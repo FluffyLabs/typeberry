@@ -1,0 +1,17 @@
+{
+	"name": "jam",
+	"version": "0.0.1",
+	"description": "JAM implementation in TypeScript",
+	"main": "index.js",
+	"scripts": {
+		"run": "ts-node ./bin/jar",
+		"test": "node --test --require ts-node/register **/*.test.ts",
+		"ts-node": "ts-node"
+	},
+	"author": "Fluffy Labs",
+	"license": "MPL-2.0",
+	"devDependencies": {
+		"@biomejs/biome": "1.8.3",
+		"ts-node": "^10.9.2"
+	}
+}
