@@ -1,28 +1,33 @@
+import type { Opaque } from './opaque';
+
+export type Hash = Opaque<void, "Hash">;
+type U64 = bigint;
+
 export class UnsealedHeader {
 	// GP: H_p
-	public parentHeaderHash: void = undefined;
+	public parentHeaderHash: Hash;
 	// GP: H_r
-	public priorStateRoot: void = undefined;
+	public priorStateRoot: Hash;
 	// GP: H_x
-	public extrinsicHash: void = undefined;
+	public extrinsicHash: Hash;
 	// GP: H_t
-	public timeSlotIndex: void = undefined;
+	public timeSlotIndex: U64 = BigInt(0);
 	// GP: H_e
-	public epoch: void = undefined;
+	public epoch: U64 = BigInt(0);
 	// GP: H_w
-	public winningTickets: void = undefined;
+	public winningTickets: undefined = undefined;
 	// GP: H_j
-	public judgementMarkers: void = undefined;
+	public judgementMarkers: undefined = undefined;
 	// GP: H_k
-	public bandersnatchBlockAuthor: void = undefined;
+	public bandersnatchBlockAuthor: undefined = undefined;
 	// GP: H_v
 	//
 	// "the entropy yielding VRF signature"
-	public vrfSignature: void = undefined;
+	public vrfSignature: undefined = undefined;
 }
 
 export class Header {
 	public header: UnsealedHeader = new UnsealedHeader();
 	// GP: H_s
-	public seal: void = undefined;
+	public seal: undefined = undefined;
 }

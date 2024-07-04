@@ -1,5 +1,5 @@
 import { Header } from "./header";
-import { Opaque } from "./opaque";
+import type { Opaque } from "./opaque";
 
 export type Ticket = Opaque<void, "Tickets">;
 export type Judgement = Opaque<void, "Judgements">;

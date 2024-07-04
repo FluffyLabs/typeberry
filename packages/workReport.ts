@@ -1,3 +1,5 @@
+import type { Hash } from './header';
+
 export class WorkPackage {
 	items: WorkItem[] = [];
 }
@@ -6,21 +8,18 @@ export class WorkItem {}
 // A total serialized size of a work-report may be no greater than W_r bytes.
 export class WorkReport {
 	// GP : a
-	authorizerHash: void;
+	authorizerHash: Hash;
 	// GP : o
-	authorizerOutput: void;
+	authorizerOutput: undefined;
 	// GP : x
 	refinementContext: RefinementContext;
 	// GP : s
-	packageSpecification: void;
+	packageSpecification: undefined;
 	// GP : r
 	results: WorkResult[];
 
 	constructor() {
-		this.authorizerHash = undefined;
-		this.authorizerOutput = undefined;
 		this.refinementContext = new RefinementContext();
-		this.packageSpecification = undefined;
 		this.results = [];
 	}
 }
@@ -28,21 +27,12 @@ export class WorkReport {
 // The context of the chain at the point that the report's corresponding
 // work package has been evaluated.
 export class RefinementContext {
-	anchorHash: void;
-	anchorPostStateRoot: void;
-	anchorBeefyRoot: void;
-	lookupAnchor: void;
-	timeslot: void;
-	preRequisiteWorkPackage?: void;
-
-	constructor() {
-		this.anchorHash = undefined;
-		this.anchorPostStateRoot = undefined;
-		this.anchorBeefyRoot = undefined;
-		this.lookupAnchor = undefined;
-		this.timeslot = undefined;
-		this.preRequisiteWorkPackage = undefined;
-	}
+	anchorHash: Hash;
+	anchorPostStateRoot: Hash;
+	anchorBeefyRoot: Hash;
+	lookupAnchor: Hash;
+	timeslot: undefined;
+	preRequisiteWorkPackage?: undefined;
 }
 
 export class WorkResult {}

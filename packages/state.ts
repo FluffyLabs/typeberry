@@ -1,62 +1,49 @@
+import type { Block } from './block';
+
 // GP: sigma
 export class State {
 	// GP: alpha
 	//
 	// "the authorization requirement which work done on that core must satisfy at the time
 	// of being reported on-chain,"
-	authorizatonRequirement: void;
+	authorizatonRequirement: undefined;
 	// GP: beta
-	previousBlocks: void;
+	previousBlocks: Block[] = [];
 	// GP: gamma
 	//
 	// "all other state concerning the determination of these[validator's] keys"
-	validatorElectionState: void;
+	validatorElectionState: undefined;
 	// GP: delta
-	services: void;
+	services: undefined;
 	// GP: eta
-	entropyPool: void;
+	entropyPool: undefined;
 	// GP: iota
 	//
 	// Enqueued validator set for the next epoch.
-	nextValidatorSet: void;
+	nextValidatorSet: undefined;
 	// GP: kappa
 	//
 	// Validator set in the current epoch.
-	currentValidatorSet: void;
+	currentValidatorSet: undefined;
 	// GP: lambda
 	//
 	// Validator set archive.
-	previousValidatorSets: void;
+	previousValidatorSets: undefined;
 	// GP: rho
 	//
 	// "each of the cores' currently assigned `report`, the availability of whose
 	// `work-package` must yet be assured by a super-majority of validators."
-	workPackgesToConfirm: void;
+	workPackgesToConfirm: undefined;
 	// GP: tau
-	mostRecentTime: void;
+	mostRecentTime: undefined;
 	// GP: varphi
 	//
 	// `alpha` the authorization requirement which work done on that core must satisfy at the time
 	// of being reported on-chain, together with the queue which fills this, `varphi`.
-	enquedWorkPackages: void;
+	enquedWorkPackages: undefined;
 	// GP: chi
-	priviledgedServices: void;
+	priviledgedServices: undefined;
 	// GP: psi
-	ongoingDisputes: void;
+	ongoingDisputes: undefined;
 
-	constructor() {
-		this.authorizatonRequirement = undefined;
-		this.previousBlocks = undefined;
-		this.validatorElectionState = undefined;
-		this.services = undefined;
-		this.entropyPool = undefined;
-		this.nextValidatorSet = undefined;
-		this.currentValidatorSet = undefined;
-		this.previousValidatorSets = undefined;
-		this.workPackgesToConfirm = undefined;
-		this.mostRecentTime = undefined;
-		this.enquedWorkPackages = undefined;
-		this.priviledgedServices = undefined;
-		this.ongoingDisputes = undefined;
-	}
 }
