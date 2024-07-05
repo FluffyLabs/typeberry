@@ -1,4 +1,4 @@
-import type { Hash } from './header';
+import type { Hash } from "./header";
 
 export class WorkPackage {
 	items: WorkItem[] = [];

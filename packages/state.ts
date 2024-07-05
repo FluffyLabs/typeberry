@@ -1,4 +1,4 @@
-import type { Block } from './block';
+import type { Block } from "./block";
 
 // GP: sigma
 export class State {
@@ -45,5 +45,4 @@ export class State {
 	priviledgedServices: undefined;
 	// GP: psi
 	ongoingDisputes: undefined;
-
 }
