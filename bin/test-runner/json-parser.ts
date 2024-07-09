@@ -1,10 +1,17 @@
-
 export type FromJson<T> = 
+	FromJsonParser<T, string> |
+	FromJsonParser<T, number> |
+	FromJsonPrimitive<T>;
+
+export type FromJsonPrimitive<T> = 
 	T extends string ? 'string' :
 	T extends number ? 'number' :
 	T extends boolean ? 'boolean':
 	T extends object ? ObjectFromJson<T> :
-	null;
+	never;
+
+export type FromJsonParser<T, Y> = 
+	[FromJsonPrimitive<Y>, (inJson: Y) => T];
 
 export type ObjectFromJson<T> = {
 	[K in keyof T]: FromJson<T[K]>;
@@ -13,13 +20,6 @@ export type ObjectFromJson<T> = {
 export function parseFromJson<T>(jsonType: unknown, ctor: FromJson<T>): T {
 	const t = typeof jsonType;
 	
-	if (ctor === null) {
-		if (jsonType === null) {
-			return null as T;
-		}
-		throw new Error(`Expected ${ctor} but got ${t}`);
-	}
-
 	if (ctor === 'string') {
 		if (t === 'string') {
 			return jsonType as T;
@@ -39,6 +39,23 @@ export function parseFromJson<T>(jsonType: unknown, ctor: FromJson<T>): T {
 			return jsonType as T;
 		}
 		throw new Error(`Expected ${ctor} but got ${t}`);
+	}
+
+	if (Array.isArray(ctor)) {
+		const type = ctor[0];
+		if (type === 'string') {
+			const parser = ctor[1];
+			const value = parseFromJson<string>(jsonType, type);
+			return parser(value);
+		}
+
+		if (type === 'number') {
+			const parser = ctor[1];
+			const value = parseFromJson<number>(jsonType, type);
+			return parser(value);
+		}
+
+		throw new Error(`Invalid parser type: ${type}`);
 	}
 	
 	if (t !== 'object') {
