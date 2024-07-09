@@ -7,7 +7,7 @@
 		"format": "biome format --write ./",
 		"lint": "biome lint ./",
 		"run": "ts-node ./bin/jar",
-		"test": "node --test --require ts-node/register **/*.test.ts",
+		"test": "node --test --require ts-node/register",
 		"ts-node": "ts-node"
 	},
 	"author": "Fluffy Labs",

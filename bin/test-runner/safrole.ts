@@ -39,6 +39,7 @@ export interface ValidatorData {
 	metadata: Blob;
 }
 
+// TODO [ToDr] Make a nicer anum
 export type TicketsOrKeys = 0 /* tickets */ | 1 /* keys */;
 
 export interface TicketBody {
@@ -51,7 +52,7 @@ export interface TicketEnvelope {
 	signature: Bytes<784>;
 }
 
-export interface SafroleState {
+export interface State {
 	timeslot: number;
 	entropy: [EntropyHash, EntropyHash, EntropyHash, EntropyHash];
 	prev_validators: ValidatorData[];
@@ -63,13 +64,26 @@ export interface SafroleState {
 	tickets_verifier_key: Bytes<384>;
 }
 
+export interface Output {
+	ok?: {
+		epoch_mark?: {
+			entropy: EntropyHash,
+			validators: BandersnatchKey[],
+		},
+		tickets_mark?: TicketBody[],
+	},
+	err: number,
+}
+
 export interface SafroleTest {
 	input: {
 		slot: number;
 		entropy: EntropyHash;
 		extrinsics: TicketEnvelope[];
 	};
-	pre_state: SafroleState;
+	pre_state: State;
+	output: Output;
+	post_state: State;
 }
 
 export function isSafroleTest(
@@ -87,5 +101,6 @@ export function isSafroleTest(
 }
 
 export function runSafroleTest(t: TestContext, testContent: SafroleTest) {
+	console.log(testContent);
 	t.todo("implement me");
 }
