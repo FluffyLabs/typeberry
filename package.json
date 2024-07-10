@@ -4,6 +4,7 @@
 	"description": "JAM implementation in TypeScript",
 	"main": "index.js",
 	"scripts": {
+		"ci": "biome ci && npm run test",
 		"format": "biome format --write ./",
 		"lint": "biome lint ./",
 		"run": "ts-node ./bin/jar",
