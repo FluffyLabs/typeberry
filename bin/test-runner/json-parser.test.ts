@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { test } from "node:test";
-import { type FromJson, parseFromJson } from "./json-parser";
+import { type FromJson, optional, parseFromJson } from "./json-parser";
 
 test("JSON parser", async (t) => {
 	await t.test("parse simple class", () => {
@@ -75,5 +75,87 @@ test("JSON parser", async (t) => {
 		assert.strictEqual(result.v, true);
 	});
 
-	// TODO [ToDr] Negative cases / arrays / check keys / check types
+	await t.test("arrays", () => {
+		const json = `{"k": ["a", "b", "c"]}`;
+		class TestClass {
+			static fromJson: FromJson<TestClass> = {
+				k: ["array", "string"],
+			};
+
+			k!: string[];
+		}
+
+		const result = parseFromJson<TestClass>(
+			JSON.parse(json),
+			TestClass.fromJson,
+		);
+		assert.deepEqual(result.k, ["a", "b", "c"]);
+	});
+
+	await t.test("keys mismatch", () => {
+		const json = `{"x": 5, "v": true }`;
+		class TestClass {
+			static fromJson: FromJson<TestClass> = {
+				k: "number",
+				v: "boolean",
+			};
+
+			k = 0;
+			v = false;
+		}
+
+		try {
+			parseFromJson<TestClass>(JSON.parse(json), TestClass.fromJson);
+			assert.fail("Expected error to be thrown");
+		} catch (e) {
+			assert.strictEqual(
+				`${e}`,
+				`Error: [<root>] Unexpected or missing keys: <missing>,"k" | "x",<missing> {"x":5,"v":true} {"k":"number","v":"boolean"}`,
+			);
+		}
+	});
+
+	await t.test("type mismatch", () => {
+		const json = `{"k": "sdf", "v": true }`;
+		class TestClass {
+			static fromJson: FromJson<TestClass> = {
+				k: "number",
+				v: "boolean",
+			};
+
+			k = 0;
+			v = false;
+		}
+
+		try {
+			parseFromJson<TestClass>(JSON.parse(json), TestClass.fromJson);
+			assert.fail("Expected error to be thrown");
+		} catch (e) {
+			assert.strictEqual(
+				`${e}`,
+				"Error: [<root>.k] Expected number but got string",
+			);
+		}
+	});
+
+	await t.test("optionals", () => {
+		const json = `{"v": true }`;
+		class TestClass {
+			static fromJson = optional<TestClass>({
+				k: "number",
+				v: "boolean",
+			});
+
+			k?: number;
+			v?: boolean;
+		}
+
+		const result = parseFromJson<TestClass>(
+			JSON.parse(json),
+			TestClass.fromJson,
+		);
+
+		assert.strictEqual(result.k, undefined);
+		assert.strictEqual(result.v, true);
+	});
 });

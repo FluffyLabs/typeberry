@@ -9,7 +9,7 @@
 		"format": "biome format --write",
 		"lint": "biome lint --write",
 		"run": "ts-node ./bin/jar",
-		"test": "node --test --require ts-node/register",
+		"test": "find ./ -name '*.test.ts' -exec node --test --require ts-node/register {} \\;",
 		"ts-node": "ts-node",
 		"biome": "biome"
 	},
