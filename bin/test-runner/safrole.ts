@@ -1,7 +1,7 @@
 import type { TestContext } from "node:test";
+import { Ticket } from "../../packages/block";
 import type { Opaque } from "../../packages/opaque";
 import { type FromJson, optional, parseFromJson } from "./json-parser";
-import { Ticket } from "../../packages/block";
 
 function assert(value: boolean, description: string): asserts value is true {
 	if (!value) throw new Error(description);

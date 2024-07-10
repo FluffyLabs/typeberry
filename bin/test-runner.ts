@@ -3,8 +3,8 @@ import * as fs from "node:fs/promises";
 import { test } from "node:test";
 
 import type { TestContext } from "node:test";
-import { SafroleTest, runSafroleTest } from "./test-runner/safrole";
 import { parseFromJson } from "./test-runner/json-parser";
+import { SafroleTest, runSafroleTest } from "./test-runner/safrole";
 
 main().then(console.log).catch(console.error);
 
