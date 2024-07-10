@@ -8,7 +8,8 @@
 		"lint": "biome lint ./",
 		"run": "ts-node ./bin/jar",
 		"test": "node --test --require ts-node/register",
-		"ts-node": "ts-node"
+		"ts-node": "ts-node",
+		"biome": "biome"
 	},
 	"author": "Fluffy Labs",
 	"license": "MPL-2.0",

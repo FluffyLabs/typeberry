@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert";
-import { FromJson, parseFromJson } from "./json-parser";
+import { type FromJson, parseFromJson } from "./json-parser";
 
 test("JSON parser", async (t) => {
 	await t.test("parse simple class", () => {
@@ -11,8 +11,8 @@ test("JSON parser", async (t) => {
 				v: "boolean",
 			};
 
-			k: number = 0;
-			v: boolean = false;
+			k = 0;
+			v = false;
 		}
 
 		const result = parseFromJson<TestClass>(
@@ -30,8 +30,8 @@ test("JSON parser", async (t) => {
 				k: "number",
 				v: "boolean",
 			};
-			k: number = 0;
-			v: boolean = false;
+			k = 0;
+			v = false;
 		}
 
 		class TestClass {
@@ -40,7 +40,7 @@ test("JSON parser", async (t) => {
 				nested: NestedClass.fromJson,
 			};
 
-			k: string = "";
+			k = "";
 			nested: NestedClass = new NestedClass();
 		}
 
@@ -59,12 +59,12 @@ test("JSON parser", async (t) => {
 		const json = `{"k": "0x123", "v": true }`;
 		class TestClass {
 			static fromJson: FromJson<TestClass> = {
-				k: ["string", (v: string) => parseInt(v)],
+				k: ["string", (v: string) => Number.parseInt(v)],
 				v: "boolean",
 			};
 
-			k: number = 0;
-			v: boolean = false;
+			k = 0;
+			v = false;
 		}
 
 		const result = parseFromJson<TestClass>(

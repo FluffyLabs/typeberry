@@ -1,8 +1,6 @@
 /// Extract an element type of an array type.
-type ElementType<T> = T extends (infer U)[] ? U : T;
-
-export type FromJson<T> = T extends any[]
-	? ["array", FromJson<ElementType<T>>]
+export type FromJson<T> = T extends (infer U)[]
+	? ["array", FromJson<U>]
 	: // parse a string from JSON into expected type
 			| FromJsonWithParser<T, string>
 			// parse a number from JSON into expected type
@@ -44,12 +42,13 @@ export function optional<T>(
 				);
 			}
 
-			const j = json as any;
+			const j = json as { [key: string]: unknown };
 			for (const [k, v] of Object.entries(type)) {
 				if (k in json) {
 					// we allow `null` in a key
 					if (j[k] !== null) {
-						j[k] = parseFromJson(j[k], v as any, `${context}.${k}`);
+						const val = v as FromJson<unknown>;
+						j[k] = parseFromJson(j[k], val, `${context}.${k}`);
 					}
 				}
 			}
@@ -62,7 +61,7 @@ export function optional<T>(
 export function parseFromJson<T>(
 	jsonType: unknown,
 	ctor: FromJson<T>,
-	context: string = "<root>",
+	context = "<root>",
 ): T {
 	const t = typeof jsonType;
 
@@ -140,8 +139,8 @@ export function parseFromJson<T>(
 		throw new Error(`[${context}] Unexpected 'null'`);
 	}
 
-	const obj = jsonType as any;
-	const c = ctor as any;
+	const obj = jsonType as { [key: string]: unknown };
+	const c = ctor as { [key: string]: FromJson<unknown> };
 
 	const keysDifference = diffKeys(obj, ctor);
 	if (keysDifference.length > 0) {
