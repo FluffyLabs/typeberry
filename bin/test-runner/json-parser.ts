@@ -68,12 +68,12 @@ export function parseFromJson<T>(jsonType: unknown, ctor: FromJson<T>): T {
 		throw new Error(`Unhandled type ${ctor}`);
 	}
 
-	const obj = jsonType as any;
-	const c = ctor as any;
+	const obj = jsonType as { [key: string]: unknown };
+	const c = ctor as { [key: string]: FromJson<unknown> };
 	for (const key of Object.keys(ctor)) {
 		const v = obj[key];
 		obj[key] = parseFromJson(v, c[key]);
 	}
 
-	return obj;
+	return obj as T;
 }
