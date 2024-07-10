@@ -67,12 +67,12 @@ export interface State {
 export interface Output {
 	ok?: {
 		epoch_mark?: {
-			entropy: EntropyHash,
-			validators: BandersnatchKey[],
-		},
-		tickets_mark?: TicketBody[],
-	},
-	err: number,
+			entropy: EntropyHash;
+			validators: BandersnatchKey[];
+		};
+		tickets_mark?: TicketBody[];
+	};
+	err: number;
 }
 
 export interface SafroleTest {
