@@ -1,11 +1,11 @@
-import { test } from "node:test";
 import { fail } from "node:assert";
 import * as fs from "node:fs/promises";
+import { test } from "node:test";
 
 import type { TestContext } from "node:test";
 import {
-	isSafroleTest,
 	type SafroleTest,
+	isSafroleTest,
 	runSafroleTest,
 } from "./test-runner/safrole";
 

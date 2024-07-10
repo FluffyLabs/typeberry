@@ -5,11 +5,12 @@
 	"main": "index.js",
 	"scripts": {
 		"ci": "biome ci && npm run test",
-		"format": "biome format --write ./",
+		"format": "biome format --write",
 		"lint": "biome lint ./",
 		"run": "ts-node ./bin/jar",
 		"test": "node --test --require ts-node/register",
-		"ts-node": "ts-node"
+		"ts-node": "ts-node",
+		"biome": "biome"
 	},
 	"author": "Fluffy Labs",
 	"license": "MPL-2.0",
