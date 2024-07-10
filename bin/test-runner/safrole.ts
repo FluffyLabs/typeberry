@@ -1,5 +1,4 @@
 import type { TestContext } from "node:test";
-import { Ticket } from "../../packages/block";
 import type { Opaque } from "../../packages/opaque";
 import { type FromJson, optional, parseFromJson } from "./json-parser";
 
