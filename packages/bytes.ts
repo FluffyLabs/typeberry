@@ -2,7 +2,7 @@ function assert(value: boolean, description: string): asserts value is true {
 	if (!value) throw new Error(description);
 }
 
-export class Blob {
+export class BytesBlob {
 	readonly buffer: ArrayBuffer = new ArrayBuffer(0);
 	readonly length?: number = 0;
 
@@ -11,7 +11,7 @@ export class Blob {
 		this.length = buffer.byteLength;
 	}
 
-	static parseBlob(v: string): Blob {
+	static parseBlob(v: string): BytesBlob {
 		const len = v.length;
 		if (len % 2 === 1 || !v.startsWith("0x")) {
 			throw new Error(`Invalid hex string: ${v}.`);
@@ -24,7 +24,7 @@ export class Blob {
 			bytes[i / 2 - 1] = Number.parseInt(c, 16);
 		}
 
-		return new Blob(buffer);
+		return new BytesBlob(buffer);
 	}
 }
 
@@ -48,7 +48,7 @@ export class Bytes<T extends number> {
 			);
 		}
 
-		const blob = Blob.parseBlob(v);
+		const blob = BytesBlob.parseBlob(v);
 		return new Bytes(new DataView(blob.buffer), len);
 	}
 }

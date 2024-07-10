@@ -1,11 +1,11 @@
 import assert from "node:assert";
 import { test } from "node:test";
-import { Blob, Bytes } from "./bytes";
+import { Bytes, BytesBlob } from "./bytes";
 
-test("Blob", async (t) => {
+test("BytesBlob", async (t) => {
 	await t.test("should fail if 0x is missing", () => {
 		try {
-			Blob.parseBlob("ff2f");
+			BytesBlob.parseBlob("ff2f");
 			assert.fail("Should throw an exception");
 		} catch (e) {
 			assert.strictEqual(`${e}`, "Error: Invalid hex string: ff2f.");
@@ -15,7 +15,7 @@ test("Blob", async (t) => {
 	await t.test("parse 0x-prefixed hex string into blob of bytes", () => {
 		const input =
 			"0x2fa3f686df876995167e7c2e5d74c4c7b6e48f8068fe0e44208344d480f7904c";
-		const result = Blob.parseBlob(input);
+		const result = BytesBlob.parseBlob(input);
 
 		assert.deepEqual(
 			new Uint8Array(result.buffer),
