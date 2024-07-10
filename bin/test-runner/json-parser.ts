@@ -60,38 +60,38 @@ export function optional<T>(
 
 export function parseFromJson<T>(
 	jsonType: unknown,
-	ctor: FromJson<T>,
+	jsonDescription: FromJson<T>,
 	context = "<root>",
 ): T {
 	const t = typeof jsonType;
 
-	if (ctor === "string") {
+	if (jsonDescription === "string") {
 		if (t === "string") {
 			return jsonType as T;
 		}
-		throw new Error(`[${context}] Expected ${ctor} but got ${t}`);
+		throw new Error(`[${context}] Expected ${jsonDescription} but got ${t}`);
 	}
 
-	if (ctor === "number") {
+	if (jsonDescription === "number") {
 		if (t === "number") {
 			return jsonType as T;
 		}
-		throw new Error(`[${context}] Expected ${ctor} but got ${t}`);
+		throw new Error(`[${context}] Expected ${jsonDescription} but got ${t}`);
 	}
 
-	if (ctor === "boolean") {
+	if (jsonDescription === "boolean") {
 		if (t === "boolean") {
 			return jsonType as T;
 		}
-		throw new Error(`[${context}] Expected ${ctor} but got ${t}`);
+		throw new Error(`[${context}] Expected ${jsonDescription} but got ${t}`);
 	}
 
-	if (Array.isArray(ctor)) {
-		const type = ctor[0];
+	if (Array.isArray(jsonDescription)) {
+		const type = jsonDescription[0];
 
 		// an array type
 		if (type === "array") {
-			const expectedType = ctor[1];
+			const expectedType = jsonDescription[1];
 			if (!Array.isArray(jsonType)) {
 				throw new Error(`[${context}] Expected array, got ${jsonType}`);
 			}
@@ -105,21 +105,21 @@ export function parseFromJson<T>(
 
 		// a manual parser for nested object
 		if (type === "object") {
-			const parser = ctor[1];
+			const parser = jsonDescription[1];
 			const obj = jsonType as object;
 			return parser(obj, context);
 		}
 
 		// An expected in-json type and the parser to the destination type.
 		if (type === "string") {
-			const parser = ctor[1];
+			const parser = jsonDescription[1];
 			const value = parseFromJson<string>(jsonType, type, context);
 			return parser(value, context);
 		}
 
 		if (type === "number") {
-			const type = ctor[0];
-			const parser = ctor[1];
+			const type = jsonDescription[0];
+			const parser = jsonDescription[1];
 			const value = parseFromJson<number>(jsonType, type, context);
 			return parser(value, context);
 		}
@@ -131,8 +131,8 @@ export function parseFromJson<T>(
 		throw new Error(`Expected complex type but got ${t}`);
 	}
 
-	if (typeof ctor !== "object") {
-		throw new Error(`[${context}] Unhandled type ${ctor}`);
+	if (typeof jsonDescription !== "object") {
+		throw new Error(`[${context}] Unhandled type ${jsonDescription}`);
 	}
 
 	if (jsonType === null) {
@@ -140,16 +140,16 @@ export function parseFromJson<T>(
 	}
 
 	const obj = jsonType as { [key: string]: unknown };
-	const c = ctor as { [key: string]: FromJson<unknown> };
+	const c = jsonDescription as { [key: string]: FromJson<unknown> };
 
-	const keysDifference = diffKeys(obj, ctor);
+	const keysDifference = diffKeys(obj, jsonDescription);
 	if (keysDifference.length > 0) {
 		throw new Error(
-			`[${context}] Unexpected or missing keys: ${keysDifference.join(" | ")} ${JSON.stringify(obj)} ${JSON.stringify(ctor)}`,
+			`[${context}] Unexpected or missing keys: ${keysDifference.join(" | ")} ${JSON.stringify(obj)} ${JSON.stringify(jsonDescription)}`,
 		);
 	}
 
-	for (const key of Object.keys(ctor)) {
+	for (const key of Object.keys(jsonDescription)) {
 		const v = obj[key];
 		obj[key] = parseFromJson(v, c[key], `${context}.${key}`);
 	}
