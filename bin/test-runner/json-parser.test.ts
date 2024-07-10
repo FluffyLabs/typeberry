@@ -75,5 +75,5 @@ test("JSON parser", async (t) => {
 		assert.strictEqual(result.v, true);
 	});
 
-	// TODO [ToDr] Negative cases
+	// TODO [ToDr] Negative cases / arrays / check keys / check types
 });

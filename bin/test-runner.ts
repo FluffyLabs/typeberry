@@ -3,11 +3,8 @@ import * as fs from "node:fs/promises";
 import { test } from "node:test";
 
 import type { TestContext } from "node:test";
-import {
-	type SafroleTest,
-	isSafroleTest,
-	runSafroleTest,
-} from "./test-runner/safrole";
+import { parseFromJson } from "./test-runner/json-parser";
+import { SafroleTest, runSafroleTest } from "./test-runner/safrole";
 
 main().then(console.log).catch(console.error);
 
@@ -29,9 +26,14 @@ async function dispatchTest(
 	testContent: unknown,
 	file: string,
 ) {
-	if (isSafroleTest(testContent)) {
-		runSafroleTest(t, testContent);
-	} else {
-		fail(`Unrecognized test case in ${file}`);
+	try {
+		const safroleTest = parseFromJson<SafroleTest>(
+			testContent,
+			SafroleTest.fromJson,
+		);
+		runSafroleTest(t, safroleTest);
+	} catch (e) {
+		fail(`Not a safrole test: ${e}`);
 	}
+	fail(`Unrecognized test case in ${file}`);
 }
