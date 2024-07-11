@@ -43,28 +43,13 @@ export class TicketBody {
 }
 
 export class TicketsOrKeys {
-	static fromJson: FromJson<TicketsOrKeys> = [
-		"object",
-		(v: unknown, context?: string) => {
-			if (typeof v !== "object" || v === null) {
-				throw new Error(`[${context}] Missing TicketsOrKeys field.`);
-			}
-
-			if ("tickets" in v && Array.isArray(v.tickets)) {
-				v.tickets = v.tickets.map((t: unknown) =>
-					parseFromJson(t, TicketBody.fromJson, `${context}.tickets`),
-				);
-			}
-
-			if ("keys" in v && Array.isArray(v.keys)) {
-				v.keys = v.keys.map(
-					(k: string) => Bytes.parseBytes(k, 32) as BandersnatchKey,
-				);
-			}
-
-			return v;
-		},
-	];
+	static fromJson = optional<TicketsOrKeys>({
+		tickets: ["array", TicketBody.fromJson],
+		keys: [
+			"array",
+			["string", (v: string) => Bytes.parseBytes(v, 32) as BandersnatchKey],
+		],
+	});
 	tickets?: TicketBody[];
 	keys?: BandersnatchKey[];
 }

@@ -31,9 +31,10 @@ async function dispatchTest(
 			testContent,
 			SafroleTest.fromJson,
 		);
-		runSafroleTest(t, safroleTest);
+		return runSafroleTest(t, safroleTest);
 	} catch (e) {
 		fail(`Not a safrole test: ${e}`);
 	}
+
 	fail(`Unrecognized test case in ${file}`);
 }
