@@ -1,7 +1,7 @@
-import { FixedArray } from "../types";
-import { assemblify } from "./assemblify";
 import * as $ from "scale-codec";
-import { MemoryChunkItem, PageMapItem, Program } from "./types";
+import type { FixedArray } from "../types";
+import { assemblify } from "./assemblify";
+import type { MemoryChunkItem, PageMapItem, Program } from "./types";
 
 type InitialState = {
 	regs?: FixedArray<number, 13>;
@@ -28,7 +28,7 @@ p = len(j)
 
 export class Pvm {
 	private program: Program;
-	private pc: number = 0;
+	private pc = 0;
 	private regs: FixedArray<number, 13>;
 	private gas: number;
 	private pageMap: Array<PageMapItem>;

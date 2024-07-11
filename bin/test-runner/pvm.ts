@@ -1,8 +1,8 @@
-import type { TestContext } from "node:test";
-import { FromJson } from "./json-parser";
-import { Pvm } from "../../packages/pvm/pvm";
-import { FixedArray } from "../../packages/types";
 import assert from "node:assert";
+import type { TestContext } from "node:test";
+import { Pvm } from "../../packages/pvm/pvm";
+import type { FixedArray } from "../../packages/types";
+import type { FromJson } from "./json-parser";
 
 type Status = "trap";
 class MemoryChunkItem {
