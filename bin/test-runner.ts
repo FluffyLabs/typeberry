@@ -48,7 +48,6 @@ async function dispatchTest(
 	testContent: unknown,
 	file: string,
 ) {
-
 	const errors: unknown[] = [];
 	const addError = (e: unknown) => errors.push(e);
 

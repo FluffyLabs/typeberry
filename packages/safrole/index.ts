@@ -29,6 +29,16 @@ export type State = {
 	ticketsAccumulator(): TicketBody[];
 };
 
+export type StateDiff = {
+	timeslot?: number;
+	entropy?: [EntropyHash];
+	prevValidators?: ValidatorData[];
+	currValidators?: ValidatorData[];
+	nextValidators?: ValidatorData[];
+	designedValidators?: ValidatorData[];
+	ticketsAccumulator?: TicketBody[];
+};
+
 export class Safrole {
 	state: State;
 
@@ -40,11 +50,20 @@ export class Safrole {
 		slot: number;
 		entropy: EntropyHash;
 		extrinsics: TicketEnvelope[];
-	}) {
-		throw new Error("Method not implemented.");
-	}
+	}): StateDiff {
+		const newState: StateDiff = {};
+		if (this.state.timeslot() > input.slot) {
+			throw new Error(
+				`Timeslot is in the past. Current ${this.state.timeslot()}, got ${input.slot}`,
+			);
+		}
 
-	currentState(): unknown {
-		throw new Error("Method not implemented.");
+		newState.timeslot = input.slot;
+		newState.entropy = [input.entropy];
+		for (const v of input.extrinsics) {
+			// TODO [ToDr] Verify signatures
+		}
+
+		return newState;
 	}
 }

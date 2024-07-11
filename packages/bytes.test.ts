@@ -17,7 +17,7 @@ test("BytesBlob", async (t) => {
 			"0x2fa3f686df876995167e7c2e5d74c4c7b6e48f8068fe0e44208344d480f7904c";
 		const result = BytesBlob.parseBlob(input);
 
-		assert.deepEqual(
+		assert.deepStrictEqual(
 			new Uint8Array(result.buffer),
 			new Uint8Array([
 				47, 163, 246, 134, 223, 135, 105, 149, 22, 126, 124, 46, 93, 116, 196,
@@ -50,7 +50,7 @@ test("Bytes", async (t) => {
 
 		const bytes = Bytes.parseBytes(input, 32);
 
-		assert.deepEqual(
+		assert.deepStrictEqual(
 			new Uint8Array(bytes.view.buffer),
 			new Uint8Array([
 				156, 45, 59, 206, 122, 160, 165, 133, 124, 103, 168, 82, 71, 54, 93, 32,

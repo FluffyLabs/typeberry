@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import type { TestContext } from "node:test";
 import { Bytes, BytesBlob } from "../../packages/bytes";
 import type {
 	BandersnatchKey,
@@ -9,6 +8,7 @@ import type {
 import type { EntropyHash } from "../../packages/hash";
 import {
 	Safrole,
+	type StateDiff as SafroleStateDiff,
 	type TicketBody,
 	type TicketEnvelope,
 	type ValidatorData,
@@ -159,11 +159,34 @@ export class SafroleTest {
 
 export function runSafroleTest(testContent: SafroleTest) {
 	const preState = convertJsonObjectToClass(testContent.pre_state);
-	const postState = convertJsonObjectToClass(testContent.post_state);
 	const safrole = new Safrole(preState);
 
-	const output = safrole.transition(testContent.input);
+	const output: Output = {};
+	let error = "";
+	let stateDiff: SafroleStateDiff = {};
+	try {
+		stateDiff = safrole.transition(testContent.input);
+		output.ok = {
+			epoch_mark: undefined,
+			tickets_mark: undefined,
+		};
+	} catch (e) {
+		error = `${e}`;
+		console.error(error);
+		output.err = 1;
+	}
 
-	assert.deepEqual(output, testContent.output);
-	assert.deepEqual(safrole.currentState(), postState);
+	const postState = structuredClone(testContent.pre_state);
+	// TODO [ToDr] Didn't find a better way to do this :sad:
+	const unsafePostState = postState as unknown as { [key: string]: unknown };
+	const unsafeStateDiff = stateDiff as unknown as { [key: string]: unknown };
+	for (const k of Object.keys(postState)) {
+		const diffKey = snakeToCamel(k);
+		if (diffKey in stateDiff) {
+			unsafePostState[k] = unsafeStateDiff[diffKey];
+		}
+	}
+
+	assert.deepStrictEqual(output, testContent.output);
+	assert.deepStrictEqual(postState, testContent.post_state);
 }

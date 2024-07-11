@@ -49,7 +49,7 @@ test("JSON parser", async (t) => {
 			TestClass.fromJson,
 		);
 		assert.strictEqual(result.k, "xyz");
-		assert.deepEqual(result.nested, {
+		assert.deepStrictEqual(result.nested, {
 			k: 5,
 			v: true,
 		});
@@ -89,7 +89,7 @@ test("JSON parser", async (t) => {
 			JSON.parse(json),
 			TestClass.fromJson,
 		);
-		assert.deepEqual(result.k, ["a", "b", "c"]);
+		assert.deepStrictEqual(result.k, ["a", "b", "c"]);
 	});
 
 	await t.test("keys mismatch", () => {
