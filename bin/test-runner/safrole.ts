@@ -121,8 +121,8 @@ export class OkOutput {
 		epoch_mark: EpochMark.fromJson,
 		tickets_mark: ["array", ticketBodyFromJson],
 	});
-	epoch_mark?: EpochMark;
-	tickets_mark?: TicketBody[];
+	epoch_mark?: EpochMark | null;
+	tickets_mark?: TicketBody[] | null;
 }
 
 export class Output {
@@ -167,8 +167,8 @@ export function runSafroleTest(testContent: SafroleTest) {
 	try {
 		stateDiff = safrole.transition(testContent.input);
 		output.ok = {
-			epoch_mark: undefined,
-			tickets_mark: undefined,
+			epoch_mark: null,
+			tickets_mark: null,
 		};
 	} catch (e) {
 		error = `${e}`;

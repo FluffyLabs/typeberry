@@ -3,7 +3,7 @@ import * as fs from "node:fs/promises";
 import { test } from "node:test";
 
 import type { TestContext } from "node:test";
-import { FromJson, parseFromJson } from "./test-runner/json-parser";
+import { type FromJson, parseFromJson } from "./test-runner/json-parser";
 import { PvmTest, runPvmTest } from "./test-runner/pvm";
 import { SafroleTest, runSafroleTest } from "./test-runner/safrole";
 
@@ -24,17 +24,14 @@ async function main() {
 
 function parseTest<T>(
 	testContent: unknown,
-	fromJson: FromJson<T>, 
+	fromJson: FromJson<T>,
 	run: (t: T) => void,
 	addError: (e: unknown) => void,
 ) {
 	try {
-		const parsedTest = parseFromJson(
-			testContent,
-			fromJson,
-		);
+		const parsedTest = parseFromJson(testContent, fromJson);
 
-		return () =>{
+		return () => {
 			run(parsedTest);
 		};
 	} catch (e) {
@@ -60,9 +57,11 @@ async function dispatchTest(
 		console.error(error);
 	}
 
-	function nonNull<T>(x: T | null): x is T { return x !== null }
+	function nonNull<T>(x: T | null): x is T {
+		return x !== null;
+	}
 	const nonEmptyRunners = runners.filter(nonNull);
-	
+
 	if (nonEmptyRunners.length === 0) {
 		fail(`Unrecognized test case in ${file}`);
 	} else {
