@@ -22,7 +22,7 @@ async function main() {
 	}
 }
 
-function handleSafroleTest(t: TestContext, testContent: unknown, file: string) {
+function handleSafroleTest(t: TestContext, testContent: unknown) {
 	const safroleTest = parseFromJson<SafroleTest>(
 		testContent,
 		SafroleTest.fromJson,
@@ -30,7 +30,7 @@ function handleSafroleTest(t: TestContext, testContent: unknown, file: string) {
 	return () => runSafroleTest(t, safroleTest);
 }
 
-function handlePvmTest(t: TestContext, testContent: unknown, file: string) {
+function handlePvmTest(t: TestContext, testContent: unknown) {
 	const pvmTest = parseFromJson<PvmTest>(testContent, PvmTest.fromJson);
 	return () => runPvmTest(t, pvmTest);
 }
@@ -46,7 +46,7 @@ async function dispatchTest(
 	const runners: (() => void)[] = [];
 	for (const handler of handlers) {
 		try {
-			const runner = handler(t, testContent, file);
+			const runner = handler(t, testContent);
 			runners.push(runner);
 		} catch (e) {
 			errors.push(e);

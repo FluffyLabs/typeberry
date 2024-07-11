@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import type { TestContext } from "node:test";
+import type { FixedArray } from "../../packages/fixed-array";
 import { Pvm } from "../../packages/pvm/pvm";
-import type { FixedArray } from "../../packages/types";
 import type { FromJson } from "./json-parser";
 
 type Status = "trap";
@@ -11,7 +11,7 @@ class MemoryChunkItem {
 		contents: ["array", "number"],
 	};
 	address!: number;
-	contents!: Array<number>;
+	contents!: number[];
 }
 
 class PageMapItem {
@@ -43,14 +43,14 @@ export class PvmTest {
 	name!: string;
 	"initial-regs": FixedArray<number, 13>;
 	"initial-pc": number;
-	"initial-page-map": Array<PageMapItem>;
-	"initial-memory": Array<MemoryChunkItem>;
+	"initial-page-map": PageMapItem[];
+	"initial-memory": MemoryChunkItem[];
 	"initial-gas": number;
-	program!: Array<number>;
+	program!: number[];
 	"expected-status": Status;
 	"expected-regs": FixedArray<number, 13>;
 	"expected-pc": number;
-	"expected-memory": Array<MemoryChunkItem>;
+	"expected-memory": MemoryChunkItem[];
 	"expected-gas": number;
 }
 

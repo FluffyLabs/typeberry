@@ -96,7 +96,7 @@ export function parseFromJson<T>(
 				throw new Error(`[${context}] Expected array, got ${jsonType}`);
 			}
 
-			const arr = jsonType as Array<unknown>;
+			const arr = jsonType as unknown[];
 			for (const [k, v] of arr.entries()) {
 				arr[k] = parseFromJson(v, expectedType, `${context}.${k}`);
 			}

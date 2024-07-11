@@ -12,7 +12,7 @@
 		"test": "find ./ -name '*.test.ts' -exec node --test --require ts-node/register {} \\;",
 		"ts-node": "ts-node",
 		"biome": "biome",
-		"start-pvm": "ts-node ./packages/pvm/index.ts",
+		"start-pvm": "ts-node ./bin/pvm.ts",
 		"test-runner": "ts-node ./bin/test-runner.ts"
 	},
 	"author": "Fluffy Labs",

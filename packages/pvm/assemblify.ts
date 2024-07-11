@@ -234,7 +234,7 @@ const byteToOpCodeMap = instructions.reduce((acc, instruction) => {
 	return acc;
 }, {} as ByteToOpCodeMap);
 
-export function assemblify(program: Array<number>, k: Array<number>) {
+export function assemblify(program: number[], k: number[]) {
 	const printableProgram = program.reduce(
 		(acc, byte, index) => {
 			const byteNumber = Math.floor(index / 8);

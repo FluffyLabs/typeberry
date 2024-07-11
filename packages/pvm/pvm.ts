@@ -1,17 +1,34 @@
 import * as $ from "scale-codec";
-import type { FixedArray } from "../types";
+import type { FixedArray } from "../fixed-array";
 import { assemblify } from "./assemblify";
-import type { MemoryChunkItem, PageMapItem, Program } from "./types";
 
 type InitialState = {
 	regs?: FixedArray<number, 13>;
 	pc?: number;
-	pageMap?: Array<PageMapItem>;
-	memory?: Array<MemoryChunkItem>;
+	pageMap?: PageMapItem[];
+	memory?: MemoryChunkItem[];
 	gas?: number;
 };
 
-const zz = $.array($.u8);
+type MemoryChunkItem = {
+	address: number;
+	contents: number[];
+};
+
+type PageMapItem = {
+	address: number;
+	length: number;
+	"is-writable": boolean;
+};
+
+type Program = {
+	c: number[];
+	k: number[];
+	jLength: number;
+	z: number;
+	cLength: number;
+};
+
 /*
 // dynamic jump table
 j = Vec<u8 | u16 | u24 | u32>
@@ -31,11 +48,11 @@ export class Pvm {
 	private pc = 0;
 	private regs: FixedArray<number, 13>;
 	private gas: number;
-	private pageMap: Array<PageMapItem>;
-	private memory: Array<MemoryChunkItem>;
+	private pageMap: PageMapItem[];
+	private memory: MemoryChunkItem[];
 	private status: "trap" | "halt" = "trap";
 
-	constructor(rawProgram: Array<number>, initialState: InitialState = {}) {
+	constructor(rawProgram: number[], initialState: InitialState = {}) {
 		const [jLength, z, cLength, c, k] = this.decodeProgram(
 			new Uint8Array(rawProgram),
 		);
