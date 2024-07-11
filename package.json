@@ -11,12 +11,17 @@
 		"run": "ts-node ./bin/jar",
 		"test": "find ./ -name '*.test.ts' -exec node --test --require ts-node/register {} \\;",
 		"ts-node": "ts-node",
-		"biome": "biome"
+		"biome": "biome",
+		"start-pvm": "ts-node ./bin/pvm.ts",
+		"test-runner": "ts-node ./bin/test-runner.ts"
 	},
 	"author": "Fluffy Labs",
 	"license": "MPL-2.0",
 	"devDependencies": {
 		"@biomejs/biome": "1.8.3",
 		"ts-node": "^10.9.2"
+	},
+	"dependencies": {
+		"scale-codec": "^0.13.0"
 	}
 }

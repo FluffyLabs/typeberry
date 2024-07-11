@@ -4,6 +4,7 @@ import { test } from "node:test";
 
 import type { TestContext } from "node:test";
 import { parseFromJson } from "./test-runner/json-parser";
+import { PvmTest, runPvmTest } from "./test-runner/pvm";
 import { SafroleTest, runSafroleTest } from "./test-runner/safrole";
 
 main().then(console.log).catch(console.error);
@@ -21,20 +22,45 @@ async function main() {
 	}
 }
 
+function handleSafroleTest(t: TestContext, testContent: unknown) {
+	const safroleTest = parseFromJson<SafroleTest>(
+		testContent,
+		SafroleTest.fromJson,
+	);
+	return () => runSafroleTest(t, safroleTest);
+}
+
+function handlePvmTest(t: TestContext, testContent: unknown) {
+	const pvmTest = parseFromJson<PvmTest>(testContent, PvmTest.fromJson);
+	return () => runPvmTest(t, pvmTest);
+}
+
 async function dispatchTest(
 	t: TestContext,
 	testContent: unknown,
 	file: string,
 ) {
-	try {
-		const safroleTest = parseFromJson<SafroleTest>(
-			testContent,
-			SafroleTest.fromJson,
-		);
-		return runSafroleTest(t, safroleTest);
-	} catch (e) {
-		fail(`Not a safrole test: ${e}`);
+	const handlers = [handleSafroleTest, handlePvmTest];
+
+	const errors: unknown[] = [];
+	const runners: (() => void)[] = [];
+	for (const handler of handlers) {
+		try {
+			const runner = handler(t, testContent);
+			runners.push(runner);
+		} catch (e) {
+			errors.push(e);
+		}
 	}
 
-	fail(`Unrecognized test case in ${file}`);
+	if (runners.length === 0) {
+		for (const error of errors) {
+			console.error(error);
+		}
+		fail(`Unrecognized test case in ${file}`);
+	}
+
+	for (const runner of runners) {
+		runner();
+	}
 }
