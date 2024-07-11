@@ -1,49 +1,70 @@
 import type { TestContext } from "node:test";
+import { FromJson } from "./json-parser";
+import { Pvm } from "../../packages/pvm/pvm";
+import { FixedArray } from "../../packages/types";
+import assert from "node:assert";
 
 type Status = "trap";
+class MemoryChunkItem {
+	static fromJson: FromJson<MemoryChunkItem> = {
+		address: "number",
+		contents: ["array", "number"],
+	};
+	address!: number;
+	contents!: Array<number>;
+}
 
-type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N
-	? A
-	: GrowToSize<T, N, [...A, T]>;
+class PageMapItem {
+	static fromJson: FromJson<PageMapItem> = {
+		address: "number",
+		length: "number",
+		"is-writable": "boolean",
+	};
+	address!: number;
+	length!: number;
+	"is-writable": boolean;
+}
+export class PvmTest {
+	static fromJson: FromJson<PvmTest> = {
+		name: "string",
+		"initial-regs": ["array", "number"],
+		"initial-pc": "number",
+		"initial-page-map": ["array", PageMapItem.fromJson],
+		"initial-memory": ["array", MemoryChunkItem.fromJson],
+		"initial-gas": "number",
+		program: ["array", "number"],
+		"expected-status": "string",
+		"expected-regs": ["array", "number"],
+		"expected-pc": "number",
+		"expected-memory": ["array", MemoryChunkItem.fromJson],
+		"expected-gas": "number",
+	};
 
-export type FixedArray<T, N extends number> = GrowToSize<T, N, []>;
-
-export type PvmTest = {
-	name: string;
+	name!: string;
 	"initial-regs": FixedArray<number, 13>;
 	"initial-pc": number;
-	"initial-page-map": Array<unknown>;
-	"initial-memory": Array<unknown>;
+	"initial-page-map": Array<PageMapItem>;
+	"initial-memory": Array<MemoryChunkItem>;
 	"initial-gas": number;
-	program: Array<number>;
+	program!: Array<number>;
 	"expected-status": Status;
 	"expected-regs": FixedArray<number, 13>;
 	"expected-pc": number;
-	"expected-memory": Array<unknown>;
+	"expected-memory": Array<MemoryChunkItem>;
 	"expected-gas": number;
-};
-
-const testKeys: Array<keyof PvmTest> = [
-	"name",
-	"initial-regs",
-	"initial-pc",
-	"initial-page-map",
-	"initial-memory",
-	"initial-gas",
-	"program",
-	"expected-status",
-	"expected-regs",
-	"expected-pc",
-	"expected-pc",
-	"expected-memory",
-	"expected-gas",
-];
-
-export function isPvmTest(testContent): testContent is PvmTest {
-	if (typeof testContent !== "object" || testContent === null) return false;
-	return testKeys.every((key) => testContent.hasOwnProperty(key));
 }
 
 export function runPvmTest(t: TestContext, testContent: PvmTest) {
-	t.todo("implement me");
+	const pvm = new Pvm(testContent.program);
+	pvm.printProgram();
+
+	pvm.runProgram();
+
+	const state = pvm.getState();
+
+	assert.strictEqual(state.gas, testContent["expected-gas"]);
+	assert.strictEqual(state.pc, testContent["expected-pc"]);
+	assert.strictEqual(state.memory, testContent["expected-memory"]);
+	assert.strictEqual(state.regs, testContent["expected-regs"]);
+	assert.strictEqual(state.status, testContent["expected-status"]);
 }

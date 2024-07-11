@@ -1,7 +1,15 @@
+import { FixedArray } from "../types";
 import { assemblify } from "./assemblify";
 import * as $ from "scale-codec";
+import { MemoryChunkItem, PageMapItem, Program } from "./types";
 
-type InitialState = {};
+type InitialState = {
+	regs?: FixedArray<number, 13>;
+	pc?: number;
+	pageMap?: Array<PageMapItem>;
+	memory?: Array<MemoryChunkItem>;
+	gas?: number;
+};
 
 const zz = $.array($.u8);
 /*
@@ -19,24 +27,29 @@ p = len(j)
 */
 
 export class Pvm {
-	private program: Array<number>;
-	private k: Array<number>;
-	private jLength: number;
-	private z: number;
-	private cLength: number;
+	private program: Program;
+	private pc: number = 0;
+	private regs: FixedArray<number, 13>;
+	private gas: number;
+	private pageMap: Array<PageMapItem>;
+	private memory: Array<MemoryChunkItem>;
+	private status: "trap" | "halt" = "trap";
 
 	constructor(
 		rawProgram: Array<number>,
 		private initialState: InitialState = {},
 	) {
-		const [jLength, z, cLength, program, k] = this.decodeProgram(
+		const [jLength, z, cLength, c, k] = this.decodeProgram(
 			new Uint8Array(rawProgram),
 		);
-		this.cLength = cLength;
-		this.jLength = jLength;
-		this.z = z;
-		this.program = program;
-		this.k = k;
+		this.program = { cLength, jLength, z, c, k };
+		this.pc = initialState.pc ?? 0;
+		this.regs =
+			initialState.regs ??
+			(new Array<number>(13).fill(0) as FixedArray<number, 13>);
+		this.gas = initialState.gas ?? 0;
+		this.pageMap = initialState.pageMap ?? [];
+		this.memory = initialState.memory ?? [];
 	}
 
 	private decodeProgram(program: Uint8Array) {
@@ -56,7 +69,22 @@ export class Pvm {
 	}
 
 	printProgram() {
-		const p = assemblify(this.program, this.k);
+		const p = assemblify(this.program.c, this.program.k);
 		console.table(p);
+	}
+
+	runProgram() {
+		this.status = "trap";
+	}
+
+	getState() {
+		return {
+			pc: this.pc,
+			regs: this.regs,
+			gas: this.gas,
+			pageMap: this.pageMap,
+			memory: this.memory,
+			status: this.status,
+		};
 	}
 }
