@@ -35,10 +35,7 @@ export class Pvm {
 	private memory: Array<MemoryChunkItem>;
 	private status: "trap" | "halt" = "trap";
 
-	constructor(
-		rawProgram: Array<number>,
-		private initialState: InitialState = {},
-	) {
+	constructor(rawProgram: Array<number>, initialState: InitialState = {}) {
 		const [jLength, z, cLength, c, k] = this.decodeProgram(
 			new Uint8Array(rawProgram),
 		);
