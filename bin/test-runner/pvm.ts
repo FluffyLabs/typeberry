@@ -55,16 +55,20 @@ export class PvmTest {
 }
 
 export function runPvmTest(testContent: PvmTest) {
-	const pvm = new Pvm(testContent.program);
-	pvm.printProgram();
+	const pvm = new Pvm(testContent.program, {
+		gas: testContent["initial-gas"],
+		memory: testContent["initial-memory"],
+		pageMap: testContent["initial-page-map"],
+		pc: testContent["initial-pc"],
+		regs: testContent["initial-regs"],
+	});
 
 	pvm.runProgram();
-
 	const state = pvm.getState();
 
 	assert.strictEqual(state.gas, testContent["expected-gas"]);
 	assert.strictEqual(state.pc, testContent["expected-pc"]);
-	assert.strictEqual(state.memory, testContent["expected-memory"]);
-	assert.strictEqual(state.regs, testContent["expected-regs"]);
+	assert.deepStrictEqual(state.memory, testContent["expected-memory"]);
+	assert.deepStrictEqual(state.regs, testContent["expected-regs"]);
 	assert.strictEqual(state.status, testContent["expected-status"]);
 }
