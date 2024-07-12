@@ -63,16 +63,16 @@ async function dispatchTest(
 		),
 	];
 
-	for (const error of errors) {
-		console.error(error);
-	}
-
 	function nonNull<T>(x: T | null): x is T {
 		return x !== null;
 	}
 	const nonEmptyRunners = runners.filter(nonNull);
 
 	if (nonEmptyRunners.length === 0) {
+		for (const error of errors) {
+			console.error(error);
+		}
+
 		fail(`Unrecognized test case in ${file}`);
 	} else {
 		for (const runner of nonEmptyRunners) {
