@@ -22,11 +22,11 @@ async function main() {
 	}
 }
 
-function parseTest<T>(
+function tryToPrepareTestRunner<T>(
 	testContent: unknown,
 	fromJson: FromJson<T>,
 	run: (t: T) => void,
-	addError: (e: unknown) => void,
+	onError: (e: unknown) => void,
 ) {
 	try {
 		const parsedTest = parseFromJson(testContent, fromJson);
@@ -35,7 +35,7 @@ function parseTest<T>(
 			run(parsedTest);
 		};
 	} catch (e) {
-		addError(e);
+		onError(e);
 		return null;
 	}
 }
@@ -46,11 +46,21 @@ async function dispatchTest(
 	file: string,
 ) {
 	const errors: unknown[] = [];
-	const addError = (e: unknown) => errors.push(e);
+	const handleError = (e: unknown) => errors.push(e);
 
 	const runners = [
-		parseTest(testContent, SafroleTest.fromJson, runSafroleTest, addError),
-		parseTest(testContent, PvmTest.fromJson, runPvmTest, addError),
+		tryToPrepareTestRunner(
+			testContent,
+			SafroleTest.fromJson,
+			runSafroleTest,
+			handleError,
+		),
+		tryToPrepareTestRunner(
+			testContent,
+			PvmTest.fromJson,
+			runPvmTest,
+			handleError,
+		),
 	];
 
 	for (const error of errors) {

@@ -33,7 +33,7 @@ function snakeToCamel<T extends string>(s: T): SnakeToCamel<T> {
 	) as SnakeToCamel<T>;
 }
 
-function convertJsonObjectToClass<T extends object>(
+function convertKeysToCamelCaseFuncs<T extends object>(
 	json: T,
 ): PlainObjectToClass<ConvertKeysToCamelCase<T>> {
 	const clazz = {} as { [key: string]: unknown };
@@ -158,7 +158,7 @@ export class SafroleTest {
 }
 
 export function runSafroleTest(testContent: SafroleTest) {
-	const preState = convertJsonObjectToClass(testContent.pre_state);
+	const preState = convertKeysToCamelCaseFuncs(testContent.pre_state);
 	const safrole = new Safrole(preState);
 
 	const output: Output = {};
