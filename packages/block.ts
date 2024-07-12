@@ -12,7 +12,7 @@ export class Block {
 	// GP: H
 	public header: Header = new Header();
 	// GP: E_T
-	public tickAvailabilityets: Ticket[] = [];
+	public ticketsAvailability: Ticket[] = [];
 	// GP: E_J
 	public judgements: Judgement[] = [];
 	// GP: E_P

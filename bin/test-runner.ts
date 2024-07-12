@@ -3,7 +3,7 @@ import * as fs from "node:fs/promises";
 import { test } from "node:test";
 
 import type { TestContext } from "node:test";
-import { parseFromJson } from "./test-runner/json-parser";
+import { type FromJson, parseFromJson } from "./test-runner/json-parser";
 import { PvmTest, runPvmTest } from "./test-runner/pvm";
 import { SafroleTest, runSafroleTest } from "./test-runner/safrole";
 
@@ -22,17 +22,22 @@ async function main() {
 	}
 }
 
-function handleSafroleTest(t: TestContext, testContent: unknown) {
-	const safroleTest = parseFromJson<SafroleTest>(
-		testContent,
-		SafroleTest.fromJson,
-	);
-	return () => runSafroleTest(t, safroleTest);
-}
+function tryToPrepareTestRunner<T>(
+	testContent: unknown,
+	fromJson: FromJson<T>,
+	run: (t: T) => void,
+	onError: (e: unknown) => void,
+) {
+	try {
+		const parsedTest = parseFromJson(testContent, fromJson);
 
-function handlePvmTest(t: TestContext, testContent: unknown) {
-	const pvmTest = parseFromJson<PvmTest>(testContent, PvmTest.fromJson);
-	return () => runPvmTest(t, pvmTest);
+		return () => {
+			run(parsedTest);
+		};
+	} catch (e) {
+		onError(e);
+		return null;
+	}
 }
 
 async function dispatchTest(
@@ -40,27 +45,38 @@ async function dispatchTest(
 	testContent: unknown,
 	file: string,
 ) {
-	const handlers = [handleSafroleTest, handlePvmTest];
-
 	const errors: unknown[] = [];
-	const runners: (() => void)[] = [];
-	for (const handler of handlers) {
-		try {
-			const runner = handler(t, testContent);
-			runners.push(runner);
-		} catch (e) {
-			errors.push(e);
-		}
+	const handleError = (e: unknown) => errors.push(e);
+
+	const runners = [
+		tryToPrepareTestRunner(
+			testContent,
+			SafroleTest.fromJson,
+			runSafroleTest,
+			handleError,
+		),
+		tryToPrepareTestRunner(
+			testContent,
+			PvmTest.fromJson,
+			runPvmTest,
+			handleError,
+		),
+	];
+
+	for (const error of errors) {
+		console.error(error);
 	}
 
-	if (runners.length === 0) {
-		for (const error of errors) {
-			console.error(error);
-		}
+	function nonNull<T>(x: T | null): x is T {
+		return x !== null;
+	}
+	const nonEmptyRunners = runners.filter(nonNull);
+
+	if (nonEmptyRunners.length === 0) {
 		fail(`Unrecognized test case in ${file}`);
-	}
-
-	for (const runner of runners) {
-		runner();
+	} else {
+		for (const runner of nonEmptyRunners) {
+			runner();
+		}
 	}
 }

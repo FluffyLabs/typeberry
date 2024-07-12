@@ -1,50 +1,71 @@
-import type { TestContext } from "node:test";
-import type { Opaque } from "../../packages/opaque";
-import { Blob, Bytes } from "./bytes";
+import assert from "node:assert";
+import { Bytes, BytesBlob } from "../../packages/bytes";
+import type {
+	BandersnatchKey,
+	BlsKey,
+	Ed25519Key,
+} from "../../packages/crypto";
+import type { EntropyHash } from "../../packages/hash";
+import {
+	Safrole,
+	type StateDiff as SafroleStateDiff,
+	type TicketBody,
+	type TicketEnvelope,
+	type ValidatorData,
+} from "../../packages/safrole";
 import { type FromJson, optional, parseFromJson } from "./json-parser";
 
-export type Hash = Bytes<32>;
+type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}`
+	? `${T}${Capitalize<SnakeToCamel<U>>}`
+	: S;
 
-export type EntropyHash = Opaque<Hash, "entropy">;
-const EntropyHashFromJson: FromJson<EntropyHash> = [
+type ConvertKeysToCamelCase<T> = {
+	[K in keyof T as SnakeToCamel<K & string>]: T[K];
+};
+
+type PlainObjectToClass<T> = {
+	[K in keyof T]: () => T[K];
+};
+
+function snakeToCamel<T extends string>(s: T): SnakeToCamel<T> {
+	return s.replace(/(_\w)/g, (matches) =>
+		matches[1].toUpperCase(),
+	) as SnakeToCamel<T>;
+}
+
+function convertKeysToCamelCaseFuncs<T extends object>(
+	json: T,
+): PlainObjectToClass<ConvertKeysToCamelCase<T>> {
+	const clazz = {} as { [key: string]: unknown };
+	for (const [k, v] of Object.entries(json)) {
+		clazz[snakeToCamel(k)] = () => v;
+	}
+	return clazz as PlainObjectToClass<ConvertKeysToCamelCase<T>>;
+}
+
+const entropyHashFromJson: FromJson<EntropyHash> = [
 	"string",
 	(v: string) => Bytes.parseBytes(v, 32) as EntropyHash,
 ];
 
-export type Ed25519Key = Opaque<Bytes<32>, "ed25519">;
-export type BandersnatchKey = Opaque<Bytes<32>, "BandersnatchKey">;
-export type BlsKey = Opaque<Bytes<144>, "bls">;
+const validatorDataFromJson: FromJson<ValidatorData> = {
+	ed25519: ["string", (v: string) => Bytes.parseBytes(v, 32) as Ed25519Key],
+	bandersnatch: [
+		"string",
+		(v: string) => Bytes.parseBytes(v, 32) as BandersnatchKey,
+	],
+	bls: ["string", (v: string) => Bytes.parseBytes(v, 144) as BlsKey],
+	metadata: ["string", BytesBlob.parseBlob],
+};
 
-export class ValidatorData {
-	static fromJson: FromJson<ValidatorData> = {
-		ed25519: ["string", (v: string) => Bytes.parseBytes(v, 32) as Ed25519Key],
-		bandersnatch: [
-			"string",
-			(v: string) => Bytes.parseBytes(v, 32) as BandersnatchKey,
-		],
-		bls: ["string", (v: string) => Bytes.parseBytes(v, 144) as BlsKey],
-		metadata: ["string", Blob.parseBlob],
-	};
-
-	ed25519!: Ed25519Key;
-	bandersnatch!: BandersnatchKey;
-	bls!: BlsKey;
-	metadata!: Blob;
-}
-
-export class TicketBody {
-	static fromJson: FromJson<TicketBody> = {
-		id: ["string", (v: string) => Bytes.parseBytes(v, 32)],
-		attempt: "number",
-	};
-
-	id!: Hash;
-	attempt!: number;
-}
+const ticketBodyFromJson: FromJson<TicketBody> = {
+	id: ["string", (v: string) => Bytes.parseBytes(v, 32)],
+	attempt: "number",
+};
 
 export class TicketsOrKeys {
 	static fromJson = optional<TicketsOrKeys>({
-		tickets: ["array", TicketBody.fromJson],
+		tickets: ["array", ticketBodyFromJson],
 		keys: [
 			"array",
 			["string", (v: string) => Bytes.parseBytes(v, 32) as BandersnatchKey],
@@ -54,25 +75,20 @@ export class TicketsOrKeys {
 	keys?: BandersnatchKey[];
 }
 
-export class TicketEnvelope {
-	static fromJson: FromJson<TicketEnvelope> = {
-		attempt: "number",
-		signature: ["string", (v: string) => Bytes.parseBytes(v, 784)],
-	};
+const ticketEnvelopeFromJson: FromJson<TicketEnvelope> = {
+	attempt: "number",
+	signature: ["string", (v: string) => Bytes.parseBytes(v, 784)],
+};
 
-	attempt!: number;
-	signature!: Bytes<784>;
-}
-
-export class State {
-	static fromJson: FromJson<State> = {
+class JsonState {
+	static fromJson: FromJson<JsonState> = {
 		timeslot: "number",
-		entropy: ["array", EntropyHashFromJson],
-		prev_validators: ["array", ValidatorData.fromJson],
-		curr_validators: ["array", ValidatorData.fromJson],
-		next_validators: ["array", ValidatorData.fromJson],
-		designed_validators: ["array", ValidatorData.fromJson],
-		tickets_accumulator: ["array", TicketBody.fromJson],
+		entropy: ["array", entropyHashFromJson],
+		prev_validators: ["array", validatorDataFromJson],
+		curr_validators: ["array", validatorDataFromJson],
+		next_validators: ["array", validatorDataFromJson],
+		designed_validators: ["array", validatorDataFromJson],
+		tickets_accumulator: ["array", ticketBodyFromJson],
 		tickets_or_keys: TicketsOrKeys.fromJson,
 		tickets_verifier_key: ["string", (v: string) => Bytes.parseBytes(v, 384)],
 	};
@@ -89,7 +105,7 @@ export class State {
 
 export class EpochMark {
 	static fromJson: FromJson<EpochMark> = {
-		entropy: EntropyHashFromJson,
+		entropy: entropyHashFromJson,
 		validators: [
 			"array",
 			["string", (v: string) => Bytes.parseBytes(v, 32) as BandersnatchKey],
@@ -103,10 +119,10 @@ export class EpochMark {
 export class OkOutput {
 	static fromJson = optional<OkOutput>({
 		epoch_mark: EpochMark.fromJson,
-		tickets_mark: ["array", TicketBody.fromJson],
+		tickets_mark: ["array", ticketBodyFromJson],
 	});
-	epoch_mark?: EpochMark;
-	tickets_mark?: TicketBody[];
+	epoch_mark?: EpochMark | null;
+	tickets_mark?: TicketBody[] | null;
 }
 
 export class Output {
@@ -123,12 +139,12 @@ export class SafroleTest {
 	static fromJson: FromJson<SafroleTest> = {
 		input: {
 			slot: "number",
-			entropy: EntropyHashFromJson,
-			extrinsics: ["array", TicketEnvelope.fromJson],
+			entropy: entropyHashFromJson,
+			extrinsics: ["array", ticketEnvelopeFromJson],
 		},
-		pre_state: State.fromJson,
+		pre_state: JsonState.fromJson,
 		output: Output.fromJson,
-		post_state: State.fromJson,
+		post_state: JsonState.fromJson,
 	};
 
 	input!: {
@@ -136,12 +152,41 @@ export class SafroleTest {
 		entropy: EntropyHash;
 		extrinsics: TicketEnvelope[];
 	};
-	pre_state!: State;
+	pre_state!: JsonState;
 	output!: Output;
-	post_state!: State;
+	post_state!: JsonState;
 }
 
-export function runSafroleTest(t: TestContext, testContent: SafroleTest) {
-	console.log(testContent);
-	t.todo("implement me");
+export function runSafroleTest(testContent: SafroleTest) {
+	const preState = convertKeysToCamelCaseFuncs(testContent.pre_state);
+	const safrole = new Safrole(preState);
+
+	const output: Output = {};
+	let error = "";
+	let stateDiff: SafroleStateDiff = {};
+	try {
+		stateDiff = safrole.transition(testContent.input);
+		output.ok = {
+			epoch_mark: null,
+			tickets_mark: null,
+		};
+	} catch (e) {
+		error = `${e}`;
+		console.error(error);
+		output.err = 1;
+	}
+
+	const postState = structuredClone(testContent.pre_state);
+	// TODO [ToDr] Didn't find a better way to do this :sad:
+	const unsafePostState = postState as unknown as { [key: string]: unknown };
+	const unsafeStateDiff = stateDiff as unknown as { [key: string]: unknown };
+	for (const k of Object.keys(postState)) {
+		const diffKey = snakeToCamel(k);
+		if (diffKey in stateDiff) {
+			unsafePostState[k] = unsafeStateDiff[diffKey];
+		}
+	}
+
+	assert.deepStrictEqual(output, testContent.output);
+	assert.deepStrictEqual(postState, testContent.post_state);
 }

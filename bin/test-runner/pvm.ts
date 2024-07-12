@@ -54,7 +54,7 @@ export class PvmTest {
 	"expected-gas": number;
 }
 
-export function runPvmTest(t: TestContext, testContent: PvmTest) {
+export function runPvmTest(testContent: PvmTest) {
 	const pvm = new Pvm(testContent.program);
 	pvm.printProgram();
 
