@@ -15,8 +15,7 @@ export class MathOps extends BaseOps {
 		resultIndex: number,
 	) {
 		this.regs.unsignedRegisters[resultIndex] =
-			(this.regs.unsignedRegisters[firstIndex] + BigInt(immediateValue)) %
-			MAX_VALUE;
+			(this.regs.unsignedRegisters[firstIndex] + immediateValue) % MAX_VALUE;
 	}
 
 	mul(firstIndex: number, secondIndex: number, resultIndex: number) {
@@ -32,8 +31,7 @@ export class MathOps extends BaseOps {
 		resultIndex: number,
 	) {
 		this.regs.signedRegisters[resultIndex] =
-			(this.regs.signedRegisters[firstIndex] * BigInt(immediateValue)) %
-			MAX_VALUE;
+			(this.regs.signedRegisters[firstIndex] * immediateValue) % MAX_VALUE;
 	}
 
 	sub(firstIndex: number, secondIndex: number, resultIndex: number) {

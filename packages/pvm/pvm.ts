@@ -84,7 +84,7 @@ export class Pvm {
 	private decodeProgram(program: Uint8Array) {
 		const first3Numbers = $.tuple($.u8, $.u8, $.u8); // TODO [MaSi] according to GP - [0] and [2] should be compact int - but there is a single byte in tests
 		const [jLength, z, cLength] = first3Numbers.decode(program);
-		const jSize = z <= 8 ? 8 : z <= 16 ? 16 : (32 as const);
+		const jSize = z <= 8 ? 8 : z <= 16 ? 16 : 32;
 		const jumpTable =
 			jLength > 0 ? [$.sizedArray($.int(false, jSize), jLength)] : [];
 		return $.tuple(
@@ -110,18 +110,22 @@ export class Pvm {
 	}
 
 	private getBytesToNextInstruction(counter: number) {
-		const noOfBytes = 0;
+		let noOfBytes = 0;
 
 		for (let i = counter + 1; i < 24; i++) {
-			if (this.isInstruction(counter)) {
+			if (this.isInstruction(i)) {
 				break;
 			}
+
+			noOfBytes++;
 		}
+
 		return noOfBytes;
 	}
 
 	private getArgs(instruction: number) {
 		const argsType = instructionArgumentTypeMap[instruction];
+
 		switch (argsType) {
 			case ArgumentType.NO_ARGUMENTS:
 				return [];
@@ -141,10 +145,12 @@ export class Pvm {
 						this.program.c.slice(this.pc + 2, this.pc + 2 + immediateBytes + 1), // TODO [MaSi] remove allocation
 					),
 				);
+
 				return [firstRegister, secondRegister, immediate];
 			}
 
 			default:
+				console.error("instruction was not matched!");
 				return [];
 		}
 	}
@@ -188,17 +194,38 @@ export class Pvm {
 				case Instruction.SHLO_L_IMM:
 					this.shiftOps.shiftLogicalLeftImmediate(args[0], args[2], args[1]);
 					break;
+				case Instruction.SHLO_L_IMM_ALT:
+					this.shiftOps.shiftLogicalLeftImmediateAlternative(
+						args[0],
+						args[2],
+						args[1],
+					);
+					break;
 				case Instruction.SHLO_R:
 					this.shiftOps.shiftLogicalRight(args[1], args[0], args[2]);
 					break;
 				case Instruction.SHLO_R_IMM:
 					this.shiftOps.shiftLogicalRightImmediate(args[0], args[2], args[1]);
 					break;
+				case Instruction.SHLO_R_IMM_ALT:
+					this.shiftOps.shiftLogicalRightImmediateAlternative(
+						args[0],
+						args[2],
+						args[1],
+					);
+					break;
 				case Instruction.SHAR_R:
 					this.shiftOps.shiftAritmeticRight(args[1], args[0], args[2]);
 					break;
 				case Instruction.SHAR_R_IMM:
 					this.shiftOps.shiftAritmeticRightImmediate(args[0], args[2], args[1]);
+					break;
+				case Instruction.SHAR_R_IMM_ALT:
+					this.shiftOps.shiftAritmeticRightImmediateAlternative(
+						args[0],
+						args[2],
+						args[1],
+					);
 					break;
 				case Instruction.OR:
 					this.bitOps.or(args[1], args[0], args[2]);
@@ -230,7 +257,7 @@ export class Pvm {
 		const regs = Array<number>(13);
 
 		for (let i = 0; i < 13; i++) {
-			regs[i] = this.registers.get(i);
+			regs[i] = Number(this.registers.unsignedRegisters[i]);
 		}
 
 		return {

@@ -1,16 +1,14 @@
 const NO_OF_REGISTERS = 13;
-const REGISTER_SIZE = 8;
+const REGISTER_SIZE = 4;
 
 export class Registers {
 	private buffer = new ArrayBuffer(NO_OF_REGISTERS * REGISTER_SIZE);
-	signedRegisters = new BigInt64Array(this.buffer);
-	unsignedRegisters = new BigUint64Array(this.buffer);
+	private view = new DataView(this.buffer);
+	signedRegisters = new Int32Array(this.buffer);
+	unsignedRegisters = new Uint32Array(this.buffer);
 
 	set(index: number, value: number) {
-		this.unsignedRegisters[index] = BigInt(value);
-	}
-
-	get(index: number) {
-		return Number(this.unsignedRegisters[index]);
+		const indexOffset = index * REGISTER_SIZE;
+		this.view.setUint32(indexOffset, value, true);
 	}
 }

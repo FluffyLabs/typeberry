@@ -3,57 +3,7 @@ import { Instruction } from "./instruction";
 type Byte = number;
 type Name = string;
 type Gas = number;
-type NoOfImmediate = 0 | 1 | 2;
-type NoOfOffset = 0 | 1;
-type NoOfRegister = 0 | 1 | 2 | 3;
 type InstructionTuple = [Byte, Name, Gas];
-type InstructionWithMetadata = [
-	Byte,
-	Name,
-	Gas,
-	NoOfOffset,
-	NoOfImmediate,
-	NoOfRegister,
-];
-
-type ArgsMetadata = {
-	noOfOffset: NoOfOffset;
-	noOfImmediate: NoOfImmediate;
-	noOfRegister: NoOfRegister;
-};
-
-const defaultArgsMetadata: ArgsMetadata = {
-	noOfImmediate: 0,
-	noOfRegister: 0,
-	noOfOffset: 0,
-};
-
-function withArgsMetadata() {
-	const meta = { ...defaultArgsMetadata };
-	const builder = {
-		offset(value: NoOfOffset) {
-			meta.noOfOffset = value;
-			return builder;
-		},
-		register(value: NoOfRegister) {
-			meta.noOfRegister = value;
-			return builder;
-		},
-		immediate(value: NoOfImmediate) {
-			meta.noOfImmediate = value;
-			return builder;
-		},
-		get() {
-			return (instruction: InstructionTuple): InstructionWithMetadata => [
-				...instruction,
-				meta.noOfOffset,
-				meta.noOfImmediate,
-				meta.noOfRegister,
-			];
-		},
-	};
-	return builder;
-}
 
 const instructionsWithoutArgs: InstructionTuple[] = [
 	[Instruction.TRAP, "trap", 1],
@@ -179,57 +129,30 @@ const instructionsWithArgumentsOfThreeRegisters: InstructionTuple[] = [
 	[Instruction.CMOV_NZ, "cmov_nz", 0],
 ];
 
-const instructions: InstructionWithMetadata[] = [
-	...instructionsWithoutArgs.map(withArgsMetadata().get()),
-	...instructionsWithArgsOfOneImmediate.map(
-		withArgsMetadata().immediate(1).get(),
-	),
-	...instructionsWithArgsOfTwoImmediate.map(
-		withArgsMetadata().immediate(2).get(),
-	),
-	...instructionsWithArgsOfOneOffset.map(withArgsMetadata().offset(1).get()),
-	...instructionsWithArgsOfOneRegisterAndOneImmediate.map(
-		withArgsMetadata().register(1).immediate(1).get(),
-	),
-	...instructionsWithArgsOfOneRegisterAndTwoImmediate.map(
-		withArgsMetadata().register(1).immediate(2).get(),
-	),
-	...instructionsWithArgsOfOneRegisterOneImmediateAndOneOffset.map(
-		withArgsMetadata().register(1).immediate(1).offset(1).get(),
-	),
-	...instructionsWithArgsOfTwoRegisters.map(
-		withArgsMetadata().register(2).get(),
-	),
-	...instructionsWithArgsOfTwoRegistersAndOneImmediate.map(
-		withArgsMetadata().register(2).immediate(1).get(),
-	),
-	...instructionsWithArgsOfTwoRegistersAndOneOffset.map(
-		withArgsMetadata().register(2).offset(1).get(),
-	),
-	...instructionWithArgumentsOfTwoRegistersAndTwoImmediates.map(
-		withArgsMetadata().register(2).immediate(2).get(),
-	),
-	...instructionsWithArgumentsOfThreeRegisters.map(
-		withArgsMetadata().register(3).get(),
-	),
+const instructions: InstructionTuple[] = [
+	...instructionsWithoutArgs,
+	...instructionsWithArgsOfOneImmediate,
+	...instructionsWithArgsOfTwoImmediate,
+	...instructionsWithArgsOfOneOffset,
+	...instructionsWithArgsOfOneRegisterAndOneImmediate,
+	...instructionsWithArgsOfOneRegisterAndTwoImmediate,
+	...instructionsWithArgsOfOneRegisterOneImmediateAndOneOffset,
+	...instructionsWithArgsOfTwoRegisters,
+	...instructionsWithArgsOfTwoRegistersAndOneImmediate,
+	...instructionsWithArgsOfTwoRegistersAndOneOffset,
+	...instructionWithArgumentsOfTwoRegistersAndTwoImmediates,
+	...instructionsWithArgumentsOfThreeRegisters,
 ];
 
 type OpCode = {
 	name: Name;
 	gas: Gas;
-} & ArgsMetadata;
+};
 
-const createOpCodeEntry = ([
-	byte,
-	name,
-	gas,
-	noOfOffset,
-	noOfImmediate,
-	noOfRegister,
-]: InstructionWithMetadata): [Byte, OpCode] => [
-	byte,
-	{ name, gas, noOfOffset, noOfRegister, noOfImmediate },
-];
+const createOpCodeEntry = ([byte, name, gas]: InstructionTuple): [
+	Byte,
+	OpCode,
+] => [byte, { name, gas }];
 
 type ByteToOpCodeMap = { [key: Byte]: OpCode };
 

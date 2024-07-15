@@ -1,6 +1,6 @@
-export const MINUS_ONE = -1n;
-export const ZERO = 0n;
-export const ONE = 1n;
+export const MINUS_ONE = -1;
+export const ZERO = 0;
+export const ONE = 1;
 
-export const MAX_VALUE = BigInt(2 ** 32);
-export const MIN_VALUE = BigInt(-(2 ** 31));
+export const MAX_VALUE = 2 ** 32;
+export const MIN_VALUE = -(2 ** 31);

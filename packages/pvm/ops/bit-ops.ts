@@ -11,8 +11,7 @@ export class BitOps extends BaseOps {
 
 	orImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
 		this.regs.unsignedRegisters[resultIndex] =
-			(this.regs.unsignedRegisters[firstIndex] | BigInt(immediateValue)) %
-			MAX_VALUE;
+			(this.regs.unsignedRegisters[firstIndex] | immediateValue) % MAX_VALUE;
 	}
 
 	and(firstIndex: number, secondIndex: number, resultIndex: number) {
@@ -28,8 +27,7 @@ export class BitOps extends BaseOps {
 		resultIndex: number,
 	) {
 		this.regs.signedRegisters[resultIndex] =
-			(this.regs.signedRegisters[firstIndex] & BigInt(immediateValue)) %
-			MAX_VALUE;
+			(this.regs.signedRegisters[firstIndex] & immediateValue) % MAX_VALUE;
 	}
 
 	xor(firstIndex: number, secondIndex: number, resultIndex: number) {
@@ -45,7 +43,6 @@ export class BitOps extends BaseOps {
 		resultIndex: number,
 	) {
 		this.regs.unsignedRegisters[resultIndex] =
-			(this.regs.unsignedRegisters[firstIndex] ^ BigInt(immediateValue)) %
-			MAX_VALUE;
+			(this.regs.unsignedRegisters[firstIndex] ^ immediateValue) % MAX_VALUE;
 	}
 }

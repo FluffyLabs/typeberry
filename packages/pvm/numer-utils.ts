@@ -1,6 +1,7 @@
 export function decodeImmediate(bytes: Uint8Array): number {
 	const n = bytes.length;
 	let value = 0;
+
 	for (let i = 0; i < n; i++) {
 		value |= bytes[i] << (8 * i);
 	}
