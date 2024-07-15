@@ -1,5 +1,4 @@
 import { BaseOps } from "./base-ops";
-import { MAX_VALUE } from "./math-consts";
 
 export class ShiftOps extends BaseOps {
 	shiftLogicalLeft(
@@ -7,10 +6,11 @@ export class ShiftOps extends BaseOps {
 		secondIndex: number,
 		resultIndex: number,
 	) {
-		this.regs.signedRegisters[resultIndex] =
-			(this.regs.signedRegisters[firstIndex] <<
-				this.regs.signedRegisters[secondIndex]) %
-			MAX_VALUE;
+		this.shiftLogicalLeftImmediateAlternative(
+			firstIndex,
+			this.regs.asUnsigned[secondIndex],
+			resultIndex,
+		);
 	}
 
 	shiftLogicalRight(
@@ -18,10 +18,11 @@ export class ShiftOps extends BaseOps {
 		secondIndex: number,
 		resultIndex: number,
 	) {
-		this.regs.signedRegisters[resultIndex] =
-			(this.regs.signedRegisters[firstIndex] >>
-				this.regs.signedRegisters[secondIndex]) %
-			MAX_VALUE;
+		this.shiftLogicalRightImmediateAlternative(
+			firstIndex,
+			this.regs.asUnsigned[secondIndex],
+			resultIndex,
+		);
 	}
 
 	shiftAritmeticRight(
@@ -29,10 +30,11 @@ export class ShiftOps extends BaseOps {
 		secondIndex: number,
 		resultIndex: number,
 	) {
-		this.regs.unsignedRegisters[resultIndex] =
-			(this.regs.unsignedRegisters[firstIndex] >> // ToDo [Masi] it should be >>> instead of >> but it is not supported in case of Int64
-				this.regs.unsignedRegisters[secondIndex]) %
-			MAX_VALUE;
+		this.shiftAritmeticRightImmediateAlternative(
+			firstIndex,
+			this.regs.asUnsigned[secondIndex],
+			resultIndex,
+		);
 	}
 
 	shiftLogicalLeftImmediate(
@@ -40,8 +42,8 @@ export class ShiftOps extends BaseOps {
 		immediateValue: number,
 		resultIndex: number,
 	) {
-		this.regs.signedRegisters[resultIndex] =
-			(this.regs.signedRegisters[firstIndex] << immediateValue) % MAX_VALUE;
+		this.regs.asUnsigned[resultIndex] =
+			this.regs.asUnsigned[firstIndex] << (immediateValue % 32);
 	}
 
 	shiftLogicalRightImmediate(
@@ -49,8 +51,8 @@ export class ShiftOps extends BaseOps {
 		immediateValue: number,
 		resultIndex: number,
 	) {
-		this.regs.signedRegisters[resultIndex] =
-			(this.regs.signedRegisters[firstIndex] >> immediateValue) % MAX_VALUE;
+		this.regs.asUnsigned[resultIndex] =
+			this.regs.asUnsigned[firstIndex] >>> (immediateValue % 32);
 	}
 
 	shiftAritmeticRightImmediate(
@@ -58,9 +60,8 @@ export class ShiftOps extends BaseOps {
 		immediateValue: number,
 		resultIndex: number,
 	) {
-		this.regs.unsignedRegisters[resultIndex] =
-			(this.regs.unsignedRegisters[firstIndex] >> immediateValue) % // ToDo [Masi] it should be >>> instead of >> but it is not supported in case of Int64
-			MAX_VALUE;
+		this.regs.asUnsigned[resultIndex] =
+			this.regs.asUnsigned[firstIndex] >> (immediateValue % 32);
 	}
 
 	shiftLogicalLeftImmediateAlternative(
@@ -68,8 +69,8 @@ export class ShiftOps extends BaseOps {
 		immediateValue: number,
 		resultIndex: number,
 	) {
-		this.regs.signedRegisters[resultIndex] =
-			(immediateValue << this.regs.signedRegisters[firstIndex]) % MAX_VALUE;
+		this.regs.asSigned[resultIndex] =
+			immediateValue << (this.regs.asSigned[firstIndex] % 32);
 	}
 
 	shiftLogicalRightImmediateAlternative(
@@ -77,8 +78,8 @@ export class ShiftOps extends BaseOps {
 		immediateValue: number,
 		resultIndex: number,
 	) {
-		this.regs.signedRegisters[resultIndex] =
-			(immediateValue >> this.regs.signedRegisters[firstIndex]) % MAX_VALUE;
+		this.regs.asSigned[resultIndex] =
+			immediateValue >>> (this.regs.asSigned[firstIndex] % 32);
 	}
 
 	shiftAritmeticRightImmediateAlternative(
@@ -86,8 +87,7 @@ export class ShiftOps extends BaseOps {
 		immediateValue: number,
 		resultIndex: number,
 	) {
-		this.regs.unsignedRegisters[resultIndex] =
-			(immediateValue >> this.regs.unsignedRegisters[firstIndex]) % // ToDo [Masi] it should be >>> instead of >> but it is not supported in case of Int64
-			MAX_VALUE;
+		this.regs.asUnsigned[resultIndex] =
+			immediateValue >> (this.regs.asUnsigned[firstIndex] % 32);
 	}
 }

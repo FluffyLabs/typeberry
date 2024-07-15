@@ -1,12 +1,13 @@
 import { BaseOps } from "./base-ops";
-import { MAX_VALUE, MINUS_ONE, MIN_VALUE, ONE, ZERO } from "./math-consts";
+import { MAX_VALUE, MIN_VALUE } from "./math-consts";
 
 export class MathOps extends BaseOps {
 	add(firstIndex: number, secondIndex: number, resultIndex: number) {
-		this.regs.unsignedRegisters[resultIndex] =
-			(this.regs.unsignedRegisters[firstIndex] +
-				this.regs.unsignedRegisters[secondIndex]) %
-			MAX_VALUE;
+		this.addImmediate(
+			firstIndex,
+			this.regs.asUnsigned[secondIndex],
+			resultIndex,
+		);
 	}
 
 	addImmediate(
@@ -14,15 +15,20 @@ export class MathOps extends BaseOps {
 		immediateValue: number,
 		resultIndex: number,
 	) {
-		this.regs.unsignedRegisters[resultIndex] =
-			(this.regs.unsignedRegisters[firstIndex] + immediateValue) % MAX_VALUE;
+		if (this.regs.asUnsigned[firstIndex] > MAX_VALUE - immediateValue) {
+			this.regs.asUnsigned[resultIndex] =
+				MAX_VALUE -
+				Math.max(this.regs.asUnsigned[firstIndex], immediateValue) +
+				Math.min(this.regs.asUnsigned[firstIndex], immediateValue) -
+				1;
+		} else {
+			this.regs.asUnsigned[resultIndex] =
+				this.regs.asUnsigned[firstIndex] + immediateValue;
+		}
 	}
 
 	mul(firstIndex: number, secondIndex: number, resultIndex: number) {
-		this.regs.signedRegisters[resultIndex] =
-			(this.regs.signedRegisters[firstIndex] *
-				this.regs.signedRegisters[secondIndex]) %
-			MAX_VALUE;
+		this.mulImmediate(firstIndex, this.regs.asSigned[secondIndex], resultIndex);
 	}
 
 	mulImmediate(
@@ -30,42 +36,51 @@ export class MathOps extends BaseOps {
 		immediateValue: number,
 		resultIndex: number,
 	) {
-		this.regs.signedRegisters[resultIndex] =
-			(this.regs.signedRegisters[firstIndex] * immediateValue) % MAX_VALUE;
+		if (this.regs.asSigned[firstIndex] > MAX_VALUE / immediateValue) {
+			const result =
+				(BigInt(this.regs.asUnsigned[firstIndex]) * BigInt(immediateValue)) %
+				2n ** 32n;
+			this.regs.asSigned[resultIndex] = Number(result);
+		} else {
+			this.regs.asSigned[resultIndex] =
+				this.regs.asSigned[firstIndex] * immediateValue;
+		}
 	}
 
 	sub(firstIndex: number, secondIndex: number, resultIndex: number) {
-		this.regs.unsignedRegisters[resultIndex] =
-			(MAX_VALUE +
-				this.regs.unsignedRegisters[firstIndex] -
-				this.regs.unsignedRegisters[secondIndex]) %
-			MAX_VALUE;
+		if (this.regs.asUnsigned[firstIndex] > this.regs.asUnsigned[secondIndex]) {
+			this.regs.asUnsigned[resultIndex] =
+				MAX_VALUE -
+				this.regs.asUnsigned[firstIndex] +
+				this.regs.asUnsigned[secondIndex] +
+				1;
+		} else {
+			this.regs.asUnsigned[resultIndex] =
+				this.regs.asUnsigned[secondIndex] - this.regs.asUnsigned[firstIndex];
+		}
 	}
 
 	divSigned(firstIndex: number, secondIndex: number, resultIndex: number) {
-		if (this.regs.signedRegisters[secondIndex] === ZERO) {
-			this.regs.signedRegisters[resultIndex] = MAX_VALUE - ONE;
+		if (this.regs.asSigned[secondIndex] === 0) {
+			this.regs.asSigned[resultIndex] = MAX_VALUE;
 		} else if (
-			this.regs.signedRegisters[firstIndex] === MIN_VALUE &&
-			this.regs.signedRegisters[secondIndex] === MINUS_ONE
+			this.regs.asSigned[firstIndex] === MIN_VALUE &&
+			this.regs.asSigned[secondIndex] === -1
 		) {
-			this.regs.signedRegisters[resultIndex] =
-				this.regs.unsignedRegisters[firstIndex];
+			this.regs.asSigned[resultIndex] = this.regs.asUnsigned[firstIndex];
 		} else {
-			this.regs.signedRegisters[resultIndex] = ~~(
-				this.regs.signedRegisters[firstIndex] /
-				this.regs.signedRegisters[secondIndex]
+			this.regs.asSigned[resultIndex] = ~~(
+				this.regs.asSigned[firstIndex] / this.regs.asSigned[secondIndex]
 			);
 		}
 	}
 
 	divUnsigned(firstIndex: number, secondIndex: number, resultIndex: number) {
-		if (this.regs.unsignedRegisters[secondIndex] === ZERO) {
-			this.regs.unsignedRegisters[resultIndex] = MAX_VALUE - ONE;
+		if (this.regs.asUnsigned[secondIndex] === 0) {
+			this.regs.asUnsigned[resultIndex] = MAX_VALUE;
 		} else {
-			this.regs.unsignedRegisters[resultIndex] = ~~(
-				this.regs.unsignedRegisters[firstIndex] /
-				this.regs.unsignedRegisters[secondIndex]
+			this.regs.asUnsigned[resultIndex] = ~~(
+				this.regs.asUnsigned[firstIndex] / this.regs.asUnsigned[secondIndex]
 			);
 		}
 	}

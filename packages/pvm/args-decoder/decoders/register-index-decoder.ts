@@ -1,3 +1,7 @@
+import { NO_OF_REGISTERS } from "../../registers";
+
+const MAX_REGISTER_INDEX = NO_OF_REGISTERS - 1;
+
 export class RegisterIndexDecoder {
 	private byte = new Int8Array(1);
 
@@ -6,10 +10,10 @@ export class RegisterIndexDecoder {
 	}
 
 	getFirstIndex() {
-		return this.byte[0] & 0x0f;
+		return Math.min((this.byte[0] & 0xf0) >> 4, MAX_REGISTER_INDEX);
 	}
 
 	getSecondIndex() {
-		return (this.byte[0] & 0xf0) >> 4;
+		return Math.min(this.byte[0] & 0x0f, MAX_REGISTER_INDEX);
 	}
 }

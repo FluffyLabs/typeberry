@@ -1,24 +1,10 @@
-import { byteToOpCodeMap } from "./assemblify";
-import { Instruction } from "./instruction";
+import { Instruction } from "../instruction";
+import { ArgumentType } from "./argument-type";
 
-export enum ArgumentType {
-	NO_ARGUMENTS = 0,
-	ONE_IMMEDIATE = 1,
-	TWO_IMMEDIATE = 2,
-	ONE_OFFSET = 3,
-	ONE_REGISTER_ONE_IMMEDIATE = 4,
-	ONE_REGISTER_TWO_IMMEDIATE = 5,
-	ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET = 6,
-	TWO_REGISTERS = 7,
-	TWO_REGISTERS_ONE_IMMEDIATE = 8,
-	TWO_REGISTERS_ONE_OFFSET = 9,
-	TWO_REGISTERS_TWO_IMMEDIATE = 10,
-	THREE_REGISTERS = 11,
-}
+const HIGHEST_INSTRUCTION_NUMBER = 87;
 
-const maxInstructionValue = 87; // The highest instruction number
 export const instructionArgumentTypeMap = new Uint8Array(
-	maxInstructionValue + 1,
+	HIGHEST_INSTRUCTION_NUMBER + 1,
 );
 
 instructionArgumentTypeMap[Instruction.TRAP] = ArgumentType.NO_ARGUMENTS;
@@ -174,10 +160,3 @@ instructionArgumentTypeMap[Instruction.SHLO_R] = ArgumentType.THREE_REGISTERS;
 instructionArgumentTypeMap[Instruction.SHAR_R] = ArgumentType.THREE_REGISTERS;
 instructionArgumentTypeMap[Instruction.CMOV_IZ] = ArgumentType.THREE_REGISTERS;
 instructionArgumentTypeMap[Instruction.CMOV_NZ] = ArgumentType.THREE_REGISTERS;
-
-export const instructionGasMap = new Uint8Array(maxInstructionValue + 1);
-
-for (let i = 0; i < maxInstructionValue + 1; i++) {
-	const gas = byteToOpCodeMap[i]?.gas;
-	instructionGasMap[i] = gas ?? 0;
-}

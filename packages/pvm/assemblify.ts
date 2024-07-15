@@ -10,21 +10,21 @@ const instructionsWithoutArgs: InstructionTuple[] = [
 	[Instruction.FALLTHROUGH, "fallthrough", 0],
 ];
 
-const instructionsWithArgsOfOneImmediate: InstructionTuple[] = [
+const instructionsWithOneImmediate: InstructionTuple[] = [
 	[Instruction.ECALLI, "ecalli", 0],
 ];
 
-const instructionsWithArgsOfTwoImmediate: InstructionTuple[] = [
+const instructionsWithTwoImmediates: InstructionTuple[] = [
 	[Instruction.STORE_IMM_U8, "store_imm_u8", 0],
 	[Instruction.STORE_IMM_U16, "store_imm_u16", 0],
 	[Instruction.STORE_IMM_U32, "store_imm_u32", 0],
 ];
 
-const instructionsWithArgsOfOneOffset: InstructionTuple[] = [
+const instructionsWithOneOffset: InstructionTuple[] = [
 	[Instruction.JUMP, "jump", 0],
 ];
 
-const instructionsWithArgsOfOneRegisterAndOneImmediate: InstructionTuple[] = [
+const instructionsWithOneRegisterAndOneImmediate: InstructionTuple[] = [
 	[Instruction.JUMP_IND, "jump_ind", 0],
 	[Instruction.LOAD_IMM, "load_imm", 0],
 	[Instruction.LOAD_U8, "load_u8", 0],
@@ -37,13 +37,13 @@ const instructionsWithArgsOfOneRegisterAndOneImmediate: InstructionTuple[] = [
 	[Instruction.STORE_U32, "store_u32", 0],
 ];
 
-const instructionsWithArgsOfOneRegisterAndTwoImmediate: InstructionTuple[] = [
+const instructionsWithOneRegisterAndTwoImmediate: InstructionTuple[] = [
 	[Instruction.STORE_IMM_IND_U8, "store_imm_ind_u8", 0],
 	[Instruction.STORE_IMM_IND_U16, "store_imm_ind_u16", 0],
 	[Instruction.STORE_IMM_IND_U32, "store_imm_ind_u32", 0],
 ];
 
-const instructionsWithArgsOfOneRegisterOneImmediateAndOneOffset: InstructionTuple[] =
+const instructionsWithOneRegisterOneImmediateAndOneOffset: InstructionTuple[] =
 	[
 		[Instruction.LOAD_IMM_JUMP, "load_imm_jump", 0],
 		[Instruction.BRANCH_EQ_IMM, "branch_eq_imm", 0],
@@ -58,12 +58,12 @@ const instructionsWithArgsOfOneRegisterOneImmediateAndOneOffset: InstructionTupl
 		[Instruction.BRANCH_GT_S_IMM, "branch_gt_s_imm", 0],
 	];
 
-const instructionsWithArgsOfTwoRegisters: InstructionTuple[] = [
+const instructionsWithTwoRegisters: InstructionTuple[] = [
 	[Instruction.MOVE_REG, "move_reg", 0],
 	[Instruction.SBRK, "sbrk", 0],
 ];
 
-const instructionsWithArgsOfTwoRegistersAndOneImmediate: InstructionTuple[] = [
+const instructionsWithTwoRegistersAndOneImmediate: InstructionTuple[] = [
 	[Instruction.STORE_IND_U8, "store_ind_u8", 0],
 	[Instruction.STORE_IND_U16, "store_ind_u16", 0],
 	[Instruction.STORE_IND_U32, "store_ind_u32", 0],
@@ -94,7 +94,7 @@ const instructionsWithArgsOfTwoRegistersAndOneImmediate: InstructionTuple[] = [
 	[Instruction.CMOV_NZ_IMM, "cmov_nz_imm", 0],
 ];
 
-const instructionsWithArgsOfTwoRegistersAndOneOffset: InstructionTuple[] = [
+const instructionsWithTwoRegistersAndOneOffset: InstructionTuple[] = [
 	[Instruction.BRANCH_EQ, "branch_eq", 0],
 	[Instruction.BRANCH_NE, "branch_ne", 0],
 	[Instruction.BRANCH_LT_U, "branch_lt_u", 0],
@@ -103,10 +103,11 @@ const instructionsWithArgsOfTwoRegistersAndOneOffset: InstructionTuple[] = [
 	[Instruction.BRANCH_GE_S, "branch_ge_s", 0],
 ];
 
-const instructionWithArgumentsOfTwoRegistersAndTwoImmediates: InstructionTuple[] =
-	[[Instruction.LOAD_IMM_JUMP_IND, "load_imm_jump_ind", 0]];
+const instructionWithTwoRegistersAndTwoImmediates: InstructionTuple[] = [
+	[Instruction.LOAD_IMM_JUMP_IND, "load_imm_jump_ind", 0],
+];
 
-const instructionsWithArgumentsOfThreeRegisters: InstructionTuple[] = [
+const instructionsWithThreeRegisters: InstructionTuple[] = [
 	[Instruction.ADD, "add", 2],
 	[Instruction.SUB, "sub", 2],
 	[Instruction.AND, "and", 2],
@@ -131,17 +132,17 @@ const instructionsWithArgumentsOfThreeRegisters: InstructionTuple[] = [
 
 const instructions: InstructionTuple[] = [
 	...instructionsWithoutArgs,
-	...instructionsWithArgsOfOneImmediate,
-	...instructionsWithArgsOfTwoImmediate,
-	...instructionsWithArgsOfOneOffset,
-	...instructionsWithArgsOfOneRegisterAndOneImmediate,
-	...instructionsWithArgsOfOneRegisterAndTwoImmediate,
-	...instructionsWithArgsOfOneRegisterOneImmediateAndOneOffset,
-	...instructionsWithArgsOfTwoRegisters,
-	...instructionsWithArgsOfTwoRegistersAndOneImmediate,
-	...instructionsWithArgsOfTwoRegistersAndOneOffset,
-	...instructionWithArgumentsOfTwoRegistersAndTwoImmediates,
-	...instructionsWithArgumentsOfThreeRegisters,
+	...instructionsWithOneImmediate,
+	...instructionsWithTwoImmediates,
+	...instructionsWithOneOffset,
+	...instructionsWithOneRegisterAndOneImmediate,
+	...instructionsWithOneRegisterAndTwoImmediate,
+	...instructionsWithOneRegisterOneImmediateAndOneOffset,
+	...instructionsWithTwoRegisters,
+	...instructionsWithTwoRegistersAndOneImmediate,
+	...instructionsWithTwoRegistersAndOneOffset,
+	...instructionWithTwoRegistersAndTwoImmediates,
+	...instructionsWithThreeRegisters,
 ];
 
 type OpCode = {

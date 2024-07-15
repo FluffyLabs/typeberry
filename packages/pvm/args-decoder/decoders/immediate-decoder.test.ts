@@ -102,4 +102,17 @@ test("ImmediateDecoder", async (t) => {
 		assert.equal(decoder.getSigned(), expectedSigned);
 		assert.equal(decoder.getUnsigned(), expectedUnsigned);
 	});
+
+	await t.test("Empty bytes array", () => {
+		const decoder = new ImmediateDecoder();
+
+		const encodedBytes = new Uint8Array([]);
+		const expectedSigned = 0;
+		const expectedUnsigned = 0;
+
+		decoder.setBytes(encodedBytes);
+
+		assert.equal(decoder.getSigned(), expectedSigned);
+		assert.equal(decoder.getUnsigned(), expectedUnsigned);
+	});
 });

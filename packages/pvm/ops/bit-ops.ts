@@ -3,21 +3,19 @@ import { MAX_VALUE } from "./math-consts";
 
 export class BitOps extends BaseOps {
 	or(firstIndex: number, secondIndex: number, resultIndex: number) {
-		this.regs.unsignedRegisters[resultIndex] =
-			(this.regs.unsignedRegisters[firstIndex] |
-				this.regs.unsignedRegisters[secondIndex]) %
+		this.regs.asUnsigned[resultIndex] =
+			(this.regs.asUnsigned[firstIndex] | this.regs.asUnsigned[secondIndex]) %
 			MAX_VALUE;
 	}
 
 	orImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-		this.regs.unsignedRegisters[resultIndex] =
-			(this.regs.unsignedRegisters[firstIndex] | immediateValue) % MAX_VALUE;
+		this.regs.asUnsigned[resultIndex] =
+			(this.regs.asUnsigned[firstIndex] | immediateValue) % MAX_VALUE;
 	}
 
 	and(firstIndex: number, secondIndex: number, resultIndex: number) {
-		this.regs.signedRegisters[resultIndex] =
-			(this.regs.signedRegisters[firstIndex] &
-				this.regs.signedRegisters[secondIndex]) %
+		this.regs.asSigned[resultIndex] =
+			(this.regs.asSigned[firstIndex] & this.regs.asSigned[secondIndex]) %
 			MAX_VALUE;
 	}
 
@@ -26,15 +24,13 @@ export class BitOps extends BaseOps {
 		immediateValue: number,
 		resultIndex: number,
 	) {
-		this.regs.signedRegisters[resultIndex] =
-			(this.regs.signedRegisters[firstIndex] & immediateValue) % MAX_VALUE;
+		this.regs.asSigned[resultIndex] =
+			(this.regs.asSigned[firstIndex] & immediateValue) % MAX_VALUE;
 	}
 
 	xor(firstIndex: number, secondIndex: number, resultIndex: number) {
-		this.regs.unsignedRegisters[resultIndex] =
-			(this.regs.unsignedRegisters[firstIndex] |
-				this.regs.unsignedRegisters[secondIndex]) %
-			MAX_VALUE;
+		this.regs.asUnsigned[resultIndex] =
+			this.regs.asUnsigned[firstIndex] ^ this.regs.asUnsigned[secondIndex];
 	}
 
 	xorImmediate(
@@ -42,7 +38,7 @@ export class BitOps extends BaseOps {
 		immediateValue: number,
 		resultIndex: number,
 	) {
-		this.regs.unsignedRegisters[resultIndex] =
-			(this.regs.unsignedRegisters[firstIndex] ^ immediateValue) % MAX_VALUE;
+		this.regs.asUnsigned[resultIndex] =
+			this.regs.asUnsigned[firstIndex] ^ immediateValue;
 	}
 }

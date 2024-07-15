@@ -8,7 +8,7 @@ export class ImmediateDecoder {
 
 	setBytes(bytes: Uint8Array) {
 		const n = bytes.length;
-		const msb = bytes[n - 1] & 0x80;
+		const msb = n > 0 ? bytes[n - 1] & 0x80 : 0;
 		const noOfBytes = Math.min(n, IMMEDIATE_SIZE);
 		const prefix = msb !== 0 ? 0xff : 0x00;
 
