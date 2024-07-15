@@ -1,22 +1,25 @@
 import { BaseOps } from "./base-ops";
-import { MAX_VALUE } from "./math-consts";
 
 export class BitOps extends BaseOps {
 	or(firstIndex: number, secondIndex: number, resultIndex: number) {
-		this.regs.asUnsigned[resultIndex] =
-			(this.regs.asUnsigned[firstIndex] | this.regs.asUnsigned[secondIndex]) %
-			MAX_VALUE;
+		this.orImmediate(
+			firstIndex,
+			this.regs.asUnsigned[secondIndex],
+			resultIndex,
+		);
 	}
 
 	orImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
 		this.regs.asUnsigned[resultIndex] =
-			(this.regs.asUnsigned[firstIndex] | immediateValue) % MAX_VALUE;
+			this.regs.asUnsigned[firstIndex] | immediateValue;
 	}
 
 	and(firstIndex: number, secondIndex: number, resultIndex: number) {
-		this.regs.asSigned[resultIndex] =
-			(this.regs.asSigned[firstIndex] & this.regs.asSigned[secondIndex]) %
-			MAX_VALUE;
+		this.andImmediate(
+			firstIndex,
+			this.regs.asUnsigned[secondIndex],
+			resultIndex,
+		);
 	}
 
 	andImmediate(
@@ -24,13 +27,16 @@ export class BitOps extends BaseOps {
 		immediateValue: number,
 		resultIndex: number,
 	) {
-		this.regs.asSigned[resultIndex] =
-			(this.regs.asSigned[firstIndex] & immediateValue) % MAX_VALUE;
+		this.regs.asUnsigned[resultIndex] =
+			this.regs.asUnsigned[firstIndex] & immediateValue;
 	}
 
 	xor(firstIndex: number, secondIndex: number, resultIndex: number) {
-		this.regs.asUnsigned[resultIndex] =
-			this.regs.asUnsigned[firstIndex] ^ this.regs.asUnsigned[secondIndex];
+		this.xorImmediate(
+			firstIndex,
+			this.regs.asUnsigned[secondIndex],
+			resultIndex,
+		);
 	}
 
 	xorImmediate(
