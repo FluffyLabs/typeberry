@@ -3,56 +3,62 @@ import { ImmediateDecoder } from "./decoders/immediate-decoder";
 import { RegisterIndexDecoder } from "./decoders/register-index-decoder";
 import { instructionArgumentTypeMap } from "./instruction-argument-type-map";
 
-type BaseResult = {
-	noOfInstructionsToSkip: number;
+type NullablePartial<T> = { [P in keyof T]?: T[P] | null };
 
+export type NoArgumentsResult = {
+	noOfInstructionsToSkip: number;
+};
+export type ThreeRegistersResult = {
+	noOfInstructionsToSkip: number;
 	firstRegisterIndex: number;
 	secondRegisterIndex: number;
 	thirdRegisterIndex: number;
+};
 
+export type TwoRegistersOneImmediateResult = {
+	noOfInstructionsToSkip: number;
+	firstRegisterIndex: number;
+	secondRegisterIndex: number;
+	immediateDecoder1: ImmediateDecoder;
+};
+
+export type TwoRegistersTwoImmediatesResult = {
+	noOfInstructionsToSkip: number;
+	firstRegisterIndex: number;
+	secondRegisterIndex: number;
 	immediateDecoder1: ImmediateDecoder;
 	immediateDecoder2: ImmediateDecoder;
+};
 
+export type OneOffsetResult = {
+	noOfInstructionsToSkip: number;
 	offset: unknown;
 };
-type ArgType<T extends ArgumentType> = { argumentType: T };
-
-export type NoArgumentsResult = ArgType<ArgumentType.NO_ARGUMENTS> &
-	Pick<BaseResult, "noOfInstructionsToSkip">;
-export type ThreeRegistersResult = ArgType<ArgumentType.THREE_REGISTERS> &
-	Pick<
-		BaseResult,
-		| "noOfInstructionsToSkip"
-		| "firstRegisterIndex"
-		| "secondRegisterIndex"
-		| "thirdRegisterIndex"
-	>;
-export type TwoRegistersOneImmediateResult =
-	ArgType<ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE> &
-		Pick<
-			BaseResult,
-			| "noOfInstructionsToSkip"
-			| "firstRegisterIndex"
-			| "secondRegisterIndex"
-			| "immediateDecoder1"
-		>;
 
 type Result =
 	| NoArgumentsResult
 	| ThreeRegistersResult
-	| TwoRegistersOneImmediateResult;
+	| TwoRegistersOneImmediateResult
+	| TwoRegistersTwoImmediatesResult
+	| OneOffsetResult;
 
-const createResult = (): Partial<BaseResult> => ({
+type AllResults = NoArgumentsResult &
+	ThreeRegistersResult &
+	TwoRegistersOneImmediateResult &
+	TwoRegistersTwoImmediatesResult &
+	OneOffsetResult;
+
+const createResult = (): NullablePartial<AllResults> => ({
 	noOfInstructionsToSkip: 1,
 
-	firstRegisterIndex: undefined,
-	secondRegisterIndex: undefined,
-	thirdRegisterIndex: undefined,
+	firstRegisterIndex: null,
+	secondRegisterIndex: null,
+	thirdRegisterIndex: null,
 
-	immediateDecoder1: undefined,
-	immediateDecoder2: undefined,
+	immediateDecoder1: null,
+	immediateDecoder2: null,
 
-	offset: undefined,
+	offset: null,
 });
 
 const MAX_ARGS_LENGTH = 24;
@@ -92,14 +98,14 @@ export class ArgsDecoder {
 	private resetResult() {
 		this.result.noOfInstructionsToSkip = 1;
 
-		this.result.firstRegisterIndex = undefined;
-		this.result.secondRegisterIndex = undefined;
-		this.result.thirdRegisterIndex = undefined;
+		this.result.firstRegisterIndex = null;
+		this.result.secondRegisterIndex = null;
+		this.result.thirdRegisterIndex = null;
 
-		this.result.immediateDecoder1 = undefined;
-		this.result.immediateDecoder2 = undefined;
+		this.result.immediateDecoder1 = null;
+		this.result.immediateDecoder2 = null;
 
-		this.result.offset = undefined;
+		this.result.offset = null;
 	}
 
 	getArgs(pc: number): Result {
@@ -112,27 +118,25 @@ export class ArgsDecoder {
 			case ArgumentType.NO_ARGUMENTS:
 				return this.result as NoArgumentsResult;
 			case ArgumentType.THREE_REGISTERS: {
-				this.result.noOfInstructionsToSkip = 3;
+				const result = this.result as ThreeRegistersResult;
+				result.noOfInstructionsToSkip = 3;
 				const firstByte = this.code[pc + 1];
 				const secondByte = this.code[pc + 2];
 				this.registerIndexDecoder.setByte(firstByte);
-				this.result.firstRegisterIndex =
-					this.registerIndexDecoder.getFirstIndex();
-				this.result.secondRegisterIndex =
-					this.registerIndexDecoder.getSecondIndex();
+				result.firstRegisterIndex = this.registerIndexDecoder.getFirstIndex();
+				result.secondRegisterIndex = this.registerIndexDecoder.getSecondIndex();
 				this.registerIndexDecoder.setByte(secondByte);
-				this.result.thirdRegisterIndex =
-					this.registerIndexDecoder.getSecondIndex();
+				result.thirdRegisterIndex = this.registerIndexDecoder.getSecondIndex();
 				return this.result as ThreeRegistersResult;
 			}
 
 			case ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE: {
+				const result = this.result as TwoRegistersOneImmediateResult;
+
 				const firstByte = this.code[pc + 1];
 				this.registerIndexDecoder.setByte(firstByte);
-				this.result.firstRegisterIndex =
-					this.registerIndexDecoder.getFirstIndex();
-				this.result.secondRegisterIndex =
-					this.registerIndexDecoder.getSecondIndex();
+				result.firstRegisterIndex = this.registerIndexDecoder.getFirstIndex();
+				result.secondRegisterIndex = this.registerIndexDecoder.getSecondIndex();
 
 				const immediateBytes = this.getBytesToNextInstruction(pc + 1) + 1;
 				this.result.noOfInstructionsToSkip = 1 + immediateBytes;
@@ -142,7 +146,7 @@ export class ArgsDecoder {
 						this.code.slice(pc + 2, pc + 2 + immediateBytes + 1), // TODO [MaSi] remove allocation
 					),
 				);
-				this.result.immediateDecoder1 = this.immediateDecoder1;
+				result.immediateDecoder1 = this.immediateDecoder1;
 				return this.result as TwoRegistersOneImmediateResult;
 			}
 

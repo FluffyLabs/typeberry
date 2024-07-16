@@ -1,9 +1,7 @@
-import { Instruction } from "../instruction";
+import { HIGHEST_INSTRUCTION_NUMBER, Instruction } from "../instruction";
 import { ArgumentType } from "./argument-type";
 
-const HIGHEST_INSTRUCTION_NUMBER = 87;
-
-export const instructionArgumentTypeMap = new Uint8Array(
+export const instructionArgumentTypeMap = new Array<ArgumentType>(
 	HIGHEST_INSTRUCTION_NUMBER + 1,
 );
 

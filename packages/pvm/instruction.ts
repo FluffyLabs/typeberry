@@ -88,3 +88,5 @@ export enum Instruction {
 	STORE_IMM_U16 = 79,
 	STORE_IMM_U32 = 38,
 }
+
+export const HIGHEST_INSTRUCTION_NUMBER = Instruction.SBRK;

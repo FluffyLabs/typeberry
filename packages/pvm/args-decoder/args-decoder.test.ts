@@ -12,14 +12,14 @@ test("ArgsDecoder", async (t) => {
 		const expectedResult = {
 			noOfInstructionsToSkip: code.length,
 
-			firstRegisterIndex: undefined,
-			secondRegisterIndex: undefined,
-			thirdRegisterIndex: undefined,
+			firstRegisterIndex: null,
+			secondRegisterIndex: null,
+			thirdRegisterIndex: null,
 
-			immediateDecoder1: undefined,
-			immediateDecoder2: undefined,
+			immediateDecoder1: null,
+			immediateDecoder2: null,
 
-			offset: undefined,
+			offset: null,
 		};
 
 		const result = argsDecoder.getArgs(0);
@@ -38,10 +38,10 @@ test("ArgsDecoder", async (t) => {
 			secondRegisterIndex: 2,
 			thirdRegisterIndex: 3,
 
-			immediateDecoder1: undefined,
-			immediateDecoder2: undefined,
+			immediateDecoder1: null,
+			immediateDecoder2: null,
 
-			offset: undefined,
+			offset: null,
 		};
 
 		const result = argsDecoder.getArgs(0);
@@ -62,12 +62,12 @@ test("ArgsDecoder", async (t) => {
 
 				firstRegisterIndex: 1,
 				secondRegisterIndex: 2,
-				thirdRegisterIndex: undefined,
+				thirdRegisterIndex: null,
 
 				immediateDecoder1: expectedImmediateDecoder,
-				immediateDecoder2: undefined,
+				immediateDecoder2: null,
 
-				offset: undefined,
+				offset: null,
 			};
 
 			const result = argsDecoder.getArgs(0);

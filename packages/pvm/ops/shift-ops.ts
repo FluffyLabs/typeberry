@@ -1,5 +1,7 @@
 import { BaseOps } from "./base-ops";
 
+const MAX_SHIFT = 32;
+
 export class ShiftOps extends BaseOps {
 	shiftLogicalLeft(
 		firstIndex: number,
@@ -43,7 +45,7 @@ export class ShiftOps extends BaseOps {
 		resultIndex: number,
 	) {
 		this.regs.asUnsigned[resultIndex] =
-			this.regs.asUnsigned[firstIndex] << (immediateValue % 32);
+			this.regs.asUnsigned[firstIndex] << (immediateValue % MAX_SHIFT);
 	}
 
 	shiftLogicalRightImmediate(
@@ -52,7 +54,7 @@ export class ShiftOps extends BaseOps {
 		resultIndex: number,
 	) {
 		this.regs.asUnsigned[resultIndex] =
-			this.regs.asUnsigned[firstIndex] >>> (immediateValue % 32);
+			this.regs.asUnsigned[firstIndex] >>> (immediateValue % MAX_SHIFT);
 	}
 
 	shiftArithmeticRightImmediate(
@@ -61,7 +63,7 @@ export class ShiftOps extends BaseOps {
 		resultIndex: number,
 	) {
 		this.regs.asUnsigned[resultIndex] =
-			this.regs.asUnsigned[firstIndex] >> (immediateValue % 32);
+			this.regs.asUnsigned[firstIndex] >> (immediateValue % MAX_SHIFT);
 	}
 
 	shiftLogicalLeftImmediateAlternative(
@@ -70,7 +72,7 @@ export class ShiftOps extends BaseOps {
 		resultIndex: number,
 	) {
 		this.regs.asUnsigned[resultIndex] =
-			immediateValue << (this.regs.asUnsigned[firstIndex] % 32);
+			immediateValue << (this.regs.asUnsigned[firstIndex] % MAX_SHIFT);
 	}
 
 	shiftLogicalRightImmediateAlternative(
@@ -79,7 +81,7 @@ export class ShiftOps extends BaseOps {
 		resultIndex: number,
 	) {
 		this.regs.asUnsigned[resultIndex] =
-			immediateValue >>> (this.regs.asUnsigned[firstIndex] % 32);
+			immediateValue >>> (this.regs.asUnsigned[firstIndex] % MAX_SHIFT);
 	}
 
 	shiftArithmeticRightImmediateAlternative(
@@ -94,6 +96,6 @@ export class ShiftOps extends BaseOps {
 			this.regs.asUnsigned[firstIndex],
 		);
 		this.regs.asSigned[resultIndex] =
-			immediateValue >> (this.regs.asUnsigned[firstIndex] % 32);
+			immediateValue >> (this.regs.asUnsigned[firstIndex] % MAX_SHIFT);
 	}
 }
