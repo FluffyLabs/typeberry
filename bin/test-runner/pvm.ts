@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import type { TestContext } from "node:test";
 import type { FixedArray } from "../../packages/fixed-array";
 import { Pvm } from "../../packages/pvm/pvm";
 import type { FromJson } from "./json-parser";
