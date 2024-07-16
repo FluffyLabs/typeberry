@@ -3,7 +3,6 @@ const REGISTER_SIZE = 4;
 
 export class Registers {
 	private buffer = new ArrayBuffer(NO_OF_REGISTERS * REGISTER_SIZE);
-	private view = new DataView(this.buffer);
 	asSigned = new Int32Array(this.buffer);
 	asUnsigned = new Uint32Array(this.buffer);
 }

@@ -267,7 +267,7 @@ export class Pvm {
 						secondRegisterIndex,
 						thirdRegisterIndex,
 					} = args as ThreeRegistersResult;
-					this.shiftOps.shiftAritmeticRight(
+					this.shiftOps.shiftArithmeticRight(
 						firstRegisterIndex,
 						secondRegisterIndex,
 						thirdRegisterIndex,
@@ -277,7 +277,7 @@ export class Pvm {
 				case Instruction.SHAR_R_IMM: {
 					const { firstRegisterIndex, secondRegisterIndex, immediateDecoder1 } =
 						args as TwoRegistersOneImmediateResult;
-					this.shiftOps.shiftAritmeticRightImmediate(
+					this.shiftOps.shiftArithmeticRightImmediate(
 						firstRegisterIndex,
 						immediateDecoder1.getSigned(),
 						secondRegisterIndex,
@@ -287,7 +287,7 @@ export class Pvm {
 				case Instruction.SHAR_R_IMM_ALT: {
 					const { firstRegisterIndex, secondRegisterIndex, immediateDecoder1 } =
 						args as TwoRegistersOneImmediateResult;
-					this.shiftOps.shiftAritmeticRightImmediateAlternative(
+					this.shiftOps.shiftArithmeticRightImmediateAlternative(
 						firstRegisterIndex,
 						immediateDecoder1.getSigned(),
 						secondRegisterIndex,

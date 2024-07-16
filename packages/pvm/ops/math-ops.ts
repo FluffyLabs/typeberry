@@ -36,14 +36,14 @@ export class MathOps extends BaseOps {
 		immediateValue: number,
 		resultIndex: number,
 	) {
-		if (this.regs.asSigned[firstIndex] > MAX_VALUE / immediateValue) {
+		if (this.regs.asUnsigned[firstIndex] > MAX_VALUE / immediateValue) {
 			const result =
 				(BigInt(this.regs.asUnsigned[firstIndex]) * BigInt(immediateValue)) %
 				2n ** 32n;
-			this.regs.asSigned[resultIndex] = Number(result);
+			this.regs.asUnsigned[resultIndex] = Number(result);
 		} else {
-			this.regs.asSigned[resultIndex] =
-				this.regs.asSigned[firstIndex] * immediateValue;
+			this.regs.asUnsigned[resultIndex] =
+				this.regs.asUnsigned[firstIndex] * immediateValue;
 		}
 	}
 
