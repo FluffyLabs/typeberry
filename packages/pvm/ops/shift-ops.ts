@@ -25,14 +25,14 @@ export class ShiftOps extends BaseOps {
 		);
 	}
 
-	shiftAritmeticRight(
+	shiftArithmeticRight(
 		firstIndex: number,
 		secondIndex: number,
 		resultIndex: number,
 	) {
-		this.shiftAritmeticRightImmediateAlternative(
+		this.shiftArithmeticRightImmediateAlternative(
 			firstIndex,
-			this.regs.asUnsigned[secondIndex],
+			this.regs.asSigned[secondIndex],
 			resultIndex,
 		);
 	}
@@ -55,7 +55,7 @@ export class ShiftOps extends BaseOps {
 			this.regs.asUnsigned[firstIndex] >>> (immediateValue % 32);
 	}
 
-	shiftAritmeticRightImmediate(
+	shiftArithmeticRightImmediate(
 		firstIndex: number,
 		immediateValue: number,
 		resultIndex: number,
@@ -69,8 +69,8 @@ export class ShiftOps extends BaseOps {
 		immediateValue: number,
 		resultIndex: number,
 	) {
-		this.regs.asSigned[resultIndex] =
-			immediateValue << (this.regs.asSigned[firstIndex] % 32);
+		this.regs.asUnsigned[resultIndex] =
+			immediateValue << (this.regs.asUnsigned[firstIndex] % 32);
 	}
 
 	shiftLogicalRightImmediateAlternative(
@@ -78,16 +78,22 @@ export class ShiftOps extends BaseOps {
 		immediateValue: number,
 		resultIndex: number,
 	) {
-		this.regs.asSigned[resultIndex] =
-			immediateValue >>> (this.regs.asSigned[firstIndex] % 32);
+		this.regs.asUnsigned[resultIndex] =
+			immediateValue >>> (this.regs.asUnsigned[firstIndex] % 32);
 	}
 
-	shiftAritmeticRightImmediateAlternative(
+	shiftArithmeticRightImmediateAlternative(
 		firstIndex: number,
 		immediateValue: number,
 		resultIndex: number,
 	) {
-		this.regs.asUnsigned[resultIndex] =
+		console.error(
+			"aaa",
+			firstIndex,
+			immediateValue,
+			this.regs.asUnsigned[firstIndex],
+		);
+		this.regs.asSigned[resultIndex] =
 			immediateValue >> (this.regs.asUnsigned[firstIndex] % 32);
 	}
 }

@@ -13,7 +13,7 @@ import {
 	type TicketEnvelope,
 	type ValidatorData,
 } from "../../packages/safrole";
-import { type FromJson, optional, parseFromJson } from "./json-parser";
+import { type FromJson, optional } from "./json-parser";
 
 type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}`
 	? `${T}${Capitalize<SnakeToCamel<U>>}`

@@ -1,4 +1,3 @@
-import { Instruction } from "../instruction";
 import { ArgumentType } from "./argument-type";
 import { ImmediateDecoder } from "./decoders/immediate-decoder";
 import { RegisterIndexDecoder } from "./decoders/register-index-decoder";
