@@ -1,6 +1,5 @@
 import { BaseOps } from "./base-ops";
-
-const MAX_SHIFT = 32;
+import { MAX_SHIFT } from "./math-consts";
 
 export class ShiftOps extends BaseOps {
 	shiftLogicalLeft(

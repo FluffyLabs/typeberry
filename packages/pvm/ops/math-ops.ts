@@ -1,5 +1,5 @@
 import { BaseOps } from "./base-ops";
-import { MAX_VALUE, MIN_VALUE } from "./math-consts";
+import { MAX_SHIFT, MAX_VALUE, MIN_VALUE } from "./math-consts";
 
 export class MathOps extends BaseOps {
 	add(firstIndex: number, secondIndex: number, resultIndex: number) {
@@ -81,8 +81,8 @@ export class MathOps extends BaseOps {
 		resultIndex: number,
 	) {
 		const result =
-			(BigInt(this.regs.asSigned[firstIndex]) * BigInt(immediateValue)) /
-			2n ** 32n;
+			(BigInt(this.regs.asSigned[firstIndex]) * BigInt(immediateValue)) >>
+			BigInt(MAX_SHIFT);
 		this.regs.asSigned[resultIndex] = Number(result % 2n ** 32n);
 	}
 
@@ -92,8 +92,8 @@ export class MathOps extends BaseOps {
 		resultIndex: number,
 	) {
 		const result =
-			(BigInt(this.regs.asUnsigned[firstIndex]) * BigInt(immediateValue)) /
-			2n ** 32n;
+			(BigInt(this.regs.asUnsigned[firstIndex]) * BigInt(immediateValue)) >>
+			BigInt(MAX_SHIFT);
 		this.regs.asUnsigned[resultIndex] = Number(result % 2n ** 32n);
 	}
 
