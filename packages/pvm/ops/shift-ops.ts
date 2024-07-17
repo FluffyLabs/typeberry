@@ -89,12 +89,6 @@ export class ShiftOps extends BaseOps {
 		immediateValue: number,
 		resultIndex: number,
 	) {
-		console.error(
-			"aaa",
-			firstIndex,
-			immediateValue,
-			this.regs.asUnsigned[firstIndex],
-		);
 		this.regs.asSigned[resultIndex] =
 			immediateValue >> (this.regs.asUnsigned[firstIndex] % MAX_SHIFT);
 	}

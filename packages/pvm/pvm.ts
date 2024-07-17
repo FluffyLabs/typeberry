@@ -146,7 +146,66 @@ export class Pvm {
 					);
 					break;
 				}
+				case Instruction.MUL_UPPER_U_U: {
+					const {
+						firstRegisterIndex,
+						secondRegisterIndex,
+						thirdRegisterIndex,
+					} = args as ThreeRegistersResult;
+					this.mathOps.mulUpperUU(
+						firstRegisterIndex,
+						secondRegisterIndex,
+						thirdRegisterIndex,
+					);
+					break;
+				}
+				case Instruction.MUL_UPPER_S_S: {
+					const {
+						firstRegisterIndex,
+						secondRegisterIndex,
+						thirdRegisterIndex,
+					} = args as ThreeRegistersResult;
+					this.mathOps.mulUpperSS(
+						firstRegisterIndex,
+						secondRegisterIndex,
+						thirdRegisterIndex,
+					);
+					break;
+				}
+				case Instruction.MUL_UPPER_S_U: {
+					const {
+						firstRegisterIndex,
+						secondRegisterIndex,
+						thirdRegisterIndex,
+					} = args as ThreeRegistersResult;
+					this.mathOps.mulUpperSU(
+						firstRegisterIndex,
+						secondRegisterIndex,
+						thirdRegisterIndex,
+					);
+					break;
+				}
 				case Instruction.MUL_IMM: {
+					const { firstRegisterIndex, secondRegisterIndex, immediateDecoder1 } =
+						args as TwoRegistersOneImmediateResult;
+					this.mathOps.mulImmediate(
+						firstRegisterIndex,
+						immediateDecoder1.getSigned(),
+						secondRegisterIndex,
+					);
+					break;
+				}
+				case Instruction.MUL_UPPER_U_U_IMM: {
+					const { firstRegisterIndex, secondRegisterIndex, immediateDecoder1 } =
+						args as TwoRegistersOneImmediateResult;
+					this.mathOps.mulImmediate(
+						firstRegisterIndex,
+						immediateDecoder1.getUnsigned(),
+						secondRegisterIndex,
+					);
+					break;
+				}
+				case Instruction.MUL_UPPER_S_S_IMM: {
 					const { firstRegisterIndex, secondRegisterIndex, immediateDecoder1 } =
 						args as TwoRegistersOneImmediateResult;
 					this.mathOps.mulImmediate(
@@ -166,6 +225,16 @@ export class Pvm {
 						firstRegisterIndex,
 						secondRegisterIndex,
 						thirdRegisterIndex,
+					);
+					break;
+				}
+				case Instruction.NEG_ADD_IMM: {
+					const { firstRegisterIndex, immediateDecoder1, secondRegisterIndex } =
+						args as TwoRegistersOneImmediateResult;
+					this.mathOps.negAddImmediate(
+						firstRegisterIndex,
+						immediateDecoder1.getUnsigned(),
+						secondRegisterIndex,
 					);
 					break;
 				}
@@ -189,6 +258,32 @@ export class Pvm {
 						thirdRegisterIndex,
 					} = args as ThreeRegistersResult;
 					this.mathOps.divUnsigned(
+						firstRegisterIndex,
+						secondRegisterIndex,
+						thirdRegisterIndex,
+					);
+					break;
+				}
+				case Instruction.REM_S: {
+					const {
+						firstRegisterIndex,
+						secondRegisterIndex,
+						thirdRegisterIndex,
+					} = args as ThreeRegistersResult;
+					this.mathOps.remSigned(
+						firstRegisterIndex,
+						secondRegisterIndex,
+						thirdRegisterIndex,
+					);
+					break;
+				}
+				case Instruction.REM_U: {
+					const {
+						firstRegisterIndex,
+						secondRegisterIndex,
+						thirdRegisterIndex,
+					} = args as ThreeRegistersResult;
+					this.mathOps.remUnsigned(
 						firstRegisterIndex,
 						secondRegisterIndex,
 						thirdRegisterIndex,
