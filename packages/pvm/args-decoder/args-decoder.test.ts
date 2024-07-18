@@ -1,13 +1,14 @@
 import assert from "node:assert";
 import { test } from "node:test";
 import { Instruction } from "../instruction";
+import { Mask } from "../program-decoder/mask";
 import { ArgsDecoder } from "./args-decoder";
 import { ImmediateDecoder } from "./decoders/immediate-decoder";
 
 test("ArgsDecoder", async (t) => {
 	await t.test("return empty result for instruction without args", () => {
-		const code = [Instruction.TRAP];
-		const mask = [0b1111_1111];
+		const code = new Uint8Array([Instruction.TRAP]);
+		const mask = new Mask([0b1111_1111]);
 		const argsDecoder = new ArgsDecoder(code, mask);
 		const expectedResult = {
 			noOfInstructionsToSkip: code.length,
@@ -28,8 +29,8 @@ test("ArgsDecoder", async (t) => {
 	});
 
 	await t.test("return correct result for instruction with 3 regs", () => {
-		const code = [Instruction.ADD, 0x12, 0x03];
-		const mask = [0b1111_1001];
+		const code = new Uint8Array([Instruction.ADD, 0x12, 0x03]);
+		const mask = new Mask([0b1111_1001]);
 		const argsDecoder = new ArgsDecoder(code, mask);
 		const expectedResult = {
 			noOfInstructionsToSkip: code.length,
@@ -52,8 +53,8 @@ test("ArgsDecoder", async (t) => {
 	await t.test(
 		"return correct result for instruction with 2 regs and 1 immediate",
 		() => {
-			const code = [Instruction.ADD_IMM, 0x12, 0xff];
-			const mask = [0b1111_1001];
+			const code = new Uint8Array([Instruction.ADD_IMM, 0x12, 0xff]);
+			const mask = new Mask([0b1111_1001]);
 			const argsDecoder = new ArgsDecoder(code, mask);
 			const expectedImmediateDecoder = new ImmediateDecoder();
 			expectedImmediateDecoder.setBytes(new Uint8Array([0xff]));
