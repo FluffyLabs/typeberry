@@ -76,19 +76,6 @@ export class ArgsDecoder {
 		private mask: Mask,
 	) {}
 
-	private getBytesToNextInstruction(counter: number) {
-		let noOfBytes = 0;
-		for (let i = counter + 1; i <= counter + MAX_ARGS_LENGTH; i++) {
-			if (this.mask.isInstruction(i)) {
-				break;
-			}
-
-			noOfBytes++;
-		}
-
-		return noOfBytes;
-	}
-
 	private resetResult() {
 		this.result.noOfInstructionsToSkip = 1;
 
@@ -132,7 +119,7 @@ export class ArgsDecoder {
 				result.firstRegisterIndex = this.registerIndexDecoder.getFirstIndex();
 				result.secondRegisterIndex = this.registerIndexDecoder.getSecondIndex();
 
-				const immediateBytes = this.getBytesToNextInstruction(pc + 1) + 1;
+				const immediateBytes = this.mask.getNoOfBytesToNextInstruction(pc + 1);
 				this.result.noOfInstructionsToSkip = 1 + immediateBytes;
 
 				this.immediateDecoder1.setBytes(
