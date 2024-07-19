@@ -84,7 +84,7 @@ const instructionsWithTwoRegistersAndOneImmediate: InstructionTuple[] = [
 	[Instruction.SHLO_L_IMM, "shlo_l_imm", 2],
 	[Instruction.SHLO_R_IMM, "shlo_r_imm", 2],
 	[Instruction.SHAR_R_IMM, "shar_r_imm", 2],
-	[Instruction.NEG_ADD_IMM, "neg_add_imm", 0],
+	[Instruction.NEG_ADD_IMM, "neg_add_imm", 2],
 	[Instruction.SET_GT_U_IMM, "set_gt_u_imm", 0],
 	[Instruction.SET_GT_S_IMM, "set_gt_s_imm", 0],
 	[Instruction.SHLO_L_IMM_ALT, "shlo_l_imm_alt", 2],
