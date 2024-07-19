@@ -69,7 +69,7 @@ export class Bytes<T extends number> {
 	static parseBytesNoPrefix<X extends number>(v: string, len: X): Bytes<X> {
 		if (v.length > 2 * len) {
 			throw new Error(
-				`Input string too long. Expected ${len}, got ${v.length / 2 - 1}`,
+				`Input string too long. Expected ${len}, got ${v.length / 2}`,
 			);
 		}
 
