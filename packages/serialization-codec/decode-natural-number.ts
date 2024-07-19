@@ -27,7 +27,7 @@ export function decodeNaturalNumber(bytes: Uint8Array): Result {
 	const firstByteValue = BigInt(bytes[0]) + 2n ** (8n - BigInt(l)) - 2n ** 8n;
 
 	return {
-		value: restBytesValue + firstByteValue << (8n * BigInt(l)),
+		value: (restBytesValue + firstByteValue) << (8n * BigInt(l)),
 		bytesToSkip,
 	};
 }
