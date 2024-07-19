@@ -157,7 +157,7 @@ export class SafroleTest {
 	post_state!: JsonState;
 }
 
-export function runSafroleTest(testContent: SafroleTest) {
+export async function runSafroleTest(testContent: SafroleTest) {
 	const preState = convertKeysToCamelCaseFuncs(testContent.pre_state);
 	const safrole = new Safrole(preState);
 
@@ -165,7 +165,7 @@ export function runSafroleTest(testContent: SafroleTest) {
 	let error = "";
 	let stateDiff: SafroleStateDiff = {};
 	try {
-		stateDiff = safrole.transition(testContent.input);
+		stateDiff = await safrole.transition(testContent.input);
 		output.ok = {
 			epoch_mark: null,
 			tickets_mark: null,
@@ -187,6 +187,7 @@ export function runSafroleTest(testContent: SafroleTest) {
 		}
 	}
 
+	assert.deepStrictEqual(error, "");
 	assert.deepStrictEqual(output, testContent.output);
 	assert.deepStrictEqual(postState, testContent.post_state);
 }

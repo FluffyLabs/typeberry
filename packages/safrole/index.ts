@@ -1,6 +1,7 @@
 import type { Bytes, BytesBlob } from "../bytes";
 import type { BandersnatchKey, BlsKey, Ed25519Key } from "../crypto";
 import type { EntropyHash, Hash } from "../hash";
+import { verifyBandersnatch } from "./bandersnatch";
 
 export type TicketBody = {
 	id: Hash;
@@ -46,17 +47,19 @@ export class Safrole {
 		this.state = state;
 	}
 
-	transition(input: {
+	async transition(input: {
 		slot: number;
 		entropy: EntropyHash;
 		extrinsics: TicketEnvelope[];
-	}): StateDiff {
+	}): Promise<StateDiff> {
 		const newState: StateDiff = {};
 		if (this.state.timeslot() > input.slot) {
 			throw new Error(
 				`Timeslot is in the past. Current ${this.state.timeslot()}, got ${input.slot}`,
 			);
 		}
+
+		await verifyBandersnatch();
 
 		newState.timeslot = input.slot;
 		newState.entropy = [input.entropy];

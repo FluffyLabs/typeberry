@@ -53,7 +53,7 @@ export class PvmTest {
 	"expected-gas": number;
 }
 
-export function runPvmTest(testContent: PvmTest) {
+export async function runPvmTest(testContent: PvmTest) {
 	const pvm = new Pvm(testContent.program, {
 		gas: testContent["initial-gas"],
 		memory: testContent["initial-memory"],
