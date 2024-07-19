@@ -25,14 +25,14 @@ async function main() {
 function tryToPrepareTestRunner<T>(
 	testContent: unknown,
 	fromJson: FromJson<T>,
-	run: (t: T) => void,
+	run: (t: T) => Promise<void>,
 	onError: (e: unknown) => void,
 ) {
 	try {
 		const parsedTest = parseFromJson(testContent, fromJson);
 
-		return () => {
-			run(parsedTest);
+		return async () => {
+			await run(parsedTest);
 		};
 	} catch (e) {
 		onError(e);
@@ -75,8 +75,10 @@ async function dispatchTest(
 
 		fail(`Unrecognized test case in ${file}`);
 	} else {
+		const promises = [];
 		for (const runner of nonEmptyRunners) {
-			runner();
+			promises.push(runner());
 		}
+		await Promise.all(promises);
 	}
 }
