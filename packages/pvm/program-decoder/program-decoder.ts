@@ -1,4 +1,4 @@
-import { decodeNaturalNumber } from "../../serialization-codec/decode-natural-number";
+import { decodeNaturalNumber } from "../../jam-codec/decode-natural-number";
 import { Mask } from "./mask";
 
 export class ProgramDecoder {
