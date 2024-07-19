@@ -1,9 +1,5 @@
 export class Mask {
-	private mask: Uint8Array;
-
-	constructor(code: number[]) {
-		this.mask = new Uint8Array(code);
-	}
+	constructor(private mask: Uint8Array) {}
 
 	isInstruction(index: number) {
 		const byteNumber = Math.floor(index / 8);

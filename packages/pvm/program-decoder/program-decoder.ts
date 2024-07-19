@@ -1,15 +1,5 @@
-import * as $ from "scale-codec";
+import { decodeNaturalNumber } from "../../serialization-codec/decode-natural-number";
 import { Mask } from "./mask";
-
-const first3Numbers = $.tuple($.u8, $.u8, $.u8); // TODO [MaSi] according to GP - [0] and [2] should be compact int - but there is a single byte in tests
-const getJumpTable = (itemSize: number, jumpTableLength: number) => {
-	if (jumpTableLength === 0) {
-		return [];
-	}
-
-	const roundedItemSize = itemSize <= 8 ? 8 : itemSize <= 16 ? 16 : 32;
-	return [$.sizedArray($.int(false, roundedItemSize), jumpTableLength)];
-};
 
 export class ProgramDecoder {
 	private code: Uint8Array;
@@ -23,25 +13,33 @@ export class ProgramDecoder {
 	}
 
 	private decodeProgram(program: Uint8Array) {
-		const [jumpTableLength, jumpTableItemSize, codeLength] =
-			first3Numbers.decode(program);
-		const jumpTable = getJumpTable(jumpTableItemSize, jumpTableLength);
-		const decoded = $.tuple(
-			$.u8,
-			$.u8,
-			$.u8,
-			...jumpTable,
-			$.sizedArray($.u8, codeLength),
-			$.sizedArray($.u8, Math.ceil(codeLength / 8)),
-		).decode(program);
+		const { value: jumpTableLength, bytesToSkip: firstNumberLength } =
+			decodeNaturalNumber(program);
+		const jumpTableItemSize = program[firstNumberLength];
+		const { value: codeLength, bytesToSkip: thirdNumberLenght } =
+			decodeNaturalNumber(program.subarray(firstNumberLength + 1));
+		const jumpTableFirstByteIndex = firstNumberLength + 1 + thirdNumberLenght;
+		const jumpTableLengthInBytes = Number(jumpTableLength) * jumpTableItemSize;
+		const jumpTable = program.subarray(
+			jumpTableFirstByteIndex,
+			jumpTableFirstByteIndex + jumpTableLengthInBytes,
+		);
+		const codeFirstIndex = jumpTableFirstByteIndex + jumpTableLengthInBytes;
+		const code = program.subarray(
+			codeFirstIndex,
+			codeFirstIndex + Number(codeLength),
+		);
+		const maskFirstIndex = codeFirstIndex + Number(codeLength);
+		const maskLengthInBytes = Math.ceil(Number(codeLength) / 8);
+		const mask = program.subarray(
+			maskFirstIndex,
+			maskFirstIndex + maskLengthInBytes,
+		);
 
 		return {
-			codeLength,
-			jumpTableLength,
-			jumpTableItemSize,
-			jumpTable: jumpTableLength > 0 ? decoded[3] : [],
-			code: decoded[jumpTableLength > 0 ? 4 : 3],
-			mask: decoded[jumpTableLength > 0 ? 5 : 4],
+			mask,
+			code,
+			jumpTable,
 		};
 	}
 
