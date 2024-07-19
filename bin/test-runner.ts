@@ -6,6 +6,7 @@ import type { TestContext } from "node:test";
 import { type FromJson, parseFromJson } from "./test-runner/json-parser";
 import { PvmTest, runPvmTest } from "./test-runner/pvm";
 import { SafroleTest, runSafroleTest } from "./test-runner/safrole";
+import {TrieTest, runTrieTest, trieTestSuiteFromJson} from "./test-runner/trie";
 
 main().then(console.log).catch(console.error);
 
@@ -59,6 +60,12 @@ async function dispatchTest(
 			testContent,
 			PvmTest.fromJson,
 			runPvmTest,
+			handleError,
+		),
+		tryToPrepareTestRunner(
+			testContent,
+			trieTestSuiteFromJson,
+			runTrieTest,
 			handleError,
 		),
 	];

@@ -25,13 +25,13 @@ export class BytesBlob {
 		return bufferToHexString(this.buffer);
 	}
 
-	static parseBlob(v: string): BytesBlob {
-		const len = v.length;
-		if (len % 2 === 1 || !v.startsWith("0x")) {
-			throw new Error(`Invalid hex string: ${v}.`);
+	static parseBlobNoPrefix(v: string): BytesBlob {
+		const len = v.length
+		if (len % 2 === 1) {
+			throw new Error(`Odd number of nibbles. Invalid hex string: ${v}.`);
 		}
 		// NOTE [ToDr] alloc
-		const buffer = new ArrayBuffer(len / 2 - 1);
+		const buffer = new ArrayBuffer(len / 2);
 		const bytes = new Uint8Array(buffer);
 		for (let i = 2; i < len - 1; i += 2) {
 			const c = v.substring(i, i + 2);
@@ -39,6 +39,13 @@ export class BytesBlob {
 		}
 
 		return new BytesBlob(buffer);
+	}
+
+	static parseBlob(v: string): BytesBlob {
+		if (!v.startsWith("0x")) {
+			throw new Error(`Invalid hex string: ${v}.`);
+		}
+		return BytesBlob.parseBlobNoPrefix(v.substring(2));
 	}
 }
 
@@ -57,6 +64,17 @@ export class Bytes<T extends number> {
 
 	toString() {
 		return bufferToHexString(this.view.buffer);
+	}
+
+	static parseBytesNoPrefix<X extends number>(v: string, len: X): Bytes<X> {
+		if (v.length > 2 * len) {
+			throw new Error(
+				`Input string too long. Expected ${len}, got ${v.length / 2 - 1}`,
+			);
+		}
+
+		const blob = BytesBlob.parseBlobNoPrefix(v);
+		return new Bytes(new DataView(blob.buffer), len);
 	}
 
 	static parseBytes<X extends number>(v: string, len: X): Bytes<X> {
