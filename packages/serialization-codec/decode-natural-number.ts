@@ -10,16 +10,17 @@ type Result = {
 export function decodeNaturalNumber(bytes: Uint8Array): Result {
 	const littleEndianDecoder = new LittleEndianDecoder();
 	const l = decodeLengthAfterFirstByte(bytes[0]);
+	const bytesToSkip = l + 1;
 
 	if (l === 8) {
 		return {
 			value: littleEndianDecoder.decode(bytes.subarray(1, 9)),
-			bytesToSkip: 9,
+			bytesToSkip,
 		};
 	}
 
 	if (l === 0) {
-		return { value: BigInt(bytes[0]), bytesToSkip: 1 };
+		return { value: BigInt(bytes[0]), bytesToSkip };
 	}
 
 	const restBytesValue = littleEndianDecoder.decode(bytes.subarray(1, l + 1));
@@ -27,7 +28,7 @@ export function decodeNaturalNumber(bytes: Uint8Array): Result {
 
 	return {
 		value: restBytesValue + firstByteValue * 2n ** (8n * BigInt(l)),
-		bytesToSkip: l + 1,
+		bytesToSkip,
 	};
 }
 
