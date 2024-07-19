@@ -1,7 +1,7 @@
 import type { Bytes, BytesBlob } from "../bytes";
 import type { BandersnatchKey, BlsKey, Ed25519Key } from "../crypto";
 import type { EntropyHash, Hash } from "../hash";
-import {verify_bandersnatch} from "./bandersnatch";
+import { verify_bandersnatch } from "./bandersnatch";
 
 export type TicketBody = {
 	id: Hash;
