@@ -1,7 +1,7 @@
 import type { Bytes, BytesBlob } from "../bytes";
 import type { BandersnatchKey, BlsKey, Ed25519Key } from "../crypto";
 import type { EntropyHash, Hash } from "../hash";
-import { verify_bandersnatch } from "./bandersnatch";
+import { verifyBandersnatch } from "./bandersnatch";
 
 export type TicketBody = {
 	id: Hash;
@@ -59,7 +59,7 @@ export class Safrole {
 			);
 		}
 
-		await verify_bandersnatch();
+		await verifyBandersnatch();
 
 		newState.timeslot = input.slot;
 		newState.entropy = [input.entropy];
