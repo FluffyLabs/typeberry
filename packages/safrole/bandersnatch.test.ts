@@ -1,10 +1,10 @@
 import { test } from "node:test";
-import { verify_bandersnatch } from "./bandersnatch";
+import { verifyBandersnatch } from "./bandersnatch";
 
 test("Bandersnatch verification", async (t) => {
 	await t.test("verify", async () => {
 		try {
-			await verify_bandersnatch();
+			await verifyBandersnatch();
 		} catch (e) {
 			console.log("Error temporarily expected.");
 		}
