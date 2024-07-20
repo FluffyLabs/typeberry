@@ -1,4 +1,3 @@
-import * as $ from "scale-codec";
 import type { FixedArray } from "../fixed-array";
 import {
 	ArgsDecoder,
@@ -11,6 +10,8 @@ import { instructionGasMap } from "./instruction-gas-map";
 import { BitOps } from "./ops/bit-ops";
 import { MathOps } from "./ops/math-ops";
 import { ShiftOps } from "./ops/shift-ops";
+import type { Mask } from "./program-decoder/mask";
+import { ProgramDecoder } from "./program-decoder/program-decoder";
 import { NO_OF_REGISTERS, Registers } from "./registers";
 
 type InitialState = {
@@ -32,30 +33,7 @@ type PageMapItem = {
 	"is-writable": boolean;
 };
 
-type Program = {
-	c: number[];
-	k: number[];
-	jLength: number;
-	z: number;
-	cLength: number;
-};
-
-/*
-// dynamic jump table
-j = Vec<u8 | u16 | u24 | u32>
-// number of octets of every index in dynamic jump table
-z = 1, 2, 3, 4, 5, 6, 7, 8 
-
-p = len(j)
-    ++ z
-    ++ len(c)
-    ++ [...]
-    ++ c 
-    ++ k (len(k) == len(c))
-*/
-
 export class Pvm {
-	private program: Program;
 	private pc = 0;
 	private registers = new Registers();
 	private mathOps = new MathOps(this.registers);
@@ -66,12 +44,14 @@ export class Pvm {
 	private memory: MemoryChunkItem[];
 	private status: "trap" | "halt" = "trap";
 	private argsDecoder: ArgsDecoder;
+	private code: Uint8Array;
+	private mask: Mask;
 
-	constructor(rawProgram: number[], initialState: InitialState = {}) {
-		const [jLength, z, cLength, c, k] = this.decodeProgram(
-			new Uint8Array(rawProgram),
-		);
-		this.program = { cLength, jLength, z, c, k };
+	constructor(rawProgram: Uint8Array, initialState: InitialState = {}) {
+		const programDecoder = new ProgramDecoder(rawProgram);
+		this.code = programDecoder.getCode();
+		this.mask = programDecoder.getMask();
+
 		this.pc = initialState.pc ?? 0;
 
 		for (let i = 0; i < NO_OF_REGISTERS; i++) {
@@ -80,33 +60,17 @@ export class Pvm {
 		this.gas = initialState.gas ?? 0;
 		this.pageMap = initialState.pageMap ?? [];
 		this.memory = initialState.memory ?? [];
-		this.argsDecoder = new ArgsDecoder(c, k);
-	}
-
-	private decodeProgram(program: Uint8Array) {
-		const first3Numbers = $.tuple($.u8, $.u8, $.u8); // TODO [MaSi] according to GP - [0] and [2] should be compact int - but there is a single byte in tests
-		const [jLength, z, cLength] = first3Numbers.decode(program);
-		const jSize = z <= 8 ? 8 : z <= 16 ? 16 : 32;
-		const jumpTable =
-			jLength > 0 ? [$.sizedArray($.int(false, jSize), jLength)] : [];
-		return $.tuple(
-			$.u8,
-			$.u8,
-			$.u8,
-			...jumpTable,
-			$.sizedArray($.u8, cLength),
-			$.sizedArray($.u8, Math.ceil(cLength / 8)),
-		).decode(program);
+		this.argsDecoder = new ArgsDecoder(this.code, this.mask);
 	}
 
 	printProgram() {
-		const p = assemblify(this.program.c, this.program.k);
+		const p = assemblify(this.code, this.mask);
 		console.table(p);
 	}
 
 	runProgram() {
-		while (this.pc < this.program.cLength) {
-			const currentInstruction = this.program.c[this.pc];
+		while (this.pc < this.code.length) {
+			const currentInstruction = this.code[this.pc];
 			const args = this.argsDecoder.getArgs(this.pc);
 
 			switch (currentInstruction) {
