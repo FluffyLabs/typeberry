@@ -54,7 +54,7 @@ export class PvmTest {
 }
 
 export async function runPvmTest(testContent: PvmTest) {
-	const pvm = new Pvm(testContent.program, {
+	const pvm = new Pvm(new Uint8Array(testContent.program), {
 		gas: testContent["initial-gas"],
 		memory: testContent["initial-memory"],
 		pageMap: testContent["initial-page-map"],

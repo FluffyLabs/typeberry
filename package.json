@@ -22,7 +22,6 @@
 		"ts-node": "^10.9.2"
 	},
 	"dependencies": {
-		"bandersnatch-wasm": "github:fluffylabs/bandersnatch#d0683b0e03635f4fda937addc5c0c7e8b761b607",
-		"scale-codec": "^0.13.0"
+		"bandersnatch-wasm": "github:fluffylabs/bandersnatch#d0683b0e03635f4fda937addc5c0c7e8b761b607"
 	}
 }

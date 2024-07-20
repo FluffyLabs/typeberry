@@ -1,3 +1,4 @@
+import type { Mask } from "../program-decoder/mask";
 import { ArgumentType } from "./argument-type";
 import { ImmediateDecoder } from "./decoders/immediate-decoder";
 import { RegisterIndexDecoder } from "./decoders/register-index-decoder";
@@ -71,29 +72,9 @@ export class ArgsDecoder {
 	private result = createResult(); // [MaSi] because I don't want to allocate memory for each instruction
 
 	constructor(
-		private code: number[],
-		private mask: number[],
+		private code: Uint8Array,
+		private mask: Mask,
 	) {}
-
-	private isInstruction(counter: number) {
-		const byteNumber = Math.floor(counter / 8);
-		const bitNumber = counter % 8;
-		const mask = 1 << bitNumber;
-		return (this.mask[byteNumber] & mask) > 0;
-	}
-
-	private getBytesToNextInstruction(counter: number) {
-		let noOfBytes = 0;
-		for (let i = counter + 1; i <= counter + MAX_ARGS_LENGTH; i++) {
-			if (this.isInstruction(i)) {
-				break;
-			}
-
-			noOfBytes++;
-		}
-
-		return noOfBytes;
-	}
 
 	private resetResult() {
 		this.result.noOfInstructionsToSkip = 1;
@@ -138,7 +119,7 @@ export class ArgsDecoder {
 				result.firstRegisterIndex = this.registerIndexDecoder.getFirstIndex();
 				result.secondRegisterIndex = this.registerIndexDecoder.getSecondIndex();
 
-				const immediateBytes = this.getBytesToNextInstruction(pc + 1) + 1;
+				const immediateBytes = this.mask.getNoOfBytesToNextInstruction(pc + 1);
 				this.result.noOfInstructionsToSkip = 1 + immediateBytes;
 
 				this.immediateDecoder1.setBytes(

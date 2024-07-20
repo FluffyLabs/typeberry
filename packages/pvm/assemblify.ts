@@ -1,4 +1,5 @@
 import { Instruction } from "./instruction";
+import type { Mask } from "./program-decoder/mask";
 
 type Byte = number;
 type Name = string;
@@ -163,14 +164,10 @@ export const byteToOpCodeMap = instructions.reduce((acc, instruction) => {
 	return acc;
 }, {} as ByteToOpCodeMap);
 
-export function assemblify(program: number[], k: number[]) {
+export function assemblify(program: Uint8Array, mask: Mask) {
 	const printableProgram = program.reduce(
 		(acc, byte, index) => {
-			const byteNumber = Math.floor(index / 8);
-			const bitNumber = index % 8;
-			const mask = 1 << bitNumber;
-			const isOpCode = (k[byteNumber] & mask) > 0;
-			if (isOpCode) {
+			if (mask.isInstruction(index)) {
 				const instruction = byteToOpCodeMap[byte];
 				acc.push([instruction.name]);
 			} else {
