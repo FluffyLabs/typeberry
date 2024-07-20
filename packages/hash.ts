@@ -3,4 +3,3 @@ import type { Opaque } from "./opaque";
 
 export type Hash = Bytes<32>;
 export type EntropyHash = Opaque<Hash, "entropy">;
-export type TrieRoot = Opaque<Hash, "trie">;

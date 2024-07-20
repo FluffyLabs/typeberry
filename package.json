@@ -10,6 +10,7 @@
 		"lint": "biome lint --write",
 		"run": "ts-node ./bin/jar",
 		"test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
+		"test-watch": "node --watch --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
 		"ts-node": "ts-node",
 		"biome": "biome",
 		"start-pvm": "ts-node ./bin/pvm.ts",
@@ -22,6 +23,7 @@
 		"ts-node": "^10.9.2"
 	},
 	"dependencies": {
-		"bandersnatch-wasm": "github:fluffylabs/bandersnatch#d0683b0e03635f4fda937addc5c0c7e8b761b607"
+		"bandersnatch-wasm": "github:fluffylabs/bandersnatch#d0683b0e03635f4fda937addc5c0c7e8b761b607",
+		"blake2b": "^2.1.4"
 	}
 }

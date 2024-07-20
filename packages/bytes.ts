@@ -25,17 +25,26 @@ export class BytesBlob {
 		return bufferToHexString(this.buffer);
 	}
 
+	static fromBytes(v: number[]): BytesBlob {
+		const arr = new Uint8Array(v);
+		return new BytesBlob(arr.buffer);
+	}
+
 	static parseBlobNoPrefix(v: string): BytesBlob {
-		const len = v.length
+		const len = v.length;
 		if (len % 2 === 1) {
 			throw new Error(`Odd number of nibbles. Invalid hex string: ${v}.`);
 		}
 		// NOTE [ToDr] alloc
 		const buffer = new ArrayBuffer(len / 2);
 		const bytes = new Uint8Array(buffer);
-		for (let i = 2; i < len - 1; i += 2) {
+		for (let i = 0; i < len - 1; i += 2) {
 			const c = v.substring(i, i + 2);
-			bytes[i / 2 - 1] = Number.parseInt(c, 16);
+			const parsed = Number(`0x${c}`);
+			if (Number.isNaN(parsed)) {
+				throw new Error(`Invalid characters in hex byte string: ${c}`);
+			}
+			bytes[i / 2] = parsed;
 		}
 
 		return new BytesBlob(buffer);
@@ -43,27 +52,32 @@ export class BytesBlob {
 
 	static parseBlob(v: string): BytesBlob {
 		if (!v.startsWith("0x")) {
-			throw new Error(`Invalid hex string: ${v}.`);
+			throw new Error(`Missing 0x prefix: ${v}.`);
 		}
 		return BytesBlob.parseBlobNoPrefix(v.substring(2));
 	}
 }
 
 export class Bytes<T extends number> {
-	readonly view: DataView = new DataView(new ArrayBuffer(0));
+	readonly raw: DataView = new DataView(new ArrayBuffer(0));
 	readonly length: T;
 
-	constructor(view: DataView, len: T) {
+	constructor(raw: DataView, len: T) {
 		assert(
-			view.byteLength === len,
-			`Given buffer has incorrect size ${view.byteLength} vs expected ${len}`,
+			raw.byteLength === len,
+			`Given buffer has incorrect size ${raw.byteLength} vs expected ${len}`,
 		);
-		this.view = view;
+		this.raw = raw;
 		this.length = len;
 	}
 
 	toString() {
-		return bufferToHexString(this.view.buffer);
+		// TODO [ToDr] This disregards offset and length we should not be accessing raw buffer.
+		return bufferToHexString(this.raw.buffer);
+	}
+
+	static zero<X extends number>(len: X): Bytes<X> {
+		return new Bytes(new DataView(new ArrayBuffer(len)), len);
 	}
 
 	static parseBytesNoPrefix<X extends number>(v: string, len: X): Bytes<X> {
