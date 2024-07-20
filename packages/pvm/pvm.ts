@@ -1,4 +1,3 @@
-import type { FixedArray } from "../fixed-array";
 import {
 	ArgsDecoder,
 	type ThreeRegistersResult,
@@ -15,7 +14,7 @@ import { ProgramDecoder } from "./program-decoder/program-decoder";
 import { NO_OF_REGISTERS, Registers } from "./registers";
 
 type InitialState = {
-	regs?: FixedArray<number, 13>;
+	regs?: RegistersArray;
 	pc?: number;
 	pageMap?: PageMapItem[];
 	memory?: MemoryChunkItem[];
@@ -32,6 +31,14 @@ type PageMapItem = {
 	length: number;
 	"is-writable": boolean;
 };
+
+type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N
+	? A
+	: GrowToSize<T, N, [...A, T]>;
+
+type FixedArray<T, N extends number> = GrowToSize<T, N, []>;
+
+export type RegistersArray = FixedArray<number, 13>;
 
 export class Pvm {
 	private pc = 0;

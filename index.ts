@@ -1,5 +1,5 @@
-import "./packages/block";
-import "./packages/header";
+import "./packages/stubs/block";
+import "./packages/stubs/header";
 import "./packages/opaque";
-import "./packages/state";
-import "./packages/workReport";
+import "./packages/stubs/state";
+import "./packages/stubs/workReport";

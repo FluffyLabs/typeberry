@@ -1,6 +1,5 @@
 import assert from "node:assert";
-import type { FixedArray } from "../../packages/fixed-array";
-import { Pvm } from "../../packages/pvm/pvm";
+import { Pvm, type RegistersArray } from "../../packages/pvm/pvm";
 import type { FromJson } from "./json-parser";
 
 type Status = "trap";
@@ -40,14 +39,14 @@ export class PvmTest {
 	};
 
 	name!: string;
-	"initial-regs": FixedArray<number, 13>;
+	"initial-regs": RegistersArray;
 	"initial-pc": number;
 	"initial-page-map": PageMapItem[];
 	"initial-memory": MemoryChunkItem[];
 	"initial-gas": number;
 	program!: number[];
 	"expected-status": Status;
-	"expected-regs": FixedArray<number, 13>;
+	"expected-regs": RegistersArray;
 	"expected-pc": number;
 	"expected-memory": MemoryChunkItem[];
 	"expected-gas": number;
