@@ -59,9 +59,10 @@ export class InMemoryTrie {
 		this.nodes = nodes;
 	}
 
-	set(key: StateKey, value: BytesBlob, valueHash?: TrieHash) {
+	set(key: StateKey, value: BytesBlob, maybeValueHash?: TrieHash) {
 		this.flat.set(key, value);
-		valueHash ??= this.nodes.hasher.hashConcat(value.buffer);
+		const valueHash =
+			maybeValueHash ?? this.nodes.hasher.hashConcat(value.buffer);
 		this.root = LeafNode.fromValue(key, value, valueHash).node;
 	}
 
@@ -75,7 +76,6 @@ function merkelize(root: TrieNode | null, nodes: NodesDb): TrieHash {
 		return Bytes.zero(HASH_BYTES) as TrieHash;
 	}
 
-	debugger;
 	const kind = root.getNodeType();
 	if (kind === NodeType.Branch) {
 		const node = root.asBranchNode();
@@ -207,7 +207,11 @@ export class LeafNode {
 		this.node = node;
 	}
 
-	static fromValue(key: StateKey, value: BytesBlob, valueHash: TrieHash): LeafNode {
+	static fromValue(
+		key: StateKey,
+		value: BytesBlob,
+		valueHash: TrieHash,
+	): LeafNode {
 		const node = new TrieNode();
 		// The value will fit in the leaf itself.
 		if (value.length <= HASH_BYTES) {
@@ -257,9 +261,7 @@ export class LeafNode {
 	 */
 	getValue(): BytesBlob {
 		const len = this.getValueLength();
-		return new BytesBlob(
-			this.node.data.subarray(HASH_BYTES, HASH_BYTES + len),
-		);
+		return new BytesBlob(this.node.data.subarray(HASH_BYTES, HASH_BYTES + len));
 	}
 
 	/**
