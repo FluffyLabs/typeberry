@@ -1,16 +1,16 @@
 import blake2b from "blake2b";
 import { Bytes } from "./bytes";
-import type { TrieHash, TrieHasher } from "./trie/trie";
+import { HASH_BYTES, type TrieHash, type TrieHasher } from "./trie/trie";
 
 export const trieHasher: TrieHasher = {
-	hashConcat(n: DataView, rest?: DataView[]): TrieHash {
-		const hasher = blake2b(512);
+	hashConcat(n: Uint8Array, rest?: Uint8Array[]): TrieHash {
+		const hasher = blake2b(HASH_BYTES);
 		hasher?.update(n);
 		for (const v of rest ?? []) {
 			hasher?.update(v);
 		}
-		const out = Bytes.zero(32);
-		hasher?.digest(out);
+		const out = Bytes.zero(HASH_BYTES);
+		hasher?.digest(out.raw);
 		return out as TrieHash;
 	},
 };

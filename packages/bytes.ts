@@ -2,32 +2,31 @@ function assert(value: boolean, description: string): asserts value is true {
 	if (!value) throw new Error(description);
 }
 
-function bufferToHexString(buffer: ArrayBuffer): string {
+function bytesToHexString(buffer: Uint8Array): string {
 	// TODO [ToDr] consider using TextDecoder API?
 	let s = "0x";
-	const asUint = new Uint8Array(buffer);
-	for (const v of asUint) {
+	for (const v of buffer) {
 		s += v.toString(16).padStart(2, "0");
 	}
 	return s;
 }
 
 export class BytesBlob {
-	readonly buffer: ArrayBuffer = new ArrayBuffer(0);
+	readonly buffer: Uint8Array = new Uint8Array([]);
 	readonly length: number = 0;
 
-	constructor(buffer: ArrayBuffer) {
-		this.buffer = buffer;
-		this.length = buffer.byteLength;
+	constructor(data: Uint8Array) {
+		this.buffer = data;
+		this.length = data.byteLength;
 	}
 
 	toString() {
-		return bufferToHexString(this.buffer);
+		return bytesToHexString(this.buffer);
 	}
 
 	static fromBytes(v: number[]): BytesBlob {
 		const arr = new Uint8Array(v);
-		return new BytesBlob(arr.buffer);
+		return new BytesBlob(arr);
 	}
 
 	static parseBlobNoPrefix(v: string): BytesBlob {
@@ -40,6 +39,8 @@ export class BytesBlob {
 		const bytes = new Uint8Array(buffer);
 		for (let i = 0; i < len - 1; i += 2) {
 			const c = v.substring(i, i + 2);
+			// TODO [ToDr] Remove string concat and simply parse each nibble manually
+			// (switch from 0..f)
 			const parsed = Number(`0x${c}`);
 			if (Number.isNaN(parsed)) {
 				throw new Error(`Invalid characters in hex byte string: ${c}`);
@@ -47,7 +48,7 @@ export class BytesBlob {
 			bytes[i / 2] = parsed;
 		}
 
-		return new BytesBlob(buffer);
+		return new BytesBlob(bytes);
 	}
 
 	static parseBlob(v: string): BytesBlob {
@@ -59,10 +60,10 @@ export class BytesBlob {
 }
 
 export class Bytes<T extends number> {
-	readonly raw: DataView = new DataView(new ArrayBuffer(0));
+	readonly raw: Uint8Array = new Uint8Array([]);
 	readonly length: T;
 
-	constructor(raw: DataView, len: T) {
+	constructor(raw: Uint8Array, len: T) {
 		assert(
 			raw.byteLength === len,
 			`Given buffer has incorrect size ${raw.byteLength} vs expected ${len}`,
@@ -72,12 +73,11 @@ export class Bytes<T extends number> {
 	}
 
 	toString() {
-		// TODO [ToDr] This disregards offset and length we should not be accessing raw buffer.
-		return bufferToHexString(this.raw.buffer);
+		return bytesToHexString(this.raw);
 	}
 
 	static zero<X extends number>(len: X): Bytes<X> {
-		return new Bytes(new DataView(new ArrayBuffer(len)), len);
+		return new Bytes(new Uint8Array(len), len);
 	}
 
 	static parseBytesNoPrefix<X extends number>(v: string, len: X): Bytes<X> {
@@ -88,7 +88,7 @@ export class Bytes<T extends number> {
 		}
 
 		const blob = BytesBlob.parseBlobNoPrefix(v);
-		return new Bytes(new DataView(blob.buffer), len);
+		return new Bytes(blob.buffer, len);
 	}
 
 	static parseBytes<X extends number>(v: string, len: X): Bytes<X> {
@@ -99,6 +99,6 @@ export class Bytes<T extends number> {
 		}
 
 		const blob = BytesBlob.parseBlob(v);
-		return new Bytes(new DataView(blob.buffer), len);
+		return new Bytes(blob.buffer, len);
 	}
 }

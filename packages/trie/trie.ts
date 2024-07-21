@@ -3,15 +3,15 @@ import { check } from "../debug";
 import type { Hash } from "../hash";
 import type { Opaque } from "../opaque";
 
-const HASH_BYTES = 32;
+export const HASH_BYTES = 32;
 const TRUNCATED_KEY_BYTES = 31;
 
 export type TrieHasher = {
-	hashConcat(n: DataView, r?: DataView[]): TrieHash;
+	hashConcat(n: Uint8Array, r?: Uint8Array[]): TrieHash;
 };
 
 function hashNode(hasher: TrieHasher, n: TrieNode): TrieHash {
-	return hasher.hashConcat(new DataView(n.data.buffer));
+	return hasher.hashConcat(n.data);
 }
 
 export type StateKey = Opaque<Bytes<32>, "stateKey">;
@@ -24,13 +24,13 @@ export function parseStateKey(v: string): StateKey {
 }
 
 export class StateDiff {
-	diff: Map<StateKey, BytesBlob> = new Map();
+	readonly diff: Map<StateKey, BytesBlob> = new Map();
 }
 
 class NodesDb {
-	public hasher: TrieHasher;
+	readonly hasher: TrieHasher;
 
-	nodes: Map<TrieHash, TrieNode> = new Map();
+	private readonly nodes: Map<TrieHash, TrieNode> = new Map();
 
 	constructor(hasher: TrieHasher) {
 		this.hasher = hasher;
@@ -47,9 +47,9 @@ class NodesDb {
 }
 
 export class InMemoryTrie {
-	private flat: Map<StateKey, BytesBlob> = new Map();
+	private readonly flat: Map<StateKey, BytesBlob> = new Map();
+	private readonly nodes: NodesDb;
 	private root: TrieNode | null = null;
-	private nodes: NodesDb;
 
 	static empty(hasher: TrieHasher): InMemoryTrie {
 		return new InMemoryTrie(new NodesDb(hasher));
@@ -59,8 +59,10 @@ export class InMemoryTrie {
 		this.nodes = nodes;
 	}
 
-	set(key: StateKey, value: BytesBlob) {
+	set(key: StateKey, value: BytesBlob, valueHash?: TrieHash) {
 		this.flat.set(key, value);
+		valueHash ??= this.nodes.hasher.hashConcat(value.buffer);
+		this.root = LeafNode.fromValue(key, value, valueHash).node;
 	}
 
 	getRoot(): TrieHash {
@@ -72,11 +74,14 @@ function merkelize(root: TrieNode | null, nodes: NodesDb): TrieHash {
 	if (root === null) {
 		return Bytes.zero(HASH_BYTES) as TrieHash;
 	}
+
+	debugger;
 	const kind = root.getNodeType();
 	if (kind === NodeType.Branch) {
 		const node = root.asBranchNode();
 		// TODO [ToDr] maybe better to store children directly instead of going to the db?
 		// it needs an extra step when writing to disk, but might be faster?
+		// TODO [ToDr] avoid recursion
 		const left = merkelize(nodes.get(node.getLeft()), nodes);
 		const right = merkelize(nodes.get(node.getRight()), nodes);
 		return nodes.hasher.hashConcat(left.raw, [right.raw]);
@@ -110,15 +115,15 @@ export enum NodeType {
  */
 export class TrieNode {
 	/** Exactly 512 bits / 64 bytes */
-	data: Uint8Array = new Uint8Array();
+	readonly data: Uint8Array = new Uint8Array(64);
 
 	/** Returns the type of the node */
 	getNodeType(): NodeType {
-		if ((this.data[0] & 0x1) === 0x0) {
+		if ((this.data[0] & 0b1) === 0b0) {
 			return NodeType.Branch;
 		}
 
-		if ((this.data[0] & 0x01) === 0x10) {
+		if ((this.data[0] & 0b11) === 0b11) {
 			return NodeType.EmbedLeaf;
 		}
 
@@ -152,7 +157,7 @@ export class TrieNode {
  */
 export class BranchNode {
 	// Underlying raw node.
-	node: TrieNode;
+	readonly node: TrieNode;
 
 	constructor(node: TrieNode) {
 		this.node = node;
@@ -162,7 +167,7 @@ export class BranchNode {
 	getLeft(): TrieHash {
 		// TODO [ToDr] what to do with the first bit?
 		return new Bytes(
-			new DataView(this.node.data.buffer, 0, HASH_BYTES),
+			this.node.data.subarray(0, HASH_BYTES),
 			HASH_BYTES,
 		) as TrieHash;
 	}
@@ -170,7 +175,7 @@ export class BranchNode {
 	/** Get the hash of the right sub-trie. */
 	getRight(): TrieHash {
 		return new Bytes(
-			new DataView(this.node.data.buffer, HASH_BYTES),
+			this.node.data.subarray(HASH_BYTES),
 			HASH_BYTES,
 		) as TrieHash;
 	}
@@ -196,16 +201,37 @@ export class BranchNode {
  */
 export class LeafNode {
 	// Underlying raw node.
-	node: TrieNode;
+	readonly node: TrieNode;
 
 	constructor(node: TrieNode) {
 		this.node = node;
 	}
 
+	static fromValue(key: StateKey, value: BytesBlob, valueHash: TrieHash): LeafNode {
+		const node = new TrieNode();
+		// The value will fit in the leaf itself.
+		if (value.length <= HASH_BYTES) {
+			node.data[0] = value.length << 2;
+			node.data[0] |= 0b01;
+			// truncate & copy the key
+			node.data.set(key.raw.subarray(0, TRUNCATED_KEY_BYTES), 1);
+			// copy the value
+			node.data.set(value.buffer, TRUNCATED_KEY_BYTES + 1);
+		} else {
+			node.data[0] = 0b11;
+			// truncate & copy the key
+			node.data.set(key.raw.subarray(0, TRUNCATED_KEY_BYTES), 1);
+			// copy the value hash
+			node.data.set(valueHash.raw, TRUNCATED_KEY_BYTES + 1);
+		}
+
+		return new LeafNode(node);
+	}
+
 	/** Get the key (truncated to 31 bytes). */
 	getKey(): TruncatedStateKey {
 		return new Bytes(
-			new DataView(this.node.data.buffer, 0, TRUNCATED_KEY_BYTES),
+			this.node.data.subarray(0, TRUNCATED_KEY_BYTES),
 			TRUNCATED_KEY_BYTES,
 		) as TruncatedStateKey;
 	}
@@ -219,8 +245,8 @@ export class LeafNode {
 	getValueLength(): number {
 		const firstByte = this.node.data[0];
 		// clean the first two bits
-		const cleanByte = firstByte & 0b11111100;
-		return cleanByte >> 2;
+		const cleanByte = firstByte & 0b0011_1111;
+		return cleanByte;
 	}
 
 	/**
@@ -232,7 +258,7 @@ export class LeafNode {
 	getValue(): BytesBlob {
 		const len = this.getValueLength();
 		return new BytesBlob(
-			this.node.data.buffer.slice(HASH_BYTES, HASH_BYTES + len),
+			this.node.data.subarray(HASH_BYTES, HASH_BYTES + len),
 		);
 	}
 
@@ -244,7 +270,7 @@ export class LeafNode {
 	 */
 	getValueHash(): ValueHash {
 		return new Bytes(
-			new DataView(this.node.data.buffer, HASH_BYTES),
+			this.node.data.subarray(HASH_BYTES),
 			HASH_BYTES,
 		) as ValueHash;
 	}
