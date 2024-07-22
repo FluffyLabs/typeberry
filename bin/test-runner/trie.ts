@@ -1,13 +1,16 @@
 import assert from "node:assert";
+import { test } from 'node:test';
+
 import { Bytes, BytesBlob } from "../../packages/bytes";
-import type { TrieHash } from "../../packages/trie/trie";
+import { InMemoryTrie, StateKey, type TrieHash } from "../../packages/trie/trie";
 import type { FromJson } from "./json-parser";
+import {blake2bTrieHasher} from "../../packages/blake2b.node";
 
 export class TrieTest {
 	static fromJson: FromJson<TrieTest> = {
 		input: [
 			"object",
-			(input: unknown, context?: string): Map<Bytes<32>, BytesBlob> => {
+			(input: unknown, context?: string): Map<StateKey, BytesBlob> => {
 				if (input === null) {
 					throw new Error(`[${context}] Unexpected 'null'`);
 				}
@@ -15,9 +18,9 @@ export class TrieTest {
 					throw new Error(`[${context}] Expected an object.`);
 				}
 
-				const output: Map<Bytes<32>, BytesBlob> = new Map();
+				const output: Map<StateKey, BytesBlob> = new Map();
 				for (const [k, v] of Object.entries(input)) {
-					const key = Bytes.parseBytesNoPrefix(k, 32);
+					const key = Bytes.parseBytesNoPrefix(k, 32) as StateKey;
 					const value = BytesBlob.parseBlobNoPrefix(v);
 					output.set(key, value);
 				}
@@ -30,7 +33,7 @@ export class TrieTest {
 			(v: string) => Bytes.parseBytesNoPrefix(v, 32) as TrieHash,
 		],
 	};
-	input!: Map<Bytes<32>, BytesBlob>;
+	input!: Map<StateKey, BytesBlob>;
 	output!: TrieHash;
 }
 
@@ -41,13 +44,18 @@ export const trieTestSuiteFromJson: FromJson<TrieTestSuite> = [
 ];
 
 export async function runTrieTest(testContent: TrieTestSuite) {
-	for (const test of testContent) {
-		assert.strictEqual(
-			test.output,
-			Bytes.parseBytes(
-				"0x0000000000000000000000000000000000000000000000000000000000000000",
-				32,
-			),
-		);
+	for (const [id, testData] of testContent.entries()) {
+		await test(`Trie test ${id}`, () => {
+			const trie = InMemoryTrie.empty(blake2bTrieHasher);
+
+			for (const [key, value] of testData.input.entries()) {
+				trie.set(key, value);
+			}
+
+			assert.deepStrictEqual(
+				testData.output,
+				trie.getRoot(),
+			);
+		});
 	}
 }

@@ -2,7 +2,7 @@ import blake2b from "blake2b";
 import { Bytes } from "./bytes";
 import { HASH_BYTES, type TrieHash, type TrieHasher } from "./trie/trie";
 
-export const trieHasher: TrieHasher = {
+export const blake2bTrieHasher: TrieHasher = {
 	hashConcat(n: Uint8Array, rest?: Uint8Array[]): TrieHash {
 		const hasher = blake2b(HASH_BYTES);
 		hasher?.update(n);

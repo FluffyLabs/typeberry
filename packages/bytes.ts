@@ -1,6 +1,4 @@
-function assert(value: boolean, description: string): asserts value is true {
-	if (!value) throw new Error(description);
-}
+import {check} from "./debug";
 
 function bytesToHexString(buffer: Uint8Array): string {
 	// TODO [ToDr] consider using TextDecoder API?
@@ -64,7 +62,7 @@ export class Bytes<T extends number> {
 	readonly length: T;
 
 	constructor(raw: Uint8Array, len: T) {
-		assert(
+		check(
 			raw.byteLength === len,
 			`Given buffer has incorrect size ${raw.byteLength} vs expected ${len}`,
 		);
@@ -74,6 +72,19 @@ export class Bytes<T extends number> {
 
 	toString() {
 		return bytesToHexString(this.raw);
+	}
+
+	isEqualTo(other: Bytes<T>): boolean {
+		if (this.length != other.length) {
+			return false;
+		}
+
+		for (let i = 0; i < this.length; i++) {
+			if (this.raw[i] != other.raw[i]) {
+				return false; 
+			}
+		}
+		return true; 
 	}
 
 	static zero<X extends number>(len: X): Bytes<X> {
