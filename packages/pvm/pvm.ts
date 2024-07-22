@@ -37,9 +37,6 @@ export type RegistersArray = FixedArray<number, 13>;
 export class Pvm {
   private pc = 0;
   private registers = new Registers();
-  private mathOps = new MathOps(this.registers);
-  private shiftOps = new ShiftOps(this.registers);
-  private bitOps = new BitOps(this.registers);
   private gas: number;
   private pageMap: PageMapItem[];
   private memory: MemoryChunkItem[];
