@@ -1,12 +1,13 @@
 import type { ThreeRegistersResult } from "../args-decoder/args-decoder";
 import { Instruction } from "../instruction";
-import type { BitOps, MathOps, ShiftOps } from "../ops";
+import type { BitOps, BooleanOps, MathOps, ShiftOps } from "../ops";
 
 export class ThreeRegsDispatcher {
   constructor(
     private mathOps: MathOps,
     private shiftOps: ShiftOps,
     private bitOps: BitOps,
+    private booleanOps: BooleanOps,
   ) {}
 
   dispatch(instruction: Instruction, args: ThreeRegistersResult) {
@@ -73,6 +74,14 @@ export class ThreeRegsDispatcher {
       }
       case Instruction.XOR: {
         this.bitOps.xor(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
+      }
+      case Instruction.SET_LT_S: {
+        this.booleanOps.setLessThanSigned(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
+      }
+      case Instruction.SET_LT_U: {
+        this.booleanOps.setLessThanUnsigned(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
         break;
       }
     }
