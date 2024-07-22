@@ -5,10 +5,11 @@
  * Note the checks should not have any side effects, since we might decide
  * to remove all of them in a post-processing step.
  */
-export function check(condition: boolean, message?: string): asserts condition is true {
+export function check(
+	condition: boolean,
+	message?: string,
+): asserts condition is true {
 	if (!condition) {
-		throw new Error(
-			`Assertion failure: ${message || ""}`,
-		);
+		throw new Error(`Assertion failure: ${message || ""}`);
 	}
 }

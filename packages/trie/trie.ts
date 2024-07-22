@@ -88,84 +88,99 @@ export class InMemoryTrie {
  *
  * New root node is returned.
  */
-function trieInsert(root: TrieNode | null, nodes: WriteableNodesDb, leaf: LeafNode): TrieNode {
-		if (root === null) {
-			nodes.insert(leaf.node);
-			return leaf.node;
-		}
+function trieInsert(
+	root: TrieNode | null,
+	nodes: WriteableNodesDb,
+	leaf: LeafNode,
+): TrieNode {
+	if (root === null) {
+		nodes.insert(leaf.node);
+		return leaf.node;
+	}
 
-		// first we look up a good place to insert the node to the tree, based on it's key.
-		const traversedPath = findNodeToReplace(root, nodes, leaf.getKey());
+	// first we look up a good place to insert the node to the tree, based on it's key.
+	const traversedPath = findNodeToReplace(root, nodes, leaf.getKey());
 
-		// now we analyze two possible situations:
-		// 1. We found a leaf node - that means we need to create a branch node (and possible
-		//    extra branch nodes for a common prefix) with these two leafs. Finally we update the
-		//    traversed path from root.
-		// 2. We found an empty spot (i.e. branch node with zero hash) - we can just update already
-		//    traversed path from root.
-		const nodeToInsert: [TrieNode, TrieHash] = traversedPath.leafToReplace
-			? addBranchingAndInsertLeaf(traversedPath, nodes, traversedPath.leafToReplace, leaf)
-			: [leaf.node, nodes.insert(leaf.node)];
+	// now we analyze two possible situations:
+	// 1. We found a leaf node - that means we need to create a branch node (and possible
+	//    extra branch nodes for a common prefix) with these two leafs. Finally we update the
+	//    traversed path from root.
+	// 2. We found an empty spot (i.e. branch node with zero hash) - we can just update already
+	//    traversed path from root.
+	const nodeToInsert: [TrieNode, TrieHash] = traversedPath.leafToReplace
+		? addBranchingAndInsertLeaf(
+				traversedPath,
+				nodes,
+				traversedPath.leafToReplace,
+				leaf,
+			)
+		: [leaf.node, nodes.insert(leaf.node)];
 
-		// finally update the traversed path from `root` to the insertion location.
-		let historicalBranch = traversedPath.branchingHistory.pop();
-		let [lastNode, lastHash] = nodeToInsert;
+	// finally update the traversed path from `root` to the insertion location.
+	let historicalBranch = traversedPath.branchingHistory.pop();
+	let [lastNode, lastHash] = nodeToInsert;
 
-		while (historicalBranch !== undefined) {
-			const [branchNode, branchHash, bit] = historicalBranch;
-			nodes.remove(branchHash);
+	while (historicalBranch !== undefined) {
+		const [branchNode, branchHash, bit] = historicalBranch;
+		nodes.remove(branchHash);
 
-			// TODO [ToDr] [opti] Avoid allocation here by re-using the old branch node?
-			const newBranchNode = bit
-				? BranchNode.fromSubNodes(branchNode.getLeft(), lastHash)
-				: BranchNode.fromSubNodes(lastHash, branchNode.getRight());
-			lastHash = nodes.insert(newBranchNode.node);
-			lastNode = newBranchNode.node;
+		// TODO [ToDr] [opti] Avoid allocation here by re-using the old branch node?
+		const newBranchNode = bit
+			? BranchNode.fromSubNodes(branchNode.getLeft(), lastHash)
+			: BranchNode.fromSubNodes(lastHash, branchNode.getRight());
+		lastHash = nodes.insert(newBranchNode.node);
+		lastNode = newBranchNode.node;
 
-			historicalBranch = traversedPath.branchingHistory.pop();
-		}
+		historicalBranch = traversedPath.branchingHistory.pop();
+	}
 
-		return lastNode;
+	return lastNode;
 }
 
 class TraversedPath {
 	branchingHistory: [BranchNode, TrieHash, boolean][] = [];
-	bitIndex: number = 0;
+	bitIndex = 0;
 	leafToReplace?: [LeafNode, TrieHash];
 }
 
-function findNodeToReplace(root: TrieNode, nodes: NodesDb, key: TruncatedStateKey): TraversedPath {
+function findNodeToReplace(
+	root: TrieNode,
+	nodes: NodesDb,
+	key: TruncatedStateKey,
+): TraversedPath {
 	const traversedPath = new TraversedPath();
 	let currentNode = root;
 	let currentNodeHash = hashNode(nodes.hasher, root);
 
 	while (true) {
 		const kind = currentNode.getNodeType();
-		if (kind === NodeType.Branch) {
-			// going down the trie
-			const branch = currentNode.asBranchNode();
-			const currBit = getBit(key, traversedPath.bitIndex);
-			const nextHash = currBit ? branch.getRight() : branch.getLeft();
-			traversedPath.branchingHistory.push([branch, currentNodeHash, currBit]);
-
-			const nextNode = nodes.get(nextHash);
-			if (nextNode === null) {
-				if (nextHash.isEqualTo(Bytes.zero(HASH_BYTES))) {
-					return traversedPath;
-				} else {
-					throw new Error(`Missing trie node '${nextHash}' with key prefix: ${key}[0..${traversedPath.bitIndex}]`);
-				}
-			}
-
-			currentNode = nextNode;
-			currentNodeHash = nextHash;
-			traversedPath.bitIndex += 1;
-			continue;
-		} else {
+		if (kind !== NodeType.Branch) {
+			// we found a leaf that needs to be merged with the one being inserted.
 			const leaf = currentNode.asLeafNode();
 			traversedPath.leafToReplace = [leaf, currentNodeHash];
 			return traversedPath;
 		}
+
+		// going down the trie
+		const branch = currentNode.asBranchNode();
+		const currBit = getBit(key, traversedPath.bitIndex);
+		const nextHash = currBit ? branch.getRight() : branch.getLeft();
+		traversedPath.branchingHistory.push([branch, currentNodeHash, currBit]);
+
+		const nextNode = nodes.get(nextHash);
+		if (nextNode === null) {
+			if (nextHash.isEqualTo(Bytes.zero(HASH_BYTES))) {
+				return traversedPath;
+			}
+
+			throw new Error(
+				`Missing trie node '${nextHash}' with key prefix: ${key}[0..${traversedPath.bitIndex}]`,
+			);
+		}
+
+		currentNode = nextNode;
+		currentNodeHash = nextHash;
+		traversedPath.bitIndex += 1;
 	}
 }
 
@@ -173,19 +188,19 @@ function addBranchingAndInsertLeaf(
 	traversedPath: TraversedPath,
 	nodes: WriteableNodesDb,
 	leafToReplace: [LeafNode, TrieHash],
-	leaf: LeafNode
+	leaf: LeafNode,
 ): [TrieNode, TrieHash] {
 	const key = leaf.getKey();
 	const [existingLeaf, existingLeafHash] = leafToReplace;
 	const existingLeafKey = existingLeaf.getKey();
 
-	// TODO [ToDr] [opti] instead of inserting/removing a bunch of nodes, it might be 
+	// TODO [ToDr] [opti] instead of inserting/removing a bunch of nodes, it might be
 	// better to return a changeset that can be batch-applied to the DB.
 	const leafNodeHash = nodes.insert(leaf.node);
 	if (existingLeafKey.isEqualTo(key)) {
 		// just replacing an existing value
 		// TODO [ToDr] implement & test
-		throw new Error('replacement is unimplemented yet');
+		throw new Error("replacement is unimplemented yet");
 	}
 
 	// In case both keys share a prefix we need to add a bunch of branch
@@ -207,25 +222,25 @@ function addBranchingAndInsertLeaf(
 	}
 
 	// Now construct the common branches, and insert zero hash in place of other sub-trees.
-	let lastBranch = divergingBit 
+	let lastBranch = divergingBit
 		? BranchNode.fromSubNodes(existingLeafHash, leafNodeHash)
 		: BranchNode.fromSubNodes(leafNodeHash, existingLeafHash);
 
-		let lastHash = nodes.insert(lastBranch.node);
-		let bit = commonBits.pop();
-		const zero = Bytes.zero(HASH_BYTES) as TrieHash;
+	let lastHash = nodes.insert(lastBranch.node);
+	let bit = commonBits.pop();
+	const zero = Bytes.zero(HASH_BYTES) as TrieHash;
 
-		// go up and create branch nodes for the common prefix
-		while (bit !== undefined) {
-			lastBranch = bit
-				? BranchNode.fromSubNodes(zero, lastHash)
-				: BranchNode.fromSubNodes(lastHash, zero);
-				lastHash = nodes.insert(lastBranch.node);
-				bit = commonBits.pop();
-		}
+	// go up and create branch nodes for the common prefix
+	while (bit !== undefined) {
+		lastBranch = bit
+			? BranchNode.fromSubNodes(zero, lastHash)
+			: BranchNode.fromSubNodes(lastHash, zero);
+		lastHash = nodes.insert(lastBranch.node);
+		bit = commonBits.pop();
+	}
 
-		// let's return the top branch to join with the history
-		return [lastBranch.node, lastHash];
+	// let's return the top branch to join with the history
+	return [lastBranch.node, lastHash];
 }
 
 function getBit(key: TruncatedStateKey, bitIndex: number): boolean {
@@ -233,7 +248,7 @@ function getBit(key: TruncatedStateKey, bitIndex: number): boolean {
 	const byte = Math.floor(bitIndex / 8);
 	const bit = bitIndex - byte * 8;
 	const mask = 1 << bit;
-	
+
 	const val = key.raw[byte] & mask;
 	return val > 0;
 }

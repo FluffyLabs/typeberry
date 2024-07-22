@@ -1,10 +1,14 @@
 import assert from "node:assert";
-import { test } from 'node:test';
+import { test } from "node:test";
 
+import { blake2bTrieHasher } from "../../packages/blake2b.node";
 import { Bytes, BytesBlob } from "../../packages/bytes";
-import { InMemoryTrie, StateKey, type TrieHash } from "../../packages/trie/trie";
+import {
+	InMemoryTrie,
+	type StateKey,
+	type TrieHash,
+} from "../../packages/trie/trie";
 import type { FromJson } from "./json-parser";
-import {blake2bTrieHasher} from "../../packages/blake2b.node";
 
 export class TrieTest {
 	static fromJson: FromJson<TrieTest> = {
@@ -52,10 +56,7 @@ export async function runTrieTest(testContent: TrieTestSuite) {
 				trie.set(key, value);
 			}
 
-			assert.deepStrictEqual(
-				testData.output,
-				trie.getRoot(),
-			);
+			assert.deepStrictEqual(testData.output, trie.getRoot());
 		});
 	}
 }

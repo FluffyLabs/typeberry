@@ -1,4 +1,4 @@
-import {check} from "./debug";
+import { check } from "./debug";
 
 function bytesToHexString(buffer: Uint8Array): string {
 	// TODO [ToDr] consider using TextDecoder API?
@@ -75,16 +75,16 @@ export class Bytes<T extends number> {
 	}
 
 	isEqualTo(other: Bytes<T>): boolean {
-		if (this.length != other.length) {
+		if (this.length !== other.length) {
 			return false;
 		}
 
 		for (let i = 0; i < this.length; i++) {
-			if (this.raw[i] != other.raw[i]) {
-				return false; 
+			if (this.raw[i] !== other.raw[i]) {
+				return false;
 			}
 		}
-		return true; 
+		return true;
 	}
 
 	static zero<X extends number>(len: X): Bytes<X> {
