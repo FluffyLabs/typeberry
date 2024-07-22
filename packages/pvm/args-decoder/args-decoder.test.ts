@@ -59,4 +59,25 @@ test("ArgsDecoder", async (t) => {
 
     assert.deepStrictEqual(result, expectedResult);
   });
+
+  await t.test("return correct result for instruction with 2 regs and 1 immediate", () => {
+    const code = new Uint8Array([Instruction.ADD_IMM, 0x12, 0xff]);
+    const mask = new Mask(new Uint8Array([0b1111_1001]));
+    const argsDecoder = new ArgsDecoder(code, mask);
+    const expectedImmediateDecoder = new ImmediateDecoder();
+    expectedImmediateDecoder.setBytes(new Uint8Array([0xff]));
+    const expectedResult = {
+      noOfInstructionsToSkip: code.length,
+      type: ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE,
+
+      firstRegisterIndex: 1,
+      secondRegisterIndex: 2,
+
+      immediateDecoder1: expectedImmediateDecoder,
+    };
+
+    const result = argsDecoder.getArgs(0);
+
+    assert.deepStrictEqual(result, expectedResult);
+  });
 });
