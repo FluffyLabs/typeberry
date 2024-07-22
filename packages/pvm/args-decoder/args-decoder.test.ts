@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { Instruction } from "../instruction";
 import { Mask } from "../program-decoder/mask";
 import { ArgsDecoder } from "./args-decoder";
+import { ArgumentType } from "./argument-type";
 import { ImmediateDecoder } from "./decoders/immediate-decoder";
 
 test("ArgsDecoder", async (t) => {
@@ -12,15 +13,7 @@ test("ArgsDecoder", async (t) => {
     const argsDecoder = new ArgsDecoder(code, mask);
     const expectedResult = {
       noOfInstructionsToSkip: code.length,
-
-      firstRegisterIndex: null,
-      secondRegisterIndex: null,
-      thirdRegisterIndex: null,
-
-      immediateDecoder1: null,
-      immediateDecoder2: null,
-
-      offset: null,
+      type: ArgumentType.NO_ARGUMENTS,
     };
 
     const result = argsDecoder.getArgs(0);
@@ -34,15 +27,11 @@ test("ArgsDecoder", async (t) => {
     const argsDecoder = new ArgsDecoder(code, mask);
     const expectedResult = {
       noOfInstructionsToSkip: code.length,
+      type: ArgumentType.THREE_REGISTERS,
 
       firstRegisterIndex: 1,
       secondRegisterIndex: 2,
       thirdRegisterIndex: 3,
-
-      immediateDecoder1: null,
-      immediateDecoder2: null,
-
-      offset: null,
     };
 
     const result = argsDecoder.getArgs(0);
@@ -58,15 +47,12 @@ test("ArgsDecoder", async (t) => {
     expectedImmediateDecoder.setBytes(new Uint8Array([0xff]));
     const expectedResult = {
       noOfInstructionsToSkip: code.length,
+      type: ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE,
 
       firstRegisterIndex: 1,
       secondRegisterIndex: 2,
-      thirdRegisterIndex: null,
 
       immediateDecoder1: expectedImmediateDecoder,
-      immediateDecoder2: null,
-
-      offset: null,
     };
 
     const result = argsDecoder.getArgs(0);
