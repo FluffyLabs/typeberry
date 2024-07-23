@@ -109,7 +109,6 @@ export class BranchNode {
 
 	/** Get the hash of the left sub-trie. */
 	getLeft(): TrieHash {
-		// TODO [ToDr] what to do with the first bit?
 		return new Bytes(
 			this.node.data.subarray(0, HASH_BYTES),
 			HASH_BYTES,
@@ -136,7 +135,7 @@ export class BranchNode {
  * |----|----------|-------------------|---------------------------|
  * | 10 |  000111  | deadbeef...       | 0123456789abcdef...       |
  * +---------------------------------------------------------------+
- * |                    Value value leaf                        |
+ * |                    Value hash leaf                            |
  * +----+----------+-------------------+---------------------------+
  * | BL |   zero   | Key               | Value hash                |
  * |----|----------|-------------------|---------------------------|
