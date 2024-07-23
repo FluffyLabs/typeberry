@@ -19,7 +19,8 @@ interface LogEntry {
 }
 
 const DRY = true;
-const LOG_PATH = "../logs/commit-hash-to-blockchain.log.json";
+const LOGS_DIR = "../logs/";
+const LOG_PATH = `${LOGS_DIR}commit-hash-to-blockchain.log.json`;
 
 async function main() {
   const log: LogEntry[] = [];
@@ -50,6 +51,7 @@ async function main() {
 
     log.push(logEntry);
 
+    await fs.mkdir(LOGS_DIR);
     await fs.writeFile(LOG_PATH, JSON.stringify(log));
 
     return;
