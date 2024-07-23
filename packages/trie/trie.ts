@@ -37,24 +37,45 @@ class NodesDb {
 	}
 
 	get(hash: TrieHash): TrieNode | null {
-		return this.nodes.get(hash.toString()) ?? null;
+		const key = NodesDb.hashCompatStr(hash);
+		return this.nodes.get(key) ?? null;
+	}
+
+	/**
+	 * Returns a string identifier of that hash to be used as a key in DB.
+	 *
+	 * Before calling `toString` the first bit is set to 0, to maintain compatibility
+	 * with branch nodes, which have the left subtree stripped out of the first bit (since it's
+	 * a branch node identifier).
+	 *
+	 */
+	protected static hashCompatStr(hash: TrieHash): string {
+		const prevValue = hash.raw[0];
+		hash.raw[0] &= 0b1111_1110;
+		const hashString = hash.toString();
+		// restore the original byte, so that we have correct value in case it
+		// ends up in the right part of the subtree.
+		hash.raw[0] = prevValue;
+		return hashString;
 	}
 }
 
 class WriteableNodesDb extends NodesDb {
-	remove(branchHash: TrieHash) {
-		// TODO [ToDr] implement me - currently no-op.
+	remove(hash: TrieHash) {
+		const key = NodesDb.hashCompatStr(hash);
+		this.nodes.delete(key);
 	}
 
 	insert(node: TrieNode, hash?: TrieHash): TrieHash {
 		const h = hash ?? hashNode(this.hasher, node);
-		this.nodes.set(h.toString(), node);
+		const key = NodesDb.hashCompatStr(h);
+		this.nodes.set(key, node);
 		return h;
 	}
 }
 
 export class InMemoryTrie {
-	private readonly flat: Map<StateKey, BytesBlob> = new Map();
+	private readonly flat: Map<string, BytesBlob> = new Map();
 	private readonly nodes: WriteableNodesDb;
 	private root: TrieNode | null = null;
 
@@ -67,7 +88,7 @@ export class InMemoryTrie {
 	}
 
 	set(key: StateKey, value: BytesBlob, maybeValueHash?: TrieHash) {
-		this.flat.set(key, value);
+		this.flat.set(key.toString(), value);
 		const valueHash =
 			maybeValueHash ?? this.nodes.hasher.hashConcat(value.buffer);
 		const leafNode = LeafNode.fromValue(key, value, valueHash);
@@ -75,8 +96,15 @@ export class InMemoryTrie {
 	}
 
 	getRoot(): TrieHash {
-		// TODO [ToDr] maybe we can just hash the root? We don't need to go down?
-		return trieMerkleRoot(this.root, this.nodes);
+		if (this.root === null) {
+			return Bytes.zero(HASH_BYTES) as TrieHash;
+		}
+
+		return hashNode(this.nodes.hasher, this.root);
+	}
+
+	toString(): string {
+		return trieStringify(this.root, this.nodes);
 	}
 }
 
@@ -103,12 +131,12 @@ function trieInsert(
 
 	// now we analyze two possible situations:
 	// 1. We found a leaf node - that means we need to create a branch node (and possible
-	//    extra branch nodes for a common prefix) with these two leafs. Finally we update the
+	//    extra branch nodes for a common prefix) with these two leaves. Finally we update the
 	//    traversed path from root.
 	// 2. We found an empty spot (i.e. branch node with zero hash) - we can just update already
 	//    traversed path from root.
 	const nodeToInsert: [TrieNode, TrieHash] = traversedPath.leafToReplace
-		? addBranchingAndInsertLeaf(
+		? createSubtreeForBothLeaves(
 				traversedPath,
 				nodes,
 				traversedPath.leafToReplace,
@@ -137,12 +165,22 @@ function trieInsert(
 	return lastNode;
 }
 
+/**
+ * Path of branch nodes traversed while looking for the best place to put a new leaf.
+ */
 class TraversedPath {
+	/** history of branch nodes (with their hashes) and the branching bit. */
 	branchingHistory: [BranchNode, TrieHash, boolean][] = [];
+	/** last bitIndex */
 	bitIndex = 0;
+	/** in case of a leaf node at destination, details of that leaf node */
 	leafToReplace?: [LeafNode, TrieHash];
 }
 
+/**
+ * Traverse the trie starting from root and return the path leading to the destination
+ * where leaf with `key` should be placed.
+ */
 function findNodeToReplace(
 	root: TrieNode,
 	nodes: NodesDb,
@@ -184,14 +222,21 @@ function findNodeToReplace(
 	}
 }
 
-function addBranchingAndInsertLeaf(
+/**
+ * Handle a situation where we replace an existing leaf node at destination.
+ *
+ * In such case we need to create a subtree that will hold both of the leaves.
+ *
+ * The function returns a root of the subtree.
+ */
+function createSubtreeForBothLeaves(
 	traversedPath: TraversedPath,
 	nodes: WriteableNodesDb,
 	leafToReplace: [LeafNode, TrieHash],
 	leaf: LeafNode,
 ): [TrieNode, TrieHash] {
 	const key = leaf.getKey();
-	const [existingLeaf, existingLeafHash] = leafToReplace;
+	let [existingLeaf, existingLeafHash] = leafToReplace;
 	const existingLeafKey = existingLeaf.getKey();
 
 	// TODO [ToDr] [opti] instead of inserting/removing a bunch of nodes, it might be
@@ -199,8 +244,8 @@ function addBranchingAndInsertLeaf(
 	const leafNodeHash = nodes.insert(leaf.node);
 	if (existingLeafKey.isEqualTo(key)) {
 		// just replacing an existing value
-		// TODO [ToDr] implement & test
-		throw new Error("replacement is unimplemented yet");
+		nodes.remove(existingLeafHash);
+		return [leaf.node, leafNodeHash];
 	}
 
 	// In case both keys share a prefix we need to add a bunch of branch
@@ -222,13 +267,26 @@ function addBranchingAndInsertLeaf(
 	}
 
 	// Now construct the common branches, and insert zero hash in place of other sub-trees.
+	const zero = Bytes.zero(HASH_BYTES) as TrieHash;
+
+	// In case we move the leaf from left to right it's hash needs to be re-calculated (missing bit).
+	// TODO [ToDr] [opti] might be better to store the original bit value instead of recalculating.
+	const leafWasInLeftBranch = (() => {
+		const l = traversedPath.branchingHistory.length;
+		if (l > 0) {
+			return traversedPath.branchingHistory[l - 1][2] === false;
+		}
+		return false;
+	})();
+	if (leafWasInLeftBranch && !divergingBit) {
+		existingLeafHash = hashNode(nodes.hasher, existingLeaf.node);
+	}
+
 	let lastBranch = divergingBit
 		? BranchNode.fromSubNodes(existingLeafHash, leafNodeHash)
 		: BranchNode.fromSubNodes(leafNodeHash, existingLeafHash);
-
 	let lastHash = nodes.insert(lastBranch.node);
 	let bit = commonBits.pop();
-	const zero = Bytes.zero(HASH_BYTES) as TrieHash;
 
 	// go up and create branch nodes for the common prefix
 	while (bit !== undefined) {
@@ -243,6 +301,9 @@ function addBranchingAndInsertLeaf(
 	return [lastBranch.node, lastHash];
 }
 
+/**
+ * Return a single bit from `key` located at `bitIndex`.
+ */
 function getBit(key: TruncatedStateKey, bitIndex: number): boolean {
 	check(bitIndex <= 255);
 	const byte = Math.floor(bitIndex / 8);
@@ -251,36 +312,6 @@ function getBit(key: TruncatedStateKey, bitIndex: number): boolean {
 
 	const val = key.raw[byte] & mask;
 	return val > 0;
-}
-
-/**
- * Construct a sub-trie commitment given root node and the collection of inner nodes.
- *
- * This function will perform a Merkelization of the binary trie, as described in
- * section D.2 of the Gray Paper.
- *
- * We are going to traverse the trie starting from the leafs and concate and hash their
- * representations. We always concate two siblings (taking zero hash if there is only one leaf)
- * and move to the upper level to concate & hash the resulting hashes of the two child sub-tries.
-
- */
-function trieMerkleRoot(root: TrieNode | null, nodes: NodesDb): TrieHash {
-	if (root === null) {
-		return Bytes.zero(HASH_BYTES) as TrieHash;
-	}
-
-	const kind = root.getNodeType();
-	if (kind === NodeType.Branch) {
-		const node = root.asBranchNode();
-		// TODO [ToDr] [opti] maybe better to store children directly instead of going to the db?
-		// it needs an extra step when writing to disk, but might be faster?
-		// TODO [ToDr] [crit] avoid recursion
-		const left = trieMerkleRoot(nodes.get(node.getLeft()), nodes);
-		const right = trieMerkleRoot(nodes.get(node.getRight()), nodes);
-		return nodes.hasher.hashConcat(left.raw, [right.raw]);
-	}
-
-	return hashNode(nodes.hasher, root);
 }
 
 export enum NodeType {
@@ -360,6 +391,7 @@ export class BranchNode {
 		const node = new TrieNode();
 		node.data.set(left.raw, 0);
 		node.data.set(right.raw, HASH_BYTES);
+
 		// set the first bit to 0 (branch node)
 		node.data[0] &= 0b1111_1110;
 
@@ -478,3 +510,38 @@ export class LeafNode {
 		) as ValueHash;
 	}
 }
+
+function trieStringify(root: TrieNode | null, nodes: NodesDb): string {
+	if (root === null) {
+		return "<empty tree>";
+	}
+
+	const kind = root.getNodeType();
+	if (kind === NodeType.Branch) {
+		const branch = root.asBranchNode();
+		const leftHash = branch.getLeft();
+		const rightHash = branch.getRight();
+		const indent = (v: string) =>
+			v
+				.split("\n")
+				.map((v) => `\t\t${v}`)
+				.join("\n");
+		const left = trieStringify(nodes.get(leftHash), nodes);
+		const right = trieStringify(nodes.get(rightHash), nodes);
+
+		return `<branch>
+	-- ${leftHash}: ${indent(left)}
+	-- ${rightHash}: ${indent(right)}
+`;
+	}
+
+	const leaf = root.asLeafNode();
+	const valueLength = leaf.getValueLength();
+	const value =
+		valueLength > 0
+			? `'${leaf.getValue()}'(len:${valueLength})`
+			: `'<hash>${leaf.getValueHash()}'`;
+	return `\nLeaf('${leaf.getKey().toString()}',${value})`;
+}
+
+// TODO [ToDr] Split into multiple files.
