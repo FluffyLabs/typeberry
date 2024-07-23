@@ -24,7 +24,7 @@ We recommend [NVM](https://github.com/nvm-sh/nvm) to install and manage differen
 ## Installing dependencies
 
 ```
-$ npm i
+$ npm ci
 ```
 
 ## Running unit tests
