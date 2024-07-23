@@ -58,7 +58,7 @@ export class BytesBlob {
 }
 
 export class Bytes<T extends number> {
-	readonly raw: Uint8Array = new Uint8Array([]);
+	readonly raw: Uint8Array;
 	readonly length: T;
 
 	constructor(raw: Uint8Array, len: T) {
