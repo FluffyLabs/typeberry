@@ -1,5 +1,5 @@
 import * as fs from "node:fs/promises";
-import github from "@actions/github";
+import * as github from "@actions/github";
 import { ApiPromise, WsProvider, Keyring } from "@polkadot/api";
 import type { ExtrinsicStatus, Hash } from "@polkadot/types/interfaces";
 import type { PushEvent } from "@octokit/webhooks-types";
