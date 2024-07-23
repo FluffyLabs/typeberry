@@ -33,15 +33,15 @@ export enum NodeType {
  * A representation of an unidentified raw trie node.
  *
  * The node can be either (determined by the first bit):
- *  - a branch node
- *  - a leaf node
+ *	- a branch node
+ *	- a leaf node
  *
  * In case of a branch node the contained data is:
  *	- left sub-node hash (32 bytes - 1 bit)
  *	- right sub-node hash (32 bytes)
  *
  * There are two kinds of leaf nodes (determined by the second bit)
- *  - Embedded value leaf nodes
+ *	- Embedded value leaf nodes
  *	- Value hash leaf nodes
  *
  * Embedded value leaf nodes contain
