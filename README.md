@@ -61,7 +61,7 @@ check out the repository with test cases and then use `test-runner` to execute t
 ```
 $ git clone https://github.com/w3f/jamtestvectors.git
 $ cd typeberry
-$ npm run ts-node ./bin/test-runner.ts ../jamtestvectors/**/*.json
+$ npm run test-runner --  ../jamtestvectors/**/*.json
 ```
 
 Obviously it's also possible to run just single test case or part of the testcases by altering the glob pattern in the path.
