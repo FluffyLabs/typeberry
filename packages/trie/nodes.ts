@@ -1,5 +1,5 @@
 import { Bytes, BytesBlob } from "../bytes";
-import {check} from "../debug";
+import { check } from "../debug";
 import type { Hash } from "../hash";
 import type { Opaque } from "../opaque";
 
