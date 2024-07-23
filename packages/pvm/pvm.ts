@@ -95,7 +95,7 @@ export class Pvm {
           }
           break;
         case ArgumentType.THREE_REGISTERS:
-          this.threeRegsDispatcher.disptach(currentInstruction, args);
+          this.threeRegsDispatcher.dispatch(currentInstruction, args);
           break;
         case ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE:
           this.twoRegsOneImmDispatcher.dispatch(currentInstruction, args);

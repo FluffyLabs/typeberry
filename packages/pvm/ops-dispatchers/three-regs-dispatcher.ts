@@ -9,7 +9,7 @@ export class ThreeRegsDispatcher {
     private bitOps: BitOps,
   ) {}
 
-  disptach(instruction: Instruction, args: ThreeRegistersResult) {
+  dispatch(instruction: Instruction, args: ThreeRegistersResult) {
     switch (instruction) {
       case Instruction.ADD: {
         this.mathOps.add(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
