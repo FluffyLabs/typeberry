@@ -14,7 +14,7 @@
     "biome": "biome",
     "start-pvm": "ts-node ./bin/pvm.ts",
     "test-runner": "ts-node ./bin/test-runner.ts",
-    "commit-hash-to-blockchain": "ts-node ./bin/commit-hash-to-blockchain.ts"
+    "blockchain-git-log": "ts-node ./bin/blockchain-git-log.ts"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

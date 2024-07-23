@@ -24,9 +24,10 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
-      - name: "Download previous transaction log"
-        uses: actions/download-artifact@v4
-      - run: npm run commit-hash-to-blockchain
+      - run: npm ci
+      # - name: "Download previous transaction log"
+      #   uses: actions/download-artifact@v4
+      - run: npm run blockchain-git-log
       - name: Upload new transaction log
         uses: actions/upload-artifact@v4
         with:

@@ -1,8 +1,8 @@
-import { promises as fs } from "fs";
+import * as fs from "node:fs/promises";
 import github from "@actions/github";
 import { ApiPromise, WsProvider, Keyring } from "@polkadot/api";
-import { ExtrinsicStatus, Hash } from "@polkadot/types/interfaces";
-import { PushEvent } from "@octokit/webhooks-types";
+import type { ExtrinsicStatus, Hash } from "@polkadot/types/interfaces";
+import type { PushEvent } from "@octokit/webhooks-types";
 
 type TransactionPayload = [
   string,
@@ -51,6 +51,8 @@ async function main() {
     log.push(logEntry);
 
     await fs.writeFile(LOG_PATH, JSON.stringify(log));
+
+    return;
   }
 
   // Connect to the local Substrate node
