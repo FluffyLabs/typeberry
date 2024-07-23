@@ -1,14 +1,13 @@
 import type { TwoRegistersOneImmediateResult } from "../args-decoder/args-decoder";
 import { Instruction } from "../instruction";
-import type { BitOps } from "../ops/bit-ops";
-import type { MathOps } from "../ops/math-ops";
-import type { ShiftOps } from "../ops/shift-ops";
+import type { BitOps, BooleanOps, MathOps, ShiftOps } from "../ops";
 
 export class TwoRegsOneImmDispatcher {
   constructor(
     private mathOps: MathOps,
     private shiftOps: ShiftOps,
     private bitOps: BitOps,
+    private booleanOps: BooleanOps,
   ) {}
 
   dispatch(instruction: Instruction, args: TwoRegistersOneImmediateResult) {
@@ -119,6 +118,39 @@ export class TwoRegsOneImmDispatcher {
       }
       case Instruction.XOR_IMM: {
         this.bitOps.xorImmediate(
+          args.firstRegisterIndex,
+          args.immediateDecoder1.getUnsigned(),
+          args.secondRegisterIndex,
+        );
+        break;
+      }
+      case Instruction.SET_LT_S_IMM: {
+        this.booleanOps.setLessThanSignedImmediate(
+          args.firstRegisterIndex,
+          args.immediateDecoder1.getSigned(),
+          args.secondRegisterIndex,
+        );
+        break;
+      }
+      case Instruction.SET_LT_U_IMM: {
+        this.booleanOps.setLessThanUnsignedImmediate(
+          args.firstRegisterIndex,
+          args.immediateDecoder1.getUnsigned(),
+          args.secondRegisterIndex,
+        );
+        break;
+      }
+
+      case Instruction.SET_GT_S_IMM: {
+        this.booleanOps.setGreaterThanSignedImmediate(
+          args.firstRegisterIndex,
+          args.immediateDecoder1.getSigned(),
+          args.secondRegisterIndex,
+        );
+        break;
+      }
+      case Instruction.SET_GT_U_IMM: {
+        this.booleanOps.setGreaterThanUnsignedImmediate(
           args.firstRegisterIndex,
           args.immediateDecoder1.getUnsigned(),
           args.secondRegisterIndex,

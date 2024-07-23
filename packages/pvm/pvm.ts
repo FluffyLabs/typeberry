@@ -3,7 +3,7 @@ import { ArgumentType } from "./args-decoder/argument-type";
 import { assemblify } from "./assemblify";
 import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
-import { BitOps, MathOps, ShiftOps } from "./ops";
+import { BitOps, BooleanOps, MathOps, ShiftOps } from "./ops";
 import { ThreeRegsDispatcher, TwoRegsOneImmDispatcher } from "./ops-dispatchers";
 import type { Mask } from "./program-decoder/mask";
 import { ProgramDecoder } from "./program-decoder/program-decoder";
@@ -37,9 +37,6 @@ export type RegistersArray = FixedArray<number, 13>;
 export class Pvm {
   private pc = 0;
   private registers = new Registers();
-  private mathOps = new MathOps(this.registers);
-  private shiftOps = new ShiftOps(this.registers);
-  private bitOps = new BitOps(this.registers);
   private gas: number;
   private pageMap: PageMapItem[];
   private memory: MemoryChunkItem[];
@@ -67,9 +64,10 @@ export class Pvm {
     const mathOps = new MathOps(this.registers);
     const shiftOps = new ShiftOps(this.registers);
     const bitOps = new BitOps(this.registers);
+    const booleanOps = new BooleanOps(this.registers);
 
-    this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps);
-    this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(mathOps, shiftOps, bitOps);
+    this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps);
+    this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(mathOps, shiftOps, bitOps, booleanOps);
   }
 
   printProgram() {
