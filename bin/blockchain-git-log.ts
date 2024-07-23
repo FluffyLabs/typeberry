@@ -20,7 +20,7 @@ interface LogEntry {
 
 const DRY = true;
 const LOGS_DIR = "../logs/";
-const LOG_PATH = `${LOGS_DIR}commit-hash-to-blockchain.log.json`;
+const LOG_PATH = `${LOGS_DIR}blockchain-git-log.log.json`;
 
 async function main() {
   const log: LogEntry[] = [];
