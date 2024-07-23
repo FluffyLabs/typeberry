@@ -3,6 +3,7 @@ import type {
   OneOffsetResult,
   ThreeRegistersResult,
   TwoRegistersOneImmediateResult,
+  TwoRegistersResult,
   TwoRegistersTwoImmediatesResult,
 } from "./args-decoder";
 import { ArgumentType } from "./argument-type";
@@ -18,7 +19,7 @@ type Results = [
   undefined, // 1 reg 1 imm
   undefined, // 1 reg 2 imms
   undefined, // 1 reg 1 imm 1 offset
-  undefined, // 2 regs
+  TwoRegistersResult,
   TwoRegistersOneImmediateResult,
   undefined, // 2 regs 1 offset
   TwoRegistersTwoImmediatesResult,
@@ -31,6 +32,13 @@ export const createResults = () => {
   results[ArgumentType.NO_ARGUMENTS] = {
     type: ArgumentType.NO_ARGUMENTS,
     noOfInstructionsToSkip: 1,
+  };
+
+  results[ArgumentType.TWO_REGISTERS] = {
+    type: ArgumentType.TWO_REGISTERS,
+    noOfInstructionsToSkip: 1,
+    firstRegisterIndex: 0,
+    secondRegisterIndex: 0,
   };
 
   results[ArgumentType.THREE_REGISTERS] = {

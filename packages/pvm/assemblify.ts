@@ -55,7 +55,7 @@ const instructionsWithOneRegisterOneImmediateAndOneOffset: InstructionTuple[] = 
 ];
 
 const instructionsWithTwoRegisters: InstructionTuple[] = [
-  [Instruction.MOVE_REG, "move_reg", 0],
+  [Instruction.MOVE_REG, "move_reg", 2],
   [Instruction.SBRK, "sbrk", 0],
 ];
 
@@ -86,8 +86,8 @@ const instructionsWithTwoRegistersAndOneImmediate: InstructionTuple[] = [
   [Instruction.SHLO_L_IMM_ALT, "shlo_l_imm_alt", 2],
   [Instruction.SHLO_R_IMM_ALT, "shlo_r_imm_alt", 2],
   [Instruction.SHAR_R_IMM_ALT, "shar_r_imm_alt", 2],
-  [Instruction.CMOV_IZ_IMM, "cmov_iz_imm", 0],
-  [Instruction.CMOV_NZ_IMM, "cmov_nz_imm", 0],
+  [Instruction.CMOV_IZ_IMM, "cmov_iz_imm", 2],
+  [Instruction.CMOV_NZ_IMM, "cmov_nz_imm", 2],
 ];
 
 const instructionsWithTwoRegistersAndOneOffset: InstructionTuple[] = [
@@ -122,8 +122,8 @@ const instructionsWithThreeRegisters: InstructionTuple[] = [
   [Instruction.SHLO_L, "shlo_l", 2],
   [Instruction.SHLO_R, "shlo_r", 2],
   [Instruction.SHAR_R, "shar_r", 2],
-  [Instruction.CMOV_IZ, "cmov_iz", 0],
-  [Instruction.CMOV_NZ, "cmov_nz", 0],
+  [Instruction.CMOV_IZ, "cmov_iz", 2],
+  [Instruction.CMOV_NZ, "cmov_nz", 2],
 ];
 
 const instructions: InstructionTuple[] = [

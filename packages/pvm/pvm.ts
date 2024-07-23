@@ -3,8 +3,8 @@ import { ArgumentType } from "./args-decoder/argument-type";
 import { assemblify } from "./assemblify";
 import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
-import { BitOps, BooleanOps, MathOps, ShiftOps } from "./ops";
-import { ThreeRegsDispatcher, TwoRegsOneImmDispatcher } from "./ops-dispatchers";
+import { BitOps, BooleanOps, MathOps, MoveOps, ShiftOps } from "./ops";
+import { ThreeRegsDispatcher, TwoRegsDispatcher, TwoRegsOneImmDispatcher } from "./ops-dispatchers";
 import type { Mask } from "./program-decoder/mask";
 import { ProgramDecoder } from "./program-decoder/program-decoder";
 import { NO_OF_REGISTERS, Registers } from "./registers";
@@ -46,6 +46,7 @@ export class Pvm {
   private mask: Mask;
   private threeRegsDispatcher: ThreeRegsDispatcher;
   private twoRegsOneImmDispatcher: TwoRegsOneImmDispatcher;
+  private twoRegsDispatcher: TwoRegsDispatcher;
 
   constructor(rawProgram: Uint8Array, initialState: InitialState = {}) {
     const programDecoder = new ProgramDecoder(rawProgram);
@@ -65,9 +66,11 @@ export class Pvm {
     const shiftOps = new ShiftOps(this.registers);
     const bitOps = new BitOps(this.registers);
     const booleanOps = new BooleanOps(this.registers);
+    const moveOps = new MoveOps(this.registers);
 
-    this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps);
-    this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(mathOps, shiftOps, bitOps, booleanOps);
+    this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
+    this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
+    this.twoRegsDispatcher = new TwoRegsDispatcher(moveOps);
   }
 
   printProgram() {
@@ -91,6 +94,9 @@ export class Pvm {
             this.status = "trap";
             return;
           }
+          break;
+        case ArgumentType.TWO_REGISTERS:
+          this.twoRegsDispatcher.dispatch(currentInstruction, args);
           break;
         case ArgumentType.THREE_REGISTERS:
           this.threeRegsDispatcher.dispatch(currentInstruction, args);

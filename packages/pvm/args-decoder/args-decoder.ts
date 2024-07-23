@@ -10,12 +10,20 @@ export type NoArgumentsResult = {
   type: ArgumentType.NO_ARGUMENTS;
   noOfInstructionsToSkip: number;
 };
+
 export type ThreeRegistersResult = {
   type: ArgumentType.THREE_REGISTERS;
   noOfInstructionsToSkip: number;
   firstRegisterIndex: number;
   secondRegisterIndex: number;
   thirdRegisterIndex: number;
+};
+
+export type TwoRegistersResult = {
+  type: ArgumentType.TWO_REGISTERS;
+  noOfInstructionsToSkip: number;
+  firstRegisterIndex: number;
+  secondRegisterIndex: number;
 };
 
 export type TwoRegistersOneImmediateResult = {
@@ -43,6 +51,7 @@ export type OneOffsetResult = {
 
 type Result =
   | NoArgumentsResult
+  | TwoRegistersResult
   | ThreeRegistersResult
   | TwoRegistersOneImmediateResult
   | TwoRegistersTwoImmediatesResult
@@ -94,6 +103,17 @@ export class ArgsDecoder {
 
         this.immediateDecoder1.setBytes(this.code.subarray(pc + 2, pc + 2 + immediateBytes + 1));
         result.immediateDecoder1 = this.immediateDecoder1;
+        return result;
+      }
+
+      case ArgumentType.TWO_REGISTERS: {
+        const result = this.results[argsType];
+        result.type = ArgumentType.TWO_REGISTERS;
+        result.noOfInstructionsToSkip = 2;
+        const firstByte = this.code[pc + 1];
+        this.registerIndexDecoder.setByte(firstByte);
+        result.firstRegisterIndex = this.registerIndexDecoder.getFirstIndex();
+        result.secondRegisterIndex = this.registerIndexDecoder.getSecondIndex();
         return result;
       }
 
