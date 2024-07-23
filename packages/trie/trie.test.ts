@@ -2,7 +2,8 @@ import assert from "node:assert";
 import { test } from "node:test";
 import { blake2bTrieHasher } from "../blake2b.node";
 import { Bytes, BytesBlob } from "../bytes";
-import { InMemoryTrie, LeafNode, parseStateKey } from "./trie";
+import { LeafNode, parseStateKey } from "./nodes";
+import { InMemoryTrie } from "./trie";
 
 test("Trie", async () => {
 	await test("Empty trie", () => {

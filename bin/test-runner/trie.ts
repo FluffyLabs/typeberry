@@ -7,7 +7,7 @@ import {
 	InMemoryTrie,
 	type StateKey,
 	type TrieHash,
-} from "../../packages/trie/trie";
+} from "../../packages/trie";
 import type { FromJson } from "./json-parser";
 
 export class TrieTest {
