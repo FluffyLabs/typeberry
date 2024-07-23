@@ -1,28 +1,33 @@
 {
-	"name": "jam",
-	"version": "0.0.1",
-	"description": "JAM implementation in TypeScript",
-	"main": "index.js",
-	"scripts": {
-		"ci": "biome ci",
-		"check": "biome check --write",
-		"format": "biome format --write",
-		"lint": "biome lint --write",
-		"run": "ts-node ./bin/jar",
-		"test": "find ./ -name '*.test.ts' -exec node --test --require ts-node/register {} \\;",
-		"ts-node": "ts-node",
-		"biome": "biome",
-		"start-pvm": "ts-node ./bin/pvm.ts",
-		"test-runner": "ts-node ./bin/test-runner.ts"
-	},
-	"author": "Fluffy Labs",
-	"license": "MPL-2.0",
-	"devDependencies": {
-		"@biomejs/biome": "1.8.3",
-		"ts-node": "^10.9.2"
-	},
-	"dependencies": {
-		"bandersnatch-wasm": "github:fluffylabs/bandersnatch#d0683b0e03635f4fda937addc5c0c7e8b761b607",
-		"scale-codec": "^0.13.0"
-	}
+  "name": "jam",
+  "version": "0.0.1",
+  "description": "JAM implementation in TypeScript",
+  "main": "index.js",
+  "scripts": {
+    "ci": "biome ci",
+    "check": "biome check --write",
+    "format": "biome format --write",
+    "lint": "biome lint --write",
+    "run": "ts-node ./bin/jar",
+    "test": "find ./ -name '*.test.ts' -exec node --test --require ts-node/register {} \\;",
+    "ts-node": "ts-node",
+    "biome": "biome",
+    "start-pvm": "ts-node ./bin/pvm.ts",
+    "test-runner": "ts-node ./bin/test-runner.ts",
+    "commit-hash-to-blockchain": "ts-node ./bin/commit-hash-to-blockchain.ts"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0",
+  "devDependencies": {
+    "@actions/github": "^6.0.0",
+    "@biomejs/biome": "1.8.3",
+    "@octokit/webhooks-types": "^7.5.1",
+    "@polkadot/api": "^12.2.1",
+    "@polkadot/types": "^12.2.1",
+    "ts-node": "^10.9.2"
+  },
+  "dependencies": {
+    "bandersnatch-wasm": "github:fluffylabs/bandersnatch#d0683b0e03635f4fda937addc5c0c7e8b761b607",
+    "scale-codec": "^0.13.0"
+  }
 }
