@@ -1,26 +1,26 @@
 {
-	"name": "typeberry",
-	"version": "0.0.1",
-	"description": "JAM implementation in TypeScript",
-	"main": "index.ts",
-	"scripts": {
-		"qa": "biome ci",
-		"qa-fix": "npm run check; npm run format; npm run lint",
-		"format": "biome format --write",
-		"lint": "biome lint --write; biome check --write",
-		"run": "ts-node ./index.ts",
-		"run-pvm": "ts-node ./bin/pvm.ts",
-		"run-tests": "ts-node ./bin/test-runner.ts",
-		"test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
-		"ts-node": "ts-node"
-	},
-	"author": "Fluffy Labs",
-	"license": "MPL-2.0",
-	"devDependencies": {
-		"@biomejs/biome": "1.8.3",
-		"ts-node": "^10.9.2"
-	},
-	"dependencies": {
-		"bandersnatch-wasm": "github:fluffylabs/bandersnatch#d0683b0e03635f4fda937addc5c0c7e8b761b607"
-	}
+  "name": "typeberry",
+  "version": "0.0.1",
+  "description": "JAM implementation in TypeScript",
+  "main": "index.ts",
+  "scripts": {
+    "qa": "biome ci",
+    "qa-fix": "npm run check; npm run format; npm run lint",
+    "format": "biome format --write",
+    "lint": "biome lint --write; biome check --write",
+    "run": "ts-node ./index.ts",
+    "run-pvm": "ts-node ./bin/pvm.ts",
+    "run-tests": "ts-node ./bin/test-runner.ts",
+    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
+    "ts-node": "ts-node"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0",
+  "devDependencies": {
+    "@biomejs/biome": "1.8.3",
+    "ts-node": "^10.9.2"
+  },
+  "dependencies": {
+    "bandersnatch-wasm": "github:fluffylabs/bandersnatch#d0683b0e03635f4fda937addc5c0c7e8b761b607"
+  }
 }
