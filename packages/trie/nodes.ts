@@ -12,6 +12,7 @@ export type ValueHash = Opaque<Hash, "trieValue">;
 export const HASH_BYTES = 32;
 /** Value nodes have the key truncated to 31 bytes. */
 const TRUNCATED_KEY_BYTES = 31;
+export const TRUNCATED_KEY_BITS = TRUNCATED_KEY_BYTES * 8;
 
 export function parseStateKey(v: string): StateKey {
   return Bytes.parseBytesNoPrefix(v, HASH_BYTES) as StateKey;

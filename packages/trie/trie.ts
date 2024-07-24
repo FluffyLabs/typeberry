@@ -2,6 +2,7 @@ import { Bytes, type BytesBlob } from "../bytes";
 import { check } from "../debug";
 import {
   BranchNode,
+  TRUNCATED_KEY_BITS,
   HASH_BYTES,
   LeafNode,
   NodeType,
@@ -175,9 +176,8 @@ function createSubtreeForBothLeaves(
   // Here we identify the common bit prefix that will later be used
   // in reverse to construct required branch nodes.
   const commonBits: boolean[] = [];
-  const maxBit = HASH_BYTES * 8;
   let divergingBit = getBit(key, traversedPath.bitIndex);
-  while (traversedPath.bitIndex < maxBit) {
+  while (traversedPath.bitIndex < TRUNCATED_KEY_BITS) {
     divergingBit = getBit(key, traversedPath.bitIndex);
     const bit2 = getBit(existingLeafKey, traversedPath.bitIndex);
     if (divergingBit === bit2) {
@@ -225,9 +225,9 @@ function createSubtreeForBothLeaves(
  * Return a single bit from `key` located at `bitIndex`.
  */
 function getBit(key: TruncatedStateKey, bitIndex: number): boolean {
-  check(bitIndex <= 255);
-  const byte = Math.floor(bitIndex / 8);
-  const bit = bitIndex - byte * 8;
+  check(bitIndex < TRUNCATED_KEY_BITS);
+  const byte = bitIndex >> 3;
+  const bit = bitIndex - (byte << 3);
   const mask = 1 << bit;
 
   const val = key.raw[byte] & mask;

@@ -37,7 +37,7 @@ export class BytesBlob {
     const bytes = new Uint8Array(buffer);
     for (let i = 0; i < len - 1; i += 2) {
       const c = v.substring(i, i + 2);
-      // TODO [ToDr] Remove string concat and simply parse each nibble manually
+      // TODO [ToDr] [opti] Remove string concat and simply parse each nibble manually
       // (switch from 0..f)
       const parsed = Number(`0x${c}`);
       if (Number.isNaN(parsed)) {
