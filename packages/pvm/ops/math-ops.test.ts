@@ -25,7 +25,7 @@ test("MathOps", async (t) => {
     const secondValue = 13;
     const resultValue = 25;
     const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.add(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -37,7 +37,7 @@ test("MathOps", async (t) => {
     const secondValue = 13;
     const resultValue = 12;
     const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.add(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -49,7 +49,7 @@ test("MathOps", async (t) => {
     const secondValue = 13;
     const resultValue = 25;
     const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.addImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -61,7 +61,7 @@ test("MathOps", async (t) => {
     const secondValue = 13;
     const resultValue = 12;
     const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.addImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -73,7 +73,7 @@ test("MathOps", async (t) => {
     const secondValue = 13;
     const resultValue = 1;
     const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.sub(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -85,7 +85,7 @@ test("MathOps", async (t) => {
     const secondValue = 12;
     const resultValue = MAX_VALUE;
     const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.sub(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -97,7 +97,7 @@ test("MathOps", async (t) => {
     const secondValue = 13;
     const resultValue = 1;
     const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.negAddImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -109,7 +109,7 @@ test("MathOps", async (t) => {
     const secondValue = 12;
     const resultValue = MAX_VALUE;
     const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.negAddImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -121,7 +121,7 @@ test("MathOps", async (t) => {
     const secondValue = 13;
     const resultValue = 156;
     const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mul(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -133,7 +133,7 @@ test("MathOps", async (t) => {
     const secondValue = 2 ** 18;
     const resultValue = 262144;
     const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mul(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -145,7 +145,7 @@ test("MathOps", async (t) => {
     const secondValue = 13;
     const resultValue = 156;
     const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mulImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -157,7 +157,7 @@ test("MathOps", async (t) => {
     const secondValue = 2 ** 18;
     const resultValue = 262144;
     const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mulImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -169,7 +169,7 @@ test("MathOps", async (t) => {
     const secondValue = 2 ** 30;
     const resultValue = 268435456;
     const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mulUpperUUImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -181,7 +181,7 @@ test("MathOps", async (t) => {
     const secondValue = MAX_VALUE;
     const resultValue = MAX_VALUE - 1;
     const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mulUpperUUImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -193,7 +193,7 @@ test("MathOps", async (t) => {
     const secondValue = 2 ** 30;
     const resultValue = 268435456;
     const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mulUpperUU(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -205,7 +205,7 @@ test("MathOps", async (t) => {
     const secondValue = MAX_VALUE;
     const resultValue = MAX_VALUE - 1;
     const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mulUpperUU(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -219,7 +219,7 @@ test("MathOps", async (t) => {
     const regs = new Registers();
     regs.asSigned[FIRST_REGISTER] = firstValue;
 
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mulUpperSSImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -233,7 +233,7 @@ test("MathOps", async (t) => {
     const regs = new Registers();
     regs.asSigned[FIRST_REGISTER] = firstValue;
 
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mulUpperSSImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -247,7 +247,7 @@ test("MathOps", async (t) => {
     const regs = new Registers();
     regs.asSigned[FIRST_REGISTER] = firstValue;
 
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mulUpperSSImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -261,7 +261,7 @@ test("MathOps", async (t) => {
     const regs = new Registers();
     regs.asSigned[FIRST_REGISTER] = firstValue;
 
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mulUpperSSImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -276,7 +276,7 @@ test("MathOps", async (t) => {
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[SECOND_REGISTER] = secondValue;
 
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mulUpperSS(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -291,7 +291,7 @@ test("MathOps", async (t) => {
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[SECOND_REGISTER] = secondValue;
 
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mulUpperSS(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -306,7 +306,7 @@ test("MathOps", async (t) => {
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[SECOND_REGISTER] = secondValue;
 
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mulUpperSS(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -321,7 +321,7 @@ test("MathOps", async (t) => {
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[SECOND_REGISTER] = secondValue;
 
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mulUpperSS(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -336,7 +336,7 @@ test("MathOps", async (t) => {
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asUnsigned[SECOND_REGISTER] = secondValue;
 
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mulUpperSU(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -351,7 +351,7 @@ test("MathOps", async (t) => {
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asUnsigned[SECOND_REGISTER] = secondValue;
 
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.mulUpperSU(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -363,7 +363,7 @@ test("MathOps", async (t) => {
     const secondValue = 26;
     const resultValue = 13;
     const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.divUnsigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -375,7 +375,7 @@ test("MathOps", async (t) => {
     const secondValue = 25;
     const resultValue = 12;
     const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.divUnsigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -387,7 +387,7 @@ test("MathOps", async (t) => {
     const secondValue = 25;
     const resultValue = MAX_VALUE;
     const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.divUnsigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -401,7 +401,7 @@ test("MathOps", async (t) => {
     const regs = new Registers();
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[SECOND_REGISTER] = secondValue;
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.divSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -415,7 +415,7 @@ test("MathOps", async (t) => {
     const regs = new Registers();
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[SECOND_REGISTER] = secondValue;
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.divSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -429,7 +429,7 @@ test("MathOps", async (t) => {
     const regs = new Registers();
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[SECOND_REGISTER] = secondValue;
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.divSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -443,7 +443,7 @@ test("MathOps", async (t) => {
     const regs = new Registers();
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[SECOND_REGISTER] = secondValue;
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.divSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -457,7 +457,7 @@ test("MathOps", async (t) => {
     const regs = new Registers();
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[SECOND_REGISTER] = secondValue;
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.divSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -471,7 +471,7 @@ test("MathOps", async (t) => {
     const regs = new Registers();
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[SECOND_REGISTER] = secondValue;
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.divSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -485,7 +485,7 @@ test("MathOps", async (t) => {
     const regs = new Registers();
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[SECOND_REGISTER] = secondValue;
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.divSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -499,7 +499,7 @@ test("MathOps", async (t) => {
     const regs = new Registers();
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[SECOND_REGISTER] = secondValue;
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.divSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -511,7 +511,7 @@ test("MathOps", async (t) => {
     const secondValue = 26;
     const resultValue = 1;
     const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.remUnsigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -523,7 +523,7 @@ test("MathOps", async (t) => {
     const secondValue = 25;
     const resultValue = secondValue;
     const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const mathOps = new MathOps({ regs });
 
     mathOps.remUnsigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 

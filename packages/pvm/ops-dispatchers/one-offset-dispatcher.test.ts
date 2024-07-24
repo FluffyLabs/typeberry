@@ -10,7 +10,7 @@ import { OneOffsetDispatcher } from "./one-offset-dispatcher";
 
 test("OneOffsetDispatcher", async (t) => {
   const regs = new Registers();
-  const branchOps = new BranchOps(regs);
+  const branchOps = new BranchOps({ regs, pc: 0, nextPc: 0 });
 
   const mockFn = t.mock.fn();
 

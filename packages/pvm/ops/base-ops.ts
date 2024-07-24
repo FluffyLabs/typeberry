@@ -1,5 +1,5 @@
-import type { Registers } from "../registers";
+import type { Context } from "../context";
 
-export class BaseOps {
-  constructor(protected regs: Registers) {}
+export class BaseOps<T extends keyof Context> {
+  constructor(protected context: Pick<Context, T>) {}
 }

@@ -24,7 +24,7 @@ test("ShiftOps", async (t) => {
     const secondValue = 0b0001;
     const resultValue = 0b1000;
     const regs = getRegisters([firstValue, secondValue]);
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftLogicalLeft(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -36,7 +36,7 @@ test("ShiftOps", async (t) => {
     const secondValue = 0b0001;
     const resultValue = 0b1000;
     const regs = getRegisters([firstValue, secondValue]);
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftLogicalLeft(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -48,7 +48,7 @@ test("ShiftOps", async (t) => {
     const secondValue = 0xa0_00_00_00;
     const resultValue = 0;
     const regs = getRegisters([firstValue, secondValue]);
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftLogicalLeft(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -60,7 +60,7 @@ test("ShiftOps", async (t) => {
     const secondValue = 0b0001;
     const resultValue = 0b1000;
     const regs = getRegisters([firstValue]);
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftLogicalLeftImmediateAlternative(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -72,7 +72,7 @@ test("ShiftOps", async (t) => {
     const secondValue = 0b0001;
     const resultValue = 0b1000;
     const regs = getRegisters([firstValue]);
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftLogicalLeftImmediateAlternative(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -84,7 +84,7 @@ test("ShiftOps", async (t) => {
     const secondValue = 0xa0_00_00_00;
     const resultValue = 0;
     const regs = getRegisters([firstValue]);
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftLogicalLeftImmediateAlternative(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -96,7 +96,7 @@ test("ShiftOps", async (t) => {
     const secondValue = 3;
     const resultValue = 0b1000;
     const regs = getRegisters([firstValue]);
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftLogicalLeftImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -108,7 +108,7 @@ test("ShiftOps", async (t) => {
     const secondValue = 35;
     const resultValue = 0b1000;
     const regs = getRegisters([firstValue]);
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftLogicalLeftImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -120,7 +120,7 @@ test("ShiftOps", async (t) => {
     const secondValue = 3;
     const resultValue = 0;
     const regs = getRegisters([firstValue]);
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftLogicalLeftImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -132,7 +132,7 @@ test("ShiftOps", async (t) => {
     const secondValue = 0b10000;
     const resultValue = 0b00010;
     const regs = getRegisters([firstValue, secondValue]);
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftLogicalRight(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -144,7 +144,7 @@ test("ShiftOps", async (t) => {
     const secondValue = 0b10000;
     const resultValue = 0b00010;
     const regs = getRegisters([firstValue, secondValue]);
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftLogicalRight(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -156,7 +156,7 @@ test("ShiftOps", async (t) => {
     const secondValue = 0b10000;
     const resultValue = 0b00010;
     const regs = getRegisters([firstValue]);
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftLogicalRightImmediateAlternative(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -168,7 +168,7 @@ test("ShiftOps", async (t) => {
     const secondValue = 0b10000;
     const resultValue = 0b00010;
     const regs = getRegisters([firstValue]);
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftLogicalRightImmediateAlternative(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -180,7 +180,7 @@ test("ShiftOps", async (t) => {
     const secondValue = 3;
     const resultValue = 0b00010;
     const regs = getRegisters([firstValue]);
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftLogicalRightImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -192,7 +192,7 @@ test("ShiftOps", async (t) => {
     const secondValue = 35;
     const resultValue = 0b00010;
     const regs = getRegisters([firstValue]);
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftLogicalRightImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -206,7 +206,7 @@ test("ShiftOps", async (t) => {
     const regs = new Registers();
     regs.asUnsigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[SECOND_REGISTER] = secondValue;
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftArithmeticRight(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -220,7 +220,7 @@ test("ShiftOps", async (t) => {
     const regs = new Registers();
     regs.asUnsigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[SECOND_REGISTER] = secondValue;
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftArithmeticRight(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -234,7 +234,7 @@ test("ShiftOps", async (t) => {
     const regs = new Registers();
     regs.asUnsigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[SECOND_REGISTER] = secondValue;
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftArithmeticRight(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -247,7 +247,7 @@ test("ShiftOps", async (t) => {
     const resultValue = 0b00010;
     const regs = new Registers();
     regs.asUnsigned[FIRST_REGISTER] = firstValue;
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftArithmeticRightImmediateAlternative(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -260,7 +260,7 @@ test("ShiftOps", async (t) => {
     const resultValue = 0xff_ff_ff_ff | 0; // -1
     const regs = new Registers();
     regs.asUnsigned[FIRST_REGISTER] = firstValue;
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftArithmeticRightImmediateAlternative(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -273,7 +273,7 @@ test("ShiftOps", async (t) => {
     const resultValue = 0b00010;
     const regs = new Registers();
     regs.asUnsigned[FIRST_REGISTER] = firstValue;
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftArithmeticRightImmediateAlternative(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -286,7 +286,7 @@ test("ShiftOps", async (t) => {
     const resultValue = 0b00010;
     const regs = new Registers();
     regs.asUnsigned[FIRST_REGISTER] = firstValue;
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftArithmeticRightImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -299,7 +299,7 @@ test("ShiftOps", async (t) => {
     const resultValue = 0xff_ff_ff_ff | 0; // -1
     const regs = new Registers();
     regs.asUnsigned[FIRST_REGISTER] = firstValue;
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftArithmeticRightImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -312,7 +312,7 @@ test("ShiftOps", async (t) => {
     const resultValue = 0b00010;
     const regs = new Registers();
     regs.asUnsigned[FIRST_REGISTER] = firstValue;
-    const shiftOps = new ShiftOps(regs);
+    const shiftOps = new ShiftOps({ regs });
 
     shiftOps.shiftArithmeticRightImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 

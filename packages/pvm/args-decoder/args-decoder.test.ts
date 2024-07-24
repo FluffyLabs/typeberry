@@ -10,7 +10,7 @@ test("ArgsDecoder", async (t) => {
   await t.test("return empty result for instruction without args", () => {
     const code = new Uint8Array([Instruction.TRAP]);
     const mask = new Mask(new Uint8Array([0b1111_1111]));
-    const argsDecoder = new ArgsDecoder(code, mask);
+    const argsDecoder = new ArgsDecoder({ code, mask });
     const expectedResult = {
       noOfInstructionsToSkip: code.length,
       type: ArgumentType.NO_ARGUMENTS,
@@ -24,7 +24,7 @@ test("ArgsDecoder", async (t) => {
   await t.test("return correct result for instruction with 3 regs", () => {
     const code = new Uint8Array([Instruction.ADD, 0x12, 0x03]);
     const mask = new Mask(new Uint8Array([0b1111_1001]));
-    const argsDecoder = new ArgsDecoder(code, mask);
+    const argsDecoder = new ArgsDecoder({ code, mask });
     const expectedResult = {
       noOfInstructionsToSkip: code.length,
       type: ArgumentType.THREE_REGISTERS,
@@ -42,7 +42,7 @@ test("ArgsDecoder", async (t) => {
   await t.test("return correct result for instruction with 2 regs and 1 immediate", () => {
     const code = new Uint8Array([Instruction.ADD_IMM, 0x12, 0xff]);
     const mask = new Mask(new Uint8Array([0b1111_1001]));
-    const argsDecoder = new ArgsDecoder(code, mask);
+    const argsDecoder = new ArgsDecoder({ code, mask });
     const expectedImmediateDecoder = new ImmediateDecoder();
     expectedImmediateDecoder.setBytes(new Uint8Array([0xff]));
     const expectedResult = {
@@ -63,7 +63,7 @@ test("ArgsDecoder", async (t) => {
   await t.test("return correct result for instruction with 2 regs and 1 immediate", () => {
     const code = new Uint8Array([Instruction.ADD_IMM, 0x12, 0xff]);
     const mask = new Mask(new Uint8Array([0b1111_1001]));
-    const argsDecoder = new ArgsDecoder(code, mask);
+    const argsDecoder = new ArgsDecoder({ code, mask });
     const expectedImmediateDecoder = new ImmediateDecoder();
     expectedImmediateDecoder.setBytes(new Uint8Array([0xff]));
     const expectedResult = {
@@ -84,7 +84,7 @@ test("ArgsDecoder", async (t) => {
   await t.test("return correct result for instruction with 1 reg, 1 immediate and 1 offset", () => {
     const code = new Uint8Array([Instruction.BRANCH_EQ_IMM, 39, 210, 4, 6]);
     const mask = new Mask(new Uint8Array([0b1111_1001]));
-    const argsDecoder = new ArgsDecoder(code, mask);
+    const argsDecoder = new ArgsDecoder({ code, mask });
     const expectedImmediateDecoder = new ImmediateDecoder();
     expectedImmediateDecoder.setBytes(new Uint8Array([210, 4]));
     const expectedResult = {
@@ -104,7 +104,7 @@ test("ArgsDecoder", async (t) => {
   await t.test("return correct result for instruction with 2 regs and 1 offset", () => {
     const code = new Uint8Array([Instruction.BRANCH_EQ, 135, 4]);
     const mask = new Mask(new Uint8Array([0b1111_1001]));
-    const argsDecoder = new ArgsDecoder(code, mask);
+    const argsDecoder = new ArgsDecoder({ code, mask });
     const expectedImmediateDecoder = new ImmediateDecoder();
     expectedImmediateDecoder.setBytes(new Uint8Array([0xff]));
     const expectedResult = {

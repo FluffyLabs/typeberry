@@ -23,7 +23,7 @@ test("MoveOps", async (t) => {
     const firstValue = 5;
     const resultValue = firstValue;
     const regs = getRegisters([firstValue]);
-    const moveOps = new MoveOps(regs);
+    const moveOps = new MoveOps({ regs });
 
     moveOps.moveRegister(FIRST_REGISTER, RESULT_REGISTER);
 
@@ -35,7 +35,7 @@ test("MoveOps", async (t) => {
     const secondValue = 5;
     const resultValue = secondValue;
     const regs = getRegisters([firstValue, secondValue]);
-    const moveOps = new MoveOps(regs);
+    const moveOps = new MoveOps({ regs });
 
     moveOps.cmovIfZero(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -47,7 +47,7 @@ test("MoveOps", async (t) => {
     const secondValue = 5;
     const resultValue = 0;
     const regs = getRegisters([firstValue, secondValue]);
-    const moveOps = new MoveOps(regs);
+    const moveOps = new MoveOps({ regs });
 
     moveOps.cmovIfZero(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -59,7 +59,7 @@ test("MoveOps", async (t) => {
     const secondValue = 5;
     const resultValue = secondValue;
     const regs = getRegisters([firstValue, secondValue]);
-    const moveOps = new MoveOps(regs);
+    const moveOps = new MoveOps({ regs });
 
     moveOps.cmovIfNotZero(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -71,7 +71,7 @@ test("MoveOps", async (t) => {
     const secondValue = 5;
     const resultValue = 0;
     const regs = getRegisters([firstValue, secondValue]);
-    const moveOps = new MoveOps(regs);
+    const moveOps = new MoveOps({ regs });
 
     moveOps.cmovIfNotZero(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -83,7 +83,7 @@ test("MoveOps", async (t) => {
     const secondValue = 5;
     const resultValue = secondValue;
     const regs = getRegisters([firstValue]);
-    const moveOps = new MoveOps(regs);
+    const moveOps = new MoveOps({ regs });
 
     moveOps.cmovIfZeroImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -95,7 +95,7 @@ test("MoveOps", async (t) => {
     const secondValue = 5;
     const resultValue = 0;
     const regs = getRegisters([firstValue]);
-    const moveOps = new MoveOps(regs);
+    const moveOps = new MoveOps({ regs });
 
     moveOps.cmovIfZeroImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -107,7 +107,7 @@ test("MoveOps", async (t) => {
     const secondValue = 5;
     const resultValue = secondValue;
     const regs = getRegisters([firstValue]);
-    const moveOps = new MoveOps(regs);
+    const moveOps = new MoveOps({ regs });
 
     moveOps.cmovIfNotZeroImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -119,7 +119,7 @@ test("MoveOps", async (t) => {
     const secondValue = 5;
     const resultValue = 0;
     const regs = getRegisters([firstValue]);
-    const moveOps = new MoveOps(regs);
+    const moveOps = new MoveOps({ regs });
 
     moveOps.cmovIfNotZeroImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 

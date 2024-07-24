@@ -10,7 +10,7 @@ import { OneRegisterOneImmediateOneOffsetDispatcher } from "./one-reg-one-imm-on
 
 test("OneRegisterOneImmediateOneOffsetDispatcher", async (t) => {
   const regs = new Registers();
-  const branchOps = new BranchOps(regs);
+  const branchOps = new BranchOps({ regs, pc: 0, nextPc: 0 });
 
   const mockFn = t.mock.fn();
 

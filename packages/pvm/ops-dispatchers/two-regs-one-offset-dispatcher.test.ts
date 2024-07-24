@@ -10,7 +10,7 @@ import { TwoRegsOneOffsetDispatcher } from "./two-regs-one-offset-dispatcher";
 
 test("TwoRegsOneOffsetDispatcher", async (t) => {
   const regs = new Registers();
-  const branchOps = new BranchOps(regs);
+  const branchOps = new BranchOps({ regs, pc: 0, nextPc: 0 });
 
   const mockFn = t.mock.fn();
 
