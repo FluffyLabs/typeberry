@@ -5,7 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "qa": "biome ci",
-    "qa-fix": "npm run check; npm run format; npm run lint",
+    "qa-fix": "npm run format; npm run lint",
     "format": "biome format --write",
     "lint": "biome lint --write; biome check --write",
     "run": "ts-node ./index.ts",

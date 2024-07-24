@@ -2,11 +2,11 @@ import { Bytes, type BytesBlob } from "../bytes";
 import { check } from "../debug";
 import {
   BranchNode,
-  TRUNCATED_KEY_BITS,
   HASH_BYTES,
   LeafNode,
   NodeType,
   type StateKey,
+  TRUNCATED_KEY_BITS,
   type TrieHash,
   type TrieNode,
   type TruncatedStateKey,

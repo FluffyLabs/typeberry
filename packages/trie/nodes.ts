@@ -45,7 +45,12 @@ export enum NodeType {
  *	- Embedded value leaf nodes
  *	- Value hash leaf nodes
  *
- * Embedded value leaf nodes contain
+ * Embedded value leaf nodes contain:
+ *  - a length of the embedded value (last 6 bits of the first byte)
+ *  - the value itself (padded with zeroes)
+ *
+ * Regular value leaf nodes contain:
+ *  - a hash of the value
  */
 export class TrieNode {
   /** Exactly 512 bits / 64 bytes */
