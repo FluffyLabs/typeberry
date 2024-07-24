@@ -18,11 +18,11 @@
   "license": "MPL-2.0",
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
-	"@types/blake2b": "^2.1.3",
+    "@types/blake2b": "^2.1.3",
     "ts-node": "^10.9.2"
   },
   "dependencies": {
     "bandersnatch-wasm": "github:fluffylabs/bandersnatch#d0683b0e03635f4fda937addc5c0c7e8b761b607",
-		"blake2b": "^2.1.4"
+    "blake2b": "^2.1.4"
   }
 }

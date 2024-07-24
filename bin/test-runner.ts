@@ -45,26 +45,11 @@ async function dispatchTest(t: TestContext, testContent: unknown, file: string) 
   const errors: unknown[] = [];
   const handleError = (e: unknown) => errors.push(e);
 
-	const runners = [
-		tryToPrepareTestRunner(
-			testContent,
-			SafroleTest.fromJson,
-			runSafroleTest,
-			handleError,
-		),
-		tryToPrepareTestRunner(
-			testContent,
-			PvmTest.fromJson,
-			runPvmTest,
-			handleError,
-		),
-		tryToPrepareTestRunner(
-			testContent,
-			trieTestSuiteFromJson,
-			runTrieTest,
-			handleError,
-		),
-	];
+  const runners = [
+    tryToPrepareTestRunner(testContent, SafroleTest.fromJson, runSafroleTest, handleError),
+    tryToPrepareTestRunner(testContent, PvmTest.fromJson, runPvmTest, handleError),
+    tryToPrepareTestRunner(testContent, trieTestSuiteFromJson, runTrieTest, handleError),
+  ];
 
   function nonNull<T>(x: T | null): x is T {
     return x !== null;
