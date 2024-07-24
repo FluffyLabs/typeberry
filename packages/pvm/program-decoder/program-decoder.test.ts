@@ -11,19 +11,19 @@ const bitMask = [73, 6];
 const program = [0, 0, 16, ...code, ...bitMask];
 
 test("ProgramDecoder", async (t) => {
-	await t.test("should corectly decode instructions", () => {
-		const programDecoder = new ProgramDecoder(new Uint8Array(program));
+  await t.test("should corectly decode instructions", () => {
+    const programDecoder = new ProgramDecoder(new Uint8Array(program));
 
-		const result = programDecoder.getCode();
+    const result = programDecoder.getCode();
 
-		assert.deepStrictEqual(result, new Uint8Array(code));
-	});
+    assert.deepStrictEqual(result, new Uint8Array(code));
+  });
 
-	await t.test("should corectly decode mask", () => {
-		const programDecoder = new ProgramDecoder(new Uint8Array(program));
+  await t.test("should corectly decode mask", () => {
+    const programDecoder = new ProgramDecoder(new Uint8Array(program));
 
-		const result = programDecoder.getMask();
+    const result = programDecoder.getMask();
 
-		assert.deepStrictEqual(result, new Mask(new Uint8Array(bitMask)));
-	});
+    assert.deepStrictEqual(result, new Mask(new Uint8Array(bitMask)));
+  });
 });

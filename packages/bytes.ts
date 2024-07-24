@@ -102,12 +102,10 @@ export class Bytes<T extends number> {
 		return new Bytes(blob.buffer, len);
 	}
 
-	static parseBytes<X extends number>(v: string, len: X): Bytes<X> {
-		if (v.length > 2 * len + 2) {
-			throw new Error(
-				`Input string too long. Expected ${len}, got ${v.length / 2 - 1}`,
-			);
-		}
+  static parseBytes<X extends number>(v: string, len: X): Bytes<X> {
+    if (v.length > 2 * len + 2) {
+      throw new Error(`Input string too long. Expected ${len}, got ${v.length / 2 - 1}`);
+    }
 
 		const blob = BytesBlob.parseBlob(v);
 		return new Bytes(blob.buffer, len);

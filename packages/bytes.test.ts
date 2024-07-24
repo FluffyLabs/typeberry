@@ -24,10 +24,9 @@ test("BytesBlob", async (t) => {
 		}
 	});
 
-	await t.test("parse 0x-prefixed hex string into blob of bytes", () => {
-		const input =
-			"0x2fa3f686df876995167e7c2e5d74c4c7b6e48f8068fe0e44208344d480f7904c";
-		const result = BytesBlob.parseBlob(input);
+  await t.test("parse 0x-prefixed hex string into blob of bytes", () => {
+    const input = "0x2fa3f686df876995167e7c2e5d74c4c7b6e48f8068fe0e44208344d480f7904c";
+    const result = BytesBlob.parseBlob(input);
 
 		assert.deepStrictEqual(
 			result.buffer,
@@ -62,26 +61,21 @@ test("BytesBlob", async (t) => {
 });
 
 test("Bytes", async (t) => {
-	await t.test("should fail in case of length mismatch", () => {
-		const input =
-			"0x9c2d3bce7aa0a5857c67a85247365d2035f7d9daec2b515e86086584ad5e8644";
+  await t.test("should fail in case of length mismatch", () => {
+    const input = "0x9c2d3bce7aa0a5857c67a85247365d2035f7d9daec2b515e86086584ad5e8644";
 
-		try {
-			Bytes.parseBytes(input, 16);
-			assert.fail("Should throw an exception");
-		} catch (e) {
-			assert.strictEqual(
-				`${e}`,
-				"Error: Input string too long. Expected 16, got 32",
-			);
-		}
-	});
+    try {
+      Bytes.parseBytes(input, 16);
+      assert.fail("Should throw an exception");
+    } catch (e) {
+      assert.strictEqual(`${e}`, "Error: Input string too long. Expected 16, got 32");
+    }
+  });
 
-	await t.test("parse 0x-prefixed, fixed length bytes vector", () => {
-		const input =
-			"0x9c2d3bce7aa0a5857c67a85247365d2035f7d9daec2b515e86086584ad5e8644";
+  await t.test("parse 0x-prefixed, fixed length bytes vector", () => {
+    const input = "0x9c2d3bce7aa0a5857c67a85247365d2035f7d9daec2b515e86086584ad5e8644";
 
-		const bytes = Bytes.parseBytes(input, 32);
+    const bytes = Bytes.parseBytes(input, 32);
 
 		assert.deepStrictEqual(
 			bytes.raw,
