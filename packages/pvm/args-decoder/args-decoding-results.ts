@@ -2,6 +2,7 @@ import type {
   NoArgumentsResult,
   OneOffsetResult,
   OneRegisterOneImmediateOneOffsetResult,
+  OneRegisterOneImmediateResult,
   ThreeRegistersResult,
   TwoRegistersOneImmediateResult,
   TwoRegistersOneOffsetResult,
@@ -18,7 +19,7 @@ type Results = [
   undefined, // 1 imm
   undefined, // 2 imms
   OneOffsetResult,
-  undefined, // 1 reg 1 imm
+  OneRegisterOneImmediateResult,
   undefined, // 1 reg 2 imms
   OneRegisterOneImmediateOneOffsetResult,
   TwoRegistersResult,
@@ -72,6 +73,13 @@ export const createResults = () => {
     noOfInstructionsToSkip: 1,
     firstRegisterIndex: 0,
     secondRegisterIndex: 0,
+    immediateDecoder1: null as unknown as ImmediateDecoder,
+  };
+
+  results[ArgumentType.ONE_REGISTER_ONE_IMMEDIATE] = {
+    type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE,
+    noOfInstructionsToSkip: 1,
+    firstRegisterIndex: 0,
     immediateDecoder1: null as unknown as ImmediateDecoder,
   };
 

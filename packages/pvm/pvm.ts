@@ -4,9 +4,10 @@ import { assemblify } from "./assemblify";
 import { Context } from "./context";
 import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
-import { BitOps, BooleanOps, BranchOps, MathOps, MoveOps, ShiftOps } from "./ops";
+import { BitOps, BooleanOps, BranchOps, LoadOps, MathOps, MoveOps, ShiftOps } from "./ops";
 import {
   OneOffsetDispatcher,
+  OneRegisterOneImmediateDispatcher,
   OneRegisterOneImmediateOneOffsetDispatcher,
   ThreeRegsDispatcher,
   TwoRegsDispatcher,
@@ -54,6 +55,7 @@ export class Pvm {
   private oneRegisterOneImmediateOneOffsetDispatcher: OneRegisterOneImmediateOneOffsetDispatcher;
   private twoRegsOneOffsetDispatcher: TwoRegsOneOffsetDispatcher;
   private oneOffsetDispatcher: OneOffsetDispatcher;
+  private oneRegisterOneImmediateDispatcher: OneRegisterOneImmediateDispatcher;
 
   constructor(rawProgram: Uint8Array, initialState: InitialState = {}) {
     const programDecoder = new ProgramDecoder(rawProgram);
@@ -79,6 +81,7 @@ export class Pvm {
     const booleanOps = new BooleanOps(this.context);
     const moveOps = new MoveOps(this.context);
     const branchOps = new BranchOps(this.context);
+    const loadOps = new LoadOps(this.context);
 
     this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
     this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
@@ -86,6 +89,7 @@ export class Pvm {
     this.oneRegisterOneImmediateOneOffsetDispatcher = new OneRegisterOneImmediateOneOffsetDispatcher(branchOps);
     this.twoRegsOneOffsetDispatcher = new TwoRegsOneOffsetDispatcher(branchOps);
     this.oneOffsetDispatcher = new OneOffsetDispatcher(branchOps);
+    this.oneRegisterOneImmediateDispatcher = new OneRegisterOneImmediateDispatcher(loadOps);
   }
 
   printProgram() {
@@ -99,10 +103,12 @@ export class Pvm {
       this.gas -= instructionGasMap[currentInstruction];
 
       if (this.gas < 0) {
-        // TODO [MaSi]: to handle
+        break;
       }
+
       const args = this.argsDecoder.getArgs(this.context.pc);
       this.context.nextPc = this.context.pc + args.noOfInstructionsToSkip;
+
       switch (args.type) {
         case ArgumentType.NO_ARGUMENTS:
           if (currentInstruction === Instruction.TRAP) {
@@ -128,9 +134,17 @@ export class Pvm {
         case ArgumentType.ONE_OFFSET:
           this.oneOffsetDispatcher.dispatch(currentInstruction, args);
           break;
+        case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE:
+          this.oneRegisterOneImmediateDispatcher.dispatch(currentInstruction, args);
+          break;
       }
-
       this.context.pc = this.context.nextPc;
+    }
+
+    this.gas -= instructionGasMap[Instruction.TRAP];
+
+    if (this.gas < 0) {
+      // TODO [MaSi]: to handle
     }
   }
 

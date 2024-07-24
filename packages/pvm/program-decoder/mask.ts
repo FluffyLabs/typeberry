@@ -18,6 +18,10 @@ export class Mask {
       if (this.isInstruction(i)) {
         break;
       }
+
+      if (i >= this.mask.length * 8) {
+        break;
+      }
     }
 
     return noOfBytes;
