@@ -1,8 +1,10 @@
 import type {
   NoArgumentsResult,
   OneOffsetResult,
+  OneRegisterOneImmediateOneOffsetResult,
   ThreeRegistersResult,
   TwoRegistersOneImmediateResult,
+  TwoRegistersOneOffsetResult,
   TwoRegistersResult,
   TwoRegistersTwoImmediatesResult,
 } from "./args-decoder";
@@ -18,10 +20,10 @@ type Results = [
   OneOffsetResult,
   undefined, // 1 reg 1 imm
   undefined, // 1 reg 2 imms
-  undefined, // 1 reg 1 imm 1 offset
+  OneRegisterOneImmediateOneOffsetResult,
   TwoRegistersResult,
   TwoRegistersOneImmediateResult,
-  undefined, // 2 regs 1 offset
+  TwoRegistersOneOffsetResult,
   TwoRegistersTwoImmediatesResult,
   ThreeRegistersResult,
 ];
@@ -49,12 +51,34 @@ export const createResults = () => {
     thirdRegisterIndex: 0,
   };
 
+  results[ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET] = {
+    type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET,
+    noOfInstructionsToSkip: 1,
+    firstRegisterIndex: 0,
+    immediateDecoder1: null as unknown as ImmediateDecoder,
+    offset: 0,
+  };
+
+  results[ArgumentType.TWO_REGISTERS_ONE_OFFSET] = {
+    type: ArgumentType.TWO_REGISTERS_ONE_OFFSET,
+    noOfInstructionsToSkip: 1,
+    firstRegisterIndex: 0,
+    secondRegisterIndex: 0,
+    offset: 0,
+  };
+
   results[ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE] = {
     type: ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE,
     noOfInstructionsToSkip: 1,
     firstRegisterIndex: 0,
     secondRegisterIndex: 0,
     immediateDecoder1: null as unknown as ImmediateDecoder,
+  };
+
+  results[ArgumentType.ONE_OFFSET] = {
+    type: ArgumentType.ONE_OFFSET,
+    noOfInstructionsToSkip: 1,
+    offset: 0,
   };
 
   return results;

@@ -3,8 +3,15 @@ import { ArgumentType } from "./args-decoder/argument-type";
 import { assemblify } from "./assemblify";
 import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
-import { BitOps, BooleanOps, MathOps, MoveOps, ShiftOps } from "./ops";
-import { ThreeRegsDispatcher, TwoRegsDispatcher, TwoRegsOneImmDispatcher } from "./ops-dispatchers";
+import { BitOps, BooleanOps, BranchOps, MathOps, MoveOps, ShiftOps } from "./ops";
+import {
+  OneOffsetDispatcher,
+  OneRegisterOneImmediateOneOffsetDispatcher,
+  ThreeRegsDispatcher,
+  TwoRegsDispatcher,
+  TwoRegsOneImmDispatcher,
+  TwoRegsOneOffsetDispatcher,
+} from "./ops-dispatchers";
 import type { Mask } from "./program-decoder/mask";
 import { ProgramDecoder } from "./program-decoder/program-decoder";
 import { NO_OF_REGISTERS, Registers } from "./registers";
@@ -47,6 +54,9 @@ export class Pvm {
   private threeRegsDispatcher: ThreeRegsDispatcher;
   private twoRegsOneImmDispatcher: TwoRegsOneImmDispatcher;
   private twoRegsDispatcher: TwoRegsDispatcher;
+  private oneRegisterOneImmediateOneOffsetDispatcher: OneRegisterOneImmediateOneOffsetDispatcher;
+  private twoRegsOneOffsetDispatcher: TwoRegsOneOffsetDispatcher;
+  private oneOffsetDispatcher: OneOffsetDispatcher;
 
   constructor(rawProgram: Uint8Array, initialState: InitialState = {}) {
     const programDecoder = new ProgramDecoder(rawProgram);
@@ -67,10 +77,14 @@ export class Pvm {
     const bitOps = new BitOps(this.registers);
     const booleanOps = new BooleanOps(this.registers);
     const moveOps = new MoveOps(this.registers);
+    const branchOps = new BranchOps(this.registers);
 
     this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
     this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
     this.twoRegsDispatcher = new TwoRegsDispatcher(moveOps);
+    this.oneRegisterOneImmediateOneOffsetDispatcher = new OneRegisterOneImmediateOneOffsetDispatcher(branchOps);
+    this.twoRegsOneOffsetDispatcher = new TwoRegsOneOffsetDispatcher(branchOps);
+    this.oneOffsetDispatcher = new OneOffsetDispatcher(branchOps);
   }
 
   printProgram() {
@@ -95,6 +109,9 @@ export class Pvm {
             return;
           }
           break;
+        case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET:
+          this.oneRegisterOneImmediateOneOffsetDispatcher.dispatch(currentInstruction, args);
+          break;
         case ArgumentType.TWO_REGISTERS:
           this.twoRegsDispatcher.dispatch(currentInstruction, args);
           break;
@@ -103,6 +120,12 @@ export class Pvm {
           break;
         case ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE:
           this.twoRegsOneImmDispatcher.dispatch(currentInstruction, args);
+          break;
+        case ArgumentType.TWO_REGISTERS_ONE_OFFSET:
+          this.twoRegsOneOffsetDispatcher.dispatch(currentInstruction, args);
+          break;
+        case ArgumentType.ONE_OFFSET:
+          this.oneOffsetDispatcher.dispatch(currentInstruction, args);
           break;
       }
 
