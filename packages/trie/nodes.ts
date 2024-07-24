@@ -90,11 +90,7 @@ export class TrieNode {
  */
 export class BranchNode {
 	// Underlying raw node.
-	readonly node: TrieNode;
-
-	constructor(node: TrieNode) {
-		this.node = node;
-	}
+	constructor(readonly node: TrieNode) {}
 
 	static fromSubNodes(left: TrieHash, right: TrieHash) {
 		const node = new TrieNode();
