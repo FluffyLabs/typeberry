@@ -21,7 +21,19 @@ export class Mask {
 
       if (i >= this.mask.length * 8) {
         break;
-      }
+      getNoOfBytesToNextInstruction(index: number) {
+         let noOfBytes = 0;
+         const maxIndex = Math.min(
+           index + 1 + MAX_ARGS_LENGTH,
+           this.mask.length * 8
+         );
+         for (let i = index + 1; i < maxIndex; i++) {
+           noOfBytes++;
+           if (this.isInstruction(i)) {
+             break;
+           }
+         }
+       }
     }
 
     return noOfBytes;
