@@ -67,7 +67,10 @@ export class PvmTest {
 export async function runPvmTest(testContent: PvmTest) {
   const pvm = new Pvm(testContent.program, {
     gas: testContent["initial-gas"],
-    memory: testContent["initial-memory"],
+    memory: testContent["initial-memory"].map((item) => ({
+      address: item.address,
+      contents: new Uint8Array(item.contents),
+    })),
     pageMap: testContent["initial-page-map"],
     pc: testContent["initial-pc"],
     regs: testContent["initial-regs"],

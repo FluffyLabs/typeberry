@@ -4,6 +4,7 @@ import { assemblify } from "./assemblify";
 import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
 import { InstructionResult } from "./instruction-result";
+import { Memory } from "./memory";
 import { BitOps, BooleanOps, BranchOps, LoadOps, MathOps, MoveOps, ShiftOps } from "./ops";
 import {
   OneOffsetDispatcher,
@@ -14,6 +15,9 @@ import {
   TwoRegsOneImmDispatcher,
   TwoRegsOneOffsetDispatcher,
 } from "./ops-dispatchers";
+import { TwoImmsDispatcher } from "./ops-dispatchers/two-imms-dispatcher";
+import { StoreOps } from "./ops/store-ops";
+import { PageMap } from "./page-map";
 import type { Mask } from "./program-decoder/mask";
 import { ProgramDecoder } from "./program-decoder/program-decoder";
 import { NO_OF_REGISTERS, Registers } from "./registers";
@@ -47,10 +51,8 @@ export class Pvm {
   private registers: Registers;
   private code: Uint8Array;
   private mask: Mask;
-  private pc = 0;
+  private pc: number;
   private gas: number;
-  private pageMap: PageMapItem[];
-  private memory: MemoryChunkItem[];
   private status: "trap" | "halt" = "trap";
   private argsDecoder: ArgsDecoder;
   private threeRegsDispatcher: ThreeRegsDispatcher;
@@ -61,20 +63,22 @@ export class Pvm {
   private oneOffsetDispatcher: OneOffsetDispatcher;
   private oneRegisterOneImmediateDispatcher: OneRegisterOneImmediateDispatcher;
   private instructionResult = new InstructionResult();
+  private memory: Memory;
+  private twoImmsDispatcher: TwoImmsDispatcher;
 
   constructor(rawProgram: Uint8Array, initialState: InitialState = {}) {
     const programDecoder = new ProgramDecoder(rawProgram);
     this.code = programDecoder.getCode();
     this.mask = programDecoder.getMask();
     this.registers = new Registers();
-    const pc = initialState.pc ?? 0;
+    const pageMap = new PageMap(initialState.pageMap ?? []);
+    this.memory = new Memory(pageMap, initialState.memory ?? []);
+    this.pc = initialState.pc ?? 0;
 
     for (let i = 0; i < NO_OF_REGISTERS; i++) {
       this.registers.asUnsigned[i] = initialState.regs?.[i] ?? 0;
     }
     this.gas = initialState.gas ?? 0;
-    this.pageMap = initialState.pageMap ?? [];
-    this.memory = initialState.memory ?? [];
 
     this.argsDecoder = new ArgsDecoder(this.code, this.mask);
 
@@ -84,7 +88,8 @@ export class Pvm {
     const booleanOps = new BooleanOps(this.registers);
     const moveOps = new MoveOps(this.registers);
     const branchOps = new BranchOps(this.registers, this.instructionResult);
-    const loadOps = new LoadOps(this.registers);
+    const loadOps = new LoadOps(this.registers, this.memory);
+    const storeOps = new StoreOps(this.registers, this.memory);
 
     this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
     this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
@@ -92,7 +97,8 @@ export class Pvm {
     this.oneRegisterOneImmediateOneOffsetDispatcher = new OneRegisterOneImmediateOneOffsetDispatcher(branchOps);
     this.twoRegsOneOffsetDispatcher = new TwoRegsOneOffsetDispatcher(branchOps);
     this.oneOffsetDispatcher = new OneOffsetDispatcher(branchOps);
-    this.oneRegisterOneImmediateDispatcher = new OneRegisterOneImmediateDispatcher(loadOps);
+    this.oneRegisterOneImmediateDispatcher = new OneRegisterOneImmediateDispatcher(loadOps, storeOps);
+    this.twoImmsDispatcher = new TwoImmsDispatcher(storeOps);
   }
 
   printProgram() {
@@ -139,6 +145,9 @@ export class Pvm {
         case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE:
           this.oneRegisterOneImmediateDispatcher.dispatch(currentInstruction, args);
           break;
+        case ArgumentType.TWO_IMMEDIATES:
+          this.twoImmsDispatcher.dispatch(currentInstruction, args);
+          break;
       }
       this.pc += this.instructionResult.pcOffset;
     }
@@ -163,8 +172,7 @@ export class Pvm {
       pc: this.pc,
       regs,
       gas: this.gas,
-      pageMap: this.pageMap,
-      memory: this.memory,
+      memory: this.memory.getMemoryDump(),
       status: this.status,
     };
   }
