@@ -1,7 +1,7 @@
+import { Bytes } from "@typeberry/bytes";
 import blake2b from "blake2b";
-import { Bytes } from "./bytes";
-import { HASH_BYTES, type TrieHash } from "./trie/nodes";
-import type { TrieHasher } from "./trie/nodesDb";
+import { HASH_BYTES, type TrieHash } from "./nodes";
+import type { TrieHasher } from "./nodesDb";
 
 export const blake2bTrieHasher: TrieHasher = {
   hashConcat(n: Uint8Array, rest?: Uint8Array[]): TrieHash {

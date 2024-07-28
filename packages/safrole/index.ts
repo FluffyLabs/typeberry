@@ -1,7 +1,10 @@
-import type { Bytes, BytesBlob } from "../bytes";
-import type { BandersnatchKey, BlsKey, Ed25519Key } from "../crypto";
-import type { EntropyHash, Hash } from "../hash";
+import type { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { Opaque } from "@typeberry/utils";
 import { verifyBandersnatch } from "./bandersnatch";
+import type { BandersnatchKey, BlsKey, Ed25519Key } from "./crypto";
+
+export type Hash = Bytes<32>;
+export type EntropyHash = Opaque<Hash, "entropy">;
 
 export type TicketBody = {
   id: Hash;

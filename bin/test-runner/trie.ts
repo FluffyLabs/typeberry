@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import { test } from "node:test";
 
-import { blake2bTrieHasher } from "../../packages/blake2b.node";
-import { Bytes, BytesBlob } from "../../packages/bytes";
-import { InMemoryTrie, type StateKey, type TrieHash } from "../../packages/trie";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { InMemoryTrie, type StateKey, type TrieHash } from "@typeberry/trie";
+import { blake2bTrieHasher } from "@typeberry/trie/blake2b.node";
 import type { FromJson } from "./json-parser";
 
 export class TrieTest {

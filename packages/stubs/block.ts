@@ -1,5 +1,5 @@
+import type { Opaque } from "@typeberry/utils";
 import { Header } from "./header";
-import type { Opaque } from "./opaque";
 
 export type Ticket = Opaque<void, "Tickets">;
 export type Judgement = Opaque<void, "Judgements">;
