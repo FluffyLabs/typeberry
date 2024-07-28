@@ -52,7 +52,7 @@ test("ArgsDecoder", async (t) => {
       firstRegisterIndex: 1,
       secondRegisterIndex: 2,
 
-      immediateDecoder1: expectedImmediateDecoder,
+      immediateDecoder: expectedImmediateDecoder,
     };
 
     const result = argsDecoder.getArgs(0);
@@ -73,7 +73,7 @@ test("ArgsDecoder", async (t) => {
       firstRegisterIndex: 1,
       secondRegisterIndex: 2,
 
-      immediateDecoder1: expectedImmediateDecoder,
+      immediateDecoder: expectedImmediateDecoder,
     };
 
     const result = argsDecoder.getArgs(0);
@@ -92,7 +92,7 @@ test("ArgsDecoder", async (t) => {
       type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET,
 
       firstRegisterIndex: 7,
-      immediateDecoder1: expectedImmediateDecoder,
+      immediateDecoder: expectedImmediateDecoder,
       offset: 6,
     };
 

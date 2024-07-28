@@ -10,7 +10,7 @@ import type {
   TwoRegistersTwoImmediatesResult,
 } from "./args-decoder";
 import { ArgumentType } from "./argument-type";
-import type { ImmediateDecoder } from "./decoders/immediate-decoder";
+import { ImmediateDecoder } from "./decoders/immediate-decoder";
 
 const ARGUMENT_TYPE_LENGTH = Object.keys(ArgumentType).length / 2;
 
@@ -56,7 +56,7 @@ export const createResults = () => {
     type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET,
     noOfInstructionsToSkip: 1,
     firstRegisterIndex: 0,
-    immediateDecoder1: null as unknown as ImmediateDecoder,
+    immediateDecoder: new ImmediateDecoder(),
     offset: 0,
   };
 
@@ -73,14 +73,14 @@ export const createResults = () => {
     noOfInstructionsToSkip: 1,
     firstRegisterIndex: 0,
     secondRegisterIndex: 0,
-    immediateDecoder1: null as unknown as ImmediateDecoder,
+    immediateDecoder: new ImmediateDecoder(),
   };
 
   results[ArgumentType.ONE_REGISTER_ONE_IMMEDIATE] = {
     type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE,
     noOfInstructionsToSkip: 1,
     firstRegisterIndex: 0,
-    immediateDecoder1: null as unknown as ImmediateDecoder,
+    immediateDecoder: new ImmediateDecoder(),
   };
 
   results[ArgumentType.ONE_OFFSET] = {

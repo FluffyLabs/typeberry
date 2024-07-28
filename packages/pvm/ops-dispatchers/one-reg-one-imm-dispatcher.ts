@@ -8,7 +8,7 @@ export class OneRegisterOneImmediateDispatcher {
   dispatch(instruction: Instruction, args: OneRegisterOneImmediateResult) {
     switch (instruction) {
       case Instruction.LOAD_IMM:
-        this.loadOps.loadImmediate(args.firstRegisterIndex, args.immediateDecoder1.getUnsigned());
+        this.loadOps.loadImmediate(args.firstRegisterIndex, args.immediateDecoder.getUnsigned());
         break;
     }
   }

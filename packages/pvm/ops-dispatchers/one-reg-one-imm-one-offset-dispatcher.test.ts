@@ -35,7 +35,7 @@ test("OneRegisterOneImmediateOneOffsetDispatcher", async (t) => {
   });
 
   const argsMock = {
-    immediateDecoder1: { getSigned: () => {}, getUnsigned: () => {} },
+    immediateDecoder: { getSigned: () => {}, getUnsigned: () => {} },
   } as OneRegisterOneImmediateOneOffsetResult;
 
   const relevantInstructions = Object.entries(Instruction)

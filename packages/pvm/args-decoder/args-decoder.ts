@@ -31,14 +31,14 @@ export type TwoRegistersOneImmediateResult = {
   noOfInstructionsToSkip: number;
   firstRegisterIndex: number;
   secondRegisterIndex: number;
-  immediateDecoder1: ImmediateDecoder;
+  immediateDecoder: ImmediateDecoder;
 };
 
 export type OneRegisterOneImmediateResult = {
   type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE;
   noOfInstructionsToSkip: number;
   firstRegisterIndex: number;
-  immediateDecoder1: ImmediateDecoder;
+  immediateDecoder: ImmediateDecoder;
 };
 
 export type TwoRegistersTwoImmediatesResult = {
@@ -46,8 +46,8 @@ export type TwoRegistersTwoImmediatesResult = {
   noOfInstructionsToSkip: number;
   firstRegisterIndex: number;
   secondRegisterIndex: number;
-  immediateDecoder1: ImmediateDecoder;
-  immediateDecoder2: ImmediateDecoder;
+  firstImmediateDecoder: ImmediateDecoder;
+  secondImmediateDecoder: ImmediateDecoder;
 };
 
 export type TwoRegistersOneOffsetResult = {
@@ -62,7 +62,7 @@ export type OneRegisterOneImmediateOneOffsetResult = {
   type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET;
   noOfInstructionsToSkip: number;
   firstRegisterIndex: number;
-  immediateDecoder1: ImmediateDecoder;
+  immediateDecoder: ImmediateDecoder;
   offset: number;
 };
 
@@ -85,8 +85,7 @@ type Result =
 
 export class ArgsDecoder {
   private registerIndexDecoder = new NibblesDecoder();
-  private immediateDecoder1 = new ImmediateDecoder();
-  private immediateDecoder2 = new ImmediateDecoder();
+  private offsetDecoder = new ImmediateDecoder();
 
   private results = createResults(); // [MaSi] because I don't want to allocate memory for each instruction
 
@@ -123,8 +122,7 @@ export class ArgsDecoder {
         const immediateLength = this.context.mask.getNoOfBytesToNextInstruction(pc + 2);
         result.noOfInstructionsToSkip = 2 + immediateLength;
 
-        this.immediateDecoder1.setBytes(this.context.code.subarray(pc + 2, pc + 2 + immediateLength));
-        result.immediateDecoder1 = this.immediateDecoder1;
+        result.immediateDecoder.setBytes(this.context.code.subarray(pc + 2, pc + 2 + immediateLength));
         return result;
       }
 
@@ -134,13 +132,12 @@ export class ArgsDecoder {
         this.registerIndexDecoder.setByte(firstByte);
         result.firstRegisterIndex = this.registerIndexDecoder.getLowNibbleAsRegisterIndex();
         const immediateLength = this.registerIndexDecoder.getHighNibble();
-        this.immediateDecoder1.setBytes(this.context.code.subarray(pc + 2, pc + 2 + immediateLength));
+        result.immediateDecoder.setBytes(this.context.code.subarray(pc + 2, pc + 2 + immediateLength));
         const offsetLength = this.context.mask.getNoOfBytesToNextInstruction(pc + 2 + immediateLength);
-        this.immediateDecoder2.setBytes(
+        this.offsetDecoder.setBytes(
           this.context.code.subarray(pc + 2 + immediateLength, pc + 2 + immediateLength + offsetLength),
         );
-        result.immediateDecoder1 = this.immediateDecoder1;
-        result.offset = this.immediateDecoder2.getSigned();
+        result.offset = this.offsetDecoder.getSigned();
         result.noOfInstructionsToSkip = 2 + immediateLength + offsetLength;
         return result;
       }
@@ -154,8 +151,8 @@ export class ArgsDecoder {
         const offsetLength = this.context.mask.getNoOfBytesToNextInstruction(pc + 2);
         result.noOfInstructionsToSkip = 2 + offsetLength;
 
-        this.immediateDecoder1.setBytes(this.context.code.subarray(pc + 2, pc + 2 + offsetLength));
-        result.offset = this.immediateDecoder1.getSigned();
+        this.offsetDecoder.setBytes(this.context.code.subarray(pc + 2, pc + 2 + offsetLength));
+        result.offset = this.offsetDecoder.getSigned();
         return result;
       }
 
@@ -173,8 +170,8 @@ export class ArgsDecoder {
         const result = this.results[argsType];
         const offsetLength = this.context.mask.getNoOfBytesToNextInstruction(pc + 1);
         result.noOfInstructionsToSkip = 1 + offsetLength;
-        this.immediateDecoder1.setBytes(this.context.code.subarray(pc + 1, pc + 1 + offsetLength));
-        result.offset = this.immediateDecoder1.getSigned();
+        this.offsetDecoder.setBytes(this.context.code.subarray(pc + 1, pc + 1 + offsetLength));
+        result.offset = this.offsetDecoder.getSigned();
         return result;
       }
 
@@ -187,8 +184,7 @@ export class ArgsDecoder {
         const immediateLength = this.context.mask.getNoOfBytesToNextInstruction(pc + 2);
         result.noOfInstructionsToSkip = 2 + immediateLength;
 
-        this.immediateDecoder1.setBytes(this.context.code.subarray(pc + 2, pc + 2 + immediateLength));
-        result.immediateDecoder1 = this.immediateDecoder1;
+        result.immediateDecoder.setBytes(this.context.code.subarray(pc + 2, pc + 2 + immediateLength));
         return result;
       }
 
