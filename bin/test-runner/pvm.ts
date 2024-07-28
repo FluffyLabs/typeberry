@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { Pvm, type RegistersArray } from "../../packages/pvm/pvm";
+import { Pvm, type RegistersArray } from "@typeberry/pvm/pvm";
 import type { FromJson } from "./json-parser";
 
 type Status = "trap";

@@ -1,4 +1,4 @@
-import type { Opaque } from "./opaque";
+import type { Opaque } from "@typeberry/utils";
 
 export type Hash = Opaque<void, "Hash">;
 type U64 = bigint;

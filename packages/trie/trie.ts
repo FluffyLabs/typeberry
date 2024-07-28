@@ -1,5 +1,5 @@
-import { Bytes, type BytesBlob } from "../bytes";
-import { check } from "../debug";
+import { Bytes, type BytesBlob } from "@typeberry/bytes";
+import { check } from "@typeberry/utils";
 import {
   BranchNode,
   HASH_BYTES,

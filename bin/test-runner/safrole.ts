@@ -1,14 +1,14 @@
 import assert from "node:assert";
-import { Bytes, BytesBlob } from "../../packages/bytes";
-import type { BandersnatchKey, BlsKey, Ed25519Key } from "../../packages/crypto";
-import type { EntropyHash } from "../../packages/hash";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { EntropyHash } from "@typeberry/safrole";
 import {
   Safrole,
   type StateDiff as SafroleStateDiff,
   type TicketBody,
   type TicketEnvelope,
   type ValidatorData,
-} from "../../packages/safrole";
+} from "@typeberry/safrole";
+import type { BandersnatchKey, BlsKey, Ed25519Key } from "@typeberry/safrole/crypto";
 import { type FromJson, optional } from "./json-parser";
 
 type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}` ? `${T}${Capitalize<SnakeToCamel<U>>}` : S;
