@@ -1,5 +1,5 @@
-import "./packages/stubs/block";
-import "./packages/stubs/header";
-import "./packages/opaque";
-import "./packages/stubs/state";
-import "./packages/stubs/workReport";
+import "@typeberry/test-runner";
+import "@typeberry/stubs/block";
+import "@typeberry/stubs/header";
+import "@typeberry/stubs/state";
+import "@typeberry/stubs/workReport";
