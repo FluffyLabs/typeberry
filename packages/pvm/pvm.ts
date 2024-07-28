@@ -4,6 +4,7 @@ import { assemblify } from "./assemblify";
 import { Context } from "./context";
 import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
+import { InstructionResult } from "./instruction-result";
 import { BitOps, BooleanOps, BranchOps, LoadOps, MathOps, MoveOps, ShiftOps } from "./ops";
 import {
   OneOffsetDispatcher,
@@ -56,6 +57,7 @@ export class Pvm {
   private twoRegsOneOffsetDispatcher: TwoRegsOneOffsetDispatcher;
   private oneOffsetDispatcher: OneOffsetDispatcher;
   private oneRegisterOneImmediateDispatcher: OneRegisterOneImmediateDispatcher;
+  private instructionResult = new InstructionResult();
 
   constructor(rawProgram: Uint8Array, initialState: InitialState = {}) {
     const programDecoder = new ProgramDecoder(rawProgram);
@@ -80,7 +82,7 @@ export class Pvm {
     const bitOps = new BitOps(this.context);
     const booleanOps = new BooleanOps(this.context);
     const moveOps = new MoveOps(this.context);
-    const branchOps = new BranchOps(this.context);
+    const branchOps = new BranchOps(this.context, this.instructionResult);
     const loadOps = new LoadOps(this.context);
 
     this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
@@ -107,8 +109,7 @@ export class Pvm {
       }
 
       const args = this.argsDecoder.getArgs(this.context.pc);
-      this.context.nextPc = this.context.pc + args.noOfInstructionsToSkip;
-
+      this.instructionResult.nextPc = this.context.pc + args.noOfInstructionsToSkip;
       switch (args.type) {
         case ArgumentType.NO_ARGUMENTS:
           if (currentInstruction === Instruction.TRAP) {
@@ -138,9 +139,11 @@ export class Pvm {
           this.oneRegisterOneImmediateDispatcher.dispatch(currentInstruction, args);
           break;
       }
-      this.context.pc = this.context.nextPc;
+      this.context.pc = this.instructionResult.nextPc;
     }
 
+    // Gray Paper defines that the code is infinitely extended with `0` opcodes (`TRAP`).
+    // Hence the final instruction will always be `TRAP` and we subtract the gas accordingly at the very end.
     this.gas -= instructionGasMap[Instruction.TRAP];
 
     if (this.gas < 0) {

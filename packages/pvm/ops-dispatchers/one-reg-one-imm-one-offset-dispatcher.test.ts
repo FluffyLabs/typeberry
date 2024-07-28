@@ -3,6 +3,7 @@ import { test } from "node:test";
 import type { OneRegisterOneImmediateOneOffsetResult } from "../args-decoder/args-decoder";
 import { ArgumentType } from "../args-decoder/argument-type";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
+import type { Context } from "../context";
 import { Instruction } from "../instruction";
 import { BranchOps } from "../ops";
 import { Registers } from "../registers";
@@ -10,7 +11,7 @@ import { OneRegisterOneImmediateOneOffsetDispatcher } from "./one-reg-one-imm-on
 
 test("OneRegisterOneImmediateOneOffsetDispatcher", async (t) => {
   const regs = new Registers();
-  const branchOps = new BranchOps({ regs, pc: 0, nextPc: 0 });
+  const branchOps = new BranchOps({ regs, pc: 0 } as Context, { nextPc: 0 });
 
   const mockFn = t.mock.fn();
 
