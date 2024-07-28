@@ -2,8 +2,7 @@
   "name": "@typeberry/test-runner",
   "version": "0.0.1",
   "description": "JAM-test-vectors runner.",
-  "main": "index.js",
-  "devDependencies": {},
+  "main": "index.ts",
   "scripts": {
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\\\n' ' ')"
   },

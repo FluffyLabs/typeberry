@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "description": "Safrole implementation based on the Gray Paper.",
   "main": "index.ts",
-  "devDependencies": {},
   "dependencies": {
     "bandersnatch-wasm": "github:fluffylabs/bandersnatch#d0683b0e03635f4fda937addc5c0c7e8b761b607"
   },
