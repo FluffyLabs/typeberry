@@ -1,28 +1,29 @@
-import type { Context } from "../context";
-import { BaseOps } from "./base-ops";
+import type { Registers } from "../registers";
 
-export class MoveOps extends BaseOps<Pick<Context, "regs">> {
+export class MoveOps {
+  constructor(private regs: Registers) {}
+
   cmovIfZeroImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    if (this.ctx.regs.asUnsigned[firstIndex] === 0) {
-      this.ctx.regs.asUnsigned[resultIndex] = immediateValue;
+    if (this.regs.asUnsigned[firstIndex] === 0) {
+      this.regs.asUnsigned[resultIndex] = immediateValue;
     }
   }
 
   cmovIfNotZeroImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    if (this.ctx.regs.asUnsigned[firstIndex] !== 0) {
-      this.ctx.regs.asUnsigned[resultIndex] = immediateValue;
+    if (this.regs.asUnsigned[firstIndex] !== 0) {
+      this.regs.asUnsigned[resultIndex] = immediateValue;
     }
   }
 
   cmovIfZero(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.cmovIfZeroImmediate(firstIndex, this.ctx.regs.asUnsigned[secondIndex], resultIndex);
+    this.cmovIfZeroImmediate(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
   }
 
   cmovIfNotZero(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.cmovIfNotZeroImmediate(firstIndex, this.ctx.regs.asUnsigned[secondIndex], resultIndex);
+    this.cmovIfNotZeroImmediate(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
   }
 
   moveRegister(firstIndex: number, resultIndex: number) {
-    this.ctx.regs.asUnsigned[resultIndex] = this.ctx.regs.asUnsigned[firstIndex];
+    this.regs.asUnsigned[resultIndex] = this.regs.asUnsigned[firstIndex];
   }
 }

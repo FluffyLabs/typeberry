@@ -24,7 +24,7 @@ test("BooleanOps", async (t) => {
     const initialResultRegister = 3;
     const resultValue = 1;
     const regs = getRegisters([firstValue, initialResultRegister]);
-    const bitOps = new BooleanOps({ regs });
+    const bitOps = new BooleanOps(regs);
 
     bitOps.setLessThanUnsignedImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -37,7 +37,7 @@ test("BooleanOps", async (t) => {
     const initialResultRegister = 3;
     const resultValue = 0;
     const regs = getRegisters([firstValue, initialResultRegister]);
-    const bitOps = new BooleanOps({ regs });
+    const bitOps = new BooleanOps(regs);
 
     bitOps.setLessThanUnsignedImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -50,7 +50,7 @@ test("BooleanOps", async (t) => {
     const initialResultRegister = 3;
     const resultValue = 1;
     const regs = getRegisters([firstValue, initialResultRegister]);
-    const bitOps = new BooleanOps({ regs });
+    const bitOps = new BooleanOps(regs);
 
     bitOps.setGreaterThanUnsignedImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -63,7 +63,7 @@ test("BooleanOps", async (t) => {
     const initialResultRegister = 3;
     const resultValue = 0;
     const regs = getRegisters([firstValue, initialResultRegister]);
-    const bitOps = new BooleanOps({ regs });
+    const bitOps = new BooleanOps(regs);
 
     bitOps.setGreaterThanUnsignedImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -78,7 +78,7 @@ test("BooleanOps", async (t) => {
     const regs = new Registers();
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[RESULT_REGISTER] = initialResultRegister;
-    const bitOps = new BooleanOps({ regs });
+    const bitOps = new BooleanOps(regs);
 
     bitOps.setLessThanSignedImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -93,7 +93,7 @@ test("BooleanOps", async (t) => {
     const regs = new Registers();
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[RESULT_REGISTER] = initialResultRegister;
-    const bitOps = new BooleanOps({ regs });
+    const bitOps = new BooleanOps(regs);
 
     bitOps.setLessThanSignedImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -108,7 +108,7 @@ test("BooleanOps", async (t) => {
     const regs = new Registers();
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[RESULT_REGISTER] = initialResultRegister;
-    const bitOps = new BooleanOps({ regs });
+    const bitOps = new BooleanOps(regs);
 
     bitOps.setGreaterThanSignedImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -123,7 +123,7 @@ test("BooleanOps", async (t) => {
     const regs = new Registers();
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[RESULT_REGISTER] = initialResultRegister;
-    const bitOps = new BooleanOps({ regs });
+    const bitOps = new BooleanOps(regs);
 
     bitOps.setGreaterThanSignedImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -136,7 +136,7 @@ test("BooleanOps", async (t) => {
     const initialResultRegister = 3;
     const resultValue = 1;
     const regs = getRegisters([firstValue, initialResultRegister, secondValue]);
-    const bitOps = new BooleanOps({ regs });
+    const bitOps = new BooleanOps(regs);
 
     bitOps.setLessThanUnsigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -149,7 +149,7 @@ test("BooleanOps", async (t) => {
     const initialResultRegister = 3;
     const resultValue = 0;
     const regs = getRegisters([firstValue, initialResultRegister, secondValue]);
-    const bitOps = new BooleanOps({ regs });
+    const bitOps = new BooleanOps(regs);
 
     bitOps.setLessThanUnsigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -165,7 +165,7 @@ test("BooleanOps", async (t) => {
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[SECOND_REGISTER] = secondValue;
     regs.asSigned[RESULT_REGISTER] = initialResultRegister;
-    const bitOps = new BooleanOps({ regs });
+    const bitOps = new BooleanOps(regs);
 
     bitOps.setLessThanSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -181,7 +181,7 @@ test("BooleanOps", async (t) => {
     regs.asSigned[FIRST_REGISTER] = firstValue;
     regs.asSigned[SECOND_REGISTER] = secondValue;
     regs.asSigned[RESULT_REGISTER] = initialResultRegister;
-    const bitOps = new BooleanOps({ regs });
+    const bitOps = new BooleanOps(regs);
 
     bitOps.setLessThanSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 

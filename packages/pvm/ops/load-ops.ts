@@ -1,8 +1,9 @@
-import type { Context } from "../context";
-import { BaseOps } from "./base-ops";
+import type { Registers } from "../registers";
 
-export class LoadOps extends BaseOps<Pick<Context, "regs">> {
+export class LoadOps {
+  constructor(private regs: Registers) {}
+
   loadImmediate(registerIndex: number, immediate: number) {
-    this.ctx.regs.asUnsigned[registerIndex] = immediate;
+    this.regs.asUnsigned[registerIndex] = immediate;
   }
 }

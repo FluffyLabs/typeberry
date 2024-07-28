@@ -1,7 +1,6 @@
 import { ArgsDecoder } from "./args-decoder/args-decoder";
 import { ArgumentType } from "./args-decoder/argument-type";
 import { assemblify } from "./assemblify";
-import { Context } from "./context";
 import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
 import { InstructionResult } from "./instruction-result";
@@ -15,6 +14,7 @@ import {
   TwoRegsOneImmDispatcher,
   TwoRegsOneOffsetDispatcher,
 } from "./ops-dispatchers";
+import type { Mask } from "./program-decoder/mask";
 import { ProgramDecoder } from "./program-decoder/program-decoder";
 import { NO_OF_REGISTERS, Registers } from "./registers";
 
@@ -44,7 +44,10 @@ type FixedArray<T, N extends number> = GrowToSize<T, N, []>;
 export type RegistersArray = FixedArray<number, 13>;
 
 export class Pvm {
-  private context: Context;
+  private registers: Registers;
+  private code: Uint8Array;
+  private mask: Mask;
+  private pc = 0;
   private gas: number;
   private pageMap: PageMapItem[];
   private memory: MemoryChunkItem[];
@@ -61,29 +64,27 @@ export class Pvm {
 
   constructor(rawProgram: Uint8Array, initialState: InitialState = {}) {
     const programDecoder = new ProgramDecoder(rawProgram);
-    const code = programDecoder.getCode();
-    const mask = programDecoder.getMask();
-    const registers = new Registers();
+    this.code = programDecoder.getCode();
+    this.mask = programDecoder.getMask();
+    this.registers = new Registers();
     const pc = initialState.pc ?? 0;
 
     for (let i = 0; i < NO_OF_REGISTERS; i++) {
-      registers.asUnsigned[i] = initialState.regs?.[i] ?? 0;
+      this.registers.asUnsigned[i] = initialState.regs?.[i] ?? 0;
     }
     this.gas = initialState.gas ?? 0;
     this.pageMap = initialState.pageMap ?? [];
     this.memory = initialState.memory ?? [];
 
-    this.context = new Context(code, mask, registers, pc);
+    this.argsDecoder = new ArgsDecoder(this.code, this.mask);
 
-    this.argsDecoder = new ArgsDecoder(this.context);
-
-    const mathOps = new MathOps(this.context);
-    const shiftOps = new ShiftOps(this.context);
-    const bitOps = new BitOps(this.context);
-    const booleanOps = new BooleanOps(this.context);
-    const moveOps = new MoveOps(this.context);
-    const branchOps = new BranchOps(this.context, this.instructionResult);
-    const loadOps = new LoadOps(this.context);
+    const mathOps = new MathOps(this.registers);
+    const shiftOps = new ShiftOps(this.registers);
+    const bitOps = new BitOps(this.registers);
+    const booleanOps = new BooleanOps(this.registers);
+    const moveOps = new MoveOps(this.registers);
+    const branchOps = new BranchOps(this.registers, this.instructionResult);
+    const loadOps = new LoadOps(this.registers);
 
     this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
     this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
@@ -95,21 +96,21 @@ export class Pvm {
   }
 
   printProgram() {
-    const p = assemblify(this.context.code, this.context.mask);
+    const p = assemblify(this.code, this.mask);
     console.table(p);
   }
 
   runProgram() {
-    while (this.context.pc < this.context.code.length) {
-      const currentInstruction = this.context.code[this.context.pc];
+    while (this.pc < this.code.length) {
+      const currentInstruction = this.code[this.pc];
       this.gas -= instructionGasMap[currentInstruction];
 
       if (this.gas < 0) {
         break;
       }
 
-      const args = this.argsDecoder.getArgs(this.context.pc);
-      this.instructionResult.nextPc = this.context.pc + args.noOfInstructionsToSkip;
+      const args = this.argsDecoder.getArgs(this.pc);
+      this.instructionResult.pcOffset = args.noOfInstructionsToSkip;
       switch (args.type) {
         case ArgumentType.NO_ARGUMENTS:
           if (currentInstruction === Instruction.TRAP) {
@@ -139,7 +140,7 @@ export class Pvm {
           this.oneRegisterOneImmediateDispatcher.dispatch(currentInstruction, args);
           break;
       }
-      this.context.pc = this.instructionResult.nextPc;
+      this.pc += this.instructionResult.pcOffset;
     }
 
     // Gray Paper defines that the code is infinitely extended with `0` opcodes (`TRAP`).
@@ -155,11 +156,11 @@ export class Pvm {
     const regs = Array<number>(NO_OF_REGISTERS);
 
     for (let i = 0; i < NO_OF_REGISTERS; i++) {
-      regs[i] = Number(this.context.regs.asUnsigned[i]);
+      regs[i] = Number(this.registers.asUnsigned[i]);
     }
 
     return {
-      pc: this.context.pc,
+      pc: this.pc,
       regs,
       gas: this.gas,
       pageMap: this.pageMap,

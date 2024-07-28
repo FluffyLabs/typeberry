@@ -24,7 +24,7 @@ test("BitOps", async (t) => {
     const secondValue = 0b10;
     const resultValue = 0b11;
     const regs = getRegisters([firstValue, secondValue]);
-    const bitOps = new BitOps({ regs });
+    const bitOps = new BitOps(regs);
 
     bitOps.or(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -36,7 +36,7 @@ test("BitOps", async (t) => {
     const secondValue = 0b10;
     const resultValue = 0b11;
     const regs = getRegisters([firstValue]);
-    const bitOps = new BitOps({ regs });
+    const bitOps = new BitOps(regs);
 
     bitOps.orImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -48,7 +48,7 @@ test("BitOps", async (t) => {
     const secondValue = 0b011;
     const resultValue = 0b001;
     const regs = getRegisters([firstValue, secondValue]);
-    const bitOps = new BitOps({ regs });
+    const bitOps = new BitOps(regs);
 
     bitOps.and(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -60,7 +60,7 @@ test("BitOps", async (t) => {
     const secondValue = 0b011;
     const resultValue = 0b001;
     const regs = getRegisters([firstValue]);
-    const bitOps = new BitOps({ regs });
+    const bitOps = new BitOps(regs);
 
     bitOps.andImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
@@ -72,7 +72,7 @@ test("BitOps", async (t) => {
     const secondValue = 0b110;
     const resultValue = 0b011;
     const regs = getRegisters([firstValue, secondValue]);
-    const bitOps = new BitOps({ regs });
+    const bitOps = new BitOps(regs);
 
     bitOps.xor(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
@@ -84,7 +84,7 @@ test("BitOps", async (t) => {
     const secondValue = 0b110;
     const resultValue = 0b011;
     const regs = getRegisters([firstValue]);
-    const bitOps = new BitOps({ regs });
+    const bitOps = new BitOps(regs);
 
     bitOps.xorImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 

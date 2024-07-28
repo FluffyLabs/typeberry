@@ -1,3 +1,3 @@
 export class InstructionResult {
-  public nextPc = 0;
+  public pcOffset = 0;
 }
