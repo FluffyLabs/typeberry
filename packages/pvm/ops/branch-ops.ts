@@ -11,7 +11,7 @@ export class BranchOps {
     if (!condition) {
       return;
     }
-
+    // TODO [MaSi]: incorrect offset should be handled here
     this.instructionResult.pcOffset = offset;
   }
 
