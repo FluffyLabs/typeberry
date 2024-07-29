@@ -84,7 +84,7 @@ type Result =
   | OneOffsetResult;
 
 export class ArgsDecoder {
-  private registerIndexDecoder = new NibblesDecoder();
+  private nibblesDecoder = new NibblesDecoder();
   private offsetDecoder = new ImmediateDecoder();
 
   private results = createResults(); // [MaSi] because I don't want to allocate memory for each instruction
@@ -107,20 +107,20 @@ export class ArgsDecoder {
         result.noOfInstructionsToSkip = 3;
         const firstByte = this.code[pc + 1];
         const secondByte = this.code[pc + 2];
-        this.registerIndexDecoder.setByte(firstByte);
-        result.firstRegisterIndex = this.registerIndexDecoder.getHighNibbleAsRegisterIndex();
-        result.secondRegisterIndex = this.registerIndexDecoder.getLowNibbleAsRegisterIndex();
-        this.registerIndexDecoder.setByte(secondByte);
-        result.thirdRegisterIndex = this.registerIndexDecoder.getLowNibble();
+        this.nibblesDecoder.setByte(firstByte);
+        result.firstRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
+        result.secondRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
+        this.nibblesDecoder.setByte(secondByte);
+        result.thirdRegisterIndex = this.nibblesDecoder.getLowNibble();
         return result;
       }
 
       case ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE: {
         const result = this.results[argsType];
         const firstByte = this.code[pc + 1];
-        this.registerIndexDecoder.setByte(firstByte);
-        result.firstRegisterIndex = this.registerIndexDecoder.getHighNibbleAsRegisterIndex();
-        result.secondRegisterIndex = this.registerIndexDecoder.getLowNibbleAsRegisterIndex();
+        this.nibblesDecoder.setByte(firstByte);
+        result.firstRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
+        result.secondRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
 
         const immediateLength = this.mask.getNoOfBytesToNextInstruction(pc + 2);
         result.noOfInstructionsToSkip = 2 + immediateLength;
@@ -132,9 +132,9 @@ export class ArgsDecoder {
       case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET: {
         const result = this.results[argsType];
         const firstByte = this.code[pc + 1];
-        this.registerIndexDecoder.setByte(firstByte);
-        result.firstRegisterIndex = this.registerIndexDecoder.getLowNibbleAsRegisterIndex();
-        const immediateLength = this.registerIndexDecoder.getHighNibble();
+        this.nibblesDecoder.setByte(firstByte);
+        result.firstRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
+        const immediateLength = this.nibblesDecoder.getHighNibble();
         result.immediateDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + immediateLength));
         const offsetLength = this.mask.getNoOfBytesToNextInstruction(pc + 2 + immediateLength);
         this.offsetDecoder.setBytes(
@@ -148,9 +148,9 @@ export class ArgsDecoder {
       case ArgumentType.TWO_REGISTERS_ONE_OFFSET: {
         const result = this.results[argsType];
         const firstByte = this.code[pc + 1];
-        this.registerIndexDecoder.setByte(firstByte);
-        result.firstRegisterIndex = this.registerIndexDecoder.getLowNibbleAsRegisterIndex();
-        result.secondRegisterIndex = this.registerIndexDecoder.getHighNibbleAsRegisterIndex();
+        this.nibblesDecoder.setByte(firstByte);
+        result.firstRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
+        result.secondRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
         const offsetLength = this.mask.getNoOfBytesToNextInstruction(pc + 2);
         result.noOfInstructionsToSkip = 2 + offsetLength;
 
@@ -163,9 +163,9 @@ export class ArgsDecoder {
         const result = this.results[argsType];
         result.noOfInstructionsToSkip = 2;
         const firstByte = this.code[pc + 1];
-        this.registerIndexDecoder.setByte(firstByte);
-        result.firstRegisterIndex = this.registerIndexDecoder.getHighNibbleAsRegisterIndex();
-        result.secondRegisterIndex = this.registerIndexDecoder.getLowNibbleAsRegisterIndex();
+        this.nibblesDecoder.setByte(firstByte);
+        result.firstRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
+        result.secondRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
         return result;
       }
 
@@ -181,8 +181,8 @@ export class ArgsDecoder {
       case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE: {
         const result = this.results[argsType];
         const firstByte = this.code[pc + 1];
-        this.registerIndexDecoder.setByte(firstByte);
-        result.firstRegisterIndex = this.registerIndexDecoder.getLowNibbleAsRegisterIndex();
+        this.nibblesDecoder.setByte(firstByte);
+        result.firstRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
 
         const immediateLength = this.mask.getNoOfBytesToNextInstruction(pc + 2);
         result.noOfInstructionsToSkip = 2 + immediateLength;
