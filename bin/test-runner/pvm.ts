@@ -6,10 +6,19 @@ type Status = "trap";
 class MemoryChunkItem {
   static fromJson: FromJson<MemoryChunkItem> = {
     address: "number",
-    contents: ["array", "number"],
+    contents: [
+      "object",
+      (v: unknown) => {
+        if (Array.isArray(v)) {
+          return new Uint8Array(v);
+        }
+
+        return new Uint8Array();
+      },
+    ],
   };
   address!: number;
-  contents!: number[];
+  contents!: Uint8Array;
 }
 
 class PageMapItem {
@@ -30,7 +39,16 @@ export class PvmTest {
     "initial-page-map": ["array", PageMapItem.fromJson],
     "initial-memory": ["array", MemoryChunkItem.fromJson],
     "initial-gas": "number",
-    program: ["array", "number"],
+    program: [
+      "object",
+      (v: unknown) => {
+        if (Array.isArray(v)) {
+          return new Uint8Array(v);
+        }
+
+        return new Uint8Array();
+      },
+    ],
     "expected-status": "string",
     "expected-regs": ["array", "number"],
     "expected-pc": "number",
@@ -44,7 +62,7 @@ export class PvmTest {
   "initial-page-map": PageMapItem[];
   "initial-memory": MemoryChunkItem[];
   "initial-gas": number;
-  program!: number[];
+  program!: Uint8Array;
   "expected-status": Status;
   "expected-regs": RegistersArray;
   "expected-pc": number;
@@ -53,7 +71,7 @@ export class PvmTest {
 }
 
 export async function runPvmTest(testContent: PvmTest) {
-  const pvm = new Pvm(new Uint8Array(testContent.program), {
+  const pvm = new Pvm(testContent.program, {
     gas: testContent["initial-gas"],
     memory: testContent["initial-memory"],
     pageMap: testContent["initial-page-map"],

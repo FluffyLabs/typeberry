@@ -28,7 +28,7 @@ type InitialState = {
 
 type MemoryChunkItem = {
   address: number;
-  contents: number[];
+  contents: Uint8Array;
 };
 
 type PageMapItem = {
