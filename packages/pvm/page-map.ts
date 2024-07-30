@@ -1,3 +1,5 @@
+import { check } from "@typeberry/utils";
+
 type Page = {
   address: number;
   length: number;
@@ -12,6 +14,8 @@ export class PageMap {
     this.pageSize = initialPageMap[0]?.length ?? 0;
 
     for (const page of initialPageMap) {
+      check(page.length === this.pageSize, "All pages should be the same length!");
+      check(page.address % this.pageSize === 0, "The page address should be a multiple of the page size!");
       this.pages.set(page.address, page);
     }
   }

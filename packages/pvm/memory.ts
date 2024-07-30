@@ -35,6 +35,8 @@ export class Memory {
       if (!hasPage) {
         this.memory.set(pageAddress, page);
       }
+    } else {
+      // TODO [MaSi]: it should be a page fault
     }
   }
 
@@ -43,10 +45,16 @@ export class Memory {
     const pageAddress = address - addressInPage;
 
     if (this.pageMap.isReadable(pageAddress)) {
-      return this.memory.get(pageAddress)?.[addressInPage].subarray(0, length) ?? new Uint8Array(length);
+      const value = this.memory.get(pageAddress)?.[addressInPage];
+      if (value) {
+        return value.subarray(0, length);
+      }
+      const bytes = new Uint8Array(4);
+      this.store(address, bytes);
+      return bytes.subarray(0, length);
     }
 
-    return null;
+    return null; // TODO [MaSi]: it should be a page fault
   }
 
   getMemoryDump() {

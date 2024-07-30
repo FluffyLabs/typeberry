@@ -16,6 +16,8 @@ export class LoadOps {
 
     if (bytes) {
       this.regs.setFromBytes(registerIndex, bytes);
+    } else {
+      // TODO [MaSi]: it should be a page fault
     }
   }
 
