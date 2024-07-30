@@ -13,7 +13,7 @@ class MemoryChunkItem {
           return new Uint8Array(v);
         }
 
-        return new Uint8Array();
+        throw new Error(`Expected an array, got ${typeof v} instead.`);
       },
     ],
   };
