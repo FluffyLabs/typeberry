@@ -4,7 +4,7 @@ import type { FromJson } from "./json-parser";
 
 type Status = "trap";
 
-const uint8ArrayFromJson = [
+const uint8ArrayFromJson: ["object", (v: unknown) => Uint8Array] = [
   "object",
   (v: unknown) => {
     if (Array.isArray(v)) {
@@ -13,7 +13,7 @@ const uint8ArrayFromJson = [
 
     throw new Error(`Expected an array, got ${typeof v} instead.`);
   },
-] as ["object", (v: unknown) => Uint8Array];
+];
 
 class MemoryChunkItem {
   static fromJson: FromJson<MemoryChunkItem> = {
