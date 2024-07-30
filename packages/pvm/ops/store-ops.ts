@@ -7,6 +7,7 @@ export class StoreOps {
     private regs: Registers,
     private memory: Memory,
   ) {}
+
   storeU8(address: number, registerIndex: number) {
     this.storeByte(address, this.regs.getBytesAsLittleEndian(registerIndex));
   }

@@ -91,7 +91,7 @@ describe("PageMap", () => {
   });
 
   describe("PageMap.getPageSize", () => {
-    it("should return true", () => {
+    it("should return correct page size length", () => {
       const length = 4096;
       const initialPageMap = [
         {

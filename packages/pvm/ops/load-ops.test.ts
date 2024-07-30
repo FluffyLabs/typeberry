@@ -35,4 +35,71 @@ describe("LoadOps", () => {
       assert.strictEqual(registers.asUnsigned[RESULT_REGISTER], expectedUnsignedNumber);
     });
   });
+
+  describe("load (U8, U16 and U32)", () => {
+    it("should load u8 from memory to register", () => {
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 1;
+      const initialMemory = [{ address, contents: new Uint8Array([0xff, 0xee, 0xdd, 0xcc]) }];
+      const memory = new Memory(pageMap, initialMemory);
+      const registers = new Registers();
+      const loadOps = new LoadOps(registers, memory);
+      const expectedValue = 0xff;
+      const registerIndex = 0;
+
+      loadOps.loadU8(address, registerIndex);
+
+      assert.deepStrictEqual(registers.asSigned[registerIndex], expectedValue);
+      assert.deepStrictEqual(registers.asUnsigned[registerIndex], expectedValue);
+    });
+
+    it("should load u16 from memory to register", () => {
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 1;
+      const initialMemory = [{ address, contents: new Uint8Array([0xff, 0xee, 0xdd, 0xcc]) }];
+      const memory = new Memory(pageMap, initialMemory);
+      const registers = new Registers();
+      const loadOps = new LoadOps(registers, memory);
+      const expectedValue = 61183;
+      const registerIndex = 0;
+
+      loadOps.loadU16(address, registerIndex);
+
+      assert.deepStrictEqual(registers.asSigned[registerIndex], expectedValue);
+      assert.deepStrictEqual(registers.asUnsigned[registerIndex], expectedValue);
+    });
+
+    it("should load u32 from memory to register", () => {
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 1;
+      const initialMemory = [{ address, contents: new Uint8Array([0xff, 0xee, 0xdd, 0x0c]) }];
+      const memory = new Memory(pageMap, initialMemory);
+      const registers = new Registers();
+      const loadOps = new LoadOps(registers, memory);
+      const expectedValue = 215871231;
+      const registerIndex = 0;
+
+      loadOps.loadU32(address, registerIndex);
+
+      assert.deepStrictEqual(registers.asSigned[registerIndex], expectedValue);
+      assert.deepStrictEqual(registers.asUnsigned[registerIndex], expectedValue);
+    });
+
+    it("should load u32 from memory to register (negative number)", () => {
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 1;
+      const initialMemory = [{ address, contents: new Uint8Array([0xff, 0xff, 0xff, 0xff]) }];
+      const memory = new Memory(pageMap, initialMemory);
+      const registers = new Registers();
+      const loadOps = new LoadOps(registers, memory);
+      const expectedSignedValue = -1;
+      const expectedUnsignedValue = 2 ** 32 - 1;
+      const registerIndex = 0;
+
+      loadOps.loadU32(address, registerIndex);
+
+      assert.deepStrictEqual(registers.asSigned[registerIndex], expectedSignedValue);
+      assert.deepStrictEqual(registers.asUnsigned[registerIndex], expectedUnsignedValue);
+    });
+  });
 });
