@@ -3,19 +3,22 @@ import { Pvm, type RegistersArray } from "@typeberry/pvm/pvm";
 import type { FromJson } from "./json-parser";
 
 type Status = "trap";
+
+const uint8ArrayFromJson = [
+  "object",
+  (v: unknown) => {
+    if (Array.isArray(v)) {
+      return new Uint8Array(v);
+    }
+
+    throw new Error(`Expected an array, got ${typeof v} instead.`);
+  },
+] as ["object", (v: unknown) => Uint8Array];
+
 class MemoryChunkItem {
   static fromJson: FromJson<MemoryChunkItem> = {
     address: "number",
-    contents: [
-      "object",
-      (v: unknown) => {
-        if (Array.isArray(v)) {
-          return new Uint8Array(v);
-        }
-
-        throw new Error(`Expected an array, got ${typeof v} instead.`);
-      },
-    ],
+    contents: uint8ArrayFromJson,
   };
   address!: number;
   contents!: Uint8Array;
@@ -39,16 +42,7 @@ export class PvmTest {
     "initial-page-map": ["array", PageMapItem.fromJson],
     "initial-memory": ["array", MemoryChunkItem.fromJson],
     "initial-gas": "number",
-    program: [
-      "object",
-      (v: unknown) => {
-        if (Array.isArray(v)) {
-          return new Uint8Array(v);
-        }
-
-        return new Uint8Array();
-      },
-    ],
+    program: uint8ArrayFromJson,
     "expected-status": "string",
     "expected-regs": ["array", "number"],
     "expected-pc": "number",
