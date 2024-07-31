@@ -100,6 +100,7 @@ export class Pvm {
       booleanOps,
       moveOps,
       storeOps,
+      loadOps,
     );
     this.twoRegsDispatcher = new TwoRegsDispatcher(moveOps);
     this.oneRegisterOneImmediateOneOffsetDispatcher = new OneRegisterOneImmediateOneOffsetDispatcher(branchOps);
