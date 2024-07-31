@@ -131,4 +131,78 @@ describe("StoreOps", () => {
       assert.deepStrictEqual(memory.getMemoryDump(), expectedMemory);
     });
   });
+
+  describe("storeImmediateInd (U8, U16 and U32)", () => {
+    it("should store u8 number", () => {
+      const regs = new Registers();
+      const registerIndex = 0;
+      regs.asUnsigned[registerIndex] = 1;
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 2;
+      const fistimmediateDecoder = new ImmediateDecoder();
+      fistimmediateDecoder.setBytes(new Uint8Array([1]));
+      const secondimmediateDecoder = new ImmediateDecoder();
+      secondimmediateDecoder.setBytes(new Uint8Array([0xfe, 0xdc, 0xba, 0x98]));
+      const memory = new Memory(pageMap, []);
+      const storeOps = new StoreOps(regs, memory);
+      const expectedMemory = [
+        {
+          address,
+          contents: new Uint8Array([0xfe]),
+        },
+      ];
+
+      storeOps.storeImmediateIndU8(registerIndex, fistimmediateDecoder, secondimmediateDecoder);
+
+      assert.deepStrictEqual(memory.getMemoryDump(), expectedMemory);
+    });
+
+    it("should store u16 number", () => {
+      const regs = new Registers();
+      const registerIndex = 0;
+      regs.asUnsigned[registerIndex] = 1;
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 2;
+      const fistimmediateDecoder = new ImmediateDecoder();
+      fistimmediateDecoder.setBytes(new Uint8Array([1]));
+      const secondimmediateDecoder = new ImmediateDecoder();
+      secondimmediateDecoder.setBytes(new Uint8Array([0xfe, 0xdc, 0xba, 0x98]));
+      const memory = new Memory(pageMap, []);
+      const storeOps = new StoreOps(regs, memory);
+      const expectedMemory = [
+        {
+          address,
+          contents: new Uint8Array([0xfe, 0xdc]),
+        },
+      ];
+
+      storeOps.storeImmediateIndU16(registerIndex, fistimmediateDecoder, secondimmediateDecoder);
+
+      assert.deepStrictEqual(memory.getMemoryDump(), expectedMemory);
+    });
+
+    it("should store u32 number", () => {
+      const regs = new Registers();
+      const registerIndex = 0;
+      regs.asUnsigned[registerIndex] = 1;
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 2;
+      const fistimmediateDecoder = new ImmediateDecoder();
+      fistimmediateDecoder.setBytes(new Uint8Array([1]));
+      const secondimmediateDecoder = new ImmediateDecoder();
+      secondimmediateDecoder.setBytes(new Uint8Array([0xfe, 0xdc, 0xba, 0x98]));
+      const memory = new Memory(pageMap, []);
+      const storeOps = new StoreOps(regs, memory);
+      const expectedMemory = [
+        {
+          address,
+          contents: new Uint8Array([0xfe, 0xdc, 0xba, 0x98]),
+        },
+      ];
+
+      storeOps.storeImmediateIndU32(registerIndex, fistimmediateDecoder, secondimmediateDecoder);
+
+      assert.deepStrictEqual(memory.getMemoryDump(), expectedMemory);
+    });
+  });
 });

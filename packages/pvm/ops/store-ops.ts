@@ -32,6 +32,33 @@ export class StoreOps {
     this.store4Bytes(address, immediateDecoder.getBytesAsLittleEndian());
   }
 
+  storeImmediateIndU8(
+    registerIndex: number,
+    firstImmediateDecoder: ImmediateDecoder,
+    secondImmediateDecoder: ImmediateDecoder,
+  ) {
+    const address = this.regs.asUnsigned[registerIndex] + firstImmediateDecoder.getUnsigned();
+    this.storeByte(address, secondImmediateDecoder.getBytesAsLittleEndian());
+  }
+
+  storeImmediateIndU16(
+    registerIndex: number,
+    firstImmediateDecoder: ImmediateDecoder,
+    secondImmediateDecoder: ImmediateDecoder,
+  ) {
+    const address = this.regs.asUnsigned[registerIndex] + firstImmediateDecoder.getUnsigned();
+    this.store2Bytes(address, secondImmediateDecoder.getBytesAsLittleEndian());
+  }
+
+  storeImmediateIndU32(
+    registerIndex: number,
+    firstImmediateDecoder: ImmediateDecoder,
+    secondImmediateDecoder: ImmediateDecoder,
+  ) {
+    const address = this.regs.asUnsigned[registerIndex] + firstImmediateDecoder.getUnsigned();
+    this.store4Bytes(address, secondImmediateDecoder.getBytesAsLittleEndian());
+  }
+
   private storeByte(address: number, bytes: Uint8Array) {
     this.memory.store(address, bytes.subarray(0, 1));
   }
