@@ -5,7 +5,7 @@ import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
 import { InstructionResult } from "./instruction-result";
 import { Memory } from "./memory";
-import { BitOps, BooleanOps, BranchOps, LoadOps, MathOps, MoveOps, ShiftOps } from "./ops";
+import { BitOps, BooleanOps, BranchOps, LoadOps, MathOps, MoveOps, ShiftOps, StoreOps } from "./ops";
 import {
   OneOffsetDispatcher,
   OneRegisterOneImmediateDispatcher,
@@ -16,7 +16,6 @@ import {
   TwoRegsOneOffsetDispatcher,
 } from "./ops-dispatchers";
 import { TwoImmsDispatcher } from "./ops-dispatchers/two-imms-dispatcher";
-import { StoreOps } from "./ops/store-ops";
 import { PageMap } from "./page-map";
 import type { Mask } from "./program-decoder/mask";
 import { ProgramDecoder } from "./program-decoder/program-decoder";

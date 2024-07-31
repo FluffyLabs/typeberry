@@ -6,7 +6,7 @@ import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
 import { Instruction } from "../instruction";
 import { Memory } from "../memory";
-import { StoreOps } from "../ops/store-ops";
+import { StoreOps } from "../ops";
 import { PageMap } from "../page-map";
 import { Registers } from "../registers";
 import { OneRegTwoImmsDispatcher } from "./one-reg-two-imms-dispatcher";

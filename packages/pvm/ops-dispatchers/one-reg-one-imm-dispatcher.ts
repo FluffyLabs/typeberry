@@ -1,7 +1,6 @@
 import type { OneRegisterOneImmediateResult } from "../args-decoder/args-decoder";
 import { Instruction } from "../instruction";
-import type { LoadOps } from "../ops";
-import type { StoreOps } from "../ops/store-ops";
+import type { LoadOps, StoreOps } from "../ops";
 
 export class OneRegisterOneImmediateDispatcher {
   constructor(
