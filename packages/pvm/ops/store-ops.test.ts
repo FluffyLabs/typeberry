@@ -20,7 +20,7 @@ describe("StoreOps", () => {
       const expectedMemory = [
         {
           address,
-          contents: [0x98],
+          contents: new Uint8Array([0x98]),
         },
       ];
 
@@ -40,7 +40,7 @@ describe("StoreOps", () => {
       const expectedMemory = [
         {
           address,
-          contents: [0x98, 0xba],
+          contents: new Uint8Array([0x98, 0xba]),
         },
       ];
 
@@ -60,7 +60,7 @@ describe("StoreOps", () => {
       const expectedMemory = [
         {
           address,
-          contents: [0x98, 0xba, 0xdc, 0xfe],
+          contents: new Uint8Array([0x98, 0xba, 0xdc, 0xfe]),
         },
       ];
 
@@ -82,7 +82,7 @@ describe("StoreOps", () => {
       const expectedMemory = [
         {
           address,
-          contents: [0xfe],
+          contents: new Uint8Array([0xfe]),
         },
       ];
 
@@ -102,7 +102,7 @@ describe("StoreOps", () => {
       const expectedMemory = [
         {
           address,
-          contents: [0xfe, 0xdc],
+          contents: new Uint8Array([0xfe, 0xdc]),
         },
       ];
 
@@ -122,7 +122,7 @@ describe("StoreOps", () => {
       const expectedMemory = [
         {
           address,
-          contents: [0xfe, 0xdc, 0xba, 0x98],
+          contents: new Uint8Array([0xfe, 0xdc, 0xba, 0x98]),
         },
       ];
 

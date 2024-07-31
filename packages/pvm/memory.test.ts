@@ -10,7 +10,8 @@ describe("Memory", () => {
       const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
       const initialMemory = [{ address: 1, contents: new Uint8Array([0xff, 0xee, 0xdd, 0xcc]) }];
       const memory = new Memory(pageMap, initialMemory);
-      const expectedMemory = [{ address: 1, contents: [0xff, 0xee, 0xdd, 0xcc] }];
+      const bytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
+      const expectedMemory = [{ address: 1, contents: bytes }];
 
       const dump = memory.getMemoryDump();
 
@@ -22,7 +23,7 @@ describe("Memory", () => {
     it("should store bytes at the beginning of a page", () => {
       const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
       const memory = new Memory(pageMap, []);
-      const bytes = [0xff, 0xee, 0xdd, 0xcc];
+      const bytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
       const expectedMemory = [
         {
           address: 0,
@@ -30,7 +31,7 @@ describe("Memory", () => {
         },
       ];
 
-      memory.store(0, new Uint8Array(bytes));
+      memory.store(0, bytes);
 
       assert.deepStrictEqual(memory.getMemoryDump(), expectedMemory);
     });
@@ -38,7 +39,7 @@ describe("Memory", () => {
     it("should store bytes in the middle of a page", () => {
       const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
       const memory = new Memory(pageMap, []);
-      const bytes = [0xff, 0xee, 0xdd, 0xcc];
+      const bytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
       const expectedMemory = [
         {
           address: 2000,
@@ -46,7 +47,7 @@ describe("Memory", () => {
         },
       ];
 
-      memory.store(2000, new Uint8Array(bytes));
+      memory.store(2000, bytes);
 
       assert.deepStrictEqual(memory.getMemoryDump(), expectedMemory);
     });
@@ -54,9 +55,9 @@ describe("Memory", () => {
     it("should not store bytes if the page is not writable", () => {
       const pageMap = new PageMap([{ "is-writable": false, address: 0, length: 4096 }]);
       const memory = new Memory(pageMap, []);
-      const bytes = [0xff, 0xee, 0xdd, 0xcc];
+      const bytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
 
-      memory.store(0, new Uint8Array(bytes));
+      memory.store(0, bytes);
 
       assert.deepStrictEqual(memory.getMemoryDump(), []);
     });
