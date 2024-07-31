@@ -58,14 +58,14 @@ export class Memory {
   }
 
   getMemoryDump() {
-    const dump: { address: number; contents: number[] }[] = [];
+    const dump: { address: number; contents: Uint8Array }[] = [];
 
     for (const [address, page] of this.memory.entries()) {
       for (let i = 0; i < page.length; i++) {
         if (page[i]?.some((bytes) => bytes > 0)) {
           dump.push({
             address: address + i,
-            contents: Array.from(page[i]),
+            contents: page[i],
           });
         }
       }
