@@ -7,3 +7,4 @@ export { OneOffsetDispatcher } from "./one-offset-dispatcher";
 export { OneRegisterOneImmediateDispatcher } from "./one-reg-one-imm-dispatcher";
 export { OneRegTwoImmsDispatcher } from "./one-reg-two-imms-dispatcher";
 export { TwoImmsDispatcher } from "./two-imms-dispatcher";
+export { NoArgsDispatcher } from "./no-args-dispatcher";

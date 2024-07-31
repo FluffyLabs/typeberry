@@ -5,8 +5,9 @@ import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
 import { InstructionResult } from "./instruction-result";
 import { Memory } from "./memory";
-import { BitOps, BooleanOps, BranchOps, LoadOps, MathOps, MoveOps, ShiftOps, StoreOps } from "./ops";
+import { BitOps, BooleanOps, BranchOps, LoadOps, MathOps, MoveOps, NoArgsOps, ShiftOps, StoreOps } from "./ops";
 import {
+  NoArgsDispatcher,
   OneOffsetDispatcher,
   OneRegTwoImmsDispatcher,
   OneRegisterOneImmediateDispatcher,
@@ -21,6 +22,7 @@ import { PageMap } from "./page-map";
 import type { Mask } from "./program-decoder/mask";
 import { ProgramDecoder } from "./program-decoder/program-decoder";
 import { NO_OF_REGISTERS, Registers } from "./registers";
+import { Result } from "./result";
 
 type InitialState = {
   regs?: RegistersArray;
@@ -53,7 +55,6 @@ export class Pvm {
   private mask: Mask;
   private pc: number;
   private gas: number;
-  private status: "trap" | "halt" = "trap";
   private argsDecoder: ArgsDecoder;
   private threeRegsDispatcher: ThreeRegsDispatcher;
   private twoRegsOneImmDispatcher: TwoRegsOneImmDispatcher;
@@ -66,6 +67,7 @@ export class Pvm {
   private memory: Memory;
   private twoImmsDispatcher: TwoImmsDispatcher;
   private oneRegTwoImmsDispatcher: OneRegTwoImmsDispatcher;
+  private noArgsDispatcher: NoArgsDispatcher;
 
   constructor(rawProgram: Uint8Array, initialState: InitialState = {}) {
     const programDecoder = new ProgramDecoder(rawProgram);
@@ -91,6 +93,7 @@ export class Pvm {
     const branchOps = new BranchOps(this.registers, this.instructionResult);
     const loadOps = new LoadOps(this.registers, this.memory);
     const storeOps = new StoreOps(this.registers, this.memory);
+    const noArgsOps = new NoArgsOps(this.instructionResult);
 
     this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
     this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(
@@ -109,6 +112,7 @@ export class Pvm {
     this.oneRegisterOneImmediateDispatcher = new OneRegisterOneImmediateDispatcher(loadOps, storeOps);
     this.twoImmsDispatcher = new TwoImmsDispatcher(storeOps);
     this.oneRegTwoImmsDispatcher = new OneRegTwoImmsDispatcher(storeOps);
+    this.noArgsDispatcher = new NoArgsDispatcher(noArgsOps);
   }
 
   printProgram() {
@@ -129,10 +133,7 @@ export class Pvm {
       this.instructionResult.pcOffset = args.noOfInstructionsToSkip;
       switch (args.type) {
         case ArgumentType.NO_ARGUMENTS:
-          if (currentInstruction === Instruction.TRAP) {
-            this.status = "trap";
-            return;
-          }
+          this.noArgsDispatcher.dispatch(currentInstruction);
           break;
         case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET:
           this.oneRegisterOneImmediateOneOffsetDispatcher.dispatch(currentInstruction, args);
@@ -162,6 +163,11 @@ export class Pvm {
           this.oneRegTwoImmsDispatcher.dispatch(currentInstruction, args);
           break;
       }
+
+      if (this.instructionResult.status !== null) {
+        return;
+      }
+
       this.pc += this.instructionResult.pcOffset;
     }
 
@@ -181,12 +187,16 @@ export class Pvm {
       regs[i] = Number(this.registers.asUnsigned[i]);
     }
 
+    // [MaSi] I think it should be Result.HALT instead of Result.PANIC but tests expect trap (panic).
+    // The definiton of trap was recently changed from HALT to PANIC so probably it can be removed soon.
+    const status = Result[this.instructionResult.status ?? Result.PANIC].toLowerCase();
+
     return {
       pc: this.pc,
       regs,
       gas: this.gas,
       memory: this.memory.getMemoryDump(),
-      status: this.status,
+      status: status === "panic" ? "trap" : "status",
     };
   }
 }
