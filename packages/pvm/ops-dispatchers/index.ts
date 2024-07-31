@@ -5,3 +5,5 @@ export { OneRegisterOneImmediateOneOffsetDispatcher } from "./one-reg-one-imm-on
 export { TwoRegsOneOffsetDispatcher } from "./two-regs-one-offset-dispatcher";
 export { OneOffsetDispatcher } from "./one-offset-dispatcher";
 export { OneRegisterOneImmediateDispatcher } from "./one-reg-one-imm-dispatcher";
+export { OneRegTwoImmsDispatcher } from "./one-reg-two-imms-dispatcher";
+export { TwoImmsDispatcher } from "./two-imms-dispatcher";

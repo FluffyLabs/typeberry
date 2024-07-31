@@ -8,14 +8,15 @@ import { Memory } from "./memory";
 import { BitOps, BooleanOps, BranchOps, LoadOps, MathOps, MoveOps, ShiftOps, StoreOps } from "./ops";
 import {
   OneOffsetDispatcher,
+  OneRegTwoImmsDispatcher,
   OneRegisterOneImmediateDispatcher,
   OneRegisterOneImmediateOneOffsetDispatcher,
   ThreeRegsDispatcher,
+  TwoImmsDispatcher,
   TwoRegsDispatcher,
   TwoRegsOneImmDispatcher,
   TwoRegsOneOffsetDispatcher,
 } from "./ops-dispatchers";
-import { TwoImmsDispatcher } from "./ops-dispatchers/two-imms-dispatcher";
 import { PageMap } from "./page-map";
 import type { Mask } from "./program-decoder/mask";
 import { ProgramDecoder } from "./program-decoder/program-decoder";
@@ -64,6 +65,7 @@ export class Pvm {
   private instructionResult = new InstructionResult();
   private memory: Memory;
   private twoImmsDispatcher: TwoImmsDispatcher;
+  private oneRegTwoImmsDispatcher: OneRegTwoImmsDispatcher;
 
   constructor(rawProgram: Uint8Array, initialState: InitialState = {}) {
     const programDecoder = new ProgramDecoder(rawProgram);
@@ -98,6 +100,7 @@ export class Pvm {
     this.oneOffsetDispatcher = new OneOffsetDispatcher(branchOps);
     this.oneRegisterOneImmediateDispatcher = new OneRegisterOneImmediateDispatcher(loadOps, storeOps);
     this.twoImmsDispatcher = new TwoImmsDispatcher(storeOps);
+    this.oneRegTwoImmsDispatcher = new OneRegTwoImmsDispatcher(storeOps);
   }
 
   printProgram() {
@@ -146,6 +149,9 @@ export class Pvm {
           break;
         case ArgumentType.TWO_IMMEDIATES:
           this.twoImmsDispatcher.dispatch(currentInstruction, args);
+          break;
+        case ArgumentType.ONE_REGISTER_TWO_IMMEDIATES:
+          this.oneRegTwoImmsDispatcher.dispatch(currentInstruction, args);
           break;
       }
       this.pc += this.instructionResult.pcOffset;
