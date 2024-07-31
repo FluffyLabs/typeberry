@@ -32,6 +32,12 @@ export class OneRegisterOneImmediateDispatcher {
       case Instruction.LOAD_U32:
         this.loadOps.loadU32(args.immediateDecoder.getUnsigned(), args.firstRegisterIndex);
         break;
+      case Instruction.LOAD_I8:
+        this.loadOps.loadI8(args.immediateDecoder.getUnsigned(), args.firstRegisterIndex);
+        break;
+      case Instruction.LOAD_I16:
+        this.loadOps.loadI16(args.immediateDecoder.getUnsigned(), args.firstRegisterIndex);
+        break;
     }
   }
 }
