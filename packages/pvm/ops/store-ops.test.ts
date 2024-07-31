@@ -205,4 +205,78 @@ describe("StoreOps", () => {
       assert.deepStrictEqual(memory.getMemoryDump(), expectedMemory);
     });
   });
+
+  describe("storeInd (U8, U16 and U32)", () => {
+    it("should store u8 number", () => {
+      const regs = new Registers();
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 2;
+      const firstRegisterIndex = 0;
+      const secondRegisterIndex = 1;
+      regs.asUnsigned[firstRegisterIndex] = 1;
+      regs.asUnsigned[secondRegisterIndex] = 0xfe_dc_ba_98;
+      const immediateDecoder = new ImmediateDecoder();
+      immediateDecoder.setBytes(new Uint8Array([1]));
+      const memory = new Memory(pageMap, []);
+      const storeOps = new StoreOps(regs, memory);
+      const expectedMemory = [
+        {
+          address,
+          contents: new Uint8Array([0x98]),
+        },
+      ];
+
+      storeOps.storeIndU8(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
+
+      assert.deepStrictEqual(memory.getMemoryDump(), expectedMemory);
+    });
+
+    it("should store u16 number", () => {
+      const regs = new Registers();
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 2;
+      const firstRegisterIndex = 0;
+      const secondRegisterIndex = 1;
+      regs.asUnsigned[firstRegisterIndex] = 1;
+      regs.asUnsigned[secondRegisterIndex] = 0xfe_dc_ba_98;
+      const immediateDecoder = new ImmediateDecoder();
+      immediateDecoder.setBytes(new Uint8Array([1]));
+      const memory = new Memory(pageMap, []);
+      const storeOps = new StoreOps(regs, memory);
+      const expectedMemory = [
+        {
+          address,
+          contents: new Uint8Array([0x98, 0xba]),
+        },
+      ];
+
+      storeOps.storeIndU16(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
+
+      assert.deepStrictEqual(memory.getMemoryDump(), expectedMemory);
+    });
+
+    it("should store u32 number", () => {
+      const regs = new Registers();
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 2;
+      const firstRegisterIndex = 0;
+      const secondRegisterIndex = 1;
+      regs.asUnsigned[firstRegisterIndex] = 1;
+      regs.asUnsigned[secondRegisterIndex] = 0xfe_dc_ba_98;
+      const immediateDecoder = new ImmediateDecoder();
+      immediateDecoder.setBytes(new Uint8Array([1]));
+      const memory = new Memory(pageMap, []);
+      const storeOps = new StoreOps(regs, memory);
+      const expectedMemory = [
+        {
+          address,
+          contents: new Uint8Array([0x98, 0xba, 0xdc, 0xfe]),
+        },
+      ];
+
+      storeOps.storeIndU32(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
+
+      assert.deepStrictEqual(memory.getMemoryDump(), expectedMemory);
+    });
+  });
 });
