@@ -237,6 +237,24 @@ export class ArgsDecoder {
         return result;
       }
 
+      case ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES: {
+        const result = this.results[argsType];
+        const firstByte = this.code[pc + 1];
+        const secondByte = this.code[pc + 2];
+        this.nibblesDecoder.setByte(firstByte);
+        result.firstRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
+        result.secondRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
+        this.nibblesDecoder.setByte(secondByte);
+        const firstImmediateLength = this.nibblesDecoder.getLowNibbleAsLength();
+        result.firstImmediateDecoder.setBytes(this.code.subarray(pc + 3, pc + 3 + firstImmediateLength));
+        const secondImmediateLength = this.mask.getNoOfBytesToNextInstruction(pc + 3 + firstImmediateLength);
+        result.secondImmediateDecoder.setBytes(
+          this.code.subarray(pc + 3 + firstImmediateLength, pc + 3 + firstImmediateLength + secondImmediateLength),
+        );
+        result.noOfInstructionsToSkip = 3 + firstImmediateLength + secondImmediateLength;
+        return result;
+      }
+
       default:
         throw new Error("instruction was not matched!");
     }

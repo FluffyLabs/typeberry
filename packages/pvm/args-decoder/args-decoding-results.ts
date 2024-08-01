@@ -106,5 +106,14 @@ export const createResults = () => {
     secondImmediateDecoder: new ImmediateDecoder(),
   };
 
+  results[ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES] = {
+    type: ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES,
+    noOfInstructionsToSkip: 1,
+    firstImmediateDecoder: new ImmediateDecoder(),
+    secondImmediateDecoder: new ImmediateDecoder(),
+    firstRegisterIndex: 0,
+    secondRegisterIndex: 0,
+  };
+
   return results;
 };

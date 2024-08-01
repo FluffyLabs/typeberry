@@ -28,6 +28,7 @@ import {
   TwoRegsDispatcher,
   TwoRegsOneImmDispatcher,
   TwoRegsOneOffsetDispatcher,
+  TwoRegsTwoImmsDispatcher,
 } from "./ops-dispatchers";
 import { PageMap } from "./page-map";
 import type { Mask } from "./program-decoder/mask";
@@ -79,6 +80,7 @@ export class Pvm {
   private twoImmsDispatcher: TwoImmsDispatcher;
   private oneRegTwoImmsDispatcher: OneRegTwoImmsDispatcher;
   private noArgsDispatcher: NoArgsDispatcher;
+  private twoRegsTwoImmsDispatcher: TwoRegsTwoImmsDispatcher;
 
   constructor(rawProgram: Uint8Array, initialState: InitialState = {}) {
     const programDecoder = new ProgramDecoder(rawProgram);
@@ -126,6 +128,7 @@ export class Pvm {
     this.twoImmsDispatcher = new TwoImmsDispatcher(storeOps);
     this.oneRegTwoImmsDispatcher = new OneRegTwoImmsDispatcher(storeOps);
     this.noArgsDispatcher = new NoArgsDispatcher(noArgsOps);
+    this.twoRegsTwoImmsDispatcher = new TwoRegsTwoImmsDispatcher(loadOps, dynamicJumpOps);
   }
 
   printProgram() {
@@ -174,6 +177,9 @@ export class Pvm {
           break;
         case ArgumentType.ONE_REGISTER_TWO_IMMEDIATES:
           this.oneRegTwoImmsDispatcher.dispatch(currentInstruction, args);
+          break;
+        case ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES:
+          this.twoRegsTwoImmsDispatcher.dispatch(currentInstruction, args);
           break;
       }
 
