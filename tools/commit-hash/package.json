@@ -1,0 +1,17 @@
+{
+  "name": "@typeberry/commit-hash-to-blockchain",
+  "version": "0.0.1",
+  "description": "Commit git hashes to a public blockchain.",
+  "main": "index.ts",
+  "devDependencies": {
+    "@actions/github": "^6.0.0",
+    "@octokit/webhooks-types": "^7.5.1",
+    "@polkadot/api": "^12.2.1",
+    "@polkadot/types": "^12.2.1"
+  },
+  "scripts": {
+    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\\\n' ' ')"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0"
+}

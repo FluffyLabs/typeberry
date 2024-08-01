@@ -12,7 +12,8 @@
     "packages/jam-codec",
     "packages/utils",
     "packages/stubs",
-    "bin/test-runner"
+    "bin/test-runner",
+    "tools/commit-hash"
   ],
   "engines": {
     "node": ">=20",
@@ -26,8 +27,9 @@
     "run": "ts-node ./index.ts",
     "run-pvm": "ts-node ./bin/pvm.ts",
     "run-tests": "ts-node ./bin/test-runner.ts",
-    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
-    "ts-node": "ts-node"
+    "test": "node --test --require ts-node/register $(find . -type d -name node_modules -prune -type f -o -name '*.test.ts' | tr '\\n' ' ')",
+    "ts-node": "ts-node",
+    "blockchain-git-log": "ts-node ./tools/commit-hash/index.ts"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
