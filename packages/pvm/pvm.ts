@@ -17,7 +17,6 @@ import {
   TwoRegsOneImmDispatcher,
   TwoRegsOneOffsetDispatcher,
 } from "./ops-dispatchers";
-import { TwoImmsDispatcher } from "./ops-dispatchers/two-imms-dispatcher";
 import { PageMap } from "./page-map";
 import type { Mask } from "./program-decoder/mask";
 import { ProgramDecoder } from "./program-decoder/program-decoder";
