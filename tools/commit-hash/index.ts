@@ -1,15 +1,15 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as github from "@actions/github";
-import { ApiPromise, WsProvider, Keyring } from "@polkadot/api";
 import type { PushEvent } from "@octokit/webhooks-types";
+import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 
 type TransactionPayload = [
   string, // repo name
   string, // ref/branch name
   number, // timestamp
   string[], // commit ids
-  string | null // previous block hash
+  string | null, // previous block hash
 ];
 const COMMIT_IDS_INDEX = 3;
 
@@ -24,13 +24,10 @@ const LOG_FILENAME = process.env.LOG_FILENAME as string;
 const AUTH = process.env.COMMIT_KEY_SECRET;
 
 if (!LOG_FILENAME || !AUTH) {
-  throw new Error('Missing LOG_FILENAME or COMMIT_KEY_SECRET env variables');
+  throw new Error("Missing LOG_FILENAME or COMMIT_KEY_SECRET env variables");
 }
 
-function getPendingCommitIds(
-  log: LogEntry[],
-  eventPayload: PushEvent
-): string[] {
+function getPendingCommitIds(log: LogEntry[], eventPayload: PushEvent): string[] {
   const commitIds = [...eventPayload.commits.map((commit) => commit.id)];
 
   for (let i = log.length - 1; i >= 0; i--) {
@@ -52,11 +49,7 @@ async function writeLog(log: LogEntry[]) {
   }
 }
 
-async function handleError(
-  log: LogEntry[],
-  transactionPayload: TransactionPayload,
-  error: string
-) {
+async function handleError(log: LogEntry[], transactionPayload: TransactionPayload, error: string) {
   log.push({
     payload: transactionPayload,
     status: error,
@@ -101,33 +94,30 @@ async function main() {
   try {
     console.log("Submitting...");
 
-    const unsub = await remark.signAndSend(
-      pair,
-      async ({ status, dispatchError }) => {
-        console.log(`Transaction status: ${status.type}`);
+    const unsub = await remark.signAndSend(pair, async ({ status, dispatchError }) => {
+      console.log(`Transaction status: ${status.type}`);
 
-        if (status.isInBlock) {
-          console.log(`Success. Block hash: ${status.asInBlock.toString()}`);
+      if (status.isInBlock) {
+        console.log(`Success. Block hash: ${status.asInBlock.toString()}`);
 
-          log.push({
-            payload: transactionPayload,
-            status: status.type,
-            block: status.asInBlock.toString(),
-            failed: false,
-          });
+        log.push({
+          payload: transactionPayload,
+          status: status.type,
+          block: status.asInBlock.toString(),
+          failed: false,
+        });
 
-          await writeLog(log);
+        await writeLog(log);
 
-          unsub();
-          await api.disconnect();
-        } else if (dispatchError) {
-          await handleError(log, transactionPayload, dispatchError.toString());
+        unsub();
+        await api.disconnect();
+      } else if (dispatchError) {
+        await handleError(log, transactionPayload, dispatchError.toString());
 
-          unsub();
-          await api.disconnect();
-        }
+        unsub();
+        await api.disconnect();
       }
-    );
+    });
   } catch (error) {
     if (error instanceof Error) {
       await handleError(log, transactionPayload, error.toString());
