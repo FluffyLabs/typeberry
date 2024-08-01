@@ -102,7 +102,7 @@ describe("LoadOps", () => {
       assert.deepStrictEqual(registers.asUnsigned[registerIndex], expectedUnsignedValue);
     });
   });
-
+  
   describe("load (I8 and I16)", () => {
     it("should load i8 from memory to register", () => {
       const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
