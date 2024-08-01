@@ -102,4 +102,40 @@ describe("LoadOps", () => {
       assert.deepStrictEqual(registers.asUnsigned[registerIndex], expectedUnsignedValue);
     });
   });
+
+  describe("load (I8 and I16)", () => {
+    it("should load i8 from memory to register", () => {
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 1;
+      const initialMemory = [{ address, contents: new Uint8Array([0xcc, 0xff, 0xff, 0xff]) }];
+      const memory = new Memory(pageMap, initialMemory);
+      const registers = new Registers();
+      const loadOps = new LoadOps(registers, memory);
+      const expectedSignedValue = -52;
+      const expectedUnsignedValue = 4294967244;
+      const registerIndex = 0;
+
+      loadOps.loadI8(address, registerIndex);
+
+      assert.deepStrictEqual(registers.asSigned[registerIndex], expectedSignedValue);
+      assert.deepStrictEqual(registers.asUnsigned[registerIndex], expectedUnsignedValue);
+    });
+
+    it("should load i16 from memory to register", () => {
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 1;
+      const initialMemory = [{ address, contents: new Uint8Array([0xcc, 0xdd, 0xff, 0xff]) }];
+      const memory = new Memory(pageMap, initialMemory);
+      const registers = new Registers();
+      const loadOps = new LoadOps(registers, memory);
+      const expectedSignedValue = -8756;
+      const expectedUnsignedValue = 4294958540;
+      const registerIndex = 0;
+
+      loadOps.loadI16(address, registerIndex);
+
+      assert.deepStrictEqual(registers.asSigned[registerIndex], expectedSignedValue);
+      assert.deepStrictEqual(registers.asUnsigned[registerIndex], expectedUnsignedValue);
+    });
+  });
 });
