@@ -93,7 +93,15 @@ export class Pvm {
     const storeOps = new StoreOps(this.registers, this.memory);
 
     this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
-    this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
+    this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(
+      mathOps,
+      shiftOps,
+      bitOps,
+      booleanOps,
+      moveOps,
+      storeOps,
+      loadOps,
+    );
     this.twoRegsDispatcher = new TwoRegsDispatcher(moveOps);
     this.oneRegisterOneImmediateOneOffsetDispatcher = new OneRegisterOneImmediateOneOffsetDispatcher(branchOps);
     this.twoRegsOneOffsetDispatcher = new TwoRegsOneOffsetDispatcher(branchOps);

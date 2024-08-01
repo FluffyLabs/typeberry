@@ -1,3 +1,4 @@
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import type { Memory } from "../memory";
 import type { Registers } from "../registers";
 
@@ -56,5 +57,30 @@ export class LoadOps {
 
   loadI16(address: number, registerIndex: number) {
     this.loadSignedNumber(address, registerIndex, 2);
+  }
+
+  loadIndU8(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
+    const address = this.regs.asUnsigned[firstRegisterIndex] + immediateDecoder.getUnsigned();
+    this.loadNumber(address, secondRegisterIndex, 1);
+  }
+
+  loadIndU16(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
+    const address = this.regs.asUnsigned[firstRegisterIndex] + immediateDecoder.getUnsigned();
+    this.loadNumber(address, secondRegisterIndex, 2);
+  }
+
+  loadIndU32(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
+    const address = this.regs.asUnsigned[firstRegisterIndex] + immediateDecoder.getUnsigned();
+    this.loadNumber(address, secondRegisterIndex, 4);
+  }
+
+  loadIndI8(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
+    const address = this.regs.asUnsigned[firstRegisterIndex] + immediateDecoder.getUnsigned();
+    this.loadSignedNumber(address, secondRegisterIndex, 1);
+  }
+
+  loadIndI16(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
+    const address = this.regs.asUnsigned[firstRegisterIndex] + immediateDecoder.getUnsigned();
+    this.loadSignedNumber(address, secondRegisterIndex, 2);
   }
 }

@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { Memory } from "../memory";
 import { PageMap } from "../page-map";
 import { Registers } from "../registers";
@@ -136,6 +137,133 @@ describe("LoadOps", () => {
 
       assert.deepStrictEqual(registers.asSigned[registerIndex], expectedSignedValue);
       assert.deepStrictEqual(registers.asUnsigned[registerIndex], expectedUnsignedValue);
+    });
+  });
+
+  describe("loadInd (I8 and I16)", () => {
+    it("should load i8 from memory to register", () => {
+      const registers = new Registers();
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 2;
+      const initialMemory = [{ address, contents: new Uint8Array([0xcc, 0xff, 0xff, 0xff]) }];
+      const firstRegisterIndex = 0;
+      const secondRegisterIndex = 0;
+      registers.asUnsigned[firstRegisterIndex] = 1;
+      const memory = new Memory(pageMap, initialMemory);
+      const loadOps = new LoadOps(registers, memory);
+      const expectedSignedValue = -52;
+      const expectedUnsignedValue = 4294967244;
+      const immediateDecoder = new ImmediateDecoder();
+      immediateDecoder.setBytes(new Uint8Array([1]));
+
+      loadOps.loadIndI8(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
+
+      assert.deepStrictEqual(registers.asSigned[secondRegisterIndex], expectedSignedValue);
+      assert.deepStrictEqual(registers.asUnsigned[secondRegisterIndex], expectedUnsignedValue);
+    });
+
+    it("should load i16 from memory to register", () => {
+      const registers = new Registers();
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 2;
+      const initialMemory = [{ address, contents: new Uint8Array([0xcc, 0xdd, 0xff, 0xff]) }];
+      const firstRegisterIndex = 0;
+      const secondRegisterIndex = 0;
+      registers.asUnsigned[firstRegisterIndex] = 1;
+      const memory = new Memory(pageMap, initialMemory);
+      const loadOps = new LoadOps(registers, memory);
+      const expectedSignedValue = -8756;
+      const expectedUnsignedValue = 4294958540;
+      const immediateDecoder = new ImmediateDecoder();
+      immediateDecoder.setBytes(new Uint8Array([1]));
+
+      loadOps.loadIndI16(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
+
+      assert.deepStrictEqual(registers.asSigned[secondRegisterIndex], expectedSignedValue);
+      assert.deepStrictEqual(registers.asUnsigned[secondRegisterIndex], expectedUnsignedValue);
+    });
+  });
+
+  describe("loadInd (U8, U16 and U32)", () => {
+    it("should load u8 from memory to register", () => {
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 2;
+      const initialMemory = [{ address, contents: new Uint8Array([0xff, 0xee, 0xdd, 0xcc]) }];
+      const memory = new Memory(pageMap, initialMemory);
+      const registers = new Registers();
+      const firstRegisterIndex = 0;
+      const secondRegisterIndex = 0;
+      registers.asUnsigned[firstRegisterIndex] = 1;
+      const loadOps = new LoadOps(registers, memory);
+      const immediateDecoder = new ImmediateDecoder();
+      immediateDecoder.setBytes(new Uint8Array([1]));
+      const expectedValue = 0xff;
+
+      loadOps.loadIndU8(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
+
+      assert.deepStrictEqual(registers.asSigned[secondRegisterIndex], expectedValue);
+      assert.deepStrictEqual(registers.asUnsigned[secondRegisterIndex], expectedValue);
+    });
+
+    it("should load u16 from memory to register", () => {
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 2;
+      const initialMemory = [{ address, contents: new Uint8Array([0xff, 0xee, 0xdd, 0xcc]) }];
+      const memory = new Memory(pageMap, initialMemory);
+      const registers = new Registers();
+      const firstRegisterIndex = 0;
+      const secondRegisterIndex = 0;
+      registers.asUnsigned[firstRegisterIndex] = 1;
+      const loadOps = new LoadOps(registers, memory);
+      const immediateDecoder = new ImmediateDecoder();
+      immediateDecoder.setBytes(new Uint8Array([1]));
+      const expectedValue = 61183;
+
+      loadOps.loadIndU16(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
+
+      assert.deepStrictEqual(registers.asSigned[secondRegisterIndex], expectedValue);
+      assert.deepStrictEqual(registers.asUnsigned[secondRegisterIndex], expectedValue);
+    });
+
+    it("should load u32 from memory to register", () => {
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 2;
+      const initialMemory = [{ address, contents: new Uint8Array([0xff, 0xee, 0xdd, 0x0c]) }];
+      const memory = new Memory(pageMap, initialMemory);
+      const registers = new Registers();
+      const firstRegisterIndex = 0;
+      const secondRegisterIndex = 0;
+      registers.asUnsigned[firstRegisterIndex] = 1;
+      const loadOps = new LoadOps(registers, memory);
+      const immediateDecoder = new ImmediateDecoder();
+      immediateDecoder.setBytes(new Uint8Array([1]));
+      const expectedValue = 215871231;
+
+      loadOps.loadIndU32(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
+
+      assert.deepStrictEqual(registers.asSigned[secondRegisterIndex], expectedValue);
+      assert.deepStrictEqual(registers.asUnsigned[secondRegisterIndex], expectedValue);
+    });
+
+    it("should load u32 from memory to register (negative number)", () => {
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const address = 2;
+      const initialMemory = [{ address, contents: new Uint8Array([0xff, 0xff, 0xff, 0xff]) }];
+      const memory = new Memory(pageMap, initialMemory);
+      const registers = new Registers();
+      const firstRegisterIndex = 0;
+      const secondRegisterIndex = 0;
+      registers.asUnsigned[firstRegisterIndex] = 1;
+      const loadOps = new LoadOps(registers, memory);
+      const immediateDecoder = new ImmediateDecoder();
+      immediateDecoder.setBytes(new Uint8Array([1]));
+      const expectedSignedValue = -1;
+      const expectedUnsignedValue = 2 ** 32 - 1;
+
+      loadOps.loadIndU32(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
+
+      assert.deepStrictEqual(registers.asSigned[secondRegisterIndex], expectedSignedValue);
+      assert.deepStrictEqual(registers.asUnsigned[secondRegisterIndex], expectedUnsignedValue);
     });
   });
 });
