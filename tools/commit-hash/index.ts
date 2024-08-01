@@ -11,6 +11,7 @@ type TransactionPayload = [
   string[], // commit ids
   string | null // previous block hash
 ];
+const COMMIT_IDS_INDEX = 3;
 
 interface LogEntry {
   payload: TransactionPayload;
@@ -20,9 +21,11 @@ interface LogEntry {
 }
 
 const LOG_FILENAME = process.env.LOG_FILENAME as string;
-const AUTH =
-  "deliver resource region two win idea volcano nominee shove phrase horse illness";
-// @todo any ideas on how to store this in a safer manner?
+const AUTH = process.env.COMMIT_KEY_SECRET;
+
+if (!LOG_FILENAME || !AUTH) {
+  throw new Error('Missing LOG_FILENAME or COMMIT_KEY_SECRET env variables');
+}
 
 function getPendingCommitIds(
   log: LogEntry[],
@@ -31,11 +34,10 @@ function getPendingCommitIds(
   const commitIds = [...eventPayload.commits.map((commit) => commit.id)];
 
   for (let i = log.length - 1; i >= 0; i--) {
-    if (log[i].failed === true) {
-      commitIds.unshift(...log[i].payload[3]);
-    } else {
+    if (!log[i].failed) {
       break;
     }
+    commitIds.unshift(...log[i].payload[COMMIT_IDS_INDEX]);
   }
 
   return commitIds;
@@ -43,7 +45,7 @@ function getPendingCommitIds(
 
 async function writeLog(log: LogEntry[]) {
   try {
-    await fs.writeFile(LOG_FILENAME, JSON.stringify(log));
+    await fs.writeFile(LOG_FILENAME, JSON.stringify(log, null, 2));
     console.log("New log written.");
   } catch (e) {
     console.error(e);
@@ -79,12 +81,13 @@ async function main() {
   }
 
   const eventPayload = github.context.payload as PushEvent;
+  const previousBlockHash = log.filter((logEntry) => !logEntry.failed).pop()?.block || "";
   const transactionPayload: TransactionPayload = [
     eventPayload.repository.name,
     github.context.ref,
     Date.now(),
     getPendingCommitIds(log, eventPayload),
-    log.filter((logEntry) => !logEntry.failed).pop()?.block || "",
+    previousBlockHash,
   ];
 
   const wsProvider = new WsProvider("wss://kusama-asset-hub-rpc.polkadot.io");
