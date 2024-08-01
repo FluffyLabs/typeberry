@@ -1,5 +1,17 @@
 export class Mask {
+  /**
+    * The lookup table will have `0` at the index which corresponds to an instruction on the same index in the bytecode.
+    * In case the value is non-zero it signifies the offset to the index with next instruction.
+    *
+    * Example:
+    * ```
+    * 0..1..2..3..4..5..6..7..8..9 # Indices
+    * 0..2..1..0..1..0..3..2..1..0 # lookupTable values
+    * ```
+    * There are instructions at indices `0, 3, 5, 9`.
+    */
   private lookupTable: Uint8Array;
+
   constructor(mask: Uint8Array) {
     this.lookupTable = this.buildLookupTable(mask);
   }
