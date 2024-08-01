@@ -24,37 +24,40 @@ export class Memory {
     }
   }
 
+  isWritable(address: number) {
+    const addressInPage = address % this.pageSize;
+    const pageAddress = address - addressInPage;
+    return this.pageMap.isWritable(pageAddress);
+  }
+
+  isReadable(address: number) {
+    const addressInPage = address % this.pageSize;
+    const pageAddress = address - addressInPage;
+    return this.pageMap.isReadable(pageAddress);
+  }
+
   store(address: number, bytes: Uint8Array) {
     const addressInPage = address % this.pageSize;
     const pageAddress = address - addressInPage;
-
-    if (this.pageMap.isWritable(pageAddress)) {
-      const hasPage = this.memory.has(pageAddress);
-      const page = this.memory.get(pageAddress) ?? new Array<Uint8Array>(this.pageSize);
-      page[addressInPage] = bytes;
-      if (!hasPage) {
-        this.memory.set(pageAddress, page);
-      }
-    } else {
-      // TODO [MaSi]: it should be a page fault
+    const hasPage = this.memory.has(pageAddress);
+    const page = this.memory.get(pageAddress) ?? new Array<Uint8Array>(this.pageSize);
+    page[addressInPage] = bytes;
+    if (!hasPage) {
+      this.memory.set(pageAddress, page);
     }
   }
 
-  load(address: number, length: 1 | 2 | 4): Uint8Array | null {
+  load(address: number, length: 1 | 2 | 4): Uint8Array {
     const addressInPage = address % this.pageSize;
     const pageAddress = address - addressInPage;
 
-    if (this.pageMap.isReadable(pageAddress)) {
-      const value = this.memory.get(pageAddress)?.[addressInPage];
-      if (value) {
-        return value.subarray(0, length);
-      }
-      const bytes = new Uint8Array(4);
-      this.store(address, bytes);
-      return bytes.subarray(0, length);
+    const value = this.memory.get(pageAddress)?.[addressInPage];
+    if (value) {
+      return value.subarray(0, length);
     }
-
-    return null; // TODO [MaSi]: it should be a page fault
+    const bytes = new Uint8Array(4);
+    this.store(address, bytes);
+    return bytes.subarray(0, length);
   }
 
   getMemoryDump() {

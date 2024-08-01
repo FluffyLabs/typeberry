@@ -105,8 +105,8 @@ export class Pvm {
     const booleanOps = new BooleanOps(this.registers);
     const moveOps = new MoveOps(this.registers);
     const branchOps = new BranchOps(this.registers, this.instructionResult);
-    const loadOps = new LoadOps(this.registers, this.memory);
-    const storeOps = new StoreOps(this.registers, this.memory);
+    const loadOps = new LoadOps(this.registers, this.memory, this.instructionResult);
+    const storeOps = new StoreOps(this.registers, this.memory, this.instructionResult);
     const noArgsOps = new NoArgsOps(this.instructionResult);
     const dynamicJumpOps = new DynamicJumpOps(this.registers, jumpTable, this.instructionResult, this.mask);
 
@@ -137,85 +137,93 @@ export class Pvm {
   }
 
   runProgram() {
-    while (this.pc < this.code.length) {
-      const currentInstruction = this.code[this.pc];
-      this.gas -= instructionGasMap[currentInstruction];
+    while (this.nextStep()) {}
+  }
 
-      if (this.gas < 0) {
-        break;
-      }
-
-      const args = this.argsDecoder.getArgs(this.pc);
-      this.instructionResult.pcOffset = args.noOfInstructionsToSkip;
-      switch (args.type) {
-        case ArgumentType.NO_ARGUMENTS:
-          this.noArgsDispatcher.dispatch(currentInstruction);
-          break;
-        case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET:
-          this.oneRegisterOneImmediateOneOffsetDispatcher.dispatch(currentInstruction, args);
-          break;
-        case ArgumentType.TWO_REGISTERS:
-          this.twoRegsDispatcher.dispatch(currentInstruction, args);
-          break;
-        case ArgumentType.THREE_REGISTERS:
-          this.threeRegsDispatcher.dispatch(currentInstruction, args);
-          break;
-        case ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE:
-          this.twoRegsOneImmDispatcher.dispatch(currentInstruction, args);
-          break;
-        case ArgumentType.TWO_REGISTERS_ONE_OFFSET:
-          this.twoRegsOneOffsetDispatcher.dispatch(currentInstruction, args);
-          break;
-        case ArgumentType.ONE_OFFSET:
-          this.oneOffsetDispatcher.dispatch(currentInstruction, args);
-          break;
-        case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE:
-          this.oneRegisterOneImmediateDispatcher.dispatch(currentInstruction, args);
-          break;
-        case ArgumentType.TWO_IMMEDIATES:
-          this.twoImmsDispatcher.dispatch(currentInstruction, args);
-          break;
-        case ArgumentType.ONE_REGISTER_TWO_IMMEDIATES:
-          this.oneRegTwoImmsDispatcher.dispatch(currentInstruction, args);
-          break;
-        case ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES:
-          this.twoRegsTwoImmsDispatcher.dispatch(currentInstruction, args);
-          break;
-      }
-
-      if (this.instructionResult.status !== null) {
-        return;
-      }
-
-      this.pc += this.instructionResult.pcOffset;
-    }
-
-    // Gray Paper defines that the code is infinitely extended with `0` opcodes (`TRAP`).
-    // Hence the final instruction will always be `TRAP` and we subtract the gas accordingly at the very end.
-    this.gas -= instructionGasMap[Instruction.TRAP];
+  nextStep() {
+    const currentInstruction = this.code[this.pc] ?? Instruction.TRAP;
+    this.gas -= instructionGasMap[currentInstruction];
 
     if (this.gas < 0) {
       // TODO [MaSi]: to handle
+      return false;
     }
+
+    const args = this.argsDecoder.getArgs(this.pc);
+    this.instructionResult.pcOffset = args.noOfInstructionsToSkip;
+    switch (args.type) {
+      case ArgumentType.NO_ARGUMENTS:
+        this.noArgsDispatcher.dispatch(currentInstruction);
+        break;
+      case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET:
+        this.oneRegisterOneImmediateOneOffsetDispatcher.dispatch(currentInstruction, args);
+        break;
+      case ArgumentType.TWO_REGISTERS:
+        this.twoRegsDispatcher.dispatch(currentInstruction, args);
+        break;
+      case ArgumentType.THREE_REGISTERS:
+        this.threeRegsDispatcher.dispatch(currentInstruction, args);
+        break;
+      case ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE:
+        this.twoRegsOneImmDispatcher.dispatch(currentInstruction, args);
+        break;
+      case ArgumentType.TWO_REGISTERS_ONE_OFFSET:
+        this.twoRegsOneOffsetDispatcher.dispatch(currentInstruction, args);
+        break;
+      case ArgumentType.ONE_OFFSET:
+        this.oneOffsetDispatcher.dispatch(currentInstruction, args);
+        break;
+      case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE:
+        this.oneRegisterOneImmediateDispatcher.dispatch(currentInstruction, args);
+        break;
+      case ArgumentType.TWO_IMMEDIATES:
+        this.twoImmsDispatcher.dispatch(currentInstruction, args);
+        break;
+      case ArgumentType.ONE_REGISTER_TWO_IMMEDIATES:
+        this.oneRegTwoImmsDispatcher.dispatch(currentInstruction, args);
+        break;
+      case ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES:
+        this.twoRegsTwoImmsDispatcher.dispatch(currentInstruction, args);
+        break;
+    }
+
+    if (this.instructionResult.status !== null) {
+      // All abnormal terminations should be interpreted as TRAP and we should subtract the gas. In case of FAULT we have to do it manually at the very end.
+      if (this.instructionResult.status === Result.FAULT) {
+        this.gas -= instructionGasMap[Instruction.TRAP];
+      }
+      return false;
+    }
+
+    this.pc += this.instructionResult.pcOffset;
+    return true;
   }
 
-  getState() {
-    const regs = Array<number>(NO_OF_REGISTERS);
+  getRegisters() {
+    return Array.from(this.registers.asUnsigned);
+  }
 
-    for (let i = 0; i < NO_OF_REGISTERS; i++) {
-      regs[i] = Number(this.registers.asUnsigned[i]);
+  getMemory() {
+    return this.memory.getMemoryDump();
+  }
+
+  getPC() {
+    return this.pc;
+  }
+
+  getGas() {
+    return this.gas;
+  }
+
+  getStatus() {
+    if (this.instructionResult.status === null) {
+      return null;
     }
 
-    // [MaSi] I think it should be Result.HALT instead of Result.PANIC but tests expect trap (panic).
-    // The definiton of trap was recently changed from HALT to PANIC so probably it can be removed soon.
-    const status = Result[this.instructionResult.status ?? Result.PANIC].toLowerCase();
+    if (this.instructionResult.status === Result.FAULT || this.instructionResult.status === Result.PANIC) {
+      return "trap";
+    }
 
-    return {
-      pc: this.pc,
-      regs,
-      gas: this.gas,
-      memory: this.memory.getMemoryDump(),
-      status: status === "panic" ? "trap" : status,
-    };
+    return "halt";
   }
 }

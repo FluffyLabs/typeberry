@@ -1,11 +1,14 @@
 import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
+import type { InstructionResult } from "../instruction-result";
 import type { Memory } from "../memory";
 import type { Registers } from "../registers";
+import { Result } from "../result";
 
 export class StoreOps {
   constructor(
     private regs: Registers,
     private memory: Memory,
+    private instructionResult: InstructionResult,
   ) {}
 
   storeU8(address: number, registerIndex: number) {
@@ -75,14 +78,23 @@ export class StoreOps {
   }
 
   private storeByte(address: number, bytes: Uint8Array) {
-    this.memory.store(address, bytes.subarray(0, 1));
+    this.store(address, bytes.subarray(0, 1));
   }
 
   private store2Bytes(address: number, bytes: Uint8Array) {
-    this.memory.store(address, bytes.subarray(0, 2));
+    this.store(address, bytes.subarray(0, 2));
   }
 
   private store4Bytes(address: number, bytes: Uint8Array) {
-    this.memory.store(address, bytes.subarray(0, 4));
+    this.store(address, bytes.subarray(0, 4));
+  }
+
+  private store(address: number, bytes: Uint8Array) {
+    if (!this.memory.isWritable(address)) {
+      this.instructionResult.status = Result.FAULT;
+      this.instructionResult.faultAddress = address;
+      return;
+    }
+    this.memory.store(address, bytes);
   }
 }

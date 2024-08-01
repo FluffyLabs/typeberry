@@ -74,11 +74,10 @@ export async function runPvmTest(testContent: PvmTest) {
   });
 
   pvm.runProgram();
-  const state = pvm.getState();
 
-  assert.strictEqual(state.gas, testContent["expected-gas"]);
-  assert.strictEqual(state.pc, testContent["expected-pc"]);
-  assert.deepStrictEqual(state.memory, testContent["expected-memory"]);
-  assert.deepStrictEqual(state.regs, testContent["expected-regs"]);
-  assert.strictEqual(state.status, testContent["expected-status"]);
+  assert.strictEqual(pvm.getGas(), testContent["expected-gas"]);
+  assert.strictEqual(pvm.getPC(), testContent["expected-pc"]);
+  assert.deepStrictEqual(pvm.getMemory(), testContent["expected-memory"]);
+  assert.deepStrictEqual(pvm.getRegisters(), testContent["expected-regs"]);
+  assert.strictEqual(pvm.getStatus(), testContent["expected-status"]);
 }

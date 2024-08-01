@@ -20,8 +20,8 @@ describe("OneRegisterOneImmediateDispatcher", () => {
   const jumpTable = new JumpTable(1, new Uint8Array([1]));
   const mask = new Mask(new Uint8Array([1]));
   const instructionResult = new InstructionResult();
-  const storeOps = new StoreOps(regs, memory);
-  const loadOps = new LoadOps(regs, memory);
+  const storeOps = new StoreOps(regs, memory, instructionResult);
+  const loadOps = new LoadOps(regs, memory, instructionResult);
   const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
   const mockFn = mock.fn();
 

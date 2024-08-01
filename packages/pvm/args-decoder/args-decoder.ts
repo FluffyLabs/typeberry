@@ -1,4 +1,4 @@
-import type { Instruction } from "../instruction";
+import { Instruction } from "../instruction";
 import type { Mask } from "../program-decoder/mask";
 import { createResults } from "./args-decoding-results";
 import { ArgumentType } from "./argument-type";
@@ -112,7 +112,7 @@ export class ArgsDecoder {
   ) {}
 
   getArgs(pc: number): Result {
-    const instruction: Instruction = this.code[pc];
+    const instruction: Instruction = this.code[pc] ?? Instruction.TRAP;
     const argsType = instructionArgumentTypeMap[instruction];
 
     switch (argsType) {
@@ -256,7 +256,7 @@ export class ArgsDecoder {
       }
 
       default:
-        throw new Error("instruction was not matched!");
+        throw new Error(`instruction ${instruction} was not matched!`);
     }
   }
 }
