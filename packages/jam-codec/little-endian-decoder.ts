@@ -3,6 +3,7 @@ const BUFFER_SIZE = 8;
 export class LittleEndianDecoder {
   private buffer = new ArrayBuffer(BUFFER_SIZE);
   private valueArray = new BigUint64Array(this.buffer);
+  private u32ValueArray = new Uint32Array(this.buffer);
   private view = new DataView(this.buffer);
 
   decode(bytes: Uint8Array) {
@@ -18,5 +19,10 @@ export class LittleEndianDecoder {
     }
 
     return this.valueArray[0];
+  }
+
+  decodeU32(bytes: Uint8Array) {
+    this.decode(bytes);
+    return this.u32ValueArray[0];
   }
 }

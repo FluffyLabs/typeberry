@@ -7,3 +7,4 @@ export { BranchOps } from "./branch-ops";
 export { LoadOps } from "./load-ops";
 export { StoreOps } from "./store-ops";
 export { NoArgsOps } from "./no-args-ops";
+export { DynamicJumpOps } from "./dynamic-jump-ops";

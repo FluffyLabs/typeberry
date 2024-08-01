@@ -5,7 +5,18 @@ import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
 import { InstructionResult } from "./instruction-result";
 import { Memory } from "./memory";
-import { BitOps, BooleanOps, BranchOps, LoadOps, MathOps, MoveOps, NoArgsOps, ShiftOps, StoreOps } from "./ops";
+import {
+  BitOps,
+  BooleanOps,
+  BranchOps,
+  DynamicJumpOps,
+  LoadOps,
+  MathOps,
+  MoveOps,
+  NoArgsOps,
+  ShiftOps,
+  StoreOps,
+} from "./ops";
 import {
   NoArgsDispatcher,
   OneOffsetDispatcher,
@@ -73,6 +84,7 @@ export class Pvm {
     const programDecoder = new ProgramDecoder(rawProgram);
     this.code = programDecoder.getCode();
     this.mask = programDecoder.getMask();
+    const jumpTable = programDecoder.getJumpTable();
     this.registers = new Registers();
     const pageMap = new PageMap(initialState.pageMap ?? []);
     this.memory = new Memory(pageMap, initialState.memory ?? []);
@@ -94,6 +106,7 @@ export class Pvm {
     const loadOps = new LoadOps(this.registers, this.memory);
     const storeOps = new StoreOps(this.registers, this.memory);
     const noArgsOps = new NoArgsOps(this.instructionResult);
+    const dynamicJumpOps = new DynamicJumpOps(this.registers, jumpTable, this.instructionResult, this.mask);
 
     this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
     this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(
@@ -109,7 +122,7 @@ export class Pvm {
     this.oneRegisterOneImmediateOneOffsetDispatcher = new OneRegisterOneImmediateOneOffsetDispatcher(branchOps);
     this.twoRegsOneOffsetDispatcher = new TwoRegsOneOffsetDispatcher(branchOps);
     this.oneOffsetDispatcher = new OneOffsetDispatcher(branchOps);
-    this.oneRegisterOneImmediateDispatcher = new OneRegisterOneImmediateDispatcher(loadOps, storeOps);
+    this.oneRegisterOneImmediateDispatcher = new OneRegisterOneImmediateDispatcher(loadOps, storeOps, dynamicJumpOps);
     this.twoImmsDispatcher = new TwoImmsDispatcher(storeOps);
     this.oneRegTwoImmsDispatcher = new OneRegTwoImmsDispatcher(storeOps);
     this.noArgsDispatcher = new NoArgsDispatcher(noArgsOps);
