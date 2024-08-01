@@ -4,13 +4,15 @@ import type { OneRegisterOneImmediateOneOffsetResult } from "../args-decoder/arg
 import { ArgumentType } from "../args-decoder/argument-type";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
 import { Instruction } from "../instruction";
+import { InstructionResult } from "../instruction-result";
 import { BranchOps } from "../ops";
 import { Registers } from "../registers";
 import { OneRegisterOneImmediateOneOffsetDispatcher } from "./one-reg-one-imm-one-offset-dispatcher";
 
 test("OneRegisterOneImmediateOneOffsetDispatcher", async (t) => {
   const regs = new Registers();
-  const branchOps = new BranchOps(regs, { pcOffset: 0 });
+  const instructionResult = new InstructionResult();
+  const branchOps = new BranchOps(regs, instructionResult);
 
   const mockFn = t.mock.fn();
 
