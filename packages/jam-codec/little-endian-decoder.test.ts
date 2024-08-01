@@ -1,10 +1,10 @@
 import assert from "node:assert";
-import { test } from "node:test";
+import { describe, it } from "node:test";
 
 import { LittleEndianDecoder } from "./little-endian-decoder";
 
-test("LittleEndianDecoder", async (t) => {
-  await t.test("Empty bytes array", () => {
+describe("LittleEndianDecoder", async (t) => {
+  it("Empty bytes array", () => {
     const decoder = new LittleEndianDecoder();
 
     const encodedBytes = new Uint8Array([]);
@@ -15,7 +15,7 @@ test("LittleEndianDecoder", async (t) => {
     assert.strictEqual(result, expectedValue);
   });
 
-  await t.test("1 byte number", () => {
+  it("1 byte number", () => {
     const decoder = new LittleEndianDecoder();
 
     const encodedBytes = new Uint8Array([0xff]);
@@ -26,7 +26,7 @@ test("LittleEndianDecoder", async (t) => {
     assert.strictEqual(result, expectedValue);
   });
 
-  await t.test("2 bytes number", () => {
+  it("2 bytes number", () => {
     const decoder = new LittleEndianDecoder();
 
     const encodedBytes = new Uint8Array([0xff, 0x01]);
@@ -37,7 +37,7 @@ test("LittleEndianDecoder", async (t) => {
     assert.strictEqual(result, expectedValue);
   });
 
-  await t.test("4 bytes number", () => {
+  it("4 bytes number", () => {
     const decoder = new LittleEndianDecoder();
 
     const encodedBytes = new Uint8Array([0xff, 0x56, 0x34, 0x12]);
@@ -48,7 +48,7 @@ test("LittleEndianDecoder", async (t) => {
     assert.strictEqual(result, expectedValue);
   });
 
-  await t.test("8 bytes number", () => {
+  it("8 bytes number", () => {
     const decoder = new LittleEndianDecoder();
 
     const encodedBytes = new Uint8Array([0xff, 0xde, 0xbc, 0x9a, 0x78, 0x56, 0x34, 0x12]);
