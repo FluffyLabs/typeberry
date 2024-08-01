@@ -196,7 +196,7 @@ export class Pvm {
       regs,
       gas: this.gas,
       memory: this.memory.getMemoryDump(),
-      status: status === "panic" ? "trap" : "status",
+      status: status === "panic" ? "trap" : status,
     };
   }
 }
