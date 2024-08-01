@@ -73,6 +73,14 @@ export type OneRegisterOneImmediateOneOffsetResult = {
   offset: number;
 };
 
+export type OneRegisterTwoImmediatesResult = {
+  type: ArgumentType.ONE_REGISTER_TWO_IMMEDIATES;
+  noOfInstructionsToSkip: number;
+  registerIndex: number;
+  firstImmediateDecoder: ImmediateDecoder;
+  secondImmediateDecoder: ImmediateDecoder;
+};
+
 export type OneOffsetResult = {
   type: ArgumentType.ONE_OFFSET;
   noOfInstructionsToSkip: number;
@@ -89,7 +97,8 @@ type Result =
   | TwoRegistersOneOffsetResult
   | OneRegisterOneImmediateResult
   | OneOffsetResult
-  | TwoImmediatesResult;
+  | TwoImmediatesResult
+  | OneRegisterTwoImmediatesResult;
 
 export class ArgsDecoder {
   private nibblesDecoder = new NibblesDecoder();
@@ -203,7 +212,22 @@ export class ArgsDecoder {
         const result = this.results[argsType];
         const firstByte = this.code[pc + 1];
         this.nibblesDecoder.setByte(firstByte);
-        const firstImmediateLength = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
+        const firstImmediateLength = this.nibblesDecoder.getLowNibbleAsLength();
+        result.firstImmediateDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + firstImmediateLength));
+        const secondImmediateLength = this.mask.getNoOfBytesToNextInstruction(pc + 2 + firstImmediateLength);
+        result.secondImmediateDecoder.setBytes(
+          this.code.subarray(pc + 2 + firstImmediateLength, pc + 2 + firstImmediateLength + secondImmediateLength),
+        );
+        result.noOfInstructionsToSkip = 2 + firstImmediateLength + secondImmediateLength;
+        return result;
+      }
+
+      case ArgumentType.ONE_REGISTER_TWO_IMMEDIATES: {
+        const result = this.results[argsType];
+        const firstByte = this.code[pc + 1];
+        this.nibblesDecoder.setByte(firstByte);
+        result.registerIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
+        const firstImmediateLength = this.nibblesDecoder.getHighNibbleAsLength();
         result.firstImmediateDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + firstImmediateLength));
         const secondImmediateLength = this.mask.getNoOfBytesToNextInstruction(pc + 2 + firstImmediateLength);
         result.secondImmediateDecoder.setBytes(

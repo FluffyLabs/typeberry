@@ -1,6 +1,6 @@
 import type { TwoImmediatesResult } from "../args-decoder/args-decoder";
 import { Instruction } from "../instruction";
-import type { StoreOps } from "../ops/store-ops";
+import type { StoreOps } from "../ops";
 
 export class TwoImmsDispatcher {
   constructor(private storeOps: StoreOps) {}
