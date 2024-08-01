@@ -21,7 +21,7 @@ interface LogEntry {
 }
 
 const LOG_FILENAME = process.env.LOG_FILENAME as string;
-const AUTH = process.env.COMMIT_KEY_SECRET;
+const AUTH = process.env.COMMIT_KEY_SECRET as string;
 
 if (!LOG_FILENAME || !AUTH) {
   throw new Error("Missing LOG_FILENAME or COMMIT_KEY_SECRET env variables");
