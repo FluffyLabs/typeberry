@@ -3,10 +3,20 @@ import * as fs from "node:fs/promises";
 import { test } from "node:test";
 
 import type { TestContext } from "node:test";
-import { type FromJson, parseFromJson } from "./test-runner/json-parser";
-import { PvmTest, runPvmTest } from "./test-runner/pvm";
-import { SafroleTest, runSafroleTest } from "./test-runner/safrole";
-import { runTrieTest, trieTestSuiteFromJson } from "./test-runner/trie";
+import {
+  EcTest,
+  PageProof,
+  SegmentEcTest,
+  SegmentRoot,
+  runEcTest,
+  runPageProofTest,
+  runSegmentEcTest,
+  runSegmentRootTest,
+} from "@typeberry/test-runner";
+import { type FromJson, parseFromJson } from "@typeberry/test-runner/json-parser";
+import { PvmTest, runPvmTest } from "@typeberry/test-runner/pvm";
+import { SafroleTest, runSafroleTest } from "@typeberry/test-runner/safrole";
+import { runTrieTest, trieTestSuiteFromJson } from "@typeberry/test-runner/trie";
 
 main().then(console.log).catch(console.error);
 
@@ -41,14 +51,22 @@ function tryToPrepareTestRunner<T>(
   }
 }
 
-async function dispatchTest(t: TestContext, testContent: unknown, file: string) {
+async function dispatchTest(_t: TestContext, testContent: unknown, file: string) {
   const errors: unknown[] = [];
   const handleError = (e: unknown) => errors.push(e);
 
+  function prepRunner<T>(fromJson: FromJson<T>, run: (t: T) => Promise<void>) {
+    return tryToPrepareTestRunner(testContent, fromJson, run, handleError);
+  }
+
   const runners = [
-    tryToPrepareTestRunner(testContent, SafroleTest.fromJson, runSafroleTest, handleError),
-    tryToPrepareTestRunner(testContent, PvmTest.fromJson, runPvmTest, handleError),
-    tryToPrepareTestRunner(testContent, trieTestSuiteFromJson, runTrieTest, handleError),
+    prepRunner(SafroleTest.fromJson, runSafroleTest),
+    prepRunner(PvmTest.fromJson, runPvmTest),
+    prepRunner(trieTestSuiteFromJson, runTrieTest),
+    prepRunner(EcTest.fromJson, runEcTest),
+    prepRunner(PageProof.fromJson, runPageProofTest),
+    prepRunner(SegmentEcTest.fromJson, runSegmentEcTest),
+    prepRunner(SegmentRoot.fromJson, runSegmentRootTest),
   ];
 
   function nonNull<T>(x: T | null): x is T {
@@ -63,7 +81,7 @@ async function dispatchTest(t: TestContext, testContent: unknown, file: string) 
 
     fail(`Unrecognized test case in ${file}`);
   } else {
-    const promises = [];
+    const promises: Promise<void>[] = [];
     for (const runner of nonEmptyRunners) {
       promises.push(runner());
     }

@@ -1,8 +1,7 @@
-import { Bytes, BytesBlob } from "../bytes";
-import { check } from "../debug";
-import type { Hash } from "../hash";
-import type { Opaque } from "../opaque";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { type Opaque, check } from "@typeberry/utils";
 
+export type Hash = Bytes<32>;
 export type StateKey = Opaque<Bytes<32>, "stateKey">;
 export type TruncatedStateKey = Opaque<Bytes<31>, "stateKey">;
 export type TrieHash = Opaque<Hash, "trie">;

@@ -34,6 +34,11 @@ $ npm ci
 $ npm run test
 ```
 
+Running tests from a single package:
+```bash
+$ npm run -w @typeberry/trie test
+```
+
 ### Running formatting & linting
 
 ```bash
@@ -64,11 +69,19 @@ to execute them.
 ```bash
 $ git clone https://github.com/w3f/jamtestvectors.git
 $ cd typeberry
-$ npm run run-tests --  ../jamtestvectors/**/*.json
+$ npm run run-tests --  ../jamtestvectors/**/*.json ../jamtestvectors/erasure_coding/vectors/*
 ```
 
 Obviously it's also possible to run just single test case or part of the test
 cases by altering the glob pattern in the path.
+
+### Adding a new component / package
+
+```bash
+$ npm init -w ./packages/mycomponent
+```
+
+This command will automatically update the `workspaces` field in top-level `package.json`.
 
 ## Codestyle
 

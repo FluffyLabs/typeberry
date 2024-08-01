@@ -1,12 +1,12 @@
 import assert from "node:assert";
-import { test } from "node:test";
-import { blake2bTrieHasher } from "../blake2b.node";
-import { Bytes, BytesBlob } from "../bytes";
+import { describe, it } from "node:test";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { blake2bTrieHasher } from "./blake2b.node";
 import { LeafNode, parseStateKey } from "./nodes";
 import { InMemoryTrie } from "./trie";
 
-test("Trie", async () => {
-  await test("Empty trie", () => {
+describe("Trie", async () => {
+  it("Empty trie", () => {
     const trie = InMemoryTrie.empty(blake2bTrieHasher);
 
     assert.deepStrictEqual(
@@ -15,7 +15,7 @@ test("Trie", async () => {
     );
   });
 
-  await test("Leaf Node", () => {
+  it("Leaf Node", () => {
     const key = parseStateKey("16c72e0c2e0b78157e3a116d86d90461a199e439325317aea160b30347adb8ec");
     const value = BytesBlob.parseBlob("0x4227b4a465084852cd87d8f23bec0db6fa7766b9685ab5e095ef9cda9e15e49dff");
     const valueHash = blake2bTrieHasher.hashConcat(value.buffer);
@@ -30,7 +30,7 @@ test("Trie", async () => {
     assert.deepStrictEqual(node.getValueHash(), valueHash);
   });
 
-  await test("Empty value", () => {
+  it("Empty value", () => {
     const trie = InMemoryTrie.empty(blake2bTrieHasher);
 
     trie.set(
@@ -44,7 +44,7 @@ test("Trie", async () => {
     );
   });
 
-  await test("Should import some keys", () => {
+  it("Should import some keys", () => {
     const trie = InMemoryTrie.empty(blake2bTrieHasher);
 
     trie.set(
@@ -58,7 +58,7 @@ test("Trie", async () => {
     );
   });
 
-  await test("Non embedded leaf", () => {
+  it("Non embedded leaf", () => {
     const trie = InMemoryTrie.empty(blake2bTrieHasher);
 
     trie.set(
@@ -72,7 +72,7 @@ test("Trie", async () => {
     );
   });
 
-  await test("More complicated trie", () => {
+  it("More complicated trie", () => {
     const trie = InMemoryTrie.empty(blake2bTrieHasher);
 
     trie.set(
@@ -92,7 +92,7 @@ test("Trie", async () => {
     );
   });
 
-  await test("Move leaf from left to right branch", () => {
+  it("Move leaf from left to right branch", () => {
     const trie = InMemoryTrie.empty(blake2bTrieHasher);
 
     // left value
@@ -119,7 +119,7 @@ test("Trie", async () => {
     );
   });
 
-  await test("Replace leaf value", () => {
+  it("Replace leaf value", () => {
     const trie = InMemoryTrie.empty(blake2bTrieHasher);
     const insert = {
       f2a9fcaf8ae0ff770b0908ebdee1daf8457c0ef5e1106c89ad364236333c5fb3: "0x23",
@@ -145,7 +145,7 @@ test("Trie", async () => {
     );
   });
 
-  await test("Test vector 9", () => {
+  it("Test vector 9", () => {
     const vector = {
       input: {
         d7f99b746f23411983df92806725af8e5cb66eba9f200737accae4a1ab7f47b9:
@@ -162,7 +162,7 @@ test("Trie", async () => {
     runTestVector(vector);
   });
 
-  await test("Test vector 10", () => {
+  it("Test vector 10", () => {
     const vector = {
       input: {
         "5dffe0e2c9f089d30e50b04ee562445cf2c0e7e7d677580ef0ccf2c6fa3522dd":

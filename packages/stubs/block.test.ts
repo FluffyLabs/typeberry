@@ -1,8 +1,8 @@
 import assert from "node:assert";
-import { test } from "node:test";
+import { describe, it } from "node:test";
 
-test("Hello Block", async (t) => {
-  await t.test("subtest", () => {
+describe("Hello Block", () => {
+  it("test", () => {
     assert.strictEqual(1, 1);
   });
 });

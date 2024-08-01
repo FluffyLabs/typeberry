@@ -9,6 +9,14 @@ TODO [ToDr] This is just a stub.
 Files without a special convention must be compatible with both node and web
 environment (aka "core" files).
 
+## Repository structure
+
+1. `./packages` - self-contained parts of the typeberry implementation.
+    Think: libraries. Always named `@typeberry/<name>`.
+2. `./bin` - executable scripts and possibly their dependencies.
+3. `./workers` - parts of typeberry that run as a worker. And communicate with
+    other components. Use `./packages` for their underlying logic.
+
 ## Avoid constructor overloading
 
 Constructor overloading can be pretty misleading. To avoid confusion about how the

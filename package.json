@@ -3,6 +3,21 @@
   "version": "0.0.1",
   "description": "JAM implementation in TypeScript",
   "main": "index.ts",
+  "private": true,
+  "workspaces": [
+    "packages/trie",
+    "packages/pvm",
+    "packages/safrole",
+    "packages/bytes",
+    "packages/jam-codec",
+    "packages/utils",
+    "packages/stubs",
+    "bin/test-runner"
+  ],
+  "engines": {
+    "node": ">=20",
+    "npm": ">=10"
+  },
   "scripts": {
     "qa": "biome ci",
     "qa-fix": "npm run format; npm run lint",
@@ -19,15 +34,6 @@
   "license": "MPL-2.0",
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
-    "@types/blake2b": "^2.1.3",
-    "@actions/github": "^6.0.0",
-    "@octokit/webhooks-types": "^7.5.1",
-    "@polkadot/api": "^12.2.1",
-    "@polkadot/types": "^12.2.1",
     "ts-node": "^10.9.2"
-  },
-  "dependencies": {
-    "bandersnatch-wasm": "github:fluffylabs/bandersnatch#d0683b0e03635f4fda937addc5c0c7e8b761b607",
-    "blake2b": "^2.1.4"
   }
 }
