@@ -35,6 +35,8 @@ jobs:
           branch: ${{ github.ref_name }}
         continue-on-error: true
       - run: npm run blockchain-git-log
+        env:
+          COMMIT_KEY_SECRET: ${{ secrets.COMMIT_KEY_SECRET }}
       - name: Upload new transaction log
         uses: actions/upload-artifact@v4
         with:
