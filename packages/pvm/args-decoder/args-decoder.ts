@@ -42,10 +42,17 @@ export type OneRegisterOneImmediateResult = {
 };
 
 export type TwoRegistersTwoImmediatesResult = {
-  type: ArgumentType.TWO_REGISTERS_TWO_IMMEDIATE;
+  type: ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES;
   noOfInstructionsToSkip: number;
   firstRegisterIndex: number;
   secondRegisterIndex: number;
+  firstImmediateDecoder: ImmediateDecoder;
+  secondImmediateDecoder: ImmediateDecoder;
+};
+
+export type TwoImmediatesResult = {
+  type: ArgumentType.TWO_IMMEDIATES;
+  noOfInstructionsToSkip: number;
   firstImmediateDecoder: ImmediateDecoder;
   secondImmediateDecoder: ImmediateDecoder;
 };
@@ -81,7 +88,8 @@ type Result =
   | OneRegisterOneImmediateOneOffsetResult
   | TwoRegistersOneOffsetResult
   | OneRegisterOneImmediateResult
-  | OneOffsetResult;
+  | OneOffsetResult
+  | TwoImmediatesResult;
 
 export class ArgsDecoder {
   private nibblesDecoder = new NibblesDecoder();
@@ -188,6 +196,20 @@ export class ArgsDecoder {
         result.noOfInstructionsToSkip = 2 + immediateLength;
 
         result.immediateDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + immediateLength));
+        return result;
+      }
+
+      case ArgumentType.TWO_IMMEDIATES: {
+        const result = this.results[argsType];
+        const firstByte = this.code[pc + 1];
+        this.nibblesDecoder.setByte(firstByte);
+        const firstImmediateLength = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
+        result.firstImmediateDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + firstImmediateLength));
+        const secondImmediateLength = this.mask.getNoOfBytesToNextInstruction(pc + 2 + firstImmediateLength);
+        result.secondImmediateDecoder.setBytes(
+          this.code.subarray(pc + 2 + firstImmediateLength, pc + 2 + firstImmediateLength + secondImmediateLength),
+        );
+        result.noOfInstructionsToSkip = 2 + firstImmediateLength + secondImmediateLength;
         return result;
       }
 
