@@ -8,12 +8,12 @@ import { instructionArgumentTypeMap } from "./instruction-argument-type-map";
 
 export type NoArgumentsResult = {
   type: ArgumentType.NO_ARGUMENTS;
-  noOfInstructionsToSkip: number;
+  noOfBytesToSkip: number;
 };
 
 export type ThreeRegistersResult = {
   type: ArgumentType.THREE_REGISTERS;
-  noOfInstructionsToSkip: number;
+  noOfBytesToSkip: number;
   firstRegisterIndex: number;
   secondRegisterIndex: number;
   thirdRegisterIndex: number;
@@ -21,14 +21,14 @@ export type ThreeRegistersResult = {
 
 export type TwoRegistersResult = {
   type: ArgumentType.TWO_REGISTERS;
-  noOfInstructionsToSkip: number;
+  noOfBytesToSkip: number;
   firstRegisterIndex: number;
   secondRegisterIndex: number;
 };
 
 export type TwoRegistersOneImmediateResult = {
   type: ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE;
-  noOfInstructionsToSkip: number;
+  noOfBytesToSkip: number;
   firstRegisterIndex: number;
   secondRegisterIndex: number;
   immediateDecoder: ImmediateDecoder;
@@ -36,14 +36,14 @@ export type TwoRegistersOneImmediateResult = {
 
 export type OneRegisterOneImmediateResult = {
   type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE;
-  noOfInstructionsToSkip: number;
+  noOfBytesToSkip: number;
   firstRegisterIndex: number;
   immediateDecoder: ImmediateDecoder;
 };
 
 export type TwoRegistersTwoImmediatesResult = {
   type: ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES;
-  noOfInstructionsToSkip: number;
+  noOfBytesToSkip: number;
   firstRegisterIndex: number;
   secondRegisterIndex: number;
   firstImmediateDecoder: ImmediateDecoder;
@@ -52,14 +52,14 @@ export type TwoRegistersTwoImmediatesResult = {
 
 export type TwoImmediatesResult = {
   type: ArgumentType.TWO_IMMEDIATES;
-  noOfInstructionsToSkip: number;
+  noOfBytesToSkip: number;
   firstImmediateDecoder: ImmediateDecoder;
   secondImmediateDecoder: ImmediateDecoder;
 };
 
 export type TwoRegistersOneOffsetResult = {
   type: ArgumentType.TWO_REGISTERS_ONE_OFFSET;
-  noOfInstructionsToSkip: number;
+  noOfBytesToSkip: number;
   firstRegisterIndex: number;
   secondRegisterIndex: number;
   offset: number;
@@ -67,7 +67,7 @@ export type TwoRegistersOneOffsetResult = {
 
 export type OneRegisterOneImmediateOneOffsetResult = {
   type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET;
-  noOfInstructionsToSkip: number;
+  noOfBytesToSkip: number;
   firstRegisterIndex: number;
   immediateDecoder: ImmediateDecoder;
   offset: number;
@@ -75,7 +75,7 @@ export type OneRegisterOneImmediateOneOffsetResult = {
 
 export type OneRegisterTwoImmediatesResult = {
   type: ArgumentType.ONE_REGISTER_TWO_IMMEDIATES;
-  noOfInstructionsToSkip: number;
+  noOfBytesToSkip: number;
   registerIndex: number;
   firstImmediateDecoder: ImmediateDecoder;
   secondImmediateDecoder: ImmediateDecoder;
@@ -121,7 +121,7 @@ export class ArgsDecoder {
 
       case ArgumentType.THREE_REGISTERS: {
         const result = this.results[argsType];
-        result.noOfInstructionsToSkip = 3;
+        result.noOfBytesToSkip = 3;
         const firstByte = this.code[pc + 1];
         const secondByte = this.code[pc + 2];
         this.nibblesDecoder.setByte(firstByte);
@@ -140,7 +140,7 @@ export class ArgsDecoder {
         result.secondRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
 
         const immediateLength = this.mask.getNoOfBytesToNextInstruction(pc + 2);
-        result.noOfInstructionsToSkip = 2 + immediateLength;
+        result.noOfBytesToSkip = 2 + immediateLength;
 
         result.immediateDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + immediateLength));
         return result;
@@ -158,7 +158,7 @@ export class ArgsDecoder {
           this.code.subarray(pc + 2 + immediateLength, pc + 2 + immediateLength + offsetLength),
         );
         result.offset = this.offsetDecoder.getSigned();
-        result.noOfInstructionsToSkip = 2 + immediateLength + offsetLength;
+        result.noOfBytesToSkip = 2 + immediateLength + offsetLength;
         return result;
       }
 
@@ -169,7 +169,7 @@ export class ArgsDecoder {
         result.firstRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
         result.secondRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
         const offsetLength = this.mask.getNoOfBytesToNextInstruction(pc + 2);
-        result.noOfInstructionsToSkip = 2 + offsetLength;
+        result.noOfBytesToSkip = 2 + offsetLength;
 
         this.offsetDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + offsetLength));
         result.offset = this.offsetDecoder.getSigned();
@@ -178,7 +178,7 @@ export class ArgsDecoder {
 
       case ArgumentType.TWO_REGISTERS: {
         const result = this.results[argsType];
-        result.noOfInstructionsToSkip = 2;
+        result.noOfBytesToSkip = 2;
         const firstByte = this.code[pc + 1];
         this.nibblesDecoder.setByte(firstByte);
         result.firstRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
@@ -202,7 +202,7 @@ export class ArgsDecoder {
         result.firstRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
 
         const immediateLength = this.mask.getNoOfBytesToNextInstruction(pc + 2);
-        result.noOfInstructionsToSkip = 2 + immediateLength;
+        result.noOfBytesToSkip = 2 + immediateLength;
 
         result.immediateDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + immediateLength));
         return result;
@@ -218,7 +218,7 @@ export class ArgsDecoder {
         result.secondImmediateDecoder.setBytes(
           this.code.subarray(pc + 2 + firstImmediateLength, pc + 2 + firstImmediateLength + secondImmediateLength),
         );
-        result.noOfInstructionsToSkip = 2 + firstImmediateLength + secondImmediateLength;
+        result.noOfBytesToSkip = 2 + firstImmediateLength + secondImmediateLength;
         return result;
       }
 
@@ -233,7 +233,7 @@ export class ArgsDecoder {
         result.secondImmediateDecoder.setBytes(
           this.code.subarray(pc + 2 + firstImmediateLength, pc + 2 + firstImmediateLength + secondImmediateLength),
         );
-        result.noOfInstructionsToSkip = 2 + firstImmediateLength + secondImmediateLength;
+        result.noOfBytesToSkip = 2 + firstImmediateLength + secondImmediateLength;
         return result;
       }
 
@@ -252,12 +252,10 @@ export class ArgsDecoder {
         result.firstImmediateDecoder.setBytes(this.code.subarray(newPc, newPc + firstImmediateLength));
         newPc += firstImmediateLength;
         const secondImmediateLength = this.mask.getNoOfBytesToNextInstruction(newPc);
-        result.secondImmediateDecoder.setBytes(
-          this.code.subarray(newPc, newPc + secondImmediateLength),
-        );
+        result.secondImmediateDecoder.setBytes(this.code.subarray(newPc, newPc + secondImmediateLength));
         newPc += secondImmediateLength;
         // BTW this name is not precise, it should be: noOfOctetsToSkip or noOfBytesToSkip
-        result.noOfInstructionsToSkip = newPc - pc;
+        result.noOfBytesToSkip = newPc - pc;
         return result;
       }
 

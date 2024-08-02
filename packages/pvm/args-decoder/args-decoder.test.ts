@@ -12,7 +12,7 @@ describe("ArgsDecoder", () => {
     const mask = new Mask(new Uint8Array([0b1111_1111]));
     const argsDecoder = new ArgsDecoder(code, mask);
     const expectedResult = {
-      noOfInstructionsToSkip: code.length,
+      noOfBytesToSkip: code.length,
       type: ArgumentType.NO_ARGUMENTS,
     };
 
@@ -26,7 +26,7 @@ describe("ArgsDecoder", () => {
     const mask = new Mask(new Uint8Array([0b1111_1001]));
     const argsDecoder = new ArgsDecoder(code, mask);
     const expectedResult = {
-      noOfInstructionsToSkip: code.length,
+      noOfBytesToSkip: code.length,
       type: ArgumentType.THREE_REGISTERS,
 
       firstRegisterIndex: 1,
@@ -46,7 +46,7 @@ describe("ArgsDecoder", () => {
     const expectedImmediateDecoder = new ImmediateDecoder();
     expectedImmediateDecoder.setBytes(new Uint8Array([0xff]));
     const expectedResult = {
-      noOfInstructionsToSkip: code.length,
+      noOfBytesToSkip: code.length,
       type: ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE,
 
       firstRegisterIndex: 1,
@@ -67,7 +67,7 @@ describe("ArgsDecoder", () => {
     const expectedImmediateDecoder = new ImmediateDecoder();
     expectedImmediateDecoder.setBytes(new Uint8Array([0xff]));
     const expectedResult = {
-      noOfInstructionsToSkip: code.length,
+      noOfBytesToSkip: code.length,
       type: ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE,
 
       firstRegisterIndex: 1,
@@ -88,7 +88,7 @@ describe("ArgsDecoder", () => {
     const expectedImmediateDecoder = new ImmediateDecoder();
     expectedImmediateDecoder.setBytes(new Uint8Array([210, 4]));
     const expectedResult = {
-      noOfInstructionsToSkip: code.length,
+      noOfBytesToSkip: code.length,
       type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET,
 
       firstRegisterIndex: 7,
@@ -108,7 +108,7 @@ describe("ArgsDecoder", () => {
     const expectedImmediateDecoder = new ImmediateDecoder();
     expectedImmediateDecoder.setBytes(new Uint8Array([0xff]));
     const expectedResult = {
-      noOfInstructionsToSkip: code.length,
+      noOfBytesToSkip: code.length,
       type: ArgumentType.TWO_REGISTERS_ONE_OFFSET,
 
       firstRegisterIndex: 7,
@@ -132,7 +132,7 @@ describe("ArgsDecoder", () => {
     expectedsecondImmediateDecoder.setBytes(new Uint8Array([0x03, 0x04]));
 
     const expectedResult = {
-      noOfInstructionsToSkip: code.length,
+      noOfBytesToSkip: code.length,
       type: ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES,
 
       firstRegisterIndex: 7,

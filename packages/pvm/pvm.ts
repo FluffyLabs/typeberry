@@ -146,7 +146,7 @@ export class Pvm {
       }
 
       const args = this.argsDecoder.getArgs(this.pc);
-      this.instructionResult.pcOffset = args.noOfInstructionsToSkip;
+      this.instructionResult.pcOffset = args.noOfBytesToSkip;
       switch (args.type) {
         case ArgumentType.NO_ARGUMENTS:
           this.noArgsDispatcher.dispatch(currentInstruction);
