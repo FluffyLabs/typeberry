@@ -1,27 +1,33 @@
-import { decodeNaturalNumber } from "@typeberry/jam-codec";
+import { LittleEndianDecoder } from "@typeberry/jam-codec/little-endian-decoder";
 import { check } from "@typeberry/utils";
 
 export class JumpTable {
-  private indexes = new Set<number>();
+  private indices: Uint32Array;
+  private littleEndianDecoder = new LittleEndianDecoder();
 
   constructor(jumpTableItemLength: number, bytes: Uint8Array) {
     check(
-      bytes.length % jumpTableItemLength === 0,
+      jumpTableItemLength === 0 || bytes.length % jumpTableItemLength === 0,
       `Length of jump table (${bytes.length}) should be a multiple of item lenght (${jumpTableItemLength})!`,
     );
 
+    const length = jumpTableItemLength === 0 ? 0 : bytes.length / jumpTableItemLength;
+
+    this.indices = new Uint32Array(length);
     for (let i = 0; i < bytes.length; i += jumpTableItemLength) {
-      const index = this.decodeItem(bytes.subarray(i, i + jumpTableItemLength));
-      this.indexes.add(index);
+      this.indices[i / jumpTableItemLength] = this.decodeItem(bytes.subarray(i, i + jumpTableItemLength));
     }
   }
 
   private decodeItem(bytes: Uint8Array) {
-    const { value } = decodeNaturalNumber(bytes);
-    return Number(value);
+    return this.littleEndianDecoder.decodeU32(bytes);
   }
 
   hasIndex(index: number) {
-    return this.indexes.has(index);
+    return index < this.indices.length && index >= 0;
+  }
+
+  getDestination(index: number) {
+    return this.indices[index];
   }
 }

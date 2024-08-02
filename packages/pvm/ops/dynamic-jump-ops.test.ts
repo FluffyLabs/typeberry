@@ -1,0 +1,111 @@
+import assert from "node:assert";
+import { describe, it } from "node:test";
+import { InstructionResult } from "../instruction-result";
+import { JumpTable } from "../program-decoder/jump-table";
+import { Mask } from "../program-decoder/mask";
+import { Registers } from "../registers";
+import { Result } from "../result";
+import { DynamicJumpOps } from "./dynamic-jump-ops";
+import { MAX_VALUE } from "./math-consts";
+
+describe("DynamicJumpOps", () => {
+  it("should set correct pcOffset", () => {
+    const regs = new Registers();
+    const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
+    const instructionResult = new InstructionResult();
+    const mask = new Mask(new Uint8Array([0b11111001]));
+    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
+    const registerIndex = 0;
+    regs.asUnsigned[registerIndex] = 3;
+
+    dynamicJumpOps.jumpInd(5, registerIndex);
+
+    assert.strictEqual(instructionResult.pcOffset, 3);
+    assert.strictEqual(instructionResult.status, null);
+  });
+
+  it("should set correct pcOffset (address overflow)", () => {
+    const regs = new Registers();
+    const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
+    const instructionResult = new InstructionResult();
+    const mask = new Mask(new Uint8Array([0b11111001]));
+    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
+    const registerIndex = 0;
+    regs.asUnsigned[registerIndex] = MAX_VALUE;
+
+    dynamicJumpOps.jumpInd(9, registerIndex);
+
+    assert.strictEqual(instructionResult.pcOffset, 3);
+    assert.strictEqual(instructionResult.status, null);
+  });
+
+  it("should change status to HALT", () => {
+    const regs = new Registers();
+    const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
+    const instructionResult = new InstructionResult();
+    const mask = new Mask(new Uint8Array([0b11111001]));
+    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
+    const registerIndex = 0;
+    regs.asUnsigned[registerIndex] = 0xff_ff_00_00;
+
+    dynamicJumpOps.jumpInd(0, registerIndex);
+
+    assert.strictEqual(instructionResult.status, Result.HALT);
+  });
+
+  it("should change status to PANIC because dynamic address is equal to 0 ", () => {
+    const regs = new Registers();
+    const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
+    const instructionResult = new InstructionResult();
+    const mask = new Mask(new Uint8Array([0b11111001]));
+    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
+    const registerIndex = 0;
+    regs.asUnsigned[registerIndex] = 0;
+
+    dynamicJumpOps.jumpInd(0, registerIndex);
+
+    assert.strictEqual(instructionResult.status, Result.PANIC);
+  });
+
+  it("should change status to PANIC because dynamic address does not exist in jump table", () => {
+    const regs = new Registers();
+    const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
+    const instructionResult = new InstructionResult();
+    const mask = new Mask(new Uint8Array([0b11111001]));
+    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
+    const registerIndex = 0;
+    regs.asUnsigned[registerIndex] = 11;
+
+    dynamicJumpOps.jumpInd(5, registerIndex);
+
+    assert.strictEqual(instructionResult.status, Result.PANIC);
+  });
+
+  it("should change status to PANIC because dynamic address is not a multiple of jump aligment factor (that is equal to 4) ", () => {
+    const regs = new Registers();
+    const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
+    const instructionResult = new InstructionResult();
+    const mask = new Mask(new Uint8Array([0b11111001]));
+    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
+    const registerIndex = 0;
+    regs.asUnsigned[registerIndex] = 4;
+
+    dynamicJumpOps.jumpInd(5, registerIndex);
+
+    assert.strictEqual(instructionResult.status, Result.PANIC);
+  });
+
+  it("should change status to PANIC because destination is not an instrction", () => {
+    const regs = new Registers();
+    const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
+    const instructionResult = new InstructionResult();
+    const mask = new Mask(new Uint8Array([0b11110001]));
+    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
+    const registerIndex = 0;
+    regs.asUnsigned[registerIndex] = 3;
+
+    dynamicJumpOps.jumpInd(5, registerIndex);
+
+    assert.strictEqual(instructionResult.status, Result.PANIC);
+  });
+});

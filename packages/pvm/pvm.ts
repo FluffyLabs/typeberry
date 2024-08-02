@@ -5,7 +5,18 @@ import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
 import { InstructionResult } from "./instruction-result";
 import { Memory } from "./memory";
-import { BitOps, BooleanOps, BranchOps, LoadOps, MathOps, MoveOps, NoArgsOps, ShiftOps, StoreOps } from "./ops";
+import {
+  BitOps,
+  BooleanOps,
+  BranchOps,
+  DynamicJumpOps,
+  LoadOps,
+  MathOps,
+  MoveOps,
+  NoArgsOps,
+  ShiftOps,
+  StoreOps,
+} from "./ops";
 import {
   NoArgsDispatcher,
   OneOffsetDispatcher,
@@ -17,6 +28,7 @@ import {
   TwoRegsDispatcher,
   TwoRegsOneImmDispatcher,
   TwoRegsOneOffsetDispatcher,
+  TwoRegsTwoImmsDispatcher,
 } from "./ops-dispatchers";
 import { PageMap } from "./page-map";
 import type { Mask } from "./program-decoder/mask";
@@ -68,11 +80,13 @@ export class Pvm {
   private twoImmsDispatcher: TwoImmsDispatcher;
   private oneRegTwoImmsDispatcher: OneRegTwoImmsDispatcher;
   private noArgsDispatcher: NoArgsDispatcher;
+  private twoRegsTwoImmsDispatcher: TwoRegsTwoImmsDispatcher;
 
   constructor(rawProgram: Uint8Array, initialState: InitialState = {}) {
     const programDecoder = new ProgramDecoder(rawProgram);
     this.code = programDecoder.getCode();
     this.mask = programDecoder.getMask();
+    const jumpTable = programDecoder.getJumpTable();
     this.registers = new Registers();
     const pageMap = new PageMap(initialState.pageMap ?? []);
     this.memory = new Memory(pageMap, initialState.memory ?? []);
@@ -94,6 +108,7 @@ export class Pvm {
     const loadOps = new LoadOps(this.registers, this.memory);
     const storeOps = new StoreOps(this.registers, this.memory);
     const noArgsOps = new NoArgsOps(this.instructionResult);
+    const dynamicJumpOps = new DynamicJumpOps(this.registers, jumpTable, this.instructionResult, this.mask);
 
     this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
     this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(
@@ -109,10 +124,11 @@ export class Pvm {
     this.oneRegisterOneImmediateOneOffsetDispatcher = new OneRegisterOneImmediateOneOffsetDispatcher(branchOps);
     this.twoRegsOneOffsetDispatcher = new TwoRegsOneOffsetDispatcher(branchOps);
     this.oneOffsetDispatcher = new OneOffsetDispatcher(branchOps);
-    this.oneRegisterOneImmediateDispatcher = new OneRegisterOneImmediateDispatcher(loadOps, storeOps);
+    this.oneRegisterOneImmediateDispatcher = new OneRegisterOneImmediateDispatcher(loadOps, storeOps, dynamicJumpOps);
     this.twoImmsDispatcher = new TwoImmsDispatcher(storeOps);
     this.oneRegTwoImmsDispatcher = new OneRegTwoImmsDispatcher(storeOps);
     this.noArgsDispatcher = new NoArgsDispatcher(noArgsOps);
+    this.twoRegsTwoImmsDispatcher = new TwoRegsTwoImmsDispatcher(loadOps, dynamicJumpOps);
   }
 
   printProgram() {
@@ -130,7 +146,7 @@ export class Pvm {
       }
 
       const args = this.argsDecoder.getArgs(this.pc);
-      this.instructionResult.pcOffset = args.noOfInstructionsToSkip;
+      this.instructionResult.pcOffset = args.noOfBytesToSkip;
       switch (args.type) {
         case ArgumentType.NO_ARGUMENTS:
           this.noArgsDispatcher.dispatch(currentInstruction);
@@ -161,6 +177,9 @@ export class Pvm {
           break;
         case ArgumentType.ONE_REGISTER_TWO_IMMEDIATES:
           this.oneRegTwoImmsDispatcher.dispatch(currentInstruction, args);
+          break;
+        case ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES:
+          this.twoRegsTwoImmsDispatcher.dispatch(currentInstruction, args);
           break;
       }
 

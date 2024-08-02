@@ -1,11 +1,13 @@
 import type { OneRegisterOneImmediateResult } from "../args-decoder/args-decoder";
 import { Instruction } from "../instruction";
 import type { LoadOps, StoreOps } from "../ops";
+import type { DynamicJumpOps } from "../ops/dynamic-jump-ops";
 
 export class OneRegisterOneImmediateDispatcher {
   constructor(
     private loadOps: LoadOps,
     private storeOps: StoreOps,
+    private dynamicJumpOps: DynamicJumpOps,
   ) {}
 
   dispatch(instruction: Instruction, args: OneRegisterOneImmediateResult) {
@@ -36,6 +38,9 @@ export class OneRegisterOneImmediateDispatcher {
         break;
       case Instruction.LOAD_I16:
         this.loadOps.loadI16(args.immediateDecoder.getUnsigned(), args.firstRegisterIndex);
+        break;
+      case Instruction.JUMP_IND:
+        this.dynamicJumpOps.jumpInd(args.immediateDecoder.getUnsigned(), args.firstRegisterIndex);
         break;
     }
   }
