@@ -35,6 +35,7 @@ import type { Mask } from "./program-decoder/mask";
 import { ProgramDecoder } from "./program-decoder/program-decoder";
 import { NO_OF_REGISTERS, Registers } from "./registers";
 import { Result } from "./result";
+import { Status } from "./status";
 
 type InitialState = {
   regs?: RegistersArray;
@@ -81,6 +82,7 @@ export class Pvm {
   private oneRegTwoImmsDispatcher: OneRegTwoImmsDispatcher;
   private noArgsDispatcher: NoArgsDispatcher;
   private twoRegsTwoImmsDispatcher: TwoRegsTwoImmsDispatcher;
+  private status = Status.OK;
 
   constructor(rawProgram: Uint8Array, initialState: InitialState = {}) {
     const programDecoder = new ProgramDecoder(rawProgram);
@@ -137,7 +139,7 @@ export class Pvm {
   }
 
   runProgram() {
-    while (this.nextStep()) {}
+    while (this.nextStep() === Status.OK) {}
   }
 
   nextStep() {
@@ -145,8 +147,8 @@ export class Pvm {
     this.gas -= instructionGasMap[currentInstruction];
 
     if (this.gas < 0) {
-      // TODO [MaSi]: to handle
-      return false;
+      this.status = Status.OUT_OF_GAS;
+      return this.status;
     }
 
     const args = this.argsDecoder.getArgs(this.pc);
@@ -192,11 +194,23 @@ export class Pvm {
       if (this.instructionResult.status === Result.FAULT) {
         this.gas -= instructionGasMap[Instruction.TRAP];
       }
-      return false;
+
+      switch (this.instructionResult.status) {
+        case Result.FAULT:
+          this.status = Status.PANIC;
+          break;
+        case Result.HALT:
+          this.status = Status.HALT;
+          break;
+        case Result.PANIC:
+          this.status = Status.PANIC;
+          break;
+      }
+      return this.status;
     }
 
     this.pc += this.instructionResult.pcOffset;
-    return true;
+    return this.status;
   }
 
   getRegisters() {
@@ -216,17 +230,10 @@ export class Pvm {
   }
 
   getStatus() {
-    if (this.instructionResult.status === null) {
-      return null;
-    }
-
-    if (this.instructionResult.status === Result.FAULT || this.instructionResult.status === Result.PANIC) {
-      return "trap";
-    }
-
-    return "halt";
+    return this.status;
   }
-  getMemoryPage(): Uint8Array | null {
-    return null;
+
+  getMemoryPage(pageNumber: number): Uint8Array | null {
+    return this.memory.getPageDump(pageNumber);
   }
 }

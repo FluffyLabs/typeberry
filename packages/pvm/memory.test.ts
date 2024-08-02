@@ -155,4 +155,15 @@ describe("Memory", () => {
       assert.deepStrictEqual(result, true);
     });
   });
+
+  describe("Memory.getPageDump", () => {
+    const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+    const initialMemory = [{ address: 1, contents: new Uint8Array([0xff, 0xee, 0xdd, 0xcc]) }];
+    const memory = new Memory(pageMap, initialMemory);
+    const expectedBytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
+
+    const pageDump = memory.getPageDump(0);
+
+    assert.deepStrictEqual(pageDump, expectedBytes);
+  });
 });

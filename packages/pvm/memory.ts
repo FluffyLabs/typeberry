@@ -52,12 +52,18 @@ export class Memory {
     const addressInPage = address % this.pageSize;
     const pageAddress = address - addressInPage;
 
-    const value = this.memory.get(pageAddress)?.[addressInPage];
-    if (value) {
-      return value.subarray(0, length);
-    }
+    const value = this.memory.get(pageAddress)?.[addressInPage] ?? ZERO;
+    return value.subarray(0, length);
+  }
 
-    return ZERO;
+  getPageDump(pageNumber: number) {
+    // TODO [MaSi]: It is a temporary solution to unlock the tooling team, the function is not used from PVM. The implementation needs more love
+    const page = this.memory.get(pageNumber);
+    if (!page) {
+      return null;
+    }
+    const flatPage = page.map((x) => x ?? ZERO).reduce((acc, item) => acc.concat(...item), [] as number[]);
+    return new Uint8Array(flatPage);
   }
 
   getMemoryDump() {
