@@ -5,6 +5,7 @@ import { ArgumentType } from "../args-decoder/argument-type";
 import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
 import { Instruction } from "../instruction";
+import { InstructionResult } from "../instruction-result";
 import { Memory } from "../memory";
 import { BitOps, BooleanOps, LoadOps, MathOps, MoveOps, ShiftOps, StoreOps } from "../ops";
 import { PageMap } from "../page-map";
@@ -12,6 +13,7 @@ import { Registers } from "../registers";
 import { TwoRegsOneImmDispatcher } from "./two-regs-one-imm-dispatcher";
 
 describe("TwoRegsOneImmDispatcher", () => {
+  const instructionResult = new InstructionResult();
   const regs = new Registers();
   const memory = new Memory(new PageMap([]), []);
   const mathOps = new MathOps(regs);
@@ -19,8 +21,8 @@ describe("TwoRegsOneImmDispatcher", () => {
   const bitOps = new BitOps(regs);
   const booleanOps = new BooleanOps(regs);
   const moveOps = new MoveOps(regs);
-  const storeOps = new StoreOps(regs, memory);
-  const loadOps = new LoadOps(regs, memory);
+  const storeOps = new StoreOps(regs, memory, instructionResult);
+  const loadOps = new LoadOps(regs, memory, instructionResult);
 
   const mockFn = mock.fn();
 

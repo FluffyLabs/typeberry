@@ -21,7 +21,7 @@ describe("TwoRegsTwoImmsDispatcher", () => {
     const jumpTable = new JumpTable(1, new Uint8Array([1]));
     const instructionResult = new InstructionResult();
     const mask = new Mask(new Uint8Array([1]));
-    const loadOps = new LoadOps(regs, memory);
+    const loadOps = new LoadOps(regs, memory, instructionResult);
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
     const loadImmediateMock = mock.fn();
     const jumpIndMock = mock.fn();
@@ -65,11 +65,11 @@ describe("TwoRegsTwoImmsDispatcher", () => {
   });
 
   describe("check if it handles other instructions than expected", () => {
+    const instructionResult = new InstructionResult();
     const regs = new Registers();
     const memory = new Memory(new PageMap([]), []);
-    const loadOps = new LoadOps(regs, memory);
+    const loadOps = new LoadOps(regs, memory, instructionResult);
     const jumpTable = new JumpTable(1, new Uint8Array([1]));
-    const instructionResult = new InstructionResult();
     const mask = new Mask(new Uint8Array([1]));
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
     const mockFn = mock.fn();

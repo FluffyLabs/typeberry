@@ -1,4 +1,4 @@
-import type { Instruction } from "../instruction";
+import { Instruction } from "../instruction";
 import type { Mask } from "../program-decoder/mask";
 import { createResults } from "./args-decoding-results";
 import { ArgumentType } from "./argument-type";
@@ -83,7 +83,7 @@ export type OneRegisterTwoImmediatesResult = {
 
 export type OneOffsetResult = {
   type: ArgumentType.ONE_OFFSET;
-  noOfInstructionsToSkip: number;
+  noOfBytesToSkip: number;
   offset: number;
 };
 
@@ -112,7 +112,7 @@ export class ArgsDecoder {
   ) {}
 
   getArgs(pc: number): Result {
-    const instruction: Instruction = this.code[pc];
+    const instruction: Instruction = this.code[pc] ?? Instruction.TRAP;
     const argsType = instructionArgumentTypeMap[instruction];
 
     switch (argsType) {
@@ -189,7 +189,7 @@ export class ArgsDecoder {
       case ArgumentType.ONE_OFFSET: {
         const result = this.results[argsType];
         const offsetLength = this.mask.getNoOfBytesToNextInstruction(pc + 1);
-        result.noOfInstructionsToSkip = 1 + offsetLength;
+        result.noOfBytesToSkip = 1 + offsetLength;
         this.offsetDecoder.setBytes(this.code.subarray(pc + 1, pc + 1 + offsetLength));
         result.offset = this.offsetDecoder.getSigned();
         return result;
@@ -254,13 +254,12 @@ export class ArgsDecoder {
         const secondImmediateLength = this.mask.getNoOfBytesToNextInstruction(newPc);
         result.secondImmediateDecoder.setBytes(this.code.subarray(newPc, newPc + secondImmediateLength));
         newPc += secondImmediateLength;
-        // BTW this name is not precise, it should be: noOfOctetsToSkip or noOfBytesToSkip
         result.noOfBytesToSkip = newPc - pc;
         return result;
       }
 
       default:
-        throw new Error("instruction was not matched!");
+        throw new Error(`instruction ${instruction} was not matched!`);
     }
   }
 }

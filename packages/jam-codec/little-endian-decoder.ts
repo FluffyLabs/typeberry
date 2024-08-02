@@ -25,7 +25,7 @@ export class LittleEndianDecoder {
   }
 
   decodeU32(bytes: Uint8Array) {
-    this.decodeU64(bytes);
+    this.loadBytes(bytes);
     return this.u32ValueArray[0];
   }
 }

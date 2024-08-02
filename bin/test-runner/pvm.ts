@@ -2,8 +2,6 @@ import assert from "node:assert";
 import { Pvm, type RegistersArray } from "@typeberry/pvm/pvm";
 import type { FromJson } from "./json-parser";
 
-type Status = "trap";
-
 const uint8ArrayFromJson: ["object", (v: unknown) => Uint8Array] = [
   "object",
   (v: unknown) => {
@@ -57,7 +55,7 @@ export class PvmTest {
   "initial-memory": MemoryChunkItem[];
   "initial-gas": number;
   program!: Uint8Array;
-  "expected-status": Status;
+  "expected-status": string;
   "expected-regs": RegistersArray;
   "expected-pc": number;
   "expected-memory": MemoryChunkItem[];
@@ -74,11 +72,12 @@ export async function runPvmTest(testContent: PvmTest) {
   });
 
   pvm.runProgram();
-  const state = pvm.getState();
 
-  assert.strictEqual(state.gas, testContent["expected-gas"]);
-  assert.strictEqual(state.pc, testContent["expected-pc"]);
-  assert.deepStrictEqual(state.memory, testContent["expected-memory"]);
-  assert.deepStrictEqual(state.regs, testContent["expected-regs"]);
-  assert.strictEqual(state.status, testContent["expected-status"]);
+  assert.strictEqual(pvm.getGas(), testContent["expected-gas"]);
+  assert.strictEqual(pvm.getPC(), testContent["expected-pc"]);
+  assert.deepStrictEqual(pvm.getMemory(), testContent["expected-memory"]);
+  assert.deepStrictEqual(Array.from(pvm.getRegisters()), testContent["expected-regs"]);
+  const pvmStatus = pvm.getStatus();
+  const testStatus = pvmStatus <= 1 ? "halt" : "trap";
+  assert.strictEqual(testStatus, testContent["expected-status"]);
 }

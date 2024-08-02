@@ -95,7 +95,7 @@ export const createResults = () => {
 
   results[ArgumentType.ONE_OFFSET] = {
     type: ArgumentType.ONE_OFFSET,
-    noOfInstructionsToSkip: 1,
+    noOfBytesToSkip: 1,
     offset: 0,
   };
 
