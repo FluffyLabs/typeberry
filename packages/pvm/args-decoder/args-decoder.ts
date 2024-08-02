@@ -239,19 +239,25 @@ export class ArgsDecoder {
 
       case ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES: {
         const result = this.results[argsType];
-        const firstByte = this.code[pc + 1];
-        const secondByte = this.code[pc + 2];
+        let newPc = pc + 1;
+        const firstByte = this.code[newPc];
+        newPc += 1;
+        const secondByte = this.code[newPc];
         this.nibblesDecoder.setByte(firstByte);
         result.firstRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
         result.secondRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
         this.nibblesDecoder.setByte(secondByte);
         const firstImmediateLength = this.nibblesDecoder.getLowNibbleAsLength();
-        result.firstImmediateDecoder.setBytes(this.code.subarray(pc + 3, pc + 3 + firstImmediateLength));
-        const secondImmediateLength = this.mask.getNoOfBytesToNextInstruction(pc + 3 + firstImmediateLength);
+        newPc += 1;
+        result.firstImmediateDecoder.setBytes(this.code.subarray(newPc, newPc + firstImmediateLength));
+        newPc += firstImmediateLength;
+        const secondImmediateLength = this.mask.getNoOfBytesToNextInstruction(newPc);
         result.secondImmediateDecoder.setBytes(
-          this.code.subarray(pc + 3 + firstImmediateLength, pc + 3 + firstImmediateLength + secondImmediateLength),
+          this.code.subarray(newPc, newPc + secondImmediateLength),
         );
-        result.noOfInstructionsToSkip = 3 + firstImmediateLength + secondImmediateLength;
+        newPc += secondImmediateLength;
+        // BTW this name is not precise, it should be: noOfOctetsToSkip or noOfBytesToSkip
+        result.noOfInstructionsToSkip = newPc - pc;
         return result;
       }
 

@@ -2,7 +2,7 @@ import { LittleEndianDecoder } from "@typeberry/jam-codec/little-endian-decoder"
 import { check } from "@typeberry/utils";
 
 export class JumpTable {
-  private indexes: Uint32Array;
+  private indices: Uint32Array;
   private littleEndianDecoder = new LittleEndianDecoder();
 
   constructor(jumpTableItemLength: number, bytes: Uint8Array) {
