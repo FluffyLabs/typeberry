@@ -200,7 +200,7 @@ export class Pvm {
   }
 
   getRegisters() {
-    return Array.from(this.registers.asUnsigned);
+    return this.registers.asUnsigned;
   }
 
   getMemory() {
@@ -226,4 +226,5 @@ export class Pvm {
 
     return "halt";
   }
+  getMemoryPage(): Uint8Array | null {}
 }

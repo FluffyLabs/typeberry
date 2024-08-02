@@ -5,6 +5,7 @@ type MemoryChunkItem = {
   contents: Uint8Array;
 };
 
+const ZERO = new Uint8Array(4);
 export class Memory {
   private memory = new Map<number, Uint8Array[]>();
   private pageSize: number;
@@ -55,9 +56,8 @@ export class Memory {
     if (value) {
       return value.subarray(0, length);
     }
-    const bytes = new Uint8Array(4);
-    this.store(address, bytes);
-    return bytes.subarray(0, length);
+
+    return ZERO;
   }
 
   getMemoryDump() {
