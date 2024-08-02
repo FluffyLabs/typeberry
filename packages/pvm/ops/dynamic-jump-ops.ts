@@ -39,15 +39,13 @@ export class DynamicJumpOps {
   }
 
   jumpInd(immediateValue: number, registerIndex: number) {
-    if (this.regs.asUnsigned[registerIndex] > MAX_VALUE - immediateValue) {
+    const registerValue = this.regs.asUnsigned[registerIndex];
+    if (registerValue > MAX_VALUE - immediateValue) {
       const dynamicAddress =
-        MAX_VALUE -
-        Math.max(this.regs.asUnsigned[registerIndex], immediateValue) +
-        Math.min(this.regs.asUnsigned[registerIndex], immediateValue) -
-        1;
+        MAX_VALUE - Math.max(registerValue, immediateValue) + Math.min(registerValue, immediateValue) - 1;
       this.djump(dynamicAddress);
     } else {
-      const dynamicAddress = this.regs.asUnsigned[registerIndex] + immediateValue;
+      const dynamicAddress = registerValue + immediateValue;
       this.djump(dynamicAddress);
     }
   }

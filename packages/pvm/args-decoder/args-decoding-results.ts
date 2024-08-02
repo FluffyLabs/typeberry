@@ -36,19 +36,19 @@ export const createResults = () => {
 
   results[ArgumentType.NO_ARGUMENTS] = {
     type: ArgumentType.NO_ARGUMENTS,
-    noOfInstructionsToSkip: 1,
+    noOfBytesToSkip: 1,
   };
 
   results[ArgumentType.TWO_REGISTERS] = {
     type: ArgumentType.TWO_REGISTERS,
-    noOfInstructionsToSkip: 1,
+    noOfBytesToSkip: 1,
     firstRegisterIndex: 0,
     secondRegisterIndex: 0,
   };
 
   results[ArgumentType.THREE_REGISTERS] = {
     type: ArgumentType.THREE_REGISTERS,
-    noOfInstructionsToSkip: 1,
+    noOfBytesToSkip: 1,
     firstRegisterIndex: 0,
     secondRegisterIndex: 0,
     thirdRegisterIndex: 0,
@@ -56,7 +56,7 @@ export const createResults = () => {
 
   results[ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET] = {
     type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET,
-    noOfInstructionsToSkip: 1,
+    noOfBytesToSkip: 1,
     firstRegisterIndex: 0,
     immediateDecoder: new ImmediateDecoder(),
     offset: 0,
@@ -64,7 +64,7 @@ export const createResults = () => {
 
   results[ArgumentType.TWO_REGISTERS_ONE_OFFSET] = {
     type: ArgumentType.TWO_REGISTERS_ONE_OFFSET,
-    noOfInstructionsToSkip: 1,
+    noOfBytesToSkip: 1,
     firstRegisterIndex: 0,
     secondRegisterIndex: 0,
     offset: 0,
@@ -72,7 +72,7 @@ export const createResults = () => {
 
   results[ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE] = {
     type: ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE,
-    noOfInstructionsToSkip: 1,
+    noOfBytesToSkip: 1,
     firstRegisterIndex: 0,
     secondRegisterIndex: 0,
     immediateDecoder: new ImmediateDecoder(),
@@ -80,14 +80,14 @@ export const createResults = () => {
 
   results[ArgumentType.ONE_REGISTER_ONE_IMMEDIATE] = {
     type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE,
-    noOfInstructionsToSkip: 1,
+    noOfBytesToSkip: 1,
     firstRegisterIndex: 0,
     immediateDecoder: new ImmediateDecoder(),
   };
 
   results[ArgumentType.ONE_REGISTER_TWO_IMMEDIATES] = {
     type: ArgumentType.ONE_REGISTER_TWO_IMMEDIATES,
-    noOfInstructionsToSkip: 1,
+    noOfBytesToSkip: 1,
     registerIndex: 0,
     firstImmediateDecoder: new ImmediateDecoder(),
     secondImmediateDecoder: new ImmediateDecoder(),
@@ -95,20 +95,20 @@ export const createResults = () => {
 
   results[ArgumentType.ONE_OFFSET] = {
     type: ArgumentType.ONE_OFFSET,
-    noOfInstructionsToSkip: 1,
+    noOfBytesToSkip: 1,
     offset: 0,
   };
 
   results[ArgumentType.TWO_IMMEDIATES] = {
     type: ArgumentType.TWO_IMMEDIATES,
-    noOfInstructionsToSkip: 1,
+    noOfBytesToSkip: 1,
     firstImmediateDecoder: new ImmediateDecoder(),
     secondImmediateDecoder: new ImmediateDecoder(),
   };
 
   results[ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES] = {
     type: ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES,
-    noOfInstructionsToSkip: 1,
+    noOfBytesToSkip: 1,
     firstImmediateDecoder: new ImmediateDecoder(),
     secondImmediateDecoder: new ImmediateDecoder(),
     firstRegisterIndex: 0,

@@ -2,7 +2,7 @@ import { LittleEndianDecoder } from "@typeberry/jam-codec/little-endian-decoder"
 import { check } from "@typeberry/utils";
 
 export class JumpTable {
-  private indexes: Uint32Array;
+  private indices: Uint32Array;
   private littleEndianDecoder = new LittleEndianDecoder();
 
   constructor(jumpTableItemLength: number, bytes: Uint8Array) {
@@ -13,9 +13,9 @@ export class JumpTable {
 
     const length = jumpTableItemLength === 0 ? 0 : bytes.length / jumpTableItemLength;
 
-    this.indexes = new Uint32Array(length);
+    this.indices = new Uint32Array(length);
     for (let i = 0; i < bytes.length; i += jumpTableItemLength) {
-      this.indexes[i / jumpTableItemLength] = this.decodeItem(bytes.subarray(i, i + jumpTableItemLength));
+      this.indices[i / jumpTableItemLength] = this.decodeItem(bytes.subarray(i, i + jumpTableItemLength));
     }
   }
 
@@ -24,10 +24,10 @@ export class JumpTable {
   }
 
   hasIndex(index: number) {
-    return index < this.indexes.length && index >= 0;
+    return index < this.indices.length && index >= 0;
   }
 
   getDestination(index: number) {
-    return this.indexes[index];
+    return this.indices[index];
   }
 }

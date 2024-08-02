@@ -78,6 +78,6 @@ export async function runPvmTest(testContent: PvmTest) {
   assert.strictEqual(pvm.getGas(), testContent["expected-gas"]);
   assert.strictEqual(pvm.getPC(), testContent["expected-pc"]);
   assert.deepStrictEqual(pvm.getMemory(), testContent["expected-memory"]);
-  assert.deepStrictEqual(pvm.getRegisters(), testContent["expected-regs"]);
+  assert.deepStrictEqual(Array.from(pvm.getRegisters()), testContent["expected-regs"]);
   assert.strictEqual(pvm.getStatus(), testContent["expected-status"]);
 }
