@@ -92,7 +92,7 @@ export class StoreOps {
   private store(address: number, bytes: Uint8Array) {
     if (!this.memory.isWritable(address)) {
       this.instructionResult.status = Result.FAULT;
-      this.instructionResult.faultAddress = address;
+      this.instructionResult.exitParam = address;
       return;
     }
     this.memory.store(address, bytes);

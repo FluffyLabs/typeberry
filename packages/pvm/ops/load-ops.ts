@@ -18,7 +18,7 @@ export class LoadOps {
   private loadNumber(address: number, registerIndex: number, numberLength: 1 | 2 | 4) {
     if (!this.memory.isReadable(address)) {
       this.instructionResult.status = Result.FAULT;
-      this.instructionResult.faultAddress = address;
+      this.instructionResult.exitParam = address;
       return;
     }
     const bytes = this.memory.load(address, numberLength);
@@ -29,7 +29,7 @@ export class LoadOps {
   private loadSignedNumber(address: number, registerIndex: number, numberLength: 1 | 2) {
     if (!this.memory.isReadable(address)) {
       this.instructionResult.status = Result.FAULT;
-      this.instructionResult.faultAddress = address;
+      this.instructionResult.exitParam = address;
       return;
     }
     const bytes = this.memory.load(address, numberLength);
