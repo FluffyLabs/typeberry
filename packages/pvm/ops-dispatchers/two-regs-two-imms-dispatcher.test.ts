@@ -4,6 +4,7 @@ import type { TwoRegistersTwoImmediatesResult } from "../args-decoder/args-decod
 import { ArgumentType } from "../args-decoder/argument-type";
 import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
+import { BasicBlocks } from "../basic-blocks";
 import { Instruction } from "../instruction";
 import { InstructionResult } from "../instruction-result";
 import { Memory } from "../memory";
@@ -22,7 +23,8 @@ describe("TwoRegsTwoImmsDispatcher", () => {
     const instructionResult = new InstructionResult();
     const mask = new Mask(new Uint8Array([1]));
     const loadOps = new LoadOps(regs, memory, instructionResult);
-    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
+    const basicBlocks = new BasicBlocks(new Uint8Array(), mask);
+    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const loadImmediateMock = mock.fn();
     const jumpIndMock = mock.fn();
 
@@ -71,7 +73,8 @@ describe("TwoRegsTwoImmsDispatcher", () => {
     const loadOps = new LoadOps(regs, memory, instructionResult);
     const jumpTable = new JumpTable(1, new Uint8Array([1]));
     const mask = new Mask(new Uint8Array([1]));
-    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
+    const basicBlocks = new BasicBlocks(new Uint8Array(), mask);
+    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const mockFn = mock.fn();
 
     function mockAllMethods(obj: object) {

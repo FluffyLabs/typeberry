@@ -1,5 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { BasicBlocks } from "../basic-blocks";
+import { Instruction } from "../instruction";
 import { InstructionResult } from "../instruction-result";
 import { JumpTable } from "../program-decoder/jump-table";
 import { Mask } from "../program-decoder/mask";
@@ -13,8 +15,12 @@ describe("DynamicJumpOps", () => {
     const regs = new Registers();
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
-    const mask = new Mask(new Uint8Array([0b11111001]));
-    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
+    const mask = new Mask(new Uint8Array([0b1100_1111]));
+    const basicBlocks = new BasicBlocks(
+      new Uint8Array([Instruction.TRAP, Instruction.TRAP, Instruction.TRAP, Instruction.ADD, 5, 6]),
+      mask,
+    );
+    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
     regs.asUnsigned[registerIndex] = 3;
 
@@ -28,8 +34,12 @@ describe("DynamicJumpOps", () => {
     const regs = new Registers();
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
-    const mask = new Mask(new Uint8Array([0b11111001]));
-    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
+    const mask = new Mask(new Uint8Array([0b1100_1111]));
+    const basicBlocks = new BasicBlocks(
+      new Uint8Array([Instruction.TRAP, Instruction.TRAP, Instruction.TRAP, Instruction.ADD, 5, 6]),
+      mask,
+    );
+    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
     regs.asUnsigned[registerIndex] = MAX_VALUE;
 
@@ -44,7 +54,8 @@ describe("DynamicJumpOps", () => {
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
     const mask = new Mask(new Uint8Array([0b11111001]));
-    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
+    const basicBlocks = new BasicBlocks(new Uint8Array(), mask);
+    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
     regs.asUnsigned[registerIndex] = 0xff_ff_00_00;
 
@@ -58,7 +69,8 @@ describe("DynamicJumpOps", () => {
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
     const mask = new Mask(new Uint8Array([0b11111001]));
-    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
+    const basicBlocks = new BasicBlocks(new Uint8Array(), mask);
+    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
     regs.asUnsigned[registerIndex] = 0;
 
@@ -72,7 +84,8 @@ describe("DynamicJumpOps", () => {
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
     const mask = new Mask(new Uint8Array([0b11111001]));
-    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
+    const basicBlocks = new BasicBlocks(new Uint8Array(), mask);
+    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
     regs.asUnsigned[registerIndex] = 11;
 
@@ -86,7 +99,8 @@ describe("DynamicJumpOps", () => {
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
     const mask = new Mask(new Uint8Array([0b11111001]));
-    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
+    const basicBlocks = new BasicBlocks(new Uint8Array(), mask);
+    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
     regs.asUnsigned[registerIndex] = 4;
 
@@ -100,7 +114,23 @@ describe("DynamicJumpOps", () => {
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
     const mask = new Mask(new Uint8Array([0b11110001]));
-    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
+    const basicBlocks = new BasicBlocks(new Uint8Array(), mask);
+    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
+    const registerIndex = 0;
+    regs.asUnsigned[registerIndex] = 3;
+
+    dynamicJumpOps.jumpInd(5, registerIndex);
+
+    assert.strictEqual(instructionResult.status, Result.PANIC);
+  });
+
+  it("should change status to PANIC because destination is not an instruction that is the beginning of basic block", () => {
+    const regs = new Registers();
+    const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
+    const instructionResult = new InstructionResult();
+    const mask = new Mask(new Uint8Array([0b1001_0001]));
+    const basicBlocks = new BasicBlocks(new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]), mask);
+    const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
     regs.asUnsigned[registerIndex] = 3;
 

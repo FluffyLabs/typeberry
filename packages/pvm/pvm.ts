@@ -1,6 +1,7 @@
 import { ArgsDecoder } from "./args-decoder/args-decoder";
 import { ArgumentType } from "./args-decoder/argument-type";
 import { assemblify } from "./assemblify";
+import { BasicBlocks } from "./basic-blocks";
 import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
 import { InstructionResult } from "./instruction-result";
@@ -100,17 +101,18 @@ export class Pvm {
     this.gas = initialState.gas ?? 0;
 
     this.argsDecoder = new ArgsDecoder(this.code, this.mask);
+    const basicBlocks = new BasicBlocks(this.code, this.mask);
 
     const mathOps = new MathOps(this.registers);
     const shiftOps = new ShiftOps(this.registers);
     const bitOps = new BitOps(this.registers);
     const booleanOps = new BooleanOps(this.registers);
     const moveOps = new MoveOps(this.registers);
-    const branchOps = new BranchOps(this.registers, this.instructionResult);
+    const branchOps = new BranchOps(this.registers, this.instructionResult, basicBlocks);
     const loadOps = new LoadOps(this.registers, this.memory, this.instructionResult);
     const storeOps = new StoreOps(this.registers, this.memory, this.instructionResult);
     const noArgsOps = new NoArgsOps(this.instructionResult);
-    const dynamicJumpOps = new DynamicJumpOps(this.registers, jumpTable, this.instructionResult, this.mask);
+    const dynamicJumpOps = new DynamicJumpOps(this.registers, jumpTable, this.instructionResult, basicBlocks);
 
     this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
     this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(

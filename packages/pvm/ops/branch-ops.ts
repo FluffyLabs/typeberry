@@ -1,3 +1,4 @@
+import type { BasicBlocks } from "../basic-blocks";
 import type { InstructionResult } from "../instruction-result";
 import type { Registers } from "../registers";
 
@@ -5,13 +6,18 @@ export class BranchOps {
   constructor(
     private regs: Registers,
     private instructionResult: InstructionResult,
+    private basicBlocks: BasicBlocks,
   ) {}
 
   private branch(offset: number, condition: boolean) {
     if (!condition) {
       return;
     }
+
+    // if (this.basicBlocks.isBeginningOfBasicBlock()) {
     // TODO [MaSi]: incorrect offset should be handled here
+    // }
+
     this.instructionResult.pcOffset = offset;
   }
 

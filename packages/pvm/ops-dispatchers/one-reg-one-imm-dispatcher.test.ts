@@ -4,6 +4,7 @@ import type { OneRegisterOneImmediateResult } from "../args-decoder/args-decoder
 import { ArgumentType } from "../args-decoder/argument-type";
 import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
+import { BasicBlocks } from "../basic-blocks";
 import { Instruction } from "../instruction";
 import { InstructionResult } from "../instruction-result";
 import { Memory } from "../memory";
@@ -22,7 +23,8 @@ describe("OneRegisterOneImmediateDispatcher", () => {
   const instructionResult = new InstructionResult();
   const storeOps = new StoreOps(regs, memory, instructionResult);
   const loadOps = new LoadOps(regs, memory, instructionResult);
-  const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
+  const basicBlocks = new BasicBlocks(new Uint8Array(), mask);
+  const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
   const mockFn = mock.fn();
 
   function mockAllMethods(obj: object) {
