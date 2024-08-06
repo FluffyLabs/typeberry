@@ -21,6 +21,22 @@ describe("ArgsDecoder", () => {
     assert.deepStrictEqual(result, expectedResult);
   });
 
+  it("return correct result for instruction with 1 immediate", () => {
+    const code = new Uint8Array([Instruction.ECALLI, 0xff]);
+    const mask = new Mask(new Uint8Array([0b1111_1111]));
+    const argsDecoder = new ArgsDecoder(code, mask);
+    const expectedImmediateDecoder = new ImmediateDecoder();
+    expectedImmediateDecoder.setBytes(new Uint8Array([0xff]));
+    const expectedResult = {
+      noOfBytesToSkip: code.length,
+      type: ArgumentType.ONE_IMMEDIATE,
+      immediateDecoder: expectedImmediateDecoder,
+    };
+    const result = argsDecoder.getArgs(0);
+
+    assert.deepStrictEqual(result, expectedResult);
+  });
+
   it("return correct result for instruction with 3 regs", () => {
     const code = new Uint8Array([Instruction.ADD, 0x12, 0x03]);
     const mask = new Mask(new Uint8Array([0b1111_1001]));

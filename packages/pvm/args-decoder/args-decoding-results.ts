@@ -1,5 +1,6 @@
 import type {
   NoArgumentsResult,
+  OneImmediateResult,
   OneOffsetResult,
   OneRegisterOneImmediateOneOffsetResult,
   OneRegisterOneImmediateResult,
@@ -18,7 +19,7 @@ const ARGUMENT_TYPE_LENGTH = Object.keys(ArgumentType).length / 2;
 
 type Results = [
   NoArgumentsResult,
-  undefined, // 1 imm
+  OneImmediateResult,
   TwoImmediatesResult,
   OneOffsetResult,
   OneRegisterOneImmediateResult,
@@ -37,6 +38,12 @@ export const createResults = () => {
   results[ArgumentType.NO_ARGUMENTS] = {
     type: ArgumentType.NO_ARGUMENTS,
     noOfBytesToSkip: 1,
+  };
+
+  results[ArgumentType.ONE_IMMEDIATE] = {
+    type: ArgumentType.ONE_IMMEDIATE,
+    noOfBytesToSkip: 1,
+    immediateDecoder: new ImmediateDecoder(),
   };
 
   results[ArgumentType.TWO_REGISTERS] = {

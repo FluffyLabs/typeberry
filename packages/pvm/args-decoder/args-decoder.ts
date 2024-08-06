@@ -11,6 +11,12 @@ export type NoArgumentsResult = {
   noOfBytesToSkip: number;
 };
 
+export type OneImmediateResult = {
+  type: ArgumentType.ONE_IMMEDIATE;
+  noOfBytesToSkip: number;
+  immediateDecoder: ImmediateDecoder;
+};
+
 export type ThreeRegistersResult = {
   type: ArgumentType.THREE_REGISTERS;
   noOfBytesToSkip: number;
@@ -89,6 +95,7 @@ export type OneOffsetResult = {
 
 type Result =
   | NoArgumentsResult
+  | OneImmediateResult
   | TwoRegistersResult
   | ThreeRegistersResult
   | TwoRegistersOneImmediateResult
@@ -118,6 +125,14 @@ export class ArgsDecoder {
     switch (argsType) {
       case ArgumentType.NO_ARGUMENTS:
         return this.results[argsType];
+
+      case ArgumentType.ONE_IMMEDIATE: {
+        const result = this.results[argsType];
+        const immediateLength = this.mask.getNoOfBytesToNextInstruction(pc + 1);
+        result.immediateDecoder.setBytes(this.code.subarray(pc + 1, pc + 1 + immediateLength));
+        result.noOfBytesToSkip = 1 + immediateLength;
+        return result;
+      }
 
       case ArgumentType.THREE_REGISTERS: {
         const result = this.results[argsType];
