@@ -4,7 +4,7 @@ import { describe, it } from "node:test";
 import { NibblesDecoder } from "./nibbles-decoder";
 
 describe("NibblesDecoder", () => {
-  it("decode high nibble from 0x79", () => {
+  it("should decode high nibble from 0x79", () => {
     const nibblesDecoder = new NibblesDecoder();
 
     nibblesDecoder.setByte(0x79);
@@ -14,7 +14,7 @@ describe("NibblesDecoder", () => {
     assert.strictEqual(registerValue, 7);
   });
 
-  it("decode low nibble from 0x79", () => {
+  it("should decode low nibble from 0x79", () => {
     const nibblesDecoder = new NibblesDecoder();
 
     nibblesDecoder.setByte(0x79);
@@ -44,7 +44,7 @@ describe("NibblesDecoder", () => {
     assert.strictEqual(registerValue, 14);
   });
 
-  it("decode high register index from 0x79", () => {
+  it("should decode high register index from 0x79", () => {
     const nibblesDecoder = new NibblesDecoder();
 
     nibblesDecoder.setByte(0x79);
@@ -54,7 +54,7 @@ describe("NibblesDecoder", () => {
     assert.strictEqual(registerValue, 7);
   });
 
-  it("decode low register index from 0x79", () => {
+  it("should decode low register index from 0x79", () => {
     const nibblesDecoder = new NibblesDecoder();
 
     nibblesDecoder.setByte(0x79);
@@ -94,7 +94,7 @@ describe("NibblesDecoder", () => {
     assert.strictEqual(registerValue, 2);
   });
 
-  it("decode low length from 0x23", () => {
+  it("should decode low length from 0x23", () => {
     const nibblesDecoder = new NibblesDecoder();
 
     nibblesDecoder.setByte(0x23);
