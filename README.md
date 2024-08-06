@@ -1,12 +1,6 @@
 # typeberry 🫐
 
-<p>
-    [![Node.js CI](https://github.com/FluffyLabs/typeberry/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/node.js.yml)
-
-    [![Publish commits](https://github.com/FluffyLabs/typeberry/actions/workflows/blockchain-git-log.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/blockchain-git-log.yml)
-
-    [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
-</p>
+[![Node.js CI](https://github.com/FluffyLabs/typeberry/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/node.js.yml) [![Publish commits](https://github.com/FluffyLabs/typeberry/actions/workflows/blockchain-git-log.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/blockchain-git-log.yml) [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 
 Typeberry is a TypeScript implementation of [JAM protocol](https://graypaper.com/).
 
