@@ -11,7 +11,7 @@ import { DynamicJumpOps } from "./dynamic-jump-ops";
 import { MAX_VALUE } from "./math-consts";
 
 describe("DynamicJumpOps", () => {
-  it("should set correct pcOffset", () => {
+  it("should set correct nextPc", () => {
     const regs = new Registers();
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
@@ -26,11 +26,11 @@ describe("DynamicJumpOps", () => {
 
     dynamicJumpOps.jumpInd(5, registerIndex);
 
-    assert.strictEqual(instructionResult.pcOffset, 3);
+    assert.strictEqual(instructionResult.nextPc, 3);
     assert.strictEqual(instructionResult.status, null);
   });
 
-  it("should set correct pcOffset (address overflow)", () => {
+  it("should set correct nextPc (address overflow)", () => {
     const regs = new Registers();
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
@@ -45,7 +45,7 @@ describe("DynamicJumpOps", () => {
 
     dynamicJumpOps.jumpInd(9, registerIndex);
 
-    assert.strictEqual(instructionResult.pcOffset, 3);
+    assert.strictEqual(instructionResult.nextPc, 3);
     assert.strictEqual(instructionResult.status, null);
   });
 

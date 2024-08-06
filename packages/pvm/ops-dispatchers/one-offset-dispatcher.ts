@@ -8,7 +8,7 @@ export class OneOffsetDispatcher {
   dispatch(instruction: Instruction, args: OneOffsetResult) {
     switch (instruction) {
       case Instruction.JUMP:
-        this.branchOps.jump(args.offset);
+        this.branchOps.jump(args.nextPc);
         break;
     }
   }

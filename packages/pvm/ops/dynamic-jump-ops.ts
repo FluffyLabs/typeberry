@@ -35,7 +35,7 @@ export class DynamicJumpOps {
       return;
     }
 
-    this.instructionResult.pcOffset = destination;
+    this.instructionResult.nextPc = destination;
   }
 
   jumpInd(immediateValue: number, registerIndex: number) {
