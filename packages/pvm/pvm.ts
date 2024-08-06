@@ -10,6 +10,7 @@ import {
   BooleanOps,
   BranchOps,
   DynamicJumpOps,
+  HostCallOps,
   LoadOps,
   MathOps,
   MoveOps,
@@ -19,6 +20,7 @@ import {
 } from "./ops";
 import {
   NoArgsDispatcher,
+  OneImmDispatcher,
   OneOffsetDispatcher,
   OneRegTwoImmsDispatcher,
   OneRegisterOneImmediateDispatcher,
@@ -82,6 +84,7 @@ export class Pvm {
   private oneRegTwoImmsDispatcher: OneRegTwoImmsDispatcher;
   private noArgsDispatcher: NoArgsDispatcher;
   private twoRegsTwoImmsDispatcher: TwoRegsTwoImmsDispatcher;
+  private oneImmDispatcher: OneImmDispatcher;
   private status = Status.OK;
 
   constructor(rawProgram: Uint8Array, initialState: InitialState = {}) {
@@ -111,6 +114,7 @@ export class Pvm {
     const storeOps = new StoreOps(this.registers, this.memory, this.instructionResult);
     const noArgsOps = new NoArgsOps(this.instructionResult);
     const dynamicJumpOps = new DynamicJumpOps(this.registers, jumpTable, this.instructionResult, this.mask);
+    const hostCallOps = new HostCallOps(this.instructionResult);
 
     this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
     this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(
@@ -131,6 +135,7 @@ export class Pvm {
     this.oneRegTwoImmsDispatcher = new OneRegTwoImmsDispatcher(storeOps);
     this.noArgsDispatcher = new NoArgsDispatcher(noArgsOps);
     this.twoRegsTwoImmsDispatcher = new TwoRegsTwoImmsDispatcher(loadOps, dynamicJumpOps);
+    this.oneImmDispatcher = new OneImmDispatcher(hostCallOps);
   }
 
   printProgram() {
@@ -156,6 +161,9 @@ export class Pvm {
     switch (args.type) {
       case ArgumentType.NO_ARGUMENTS:
         this.noArgsDispatcher.dispatch(currentInstruction);
+        break;
+      case ArgumentType.ONE_IMMEDIATE:
+        this.oneImmDispatcher.dispatch(currentInstruction, args);
         break;
       case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET:
         this.oneRegisterOneImmediateOneOffsetDispatcher.dispatch(currentInstruction, args);
