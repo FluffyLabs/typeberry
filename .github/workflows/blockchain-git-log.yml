@@ -1,6 +1,6 @@
 # This workflow will upload the hash of every commit merged to the main branch to a public blockchain
 
-name: Upload commit hashes to a public blockchain
+name: Publish Commits
 
 on:
   push:
