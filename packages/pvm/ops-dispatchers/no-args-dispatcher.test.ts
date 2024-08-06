@@ -1,22 +1,15 @@
 import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
-import type { OneRegisterTwoImmediatesResult } from "../args-decoder/args-decoder";
 import { ArgumentType } from "../args-decoder/argument-type";
-import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
 import { Instruction } from "../instruction";
 import { InstructionResult } from "../instruction-result";
-import { Memory } from "../memory";
-import { StoreOps } from "../ops";
-import { PageMap } from "../page-map";
-import { Registers } from "../registers";
-import { OneRegTwoImmsDispatcher } from "./one-reg-two-imms-dispatcher";
+import { NoArgsOps } from "../ops";
+import { NoArgsDispatcher } from "./no-args-dispatcher";
 
-describe("OneRegTwoImmsDispatcher", () => {
-  const regs = new Registers();
-  const memory = new Memory(new PageMap([]), []);
+describe("NoArgsDispatcher", () => {
   const instructionResult = new InstructionResult();
-  const storeOps = new StoreOps(regs, memory, instructionResult);
+  const noArgsOps = new NoArgsOps(instructionResult);
 
   const mockFn = mock.fn();
 
@@ -29,7 +22,7 @@ describe("OneRegTwoImmsDispatcher", () => {
   }
 
   before(() => {
-    mockAllMethods(storeOps);
+    mockAllMethods(noArgsOps);
   });
 
   after(() => {
@@ -40,20 +33,15 @@ describe("OneRegTwoImmsDispatcher", () => {
     mockFn.mock.resetCalls();
   });
 
-  const argsMock = {
-    firstImmediateDecoder: new ImmediateDecoder(),
-    secondImmediateDecoder: new ImmediateDecoder(),
-  } as OneRegisterTwoImmediatesResult;
-
   const relevantInstructions = Object.entries(Instruction)
     .filter((entry): entry is [string, number] => typeof entry[0] === "string" && typeof entry[1] === "number")
-    .filter((entry) => instructionArgumentTypeMap[entry[1]] === ArgumentType.ONE_REGISTER_TWO_IMMEDIATES);
+    .filter((entry) => instructionArgumentTypeMap[entry[1]] === ArgumentType.NO_ARGUMENTS);
 
   for (const [name, instruction] of relevantInstructions) {
     it(`checks if instruction ${name} = ${instruction} is handled by OneRegTwoImmsDispatcher`, () => {
-      const dispatcher = new OneRegTwoImmsDispatcher(storeOps);
+      const dispatcher = new NoArgsDispatcher(noArgsOps);
 
-      dispatcher.dispatch(instruction, argsMock);
+      dispatcher.dispatch(instruction);
 
       assert.strictEqual(mockFn.mock.calls.length, 1);
     });
@@ -61,13 +49,13 @@ describe("OneRegTwoImmsDispatcher", () => {
 
   const otherInstructions = Object.entries(Instruction)
     .filter((entry): entry is [string, number] => typeof entry[0] === "string" && typeof entry[1] === "number")
-    .filter((entry) => instructionArgumentTypeMap[entry[1]] !== ArgumentType.ONE_REGISTER_TWO_IMMEDIATES);
+    .filter((entry) => instructionArgumentTypeMap[entry[1]] !== ArgumentType.NO_ARGUMENTS);
 
   for (const [name, instruction] of otherInstructions) {
     it(`checks if instruction ${name} = ${instruction} is not handled by OneRegTwoImmsDispatcher`, () => {
-      const dispatcher = new OneRegTwoImmsDispatcher(storeOps);
+      const dispatcher = new NoArgsDispatcher(noArgsOps);
 
-      dispatcher.dispatch(instruction, argsMock);
+      dispatcher.dispatch(instruction);
 
       assert.strictEqual(mockFn.mock.calls.length, 0);
     });

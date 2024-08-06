@@ -5,6 +5,7 @@ import { ArgumentType } from "../args-decoder/argument-type";
 import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
 import { Instruction } from "../instruction";
+import { InstructionResult } from "../instruction-result";
 import { Memory } from "../memory";
 import { StoreOps } from "../ops";
 import { PageMap } from "../page-map";
@@ -14,7 +15,8 @@ import { TwoImmsDispatcher } from "./two-imms-dispatcher";
 describe("TwoImmsDispatcher", () => {
   const regs = new Registers();
   const memory = new Memory(new PageMap([]), []);
-  const storeOps = new StoreOps(regs, memory);
+  const instructionResult = new InstructionResult();
+  const storeOps = new StoreOps(regs, memory, instructionResult);
 
   const mockFn = mock.fn();
 

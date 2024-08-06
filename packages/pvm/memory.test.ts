@@ -51,16 +51,6 @@ describe("Memory", () => {
 
       assert.deepStrictEqual(memory.getMemoryDump(), expectedMemory);
     });
-
-    it("should not store bytes if the page is not writable", () => {
-      const pageMap = new PageMap([{ "is-writable": false, address: 0, length: 4096 }]);
-      const memory = new Memory(pageMap, []);
-      const bytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
-
-      memory.store(0, bytes);
-
-      assert.deepStrictEqual(memory.getMemoryDump(), []);
-    });
   });
 
   describe("Memory.load", () => {
@@ -106,15 +96,74 @@ describe("Memory", () => {
 
       assert.deepStrictEqual(bytes, expectedBytes);
     });
+  });
 
-    it("should return null when memory is not readable", () => {
+  describe("Memory.isReadable", () => {
+    it("should return false when memory is not acissible", () => {
       const pageMap = new PageMap([]);
       const memory = new Memory(pageMap, []);
-      const expectedBytes = null;
 
-      const bytes = memory.load(1, 4);
+      const result = memory.isReadable(1);
 
-      assert.deepStrictEqual(bytes, expectedBytes);
+      assert.deepStrictEqual(result, false);
     });
+
+    it("should return true when memory is readable", () => {
+      const pageMap = new PageMap([{ "is-writable": false, address: 0, length: 4096 }]);
+      const memory = new Memory(pageMap, []);
+
+      const result = memory.isReadable(1);
+
+      assert.deepStrictEqual(result, true);
+    });
+
+    it("should return true when memory is writable", () => {
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const memory = new Memory(pageMap, []);
+
+      const result = memory.isReadable(1);
+
+      assert.deepStrictEqual(result, true);
+    });
+  });
+
+  describe("Memory.isWritable", () => {
+    it("should return false when memory is not acissible", () => {
+      const pageMap = new PageMap([]);
+      const memory = new Memory(pageMap, []);
+
+      const result = memory.isWritable(1);
+
+      assert.deepStrictEqual(result, false);
+    });
+
+    it("should return false when memory is writable", () => {
+      const pageMap = new PageMap([{ "is-writable": false, address: 0, length: 4096 }]);
+      const memory = new Memory(pageMap, []);
+
+      const result = memory.isWritable(1);
+
+      assert.deepStrictEqual(result, false);
+    });
+
+    it("should return true when memory is writable", () => {
+      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+      const memory = new Memory(pageMap, []);
+
+      const result = memory.isWritable(1);
+
+      assert.deepStrictEqual(result, true);
+    });
+  });
+
+  describe("Memory.getPageDump", () => {
+    const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
+    const initialMemory = [{ address: 1, contents: new Uint8Array([0xff, 0xee, 0xdd, 0xcc]) }];
+    const memory = new Memory(pageMap, initialMemory);
+    const expectedBytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
+
+    const pageDump = memory.getPageDump(0);
+
+    assert.deepStrictEqual(pageDump, expectedBytes);
   });
 });

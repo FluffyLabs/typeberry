@@ -1,23 +1,28 @@
 import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
-import type { OneRegisterTwoImmediatesResult } from "../args-decoder/args-decoder";
+import type { OneRegisterOneImmediateResult } from "../args-decoder/args-decoder";
 import { ArgumentType } from "../args-decoder/argument-type";
 import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
 import { Instruction } from "../instruction";
 import { InstructionResult } from "../instruction-result";
 import { Memory } from "../memory";
-import { StoreOps } from "../ops";
+import { DynamicJumpOps, LoadOps, StoreOps } from "../ops";
 import { PageMap } from "../page-map";
+import { JumpTable } from "../program-decoder/jump-table";
+import { Mask } from "../program-decoder/mask";
 import { Registers } from "../registers";
-import { OneRegTwoImmsDispatcher } from "./one-reg-two-imms-dispatcher";
+import { OneRegisterOneImmediateDispatcher } from "./one-reg-one-imm-dispatcher";
 
-describe("OneRegTwoImmsDispatcher", () => {
+describe("OneRegisterOneImmediateDispatcher", () => {
   const regs = new Registers();
   const memory = new Memory(new PageMap([]), []);
+  const jumpTable = new JumpTable(1, new Uint8Array([1]));
+  const mask = new Mask(new Uint8Array([1]));
   const instructionResult = new InstructionResult();
   const storeOps = new StoreOps(regs, memory, instructionResult);
-
+  const loadOps = new LoadOps(regs, memory, instructionResult);
+  const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, mask);
   const mockFn = mock.fn();
 
   function mockAllMethods(obj: object) {
@@ -30,6 +35,8 @@ describe("OneRegTwoImmsDispatcher", () => {
 
   before(() => {
     mockAllMethods(storeOps);
+    mockAllMethods(loadOps);
+    mockAllMethods(dynamicJumpOps);
   });
 
   after(() => {
@@ -41,17 +48,16 @@ describe("OneRegTwoImmsDispatcher", () => {
   });
 
   const argsMock = {
-    firstImmediateDecoder: new ImmediateDecoder(),
-    secondImmediateDecoder: new ImmediateDecoder(),
-  } as OneRegisterTwoImmediatesResult;
+    immediateDecoder: new ImmediateDecoder(),
+  } as OneRegisterOneImmediateResult;
 
   const relevantInstructions = Object.entries(Instruction)
     .filter((entry): entry is [string, number] => typeof entry[0] === "string" && typeof entry[1] === "number")
-    .filter((entry) => instructionArgumentTypeMap[entry[1]] === ArgumentType.ONE_REGISTER_TWO_IMMEDIATES);
+    .filter((entry) => instructionArgumentTypeMap[entry[1]] === ArgumentType.ONE_REGISTER_ONE_IMMEDIATE);
 
   for (const [name, instruction] of relevantInstructions) {
-    it(`checks if instruction ${name} = ${instruction} is handled by OneRegTwoImmsDispatcher`, () => {
-      const dispatcher = new OneRegTwoImmsDispatcher(storeOps);
+    it(`checks if instruction ${name} = ${instruction} is handled by TwoImmsDispatcher`, () => {
+      const dispatcher = new OneRegisterOneImmediateDispatcher(loadOps, storeOps, dynamicJumpOps);
 
       dispatcher.dispatch(instruction, argsMock);
 
@@ -61,11 +67,11 @@ describe("OneRegTwoImmsDispatcher", () => {
 
   const otherInstructions = Object.entries(Instruction)
     .filter((entry): entry is [string, number] => typeof entry[0] === "string" && typeof entry[1] === "number")
-    .filter((entry) => instructionArgumentTypeMap[entry[1]] !== ArgumentType.ONE_REGISTER_TWO_IMMEDIATES);
+    .filter((entry) => instructionArgumentTypeMap[entry[1]] !== ArgumentType.ONE_REGISTER_ONE_IMMEDIATE);
 
   for (const [name, instruction] of otherInstructions) {
-    it(`checks if instruction ${name} = ${instruction} is not handled by OneRegTwoImmsDispatcher`, () => {
-      const dispatcher = new OneRegTwoImmsDispatcher(storeOps);
+    it(`checks if instruction ${name} = ${instruction} is not handled by TwoImmsDispatcher`, () => {
+      const dispatcher = new OneRegisterOneImmediateDispatcher(loadOps, storeOps, dynamicJumpOps);
 
       dispatcher.dispatch(instruction, argsMock);
 

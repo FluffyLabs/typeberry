@@ -1,6 +1,6 @@
 import type { TwoRegistersOneImmediateResult } from "../args-decoder/args-decoder";
 import { Instruction } from "../instruction";
-import type { BitOps, BooleanOps, MathOps, MoveOps, ShiftOps } from "../ops";
+import type { BitOps, BooleanOps, LoadOps, MathOps, MoveOps, ShiftOps, StoreOps } from "../ops";
 
 export class TwoRegsOneImmDispatcher {
   constructor(
@@ -9,6 +9,8 @@ export class TwoRegsOneImmDispatcher {
     private bitOps: BitOps,
     private booleanOps: BooleanOps,
     private moveOps: MoveOps,
+    private storeOps: StoreOps,
+    private loadOps: LoadOps,
   ) {}
 
   dispatch(instruction: Instruction, args: TwoRegistersOneImmediateResult) {
@@ -159,6 +161,38 @@ export class TwoRegsOneImmDispatcher {
           args.immediateDecoder.getUnsigned(),
           args.secondRegisterIndex,
         );
+        break;
+
+      case Instruction.STORE_IND_U8:
+        this.storeOps.storeIndU8(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
+        break;
+
+      case Instruction.STORE_IND_U16:
+        this.storeOps.storeIndU16(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
+        break;
+
+      case Instruction.STORE_IND_U32:
+        this.storeOps.storeIndU32(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
+        break;
+
+      case Instruction.LOAD_IND_U8:
+        this.loadOps.loadIndU8(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
+        break;
+
+      case Instruction.LOAD_IND_U16:
+        this.loadOps.loadIndU16(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
+        break;
+
+      case Instruction.LOAD_IND_U32:
+        this.loadOps.loadIndU32(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
+        break;
+
+      case Instruction.LOAD_IND_I8:
+        this.loadOps.loadIndI8(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
+        break;
+
+      case Instruction.LOAD_IND_I16:
+        this.loadOps.loadIndI16(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
         break;
     }
   }
