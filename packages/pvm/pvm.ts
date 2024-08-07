@@ -148,6 +148,13 @@ export class Pvm {
   }
 
   nextStep() {
+    /**
+     * We have two options to handle an invalid instruction:
+     * - change status to panic and quit program immediately,
+     * - treat the invalid instruction as a regular trap.
+     * The difference is that in the second case we don't need any additional condition and gas will be subtracted automagically so this option is implemented
+     * Reference: https://graypaper.fluffylabs.dev/#WyI0ODY2YjU5YmMwIiwiMjIiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEwIGgyIHkxMWQwIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeDEwIGhiIHkxMWQxIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+Il1d
+     */
     const currentInstruction = this.code[this.pc] ?? Instruction.TRAP;
     this.gas -= instructionGasMap[currentInstruction];
 
