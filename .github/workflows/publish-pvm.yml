@@ -3,7 +3,8 @@ name: Publish obfuscated PVM
 on:
   push:
     branches:
-      - publish-pvm
+      - main
+    paths: ['packages/pvm/**']
 jobs:
   publish-pvm:
     runs-on: ubuntu-latest
