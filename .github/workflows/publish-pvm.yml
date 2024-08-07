@@ -42,3 +42,6 @@ jobs:
     - name: Print package.json
       working-directory: ./dist/pvm-obfuscated
       run: cat package.json
+    - name: Publish package
+      working-directory: ./dist/pvm-obfuscated
+      run: npm publish --dry-run
