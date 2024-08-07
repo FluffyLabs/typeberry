@@ -274,6 +274,10 @@ export class ArgsDecoder {
       }
 
       default:
+        /**
+         * argsType wasn't matched so the instruction is invalid.
+         * Invalid instruction is treated as trap, hence fallback to ArgumentType.NO_ARGUMENTS
+         */
         return this.results[ArgumentType.NO_ARGUMENTS];
     }
   }
