@@ -25,9 +25,8 @@ jobs:
       run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
     - name: Build PVM
       run: npm run obfuscate-pvm
-    - name: Change dir to dist/pvm-obfuscated
-      run: cd dist/pvm-obfuscated
     - name: Generate package.json
+      working-directory: ./dist/pvm-obfuscated
       run: |
         echo '{
           "name": "@typeberry/pvm",
@@ -38,6 +37,8 @@ jobs:
           }
         }' > package.json
     - name: List dir
+      working-directory: ./dist/pvm-obfuscated
       run: ls
     - name: Print package.json
+      working-directory: ./dist/pvm-obfuscated
       run: cat package.json
