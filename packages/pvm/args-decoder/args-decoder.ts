@@ -274,7 +274,7 @@ export class ArgsDecoder {
       }
 
       default:
-        throw new Error(`instruction ${instruction} was not matched!`);
+        return this.results[ArgumentType.NO_ARGUMENTS];
     }
   }
 }
