@@ -35,9 +35,8 @@ jobs:
           "author": "Fluffy Labs",
           "license": "MPL-2.0"
         }' > package.json
-    - name: Print package.json
-      working-directory: ./dist/pvm-obfuscated
-      run: cat package.json
     - name: Publish package
       working-directory: ./dist/pvm-obfuscated
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       run: npm publish --dry-run
