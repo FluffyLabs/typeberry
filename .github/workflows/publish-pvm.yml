@@ -31,10 +31,7 @@ jobs:
         echo '{
           "name": "@typeberry/pvm",
           "version": "0.0.1-${{ env.COMMIT_HASH }}",
-          "main": "pvm.js",
-          "scripts": {
-            "test": "echo \\"Error: no test specified\\" && exit 1"
-          }
+          "main": "pvm.js"
         }' > package.json
     - name: List dir
       working-directory: ./dist/pvm-obfuscated
