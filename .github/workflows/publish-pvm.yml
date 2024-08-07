@@ -1,0 +1,42 @@
+name: Publish obfuscated PVM
+
+on:
+  push:
+    branches:
+      - publish-pvm
+
+jobs:
+  publish-pvm:
+    strategy:
+      matrix:
+        node-version: [22.x]
+    
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    - name: Install dependencies
+      run: npm ci
+    - name: Get commit hash
+      run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+    - name: Build PVM
+      run: npm run obfuscate-pvm
+    - name: Change dir to dist/pvm-obfuscated
+      run: cd dist/pvm-obfuscated
+    - name: Generate package.json
+      run: |
+        echo '{
+          "name": "@typeberry/pvm",
+          "version": "0.0.1-${{ env.COMMIT_HASH }}",
+          "main": "pvm.js",
+          "scripts": {
+            "test": "echo \\"Error: no test specified\\" && exit 1"
+          }
+        }' > package.json
+    - name: List dir
+      run: ls
+    - name: Print package.json
+      run: cat package.json
