@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 
 import { LittleEndianDecoder } from "./little-endian-decoder";
 
-describe("LittleEndianDecoder", async (t) => {
+describe("LittleEndianDecoder", () => {
   describe("LittleEndianDecoder.decodeU64", () => {
     it("Empty bytes array", () => {
       const decoder = new LittleEndianDecoder();
