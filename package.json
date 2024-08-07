@@ -30,9 +30,9 @@
     "test": "node --test --require ts-node/register $(find . -type d -name node_modules -prune -type f -o -name '*.test.ts' | tr '\\n' ' ')",
     "ts-node": "ts-node",
     "blockchain-git-log": "ts-node ./tools/commit-hash/index.ts",
-    "build-pvm": "tsc --lib es2021,dom --module esnext --target es2021 --strict --esModuleInterop --skipLibCheck --forceConsistentCasingInFileNames --moduleResolution node --outDir pvm-dist ./packages/pvm/pvm.ts",
+    "build-pvm": "tsc --lib es2021,dom --module esnext --target es2021 --strict --esModuleInterop --skipLibCheck --forceConsistentCasingInFileNames --moduleResolution node --outDir ./dist/pvm ./packages/pvm/pvm.ts",
     "preobfuscate-pvm": "npm run build-pvm",
-    "obfuscate-pvm": "npx javascript-obfuscator ./pvm-dist --output pvm-dist-obfuscated --compact true --control-flow-flattening true"
+    "obfuscate-pvm": "npx javascript-obfuscator ./dist/pvm --output ./dist/pvm-obfuscated --compact true --control-flow-flattening true"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
