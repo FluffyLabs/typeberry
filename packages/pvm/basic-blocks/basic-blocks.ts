@@ -12,7 +12,7 @@ export class BasicBlocks {
       return true;
     }
 
-    return this.isBasicBlockTermination(index - 1) && this.mask.isInstruction(index);
+    return this.mask.isInstruction(index) && this.isBasicBlockTermination(index - 1);
   }
 
   private isBasicBlockTermination(index: number) {
