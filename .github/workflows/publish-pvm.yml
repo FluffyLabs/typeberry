@@ -39,4 +39,4 @@ jobs:
       working-directory: ./dist/pvm-obfuscated
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      run: npm publish --dry-run
+      run: npm publish
