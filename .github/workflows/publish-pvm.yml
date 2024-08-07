@@ -31,11 +31,10 @@ jobs:
         echo '{
           "name": "@typeberry/pvm",
           "version": "0.0.1-${{ env.COMMIT_HASH }}",
-          "main": "pvm.js"
+          "main": "pvm.js",
+          "author": "Fluffy Labs",
+          "license": "MPL-2.0"
         }' > package.json
-    - name: List dir
-      working-directory: ./dist/pvm-obfuscated
-      run: ls
     - name: Print package.json
       working-directory: ./dist/pvm-obfuscated
       run: cat package.json
