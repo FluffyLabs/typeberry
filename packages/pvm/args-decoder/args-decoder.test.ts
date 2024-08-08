@@ -109,7 +109,7 @@ describe("ArgsDecoder", () => {
 
       firstRegisterIndex: 7,
       immediateDecoder: expectedImmediateDecoder,
-      offset: 6,
+      nextPc: 6,
     };
 
     const result = argsDecoder.getArgs(0);
@@ -130,7 +130,7 @@ describe("ArgsDecoder", () => {
       firstRegisterIndex: 7,
       secondRegisterIndex: 8,
 
-      offset: 4,
+      nextPc: 4,
     };
 
     const result = argsDecoder.getArgs(0);

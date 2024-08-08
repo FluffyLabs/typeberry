@@ -3,16 +3,19 @@ import { test } from "node:test";
 import type { OneRegisterOneImmediateOneOffsetResult } from "../args-decoder/args-decoder";
 import { ArgumentType } from "../args-decoder/argument-type";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
+import { BasicBlocks } from "../basic-blocks";
 import { Instruction } from "../instruction";
 import { InstructionResult } from "../instruction-result";
 import { BranchOps } from "../ops";
+import { Mask } from "../program-decoder/mask";
 import { Registers } from "../registers";
 import { OneRegisterOneImmediateOneOffsetDispatcher } from "./one-reg-one-imm-one-offset-dispatcher";
 
 test("OneRegisterOneImmediateOneOffsetDispatcher", async (t) => {
   const regs = new Registers();
   const instructionResult = new InstructionResult();
-  const branchOps = new BranchOps(regs, instructionResult);
+  const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+  const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
 
   const mockFn = t.mock.fn();
 

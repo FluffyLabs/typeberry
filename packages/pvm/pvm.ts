@@ -1,6 +1,7 @@
 import { ArgsDecoder } from "./args-decoder/args-decoder";
 import { ArgumentType } from "./args-decoder/argument-type";
 import { assemblify } from "./assemblify";
+import { BasicBlocks } from "./basic-blocks";
 import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
 import { InstructionResult } from "./instruction-result";
@@ -103,17 +104,18 @@ export class Pvm {
     this.gas = initialState.gas ?? 0;
 
     this.argsDecoder = new ArgsDecoder(this.code, this.mask);
+    const basicBlocks = new BasicBlocks(this.code, this.mask);
 
     const mathOps = new MathOps(this.registers);
     const shiftOps = new ShiftOps(this.registers);
     const bitOps = new BitOps(this.registers);
     const booleanOps = new BooleanOps(this.registers);
     const moveOps = new MoveOps(this.registers);
-    const branchOps = new BranchOps(this.registers, this.instructionResult);
+    const branchOps = new BranchOps(this.registers, this.instructionResult, basicBlocks);
     const loadOps = new LoadOps(this.registers, this.memory, this.instructionResult);
     const storeOps = new StoreOps(this.registers, this.memory, this.instructionResult);
     const noArgsOps = new NoArgsOps(this.instructionResult);
-    const dynamicJumpOps = new DynamicJumpOps(this.registers, jumpTable, this.instructionResult, this.mask);
+    const dynamicJumpOps = new DynamicJumpOps(this.registers, jumpTable, this.instructionResult, basicBlocks);
     const hostCallOps = new HostCallOps(this.instructionResult);
 
     this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
@@ -164,7 +166,7 @@ export class Pvm {
     }
 
     const args = this.argsDecoder.getArgs(this.pc);
-    this.instructionResult.pcOffset = args.noOfBytesToSkip;
+    this.instructionResult.nextPc = this.pc + args.noOfBytesToSkip;
     switch (args.type) {
       case ArgumentType.NO_ARGUMENTS:
         this.noArgsDispatcher.dispatch(currentInstruction);
@@ -224,7 +226,7 @@ export class Pvm {
       return this.status;
     }
 
-    this.pc += this.instructionResult.pcOffset;
+    this.pc = this.instructionResult.nextPc;
     return this.status;
   }
 

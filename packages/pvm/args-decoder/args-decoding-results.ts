@@ -66,7 +66,7 @@ export const createResults = () => {
     noOfBytesToSkip: 1,
     firstRegisterIndex: 0,
     immediateDecoder: new ImmediateDecoder(),
-    offset: 0,
+    nextPc: 0,
   };
 
   results[ArgumentType.TWO_REGISTERS_ONE_OFFSET] = {
@@ -74,7 +74,7 @@ export const createResults = () => {
     noOfBytesToSkip: 1,
     firstRegisterIndex: 0,
     secondRegisterIndex: 0,
-    offset: 0,
+    nextPc: 0,
   };
 
   results[ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE] = {
@@ -103,7 +103,7 @@ export const createResults = () => {
   results[ArgumentType.ONE_OFFSET] = {
     type: ArgumentType.ONE_OFFSET,
     noOfBytesToSkip: 1,
-    offset: 0,
+    nextPc: 0,
   };
 
   results[ArgumentType.TWO_IMMEDIATES] = {

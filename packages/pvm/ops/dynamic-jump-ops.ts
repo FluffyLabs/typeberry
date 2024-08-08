@@ -1,6 +1,6 @@
+import type { BasicBlocks } from "../basic-blocks";
 import type { InstructionResult } from "../instruction-result";
 import type { JumpTable } from "../program-decoder/jump-table";
-import type { Mask } from "../program-decoder/mask";
 import type { Registers } from "../registers";
 import { Result } from "../result";
 import { MAX_VALUE } from "./math-consts";
@@ -13,7 +13,7 @@ export class DynamicJumpOps {
     private regs: Registers,
     private jumpTable: JumpTable,
     private instructionResult: InstructionResult,
-    private mask: Mask,
+    private basicBlocks: BasicBlocks,
   ) {}
 
   private djump(dynamicAddress: number) {
@@ -30,12 +30,12 @@ export class DynamicJumpOps {
     const jumpTableIndex = dynamicAddress / JUMP_ALIGMENT_FACTOR - 1;
     const destination = this.jumpTable.getDestination(jumpTableIndex);
 
-    if (!this.jumpTable.hasIndex(jumpTableIndex) || !this.mask.isInstruction(destination)) {
+    if (!this.jumpTable.hasIndex(jumpTableIndex) || !this.basicBlocks.isBeginningOfBasicBlock(jumpTableIndex)) {
       this.instructionResult.status = Result.PANIC;
       return;
     }
 
-    this.instructionResult.pcOffset = destination;
+    this.instructionResult.nextPc = destination;
   }
 
   jumpInd(immediateValue: number, registerIndex: number) {

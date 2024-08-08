@@ -68,7 +68,7 @@ export type TwoRegistersOneOffsetResult = {
   noOfBytesToSkip: number;
   firstRegisterIndex: number;
   secondRegisterIndex: number;
-  offset: number;
+  nextPc: number;
 };
 
 export type OneRegisterOneImmediateOneOffsetResult = {
@@ -76,7 +76,7 @@ export type OneRegisterOneImmediateOneOffsetResult = {
   noOfBytesToSkip: number;
   firstRegisterIndex: number;
   immediateDecoder: ImmediateDecoder;
-  offset: number;
+  nextPc: number;
 };
 
 export type OneRegisterTwoImmediatesResult = {
@@ -90,7 +90,7 @@ export type OneRegisterTwoImmediatesResult = {
 export type OneOffsetResult = {
   type: ArgumentType.ONE_OFFSET;
   noOfBytesToSkip: number;
-  offset: number;
+  nextPc: number;
 };
 
 type Result =
@@ -172,7 +172,7 @@ export class ArgsDecoder {
         this.offsetDecoder.setBytes(
           this.code.subarray(pc + 2 + immediateLength, pc + 2 + immediateLength + offsetLength),
         );
-        result.offset = this.offsetDecoder.getSigned();
+        result.nextPc = pc + this.offsetDecoder.getSigned();
         result.noOfBytesToSkip = 2 + immediateLength + offsetLength;
         return result;
       }
@@ -187,7 +187,7 @@ export class ArgsDecoder {
         result.noOfBytesToSkip = 2 + offsetLength;
 
         this.offsetDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + offsetLength));
-        result.offset = this.offsetDecoder.getSigned();
+        result.nextPc = pc + this.offsetDecoder.getSigned();
         return result;
       }
 
@@ -206,7 +206,7 @@ export class ArgsDecoder {
         const offsetLength = this.mask.getNoOfBytesToNextInstruction(pc + 1);
         result.noOfBytesToSkip = 1 + offsetLength;
         this.offsetDecoder.setBytes(this.code.subarray(pc + 1, pc + 1 + offsetLength));
-        result.offset = this.offsetDecoder.getSigned();
+        result.nextPc = pc + this.offsetDecoder.getSigned();
         return result;
       }
 
