@@ -27,14 +27,6 @@ export class BranchOps {
     this.branch(nextPc, true);
   }
 
-  loadImmediateJump(registerIndex: number, immediate: number, nextPc: number) {
-    // TODO: [MaSi] it should be split into loadImmediate (from BranchOps) and jump
-    // like we have in case of load_imm_jump_ind (see TwoRegsTwoImmsDispatcher class)
-    // but currently it is not possible because of TwoRegsTwoImmsDispatcher class tests
-    this.regs.asUnsigned[registerIndex] = immediate;
-    this.branch(nextPc, true);
-  }
-
   branchEqImmediate(registerIndex: number, immediate: number, nextPc: number) {
     this.branch(nextPc, this.regs.asUnsigned[registerIndex] === immediate);
   }
