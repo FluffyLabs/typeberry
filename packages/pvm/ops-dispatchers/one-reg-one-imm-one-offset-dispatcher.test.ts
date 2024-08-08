@@ -9,9 +9,9 @@ import { InstructionResult } from "../instruction-result";
 import { BranchOps } from "../ops";
 import { Mask } from "../program-decoder/mask";
 import { Registers } from "../registers";
-import { OneRegisterOneImmediateOneOffsetDispatcher } from "./one-reg-one-imm-one-offset-dispatcher";
+import { OneRegOneImmOneOffsetDispatcher } from "./one-reg-one-imm-one-offset-dispatcher";
 
-test("OneRegisterOneImmediateOneOffsetDispatcher", async (t) => {
+test("OneRegOneImmOneOffsetDispatcher", async (t) => {
   const regs = new Registers();
   const instructionResult = new InstructionResult();
   const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
@@ -51,7 +51,7 @@ test("OneRegisterOneImmediateOneOffsetDispatcher", async (t) => {
     await t.test(
       `checks if instruction ${name} = ${instruction} is handled by OneRegisterOneImmediateOneOffsetDispatcher`,
       () => {
-        const dispatcher = new OneRegisterOneImmediateOneOffsetDispatcher(branchOps);
+        const dispatcher = new OneRegOneImmOneOffsetDispatcher(branchOps);
 
         dispatcher.dispatch(instruction, argsMock);
 
@@ -68,7 +68,7 @@ test("OneRegisterOneImmediateOneOffsetDispatcher", async (t) => {
     await t.test(
       `checks if instruction ${name} = ${instruction} is not handled by OneRegisterOneImmediateOneOffsetDispatcher`,
       () => {
-        const dispatcher = new OneRegisterOneImmediateOneOffsetDispatcher(branchOps);
+        const dispatcher = new OneRegOneImmOneOffsetDispatcher(branchOps);
 
         dispatcher.dispatch(instruction, argsMock);
 

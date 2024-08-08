@@ -2,7 +2,7 @@ import type { OneRegisterOneImmediateOneOffsetResult } from "../args-decoder/arg
 import { Instruction } from "../instruction";
 import type { BranchOps } from "../ops";
 
-export class OneRegisterOneImmediateOneOffsetDispatcher {
+export class OneRegOneImmOneOffsetDispatcher {
   constructor(private branchOps: BranchOps) {}
 
   dispatch(instruction: Instruction, args: OneRegisterOneImmediateOneOffsetResult) {
