@@ -13,7 +13,8 @@
     "packages/utils",
     "packages/stubs",
     "bin/test-runner",
-    "tools/commit-hash"
+    "tools/commit-hash",
+    "tools/pvm-builder"
   ],
   "engines": {
     "node": ">=20",
@@ -30,7 +31,7 @@
     "test": "node --test --require ts-node/register $(find . -type d -name node_modules -prune -type f -o -name '*.test.ts' | tr '\\n' ' ')",
     "ts-node": "ts-node",
     "blockchain-git-log": "ts-node ./tools/commit-hash/index.ts",
-    "build-pvm": "tsc --lib es2021,dom --module esnext --target es2021 --strict --esModuleInterop --skipLibCheck --forceConsistentCasingInFileNames --moduleResolution node --outDir ./dist/pvm ./packages/pvm/pvm.ts",
+    "build-pvm": "npm run build -w tools/pvm-builder",
     "preobfuscate-pvm": "npm run build-pvm",
     "obfuscate-pvm": "npx javascript-obfuscator ./dist/pvm --output ./dist/pvm-obfuscated --compact true --control-flow-flattening true"
   },
