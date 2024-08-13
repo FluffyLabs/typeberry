@@ -62,15 +62,33 @@ export class PvmTest {
   "expected-gas": number;
 }
 
+function getMemory(pageMap: PageMapItem[], memory: MemoryChunkItem[], isWritable: boolean) {
+  const heap = pageMap.filter((x) => x["is-writable"] === isWritable)[0];
+  if (heap) {
+    const address = heap.address;
+    const data = new Uint8Array(heap.length);
+    const chunk = memory.find((x) => x.address === address);
+    if (chunk) {
+      data.set(chunk.contents, chunk.address - address);
+    }
+    return data;
+  }
+  return new Uint8Array();
+}
+
 export async function runPvmTest(testContent: PvmTest) {
+  const memory = testContent["initial-memory"];
+  const pageMap = testContent["initial-page-map"];
+
   const pvm = new Pvm(testContent.program, {
     gas: testContent["initial-gas"],
-    memory: testContent["initial-memory"],
-    pageMap: testContent["initial-page-map"],
     pc: testContent["initial-pc"],
     regs: testContent["initial-regs"],
   });
 
+  const heap = getMemory(pageMap, memory, true);
+  const readOnly = getMemory(pageMap, memory, false);
+  pvm.setMemory(readOnly, heap, 0, 0);
   pvm.runProgram();
 
   assert.strictEqual(pvm.getGas(), testContent["expected-gas"]);

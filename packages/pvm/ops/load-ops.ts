@@ -16,31 +16,35 @@ export class LoadOps {
   }
 
   private loadNumber(address: number, registerIndex: number, numberLength: 1 | 2 | 4) {
-    if (!this.memory.isReadable(address)) {
+    try {
+      const bytes = this.memory.load(address, numberLength);
+      this.regs.setFromBytes(registerIndex, bytes);
+    } catch {
       this.instructionResult.status = Result.FAULT;
       this.instructionResult.exitParam = address;
-      return;
     }
-    const bytes = this.memory.load(address, numberLength);
-
-    this.regs.setFromBytes(registerIndex, bytes);
   }
 
   private loadSignedNumber(address: number, registerIndex: number, numberLength: 1 | 2) {
-    if (!this.memory.isReadable(address)) {
+    try {
+      const bytes = this.memory.load(address, numberLength);
+      if (!bytes) {
+        this.instructionResult.status = Result.FAULT;
+        this.instructionResult.exitParam = address;
+        return;
+      }
+      const msb = bytes[numberLength - 1] & 0x80;
+      if (msb > 0) {
+        const result = new Uint8Array(4);
+        result.fill(0xff);
+        result.set(bytes, 0);
+        this.regs.setFromBytes(registerIndex, result);
+      } else {
+        this.regs.setFromBytes(registerIndex, bytes);
+      }
+    } catch {
       this.instructionResult.status = Result.FAULT;
       this.instructionResult.exitParam = address;
-      return;
-    }
-    const bytes = this.memory.load(address, numberLength);
-    const msb = bytes[numberLength - 1] & 0x80;
-    if (msb > 0) {
-      const result = new Uint8Array(4);
-      result.fill(0xff);
-      result.set(bytes, 0);
-      this.regs.setFromBytes(registerIndex, result);
-    } else {
-      this.regs.setFromBytes(registerIndex, bytes);
     }
   }
 

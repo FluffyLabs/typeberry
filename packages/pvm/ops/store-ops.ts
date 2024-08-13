@@ -90,11 +90,11 @@ export class StoreOps {
   }
 
   private store(address: number, bytes: Uint8Array) {
-    if (!this.memory.isWritable(address)) {
-      this.instructionResult.status = Result.FAULT;
+    try {
+      this.memory.store(address, bytes);
+    } catch {
       this.instructionResult.exitParam = address;
-      return;
+      this.instructionResult.status = Result.FAULT;
     }
-    this.memory.store(address, bytes);
   }
 }

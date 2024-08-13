@@ -33,7 +33,6 @@ import {
   TwoRegsOneOffsetDispatcher,
   TwoRegsTwoImmsDispatcher,
 } from "./ops-dispatchers";
-import { PageMap } from "./page-map";
 import type { Mask } from "./program-decoder/mask";
 import { ProgramDecoder } from "./program-decoder/program-decoder";
 import { NO_OF_REGISTERS, Registers } from "./registers";
@@ -43,20 +42,7 @@ import { Status } from "./status";
 type InitialState = {
   regs?: RegistersArray;
   pc?: number;
-  pageMap?: PageMapItem[];
-  memory?: MemoryChunkItem[];
   gas?: number;
-};
-
-type MemoryChunkItem = {
-  address: number;
-  contents: Uint8Array;
-};
-
-type PageMapItem = {
-  address: number;
-  length: number;
-  "is-writable": boolean;
 };
 
 type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N ? A : GrowToSize<T, N, [...A, T]>;
@@ -94,8 +80,7 @@ export class Pvm {
     this.mask = programDecoder.getMask();
     const jumpTable = programDecoder.getJumpTable();
     this.registers = new Registers();
-    const pageMap = new PageMap(initialState.pageMap ?? []);
-    this.memory = new Memory(pageMap, initialState.memory ?? []);
+    this.memory = new Memory();
     this.pc = initialState.pc ?? 0;
 
     for (let i = 0; i < NO_OF_REGISTERS; i++) {
@@ -139,6 +124,12 @@ export class Pvm {
     this.twoRegsTwoImmsDispatcher = new TwoRegsTwoImmsDispatcher(loadOps, dynamicJumpOps);
     this.oneImmDispatcher = new OneImmDispatcher(hostCallOps);
   }
+
+  setMemory(readOnlyData: Uint8Array, initialHeap: Uint8Array, stackSize: number, noOfHeapPages: number) {
+    this.memory.setupMemory(readOnlyData, initialHeap, stackSize, noOfHeapPages);
+  }
+
+  setRegisters() {}
 
   printProgram() {
     const p = assemblify(this.code, this.mask);
@@ -251,6 +242,7 @@ export class Pvm {
   }
 
   getMemoryPage(pageNumber: number): Uint8Array | null {
-    return this.memory.getPageDump(pageNumber);
+    // return this.memory.getPageDump(pageNumber);
+    return null;
   }
 }
