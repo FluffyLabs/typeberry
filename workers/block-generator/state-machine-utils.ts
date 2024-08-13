@@ -66,7 +66,7 @@ export class StateMachine<
 > {
   private state: CurrentState;
   private allStates: Map<StateNames<TStates>, TStates>;
-  private stateListeners: EventEmitter = new EventEmitter();
+  private stateListeners = new EventEmitter();
 
   constructor(initialState: CurrentState, allStates: TStates[]) {
     this.state = initialState;
@@ -84,7 +84,9 @@ export class StateMachine<
     return new Promise((resolve) => {
       // TODO [ToDr] reject when finished/error?
       this.stateListeners.once(state, () => {
-        resolve(this.cast());
+        if (this.cast(state)) {
+          resolve(this);
+        }
       });
     });
   }
@@ -96,26 +98,20 @@ export class StateMachine<
       throw new Error("Attempting transition to already active state!");
     }
 
-    if (!this.state.canTransitionTo(newStateName)) {
-      throw new Error(`Unallowed transition from ${this.state.name()} to ${newStateName}`);
-    }
-
     const newState = this.allStates.get(newStateName);
     if (!newState) {
       throw new Error(`Unavailable state: ${newStateName}`);
     }
 
-    const self = this.cast<TNewState>();
-    // We get a type error, because the compiler can't ensure it's a valid transition.
-    self.state = newState as unknown as TNewState;
-    // emit an event
-    this.stateListeners.emit(newStateName, self);
-    return self;
+    if (this.cast(newStateName)) {
+      this.stateListeners.emit(newStateName, this);
+      return this;
+    } else {
+      throw new Error(`Unallowed transition from ${this.state.name()} to ${newStateName}`);
+    }
   }
 
-  cast<TNewState extends TStates>(): StateMachine<TNewState, TStates> {
-    // TODO [ToDr] more elegant solution to type transition?
-    const self = this as unknown as StateMachine<TNewState, TStates>;
-    return self;
+  cast<TNewState extends TStates>(newStateName:  StateNames<TNewState>): this is StateMachine<TNewState, TStates> {
+    return this.state.canTransitionTo(newStateName);
   }
 }
