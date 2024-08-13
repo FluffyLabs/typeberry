@@ -9,7 +9,6 @@ import { Instruction } from "../instruction";
 import { InstructionResult } from "../instruction-result";
 import { Memory } from "../memory";
 import { DynamicJumpOps, LoadOps } from "../ops";
-import { PageMap } from "../page-map";
 import { JumpTable } from "../program-decoder/jump-table";
 import { Mask } from "../program-decoder/mask";
 import { Registers } from "../registers";
@@ -18,7 +17,7 @@ import { TwoRegsTwoImmsDispatcher } from "./two-regs-two-imms-dispatcher";
 describe("TwoRegsTwoImmsDispatcher", () => {
   describe("check if it handles expected instructions", () => {
     const regs = new Registers();
-    const memory = new Memory(new PageMap([]), []);
+    const memory = new Memory();
     const jumpTable = new JumpTable(1, new Uint8Array([1]));
     const instructionResult = new InstructionResult();
     const mask = new Mask(new Uint8Array([1]));
@@ -69,7 +68,7 @@ describe("TwoRegsTwoImmsDispatcher", () => {
   describe("check if it handles other instructions than expected", () => {
     const instructionResult = new InstructionResult();
     const regs = new Registers();
-    const memory = new Memory(new PageMap([]), []);
+    const memory = new Memory();
     const loadOps = new LoadOps(regs, memory, instructionResult);
     const jumpTable = new JumpTable(1, new Uint8Array([1]));
     const mask = new Mask(new Uint8Array([1]));

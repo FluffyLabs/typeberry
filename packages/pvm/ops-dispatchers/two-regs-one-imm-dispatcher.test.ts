@@ -8,14 +8,13 @@ import { Instruction } from "../instruction";
 import { InstructionResult } from "../instruction-result";
 import { Memory } from "../memory";
 import { BitOps, BooleanOps, LoadOps, MathOps, MoveOps, ShiftOps, StoreOps } from "../ops";
-import { PageMap } from "../page-map";
 import { Registers } from "../registers";
 import { TwoRegsOneImmDispatcher } from "./two-regs-one-imm-dispatcher";
 
 describe("TwoRegsOneImmDispatcher", () => {
   const instructionResult = new InstructionResult();
   const regs = new Registers();
-  const memory = new Memory(new PageMap([]), []);
+  const memory = new Memory();
   const mathOps = new MathOps(regs);
   const shiftOps = new ShiftOps(regs);
   const bitOps = new BitOps(regs);

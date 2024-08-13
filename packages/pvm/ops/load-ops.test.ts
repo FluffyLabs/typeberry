@@ -4,7 +4,7 @@ import { describe, it } from "node:test";
 import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { InstructionResult } from "../instruction-result";
 import { Memory } from "../memory";
-import { PageMap } from "../page-map";
+import { SEGMENT_SIZE } from "../memory/memory-conts";
 import { Registers } from "../registers";
 import { LoadOps } from "./load-ops";
 
@@ -15,7 +15,7 @@ describe("LoadOps", () => {
     it("should load positive number into register", () => {
       const instructionResult = new InstructionResult();
       const registers = new Registers();
-      const memory = new Memory(new PageMap([]), []);
+      const memory = new Memory();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const numberToLoad = 15;
 
@@ -28,7 +28,7 @@ describe("LoadOps", () => {
     it("should load negative number into register", () => {
       const instructionResult = new InstructionResult();
       const registers = new Registers();
-      const memory = new Memory(new PageMap([]), []);
+      const memory = new Memory();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const numberToLoad = -1;
       const expectedUnsignedNumber = 0xff_ff_ff_ff;
@@ -43,10 +43,10 @@ describe("LoadOps", () => {
   describe("load (U8, U16 and U32)", () => {
     it("should load u8 from memory to register", () => {
       const instructionResult = new InstructionResult();
-      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
-      const address = 1;
-      const initialMemory = [{ address, contents: new Uint8Array([0xff, 0xee, 0xdd, 0xcc]) }];
-      const memory = new Memory(pageMap, initialMemory);
+      const address = 2 * SEGMENT_SIZE;
+      const initialHeap = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
+      const memory = new Memory();
+      memory.setupMemory(new Uint8Array(), initialHeap, 0, 0);
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedValue = 0xff;
@@ -60,10 +60,10 @@ describe("LoadOps", () => {
 
     it("should load u16 from memory to register", () => {
       const instructionResult = new InstructionResult();
-      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
-      const address = 1;
-      const initialMemory = [{ address, contents: new Uint8Array([0xff, 0xee, 0xdd, 0xcc]) }];
-      const memory = new Memory(pageMap, initialMemory);
+      const address = 2 * SEGMENT_SIZE;
+      const initialHeap = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
+      const memory = new Memory();
+      memory.setupMemory(new Uint8Array(), initialHeap, 0, 0);
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedValue = 61183;
@@ -77,10 +77,10 @@ describe("LoadOps", () => {
 
     it("should load u32 from memory to register", () => {
       const instructionResult = new InstructionResult();
-      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
-      const address = 1;
-      const initialMemory = [{ address, contents: new Uint8Array([0xff, 0xee, 0xdd, 0x0c]) }];
-      const memory = new Memory(pageMap, initialMemory);
+      const address = 2 * SEGMENT_SIZE;
+      const initialHeap = new Uint8Array([0xff, 0xee, 0xdd, 0x0c]);
+      const memory = new Memory();
+      memory.setupMemory(new Uint8Array(), initialHeap, 0, 0);
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedValue = 215871231;
@@ -94,10 +94,10 @@ describe("LoadOps", () => {
 
     it("should load u32 from memory to register (negative number)", () => {
       const instructionResult = new InstructionResult();
-      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
-      const address = 1;
-      const initialMemory = [{ address, contents: new Uint8Array([0xff, 0xff, 0xff, 0xff]) }];
-      const memory = new Memory(pageMap, initialMemory);
+      const address = 2 * SEGMENT_SIZE;
+      const initialHeap = new Uint8Array([0xff, 0xff, 0xff, 0xff]);
+      const memory = new Memory();
+      memory.setupMemory(new Uint8Array(), initialHeap, 0, 0);
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -1;
@@ -114,10 +114,10 @@ describe("LoadOps", () => {
   describe("load (I8 and I16)", () => {
     it("should load i8 from memory to register", () => {
       const instructionResult = new InstructionResult();
-      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
-      const address = 1;
-      const initialMemory = [{ address, contents: new Uint8Array([0xcc, 0xff, 0xff, 0xff]) }];
-      const memory = new Memory(pageMap, initialMemory);
+      const address = 2 * SEGMENT_SIZE;
+      const initialHeap = new Uint8Array([0xcc, 0xdd, 0xee, 0xff]);
+      const memory = new Memory();
+      memory.setupMemory(new Uint8Array(), initialHeap, 0, 0);
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -52;
@@ -132,10 +132,10 @@ describe("LoadOps", () => {
 
     it("should load i16 from memory to register", () => {
       const instructionResult = new InstructionResult();
-      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
-      const address = 1;
-      const initialMemory = [{ address, contents: new Uint8Array([0xcc, 0xdd, 0xff, 0xff]) }];
-      const memory = new Memory(pageMap, initialMemory);
+      const address = 2 * SEGMENT_SIZE;
+      const initialHeap = new Uint8Array([0xcc, 0xdd, 0xee, 0xff]);
+      const memory = new Memory();
+      memory.setupMemory(new Uint8Array(), initialHeap, 0, 0);
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -8756;
@@ -153,18 +153,17 @@ describe("LoadOps", () => {
     it("should load i8 from memory to register", () => {
       const instructionResult = new InstructionResult();
       const registers = new Registers();
-      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
-      const address = 2;
-      const initialMemory = [{ address, contents: new Uint8Array([0xcc, 0xff, 0xff, 0xff]) }];
+      const initialHeap = new Uint8Array([0xcc, 0xdd, 0xee, 0xff]);
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 0;
-      registers.asUnsigned[firstRegisterIndex] = 1;
-      const memory = new Memory(pageMap, initialMemory);
+      registers.asUnsigned[firstRegisterIndex] = SEGMENT_SIZE;
+      const memory = new Memory();
+      memory.setupMemory(new Uint8Array(), initialHeap, 0, 0);
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -52;
       const expectedUnsignedValue = 4294967244;
       const immediateDecoder = new ImmediateDecoder();
-      immediateDecoder.setBytes(new Uint8Array([1]));
+      immediateDecoder.setBytes(new Uint8Array([0x0, 0x0, 0x01]));
 
       loadOps.loadIndI8(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
 
@@ -175,18 +174,18 @@ describe("LoadOps", () => {
     it("should load i16 from memory to register", () => {
       const instructionResult = new InstructionResult();
       const registers = new Registers();
-      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
-      const address = 2;
-      const initialMemory = [{ address, contents: new Uint8Array([0xcc, 0xdd, 0xff, 0xff]) }];
+      const address = 2 * SEGMENT_SIZE;
+      const initialHeap = new Uint8Array([0xcc, 0xdd, 0xee, 0xff]);
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 0;
-      registers.asUnsigned[firstRegisterIndex] = 1;
-      const memory = new Memory(pageMap, initialMemory);
+      registers.asUnsigned[firstRegisterIndex] = SEGMENT_SIZE;
+      const memory = new Memory();
+      memory.setupMemory(new Uint8Array(), initialHeap, 0, 0);
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -8756;
       const expectedUnsignedValue = 4294958540;
       const immediateDecoder = new ImmediateDecoder();
-      immediateDecoder.setBytes(new Uint8Array([1]));
+      immediateDecoder.setBytes(new Uint8Array([0x0, 0x0, 0x01]));
 
       loadOps.loadIndI16(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
 
@@ -198,17 +197,17 @@ describe("LoadOps", () => {
   describe("loadInd (U8, U16 and U32)", () => {
     it("should load u8 from memory to register", () => {
       const instructionResult = new InstructionResult();
-      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
-      const address = 2;
-      const initialMemory = [{ address, contents: new Uint8Array([0xff, 0xee, 0xdd, 0xcc]) }];
-      const memory = new Memory(pageMap, initialMemory);
+      const address = 2 * SEGMENT_SIZE;
+      const initialHeap = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
+      const memory = new Memory();
+      memory.setupMemory(new Uint8Array(), initialHeap, 0, 0);
       const registers = new Registers();
       const firstRegisterIndex = 0;
-      const secondRegisterIndex = 0;
-      registers.asUnsigned[firstRegisterIndex] = 1;
+      const secondRegisterIndex = 1;
+      registers.asUnsigned[firstRegisterIndex] = SEGMENT_SIZE;
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const immediateDecoder = new ImmediateDecoder();
-      immediateDecoder.setBytes(new Uint8Array([1]));
+      immediateDecoder.setBytes(new Uint8Array([0x0, 0x0, 0x01]));
       const expectedValue = 0xff;
 
       loadOps.loadIndU8(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
@@ -219,17 +218,18 @@ describe("LoadOps", () => {
 
     it("should load u16 from memory to register", () => {
       const instructionResult = new InstructionResult();
-      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
-      const address = 2;
-      const initialMemory = [{ address, contents: new Uint8Array([0xff, 0xee, 0xdd, 0xcc]) }];
-      const memory = new Memory(pageMap, initialMemory);
+      const address = 2 * SEGMENT_SIZE;
+      const initialHeap = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
+      const memory = new Memory();
+      memory.setupMemory(new Uint8Array(), initialHeap, 0, 0);
       const registers = new Registers();
       const firstRegisterIndex = 0;
-      const secondRegisterIndex = 0;
-      registers.asUnsigned[firstRegisterIndex] = 1;
+      const secondRegisterIndex = 1;
+      registers.asUnsigned[firstRegisterIndex] = SEGMENT_SIZE;
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const immediateDecoder = new ImmediateDecoder();
-      immediateDecoder.setBytes(new Uint8Array([1]));
+      immediateDecoder.setBytes(new Uint8Array([0x0, 0x0, 0x01]));
+
       const expectedValue = 61183;
 
       loadOps.loadIndU16(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
@@ -240,17 +240,17 @@ describe("LoadOps", () => {
 
     it("should load u32 from memory to register", () => {
       const instructionResult = new InstructionResult();
-      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
-      const address = 2;
-      const initialMemory = [{ address, contents: new Uint8Array([0xff, 0xee, 0xdd, 0x0c]) }];
-      const memory = new Memory(pageMap, initialMemory);
+      const address = 2 * SEGMENT_SIZE;
+      const initialHeap = new Uint8Array([0xff, 0xee, 0xdd, 0x0c]);
+      const memory = new Memory();
+      memory.setupMemory(new Uint8Array(), initialHeap, 0, 0);
       const registers = new Registers();
       const firstRegisterIndex = 0;
-      const secondRegisterIndex = 0;
-      registers.asUnsigned[firstRegisterIndex] = 1;
+      const secondRegisterIndex = 1;
+      registers.asUnsigned[firstRegisterIndex] = SEGMENT_SIZE;
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const immediateDecoder = new ImmediateDecoder();
-      immediateDecoder.setBytes(new Uint8Array([1]));
+      immediateDecoder.setBytes(new Uint8Array([0x0, 0x0, 0x01]));
       const expectedValue = 215871231;
 
       loadOps.loadIndU32(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
@@ -261,17 +261,16 @@ describe("LoadOps", () => {
 
     it("should load u32 from memory to register (negative number)", () => {
       const instructionResult = new InstructionResult();
-      const pageMap = new PageMap([{ "is-writable": true, address: 0, length: 4096 }]);
-      const address = 2;
-      const initialMemory = [{ address, contents: new Uint8Array([0xff, 0xff, 0xff, 0xff]) }];
-      const memory = new Memory(pageMap, initialMemory);
+      const initialHeap = new Uint8Array([0xff, 0xff, 0xff, 0xff]);
+      const memory = new Memory();
+      memory.setupMemory(new Uint8Array(), initialHeap, 0, 0);
       const registers = new Registers();
       const firstRegisterIndex = 0;
-      const secondRegisterIndex = 0;
-      registers.asUnsigned[firstRegisterIndex] = 1;
+      const secondRegisterIndex = 1;
+      registers.asUnsigned[firstRegisterIndex] = SEGMENT_SIZE;
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const immediateDecoder = new ImmediateDecoder();
-      immediateDecoder.setBytes(new Uint8Array([1]));
+      immediateDecoder.setBytes(new Uint8Array([0x0, 0x0, 0x01]));
       const expectedSignedValue = -1;
       const expectedUnsignedValue = 2 ** 32 - 1;
 

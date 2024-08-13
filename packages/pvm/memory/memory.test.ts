@@ -2,7 +2,6 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { Memory } from "./memory";
-import { PageMap } from "./page-map";
 
 describe("Memory", () => {
   describe("Initial memory", () => {
@@ -129,8 +128,7 @@ describe("Memory", () => {
 
   describe("Memory.isWritable", () => {
     it("should return false when memory is not acissible", () => {
-      const pageMap = new PageMap([]);
-      const memory = new Memory(pageMap, []);
+      const memory = new Memory();
 
       const result = memory.isWritable(1);
 
