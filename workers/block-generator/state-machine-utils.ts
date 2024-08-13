@@ -1,11 +1,11 @@
-import {EventEmitter} from 'node:events';
+import { EventEmitter } from "node:events";
 
 export type MessageEnvelope = {
   name: string;
   data: unknown;
 };
 
-export type ExtractName<T> = T extends string ? T extends infer U ? U : never : never;
+export type ExtractName<T> = T extends string ? (T extends infer U ? U : never) : never;
 export type StateNames<T> = T extends State<infer U> ? ExtractName<U> : never;
 export type StateEventHandler<T> = (data: unknown) => StateNames<T> | null;
 
@@ -21,18 +21,21 @@ export abstract class State<TName> {
   }
 }
 
-export type ValidTransitionFrom<T> = T extends ProtocolState<infer _, infer _, infer TAllowed> ? TAllowed : never;
+export type ValidTransitionFrom<T> = T extends ProtocolState<infer _A, infer _B, infer TAllowed> ? TAllowed : never;
 
 export abstract class ProtocolState<TName, TAllStates, TAllowedTransitions extends TAllStates> extends State<TName> {
+  protected allowedTransitions: StateNames<TAllowedTransitions>[];
+  // TODO [ToDr] it would be cool if states defined emitted events / sent messages
+  protected listeners: Map<string, StateEventHandler<TAllowedTransitions>>;
 
-    protected allowedTransitions: StateNames<TAllowedTransitions>[];
-    // TODO [ToDr] it would be cool if states defined emitted events / sent messages
-    protected listeners: Map<string, StateEventHandler<TAllowedTransitions>>;
-
-  constructor({ name, listeners = new Map(), allowedTransitions = []}: {
-    name: TName,
-    listeners?: Map<string, StateEventHandler<TAllowedTransitions>>,
-    allowedTransitions?: StateNames<TAllowedTransitions>[],
+  constructor({
+    name,
+    listeners = new Map(),
+    allowedTransitions = [],
+  }: {
+    name: TName;
+    listeners?: Map<string, StateEventHandler<TAllowedTransitions>>;
+    allowedTransitions?: StateNames<TAllowedTransitions>[];
   }) {
     super(name);
     // TODO [ToDr] Verify that all `TAllowedTransitions` types are present.
@@ -59,11 +62,8 @@ export abstract class ProtocolState<TName, TAllStates, TAllowedTransitions exten
 
 export class StateMachine<
   CurrentState extends TStates,
-  TStates extends ProtocolState<
-  StateNames<TStates>,
-  TStates,
-  TStates
->> {
+  TStates extends ProtocolState<StateNames<TStates>, TStates, TStates>,
+> {
   private state: CurrentState;
   private allStates: Map<StateNames<TStates>, TStates>;
   private stateListeners: EventEmitter = new EventEmitter();
@@ -80,10 +80,7 @@ export class StateMachine<
     return this.state;
   }
 
-  waitForState<TNewState extends TStates>(state: StateNames<TNewState>): Promise<StateMachine<
-    TNewState,
-    TStates
-  >> {
+  waitForState<TNewState extends TStates>(state: StateNames<TNewState>): Promise<StateMachine<TNewState, TStates>> {
     return new Promise((resolve) => {
       // TODO [ToDr] reject when finished/error?
       this.stateListeners.once(state, () => {
@@ -92,12 +89,11 @@ export class StateMachine<
     });
   }
 
-  transition<TNewState extends ValidTransitionFrom<CurrentState> & TStates>(newStateName: StateNames<TNewState>): StateMachine<
-    TNewState,
-    TStates
-  > {
+  transition<TNewState extends ValidTransitionFrom<CurrentState> & TStates>(
+    newStateName: StateNames<TNewState>,
+  ): StateMachine<TNewState, TStates> {
     if (this.state.name() === newStateName) {
-      throw new Error('Attempting transition to already active state!');
+      throw new Error("Attempting transition to already active state!");
     }
 
     if (!this.state.canTransitionTo(newStateName)) {

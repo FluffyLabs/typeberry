@@ -1,6 +1,6 @@
-import { Worker } from 'node:worker_threads';
-import {MessageChannelStateMachine} from "./state-machine-channel";
-import {ProtocolState, StateMachine} from "./state-machine-utils";
+import type { Worker } from "node:worker_threads";
+import { MessageChannelStateMachine } from "./state-machine-channel";
+import { ProtocolState, StateMachine } from "./state-machine-utils";
 
 export function mainStateMachine(worker: Worker) {
   const spawning = new SpawningMain();
@@ -10,68 +10,60 @@ export function mainStateMachine(worker: Worker) {
 
   const machine = new MessageChannelStateMachine<SpawningMain, States>(
     new StateMachine(spawning, [spawning, configuring, ready, finished]),
-    worker
+    worker,
   );
 
   return machine;
 }
 
-
 export type States = Spawning | Configuring | Ready | Finished;
 
-class Spawning extends ProtocolState<'spawning', States, Configuring> {
+class Spawning extends ProtocolState<"spawning", States, Configuring> {
   constructor() {
     super({
-      name: 'spawning',
-      allowedTransitions: ['configuring'],
+      name: "spawning",
+      allowedTransitions: ["configuring"],
     });
   }
 }
 
 export class SpawningMain extends Spawning {
-  spawn() {
-  }
-  onWaitingForConfig() {
-  }
+  spawn() {}
+  onWaitingForConfig() {}
 }
 
 export class SpawningWorker extends Spawning {
-  waitingForConfig() {
-  }
+  waitingForConfig() {}
 }
 
-export class Configuring extends ProtocolState<'configuring', States, Ready> {
+export class Configuring extends ProtocolState<"configuring", States, Ready> {
   constructor() {
     super({
-      name: 'configuring',
-      allowedTransitions: ['ready'],
+      name: "configuring",
+      allowedTransitions: ["ready"],
     });
   }
 
-  sendConfig() {
-  }
+  sendConfig() {}
 
-  onConfigured() {
-  }
+  onConfigured() {}
 }
 
-export class Ready extends ProtocolState<'ready', States, Finished> {
+export class Ready extends ProtocolState<"ready", States, Finished> {
   constructor() {
     super({
-      name: 'ready',
-      allowedTransitions: ['finished'],
+      name: "ready",
+      allowedTransitions: ["finished"],
     });
   }
 
-  close() {
-  }
+  close() {}
 
-  onClosed() {
-  }
+  onClosed() {}
 }
 
-export class Finished extends ProtocolState<'finished', States, never> {
+export class Finished extends ProtocolState<"finished", States, never> {
   constructor() {
-    super({name: 'finished'});
+    super({ name: "finished" });
   }
 }
