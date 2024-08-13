@@ -1,0 +1,12 @@
+{
+  "name": "@typeberry/typeberry",
+  "version": "0.0.1",
+  "description": "The main typeberry binary.",
+  "main": "typeberry.ts",
+  "scripts": {
+    "start": "ts-node ./typeberry.ts",
+    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\\\n' ' ')"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0"
+}
