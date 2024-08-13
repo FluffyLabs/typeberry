@@ -23,4 +23,8 @@ export class AdditionalReadOnlyData {
   getMemoryDump() {
     return this.data.getMemoryDump(STACK_SEGMENT);
   }
+
+  getPageDump(index: number) {
+    return this.data.getPageDump(index, STACK_SEGMENT);
+  }
 }

@@ -49,4 +49,8 @@ export class Heap {
   getMemoryDump() {
     return this.data.getMemoryDump(this.beginnigOfHeap);
   }
+
+  getPageDump(index: number) {
+    return this.data.getPageDump(index, this.beginnigOfHeap);
+  }
 }

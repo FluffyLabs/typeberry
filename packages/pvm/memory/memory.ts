@@ -1,3 +1,4 @@
+import { PAGE_SIZE } from "./memory-conts";
 import { PageFault } from "./page-fault";
 import { AdditionalReadOnlyData, Heap, ReadOnlyData, Stack } from "./segments";
 
@@ -21,7 +22,7 @@ export class Memory {
     return this.heap.sbrk(size);
   }
 
-  getSegmentBasedOnAddress(address: number) {
+  private getSegmentByAddress(address: number) {
     if (this.heap.isHeapAddress(address)) {
       return this.heap;
     }
@@ -42,7 +43,7 @@ export class Memory {
   }
 
   store(address: number, data: Uint8Array) {
-    const segment = this.getSegmentBasedOnAddress(address);
+    const segment = this.getSegmentByAddress(address);
 
     if (segment === this.heap || segment === this.stack) {
       segment.store(address, data);
@@ -53,7 +54,7 @@ export class Memory {
   }
 
   load(address: number, length: 1 | 2 | 4) {
-    const segment = this.getSegmentBasedOnAddress(address);
+    const segment = this.getSegmentByAddress(address);
     if (!segment) {
       throw new PageFault(address);
     }
@@ -68,5 +69,11 @@ export class Memory {
       ...this.stack.getMemoryDump(),
       ...this.additionalReadOnlyData.getMemoryDump(),
     ];
+  }
+
+  getPageDump(index: number) {
+    const address = index * PAGE_SIZE;
+    const segment = this.getSegmentByAddress(address);
+    return segment.getPageDump(index);
   }
 }

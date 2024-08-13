@@ -8,7 +8,7 @@ export class ReadOnlyData {
 
   setup(readOnlyData: Uint8Array) {
     this.data.setup(readOnlyData);
-    this.endOfReadOnlyDataSegment = increaseToPageSize(readOnlyData.length);
+    this.endOfReadOnlyDataSegment = SEGMENT_SIZE + increaseToPageSize(readOnlyData.length);
   }
 
   isReadonlyDataAddress(address: number) {
@@ -22,5 +22,9 @@ export class ReadOnlyData {
 
   getMemoryDump() {
     return this.data.getMemoryDump(SEGMENT_SIZE);
+  }
+
+  getPageDump(index: number) {
+    return this.data.getPageDump(index, SEGMENT_SIZE);
   }
 }

@@ -30,4 +30,8 @@ export class Stack {
   getMemoryDump() {
     return this.data.getMemoryDump(this.endOfStack);
   }
+
+  getPageDump(index: number) {
+    return this.data.getPageDump(index, this.endOfStack);
+  }
 }

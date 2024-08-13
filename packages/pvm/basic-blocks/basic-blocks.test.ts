@@ -50,7 +50,7 @@ describe("BasicBlocks", () => {
     assert.strictEqual(result, false);
   });
 
-  it("should return true for a termination block instruction that is the after a termination instruction", () => {
+  it("should return true for a termination block instruction that is the first instruction after a termination instruction", () => {
     const mask = new Mask(new Uint8Array([0b1111_1111]));
     const code = new Uint8Array([Instruction.TRAP, Instruction.TRAP]);
     const basicBlocks = new BasicBlocks(code, mask);

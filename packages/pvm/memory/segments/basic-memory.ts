@@ -1,4 +1,4 @@
-import { ZERO } from "../memory-conts";
+import { PAGE_SIZE, ZERO } from "../memory-conts";
 
 export class BasicMemory {
   private data = new Uint8Array();
@@ -58,5 +58,10 @@ export class BasicMemory {
     }
 
     return result;
+  }
+
+  getPageDump(pageIndex: number, addressOffset: number) {
+    const index = pageIndex * PAGE_SIZE - addressOffset;
+    return this.data.subarray(index, index + PAGE_SIZE);
   }
 }
