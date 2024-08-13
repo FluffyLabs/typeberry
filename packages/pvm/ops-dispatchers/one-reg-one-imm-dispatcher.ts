@@ -3,7 +3,7 @@ import { Instruction } from "../instruction";
 import type { LoadOps, StoreOps } from "../ops";
 import type { DynamicJumpOps } from "../ops/dynamic-jump-ops";
 
-export class OneRegisterOneImmediateDispatcher {
+export class OneRegOneImmDispatcher {
   constructor(
     private loadOps: LoadOps,
     private storeOps: StoreOps,

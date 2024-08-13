@@ -23,9 +23,9 @@ import {
   NoArgsDispatcher,
   OneImmDispatcher,
   OneOffsetDispatcher,
+  OneRegOneImmDispatcher,
+  OneRegOneImmOneOffsetDispatcher,
   OneRegTwoImmsDispatcher,
-  OneRegisterOneImmediateDispatcher,
-  OneRegisterOneImmediateOneOffsetDispatcher,
   ThreeRegsDispatcher,
   TwoImmsDispatcher,
   TwoRegsDispatcher,
@@ -61,10 +61,10 @@ export class Pvm {
   private threeRegsDispatcher: ThreeRegsDispatcher;
   private twoRegsOneImmDispatcher: TwoRegsOneImmDispatcher;
   private twoRegsDispatcher: TwoRegsDispatcher;
-  private oneRegisterOneImmediateOneOffsetDispatcher: OneRegisterOneImmediateOneOffsetDispatcher;
+  private oneRegOneImmOneOffsetDispatcher: OneRegOneImmOneOffsetDispatcher;
   private twoRegsOneOffsetDispatcher: TwoRegsOneOffsetDispatcher;
   private oneOffsetDispatcher: OneOffsetDispatcher;
-  private oneRegisterOneImmediateDispatcher: OneRegisterOneImmediateDispatcher;
+  private oneRegOneImmDispatcher: OneRegOneImmDispatcher;
   private instructionResult = new InstructionResult();
   private memory: Memory;
   private twoImmsDispatcher: TwoImmsDispatcher;
@@ -114,10 +114,10 @@ export class Pvm {
       loadOps,
     );
     this.twoRegsDispatcher = new TwoRegsDispatcher(moveOps);
-    this.oneRegisterOneImmediateOneOffsetDispatcher = new OneRegisterOneImmediateOneOffsetDispatcher(branchOps);
+    this.oneRegOneImmOneOffsetDispatcher = new OneRegOneImmOneOffsetDispatcher(branchOps, loadOps);
     this.twoRegsOneOffsetDispatcher = new TwoRegsOneOffsetDispatcher(branchOps);
     this.oneOffsetDispatcher = new OneOffsetDispatcher(branchOps);
-    this.oneRegisterOneImmediateDispatcher = new OneRegisterOneImmediateDispatcher(loadOps, storeOps, dynamicJumpOps);
+    this.oneRegOneImmDispatcher = new OneRegOneImmDispatcher(loadOps, storeOps, dynamicJumpOps);
     this.twoImmsDispatcher = new TwoImmsDispatcher(storeOps);
     this.oneRegTwoImmsDispatcher = new OneRegTwoImmsDispatcher(storeOps);
     this.noArgsDispatcher = new NoArgsDispatcher(noArgsOps);
@@ -166,7 +166,7 @@ export class Pvm {
         this.oneImmDispatcher.dispatch(currentInstruction, args);
         break;
       case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET:
-        this.oneRegisterOneImmediateOneOffsetDispatcher.dispatch(currentInstruction, args);
+        this.oneRegOneImmOneOffsetDispatcher.dispatch(currentInstruction, args);
         break;
       case ArgumentType.TWO_REGISTERS:
         this.twoRegsDispatcher.dispatch(currentInstruction, args);
@@ -184,7 +184,7 @@ export class Pvm {
         this.oneOffsetDispatcher.dispatch(currentInstruction, args);
         break;
       case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE:
-        this.oneRegisterOneImmediateDispatcher.dispatch(currentInstruction, args);
+        this.oneRegOneImmDispatcher.dispatch(currentInstruction, args);
         break;
       case ArgumentType.TWO_IMMEDIATES:
         this.twoImmsDispatcher.dispatch(currentInstruction, args);
