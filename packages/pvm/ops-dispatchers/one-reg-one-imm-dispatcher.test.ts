@@ -12,9 +12,9 @@ import { DynamicJumpOps, LoadOps, StoreOps } from "../ops";
 import { JumpTable } from "../program-decoder/jump-table";
 import { Mask } from "../program-decoder/mask";
 import { Registers } from "../registers";
-import { OneRegisterOneImmediateDispatcher } from "./one-reg-one-imm-dispatcher";
+import { OneRegOneImmDispatcher } from "./one-reg-one-imm-dispatcher";
 
-describe("OneRegisterOneImmediateDispatcher", () => {
+describe("OneRegOneImmDispatcher", () => {
   const regs = new Registers();
   const memory = new Memory();
   const jumpTable = new JumpTable(1, new Uint8Array([1]));
@@ -58,7 +58,7 @@ describe("OneRegisterOneImmediateDispatcher", () => {
 
   for (const [name, instruction] of relevantInstructions) {
     it(`checks if instruction ${name} = ${instruction} is handled by TwoImmsDispatcher`, () => {
-      const dispatcher = new OneRegisterOneImmediateDispatcher(loadOps, storeOps, dynamicJumpOps);
+      const dispatcher = new OneRegOneImmDispatcher(loadOps, storeOps, dynamicJumpOps);
 
       dispatcher.dispatch(instruction, argsMock);
 
@@ -72,7 +72,7 @@ describe("OneRegisterOneImmediateDispatcher", () => {
 
   for (const [name, instruction] of otherInstructions) {
     it(`checks if instruction ${name} = ${instruction} is not handled by TwoImmsDispatcher`, () => {
-      const dispatcher = new OneRegisterOneImmediateDispatcher(loadOps, storeOps, dynamicJumpOps);
+      const dispatcher = new OneRegOneImmDispatcher(loadOps, storeOps, dynamicJumpOps);
 
       dispatcher.dispatch(instruction, argsMock);
 

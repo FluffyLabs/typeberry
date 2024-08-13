@@ -1,14 +1,18 @@
 import type { OneRegisterOneImmediateOneOffsetResult } from "../args-decoder/args-decoder";
 import { Instruction } from "../instruction";
-import type { BranchOps } from "../ops";
+import type { BranchOps, LoadOps } from "../ops";
 
-export class OneRegisterOneImmediateOneOffsetDispatcher {
-  constructor(private branchOps: BranchOps) {}
+export class OneRegOneImmOneOffsetDispatcher {
+  constructor(
+    private branchOps: BranchOps,
+    private loadOps: LoadOps,
+  ) {}
 
   dispatch(instruction: Instruction, args: OneRegisterOneImmediateOneOffsetResult) {
     switch (instruction) {
       case Instruction.LOAD_IMM_JUMP:
-        this.branchOps.loadImmediateJump(args.firstRegisterIndex, args.immediateDecoder.getUnsigned(), args.nextPc);
+        this.loadOps.loadImmediate(args.firstRegisterIndex, args.immediateDecoder.getUnsigned());
+        this.branchOps.jump(args.nextPc);
         break;
       case Instruction.BRANCH_EQ_IMM:
         this.branchOps.branchEqImmediate(args.firstRegisterIndex, args.immediateDecoder.getUnsigned(), args.nextPc);
