@@ -282,7 +282,7 @@ describe("LoadOps", () => {
     });
   });
 
-  describe("load inaccessible segments (unsigned)", () => {
+  describe("try load inaccessible segments (unsigned)", () => {
     it("should set FAULT status in instructionResult", () => {
       const instructionResult = new InstructionResult();
       const memory = new Memory();
@@ -308,7 +308,7 @@ describe("LoadOps", () => {
     });
   });
 
-  describe("load inaccessible segments (signed)", () => {
+  describe("try load inaccessible segments (signed)", () => {
     it("should set FAULT status in instructionResult", () => {
       const instructionResult = new InstructionResult();
       const memory = new Memory();

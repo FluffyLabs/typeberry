@@ -1,5 +1,7 @@
 import { PAGE_SIZE, ZERO } from "../memory-conts";
 
+export const MUTABLE_ZERO = new Uint8Array([0, 0, 0, 0]); // to avoid allocation
+
 export class BasicMemory {
   private data = new Uint8Array();
 
@@ -12,16 +14,15 @@ export class BasicMemory {
   }
 
   load(index: number, length: 1 | 2 | 4) {
-    if (index < this.data.length - length) {
+    if (index + length <= this.data.length) {
       return this.data.subarray(index, index + length);
     }
 
-    if (this.data.length - length < index && index >= this.data.length) {
-      // is it okay to return a result that is shorter than {length}?
-      const result = new Uint8Array(length);
-      const firstPart = this.data.subarray(this.data.length - length, this.data.length);
-      result.fill(0);
+    if (index < this.data.length && index + length >= this.data.length) {
+      const result = MUTABLE_ZERO;
+      const firstPart = this.data.subarray(index, this.data.length);
       result.set(firstPart);
+      result.fill(0, firstPart.length, length);
       return result;
     }
 
@@ -55,6 +56,10 @@ export class BasicMemory {
         }
         currentBlock = null;
       }
+    }
+
+    if (currentBlock) {
+      result.push({ ...currentBlock, contents: new Uint8Array(currentBlock?.contents) });
     }
 
     return result;
