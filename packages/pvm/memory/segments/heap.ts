@@ -26,7 +26,7 @@ export class Heap {
     const newHeapSize = size + currentHeapSize; // can overflow
 
     if (newHeapSize >= this.endOfHeap) {
-      // OoM
+      // OoM, I have no idea how to handle that PANIC? NOOP?
     }
 
     if (newHeapSize > this.beginnigOfHeap + this.data.length) {

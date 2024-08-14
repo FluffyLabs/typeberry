@@ -34,6 +34,9 @@ export class BasicMemory {
   }
 
   resize(newSize: number) {
+    if (newSize <= this.data.length) {
+      return;
+    }
     const newData = new Uint8Array(newSize);
     newData.set(this.data);
     this.data = newData;
