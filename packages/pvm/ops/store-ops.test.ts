@@ -6,6 +6,7 @@ import { InstructionResult } from "../instruction-result";
 import { Memory } from "../memory";
 import { SEGMENT_SIZE } from "../memory/memory-conts";
 import { Registers } from "../registers";
+import { Result } from "../result";
 import { StoreOps } from "./store-ops";
 
 describe("StoreOps", () => {
@@ -290,6 +291,32 @@ describe("StoreOps", () => {
       storeOps.storeIndU32(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
 
       assert.deepStrictEqual(memory.getMemoryDump(), expectedMemory);
+    });
+  });
+
+  describe("try store in inaccessible segments", () => {
+    it("should set FAULT status in instructionResult", () => {
+      const instructionResult = new InstructionResult();
+      const memory = new Memory();
+      const registers = new Registers();
+      const storeOps = new StoreOps(registers, memory, instructionResult);
+      const inaccessibleAddress = 0;
+
+      storeOps.storeU8(inaccessibleAddress, 0);
+
+      assert.strictEqual(instructionResult.status, Result.FAULT);
+    });
+
+    it("should set fault address in instructionResult.exitParam", () => {
+      const instructionResult = new InstructionResult();
+      const memory = new Memory();
+      const registers = new Registers();
+      const storeOps = new StoreOps(registers, memory, instructionResult);
+      const inaccessibleAddress = 0;
+
+      storeOps.storeU8(inaccessibleAddress, 0);
+
+      assert.strictEqual(instructionResult.exitParam, inaccessibleAddress);
     });
   });
 });

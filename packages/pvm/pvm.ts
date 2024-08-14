@@ -242,7 +242,6 @@ export class Pvm {
   }
 
   getMemoryPage(pageNumber: number): Uint8Array | null {
-    // return this.memory.getPageDump(pageNumber);
-    return null;
+    return this.memory.getPageDump(pageNumber);
   }
 }

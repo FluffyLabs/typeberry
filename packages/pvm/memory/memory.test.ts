@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { describe } from "node:test";
+import { describe, it } from "node:test";
 
 import { Memory } from "./memory";
 import { PAGE_SIZE, SEGMENT_SIZE } from "./memory-conts";
@@ -99,12 +99,24 @@ describe("Memory", () => {
   // });
 
   describe("Memory.getPageDump", () => {
-    const memory = new Memory();
-    memory.setupMemory(new Uint8Array([0xff, 0xee, 0xdd, 0xcc]), new Uint8Array(), 0, 0);
-    const expectedBytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
+    it("should return dump of first page of readonly segment", () => {
+      const memory = new Memory();
+      memory.setupMemory(new Uint8Array([0xff, 0xee, 0xdd, 0xcc]), new Uint8Array(), 0, 0);
+      const expectedBytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
 
-    const pageDump = memory.getPageDump(SEGMENT_SIZE / PAGE_SIZE);
+      const pageDump = memory.getPageDump(SEGMENT_SIZE / PAGE_SIZE);
 
-    assert.deepStrictEqual(pageDump, expectedBytes);
+      assert.deepStrictEqual(pageDump, expectedBytes);
+    });
+
+    it("should return null in case of inaccessible address", () => {
+      const memory = new Memory();
+      memory.setupMemory(new Uint8Array([0xff, 0xee, 0xdd, 0xcc]), new Uint8Array(), 0, 0);
+      const expectedBytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
+
+      const pageDump = memory.getPageDump(0);
+
+      assert.deepStrictEqual(pageDump, null);
+    });
   });
 });

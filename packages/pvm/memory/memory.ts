@@ -73,7 +73,11 @@ export class Memory {
 
   getPageDump(index: number) {
     const address = index * PAGE_SIZE;
-    const segment = this.getSegmentByAddress(address);
-    return segment.getPageDump(index);
+    try {
+      const segment = this.getSegmentByAddress(address);
+      return segment.getPageDump(index);
+    } catch {
+      return null;
+    }
   }
 }

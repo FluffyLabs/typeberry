@@ -28,11 +28,6 @@ export class LoadOps {
   private loadSignedNumber(address: number, registerIndex: number, numberLength: 1 | 2) {
     try {
       const bytes = this.memory.load(address, numberLength);
-      if (!bytes) {
-        this.instructionResult.status = Result.FAULT;
-        this.instructionResult.exitParam = address;
-        return;
-      }
       const msb = bytes[numberLength - 1] & 0x80;
       if (msb > 0) {
         const result = new Uint8Array(4);

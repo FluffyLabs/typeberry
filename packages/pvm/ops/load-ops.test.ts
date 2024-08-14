@@ -6,6 +6,7 @@ import { InstructionResult } from "../instruction-result";
 import { Memory } from "../memory";
 import { SEGMENT_SIZE } from "../memory/memory-conts";
 import { Registers } from "../registers";
+import { Result } from "../result";
 import { LoadOps } from "./load-ops";
 
 const RESULT_REGISTER = 12;
@@ -278,6 +279,58 @@ describe("LoadOps", () => {
 
       assert.deepStrictEqual(registers.asSigned[secondRegisterIndex], expectedSignedValue);
       assert.deepStrictEqual(registers.asUnsigned[secondRegisterIndex], expectedUnsignedValue);
+    });
+  });
+
+  describe("load inaccessible segments (unsigned)", () => {
+    it("should set FAULT status in instructionResult", () => {
+      const instructionResult = new InstructionResult();
+      const memory = new Memory();
+      const registers = new Registers();
+      const loadOps = new LoadOps(registers, memory, instructionResult);
+      const inaccessibleAddress = 0;
+
+      loadOps.loadU8(inaccessibleAddress, 0);
+
+      assert.strictEqual(instructionResult.status, Result.FAULT);
+    });
+
+    it("should set fault address in instructionResult.exitParam", () => {
+      const instructionResult = new InstructionResult();
+      const memory = new Memory();
+      const registers = new Registers();
+      const loadOps = new LoadOps(registers, memory, instructionResult);
+      const inaccessibleAddress = 0;
+
+      loadOps.loadU8(inaccessibleAddress, 0);
+
+      assert.strictEqual(instructionResult.exitParam, inaccessibleAddress);
+    });
+  });
+
+  describe("load inaccessible segments (signed)", () => {
+    it("should set FAULT status in instructionResult", () => {
+      const instructionResult = new InstructionResult();
+      const memory = new Memory();
+      const registers = new Registers();
+      const loadOps = new LoadOps(registers, memory, instructionResult);
+      const inaccessibleAddress = 0;
+
+      loadOps.loadI8(inaccessibleAddress, 0);
+
+      assert.strictEqual(instructionResult.status, Result.FAULT);
+    });
+
+    it("should set fault address in instructionResult.exitParam", () => {
+      const instructionResult = new InstructionResult();
+      const memory = new Memory();
+      const registers = new Registers();
+      const loadOps = new LoadOps(registers, memory, instructionResult);
+      const inaccessibleAddress = 0;
+
+      loadOps.loadI8(inaccessibleAddress, 0);
+
+      assert.strictEqual(instructionResult.exitParam, inaccessibleAddress);
     });
   });
 });
