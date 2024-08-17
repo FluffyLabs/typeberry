@@ -1,16 +1,19 @@
-import { STACK_SEGMENT } from "../memory-conts";
+import { ONE_MB, STACK_SEGMENT } from "../memory-conts";
 import { increaseToPageSize } from "../memory-utils";
 import { BasicMemory } from "./basic-memory";
 
 export class Stack {
-  private data = new BasicMemory();
+  private data: BasicMemory;
   private endOfStack = STACK_SEGMENT;
+  private stackSize = 0;
 
-  setup(size: number) {
-    const stackSize = increaseToPageSize(size);
-    const stack = new Uint8Array(stackSize);
-    this.data.setup(stack);
-    this.endOfStack = STACK_SEGMENT - stackSize;
+  constructor() {
+    this.data = new BasicMemory(16 * ONE_MB);
+  }
+
+  set(size: number) {
+    this.stackSize = increaseToPageSize(size);
+    this.endOfStack = STACK_SEGMENT - this.stackSize;
   }
 
   isStackAddress(address: number) {

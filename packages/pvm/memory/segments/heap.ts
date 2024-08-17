@@ -1,20 +1,23 @@
-import { PAGE_SIZE, SEGMENT_SIZE } from "../memory-conts";
+import { ONE_GB, PAGE_SIZE, SEGMENT_SIZE } from "../memory-conts";
 import { increaseToPageSize, increaseToSegmentSize } from "../memory-utils";
 import { BasicMemory } from "./basic-memory";
 
 export class Heap {
-  private data = new BasicMemory();
+  private data: BasicMemory;
+  private heapSize = 0;
   private beginnigOfHeap = 2 * SEGMENT_SIZE;
   private endOfHeap = 0;
 
-  setup(readOnlyData: Uint8Array, initialHeap: Uint8Array, noOfHeapPages: number) {
-    const heapSize = increaseToPageSize(initialHeap.length);
-    const heap = new Uint8Array(heapSize);
-    heap.set(initialHeap);
-    this.data.setup(heap);
+  constructor() {
+    this.data = new BasicMemory(ONE_GB);
+  }
+
+  set(readOnlyData: Uint8Array, initialHeap: Uint8Array, noOfHeapPages: number) {
+    this.heapSize = increaseToPageSize(initialHeap.length);
+    this.data.set(initialHeap);
     this.beginnigOfHeap = 2 * SEGMENT_SIZE + increaseToSegmentSize(readOnlyData.length);
     this.endOfHeap =
-      2 * SEGMENT_SIZE + increaseToSegmentSize(readOnlyData.length) + heapSize + noOfHeapPages * PAGE_SIZE;
+      2 * SEGMENT_SIZE + increaseToSegmentSize(readOnlyData.length) + this.heapSize + noOfHeapPages * PAGE_SIZE;
   }
 
   isHeapAddress(address: number) {
@@ -22,15 +25,15 @@ export class Heap {
   }
 
   sbrk(size: number) {
-    const currentHeapSize = this.data.length;
+    const currentHeapSize = this.heapSize;
     const newHeapSize = size + currentHeapSize; // can overflow
 
     if (newHeapSize >= this.endOfHeap) {
       // OoM, I have no idea how to handle that PANIC? NOOP?
     }
 
-    if (newHeapSize > this.beginnigOfHeap + this.data.length) {
-      this.data.resize(increaseToPageSize(newHeapSize));
+    if (newHeapSize > this.beginnigOfHeap + currentHeapSize) {
+      this.heapSize = increaseToPageSize(newHeapSize);
     }
 
     return currentHeapSize;

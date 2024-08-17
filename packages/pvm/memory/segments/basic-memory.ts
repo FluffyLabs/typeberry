@@ -1,45 +1,23 @@
-import { PAGE_SIZE, ZERO } from "../memory-conts";
-
-export const MUTABLE_ZERO = new Uint8Array([0, 0, 0, 0]); // to avoid allocation
+import { PAGE_SIZE } from "../memory-conts";
 
 export class BasicMemory {
-  private data = new Uint8Array();
+  private data: Uint8Array;
 
-  get length() {
-    return this.data.length;
+  constructor(initialSize: number) {
+    const buffer = new ArrayBuffer(initialSize);
+    this.data = new Uint8Array(buffer);
   }
 
-  setup(bytes: Uint8Array) {
-    this.data = bytes;
+  set(bytes: Uint8Array) {
+    this.data.set(bytes);
   }
 
   load(index: number, length: 1 | 2 | 4) {
-    if (index + length <= this.data.length) {
-      return this.data.subarray(index, index + length);
-    }
-
-    if (index < this.data.length && index + length >= this.data.length) {
-      const result = MUTABLE_ZERO;
-      const firstPart = this.data.subarray(index, this.data.length);
-      result.set(firstPart);
-      result.fill(0, firstPart.length, length);
-      return result;
-    }
-
-    return ZERO.subarray(0, length);
+    return this.data.subarray(index, index + length);
   }
 
   store(index: number, bytes: Uint8Array) {
     this.data.set(bytes, index);
-  }
-
-  resize(newSize: number) {
-    if (newSize <= this.data.length) {
-      return;
-    }
-    const newData = new Uint8Array(newSize);
-    newData.set(this.data);
-    this.data = newData;
   }
 
   getMemoryDump(addressOffset: number) {

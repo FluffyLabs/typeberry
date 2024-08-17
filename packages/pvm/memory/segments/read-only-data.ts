@@ -1,13 +1,17 @@
-import { SEGMENT_SIZE } from "../memory-conts";
+import { ONE_MB, SEGMENT_SIZE } from "../memory-conts";
 import { increaseToPageSize } from "../memory-utils";
 import { BasicMemory } from "./basic-memory";
 
 export class ReadOnlyData {
-  private data = new BasicMemory();
+  private data: BasicMemory;
   private endOfReadOnlyDataSegment = SEGMENT_SIZE;
 
-  setup(readOnlyData: Uint8Array) {
-    this.data.setup(readOnlyData);
+  constructor() {
+    this.data = new BasicMemory(16 * ONE_MB);
+  }
+
+  set(readOnlyData: Uint8Array) {
+    this.data.set(readOnlyData);
     this.endOfReadOnlyDataSegment = SEGMENT_SIZE + increaseToPageSize(readOnlyData.length);
   }
 

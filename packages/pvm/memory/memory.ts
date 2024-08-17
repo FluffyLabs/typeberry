@@ -9,13 +9,13 @@ export class Memory {
   private additionalReadOnlyData = new AdditionalReadOnlyData();
 
   setupMemory(readOnlyData: Uint8Array, initialHeap: Uint8Array, stackSize: number, noOfHeapPages: number) {
-    this.readOnlyData.setup(readOnlyData);
-    this.heap.setup(readOnlyData, initialHeap, noOfHeapPages);
-    this.stack.setup(stackSize);
+    this.readOnlyData.set(readOnlyData);
+    this.heap.set(readOnlyData, initialHeap, noOfHeapPages);
+    this.stack.set(stackSize);
   }
 
   setupAdditionalReadOnlySegment(readOnlyData: Uint8Array) {
-    this.additionalReadOnlyData.setup(readOnlyData);
+    this.additionalReadOnlyData.set(readOnlyData);
   }
 
   sbrk(size: number) {
