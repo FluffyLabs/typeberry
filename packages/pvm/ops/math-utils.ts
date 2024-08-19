@@ -92,6 +92,9 @@ export function mulUpperUnsigned(a: number, b: number) {
   return highHigh + (lowLow >> 16) + (highLow >> 16) + (carry >> 16);
 }
 
+/**
+ * Same as [mulUpperUnsigned] but treat the arguments as signed (two-complement) 32-bit numbers and the result alike.
+ */
 export function mulUpperSigned(a: number, b: number) {
   const sign = Math.sign(a) * Math.sign(b);
   const aAbs = a < 0 ? ~a + 1 : a;
