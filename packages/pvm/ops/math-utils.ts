@@ -56,6 +56,19 @@ export function mulUnsigned(a: number, b: number) {
   return a * b;
 }
 
+/**
+ * Multiply two unsigned 32-bit numbers and take the upper 32-bits of the result.
+ *  
+ * The result of multiplication is a 64-bits number and we are only interested in the part that lands in the upper 32-bits.
+ * For example if we multiply `0xffffffff * 0xffffffff`, we get:
+ 
+ * |   32-bits  |   32-bits  |
+ * +------------+------------+
+ * |    upper   |    lower   |
+ * | 0xfffffffe | 0x00000001 |
+ *
+ * So `0xfffffffe` is returned.
+ */
 export function mulUpperUnsigned(a: number, b: number) {
   const aHigh = a >> 16;
   const aLow = a & 0xffff;
