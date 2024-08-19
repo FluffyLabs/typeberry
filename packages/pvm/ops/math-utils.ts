@@ -11,6 +11,9 @@ export function add(a: number, b: number) {
   return a + b;
 }
 
+/**
+ * Overflowing subtraction for two-complement representation of 32-bit signed numbers.
+ */ 
 export function sub(a: number, b: number) {
   if (a > b) {
     return MAX_VALUE - a + b + 1;
