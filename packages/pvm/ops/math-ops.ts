@@ -1,12 +1,12 @@
 import type { Registers } from "../registers";
 import { MAX_VALUE, MIN_VALUE } from "./math-consts";
-import { add, mulUnsigned, mulUpperSigned, mulUpperUnsigned, sub } from "./math-utils";
+import { add, mulLowerUnsigned, mulUpperSigned, mulUpperUnsigned, sub } from "./math-utils";
 
 export class MathOps {
   constructor(private regs: Registers) {}
 
   add(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.addImmediate(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
+    this.regs.asUnsigned[resultIndex] = add(this.regs.asUnsigned[firstIndex], this.regs.asUnsigned[secondIndex]);
   }
 
   addImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
@@ -14,23 +14,29 @@ export class MathOps {
   }
 
   mul(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.mulImmediate(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
+    this.regs.asUnsigned[resultIndex] = mulLowerUnsigned(
+      this.regs.asUnsigned[firstIndex],
+      this.regs.asUnsigned[secondIndex],
+    );
   }
 
   mulUpperUU(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.mulUpperUUImmediate(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
+    this.regs.asUnsigned[resultIndex] = mulUpperUnsigned(
+      this.regs.asUnsigned[firstIndex],
+      this.regs.asUnsigned[secondIndex],
+    );
   }
 
   mulUpperSS(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.mulUpperSSImmediate(firstIndex, this.regs.asSigned[secondIndex], resultIndex);
+    this.regs.asSigned[resultIndex] = mulUpperSigned(this.regs.asSigned[firstIndex], this.regs.asSigned[secondIndex]);
   }
 
   mulUpperSU(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.mulUpperSSImmediate(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
+    this.regs.asSigned[resultIndex] = mulUpperSigned(this.regs.asSigned[firstIndex], this.regs.asUnsigned[secondIndex]);
   }
 
   mulImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = mulUnsigned(this.regs.asUnsigned[firstIndex], immediateValue);
+    this.regs.asUnsigned[resultIndex] = mulLowerUnsigned(this.regs.asUnsigned[firstIndex], immediateValue);
   }
 
   mulUpperSSImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
@@ -42,7 +48,7 @@ export class MathOps {
   }
 
   sub(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.negAddImmediate(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
+    this.regs.asUnsigned[resultIndex] = sub(this.regs.asUnsigned[firstIndex], this.regs.asUnsigned[secondIndex]);
   }
 
   negAddImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {

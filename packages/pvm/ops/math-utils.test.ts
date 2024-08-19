@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { MAX_VALUE } from "./math-consts";
-import { add, mulUnsigned, mulUpperSigned, mulUpperUnsigned, sub } from "./math-utils";
+import { add, mulLowerUnsigned, mulUpperSigned, mulUpperUnsigned, sub } from "./math-utils";
 
 describe("math-utils", () => {
   describe("add", () => {
@@ -75,7 +75,7 @@ describe("math-utils", () => {
       const b = 6;
       const expectedResult = 30;
 
-      const result = mulUnsigned(a, b);
+      const result = mulLowerUnsigned(a, b);
 
       assert.strictEqual(result, expectedResult);
     });
@@ -85,7 +85,7 @@ describe("math-utils", () => {
       const b = 2 ** 18;
       const expectedResult = 262144;
 
-      const result = mulUnsigned(a, b);
+      const result = mulLowerUnsigned(a, b);
 
       assert.strictEqual(result, expectedResult);
     });
