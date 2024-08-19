@@ -15,6 +15,8 @@ const decoder = new LittleEndianDecoder();
  * z - heap pages filled with zeros
  * s - stack size
  * c - program code
+ *
+ * GP reference: https://graypaper.fluffylabs.dev/#WyIxYjA4MWZlM2U3IiwiMjciLG51bGwsbnVsbCxbIjxkaXYgY2xhc3M9XCJ0IG0wIHgxMCBoNiB5MTUzMCBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiIsIjxkaXYgY2xhc3M9XCJ0IG0wIHgxMCBoNiB5MTUzOCBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
  */
 
 const READONLY_LENGTH_INDEX = 0;
