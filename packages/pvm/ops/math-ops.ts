@@ -1,70 +1,58 @@
 import type { Registers } from "../registers";
-import { MAX_SHIFT, MAX_VALUE, MIN_VALUE } from "./math-consts";
+import { MAX_VALUE, MIN_VALUE } from "./math-consts";
+import { add, mulLowerUnsigned, mulUpperSigned, mulUpperUnsigned, sub } from "./math-utils";
 
 export class MathOps {
   constructor(private regs: Registers) {}
 
   add(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.addImmediate(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
+    this.regs.asUnsigned[resultIndex] = add(this.regs.asUnsigned[firstIndex], this.regs.asUnsigned[secondIndex]);
   }
 
   addImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    if (this.regs.asUnsigned[firstIndex] > MAX_VALUE - immediateValue) {
-      this.regs.asUnsigned[resultIndex] =
-        MAX_VALUE -
-        Math.max(this.regs.asUnsigned[firstIndex], immediateValue) +
-        Math.min(this.regs.asUnsigned[firstIndex], immediateValue) -
-        1;
-    } else {
-      this.regs.asUnsigned[resultIndex] = this.regs.asUnsigned[firstIndex] + immediateValue;
-    }
+    this.regs.asUnsigned[resultIndex] = add(this.regs.asUnsigned[firstIndex], immediateValue);
   }
 
   mul(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.mulImmediate(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
+    this.regs.asUnsigned[resultIndex] = mulLowerUnsigned(
+      this.regs.asUnsigned[firstIndex],
+      this.regs.asUnsigned[secondIndex],
+    );
   }
 
   mulUpperUU(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.mulUpperUUImmediate(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
+    this.regs.asUnsigned[resultIndex] = mulUpperUnsigned(
+      this.regs.asUnsigned[firstIndex],
+      this.regs.asUnsigned[secondIndex],
+    );
   }
 
   mulUpperSS(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.mulUpperSSImmediate(firstIndex, this.regs.asSigned[secondIndex], resultIndex);
+    this.regs.asSigned[resultIndex] = mulUpperSigned(this.regs.asSigned[firstIndex], this.regs.asSigned[secondIndex]);
   }
 
   mulUpperSU(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.mulUpperSSImmediate(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
+    this.regs.asSigned[resultIndex] = mulUpperSigned(this.regs.asSigned[firstIndex], this.regs.asUnsigned[secondIndex]);
   }
 
   mulImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    if (this.regs.asUnsigned[firstIndex] > MAX_VALUE / immediateValue) {
-      const result = (BigInt(this.regs.asUnsigned[firstIndex]) * BigInt(immediateValue)) % 2n ** 32n;
-      this.regs.asUnsigned[resultIndex] = Number(result);
-    } else {
-      this.regs.asUnsigned[resultIndex] = this.regs.asUnsigned[firstIndex] * immediateValue;
-    }
+    this.regs.asUnsigned[resultIndex] = mulLowerUnsigned(this.regs.asUnsigned[firstIndex], immediateValue);
   }
 
   mulUpperSSImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    const result = (BigInt(this.regs.asSigned[firstIndex]) * BigInt(immediateValue)) >> BigInt(MAX_SHIFT);
-    this.regs.asSigned[resultIndex] = Number(result % 2n ** 32n);
+    this.regs.asSigned[resultIndex] = mulUpperSigned(this.regs.asSigned[firstIndex], immediateValue);
   }
 
   mulUpperUUImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    const result = (BigInt(this.regs.asUnsigned[firstIndex]) * BigInt(immediateValue)) >> BigInt(MAX_SHIFT);
-    this.regs.asUnsigned[resultIndex] = Number(result % 2n ** 32n);
+    this.regs.asUnsigned[resultIndex] = mulUpperUnsigned(this.regs.asUnsigned[firstIndex], immediateValue);
   }
 
   sub(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.negAddImmediate(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
+    this.regs.asUnsigned[resultIndex] = sub(this.regs.asUnsigned[firstIndex], this.regs.asUnsigned[secondIndex]);
   }
 
   negAddImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    if (this.regs.asUnsigned[firstIndex] > immediateValue) {
-      this.regs.asUnsigned[resultIndex] = MAX_VALUE - this.regs.asUnsigned[firstIndex] + immediateValue + 1;
-    } else {
-      this.regs.asUnsigned[resultIndex] = immediateValue - this.regs.asUnsigned[firstIndex];
-    }
+    this.regs.asUnsigned[resultIndex] = sub(this.regs.asUnsigned[firstIndex], immediateValue);
   }
 
   divSigned(firstIndex: number, secondIndex: number, resultIndex: number) {
