@@ -38,7 +38,15 @@ export function sub(a: number, b: number) {
 
 const MUL_THRESHOLD = 2 ** 16;
 
-export function mulUnsigned(a: number, b: number) {
+/**
+ * Efficiently multiply the two given numbers modulo 2**32 (i.e. lower 32-bit part of the multiplication).
+ * 
+ * In case the numbers fit into 2**32 we simply calculate their multiplication.
+ * In case the numbers are larger we split them into higher and lower bits
+ * and perform the multiplication separately to make sure we don't overflow
+ * the 2**32 and `MAX_SAFE_INTEGER`.
+ */
+export function mulLowerUnsigned(a: number, b: number) {
   if (a > MUL_THRESHOLD || b > MUL_THRESHOLD) {
     const aHigh = a >> 16;
     const aLow = a & 0xffff;
