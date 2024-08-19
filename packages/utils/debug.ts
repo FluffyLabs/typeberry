@@ -24,7 +24,7 @@ function cast<T, U extends T>(a: T, condition: boolean): a is U {
  * should be replaced with:
  * const x = y as CheckedNumber;
  */
-export function checkAndType<T, U extends T>(a: T, condition: boolean, message?: string): U {
+export function ensure<T, U extends T>(a: T, condition: boolean, message?: string): U {
   if (cast<T, U>(a, condition)) {
     return a;
   }

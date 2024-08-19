@@ -1,5 +1,5 @@
 import { LittleEndianDecoder } from "@typeberry/jam-codec/little-endian-decoder";
-import { type Opaque, checkAndType } from "@typeberry/utils";
+import { type Opaque, ensure } from "@typeberry/utils";
 
 import { ARGS_SEGMENT, DATA_LEGNTH, LAST_PAGE, PAGE_SIZE, SEGMENT_SIZE, STACK_SEGMENT } from "./memory-conts";
 import { alignToPageSize, alignToSegmentSize } from "./memory-utils";
@@ -31,21 +31,13 @@ type InputLength = Opaque<number, "Number that is lower than 2 ** 24 (Z_I from G
 export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {
   const oLength = decoder.decodeU32(program.subarray(READONLY_LENGTH_INDEX, HEAP_LENGTH_INDEX));
   const wLength = decoder.decodeU32(program.subarray(HEAP_LENGTH_INDEX, NO_OF_HEAP_PAGES_INDEX));
-  const argsLength = checkAndType<number, InputLength>(
-    args.length,
-    args.length <= DATA_LEGNTH,
-    "Incorrect arguments length",
-  );
-  const readOnlyLength = checkAndType<number, InputLength>(
+  const argsLength = ensure<number, InputLength>(args.length, args.length <= DATA_LEGNTH, "Incorrect arguments length");
+  const readOnlyLength = ensure<number, InputLength>(
     oLength,
     oLength <= DATA_LEGNTH,
     "Incorrect readonly segment length",
   );
-  const heapLength = checkAndType<number, InputLength>(
-    wLength,
-    wLength <= DATA_LEGNTH,
-    "Incorrect heap segment length",
-  );
+  const heapLength = ensure<number, InputLength>(wLength, wLength <= DATA_LEGNTH, "Incorrect heap segment length");
   const noOfHeapZerosPages = decoder.decodeU32(program.subarray(NO_OF_HEAP_PAGES_INDEX, STACK_SIZE_INDEX));
   const stackSize = decoder.decodeU32(program.subarray(STACK_SIZE_INDEX, READONLY_DATA_INDEX));
   const heapIndex = READONLY_DATA_INDEX + readOnlyLength;
