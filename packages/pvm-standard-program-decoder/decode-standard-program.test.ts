@@ -1,5 +1,5 @@
-import { describe, it } from "node:test";
 import assert from "node:assert";
+import { describe, it } from "node:test";
 import { decodeStandardProgram } from "./decode-standard-program";
 
 const O_LENGTH = new Uint8Array([0x04, 0x00, 0x00]); // E_3(|o|) = 04 00 00
@@ -17,48 +17,48 @@ const ARGS = new Uint8Array([0x1, 0x2, 0x3]);
 describe("decodeStandardProgram", () => {
   const decodedProgram = decodeStandardProgram(PROGRAM, ARGS);
 
-    it("should exctract code correctly", () => {
-        assert.deepStrictEqual(decodedProgram.code, C);
-    });
+  it("should exctract code correctly", () => {
+    assert.deepStrictEqual(decodedProgram.code, C);
+  });
 
-    it("should write args length to 12th register", () => {
-        const registerIndex = 11;
+  it("should write args length to 12th register", () => {
+    const registerIndex = 11;
 
-        assert.strictEqual(decodedProgram.registers[registerIndex], ARGS.length);
-    });
+    assert.strictEqual(decodedProgram.registers[registerIndex], ARGS.length);
+  });
 
-    it("should prepare readable memory segments", () => {
-        const expectedMemory = [
-            {
-              start: 65536,
-              end: 65540,
-              data: O
-            },
-            { start: 65540, end: 81920, data: null },
-            {
-              start: 4278124544,
-              end: 4278124547,
-              data: ARGS
-            },
-            { start: 4278124547, end: 4278140931, data: null }
-          ];
+  it("should prepare readable memory segments", () => {
+    const expectedMemory = [
+      {
+        start: 65536,
+        end: 65540,
+        data: O,
+      },
+      { start: 65540, end: 81920, data: null },
+      {
+        start: 4278124544,
+        end: 4278124547,
+        data: ARGS,
+      },
+      { start: 4278124547, end: 4278140931, data: null },
+    ];
 
-          assert.deepStrictEqual(decodedProgram.memory.readable, expectedMemory);
-    });
+    assert.deepStrictEqual(decodedProgram.memory.readable, expectedMemory);
+  });
 
-    it("should prepare writeable memory segments", () => {
-        const expectedMemory = [
-            { start: 196608, end: 196610, data: W },
-            { start: 196610, end: 262144, data: null },
-            { start: 4278042624, end: 4278059008, data: null }
-          ]
+  it("should prepare writeable memory segments", () => {
+    const expectedMemory = [
+      { start: 196608, end: 196610, data: W },
+      { start: 196610, end: 262144, data: null },
+      { start: 4278042624, end: 4278059008, data: null },
+    ];
 
-          assert.deepStrictEqual(decodedProgram.memory.writeable, expectedMemory);
-    });
+    assert.deepStrictEqual(decodedProgram.memory.writeable, expectedMemory);
+  });
 
-    it("sbrkIndex", () => {
-        const expectedSbreak = 262144;
+  it("sbrkIndex", () => {
+    const expectedSbreak = 262144;
 
-        assert.strictEqual(decodedProgram.memory.sbrkIndex, expectedSbreak);
-    });
+    assert.strictEqual(decodedProgram.memory.sbrkIndex, expectedSbreak);
+  });
 });
