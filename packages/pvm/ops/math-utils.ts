@@ -1,7 +1,21 @@
 import { MAX_VALUE } from "./math-consts";
 
+/**
+ * Overflowing addition for two-complement representation of 32-bit signed numbers.
+ */
 export function add(a: number, b: number) {
   if (a > MAX_VALUE - b) {
+    /**
+     * MAX_VALUE is equal to 2 ** 32 - 1
+     * MAX_VALUE - ( (MAX_VALUE - a) + (MAX_VALUE - b) ) - 1
+     * = MAX_VALUE - (2MAX_VALUE - a - b) -1
+     * = MAX_VALUE - 2MAX_VALUE + a + b - 1
+     * = a + b - MAX_VALUE - 1
+     * = a + b - 2 ** 32
+     * but we know that 2MAX_VALUE > a + b > MAX_VALUE so in this case:
+     * a + b - 2 ** 32 <=> (a + b) % 2 ** 32
+     * = (a + b) % (MAX_VALUE + 1)
+     */
     const spaceToMaxA = MAX_VALUE - a;
     const spaceToMaxB = MAX_VALUE - b;
     const overflowSum = spaceToMaxA + spaceToMaxB;
@@ -13,7 +27,7 @@ export function add(a: number, b: number) {
 
 /**
  * Overflowing subtraction for two-complement representation of 32-bit signed numbers.
- */ 
+ */
 export function sub(a: number, b: number) {
   if (a > b) {
     return MAX_VALUE - a + b + 1;
@@ -22,8 +36,10 @@ export function sub(a: number, b: number) {
   return b - a;
 }
 
+const MUL_THRESHOLD = 2 ** 16;
+
 export function mulUnsigned(a: number, b: number) {
-  if (a > MAX_VALUE / b) {
+  if (a > MUL_THRESHOLD || b > MUL_THRESHOLD) {
     const aHigh = a >> 16;
     const aLow = a & 0xffff;
     const bHigh = b >> 16;
