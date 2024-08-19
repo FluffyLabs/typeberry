@@ -2,8 +2,9 @@ import { LittleEndianDecoder } from "@typeberry/jam-codec/little-endian-decoder"
 import { type Opaque, checkAndType } from "@typeberry/utils";
 
 import { ARGS_SEGMENT, DATA_LEGNTH, LAST_PAGE, PAGE_SIZE, SEGMENT_SIZE, STACK_SEGMENT } from "./memory-conts";
-import { increaseToPageSize, increaseToSegmentSize } from "./memory-utils";
+import { alignToPageSize, alignToSegmentSize } from "./memory-utils";
 
+const NO_OF_REGISTERS = 13;
 const decoder = new LittleEndianDecoder();
 
 /**
@@ -57,15 +58,15 @@ export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {
 
   const readonlyDataStart = SEGMENT_SIZE;
   const readonlyDataEnd = SEGMENT_SIZE + readOnlyLength;
-  const readOnlyZerosEnd = SEGMENT_SIZE + increaseToPageSize(readOnlyLength);
-  const heapDataStart = 2 * SEGMENT_SIZE + increaseToSegmentSize(readOnlyLength);
+  const readOnlyZerosEnd = SEGMENT_SIZE + alignToPageSize(readOnlyLength);
+  const heapDataStart = 2 * SEGMENT_SIZE + alignToSegmentSize(readOnlyLength);
   const heapDataEnd = heapDataStart + heapLength;
-  const heapZerosEnd = heapDataStart + increaseToPageSize(heapLength) + noOfHeapZerosPages * PAGE_SIZE;
-  const stackStart = STACK_SEGMENT - increaseToPageSize(stackSize);
+  const heapZerosEnd = heapDataStart + alignToPageSize(heapLength) + noOfHeapZerosPages * PAGE_SIZE;
+  const stackStart = STACK_SEGMENT - alignToPageSize(stackSize);
   const stackEnd = STACK_SEGMENT;
   const argsStart = ARGS_SEGMENT;
   const argsEnd = argsStart + argsLength;
-  const argsZerosEnd = argsEnd + increaseToPageSize(argsLength);
+  const argsZerosEnd = argsEnd + alignToPageSize(argsLength);
 
   return {
     code,
@@ -93,8 +94,9 @@ function getMemorySegment(start: number, end: number, data: Uint8Array | null = 
 }
 
 function getRegisters(argsLength: number) {
-  const regs = new Uint8Array(13);
+  const regs = new Uint8Array(NO_OF_REGISTERS);
 
+  // GP reference: https://graypaper.fluffylabs.dev/#WyIxYjA4MWZlM2U3IiwiMjciLG51bGwsbnVsbCxbIjxkaXYgY2xhc3M9XCJ0IG0wIHgxMCBoYyB5MTU5OSBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiIsIjxkaXYgY2xhc3M9XCJ0IG0wIHgxMCBoYyB5MTU5OSBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
   regs[1] = LAST_PAGE;
   regs[2] = STACK_SEGMENT;
   regs[10] = ARGS_SEGMENT;
