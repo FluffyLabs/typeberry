@@ -166,7 +166,7 @@ export class ArgsDecoder {
         const firstByte = this.code[pc + 1];
         this.nibblesDecoder.setByte(firstByte);
         result.firstRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
-        const immediateLength = this.nibblesDecoder.getHighNibble();
+        const immediateLength = this.nibblesDecoder.getHighNibbleAsLength();
         result.immediateDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + immediateLength));
         const offsetLength = this.mask.getNoOfBytesToNextInstruction(pc + 2 + immediateLength);
         this.offsetDecoder.setBytes(

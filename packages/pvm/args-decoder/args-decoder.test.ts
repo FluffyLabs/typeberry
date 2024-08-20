@@ -23,7 +23,7 @@ describe("ArgsDecoder", () => {
 
   it("return correct result for instruction with 1 immediate", () => {
     const code = new Uint8Array([Instruction.ECALLI, 0xff]);
-    const mask = new Mask(new Uint8Array([0b1111_1111]));
+    const mask = new Mask(new Uint8Array([0b1111_1101]));
     const argsDecoder = new ArgsDecoder(code, mask);
     const expectedImmediateDecoder = new ImmediateDecoder();
     expectedImmediateDecoder.setBytes(new Uint8Array([0xff]));
@@ -99,7 +99,7 @@ describe("ArgsDecoder", () => {
 
   it("return correct result for instruction with 1 reg, 1 immediate and 1 offset", () => {
     const code = new Uint8Array([Instruction.BRANCH_EQ_IMM, 39, 210, 4, 6]);
-    const mask = new Mask(new Uint8Array([0b1111_1001]));
+    const mask = new Mask(new Uint8Array([0b1110_0001]));
     const argsDecoder = new ArgsDecoder(code, mask);
     const expectedImmediateDecoder = new ImmediateDecoder();
     expectedImmediateDecoder.setBytes(new Uint8Array([210, 4]));

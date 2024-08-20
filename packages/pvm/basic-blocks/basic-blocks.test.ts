@@ -50,6 +50,17 @@ describe("BasicBlocks", () => {
     assert.strictEqual(result, false);
   });
 
+  it("should return true for a beginning of basic block instruction that is not the first instruction after a block termination instruction that has some args", () => {
+    const mask = new Mask(new Uint8Array([0b1100_1001]));
+    const code = new Uint8Array([Instruction.BRANCH_EQ, 135, 25, Instruction.ADD, 5, 7, Instruction.TRAP]);
+    const basicBlocks = new BasicBlocks(code, mask);
+    const index = 3;
+
+    const result = basicBlocks.isBeginningOfBasicBlock(index);
+
+    assert.strictEqual(result, true);
+  });
+
   it("should return true for a termination block instruction that is the after a termination instruction", () => {
     const mask = new Mask(new Uint8Array([0b1111_1111]));
     const code = new Uint8Array([Instruction.TRAP, Instruction.TRAP]);
