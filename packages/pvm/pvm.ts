@@ -1,5 +1,7 @@
 import { ArgsDecoder } from "./args-decoder/args-decoder";
+import { createResults } from "./args-decoder/args-decoding-results";
 import { ArgumentType } from "./args-decoder/argument-type";
+import { instructionArgumentTypeMap } from "./args-decoder/instruction-argument-type-map";
 import { assemblify } from "./assemblify";
 import { BasicBlocks } from "./basic-blocks";
 import { Instruction } from "./instruction";
@@ -87,6 +89,7 @@ export class Pvm {
   private twoRegsTwoImmsDispatcher: TwoRegsTwoImmsDispatcher;
   private oneImmDispatcher: OneImmDispatcher;
   private status = Status.OK;
+  private argsDecodingResults = createResults();
 
   constructor(rawProgram: Uint8Array, initialState: InitialState = {}) {
     const programDecoder = new ProgramDecoder(rawProgram);
@@ -158,15 +161,18 @@ export class Pvm {
      * Reference: https://graypaper.fluffylabs.dev/#WyI0ODY2YjU5YmMwIiwiMjIiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEwIGgyIHkxMWQwIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeDEwIGhiIHkxMWQxIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+Il1d
      */
     const currentInstruction = this.code[this.pc] ?? Instruction.TRAP;
+
     this.gas -= instructionGasMap[currentInstruction];
 
     if (this.gas < 0) {
       this.status = Status.OUT_OF_GAS;
       return this.status;
     }
-
-    const args = this.argsDecoder.getArgs(this.pc);
+    const argsType = instructionArgumentTypeMap[currentInstruction];
+    const argsResult = this.argsDecodingResults[argsType];
+    const args = this.argsDecoder.fillArgs(this.pc, argsResult);
     this.instructionResult.nextPc = this.pc + args.noOfBytesToSkip;
+
     switch (args.type) {
       case ArgumentType.NO_ARGUMENTS:
         this.noArgsDispatcher.dispatch(currentInstruction);
