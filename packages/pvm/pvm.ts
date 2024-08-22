@@ -8,6 +8,7 @@ import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
 import { InstructionResult } from "./instruction-result";
 import { Memory } from "./memory";
+import { Memory as m } from "./memory/memory";
 import {
   BitOps,
   BooleanOps,
@@ -66,7 +67,7 @@ type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N ? A 
 type FixedArray<T, N extends number> = GrowToSize<T, N, []>;
 
 export type RegistersArray = FixedArray<number, 13>;
-
+new m();
 export class Pvm {
   private registers: Registers;
   private code: Uint8Array;
