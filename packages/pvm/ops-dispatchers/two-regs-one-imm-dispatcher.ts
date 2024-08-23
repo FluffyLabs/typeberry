@@ -1,4 +1,4 @@
-import type { TwoRegistersOneImmediateResult } from "../args-decoder/args-decoder";
+import type { TwoRegistersOneImmediateArgs } from "../args-decoder/args-decoder";
 import { Instruction } from "../instruction";
 import type { BitOps, BooleanOps, LoadOps, MathOps, MoveOps, ShiftOps, StoreOps } from "../ops";
 
@@ -13,7 +13,7 @@ export class TwoRegsOneImmDispatcher {
     private loadOps: LoadOps,
   ) {}
 
-  dispatch(instruction: Instruction, args: TwoRegistersOneImmediateResult) {
+  dispatch(instruction: Instruction, args: TwoRegistersOneImmediateArgs) {
     switch (instruction) {
       case Instruction.ADD_IMM:
         this.mathOps.addImmediate(

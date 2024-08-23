@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { test } from "node:test";
-import type { ThreeRegistersResult } from "../args-decoder/args-decoder";
+import type { ThreeRegistersArgs } from "../args-decoder/args-decoder";
 import { ArgumentType } from "../args-decoder/argument-type";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
 import { Instruction } from "../instruction";
@@ -51,7 +51,7 @@ test("ThreeRegsDispatcher", async (t) => {
     await t.test(`checks if instruction ${name} = ${instruction} is handled by ThreeRegsDispatcher`, () => {
       const threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
 
-      threeRegsDispatcher.dispatch(instruction, {} as ThreeRegistersResult);
+      threeRegsDispatcher.dispatch(instruction, {} as ThreeRegistersArgs);
 
       assert.strictEqual(mockFn.mock.calls.length, 1);
     });
@@ -65,7 +65,7 @@ test("ThreeRegsDispatcher", async (t) => {
     await t.test(`checks if instruction ${name} = ${instruction} is not handled by ThreeRegsDispatcher`, () => {
       const threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
 
-      threeRegsDispatcher.dispatch(instruction, {} as ThreeRegistersResult);
+      threeRegsDispatcher.dispatch(instruction, {} as ThreeRegistersArgs);
 
       assert.strictEqual(mockFn.mock.calls.length, 0);
     });

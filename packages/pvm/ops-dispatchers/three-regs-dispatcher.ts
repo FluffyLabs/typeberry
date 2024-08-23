@@ -1,4 +1,4 @@
-import type { ThreeRegistersResult } from "../args-decoder/args-decoder";
+import type { ThreeRegistersArgs } from "../args-decoder/args-decoder";
 import { Instruction } from "../instruction";
 import type { BitOps, BooleanOps, MathOps, MoveOps, ShiftOps } from "../ops";
 
@@ -11,7 +11,7 @@ export class ThreeRegsDispatcher {
     private moveOps: MoveOps,
   ) {}
 
-  dispatch(instruction: Instruction, args: ThreeRegistersResult) {
+  dispatch(instruction: Instruction, args: ThreeRegistersArgs) {
     switch (instruction) {
       case Instruction.ADD:
         this.mathOps.add(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);

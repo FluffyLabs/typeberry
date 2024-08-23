@@ -1,11 +1,11 @@
-import type { TwoRegistersOneOffsetResult } from "../args-decoder/args-decoder";
+import type { TwoRegistersOneOffsetArgs } from "../args-decoder/args-decoder";
 import { Instruction } from "../instruction";
 import type { BranchOps } from "../ops";
 
 export class TwoRegsOneOffsetDispatcher {
   constructor(private branchOps: BranchOps) {}
 
-  dispatch(instruction: Instruction, args: TwoRegistersOneOffsetResult) {
+  dispatch(instruction: Instruction, args: TwoRegistersOneOffsetArgs) {
     switch (instruction) {
       case Instruction.BRANCH_EQ:
         this.branchOps.branchEq(args.firstRegisterIndex, args.secondRegisterIndex, args.nextPc);

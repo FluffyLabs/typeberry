@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
 
-import type { OneRegisterOneImmediateOneOffsetResult } from "../args-decoder/args-decoder";
+import type { OneRegisterOneImmediateOneOffsetArgs } from "../args-decoder/args-decoder";
 import { ArgumentType } from "../args-decoder/argument-type";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
 import { BasicBlocks } from "../basic-blocks";
@@ -29,7 +29,7 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
 
     const argsMock = {
       immediateDecoder: { getSigned: () => {}, getUnsigned: () => {} },
-    } as OneRegisterOneImmediateOneOffsetResult;
+    } as OneRegisterOneImmediateOneOffsetArgs;
 
     it("it should call BranchOps.jump and LoadOps.loadImmediate", () => {
       const jumpMockFunction = mock.fn();
@@ -178,7 +178,7 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
 
     const argsMock = {
       immediateDecoder: { getSigned: () => {}, getUnsigned: () => {} },
-    } as OneRegisterOneImmediateOneOffsetResult;
+    } as OneRegisterOneImmediateOneOffsetArgs;
 
     const otherInstructions = Object.entries(Instruction)
       .filter((entry): entry is [string, number] => typeof entry[0] === "string" && typeof entry[1] === "number")

@@ -1,5 +1,7 @@
 import { ArgsDecoder } from "./args-decoder/args-decoder";
+import { createResults } from "./args-decoder/args-decoding-results";
 import { ArgumentType } from "./args-decoder/argument-type";
+import { instructionArgumentTypeMap } from "./args-decoder/instruction-argument-type-map";
 import { assemblify } from "./assemblify";
 import { BasicBlocks } from "./basic-blocks";
 import { Instruction } from "./instruction";
@@ -87,6 +89,7 @@ export class Pvm {
   private twoRegsTwoImmsDispatcher: TwoRegsTwoImmsDispatcher;
   private oneImmDispatcher: OneImmDispatcher;
   private status = Status.OK;
+  private argsDecodingResults = createResults();
 
   constructor(rawProgram: Uint8Array, initialState: InitialState = {}) {
     const programDecoder = new ProgramDecoder(rawProgram);
@@ -158,51 +161,54 @@ export class Pvm {
      * Reference: https://graypaper.fluffylabs.dev/#WyI0ODY2YjU5YmMwIiwiMjIiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEwIGgyIHkxMWQwIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeDEwIGhiIHkxMWQxIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+Il1d
      */
     const currentInstruction = this.code[this.pc] ?? Instruction.TRAP;
+
     this.gas -= instructionGasMap[currentInstruction];
 
     if (this.gas < 0) {
       this.status = Status.OUT_OF_GAS;
       return this.status;
     }
+    const argsType = instructionArgumentTypeMap[currentInstruction];
+    const argsResult = this.argsDecodingResults[argsType];
+    this.argsDecoder.fillArgs(this.pc, argsResult);
+    this.instructionResult.nextPc = this.pc + argsResult.noOfBytesToSkip;
 
-    const args = this.argsDecoder.getArgs(this.pc);
-    this.instructionResult.nextPc = this.pc + args.noOfBytesToSkip;
-    switch (args.type) {
+    switch (argsResult.type) {
       case ArgumentType.NO_ARGUMENTS:
         this.noArgsDispatcher.dispatch(currentInstruction);
         break;
       case ArgumentType.ONE_IMMEDIATE:
-        this.oneImmDispatcher.dispatch(currentInstruction, args);
+        this.oneImmDispatcher.dispatch(currentInstruction, argsResult);
         break;
       case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET:
-        this.oneRegOneImmOneOffsetDispatcher.dispatch(currentInstruction, args);
+        this.oneRegOneImmOneOffsetDispatcher.dispatch(currentInstruction, argsResult);
         break;
       case ArgumentType.TWO_REGISTERS:
-        this.twoRegsDispatcher.dispatch(currentInstruction, args);
+        this.twoRegsDispatcher.dispatch(currentInstruction, argsResult);
         break;
       case ArgumentType.THREE_REGISTERS:
-        this.threeRegsDispatcher.dispatch(currentInstruction, args);
+        this.threeRegsDispatcher.dispatch(currentInstruction, argsResult);
         break;
       case ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE:
-        this.twoRegsOneImmDispatcher.dispatch(currentInstruction, args);
+        this.twoRegsOneImmDispatcher.dispatch(currentInstruction, argsResult);
         break;
       case ArgumentType.TWO_REGISTERS_ONE_OFFSET:
-        this.twoRegsOneOffsetDispatcher.dispatch(currentInstruction, args);
+        this.twoRegsOneOffsetDispatcher.dispatch(currentInstruction, argsResult);
         break;
       case ArgumentType.ONE_OFFSET:
-        this.oneOffsetDispatcher.dispatch(currentInstruction, args);
+        this.oneOffsetDispatcher.dispatch(currentInstruction, argsResult);
         break;
       case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE:
-        this.oneRegOneImmDispatcher.dispatch(currentInstruction, args);
+        this.oneRegOneImmDispatcher.dispatch(currentInstruction, argsResult);
         break;
       case ArgumentType.TWO_IMMEDIATES:
-        this.twoImmsDispatcher.dispatch(currentInstruction, args);
+        this.twoImmsDispatcher.dispatch(currentInstruction, argsResult);
         break;
       case ArgumentType.ONE_REGISTER_TWO_IMMEDIATES:
-        this.oneRegTwoImmsDispatcher.dispatch(currentInstruction, args);
+        this.oneRegTwoImmsDispatcher.dispatch(currentInstruction, argsResult);
         break;
       case ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES:
-        this.twoRegsTwoImmsDispatcher.dispatch(currentInstruction, args);
+        this.twoRegsTwoImmsDispatcher.dispatch(currentInstruction, argsResult);
         break;
     }
 
