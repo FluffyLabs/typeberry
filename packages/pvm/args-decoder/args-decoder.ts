@@ -113,16 +113,16 @@ export class ArgsDecoder {
     private mask: Mask,
   ) {}
 
-  fillArgs<T extends Args>(pc: number, result: T): Args {
+  fillArgs<T extends Args>(pc: number, result: T) {
     switch (result.type) {
       case ArgumentType.NO_ARGUMENTS:
-        return result;
+        break;
 
       case ArgumentType.ONE_IMMEDIATE: {
         const immediateLength = this.mask.getNoOfBytesToNextInstruction(pc + 1);
         result.immediateDecoder.setBytes(this.code.subarray(pc + 1, pc + 1 + immediateLength));
         result.noOfBytesToSkip = 1 + immediateLength;
-        return result;
+        break;
       }
 
       case ArgumentType.THREE_REGISTERS: {
@@ -134,7 +134,7 @@ export class ArgsDecoder {
         result.secondRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
         this.nibblesDecoder.setByte(secondByte);
         result.thirdRegisterIndex = this.nibblesDecoder.getLowNibble();
-        return result;
+        break;
       }
 
       case ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE: {
@@ -147,7 +147,7 @@ export class ArgsDecoder {
         result.noOfBytesToSkip = 2 + immediateLength;
 
         result.immediateDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + immediateLength));
-        return result;
+        break;
       }
 
       case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET: {
@@ -162,7 +162,7 @@ export class ArgsDecoder {
         );
         result.nextPc = pc + this.offsetDecoder.getSigned();
         result.noOfBytesToSkip = 2 + immediateLength + offsetLength;
-        return result;
+        break;
       }
 
       case ArgumentType.TWO_REGISTERS_ONE_OFFSET: {
@@ -175,7 +175,7 @@ export class ArgsDecoder {
 
         this.offsetDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + offsetLength));
         result.nextPc = pc + this.offsetDecoder.getSigned();
-        return result;
+        break;
       }
 
       case ArgumentType.TWO_REGISTERS: {
@@ -184,7 +184,7 @@ export class ArgsDecoder {
         this.nibblesDecoder.setByte(firstByte);
         result.firstRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
         result.secondRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
-        return result;
+        break;
       }
 
       case ArgumentType.ONE_OFFSET: {
@@ -192,7 +192,7 @@ export class ArgsDecoder {
         result.noOfBytesToSkip = 1 + offsetLength;
         this.offsetDecoder.setBytes(this.code.subarray(pc + 1, pc + 1 + offsetLength));
         result.nextPc = pc + this.offsetDecoder.getSigned();
-        return result;
+        break;
       }
 
       case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE: {
@@ -204,7 +204,7 @@ export class ArgsDecoder {
         result.noOfBytesToSkip = 2 + immediateLength;
 
         result.immediateDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + immediateLength));
-        return result;
+        break;
       }
 
       case ArgumentType.TWO_IMMEDIATES: {
@@ -217,7 +217,7 @@ export class ArgsDecoder {
           this.code.subarray(pc + 2 + firstImmediateLength, pc + 2 + firstImmediateLength + secondImmediateLength),
         );
         result.noOfBytesToSkip = 2 + firstImmediateLength + secondImmediateLength;
-        return result;
+        break;
       }
 
       case ArgumentType.ONE_REGISTER_TWO_IMMEDIATES: {
@@ -231,7 +231,7 @@ export class ArgsDecoder {
           this.code.subarray(pc + 2 + firstImmediateLength, pc + 2 + firstImmediateLength + secondImmediateLength),
         );
         result.noOfBytesToSkip = 2 + firstImmediateLength + secondImmediateLength;
-        return result;
+        break;
       }
 
       case ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES: {
@@ -251,7 +251,7 @@ export class ArgsDecoder {
         result.secondImmediateDecoder.setBytes(this.code.subarray(newPc, newPc + secondImmediateLength));
         newPc += secondImmediateLength;
         result.noOfBytesToSkip = newPc - pc;
-        return result;
+        break;
       }
     }
   }
