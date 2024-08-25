@@ -47,7 +47,7 @@ export class MessageChannelStateMachine<
   }
 
   private stateInfo(remote: string) {
-    return ` (local state: "${this.currentState().stateName}", remote state: "${remote}")`;
+    return ` (local state: "${this.currentState()}", remote state: "${remote}")`;
   }
 
   private async dispatchRequest(name: string, data: unknown, msg: Message) {

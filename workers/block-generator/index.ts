@@ -23,12 +23,12 @@ export async function spawnWorker() {
 
   const machine = stateMachineMain();
   const channel = await MessageChannelStateMachine.createAndTransferChannel(machine, worker);
-  console.log("[BlockGenerator] Worker spawned", channel.currentState().stateName);
+  console.log(`[BlockGenerator] Worker spawned ${channel.currentState()}`);
   return channel;
 }
 
 export async function main(channel: MessageChannelStateMachine<WorkerInitialized, WorkerStates>) {
-  console.log("[BlockGenerator] Worker running", channel.currentState().stateName);
+  console.log(`[BlockGenerator] Worker running ${channel.currentState()}`);
   const ready = await channel.waitForState<WorkerReady>("ready(worker)");
 
   const finished = await ready.doUntil<Finished>("finished", async (worker, port, isFinished) => {
