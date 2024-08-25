@@ -1,5 +1,5 @@
-import type { TypedChannel } from "./state-machine/channel";
-import { type RespondAndTransitionTo, State, StateMachine, type TransitionTo } from "./state-machine/utils";
+import type { TypedChannel } from "@typeberry/state-machine";
+import { type RespondAndTransitionTo, State, StateMachine, type TransitionTo } from "@typeberry/state-machine";
 
 export type StatesMain = InitializedMain | ReadyMain | Finished;
 export type StatesWorker = InitializedWorker | ReadyWorker | Finished;

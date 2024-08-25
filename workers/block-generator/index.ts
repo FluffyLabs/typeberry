@@ -1,5 +1,8 @@
 import { resolve } from "node:path";
 import { Worker, isMainThread, parentPort } from "node:worker_threads";
+
+import { MessageChannelStateMachine } from "@typeberry/state-machine";
+
 import {
   type InitializedWorker,
   type ReadyWorker,
@@ -7,7 +10,6 @@ import {
   stateMachineMain,
   stateMachineWorker,
 } from "./state-machine";
-import { MessageChannelStateMachine } from "./state-machine/channel";
 
 if (!isMainThread) {
   const machine = stateMachineWorker();

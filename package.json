@@ -17,7 +17,8 @@
     "tools/commit-hash",
     "tools/pvm-builder",
     "workers/block-generator",
-    "workers/importer"
+    "workers/importer",
+    "packages/state-machine"
   ],
   "engines": {
     "node": ">=20",

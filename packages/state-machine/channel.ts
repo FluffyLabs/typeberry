@@ -3,7 +3,7 @@ import { check } from "@typeberry/utils";
 
 import { type Message, Ok } from "./message";
 import { TypedPort } from "./port";
-import type { State, StateMachine, StateNames, TransitionTo, ValidTransitionFrom } from "./utils";
+import type { State, StateMachine, StateNames, TransitionTo, ValidTransitionFrom } from "./state-machine";
 
 const CHANNEL_MESSAGE = "channel";
 
