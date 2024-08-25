@@ -1,11 +1,11 @@
 import { MessageChannel, MessagePort, type Worker } from "node:worker_threads";
-import { check } from '@typeberry/utils';
+import { check } from "@typeberry/utils";
 
+import { type Message, Ok } from "./message";
+import { TypedPort } from "./port";
 import type { State, StateMachine, StateNames, TransitionTo, ValidTransitionFrom } from "./utils";
-import {TypedPort} from "./port";
-import {Message, Ok} from "./message";
 
-const CHANNEL_MESSAGE = 'channel';
+const CHANNEL_MESSAGE = "channel";
 
 export interface TypedChannel {
   sendMessage(name: string, data: unknown): void;
@@ -16,13 +16,13 @@ export interface TypedChannel {
 export class MessageChannelStateMachine<
   CurrentState extends TStates,
   TStates extends State<StateNames<TStates>, TStates>,
-> implements TypedChannel {
-
+> implements TypedChannel
+{
   constructor(
     private readonly machine: StateMachine<CurrentState, TStates>,
     private readonly port: TypedPort,
   ) {
-    port.listeners.on('message', (name: string, data: unknown, remoteState: string) => {
+    port.listeners.on("message", (name: string, data: unknown, remoteState: string) => {
       try {
         const needsTransition = this.dispatchMessage(name, data);
         if (needsTransition) {
@@ -30,16 +30,16 @@ export class MessageChannelStateMachine<
         }
       } catch (e) {
         console.error(`[${this.constructor.name}] Unable to dispatch message: ${e}. ${this.stateInfo(remoteState)}`);
-        throw e
+        throw e;
       }
     });
 
-    port.listeners.on('request', async (name: string, data: unknown, remoteState: string, msg: Message) => {
+    port.listeners.on("request", async (name: string, data: unknown, remoteState: string, msg: Message) => {
       try {
         await this.dispatchRequest(name, data, msg);
       } catch (e) {
         console.error(`[${this.constructor.name}] Unable to dispatch request: ${e}. ${this.stateInfo(remoteState)}`);
-        throw e
+        throw e;
       }
     });
   }
@@ -74,7 +74,7 @@ export class MessageChannelStateMachine<
     return this.port.respond(prevState.stateName, msg, res.response);
   }
 
-  private dispatchMessage(name: string, data: unknown): TransitionTo<ValidTransitionFrom<CurrentState>> | void {
+  private dispatchMessage(name: string, data: unknown): TransitionTo<ValidTransitionFrom<CurrentState>> | undefined {
     const handler = this.currentState().messageListeners.get(name);
 
     if (!handler) {
@@ -106,19 +106,17 @@ export class MessageChannelStateMachine<
     state: TStateName,
     work: (state: CurrentState, port: TypedChannel, isFinished: () => boolean) => Promise<void>,
   ) {
-    const finish = this.waitForState(state)
-      .then(() => {
-        isFinished.finished = true;
-      });
+    const finish = this.waitForState(state).then(() => {
+      isFinished.finished = true;
+    });
     const isFinished = { finished: false };
 
-    return Promise.all([
-      work(this.currentState(), this, () => isFinished.finished),
-      finish
-    ]);
+    return Promise.all([work(this.currentState(), this, () => isFinished.finished), finish]);
   }
 
-  transition<TNewState extends ValidTransitionFrom<CurrentState>>(f: (state: CurrentState, port: TypedChannel) => TransitionTo<TNewState>) {
+  transition<TNewState extends ValidTransitionFrom<CurrentState>>(
+    f: (state: CurrentState, port: TypedChannel) => TransitionTo<TNewState>,
+  ) {
     const currentState = this.currentState();
     const newStateName = f(currentState, this);
     this.machine.transition<TNewState>(newStateName.state, newStateName.data);
@@ -135,11 +133,8 @@ export class MessageChannelStateMachine<
 
   static async createAndTransferChannel<
     CurrentState extends TStates,
-    TStates extends State<StateNames<TStates>, TStates>
-  >(
-    machine: StateMachine<CurrentState, TStates>,
-    worker: Worker,
-  ) {
+    TStates extends State<StateNames<TStates>, TStates>,
+  >(machine: StateMachine<CurrentState, TStates>, worker: Worker) {
     const channel = new MessageChannel();
     const port = new TypedPort(channel.port2);
     const stateName = machine.currentState().stateName;
@@ -155,21 +150,18 @@ export class MessageChannelStateMachine<
     return new MessageChannelStateMachine(machine, port);
   }
 
-  static async receiveChannel<
-    CurrentState extends TStates,
-    TStates extends State<StateNames<TStates>, TStates>
-  >(
+  static async receiveChannel<CurrentState extends TStates, TStates extends State<StateNames<TStates>, TStates>>(
     machine: StateMachine<CurrentState, TStates>,
     parentPort: MessagePort | null,
   ) {
     if (!parentPort) {
-      throw new Error('This code is expected to be run in a worker.');
+      throw new Error("This code is expected to be run in a worker.");
     }
 
     const promise = new Promise<TypedPort>((resolve, reject) => {
-      parentPort.once('message', (value: Message) => {
+      parentPort.once("message", (value: Message) => {
         try {
-          check(value.kind === 'request', "The initial message should be a request with channel.");
+          check(value.kind === "request", "The initial message should be a request with channel.");
           check(value.name === CHANNEL_MESSAGE);
           check(value.data instanceof MessagePort);
           const port = new TypedPort(value.data as MessagePort);

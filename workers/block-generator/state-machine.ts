@@ -1,5 +1,5 @@
-import {TypedChannel} from "./state-machine/channel";
-import { RespondAndTransitionTo, State, StateMachine, TransitionTo } from "./state-machine/utils";
+import type { TypedChannel } from "./state-machine/channel";
+import { type RespondAndTransitionTo, State, StateMachine, type TransitionTo } from "./state-machine/utils";
 
 export type StatesMain = InitializedMain | ReadyMain | Finished;
 export type StatesWorker = InitializedWorker | ReadyWorker | Finished;
@@ -28,24 +28,24 @@ export class InitializedMain extends State<"initialized(main)", ReadyMain> {
   constructor() {
     super({
       name: "initialized(main)",
-      allowedTransitions: ['ready(main)']
+      allowedTransitions: ["ready(main)"],
     });
   }
 
   sendConfig(channel: TypedChannel, config: Config): TransitionTo<ReadyMain> {
-    channel.sendMessage('config', config);
-    return { state: 'ready(main)' };
+    channel.sendMessage("config", config);
+    return { state: "ready(main)" };
   }
 }
 
 export class ReadyMain extends State<"ready(main)", Finished> {
   constructor() {
     super({
-      name: 'ready(main)',
-      allowedTransitions: ['finished'],
+      name: "ready(main)",
+      allowedTransitions: ["finished"],
       messageListeners: {
-        'block': (block) => this.onBlock(block),
-      }
+        block: (block) => this.onBlock(block) as undefined,
+      },
     });
   }
 
@@ -54,8 +54,8 @@ export class ReadyMain extends State<"ready(main)", Finished> {
   }
 
   finish(channel: TypedChannel): TransitionTo<Finished> {
-    const promise = channel.sendRequest<null>('finish', null);
-    return { state: 'finished', data: promise };
+    const promise = channel.sendRequest<null>("finish", null);
+    return { state: "finished", data: promise };
   }
 }
 
@@ -63,15 +63,15 @@ export class InitializedWorker extends State<"initialized(worker)", ReadyWorker>
   constructor() {
     super({
       name: "initialized(worker)",
-      allowedTransitions: ['ready(worker)'],
-      messageListeners: {'config': (data) => this.onConfig(data)},
+      allowedTransitions: ["ready(worker)"],
+      messageListeners: { config: (data) => this.onConfig(data) },
     });
   }
 
   private onConfig(config: unknown): TransitionTo<ReadyWorker> {
-    console.log('Got config, moving to ready');
+    console.log("Got config, moving to ready");
     return {
-      state: 'ready(worker)',
+      state: "ready(worker)",
       data: config as Config,
     };
   }
@@ -82,19 +82,18 @@ export class ReadyWorker extends State<"ready(worker)", Finished, Config> {
     super({
       name: "ready(worker)",
       allowedTransitions: ["finished"],
-      requestHandlers: { 'finish': async () => this.endWork() },
+      requestHandlers: { finish: async () => this.endWork() },
     });
   }
 
-
   sendBlock(port: TypedChannel, block: { number: number }) {
-    port.sendMessage('block', block);
+    port.sendMessage("block", block);
   }
 
   async endWork(): Promise<RespondAndTransitionTo<null, Finished>> {
     return {
       response: null,
-      transitionTo: { state: 'finished', data: Promise.resolve(null) },
+      transitionTo: { state: "finished", data: Promise.resolve(null) },
     };
   }
 }

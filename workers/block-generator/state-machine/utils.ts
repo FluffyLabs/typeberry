@@ -4,7 +4,7 @@ type ExtractName<T> = T extends string ? (T extends infer U ? U : never) : never
 export type StateNames<T> = T extends State<infer U, infer _R> ? ExtractName<U> : never;
 export type StateData<T> = T extends State<infer _U, infer _R, infer D> ? D : never;
 
-export type MessageHandler<T> = (data: unknown) => TransitionTo<T> | void;
+export type MessageHandler<T> = (data: unknown) => TransitionTo<T> | undefined;
 export type RequestHandler<T, TRes = unknown> = (data: unknown) => Promise<RespondAndTransitionTo<TRes, T>>;
 
 export type TransitionTo<TState> = {
@@ -34,8 +34,8 @@ export abstract class State<TName, TAllowedTransitions, TData = unknown> {
     allowedTransitions = [],
   }: {
     name: TName;
-    messageListeners?: {[message: string]: MessageHandler<TAllowedTransitions>};
-    requestHandlers?: {[request: string]: RequestHandler<TAllowedTransitions>};
+    messageListeners?: { [message: string]: MessageHandler<TAllowedTransitions> };
+    requestHandlers?: { [request: string]: RequestHandler<TAllowedTransitions> };
     allowedTransitions?: StateNames<TAllowedTransitions>[];
   }) {
     this.stateName = name;
@@ -59,11 +59,7 @@ export abstract class State<TName, TAllowedTransitions, TData = unknown> {
   }
 }
 
-export class StateMachine<
-  CurrentState extends TStates,
-  TStates extends State<StateNames<TStates>, TStates>,
-> {
-
+export class StateMachine<CurrentState extends TStates, TStates extends State<StateNames<TStates>, TStates>> {
   private state: CurrentState;
   private allStates: Map<StateNames<TStates>, TStates>;
   private stateListeners = new EventEmitter();
