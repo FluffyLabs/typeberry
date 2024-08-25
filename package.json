@@ -11,14 +11,14 @@
     "packages/jam-codec",
     "packages/pvm",
     "packages/safrole",
+    "packages/state-machine",
     "packages/stubs",
     "packages/trie",
     "packages/utils",
     "tools/commit-hash",
     "tools/pvm-builder",
     "workers/block-generator",
-    "workers/importer",
-    "packages/state-machine"
+    "workers/importer"
   ],
   "engines": {
     "node": ">=20",
