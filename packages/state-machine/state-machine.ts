@@ -4,7 +4,7 @@ type ExtractName<T> = T extends string ? (T extends infer U ? U : never) : never
 export type StateNames<T> = T extends State<infer U, infer _R> ? ExtractName<U> : never;
 export type StateData<T> = T extends State<infer _U, infer _R, infer D> ? D : never;
 
-export type MessageHandler<T> = (data: unknown) => TransitionTo<T> | undefined;
+export type SignalHandler<T> = (data: unknown) => TransitionTo<T> | undefined;
 export type RequestHandler<T, TRes = unknown> = (data: unknown) => Promise<RespondAndTransitionTo<TRes, T>>;
 
 export type TransitionTo<TState> = {
@@ -21,7 +21,7 @@ export type ValidTransitionFrom<T> = T extends State<infer _A, infer TAllowed> ?
 
 export abstract class State<TName, TAllowedTransitions, TData = unknown> {
   public readonly stateName: TName;
-  public readonly messageListeners: Map<string, MessageHandler<TAllowedTransitions>>;
+  public readonly signalListeners: Map<string, SignalHandler<TAllowedTransitions>>;
   public readonly requestHandlers: Map<string, RequestHandler<TAllowedTransitions>>;
 
   protected readonly allowedTransitions: StateNames<TAllowedTransitions>[];
@@ -29,19 +29,19 @@ export abstract class State<TName, TAllowedTransitions, TData = unknown> {
 
   constructor({
     name,
-    messageListeners = {},
+    signalListeners = {},
     requestHandlers = {},
     allowedTransitions = [],
   }: {
     name: TName;
-    messageListeners?: { [message: string]: MessageHandler<TAllowedTransitions> };
+    signalListeners?: { [signal: string]: SignalHandler<TAllowedTransitions> };
     requestHandlers?: { [request: string]: RequestHandler<TAllowedTransitions> };
     allowedTransitions?: StateNames<TAllowedTransitions>[];
   }) {
     this.stateName = name;
     // TODO [ToDr] Verify that all `TAllowedTransitions` types are present.
     this.allowedTransitions = allowedTransitions;
-    this.messageListeners = new Map(Object.entries(messageListeners));
+    this.signalListeners = new Map(Object.entries(signalListeners));
     this.requestHandlers = new Map(Object.entries(requestHandlers));
   }
 

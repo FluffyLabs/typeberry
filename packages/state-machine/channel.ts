@@ -8,9 +8,11 @@ import type { State, StateMachine, StateNames, TransitionTo, ValidTransitionFrom
 const CHANNEL_MESSAGE = "channel";
 
 export interface TypedChannel {
-  sendMessage(name: string, data: unknown): void;
+  sendSignal(name: string, data: unknown): void;
 
   sendRequest<T>(name: string, data: unknown): Promise<T>;
+
+  close(): void;
 }
 
 export class MessageChannelStateMachine<
@@ -22,14 +24,14 @@ export class MessageChannelStateMachine<
     private readonly machine: StateMachine<CurrentState, TStates>,
     private readonly port: TypedPort,
   ) {
-    port.listeners.on("message", (name: string, data: unknown, remoteState: string) => {
+    port.listeners.on("signal", (name: string, data: unknown, remoteState: string) => {
       try {
-        const needsTransition = this.dispatchMessage(name, data);
+        const needsTransition = this.dispatchSignal(name, data);
         if (needsTransition) {
           this.machine.transition(needsTransition.state, needsTransition.data);
         }
       } catch (e) {
-        console.error(`[${this.constructor.name}] Unable to dispatch message: ${e}. ${this.stateInfo(remoteState)}`);
+        console.error(`[${this.constructor.name}] Unable to dispatch signal: ${e}. ${this.stateInfo(remoteState)}`);
         throw e;
       }
     });
@@ -74,19 +76,19 @@ export class MessageChannelStateMachine<
     return this.port.respond(prevState.stateName, msg, res.response);
   }
 
-  private dispatchMessage(name: string, data: unknown): TransitionTo<ValidTransitionFrom<CurrentState>> | undefined {
-    const handler = this.currentState().messageListeners.get(name);
+  private dispatchSignal(name: string, data: unknown): TransitionTo<ValidTransitionFrom<CurrentState>> | undefined {
+    const handler = this.currentState().signalListeners.get(name);
 
     if (!handler) {
-      throw new Error(`Unexpected message "${name}"`);
+      throw new Error(`Unexpected signal "${name}"`);
     }
 
     const newState = handler(data);
     return newState;
   }
 
-  sendMessage(name: string, data: unknown) {
-    this.port.sendMessage(this.currentState().stateName, name, data);
+  sendSignal(name: string, data: unknown) {
+    this.port.sendSignal(this.currentState().stateName, name, data);
   }
 
   async sendRequest<TRes>(name: string, data: unknown): Promise<TRes> {
@@ -102,16 +104,18 @@ export class MessageChannelStateMachine<
     return this.machine.currentState();
   }
 
-  async doUntil<TStateName extends StateNames<TStates>>(
-    state: TStateName,
-    work: (state: CurrentState, port: TypedChannel, isFinished: () => boolean) => Promise<void>,
+  async doUntil<TState extends TStates>(
+    state: StateNames<TState>,
+    work: (state: CurrentState, port: TypedChannel, isDone: () => boolean) => Promise<void>,
   ) {
-    const finish = this.waitForState(state).then(() => {
-      isFinished.finished = true;
+    const done = this.waitForState(state).then(() => {
+      isDone.isDone = true;
     });
-    const isFinished = { finished: false };
+    const isDone = { isDone: false };
 
-    return Promise.all([work(this.currentState(), this, () => isFinished.finished), finish]);
+    await Promise.all([work(this.currentState(), this, () => isDone.isDone), done]);
+
+    return this.transitionTo<TState>();
   }
 
   transition<TNewState extends ValidTransitionFrom<CurrentState>>(

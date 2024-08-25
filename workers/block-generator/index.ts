@@ -4,9 +4,10 @@ import { Worker, isMainThread, parentPort } from "node:worker_threads";
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
 import {
-  type InitializedWorker,
-  type ReadyWorker,
-  type StatesWorker,
+  type Finished,
+  type WorkerInitialized,
+  type WorkerReady,
+  type WorkerStates,
   stateMachineMain,
   stateMachineWorker,
 } from "./state-machine";
@@ -26,11 +27,11 @@ export async function spawnWorker() {
   return channel;
 }
 
-export async function main(channel: MessageChannelStateMachine<InitializedWorker, StatesWorker>) {
+export async function main(channel: MessageChannelStateMachine<WorkerInitialized, WorkerStates>) {
   console.log("[BlockGenerator] Worker running", channel.currentState().stateName);
-  const ready = await channel.waitForState<ReadyWorker>("ready(worker)");
+  const ready = await channel.waitForState<WorkerReady>("ready(worker)");
 
-  const finished = await ready.doUntil("finished", async (worker, port, isFinished) => {
+  const finished = await ready.doUntil<Finished>("finished", async (worker, port, isFinished) => {
     let counter = 0;
     while (!isFinished()) {
       counter += 1;
@@ -41,7 +42,7 @@ export async function main(channel: MessageChannelStateMachine<InitializedWorker
 
   console.log("[BlockGenerator] Worker finished. Closing channel.");
 
-  channel.close();
+  finished.currentState().close(channel);
 }
 
 async function wait(time_ms: number) {

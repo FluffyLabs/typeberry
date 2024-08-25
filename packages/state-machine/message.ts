@@ -1,6 +1,6 @@
 export const Ok = "OK";
 
-export type MessageKind = "message" | "request" | "response" | "subscribe" | "subscription";
+export type MessageKind = "signal" | "request" | "response" | "subscribe" | "subscription";
 
 export type Message = {
   kind: MessageKind;

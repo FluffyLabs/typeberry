@@ -54,8 +54,8 @@ export class TypedPort {
         case "response":
           this.responseListeners.emit(reqEvent(msg.id), null, msg.data, msg.name, msg.localState, msg);
           break;
-        case "message":
-          this.listeners.emit("message", msg.name, msg.data, msg.localState, msg);
+        case "signal":
+          this.listeners.emit("signal", msg.name, msg.data, msg.localState, msg);
           break;
         case "request":
           this.listeners.emit("request", msg.name, msg.data, msg.localState, msg);
@@ -107,11 +107,11 @@ export class TypedPort {
     ];
   }
 
-  sendMessage(localState: string, name: string, data: unknown, transferList?: TransferListItem[]) {
+  sendSignal(localState: string, name: string, data: unknown, transferList?: TransferListItem[]) {
     this.messageId += 1;
     this.postMessage(
       {
-        kind: "message",
+        kind: "signal",
         name,
         id: this.messageId,
         localState,

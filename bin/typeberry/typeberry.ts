@@ -11,8 +11,10 @@ async function main() {
       });
     });
 
+    // Just a dummy timer, to give some time to generate blocks.
     await wait(10000);
 
+    // Send a finish signal to the block generator.
     const finished = blockGen.transition((ready, port) => {
       return ready.finish(port);
     });
