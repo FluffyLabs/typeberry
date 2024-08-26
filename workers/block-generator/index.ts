@@ -18,19 +18,15 @@ if (!isMainThread) {
   channel.then((channel) => main(channel)).catch(console.error);
 }
 
-export async function spawnWorker() {
-  const worker = new Worker(resolve(__dirname, "./bootstrap.js"));
-
-  const machine = stateMachineMain();
-  const channel = await MessageChannelStateMachine.createAndTransferChannel(machine, worker);
-  console.log(`[BlockGenerator] Worker spawned ${channel.currentState()}`);
-  return channel;
-}
-
+/**
+ * The `BlockGenerator` should periodically create new blocks and send them as signals to the main thread.
+ */
 export async function main(channel: MessageChannelStateMachine<WorkerInitialized, WorkerStates>) {
   console.log(`[BlockGenerator] Worker running ${channel.currentState()}`);
+  // Await the configuration object
   const ready = await channel.waitForState<WorkerReady>("ready(worker)");
 
+  // Generate blocks until the close signal is received.
   const finished = await ready.doUntil<Finished>("finished", async (worker, port, isFinished) => {
     let counter = 0;
     while (!isFinished()) {
@@ -42,7 +38,17 @@ export async function main(channel: MessageChannelStateMachine<WorkerInitialized
 
   console.log("[BlockGenerator] Worker finished. Closing channel.");
 
+  // Close the comms to gracefuly close the app.
   finished.currentState().close(channel);
+}
+
+export async function spawnWorker() {
+  const worker = new Worker(resolve(__dirname, "./bootstrap.js"));
+
+  const machine = stateMachineMain();
+  const channel = await MessageChannelStateMachine.createAndTransferChannel(machine, worker);
+  console.log(`[BlockGenerator] Worker spawned ${channel.currentState()}`);
+  return channel;
 }
 
 async function wait(time_ms: number) {
