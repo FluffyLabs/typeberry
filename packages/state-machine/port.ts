@@ -109,7 +109,7 @@ export class TypedPort {
 
   private postMessage(msg: Message, transferList?: TransferListItem[]) {
     try {
-      console.log('this positing message');
+      console.log("this positing message");
       this.port.postMessage(msg, transferList);
     } catch (e) {
       console.error(`[${this.constructor.name}] Failed to post a message: ${e}`, msg);

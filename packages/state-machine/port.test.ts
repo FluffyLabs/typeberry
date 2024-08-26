@@ -1,10 +1,10 @@
-import { MessageChannel } from 'node:worker_threads';
+import assert from "node:assert";
 import { describe, it } from "node:test";
-import assert from 'node:assert';
-import { TypedPort } from './port';
+import { MessageChannel } from "node:worker_threads";
+import { TypedPort } from "./port";
 
 describe("TypedPort", () => {
-  it('should send a signal', async (t) => {
+  it("should send a signal", async (t) => {
     // given
     const channel = new MessageChannel();
     const receiver = channel.port2;
@@ -14,21 +14,21 @@ describe("TypedPort", () => {
 
     // when
     const response = new Promise((resolve) => {
-      receiver.once('message', resolve);
+      receiver.once("message", resolve);
     });
-    port.sendSignal('myState', 'signal1', {obj: true});
+    port.sendSignal("myState", "signal1", { obj: true });
 
     // then
     assert.deepStrictEqual(await response, {
-      data: { obj : true },
+      data: { obj: true },
       id: 1,
-      kind: 'signal',
-      name: 'signal1',
-      localState: 'myState',
+      kind: "signal",
+      name: "signal1",
+      localState: "myState",
     });
   });
 
-  it('should send a request', async (t) => {
+  it("should send a request", async (t) => {
     // given
     const channel = new MessageChannel();
     const receiver = channel.port2;
@@ -38,55 +38,56 @@ describe("TypedPort", () => {
 
     // when
     const response = new Promise((resolve) => {
-      receiver.once('message', resolve);
+      receiver.once("message", resolve);
     });
-    port.sendRequest('myState', 'signal1', {obj: true});
+    port.sendRequest("myState", "signal1", { obj: true });
 
     // then
     assert.deepStrictEqual(await response, {
-      data: { obj : true },
+      data: { obj: true },
       id: 1,
-      kind: 'request',
-      name: 'signal1',
-      localState: 'myState',
+      kind: "request",
+      name: "signal1",
+      localState: "myState",
     });
   });
 
-  it('should receive a signal', async (t) => {
+  it("should receive a signal", async (t) => {
     // given
     const channel = new MessageChannel();
     // TODO [ToDr] Mocking this method should not be necessary, but
     // for some reason the test runners hangs when calling `.on`.
-    const onMock = t.mock.fn();
-    channel.port1.on = onMock as any;
+    const onMock = t.mock.fn<typeof channel.port1.on>();
+    channel.port1.on = onMock;
     const port = new TypedPort(channel.port1);
 
     // when
     const response = new Promise((resolve) => {
-      port.listeners.once('signal', (...args) => {
+      port.listeners.once("signal", (...args) => {
         resolve(args);
       });
     });
     const listener = onMock.mock.calls[0].arguments[1];
     listener({
       id: 10,
-      kind: 'signal',
-      name: 'signal3',
+      kind: "signal",
+      name: "signal3",
       data: { obj: false },
-      localState: 'otherState',
+      localState: "otherState",
     });
 
     // then
     assert.deepStrictEqual(await response, [
-      'signal3',
+      "signal3",
       { obj: false },
-      'otherState',
+      "otherState",
       {
-        data: { obj : false },
+        data: { obj: false },
         id: 10,
-        kind: 'signal',
-        name: 'signal3',
-        localState: 'otherState',
-      }]);
+        kind: "signal",
+        name: "signal3",
+        localState: "otherState",
+      },
+    ]);
   });
 });
