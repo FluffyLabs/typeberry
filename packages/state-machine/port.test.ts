@@ -1,15 +1,22 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
+import { type TestContext, describe, it } from "node:test";
 import { MessageChannel } from "node:worker_threads";
 import { TypedPort } from "./port";
+
+function newChannel(t: TestContext) {
+  const channel = new MessageChannel();
+  t.after(() => {
+    channel.port1.close();
+    channel.port2.close();
+  });
+  return channel;
+}
 
 describe("TypedPort", () => {
   it("should send a signal", async (t) => {
     // given
-    const channel = new MessageChannel();
+    const channel = newChannel(t);
     const receiver = channel.port2;
-    // calling `.on` hangs the whole test?
-    channel.port1.on = t.mock.fn();
     const port = new TypedPort(channel.port1);
 
     // when
@@ -30,10 +37,8 @@ describe("TypedPort", () => {
 
   it("should send a request", async (t) => {
     // given
-    const channel = new MessageChannel();
+    const channel = newChannel(t);
     const receiver = channel.port2;
-    // calling `.on` hangs the whole test?
-    channel.port1.on = t.mock.fn();
     const port = new TypedPort(channel.port1);
 
     // when
@@ -54,11 +59,7 @@ describe("TypedPort", () => {
 
   it("should receive a signal", async (t) => {
     // given
-    const channel = new MessageChannel();
-    // TODO [ToDr] Mocking this method should not be necessary, but
-    // for some reason the test runners hangs when calling `.on`.
-    const onMock = t.mock.fn<typeof channel.port1.on>();
-    channel.port1.on = onMock;
+    const channel = newChannel(t);
     const port = new TypedPort(channel.port1);
 
     // when
@@ -67,8 +68,8 @@ describe("TypedPort", () => {
         resolve(args);
       });
     });
-    const listener = onMock.mock.calls[0].arguments[1];
-    listener({
+
+    channel.port2.postMessage({
       id: 10,
       kind: "signal",
       name: "signal3",
