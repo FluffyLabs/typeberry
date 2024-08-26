@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
-import type { TwoRegistersOneImmediateResult } from "../args-decoder/args-decoder";
+import type { TwoRegistersOneImmediateArgs } from "../args-decoder/args-decoder";
 import { ArgumentType } from "../args-decoder/argument-type";
 import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
@@ -54,7 +54,7 @@ describe("TwoRegsOneImmDispatcher", () => {
 
   const argsMock = {
     immediateDecoder: new ImmediateDecoder(),
-  } as TwoRegistersOneImmediateResult;
+  } as TwoRegistersOneImmediateArgs;
 
   const relevantInstructions = Object.entries(Instruction)
     .filter((entry): entry is [string, number] => typeof entry[0] === "string" && typeof entry[1] === "number")

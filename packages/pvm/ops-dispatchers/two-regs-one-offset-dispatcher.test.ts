@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { test } from "node:test";
-import type { TwoRegistersOneOffsetResult } from "../args-decoder/args-decoder";
+import type { TwoRegistersOneOffsetArgs } from "../args-decoder/args-decoder";
 import { ArgumentType } from "../args-decoder/argument-type";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
 import { BasicBlocks } from "../basic-blocks";
@@ -39,7 +39,7 @@ test("TwoRegsOneOffsetDispatcher", async (t) => {
     mockFn.mock.resetCalls();
   });
 
-  const argsMock = {} as TwoRegistersOneOffsetResult;
+  const argsMock = {} as TwoRegistersOneOffsetArgs;
 
   const relevantInstructions = Object.entries(Instruction)
     .filter((entry): entry is [string, number] => typeof entry[0] === "string" && typeof entry[1] === "number")

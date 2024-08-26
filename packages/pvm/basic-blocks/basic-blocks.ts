@@ -11,8 +11,10 @@ export class BasicBlocks {
     if (index === 0) {
       return true;
     }
-
-    return this.mask.isInstruction(index) && this.isBasicBlockTermination(index - 1);
+    return (
+      this.mask.isInstruction(index) &&
+      this.isBasicBlockTermination(index - (this.mask.getNoOfBytesToPreviousInstruction(index - 1) + 1))
+    );
   }
 
   private isBasicBlockTermination(index: number) {

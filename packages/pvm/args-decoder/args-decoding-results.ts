@@ -1,16 +1,16 @@
 import type {
-  NoArgumentsResult,
-  OneImmediateResult,
-  OneOffsetResult,
-  OneRegisterOneImmediateOneOffsetResult,
-  OneRegisterOneImmediateResult,
-  OneRegisterTwoImmediatesResult,
-  ThreeRegistersResult,
-  TwoImmediatesResult,
-  TwoRegistersOneImmediateResult,
-  TwoRegistersOneOffsetResult,
-  TwoRegistersResult,
-  TwoRegistersTwoImmediatesResult,
+  EmptyArgs,
+  OneImmediateArgs,
+  OneOffsetArgs,
+  OneRegisterOneImmediateArgs,
+  OneRegisterOneImmediateOneOffsetArgs,
+  OneRegisterTwoImmediatesArgs,
+  ThreeRegistersArgs,
+  TwoImmediatesArgs,
+  TwoRegistersArgs,
+  TwoRegistersOneImmediateArgs,
+  TwoRegistersOneOffsetArgs,
+  TwoRegistersTwoImmediatesArgs,
 } from "./args-decoder";
 import { ArgumentType } from "./argument-type";
 import { ImmediateDecoder } from "./decoders/immediate-decoder";
@@ -18,18 +18,18 @@ import { ImmediateDecoder } from "./decoders/immediate-decoder";
 const ARGUMENT_TYPE_LENGTH = Object.keys(ArgumentType).length / 2;
 
 type Results = [
-  NoArgumentsResult,
-  OneImmediateResult,
-  TwoImmediatesResult,
-  OneOffsetResult,
-  OneRegisterOneImmediateResult,
-  OneRegisterTwoImmediatesResult,
-  OneRegisterOneImmediateOneOffsetResult,
-  TwoRegistersResult,
-  TwoRegistersOneImmediateResult,
-  TwoRegistersOneOffsetResult,
-  TwoRegistersTwoImmediatesResult,
-  ThreeRegistersResult,
+  EmptyArgs,
+  OneImmediateArgs,
+  TwoImmediatesArgs,
+  OneOffsetArgs,
+  OneRegisterOneImmediateArgs,
+  OneRegisterTwoImmediatesArgs,
+  OneRegisterOneImmediateOneOffsetArgs,
+  TwoRegistersArgs,
+  TwoRegistersOneImmediateArgs,
+  TwoRegistersOneOffsetArgs,
+  TwoRegistersTwoImmediatesArgs,
+  ThreeRegistersArgs,
 ];
 
 export const createResults = () => {
@@ -64,7 +64,7 @@ export const createResults = () => {
   results[ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET] = {
     type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET,
     noOfBytesToSkip: 1,
-    firstRegisterIndex: 0,
+    registerIndex: 0,
     immediateDecoder: new ImmediateDecoder(),
     nextPc: 0,
   };
@@ -88,7 +88,7 @@ export const createResults = () => {
   results[ArgumentType.ONE_REGISTER_ONE_IMMEDIATE] = {
     type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE,
     noOfBytesToSkip: 1,
-    firstRegisterIndex: 0,
+    registerIndex: 0,
     immediateDecoder: new ImmediateDecoder(),
   };
 

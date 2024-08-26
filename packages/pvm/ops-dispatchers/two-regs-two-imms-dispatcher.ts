@@ -1,4 +1,4 @@
-import type { TwoRegistersTwoImmediatesResult } from "../args-decoder/args-decoder";
+import type { TwoRegistersTwoImmediatesArgs } from "../args-decoder/args-decoder";
 import { Instruction } from "../instruction";
 import type { DynamicJumpOps, LoadOps } from "../ops";
 
@@ -8,7 +8,7 @@ export class TwoRegsTwoImmsDispatcher {
     private dynamicJumpOps: DynamicJumpOps,
   ) {}
 
-  dispatch(instruction: Instruction, args: TwoRegistersTwoImmediatesResult) {
+  dispatch(instruction: Instruction, args: TwoRegistersTwoImmediatesArgs) {
     switch (instruction) {
       case Instruction.LOAD_IMM_JUMP_IND:
         this.loadOps.loadImmediate(args.firstRegisterIndex, args.firstImmediateDecoder.getUnsigned());

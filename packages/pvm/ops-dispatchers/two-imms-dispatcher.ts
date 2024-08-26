@@ -1,11 +1,11 @@
-import type { TwoImmediatesResult } from "../args-decoder/args-decoder";
+import type { TwoImmediatesArgs } from "../args-decoder/args-decoder";
 import { Instruction } from "../instruction";
 import type { StoreOps } from "../ops";
 
 export class TwoImmsDispatcher {
   constructor(private storeOps: StoreOps) {}
 
-  dispatch(instruction: Instruction, args: TwoImmediatesResult) {
+  dispatch(instruction: Instruction, args: TwoImmediatesArgs) {
     switch (instruction) {
       case Instruction.STORE_IMM_U8:
         this.storeOps.storeImmediateU8(args.firstImmediateDecoder.getUnsigned(), args.secondImmediateDecoder);

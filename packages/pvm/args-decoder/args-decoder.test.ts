@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { Instruction } from "../instruction";
 import { Mask } from "../program-decoder/mask";
 import { ArgsDecoder } from "./args-decoder";
+import { createResults } from "./args-decoding-results";
 import { ArgumentType } from "./argument-type";
 import { ImmediateDecoder } from "./decoders/immediate-decoder";
 
@@ -11,28 +12,30 @@ describe("ArgsDecoder", () => {
     const code = new Uint8Array([Instruction.TRAP]);
     const mask = new Mask(new Uint8Array([0b1111_1111]));
     const argsDecoder = new ArgsDecoder(code, mask);
+    const result = createResults()[ArgumentType.NO_ARGUMENTS];
     const expectedResult = {
       noOfBytesToSkip: code.length,
       type: ArgumentType.NO_ARGUMENTS,
     };
 
-    const result = argsDecoder.getArgs(0);
+    argsDecoder.fillArgs(0, result);
 
     assert.deepStrictEqual(result, expectedResult);
   });
 
   it("return correct result for instruction with 1 immediate", () => {
     const code = new Uint8Array([Instruction.ECALLI, 0xff]);
-    const mask = new Mask(new Uint8Array([0b1111_1111]));
+    const mask = new Mask(new Uint8Array([0b1111_1101]));
     const argsDecoder = new ArgsDecoder(code, mask);
     const expectedImmediateDecoder = new ImmediateDecoder();
     expectedImmediateDecoder.setBytes(new Uint8Array([0xff]));
+    const result = createResults()[ArgumentType.ONE_IMMEDIATE];
     const expectedResult = {
       noOfBytesToSkip: code.length,
       type: ArgumentType.ONE_IMMEDIATE,
       immediateDecoder: expectedImmediateDecoder,
     };
-    const result = argsDecoder.getArgs(0);
+    argsDecoder.fillArgs(0, result);
 
     assert.deepStrictEqual(result, expectedResult);
   });
@@ -41,6 +44,7 @@ describe("ArgsDecoder", () => {
     const code = new Uint8Array([Instruction.ADD, 0x12, 0x03]);
     const mask = new Mask(new Uint8Array([0b1111_1001]));
     const argsDecoder = new ArgsDecoder(code, mask);
+    const result = createResults()[ArgumentType.THREE_REGISTERS];
     const expectedResult = {
       noOfBytesToSkip: code.length,
       type: ArgumentType.THREE_REGISTERS,
@@ -50,7 +54,7 @@ describe("ArgsDecoder", () => {
       thirdRegisterIndex: 3,
     };
 
-    const result = argsDecoder.getArgs(0);
+    argsDecoder.fillArgs(0, result);
 
     assert.deepStrictEqual(result, expectedResult);
   });
@@ -61,6 +65,7 @@ describe("ArgsDecoder", () => {
     const argsDecoder = new ArgsDecoder(code, mask);
     const expectedImmediateDecoder = new ImmediateDecoder();
     expectedImmediateDecoder.setBytes(new Uint8Array([0xff]));
+    const result = createResults()[ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE];
     const expectedResult = {
       noOfBytesToSkip: code.length,
       type: ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE,
@@ -71,48 +76,27 @@ describe("ArgsDecoder", () => {
       immediateDecoder: expectedImmediateDecoder,
     };
 
-    const result = argsDecoder.getArgs(0);
-
-    assert.deepStrictEqual(result, expectedResult);
-  });
-
-  it("return correct result for instruction with 2 regs and 1 immediate", () => {
-    const code = new Uint8Array([Instruction.ADD_IMM, 0x12, 0xff]);
-    const mask = new Mask(new Uint8Array([0b1111_1001]));
-    const argsDecoder = new ArgsDecoder(code, mask);
-    const expectedImmediateDecoder = new ImmediateDecoder();
-    expectedImmediateDecoder.setBytes(new Uint8Array([0xff]));
-    const expectedResult = {
-      noOfBytesToSkip: code.length,
-      type: ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE,
-
-      firstRegisterIndex: 1,
-      secondRegisterIndex: 2,
-
-      immediateDecoder: expectedImmediateDecoder,
-    };
-
-    const result = argsDecoder.getArgs(0);
+    argsDecoder.fillArgs(0, result);
 
     assert.deepStrictEqual(result, expectedResult);
   });
 
   it("return correct result for instruction with 1 reg, 1 immediate and 1 offset", () => {
     const code = new Uint8Array([Instruction.BRANCH_EQ_IMM, 39, 210, 4, 6]);
-    const mask = new Mask(new Uint8Array([0b1111_1001]));
+    const mask = new Mask(new Uint8Array([0b1110_0001]));
     const argsDecoder = new ArgsDecoder(code, mask);
     const expectedImmediateDecoder = new ImmediateDecoder();
     expectedImmediateDecoder.setBytes(new Uint8Array([210, 4]));
+    const result = createResults()[ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET];
     const expectedResult = {
       noOfBytesToSkip: code.length,
       type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET,
-
-      firstRegisterIndex: 7,
+      registerIndex: 7,
       immediateDecoder: expectedImmediateDecoder,
       nextPc: 6,
     };
 
-    const result = argsDecoder.getArgs(0);
+    argsDecoder.fillArgs(0, result);
 
     assert.deepStrictEqual(result, expectedResult);
   });
@@ -123,6 +107,7 @@ describe("ArgsDecoder", () => {
     const argsDecoder = new ArgsDecoder(code, mask);
     const expectedImmediateDecoder = new ImmediateDecoder();
     expectedImmediateDecoder.setBytes(new Uint8Array([0xff]));
+    const result = createResults()[ArgumentType.TWO_REGISTERS_ONE_OFFSET];
     const expectedResult = {
       noOfBytesToSkip: code.length,
       type: ArgumentType.TWO_REGISTERS_ONE_OFFSET,
@@ -133,7 +118,7 @@ describe("ArgsDecoder", () => {
       nextPc: 4,
     };
 
-    const result = argsDecoder.getArgs(0);
+    argsDecoder.fillArgs(0, result);
 
     assert.deepStrictEqual(result, expectedResult);
   });
@@ -146,7 +131,7 @@ describe("ArgsDecoder", () => {
     expectedfirstImmediateDecoder.setBytes(new Uint8Array([0x01, 0x02]));
     const expectedsecondImmediateDecoder = new ImmediateDecoder();
     expectedsecondImmediateDecoder.setBytes(new Uint8Array([0x03, 0x04]));
-
+    const result = createResults()[ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES];
     const expectedResult = {
       noOfBytesToSkip: code.length,
       type: ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES,
@@ -158,7 +143,7 @@ describe("ArgsDecoder", () => {
       secondImmediateDecoder: expectedsecondImmediateDecoder,
     };
 
-    const result = argsDecoder.getArgs(0);
+    argsDecoder.fillArgs(0, result);
 
     assert.deepStrictEqual(result, expectedResult);
   });

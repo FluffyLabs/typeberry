@@ -10,6 +10,7 @@
     "packages/bytes",
     "packages/jam-codec",
     "packages/pvm",
+    "packages/pvm-standard-program-decoder",
     "packages/safrole",
     "packages/state-machine",
     "packages/stubs",
