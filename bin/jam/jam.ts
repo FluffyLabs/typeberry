@@ -2,7 +2,7 @@ import { isMainThread } from "node:worker_threads";
 
 import * as blockGenerator from "@typeberry/block-generator";
 
-async function main() {
+export async function main() {
   if (isMainThread) {
     const worker = await blockGenerator.spawnWorker();
     const blockGen = worker.transition((state, port) => {
@@ -26,8 +26,6 @@ async function main() {
     return;
   }
 }
-
-main();
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));

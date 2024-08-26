@@ -6,7 +6,7 @@
   "private": true,
   "workspaces": [
     "bin/test-runner",
-    "bin/typeberry",
+    "bin/jam",
     "packages/bytes",
     "packages/jam-codec",
     "packages/pvm",
@@ -22,7 +22,7 @@
     "workers/importer"
   ],
   "engines": {
-    "node": ">=20",
+    "node": ">=22",
     "npm": ">=10"
   },
   "scripts": {
@@ -33,7 +33,6 @@
     "start": "ts-node ./index.ts",
     "run-pvm": "ts-node ./bin/pvm.ts",
     "run-tests": "ts-node ./bin/test-runner.ts",
-    "run-typeberry": "ts-node ./bin/typeberry/typeberry.ts",
     "test": "node --test --require ts-node/register $(find . -type d -name node_modules -prune -type f -o -name '*.test.ts' | tr '\\n' ' ')",
     "ts-node": "ts-node",
     "blockchain-git-log": "ts-node ./tools/commit-hash/index.ts",

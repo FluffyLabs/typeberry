@@ -1,3 +1,5 @@
 import "@typeberry/test-runner";
 import "@typeberry/stubs";
-import "@typeberry/typeberry";
+import { main } from "@typeberry/jam/jam";
+
+main();
