@@ -54,7 +54,7 @@ export class StateMachine<CurrentState extends TStates, TStates extends State<St
    */
   transition<TNewState extends ValidTransitionFrom<CurrentState> & TStates>(
     newStateName: StateNames<TNewState>,
-    data: unknown,
+    data?: unknown,
   ): StateMachine<TNewState, TStates> {
     if (this.state.stateName === newStateName) {
       throw new Error("Attempting transition to already active state!");
