@@ -1,10 +1,9 @@
 import { EventEmitter } from "node:events";
 import type { MessagePort, TransferListItem } from "node:worker_threads";
 import { check } from "@typeberry/utils";
-import { isValidMessage, type Message } from "./message";
+import { type Message, isValidMessage } from "./message";
 
-
-const MAX_ID = 2**32;
+const MAX_ID = 2 ** 32;
 
 /**
  * Wrapper around `MessagePort` to communicate between workers or threads.
