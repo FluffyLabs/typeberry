@@ -19,7 +19,9 @@
     "tools/commit-hash",
     "tools/pvm-builder",
     "workers/block-generator",
-    "workers/importer"
+    "workers/importer",
+    "packages/logger",
+    "tools/benchmark"
   ],
   "engines": {
     "node": ">=22",
