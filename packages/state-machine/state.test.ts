@@ -11,8 +11,15 @@ describe("State", () => {
     // given
     const state = new StateA({ name: "a", allowedTransitions: ["b"] });
 
-    // when / the
+    // when / then
     assert.strictEqual(state.canTransitionTo("b"), true);
+  });
+  
+  it("should return false for not allowed transition", () => {
+    // given
+    const state = new StateA({ name: "a", allowedTransitions: ["b"] });
+
+    // when / then
     assert.strictEqual(state.canTransitionTo("c"), false);
   });
 });
