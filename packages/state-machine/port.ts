@@ -3,6 +3,9 @@ import type { MessagePort, TransferListItem } from "node:worker_threads";
 import { check } from "@typeberry/utils";
 import { isValidMessage, type Message } from "./message";
 
+
+const MAX_ID = 2**32;
+
 /**
  * Wrapper around `MessagePort` to communicate between workers or threads.
  *
@@ -47,7 +50,9 @@ export class TypedPort {
    * Send a signal to the worker.
    */
   sendSignal(localState: string, name: string, data: unknown, transferList?: TransferListItem[]) {
-    this.messageId += 1;
+    this.messageId = (this.messageId + 1) % MAX_ID;
+    this.messageId >>>= 0;
+
     this.postMessage(
       {
         kind: "signal",
