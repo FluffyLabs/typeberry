@@ -23,6 +23,9 @@
       "style": {
         "useShorthandArrayType": "error"
       },
+      "nursery": {
+        "noEvolvingTypes": "error"
+      },
       "correctness": {
         "noUnusedImports": "error"
       }
