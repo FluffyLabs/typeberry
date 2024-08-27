@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import type { MessagePort, TransferListItem } from "node:worker_threads";
 import { check } from "@typeberry/utils";
-import type { Message } from "./message";
+import { isValidMessage, type Message } from "./message";
 
 /**
  * Wrapper around `MessagePort` to communicate between workers or threads.
@@ -148,37 +148,6 @@ export class TypedPort {
       this.responseListeners.emit(ev, new Error(`port is ${reason}`));
     }
   }
-}
-
-/**
- * Some preliminary validation of incoming message.
- */
-function isValidMessage(msg: unknown): msg is Message {
-  if (!msg || typeof msg !== "object") {
-    return false;
-  }
-
-  if (!("kind" in msg) || typeof msg.kind !== "string") {
-    return false;
-  }
-
-  if (!("id" in msg) || typeof msg.id !== "number") {
-    return false;
-  }
-
-  if (!("name" in msg) || typeof msg.name !== "string") {
-    return false;
-  }
-
-  if (!("data" in msg)) {
-    return false;
-  }
-
-  if (!("localState" in msg) || typeof msg.localState !== "string") {
-    return false;
-  }
-
-  return true;
 }
 
 /**

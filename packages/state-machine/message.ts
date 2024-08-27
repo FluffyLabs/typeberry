@@ -23,3 +23,34 @@ export type Message = {
   /** Local state of the sender. Can be used to assert on the overall state of the app. */
   localState: string;
 };
+
+/**
+ * Some preliminary validation of incoming message.
+ */
+export function isValidMessage(msg: unknown): msg is Message {
+  if (!msg || typeof msg !== "object") {
+    return false;
+  }
+
+  if (!("kind" in msg) || typeof msg.kind !== "string") {
+    return false;
+  }
+
+  if (!("id" in msg) || typeof msg.id !== "number") {
+    return false;
+  }
+
+  if (!("name" in msg) || typeof msg.name !== "string") {
+    return false;
+  }
+
+  if (!("data" in msg)) {
+    return false;
+  }
+
+  if (!("localState" in msg) || typeof msg.localState !== "string") {
+    return false;
+  }
+
+  return true;
+}
