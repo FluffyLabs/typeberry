@@ -60,11 +60,8 @@ export class MessageChannelStateMachine<
   ) {
     port.listeners.on("signal", (name: string, data: unknown, remoteState: string) => {
       try {
-        const needsTransition = this.dispatchSignal(name, data);
-        if (needsTransition) {
-          this.machine.transition(needsTransition.state, needsTransition.data);
-        }
-      } catch (e) {
+        this.dispatchSignal(name, data);
+      } catch (e: unknown) {
         console.error(`[${this.constructor.name}] Unable to dispatch signal: ${e}. ${this.stateInfo(remoteState)}`);
         throw e;
       }
@@ -73,7 +70,7 @@ export class MessageChannelStateMachine<
     port.listeners.on("request", async (name: string, data: unknown, remoteState: string, msg: Message) => {
       try {
         await this.dispatchRequest(name, data, msg);
-      } catch (e) {
+      } catch (e: unknown) {
         console.error(`[${this.constructor.name}] Unable to dispatch request: ${e}. ${this.stateInfo(remoteState)}`);
         throw e;
       }
@@ -176,7 +173,7 @@ export class MessageChannelStateMachine<
     return this.port.respond(prevState.stateName, msg, res.response);
   }
 
-  private dispatchSignal(name: string, data: unknown): TransitionTo<ValidTransitionFrom<CurrentState>> | undefined {
+  private dispatchSignal(name: string, data: unknown) {
     const handler = this.currentState().signalListeners.get(name);
 
     if (!handler) {
@@ -184,7 +181,9 @@ export class MessageChannelStateMachine<
     }
 
     const newState = handler(data);
-    return newState;
+    if (newState) {
+      this.machine.transition(newState.state, newState.data);
+    }
   }
 
   private transitionTo<TNewState extends TStates>(): MessageChannelStateMachine<TNewState, TStates> {
