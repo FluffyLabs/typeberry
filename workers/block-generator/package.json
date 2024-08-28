@@ -1,7 +1,7 @@
 {
-  "name": "@typeberry/utils",
+  "name": "@typeberry/block-generator",
   "version": "0.0.1",
-  "description": "Utilities for typeberry implementation. Things don't go here lightly.",
+  "description": "A test block generator simulating blocks received over the network.",
   "main": "index.ts",
   "scripts": {
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

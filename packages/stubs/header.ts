@@ -5,11 +5,11 @@ type U64 = bigint;
 
 export class UnsealedHeader {
   // GP: H_p
-  public parentHeaderHash: Hash;
+  public parentHeaderHash!: Hash;
   // GP: H_r
-  public priorStateRoot: Hash;
+  public priorStateRoot!: Hash;
   // GP: H_x
-  public extrinsicHash: Hash;
+  public extrinsicHash!: Hash;
   // GP: H_t
   public timeSlotIndex: U64 = BigInt(0);
   // GP: H_e
