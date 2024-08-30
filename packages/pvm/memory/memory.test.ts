@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 
 import { PageFault } from "./errors";
 import { Memory } from "./memory";
-import { MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "./memory-consts";
+import { MEMORY_SIZE, MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "./memory-consts";
 import { createMemoryIndex } from "./memory-index";
 import { type PageNumber, createPageNumber } from "./page-number";
 import { ReadablePage, VirtualPage, WriteablePage } from "./pages";
@@ -112,6 +112,7 @@ describe("Memory", () => {
       const expectedMemory = {
         sbrkIndex: 0,
         virtualSbrkIndex: 0,
+        endHeap: MEMORY_SIZE,
         memory: expectedMemoryMap,
       };
 
@@ -147,6 +148,7 @@ describe("Memory", () => {
       const expectedMemory = {
         sbrkIndex: 0,
         virtualSbrkIndex: 0,
+        endHeap: MEMORY_SIZE,
         memory: expectedMemoryMap,
       };
       const storeResult = memory.storeFrom(addressToStore, dataToStore);
@@ -183,6 +185,7 @@ describe("Memory", () => {
       const expectedMemory = {
         sbrkIndex: PAGE_SIZE,
         virtualSbrkIndex: lengthToAllocate,
+        endHeap: MEMORY_SIZE,
         memory: expectedMemoryMap,
       };
 
@@ -212,6 +215,7 @@ describe("Memory", () => {
       const expectedMemory = {
         sbrkIndex: 2 * PAGE_SIZE,
         virtualSbrkIndex: lengthToAllocate,
+        endHeap: MEMORY_SIZE,
         memory: expectedMemoryMap,
       };
 
@@ -232,6 +236,7 @@ describe("Memory", () => {
       const expectedMemoryAfterFirstAllocation = {
         sbrkIndex: PAGE_SIZE,
         virtualSbrkIndex: lengthToAllocate,
+        endHeap: MEMORY_SIZE,
         memory: expectedMemoryMap,
       };
 
@@ -242,6 +247,7 @@ describe("Memory", () => {
       const expectedMemoryAfterSecondAllocation = {
         sbrkIndex: PAGE_SIZE,
         virtualSbrkIndex: 2 * lengthToAllocate,
+        endHeap: MEMORY_SIZE,
         memory: expectedMemoryMap,
       };
 
@@ -260,7 +266,7 @@ describe("Memory", () => {
       const pageNumber = createPageNumber(0);
       memoryMap.set(pageNumber, page);
       const memory = new Memory(memoryMap);
-      memory.setSbrkIndex(endPageIndex);
+      memory.setSbrkIndex(endPageIndex, createMemoryIndex(MEMORY_SIZE));
       const lengthToAllocate = 5;
       const expectedMemoryMap = new Map();
       const startMemoryIndex = createMemoryIndex(0);
@@ -272,6 +278,7 @@ describe("Memory", () => {
       const expectedMemory = {
         sbrkIndex: PAGE_SIZE,
         virtualSbrkIndex: endPageIndex + lengthToAllocate,
+        endHeap: MEMORY_SIZE,
         memory: expectedMemoryMap,
       };
 

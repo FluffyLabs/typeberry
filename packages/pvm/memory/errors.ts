@@ -21,3 +21,15 @@ export class ChunkTooLong extends Error {
     super("Memory chunk is longer than the address range!");
   }
 }
+
+export class PageOverride extends Error {
+  constructor() {
+    super("You try to override existing memory page!");
+  }
+}
+
+export class IncorrectSbrkIndex extends Error {
+  constructor() {
+    super("Space between sbrk index and max heap index should be empty!");
+  }
+}

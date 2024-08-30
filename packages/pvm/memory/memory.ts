@@ -1,5 +1,5 @@
 import { PageFault } from "./errors";
-import { PAGE_SIZE } from "./memory-consts";
+import { MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
 import { type MemoryIndex, createMemoryIndex } from "./memory-index";
 import { alignToPageSize, getPageNumber } from "./memory-utils";
 import { type PageNumber, createPageNumber } from "./page-number";
@@ -7,14 +7,16 @@ import { VirtualPage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 
 export class Memory {
-  sbrkIndex: MemoryIndex = createMemoryIndex(0);
-  virtualSbrkIndex: MemoryIndex = createMemoryIndex(0);
+  sbrkIndex = createMemoryIndex(0);
+  virtualSbrkIndex = createMemoryIndex(0);
+  endHeap = createMemoryIndex(MEMORY_SIZE);
 
   constructor(private memory: Map<PageNumber, MemoryPage> = new Map()) {}
 
-  setSbrkIndex(index: MemoryIndex) {
+  setSbrkIndex(index: MemoryIndex, endHeap: MemoryIndex) {
     this.sbrkIndex = index;
     this.virtualSbrkIndex = index;
+    this.endHeap = endHeap;
   }
 
   storeFrom(address: MemoryIndex, bytes: Uint8Array) {
@@ -25,7 +27,7 @@ export class Memory {
     }
 
     if (address >= this.virtualSbrkIndex && address < this.sbrkIndex) {
-      // [virtualSbrkIndex; sbrkIndex) is allocated but shouldn't be available yet
+      // the range [virtualSbrkIndex; sbrkIndex) is allocated but shouldn't be available yet
       return new PageFault(address);
     }
 
@@ -59,7 +61,7 @@ export class Memory {
     }
 
     if (address >= this.virtualSbrkIndex && address < this.sbrkIndex) {
-      // [virtualSbrkIndex; sbrkIndex) is allocated but shouldn't be available yet
+      // [virtualSbrkIndex; sbrkIndex) is allocated but shouldn't be available before sbrk is called
       return new PageFault(address);
     }
 
@@ -83,7 +85,7 @@ export class Memory {
   }
 
   sbrk(length: number): MemoryIndex {
-    // check if length + sbrkInddex < initialSbrkIndex + maxHeap
+    // TODO: check if length + sbrkInddex < initialSbrkIndex + maxHeap
     const currentSbrkIndex = this.sbrkIndex;
     const currentVirtualSbrkIndex = this.virtualSbrkIndex;
     const newVirtualSbrkIndex = createMemoryIndex(this.virtualSbrkIndex + length);
