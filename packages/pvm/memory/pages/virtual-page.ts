@@ -81,7 +81,8 @@ export class VirtualPage extends MemoryPage {
     return null;
   }
 
-  sbrk() {
-    // TODO
+  sbrk(start: MemoryIndex) {
+    this.set(start, this.end, new Uint8Array(this.end - start), writeable);
+    return this.end - start;
   }
 }

@@ -3,7 +3,7 @@ import { PAGE_SIZE } from "./memory-consts";
 import { type MemoryIndex, createMemoryIndex } from "./memory-index";
 import { alignToPageSize, getPageNumber } from "./memory-utils";
 import { type PageNumber, createPageNumber } from "./page-number";
-import { WriteablePage } from "./pages";
+import { VirtualPage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 
 export class Memory {
@@ -23,6 +23,12 @@ export class Memory {
     if (!page) {
       return new PageFault(address);
     }
+
+    if (address >= this.virtualSbrkIndex && address < this.sbrkIndex) {
+      // [virtualSbrkIndex; sbrkIndex) is allocated but shouldn't be available yet
+      return new PageFault(address);
+    }
+
     const pageEnd = page.start + PAGE_SIZE;
 
     if (address + bytes.length > pageEnd) {
@@ -51,6 +57,12 @@ export class Memory {
     if (!page) {
       return new PageFault(address);
     }
+
+    if (address >= this.virtualSbrkIndex && address < this.sbrkIndex) {
+      // [virtualSbrkIndex; sbrkIndex) is allocated but shouldn't be available yet
+      return new PageFault(address);
+    }
+
     const pageEnd = page.start + PAGE_SIZE;
 
     if (address + length > pageEnd) {
@@ -82,13 +94,28 @@ export class Memory {
       return currentVirtualSbrkIndex;
     }
 
+    // we have to "close" the last "virtual page"
+    const lastWriteableMemoryCell = createMemoryIndex(Math.max(currentSbrkIndex - 1, 0));
+    const lastAllocatedPageNumber = getPageNumber(lastWriteableMemoryCell);
+    const lastAllocatedPage = this.memory.get(lastAllocatedPageNumber);
+    if (lastAllocatedPage instanceof VirtualPage) {
+      const allocatedLength = lastAllocatedPage.sbrk(currentSbrkIndex);
+      this.sbrkIndex = createMemoryIndex(this.sbrkIndex + allocatedLength);
+      this.virtualSbrkIndex = createMemoryIndex(this.virtualSbrkIndex + Math.min(allocatedLength, length));
+
+      if (allocatedLength >= length) {
+        return currentSbrkIndex;
+      }
+    }
+
+    // standard allocation using "Writeable" pages
     const newSbrkIndex = createMemoryIndex(alignToPageSize(this.sbrkIndex + length));
     const pagesToAllocate = newSbrkIndex / PAGE_SIZE;
 
     for (let i = 0; i < pagesToAllocate; i++) {
       const startMemoryIndex = createMemoryIndex(currentSbrkIndex + i * PAGE_SIZE);
-      const pageNumber = createPageNumber(startMemoryIndex >>> 4);
-      const page = new WriteablePage(startMemoryIndex); // initial page length do zmiany np 4kB (25% page size)
+      const pageNumber = getPageNumber(startMemoryIndex);
+      const page = new WriteablePage(startMemoryIndex);
       this.memory.set(pageNumber, page);
     }
 
