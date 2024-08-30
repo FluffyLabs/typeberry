@@ -1,7 +1,7 @@
+import { PageFault } from "./errors";
 import { PAGE_SIZE } from "./memory-consts";
 import { type MemoryIndex, createMemoryIndex } from "./memory-index";
-import { alignToPageSize } from "./memory-utils";
-import { PageFault } from "./errors";
+import { alignToPageSize, getPageNumber } from "./memory-utils";
 import { type PageNumber, createPageNumber } from "./page-number";
 import { WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
@@ -12,17 +12,13 @@ export class Memory {
 
   constructor(private memory: Map<PageNumber, MemoryPage> = new Map()) {}
 
-  private getPageNumberFor(address: number): PageNumber {
-    return createPageNumber(address >>> 4);
-  }
-
   setSbrkIndex(index: MemoryIndex) {
     this.sbrkIndex = index;
     this.virtualSbrkIndex = index;
   }
 
   storeFrom(address: MemoryIndex, bytes: Uint8Array) {
-    const pageNumber = this.getPageNumberFor(address);
+    const pageNumber = getPageNumber(address);
     const page = this.memory.get(pageNumber);
     if (!page) {
       return new PageFault(address);
@@ -42,10 +38,12 @@ export class Memory {
     } else {
       page.storeFrom(address, bytes);
     }
+
+    return null;
   }
 
   loadInto(result: Uint8Array, address: MemoryIndex, length: 1 | 2 | 4) {
-    const pageNumber = this.getPageNumberFor(address);
+    const pageNumber = getPageNumber(address);
     const page = this.memory.get(pageNumber);
     if (!page) {
       return new PageFault(address);
@@ -60,11 +58,13 @@ export class Memory {
       if (!secondPage) {
         return new PageFault(pageEnd);
       }
-      page.loadInto(result, address, toReadFromFirstPage); // subarray
-      secondPage.loadInto(result, secondPage.start, toReadFromSecondPage); // subarray
+      page.loadInto(result.subarray(0, toReadFromFirstPage), address, toReadFromFirstPage);
+      secondPage.loadInto(result.subarray(toReadFromFirstPage), secondPage.start, toReadFromSecondPage);
     } else {
       page.loadInto(result, address, length);
     }
+
+    return null;
   }
 
   sbrk(length: number): MemoryIndex {
