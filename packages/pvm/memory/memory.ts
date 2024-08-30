@@ -1,7 +1,7 @@
-import { type MemoryIndex, createMemoryIndex } from "./memory-address";
 import { PAGE_SIZE } from "./memory-consts";
+import { type MemoryIndex, createMemoryIndex } from "./memory-index";
 import { alignToPageSize } from "./memory-utils";
-import { PageFault } from "./page-fault";
+import { PageFault } from "./errors";
 import { type PageNumber, createPageNumber } from "./page-number";
 import { WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
@@ -85,9 +85,7 @@ export class Memory {
     for (let i = 0; i < pagesToAllocate; i++) {
       const startMemoryIndex = createMemoryIndex(currentSbrkIndex + i * PAGE_SIZE);
       const pageNumber = createPageNumber(startMemoryIndex >>> 4);
-      const isLast = i === pagesToAllocate - 1;
-      const initialPageLength = isLast ? length % PAGE_SIZE : PAGE_SIZE;
-      const page = new WriteablePage(startMemoryIndex, initialPageLength); // initial page length do zmiany np 4kB (25% page size)
+      const page = new WriteablePage(startMemoryIndex); // initial page length do zmiany np 4kB (25% page size)
       this.memory.set(pageNumber, page);
     }
 

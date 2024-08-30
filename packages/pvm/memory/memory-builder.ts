@@ -1,7 +1,7 @@
 import { check } from "@typeberry/utils";
 import { Memory } from "./memory";
-import { type MemoryIndex, createMemoryIndex } from "./memory-address";
 import { PAGE_SIZE } from "./memory-consts";
+import { type MemoryIndex, createMemoryIndex } from "./memory-index";
 import { type PageNumber, createPageNumber } from "./page-number";
 import { ReadablePage, VirtualPage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
@@ -43,7 +43,7 @@ export class MemoryBuilder {
         const page = new ReadablePage(startPageAddress, data.subarray(i * PAGE_SIZE, (i + 1) * PAGE_SIZE));
         this.initialMemory.set(pageNumber, page);
       } else {
-        // 
+        //
         const page = new VirtualPage(startPageAddress);
         page.set(start, end, data, readable);
         this.initialMemory.set(pageNumber, page);
@@ -53,8 +53,11 @@ export class MemoryBuilder {
     return this;
   }
 
-  finalize(sbrkIndex: MemoryIndex, maxHeap: number): Memory {
+  setReadablePages(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {}
 
+  setWritablePages(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {}
+
+  finalize(sbrkIndex: MemoryIndex, maxHeap: number): Memory {
     // if (sbrkIndex + maxHeap < 2 ** 32 -1) {
 
     // } // alokacja tylko na pustym kawałku

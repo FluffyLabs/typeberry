@@ -1,5 +1,5 @@
-import type { MemoryIndex } from "../memory-address";
-import { PageFault } from "../page-fault";
+import { PageFault } from "../errors";
+import type { MemoryIndex } from "../memory-index";
 import { MemoryPage } from "./memory-page";
 
 export class ReadablePage extends MemoryPage {
@@ -15,6 +15,7 @@ export class ReadablePage extends MemoryPage {
     const bytes = this.data.subarray(startIndex, startIndex + length);
     result.fill(0, 0, length);
     result.set(bytes);
+    return null;
   }
 
   storeFrom(address: MemoryIndex, _data: Uint8Array) {
