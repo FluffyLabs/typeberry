@@ -34,7 +34,10 @@ export class Memory {
         return new PageFault(pageEnd);
       }
       page.storeFrom(address, bytes.subarray(0, toStoreOnFirstPage));
-      secondPage.storeFrom(address, bytes.subarray(toStoreOnFirstPage, toStoreOnFirstPage + toStoreOnSecondPage));
+      secondPage.storeFrom(
+        secondPage.start,
+        bytes.subarray(toStoreOnFirstPage, toStoreOnFirstPage + toStoreOnSecondPage),
+      );
     } else {
       page.storeFrom(address, bytes);
     }

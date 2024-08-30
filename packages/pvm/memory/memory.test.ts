@@ -3,10 +3,10 @@ import { describe, it } from "node:test";
 
 import { PageFault } from "./errors";
 import { Memory } from "./memory";
-import { PAGE_SIZE } from "./memory-consts";
+import { MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "./memory-consts";
 import { createMemoryIndex } from "./memory-index";
 import { type PageNumber, createPageNumber } from "./page-number";
-import { ReadablePage } from "./pages";
+import { ReadablePage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 
 describe("Memory", () => {
@@ -91,11 +91,82 @@ describe("Memory", () => {
       assert.deepStrictEqual(storeResult, new PageFault(addressToStore));
     });
 
-    it("should correctly store data on one page", () => {});
+    it("should correctly store data on one page", () => {
+      const startPageIndex = createMemoryIndex(0);
+      const page = new WriteablePage(startPageIndex, new Uint8Array());
+      const memoryMap = new Map<PageNumber, MemoryPage>();
+      const pageNumber = createPageNumber(0);
+      memoryMap.set(pageNumber, page);
+      const memory = new Memory(memoryMap);
+      const dataToStore = new Uint8Array([1, 2, 3, 4]);
+      const addressToStore = createMemoryIndex(1);
+      const expectedMemoryMap = new Map();
+      expectedMemoryMap.set(
+        pageNumber,
+        new WriteablePage(
+          startPageIndex,
+          new Uint8Array([0, ...dataToStore, ...new Uint8Array(MIN_ALLOCATION_LENGTH - dataToStore.length - 1)]),
+        ),
+      );
+      const expectedMemory = {
+        sbrkIndex: 0,
+        virtualSbrkIndex: 0,
+        memory: expectedMemoryMap,
+      };
 
-    it("should correctly store data on two pages", () => {});
+      const storeResult = memory.storeFrom(addressToStore, dataToStore);
 
-    it("should return PageFault if case of storing data on 2 pages but one of them does not exist", () => {});
+      assert.deepStrictEqual(storeResult, null);
+      assert.deepEqual(memory, expectedMemory);
+    });
+
+    it("should correctly store data on two pages", () => {
+      const firstStartPageIndex = createMemoryIndex(0);
+      const secondStartPageIndex = createMemoryIndex(PAGE_SIZE);
+      const firstPage = new WriteablePage(firstStartPageIndex, new Uint8Array(PAGE_SIZE));
+      const secondPage = new WriteablePage(secondStartPageIndex, new Uint8Array());
+      const memoryMap = new Map<PageNumber, MemoryPage>();
+      const firstPageNumber = createPageNumber(0);
+      const secondPageNumber = createPageNumber(1);
+      memoryMap.set(firstPageNumber, firstPage);
+      memoryMap.set(secondPageNumber, secondPage);
+      const memory = new Memory(memoryMap);
+      const dataToStore = new Uint8Array([1, 2, 3, 4]);
+      const addressToStore = createMemoryIndex(PAGE_SIZE - 2);
+      const expectedMemoryMap = new Map();
+      expectedMemoryMap.set(
+        firstPageNumber,
+        new WriteablePage(firstStartPageIndex, new Uint8Array([...new Uint8Array(PAGE_SIZE - 2), 1, 2])),
+      );
+      expectedMemoryMap.set(
+        secondPageNumber,
+        new WriteablePage(secondStartPageIndex, new Uint8Array([3, 4, ...new Uint8Array(MIN_ALLOCATION_LENGTH - 2)])),
+      );
+
+      const expectedMemory = {
+        sbrkIndex: 0,
+        virtualSbrkIndex: 0,
+        memory: expectedMemoryMap,
+      };
+      const storeResult = memory.storeFrom(addressToStore, dataToStore);
+
+      assert.deepStrictEqual(storeResult, null);
+      assert.deepEqual(memory, expectedMemory);
+    });
+
+    it("should return PageFault if case of storing data on 2 pages but one of them does not exist", () => {
+      const startPageIndex = createMemoryIndex(0);
+      const bytes = new Uint8Array();
+      const page = new ReadablePage(startPageIndex, bytes);
+      const memoryMap = new Map<PageNumber, MemoryPage>();
+      memoryMap.set(createPageNumber(0), page);
+      const memory = new Memory(memoryMap);
+      const addressToStore = createMemoryIndex(PAGE_SIZE - 2);
+
+      const storeResult = memory.storeFrom(addressToStore, new Uint8Array(4));
+
+      assert.deepStrictEqual(storeResult, new PageFault(PAGE_SIZE));
+    });
   });
 
   describe("sbrk", () => {});

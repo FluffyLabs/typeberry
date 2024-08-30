@@ -42,11 +42,12 @@ export class WriteablePage extends MemoryPage {
   }
 
   storeFrom(address: MemoryIndex, bytes: Uint8Array) {
-    if (this.buffer.byteLength < address + bytes.length && this.buffer.byteLength < PAGE_SIZE) {
+    const pageIndex = createPageIndex(address - this.start);
+    if (this.buffer.byteLength < pageIndex + bytes.length && this.buffer.byteLength < PAGE_SIZE) {
       const newLength = alignToMinimalAllocationLength(address + bytes.length);
       this.buffer.resize(newLength);
     }
-    const pageIndex = createPageIndex(address - this.start);
+
     this.view.set(bytes, pageIndex);
     return null;
   }
