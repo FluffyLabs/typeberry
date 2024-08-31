@@ -1,5 +1,5 @@
 import { MIN_ALLOCATION_LENGTH, PAGE_SIZE, PAGE_SIZE_SHIFT } from "./memory-consts";
-import type { MemoryIndex } from "./memory-index";
+import { type MemoryIndex, createMemoryIndex } from "./memory-index";
 import { createPageNumber } from "./page-number";
 
 export function alignToPageSize(length: number) {
@@ -14,4 +14,8 @@ export function alignToMinimalAllocationLength(length: number) {
 
 export function getPageNumber(address: MemoryIndex) {
   return createPageNumber(address >> PAGE_SIZE_SHIFT);
+}
+
+export function getStartPageIndex(address: MemoryIndex) {
+  return createMemoryIndex(address & ~(PAGE_SIZE - 1));
 }

@@ -3,7 +3,7 @@ import { IncorrectSbrkIndex, PageOverride } from "./errors";
 import { Memory } from "./memory";
 import { PAGE_SIZE } from "./memory-consts";
 import { type MemoryIndex, createMemoryIndex } from "./memory-index";
-import { getPageNumber } from "./memory-utils";
+import { getPageNumber, getStartPageIndex } from "./memory-utils";
 import type { PageNumber } from "./page-number";
 import { ReadablePage, VirtualPage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
@@ -22,7 +22,7 @@ export class MemoryBuilder {
     );
 
     const pageNumber = getPageNumber(start);
-    const page = this.initialMemory.get(pageNumber) ?? new VirtualPage(start);
+    const page = this.initialMemory.get(pageNumber) ?? new VirtualPage(getStartPageIndex(start));
     if (!(page instanceof VirtualPage)) {
       throw new PageOverride();
     }
@@ -41,7 +41,7 @@ export class MemoryBuilder {
     );
 
     const pageNumber = getPageNumber(start);
-    const page = this.initialMemory.get(pageNumber) ?? new VirtualPage(start);
+    const page = this.initialMemory.get(pageNumber) ?? new VirtualPage(getStartPageIndex(start));
     if (!(page instanceof VirtualPage)) {
       throw new PageOverride();
     }

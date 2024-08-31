@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 
 import { MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "./memory-consts";
 import { createMemoryIndex } from "./memory-index";
-import { alignToMinimalAllocationLength, alignToPageSize, getPageNumber } from "./memory-utils";
+import { alignToMinimalAllocationLength, alignToPageSize, getPageNumber, getStartPageIndex } from "./memory-utils";
 import { createPageNumber } from "./page-number";
 
 describe("memory-utils", () => {
@@ -74,6 +74,26 @@ describe("memory-utils", () => {
       const lengthAligned = alignToMinimalAllocationLength(length);
 
       assert.strictEqual(lengthAligned, PAGE_SIZE);
+    });
+  });
+
+  describe("getStartPageIndex", () => {
+    it("should return start index of 1st page", () => {
+      const address = createMemoryIndex(1);
+      const expectedAddress = 0;
+
+      const startPageIndex = getStartPageIndex(address);
+
+      assert.strictEqual(startPageIndex, expectedAddress);
+    });
+
+    it("should return start index of 10th page", () => {
+      const address = createMemoryIndex(1 + 10 * PAGE_SIZE);
+      const expectedAddress = 10 * PAGE_SIZE;
+
+      const startPageIndex = getStartPageIndex(address);
+
+      assert.strictEqual(startPageIndex, expectedAddress);
     });
   });
 });
