@@ -13,7 +13,7 @@ export class MemoryBuilder {
   private initialMemory: Map<PageNumber, MemoryPage> = new Map();
 
   setWriteable(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
-    check(start > end, "end has to be bigger than start");
+    check(start < end, "end has to be bigger than start");
     check(!data || data.length < end - start, "the initial data is longer than address range");
     check(!data || data.length < PAGE_SIZE, "chunk cannot be longer than one page");
     check(
@@ -32,7 +32,7 @@ export class MemoryBuilder {
   }
 
   setReadable(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
-    check(start > end, "end has to be bigger than start");
+    check(start < end, "end has to be bigger than start");
     check(!data || data.length < end - start, "the initial data is longer than address range");
     check(!data || data.length < PAGE_SIZE, "chunk cannot be longer than one page");
     check(
@@ -51,9 +51,9 @@ export class MemoryBuilder {
   }
 
   setReadablePages(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
-    check(start > end, "end has to be bigger than start");
-    check(start % PAGE_SIZE !== 0, `start needs to be a multiple of page size (${PAGE_SIZE})`);
-    check(end % PAGE_SIZE !== 0, `end needs to be a multiple of page size (${PAGE_SIZE})`);
+    check(start < end, "end has to be bigger than start");
+    check(start % PAGE_SIZE === 0, `start needs to be a multiple of page size (${PAGE_SIZE})`);
+    check(end % PAGE_SIZE === 0, `end needs to be a multiple of page size (${PAGE_SIZE})`);
     check(!data || data.length < end - start, "the initial data is longer than address range");
 
     const noOfPages = (end - start) / PAGE_SIZE;
@@ -65,12 +65,14 @@ export class MemoryBuilder {
       const page = new ReadablePage(startIndex, dataChunk);
       this.initialMemory.set(pageNumber, page);
     }
+
+    return this;
   }
 
-  setWritablePages(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
-    check(start > end, "end has to be bigger than start");
-    check(start % PAGE_SIZE !== 0, `start needs to be a multiple of page size (${PAGE_SIZE})`);
-    check(end % PAGE_SIZE !== 0, `end needs to be a multiple of page size (${PAGE_SIZE})`);
+  setWriteablePages(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
+    check(start < end, "end has to be bigger than start");
+    check(start % PAGE_SIZE === 0, `start needs to be a multiple of page size (${PAGE_SIZE})`);
+    check(end % PAGE_SIZE === 0, `end needs to be a multiple of page size (${PAGE_SIZE})`);
     check(!data || data.length < end - start, "the initial data is longer than address range");
 
     const noOfPages = (end - start) / PAGE_SIZE;
@@ -82,6 +84,8 @@ export class MemoryBuilder {
       const page = new WriteablePage(startIndex, dataChunk);
       this.initialMemory.set(pageNumber, page);
     }
+
+    return this;
   }
 
   finalize(sbrkIndex: MemoryIndex, endHeap: MemoryIndex): Memory {
