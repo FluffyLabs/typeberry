@@ -7,7 +7,7 @@ export type PageNumber = Opaque<number, "memory page number">;
 export function createPageNumber(index: number) {
   return ensure<number, PageNumber>(
     index,
-    index >= 0 && index * PAGE_SIZE < MEMORY_SIZE - PAGE_SIZE,
+    index >= 0 && index * PAGE_SIZE <= MEMORY_SIZE - PAGE_SIZE + 1,
     `Incorrect page number: ${index}!`,
   );
 }

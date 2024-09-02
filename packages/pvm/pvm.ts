@@ -18,6 +18,7 @@ import {
   HostCallOps,
   LoadOps,
   MathOps,
+  MemoryOps,
   MoveOps,
   NoArgsOps,
   ShiftOps,
@@ -108,6 +109,7 @@ export class Pvm {
     const noArgsOps = new NoArgsOps(this.instructionResult);
     const dynamicJumpOps = new DynamicJumpOps(this.registers, jumpTable, this.instructionResult, basicBlocks);
     const hostCallOps = new HostCallOps(this.instructionResult);
+    const memoryOps = new MemoryOps(this.registers, this.memory);
 
     this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
     this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(
@@ -119,7 +121,7 @@ export class Pvm {
       storeOps,
       loadOps,
     );
-    this.twoRegsDispatcher = new TwoRegsDispatcher(moveOps);
+    this.twoRegsDispatcher = new TwoRegsDispatcher(moveOps, memoryOps);
     this.oneRegOneImmOneOffsetDispatcher = new OneRegOneImmOneOffsetDispatcher(branchOps, loadOps);
     this.twoRegsOneOffsetDispatcher = new TwoRegsOneOffsetDispatcher(branchOps);
     this.oneOffsetDispatcher = new OneOffsetDispatcher(branchOps);

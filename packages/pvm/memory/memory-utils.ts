@@ -13,7 +13,7 @@ export function alignToMinimalAllocationLength(length: number) {
 }
 
 export function getPageNumber(address: MemoryIndex) {
-  return createPageNumber(address >> PAGE_SIZE_SHIFT);
+  return createPageNumber(address >>> PAGE_SIZE_SHIFT);
 }
 
 export function getStartPageIndex(address: MemoryIndex) {

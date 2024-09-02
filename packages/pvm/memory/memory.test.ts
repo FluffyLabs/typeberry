@@ -286,5 +286,36 @@ describe("Memory", () => {
 
       assert.deepEqual(memory, expectedMemory);
     });
+
+    it("should allocate two pages one by one", () => {
+      const memory = new Memory();
+      const lengthToAllocate = PAGE_SIZE;
+      const expectedMemoryMap = new Map();
+      const firstPageNumber = createPageNumber(0);
+      const secondPageNumber = createPageNumber(1);
+      const firstStartMemoryIndex = createMemoryIndex(0);
+      const secondStartMemoryIndex = createMemoryIndex(PAGE_SIZE);
+
+      expectedMemoryMap.set(
+        firstPageNumber,
+        new WriteablePage(firstStartMemoryIndex, new Uint8Array(MIN_ALLOCATION_LENGTH)),
+      );
+      expectedMemoryMap.set(
+        secondPageNumber,
+        new WriteablePage(secondStartMemoryIndex, new Uint8Array(MIN_ALLOCATION_LENGTH)),
+      );
+
+      const expectedMemory = {
+        sbrkIndex: 2 * PAGE_SIZE,
+        virtualSbrkIndex: 2 * PAGE_SIZE,
+        endHeap: MEMORY_SIZE,
+        memory: expectedMemoryMap,
+      };
+
+      memory.sbrk(lengthToAllocate);
+      memory.sbrk(lengthToAllocate);
+
+      assert.deepEqual(memory, expectedMemory);
+    });
   });
 });

@@ -112,7 +112,7 @@ export class Memory {
 
     // standard allocation using "Writeable" pages
     const newSbrkIndex = createMemoryIndex(alignToPageSize(this.sbrkIndex + length));
-    const pagesToAllocate = newSbrkIndex / PAGE_SIZE;
+    const pagesToAllocate = (newSbrkIndex - currentSbrkIndex) / PAGE_SIZE;
 
     for (let i = 0; i < pagesToAllocate; i++) {
       const startMemoryIndex = createMemoryIndex(currentSbrkIndex + i * PAGE_SIZE);
