@@ -19,7 +19,7 @@ describe("MemoryBuilder", () => {
       pageMap.set(1, new ReadablePage(createMemoryIndex(PAGE_SIZE), new Uint8Array()));
       pageMap.set(2, new WriteablePage(createMemoryIndex(2 * PAGE_SIZE), new Uint8Array()));
       const expectedMemory = {
-        endHeap: 4 * PAGE_SIZE,
+        endHeapIndex: 4 * PAGE_SIZE,
         sbrkIndex: 3 * PAGE_SIZE,
         virtualSbrkIndex: 3 * PAGE_SIZE,
         memory: pageMap,
@@ -58,7 +58,7 @@ describe("MemoryBuilder", () => {
       vp.set(createMemoryIndex(0), createMemoryIndex(1), new Uint8Array(), readable);
       pageMap.set(0, vp);
       const expectedMemory = {
-        endHeap: 4 * PAGE_SIZE,
+        endHeapIndex: 4 * PAGE_SIZE,
         sbrkIndex: 3 * PAGE_SIZE,
         virtualSbrkIndex: 3 * PAGE_SIZE,
         memory: pageMap,
@@ -90,7 +90,7 @@ describe("MemoryBuilder", () => {
       vp.set(createMemoryIndex(1), createMemoryIndex(2), new Uint8Array(), writeable);
       pageMap.set(0, vp);
       const expectedMemory = {
-        endHeap: 4 * PAGE_SIZE,
+        endHeapIndex: 4 * PAGE_SIZE,
         sbrkIndex: 3 * PAGE_SIZE,
         virtualSbrkIndex: 3 * PAGE_SIZE,
         memory: pageMap,
@@ -122,7 +122,7 @@ describe("MemoryBuilder", () => {
       const pageMap = new Map();
       pageMap.set(1, new ReadablePage(createMemoryIndex(PAGE_SIZE), new Uint8Array()));
       const expectedMemory = {
-        endHeap: 4 * PAGE_SIZE,
+        endHeapIndex: 4 * PAGE_SIZE,
         sbrkIndex: 3 * PAGE_SIZE,
         virtualSbrkIndex: 3 * PAGE_SIZE,
         memory: pageMap,
@@ -140,7 +140,7 @@ describe("MemoryBuilder", () => {
       const pageMap = new Map();
       pageMap.set(2, new WriteablePage(createMemoryIndex(2 * PAGE_SIZE), new Uint8Array()));
       const expectedMemory = {
-        endHeap: 4 * PAGE_SIZE,
+        endHeapIndex: 4 * PAGE_SIZE,
         sbrkIndex: 3 * PAGE_SIZE,
         virtualSbrkIndex: 3 * PAGE_SIZE,
         memory: pageMap,
@@ -159,7 +159,7 @@ describe("MemoryBuilder", () => {
       pageMap.set(1, new ReadablePage(createMemoryIndex(PAGE_SIZE), new Uint8Array()));
       pageMap.set(2, new WriteablePage(createMemoryIndex(2 * PAGE_SIZE), new Uint8Array()));
       const expectedMemory = {
-        endHeap: 4 * PAGE_SIZE,
+        endHeapIndex: 4 * PAGE_SIZE,
         sbrkIndex: 3 * PAGE_SIZE,
         virtualSbrkIndex: 3 * PAGE_SIZE,
         memory: pageMap,

@@ -9,14 +9,14 @@ import type { MemoryPage } from "./pages/memory-page";
 export class Memory {
   sbrkIndex = createMemoryIndex(0);
   virtualSbrkIndex = createMemoryIndex(0);
-  endHeap = createMemoryIndex(MEMORY_SIZE);
+  endHeapIndex = createMemoryIndex(MEMORY_SIZE);
 
   constructor(private memory: Map<PageNumber, MemoryPage> = new Map()) {}
 
-  setSbrkIndex(index: MemoryIndex, endHeap: MemoryIndex) {
-    this.sbrkIndex = index;
-    this.virtualSbrkIndex = index;
-    this.endHeap = endHeap;
+  setSbrkIndex(sbrkIndex: MemoryIndex, endHeapIndex: MemoryIndex) {
+    this.sbrkIndex = sbrkIndex;
+    this.virtualSbrkIndex = sbrkIndex;
+    this.endHeapIndex = endHeapIndex;
   }
 
   storeFrom(address: MemoryIndex, bytes: Uint8Array) {
@@ -85,9 +85,14 @@ export class Memory {
   }
 
   sbrk(length: number): MemoryIndex {
-    // TODO: check if length + sbrkInddex < initialSbrkIndex + maxHeap
     const currentSbrkIndex = this.sbrkIndex;
     const currentVirtualSbrkIndex = this.virtualSbrkIndex;
+
+    // new index is bigger than 2 ** 32 or endHeapIndex
+    if (MEMORY_SIZE - length >= currentVirtualSbrkIndex || currentVirtualSbrkIndex + length >= this.endHeapIndex) {
+      // OoM but idk how to handle it
+    }
+
     const newVirtualSbrkIndex = createMemoryIndex(this.virtualSbrkIndex + length);
 
     // no alllocation needed

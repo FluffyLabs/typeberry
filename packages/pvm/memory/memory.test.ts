@@ -112,7 +112,7 @@ describe("Memory", () => {
       const expectedMemory = {
         sbrkIndex: 0,
         virtualSbrkIndex: 0,
-        endHeap: MEMORY_SIZE,
+        endHeapIndex: MEMORY_SIZE,
         memory: expectedMemoryMap,
       };
 
@@ -148,7 +148,7 @@ describe("Memory", () => {
       const expectedMemory = {
         sbrkIndex: 0,
         virtualSbrkIndex: 0,
-        endHeap: MEMORY_SIZE,
+        endHeapIndex: MEMORY_SIZE,
         memory: expectedMemoryMap,
       };
       const storeResult = memory.storeFrom(addressToStore, dataToStore);
@@ -185,7 +185,7 @@ describe("Memory", () => {
       const expectedMemory = {
         sbrkIndex: PAGE_SIZE,
         virtualSbrkIndex: lengthToAllocate,
-        endHeap: MEMORY_SIZE,
+        endHeapIndex: MEMORY_SIZE,
         memory: expectedMemoryMap,
       };
 
@@ -215,7 +215,7 @@ describe("Memory", () => {
       const expectedMemory = {
         sbrkIndex: 2 * PAGE_SIZE,
         virtualSbrkIndex: lengthToAllocate,
-        endHeap: MEMORY_SIZE,
+        endHeapIndex: MEMORY_SIZE,
         memory: expectedMemoryMap,
       };
 
@@ -236,7 +236,7 @@ describe("Memory", () => {
       const expectedMemoryAfterFirstAllocation = {
         sbrkIndex: PAGE_SIZE,
         virtualSbrkIndex: lengthToAllocate,
-        endHeap: MEMORY_SIZE,
+        endHeapIndex: MEMORY_SIZE,
         memory: expectedMemoryMap,
       };
 
@@ -247,7 +247,7 @@ describe("Memory", () => {
       const expectedMemoryAfterSecondAllocation = {
         sbrkIndex: PAGE_SIZE,
         virtualSbrkIndex: 2 * lengthToAllocate,
-        endHeap: MEMORY_SIZE,
+        endHeapIndex: MEMORY_SIZE,
         memory: expectedMemoryMap,
       };
 
@@ -278,7 +278,7 @@ describe("Memory", () => {
       const expectedMemory = {
         sbrkIndex: PAGE_SIZE,
         virtualSbrkIndex: endPageIndex + lengthToAllocate,
-        endHeap: MEMORY_SIZE,
+        endHeapIndex: MEMORY_SIZE,
         memory: expectedMemoryMap,
       };
 
@@ -308,7 +308,7 @@ describe("Memory", () => {
       const expectedMemory = {
         sbrkIndex: 2 * PAGE_SIZE,
         virtualSbrkIndex: 2 * PAGE_SIZE,
-        endHeap: MEMORY_SIZE,
+        endHeapIndex: MEMORY_SIZE,
         memory: expectedMemoryMap,
       };
 
