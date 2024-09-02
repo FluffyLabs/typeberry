@@ -1,4 +1,5 @@
 import { PageFault } from "../errors";
+import { PAGE_SIZE } from "../memory-consts";
 import type { MemoryIndex } from "../memory-index";
 import { MemoryPage } from "./memory-page";
 
@@ -20,5 +21,9 @@ export class ReadablePage extends MemoryPage {
 
   storeFrom(address: MemoryIndex, _data: Uint8Array) {
     return new PageFault(address);
+  }
+
+  getPageDump() {
+    return new Uint8Array([...this.data, ...new Uint8Array(PAGE_SIZE - this.data.length)]);
   }
 }

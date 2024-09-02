@@ -15,4 +15,5 @@ export abstract class MemoryPage {
 
   abstract loadInto(res: Uint8Array, address: MemoryIndex, length: number): null | PageFault;
   abstract storeFrom(address: MemoryIndex, data: Uint8Array): null | PageFault;
+  abstract getPageDump(): Uint8Array;
 }

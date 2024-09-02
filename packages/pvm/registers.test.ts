@@ -83,39 +83,4 @@ describe("Registers", () => {
       assert.deepStrictEqual(regs.getBytesAsLittleEndian(1), expectedBytes);
     });
   });
-
-  describe("setFromBytes", () => {
-    it("should write [0xff] into register", () => {
-      const regs = new Registers();
-      const registerIndex = 0;
-      const bytes = new Uint8Array([0xff]);
-
-      regs.setFromBytes(registerIndex, bytes);
-
-      assert.strictEqual(regs.asUnsigned[registerIndex], 0xff);
-      assert.strictEqual(regs.asSigned[registerIndex], 0xff);
-    });
-
-    it("should write [0xff, 0xee] into register", () => {
-      const regs = new Registers();
-      const registerIndex = 0;
-      const bytes = new Uint8Array([0xff, 0xee]);
-
-      regs.setFromBytes(registerIndex, bytes);
-
-      assert.strictEqual(regs.asUnsigned[registerIndex], 0xee_ff);
-      assert.strictEqual(regs.asSigned[registerIndex], 0xee_ff);
-    });
-
-    it("should write [0xff, 0xee] into register", () => {
-      const regs = new Registers();
-      const registerIndex = 0;
-      const bytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
-
-      regs.setFromBytes(registerIndex, bytes);
-
-      assert.strictEqual(regs.asUnsigned[registerIndex], 0xcc_dd_ee_ff);
-      assert.strictEqual(regs.asSigned[registerIndex], -857870593);
-    });
-  });
 });

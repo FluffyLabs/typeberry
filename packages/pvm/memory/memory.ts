@@ -41,16 +41,16 @@ export class Memory {
       if (!secondPage) {
         return new PageFault(pageEnd);
       }
-      page.storeFrom(address, bytes.subarray(0, toStoreOnFirstPage));
-      secondPage.storeFrom(
+      const firstPageStoreResult = page.storeFrom(address, bytes.subarray(0, toStoreOnFirstPage));
+      if (firstPageStoreResult !== null) {
+        return firstPageStoreResult;
+      }
+      return secondPage.storeFrom(
         secondPage.start,
         bytes.subarray(toStoreOnFirstPage, toStoreOnFirstPage + toStoreOnSecondPage),
       );
-    } else {
-      page.storeFrom(address, bytes);
     }
-
-    return null;
+    return page.storeFrom(address, bytes);
   }
 
   loadInto(result: Uint8Array, address: MemoryIndex, length: 1 | 2 | 4) {
@@ -124,5 +124,14 @@ export class Memory {
     this.virtualSbrkIndex = createMemoryIndex(currentSbrkIndex + length);
     this.sbrkIndex = newSbrkIndex;
     return currentSbrkIndex;
+  }
+
+  getPageDump(pageNumber: PageNumber) {
+    const page = this.memory.get(pageNumber);
+    return page?.getPageDump() ?? new Uint8Array(PAGE_SIZE);
+  }
+
+  getDirtyPages() {
+    return this.memory.keys();
   }
 }

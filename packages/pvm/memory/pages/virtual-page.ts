@@ -1,4 +1,5 @@
 import { ChunkOverlap, ChunkTooLong, PageFault } from "../errors";
+import { PAGE_SIZE } from "../memory-consts";
 import { type MemoryIndex, createMemoryIndex } from "../memory-index";
 import { MemoryPage } from "./memory-page";
 
@@ -84,5 +85,15 @@ export class VirtualPage extends MemoryPage {
   sbrk(start: MemoryIndex) {
     this.set(start, this.end, new Uint8Array(this.end - start), writeable);
     return this.end - start;
+  }
+
+  getPageDump() {
+    const page = new Uint8Array(PAGE_SIZE);
+
+    for (const [start, _end, chunk] of this.chunks) {
+      page.set(chunk, start);
+    }
+
+    return page;
   }
 }

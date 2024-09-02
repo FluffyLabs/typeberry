@@ -51,4 +51,8 @@ export class WriteablePage extends MemoryPage {
     this.view.set(bytes, pageIndex);
     return null;
   }
+
+  getPageDump() {
+    return new Uint8Array([...this.view, ...new Uint8Array(PAGE_SIZE - this.view.length)]);
+  }
 }

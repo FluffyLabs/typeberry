@@ -9,6 +9,7 @@ import { instructionGasMap } from "./instruction-gas-map";
 import { InstructionResult } from "./instruction-result";
 import { Memory } from "./memory";
 import { Memory as m } from "./memory/memory";
+import { createPageNumber } from "./memory/page-number";
 import {
   BitOps,
   BooleanOps,
@@ -36,7 +37,6 @@ import {
   TwoRegsOneOffsetDispatcher,
   TwoRegsTwoImmsDispatcher,
 } from "./ops-dispatchers";
-import { PageMap } from "./page-map";
 import type { Mask } from "./program-decoder/mask";
 import { ProgramDecoder } from "./program-decoder/program-decoder";
 import { NO_OF_REGISTERS, Registers } from "./registers";
@@ -46,20 +46,8 @@ import { Status } from "./status";
 type InitialState = {
   regs?: RegistersArray;
   pc?: number;
-  pageMap?: PageMapItem[];
-  memory?: MemoryChunkItem[];
+  memory?: Memory;
   gas?: number;
-};
-
-type MemoryChunkItem = {
-  address: number;
-  contents: Uint8Array;
-};
-
-type PageMapItem = {
-  address: number;
-  length: number;
-  "is-writable": boolean;
 };
 
 type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N ? A : GrowToSize<T, N, [...A, T]>;
@@ -98,8 +86,7 @@ export class Pvm {
     this.mask = programDecoder.getMask();
     const jumpTable = programDecoder.getJumpTable();
     this.registers = new Registers();
-    const pageMap = new PageMap(initialState.pageMap ?? []);
-    this.memory = new Memory(pageMap, initialState.memory ?? []);
+    this.memory = initialState.memory ?? new Memory();
     this.pc = initialState.pc ?? 0;
 
     for (let i = 0; i < NO_OF_REGISTERS; i++) {
@@ -241,10 +228,6 @@ export class Pvm {
     return this.registers.asUnsigned;
   }
 
-  getMemory() {
-    return this.memory.getMemoryDump();
-  }
-
   getPC() {
     return this.pc;
   }
@@ -257,7 +240,7 @@ export class Pvm {
     return this.status;
   }
 
-  getMemoryPage(pageNumber: number): Uint8Array | null {
-    return this.memory.getPageDump(pageNumber);
+  getMemoryPage(pageNumber: number): Uint8Array {
+    return this.memory.getPageDump(createPageNumber(pageNumber));
   }
 }

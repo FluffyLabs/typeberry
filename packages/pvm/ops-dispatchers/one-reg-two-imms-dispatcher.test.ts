@@ -8,13 +8,12 @@ import { Instruction } from "../instruction";
 import { InstructionResult } from "../instruction-result";
 import { Memory } from "../memory";
 import { StoreOps } from "../ops";
-import { PageMap } from "../page-map";
 import { Registers } from "../registers";
 import { OneRegTwoImmsDispatcher } from "./one-reg-two-imms-dispatcher";
 
 describe("OneRegTwoImmsDispatcher", () => {
   const regs = new Registers();
-  const memory = new Memory(new PageMap([]), []);
+  const memory = new Memory();
   const instructionResult = new InstructionResult();
   const storeOps = new StoreOps(regs, memory, instructionResult);
 
