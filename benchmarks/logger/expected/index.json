@@ -1,19 +1,19 @@
 {
   "name": "Logger",
-  "date": "2024-09-02T04:51:47.972Z",
+  "date": "2024-09-02T20:32:34.656Z",
   "version": null,
   "results": [
     {
       "name": "console.log with string concat",
-      "ops": 220442.43,
-      "margin": 1.08,
+      "ops": 220525.59,
+      "margin": 1.1,
       "percentSlower": 0
     },
     {
       "name": "console.log with args",
-      "ops": 114780.28,
-      "margin": 0.87,
-      "percentSlower": 47.93
+      "ops": 117834.49,
+      "margin": 1.18,
+      "percentSlower": 46.57
     }
   ],
   "fastest": {
