@@ -1,12 +1,11 @@
-import fs from 'node:fs'
-import path from 'node:path';
-import chalk from 'chalk';
-import {BENCHMARKS_DIR, OUTPUT_DIR, EXPECTED_DIR} from './setup'
-import {ComparisonResult, BennyResults} from './types';
-import { formatResults } from './format';
+import fs from "node:fs";
+import path from "node:path";
+import chalk from "chalk";
+import { formatResults } from "./format";
+import { BENCHMARKS_DIR, EXPECTED_DIR, OUTPUT_DIR } from "./setup";
+import type { BennyResults, ComparisonResult } from "./types";
 
-runAllBenchmarks()
-  .catch(e => console.error(e));
+runAllBenchmarks().catch((e) => console.error(e));
 
 async function runAllBenchmarks() {
   // We are going to run all benchmarks in our benchmark folder.
@@ -21,13 +20,12 @@ async function runAllBenchmarks() {
     if (fs.statSync(benchPath).isDirectory()) {
       const files = fs.readdirSync(benchPath);
       for (const file of files) {
-        const isTs = path.extname(file) === '.ts';
+        const isTs = path.extname(file) === ".ts";
         if (isTs) {
           promises.push(
-            runBenchmark(benchPath, file)
-            .then((res: ComparisonResult) => {
+            runBenchmark(benchPath, file).then((res: ComparisonResult) => {
               results.set(`${benchmark}/${file}`, res);
-            })
+            }),
           );
         } else {
           console.warn(`Ignoring ${benchPath}/${file}`);
@@ -46,16 +44,17 @@ async function runAllBenchmarks() {
   fs.writeFileSync(`${benchmarksPath}/results.txt`, txt);
 
   // print summary
-  console.log('Summary:');
+  console.log("Summary:");
   for (const [file, diffs] of results.entries()) {
     for (const [idx, diff] of diffs.entries()) {
-      console.log(`${file}[${idx}]: ${'err' in diff ? chalk.red.bold(diff.err) : chalk.green('OK')}`);
+      console.log(`${file}[${idx}]: ${"err" in diff ? chalk.red.bold(diff.err) : chalk.green("OK")}`);
     }
   }
 
-  const hasErrors = Array.from(results.entries()).filter(([_key, diff]) => {
-    return "err" in diff;
-  }).length > 0;
+  const hasErrors =
+    Array.from(results.entries()).filter(([_key, diff]) => {
+      return "err" in diff;
+    }).length > 0;
 
   if (hasErrors) {
     process.exit(-1);
@@ -69,7 +68,7 @@ async function runBenchmark(benchPath: string, fileName: string): Promise<Compar
   const run = require(path.resolve(filePath));
   await run();
 
-  console.log('Compare with expected results.');
+  console.log("Compare with expected results.");
   const outputPath = `${benchPath}/${OUTPUT_DIR}/${fileNameNoExt}.json`;
   const expectedPath = `${benchPath}/${EXPECTED_DIR}/${fileNameNoExt}.json`;
 
@@ -79,14 +78,10 @@ async function runBenchmark(benchPath: string, fileName: string): Promise<Compar
     const previousResults = JSON.parse(expectedContent.toString());
     return compareResults(currentResults, previousResults);
   }
-
-  // since there are no expected results, let's just copy the existing ones.
-  {
-    try {
-      fs.statSync(path.dirname(expectedPath))
-    } catch {
-      fs.mkdirSync(path.dirname(expectedPath));
-    }
+  try {
+    fs.statSync(path.dirname(expectedPath));
+  } catch {
+    fs.mkdirSync(path.dirname(expectedPath));
   }
   fs.cpSync(outputPath, expectedPath);
   return compareResults(currentResults, currentResults);
@@ -120,7 +115,7 @@ function compareResults(currentResults: BennyResults, previousResults: BennyResu
     const margin = 5 + curr[i].margin + prev[i].margin;
     // but take the slower result to comparison.
     const min = Math.min(curr[i].ops, prev[i].ops);
-    if (diff > min * margin / 100) {
+    if (diff > (min * margin) / 100) {
       res.push({
         err: `Significant speed difference: (current) "${curr[i].ops} ±${curr[i].margin}%" vs "${prev[i].ops} ±${prev[i].margin}%" (previous)`,
         ops: [curr[i].ops, prev[i].ops],
@@ -137,4 +132,3 @@ function compareResults(currentResults: BennyResults, previousResults: BennyResu
 
   return res;
 }
-

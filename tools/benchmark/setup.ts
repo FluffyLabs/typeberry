@@ -1,8 +1,8 @@
-export { add, complete, cycle, suite } from 'benny';
-import { save as rawSave, configure as rawConfigure } from 'benny';
-import type {Config} from 'benny/lib/internal/common-types';
+export { add, complete, cycle, suite } from "benny";
+import { configure as rawConfigure, save as rawSave } from "benny";
+import type { Config } from "benny/lib/internal/common-types";
 
-import * as path from 'node:path';
+import * as path from "node:path";
 
 export const BENCHMARKS_DIR = "benchmarks";
 export const OUTPUT_DIR = "output";
@@ -24,12 +24,12 @@ export function save(benchmarkPath: string) {
     rawSave({
       ...defaultParams,
       details: false,
-      format: 'json'
+      format: "json",
     }),
     rawSave({
       ...defaultParams,
       details: true,
-      format: 'chart.html',
-    })
+      format: "chart.html",
+    }),
   ];
 }

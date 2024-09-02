@@ -1,19 +1,19 @@
-import type { ComparisonResult } from './types';
+import type { ComparisonResult } from "./types";
 
 type ErrorSummary = {
-  name: string,
-  err: string,
+  name: string;
+  err: string;
 };
 
-export function formatResults(input: Map<String, ComparisonResult>) {
+export function formatResults(input: Map<string, ComparisonResult>) {
   let okCount = 0;
   let allCount = 0;
-  let errors: ErrorSummary[] = [];
+  const errors: ErrorSummary[] = [];
 
   for (const [name, diffs] of input.entries()) {
     for (const [idx, diff] of diffs.entries()) {
       allCount += 1;
-      if ('err' in diff && diff.err) {
+      if ("err" in diff && diff.err) {
         errors.push({
           name: `${name}[${idx}]`,
           err: diff.err,
@@ -23,7 +23,6 @@ export function formatResults(input: Map<String, ComparisonResult>) {
       }
     }
   }
-
 
   const errorsTxt = formatErrors(errors);
   return `
@@ -35,12 +34,12 @@ export function formatResults(input: Map<String, ComparisonResult>) {
 
 function formatErrors(errors: ErrorSummary[]) {
   if (errors.length === 0) {
-    return '';
+    return "";
   }
 
   return `
 | Benchmark | Error |
 |-----------|-------|
-${errors.map(e => `| ${e.name} | ${e.err} |`).join('\n')}
+${errors.map((e) => `| ${e.name} | ${e.err} |`).join("\n")}
 `;
 }

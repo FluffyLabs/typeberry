@@ -1,2 +1,1 @@
-export function logger() {
-}
+export function logger() {}

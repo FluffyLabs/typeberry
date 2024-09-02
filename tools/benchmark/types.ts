@@ -1,27 +1,26 @@
 export type ComparisonResult = {
-  err?: string,
-  ok?: boolean,
-  ops?: [number, number],
-  margin?: [number, number],
+  err?: string;
+  ok?: boolean;
+  ops?: [number, number];
+  margin?: [number, number];
 }[];
 
 export type BennyResults = {
-  name: string,
-  date: string,
-  version: string | null,
+  name: string;
+  date: string;
+  version: string | null;
   results: {
-    name: string,
-    ops: number,
-    margin: number,
-    percentSlower: number,
-  }[],
+    name: string;
+    ops: number;
+    margin: number;
+    percentSlower: number;
+  }[];
   fastest: {
-    name: string,
-    index: number,
-  },
+    name: string;
+    index: number;
+  };
   slowest: {
-    name: string,
-    index: number,
-  }
+    name: string;
+    index: number;
+  };
 };
-
