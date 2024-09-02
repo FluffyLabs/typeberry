@@ -128,6 +128,7 @@ export class Memory {
 
   getPageDump(pageNumber: PageNumber) {
     const page = this.memory.get(pageNumber);
+    // Would it be better to return null in case of unallocated page?
     return page?.getPageDump() ?? new Uint8Array(PAGE_SIZE);
   }
 
