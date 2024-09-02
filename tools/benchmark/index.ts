@@ -2,6 +2,8 @@ import fs from 'node:fs'
 import path from 'node:path';
 import chalk from 'chalk';
 import {BENCHMARKS_DIR, OUTPUT_DIR, EXPECTED_DIR} from './setup'
+import {ComparisonResult, BennyResults} from './types';
+import { formatResults } from './format';
 
 runAllBenchmarks()
   .catch(e => console.error(e));
@@ -11,7 +13,7 @@ async function runAllBenchmarks() {
   const benchmarksPath = `./${BENCHMARKS_DIR}`;
   const benchmarks = fs.readdirSync(benchmarksPath);
 
-  const results = new Map<string, Diff>();
+  const results = new Map<string, ComparisonResult>();
   const promises: Promise<void>[] = [];
 
   for (const benchmark of benchmarks) {
@@ -23,7 +25,7 @@ async function runAllBenchmarks() {
         if (isTs) {
           promises.push(
             runBenchmark(benchPath, file)
-            .then((res: Diff) => {
+            .then((res: ComparisonResult) => {
               results.set(`${benchmark}/${file}`, res);
             })
           );
@@ -36,7 +38,13 @@ async function runAllBenchmarks() {
 
   await Promise.all(promises);
 
+  // dump raw JSON
   fs.writeFileSync(`${benchmarksPath}/results.json`, JSON.stringify(Object.fromEntries(results.entries())));
+
+  // create a textual summary (github comment)
+  const txt = formatResults(results);
+  fs.writeFileSync(`${benchmarksPath}/results.txt`, txt);
+
   // print summary
   console.log('Summary:');
   for (const [file, diffs] of results.entries()) {
@@ -54,7 +62,7 @@ async function runAllBenchmarks() {
   }
 }
 
-async function runBenchmark(benchPath: string, fileName: string): Promise<Diff> {
+async function runBenchmark(benchPath: string, fileName: string): Promise<ComparisonResult> {
   const filePath = `${benchPath}/${fileName}`;
   const fileNameNoExt = path.basename(fileName, path.extname(fileName));
   console.log(`Running ${filePath}`);
@@ -92,38 +100,11 @@ function tryReadFile(p: string) {
   }
 }
 
-type Diff = {
-  err?: string,
-  ok?: boolean,
-  ops?: [number, number],
-  margin?: [number, number],
-}[];
-
-type Results = {
-  name: string,
-  date: string,
-  version: string | null,
-  results: {
-    name: string,
-    ops: number,
-    margin: number,
-    percentSlower: number,
-  }[],
-  fastest: {
-    name: string,
-    index: number,
-  },
-  slowest: {
-    name: string,
-    index: number,
-  }
-};
-
-function compareResults(currentResults: Results, previousResults: Results): Diff {
+function compareResults(currentResults: BennyResults, previousResults: BennyResults): ComparisonResult {
   const curr = currentResults.results;
   const prev = previousResults.results;
 
-  const res: Diff = [];
+  const res: ComparisonResult = [];
 
   for (let i = 0; i < Math.max(curr.length, prev.length); i += 1) {
     if (curr[i].name !== prev[i].name) {
@@ -156,3 +137,4 @@ function compareResults(currentResults: Results, previousResults: Results): Diff
 
   return res;
 }
+
