@@ -88,9 +88,9 @@ export class MemoryBuilder {
     return this;
   }
 
-  finalize(sbrkIndex: MemoryIndex, endHeap: MemoryIndex): Memory {
+  finalize(sbrkIndex: MemoryIndex, endHeapIndex: MemoryIndex): Memory {
     const firstPage = getPageNumber(sbrkIndex);
-    const lastPage = getPageNumber(endHeap);
+    const lastPage = getPageNumber(endHeapIndex);
     for (let i = firstPage; i < lastPage; i++) {
       if (this.initialMemory.has(i)) {
         throw new IncorrectSbrkIndex();
@@ -98,7 +98,7 @@ export class MemoryBuilder {
     }
 
     const memory = new Memory(this.initialMemory);
-    memory.setSbrkIndex(sbrkIndex, endHeap);
+    memory.setSbrkIndex(sbrkIndex, endHeapIndex);
     this.initialMemory = new Map();
     return memory;
   }
