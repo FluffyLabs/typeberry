@@ -10,38 +10,11 @@ import { getPageNumber, getStartPageIndex } from "../memory/memory-utils";
 import { Registers } from "../registers";
 import { StoreOps } from "./store-ops";
 
-function transformPageDump(data: Uint8Array, offset: MemoryIndex) {
-  const blocks: {
-    address: MemoryIndex;
-    contents: Uint8Array;
-  }[] = [];
-  let start: MemoryIndex | null = null;
-
-  for (let i = 0; i < data.length; i++) {
-    if (data[i] > 0) {
-      if (start === null) {
-        start = createMemoryIndex(i + offset);
-      }
-    } else {
-      if (start !== null) {
-        blocks.push({
-          address: start,
-          contents: data.subarray(start, i),
-        });
-        start = null;
-      }
-    }
-  }
-
-  if (start !== null) {
-    blocks.push({
-      address: start,
-      contents: data.subarray(start),
-    });
-  }
-
-  return blocks;
-}
+const getExpectedPage = (address: MemoryIndex, contents: Uint8Array, length: number) => {
+  const pageStartIndex = getStartPageIndex(address);
+  const rawPage = [...new Uint8Array(address - pageStartIndex), ...contents];
+  return new Uint8Array([...rawPage, ...new Uint8Array(length - rawPage.length)]);
+};
 
 describe("StoreOps", () => {
   describe("store (U8, U16 and U32)", () => {
@@ -55,17 +28,12 @@ describe("StoreOps", () => {
         .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
         .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
-      const expectedMemory = [
-        {
-          address,
-          contents: new Uint8Array([0x98]),
-        },
-      ];
+      const expectedPage = getExpectedPage(address, new Uint8Array([0x98]), PAGE_SIZE);
 
       storeOps.storeU8(address, registerIndex);
 
       const page = memory.getPageDump(getPageNumber(address));
-      assert.deepStrictEqual(transformPageDump(page, getStartPageIndex(address)), expectedMemory);
+      assert.deepStrictEqual(page, expectedPage);
     });
 
     it("should store u16 number", () => {
@@ -78,17 +46,12 @@ describe("StoreOps", () => {
         .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
         .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
-      const expectedMemory = [
-        {
-          address,
-          contents: new Uint8Array([0x98, 0xba]),
-        },
-      ];
+      const expectedPage = getExpectedPage(address, new Uint8Array([0x98, 0xba]), PAGE_SIZE);
 
       storeOps.storeU16(address, registerIndex);
 
       const page = memory.getPageDump(getPageNumber(address));
-      assert.deepStrictEqual(transformPageDump(page, getStartPageIndex(address)), expectedMemory);
+      assert.deepStrictEqual(page, expectedPage);
     });
 
     it("should store u32 number", () => {
@@ -101,17 +64,12 @@ describe("StoreOps", () => {
         .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
         .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
-      const expectedMemory = [
-        {
-          address,
-          contents: new Uint8Array([0x98, 0xba, 0xdc, 0xfe]),
-        },
-      ];
+      const expectedPage = getExpectedPage(address, new Uint8Array([0x98, 0xba, 0xdc, 0xfe]), PAGE_SIZE);
 
       storeOps.storeU32(address, registerIndex);
 
       const page = memory.getPageDump(getPageNumber(address));
-      assert.deepStrictEqual(transformPageDump(page, getStartPageIndex(address)), expectedMemory);
+      assert.deepStrictEqual(page, expectedPage);
     });
   });
 
@@ -126,17 +84,12 @@ describe("StoreOps", () => {
         .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
         .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
-      const expectedMemory = [
-        {
-          address,
-          contents: new Uint8Array([0xfe]),
-        },
-      ];
+      const expectedPage = getExpectedPage(address, new Uint8Array([0xfe]), PAGE_SIZE);
 
       storeOps.storeImmediateU8(address, immediateDecoder);
 
       const page = memory.getPageDump(getPageNumber(address));
-      assert.deepStrictEqual(transformPageDump(page, getStartPageIndex(address)), expectedMemory);
+      assert.deepStrictEqual(page, expectedPage);
     });
 
     it("should store u16 number", () => {
@@ -149,17 +102,12 @@ describe("StoreOps", () => {
         .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
         .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
-      const expectedMemory = [
-        {
-          address,
-          contents: new Uint8Array([0xfe, 0xdc]),
-        },
-      ];
+      const expectedPage = getExpectedPage(address, new Uint8Array([0xfe, 0xdc]), PAGE_SIZE);
 
       storeOps.storeImmediateU16(address, immediateDecoder);
 
       const page = memory.getPageDump(getPageNumber(address));
-      assert.deepStrictEqual(transformPageDump(page, getStartPageIndex(address)), expectedMemory);
+      assert.deepStrictEqual(page, expectedPage);
     });
 
     it("should store u32 number", () => {
@@ -172,17 +120,12 @@ describe("StoreOps", () => {
         .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
         .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
-      const expectedMemory = [
-        {
-          address,
-          contents: new Uint8Array([0xfe, 0xdc, 0xba, 0x98]),
-        },
-      ];
+      const expectedPage = getExpectedPage(address, new Uint8Array([0xfe, 0xdc, 0xba, 0x98]), PAGE_SIZE);
 
       storeOps.storeImmediateU32(address, immediateDecoder);
 
       const page = memory.getPageDump(getPageNumber(address));
-      assert.deepStrictEqual(transformPageDump(page, getStartPageIndex(address)), expectedMemory);
+      assert.deepStrictEqual(page, expectedPage);
     });
   });
 
@@ -201,17 +144,12 @@ describe("StoreOps", () => {
         .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
         .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
-      const expectedMemory = [
-        {
-          address,
-          contents: new Uint8Array([0xfe]),
-        },
-      ];
+      const expectedPage = getExpectedPage(address, new Uint8Array([0xfe]), PAGE_SIZE);
 
       storeOps.storeImmediateIndU8(registerIndex, fistimmediateDecoder, secondimmediateDecoder);
 
       const page = memory.getPageDump(getPageNumber(address));
-      assert.deepStrictEqual(transformPageDump(page, getStartPageIndex(address)), expectedMemory);
+      assert.deepStrictEqual(page, expectedPage);
     });
 
     it("should store u16 number", () => {
@@ -228,17 +166,12 @@ describe("StoreOps", () => {
         .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
         .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
-      const expectedMemory = [
-        {
-          address,
-          contents: new Uint8Array([0xfe, 0xdc]),
-        },
-      ];
+      const expectedPage = getExpectedPage(address, new Uint8Array([0xfe, 0xdc]), PAGE_SIZE);
 
       storeOps.storeImmediateIndU16(registerIndex, fistimmediateDecoder, secondimmediateDecoder);
 
       const page = memory.getPageDump(getPageNumber(address));
-      assert.deepStrictEqual(transformPageDump(page, getStartPageIndex(address)), expectedMemory);
+      assert.deepStrictEqual(page, expectedPage);
     });
 
     it("should store u32 number", () => {
@@ -255,17 +188,12 @@ describe("StoreOps", () => {
         .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
         .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
-      const expectedMemory = [
-        {
-          address,
-          contents: new Uint8Array([0xfe, 0xdc, 0xba, 0x98]),
-        },
-      ];
+      const expectedPage = getExpectedPage(address, new Uint8Array([0xfe, 0xdc, 0xba, 0x98]), PAGE_SIZE);
 
       storeOps.storeImmediateIndU32(registerIndex, fistimmediateDecoder, secondimmediateDecoder);
 
       const page = memory.getPageDump(getPageNumber(address));
-      assert.deepStrictEqual(transformPageDump(page, getStartPageIndex(address)), expectedMemory);
+      assert.deepStrictEqual(page, expectedPage);
     });
   });
 
@@ -284,17 +212,12 @@ describe("StoreOps", () => {
         .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
         .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
-      const expectedMemory = [
-        {
-          address,
-          contents: new Uint8Array([0x98]),
-        },
-      ];
+      const expectedPage = getExpectedPage(address, new Uint8Array([0x98]), PAGE_SIZE);
 
       storeOps.storeIndU8(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
 
       const page = memory.getPageDump(getPageNumber(address));
-      assert.deepStrictEqual(transformPageDump(page, getStartPageIndex(address)), expectedMemory);
+      assert.deepStrictEqual(page, expectedPage);
     });
 
     it("should store u16 number", () => {
@@ -311,17 +234,12 @@ describe("StoreOps", () => {
         .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
         .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
-      const expectedMemory = [
-        {
-          address,
-          contents: new Uint8Array([0x98, 0xba]),
-        },
-      ];
+      const expectedPage = getExpectedPage(address, new Uint8Array([0x98, 0xba]), PAGE_SIZE);
 
       storeOps.storeIndU16(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
 
       const page = memory.getPageDump(getPageNumber(address));
-      assert.deepStrictEqual(transformPageDump(page, getStartPageIndex(address)), expectedMemory);
+      assert.deepStrictEqual(page, expectedPage);
     });
 
     it("should store u32 number", () => {
@@ -338,17 +256,12 @@ describe("StoreOps", () => {
         .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
         .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
-      const expectedMemory = [
-        {
-          address,
-          contents: new Uint8Array([0x98, 0xba, 0xdc, 0xfe]),
-        },
-      ];
+      const expectedPage = getExpectedPage(address, new Uint8Array([0x98, 0xba, 0xdc, 0xfe]), PAGE_SIZE);
 
       storeOps.storeIndU32(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
 
       const page = memory.getPageDump(getPageNumber(address));
-      assert.deepStrictEqual(transformPageDump(page, getStartPageIndex(address)), expectedMemory);
+      assert.deepStrictEqual(page, expectedPage);
     });
   });
 });

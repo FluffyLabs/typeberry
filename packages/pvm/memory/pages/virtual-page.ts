@@ -91,7 +91,7 @@ export class VirtualPage extends MemoryPage {
     const page = new Uint8Array(PAGE_SIZE);
 
     for (const [start, _end, chunk] of this.chunks) {
-      page.set(chunk, start);
+      page.set(chunk, start - this.start);
     }
 
     return page;

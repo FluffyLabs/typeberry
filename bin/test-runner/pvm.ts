@@ -1,7 +1,9 @@
 import assert from "node:assert";
 import { MemoryBuilder } from "@typeberry/pvm/memory";
 import { PAGE_SIZE } from "@typeberry/pvm/memory/memory-consts";
-import { createMemoryIndex } from "@typeberry/pvm/memory/memory-index";
+import { type MemoryIndex, createMemoryIndex } from "@typeberry/pvm/memory/memory-index";
+import { getPageNumber, getStartPageIndex } from "@typeberry/pvm/memory/memory-utils";
+import type { PageNumber } from "@typeberry/pvm/memory/page-number";
 import { Pvm, type RegistersArray } from "@typeberry/pvm/pvm";
 import type { FromJson } from "./json-parser";
 
@@ -65,6 +67,12 @@ export class PvmTest {
   "expected-gas": number;
 }
 
+const getExpectedPage = (address: MemoryIndex, contents: Uint8Array, length: number) => {
+  const pageStartIndex = getStartPageIndex(address);
+  const rawPage = [...new Uint8Array(address - pageStartIndex), ...contents];
+  return new Uint8Array([...rawPage, ...new Uint8Array(length - rawPage.length)]);
+};
+
 export async function runPvmTest(testContent: PvmTest) {
   const initialMemory = testContent["initial-memory"];
   const pageMap = testContent["initial-page-map"];
@@ -118,9 +126,27 @@ export async function runPvmTest(testContent: PvmTest) {
 
   assert.strictEqual(pvm.getGas(), testContent["expected-gas"]);
   assert.strictEqual(pvm.getPC(), testContent["expected-pc"]);
-  // assert.deepStrictEqual(pvm.getMemory(), testContent["expected-memory"]);
   assert.deepStrictEqual(Array.from(pvm.getRegisters()), testContent["expected-regs"]);
   const pvmStatus = pvm.getStatus();
   const testStatus = pvmStatus <= 1 ? "halt" : "trap";
   assert.strictEqual(testStatus, testContent["expected-status"]);
+
+  const dirtyPages = memory.getDirtyPages();
+  const checkedPages = new Set<PageNumber>();
+  const expectedMemory = testContent["expected-memory"];
+  for (const memoryChunk of expectedMemory) {
+    const address = createMemoryIndex(memoryChunk.address);
+    // here is a hidden assumption that 1 chunk === 1 page and it won't work in case of 2 chunks on one page
+    const expectedPage = getExpectedPage(address, memoryChunk.contents, PAGE_SIZE);
+    const pageNumber = getPageNumber(address);
+    checkedPages.add(pageNumber);
+    assert.deepStrictEqual(pvm.getMemoryPage(pageNumber), expectedPage);
+  }
+
+  const emptyPage = new Uint8Array(PAGE_SIZE);
+  const pageThatShouldBeEmpty = Array.from(dirtyPages).filter((pageNumber) => !checkedPages.has(pageNumber));
+
+  for (const pageNumber of pageThatShouldBeEmpty) {
+    assert.deepStrictEqual(pvm.getMemoryPage(pageNumber), emptyPage);
+  }
 }
