@@ -29,7 +29,7 @@ export function formatResults(input: Map<string, Result>, commitHash?: string) {
         name: fullName,
         filePath,
         ops: `${curr.ops} ±${curr.margin}%`,
-        comment: curr.percentSlower === 0 ? "fastest" : `${curr.percentSlower}% slower`,
+        comment: curr.percentSlower === 0 ? "fastest ✅" : `${curr.percentSlower}% slower`,
       });
 
       if ("err" in diff && diff.err) {
@@ -47,7 +47,7 @@ export function formatResults(input: Map<string, Result>, commitHash?: string) {
   const detailsTxt = formatDetails(all);
   const errorsTxt = formatErrors(errors);
   return `
-Benchmarks summary: ${okCount}/${all.length} OK
+### Benchmarks summary: ${okCount}/${all.length} OK ${okCount === all.length ? "✅" : "❌"}
 
 ${detailsTxt}
 
