@@ -5,15 +5,15 @@
   "results": [
     {
       "name": "multiply and bring back to u32",
-      "ops": 145369026.23,
-      "margin": 5.03,
+      "ops": 246216343.36,
+      "margin": 5,
       "percentSlower": 0
     },
     {
       "name": "multiply and take modulus",
-      "ops": 141065889.97,
-      "margin": 5.62,
-      "percentSlower": 2.96
+      "ops": 247109296.23,
+      "margin": 5,
+      "percentSlower": 0
     }
   ],
   "fastest": {
