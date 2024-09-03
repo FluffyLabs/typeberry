@@ -5,7 +5,7 @@ import { formatResults } from "./format";
 import { BENCHMARKS_DIR, EXPECTED_DIR, OUTPUT_DIR } from "./setup";
 import type { BennyResults, ComparisonResult, Result } from "./types";
 
-const commitHash = process.env['GITHUB_SHA'];
+const commitHash = process.env.GITHUB_SHA;
 
 runAllBenchmarks().catch((e) => console.error(e));
 
@@ -42,7 +42,7 @@ async function runAllBenchmarks() {
   fs.writeFileSync(`${benchmarksPath}/results.json`, JSON.stringify(Object.fromEntries(results.entries())));
 
   // create a textual summary (github comment)
-  const txt = formatResults(results, commitHash, );
+  const txt = formatResults(results, commitHash);
   fs.writeFileSync(`${benchmarksPath}/results.txt`, txt);
 
   // print summary
@@ -55,7 +55,7 @@ async function runAllBenchmarks() {
 
   const hasErrors =
     Array.from(results.entries()).filter(([_key, diff]) => {
-      return !!diff.diff.find(e => e.err);
+      return !!diff.diff.find((e) => e.err);
     }).length > 0;
 
   if (hasErrors) {

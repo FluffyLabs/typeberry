@@ -1,6 +1,6 @@
 export type Result = {
-  current: BennyResults,
-  diff: ComparisonResult,
+  current: BennyResults;
+  diff: ComparisonResult;
 };
 
 export type ComparisonResult = {

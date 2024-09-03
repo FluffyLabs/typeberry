@@ -1,4 +1,4 @@
-import {BENCHMARKS_DIR} from "./setup";
+import { BENCHMARKS_DIR } from "./setup";
 import type { Result } from "./types";
 
 type ErrorSummary = {
@@ -8,16 +8,13 @@ type ErrorSummary = {
 };
 
 type BenchmarkSummary = {
-  name: string,
-  filePath: string,
-  ops: string,
-  comment: string,
+  name: string;
+  filePath: string;
+  ops: string;
+  comment: string;
 };
 
-export function formatResults(
-  input: Map<string, Result>,
-  commitHash?: string,
-) {
+export function formatResults(input: Map<string, Result>, commitHash?: string) {
   let okCount = 0;
   const all: BenchmarkSummary[] = [];
   const errors: ErrorSummary[] = [];
@@ -25,16 +22,14 @@ export function formatResults(
   for (const [name, diffs] of input.entries()) {
     for (const [idx, diff] of diffs.diff.entries()) {
       const fullName = `${name}[${idx}]`;
-      const filePath = commitHash
-        ? `../blob/${commitHash}/${BENCHMARKS_DIR}/${name}`
-        : `./${BENCHMARKS_DIR}/${name}`;
+      const filePath = commitHash ? `../blob/${commitHash}/${BENCHMARKS_DIR}/${name}` : `./${BENCHMARKS_DIR}/${name}`;
       const curr = diffs.current.results[idx];
 
       all.push({
         name: fullName,
         filePath,
         ops: `${curr.ops} ±${curr.margin}%`,
-        comment: curr.percentSlower === 0 ? 'fastest' : `${curr.percentSlower}% slower`
+        comment: curr.percentSlower === 0 ? "fastest" : `${curr.percentSlower}% slower`,
       });
 
       if ("err" in diff && diff.err) {
@@ -67,7 +62,7 @@ function formatDetails(all: BenchmarkSummary[]) {
 
 | Benchmark | Ops |  |
 |-----------|-----|--|
-${all.map((b) => `| [${b.name}](${b.filePath}) | ${b.ops} | ${b.comment} |`).join('\n')}
+${all.map((b) => `| [${b.name}](${b.filePath}) | ${b.ops} | ${b.comment} |`).join("\n")}
 </details>
 `;
 }
