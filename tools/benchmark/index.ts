@@ -106,7 +106,7 @@ function compareResults(currentResults: BennyResults, previousResults: BennyResu
   const res: ComparisonResult = [];
 
   for (let i = 0; i < Math.max(curr.length, prev.length); i += 1) {
-    if (curr[i].name !== prev[i].name) {
+    if (curr[i]?.name !== prev[i]?.name) {
       res.push({
         err: `Mismatching name (current) "${curr[i]?.name}" vs "${prev[i]?.name}" (previous)`,
       });
