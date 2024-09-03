@@ -68,38 +68,38 @@ export class VirtualPage extends MemoryPage {
 
   loadInto(res: Uint8Array, address: MemoryIndex, length: 1 | 2 | 3 | 4) {
     // find the first chunk to load from
-    let chunk = this.chunks.findIndex((chunk, idx) => chunk.start < address);
+    const chunk = this.chunks.findIndex((chunk, idx) => chunk.start < address);
     if (chunk === -1) {
-       return new PageFault(address);
+      return new PageFault(address);
     }
-   
+
     let loadedLength = 0;
     while (loadedLength < length) {
       const [start, end, data] = this.chunks[chunk];
-      
+
       // this below could be collapsed into a few lines, but I think
       // it's more readable that way.
       if (loadedLength + data.length <= length) {
-         // we can fit the whole chunk's data
-         res.set(data, loadedLength);
-         loadedLength += data.length;
+        // we can fit the whole chunk's data
+        res.set(data, loadedLength);
+        loadedLength += data.length;
       } else {
-         // or we just need the remaining portion
-         res.set(data.subarray(0, length - loadedLength), loadedLength);
-         loadedLength += data.length;
+        // or we just need the remaining portion
+        res.set(data.subarray(0, length - loadedLength), loadedLength);
+        loadedLength += data.length;
       }
-      
+
       // fill the reminder with zeros.
       if (address + length < end) {
         res.fill(0, loadedLength, length);
         loadedLength = length;
       }
-      
+
       // we run out of chunks to load from
       if (chunk >= this.chunks.length) {
-         return new PageFault(address + loadedLength);
+        return new PageFault(address + loadedLength);
       }
-   }
+    }
   }
 
   sbrk(start: MemoryIndex) {

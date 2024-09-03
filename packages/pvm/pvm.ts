@@ -8,7 +8,6 @@ import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
 import { InstructionResult } from "./instruction-result";
 import { Memory } from "./memory";
-import { Memory as m } from "./memory/memory";
 import { createPageNumber } from "./memory/page-number";
 import {
   BitOps,
