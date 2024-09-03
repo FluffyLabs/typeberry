@@ -1,0 +1,40 @@
+# Run all benchmarks and compare the results.
+
+name: Benchmarks
+
+on:
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  benchmarks:
+    runs-on: self-hosted
+
+    strategy:
+      matrix:
+        node-version: [22.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run benchmarks
+      - name: Comment PR
+        if: always()
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          filePath: ./benchmarks/results.txt
+          comment_tag: benchmarks
+      - name: Upload new transaction log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          path: |
+            ./benchmarks/*/output
+            ./benchmarks/results.json
+          name: benchmark-results
