@@ -101,7 +101,7 @@ function tryReadFile(p: string) {
 
 function compareResults(currentResults: BennyResults, expectedResults: BennyResults): ComparisonResult {
   const curr = currentResults.results;
-  const prev = expectedResults.results;
+  let prev = expectedResults.results;
 
   // should not happen, since BennyResults always have some results.
   if (curr === null) {
@@ -109,9 +109,7 @@ function compareResults(currentResults: BennyResults, expectedResults: BennyResu
   }
 
   // if there is no expectation on the results, just check which case is the fastest.
-  if (prev === null) {
-    return compareFastest(currentResults, expectedResults);
-  }
+  prev = prev ?? curr;
 
   const res: ComparisonResult = [];
 
