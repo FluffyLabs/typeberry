@@ -17,11 +17,11 @@
     }
   ],
   "fastest": {
-    "name": "multiply and bring back to u32",
-    "index": 0
-  },
-  "slowest": {
     "name": "multiply and take modulus",
     "index": 1
+  },
+  "slowest": {
+    "name": "multiply and bring back to u32",
+    "index": 0
   }
 }

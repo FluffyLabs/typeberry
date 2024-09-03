@@ -39,7 +39,7 @@ async function runAllBenchmarks() {
   await Promise.all(promises);
 
   // dump raw JSON
-  fs.writeFileSync(`${benchmarksPath}/results.json`, JSON.stringify(Object.fromEntries(results.entries())));
+  fs.writeFileSync(`${benchmarksPath}/results.json`, JSON.stringify(Object.fromEntries(results.entries()), null, 2));
 
   // create a textual summary (github comment)
   const txt = formatResults(results, commitHash);
