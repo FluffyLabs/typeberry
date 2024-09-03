@@ -17,7 +17,12 @@ and create results in `<benchmark-name>/output` directory.
 
 If a JSON file `<benchmark-name>/expected/<file>.json` exists, the benchmark
 runner will additionally compare the results of execution with the expected
-results. The summary of execution of the benchmarks is created in
+results. The format of the file is the same as the `output` JSON file.
+
+If the exact results are not that important, and we only care about the
+`fastest` case. It's possible to set `results` to a `null` value in the `expected`
+file.
+
+The summary of execution of the benchmarks is created in
 `./results.json` and `./results.txt` files. When benchmarks are running on
 Github, the latter will be posted as a comment to the PR.
-
