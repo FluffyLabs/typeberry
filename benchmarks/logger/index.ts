@@ -29,3 +29,7 @@ module.exports = () =>
     configure({}),
     ...save(__filename),
   );
+
+if (require.main === module) {
+  module.exports();
+}

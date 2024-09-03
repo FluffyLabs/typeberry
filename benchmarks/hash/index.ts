@@ -714,3 +714,7 @@ type Byte =
   | typeof xfd
   | typeof xfe
   | typeof xff;
+
+if (require.main === module) {
+  module.exports();
+}
