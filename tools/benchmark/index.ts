@@ -3,7 +3,9 @@ import path from "node:path";
 import chalk from "chalk";
 import { formatResults } from "./format";
 import { BENCHMARKS_DIR, EXPECTED_DIR, OUTPUT_DIR } from "./setup";
-import type { BennyResults, ComparisonResult } from "./types";
+import type { BennyResults, ComparisonResult, Result } from "./types";
+
+const commitHash = process.env['GITHUB_SHA'];
 
 runAllBenchmarks().catch((e) => console.error(e));
 
@@ -12,7 +14,7 @@ async function runAllBenchmarks() {
   const benchmarksPath = `./${BENCHMARKS_DIR}`;
   const benchmarks = fs.readdirSync(benchmarksPath);
 
-  const results = new Map<string, ComparisonResult>();
+  const results = new Map<string, Result>();
   const promises: Promise<void>[] = [];
 
   for (const benchmark of benchmarks) {
@@ -23,7 +25,7 @@ async function runAllBenchmarks() {
         const isTs = path.extname(file) === ".ts";
         if (isTs) {
           promises.push(
-            runBenchmark(benchPath, file).then((res: ComparisonResult) => {
+            runBenchmark(benchPath, file).then((res: Result) => {
               results.set(`${benchmark}/${file}`, res);
             }),
           );
@@ -40,20 +42,20 @@ async function runAllBenchmarks() {
   fs.writeFileSync(`${benchmarksPath}/results.json`, JSON.stringify(Object.fromEntries(results.entries())));
 
   // create a textual summary (github comment)
-  const txt = formatResults(results);
+  const txt = formatResults(results, commitHash, );
   fs.writeFileSync(`${benchmarksPath}/results.txt`, txt);
 
   // print summary
   console.log("Summary:");
   for (const [file, diffs] of results.entries()) {
-    for (const [idx, diff] of diffs.entries()) {
+    for (const [idx, diff] of diffs.diff.entries()) {
       console.log(`${file}[${idx}]: ${"err" in diff ? chalk.red.bold(diff.err) : chalk.green("OK")}`);
     }
   }
 
   const hasErrors =
     Array.from(results.entries()).filter(([_key, diff]) => {
-      return "err" in diff;
+      return !!diff.diff.find(e => e.err);
     }).length > 0;
 
   if (hasErrors) {
@@ -61,7 +63,7 @@ async function runAllBenchmarks() {
   }
 }
 
-async function runBenchmark(benchPath: string, fileName: string): Promise<ComparisonResult> {
+async function runBenchmark(benchPath: string, fileName: string): Promise<Result> {
   const filePath = `${benchPath}/${fileName}`;
   const fileNameNoExt = path.basename(fileName, path.extname(fileName));
   console.log(`Running ${filePath}`);
@@ -76,15 +78,17 @@ async function runBenchmark(benchPath: string, fileName: string): Promise<Compar
   const expectedContent = tryReadFile(expectedPath);
   if (expectedContent) {
     const previousResults = JSON.parse(expectedContent.toString());
-    return compareResults(currentResults, previousResults);
+    return {
+      diff: compareResults(currentResults, previousResults),
+      current: currentResults,
+    };
   }
-  try {
-    fs.statSync(path.dirname(expectedPath));
-  } catch {
-    fs.mkdirSync(path.dirname(expectedPath));
-  }
-  fs.cpSync(outputPath, expectedPath);
-  return compareResults(currentResults, currentResults);
+
+  // If the expected directory does not exist, just compare with itself.
+  return {
+    diff: compareResults(currentResults, currentResults),
+    current: currentResults,
+  };
 }
 
 function tryReadFile(p: string) {

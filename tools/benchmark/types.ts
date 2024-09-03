@@ -1,3 +1,8 @@
+export type Result = {
+  current: BennyResults,
+  diff: ComparisonResult,
+};
+
 export type ComparisonResult = {
   err?: string;
   ok?: boolean;
