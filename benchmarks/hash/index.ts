@@ -714,5 +714,3 @@ type Byte =
   | typeof xfd
   | typeof xfe
   | typeof xff;
-
-module.exports();
