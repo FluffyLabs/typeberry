@@ -92,6 +92,7 @@ export async function runPvmTest(testContent: PvmTest) {
         memoryBuilder.setWriteable(startPageIndex, endPageIndex, new Uint8Array());
       } else {
         memoryBuilder.setReadable(startPageIndex, endPageIndex, new Uint8Array());
+        continue;
       }
     }
 

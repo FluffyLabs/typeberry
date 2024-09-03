@@ -7,9 +7,9 @@ import { VirtualPage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 
 export class Memory {
-  sbrkIndex = createMemoryIndex(0);
-  virtualSbrkIndex = createMemoryIndex(0);
-  endHeapIndex = createMemoryIndex(MEMORY_SIZE);
+  private sbrkIndex = createMemoryIndex(0);
+  private virtualSbrkIndex = createMemoryIndex(0);
+  private endHeapIndex = createMemoryIndex(MEMORY_SIZE);
 
   constructor(private memory: Map<PageNumber, MemoryPage> = new Map()) {}
 

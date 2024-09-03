@@ -34,6 +34,7 @@ export class WriteablePage extends MemoryPage {
   }
 
   loadInto(result: Uint8Array, address: MemoryIndex, length: 1 | 2 | 3 | 4) {
+    check(address > this.start && address + length < this.end, "address within page");
     const startIndex = address - this.start;
     const bytes = this.view.subarray(startIndex, startIndex + length);
     result.fill(0, 0, length);

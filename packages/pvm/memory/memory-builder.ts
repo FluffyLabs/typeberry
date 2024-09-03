@@ -10,12 +10,12 @@ import type { MemoryPage } from "./pages/memory-page";
 import { readable, writeable } from "./pages/virtual-page";
 
 export class MemoryBuilder {
-  private initialMemory: Map<PageNumber, MemoryPage> = new Map();
+  private readonly initialMemory: Map<PageNumber, MemoryPage> = new Map();
 
   setWriteable(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
     check(start < end, "end has to be bigger than start");
-    check(!data || data.length < end - start, "the initial data is longer than address range");
-    check(!data || data.length < PAGE_SIZE, "chunk cannot be longer than one page");
+    check(data.length < end - start, "the initial data is longer than address range");
+    check(data.length < PAGE_SIZE, "chunk cannot be longer than one page");
     check(
       getPageNumber(start) === getPageNumber(createMemoryIndex(end - 1)),
       "start and end have to be on the same page",
@@ -33,8 +33,8 @@ export class MemoryBuilder {
 
   setReadable(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
     check(start < end, "end has to be bigger than start");
-    check(!data || data.length < end - start, "the initial data is longer than address range");
-    check(!data || data.length < PAGE_SIZE, "chunk cannot be longer than one page");
+    check(data.length < end - start, "the initial data is longer than address range");
+    check(data.length < PAGE_SIZE, "chunk cannot be longer than one page");
     check(
       getPageNumber(start) === getPageNumber(createMemoryIndex(end - 1)),
       "start and end have to be on the same page",
@@ -54,7 +54,7 @@ export class MemoryBuilder {
     check(start < end, "end has to be bigger than start");
     check(start % PAGE_SIZE === 0, `start needs to be a multiple of page size (${PAGE_SIZE})`);
     check(end % PAGE_SIZE === 0, `end needs to be a multiple of page size (${PAGE_SIZE})`);
-    check(!data || data.length < end - start, "the initial data is longer than address range");
+    check(data.length < end - start, "the initial data is longer than address range");
 
     const noOfPages = (end - start) / PAGE_SIZE;
 
@@ -73,7 +73,7 @@ export class MemoryBuilder {
     check(start < end, "end has to be bigger than start");
     check(start % PAGE_SIZE === 0, `start needs to be a multiple of page size (${PAGE_SIZE})`);
     check(end % PAGE_SIZE === 0, `end needs to be a multiple of page size (${PAGE_SIZE})`);
-    check(!data || data.length < end - start, "the initial data is longer than address range");
+    check(data.length < end - start, "the initial data is longer than address range");
 
     const noOfPages = (end - start) / PAGE_SIZE;
 
@@ -99,7 +99,6 @@ export class MemoryBuilder {
 
     const memory = new Memory(this.initialMemory);
     memory.setSbrkIndex(sbrkIndex, endHeapIndex);
-    this.initialMemory = new Map();
     return memory;
   }
 }
