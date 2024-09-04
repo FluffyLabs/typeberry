@@ -1,8 +1,7 @@
 import { MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "../memory-consts";
-import type { MemoryIndex } from "../memory-index";
 import { alignToMinimalAllocationLength } from "../memory-utils";
-import { createPageIndex } from "../page-index";
 import { MemoryPage } from "./memory-page";
+import type { PageIndex, PageNumber } from "./page-utils";
 
 /**
  * I had to extend ArrayBuffer type to use resizable ArrayBuffer.
@@ -23,8 +22,8 @@ export class WriteablePage extends MemoryPage {
   private buffer: ArrayBuffer;
   private view: Uint8Array;
 
-  constructor(start: MemoryIndex, initialData?: Uint8Array) {
-    super(start);
+  constructor(pageNumber: PageNumber, initialData?: Uint8Array) {
+    super(pageNumber);
     const initialPageLength = initialData ? alignToMinimalAllocationLength(initialData?.length) : MIN_ALLOCATION_LENGTH;
     this.buffer = new ArrayBuffer(initialPageLength, { maxByteLength: PAGE_SIZE });
     this.view = new Uint8Array(this.buffer);
@@ -33,27 +32,24 @@ export class WriteablePage extends MemoryPage {
     }
   }
 
-  loadInto(result: Uint8Array, address: MemoryIndex, length: 1 | 2 | 3 | 4) {
-    check(address > this.start && address + length < this.end, "address within page");
-    const startIndex = address - this.start;
+  loadInto(result: Uint8Array, startIndex: PageIndex, length: 1 | 2 | 3 | 4) {
     const bytes = this.view.subarray(startIndex, startIndex + length);
     result.fill(0, 0, length);
     result.set(bytes);
     return null;
   }
 
-  storeFrom(address: MemoryIndex, bytes: Uint8Array) {
-    const pageIndex = createPageIndex(address - this.start);
-    if (this.buffer.byteLength < pageIndex + bytes.length && this.buffer.byteLength < PAGE_SIZE) {
-      const newLength = alignToMinimalAllocationLength(address + bytes.length);
+  storeFrom(startIndex: PageIndex, bytes: Uint8Array) {
+    if (this.buffer.byteLength < startIndex + bytes.length && this.buffer.byteLength < PAGE_SIZE) {
+      const newLength = alignToMinimalAllocationLength(startIndex + bytes.length);
       this.buffer.resize(newLength);
     }
 
-    this.view.set(bytes, pageIndex);
+    this.view.set(bytes, startIndex);
     return null;
   }
 
   getPageDump() {
-    return new Uint8Array([...this.view, ...new Uint8Array(PAGE_SIZE - this.view.length)]);
+    return this.view;
   }
 }

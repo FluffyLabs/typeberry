@@ -5,6 +5,7 @@ import { MemoryBuilder } from "./memory-builder";
 import { PAGE_SIZE } from "./memory-consts";
 import { createMemoryIndex } from "./memory-index";
 import { ReadablePage, VirtualPage, WriteablePage } from "./pages";
+import { createPageNumber } from "./pages/page-utils";
 import { readable, writeable } from "./pages/virtual-page";
 
 describe("MemoryBuilder", () => {
@@ -12,12 +13,12 @@ describe("MemoryBuilder", () => {
     it("should work correctly (happy path)", () => {
       const builder = new MemoryBuilder();
       const pageMap = new Map();
-      const vp = new VirtualPage(createMemoryIndex(0));
+      const vp = new VirtualPage(createPageNumber(0));
       vp.set(createMemoryIndex(0), createMemoryIndex(1), new Uint8Array(), readable);
       vp.set(createMemoryIndex(1), createMemoryIndex(2), new Uint8Array(), writeable);
       pageMap.set(0, vp);
-      pageMap.set(1, new ReadablePage(createMemoryIndex(PAGE_SIZE), new Uint8Array()));
-      pageMap.set(2, new WriteablePage(createMemoryIndex(2 * PAGE_SIZE), new Uint8Array()));
+      pageMap.set(1, new ReadablePage(createPageNumber(1), new Uint8Array()));
+      pageMap.set(2, new WriteablePage(createPageNumber(2), new Uint8Array()));
       const expectedMemory = {
         endHeapIndex: 4 * PAGE_SIZE,
         sbrkIndex: 3 * PAGE_SIZE,
@@ -54,7 +55,7 @@ describe("MemoryBuilder", () => {
     it("should correctly add readable chunk on virtual page", () => {
       const builder = new MemoryBuilder();
       const pageMap = new Map();
-      const vp = new VirtualPage(createMemoryIndex(0));
+      const vp = new VirtualPage(createPageNumber(0));
       vp.set(createMemoryIndex(0), createMemoryIndex(1), new Uint8Array(), readable);
       pageMap.set(0, vp);
       const expectedMemory = {
@@ -86,7 +87,7 @@ describe("MemoryBuilder", () => {
     it("should correctly add writeable chunk on virtual page", () => {
       const builder = new MemoryBuilder();
       const pageMap = new Map();
-      const vp = new VirtualPage(createMemoryIndex(0));
+      const vp = new VirtualPage(createPageNumber(0));
       vp.set(createMemoryIndex(1), createMemoryIndex(2), new Uint8Array(), writeable);
       pageMap.set(0, vp);
       const expectedMemory = {
@@ -120,7 +121,7 @@ describe("MemoryBuilder", () => {
     it("should add readable page", () => {
       const builder = new MemoryBuilder();
       const pageMap = new Map();
-      pageMap.set(1, new ReadablePage(createMemoryIndex(PAGE_SIZE), new Uint8Array()));
+      pageMap.set(1, new ReadablePage(createPageNumber(1), new Uint8Array()));
       const expectedMemory = {
         endHeapIndex: 4 * PAGE_SIZE,
         sbrkIndex: 3 * PAGE_SIZE,
@@ -138,7 +139,7 @@ describe("MemoryBuilder", () => {
     it("should add writeable page", () => {
       const builder = new MemoryBuilder();
       const pageMap = new Map();
-      pageMap.set(2, new WriteablePage(createMemoryIndex(2 * PAGE_SIZE), new Uint8Array()));
+      pageMap.set(2, new WriteablePage(createPageNumber(2), new Uint8Array()));
       const expectedMemory = {
         endHeapIndex: 4 * PAGE_SIZE,
         sbrkIndex: 3 * PAGE_SIZE,
@@ -156,8 +157,8 @@ describe("MemoryBuilder", () => {
     it("should add two pages", () => {
       const builder = new MemoryBuilder();
       const pageMap = new Map();
-      pageMap.set(1, new ReadablePage(createMemoryIndex(PAGE_SIZE), new Uint8Array()));
-      pageMap.set(2, new WriteablePage(createMemoryIndex(2 * PAGE_SIZE), new Uint8Array()));
+      pageMap.set(1, new ReadablePage(createPageNumber(1), new Uint8Array()));
+      pageMap.set(2, new WriteablePage(createPageNumber(2), new Uint8Array()));
       const expectedMemory = {
         endHeapIndex: 4 * PAGE_SIZE,
         sbrkIndex: 3 * PAGE_SIZE,

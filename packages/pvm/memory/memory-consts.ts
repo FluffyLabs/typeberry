@@ -2,6 +2,7 @@ import { check } from "@typeberry/utils";
 
 export const MEMORY_SIZE = 0xff_ff_ff_ff;
 export const PAGE_SIZE_SHIFT = 14;
+// PAGE_SIZE has to be a power of 2
 export const PAGE_SIZE = 1 << PAGE_SIZE_SHIFT;
 const MIN_ALLOCATION_SHIFT = 7;
 

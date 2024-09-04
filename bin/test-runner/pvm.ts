@@ -3,7 +3,7 @@ import { MemoryBuilder } from "@typeberry/pvm/memory";
 import { PAGE_SIZE } from "@typeberry/pvm/memory/memory-consts";
 import { type MemoryIndex, createMemoryIndex } from "@typeberry/pvm/memory/memory-index";
 import { getPageNumber, getStartPageIndex } from "@typeberry/pvm/memory/memory-utils";
-import type { PageNumber } from "@typeberry/pvm/memory/page-number";
+import type { PageNumber } from "@typeberry/pvm/memory/pages/page-utils";
 import { Pvm, type RegistersArray } from "@typeberry/pvm/pvm";
 import type { FromJson } from "./json-parser";
 
@@ -96,25 +96,35 @@ export async function runPvmTest(testContent: PvmTest) {
       }
     }
 
-    for (const memoryChunk of memoryChunksOnThisPage) {
-      const address = createMemoryIndex(memoryChunk.address);
-      let contents: number[] = [];
+    if (memoryChunksOnThisPage.length > 1) {
+      throw new Error("The current implementation assumes 1 memory chunk on 1 page");
+    }
 
-      if (address > startPageIndex) {
-        contents = contents.concat(...new Uint8Array(address - startPageIndex));
-      }
+    if (memoryChunksOnThisPage.length === 0) {
+      continue;
+    }
 
-      contents = contents.concat(...memoryChunk.contents);
+    const memoryChunk = memoryChunksOnThisPage[0];
+    const address = createMemoryIndex(memoryChunk.address);
+    const contents = new Uint8Array([
+      ...(address > startPageIndex ? new Uint8Array(address - startPageIndex) : []),
+      ...memoryChunk.contents,
+    ]);
 
-      if (isWriteable) {
-        memoryBuilder.setWriteable(startPageIndex, endPageIndex, new Uint8Array(contents));
-      } else {
-        memoryBuilder.setReadable(startPageIndex, endPageIndex, new Uint8Array(contents));
-      }
+    if (isWriteable) {
+      memoryBuilder.setWriteable(startPageIndex, endPageIndex, contents);
+    } else {
+      memoryBuilder.setReadable(startPageIndex, endPageIndex, contents);
     }
   }
 
-  const memory = memoryBuilder.finalize(createMemoryIndex(16 * PAGE_SIZE), createMemoryIndex(32 * PAGE_SIZE));
+  /**
+   * The values of HEAP_START_PAGE and HEAP_END_PAGE are not important.
+   * For now it is enough that the heap is behind the space used by tests.
+   */
+  const HEAP_START_PAGE = 16;
+  const HEAP_END_PAGE = 32;
+  const memory = memoryBuilder.finalize(createMemoryIndex(HEAP_START_PAGE), createMemoryIndex(HEAP_END_PAGE));
 
   const pvm = new Pvm(testContent.program, {
     gas: testContent["initial-gas"],
@@ -137,7 +147,6 @@ export async function runPvmTest(testContent: PvmTest) {
   const expectedMemory = testContent["expected-memory"];
   for (const memoryChunk of expectedMemory) {
     const address = createMemoryIndex(memoryChunk.address);
-    // here is a hidden assumption that 1 chunk === 1 page and it won't work in case of 2 chunks on one page
     const expectedPage = getExpectedPage(address, memoryChunk.contents, PAGE_SIZE);
     const pageNumber = getPageNumber(address);
     checkedPages.add(pageNumber);

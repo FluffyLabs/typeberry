@@ -1,10 +1,16 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "./memory-consts";
+import { MEMORY_SIZE, MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "./memory-consts";
 import { createMemoryIndex } from "./memory-index";
-import { alignToMinimalAllocationLength, alignToPageSize, getPageNumber, getStartPageIndex } from "./memory-utils";
-import { createPageNumber } from "./page-number";
+import {
+  alignToMinimalAllocationLength,
+  alignToPageSize,
+  getPageNumber,
+  getStartPageIndex,
+  getStartPageIndexFromPageNumber,
+} from "./memory-utils";
+import { createPageNumber } from "./pages/page-utils";
 
 describe("memory-utils", () => {
   describe("getPageNumber", () => {
@@ -94,6 +100,35 @@ describe("memory-utils", () => {
       const startPageIndex = getStartPageIndex(address);
 
       assert.strictEqual(startPageIndex, expectedAddress);
+    });
+  });
+
+  describe("getStartPageIndexFromPageNumber", () => {
+    it("should return a correct start index for page 0", () => {
+      const pageNumber = createPageNumber(0);
+      const expectedMemoryIndex = createMemoryIndex(0);
+
+      const startIndex = getStartPageIndexFromPageNumber(pageNumber);
+
+      assert.strictEqual(startIndex, expectedMemoryIndex);
+    });
+
+    it("should return a correct start index for page 1", () => {
+      const pageNumber = createPageNumber(1);
+      const expectedMemoryIndex = createMemoryIndex(PAGE_SIZE);
+
+      const startIndex = getStartPageIndexFromPageNumber(pageNumber);
+
+      assert.strictEqual(startIndex, expectedMemoryIndex);
+    });
+
+    it("should return a correct start index for the last page", () => {
+      const lastMemoryIndex = createMemoryIndex(MEMORY_SIZE);
+      const pageNumber = getPageNumber(lastMemoryIndex);
+
+      const startIndex = getStartPageIndexFromPageNumber(pageNumber);
+
+      assert.strictEqual(startIndex, pageNumber * PAGE_SIZE);
     });
   });
 });

@@ -1,18 +1,26 @@
 import { check } from "@typeberry/utils";
-import { IncorrectSbrkIndex, PageOverride } from "./errors";
+import { FinalizedBuilderModification, IncorrectSbrkIndex, PageOverride } from "./errors";
 import { Memory } from "./memory";
 import { PAGE_SIZE } from "./memory-consts";
 import { type MemoryIndex, createMemoryIndex } from "./memory-index";
-import { getPageNumber, getStartPageIndex } from "./memory-utils";
-import type { PageNumber } from "./page-number";
+import { getPageNumber } from "./memory-utils";
 import { ReadablePage, VirtualPage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
+import type { PageNumber } from "./pages/page-utils";
 import { readable, writeable } from "./pages/virtual-page";
 
 export class MemoryBuilder {
   private readonly initialMemory: Map<PageNumber, MemoryPage> = new Map();
+  private isFinalized = false;
+
+  private ensureNotFinalized() {
+    if (this.isFinalized) {
+      throw new FinalizedBuilderModification();
+    }
+  }
 
   setWriteable(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
+    this.ensureNotFinalized();
     check(start < end, "end has to be bigger than start");
     check(data.length < end - start, "the initial data is longer than address range");
     check(data.length < PAGE_SIZE, "chunk cannot be longer than one page");
@@ -22,7 +30,7 @@ export class MemoryBuilder {
     );
 
     const pageNumber = getPageNumber(start);
-    const page = this.initialMemory.get(pageNumber) ?? new VirtualPage(getStartPageIndex(start));
+    const page = this.initialMemory.get(pageNumber) ?? new VirtualPage(pageNumber);
     if (!(page instanceof VirtualPage)) {
       throw new PageOverride();
     }
@@ -32,6 +40,7 @@ export class MemoryBuilder {
   }
 
   setReadable(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
+    this.ensureNotFinalized();
     check(start < end, "end has to be bigger than start");
     check(data.length < end - start, "the initial data is longer than address range");
     check(data.length < PAGE_SIZE, "chunk cannot be longer than one page");
@@ -41,7 +50,7 @@ export class MemoryBuilder {
     );
 
     const pageNumber = getPageNumber(start);
-    const page = this.initialMemory.get(pageNumber) ?? new VirtualPage(getStartPageIndex(start));
+    const page = this.initialMemory.get(pageNumber) ?? new VirtualPage(pageNumber);
     if (!(page instanceof VirtualPage)) {
       throw new PageOverride();
     }
@@ -51,6 +60,7 @@ export class MemoryBuilder {
   }
 
   setReadablePages(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
+    this.ensureNotFinalized();
     check(start < end, "end has to be bigger than start");
     check(start % PAGE_SIZE === 0, `start needs to be a multiple of page size (${PAGE_SIZE})`);
     check(end % PAGE_SIZE === 0, `end needs to be a multiple of page size (${PAGE_SIZE})`);
@@ -62,7 +72,7 @@ export class MemoryBuilder {
       const startIndex = createMemoryIndex(i * PAGE_SIZE + start);
       const pageNumber = getPageNumber(startIndex);
       const dataChunk = data.subarray(i * PAGE_SIZE, (i + 1) * PAGE_SIZE);
-      const page = new ReadablePage(startIndex, dataChunk);
+      const page = new ReadablePage(pageNumber, dataChunk);
       this.initialMemory.set(pageNumber, page);
     }
 
@@ -70,6 +80,7 @@ export class MemoryBuilder {
   }
 
   setWriteablePages(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
+    this.ensureNotFinalized();
     check(start < end, "end has to be bigger than start");
     check(start % PAGE_SIZE === 0, `start needs to be a multiple of page size (${PAGE_SIZE})`);
     check(end % PAGE_SIZE === 0, `end needs to be a multiple of page size (${PAGE_SIZE})`);
@@ -81,7 +92,7 @@ export class MemoryBuilder {
       const startIndex = createMemoryIndex(i * PAGE_SIZE + start);
       const pageNumber = getPageNumber(startIndex);
       const dataChunk = data.subarray(i * PAGE_SIZE, (i + 1) * PAGE_SIZE);
-      const page = new WriteablePage(startIndex, dataChunk);
+      const page = new WriteablePage(pageNumber, dataChunk);
       this.initialMemory.set(pageNumber, page);
     }
 
@@ -91,14 +102,20 @@ export class MemoryBuilder {
   finalize(sbrkIndex: MemoryIndex, endHeapIndex: MemoryIndex): Memory {
     const firstPage = getPageNumber(sbrkIndex);
     const lastPage = getPageNumber(endHeapIndex);
+
     for (let i = firstPage; i < lastPage; i++) {
       if (this.initialMemory.has(i)) {
         throw new IncorrectSbrkIndex();
       }
     }
 
-    const memory = new Memory(this.initialMemory);
-    memory.setSbrkIndex(sbrkIndex, endHeapIndex);
+    const memory = new Memory({
+      memory: this.initialMemory,
+      sbrkIndex,
+      endHeapIndex,
+    });
+
+    this.isFinalized = true;
     return memory;
   }
 }
