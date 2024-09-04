@@ -41,7 +41,7 @@ export class WriteablePage extends MemoryPage {
 
   storeFrom(startIndex: PageIndex, bytes: Uint8Array) {
     if (this.buffer.byteLength < startIndex + bytes.length && this.buffer.byteLength < PAGE_SIZE) {
-      const newLength = Math.min(PAGE_SIZE, Math.max(MIN_ALLOCATION_LENGTH, startIndex + length));
+      const newLength = Math.min(PAGE_SIZE, Math.max(MIN_ALLOCATION_LENGTH, startIndex + bytes.length));
       this.buffer.resize(newLength);
     }
 

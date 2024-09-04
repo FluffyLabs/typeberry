@@ -69,7 +69,7 @@ describe("WriteablePage", () => {
     const bytesToStore = new Uint8Array([1, 2, 3, 4]);
     const indexToStore = createPageIndex(MIN_ALLOCATION_LENGTH);
     const writeablePage = new WriteablePage(pageNumber);
-    const expectedBuffer = new ArrayBuffer(2 * MIN_ALLOCATION_LENGTH);
+    const expectedBuffer = new ArrayBuffer(MIN_ALLOCATION_LENGTH + bytesToStore.length);
     const expectedView = new Uint8Array(expectedBuffer);
     expectedView.set(bytesToStore, MIN_ALLOCATION_LENGTH);
     const expectedObject = {
