@@ -3,23 +3,29 @@ export type Result = {
   diff: ComparisonResult;
 };
 
-export type ComparisonResult = {
-  err?: string;
-  ok?: boolean;
-  ops?: [number, number];
-  margin?: [number, number];
-}[];
+export type ErrorResult = {
+  err: string;
+};
+export type OkResult = {
+  ok: true;
+  ops: [number, number];
+  margin: [number, number];
+};
+
+export type ComparisonResult = (ErrorResult | OkResult)[];
 
 export type BennyResults = {
   name: string;
   date: string;
   version: string | null;
-  results: {
-    name: string;
-    ops: number;
-    margin: number;
-    percentSlower: number;
-  }[];
+  results:
+    | {
+        name: string;
+        ops: number;
+        margin: number;
+        percentSlower: number;
+      }[]
+    | null;
   fastest: {
     name: string;
     index: number;

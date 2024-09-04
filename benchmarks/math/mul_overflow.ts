@@ -1,21 +1,21 @@
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
 
-const a = 0xffffffff12;
-const b = 0x1234123412;
+const a = 0xffffff12 >>> 0;
+const b = 0x34123412 >>> 0;
+
+const MAX_U32 = 2 ** 32;
 
 module.exports = () =>
   suite(
     "Wrapping Multiplication",
 
     add("multiply and bring back to u32", () => {
-      const a1 = a >>> 0;
-      const b1 = b >>> 0;
-      const c1 = (a1 * b1) >>> 0;
+      const c1 = (a * b) >>> 0;
       return c1;
     }),
 
     add("multiply and take modulus", () => {
-      const c1 = (a * b) % 2 ** 32;
+      const c1 = (a * b) % MAX_U32;
       return c1;
     }),
 
@@ -24,3 +24,7 @@ module.exports = () =>
     configure({}),
     ...save(__filename),
   );
+
+if (require.main === module) {
+  module.exports();
+}
