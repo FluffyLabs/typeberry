@@ -1,5 +1,4 @@
 import { MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "../memory-consts";
-import { alignToMinimalAllocationLength } from "../memory-utils";
 import { MemoryPage } from "./memory-page";
 import type { PageIndex, PageNumber } from "./page-utils";
 
@@ -24,7 +23,8 @@ export class WriteablePage extends MemoryPage {
 
   constructor(pageNumber: PageNumber, initialData?: Uint8Array) {
     super(pageNumber);
-    const initialPageLength = initialData ? alignToMinimalAllocationLength(initialData?.length) : MIN_ALLOCATION_LENGTH;
+    const dataLength = initialData?.length ?? 0;
+    const initialPageLength = Math.min(PAGE_SIZE, Math.max(dataLength, MIN_ALLOCATION_LENGTH));
     this.buffer = new ArrayBuffer(initialPageLength, { maxByteLength: PAGE_SIZE });
     this.view = new Uint8Array(this.buffer);
     if (initialData) {
@@ -41,7 +41,7 @@ export class WriteablePage extends MemoryPage {
 
   storeFrom(startIndex: PageIndex, bytes: Uint8Array) {
     if (this.buffer.byteLength < startIndex + bytes.length && this.buffer.byteLength < PAGE_SIZE) {
-      const newLength = alignToMinimalAllocationLength(startIndex + bytes.length);
+      const newLength = Math.min(PAGE_SIZE, Math.max(MIN_ALLOCATION_LENGTH, startIndex + length));
       this.buffer.resize(newLength);
     }
 

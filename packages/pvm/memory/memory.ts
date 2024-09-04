@@ -42,24 +42,30 @@ export class Memory {
     const firstPageIndex = createPageIndex(address - page.start);
     const pageEnd = page.start + PAGE_SIZE;
 
-    if (address + bytes.length > pageEnd) {
-      const toStoreOnFirstPage = address + bytes.length - pageEnd;
-      const toStoreOnSecondPage = bytes.length - toStoreOnFirstPage;
-      const secondPageNumber = createPageNumber(pageNumber + 1);
-      const secondPage = this.memory.get(secondPageNumber);
-      if (!secondPage) {
-        return new PageFault(pageEnd);
-      }
-      const firstPageStoreResult = page.storeFrom(firstPageIndex, bytes.subarray(0, toStoreOnFirstPage));
-      if (firstPageStoreResult !== null) {
-        return firstPageStoreResult;
-      }
-      return secondPage.storeFrom(
-        createPageIndex(0),
-        bytes.subarray(toStoreOnFirstPage, toStoreOnFirstPage + toStoreOnSecondPage),
-      );
+    if (address + bytes.length <= pageEnd) {
+      return page.storeFrom(firstPageIndex, bytes);
     }
-    return page.storeFrom(firstPageIndex, bytes);
+
+    // bytes span two pages, so we need to split it and store separately.
+    const toStoreOnFirstPage = address + bytes.length - pageEnd;
+    const toStoreOnSecondPage = bytes.length - toStoreOnFirstPage;
+    const secondPageNumber = createPageNumber(pageNumber + 1);
+    const secondPage = this.memory.get(secondPageNumber);
+
+    if (!secondPage) {
+      return new PageFault(pageEnd);
+    }
+
+    const firstPageStoreResult = page.storeFrom(firstPageIndex, bytes.subarray(0, toStoreOnFirstPage));
+
+    if (firstPageStoreResult !== null) {
+      return firstPageStoreResult;
+    }
+
+    return secondPage.storeFrom(
+      createPageIndex(0),
+      bytes.subarray(toStoreOnFirstPage, toStoreOnFirstPage + toStoreOnSecondPage),
+    );
   }
 
   loadInto(result: Uint8Array, address: MemoryIndex, length: 1 | 2 | 4) {
@@ -77,21 +83,30 @@ export class Memory {
     const firstPageIndex = createPageIndex(address - page.start);
     const pageEnd = page.start + PAGE_SIZE;
 
-    if (address + length > pageEnd) {
-      const toReadFromFirstPage = address + length - pageEnd;
-      const toReadFromSecondPage = length - toReadFromFirstPage;
-      const secondPageNumber = createPageNumber(pageNumber + 1);
-      const secondPage = this.memory.get(secondPageNumber);
-      if (!secondPage) {
-        return new PageFault(pageEnd);
-      }
-      page.loadInto(result.subarray(0, toReadFromFirstPage), firstPageIndex, toReadFromFirstPage);
-      secondPage.loadInto(result.subarray(toReadFromFirstPage), createPageIndex(0), toReadFromSecondPage);
-    } else {
-      page.loadInto(result, firstPageIndex, length);
+    if (address + length <= pageEnd) {
+      return page.loadInto(result, firstPageIndex, length);
     }
 
-    return null;
+    // bytes span two pages, so we need to split it and load separately.
+    const toReadFromFirstPage = address + length - pageEnd;
+    const toReadFromSecondPage = length - toReadFromFirstPage;
+    const secondPageNumber = createPageNumber(pageNumber + 1);
+    const secondPage = this.memory.get(secondPageNumber);
+    if (!secondPage) {
+      return new PageFault(pageEnd);
+    }
+
+    const firstPageLoadResult = page.loadInto(
+      result.subarray(0, toReadFromFirstPage),
+      firstPageIndex,
+      toReadFromFirstPage,
+    );
+
+    if (firstPageLoadResult !== null) {
+      return firstPageLoadResult;
+    }
+
+    return secondPage.loadInto(result.subarray(toReadFromFirstPage), createPageIndex(0), toReadFromSecondPage);
   }
 
   sbrk(length: number): MemoryIndex {
@@ -129,8 +144,7 @@ export class Memory {
 
   getPageDump(pageNumber: PageNumber) {
     const page = this.memory.get(pageNumber);
-    // Would it be better to return null in case of unallocated page?
-    return page?.getPageDump() ?? new Uint8Array(PAGE_SIZE);
+    return page?.getPageDump() ?? null;
   }
 
   getDirtyPages() {

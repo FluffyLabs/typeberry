@@ -1,15 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { MEMORY_SIZE, MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "./memory-consts";
+import { MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
 import { createMemoryIndex } from "./memory-index";
-import {
-  alignToMinimalAllocationLength,
-  alignToPageSize,
-  getPageNumber,
-  getStartPageIndex,
-  getStartPageIndexFromPageNumber,
-} from "./memory-utils";
+import { alignToPageSize, getPageNumber, getStartPageIndex, getStartPageIndexFromPageNumber } from "./memory-utils";
 import { createPageNumber } from "./pages/page-utils";
 
 describe("memory-utils", () => {
@@ -54,32 +48,6 @@ describe("memory-utils", () => {
       const lengthAligned = alignToPageSize(length);
 
       assert.strictEqual(lengthAligned, 2 * PAGE_SIZE);
-    });
-  });
-
-  describe("alignToMinimalAllocationLength", () => {
-    it("should return MIN_ALLOCATION_LENGTH for 0", () => {
-      const length = 0;
-
-      const lengthAligned = alignToMinimalAllocationLength(length);
-
-      assert.strictEqual(lengthAligned, MIN_ALLOCATION_LENGTH);
-    });
-
-    it("should return 2 * MIN_ALLOCATION_LENGTH for MIN_ALLOCATION_LENGTH + 1", () => {
-      const length = MIN_ALLOCATION_LENGTH + 1;
-
-      const lengthAligned = alignToMinimalAllocationLength(length);
-
-      assert.strictEqual(lengthAligned, 2 * MIN_ALLOCATION_LENGTH);
-    });
-
-    it("should not return a value bigger than PAGE_SIZE", () => {
-      const length = 2 * PAGE_SIZE;
-
-      const lengthAligned = alignToMinimalAllocationLength(length);
-
-      assert.strictEqual(lengthAligned, PAGE_SIZE);
     });
   });
 
