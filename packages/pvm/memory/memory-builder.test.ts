@@ -5,8 +5,8 @@ import { MemoryBuilder } from "./memory-builder";
 import { PAGE_SIZE } from "./memory-consts";
 import { createMemoryIndex } from "./memory-index";
 import { ReadablePage, VirtualPage, WriteablePage } from "./pages";
-import { createPageNumber } from "./pages/page-utils";
-import { readable, writeable } from "./pages/virtual-page";
+import { createPageIndex, createPageNumber } from "./pages/page-utils";
+import { createEndChunkIndex, readable, writeable } from "./pages/virtual-page";
 
 describe("MemoryBuilder", () => {
   describe("finalize", () => {
@@ -14,8 +14,8 @@ describe("MemoryBuilder", () => {
       const builder = new MemoryBuilder();
       const pageMap = new Map();
       const vp = new VirtualPage(createPageNumber(0));
-      vp.set(createMemoryIndex(0), createMemoryIndex(1), new Uint8Array(), readable);
-      vp.set(createMemoryIndex(1), createMemoryIndex(2), new Uint8Array(), writeable);
+      vp.set(createPageIndex(0), createEndChunkIndex(1), new Uint8Array(), readable);
+      vp.set(createPageIndex(1), createEndChunkIndex(2), new Uint8Array(), writeable);
       pageMap.set(0, vp);
       pageMap.set(1, new ReadablePage(createPageNumber(1), new Uint8Array()));
       pageMap.set(2, new WriteablePage(createPageNumber(2), new Uint8Array()));
@@ -49,6 +49,17 @@ describe("MemoryBuilder", () => {
 
       assert.throws(tryToBuildMemory, new IncorrectSbrkIndex());
     });
+
+    it("should throw IncorrectSbrkIndex exception when sbrk index is on virtual page", () => {
+      const builder = new MemoryBuilder();
+
+      const tryToBuildMemory = () =>
+        builder
+          .setWriteable(createMemoryIndex(1), createMemoryIndex(50), new Uint8Array())
+          .finalize(createMemoryIndex(50), createMemoryIndex(4 * PAGE_SIZE));
+
+      assert.throws(tryToBuildMemory, new IncorrectSbrkIndex());
+    });
   });
 
   describe("chunked memory", () => {
@@ -56,7 +67,7 @@ describe("MemoryBuilder", () => {
       const builder = new MemoryBuilder();
       const pageMap = new Map();
       const vp = new VirtualPage(createPageNumber(0));
-      vp.set(createMemoryIndex(0), createMemoryIndex(1), new Uint8Array(), readable);
+      vp.set(createPageIndex(0), createEndChunkIndex(1), new Uint8Array(), readable);
       pageMap.set(0, vp);
       const expectedMemory = {
         endHeapIndex: 4 * PAGE_SIZE,
@@ -88,7 +99,7 @@ describe("MemoryBuilder", () => {
       const builder = new MemoryBuilder();
       const pageMap = new Map();
       const vp = new VirtualPage(createPageNumber(0));
-      vp.set(createMemoryIndex(1), createMemoryIndex(2), new Uint8Array(), writeable);
+      vp.set(createPageIndex(1), createEndChunkIndex(2), new Uint8Array(), writeable);
       pageMap.set(0, vp);
       const expectedMemory = {
         endHeapIndex: 4 * PAGE_SIZE,

@@ -5,10 +5,9 @@ import { PageFault } from "./errors";
 import { Memory } from "./memory";
 import { MEMORY_SIZE, MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "./memory-consts";
 import { createMemoryIndex } from "./memory-index";
-import { ReadablePage, VirtualPage, WriteablePage } from "./pages";
+import { ReadablePage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, createPageNumber } from "./pages/page-utils";
-import { writeable } from "./pages/virtual-page";
 
 describe("Memory", () => {
   describe("loadInto", () => {
@@ -257,37 +256,6 @@ describe("Memory", () => {
       memory.sbrk(lengthToAllocate);
 
       assert.deepEqual(memory, expectedMemoryAfterSecondAllocation);
-    });
-
-    it("should allocate chunk on virtual page", () => {
-      const startPageIndex = createMemoryIndex(0);
-      const endPageIndex = createMemoryIndex(50);
-      const pageNumber = createPageNumber(0);
-      const page = new VirtualPage(pageNumber);
-      const initialChunk = [startPageIndex, endPageIndex, new Uint8Array(), writeable] as const;
-      page.set(...initialChunk);
-      const memoryMap = new Map<PageNumber, MemoryPage>();
-      memoryMap.set(pageNumber, page);
-      const sbrkIndex = createMemoryIndex(endPageIndex);
-      const endHeapIndex = createMemoryIndex(MEMORY_SIZE);
-      const memory = new Memory({ memory: memoryMap, sbrkIndex, endHeapIndex });
-      const lengthToAllocate = 5;
-      const expectedMemoryMap = new Map();
-      const expectedPage = new VirtualPage(pageNumber);
-      expectedMemoryMap.set(pageNumber, expectedPage);
-      expectedPage.set(...initialChunk);
-      expectedPage.set(endPageIndex, createMemoryIndex(PAGE_SIZE), new Uint8Array(PAGE_SIZE - endPageIndex), writeable);
-
-      const expectedMemory = {
-        sbrkIndex: PAGE_SIZE,
-        virtualSbrkIndex: endPageIndex + lengthToAllocate,
-        endHeapIndex: MEMORY_SIZE,
-        memory: expectedMemoryMap,
-      };
-
-      memory.sbrk(lengthToAllocate);
-
-      assert.deepEqual(memory, expectedMemory);
     });
 
     it("should allocate two pages one by one", () => {

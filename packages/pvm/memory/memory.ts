@@ -2,7 +2,7 @@ import { PageFault } from "./errors";
 import { MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
 import { type MemoryIndex, createMemoryIndex } from "./memory-index";
 import { alignToPageSize, getPageNumber } from "./memory-utils";
-import { VirtualPage, WriteablePage } from "./pages";
+import { WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, createPageIndex, createPageNumber } from "./pages/page-utils";
 
@@ -109,20 +109,6 @@ export class Memory {
     if (newVirtualSbrkIndex <= currentSbrkIndex) {
       this.virtualSbrkIndex = newVirtualSbrkIndex;
       return currentVirtualSbrkIndex;
-    }
-
-    // we have to "close" the last "virtual page"
-    const lastWriteableMemoryCell = createMemoryIndex(Math.max(currentSbrkIndex - 1, 0));
-    const lastAllocatedPageNumber = getPageNumber(lastWriteableMemoryCell);
-    const lastAllocatedPage = this.memory.get(lastAllocatedPageNumber);
-    if (lastAllocatedPage instanceof VirtualPage) {
-      const allocatedLength = lastAllocatedPage.sbrk(currentSbrkIndex);
-      this.sbrkIndex = createMemoryIndex(this.sbrkIndex + allocatedLength);
-      this.virtualSbrkIndex = createMemoryIndex(this.virtualSbrkIndex + Math.min(allocatedLength, length));
-
-      if (allocatedLength >= length) {
-        return currentSbrkIndex;
-      }
     }
 
     // standard allocation using "Writeable" pages

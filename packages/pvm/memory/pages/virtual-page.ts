@@ -1,7 +1,6 @@
 import { type Opaque, ensure } from "@typeberry/utils";
 import { ChunkOverlap, ChunkTooLong, PageFault } from "../errors";
 import { PAGE_SIZE } from "../memory-consts";
-import type { MemoryIndex } from "../memory-index";
 import { MemoryPage } from "./memory-page";
 import { type PageIndex, createPageIndex } from "./page-utils";
 
@@ -32,7 +31,7 @@ export class VirtualPage extends MemoryPage {
    */
   private chunks: [PageIndex, ChunkEndIndex, Uint8Array, AccessType][] = [];
 
-  set(start: MemoryIndex, end: MemoryIndex, chunk: Uint8Array, accessType: AccessType) {
+  set(start: PageIndex, end: ChunkEndIndex, chunk: Uint8Array, accessType: AccessType) {
     if (this.chunks.find(([s, e]) => (start <= s && s < end) || (start < e && e < end))) {
       throw new ChunkOverlap();
     }
@@ -41,20 +40,17 @@ export class VirtualPage extends MemoryPage {
       throw new ChunkTooLong();
     }
 
-    const startPageIndex = createPageIndex(start - this.start);
-    const endPageIndex = createEndChunkIndex(end - this.start);
-
-    if (accessType === readable || chunk.length === endPageIndex - startPageIndex) {
-      this.chunks.push([startPageIndex, endPageIndex, chunk, accessType]);
+    if (accessType === readable || chunk.length === end - start) {
+      this.chunks.push([start, end, chunk, accessType]);
     } else {
       if (chunk.length > 0) {
-        this.chunks.push([startPageIndex, createEndChunkIndex(startPageIndex + chunk.length), chunk, accessType]);
+        this.chunks.push([start, createEndChunkIndex(start + chunk.length), chunk, accessType]);
       }
 
       // "length < end - start" and the chunk is writeable so we need to allocate zeros from "start + length" to "end"
       // to have possibility to store data from "start" to "end"
       const emptyChunk = new Uint8Array(end - start - chunk.length);
-      this.chunks.push([createPageIndex(startPageIndex + chunk.length), endPageIndex, emptyChunk, accessType]);
+      this.chunks.push([createPageIndex(start + chunk.length), end, emptyChunk, accessType]);
     }
     // the chunks have to be sorted to load from / store into a few chunks
     this.chunks.sort((a, b) => a[0] - b[0]);
@@ -144,11 +140,6 @@ export class VirtualPage extends MemoryPage {
     }
 
     return null;
-  }
-
-  sbrk(start: MemoryIndex) {
-    this.set(start, this.end, new Uint8Array(this.end - start), writeable);
-    return this.end - start;
   }
 
   getPageDump() {

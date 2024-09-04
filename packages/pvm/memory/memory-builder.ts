@@ -6,8 +6,8 @@ import { type MemoryIndex, createMemoryIndex } from "./memory-index";
 import { getPageNumber } from "./memory-utils";
 import { ReadablePage, VirtualPage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
-import type { PageNumber } from "./pages/page-utils";
-import { readable, writeable } from "./pages/virtual-page";
+import { type PageNumber, createPageIndex } from "./pages/page-utils";
+import { createEndChunkIndex, readable, writeable } from "./pages/virtual-page";
 
 export class MemoryBuilder {
   private readonly initialMemory: Map<PageNumber, MemoryPage> = new Map();
@@ -34,7 +34,10 @@ export class MemoryBuilder {
     if (!(page instanceof VirtualPage)) {
       throw new PageOverride();
     }
-    page.set(start, end, data, writeable);
+
+    const startPageIndex = createPageIndex(start - page.start);
+    const endChunkIndex = createEndChunkIndex(end - page.start);
+    page.set(startPageIndex, endChunkIndex, data, writeable);
     this.initialMemory.set(pageNumber, page);
     return this;
   }
@@ -54,7 +57,10 @@ export class MemoryBuilder {
     if (!(page instanceof VirtualPage)) {
       throw new PageOverride();
     }
-    page.set(start, end, data, readable);
+
+    const startPageIndex = createPageIndex(start - page.start);
+    const endChunkIndex = createEndChunkIndex(end - page.start);
+    page.set(startPageIndex, endChunkIndex, data, readable);
     this.initialMemory.set(pageNumber, page);
     return this;
   }
