@@ -106,7 +106,7 @@ export class MemoryBuilder {
   }
 
   /**
-   * This function can be useful when page map and initial memory  data are provided separatelly
+   * This function can be useful when page map and initial memory data are provided separatelly.
    * You can use setWriteable/setReadable to create empty pages and then setData to fill them
    */
   setData(start: MemoryIndex, data: Uint8Array) {
