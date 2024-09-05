@@ -110,6 +110,7 @@ export class MemoryBuilder {
    * You can use setWriteable/setReadable to create empty pages and then setData to fill them
    */
   setData(start: MemoryIndex, data: Uint8Array) {
+    this.ensureNotFinalized();
     const end = createMemoryIndex(start + data.length);
     check(getPageNumber(start) === getPageNumber(end), "The data has to fit into a single page.");
     const pageNumber = getPageNumber(start);
@@ -130,6 +131,7 @@ export class MemoryBuilder {
   }
 
   finalize(sbrkIndex: MemoryIndex, endHeapIndex: MemoryIndex): Memory {
+    this.ensureNotFinalized();
     const firstPage = getPageNumber(sbrkIndex);
     const lastPage = getPageNumber(endHeapIndex);
 
