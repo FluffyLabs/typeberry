@@ -3,7 +3,7 @@ import { newLogger } from "@typeberry/logger";
 
 import * as blockGenerator from "@typeberry/block-generator";
 
-const logger = newLogger(__filename);
+const logger = newLogger(__filename, "jam");
 
 export async function main() {
   if (isMainThread) {

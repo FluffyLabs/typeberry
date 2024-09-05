@@ -8,6 +8,7 @@ export enum Level {
 
 export type Options = {
   defaultLevel: Level;
+  workingDir: string,
   modules: Map<string, Level>;
 };
 
@@ -49,14 +50,18 @@ export function findLevel(options: Options, moduleName: string): Level {
  *  - `trace` - default logging level set to `trace`.
  *  - `debug;consensus=trace` - default level is set to `debug/log`, but consensus is in trace mode.
  */
-export function parseLoggerOptions(input: string, defaultLevel: Level): Options {
+export function parseLoggerOptions(
+  input: string,
+  defaultLevel: Level,
+  workingDir?: string,
+): Options {
   const modules = new Map<string, Level>();
-  const parts = input.toLowerCase().split(";");
+  const parts = input.toLowerCase().split(",");
   let defLevel = defaultLevel;
 
   for (const p of parts) {
     const clean = p.trim();
-    // skip empty objects (forgotten `;` removed)
+    // skip empty objects (forgotten `,` removed)
     if (clean.length === 0) {
       continue;
     }
@@ -69,9 +74,13 @@ export function parseLoggerOptions(input: string, defaultLevel: Level): Options 
     }
   }
 
+  const myDir = __dirname.split('/');
+  myDir.pop();
+  myDir.pop();
   return {
     defaultLevel: defLevel,
     modules,
+    workingDir: workingDir ?? myDir.join('/'),
   };
 }
 

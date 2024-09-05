@@ -214,7 +214,7 @@ export class MessageChannelStateMachine<
     try {
       await promise;
     } catch (e) {
-      logger.error(e);
+      logger.error(JSON.stringify(e));
     }
     return new MessageChannelStateMachine(machine, port);
   }

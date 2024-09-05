@@ -25,7 +25,7 @@ if (!isMainThread) {
  * The `BlockGenerator` should periodically create new blocks and send them as signals to the main thread.
  */
 export async function main(channel: MessageChannelStateMachine<WorkerInitialized, WorkerStates>) {
-  logger.log(`Worker running ${channel.currentState()}`);
+  logger.info(`Worker running ${channel.currentState()}`);
   // Await the configuration object
   const ready = await channel.waitForState<WorkerReady>("ready(worker)");
 
@@ -39,7 +39,7 @@ export async function main(channel: MessageChannelStateMachine<WorkerInitialized
     }
   });
 
-  logger.log("Worker finished. Closing channel.");
+  logger.info("Worker finished. Closing channel.");
 
   // Close the comms to gracefuly close the app.
   finished.currentState().close(channel);
@@ -50,7 +50,7 @@ export async function spawnWorker() {
 
   const machine = stateMachineMain();
   const channel = await MessageChannelStateMachine.createAndTransferChannel(machine, worker);
-  logger.log(`Worker spawned ${channel.currentState()}`);
+  logger.info(`Worker spawned ${channel.currentState()}`);
   return channel;
 }
 

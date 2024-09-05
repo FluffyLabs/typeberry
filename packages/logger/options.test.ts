@@ -68,7 +68,7 @@ describe("Options.parseLoggerOptions", () => {
     };
 
     // when
-    const parsedOptions = parseLoggerOptions("trace;consensus=error", Level.WARN);
+    const parsedOptions = parseLoggerOptions("trace,consensus=error", Level.WARN);
 
     // then
     assert.deepStrictEqual(expectedOptions, parsedOptions);
@@ -84,7 +84,7 @@ describe("Options.parseLoggerOptions", () => {
     };
 
     // when
-    const parsedOptions = parseLoggerOptions("consensus=error ; consensus/voting = TRACE; debug", Level.WARN);
+    const parsedOptions = parseLoggerOptions("consensus=error , consensus/voting = TRACE, debug", Level.WARN);
 
     // then
     assert.deepStrictEqual(expectedOptions, parsedOptions);
@@ -100,7 +100,7 @@ describe("Options.parseLoggerOptions", () => {
     };
 
     // when
-    const parsedOptions = parseLoggerOptions("consensus=error ; consensus/voting = TRACE;", Level.LOG);
+    const parsedOptions = parseLoggerOptions("consensus=error , consensus/voting = TRACE,", Level.LOG);
 
     // then
     assert.deepStrictEqual(expectedOptions, parsedOptions);

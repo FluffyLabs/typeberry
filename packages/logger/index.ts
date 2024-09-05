@@ -39,6 +39,7 @@ export function configureLogger(options: Options) {
 }
 
 const DEFAULT_OPTIONS = {
+  workingDir: '',
   defaultLevel: Level.TRACE,
   modules: new Map(),
 };
@@ -80,6 +81,6 @@ export class Logger {
 
   /** Log a message with `ERROR` level. */
   error(val: string) {
-    this.config.transport.warn(this.moduleName, this.fileName, val);
+    this.config.transport.error(this.moduleName, this.fileName, val);
   }
 }

@@ -50,15 +50,19 @@ export class ConsoleTransport implements Transport {
   }
 
   push(lvl: Level, moduleName: string, fileName: string, val: string) {
+    const shortName = fileName.replace(this.options.workingDir, '');
     const level = findLevel(this.options, moduleName);
-    if (lvl >= level) {
-      if (lvl === Level.WARN) {
-        console.warn(lvl, moduleName, fileName, val);
-      } else if (lvl === Level.ERROR) {
-        console.error(lvl, moduleName, fileName, val);
-      } else {
-        console.info(lvl, moduleName, fileName, val);
-      }
+    const lvlText = Level[lvl];
+    if (lvl < level) {
+      return;
+    }
+
+    if (lvl === Level.WARN) {
+      console.warn(`${lvlText} [${moduleName}] ${val} @ ${shortName}`);
+    } else if (lvl === Level.ERROR) {
+      console.error(`${lvlText} [${moduleName}] ${val} @ ${shortName}`);
+    } else {
+      console.info(`${lvlText} [${moduleName}] ${val} @ ${shortName}`);
     }
   }
 }
