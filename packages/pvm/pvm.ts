@@ -8,6 +8,7 @@ import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
 import { InstructionResult } from "./instruction-result";
 import { Memory } from "./memory";
+import { createPageNumber } from "./memory/pages/page-utils";
 import {
   BitOps,
   BooleanOps,
@@ -16,6 +17,7 @@ import {
   HostCallOps,
   LoadOps,
   MathOps,
+  MemoryOps,
   MoveOps,
   NoArgsOps,
   ShiftOps,
@@ -35,7 +37,6 @@ import {
   TwoRegsOneOffsetDispatcher,
   TwoRegsTwoImmsDispatcher,
 } from "./ops-dispatchers";
-import { PageMap } from "./page-map";
 import type { Mask } from "./program-decoder/mask";
 import { ProgramDecoder } from "./program-decoder/program-decoder";
 import { NO_OF_REGISTERS, Registers } from "./registers";
@@ -45,20 +46,8 @@ import { Status } from "./status";
 type InitialState = {
   regs?: RegistersArray;
   pc?: number;
-  pageMap?: PageMapItem[];
-  memory?: MemoryChunkItem[];
+  memory?: Memory;
   gas?: number;
-};
-
-type MemoryChunkItem = {
-  address: number;
-  contents: Uint8Array;
-};
-
-type PageMapItem = {
-  address: number;
-  length: number;
-  "is-writable": boolean;
 };
 
 type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N ? A : GrowToSize<T, N, [...A, T]>;
@@ -66,7 +55,6 @@ type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N ? A 
 type FixedArray<T, N extends number> = GrowToSize<T, N, []>;
 
 export type RegistersArray = FixedArray<number, 13>;
-
 export class Pvm {
   private registers: Registers;
   private code: Uint8Array;
@@ -97,8 +85,7 @@ export class Pvm {
     this.mask = programDecoder.getMask();
     const jumpTable = programDecoder.getJumpTable();
     this.registers = new Registers();
-    const pageMap = new PageMap(initialState.pageMap ?? []);
-    this.memory = new Memory(pageMap, initialState.memory ?? []);
+    this.memory = initialState.memory ?? new Memory();
     this.pc = initialState.pc ?? 0;
 
     for (let i = 0; i < NO_OF_REGISTERS; i++) {
@@ -120,6 +107,7 @@ export class Pvm {
     const noArgsOps = new NoArgsOps(this.instructionResult);
     const dynamicJumpOps = new DynamicJumpOps(this.registers, jumpTable, this.instructionResult, basicBlocks);
     const hostCallOps = new HostCallOps(this.instructionResult);
+    const memoryOps = new MemoryOps(this.registers, this.memory);
 
     this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
     this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(
@@ -131,7 +119,7 @@ export class Pvm {
       storeOps,
       loadOps,
     );
-    this.twoRegsDispatcher = new TwoRegsDispatcher(moveOps);
+    this.twoRegsDispatcher = new TwoRegsDispatcher(moveOps, memoryOps);
     this.oneRegOneImmOneOffsetDispatcher = new OneRegOneImmOneOffsetDispatcher(branchOps, loadOps);
     this.twoRegsOneOffsetDispatcher = new TwoRegsOneOffsetDispatcher(branchOps);
     this.oneOffsetDispatcher = new OneOffsetDispatcher(branchOps);
@@ -240,10 +228,6 @@ export class Pvm {
     return this.registers.asUnsigned;
   }
 
-  getMemory() {
-    return this.memory.getMemoryDump();
-  }
-
   getPC() {
     return this.pc;
   }
@@ -256,7 +240,7 @@ export class Pvm {
     return this.status;
   }
 
-  getMemoryPage(pageNumber: number): Uint8Array | null {
-    return this.memory.getPageDump(pageNumber);
+  getMemoryPage(pageNumber: number): null | Uint8Array {
+    return this.memory.getPageDump(createPageNumber(pageNumber));
   }
 }

@@ -1,0 +1,14 @@
+{
+  "name": "Hash + Symbols",
+  "date": "2024-09-03T16:32:01.479Z",
+  "version": null,
+  "results": null,
+  "fastest": {
+    "name": "hash with packed representation",
+    "index": 4
+  },
+  "slowest": {
+    "name": "hash with string representation",
+    "index": 1
+  }
+}

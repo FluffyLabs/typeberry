@@ -3,7 +3,7 @@ import path from "node:path";
 import chalk from "chalk";
 import { formatResults } from "./format";
 import { BENCHMARKS_DIR, EXPECTED_DIR, OUTPUT_DIR } from "./setup";
-import type { BennyResults, ComparisonResult, Result } from "./types";
+import type { BennyResults, ComparisonResult, ErrorResult, OkResult, Result } from "./types";
 
 const commitHash = process.env.GITHUB_SHA;
 
@@ -39,7 +39,7 @@ async function runAllBenchmarks() {
   await Promise.all(promises);
 
   // dump raw JSON
-  fs.writeFileSync(`${benchmarksPath}/results.json`, JSON.stringify(Object.fromEntries(results.entries())));
+  fs.writeFileSync(`${benchmarksPath}/results.json`, JSON.stringify(Object.fromEntries(results.entries()), null, 2));
 
   // create a textual summary (github comment)
   const txt = formatResults(results, commitHash);
@@ -55,7 +55,7 @@ async function runAllBenchmarks() {
 
   const hasErrors =
     Array.from(results.entries()).filter(([_key, diff]) => {
-      return !!diff.diff.find((e) => e.err);
+      return !!diff.diff.find((e: OkResult | ErrorResult) => "err" in e);
     }).length > 0;
 
   if (hasErrors) {
@@ -99,16 +99,24 @@ function tryReadFile(p: string) {
   }
 }
 
-function compareResults(currentResults: BennyResults, previousResults: BennyResults): ComparisonResult {
+function compareResults(currentResults: BennyResults, expectedResults: BennyResults): ComparisonResult {
   const curr = currentResults.results;
-  const prev = previousResults.results;
+  let prev = expectedResults.results;
+
+  // should not happen, since BennyResults always have some results.
+  if (curr === null) {
+    return [];
+  }
+
+  // if there is no expectation on the results, just check which case is the fastest.
+  prev = prev ?? curr;
 
   const res: ComparisonResult = [];
 
   for (let i = 0; i < Math.max(curr.length, prev.length); i += 1) {
     if (curr[i]?.name !== prev[i]?.name) {
       res.push({
-        err: `Mismatching name (current) "${curr[i]?.name}" vs "${prev[i]?.name}" (previous)`,
+        err: `Mismatching name (current) "${curr[i]?.name}" vs "${prev[i]?.name}" (expected)`,
       });
       continue;
     }
@@ -134,5 +142,17 @@ function compareResults(currentResults: BennyResults, previousResults: BennyResu
     }
   }
 
-  return res;
+  return [...res, ...compareFastest(currentResults, expectedResults)];
+}
+
+function compareFastest(currentResults: BennyResults, expectedResults: BennyResults): ComparisonResult {
+  if (currentResults.fastest.name !== expectedResults.fastest.name) {
+    return [
+      {
+        err: `Fastest result changed to (current) "${currentResults.fastest.name}" from "${expectedResults.fastest.name}" (expected)`,
+      },
+    ];
+  }
+
+  return [];
 }

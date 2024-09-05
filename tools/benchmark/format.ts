@@ -23,14 +23,16 @@ export function formatResults(input: Map<string, Result>, commitHash?: string) {
     for (const [idx, diff] of diffs.diff.entries()) {
       const fullName = `${name}[${idx}]`;
       const filePath = commitHash ? `../blob/${commitHash}/${BENCHMARKS_DIR}/${name}` : `./${BENCHMARKS_DIR}/${name}`;
-      const curr = diffs.current.results[idx];
+      const curr = diffs.current.results?.[idx];
 
-      all.push({
-        name: fullName,
-        filePath,
-        ops: `${curr.ops} ±${curr.margin}%`,
-        comment: curr.percentSlower === 0 ? "fastest ✅" : `${curr.percentSlower}% slower`,
-      });
+      if (curr) {
+        all.push({
+          name: fullName,
+          filePath,
+          ops: `${curr.ops} ±${curr.margin}%`,
+          comment: curr.percentSlower === 0 ? "fastest ✅" : `${curr.percentSlower}% slower`,
+        });
+      }
 
       if ("err" in diff && diff.err) {
         errors.push({

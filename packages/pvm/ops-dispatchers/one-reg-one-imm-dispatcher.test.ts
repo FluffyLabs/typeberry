@@ -9,7 +9,6 @@ import { Instruction } from "../instruction";
 import { InstructionResult } from "../instruction-result";
 import { Memory } from "../memory";
 import { DynamicJumpOps, LoadOps, StoreOps } from "../ops";
-import { PageMap } from "../page-map";
 import { JumpTable } from "../program-decoder/jump-table";
 import { Mask } from "../program-decoder/mask";
 import { Registers } from "../registers";
@@ -17,7 +16,7 @@ import { OneRegOneImmDispatcher } from "./one-reg-one-imm-dispatcher";
 
 describe("OneRegOneImmDispatcher", () => {
   const regs = new Registers();
-  const memory = new Memory(new PageMap([]), []);
+  const memory = new Memory();
   const jumpTable = new JumpTable(1, new Uint8Array([1]));
   const mask = new Mask(new Uint8Array([1]));
   const instructionResult = new InstructionResult();
