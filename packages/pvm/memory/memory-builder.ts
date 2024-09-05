@@ -110,7 +110,8 @@ export class MemoryBuilder {
    * You can use setWriteable/setReadable to create empty pages and then setData to fill them
    */
   setData(start: MemoryIndex, data: Uint8Array) {
-    check(getPageNumber(start) === getPageNumber(start + data.length), "The data has to fit into a single page.");
+    const end = createMemoryIndex(start + data.length);
+    check(getPageNumber(start) === getPageNumber(end), "The data has to fit into a single page.");
     const pageNumber = getPageNumber(start);
     const page = this.initialMemory.get(pageNumber);
 
@@ -120,7 +121,7 @@ export class MemoryBuilder {
 
     if (page instanceof VirtualPage) {
       const startPageIndex = createPageIndex(start - page.start);
-      page.store(startPageIndex, data);
+      page.storeFrom(startPageIndex, data);
     } else {
       throw new WrongPage();
     }
