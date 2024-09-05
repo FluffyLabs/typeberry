@@ -23,7 +23,7 @@ export class MemoryBuilder {
     this.ensureNotFinalized();
     check(start < end, "end has to be bigger than start");
     check(data.length <= end - start, "the initial data is longer than address range");
-    check(data.length < PAGE_SIZE, "chunk cannot be longer than one page");
+    check(data.length <= PAGE_SIZE, "chunk cannot be longer than one page");
     check(
       getPageNumber(start) === getPageNumber(createMemoryIndex(end - 1)),
       "start and end have to be on the same page",
@@ -46,7 +46,7 @@ export class MemoryBuilder {
     this.ensureNotFinalized();
     check(start < end, "end has to be bigger than start");
     check(data.length <= end - start, "the initial data is longer than address range");
-    check(data.length < PAGE_SIZE, "chunk cannot be longer than one page");
+    check(data.length <= PAGE_SIZE, "chunk cannot be longer than one page");
     check(
       getPageNumber(start) === getPageNumber(createMemoryIndex(end - 1)),
       "start and end have to be on the same page",
@@ -110,6 +110,7 @@ export class MemoryBuilder {
    * You can use setWriteable/setReadable to create empty pages and then setData to fill them
    */
   setData(start: MemoryIndex, data: Uint8Array) {
+    check(getPageNumber(start) === getPageNumber(start + data.length), "The data has to fit into a single page.");
     const pageNumber = getPageNumber(start);
     const page = this.initialMemory.get(pageNumber);
 
@@ -119,7 +120,7 @@ export class MemoryBuilder {
 
     if (page instanceof VirtualPage) {
       const startPageIndex = createPageIndex(start - page.start);
-      page.fill(startPageIndex, data);
+      page.store(startPageIndex, data);
     } else {
       throw new WrongPage();
     }
