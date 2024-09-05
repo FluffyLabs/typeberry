@@ -50,9 +50,9 @@ export function findLevel(options: Options, moduleName: string): Level {
  *  - `debug;consensus=trace` - default level is set to `debug/log`, but consensus is in trace mode.
  */
 export function parseLoggerOptions(input: string, defaultLevel: Level): Options {
-  const parts = input.toLowerCase().split(";");
-
   const modules = new Map<string, Level>();
+  const parts = input.toLowerCase().split(";");
+  let defLevel = defaultLevel;
 
   for (const p of parts) {
     const clean = p.trim();
@@ -62,7 +62,7 @@ export function parseLoggerOptions(input: string, defaultLevel: Level): Options 
     }
     // we just have the default level
     if (clean.indexOf("=") === -1) {
-      defaultLevel = parseLevel(clean);
+      defLevel = parseLevel(clean);
     } else {
       const [mod, lvl] = clean.split("=");
       modules.set(mod.trim(), parseLevel(lvl.trim()));
@@ -70,7 +70,7 @@ export function parseLoggerOptions(input: string, defaultLevel: Level): Options 
   }
 
   return {
-    defaultLevel,
+    defaultLevel: defLevel,
     modules,
   };
 }

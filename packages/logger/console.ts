@@ -52,7 +52,13 @@ export class ConsoleTransport implements Transport {
   push(lvl: Level, moduleName: string, fileName: string, val: string) {
     const level = findLevel(this.options, moduleName);
     if (lvl >= level) {
-      console.log(lvl, moduleName, fileName, val);
+      if (lvl === Level.WARN) {
+        console.warn(lvl, moduleName, fileName, val);
+      } else if (lvl === Level.ERROR) {
+        console.error(lvl, moduleName, fileName, val);
+      } else {
+        console.info(lvl, moduleName, fileName, val);
+      }
     }
   }
 }

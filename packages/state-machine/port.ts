@@ -1,9 +1,11 @@
 import { EventEmitter } from "node:events";
 import type { MessagePort, TransferListItem } from "node:worker_threads";
+import { newLogger } from "@typeberry/logger";
 import { check } from "@typeberry/utils";
 import { type Message, isValidMessage } from "./message";
 
 const MAX_ID = 2 ** 32;
+const logger = newLogger(__filename, "state-machine/port");
 
 /**
  * Wrapper around `MessagePort` to communicate between workers or threads.
@@ -30,7 +32,7 @@ export class TypedPort {
       try {
         this.dispatchPortMessage(msg);
       } catch (e) {
-        console.error(`[${this.constructor.name}] Failed to dispatch a message: ${e}`, msg);
+        logger.error(`[${this.constructor.name}] Failed to dispatch a message: ${e}: ${JSON.stringify(msg)}`);
         throw e;
       }
     });
@@ -115,7 +117,7 @@ export class TypedPort {
     try {
       this.port.postMessage(msg, transferList);
     } catch (e) {
-      console.error(`[${this.constructor.name}] Failed to post a message: ${e}`, msg);
+      logger.error(`[${this.constructor.name}] Failed to post a message: ${e}: ${JSON.stringify(msg)}`);
       throw e;
     }
   }
