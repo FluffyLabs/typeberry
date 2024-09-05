@@ -1,6 +1,7 @@
 import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import type { InstructionResult } from "../instruction-result";
 import type { Memory } from "../memory";
+import { createMemoryIndex } from "../memory/memory-index";
 import type { Registers } from "../registers";
 import { Result } from "../result";
 
@@ -16,31 +17,26 @@ export class LoadOps {
   }
 
   private loadNumber(address: number, registerIndex: number, numberLength: 1 | 2 | 4) {
-    if (!this.memory.isReadable(address)) {
+    const registerBytes = this.regs.getBytesAsLittleEndian(registerIndex);
+    const loadResult = this.memory.loadInto(registerBytes, createMemoryIndex(address), numberLength);
+    if (loadResult !== null) {
       this.instructionResult.status = Result.FAULT;
       this.instructionResult.exitParam = address;
-      return;
     }
-    const bytes = this.memory.load(address, numberLength);
-
-    this.regs.setFromBytes(registerIndex, bytes);
   }
 
   private loadSignedNumber(address: number, registerIndex: number, numberLength: 1 | 2) {
-    if (!this.memory.isReadable(address)) {
+    const registerBytes = this.regs.getBytesAsLittleEndian(registerIndex);
+    const loadResult = this.memory.loadInto(registerBytes, createMemoryIndex(address), numberLength);
+    if (loadResult !== null) {
       this.instructionResult.status = Result.FAULT;
       this.instructionResult.exitParam = address;
       return;
     }
-    const bytes = this.memory.load(address, numberLength);
-    const msb = bytes[numberLength - 1] & 0x80;
+
+    const msb = registerBytes[numberLength - 1] & 0x80;
     if (msb > 0) {
-      const result = new Uint8Array(4);
-      result.fill(0xff);
-      result.set(bytes, 0);
-      this.regs.setFromBytes(registerIndex, result);
-    } else {
-      this.regs.setFromBytes(registerIndex, bytes);
+      registerBytes.fill(0xff, numberLength);
     }
   }
 

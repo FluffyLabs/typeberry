@@ -9,7 +9,6 @@ import { Instruction } from "../instruction";
 import { InstructionResult } from "../instruction-result";
 import { Memory } from "../memory";
 import { BranchOps, LoadOps } from "../ops";
-import { PageMap } from "../page-map";
 import { Mask } from "../program-decoder/mask";
 import { Registers } from "../registers";
 import { OneRegOneImmOneOffsetDispatcher } from "./one-reg-one-imm-one-offset-dispatcher";
@@ -17,7 +16,7 @@ import { OneRegOneImmOneOffsetDispatcher } from "./one-reg-one-imm-one-offset-di
 describe("OneRegOneImmOneOffsetDispatcher", () => {
   describe("check if it handles expected instructions", () => {
     const regs = new Registers();
-    const memory = new Memory(new PageMap([]), []);
+    const memory = new Memory();
     const instructionResult = new InstructionResult();
     const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
     const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
@@ -147,7 +146,7 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
 
   describe("check if it handles other instructions than expected", () => {
     const regs = new Registers();
-    const memory = new Memory(new PageMap([]), []);
+    const memory = new Memory();
     const instructionResult = new InstructionResult();
     const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
     const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
