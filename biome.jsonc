@@ -33,5 +33,8 @@
         "noConsoleLog": "error"
       }
     }
+  },
+  "files": {
+    "ignore": ["dist/*"]
   }
 }
