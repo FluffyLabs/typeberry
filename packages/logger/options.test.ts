@@ -7,6 +7,7 @@ describe("Options.findLevel", () => {
     const expectedLevel = findLevel(
       {
         defaultLevel: Level.TRACE,
+        workingDir: ".",
         modules: new Map(),
       },
       "consensus/voting",
@@ -21,6 +22,7 @@ describe("Options.findLevel", () => {
     const expectedLevel = findLevel(
       {
         defaultLevel: Level.TRACE,
+        workingDir: ".",
         modules,
       },
       "consensus/voting",
@@ -35,6 +37,7 @@ describe("Options.findLevel", () => {
     const expectedLevel = findLevel(
       {
         defaultLevel: Level.TRACE,
+        workingDir: ".",
         modules,
       },
       "consensus/voting",
@@ -49,11 +52,13 @@ describe("Options.parseLoggerOptions", () => {
     const modules = new Map<string, Level>();
     const expectedOptions = {
       defaultLevel: Level.INFO,
+      workingDir: ".",
       modules,
     };
 
     // when
     const parsedOptions = parseLoggerOptions("InFO ", Level.LOG);
+    expectedOptions.workingDir = parsedOptions.workingDir;
 
     // then
     assert.deepStrictEqual(expectedOptions, parsedOptions);
@@ -64,11 +69,13 @@ describe("Options.parseLoggerOptions", () => {
     modules.set("consensus", Level.ERROR);
     const expectedOptions = {
       defaultLevel: Level.TRACE,
+      workingDir: ".",
       modules,
     };
 
     // when
     const parsedOptions = parseLoggerOptions("trace,consensus=error", Level.WARN);
+    expectedOptions.workingDir = parsedOptions.workingDir;
 
     // then
     assert.deepStrictEqual(expectedOptions, parsedOptions);
@@ -80,11 +87,13 @@ describe("Options.parseLoggerOptions", () => {
     modules.set("consensus/voting", Level.TRACE);
     const expectedOptions = {
       defaultLevel: Level.LOG,
+      workingDir: ".",
       modules,
     };
 
     // when
     const parsedOptions = parseLoggerOptions("consensus=error , consensus/voting = TRACE, debug", Level.WARN);
+    expectedOptions.workingDir = parsedOptions.workingDir;
 
     // then
     assert.deepStrictEqual(expectedOptions, parsedOptions);
@@ -96,11 +105,13 @@ describe("Options.parseLoggerOptions", () => {
     modules.set("consensus/voting", Level.TRACE);
     const expectedOptions = {
       defaultLevel: Level.LOG,
+      workingDir: ".",
       modules,
     };
 
     // when
     const parsedOptions = parseLoggerOptions("consensus=error , consensus/voting = TRACE,", Level.LOG);
+    expectedOptions.workingDir = parsedOptions.workingDir;
 
     // then
     assert.deepStrictEqual(expectedOptions, parsedOptions);
