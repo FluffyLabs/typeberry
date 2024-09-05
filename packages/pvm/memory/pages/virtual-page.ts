@@ -88,7 +88,7 @@ export class VirtualPage extends MemoryPage {
 
       const startChunkIndex = startIndex - startChunkPageIndex + storedBytes;
       const spaceOnChunk = endChunkPageIndex - startIndex - storedBytes;
-      const bytesToStore = dataToStore.subarray(storedBytes, storedBytes + spaceOnChunk);
+      const bytesToStore = dataToStore.subarray(storedBytes, Math.min(storedBytes + spaceOnChunk, dataToStore.length));
       data.set(bytesToStore, startChunkIndex);
       storedBytes += bytesToStore.length;
 
