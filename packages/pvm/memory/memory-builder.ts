@@ -1,5 +1,5 @@
 import { check } from "@typeberry/utils";
-import { FinalizedBuilderModification, IncorrectSbrkIndex, PageOverride } from "./errors";
+import { FinalizedBuilderModification, IncorrectSbrkIndex, PageNotExist, PageOverride, WrongPage } from "./errors";
 import { Memory } from "./memory";
 import { PAGE_SIZE } from "./memory-consts";
 import { type MemoryIndex, createMemoryIndex } from "./memory-index";
@@ -22,7 +22,7 @@ export class MemoryBuilder {
   setWriteable(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
     this.ensureNotFinalized();
     check(start < end, "end has to be bigger than start");
-    check(data.length < end - start, "the initial data is longer than address range");
+    check(data.length <= end - start, "the initial data is longer than address range");
     check(data.length < PAGE_SIZE, "chunk cannot be longer than one page");
     check(
       getPageNumber(start) === getPageNumber(createMemoryIndex(end - 1)),
@@ -45,7 +45,7 @@ export class MemoryBuilder {
   setReadable(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
     this.ensureNotFinalized();
     check(start < end, "end has to be bigger than start");
-    check(data.length < end - start, "the initial data is longer than address range");
+    check(data.length <= end - start, "the initial data is longer than address range");
     check(data.length < PAGE_SIZE, "chunk cannot be longer than one page");
     check(
       getPageNumber(start) === getPageNumber(createMemoryIndex(end - 1)),
@@ -100,6 +100,28 @@ export class MemoryBuilder {
       const dataChunk = data.subarray(i * PAGE_SIZE, (i + 1) * PAGE_SIZE);
       const page = new WriteablePage(pageNumber, dataChunk);
       this.initialMemory.set(pageNumber, page);
+    }
+
+    return this;
+  }
+
+  /**
+   * This function can be useful when page map and initial memory  data are provided separatelly
+   * You can use setWriteable/setReadable to create empty pages and then setData to fill them
+   */
+  setData(start: MemoryIndex, data: Uint8Array) {
+    const pageNumber = getPageNumber(start);
+    const page = this.initialMemory.get(pageNumber);
+
+    if (!page) {
+      throw new PageNotExist();
+    }
+
+    if (page instanceof VirtualPage) {
+      const startPageIndex = createPageIndex(start - page.start);
+      page.fill(startPageIndex, data);
+    } else {
+      throw new WrongPage();
     }
 
     return this;

@@ -1,5 +1,5 @@
 import { type Opaque, ensure } from "@typeberry/utils";
-import { ChunkOverlap, ChunkTooLong, PageFault } from "../errors";
+import { ChunkNotFound, ChunkOverlap, ChunkTooLong, PageFault } from "../errors";
 import { PAGE_SIZE } from "../memory-consts";
 import { MemoryPage } from "./memory-page";
 import { type PageIndex, createPageIndex } from "./page-utils";
@@ -54,6 +54,20 @@ export class VirtualPage extends MemoryPage {
     }
     // the chunks have to be sorted to load from / store into a few chunks
     this.chunks.sort((a, b) => a[0] - b[0]);
+  }
+
+  fill(start: PageIndex, data: Uint8Array) {
+    const chunk = this.chunks.find(
+      ([s, e]) => (start <= s && s < start + data.length) || (start < e && e < data.length),
+    );
+
+    if (!chunk) {
+      throw new ChunkNotFound();
+    }
+
+    const [startChunk, endChunk, chunkData] = chunk;
+    const offset = start - startChunk;
+    chunkData.set(data, offset);
   }
 
   storeFrom(startIndex: PageIndex, dataToStore: Uint8Array) {

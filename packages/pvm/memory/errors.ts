@@ -30,3 +30,21 @@ export class FinalizedBuilderModification extends Error {
     super("MemoryBuilder was finalized and cannot be changed!");
   }
 }
+
+export class PageNotExist extends Error {
+  constructor() {
+    super("You try to fill data on memory page that does not exist!");
+  }
+}
+
+export class WrongPage extends Error {
+  constructor() {
+    super("Page is not an instance of VirtualPage");
+  }
+}
+
+export class ChunkNotFound extends Error {
+  constructor() {
+    super("Chunk does not exist or is too short");
+  }
+}

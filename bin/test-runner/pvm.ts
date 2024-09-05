@@ -83,39 +83,16 @@ export async function runPvmTest(testContent: PvmTest) {
     const endPageIndex = createMemoryIndex(startPageIndex + page.length);
     const isWriteable = page["is-writable"];
 
-    const memoryChunksOnThisPage = initialMemory.filter(
-      ({ address }) => address >= startPageIndex && address < endPageIndex,
-    );
-
-    if (memoryChunksOnThisPage.length === 0) {
-      if (isWriteable) {
-        memoryBuilder.setWriteable(startPageIndex, endPageIndex, new Uint8Array());
-      } else {
-        memoryBuilder.setReadable(startPageIndex, endPageIndex, new Uint8Array());
-        continue;
-      }
-    }
-
-    if (memoryChunksOnThisPage.length > 1) {
-      throw new Error("The current implementation assumes 1 memory chunk on 1 page");
-    }
-
-    if (memoryChunksOnThisPage.length === 0) {
-      continue;
-    }
-
-    const memoryChunk = memoryChunksOnThisPage[0];
-    const address = createMemoryIndex(memoryChunk.address);
-    const contents = new Uint8Array([
-      ...(address > startPageIndex ? new Uint8Array(address - startPageIndex) : []),
-      ...memoryChunk.contents,
-    ]);
-
     if (isWriteable) {
-      memoryBuilder.setWriteable(startPageIndex, endPageIndex, contents);
+      memoryBuilder.setWriteable(startPageIndex, endPageIndex, new Uint8Array(page.length));
     } else {
-      memoryBuilder.setReadable(startPageIndex, endPageIndex, contents);
+      memoryBuilder.setReadable(startPageIndex, endPageIndex, new Uint8Array(page.length));
     }
+  }
+
+  for (const memoryChunk of initialMemory) {
+    const address = createMemoryIndex(memoryChunk.address);
+    memoryBuilder.setData(address, memoryChunk.contents);
   }
 
   /**
