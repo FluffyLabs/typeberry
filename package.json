@@ -8,6 +8,7 @@
     "bin/test-runner",
     "packages/bytes",
     "packages/codec",
+    "packages/erasure-coding",
     "packages/logger",
     "packages/pvm",
     "packages/pvm-debugger-adapter",
