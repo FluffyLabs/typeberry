@@ -1,5 +1,5 @@
-import {ConsoleTransport} from "./console";
-import {Level, Options} from "./options";
+import { ConsoleTransport } from "./console";
+import { Level, type Options } from "./options";
 
 export function logger(fileName: string, moduleName?: string) {
   return new Logger(moduleName ?? fileName, fileName);
@@ -8,10 +8,11 @@ export function logger(fileName: string, moduleName?: string) {
 export function configure(
   defaultLevel: Level,
   modules: {
-    module: string,
-    level: Level
-  }[]) {
-    const options: Options = {
+    module: string;
+    level: Level;
+  }[],
+) {
+  const options: Options = {
     defaultLevel,
     modules: new Map<string, Level>(),
   };
@@ -38,13 +39,16 @@ const DEFAULT_OPTIONS = {
   modules: new Map(),
 };
 
-let GLOBAL_CONFIG = {
+const GLOBAL_CONFIG = {
   options: DEFAULT_OPTIONS,
   transport: ConsoleTransport.create(DEFAULT_OPTIONS.defaultLevel, DEFAULT_OPTIONS),
 };
 
 class Logger {
-  constructor(private moduleName: string, private fileName: string) {}
+  constructor(
+    private moduleName: string,
+    private fileName: string,
+  ) {}
 
   trace(val: string) {
     GLOBAL_CONFIG.transport.trace(this.moduleName, this.fileName, val);
@@ -62,4 +66,3 @@ class Logger {
     GLOBAL_CONFIG.transport.warn(this.moduleName, this.fileName, val);
   }
 }
-

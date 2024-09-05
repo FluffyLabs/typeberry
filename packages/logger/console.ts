@@ -1,5 +1,5 @@
-import {Level, Options, findLevel} from "./options";
-import {Transport} from "./transport";
+import { Level, type Options, findLevel } from "./options";
+import type { Transport } from "./transport";
 
 export class ConsoleTransport implements Transport {
   static create(minimalLevel: Level, options: Options) {
@@ -17,8 +17,12 @@ export class ConsoleTransport implements Transport {
 
   constructor(private options: Options) {}
 
-  trace(_moduleName: string, _fileName: string, _val: string) { /* no-op */ }
-  log(_moduleName: string, _fileName: string, _val: string) { /* no-op */ }
+  trace(_moduleName: string, _fileName: string, _val: string) {
+    /* no-op */
+  }
+  log(_moduleName: string, _fileName: string, _val: string) {
+    /* no-op */
+  }
 
   warn(moduleName: string, fileName: string, val: string) {
     this.push(Level.WARN, moduleName, fileName, val);
@@ -47,7 +51,9 @@ class TraceConsoleTransport extends ConsoleTransport {
 }
 
 class LogConsoleTransport extends ConsoleTransport {
-  trace(_moduleName: string, _fileName: string, _val: string) { /* no-op */ }
+  trace(_moduleName: string, _fileName: string, _val: string) {
+    /* no-op */
+  }
 
   log(moduleName: string, fileName: string, val: string) {
     this.push(Level.LOG, moduleName, fileName, val);

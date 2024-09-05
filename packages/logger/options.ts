@@ -3,11 +3,11 @@ export enum Level {
   LOG = 2,
   WARN = 3,
   ERROR = 4,
-};
+}
 
 export type Options = {
-  defaultLevel: Level,
-  modules: Map<string, Level>,
+  defaultLevel: Level;
+  modules: Map<string, Level>;
 };
 
 /**
@@ -31,7 +31,7 @@ export function findLevel(options: Options, moduleName: string) {
       return level;
     }
 
-    const lastSlash = moduleName.lastIndexOf('/');
+    const lastSlash = moduleName.lastIndexOf("/");
     if (lastSlash === -1) {
       return options.defaultLevel;
     }
