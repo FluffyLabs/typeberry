@@ -39,7 +39,7 @@ export function configureLogger(options: Options) {
 }
 
 const DEFAULT_OPTIONS = {
-  workingDir: '',
+  workingDir: "",
   defaultLevel: Level.TRACE,
   modules: new Map(),
 };
