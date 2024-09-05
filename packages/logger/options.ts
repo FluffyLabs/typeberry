@@ -1,8 +1,9 @@
 export enum Level {
   TRACE = 1,
-  LOG = 2,
-  WARN = 3,
-  ERROR = 4,
+  DEBUG = 2,
+  LOG = 3,
+  WARN = 4,
+  ERROR = 5,
 }
 
 export type Options = {
@@ -26,12 +27,12 @@ export type Options = {
 export function findLevel(options: Options, moduleName: string) {
   let parentModuleName = moduleName;
   for (;;) {
-    const level = this.options.modules.get(parentModuleName);
+    const level = options.modules.get(parentModuleName);
     if (level) {
       return level;
     }
 
-    const lastSlash = moduleName.lastIndexOf("/");
+    const lastSlash = parentModuleName.lastIndexOf("/");
     if (lastSlash === -1) {
       return options.defaultLevel;
     }
