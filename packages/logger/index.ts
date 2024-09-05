@@ -1,7 +1,7 @@
 import { ConsoleTransport } from "./console";
 import { Level, type Options } from "./options";
 
-export { parseLoggerOptions } from './options';
+export { Level, parseLoggerOptions } from "./options";
 
 /**
  * Create a new logger instance given filename and an optional module name.
@@ -9,7 +9,7 @@ export { parseLoggerOptions } from './options';
  * If the module name is not given, `fileName` becomes the module name.
  *
  * The logger will use a global configuration which can be changed using
- * [`configure`] function.
+ * [`configureLogger`] function.
  */
 export function newLogger(fileName: string, moduleName?: string) {
   return new Logger(moduleName ?? fileName, fileName, GLOBAL_CONFIG);
@@ -24,27 +24,12 @@ export function newLogger(fileName: string, moduleName?: string) {
  *
  * Changing the options affects all previously created loggers.
  */
-export function configure(
-  defaultLevel: Level,
-  modules: {
-    module: string;
-    level: Level;
-  }[],
-) {
-  const options: Options = {
-    defaultLevel,
-    modules: new Map<string, Level>(),
-  };
-
-  for (const mod of modules) {
-    options.modules.set(mod.module, mod.level);
-  }
-
+export function configureLogger(options: Options) {
   // find minimal level to optimise logging in case
   // we don't care about low-level logs.
-  const minimalLevel = modules.reduce((level, mod) => {
-    return level < mod.level ? level : mod.level;
-  }, defaultLevel);
+  const minimalLevel = Array.from(options.modules.values()).reduce((level, modLevel) => {
+    return level < modLevel ? level : modLevel;
+  }, options.defaultLevel);
 
   const transport = ConsoleTransport.create(minimalLevel, options);
 
@@ -54,7 +39,7 @@ export function configure(
 }
 
 const DEFAULT_OPTIONS = {
-  defaultLevel: Level.WARN,
+  defaultLevel: Level.TRACE,
   modules: new Map(),
 };
 
@@ -78,14 +63,14 @@ export class Logger {
     this.config.transport.trace(this.moduleName, this.fileName, val);
   }
 
-  /** Log a message with `DEBUG` level. */
-  debug(val: string) {
-    this.config.transport.debug(this.moduleName, this.fileName, val);
-  }
-
-  /** Log a message with `LOG` (`INFO`) level. */
+  /** Log a message with `DEBUG`/`LOG` level. */
   log(val: string) {
     this.config.transport.log(this.moduleName, this.fileName, val);
+  }
+
+  /** Log a message with `INFO` level. */
+  info(val: string) {
+    this.config.transport.info(this.moduleName, this.fileName, val);
   }
 
   /** Log a message with `WARN` level. */

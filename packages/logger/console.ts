@@ -16,12 +16,12 @@ export class ConsoleTransport implements Transport {
       return new TraceConsoleTransport(options);
     }
 
-    if (minimalLevel === Level.DEBUG) {
-      return new DebugConsoleTransport(options);
-    }
-
     if (minimalLevel === Level.LOG) {
       return new LogConsoleTransport(options);
+    }
+
+    if (minimalLevel === Level.INFO) {
+      return new InfoConsoleTransport(options);
     }
 
     return new ConsoleTransport(options);
@@ -33,11 +33,11 @@ export class ConsoleTransport implements Transport {
     /* no-op */
   }
 
-  debug(_moduleName: string, _fileName: string, _val: string) {
+  log(_moduleName: string, _fileName: string, _val: string) {
     /* no-op */
   }
 
-  log(_moduleName: string, _fileName: string, _val: string) {
+  info(_moduleName: string, _fileName: string, _val: string) {
     /* no-op */
   }
 
@@ -65,46 +65,45 @@ class TraceConsoleTransport extends ConsoleTransport {
     this.push(Level.TRACE, moduleName, fileName, val);
   }
 
-  debug(moduleName: string, fileName: string, val: string) {
-    this.push(Level.DEBUG, moduleName, fileName, val);
-  }
-
   log(moduleName: string, fileName: string, val: string) {
     this.push(Level.LOG, moduleName, fileName, val);
+  }
+
+  info(moduleName: string, fileName: string, val: string) {
+    this.push(Level.INFO, moduleName, fileName, val);
   }
 }
 
 /**
  * An optimized version of the logger - completely ignores `TRACE` level calls.
  */
-class DebugConsoleTransport extends ConsoleTransport {
-  trace(_moduleName: string, _fileName: string, _val: string) {
-    /* no-op */
-  }
-
-  debug(moduleName: string, fileName: string, val: string) {
-    this.push(Level.DEBUG, moduleName, fileName, val);
-  }
-
-  log(moduleName: string, fileName: string, val: string) {
-    this.push(Level.LOG, moduleName, fileName, val);
-  }
-}
-
-
-/**
- * An optimized version of the logger - completely ignores `TRACE` & `DEBUG` level calls.
- */
 class LogConsoleTransport extends ConsoleTransport {
   trace(_moduleName: string, _fileName: string, _val: string) {
     /* no-op */
   }
 
-  debug(_moduleName: string, _fileName: string, _val: string) {
+  log(moduleName: string, fileName: string, val: string) {
+    this.push(Level.LOG, moduleName, fileName, val);
+  }
+
+  info(moduleName: string, fileName: string, val: string) {
+    this.push(Level.INFO, moduleName, fileName, val);
+  }
+}
+
+/**
+ * An optimized version of the logger - completely ignores `TRACE` & `DEBUG` level calls.
+ */
+class InfoConsoleTransport extends ConsoleTransport {
+  trace(_moduleName: string, _fileName: string, _val: string) {
     /* no-op */
   }
 
-  log(moduleName: string, fileName: string, val: string) {
-    this.push(Level.LOG, moduleName, fileName, val);
+  log(_moduleName: string, _fileName: string, _val: string) {
+    /* no-op */
+  }
+
+  info(moduleName: string, fileName: string, val: string) {
+    this.push(Level.INFO, moduleName, fileName, val);
   }
 }

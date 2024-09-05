@@ -1,3 +1,5 @@
+import { newLogger } from "@typeberry/logger";
+
 type ExtractName<T> = T extends string ? (T extends infer U ? U : never) : never;
 
 /**
@@ -68,6 +70,7 @@ export type RespondAndTransitionTo<TRes, TState> = {
   transitionTo?: TransitionTo<TState>;
 };
 
+const logger = newLogger(__filename, "state-machine/state");
 /**
  * A state object that can be extended with some state-specific methods.
  *
@@ -127,7 +130,7 @@ export abstract class State<TName, TAllowedTransitions, TData = unknown> {
    * actions.
    */
   onActivation(data: TData) {
-    console.log(`[${this.constructor.name}] Changing state to: ${this}`);
+    logger.log(`[${this.constructor.name}] Changing state to: ${this}`);
     this.data = data;
   }
 

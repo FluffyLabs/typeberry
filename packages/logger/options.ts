@@ -1,7 +1,7 @@
 export enum Level {
   TRACE = 1,
-  DEBUG = 2,
-  LOG = 3,
+  LOG = 2,
+  INFO = 3,
   WARN = 4,
   ERROR = 5,
 }
@@ -45,14 +45,14 @@ export function findLevel(options: Options, moduleName: string): Level {
  * A function to parse logger definition (including modules) given as a string.
  *
  * Examples
- *  - `info` - setup default logging level to `info/log`.
+ *  - `info` - setup default logging level to `info`.
  *  - `trace` - default logging level set to `trace`.
- *  - `log;consensus=trace` - default level is set to `info/log`, but consensus is in trace mode.
+ *  - `debug;consensus=trace` - default level is set to `debug/log`, but consensus is in trace mode.
  */
 export function parseLoggerOptions(input: string, defaultLevel: Level): Options {
-  const parts = input.toLowerCase().split(';');
+  const parts = input.toLowerCase().split(";");
 
-  let modules = new Map<string, Level>();
+  const modules = new Map<string, Level>();
 
   for (const p of parts) {
     const clean = p.trim();
@@ -61,10 +61,10 @@ export function parseLoggerOptions(input: string, defaultLevel: Level): Options 
       continue;
     }
     // we just have the default level
-    if (clean.indexOf('=') === -1) {
+    if (clean.indexOf("=") === -1) {
       defaultLevel = parseLevel(clean);
     } else {
-      const [mod, lvl] = clean.split('=');
+      const [mod, lvl] = clean.split("=");
       modules.set(mod.trim(), parseLevel(lvl.trim()));
     }
   }
@@ -76,7 +76,7 @@ export function parseLoggerOptions(input: string, defaultLevel: Level): Options 
 }
 
 function parseLevel(lvl: string): Level {
-  const typedLvl: keyof typeof Level = lvl === 'info' ? 'LOG' : lvl.toUpperCase() as keyof typeof Level;
+  const typedLvl: keyof typeof Level = lvl === "debug" ? "LOG" : (lvl.toUpperCase() as keyof typeof Level);
 
   if (!Level[typedLvl]) {
     throw new Error(`Unknown logging level: "${lvl}". Use one of "trace", "debug", "log","info", "warn", "error"`);

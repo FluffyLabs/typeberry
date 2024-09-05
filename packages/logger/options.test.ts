@@ -1,13 +1,16 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import {Level, findLevel, parseLoggerOptions} from "./options";
+import { Level, findLevel, parseLoggerOptions } from "./options";
 
 describe("Options.findLevel", () => {
   it("should return default level when nothing is present", () => {
-    const expectedLevel = findLevel({
-      defaultLevel: Level.TRACE,
-      modules: new Map(),
-    }, "consensus/voting");
+    const expectedLevel = findLevel(
+      {
+        defaultLevel: Level.TRACE,
+        modules: new Map(),
+      },
+      "consensus/voting",
+    );
 
     assert.strictEqual(expectedLevel, Level.TRACE);
   });
@@ -15,10 +18,13 @@ describe("Options.findLevel", () => {
   it("should return specialized level", () => {
     const modules = new Map<string, Level>();
     modules.set("consensus/voting", Level.WARN);
-    const expectedLevel = findLevel({
-      defaultLevel: Level.TRACE,
-      modules,
-    }, "consensus/voting");
+    const expectedLevel = findLevel(
+      {
+        defaultLevel: Level.TRACE,
+        modules,
+      },
+      "consensus/voting",
+    );
 
     assert.strictEqual(expectedLevel, Level.WARN);
   });
@@ -26,10 +32,13 @@ describe("Options.findLevel", () => {
   it("should return specialized level when parent is defined", () => {
     const modules = new Map<string, Level>();
     modules.set("consensus", Level.ERROR);
-    const expectedLevel = findLevel({
-      defaultLevel: Level.TRACE,
-      modules,
-    }, "consensus/voting");
+    const expectedLevel = findLevel(
+      {
+        defaultLevel: Level.TRACE,
+        modules,
+      },
+      "consensus/voting",
+    );
 
     assert.strictEqual(expectedLevel, Level.ERROR);
   });
@@ -39,12 +48,12 @@ describe("Options.parseLoggerOptions", () => {
   it("parse default level and disregard case and whitespace", () => {
     const modules = new Map<string, Level>();
     const expectedOptions = {
-      defaultLevel: Level.LOG,
+      defaultLevel: Level.INFO,
       modules,
     };
 
     // when
-    const parsedOptions = parseLoggerOptions('InFO ', Level.DEBUG);
+    const parsedOptions = parseLoggerOptions("InFO ", Level.LOG);
 
     // then
     assert.deepStrictEqual(expectedOptions, parsedOptions);
@@ -59,7 +68,7 @@ describe("Options.parseLoggerOptions", () => {
     };
 
     // when
-    const parsedOptions = parseLoggerOptions('trace;consensus=error', Level.WARN);
+    const parsedOptions = parseLoggerOptions("trace;consensus=error", Level.WARN);
 
     // then
     assert.deepStrictEqual(expectedOptions, parsedOptions);
@@ -70,12 +79,12 @@ describe("Options.parseLoggerOptions", () => {
     modules.set("consensus", Level.ERROR);
     modules.set("consensus/voting", Level.TRACE);
     const expectedOptions = {
-      defaultLevel: Level.DEBUG,
+      defaultLevel: Level.LOG,
       modules,
     };
 
     // when
-    const parsedOptions = parseLoggerOptions('consensus=error ; consensus/voting = TRACE; debug', Level.WARN);
+    const parsedOptions = parseLoggerOptions("consensus=error ; consensus/voting = TRACE; debug", Level.WARN);
 
     // then
     assert.deepStrictEqual(expectedOptions, parsedOptions);
@@ -91,7 +100,7 @@ describe("Options.parseLoggerOptions", () => {
     };
 
     // when
-    const parsedOptions = parseLoggerOptions('consensus=error ; consensus/voting = TRACE;', Level.LOG);
+    const parsedOptions = parseLoggerOptions("consensus=error ; consensus/voting = TRACE;", Level.LOG);
 
     // then
     assert.deepStrictEqual(expectedOptions, parsedOptions);
