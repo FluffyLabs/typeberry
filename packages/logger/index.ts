@@ -1,6 +1,8 @@
 import { ConsoleTransport } from "./console";
 import { Level, type Options } from "./options";
 
+export { parseLoggerOptions } from './options';
+
 /**
  * Create a new logger instance given filename and an optional module name.
  *
@@ -9,7 +11,7 @@ import { Level, type Options } from "./options";
  * The logger will use a global configuration which can be changed using
  * [`configure`] function.
  */
-export function logger(fileName: string, moduleName?: string) {
+export function newLogger(fileName: string, moduleName?: string) {
   return new Logger(moduleName ?? fileName, fileName, GLOBAL_CONFIG);
 }
 
