@@ -45,6 +45,17 @@ class Bytes32 {
     return ret;
   }
 
+  toBigInt()
+  {
+    var ret = BigInt(this.array[0]);
+
+    for (let i = 1; i < 8; i++) {
+      ret *= BigInt(1 << 32);
+      ret += BigInt(this.array[i]);
+    }
+    return ret;
+  }
+
   static compare(a: Bytes32, b: Bytes32) {
     for (let i = 0; i < 8; i++) {
       var diff = a.array[i] - b.array[i];
@@ -242,14 +253,14 @@ class MapBase64 implements TestMapInterface {
 }
 
 class MapHash implements TestMapInterface {
-  map: Map<number, number[]> = new Map<number, number[]>();
+  map: Map<number, BigInt[]> = new Map<number, BigInt[]>();
 
   insert(array: Uint8Array, index: number, count: number) {
     // TODO assert count == 32
     var bytes = new Bytes32(array, index);
     var key = bytes.hash();
-    if (this.map.has(key)) this.map.get(key)!.push(bytes.toNumber());
-    else this.map.set(key, [bytes.toNumber()]);
+    if (this.map.has(key)) this.map.get(key)!.push(bytes.toBigInt());
+    else this.map.set(key, [bytes.toBigInt()]);
   }
 
   commitInserts() {}
@@ -260,7 +271,7 @@ class MapHash implements TestMapInterface {
     var key = bytes.hash();
 
     if (this.map.has(key)) {
-      var idx = this.map.get(key)!.indexOf(bytes.toNumber());
+      var idx = this.map.get(key)!.indexOf(bytes.toBigInt());
       if (idx == -1) return 0;
       return 1;
     }
@@ -347,20 +358,24 @@ class ArrayNumber implements TestMapInterface {
 }
 
 class ArrayBigNumber implements TestMapInterface {
-  array: Array<number> = [];
+  array: Array<BigInt> = [];
 
   insert(array: Uint8Array, index: number, count: number) {
-    var key = 0;
+    var key = BigInt(0);
     for (let i = 0; i < count; i++) {
-      key *= 256;
-      key += array[index + i];
+      key *= 256n;
+      key += BigInt(array[index + i]);
     }
 
     this.array.push(key);
   }
 
   commitInserts() {
-    this.array.sort((n1, n2) => n1 - n2);
+    this.array.sort((n1: BigInt, n2: BigInt) => {
+      if (n1 > n2) return 1;
+      else if (n1 < n2) return -1;
+      else return 0;
+    });
 
     //		for(let i =0;i < this.array.length;i++)
     //		{
@@ -371,16 +386,16 @@ class ArrayBigNumber implements TestMapInterface {
   }
 
   query(array: Uint8Array, index: number, count: number) {
-    var key = 0;
+    var key = BigInt(0);
     for (let i = 0; i < count; i++) {
-      key *= 256;
-      key += array[index + i];
+      key *= 256n;
+      key += BigInt(array[index + i]);
     }
 
     return this.binarySearch(this.array, key);
   }
 
-  binarySearch(array: number[], needle: number) {
+  binarySearch(array: BigInt[], needle: BigInt) {
     var begin = 0;
     var end = array.length;
 
