@@ -35,7 +35,7 @@ async function main() {
     });
   }
 
-  return "OK";
+  return "Tests have been executed";
 }
 
 function tryToPrepareTestRunner<T>(
