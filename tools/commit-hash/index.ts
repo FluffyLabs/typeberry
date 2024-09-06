@@ -2,9 +2,9 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as github from "@actions/github";
 import type { PushEvent } from "@octokit/webhooks-types";
-import { newLogger } from "@typeberry/logger";
 // @ts-ignore
-import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
+import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
+import { newLogger } from "@typeberry/logger";
 
 const logger = newLogger(__filename);
 
