@@ -41,7 +41,8 @@
     "blockchain-git-log": "ts-node ./tools/commit-hash/index.ts",
     "build-pvm": "npm run build -w tools/pvm-builder",
     "preobfuscate-pvm": "npm run build-pvm",
-    "obfuscate-pvm": "npx javascript-obfuscator ./dist/pvm --output ./dist/pvm-obfuscated --compact true --control-flow-flattening true"
+    "obfuscate-pvm": "npx javascript-obfuscator ./dist/pvm --output ./dist/pvm-obfuscated --compact true --control-flow-flattening true",
+    "benchmark-map": "node --max-old-space-size=32000 --require ts-node/register ./packages/trie/map_benchmark.ts" 
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
