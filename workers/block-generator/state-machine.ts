@@ -1,3 +1,4 @@
+import { newLogger } from "@typeberry/logger";
 import type { TypedChannel } from "@typeberry/state-machine";
 import { type RespondAndTransitionTo, State, StateMachine, type TransitionTo } from "@typeberry/state-machine";
 
@@ -38,6 +39,8 @@ export class MainInitialized extends State<"initialized(main)", MainReady> {
   }
 }
 
+const logger = newLogger(__filename, "block-generator");
+
 export class MainReady extends State<"ready(main)", Finished> {
   constructor() {
     super({
@@ -50,7 +53,7 @@ export class MainReady extends State<"ready(main)", Finished> {
   }
 
   private onBlock(block: unknown) {
-    console.log(`${this.constructor.name} got block`, block);
+    logger.log(`${this.constructor.name} got block: "${JSON.stringify(block)}"`);
   }
 
   finish(channel: TypedChannel): TransitionTo<Finished> {
@@ -69,7 +72,7 @@ export class WorkerInitialized extends State<"initialized(worker)", WorkerReady>
   }
 
   private onConfig(config: unknown): TransitionTo<WorkerReady> {
-    console.log("Got config, moving to ready");
+    logger.log("Got config, moving to ready");
     return {
       state: "ready(worker)",
       data: config as Config,

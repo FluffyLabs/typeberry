@@ -1,10 +1,13 @@
 import { MessageChannel, MessagePort, type Worker } from "node:worker_threads";
 import { check } from "@typeberry/utils";
 
+import { newLogger } from "@typeberry/logger";
 import type { StateMachine } from "./machine";
 import { type Message, Ok } from "./message";
 import { TypedPort } from "./port";
 import type { State, StateNames, TransitionTo, ValidTransitionFrom } from "./state";
+
+const logger = newLogger(__filename, "state-machine");
 
 /**
  * An abstraction for the communication channel between worker threads.
@@ -62,7 +65,7 @@ export class MessageChannelStateMachine<
       try {
         this.dispatchSignal(name, data);
       } catch (e: unknown) {
-        console.error(`[${this.constructor.name}] Unable to dispatch signal: ${e}. ${this.stateInfo(remoteState)}`);
+        logger.error(`[${this.constructor.name}] Unable to dispatch signal: ${e}. ${this.stateInfo(remoteState)}`);
         throw e;
       }
     });
@@ -71,7 +74,7 @@ export class MessageChannelStateMachine<
       try {
         await this.dispatchRequest(name, data, msg);
       } catch (e: unknown) {
-        console.error(`[${this.constructor.name}] Unable to dispatch request: ${e}. ${this.stateInfo(remoteState)}`);
+        logger.error(`[${this.constructor.name}] Unable to dispatch request: ${e}. ${this.stateInfo(remoteState)}`);
         throw e;
       }
     });
@@ -166,7 +169,7 @@ export class MessageChannelStateMachine<
     }
 
     if (didStateChangeInMeantime) {
-      console.warn(`Ignoring obsolete response for an old request: "${name}"`);
+      logger.warn(`Ignoring obsolete response for an old request: "${name}"`);
       return;
     }
 
@@ -211,7 +214,7 @@ export class MessageChannelStateMachine<
     try {
       await promise;
     } catch (e) {
-      console.error(e);
+      logger.error(JSON.stringify(e));
     }
     return new MessageChannelStateMachine(machine, port);
   }

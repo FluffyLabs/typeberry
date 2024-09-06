@@ -1,13 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
+import { newLogger } from "@typeberry/logger";
 import chalk from "chalk";
 import { formatResults } from "./format";
 import { BENCHMARKS_DIR, EXPECTED_DIR, OUTPUT_DIR } from "./setup";
 import type { BennyResults, ComparisonResult, ErrorResult, OkResult, Result } from "./types";
 
 const commitHash = process.env.GITHUB_SHA;
+const logger = newLogger(__filename, "benchmarks");
 
-runAllBenchmarks().catch((e) => console.error(e));
+runAllBenchmarks().catch((e) => logger.error(e));
 
 async function runAllBenchmarks() {
   // We are going to run all benchmarks in our benchmark folder.
@@ -30,7 +32,7 @@ async function runAllBenchmarks() {
             }),
           );
         } else {
-          console.warn(`Ignoring ${benchPath}/${file}`);
+          logger.warn(`Ignoring ${benchPath}/${file}`);
         }
       }
     }
@@ -46,10 +48,10 @@ async function runAllBenchmarks() {
   fs.writeFileSync(`${benchmarksPath}/results.txt`, txt);
 
   // print summary
-  console.log("Summary:");
+  logger.log("Summary:");
   for (const [file, diffs] of results.entries()) {
     for (const [idx, diff] of diffs.diff.entries()) {
-      console.log(`${file}[${idx}]: ${"err" in diff ? chalk.red.bold(diff.err) : chalk.green("OK")}`);
+      logger.log(`${file}[${idx}]: ${"err" in diff ? chalk.red.bold(diff.err) : chalk.green("OK")}`);
     }
   }
 
@@ -66,11 +68,11 @@ async function runAllBenchmarks() {
 async function runBenchmark(benchPath: string, fileName: string): Promise<Result> {
   const filePath = `${benchPath}/${fileName}`;
   const fileNameNoExt = path.basename(fileName, path.extname(fileName));
-  console.log(`Running ${filePath}`);
+  logger.log(`Running ${filePath}`);
   const run = require(path.resolve(filePath));
   await run();
 
-  console.log("Compare with expected results.");
+  logger.log("Compare with expected results.");
   const outputPath = `${benchPath}/${OUTPUT_DIR}/${fileNameNoExt}.json`;
   const expectedPath = `${benchPath}/${EXPECTED_DIR}/${fileNameNoExt}.json`;
 

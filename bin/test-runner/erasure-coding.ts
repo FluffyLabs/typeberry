@@ -1,4 +1,5 @@
 import { BytesBlob } from "@typeberry/bytes";
+import { newLogger } from "@typeberry/logger";
 import type { FromJson } from "./json-parser";
 
 export class EcTest {
@@ -55,22 +56,24 @@ export class SegmentRoot {
   chunks_root!: BytesBlob;
 }
 
+const logger = newLogger(__filename);
+
 export async function runEcTest(test: EcTest) {
-  console.log(test);
+  logger.log(JSON.stringify(test, null, 2));
   throw new Error("Not implemented yet!");
 }
 
 export async function runPageProofTest(test: PageProof) {
-  console.log(test);
+  logger.log(JSON.stringify(test, null, 2));
   throw new Error("Not implemented yet!");
 }
 
 export async function runSegmentEcTest(test: SegmentEcTest) {
-  console.log(test);
+  logger.log(JSON.stringify(test, null, 2));
   throw new Error("Not implemented yet!");
 }
 
 export async function runSegmentRootTest(test: SegmentRoot) {
-  console.log(test);
+  logger.log(JSON.stringify(test, null, 2));
   throw new Error("Not implemented yet!");
 }

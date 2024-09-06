@@ -1,6 +1,9 @@
 import { isMainThread } from "node:worker_threads";
+import { newLogger } from "@typeberry/logger";
 
 import * as blockGenerator from "@typeberry/block-generator";
+
+const logger = newLogger(__filename, "jam");
 
 export async function main() {
   if (isMainThread) {
@@ -19,10 +22,10 @@ export async function main() {
       return ready.finish(port);
     });
 
-    console.log("[main] waiting for tasks to finish");
+    logger.log("[main] waiting for tasks to finish");
     await finished.currentState().waitForWorkerToFinish();
   } else {
-    console.error("The main binary cannot be running as a Worker!");
+    logger.error("The main binary cannot be running as a Worker!");
     return;
   }
 }

@@ -6,7 +6,7 @@ describe("Bandersnatch verification", () => {
     try {
       await verifyBandersnatch();
     } catch (e) {
-      console.log("Error temporarily expected.");
+      console.info("Error temporarily expected.");
     }
   });
 });

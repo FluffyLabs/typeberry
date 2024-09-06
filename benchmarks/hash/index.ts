@@ -1,6 +1,8 @@
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
+import { newLogger } from "@typeberry/logger";
 
 const HASH_LENGTH: number = 32;
+const logger = newLogger(__filename);
 
 type ByteHash = Byte[];
 type NumberHash = number[];
@@ -91,7 +93,7 @@ function generate<T>(name: string, f: () => T): T[] {
     result.push(f());
   }
   const end = process.memoryUsage();
-  console.log(`[${name}] mem diff: ${Math.round(((start.heapUsed - end.heapUsed) / 1024 / 1024) * 100) / 100}MB`);
+  logger.log(`[${name}] mem diff: ${Math.round(((start.heapUsed - end.heapUsed) / 1024 / 1024) * 100) / 100}MB`);
   return result;
 }
 

@@ -14,6 +14,7 @@ module.exports = () =>
     add("console.log with string concat", () => {
       const obj = new SomeClass(5, "hello world!");
       return () => {
+        // biome-ignore lint/suspicious/noConsoleLog: that's the whole point of the benchmark
         console.log(`[${obj.name}] has reached value ${obj.value}`);
       };
     }),
@@ -21,6 +22,7 @@ module.exports = () =>
     add("console.log with args", () => {
       const obj = new SomeClass(5, "hello world!");
       return () => {
+        // biome-ignore lint/suspicious/noConsoleLog: that's the whole point of the benchmark
         console.log(obj.name, " has reached value ", obj.value);
       };
     }),

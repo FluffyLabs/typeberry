@@ -3,6 +3,9 @@ import * as path from "node:path";
 import * as github from "@actions/github";
 import type { PushEvent } from "@octokit/webhooks-types";
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
+import { newLogger } from "@typeberry/logger";
+
+const logger = newLogger(__filename);
 
 type TransactionPayload = [
   string, // repo name
@@ -43,9 +46,9 @@ function getPendingCommitIds(log: LogEntry[], eventPayload: PushEvent): string[]
 async function writeLog(log: LogEntry[]) {
   try {
     await fs.writeFile(LOG_FILENAME, JSON.stringify(log, null, 2));
-    console.log("New log written.");
+    logger.log("New log written.");
   } catch (e) {
-    console.error(e);
+    logger.error(e);
   }
 }
 
@@ -59,7 +62,7 @@ async function handleError(log: LogEntry[], transactionPayload: TransactionPaylo
 
   await writeLog(log);
 
-  console.error(error);
+  logger.error(error);
   process.exit(1);
 }
 
@@ -68,9 +71,9 @@ async function main() {
 
   try {
     log.push(...require(path.relative(__dirname, LOG_FILENAME)));
-    console.log("Previous log found. Appending.");
+    logger.log("Previous log found. Appending.");
   } catch (e) {
-    console.log("Previous log not found. Starting a new one.");
+    logger.log("Previous log not found. Starting a new one.");
   }
 
   const eventPayload = github.context.payload as PushEvent;
@@ -92,13 +95,13 @@ async function main() {
   const remark = api.tx.system.remark(JSON.stringify(transactionPayload));
 
   try {
-    console.log("Submitting...");
+    logger.log("Submitting...");
 
     const unsub = await remark.signAndSend(pair, async ({ status, dispatchError }) => {
-      console.log(`Transaction status: ${status.type}`);
+      logger.log(`Transaction status: ${status.type}`);
 
       if (status.isInBlock) {
-        console.log(`Success. Block hash: ${status.asInBlock.toString()}`);
+        logger.log(`Success. Block hash: ${status.asInBlock.toString()}`);
 
         log.push({
           payload: transactionPayload,
