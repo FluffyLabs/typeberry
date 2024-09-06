@@ -28,6 +28,7 @@
     "npm": ">=10"
   },
   "scripts": {
+    "build": "tsc",
     "qa": "biome ci",
     "qa-fix": "npm run format; npm run lint",
     "format": "biome format --write",
