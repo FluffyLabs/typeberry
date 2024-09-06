@@ -81,7 +81,7 @@ async function dispatchTest(_t: TestContext, testContent: unknown, file: string)
 
   if (nonEmptyRunners.length === 0) {
     for (const error of errors) {
-      logger.error(error);
+      logger.error(JSON.stringify(error, null, 2));
     }
 
     fail(`Unrecognized test case in ${file}`);
