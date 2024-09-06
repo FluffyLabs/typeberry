@@ -62,11 +62,11 @@ export function parseLoggerOptions(input: string, defaultLevel: Level, workingDi
       continue;
     }
     // we just have the default level
-    if (clean.indexOf("=") === -1) {
-      defLevel = parseLevel(clean);
-    } else {
+    if (clean.includes("=")) {
       const [mod, lvl] = clean.split("=");
       modules.set(mod.trim(), parseLevel(lvl.trim()));
+    } else {
+      defLevel = parseLevel(clean);
     }
   }
 
