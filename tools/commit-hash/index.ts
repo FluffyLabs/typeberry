@@ -48,7 +48,7 @@ async function writeLog(log: LogEntry[]) {
     await fs.writeFile(LOG_FILENAME, JSON.stringify(log, null, 2));
     logger.log("New log written.");
   } catch (e) {
-    logger.error(e);
+    logger.error(JSON.stringify(e, null, 2));
   }
 }
 
