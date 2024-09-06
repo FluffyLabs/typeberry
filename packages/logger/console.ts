@@ -27,7 +27,7 @@ export class ConsoleTransport implements Transport {
     return new ConsoleTransport(options);
   }
 
-  constructor(private options: Options) {}
+  protected constructor(private options: Options) {}
 
   trace(_moduleName: string, _fileName: string, _val: string) {
     /* no-op */
@@ -52,14 +52,14 @@ export class ConsoleTransport implements Transport {
   push(level: Level, moduleName: string, fileName: string, val: string) {
     const shortName = fileName.replace(this.options.workingDir, "");
     const configuredLevel = findLevel(this.options, moduleName);
-    const lvlText = Level[lvl];
+    const lvlText = Level[level].padEnd(5);
     if (level < configuredLevel) {
       return;
     }
 
-    if (lvl === Level.WARN) {
+    if (level === Level.WARN) {
       console.warn(`${lvlText} [${moduleName}] ${val} @ ${shortName}`);
-    } else if (lvl === Level.ERROR) {
+    } else if (level === Level.ERROR) {
       console.error(`${lvlText} [${moduleName}] ${val} @ ${shortName}`);
     } else {
       console.info(`${lvlText} [${moduleName}] ${val} @ ${shortName}`);
