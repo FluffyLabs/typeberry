@@ -2,6 +2,7 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as github from "@actions/github";
 import type { PushEvent } from "@octokit/webhooks-types";
+// @ts-ignore ECMAScript module being incompatible with CommonJS.
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 import { newLogger } from "@typeberry/logger";
 
@@ -48,7 +49,7 @@ async function writeLog(log: LogEntry[]) {
     await fs.writeFile(LOG_FILENAME, JSON.stringify(log, null, 2));
     logger.log("New log written.");
   } catch (e) {
-    logger.error(e);
+    logger.error(JSON.stringify(e, null, 2));
   }
 }
 
