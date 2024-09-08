@@ -2,7 +2,7 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as github from "@actions/github";
 import type { PushEvent } from "@octokit/webhooks-types";
-// @ts-ignore
+// @ts-ignore ECMAScript module being incompatible with CommonJS.
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 import { newLogger } from "@typeberry/logger";
 
