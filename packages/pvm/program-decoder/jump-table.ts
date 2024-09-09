@@ -1,26 +1,33 @@
-import { LittleEndianDecoder } from "@typeberry/jam-codec/little-endian-decoder";
+import {Decoder} from "@typeberry/jam-codec";
 import { check } from "@typeberry/utils";
 
 export class JumpTable {
   private indices: Uint32Array;
-  private littleEndianDecoder = new LittleEndianDecoder();
 
-  constructor(jumpTableItemLength: number, bytes: Uint8Array) {
+  constructor(itemByteLength: number, bytes: Uint8Array) {
     check(
-      jumpTableItemLength === 0 || bytes.length % jumpTableItemLength === 0,
-      `Length of jump table (${bytes.length}) should be a multiple of item lenght (${jumpTableItemLength})!`,
+      itemByteLength === 0 || bytes.length % itemByteLength === 0,
+      `Length of jump table (${bytes.length}) should be a multiple of item lenght (${itemByteLength})!`,
     );
+    check(itemByteLength <= 4, "Programs larger than 2**(8 * 4) are not supported");
 
-    const length = jumpTableItemLength === 0 ? 0 : bytes.length / jumpTableItemLength;
+    const length = itemByteLength === 0 ? 0 : bytes.length / itemByteLength;
 
     this.indices = new Uint32Array(length);
-    for (let i = 0; i < bytes.length; i += jumpTableItemLength) {
-      this.indices[i / jumpTableItemLength] = this.decodeItem(bytes.subarray(i, i + jumpTableItemLength));
+    const decoder = Decoder.fromBlob(bytes);
+    let decodeNext;
+    if (itemByteLength === 4) {
+      decodeNext = () => decoder.u32();
+    } else if (itemByteLength === 3) {
+      decodeNext = () => decoder.u24();
+    } else if (itemByteLength === 2) {
+      decodeNext = () => decoder.u16();
+    } else {
+      decodeNext = () => decoder.u8();
     }
-  }
-
-  private decodeItem(bytes: Uint8Array) {
-    return this.littleEndianDecoder.decodeU32(bytes);
+    for (let i = 0; i < length; i += 1) {
+      this.indices[i] = decodeNext();
+    }
   }
 
   hasIndex(index: number) {

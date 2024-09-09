@@ -3,6 +3,7 @@ import { check } from "@typeberry/utils";
 
 // TODO [ToDr] bitvec
 // TODO [ToDr] sequences
+// TODO [ToDr] bignums - decide for builtin vs custom type
 
 /**
  * I had to extend ArrayBuffer type to use resizable ArrayBuffer.
@@ -138,7 +139,7 @@ export class Encoder {
   }
 
   /**
-   * Encode a fixed-bytes number.
+   * Prepare for encoding of a fixed-bytes number.
    *
    *
    * The encoding will always occupy N bytes in little-endian ordering.

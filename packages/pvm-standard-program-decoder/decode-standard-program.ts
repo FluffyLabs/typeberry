@@ -1,11 +1,10 @@
-import { LittleEndianDecoder } from "@typeberry/jam-codec/little-endian-decoder";
 import { type Opaque, ensure } from "@typeberry/utils";
 
 import { ARGS_SEGMENT, DATA_LEGNTH, LAST_PAGE, PAGE_SIZE, SEGMENT_SIZE, STACK_SEGMENT } from "./memory-conts";
 import { alignToPageSize, alignToSegmentSize } from "./memory-utils";
+import {Decoder} from "@typeberry/jam-codec";
 
 const NO_OF_REGISTERS = 13;
-const decoder = new LittleEndianDecoder();
 
 /**
  * program = E_3(|o|) ++ E_3(|w|) ++ E_2(z) ++ E_3(s) ++ o ++ w ++ E_4(|c|) ++ c
@@ -29,8 +28,9 @@ const READONLY_DATA_INDEX = STACK_SIZE_INDEX + 3;
 type InputLength = Opaque<number, "Number that is lower than 2 ** 24 (Z_I from GP)">;
 
 export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {
-  const oLength = decoder.decodeU32(program.subarray(READONLY_LENGTH_INDEX, HEAP_LENGTH_INDEX));
-  const wLength = decoder.decodeU32(program.subarray(HEAP_LENGTH_INDEX, NO_OF_HEAP_PAGES_INDEX));
+  const decoder = Decoder.fromBlob(program);
+  const oLength = decoder.u24();
+  const wLength = decoder.u24();
   const argsLength = ensure<number, InputLength>(args.length, args.length <= DATA_LEGNTH, "Incorrect arguments length");
   const readOnlyLength = ensure<number, InputLength>(
     oLength,
@@ -38,14 +38,15 @@ export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {
     "Incorrect readonly segment length",
   );
   const heapLength = ensure<number, InputLength>(wLength, wLength <= DATA_LEGNTH, "Incorrect heap segment length");
-  const noOfHeapZerosPages = decoder.decodeU32(program.subarray(NO_OF_HEAP_PAGES_INDEX, STACK_SIZE_INDEX));
-  const stackSize = decoder.decodeU32(program.subarray(STACK_SIZE_INDEX, READONLY_DATA_INDEX));
+  const noOfHeapZerosPages = decoder.u16();
+  const stackSize = decoder.u24();
   const heapIndex = READONLY_DATA_INDEX + readOnlyLength;
   const readOnlyMemory = program.subarray(READONLY_DATA_INDEX, heapIndex);
   const codeLengthIndex = heapIndex + heapLength;
   const initialHeap = program.subarray(heapIndex, codeLengthIndex);
   const codeIndex = codeLengthIndex + 4;
-  const codeLength = decoder.decodeU32(program.subarray(codeLengthIndex, codeIndex));
+  decoder.moveTo(codeLengthIndex);
+  const codeLength = decoder.u32();
   const code = program.subarray(codeIndex, codeIndex + codeLength);
 
   const readonlyDataStart = SEGMENT_SIZE;
