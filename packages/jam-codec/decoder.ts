@@ -114,6 +114,27 @@ export class Decoder {
     return num;
   }
 
+  varU64(): bigint {
+    const firstByte = this.source[this.offset];
+    const l = decodeLengthAfterFirstByte(firstByte);
+    this.offset += 1;
+
+    if (l === 0) {
+      return BigInt(firstByte);
+    }
+
+    this.offset += l;
+    if (l === 8) {
+      return this.dataView.getBigUint64(this.offset - l, true);
+    }
+
+    let num = BigInt(firstByte + 2 ** (8 - l) - 2 ** 8) * BigInt(2 ** (8 * l));
+    for (let i = 0; i < l; i += 1) {
+      num |= BigInt(this.source[this.offset - l + i]) << BigInt(8 * i);
+    }
+    return num;
+  }
+
   moveTo(newOffset: number) {
     check(newOffset < this.source.length, `New offset goes beyond the source: ${newOffset} vs ${this.source.length}.`);
     this.offset = newOffset;
