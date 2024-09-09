@@ -1,1 +1,1 @@
-export * from "@typeberry/pvm";
+export * from "@typeberry/pvm-debugger-adapter";
