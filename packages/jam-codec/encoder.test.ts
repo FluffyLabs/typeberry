@@ -61,7 +61,7 @@ describe("JAM encoder / numbers", () => {
     encoder.i32(-42);
     encoder.i32(0);
 
-    assert.deepStrictEqual(encoder.viewResult(), BytesBlob.parseBlob("0xffffff7f01000080424242422b00000000000000"));
+    assert.deepStrictEqual(encoder.viewResult().toString(), BytesBlob.parseBlob("0xffffff7f0000008042424242d6ffffff00000000").toString());
   });
 
   it("should encode a bunch of i24 numbers", () => {
@@ -71,7 +71,7 @@ describe("JAM encoder / numbers", () => {
     encoder.i24(-42);
     encoder.i24(0);
 
-    assert.deepStrictEqual(encoder.viewResult(), BytesBlob.parseBlob("0x4242422b0000000000"));
+    assert.deepStrictEqual(encoder.viewResult().toString(), BytesBlob.parseBlob("0x424242d6ffff000000").toString());
   });
 
   it("should encode a bunch of i16 numbers", () => {
@@ -81,7 +81,7 @@ describe("JAM encoder / numbers", () => {
     encoder.i16(-42);
     encoder.i16(0);
 
-    assert.deepStrictEqual(encoder.viewResult(), BytesBlob.parseBlob("0x42422b000000"));
+    assert.deepStrictEqual(encoder.viewResult().toString(), BytesBlob.parseBlob("0x4242d6ff0000").toString());
   });
 
   it("should encode a bunch of i8 numbers", () => {
@@ -91,8 +91,41 @@ describe("JAM encoder / numbers", () => {
     encoder.i8(-42);
     encoder.i8(0);
 
-    assert.deepStrictEqual(encoder.viewResult(), BytesBlob.parseBlob("0x422b00"));
+    assert.deepStrictEqual(encoder.viewResult(), BytesBlob.parseBlob("0x42d600"));
+  });
+
+  it("should encode a bool", () => {
+    const encoder = Encoder.create();
+
+    encoder.bool(true);
+    encoder.bool(false);
+
+    assert.deepStrictEqual(encoder.viewResult(), BytesBlob.parseBlob("0x0100"));
   });
 });
 
+describe("JAM encoder / sizing", () => {
+  it('should throw exception if destination is too small', () => {
+    const encoder = Encoder.create({
+      destination: new Uint8Array(2),
+    });
+
+    assert.throws(() => {
+      encoder.i32(5);
+    }, {
+      name: 'Error',
+      message: 'Not enough space in the destination array. Needs 4, has 2.'
+    });
+  });
+
+  it('should extend the space', () => {
+    const encoder = Encoder.create({
+      expectedLength: 1,
+    });
+
+    encoder.i32(5);
+
+    assert.deepStrictEqual(encoder.viewResult(), BytesBlob.parseBlob("0x05000000"));
+  });
+});
 // TODO [ToDr] check the negative space (exceptions).
