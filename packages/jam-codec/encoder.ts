@@ -1,5 +1,5 @@
-import {Bytes, BytesBlob} from "@typeberry/bytes";
-import {check} from "@typeberry/utils";
+import { type Bytes, BytesBlob } from "@typeberry/bytes";
+import { check } from "@typeberry/utils";
 
 /**
  * I had to extend ArrayBuffer type to use resizable ArrayBuffer.
@@ -16,18 +16,20 @@ declare global {
   }
 }
 
-export type Options = {
-  expectedLength: number
-} | {
-  destination: Uint8Array,
-};
+export type Options =
+  | {
+      expectedLength: number;
+    }
+  | {
+      destination: Uint8Array;
+    };
 
 const DEFAULT_START_LENGTH = 512; // 512B
 const MAX_LENGTH = 10 * 1024 * 1024; // 10MB
 
 export class Encoder {
   static create(options?: Options) {
-    if (options && 'destination' in options) {
+    if (options && "destination" in options) {
       return new Encoder(options.destination);
     }
 
@@ -37,9 +39,12 @@ export class Encoder {
     return new Encoder(new Uint8Array(destination), buffer);
   }
 
-  private offset: number = 0;
+  private offset = 0;
 
-  private constructor(private readonly destination: Uint8Array, private readonly buffer?: ArrayBuffer) {}
+  private constructor(
+    private readonly destination: Uint8Array,
+    private readonly buffer?: ArrayBuffer,
+  ) {}
 
   viewResult() {
     return new BytesBlob(this.destination.subarray(0, this.offset));
@@ -96,19 +101,19 @@ export class Encoder {
    */
   private iN(num: number, bytesToEncode: 1 | 2 | 3 | 4) {
     const BITS = 8;
-    const maxNum = 2**(BITS * bytesToEncode);
+    const maxNum = 2 ** (BITS * bytesToEncode);
     // note that despite the actual range of values being within:
     // `[ - maxNum / 2, maxNum / 2)`
     // we still allow positive numbers from `[maxNum / 2, maxNum)`.
     // So it does not matter if the argument is a negative value,
     // OR if someone just gave us two-complement already.
     check(num < maxNum, `Only for numbers up to 2**${BITS * bytesToEncode} - 1`);
-    check(-num <= (maxNum / 2), `Only for numbers down to -2**${BITS * bytesToEncode - 1}`);
+    check(-num <= maxNum / 2, `Only for numbers down to -2**${BITS * bytesToEncode - 1}`);
 
     this.ensureBigEnough(bytesToEncode);
 
     let encodeNum = num < 0 ? maxNum - num + 1 : num;
-    for (let i = this.offset; i < this.offset + bytesToEncode; i+= 1) {
+    for (let i = this.offset; i < this.offset + bytesToEncode; i += 1) {
       this.destination[i] = encodeNum & 0xff;
       encodeNum >>>= BITS;
     }
@@ -122,7 +127,7 @@ export class Encoder {
    *
    * https://graypaper.fluffylabs.dev/#WyJlMjA2ZTI2NjNjIiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEzIGg2IHkxZGJlIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeDYxIGhkIHkxZGJmIGZmMTcgZnM1IGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
    */
-  u32(num: number)  {
+  u32(num: number) {
     check(num >= 0, "Only for natural numbers.");
     check(num < 2 ** 32, "Only for numbers up to 2**32");
 
@@ -138,13 +143,13 @@ export class Encoder {
     let maxEncoded = 2 ** (7 * 5);
     // note we use `/ 2**7` here not binary,
     // since `maxEncoded` is greater than 2**32
-    let minEncoded = maxEncoded / 2**7;
+    let minEncoded = maxEncoded / 2 ** 7;
     for (let l = 4; l >= 0; l -= 1) {
       if (num >= minEncoded) {
         this.ensureBigEnough(l + 1);
 
         const maxVal = l === 0 ? minEncoded : minEncoded << 1;
-        const byte = (2**8 - 2**(8 - l) + Math.floor(num / maxVal)) & 0xff;
+        const byte = (2 ** 8 - 2 ** (8 - l) + Math.floor(num / maxVal)) & 0xff;
         this.destination[this.offset] = byte;
         this.offset += 1;
         if (l > 0) {
@@ -199,7 +204,7 @@ export class Encoder {
    *
    */
   bytes<N extends number>(bytes: Bytes<N>) {
-    this.ensureBigEnough(bytes.length)
+    this.ensureBigEnough(bytes.length);
 
     this.destination.set(bytes.raw, this.offset);
     this.offset += bytes.length;
@@ -218,9 +223,10 @@ export class Encoder {
       }
       // and then check again
       if (newLength >= this.destination.length) {
-        throw new Error(`Not enough space in the destination array. Needs ${newLength}, has ${this.destination.length}`);
+        throw new Error(
+          `Not enough space in the destination array. Needs ${newLength}, has ${this.destination.length}`,
+        );
       }
     }
   }
 }
-
