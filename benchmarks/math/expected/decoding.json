@@ -1,0 +1,14 @@
+{
+  "name": "Decoding numbers",
+  "date": "2024-09-09T19:52:45.075Z",
+  "version": null,
+  "results": null,
+  "fastest": {
+    "name": "int32array decode",
+    "index": 1
+  },
+  "slowest": {
+    "name": "manual decode",
+    "index": 0
+  }
+}
