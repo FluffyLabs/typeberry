@@ -1,0 +1,14 @@
+{
+  "name": "BigInt decoding",
+  "date": "2024-09-09T22:52:06.951Z",
+  "version": null,
+  "results": null,
+  "fastest": {
+    "name": "decode custom",
+    "index": 0
+  },
+  "slowest": {
+    "name": "decode bigint",
+    "index": 1
+  }
+}

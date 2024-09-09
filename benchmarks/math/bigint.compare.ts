@@ -15,18 +15,27 @@ const input = new ArrayBuffer(8);
 const view = new DataView(input);
 view.setBigUint64(0, 2n ** 60n, true);
 
+const otherA = new U64(0xff, 0xff);
+const otherB = (0xffn << 32n) + 0xffn;
+
 module.exports = () =>
   suite(
-    "BigNum decoding",
+    "BigInt compare",
 
-    add("decode custom", () => {
+    add("compare custom", () => {
       const lower = view.getUint32(0);
       const upper = view.getUint32(4);
-      return new U64(upper, lower);
+      const n = new U64(upper, lower);
+      return () => {
+        return n.isEqualTo(otherA);
+      };
     }),
 
-    add("decode bignum", () => {
-      return view.getBigUint64(0, true);
+    add("compare bigint", () => {
+      const n = view.getBigUint64(0, true);
+      return () => {
+        return n === otherB;
+      };
     }),
 
     cycle(),
