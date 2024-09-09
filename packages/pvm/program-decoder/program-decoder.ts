@@ -1,4 +1,4 @@
-import {Decoder} from "@typeberry/jam-codec";
+import { Decoder } from "@typeberry/jam-codec";
 import { JumpTable } from "./jump-table";
 import { Mask } from "./mask";
 

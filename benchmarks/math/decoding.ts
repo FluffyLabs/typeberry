@@ -1,6 +1,5 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
-
 
 const inputEncoded = new ArrayBuffer(12);
 const view = new DataView(inputEncoded);
@@ -22,7 +21,8 @@ module.exports = () =>
         assert.strictEqual(a, -10);
         assert.strictEqual(b, 0x42);
         assert.strictEqual(c, 0xffff);
-      }}),
+      };
+    }),
 
     add("int32array decode", () => {
       const source = new Int32Array(inputEncoded);
@@ -34,7 +34,8 @@ module.exports = () =>
         assert.strictEqual(a, -10);
         assert.strictEqual(b, 0x42);
         assert.strictEqual(c, 0xffff);
-    }}),
+      };
+    }),
 
     add("dataview decode", () => {
       const source = new DataView(inputEncoded);
@@ -46,7 +47,8 @@ module.exports = () =>
         assert.strictEqual(a, -10);
         assert.strictEqual(b, 0x42);
         assert.strictEqual(c, 0xffff);
-    }}),
+      };
+    }),
 
     cycle(),
     complete(),
@@ -59,8 +61,5 @@ if (require.main === module) {
 }
 
 function decode(source: Uint8Array) {
-  return source[0]
-    + (source[1] << 8)
-    + (source[2] << 16)
-    + (source[3] << 24);
+  return source[0] + (source[1] << 8) + (source[2] << 16) + (source[3] << 24);
 }

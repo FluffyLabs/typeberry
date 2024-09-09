@@ -1,5 +1,5 @@
-import {BytesBlob} from "@typeberry/bytes";
-import {check} from "@typeberry/utils";
+import type { BytesBlob } from "@typeberry/bytes";
+import { check } from "@typeberry/utils";
 
 // TODO [ToDr] Decode fixed-size sequence
 // TODO [ToDr] Decode length-prefixed blob
@@ -17,7 +17,7 @@ export class Decoder {
 
   private constructor(
     private readonly source: Uint8Array,
-    private offset: number = 0,
+    private offset = 0,
   ) {
     this.dataView = new DataView(source.buffer, source.byteOffset, source.byteLength);
   }
@@ -53,7 +53,7 @@ export class Decoder {
     return this.getNum(3, () => {
       // TODO [ToDr] most likely broken
       let num = this.dataView.getInt8(this.offset);
-      num += (this.dataView.getInt16(this.offset + 1, true)) << 8;
+      num += this.dataView.getInt16(this.offset + 1, true) << 8;
       return num;
     });
   }
@@ -61,7 +61,7 @@ export class Decoder {
   u24(): number {
     return this.getNum(3, () => {
       let num = this.dataView.getUint8(this.offset);
-      num += (this.dataView.getUint16(this.offset + 1, true)) << 8;
+      num += this.dataView.getUint16(this.offset + 1, true) << 8;
       return num;
     });
   }
@@ -126,11 +126,12 @@ export class Decoder {
   private ensureHasBytes(bytes: number) {
     check(bytes >= 0, "Negative number of bytes given.");
     if (this.offset + bytes > this.source.length) {
-      throw new Error(`Attempting to decode more data than there is left. Need ${bytes}, left: ${this.source.length - this.offset}.`);
+      throw new Error(
+        `Attempting to decode more data than there is left. Need ${bytes}, left: ${this.source.length - this.offset}.`,
+      );
     }
   }
 }
-
 
 const MASKS = [0xff, 0xfe, 0xfc, 0xf8, 0xf0, 0xe0, 0xc0, 0x80];
 function decodeLengthAfterFirstByte(firstByte: number) {

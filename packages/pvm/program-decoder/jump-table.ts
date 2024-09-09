@@ -1,4 +1,4 @@
-import {Decoder} from "@typeberry/jam-codec";
+import { Decoder } from "@typeberry/jam-codec";
 import { check } from "@typeberry/utils";
 
 export class JumpTable {
@@ -15,15 +15,13 @@ export class JumpTable {
 
     this.indices = new Uint32Array(length);
     const decoder = Decoder.fromBlob(bytes);
-    let decodeNext;
+    let decodeNext = () => decoder.u8();
     if (itemByteLength === 4) {
       decodeNext = () => decoder.u32();
     } else if (itemByteLength === 3) {
       decodeNext = () => decoder.u24();
     } else if (itemByteLength === 2) {
       decodeNext = () => decoder.u16();
-    } else {
-      decodeNext = () => decoder.u8();
     }
     for (let i = 0; i < length; i += 1) {
       this.indices[i] = decodeNext();

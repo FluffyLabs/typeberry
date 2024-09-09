@@ -41,7 +41,7 @@ describe("decodeNaturalNumber", () => {
     assert.strictEqual(result.bytesToSkip, encodedBytes.length);
   });
 
-  it.only("decode 2 bytes min value", () => {
+  it("decode 2 bytes min value", () => {
     const encodedBytes = new Uint8Array([128, 128]);
     const expectedValue = 128;
 
@@ -211,7 +211,7 @@ describe("decodeNaturalNumber", () => {
     assert.strictEqual(result.value, expectedValue);
     assert.strictEqual(result.bytesToSkip, 1);
   });
-/*
+  /*
   it("decode 7 bytes number with extra bytes ", () => {
     const encodedBytes = new Uint8Array([256 - 4 + 1, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x1, 0x2]);
     const expectedValue = 2n ** 49n - 1n;

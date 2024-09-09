@@ -61,7 +61,10 @@ describe("JAM encoder / numbers", () => {
     encoder.i32(-42);
     encoder.i32(0);
 
-    assert.deepStrictEqual(encoder.viewResult().toString(), BytesBlob.parseBlob("0xffffff7f0000008042424242d6ffffff00000000").toString());
+    assert.deepStrictEqual(
+      encoder.viewResult().toString(),
+      BytesBlob.parseBlob("0xffffff7f0000008042424242d6ffffff00000000").toString(),
+    );
   });
 
   it("should encode a bunch of i24 numbers", () => {
@@ -105,20 +108,23 @@ describe("JAM encoder / numbers", () => {
 });
 
 describe("JAM encoder / sizing", () => {
-  it('should throw exception if destination is too small', () => {
+  it("should throw exception if destination is too small", () => {
     const encoder = Encoder.create({
       destination: new Uint8Array(2),
     });
 
-    assert.throws(() => {
-      encoder.i32(5);
-    }, {
-      name: 'Error',
-      message: 'Not enough space in the destination array. Needs 4, has 2.'
-    });
+    assert.throws(
+      () => {
+        encoder.i32(5);
+      },
+      {
+        name: "Error",
+        message: "Not enough space in the destination array. Needs 4, has 2.",
+      },
+    );
   });
 
-  it('should extend the space', () => {
+  it("should extend the space", () => {
     const encoder = Encoder.create({
       expectedLength: 1,
     });

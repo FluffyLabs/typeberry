@@ -1,8 +1,8 @@
 import { type Opaque, ensure } from "@typeberry/utils";
 
+import { Decoder } from "@typeberry/jam-codec";
 import { ARGS_SEGMENT, DATA_LEGNTH, LAST_PAGE, PAGE_SIZE, SEGMENT_SIZE, STACK_SEGMENT } from "./memory-conts";
 import { alignToPageSize, alignToSegmentSize } from "./memory-utils";
-import {Decoder} from "@typeberry/jam-codec";
 
 const NO_OF_REGISTERS = 13;
 

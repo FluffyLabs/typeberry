@@ -1,6 +1,5 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
-
 
 const inputEmpty = new ArrayBuffer(12);
 const inputEncoded = new ArrayBuffer(12);
@@ -32,7 +31,8 @@ module.exports = () =>
         dest[2] = 0xffff;
 
         assert.deepStrictEqual(inputEmpty, inputEncoded);
-    }}),
+      };
+    }),
 
     add("dataview encode", () => {
       const dest = new DataView(inputEmpty);
@@ -42,7 +42,8 @@ module.exports = () =>
         dest.setInt32(8, 0xffff, true);
 
         assert.deepStrictEqual(inputEmpty, inputEncoded);
-    }}),
+      };
+    }),
 
     cycle(),
     complete(),
@@ -55,8 +56,8 @@ if (require.main === module) {
 }
 
 function encode(num: number, destination: Uint8Array) {
-  let n = num < 0 ? 2**32 + num : num;
-  for (let i=0; i < 4; i += 1) {
+  let n = num < 0 ? 2 ** 32 + num : num;
+  for (let i = 0; i < 4; i += 1) {
     const byte = n & 0xff;
     destination[i] = byte;
     n >>>= 8;
