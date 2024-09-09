@@ -36,13 +36,16 @@ export class PvmDebuggerAdapter {
     const page = this.pvm.getMemoryPage(pageNumber);
 
     if (!page) {
+      // page wasn't allocated so we return an empty page
       return new Uint8Array(PAGE_SIZE);
     }
 
     if (page.length === PAGE_SIZE) {
+      // page was allocated and has a proper size so we can simply return it
       return page;
     }
 
+    // page was allocated but it is shorter than PAGE_SIZE so we have to extend it
     const fullPage = new Uint8Array(PAGE_SIZE);
     fullPage.set(page);
     return fullPage;
