@@ -19,7 +19,7 @@
     "packages/utils",
     "tools/benchmark",
     "tools/commit-hash",
-    "tools/pvm-builder",
+    "tools/builder",
     "workers/block-generator",
     "workers/importer"
   ],
@@ -40,7 +40,8 @@
     "test": "node --test --require ts-node/register $(find . -type d -name node_modules -prune -type f -o -name '*.test.ts' | tr '\\n' ' ')",
     "ts-node": "ts-node",
     "blockchain-git-log": "ts-node ./tools/commit-hash/index.ts",
-    "build-pvm": "npm run build -w tools/pvm-builder",
+    "build-pvm": "npm run build -w tools/builder -- --environment PACKAGE_NAME:@typeberry/pvm,PACKAGE_OUT:pvm/pvm",
+    "build-trie": "npm run build -w tools/builder -- --environment PACKAGE_NAME:@typeberry/trie,PACKAGE_OUT:trie/trie",
     "preobfuscate-pvm": "npm run build-pvm",
     "obfuscate-pvm": "npx javascript-obfuscator ./dist/pvm --output ./dist/pvm-obfuscated --compact true --control-flow-flattening true"
   },
