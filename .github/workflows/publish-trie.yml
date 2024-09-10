@@ -1,10 +1,10 @@
-name: Publish obfuscated PVM
+name: Publish Trie package
 
 on:
   push:
     branches:
       - main
-    paths: ['packages/pvm/**']
+    paths: ['packages/trie/**', 'packages/bytes/**']
 jobs:
   publish-trie:
     runs-on: ubuntu-latest
