@@ -243,3 +243,5 @@ describe("decode natural number", () => {
     assert.strictEqual(result.bytesToSkip, 9);
   });
 });
+
+// TODO [ToDr] Tests for uN / iN

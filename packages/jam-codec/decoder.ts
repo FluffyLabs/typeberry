@@ -1,14 +1,20 @@
-import type { BytesBlob } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { check } from "@typeberry/utils";
 
-// TODO [ToDr] Decode fixed-size sequence
-// TODO [ToDr] Decode length-prefixed blob
-
+/**
+ * Primitives decoder for JAM codec.
+ */
 export class Decoder {
+  /**
+   * Create a new [`Decoder`] instance from given bytes blob and starting offset.
+   */
   static fromBytesBlob(source: BytesBlob, offset?: number) {
     return new Decoder(source.buffer, offset);
   }
 
+  /**
+   * Create a new [`Decoder`] instance given a raw array of bytes as a source.
+   */
   static fromBlob(source: Uint8Array) {
     return new Decoder(source);
   }
@@ -22,33 +28,35 @@ export class Decoder {
     this.dataView = new DataView(source.buffer, source.byteOffset, source.byteLength);
   }
 
+  /**
+   * Return the number of bytes read from the source
+   * (i.e. current offset within the source).
+   */
   bytesRead(): number {
     return this.offset;
   }
 
-  private getNum(bytes: number, f: () => number) {
-    this.ensureHasBytes(bytes);
-    const num = f();
-    this.offset += bytes;
-    return num;
-  }
-
+  /** Decode single byte as a signed number. */
   i8(): number {
     return this.getNum(1, () => this.dataView.getInt8(this.offset));
   }
 
+  /** Decode single byte as an unsigned number. */
   u8(): number {
     return this.getNum(1, () => this.dataView.getUint8(this.offset));
   }
 
+  /** Decode two bytes as a signed number. */
   i16(): number {
     return this.getNum(2, () => this.dataView.getInt16(this.offset, true));
   }
 
+  /** Decode two bytes as an unsigned number. */
   u16(): number {
     return this.getNum(2, () => this.dataView.getUint16(this.offset, true));
   }
 
+  /** Decode three bytes as a signed number. */
   i24(): number {
     return this.getNum(3, () => {
       // TODO [ToDr] most likely broken
@@ -58,6 +66,7 @@ export class Decoder {
     });
   }
 
+  /** Decode three bytes as an unsigned number. */
   u24(): number {
     return this.getNum(3, () => {
       let num = this.dataView.getUint8(this.offset);
@@ -66,14 +75,22 @@ export class Decoder {
     });
   }
 
+  /** Decode 4 bytes as a signed number. */
   i32(): number {
     return this.getNum(4, () => this.dataView.getInt32(this.offset, true));
   }
 
+  /** Decode 4 bytes as an unsigned number. */
   u32(): number {
     return this.getNum(4, () => this.dataView.getUint32(this.offset, true));
   }
 
+  /**
+    * Decode a boolean discriminator.
+    *
+    * NOTE: this method will throw an exception in case the encoded
+    *       byte is neither 0 nor 1.
+    */
   bool(): boolean {
     const num = this.u8();
     if (num === 0) {
@@ -87,6 +104,12 @@ export class Decoder {
     throw new Error(`Unexpected number when decoding a boolean: ${num}`);
   }
 
+  /**
+    * Decode a variable-length encoding of natural numbers (up to 2**32).
+    *
+    * NOTE: this method will panic in case a larger number is found
+    *       in the source.
+    */
   varU32(): number {
     const firstByte = this.source[this.offset];
     const l = decodeLengthAfterFirstByte(firstByte);
@@ -114,6 +137,7 @@ export class Decoder {
     return num;
   }
 
+  /** Decode a variable-length encoding of natural numbers (up to 2**64). */
   varU64(): bigint {
     const firstByte = this.source[this.offset];
     const l = decodeLengthAfterFirstByte(firstByte);
@@ -135,13 +159,54 @@ export class Decoder {
     return num;
   }
 
-  moveTo(newOffset: number) {
-    check(newOffset < this.source.length, `New offset goes beyond the source: ${newOffset} vs ${this.source.length}.`);
-    this.offset = newOffset;
+  /**
+   * Decode a fixed-length sequence of bytes.
+   */
+  bytes<N extends number>(len: N): Bytes<N> {
+    check(len > 0, "Cannot decode an empty bytes.");
+    this.ensureHasBytes(len);
+    const bytes = this.source.subarray(this.offset, this.offset + len);
+    this.offset += len;
+    return new Bytes(bytes, len);
   }
 
+  /**
+   * Decode a variable-length sequence of bytes.
+   */
+  bytesBlob(): BytesBlob {
+    const len = this.varU32();
+    this.ensureHasBytes(len);
+    const bytes = this.source.subarray(this.offset, this.offset + len);
+    this.offset += len;
+    return new BytesBlob(bytes);
+  }
+
+  /**
+    * Move the decoding cursor to given offset.
+    *
+    * Note the offset can actually be smaller than the current offset
+    * (i.e. one can go back).
+    */
+  moveTo(newOffset: number) {
+    if (this.offset < newOffset) {
+      this.skip(newOffset - this.offset);
+    } else {
+      check(newOffset >= 0, "The offset has to be positive");
+      this.offset = newOffset;
+    }
+  }
+
+  /** Skip given number of bytes for decoding. */
   skip(bytes: number) {
-    this.moveTo(this.offset + bytes);
+    this.ensureHasBytes(bytes);
+    this.offset += bytes;
+  }
+
+  private getNum(bytes: number, f: () => number) {
+    this.ensureHasBytes(bytes);
+    const num = f();
+    this.offset += bytes;
+    return num;
   }
 
   private ensureHasBytes(bytes: number) {

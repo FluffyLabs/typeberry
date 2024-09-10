@@ -40,14 +40,10 @@ export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {
   const heapLength = ensure<number, InputLength>(wLength, wLength <= DATA_LEGNTH, "Incorrect heap segment length");
   const noOfHeapZerosPages = decoder.u16();
   const stackSize = decoder.u24();
-  const heapIndex = READONLY_DATA_INDEX + readOnlyLength;
-  const readOnlyMemory = program.subarray(READONLY_DATA_INDEX, heapIndex);
-  const codeLengthIndex = heapIndex + heapLength;
-  const initialHeap = program.subarray(heapIndex, codeLengthIndex);
-  const codeIndex = codeLengthIndex + 4;
-  decoder.moveTo(codeLengthIndex);
+  const readOnlyMemory = decoder.bytes(readOnlyLength).raw;
+  const initialHeap = decoder.bytes(heapLength).raw;
   const codeLength = decoder.u32();
-  const code = program.subarray(codeIndex, codeIndex + codeLength);
+  const code = decoder.bytes(codeLength).raw;
 
   const readonlyDataStart = SEGMENT_SIZE;
   const readonlyDataEnd = SEGMENT_SIZE + readOnlyLength;

@@ -28,8 +28,8 @@ export class ProgramDecoder {
 
     const codeFirstIndex = jumpTableFirstByteIndex + jumpTableLengthInBytes;
     const code = program.subarray(codeFirstIndex, codeFirstIndex + codeLength);
-    const maskFirstIndex = codeFirstIndex + Number(codeLength);
-    const maskLengthInBytes = Math.ceil(Number(codeLength) / 8);
+    const maskFirstIndex = codeFirstIndex + codeLength;
+    const maskLengthInBytes = Math.ceil(codeLength / 8);
     const mask = program.subarray(maskFirstIndex, maskFirstIndex + maskLengthInBytes);
 
     return {
