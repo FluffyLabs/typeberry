@@ -3,7 +3,7 @@ import type { InstructionResult } from "../instruction-result";
 import type { JumpTable } from "../program-decoder/jump-table";
 import type { Registers } from "../registers";
 import { Result } from "../result";
-import { MAX_VALUE } from "./math-consts";
+import { add } from "./math-utils";
 
 const EXIT = 0xff_ff_00_00;
 const JUMP_ALIGMENT_FACTOR = 4;
@@ -40,13 +40,7 @@ export class DynamicJumpOps {
 
   jumpInd(immediateValue: number, registerIndex: number) {
     const registerValue = this.regs.asUnsigned[registerIndex];
-    if (registerValue > MAX_VALUE - immediateValue) {
-      const dynamicAddress =
-        MAX_VALUE - Math.max(registerValue, immediateValue) + Math.min(registerValue, immediateValue) - 1;
-      this.djump(dynamicAddress);
-    } else {
-      const dynamicAddress = registerValue + immediateValue;
-      this.djump(dynamicAddress);
-    }
+    const address = add(registerValue, immediateValue);
+    this.djump(address);
   }
 }
