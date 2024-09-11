@@ -4,8 +4,12 @@
   "description": "Erasure encoding implementation",
   "main": "index.ts",
   "scripts": {
-    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
+    "start": "ts-node ./index"
   },
   "author": "Fluffy Labs",
-  "license": "MPL-2.0"
+  "license": "MPL-2.0",
+  "dependencies": {
+    "@ronomon/reed-solomon": "^6.0.0"
+  }
 }
