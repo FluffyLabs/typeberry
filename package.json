@@ -11,6 +11,7 @@
     "packages/jam-codec",
     "packages/logger",
     "packages/pvm",
+    "packages/pvm-debugger-adapter",
     "packages/pvm-standard-program-decoder",
     "packages/safrole",
     "packages/state-machine",
