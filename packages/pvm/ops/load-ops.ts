@@ -4,7 +4,7 @@ import type { Memory } from "../memory";
 import { createMemoryIndex } from "../memory/memory-index";
 import type { Registers } from "../registers";
 import { Result } from "../result";
-import { add } from "./math-utils";
+import { addWithOverflow } from "./math-utils";
 
 export class LoadOps {
   constructor(
@@ -62,27 +62,27 @@ export class LoadOps {
   }
 
   loadIndU8(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = add(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
+    const address = addWithOverflow(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
     this.loadNumber(address, secondRegisterIndex, 1);
   }
 
   loadIndU16(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = add(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
+    const address = addWithOverflow(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
     this.loadNumber(address, secondRegisterIndex, 2);
   }
 
   loadIndU32(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = add(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
+    const address = addWithOverflow(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
     this.loadNumber(address, secondRegisterIndex, 4);
   }
 
   loadIndI8(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = add(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
+    const address = addWithOverflow(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
     this.loadSignedNumber(address, secondRegisterIndex, 1);
   }
 
   loadIndI16(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = add(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
+    const address = addWithOverflow(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
     this.loadSignedNumber(address, secondRegisterIndex, 2);
   }
 }

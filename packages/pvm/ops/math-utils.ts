@@ -3,7 +3,7 @@ import { MAX_VALUE } from "./math-consts";
 /**
  * Overflowing addition for two-complement representation of 32-bit signed numbers.
  */
-export function add(a: number, b: number) {
+export function addWithOverflow(a: number, b: number) {
   if (a > MAX_VALUE - b) {
     /**
      * MAX_VALUE is equal to 2 ** 32 - 1

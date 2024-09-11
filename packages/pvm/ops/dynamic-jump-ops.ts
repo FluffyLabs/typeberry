@@ -3,7 +3,7 @@ import type { InstructionResult } from "../instruction-result";
 import type { JumpTable } from "../program-decoder/jump-table";
 import type { Registers } from "../registers";
 import { Result } from "../result";
-import { add } from "./math-utils";
+import { addWithOverflow } from "./math-utils";
 
 const EXIT = 0xff_ff_00_00;
 const JUMP_ALIGMENT_FACTOR = 4;
@@ -40,7 +40,7 @@ export class DynamicJumpOps {
 
   jumpInd(immediateValue: number, registerIndex: number) {
     const registerValue = this.regs.asUnsigned[registerIndex];
-    const address = add(registerValue, immediateValue);
+    const address = addWithOverflow(registerValue, immediateValue);
     this.djump(address);
   }
 }
