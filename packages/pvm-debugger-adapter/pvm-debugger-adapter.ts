@@ -7,11 +7,7 @@ export class PvmDebuggerAdapter {
   constructor(...args: ConstructorParameters<typeof Pvm>) {
     this.pvm = new Pvm(...args);
   }
-
-  runProgram() {
-    return this.pvm.runProgram();
-  }
-
+  
   nextStep() {
     return this.pvm.nextStep();
   }
