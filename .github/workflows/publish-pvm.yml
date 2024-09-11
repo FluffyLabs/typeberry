@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-    paths: ['packages/pvm/**']
+    paths: ['packages/pvm/**', 'packages/pvm-debugger-adapter/**']
 jobs:
   publish-pvm:
     runs-on: ubuntu-latest
