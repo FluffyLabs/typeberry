@@ -1,9 +1,8 @@
 {
-  "name": "@typeberry/pvm-builder",
+  "name": "@typeberry/builder",
   "version": "0.0.1",
-  "description": "Build PVM to one CommonJS module",
+  "description": "Build typeberry package into one CommonJS module",
   "type": "module",
-  "main": "index.ts",
   "scripts": {
     "build": "rollup -c"
   },

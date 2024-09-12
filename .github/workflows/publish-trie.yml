@@ -1,17 +1,17 @@
-name: Publish obfuscated PVM
+name: Publish Trie package
 
 on:
   push:
     branches:
       - main
-    paths: ['packages/pvm/**', 'packages/pvm-debugger-adapter/**', '.github/workflows/publish-pvm.yml']
+    paths: ['packages/trie/**', 'packages/bytes/**']
 jobs:
-  publish-pvm:
+  publish-trie:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [22.x]
-    
+
     steps:
     - uses: actions/checkout@v4
     - name: Use Node.js ${{ matrix.node-version }}
@@ -24,20 +24,20 @@ jobs:
       run: npm ci
     - name: Get commit hash
       run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-    - name: Build PVM
-      run: npm run obfuscate-pvm
+    - name: Build Trie
+      run: npm run build-trie
     - name: Generate package.json
-      working-directory: ./dist/pvm-obfuscated
+      working-directory: ./dist/trie
       run: |
         echo '{
-          "name": "@typeberry/pvm",
+          "name": "@typeberry/trie",
           "version": "0.0.1-${{ env.COMMIT_HASH }}",
-          "main": "pvm.js",
+          "main": "trie.js",
           "author": "Fluffy Labs",
           "license": "MPL-2.0"
         }' > package.json
     - name: Publish package
-      working-directory: ./dist/pvm-obfuscated
+      working-directory: ./dist/trie
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       run: npm publish --access public
