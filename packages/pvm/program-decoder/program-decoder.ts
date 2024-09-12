@@ -21,16 +21,15 @@ export class ProgramDecoder {
     const jumpTableIndexByteLen = decoder.i8();
     const codeLength = decoder.varU32();
 
-    // TODO [ToDr] this could be `decodeBytes(len)`
-    const jumpTableFirstByteIndex = decoder.bytesRead();
+    // TODO [ToDr] we could decode a bitvec here, but currently
+    // the test programs have remaining bits filled with `1`s,
+    // which is not aligned with the codec expectations (`0` padded).
     const jumpTableLengthInBytes = jumpTableLength * jumpTableIndexByteLen;
-    const jumpTable = program.subarray(jumpTableFirstByteIndex, jumpTableFirstByteIndex + jumpTableLengthInBytes);
+    const jumpTable = decoder.bytes(jumpTableLengthInBytes).raw;
 
-    const codeFirstIndex = jumpTableFirstByteIndex + jumpTableLengthInBytes;
-    const code = program.subarray(codeFirstIndex, codeFirstIndex + codeLength);
-    const maskFirstIndex = codeFirstIndex + codeLength;
+    const code = decoder.bytes(codeLength).raw;
     const maskLengthInBytes = Math.ceil(codeLength / 8);
-    const mask = program.subarray(maskFirstIndex, maskFirstIndex + maskLengthInBytes);
+    const mask = decoder.bytes(maskLengthInBytes).raw;
 
     return {
       mask,
