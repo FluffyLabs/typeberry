@@ -2,6 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder } from "./encoder";
+import {BitVec} from "@typeberry/bytes/bitvec";
 
 describe("JAM encoder / bytes", () => {
   it("should encode empty bytes sequence", () => {
@@ -40,14 +41,14 @@ describe("JAM encoder / numbers", () => {
   it("should encode variable length u32", () => {
     const encoder = Encoder.create();
 
-    encoder.u32(0);
-    encoder.u32(1);
-    encoder.u32(2);
-    encoder.u32(3);
-    encoder.u32(42);
-    encoder.u32(2 ** 32 - 1);
-    encoder.u32(2 ** 31 - 1);
-    encoder.u32(0x42424242);
+    encoder.varU32(0);
+    encoder.varU32(1);
+    encoder.varU32(2);
+    encoder.varU32(3);
+    encoder.varU32(42);
+    encoder.varU32(2 ** 32 - 1);
+    encoder.varU32(2 ** 31 - 1);
+    encoder.varU32(0x42424242);
 
     assert.deepStrictEqual(encoder.viewResult(), BytesBlob.parseBlob("0x000102032af7ffffff1ff3ffffff1ff242424202"));
   });
@@ -134,4 +135,88 @@ describe("JAM encoder / sizing", () => {
     assert.deepStrictEqual(encoder.viewResult(), BytesBlob.parseBlob("0x05000000"));
   });
 });
-// TODO [ToDr] check the negative space (exceptions).
+
+describe("JAM encoder / bitvec", () => {
+  it("should encode a 1-byte bit vector", () => {
+    const encoder = Encoder.create();
+    // 1 byte long bit vec
+    const bitvec = BitVec.create(8);
+    bitvec.setBit(0, true);
+    bitvec.setBit(6, true);
+
+    // when
+    encoder.bitVecFixLen(bitvec);
+    encoder.bitVecVarLen(bitvec);
+
+    assert.deepStrictEqual(
+      encoder.viewResult().toString(),
+      "0x410841"
+    );
+  });
+
+  it("should encode a longer bit vector", () => {
+    const encoder = Encoder.create();
+    // 1 byte long bit vec
+    const bitvec = BitVec.create(65);
+    bitvec.setBit(0, true);
+    bitvec.setBit(32, true);
+    bitvec.setBit(64, true);
+    bitvec.setBit(64, true);
+
+    // when
+    encoder.bitVecFixLen(bitvec);
+    encoder.bitVecVarLen(bitvec);
+
+    assert.deepStrictEqual(
+      encoder.viewResult().toString(),
+      "0x01000000010000000141010000000100000001"
+    );
+  });
+});
+
+describe("JAM encoder / generics", () => {
+  class MyType {
+    z: Bytes<4>;
+    constructor(public x: number, public y: boolean, z?: Bytes<4>) {
+      this.z = z ?? Bytes.parseBytes("0xdeadbeef", 4);
+    }
+
+    static encode(encoder: Encoder, elem: MyType) {
+      encoder.i32(elem.x);
+      encoder.bool(elem.y);
+      encoder.bytes(elem.z);
+    }
+  }
+
+  it("should encode an optional value", () => {
+    const encoder = Encoder.create();
+
+    encoder.optional(MyType, new MyType(3, true));
+    encoder.optional(MyType, null);
+    encoder.optional(MyType, null);
+    encoder.optional(MyType, new MyType(5, false));
+
+    assert.deepStrictEqual(
+      encoder.viewResult().toString(),
+      "0x010300000001deadbeef0000010500000000deadbeef"
+    );
+  });
+
+  it("should encode a sequence", () => {
+    const encoder = Encoder.create();
+    const seq = [
+      new MyType(5, true),
+      new MyType(7, true),
+      new MyType(10, true),
+    ];
+
+    encoder.sequenceVarLen(MyType, seq);
+    encoder.sequenceFixLen(MyType, seq);
+
+    assert.deepStrictEqual(
+      encoder.viewResult().toString(),
+      "0x030500000001deadbeef0700000001deadbeef0a00000001deadbeef0500000001deadbeef0700000001deadbeef0a00000001deadbeef"
+    );
+  });
+});
+

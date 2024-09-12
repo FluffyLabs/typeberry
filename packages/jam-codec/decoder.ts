@@ -1,5 +1,10 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import {BitVec} from "@typeberry/bytes/bitvec";
 import { check } from "@typeberry/utils";
+
+export type Decode<T> = {
+  decode: (d: Decoder) => T,
+}
 
 /**
  * Primitives decoder for JAM codec.
@@ -179,6 +184,39 @@ export class Decoder {
     const bytes = this.source.subarray(this.offset, this.offset + len);
     this.offset += len;
     return new BytesBlob(bytes);
+  }
+
+  bitVecFixLen(bitLength: number): BitVec {
+    const byteLength = Math.ceil(bitLength / 8);
+    const bytes = this.bytes(byteLength);
+    // TODO [ToDr] should we ensure that the non-used bits are zero?
+    return BitVec.fromBytes(bytes, bitLength);
+  }
+
+  bitVecVarLen(): BitVec {
+    const bitLength = this.varU32();
+    return this.bitVecFixLen(bitLength);
+  }
+
+  optional<T>(decode: Decode<T>): T | null {
+    const isSet = this.bool();
+    if (!isSet) {
+      return null;
+    }
+    return decode.decode(this);
+  }
+
+  sequenceFixLen<T>(len: number, decode: Decode<T>): T[] {
+    const result = Array<T>(len);
+    for (let i=0;i<len; i+= 1) {
+      result[i] = decode.decode(this);
+    }
+    return result;
+  }
+
+  sequenceVarLen<T>(decode: Decode<T>): T[] {
+    const len = this.varU32();
+    return this.sequenceFixLen(len, decode);
   }
 
   /**

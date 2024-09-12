@@ -1,9 +1,14 @@
-import { type Bytes, BytesBlob } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import {BitVec} from "@typeberry/bytes/bitvec";
 import { check } from "@typeberry/utils";
 
 // TODO [ToDr] bitvec
 // TODO [ToDr] sequences
 // TODO [ToDr] bignums - decide for builtin vs custom type
+
+export type Encode<T> = {
+  encode: (encoder: Encoder, elem: T) => void;
+};
 
 /**
  * I had to extend ArrayBuffer type to use resizable ArrayBuffer.
@@ -135,7 +140,7 @@ export class Encoder {
    * https://graypaper.fluffylabs.dev/#WyJlMjA2ZTI2NjNjIiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEzIGg2IHkxZGZlIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeDEwIGhjIHkxZGZmIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+Il1d
    */
   bool(bool: boolean) {
-    this.u32(bool ? 1 : 0);
+    this.varU32(bool ? 1 : 0);
   }
 
   /**
@@ -164,11 +169,13 @@ export class Encoder {
   /**
    * Encode a 32-bit natural number (compact).
    *
-   * The encoding can take various amount of bytes depending on the actual value.
+   * The encoding can take variable amount of bytes depending on the actual value.
+   *
+   * TODO [ToDr] Change to bigint.
    *
    * https://graypaper.fluffylabs.dev/#WyJlMjA2ZTI2NjNjIiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEzIGg2IHkxZGJlIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeDYxIGhkIHkxZGJmIGZmMTcgZnM1IGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
    */
-  u32(num: number) {
+  varU32(num: number) {
     check(num >= 0, "Only for natural numbers.");
     check(num < 2 ** 32, "Only for numbers up to 2**32");
 
@@ -235,7 +242,7 @@ export class Encoder {
    */
   blob(blob: Uint8Array) {
     // first encode the length
-    this.u32(blob.length);
+    this.varU32(blob.length);
 
     // now encode the bytes
     this.ensureBigEnough(blob.length);
@@ -257,6 +264,67 @@ export class Encoder {
 
     this.destination.set(bytes.raw, this.offset);
     this.offset += bytes.length;
+  }
+
+  /**
+   * Encode a bit vector with known length.
+   *
+   * The bits are packed into bytes and just placed as-is in the destination.
+   * https://graypaper.fluffylabs.dev/#WyI3YWU1MWY5MzI1IiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeGYgaDYgeTFlNjEgZmY3IGZzMCBmYzAgc2MwIGxzMCB3czBcIj4iLCI8ZGl2IGNsYXNzPVwidCBtMCB4ZiBoNiB5MWU2MiBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
+   */
+  bitVecFixLen(bitvec: BitVec) {
+    const bytes = bitvec.raw();
+    this.bytes(new Bytes(bytes, bytes.length));
+  }
+
+  /**
+   * Encode a bit vector with variable length.
+   *
+   * A bit-length discriminator (varU32) is placed before the packed bit content.
+   * https://graypaper.fluffylabs.dev/#WyI3YWU1MWY5MzI1IiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeGYgaDYgeTFlNjEgZmY3IGZzMCBmYzAgc2MwIGxzMCB3czBcIj4iLCI8ZGl2IGNsYXNzPVwidCBtMCB4ZiBoNiB5MWU2MiBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
+   */
+  bitVecVarLen(bitvec: BitVec) {
+    const len = bitvec.bitLength;
+    this.varU32(len);
+    this.bitVecFixLen(bitvec);
+  }
+
+  /**
+   * Encode a potentially empty value.
+   *
+   * A 0 or 1 is placed before the element to indicate it's presence.
+   * https://graypaper.fluffylabs.dev/#WyI3YWU1MWY5MzI1IiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEyIGg2IHkxZTU2IGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeGYgaGMgeTFlNTcgZmY3IGZzMCBmYzAgc2MwIGxzMCB3czBcIj4iXV0=
+   */
+  optional<T>(encode: Encode<T>, element?: T | null) {
+    const isSet = element !== null && element !== undefined;
+    this.bool(isSet);
+    if (isSet) {
+      encode.encode(this, element);
+    }
+  }
+
+  /**
+   * Encode a fixed-length sequence of elements of some type.
+   *
+   * https://graypaper.fluffylabs.dev/#WyI3YWU1MWY5MzI1IiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeGYgaGIgeTFlNDIgZmY3IGZzMCBmYzAgc2MwIGxzMCB3czBcIj4iLCI8ZGl2IGNsYXNzPVwidCBtMCB4ZiBoYSB5MWU0MyBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
+   */
+  sequenceFixLen<T>(encode: Encode<T>, elements: T[]) {
+    for (const e of elements) {
+      encode.encode(this, e);
+    }
+  }
+
+
+  /**
+   * Encode a variable-length sequence of elements of some type.
+   *
+   * A length discriminator is placed before the concatentation of encodings of all the elements.
+   *
+   * https://graypaper.fluffylabs.dev/#WyI3YWU1MWY5MzI1IiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeGYgaGIgeTFlNDIgZmY3IGZzMCBmYzAgc2MwIGxzMCB3czBcIj4iLCI8ZGl2IGNsYXNzPVwidCBtMCB4ZiBoYSB5MWU0MyBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
+   */
+  sequenceVarLen<T>(encode: Encode<T>, elements: T[]) {
+    this.varU32(elements.length);
+    this.sequenceFixLen(encode, elements);
   }
 
   private ensureBigEnough(length: number) {
