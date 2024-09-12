@@ -13,7 +13,7 @@ export class BytesBlob {
   readonly buffer: Uint8Array = new Uint8Array([]);
   readonly length: number = 0;
 
-  constructor(data: Uint8Array) {
+  private constructor(data: Uint8Array) {
     this.buffer = data;
     this.length = data.byteLength;
   }
@@ -22,7 +22,11 @@ export class BytesBlob {
     return bytesToHexString(this.buffer);
   }
 
-  static fromBytes(v: number[]): BytesBlob {
+  static fromBlob(v: Uint8Array): BytesBlob {
+    return new BytesBlob(v);
+  }
+
+  static fromNumbers(v: number[]): BytesBlob {
     const arr = new Uint8Array(v);
     return new BytesBlob(arr);
   }
@@ -61,7 +65,7 @@ export class Bytes<T extends number> {
   readonly raw: Uint8Array;
   readonly length: T;
 
-  constructor(raw: Uint8Array, len: T) {
+  private constructor(raw: Uint8Array, len: T) {
     check(raw.byteLength === len, `Given buffer has incorrect size ${raw.byteLength} vs expected ${len}`);
     this.raw = raw;
     this.length = len;
@@ -82,6 +86,10 @@ export class Bytes<T extends number> {
       }
     }
     return true;
+  }
+
+  static fromBlob<X extends number>(v: Uint8Array, len: X): Bytes<X> {
+    return new Bytes(v, len);
   }
 
   static zero<X extends number>(len: X): Bytes<X> {

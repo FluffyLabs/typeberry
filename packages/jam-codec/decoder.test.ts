@@ -405,7 +405,7 @@ describe("JAM decoder / bitvec", () => {
   });
 
   it("should decode a longer bit vector", () => {
-    const input = BytesBlob.parseBlob("0x01000000010000000141010000000100000001");
+    const input = BytesBlob.parseBlob("0x01000000010000800141010000000100008001");
     const decoder = Decoder.fromBytesBlob(input);
 
     // when
@@ -416,11 +416,22 @@ describe("JAM decoder / bitvec", () => {
     const expected = BitVec.empty(65);
     expected.setBit(0, true);
     expected.setBit(32, true);
-    expected.setBit(64, true);
+    expected.setBit(63, true);
     expected.setBit(64, true);
 
     assert.deepStrictEqual(bitvec1, expected);
     assert.deepStrictEqual(bitvec2, expected);
+  });
+
+  it("should fail if remaining bits are set", () => {
+    const input = BytesBlob.parseBlob("0x010000000100008011");
+    const decoder = Decoder.fromBytesBlob(input);
+
+    // when
+    assert.throws(() => decoder.bitVecFixLen(65), {
+      name: 'Error',
+      message: 'Non-zero bits found in the last byte of bitvec encoding.'
+    });
   });
 });
 

@@ -80,7 +80,7 @@ export class Encoder {
    * underlying `destination`.
    */
   viewResult() {
-    return new BytesBlob(this.destination.subarray(0, this.offset));
+    return BytesBlob.fromBlob(this.destination.subarray(0, this.offset));
   }
 
   /**
@@ -281,7 +281,7 @@ export class Encoder {
    */
   bitVecFixLen(bitvec: BitVec) {
     const bytes = bitvec.raw();
-    this.bytes(new Bytes(bytes, bytes.length));
+    this.bytes(Bytes.fromBlob(bytes, bytes.length));
   }
 
   /**

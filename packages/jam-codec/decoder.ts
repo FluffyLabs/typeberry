@@ -177,7 +177,7 @@ export class Decoder {
     this.ensureHasBytes(len);
     const bytes = this.source.subarray(this.offset, this.offset + len);
     this.offset += len;
-    return new Bytes(bytes, len);
+    return Bytes.fromBlob(bytes, len);
   }
 
   /** Decode a variable-length sequence of bytes. */
@@ -186,7 +186,7 @@ export class Decoder {
     this.ensureHasBytes(len);
     const bytes = this.source.subarray(this.offset, this.offset + len);
     this.offset += len;
-    return new BytesBlob(bytes);
+    return BytesBlob.fromBlob(bytes);
   }
 
   /** Decode a fixed-length sequence of bits of given length. */
@@ -262,8 +262,6 @@ export class Decoder {
     this.ensureHasBytes(bytes);
     this.offset += bytes;
   }
-
-  // TODO [ToDr] make sure there are no bytes left at the very end.
 
   private getNum(bytes: number, f: () => number) {
     this.ensureHasBytes(bytes);

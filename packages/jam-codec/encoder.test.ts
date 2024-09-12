@@ -181,14 +181,14 @@ describe("JAM encoder / bitvec", () => {
     const bitvec = BitVec.empty(65);
     bitvec.setBit(0, true);
     bitvec.setBit(32, true);
-    bitvec.setBit(64, true);
+    bitvec.setBit(63, true);
     bitvec.setBit(64, true);
 
     // when
     encoder.bitVecFixLen(bitvec);
     encoder.bitVecVarLen(bitvec);
 
-    assert.deepStrictEqual(encoder.viewResult().toString(), "0x01000000010000000141010000000100000001");
+    assert.deepStrictEqual(encoder.viewResult().toString(), "0x01000000010000800141010000000100008001");
   });
 });
 
