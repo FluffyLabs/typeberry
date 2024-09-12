@@ -1,6 +1,8 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { BitVec } from "@typeberry/bytes/bitvec";
 import { Decoder } from "./decoder";
 
 function decodeVarU32(source: Uint8Array) {
@@ -244,6 +246,228 @@ describe("decode natural number", () => {
   });
 });
 
+describe("JAM decoder / bytes", () => {
+  it("should decode empty bytes sequence", () => {
+    const input = BytesBlob.parseBlob("0x00");
+    const decoder = Decoder.fromBytesBlob(input);
 
-describe(
-// TODO [ToDr] Tests for uN / iN
+    const blob = decoder.bytesBlob();
+
+    assert.deepStrictEqual(blob.toString(), "0x");
+  });
+
+  it("should decode bytes sequence", () => {
+    const input = BytesBlob.parseBlob("0x04deadbeef");
+    const decoder = Decoder.fromBytesBlob(input);
+
+    const blob = decoder.bytesBlob();
+
+    assert.deepStrictEqual(blob.toString(), "0xdeadbeef");
+  });
+
+  it("should decode a fixed-length bytes", () => {
+    const input = BytesBlob.parseBlob("0xdeadbeef");
+    const decoder = Decoder.fromBytesBlob(input);
+
+    const blob = decoder.bytes(4);
+
+    assert.deepStrictEqual(blob.toString(), "0xdeadbeef");
+  });
+});
+
+describe("JAM decoder / numbers", () => {
+  it("should decode a large number", () => {
+    const input = BytesBlob.parseBlob("0xf0ffffffff");
+    const decoder = Decoder.fromBytesBlob(input);
+
+    const l = decoder.varU32();
+    decoder.moveTo(0);
+    const ln = decoder.varU64();
+
+    assert.deepStrictEqual(BigInt(l), ln);
+    assert.deepStrictEqual(l, 2 ** 32 - 1);
+  });
+
+  it("should fail to decode a number over 32-bits", () => {
+    const input = BytesBlob.parseBlob("0xf100000000");
+    const decoder = Decoder.fromBytesBlob(input);
+
+    const ln = decoder.varU64();
+    assert.deepStrictEqual(ln, 2n ** 32n);
+
+    decoder.moveTo(0);
+    assert.throws(() => decoder.varU32(), {
+      name: "Error",
+      message: "Unexpectedly large value for u32. l=4, firstByte=1",
+    });
+  });
+
+  it("should decode variable length u32", () => {
+    const input = BytesBlob.parseBlob("0x000102032af0fffffffff0ffffff7ff042424242");
+    const decoder = Decoder.fromBytesBlob(input);
+
+    assert.deepStrictEqual(decoder.varU32(), 0);
+    assert.deepStrictEqual(decoder.varU32(), 1);
+    assert.deepStrictEqual(decoder.varU32(), 2);
+    assert.deepStrictEqual(decoder.varU32(), 3);
+    assert.deepStrictEqual(decoder.varU32(), 42);
+    assert.deepStrictEqual(decoder.varU32(), 2 ** 32 - 1);
+    assert.deepStrictEqual(decoder.varU32(), 2 ** 31 - 1);
+    assert.deepStrictEqual(decoder.varU32(), 0x42424242);
+  });
+
+  it("should decode variable length u64", () => {
+    const input = BytesBlob.parseBlob("0x0001f100000000ff0000000000000001ffffffffffffffffff");
+    const decoder = Decoder.fromBytesBlob(input);
+
+    assert.deepStrictEqual(decoder.varU64(), 0n);
+    assert.deepStrictEqual(decoder.varU64(), 1n);
+    assert.deepStrictEqual(decoder.varU64(), 2n ** 32n);
+    assert.deepStrictEqual(decoder.varU64(), 2n ** 56n);
+    assert.deepStrictEqual(decoder.varU64(), 2n ** 64n - 1n);
+  });
+
+  it("should decode a bunch of i32 numbers", () => {
+    const input = BytesBlob.parseBlob("0xffffff7f0000008042424242d6ffffff00000000");
+    const decoder = Decoder.fromBytesBlob(input);
+
+    const results = [decoder.i32(), decoder.i32(), decoder.i32(), decoder.i32(), decoder.i32()];
+
+    assert.deepStrictEqual(results, [2 ** 31 - 1, -(2 ** 31), 0x42424242, -42, 0]);
+  });
+
+  it("should decode a bunch of u32 numbers", () => {
+    const input = BytesBlob.parseBlob("0xffffff7f0000008042424242d6ffffff00000000");
+    const decoder = Decoder.fromBytesBlob(input);
+
+    const results = [decoder.u32(), decoder.u32(), decoder.u32(), decoder.u32(), decoder.u32()];
+
+    assert.deepStrictEqual(results, [2 ** 31 - 1, 2 ** 32 - 2 ** 31, 0x42424242, 2 ** 32 - 42, 0]);
+  });
+
+  it("should decode a bunch of i24 numbers", () => {
+    const input = BytesBlob.parseBlob("0x424242d6ffff000000");
+    const decoder = Decoder.fromBytesBlob(input);
+
+    const results = [decoder.i24(), decoder.i24(), decoder.i24()];
+
+    assert.deepStrictEqual(results, [0x424242, -42, 0]);
+  });
+
+  it("should decode a bunch of i16 numbers", () => {
+    const input = BytesBlob.parseBlob("0x4242d6ff0000");
+    const decoder = Decoder.fromBytesBlob(input);
+
+    const results = [decoder.i16(), decoder.i16(), decoder.i16()];
+
+    assert.deepStrictEqual(results, [0x4242, -42, 0]);
+  });
+
+  it("should decode a bunch of i8 numbers", () => {
+    const input = BytesBlob.parseBlob("0x42d600");
+    const decoder = Decoder.fromBytesBlob(input);
+
+    const results = [decoder.i8(), decoder.i8(), decoder.i8()];
+
+    assert.deepStrictEqual(results, [0x42, -42, 0]);
+  });
+
+  it("should decode a bool", () => {
+    const input = BytesBlob.parseBlob("0x0100");
+    const decoder = Decoder.fromBytesBlob(input);
+
+    assert.deepStrictEqual(decoder.bool(), true);
+    assert.deepStrictEqual(decoder.bool(), false);
+  });
+});
+
+describe("JAM decoder / bitvec", () => {
+  it("should decode a 1-byte bit vector", () => {
+    const input = BytesBlob.parseBlob("0x410841");
+    const decoder = Decoder.fromBytesBlob(input);
+
+    // when
+    const bitvec1 = decoder.bitVecFixLen(8);
+    const bitvec2 = decoder.bitVecVarLen();
+
+    // then
+    const expected = BitVec.empty(8);
+    expected.setBit(0, true);
+    expected.setBit(6, true);
+
+    assert.deepStrictEqual(bitvec1, expected);
+    assert.deepStrictEqual(bitvec2, expected);
+  });
+
+  it("should decode a longer bit vector", () => {
+    const input = BytesBlob.parseBlob("0x01000000010000000141010000000100000001");
+    const decoder = Decoder.fromBytesBlob(input);
+
+    // when
+    const bitvec1 = decoder.bitVecFixLen(65);
+    const bitvec2 = decoder.bitVecVarLen();
+
+    // then
+    const expected = BitVec.empty(65);
+    expected.setBit(0, true);
+    expected.setBit(32, true);
+    expected.setBit(64, true);
+    expected.setBit(64, true);
+
+    assert.deepStrictEqual(bitvec1, expected);
+    assert.deepStrictEqual(bitvec2, expected);
+  });
+});
+
+describe("JAM decoder / generics", () => {
+  class MyType {
+    constructor(
+      public x: number,
+      public y: boolean,
+      public z: Bytes<4>,
+    ) {}
+
+    static decode(decoder: Decoder): MyType {
+      const x = decoder.i32();
+      const y = decoder.bool();
+      const z = decoder.bytes(4);
+
+      return new MyType(x, y, z);
+    }
+  }
+
+  it("should decode an optional value", () => {
+    const input = BytesBlob.parseBlob("0x010300000001deadbeef0000010500000000deadbeef");
+    const decoder = Decoder.fromBytesBlob(input);
+
+    const results = [
+      decoder.optional(MyType),
+      decoder.optional(MyType),
+      decoder.optional(MyType),
+      decoder.optional(MyType),
+    ];
+
+    assert.deepStrictEqual(results, [
+      new MyType(3, true, Bytes.parseBytes("0xdeadbeef", 4)),
+      null,
+      null,
+      new MyType(5, false, Bytes.parseBytes("0xdeadbeef", 4)),
+    ]);
+  });
+
+  it("should decode a sequence", () => {
+    const input = BytesBlob.parseBlob(
+      "0x030500000001deadbeef0700000001deadbeef0a00000001deadbeef0500000001deadbeef0700000001deadbeef0a00000001deadbeef",
+    );
+    const decoder = Decoder.fromBytesBlob(input);
+
+    const result1 = decoder.sequenceVarLen(MyType);
+    const result2 = decoder.sequenceFixLen(MyType, 3);
+
+    const bytes = Bytes.parseBytes("0xdeadbeef", 4);
+    const expected = [new MyType(5, true, bytes), new MyType(7, true, bytes), new MyType(10, true, bytes)];
+
+    assert.deepStrictEqual(result1, expected);
+    assert.deepStrictEqual(result2, expected);
+  });
+});

@@ -2,13 +2,13 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { BitVec } from "@typeberry/bytes/bitvec";
 import { check } from "@typeberry/utils";
 
+/** A decoder for some specific type `T` */
 export type Decode<T> = {
+  /** Decode object of type `T`. */
   decode: (d: Decoder) => T;
 };
 
-/**
- * Primitives decoder for JAM codec.
- */
+/** Primitives decoder for JAM codec. */
 export class Decoder {
   /**
    * Create a new [`Decoder`] instance from given bytes blob and starting offset.
@@ -64,9 +64,8 @@ export class Decoder {
   /** Decode three bytes as a signed number. */
   i24(): number {
     return this.getNum(3, () => {
-      // TODO [ToDr] most likely broken
-      let num = this.dataView.getInt8(this.offset);
-      num += this.dataView.getInt16(this.offset + 1, true) << 8;
+      let num = this.dataView.getUint16(this.offset + 1, true) << 8;
+      num |= this.dataView.getInt8(this.offset);
       return num;
     });
   }
@@ -124,12 +123,17 @@ export class Decoder {
       return firstByte;
     }
 
-    if (l >= 4) {
+    if (l > 4) {
       throw new Error(`Unexpectedly large value for u32. l=${l}`);
     }
 
     let num = firstByte + 2 ** (8 - l) - 2 ** 8;
-    if (l === 3) {
+    if (l === 4) {
+      if (num !== 0) {
+        throw new Error(`Unexpectedly large value for u32. l=${l}, firstByte=${num}`);
+      }
+      num = this.u32();
+    } else if (l === 3) {
       num <<= 24;
       num += this.u24();
     } else if (l === 2) {
@@ -201,7 +205,7 @@ export class Decoder {
       const emptyMask = 0xff ^ nonEmptyMask;
       const lastByte = bytes.raw[byteLength - 1];
       if ((lastByte & emptyMask) > 0) {
-        throw new Error('Non-zero bits found in the last byte of bitvec encoding.')
+        throw new Error("Non-zero bits found in the last byte of bitvec encoding.");
       }
     }
 
@@ -224,7 +228,7 @@ export class Decoder {
   }
 
   /** Decode a known-length sequence of elements. */
-  sequenceFixLen<T>(len: number, decode: Decode<T>): T[] {
+  sequenceFixLen<T>(decode: Decode<T>, len: number): T[] {
     const result = Array<T>(len);
     for (let i = 0; i < len; i += 1) {
       result[i] = decode.decode(this);
@@ -235,7 +239,7 @@ export class Decoder {
   /** Decode a variable-length sequence of elements. */
   sequenceVarLen<T>(decode: Decode<T>): T[] {
     const len = this.varU32();
-    return this.sequenceFixLen(len, decode);
+    return this.sequenceFixLen(decode, len);
   }
 
   /**
@@ -258,6 +262,8 @@ export class Decoder {
     this.ensureHasBytes(bytes);
     this.offset += bytes;
   }
+
+  // TODO [ToDr] make sure there are no bytes left at the very end.
 
   private getNum(bytes: number, f: () => number) {
     this.ensureHasBytes(bytes);

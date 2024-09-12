@@ -2,11 +2,9 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { BitVec } from "@typeberry/bytes/bitvec";
 import { check } from "@typeberry/utils";
 
-// TODO [ToDr] bitvec
-// TODO [ToDr] sequences
-// TODO [ToDr] bignums - decide for builtin vs custom type
-
+/** An encoder for some specific type `T`. */
 export type Encode<T> = {
+  /** Encode given element of type `T`. */
   encode: (encoder: Encoder, elem: T) => void;
 };
 
@@ -86,7 +84,7 @@ export class Encoder {
   }
 
   /**
-   * Encoded a 32-bit integer.
+   * Encode a 32-bit integer.
    *
    * The encoding will always occupy 4 bytes in little-endian ordering.
    * Negative numbers are represented as a two-complement.
@@ -98,7 +96,7 @@ export class Encoder {
   }
 
   /**
-   * Encoded a 24-bit integer.
+   * Encode a 24-bit integer.
    *
    * The encoding will always occupy 3 bytes in little-endian ordering.
    * Negative numbers are represented as a two-complement.
@@ -111,7 +109,7 @@ export class Encoder {
   }
 
   /**
-   * Encoded a 16-bit integer.
+   * Encode a 16-bit integer.
    *
    * The encoding will always occupy 2 bytes in little-endian ordering.
    * Negative numbers are represented as a two-complement.
@@ -123,7 +121,7 @@ export class Encoder {
   }
 
   /**
-   * Encoded a 8-bit integer.
+   * Encode a 8-bit integer.
    *
    * The encoding will always occupy 1 byte in little-endian ordering.
    * Negative numbers are represented as a two-complement.
@@ -199,7 +197,7 @@ export class Encoder {
     if (num >= maxEncoded) {
       this.ensureBigEnough(9);
       this.destination[this.offset] = 0xff;
-      this.dataView.setBigUint64(this.offset + 1, num);
+      this.dataView.setBigUint64(this.offset + 1, num, true);
       this.offset += 9;
       return;
     }
@@ -211,7 +209,7 @@ export class Encoder {
         this.ensureBigEnough(l + 1);
 
         // encode the first byte
-        const maxVal = l === 0 ? minEncoded : minEncoded << 1n;
+        const maxVal = 2n ** BigInt(8 * l);
         const byte = BigInt(2 ** 8 - 2 ** (8 - l)) + num / maxVal;
         this.destination[this.offset] = Number(byte) & 0xff;
         this.offset += 1;

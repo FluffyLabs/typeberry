@@ -38,6 +38,14 @@ describe("JAM encoder / bytes", () => {
 });
 
 describe("JAM encoder / numbers", () => {
+  it("should encode a large 32-bit number", () => {
+    const encoder = Encoder.create();
+
+    encoder.varU32(2 ** 32 - 1);
+
+    assert.deepStrictEqual(encoder.viewResult().toString(), "0xf0ffffffff");
+  });
+
   it("should encode variable length u32", () => {
     const encoder = Encoder.create();
 
@@ -50,7 +58,19 @@ describe("JAM encoder / numbers", () => {
     encoder.varU32(2 ** 31 - 1);
     encoder.varU32(0x42424242);
 
-    assert.deepStrictEqual(encoder.viewResult(), BytesBlob.parseBlob("0x000102032af7ffffff1ff3ffffff1ff242424202"));
+    assert.deepStrictEqual(encoder.viewResult().toString(), "0x000102032af0fffffffff0ffffff7ff042424242");
+  });
+
+  it("should encode variable length u64", () => {
+    const encoder = Encoder.create();
+
+    encoder.varU64(0n);
+    encoder.varU64(1n);
+    encoder.varU64(2n ** 32n);
+    encoder.varU64(2n ** 56n);
+    encoder.varU64(2n ** 64n - 1n);
+
+    assert.deepStrictEqual(encoder.viewResult().toString(), "0x0001f100000000ff0000000000000001ffffffffffffffffff");
   });
 
   it("should encode a bunch of i32 numbers", () => {
@@ -153,7 +173,6 @@ describe("JAM encoder / bitvec", () => {
 
   it("should encode a longer bit vector", () => {
     const encoder = Encoder.create();
-    // 1 byte long bit vec
     const bitvec = BitVec.empty(65);
     bitvec.setBit(0, true);
     bitvec.setBit(32, true);
