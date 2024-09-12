@@ -354,9 +354,9 @@ describe("JAM decoder / numbers", () => {
     assert.deepStrictEqual(decoder.i24(), 0);
     assert.deepStrictEqual(decoder.i24(), -127);
     assert.deepStrictEqual(decoder.i24(), 1383553);
-    assert.deepStrictEqual(decoder.i24(), -(2**23));
-    assert.deepStrictEqual(decoder.i24(), 2**23 - 1);
-    assert.deepStrictEqual(decoder.i24(), -(2**23 - 1));
+    assert.deepStrictEqual(decoder.i24(), -(2 ** 23));
+    assert.deepStrictEqual(decoder.i24(), 2 ** 23 - 1);
+    assert.deepStrictEqual(decoder.i24(), -(2 ** 23 - 1));
   });
 
   it("should decode a bunch of i16 numbers", () => {
@@ -429,8 +429,8 @@ describe("JAM decoder / bitvec", () => {
 
     // when
     assert.throws(() => decoder.bitVecFixLen(65), {
-      name: 'Error',
-      message: 'Non-zero bits found in the last byte of bitvec encoding.'
+      name: "Error",
+      message: "Non-zero bits found in the last byte of bitvec encoding.",
     });
   });
 });

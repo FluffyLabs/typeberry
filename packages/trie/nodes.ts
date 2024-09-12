@@ -168,7 +168,10 @@ export class LeafNode {
 
   /** Get the key (truncated to 31 bytes). */
   getKey(): TruncatedStateKey {
-    return Bytes.fromBlob(this.node.data.subarray(1, TRUNCATED_KEY_BYTES + 1), TRUNCATED_KEY_BYTES) as TruncatedStateKey;
+    return Bytes.fromBlob(
+      this.node.data.subarray(1, TRUNCATED_KEY_BYTES + 1),
+      TRUNCATED_KEY_BYTES,
+    ) as TruncatedStateKey;
   }
 
   /**

@@ -96,11 +96,14 @@ describe("JAM encoder / numbers", () => {
     encoder.i24(0);
     encoder.i24(-127);
     encoder.i24(1383553);
-    encoder.i24(2**23);
-    encoder.i24(2**23 - 1);
-    encoder.i24(2**23 + 1);
+    encoder.i24(2 ** 23);
+    encoder.i24(2 ** 23 - 1);
+    encoder.i24(2 ** 23 + 1);
 
-    assert.deepStrictEqual(encoder.viewResult().toString(), BytesBlob.parseBlob("0x424242d6ffff00000081ffff811c15000080ffff7f010080").toString());
+    assert.deepStrictEqual(
+      encoder.viewResult().toString(),
+      BytesBlob.parseBlob("0x424242d6ffff00000081ffff811c15000080ffff7f010080").toString(),
+    );
   });
 
   it("should encode a bunch of i16 numbers", () => {

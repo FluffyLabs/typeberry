@@ -66,7 +66,7 @@ export class Decoder {
     return this.getNum(3, () => {
       let num = this.dataView.getUint16(this.offset + 1, true) << 8;
       num |= this.dataView.getUint8(this.offset);
-      return num >= 2**23 ? num - 2**24 : num;
+      return num >= 2 ** 23 ? num - 2 ** 24 : num;
     });
   }
 
