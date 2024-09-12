@@ -1,8 +1,8 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { BitVec } from "@typeberry/bytes/bitvec";
 import { Encoder } from "./encoder";
-import {BitVec} from "@typeberry/bytes/bitvec";
 
 describe("JAM encoder / bytes", () => {
   it("should encode empty bytes sequence", () => {
@@ -148,10 +148,7 @@ describe("JAM encoder / bitvec", () => {
     encoder.bitVecFixLen(bitvec);
     encoder.bitVecVarLen(bitvec);
 
-    assert.deepStrictEqual(
-      encoder.viewResult().toString(),
-      "0x410841"
-    );
+    assert.deepStrictEqual(encoder.viewResult().toString(), "0x410841");
   });
 
   it("should encode a longer bit vector", () => {
@@ -167,17 +164,18 @@ describe("JAM encoder / bitvec", () => {
     encoder.bitVecFixLen(bitvec);
     encoder.bitVecVarLen(bitvec);
 
-    assert.deepStrictEqual(
-      encoder.viewResult().toString(),
-      "0x01000000010000000141010000000100000001"
-    );
+    assert.deepStrictEqual(encoder.viewResult().toString(), "0x01000000010000000141010000000100000001");
   });
 });
 
 describe("JAM encoder / generics", () => {
   class MyType {
     z: Bytes<4>;
-    constructor(public x: number, public y: boolean, z?: Bytes<4>) {
+    constructor(
+      public x: number,
+      public y: boolean,
+      z?: Bytes<4>,
+    ) {
       this.z = z ?? Bytes.parseBytes("0xdeadbeef", 4);
     }
 
@@ -196,27 +194,19 @@ describe("JAM encoder / generics", () => {
     encoder.optional(MyType, null);
     encoder.optional(MyType, new MyType(5, false));
 
-    assert.deepStrictEqual(
-      encoder.viewResult().toString(),
-      "0x010300000001deadbeef0000010500000000deadbeef"
-    );
+    assert.deepStrictEqual(encoder.viewResult().toString(), "0x010300000001deadbeef0000010500000000deadbeef");
   });
 
   it("should encode a sequence", () => {
     const encoder = Encoder.create();
-    const seq = [
-      new MyType(5, true),
-      new MyType(7, true),
-      new MyType(10, true),
-    ];
+    const seq = [new MyType(5, true), new MyType(7, true), new MyType(10, true)];
 
     encoder.sequenceVarLen(MyType, seq);
     encoder.sequenceFixLen(MyType, seq);
 
     assert.deepStrictEqual(
       encoder.viewResult().toString(),
-      "0x030500000001deadbeef0700000001deadbeef0a00000001deadbeef0500000001deadbeef0700000001deadbeef0a00000001deadbeef"
+      "0x030500000001deadbeef0700000001deadbeef0a00000001deadbeef0500000001deadbeef0700000001deadbeef0a00000001deadbeef",
     );
   });
 });
-

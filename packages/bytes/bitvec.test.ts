@@ -14,7 +14,7 @@ describe("BitVec", () => {
     assert.ok(bits.isSet(9));
     assert.ok(bits.isSet(8));
 
-    for (let i=1; i<8; i+=1) {
+    for (let i = 1; i < 8; i += 1) {
       assert.ok(!bits.isSet(i));
     }
   });

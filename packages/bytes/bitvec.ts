@@ -1,11 +1,10 @@
-import {check} from "@typeberry/utils";
-import {Bytes} from "./bytes";
+import { check } from "@typeberry/utils";
+import type { Bytes } from "./bytes";
 
 /**
  * A sequence of bits with a packed in-memory representation.
  */
 export class BitVec {
-
   /**
    * Wrap an existing bytes and treat them as [`BitVec`]
    */
@@ -31,7 +30,10 @@ export class BitVec {
     private readonly data: Uint8Array,
     public readonly bitLength: number,
   ) {
-    check(data.length * 8 >= bitLength, `Not enough bytes in the data array. Need ${data.length * 8} has ${bitLength}.`);
+    check(
+      data.length * 8 >= bitLength,
+      `Not enough bytes in the data array. Need ${data.length * 8} has ${bitLength}.`,
+    );
 
     this.byteLength = Math.ceil(bitLength / 8);
   }

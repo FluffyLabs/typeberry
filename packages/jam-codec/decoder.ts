@@ -1,10 +1,10 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import {BitVec} from "@typeberry/bytes/bitvec";
+import { BitVec } from "@typeberry/bytes/bitvec";
 import { check } from "@typeberry/utils";
 
 export type Decode<T> = {
-  decode: (d: Decoder) => T,
-}
+  decode: (d: Decoder) => T;
+};
 
 /**
  * Primitives decoder for JAM codec.
@@ -91,11 +91,11 @@ export class Decoder {
   }
 
   /**
-    * Decode a boolean discriminator.
-    *
-    * NOTE: this method will throw an exception in case the encoded
-    *       byte is neither 0 nor 1.
-    */
+   * Decode a boolean discriminator.
+   *
+   * NOTE: this method will throw an exception in case the encoded
+   *       byte is neither 0 nor 1.
+   */
   bool(): boolean {
     const num = this.u8();
     if (num === 0) {
@@ -110,11 +110,11 @@ export class Decoder {
   }
 
   /**
-    * Decode a variable-length encoding of natural numbers (up to 2**32).
-    *
-    * NOTE: this method will panic in case a larger number is found
-    *       in the source.
-    */
+   * Decode a variable-length encoding of natural numbers (up to 2**32).
+   *
+   * NOTE: this method will panic in case a larger number is found
+   *       in the source.
+   */
   varU32(): number {
     const firstByte = this.source[this.offset];
     const l = decodeLengthAfterFirstByte(firstByte);
@@ -208,7 +208,7 @@ export class Decoder {
 
   sequenceFixLen<T>(len: number, decode: Decode<T>): T[] {
     const result = Array<T>(len);
-    for (let i=0;i<len; i+= 1) {
+    for (let i = 0; i < len; i += 1) {
       result[i] = decode.decode(this);
     }
     return result;
@@ -220,11 +220,11 @@ export class Decoder {
   }
 
   /**
-    * Move the decoding cursor to given offset.
-    *
-    * Note the offset can actually be smaller than the current offset
-    * (i.e. one can go back).
-    */
+   * Move the decoding cursor to given offset.
+   *
+   * Note the offset can actually be smaller than the current offset
+   * (i.e. one can go back).
+   */
   moveTo(newOffset: number) {
     if (this.offset < newOffset) {
       this.skip(newOffset - this.offset);

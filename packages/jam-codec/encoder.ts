@@ -1,5 +1,5 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import {BitVec} from "@typeberry/bytes/bitvec";
+import type { BitVec } from "@typeberry/bytes/bitvec";
 import { check } from "@typeberry/utils";
 
 // TODO [ToDr] bitvec
@@ -313,7 +313,6 @@ export class Encoder {
       encode.encode(this, e);
     }
   }
-
 
   /**
    * Encode a variable-length sequence of elements of some type.
