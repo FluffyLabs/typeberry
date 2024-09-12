@@ -140,7 +140,7 @@ describe("JAM encoder / bitvec", () => {
   it("should encode a 1-byte bit vector", () => {
     const encoder = Encoder.create();
     // 1 byte long bit vec
-    const bitvec = BitVec.create(8);
+    const bitvec = BitVec.empty(8);
     bitvec.setBit(0, true);
     bitvec.setBit(6, true);
 
@@ -154,7 +154,7 @@ describe("JAM encoder / bitvec", () => {
   it("should encode a longer bit vector", () => {
     const encoder = Encoder.create();
     // 1 byte long bit vec
-    const bitvec = BitVec.create(65);
+    const bitvec = BitVec.empty(65);
     bitvec.setBit(0, true);
     bitvec.setBit(32, true);
     bitvec.setBit(64, true);

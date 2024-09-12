@@ -164,20 +164,19 @@ export class Decoder {
     return num;
   }
 
-  /**
-   * Decode a fixed-length sequence of bytes.
-   */
+  /** Decode a fixed-length sequence of bytes. */
   bytes<N extends number>(len: N): Bytes<N> {
-    check(len > 0, "Cannot decode an empty bytes.");
+    if (len === 0) {
+      return Bytes.zero(len);
+    }
+
     this.ensureHasBytes(len);
     const bytes = this.source.subarray(this.offset, this.offset + len);
     this.offset += len;
     return new Bytes(bytes, len);
   }
 
-  /**
-   * Decode a variable-length sequence of bytes.
-   */
+  /** Decode a variable-length sequence of bytes. */
   bytesBlob(): BytesBlob {
     const len = this.varU32();
     this.ensureHasBytes(len);
@@ -186,18 +185,36 @@ export class Decoder {
     return new BytesBlob(bytes);
   }
 
+  /** Decode a fixed-length sequence of bits of given length. */
   bitVecFixLen(bitLength: number): BitVec {
+    if (bitLength === 0) {
+      return BitVec.empty(0);
+    }
+
     const byteLength = Math.ceil(bitLength / 8);
     const bytes = this.bytes(byteLength);
-    // TODO [ToDr] should we ensure that the non-used bits are zero?
+
+    // verify that the remaining bits are zero
+    const emptyBitsStart = bitLength % 8;
+    if (emptyBitsStart > 0) {
+      const nonEmptyMask = 2 ** emptyBitsStart - 1;
+      const emptyMask = 0xff ^ nonEmptyMask;
+      const lastByte = bytes.raw[byteLength - 1];
+      if ((lastByte & emptyMask) > 0) {
+        throw new Error('Non-zero bits found in the last byte of bitvec encoding.')
+      }
+    }
+
     return BitVec.fromBytes(bytes, bitLength);
   }
 
+  /** Decode a variable-length sequence of bits. */
   bitVecVarLen(): BitVec {
     const bitLength = this.varU32();
     return this.bitVecFixLen(bitLength);
   }
 
+  /** Decode a possibly optional value. */
   optional<T>(decode: Decode<T>): T | null {
     const isSet = this.bool();
     if (!isSet) {
@@ -206,6 +223,7 @@ export class Decoder {
     return decode.decode(this);
   }
 
+  /** Decode a known-length sequence of elements. */
   sequenceFixLen<T>(len: number, decode: Decode<T>): T[] {
     const result = Array<T>(len);
     for (let i = 0; i < len; i += 1) {
@@ -214,6 +232,7 @@ export class Decoder {
     return result;
   }
 
+  /** Decode a variable-length sequence of elements. */
   sequenceVarLen<T>(decode: Decode<T>): T[] {
     const len = this.varU32();
     return this.sequenceFixLen(len, decode);

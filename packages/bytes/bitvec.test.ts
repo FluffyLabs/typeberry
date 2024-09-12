@@ -4,7 +4,7 @@ import { BitVec } from "./bitvec";
 
 describe("BitVec", () => {
   it("should set and read bytes", () => {
-    const bits = BitVec.create(10);
+    const bits = BitVec.empty(10);
 
     bits.setBit(0, true);
     bits.setBit(8, true);

@@ -19,7 +19,7 @@ export class BitVec {
   /**
    * Create new [`BitVec`] with all values set to `false`.
    */
-  static create(bitLength: number) {
+  static empty(bitLength: number) {
     const data = new Uint8Array(Math.ceil(bitLength / 8));
     return new BitVec(data, bitLength);
   }
