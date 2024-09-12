@@ -171,53 +171,62 @@ export class Encoder {
    *
    * The encoding can take variable amount of bytes depending on the actual value.
    *
-   * TODO [ToDr] Change to bigint.
-   *
    * https://graypaper.fluffylabs.dev/#WyJlMjA2ZTI2NjNjIiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEzIGg2IHkxZGJlIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeDYxIGhkIHkxZGJmIGZmMTcgZnM1IGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
    */
   varU32(num: number) {
     check(num >= 0, "Only for natural numbers.");
     check(num < 2 ** 32, "Only for numbers up to 2**32");
+    this.varU64(BigInt(num));
+  }
 
-    if (num === 0) {
+  /**
+   * Encode a 64-bit natural number (compact).
+   *
+   * The encoding can take variable amount of bytes depending on the actual value.
+   *
+   * https://graypaper.fluffylabs.dev/#WyJlMjA2ZTI2NjNjIiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEzIGg2IHkxZGJlIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeDYxIGhkIHkxZGJmIGZmMTcgZnM1IGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
+   */
+  varU64(num: bigint) {
+    if (num === 0n) {
       this.ensureBigEnough(1);
-      this.destination[this.offset] = num;
+      this.destination[this.offset] = 0;
       this.offset += 1;
       return;
     }
 
-    // find the size. Since we only encode u32 here,
-    // we can safely start in the middle
-    let maxEncoded = 2 ** (7 * 5);
-    // note we use `/ 2**7` here not binary,
-    // since `maxEncoded` is greater than 2**32
-    let minEncoded = maxEncoded / 2 ** 7;
-    for (let l = 4; l >= 0; l -= 1) {
+    // handle the biggest case
+    let maxEncoded = 2n ** (7n * 8n);
+    if (num >= maxEncoded) {
+      this.ensureBigEnough(9);
+      this.destination[this.offset] = 0xff;
+      this.dataView.setBigUint64(this.offset + 1, num);
+      this.offset += 9;
+      return;
+    }
+
+    // let's look for the correct range
+    let minEncoded = maxEncoded >> 7n;
+    for (let l = 7; l >= 0; l -= 1) {
       if (num >= minEncoded) {
         this.ensureBigEnough(l + 1);
 
-        const maxVal = l === 0 ? minEncoded : minEncoded << 1;
-        const byte = (2 ** 8 - 2 ** (8 - l) + Math.floor(num / maxVal)) & 0xff;
-        this.destination[this.offset] = byte;
+        // encode the first byte
+        const maxVal = l === 0 ? minEncoded : minEncoded << 1n;
+        const byte = BigInt(2 ** 8 - 2 ** (8 - l)) + num / maxVal;
+        this.destination[this.offset] = Number(byte) & 0xff;
         this.offset += 1;
-        if (l > 0) {
-          // encode the bytes of len `l`
-          const rest = num % maxVal;
-          if (l === 4) {
-            this.i32(rest);
-          } else if (l === 3) {
-            this.i24(rest);
-          } else if (l === 2) {
-            this.i16(rest);
-          } else {
-            this.i8(rest);
-          }
+        // now encode the rest of bytes of len `l`
+        let rest = num % maxVal;
+        for (let i = this.offset; i < this.offset + l; i += 1) {
+          this.destination[i] = Number(rest & 0xffn);
+          rest >>= 8n;
         }
+        this.offset += l;
         return;
       }
       // move one power down
       maxEncoded = minEncoded;
-      minEncoded >>>= 7;
+      minEncoded >>= 7n;
     }
 
     throw new Error(`Unhandled number encoding: ${num}`);
