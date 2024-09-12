@@ -1,5 +1,5 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { BitVec } from "@typeberry/bytes/bitvec";
+import { BitVec } from "@typeberry/bytes";
 import { check } from "@typeberry/utils";
 
 /** A decoder for some specific type `T` */
@@ -65,8 +65,8 @@ export class Decoder {
   i24(): number {
     return this.getNum(3, () => {
       let num = this.dataView.getUint16(this.offset + 1, true) << 8;
-      num |= this.dataView.getInt8(this.offset);
-      return num;
+      num |= this.dataView.getUint8(this.offset);
+      return num >= 2**23 ? num - 2**24 : num;
     });
   }
 

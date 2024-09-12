@@ -1,5 +1,5 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import type { BitVec } from "@typeberry/bytes/bitvec";
+import type { BitVec } from "@typeberry/bytes";
 import { check } from "@typeberry/utils";
 
 /** An encoder for some specific type `T`. */

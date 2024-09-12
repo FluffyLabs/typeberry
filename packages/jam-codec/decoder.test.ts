@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { BitVec } from "@typeberry/bytes/bitvec";
+import { BitVec } from "@typeberry/bytes";
 import { Decoder } from "./decoder";
 
 function decodeVarU32(source: Uint8Array) {
@@ -346,12 +346,17 @@ describe("JAM decoder / numbers", () => {
   });
 
   it("should decode a bunch of i24 numbers", () => {
-    const input = BytesBlob.parseBlob("0x424242d6ffff000000");
+    const input = BytesBlob.parseBlob("0x424242d6ffff00000081ffff811c15000080ffff7f010080");
     const decoder = Decoder.fromBytesBlob(input);
 
-    const results = [decoder.i24(), decoder.i24(), decoder.i24()];
-
-    assert.deepStrictEqual(results, [0x424242, -42, 0]);
+    assert.deepStrictEqual(decoder.i24(), 0x424242);
+    assert.deepStrictEqual(decoder.i24(), -42);
+    assert.deepStrictEqual(decoder.i24(), 0);
+    assert.deepStrictEqual(decoder.i24(), -127);
+    assert.deepStrictEqual(decoder.i24(), 1383553);
+    assert.deepStrictEqual(decoder.i24(), -(2**23));
+    assert.deepStrictEqual(decoder.i24(), 2**23 - 1);
+    assert.deepStrictEqual(decoder.i24(), -(2**23 - 1));
   });
 
   it("should decode a bunch of i16 numbers", () => {
