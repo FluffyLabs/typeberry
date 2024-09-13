@@ -1,6 +1,6 @@
 import { type Opaque, ensure } from "@typeberry/utils";
 
-import { LAST_PAGE_START_MEMORY_INDEX, PAGE_SIZE } from "../memory-consts";
+import { LAST_PAGE_NUMBER, PAGE_SIZE } from "../memory-consts";
 
 export type PageIndex = Opaque<number, "memory page index">;
 export type PageNumber = Opaque<number, "memory page number">;
@@ -12,11 +12,7 @@ export function createPageIndex(index: number) {
 
 /** Ensure that given `index` represents an index of one of the pages. */
 export function createPageNumber(index: number) {
-  return ensure<number, PageNumber>(
-    index,
-    index >= 0 && index * PAGE_SIZE <= LAST_PAGE_START_MEMORY_INDEX,
-    `Incorrect page number: ${index}!`,
-  );
+  return ensure<number, PageNumber>(index, index >= 0 && index <= LAST_PAGE_NUMBER, `Incorrect page number: ${index}!`);
 }
 
 /**
@@ -30,6 +26,6 @@ export function createPageNumber(index: number) {
  * https://graypaper.fluffylabs.dev/#WyI3YWU1MWY5MzI1IiwiNyIsIk5vdGF0aW9uYWwgQ29udmVudGlvbnMiLCJDcnlwdG9ncmFwaHkiLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEyIGhiIHk0YyBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiIsIjxkaXYgY2xhc3M9XCJ0IG0wIHgzOCBoYiB5NGMgZmYxMyBmczAgZmMwIHNjMCBsczAgd3MwXCI+Il1d
  */
 export function getNextPageNumber(pageNumber: PageNumber): PageNumber {
-  const newPageNumber = pageNumber === LAST_PAGE_START_MEMORY_INDEX ? 0 : pageNumber + 1;
+  const newPageNumber = pageNumber === LAST_PAGE_NUMBER ? 0 : pageNumber + 1;
   return createPageNumber(newPageNumber);
 }
