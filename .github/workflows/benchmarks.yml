@@ -29,7 +29,7 @@ jobs:
       - run: npm run benchmarks
       - name: Display results
         if: always()
-        run: echo ./benchmarks/results.txt
+        run: cat ./benchmarks/results.txt
       - name: Comment PR
         if: always() && github.event_name == 'pull_request'
         uses: thollander/actions-comment-pull-request@v2
