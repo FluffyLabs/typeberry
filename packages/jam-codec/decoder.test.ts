@@ -298,7 +298,7 @@ describe("JAM decoder / numbers", () => {
     decoder.moveTo(0);
     assert.throws(() => decoder.varU32(), {
       name: "Error",
-      message: "Unexpectedly large value for u32. l=4, firstByte=1",
+      message: "Unexpectedly large value for u32. l=4, mostSignificantByte=1",
     });
   });
 

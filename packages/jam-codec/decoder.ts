@@ -63,17 +63,15 @@ export class Decoder {
 
   /** Decode three bytes as a signed number. */
   i24(): number {
-    return this.getNum(3, () => {
-      const num = this.u24();
-      return num >= 2 ** 23 ? num - 2 ** 24 : num;
-    });
+    const num = this.u24();
+    return num >= 2 ** 23 ? num - 2 ** 24 : num;
   }
 
   /** Decode three bytes as an unsigned number. */
   u24(): number {
     return this.getNum(3, () => {
       let num = this.dataView.getUint8(this.offset);
-      num += this.dataView.getUint16(this.offset + 1, true) << 8;
+      num |= this.dataView.getUint16(this.offset + 1, true) << 8;
       return num;
     });
   }
@@ -136,9 +134,8 @@ export class Decoder {
     } else if (mostSignificantByte === 0) {
       return this.u32();
     }
-     
-    throw new Error(`Unexpectedly large value for u32. l=${l}, firstByte=${num}`);
-  }
+
+    throw new Error(`Unexpectedly large value for u32. l=${l}, mostSignificantByte=${mostSignificantByte}`);
   }
 
   /** Decode a variable-length encoding of natural numbers (up to 2**64). */
@@ -196,6 +193,7 @@ export class Decoder {
     // verify that the remaining bits are zero
     const emptyBitsStart = bitLength % 8;
     if (emptyBitsStart > 0) {
+      const lastByte = bytes.raw[byteLength - 1];
       const emptyBits = lastByte >> emptyBitsStart;
       if (emptyBits > 0) {
         throw new Error("Non-zero bits found in the last byte of bitvec encoding.");
