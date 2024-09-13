@@ -4,14 +4,19 @@ on:
   push:
     branches:
       - main
-    paths: ['packages/pvm/**', 'packages/pvm-debugger-adapter/**', '.github/workflows/publish-pvm.yml']
+    paths: [
+      'tools/builder/**',
+      'packages/pvm/**',
+      'packages/pvm-debugger-adapter/**',
+      '.github/workflows/publish-pvm.yml'
+    ]
 jobs:
   publish-pvm:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [22.x]
-    
+
     steps:
     - uses: actions/checkout@v4
     - name: Use Node.js ${{ matrix.node-version }}
