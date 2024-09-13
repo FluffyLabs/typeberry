@@ -4,8 +4,8 @@
   "version": null,
   "results": null,
   "fastest": {
-    "name": "int32array encode",
-    "index": 1
+    "name": "dataview encode",
+    "index": 2
   },
   "slowest": {
     "name": "manual encode",
