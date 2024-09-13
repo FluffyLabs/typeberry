@@ -9,7 +9,7 @@ export class JumpTable {
       itemByteLength === 0 || bytes.length % itemByteLength === 0,
       `Length of jump table (${bytes.length}) should be a multiple of item lenght (${itemByteLength})!`,
     );
-    check(itemByteLength <= 4, "Programs larger than 2**(8 * 4) are not supported");
+    check(itemByteLength <= 4, "Programs larger than 2**32 are not supported");
 
     const length = itemByteLength === 0 ? 0 : bytes.length / itemByteLength;
 

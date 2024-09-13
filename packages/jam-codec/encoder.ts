@@ -345,7 +345,7 @@ export class Encoder {
       // we can try to resize the underlying buffer
       if (this.buffer) {
         // make sure we at least double the size of the buffer every time.
-        const minExtend = Math.max(newLength, this.buffer.byteLength * 2);
+        const minExtend = Math.max(newLength, this.buffer.byteLength << 1);
         // but we must never exceed the max length.
         this.buffer.resize(Math.min(MAX_LENGTH, minExtend));
       }

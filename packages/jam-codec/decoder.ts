@@ -64,8 +64,7 @@ export class Decoder {
   /** Decode three bytes as a signed number. */
   i24(): number {
     return this.getNum(3, () => {
-      let num = this.dataView.getUint16(this.offset + 1, true) << 8;
-      num |= this.dataView.getUint8(this.offset);
+      const num = this.u24();
       return num >= 2 ** 23 ? num - 2 ** 24 : num;
     });
   }
@@ -127,23 +126,19 @@ export class Decoder {
       throw new Error(`Unexpectedly large value for u32. l=${l}`);
     }
 
-    let num = firstByte + 2 ** (8 - l) - 2 ** 8;
-    if (l === 4) {
-      if (num !== 0) {
-        throw new Error(`Unexpectedly large value for u32. l=${l}, firstByte=${num}`);
-      }
-      num = this.u32();
-    } else if (l === 3) {
-      num <<= 24;
-      num += this.u24();
+    const mostSignificantByte = (firstByte + 2 ** (8 - l) - 2 ** 8) << (l * 8);
+    if (l === 1) {
+      return mostSignificantByte + this.u8();
     } else if (l === 2) {
-      num <<= 16;
-      num += this.u16();
-    } else {
-      num <<= 8;
-      num += this.u8();
+      return mostSignificantByte + this.u16();
+    } else if (l === 3) {
+      return mostSignificantByte + this.u24();
+    } else if (mostSignificantByte === 0) {
+      return this.u32();
     }
-    return num;
+     
+    throw new Error(`Unexpectedly large value for u32. l=${l}, firstByte=${num}`);
+  }
   }
 
   /** Decode a variable-length encoding of natural numbers (up to 2**64). */
@@ -161,7 +156,7 @@ export class Decoder {
       return this.dataView.getBigUint64(this.offset - l, true);
     }
 
-    let num = BigInt(firstByte + 2 ** (8 - l) - 2 ** 8) * BigInt(2 ** (8 * l));
+    let num = BigInt(firstByte + 2 ** (8 - l) - 2 ** 8) << BigInt(8 * l);
     for (let i = 0; i < l; i += 1) {
       num |= BigInt(this.source[this.offset - l + i]) << BigInt(8 * i);
     }
@@ -201,10 +196,8 @@ export class Decoder {
     // verify that the remaining bits are zero
     const emptyBitsStart = bitLength % 8;
     if (emptyBitsStart > 0) {
-      const nonEmptyMask = 2 ** emptyBitsStart - 1;
-      const emptyMask = 0xff ^ nonEmptyMask;
-      const lastByte = bytes.raw[byteLength - 1];
-      if ((lastByte & emptyMask) > 0) {
+      const emptyBits = lastByte >> emptyBitsStart;
+      if (emptyBits > 0) {
         throw new Error("Non-zero bits found in the last byte of bitvec encoding.");
       }
     }
@@ -282,6 +275,7 @@ export class Decoder {
 
 const MASKS = [0xff, 0xfe, 0xfc, 0xf8, 0xf0, 0xe0, 0xc0, 0x80];
 function decodeLengthAfterFirstByte(firstByte: number) {
+  check(firstByte >= 0 && firstByte < 256, `Incorrect byte value: ${firstByte}`)
   for (let i = 0; i < MASKS.length; i++) {
     if (firstByte >= MASKS[i]) {
       return 8 - i;

@@ -18,7 +18,7 @@ export class ProgramDecoder {
   private decodeProgram(program: Uint8Array) {
     const decoder = Decoder.fromBlob(program);
     const jumpTableLength = decoder.varU32();
-    const jumpTableIndexByteLen = decoder.i8();
+    const jumpTableIndexByteLen = decoder.u8();
     const codeLength = decoder.varU32();
 
     // TODO [ToDr] we could decode a bitvec here, but currently
