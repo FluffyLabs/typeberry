@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
-    "target": "es2021",
+    "declaration": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "lib": ["dom", "es2021"],
     "module": "ESNext",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
     "moduleResolution": "Node",
-    "strict": true
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "es2021"
   }
 }

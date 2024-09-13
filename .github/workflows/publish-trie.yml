@@ -4,7 +4,12 @@ on:
   push:
     branches:
       - main
-    paths: ['packages/trie/**', 'packages/bytes/**']
+    paths: [
+      'tools/builder/**',
+      'packages/trie/**',
+      'packages/bytes/**',
+      '.github/workflows/publish-trie.yml'
+    ]
 jobs:
   publish-trie:
     runs-on: ubuntu-latest
