@@ -127,11 +127,17 @@ export class Decoder {
     const mostSignificantByte = (firstByte + 2 ** (8 - l) - 2 ** 8) << (l * 8);
     if (l === 1) {
       return mostSignificantByte + this.u8();
-    } else if (l === 2) {
+    }
+
+    if (l === 2) {
       return mostSignificantByte + this.u16();
-    } else if (l === 3) {
+    }
+
+    if (l === 3) {
       return mostSignificantByte + this.u24();
-    } else if (mostSignificantByte === 0) {
+    }
+
+    if (mostSignificantByte === 0) {
       return this.u32();
     }
 
@@ -273,7 +279,7 @@ export class Decoder {
 
 const MASKS = [0xff, 0xfe, 0xfc, 0xf8, 0xf0, 0xe0, 0xc0, 0x80];
 function decodeLengthAfterFirstByte(firstByte: number) {
-  check(firstByte >= 0 && firstByte < 256, `Incorrect byte value: ${firstByte}`)
+  check(firstByte >= 0 && firstByte < 256, `Incorrect byte value: ${firstByte}`);
   for (let i = 0; i < MASKS.length; i++) {
     if (firstByte >= MASKS[i]) {
       return 8 - i;
