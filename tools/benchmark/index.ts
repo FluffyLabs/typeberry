@@ -161,7 +161,7 @@ function compareFastest(currentResults: BennyResults, expectedResults: BennyResu
 
   return [
     {
-      err: `Fastest result changed to (current) "${current.name}[${current.index}]" from "${expectedNames.join(" or ")}" (expected)`,
+      err: `Fastest result changed to (current) "${current.name}[${current.index}]" from "${expectedNames.join(" or ")}" (expected) ❌`,
     },
   ];
 }
