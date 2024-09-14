@@ -48,7 +48,7 @@ describe("BytesBlob", () => {
   });
 
   it("from bytes", () => {
-    const result = BytesBlob.fromBytes([47, 163, 246, 134]);
+    const result = BytesBlob.fromNumbers([47, 163, 246, 134]);
 
     assert.deepStrictEqual(result.buffer, new Uint8Array([47, 163, 246, 134]));
   });
