@@ -4,10 +4,12 @@ export type Result = {
 };
 
 export type ErrorResult = {
+  name: string;
   err: string;
 };
 export type OkResult = {
   ok: true;
+  name: string;
   ops: [number, number];
   margin: [number, number];
 };
