@@ -4,6 +4,7 @@ import { BytesBlob } from "@typeberry/bytes";
 import { BitVec } from "@typeberry/bytes";
 import { Decoder } from "./decoder";
 import { Encoder } from "./encoder";
+import {I16, I24, I32, I8, U16, U24, U32, U8, VAR_U32, VAR_U64} from "./descriptors";
 
 let seed = 1;
 function random() {
@@ -23,78 +24,6 @@ describe("JAM encoder / decoder", () => {
       type: ty,
     };
   }
-
-  function type<T>(name: string, encode: (e: Encoder, elem: T) => void, decode: (d: Decoder) => T) {
-    return {
-      name,
-      encode,
-      decode,
-    };
-  }
-
-  const VAR_U32 = type<number>(
-    "var_u32",
-    (e, v) => e.varU32(v),
-    (d) => d.varU32(),
-  );
-  const VAR_U64 = type<bigint>(
-    "var_u64",
-    (e, v) => e.varU64(v),
-    (d) => d.varU64(),
-  );
-
-  const U32 = type<number>(
-    "u32",
-    (e, v) => e.i32(v),
-    (d) => d.u32(),
-  );
-  const U24 = type<number>(
-    "u24",
-    (e, v) => e.i24(v),
-    (d) => d.u24(),
-  );
-  const U16 = type<number>(
-    "u16",
-    (e, v) => e.i16(v),
-    (d) => d.u16(),
-  );
-  const U8 = type<number>(
-    "u8",
-    (e, v) => e.i8(v),
-    (d) => d.u8(),
-  );
-
-  const I32 = type<number>(
-    "i32",
-    (e, v) => e.i32(v),
-    (d) => d.i32(),
-  );
-  const I24 = type<number>(
-    "i24",
-    (e, v) => e.i24(v),
-    (d) => d.i24(),
-  );
-  const I16 = type<number>(
-    "i16",
-    (e, v) => e.i16(v),
-    (d) => d.i16(),
-  );
-  const I8 = type<number>(
-    "i8",
-    (e, v) => e.i8(v),
-    (d) => d.i8(),
-  );
-
-  const BLOB = type<BytesBlob>(
-    "BytesBlob",
-    (e, v) => e.bytesBlob(v),
-    (d) => d.bytesBlob(),
-  );
-  const BITVEC = type<BitVec>(
-    "BitVec",
-    (e, v) => e.bitVecVarLen(v),
-    (d) => d.bitVecVarLen(),
-  );
 
   // biome-ignore lint/suspicious/noExplicitAny: I need to make sure that the generator output matches the type.
   const types: Generator<any>[] = [
