@@ -8,7 +8,7 @@
     "bin/jam",
     "bin/test-runner",
     "packages/bytes",
-    "packages/jam-codec",
+    "packages/codec",
     "packages/logger",
     "packages/pvm",
     "packages/pvm-debugger-adapter",
