@@ -26,10 +26,15 @@ export type BennyResults = {
         percentSlower: number;
       }[]
     | null;
-  fastest: {
-    name: string;
-    index: number;
-  };
+  fastest:
+    | {
+        name: string;
+        index: number;
+      }
+    | {
+        name: string;
+        index: number;
+      }[];
   slowest: {
     name: string;
     index: number;
