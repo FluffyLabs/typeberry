@@ -174,21 +174,16 @@ export const CLASS = <T>(
   // Create a
   class View extends AbstractView<T> {
     constructor(d: Decoder) {
-      super(d, descriptors);
-      forEachDescriptor(descriptors, (key) => {
-        if (typeof key === "string") {
-          Object.defineProperty(this, key, {
-            value: () => this.getOrDecode(key),
-          });
-        }
-      });
+      super(d, Class, descriptors);
     }
   }
   // We need to dynamically extend the prototype to add these extra lazy getters.
   forEachDescriptor(descriptors, (key) => {
     if (typeof key === "string") {
-      Object.defineProperty(View.prototype, key, function (this: View) {
-        this.getOrDecode(key);
+      Object.defineProperty(View.prototype, key, {
+        value: function (this: View) {
+          return this.getOrDecode(key);
+        },
       });
     }
   });
@@ -233,8 +228,19 @@ abstract class AbstractView<T> {
 
   constructor(
     private readonly d: Decoder,
+    protected readonly materializedConstructor: Constructor<T>,
     protected readonly descriptors: ClassDescriptorOf<T>,
   ) {}
+
+  public materialize(): T {
+    const fields = Object.keys(this.descriptors);
+    // make sure to fully populate the cache.
+    if (this.lastDecodedIdx + 1 !== fields.length) {
+      this.decodeUpTo(fields[fields.length - 1]);
+    }
+    const constructorParams = fields.map((key) => this.cache.get(key));
+    return new this.materializedConstructor(...constructorParams);
+  }
 
   private decodeUpTo(field: string): unknown | undefined {
     let lastVal = undefined;

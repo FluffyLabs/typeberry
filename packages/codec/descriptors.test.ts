@@ -55,6 +55,20 @@ describe("Codec Descriptors / class", () => {
     assert.deepStrictEqual(headerView.priorStateRoot(), data.priorStateRoot);
   });
 
+  it("should materialize a lazy view", () => {
+    // given
+    const data = testData();
+
+    const headerView = new TestHeader.Codec.View(Decoder.fromBytesBlob(data.bytes));
+    // read one data point to have something in cache, but not everything
+    assert.deepStrictEqual(headerView.parentHeaderHash(), data.parentHeaderHash);
+
+    const header = headerView.materialize();
+    assert.deepStrictEqual(header.parentHeaderHash, data.parentHeaderHash);
+    assert.deepStrictEqual(header.extrinsicHash, data.extrinsicHash);
+    assert.deepStrictEqual(header.priorStateRoot, data.priorStateRoot);
+  });
+
   it("should decode a class", () => {
     // given
     const data = testData();
