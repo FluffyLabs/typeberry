@@ -21,6 +21,14 @@ export type FieldsAsMethods<T> = {
   [K in keyof T]: () => T[K];
 };
 
+export type FieldsAsObject<T> = {
+  [K in keyof T]: T[K];
+};
+
+type FieldsAsOptional<T> = {
+  [K in keyof T]?: T[K];
+};
+
 export type View<T> = {
   View: new (d: Decoder) => AbstractView<T> & FieldsAsMethods<T>;
 };
@@ -164,8 +172,7 @@ function forEachDescriptor<T>(
   }
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: [ToDr] No idea how to define the constructor without any.
-type Constructor<T> = new (...args: any[]) => T;
+type Constructor<T> = new (o: FieldsAsObject<T>) => T;
 
 export const CLASS = <T>(
   name: string,
@@ -207,12 +214,12 @@ export const CLASS = <T>(
       });
     },
     (d) => {
-      const constructorParams: ConstructorParameters<typeof Class> = [];
-      forEachDescriptor(descriptors, (_key, descriptor) => {
+      const constructorParams: FieldsAsOptional<T> = {};
+      forEachDescriptor(descriptors, (key, descriptor) => {
         const value = descriptor.decode(d);
-        constructorParams.push(value);
+        constructorParams[key] = value;
       });
-      return new Class(...constructorParams);
+      return new Class(constructorParams as FieldsAsObject<T>);
     },
   );
 

@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder } from "./decoder";
-import { BYTES, CLASS } from "./descriptors";
+import { BYTES, CLASS, type FieldsAsObject } from "./descriptors";
 import { Encoder } from "./encoder";
 
 describe("Codec Descriptors / class", () => {
@@ -13,11 +13,15 @@ describe("Codec Descriptors / class", () => {
       extrinsicHash: BYTES(32),
     });
 
-    constructor(
-      public readonly parentHeaderHash: Bytes<32>,
-      public readonly priorStateRoot: Bytes<32>,
-      public readonly extrinsicHash: Bytes<32>,
-    ) {}
+    public readonly parentHeaderHash: Bytes<32>;
+    public readonly priorStateRoot: Bytes<32>;
+    public readonly extrinsicHash: Bytes<32>;
+
+    constructor(o: FieldsAsObject<TestHeader>) {
+      this.parentHeaderHash = o.parentHeaderHash;
+      this.priorStateRoot = o.priorStateRoot;
+      this.extrinsicHash = o.extrinsicHash;
+    }
   }
 
   const testData = () => {
