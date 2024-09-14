@@ -1,41 +1,12 @@
 import { ConsoleTransport } from "./console";
 import { Level, type Options } from "./options";
-
 export { Level, parseLoggerOptions } from "./options";
 
 /**
- * Create a new logger instance given filename and an optional module name.
- *
- * If the module name is not given, `fileName` becomes the module name.
- *
- * The logger will use a global configuration which can be changed using
- * [`configureLogger`] function.
+ * DEPRECATED: use `Logger.new` instead.
  */
 export function newLogger(fileName: string, moduleName?: string) {
-  return new Logger(moduleName ?? fileName, fileName, GLOBAL_CONFIG);
-}
-
-/**
- * Global configuration of all loggers.
- *
- * One can specify a default logging level (only logs with level >= default will be printed).
- * It's also possible to configure per-module logging level that takes precedence
- * over the default one.
- *
- * Changing the options affects all previously created loggers.
- */
-export function configureLogger(options: Options) {
-  // find minimal level to optimise logging in case
-  // we don't care about low-level logs.
-  const minimalLevel = Array.from(options.modules.values()).reduce((level, modLevel) => {
-    return level < modLevel ? level : modLevel;
-  }, options.defaultLevel);
-
-  const transport = ConsoleTransport.create(minimalLevel, options);
-
-  // set the global config
-  GLOBAL_CONFIG.options = options;
-  GLOBAL_CONFIG.transport = transport;
+  return Logger.new(fileName, moduleName);
 }
 
 const DEFAULT_OPTIONS = {
@@ -53,6 +24,42 @@ const GLOBAL_CONFIG = {
  * A logger instance.
  */
 export class Logger {
+  /**
+   * Create a new logger instance given filename and an optional module name.
+   *
+   * If the module name is not given, `fileName` becomes the module name.
+   * The module name can be composed from multiple parts separated with `/`.
+   *
+   * The logger will use a global configuration which can be changed using
+   * [`configureLogger`] function.
+   */
+  static new(fileName: string, moduleName?: string) {
+    return new Logger(moduleName ?? fileName, fileName, GLOBAL_CONFIG);
+  }
+
+  /**
+   * Global configuration of all loggers.
+   *
+   * One can specify a default logging level (only logs with level >= default will be printed).
+   * It's also possible to configure per-module logging level that takes precedence
+   * over the default one.
+   *
+   * Changing the options affects all previously created loggers.
+   */
+  static configure(options: Options) {
+    // find minimal level to optimise logging in case
+    // we don't care about low-level logs.
+    const minimalLevel = Array.from(options.modules.values()).reduce((level, modLevel) => {
+      return level < modLevel ? level : modLevel;
+    }, options.defaultLevel);
+
+    const transport = ConsoleTransport.create(minimalLevel, options);
+
+    // set the global config
+    GLOBAL_CONFIG.options = options;
+    GLOBAL_CONFIG.transport = transport;
+  }
+
   constructor(
     private moduleName: string,
     private fileName: string,

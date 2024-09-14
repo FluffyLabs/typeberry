@@ -1,4 +1,5 @@
 import type { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
+import { Logger } from "@typeberry/logger";
 import { check } from "@typeberry/utils";
 import type { Decode, Decoder } from "./decoder";
 import type { Encode, Encoder } from "./encoder";
@@ -221,7 +222,8 @@ export const CLASS = <T>(
   };
 };
 
-// TODO [ToDr] Add materialize method
+const logger = Logger.new(__filename, "codec/descriptors");
+
 abstract class AbstractView<T> {
   private lastDecodedIdx = -1;
   private readonly cache = new Map<string, unknown>();
@@ -236,13 +238,13 @@ abstract class AbstractView<T> {
     const fields = Object.keys(this.descriptors);
     // make sure to fully populate the cache.
     if (this.lastDecodedIdx + 1 !== fields.length) {
-      this.decodeUpTo(fields[fields.length - 1]);
+      this.decodeUpTo(fields[fields.length - 1], false);
     }
     const constructorParams = fields.map((key) => this.cache.get(key));
     return new this.materializedConstructor(...constructorParams);
   }
 
-  private decodeUpTo(field: string): unknown | undefined {
+  private decodeUpTo(field: string, shouldWarn = true): unknown | undefined {
     let lastVal = undefined;
     const descriptorKeys = Object.keys(this.descriptors);
     const needIdx = descriptorKeys.findIndex((k) => k === field);
@@ -258,10 +260,8 @@ abstract class AbstractView<T> {
       lastVal = val;
     }
     this.lastDecodedIdx = needIdx;
-    if (this.lastDecodedIdx + 1 === descriptorKeys.length) {
-      // TODO [ToDr] Should we finish here?
-      // What if we are part of a bigger sequence? Or just a field in some other class?
-      // this.d.finish();
+    if (shouldWarn && this.lastDecodedIdx + 1 === descriptorKeys.length) {
+      logger.warn(`Decoded an entire object of class ${this.materializedConstructor}. You should rather materialize.`);
     }
     return lastVal;
   }
