@@ -118,6 +118,7 @@ function compareResults(currentResults: BennyResults, expectedResults: BennyResu
   for (let i = 0; i < Math.max(curr.length, prev.length); i += 1) {
     if (curr[i]?.name !== prev[i]?.name) {
       res.push({
+        name: curr[i]?.name ?? prev[i]?.name,
         err: `Mismatching name (current) "${curr[i]?.name}" vs "${prev[i]?.name}" (expected)`,
       });
       continue;
@@ -131,12 +132,14 @@ function compareResults(currentResults: BennyResults, expectedResults: BennyResu
     const min = Math.min(curr[i].ops, prev[i].ops);
     if (diff > (min * margin) / 100) {
       res.push({
+        name: curr[i].name,
         err: `Significant speed difference: (current) "${curr[i].ops} ±${curr[i].margin}%" vs "${prev[i].ops} ±${prev[i].margin}%" (previous)`,
         ops: [curr[i].ops, prev[i].ops],
         margin: [curr[i].margin, prev[i].margin],
       });
     } else {
       res.push({
+        name: curr[i].name,
         ok: true,
         ops: [curr[i].ops, prev[i].ops],
         margin: [curr[i].margin, prev[i].margin],
@@ -161,6 +164,7 @@ function compareFastest(currentResults: BennyResults, expectedResults: BennyResu
 
   return [
     {
+      name: current.name,
       err: `Fastest result changed to (current) "${current.name}[${current.index}]" from "${expectedNames.join(" or ")}" (expected) ❌`,
     },
   ];
