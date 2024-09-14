@@ -4,7 +4,7 @@ import { BytesBlob } from "@typeberry/bytes";
 import { BitVec } from "@typeberry/bytes";
 import { Decoder } from "./decoder";
 import { Encoder } from "./encoder";
-import {I16, I24, I32, I8, U16, U24, U32, U8, VAR_U32, VAR_U64} from "./descriptors";
+import {BITVEC, BLOB, Descriptor, I16, I24, I32, I8, U16, U24, U32, U8, VAR_U32, VAR_U64} from "./descriptors";
 
 let seed = 1;
 function random() {
@@ -15,13 +15,13 @@ function random() {
 describe("JAM encoder / decoder", () => {
   type Generator<T> = {
     generate: () => T;
-    type: ReturnType<typeof type<T>>;
+    descriptor: Descriptor<T>,
   };
 
-  function generator<T>(generate: () => T, ty: ReturnType<typeof type<T>>) {
+  function generator<T>(generate: () => T, descriptor: Descriptor<T>) {
     return {
       generate,
-      type: ty,
+      descriptor,
     };
   }
 
@@ -60,14 +60,14 @@ describe("JAM encoder / decoder", () => {
   for (const g of types) {
     const max = 100;
     for (let i = 0; i < max; i += 1) {
-      it(`should run random tests for ${g.type.name} (${i + 1} / ${max})`, () => {
+      it(`should run random tests for ${g.descriptor.name} (${i + 1} / ${max})`, () => {
         const encoder = Encoder.create();
         const expected = g.generate();
-        g.type.encode(encoder, expected);
+        g.descriptor.encode(encoder, expected);
         const encoded = encoder.viewResult();
 
         const decoder = Decoder.fromBytesBlob(encoded);
-        const result = g.type.decode(decoder);
+        const result = g.descriptor.decode(decoder);
         assert.deepStrictEqual(result, expected);
       });
     }
