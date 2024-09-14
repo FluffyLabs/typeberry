@@ -35,7 +35,7 @@ describe("Trie", async () => {
 
     trie.set(
       parseStateKey("16c72e0c2e0b78157e3a116d86d90461a199e439325317aea160b30347adb8ec"),
-      BytesBlob.fromBytes([]),
+      BytesBlob.fromNumbers([]),
     );
 
     assert.deepStrictEqual(
@@ -49,7 +49,7 @@ describe("Trie", async () => {
 
     trie.set(
       parseStateKey("645eece27fdce6fd3852790131a50dc5b2dd655a855421b88700e6eb43279ad9"),
-      BytesBlob.fromBytes([0x72]),
+      BytesBlob.fromNumbers([0x72]),
     );
 
     assert.deepStrictEqual(

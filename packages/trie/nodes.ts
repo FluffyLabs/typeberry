@@ -110,12 +110,12 @@ export class BranchNode {
 
   /** Get the hash of the left sub-trie. */
   getLeft(): TrieHash {
-    return new Bytes(this.node.data.subarray(0, HASH_BYTES), HASH_BYTES) as TrieHash;
+    return Bytes.fromBlob(this.node.data.subarray(0, HASH_BYTES), HASH_BYTES) as TrieHash;
   }
 
   /** Get the hash of the right sub-trie. */
   getRight(): TrieHash {
-    return new Bytes(this.node.data.subarray(HASH_BYTES), HASH_BYTES) as TrieHash;
+    return Bytes.fromBlob(this.node.data.subarray(HASH_BYTES), HASH_BYTES) as TrieHash;
   }
 }
 
@@ -168,7 +168,10 @@ export class LeafNode {
 
   /** Get the key (truncated to 31 bytes). */
   getKey(): TruncatedStateKey {
-    return new Bytes(this.node.data.subarray(1, TRUNCATED_KEY_BYTES + 1), TRUNCATED_KEY_BYTES) as TruncatedStateKey;
+    return Bytes.fromBlob(
+      this.node.data.subarray(1, TRUNCATED_KEY_BYTES + 1),
+      TRUNCATED_KEY_BYTES,
+    ) as TruncatedStateKey;
   }
 
   /**
@@ -190,7 +193,7 @@ export class LeafNode {
    */
   getValue(): BytesBlob {
     const len = this.getValueLength();
-    return new BytesBlob(this.node.data.subarray(HASH_BYTES, HASH_BYTES + len));
+    return BytesBlob.fromBlob(this.node.data.subarray(HASH_BYTES, HASH_BYTES + len));
   }
 
   /**
@@ -200,6 +203,6 @@ export class LeafNode {
    * Note that for embedded value this is going to be full 0-padded 32 bytes.
    */
   getValueHash(): ValueHash {
-    return new Bytes(this.node.data.subarray(HASH_BYTES), HASH_BYTES) as ValueHash;
+    return Bytes.fromBlob(this.node.data.subarray(HASH_BYTES), HASH_BYTES) as ValueHash;
   }
 }

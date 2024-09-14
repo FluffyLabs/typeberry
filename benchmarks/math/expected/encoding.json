@@ -1,0 +1,20 @@
+{
+  "name": "Encoding numbers",
+  "date": "2024-09-09T19:53:37.798Z",
+  "version": null,
+  "results": null,
+  "fastest": [
+    {
+      "name": "dataview encode",
+      "index": 2
+    },
+    {
+      "name": "int32array encode",
+      "index": 1
+    }
+  ],
+  "slowest": {
+    "name": "manual encode",
+    "index": 0
+  }
+}

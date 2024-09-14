@@ -1,1 +1,2 @@
-export * from "./decode-natural-number";
+export * from "./decoder";
+export * from "./encoder";

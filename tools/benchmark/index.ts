@@ -148,13 +148,20 @@ function compareResults(currentResults: BennyResults, expectedResults: BennyResu
 }
 
 function compareFastest(currentResults: BennyResults, expectedResults: BennyResults): ComparisonResult {
-  if (currentResults.fastest.name !== expectedResults.fastest.name) {
-    return [
-      {
-        err: `Fastest result changed to (current) "${currentResults.fastest.name}" from "${expectedResults.fastest.name}" (expected)`,
-      },
-    ];
+  const current = Array.isArray(currentResults.fastest) ? currentResults.fastest[0] : currentResults.fastest;
+  const expected = Array.isArray(expectedResults.fastest) ? expectedResults.fastest : [expectedResults.fastest];
+
+  const expectedNames: string[] = [];
+  for (const e of expected) {
+    if (current.name === e.name && current.index === e.index) {
+      return [];
+    }
+    expectedNames.push(`${e.name}[${e.index}]`);
   }
 
-  return [];
+  return [
+    {
+      err: `Fastest result changed to (current) "${current.name}[${current.index}]" from "${expectedNames.join(" or ")}" (expected) ❌`,
+    },
+  ];
 }

@@ -1,4 +1,4 @@
-import { decodeNaturalNumber } from "@typeberry/jam-codec";
+import { Decoder } from "@typeberry/jam-codec";
 import { JumpTable } from "./jump-table";
 import { Mask } from "./mask";
 
@@ -16,19 +16,23 @@ export class ProgramDecoder {
   }
 
   private decodeProgram(program: Uint8Array) {
-    const { value: jumpTableLength, bytesToSkip: firstNumberLength } = decodeNaturalNumber(program);
-    const jumpTableItemLength = program[firstNumberLength];
-    const { value: codeLength, bytesToSkip: thirdNumberLenght } = decodeNaturalNumber(
-      program.subarray(firstNumberLength + 1),
-    );
-    const jumpTableFirstByteIndex = firstNumberLength + 1 + thirdNumberLenght;
-    const jumpTableLengthInBytes = Number(jumpTableLength) * jumpTableItemLength;
-    const jumpTable = program.subarray(jumpTableFirstByteIndex, jumpTableFirstByteIndex + jumpTableLengthInBytes);
-    const codeFirstIndex = jumpTableFirstByteIndex + jumpTableLengthInBytes;
-    const code = program.subarray(codeFirstIndex, codeFirstIndex + Number(codeLength));
-    const maskFirstIndex = codeFirstIndex + Number(codeLength);
-    const maskLengthInBytes = Math.ceil(Number(codeLength) / 8);
-    const mask = program.subarray(maskFirstIndex, maskFirstIndex + maskLengthInBytes);
+    const decoder = Decoder.fromBlob(program);
+    // number of items in the jump table
+    const jumpTableLength = decoder.varU32();
+    // how many bytes are used to encode a single item of the jump table
+    const jumpTableItemLength = decoder.u8();
+    // the length of the code (in bytes).
+    const codeLength = decoder.varU32();
+
+    const jumpTableLengthInBytes = jumpTableLength * jumpTableItemLength;
+    const jumpTable = decoder.bytes(jumpTableLengthInBytes).raw;
+
+    const code = decoder.bytes(codeLength).raw;
+    // TODO [ToDr] we could decode a bitvec here, but currently
+    // the test programs have remaining bits filled with `1`s,
+    // which is not aligned with the codec expectations (`0` padded).
+    const maskLengthInBytes = Math.ceil(codeLength / 8);
+    const mask = decoder.bytes(maskLengthInBytes).raw;
 
     return {
       mask,
