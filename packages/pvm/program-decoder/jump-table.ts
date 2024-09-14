@@ -26,6 +26,7 @@ export class JumpTable {
     for (let i = 0; i < length; i += 1) {
       this.indices[i] = decodeNext();
     }
+    decoder.finish();
   }
 
   hasIndex(index: number) {
