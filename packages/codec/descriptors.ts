@@ -1,7 +1,7 @@
-import {BitVec, Bytes, BytesBlob} from "@typeberry/bytes";
-import {Decode, Decoder} from "./decoder";
-import {Encode, Encoder} from "./encoder";
-import {check} from "@typeberry/utils";
+import type { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
+import { check } from "@typeberry/utils";
+import type { Decode, Decoder } from "./decoder";
+import type { Encode, Encoder } from "./encoder";
 
 const TYPICAL_SEQUENCE_LENGTH = 64;
 
@@ -22,7 +22,7 @@ export type FieldsAsMethods<T> = {
 
 export type View<T> = {
   View: new (d: Decoder) => AbstractView<T> & FieldsAsMethods<T>;
-}
+};
 
 export const VAR_U32 = descriptor<number>(
   "var_u32",
@@ -102,39 +102,43 @@ export const BITVEC_VAR_LEN = descriptor<BitVec>(
   (d) => d.bitVecVarLen(),
 );
 
-export const BITVEC_FIX_LEN = (len: number) => descriptor<BitVec>(
-  `BitVec[${len}]`,
-  len >>> 3,
-  (e, v) => e.bitVecFixLen(v),
-  (d) => d.bitVecFixLen(len),
-);
+export const BITVEC_FIX_LEN = (len: number) =>
+  descriptor<BitVec>(
+    `BitVec[${len}]`,
+    len >>> 3,
+    (e, v) => e.bitVecFixLen(v),
+    (d) => d.bitVecFixLen(len),
+  );
 
-export const OPTIONAL = <T>(type: Descriptor<T>) => descriptor<T | null>(
-  `Optional<${type.name}>`,
-  1 + type.sizeHintBytes,
-  (e, v) => e.optional(type, v),
-  (d) => d.optional(type),
-);
+export const OPTIONAL = <T>(type: Descriptor<T>) =>
+  descriptor<T | null>(
+    `Optional<${type.name}>`,
+    1 + type.sizeHintBytes,
+    (e, v) => e.optional(type, v),
+    (d) => d.optional(type),
+  );
 
-export const SEQUENCE_VAR_LEN = <T>(type: Descriptor<T>) => descriptor<T[]>(
-  `Sequence<${type.name}>[?]`,
-  TYPICAL_SEQUENCE_LENGTH * type.sizeHintBytes,
-  (e, v) => e.sequenceVarLen(type, v),
-  (d) => d.sequenceVarLen(type)
-);
+export const SEQUENCE_VAR_LEN = <T>(type: Descriptor<T>) =>
+  descriptor<T[]>(
+    `Sequence<${type.name}>[?]`,
+    TYPICAL_SEQUENCE_LENGTH * type.sizeHintBytes,
+    (e, v) => e.sequenceVarLen(type, v),
+    (d) => d.sequenceVarLen(type),
+  );
 
-export const SEQUENCE_FIX_LEN = <T>(type: Descriptor<T>, len: number) => descriptor<T[]>(
-  `Sequence<${type.name}>[${len}]`,
-  len * type.sizeHintBytes,
-  (e, v) => e.sequenceFixLen(type, v),
-  (d) => d.sequenceFixLen(type, len),
-);
+export const SEQUENCE_FIX_LEN = <T>(type: Descriptor<T>, len: number) =>
+  descriptor<T[]>(
+    `Sequence<${type.name}>[${len}]`,
+    len * type.sizeHintBytes,
+    (e, v) => e.sequenceFixLen(type, v),
+    (d) => d.sequenceFixLen(type, len),
+  );
 
 export const BYTES = (() => {
-  const cache = new Map<string, any>();
+  const cache = new Map<string, unknown>();
   return <N extends number>(len: N): Descriptor<Bytes<N>> => {
     const key = `${len}`;
-    let ret = cache.get(key);
+    let ret = cache.get(key) as Descriptor<Bytes<N>>;
     if (!ret) {
       ret = descriptor<Bytes<N>>(
         `Bytes<${len}>`,
@@ -154,31 +158,47 @@ function forEachDescriptor<T>(
 ) {
   for (const key in descriptors) {
     if (key in descriptors) {
-      f(key, descriptors[key])
+      f(key, descriptors[key]);
     }
   }
 }
 
-export const CLASS = function<T>(
+// biome-ignore lint/suspicious/noExplicitAny: [ToDr] No idea how to define the constructor without any.
+type Constructor<T> = new (...args: any[]) => T;
+
+export const CLASS = <T>(
   name: string,
-  constructor: new (...args: any[]) => T,
+  Class: Constructor<T>,
   descriptors: ClassDescriptorOf<T>,
-): Descriptor<T> & View<T> {
+): Descriptor<T> & View<T> => {
+  // Create a
   class View extends AbstractView<T> {
     constructor(d: Decoder) {
       super(d, descriptors);
       forEachDescriptor(descriptors, (key) => {
-        if (typeof key === 'string') {
+        if (typeof key === "string") {
           Object.defineProperty(this, key, {
-            value: () => this.getOrDecode(key)
+            value: () => this.getOrDecode(key),
           });
         }
       });
     }
-  };
+  }
+  // We need to dynamically extend the prototype to add these extra lazy getters.
+  forEachDescriptor(descriptors, (key) => {
+    if (typeof key === "string") {
+      Object.defineProperty(View.prototype, key, function (this: View) {
+        this.getOrDecode(key);
+      });
+    }
+  });
 
+  // calculate a size hint
   let sizeHintBytes = 0;
-  forEachDescriptor(descriptors, (_k, val) => sizeHintBytes += val.sizeHintBytes);
+  forEachDescriptor(descriptors, (_k, val) => {
+    sizeHintBytes += val.sizeHintBytes;
+  });
+
   // TODO [ToDr] How to ensure that the descriptor keys are in the same order
   // as the constructor parameters?
   const desc = descriptor<T>(
@@ -186,41 +206,44 @@ export const CLASS = function<T>(
     sizeHintBytes,
     (e, t) => {
       forEachDescriptor(descriptors, (key, descriptor) => {
-          const value = t[key];
-          descriptor.encode(e, value);
+        const value = t[key];
+        descriptor.encode(e, value);
       });
     },
     (d) => {
-      const constructorParams: ConstructorParameters<typeof constructor> = [];
+      const constructorParams: ConstructorParameters<typeof Class> = [];
       forEachDescriptor(descriptors, (_key, descriptor) => {
         const value = descriptor.decode(d);
         constructorParams.push(value);
       });
-      return new constructor(...constructorParams);
-    }
+      return new Class(...constructorParams);
+    },
   );
 
   return {
-    View: View as any,
+    View: View as new (d: Decoder) => AbstractView<T> & FieldsAsMethods<T>,
     ...desc,
   };
-}
+};
 
 // TODO [ToDr] Add materialize method
 abstract class AbstractView<T> {
-  private lastDecodedIdx: number = -1;
-  private readonly cache = new Map<string, any>();
+  private lastDecodedIdx = -1;
+  private readonly cache = new Map<string, unknown>();
 
   constructor(
     private readonly d: Decoder,
     protected readonly descriptors: ClassDescriptorOf<T>,
-   ) {}
+  ) {}
 
-  private decodeUpTo(field: string): any {
+  private decodeUpTo(field: string): unknown | undefined {
     let lastVal = undefined;
     const descriptorKeys = Object.keys(this.descriptors);
-    const needIdx = descriptorKeys.findIndex(k => k === field);
-    check(this.lastDecodedIdx < needIdx, `Unjustified request to decode data: lastDecodedIdx: ${this.lastDecodedIdx}, need: ${needIdx}`);
+    const needIdx = descriptorKeys.findIndex((k) => k === field);
+    check(
+      this.lastDecodedIdx < needIdx,
+      `Unjustified request to decode data: lastDecodedIdx: ${this.lastDecodedIdx}, need: ${needIdx}`,
+    );
 
     for (let i = this.lastDecodedIdx + 1; i <= needIdx; i += 1) {
       const f = this.descriptors[descriptorKeys[i] as keyof ClassDescriptorOf<T>];
@@ -237,7 +260,7 @@ abstract class AbstractView<T> {
     return lastVal;
   }
 
-  protected getOrDecode(field: string): any {
+  protected getOrDecode(field: string): unknown {
     const cached = this.cache.get(field);
     return cached !== undefined ? cached : this.decodeUpTo(field);
   }
@@ -247,7 +270,7 @@ function descriptor<T>(
   name: string,
   sizeHintBytes: number,
   encode: (e: Encoder, elem: T) => void,
-  decode: (d: Decoder) => T
+  decode: (d: Decoder) => T,
 ): Descriptor<T> {
   return {
     name,

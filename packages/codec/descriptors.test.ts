@@ -1,26 +1,23 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
+import { Decoder } from "./decoder";
+import { BYTES, CLASS } from "./descriptors";
 import { Encoder } from "./encoder";
-import {BYTES, CLASS} from "./descriptors";
-import {Decoder} from "./decoder";
 
-describe.only("Codec Descriptors / class", () => {
+describe("Codec Descriptors / class", () => {
   class TestHeader {
-    static Codec = CLASS(
-      "TestHeader",
-      TestHeader,
-      {
-        parentHeaderHash: BYTES(32),
-        priorStateRoot: BYTES(32),
-        extrinsicHash: BYTES(32),
-      });
+    static Codec = CLASS("TestHeader", TestHeader, {
+      parentHeaderHash: BYTES(32),
+      priorStateRoot: BYTES(32),
+      extrinsicHash: BYTES(32),
+    });
 
-      constructor(
-        public readonly parentHeaderHash: Bytes<32>,
-        public readonly priorStateRoot: Bytes<32>,
-        public readonly extrinsicHash: Bytes<32>,
-      ) {}
+    constructor(
+      public readonly parentHeaderHash: Bytes<32>,
+      public readonly priorStateRoot: Bytes<32>,
+      public readonly extrinsicHash: Bytes<32>,
+    ) {}
   }
 
   const testData = () => {
@@ -69,14 +66,10 @@ describe.only("Codec Descriptors / class", () => {
     assert.deepStrictEqual(header.priorStateRoot, data.priorStateRoot);
   });
 
-  it('should encode a class', () => {
+  it("should encode a class", () => {
     // given
     const data = testData();
-    const header = new TestHeader(
-      data.parentHeaderHash,
-      data.priorStateRoot,
-      data.extrinsicHash
-    );
+    const header = new TestHeader(data.parentHeaderHash, data.priorStateRoot, data.extrinsicHash);
 
     const encoder = Encoder.create({ expectedLength: TestHeader.Codec.sizeHintBytes });
     TestHeader.Codec.encode(encoder, header);
@@ -84,7 +77,4 @@ describe.only("Codec Descriptors / class", () => {
     assert.deepStrictEqual(encoder.viewResult(), data.bytes);
     assert.deepStrictEqual(TestHeader.Codec.sizeHintBytes, 3 * 32);
   });
-
 });
-
-

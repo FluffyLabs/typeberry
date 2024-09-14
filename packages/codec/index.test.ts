@@ -3,8 +3,23 @@ import { describe, it } from "node:test";
 import { BytesBlob } from "@typeberry/bytes";
 import { BitVec } from "@typeberry/bytes";
 import { Decoder } from "./decoder";
+import {
+  BITVEC_FIX_LEN,
+  BITVEC_VAR_LEN,
+  BLOB,
+  type Descriptor,
+  I8,
+  I16,
+  I24,
+  I32,
+  U8,
+  U16,
+  U24,
+  U32,
+  VAR_U32,
+  VAR_U64,
+} from "./descriptors";
 import { Encoder } from "./encoder";
-import {BITVEC, BLOB, Descriptor, I16, I24, I32, I8, U16, U24, U32, U8, VAR_U32, VAR_U64} from "./descriptors";
 
 let seed = 1;
 function random() {
@@ -15,7 +30,7 @@ function random() {
 describe("JAM encoder / decoder", () => {
   type Generator<T> = {
     generate: () => T;
-    descriptor: Descriptor<T>,
+    descriptor: Descriptor<T>;
   };
 
   function generator<T>(generate: () => T, descriptor: Descriptor<T>) {
@@ -54,7 +69,16 @@ describe("JAM encoder / decoder", () => {
         vec.setBit(len, random() > 0.5);
       }
       return vec;
-    }, BITVEC),
+    }, BITVEC_VAR_LEN),
+
+    generator(() => {
+      let len = 10;
+      const vec = BitVec.empty(len);
+      while (--len >= 0) {
+        vec.setBit(len, random() > 0.5);
+      }
+      return vec;
+    }, BITVEC_FIX_LEN(10)),
   ];
 
   for (const g of types) {
