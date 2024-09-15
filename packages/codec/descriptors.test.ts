@@ -87,7 +87,11 @@ describe("Codec Descriptors / class", () => {
   it("should encode a class", () => {
     // given
     const data = testData();
-    const header = new TestHeader(data.parentHeaderHash, data.priorStateRoot, data.extrinsicHash);
+    const header = new TestHeader({
+      parentHeaderHash: data.parentHeaderHash,
+      priorStateRoot: data.priorStateRoot,
+      extrinsicHash: data.extrinsicHash,
+    });
 
     const encoder = Encoder.create({ expectedLength: TestHeader.Codec.sizeHintBytes });
     TestHeader.Codec.encode(encoder, header);

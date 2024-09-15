@@ -247,8 +247,8 @@ abstract class AbstractView<T> {
     if (this.lastDecodedIdx + 1 !== fields.length) {
       this.decodeUpTo(fields[fields.length - 1], false);
     }
-    const constructorParams = fields.map((key) => this.cache.get(key));
-    return new this.materializedConstructor(...constructorParams);
+    const constructorParams = Object.fromEntries(fields.map((key) => [key, this.cache.get(key)]));
+    return new this.materializedConstructor(constructorParams as FieldsAsObject<T>);
   }
 
   private decodeUpTo(field: string, shouldWarn = true): unknown | undefined {
