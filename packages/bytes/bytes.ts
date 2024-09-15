@@ -96,6 +96,12 @@ export class Bytes<T extends number> {
     return new Bytes(new Uint8Array(len), len);
   }
 
+  static fill<X extends number>(len: X, input: number): Bytes<X> {
+    const bytes = Bytes.zero(len);
+    bytes.raw.fill(input, 0, len);
+    return bytes;
+  }
+
   static parseBytesNoPrefix<X extends number>(v: string, len: X): Bytes<X> {
     if (v.length > 2 * len) {
       throw new Error(`Input string too long. Expected ${len}, got ${v.length / 2}`);

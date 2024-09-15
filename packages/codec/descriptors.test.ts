@@ -29,12 +29,10 @@ describe("Codec Descriptors / class", () => {
     const parentHeaderHash = Bytes.zero(32);
     encoder.bytes(parentHeaderHash);
 
-    const priorStateRoot = Bytes.zero(32);
-    priorStateRoot.raw.fill(1, 0, 32);
+    const priorStateRoot = Bytes.fill(32, 1);
     encoder.bytes(priorStateRoot);
 
-    const extrinsicHash = Bytes.zero(32);
-    extrinsicHash.raw.fill(5, 0, 32);
+    const extrinsicHash = Bytes.fill(32, 5);
     encoder.bytes(extrinsicHash);
 
     return {
@@ -49,7 +47,7 @@ describe("Codec Descriptors / class", () => {
     // given
     const data = testData();
 
-    const headerView = new TestHeader.Codec.View(Decoder.fromBytesBlob(data.bytes));
+    const headerView = TestHeader.Codec.View.fromBytesBlob(data.bytes);
     assert.deepStrictEqual(headerView.parentHeaderHash(), data.parentHeaderHash);
     assert.deepStrictEqual(headerView.extrinsicHash(), data.extrinsicHash);
     assert.deepStrictEqual(headerView.priorStateRoot(), data.priorStateRoot);
@@ -63,7 +61,7 @@ describe("Codec Descriptors / class", () => {
     // given
     const data = testData();
 
-    const headerView = new TestHeader.Codec.View(Decoder.fromBytesBlob(data.bytes));
+    const headerView = TestHeader.Codec.View.fromBytesBlob(data.bytes);
     // read one data point to have something in cache, but not everything
     assert.deepStrictEqual(headerView.parentHeaderHash(), data.parentHeaderHash);
 

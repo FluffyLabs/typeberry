@@ -1,7 +1,7 @@
 import type { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
 import { check } from "@typeberry/utils";
-import type { Decode, Decoder } from "./decoder";
+import { type Decode, Decoder } from "./decoder";
 import type { Encode, Encoder } from "./encoder";
 
 const TYPICAL_SEQUENCE_LENGTH = 64;
@@ -29,8 +29,15 @@ type FieldsAsOptional<T> = {
   [K in keyof T]?: T[K];
 };
 
-export type View<T> = {
-  View: new (d: Decoder) => AbstractView<T> & FieldsAsMethods<T>;
+export type View<T> = AbstractView<T> & FieldsAsMethods<T>;
+
+export type ViewConstructor<T> = {
+  new (d: Decoder): View<T>;
+  fromBytesBlob(bytes: BytesBlob): View<T>;
+};
+
+export type WithView<T> = {
+  View: ViewConstructor<T>;
 };
 
 export const VAR_U32 = descriptor<number>(
@@ -178,9 +185,9 @@ export const CLASS = <T>(
   name: string,
   Class: Constructor<T>,
   descriptors: ClassDescriptorOf<T>,
-): Descriptor<T> & View<T> => {
+): Descriptor<T> & WithView<T> => {
   // Create a
-  class View extends AbstractView<T> {
+  class ClassView extends AbstractView<T> {
     constructor(d: Decoder) {
       super(d, Class, descriptors);
     }
@@ -188,13 +195,16 @@ export const CLASS = <T>(
   // We need to dynamically extend the prototype to add these extra lazy getters.
   forEachDescriptor(descriptors, (key) => {
     if (typeof key === "string") {
-      Object.defineProperty(View.prototype, key, {
-        value: function (this: View) {
+      Object.defineProperty(ClassView.prototype, key, {
+        value: function (this: ClassView) {
           return this.getOrDecode(key);
         },
       });
     }
   });
+
+  const ViewTyped = ClassView as ViewConstructor<T>;
+  ViewTyped.fromBytesBlob = (bytes: BytesBlob) => new ViewTyped(Decoder.fromBytesBlob(bytes));
 
   // calculate a size hint
   let sizeHintBytes = 0;
@@ -224,7 +234,7 @@ export const CLASS = <T>(
   );
 
   return {
-    View: View as new (d: Decoder) => AbstractView<T> & FieldsAsMethods<T>,
+    View: ViewTyped,
     ...desc,
   };
 };
@@ -268,7 +278,9 @@ abstract class AbstractView<T> {
     }
     this.lastDecodedIdx = needIdx;
     if (shouldWarn && this.lastDecodedIdx + 1 === descriptorKeys.length) {
-      logger.warn(`Decoded an entire object of class ${this.materializedConstructor}. You should rather materialize.`);
+      logger.warn(
+        `Decoded an entire object of class ${this.materializedConstructor.name}. You should rather materialize.`,
+      );
     }
     return lastVal;
   }
