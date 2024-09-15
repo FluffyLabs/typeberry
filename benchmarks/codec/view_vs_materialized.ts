@@ -2,10 +2,10 @@ import assert from "node:assert";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { BYTES, CLASS, type FieldsAsObject, VAR_U64, type View } from "@typeberry/codec/descriptors";
+import { BYTES, CLASS, type Record, VAR_U64, type View } from "@typeberry/codec/descriptors";
 
 class TestHeader {
-  static Codec = CLASS("TestHeader", TestHeader, {
+  static Codec = CLASS(TestHeader, {
     blockNumber: VAR_U64,
     parentHeaderHash: BYTES(32),
     priorStateRoot: BYTES(32),
@@ -17,7 +17,7 @@ class TestHeader {
   public readonly priorStateRoot: Bytes<32>;
   public readonly extrinsicHash: Bytes<32>;
 
-  constructor(o: FieldsAsObject<TestHeader>) {
+  constructor(o: Record<TestHeader>) {
     this.blockNumber = o.blockNumber;
     this.parentHeaderHash = o.parentHeaderHash;
     this.priorStateRoot = o.priorStateRoot;

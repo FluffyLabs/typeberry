@@ -2,12 +2,12 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder } from "./decoder";
-import { BYTES, CLASS, type FieldsAsObject } from "./descriptors";
+import { BYTES, CLASS, type Record } from "./descriptors";
 import { Encoder } from "./encoder";
 
 describe("Codec Descriptors / class", () => {
   class TestHeader {
-    static Codec = CLASS("TestHeader", TestHeader, {
+    static Codec = CLASS(TestHeader, {
       parentHeaderHash: BYTES(32),
       priorStateRoot: BYTES(32),
       extrinsicHash: BYTES(32),
@@ -17,7 +17,7 @@ describe("Codec Descriptors / class", () => {
     public readonly priorStateRoot: Bytes<32>;
     public readonly extrinsicHash: Bytes<32>;
 
-    constructor(o: FieldsAsObject<TestHeader>) {
+    constructor(o: Record<TestHeader>) {
       this.parentHeaderHash = o.parentHeaderHash;
       this.priorStateRoot = o.priorStateRoot;
       this.extrinsicHash = o.extrinsicHash;
