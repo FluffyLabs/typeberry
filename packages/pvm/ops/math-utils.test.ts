@@ -2,16 +2,16 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { MAX_VALUE } from "./math-consts";
-import { add, mulLowerUnsigned, mulUpperSigned, mulUpperUnsigned, sub } from "./math-utils";
+import { addWithOverflow, mulLowerUnsigned, mulUpperSigned, mulUpperUnsigned, sub } from "./math-utils";
 
 describe("math-utils", () => {
-  describe("add", () => {
+  describe("addWithOverflow", () => {
     it("should add two numbers without overflow", () => {
       const a = 5;
       const b = 6;
       const expectedResult = 11;
 
-      const result = add(a, b);
+      const result = addWithOverflow(a, b);
 
       assert.strictEqual(result, expectedResult);
     });
@@ -21,7 +21,7 @@ describe("math-utils", () => {
       const b = 6;
       const expectedResult = 5;
 
-      const result = add(a, b);
+      const result = addWithOverflow(a, b);
 
       assert.strictEqual(result, expectedResult);
     });
@@ -31,7 +31,7 @@ describe("math-utils", () => {
       const b = 2 ** 31 + 6;
       const expectedResult = 11;
 
-      const result = add(a, b);
+      const result = addWithOverflow(a, b);
 
       assert.strictEqual(result, expectedResult);
     });
@@ -41,7 +41,7 @@ describe("math-utils", () => {
       const b = MAX_VALUE;
       const expectedResult = MAX_VALUE - 1;
 
-      const result = add(a, b);
+      const result = addWithOverflow(a, b);
 
       assert.strictEqual(result, expectedResult);
     });
