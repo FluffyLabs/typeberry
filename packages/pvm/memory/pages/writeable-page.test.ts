@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "../memory-consts";
+import { MIN_ALLOCATION_LENGTH } from "../memory-consts";
 import { createMemoryIndex } from "../memory-index";
 import { createPageIndex, createPageNumber } from "./page-utils";
 import { WriteablePage } from "./writeable-page";
@@ -52,7 +52,6 @@ describe("WriteablePage", () => {
     expectedView.set(bytesToStore, indexToStore);
     const expectedObject = {
       start: startIndex,
-      end: startIndex + PAGE_SIZE,
       buffer: expectedBuffer,
       view: expectedView,
     };
@@ -74,7 +73,6 @@ describe("WriteablePage", () => {
     expectedView.set(bytesToStore, MIN_ALLOCATION_LENGTH);
     const expectedObject = {
       start: startIndex,
-      end: startIndex + PAGE_SIZE,
       buffer: expectedBuffer,
       view: expectedView,
     };

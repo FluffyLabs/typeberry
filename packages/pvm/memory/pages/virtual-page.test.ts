@@ -39,7 +39,6 @@ describe("VirtualPage", () => {
     const endIndex = createEndChunkIndex(startIndex + bytes.length);
     const expectedPage = {
       chunks: [[startIndex, endIndex, bytes, readable]],
-      end: startPageIndex + PAGE_SIZE,
       start: startPageIndex,
     };
 
@@ -57,7 +56,6 @@ describe("VirtualPage", () => {
     const endIndex = createEndChunkIndex(startIndex + bytes.length);
     const expectedPage = {
       chunks: [[startIndex, endIndex, bytes, writeable]],
-      end: startPageIndex + PAGE_SIZE,
       start: startPageIndex,
     };
 
@@ -79,7 +77,6 @@ describe("VirtualPage", () => {
         [startIndex, startIndex + bytes.length, bytes, writeable],
         [startIndex + bytes.length, endIndex, extraBytes, writeable],
       ],
-      end: startPageIndex + PAGE_SIZE,
       start: startPageIndex,
     };
 
@@ -89,7 +86,6 @@ describe("VirtualPage", () => {
   });
 
   it("should return PageFault as the address is not part of any chunk", () => {
-    const startPageIndex = createMemoryIndex(0);
     const pageNumber = createPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
@@ -105,7 +101,6 @@ describe("VirtualPage", () => {
   });
 
   it("should not return PageFault when loading from the end of page", () => {
-    const startPageIndex = createMemoryIndex(0);
     const pageNumber = createPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
@@ -122,7 +117,6 @@ describe("VirtualPage", () => {
   });
 
   it("should load 4 bytes from one chunk of readable memory", () => {
-    const startPageIndex = createMemoryIndex(0);
     const pageNumber = createPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
@@ -190,7 +184,6 @@ describe("VirtualPage", () => {
   });
 
   it("should load 1 byte from one chunk that have 1 byte length", () => {
-    const startPageIndex = createMemoryIndex(0);
     const pageNumber = createPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1]);
@@ -244,7 +237,6 @@ describe("VirtualPage", () => {
   });
 
   it("should return PageFault when load 4 bytes from two chunks of memory but there is a gap between them", () => {
-    const startPageIndex = createMemoryIndex(0);
     const pageNumber = createPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
@@ -263,7 +255,6 @@ describe("VirtualPage", () => {
   });
 
   it("should return PageFaul when store 4 bytes into readable memory", () => {
-    const startPageIndex = createMemoryIndex(0);
     const pageNumber = createPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4]);
@@ -278,7 +269,6 @@ describe("VirtualPage", () => {
   });
 
   it("should return PageFault when store 4 bytes into inacessible memory", () => {
-    const startPageIndex = createMemoryIndex(0);
     const pageNumber = createPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4]);
@@ -303,7 +293,6 @@ describe("VirtualPage", () => {
     virtualPage.set(startIndex, endIndex, new Uint8Array(), writeable);
     const expectedPage = {
       chunks: [[startIndex, endIndex, new Uint8Array([...bytes, 0]), writeable]],
-      end: startPageIndex + PAGE_SIZE,
       start: startPageIndex,
     };
 
@@ -324,7 +313,6 @@ describe("VirtualPage", () => {
     virtualPage.set(startIndex, endIndex, new Uint8Array(), writeable);
     const expectedPage = {
       chunks: [[startIndex, endIndex, bytes, writeable]],
-      end: startPageIndex + PAGE_SIZE,
       start: startPageIndex,
     };
 
@@ -345,7 +333,6 @@ describe("VirtualPage", () => {
     virtualPage.set(startIndex, endIndex, new Uint8Array(), writeable);
     const expectedPage = {
       chunks: [[startIndex, endIndex, bytes, writeable]],
-      end: startPageIndex + PAGE_SIZE,
       start: startPageIndex,
     };
 
@@ -372,7 +359,6 @@ describe("VirtualPage", () => {
         [firstStartIndex, firstEndIndex, new Uint8Array([0, 0, 0, 1, 2]), writeable],
         [secondStartIndex, secondEndIndex, new Uint8Array([3, 4, 0, 0, 0]), writeable],
       ],
-      end: startPageIndex + PAGE_SIZE,
       start: startPageIndex,
     };
 
@@ -411,7 +397,6 @@ describe("VirtualPage", () => {
     virtualPage.set(startIndex, endIndex, new Uint8Array(), writeable);
     const expectedPage = {
       chunks: [[startIndex, endIndex, new Uint8Array([0, 0, 0, 1, 2]), writeable]],
-      end: startPageIndex + PAGE_SIZE,
       start: startPageIndex,
     };
 

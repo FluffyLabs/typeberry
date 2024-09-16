@@ -4,7 +4,7 @@ import { type MemoryIndex, createMemoryIndex } from "./memory-index";
 import { alignToPageSize, getPageNumber } from "./memory-utils";
 import { WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
-import { type PageNumber, createPageIndex, createPageNumber } from "./pages/page-utils";
+import { type PageNumber, createPageIndex, getNextPageNumber } from "./pages/page-utils";
 
 type InitialMemoryState = {
   memory: Map<PageNumber, MemoryPage>;
@@ -49,7 +49,8 @@ export class Memory {
     // bytes span two pages, so we need to split it and store separately.
     const toStoreOnFirstPage = address + bytes.length - pageEnd;
     const toStoreOnSecondPage = bytes.length - toStoreOnFirstPage;
-    const secondPageNumber = createPageNumber(pageNumber + 1);
+    // secondPageNumber will be 0 if pageNumber is the last page
+    const secondPageNumber = getNextPageNumber(pageNumber);
     const secondPage = this.memory.get(secondPageNumber);
 
     if (!secondPage) {
@@ -90,7 +91,8 @@ export class Memory {
     // bytes span two pages, so we need to split it and load separately.
     const toReadFromFirstPage = address + length - pageEnd;
     const toReadFromSecondPage = length - toReadFromFirstPage;
-    const secondPageNumber = createPageNumber(pageNumber + 1);
+    // secondPageNumber will be 0 if pageNumber is the last page
+    const secondPageNumber = getNextPageNumber(pageNumber);
     const secondPage = this.memory.get(secondPageNumber);
     if (!secondPage) {
       return new PageFault(pageEnd);
