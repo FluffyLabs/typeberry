@@ -21,7 +21,9 @@ import { runTrieTest, trieTestSuiteFromJson } from "./trie";
 
 const logger = newLogger(__filename);
 
-main().then(logger.log).catch(logger.error);
+main()
+  .then((r) => logger.log(r))
+  .catch((e) => logger.error(e));
 
 async function main() {
   const files = process.argv.slice(2);
@@ -35,6 +37,7 @@ async function main() {
     });
   }
 
+  // TODO [ToDr] generate results file.
   return "Tests have been executed";
 }
 

@@ -3,7 +3,7 @@ name: Run JAM test vectors
 on:
   pull_request:
     branches: ["main"]
-    paths: ['.github/workflows/testvectors.yml', 'bin/test-runner/**', 'tools/testvectors/**']
+    paths: ['.github/workflows/test-runner.yml', 'bin/test-runner/**']
   schedule:
     - cron: '0 0 * * *'
 
@@ -29,7 +29,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
-      - run: npm start -w @typeberry/test-runner
+      - run: npm start -w @typeberry/test-runner -- ./jamtestvectors/**/*.json
       - name: Display results
         if: always()
         run: cat ./jamtestvectors/results.txt

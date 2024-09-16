@@ -94,9 +94,6 @@ $ npm start -w @typeberry/test-runner  --  jamtestvectors/**/*.json ../jamtestve
 Obviously it's also possible to run just single test case or part of the test
 cases by altering the glob pattern in the path.
 
-If you don't pass any argument, the runner will attempt to execute all possible tests from
-`./jamtestvectors`.
-
 ### Adding a new component / package
 
 ```bash
