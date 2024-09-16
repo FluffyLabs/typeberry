@@ -1,11 +1,9 @@
-# Run all benchmarks and compare the results.
-
-name: Benchmarks
+name: Run JAM test vectors
 
 on:
   pull_request:
     branches: ["main"]
-    paths: ['.github/workflows/benchmarks.yml', 'benchmarks/**', 'tools/benchmark/**']
+    paths: ['.github/workflows/testvectors.yml', 'bin/test-runner/**', 'tools/testvectors/**']
   schedule:
     - cron: '0 0 * * *'
 
@@ -20,28 +18,32 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout JAM test vectors
+        uses: actions/checkout@v4
+        with:
+          repository: AcalaNetwork/jamtestvectors
+          path: "./jamtestvectors"
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
-      - run: npm start -w @typeberry/benchmark
+      - run: npm start -w @typeberry/test-runner
       - name: Display results
         if: always()
-        run: cat ./dist/benchmarks/results.txt
+        run: cat ./jamtestvectors/results.txt
       - name: Comment PR
         if: always() && github.event_name == 'pull_request'
         uses: thollander/actions-comment-pull-request@v2
         with:
-          filePath: ./dist/benchmarks/results.txt
-          comment_tag: benchmarks
+          filePath: ./jamtestvectors/results.txt
+          comment_tag: jamtestvectors
       - name: Upload new transaction log
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           path: |
-            ./benchmarks/*/output
-            ./dist/benchmarks/results.json
-            ./dist/benchmarks/results.txt
-          name: benchmark-results
+            ./jamtestvectors/results.json
+            ./jamtestvectors/results.txt
+          name: jamtestvectors-results

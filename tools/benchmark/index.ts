@@ -14,6 +14,10 @@ runAllBenchmarks().catch((e) => logger.error(e));
 async function runAllBenchmarks() {
   // We are going to run all benchmarks in our benchmark folder.
   const benchmarksPath = `./${BENCHMARKS_DIR}`;
+  const distPath = `./dist/${BENCHMARKS_DIR}`;
+  fs.mkdirSync(distPath, {
+    recursive: true,
+  });
   const benchmarks = fs.readdirSync(benchmarksPath);
 
   const results = new Map<string, Result>();
@@ -41,11 +45,11 @@ async function runAllBenchmarks() {
   await Promise.all(promises);
 
   // dump raw JSON
-  fs.writeFileSync(`${benchmarksPath}/results.json`, JSON.stringify(Object.fromEntries(results.entries()), null, 2));
+  fs.writeFileSync(`${distPath}/results.json`, JSON.stringify(Object.fromEntries(results.entries()), null, 2));
 
   // create a textual summary (github comment)
   const txt = formatResults(results, commitHash);
-  fs.writeFileSync(`${benchmarksPath}/results.txt`, txt);
+  fs.writeFileSync(`${distPath}/results.txt`, txt);
 
   // print summary
   logger.log("Summary:");

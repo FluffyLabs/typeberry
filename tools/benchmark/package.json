@@ -1,7 +1,7 @@
 {
   "name": "@typeberry/benchmark",
   "version": "0.0.1",
-  "description": "Benchmark runner for typeberry.",
+  "description": "Benchmarks runner for typeberry.",
   "main": "index.ts",
   "scripts": {
     "start": "ts-node ./index.ts",

@@ -30,18 +30,13 @@ We recommend [NVM](https://github.com/nvm-sh/nvm) to install and manage differen
 $ npm ci
 ```
 
-### Running unit tests
+### Running typeberry
 
 ```bash
-$ npm run test
+$ npm start
 ```
 
-Running tests from a single package:
-```bash
-$ npm run -w @typeberry/trie test
-```
-
-### Running formatting & linting
+### Formatting & linting
 
 ```bash
 $ npm run qa
@@ -61,7 +56,30 @@ A shorthand to run all the checks and apply safe fixes all at once is:
 $ npm run qa-fix
 ```
 
-### Running JSON tests
+### Running unit tests
+
+```bash
+$ npm run test
+```
+
+Running tests from a single package:
+```bash
+$ npm run test -w @typeberry/trie
+```
+
+### Running benchmarks
+This command will run all benchmarks from `./benchmarks/` folder
+
+```bash
+$ npm start -w @typeberry/benchmark
+```
+
+Since each benchmark file is also runnable, it's easy to run just one benchmark, e.g:
+```bash
+$ npm exec ts-node ./benchmarks/math/mul_overflow.ts
+```
+
+### Running JSON test vectors
 
 To run JSON test cases coming from the official
 [JAM test vectors repository](https://github.com/w3f/jamtestvectors/) you need
@@ -70,12 +88,14 @@ to execute them.
 
 ```bash
 $ git clone https://github.com/w3f/jamtestvectors.git
-$ cd typeberry
-$ npm run run-tests --  ../jamtestvectors/**/*.json ../jamtestvectors/erasure_coding/vectors/*
+$ npm start -w @typeberry/test-runner  --  jamtestvectors/**/*.json ../jamtestvectors/erasure_coding/vectors/*
 ```
 
 Obviously it's also possible to run just single test case or part of the test
 cases by altering the glob pattern in the path.
+
+If you don't pass any argument, the runner will attempt to execute all possible tests from
+`./jamtestvectors`.
 
 ### Adding a new component / package
 

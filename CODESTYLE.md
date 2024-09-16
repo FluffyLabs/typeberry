@@ -13,9 +13,30 @@ environment (aka "core" files).
 
 1. `./packages` - self-contained parts of the typeberry implementation.
     Think: libraries. Always named `@typeberry/<name>`.
-2. `./bin` - executable scripts and possibly their dependencies.
-3. `./workers` - parts of typeberry that run as a worker. And communicate with
+2. `./bin` - full-featured binaries that are core to typeberry.
+3. `./tools` - auxiliary, stand-alone tools which can be executed separately.
+4. `./workers` - parts of typeberry that run as a worker. And communicate with
     other components. Use `./packages` for their underlying logic.
+5. `./benchmarks` - contains all micro & macro benchmarks for the typeberry components
+    or simply tests to figure out the best way to solve some problem.
+
+## NPM workspace
+
+Since we're using NPM workspaces, each workspace (i.e. sub-project/library/package)
+should have it's own set of scripts. Avoid polluting the main `package.json` with
+scripts to run, instead move the script as close to the package that will be run
+as possible.
+
+Below some pre-defined scripts and their expected behaviour:
+1. `test` - obligatory script to run tests from a package. Usuall the command is
+    exactly the same for all of the packages.
+2. `start` - optional script to execute the package. Note that it's not limited
+    only to `./bin` packages.
+3. `build` - if package can be built into a CommonJS module and later potentially
+    published to NPM registry that should be the command which produces the final
+    JS file in `./dist` directory.
+4. `obfuscate` - if package should be obfuscated before publishing. This step should
+    also automatically build the package.
 
 ## Avoid constructor overloading
 
@@ -43,7 +64,7 @@ The cost of having a half-baked frankenstein is worse than bringing in a good
 dependencies of the library itself and prefer speed & simplicity and no to
 little dependencies over functionality.
 
-## Avoid allocations
+## Avoid allocations & data copying
 
 While it's nearly impossible to avoid all allocations in TypeScript,
 we might try to limit allocations of large objects
@@ -52,6 +73,12 @@ and re-use the memory as much as possible.
 The goal is to avoid stop-the-world GC pauses.
 
 Wherever possible prefer `ArrayBuffer` and it's views over regular numeric arrays.
+
+Try to also think if some operations can be defered to a later time, especially
+if you don't know if they are going to be called anyway.
+ 
+Avoid copying large chunks of memory (i.e. `Uint8Array`s) to some other arrays.
+Prefer returning subarrays from a larger allocated chunk and creating view objects.
 Note there is `subarray` function that should be preferred over `slice`.
 
 
