@@ -21,7 +21,7 @@ export function formatResults(input: Map<string, Result>, commitHash?: string) {
 
   for (const [name, diffs] of input.entries()) {
     for (const [idx, diff] of diffs.diff.entries()) {
-      const fullName = `${name}[${idx}]`;
+      const fullName = `${name}[${idx}] → ${diff.name}`;
       const filePath = commitHash ? `../blob/${commitHash}/${BENCHMARKS_DIR}/${name}` : `./${BENCHMARKS_DIR}/${name}`;
       const curr = diffs.current.results?.[idx];
 
