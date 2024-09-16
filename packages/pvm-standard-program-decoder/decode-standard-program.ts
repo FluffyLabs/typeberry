@@ -43,6 +43,7 @@ export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {
   const initialHeap = decoder.bytes(heapLength).raw;
   const codeLength = decoder.u32();
   const code = decoder.bytes(codeLength).raw;
+  decoder.finish();
 
   const readonlyDataStart = SEGMENT_SIZE;
   const readonlyDataEnd = SEGMENT_SIZE + readOnlyLength;

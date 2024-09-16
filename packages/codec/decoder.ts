@@ -260,6 +260,19 @@ export class Decoder {
     this.offset += bytes;
   }
 
+  /**
+   * Finish decoding `source` object and make sure there is no data left.
+   *
+   * This method can be called when the entire object that was meant to be
+   * stored in the `source` is now fully decoded and we want to ensure
+   * that there is no extra bytes contained in the `source`.
+   */
+  finish() {
+    if (this.offset < this.source.length) {
+      throw new Error(`Expecting end of input, yet there are still ${this.source.length - this.offset} bytes left.`);
+    }
+  }
+
   private getNum(bytes: number, f: () => number) {
     this.ensureHasBytes(bytes);
     const num = f();

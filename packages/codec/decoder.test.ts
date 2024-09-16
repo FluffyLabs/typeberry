@@ -5,26 +5,44 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { BitVec } from "@typeberry/bytes";
 import { Decoder } from "./decoder";
 
-function decodeVarU32(source: Uint8Array) {
+function decodeVarU32(source: Uint8Array, finish = true) {
   const decoder = Decoder.fromBlob(source);
   const value = decoder.varU32();
   const bytesToSkip = decoder.bytesRead();
+  finish && decoder.finish();
 
   // compare with u64 just to be sure.
   const decoder2 = Decoder.fromBlob(source);
   assert.strictEqual(decoder2.varU64(), BigInt(value));
+  finish && decoder2.finish();
 
   return { value, bytesToSkip };
 }
 
-function decodeVarU64(source: Uint8Array) {
+function decodeVarU64(source: Uint8Array, finish = true) {
   const decoder = Decoder.fromBlob(source);
   const value = decoder.varU64();
   const bytesToSkip = decoder.bytesRead();
+  finish && decoder.finish();
   return { value, bytesToSkip };
 }
 
 describe("decode natural number", () => {
+  it("should fail when there are some bytes left", () => {
+    const encodedBytes = new Uint8Array([0]);
+    const decoder = Decoder.fromBlob(encodedBytes);
+
+    assert.throws(
+      () => {
+        decoder.finish();
+      },
+      {
+        name: "Error",
+        message: "Expecting end of input, yet there are still 1 bytes left.",
+      },
+    );
+  });
+
   it("decode 0", () => {
     const encodedBytes = new Uint8Array([0]);
     const expectedValue = 0;
@@ -219,7 +237,7 @@ describe("decode natural number", () => {
     const encodedBytes = new Uint8Array([0, 1, 2, 3]);
     const expectedValue = 0;
 
-    const result = decodeVarU32(encodedBytes);
+    const result = decodeVarU32(encodedBytes, false);
 
     assert.strictEqual(result.value, expectedValue);
     assert.strictEqual(result.bytesToSkip, 1);
@@ -229,7 +247,7 @@ describe("decode natural number", () => {
     const encodedBytes = new Uint8Array([256 - 4 + 1, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x1, 0x2]);
     const expectedValue = 2n ** 49n - 1n;
 
-    const result = decodeVarU64(encodedBytes);
+    const result = decodeVarU64(encodedBytes, false);
 
     assert.strictEqual(result.value, expectedValue);
     assert.strictEqual(result.bytesToSkip, 7);
@@ -239,7 +257,7 @@ describe("decode natural number", () => {
     const encodedBytes = new Uint8Array([255, 255, 255, 255, 255, 255, 255, 255, 255, 1, 2, 3]);
     const expectedValue = 2n ** 64n - 1n;
 
-    const result = decodeVarU64(encodedBytes);
+    const result = decodeVarU64(encodedBytes, false);
 
     assert.strictEqual(result.value, expectedValue);
     assert.strictEqual(result.bytesToSkip, 9);
@@ -252,6 +270,7 @@ describe("JAM decoder / bytes", () => {
     const decoder = Decoder.fromBytesBlob(input);
 
     const blob = decoder.bytesBlob();
+    decoder.finish();
 
     assert.deepStrictEqual(blob.toString(), "0x");
   });
@@ -261,6 +280,7 @@ describe("JAM decoder / bytes", () => {
     const decoder = Decoder.fromBytesBlob(input);
 
     const blob = decoder.bytesBlob();
+    decoder.finish();
 
     assert.deepStrictEqual(blob.toString(), "0xdeadbeef");
   });
@@ -270,6 +290,7 @@ describe("JAM decoder / bytes", () => {
     const decoder = Decoder.fromBytesBlob(input);
 
     const blob = decoder.bytes(4);
+    decoder.finish();
 
     assert.deepStrictEqual(blob.toString(), "0xdeadbeef");
   });
@@ -283,6 +304,7 @@ describe("JAM decoder / numbers", () => {
     const l = decoder.varU32();
     decoder.moveTo(0);
     const ln = decoder.varU64();
+    decoder.finish();
 
     assert.deepStrictEqual(BigInt(l), ln);
     assert.deepStrictEqual(l, 2 ** 32 - 1);
@@ -314,6 +336,7 @@ describe("JAM decoder / numbers", () => {
     assert.deepStrictEqual(decoder.varU32(), 2 ** 32 - 1);
     assert.deepStrictEqual(decoder.varU32(), 2 ** 31 - 1);
     assert.deepStrictEqual(decoder.varU32(), 0x42424242);
+    decoder.finish();
   });
 
   it("should decode variable length u64", () => {
@@ -325,6 +348,7 @@ describe("JAM decoder / numbers", () => {
     assert.deepStrictEqual(decoder.varU64(), 2n ** 32n);
     assert.deepStrictEqual(decoder.varU64(), 2n ** 56n);
     assert.deepStrictEqual(decoder.varU64(), 2n ** 64n - 1n);
+    decoder.finish();
   });
 
   it("should decode a bunch of i32 numbers", () => {
@@ -332,6 +356,7 @@ describe("JAM decoder / numbers", () => {
     const decoder = Decoder.fromBytesBlob(input);
 
     const results = [decoder.i32(), decoder.i32(), decoder.i32(), decoder.i32(), decoder.i32()];
+    decoder.finish();
 
     assert.deepStrictEqual(results, [2 ** 31 - 1, -(2 ** 31), 0x42424242, -42, 0]);
   });
@@ -341,6 +366,7 @@ describe("JAM decoder / numbers", () => {
     const decoder = Decoder.fromBytesBlob(input);
 
     const results = [decoder.u32(), decoder.u32(), decoder.u32(), decoder.u32(), decoder.u32()];
+    decoder.finish();
 
     assert.deepStrictEqual(results, [2 ** 31 - 1, 2 ** 32 - 2 ** 31, 0x42424242, 2 ** 32 - 42, 0]);
   });
@@ -357,6 +383,7 @@ describe("JAM decoder / numbers", () => {
     assert.deepStrictEqual(decoder.i24(), -(2 ** 23));
     assert.deepStrictEqual(decoder.i24(), 2 ** 23 - 1);
     assert.deepStrictEqual(decoder.i24(), -(2 ** 23 - 1));
+    decoder.finish();
   });
 
   it("should decode a bunch of i16 numbers", () => {
@@ -364,6 +391,7 @@ describe("JAM decoder / numbers", () => {
     const decoder = Decoder.fromBytesBlob(input);
 
     const results = [decoder.i16(), decoder.i16(), decoder.i16()];
+    decoder.finish();
 
     assert.deepStrictEqual(results, [0x4242, -42, 0]);
   });
@@ -373,6 +401,7 @@ describe("JAM decoder / numbers", () => {
     const decoder = Decoder.fromBytesBlob(input);
 
     const results = [decoder.i8(), decoder.i8(), decoder.i8()];
+    decoder.finish();
 
     assert.deepStrictEqual(results, [0x42, -42, 0]);
   });
@@ -383,6 +412,7 @@ describe("JAM decoder / numbers", () => {
 
     assert.deepStrictEqual(decoder.bool(), true);
     assert.deepStrictEqual(decoder.bool(), false);
+    decoder.finish();
   });
 });
 
@@ -394,6 +424,7 @@ describe("JAM decoder / bitvec", () => {
     // when
     const bitvec1 = decoder.bitVecFixLen(8);
     const bitvec2 = decoder.bitVecVarLen();
+    decoder.finish();
 
     // then
     const expected = BitVec.empty(8);
@@ -411,6 +442,7 @@ describe("JAM decoder / bitvec", () => {
     // when
     const bitvec1 = decoder.bitVecFixLen(65);
     const bitvec2 = decoder.bitVecVarLen();
+    decoder.finish();
 
     // then
     const expected = BitVec.empty(65);
@@ -462,6 +494,7 @@ describe("JAM decoder / generics", () => {
       decoder.optional(MyType),
       decoder.optional(MyType),
     ];
+    decoder.finish();
 
     assert.deepStrictEqual(results, [
       new MyType(3, true, Bytes.parseBytes("0xdeadbeef", 4)),
@@ -479,6 +512,7 @@ describe("JAM decoder / generics", () => {
 
     const result1 = decoder.sequenceVarLen(MyType);
     const result2 = decoder.sequenceFixLen(MyType, 3);
+    decoder.finish();
 
     const bytes = Bytes.parseBytes("0xdeadbeef", 4);
     const expected = [new MyType(5, true, bytes), new MyType(7, true, bytes), new MyType(10, true, bytes)];

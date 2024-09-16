@@ -33,6 +33,7 @@ export class ProgramDecoder {
     // which is not aligned with the codec expectations (`0` padded).
     const maskLengthInBytes = Math.ceil(codeLength / 8);
     const mask = decoder.bytes(maskLengthInBytes).raw;
+    decoder.finish();
 
     return {
       mask,

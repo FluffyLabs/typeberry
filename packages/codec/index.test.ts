@@ -92,6 +92,7 @@ describe("JAM encoder / decoder", () => {
 
         const decoder = Decoder.fromBytesBlob(encoded);
         const result = g.descriptor.decode(decoder);
+        decoder.finish();
         assert.deepStrictEqual(result, expected);
       });
     }
