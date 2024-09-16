@@ -5,20 +5,20 @@
   "results": [
     {
       "name": "parse hex using `Number` with NaN checking",
-      "ops": 86174.31,
-      "margin": 0.25,
+      "ops": 134270.15,
+      "margin": 0.1,
       "percentSlower": 87.09
     },
     {
       "name": "parse hex from char codes",
-      "ops": 667250.61,
+      "ops": 983048.54,
       "margin": 0.29,
       "percentSlower": 0
     },
     {
       "name": "parse hex from string nibbles",
-      "ops": 398941.86,
-      "margin": 0.18,
+      "ops": 556035.34,
+      "margin": 0.25,
       "percentSlower": 40.21
     }
   ],

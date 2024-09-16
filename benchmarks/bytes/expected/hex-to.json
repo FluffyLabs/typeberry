@@ -5,14 +5,14 @@
   "results": [
     {
       "name": "number toString + padding",
-      "ops": 195171.31,
-      "margin": 0.87,
+      "ops": 318696.03,
+      "margin": 0.1,
       "percentSlower": 50
     },
     {
       "name": "manual",
-      "ops": 390340.4,
-      "margin": 0.5,
+      "ops": 358682.53,
+      "margin": 0.1,
       "percentSlower": 0
     }
   ],
