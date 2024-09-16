@@ -1,3 +1,4 @@
+import util from "node:util";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
 
 class SomeClass {
@@ -7,6 +8,16 @@ class SomeClass {
   ) {}
 }
 
+/**
+ * Since console.log is mostly just the `util.format` + access to stdout,
+ * we overwrite it here to avoid spamming the console while running benchmarks.
+ */
+const logs: string[] = [];
+function fakeConsoleLog(...args: unknown[]) {
+  // biome-ignore lint/style/useTemplate: We want to be as close to the console.log impl as possible.
+  logs.push(util.format.apply(null, args) + "\n");
+}
+
 module.exports = () =>
   suite(
     "Logger",
@@ -14,16 +25,14 @@ module.exports = () =>
     add("console.log with string concat", () => {
       const obj = new SomeClass(5, "hello world!");
       return () => {
-        // biome-ignore lint/suspicious/noConsoleLog: that's the whole point of the benchmark
-        console.log(`[${obj.name}] has reached value ${obj.value}`);
+        fakeConsoleLog(`[${obj.name}] has reached value ${obj.value}`);
       };
     }),
 
     add("console.log with args", () => {
       const obj = new SomeClass(5, "hello world!");
       return () => {
-        // biome-ignore lint/suspicious/noConsoleLog: that's the whole point of the benchmark
-        console.log(obj.name, " has reached value ", obj.value);
+        fakeConsoleLog(obj.name, " has reached value ", obj.value);
       };
     }),
     cycle(),
