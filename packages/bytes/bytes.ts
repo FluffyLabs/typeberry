@@ -129,7 +129,7 @@ function parseByte(s: string): number {
   check(s.length === 2, "Two-character string expected");
   const a = parseCharCode(s.charCodeAt(0));
   const b = parseCharCode(s.charCodeAt(1));
-  return (a << 8) | b;
+  return (a << 4) | b;
 }
 
 const CODE_OF_0 = "0".charCodeAt(0);
@@ -145,11 +145,11 @@ function parseCharCode(x: number) {
   }
 
   if (x >= CODE_OF_a && x <= CODE_OF_f) {
-    return x - CODE_OF_a;
+    return x - CODE_OF_a + 10;
   }
 
   if (x >= CODE_OF_A && x <= CODE_OF_F) {
-    return x - CODE_OF_A;
+    return x - CODE_OF_A + 10;
   }
 
   throw new Error(`Invalid characters in hex byte string: ${String.fromCharCode(x)}`);
@@ -158,7 +158,7 @@ function parseCharCode(x: number) {
 function bytesToHexString(buffer: Uint8Array): string {
   const nibbleToString = (n: number) => {
     if (n > 9) {
-      return String.fromCharCode(n + CODE_OF_a);
+      return String.fromCharCode(n + CODE_OF_a - 10);
     }
     return String.fromCharCode(n + CODE_OF_0);
   };

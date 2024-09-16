@@ -19,18 +19,18 @@ function parseCharCode(x: number) {
   }
 
   if (x >= CODE_OF_a && x <= CODE_OF_f) {
-    return x - CODE_OF_a;
+    return 10 + x - CODE_OF_a;
   }
 
   if (x >= CODE_OF_A && x <= CODE_OF_F) {
-    return x - CODE_OF_A;
+    return 10 + x - CODE_OF_A;
   }
 
   throw new Error(`Invalid characters in hex byte string: ${String.fromCharCode(x)}`);
 }
 
 function parseByteFromNibbles(s: string): number {
-  return (parseNibble(s[0]) << 8) | parseNibble(s[1]);
+  return (parseNibble(s[0]) << 4) | parseNibble(s[1]);
 }
 function parseNibble(n: string): number {
   switch (n) {
