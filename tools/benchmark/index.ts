@@ -3,7 +3,7 @@ import path from "node:path";
 import { newLogger } from "@typeberry/logger";
 import chalk from "chalk";
 import { formatResults } from "./format";
-import { BENCHMARKS_DIR, EXPECTED_DIR, OUTPUT_DIR } from "./setup";
+import { BENCHMARKS_DIR, DIST_DIR, EXPECTED_DIR, OUTPUT_DIR, REL_DIR } from "./setup";
 import type { BennyResults, ComparisonResult, ErrorResult, OkResult, Result } from "./types";
 
 const commitHash = process.env.GITHUB_SHA;
@@ -13,8 +13,8 @@ runAllBenchmarks().catch((e) => logger.error(e));
 
 async function runAllBenchmarks() {
   // We are going to run all benchmarks in our benchmark folder.
-  const benchmarksPath = `./${BENCHMARKS_DIR}`;
-  const distPath = `./dist/${BENCHMARKS_DIR}`;
+  const benchmarksPath = `${REL_DIR}/${BENCHMARKS_DIR}`;
+  const distPath = `${REL_DIR}/${DIST_DIR}/${BENCHMARKS_DIR}`;
   fs.mkdirSync(distPath, {
     recursive: true,
   });
