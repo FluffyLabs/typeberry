@@ -1,4 +1,4 @@
-import { Decoder } from "@typeberry/jam-codec";
+import { Decoder } from "@typeberry/codec";
 import { check } from "@typeberry/utils";
 
 export class JumpTable {
