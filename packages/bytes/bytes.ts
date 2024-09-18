@@ -44,7 +44,7 @@ export class BytesBlob {
     const bytes = new Uint8Array(buffer);
     for (let i = 0; i < len - 1; i += 2) {
       const c = v.substring(i, i + 2);
-      bytes[i / 2] = parseByte(c);
+      bytes[i / 2] = byteFromString(c);
     }
 
     return new BytesBlob(bytes);
@@ -125,10 +125,10 @@ export class Bytes<T extends number> {
   }
 }
 
-function parseByte(s: string): number {
+function byteFromString(s: string): number {
   check(s.length === 2, "Two-character string expected");
-  const a = parseCharCode(s.charCodeAt(0));
-  const b = parseCharCode(s.charCodeAt(1));
+  const a = numberFromCharCode(s.charCodeAt(0));
+  const b = numberFromCharCode(s.charCodeAt(1));
   return (a << 4) | b;
 }
 
@@ -138,18 +138,19 @@ const CODE_OF_a = "a".charCodeAt(0);
 const CODE_OF_f = "f".charCodeAt(0);
 const CODE_OF_A = "A".charCodeAt(0);
 const CODE_OF_F = "F".charCodeAt(0);
+const VALUE_OF_A = 0xa;
 
-function parseCharCode(x: number) {
+function numberFromCharCode(x: number) {
   if (x >= CODE_OF_0 && x <= CODE_OF_9) {
     return x - CODE_OF_0;
   }
 
   if (x >= CODE_OF_a && x <= CODE_OF_f) {
-    return x - CODE_OF_a + 10;
+    return x - CODE_OF_a + VALUE_OF_A;
   }
 
   if (x >= CODE_OF_A && x <= CODE_OF_F) {
-    return x - CODE_OF_A + 10;
+    return x - CODE_OF_A + VALUE_OF_A;
   }
 
   throw new Error(`Invalid characters in hex byte string: ${String.fromCharCode(x)}`);
@@ -157,8 +158,8 @@ function parseCharCode(x: number) {
 
 function bytesToHexString(buffer: Uint8Array): string {
   const nibbleToString = (n: number) => {
-    if (n > 9) {
-      return String.fromCharCode(n + CODE_OF_a - 10);
+    if (n >= VALUE_OF_A) {
+      return String.fromCharCode(n + CODE_OF_a - VALUE_OF_A);
     }
     return String.fromCharCode(n + CODE_OF_0);
   };
