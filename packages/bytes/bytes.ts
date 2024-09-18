@@ -104,6 +104,14 @@ export class Bytes<T extends number> {
     return new Bytes(new Uint8Array(len), len);
   }
 
+  /** Create a [`Bytes<X>`] with all bytes filled with given input number. */
+  static fill<X extends number>(len: X, input: number): Bytes<X> {
+    check((input & 0xff) === input, "Input has to be a byte.");
+    const bytes = Bytes.zero(len);
+    bytes.raw.fill(input, 0, len);
+    return bytes;
+  }
+
   /** Parse a hex-encoded fixed-length bytes without `0x` prefix. */
   static parseBytesNoPrefix<X extends number>(v: string, len: X): Bytes<X> {
     if (v.length > 2 * len) {

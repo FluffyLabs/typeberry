@@ -1,0 +1,51 @@
+{
+  "name": "Codec Views",
+  "date": "2024-09-15T07:02:47.772Z",
+  "version": null,
+  "results": [
+    {
+      "name": "Get the first field from View",
+      "ops": 4026118.98,
+      "margin": 0.56,
+      "percentSlower": 0
+    },
+    {
+      "name": "Get the first field from Decoded",
+      "ops": 2377164.14,
+      "margin": 0.17,
+      "percentSlower": 44.35
+    },
+    {
+      "name": "Get two fields from View",
+      "ops": 2401505.21,
+      "margin": 0.14,
+      "percentSlower": 38.74
+    },
+    {
+      "name": "Get two fields from Decoded",
+      "ops": 2366781.33,
+      "margin": 0.56,
+      "percentSlower": 44.23
+    },
+    {
+      "name": "Get only third fields from View",
+      "ops": 3170652.71,
+      "margin": 0.1,
+      "percentSlower": 21.7
+    },
+    {
+      "name": "Get only third fields from Decoded",
+      "ops": 2433515.51,
+      "margin": 0.15,
+      "percentSlower": 43.31
+    }
+  ],
+  "fastest": {
+    "name": "Get the first field from View",
+    "index": 0
+  },
+  "slowest": {
+    "name": "Get the first field from Decoded",
+    "index": 1
+  }
+}

@@ -2,7 +2,7 @@ import { fail } from "node:assert";
 import * as fs from "node:fs/promises";
 import test from "node:test";
 
-import { Level, configureLogger, newLogger, parseLoggerOptions } from "@typeberry/logger";
+import { Level, Logger, newLogger, parseLoggerOptions } from "@typeberry/logger";
 import { type FromJson, parseFromJson } from "./json-parser";
 import {
   EcTest,
@@ -21,7 +21,7 @@ import { runTrieTest, trieTestSuiteFromJson } from "./tests/trie";
 
 const logger = newLogger(__filename, "test-runner");
 const options = parseLoggerOptions(process.env.JAM_LOG ?? "", Level.LOG);
-configureLogger(options);
+Logger.configure(options);
 
 main()
   .then((r) => logger.log(r))
