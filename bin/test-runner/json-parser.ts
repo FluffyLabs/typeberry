@@ -146,12 +146,10 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
     throw e;
   }
 
-  console.time(`nested ${context}`);
   for (const key of Object.keys(jsonDescription)) {
     const v = obj[key];
     obj[key] = parseFromJson(v, c[key], `${context}.${key}`);
   }
-  console.timeEnd(`nested ${context}`);
 
   return obj as T;
 }

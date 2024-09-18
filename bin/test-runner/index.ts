@@ -46,6 +46,7 @@ async function main() {
       })(),
     );
   }
+  process.stdout.write("\n");
 
   // now we're going to aggregate the tests by their runner.
   const aggregated = new Map<string, TestAndRunner[]>();
@@ -55,7 +56,7 @@ async function main() {
     aggregated.set(test.runner, sameRunner);
   }
 
-  logger.info(`\nRunning all tests (${tests.length}).`);
+  logger.info(`Running all tests (${tests.length}).`);
   // we have all of the tests now, let's run them in parallel and generate results.
   for (const [key, values] of aggregated.entries()) {
     // split large suites into parts to run them in parallel
@@ -98,9 +99,7 @@ function tryToPrepareTestRunner<T>(
   onError: (name: string, e: unknown) => void,
 ): TestAndRunner | null {
   try {
-    console.time("parseFromJson");
     const parsedTest = parseFromJson(testContent, fromJson);
-    console.timeEnd("parseFromJson");
 
     return {
       runner: name,
@@ -108,7 +107,6 @@ function tryToPrepareTestRunner<T>(
       test: () => run(parsedTest),
     };
   } catch (e) {
-    console.timeEnd("parseFromJson");
     onError(name, e);
     return null;
   }
