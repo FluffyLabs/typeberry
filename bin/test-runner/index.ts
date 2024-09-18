@@ -3,6 +3,9 @@ import { run } from "node:test";
 import { spec } from "node:test/reporters";
 import { Reporter } from "./reporter";
 
+const distDir = `${__dirname}/../../dist`;
+fs.mkdirSync(distDir);
+
 const stream = run({
   files: [`${__dirname}/cases.ts`],
   timeout: 120 * 1000,
@@ -13,4 +16,4 @@ const stream = run({
 
 stream.compose(new spec()).pipe(process.stdout);
 
-stream.compose(new Reporter()).pipe(fs.createWriteStream(`${__dirname}/../../dist/jamtestvectors.txt`));
+stream.compose(new Reporter()).pipe(fs.createWriteStream(`${distDir}/jamtestvectors.txt`));
