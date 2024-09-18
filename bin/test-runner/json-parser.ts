@@ -27,7 +27,10 @@ export type ObjectFromJson<T> = {
   [K in keyof T]: FromJson<T[K]>;
 };
 
-export function optional<T>(type: ObjectFromJson<T>): FromJsonWithParser<T, unknown> {
+export function optional<T>(
+  type: ObjectFromJson<T>,
+  optionalKeys: string[], // TODO [ToDr] typing
+): FromJsonWithParser<T, unknown> {
   return [
     "object",
     (json: unknown, context?: string) => {
@@ -43,6 +46,8 @@ export function optional<T>(type: ObjectFromJson<T>): FromJsonWithParser<T, unkn
             const val = v as FromJson<unknown>;
             j[k] = parseFromJson(j[k], val, `${context}.${k}`);
           }
+        } else if (optionalKeys.indexOf(k) === -1) {
+          throw new Error(`[${context}] Missing non-optional key "${k}" in ${Object.keys(json)}`);
         }
       }
 
@@ -133,15 +138,20 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
 
   const keysDifference = diffKeys(obj, jsonDescription);
   if (keysDifference.length > 0) {
-    throw new Error(
-      `[${context}] Unexpected or missing keys: ${keysDifference.join(" | ")} ${JSON.stringify(obj)} ${JSON.stringify(jsonDescription)}`,
+    const e = new Error(
+      `[${context}] Unexpected or missing keys: ${keysDifference.join(" | ")}
+          Data: ${Object.keys(obj)}
+          Schema: ${Object.keys(jsonDescription)}`,
     );
+    throw e;
   }
 
+  console.time(`nested ${context}`);
   for (const key of Object.keys(jsonDescription)) {
     const v = obj[key];
     obj[key] = parseFromJson(v, c[key], `${context}.${key}`);
   }
+  console.timeEnd(`nested ${context}`);
 
   return obj as T;
 }

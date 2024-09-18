@@ -1,6 +1,6 @@
 import { BytesBlob } from "@typeberry/bytes";
 import { newLogger } from "@typeberry/logger";
-import type { FromJson } from "./json-parser";
+import type { FromJson } from "../json-parser";
 
 export class EcTest {
   static fromJson: FromJson<EcTest> = {
@@ -56,24 +56,24 @@ export class SegmentRoot {
   chunks_root!: BytesBlob;
 }
 
-const logger = newLogger(__filename);
+const logger = newLogger(__filename, "test-runner/erasure-coding");
 
 export async function runEcTest(test: EcTest) {
-  logger.log(JSON.stringify(test, null, 2));
-  throw new Error("Not implemented yet!");
+  logger.trace(JSON.stringify(test, null, 2));
+  logger.error("Not implemented yet!");
 }
 
 export async function runPageProofTest(test: PageProof) {
-  logger.log(JSON.stringify(test, null, 2));
-  throw new Error("Not implemented yet!");
+  logger.trace(JSON.stringify(test, null, 2));
+  logger.error("Not implemented yet!");
 }
 
 export async function runSegmentEcTest(test: SegmentEcTest) {
-  logger.log(JSON.stringify(test, null, 2));
-  throw new Error("Not implemented yet!");
+  logger.trace(JSON.stringify(test, null, 2));
+  logger.error("Not implemented yet!");
 }
 
 export async function runSegmentRootTest(test: SegmentRoot) {
-  logger.log(JSON.stringify(test, null, 2));
-  throw new Error("Not implemented yet!");
+  logger.trace(JSON.stringify(test, null, 2));
+  logger.error("Not implemented yet!");
 }

@@ -21,7 +21,7 @@ jobs:
       - name: Checkout JAM test vectors
         uses: actions/checkout@v4
         with:
-          repository: AcalaNetwork/jamtestvectors
+          repository: FluffyLabs/jamtestvectors
           path: "./jamtestvectors"
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
