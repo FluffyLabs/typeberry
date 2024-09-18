@@ -29,21 +29,20 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
-      - run: npm start -w @typeberry/test-runner -- ./jamtestvectors/**/*.json
+      - run: npm run report -w @typeberry/test-runner
       - name: Display results
         if: always()
-        run: cat ./jamtestvectors/results.txt
+        run: cat ./dist/jamtestvectors.txt
       - name: Comment PR
         if: always() && github.event_name == 'pull_request'
         uses: thollander/actions-comment-pull-request@v2
         with:
-          filePath: ./jamtestvectors/results.txt
+          filePath: ./dist/jamtestvectors.txt
           comment_tag: jamtestvectors
       - name: Upload new transaction log
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           path: |
-            ./jamtestvectors/results.json
-            ./jamtestvectors/results.txt
+            ./dist/jamtestvectors.txt
           name: jamtestvectors-results
