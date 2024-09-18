@@ -16,6 +16,8 @@ describe("Codec Descriptors / class", () => {
     public readonly parentHeaderHash: Bytes<32>;
     public readonly priorStateRoot: Bytes<32>;
     public readonly extrinsicHash: Bytes<32>;
+    // this key is ignored, since it's not a string one.
+    public readonly 0: number;
 
     constructor(o: Record<TestHeader>) {
       this.parentHeaderHash = o.parentHeaderHash;

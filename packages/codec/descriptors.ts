@@ -38,7 +38,7 @@ export type Descriptor<T> = {
  * Converts a class `T` into an object with the same fields as the class.
  */
 export type Record<T> = {
-  [K in keyof T]: T[K];
+  [K in Extract<keyof T, string>]: T[K];
 };
 
 /**
@@ -46,21 +46,21 @@ export type Record<T> = {
  * with the same names and return values as the fields of that class.
  */
 type LazyRecord<T> = {
-  [K in keyof T]: () => T[K];
+  [K in Extract<keyof T, string>]: () => T[K];
 };
 
 /**
  * Same as `Record<T>`, but the fields are all optional.
  */
 type OptionalRecord<T> = {
-  [K in keyof T]?: T[K];
+  [K in Extract<keyof T, string>]?: T[K];
 };
 
 /**
  * `Descriptor` of a complex type of some class with a bunch of public fields.
  */
 type DescriptorRecord<T> = {
-  [K in keyof T]: Descriptor<T[K]>;
+  [K in Extract<keyof T, string>]: Descriptor<T[K]>;
 };
 
 /**
@@ -191,10 +191,9 @@ export const BLOB = descriptor<BytesBlob>(
 
 /** Fixed-length bytes sequence. */
 export const BYTES = (() => {
-  const cache = new Map<string, unknown>();
+  const cache = new Map<number, unknown>();
   return <N extends number>(len: N): Descriptor<Bytes<N>> => {
-    const key = `${len}`;
-    let ret = cache.get(key) as Descriptor<Bytes<N>>;
+    let ret = cache.get(len) as Descriptor<Bytes<N>>;
     if (!ret) {
       ret = descriptor<Bytes<N>>(
         `Bytes<${len}>`,
@@ -202,7 +201,7 @@ export const BYTES = (() => {
         (e, v) => e.bytes(v),
         (d) => d.bytes(len),
       );
-      cache.set(key, ret);
+      cache.set(len, ret);
     }
     return ret;
   };
@@ -385,11 +384,12 @@ abstract class AbstractView<T> {
 /** Typesafe iteration of every descriptor in the record object. */
 function forEachDescriptor<T>(
   descriptors: DescriptorRecord<T>,
-  f: <K extends keyof T>(key: K, val: Descriptor<T[K]>) => void,
+  f: <K extends keyof DescriptorRecord<T>>(key: K, val: Descriptor<T[K]>) => void,
 ) {
   for (const key in descriptors) {
-    if (key in descriptors) {
-      f(key, descriptors[key]);
+    if (typeof key === "string" && key in descriptors) {
+      const k = key as keyof DescriptorRecord<T>;
+      f(k, descriptors[k]);
     }
   }
 }
