@@ -1,16 +1,19 @@
 import type { Registers } from "../registers";
 import { MAX_VALUE, MIN_VALUE } from "./math-consts";
-import { add, mulLowerUnsigned, mulUpperSigned, mulUpperUnsigned, sub } from "./math-utils";
+import { addWithOverflow, mulLowerUnsigned, mulUpperSigned, mulUpperUnsigned, sub } from "./math-utils";
 
 export class MathOps {
   constructor(private regs: Registers) {}
 
   add(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = add(this.regs.asUnsigned[firstIndex], this.regs.asUnsigned[secondIndex]);
+    this.regs.asUnsigned[resultIndex] = addWithOverflow(
+      this.regs.asUnsigned[firstIndex],
+      this.regs.asUnsigned[secondIndex],
+    );
   }
 
   addImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = add(this.regs.asUnsigned[firstIndex], immediateValue);
+    this.regs.asUnsigned[resultIndex] = addWithOverflow(this.regs.asUnsigned[firstIndex], immediateValue);
   }
 
   mul(firstIndex: number, secondIndex: number, resultIndex: number) {

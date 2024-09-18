@@ -85,6 +85,35 @@ describe("Memory", () => {
 
       assert.deepStrictEqual(loadResult, new PageFault(PAGE_SIZE));
     });
+
+    it("should correctly load data from two pages - the last page and the first page", () => {
+      const firstPageNumber = createPageNumber((MEMORY_SIZE - PAGE_SIZE + 1) / PAGE_SIZE);
+      const secondPageNumber = createPageNumber(0);
+      const bytes = new Uint8Array([1, 2, 3, 4, 5]);
+      const firstPage = new ReadablePage(
+        firstPageNumber,
+        new Uint8Array([...new Uint8Array(PAGE_SIZE - bytes.length), ...bytes]),
+      );
+      const secondPage = new ReadablePage(
+        secondPageNumber,
+        new Uint8Array([...bytes, ...new Uint8Array(PAGE_SIZE - bytes.length)]),
+      );
+      const memoryMap = new Map<PageNumber, MemoryPage>();
+      memoryMap.set(firstPageNumber, firstPage);
+      memoryMap.set(secondPageNumber, secondPage);
+      const sbrkIndex = createMemoryIndex(0);
+      const endHeapIndex = createMemoryIndex(MEMORY_SIZE);
+      const memory = new Memory({ memory: memoryMap, sbrkIndex, endHeapIndex });
+      const lengthToLoad = 4;
+      const result = new Uint8Array(lengthToLoad);
+      const addressToLoad = createMemoryIndex(MEMORY_SIZE - 1);
+      const expectedResult = new Uint8Array([4, 5, 1, 2]);
+
+      const loadResult = memory.loadInto(result, addressToLoad, lengthToLoad);
+
+      assert.deepStrictEqual(loadResult, null);
+      assert.deepStrictEqual(result, expectedResult);
+    });
   });
 
   describe("storeFrom", () => {
@@ -129,12 +158,11 @@ describe("Memory", () => {
     });
 
     it("should correctly store data on two pages", () => {
-      const pageNumber = createPageNumber(0);
-      const firstPage = new WriteablePage(pageNumber, new Uint8Array(PAGE_SIZE));
-      const secondPage = new WriteablePage(pageNumber, new Uint8Array());
-      const memoryMap = new Map<PageNumber, MemoryPage>();
       const firstPageNumber = createPageNumber(0);
       const secondPageNumber = createPageNumber(1);
+      const firstPage = new WriteablePage(firstPageNumber, new Uint8Array(PAGE_SIZE));
+      const secondPage = new WriteablePage(secondPageNumber, new Uint8Array());
+      const memoryMap = new Map<PageNumber, MemoryPage>();
       const sbrkIndex = createMemoryIndex(0);
       const endHeapIndex = createMemoryIndex(MEMORY_SIZE);
       memoryMap.set(firstPageNumber, firstPage);
@@ -145,11 +173,11 @@ describe("Memory", () => {
       const expectedMemoryMap = new Map();
       expectedMemoryMap.set(
         firstPageNumber,
-        new WriteablePage(pageNumber, new Uint8Array([...new Uint8Array(PAGE_SIZE - 2), 1, 2])),
+        new WriteablePage(firstPageNumber, new Uint8Array([...new Uint8Array(PAGE_SIZE - 2), 1, 2])),
       );
       expectedMemoryMap.set(
         secondPageNumber,
-        new WriteablePage(pageNumber, new Uint8Array([3, 4, ...new Uint8Array(MIN_ALLOCATION_LENGTH - 2)])),
+        new WriteablePage(secondPageNumber, new Uint8Array([3, 4, ...new Uint8Array(MIN_ALLOCATION_LENGTH - 2)])),
       );
 
       const expectedMemory = {
@@ -178,6 +206,42 @@ describe("Memory", () => {
       const storeResult = memory.storeFrom(addressToStore, new Uint8Array(4));
 
       assert.deepStrictEqual(storeResult, new PageFault(PAGE_SIZE));
+    });
+
+    it("should correctly store data on two pages - the last page and the first page", () => {
+      const firstPageNumber = createPageNumber((MEMORY_SIZE - PAGE_SIZE + 1) / PAGE_SIZE);
+      const secondPageNumber = createPageNumber(0);
+      const firstPage = new WriteablePage(firstPageNumber, new Uint8Array(PAGE_SIZE));
+      const secondPage = new WriteablePage(secondPageNumber, new Uint8Array(PAGE_SIZE));
+      const memoryMap = new Map<PageNumber, MemoryPage>();
+      const sbrkIndex = createMemoryIndex(0);
+      const endHeapIndex = createMemoryIndex(MEMORY_SIZE);
+      memoryMap.set(firstPageNumber, firstPage);
+      memoryMap.set(secondPageNumber, secondPage);
+      const memory = new Memory({ memory: memoryMap, sbrkIndex, endHeapIndex });
+      const dataToStore = new Uint8Array([1, 2, 3, 4]);
+      const addressToStore = createMemoryIndex(MEMORY_SIZE - 1);
+      const expectedMemoryMap = new Map();
+      expectedMemoryMap.set(
+        firstPageNumber,
+        new WriteablePage(firstPageNumber, new Uint8Array([...new Uint8Array(PAGE_SIZE - 2), 1, 2])),
+      );
+      expectedMemoryMap.set(
+        secondPageNumber,
+        new WriteablePage(secondPageNumber, new Uint8Array([3, 4, ...new Uint8Array(PAGE_SIZE - 2)])),
+      );
+
+      const expectedMemory = {
+        sbrkIndex,
+        virtualSbrkIndex: sbrkIndex,
+        endHeapIndex,
+        memory: expectedMemoryMap,
+      };
+
+      const storeResult = memory.storeFrom(addressToStore, dataToStore);
+
+      assert.deepStrictEqual(storeResult, null);
+      assert.deepEqual(memory, expectedMemory);
     });
   });
 

@@ -2,12 +2,14 @@ import { BENCHMARKS_DIR } from "./setup";
 import type { Result } from "./types";
 
 type ErrorSummary = {
+  file: string;
   name: string;
   filePath: string;
   err: string;
 };
 
 type BenchmarkSummary = {
+  file: string;
   name: string;
   filePath: string;
   ops: string;
@@ -21,13 +23,13 @@ export function formatResults(input: Map<string, Result>, commitHash?: string) {
 
   for (const [name, diffs] of input.entries()) {
     for (const [idx, diff] of diffs.diff.entries()) {
-      const fullName = `${name}[${idx}] → ${diff.name}`;
       const filePath = commitHash ? `../blob/${commitHash}/${BENCHMARKS_DIR}/${name}` : `./${BENCHMARKS_DIR}/${name}`;
       const curr = diffs.current.results?.[idx];
-
+      const file = `${name}[${idx}]`;
       if (curr) {
         all.push({
-          name: fullName,
+          name: diff.name,
+          file,
           filePath,
           ops: `${curr.ops} ±${curr.margin}%`,
           comment: curr.percentSlower === 0 ? "fastest ✅" : `${curr.percentSlower}% slower`,
@@ -36,7 +38,8 @@ export function formatResults(input: Map<string, Result>, commitHash?: string) {
 
       if ("err" in diff && diff.err) {
         errors.push({
-          name: fullName,
+          name: diff.name,
+          file,
           filePath,
           err: diff.err,
         });
@@ -62,9 +65,9 @@ function formatDetails(all: BenchmarkSummary[]) {
 <details>
 <summary>View all</summary>
 
-| Benchmark | Ops |  |
-|-----------|-----|--|
-${all.map((b) => `| [${b.name}](${b.filePath}) | ${b.ops} | ${b.comment} |`).join("\n")}
+| File | Benchmark | Ops |  |
+|------|-----------|-----|--|
+${all.map((b) => `| [${b.file}](${b.filePath}) | ${b.name} | ${b.ops} | ${b.comment} |`).join("\n")}
 </details>
 `;
 }
@@ -75,8 +78,8 @@ function formatErrors(errors: ErrorSummary[]) {
   }
 
   return `
-| Benchmark | Error |
-|-----------|-------|
-${errors.map((e) => `| [${e.name}](${e.filePath}) | ${e.err} |`).join("\n")}
+| File | Benchmark | Error |
+|------|-----------|-------|
+${errors.map((e) => `| [${e.file}](${e.filePath}) | ${e.name} |  ${e.err} |`).join("\n")}
 `;
 }
