@@ -4,7 +4,8 @@
   "description": "JAM-test-vectors runner.",
   "main": "index.ts",
   "scripts": {
-    "start": "ts-node ./index.ts",
+    "report": "ts-node ./index.ts",
+    "start": "ts-node ./cases.ts",
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",
