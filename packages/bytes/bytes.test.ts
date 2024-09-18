@@ -17,7 +17,7 @@ describe("BytesBlob", () => {
       BytesBlob.parseBlob("0xff2g");
       assert.fail("Should throw an exception");
     } catch (e) {
-      assert.strictEqual(`${e}`, "Error: Invalid characters in hex byte string: 2g");
+      assert.strictEqual(`${e}`, "Error: Invalid characters in hex byte string: g");
     }
   });
 
