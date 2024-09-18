@@ -1,0 +1,33 @@
+{
+  "name": "Bytes / hex parsing",
+  "date": "2024-09-16T11:53:30.029Z",
+  "version": null,
+  "results": [
+    {
+      "name": "parse hex using `Number` with NaN checking",
+      "ops": 134270.15,
+      "margin": 0.1,
+      "percentSlower": 87.09
+    },
+    {
+      "name": "parse hex from char codes",
+      "ops": 983048.54,
+      "margin": 0.29,
+      "percentSlower": 0
+    },
+    {
+      "name": "parse hex from string nibbles",
+      "ops": 556035.34,
+      "margin": 0.25,
+      "percentSlower": 40.21
+    }
+  ],
+  "fastest": {
+    "name": "parse hex from char codes",
+    "index": 1
+  },
+  "slowest": {
+    "name": "parse hex using `Number` with NaN checking",
+    "index": 0
+  }
+}

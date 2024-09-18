@@ -1,0 +1,27 @@
+{
+  "name": "Bytes / into hex",
+  "date": "2024-09-16T11:15:49.606Z",
+  "version": null,
+  "results": [
+    {
+      "name": "number toString + padding",
+      "ops": 318696.03,
+      "margin": 0.1,
+      "percentSlower": 50
+    },
+    {
+      "name": "manual",
+      "ops": 358682.53,
+      "margin": 0.1,
+      "percentSlower": 0
+    }
+  ],
+  "fastest": {
+    "name": "manual",
+    "index": 1
+  },
+  "slowest": {
+    "name": "number toString + padding",
+    "index": 0
+  }
+}
