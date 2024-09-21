@@ -1,11 +1,11 @@
 import { EventEmitter } from "node:events";
 import type { MessagePort, TransferListItem } from "node:worker_threads";
-import { newLogger } from "@typeberry/logger";
+import { Logger } from "@typeberry/logger";
 import { check } from "@typeberry/utils";
 import { type Message, isValidMessage } from "./message";
 
 const MAX_ID = 2 ** 32;
-const logger = newLogger(__filename, "state-machine/port");
+const logger = Logger.new(__filename, "state-machine/port");
 
 /**
  * Wrapper around `MessagePort` to communicate between workers or threads.

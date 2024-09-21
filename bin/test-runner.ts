@@ -3,7 +3,7 @@ import * as fs from "node:fs/promises";
 import { test } from "node:test";
 
 import type { TestContext } from "node:test";
-import { newLogger } from "@typeberry/logger";
+import { Logger } from "@typeberry/logger";
 import {
   EcTest,
   PageProof,
@@ -19,7 +19,7 @@ import { PvmTest, runPvmTest } from "@typeberry/test-runner/pvm";
 import { SafroleTest, runSafroleTest } from "@typeberry/test-runner/safrole";
 import { runTrieTest, trieTestSuiteFromJson } from "@typeberry/test-runner/trie";
 
-const logger = newLogger(__filename);
+const logger = Logger.new(__filename, "test-runner");
 
 main().then(logger.log).catch(logger.error);
 

@@ -1,5 +1,5 @@
 import { BytesBlob } from "@typeberry/bytes";
-import { newLogger } from "@typeberry/logger";
+import { Logger } from "@typeberry/logger";
 import type { FromJson } from "./json-parser";
 
 export class EcTest {
@@ -56,7 +56,7 @@ export class SegmentRoot {
   chunks_root!: BytesBlob;
 }
 
-const logger = newLogger(__filename);
+const logger = Logger.new(__filename, "test-runner/erasure-coding");
 
 export async function runEcTest(test: EcTest) {
   logger.log(JSON.stringify(test, null, 2));

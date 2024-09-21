@@ -1,13 +1,6 @@
 import { ConsoleTransport } from "./console";
-import { Level, type Options } from "./options";
+import { Level, type Options, parseLoggerOptions } from "./options";
 export { Level, parseLoggerOptions } from "./options";
-
-/**
- * DEPRECATED: use `Logger.new` instead.
- */
-export function newLogger(fileName: string, moduleName?: string) {
-  return Logger.new(fileName, moduleName);
-}
 
 const DEFAULT_OPTIONS = {
   workingDir: "",
@@ -46,7 +39,7 @@ export class Logger {
    *
    * Changing the options affects all previously created loggers.
    */
-  static configure(options: Options) {
+  static configureAllFromOptions(options: Options) {
     // find minimal level to optimise logging in case
     // we don't care about low-level logs.
     const minimalLevel = Array.from(options.modules.values()).reduce((level, modLevel) => {
@@ -58,6 +51,17 @@ export class Logger {
     // set the global config
     GLOBAL_CONFIG.options = options;
     GLOBAL_CONFIG.transport = transport;
+  }
+
+  /**
+   * Global configuration of all loggers.
+   *
+   * Parse configuration options from an input string typically obtained
+   * from environment variable `JAM_LOG`.
+   */
+  static configureAll(input: string, defaultLevel: Level, workingDir?: string) {
+    const options = parseLoggerOptions(input, defaultLevel, workingDir);
+    Logger.configureAllFromOptions(options);
   }
 
   constructor(
