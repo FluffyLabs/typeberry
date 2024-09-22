@@ -29,8 +29,8 @@
     },
     {
       "name": "Get only third fields from View",
-      "ops": 2909786.3,
-      "margin": 1,
+      "ops": 3021231.74,
+      "margin": 5,
       "percentSlower": 21.7
     },
     {
