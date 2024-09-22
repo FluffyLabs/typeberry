@@ -4,7 +4,11 @@ import { spec } from "node:test/reporters";
 import { Reporter } from "./reporter";
 
 const distDir = `${__dirname}/../../dist`;
-fs.mkdirSync(distDir);
+try {
+  fs.mkdirSync(distDir);
+} catch (e) {
+  // ignore
+}
 
 const stream = run({
   files: [`${__dirname}/cases.ts`],
@@ -16,4 +20,11 @@ const stream = run({
 
 stream.compose(new spec()).pipe(process.stdout);
 
-stream.compose(new Reporter()).pipe(fs.createWriteStream(`${distDir}/jamtestvectors.txt`));
+const reporter = new Reporter();
+const fileStream = fs.createWriteStream(`${distDir}/jamtestvectors.txt`);
+stream
+  .compose(reporter)
+  .on("end", () => {
+    reporter.finalize(fileStream);
+  })
+  .pipe(fileStream);

@@ -25,7 +25,10 @@ Logger.configure(options);
 
 main()
   .then((r) => logger.log(r))
-  .catch((e) => logger.error(e));
+  .catch((e) => {
+    logger.error(e);
+    process.exit(-1);
+  });
 
 async function main() {
   const relPath = `${__dirname}/../..`;
