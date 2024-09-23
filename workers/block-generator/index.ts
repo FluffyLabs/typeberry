@@ -3,7 +3,7 @@ import { Worker, isMainThread, parentPort } from "node:worker_threads";
 
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
-import { newLogger } from "@typeberry/logger";
+import { Logger } from "@typeberry/logger";
 import {
   type Finished,
   type WorkerInitialized,
@@ -13,7 +13,7 @@ import {
   stateMachineWorker,
 } from "./state-machine";
 
-const logger = newLogger(__filename, "block-generator");
+const logger = Logger.new(global.__filename, "block-generator");
 
 if (!isMainThread) {
   const machine = stateMachineWorker();

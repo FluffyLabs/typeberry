@@ -1,4 +1,4 @@
-import { newLogger } from "@typeberry/logger";
+import { Logger } from "@typeberry/logger";
 
 type ExtractName<T> = T extends string ? (T extends infer U ? U : never) : never;
 
@@ -70,7 +70,7 @@ export type RespondAndTransitionTo<TRes, TState> = {
   transitionTo?: TransitionTo<TState>;
 };
 
-const logger = newLogger(__filename, "state-machine/state");
+const logger = Logger.new(global.__filename, "state-machine/state");
 /**
  * A state object that can be extended with some state-specific methods.
  *

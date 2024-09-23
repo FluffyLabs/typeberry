@@ -1,4 +1,4 @@
-import { newLogger } from "@typeberry/logger";
+import { Logger } from "@typeberry/logger";
 import type { TypedChannel } from "@typeberry/state-machine";
 import { type RespondAndTransitionTo, State, StateMachine, type TransitionTo } from "@typeberry/state-machine";
 
@@ -39,7 +39,7 @@ export class MainInitialized extends State<"initialized(main)", MainReady> {
   }
 }
 
-const logger = newLogger(__filename, "block-generator");
+const logger = Logger.new(global.__filename, "block-generator");
 
 export class MainReady extends State<"ready(main)", Finished> {
   constructor() {
