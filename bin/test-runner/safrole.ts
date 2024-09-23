@@ -136,7 +136,7 @@ export class SafroleTest {
   post_state!: JsonState;
 }
 
-const logger = Logger.new(__filename, "test-runner/safrole");
+const logger = Logger.new(global.__filename, "test-runner/safrole");
 
 export async function runSafroleTest(testContent: SafroleTest) {
   const preState = convertKeysToCamelCaseFuncs(testContent.pre_state);

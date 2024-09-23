@@ -39,7 +39,7 @@ export class MainInitialized extends State<"initialized(main)", MainReady> {
   }
 }
 
-const logger = Logger.new(__filename, "block-generator");
+const logger = Logger.new(global.__filename, "block-generator");
 
 export class MainReady extends State<"ready(main)", Finished> {
   constructor() {

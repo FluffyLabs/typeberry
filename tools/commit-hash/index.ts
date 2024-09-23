@@ -6,7 +6,7 @@ import type { PushEvent } from "@octokit/webhooks-types";
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 import { Logger } from "@typeberry/logger";
 
-const logger = Logger.new(__filename, "commit-hash");
+const logger = Logger.new(global.__filename, "commit-hash");
 
 type TransactionPayload = [
   string, // repo name

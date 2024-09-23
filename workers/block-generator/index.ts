@@ -13,7 +13,7 @@ import {
   stateMachineWorker,
 } from "./state-machine";
 
-const logger = Logger.new(__filename, "block-generator");
+const logger = Logger.new(global.__filename, "block-generator");
 
 if (!isMainThread) {
   const machine = stateMachineWorker();

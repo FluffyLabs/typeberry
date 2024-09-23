@@ -26,8 +26,9 @@ export class Logger {
    * The logger will use a global configuration which can be changed using
    * [`configureLogger`] function.
    */
-  static new(fileName: string, moduleName?: string) {
-    return new Logger(moduleName ?? fileName, fileName, GLOBAL_CONFIG);
+  static new(fileName?: string, moduleName?: string) {
+    let fName = fileName ?? 'unknown';
+    return new Logger(moduleName ?? fName, fName, GLOBAL_CONFIG);
   }
 
   /**

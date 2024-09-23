@@ -19,7 +19,7 @@ import { PvmTest, runPvmTest } from "@typeberry/test-runner/pvm";
 import { SafroleTest, runSafroleTest } from "@typeberry/test-runner/safrole";
 import { runTrieTest, trieTestSuiteFromJson } from "@typeberry/test-runner/trie";
 
-const logger = Logger.new(__filename, "test-runner");
+const logger = Logger.new(global.__filename, "test-runner");
 
 main().then(logger.log).catch(logger.error);
 

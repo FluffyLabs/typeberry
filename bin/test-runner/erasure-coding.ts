@@ -56,7 +56,7 @@ export class SegmentRoot {
   chunks_root!: BytesBlob;
 }
 
-const logger = Logger.new(__filename, "test-runner/erasure-coding");
+const logger = Logger.new(global.__filename, "test-runner/erasure-coding");
 
 export async function runEcTest(test: EcTest) {
   logger.log(JSON.stringify(test, null, 2));
