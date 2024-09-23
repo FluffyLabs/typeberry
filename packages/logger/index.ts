@@ -27,7 +27,7 @@ export class Logger {
    * [`configureLogger`] function.
    */
   static new(fileName?: string, moduleName?: string) {
-    let fName = fileName ?? 'unknown';
+    const fName = fileName ?? "unknown";
     return new Logger(moduleName ?? fName, fName, GLOBAL_CONFIG);
   }
 
