@@ -7,11 +7,11 @@ See other files as examples.
 # Running
 
 ```
-$ npm run benchmarks
+$ npm start -w @typeberry/benchmark
 ```
 
-The top-level `benchmarks` command will run all benchmarks in this folder,
-and create results in `<benchmark-name>/output` directory.
+The top-level `start` command of `@typeberry/benchmark` package will run all
+benchmarks in this folder, and create results in `<benchmark-name>/output` directory.
 
 # Maintaining performance
 
@@ -24,5 +24,5 @@ If the exact results are not that important, and we only care about the
 file.
 
 The summary of execution of the benchmarks is created in
-`./results.json` and `./results.txt` files. When benchmarks are running on
-Github, the latter will be posted as a comment to the PR.
+`./dist/benchmarks/results.json` and `./dist/benchmarks/results.txt` files. When
+benchmarks are running on Github, the latter will be posted as a comment to the PR.

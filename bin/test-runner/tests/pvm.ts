@@ -5,7 +5,7 @@ import { type MemoryIndex, createMemoryIndex } from "@typeberry/pvm/memory/memor
 import { getPageNumber, getStartPageIndex } from "@typeberry/pvm/memory/memory-utils";
 import type { PageNumber } from "@typeberry/pvm/memory/pages/page-utils";
 import { Pvm, type RegistersArray } from "@typeberry/pvm/pvm";
-import type { FromJson } from "./json-parser";
+import type { FromJson } from "../json-parser";
 
 const uint8ArrayFromJson: ["object", (v: unknown) => Uint8Array] = [
   "object",

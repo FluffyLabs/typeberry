@@ -1,17 +1,37 @@
 const fs = require("node:fs");
+const childProcess = require("node:child_process");
 
 const packageToBuild = process.env.PACKAGE_NAME;
-const outFile = process.env.PACKAGE_OUT;
+const outDir = process.env.PACKAGE_OUT;
 
 if (!packageToBuild) {
   throw new Error(`Missing 'PACKAGE_NAME' environment variable.`);
 }
 
-if (!outFile) {
+if (!outDir) {
   throw new Error(`Missing 'PACKAGE_OUT' environment variable.`);
 }
 
 const data = `export * from "${packageToBuild}";`;
 fs.writeFileSync(`${__dirname}/pkg.ts`, data);
 
-module.exports = `${__dirname}/../../dist/${outFile}.js`;
+const DIST = `${__dirname}/../../dist/${outDir}`;
+
+const commitHashResult = childProcess.execSync("git rev-parse --short HEAD");
+const originalPackageJson = require(`${packageToBuild}/package.json`);
+// generate package.json
+const packageJson = JSON.stringify(
+  {
+    name: packageToBuild,
+    version: `${originalPackageJson.version}-${commitHashResult.toString("utf8").trim()}`,
+    main: "index.js",
+    author: originalPackageJson.author,
+    license: originalPackageJson.license,
+  },
+  null,
+  2,
+);
+fs.mkdirSync(DIST, { recursive: true });
+fs.writeFileSync(`${DIST}/package.json`, packageJson);
+
+module.exports = `${DIST}/index.js`;

@@ -98,7 +98,9 @@ test("JSON parser", async (t) => {
     } catch (e) {
       assert.strictEqual(
         `${e}`,
-        `Error: [<root>] Unexpected or missing keys: <missing>,"k" | "x",<missing> {"x":5,"v":true} {"k":"number","v":"boolean"}`,
+        `Error: [<root>] Unexpected or missing keys: <missing>,"k" | "x",<missing>
+          Data: x,v
+          Schema: k,v`,
       );
     }
   });
@@ -126,10 +128,13 @@ test("JSON parser", async (t) => {
   await t.test("optionals", () => {
     const json = `{"v": true }`;
     class TestClass {
-      static fromJson = optional<TestClass>({
-        k: "number",
-        v: "boolean",
-      });
+      static fromJson = optional<TestClass>(
+        {
+          k: "number",
+          v: "boolean",
+        },
+        ["k", "v"],
+      );
 
       k?: number;
       v?: boolean;

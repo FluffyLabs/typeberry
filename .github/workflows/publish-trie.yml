@@ -3,14 +3,14 @@ name: Publish Trie package
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
     paths: [
       'tools/builder/**',
       'packages/trie/**',
       'packages/bytes/**',
       '.github/workflows/publish-trie.yml'
     ]
+
 jobs:
   publish-trie:
     runs-on: ubuntu-latest
@@ -28,20 +28,8 @@ jobs:
         registry-url: 'https://registry.npmjs.org'
     - name: Install dependencies
       run: npm ci
-    - name: Get commit hash
-      run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
     - name: Build Trie
-      run: npm run build-trie
-    - name: Generate package.json
-      working-directory: ./dist/trie
-      run: |
-        echo '{
-          "name": "@typeberry/trie",
-          "version": "0.0.1-${{ env.COMMIT_HASH }}",
-          "main": "trie.js",
-          "author": "Fluffy Labs",
-          "license": "MPL-2.0"
-        }' > package.json
+      run: npm build -w @typeberry/trie
     - name: Publish package
       working-directory: ./dist/trie
       env:

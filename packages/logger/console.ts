@@ -51,18 +51,20 @@ export class ConsoleTransport implements Transport {
 
   push(level: Level, moduleName: string, fileName: string, val: string) {
     const shortName = fileName.replace(this.options.workingDir, "");
+    const shortModule = moduleName.replace(this.options.workingDir, "");
     const configuredLevel = findLevel(this.options, moduleName);
     const lvlText = Level[level].padEnd(5);
     if (level < configuredLevel) {
       return;
     }
 
+    const msg = `${lvlText} [${shortModule}] ${val} @ ${shortName}`;
     if (level === Level.WARN) {
-      console.warn(`${lvlText} [${moduleName}] ${val} @ ${shortName}`);
+      console.warn(msg);
     } else if (level === Level.ERROR) {
-      console.error(`${lvlText} [${moduleName}] ${val} @ ${shortName}`);
+      console.error(msg);
     } else {
-      console.info(`${lvlText} [${moduleName}] ${val} @ ${shortName}`);
+      console.info(msg);
     }
   }
 }

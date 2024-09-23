@@ -4,7 +4,7 @@ export { Level, parseLoggerOptions } from "./options";
 
 const DEFAULT_OPTIONS = {
   workingDir: "",
-  defaultLevel: Level.TRACE,
+  defaultLevel: Level.LOG,
   modules: new Map(),
 };
 

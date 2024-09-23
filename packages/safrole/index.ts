@@ -53,7 +53,8 @@ export class Safrole {
   async transition(input: {
     slot: number;
     entropy: EntropyHash;
-    extrinsics: TicketEnvelope[];
+    offenders: Ed25519Key[];
+    extrinsic: TicketEnvelope[];
   }): Promise<StateDiff> {
     const newState: StateDiff = {};
     if (this.state.timeslot() > input.slot) {
@@ -64,7 +65,7 @@ export class Safrole {
 
     newState.timeslot = input.slot;
     newState.entropy = [input.entropy];
-    for (const v of input.extrinsics) {
+    for (const v of input.extrinsic) {
       // TODO [ToDr] Verify signatures
     }
 
