@@ -49,6 +49,20 @@ type LazyRecord<T> = {
   [K in Extract<keyof T, string>]: () => T[K];
 };
 
+type ViewRecord<T> = Pick<{
+  [K in keyof T]: () => View<T[K]>;
+}, ViewKeys<T>>;
+
+const VIEW_FIELD = "View";
+
+type ViewKeys<T> = {
+  [K in keyof T]: T[K] extends WithView<T[K]> ? K : never;
+}[Extract<keyof T, string>];
+
+function viewMethod(key: string) {
+  return `${key}View`;
+}
+
 /**
  * Same as `Record<T>`, but the fields are all optional.
  */
@@ -85,7 +99,7 @@ type DescriptorRecord<T> = {
  * A view can be converted into `T` at any point via [`AbstractView.materialize`]
  * method.
  */
-export type View<T> = AbstractView<T> & LazyRecord<T>;
+export type View<T> = AbstractView<T> & LazyRecord<T> & ViewRecord<T>;
 
 /** A constructor for the `View<T>`. */
 type ViewConstructor<T> = {
@@ -95,7 +109,7 @@ type ViewConstructor<T> = {
 
 /** An extra `ViewConstructor` attached to some `Descriptor`. */
 type WithView<T> = {
-  View: ViewConstructor<T>;
+  [VIEW_FIELD]: ViewConstructor<T>;
 };
 
 /** A constructor of basic data object that takes a `Record<T>`. */
@@ -275,6 +289,15 @@ export const CLASS = <T>(Class: ClassConstructor<T>, descriptors: DescriptorReco
           return this.getOrDecode(key);
         },
       });
+
+      if (VIEW_FIELD in descriptors[key]) {
+        // add view method.
+        Object.defineProperty(ClassView.prototype, viewMethod(key), {
+          value: function (this: ClassView)  {
+            return this.getOrDecodeView(key);
+          }
+        })
+      }
     }
   });
 
