@@ -42,15 +42,12 @@ async function main() {
   logger.info(`Creating tests for ${files.length} files.`);
   for (const file of files) {
     const data = await fs.readFile(`${relPath}/${file}`, "utf8");
+    // TODO [ToDr] We might want to implement a custom JSON parser
+    // to avoid-double converting to expected types.
+    const testContent = JSON.parse(data);
+    const testCases = prepareTests(testContent, file);
 
-    tests.push(
-      ...(() => {
-        // TODO [ToDr] We might want to implement a custom JSON parser
-        // to avoid-double converting to expected types.
-        const testContent = JSON.parse(data);
-        return prepareTest(testContent, file);
-      })(),
-    );
+    tests.push(...testCases);
   }
 
   // now we're going to aggregate the tests by their runner.
@@ -123,7 +120,7 @@ type TestAndRunner = {
   test: () => Promise<void>;
 };
 
-function prepareTest(testContent: unknown, file: string): TestAndRunner[] {
+function prepareTests(testContent: unknown, file: string): TestAndRunner[] {
   const errors: [string, unknown][] = [];
   const handleError = (name: string, e: unknown) => errors.push([name, e]);
 
