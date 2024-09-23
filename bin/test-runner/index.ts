@@ -6,7 +6,7 @@ import { Reporter } from "./reporter";
 const distDir = `${__dirname}/../../dist`;
 try {
   fs.mkdirSync(distDir);
-} catch (e) {
+} catch {
   // ignore
 }
 
