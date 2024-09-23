@@ -1,13 +1,13 @@
 import fs from "node:fs";
 import path from "node:path";
-import { newLogger } from "@typeberry/logger";
+import { Logger } from "@typeberry/logger";
 import chalk from "chalk";
 import { formatResults } from "./format";
 import { BENCHMARKS_DIR, DIST_DIR, EXPECTED_DIR, OUTPUT_DIR, REL_DIR } from "./setup";
 import type { BennyResults, ComparisonResult, ErrorResult, OkResult, Result } from "./types";
 
 const commitHash = process.env.GITHUB_SHA;
-const logger = newLogger(__filename, "benchmarks");
+const logger = Logger.new(global.__filename, "benchmarks");
 
 runAllBenchmarks().catch((e) => logger.error(e));
 

@@ -1,5 +1,5 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { newLogger } from "@typeberry/logger";
+import { Logger } from "@typeberry/logger";
 import type { EntropyHash, State as SafroleState } from "@typeberry/safrole";
 import {
   Safrole,
@@ -141,7 +141,7 @@ export class SafroleTest {
   post_state!: JsonState;
 }
 
-const logger = newLogger(__filename, "test-runner/safrole");
+const logger = Logger.new(global.__filename, "test-runner/safrole");
 
 export async function runSafroleTest(testContent: SafroleTest) {
   const preState = convertPreStateToModel(testContent.pre_state);

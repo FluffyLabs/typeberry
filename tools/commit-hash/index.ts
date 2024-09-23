@@ -4,9 +4,9 @@ import * as github from "@actions/github";
 import type { PushEvent } from "@octokit/webhooks-types";
 // @ts-ignore ECMAScript module being incompatible with CommonJS.
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
-import { newLogger } from "@typeberry/logger";
+import { Logger } from "@typeberry/logger";
 
-const logger = newLogger(__filename);
+const logger = Logger.new(global.__filename, "commit-hash");
 
 type TransactionPayload = [
   string, // repo name

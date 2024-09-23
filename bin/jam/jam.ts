@@ -1,9 +1,9 @@
 import { isMainThread } from "node:worker_threads";
-import { newLogger } from "@typeberry/logger";
+import { Logger } from "@typeberry/logger";
 
 import * as blockGenerator from "@typeberry/block-generator";
 
-const logger = newLogger(__filename, "jam");
+const logger = Logger.new(global.__filename, "jam");
 
 export async function main() {
   if (isMainThread) {
