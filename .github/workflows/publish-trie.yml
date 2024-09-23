@@ -29,7 +29,7 @@ jobs:
     - name: Install dependencies
       run: npm ci
     - name: Build Trie
-      run: npm build -w @typeberry/trie
+      run: npm run build -w @typeberry/trie
     - name: Publish package
       working-directory: ./dist/trie
       env:
