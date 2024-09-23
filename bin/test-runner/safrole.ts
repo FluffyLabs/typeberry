@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { newLogger } from "@typeberry/logger";
+import { Logger } from "@typeberry/logger";
 import type { EntropyHash } from "@typeberry/safrole";
 import {
   Safrole,
@@ -136,7 +136,7 @@ export class SafroleTest {
   post_state!: JsonState;
 }
 
-const logger = newLogger(__filename);
+const logger = Logger.new(global.__filename, "test-runner/safrole");
 
 export async function runSafroleTest(testContent: SafroleTest) {
   const preState = convertKeysToCamelCaseFuncs(testContent.pre_state);
