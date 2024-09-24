@@ -24,6 +24,19 @@ export class Decoder {
     return new Decoder(source);
   }
 
+  /**
+   * Decode a single object from all of the source bytes.
+   *
+   * NOTE that if you need to decode multiple objects, it might be better
+   * to create a [`Decoder`] instance intstead of slicing the data.
+   */
+  static decodeObject<T>(decode: Decode<T>, source: BytesBlob | Uint8Array): T {
+    const decoder = source instanceof BytesBlob ? Decoder.fromBytesBlob(source) : Decoder.fromBlob(source);
+    const obj = decoder.object(decode);
+    decoder.finish();
+    return obj;
+  }
+
   private readonly dataView: DataView;
 
   private constructor(
@@ -31,6 +44,15 @@ export class Decoder {
     private offset = 0,
   ) {
     this.dataView = new DataView(source.buffer, source.byteOffset, source.byteLength);
+  }
+
+  /**
+   * Return a copy of this decoder.
+   *
+   * The copy will maintain it's own `offset` within the source.
+   */
+  clone(): Decoder {
+    return new Decoder(this.source, this.offset);
   }
 
   /**
@@ -213,6 +235,11 @@ export class Decoder {
   bitVecVarLen(): BitVec {
     const bitLength = this.varU32();
     return this.bitVecFixLen(bitLength);
+  }
+
+  /** Decode a composite object. */
+  object<T>(decode: Decode<T>): T {
+    return decode.decode(this);
   }
 
   /** Decode a possibly optional value. */
