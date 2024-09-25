@@ -77,7 +77,7 @@ export class Encoder {
     const encoder = Encoder.create({
       expectedLength: encode.sizeHintBytes ?? DEFAULT_START_LENGTH,
     });
-    encode.encode(encoder, object);
+    encoder.object(encode, object);
     return encoder.viewResult();
   }
 
