@@ -409,7 +409,7 @@ abstract class AbstractView<T> {
 
     for (let i = this.lastDecodedIdx + 1; i <= needIdx; i += 1) {
       const key = descriptorKeys[i] as keyof DescriptorRecord<T>;
-      const f = this.descriptors[k];
+      const descriptor = this.descriptors[k];
       const val = f.decode(this.d);
       this.cache.set(k, val);
       lastVal = val;
