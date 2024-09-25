@@ -63,7 +63,7 @@ type LazyRecord<T> = {
  * only for keys `NestedViewKeys`, returning a `View` objects.
  */
 type ViewRecord<T, NestedViewKeys extends keyof T> = {
-  [K in NestedViewKeys as `${K & string}View`]: <N extends ViewConstructor<T[K], never>>() => ViewOf<N>;
+  [K in NestedViewKeys as `${K & string}${typeof VIEW_FIELD}`]: <N extends ViewConstructor<T[K], never>>() => ViewOf<N>;
 };
 
 function viewMethod(key: string) {
@@ -107,14 +107,12 @@ type KeysWithView<T, D extends DescriptorRecord<T>> = {
  * the `View` will need to decode everything anyway, so
  * it makes more sense to decode that right away.
  *
- * A view can be converted into `T` at any point via [`AbstractView[MATERIALIZE]`]
+ * A view can be converted into `T` at any point via [`AbstractView.materialize`]
  * method.
  */
 export type View<T, NestedViewKeys extends keyof T = never> = AbstractView<T> &
   LazyRecord<T> &
   ViewRecord<T, NestedViewKeys>;
-/** A symbol for materialize function to avoid clashes. */
-export const MATERIALIZE = Symbol("materialize");
 
 /** A constructor for the `View<T>`. */
 type ViewConstructor<T, NestedViewKeys extends keyof T> = {
@@ -383,7 +381,7 @@ abstract class AbstractView<T> {
    * Create a concrete instance of `T` by decoding all of the remaining
    * fields that are not yet there in the cache.
    */
-  public [MATERIALIZE](): T {
+  public materialize(): T {
     const fields = Object.keys(this.descriptors) as (keyof T)[];
     // make sure to fully populate the cache.
     if (this.lastDecodedIdx + 1 !== fields.length) {
@@ -409,9 +407,9 @@ abstract class AbstractView<T> {
 
     for (let i = this.lastDecodedIdx + 1; i <= needIdx; i += 1) {
       const key = descriptorKeys[i] as keyof DescriptorRecord<T>;
-      const descriptor = this.descriptors[k];
-      const val = f.decode(this.d);
-      this.cache.set(k, val);
+      const descriptor = this.descriptors[key];
+      const val = descriptor.decode(this.d);
+      this.cache.set(key, val);
       lastVal = val;
     }
     this.lastDecodedIdx = needIdx;
@@ -440,7 +438,7 @@ abstract class AbstractView<T> {
   /**
    * Get the view of the field from cache or decode it.
    */
-  protected getOrDecodeView(field: keyof T): View<T[keyof T]> {
+  protected getOrDecodeView(field: keyof DescriptorRecord<T>): View<T[keyof T]> {
     const cached = this.cache.get(field);
     if (cached !== undefined) {
       logger.warn(
@@ -455,24 +453,23 @@ abstract class AbstractView<T> {
       return viewCached;
     }
     // decode up to the previous field and then get the view.
-    const descriptorKeys = Object.keys(this.descriptors) as (keyof T)[];
+    const descriptorKeys = Object.keys(this.descriptors);
     const needIdx = descriptorKeys.findIndex((k) => k === field);
     if (needIdx > 0) {
-      this.decodeUpTo(descriptorKeys[needIdx - 1]);
+      this.decodeUpTo(descriptorKeys[needIdx - 1] as keyof T);
     }
     // return the view
-    // TODO [ToDr] fix type casting?
-    const val = this.descriptors[field as keyof DescriptorRecord<T>];
+    const val = this.descriptors[field];
     // we need to clone the decoder here, to make sure further calls
     // to the original view do not disrupt the nested one.
     if (!(VIEW_FIELD in val)) {
       throw new Error(`Attempting to decode a 'View' of a field ${String(field)} which doesn't have one.`);
     }
 
-    const maybeView = new val.View(this.d.clone());
-    const typedMaybeView = maybeView as unknown as View<T[keyof T]>;
-    this.viewCache.set(field, typedMaybeView);
-    return typedMaybeView;
+    const view = new val.View(this.d.clone());
+    const typedView = view as unknown as View<T[keyof T]>;
+    this.viewCache.set(field, typedView);
+    return typedView;
   }
 }
 

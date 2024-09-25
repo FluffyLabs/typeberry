@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder } from "./decoder";
-import { BYTES, CLASS, MATERIALIZE, type Record, STRING, U32 } from "./descriptors";
+import { BYTES, CLASS, type Record, STRING, U32 } from "./descriptors";
 import { Encoder } from "./encoder";
 
 class TestHeader {
@@ -67,7 +67,7 @@ describe("Codec Descriptors / class", () => {
     // read one data point to have something in cache, but not everything
     assert.deepStrictEqual(headerView.parentHeaderHash(), data.parentHeaderHash);
 
-    const header = headerView[MATERIALIZE]();
+    const header = headerView.materialize();
     assert.deepStrictEqual(header.parentHeaderHash, data.parentHeaderHash);
     assert.deepStrictEqual(header.extrinsicHash, data.extrinsicHash);
     assert.deepStrictEqual(header.priorStateRoot, data.priorStateRoot);
