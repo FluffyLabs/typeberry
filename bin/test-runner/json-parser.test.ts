@@ -1,15 +1,15 @@
 import assert from "node:assert";
 import { test } from "node:test";
-import { type FromJson, optional, parseFromJson } from "./json-parser";
+import { type FromJson, parseFromJson, NUMBER, BOOLEAN, STRING, ARRAY, OPTIONAL, OBJECT } from "./json-parser";
 
 test("JSON parser", async (t) => {
   await t.test("parse simple class", () => {
     const json = `{"k": 5, "v": true }`;
     class TestClass {
-      static fromJson: FromJson<TestClass> = {
-        k: "number",
-        v: "boolean",
-      };
+      static fromJson: FromJson<TestClass> = OBJECT({
+        k: NUMBER(),
+        v: BOOLEAN(),
+      });
 
       k = 0;
       v = false;
@@ -23,19 +23,19 @@ test("JSON parser", async (t) => {
   await t.test("parse nested object", () => {
     const json = `{"k": "xyz", "nested": { "k": 5, "v": true }}`;
     class NestedClass {
-      static fromJson: FromJson<NestedClass> = {
-        k: "number",
-        v: "boolean",
-      };
+      static fromJson: FromJson<NestedClass> = OBJECT({
+        k: NUMBER(),
+        v: BOOLEAN(),
+      });
       k = 0;
       v = false;
     }
 
     class TestClass {
-      static fromJson: FromJson<TestClass> = {
-        k: "string",
+      static fromJson: FromJson<TestClass> = OBJECT({
+        k: STRING(),
         nested: NestedClass.fromJson,
-      };
+      });
 
       k = "";
       nested: NestedClass = new NestedClass();
@@ -51,11 +51,12 @@ test("JSON parser", async (t) => {
 
   await t.test("parse & process", () => {
     const json = `{"k": "0x123", "v": true }`;
+    const t = STRING((v: string) => Number.parseInt(v));
     class TestClass {
-      static fromJson: FromJson<TestClass> = {
-        k: ["string", (v: string) => Number.parseInt(v)],
-        v: "boolean",
-      };
+      static fromJson: FromJson<TestClass> = OBJECT({
+        k: t,
+        v: BOOLEAN(),
+      });
 
       k = 0;
       v = false;
@@ -69,9 +70,9 @@ test("JSON parser", async (t) => {
   await t.test("arrays", () => {
     const json = `{"k": ["a", "b", "c"]}`;
     class TestClass {
-      static fromJson: FromJson<TestClass> = {
-        k: ["array", "string"],
-      };
+      static fromJson: FromJson<TestClass> = OBJECT({
+        k: ARRAY(STRING()),
+      });
 
       k!: string[];
     }
@@ -83,10 +84,10 @@ test("JSON parser", async (t) => {
   await t.test("keys mismatch", () => {
     const json = `{"x": 5, "v": true }`;
     class TestClass {
-      static fromJson: FromJson<TestClass> = {
-        k: "number",
-        v: "boolean",
-      };
+      static fromJson: FromJson<TestClass> = OBJECT({
+        k: NUMBER(),
+        v: BOOLEAN(),
+      });
 
       k = 0;
       v = false;
@@ -108,10 +109,10 @@ test("JSON parser", async (t) => {
   await t.test("type mismatch", () => {
     const json = `{"k": "sdf", "v": true }`;
     class TestClass {
-      static fromJson: FromJson<TestClass> = {
-        k: "number",
-        v: "boolean",
-      };
+      static fromJson: FromJson<TestClass> = OBJECT({
+        k: NUMBER(),
+        v: BOOLEAN(),
+      });
 
       k = 0;
       v = false;
@@ -128,13 +129,10 @@ test("JSON parser", async (t) => {
   await t.test("optionals", () => {
     const json = `{"v": true }`;
     class TestClass {
-      static fromJson = optional<TestClass>(
-        {
-          k: "number",
-          v: "boolean",
-        },
-        ["k", "v"],
-      );
+      static fromJson: FromJson<TestClass> = OBJECT({
+          k: OPTIONAL(NUMBER()),
+          v: OPTIONAL(BOOLEAN()),
+      });
 
       k?: number;
       v?: boolean;

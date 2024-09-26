@@ -1,25 +1,22 @@
-import { optional } from "../json-parser";
+import { ANY, ARRAY, BOOLEAN, FromJson, OBJECT, OPTIONAL, STRING } from "../json-parser";
 
 export class JsonSchema {
-  static fromJson = optional<JsonSchema>(
-    {
-      $schema: "string",
-      type: "string",
-      title: "string",
-      description: "string",
-      properties: ["object", () => null],
-      required: ["array", "string"],
-      additionalProperties: "boolean",
-      $defs: ["object", () => null],
-    },
-    ["title", "description", "required", "$defs"],
-  );
+  static fromJson: FromJson<JsonSchema> = OBJECT({
+      $schema: STRING(),
+      type: STRING(),
+      title: OPTIONAL<string>(STRING()),
+      description: OPTIONAL<string>(STRING()),
+      properties: ANY(() => null as unknown),
+      required: OPTIONAL<string[]>(ARRAY(STRING())),
+      additionalProperties: BOOLEAN(),
+      $defs: OPTIONAL<unknown>(ANY(() => null as unknown)),
+    });
   $schema!: string;
   type!: string;
   title?: string;
   description?: string;
   properties!: unknown;
-  required!: string[];
+  required?: string[];
   additionalProperties!: boolean;
   $defs?: unknown;
 }

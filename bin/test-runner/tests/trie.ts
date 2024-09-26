@@ -4,12 +4,11 @@ import { test } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { InMemoryTrie, type StateKey, type TrieHash } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/blake2b.node";
-import type { FromJson } from "../json-parser";
+import { ANY, ARRAY, OBJECT, STRING, type FromJson } from "../json-parser";
 
 export class TrieTest {
-  static fromJson: FromJson<TrieTest> = {
-    input: [
-      "object",
+  static fromJson: FromJson<TrieTest> = OBJECT({
+    input: ANY(
       (input: unknown, context?: string): Map<StateKey, BytesBlob> => {
         if (input === null) {
           throw new Error(`[${context}] Unexpected 'null'`);
@@ -27,15 +26,15 @@ export class TrieTest {
 
         return output;
       },
-    ],
-    output: ["string", (v: string) => Bytes.parseBytesNoPrefix(v, 32) as TrieHash],
-  };
+    ),
+    output: STRING((v: string) => Bytes.parseBytesNoPrefix(v, 32) as TrieHash),
+  });
   input!: Map<StateKey, BytesBlob>;
   output!: TrieHash;
 }
 
 export type TrieTestSuite = [TrieTest];
-export const trieTestSuiteFromJson: FromJson<TrieTestSuite> = ["array", TrieTest.fromJson];
+export const trieTestSuiteFromJson: FromJson<TrieTestSuite> = ARRAY(TrieTest.fromJson);
 
 export async function runTrieTest(testContent: TrieTestSuite) {
   for (const [id, testData] of testContent.entries()) {

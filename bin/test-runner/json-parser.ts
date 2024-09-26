@@ -1,157 +1,179 @@
-/// Extract an element type of an array type.
-export type FromJson<T> = T extends (infer U)[]
-  ? ["array", FromJson<U>]
-  : // parse a string from JSON into expected type
-      | FromJsonWithParser<T, string>
-      // parse a number from JSON into expected type
-      | FromJsonWithParser<T, number>
-      // manually parse a nested object
-      | FromJsonWithParser<T, unknown>
-      | FromJsonPrimitive<T>;
+export type FromJson<T, From = T> =
+  T extends (infer U)[] ? FromJsonArray<U> :
+  (
+    | FromJsonOptional<T>
+    | FromJsonAny<T>
+    | FromJsonObject<T>
+    | FromJsonBool<T>
+    | FromJsonWithParser<T, From>
+  );
 
-export type FromJsonPrimitive<T> = T extends string
-  ? "string"
-  : T extends number
-    ? "number"
-    : T extends boolean
-      ? "boolean"
-      : T extends object
-        ? ObjectFromJson<T>
-        : T extends unknown
-          ? "object"
-          : never;
-
-export type FromJsonWithParser<T, Y> = [FromJsonPrimitive<Y>, (inJson: Y, context?: string) => T];
-
-export type ObjectFromJson<T> = {
-  [K in keyof T]: FromJson<T[K]>;
+type FromJsonArray<T> = {
+  kind: 'array',
+  from: FromJson<T>,
 };
 
-export function optional<T>(
-  type: ObjectFromJson<T>,
-  optionalKeys: string[], // TODO [ToDr] typing
-): FromJsonWithParser<T, unknown> {
-  return [
-    "object",
-    (json: unknown, context?: string) => {
-      if (json === null || typeof json !== "object") {
-        throw new Error(`[${context}] Expected object with optional fields, got: ${json}`);
-      }
+type FromJsonWithParser<T, From> = {
+  kind: FromJsonPrimitive<From>,
+  parser?: Parser<From, T>;
+};
 
-      const j = json as { [key: string]: unknown };
-      for (const [k, v] of Object.entries(type)) {
-        if (k in json) {
-          // we allow `null` in a key
-          if (j[k] !== null) {
-            const val = v as FromJson<unknown>;
-            j[k] = parseFromJson(j[k], val, `${context}.${k}`);
-          }
-        } else if (optionalKeys.indexOf(k) === -1) {
-          throw new Error(`[${context}] Missing non-optional key "${k}" in ${Object.keys(json)}`);
-        }
-      }
+type FromJsonAny<T> = {
+  kind: 'any',
+  parser: Parser<unknown, T>,
+};
 
-      return json as T;
-    },
-  ];
-}
+type FromJsonBool<T> = T extends boolean ? {
+  kind: 'boolean',
+} : never;
+
+type Parser<TFrom, TInto> = (inJson: TFrom, context?: string) => TInto;
+
+type FromJsonPrimitive<T> =
+  T extends string ? 'string' :
+  T extends number ? 'number' :
+  never;
+
+type FromJsonOptional<U> = {
+  kind: 'optional',
+  from: FromJson<NonNullable<U>>,
+};
+
+type FromJsonObject<T> = {
+  kind: 'object',
+  from: ObjectFromJson<T>
+};
+
+export type ObjectFromJson<T> = {
+  [K in Extract<keyof T, string>]: FromJson<T[K], any>;
+};
+
+export const STRING = <T = string>(parser?: Parser<string, T>) => ({
+  kind: 'string',
+  parser
+} as FromJson<T>);
+
+export const NUMBER = <T = number>(parser?: Parser<number, T>) => ({
+  kind: 'number',
+  parser,
+} as FromJson<T>);
+
+export const BOOLEAN = (): FromJson<boolean> => ({
+  kind: 'boolean',
+});
+
+export const ANY = <T>(parser: Parser<unknown, T>) => ({
+  kind: 'any',
+  parser,
+} as FromJson<T>);
+
+export const OPTIONAL = <T>(from: FromJson<T>) => ({
+  kind: 'optional',
+  from,
+} as FromJson<T | undefined>);
+
+export const ARRAY = <T>(from: FromJson<T>): FromJson<T[]> => ({
+  kind: 'array',
+  from,
+});
+
+export const OBJECT = <T>(from: ObjectFromJson<T>) => ({
+  kind: 'object',
+  from,
+} as FromJson<T>);
 
 export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>, context = "<root>"): T {
   const t = typeof jsonType;
 
-  if (jsonDescription === "string") {
-    if (t === "string") {
-      return jsonType as T;
+  const kind = jsonDescription.kind;
+
+  if (kind === 'object') {
+    if (t !== 'object') {
+      throw new Error(`Expected complex type but got ${t}`);
     }
-    throw new Error(`[${context}] Expected ${jsonDescription} but got ${t}`);
-  }
+    const description = jsonDescription as FromJsonObject<T>;
 
-  if (jsonDescription === "number") {
-    if (t === "number") {
-      return jsonType as T;
-    }
-    throw new Error(`[${context}] Expected ${jsonDescription} but got ${t}`);
-  }
+    const obj = jsonType as { [key: string]: unknown };
+    const c = description.from as { [key: string]: FromJson<unknown> };
 
-  if (jsonDescription === "boolean") {
-    if (t === "boolean") {
-      return jsonType as T;
-    }
-    throw new Error(`[${context}] Expected ${jsonDescription} but got ${t}`);
-  }
-
-  if (Array.isArray(jsonDescription)) {
-    const type = jsonDescription[0];
-
-    // an array type
-    if (type === "array") {
-      const expectedType = jsonDescription[1];
-      if (!Array.isArray(jsonType)) {
-        throw new Error(`[${context}] Expected array, got ${jsonType}`);
+    for (const key of Object.keys(c)) {
+      const inJson = obj[key];
+      const descriptor = c[key] as FromJson<any>;
+      if (inJson !== undefined || descriptor.kind === 'optional') {
+        const result = parseFromJson(inJson, descriptor, `${context}.${key}`);
+        // note that for optional keys we will populate the object here
+        // with undefined, which is what we want for key comparison.
+        obj[key] = result;
       }
-
-      const arr = jsonType as unknown[];
-      for (const [k, v] of arr.entries()) {
-        arr[k] = parseFromJson(v, expectedType, `${context}.${k}`);
-      }
-      return arr as T;
     }
 
-    // a manual parser for nested object
-    if (type === "object") {
-      const parser = jsonDescription[1];
-      const obj = jsonType as object;
-      return parser(obj, context);
-    }
-
-    // An expected in-json type and the parser to the destination type.
-    if (type === "string") {
-      const parser = jsonDescription[1];
-      const value = parseFromJson<string>(jsonType, type, context);
-      return parser(value, context);
-    }
-
-    if (type === "number") {
-      const type = jsonDescription[0];
-      const parser = jsonDescription[1];
-      const value = parseFromJson<number>(jsonType, type, context);
-      return parser(value, context);
-    }
-
-    throw new Error(`[${context}] Invalid parser type: ${type}`);
-  }
-
-  if (t !== "object") {
-    throw new Error(`Expected complex type but got ${t}`);
-  }
-
-  if (typeof jsonDescription !== "object") {
-    throw new Error(`[${context}] Unhandled type ${jsonDescription}`);
-  }
-
-  if (jsonType === null) {
-    throw new Error(`[${context}] Unexpected 'null'`);
-  }
-
-  const obj = jsonType as { [key: string]: unknown };
-  const c = jsonDescription as { [key: string]: FromJson<unknown> };
-
-  const keysDifference = diffKeys(obj, jsonDescription);
-  if (keysDifference.length > 0) {
-    const e = new Error(
-      `[${context}] Unexpected or missing keys: ${keysDifference.join(" | ")}
+    // now compare if we miss any keys
+    const keysDifference = diffKeys(obj, c);
+    if (keysDifference.length > 0) {
+      const e = new Error(
+        `[${context}] Unexpected or missing keys: ${keysDifference.join(" | ")}
           Data: ${Object.keys(obj)}
-          Schema: ${Object.keys(jsonDescription)}`,
-    );
-    throw e;
+          Schema: ${Object.keys(c)}`,
+      );
+      throw e;
+    }
+
+    return obj as T;
   }
 
-  for (const key of Object.keys(jsonDescription)) {
-    const v = obj[key];
-    obj[key] = parseFromJson(v, c[key], `${context}.${key}`);
+  // optional
+  if (kind === 'optional') {
+    if (jsonType === undefined || jsonType === null) {
+      return jsonType as T;
+    }
+    const description = jsonDescription as FromJsonOptional<T>;
+    return parseFromJson<T>(jsonType, description.from as FromJson<T>, context);
   }
 
-  return obj as T;
+  // array
+  if (kind === 'array') {
+    if (!Array.isArray(jsonType)) {
+      throw new Error(`[${context}] Expected array, got ${jsonType}`);
+    }
+    const description = jsonDescription as FromJsonArray<T>;
+    const arr = jsonType as unknown[];
+    for (const [k, v] of arr.entries()) {
+      arr[k] = parseFromJson(v, description.from, `${context}.${k}`);
+    }
+    return arr as T;
+  }
+
+  // manual parser
+  if (kind === 'any') {
+    const description = jsonDescription as FromJsonAny<T>;
+    return description.parser(jsonType, context);
+  }
+
+  const parsePrimitive = <TFrom>(jsonType: TFrom, jsonDescription: FromJsonWithParser<T, TFrom>, context?: string): T => {
+    if (jsonDescription.parser) {
+      return jsonDescription.parser(jsonType, context);
+    }
+
+    return jsonType as unknown as T;
+  };
+
+  // primitive type
+  if (t === kind && kind === 'string')  {
+    const description = jsonDescription as FromJsonWithParser<T, string>;
+    return parsePrimitive<string>(jsonType as string, description, context);
+  }
+
+  if (t === kind && kind === 'number') {
+    const description = jsonDescription as FromJsonWithParser<T, number>;
+    return parsePrimitive<number>(jsonType as number, description, context);
+  }
+
+  if (t === kind && kind === 'boolean') {
+    const description = jsonDescription as FromJsonWithParser<T, boolean>;
+    return parsePrimitive<boolean>(jsonType as boolean, description, context);
+  }
+
+  throw new Error(`[${context}] Expected ${kind} but got ${t}`);
 }
 
 function diffKeys(obj1: object, obj2: object): [string, string][] {

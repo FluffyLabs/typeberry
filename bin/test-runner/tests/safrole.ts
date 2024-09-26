@@ -9,7 +9,7 @@ import {
   type ValidatorData,
 } from "@typeberry/safrole";
 import type { BandersnatchKey, BlsKey, Ed25519Key } from "@typeberry/safrole/crypto";
-import { type FromJson, optional } from "../json-parser";
+import { type FromJson, STRING, NUMBER, ARRAY, OPTIONAL, OBJECT } from "../json-parser";
 
 type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}` ? `${T}${Capitalize<SnakeToCamel<U>>}` : S;
 
@@ -17,51 +17,48 @@ function snakeToCamel<T extends string>(s: T): SnakeToCamel<T> {
   return s.replace(/(_\w)/g, (matches) => matches[1].toUpperCase()) as SnakeToCamel<T>;
 }
 
-const entropyHashFromJson: FromJson<EntropyHash> = ["string", (v: string) => Bytes.parseBytes(v, 32) as EntropyHash];
+const entropyHashFromJson: FromJson<EntropyHash> = STRING((v: string) => Bytes.parseBytes(v, 32) as EntropyHash);
 
-const ed25519FromJson: FromJson<Ed25519Key> = ["string", (v: string) => Bytes.parseBytes(v, 32) as Ed25519Key];
+const ed25519FromJson: FromJson<Ed25519Key> = STRING((v: string) => Bytes.parseBytes(v, 32) as Ed25519Key);
 
-const validatorDataFromJson: FromJson<ValidatorData> = {
+const validatorDataFromJson: FromJson<ValidatorData> = OBJECT({
   ed25519: ed25519FromJson,
-  bandersnatch: ["string", (v: string) => Bytes.parseBytes(v, 32) as BandersnatchKey],
-  bls: ["string", (v: string) => Bytes.parseBytes(v, 144) as BlsKey],
-  metadata: ["string", BytesBlob.parseBlob],
-};
+  bandersnatch: STRING((v: string) => Bytes.parseBytes(v, 32) as BandersnatchKey),
+  bls: STRING((v: string) => Bytes.parseBytes(v, 144) as BlsKey),
+  metadata: STRING(BytesBlob.parseBlob),
+});
 
-const ticketBodyFromJson: FromJson<TicketBody> = {
-  id: ["string", (v: string) => Bytes.parseBytes(v, 32)],
-  attempt: "number",
-};
+const ticketBodyFromJson: FromJson<TicketBody> = OBJECT({
+  id: STRING((v: string) => Bytes.parseBytes(v, 32)),
+  attempt: NUMBER(),
+});
 
 export class TicketsOrKeys {
-  static fromJson = optional<TicketsOrKeys>(
-    {
-      tickets: ["array", ticketBodyFromJson],
-      keys: ["array", ["string", (v: string) => Bytes.parseBytes(v, 32) as BandersnatchKey]],
-    },
-    ["tickets", "keys"],
-  );
+  static fromJson: FromJson<TicketsOrKeys> = OBJECT({
+    tickets: OPTIONAL<TicketBody[]>(ARRAY(ticketBodyFromJson)),
+    keys: OPTIONAL<BandersnatchKey[]>(ARRAY(STRING((v: string) => Bytes.parseBytes(v, 32) as BandersnatchKey))),
+  });
   tickets?: TicketBody[];
   keys?: BandersnatchKey[];
 }
 
-const ticketEnvelopeFromJson: FromJson<TicketEnvelope> = {
-  attempt: "number",
-  signature: ["string", (v: string) => Bytes.parseBytes(v, 784)],
-};
+const ticketEnvelopeFromJson: FromJson<TicketEnvelope> = OBJECT({
+  attempt: NUMBER(),
+  signature: STRING((v: string) => Bytes.parseBytes(v, 784)),
+});
 
 class JsonState {
-  static fromJson: FromJson<JsonState> = {
-    tau: "number",
-    eta: ["array", entropyHashFromJson],
-    lambda: ["array", validatorDataFromJson],
-    kappa: ["array", validatorDataFromJson],
-    gamma_k: ["array", validatorDataFromJson],
-    iota: ["array", validatorDataFromJson],
-    gamma_a: ["array", ticketBodyFromJson],
+  static fromJson: FromJson<JsonState> = OBJECT({
+    tau: NUMBER(),
+    eta: ARRAY(entropyHashFromJson),
+    lambda: ARRAY(validatorDataFromJson),
+    kappa: ARRAY(validatorDataFromJson),
+    gamma_k: ARRAY(validatorDataFromJson),
+    iota: ARRAY(validatorDataFromJson),
+    gamma_a: ARRAY(ticketBodyFromJson),
     gamma_s: TicketsOrKeys.fromJson,
-    gamma_z: ["string", (v: string) => Bytes.parseBytes(v, 144)],
-  };
+    gamma_z: STRING((v: string) => Bytes.parseBytes(v, 144)),
+  });
   // timeslot
   tau!: number;
   // entropy
@@ -83,52 +80,46 @@ class JsonState {
 }
 
 export class EpochMark {
-  static fromJson: FromJson<EpochMark> = {
+  static fromJson: FromJson<EpochMark> = OBJECT({
     entropy: entropyHashFromJson,
-    validators: ["array", ["string", (v: string) => Bytes.parseBytes(v, 32) as BandersnatchKey]],
-  };
+    validators: ARRAY(STRING((v: string) => Bytes.parseBytes(v, 32) as BandersnatchKey)),
+  });
 
   entropy!: EntropyHash;
   validators!: BandersnatchKey[];
 }
 
 export class OkOutput {
-  static fromJson = optional<OkOutput>(
-    {
-      epoch_mark: EpochMark.fromJson,
-      tickets_mark: ["array", ticketBodyFromJson],
-    },
-    ["epoch_mark", "tickets_mark"],
-  );
-  epoch_mark?: EpochMark | null;
-  tickets_mark?: TicketBody[] | null;
+  static fromJson: FromJson<OkOutput> = OBJECT({
+    epoch_mark: OPTIONAL(EpochMark.fromJson),
+    tickets_mark: OPTIONAL<TicketBody[]>(ARRAY(ticketBodyFromJson)),
+  });
+  epoch_mark?: EpochMark;
+  tickets_mark?: TicketBody[];
 }
 
 export class Output {
-  static fromJson = optional<Output>(
-    {
-      ok: OkOutput.fromJson,
-      err: "string",
-    },
-    ["ok", "err"],
-  );
+  static fromJson: FromJson<Output> = OBJECT({
+    ok: OPTIONAL(OkOutput.fromJson),
+    err: OPTIONAL(STRING()),
+  });
 
   ok?: OkOutput = undefined;
   err?: string = undefined;
 }
 
 export class SafroleTest {
-  static fromJson: FromJson<SafroleTest> = {
-    input: {
-      slot: "number",
+  static fromJson: FromJson<SafroleTest> = OBJECT({
+    input: OBJECT({
+      slot: NUMBER(),
       entropy: entropyHashFromJson,
-      offenders: ["array", ed25519FromJson],
-      extrinsic: ["array", ticketEnvelopeFromJson],
-    },
+      offenders: ARRAY(ed25519FromJson),
+      extrinsic: ARRAY(ticketEnvelopeFromJson),
+    }),
     pre_state: JsonState.fromJson,
     output: Output.fromJson,
     post_state: JsonState.fromJson,
-  };
+  });
 
   input!: {
     slot: number;
@@ -153,8 +144,8 @@ export async function runSafroleTest(testContent: SafroleTest) {
   try {
     stateDiff = await safrole.transition(testContent.input);
     output.ok = {
-      epoch_mark: null,
-      tickets_mark: null,
+      epoch_mark: undefined,
+      tickets_mark: undefined,
     };
   } catch (e) {
     error = `${e}`;

@@ -5,53 +5,52 @@ import { type MemoryIndex, createMemoryIndex } from "@typeberry/pvm/memory/memor
 import { getPageNumber, getStartPageIndex } from "@typeberry/pvm/memory/memory-utils";
 import type { PageNumber } from "@typeberry/pvm/memory/pages/page-utils";
 import { Pvm, type RegistersArray } from "@typeberry/pvm/pvm";
-import type { FromJson } from "../json-parser";
+import { ANY, ARRAY, BOOLEAN, NUMBER, OBJECT, STRING, type FromJson } from "../json-parser";
 
-const uint8ArrayFromJson: ["object", (v: unknown) => Uint8Array] = [
-  "object",
+const uint8ArrayFromJson = ANY(
   (v: unknown) => {
     if (Array.isArray(v)) {
       return new Uint8Array(v);
     }
 
     throw new Error(`Expected an array, got ${typeof v} instead.`);
-  },
-];
+  }
+);
 
 class MemoryChunkItem {
-  static fromJson: FromJson<MemoryChunkItem> = {
-    address: "number",
+  static fromJson: FromJson<MemoryChunkItem> = OBJECT({
+    address: NUMBER(),
     contents: uint8ArrayFromJson,
-  };
+  });
   address!: number;
   contents!: Uint8Array;
 }
 
 class PageMapItem {
-  static fromJson: FromJson<PageMapItem> = {
-    address: "number",
-    length: "number",
-    "is-writable": "boolean",
-  };
+  static fromJson: FromJson<PageMapItem> = OBJECT({
+    address: NUMBER(),
+    length: NUMBER(),
+    "is-writable": BOOLEAN(),
+  });
   address!: number;
   length!: number;
   "is-writable": boolean;
 }
 export class PvmTest {
-  static fromJson: FromJson<PvmTest> = {
-    name: "string",
-    "initial-regs": ["array", "number"],
-    "initial-pc": "number",
-    "initial-page-map": ["array", PageMapItem.fromJson],
-    "initial-memory": ["array", MemoryChunkItem.fromJson],
-    "initial-gas": "number",
+  static fromJson: FromJson<PvmTest> = OBJECT({
+    name: STRING(),
+    "initial-regs": ARRAY(NUMBER()),
+    "initial-pc": NUMBER(),
+    "initial-page-map": ARRAY(PageMapItem.fromJson),
+    "initial-memory": ARRAY(MemoryChunkItem.fromJson),
+    "initial-gas": NUMBER(),
     program: uint8ArrayFromJson,
-    "expected-status": "string",
-    "expected-regs": ["array", "number"],
-    "expected-pc": "number",
-    "expected-memory": ["array", MemoryChunkItem.fromJson],
-    "expected-gas": "number",
-  };
+    "expected-status": STRING(),
+    "expected-regs": ARRAY(NUMBER()),
+    "expected-pc": NUMBER(),
+    "expected-memory": ARRAY(MemoryChunkItem.fromJson),
+    "expected-gas": NUMBER(),
+  });
 
   name!: string;
   "initial-regs": RegistersArray;
