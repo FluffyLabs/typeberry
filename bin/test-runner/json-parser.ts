@@ -109,6 +109,14 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
     const obj = jsonType as { [key: string]: unknown };
     const c = description.from as { [key: string]: FromJson<unknown> };
 
+    // populate result with the original keys to make sure
+    // we reject them during comparison.
+    for (const key of Object.keys(obj)) {
+      if (!(key in result)) {
+        result[key] = undefined;
+      }
+    }
+
     for (const key of Object.keys(c)) {
       const inJson = obj[key];
       const descriptor = c[key];
