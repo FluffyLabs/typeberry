@@ -97,7 +97,6 @@ export const OBJECT = <T>(from: ObjectFromJson<T>) =>
 
 export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>, context = "<root>"): T {
   const t = typeof jsonType;
-
   const kind = jsonDescription.kind;
 
   if (kind === "object") {
@@ -106,6 +105,7 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
     }
     const description = jsonDescription as FromJsonObject<T>;
 
+    const result = {} as { [key: string]: unknown };
     const obj = jsonType as { [key: string]: unknown };
     const c = description.from as { [key: string]: FromJson<unknown> };
 
@@ -113,25 +113,25 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
       const inJson = obj[key];
       const descriptor = c[key];
       if (inJson !== undefined || descriptor.kind === "optional") {
-        const result = parseFromJson(inJson, descriptor, `${context}.${key}`);
+        const r = parseFromJson(inJson, descriptor, `${context}.${key}`);
         // note that for optional keys we will populate the object here
         // with undefined, which is what we want for key comparison.
-        obj[key] = result;
+        result[key] = r;
       }
     }
 
     // now compare if we miss any keys
-    const keysDifference = diffKeys(obj, c);
+    const keysDifference = diffKeys(result, c);
     if (keysDifference.length > 0) {
       const e = new Error(
         `[${context}] Unexpected or missing keys: ${keysDifference.join(" | ")}
-          Data: ${Object.keys(obj)}
+          Data: ${Object.keys(result)}
           Schema: ${Object.keys(c)}`,
       );
       throw e;
     }
 
-    return obj as T;
+    return result as T;
   }
 
   // optional
@@ -148,10 +148,11 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
     if (!Array.isArray(jsonType)) {
       throw new Error(`[${context}] Expected array, got ${jsonType}`);
     }
+    const result = [] as unknown[];
     const description = jsonDescription as FromJsonArray<T>;
     const arr = jsonType as unknown[];
     for (const [k, v] of arr.entries()) {
-      arr[k] = parseFromJson(v, description.from, `${context}.${k}`);
+      result[k] = parseFromJson(v, description.from, `${context}.${k}`);
     }
     return arr as T;
   }
