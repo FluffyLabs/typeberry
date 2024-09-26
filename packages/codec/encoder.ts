@@ -6,6 +6,12 @@ import { check } from "@typeberry/utils";
 export type Encode<T> = {
   /** Encode given element of type `T`. */
   encode: (encoder: Encoder, elem: T) => void;
+  /**
+   * A hint about size of that type.
+   *
+   * Can be used as an optimization for how many bytes should be allocated for that type.
+   */
+  sizeHintBytes?: number;
 };
 
 /**
@@ -57,6 +63,22 @@ export class Encoder {
     const buffer = new ArrayBuffer(startLength, { maxByteLength: MAX_LENGTH });
     const destination = new Uint8Array(buffer);
     return new Encoder(destination, buffer);
+  }
+
+  /**
+   * Encode just a single object.
+   *
+   * NOTE that if you need to encode a tuple glueing together outputs
+   * of that function is going to be sub-optimal!
+   *
+   * This is only for one-shot encodings.
+   */
+  static encodeObject<T>(encode: Encode<T>, object: T): BytesBlob {
+    const encoder = Encoder.create({
+      expectedLength: encode.sizeHintBytes ?? DEFAULT_START_LENGTH,
+    });
+    encoder.object(encode, object);
+    return encoder.viewResult();
   }
 
   private offset = 0;
@@ -297,6 +319,14 @@ export class Encoder {
   }
 
   /**
+   * Encode a composite object.
+   */
+  object<T>(encode: Encode<T>, element: T) {
+    this.applySizeHint(encode);
+    encode.encode(this, element);
+  }
+
+  /**
    * Encode a potentially empty value.
    *
    * A 0 or 1 is placed before the element to indicate it's presence.
@@ -306,6 +336,7 @@ export class Encoder {
     const isSet = element !== null && element !== undefined;
     this.bool(isSet);
     if (isSet) {
+      this.applySizeHint(encode);
       encode.encode(this, element);
     }
   }
@@ -316,6 +347,7 @@ export class Encoder {
    * https://graypaper.fluffylabs.dev/#WyI3YWU1MWY5MzI1IiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeGYgaGIgeTFlNDIgZmY3IGZzMCBmYzAgc2MwIGxzMCB3czBcIj4iLCI8ZGl2IGNsYXNzPVwidCBtMCB4ZiBoYSB5MWU0MyBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
    */
   sequenceFixLen<T>(encode: Encode<T>, elements: T[]) {
+    this.applySizeHint(encode, elements.length);
     for (const e of elements) {
       encode.encode(this, e);
     }
@@ -333,11 +365,31 @@ export class Encoder {
     this.sequenceFixLen(encode, elements);
   }
 
-  private ensureBigEnough(length: number) {
+  private applySizeHint<T>(encode: Encode<T>, multiply = 1) {
+    const sizeHint = encode.sizeHintBytes ?? 0;
+    if (sizeHint > 0 && multiply > 0) {
+      this.ensureBigEnough(sizeHint * multiply, { silent: true });
+    }
+  }
+
+  /**
+   * Expand the destination to fit given length.
+   *
+   * The `silent` flag can be set when we are just giving a size hint about
+   * a composite type being encoded.
+   * In such case we are not sure if we are going to use all of the bytes from the hint,
+   * so going over `MAX_LENGTH` or destination is not an error here.
+   * When subsequent fields of a composite object will be encode they call this function
+   * anyway, so if we really should throw we will.
+   */
+  private ensureBigEnough(length: number, options: { silent: boolean } = { silent: false }) {
     check(length >= 0, "Negative length given");
 
     const newLength = this.offset + length;
     if (newLength > MAX_LENGTH) {
+      if (options.silent) {
+        return;
+      }
       throw new Error(`The encoded size would reach the maximum of ${MAX_LENGTH}.`);
     }
 
@@ -351,6 +403,9 @@ export class Encoder {
       }
       // and then check again
       if (newLength > this.destination.length) {
+        if (options.silent) {
+          return;
+        }
         throw new Error(
           `Not enough space in the destination array. Needs ${newLength}, has ${this.destination.length}.`,
         );
