@@ -1,4 +1,4 @@
-import type { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
+import { type BitVec, type Bytes, BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
 import { check } from "@typeberry/utils";
 import { type Decode, Decoder } from "./decoder";
@@ -26,13 +26,22 @@ export type Codec<T> = Encode<T> & Decode<T>;
 export type Descriptor<T> = {
   /** Descriptive name of the coded data. */
   name: string;
-  /**
-   * A hint about size of that type.
-   *
-   * Should be used when encoding to create long-enough destination.
-   */
-  sizeHintBytes: number;
 } & Codec<T>;
+
+const VIEW_FIELD = "View";
+
+/**
+ * A more sophisticated descriptor for an object that represents a record (aka class).
+ *
+ * The second optional generic parameter is there to specialise the `record` type
+ * in case it's required for nested views.
+ */
+export type ClassDescriptor<T, D extends DescriptorRecord<T> = DescriptorRecord<T>> = Descriptor<T> & {
+  /** Descriptor record object which defines this `ClassDescriptor`. */
+  record: D;
+  /** A lazy view of the class (if any). */
+  [VIEW_FIELD]: ViewConstructor<T, KeysWithView<T, D>>;
+};
 
 /**
  * Converts a class `T` into an object with the same fields as the class.
@@ -50,6 +59,18 @@ type LazyRecord<T> = {
 };
 
 /**
+ * Convers a class `T` into an object with `*View` methods
+ * only for keys `NestedViewKeys`, returning a `View` objects.
+ */
+type ViewRecord<T, NestedViewKeys extends keyof T> = {
+  [K in NestedViewKeys as `${K & string}${typeof VIEW_FIELD}`]: <N extends ViewConstructor<T[K], never>>() => ViewOf<N>;
+};
+
+function viewMethod(key: string) {
+  return `${key}${VIEW_FIELD}`;
+}
+
+/**
  * Same as `Record<T>`, but the fields are all optional.
  */
 type OptionalRecord<T> = {
@@ -60,8 +81,12 @@ type OptionalRecord<T> = {
  * `Descriptor` of a complex type of some class with a bunch of public fields.
  */
 type DescriptorRecord<T> = {
-  [K in Extract<keyof T, string>]: Descriptor<T[K]>;
+  [K in Extract<keyof T, string>]: Descriptor<T[K]> | ClassDescriptor<T[K]>;
 };
+
+type KeysWithView<T, D extends DescriptorRecord<T>> = {
+  [K in Extract<keyof T, string>]: D[K] extends ClassDescriptor<T[K], infer _> ? K : never;
+}[Extract<keyof T, string>];
 
 /**
  * A `View` of some class `T`.
@@ -85,18 +110,18 @@ type DescriptorRecord<T> = {
  * A view can be converted into `T` at any point via [`AbstractView.materialize`]
  * method.
  */
-export type View<T> = AbstractView<T> & LazyRecord<T>;
+export type View<T, NestedViewKeys extends keyof T = never> = AbstractView<T> &
+  LazyRecord<T> &
+  ViewRecord<T, NestedViewKeys>;
 
 /** A constructor for the `View<T>`. */
-type ViewConstructor<T> = {
-  new (d: Decoder): View<T>;
-  fromBytesBlob(bytes: BytesBlob): View<T>;
+type ViewConstructor<T, NestedViewKeys extends keyof T> = {
+  new (d: Decoder): View<T, NestedViewKeys>;
+  fromBytesBlob(bytes: BytesBlob): View<T, NestedViewKeys>;
 };
 
-/** An extra `ViewConstructor` attached to some `Descriptor`. */
-type WithView<T> = {
-  View: ViewConstructor<T>;
-};
+/** Extract the view type given the constructor. */
+type ViewOf<C> = C extends ViewConstructor<infer T, infer N> ? View<T, N> : never;
 
 /** A constructor of basic data object that takes a `Record<T>`. */
 type ClassConstructor<T> = new (o: Record<T>) => T;
@@ -181,6 +206,14 @@ export const I8 = descriptor<number>(
   (d) => d.i8(),
 );
 
+/** String encoded as variable-length bytes blob. */
+export const STRING = descriptor<string>(
+  "string",
+  TYPICAL_SEQUENCE_LENGTH,
+  (e, v) => e.bytesBlob(BytesBlob.fromBlob(new TextEncoder().encode(v))),
+  (d) => new TextDecoder("utf8", { fatal: true }).decode(d.bytesBlob().buffer),
+);
+
 /** Variable-length bytes blob. */
 export const BLOB = descriptor<BytesBlob>(
   "BytesBlob",
@@ -228,7 +261,7 @@ export const BITVEC_FIX_LEN = (len: number) =>
 export const OPTIONAL = <T>(type: Descriptor<T>) =>
   descriptor<T | null>(
     `Optional<${type.name}>`,
-    1 + type.sizeHintBytes,
+    1 + (type.sizeHintBytes ?? 0),
     (e, v) => e.optional(type, v),
     (d) => d.optional(type),
   );
@@ -237,7 +270,7 @@ export const OPTIONAL = <T>(type: Descriptor<T>) =>
 export const SEQUENCE_VAR_LEN = <T>(type: Descriptor<T>) =>
   descriptor<T[]>(
     `Sequence<${type.name}>[?]`,
-    TYPICAL_SEQUENCE_LENGTH * type.sizeHintBytes,
+    TYPICAL_SEQUENCE_LENGTH * (type.sizeHintBytes ?? 0),
     (e, v) => e.sequenceVarLen(type, v),
     (d) => d.sequenceVarLen(type),
   );
@@ -246,7 +279,7 @@ export const SEQUENCE_VAR_LEN = <T>(type: Descriptor<T>) =>
 export const SEQUENCE_FIX_LEN = <T>(type: Descriptor<T>, len: number) =>
   descriptor<T[]>(
     `Sequence<${type.name}>[${len}]`,
-    len * type.sizeHintBytes,
+    len * (type.sizeHintBytes ?? 0),
     (e, v) => e.sequenceFixLen(type, v),
     (d) => d.sequenceFixLen(type, len),
   );
@@ -260,13 +293,17 @@ export const SEQUENCE_FIX_LEN = <T>(type: Descriptor<T>, len: number) =>
  * Additionally a `View<T>` is generated, which allows partially-decoding these class
  * elements.
  */
-export const CLASS = <T>(Class: ClassConstructor<T>, descriptors: DescriptorRecord<T>): Descriptor<T> & WithView<T> => {
+export const CLASS = <T, D extends DescriptorRecord<T>>(
+  Class: ClassConstructor<T>,
+  descriptors: D,
+): ClassDescriptor<T, D> => {
   // Create a View, based on the `AbstractView`.
   class ClassView extends AbstractView<T> {
     constructor(d: Decoder) {
       super(d, Class, descriptors);
     }
   }
+
   // We need to dynamically extend the prototype to add these extra lazy getters.
   forEachDescriptor(descriptors, (key) => {
     if (typeof key === "string") {
@@ -275,17 +312,26 @@ export const CLASS = <T>(Class: ClassConstructor<T>, descriptors: DescriptorReco
           return this.getOrDecode(key);
         },
       });
+
+      if (VIEW_FIELD in descriptors[key]) {
+        // add view method.
+        Object.defineProperty(ClassView.prototype, viewMethod(key), {
+          value: function (this: ClassView) {
+            return this.getOrDecodeView(key);
+          },
+        });
+      }
     }
   });
 
   // Also add a static builder method to avoid boilerplate.
-  const ViewTyped = ClassView as ViewConstructor<T>;
+  const ViewTyped = ClassView as ViewConstructor<T, KeysWithView<T, D>>;
   ViewTyped.fromBytesBlob = (bytes: BytesBlob) => new ViewTyped(Decoder.fromBytesBlob(bytes));
 
   // Calculate a size hint for this class.
   let sizeHintBytes = 0;
   forEachDescriptor(descriptors, (_k, val) => {
-    sizeHintBytes += val.sizeHintBytes;
+    sizeHintBytes += val.sizeHintBytes ?? 0;
   });
 
   // and finally create the descriptor for the entire class.
@@ -310,6 +356,7 @@ export const CLASS = <T>(Class: ClassConstructor<T>, descriptors: DescriptorReco
 
   return {
     View: ViewTyped,
+    record: descriptors,
     ...desc,
   };
 };
@@ -321,7 +368,8 @@ const logger = Logger.new(global.__filename, "codec/descriptors");
  */
 abstract class AbstractView<T> {
   private lastDecodedIdx = -1;
-  private readonly cache = new Map<string, unknown>();
+  private readonly cache = new Map<keyof T, T[keyof T]>();
+  private readonly viewCache = new Map<keyof T, View<T[keyof T]>>();
 
   constructor(
     private readonly d: Decoder,
@@ -334,7 +382,7 @@ abstract class AbstractView<T> {
    * fields that are not yet there in the cache.
    */
   public materialize(): T {
-    const fields = Object.keys(this.descriptors);
+    const fields = Object.keys(this.descriptors) as (keyof T)[];
     // make sure to fully populate the cache.
     if (this.lastDecodedIdx + 1 !== fields.length) {
       this.decodeUpTo(fields[fields.length - 1], false);
@@ -348,36 +396,80 @@ abstract class AbstractView<T> {
    *
    * NOTE: this method should not be called if the value is already in the cache!
    */
-  private decodeUpTo(field: string, shouldWarn = true): unknown | undefined {
+  private decodeUpTo(field: keyof T, shouldWarn = true): T[keyof T] {
     let lastVal = undefined;
     const descriptorKeys = Object.keys(this.descriptors);
     const needIdx = descriptorKeys.findIndex((k) => k === field);
     check(
       this.lastDecodedIdx < needIdx,
-      `Unjustified request to decode data: lastDecodedIdx: ${this.lastDecodedIdx}, need: ${needIdx}`,
+      `Unjustified request to decode data: lastDecodedIdx: ${this.lastDecodedIdx}, need: ${needIdx} (${String(field)})`,
     );
 
     for (let i = this.lastDecodedIdx + 1; i <= needIdx; i += 1) {
-      const f = this.descriptors[descriptorKeys[i] as keyof DescriptorRecord<T>];
-      const val = f.decode(this.d);
-      this.cache.set(descriptorKeys[i], val);
+      const key = descriptorKeys[i] as keyof DescriptorRecord<T>;
+      const descriptor = this.descriptors[key];
+      const val = descriptor.decode(this.d);
+      this.cache.set(key, val);
       lastVal = val;
     }
     this.lastDecodedIdx = needIdx;
     if (shouldWarn && this.lastDecodedIdx + 1 === descriptorKeys.length) {
       logger.warn(
-        `Decoded an entire object of class ${this.materializedConstructor.name}. You should rather materialize.`,
+        `Decoded an entire object of class ${this.materializedConstructor.name}
+         by accessing ${String(field)}. You should rather materialize.`,
       );
     }
+
+    if (lastVal === undefined) {
+      throw new Error(`Unable to decode field ${String(field)}: ${this.lastDecodedIdx} vs ${needIdx}`);
+    }
+
     return lastVal;
   }
 
   /**
    * Get the value of the field from cache or decode it.
    */
-  protected getOrDecode(field: string): unknown {
+  protected getOrDecode(field: keyof T): T[keyof T] {
     const cached = this.cache.get(field);
     return cached !== undefined ? cached : this.decodeUpTo(field);
+  }
+
+  /**
+   * Get the view of the field from cache or decode it.
+   */
+  protected getOrDecodeView(field: keyof DescriptorRecord<T>): View<T[keyof T]> {
+    const cached = this.cache.get(field);
+    if (cached !== undefined) {
+      logger.warn(
+        `Requesting a view of an already decoded field ${String(field)} of
+         class ${this.materializedConstructor.name}. Just get the decoded value instead.
+        `,
+      );
+    }
+
+    const viewCached = this.viewCache.get(field);
+    if (viewCached !== undefined) {
+      return viewCached;
+    }
+    // decode up to the previous field and then get the view.
+    const descriptorKeys = Object.keys(this.descriptors);
+    const needIdx = descriptorKeys.findIndex((k) => k === field);
+    if (needIdx > 0) {
+      this.decodeUpTo(descriptorKeys[needIdx - 1] as keyof T);
+    }
+    // return the view
+    const val = this.descriptors[field];
+    // we need to clone the decoder here, to make sure further calls
+    // to the original view do not disrupt the nested one.
+    if (!(VIEW_FIELD in val)) {
+      throw new Error(`Attempting to decode a 'View' of a field ${String(field)} which doesn't have one.`);
+    }
+
+    const view = new val.View(this.d.clone());
+    const typedView = view as unknown as View<T[keyof T]>;
+    this.viewCache.set(field, typedView);
+    return typedView;
   }
 }
 
