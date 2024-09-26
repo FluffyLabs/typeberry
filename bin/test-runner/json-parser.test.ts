@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { test } from "node:test";
-import { type FromJson, parseFromJson, NUMBER, BOOLEAN, STRING, ARRAY, OPTIONAL, OBJECT } from "./json-parser";
+import { ARRAY, BOOLEAN, type FromJson, NUMBER, OBJECT, OPTIONAL, STRING, parseFromJson } from "./json-parser";
 
 test("JSON parser", async (t) => {
   await t.test("parse simple class", () => {
@@ -130,8 +130,8 @@ test("JSON parser", async (t) => {
     const json = `{"v": true }`;
     class TestClass {
       static fromJson: FromJson<TestClass> = OBJECT({
-          k: OPTIONAL(NUMBER()),
-          v: OPTIONAL(BOOLEAN()),
+        k: OPTIONAL(NUMBER()),
+        v: OPTIONAL(BOOLEAN()),
       });
 
       k?: number;

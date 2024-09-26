@@ -1,6 +1,6 @@
 import { BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
-import { ARRAY, OBJECT, STRING, type FromJson } from "../json-parser";
+import { ARRAY, type FromJson, OBJECT, STRING } from "../json-parser";
 
 export class EcTest {
   static fromJson: FromJson<EcTest> = OBJECT({

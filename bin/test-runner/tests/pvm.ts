@@ -5,17 +5,15 @@ import { type MemoryIndex, createMemoryIndex } from "@typeberry/pvm/memory/memor
 import { getPageNumber, getStartPageIndex } from "@typeberry/pvm/memory/memory-utils";
 import type { PageNumber } from "@typeberry/pvm/memory/pages/page-utils";
 import { Pvm, type RegistersArray } from "@typeberry/pvm/pvm";
-import { ANY, ARRAY, BOOLEAN, NUMBER, OBJECT, STRING, type FromJson } from "../json-parser";
+import { ANY, ARRAY, BOOLEAN, type FromJson, NUMBER, OBJECT, STRING } from "../json-parser";
 
-const uint8ArrayFromJson = ANY(
-  (v: unknown) => {
-    if (Array.isArray(v)) {
-      return new Uint8Array(v);
-    }
-
-    throw new Error(`Expected an array, got ${typeof v} instead.`);
+const uint8ArrayFromJson = ANY((v: unknown) => {
+  if (Array.isArray(v)) {
+    return new Uint8Array(v);
   }
-);
+
+  throw new Error(`Expected an array, got ${typeof v} instead.`);
+});
 
 class MemoryChunkItem {
   static fromJson: FromJson<MemoryChunkItem> = OBJECT({

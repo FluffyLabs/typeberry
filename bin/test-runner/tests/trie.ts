@@ -4,29 +4,27 @@ import { test } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { InMemoryTrie, type StateKey, type TrieHash } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/blake2b.node";
-import { ANY, ARRAY, OBJECT, STRING, type FromJson } from "../json-parser";
+import { ANY, ARRAY, type FromJson, OBJECT, STRING } from "../json-parser";
 
 export class TrieTest {
   static fromJson: FromJson<TrieTest> = OBJECT({
-    input: ANY(
-      (input: unknown, context?: string): Map<StateKey, BytesBlob> => {
-        if (input === null) {
-          throw new Error(`[${context}] Unexpected 'null'`);
-        }
-        if (typeof input !== "object") {
-          throw new Error(`[${context}] Expected an object.`);
-        }
+    input: ANY((input: unknown, context?: string): Map<StateKey, BytesBlob> => {
+      if (input === null) {
+        throw new Error(`[${context}] Unexpected 'null'`);
+      }
+      if (typeof input !== "object") {
+        throw new Error(`[${context}] Expected an object.`);
+      }
 
-        const output: Map<StateKey, BytesBlob> = new Map();
-        for (const [k, v] of Object.entries(input)) {
-          const key = Bytes.parseBytesNoPrefix(k, 32) as StateKey;
-          const value = BytesBlob.parseBlobNoPrefix(v);
-          output.set(key, value);
-        }
+      const output: Map<StateKey, BytesBlob> = new Map();
+      for (const [k, v] of Object.entries(input)) {
+        const key = Bytes.parseBytesNoPrefix(k, 32) as StateKey;
+        const value = BytesBlob.parseBlobNoPrefix(v);
+        output.set(key, value);
+      }
 
-        return output;
-      },
-    ),
+      return output;
+    }),
     output: STRING((v: string) => Bytes.parseBytesNoPrefix(v, 32) as TrieHash),
   });
   input!: Map<StateKey, BytesBlob>;

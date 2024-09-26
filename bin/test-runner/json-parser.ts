@@ -1,3 +1,4 @@
+// biome-ignore format: The type is cleaner when it's formatted manually
 export type FromJson<T, From = T> =
   T extends (infer U)[] ? FromJsonArray<U> :
   (
@@ -9,86 +10,98 @@ export type FromJson<T, From = T> =
   );
 
 type FromJsonArray<T> = {
-  kind: 'array',
-  from: FromJson<T>,
+  kind: "array";
+  from: FromJson<T>;
 };
 
 type FromJsonWithParser<T, From> = {
-  kind: FromJsonPrimitive<From>,
+  kind: FromJsonPrimitive<From>;
   parser?: Parser<From, T>;
 };
 
 type FromJsonAny<T> = {
-  kind: 'any',
-  parser: Parser<unknown, T>,
+  kind: "any";
+  parser: Parser<unknown, T>;
 };
 
-type FromJsonBool<T> = T extends boolean ? {
-  kind: 'boolean',
-} : never;
+type FromJsonBool<T> = T extends boolean
+  ? {
+      kind: "boolean";
+    }
+  : never;
 
 type Parser<TFrom, TInto> = (inJson: TFrom, context?: string) => TInto;
 
 type FromJsonPrimitive<T> =
-  T extends string ? 'string' :
-  T extends number ? 'number' :
-  never;
+  // string
+  T extends string
+    ? "string"
+    : // or number
+      T extends number
+      ? "number"
+      : // boolean is handled separately, since we don't want a parser for it.
+        never;
 
 type FromJsonOptional<U> = {
-  kind: 'optional',
-  from: FromJson<NonNullable<U>>,
+  kind: "optional";
+  from: FromJson<NonNullable<U>>;
 };
 
 type FromJsonObject<T> = {
-  kind: 'object',
-  from: ObjectFromJson<T>
+  kind: "object";
+  from: ObjectFromJson<T>;
 };
 
 export type ObjectFromJson<T> = {
-  [K in Extract<keyof T, string>]: FromJson<T[K], any>;
+  [K in Extract<keyof T, string>]: FromJson<T[K]>;
 };
 
-export const STRING = <T = string>(parser?: Parser<string, T>) => ({
-  kind: 'string',
-  parser
-} as FromJson<T>);
+export const STRING = <T = string>(parser?: Parser<string, T>) =>
+  ({
+    kind: "string",
+    parser,
+  }) as FromJson<T>;
 
-export const NUMBER = <T = number>(parser?: Parser<number, T>) => ({
-  kind: 'number',
-  parser,
-} as FromJson<T>);
+export const NUMBER = <T = number>(parser?: Parser<number, T>) =>
+  ({
+    kind: "number",
+    parser,
+  }) as FromJson<T>;
 
 export const BOOLEAN = (): FromJson<boolean> => ({
-  kind: 'boolean',
+  kind: "boolean",
 });
 
-export const ANY = <T>(parser: Parser<unknown, T>) => ({
-  kind: 'any',
-  parser,
-} as FromJson<T>);
+export const ANY = <T>(parser: Parser<unknown, T>) =>
+  ({
+    kind: "any",
+    parser,
+  }) as FromJson<T>;
 
-export const OPTIONAL = <T>(from: FromJson<T>) => ({
-  kind: 'optional',
-  from,
-} as FromJson<T | undefined>);
+export const OPTIONAL = <T>(from: FromJson<T>) =>
+  ({
+    kind: "optional",
+    from,
+  }) as FromJson<T | undefined>;
 
 export const ARRAY = <T>(from: FromJson<T>): FromJson<T[]> => ({
-  kind: 'array',
+  kind: "array",
   from,
 });
 
-export const OBJECT = <T>(from: ObjectFromJson<T>) => ({
-  kind: 'object',
-  from,
-} as FromJson<T>);
+export const OBJECT = <T>(from: ObjectFromJson<T>) =>
+  ({
+    kind: "object",
+    from,
+  }) as FromJson<T>;
 
 export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>, context = "<root>"): T {
   const t = typeof jsonType;
 
   const kind = jsonDescription.kind;
 
-  if (kind === 'object') {
-    if (t !== 'object') {
+  if (kind === "object") {
+    if (t !== "object") {
       throw new Error(`Expected complex type but got ${t}`);
     }
     const description = jsonDescription as FromJsonObject<T>;
@@ -98,8 +111,8 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
 
     for (const key of Object.keys(c)) {
       const inJson = obj[key];
-      const descriptor = c[key] as FromJson<any>;
-      if (inJson !== undefined || descriptor.kind === 'optional') {
+      const descriptor = c[key];
+      if (inJson !== undefined || descriptor.kind === "optional") {
         const result = parseFromJson(inJson, descriptor, `${context}.${key}`);
         // note that for optional keys we will populate the object here
         // with undefined, which is what we want for key comparison.
@@ -122,7 +135,7 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
   }
 
   // optional
-  if (kind === 'optional') {
+  if (kind === "optional") {
     if (jsonType === undefined || jsonType === null) {
       return jsonType as T;
     }
@@ -131,7 +144,7 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
   }
 
   // array
-  if (kind === 'array') {
+  if (kind === "array") {
     if (!Array.isArray(jsonType)) {
       throw new Error(`[${context}] Expected array, got ${jsonType}`);
     }
@@ -144,12 +157,16 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
   }
 
   // manual parser
-  if (kind === 'any') {
+  if (kind === "any") {
     const description = jsonDescription as FromJsonAny<T>;
     return description.parser(jsonType, context);
   }
 
-  const parsePrimitive = <TFrom>(jsonType: TFrom, jsonDescription: FromJsonWithParser<T, TFrom>, context?: string): T => {
+  const parsePrimitive = <TFrom>(
+    jsonType: TFrom,
+    jsonDescription: FromJsonWithParser<T, TFrom>,
+    context?: string,
+  ): T => {
     if (jsonDescription.parser) {
       return jsonDescription.parser(jsonType, context);
     }
@@ -158,17 +175,17 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
   };
 
   // primitive type
-  if (t === kind && kind === 'string')  {
+  if (t === kind && kind === "string") {
     const description = jsonDescription as FromJsonWithParser<T, string>;
     return parsePrimitive<string>(jsonType as string, description, context);
   }
 
-  if (t === kind && kind === 'number') {
+  if (t === kind && kind === "number") {
     const description = jsonDescription as FromJsonWithParser<T, number>;
     return parsePrimitive<number>(jsonType as number, description, context);
   }
 
-  if (t === kind && kind === 'boolean') {
+  if (t === kind && kind === "boolean") {
     const description = jsonDescription as FromJsonWithParser<T, boolean>;
     return parsePrimitive<boolean>(jsonType as boolean, description, context);
   }

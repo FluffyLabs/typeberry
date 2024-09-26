@@ -9,7 +9,7 @@ import {
   type ValidatorData,
 } from "@typeberry/safrole";
 import type { BandersnatchKey, BlsKey, Ed25519Key } from "@typeberry/safrole/crypto";
-import { type FromJson, STRING, NUMBER, ARRAY, OPTIONAL, OBJECT } from "../json-parser";
+import { ARRAY, type FromJson, NUMBER, OBJECT, OPTIONAL, STRING } from "../json-parser";
 
 type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}` ? `${T}${Capitalize<SnakeToCamel<U>>}` : S;
 
