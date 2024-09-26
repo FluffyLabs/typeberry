@@ -162,7 +162,7 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
     for (const [k, v] of arr.entries()) {
       result[k] = parseFromJson(v, description.from, `${context}.${k}`);
     }
-    return arr as T;
+    return result as T;
   }
 
   // manual parser
