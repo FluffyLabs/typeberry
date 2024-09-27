@@ -5,14 +5,14 @@
   "results": [
     {
       "name": "Get the first field from View",
-      "ops": 4026118.98,
-      "margin": 1,
+      "ops": 3926118.98,
+      "margin": 5,
       "percentSlower": 0
     },
     {
       "name": "Get the first field from Decoded",
       "ops": 2377164.14,
-      "margin": 1,
+      "margin": 5,
       "percentSlower": 44.35
     },
     {
