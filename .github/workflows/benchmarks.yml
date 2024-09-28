@@ -28,7 +28,9 @@ jobs:
           cache: "npm"
       - run: npm ci
       - name: Warmup run
-        run: npm start -w @typeberry/benchmark || true
+        run: |
+            npm start -w @typeberry/benchmark || true
+            rm -rf ./benchmarks/*/output
       - name: Benchmarks run
         run: npm start -w @typeberry/benchmark
       - name: Display results
