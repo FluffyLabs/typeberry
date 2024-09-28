@@ -30,8 +30,8 @@
     },
     {
       "name": "Get only third fields from Decoded",
-      "ops": 2296239.1,
-      "margin": 1
+      "ops": 2361247.1,
+      "margin": 2
     }
   ],
   "fastest": {
