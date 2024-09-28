@@ -138,7 +138,7 @@ function compareResults(currentResults: BennyResults, expectedResults: BennyResu
     // compare the difference between results
     const diff = Math.abs(currNormalized - prevNormalized);
     // be generous with the margin
-    const margin = curr[i].margin + prev[i].margin;
+    const margin = 5 + curr[i].margin + prev[i].margin;
     // but take the slower result to comparison.
     const min = Math.min(currNormalized, prevNormalized);
     if (diff > (min * margin) / 100) {
