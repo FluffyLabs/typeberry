@@ -21,10 +21,27 @@ export type FromJsonPrimitive<T> = T extends string
           ? "object"
           : never;
 
-export type FromJsonWithParser<T, Y> = [FromJsonPrimitive<Y>, (inJson: Y, context?: string) => T];
+export type Parser<TFrom, TInto> = (inJson: TFrom, context?: string) => TInto;
+export type FromJsonWithParser<T, Y> = [FromJsonPrimitive<Y>, Parser<Y, T>];
 
 export type ObjectFromJson<T> = {
   [K in keyof T]: FromJson<T[K]>;
+};
+
+export const FROM_STRING = <TInto>(parser: Parser<string, TInto>): FromJsonWithParser<TInto, string> => {
+  return ["string", parser];
+};
+
+export const FROM_NUMBER = <TInto>(parser: Parser<number, TInto>): FromJsonWithParser<TInto, number> => {
+  return ["number", parser];
+};
+
+export const FROM_ANY = <TInto>(parser: Parser<unknown, TInto>): FromJsonWithParser<TInto, unknown> => {
+  return ["object", parser];
+};
+
+export const ARRAY = <TInto>(from: FromJson<TInto>): FromJson<TInto[]> => {
+  return ["array", from];
 };
 
 export function optional<T>(

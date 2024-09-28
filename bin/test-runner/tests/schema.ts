@@ -1,4 +1,4 @@
-import { optional } from "../json-parser";
+import { ARRAY, FROM_ANY, optional } from "../json-parser";
 
 export class JsonSchema {
   static fromJson = optional<JsonSchema>(
@@ -7,10 +7,10 @@ export class JsonSchema {
       type: "string",
       title: "string",
       description: "string",
-      properties: ["object", () => null],
-      required: ["array", "string"],
+      properties: FROM_ANY(() => null),
+      required: ARRAY("string"),
       additionalProperties: "boolean",
-      $defs: ["object", () => null],
+      $defs: FROM_ANY(() => null),
     },
     ["title", "description", "required", "$defs"],
   );
