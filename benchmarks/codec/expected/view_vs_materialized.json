@@ -20,8 +20,8 @@
     },
     {
       "name": "Get two fields from Decoded",
-      "ops": 2366781.33,
-      "margin": 1
+      "ops": 2340681.57,
+      "margin": 5
     },
     {
       "name": "Get only third fields from View",
@@ -30,8 +30,8 @@
     },
     {
       "name": "Get only third fields from Decoded",
-      "ops": 2361247.1,
-      "margin": 2
+      "ops": 2388788.41,
+      "margin": 5
     }
   ],
   "fastest": {
