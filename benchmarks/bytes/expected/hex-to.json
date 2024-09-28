@@ -6,14 +6,12 @@
     {
       "name": "number toString + padding",
       "ops": 318696.03,
-      "margin": 0.1,
-      "percentSlower": 50
+      "margin": 0.1
     },
     {
       "name": "manual",
       "ops": 358682.53,
-      "margin": 0.1,
-      "percentSlower": 0
+      "margin": 0.1
     }
   ],
   "fastest": {

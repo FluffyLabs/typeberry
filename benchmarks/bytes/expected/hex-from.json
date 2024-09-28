@@ -6,20 +6,17 @@
     {
       "name": "parse hex using `Number` with NaN checking",
       "ops": 134270.15,
-      "margin": 0.1,
-      "percentSlower": 87.09
+      "margin": 0.1
     },
     {
       "name": "parse hex from char codes",
       "ops": 983048.54,
-      "margin": 0.29,
-      "percentSlower": 0
+      "margin": 0.29
     },
     {
       "name": "parse hex from string nibbles",
       "ops": 556035.34,
-      "margin": 0.25,
-      "percentSlower": 40.21
+      "margin": 0.25
     }
   ],
   "fastest": {
