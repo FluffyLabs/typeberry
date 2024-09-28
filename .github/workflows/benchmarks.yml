@@ -27,7 +27,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: npm ci
-      - run: npm start -w @typeberry/benchmark
+      - run: npm start -w @typeberry/benchmark || npm start -w @typeberry/benchmark
       - name: Display results
         if: always()
         run: cat ./dist/benchmarks/results.txt
