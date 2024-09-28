@@ -13,6 +13,7 @@ runAllBenchmarks().catch((e: Error) => {
   logger.error(e.message);
   logger.error(`Cause: ${e.cause}`);
   logger.error(`Stack: ${e.stack ?? ""}`);
+  process.exit(-1);
 });
 
 async function runAllBenchmarks() {
@@ -69,7 +70,7 @@ async function runAllBenchmarks() {
     }).length > 0;
 
   if (hasErrors) {
-    process.exit(-1);
+    throw new Error("Errors while running benchmarks. Exiting.");
   }
 }
 
