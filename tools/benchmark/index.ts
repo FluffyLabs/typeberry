@@ -9,7 +9,11 @@ import type { BennyOps, BennyResults, ComparisonResult, ErrorResult, OkResult, R
 const commitHash = process.env.GITHUB_SHA;
 const logger = Logger.new(global.__filename, "benchmarks");
 
-runAllBenchmarks().catch((e) => logger.error(e));
+runAllBenchmarks().catch((e: Error) => {
+  logger.error(e.message);
+  logger.error(`Cause: ${e.cause}`);
+  logger.error(`Stack: ${e.stack ?? ""}`);
+});
 
 async function runAllBenchmarks() {
   // We are going to run all benchmarks in our benchmark folder.
