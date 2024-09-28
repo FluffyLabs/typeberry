@@ -7,7 +7,8 @@ export type FromJson<T> = T extends (infer U)[]
       | FromJsonWithParser<T, number>
       // manually parse a nested object
       | FromJsonWithParser<T, unknown>
-      | FromJsonPrimitive<T>;
+      | FromJsonPrimitive<T>
+      | FromJsonOptional<T>;
 
 export type FromJsonPrimitive<T> = T extends string
   ? "string"
@@ -22,7 +23,10 @@ export type FromJsonPrimitive<T> = T extends string
           : never;
 
 export type Parser<TFrom, TInto> = (inJson: TFrom, context?: string) => TInto;
-export type FromJsonWithParser<T, Y> = [FromJsonPrimitive<Y>, Parser<Y, T>];
+
+export type FromJsonWithParser<TInto, TFrom> = [FromJsonPrimitive<TFrom>, Parser<TFrom, TInto>];
+
+export type FromJsonOptional<TInto> = ["optional", FromJson<TInto>];
 
 export type ObjectFromJson<T> = {
   [K in keyof T]: FromJson<T[K]>;
@@ -40,38 +44,13 @@ export const FROM_ANY = <TInto>(parser: Parser<unknown, TInto>): FromJsonWithPar
   return ["object", parser];
 };
 
+export const OPTIONAL = <T>(from: FromJson<T>): FromJson<T | undefined> => {
+  return ["optional", from] as FromJson<T | undefined>;
+};
+
 export const ARRAY = <TInto>(from: FromJson<TInto>): FromJson<TInto[]> => {
   return ["array", from];
 };
-
-export function optional<T>(
-  type: ObjectFromJson<T>,
-  optionalKeys: string[], // TODO [ToDr] typing
-): FromJsonWithParser<T, unknown> {
-  return [
-    "object",
-    (json: unknown, context?: string) => {
-      if (json === null || typeof json !== "object") {
-        throw new Error(`[${context}] Expected object with optional fields, got: ${json}`);
-      }
-
-      const j = json as { [key: string]: unknown };
-      for (const [k, v] of Object.entries(type)) {
-        if (k in json) {
-          // we allow `null` in a key
-          if (j[k] !== null) {
-            const val = v as FromJson<unknown>;
-            j[k] = parseFromJson(j[k], val, `${context}.${k}`);
-          }
-        } else if (optionalKeys.indexOf(k) === -1) {
-          throw new Error(`[${context}] Missing non-optional key "${k}" in ${Object.keys(json)}`);
-        }
-      }
-
-      return json as T;
-    },
-  ];
-}
 
 export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>, context = "<root>"): T {
   const t = typeof jsonType;
@@ -108,10 +87,21 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
       }
 
       const arr = jsonType as unknown[];
+      const result = [] as unknown[];
       for (const [k, v] of arr.entries()) {
-        arr[k] = parseFromJson(v, expectedType, `${context}.${k}`);
+        result[k] = parseFromJson(v, expectedType, `${context}.${k}`);
       }
-      return arr as T;
+      return result as T;
+    }
+
+    // optional type
+    if (type === "optional") {
+      if (jsonType === undefined || jsonType === null) {
+        return jsonType as T;
+      }
+
+      const expectedType = jsonDescription[1];
+      return parseFromJson(jsonType, expectedType, context);
     }
 
     // a manual parser for nested object
@@ -150,25 +140,39 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
     throw new Error(`[${context}] Unexpected 'null'`);
   }
 
+  const result = {} as { [key: string]: unknown };
   const obj = jsonType as { [key: string]: unknown };
   const c = jsonDescription as { [key: string]: FromJson<unknown> };
 
-  const keysDifference = diffKeys(obj, jsonDescription);
+  // add all keys so that they are in the same order.
+  for (const key of Object.keys(obj)) {
+    result[key] = undefined;
+  }
+
+  // now parse the ones that we need (some might be optional, but that's fine).
+  for (const key of Object.keys(jsonDescription)) {
+    // we intentionally skip missing keys, to have them detected
+    // during key diffing. But for optional keys we put undefined value.
+    if (key in obj) {
+      const v = obj[key];
+      result[key] = parseFromJson(v, c[key], `${context}.${key}`);
+    } else if (Array.isArray(c[key]) && c[key][0] === "optional") {
+      result[key] = undefined;
+    }
+  }
+
+  // compute the key difference
+  const keysDifference = diffKeys(result, jsonDescription);
   if (keysDifference.length > 0) {
     const e = new Error(
       `[${context}] Unexpected or missing keys: ${keysDifference.join(" | ")}
-          Data: ${Object.keys(obj)}
+          Data: ${Object.keys(result)}
           Schema: ${Object.keys(jsonDescription)}`,
     );
     throw e;
   }
 
-  for (const key of Object.keys(jsonDescription)) {
-    const v = obj[key];
-    obj[key] = parseFromJson(v, c[key], `${context}.${key}`);
-  }
-
-  return obj as T;
+  return result as T;
 }
 
 function diffKeys(obj1: object, obj2: object): [string, string][] {

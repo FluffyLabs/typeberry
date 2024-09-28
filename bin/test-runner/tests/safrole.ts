@@ -9,7 +9,7 @@ import {
   type ValidatorData,
 } from "@typeberry/safrole";
 import type { BandersnatchKey, BlsKey, Ed25519Key } from "@typeberry/safrole/crypto";
-import { ARRAY, FROM_STRING, type FromJson, optional } from "../json-parser";
+import { ARRAY, FROM_STRING, type FromJson, OPTIONAL } from "../json-parser";
 
 type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}` ? `${T}${Capitalize<SnakeToCamel<U>>}` : S;
 
@@ -38,13 +38,10 @@ const ticketBodyFromJson: FromJson<TicketBody> = {
 };
 
 export class TicketsOrKeys {
-  static fromJson = optional<TicketsOrKeys>(
-    {
-      tickets: ARRAY(ticketBodyFromJson),
-      keys: ARRAY(FROM_STRING((v) => Bytes.parseBytes(v, 32) as BandersnatchKey)),
-    },
-    ["tickets", "keys"],
-  );
+  static fromJson: FromJson<TicketsOrKeys> = {
+    tickets: OPTIONAL<TicketBody[]>(ARRAY(ticketBodyFromJson)),
+    keys: OPTIONAL<BandersnatchKey[]>(ARRAY(FROM_STRING((v) => Bytes.parseBytes(v, 32) as BandersnatchKey))),
+  };
   tickets?: TicketBody[];
   keys?: BandersnatchKey[];
 }
@@ -97,28 +94,22 @@ export class EpochMark {
 }
 
 export class OkOutput {
-  static fromJson = optional<OkOutput>(
-    {
-      epoch_mark: EpochMark.fromJson,
-      tickets_mark: ARRAY(ticketBodyFromJson),
-    },
-    ["epoch_mark", "tickets_mark"],
-  );
-  epoch_mark?: EpochMark | null;
-  tickets_mark?: TicketBody[] | null;
+  static fromJson: FromJson<OkOutput> = {
+    epoch_mark: OPTIONAL(EpochMark.fromJson),
+    tickets_mark: OPTIONAL<TicketBody[]>(ARRAY(ticketBodyFromJson)),
+  };
+  epoch_mark?: EpochMark;
+  tickets_mark?: TicketBody[];
 }
 
 export class Output {
-  static fromJson = optional<Output>(
-    {
-      ok: OkOutput.fromJson,
-      err: "string",
-    },
-    ["ok", "err"],
-  );
+  static fromJson: FromJson<Output> = {
+    ok: OPTIONAL(OkOutput.fromJson),
+    err: OPTIONAL("string"),
+  };
 
-  ok?: OkOutput = undefined;
-  err?: string = undefined;
+  ok?: OkOutput;
+  err?: string;
 }
 
 export class SafroleTest {
@@ -157,8 +148,8 @@ export async function runSafroleTest(testContent: SafroleTest) {
   try {
     stateDiff = await safrole.transition(testContent.input);
     output.ok = {
-      epoch_mark: null,
-      tickets_mark: null,
+      epoch_mark: undefined,
+      tickets_mark: undefined,
     };
   } catch (e) {
     error = `${e}`;
