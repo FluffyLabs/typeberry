@@ -1,53 +1,62 @@
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Bytes } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
-import { NUMBER, OBJECT, STRING, type FromJson } from "../json-parser";
+import { OPTIONAL, ARRAY, FROM_STRING, type FromJson } from "../json-parser";
+import {BandersnatchKey, Ed25519Key} from "@typeberry/safrole/crypto";
+import {EntropyHash} from "@typeberry/safrole";
+import {TrieHash} from "@typeberry/trie";
+import {Opaque} from "@typeberry/utils";
 
-const BYTES32 = STRING((v) => Bytes.parseBytes(v, 32));
+const bytes32 = <T extends Bytes<32>>() => FROM_STRING((v) => Bytes.parseBytes(v, 32) as T);
+const bytes96FromString = FROM_STRING(v => Bytes.parseBytes(v, 96));
+
+type HeaderHash = Opaque<Bytes<32>, "header hash">
+
+class EpochMark {
+  static fromJson: FromJson<EpochMark> = {
+    entropy: bytes32<EntropyHash>(),
+    validators: ARRAY(bytes32<BandersnatchKey>())
+  };
+
+  entropy!: EntropyHash;
+  validators!: BandersnatchKey[];
+}
+class TicketsMark {
+  static fromJson: FromJson<TicketsMark> = {
+    id: bytes32<Bytes<32>>(),
+    attempt: 'number',
+  };
+  id!: Bytes<32>;
+  attempt!: 0 | 1;
+}
 
 export class Header {
-  static fromJson: FromJson<Header> = OBJECT({
-    parent: BYTES32,
-    parent_state_root: BYTES32,
-    extrinsic_hash: BYTES32,
-    slot: NUMBER(),
-    epoch_mark: OBJECT({
-      entropy: BYTES32,
-    }),
-    tickets_mark: ANY(() => null),
-    offenders_mark: ARRAY(),
-  });
+  static fromJson: FromJson<Header> = {
+    parent: bytes32<HeaderHash>(),
+    parent_state_root: bytes32<TrieHash>(),
+    extrinsic_hash: bytes32<Bytes<32>>(),
+    slot: 'number', // u32
+    epoch_mark: OPTIONAL(EpochMark.fromJson),
+    tickets_mark: OPTIONAL<TicketsMark[]>(ARRAY(TicketsMark.fromJson)),
+    offenders_mark: ARRAY(bytes32<Ed25519Key>()),
+    author_index: 'number',
+    entropy_source: bytes96FromString,
+    seal: bytes96FromString,
+  };
 
-  parent!: Bytes<32>;
-  parent_state_root!: Bytes<32>;
+  parent!: HeaderHash;
+  parent_state_root!: TrieHash;
   extrinsic_hash!: Bytes<32>;
   slot!: number;
-  epoch_mark: {
-    entropy: Bytes<32>;
-  }
-  tickets_mark?: null;
-  offenders_mark?: [];
-  author_index: number;
-  entropy_source:
-  seal
+  epoch_mark?: EpochMark;
+  tickets_mark?: TicketsMark[];
+  offenders_mark?: Ed25519Key[];
+  author_index!: number; // u16
+  entropy_source!: Bytes<96>;
+  seal!: Bytes<96>;
 }
 const logger = Logger.new(global.__filename, "test-runner/codec");
 
-export async function runHeaderTest(test: Header) {
+export async function runHeaderTest(test: Header, file: string) {
   logger.trace(JSON.stringify(test, null, 2));
-  logger.error("Not implemented yet!");
-}
-
-export async function runPageProofTest(test: PageProof) {
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error("Not implemented yet!");
-}
-
-export async function runSegmentEcTest(test: SegmentEcTest) {
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error("Not implemented yet!");
-}
-
-export async function runSegmentRootTest(test: SegmentRoot) {
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error("Not implemented yet!");
+  logger.error(`Not implemented yet! ${file}`);
 }

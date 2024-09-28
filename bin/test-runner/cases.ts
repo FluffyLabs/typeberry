@@ -18,6 +18,7 @@ import { PvmTest, runPvmTest } from "./tests/pvm";
 import { SafroleTest, runSafroleTest } from "./tests/safrole";
 import { JsonSchema, ignoreSchemaFiles } from "./tests/schema";
 import { runTrieTest, trieTestSuiteFromJson } from "./tests/trie";
+import {Header, runHeaderTest} from "./tests/codec";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 const logger = Logger.new(global.__filename, "test-runner");
@@ -88,7 +89,6 @@ async function main() {
     }
   }
 
-  // TODO [ToDr] generate results file.
   return "Tests registed successfuly";
 }
 
@@ -97,7 +97,7 @@ function tryToPrepareTestRunner<T>(
   file: string,
   testContent: unknown,
   fromJson: FromJson<T>,
-  run: (t: T) => Promise<void>,
+  run: (t: T, file: string) => Promise<void>,
   onError: (name: string, e: unknown) => void,
 ): TestAndRunner | null {
   try {
@@ -106,7 +106,7 @@ function tryToPrepareTestRunner<T>(
     return {
       runner: name,
       file,
-      test: () => run(parsedTest),
+      test: () => run(parsedTest, file),
     };
   } catch (e) {
     onError(name, e);
@@ -124,7 +124,7 @@ function prepareTests(testContent: unknown, file: string): TestAndRunner[] {
   const errors: [string, unknown][] = [];
   const handleError = (name: string, e: unknown) => errors.push([name, e]);
 
-  function prepRunner<T>(name: string, fromJson: FromJson<T>, run: (t: T) => Promise<void>) {
+  function prepRunner<T>(name: string, fromJson: FromJson<T>, run: (t: T, file: string) => Promise<void>) {
     const r = tryToPrepareTestRunner(name, file, testContent, fromJson, run, handleError);
     return r;
   }
@@ -137,6 +137,7 @@ function prepareTests(testContent: unknown, file: string): TestAndRunner[] {
     prepRunner("erasure-coding/page-proof", PageProof.fromJson, runPageProofTest),
     prepRunner("erasure-coding/segment-ec", SegmentEcTest.fromJson, runSegmentEcTest),
     prepRunner("erasure-coding/segment-root", SegmentRoot.fromJson, runSegmentRootTest),
+    prepRunner("codec/header", Header.fromJson, runHeaderTest),
     prepRunner("ignored", JsonSchema.fromJson, ignoreSchemaFiles),
   ];
 
