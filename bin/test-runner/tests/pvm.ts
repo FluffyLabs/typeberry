@@ -5,18 +5,15 @@ import { type MemoryIndex, createMemoryIndex } from "@typeberry/pvm/memory/memor
 import { getPageNumber, getStartPageIndex } from "@typeberry/pvm/memory/memory-utils";
 import type { PageNumber } from "@typeberry/pvm/memory/pages/page-utils";
 import { Pvm, type RegistersArray } from "@typeberry/pvm/pvm";
-import type { FromJson } from "../json-parser";
+import { ARRAY, FROM_ANY, type FromJson } from "../json-parser";
 
-const uint8ArrayFromJson: ["object", (v: unknown) => Uint8Array] = [
-  "object",
-  (v: unknown) => {
-    if (Array.isArray(v)) {
-      return new Uint8Array(v);
-    }
+const uint8ArrayFromJson = FROM_ANY((v: unknown) => {
+  if (Array.isArray(v)) {
+    return new Uint8Array(v);
+  }
 
-    throw new Error(`Expected an array, got ${typeof v} instead.`);
-  },
-];
+  throw new Error(`Expected an array, got ${typeof v} instead.`);
+});
 
 class MemoryChunkItem {
   static fromJson: FromJson<MemoryChunkItem> = {
@@ -40,16 +37,16 @@ class PageMapItem {
 export class PvmTest {
   static fromJson: FromJson<PvmTest> = {
     name: "string",
-    "initial-regs": ["array", "number"],
+    "initial-regs": ARRAY("number"),
     "initial-pc": "number",
-    "initial-page-map": ["array", PageMapItem.fromJson],
-    "initial-memory": ["array", MemoryChunkItem.fromJson],
+    "initial-page-map": ARRAY(PageMapItem.fromJson),
+    "initial-memory": ARRAY(MemoryChunkItem.fromJson),
     "initial-gas": "number",
     program: uint8ArrayFromJson,
     "expected-status": "string",
-    "expected-regs": ["array", "number"],
+    "expected-regs": ARRAY("number"),
     "expected-pc": "number",
-    "expected-memory": ["array", MemoryChunkItem.fromJson],
+    "expected-memory": ARRAY(MemoryChunkItem.fromJson),
     "expected-gas": "number",
   };
 

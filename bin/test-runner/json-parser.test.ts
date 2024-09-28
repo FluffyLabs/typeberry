@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { test } from "node:test";
-import { type FromJson, optional, parseFromJson } from "./json-parser";
+import { ARRAY, FROM_STRING, type FromJson, OPTIONAL, parseFromJson } from "./json-parser";
 
 test("JSON parser", async (t) => {
   await t.test("parse simple class", () => {
@@ -53,7 +53,7 @@ test("JSON parser", async (t) => {
     const json = `{"k": "0x123", "v": true }`;
     class TestClass {
       static fromJson: FromJson<TestClass> = {
-        k: ["string", (v: string) => Number.parseInt(v)],
+        k: FROM_STRING((v) => Number.parseInt(v)),
         v: "boolean",
       };
 
@@ -70,7 +70,7 @@ test("JSON parser", async (t) => {
     const json = `{"k": ["a", "b", "c"]}`;
     class TestClass {
       static fromJson: FromJson<TestClass> = {
-        k: ["array", "string"],
+        k: ARRAY("string"),
       };
 
       k!: string[];
@@ -128,13 +128,10 @@ test("JSON parser", async (t) => {
   await t.test("optionals", () => {
     const json = `{"v": true }`;
     class TestClass {
-      static fromJson = optional<TestClass>(
-        {
-          k: "number",
-          v: "boolean",
-        },
-        ["k", "v"],
-      );
+      static fromJson: FromJson<TestClass> = {
+        k: OPTIONAL("number"),
+        v: OPTIONAL("boolean"),
+      };
 
       k?: number;
       v?: boolean;
