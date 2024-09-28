@@ -20,7 +20,7 @@ export type BennyOps = {
   name: string;
   ops: number;
   margin: number;
-  percentSlower: number;
+  percentSlower?: number;
 };
 
 export type BennyResults = {
