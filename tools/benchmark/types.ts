@@ -16,18 +16,18 @@ export type OkResult = {
 
 export type ComparisonResult = (ErrorResult | OkResult)[];
 
+export type BennyOps = {
+  name: string;
+  ops: number;
+  margin: number;
+  percentSlower: number;
+};
+
 export type BennyResults = {
   name: string;
   date: string;
   version: string | null;
-  results:
-    | {
-        name: string;
-        ops: number;
-        margin: number;
-        percentSlower: number;
-      }[]
-    | null;
+  results: BennyOps[] | null;
   fastest:
     | {
         name: string;

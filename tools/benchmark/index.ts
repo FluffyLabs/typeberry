@@ -4,7 +4,7 @@ import { Logger } from "@typeberry/logger";
 import chalk from "chalk";
 import { formatResults } from "./format";
 import { BENCHMARKS_DIR, DIST_DIR, EXPECTED_DIR, OUTPUT_DIR, REL_DIR } from "./setup";
-import type { BennyResults, ComparisonResult, ErrorResult, OkResult, Result } from "./types";
+import type { BennyOps, BennyResults, ComparisonResult, ErrorResult, OkResult, Result } from "./types";
 
 const commitHash = process.env.GITHUB_SHA;
 const logger = Logger.new(global.__filename, "benchmarks");
@@ -119,6 +119,9 @@ function compareResults(currentResults: BennyResults, expectedResults: BennyResu
 
   const res: ComparisonResult = [];
 
+  const currMinOps = Math.min(...Array.from(curr.values()).map((x) => x.ops));
+  const prevMinOps = Math.min(...Array.from(prev.values()).map((x) => x.ops));
+
   for (let i = 0; i < Math.max(curr.length, prev.length); i += 1) {
     if (curr[i]?.name !== prev[i]?.name) {
       res.push({
@@ -128,16 +131,20 @@ function compareResults(currentResults: BennyResults, expectedResults: BennyResu
       continue;
     }
 
+    // we work on normalized results
+    const currNormalized = curr[i].ops / currMinOps;
+    const prevNormalized = prev[i].ops / prevMinOps;
+
     // compare the difference between results
-    const diff = Math.abs(curr[i].ops - prev[i].ops);
+    const diff = Math.abs(currNormalized - prevNormalized);
     // be generous with the margin
-    const margin = 5 + curr[i].margin + prev[i].margin;
+    const margin = curr[i].margin + prev[i].margin;
     // but take the slower result to comparison.
-    const min = Math.min(curr[i].ops, prev[i].ops);
+    const min = Math.min(currNormalized, prevNormalized);
     if (diff > (min * margin) / 100) {
       res.push({
         name: curr[i].name,
-        err: `Significant speed difference: (current) "${curr[i].ops} ±${curr[i].margin}%" vs "${prev[i].ops} ±${prev[i].margin}%" (previous)`,
+        err: errMsg(curr[i], prev[i], currNormalized, prevNormalized),
         ops: [curr[i].ops, prev[i].ops],
         margin: [curr[i].margin, prev[i].margin],
       });
@@ -172,4 +179,8 @@ function compareFastest(currentResults: BennyResults, expectedResults: BennyResu
       err: `Fastest result changed to (current) "${current.name}[${current.index}]" from "${expectedNames.join(" or ")}" (expected) ❌`,
     },
   ];
+}
+
+function errMsg(curr: BennyOps, prev: BennyOps, currNormalized: number, prevNormalized: number) {
+  return `Significant speed difference: (current) "${curr.ops} (${currNormalized}) ±${curr.margin}%" vs "${prev.ops} (${prevNormalized}) ± ${prev.margin}%" (previous)`;
 }

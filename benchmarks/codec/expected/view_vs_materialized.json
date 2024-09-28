@@ -5,7 +5,7 @@
   "results": [
     {
       "name": "Get the first field from View",
-      "ops": 3926118.98,
+      "ops": 3826118.98,
       "margin": 5,
       "percentSlower": 0
     },
