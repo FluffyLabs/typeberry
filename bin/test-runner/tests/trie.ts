@@ -2,13 +2,13 @@ import assert from "node:assert";
 import { test } from "node:test";
 
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { type FromJson, json } from "@typeberry/json-parser";
 import { InMemoryTrie, type StateKey, type TrieHash } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/blake2b.node";
-import { FROM_ANY, FROM_STRING, type FromJson } from "../json-parser";
 
 export class TrieTest {
   static fromJson: FromJson<TrieTest> = {
-    input: FROM_ANY((input: unknown, context?: string): Map<StateKey, BytesBlob> => {
+    input: json.fromAny((input: unknown, context?: string): Map<StateKey, BytesBlob> => {
       if (input === null) {
         throw new Error(`[${context}] Unexpected 'null'`);
       }
@@ -25,7 +25,7 @@ export class TrieTest {
 
       return output;
     }),
-    output: FROM_STRING((v) => Bytes.parseBytesNoPrefix(v, 32) as TrieHash),
+    output: json.fromString((v) => Bytes.parseBytesNoPrefix(v, 32) as TrieHash),
   };
   input!: Map<StateKey, BytesBlob>;
   output!: TrieHash;
