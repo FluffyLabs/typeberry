@@ -1,15 +1,15 @@
 import { Bytes } from "@typeberry/bytes";
-import { Logger } from "@typeberry/logger";
-import { OPTIONAL, ARRAY, FROM_STRING, type FromJson } from "../json-parser";
+import { OPTIONAL, ARRAY, FROM_STRING, type FromJson, FROM_NUMBER } from "../../json-parser";
 import {BandersnatchKey, Ed25519Key} from "@typeberry/safrole/crypto";
 import {EntropyHash} from "@typeberry/safrole";
 import {TrieHash} from "@typeberry/trie";
 import {Opaque} from "@typeberry/utils";
+import {HeaderHash, logger, Slot, ValidatorIndex} from ".";
 
 const bytes32 = <T extends Bytes<32>>() => FROM_STRING((v) => Bytes.parseBytes(v, 32) as T);
-const bytes96FromString = FROM_STRING(v => Bytes.parseBytes(v, 96));
 
-type HeaderHash = Opaque<Bytes<32>, "header hash">
+const bandersnatchVrfSignatureFromString = FROM_STRING(v => Bytes.parseBytes(v, 96) as BandersnatchVrfSignature);
+type BandersnatchVrfSignature = Opaque<Bytes<96>, "BandersnatchVrfSignature">;
 
 class EpochMark {
   static fromJson: FromJson<EpochMark> = {
@@ -20,6 +20,7 @@ class EpochMark {
   entropy!: EntropyHash;
   validators!: BandersnatchKey[];
 }
+
 class TicketsMark {
   static fromJson: FromJson<TicketsMark> = {
     id: bytes32<Bytes<32>>(),
@@ -34,29 +35,29 @@ export class Header {
     parent: bytes32<HeaderHash>(),
     parent_state_root: bytes32<TrieHash>(),
     extrinsic_hash: bytes32<Bytes<32>>(),
-    slot: 'number', // u32
+    slot: FROM_NUMBER(n => n as Slot),
     epoch_mark: OPTIONAL(EpochMark.fromJson),
     tickets_mark: OPTIONAL<TicketsMark[]>(ARRAY(TicketsMark.fromJson)),
     offenders_mark: ARRAY(bytes32<Ed25519Key>()),
-    author_index: 'number',
-    entropy_source: bytes96FromString,
-    seal: bytes96FromString,
+    author_index: FROM_NUMBER(n => n as ValidatorIndex),
+    entropy_source: bandersnatchVrfSignatureFromString,
+    seal: bandersnatchVrfSignatureFromString,
   };
 
   parent!: HeaderHash;
   parent_state_root!: TrieHash;
   extrinsic_hash!: Bytes<32>;
-  slot!: number;
+  slot!: Slot;
   epoch_mark?: EpochMark;
   tickets_mark?: TicketsMark[];
   offenders_mark?: Ed25519Key[];
-  author_index!: number; // u16
-  entropy_source!: Bytes<96>;
-  seal!: Bytes<96>;
+  author_index!: ValidatorIndex;
+  entropy_source!: BandersnatchVrfSignature;
+  seal!: BandersnatchVrfSignature;
 }
-const logger = Logger.new(global.__filename, "test-runner/codec");
 
 export async function runHeaderTest(test: Header, file: string) {
   logger.trace(JSON.stringify(test, null, 2));
   logger.error(`Not implemented yet! ${file}`);
 }
+

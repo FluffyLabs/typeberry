@@ -40,6 +40,10 @@ export const FROM_NUMBER = <TInto>(parser: Parser<number, TInto>): FromJsonWithP
   return ["number", parser];
 };
 
+export const CAST_NUMBER = <TInto extends number>() => {
+  return FROM_NUMBER((v) => v as TInto);
+}
+
 export const FROM_ANY = <TInto>(parser: Parser<unknown, TInto>): FromJsonWithParser<TInto, unknown> => {
   return ["object", parser];
 };

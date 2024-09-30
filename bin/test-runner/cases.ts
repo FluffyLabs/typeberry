@@ -18,7 +18,10 @@ import { PvmTest, runPvmTest } from "./tests/pvm";
 import { SafroleTest, runSafroleTest } from "./tests/safrole";
 import { JsonSchema, ignoreSchemaFiles } from "./tests/schema";
 import { runTrieTest, trieTestSuiteFromJson } from "./tests/trie";
-import {Header, runHeaderTest} from "./tests/codec";
+import {Header, runHeaderTest} from "./tests/codec/header";
+import {AssurancesExtrinsicFromJson, runAssurancesExtrinsicTest} from "./tests/codec/assurances_extrinsic";
+import {DisputesExtrinsic, runDisputesExtrinsicTest} from "./tests/codec/disputes_extrinsic";
+import {GuaranteesExtrinsicFromJson as guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest} from "./tests/codec/guarantees_extrinsic";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 const logger = Logger.new(global.__filename, "test-runner");
@@ -137,6 +140,9 @@ function prepareTests(testContent: unknown, file: string): TestAndRunner[] {
     prepRunner("erasure-coding/page-proof", PageProof.fromJson, runPageProofTest),
     prepRunner("erasure-coding/segment-ec", SegmentEcTest.fromJson, runSegmentEcTest),
     prepRunner("erasure-coding/segment-root", SegmentRoot.fromJson, runSegmentRootTest),
+    prepRunner("codec/assurances_extrinsic", AssurancesExtrinsicFromJson, runAssurancesExtrinsicTest),
+    prepRunner("codec/disputes_extrinsic", DisputesExtrinsic.fromJson, runDisputesExtrinsicTest),
+    prepRunner("codec/guarantees_extrinsic", guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest),
     prepRunner("codec/header", Header.fromJson, runHeaderTest),
     prepRunner("ignored", JsonSchema.fromJson, ignoreSchemaFiles),
   ];
