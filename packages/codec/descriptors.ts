@@ -361,7 +361,7 @@ export const CLASS = <T, D extends DescriptorRecord<T>>(
   };
 };
 
-const logger = Logger.new(global.__filename, "codec/descriptors");
+const logger = Logger.new(__filename, "codec/descriptors");
 
 /**
  * A base class for all the lazy views.
