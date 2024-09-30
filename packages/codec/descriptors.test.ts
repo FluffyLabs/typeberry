@@ -2,14 +2,14 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder } from "./decoder";
-import { BYTES, CLASS, type Record, STRING, U32 } from "./descriptors";
+import { type Record, codec } from "./descriptors";
 import { Encoder } from "./encoder";
 
 class TestHeader {
-  static Codec = CLASS(TestHeader, {
-    parentHeaderHash: BYTES(32),
-    priorStateRoot: BYTES(32),
-    extrinsicHash: BYTES(32),
+  static Codec = codec.Class(TestHeader, {
+    parentHeaderHash: codec.bytes(32),
+    priorStateRoot: codec.bytes(32),
+    extrinsicHash: codec.bytes(32),
   });
 
   public readonly parentHeaderHash: Bytes<32>;
@@ -102,8 +102,8 @@ describe("Codec Descriptors / class", () => {
 
 describe("Codec Descriptors / nested views", () => {
   class TestExtrinsic {
-    static Codec = CLASS(TestExtrinsic, {
-      kind: STRING,
+    static Codec = codec.Class(TestExtrinsic, {
+      kind: codec.string,
     });
 
     kind: string;
@@ -114,8 +114,8 @@ describe("Codec Descriptors / nested views", () => {
   }
 
   class TestBlock {
-    static Codec = CLASS(TestBlock, {
-      someUnrelatedField: U32,
+    static Codec = codec.Class(TestBlock, {
+      someUnrelatedField: codec.u32,
       header: TestHeader.Codec,
       extrinsic: TestExtrinsic.Codec,
     });
@@ -145,7 +145,7 @@ describe("Codec Descriptors / nested views", () => {
     encoder.bytes(extrinsicHash);
 
     // Extrinsic
-    STRING.encode(encoder, "hello world!");
+    codec.string.encode(encoder, "hello world!");
 
     return {
       bytes: encoder.viewResult(),
