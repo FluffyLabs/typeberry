@@ -4,6 +4,13 @@ import test from "node:test";
 
 import { Level, Logger } from "@typeberry/logger";
 import { type FromJson, parseFromJson } from "./json-parser";
+import { AssurancesExtrinsicFromJson, runAssurancesExtrinsicTest } from "./tests/codec/assurances_extrinsic";
+import { DisputesExtrinsic, runDisputesExtrinsicTest } from "./tests/codec/disputes_extrinsic";
+import {
+  GuaranteesExtrinsicFromJson as guaranteesExtrinsicFromJson,
+  runGuaranteesExtrinsicTest,
+} from "./tests/codec/guarantees_extrinsic";
+import { Header, runHeaderTest } from "./tests/codec/header";
 import {
   EcTest,
   PageProof,
@@ -18,10 +25,6 @@ import { PvmTest, runPvmTest } from "./tests/pvm";
 import { SafroleTest, runSafroleTest } from "./tests/safrole";
 import { JsonSchema, ignoreSchemaFiles } from "./tests/schema";
 import { runTrieTest, trieTestSuiteFromJson } from "./tests/trie";
-import {Header, runHeaderTest} from "./tests/codec/header";
-import {AssurancesExtrinsicFromJson, runAssurancesExtrinsicTest} from "./tests/codec/assurances_extrinsic";
-import {DisputesExtrinsic, runDisputesExtrinsicTest} from "./tests/codec/disputes_extrinsic";
-import {GuaranteesExtrinsicFromJson as guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest} from "./tests/codec/guarantees_extrinsic";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 const logger = Logger.new(global.__filename, "test-runner");

@@ -1,10 +1,16 @@
-import {Ed25519Signature, HeaderHash, Slot, ValidatorIndex, bytes32, ed25519SignatureFromJson, logger} from ".";
-import {Ed25519Key} from "@typeberry/safrole/crypto";
-import {ARRAY, CAST_NUMBER, FROM_NUMBER, FROM_STRING, FromJson, OPTIONAL, FROM_ANY} from "../../json-parser";
-import {Bytes, BytesBlob} from "@typeberry/bytes";
-import {Opaque} from "@typeberry/utils";
-import {TrieHash} from "@typeberry/trie";
-import {Report} from "../../../../packages/stubs";
+import { type Bytes, BytesBlob } from "@typeberry/bytes";
+import type { TrieHash } from "@typeberry/trie";
+import type { Opaque } from "@typeberry/utils";
+import {
+  type Ed25519Signature,
+  type HeaderHash,
+  type Slot,
+  type ValidatorIndex,
+  bytes32,
+  ed25519SignatureFromJson,
+  logger,
+} from ".";
+import { ARRAY, CAST_NUMBER, FROM_ANY, FROM_STRING, type FromJson, OPTIONAL } from "../../json-parser";
 
 type ServiceId = Opaque<number, "ServiceId[u32]">;
 // TODO [ToDr] we don't have enough precision here so 🤞
@@ -54,7 +60,7 @@ class WorkExecResult {
 class WorkPackageSpec {
   static fromJson: FromJson<WorkPackageSpec> = {
     hash: bytes32(),
-    len: 'number',
+    len: "number",
     erasure_root: bytes32(),
     exports_root: bytes32(),
   };
@@ -127,7 +133,7 @@ class ReportGuarantee {
   signatures!: ValidatorSignature[];
 
   private constructor() {}
-};
+}
 
 export type GuaranteesExtrinsic = ReportGuarantee[];
 export const GuaranteesExtrinsicFromJson = ARRAY(ReportGuarantee.fromJson);
@@ -136,4 +142,3 @@ export async function runGuaranteesExtrinsicTest(test: GuaranteesExtrinsic, file
   logger.trace(JSON.stringify(test, null, 2));
   logger.error(`Not implemented yet! ${file}`);
 }
-
