@@ -5,7 +5,7 @@ import { check } from "@typeberry/utils";
 import { type Message, isValidMessage } from "./message";
 
 const MAX_ID = 2 ** 32;
-const logger = Logger.new(global.__filename, "state-machine/port");
+const logger = Logger.new(__filename, "state-machine/port");
 
 /**
  * Wrapper around `MessagePort` to communicate between workers or threads.

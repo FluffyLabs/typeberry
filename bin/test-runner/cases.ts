@@ -20,7 +20,7 @@ import { JsonSchema, ignoreSchemaFiles } from "./tests/schema";
 import { runTrieTest, trieTestSuiteFromJson } from "./tests/trie";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
-const logger = Logger.new(global.__filename, "test-runner");
+const logger = Logger.new(__filename, "test-runner");
 
 main()
   .then((r) => logger.log(r))
