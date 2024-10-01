@@ -7,7 +7,7 @@ import { BENCHMARKS_DIR, DIST_DIR, EXPECTED_DIR, OUTPUT_DIR, REL_DIR } from "./s
 import type { BennyOps, BennyResults, ComparisonResult, ErrorResult, OkResult, Result } from "./types";
 
 const commitHash = process.env.GITHUB_SHA;
-const logger = Logger.new(global.__filename, "benchmarks");
+const logger = Logger.new(__filename, "benchmarks");
 
 runAllBenchmarks().catch((e: Error) => {
   logger.error(e.message);
