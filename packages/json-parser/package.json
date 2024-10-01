@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "description": "Strict JSON parser with complex type support.",
   "main": "index.ts",
-  "devDependencies": {},
   "scripts": {
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\\\n' ' ')"
   },
