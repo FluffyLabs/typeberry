@@ -1,13 +1,15 @@
 import { BytesBlob } from "@typeberry/bytes";
+import { type FromJson, json } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
-import { ARRAY, FROM_STRING, type FromJson } from "../json-parser";
 
-const BYTES = FROM_STRING(BytesBlob.parseBlobNoPrefix);
+namespace fromJson {
+  export const bytesBlob = json.fromString(BytesBlob.parseBlobNoPrefix);
+}
 
 export class EcTest {
   static fromJson: FromJson<EcTest> = {
-    data: BYTES,
-    chunks: ARRAY(BYTES),
+    data: fromJson.bytesBlob,
+    chunks: json.array(fromJson.bytesBlob),
   };
 
   data!: BytesBlob;
@@ -16,9 +18,9 @@ export class EcTest {
 
 export class PageProof {
   static fromJson: FromJson<PageProof> = {
-    data: BYTES,
-    page_proofs: ARRAY(BYTES),
-    segments_root: BYTES,
+    data: fromJson.bytesBlob,
+    page_proofs: json.array(fromJson.bytesBlob),
+    segments_root: fromJson.bytesBlob,
   };
 
   data!: BytesBlob;
@@ -28,7 +30,7 @@ export class PageProof {
 
 export class SegmentEc {
   static fromJson: FromJson<SegmentEc> = {
-    segment_ec: ARRAY(BYTES),
+    segment_ec: json.array(fromJson.bytesBlob),
   };
 
   segment_ec!: BytesBlob[];
@@ -36,9 +38,9 @@ export class SegmentEc {
 
 export class SegmentEcTest {
   static fromJson: FromJson<SegmentEcTest> = {
-    data: BYTES,
-    segments: ARRAY(SegmentEc.fromJson),
-    segments_root: BYTES,
+    data: fromJson.bytesBlob,
+    segments: json.array(SegmentEc.fromJson),
+    segments_root: fromJson.bytesBlob,
   };
 
   data!: BytesBlob;
@@ -48,9 +50,9 @@ export class SegmentEcTest {
 
 export class SegmentRoot {
   static fromJson: FromJson<SegmentRoot> = {
-    data: BYTES,
-    chunks: ARRAY(BYTES),
-    chunks_root: BYTES,
+    data: fromJson.bytesBlob,
+    chunks: json.array(fromJson.bytesBlob),
+    chunks_root: fromJson.bytesBlob,
   };
 
   data!: BytesBlob;
