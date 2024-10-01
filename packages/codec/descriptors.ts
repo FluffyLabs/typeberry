@@ -126,240 +126,243 @@ type ViewOf<C> = C extends ViewConstructor<infer T, infer N> ? View<T, N> : neve
 /** A constructor of basic data object that takes a `Record<T>`. */
 type ClassConstructor<T> = new (o: Record<T>) => T;
 
-/** Variable-length U32. */
-export const VAR_U32 = descriptor<number>(
-  "var_u32",
-  4,
-  (e, v) => e.varU32(v),
-  (d) => d.varU32(),
-);
-
-/** Variable-length U64. */
-export const VAR_U64 = descriptor<bigint>(
-  "var_u64",
-  8,
-  (e, v) => e.varU64(v),
-  (d) => d.varU64(),
-);
-
-/** Unsigned 32-bit number. */
-export const U32 = descriptor<number>(
-  "u32",
-  4,
-  (e, v) => e.i32(v),
-  (d) => d.u32(),
-);
-
-/** Unsigned 24-bit number. */
-export const U24 = descriptor<number>(
-  "u24",
-  3,
-  (e, v) => e.i24(v),
-  (d) => d.u24(),
-);
-
-/** Unsigned 16-bit number. */
-export const U16 = descriptor<number>(
-  "u16",
-  2,
-  (e, v) => e.i16(v),
-  (d) => d.u16(),
-);
-
-/** Unsigned 8-bit number. */
-export const U8 = descriptor<number>(
-  "u8",
-  1,
-  (e, v) => e.i8(v),
-  (d) => d.u8(),
-);
-
-/** Signed 32-bit number. */
-export const I32 = descriptor<number>(
-  "i32",
-  4,
-  (e, v) => e.i32(v),
-  (d) => d.i32(),
-);
-
-/** Signed 24-bit number. */
-export const I24 = descriptor<number>(
-  "i24",
-  3,
-  (e, v) => e.i24(v),
-  (d) => d.i24(),
-);
-
-/** Signed 16-bit number. */
-export const I16 = descriptor<number>(
-  "i16",
-  2,
-  (e, v) => e.i16(v),
-  (d) => d.i16(),
-);
-
-/** Signed 8-bit number. */
-export const I8 = descriptor<number>(
-  "i8",
-  1,
-  (e, v) => e.i8(v),
-  (d) => d.i8(),
-);
-
-/** String encoded as variable-length bytes blob. */
-export const STRING = descriptor<string>(
-  "string",
-  TYPICAL_SEQUENCE_LENGTH,
-  (e, v) => e.bytesBlob(BytesBlob.fromBlob(new TextEncoder().encode(v))),
-  (d) => new TextDecoder("utf8", { fatal: true }).decode(d.bytesBlob().buffer),
-);
-
-/** Variable-length bytes blob. */
-export const BLOB = descriptor<BytesBlob>(
-  "BytesBlob",
-  TYPICAL_SEQUENCE_LENGTH,
-  (e, v) => e.bytesBlob(v),
-  (d) => d.bytesBlob(),
-);
-
-/** Fixed-length bytes sequence. */
-export const BYTES = (() => {
-  const cache = new Map<number, unknown>();
-  return <N extends number>(len: N): Descriptor<Bytes<N>> => {
-    let ret = cache.get(len) as Descriptor<Bytes<N>>;
-    if (!ret) {
-      ret = descriptor<Bytes<N>>(
-        `Bytes<${len}>`,
-        len,
-        (e, v) => e.bytes(v),
-        (d) => d.bytes(len),
-      );
-      cache.set(len, ret);
-    }
-    return ret;
-  };
-})();
-
-/** Variable-length bit vector. */
-export const BITVEC_VAR_LEN = descriptor<BitVec>(
-  "BitVec[?]",
-  TYPICAL_SEQUENCE_LENGTH >>> 3,
-  (e, v) => e.bitVecVarLen(v),
-  (d) => d.bitVecVarLen(),
-);
-
-/** Fixed-length bit vector. */
-export const BITVEC_FIX_LEN = (len: number) =>
-  descriptor<BitVec>(
-    `BitVec[${len}]`,
-    len >>> 3,
-    (e, v) => e.bitVecFixLen(v),
-    (d) => d.bitVecFixLen(len),
+/** Descriptors for data types that can be read/written from/to codec. */
+export namespace codec {
+  /** Variable-length U32. */
+  export const varU32 = descriptor<number>(
+    "var_u32",
+    4,
+    (e, v) => e.varU32(v),
+    (d) => d.varU32(),
   );
 
-/** Optionality wrapper for given type. */
-export const OPTIONAL = <T>(type: Descriptor<T>) =>
-  descriptor<T | null>(
-    `Optional<${type.name}>`,
-    1 + (type.sizeHintBytes ?? 0),
-    (e, v) => e.optional(type, v),
-    (d) => d.optional(type),
+  /** Variable-length U64. */
+  export const varU64 = descriptor<bigint>(
+    "var_u64",
+    8,
+    (e, v) => e.varU64(v),
+    (d) => d.varU64(),
   );
 
-/** Variable-length sequence of given type. */
-export const SEQUENCE_VAR_LEN = <T>(type: Descriptor<T>) =>
-  descriptor<T[]>(
-    `Sequence<${type.name}>[?]`,
-    TYPICAL_SEQUENCE_LENGTH * (type.sizeHintBytes ?? 0),
-    (e, v) => e.sequenceVarLen(type, v),
-    (d) => d.sequenceVarLen(type),
+  /** Unsigned 32-bit number. */
+  export const u32 = descriptor<number>(
+    "u32",
+    4,
+    (e, v) => e.i32(v),
+    (d) => d.u32(),
   );
 
-/** Fixed-length sequence of given type. */
-export const SEQUENCE_FIX_LEN = <T>(type: Descriptor<T>, len: number) =>
-  descriptor<T[]>(
-    `Sequence<${type.name}>[${len}]`,
-    len * (type.sizeHintBytes ?? 0),
-    (e, v) => e.sequenceFixLen(type, v),
-    (d) => d.sequenceFixLen(type, len),
+  /** Unsigned 24-bit number. */
+  export const u24 = descriptor<number>(
+    "u24",
+    3,
+    (e, v) => e.i24(v),
+    (d) => d.u24(),
   );
 
-/**
- * A descriptor for a more complex class type.
- *
- * The resulting descriptor is able to encode & decode all of the public fields of
- * the class, given the map of descriptors for each one of them.
- *
- * Additionally a `View<T>` is generated, which allows partially-decoding these class
- * elements.
- */
-export const CLASS = <T, D extends DescriptorRecord<T>>(
-  Class: ClassConstructor<T>,
-  descriptors: D,
-): ClassDescriptor<T, D> => {
-  // Create a View, based on the `AbstractView`.
-  class ClassView extends AbstractView<T> {
-    constructor(d: Decoder) {
-      super(d, Class, descriptors);
-    }
-  }
+  /** Unsigned 16-bit number. */
+  export const u16 = descriptor<number>(
+    "u16",
+    2,
+    (e, v) => e.i16(v),
+    (d) => d.u16(),
+  );
 
-  // We need to dynamically extend the prototype to add these extra lazy getters.
-  forEachDescriptor(descriptors, (key) => {
-    if (typeof key === "string") {
-      Object.defineProperty(ClassView.prototype, key, {
-        value: function (this: ClassView) {
-          return this.getOrDecode(key);
-        },
-      });
+  /** Unsigned 8-bit number. */
+  export const u8 = descriptor<number>(
+    "u8",
+    1,
+    (e, v) => e.i8(v),
+    (d) => d.u8(),
+  );
 
-      if (VIEW_FIELD in descriptors[key]) {
-        // add view method.
-        Object.defineProperty(ClassView.prototype, viewMethod(key), {
-          value: function (this: ClassView) {
-            return this.getOrDecodeView(key);
-          },
-        });
+  /** Signed 32-bit number. */
+  export const i32 = descriptor<number>(
+    "i32",
+    4,
+    (e, v) => e.i32(v),
+    (d) => d.i32(),
+  );
+
+  /** Signed 24-bit number. */
+  export const i24 = descriptor<number>(
+    "i24",
+    3,
+    (e, v) => e.i24(v),
+    (d) => d.i24(),
+  );
+
+  /** Signed 16-bit number. */
+  export const i16 = descriptor<number>(
+    "i16",
+    2,
+    (e, v) => e.i16(v),
+    (d) => d.i16(),
+  );
+
+  /** Signed 8-bit number. */
+  export const i8 = descriptor<number>(
+    "i8",
+    1,
+    (e, v) => e.i8(v),
+    (d) => d.i8(),
+  );
+
+  /** String encoded as variable-length bytes blob. */
+  export const string = descriptor<string>(
+    "string",
+    TYPICAL_SEQUENCE_LENGTH,
+    (e, v) => e.bytesBlob(BytesBlob.fromBlob(new TextEncoder().encode(v))),
+    (d) => new TextDecoder("utf8", { fatal: true }).decode(d.bytesBlob().buffer),
+  );
+
+  /** Variable-length bytes blob. */
+  export const blob = descriptor<BytesBlob>(
+    "BytesBlob",
+    TYPICAL_SEQUENCE_LENGTH,
+    (e, v) => e.bytesBlob(v),
+    (d) => d.bytesBlob(),
+  );
+
+  /** Fixed-length bytes sequence. */
+  export const bytes = (() => {
+    const cache = new Map<number, unknown>();
+    return <N extends number>(len: N): Descriptor<Bytes<N>> => {
+      let ret = cache.get(len) as Descriptor<Bytes<N>>;
+      if (!ret) {
+        ret = descriptor<Bytes<N>>(
+          `Bytes<${len}>`,
+          len,
+          (e, v) => e.bytes(v),
+          (d) => d.bytes(len),
+        );
+        cache.set(len, ret);
+      }
+      return ret;
+    };
+  })();
+
+  /** Variable-length bit vector. */
+  export const bitVecVarLen = descriptor<BitVec>(
+    "BitVec[?]",
+    TYPICAL_SEQUENCE_LENGTH >>> 3,
+    (e, v) => e.bitVecVarLen(v),
+    (d) => d.bitVecVarLen(),
+  );
+
+  /** Fixed-length bit vector. */
+  export const bitVecFixLen = (len: number) =>
+    descriptor<BitVec>(
+      `BitVec[${len}]`,
+      len >>> 3,
+      (e, v) => e.bitVecFixLen(v),
+      (d) => d.bitVecFixLen(len),
+    );
+
+  /** Optionality wrapper for given type. */
+  export const optional = <T>(type: Descriptor<T>) =>
+    descriptor<T | null>(
+      `Optional<${type.name}>`,
+      1 + (type.sizeHintBytes ?? 0),
+      (e, v) => e.optional(type, v),
+      (d) => d.optional(type),
+    );
+
+  /** Variable-length sequence of given type. */
+  export const sequenceVarLen = <T>(type: Descriptor<T>) =>
+    descriptor<T[]>(
+      `Sequence<${type.name}>[?]`,
+      TYPICAL_SEQUENCE_LENGTH * (type.sizeHintBytes ?? 0),
+      (e, v) => e.sequenceVarLen(type, v),
+      (d) => d.sequenceVarLen(type),
+    );
+
+  /** Fixed-length sequence of given type. */
+  export const sequenceFixLen = <T>(type: Descriptor<T>, len: number) =>
+    descriptor<T[]>(
+      `Sequence<${type.name}>[${len}]`,
+      len * (type.sizeHintBytes ?? 0),
+      (e, v) => e.sequenceFixLen(type, v),
+      (d) => d.sequenceFixLen(type, len),
+    );
+
+  /**
+   * A descriptor for a more complex class type.
+   *
+   * The resulting descriptor is able to encode & decode all of the public fields of
+   * the class, given the map of descriptors for each one of them.
+   *
+   * Additionally a `View<T>` is generated, which allows partially-decoding these class
+   * elements.
+   */
+  export const Class = <T, D extends DescriptorRecord<T>>(
+    Class: ClassConstructor<T>,
+    descriptors: D,
+  ): ClassDescriptor<T, D> => {
+    // Create a View, based on the `AbstractView`.
+    class ClassView extends AbstractView<T> {
+      constructor(d: Decoder) {
+        super(d, Class, descriptors);
       }
     }
-  });
 
-  // Also add a static builder method to avoid boilerplate.
-  const ViewTyped = ClassView as ViewConstructor<T, KeysWithView<T, D>>;
-  ViewTyped.fromBytesBlob = (bytes: BytesBlob) => new ViewTyped(Decoder.fromBytesBlob(bytes));
+    // We need to dynamically extend the prototype to add these extra lazy getters.
+    forEachDescriptor(descriptors, (key) => {
+      if (typeof key === "string") {
+        Object.defineProperty(ClassView.prototype, key, {
+          value: function (this: ClassView) {
+            return this.getOrDecode(key);
+          },
+        });
 
-  // Calculate a size hint for this class.
-  let sizeHintBytes = 0;
-  forEachDescriptor(descriptors, (_k, val) => {
-    sizeHintBytes += val.sizeHintBytes ?? 0;
-  });
+        if (VIEW_FIELD in descriptors[key]) {
+          // add view method.
+          Object.defineProperty(ClassView.prototype, viewMethod(key), {
+            value: function (this: ClassView) {
+              return this.getOrDecodeView(key);
+            },
+          });
+        }
+      }
+    });
 
-  // and finally create the descriptor for the entire class.
-  const desc = descriptor<T>(
-    Class.name,
-    sizeHintBytes,
-    (e, t) => {
-      forEachDescriptor(descriptors, (key, descriptor) => {
-        const value = t[key];
-        descriptor.encode(e, value);
-      });
-    },
-    (d) => {
-      const constructorParams: OptionalRecord<T> = {};
-      forEachDescriptor(descriptors, (key, descriptor) => {
-        const value = descriptor.decode(d);
-        constructorParams[key] = value;
-      });
-      return new Class(constructorParams as Record<T>);
-    },
-  );
+    // Also add a static builder method to avoid boilerplate.
+    const ViewTyped = ClassView as ViewConstructor<T, KeysWithView<T, D>>;
+    ViewTyped.fromBytesBlob = (bytes: BytesBlob) => new ViewTyped(Decoder.fromBytesBlob(bytes));
 
-  return {
-    View: ViewTyped,
-    record: descriptors,
-    ...desc,
+    // Calculate a size hint for this class.
+    let sizeHintBytes = 0;
+    forEachDescriptor(descriptors, (_k, val) => {
+      sizeHintBytes += val.sizeHintBytes ?? 0;
+    });
+
+    // and finally create the descriptor for the entire class.
+    const desc = descriptor<T>(
+      Class.name,
+      sizeHintBytes,
+      (e, t) => {
+        forEachDescriptor(descriptors, (key, descriptor) => {
+          const value = t[key];
+          descriptor.encode(e, value);
+        });
+      },
+      (d) => {
+        const constructorParams: OptionalRecord<T> = {};
+        forEachDescriptor(descriptors, (key, descriptor) => {
+          const value = descriptor.decode(d);
+          constructorParams[key] = value;
+        });
+        return new Class(constructorParams as Record<T>);
+      },
+    );
+
+    return {
+      View: ViewTyped,
+      record: descriptors,
+      ...desc,
+    };
   };
-};
+}
 
 const logger = Logger.new(__filename, "codec/descriptors");
 
