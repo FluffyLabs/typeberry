@@ -8,6 +8,7 @@
     "bin/test-runner",
     "packages/bytes",
     "packages/codec",
+    "packages/json-parser",
     "packages/logger",
     "packages/pvm",
     "packages/pvm-debugger-adapter",
@@ -18,8 +19,8 @@
     "packages/trie",
     "packages/utils",
     "tools/benchmark",
-    "tools/commit-hash",
     "tools/builder",
+    "tools/commit-hash",
     "workers/block-generator",
     "workers/importer"
   ],

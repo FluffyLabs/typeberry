@@ -2,8 +2,8 @@ import { fail } from "node:assert";
 import * as fs from "node:fs/promises";
 import test from "node:test";
 
+import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
-import { type FromJson, parseFromJson } from "./json-parser";
 import { AssurancesExtrinsicFromJson, runAssurancesExtrinsicTest } from "./tests/codec/assurances_extrinsic";
 import { DisputesExtrinsic, runDisputesExtrinsicTest } from "./tests/codec/disputes_extrinsic";
 import {
