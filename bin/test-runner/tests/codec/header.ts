@@ -1,20 +1,18 @@
 import { Bytes } from "@typeberry/bytes";
-import type { EntropyHash } from "@typeberry/safrole";
+import { type FromJson, json } from "@typeberry/json-parser";
+import type { EntropyHash, TicketAttempt } from "@typeberry/safrole";
 import type { BandersnatchKey, Ed25519Key } from "@typeberry/safrole/crypto";
 import type { TrieHash } from "@typeberry/trie";
 import type { Opaque } from "@typeberry/utils";
-import { type HeaderHash, type Slot, type ValidatorIndex, logger } from ".";
-import { ARRAY, FROM_NUMBER, FROM_STRING, type FromJson, OPTIONAL } from "../../json-parser";
+import { type HeaderHash, type Slot, type ValidatorIndex, bytes32, fromJson, logger } from ".";
 
-const bytes32 = <T extends Bytes<32>>() => FROM_STRING((v) => Bytes.parseBytes(v, 32) as T);
-
-const bandersnatchVrfSignatureFromString = FROM_STRING((v) => Bytes.parseBytes(v, 96) as BandersnatchVrfSignature);
 type BandersnatchVrfSignature = Opaque<Bytes<96>, "BandersnatchVrfSignature">;
+const bandersnatchVrfSignatureFromString = json.fromString((v) => Bytes.parseBytes(v, 96) as BandersnatchVrfSignature);
 
 class EpochMark {
   static fromJson: FromJson<EpochMark> = {
-    entropy: bytes32<EntropyHash>(),
-    validators: ARRAY(bytes32<BandersnatchKey>()),
+    entropy: bytes32(),
+    validators: json.array(bytes32<BandersnatchKey>()),
   };
 
   entropy!: EntropyHash;
@@ -24,22 +22,25 @@ class EpochMark {
 class TicketsMark {
   static fromJson: FromJson<TicketsMark> = {
     id: bytes32<Bytes<32>>(),
-    attempt: "number",
+    attempt: fromJson.ticketAttempt,
   };
+
   id!: Bytes<32>;
-  attempt!: 0 | 1;
+  attempt!: TicketAttempt;
+
+  private constructor() {}
 }
 
 export class Header {
   static fromJson: FromJson<Header> = {
-    parent: bytes32<HeaderHash>(),
-    parent_state_root: bytes32<TrieHash>(),
-    extrinsic_hash: bytes32<Bytes<32>>(),
-    slot: FROM_NUMBER((n) => n as Slot),
-    epoch_mark: OPTIONAL(EpochMark.fromJson),
-    tickets_mark: OPTIONAL<TicketsMark[]>(ARRAY(TicketsMark.fromJson)),
-    offenders_mark: ARRAY(bytes32<Ed25519Key>()),
-    author_index: FROM_NUMBER((n) => n as ValidatorIndex),
+    parent: bytes32(),
+    parent_state_root: bytes32(),
+    extrinsic_hash: bytes32(),
+    slot: json.castNumber(),
+    epoch_mark: json.optional(EpochMark.fromJson),
+    tickets_mark: json.optional<TicketsMark[]>(json.array(TicketsMark.fromJson)),
+    offenders_mark: json.array(bytes32<Ed25519Key>()),
+    author_index: json.castNumber(),
     entropy_source: bandersnatchVrfSignatureFromString,
     seal: bandersnatchVrfSignatureFromString,
   };
@@ -54,6 +55,8 @@ export class Header {
   author_index!: ValidatorIndex;
   entropy_source!: BandersnatchVrfSignature;
   seal!: BandersnatchVrfSignature;
+
+  private constructor() {}
 }
 
 export async function runHeaderTest(test: Header, file: string) {

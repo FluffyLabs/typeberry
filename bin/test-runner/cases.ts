@@ -5,12 +5,21 @@ import test from "node:test";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
 import { AssurancesExtrinsicFromJson, runAssurancesExtrinsicTest } from "./tests/codec/assurances_extrinsic";
+import { Block, runBlockTest } from "./tests/codec/block";
 import { DisputesExtrinsic, runDisputesExtrinsicTest } from "./tests/codec/disputes_extrinsic";
+import { Extrinsic, runExtrinsicTest } from "./tests/codec/extrinsic";
 import {
   GuaranteesExtrinsicFromJson as guaranteesExtrinsicFromJson,
   runGuaranteesExtrinsicTest,
 } from "./tests/codec/guarantees_extrinsic";
 import { Header, runHeaderTest } from "./tests/codec/header";
+import { PreimagesExtrinsicFromJson, runPreimagesExtrinsicTest } from "./tests/codec/preimages_extrinsic";
+import { RefineContext, runRefineContextTest } from "./tests/codec/refine_context";
+import { TicketsExtrinsicFromJson, runTicketsExtrinsicTest } from "./tests/codec/tickets_extrinsic";
+import { WorkItem, runWorkItemTest } from "./tests/codec/work_item";
+import { WorkPackage, runWorkPackageTest } from "./tests/codec/work_package";
+import { WorkReport, runWorkReportTest } from "./tests/codec/work_report";
+import { WorkResult, runWorkResultTest } from "./tests/codec/work_result";
 import {
   EcTest,
   PageProof,
@@ -136,18 +145,27 @@ function prepareTests(testContent: unknown, file: string): TestAndRunner[] {
   }
 
   const runners = [
-    prepRunner("safrole", SafroleTest.fromJson, runSafroleTest),
-    prepRunner("pvm", PvmTest.fromJson, runPvmTest),
-    prepRunner("trie", trieTestSuiteFromJson, runTrieTest),
+    prepRunner("codec/assurances_extrinsic", AssurancesExtrinsicFromJson, runAssurancesExtrinsicTest),
+    prepRunner("codec/block", Block.fromJson, runBlockTest),
+    prepRunner("codec/disputes_extrinsic", DisputesExtrinsic.fromJson, runDisputesExtrinsicTest),
+    prepRunner("codec/extrinsic", Extrinsic.fromJson, runExtrinsicTest),
+    prepRunner("codec/guarantees_extrinsic", guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest),
+    prepRunner("codec/header", Header.fromJson, runHeaderTest),
+    prepRunner("codec/preimages_extrinsic", PreimagesExtrinsicFromJson, runPreimagesExtrinsicTest),
+    prepRunner("codec/refine_context", RefineContext.fromJson, runRefineContextTest),
+    prepRunner("codec/tickets_extrinsic", TicketsExtrinsicFromJson, runTicketsExtrinsicTest),
+    prepRunner("codec/work_item", WorkItem.fromJson, runWorkItemTest),
+    prepRunner("codec/work_package", WorkPackage.fromJson, runWorkPackageTest),
+    prepRunner("codec/work_report", WorkReport.fromJson, runWorkReportTest),
+    prepRunner("codec/work_result", WorkResult.fromJson, runWorkResultTest),
     prepRunner("erasure-coding", EcTest.fromJson, runEcTest),
     prepRunner("erasure-coding/page-proof", PageProof.fromJson, runPageProofTest),
     prepRunner("erasure-coding/segment-ec", SegmentEcTest.fromJson, runSegmentEcTest),
     prepRunner("erasure-coding/segment-root", SegmentRoot.fromJson, runSegmentRootTest),
-    prepRunner("codec/assurances_extrinsic", AssurancesExtrinsicFromJson, runAssurancesExtrinsicTest),
-    prepRunner("codec/disputes_extrinsic", DisputesExtrinsic.fromJson, runDisputesExtrinsicTest),
-    prepRunner("codec/guarantees_extrinsic", guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest),
-    prepRunner("codec/header", Header.fromJson, runHeaderTest),
     prepRunner("ignored", JsonSchema.fromJson, ignoreSchemaFiles),
+    prepRunner("pvm", PvmTest.fromJson, runPvmTest),
+    prepRunner("safrole", SafroleTest.fromJson, runSafroleTest),
+    prepRunner("trie", trieTestSuiteFromJson, runTrieTest),
   ];
 
   const nonEmptyRunners = runners.filter((x): x is TestAndRunner => x !== null);

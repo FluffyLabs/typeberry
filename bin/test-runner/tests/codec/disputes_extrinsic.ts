@@ -1,22 +1,13 @@
+import { type FromJson, json } from "@typeberry/json-parser";
 import type { Ed25519Key } from "@typeberry/safrole/crypto";
-import {
-  type Ed25519Signature,
-  type HeaderHash,
-  type ValidatorIndex,
-  bytes32,
-  ed25519SignatureFromJson,
-  logger,
-} from ".";
-import { ARRAY, FROM_NUMBER, type FromJson } from "../../json-parser";
-
-// TODO [ToDr] can the JSON parser produce actual classes? So that we can check stuff with instanceof?
+import { type Ed25519Signature, type HeaderHash, type ValidatorIndex, bytes32, fromJson, logger } from ".";
 
 class Fault {
   static fromJson: FromJson<Fault> = {
-    target: bytes32<HeaderHash>(),
+    target: bytes32(),
     vote: "boolean",
-    key: bytes32<Ed25519Key>(),
-    signature: ed25519SignatureFromJson,
+    key: bytes32(),
+    signature: fromJson.ed25519Signature,
   };
 
   target!: HeaderHash;
@@ -29,9 +20,9 @@ class Fault {
 
 class Culprit {
   static fromJson: FromJson<Culprit> = {
-    target: bytes32<HeaderHash>(),
-    key: bytes32<Ed25519Key>(),
-    signature: ed25519SignatureFromJson,
+    target: bytes32(),
+    key: bytes32(),
+    signature: fromJson.ed25519Signature,
   };
 
   target!: HeaderHash;
@@ -44,11 +35,13 @@ class Culprit {
 class Judgement {
   static fromJson: FromJson<Judgement> = {
     vote: "boolean",
-    index: FROM_NUMBER((n) => n as ValidatorIndex),
+    index: json.castNumber(),
+    signature: fromJson.ed25519Signature,
   };
 
   vote!: boolean;
   index!: ValidatorIndex;
+  signature!: Ed25519Signature;
 
   private constructor() {}
 }
@@ -57,7 +50,7 @@ class Verdict {
   static fromJson: FromJson<Verdict> = {
     target: bytes32<HeaderHash>(),
     age: "number",
-    votes: ARRAY(Judgement.fromJson),
+    votes: json.array(Judgement.fromJson),
   };
 
   target!: HeaderHash;
@@ -69,9 +62,9 @@ class Verdict {
 
 export class DisputesExtrinsic {
   static fromJson: FromJson<DisputesExtrinsic> = {
-    verdicts: ARRAY(Verdict.fromJson),
-    culprits: ARRAY(Culprit.fromJson),
-    faults: ARRAY(Fault.fromJson),
+    verdicts: json.array(Verdict.fromJson),
+    culprits: json.array(Culprit.fromJson),
+    faults: json.array(Fault.fromJson),
   };
 
   verdicts!: Verdict[];
