@@ -1,7 +1,10 @@
+import assert from "node:assert";
+import { it } from "node:test";
+
 import { BytesBlob } from "@typeberry/bytes";
+import { decodeData, encodeData } from "@typeberry/erasure-coding";
 import { Logger } from "@typeberry/logger";
 import type { FromJson } from "../json-parser";
-
 export class EcTest {
   static fromJson: FromJson<EcTest> = {
     data: ["string", BytesBlob.parseBlobNoPrefix],
@@ -59,8 +62,29 @@ export class SegmentRoot {
 const logger = Logger.new(global.__filename, "test-runner/erasure-coding");
 
 export async function runEcTest(test: EcTest) {
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error("Not implemented yet!");
+  if (test.chunks[0].length > 2) {
+    logger.info("Incorrect test data. The chunks should have 2 bytes!");
+    it.skip(`test was skipped because of incorrect data: chunk length: ${test.chunks[0].length} (it should be 2)`);
+    return;
+  }
+
+  it("should encode data", () => {
+    const encoded = encodeData(test.data.buffer);
+    // slice(0, 1023) is needed becuase test data is incorrect (1026 length)
+    const expected = test.chunks.slice(0, 1023).map((x) => x.buffer);
+
+    assert.deepStrictEqual(encoded, expected);
+  });
+
+  it("should decode data", () => {
+    // slice(0, 1023) is needed becuase test data is incorrect (1026 length)
+    const chunks = test.chunks.slice(0, 1023).map((chunk, idx) => [idx, chunk.buffer] as [number, Uint8Array]);
+    const selectedChunks = getRandomItems(chunks, 342);
+
+    const decoded = decodeData(selectedChunks, test.data.buffer.length);
+
+    assert.deepStrictEqual(decoded, test.data.buffer);
+  });
 }
 
 export async function runPageProofTest(test: PageProof) {
@@ -76,4 +100,21 @@ export async function runSegmentEcTest(test: SegmentEcTest) {
 export async function runSegmentRootTest(test: SegmentRoot) {
   logger.trace(JSON.stringify(test, null, 2));
   logger.error("Not implemented yet!");
+}
+
+function getRandomItems(arr: [number, Uint8Array][], n: number): [number, Uint8Array][] {
+  if (n > arr.length) {
+    throw new Error("Requested more items than available in the array");
+  }
+
+  const result: [number, Uint8Array][] = [];
+  const copy = [...arr];
+
+  for (let i = 0; i < n; i++) {
+    const randomIndex = i + Math.floor(Math.random() * (copy.length - i));
+    [copy[i], copy[randomIndex]] = [copy[randomIndex], copy[i]];
+    result.push(copy[i]);
+  }
+
+  return result;
 }
