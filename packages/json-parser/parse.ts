@@ -1,5 +1,6 @@
 import type { FromJson } from "./types";
 
+/** Given already parsed JSON, parse & validate it further to match the expected `jsonDescription` type. */
 export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>, context = "<root>"): T {
   const t = typeof jsonType;
 

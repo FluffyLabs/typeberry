@@ -9,7 +9,7 @@ import {
   type TicketEnvelope,
   type ValidatorData,
 } from "@typeberry/safrole";
-import type { BandersnatchKey, BlsKey, Ed25519Key } from "@typeberry/safrole/crypto";
+import type { BandersnatchKey, BandersnatchRingSignature, BlsKey, Ed25519Key } from "@typeberry/safrole/crypto";
 
 type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}` ? `${T}${Capitalize<SnakeToCamel<U>>}` : S;
 
@@ -38,7 +38,7 @@ namespace fromJson {
 
   export const ticketEnvelope: FromJson<TicketEnvelope> = {
     attempt: "number",
-    signature: json.fromString((v) => Bytes.parseBytes(v, 784)),
+    signature: json.fromString((v) => Bytes.parseBytes(v, 784) as BandersnatchRingSignature),
   };
 }
 
