@@ -2,8 +2,8 @@ import { Bytes } from "@typeberry/bytes";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
 import { TicketEnvelope } from "@typeberry/safrole";
-import type { BandersnatchRingSignature } from "@typeberry/safrole/crypto";
 import { fromJson, logger } from ".";
+import {BandersnatchRingSignature} from "@typeberry/block";
 
 const TicketEnvelopeFromJson = json.object<TicketEnvelope>(
   {

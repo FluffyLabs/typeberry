@@ -1,7 +1,8 @@
 import type { KnownSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
-import { type Ed25519Signature, type Slot, type ValidatorIndex, fromJson, logger } from ".";
+import { type Ed25519Signature, fromJson, logger } from ".";
 import { WorkReport } from "./work_report";
+import {TimeSlot, ValidatorIndex} from "@typeberry/block";
 
 class ValidatorSignature {
   static fromJson = json.object<ValidatorSignature>(
@@ -29,7 +30,7 @@ class ReportGuarantee {
   );
 
   report!: WorkReport;
-  slot!: Slot;
+  slot!: TimeSlot;
   signatures!: KnownSizeArray<ValidatorSignature, "0..ValidatorsCount">;
 
   private constructor() {}

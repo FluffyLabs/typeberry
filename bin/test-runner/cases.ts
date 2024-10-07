@@ -12,7 +12,7 @@ import {
   GuaranteesExtrinsicFromJson as guaranteesExtrinsicFromJson,
   runGuaranteesExtrinsicTest,
 } from "./tests/codec/guarantees_extrinsic";
-import { Header, runHeaderTest } from "./tests/codec/header";
+import { fromJson as headerFromJson, runHeaderTest } from "./tests/codec/header";
 import { PreimagesExtrinsicFromJson, runPreimagesExtrinsicTest } from "./tests/codec/preimages_extrinsic";
 import { RefineContext, runRefineContextTest } from "./tests/codec/refine_context";
 import { TicketsExtrinsicFromJson, runTicketsExtrinsicTest } from "./tests/codec/tickets_extrinsic";
@@ -150,7 +150,7 @@ function prepareTests(testContent: unknown, file: string): TestAndRunner[] {
     prepRunner("codec/disputes_extrinsic", DisputesExtrinsic.fromJson, runDisputesExtrinsicTest),
     prepRunner("codec/extrinsic", Extrinsic.fromJson, runExtrinsicTest),
     prepRunner("codec/guarantees_extrinsic", guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest),
-    prepRunner("codec/header", Header.fromJson, runHeaderTest),
+    prepRunner("codec/header", headerFromJson.header, runHeaderTest),
     prepRunner("codec/preimages_extrinsic", PreimagesExtrinsicFromJson, runPreimagesExtrinsicTest),
     prepRunner("codec/refine_context", RefineContext.fromJson, runRefineContextTest),
     prepRunner("codec/tickets_extrinsic", TicketsExtrinsicFromJson, runTicketsExtrinsicTest),

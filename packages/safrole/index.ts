@@ -1,7 +1,8 @@
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { Opaque } from "@typeberry/utils";
 import { verifyBandersnatch } from "./bandersnatch";
-import type { BandersnatchKey, BandersnatchRingSignature, BlsKey, Ed25519Key } from "./crypto";
+import {BandersnatchKey, BandersnatchRingSignature, Ed25519Key} from "../block/crypto";
+import {BlsKey} from "./crypto";
 
 export type Hash = Bytes<32>;
 export type EntropyHash = Opaque<Hash, "EntropyHash">;

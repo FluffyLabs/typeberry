@@ -7,13 +7,9 @@ import type { Opaque } from "@typeberry/utils";
 
 export const bytes32 = <T extends Bytes<32>>() => json.fromString((v) => Bytes.parseBytes(v, 32) as T);
 
-export type HeaderHash = Opaque<Bytes<32>, "HeaderHash">;
 export type BeefyHash = Opaque<Bytes<32>, "BeefyHash">;
 
 export type ServiceId = Opaque<U32, "ServiceId[u32]">;
-// TODO [ToDr] We might need some other wrapper than `Opaque` for numbers to avoid conflicts?
-export type ValidatorIndex = Opaque<U16, "ValidatorIndex[u16]">;
-export type Slot = Opaque<U32, "Slot[u32]">;
 // TODO [ToDr] we don't have enough precision here so 🤞
 export type Gas = Opaque<number, "Gas[u64]">;
 export type CoreIndex = Opaque<U16, "CoreIndex[u16]">;

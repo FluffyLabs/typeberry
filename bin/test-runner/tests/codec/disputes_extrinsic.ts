@@ -1,8 +1,8 @@
 import type { KnownSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
 import type { U32 } from "@typeberry/numbers";
-import type { Ed25519Key } from "@typeberry/safrole/crypto";
-import { type Ed25519Signature, type HeaderHash, type ValidatorIndex, bytes32, fromJson, logger } from ".";
+import { type Ed25519Signature, bytes32, fromJson, logger } from ".";
+import {Ed25519Key, HeaderHash, ValidatorIndex} from "@typeberry/block";
 
 class Fault {
   static fromJson = json.object<Fault>(

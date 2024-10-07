@@ -1,7 +1,7 @@
 {
-  "name": "@typeberry/stubs",
+  "name": "@typeberry/block",
   "version": "0.0.1",
-  "description": "Temporary package with GP-based structure stubs.",
+  "description": "JAM block definition.",
   "main": "index.ts",
   "scripts": {
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
