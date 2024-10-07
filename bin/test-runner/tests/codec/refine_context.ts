@@ -9,7 +9,7 @@ export class RefineContext {
     state_root: bytes32(),
     beefy_root: bytes32(),
     lookup_anchor: bytes32(),
-    lookup_anchor_slot: json.castNumber(),
+    lookup_anchor_slot: "number",
     prerequisite: json.optional(bytes32()),
   };
 

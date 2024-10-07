@@ -1,13 +1,14 @@
 import { BitVec, Bytes } from "@typeberry/bytes";
+import type { KnownSizeArray } from "@typeberry/collections";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { type Ed25519Signature, type HeaderHash, type ValidatorIndex, bytes32, fromJson, logger } from ".";
 
 class AvailAssurance {
   static fromJson: FromJson<AvailAssurance> = {
-    anchor: bytes32<HeaderHash>(),
+    anchor: bytes32(),
     // TODO [ToDr] does the string contain some prefix or do we KNOW the length?
     bitfield: json.fromString((v) => BitVec.fromBytes(Bytes.parseBytes(v, 1), 8)),
-    validator_index: json.castNumber(),
+    validator_index: "number",
     signature: fromJson.ed25519Signature,
   };
 
@@ -18,7 +19,7 @@ class AvailAssurance {
 
   private constructor() {}
 }
-export type AssurancesExtrinsic = AvailAssurance[];
+export type AssurancesExtrinsic = KnownSizeArray<AvailAssurance, "0 .. ValidatorsCount">;
 export const AssurancesExtrinsicFromJson = json.array(AvailAssurance.fromJson);
 
 export async function runAssurancesExtrinsicTest(test: AssurancesExtrinsic, file: string) {

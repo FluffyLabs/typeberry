@@ -22,10 +22,10 @@ class WorkExecResult {
 
 export class WorkResult {
   static fromJson: FromJson<WorkResult> = {
-    service: json.castNumber(),
+    service: "number",
     code_hash: bytes32(),
     payload_hash: bytes32(),
-    gas_ratio: json.castNumber(),
+    gas_ratio: "number",
     result: WorkExecResult.fromJson,
   };
   service!: ServiceId;

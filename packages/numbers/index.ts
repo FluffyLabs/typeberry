@@ -1,10 +1,14 @@
-import type { Opaque } from "@typeberry/utils";
+declare const __REPRESENTATION_BYTES__: unique symbol;
+type WithBytesRepresentation<Bytes extends number> = {
+  readonly [__REPRESENTATION_BYTES__]: Bytes;
+};
+export type FixedSizeNumber<Bytes extends number> = number & WithBytesRepresentation<Bytes>;
 
 /** Unsigned integer that can be represented as two bytes. */
-export type U16 = Opaque<number, "u16">;
+export type U16 = FixedSizeNumber<2>;
 /** Unsigned integer that can be represented as 4 bytes. */
-export type U32 = Opaque<number, "u32">;
+export type U32 = FixedSizeNumber<4>;
 /** Unsigned integer that can be represented as 8 bytes. */
-export type U64 = Opaque<bigint, "u64">;
+export type U64 = bigint & WithBytesRepresentation<8>;
 
 // TODO [ToDr] Safe casting / math operations?

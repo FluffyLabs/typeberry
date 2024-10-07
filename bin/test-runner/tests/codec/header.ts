@@ -1,4 +1,5 @@
 import { Bytes } from "@typeberry/bytes";
+import type { KnownSizeArray } from "@typeberry/collections";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { EntropyHash, TicketAttempt } from "@typeberry/safrole";
 import type { BandersnatchKey, Ed25519Key } from "@typeberry/safrole/crypto";
@@ -16,12 +17,12 @@ class EpochMark {
   };
 
   entropy!: EntropyHash;
-  validators!: BandersnatchKey[];
+  validators!: KnownSizeArray<BandersnatchKey, "ValidatorsCount">;
 }
 
 class TicketsMark {
   static fromJson: FromJson<TicketsMark> = {
-    id: bytes32<Bytes<32>>(),
+    id: bytes32(),
     attempt: fromJson.ticketAttempt,
   };
 
@@ -36,11 +37,11 @@ export class Header {
     parent: bytes32(),
     parent_state_root: bytes32(),
     extrinsic_hash: bytes32(),
-    slot: json.castNumber(),
+    slot: "number",
     epoch_mark: json.optional(EpochMark.fromJson),
     tickets_mark: json.optional<TicketsMark[]>(json.array(TicketsMark.fromJson)),
     offenders_mark: json.array(bytes32<Ed25519Key>()),
-    author_index: json.castNumber(),
+    author_index: "number",
     entropy_source: bandersnatchVrfSignatureFromString,
     seal: bandersnatchVrfSignatureFromString,
   };
@@ -50,7 +51,7 @@ export class Header {
   extrinsic_hash!: Bytes<32>;
   slot!: Slot;
   epoch_mark?: EpochMark;
-  tickets_mark?: TicketsMark[];
+  tickets_mark?: KnownSizeArray<TicketsMark, "EpochLength">;
   offenders_mark?: Ed25519Key[];
   author_index!: ValidatorIndex;
   entropy_source!: BandersnatchVrfSignature;

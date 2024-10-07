@@ -4,7 +4,7 @@ import { type ServiceId, logger } from ".";
 
 class Preimage {
   static fromJson: FromJson<Preimage> = {
-    requester: json.castNumber(),
+    requester: "number",
     blob: json.fromString(BytesBlob.parseBlob),
   };
 

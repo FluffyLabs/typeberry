@@ -1,4 +1,5 @@
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
+import type { FixedSizeArray } from "@typeberry/collections";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { type ServiceId, bytes32, logger } from ".";
 import { RefineContext } from "./refine_context";
@@ -17,7 +18,7 @@ class Authorizer {
 export class WorkPackage {
   static fromJson: FromJson<WorkPackage> = {
     authorization: json.fromString(BytesBlob.parseBlob),
-    auth_code_host: json.castNumber(),
+    auth_code_host: "number",
     authorizer: Authorizer.fromJson,
     context: RefineContext.fromJson,
     items: json.array(WorkItem.fromJson),
@@ -27,7 +28,7 @@ export class WorkPackage {
   auth_code_host!: ServiceId;
   authorizer!: Authorizer;
   context!: RefineContext;
-  items!: WorkItem[]; // 1..4
+  items!: FixedSizeArray<WorkItem, 1 | 2 | 3 | 4>;
 
   private constructor() {}
 }

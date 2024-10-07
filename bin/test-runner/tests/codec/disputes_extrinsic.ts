@@ -1,4 +1,6 @@
+import type { KnownSizeArray } from "@typeberry/collections";
 import { type FromJson, json } from "@typeberry/json-parser";
+import type { U32 } from "@typeberry/numbers";
 import type { Ed25519Key } from "@typeberry/safrole/crypto";
 import { type Ed25519Signature, type HeaderHash, type ValidatorIndex, bytes32, fromJson, logger } from ".";
 
@@ -35,7 +37,7 @@ class Culprit {
 class Judgement {
   static fromJson: FromJson<Judgement> = {
     vote: "boolean",
-    index: json.castNumber(),
+    index: "number",
     signature: fromJson.ed25519Signature,
   };
 
@@ -48,14 +50,14 @@ class Judgement {
 
 class Verdict {
   static fromJson: FromJson<Verdict> = {
-    target: bytes32<HeaderHash>(),
+    target: bytes32(),
     age: "number",
     votes: json.array(Judgement.fromJson),
   };
 
   target!: HeaderHash;
-  age!: number; // u32
-  votes!: Judgement[]; // size of validators super majority
+  age!: U32;
+  votes!: KnownSizeArray<Judgement, "Validators super majority">;
 
   private constructor() {}
 }
