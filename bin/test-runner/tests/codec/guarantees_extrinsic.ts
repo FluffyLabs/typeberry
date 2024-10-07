@@ -1,13 +1,16 @@
 import type { KnownSizeArray } from "@typeberry/collections";
-import { type FromJson, json } from "@typeberry/json-parser";
+import { json } from "@typeberry/json-parser";
 import { type Ed25519Signature, type Slot, type ValidatorIndex, fromJson, logger } from ".";
 import { WorkReport } from "./work_report";
 
 class ValidatorSignature {
-  static fromJson: FromJson<ValidatorSignature> = {
-    validator_index: "number",
-    signature: fromJson.ed25519Signature,
-  };
+  static fromJson = json.object<ValidatorSignature>(
+    {
+      validator_index: "number",
+      signature: fromJson.ed25519Signature,
+    },
+    (v) => Object.assign(new ValidatorSignature(), v),
+  );
 
   validator_index!: ValidatorIndex;
   signature!: Ed25519Signature;
@@ -16,11 +19,15 @@ class ValidatorSignature {
 }
 
 class ReportGuarantee {
-  static fromJson: FromJson<ReportGuarantee> = {
-    report: WorkReport.fromJson,
-    slot: "number",
-    signatures: json.array(ValidatorSignature.fromJson),
-  };
+  static fromJson = json.object<ReportGuarantee>(
+    {
+      report: WorkReport.fromJson,
+      slot: "number",
+      signatures: json.array(ValidatorSignature.fromJson),
+    },
+    (x) => Object.assign(new ReportGuarantee(), x),
+  );
+
   report!: WorkReport;
   slot!: Slot;
   signatures!: KnownSizeArray<ValidatorSignature, "0..ValidatorsCount">;

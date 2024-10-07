@@ -1,16 +1,20 @@
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
-import { type FromJson, json } from "@typeberry/json-parser";
+import { json } from "@typeberry/json-parser";
 import { type Gas, type ServiceId, bytes32, logger } from ".";
 
 class WorkExecResult {
   // TODO [ToDr] Introduce fromJson.union?
-  static fromJson: FromJson<WorkExecResult> = {
-    ok: json.optional(json.fromString(BytesBlob.parseBlob)),
-    out_of_gas: json.optional(json.fromAny(() => null)),
-    panic: json.optional(json.fromAny(() => null)),
-    bad_code: json.optional(json.fromAny(() => null)),
-    code_oversize: json.optional(json.fromAny(() => null)),
-  };
+  static fromJson = json.object<WorkExecResult>(
+    {
+      ok: json.optional(json.fromString(BytesBlob.parseBlob)),
+      out_of_gas: json.optional(json.fromAny(() => null)),
+      panic: json.optional(json.fromAny(() => null)),
+      bad_code: json.optional(json.fromAny(() => null)),
+      code_oversize: json.optional(json.fromAny(() => null)),
+    },
+    (x) => Object.assign(new WorkExecResult(), x),
+  );
+
   ok?: BytesBlob;
   out_of_gas?: null;
   panic?: null;
@@ -21,13 +25,17 @@ class WorkExecResult {
 }
 
 export class WorkResult {
-  static fromJson: FromJson<WorkResult> = {
-    service: "number",
-    code_hash: bytes32(),
-    payload_hash: bytes32(),
-    gas_ratio: "number",
-    result: WorkExecResult.fromJson,
-  };
+  static fromJson = json.object<WorkResult>(
+    {
+      service: "number",
+      code_hash: bytes32(),
+      payload_hash: bytes32(),
+      gas_ratio: "number",
+      result: WorkExecResult.fromJson,
+    },
+    (x) => Object.assign(new WorkResult(), x),
+  );
+
   service!: ServiceId;
   code_hash!: Bytes<32>;
   payload_hash!: Bytes<32>;

@@ -12,10 +12,10 @@ export type TicketBody = {
   attempt: TicketAttempt;
 };
 
-export type TicketEnvelope = {
-  attempt: TicketAttempt;
-  signature: BandersnatchRingSignature;
-};
+export class TicketEnvelope {
+  attempt!: TicketAttempt;
+  signature!: BandersnatchRingSignature;
+}
 
 export type ValidatorData = {
   ed25519: Ed25519Key;

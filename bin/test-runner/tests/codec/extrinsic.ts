@@ -1,4 +1,4 @@
-import type { FromJson } from "@typeberry/json-parser";
+import { json } from "@typeberry/json-parser";
 import { logger } from ".";
 import { type AssurancesExtrinsic, AssurancesExtrinsicFromJson } from "./assurances_extrinsic";
 import { DisputesExtrinsic } from "./disputes_extrinsic";
@@ -7,13 +7,16 @@ import { type PreimagesExtrinsic, PreimagesExtrinsicFromJson } from "./preimages
 import { type TicketsExtrinsic, TicketsExtrinsicFromJson } from "./tickets_extrinsic";
 
 export class Extrinsic {
-  static fromJson: FromJson<Extrinsic> = {
-    tickets: TicketsExtrinsicFromJson,
-    disputes: DisputesExtrinsic.fromJson,
-    preimages: PreimagesExtrinsicFromJson,
-    assurances: AssurancesExtrinsicFromJson,
-    guarantees: GuaranteesExtrinsicFromJson,
-  };
+  static fromJson = json.object<Extrinsic>(
+    {
+      tickets: TicketsExtrinsicFromJson,
+      disputes: DisputesExtrinsic.fromJson,
+      preimages: PreimagesExtrinsicFromJson,
+      assurances: AssurancesExtrinsicFromJson,
+      guarantees: GuaranteesExtrinsicFromJson,
+    },
+    (v) => Object.assign(new Extrinsic(), v),
+  );
 
   tickets!: TicketsExtrinsic;
   disputes!: DisputesExtrinsic;

@@ -125,6 +125,30 @@ test("JSON parser", async (t) => {
     }
   });
 
+  await t.test("correct instanceof", () => {
+    const j = `{"k": "sdf", "v": true }`;
+    class TestClass {
+      static fromJson = json.object<TestClass>(
+        {
+          k: "string",
+          v: "boolean",
+        },
+        (x) => Object.assign(new TestClass(), x),
+      );
+
+      k = "";
+      v = false;
+    }
+
+    const result = parseFromJson<TestClass>(JSON.parse(j), TestClass.fromJson);
+
+    const expected = new TestClass();
+    expected.k = "sdf";
+    expected.v = true;
+    assert.deepStrictEqual(result, expected);
+    assert.strictEqual(result instanceof TestClass, true);
+  });
+
   await t.test("optionals", () => {
     const j = `{"v": true }`;
     class TestClass {

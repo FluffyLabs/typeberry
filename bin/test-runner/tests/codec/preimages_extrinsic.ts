@@ -1,12 +1,15 @@
 import { BytesBlob } from "@typeberry/bytes";
-import { type FromJson, json } from "@typeberry/json-parser";
+import { json } from "@typeberry/json-parser";
 import { type ServiceId, logger } from ".";
 
 class Preimage {
-  static fromJson: FromJson<Preimage> = {
-    requester: "number",
-    blob: json.fromString(BytesBlob.parseBlob),
-  };
+  static fromJson = json.object<Preimage>(
+    {
+      requester: "number",
+      blob: json.fromString(BytesBlob.parseBlob),
+    },
+    (x) => Object.assign(new Preimage(), x),
+  );
 
   requester!: ServiceId;
   blob!: BytesBlob;

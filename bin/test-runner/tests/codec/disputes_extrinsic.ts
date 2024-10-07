@@ -1,16 +1,19 @@
 import type { KnownSizeArray } from "@typeberry/collections";
-import { type FromJson, json } from "@typeberry/json-parser";
+import { json } from "@typeberry/json-parser";
 import type { U32 } from "@typeberry/numbers";
 import type { Ed25519Key } from "@typeberry/safrole/crypto";
 import { type Ed25519Signature, type HeaderHash, type ValidatorIndex, bytes32, fromJson, logger } from ".";
 
 class Fault {
-  static fromJson: FromJson<Fault> = {
-    target: bytes32(),
-    vote: "boolean",
-    key: bytes32(),
-    signature: fromJson.ed25519Signature,
-  };
+  static fromJson = json.object<Fault>(
+    {
+      target: bytes32(),
+      vote: "boolean",
+      key: bytes32(),
+      signature: fromJson.ed25519Signature,
+    },
+    (f) => Object.assign(new Fault(), f),
+  );
 
   target!: HeaderHash;
   vote!: boolean;
@@ -21,11 +24,14 @@ class Fault {
 }
 
 class Culprit {
-  static fromJson: FromJson<Culprit> = {
-    target: bytes32(),
-    key: bytes32(),
-    signature: fromJson.ed25519Signature,
-  };
+  static fromJson = json.object<Culprit>(
+    {
+      target: bytes32(),
+      key: bytes32(),
+      signature: fromJson.ed25519Signature,
+    },
+    (c) => Object.assign(new Culprit(), c),
+  );
 
   target!: HeaderHash;
   key!: Ed25519Key;
@@ -35,11 +41,14 @@ class Culprit {
 }
 
 class Judgement {
-  static fromJson: FromJson<Judgement> = {
-    vote: "boolean",
-    index: "number",
-    signature: fromJson.ed25519Signature,
-  };
+  static fromJson = json.object<Judgement>(
+    {
+      vote: "boolean",
+      index: "number",
+      signature: fromJson.ed25519Signature,
+    },
+    (x) => Object.assign(new Judgement(), x),
+  );
 
   vote!: boolean;
   index!: ValidatorIndex;
@@ -49,11 +58,14 @@ class Judgement {
 }
 
 class Verdict {
-  static fromJson: FromJson<Verdict> = {
-    target: bytes32(),
-    age: "number",
-    votes: json.array(Judgement.fromJson),
-  };
+  static fromJson = json.object<Verdict>(
+    {
+      target: bytes32(),
+      age: "number",
+      votes: json.array(Judgement.fromJson),
+    },
+    (x) => Object.assign(new Verdict(), x),
+  );
 
   target!: HeaderHash;
   age!: U32;
@@ -63,11 +75,14 @@ class Verdict {
 }
 
 export class DisputesExtrinsic {
-  static fromJson: FromJson<DisputesExtrinsic> = {
-    verdicts: json.array(Verdict.fromJson),
-    culprits: json.array(Culprit.fromJson),
-    faults: json.array(Fault.fromJson),
-  };
+  static fromJson = json.object<DisputesExtrinsic>(
+    {
+      verdicts: json.array(Verdict.fromJson),
+      culprits: json.array(Culprit.fromJson),
+      faults: json.array(Fault.fromJson),
+    },
+    (x) => Object.assign(new DisputesExtrinsic(), x),
+  );
 
   verdicts!: Verdict[];
   culprits!: Culprit[];

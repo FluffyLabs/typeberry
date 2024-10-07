@@ -1,13 +1,16 @@
-import type { FromJson } from "@typeberry/json-parser";
+import { json } from "@typeberry/json-parser";
 import { logger } from ".";
 import { Extrinsic } from "./extrinsic";
 import { Header } from "./header";
 
 export class Block {
-  static fromJson: FromJson<Block> = {
-    header: Header.fromJson,
-    extrinsic: Extrinsic.fromJson,
-  };
+  static fromJson = json.object<Block>(
+    {
+      header: Header.fromJson,
+      extrinsic: Extrinsic.fromJson,
+    },
+    (b) => Object.assign(new Block(), b),
+  );
 
   header!: Header;
   extrinsic!: Extrinsic;

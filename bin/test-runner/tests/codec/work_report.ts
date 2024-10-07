@@ -1,18 +1,21 @@
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
-import { type FromJson, json } from "@typeberry/json-parser";
+import { json } from "@typeberry/json-parser";
 import type { U32 } from "@typeberry/numbers";
 import { type CoreIndex, bytes32, logger } from ".";
 import { RefineContext } from "./refine_context";
 import { WorkResult } from "./work_result";
 
 class WorkPackageSpec {
-  static fromJson: FromJson<WorkPackageSpec> = {
-    hash: bytes32(),
-    len: "number",
-    erasure_root: bytes32(),
-    exports_root: bytes32(),
-  };
+  static fromJson = json.object<WorkPackageSpec>(
+    {
+      hash: bytes32(),
+      len: "number",
+      erasure_root: bytes32(),
+      exports_root: bytes32(),
+    },
+    (x) => Object.assign(new WorkPackageSpec(), x),
+  );
 
   hash!: Bytes<32>;
   len!: U32;
@@ -23,14 +26,17 @@ class WorkPackageSpec {
 }
 
 export class WorkReport {
-  static fromJson: FromJson<WorkReport> = {
-    package_spec: WorkPackageSpec.fromJson,
-    context: RefineContext.fromJson,
-    core_index: "number",
-    authorizer_hash: bytes32(),
-    auth_output: json.fromString(BytesBlob.parseBlob),
-    results: json.array(WorkResult.fromJson),
-  };
+  static fromJson = json.object<WorkReport>(
+    {
+      package_spec: WorkPackageSpec.fromJson,
+      context: RefineContext.fromJson,
+      core_index: "number",
+      authorizer_hash: bytes32(),
+      auth_output: json.fromString(BytesBlob.parseBlob),
+      results: json.array(WorkResult.fromJson),
+    },
+    (x) => Object.assign(new WorkReport(), x),
+  );
 
   package_spec!: WorkPackageSpec;
   context!: RefineContext;
