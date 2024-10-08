@@ -80,7 +80,7 @@ export function decodeData(input: [number, Uint8Array][], expectedLength: number
   const resultData = decodingResult.take_data(); // it destroys the result object in rust
 
   if (!resultIndices) {
-    throw new Error("indices array should exist!");
+    throw new Error("indices array in decoded result must exist!");
   }
 
   check(resultData.length === resultIndices.length * SHARD_ALIGNMENT, "incorrect length of data or indices!");
