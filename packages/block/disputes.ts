@@ -63,7 +63,7 @@ export class Judgement {
 
 export class Verdict {
   static Codec = codec.Class(Verdict, {
-    target: codec.bytes(32).cast(),
+    target: codec.bytes(HASH_SIZE).cast(),
     age: codec.u32,
     votes: codec.sequenceVarLen(Judgement.Codec).cast(),
   });

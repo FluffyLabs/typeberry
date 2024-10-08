@@ -1,9 +1,10 @@
+import type { ServiceId } from "@typeberry/block/preimage";
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
 import type { U16, U32 } from "@typeberry/numbers";
 import type { TrieHash } from "@typeberry/trie";
 import type { Opaque } from "@typeberry/utils";
-import { type Gas, type ServiceId, bytes32, logger } from ".";
+import { bytes32, logger } from ".";
 
 type ExtrinsicHash = Opaque<Bytes<32>, "ExtrinsicHash">;
 
@@ -50,7 +51,7 @@ export class WorkItem {
   service!: ServiceId;
   code_hash!: Bytes<32>;
   payload!: BytesBlob;
-  gas_limit!: Gas;
+  gas_limit!: number; // TODO [Gas]
   import_segments!: ImportSpec[];
   extrinsic!: ExtrinsicSpec[];
   export_count!: U16;

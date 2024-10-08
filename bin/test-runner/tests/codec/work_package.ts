@@ -1,8 +1,10 @@
+import type { ServiceId } from "@typeberry/block/preimage";
+import type { RefineContext } from "@typeberry/block/refine_context";
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
-import { type ServiceId, bytes32, logger } from ".";
-import { RefineContext } from "./refine_context";
+import { bytes32, logger } from ".";
+import { refineContextFromJson } from "./refine_context";
 import { WorkItem } from "./work_item";
 
 class Authorizer {
@@ -24,7 +26,7 @@ export class WorkPackage {
       authorization: json.fromString(BytesBlob.parseBlob),
       auth_code_host: "number",
       authorizer: Authorizer.fromJson,
-      context: RefineContext.fromJson,
+      context: refineContextFromJson,
       // TODO [ToDr] should we have a validator to make sure the length is okay?
       items: json.array(WorkItem.fromJson),
     },

@@ -1,54 +1,40 @@
-import { type Bytes, BytesBlob } from "@typeberry/bytes";
-import type { FixedSizeArray } from "@typeberry/collections";
+import assert from "node:assert";
+import fs from "node:fs";
+import { WorkPackageSpec, WorkReport } from "@typeberry/block/work_report";
+import { BytesBlob } from "@typeberry/bytes";
+import { Decoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
-import type { U32 } from "@typeberry/numbers";
-import { type CoreIndex, bytes32, logger } from ".";
-import { RefineContext } from "./refine_context";
-import { WorkResult } from "./work_result";
+import { bytes32 } from ".";
+import type { JsonObject } from "../../json-format";
+import { refineContextFromJson } from "./refine_context";
+import { workResultFromJson } from "./work_result";
 
-class WorkPackageSpec {
-  static fromJson = json.object<WorkPackageSpec>(
-    {
-      hash: bytes32(),
-      len: "number",
-      erasure_root: bytes32(),
-      exports_root: bytes32(),
-    },
-    (x) => Object.assign(new WorkPackageSpec(), x),
-  );
+const workPackageSpecFromJson = json.object<JsonObject<WorkPackageSpec>, WorkPackageSpec>(
+  {
+    hash: bytes32(),
+    len: "number",
+    erasure_root: bytes32(),
+    exports_root: bytes32(),
+  },
+  ({ hash, len, erasure_root, exports_root }) => new WorkPackageSpec(hash, len, erasure_root, exports_root),
+);
 
-  hash!: Bytes<32>;
-  len!: U32;
-  erasure_root!: Bytes<32>;
-  exports_root!: Bytes<32>;
-
-  private constructor() {}
-}
-
-export class WorkReport {
-  static fromJson = json.object<WorkReport>(
-    {
-      package_spec: WorkPackageSpec.fromJson,
-      context: RefineContext.fromJson,
-      core_index: "number",
-      authorizer_hash: bytes32(),
-      auth_output: json.fromString(BytesBlob.parseBlob),
-      results: json.array(WorkResult.fromJson),
-    },
-    (x) => Object.assign(new WorkReport(), x),
-  );
-
-  package_spec!: WorkPackageSpec;
-  context!: RefineContext;
-  core_index!: CoreIndex;
-  authorizer_hash!: Bytes<32>;
-  auth_output!: BytesBlob;
-  results!: FixedSizeArray<WorkResult, 1 | 2 | 3 | 4>;
-
-  private constructor() {}
-}
+export const workReportFromJson = json.object<JsonObject<WorkReport>, WorkReport>(
+  {
+    package_spec: workPackageSpecFromJson,
+    context: refineContextFromJson,
+    core_index: "number",
+    authorizer_hash: bytes32(),
+    auth_output: json.fromString(BytesBlob.parseBlob),
+    results: json.array(workResultFromJson),
+  },
+  ({ package_spec, context, core_index, authorizer_hash, auth_output, results }) =>
+    new WorkReport(package_spec, context, core_index, authorizer_hash, auth_output, results),
+);
 
 export async function runWorkReportTest(test: WorkReport, file: string) {
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error(`Not implemented yet! ${file}`);
+  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
+  const decoded = Decoder.decodeObject(WorkReport.Codec, encoded);
+
+  assert.deepStrictEqual(decoded, test);
 }

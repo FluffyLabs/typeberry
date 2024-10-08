@@ -1,11 +1,14 @@
+import type { AssurancesExtrinsic } from "@typeberry/block/assurances";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
+import type { GuaranteesExtrinsic } from "@typeberry/block/gaurantees";
+import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { TicketsExtrinsic } from "@typeberry/block/tickets";
 import { json } from "@typeberry/json-parser";
 import { logger } from ".";
-import { type AssurancesExtrinsic, AssurancesExtrinsicFromJson } from "./assurances_extrinsic";
+import { assurancesExtrinsicFromJson } from "./assurances_extrinsic";
 import { disputesExtrinsicFromJson } from "./disputes_extrinsic";
-import { type GuaranteesExtrinsic, GuaranteesExtrinsicFromJson } from "./guarantees_extrinsic";
-import { type PreimagesExtrinsic, PreimagesExtrinsicFromJson } from "./preimages_extrinsic";
+import { guaranteesExtrinsicFromJson } from "./guarantees_extrinsic";
+import { preimagesExtrinsicFromJson } from "./preimages_extrinsic";
 import { ticketsExtrinsicFromJson } from "./tickets_extrinsic";
 
 export class Extrinsic {
@@ -13,9 +16,9 @@ export class Extrinsic {
     {
       tickets: ticketsExtrinsicFromJson,
       disputes: disputesExtrinsicFromJson,
-      preimages: PreimagesExtrinsicFromJson,
-      assurances: AssurancesExtrinsicFromJson,
-      guarantees: GuaranteesExtrinsicFromJson,
+      preimages: preimagesExtrinsicFromJson,
+      assurances: assurancesExtrinsicFromJson,
+      guarantees: guaranteesExtrinsicFromJson,
     },
     (v) => Object.assign(new Extrinsic(), v),
   );

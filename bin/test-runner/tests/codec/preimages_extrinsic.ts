@@ -1,26 +1,23 @@
+import assert from "node:assert";
+import fs from "node:fs";
+import { Preimage, type PreimagesExtrinsic, preimagesExtrinsicCodec } from "@typeberry/block/preimage";
 import { BytesBlob } from "@typeberry/bytes";
+import { Decoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
-import { type ServiceId, logger } from ".";
 
-class Preimage {
-  static fromJson = json.object<Preimage>(
-    {
-      requester: "number",
-      blob: json.fromString(BytesBlob.parseBlob),
-    },
-    (x) => Object.assign(new Preimage(), x),
-  );
+const preimageFromJson = json.object<Preimage>(
+  {
+    requester: "number",
+    blob: json.fromString(BytesBlob.parseBlob),
+  },
+  ({ requester, blob }) => new Preimage(requester, blob),
+);
 
-  requester!: ServiceId;
-  blob!: BytesBlob;
-
-  private constructor() {}
-}
-
-export type PreimagesExtrinsic = Preimage[];
-export const PreimagesExtrinsicFromJson = json.array(Preimage.fromJson);
+export const preimagesExtrinsicFromJson = json.array(preimageFromJson);
 
 export async function runPreimagesExtrinsicTest(test: PreimagesExtrinsic, file: string) {
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error(`Not implemented yet! ${file}`);
+  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
+  const decoded = Decoder.decodeObject(preimagesExtrinsicCodec, encoded);
+
+  assert.deepStrictEqual(decoded, test);
 }

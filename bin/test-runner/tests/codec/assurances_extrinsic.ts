@@ -1,32 +1,29 @@
-import type { Ed25519Signature, HeaderHash, ValidatorIndex } from "@typeberry/block";
+import assert from "node:assert";
+import fs from "node:fs";
+import { type AssurancesExtrinsic, AvailabilityAssurance, assurancesExtrinsicCodec } from "@typeberry/block/assurances";
 import { BitVec, Bytes } from "@typeberry/bytes";
-import type { KnownSizeArray } from "@typeberry/collections";
+import { Decoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
-import { bytes32, fromJson, logger } from ".";
+import { bytes32, fromJson } from ".";
+import type { JsonObject } from "../../json-format";
 
-class AvailabilityAssurance {
-  static fromJson = json.object<AvailabilityAssurance>(
-    {
-      anchor: bytes32(),
-      // TODO [ToDr] does the string contain some prefix or do we KNOW the length?
-      bitfield: json.fromString((v) => BitVec.fromBytes(Bytes.parseBytes(v, 1), 8)),
-      validator_index: "number",
-      signature: fromJson.ed25519Signature,
-    },
-    (x) => Object.assign(new AvailabilityAssurance(), x),
-  );
+const availabilityAssuranceFromJson = json.object<JsonObject<AvailabilityAssurance>, AvailabilityAssurance>(
+  {
+    anchor: bytes32(),
+    // TODO [ToDr] does the string contain some prefix or do we KNOW the length?
+    bitfield: json.fromString((v) => BitVec.fromBytes(Bytes.parseBytes(v, 1), 8)),
+    validator_index: "number",
+    signature: fromJson.ed25519Signature,
+  },
+  ({ anchor, bitfield, validator_index, signature }) =>
+    new AvailabilityAssurance(anchor, bitfield, validator_index, signature),
+);
 
-  anchor!: HeaderHash;
-  bitfield!: BitVec;
-  validator_index!: ValidatorIndex;
-  signature!: Ed25519Signature;
-
-  private constructor() {}
-}
-export type AssurancesExtrinsic = KnownSizeArray<AvailabilityAssurance, "0 .. ValidatorsCount">;
-export const AssurancesExtrinsicFromJson = json.array(AvailabilityAssurance.fromJson);
+export const assurancesExtrinsicFromJson = json.array(availabilityAssuranceFromJson);
 
 export async function runAssurancesExtrinsicTest(test: AssurancesExtrinsic, file: string) {
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error(`Not implemented yet! ${file}`);
+  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
+  const decoded = Decoder.decodeObject(assurancesExtrinsicCodec, encoded);
+
+  assert.deepStrictEqual(decoded, test);
 }

@@ -1,45 +1,39 @@
-import type { Ed25519Signature, TimeSlot, ValidatorIndex } from "@typeberry/block";
-import type { KnownSizeArray } from "@typeberry/collections";
+import assert from "node:assert";
+import fs from "node:fs";
+import {
+  type GuaranteesExtrinsic,
+  ReportGuarantee,
+  ValidatorSignature,
+  guaranteesExtrinsicCodec,
+} from "@typeberry/block/gaurantees";
+import { Decoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
-import { fromJson, logger } from ".";
-import { WorkReport } from "./work_report";
+import { fromJson } from ".";
+import type { JsonObject } from "../../json-format";
+import { workReportFromJson } from "./work_report";
 
-class ValidatorSignature {
-  static fromJson = json.object<ValidatorSignature>(
-    {
-      validator_index: "number",
-      signature: fromJson.ed25519Signature,
-    },
-    (v) => Object.assign(new ValidatorSignature(), v),
-  );
+const validatorSignatureFromJson = json.object<JsonObject<ValidatorSignature>, ValidatorSignature>(
+  {
+    validator_index: "number",
+    signature: fromJson.ed25519Signature,
+  },
+  ({ validator_index, signature }) => new ValidatorSignature(validator_index, signature),
+);
 
-  validator_index!: ValidatorIndex;
-  signature!: Ed25519Signature;
+const reportGuaranteeFromJson = json.object<ReportGuarantee>(
+  {
+    report: workReportFromJson,
+    slot: "number",
+    signatures: json.array(validatorSignatureFromJson),
+  },
+  ({ report, slot, signatures }) => new ReportGuarantee(report, slot, signatures),
+);
 
-  private constructor() {}
-}
-
-class ReportGuarantee {
-  static fromJson = json.object<ReportGuarantee>(
-    {
-      report: WorkReport.fromJson,
-      slot: "number",
-      signatures: json.array(ValidatorSignature.fromJson),
-    },
-    (x) => Object.assign(new ReportGuarantee(), x),
-  );
-
-  report!: WorkReport;
-  slot!: TimeSlot;
-  signatures!: KnownSizeArray<ValidatorSignature, "0..ValidatorsCount">;
-
-  private constructor() {}
-}
-
-export type GuaranteesExtrinsic = KnownSizeArray<ReportGuarantee, "0..CoresCount">;
-export const GuaranteesExtrinsicFromJson = json.array(ReportGuarantee.fromJson);
+export const guaranteesExtrinsicFromJson = json.array(reportGuaranteeFromJson);
 
 export async function runGuaranteesExtrinsicTest(test: GuaranteesExtrinsic, file: string) {
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error(`Not implemented yet! ${file}`);
+  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
+  const decoded = Decoder.decodeObject(guaranteesExtrinsicCodec, encoded);
+
+  assert.deepStrictEqual(decoded, test);
 }
