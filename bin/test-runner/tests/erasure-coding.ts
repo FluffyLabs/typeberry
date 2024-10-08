@@ -66,6 +66,15 @@ export class SegmentRoot {
 
 const logger = Logger.new(__filename, "test-runner/erasure-coding");
 
+let seed = Math.floor(1000 * Math.random());
+
+function random() {
+  const x = Math.sin(seed++) * 10000;
+  return x - Math.floor(x);
+}
+
+logger.log(`Erasure encoding tests random seed: ${seed}`);
+
 export async function runEcTest(test: EcTest) {
   if (test.chunks[0].length > 2) {
     logger.info("Incorrect test data. The chunks should have 2 bytes!");
@@ -116,7 +125,7 @@ function getRandomItems(arr: [number, Uint8Array][], n: number): [number, Uint8A
   const copy = [...arr];
 
   for (let i = 0; i < n; i++) {
-    const randomIndex = i + Math.floor(Math.random() * (copy.length - i));
+    const randomIndex = i + Math.floor(random() * (copy.length - i));
     [copy[i], copy[randomIndex]] = [copy[randomIndex], copy[i]];
     result.push(copy[i]);
   }

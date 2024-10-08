@@ -1055,16 +1055,22 @@ function stringToBytes(input: string): Uint8Array {
   return result;
 }
 
+let seed = 1;
+function random() {
+  const x = Math.sin(seed++) * 10000;
+  return x - Math.floor(x);
+}
+
 function getRandomItems(arr: [number, Uint8Array][], n: number): [number, Uint8Array][] {
   if (n > arr.length) {
     throw new Error("Requested more items than available in the array");
   }
 
   const result: [number, Uint8Array][] = [];
-  const copy = [...arr]; // Create a shallow copy of the array
+  const copy = [...arr];
 
   for (let i = 0; i < n; i++) {
-    const randomIndex = i + Math.floor(Math.random() * (copy.length - i));
+    const randomIndex = i + Math.floor(random() * (copy.length - i));
     [copy[i], copy[randomIndex]] = [copy[randomIndex], copy[i]];
     result.push(copy[i]);
   }
@@ -1076,6 +1082,8 @@ const data = testData.data as string;
 const segmentEc = testData.segment.segments[0].segment_ec as string[];
 
 describe("erasure encoding", () => {
+  seed = Math.floor(1000 * Math.random());
+
   it("should encode data", () => {
     const encoded = encodeData(stringToBytes(data));
     const expected = segmentEc.map(stringToBytes);
@@ -1084,7 +1092,7 @@ describe("erasure encoding", () => {
     assert.deepStrictEqual(encoded, expected);
   });
 
-  it("should decode data", () => {
+  it(`should decode data (random seed: ${seed})`, () => {
     const chunks = segmentEc.map((chunk, idx) => [idx, stringToBytes(chunk)] as [number, Uint8Array]);
     const selectedChunks = getRandomItems(chunks, 342);
 
