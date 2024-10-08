@@ -23,6 +23,7 @@ export function encodeData(input: Uint8Array) {
     input.length <= 2 * N_SHARDS,
     `length of input (${input.length}) should be equal to or less than ${2 * N_SHARDS}`,
   );
+  // if the input is shorter than 342 we need to fill it with '0' to be 342
   const inputWithPadding = getInputWithPadding(input);
 
   const result = new Array<Uint8Array>(RESULT_SHARDS);
@@ -54,6 +55,7 @@ export function encodeData(input: Uint8Array) {
   return result;
 }
 
+// expectedLength can be useful to remove padding in case of short data (< 342)
 export function decodeData(input: [number, Uint8Array][], expectedLength: number = 2 * N_SHARDS) {
   check(input.length === N_SHARDS, `length of input should be equal to ${N_SHARDS}`);
   const result = new Uint8Array(2 * N_SHARDS);
