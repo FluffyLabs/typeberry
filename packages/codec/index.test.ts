@@ -3,22 +3,7 @@ import { describe, it } from "node:test";
 import { BytesBlob } from "@typeberry/bytes";
 import { BitVec } from "@typeberry/bytes";
 import { Decoder } from "./decoder";
-import {
-  BITVEC_FIX_LEN,
-  BITVEC_VAR_LEN,
-  BLOB,
-  type Descriptor,
-  I8,
-  I16,
-  I24,
-  I32,
-  U8,
-  U16,
-  U24,
-  U32,
-  VAR_U32,
-  VAR_U64,
-} from "./descriptors";
+import { type Descriptor, codec } from "./descriptors";
 import { Encoder } from "./encoder";
 
 let seed = 1;
@@ -42,16 +27,16 @@ describe("JAM encoder / decoder", () => {
 
   // biome-ignore lint/suspicious/noExplicitAny: I need to make sure that the generator output matches the type.
   const types: Generator<any>[] = [
-    generator(() => BigInt(Math.floor(random() * 2 ** 32)) ** 2n, VAR_U64),
-    generator(() => Math.floor(random() * 2 ** 32), VAR_U32),
-    generator(() => Math.floor(random() * 2 ** 32), U32),
-    generator(() => Math.floor(random() * 2 ** 24), U24),
-    generator(() => Math.floor(random() * 2 ** 16), U16),
-    generator(() => Math.floor(random() * 2 ** 8), U8),
-    generator(() => Math.floor(random() * 2 ** 32) - 2 ** 31, I32),
-    generator(() => Math.floor(random() * 2 ** 24) - 2 ** 23, I24),
-    generator(() => Math.floor(random() * 2 ** 16) - 2 ** 15, I16),
-    generator(() => Math.floor(random() * 2 ** 8) - 2 ** 7, I8),
+    generator(() => BigInt(Math.floor(random() * 2 ** 32)) ** 2n, codec.varU64),
+    generator(() => Math.floor(random() * 2 ** 32), codec.varU32),
+    generator(() => Math.floor(random() * 2 ** 32), codec.u32),
+    generator(() => Math.floor(random() * 2 ** 24), codec.u24),
+    generator(() => Math.floor(random() * 2 ** 16), codec.u16),
+    generator(() => Math.floor(random() * 2 ** 8), codec.u8),
+    generator(() => Math.floor(random() * 2 ** 32) - 2 ** 31, codec.i32),
+    generator(() => Math.floor(random() * 2 ** 24) - 2 ** 23, codec.i24),
+    generator(() => Math.floor(random() * 2 ** 16) - 2 ** 15, codec.i16),
+    generator(() => Math.floor(random() * 2 ** 8) - 2 ** 7, codec.i8),
 
     generator(() => {
       let len = Math.floor(random() * 10_000);
@@ -60,7 +45,7 @@ describe("JAM encoder / decoder", () => {
         res[len] = Math.floor(random() * 256);
       }
       return BytesBlob.fromBlob(res);
-    }, BLOB),
+    }, codec.blob),
 
     generator(() => {
       let len = Math.floor(random() * 10_000);
@@ -69,7 +54,7 @@ describe("JAM encoder / decoder", () => {
         vec.setBit(len, random() > 0.5);
       }
       return vec;
-    }, BITVEC_VAR_LEN),
+    }, codec.bitVecVarLen),
 
     generator(() => {
       let len = 10;
@@ -78,7 +63,7 @@ describe("JAM encoder / decoder", () => {
         vec.setBit(len, random() > 0.5);
       }
       return vec;
-    }, BITVEC_FIX_LEN(10)),
+    }, codec.bitVecFixLen(10)),
   ];
 
   for (const g of types) {

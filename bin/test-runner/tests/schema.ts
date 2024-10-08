@@ -1,25 +1,22 @@
-import { optional } from "../json-parser";
+import { type FromJson, json } from "@typeberry/json-parser";
 
 export class JsonSchema {
-  static fromJson = optional<JsonSchema>(
-    {
-      $schema: "string",
-      type: "string",
-      title: "string",
-      description: "string",
-      properties: ["object", () => null],
-      required: ["array", "string"],
-      additionalProperties: "boolean",
-      $defs: ["object", () => null],
-    },
-    ["title", "description", "required", "$defs"],
-  );
+  static fromJson: FromJson<JsonSchema> = {
+    $schema: "string",
+    type: "string",
+    title: json.optional("string"),
+    description: json.optional("string"),
+    properties: json.fromAny(() => null),
+    required: json.optional<string[]>(json.array("string")),
+    additionalProperties: "boolean",
+    $defs: json.optional(json.fromAny(() => null)),
+  };
   $schema!: string;
   type!: string;
   title?: string;
   description?: string;
   properties!: unknown;
-  required!: string[];
+  required?: string[];
   additionalProperties!: boolean;
   $defs?: unknown;
 }

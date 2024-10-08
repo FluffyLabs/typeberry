@@ -1,27 +1,25 @@
 import assert from "node:assert";
+import { type FromJson, json } from "@typeberry/json-parser";
 import { MemoryBuilder } from "@typeberry/pvm/memory";
 import { PAGE_SIZE } from "@typeberry/pvm/memory/memory-consts";
 import { type MemoryIndex, createMemoryIndex } from "@typeberry/pvm/memory/memory-index";
 import { getPageNumber, getStartPageIndex } from "@typeberry/pvm/memory/memory-utils";
 import type { PageNumber } from "@typeberry/pvm/memory/pages/page-utils";
 import { Pvm, type RegistersArray } from "@typeberry/pvm/pvm";
-import type { FromJson } from "../json-parser";
 
-const uint8ArrayFromJson: ["object", (v: unknown) => Uint8Array] = [
-  "object",
-  (v: unknown) => {
+namespace fromJson {
+  export const uint8Array = json.fromAny((v) => {
     if (Array.isArray(v)) {
       return new Uint8Array(v);
     }
 
     throw new Error(`Expected an array, got ${typeof v} instead.`);
-  },
-];
-
+  });
+}
 class MemoryChunkItem {
   static fromJson: FromJson<MemoryChunkItem> = {
     address: "number",
-    contents: uint8ArrayFromJson,
+    contents: fromJson.uint8Array,
   };
   address!: number;
   contents!: Uint8Array;
@@ -40,16 +38,16 @@ class PageMapItem {
 export class PvmTest {
   static fromJson: FromJson<PvmTest> = {
     name: "string",
-    "initial-regs": ["array", "number"],
+    "initial-regs": json.array("number"),
     "initial-pc": "number",
-    "initial-page-map": ["array", PageMapItem.fromJson],
-    "initial-memory": ["array", MemoryChunkItem.fromJson],
+    "initial-page-map": json.array(PageMapItem.fromJson),
+    "initial-memory": json.array(MemoryChunkItem.fromJson),
     "initial-gas": "number",
-    program: uint8ArrayFromJson,
+    program: fromJson.uint8Array,
     "expected-status": "string",
-    "expected-regs": ["array", "number"],
+    "expected-regs": json.array("number"),
     "expected-pc": "number",
-    "expected-memory": ["array", MemoryChunkItem.fromJson],
+    "expected-memory": json.array(MemoryChunkItem.fromJson),
     "expected-gas": "number",
   };
 

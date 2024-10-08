@@ -2,14 +2,14 @@ import assert from "node:assert";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { BYTES, CLASS, type Record, VAR_U64, type View } from "@typeberry/codec/descriptors";
+import { type Record, type View, codec } from "@typeberry/codec/descriptors";
 
 class TestHeader {
-  static Codec = CLASS(TestHeader, {
-    blockNumber: VAR_U64,
-    parentHeaderHash: BYTES(32),
-    priorStateRoot: BYTES(32),
-    extrinsicHash: BYTES(32),
+  static Codec = codec.Class(TestHeader, {
+    blockNumber: codec.varU64,
+    parentHeaderHash: codec.bytes(32),
+    priorStateRoot: codec.bytes(32),
+    extrinsicHash: codec.bytes(32),
   });
 
   public readonly blockNumber: bigint;

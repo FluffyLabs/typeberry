@@ -3,12 +3,17 @@ import { it } from "node:test";
 
 import { BytesBlob } from "@typeberry/bytes";
 import { decodeData, encodeData } from "@typeberry/erasure-coding";
+import { type FromJson, json } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
-import type { FromJson } from "../json-parser";
+
+namespace fromJson {
+  export const bytesBlob = json.fromString(BytesBlob.parseBlobNoPrefix);
+}
+
 export class EcTest {
   static fromJson: FromJson<EcTest> = {
-    data: ["string", BytesBlob.parseBlobNoPrefix],
-    chunks: ["array", ["string", BytesBlob.parseBlobNoPrefix]],
+    data: fromJson.bytesBlob,
+    chunks: json.array(fromJson.bytesBlob),
   };
 
   data!: BytesBlob;
@@ -17,9 +22,9 @@ export class EcTest {
 
 export class PageProof {
   static fromJson: FromJson<PageProof> = {
-    data: ["string", BytesBlob.parseBlobNoPrefix],
-    page_proofs: ["array", ["string", BytesBlob.parseBlobNoPrefix]],
-    segments_root: ["string", BytesBlob.parseBlobNoPrefix],
+    data: fromJson.bytesBlob,
+    page_proofs: json.array(fromJson.bytesBlob),
+    segments_root: fromJson.bytesBlob,
   };
 
   data!: BytesBlob;
@@ -29,7 +34,7 @@ export class PageProof {
 
 export class SegmentEc {
   static fromJson: FromJson<SegmentEc> = {
-    segment_ec: ["array", ["string", BytesBlob.parseBlobNoPrefix]],
+    segment_ec: json.array(fromJson.bytesBlob),
   };
 
   segment_ec!: BytesBlob[];
@@ -37,9 +42,9 @@ export class SegmentEc {
 
 export class SegmentEcTest {
   static fromJson: FromJson<SegmentEcTest> = {
-    data: ["string", BytesBlob.parseBlobNoPrefix],
-    segments: ["array", SegmentEc.fromJson],
-    segments_root: ["string", BytesBlob.parseBlobNoPrefix],
+    data: fromJson.bytesBlob,
+    segments: json.array(SegmentEc.fromJson),
+    segments_root: fromJson.bytesBlob,
   };
 
   data!: BytesBlob;
@@ -49,9 +54,9 @@ export class SegmentEcTest {
 
 export class SegmentRoot {
   static fromJson: FromJson<SegmentRoot> = {
-    data: ["string", BytesBlob.parseBlobNoPrefix],
-    chunks: ["array", ["string", BytesBlob.parseBlobNoPrefix]],
-    chunks_root: ["string", BytesBlob.parseBlobNoPrefix],
+    data: fromJson.bytesBlob,
+    chunks: json.array(fromJson.bytesBlob),
+    chunks_root: fromJson.bytesBlob,
   };
 
   data!: BytesBlob;
@@ -59,7 +64,7 @@ export class SegmentRoot {
   chunks_root!: BytesBlob;
 }
 
-const logger = Logger.new(global.__filename, "test-runner/erasure-coding");
+const logger = Logger.new(__filename, "test-runner/erasure-coding");
 
 export async function runEcTest(test: EcTest) {
   if (test.chunks[0].length > 2) {

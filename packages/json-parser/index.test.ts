@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import { test } from "node:test";
-import { type FromJson, optional, parseFromJson } from "./json-parser";
+import { type FromJson, json, parseFromJson } from "./";
 
 test("JSON parser", async (t) => {
   await t.test("parse simple class", () => {
-    const json = `{"k": 5, "v": true }`;
+    const j = `{"k": 5, "v": true }`;
     class TestClass {
       static fromJson: FromJson<TestClass> = {
         k: "number",
@@ -15,7 +15,7 @@ test("JSON parser", async (t) => {
       v = false;
     }
 
-    const result = parseFromJson<TestClass>(JSON.parse(json), TestClass.fromJson);
+    const result = parseFromJson<TestClass>(JSON.parse(j), TestClass.fromJson);
     assert.strictEqual(result.k, 5);
     assert.strictEqual(result.v, true);
   });
@@ -50,10 +50,10 @@ test("JSON parser", async (t) => {
   });
 
   await t.test("parse & process", () => {
-    const json = `{"k": "0x123", "v": true }`;
+    const j = `{"k": "0x123", "v": true }`;
     class TestClass {
       static fromJson: FromJson<TestClass> = {
-        k: ["string", (v: string) => Number.parseInt(v)],
+        k: json.fromString((v) => Number.parseInt(v)),
         v: "boolean",
       };
 
@@ -61,22 +61,22 @@ test("JSON parser", async (t) => {
       v = false;
     }
 
-    const result = parseFromJson<TestClass>(JSON.parse(json), TestClass.fromJson);
+    const result = parseFromJson<TestClass>(JSON.parse(j), TestClass.fromJson);
     assert.strictEqual(result.k, 0x123);
     assert.strictEqual(result.v, true);
   });
 
   await t.test("arrays", () => {
-    const json = `{"k": ["a", "b", "c"]}`;
+    const j = `{"k": ["a", "b", "c"]}`;
     class TestClass {
       static fromJson: FromJson<TestClass> = {
-        k: ["array", "string"],
+        k: json.array("string"),
       };
 
       k!: string[];
     }
 
-    const result = parseFromJson<TestClass>(JSON.parse(json), TestClass.fromJson);
+    const result = parseFromJson<TestClass>(JSON.parse(j), TestClass.fromJson);
     assert.deepStrictEqual(result.k, ["a", "b", "c"]);
   });
 
@@ -125,22 +125,43 @@ test("JSON parser", async (t) => {
     }
   });
 
-  await t.test("optionals", () => {
-    const json = `{"v": true }`;
+  await t.test("correct instanceof", () => {
+    const j = `{"k": "sdf", "v": true }`;
     class TestClass {
-      static fromJson = optional<TestClass>(
+      static fromJson = json.object<TestClass>(
         {
-          k: "number",
+          k: "string",
           v: "boolean",
         },
-        ["k", "v"],
+        (x) => Object.assign(new TestClass(), x),
       );
+
+      k = "";
+      v = false;
+    }
+
+    const result = parseFromJson<TestClass>(JSON.parse(j), TestClass.fromJson);
+
+    const expected = new TestClass();
+    expected.k = "sdf";
+    expected.v = true;
+    assert.deepStrictEqual(result, expected);
+    assert.strictEqual(result instanceof TestClass, true);
+  });
+
+  await t.test("optionals", () => {
+    const j = `{"v": true }`;
+    class TestClass {
+      static fromJson: FromJson<TestClass> = {
+        k: json.optional("number"),
+        v: json.optional("boolean"),
+      };
 
       k?: number;
       v?: boolean;
     }
 
-    const result = parseFromJson<TestClass>(JSON.parse(json), TestClass.fromJson);
+    const result = parseFromJson<TestClass>(JSON.parse(j), TestClass.fromJson);
 
     assert.strictEqual(result.k, undefined);
     assert.strictEqual(result.v, true);

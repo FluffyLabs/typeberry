@@ -70,7 +70,7 @@ export type RespondAndTransitionTo<TRes, TState> = {
   transitionTo?: TransitionTo<TState>;
 };
 
-const logger = Logger.new(global.__filename, "state-machine/state");
+const logger = Logger.new(__filename, "state-machine/state");
 /**
  * A state object that can be extended with some state-specific methods.
  *

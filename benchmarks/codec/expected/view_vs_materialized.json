@@ -5,39 +5,33 @@
   "results": [
     {
       "name": "Get the first field from View",
-      "ops": 4026118.98,
-      "margin": 1,
-      "percentSlower": 0
+      "ops": 3826118.98,
+      "margin": 5
     },
     {
       "name": "Get the first field from Decoded",
       "ops": 2377164.14,
-      "margin": 1,
-      "percentSlower": 44.35
+      "margin": 5
     },
     {
       "name": "Get two fields from View",
       "ops": 2247821.39,
-      "margin": 5,
-      "percentSlower": 38.74
+      "margin": 5
     },
     {
       "name": "Get two fields from Decoded",
-      "ops": 2366781.33,
-      "margin": 1,
-      "percentSlower": 44.23
+      "ops": 2340681.57,
+      "margin": 5
     },
     {
       "name": "Get only third fields from View",
       "ops": 3021231.74,
-      "margin": 5,
-      "percentSlower": 21.7
+      "margin": 5
     },
     {
       "name": "Get only third fields from Decoded",
-      "ops": 2296239.1,
-      "margin": 1,
-      "percentSlower": 43.31
+      "ops": 2388788.41,
+      "margin": 5
     }
   ],
   "fastest": {
