@@ -3,9 +3,8 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import type { U16, U32 } from "@typeberry/numbers";
 import type { TrieHash } from "@typeberry/trie";
 import type { Opaque } from "@typeberry/utils";
+import type { Gas, ServiceId } from "./common";
 import { HASH_SIZE } from "./hash";
-import type { ServiceId } from "./preimage";
-import type { Gas } from "./work_result";
 
 type ExtrinsicHash = Opaque<Bytes<32>, "ExtrinsicHash">;
 

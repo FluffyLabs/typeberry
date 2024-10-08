@@ -11,8 +11,11 @@ import type { JsonObject } from "../../json-format";
 const availabilityAssuranceFromJson = json.object<JsonObject<AvailabilityAssurance>, AvailabilityAssurance>(
   {
     anchor: bytes32(),
-    // TODO [ToDr] does the string contain some prefix or do we KNOW the length?
-    bitfield: json.fromString((v) => BitVec.fromBytes(Bytes.parseBytes(v, 1), 8)),
+    bitfield: json.fromString((v) => {
+      const ctx = new CodecContext();
+      const bytes = Math.ceil(ctx.coresCount / 8) * 8;
+      return BitVec.fromBytes(Bytes.parseBytes(v, bytes / 8), bytes);
+    }),
     validator_index: "number",
     signature: fromJson.ed25519Signature,
   },

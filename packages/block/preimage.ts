@@ -1,10 +1,6 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import type { U32 } from "@typeberry/numbers";
-import type { Opaque } from "@typeberry/utils";
-
-// TODO [ToDr] Find good place
-export type ServiceId = Opaque<U32, "ServiceId[u32]">;
+import type { ServiceId } from "./common";
 
 export class Preimage {
   static Codec = codec.Class(Preimage, {

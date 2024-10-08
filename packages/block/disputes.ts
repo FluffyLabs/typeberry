@@ -1,10 +1,10 @@
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import type { U32 } from "@typeberry/numbers";
+import type { ValidatorIndex } from "./common";
 import { CodecContext, EST_VALIDATORS_SUPER_MAJORITY } from "./context";
 import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Key, type Ed25519Signature } from "./crypto";
 import { HASH_SIZE, type HeaderHash } from "./hash";
-import type { ValidatorIndex } from "./header";
 
 export class Fault {
   static Codec = codec.Class(Fault, {

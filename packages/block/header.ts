@@ -1,10 +1,9 @@
 import { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
-import type { U16, U32 } from "@typeberry/numbers";
 import type { EntropyHash } from "@typeberry/safrole";
 import type { TrieHash } from "@typeberry/trie";
-import type { Opaque } from "@typeberry/utils";
+import type { TimeSlot, ValidatorIndex } from "./common";
 import { CodecContext, EST_EPOCH_LENGTH, EST_VALIDATORS } from "./context";
 import {
   BANDERSNATCH_KEY_BYTES,
@@ -16,9 +15,6 @@ import {
 } from "./crypto";
 import { type ExtrinsicHash, HASH_SIZE, type HeaderHash } from "./hash";
 import { TicketsMark } from "./tickets";
-
-export type TimeSlot = Opaque<U32, "TimeSlot[u32]">;
-export type ValidatorIndex = Opaque<U16, "ValidatorIndex[u16]">;
 
 export class EpochMark {
   static Codec = codec.Class(EpochMark, {

@@ -1,8 +1,8 @@
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { Bytes, TrieHash } from "@typeberry/trie";
 import type { Opaque } from "@typeberry/utils";
+import type { TimeSlot } from "./common";
 import { HASH_SIZE, type HeaderHash } from "./hash";
-import type { TimeSlot } from "./header";
 
 export type BeefyHash = Opaque<Bytes<typeof HASH_SIZE>, "BeefyHash">;
 

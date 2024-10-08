@@ -24,7 +24,6 @@ export const workPackageFromJson = json.object<JsonObject<WorkPackage>, WorkPack
     auth_code_host: "number",
     authorizer: authorizerFromJson,
     context: refineContextFromJson,
-    // TODO [ToDr] should we have a validator to make sure the length is okay?
     items: json.array(workItemFromJson),
   },
   ({ authorization, auth_code_host, authorizer, context, items }) =>

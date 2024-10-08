@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import fs from "node:fs";
 import type { HASH_SIZE } from "@typeberry/block";
+import type { Gas, ServiceId } from "@typeberry/block";
 import { CodecContext } from "@typeberry/block/context";
-import type { ServiceId } from "@typeberry/block/preimage";
-import { type Gas, WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work_result";
+import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work_result";
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";

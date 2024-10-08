@@ -1,10 +1,10 @@
 import type { BitVec } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
+import type { ValidatorIndex } from "./common";
 import { CodecContext, EST_CORES } from "./context";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "./crypto";
 import { HASH_SIZE, type HeaderHash } from "./hash";
-import type { ValidatorIndex } from "./header";
 
 export class AvailabilityAssurance {
   static Codec = codec.Class(AvailabilityAssurance, {

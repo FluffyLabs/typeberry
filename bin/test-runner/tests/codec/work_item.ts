@@ -1,9 +1,8 @@
 import assert from "node:assert";
 import fs from "node:fs";
+import type { Gas, HASH_SIZE, ServiceId } from "@typeberry/block";
 import { CodecContext } from "@typeberry/block/context";
-import type { ServiceId } from "@typeberry/block/preimage";
 import { ExtrinsicSpec, ImportSpec, WorkItem } from "@typeberry/block/work_item";
-import type { Gas } from "@typeberry/block/work_result";
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
@@ -43,7 +42,7 @@ export const workItemFromJson = json.object<JsonWorkItem, WorkItem>(
 
 type JsonWorkItem = {
   service: ServiceId;
-  code_hash: Bytes<32>;
+  code_hash: Bytes<typeof HASH_SIZE>;
   payload: BytesBlob;
   gas_limit: number;
   import_segments: ImportSpec[];

@@ -1,13 +1,9 @@
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import type { U32, U64 } from "@typeberry/numbers";
-import type { Opaque } from "@typeberry/utils";
+import type { U32 } from "@typeberry/numbers";
+import type { Gas, ServiceId } from "./common";
 import { HASH_SIZE } from "./hash";
-import type { ServiceId } from "./preimage";
 
-export type Gas = Opaque<U64, "Gas[u64]">;
-
-// TODO [ToDr] Check the values!
 export enum WorkExecResultKind {
   ok = 0,
   outOfGas = 1,
