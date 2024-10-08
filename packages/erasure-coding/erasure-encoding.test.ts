@@ -1080,6 +1080,7 @@ describe("erasure encoding", () => {
     const encoded = encodeData(stringToBytes(data));
     const expected = segmentEc.map(stringToBytes);
 
+    assert.deepStrictEqual(encoded.length, expected.length);
     assert.deepStrictEqual(encoded, expected);
   });
 

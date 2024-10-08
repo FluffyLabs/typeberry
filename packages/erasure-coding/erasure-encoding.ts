@@ -1,4 +1,5 @@
-import { Shard, decode, encode } from "reed-solomon-wasm/pkg";
+import { check } from "@typeberry/utils";
+import { ShardsCollection, decode, encode } from "reed-solomon-wasm/pkg";
 
 const SHARD_ALIGNMENT = 64;
 const N_SHARDS = 342;
@@ -18,51 +19,75 @@ function getInputWithPadding(input: Uint8Array) {
 }
 
 export function encodeData(input: Uint8Array) {
+  check(
+    input.length <= 2 * N_SHARDS,
+    `length of input (${input.length}) should be equal to or less than ${2 * N_SHARDS}`,
+  );
   const inputWithPadding = getInputWithPadding(input);
 
-  const shards = new Array(N_SHARDS);
   const result = new Array<Uint8Array>(RESULT_SHARDS);
 
-  for (let i = 0; i < inputWithPadding.length; i += 2) {
-    const shard = new Uint8Array(SHARD_ALIGNMENT);
-    result[i / 2] = new Uint8Array(2);
-    result[i / 2][0] = inputWithPadding[i];
-    result[i / 2][1] = inputWithPadding[i + 1];
-    shard[FIRST_POINT_INDEX] = inputWithPadding[i];
-    shard[SECOND_POINT_INDEX] = inputWithPadding[i + 1];
-    shards[i / 2] = shard;
+  const data = new Uint8Array(SHARD_ALIGNMENT * N_SHARDS);
+
+  for (let i = 0; i < N_SHARDS; i++) {
+    // fill original shards in result
+    result[i] = new Uint8Array(2);
+    result[i][0] = inputWithPadding[2 * i];
+    result[i][1] = inputWithPadding[2 * i + 1];
+    // fill array that will be passed to wasm lib
+    data[i * SHARD_ALIGNMENT + FIRST_POINT_INDEX] = inputWithPadding[2 * i];
+    data[i * SHARD_ALIGNMENT + SECOND_POINT_INDEX] = inputWithPadding[2 * i + 1];
   }
 
-  const encodedData = encode(N_SHARDS, N_REDUNDANCY, SHARD_ALIGNMENT, shards);
+  const shards = new ShardsCollection(SHARD_ALIGNMENT, data);
 
-  for (let i = 0; i < encodedData.length; i++) {
+  const encodingResult = encode(N_REDUNDANCY, SHARD_ALIGNMENT, shards);
+
+  const encodedData = encodingResult.take_data();
+
+  for (let i = 0; i < N_REDUNDANCY; i++) {
     result[i + N_SHARDS] = new Uint8Array(2);
-    result[i + N_SHARDS][0] = encodedData[i][FIRST_POINT_INDEX];
-    result[i + N_SHARDS][1] = encodedData[i][SECOND_POINT_INDEX];
+    result[i + N_SHARDS][0] = encodedData[i * SHARD_ALIGNMENT + FIRST_POINT_INDEX];
+    result[i + N_SHARDS][1] = encodedData[i * SHARD_ALIGNMENT + SECOND_POINT_INDEX];
   }
 
   return result;
 }
 
 export function decodeData(input: [number, Uint8Array][], expectedLength: number = 2 * N_SHARDS) {
+  check(input.length === N_SHARDS, `length of input should be equal to ${N_SHARDS}`);
   const result = new Uint8Array(2 * N_SHARDS);
+  const data = new Uint8Array(input.length * SHARD_ALIGNMENT);
+  const indices = new Uint16Array(input.length);
 
-  const shards = input.map(([index, points]) => {
-    const data = new Uint8Array(SHARD_ALIGNMENT);
-    data[FIRST_POINT_INDEX] = points[0];
-    data[SECOND_POINT_INDEX] = points[1];
+  for (let i = 0; i < input.length; i++) {
+    const [index, points] = input[i];
+    data[i * SHARD_ALIGNMENT + FIRST_POINT_INDEX] = points[0];
+    data[i * SHARD_ALIGNMENT + SECOND_POINT_INDEX] = points[1];
+    indices[i] = index;
     if (index < N_SHARDS) {
-      result.set(points, 2 * index);
+      // fill original shards in result
+      result[index * 2] = points[0];
+      result[index * 2 + 1] = points[1];
     }
-    return new Shard(index, data);
-  });
+  }
+  const shards = new ShardsCollection(SHARD_ALIGNMENT, data, indices);
 
-  const decoded = decode(N_SHARDS, N_REDUNDANCY, SHARD_ALIGNMENT, shards);
+  const decodingResult = decode(N_SHARDS, N_REDUNDANCY, SHARD_ALIGNMENT, shards);
+  const resultIndices = decodingResult.take_indices(); // it has to be called before take_data
+  const resultData = decodingResult.take_data(); // it destroys the result object in rust
 
-  for (let i = 0; i < decoded.length; i++) {
-    const shard = decoded[i];
-    result[2 * shard.index] = decoded[i].data[FIRST_POINT_INDEX];
-    result[2 * shard.index + 1] = decoded[i].data[SECOND_POINT_INDEX];
+  if (!resultIndices) {
+    throw new Error("indices array should exist!");
+  }
+
+  check(resultData.length === resultIndices.length * SHARD_ALIGNMENT, "incorrect length of data or indices!");
+
+  for (let i = 0; i < resultIndices.length; i++) {
+    // fill reconstructed shards in result
+    const index = resultIndices[i];
+    result[2 * index] = resultData[i * SHARD_ALIGNMENT + FIRST_POINT_INDEX];
+    result[2 * index + 1] = resultData[i * SHARD_ALIGNMENT + SECOND_POINT_INDEX];
   }
 
   return result.subarray(0, expectedLength);
