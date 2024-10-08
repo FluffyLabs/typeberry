@@ -1,9 +1,12 @@
+import assert from 'node:assert'
+import fs from 'node:fs'
 import { Bytes } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
 import { bytes32, fromJson as rootFromJson, logger } from ".";
 import {BandersnatchKey, BandersnatchVrfSignature, Ed25519Key, EpochMark, ExtrinsicHash, Header, HeaderHash, TicketsMark, TimeSlot, ValidatorIndex} from "@typeberry/block";
 import {KnownSizeArray} from "@typeberry/collections";
 import {TrieHash} from "@typeberry/trie";
+import {Decoder} from '@typeberry/codec';
 
 export namespace fromJson {
   export const bandersnatchVrfSignature = json.fromString((v) => Bytes.parseBytes(v, 96) as BandersnatchVrfSignature);
@@ -52,11 +55,11 @@ export namespace fromJson {
   ({ parent, parent_state_root, extrinsic_hash, slot, epoch_mark, tickets_mark, offenders_mark, author_index, entropy_source, seal }) => {
     const header = Header.empty();
     header.parentHash = parent;
-    header.parentStateRoot = parent_state_root;
+    header.priorStateRoot = parent_state_root;
     header.extrinsicHash = extrinsic_hash;
     header.slot = slot;
-    header.epochMark = epoch_mark;
-    header.ticketsMark = tickets_mark;
+    header.epochMark = epoch_mark ?? null;
+    header.ticketsMark = tickets_mark ?? null;
     header.offendersMark = offenders_mark;
     header.authorIndex = author_index;
     header.entropySource = entropy_source;
@@ -66,6 +69,10 @@ export namespace fromJson {
 }
 
 export async function runHeaderTest(test: Header, file: string) {
-  logger.trace(JSON.stringify(test, null, 2));
   logger.error(`Not implemented yet! ${file}`);
+  const encoded = fs.readFileSync(file.replace('json', 'bin'));
+  console.log(encoded);
+  const decodedHeader = Decoder.decodeObject(Header.Codec, encoded);
+
+  assert.deepStrictEqual(test, decodedHeader);
 }

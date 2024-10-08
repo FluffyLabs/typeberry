@@ -12,17 +12,16 @@ class TestHeader {
     extrinsicHash: codec.bytes(32),
   });
 
-  public readonly parentHeaderHash: Bytes<32>;
-  public readonly priorStateRoot: Bytes<32>;
-  public readonly extrinsicHash: Bytes<32>;
+  static fromCodec = ({ parentHeaderHash, priorStateRoot, extrinsicHash }: Record<TestHeader>) => new TestHeader(parentHeaderHash, priorStateRoot, extrinsicHash);
+
   // this key is ignored, since it's not a string one.
   public readonly 0: number;
 
-  constructor(o: Record<TestHeader>) {
-    this.parentHeaderHash = o.parentHeaderHash;
-    this.priorStateRoot = o.priorStateRoot;
-    this.extrinsicHash = o.extrinsicHash;
-  }
+  public constructor(
+    public readonly parentHeaderHash: Bytes<32>,
+    public readonly priorStateRoot: Bytes<32>,
+    public readonly extrinsicHash: Bytes<32>,
+  ) {}
 }
 
 describe("Codec Descriptors / class", () => {
@@ -87,11 +86,11 @@ describe("Codec Descriptors / class", () => {
   it("should encode a class", () => {
     // given
     const data = testData();
-    const header = new TestHeader({
-      parentHeaderHash: data.parentHeaderHash,
-      priorStateRoot: data.priorStateRoot,
-      extrinsicHash: data.extrinsicHash,
-    });
+    const header = new TestHeader(
+      data.parentHeaderHash,
+      data.priorStateRoot,
+      data.extrinsicHash,
+    );
 
     const result = Encoder.encodeObject(TestHeader.Codec, header);
 
@@ -106,11 +105,13 @@ describe("Codec Descriptors / nested views", () => {
       kind: codec.string,
     });
 
-    kind: string;
-
-    constructor(o: Record<TestExtrinsic>) {
-      this.kind = o.kind;
+    static fromCodec(o: Record<TestExtrinsic>) {
+      return new TestExtrinsic(o.kind);
     }
+
+    public constructor(
+      public kind: string,
+    ) {}
   }
 
   class TestBlock {
@@ -120,15 +121,19 @@ describe("Codec Descriptors / nested views", () => {
       extrinsic: TestExtrinsic.Codec,
     });
 
-    public readonly someUnrelatedField: number;
-    public readonly header: TestHeader;
-    public readonly extrinsic: TestExtrinsic;
-
-    constructor(o: Record<TestBlock>) {
-      this.someUnrelatedField = o.someUnrelatedField;
-      this.header = o.header;
-      this.extrinsic = o.extrinsic;
+    static fromCodec(o: Record<TestBlock>) {
+      return new TestBlock(
+        o.someUnrelatedField,
+        o.header,
+        o.extrinsic
+      );
     }
+
+    public constructor(
+      public readonly someUnrelatedField: number,
+      public readonly header: TestHeader,
+      public readonly extrinsic: TestExtrinsic,
+    ) {}
   }
 
   const testData = () => {
@@ -170,9 +175,7 @@ describe("Codec Descriptors / nested views", () => {
 
     assert.deepStrictEqual(
       block.extrinsic,
-      new TestExtrinsic({
-        kind: "hello world!",
-      }),
+      new TestExtrinsic("hello world!")
     );
   });
 

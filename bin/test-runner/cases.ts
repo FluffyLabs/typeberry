@@ -1,3 +1,4 @@
+import path from 'node:path'
 import { fail } from "node:assert";
 import * as fs from "node:fs/promises";
 import test from "node:test";
@@ -57,11 +58,12 @@ async function main() {
 
   logger.info(`Creating tests for ${files.length} files.`);
   for (const file of files) {
-    const data = await fs.readFile(`${relPath}/${file}`, "utf8");
+    const absolutePath = path.resolve(`${relPath}/${file}`);
+    const data = await fs.readFile(absolutePath, "utf8");
     // TODO [ToDr] We might want to implement a custom JSON parser
     // to avoid-double converting to expected types.
     const testContent = JSON.parse(data);
-    const testCases = prepareTests(testContent, file);
+    const testCases = prepareTests(testContent, file, absolutePath);
 
     tests.push(...testCases);
   }
@@ -110,9 +112,10 @@ async function main() {
 function tryToPrepareTestRunner<T>(
   name: string,
   file: string,
+  path: string,
   testContent: unknown,
   fromJson: FromJson<T>,
-  run: (t: T, file: string) => Promise<void>,
+  run: (t: T, path: string) => Promise<void>,
   onError: (name: string, e: unknown) => void,
 ): TestAndRunner | null {
   try {
@@ -121,7 +124,7 @@ function tryToPrepareTestRunner<T>(
     return {
       runner: name,
       file,
-      test: () => run(parsedTest, file),
+      test: () => run(parsedTest, path),
     };
   } catch (e) {
     onError(name, e);
@@ -135,12 +138,12 @@ type TestAndRunner = {
   test: () => Promise<void>;
 };
 
-function prepareTests(testContent: unknown, file: string): TestAndRunner[] {
+function prepareTests(testContent: unknown, file: string, path: string): TestAndRunner[] {
   const errors: [string, unknown][] = [];
   const handleError = (name: string, e: unknown) => errors.push([name, e]);
 
-  function prepRunner<T>(name: string, fromJson: FromJson<T>, run: (t: T, file: string) => Promise<void>) {
-    const r = tryToPrepareTestRunner(name, file, testContent, fromJson, run, handleError);
+  function prepRunner<T>(name: string, fromJson: FromJson<T>, run: (t: T, path: string) => Promise<void>) {
+    const r = tryToPrepareTestRunner(name, file, path, testContent, fromJson, run, handleError);
     return r;
   }
 

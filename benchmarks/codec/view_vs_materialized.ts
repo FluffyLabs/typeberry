@@ -12,6 +12,10 @@ class TestHeader {
     extrinsicHash: codec.bytes(32),
   });
 
+  static fromCodec(o: Record<TestHeader>) {
+    return new TestHeader(o);
+  }
+
   public readonly blockNumber: bigint;
   public readonly parentHeaderHash: Bytes<32>;
   public readonly priorStateRoot: Bytes<32>;

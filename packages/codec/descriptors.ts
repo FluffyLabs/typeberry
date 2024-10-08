@@ -23,10 +23,32 @@ export type Codec<T> = Encode<T> & Decode<T>;
  *
  * Descriptors can be composed to form more complex typings.
  */
-export type Descriptor<T> = {
-  /** Descriptive name of the coded data. */
-  name: string;
-} & Codec<T>;
+export class Descriptor<T> implements Codec<T> {
+  public constructor(
+    /** Descriptive name of the coded data. */
+    public name: string,
+    /** A byte size hint for encoded data. */
+    public sizeHintBytes: number,
+    /** Encoding function. */
+    public encode: (e: Encoder, elem: T) => void,
+    /** Decoding function. */
+    public decode: (d: Decoder) => T,
+  ) {}
+
+  /** Return a new descriptor that converts data into some other type. */
+  public convert<F>(input: (i: F) => T, output: (i: T) => F): Descriptor<F> {
+    return new Descriptor(
+      this.name,
+      this.sizeHintBytes,
+      (e: Encoder, elem: F) => this.encode(e, input(elem)),
+      (d: Decoder) => output(this.decode(d)),
+    );
+  }
+
+  public cast<F extends T>() {
+    return this.convert<F>(i => i, o => o as F);
+  }
+}
 
 const VIEW_FIELD = "View";
 
@@ -36,12 +58,18 @@ const VIEW_FIELD = "View";
  * The second optional generic parameter is there to specialise the `record` type
  * in case it's required for nested views.
  */
-export type ClassDescriptor<T, D extends DescriptorRecord<T> = DescriptorRecord<T>> = Descriptor<T> & {
-  /** Descriptor record object which defines this `ClassDescriptor`. */
-  record: D;
+export class ClassDescriptor<T, D extends DescriptorRecord<T> = DescriptorRecord<T>> extends Descriptor<T> {
   /** A lazy view of the class (if any). */
   [VIEW_FIELD]: ViewConstructor<T, KeysWithView<T, D>>;
-};
+
+  public constructor(
+    desc: Descriptor<T>,
+    view: ViewConstructor<T, KeysWithView<T, D>>,
+  ) {
+    super(desc.name, desc.sizeHintBytes, desc.encode, desc.decode);
+    this[VIEW_FIELD] = view;
+ }
+}
 
 /**
  * Converts a class `T` into an object with the same fields as the class.
@@ -124,7 +152,10 @@ type ViewConstructor<T, NestedViewKeys extends keyof T> = {
 type ViewOf<C> = C extends ViewConstructor<infer T, infer N> ? View<T, N> : never;
 
 /** A constructor of basic data object that takes a `Record<T>`. */
-type ClassConstructor<T> = new (o: Record<T>) => T;
+type ClassConstructor<T> = {
+  name: string,
+  fromCodec: (o: Record<T>) => T;
+};
 
 /** Descriptors for data types that can be read/written from/to codec. */
 export namespace codec {
@@ -352,15 +383,11 @@ export namespace codec {
           const value = descriptor.decode(d);
           constructorParams[key] = value;
         });
-        return new Class(constructorParams as Record<T>);
+        return Class.fromCodec(constructorParams as Record<T>);
       },
     );
 
-    return {
-      View: ViewTyped,
-      record: descriptors,
-      ...desc,
-    };
+    return new ClassDescriptor(desc, ViewTyped);
   };
 }
 
@@ -391,7 +418,7 @@ abstract class AbstractView<T> {
       this.decodeUpTo(fields[fields.length - 1], false);
     }
     const constructorParams = Object.fromEntries(fields.map((key) => [key, this.cache.get(key)]));
-    return new this.materializedConstructor(constructorParams as Record<T>);
+    return this.materializedConstructor.fromCodec(constructorParams as Record<T>);
   }
 
   /**
@@ -496,10 +523,10 @@ function descriptor<T>(
   encode: (e: Encoder, elem: T) => void,
   decode: (d: Decoder) => T,
 ): Descriptor<T> {
-  return {
+  return new Descriptor(
     name,
     sizeHintBytes,
     encode,
     decode,
-  };
+  );
 }
