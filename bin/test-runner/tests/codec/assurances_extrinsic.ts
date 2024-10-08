@@ -1,8 +1,8 @@
+import type { Ed25519Signature, HeaderHash, ValidatorIndex } from "@typeberry/block";
 import { BitVec, Bytes } from "@typeberry/bytes";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
-import { type Ed25519Signature, bytes32, fromJson, logger } from ".";
-import {HeaderHash, ValidatorIndex} from "@typeberry/block";
+import { bytes32, fromJson, logger } from ".";
 
 class AvailabilityAssurance {
   static fromJson = json.object<AvailabilityAssurance>(

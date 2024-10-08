@@ -1,8 +1,8 @@
+import type { Ed25519Signature, TimeSlot, ValidatorIndex } from "@typeberry/block";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
-import { type Ed25519Signature, fromJson, logger } from ".";
+import { fromJson, logger } from ".";
 import { WorkReport } from "./work_report";
-import {TimeSlot, ValidatorIndex} from "@typeberry/block";
 
 class ValidatorSignature {
   static fromJson = json.object<ValidatorSignature>(

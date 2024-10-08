@@ -1,5 +1,6 @@
 import { type BitVec, type Bytes, BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
+import type { U16, U32 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
 import { type Decode, Decoder } from "./decoder";
 import type { Encode, Encoder } from "./encoder";
@@ -46,7 +47,10 @@ export class Descriptor<T> implements Codec<T> {
   }
 
   public cast<F extends T>() {
-    return this.convert<F>(i => i, o => o as F);
+    return this.convert<F>(
+      (i) => i,
+      (o) => o as F,
+    );
   }
 }
 
@@ -62,19 +66,16 @@ export class ClassDescriptor<T, D extends DescriptorRecord<T> = DescriptorRecord
   /** A lazy view of the class (if any). */
   [VIEW_FIELD]: ViewConstructor<T, KeysWithView<T, D>>;
 
-  public constructor(
-    desc: Descriptor<T>,
-    view: ViewConstructor<T, KeysWithView<T, D>>,
-  ) {
+  public constructor(desc: Descriptor<T>, view: ViewConstructor<T, KeysWithView<T, D>>) {
     super(desc.name, desc.sizeHintBytes, desc.encode, desc.decode);
     this[VIEW_FIELD] = view;
- }
+  }
 }
 
 /**
  * Converts a class `T` into an object with the same fields as the class.
  */
-export type Record<T> = {
+export type CodecRecord<T> = {
   [K in Extract<keyof T, string>]: T[K];
 };
 
@@ -153,14 +154,14 @@ type ViewOf<C> = C extends ViewConstructor<infer T, infer N> ? View<T, N> : neve
 
 /** A constructor of basic data object that takes a `Record<T>`. */
 type ClassConstructor<T> = {
-  name: string,
-  fromCodec: (o: Record<T>) => T;
+  name: string;
+  fromCodec: (o: CodecRecord<T>) => T;
 };
 
 /** Descriptors for data types that can be read/written from/to codec. */
 export namespace codec {
   /** Variable-length U32. */
-  export const varU32 = descriptor<number>(
+  export const varU32 = descriptor<U32>(
     "var_u32",
     4,
     (e, v) => e.varU32(v),
@@ -176,7 +177,7 @@ export namespace codec {
   );
 
   /** Unsigned 32-bit number. */
-  export const u32 = descriptor<number>(
+  export const u32 = descriptor<U32>(
     "u32",
     4,
     (e, v) => e.i32(v),
@@ -192,7 +193,7 @@ export namespace codec {
   );
 
   /** Unsigned 16-bit number. */
-  export const u16 = descriptor<number>(
+  export const u16 = descriptor<U16>(
     "u16",
     2,
     (e, v) => e.i16(v),
@@ -237,6 +238,14 @@ export namespace codec {
     1,
     (e, v) => e.i8(v),
     (d) => d.i8(),
+  );
+
+  /** 1-byte boolean value. */
+  export const bool = descriptor<boolean>(
+    "bool",
+    1,
+    (e, v) => e.bool(v),
+    (d) => d.bool(),
   );
 
   /** String encoded as variable-length bytes blob. */
@@ -383,7 +392,7 @@ export namespace codec {
           const value = descriptor.decode(d);
           constructorParams[key] = value;
         });
-        return Class.fromCodec(constructorParams as Record<T>);
+        return Class.fromCodec(constructorParams as CodecRecord<T>);
       },
     );
 
@@ -418,7 +427,7 @@ abstract class AbstractView<T> {
       this.decodeUpTo(fields[fields.length - 1], false);
     }
     const constructorParams = Object.fromEntries(fields.map((key) => [key, this.cache.get(key)]));
-    return this.materializedConstructor.fromCodec(constructorParams as Record<T>);
+    return this.materializedConstructor.fromCodec(constructorParams as CodecRecord<T>);
   }
 
   /**
@@ -523,10 +532,5 @@ function descriptor<T>(
   encode: (e: Encoder, elem: T) => void,
   decode: (d: Decoder) => T,
 ): Descriptor<T> {
-  return new Descriptor(
-    name,
-    sizeHintBytes,
-    encode,
-    decode,
-  );
+  return new Descriptor(name, sizeHintBytes, encode, decode);
 }

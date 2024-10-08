@@ -1,5 +1,6 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { BitVec } from "@typeberry/bytes";
+import type { U16, U32 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
 
 /** A decoder for some specific type `T` */
@@ -79,8 +80,8 @@ export class Decoder {
   }
 
   /** Decode two bytes as an unsigned number. */
-  u16(): number {
-    return this.getNum(2, () => this.dataView.getUint16(this.offset, true));
+  u16(): U16 {
+    return this.getNum(2, () => this.dataView.getUint16(this.offset, true)) as U16;
   }
 
   /** Decode three bytes as a signed number. */
@@ -104,8 +105,8 @@ export class Decoder {
   }
 
   /** Decode 4 bytes as an unsigned number. */
-  u32(): number {
-    return this.getNum(4, () => this.dataView.getUint32(this.offset, true));
+  u32(): U32 {
+    return this.getNum(4, () => this.dataView.getUint32(this.offset, true)) as U32;
   }
 
   /**
@@ -133,13 +134,13 @@ export class Decoder {
    * NOTE: this method will panic in case a larger number is found
    *       in the source.
    */
-  varU32(): number {
+  varU32(): U32 {
     const firstByte = this.source[this.offset];
     const l = decodeLengthAfterFirstByte(firstByte);
     this.offset += 1;
 
     if (l === 0) {
-      return firstByte;
+      return firstByte as U32;
     }
 
     if (l > 4) {
@@ -148,15 +149,15 @@ export class Decoder {
 
     const mostSignificantByte = (firstByte + 2 ** (8 - l) - 2 ** 8) << (l * 8);
     if (l === 1) {
-      return mostSignificantByte + this.u8();
+      return (mostSignificantByte + this.u8()) as U32;
     }
 
     if (l === 2) {
-      return mostSignificantByte + this.u16();
+      return (mostSignificantByte + this.u16()) as U32;
     }
 
     if (l === 3) {
-      return mostSignificantByte + this.u24();
+      return (mostSignificantByte + this.u24()) as U32;
     }
 
     if (mostSignificantByte === 0) {

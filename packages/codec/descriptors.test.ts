@@ -1,8 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
+import type { U32 } from "@typeberry/numbers";
 import { Decoder } from "./decoder";
-import { type Record, codec } from "./descriptors";
+import { type CodecRecord, codec } from "./descriptors";
 import { Encoder } from "./encoder";
 
 class TestHeader {
@@ -12,7 +13,8 @@ class TestHeader {
     extrinsicHash: codec.bytes(32),
   });
 
-  static fromCodec = ({ parentHeaderHash, priorStateRoot, extrinsicHash }: Record<TestHeader>) => new TestHeader(parentHeaderHash, priorStateRoot, extrinsicHash);
+  static fromCodec = ({ parentHeaderHash, priorStateRoot, extrinsicHash }: CodecRecord<TestHeader>) =>
+    new TestHeader(parentHeaderHash, priorStateRoot, extrinsicHash);
 
   // this key is ignored, since it's not a string one.
   public readonly 0: number;
@@ -86,11 +88,7 @@ describe("Codec Descriptors / class", () => {
   it("should encode a class", () => {
     // given
     const data = testData();
-    const header = new TestHeader(
-      data.parentHeaderHash,
-      data.priorStateRoot,
-      data.extrinsicHash,
-    );
+    const header = new TestHeader(data.parentHeaderHash, data.priorStateRoot, data.extrinsicHash);
 
     const result = Encoder.encodeObject(TestHeader.Codec, header);
 
@@ -105,13 +103,11 @@ describe("Codec Descriptors / nested views", () => {
       kind: codec.string,
     });
 
-    static fromCodec(o: Record<TestExtrinsic>) {
+    static fromCodec(o: CodecRecord<TestExtrinsic>) {
       return new TestExtrinsic(o.kind);
     }
 
-    public constructor(
-      public kind: string,
-    ) {}
+    public constructor(public kind: string) {}
   }
 
   class TestBlock {
@@ -121,16 +117,12 @@ describe("Codec Descriptors / nested views", () => {
       extrinsic: TestExtrinsic.Codec,
     });
 
-    static fromCodec(o: Record<TestBlock>) {
-      return new TestBlock(
-        o.someUnrelatedField,
-        o.header,
-        o.extrinsic
-      );
+    static fromCodec(o: CodecRecord<TestBlock>) {
+      return new TestBlock(o.someUnrelatedField, o.header, o.extrinsic);
     }
 
     public constructor(
-      public readonly someUnrelatedField: number,
+      public readonly someUnrelatedField: U32,
       public readonly header: TestHeader,
       public readonly extrinsic: TestExtrinsic,
     ) {}
@@ -173,10 +165,7 @@ describe("Codec Descriptors / nested views", () => {
     assert.strictEqual(header.priorStateRoot.toString(), data.priorStateRoot.toString());
     assert.strictEqual(header.extrinsicHash.toString(), data.extrinsicHash.toString());
 
-    assert.deepStrictEqual(
-      block.extrinsic,
-      new TestExtrinsic("hello world!")
-    );
+    assert.deepStrictEqual(block.extrinsic, new TestExtrinsic("hello world!"));
   });
 
   it("should encode in the same way", () => {

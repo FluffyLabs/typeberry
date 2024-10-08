@@ -1,60 +1,38 @@
-import {Bytes} from "@typeberry/bytes";
-import {KnownSizeArray} from "@typeberry/collections";
-import {U16, U32} from "@typeberry/numbers";
-import {TrieHash} from "@typeberry/trie";
-import {Opaque} from "@typeberry/utils";
-import {BandersnatchKey, BandersnatchVrfSignature, Ed25519Key} from "./crypto";
-import {EntropyHash, TicketAttempt} from "@typeberry/safrole";
-import {ExtrinsicHash, HASH_SIZE, HeaderHash} from "./hash";
-import {codec, type Record } from "@typeberry/codec";
+import { Bytes } from "@typeberry/bytes";
+import { type CodecRecord, codec } from "@typeberry/codec";
+import type { KnownSizeArray } from "@typeberry/collections";
+import type { U16, U32 } from "@typeberry/numbers";
+import type { EntropyHash } from "@typeberry/safrole";
+import type { TrieHash } from "@typeberry/trie";
+import type { Opaque } from "@typeberry/utils";
+import type { BandersnatchKey, BandersnatchVrfSignature, Ed25519Key } from "./crypto";
+import { type ExtrinsicHash, HASH_SIZE, type HeaderHash } from "./hash";
+import { TicketsMark } from "./tickets";
 
 export type TimeSlot = Opaque<U32, "TimeSlot[u32]">;
 export type ValidatorIndex = Opaque<U16, "ValidatorIndex[u16]">;
 
 export class EpochMark {
   static Codec = codec.Class(EpochMark, {
-    entropy: codec.bytes(32).cast(),
-    validators: codec.sequenceVarLen(codec.bytes(32)).cast()
+    entropy: codec.bytes(HASH_SIZE).cast(),
+    validators: codec.sequenceVarLen(codec.bytes(32)).cast(),
   });
 
-  static fromCodec({ entropy, validators }: Record<EpochMark>) {
+  static fromCodec({ entropy, validators }: CodecRecord<EpochMark>) {
     return new EpochMark(entropy, validators);
   }
 
   public constructor(
-    public entropy: EntropyHash,
-    public validators: KnownSizeArray<BandersnatchKey, "ValidatorsCount">,
-  ) {
-
-  }
-}
-
-export class TicketsMark {
-  static Codec = codec.Class(TicketsMark, {
-    id: codec.bytes(32),
-    attempt: codec.u8.convert(i => i, o => {
-      if (o === 0 || o === 1) {
-        return o as TicketAttempt;
-      }
-      throw new Error(`Unexpected TickAttempt value in codec: ${o}`);
-    }),
-  });
-
-  static fromCodec({ id, attempt }: Record<TicketsMark>) {
-    return new TicketsMark(id, attempt);
-  }
-
-  public constructor(
-    public id: Bytes<32>,
-    public attempt: TicketAttempt,
+    public readonly entropy: EntropyHash,
+    public readonly validators: KnownSizeArray<BandersnatchKey, "ValidatorsCount">,
   ) {}
 }
 
 export class Header {
   static Codec = codec.Class(Header, {
-    parentHash: codec.bytes(32).cast(),
-    priorStateRoot: codec.bytes(32).cast(),
-    extrinsicHash: codec.bytes(32).cast(),
+    parentHash: codec.bytes(HASH_SIZE).cast(),
+    priorStateRoot: codec.bytes(HASH_SIZE).cast(),
+    extrinsicHash: codec.bytes(HASH_SIZE).cast(),
     slot: codec.u32.cast(),
     epochMark: codec.optional(EpochMark.Codec),
     ticketsMark: codec.optional(codec.sequenceVarLen(TicketsMark.Codec).cast()),
@@ -64,7 +42,7 @@ export class Header {
     seal: codec.bytes(96).cast(),
   });
 
-  static fromCodec(h: Record<Header>) {
+  static fromCodec(h: CodecRecord<Header>) {
     return Object.assign(Header.empty(), h);
   }
 

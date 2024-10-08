@@ -1,22 +1,22 @@
-import path from 'node:path'
 import { fail } from "node:assert";
 import * as fs from "node:fs/promises";
+import path from "node:path";
 import test from "node:test";
 
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
 import { AssurancesExtrinsicFromJson, runAssurancesExtrinsicTest } from "./tests/codec/assurances_extrinsic";
 import { Block, runBlockTest } from "./tests/codec/block";
-import { DisputesExtrinsic, runDisputesExtrinsicTest } from "./tests/codec/disputes_extrinsic";
+import { disputesExtrinsicFromJson, runDisputesExtrinsicTest } from "./tests/codec/disputes_extrinsic";
 import { Extrinsic, runExtrinsicTest } from "./tests/codec/extrinsic";
 import {
   GuaranteesExtrinsicFromJson as guaranteesExtrinsicFromJson,
   runGuaranteesExtrinsicTest,
 } from "./tests/codec/guarantees_extrinsic";
-import { fromJson as headerFromJson, runHeaderTest } from "./tests/codec/header";
+import { headerFromJson, runHeaderTest } from "./tests/codec/header";
 import { PreimagesExtrinsicFromJson, runPreimagesExtrinsicTest } from "./tests/codec/preimages_extrinsic";
 import { RefineContext, runRefineContextTest } from "./tests/codec/refine_context";
-import { TicketsExtrinsicFromJson, runTicketsExtrinsicTest } from "./tests/codec/tickets_extrinsic";
+import { runTicketsExtrinsicTest, ticketsExtrinsicFromJson } from "./tests/codec/tickets_extrinsic";
 import { WorkItem, runWorkItemTest } from "./tests/codec/work_item";
 import { WorkPackage, runWorkPackageTest } from "./tests/codec/work_package";
 import { WorkReport, runWorkReportTest } from "./tests/codec/work_report";
@@ -150,13 +150,13 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
   const runners = [
     prepRunner("codec/assurances_extrinsic", AssurancesExtrinsicFromJson, runAssurancesExtrinsicTest),
     prepRunner("codec/block", Block.fromJson, runBlockTest),
-    prepRunner("codec/disputes_extrinsic", DisputesExtrinsic.fromJson, runDisputesExtrinsicTest),
+    prepRunner("codec/disputes_extrinsic", disputesExtrinsicFromJson, runDisputesExtrinsicTest),
     prepRunner("codec/extrinsic", Extrinsic.fromJson, runExtrinsicTest),
     prepRunner("codec/guarantees_extrinsic", guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest),
-    prepRunner("codec/header", headerFromJson.header, runHeaderTest),
+    prepRunner("codec/header", headerFromJson, runHeaderTest),
     prepRunner("codec/preimages_extrinsic", PreimagesExtrinsicFromJson, runPreimagesExtrinsicTest),
     prepRunner("codec/refine_context", RefineContext.fromJson, runRefineContextTest),
-    prepRunner("codec/tickets_extrinsic", TicketsExtrinsicFromJson, runTicketsExtrinsicTest),
+    prepRunner("codec/tickets_extrinsic", ticketsExtrinsicFromJson, runTicketsExtrinsicTest),
     prepRunner("codec/work_item", WorkItem.fromJson, runWorkItemTest),
     prepRunner("codec/work_package", WorkPackage.fromJson, runWorkPackageTest),
     prepRunner("codec/work_report", WorkReport.fromJson, runWorkReportTest),

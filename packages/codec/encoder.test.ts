@@ -2,6 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { BitVec } from "@typeberry/bytes";
+import type { U32 } from "@typeberry/numbers";
 import { Encoder } from "./encoder";
 
 describe("JAM encoder / bytes", () => {
@@ -41,7 +42,7 @@ describe("JAM encoder / numbers", () => {
   it("should encode a large 32-bit number", () => {
     const encoder = Encoder.create();
 
-    encoder.varU32(2 ** 32 - 1);
+    encoder.varU32((2 ** 32 - 1) as U32);
 
     assert.deepStrictEqual(encoder.viewResult().toString(), "0xf0ffffffff");
   });
@@ -49,14 +50,14 @@ describe("JAM encoder / numbers", () => {
   it("should encode variable length u32", () => {
     const encoder = Encoder.create();
 
-    encoder.varU32(0);
-    encoder.varU32(1);
-    encoder.varU32(2);
-    encoder.varU32(3);
-    encoder.varU32(42);
-    encoder.varU32(2 ** 32 - 1);
-    encoder.varU32(2 ** 31 - 1);
-    encoder.varU32(0x42424242);
+    encoder.varU32(0 as U32);
+    encoder.varU32(1 as U32);
+    encoder.varU32(2 as U32);
+    encoder.varU32(3 as U32);
+    encoder.varU32(42 as U32);
+    encoder.varU32((2 ** 32 - 1) as U32);
+    encoder.varU32((2 ** 31 - 1) as U32);
+    encoder.varU32(0x42424242 as U32);
 
     assert.deepStrictEqual(encoder.viewResult().toString(), "0x000102032af0fffffffff0ffffff7ff042424242");
   });

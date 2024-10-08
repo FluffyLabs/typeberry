@@ -1,22 +1,25 @@
+import assert from "node:assert";
+import fs from "node:fs";
+import type { BandersnatchRingSignature } from "@typeberry/block";
+import { TicketEnvelope, type TicketsExtrinsic, ticketsExtrinsicCodec } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
-import type { KnownSizeArray } from "@typeberry/collections";
+import { Decoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
-import { TicketEnvelope } from "@typeberry/safrole";
-import { fromJson, logger } from ".";
-import {BandersnatchRingSignature} from "@typeberry/block";
+import { fromJson } from ".";
 
-const TicketEnvelopeFromJson = json.object<TicketEnvelope>(
+const ticketEnvelopeFromJson = json.object<TicketEnvelope>(
   {
     attempt: fromJson.ticketAttempt,
     signature: json.fromString((v) => Bytes.parseBytes(v, 784) as BandersnatchRingSignature),
   },
-  (x) => Object.assign(new TicketEnvelope(), x),
+  (x) => new TicketEnvelope(x.attempt, x.signature),
 );
 
-export type TicketsExtrinsic = KnownSizeArray<TicketEnvelope, "Size: 0..16">;
-export const TicketsExtrinsicFromJson = json.array(TicketEnvelopeFromJson);
+export const ticketsExtrinsicFromJson = json.array(ticketEnvelopeFromJson);
 
 export async function runTicketsExtrinsicTest(test: TicketsExtrinsic, file: string) {
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error(`Not implemented yet! ${file}`);
+  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
+  const decoded = Decoder.decodeObject(ticketsExtrinsicCodec, encoded);
+
+  assert.deepStrictEqual(decoded, test);
 }

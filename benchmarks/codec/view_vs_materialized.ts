@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { type Record, type View, codec } from "@typeberry/codec/descriptors";
+import { type CodecRecord, type View, codec } from "@typeberry/codec/descriptors";
 
 class TestHeader {
   static Codec = codec.Class(TestHeader, {
@@ -12,7 +12,7 @@ class TestHeader {
     extrinsicHash: codec.bytes(32),
   });
 
-  static fromCodec(o: Record<TestHeader>) {
+  static fromCodec(o: CodecRecord<TestHeader>) {
     return new TestHeader(o);
   }
 
@@ -21,7 +21,7 @@ class TestHeader {
   public readonly priorStateRoot: Bytes<32>;
   public readonly extrinsicHash: Bytes<32>;
 
-  constructor(o: Record<TestHeader>) {
+  constructor(o: CodecRecord<TestHeader>) {
     this.blockNumber = o.blockNumber;
     this.parentHeaderHash = o.parentHeaderHash;
     this.priorStateRoot = o.priorStateRoot;

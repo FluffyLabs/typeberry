@@ -1,16 +1,18 @@
+import type { DisputesExtrinsic } from "@typeberry/block/disputes";
+import type { TicketsExtrinsic } from "@typeberry/block/tickets";
 import { json } from "@typeberry/json-parser";
 import { logger } from ".";
 import { type AssurancesExtrinsic, AssurancesExtrinsicFromJson } from "./assurances_extrinsic";
-import { DisputesExtrinsic } from "./disputes_extrinsic";
+import { disputesExtrinsicFromJson } from "./disputes_extrinsic";
 import { type GuaranteesExtrinsic, GuaranteesExtrinsicFromJson } from "./guarantees_extrinsic";
 import { type PreimagesExtrinsic, PreimagesExtrinsicFromJson } from "./preimages_extrinsic";
-import { type TicketsExtrinsic, TicketsExtrinsicFromJson } from "./tickets_extrinsic";
+import { ticketsExtrinsicFromJson } from "./tickets_extrinsic";
 
 export class Extrinsic {
   static fromJson = json.object<Extrinsic>(
     {
-      tickets: TicketsExtrinsicFromJson,
-      disputes: DisputesExtrinsic.fromJson,
+      tickets: ticketsExtrinsicFromJson,
+      disputes: disputesExtrinsicFromJson,
       preimages: PreimagesExtrinsicFromJson,
       assurances: AssurancesExtrinsicFromJson,
       guarantees: GuaranteesExtrinsicFromJson,

@@ -1,15 +1,10 @@
-import {BandersnatchKey, BandersnatchRingSignature, Ed25519Key} from "@typeberry/block";
+import type { BandersnatchKey, BandersnatchRingSignature, Ed25519Key } from "@typeberry/block";
+import type { TicketEnvelope } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
 import type { EntropyHash, State as SafroleState } from "@typeberry/safrole";
-import {
-  Safrole,
-  type StateDiff as SafroleStateDiff,
-  type TicketBody,
-  type TicketEnvelope,
-  type ValidatorData,
-} from "@typeberry/safrole";
+import { Safrole, type StateDiff as SafroleStateDiff, type TicketBody, type ValidatorData } from "@typeberry/safrole";
 import type { BlsKey } from "@typeberry/safrole/crypto";
 
 type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}` ? `${T}${Capitalize<SnakeToCamel<U>>}` : S;

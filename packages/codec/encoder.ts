@@ -1,5 +1,6 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { BitVec } from "@typeberry/bytes";
+import type { U32 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
 
 /** An encoder for some specific type `T`. */
@@ -160,7 +161,7 @@ export class Encoder {
    * https://graypaper.fluffylabs.dev/#WyJlMjA2ZTI2NjNjIiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEzIGg2IHkxZGZlIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeDEwIGhjIHkxZGZmIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+Il1d
    */
   bool(bool: boolean) {
-    this.varU32(bool ? 1 : 0);
+    this.varU32((bool ? 1 : 0) as U32);
   }
 
   /**
@@ -193,7 +194,7 @@ export class Encoder {
    *
    * https://graypaper.fluffylabs.dev/#WyJlMjA2ZTI2NjNjIiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEzIGg2IHkxZGJlIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeDYxIGhkIHkxZGJmIGZmMTcgZnM1IGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
    */
-  varU32(num: number) {
+  varU32(num: U32) {
     check(num >= 0, "Only for natural numbers.");
     check(num < 2 ** 32, "Only for numbers up to 2**32");
     this.varU64(BigInt(num));
@@ -271,7 +272,7 @@ export class Encoder {
    */
   blob(blob: Uint8Array) {
     // first encode the length
-    this.varU32(blob.length);
+    this.varU32(blob.length as U32);
 
     // now encode the bytes
     this.ensureBigEnough(blob.length);
@@ -314,7 +315,7 @@ export class Encoder {
    */
   bitVecVarLen(bitvec: BitVec) {
     const len = bitvec.bitLength;
-    this.varU32(len);
+    this.varU32(len as U32);
     this.bitVecFixLen(bitvec);
   }
 
@@ -361,7 +362,8 @@ export class Encoder {
    * https://graypaper.fluffylabs.dev/#WyI3YWU1MWY5MzI1IiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeGYgaGIgeTFlNDIgZmY3IGZzMCBmYzAgc2MwIGxzMCB3czBcIj4iLCI8ZGl2IGNsYXNzPVwidCBtMCB4ZiBoYSB5MWU0MyBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
    */
   sequenceVarLen<T>(encode: Encode<T>, elements: T[]) {
-    this.varU32(elements.length);
+    check(elements.length <= 2 ** 32, "Wow, that's a nice long sequence you've got here.");
+    this.varU32(elements.length as U32);
     this.sequenceFixLen(encode, elements);
   }
 

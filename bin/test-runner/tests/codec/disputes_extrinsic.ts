@@ -1,97 +1,59 @@
-import type { KnownSizeArray } from "@typeberry/collections";
+import assert from "node:assert";
+import fs from "node:fs";
+import { Culprit, DisputesExtrinsic, Fault, Judgement, Verdict } from "@typeberry/block/disputes";
+import { Decoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
-import type { U32 } from "@typeberry/numbers";
-import { type Ed25519Signature, bytes32, fromJson, logger } from ".";
-import {Ed25519Key, HeaderHash, ValidatorIndex} from "@typeberry/block";
+import { bytes32, fromJson } from ".";
 
-class Fault {
-  static fromJson = json.object<Fault>(
-    {
-      target: bytes32(),
-      vote: "boolean",
-      key: bytes32(),
-      signature: fromJson.ed25519Signature,
-    },
-    (f) => Object.assign(new Fault(), f),
-  );
+const faultFromJson = json.object<Fault>(
+  {
+    target: bytes32(),
+    vote: "boolean",
+    key: bytes32(),
+    signature: fromJson.ed25519Signature,
+  },
+  ({ target, vote, key, signature }) => new Fault(target, vote, key, signature),
+);
 
-  target!: HeaderHash;
-  vote!: boolean;
-  key!: Ed25519Key;
-  signature!: Ed25519Signature;
+const culpritFromJson = json.object<Culprit>(
+  {
+    target: bytes32(),
+    key: bytes32(),
+    signature: fromJson.ed25519Signature,
+  },
+  ({ target, key, signature }) => new Culprit(target, key, signature),
+);
 
-  private constructor() {}
-}
+const judgementFromJson = json.object<Judgement>(
+  {
+    vote: "boolean",
+    index: "number",
+    signature: fromJson.ed25519Signature,
+  },
+  ({ vote, index, signature }) => new Judgement(vote, index, signature),
+);
 
-class Culprit {
-  static fromJson = json.object<Culprit>(
-    {
-      target: bytes32(),
-      key: bytes32(),
-      signature: fromJson.ed25519Signature,
-    },
-    (c) => Object.assign(new Culprit(), c),
-  );
+const verdictFromJson = json.object<Verdict>(
+  {
+    target: bytes32(),
+    age: "number",
+    votes: json.array(judgementFromJson),
+  },
+  ({ target, age, votes }) => new Verdict(target, age, votes),
+);
 
-  target!: HeaderHash;
-  key!: Ed25519Key;
-  signature!: Ed25519Signature;
-
-  private constructor() {}
-}
-
-class Judgement {
-  static fromJson = json.object<Judgement>(
-    {
-      vote: "boolean",
-      index: "number",
-      signature: fromJson.ed25519Signature,
-    },
-    (x) => Object.assign(new Judgement(), x),
-  );
-
-  vote!: boolean;
-  index!: ValidatorIndex;
-  signature!: Ed25519Signature;
-
-  private constructor() {}
-}
-
-class Verdict {
-  static fromJson = json.object<Verdict>(
-    {
-      target: bytes32(),
-      age: "number",
-      votes: json.array(Judgement.fromJson),
-    },
-    (x) => Object.assign(new Verdict(), x),
-  );
-
-  target!: HeaderHash;
-  age!: U32;
-  votes!: KnownSizeArray<Judgement, "Validators super majority">;
-
-  private constructor() {}
-}
-
-export class DisputesExtrinsic {
-  static fromJson = json.object<DisputesExtrinsic>(
-    {
-      verdicts: json.array(Verdict.fromJson),
-      culprits: json.array(Culprit.fromJson),
-      faults: json.array(Fault.fromJson),
-    },
-    (x) => Object.assign(new DisputesExtrinsic(), x),
-  );
-
-  verdicts!: Verdict[];
-  culprits!: Culprit[];
-  faults!: Fault[];
-
-  private constructor() {}
-}
+export const disputesExtrinsicFromJson = json.object<DisputesExtrinsic>(
+  {
+    verdicts: json.array(verdictFromJson),
+    culprits: json.array(culpritFromJson),
+    faults: json.array(faultFromJson),
+  },
+  ({ verdicts, culprits, faults }) => new DisputesExtrinsic(verdicts, culprits, faults),
+);
 
 export async function runDisputesExtrinsicTest(test: DisputesExtrinsic, file: string) {
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error(`Not implemented yet! ${file}`);
+  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
+  const decoded = Decoder.decodeObject(DisputesExtrinsic.Codec, encoded);
+
+  assert.deepStrictEqual(decoded, test);
 }

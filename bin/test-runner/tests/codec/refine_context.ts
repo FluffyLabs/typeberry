@@ -1,8 +1,8 @@
+import type { HeaderHash, TimeSlot } from "@typeberry/block";
 import type { Bytes } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
 import type { TrieHash } from "@typeberry/trie";
 import { type BeefyHash, bytes32, logger } from ".";
-import {HeaderHash, TimeSlot} from "@typeberry/block";
 
 export class RefineContext {
   static fromJson = json.object<RefineContext>(
