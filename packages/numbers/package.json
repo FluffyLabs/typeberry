@@ -1,0 +1,11 @@
+{
+  "name": "@typeberry/numbers",
+  "version": "0.0.1",
+  "description": "Number types for typeberry data structures.",
+  "main": "index.ts",
+  "scripts": {
+    "test": "node --test --require ts-node/register $(find . -type f -o -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0"
+}

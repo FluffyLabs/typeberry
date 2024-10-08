@@ -2,11 +2,11 @@
 export type FromJson<T> = T extends (infer U)[]
   ? ["array", FromJson<U>]
   : // parse a string from JSON into expected type
-      | FromJsonWithParser<T, string>
+      | FromJsonWithParser<string, T>
       // parse a number from JSON into expected type
-      | FromJsonWithParser<T, number>
+      | FromJsonWithParser<number, T>
       // manually parse a nested object
-      | FromJsonWithParser<T, unknown>
+      | FromJsonWithParser<unknown, T>
       | FromJsonPrimitive<T>
       | FromJsonOptional<T>;
 
@@ -27,7 +27,7 @@ export type FromJsonPrimitive<T> = T extends string
 export type Parser<TFrom, TInto> = (inJson: TFrom, context?: string) => TInto;
 
 /** Parsing a JSON value with given convesion. */
-export type FromJsonWithParser<TInto, TFrom> = [FromJsonPrimitive<TFrom>, Parser<TFrom, TInto>];
+export type FromJsonWithParser<TFrom, TInto> = [FromJsonPrimitive<TFrom>, Parser<TFrom, TInto>];
 
 /** A potentially optional JSON parameter (key/value undefined). */
 export type FromJsonOptional<TInto> = ["optional", FromJson<TInto>];
@@ -36,3 +36,6 @@ export type FromJsonOptional<TInto> = ["optional", FromJson<TInto>];
 export type ObjectFromJson<T> = {
   [K in keyof T]: FromJson<T[K]>;
 };
+
+/** Builder function that converts an object parsed from JSON into some expected type of object. */
+export type Builder<TFrom, TInto> = (x: TFrom) => TInto;
