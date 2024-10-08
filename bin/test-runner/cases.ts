@@ -6,9 +6,9 @@ import test from "node:test";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
 import { assurancesExtrinsicFromJson, runAssurancesExtrinsicTest } from "./tests/codec/assurances_extrinsic";
-import { Block, runBlockTest } from "./tests/codec/block";
+import { blockFromJson, runBlockTest } from "./tests/codec/block";
 import { disputesExtrinsicFromJson, runDisputesExtrinsicTest } from "./tests/codec/disputes_extrinsic";
-import { Extrinsic, runExtrinsicTest } from "./tests/codec/extrinsic";
+import { extrinsicFromJson, runExtrinsicTest } from "./tests/codec/extrinsic";
 import { guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest } from "./tests/codec/guarantees_extrinsic";
 import { headerFromJson, runHeaderTest } from "./tests/codec/header";
 import { preimagesExtrinsicFromJson, runPreimagesExtrinsicTest } from "./tests/codec/preimages_extrinsic";
@@ -146,9 +146,9 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
 
   const runners = [
     prepRunner("codec/assurances_extrinsic", assurancesExtrinsicFromJson, runAssurancesExtrinsicTest),
-    prepRunner("codec/block", Block.fromJson, runBlockTest),
+    prepRunner("codec/block", blockFromJson, runBlockTest),
     prepRunner("codec/disputes_extrinsic", disputesExtrinsicFromJson, runDisputesExtrinsicTest),
-    prepRunner("codec/extrinsic", Extrinsic.fromJson, runExtrinsicTest),
+    prepRunner("codec/extrinsic", extrinsicFromJson, runExtrinsicTest),
     prepRunner("codec/guarantees_extrinsic", guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest),
     prepRunner("codec/header", headerFromJson, runHeaderTest),
     prepRunner("codec/preimages_extrinsic", preimagesExtrinsicFromJson, runPreimagesExtrinsicTest),

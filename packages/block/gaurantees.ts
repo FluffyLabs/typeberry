@@ -39,4 +39,4 @@ export class ReportGuarantee {
 }
 
 export type GuaranteesExtrinsic = KnownSizeArray<ReportGuarantee, "0..CoresCount">;
-export const guaranteesExtrinsicCodec = codec.sequenceVarLen(ReportGuarantee.Codec).cast();
+export const guaranteesExtrinsicCodec = codec.sequenceVarLen(ReportGuarantee.Codec).cast<GuaranteesExtrinsic>();

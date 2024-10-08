@@ -46,4 +46,4 @@ export class TicketsMark {
 }
 
 export type TicketsExtrinsic = KnownSizeArray<TicketEnvelope, "Size: 0..16">;
-export const ticketsExtrinsicCodec = codec.sequenceVarLen(TicketEnvelope.Codec).cast();
+export const ticketsExtrinsicCodec = codec.sequenceVarLen(TicketEnvelope.Codec).cast<TicketsExtrinsic>();

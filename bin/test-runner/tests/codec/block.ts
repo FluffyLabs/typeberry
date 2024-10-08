@@ -1,25 +1,22 @@
-import type { Header } from "@typeberry/block";
+import assert from "node:assert";
+import fs from "node:fs";
+import { Block } from "@typeberry/block/block";
+import { Decoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
-import { logger } from ".";
-import { Extrinsic } from "./extrinsic";
+import { extrinsicFromJson } from "./extrinsic";
 import { headerFromJson } from "./header";
 
-export class Block {
-  static fromJson = json.object<Block>(
-    {
-      header: headerFromJson,
-      extrinsic: Extrinsic.fromJson,
-    },
-    (b) => new Block(b.header, b.extrinsic),
-  );
-
-  public constructor(
-    public header: Header,
-    public extrinsic: Extrinsic,
-  ) {}
-}
+export const blockFromJson = json.object<Block>(
+  {
+    header: headerFromJson,
+    extrinsic: extrinsicFromJson,
+  },
+  ({ header, extrinsic }) => new Block(header, extrinsic),
+);
 
 export async function runBlockTest(test: Block, file: string) {
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error(`Not implemented yet! ${file}`);
+  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
+  const decoded = Decoder.decodeObject(Block.Codec, encoded);
+
+  assert.deepStrictEqual(decoded, test);
 }

@@ -27,4 +27,4 @@ export class AvailabilityAssurance {
 }
 
 export type AssurancesExtrinsic = KnownSizeArray<AvailabilityAssurance, "0 .. ValidatorsCount">;
-export const assurancesExtrinsicCodec = codec.sequenceVarLen(AvailabilityAssurance.Codec);
+export const assurancesExtrinsicCodec = codec.sequenceVarLen(AvailabilityAssurance.Codec).cast<AssurancesExtrinsic>();
