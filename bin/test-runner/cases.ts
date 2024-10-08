@@ -14,8 +14,8 @@ import { headerFromJson, runHeaderTest } from "./tests/codec/header";
 import { preimagesExtrinsicFromJson, runPreimagesExtrinsicTest } from "./tests/codec/preimages_extrinsic";
 import { refineContextFromJson, runRefineContextTest } from "./tests/codec/refine_context";
 import { runTicketsExtrinsicTest, ticketsExtrinsicFromJson } from "./tests/codec/tickets_extrinsic";
-import { WorkItem, runWorkItemTest } from "./tests/codec/work_item";
-import { WorkPackage, runWorkPackageTest } from "./tests/codec/work_package";
+import { runWorkItemTest, workItemFromJson } from "./tests/codec/work_item";
+import { runWorkPackageTest, workPackageFromJson } from "./tests/codec/work_package";
 import { runWorkReportTest, workReportFromJson } from "./tests/codec/work_report";
 import { runWorkResultTest, workResultFromJson } from "./tests/codec/work_result";
 import {
@@ -154,8 +154,8 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
     prepRunner("codec/preimages_extrinsic", preimagesExtrinsicFromJson, runPreimagesExtrinsicTest),
     prepRunner("codec/refine_context", refineContextFromJson, runRefineContextTest),
     prepRunner("codec/tickets_extrinsic", ticketsExtrinsicFromJson, runTicketsExtrinsicTest),
-    prepRunner("codec/work_item", WorkItem.fromJson, runWorkItemTest),
-    prepRunner("codec/work_package", WorkPackage.fromJson, runWorkPackageTest),
+    prepRunner("codec/work_item", workItemFromJson, runWorkItemTest),
+    prepRunner("codec/work_package", workPackageFromJson, runWorkPackageTest),
     prepRunner("codec/work_report", workReportFromJson, runWorkReportTest),
     prepRunner("codec/work_result", workResultFromJson, runWorkResultTest),
     prepRunner("erasure-coding", EcTest.fromJson, runEcTest),

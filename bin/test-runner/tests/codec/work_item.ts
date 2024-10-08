@@ -1,65 +1,58 @@
+import assert from "node:assert";
+import fs from "node:fs";
 import type { ServiceId } from "@typeberry/block/preimage";
+import { ExtrinsicSpec, ImportSpec, WorkItem } from "@typeberry/block/work_item";
+import type { Gas } from "@typeberry/block/work_result";
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
+import { Decoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
-import type { U16, U32 } from "@typeberry/numbers";
-import type { TrieHash } from "@typeberry/trie";
-import type { Opaque } from "@typeberry/utils";
-import { bytes32, logger } from ".";
+import type { U16 } from "@typeberry/numbers";
+import { bytes32 } from ".";
+import type { JsonObject } from "../../json-format";
 
-type ExtrinsicHash = Opaque<Bytes<32>, "ExtrinsicHash">;
+const importSpecFromJson = json.object<JsonObject<ImportSpec>, ImportSpec>(
+  {
+    tree_root: bytes32(),
+    index: "number",
+  },
+  ({ tree_root, index }) => new ImportSpec(tree_root, index),
+);
 
-class ImportSpec {
-  static fromJson = json.object<ImportSpec>(
-    {
-      tree_root: bytes32(),
-      index: "number",
-    },
-    (x) => Object.assign(new ImportSpec(), x),
-  );
+const extrinsicSpecFromJson = json.object<ExtrinsicSpec>(
+  {
+    hash: bytes32(),
+    len: "number",
+  },
+  ({ hash, len }) => new ExtrinsicSpec(hash, len),
+);
 
-  tree_root!: TrieHash;
-  index!: U16;
-}
+export const workItemFromJson = json.object<JsonWorkItem, WorkItem>(
+  {
+    service: "number",
+    code_hash: bytes32(),
+    payload: json.fromString(BytesBlob.parseBlob),
+    gas_limit: "number",
+    import_segments: json.array(importSpecFromJson),
+    extrinsic: json.array(extrinsicSpecFromJson),
+    export_count: "number",
+  },
+  ({ service, code_hash, payload, gas_limit, import_segments, extrinsic, export_count }) =>
+    new WorkItem(service, code_hash, payload, BigInt(gas_limit) as Gas, import_segments, extrinsic, export_count),
+);
 
-class ExtrinsicSpec {
-  static fromJson = json.object<ExtrinsicSpec>(
-    {
-      hash: bytes32(),
-      len: "number",
-    },
-    (x) => Object.assign(new ExtrinsicSpec(), x),
-  );
-
-  hash!: ExtrinsicHash;
-  len!: U32;
-}
-
-export class WorkItem {
-  static fromJson = json.object<WorkItem>(
-    {
-      service: "number",
-      code_hash: bytes32(),
-      payload: json.fromString(BytesBlob.parseBlob),
-      gas_limit: "number",
-      import_segments: json.array(ImportSpec.fromJson),
-      extrinsic: json.array(ExtrinsicSpec.fromJson),
-      export_count: "number",
-    },
-    (x) => Object.assign(new WorkItem(), x),
-  );
-
-  service!: ServiceId;
-  code_hash!: Bytes<32>;
-  payload!: BytesBlob;
-  gas_limit!: number; // TODO [Gas]
-  import_segments!: ImportSpec[];
-  extrinsic!: ExtrinsicSpec[];
-  export_count!: U16;
-
-  private constructor() {}
-}
+type JsonWorkItem = {
+  service: ServiceId;
+  code_hash: Bytes<32>;
+  payload: BytesBlob;
+  gas_limit: number;
+  import_segments: ImportSpec[];
+  extrinsic: ExtrinsicSpec[];
+  export_count: U16;
+};
 
 export async function runWorkItemTest(test: WorkItem, file: string) {
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error(`Not implemented yet! ${file}`);
+  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
+  const decoded = Decoder.decodeObject(WorkItem.Codec, encoded);
+
+  assert.deepStrictEqual(decoded, test);
 }

@@ -1,6 +1,6 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { BitVec } from "@typeberry/bytes";
-import type { U16, U32 } from "@typeberry/numbers";
+import type { U16, U32, U64 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
 
 /** A decoder for some specific type `T` */
@@ -109,6 +109,16 @@ export class Decoder {
     return this.getNum(4, () => this.dataView.getUint32(this.offset, true)) as U32;
   }
 
+  /** Decode 8 bytes as a signed number. */
+  i64(): bigint {
+    return this.getNum(8, () => this.dataView.getBigInt64(this.offset, true));
+  }
+
+  /** Decode 8 bytes as a unsigned number. */
+  u64(): U64 {
+    return this.getNum(8, () => this.dataView.getBigUint64(this.offset, true)) as U64;
+  }
+
   /**
    * Decode a boolean discriminator.
    *
@@ -168,25 +178,25 @@ export class Decoder {
   }
 
   /** Decode a variable-length encoding of natural numbers (up to 2**64). */
-  varU64(): bigint {
+  varU64(): U64 {
     const firstByte = this.source[this.offset];
     const l = decodeLengthAfterFirstByte(firstByte);
     this.offset += 1;
 
     if (l === 0) {
-      return BigInt(firstByte);
+      return BigInt(firstByte) as U64;
     }
 
     this.offset += l;
     if (l === 8) {
-      return this.dataView.getBigUint64(this.offset - l, true);
+      return this.dataView.getBigUint64(this.offset - l, true) as U64;
     }
 
     let num = BigInt(firstByte + 2 ** (8 - l) - 2 ** 8) << BigInt(8 * l);
     for (let i = 0; i < l; i += 1) {
       num |= BigInt(this.source[this.offset - l + i]) << BigInt(8 * i);
     }
-    return num;
+    return num as U64;
   }
 
   /** Decode a fixed-length sequence of bytes. */
@@ -301,7 +311,7 @@ export class Decoder {
     }
   }
 
-  private getNum(bytes: number, f: () => number) {
+  private getNum<T>(bytes: number, f: () => T) {
     this.ensureHasBytes(bytes);
     const num = f();
     this.offset += bytes;

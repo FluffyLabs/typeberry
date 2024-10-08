@@ -1,6 +1,6 @@
 import { type BitVec, type Bytes, BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
-import type { U16, U32 } from "@typeberry/numbers";
+import type { U16, U32, U64 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
 import { type Decode, Decoder } from "./decoder";
 import type { Encode, Encoder } from "./encoder";
@@ -169,11 +169,19 @@ export namespace codec {
   );
 
   /** Variable-length U64. */
-  export const varU64 = descriptor<bigint>(
+  export const varU64 = descriptor<U64>(
     "var_u64",
     8,
     (e, v) => e.varU64(v),
     (d) => d.varU64(),
+  );
+
+  /** Unsigned 64-bit number. */
+  export const u64 = descriptor<U64>(
+    "u64",
+    8,
+    (e, v) => e.i64(v),
+    (d) => d.u64(),
   );
 
   /** Unsigned 32-bit number. */
@@ -206,6 +214,14 @@ export namespace codec {
     1,
     (e, v) => e.i8(v),
     (d) => d.u8(),
+  );
+
+  /** Signed 64-bit number. */
+  export const i64 = descriptor<bigint>(
+    "u64",
+    8,
+    (e, v) => e.i64(v),
+    (d) => d.i64(),
   );
 
   /** Signed 32-bit number. */

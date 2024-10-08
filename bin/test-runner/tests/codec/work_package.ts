@@ -1,48 +1,39 @@
-import type { ServiceId } from "@typeberry/block/preimage";
-import type { RefineContext } from "@typeberry/block/refine_context";
-import { type Bytes, BytesBlob } from "@typeberry/bytes";
-import type { FixedSizeArray } from "@typeberry/collections";
+import assert from "node:assert";
+import fs from "node:fs";
+import { Authorizer, WorkPackage } from "@typeberry/block/work_package";
+import { WorkReport } from "@typeberry/block/work_report";
+import { BytesBlob } from "@typeberry/bytes";
+import { Decoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
-import { bytes32, logger } from ".";
+import { bytes32 } from ".";
+import type { JsonObject } from "../../json-format";
 import { refineContextFromJson } from "./refine_context";
-import { WorkItem } from "./work_item";
+import { workItemFromJson } from "./work_item";
 
-class Authorizer {
-  static fromJson = json.object<Authorizer>(
-    {
-      code_hash: bytes32(),
-      params: json.fromString(BytesBlob.parseBlob),
-    },
-    (x) => Object.assign(new Authorizer(), x),
-  );
+const authorizerFromJson = json.object<JsonObject<Authorizer>, Authorizer>(
+  {
+    code_hash: bytes32(),
+    params: json.fromString(BytesBlob.parseBlob),
+  },
+  ({ code_hash, params }) => new Authorizer(code_hash, params),
+);
 
-  code_hash!: Bytes<32>;
-  params!: BytesBlob;
-}
-
-export class WorkPackage {
-  static fromJson = json.object<WorkPackage>(
-    {
-      authorization: json.fromString(BytesBlob.parseBlob),
-      auth_code_host: "number",
-      authorizer: Authorizer.fromJson,
-      context: refineContextFromJson,
-      // TODO [ToDr] should we have a validator to make sure the length is okay?
-      items: json.array(WorkItem.fromJson),
-    },
-    (x) => Object.assign(new WorkPackage(), x),
-  );
-
-  authorization!: BytesBlob;
-  auth_code_host!: ServiceId;
-  authorizer!: Authorizer;
-  context!: RefineContext;
-  items!: FixedSizeArray<WorkItem, 1 | 2 | 3 | 4>;
-
-  private constructor() {}
-}
+export const workPackageFromJson = json.object<JsonObject<WorkPackage>, WorkPackage>(
+  {
+    authorization: json.fromString(BytesBlob.parseBlob),
+    auth_code_host: "number",
+    authorizer: authorizerFromJson,
+    context: refineContextFromJson,
+    // TODO [ToDr] should we have a validator to make sure the length is okay?
+    items: json.array(workItemFromJson),
+  },
+  ({ authorization, auth_code_host, authorizer, context, items }) =>
+    new WorkPackage(authorization, auth_code_host, authorizer, context, items),
+);
 
 export async function runWorkPackageTest(test: WorkPackage, file: string) {
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error(`Not implemented yet! ${file}`);
+  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
+  const decoded = Decoder.decodeObject(WorkReport.Codec, encoded);
+
+  assert.deepStrictEqual(decoded, test);
 }

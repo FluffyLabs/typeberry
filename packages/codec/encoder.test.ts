@@ -74,6 +74,23 @@ describe("JAM encoder / numbers", () => {
     assert.deepStrictEqual(encoder.viewResult().toString(), "0x0001f100000000ff0000000000000001ffffffffffffffffff");
   });
 
+  it("should encode a bunch of i64 numbers", () => {
+    const encoder = Encoder.create();
+
+    encoder.i64(2n ** 63n - 1n);
+    encoder.i64(-(2n ** 63n));
+    encoder.i64(0x42424242n);
+    encoder.i64(-42n);
+    encoder.i64(0n);
+
+    assert.deepStrictEqual(
+      encoder.viewResult().toString(),
+      BytesBlob.parseBlob(
+        "0xffffffffffffff7f00000000000000804242424200000000d6ffffffffffffff0000000000000000",
+      ).toString(),
+    );
+  });
+
   it("should encode a bunch of i32 numbers", () => {
     const encoder = Encoder.create();
 

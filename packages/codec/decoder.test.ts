@@ -351,6 +351,18 @@ describe("JAM decoder / numbers", () => {
     decoder.finish();
   });
 
+  it("should decode a bunch of i64 numbers", () => {
+    const input = BytesBlob.parseBlob(
+      "0xffffffffffffff7f00000000000000804242424200000000d6ffffffffffffff0000000000000000",
+    );
+    const decoder = Decoder.fromBytesBlob(input);
+
+    const results = [decoder.i64(), decoder.i64(), decoder.i64(), decoder.i64(), decoder.i64()];
+    decoder.finish();
+
+    assert.deepStrictEqual(results, [2n ** 63n - 1n, -(2n ** 63n), 0x42424242n, -42n, 0n]);
+  });
+
   it("should decode a bunch of i32 numbers", () => {
     const input = BytesBlob.parseBlob("0xffffff7f0000008042424242d6ffffff00000000");
     const decoder = Decoder.fromBytesBlob(input);

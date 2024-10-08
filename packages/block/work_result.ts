@@ -1,11 +1,11 @@
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import type { U32 } from "@typeberry/numbers";
+import type { U32, U64 } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
 import { HASH_SIZE } from "./hash";
 import type { ServiceId } from "./preimage";
 
-export type Gas = Opaque<bigint, "Gas[u64]">;
+export type Gas = Opaque<U64, "Gas[u64]">;
 
 // TODO [ToDr] Check the values!
 export enum WorkExecResultKind {
@@ -38,8 +38,7 @@ export class WorkResult {
     service: codec.u32.cast(),
     codeHash: codec.bytes(HASH_SIZE),
     payloadHash: codec.bytes(HASH_SIZE),
-    // TODO [ToDr] Shoudn't that be a fixed-size u64?
-    gasRatio: codec.varU64.cast(),
+    gasRatio: codec.u64.cast(),
     result: WorkExecResult.Codec,
   });
 
