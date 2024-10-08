@@ -74,15 +74,18 @@ export class Encoder {
    *
    * This is only for one-shot encodings.
    */
-  static encodeObject<T>(encode: Encode<T>, object: T): BytesBlob {
+  static encodeObject<T>(encode: Encode<T>, object: T, context?: unknown): BytesBlob {
     const encoder = Encoder.create({
       expectedLength: encode.sizeHintBytes ?? DEFAULT_START_LENGTH,
     });
+    encoder.attachContext(context);
     encoder.object(encode, object);
     return encoder.viewResult();
   }
 
   private offset = 0;
+  private context?: unknown;
+
   private readonly dataView: DataView;
 
   private constructor(
@@ -94,6 +97,23 @@ export class Encoder {
     } else {
       this.dataView = new DataView(destination.buffer, destination.byteOffset, destination.byteLength);
     }
+  }
+
+  /**
+   * Attach context to the encoder.
+   *
+   * The context object can be used to pass some "global" parameters
+   * down to custom encoders.
+   */
+  attachContext(context?: unknown) {
+    this.context = context;
+  }
+
+  /**
+   * Get the encoding context object.
+   */
+  getContext(): unknown {
+    return this.context;
   }
 
   /**

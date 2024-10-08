@@ -1,12 +1,14 @@
 import assert from "node:assert";
 import fs from "node:fs";
+import { CodecContext } from "@typeberry/block/context";
 import {
   type GuaranteesExtrinsic,
   ReportGuarantee,
   ValidatorSignature,
   guaranteesExtrinsicCodec,
 } from "@typeberry/block/gaurantees";
-import { Decoder } from "@typeberry/codec";
+import { BytesBlob } from "@typeberry/bytes";
+import { Decoder, Encoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
 import { fromJson } from ".";
 import type { JsonObject } from "../../json-format";
@@ -33,7 +35,10 @@ export const guaranteesExtrinsicFromJson = json.array(reportGuaranteeFromJson);
 
 export async function runGuaranteesExtrinsicTest(test: GuaranteesExtrinsic, file: string) {
   const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
-  const decoded = Decoder.decodeObject(guaranteesExtrinsicCodec, encoded);
 
+  const myEncoded = Encoder.encodeObject(guaranteesExtrinsicCodec, test, new CodecContext());
+  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.fromBlob(encoded).toString());
+
+  const decoded = Decoder.decodeObject(guaranteesExtrinsicCodec, encoded, new CodecContext());
   assert.deepStrictEqual(decoded, test);
 }

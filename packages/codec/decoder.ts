@@ -31,8 +31,9 @@ export class Decoder {
    * NOTE that if you need to decode multiple objects, it might be better
    * to create a [`Decoder`] instance intstead of slicing the data.
    */
-  static decodeObject<T>(decode: Decode<T>, source: BytesBlob | Uint8Array): T {
+  static decodeObject<T>(decode: Decode<T>, source: BytesBlob | Uint8Array, context?: unknown): T {
     const decoder = source instanceof BytesBlob ? Decoder.fromBytesBlob(source) : Decoder.fromBlob(source);
+    decoder.attachContext(context);
     const obj = decoder.object(decode);
     decoder.finish();
     return obj;
@@ -43,8 +44,26 @@ export class Decoder {
   private constructor(
     private readonly source: Uint8Array,
     private offset = 0,
+    private context?: unknown,
   ) {
     this.dataView = new DataView(source.buffer, source.byteOffset, source.byteLength);
+  }
+
+  /**
+   * Attach context to the decoder.
+   *
+   * The context object can be used to pass some "global" parameters
+   * down to custom decoders.
+   */
+  attachContext(context?: unknown) {
+    this.context = context;
+  }
+
+  /**
+   * Get the decoding context object.
+   */
+  getContext(): unknown {
+    return this.context;
   }
 
   /**
@@ -53,7 +72,7 @@ export class Decoder {
    * The copy will maintain it's own `offset` within the source.
    */
   clone(): Decoder {
-    return new Decoder(this.source, this.offset);
+    return new Decoder(this.source, this.offset, this.context);
   }
 
   /**

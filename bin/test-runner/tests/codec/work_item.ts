@@ -1,10 +1,11 @@
 import assert from "node:assert";
 import fs from "node:fs";
+import { CodecContext } from "@typeberry/block/context";
 import type { ServiceId } from "@typeberry/block/preimage";
 import { ExtrinsicSpec, ImportSpec, WorkItem } from "@typeberry/block/work_item";
 import type { Gas } from "@typeberry/block/work_result";
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
-import { Decoder } from "@typeberry/codec";
+import { Decoder, Encoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
 import type { U16 } from "@typeberry/numbers";
 import { bytes32 } from ".";
@@ -52,7 +53,10 @@ type JsonWorkItem = {
 
 export async function runWorkItemTest(test: WorkItem, file: string) {
   const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
-  const decoded = Decoder.decodeObject(WorkItem.Codec, encoded);
 
+  const myEncoded = Encoder.encodeObject(WorkItem.Codec, test, new CodecContext());
+  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.fromBlob(encoded).toString());
+
+  const decoded = Decoder.decodeObject(WorkItem.Codec, encoded, new CodecContext());
   assert.deepStrictEqual(decoded, test);
 }

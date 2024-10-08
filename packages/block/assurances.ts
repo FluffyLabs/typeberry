@@ -1,17 +1,28 @@
 import type { BitVec } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
-import type { Ed25519Signature } from "./crypto";
+import { CodecContext, EST_CORES } from "./context";
+import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "./crypto";
 import { HASH_SIZE, type HeaderHash } from "./hash";
 import type { ValidatorIndex } from "./header";
 
 export class AvailabilityAssurance {
   static Codec = codec.Class(AvailabilityAssurance, {
     anchor: codec.bytes(HASH_SIZE).cast(),
-    // TODO [ToDr] unsure about 8?
-    bitfield: codec.bitVecFixLen(8),
+    bitfield: codec.select(
+      {
+        name: "AvailabilityAssurance.bitfield",
+        sizeHintBytes: Math.ceil(EST_CORES / 8),
+      },
+      (context) => {
+        if (context instanceof CodecContext) {
+          return codec.bitVecFixLen(Math.ceil(context.coresCount / 8) * 8);
+        }
+        throw new Error("Missing context object to decode `AvailabilityAssurance.bitfield`.");
+      },
+    ),
     validatorIndex: codec.u16.cast(),
-    signature: codec.bytes(64).cast(),
+    signature: codec.bytes(ED25519_SIGNATURE_BYTES).cast(),
   });
 
   static fromCodec({ anchor, bitfield, validatorIndex, signature }: CodecRecord<AvailabilityAssurance>) {

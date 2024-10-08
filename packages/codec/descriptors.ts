@@ -342,6 +342,39 @@ export namespace codec {
       (d) => d.sequenceFixLen(type, len),
     );
 
+  /** Custom encoding / decoding logic. */
+  export const custom = <T>(
+    {
+      name,
+      sizeHintBytes = 0,
+    }: {
+      name: string;
+      sizeHintBytes: number;
+    },
+    encode: (e: Encoder, x: T) => void,
+    decode: (d: Decoder) => T,
+  ): Descriptor<T> => descriptor(name, sizeHintBytes, encode, decode);
+
+  /** Choose a descriptor depending on the encoding/decoding context. */
+  export const select = <T>(
+    {
+      name,
+      sizeHintBytes = 0,
+    }: {
+      name: string;
+      sizeHintBytes: number;
+    },
+    chooser: (ctx: unknown) => Descriptor<T>,
+  ): Descriptor<T> =>
+    custom(
+      {
+        name,
+        sizeHintBytes,
+      },
+      (e, x) => chooser(e.getContext()).encode(e, x),
+      (d) => chooser(d.getContext()).decode(d),
+    );
+
   /**
    * A descriptor for a more complex class type.
    *

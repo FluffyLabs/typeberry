@@ -1,13 +1,13 @@
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
-import type { Ed25519Signature } from "./crypto";
+import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "./crypto";
 import type { TimeSlot, ValidatorIndex } from "./header";
 import { WorkReport } from "./work_report";
 
 export class ValidatorSignature {
   static Codec = codec.Class(ValidatorSignature, {
     validatorIndex: codec.u16.cast(),
-    signature: codec.bytes(64).cast(),
+    signature: codec.bytes(ED25519_SIGNATURE_BYTES).cast(),
   });
 
   static fromCodec({ validatorIndex, signature }: CodecRecord<ValidatorSignature>) {

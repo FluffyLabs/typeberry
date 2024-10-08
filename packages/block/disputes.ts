@@ -1,7 +1,8 @@
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import type { U32 } from "@typeberry/numbers";
-import type { Ed25519Key, Ed25519Signature } from "./crypto";
+import { CodecContext, EST_VALIDATORS_SUPER_MAJORITY } from "./context";
+import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Key, type Ed25519Signature } from "./crypto";
 import { HASH_SIZE, type HeaderHash } from "./hash";
 import type { ValidatorIndex } from "./header";
 
@@ -9,8 +10,8 @@ export class Fault {
   static Codec = codec.Class(Fault, {
     target: codec.bytes(HASH_SIZE).cast(),
     vote: codec.bool,
-    key: codec.bytes(32).cast(),
-    signature: codec.bytes(64).cast(),
+    key: codec.bytes(ED25519_KEY_BYTES).cast(),
+    signature: codec.bytes(ED25519_SIGNATURE_BYTES).cast(),
   });
 
   static fromCodec({ target, vote, key, signature }: CodecRecord<Fault>) {
@@ -28,8 +29,8 @@ export class Fault {
 export class Culprit {
   static Codec = codec.Class(Culprit, {
     target: codec.bytes(HASH_SIZE).cast(),
-    key: codec.bytes(32).cast(),
-    signature: codec.bytes(64).cast(),
+    key: codec.bytes(ED25519_KEY_BYTES).cast(),
+    signature: codec.bytes(ED25519_SIGNATURE_BYTES).cast(),
   });
 
   static fromCodec({ target, key, signature }: CodecRecord<Culprit>) {
@@ -47,7 +48,7 @@ export class Judgement {
   static Codec = codec.Class(Judgement, {
     vote: codec.bool,
     index: codec.u16.cast(),
-    signature: codec.bytes(64).cast(),
+    signature: codec.bytes(ED25519_SIGNATURE_BYTES).cast(),
   });
 
   static fromCodec({ vote, index, signature }: CodecRecord<Judgement>) {
@@ -65,7 +66,19 @@ export class Verdict {
   static Codec = codec.Class(Verdict, {
     target: codec.bytes(HASH_SIZE).cast(),
     age: codec.u32,
-    votes: codec.sequenceVarLen(Judgement.Codec).cast(),
+    votes: codec.select(
+      {
+        name: "Verdict.votes",
+        sizeHintBytes: EST_VALIDATORS_SUPER_MAJORITY * Judgement.Codec.sizeHintBytes,
+      },
+      (context) => {
+        if (context instanceof CodecContext) {
+          return codec.sequenceFixLen(Judgement.Codec, context.validatorsSuperMajority).cast();
+        }
+
+        throw new Error("Missing context object to decode `Verdict.votes`.");
+      },
+    ),
   });
 
   static fromCodec({ target, age, votes }: CodecRecord<Verdict>) {

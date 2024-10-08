@@ -17,15 +17,31 @@ export enum WorkExecResultKind {
 }
 
 export class WorkExecResult {
-  static Codec = codec.Class(WorkExecResult, {
-    kind: codec.varU32,
-    // TODO [ToDr] This should be only decoded IF kind === 0
-    okBlob: codec.optional(codec.blob),
-  });
+  static Codec = codec.custom<WorkExecResult>(
+    {
+      name: "WorkExecResult",
+      sizeHintBytes: 1,
+    },
+    (e, x) => {
+      e.varU32(x.kind);
+      if (x.kind === WorkExecResultKind.ok && x.okBlob) {
+        e.bytesBlob(x.okBlob);
+      }
+    },
+    (d) => {
+      const kind = d.varU32();
+      if (kind === WorkExecResultKind.ok) {
+        const blob = d.bytesBlob();
+        return new WorkExecResult(kind, blob);
+      }
 
-  static fromCodec({ kind, okBlob }: CodecRecord<WorkExecResult>) {
-    return new WorkExecResult(kind, okBlob);
-  }
+      if (kind > WorkExecResultKind.codeOversize) {
+        throw new Error(`Invalid WorkExecResultKind: ${kind}`);
+      }
+
+      return new WorkExecResult(kind);
+    },
+  );
 
   constructor(
     public readonly kind: U32,

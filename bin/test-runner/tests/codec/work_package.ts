@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import fs from "node:fs";
+import { CodecContext } from "@typeberry/block/context";
 import { Authorizer, WorkPackage } from "@typeberry/block/work_package";
-import { WorkReport } from "@typeberry/block/work_report";
 import { BytesBlob } from "@typeberry/bytes";
-import { Decoder } from "@typeberry/codec";
+import { Decoder, Encoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
 import { bytes32 } from ".";
 import type { JsonObject } from "../../json-format";
@@ -33,7 +33,10 @@ export const workPackageFromJson = json.object<JsonObject<WorkPackage>, WorkPack
 
 export async function runWorkPackageTest(test: WorkPackage, file: string) {
   const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
-  const decoded = Decoder.decodeObject(WorkReport.Codec, encoded);
 
+  const myEncoded = Encoder.encodeObject(WorkPackage.Codec, test, new CodecContext());
+  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.fromBlob(encoded).toString());
+
+  const decoded = Decoder.decodeObject(WorkPackage.Codec, encoded, new CodecContext());
   assert.deepStrictEqual(decoded, test);
 }

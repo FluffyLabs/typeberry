@@ -47,7 +47,7 @@ export class WorkReport {
     public readonly packageSpec: WorkPackageSpec,
     public readonly context: RefineContext,
     public readonly coreIndex: CoreIndex,
-    public readonly authorizerHash: Bytes<32>,
+    public readonly authorizerHash: Bytes<typeof HASH_SIZE>,
     public readonly authOutput: BytesBlob,
     public readonly results: FixedSizeArray<WorkResult, 1 | 2 | 3 | 4>,
   ) {}

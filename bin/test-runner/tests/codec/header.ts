@@ -11,9 +11,10 @@ import {
   type TimeSlot,
   type ValidatorIndex,
 } from "@typeberry/block";
+import { CodecContext } from "@typeberry/block/context";
 import { TicketsMark } from "@typeberry/block/tickets";
-import { Bytes } from "@typeberry/bytes";
-import { Decoder } from "@typeberry/codec";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Decoder, Encoder } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
 import type { TrieHash } from "@typeberry/trie";
@@ -92,7 +93,10 @@ export const headerFromJson = json.object<JsonHeader, Header>(
 
 export async function runHeaderTest(test: Header, file: string) {
   const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
-  const decodedHeader = Decoder.decodeObject(Header.Codec, encoded);
 
+  const myEncoded = Encoder.encodeObject(Header.Codec, test, new CodecContext());
+  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.fromBlob(encoded).toString());
+
+  const decodedHeader = Decoder.decodeObject(Header.Codec, encoded, new CodecContext());
   assert.deepStrictEqual(test, decodedHeader);
 }

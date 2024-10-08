@@ -2,7 +2,7 @@ import type { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import type { Opaque } from "@typeberry/utils";
-import type { BandersnatchRingSignature } from "./crypto";
+import { BANDERSNATCH_RING_SIGNATURE_BYTES, type BandersnatchRingSignature } from "./crypto";
 import { HASH_SIZE } from "./hash";
 
 export type TicketAttempt = Opaque<0 | 1, "TicketAttempt[0|1]">;
@@ -16,7 +16,7 @@ export const ticketAttemptCodec = codec.bool.convert<TicketAttempt>(
 export class TicketEnvelope {
   static Codec = codec.Class(TicketEnvelope, {
     attempt: ticketAttemptCodec,
-    signature: codec.bytes(784).cast(),
+    signature: codec.bytes(BANDERSNATCH_RING_SIGNATURE_BYTES).cast(),
   });
 
   static fromCodec({ attempt, signature }: CodecRecord<TicketEnvelope>) {
@@ -40,7 +40,7 @@ export class TicketsMark {
   }
 
   constructor(
-    public readonly id: Bytes<32>,
+    public readonly id: Bytes<typeof HASH_SIZE>,
     public readonly attempt: TicketAttempt,
   ) {}
 }

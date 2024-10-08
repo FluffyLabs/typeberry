@@ -1,9 +1,11 @@
 import assert from "node:assert";
 import fs from "node:fs";
+import type { HASH_SIZE } from "@typeberry/block";
+import { CodecContext } from "@typeberry/block/context";
 import type { ServiceId } from "@typeberry/block/preimage";
 import { type Gas, WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work_result";
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
-import { Decoder } from "@typeberry/codec";
+import { Decoder, Encoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
 import type { U32 } from "@typeberry/numbers";
 import { bytes32 } from ".";
@@ -61,8 +63,8 @@ export const workResultFromJson = json.object<JsonWorkResult, WorkResult>(
 
 type JsonWorkResult = {
   service: ServiceId;
-  code_hash: Bytes<32>;
-  payload_hash: Bytes<32>;
+  code_hash: Bytes<typeof HASH_SIZE>;
+  payload_hash: Bytes<typeof HASH_SIZE>;
   // TODO [ToDr] We don't have enough precision here for full bigint so 🤞
   // otherwise we will need to use a custom JSON parser.
   gas_ratio: number;
@@ -71,7 +73,10 @@ type JsonWorkResult = {
 
 export async function runWorkResultTest(test: WorkResult, file: string) {
   const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
-  const decoded = Decoder.decodeObject(WorkResult.Codec, encoded);
 
+  const myEncoded = Encoder.encodeObject(WorkResult.Codec, test, new CodecContext());
+  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.fromBlob(encoded).toString());
+
+  const decoded = Decoder.decodeObject(WorkResult.Codec, encoded, new CodecContext());
   assert.deepStrictEqual(decoded, test);
 }
