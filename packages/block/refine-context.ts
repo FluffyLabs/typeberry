@@ -4,6 +4,11 @@ import type { Opaque } from "@typeberry/utils";
 import type { TimeSlot } from "./common";
 import { HASH_SIZE, type HeaderHash } from "./hash";
 
+/**
+ * Keccak-256 hash of the BEEFY MMR root.
+ *
+ * https://graypaper.fluffylabs.dev/#/c71229b/1e76001e7900
+ */
 export type BeefyHash = Opaque<Bytes<typeof HASH_SIZE>, "BeefyHash">;
 
 export class RefineContext {

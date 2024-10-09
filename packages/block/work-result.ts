@@ -1,7 +1,7 @@
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { U32 } from "@typeberry/numbers";
-import type { Gas, ServiceId } from "./common";
+import type { ServiceGas, ServiceId } from "./common";
 import { HASH_SIZE } from "./hash";
 
 export enum WorkExecResultKind {
@@ -62,7 +62,7 @@ export class WorkResult {
     public readonly service: ServiceId,
     public readonly codeHash: Bytes<typeof HASH_SIZE>,
     public readonly payloadHash: Bytes<typeof HASH_SIZE>,
-    public readonly gasRatio: Gas,
+    public readonly gasRatio: ServiceGas,
     public readonly result: WorkExecResult,
   ) {}
 }

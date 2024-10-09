@@ -1,7 +1,29 @@
+import type { Bytes } from "@typeberry/bytes";
 import type { U16, U32, U64 } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
 
+/** Opaque Blake2B. */
+export type Blake2bHash = Bytes<32>;
+/**
+ * Time slot index.
+ *
+ * "an index of a six-second timeslots from the JAM Common Era"
+ *
+ * https://graypaper.fluffylabs.dev/#/387103d/0b1d000b2100
+ */
 export type TimeSlot = Opaque<U32, "TimeSlot[u32]">;
+/** Index of the validator in current validators set. */
 export type ValidatorIndex = Opaque<U16, "ValidatorIndex[u16]">;
+/** Unique service identifier. */
 export type ServiceId = Opaque<U32, "ServiceId[u32]">;
-export type Gas = Opaque<U64, "Gas[u64]">;
+/** Service gas - a measure of execution time/complexity. */
+export type ServiceGas = Opaque<U64, "Gas[u64]">;
+/** `eta`: epoch randomness */
+export type EntropyHash = Opaque<Blake2bHash, "EntropyHash">;
+
+/**
+ * Index of an epoch.
+ *
+ * https://graypaper.fluffylabs.dev/#/c71229b/0b20000b2300
+ */
+export type Epoch = Opaque<U32, "Epoch">;

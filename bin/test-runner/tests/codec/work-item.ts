@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import fs from "node:fs";
-import type { Gas, HASH_SIZE, ServiceId } from "@typeberry/block";
+import type { HASH_SIZE, ServiceGas, ServiceId } from "@typeberry/block";
 import { CodecContext } from "@typeberry/block/context";
 import { ExtrinsicSpec, ImportSpec, WorkItem } from "@typeberry/block/work-item";
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
@@ -37,7 +37,15 @@ export const workItemFromJson = json.object<JsonWorkItem, WorkItem>(
     export_count: "number",
   },
   ({ service, code_hash, payload, gas_limit, import_segments, extrinsic, export_count }) =>
-    new WorkItem(service, code_hash, payload, BigInt(gas_limit) as Gas, import_segments, extrinsic, export_count),
+    new WorkItem(
+      service,
+      code_hash,
+      payload,
+      BigInt(gas_limit) as ServiceGas,
+      import_segments,
+      extrinsic,
+      export_count,
+    ),
 );
 
 type JsonWorkItem = {

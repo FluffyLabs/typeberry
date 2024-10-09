@@ -29,21 +29,32 @@ export class TicketEnvelope {
   ) {}
 }
 
-export class TicketsMark {
-  static Codec = codec.Class(TicketsMark, {
+export class Ticket {
+  static Codec = codec.Class(Ticket, {
     id: codec.bytes(HASH_SIZE),
     attempt: ticketAttemptCodec,
   });
 
-  static fromCodec({ id, attempt }: CodecRecord<TicketsMark>) {
-    return new TicketsMark(id, attempt);
+  static fromCodec({ id, attempt }: CodecRecord<Ticket>) {
+    return new Ticket(id, attempt);
   }
 
   constructor(
-    public readonly id: Bytes<typeof HASH_SIZE>,
+    /**
+     * Ticket identifier - a high-entropy unbiasable 32-octet sequence.
+     *
+     * Used both as a score in the ticket contest and as input to the on-chain VRF.
+     */
+    public readonly id: Bytes<32>,
     public readonly attempt: TicketAttempt,
   ) {}
 }
 
+/**
+ * A sequence of proofs of valid tickets.
+ *
+ * https://graypaper.fluffylabs.dev/#/387103d/0e90020e9502
+ */
 export type TicketsExtrinsic = KnownSizeArray<TicketEnvelope, "Size: 0..16">;
+
 export const ticketsExtrinsicCodec = codec.sequenceVarLen(TicketEnvelope.Codec).cast<TicketsExtrinsic>();

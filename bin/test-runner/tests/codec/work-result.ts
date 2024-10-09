@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import fs from "node:fs";
 import type { HASH_SIZE } from "@typeberry/block";
-import type { Gas, ServiceId } from "@typeberry/block";
+import type { ServiceGas, ServiceId } from "@typeberry/block";
 import { CodecContext } from "@typeberry/block/context";
 import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
@@ -58,7 +58,7 @@ export const workResultFromJson = json.object<JsonWorkResult, WorkResult>(
     result: workExecResultFromJson,
   },
   ({ service, code_hash, payload_hash, gas_ratio, result }) =>
-    new WorkResult(service, code_hash, payload_hash, BigInt(gas_ratio) as Gas, result),
+    new WorkResult(service, code_hash, payload_hash, BigInt(gas_ratio) as ServiceGas, result),
 );
 
 type JsonWorkResult = {

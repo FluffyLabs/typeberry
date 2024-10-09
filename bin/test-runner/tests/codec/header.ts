@@ -4,7 +4,7 @@ import {
   type BandersnatchKey,
   type BandersnatchVrfSignature,
   type Ed25519Key,
-  EpochMark,
+  EpochMarker,
   type ExtrinsicHash,
   Header,
   type HeaderHash,
@@ -12,7 +12,7 @@ import {
   type ValidatorIndex,
 } from "@typeberry/block";
 import { CodecContext } from "@typeberry/block/context";
-import { TicketsMark } from "@typeberry/block/tickets";
+import { Ticket } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
@@ -22,20 +22,20 @@ import { bytes32, fromJson } from ".";
 
 const bandersnatchVrfSignature = json.fromString((v) => Bytes.parseBytes(v, 96) as BandersnatchVrfSignature);
 
-const epochMark = json.object<EpochMark>(
+const epochMark = json.object<EpochMarker>(
   {
     entropy: bytes32(),
     validators: json.array(bytes32<BandersnatchKey>()),
   },
-  (x) => new EpochMark(x.entropy, x.validators),
+  (x) => new EpochMarker(x.entropy, x.validators),
 );
 
-const ticketsMark = json.object<TicketsMark>(
+const ticketsMark = json.object<Ticket>(
   {
     id: bytes32(),
     attempt: fromJson.ticketAttempt,
   },
-  (x) => new TicketsMark(x.id, x.attempt),
+  (x) => new Ticket(x.id, x.attempt),
 );
 
 type JsonHeader = {
@@ -43,8 +43,8 @@ type JsonHeader = {
   parent_state_root: TrieHash;
   extrinsic_hash: ExtrinsicHash;
   slot: TimeSlot;
-  epoch_mark?: EpochMark;
-  tickets_mark?: KnownSizeArray<TicketsMark, "EpochLength">;
+  epoch_mark?: EpochMarker;
+  tickets_mark?: KnownSizeArray<Ticket, "EpochLength">;
   offenders_mark: Ed25519Key[];
   author_index: ValidatorIndex;
   entropy_source: BandersnatchVrfSignature;
@@ -58,7 +58,7 @@ export const headerFromJson = json.object<JsonHeader, Header>(
     extrinsic_hash: bytes32(),
     slot: "number",
     epoch_mark: json.optional(epochMark),
-    tickets_mark: json.optional<TicketsMark[]>(json.array(ticketsMark)),
+    tickets_mark: json.optional<Ticket[]>(json.array(ticketsMark)),
     offenders_mark: json.array(bytes32<Ed25519Key>()),
     author_index: "number",
     entropy_source: bandersnatchVrfSignature,
@@ -77,14 +77,14 @@ export const headerFromJson = json.object<JsonHeader, Header>(
     seal,
   }) => {
     const header = Header.empty();
-    header.parentHash = parent;
+    header.parentHeaderHash = parent;
     header.priorStateRoot = parent_state_root;
     header.extrinsicHash = extrinsic_hash;
-    header.slot = slot;
-    header.epochMark = epoch_mark ?? null;
-    header.ticketsMark = tickets_mark ?? null;
-    header.offendersMark = offenders_mark;
-    header.authorIndex = author_index;
+    header.timeSlotIndex = slot;
+    header.epochMarker = epoch_mark ?? null;
+    header.ticketsMarker = tickets_mark ?? null;
+    header.offendersMarker = offenders_mark;
+    header.bandersnatchBlockAuthorIndex = author_index;
     header.entropySource = entropy_source;
     header.seal = seal;
     return header;

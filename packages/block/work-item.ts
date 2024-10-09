@@ -3,7 +3,7 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import type { U16, U32 } from "@typeberry/numbers";
 import type { TrieHash } from "@typeberry/trie";
 import type { Opaque } from "@typeberry/utils";
-import type { Gas, ServiceId } from "./common";
+import type { ServiceGas, ServiceId } from "./common";
 import { HASH_SIZE } from "./hash";
 
 type ExtrinsicHash = Opaque<Bytes<32>, "ExtrinsicHash">;
@@ -67,7 +67,7 @@ export class WorkItem {
     public readonly service: ServiceId,
     public readonly codeHash: Bytes<typeof HASH_SIZE>,
     public readonly payload: BytesBlob,
-    public readonly gasLimit: Gas,
+    public readonly gasLimit: ServiceGas,
     public readonly importSegments: ImportSpec[],
     public readonly extrinsic: ExtrinsicSpec[],
     public readonly exportCount: U16,
