@@ -52,11 +52,11 @@ export function formatResults(input: Map<string, Result>, commitHash?: string) {
   const detailsTxt = formatDetails(all);
   const errorsTxt = formatErrors(errors);
   return `
-### Benchmarks summary: ${okCount}/${all.length} OK ${okCount === all.length ? "✅" : "❌"}
+${errorsTxt}
 
 ${detailsTxt}
 
-${errorsTxt}
+### Benchmarks summary: ${okCount}/${all.length} OK ${okCount === all.length ? "✅" : "❌"}
 `;
 }
 
