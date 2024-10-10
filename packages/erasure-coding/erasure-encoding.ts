@@ -5,7 +5,7 @@ const SHARD_ALIGNMENT = 64; // Shard size must be multiple of 64 bytes. (reed-so
 
 /**
  * The following values ​​are the consequences of the coding rate 342:1023
- * https://graypaper-reader.netlify.app/#/387103d/35d00235d002
+ * https://graypaper.fuffylabs.dev/#/387103d/35d00235d002
  */
 const N_SHARDS = 342;
 const RESULT_SHARDS = 1023;
@@ -20,7 +20,7 @@ const SECOND_POINT_INDEX = 32;
 
 /**
  * The shards are 2 bytes length because the encoding function is defined in GF(16)
- * https://graypaper-reader.netlify.app/#/387103d/35d10235d302
+ * https://graypaper.fluffylabs.dev/#/387103d/35d10235d302
  */
 const SHARD_LENGTH = 2;
 
@@ -35,7 +35,7 @@ function getInputWithPadding(input: Uint8Array) {
 
 export function encodeData(input: Uint8Array) {
   check(
-    input.length <= 2 * N_SHARDS,
+    input.length <= SHARD_LENGTH * N_SHARDS,
     `length of input (${input.length}) should be equal to or less than ${SHARD_LENGTH * N_SHARDS}`,
   );
   // if the input is shorter than 342 we need to fill it with '0' to be 342
@@ -70,7 +70,7 @@ export function encodeData(input: Uint8Array) {
 }
 
 // expectedLength can be useful to remove padding in case of short data (< 342)
-export function decodeData(input: [number, Uint8Array][], expectedLength: number = 2 * N_SHARDS) {
+export function decodeData(input: [number, Uint8Array][], expectedLength: number = SHARD_LENGTH * N_SHARDS) {
   check(input.length === N_SHARDS, `length of input should be equal to ${N_SHARDS}`);
   const result = new Uint8Array(SHARD_LENGTH * N_SHARDS);
 
@@ -104,8 +104,8 @@ export function decodeData(input: [number, Uint8Array][], expectedLength: number
   for (let i = 0; i < resultIndices.length; i++) {
     // fill reconstructed shards in result
     const index = resultIndices[i];
-    result[2 * index] = resultData[i * SHARD_ALIGNMENT + FIRST_POINT_INDEX];
-    result[2 * index + 1] = resultData[i * SHARD_ALIGNMENT + SECOND_POINT_INDEX];
+    result[SHARD_LENGTH * index] = resultData[i * SHARD_ALIGNMENT + FIRST_POINT_INDEX];
+    result[SHARD_LENGTH * index + 1] = resultData[i * SHARD_ALIGNMENT + SECOND_POINT_INDEX];
   }
 
   return result.subarray(0, expectedLength);

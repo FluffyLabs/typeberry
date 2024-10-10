@@ -73,7 +73,7 @@ function random() {
   return x - Math.floor(x);
 }
 
-logger.log(`Erasure encoding tests random seed: ${seed}`);
+logger.info(`Erasure encoding tests random seed: ${seed}`);
 
 export async function runEcTest(test: EcTest) {
   if (test.chunks[0].length > 2) {
