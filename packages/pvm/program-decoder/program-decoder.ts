@@ -28,11 +28,7 @@ export class ProgramDecoder {
     const jumpTable = decoder.bytes(jumpTableLengthInBytes).raw;
 
     const code = decoder.bytes(codeLength).raw;
-    // TODO [ToDr] we could decode a bitvec here, but currently
-    // the test programs have remaining bits filled with `1`s,
-    // which is not aligned with the codec expectations (`0` padded).
-    const maskLengthInBytes = Math.ceil(codeLength / 8);
-    const mask = decoder.bytes(maskLengthInBytes).raw;
+    const mask = decoder.bitVecFixLen(codeLength);
     decoder.finish();
 
     return {

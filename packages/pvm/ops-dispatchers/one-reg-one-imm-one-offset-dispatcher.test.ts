@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
 
+import { BitVec } from "@typeberry/bytes";
 import type { OneRegisterOneImmediateOneOffsetArgs } from "../args-decoder/args-decoder";
 import { ArgumentType } from "../args-decoder/argument-type";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
@@ -18,7 +19,7 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     const regs = new Registers();
     const memory = new Memory();
     const instructionResult = new InstructionResult();
-    const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+    const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
     const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
     const loadOps = new LoadOps(regs, memory, instructionResult);
 
@@ -148,7 +149,7 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     const regs = new Registers();
     const memory = new Memory();
     const instructionResult = new InstructionResult();
-    const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+    const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
     const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
     const loadOps = new LoadOps(regs, memory, instructionResult);
 

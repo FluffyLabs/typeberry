@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
+import { BitVec } from "@typeberry/bytes";
 import type { OneRegisterOneImmediateArgs } from "../args-decoder/args-decoder";
 import { ArgumentType } from "../args-decoder/argument-type";
 import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
@@ -18,7 +19,7 @@ describe("OneRegOneImmDispatcher", () => {
   const regs = new Registers();
   const memory = new Memory();
   const jumpTable = new JumpTable(1, new Uint8Array([1]));
-  const mask = new Mask(new Uint8Array([1]));
+  const mask = new Mask(BitVec.fromBlob(new Uint8Array([1]), 1));
   const instructionResult = new InstructionResult();
   const storeOps = new StoreOps(regs, memory, instructionResult);
   const loadOps = new LoadOps(regs, memory, instructionResult);

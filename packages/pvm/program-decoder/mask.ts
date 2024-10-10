@@ -1,3 +1,4 @@
+import type { BitVec } from "@typeberry/bytes";
 import { check } from "@typeberry/utils";
 export class Mask {
   /**
@@ -15,7 +16,7 @@ export class Mask {
   private lookupTableForward: Uint8Array;
   private lookupTableBackward: Uint8Array;
 
-  constructor(mask: Uint8Array) {
+  constructor(mask: BitVec) {
     this.lookupTableForward = this.buildLookupTableForward(mask);
     this.lookupTableBackward = this.buildLookupTableBackward(mask);
   }
@@ -25,49 +26,43 @@ export class Mask {
   }
 
   getNoOfBytesToNextInstruction(index: number) {
-    check(index >= 0, "index cannot be a negative number");
-    check(index < this.lookupTableForward.length, `index cannot be bigger than ${this.lookupTableForward.length}`);
-    return this.lookupTableForward[index];
+    check(index >= 0, `index (${index}) cannot be a negative number`);
+    return this.lookupTableForward[index] ?? 0;
   }
 
   getNoOfBytesToPreviousInstruction(index: number) {
-    check(index >= 0, "index cannot be a negative number");
-    check(index < this.lookupTableBackward.length, `index cannot be bigger than ${this.lookupTableBackward.length}`);
+    check(index >= 0, `index (${index}) cannot be a negative number`);
+    check(
+      index < this.lookupTableBackward.length,
+      `index (${index}) cannot be bigger than ${this.lookupTableBackward.length - 1}`,
+    );
     return this.lookupTableBackward[index];
   }
 
-  private buildLookupTableForward(mask: Uint8Array) {
-    const table = new Uint8Array(mask.length * 8);
+  private buildLookupTableForward(mask: BitVec) {
+    const table = new Uint8Array(mask.bitLength);
     let lastInstructionOffset = 0;
-    for (let i = mask.length - 1; i >= 0; i--) {
-      let singleBitMask = 0x80;
-      for (let j = 7; j >= 0; j--) {
-        if ((mask[i] & singleBitMask) > 0) {
-          lastInstructionOffset = 0;
-        } else {
-          lastInstructionOffset++;
-        }
-        table[i * 8 + j] = lastInstructionOffset;
-        singleBitMask >>>= 1;
+    for (let i = mask.bitLength - 1; i >= 0; i--) {
+      if (mask.isSet(i)) {
+        lastInstructionOffset = 0;
+      } else {
+        lastInstructionOffset++;
       }
+      table[i] = lastInstructionOffset;
     }
     return table;
   }
 
-  private buildLookupTableBackward(mask: Uint8Array) {
-    const table = new Uint8Array(mask.length * 8);
+  private buildLookupTableBackward(mask: BitVec) {
+    const table = new Uint8Array(mask.bitLength);
     let lastInstructionOffset = 0;
-    for (let i = 0; i < mask.length; i++) {
-      let singleBitMask = 0x01;
-      for (let j = 0; j < 8; j++) {
-        if ((mask[i] & singleBitMask) > 0) {
-          lastInstructionOffset = 0;
-        } else {
-          lastInstructionOffset++;
-        }
-        table[i * 8 + j] = lastInstructionOffset;
-        singleBitMask <<= 1;
+    for (let i = 0; i < mask.bitLength; i++) {
+      if (mask.isSet(i)) {
+        lastInstructionOffset = 0;
+      } else {
+        lastInstructionOffset++;
       }
+      table[i] = lastInstructionOffset;
     }
     return table;
   }
