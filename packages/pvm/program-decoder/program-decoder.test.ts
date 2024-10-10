@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
+import { BitVec } from "@typeberry/bytes";
 import { JumpTable } from "./jump-table";
 import { Mask } from "./mask";
 import { ProgramDecoder } from "./program-decoder";
@@ -26,7 +27,7 @@ describe("ProgramDecoder", () => {
 
     const result = programDecoder.getMask();
 
-    assert.deepStrictEqual(result, new Mask(new Uint8Array(bitMask)));
+    assert.deepStrictEqual(result, new Mask(BitVec.fromBlob(new Uint8Array(bitMask), code.length)));
   });
 
   it("should corectly decode jump table", () => {

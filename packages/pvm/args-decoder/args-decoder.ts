@@ -114,19 +114,21 @@ export class ArgsDecoder {
   ) {}
 
   fillArgs<T extends Args>(pc: number, result: T) {
+    const nextInstructionDistance = 1 + this.mask.getNoOfBytesToNextInstruction(pc + 1);
+    result.noOfBytesToSkip = nextInstructionDistance;
+
     switch (result.type) {
       case ArgumentType.NO_ARGUMENTS:
         break;
 
       case ArgumentType.ONE_IMMEDIATE: {
-        const immediateLength = this.mask.getNoOfBytesToNextInstruction(pc + 1);
-        result.immediateDecoder.setBytes(this.code.subarray(pc + 1, pc + 1 + immediateLength));
-        result.noOfBytesToSkip = 1 + immediateLength;
+        const immediateLength = nextInstructionDistance - 1;
+        const argsStartIndex = pc + 1;
+        result.immediateDecoder.setBytes(this.code.subarray(argsStartIndex, argsStartIndex + immediateLength));
         break;
       }
 
       case ArgumentType.THREE_REGISTERS: {
-        result.noOfBytesToSkip = 3;
         const firstByte = this.code[pc + 1];
         const secondByte = this.code[pc + 2];
         this.nibblesDecoder.setByte(firstByte);
@@ -143,10 +145,10 @@ export class ArgsDecoder {
         result.firstRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
         result.secondRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
 
-        const immediateLength = this.mask.getNoOfBytesToNextInstruction(pc + 2);
-        result.noOfBytesToSkip = 2 + immediateLength;
-
-        result.immediateDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + immediateLength));
+        const immediateLength = nextInstructionDistance - 1;
+        const immediateStartIndex = pc + 2;
+        const immediateEndIndex = immediateStartIndex + immediateLength;
+        result.immediateDecoder.setBytes(this.code.subarray(immediateStartIndex, immediateEndIndex));
         break;
       }
 
@@ -154,14 +156,18 @@ export class ArgsDecoder {
         const firstByte = this.code[pc + 1];
         this.nibblesDecoder.setByte(firstByte);
         result.registerIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
+
         const immediateLength = this.nibblesDecoder.getHighNibbleAsLength();
-        result.immediateDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + immediateLength));
-        const offsetLength = this.mask.getNoOfBytesToNextInstruction(pc + 2 + immediateLength);
-        this.offsetDecoder.setBytes(
-          this.code.subarray(pc + 2 + immediateLength, pc + 2 + immediateLength + offsetLength),
-        );
+        const immediateStartIndex = pc + 2;
+        const immediateEndIndex = immediateStartIndex + immediateLength;
+        result.immediateDecoder.setBytes(this.code.subarray(immediateStartIndex, immediateEndIndex));
+
+        const offsetLength = nextInstructionDistance - 2 - immediateLength;
+        const offsetStartIndex = pc + 2 + immediateLength;
+        const offsetEndIndex = offsetStartIndex + offsetLength;
+        this.offsetDecoder.setBytes(this.code.subarray(offsetStartIndex, offsetEndIndex));
+
         result.nextPc = pc + this.offsetDecoder.getSigned();
-        result.noOfBytesToSkip = 2 + immediateLength + offsetLength;
         break;
       }
 
@@ -170,16 +176,17 @@ export class ArgsDecoder {
         this.nibblesDecoder.setByte(firstByte);
         result.firstRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
         result.secondRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
-        const offsetLength = this.mask.getNoOfBytesToNextInstruction(pc + 2);
-        result.noOfBytesToSkip = 2 + offsetLength;
 
-        this.offsetDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + offsetLength));
+        const offsetLength = nextInstructionDistance - 2;
+        const offsetStartIndex = pc + 2;
+        const offsetEndIndex = offsetStartIndex + offsetLength;
+        this.offsetDecoder.setBytes(this.code.subarray(offsetStartIndex, offsetEndIndex));
+
         result.nextPc = pc + this.offsetDecoder.getSigned();
         break;
       }
 
       case ArgumentType.TWO_REGISTERS: {
-        result.noOfBytesToSkip = 2;
         const firstByte = this.code[pc + 1];
         this.nibblesDecoder.setByte(firstByte);
         result.firstRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
@@ -188,10 +195,13 @@ export class ArgsDecoder {
       }
 
       case ArgumentType.ONE_OFFSET: {
-        const offsetLength = this.mask.getNoOfBytesToNextInstruction(pc + 1);
-        result.noOfBytesToSkip = 1 + offsetLength;
-        this.offsetDecoder.setBytes(this.code.subarray(pc + 1, pc + 1 + offsetLength));
-        result.nextPc = pc + this.offsetDecoder.getSigned();
+        const offsetLength = nextInstructionDistance - 1;
+        const offsetStartIndex = pc + 1;
+        const offsetEndIndex = offsetStartIndex + offsetLength;
+        const offsetBytes = this.code.subarray(offsetStartIndex, offsetEndIndex);
+        this.offsetDecoder.setBytes(offsetBytes);
+        const offsetValue = this.offsetDecoder.getSigned();
+        result.nextPc = pc + offsetValue;
         break;
       }
 
@@ -200,10 +210,11 @@ export class ArgsDecoder {
         this.nibblesDecoder.setByte(firstByte);
         result.registerIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
 
-        const immediateLength = this.mask.getNoOfBytesToNextInstruction(pc + 2);
-        result.noOfBytesToSkip = 2 + immediateLength;
-
-        result.immediateDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + immediateLength));
+        const immediateLength = nextInstructionDistance - 2;
+        const immediateStartIndex = pc + 2;
+        const immediateEndIndex = immediateStartIndex + immediateLength;
+        const immediateBytes = this.code.subarray(immediateStartIndex, immediateEndIndex);
+        result.immediateDecoder.setBytes(immediateBytes);
         break;
       }
 
@@ -211,12 +222,16 @@ export class ArgsDecoder {
         const firstByte = this.code[pc + 1];
         this.nibblesDecoder.setByte(firstByte);
         const firstImmediateLength = this.nibblesDecoder.getLowNibbleAsLength();
-        result.firstImmediateDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + firstImmediateLength));
-        const secondImmediateLength = this.mask.getNoOfBytesToNextInstruction(pc + 2 + firstImmediateLength);
-        result.secondImmediateDecoder.setBytes(
-          this.code.subarray(pc + 2 + firstImmediateLength, pc + 2 + firstImmediateLength + secondImmediateLength),
-        );
-        result.noOfBytesToSkip = 2 + firstImmediateLength + secondImmediateLength;
+        const firstImmediateStartIndex = pc + 2;
+        const firstImmediateEndIndex = firstImmediateStartIndex + firstImmediateLength;
+        const firstImmediateBytes = this.code.subarray(firstImmediateStartIndex, firstImmediateEndIndex);
+        result.firstImmediateDecoder.setBytes(firstImmediateBytes);
+
+        const secondImmediateLength = nextInstructionDistance - 2 - firstImmediateLength;
+        const secondImmediateStartIndex = firstImmediateEndIndex;
+        const secondImmediateEndIndex = secondImmediateStartIndex + secondImmediateLength;
+        const secondImmediateBytes = this.code.subarray(secondImmediateStartIndex, secondImmediateEndIndex);
+        result.secondImmediateDecoder.setBytes(secondImmediateBytes);
         break;
       }
 
@@ -224,33 +239,40 @@ export class ArgsDecoder {
         const firstByte = this.code[pc + 1];
         this.nibblesDecoder.setByte(firstByte);
         result.registerIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
+
         const firstImmediateLength = this.nibblesDecoder.getHighNibbleAsLength();
-        result.firstImmediateDecoder.setBytes(this.code.subarray(pc + 2, pc + 2 + firstImmediateLength));
-        const secondImmediateLength = this.mask.getNoOfBytesToNextInstruction(pc + 2 + firstImmediateLength);
-        result.secondImmediateDecoder.setBytes(
-          this.code.subarray(pc + 2 + firstImmediateLength, pc + 2 + firstImmediateLength + secondImmediateLength),
-        );
-        result.noOfBytesToSkip = 2 + firstImmediateLength + secondImmediateLength;
+        const firstImmediateStartIndex = pc + 2;
+        const firstImmediateEndIndex = firstImmediateStartIndex + firstImmediateLength;
+        const firstImmediateBytes = this.code.subarray(firstImmediateStartIndex, firstImmediateEndIndex);
+        result.firstImmediateDecoder.setBytes(firstImmediateBytes);
+
+        const secondImmediateLength = nextInstructionDistance - 2 - firstImmediateLength;
+        const secondImmediateStartIndex = firstImmediateEndIndex;
+        const secondImmediateEndIndex = secondImmediateStartIndex + secondImmediateLength;
+        const secondImmediateBytes = this.code.subarray(secondImmediateStartIndex, secondImmediateEndIndex);
+        result.secondImmediateDecoder.setBytes(secondImmediateBytes);
         break;
       }
 
       case ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES: {
-        let newPc = pc + 1;
-        const firstByte = this.code[newPc];
-        newPc += 1;
-        const secondByte = this.code[newPc];
+        const firstByte = this.code[pc + 1];
         this.nibblesDecoder.setByte(firstByte);
         result.firstRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
         result.secondRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
+
+        const secondByte = this.code[pc + 2];
         this.nibblesDecoder.setByte(secondByte);
         const firstImmediateLength = this.nibblesDecoder.getLowNibbleAsLength();
-        newPc += 1;
-        result.firstImmediateDecoder.setBytes(this.code.subarray(newPc, newPc + firstImmediateLength));
-        newPc += firstImmediateLength;
-        const secondImmediateLength = this.mask.getNoOfBytesToNextInstruction(newPc);
-        result.secondImmediateDecoder.setBytes(this.code.subarray(newPc, newPc + secondImmediateLength));
-        newPc += secondImmediateLength;
-        result.noOfBytesToSkip = newPc - pc;
+        const firstImmediateStartIndex = pc + 3;
+        const firstImmediateEndIndex = firstImmediateStartIndex + firstImmediateLength;
+        const firstImmediateBytes = this.code.subarray(firstImmediateStartIndex, firstImmediateEndIndex);
+        result.firstImmediateDecoder.setBytes(firstImmediateBytes);
+
+        const secondImmediateLength = nextInstructionDistance - 3 - firstImmediateLength;
+        const secondImmediateStartIndex = firstImmediateEndIndex;
+        const secondImmediateEndIndex = secondImmediateStartIndex + secondImmediateLength;
+        const secondImmediateBytes = this.code.subarray(secondImmediateStartIndex, secondImmediateEndIndex);
+        result.secondImmediateDecoder.setBytes(secondImmediateBytes);
         break;
       }
     }
