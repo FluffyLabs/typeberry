@@ -1,25 +1,23 @@
 import { fail } from "node:assert";
 import * as fs from "node:fs/promises";
+import path from "node:path";
 import test from "node:test";
 
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
-import { AssurancesExtrinsicFromJson, runAssurancesExtrinsicTest } from "./tests/codec/assurances_extrinsic";
-import { Block, runBlockTest } from "./tests/codec/block";
-import { DisputesExtrinsic, runDisputesExtrinsicTest } from "./tests/codec/disputes_extrinsic";
-import { Extrinsic, runExtrinsicTest } from "./tests/codec/extrinsic";
-import {
-  GuaranteesExtrinsicFromJson as guaranteesExtrinsicFromJson,
-  runGuaranteesExtrinsicTest,
-} from "./tests/codec/guarantees_extrinsic";
-import { Header, runHeaderTest } from "./tests/codec/header";
-import { PreimagesExtrinsicFromJson, runPreimagesExtrinsicTest } from "./tests/codec/preimages_extrinsic";
-import { RefineContext, runRefineContextTest } from "./tests/codec/refine_context";
-import { TicketsExtrinsicFromJson, runTicketsExtrinsicTest } from "./tests/codec/tickets_extrinsic";
-import { WorkItem, runWorkItemTest } from "./tests/codec/work_item";
-import { WorkPackage, runWorkPackageTest } from "./tests/codec/work_package";
-import { WorkReport, runWorkReportTest } from "./tests/codec/work_report";
-import { WorkResult, runWorkResultTest } from "./tests/codec/work_result";
+import { assurancesExtrinsicFromJson, runAssurancesExtrinsicTest } from "./tests/codec/assurances-extrinsic";
+import { blockFromJson, runBlockTest } from "./tests/codec/block";
+import { disputesExtrinsicFromJson, runDisputesExtrinsicTest } from "./tests/codec/disputes-extrinsic";
+import { extrinsicFromJson, runExtrinsicTest } from "./tests/codec/extrinsic";
+import { guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest } from "./tests/codec/guarantees-extrinsic";
+import { headerFromJson, runHeaderTest } from "./tests/codec/header";
+import { preimagesExtrinsicFromJson, runPreimagesExtrinsicTest } from "./tests/codec/preimages-extrinsic";
+import { refineContextFromJson, runRefineContextTest } from "./tests/codec/refine-context";
+import { runTicketsExtrinsicTest, ticketsExtrinsicFromJson } from "./tests/codec/tickets-extrinsic";
+import { runWorkItemTest, workItemFromJson } from "./tests/codec/work-item";
+import { runWorkPackageTest, workPackageFromJson } from "./tests/codec/work-package";
+import { runWorkReportTest, workReportFromJson } from "./tests/codec/work-report";
+import { runWorkResultTest, workResultFromJson } from "./tests/codec/work-result";
 import {
   EcTest,
   PageProof,
@@ -57,11 +55,12 @@ async function main() {
 
   logger.info(`Creating tests for ${files.length} files.`);
   for (const file of files) {
-    const data = await fs.readFile(`${relPath}/${file}`, "utf8");
+    const absolutePath = path.resolve(`${relPath}/${file}`);
+    const data = await fs.readFile(absolutePath, "utf8");
     // TODO [ToDr] We might want to implement a custom JSON parser
     // to avoid-double converting to expected types.
     const testContent = JSON.parse(data);
-    const testCases = prepareTests(testContent, file);
+    const testCases = prepareTests(testContent, file, absolutePath);
 
     tests.push(...testCases);
   }
@@ -110,9 +109,10 @@ async function main() {
 function tryToPrepareTestRunner<T>(
   name: string,
   file: string,
+  path: string,
   testContent: unknown,
   fromJson: FromJson<T>,
-  run: (t: T, file: string) => Promise<void>,
+  run: (t: T, path: string) => Promise<void>,
   onError: (name: string, e: unknown) => void,
 ): TestAndRunner | null {
   try {
@@ -121,7 +121,7 @@ function tryToPrepareTestRunner<T>(
     return {
       runner: name,
       file,
-      test: () => run(parsedTest, file),
+      test: () => run(parsedTest, path),
     };
   } catch (e) {
     onError(name, e);
@@ -135,29 +135,29 @@ type TestAndRunner = {
   test: () => Promise<void>;
 };
 
-function prepareTests(testContent: unknown, file: string): TestAndRunner[] {
+function prepareTests(testContent: unknown, file: string, path: string): TestAndRunner[] {
   const errors: [string, unknown][] = [];
   const handleError = (name: string, e: unknown) => errors.push([name, e]);
 
-  function prepRunner<T>(name: string, fromJson: FromJson<T>, run: (t: T, file: string) => Promise<void>) {
-    const r = tryToPrepareTestRunner(name, file, testContent, fromJson, run, handleError);
+  function prepRunner<T>(name: string, fromJson: FromJson<T>, run: (t: T, path: string) => Promise<void>) {
+    const r = tryToPrepareTestRunner(name, file, path, testContent, fromJson, run, handleError);
     return r;
   }
 
   const runners = [
-    prepRunner("codec/assurances_extrinsic", AssurancesExtrinsicFromJson, runAssurancesExtrinsicTest),
-    prepRunner("codec/block", Block.fromJson, runBlockTest),
-    prepRunner("codec/disputes_extrinsic", DisputesExtrinsic.fromJson, runDisputesExtrinsicTest),
-    prepRunner("codec/extrinsic", Extrinsic.fromJson, runExtrinsicTest),
+    prepRunner("codec/assurances_extrinsic", assurancesExtrinsicFromJson, runAssurancesExtrinsicTest),
+    prepRunner("codec/block", blockFromJson, runBlockTest),
+    prepRunner("codec/disputes_extrinsic", disputesExtrinsicFromJson, runDisputesExtrinsicTest),
+    prepRunner("codec/extrinsic", extrinsicFromJson, runExtrinsicTest),
     prepRunner("codec/guarantees_extrinsic", guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest),
-    prepRunner("codec/header", Header.fromJson, runHeaderTest),
-    prepRunner("codec/preimages_extrinsic", PreimagesExtrinsicFromJson, runPreimagesExtrinsicTest),
-    prepRunner("codec/refine_context", RefineContext.fromJson, runRefineContextTest),
-    prepRunner("codec/tickets_extrinsic", TicketsExtrinsicFromJson, runTicketsExtrinsicTest),
-    prepRunner("codec/work_item", WorkItem.fromJson, runWorkItemTest),
-    prepRunner("codec/work_package", WorkPackage.fromJson, runWorkPackageTest),
-    prepRunner("codec/work_report", WorkReport.fromJson, runWorkReportTest),
-    prepRunner("codec/work_result", WorkResult.fromJson, runWorkResultTest),
+    prepRunner("codec/header", headerFromJson, runHeaderTest),
+    prepRunner("codec/preimages_extrinsic", preimagesExtrinsicFromJson, runPreimagesExtrinsicTest),
+    prepRunner("codec/refine_context", refineContextFromJson, runRefineContextTest),
+    prepRunner("codec/tickets_extrinsic", ticketsExtrinsicFromJson, runTicketsExtrinsicTest),
+    prepRunner("codec/work_item", workItemFromJson, runWorkItemTest),
+    prepRunner("codec/work_package", workPackageFromJson, runWorkPackageTest),
+    prepRunner("codec/work_report", workReportFromJson, runWorkReportTest),
+    prepRunner("codec/work_result", workResultFromJson, runWorkResultTest),
     prepRunner("erasure-coding", EcTest.fromJson, runEcTest),
     prepRunner("erasure-coding/page-proof", PageProof.fromJson, runPageProofTest),
     prepRunner("erasure-coding/segment-ec", SegmentEcTest.fromJson, runSegmentEcTest),

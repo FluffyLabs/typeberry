@@ -2,6 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { BitVec } from "@typeberry/bytes";
+import type { U32 } from "@typeberry/numbers";
 import { Encoder } from "./encoder";
 
 describe("JAM encoder / bytes", () => {
@@ -41,7 +42,7 @@ describe("JAM encoder / numbers", () => {
   it("should encode a large 32-bit number", () => {
     const encoder = Encoder.create();
 
-    encoder.varU32(2 ** 32 - 1);
+    encoder.varU32((2 ** 32 - 1) as U32);
 
     assert.deepStrictEqual(encoder.viewResult().toString(), "0xf0ffffffff");
   });
@@ -49,14 +50,14 @@ describe("JAM encoder / numbers", () => {
   it("should encode variable length u32", () => {
     const encoder = Encoder.create();
 
-    encoder.varU32(0);
-    encoder.varU32(1);
-    encoder.varU32(2);
-    encoder.varU32(3);
-    encoder.varU32(42);
-    encoder.varU32(2 ** 32 - 1);
-    encoder.varU32(2 ** 31 - 1);
-    encoder.varU32(0x42424242);
+    encoder.varU32(0 as U32);
+    encoder.varU32(1 as U32);
+    encoder.varU32(2 as U32);
+    encoder.varU32(3 as U32);
+    encoder.varU32(42 as U32);
+    encoder.varU32((2 ** 32 - 1) as U32);
+    encoder.varU32((2 ** 31 - 1) as U32);
+    encoder.varU32(0x42424242 as U32);
 
     assert.deepStrictEqual(encoder.viewResult().toString(), "0x000102032af0fffffffff0ffffff7ff042424242");
   });
@@ -71,6 +72,23 @@ describe("JAM encoder / numbers", () => {
     encoder.varU64(2n ** 64n - 1n);
 
     assert.deepStrictEqual(encoder.viewResult().toString(), "0x0001f100000000ff0000000000000001ffffffffffffffffff");
+  });
+
+  it("should encode a bunch of i64 numbers", () => {
+    const encoder = Encoder.create();
+
+    encoder.i64(2n ** 63n - 1n);
+    encoder.i64(-(2n ** 63n));
+    encoder.i64(0x42424242n);
+    encoder.i64(-42n);
+    encoder.i64(0n);
+
+    assert.deepStrictEqual(
+      encoder.viewResult().toString(),
+      BytesBlob.parseBlob(
+        "0xffffffffffffff7f00000000000000804242424200000000d6ffffffffffffff0000000000000000",
+      ).toString(),
+    );
   });
 
   it("should encode a bunch of i32 numbers", () => {

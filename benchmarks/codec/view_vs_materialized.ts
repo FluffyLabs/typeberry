@@ -2,7 +2,8 @@ import assert from "node:assert";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { type Record, type View, codec } from "@typeberry/codec/descriptors";
+import { type CodecRecord, type View, codec } from "@typeberry/codec/descriptors";
+import type { U64 } from "@typeberry/numbers";
 
 class TestHeader {
   static Codec = codec.Class(TestHeader, {
@@ -12,12 +13,16 @@ class TestHeader {
     extrinsicHash: codec.bytes(32),
   });
 
-  public readonly blockNumber: bigint;
+  static fromCodec(o: CodecRecord<TestHeader>) {
+    return new TestHeader(o);
+  }
+
+  public readonly blockNumber: U64;
   public readonly parentHeaderHash: Bytes<32>;
   public readonly priorStateRoot: Bytes<32>;
   public readonly extrinsicHash: Bytes<32>;
 
-  constructor(o: Record<TestHeader>) {
+  constructor(o: CodecRecord<TestHeader>) {
     this.blockNumber = o.blockNumber;
     this.parentHeaderHash = o.parentHeaderHash;
     this.priorStateRoot = o.priorStateRoot;
@@ -33,7 +38,7 @@ const extrinsicHash = Bytes.fill(32, 0x42);
 TestHeader.Codec.encode(
   encoder,
   new TestHeader({
-    blockNumber: 10_000_000n,
+    blockNumber: 10_000_000n as U64,
     parentHeaderHash,
     priorStateRoot,
     extrinsicHash,

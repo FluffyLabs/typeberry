@@ -1,21 +1,17 @@
+import type { TicketAttempt, TicketEnvelope } from "@typeberry/block/tickets";
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { Opaque } from "@typeberry/utils";
+import type { BandersnatchKey, Ed25519Key } from "../block/crypto";
 import { verifyBandersnatch } from "./bandersnatch";
-import type { BandersnatchKey, BandersnatchRingSignature, BlsKey, Ed25519Key } from "./crypto";
+import type { BlsKey } from "./crypto";
 
 export type Hash = Bytes<32>;
 export type EntropyHash = Opaque<Hash, "EntropyHash">;
-export type TicketAttempt = Opaque<0 | 1, "TicketAttempt[0|1]">;
 
 export type TicketBody = {
   id: Hash;
   attempt: TicketAttempt;
 };
-
-export class TicketEnvelope {
-  attempt!: TicketAttempt;
-  signature!: BandersnatchRingSignature;
-}
 
 export type ValidatorData = {
   ed25519: Ed25519Key;

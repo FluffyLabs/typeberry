@@ -6,6 +6,7 @@
   "workspaces": [
     "bin/jam",
     "bin/test-runner",
+    "packages/block",
     "packages/bytes",
     "packages/codec",
     "packages/collections",
@@ -18,7 +19,6 @@
     "packages/pvm-standard-program-decoder",
     "packages/safrole",
     "packages/state-machine",
-    "packages/stubs",
     "packages/trie",
     "packages/utils",
     "tools/benchmark",

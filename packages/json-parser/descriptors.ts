@@ -33,7 +33,7 @@ export namespace json {
   }
 
   /** Parse an object and create a class instance of given type using `builder` function. */
-  export function object<TFrom, TInto extends TFrom = TFrom>(
+  export function object<TFrom, TInto = TFrom>(
     from: FromJson<TFrom>,
     builder: Builder<TFrom, TInto>,
   ): FromJsonWithParser<unknown, TInto> {

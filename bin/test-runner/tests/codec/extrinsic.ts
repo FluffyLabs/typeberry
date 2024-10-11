@@ -1,33 +1,34 @@
+import assert from "node:assert";
+import fs from "node:fs";
+import { Extrinsic } from "@typeberry/block/block";
+import { CodecContext } from "@typeberry/block/context";
+import { BytesBlob } from "@typeberry/bytes";
+import { Decoder, Encoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
-import { logger } from ".";
-import { type AssurancesExtrinsic, AssurancesExtrinsicFromJson } from "./assurances_extrinsic";
-import { DisputesExtrinsic } from "./disputes_extrinsic";
-import { type GuaranteesExtrinsic, GuaranteesExtrinsicFromJson } from "./guarantees_extrinsic";
-import { type PreimagesExtrinsic, PreimagesExtrinsicFromJson } from "./preimages_extrinsic";
-import { type TicketsExtrinsic, TicketsExtrinsicFromJson } from "./tickets_extrinsic";
+import { assurancesExtrinsicFromJson } from "./assurances-extrinsic";
+import { disputesExtrinsicFromJson } from "./disputes-extrinsic";
+import { guaranteesExtrinsicFromJson } from "./guarantees-extrinsic";
+import { preimagesExtrinsicFromJson } from "./preimages-extrinsic";
+import { ticketsExtrinsicFromJson } from "./tickets-extrinsic";
 
-export class Extrinsic {
-  static fromJson = json.object<Extrinsic>(
-    {
-      tickets: TicketsExtrinsicFromJson,
-      disputes: DisputesExtrinsic.fromJson,
-      preimages: PreimagesExtrinsicFromJson,
-      assurances: AssurancesExtrinsicFromJson,
-      guarantees: GuaranteesExtrinsicFromJson,
-    },
-    (v) => Object.assign(new Extrinsic(), v),
-  );
-
-  tickets!: TicketsExtrinsic;
-  disputes!: DisputesExtrinsic;
-  preimages!: PreimagesExtrinsic;
-  assurances!: AssurancesExtrinsic;
-  guarantees!: GuaranteesExtrinsic;
-
-  private constructor() {}
-}
+export const extrinsicFromJson = json.object<Extrinsic>(
+  {
+    tickets: ticketsExtrinsicFromJson,
+    disputes: disputesExtrinsicFromJson,
+    preimages: preimagesExtrinsicFromJson,
+    assurances: assurancesExtrinsicFromJson,
+    guarantees: guaranteesExtrinsicFromJson,
+  },
+  ({ tickets, disputes, preimages, assurances, guarantees }) =>
+    new Extrinsic(tickets, disputes, preimages, assurances, guarantees),
+);
 
 export async function runExtrinsicTest(test: Extrinsic, file: string) {
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error(`Not implemented yet! ${file}`);
+  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
+
+  const myEncoded = Encoder.encodeObject(Extrinsic.Codec, test, new CodecContext());
+  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.fromBlob(encoded).toString());
+
+  const decoded = Decoder.decodeObject(Extrinsic.Codec, encoded, new CodecContext());
+  assert.deepStrictEqual(decoded, test);
 }
