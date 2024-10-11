@@ -44,6 +44,7 @@ function myTransform(this: Reporter, event: TestEvent, _encoding: BufferEncoding
           null,
           `
 <details>
+<summary>View all</summary>
 
 |  Name  |  Status  | |
 |--------|----------|-|

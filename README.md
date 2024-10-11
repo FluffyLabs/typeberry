@@ -6,7 +6,7 @@ Typeberry is a TypeScript implementation of [JAM protocol](https://graypaper.com
 
 ## Implementation status
 
-- [ ] PVM (ongoing)
+- [x] PVM
 - [ ] State Trie (ongoing)
 - [ ] Safrole (ongoing)
 - [ ] Block Import

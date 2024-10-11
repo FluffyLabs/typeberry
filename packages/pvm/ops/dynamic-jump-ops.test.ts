@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { BitVec } from "@typeberry/bytes";
 import { BasicBlocks } from "../basic-blocks";
 import { Instruction } from "../instruction";
 import { InstructionResult } from "../instruction-result";
@@ -15,11 +16,9 @@ describe("DynamicJumpOps", () => {
     const regs = new Registers();
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
-    const mask = new Mask(new Uint8Array([0b1100_1111]));
-    const basicBlocks = new BasicBlocks(
-      new Uint8Array([Instruction.TRAP, Instruction.TRAP, Instruction.TRAP, Instruction.ADD, 5, 6]),
-      mask,
-    );
+    const code = new Uint8Array([Instruction.TRAP, Instruction.TRAP, Instruction.TRAP, Instruction.ADD, 5, 6]);
+    const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1111]), code.length));
+    const basicBlocks = new BasicBlocks(code, mask);
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
     regs.asUnsigned[registerIndex] = 3;
@@ -34,11 +33,9 @@ describe("DynamicJumpOps", () => {
     const regs = new Registers();
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
-    const mask = new Mask(new Uint8Array([0b1100_1111]));
-    const basicBlocks = new BasicBlocks(
-      new Uint8Array([Instruction.TRAP, Instruction.TRAP, Instruction.TRAP, Instruction.ADD, 5, 6]),
-      mask,
-    );
+    const code = new Uint8Array([Instruction.TRAP, Instruction.TRAP, Instruction.TRAP, Instruction.ADD, 5, 6]);
+    const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1111]), code.length));
+    const basicBlocks = new BasicBlocks(code, mask);
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
     regs.asUnsigned[registerIndex] = MAX_VALUE;
@@ -53,7 +50,7 @@ describe("DynamicJumpOps", () => {
     const regs = new Registers();
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
-    const mask = new Mask(new Uint8Array([0b11111001]));
+    const mask = new Mask(BitVec.empty(0));
     const basicBlocks = new BasicBlocks(new Uint8Array(), mask);
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
@@ -68,7 +65,7 @@ describe("DynamicJumpOps", () => {
     const regs = new Registers();
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
-    const mask = new Mask(new Uint8Array([0b11111001]));
+    const mask = new Mask(BitVec.empty(0));
     const basicBlocks = new BasicBlocks(new Uint8Array(), mask);
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
@@ -83,7 +80,7 @@ describe("DynamicJumpOps", () => {
     const regs = new Registers();
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
-    const mask = new Mask(new Uint8Array([0b11111001]));
+    const mask = new Mask(BitVec.empty(0));
     const basicBlocks = new BasicBlocks(new Uint8Array(), mask);
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
@@ -98,7 +95,7 @@ describe("DynamicJumpOps", () => {
     const regs = new Registers();
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
-    const mask = new Mask(new Uint8Array([0b11111001]));
+    const mask = new Mask(BitVec.empty(0));
     const basicBlocks = new BasicBlocks(new Uint8Array(), mask);
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
@@ -113,7 +110,7 @@ describe("DynamicJumpOps", () => {
     const regs = new Registers();
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
-    const mask = new Mask(new Uint8Array([0b11110001]));
+    const mask = new Mask(BitVec.empty(0));
     const basicBlocks = new BasicBlocks(new Uint8Array(), mask);
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
@@ -128,8 +125,9 @@ describe("DynamicJumpOps", () => {
     const regs = new Registers();
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
-    const mask = new Mask(new Uint8Array([0b1001_0001]));
-    const basicBlocks = new BasicBlocks(new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]), mask);
+    const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+    const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length));
+    const basicBlocks = new BasicBlocks(code, mask);
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
     regs.asUnsigned[registerIndex] = 3;

@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { BitVec } from "@typeberry/bytes";
 import { BasicBlocks } from "../basic-blocks";
 import { Instruction } from "../instruction";
 import { InstructionResult } from "../instruction-result";
@@ -13,7 +14,7 @@ describe("BranchOps", () => {
     it("should update nextPc", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -28,10 +29,8 @@ describe("BranchOps", () => {
     it("should not update nextPc (nextPc is not the beginning of basic block)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -48,7 +47,7 @@ describe("BranchOps", () => {
     it("should update nextPc", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -67,7 +66,7 @@ describe("BranchOps", () => {
     it("should not update nextPc (condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -86,10 +85,8 @@ describe("BranchOps", () => {
     it("should update status to PANIC (nextPc is not the beginning of basic block)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -108,10 +105,8 @@ describe("BranchOps", () => {
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -132,7 +127,7 @@ describe("BranchOps", () => {
     it("should update nextPc", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -150,7 +145,7 @@ describe("BranchOps", () => {
     it("should not update nextPc (condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -168,10 +163,8 @@ describe("BranchOps", () => {
     it("should update status to PANIC (nextPc is not the beginning of basic block)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -189,10 +182,8 @@ describe("BranchOps", () => {
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -212,7 +203,7 @@ describe("BranchOps", () => {
     it("should update nextPc", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -231,7 +222,7 @@ describe("BranchOps", () => {
     it("should not update nextPc (condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -250,10 +241,8 @@ describe("BranchOps", () => {
     it("should update status to PANIC (nextPc is not the beginning of basic block)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -272,10 +261,8 @@ describe("BranchOps", () => {
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -296,7 +283,7 @@ describe("BranchOps", () => {
     it("should update nextPc", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -314,7 +301,7 @@ describe("BranchOps", () => {
     it("should not update nextPc (condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -332,10 +319,8 @@ describe("BranchOps", () => {
     it("should update status to PANIC (nextPc is not the beginning of basic block)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -353,10 +338,8 @@ describe("BranchOps", () => {
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -376,7 +359,7 @@ describe("BranchOps", () => {
     it("should update nextPc", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -395,7 +378,7 @@ describe("BranchOps", () => {
     it("should not update nextPc (condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -414,10 +397,8 @@ describe("BranchOps", () => {
     it("should update status to PANIC (nextPc is not the beginning of basic block)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -436,10 +417,8 @@ describe("BranchOps", () => {
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -460,7 +439,7 @@ describe("BranchOps", () => {
     it("should update nextPc", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -478,7 +457,7 @@ describe("BranchOps", () => {
     it("should not update nextPc (condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -496,10 +475,8 @@ describe("BranchOps", () => {
     it("should update status to PANIC (nextPc is not the beginning of basic block)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -517,10 +494,8 @@ describe("BranchOps", () => {
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -540,7 +515,7 @@ describe("BranchOps", () => {
     it("should update nextPc", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -559,7 +534,7 @@ describe("BranchOps", () => {
     it("should not update nextPc (condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -578,10 +553,8 @@ describe("BranchOps", () => {
     it("should update status to PANIC (nextPc is not the beginning of basic block)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -600,10 +573,8 @@ describe("BranchOps", () => {
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -624,7 +595,7 @@ describe("BranchOps", () => {
     it("should update nextPc", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -642,7 +613,7 @@ describe("BranchOps", () => {
     it("should not update nextPc (condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -660,10 +631,8 @@ describe("BranchOps", () => {
     it("should update status to PANIC (nextPc is not the beginning of basic block)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -681,10 +650,8 @@ describe("BranchOps", () => {
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -704,7 +671,7 @@ describe("BranchOps", () => {
     it("should update nextPc", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -722,7 +689,7 @@ describe("BranchOps", () => {
     it("should not update nextPc (condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -740,10 +707,8 @@ describe("BranchOps", () => {
     it("should update status to PANIC (nextPc is not the beginning of basic block)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -761,10 +726,8 @@ describe("BranchOps", () => {
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -784,7 +747,7 @@ describe("BranchOps", () => {
     it("should update nextPc", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -802,7 +765,7 @@ describe("BranchOps", () => {
     it("should not update nextPc (condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -820,10 +783,8 @@ describe("BranchOps", () => {
     it("should update status to PANIC (nextPc is not the beginning of basic block)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -841,10 +802,8 @@ describe("BranchOps", () => {
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -864,7 +823,7 @@ describe("BranchOps", () => {
     it("should update nextPc", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -882,7 +841,7 @@ describe("BranchOps", () => {
     it("should not update nextPc (condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -900,10 +859,8 @@ describe("BranchOps", () => {
     it("should update status to PANIC (nextPc is not the beginning of basic block)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -921,10 +878,8 @@ describe("BranchOps", () => {
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -944,7 +899,7 @@ describe("BranchOps", () => {
     it("should update nextPc", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -963,7 +918,7 @@ describe("BranchOps", () => {
     it("should not update nextPc (condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -982,10 +937,8 @@ describe("BranchOps", () => {
     it("should update status to PANIC (nextPc is not the beginning of basic block)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -1006,7 +959,7 @@ describe("BranchOps", () => {
     it("should update nextPc", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -1024,7 +977,7 @@ describe("BranchOps", () => {
     it("should not update nextPc (condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -1042,10 +995,8 @@ describe("BranchOps", () => {
     it("should update status to PANIC (nextPc is not the beginning of basic block)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -1063,10 +1014,8 @@ describe("BranchOps", () => {
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -1086,7 +1035,7 @@ describe("BranchOps", () => {
     it("should update nextPc", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -1104,7 +1053,7 @@ describe("BranchOps", () => {
     it("should not update nextPc (condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -1122,10 +1071,8 @@ describe("BranchOps", () => {
     it("should update status to PANIC (nextPc is not the beginning of basic block)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -1143,10 +1090,8 @@ describe("BranchOps", () => {
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -1166,7 +1111,7 @@ describe("BranchOps", () => {
     it("should update nextPc", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -1184,7 +1129,7 @@ describe("BranchOps", () => {
     it("should not update nextPc (condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -1202,10 +1147,8 @@ describe("BranchOps", () => {
     it("should update status to PANIC (nextPc is not the beginning of basic block)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -1223,10 +1166,8 @@ describe("BranchOps", () => {
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -1246,7 +1187,7 @@ describe("BranchOps", () => {
     it("should update nextPc", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -1265,7 +1206,7 @@ describe("BranchOps", () => {
     it("should not update nextPc (condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+      const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
       instructionResult.nextPc = 1;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 0;
@@ -1284,10 +1225,8 @@ describe("BranchOps", () => {
     it("should update status to PANIC (nextPc is not the beginning of basic block)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;
@@ -1306,10 +1245,8 @@ describe("BranchOps", () => {
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
       const regs = new Registers();
       const instructionResult = new InstructionResult();
-      const basicBlocks = new BasicBlocks(
-        new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]),
-        new Mask(new Uint8Array([0b1100_1001])),
-      );
+      const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+      const basicBlocks = new BasicBlocks(code, new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length)));
       instructionResult.nextPc = 0;
       const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
       const nextPc = 3;

@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { test } from "node:test";
+import { BitVec } from "@typeberry/bytes";
 import type { OneOffsetArgs } from "../args-decoder/args-decoder";
 import { ArgumentType } from "../args-decoder/argument-type";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
@@ -14,7 +15,7 @@ import { OneOffsetDispatcher } from "./one-offset-dispatcher";
 test("OneOffsetDispatcher", async (t) => {
   const regs = new Registers();
   const instructionResult = new InstructionResult();
-  const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(new Uint8Array()));
+  const basicBlocks = new BasicBlocks(new Uint8Array(), new Mask(BitVec.empty(0)));
   const branchOps = new BranchOps(regs, instructionResult, basicBlocks);
 
   const mockFn = t.mock.fn();

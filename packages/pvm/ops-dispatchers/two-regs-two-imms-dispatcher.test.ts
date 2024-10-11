@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
+import { BitVec } from "@typeberry/bytes";
 import type { TwoRegistersTwoImmediatesArgs } from "../args-decoder/args-decoder";
 import { ArgumentType } from "../args-decoder/argument-type";
 import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
@@ -20,7 +21,7 @@ describe("TwoRegsTwoImmsDispatcher", () => {
     const memory = new Memory();
     const jumpTable = new JumpTable(1, new Uint8Array([1]));
     const instructionResult = new InstructionResult();
-    const mask = new Mask(new Uint8Array([1]));
+    const mask = new Mask(BitVec.fromBlob(new Uint8Array([1]), 1));
     const loadOps = new LoadOps(regs, memory, instructionResult);
     const basicBlocks = new BasicBlocks(new Uint8Array(), mask);
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
@@ -71,7 +72,7 @@ describe("TwoRegsTwoImmsDispatcher", () => {
     const memory = new Memory();
     const loadOps = new LoadOps(regs, memory, instructionResult);
     const jumpTable = new JumpTable(1, new Uint8Array([1]));
-    const mask = new Mask(new Uint8Array([1]));
+    const mask = new Mask(BitVec.fromBlob(new Uint8Array([1]), 1));
     const basicBlocks = new BasicBlocks(new Uint8Array(), mask);
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const mockFn = mock.fn();
