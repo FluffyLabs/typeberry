@@ -1,15 +1,11 @@
-import assert from "node:assert";
-import fs from "node:fs";
 import type { ServiceId } from "@typeberry/block";
-import { CodecContext } from "@typeberry/block/context";
 import type { RefineContext } from "@typeberry/block/refine-context";
 import type { WorkItem } from "@typeberry/block/work-item";
 import { WorkPackage } from "@typeberry/block/work-package";
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { bytes32 } from ".";
+import { fromJson, runCodecTest } from ".";
 import { refineContextFromJson } from "./refine-context";
 import { workItemFromJson } from "./work-item";
 
@@ -19,7 +15,7 @@ type Authorizer = {
 };
 
 const authorizerFromJson: FromJson<Authorizer> = {
-  code_hash: bytes32(),
+  code_hash: fromJson.bytes32(),
   params: json.fromString(BytesBlob.parseBlob),
 };
 
@@ -52,11 +48,5 @@ type JsonWorkPackage = {
 };
 
 export async function runWorkPackageTest(test: WorkPackage, file: string) {
-  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
-
-  const myEncoded = Encoder.encodeObject(WorkPackage.Codec, test, new CodecContext());
-  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.fromBlob(encoded).toString());
-
-  const decoded = Decoder.decodeObject(WorkPackage.Codec, encoded, new CodecContext());
-  assert.deepStrictEqual(decoded, test);
+  runCodecTest(WorkPackage.Codec, test, file);
 }

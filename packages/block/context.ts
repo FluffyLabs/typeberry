@@ -29,13 +29,45 @@ export const EST_EPOCH_LENGTH = 600;
  * TODO [ToDr] note this will most likely depend on the state of the blockchain,
  * current values are there just for the tests.
  */
-export class CodecContext {
+export class ChainSpec {
   /** Number of validators. */
-  validatorsCount = 6;
+  readonly validatorsCount: number;
   /** 2/3 of number of validators + 1 */
-  validatorsSuperMajority = 5;
-  /** Length of the epoch in time slots. */
-  epochLength = 12;
+  readonly validatorsSuperMajority: number;
   /** Number of cores. */
-  coresCount = 2;
+  readonly coresCount: number;
+  /** Duration of a timeslot in seconds. */
+  readonly slotDuration: number;
+  /** Length of the epoch in time slots. */
+  readonly epochLength: number;
+  /** Length of the ticket contest in time slots. */
+  readonly contestLength: number;
+  /** The maximum number of tickets each validator can submit. */
+  readonly ticketsPerValidator: number;
+
+  constructor(data: {
+    validatorsCount: number;
+    coresCount: number;
+    slotDuration: number;
+    epochLength: number;
+    contestLength: number;
+    ticketsPerValidator: number;
+  }) {
+    this.validatorsCount = data.validatorsCount;
+    this.validatorsSuperMajority = Math.floor(data.validatorsCount / 3) * 2 + 1;
+    this.coresCount = data.coresCount;
+    this.slotDuration = data.slotDuration;
+    this.epochLength = data.epochLength;
+    this.contestLength = data.contestLength;
+    this.ticketsPerValidator = data.ticketsPerValidator;
+  }
 }
+
+export const tinyChainSpec = new ChainSpec({
+  validatorsCount: 6,
+  coresCount: 2,
+  slotDuration: 6,
+  epochLength: 12,
+  contestLength: 10,
+  ticketsPerValidator: 3,
+});

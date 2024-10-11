@@ -1,10 +1,6 @@
-import assert from "node:assert";
-import fs from "node:fs";
 import { Extrinsic } from "@typeberry/block/block";
-import { CodecContext } from "@typeberry/block/context";
-import { BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
+import { runCodecTest } from ".";
 import { assurancesExtrinsicFromJson } from "./assurances-extrinsic";
 import { disputesExtrinsicFromJson } from "./disputes-extrinsic";
 import { guaranteesExtrinsicFromJson } from "./guarantees-extrinsic";
@@ -24,11 +20,5 @@ export const extrinsicFromJson = json.object<Extrinsic>(
 );
 
 export async function runExtrinsicTest(test: Extrinsic, file: string) {
-  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
-
-  const myEncoded = Encoder.encodeObject(Extrinsic.Codec, test, new CodecContext());
-  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.fromBlob(encoded).toString());
-
-  const decoded = Decoder.decodeObject(Extrinsic.Codec, encoded, new CodecContext());
-  assert.deepStrictEqual(decoded, test);
+  runCodecTest(Extrinsic.Codec, test, file);
 }

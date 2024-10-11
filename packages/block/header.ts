@@ -3,7 +3,7 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import type { TrieHash } from "@typeberry/trie";
 import type { EntropyHash, TimeSlot, ValidatorIndex } from "./common";
-import { CodecContext, EST_EPOCH_LENGTH, EST_VALIDATORS } from "./context";
+import { ChainSpec, EST_EPOCH_LENGTH, EST_VALIDATORS } from "./context";
 import {
   BANDERSNATCH_KEY_BYTES,
   BANDERSNATCH_VRF_SIGNATURE_BYTES,
@@ -31,7 +31,7 @@ export class EpochMarker {
         sizeHintBytes: EST_VALIDATORS * BANDERSNATCH_KEY_BYTES,
       },
       (context) => {
-        if (context instanceof CodecContext) {
+        if (context instanceof ChainSpec) {
           return codec.sequenceFixLen(codec.bytes(BANDERSNATCH_KEY_BYTES), context.validatorsCount).cast();
         }
         throw new Error("Missing context object to decode `EpochMark.validators`.");
@@ -70,7 +70,7 @@ export class Header {
           sizeHintBytes: EST_EPOCH_LENGTH * Ticket.Codec.sizeHintBytes,
         },
         (context) => {
-          if (context instanceof CodecContext) {
+          if (context instanceof ChainSpec) {
             return codec.sequenceFixLen(Ticket.Codec, context.epochLength).cast();
           }
           throw new Error("Missing context object to decode `Header.ticketsMark`.");

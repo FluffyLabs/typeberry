@@ -1,5 +1,3 @@
-import assert from "node:assert";
-import fs from "node:fs";
 import {
   type BandersnatchKey,
   type BandersnatchVrfSignature,
@@ -11,28 +9,26 @@ import {
   type TimeSlot,
   type ValidatorIndex,
 } from "@typeberry/block";
-import { CodecContext } from "@typeberry/block/context";
 import { Ticket } from "@typeberry/block/tickets";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Bytes } from "@typeberry/bytes";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
 import type { TrieHash } from "@typeberry/trie";
-import { bytes32, fromJson } from ".";
+import { fromJson, runCodecTest } from ".";
 
 const bandersnatchVrfSignature = json.fromString((v) => Bytes.parseBytes(v, 96) as BandersnatchVrfSignature);
 
 const epochMark = json.object<EpochMarker>(
   {
-    entropy: bytes32(),
-    validators: json.array(bytes32<BandersnatchKey>()),
+    entropy: fromJson.bytes32(),
+    validators: json.array(fromJson.bytes32<BandersnatchKey>()),
   },
   (x) => new EpochMarker(x.entropy, x.validators),
 );
 
 const ticketsMark = json.object<Ticket>(
   {
-    id: bytes32(),
+    id: fromJson.bytes32(),
     attempt: fromJson.ticketAttempt,
   },
   (x) => new Ticket(x.id, x.attempt),
@@ -53,13 +49,13 @@ type JsonHeader = {
 
 export const headerFromJson = json.object<JsonHeader, Header>(
   {
-    parent: bytes32(),
-    parent_state_root: bytes32(),
-    extrinsic_hash: bytes32(),
+    parent: fromJson.bytes32(),
+    parent_state_root: fromJson.bytes32(),
+    extrinsic_hash: fromJson.bytes32(),
     slot: "number",
     epoch_mark: json.optional(epochMark),
     tickets_mark: json.optional<Ticket[]>(json.array(ticketsMark)),
-    offenders_mark: json.array(bytes32<Ed25519Key>()),
+    offenders_mark: json.array(fromJson.bytes32<Ed25519Key>()),
     author_index: "number",
     entropy_source: bandersnatchVrfSignature,
     seal: bandersnatchVrfSignature,
@@ -92,11 +88,5 @@ export const headerFromJson = json.object<JsonHeader, Header>(
 );
 
 export async function runHeaderTest(test: Header, file: string) {
-  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
-
-  const myEncoded = Encoder.encodeObject(Header.Codec, test, new CodecContext());
-  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.fromBlob(encoded).toString());
-
-  const decodedHeader = Decoder.decodeObject(Header.Codec, encoded, new CodecContext());
-  assert.deepStrictEqual(test, decodedHeader);
+  runCodecTest(Header.Codec, test, file);
 }

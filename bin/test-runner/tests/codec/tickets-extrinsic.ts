@@ -1,12 +1,8 @@
-import assert from "node:assert";
-import fs from "node:fs";
 import type { BandersnatchRingSignature } from "@typeberry/block";
-import { CodecContext } from "@typeberry/block/context";
 import { TicketEnvelope, type TicketsExtrinsic, ticketsExtrinsicCodec } from "@typeberry/block/tickets";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Bytes } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
-import { fromJson } from ".";
+import { fromJson, runCodecTest } from ".";
 
 const ticketEnvelopeFromJson = json.object<TicketEnvelope>(
   {
@@ -19,11 +15,5 @@ const ticketEnvelopeFromJson = json.object<TicketEnvelope>(
 export const ticketsExtrinsicFromJson = json.array(ticketEnvelopeFromJson);
 
 export async function runTicketsExtrinsicTest(test: TicketsExtrinsic, file: string) {
-  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
-
-  const myEncoded = Encoder.encodeObject(ticketsExtrinsicCodec, test, new CodecContext());
-  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.fromBlob(encoded).toString());
-
-  const decoded = Decoder.decodeObject(ticketsExtrinsicCodec, encoded, new CodecContext());
-  assert.deepStrictEqual(decoded, test);
+  runCodecTest(ticketsExtrinsicCodec, test, file);
 }

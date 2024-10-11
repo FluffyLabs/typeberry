@@ -1,12 +1,7 @@
-import assert from "node:assert";
-import fs from "node:fs";
 import type { Ed25519Key, Ed25519Signature, Epoch, ValidatorIndex, WorkReportHash } from "@typeberry/block";
-import { CodecContext } from "@typeberry/block/context";
 import { Culprit, DisputesExtrinsic, Fault, Judgement, Verdict } from "@typeberry/block/disputes";
-import { BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
-import { bytes32, fromJson } from ".";
+import { fromJson, runCodecTest } from ".";
 
 type JsonFault = {
   target: WorkReportHash;
@@ -16,9 +11,9 @@ type JsonFault = {
 };
 const faultFromJson = json.object<JsonFault, Fault>(
   {
-    target: bytes32(),
+    target: fromJson.bytes32(),
     vote: "boolean",
-    key: bytes32(),
+    key: fromJson.bytes32(),
     signature: fromJson.ed25519Signature,
   },
   ({ target, vote, key, signature }) => new Fault(target, vote, key, signature),
@@ -31,8 +26,8 @@ type JsonCulprit = {
 };
 const culpritFromJson = json.object<JsonCulprit, Culprit>(
   {
-    target: bytes32(),
-    key: bytes32(),
+    target: fromJson.bytes32(),
+    key: fromJson.bytes32(),
     signature: fromJson.ed25519Signature,
   },
   ({ target, key, signature }) => new Culprit(target, key, signature),
@@ -60,7 +55,7 @@ type JsonVerdict = {
 
 const verdictFromJson = json.object<JsonVerdict, Verdict>(
   {
-    target: bytes32(),
+    target: fromJson.bytes32(),
     age: "number",
     votes: json.array(judgementFromJson),
   },
@@ -77,10 +72,5 @@ export const disputesExtrinsicFromJson = json.object<DisputesExtrinsic>(
 );
 
 export async function runDisputesExtrinsicTest(test: DisputesExtrinsic, file: string) {
-  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
-  const myEncoded = Encoder.encodeObject(DisputesExtrinsic.Codec, test, new CodecContext());
-  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.fromBlob(encoded).toString());
-
-  const decoded = Decoder.decodeObject(DisputesExtrinsic.Codec, encoded, new CodecContext());
-  assert.deepStrictEqual(decoded, test);
+  runCodecTest(DisputesExtrinsic.Codec, test, file);
 }
