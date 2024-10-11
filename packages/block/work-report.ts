@@ -4,8 +4,8 @@ import type { FixedSizeArray } from "@typeberry/collections";
 import type { U16, U32 } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
 import { HASH_SIZE } from "./hash";
-import { RefineContext } from "./refine_context";
-import { WorkResult } from "./work_result";
+import { RefineContext } from "./refine-context";
+import { WorkResult } from "./work-result";
 
 export type CoreIndex = Opaque<U16, "CoreIndex[u16]">;
 

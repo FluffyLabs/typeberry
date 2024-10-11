@@ -1,14 +1,14 @@
 import assert from "node:assert";
 import fs from "node:fs";
 import { CodecContext } from "@typeberry/block/context";
-import { Authorizer, WorkPackage } from "@typeberry/block/work_package";
+import { Authorizer, WorkPackage } from "@typeberry/block/work-package";
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
 import { bytes32 } from ".";
 import type { JsonObject } from "../../json-format";
-import { refineContextFromJson } from "./refine_context";
-import { workItemFromJson } from "./work_item";
+import { refineContextFromJson } from "./refine-context";
+import { workItemFromJson } from "./work-item";
 
 const authorizerFromJson = json.object<JsonObject<Authorizer>, Authorizer>(
   {

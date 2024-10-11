@@ -12,7 +12,7 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
 import { fromJson } from ".";
 import type { JsonObject } from "../../json-format";
-import { workReportFromJson } from "./work_report";
+import { workReportFromJson } from "./work-report";
 
 const validatorSignatureFromJson = json.object<JsonObject<ValidatorSignature>, ValidatorSignature>(
   {

@@ -2,7 +2,7 @@ import assert from "node:assert";
 import fs from "node:fs";
 import type { HeaderHash, TimeSlot } from "@typeberry/block";
 import { CodecContext } from "@typeberry/block/context";
-import { type BeefyHash, RefineContext } from "@typeberry/block/refine_context";
+import { type BeefyHash, RefineContext } from "@typeberry/block/refine-context";
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";

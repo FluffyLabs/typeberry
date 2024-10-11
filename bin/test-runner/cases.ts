@@ -5,19 +5,19 @@ import test from "node:test";
 
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
-import { assurancesExtrinsicFromJson, runAssurancesExtrinsicTest } from "./tests/codec/assurances_extrinsic";
+import { assurancesExtrinsicFromJson, runAssurancesExtrinsicTest } from "./tests/codec/assurances-extrinsic";
 import { blockFromJson, runBlockTest } from "./tests/codec/block";
-import { disputesExtrinsicFromJson, runDisputesExtrinsicTest } from "./tests/codec/disputes_extrinsic";
+import { disputesExtrinsicFromJson, runDisputesExtrinsicTest } from "./tests/codec/disputes-extrinsic";
 import { extrinsicFromJson, runExtrinsicTest } from "./tests/codec/extrinsic";
-import { guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest } from "./tests/codec/guarantees_extrinsic";
+import { guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest } from "./tests/codec/guarantees-extrinsic";
 import { headerFromJson, runHeaderTest } from "./tests/codec/header";
-import { preimagesExtrinsicFromJson, runPreimagesExtrinsicTest } from "./tests/codec/preimages_extrinsic";
-import { refineContextFromJson, runRefineContextTest } from "./tests/codec/refine_context";
-import { runTicketsExtrinsicTest, ticketsExtrinsicFromJson } from "./tests/codec/tickets_extrinsic";
-import { runWorkItemTest, workItemFromJson } from "./tests/codec/work_item";
-import { runWorkPackageTest, workPackageFromJson } from "./tests/codec/work_package";
-import { runWorkReportTest, workReportFromJson } from "./tests/codec/work_report";
-import { runWorkResultTest, workResultFromJson } from "./tests/codec/work_result";
+import { preimagesExtrinsicFromJson, runPreimagesExtrinsicTest } from "./tests/codec/preimages-extrinsic";
+import { refineContextFromJson, runRefineContextTest } from "./tests/codec/refine-context";
+import { runTicketsExtrinsicTest, ticketsExtrinsicFromJson } from "./tests/codec/tickets-extrinsic";
+import { runWorkItemTest, workItemFromJson } from "./tests/codec/work-item";
+import { runWorkPackageTest, workPackageFromJson } from "./tests/codec/work-package";
+import { runWorkReportTest, workReportFromJson } from "./tests/codec/work-report";
+import { runWorkResultTest, workResultFromJson } from "./tests/codec/work-result";
 import {
   EcTest,
   PageProof,

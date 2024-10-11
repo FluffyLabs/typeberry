@@ -3,8 +3,8 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { ServiceId } from "./common";
 import { HASH_SIZE } from "./hash";
-import { RefineContext } from "./refine_context";
-import { WorkItem } from "./work_item";
+import { RefineContext } from "./refine-context";
+import { WorkItem } from "./work-item";
 
 export class Authorizer {
   static Codec = codec.Class(Authorizer, {

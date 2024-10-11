@@ -2,7 +2,7 @@ import assert from "node:assert";
 import fs from "node:fs";
 import type { Gas, HASH_SIZE, ServiceId } from "@typeberry/block";
 import { CodecContext } from "@typeberry/block/context";
-import { ExtrinsicSpec, ImportSpec, WorkItem } from "@typeberry/block/work_item";
+import { ExtrinsicSpec, ImportSpec, WorkItem } from "@typeberry/block/work-item";
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";

@@ -5,11 +5,11 @@ import { CodecContext } from "@typeberry/block/context";
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
-import { assurancesExtrinsicFromJson } from "./assurances_extrinsic";
-import { disputesExtrinsicFromJson } from "./disputes_extrinsic";
-import { guaranteesExtrinsicFromJson } from "./guarantees_extrinsic";
-import { preimagesExtrinsicFromJson } from "./preimages_extrinsic";
-import { ticketsExtrinsicFromJson } from "./tickets_extrinsic";
+import { assurancesExtrinsicFromJson } from "./assurances-extrinsic";
+import { disputesExtrinsicFromJson } from "./disputes-extrinsic";
+import { guaranteesExtrinsicFromJson } from "./guarantees-extrinsic";
+import { preimagesExtrinsicFromJson } from "./preimages-extrinsic";
+import { ticketsExtrinsicFromJson } from "./tickets-extrinsic";
 
 export const extrinsicFromJson = json.object<Extrinsic>(
   {

@@ -1,14 +1,14 @@
 import assert from "node:assert";
 import fs from "node:fs";
 import { CodecContext } from "@typeberry/block/context";
-import { WorkPackageSpec, WorkReport } from "@typeberry/block/work_report";
+import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
 import { bytes32 } from ".";
 import type { JsonObject } from "../../json-format";
-import { refineContextFromJson } from "./refine_context";
-import { workResultFromJson } from "./work_result";
+import { refineContextFromJson } from "./refine-context";
+import { workResultFromJson } from "./work-result";
 
 const workPackageSpecFromJson = json.object<JsonObject<WorkPackageSpec>, WorkPackageSpec>(
   {
