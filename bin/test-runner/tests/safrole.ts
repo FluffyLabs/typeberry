@@ -1,5 +1,5 @@
-import type { BandersnatchKey, BandersnatchRingSignature, Ed25519Key, EntropyHash } from "@typeberry/block";
-import type { Ticket, TicketEnvelope } from "@typeberry/block/tickets";
+import type { BandersnatchKey, BandersnatchProof, Ed25519Key, EntropyHash } from "@typeberry/block";
+import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
@@ -32,9 +32,9 @@ namespace fromJson {
     attempt: "number",
   };
 
-  export const ticketEnvelope: FromJson<TicketEnvelope> = {
+  export const ticketEnvelope: FromJson<SignedTicket> = {
     attempt: "number",
-    signature: json.fromString((v) => Bytes.parseBytes(v, 784) as BandersnatchRingSignature),
+    signature: json.fromString((v) => Bytes.parseBytes(v, 784) as BandersnatchProof),
   };
 }
 
@@ -125,7 +125,7 @@ export class SafroleTest {
     slot: number;
     entropy: EntropyHash;
     offenders: Ed25519Key[];
-    extrinsic: TicketEnvelope[];
+    extrinsic: SignedTicket[];
   };
   pre_state!: JsonState;
   output!: Output;

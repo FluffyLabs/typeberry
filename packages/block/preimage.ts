@@ -17,7 +17,9 @@ export class Preimage {
   }
 
   constructor(
+    /** The service which requested the preimage. */
     public readonly requester: ServiceId,
+    /** The preimage data blob. */
     public readonly blob: BytesBlob,
   ) {}
 }

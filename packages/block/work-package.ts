@@ -19,6 +19,7 @@ export class WorkPackage {
     authorizationCodeHash: codec.bytes(HASH_SIZE),
     parametrization: codec.blob,
     context: RefineContext.Codec,
+    // TODO [ToDr] Constrain the size of the sequence during decoding.
     items: codec.sequenceVarLen(WorkItem.Codec),
   });
 
@@ -46,7 +47,9 @@ export class WorkPackage {
     public readonly context: RefineContext,
     /**
      * `w`: sequence of work items.
-     * TODO [ToDr] most likely the max number of work items should be part of the context?
+     *
+     * Constrained by `I=4`:
+     * https://graypaper.fluffylabs.dev/#/c71229b/3d56003d5800
      */
     public readonly items: FixedSizeArray<WorkItem, 1 | 2 | 3 | 4>,
   ) {}

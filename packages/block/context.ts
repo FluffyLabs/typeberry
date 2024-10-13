@@ -25,9 +25,6 @@ export const EST_EPOCH_LENGTH = 600;
 
 /**
  * Additional data that has to be passed to the codec to correctly parse incoming bytes.
- *
- * TODO [ToDr] note this will most likely depend on the state of the blockchain,
- * current values are there just for the tests.
  */
 export class ChainSpec {
   /** Number of validators. */
@@ -63,6 +60,7 @@ export class ChainSpec {
   }
 }
 
+/** Set of values for "tiny" chain as defined in JAM test vectors. */
 export const tinyChainSpec = new ChainSpec({
   validatorsCount: 6,
   coresCount: 2,

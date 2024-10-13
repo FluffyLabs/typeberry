@@ -36,6 +36,7 @@ export class WorkReport {
     coreIndex: codec.u16.cast(),
     authorizerHash: codec.bytes(HASH_SIZE),
     authOutput: codec.blob,
+    // TODO [ToDr] Constrain the size of the sequence during decoding.
     results: codec.sequenceVarLen(WorkResult.Codec).cast(),
   });
 

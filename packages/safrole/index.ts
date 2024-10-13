@@ -1,5 +1,5 @@
 import type { BandersnatchKey, Ed25519Key, EntropyHash } from "@typeberry/block";
-import type { Ticket, TicketEnvelope } from "@typeberry/block/tickets";
+import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
 import type { BytesBlob } from "@typeberry/bytes";
 import { verifyBandersnatch } from "./bandersnatch";
 import type { BlsKey } from "./crypto";
@@ -42,7 +42,7 @@ export class Safrole {
     slot: number;
     entropy: EntropyHash;
     offenders: Ed25519Key[];
-    extrinsic: TicketEnvelope[];
+    extrinsic: SignedTicket[];
   }): Promise<StateDiff> {
     const newState: StateDiff = {};
     if (this.state.timeslot() > input.slot) {
