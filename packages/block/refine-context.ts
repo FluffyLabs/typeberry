@@ -11,6 +11,12 @@ import { HASH_SIZE, type HeaderHash } from "./hash";
  */
 export type BeefyHash = Opaque<Bytes<typeof HASH_SIZE>, "BeefyHash">;
 
+/**
+ * `X`: Refinement Context - state of the chain at the point
+ * that the report's corresponding work-package was evaluated.
+ *
+ * https://graypaper.fluffylabs.dev/#/c71229b/138600138900
+ */
 export class RefineContext {
   static Codec = codec.Class(RefineContext, {
     anchor: codec.bytes(HASH_SIZE).cast(),
@@ -33,11 +39,17 @@ export class RefineContext {
   }
 
   constructor(
+    /** `a`: Header hash at which the work-package was evaluated. */
     public readonly anchor: HeaderHash,
+    /** `s`: **Posterior** state root of the anchor. */
     public readonly stateRoot: TrieHash,
+    /** `b`: **Posterior** BEEFY root. */
     public readonly beefyRoot: BeefyHash,
+    /** `l`: Preimage lookup anchor. */
     public readonly lookupAnchor: HeaderHash,
+    /** `t`: Lookup anchor time slot. */
     public readonly lookupAnchorSlot: TimeSlot,
+    /** `p`: Optional hash of the prerequisite work-package. */
     public readonly prerequisite: Bytes<typeof HASH_SIZE> | null = null,
   ) {}
 }

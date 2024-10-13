@@ -1,6 +1,7 @@
 import type { HASH_SIZE, ServiceGas, ServiceId } from "@typeberry/block";
-import { ExtrinsicSpec, ImportSpec, WorkItem } from "@typeberry/block/work-item";
+import { ImportSpec, WorkItem, WorkItemExtrinsicSpec } from "@typeberry/block/work-item";
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
+import type { KnownSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
 import type { U16 } from "@typeberry/numbers";
 import { fromJson, runCodecTest } from ".";
@@ -14,12 +15,12 @@ const importSpecFromJson = json.object<JsonObject<ImportSpec>, ImportSpec>(
   ({ tree_root, index }) => new ImportSpec(tree_root, index),
 );
 
-const extrinsicSpecFromJson = json.object<ExtrinsicSpec>(
+const workItemExtrinsicSpecFromJson = json.object<WorkItemExtrinsicSpec>(
   {
     hash: fromJson.bytes32(),
     len: "number",
   },
-  ({ hash, len }) => new ExtrinsicSpec(hash, len),
+  ({ hash, len }) => new WorkItemExtrinsicSpec(hash, len),
 );
 
 export const workItemFromJson = json.object<JsonWorkItem, WorkItem>(
@@ -29,7 +30,7 @@ export const workItemFromJson = json.object<JsonWorkItem, WorkItem>(
     payload: json.fromString(BytesBlob.parseBlob),
     gas_limit: "number",
     import_segments: json.array(importSpecFromJson),
-    extrinsic: json.array(extrinsicSpecFromJson),
+    extrinsic: json.array(workItemExtrinsicSpecFromJson),
     export_count: "number",
   },
   ({ service, code_hash, payload, gas_limit, import_segments, extrinsic, export_count }) =>
@@ -49,8 +50,8 @@ type JsonWorkItem = {
   code_hash: Bytes<typeof HASH_SIZE>;
   payload: BytesBlob;
   gas_limit: number;
-  import_segments: ImportSpec[];
-  extrinsic: ExtrinsicSpec[];
+  import_segments: KnownSizeArray<ImportSpec, "Less than 2**11">;
+  extrinsic: WorkItemExtrinsicSpec[];
   export_count: U16;
 };
 

@@ -24,3 +24,6 @@ export type WorkReportHash = Opaque<Bytes<typeof HASH_SIZE>, "HeaderHash">;
  * https://graypaper.fluffylabs.dev/#/387103d/0c84000c8d00
  */
 export type ExtrinsicHash = Opaque<Bytes<typeof HASH_SIZE>, "ExtrinsicHash">;
+
+/** Blake2B hash of some service / authorization code. */
+export type CodeHash = Opaque<Bytes<typeof HASH_SIZE>, "CodeHash">;

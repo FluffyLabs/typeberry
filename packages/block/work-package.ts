@@ -1,12 +1,13 @@
-import type { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { ServiceId } from "./common";
-import { HASH_SIZE } from "./hash";
+import { type CodeHash, HASH_SIZE } from "./hash";
 import { RefineContext } from "./refine-context";
 import { WorkItem } from "./work-item";
 
 /**
+ * A piece of work done within a core.
  *
  * `P = (j ∈ Y, h ∈ NS, u ∈ H, p ∈ Y, x ∈ X, w ∈ ⟦I⟧1∶I)
  *
@@ -16,7 +17,7 @@ export class WorkPackage {
   static Codec = codec.Class(WorkPackage, {
     authorization: codec.blob,
     authCodeHost: codec.u32.cast(),
-    authorizationCodeHash: codec.bytes(HASH_SIZE),
+    authorizationCodeHash: codec.bytes(HASH_SIZE).cast(),
     parametrization: codec.blob,
     context: RefineContext.Codec,
     // TODO [ToDr] Constrain the size of the sequence during decoding.
@@ -40,7 +41,7 @@ export class WorkPackage {
     /** `h`: index of the service that hosts the authorization code */
     public readonly authCodeHost: ServiceId,
     /** `u`: authorization code hash */
-    public readonly authorizationCodeHash: Bytes<typeof HASH_SIZE>,
+    public readonly authorizationCodeHash: CodeHash,
     /** `p`: authorization parametrization blob */
     public readonly parametrization: BytesBlob,
     /** `x`: context in which the refine function should run */

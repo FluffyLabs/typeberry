@@ -8,10 +8,13 @@ import { RefineContext } from "./refine-context";
 import { WorkResult } from "./work-result";
 
 export type CoreIndex = Opaque<U16, "CoreIndex[u16]">;
+/** Blake2B hash of a work package. */
+export type WorkPackageHash = Opaque<Bytes<typeof HASH_SIZE>, "WorkPackageHash">;
 
+/** Details about the work package being reported on. */
 export class WorkPackageSpec {
   static Codec = codec.Class(WorkPackageSpec, {
-    hash: codec.bytes(HASH_SIZE),
+    hash: codec.bytes(HASH_SIZE).cast(),
     len: codec.u32,
     erasureRoot: codec.bytes(HASH_SIZE),
     exportsRoot: codec.bytes(HASH_SIZE),
@@ -22,9 +25,13 @@ export class WorkPackageSpec {
   }
 
   constructor(
-    public readonly hash: Bytes<typeof HASH_SIZE>,
+    /** The hash of the work package. */
+    public readonly hash: WorkPackageHash,
+    /** Encoded length of the work package. */
     public readonly len: U32,
+    /** The root hash of the erasure coding merkle tree of that work package. */
     public readonly erasureRoot: Bytes<typeof HASH_SIZE>,
+    /** The root hash of all data segments exported by this work package. */
     public readonly exportsRoot: Bytes<typeof HASH_SIZE>,
   ) {}
 }

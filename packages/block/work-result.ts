@@ -2,7 +2,7 @@ import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { U32 } from "@typeberry/numbers";
 import type { ServiceGas, ServiceId } from "./common";
-import { HASH_SIZE } from "./hash";
+import { type CodeHash, HASH_SIZE } from "./hash";
 
 export enum WorkExecResultKind {
   ok = 0,
@@ -48,7 +48,7 @@ export class WorkExecResult {
 export class WorkResult {
   static Codec = codec.Class(WorkResult, {
     service: codec.u32.cast(),
-    codeHash: codec.bytes(HASH_SIZE),
+    codeHash: codec.bytes(HASH_SIZE).cast(),
     payloadHash: codec.bytes(HASH_SIZE),
     gasRatio: codec.u64.cast(),
     result: WorkExecResult.Codec,
@@ -60,7 +60,7 @@ export class WorkResult {
 
   constructor(
     public readonly service: ServiceId,
-    public readonly codeHash: Bytes<typeof HASH_SIZE>,
+    public readonly codeHash: CodeHash,
     public readonly payloadHash: Bytes<typeof HASH_SIZE>,
     public readonly gasRatio: ServiceGas,
     public readonly result: WorkExecResult,

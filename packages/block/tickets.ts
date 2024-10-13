@@ -19,6 +19,7 @@ export const ticketAttemptCodec = codec.bool.convert<TicketAttempt>(
   },
 );
 
+/* Bandernsatch-signed ticket contest entry. */
 export class SignedTicket {
   static Codec = codec.Class(SignedTicket, {
     attempt: ticketAttemptCodec,
@@ -37,6 +38,7 @@ export class SignedTicket {
   ) {}
 }
 
+/** Anonymous? entry into the ticket contest. */
 export class Ticket {
   static Codec = codec.Class(Ticket, {
     id: codec.bytes(HASH_SIZE),
