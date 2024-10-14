@@ -1,7 +1,7 @@
 import { Extrinsic } from "@typeberry/block/block";
 import { json } from "@typeberry/json-parser";
-import { runCodecTest } from ".";
 import { assurancesExtrinsicFromJson } from "./assurances-extrinsic";
+import { runCodecTest } from "./common";
 import { disputesExtrinsicFromJson } from "./disputes-extrinsic";
 import { guaranteesExtrinsicFromJson } from "./guarantees-extrinsic";
 import { preimagesExtrinsicFromJson } from "./preimages-extrinsic";

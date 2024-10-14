@@ -1,7 +1,7 @@
 import { Preimage, type PreimagesExtrinsic, preimagesExtrinsicCodec } from "@typeberry/block/preimage";
 import { BytesBlob } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
-import { runCodecTest } from ".";
+import { runCodecTest } from "./common";
 
 const preimageFromJson = json.object<Preimage>(
   {

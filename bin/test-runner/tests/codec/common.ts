@@ -6,7 +6,6 @@ import type { TicketAttempt } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type Codec, Decoder, Encoder } from "@typeberry/codec";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { Logger } from "@typeberry/logger";
 
 export namespace fromJson {
   export const bytes32 = <T extends Bytes<32>>() => json.fromString((v) => Bytes.parseBytes(v, 32) as T);
@@ -20,8 +19,6 @@ export namespace fromJson {
     return v as TicketAttempt;
   }) as FromJson<TicketAttempt>;
 }
-
-export const logger = Logger.new(global.__filename, "test-runner/codec");
 
 export function runCodecTest<T>(codec: Codec<T>, test: T, file: string) {
   const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));

@@ -5,7 +5,7 @@ import { MAX_NUMBER_OF_WORK_ITEMS, WorkPackage } from "@typeberry/block/work-pac
 import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { fromJson, runCodecTest } from ".";
+import { fromJson, runCodecTest } from "./common";
 import { refineContextFromJson } from "./refine-context";
 import { workItemFromJson } from "./work-item";
 

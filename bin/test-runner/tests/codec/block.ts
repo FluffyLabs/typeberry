@@ -1,6 +1,6 @@
 import { Block } from "@typeberry/block/block";
 import { json } from "@typeberry/json-parser";
-import { runCodecTest } from ".";
+import { runCodecTest } from "./common";
 import { extrinsicFromJson } from "./extrinsic";
 import { headerFromJson } from "./header";
 

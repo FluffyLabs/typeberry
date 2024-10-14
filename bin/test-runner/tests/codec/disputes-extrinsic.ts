@@ -1,7 +1,7 @@
 import type { Ed25519Key, Ed25519Signature, Epoch, ValidatorIndex, WorkReportHash } from "@typeberry/block";
 import { Culprit, DisputesExtrinsic, Fault, Judgement, Verdict } from "@typeberry/block/disputes";
 import { json } from "@typeberry/json-parser";
-import { fromJson, runCodecTest } from ".";
+import { fromJson, runCodecTest } from "./common";
 
 type JsonFault = {
   target: WorkReportHash;

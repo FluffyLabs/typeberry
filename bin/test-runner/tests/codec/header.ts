@@ -14,7 +14,7 @@ import { Bytes } from "@typeberry/bytes";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
 import type { TrieHash } from "@typeberry/trie";
-import { fromJson, runCodecTest } from ".";
+import { fromJson, runCodecTest } from "./common";
 
 const bandersnatchVrfSignature = json.fromString((v) => Bytes.parseBytes(v, 96) as BandersnatchVrfSignature);
 

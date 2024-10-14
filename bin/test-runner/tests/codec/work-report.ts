@@ -6,8 +6,8 @@ import type { WorkResult } from "@typeberry/block/work-result";
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
-import { fromJson, runCodecTest } from ".";
 import type { JsonObject } from "../../json-format";
+import { fromJson, runCodecTest } from "./common";
 import { refineContextFromJson } from "./refine-context";
 import { workResultFromJson } from "./work-result";
 

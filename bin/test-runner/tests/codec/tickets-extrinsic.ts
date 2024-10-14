@@ -2,7 +2,7 @@ import type { BandersnatchProof } from "@typeberry/block";
 import { SignedTicket, type TicketsExtrinsic, ticketsExtrinsicCodec } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
-import { fromJson, runCodecTest } from ".";
+import { fromJson, runCodecTest } from "./common";
 
 const ticketEnvelopeFromJson = json.object<SignedTicket>(
   {

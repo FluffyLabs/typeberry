@@ -3,7 +3,7 @@ import { type BeefyHash, RefineContext } from "@typeberry/block/refine-context";
 import type { Bytes } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
 import type { TrieHash } from "@typeberry/trie";
-import { fromJson, runCodecTest } from ".";
+import { fromJson, runCodecTest } from "./common";
 
 export const refineContextFromJson = json.object<JsonRefineContext, RefineContext>(
   {

@@ -4,7 +4,7 @@ import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
 import type { U32 } from "@typeberry/numbers";
-import { fromJson, runCodecTest } from ".";
+import { fromJson, runCodecTest } from "./common";
 
 // TODO [ToDr] Introduce fromJson.union?
 const workExecResultFromJson = json.object<JsonWorkExecResult, WorkExecResult>(
