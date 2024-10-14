@@ -1,7 +1,7 @@
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { Bytes, TrieHash } from "@typeberry/trie";
 import type { Opaque } from "@typeberry/utils";
-import type { TimeSlot } from "./common";
+import { type TimeSlot, WithDebug } from "./common";
 import { HASH_SIZE, type HeaderHash } from "./hash";
 
 /**
@@ -17,7 +17,7 @@ export type BeefyHash = Opaque<Bytes<typeof HASH_SIZE>, "BeefyHash">;
  *
  * https://graypaper.fluffylabs.dev/#/c71229b/138600138900
  */
-export class RefineContext {
+export class RefineContext extends WithDebug {
   static Codec = codec.Class(RefineContext, {
     anchor: codec.bytes(HASH_SIZE).cast(),
     stateRoot: codec.bytes(HASH_SIZE).cast(),
@@ -51,5 +51,7 @@ export class RefineContext {
     public readonly lookupAnchorSlot: TimeSlot,
     /** `p`: Optional hash of the prerequisite work-package. */
     public readonly prerequisite: Bytes<typeof HASH_SIZE> | null = null,
-  ) {}
+  ) {
+    super();
+  }
 }

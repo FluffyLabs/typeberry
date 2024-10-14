@@ -1,13 +1,13 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import type { ServiceId } from "./common";
+import { type ServiceId, WithDebug } from "./common";
 
 /**
  * Service index (requester) and the data (blob).
  *
  * https://graypaper.fluffylabs.dev/#/c71229b/153801154901
  */
-export class Preimage {
+export class Preimage extends WithDebug {
   static Codec = codec.Class(Preimage, {
     requester: codec.u32.cast(),
     blob: codec.blob,
@@ -21,7 +21,9 @@ export class Preimage {
     public readonly requester: ServiceId,
     /** The preimage data blob. */
     public readonly blob: BytesBlob,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /**

@@ -59,7 +59,7 @@ export class MainReady extends State<"ready(main)", Finished> {
   private onBlock(block: unknown) {
     if (block instanceof Uint8Array) {
       const b = Decoder.decodeObject(Block.Codec, block, tinyChainSpec);
-      logger.log(`${this.constructor.name} got block: "${JSON.stringify(b)}"`);
+      logger.log(`${this.constructor.name} got block: "${b.toString()}"`);
     } else {
       logger.error(`${this.constructor.name} got invalid signal type: ${JSON.stringify(block)}.`);
     }

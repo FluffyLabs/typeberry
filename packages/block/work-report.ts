@@ -3,6 +3,7 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { U16, U32 } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
+import { WithDebug } from "./common";
 import { HASH_SIZE } from "./hash";
 import { RefineContext } from "./refine-context";
 import type { WorkItemsCount } from "./work-package";
@@ -14,7 +15,7 @@ export type CoreIndex = Opaque<U16, "CoreIndex[u16]">;
 export type WorkPackageHash = Opaque<Bytes<typeof HASH_SIZE>, "WorkPackageHash">;
 
 /** Details about the work package being reported on. */
-export class WorkPackageSpec {
+export class WorkPackageSpec extends WithDebug {
   static Codec = codec.Class(WorkPackageSpec, {
     hash: codec.bytes(HASH_SIZE).cast(),
     len: codec.u32,
@@ -35,7 +36,9 @@ export class WorkPackageSpec {
     public readonly erasureRoot: Bytes<typeof HASH_SIZE>,
     /** The root hash of all data segments exported by this work package. */
     public readonly exportsRoot: Bytes<typeof HASH_SIZE>,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /**
@@ -43,7 +46,7 @@ export class WorkPackageSpec {
  *
  * https://graypaper.fluffylabs.dev/#/c71229b/133e00134500
  */
-export class WorkReport {
+export class WorkReport extends WithDebug {
   static Codec = codec.Class(WorkReport, {
     workPackageSpec: WorkPackageSpec.Codec,
     context: RefineContext.Codec,
@@ -90,5 +93,7 @@ export class WorkReport {
     // public readonly segmentRootLookup: MapOfHashes<Bytes<typeof HASH_SIZE>>,
     /** `r`: The results of evaluation of each of the items in the work package. */
     public readonly results: FixedSizeArray<WorkResult, WorkItemsCount>,
-  ) {}
+  ) {
+    super();
+  }
 }

@@ -1,5 +1,5 @@
 import { HASH_SIZE } from "@typeberry/block";
-import { Bytes, type BytesBlob } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { check } from "@typeberry/utils";
 import blake2b from "blake2b";
 
@@ -46,12 +46,14 @@ export class PageAllocator implements HashAllocator {
   }
 }
 
+export const defaultAllocator = new SimpleAllocator();
+
 /** Blob of bytes with a lazy-evaluated hash. */
 export class HashableBlob<THash extends Bytes<typeof HASH_SIZE> = Bytes<typeof HASH_SIZE>> {
   constructor(
     public readonly blob: BytesBlob,
     private hash?: THash,
-    private allocator: HashAllocator = new SimpleAllocator(),
+    private allocator: HashAllocator = defaultAllocator,
   ) {}
 
   /** Get or compute the hash of the data. */
@@ -66,10 +68,14 @@ export class HashableBlob<THash extends Bytes<typeof HASH_SIZE> = Bytes<typeof H
 }
 
 /** Hash given blob of bytes. */
-export function hashBytes(blob: BytesBlob, allocator: HashAllocator) {
+export function hashBytes(blob: BytesBlob, allocator: HashAllocator = defaultAllocator) {
   const hasher = blake2b(HASH_SIZE);
   hasher?.update(blob.buffer);
   const out = allocator.emptyHash();
   hasher?.digest(out.raw);
   return out;
+}
+
+export function hashString(str: string, allocator: HashAllocator = defaultAllocator) {
+  return hashBytes(BytesBlob.fromString(str), allocator);
 }

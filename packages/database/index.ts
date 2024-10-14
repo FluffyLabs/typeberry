@@ -1,5 +1,4 @@
-import type { HASH_SIZE } from "@typeberry/block";
-import { type Bytes, BytesBlob } from "@typeberry/bytes";
+import type { BytesBlob } from "@typeberry/bytes";
 import type { HashableBlob } from "@typeberry/hash";
 import { InMemoryTrie, type StateKey, type TrieHash } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/blake2b.node";
@@ -34,16 +33,18 @@ export interface Transaction {
 
 export class InMemoryKvdb implements KeyValueDatabase<InMemoryTransaction> {
   private readonly db: WriteableNodesDb;
+  private readonly flat: Map<string, HashableBlob>;
   private readonly trie: InMemoryTrie;
 
   constructor() {
     this.db = new WriteableNodesDb(blake2bTrieHasher);
+    this.flat = new Map();
     this.trie = new InMemoryTrie(this.db);
   }
 
   get(key: StateKey): Promise<BytesBlob | null> {
-    const node = this.db.get(key as Bytes<typeof HASH_SIZE> as TrieHash);
-    return Promise.resolve(node ? BytesBlob.fromBlob(node?.data) : null);
+    const value = this.flat.get(key.toString());
+    return Promise.resolve(value?.blob ?? null);
   }
 
   async has(key: StateKey): Promise<boolean> {
@@ -63,8 +64,10 @@ export class InMemoryKvdb implements KeyValueDatabase<InMemoryTransaction> {
     for (const [key, value] of tx.writes) {
       if (value) {
         this.trie.set(key, value.blob, value.getHash());
+        this.flat.set(key.toString(), value);
       } else {
         this.trie.remove(key);
+        this.flat.delete(key.toString());
       }
     }
     return Promise.resolve();

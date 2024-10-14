@@ -3,7 +3,7 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import type { U16, U32 } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
-import type { ServiceGas, ServiceId } from "./common";
+import { type ServiceGas, type ServiceId, WithDebug } from "./common";
 import { type CodeHash, HASH_SIZE } from "./hash";
 
 type WorkItemExtrinsicHash = Opaque<Bytes<typeof HASH_SIZE>, "ExtrinsicHash">;
@@ -12,7 +12,7 @@ type WorkItemExtrinsicHash = Opaque<Bytes<typeof HASH_SIZE>, "ExtrinsicHash">;
  * Definition of data segment that was exported by some work package earlier
  * and now is being imported by another work-item.
  */
-export class ImportSpec {
+export class ImportSpec extends WithDebug {
   static Codec = codec.Class(ImportSpec, {
     treeRoot: codec.bytes(HASH_SIZE),
     index: codec.u16,
@@ -30,11 +30,13 @@ export class ImportSpec {
     public readonly treeRoot: Bytes<typeof HASH_SIZE>,
     /** Index of the prior exported segment. */
     public readonly index: U16,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /** Introduced blob hashes and their lengths. */
-export class WorkItemExtrinsicSpec {
+export class WorkItemExtrinsicSpec extends WithDebug {
   static Codec = codec.Class(WorkItemExtrinsicSpec, {
     hash: codec.bytes(HASH_SIZE).cast(),
     len: codec.u32,
@@ -49,7 +51,9 @@ export class WorkItemExtrinsicSpec {
     public readonly hash: WorkItemExtrinsicHash,
     /** Length of the preimage identified by the hash above. */
     public readonly len: U32,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /**
@@ -57,7 +61,7 @@ export class WorkItemExtrinsicSpec {
  *
  * https://graypaper.fluffylabs.dev/#/c71229b/194e00195800
  */
-export class WorkItem {
+export class WorkItem extends WithDebug {
   static Codec = codec.Class(WorkItem, {
     service: codec.u32.cast(),
     codeHash: codec.bytes(HASH_SIZE).cast(),
@@ -102,5 +106,7 @@ export class WorkItem {
     public readonly extrinsic: WorkItemExtrinsicSpec[],
     /** `e`: number of data segments exported by this work item. */
     public readonly exportCount: U16,
-  ) {}
+  ) {
+    super();
+  }
 }
