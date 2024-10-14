@@ -1,32 +1,44 @@
-import assert from "node:assert";
-import fs from "node:fs";
-import { CodecContext } from "@typeberry/block/context";
+import type { Ed25519Key, Ed25519Signature, Epoch, ValidatorIndex, WorkReportHash } from "@typeberry/block";
 import { Culprit, DisputesExtrinsic, Fault, Judgement, Verdict } from "@typeberry/block/disputes";
-import { BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
 import { json } from "@typeberry/json-parser";
-import { bytes32, fromJson } from ".";
+import { fromJson, runCodecTest } from "./common";
 
-const faultFromJson = json.object<Fault>(
+type JsonFault = {
+  target: WorkReportHash;
+  vote: boolean;
+  key: Ed25519Key;
+  signature: Ed25519Signature;
+};
+const faultFromJson = json.object<JsonFault, Fault>(
   {
-    target: bytes32(),
+    target: fromJson.bytes32(),
     vote: "boolean",
-    key: bytes32(),
+    key: fromJson.bytes32(),
     signature: fromJson.ed25519Signature,
   },
   ({ target, vote, key, signature }) => new Fault(target, vote, key, signature),
 );
 
-const culpritFromJson = json.object<Culprit>(
+type JsonCulprit = {
+  target: WorkReportHash;
+  key: Ed25519Key;
+  signature: Ed25519Signature;
+};
+const culpritFromJson = json.object<JsonCulprit, Culprit>(
   {
-    target: bytes32(),
-    key: bytes32(),
+    target: fromJson.bytes32(),
+    key: fromJson.bytes32(),
     signature: fromJson.ed25519Signature,
   },
   ({ target, key, signature }) => new Culprit(target, key, signature),
 );
 
-const judgementFromJson = json.object<Judgement>(
+type JsonJudgement = {
+  vote: boolean;
+  index: ValidatorIndex;
+  signature: Ed25519Signature;
+};
+const judgementFromJson = json.object<JsonJudgement, Judgement>(
   {
     vote: "boolean",
     index: "number",
@@ -35,13 +47,19 @@ const judgementFromJson = json.object<Judgement>(
   ({ vote, index, signature }) => new Judgement(vote, index, signature),
 );
 
-const verdictFromJson = json.object<Verdict>(
+type JsonVerdict = {
+  target: WorkReportHash;
+  age: Epoch;
+  votes: Judgement[];
+};
+
+const verdictFromJson = json.object<JsonVerdict, Verdict>(
   {
-    target: bytes32(),
+    target: fromJson.bytes32(),
     age: "number",
     votes: json.array(judgementFromJson),
   },
-  ({ target, age, votes }) => new Verdict(target, age, votes),
+  ({ target, age, votes }) => new Verdict(target, age, votes as Verdict["votes"]),
 );
 
 export const disputesExtrinsicFromJson = json.object<DisputesExtrinsic>(
@@ -54,10 +72,5 @@ export const disputesExtrinsicFromJson = json.object<DisputesExtrinsic>(
 );
 
 export async function runDisputesExtrinsicTest(test: DisputesExtrinsic, file: string) {
-  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
-  const myEncoded = Encoder.encodeObject(DisputesExtrinsic.Codec, test, new CodecContext());
-  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.fromBlob(encoded).toString());
-
-  const decoded = Decoder.decodeObject(DisputesExtrinsic.Codec, encoded, new CodecContext());
-  assert.deepStrictEqual(decoded, test);
+  runCodecTest(DisputesExtrinsic.Codec, test, file);
 }

@@ -1,10 +1,10 @@
-import type { BandersnatchKey, BandersnatchRingSignature, Ed25519Key } from "@typeberry/block";
-import type { TicketEnvelope } from "@typeberry/block/tickets";
+import type { BandersnatchKey, BandersnatchProof, Ed25519Key, EntropyHash } from "@typeberry/block";
+import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
-import type { EntropyHash, State as SafroleState } from "@typeberry/safrole";
-import { Safrole, type StateDiff as SafroleStateDiff, type TicketBody, type ValidatorData } from "@typeberry/safrole";
+import type { State as SafroleState } from "@typeberry/safrole";
+import { Safrole, type StateDiff as SafroleStateDiff, type ValidatorData } from "@typeberry/safrole";
 import type { BlsKey } from "@typeberry/safrole/crypto";
 
 type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}` ? `${T}${Capitalize<SnakeToCamel<U>>}` : S;
@@ -27,23 +27,23 @@ namespace fromJson {
     metadata: bytesBlob,
   };
 
-  export const ticketBody: FromJson<TicketBody> = {
+  export const ticketBody: FromJson<Ticket> = {
     id: bytes32(),
     attempt: "number",
   };
 
-  export const ticketEnvelope: FromJson<TicketEnvelope> = {
+  export const ticketEnvelope: FromJson<SignedTicket> = {
     attempt: "number",
-    signature: json.fromString((v) => Bytes.parseBytes(v, 784) as BandersnatchRingSignature),
+    signature: json.fromString((v) => Bytes.parseBytes(v, 784) as BandersnatchProof),
   };
 }
 
 export class TicketsOrKeys {
   static fromJson: FromJson<TicketsOrKeys> = {
-    tickets: json.optional<TicketBody[]>(json.array(fromJson.ticketBody)),
+    tickets: json.optional<Ticket[]>(json.array(fromJson.ticketBody)),
     keys: json.optional<BandersnatchKey[]>(json.array(fromJson.bytes32())),
   };
-  tickets?: TicketBody[];
+  tickets?: Ticket[];
   keys?: BandersnatchKey[];
 }
 
@@ -72,7 +72,7 @@ class JsonState {
   // designedValidators
   iota!: ValidatorData[];
   // Sealing-key contest ticket accumulator.
-  gamma_a!: TicketBody[];
+  gamma_a!: Ticket[];
   // sealing-key series of current epoch
   gamma_s!: TicketsOrKeys;
   // bandersnatch ring comittment
@@ -92,10 +92,10 @@ export class EpochMark {
 export class OkOutput {
   static fromJson: FromJson<OkOutput> = {
     epoch_mark: json.optional(EpochMark.fromJson),
-    tickets_mark: json.optional<TicketBody[]>(json.array(fromJson.ticketBody)),
+    tickets_mark: json.optional<Ticket[]>(json.array(fromJson.ticketBody)),
   };
   epoch_mark?: EpochMark;
-  tickets_mark?: TicketBody[];
+  tickets_mark?: Ticket[];
 }
 
 export class Output {
@@ -125,7 +125,7 @@ export class SafroleTest {
     slot: number;
     entropy: EntropyHash;
     offenders: Ed25519Key[];
-    extrinsic: TicketEnvelope[];
+    extrinsic: SignedTicket[];
   };
   pre_state!: JsonState;
   output!: Output;

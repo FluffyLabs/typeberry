@@ -1,61 +1,60 @@
-import assert from "node:assert";
-import fs from "node:fs";
-import type { Gas, HASH_SIZE, ServiceId } from "@typeberry/block";
-import { CodecContext } from "@typeberry/block/context";
-import { ExtrinsicSpec, ImportSpec, WorkItem } from "@typeberry/block/work-item";
-import { type Bytes, BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
+import type { CodeHash, ServiceGas, ServiceId } from "@typeberry/block";
+import { ImportSpec, WorkItem, WorkItemExtrinsicSpec } from "@typeberry/block/work-item";
+import { BytesBlob } from "@typeberry/bytes";
+import type { KnownSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
 import type { U16 } from "@typeberry/numbers";
-import { bytes32 } from ".";
 import type { JsonObject } from "../../json-format";
+import { fromJson, runCodecTest } from "./common";
 
 const importSpecFromJson = json.object<JsonObject<ImportSpec>, ImportSpec>(
   {
-    tree_root: bytes32(),
+    tree_root: fromJson.bytes32(),
     index: "number",
   },
   ({ tree_root, index }) => new ImportSpec(tree_root, index),
 );
 
-const extrinsicSpecFromJson = json.object<ExtrinsicSpec>(
+const workItemExtrinsicSpecFromJson = json.object<WorkItemExtrinsicSpec>(
   {
-    hash: bytes32(),
+    hash: fromJson.bytes32(),
     len: "number",
   },
-  ({ hash, len }) => new ExtrinsicSpec(hash, len),
+  ({ hash, len }) => new WorkItemExtrinsicSpec(hash, len),
 );
 
 export const workItemFromJson = json.object<JsonWorkItem, WorkItem>(
   {
     service: "number",
-    code_hash: bytes32(),
+    code_hash: fromJson.bytes32(),
     payload: json.fromString(BytesBlob.parseBlob),
     gas_limit: "number",
     import_segments: json.array(importSpecFromJson),
-    extrinsic: json.array(extrinsicSpecFromJson),
+    extrinsic: json.array(workItemExtrinsicSpecFromJson),
     export_count: "number",
   },
   ({ service, code_hash, payload, gas_limit, import_segments, extrinsic, export_count }) =>
-    new WorkItem(service, code_hash, payload, BigInt(gas_limit) as Gas, import_segments, extrinsic, export_count),
+    new WorkItem(
+      service,
+      code_hash,
+      payload,
+      BigInt(gas_limit) as ServiceGas,
+      import_segments,
+      extrinsic,
+      export_count,
+    ),
 );
 
 type JsonWorkItem = {
   service: ServiceId;
-  code_hash: Bytes<typeof HASH_SIZE>;
+  code_hash: CodeHash;
   payload: BytesBlob;
   gas_limit: number;
-  import_segments: ImportSpec[];
-  extrinsic: ExtrinsicSpec[];
+  import_segments: KnownSizeArray<ImportSpec, "Less than 2**11">;
+  extrinsic: WorkItemExtrinsicSpec[];
   export_count: U16;
 };
 
 export async function runWorkItemTest(test: WorkItem, file: string) {
-  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
-
-  const myEncoded = Encoder.encodeObject(WorkItem.Codec, test, new CodecContext());
-  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.fromBlob(encoded).toString());
-
-  const decoded = Decoder.decodeObject(WorkItem.Codec, encoded, new CodecContext());
-  assert.deepStrictEqual(decoded, test);
+  runCodecTest(WorkItem.Codec, test, file);
 }

@@ -1,17 +1,8 @@
-import type { TicketAttempt, TicketEnvelope } from "@typeberry/block/tickets";
-import type { Bytes, BytesBlob } from "@typeberry/bytes";
-import type { Opaque } from "@typeberry/utils";
-import type { BandersnatchKey, Ed25519Key } from "../block/crypto";
+import type { BandersnatchKey, Ed25519Key, EntropyHash } from "@typeberry/block";
+import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
+import type { BytesBlob } from "@typeberry/bytes";
 import { verifyBandersnatch } from "./bandersnatch";
 import type { BlsKey } from "./crypto";
-
-export type Hash = Bytes<32>;
-export type EntropyHash = Opaque<Hash, "EntropyHash">;
-
-export type TicketBody = {
-  id: Hash;
-  attempt: TicketAttempt;
-};
 
 export type ValidatorData = {
   ed25519: Ed25519Key;
@@ -27,7 +18,7 @@ export type State = {
   currValidators(): ValidatorData[];
   nextValidators(): ValidatorData[];
   designedValidators(): ValidatorData[];
-  ticketsAccumulator(): TicketBody[];
+  ticketsAccumulator(): Ticket[];
 };
 
 export type StateDiff = {
@@ -37,7 +28,7 @@ export type StateDiff = {
   currValidators?: ValidatorData[];
   nextValidators?: ValidatorData[];
   designedValidators?: ValidatorData[];
-  ticketsAccumulator?: TicketBody[];
+  ticketsAccumulator?: Ticket[];
 };
 
 export class Safrole {
@@ -51,7 +42,7 @@ export class Safrole {
     slot: number;
     entropy: EntropyHash;
     offenders: Ed25519Key[];
-    extrinsic: TicketEnvelope[];
+    extrinsic: SignedTicket[];
   }): Promise<StateDiff> {
     const newState: StateDiff = {};
     if (this.state.timeslot() > input.slot) {

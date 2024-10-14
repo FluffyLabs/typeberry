@@ -1,22 +1,18 @@
-import assert from "node:assert";
-import fs from "node:fs";
 import type { HeaderHash, TimeSlot } from "@typeberry/block";
-import { CodecContext } from "@typeberry/block/context";
 import { type BeefyHash, RefineContext } from "@typeberry/block/refine-context";
-import { type Bytes, BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
+import type { Bytes } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
 import type { TrieHash } from "@typeberry/trie";
-import { bytes32 } from ".";
+import { fromJson, runCodecTest } from "./common";
 
 export const refineContextFromJson = json.object<JsonRefineContext, RefineContext>(
   {
-    anchor: bytes32(),
-    state_root: bytes32(),
-    beefy_root: bytes32(),
-    lookup_anchor: bytes32(),
+    anchor: fromJson.bytes32(),
+    state_root: fromJson.bytes32(),
+    beefy_root: fromJson.bytes32(),
+    lookup_anchor: fromJson.bytes32(),
     lookup_anchor_slot: "number",
-    prerequisite: json.optional(bytes32()),
+    prerequisite: json.optional(fromJson.bytes32()),
   },
   ({ anchor, state_root, beefy_root, lookup_anchor, lookup_anchor_slot, prerequisite }) =>
     new RefineContext(anchor, state_root, beefy_root, lookup_anchor, lookup_anchor_slot, prerequisite),
@@ -32,11 +28,5 @@ type JsonRefineContext = {
 };
 
 export async function runRefineContextTest(test: RefineContext, file: string) {
-  const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
-
-  const myEncoded = Encoder.encodeObject(RefineContext.Codec, test, new CodecContext());
-  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.fromBlob(encoded).toString());
-
-  const decoded = Decoder.decodeObject(RefineContext.Codec, encoded, new CodecContext());
-  assert.deepStrictEqual(decoded, test);
+  runCodecTest(RefineContext.Codec, test, file);
 }

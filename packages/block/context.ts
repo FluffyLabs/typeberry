@@ -1,12 +1,71 @@
-export const EST_VALIDATORS = 1024;
-export const EST_VALIDATORS_SUPER_MAJORITY = 768;
+/**
+ * Estimated number of validators.
+ *
+ * NOTE: Should ONLY be used to pre-allocate some data.
+ */
+export const EST_VALIDATORS = 1023;
+/**
+ * Estimated number of super majority of validators.
+ *
+ * NOTE: Should ONLY be used to pre-allocate some data.
+ */
+export const EST_VALIDATORS_SUPER_MAJORITY = 683;
+/**
+ * Estimated number of cores.
+ *
+ * NOTE: Should ONLY be used to pre-allocate some data.
+ */
 export const EST_CORES = 12;
-export const EST_EPOCH_LENGTH = 12;
+/**
+ * Estimated epoch length (in time slots).
+ *
+ * NOTE: Should ONLY be used to pre-allocate some data.
+ */
+export const EST_EPOCH_LENGTH = 600;
 
-export class CodecContext {
-  validatorsCount = 6;
+/**
+ * Additional data that has to be passed to the codec to correctly parse incoming bytes.
+ */
+export class ChainSpec {
+  /** Number of validators. */
+  readonly validatorsCount: number;
   /** 2/3 of number of validators + 1 */
-  validatorsSuperMajority = 5;
-  epochLength = 12;
-  coresCount = 2;
+  readonly validatorsSuperMajority: number;
+  /** Number of cores. */
+  readonly coresCount: number;
+  /** Duration of a timeslot in seconds. */
+  readonly slotDuration: number;
+  /** Length of the epoch in time slots. */
+  readonly epochLength: number;
+  /** Length of the ticket contest in time slots. */
+  readonly contestLength: number;
+  /** The maximum number of tickets each validator can submit. */
+  readonly ticketsPerValidator: number;
+
+  constructor(data: {
+    validatorsCount: number;
+    coresCount: number;
+    slotDuration: number;
+    epochLength: number;
+    contestLength: number;
+    ticketsPerValidator: number;
+  }) {
+    this.validatorsCount = data.validatorsCount;
+    this.validatorsSuperMajority = Math.floor(data.validatorsCount / 3) * 2 + 1;
+    this.coresCount = data.coresCount;
+    this.slotDuration = data.slotDuration;
+    this.epochLength = data.epochLength;
+    this.contestLength = data.contestLength;
+    this.ticketsPerValidator = data.ticketsPerValidator;
+  }
 }
+
+/** Set of values for "tiny" chain as defined in JAM test vectors. */
+export const tinyChainSpec = new ChainSpec({
+  validatorsCount: 6,
+  coresCount: 2,
+  slotDuration: 6,
+  epochLength: 12,
+  contestLength: 10,
+  ticketsPerValidator: 3,
+});

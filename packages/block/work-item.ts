@@ -1,16 +1,20 @@
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
+import type { KnownSizeArray } from "@typeberry/collections";
 import type { U16, U32 } from "@typeberry/numbers";
-import type { TrieHash } from "@typeberry/trie";
 import type { Opaque } from "@typeberry/utils";
-import type { Gas, ServiceId } from "./common";
-import { HASH_SIZE } from "./hash";
+import type { ServiceGas, ServiceId } from "./common";
+import { type CodeHash, HASH_SIZE } from "./hash";
 
-type ExtrinsicHash = Opaque<Bytes<32>, "ExtrinsicHash">;
+type WorkItemExtrinsicHash = Opaque<Bytes<typeof HASH_SIZE>, "ExtrinsicHash">;
 
+/**
+ * Definition of data segment that was exported by some work package earlier
+ * and now is being imported by another work-item.
+ */
 export class ImportSpec {
   static Codec = codec.Class(ImportSpec, {
-    treeRoot: codec.bytes(HASH_SIZE).cast(),
+    treeRoot: codec.bytes(HASH_SIZE),
     index: codec.u16,
   });
 
@@ -19,35 +23,50 @@ export class ImportSpec {
   }
 
   constructor(
-    public readonly treeRoot: TrieHash,
+    /**
+     * ??: TODO [ToDr] GP seems to mention a identity of a work-package:
+     * https://graypaper.fluffylabs.dev/#/c71229b/195500195500
+     */
+    public readonly treeRoot: Bytes<typeof HASH_SIZE>,
+    /** Index of the prior exported segment. */
     public readonly index: U16,
   ) {}
 }
 
-export class ExtrinsicSpec {
-  static Codec = codec.Class(ExtrinsicSpec, {
+/** Introduced blob hashes and their lengths. */
+export class WorkItemExtrinsicSpec {
+  static Codec = codec.Class(WorkItemExtrinsicSpec, {
     hash: codec.bytes(HASH_SIZE).cast(),
     len: codec.u32,
   });
 
-  static fromCodec({ hash, len }: CodecRecord<ExtrinsicSpec>) {
-    return new ExtrinsicSpec(hash, len);
+  static fromCodec({ hash, len }: CodecRecord<WorkItemExtrinsicSpec>) {
+    return new WorkItemExtrinsicSpec(hash, len);
   }
 
   constructor(
-    public readonly hash: ExtrinsicHash,
+    /** The pre-image to this hash should be passed to the guarantor alongisde the work-package. */
+    public readonly hash: WorkItemExtrinsicHash,
+    /** Length of the preimage identified by the hash above. */
     public readonly len: U32,
   ) {}
 }
 
+/**
+ * Work Item which is a part of some work package.
+ *
+ * https://graypaper.fluffylabs.dev/#/c71229b/194e00195800
+ */
 export class WorkItem {
   static Codec = codec.Class(WorkItem, {
     service: codec.u32.cast(),
-    codeHash: codec.bytes(HASH_SIZE),
+    codeHash: codec.bytes(HASH_SIZE).cast(),
     payload: codec.blob,
     gasLimit: codec.u64.cast(),
-    importSegments: codec.sequenceVarLen(ImportSpec.Codec),
-    extrinsic: codec.sequenceVarLen(ExtrinsicSpec.Codec),
+    // TODO [ToDr] Limit the number of items when decoding.
+    importSegments: codec.sequenceVarLen(ImportSpec.Codec).cast(),
+    extrinsic: codec.sequenceVarLen(WorkItemExtrinsicSpec.Codec),
+    // TODO [ToDr] Verify the size is lower than 2**11 when importing
     exportCount: codec.u16,
   });
 
@@ -64,12 +83,24 @@ export class WorkItem {
   }
 
   constructor(
+    /** `s`: related service */
     public readonly service: ServiceId,
-    public readonly codeHash: Bytes<typeof HASH_SIZE>,
+    /**
+     * `c`: code hash of the service at the time of reporting.
+     *
+     * preimage of that hash must be available from the perspective of the lookup
+     * anchor block.
+     */
+    public readonly codeHash: CodeHash,
+    /** `y`: payload blob */
     public readonly payload: BytesBlob,
-    public readonly gasLimit: Gas,
-    public readonly importSegments: ImportSpec[],
-    public readonly extrinsic: ExtrinsicSpec[],
+    /** `g`: execution gas limit */
+    public readonly gasLimit: ServiceGas,
+    /** `i`: sequence of imported data segments, which identify a prior exported segment. */
+    public readonly importSegments: KnownSizeArray<ImportSpec, "Less than 2**11">,
+    /** `x`: sequence of blob hashes and lengths to be introduced in this block */
+    public readonly extrinsic: WorkItemExtrinsicSpec[],
+    /** `e`: number of data segments exported by this work item. */
     public readonly exportCount: U16,
   ) {}
 }
