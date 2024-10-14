@@ -1,6 +1,6 @@
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import type { FixedSizeArray } from "@typeberry/collections";
+import { FixedSizeArray } from "@typeberry/collections";
 import type { U16, U32 } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
 import { HASH_SIZE } from "./hash";
@@ -62,7 +62,14 @@ export class WorkReport {
     authorizationOutput,
     results,
   }: CodecRecord<WorkReport>) {
-    return new WorkReport(workPackageSpec, context, coreIndex, authorizerHash, authorizationOutput, results);
+    return new WorkReport(
+      workPackageSpec,
+      context,
+      coreIndex,
+      authorizerHash,
+      authorizationOutput,
+      new FixedSizeArray(results, results.length),
+    );
   }
 
   constructor(

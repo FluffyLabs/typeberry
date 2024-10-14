@@ -1,6 +1,6 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import type { FixedSizeArray } from "@typeberry/collections";
+import { FixedSizeArray } from "@typeberry/collections";
 import type { ServiceId } from "./common";
 import { type CodeHash, HASH_SIZE } from "./hash";
 import { RefineContext } from "./refine-context";
@@ -37,7 +37,14 @@ export class WorkPackage {
     context,
     items,
   }: CodecRecord<WorkPackage>) {
-    return new WorkPackage(authorization, authCodeHost, authorizationCodeHash, parametrization, context, items);
+    return new WorkPackage(
+      authorization,
+      authCodeHost,
+      authorizationCodeHash,
+      parametrization,
+      context,
+      new FixedSizeArray(items, items.length),
+    );
   }
 
   constructor(
