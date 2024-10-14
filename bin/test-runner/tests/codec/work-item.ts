@@ -1,6 +1,6 @@
-import type { HASH_SIZE, ServiceGas, ServiceId } from "@typeberry/block";
+import type { CodeHash, ServiceGas, ServiceId } from "@typeberry/block";
 import { ImportSpec, WorkItem, WorkItemExtrinsicSpec } from "@typeberry/block/work-item";
-import { type Bytes, BytesBlob } from "@typeberry/bytes";
+import { BytesBlob } from "@typeberry/bytes";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
 import type { U16 } from "@typeberry/numbers";
@@ -47,7 +47,7 @@ export const workItemFromJson = json.object<JsonWorkItem, WorkItem>(
 
 type JsonWorkItem = {
   service: ServiceId;
-  code_hash: Bytes<typeof HASH_SIZE>;
+  code_hash: CodeHash;
   payload: BytesBlob;
   gas_limit: number;
   import_segments: KnownSizeArray<ImportSpec, "Less than 2**11">;

@@ -5,8 +5,10 @@ import type { U16, U32 } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
 import { HASH_SIZE } from "./hash";
 import { RefineContext } from "./refine-context";
+import type { WorkItemsCount } from "./work-package";
 import { WorkResult } from "./work-result";
 
+/** Index of the core on which the execution of the work package is done. */
 export type CoreIndex = Opaque<U16, "CoreIndex[u16]">;
 /** Blake2B hash of a work package. */
 export type WorkPackageHash = Opaque<Bytes<typeof HASH_SIZE>, "WorkPackageHash">;
@@ -36,27 +38,50 @@ export class WorkPackageSpec {
   ) {}
 }
 
+/**
+ * A report of execution of some work package.
+ *
+ * https://graypaper.fluffylabs.dev/#/c71229b/133e00134500
+ */
 export class WorkReport {
   static Codec = codec.Class(WorkReport, {
-    packageSpec: WorkPackageSpec.Codec,
+    workPackageSpec: WorkPackageSpec.Codec,
     context: RefineContext.Codec,
     coreIndex: codec.u16.cast(),
     authorizerHash: codec.bytes(HASH_SIZE),
-    authOutput: codec.blob,
+    authorizationOutput: codec.blob,
     // TODO [ToDr] Constrain the size of the sequence during decoding.
     results: codec.sequenceVarLen(WorkResult.Codec).cast(),
   });
 
-  static fromCodec({ packageSpec, context, coreIndex, authorizerHash, authOutput, results }: CodecRecord<WorkReport>) {
-    return new WorkReport(packageSpec, context, coreIndex, authorizerHash, authOutput, results);
+  static fromCodec({
+    workPackageSpec,
+    context,
+    coreIndex,
+    authorizerHash,
+    authorizationOutput,
+    results,
+  }: CodecRecord<WorkReport>) {
+    return new WorkReport(workPackageSpec, context, coreIndex, authorizerHash, authorizationOutput, results);
   }
 
   constructor(
-    public readonly packageSpec: WorkPackageSpec,
+    /** `s`: Work package specification. */
+    public readonly workPackageSpec: WorkPackageSpec,
+    /** `x`: Refinement context. */
     public readonly context: RefineContext,
+    /** `c`: Core index on which the work is done. */
     public readonly coreIndex: CoreIndex,
+    /** `a`: Hash of the authorizer. */
     public readonly authorizerHash: Bytes<typeof HASH_SIZE>,
-    public readonly authOutput: BytesBlob,
-    public readonly results: FixedSizeArray<WorkResult, 1 | 2 | 3 | 4>,
+    /** `o`: Authorization output. */
+    public readonly authorizationOutput: BytesBlob,
+    /**
+     * TODO [ToDr] a segment-root lookup dictionary is mentioned in the GP but missing in JSON tests for now.
+     * https://graypaper.fluffylabs.dev/#/c71229b/137a00137d00
+     */
+    // public readonly segmentRootLookup: MapOfHashes<Bytes<typeof HASH_SIZE>>,
+    /** `r`: The results of evaluation of each of the items in the work package. */
+    public readonly results: FixedSizeArray<WorkResult, WorkItemsCount>,
   ) {}
 }

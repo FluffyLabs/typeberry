@@ -1,5 +1,10 @@
-import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
-import { BytesBlob } from "@typeberry/bytes";
+import type { HASH_SIZE } from "@typeberry/block";
+import type { RefineContext } from "@typeberry/block/refine-context";
+import { MAX_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package";
+import { type CoreIndex, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
+import type { WorkResult } from "@typeberry/block/work-result";
+import { type Bytes, BytesBlob } from "@typeberry/bytes";
+import { FixedSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
 import { fromJson, runCodecTest } from ".";
 import type { JsonObject } from "../../json-format";
@@ -16,7 +21,7 @@ const workPackageSpecFromJson = json.object<JsonObject<WorkPackageSpec>, WorkPac
   ({ hash, len, erasure_root, exports_root }) => new WorkPackageSpec(hash, len, erasure_root, exports_root),
 );
 
-export const workReportFromJson = json.object<JsonObject<WorkReport>, WorkReport>(
+export const workReportFromJson = json.object<JsonWorkReport, WorkReport>(
   {
     package_spec: workPackageSpecFromJson,
     context: refineContextFromJson,
@@ -26,8 +31,25 @@ export const workReportFromJson = json.object<JsonObject<WorkReport>, WorkReport
     results: json.array(workResultFromJson),
   },
   ({ package_spec, context, core_index, authorizer_hash, auth_output, results }) =>
-    new WorkReport(package_spec, context, core_index, authorizer_hash, auth_output, results),
+    new WorkReport(
+      package_spec,
+      context,
+      core_index,
+      authorizer_hash,
+      auth_output,
+      // TODO [ToDr] Verify the length and throw an exception.
+      new FixedSizeArray(results, Math.min(results.length, MAX_NUMBER_OF_WORK_ITEMS)),
+    ),
 );
+
+type JsonWorkReport = {
+  package_spec: WorkPackageSpec;
+  context: RefineContext;
+  core_index: CoreIndex;
+  authorizer_hash: Bytes<typeof HASH_SIZE>;
+  auth_output: BytesBlob;
+  results: WorkResult[];
+};
 
 export async function runWorkReportTest(test: WorkReport, file: string) {
   runCodecTest(WorkReport.Codec, test, file);

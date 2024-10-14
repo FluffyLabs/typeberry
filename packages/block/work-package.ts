@@ -6,6 +6,11 @@ import { type CodeHash, HASH_SIZE } from "./hash";
 import { RefineContext } from "./refine-context";
 import { WorkItem } from "./work-item";
 
+/** Possible number of work items in the package or results in the report. */
+export type WorkItemsCount = 1 | 2 | 3 | 4;
+/** Maximal number of work items in the work package or results in work report. */
+export const MAX_NUMBER_OF_WORK_ITEMS = 4;
+
 /**
  * A piece of work done within a core.
  *
@@ -52,6 +57,6 @@ export class WorkPackage {
      * Constrained by `I=4`:
      * https://graypaper.fluffylabs.dev/#/c71229b/3d56003d5800
      */
-    public readonly items: FixedSizeArray<WorkItem, 1 | 2 | 3 | 4>,
+    public readonly items: FixedSizeArray<WorkItem, WorkItemsCount>,
   ) {}
 }

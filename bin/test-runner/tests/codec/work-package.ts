@@ -1,8 +1,8 @@
-import type { ServiceId } from "@typeberry/block";
+import type { CodeHash, ServiceId } from "@typeberry/block";
 import type { RefineContext } from "@typeberry/block/refine-context";
 import type { WorkItem } from "@typeberry/block/work-item";
-import { WorkPackage } from "@typeberry/block/work-package";
-import { type Bytes, BytesBlob } from "@typeberry/bytes";
+import { MAX_NUMBER_OF_WORK_ITEMS, WorkPackage } from "@typeberry/block/work-package";
+import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { fromJson, runCodecTest } from ".";
@@ -10,7 +10,7 @@ import { refineContextFromJson } from "./refine-context";
 import { workItemFromJson } from "./work-item";
 
 type Authorizer = {
-  code_hash: Bytes<32>;
+  code_hash: CodeHash;
   params: BytesBlob;
 };
 
@@ -35,7 +35,7 @@ export const workPackageFromJson = json.object<JsonWorkPackage, WorkPackage>(
       authorizer.code_hash,
       authorizer.params,
       context,
-      new FixedSizeArray(items, Math.min(items.length, 4)),
+      new FixedSizeArray(items, Math.min(items.length, MAX_NUMBER_OF_WORK_ITEMS)),
     ),
 );
 
