@@ -25,7 +25,10 @@
     "tools/builder",
     "tools/commit-hash",
     "workers/block-generator",
-    "workers/importer"
+    "workers/importer",
+    "packages/transition",
+    "packages/database",
+    "packages/hash"
   ],
   "engines": {
     "node": ">=22",

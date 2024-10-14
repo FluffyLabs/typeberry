@@ -1,3 +1,7 @@
+import { Block } from "@typeberry/block";
+import { tinyChainSpec } from "@typeberry/block/context";
+import type { BytesBlob } from "@typeberry/bytes";
+import { Decoder } from "@typeberry/codec";
 import { Logger } from "@typeberry/logger";
 import type { TypedChannel } from "@typeberry/state-machine";
 import { type RespondAndTransitionTo, State, StateMachine, type TransitionTo } from "@typeberry/state-machine";
@@ -53,7 +57,12 @@ export class MainReady extends State<"ready(main)", Finished> {
   }
 
   private onBlock(block: unknown) {
-    logger.log(`${this.constructor.name} got block: "${JSON.stringify(block)}"`);
+    if (block instanceof Uint8Array) {
+      const b = Decoder.decodeObject(Block.Codec, block, tinyChainSpec);
+      logger.log(`${this.constructor.name} got block: "${JSON.stringify(b)}"`);
+    } else {
+      logger.error(`${this.constructor.name} got invalid signal type: ${JSON.stringify(block)}.`);
+    }
   }
 
   finish(channel: TypedChannel): TransitionTo<Finished> {
@@ -89,8 +98,10 @@ export class WorkerReady extends State<"ready(worker)", Finished, Config> {
     });
   }
 
-  sendBlock(port: TypedChannel, block: { number: number }) {
-    port.sendSignal("block", block);
+  sendBlock(port: TypedChannel, block: BytesBlob) {
+    // TODO [ToDr] How to make a better API to pass this binary data around?
+    // Currently we don't guarantee that the underlying buffer is actually `ArrayBuffer`.
+    port.sendSignal("block", block.buffer, [block.buffer.buffer as ArrayBuffer]);
   }
 
   async endWork(): Promise<RespondAndTransitionTo<null, Finished>> {

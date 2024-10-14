@@ -16,7 +16,7 @@ export const HASH_SIZE = 32;
 export type HeaderHash = Opaque<Bytes<typeof HASH_SIZE>, "HeaderHash">;
 
 /** Blake2B hash of JAM-encoding of some work report. */
-export type WorkReportHash = Opaque<Bytes<typeof HASH_SIZE>, "HeaderHash">;
+export type WorkReportHash = Opaque<Bytes<typeof HASH_SIZE>, "WorkReportHash">;
 
 /**
  * Blake2B hash of JAM-encoding of all extrinsics concatenated.

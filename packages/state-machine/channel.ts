@@ -1,4 +1,4 @@
-import { MessageChannel, MessagePort, type Worker } from "node:worker_threads";
+import { MessageChannel, MessagePort, type TransferListItem, type Worker } from "node:worker_threads";
 import { check } from "@typeberry/utils";
 
 import { Logger } from "@typeberry/logger";
@@ -19,12 +19,12 @@ export interface TypedChannel {
   /**
    * Send a `signal` to another worker thread.
    */
-  sendSignal(name: string, data: unknown): void;
+  sendSignal(name: string, data: unknown, transferList?: TransferListItem[]): void;
 
   /**
    * Send a `request` to another worker thread and await response.
    */
-  sendRequest<T>(name: string, data: unknown): Promise<T>;
+  sendRequest<T>(name: string, data: unknown, transferList?: TransferListItem[]): Promise<T>;
 
   /**
    * Close the communication channel with the other worker.

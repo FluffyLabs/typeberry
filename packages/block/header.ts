@@ -46,6 +46,7 @@ export class EpochMarker {
   public constructor(
     /** `eta_1'`: Randomness for the NEXT epoch. */
     public readonly entropy: EntropyHash,
+    // TODO [ToDr] constrain the sequence length during decoding.
     /** `kappa_b`: Bandernsatch validator keys for the NEXT epoch. */
     public readonly validators: KnownSizeArray<BandersnatchKey, "ValidatorsCount">,
   ) {}
@@ -123,6 +124,8 @@ export class Header {
    * https://graypaper.fluffylabs.dev/#/387103d/0de8000dee00
    */
   public seal: BandersnatchVrfSignature = Bytes.zero(BANDERSNATCH_VRF_SIGNATURE_BYTES) as BandersnatchVrfSignature;
+
+  private constructor() {}
 
   /** Create an empty header with some dummy values. */
   public static empty() {

@@ -3,7 +3,11 @@ import { Worker, isMainThread, parentPort } from "node:worker_threads";
 
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
+import { Block } from "@typeberry/block";
+import { tinyChainSpec } from "@typeberry/block/context";
+import { Decoder } from "@typeberry/codec";
 import { Logger } from "@typeberry/logger";
+import { Generator } from "./generator";
 import {
   type Finished,
   type WorkerInitialized,
@@ -18,7 +22,7 @@ const logger = Logger.new(__filename, "block-generator");
 if (!isMainThread) {
   const machine = stateMachineWorker();
   const channel = MessageChannelStateMachine.receiveChannel(machine, parentPort);
-  channel.then((channel) => main(channel)).catch(logger.error);
+  channel.then((channel) => main(channel)).catch((e) => logger.error(e));
 }
 
 /**
@@ -32,9 +36,12 @@ export async function main(channel: MessageChannelStateMachine<WorkerInitialized
   // Generate blocks until the close signal is received.
   const finished = await ready.doUntil<Finished>("finished", async (worker, port, isFinished) => {
     let counter = 0;
+    const generator = new Generator(tinyChainSpec);
     while (!isFinished()) {
       counter += 1;
-      worker.sendBlock(port, { number: counter });
+      const newBlock = await generator.nextEncodedBlock();
+      Decoder.decodeObject(Block.Codec, newBlock, tinyChainSpec);
+      worker.sendBlock(port, newBlock);
       await wait(3000);
     }
   });
