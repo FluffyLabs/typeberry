@@ -1,48 +1,108 @@
-# Nerd Fonts
+# typeberry 🫐
 
-This is an archived font from the Nerd Fonts release v3.2.1.
+[![Node.js CI](https://github.com/FluffyLabs/typeberry/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/node.js.yml) [![Publish commits](https://github.com/FluffyLabs/typeberry/actions/workflows/blockchain-git-log.yml/badge.svg?branch=main)](https://github.com/FluffyLabs/typeberry/actions/workflows/blockchain-git-log.yml) [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 
-For more information see:
-* https://github.com/ryanoasis/nerd-fonts/
-* https://github.com/ryanoasis/nerd-fonts/releases/latest/
+Typeberry is a TypeScript implementation of [JAM protocol](https://graypaper.com/).
 
-# JetBrains Mono
+## Implementation status
 
-JetBrains Mono: a typeface made for developers
+- [x] PVM
+- [ ] State Trie (ongoing)
+- [ ] Safrole (ongoing)
+- [ ] Block Import
+- [ ] GRANDPA
+- [ ] Networking
+- [ ] Data Availability
 
-For more information have a look at the upstream website: https://github.com/JetBrains/JetBrainsMono
+## Requirements
 
-Version: 2.304
+```bash
+$ node --version
+v 22.1.0
+```
 
-## Which font?
+We recommend [NVM](https://github.com/nvm-sh/nvm) to install and manage different
+`node` versions.
 
-### TL;DR
+### Installing dependencies
 
-* Pick your font family:
-  * If you are limited to monospaced fonts (because of your terminal, etc) then pick a font with `Nerd Font Mono` (or `NFM`).
-  * If you want to have bigger icons (usually around 1.5 normal letters wide) pick a font without `Mono` i.e. `Nerd Font` (or `NF`). Most terminals support this, but ymmv.
-  * If you work in a proportional context (GUI elements or edit a presentation etc) pick a font with `Nerd Font Propo` (or `NFP`).
+```bash
+$ npm ci
+```
 
-### Ligatures
+### Running typeberry
 
-Ligatures are generally preserved in the patched fonts.
-Nerd Fonts `v2.0.0` had no ligatures in the `Nerd Font Mono` fonts, this has been dropped with `v2.1.0`.
-If you have a ligature-aware terminal and don't want ligatures you can (usually) disable them in the terminal settings.
+```bash
+$ npm start
+```
 
-### Explanation
+### Formatting & linting
 
-Once you narrow down your font choice of family (`Droid Sans`, `Inconsolata`, etc) and style (`bold`, `italic`, etc) you have 2 main choices:
+```bash
+$ npm run qa
+```
 
-#### `Option 1: Download already patched font`
+Formatting & linting is done by [biomejs](https://biomejs.dev/)). You can run
+separate tools using commands below.
+Note that all safe fixes will be applied automatically.
 
- * For a stable version download a font package from the [release page](https://github.com/ryanoasis/nerd-fonts/releases)
- * Or download the development version from the folders here
+```bash
+$ npm run format # format the code
+$ npm run lint   # lint the code & organise imports
+```
 
-#### `Option 2: Patch your own font`
+A shorthand to run all the checks and apply safe fixes all at once is:
+```bash
+$ npm run qa-fix
+```
 
- * Patch your own variations with the various options provided by the font patcher (i.e. not include all symbols for smaller font size)
+### Running unit tests
 
-For more information see: [The FAQ](https://github.com/ryanoasis/nerd-fonts/wiki/FAQ-and-Troubleshooting#which-font)
+```bash
+$ npm run test
+```
 
-[SIL-RFN]:http://scripts.sil.org/cms/scripts/page.php?item_id=OFL_web_fonts_and_RFNs#14cbfd4a
+Running tests from a single package:
+```bash
+$ npm run test -w @typeberry/trie
+```
 
+### Running benchmarks
+This command will run all benchmarks from `./benchmarks/` folder
+
+```bash
+$ npm start -w @typeberry/benchmark
+```
+
+Since each benchmark file is also runnable, it's easy to run just one benchmark, e.g:
+```bash
+$ npm exec ts-node ./benchmarks/math/mul_overflow.ts
+```
+
+### Running JSON test vectors
+
+To run JSON test cases coming from the official
+[JAM test vectors repository](https://github.com/w3f/jamtestvectors/) you need
+to first check out the repository with test cases and then use `test-runner`
+to execute them.
+
+```bash
+$ git clone https://github.com/w3f/jamtestvectors.git
+$ npm start -w @typeberry/test-runner  --  jamtestvectors/**/*.json ../jamtestvectors/erasure_coding/vectors/*
+```
+
+Obviously it's also possible to run just single test case or part of the test
+cases by altering the glob pattern in the path.
+
+### Adding a new component / package
+
+```bash
+$ npm init -w ./packages/mycomponent
+```
+
+This command will automatically update the `workspaces` field in top-level `package.json`.
+
+## Codestyle
+
+A brief, but evolving description of our codestyle and guideliness is availabe
+in [CODESTYLE](./CODESTYLE.md).
