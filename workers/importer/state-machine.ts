@@ -55,6 +55,14 @@ export class ImporterReady extends State<"ready(importer)", Finished, ChainSpec>
     });
   }
 
+  getChainSpec(): ChainSpec {
+    if (!this.data) {
+      throw new Error("Did not receive chain spec config!");
+    }
+
+    return this.data;
+  }
+
   private triggerOnBlock(block: unknown) {
     if (block instanceof Uint8Array) {
       // TODO [ToDr] probably we don't want to decode it here, but

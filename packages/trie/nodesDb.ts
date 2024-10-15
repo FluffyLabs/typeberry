@@ -1,3 +1,4 @@
+import { HashDictionary } from "@typeberry/collections";
 import type { TrieHash, TrieNode } from "./nodes";
 
 /**
@@ -13,19 +14,17 @@ export type TrieHasher = {
 export class NodesDb {
   readonly hasher: TrieHasher;
 
-  // TODO [ToDr] [crit] We can't use `TrieHash` directly in the map,
-  // because of the way it's being compared. Hence having `string` here.
-  // This has to be benchmarked and re-written to a custom map most likely.
-  protected readonly nodes: Map<string, TrieNode>;
+  protected readonly nodes: HashDictionary<TrieHash, TrieNode>;
 
   constructor(hasher: TrieHasher) {
     this.hasher = hasher;
-    this.nodes = new Map();
+    this.nodes = new HashDictionary();
   }
 
   get(hash: TrieHash): TrieNode | null {
-    const key = NodesDb.hashCompatStr(hash);
-    return this.nodes.get(key) ?? null;
+    return NodesDb.withHashCompat(hash, (key) => {
+      return this.nodes.get(key) ?? null;
+    });
   }
 
   hashNode(n: TrieNode): TrieHash {
@@ -36,18 +35,18 @@ export class NodesDb {
    * Returns a string identifier of that hash to be used as a key in DB.
    *
    * Before calling `toString` the first bit is set to 0, to maintain compatibility
-   * with branch nodes, which have the left subtree stripped out of the first bit (since it's
-   * a branch node identifier).
+   * with branch nodes, which have the left subtree stripped out of the first bit
+   * (since it's a branch node identifier).
    *
    */
-  protected static hashCompatStr(hash: TrieHash): string {
+  protected static withHashCompat<T>(hash: TrieHash, exe: (hash: TrieHash) => T): T {
     const prevValue = hash.raw[0];
     hash.raw[0] &= 0b1111_1110;
-    const hashString = hash.toString();
+    const returnValue = exe(hash);
     // restore the original byte, so that we have correct value in case it
     // ends up in the right part of the subtree.
     hash.raw[0] = prevValue;
-    return hashString;
+    return returnValue;
   }
 }
 
@@ -56,14 +55,16 @@ export class NodesDb {
  */
 export class WriteableNodesDb extends NodesDb {
   remove(hash: TrieHash) {
-    const key = NodesDb.hashCompatStr(hash);
-    this.nodes.delete(key);
+    return NodesDb.withHashCompat(hash, (key) => {
+      this.nodes.delete(key);
+    });
   }
 
   insert(node: TrieNode, hash?: TrieHash): TrieHash {
     const h = hash ?? this.hashNode(node);
-    const key = NodesDb.hashCompatStr(h);
-    this.nodes.set(key, node);
+    NodesDb.withHashCompat(h, (key) => {
+      this.nodes.set(key, node);
+    });
     return h;
   }
 }

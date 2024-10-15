@@ -3,7 +3,10 @@ import { isMainThread, parentPort } from "node:worker_threads";
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
+import { SimpleAllocator } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
+import { TransitionHasher } from "../../packages/transition";
+import { Importer } from "./importer";
 import {
   type ImporterInit,
   type ImporterReady,
@@ -31,8 +34,13 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
 
   const finished = await ready.doUntil<Finished>("finished", async (worker, port, isFinished) => {
     logger.info("Importer waiting for blocks.");
+    const importer = new Importer(new TransitionHasher(worker.getChainSpec(), new SimpleAllocator()));
+
     worker.onBlock.on((b) => {
       logger.info(`Got block: ${b.header}`);
+      importer.importBlock(b);
+
+      logger.info(`Best block: ${importer.bestBlockHeader()}`);
     });
   });
 

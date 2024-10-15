@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { FixedSizeArray } from "./";
+import { FixedSizeArray } from "./sized-array";
 
 describe("FixedSizeArray", () => {
   it("should verify length", () => {
