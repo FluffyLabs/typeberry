@@ -28,7 +28,8 @@
     "workers/importer",
     "packages/transition",
     "packages/database",
-    "packages/hash"
+    "packages/hash",
+    "workers/generic"
   ],
   "engines": {
     "node": ">=22",

@@ -47,6 +47,9 @@ export class Generator {
   }
 
   async nextBlock() {
+    const lastTimeSlot = this.lastBlock?.header.timeSlotIndex;
+    const blockNumber = lastTimeSlot ? lastTimeSlot + 1 : 1;
+
     const hasher = new TransitionHasher(this.context, this.hashAllocator);
     // TODO [ToDr] write benchmark to calculate many hashes.
     const parentHeaderHash = this.lastHeaderHash(hasher);
@@ -57,8 +60,8 @@ export class Generator {
       new DisputesExtrinsic(
         [
           new Verdict(
-            Bytes.fill(HASH_SIZE, 1) as WorkReportHash,
-            0 as Epoch,
+            Bytes.fill(HASH_SIZE, blockNumber % 256) as WorkReportHash,
+            (blockNumber / this.context.epochLength) as Epoch,
             [
               new Judgement(true, 0 as ValidatorIndex, Bytes.fill(64, 0) as Ed25519Signature),
               new Judgement(true, 1 as ValidatorIndex, Bytes.fill(64, 1) as Ed25519Signature),
@@ -81,15 +84,17 @@ export class Generator {
       parentHeaderHash,
       priorStateRoot: stateRoot,
       extrinsicHash,
-      timeSlotIndex: (this.lastBlock?.header.timeSlotIndex ?? 0 + 1) as TimeSlot,
+      timeSlotIndex: blockNumber as TimeSlot,
       epochMarker: null,
       ticketsMarker: null,
       offendersMarker: [],
       bandersnatchBlockAuthorIndex: 0 as ValidatorIndex,
-      entropySource: Bytes.fill(96, 42) as BandersnatchVrfSignature,
-      seal: Bytes.fill(96, 69) as BandersnatchVrfSignature,
+      entropySource: Bytes.fill(96, (blockNumber * 42) % 256) as BandersnatchVrfSignature,
+      seal: Bytes.fill(96, (blockNumber * 69) % 256) as BandersnatchVrfSignature,
     });
 
-    return new Block(header, extrinsic);
+    const block = new Block(header, extrinsic);
+    this.lastBlock = block;
+    return block;
   }
 }

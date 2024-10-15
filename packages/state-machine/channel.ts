@@ -115,10 +115,10 @@ export class MessageChannelStateMachine<
    * The async closure is given the `isDone` function that can be periodically checked
    * to stop any on-going computation.
    */
-  async doUntil<TState extends TStates>(
-    state: StateNames<TState>,
+  async doUntil<TNewState extends TStates>(
+    state: StateNames<TNewState>,
     work: (state: CurrentState, port: TypedChannel, isDone: () => boolean) => Promise<void>,
-  ) {
+  ): Promise<MessageChannelStateMachine<TNewState, TStates>> {
     const done = this.waitForState(state).then(() => {
       isDone.isDone = true;
     });
@@ -126,7 +126,7 @@ export class MessageChannelStateMachine<
 
     await Promise.all([work(this.currentState(), this, () => isDone.isDone), done]);
 
-    return this.transitionTo<TState>();
+    return this.transitionTo<TNewState>();
   }
 
   /**
