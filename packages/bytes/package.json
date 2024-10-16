@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "Byte-related utilities and types.",
   "main": "index.ts",
+  "dependencies": {
+    "@typeberry/utils": "0.0.1"
+  },
   "scripts": {
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },

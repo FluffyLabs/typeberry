@@ -17,13 +17,6 @@ const NO_OF_REGISTERS = 13;
  *
  * GP reference: https://graypaper.fluffylabs.dev/#WyIxYjA4MWZlM2U3IiwiMjciLG51bGwsbnVsbCxbIjxkaXYgY2xhc3M9XCJ0IG0wIHgxMCBoNiB5MTUzMCBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiIsIjxkaXYgY2xhc3M9XCJ0IG0wIHgxMCBoNiB5MTUzOCBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
  */
-
-const READONLY_LENGTH_INDEX = 0;
-const HEAP_LENGTH_INDEX = READONLY_LENGTH_INDEX + 3;
-const NO_OF_HEAP_PAGES_INDEX = HEAP_LENGTH_INDEX + 3;
-const STACK_SIZE_INDEX = NO_OF_HEAP_PAGES_INDEX + 2;
-const READONLY_DATA_INDEX = STACK_SIZE_INDEX + 3;
-
 type InputLength = Opaque<number, "Number that is lower than 2 ** 24 (Z_I from GP)">;
 
 export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {

@@ -1,0 +1,16 @@
+{
+  "name": "@typeberry/benchmarks",
+  "version": "0.0.1",
+  "description": "Benchmarks - run using ./tools/benchmark",
+  "private": true,
+  "main": "index.ts",
+  "dependencies": {
+    "@typeberry/logger": "0.0.1",
+    "@typeberry/bytes": "0.0.1",
+    "@typeberry/codec": "0.0.1",
+    "@typeberry/hash": "0.0.1"
+  },
+  "scripts": {},
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0"
+}

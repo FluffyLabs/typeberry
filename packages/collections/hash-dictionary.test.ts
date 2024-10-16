@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { HASH_SIZE } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
+import { HASH_SIZE } from "@typeberry/hash";
 import { HashDictionary } from "./hash-dictionary";
 
 function key(n: number) {

@@ -3,6 +3,11 @@
   "version": "0.0.1",
   "description": "Serialization and deserialization codec for JAM.",
   "main": "index.ts",
+  "dependencies": {
+    "@typeberry/bytes": "0.0.1",
+    "@typeberry/utils": "0.0.1",
+    "@typeberry/logger": "0.0.1"
+  },
   "scripts": {
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },

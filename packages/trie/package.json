@@ -11,6 +11,9 @@
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
+    "@typeberry/bytes": "0.0.1",
+    "@typeberry/collections": "0.0.1",
+    "@typeberry/utils": "0.0.1",
     "blake2b": "^2.1.4"
   },
   "author": "Fluffy Labs",
