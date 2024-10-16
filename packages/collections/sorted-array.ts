@@ -39,34 +39,33 @@ export class SortedArray<V> {
     this.array.splice(findIdx, 0, v);
   }
 
-  /** Remove one matching element from the collection. */
-  /** Returns index of an element or -1 if the element does not exist */
-  public findIndex(v: V) {
+  /** Returns index of SOME (it's not guaranteed it's first or last) element or -1 if the element does not exist */
+  private findIndex(v: V) {
     const findIdx = this.binarySearch(v);
     if (findIdx >= this.array.length) {
-      return false;
+      return -1;
     }
 
     const existing = this.array[findIdx];
     if (this.comparator(existing, v) === Ordering.Equal) {
       return findIdx;
     }
-    
-    return -1; // or null / undefined
+
+    return -1;
   }
-  
+
+  /** Remove one matching element from the collection. */
   public removeOne(v: V) {
     const findIdx = this.findIndex(v);
     if (findIdx >= 0) {
-        // remove the element
-        this.array.splice(findIdx, 1);
-    }    
+      // remove the element
+      this.array.splice(findIdx, 1);
+    }
   }
 
   /** Check if element is present in the collection. */
   public has(v: V) {
-    const findIdx = this.findIndex(v);
-    return findIdx >= 0;
+    return this.findIndex(v) >= 0;
   }
 
   /** Return the number of items in the array. */

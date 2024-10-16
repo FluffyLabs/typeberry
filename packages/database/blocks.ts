@@ -33,7 +33,7 @@ export class InMemoryBlocks {
   public bestBlock(): Block | undefined {
     const max = Math.max(...this.blockByTimeSlot.keys());
 
-    if (max === -Infinity) {
+    if (max === Number.NEGATIVE_INFINITY) {
       return undefined;
     }
 
