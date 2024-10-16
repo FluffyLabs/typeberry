@@ -26,8 +26,9 @@ export class Listener<T> {
     return this;
   }
 
-  removeAllListeners() {
+  markDone() {
     this.emitter.emit(EVENT_DONE);
     this.emitter.removeAllListeners(EVENT);
+    this.emitter.removeAllListeners(EVENT_DONE);
   }
 }

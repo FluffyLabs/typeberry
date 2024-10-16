@@ -44,7 +44,7 @@ export class MainReady extends State<"ready(main)", Finished, ChainSpec> {
   }
 
   finish(channel: TypedChannel): TransitionTo<Finished> {
-    this.onBlock.removeAllListeners();
+    this.onBlock.markDone();
     const promise = channel.sendRequest<null>("finish", null);
     return { state: "finished", data: promise };
   }

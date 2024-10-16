@@ -75,7 +75,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, ChainSpec>
   }
 
   async endWork(): Promise<RespondAndTransitionTo<null, Finished>> {
-    this.onBlock.removeAllListeners();
+    this.onBlock.markDone();
     return {
       response: null,
       transitionTo: { state: "finished", data: Promise.resolve(null) },
