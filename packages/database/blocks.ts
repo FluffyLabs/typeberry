@@ -31,12 +31,9 @@ export class InMemoryBlocks {
   }
 
   public bestBlock(): Block | undefined {
-    let max = null as number | null;
-    for (const k of this.blockByTimeSlot.keys()) {
-      max = Math.max(max ?? k, k);
-    }
+    const max = Math.max(...this.blockByTimeSlot.keys());
 
-    if (max === null) {
+    if (max === -Infinity) {
       return undefined;
     }
 

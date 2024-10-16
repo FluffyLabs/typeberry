@@ -45,7 +45,8 @@ export async function main() {
 
     logger.log("[main] waiting for tasks to finish");
     await generatorFinished.currentState().waitForWorkerToFinish();
-    await (await whenImporterDone).currentState().waitForWorkerToFinish();
+    const importerDone = await whenImporterDone();
+    await importerDone.currentState().waitForWorkerToFinish();
   } else {
     logger.error("The main binary cannot be running as a Worker!");
     return;
