@@ -1,7 +1,14 @@
-import { HASH_SIZE } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { check } from "@typeberry/utils";
 import blake2b from "blake2b";
+
+/**
+ * Size of the output of the hash functions.
+ *
+ * https://graypaper.fluffylabs.dev/#/387103d/071401071f01
+ *
+ */
+export const HASH_SIZE = 32;
 
 /** Allocator interface - returns an empty bytes vector that can be filled with the hash. */
 export interface HashAllocator {
