@@ -1,3 +1,4 @@
 export * from "./channel";
-export * from "./state";
+export * from "./events";
 export * from "./machine";
+export * from "./state";

@@ -1,7 +1,7 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
-import type { ServiceId } from "./common";
+import { type ServiceId, WithDebug } from "./common";
 import { type CodeHash, HASH_SIZE } from "./hash";
 import { RefineContext } from "./refine-context";
 import { WorkItem } from "./work-item";
@@ -18,7 +18,7 @@ export const MAX_NUMBER_OF_WORK_ITEMS = 4;
  *
  * https://graypaper.fluffylabs.dev/#/c71229b/193300193500
  */
-export class WorkPackage {
+export class WorkPackage extends WithDebug {
   static Codec = codec.Class(WorkPackage, {
     authorization: codec.blob,
     authCodeHost: codec.u32.cast(),
@@ -65,5 +65,7 @@ export class WorkPackage {
      * https://graypaper.fluffylabs.dev/#/c71229b/3d56003d5800
      */
     public readonly items: FixedSizeArray<WorkItem, WorkItemsCount>,
-  ) {}
+  ) {
+    super();
+  }
 }

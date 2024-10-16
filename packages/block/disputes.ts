@@ -1,6 +1,6 @@
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
-import type { Epoch, ValidatorIndex } from "./common";
+import { type Epoch, type ValidatorIndex, WithDebug } from "./common";
 import { ChainSpec, EST_VALIDATORS_SUPER_MAJORITY } from "./context";
 import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Key, type Ed25519Signature } from "./crypto";
 import { HASH_SIZE, type WorkReportHash } from "./hash";
@@ -8,7 +8,7 @@ import { HASH_SIZE, type WorkReportHash } from "./hash";
 /**
  * Proof of signing a contradictory [`Judgement`] of a work report.
  */
-export class Fault {
+export class Fault extends WithDebug {
   static Codec = codec.Class(Fault, {
     workReportHash: codec.bytes(HASH_SIZE).cast(),
     wasConsideredValid: codec.bool,
@@ -29,13 +29,15 @@ export class Fault {
     public readonly key: Ed25519Key,
     /** Original signature that was part of the [`Judgement`]. */
     public readonly signature: Ed25519Signature,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /**
  * Proof of guaranteeing a work-report found to be invalid.
  */
-export class Culprit {
+export class Culprit extends WithDebug {
   static Codec = codec.Class(Culprit, {
     workReportHash: codec.bytes(HASH_SIZE).cast(),
     key: codec.bytes(ED25519_KEY_BYTES).cast(),
@@ -53,13 +55,15 @@ export class Culprit {
     public readonly key: Ed25519Key,
     /** Original signature that was part of the [`Judgement`]. */
     public readonly signature: Ed25519Signature,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /**
  * A vote for validity or invalidity of a [`WorkReport`] signed by a particular validator.
  */
-export class Judgement {
+export class Judgement extends WithDebug {
   static Codec = codec.Class(Judgement, {
     isWorkReportValid: codec.bool,
     index: codec.u16.cast(),
@@ -77,7 +81,9 @@ export class Judgement {
     public readonly index: ValidatorIndex,
     /** The signature. */
     public readonly signature: Ed25519Signature,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /**
@@ -87,7 +93,7 @@ export class Judgement {
  *
  * https://graypaper.fluffylabs.dev/#/c71229b/12af0012af00
  */
-export class Verdict {
+export class Verdict extends WithDebug {
   static Codec = codec.Class(Verdict, {
     workReportHash: codec.bytes(HASH_SIZE).cast(),
     votesEpoch: codec.u32.cast(),
@@ -129,7 +135,9 @@ export class Verdict {
      * supermajority: https://graypaper.fluffylabs.dev/#/c71229b/123202123702 ?
      */
     public readonly votes: KnownSizeArray<Judgement, "Validators super majority">,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /**
@@ -141,7 +149,7 @@ export class Verdict {
  *
  * https://graypaper.fluffylabs.dev/#/c71229b/115d01115d01
  */
-export class DisputesExtrinsic {
+export class DisputesExtrinsic extends WithDebug {
   static Codec = codec.Class(DisputesExtrinsic, {
     verdicts: codec.sequenceVarLen(Verdict.Codec),
     culprits: codec.sequenceVarLen(Culprit.Codec),
@@ -174,5 +182,7 @@ export class DisputesExtrinsic {
      * https://graypaper.fluffylabs.dev/#/c71229b/12a50112a701
      */
     public readonly faults: Fault[],
-  ) {}
+  ) {
+    super();
+  }
 }

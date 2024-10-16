@@ -33,6 +33,11 @@ export class InMemoryTrie {
     this.root = trieInsert(this.root, this.nodes, leafNode);
   }
 
+  remove(_: StateKey) {
+    // TODO [ToDr] implement me.
+    throw new Error("Removing from the trie not implemented yet.");
+  }
+
   getRoot(): TrieHash {
     if (this.root === null) {
       return Bytes.zero(HASH_BYTES) as TrieHash;

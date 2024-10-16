@@ -1,7 +1,7 @@
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { U32 } from "@typeberry/numbers";
-import type { ServiceGas, ServiceId } from "./common";
+import { type ServiceGas, type ServiceId, WithDebug } from "./common";
 import { type CodeHash, HASH_SIZE } from "./hash";
 
 /** The tag to describe the [`WorkExecResult`] union. */
@@ -19,7 +19,7 @@ export enum WorkExecResultKind {
 }
 
 /** The execution result of some work-package. */
-export class WorkExecResult {
+export class WorkExecResult extends WithDebug {
   static Codec = codec.custom<WorkExecResult>(
     {
       name: "WorkExecResult",
@@ -51,7 +51,9 @@ export class WorkExecResult {
     public readonly kind: WorkExecResultKind,
     /** Optional octet sequence - available only if `kind === ok` */
     public readonly okBlob: BytesBlob | null = null,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /**

@@ -10,6 +10,7 @@ export const blake2bTrieHasher: TrieHasher = {
     for (const v of rest ?? []) {
       hasher?.update(v);
     }
+    // TODO [ToDr] plug in the allocator?
     const out = Bytes.zero(HASH_BYTES);
     hasher?.digest(out.raw);
     return out as TrieHash;

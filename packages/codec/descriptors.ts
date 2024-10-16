@@ -76,7 +76,7 @@ export class ClassDescriptor<T, D extends DescriptorRecord<T> = DescriptorRecord
  * Converts a class `T` into an object with the same fields as the class.
  */
 export type CodecRecord<T> = {
-  [K in Extract<keyof T, string>]: T[K];
+  [K in PropertyKeys<T>]: T[K];
 };
 
 /**
@@ -84,7 +84,7 @@ export type CodecRecord<T> = {
  * with the same names and return values as the fields of that class.
  */
 type LazyRecord<T> = {
-  [K in Extract<keyof T, string>]: () => T[K];
+  [K in PropertyKeys<T>]: () => T[K];
 };
 
 /**
@@ -100,22 +100,28 @@ function viewMethod(key: string) {
 }
 
 /**
- * Same as `Record<T>`, but the fields are all optional.
+ * Same as `CodecRecord<T>`, but the fields are all optional.
  */
 type OptionalRecord<T> = {
-  [K in Extract<keyof T, string>]?: T[K];
+  [K in PropertyKeys<T>]?: T[K];
 };
 
 /**
  * `Descriptor` of a complex type of some class with a bunch of public fields.
  */
 type DescriptorRecord<T> = {
-  [K in Extract<keyof T, string>]: Descriptor<T[K]> | ClassDescriptor<T[K]>;
+  [K in PropertyKeys<T>]: Descriptor<T[K]> | ClassDescriptor<T[K]>;
 };
 
-type KeysWithView<T, D extends DescriptorRecord<T>> = {
-  [K in Extract<keyof T, string>]: D[K] extends ClassDescriptor<T[K], infer _> ? K : never;
+/** Only keys that contain properties, not methods. */
+export type PropertyKeys<T> = {
+  // biome-ignore lint/complexity/noBannedTypes: We want to skip any function-like types here.
+  [K in Extract<keyof T, string>]: T[K] extends Function ? never : K;
 }[Extract<keyof T, string>];
+
+type KeysWithView<T, D extends DescriptorRecord<T>> = {
+  [K in PropertyKeys<T>]: D[K] extends ClassDescriptor<T[K], infer _> ? K : never;
+}[PropertyKeys<T>];
 
 /**
  * A `View` of some class `T`.

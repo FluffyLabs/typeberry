@@ -2,7 +2,7 @@ import { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import type { TrieHash } from "@typeberry/trie";
-import type { EntropyHash, TimeSlot, ValidatorIndex } from "./common";
+import { type EntropyHash, type TimeSlot, type ValidatorIndex, WithDebug } from "./common";
 import { ChainSpec, EST_EPOCH_LENGTH, EST_VALIDATORS } from "./context";
 import {
   BANDERSNATCH_KEY_BYTES,
@@ -46,6 +46,7 @@ export class EpochMarker {
   public constructor(
     /** `eta_1'`: Randomness for the NEXT epoch. */
     public readonly entropy: EntropyHash,
+    // TODO [ToDr] constrain the sequence length during decoding.
     /** `kappa_b`: Bandernsatch validator keys for the NEXT epoch. */
     public readonly validators: KnownSizeArray<BandersnatchKey, "ValidatorsCount">,
   ) {}
@@ -56,7 +57,7 @@ export class EpochMarker {
  *
  * https://graypaper.fluffylabs.dev/#/387103d/0c48000c5400
  */
-export class Header {
+export class Header extends WithDebug {
   static Codec = codec.Class(Header, {
     parentHeaderHash: codec.bytes(HASH_SIZE).cast(),
     priorStateRoot: codec.bytes(HASH_SIZE).cast(),
@@ -123,6 +124,10 @@ export class Header {
    * https://graypaper.fluffylabs.dev/#/387103d/0de8000dee00
    */
   public seal: BandersnatchVrfSignature = Bytes.zero(BANDERSNATCH_VRF_SIGNATURE_BYTES) as BandersnatchVrfSignature;
+
+  private constructor() {
+    super();
+  }
 
   /** Create an empty header with some dummy values. */
   public static empty() {

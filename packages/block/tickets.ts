@@ -2,6 +2,7 @@ import type { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import type { Opaque } from "@typeberry/utils";
+import { WithDebug } from "./common";
 import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "./crypto";
 import { HASH_SIZE } from "./hash";
 
@@ -20,7 +21,7 @@ export const ticketAttemptCodec = codec.bool.convert<TicketAttempt>(
 );
 
 /* Bandernsatch-signed ticket contest entry. */
-export class SignedTicket {
+export class SignedTicket extends WithDebug {
   static Codec = codec.Class(SignedTicket, {
     attempt: ticketAttemptCodec,
     signature: codec.bytes(BANDERSNATCH_PROOF_BYTES).cast(),
@@ -35,11 +36,13 @@ export class SignedTicket {
     public readonly attempt: TicketAttempt,
     /** The bandersnatch membership proof of knowledge. */
     public readonly signature: BandersnatchProof,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /** Anonymous? entry into the ticket contest. */
-export class Ticket {
+export class Ticket extends WithDebug {
   static Codec = codec.Class(Ticket, {
     id: codec.bytes(HASH_SIZE),
     attempt: ticketAttemptCodec,
@@ -58,7 +61,9 @@ export class Ticket {
     public readonly id: Bytes<32>,
     /** Which attempt is it? */
     public readonly attempt: TicketAttempt,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /**

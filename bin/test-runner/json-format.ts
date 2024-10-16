@@ -1,3 +1,5 @@
+import type { PropertyKeys } from "@typeberry/codec";
+
 type CamelToSnake<S extends string> = S extends `${infer T}${infer U}`
   ? U extends Uncapitalize<U> // Check if U is already lowercase
     ? `${T}${CamelToSnake<U>}` // Continue without adding an underscore
@@ -5,5 +7,5 @@ type CamelToSnake<S extends string> = S extends `${infer T}${infer U}`
   : S;
 
 export type JsonObject<T> = {
-  [K in keyof T as CamelToSnake<K & string>]: T[K];
+  [K in PropertyKeys<T> as CamelToSnake<K & string>]: T[K];
 };

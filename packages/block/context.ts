@@ -1,3 +1,5 @@
+import { WithDebug } from "./common";
+
 /**
  * Estimated number of validators.
  *
@@ -26,7 +28,7 @@ export const EST_EPOCH_LENGTH = 600;
 /**
  * Additional data that has to be passed to the codec to correctly parse incoming bytes.
  */
-export class ChainSpec {
+export class ChainSpec extends WithDebug {
   /** Number of validators. */
   readonly validatorsCount: number;
   /** 2/3 of number of validators + 1 */
@@ -50,6 +52,7 @@ export class ChainSpec {
     contestLength: number;
     ticketsPerValidator: number;
   }) {
+    super();
     this.validatorsCount = data.validatorsCount;
     this.validatorsSuperMajority = Math.floor(data.validatorsCount / 3) * 2 + 1;
     this.coresCount = data.coresCount;

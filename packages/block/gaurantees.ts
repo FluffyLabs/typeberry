@@ -1,11 +1,11 @@
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
-import type { TimeSlot, ValidatorIndex } from "./common";
+import { type TimeSlot, type ValidatorIndex, WithDebug } from "./common";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "./crypto";
 import { WorkReport } from "./work-report";
 
 /** Unique validator index & signature. */
-export class Credential {
+export class Credential extends WithDebug {
   static Codec = codec.Class(Credential, {
     validatorIndex: codec.u16.cast(),
     signature: codec.bytes(ED25519_SIGNATURE_BYTES).cast(),
@@ -20,7 +20,9 @@ export class Credential {
     public readonly validatorIndex: ValidatorIndex,
     /** Signature over hash of the work-report. */
     public readonly signature: Ed25519Signature,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /**
@@ -28,7 +30,7 @@ export class Credential {
  *
  * https://graypaper.fluffylabs.dev/#/c71229b/142e02144e02
  */
-export class ReportGuarantee {
+export class ReportGuarantee extends WithDebug {
   static Codec = codec.Class(ReportGuarantee, {
     report: WorkReport.Codec,
     slot: codec.u32.cast(),
@@ -53,7 +55,9 @@ export class ReportGuarantee {
      * https://graypaper.fluffylabs.dev/#/c71229b/147602147802
      */
     public readonly credentials: KnownSizeArray<Credential, "0..ValidatorsCount">,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /**

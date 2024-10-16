@@ -1,4 +1,4 @@
-import { MessageChannel, MessagePort, type Worker } from "node:worker_threads";
+import { MessageChannel, MessagePort, type TransferListItem, type Worker } from "node:worker_threads";
 import { check } from "@typeberry/utils";
 
 import { Logger } from "@typeberry/logger";
@@ -19,12 +19,12 @@ export interface TypedChannel {
   /**
    * Send a `signal` to another worker thread.
    */
-  sendSignal(name: string, data: unknown): void;
+  sendSignal(name: string, data: unknown, transferList?: TransferListItem[]): void;
 
   /**
    * Send a `request` to another worker thread and await response.
    */
-  sendRequest<T>(name: string, data: unknown): Promise<T>;
+  sendRequest<T>(name: string, data: unknown, transferList?: TransferListItem[]): Promise<T>;
 
   /**
    * Close the communication channel with the other worker.
@@ -115,10 +115,10 @@ export class MessageChannelStateMachine<
    * The async closure is given the `isDone` function that can be periodically checked
    * to stop any on-going computation.
    */
-  async doUntil<TState extends TStates>(
-    state: StateNames<TState>,
+  async doUntil<TNewState extends TStates>(
+    state: StateNames<TNewState>,
     work: (state: CurrentState, port: TypedChannel, isDone: () => boolean) => Promise<void>,
-  ) {
+  ): Promise<MessageChannelStateMachine<TNewState, TStates>> {
     const done = this.waitForState(state).then(() => {
       isDone.isDone = true;
     });
@@ -126,7 +126,7 @@ export class MessageChannelStateMachine<
 
     await Promise.all([work(this.currentState(), this, () => isDone.isDone), done]);
 
-    return this.transitionTo<TState>();
+    return this.transitionTo<TNewState>();
   }
 
   /**
