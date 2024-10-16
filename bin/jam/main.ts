@@ -33,7 +33,6 @@ export async function main() {
         .onBlock.on((b) => {
           logger.log(`Relaying block: ${b.length}`);
           importer.sendBlock(port, b);
-          // TODO [ToDr] Plug in the best header listener here. maybe use request instead of signal?
         })
         .onceDone(() => {
           // send finish signal to the importer if the generator is done
@@ -44,7 +43,7 @@ export async function main() {
     });
 
     // Just a dummy timer, to give some time to generate blocks.
-    await wait(10);
+    await wait(5 * 60);
 
     // Send a finish signal to the block generator.
     const generatorFinished = generatorReady.transition((ready, port) => {
@@ -64,6 +63,6 @@ export async function main() {
   }
 }
 
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function wait(seconds: number) {
+  return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 }
