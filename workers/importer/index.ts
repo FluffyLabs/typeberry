@@ -25,7 +25,10 @@ if (!isMainThread) {
 }
 
 /**
- * The `BlockImporter` should periodically create new blocks and send them as signals to the main thread.
+ * The `BlockImporter` listens to `block` signals, where it expects
+ * RAW undecoded block objects (typically coming from the network).
+ *
+ * These blocks should be decoded, verified and later imported.
  */
 export async function main(channel: MessageChannelStateMachine<ImporterInit, ImporterStates>) {
   logger.info(`Importer running ${channel.currentState()}`);
