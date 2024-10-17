@@ -109,7 +109,7 @@ type OptionalRecord<T> = {
 /**
  * `Descriptor` of a complex type of some class with a bunch of public fields.
  */
-type DescriptorRecord<T> = {
+export type DescriptorRecord<T> = {
   [K in PropertyKeys<T>]: Descriptor<T[K]> | ClassDescriptor<T[K]>;
 };
 

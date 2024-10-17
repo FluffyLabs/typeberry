@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import type { U32 } from "@typeberry/numbers";
 import { Decoder } from "./decoder";
-import { type CodecRecord, codec } from "./descriptors";
+import { type CodecRecord, codec, Codec, DescriptorRecord } from "./descriptors";
 import { Encoder } from "./encoder";
 
 class TestHeader {
@@ -192,3 +192,32 @@ describe("Codec Descriptors / nested views", () => {
     assert.strictEqual(`${headerView.priorStateRoot()}`, `${data.priorStateRoot}`);
   });
 });
+
+describe("Codec Descriptors / generic class", () => {
+  abstract class Generic<A, B> {
+    constructor(
+      public readonly a: A,
+      public readonly b: B,
+    ) {}
+  }
+
+  class Concrete extends Generic<U32, boolean> {
+    static Codec = codec.Class(Concrete, {
+      a: codec.varU32,
+      b: codec.bool,
+    });
+
+    static fromCodec({a, b}: CodecRecord<Concrete>) {
+      return new Concrete(a, b);
+    }
+  }
+
+  it("should encode/decode concrete instance of generic class", () => {
+    const input = new Concrete(15 as U32, true);
+    const encoded = Encoder.encodeObject(Concrete.Codec, input);
+    const decoded = Decoder.decodeObject(Concrete.Codec, encoded);
+
+    assert.deepStrictEqual(decoded, input);
+  });
+});
+

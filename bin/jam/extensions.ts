@@ -1,5 +1,8 @@
 import * as ipc from "../../extensions/ipc";
 
 export function initializeExtensions(api: ipc.ExtensionApi) {
-  ipc.startExtension(api);
+  const closeIpc = ipc.startExtension(api);
+  return () => {
+    closeIpc();
+  };
 }

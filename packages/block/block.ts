@@ -14,7 +14,7 @@ import { type TicketsExtrinsic, ticketsExtrinsicCodec } from "./tickets";
  *
  * https://graypaper.fluffylabs.dev/#/c71229b/08ab0008ab00
  */
-@withDebug
+@withDebug()
 export class Extrinsic {
   static Codec = codec.Class(Extrinsic, {
     tickets: ticketsExtrinsicCodec,

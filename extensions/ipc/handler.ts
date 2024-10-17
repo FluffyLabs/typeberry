@@ -12,8 +12,8 @@ export interface MessageSender {
   close(): void;
 }
 
-export interface StreamHandler {
-  readonly kind: StreamKind;
+export interface StreamHandler<TStreamKind extends StreamKind = StreamKind> {
+  readonly kind: TStreamKind;
 
   onStreamMessage(streamId: StreamId, message: BytesBlob): void;
 
@@ -50,7 +50,11 @@ export class StreamSender implements MessageSender {
 }
 
 export class MessageHandler {
+  // already initiated streams
   private readonly streams: Map<StreamId, StreamHandler> = new Map();
+  // streams awaiting confirmation from the other side.
+  private readonly pendingStreams: Map<StreamId, boolean> = new Map();
+  // a collection of handlers for particular stream kind
   private readonly streamHandlers: Map<StreamKind, StreamHandler> = new Map();
 
   constructor(
@@ -74,22 +78,55 @@ export class MessageHandler {
     return true;
   }
 
-  public withStreamOfKind(streamKind: StreamKind, work: (handler: StreamHandler, sender: StreamSender) => void) {
+  public withStreamOfKind<TStreamKind extends StreamKind, THandler extends StreamHandler<TStreamKind>>(
+    streamKind: TStreamKind,
+    work: (handler: THandler, sender: StreamSender) => void
+  ) {
     // find first stream id with given kind
     for (const [streamId, handler] of this.streams.entries()) {
       if (handler.kind === streamKind) {
-        work(handler, new StreamSender(streamId, this.sender));
+        work(handler as THandler, new StreamSender(streamId, this.sender));
       }
     }
-
   }
 
-  public onServerMessage(msg: Uint8Array) {
+  public withNewStream<TStreamKind extends StreamKind, THandler extends StreamHandler<TStreamKind>>(
+    kind: TStreamKind,
+    work: (handler: THandler, sender: StreamSender) => void,
+  ) {
+    const handler = this.streamHandlers.get(kind);
+    if (!handler) {
+      throw new Error(`Stream with unregistered handler of kind: ${kind} was requested to be opened.`);
+    }
+
+    // pick a stream id
+    const getRandomStreamId = () => Math.floor(Math.random() * 2 ** 16) as StreamId;
+    const streams = this.streams;
+    const streamId = (function findStreamId() {
+      const s = getRandomStreamId();
+      if (!streams.has(s)) {
+        return s;
+      }
+      return findStreamId();
+    })();
+
+    // register the stream
+    this.streams.set(streamId, handler);
+    this.pendingStreams.set(streamId, true);
+
+    const sender = new StreamSender(streamId, this.sender);
+    sender.open(new NewStream(kind));
+
+    work(handler as THandler, sender);
+  }
+
+  public onSocketMessage(msg: Uint8Array) {
     // decode the message as `StreamEnvelope`
     const envelope = Decoder.decodeObject(StreamEnvelope.Codec, msg);
     const streamId = envelope.streamId;
     // check if this is a already known stream id
     const streamHandler = this.streams.get(streamId);
+    console.log(streamId, this.streams, msg);
     // we don't know that stream yet, so it has to be a new one
     if (streamHandler === undefined) {
       // closing or message of unknown stream - ignore.
@@ -100,6 +137,7 @@ export class MessageHandler {
       const newStream = Decoder.decodeObject(NewStream.Codec, envelope.data);
       const handler = this.streamHandlers.get(newStream.streamByte);
       if (handler !== undefined) {
+        logger.log(`[${streamId}] New stream for ${handler.kind}`);
         // insert the stream
         this.streams.set(streamId, handler);
         // Just send back the same stream byte.
@@ -120,7 +158,10 @@ export class MessageHandler {
     }
 
     if (envelope.type !== StreamEnvelopeType.Msg) {
-      logger.warn(`Got invalid type ${envelope.type} for KNOWN stream ${streamId}.`);
+      // display a warning but only if the stream was not pending for confirmation.
+      if (!this.pendingStreams.delete(streamId)) {
+        logger.warn(`Got invalid type ${envelope.type} for KNOWN stream ${streamId}.`);
+      }
       return;
     }
 

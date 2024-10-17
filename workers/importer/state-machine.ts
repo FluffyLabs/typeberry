@@ -1,4 +1,4 @@
-import { Block, Header, HeaderHash, WithHash } from "@typeberry/block";
+import { Block, Header, HeaderHash, WithHash, headerWithHashCodec } from "@typeberry/block";
 import { ChainSpec } from "@typeberry/block/context";
 import { Decoder } from "@typeberry/codec";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
@@ -20,11 +20,23 @@ export function importerStateMachine() {
 const logger = Logger.new(__filename, "importer");
 
 export class MainReady extends State<"ready(main)", Finished, ChainSpec> {
+  public readonly onBestBlock = new Listener<WithHash<HeaderHash, Header>>();
+
   constructor() {
     super({
       name: "ready(main)",
       allowedTransitions: ["finished"],
+      signalListeners: {
+        bestBlock: (block) => this.triggerBestBlock(block) as undefined,
+      }
     });
+  }
+
+  triggerBestBlock(block: unknown) {
+    if (block instanceof Uint8Array) {
+      const headerWithHash = Decoder.decodeObject(headerWithHashCodec, block);
+      this.onBestBlock.emit(headerWithHash);
+    }
   }
 
   // TODO [ToDr] This should be triggered directly from the block generator worker.

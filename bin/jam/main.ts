@@ -15,7 +15,7 @@ const bestHeader = new Listener<WithHash<HeaderHash, Header>>();
 
 export async function main() {
   if (isMainThread) {
-    initializeExtensions({ bestHeader });
+    const closeExtensions = initializeExtensions({ bestHeader });
 
     const generatorInit = await blockGenerator.spawnWorker();
     const importerInit = await blockImporter.spawnWorker();
@@ -44,7 +44,7 @@ export async function main() {
     });
 
     // Just a dummy timer, to give some time to generate blocks.
-    await wait(10000);
+    await wait(100000);
 
     // Send a finish signal to the block generator.
     const generatorFinished = generatorReady.transition((ready, port) => {
@@ -55,6 +55,9 @@ export async function main() {
     await generatorFinished.currentState().waitForWorkerToFinish();
     const importerDone = await whenImporterDone;
     await importerDone.currentState().waitForWorkerToFinish();
+    logger.log("[main] Workers finished. Closing the extensions");
+    closeExtensions();
+    logger.info("[main] Done.");
   } else {
     logger.error("The main binary cannot be running as a Worker!");
     return;

@@ -30,7 +30,8 @@
     "workers/block-generator",
     "workers/generic",
     "workers/importer",
-    "extensions/ipc"
+    "extensions/ipc",
+    "tools/ipc2rpc"
   ],
   "engines": {
     "node": ">=22",

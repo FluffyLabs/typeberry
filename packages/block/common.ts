@@ -1,7 +1,9 @@
 import type { Bytes } from "@typeberry/bytes";
 import type { U16, U32, U64 } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
-import {HASH_SIZE} from "./hash";
+import {HASH_SIZE, HeaderHash} from "./hash";
+import {Codec, CodecRecord, codec} from "@typeberry/codec";
+import {Header} from "./header";
 
 /** Opaque Blake2B. */
 export type Blake2bHash = Bytes<32>;

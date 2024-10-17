@@ -1,12 +1,20 @@
 import {HASH_SIZE, Header, HeaderHash, TimeSlot, WithDebug} from "@typeberry/block";
 import {CodecRecord, Decoder, Encoder, codec} from "@typeberry/codec";
 import {StreamHandler, StreamSender} from "../handler";
-import {U8, U16} from "@typeberry/numbers";
-import {StreamId} from "./stream";
+import {StreamId, StreamKind} from "./stream";
 import {Logger} from "@typeberry/logger";
 import {BytesBlob} from "@typeberry/bytes";
 
-export class HashAndSlot extends WithDebug{
+
+/**
+ * JAM-SNP UP0 stream.
+ *
+ * https://github.com/zdave-parity/jam-np/blob/main/simple.md#up-0-block-announcement
+ */
+
+export const STREAM_KIND = 0 as StreamKind;
+
+export class HashAndSlot extends WithDebug {
   static Codec = codec.Class(HashAndSlot, {
     hash: codec.bytes(HASH_SIZE).cast(),
     slot: codec.u32.cast(),
@@ -59,9 +67,10 @@ export class Announcement extends WithDebug {
 }
 
 const logger = Logger.new(__filename, "protocol/up-0");
+
 export class Handler implements StreamHandler {
 
-  kind = 0 as U8;
+  kind = STREAM_KIND;
 
   private readonly handshakes: Map<StreamId, Handshake> = new Map();
 
