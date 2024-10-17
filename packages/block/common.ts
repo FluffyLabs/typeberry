@@ -1,6 +1,7 @@
 import type { Bytes } from "@typeberry/bytes";
 import type { U16, U32, U64 } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
+import {HASH_SIZE} from "./hash";
 
 /** Opaque Blake2B. */
 export type Blake2bHash = Bytes<32>;
@@ -27,6 +28,12 @@ export type EntropyHash = Opaque<Blake2bHash, "EntropyHash">;
  * https://graypaper.fluffylabs.dev/#/c71229b/0b20000b2300
  */
 export type Epoch = Opaque<U32, "Epoch">;
+
+export function withDebug(): ClassDecorator {
+  return (target) => {
+    target.prototype.toString = WithDebug.prototype.toString;
+  };
+}
 
 /** A class that adds `toString` method to debug the model. */
 export abstract class WithDebug {
@@ -62,4 +69,11 @@ export abstract class WithDebug {
     v += oneLine ? "}" : "\n}";
     return v;
   }
+}
+
+export class WithHash<THash extends Bytes<typeof HASH_SIZE>, TData> {
+  constructor(
+    public readonly hash: THash,
+    public readonly data: TData,
+  ){}
 }

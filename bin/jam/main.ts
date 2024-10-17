@@ -5,11 +5,18 @@ import * as blockGenerator from "@typeberry/block-generator";
 import { tinyChainSpec } from "@typeberry/block/context";
 import type { Finished } from "@typeberry/generic-worker";
 import * as blockImporter from "@typeberry/importer";
+import {Listener} from "@typeberry/state-machine";
+import {Header, HeaderHash, WithHash} from "@typeberry/block";
+import {initializeExtensions} from "./extensions";
 
 const logger = Logger.new(__filename, "jam");
 
+const bestHeader = new Listener<WithHash<HeaderHash, Header>>();
+
 export async function main() {
   if (isMainThread) {
+    initializeExtensions({ bestHeader });
+
     const generatorInit = await blockGenerator.spawnWorker();
     const importerInit = await blockImporter.spawnWorker();
 
@@ -28,6 +35,7 @@ export async function main() {
         .onBlock.on((b) => {
           logger.log(`Relaying block: ${b.length}`);
           importer.sendBlock(port, b);
+          // TODO [ToDr] Plug in the best header listener here. maybe use request instead of signal?
         })
         .onceDone(() => {
           // send finish signal to the importer if the generator is done

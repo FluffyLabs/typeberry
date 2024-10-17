@@ -4,6 +4,8 @@ type WithBytesRepresentation<Bytes extends number> = {
 };
 export type FixedSizeNumber<Bytes extends number> = number & WithBytesRepresentation<Bytes>;
 
+/** Unsigned integer that can be represented as one byte. */
+export type U8 = FixedSizeNumber<1>;
 /** Unsigned integer that can be represented as two bytes. */
 export type U16 = FixedSizeNumber<2>;
 /** Unsigned integer that can be represented as 4 bytes. */

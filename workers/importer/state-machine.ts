@@ -1,4 +1,4 @@
-import { Block } from "@typeberry/block";
+import { Block, Header, HeaderHash, WithHash } from "@typeberry/block";
 import { ChainSpec } from "@typeberry/block/context";
 import { Decoder } from "@typeberry/codec";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
@@ -61,6 +61,10 @@ export class ImporterReady extends State<"ready(importer)", Finished, ChainSpec>
     }
 
     return this.data;
+  }
+
+  announce(sender: TypedChannel, headerWithHash: WithHash<HeaderHash, Header>) {
+    sender.sendSignal('bestBlock', headerWithHash);
   }
 
   private triggerOnBlock(block: unknown) {

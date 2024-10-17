@@ -3,7 +3,7 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { TrieHash } from "@typeberry/trie";
-import { type EntropyHash, type TimeSlot, type ValidatorIndex, WithDebug } from "./common";
+import { type EntropyHash, type TimeSlot, type ValidatorIndex, WithDebug, withDebug } from "./common";
 import { ChainSpec, EST_EPOCH_LENGTH, EST_VALIDATORS } from "./context";
 import {
   BANDERSNATCH_KEY_BYTES,
@@ -23,6 +23,7 @@ import { Ticket } from "./tickets";
  *
  * https://graypaper.fluffylabs.dev/#/387103d/0e1f020e2502
  */
+@withDebug()
 export class EpochMarker {
   static Codec = codec.Class(EpochMarker, {
     entropy: codec.bytes(HASH_SIZE).cast(),

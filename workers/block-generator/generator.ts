@@ -34,7 +34,7 @@ export class Generator {
 
   private lastHeaderHash(hasher: TransitionHasher) {
     if (this.lastBlock?.header) {
-      return hasher.header(this.lastBlock?.header);
+      return hasher.header(this.lastBlock?.header).hash;
     }
 
     return Bytes.zero(HASH_SIZE) as HeaderHash;
@@ -78,7 +78,7 @@ export class Generator {
       [] as AvailabilityAssurance[] as AssurancesExtrinsic,
       [] as ReportGuarantee[] as GuaranteesExtrinsic,
     );
-    const extrinsicHash = hasher.extrinsic(extrinsic);
+    const extrinsicHash = hasher.extrinsic(extrinsic).hash;
 
     const header = Header.fromCodec({
       parentHeaderHash,

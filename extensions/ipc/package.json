@@ -1,0 +1,11 @@
+{
+  "name": "@typeberry/ext-ipc",
+  "version": "0.0.1",
+  "description": "An IPC extension to inspect the node state.",
+  "main": "index.ts",
+  "scripts": {
+    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0"
+}

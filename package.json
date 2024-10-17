@@ -29,7 +29,8 @@
     "tools/commit-hash",
     "workers/block-generator",
     "workers/generic",
-    "workers/importer"
+    "workers/importer",
+    "extensions/ipc"
   ],
   "engines": {
     "node": ">=22",

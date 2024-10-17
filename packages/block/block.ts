@@ -1,6 +1,6 @@
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "./assurances";
-import { WithDebug } from "./common";
+import { WithDebug, withDebug } from "./common";
 import { DisputesExtrinsic } from "./disputes";
 import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "./gaurantees";
 import { Header } from "./header";
@@ -14,7 +14,8 @@ import { type TicketsExtrinsic, ticketsExtrinsicCodec } from "./tickets";
  *
  * https://graypaper.fluffylabs.dev/#/c71229b/08ab0008ab00
  */
-export class Extrinsic extends WithDebug {
+@withDebug
+export class Extrinsic {
   static Codec = codec.Class(Extrinsic, {
     tickets: ticketsExtrinsicCodec,
     disputes: DisputesExtrinsic.Codec,
@@ -53,9 +54,7 @@ export class Extrinsic extends WithDebug {
      *        by specific validators.
      */
     public readonly guarantees: GuaranteesExtrinsic,
-  ) {
-    super();
-  }
+  ) {}
 }
 
 /**

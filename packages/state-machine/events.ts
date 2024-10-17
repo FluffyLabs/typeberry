@@ -1,5 +1,7 @@
 import { EventEmitter } from "node:events";
 
+// TODO [ToDr] This maybe should be it's own package?
+
 const EVENT = Symbol();
 const EVENT_DONE = Symbol();
 
