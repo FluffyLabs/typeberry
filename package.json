@@ -31,7 +31,8 @@
     "tools/ipc2rpc",
     "workers/block-generator",
     "workers/generic",
-    "workers/importer"
+    "workers/importer",
+    "packages/database-lmdb"
   ],
   "engines": {
     "node": ">=22",
