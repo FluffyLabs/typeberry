@@ -35,14 +35,15 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
   // Await the configuration object
   const ready = await channel.waitForState<ImporterReady>("ready(importer)");
 
-  const finished = await ready.doUntil<Finished>("finished", async (worker) => {
+  const finished = await ready.doUntil<Finished>("finished", async (worker, port) => {
     logger.info("Importer waiting for blocks.");
     const importer = new Importer(new TransitionHasher(worker.getChainSpec(), new SimpleAllocator()));
 
-    worker.onBlock.on((b) => {
+    worker.onBlock.on(async (b) => {
       logger.info(`Got block: ${b.header}`);
-      importer.importBlock(b);
+      const bestHeader = await importer.importBlock(b);
 
+      worker.announce(port, bestHeader);
       logger.info(`Best block: ${importer.bestBlockHeader()}`);
     });
   });

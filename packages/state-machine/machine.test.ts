@@ -29,7 +29,7 @@ describe("StateMachine", () => {
   it("should perform transition", () => {
     // given
     const states = [new A(), new B(), new C()];
-    const machineA = new StateMachine(states[0], states);
+    const machineA = new StateMachine("x", states[0], states);
     assert.strictEqual(machineA.currentState(), states[0]);
 
     // when
@@ -42,7 +42,7 @@ describe("StateMachine", () => {
   it("should reject transition to disallowed state", () => {
     // given
     const states = [new A(), new B(), new C()];
-    const machineB = new StateMachine(states[1], states);
+    const machineB = new StateMachine("x", states[1], states);
     assert.strictEqual(machineB.currentState(), states[1]);
 
     assert.throws(() => {
@@ -54,7 +54,7 @@ describe("StateMachine", () => {
   it("should resolve a promise when state is reached", async () => {
     // given
     const states = [new A(), new B(), new C()];
-    const machineA = new StateMachine(states[0], states);
+    const machineA = new StateMachine("x", states[0], states);
 
     setTimeout(() => {
       machineA.transition("b");

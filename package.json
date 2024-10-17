@@ -6,6 +6,7 @@
   "workspaces": [
     "bin/jam",
     "bin/test-runner",
+    "extensions/ipc",
     "packages/block",
     "packages/bytes",
     "packages/codec",
@@ -27,6 +28,7 @@
     "tools/benchmark",
     "tools/builder",
     "tools/commit-hash",
+    "tools/ipc2rpc",
     "workers/block-generator",
     "workers/generic",
     "workers/importer"

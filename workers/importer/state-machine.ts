@@ -1,6 +1,6 @@
-import { Block } from "@typeberry/block";
+import { Block, type Header, type HeaderHash, type WithHash, headerWithHashCodec } from "@typeberry/block";
 import { ChainSpec } from "@typeberry/block/context";
-import { Decoder } from "@typeberry/codec";
+import { Decoder, Encoder } from "@typeberry/codec";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
 import { Logger } from "@typeberry/logger";
 import { Listener, type TypedChannel } from "@typeberry/state-machine";
@@ -14,17 +14,29 @@ export function importerStateMachine() {
   const ready = new ImporterReady();
   const finished = new Finished();
 
-  return new StateMachine(initialized, [initialized, ready, finished]);
+  return new StateMachine("importer", initialized, [initialized, ready, finished]);
 }
 
 const logger = Logger.new(__filename, "importer");
 
 export class MainReady extends State<"ready(main)", Finished, ChainSpec> {
+  public readonly onBestBlock = new Listener<WithHash<HeaderHash, Header>>();
+
   constructor() {
     super({
       name: "ready(main)",
       allowedTransitions: ["finished"],
+      signalListeners: {
+        bestBlock: (block) => this.triggerBestBlock(block) as undefined,
+      },
     });
+  }
+
+  triggerBestBlock(block: unknown) {
+    if (block instanceof Uint8Array) {
+      const headerWithHash = Decoder.decodeObject(headerWithHashCodec, block);
+      this.onBestBlock.emit(headerWithHash);
+    }
   }
 
   // TODO [ToDr] This should be triggered directly from the block generator worker.
@@ -36,6 +48,7 @@ export class MainReady extends State<"ready(main)", Finished, ChainSpec> {
   }
 
   finish(channel: TypedChannel): TransitionTo<Finished> {
+    this.onBestBlock.markDone();
     const promise = channel.sendRequest<null>("finish", null);
     return { state: "finished", data: promise };
   }
@@ -61,6 +74,11 @@ export class ImporterReady extends State<"ready(importer)", Finished, ChainSpec>
     }
 
     return this.data;
+  }
+
+  announce(sender: TypedChannel, headerWithHash: WithHash<HeaderHash, Header>) {
+    const encoded = Encoder.encodeObject(headerWithHashCodec, headerWithHash).buffer;
+    sender.sendSignal("bestBlock", encoded, [encoded.buffer as ArrayBuffer]);
   }
 
   private triggerOnBlock(block: unknown) {

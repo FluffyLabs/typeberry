@@ -3,13 +3,14 @@ import { State, StateMachine, type TransitionTo } from "@typeberry/state-machine
 import { Finished } from "./finished";
 
 export function stateMachineMain<TReady extends State<StateNames<TReady>, Finished, StateData<TReady>>>(
+  name: string,
   readyName: StateNames<TReady>,
   ready: TReady,
 ) {
   const init = new MainInit<TReady>(readyName);
   const finished = new Finished();
 
-  return new StateMachine(init, [init, ready, finished]);
+  return new StateMachine(name, init, [init, ready, finished]);
 }
 
 export class MainInit<TReady extends State<StateNames<TReady>, Finished, StateData<TReady>>> extends State<

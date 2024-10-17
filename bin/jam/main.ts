@@ -5,6 +5,8 @@ import * as blockGenerator from "@typeberry/block-generator";
 import { tinyChainSpec } from "@typeberry/block/context";
 import type { Finished } from "@typeberry/generic-worker";
 import * as blockImporter from "@typeberry/importer";
+import type { MainReady } from "@typeberry/importer/state-machine";
+import { initializeExtensions } from "./extensions";
 
 const logger = Logger.new(__filename, "jam");
 
@@ -12,6 +14,9 @@ export async function main() {
   if (isMainThread) {
     const generatorInit = await blockGenerator.spawnWorker();
     const importerInit = await blockImporter.spawnWorker();
+
+    const bestHeader = importerInit.getState<MainReady>("ready(main)").onBestBlock;
+    const closeExtensions = initializeExtensions({ bestHeader });
 
     // initialize both workers
     const generatorReady = generatorInit.transition((state, port) => {
@@ -31,12 +36,14 @@ export async function main() {
         })
         .onceDone(() => {
           // send finish signal to the importer if the generator is done
-          importer.finish(port);
+          importerReady.transition((importer) => {
+            return importer.finish(port);
+          });
         });
     });
 
     // Just a dummy timer, to give some time to generate blocks.
-    await wait(10000);
+    await wait(5 * 60);
 
     // Send a finish signal to the block generator.
     const generatorFinished = generatorReady.transition((ready, port) => {
@@ -47,12 +54,15 @@ export async function main() {
     await generatorFinished.currentState().waitForWorkerToFinish();
     const importerDone = await whenImporterDone;
     await importerDone.currentState().waitForWorkerToFinish();
+    logger.log("[main] Workers finished. Closing the extensions");
+    closeExtensions();
+    logger.info("[main] Done.");
   } else {
     logger.error("The main binary cannot be running as a Worker!");
     return;
   }
 }
 
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function wait(seconds: number) {
+  return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 }

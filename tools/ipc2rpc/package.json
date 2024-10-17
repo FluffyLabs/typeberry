@@ -1,0 +1,19 @@
+{
+  "name": "@typeberry/ipc2rpc",
+  "version": "0.0.1",
+  "description": "JSON-RPC adapter for the JAMCODEC-IPC interface.",
+  "main": "index.ts",
+  "dependencies": {
+    "@typeberry/block": "0.0.1",
+    "@typeberry/logger": "0.0.1",
+    "@typeberry/bytes": "0.0.1",
+    "@typeberry/ext-ipc": "0.0.1",
+    "json-rpc-2.0": "^1.7.0"
+  },
+  "scripts": {
+    "start": "ts-node index.ts",
+    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0"
+}

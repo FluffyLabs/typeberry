@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>JAM block explorer</title>
+    <style>body { font-size: 18px }</style>
+  </head>
+  <body>
+    <p><strong>Best JAM header</strong></p>
+    <pre id="pre"></pre>
+    <script>
+      const $pre = document.getElementById('pre');
+      main();
+
+      function main() {
+        fetchBestHeader()
+          .then(header => {
+            $pre.innerHTML = JSON.stringify(header, null, 2);
+            setTimeout(main, 1000);
+          });
+      }
+
+      async function fetchBestHeader() {
+        const response = await fetch('http://localhost:3000/', {
+          method: 'post',
+          body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'jam_bestHeader' })
+        });
+        const data = await response.json();
+        const header = data.result;
+        return header;
+      }
+    </script>
+  </body>
+</html>

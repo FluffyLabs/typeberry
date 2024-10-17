@@ -1,4 +1,4 @@
-import type { Block } from "@typeberry/block";
+import type { Block, Header, HeaderHash, WithHash } from "@typeberry/block";
 import { InMemoryBlocks, InMemoryKvdb } from "../../packages/database";
 import type { TransitionHasher } from "../../packages/transition";
 
@@ -11,10 +11,10 @@ export class Importer {
     this.state = new InMemoryKvdb();
   }
 
-  importBlock(b: Block) {
+  async importBlock(b: Block): Promise<WithHash<HeaderHash, Header>> {
     // TODO [ToDr] verify block?
     // TODO [ToDr] execute block and populate the state.
-    this.blocks.insert(b);
+    return this.blocks.insert(b);
   }
 
   bestBlockHeader() {

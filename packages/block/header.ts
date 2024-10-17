@@ -3,7 +3,7 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { TrieHash } from "@typeberry/trie";
-import { type EntropyHash, type TimeSlot, type ValidatorIndex, WithDebug } from "./common";
+import { type EntropyHash, type TimeSlot, type ValidatorIndex, WithDebug, WithHash } from "./common";
 import { ChainSpec, EST_EPOCH_LENGTH, EST_VALIDATORS } from "./context";
 import {
   BANDERSNATCH_KEY_BYTES,
@@ -23,7 +23,7 @@ import { Ticket } from "./tickets";
  *
  * https://graypaper.fluffylabs.dev/#/387103d/0e1f020e2502
  */
-export class EpochMarker {
+export class EpochMarker extends WithDebug {
   static Codec = codec.Class(EpochMarker, {
     entropy: codec.bytes(HASH_SIZE).cast(),
     validators: codec.select(
@@ -50,7 +50,9 @@ export class EpochMarker {
     // TODO [ToDr] constrain the sequence length during decoding.
     /** `kappa_b`: Bandernsatch validator keys for the NEXT epoch. */
     public readonly validators: KnownSizeArray<BandersnatchKey, "ValidatorsCount">,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /**
@@ -135,3 +137,19 @@ export class Header extends WithDebug {
     return new Header();
   }
 }
+
+// TODO [ToDr] It seems that it's impossible to create a codec for generic class.
+// The typescript type system really needs concrete objects to resolve the types:
+// `DescriptorRecord` or `CodecRecord` for some reason.
+class HeaderWithHash extends WithHash<HeaderHash, Header> {
+  static Codec = codec.Class(HeaderWithHash, {
+    hash: codec.bytes(HASH_SIZE).cast(),
+    data: Header.Codec,
+  });
+
+  static fromCodec({ hash, data }: CodecRecord<HeaderWithHash>) {
+    return new WithHash(hash, data);
+  }
+}
+
+export const headerWithHashCodec = HeaderWithHash.Codec;

@@ -1,0 +1,56 @@
+import type { BytesBlob } from "@typeberry/bytes";
+import { type CodecRecord, codec } from "@typeberry/codec";
+import type { U8, U16 } from "@typeberry/numbers";
+
+export type StreamId = U16;
+export type StreamKind = U8;
+
+export enum StreamEnvelopeType {
+  Msg = 0,
+  Open = 1,
+  Close = 2,
+}
+
+export class StreamEnvelope {
+  static Codec = codec.Class(StreamEnvelope, {
+    streamId: codec.u16,
+    type: codec.u8.convert<StreamEnvelopeType>(
+      (i) => i as U8,
+      (o: U8) => {
+        switch (o) {
+          case StreamEnvelopeType.Msg:
+            return StreamEnvelopeType.Msg;
+          case StreamEnvelopeType.Open:
+            return StreamEnvelopeType.Open;
+          case StreamEnvelopeType.Close:
+            return StreamEnvelopeType.Close;
+          default:
+            throw new Error(`Invalid 'StreamEnvelopeType' value: ${o}`);
+        }
+      },
+    ),
+    data: codec.blob,
+  });
+
+  static fromCodec({ streamId, type, data }: CodecRecord<StreamEnvelope>) {
+    return new StreamEnvelope(streamId, type, data);
+  }
+
+  constructor(
+    public readonly streamId: StreamId,
+    public readonly type: StreamEnvelopeType,
+    public readonly data: BytesBlob,
+  ) {}
+}
+
+export class NewStream {
+  static Codec = codec.Class(NewStream, {
+    streamByte: codec.u8,
+  });
+
+  static fromCodec({ streamByte }: CodecRecord<NewStream>) {
+    return new NewStream(streamByte);
+  }
+
+  constructor(public readonly streamByte: StreamKind) {}
+}

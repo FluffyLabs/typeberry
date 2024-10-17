@@ -15,7 +15,7 @@ export class JumpTable {
 
     this.indices = new Uint32Array(length);
     const decoder = Decoder.fromBlob(bytes);
-    let decodeNext = () => decoder.u8();
+    let decodeNext = () => decoder.u8() as number;
     if (itemByteLength === 4) {
       decodeNext = () => decoder.u32();
     } else if (itemByteLength === 3) {
