@@ -42,7 +42,7 @@ export class Decoder {
   private readonly dataView: DataView;
 
   private constructor(
-    private readonly source: Uint8Array,
+    public readonly source: Uint8Array,
     private offset = 0,
     private context?: unknown,
   ) {

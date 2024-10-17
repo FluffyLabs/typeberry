@@ -1,10 +1,10 @@
 import { Bytes } from "@typeberry/bytes";
-import { type CodecRecord, codec } from "@typeberry/codec";
+import { type CodecRecord, type View, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { TrieHash } from "@typeberry/trie";
 import { type EntropyHash, type TimeSlot, type ValidatorIndex, WithDebug, WithHash } from "./common";
-import { ChainSpec, EST_EPOCH_LENGTH, EST_VALIDATORS } from "./context";
+import { EST_EPOCH_LENGTH, EST_VALIDATORS, withContext } from "./context";
 import {
   BANDERSNATCH_KEY_BYTES,
   BANDERSNATCH_VRF_SIGNATURE_BYTES,
@@ -31,12 +31,9 @@ export class EpochMarker extends WithDebug {
         name: "EpochMark.validators",
         sizeHintBytes: EST_VALIDATORS * BANDERSNATCH_KEY_BYTES,
       },
-      (context) => {
-        if (context instanceof ChainSpec) {
-          return codec.sequenceFixLen(codec.bytes(BANDERSNATCH_KEY_BYTES), context.validatorsCount).cast();
-        }
-        throw new Error("Missing context object to decode `EpochMark.validators`.");
-      },
+      withContext("EpochMark.validators", (context) => {
+        return codec.sequenceFixLen(codec.bytes(BANDERSNATCH_KEY_BYTES), context.validatorsCount).cast();
+      }),
     ),
   });
 
@@ -73,12 +70,9 @@ export class Header extends WithDebug {
           name: "Header.ticketsMark",
           sizeHintBytes: EST_EPOCH_LENGTH * Ticket.Codec.sizeHintBytes,
         },
-        (context) => {
-          if (context instanceof ChainSpec) {
-            return codec.sequenceFixLen(Ticket.Codec, context.epochLength).cast();
-          }
-          throw new Error("Missing context object to decode `Header.ticketsMark`.");
-        },
+        withContext("Header.ticketsMark", (context) => {
+          return codec.sequenceFixLen(Ticket.Codec, context.epochLength).cast();
+        }),
       ),
     ),
     offendersMarker: codec.sequenceVarLen(codec.bytes(ED25519_KEY_BYTES).cast()),
@@ -137,6 +131,8 @@ export class Header extends WithDebug {
     return new Header();
   }
 }
+
+export type HeaderView = View<Header, "epochMarker">;
 
 // TODO [ToDr] It seems that it's impossible to create a codec for generic class.
 // The typescript type system really needs concrete objects to resolve the types:

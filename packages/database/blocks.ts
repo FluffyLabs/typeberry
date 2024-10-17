@@ -10,7 +10,7 @@ export class InMemoryBlocks {
 
   // TODO [ToDr] This should only store verified blocks (e.g. we know
   // e.g. that extrinsic hash matches the one in header).
-  public insert(block: Block): WithHash<HeaderHash, Header> {
+  insert(block: Block): WithHash<HeaderHash, Header> {
     const headerWithHash = this.hasher.header(block.header);
     const timeSlot = block.header.timeSlotIndex;
 
@@ -28,11 +28,11 @@ export class InMemoryBlocks {
     return headerWithHash;
   }
 
-  public get(hash: HeaderHash) {
+  get(hash: HeaderHash) {
     return this.blockByHash.get(hash);
   }
 
-  public bestBlock(): Block | undefined {
+  bestBlock(): Block | undefined {
     const max = Math.max(...this.blockByTimeSlot.keys());
 
     if (max === Number.NEGATIVE_INFINITY) {

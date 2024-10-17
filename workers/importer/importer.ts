@@ -1,23 +1,32 @@
-import type { Block, Header, HeaderHash, WithHash } from "@typeberry/block";
-import { InMemoryBlocks, InMemoryKvdb } from "../../packages/database";
+import { type BlockView, type Header, type HeaderHash, WithHash } from "@typeberry/block";
+import { InMemoryKvdb } from "../../packages/database";
+import type { LmdbBlocks } from "../../packages/database-lmdb";
 import type { TransitionHasher } from "../../packages/transition";
 
 export class Importer {
-  private readonly blocks: InMemoryBlocks;
   private readonly state: InMemoryKvdb;
 
-  constructor(hasher: TransitionHasher) {
-    this.blocks = new InMemoryBlocks(hasher);
+  constructor(
+    private readonly hasher: TransitionHasher,
+    private readonly blocks: LmdbBlocks,
+  ) {
     this.state = new InMemoryKvdb();
   }
 
-  async importBlock(b: Block): Promise<WithHash<HeaderHash, Header>> {
+  async importBlock(b: BlockView): Promise<WithHash<HeaderHash, Header>> {
     // TODO [ToDr] verify block?
     // TODO [ToDr] execute block and populate the state.
-    return this.blocks.insert(b);
+    const headerWithHash = this.hasher.header(b.header());
+    const done = await this.blocks.insertBlock(new WithHash(headerWithHash.hash, b));
+    await this.blocks.setBestHeaderHash(headerWithHash.hash);
+
+    if (done[0] && done[1]) {
+      return headerWithHash;
+    }
+    throw new Error("Error writing to the db.");
   }
 
-  bestBlockHeader() {
-    return this.blocks.bestBlock()?.header;
+  bestBlockHash() {
+    return this.blocks.getBestHeaderHash();
   }
 }

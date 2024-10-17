@@ -152,7 +152,7 @@ export type View<T, NestedViewKeys extends keyof T = never> = AbstractView<T> &
 /** A constructor for the `View<T>`. */
 type ViewConstructor<T, NestedViewKeys extends keyof T> = {
   new (d: Decoder): View<T, NestedViewKeys>;
-  fromBytesBlob(bytes: BytesBlob): View<T, NestedViewKeys>;
+  fromBytesBlob(bytes: BytesBlob | Uint8Array, context?: unknown): View<T, NestedViewKeys>;
 };
 
 /** Extract the view type given the constructor. */
@@ -423,7 +423,11 @@ export namespace codec {
 
     // Also add a static builder method to avoid boilerplate.
     const ViewTyped = ClassView as ViewConstructor<T, KeysWithView<T, D>>;
-    ViewTyped.fromBytesBlob = (bytes: BytesBlob) => new ViewTyped(Decoder.fromBytesBlob(bytes));
+    ViewTyped.fromBytesBlob = (bytes: BytesBlob | Uint8Array, context?: unknown) => {
+      const decoder = bytes instanceof Uint8Array ? Decoder.fromBlob(bytes) : Decoder.fromBytesBlob(bytes);
+      decoder.attachContext(context);
+      return new ViewTyped(decoder);
+    };
 
     // Calculate a size hint for this class.
     let sizeHintBytes = 0;

@@ -1,7 +1,7 @@
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { type Epoch, type ValidatorIndex, WithDebug } from "./common";
-import { ChainSpec, EST_VALIDATORS_SUPER_MAJORITY } from "./context";
+import { EST_VALIDATORS_SUPER_MAJORITY, withContext } from "./context";
 import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Key, type Ed25519Signature } from "./crypto";
 import { HASH_SIZE, type WorkReportHash } from "./hash";
 
@@ -102,13 +102,9 @@ export class Verdict extends WithDebug {
         name: "Verdict.votes",
         sizeHintBytes: EST_VALIDATORS_SUPER_MAJORITY * Judgement.Codec.sizeHintBytes,
       },
-      (context) => {
-        if (context instanceof ChainSpec) {
-          return codec.sequenceFixLen(Judgement.Codec, context.validatorsSuperMajority).cast();
-        }
-
-        throw new Error("Missing context object to decode `Verdict.votes`.");
-      },
+      withContext("Verdicts.votes", (context) => {
+        return codec.sequenceFixLen(Judgement.Codec, context.validatorsSuperMajority).cast();
+      }),
     ),
   });
 

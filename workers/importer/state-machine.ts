@@ -1,4 +1,11 @@
-import { Block, type Header, type HeaderHash, type WithHash, headerWithHashCodec } from "@typeberry/block";
+import {
+  Block,
+  type BlockView,
+  type Header,
+  type HeaderHash,
+  type WithHash,
+  headerWithHashCodec,
+} from "@typeberry/block";
 import { ChainSpec } from "@typeberry/block/context";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
@@ -55,7 +62,7 @@ export class MainReady extends State<"ready(main)", Finished, ChainSpec> {
 }
 
 export class ImporterReady extends State<"ready(importer)", Finished, ChainSpec> {
-  public readonly onBlock = new Listener<Block>();
+  public readonly onBlock = new Listener<BlockView>();
 
   constructor() {
     super({
@@ -77,16 +84,13 @@ export class ImporterReady extends State<"ready(importer)", Finished, ChainSpec>
   }
 
   announce(sender: TypedChannel, headerWithHash: WithHash<HeaderHash, Header>) {
-    const encoded = Encoder.encodeObject(headerWithHashCodec, headerWithHash).buffer;
+    const encoded = Encoder.encodeObject(headerWithHashCodec, headerWithHash, this.data).buffer;
     sender.sendSignal("bestBlock", encoded, [encoded.buffer as ArrayBuffer]);
   }
 
   private triggerOnBlock(block: unknown) {
     if (block instanceof Uint8Array) {
-      // TODO [ToDr] probably we don't want to decode it here, but
-      // rather use a view?
-      const b = Decoder.decodeObject(Block.Codec, block, this.data);
-      this.onBlock.emit(b);
+      this.onBlock.emit(Block.Codec.View.fromBytesBlob(block, this.data));
     } else {
       logger.error(`${this.constructor.name} got invalid signal type: ${JSON.stringify(block)}.`);
     }

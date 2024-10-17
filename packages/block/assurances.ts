@@ -2,7 +2,7 @@ import type { BitVec } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import type { ValidatorIndex } from "./common";
-import { ChainSpec, EST_CORES } from "./context";
+import { EST_CORES, withContext } from "./context";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "./crypto";
 import { HASH_SIZE, type HeaderHash } from "./hash";
 
@@ -21,12 +21,9 @@ export class AvailabilityAssurance {
         name: "AvailabilityAssurance.bitfield",
         sizeHintBytes: Math.ceil(EST_CORES / 8),
       },
-      (context) => {
-        if (context instanceof ChainSpec) {
-          return codec.bitVecFixLen(Math.ceil(context.coresCount / 8) * 8);
-        }
-        throw new Error("Missing context object to decode `AvailabilityAssurance.bitfield`.");
-      },
+      withContext("AvailabilityAssurance.bitfield", (context) => {
+        return codec.bitVecFixLen(Math.ceil(context.coresCount / 8) * 8);
+      }),
     ),
     validatorIndex: codec.u16.cast(),
     signature: codec.bytes(ED25519_SIGNATURE_BYTES).cast(),

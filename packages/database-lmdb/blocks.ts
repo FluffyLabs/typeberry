@@ -1,0 +1,78 @@
+import {
+  type BlockView,
+  Extrinsic,
+  type ExtrinsicView,
+  HASH_SIZE,
+  Header,
+  type HeaderHash,
+  type HeaderView,
+  type WithHash,
+} from "@typeberry/block";
+import type { ChainSpec } from "@typeberry/block/context";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Encoder } from "@typeberry/codec";
+import lmdb from "lmdb";
+
+const BEST_BLOCK_KEY = "best block";
+
+// TODO [ToDr] consider having a changeset for transactions,
+// where we store all `insert ++ key ++ value` and `remove ++ key`
+// in a single `Uint8Array` JAM-encoded. That could then
+// be efficiently transferred between threads.
+export class LmdbBlocks {
+  root: lmdb.RootDatabase<Uint8Array, lmdb.Key>;
+  extrinsics: lmdb.Database<Uint8Array, lmdb.Key>;
+  headers: lmdb.Database<Uint8Array, lmdb.Key>;
+
+  constructor(
+    private readonly chainSpec: ChainSpec,
+    dbPath: string,
+  ) {
+    this.root = lmdb.open(dbPath, {
+      compression: true,
+      keyEncoding: "binary",
+      encoding: "binary",
+    });
+    // TODO [ToDr] Extrinsics are stored under header hash, not their hash. Revise if it's an issue.
+    this.extrinsics = this.root.openDB({ name: "extrinsics" });
+    this.headers = this.root.openDB({ name: "headers" });
+  }
+
+  insertBlock(block: WithHash<HeaderHash, BlockView>) {
+    // TODO [ToDr] This is currently inefficient, we need a way to figure
+    // out boundaries of fields within the view type, to just get
+    // subarrays of the underlying BlockView.
+    // TODO [ToDr] we could use a single Uint8Array to perform the encoding instead of doing allocs.
+    const header = Encoder.encodeObject(Header.Codec, block.data.header(), this.chainSpec);
+    const extrinsic = Encoder.encodeObject(Extrinsic.Codec, block.data.extrinsic(), this.chainSpec);
+    const a = this.headers.put(block.hash.raw, header.buffer);
+    const b = this.extrinsics.put(block.hash.raw, extrinsic.buffer);
+    return Promise.all([a, b]);
+  }
+
+  setBestHeaderHash(hash: HeaderHash) {
+    return this.root.put(BEST_BLOCK_KEY, hash.raw);
+  }
+
+  getBestHeaderHash(): HeaderHash {
+    const data = this.root.get(BEST_BLOCK_KEY);
+    return (data ? Bytes.fromBlob(data, HASH_SIZE) : Bytes.zero(HASH_SIZE)) as HeaderHash;
+  }
+
+  getHeader(hash: HeaderHash): HeaderView | undefined {
+    const data = this.headers.get(hash.raw);
+    if (!data) {
+      return undefined;
+    }
+
+    return Header.Codec.View.fromBytesBlob(BytesBlob.fromBlob(data), this.chainSpec) as HeaderView;
+  }
+
+  getExtrinsic(hash: HeaderHash): ExtrinsicView | undefined {
+    const data = this.extrinsics.get(hash.raw);
+    if (!data) {
+      return undefined;
+    }
+    return Extrinsic.Codec.View.fromBytesBlob(BytesBlob.fromBlob(data), this.chainSpec) as ExtrinsicView;
+  }
+}

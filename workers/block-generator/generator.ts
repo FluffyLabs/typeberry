@@ -23,36 +23,36 @@ import { Encoder } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { SimpleAllocator } from "@typeberry/hash";
 import { InMemoryKvdb } from "../../packages/database";
+import type { LmdbBlocks } from "../../packages/database-lmdb";
 import { TransitionHasher } from "../../packages/transition";
 
 export class Generator {
   public readonly database = new InMemoryKvdb();
   private readonly hashAllocator = new SimpleAllocator();
-  private lastBlock: Block | null = null;
+  private lastHeaderHash: HeaderHash;
+  private lastHeader: Header | null;
 
-  constructor(public readonly context: ChainSpec) {}
-
-  private lastHeaderHash(hasher: TransitionHasher) {
-    if (this.lastBlock?.header) {
-      return hasher.header(this.lastBlock?.header).hash;
-    }
-
-    return Bytes.zero(HASH_SIZE) as HeaderHash;
+  constructor(
+    public readonly chainSpec: ChainSpec,
+    private readonly blocks: LmdbBlocks,
+  ) {
+    this.lastHeaderHash = blocks.getBestHeaderHash();
+    this.lastHeader = blocks.getHeader(this.lastHeaderHash)?.materialize() ?? null;
   }
 
   async nextEncodedBlock() {
     const newBlock = await this.nextBlock();
-    const encoded = Encoder.encodeObject(Block.Codec, newBlock, this.context);
+    const encoded = Encoder.encodeObject(Block.Codec, newBlock, this.chainSpec);
     return encoded;
   }
 
   async nextBlock() {
-    const lastTimeSlot = this.lastBlock?.header.timeSlotIndex;
+    const lastTimeSlot = this.lastHeader?.timeSlotIndex;
     const blockNumber = lastTimeSlot ? lastTimeSlot + 1 : 1;
 
-    const hasher = new TransitionHasher(this.context, this.hashAllocator);
+    const hasher = new TransitionHasher(this.chainSpec, this.hashAllocator);
     // TODO [ToDr] write benchmark to calculate many hashes.
-    const parentHeaderHash = this.lastHeaderHash(hasher);
+    const parentHeaderHash = this.lastHeaderHash;
     const stateRoot = await this.database.getRoot();
 
     const extrinsic = new Extrinsic(
@@ -61,7 +61,7 @@ export class Generator {
         [
           new Verdict(
             Bytes.fill(HASH_SIZE, blockNumber % 256) as WorkReportHash,
-            (blockNumber / this.context.epochLength) as Epoch,
+            (blockNumber / this.chainSpec.epochLength) as Epoch,
             [
               new Judgement(true, 0 as ValidatorIndex, Bytes.fill(64, 0) as Ed25519Signature),
               new Judgement(true, 1 as ValidatorIndex, Bytes.fill(64, 1) as Ed25519Signature),
@@ -93,8 +93,8 @@ export class Generator {
       seal: Bytes.fill(96, (blockNumber * 69) % 256) as BandersnatchVrfSignature,
     });
 
-    const block = new Block(header, extrinsic);
-    this.lastBlock = block;
-    return block;
+    this.lastHeaderHash = hasher.header(header).hash;
+    this.lastHeader = header;
+    return new Block(header, extrinsic);
   }
 }

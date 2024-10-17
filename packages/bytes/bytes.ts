@@ -33,6 +33,19 @@ export class BytesBlob {
     return new BytesBlob(v);
   }
 
+  /** Create a new [`BytesBlob`] by concatenating data from multiple `Uint8Array`s. */
+  static copyFromBlobs(v: Uint8Array, ...rest: Uint8Array[]) {
+    const totalLength = v.length + rest.reduce((a, v) => a + v.length, 0);
+    const buffer = new Uint8Array(totalLength);
+    buffer.set(v, 0);
+    let offset = v.length;
+    for (const r of rest) {
+      buffer.set(r, offset);
+      offset += r.length;
+    }
+    return new BytesBlob(buffer);
+  }
+
   /** Create a new [`BytesBlob`] from an array of bytes. */
   static fromNumbers(v: number[]): BytesBlob {
     check(v.find((x) => (x & 0xff) !== x) === undefined, "BytesBlob.fromNumbers used with non-byte number array.");
