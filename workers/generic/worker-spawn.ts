@@ -15,7 +15,7 @@ export async function spawnWorkerGeneric<TReady extends State<StateNames<TReady>
 ) {
   const worker = new Worker(resolve(dirname, BOOTSTRAP_FILE));
 
-  const machine = stateMachineMain(mainReadyName, mainReadyState);
+  const machine = stateMachineMain(`main->${mainReadyName}`, mainReadyName, mainReadyState);
   const channel = await MessageChannelStateMachine.createAndTransferChannel(machine, worker);
   logger.trace(`Worker spawned ${channel.currentState()}`);
   return channel;

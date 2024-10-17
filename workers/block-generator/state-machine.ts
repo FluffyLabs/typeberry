@@ -16,7 +16,7 @@ export function generatorStateMachine() {
   const ready = new GeneratorReady();
   const finished = new Finished();
 
-  return new StateMachine(initialized, [initialized, ready, finished]);
+  return new StateMachine("block-generator", initialized, [initialized, ready, finished]);
 }
 
 const logger = Logger.new(__filename, "block-generator");

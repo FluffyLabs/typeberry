@@ -1,6 +1,6 @@
-import {BytesBlob} from "@typeberry/bytes";
-import {CodecRecord, codec} from "@typeberry/codec";
-import {U16, U8} from "@typeberry/numbers";
+import type { BytesBlob } from "@typeberry/bytes";
+import { type CodecRecord, codec } from "@typeberry/codec";
+import type { U8, U16 } from "@typeberry/numbers";
 
 export type StreamId = U16;
 export type StreamKind = U8;
@@ -27,7 +27,8 @@ export class StreamEnvelope {
           default:
             throw new Error(`Invalid 'StreamEnvelopeType' value: ${o}`);
         }
-      }),
+      },
+    ),
     data: codec.blob,
   });
 
@@ -51,7 +52,5 @@ export class NewStream {
     return new NewStream(streamByte);
   }
 
-  constructor(
-     public readonly streamByte: StreamKind,
-  ) {}
+  constructor(public readonly streamByte: StreamKind) {}
 }

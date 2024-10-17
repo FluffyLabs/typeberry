@@ -1,6 +1,6 @@
-import { Block, Header, HeaderHash, WithHash, headerWithHashCodec } from "@typeberry/block";
+import { Block, type Header, type HeaderHash, type WithHash, headerWithHashCodec } from "@typeberry/block";
 import { ChainSpec } from "@typeberry/block/context";
-import { Decoder } from "@typeberry/codec";
+import { Decoder, Encoder } from "@typeberry/codec";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
 import { Logger } from "@typeberry/logger";
 import { Listener, type TypedChannel } from "@typeberry/state-machine";
@@ -14,7 +14,7 @@ export function importerStateMachine() {
   const ready = new ImporterReady();
   const finished = new Finished();
 
-  return new StateMachine(initialized, [initialized, ready, finished]);
+  return new StateMachine("importer", initialized, [initialized, ready, finished]);
 }
 
 const logger = Logger.new(__filename, "importer");
@@ -28,7 +28,7 @@ export class MainReady extends State<"ready(main)", Finished, ChainSpec> {
       allowedTransitions: ["finished"],
       signalListeners: {
         bestBlock: (block) => this.triggerBestBlock(block) as undefined,
-      }
+      },
     });
   }
 
@@ -48,6 +48,7 @@ export class MainReady extends State<"ready(main)", Finished, ChainSpec> {
   }
 
   finish(channel: TypedChannel): TransitionTo<Finished> {
+    this.onBestBlock.markDone();
     const promise = channel.sendRequest<null>("finish", null);
     return { state: "finished", data: promise };
   }
@@ -76,7 +77,8 @@ export class ImporterReady extends State<"ready(importer)", Finished, ChainSpec>
   }
 
   announce(sender: TypedChannel, headerWithHash: WithHash<HeaderHash, Header>) {
-    sender.sendSignal('bestBlock', headerWithHash);
+    const encoded = Encoder.encodeObject(headerWithHashCodec, headerWithHash).buffer;
+    sender.sendSignal("bestBlock", encoded, [encoded.buffer as ArrayBuffer]);
   }
 
   private triggerOnBlock(block: unknown) {

@@ -98,6 +98,11 @@ export class MessageChannelStateMachine<
   }
   // End of [`TypedChannel`] API.
 
+  /** Return state object of given name. */
+  getState<TState extends TStates>(name: StateNames<TState>): TState {
+    return this.machine.getState(name);
+  }
+
   /** Returns the current state object. */
   currentState() {
     return this.machine.currentState();
@@ -190,6 +195,7 @@ export class MessageChannelStateMachine<
   }
 
   private transitionTo<TNewState extends TStates>(): MessageChannelStateMachine<TNewState, TStates> {
+    logger.trace(`[${this.machine.name}] transitioned to ${this.currentState()}`);
     return this as unknown as MessageChannelStateMachine<TNewState, TStates>;
   }
 

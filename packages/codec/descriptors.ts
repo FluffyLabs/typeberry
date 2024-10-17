@@ -1,6 +1,6 @@
 import { type BitVec, type Bytes, BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
-import type { U16, U32, U64, U8 } from "@typeberry/numbers";
+import type { U8, U16, U32, U64 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
 import { type Decode, Decoder } from "./decoder";
 import type { Encode, Encoder } from "./encoder";

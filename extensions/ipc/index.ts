@@ -1,27 +1,38 @@
-import { EventEmitter} from 'node:events';
-import {startIpcServer} from "./server";
-import {Announcement, HashAndSlot} from './protocol/up-0-block-announcement';
-import {Listener} from '@typeberry/state-machine';
-import {Header, HeaderHash, WithHash} from '@typeberry/block';
+import { EventEmitter } from "node:events";
+import { HASH_SIZE, type Header, type HeaderHash, type TimeSlot, type WithHash } from "@typeberry/block";
+import { Bytes } from "@typeberry/bytes";
+import type { Listener } from "@typeberry/state-machine";
+import { Announcement, Handshake, HashAndSlot } from "./protocol/up-0-block-announcement";
+import { startIpcServer } from "./server";
 
 export interface ExtensionApi {
   bestHeader: Listener<WithHash<HeaderHash, Header>>;
 }
 
 export function startExtension(api: ExtensionApi) {
-  const announcements = new EventEmitter;
+  const announcements = new EventEmitter();
+  let bestBlock = null as HashAndSlot | null;
 
   api.bestHeader.on((headerWithHash) => {
     const header = headerWithHash.data;
     const hash = headerWithHash.hash;
     const final = new HashAndSlot(hash, header.timeSlotIndex);
-    announcements.emit('annoucement', new Announcement(header, final))
+    bestBlock = final;
+    announcements.emit("announcement", new Announcement(header, final));
   });
 
-  const ipcServer = startIpcServer(announcements);
+  // TODO [ToDr] `Handshake` should not leak that far.
+  const getHandshake = () => {
+    const final = bestBlock ?? new HashAndSlot(Bytes.zero(HASH_SIZE) as HeaderHash, 0 as TimeSlot);
+    return new Handshake(final, []);
+  };
+
+  const ipcServer = startIpcServer(announcements, getHandshake);
 
   return () => {
-    // TODO [ToDr] that's probably not enough - we should also disconnect existing clients.
+    // stop accepting new connections
+    ipcServer.server.close();
+    // abort the server
     ipcServer.close();
   };
 }

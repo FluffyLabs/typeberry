@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { BytesBlob } from "@typeberry/bytes";
 import { BitVec } from "@typeberry/bytes";
-import type { U16, U32, U64 } from "@typeberry/numbers";
+import type { U8, U16, U32, U64 } from "@typeberry/numbers";
 import { Decoder } from "./decoder";
 import { type Descriptor, codec } from "./descriptors";
 import { Encoder } from "./encoder";
@@ -34,7 +34,7 @@ describe("JAM encoder / decoder", () => {
     generator(() => Math.floor(random() * 2 ** 32) as U32, codec.u32),
     generator(() => Math.floor(random() * 2 ** 24), codec.u24),
     generator(() => Math.floor(random() * 2 ** 16) as U16, codec.u16),
-    generator(() => Math.floor(random() * 2 ** 8), codec.u8),
+    generator(() => Math.floor(random() * 2 ** 8) as U8, codec.u8),
     generator(() => BigInt(Math.floor(random() * 2 ** 32)) ** 2n - 2n ** 63n, codec.i64),
     generator(() => Math.floor(random() * 2 ** 32) - 2 ** 31, codec.i32),
     generator(() => Math.floor(random() * 2 ** 24) - 2 ** 23, codec.i24),

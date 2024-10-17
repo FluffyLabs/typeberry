@@ -23,6 +23,9 @@
       "style": {
         "useShorthandArrayType": "error"
       },
+      "complexity": {
+        "noStaticOnlyClass": "off"
+      },
       "correctness": {
         "noUnusedImports": "error",
         "noUnusedVariables": "error",

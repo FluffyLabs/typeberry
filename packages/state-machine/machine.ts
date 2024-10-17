@@ -1,4 +1,5 @@
 import { EventEmitter } from "node:events";
+import { check } from "@typeberry/utils";
 import type { State, StateNames, ValidTransitionFrom } from "./state";
 
 /**
@@ -18,7 +19,11 @@ export class StateMachine<CurrentState extends TStates, TStates extends State<St
   private readonly allStates: Map<StateNames<TStates>, TStates>;
   private readonly stateListeners = new EventEmitter();
 
-  constructor(initialState: CurrentState, allStates: TStates[]) {
+  constructor(
+    public readonly name: string,
+    initialState: CurrentState,
+    allStates: TStates[],
+  ) {
     this.state = initialState;
     this.allStates = new Map();
     for (const s of allStates) {
@@ -26,16 +31,19 @@ export class StateMachine<CurrentState extends TStates, TStates extends State<St
     }
   }
 
-  /**
-   * Get the currently active state object.
-   */
+  /** Get state object by name. */
+  getState<TState extends TStates>(name: StateNames<TState>): TState {
+    const state = this.allStates.get(name);
+    check(state !== undefined, `Unable to retrieve state object for ${name}.`);
+    return state as TState;
+  }
+
+  /** Get the currently active state object. */
   currentState(): CurrentState {
     return this.state;
   }
 
-  /**
-   * Return a promise, which resolves when given `state` (name) becomes active.
-   */
+  /** Return a promise, which resolves when given `state` (name) becomes active. */
   waitForState<TNewState extends TStates>(state: StateNames<TNewState>): Promise<StateMachine<TNewState, TStates>> {
     return new Promise((resolve) => {
       // TODO [ToDr] reject when finished/error?

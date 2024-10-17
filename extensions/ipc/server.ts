@@ -1,19 +1,16 @@
-import { createServer, Socket } from 'node:net';
-import * as path from 'node:path';
-import * as os from 'node:os';
-import * as fs from 'node:fs';
-import { EventEmitter } from 'node:events';
+import type { EventEmitter } from "node:events";
+import * as fs from "node:fs";
+import { type Socket, createServer } from "node:net";
+import * as os from "node:os";
+import * as path from "node:path";
 
-import {Logger} from '@typeberry/logger';
-import {MessageHandler, MessageSender} from './handler';
-import * as up0 from './protocol/up-0-block-announcement';
-import {BytesBlob} from '@typeberry/bytes';
-import {U8} from '@typeberry/numbers';
+import type { BytesBlob } from "@typeberry/bytes";
+import { Logger } from "@typeberry/logger";
+import { MessageHandler, type MessageSender } from "./handler";
+import * as up0 from "./protocol/up-0-block-announcement";
 
 export class MessageSenderAdapter implements MessageSender {
-  constructor(
-    private readonly socket: Socket
-  ) {}
+  constructor(private readonly socket: Socket) {}
 
   send(data: BytesBlob): void {
     this.socket.write(data.buffer);
@@ -24,37 +21,33 @@ export class MessageSenderAdapter implements MessageSender {
   }
 }
 
-export function startIpcServer(
-  announcements: EventEmitter
-) {
+export function startIpcServer(announcements: EventEmitter, getHandshake: () => up0.Handshake) {
   // Define the path for the socket or named pipe
-  const isWindows = os.platform() === 'win32';
-  const socketPath = isWindows
-    ? '\\\\.\\pipe\\typeberry'
-    : path.join(os.tmpdir(), 'typeberry.ipc');
+  const isWindows = os.platform() === "win32";
+  const socketPath = isWindows ? "\\\\.\\pipe\\typeberry" : path.join(os.tmpdir(), "typeberry.ipc");
 
   const logger = Logger.new(__filename, "ext-ipc");
 
   // Create the IPC server
   const server = createServer((socket: Socket) => {
-    logger.log('Client connected');
+    logger.log("Client connected");
     const messageHandler = new MessageHandler(new MessageSenderAdapter(socket));
-    messageHandler.registerHandlers(new up0.Handler());
+    messageHandler.registerHandlers(new up0.Handler(getHandshake, () => {}));
 
     // Send block announcements
     const listener = (announcement: unknown) => {
       if (announcement instanceof up0.Announcement) {
-        messageHandler.withStreamOfKind(0 as U8, (handler, sender) => {
-          if (handler instanceof up0.Handler) {
-            handler.sendAnnouncement(sender, announcement)
-          }
+        messageHandler.withStreamOfKind(up0.STREAM_KIND, (handler: up0.Handler, sender) => {
+          handler.sendAnnouncement(sender, announcement);
         });
+      } else {
+        throw new Error(`Invalid annoncement received: ${announcement}`);
       }
     };
-    announcements.on('announcement', listener);
+    announcements.on("announcement", listener);
 
     // Handle incoming data from the client
-    socket.on('data', (data: Buffer) => {
+    socket.on("data", (data: Buffer) => {
       try {
         messageHandler.onSocketMessage(data);
       } catch (e) {
@@ -64,13 +57,13 @@ export function startIpcServer(
     });
 
     // Handle client disconnection
-    socket.on('end', () => {
-      logger.log('Client disconnected');
+    socket.on("end", () => {
+      logger.log("Client disconnected");
       messageHandler.onClose();
-      announcements.off('annoucement', listener);
+      announcements.off("annoucement", listener);
     });
 
-    socket.on('error', (err) => {
+    socket.on("error", (err) => {
       logger.error(`Socket error: ${err}`);
       messageHandler.onClose();
       socket.end();
@@ -82,14 +75,24 @@ export function startIpcServer(
     fs.unlinkSync(socketPath);
   } catch (e) {}
 
-  server.listen(socketPath, () => {
-    logger.log(`IPC server is listening at ${socketPath}`);
-  });
+  const controller = new AbortController();
+  server.listen(
+    {
+      path: socketPath,
+      signal: controller.signal,
+    },
+    () => {
+      logger.log(`IPC server is listening at ${socketPath}`);
+    },
+  );
 
   // Handle server errors
-  server.on('error', (err) => {
+  server.on("error", (err) => {
     throw err;
   });
 
-  return server;
+  return {
+    server,
+    close: () => controller.abort(),
+  };
 }

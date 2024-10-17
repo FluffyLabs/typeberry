@@ -58,7 +58,7 @@ describe("MessageChannelStateMachine", () => {
     const port = new TypedPort(channel.port1);
     const stateA = new StateA();
     const states = [stateA, new StateB(), new StateC()];
-    const stateMachine = new StateMachine(stateA, states);
+    const stateMachine = new StateMachine("x", stateA, states);
 
     const machine = new MessageChannelStateMachine(stateMachine, port);
 
@@ -78,7 +78,7 @@ describe("MessageChannelStateMachine", () => {
     const stateA = new StateA();
     const stateB = new StateB();
     const states = [stateA, stateB, new StateC()];
-    const stateMachine = new StateMachine(stateA, states);
+    const stateMachine = new StateMachine("x", stateA, states);
 
     const machine = new MessageChannelStateMachine(stateMachine, port);
 
@@ -104,7 +104,7 @@ describe("MessageChannelStateMachine", () => {
     const stateA = new StateA();
     const stateB = new StateB();
     const states = [stateA, stateB, new StateC()];
-    const stateMachine = new StateMachine(stateA, states);
+    const stateMachine = new StateMachine("x", stateA, states);
 
     const machine = new MessageChannelStateMachine(stateMachine, port);
 
@@ -136,7 +136,7 @@ describe("MessageChannelStateMachine", () => {
     const port = new TypedPort(channel.port1);
     const stateA = new StateA();
     const states = [stateA, new StateB(), new StateC()];
-    const stateMachine = new StateMachine(stateA, states);
+    const stateMachine = new StateMachine("x", stateA, states);
 
     const machine = new MessageChannelStateMachine(stateMachine, port);
     machine.transition((state) => state.goToB("abcd"));

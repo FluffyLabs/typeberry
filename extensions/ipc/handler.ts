@@ -1,7 +1,7 @@
-import {Decoder, Encoder} from "@typeberry/codec";
-import {NewStream, StreamEnvelope, StreamEnvelopeType, StreamId, StreamKind} from "./protocol/stream";
-import {BytesBlob} from "@typeberry/bytes";
-import {Logger} from "@typeberry/logger";
+import { BytesBlob } from "@typeberry/bytes";
+import { Decoder, Encoder } from "@typeberry/codec";
+import { Logger } from "@typeberry/logger";
+import { NewStream, StreamEnvelope, StreamEnvelopeType, type StreamId, type StreamKind } from "./protocol/stream";
 
 export type ResponseHandler = (err: Error | null, response?: BytesBlob) => void;
 
@@ -15,7 +15,7 @@ export interface MessageSender {
 export interface StreamHandler<TStreamKind extends StreamKind = StreamKind> {
   readonly kind: TStreamKind;
 
-  onStreamMessage(streamId: StreamId, message: BytesBlob): void;
+  onStreamMessage(streamSender: StreamSender, message: BytesBlob): void;
 
   onClose(streamId: StreamId): void;
 }
@@ -28,24 +28,24 @@ export class StreamSender implements MessageSender {
 
   open(newStream: NewStream) {
     const msg = Encoder.encodeObject(NewStream.Codec, newStream);
-    this.sender.send(Encoder.encodeObject(
-      StreamEnvelope.Codec,
-      new StreamEnvelope(this.streamId, StreamEnvelopeType.Open, msg)
-    ));
+    this.sender.send(
+      Encoder.encodeObject(StreamEnvelope.Codec, new StreamEnvelope(this.streamId, StreamEnvelopeType.Open, msg)),
+    );
   }
 
   send(msg: BytesBlob): void {
-    this.sender.send(Encoder.encodeObject(
-      StreamEnvelope.Codec,
-      new StreamEnvelope(this.streamId, StreamEnvelopeType.Msg, msg)
-    ));
+    this.sender.send(
+      Encoder.encodeObject(StreamEnvelope.Codec, new StreamEnvelope(this.streamId, StreamEnvelopeType.Msg, msg)),
+    );
   }
 
   close(): void {
-    this.sender.send(Encoder.encodeObject(
-      StreamEnvelope.Codec,
-      new StreamEnvelope(this.streamId, StreamEnvelopeType.Close, BytesBlob.fromNumbers([]))
-    ));
+    this.sender.send(
+      Encoder.encodeObject(
+        StreamEnvelope.Codec,
+        new StreamEnvelope(this.streamId, StreamEnvelopeType.Close, BytesBlob.fromNumbers([])),
+      ),
+    );
   }
 }
 
@@ -57,10 +57,7 @@ export class MessageHandler {
   // a collection of handlers for particular stream kind
   private readonly streamHandlers: Map<StreamKind, StreamHandler> = new Map();
 
-  constructor(
-    private readonly sender: MessageSender
-  ){}
-
+  constructor(private readonly sender: MessageSender) {}
 
   public registerHandlers(...handlers: StreamHandler[]) {
     for (const handler of handlers) {
@@ -80,14 +77,16 @@ export class MessageHandler {
 
   public withStreamOfKind<TStreamKind extends StreamKind, THandler extends StreamHandler<TStreamKind>>(
     streamKind: TStreamKind,
-    work: (handler: THandler, sender: StreamSender) => void
+    work: (handler: THandler, sender: StreamSender) => void,
   ) {
     // find first stream id with given kind
     for (const [streamId, handler] of this.streams.entries()) {
       if (handler.kind === streamKind) {
         work(handler as THandler, new StreamSender(streamId, this.sender));
+        return true;
       }
     }
+    return false;
   }
 
   public withNewStream<TStreamKind extends StreamKind, THandler extends StreamHandler<TStreamKind>>(
@@ -124,28 +123,29 @@ export class MessageHandler {
     // decode the message as `StreamEnvelope`
     const envelope = Decoder.decodeObject(StreamEnvelope.Codec, msg);
     const streamId = envelope.streamId;
+    logger.log(`[${streamId}] incoming message: ${envelope.type} ${envelope.data}`);
     // check if this is a already known stream id
     const streamHandler = this.streams.get(streamId);
-    console.log(streamId, this.streams, msg);
+    const streamSender = new StreamSender(streamId, this.sender);
     // we don't know that stream yet, so it has to be a new one
     if (streamHandler === undefined) {
       // closing or message of unknown stream - ignore.
       if (envelope.type !== StreamEnvelopeType.Open) {
-        logger.warn(`Got invalid type ${envelope.type} for unknown stream ${streamId}.`);
+        logger.warn(`[${streamId}] (unknown) got invalid type ${envelope.type}.`);
         return;
       }
       const newStream = Decoder.decodeObject(NewStream.Codec, envelope.data);
       const handler = this.streamHandlers.get(newStream.streamByte);
       if (handler !== undefined) {
-        logger.log(`[${streamId}] New stream for ${handler.kind}`);
+        logger.log(`[${streamId}] new stream for ${handler.kind}`);
         // insert the stream
         this.streams.set(streamId, handler);
         // Just send back the same stream byte.
-        new StreamSender(streamId, this.sender).open(newStream);
+        streamSender.open(newStream);
         return;
       }
       // reply with an error, because we don't know how to handle that stream kind.
-      new StreamSender(streamId, this.sender).close();
+      streamSender.close();
       return;
     }
 
@@ -160,13 +160,13 @@ export class MessageHandler {
     if (envelope.type !== StreamEnvelopeType.Msg) {
       // display a warning but only if the stream was not pending for confirmation.
       if (!this.pendingStreams.delete(streamId)) {
-        logger.warn(`Got invalid type ${envelope.type} for KNOWN stream ${streamId}.`);
+        logger.warn(`[${streamId}] got invalid type ${envelope.type}.`);
       }
       return;
     }
 
     // this is a known stream, so just dispatch the message.
-    streamHandler.onStreamMessage(streamId, envelope.data);
+    streamHandler.onStreamMessage(streamSender, envelope.data);
   }
 
   onClose() {

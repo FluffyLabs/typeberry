@@ -1,10 +1,9 @@
-import {HASH_SIZE, Header, HeaderHash, TimeSlot, WithDebug} from "@typeberry/block";
-import {CodecRecord, Decoder, Encoder, codec} from "@typeberry/codec";
-import {StreamHandler, StreamSender} from "../handler";
-import {StreamId, StreamKind} from "./stream";
-import {Logger} from "@typeberry/logger";
-import {BytesBlob} from "@typeberry/bytes";
-
+import { HASH_SIZE, Header, type HeaderHash, type TimeSlot, WithDebug } from "@typeberry/block";
+import type { BytesBlob } from "@typeberry/bytes";
+import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
+import { Logger } from "@typeberry/logger";
+import type { StreamHandler, StreamSender } from "../handler";
+import type { StreamId, StreamKind } from "./stream";
 
 /**
  * JAM-SNP UP0 stream.
@@ -20,7 +19,7 @@ export class HashAndSlot extends WithDebug {
     slot: codec.u32.cast(),
   });
 
-  static fromCodec({ hash, slot}: CodecRecord<HashAndSlot>) {
+  static fromCodec({ hash, slot }: CodecRecord<HashAndSlot>) {
     return new HashAndSlot(hash, slot);
   }
 
@@ -38,7 +37,7 @@ export class Handshake {
     leafs: codec.sequenceVarLen(HashAndSlot.Codec),
   });
 
-  static fromCodec({ final, leafs}: CodecRecord<Handshake>) {
+  static fromCodec({ final, leafs }: CodecRecord<Handshake>) {
     return new Handshake(final, leafs);
   }
 
@@ -54,7 +53,7 @@ export class Announcement extends WithDebug {
     final: HashAndSlot.Codec,
   });
 
-  static fromCodec({ header, final}: CodecRecord<Announcement>) {
+  static fromCodec({ header, final }: CodecRecord<Announcement>) {
     return new Announcement(header, final);
   }
 
@@ -62,30 +61,41 @@ export class Announcement extends WithDebug {
     public readonly header: Header,
     public readonly final: HashAndSlot,
   ) {
-    super()
+    super();
   }
 }
 
 const logger = Logger.new(__filename, "protocol/up-0");
 
-export class Handler implements StreamHandler {
-
+export class Handler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
   private readonly handshakes: Map<StreamId, Handshake> = new Map();
+  private readonly pendingHandshakes: Map<StreamId, boolean> = new Map();
 
-  onStreamMessage(streamId: StreamId, message: BytesBlob): void {
+  constructor(
+    private readonly getHandshake: () => Handshake,
+    private readonly onAnnouncement: (ann: Announcement) => void,
+  ) {}
+
+  onStreamMessage(sender: StreamSender, message: BytesBlob): void {
+    const streamId = sender.streamId;
     // we expect a handshake first
     if (!this.handshakes.has(streamId)) {
       const handshake = Decoder.decodeObject(Handshake.Codec, message);
       this.handshakes.set(streamId, handshake);
-      // TODO [ToDr] we should reply with handshake (but avoid loop!) or somehow send it separately?
+      // we didn't initiate this handshake, so let's respond
+      if (!this.pendingHandshakes.delete(streamId)) {
+        logger.log(`[${streamId}] <-- responding with a handshake.`);
+        sender.send(Encoder.encodeObject(Handshake.Codec, this.getHandshake()));
+      }
       return;
     }
 
     // it's just an announcement
     const annoucement = Decoder.decodeObject(Announcement.Codec, message);
-    logger.info(`Got blocks announcement: ${annoucement}`);
+    logger.info(`[${streamId}] got blocks announcement: ${annoucement}`);
+    this.onAnnouncement(annoucement);
   }
 
   onClose(streamId: StreamId): void {
@@ -93,6 +103,7 @@ export class Handler implements StreamHandler {
   }
 
   sendHandshake(sender: StreamSender, handshake: Handshake) {
+    this.pendingHandshakes.set(sender.streamId, true);
     sender.send(Encoder.encodeObject(Handshake.Codec, handshake));
   }
 
@@ -100,7 +111,8 @@ export class Handler implements StreamHandler {
     // only send announcement if we've handshaken
     if (this.handshakes.has(sender.streamId)) {
       sender.send(Encoder.encodeObject(Announcement.Codec, annoucement));
+    } else {
+      logger.warn(`[${sender.streamId}] no handshake yet, skipping announcement.`);
     }
   }
-
 }

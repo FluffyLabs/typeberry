@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import type { U32 } from "@typeberry/numbers";
 import { Decoder } from "./decoder";
-import { type CodecRecord, codec, Codec, DescriptorRecord } from "./descriptors";
+import { type CodecRecord, codec } from "./descriptors";
 import { Encoder } from "./encoder";
 
 class TestHeader {
@@ -207,8 +207,12 @@ describe("Codec Descriptors / generic class", () => {
       b: codec.bool,
     });
 
-    static fromCodec({a, b}: CodecRecord<Concrete>) {
+    static fromCodec({ a, b }: CodecRecord<Concrete>) {
       return new Concrete(a, b);
+    }
+
+    toString() {
+      return `${this.a} ${this.b}`;
     }
   }
 
@@ -220,4 +224,3 @@ describe("Codec Descriptors / generic class", () => {
     assert.deepStrictEqual(decoded, input);
   });
 });
-

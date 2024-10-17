@@ -3,7 +3,7 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { TrieHash } from "@typeberry/trie";
-import { type EntropyHash, type TimeSlot, type ValidatorIndex, WithDebug, withDebug, WithHash } from "./common";
+import { type EntropyHash, type TimeSlot, type ValidatorIndex, WithDebug, WithHash, withDebug } from "./common";
 import { ChainSpec, EST_EPOCH_LENGTH, EST_VALIDATORS } from "./context";
 import {
   BANDERSNATCH_KEY_BYTES,
