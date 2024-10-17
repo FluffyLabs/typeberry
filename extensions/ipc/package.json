@@ -3,6 +3,12 @@
   "version": "0.0.1",
   "description": "An IPC extension to inspect the node state.",
   "main": "index.ts",
+  "dependencies": {
+    "@typeberry/block": "0.0.1",
+    "@typeberry/bytes": "0.0.1",
+    "@typeberry/codec": "0.0.1",
+    "@typeberry/logger": "0.0.1"
+  },
   "scripts": {
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },

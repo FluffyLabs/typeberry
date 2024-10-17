@@ -73,7 +73,7 @@ export function startIpcServer(announcements: EventEmitter, getHandshake: () => 
   // Start the server (remove old socket if present)
   try {
     fs.unlinkSync(socketPath);
-  } catch (e) {}
+  } catch {}
 
   const controller = new AbortController();
   server.listen(

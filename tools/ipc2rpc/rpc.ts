@@ -38,7 +38,7 @@ export function startRpc(db: Database) {
             "access-control-allow-origin": "*",
           });
           res.write(
-            JSON.stringify(response, (key, val) => {
+            JSON.stringify(response, (_key, val) => {
               if (val instanceof Bytes) {
                 return val.toString();
               }
