@@ -133,7 +133,6 @@ describe("VirtualPage", () => {
   });
 
   it("should load 4 bytes from one chunk of readable memory (2 bytes from chunk and 2 bytes from 0s)", () => {
-    const startPageIndex = createMemoryIndex(0);
     const pageNumber = createPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
@@ -150,7 +149,6 @@ describe("VirtualPage", () => {
   });
 
   it("should load 4 bytes from one chunk of writeable memory (2 bytes from chunk and 2 bytes from 0s)", () => {
-    const startPageIndex = createMemoryIndex(0);
     const pageNumber = createPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
@@ -167,7 +165,6 @@ describe("VirtualPage", () => {
   });
 
   it("should load 4 bytes from one chunk of writeable memory", () => {
-    const startPageIndex = createMemoryIndex(0);
     const pageNumber = createPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
@@ -200,7 +197,6 @@ describe("VirtualPage", () => {
   });
 
   it("should load 4 bytes from one chunk that have 4 bytes length", () => {
-    const startPageIndex = createMemoryIndex(0);
     const pageNumber = createPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4]);
@@ -217,7 +213,6 @@ describe("VirtualPage", () => {
   });
 
   it("should load 4 bytes from two chunks of memory", () => {
-    const startPageIndex = createMemoryIndex(0);
     const pageNumber = createPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
@@ -369,7 +364,6 @@ describe("VirtualPage", () => {
   });
 
   it("should return PageFault when storing 4 bytes on 2 chunks but there is a gap between them", () => {
-    const startPageIndex = createMemoryIndex(0);
     const pageNumber = createPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytesToStore = new Uint8Array([1, 2, 3, 4]);

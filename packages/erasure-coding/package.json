@@ -10,6 +10,7 @@
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
   "dependencies": {
-    "reed-solomon-wasm": "github:fluffylabs/reed-solomon-wasm#8d814552c9770fcdce30b44f193d4f48c75bad19"
+    "reed-solomon-wasm": "github:fluffylabs/reed-solomon-wasm#8d814552c9770fcdce30b44f193d4f48c75bad19",
+    "@typeberry/utils": "0.0.1"
   }
 }

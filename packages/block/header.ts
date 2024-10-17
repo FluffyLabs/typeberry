@@ -1,6 +1,7 @@
 import { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
+import { HASH_SIZE } from "@typeberry/hash";
 import type { TrieHash } from "@typeberry/trie";
 import { type EntropyHash, type TimeSlot, type ValidatorIndex, WithDebug } from "./common";
 import { ChainSpec, EST_EPOCH_LENGTH, EST_VALIDATORS } from "./context";
@@ -12,7 +13,7 @@ import {
   ED25519_KEY_BYTES,
   type Ed25519Key,
 } from "./crypto";
-import { type ExtrinsicHash, HASH_SIZE, type HeaderHash } from "./hash";
+import type { ExtrinsicHash, HeaderHash } from "./hash";
 import { Ticket } from "./tickets";
 
 /**

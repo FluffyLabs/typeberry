@@ -35,7 +35,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
   // Await the configuration object
   const ready = await channel.waitForState<ImporterReady>("ready(importer)");
 
-  const finished = await ready.doUntil<Finished>("finished", async (worker, port, isFinished) => {
+  const finished = await ready.doUntil<Finished>("finished", async (worker) => {
     logger.info("Importer waiting for blocks.");
     const importer = new Importer(new TransitionHasher(worker.getChainSpec(), new SimpleAllocator()));
 

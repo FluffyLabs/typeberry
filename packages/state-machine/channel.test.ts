@@ -63,7 +63,7 @@ describe("MessageChannelStateMachine", () => {
     const machine = new MessageChannelStateMachine(stateMachine, port);
 
     // when
-    const machineB = machine.transition((state, port) => {
+    const machineB = machine.transition((state) => {
       return state.goToB();
     });
 

@@ -73,7 +73,7 @@ async function main() {
   try {
     log.push(...require(path.relative(__dirname, LOG_FILENAME)));
     logger.log("Previous log found. Appending.");
-  } catch (e) {
+  } catch {
     logger.log("Previous log not found. Starting a new one.");
   }
 

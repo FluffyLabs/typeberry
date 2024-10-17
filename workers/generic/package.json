@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "Generic stuff for the workers.",
   "main": "index.ts",
+  "dependencies": {
+    "@typeberry/state-machine": "0.0.1"
+  },
   "scripts": {
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },

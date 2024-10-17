@@ -1,14 +1,7 @@
 import type { Bytes } from "@typeberry/bytes";
+import type { HASH_SIZE } from "@typeberry/hash";
 import type { Opaque } from "@typeberry/utils";
-
-/**
- * Size of the output of the hash functions.
- *
- * https://graypaper.fluffylabs.dev/#/387103d/071401071f01
- *
- * // TODO [ToDr] Move to the hash package or some other primitive package.
- */
-export const HASH_SIZE = 32;
+export { HASH_SIZE } from "@typeberry/hash";
 
 /**
  * Blake2B hash of JAM-encoding of some header.

@@ -53,7 +53,7 @@ export class Safrole {
 
     newState.timeslot = input.slot;
     newState.entropy = [input.entropy];
-    for (const v of input.extrinsic) {
+    for (const _v of input.extrinsic) {
       // TODO [ToDr] Verify signatures
     }
 

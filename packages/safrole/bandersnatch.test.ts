@@ -5,7 +5,7 @@ describe("Bandersnatch verification", () => {
   it("verify", async () => {
     try {
       await verifyBandersnatch();
-    } catch (e) {
+    } catch {
       console.info("Error temporarily expected.");
     }
   });

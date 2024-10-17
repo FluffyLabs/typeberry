@@ -1,5 +1,5 @@
-import type { HASH_SIZE } from "@typeberry/block";
 import type { Bytes } from "@typeberry/bytes";
+import type { HASH_SIZE } from "@typeberry/hash";
 
 /** A map which uses hashes as keys. */
 export class HashDictionary<K extends Bytes<typeof HASH_SIZE>, V> {
