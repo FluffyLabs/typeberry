@@ -2,14 +2,15 @@ const fs = require("node:fs");
 const childProcess = require("node:child_process");
 
 const packageToBuild = process.env.PACKAGE_NAME;
-const outDir = process.env.PACKAGE_OUT;
+let outDir = process.env.PACKAGE_OUT;
 
 if (!packageToBuild) {
   throw new Error(`Missing 'PACKAGE_NAME' environment variable.`);
 }
 
 if (!outDir) {
-  throw new Error(`Missing 'PACKAGE_OUT' environment variable.`);
+  const parts = packageToBuild.split("/");
+  outDir = parts[parts.length - 1];
 }
 
 const data = `export * from "${packageToBuild}";`;
@@ -34,4 +35,7 @@ const packageJson = JSON.stringify(
 fs.mkdirSync(DIST, { recursive: true });
 fs.writeFileSync(`${DIST}/package.json`, packageJson);
 
-module.exports = `${DIST}/index.js`;
+module.exports = {
+  outFile: `${DIST}/index.js`,
+  typesInput: `${DIST}/tools/builder/pkg.d.ts`,
+};
