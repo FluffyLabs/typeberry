@@ -29,12 +29,6 @@ export type EntropyHash = Opaque<Blake2bHash, "EntropyHash">;
  */
 export type Epoch = Opaque<U32, "Epoch">;
 
-export function withDebug(): ClassDecorator {
-  return (target) => {
-    target.prototype.toString = WithDebug.prototype.toString;
-  };
-}
-
 /** A class that adds `toString` method to debug the model. */
 export abstract class WithDebug {
   toString() {
