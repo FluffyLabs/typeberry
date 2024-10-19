@@ -120,7 +120,7 @@ export async function runPvmTest(testContent: PvmTest) {
   assert.strictEqual(pvm.getPC(), testContent["expected-pc"]);
   assert.deepStrictEqual(Array.from(pvm.getRegisters().asUnsigned), testContent["expected-regs"]);
   const pvmStatus = pvm.getStatus();
-  const testStatus = pvmStatus <= 1 ? "halt" : "trap";
+  const testStatus = pvmStatus < 1 ? "halt" : "trap";
   assert.strictEqual(testStatus, testContent["expected-status"]);
 
   const dirtyPages = memory.getDirtyPages();
