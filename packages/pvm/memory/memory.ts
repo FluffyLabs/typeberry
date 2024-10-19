@@ -27,6 +27,20 @@ export class Memory {
     }
   }
 
+  reset() {
+    this.sbrkIndex = createMemoryIndex(0);
+    this.virtualSbrkIndex = createMemoryIndex(0);
+    this.endHeapIndex = createMemoryIndex(MEMORY_SIZE);
+    this.memory = new Map();
+  }
+
+  copyFrom(memory: Memory) {
+    this.sbrkIndex = memory.sbrkIndex;
+    this.virtualSbrkIndex = memory.virtualSbrkIndex;
+    this.endHeapIndex = memory.endHeapIndex;
+    this.memory = memory.memory;
+  }
+
   storeFrom(address: MemoryIndex, bytes: Uint8Array) {
     const pageNumber = getPageNumber(address);
     const page = this.memory.get(pageNumber);

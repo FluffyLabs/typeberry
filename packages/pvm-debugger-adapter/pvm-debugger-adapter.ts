@@ -13,7 +13,7 @@ export class PvmDebuggerAdapter {
   }
 
   getRegisters() {
-    return this.pvm.getRegisters();
+    return this.pvm.getRegisters().asUnsigned;
   }
 
   getPC() {

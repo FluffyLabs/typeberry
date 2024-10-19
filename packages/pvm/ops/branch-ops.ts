@@ -10,6 +10,10 @@ export class BranchOps {
     private basicBlocks: BasicBlocks,
   ) {}
 
+  setBasicBlocks(basicBlocks: BasicBlocks) {
+    this.basicBlocks = basicBlocks;
+  }
+
   private branch(nextPc: number, condition: boolean) {
     if (!condition) {
       return;

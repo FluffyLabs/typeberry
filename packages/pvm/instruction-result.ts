@@ -14,4 +14,10 @@ export class InstructionResult {
    * In any other circumstance the value should be `null`.
    */
   public exitParam: number | null = null;
+
+  reset() {
+    this.nextPc = 0;
+    this.status = null;
+    this.exitParam = null;
+  }
 }

@@ -11,4 +11,15 @@ export class Registers {
     const offset = index << REGISTER_SIZE_SHIFT;
     return this.bytes.subarray(offset, offset + 4);
   }
+
+  copyFrom(regs: Registers | Uint32Array) {
+    const array = regs instanceof Uint32Array ? regs : regs.asUnsigned;
+    this.asUnsigned.set(array);
+  }
+
+  reset() {
+    for (let i = 0; i < NO_OF_REGISTERS; i++) {
+      this.asUnsigned[i] = 0;
+    }
+  }
 }

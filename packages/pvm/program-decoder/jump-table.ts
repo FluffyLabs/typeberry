@@ -36,4 +36,8 @@ export class JumpTable {
   getDestination(index: number) {
     return this.indices[index];
   }
+
+  static empty() {
+    return new JumpTable(0, new Uint8Array());
+  }
 }
