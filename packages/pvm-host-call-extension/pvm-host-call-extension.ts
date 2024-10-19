@@ -4,6 +4,7 @@ import { createMemoryIndex } from "@typeberry/pvm/memory/memory-index";
 import { getPageNumber, getStartPageIndexFromPageNumber } from "@typeberry/pvm/memory/memory-utils";
 import type { Registers } from "@typeberry/pvm/registers";
 import { Status } from "@typeberry/pvm/status";
+import { check } from "@typeberry/utils";
 import { PAGE_SIZE } from "../pvm-standard-program-decoder/memory-conts";
 import type { HostCalls } from "./host-calls";
 import type { PvmInstanceManager } from "./pvm-instance-manager";
