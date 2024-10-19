@@ -6,3 +6,4 @@ export { ArgumentType } from "@typeberry/pvm/args-decoder/argument-type";
 export { createResults } from "@typeberry/pvm/args-decoder/args-decoding-results";
 export { instructionArgumentTypeMap } from "@typeberry/pvm/args-decoder/instruction-argument-type-map";
 export { decodeStandardProgram } from "../pvm-standard-program-decoder";
+export { Registers } from "@typeberry/pvm/registers";
