@@ -59,7 +59,7 @@ export class StateRequest extends WithDebug {
     headerHash: codec.bytes(HASH_SIZE).cast(),
     startKey: codec.bytes(KEY_SIZE),
     endKey: codec.bytes(KEY_SIZE),
-    maximumSize: codec.u32.cast(),
+    maximumSize: codec.u32,
   });
 
   static fromCodec({ headerHash, startKey, endKey, maximumSize }: CodecRecord<StateRequest>) {
