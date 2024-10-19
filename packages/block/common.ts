@@ -1,4 +1,4 @@
-import type { Bytes } from "@typeberry/bytes";
+import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { U16, U32, U64 } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
 import type { HASH_SIZE } from "./hash";
@@ -71,5 +71,15 @@ export class WithHash<THash extends Bytes<typeof HASH_SIZE>, TData> extends With
     public readonly data: TData,
   ) {
     super();
+  }
+}
+
+export class WithHashAndBytes<THash extends Bytes<typeof HASH_SIZE>, TData> extends WithHash<THash, TData> {
+  constructor(
+    hash: THash,
+    data: TData,
+    public readonly encoded: BytesBlob,
+  ) {
+    super(hash, data);
   }
 }

@@ -22,6 +22,21 @@ export class BytesBlob {
     return bytesToHexString(this.buffer);
   }
 
+  /** Compare the sequence to another one. */
+  isEqualTo(other: BytesBlob): boolean {
+    if (this.length !== other.length) {
+      return false;
+    }
+
+    for (let i = 0; i < this.length; i++) {
+      if (this.buffer[i] !== other.buffer[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   /** Create a new [`BytesBlob'] by converting given UTF-u encoded string into bytes. */
   static fromString(v: string): BytesBlob {
     const encoder = new TextEncoder();

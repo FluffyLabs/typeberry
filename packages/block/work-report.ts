@@ -83,7 +83,7 @@ export class WorkReport extends WithDebug {
     /** `c`: Core index on which the work is done. */
     public readonly coreIndex: CoreIndex,
     /** `a`: Hash of the authorizer. */
-    public readonly authorizerHash: Bytes<typeof HASH_SIZE>,
+    public readonly authorizerHash: Bytes<HASH_SIZE>,
     /** `o`: Authorization output. */
     public readonly authorizationOutput: BytesBlob,
     /**

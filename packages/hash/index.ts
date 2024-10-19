@@ -9,11 +9,12 @@ import blake2b from "blake2b";
  *
  */
 export const HASH_SIZE = 32;
+export type HASH_SIZE = typeof HASH_SIZE;
 
 /**
  * Opaque, unknown hash.
  */
-export type OpaqueHash = Bytes<typeof HASH_SIZE>;
+export type OpaqueHash = Bytes<HASH_SIZE>;
 
 /** Allocator interface - returns an empty bytes vector that can be filled with the hash. */
 export interface HashAllocator {

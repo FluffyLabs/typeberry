@@ -6,6 +6,7 @@
   "dependencies": {
     "@typeberry/collections": "0.0.1",
     "@typeberry/trie": "0.0.1",
+    "@typeberry/block": "0.0.1",
     "@typeberry/hash": "0.0.1",
     "@typeberry/bytes": "0.0.1"
   },
