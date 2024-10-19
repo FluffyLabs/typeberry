@@ -37,18 +37,12 @@ import {
   TwoRegsOneOffsetDispatcher,
   TwoRegsTwoImmsDispatcher,
 } from "./ops-dispatchers";
-import type { Mask } from "./program-decoder/mask";
+import { JumpTable } from "./program-decoder/jump-table";
+import { Mask } from "./program-decoder/mask";
 import { ProgramDecoder } from "./program-decoder/program-decoder";
-import { NO_OF_REGISTERS, Registers } from "./registers";
+import { Registers } from "./registers";
 import { Result } from "./result";
 import { Status } from "./status";
-
-type InitialState = {
-  regs?: RegistersArray;
-  pc?: number;
-  memory?: Memory;
-  gas?: number;
-};
 
 type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N ? A : GrowToSize<T, N, [...A, T]>;
 
@@ -56,11 +50,11 @@ type FixedArray<T, N extends number> = GrowToSize<T, N, []>;
 
 export type RegistersArray = FixedArray<number, 13>;
 export class Pvm {
-  private registers: Registers;
-  private code: Uint8Array;
-  private mask: Mask;
-  private pc: number;
-  private gas: number;
+  private registers = new Registers();
+  private code = new Uint8Array();
+  private mask = Mask.empty();
+  private pc = 0;
+  private gas = 0;
   private argsDecoder: ArgsDecoder;
   private threeRegsDispatcher: ThreeRegsDispatcher;
   private twoRegsOneImmDispatcher: TwoRegsOneImmDispatcher;
@@ -70,7 +64,7 @@ export class Pvm {
   private oneOffsetDispatcher: OneOffsetDispatcher;
   private oneRegOneImmDispatcher: OneRegOneImmDispatcher;
   private instructionResult = new InstructionResult();
-  private memory: Memory;
+  private memory = new Memory();
   private twoImmsDispatcher: TwoImmsDispatcher;
   private oneRegTwoImmsDispatcher: OneRegTwoImmsDispatcher;
   private noArgsDispatcher: NoArgsDispatcher;
@@ -78,34 +72,22 @@ export class Pvm {
   private oneImmDispatcher: OneImmDispatcher;
   private status = Status.OK;
   private argsDecodingResults = createResults();
+  private basicBlocks: BasicBlocks;
+  private jumpTable = JumpTable.empty();
 
-  constructor(rawProgram: Uint8Array, initialState: InitialState = {}) {
-    const programDecoder = new ProgramDecoder(rawProgram);
-    this.code = programDecoder.getCode();
-    this.mask = programDecoder.getMask();
-    const jumpTable = programDecoder.getJumpTable();
-    this.registers = new Registers();
-    this.memory = initialState.memory ?? new Memory();
-    this.pc = initialState.pc ?? 0;
-
-    for (let i = 0; i < NO_OF_REGISTERS; i++) {
-      this.registers.asUnsigned[i] = initialState.regs?.[i] ?? 0;
-    }
-    this.gas = initialState.gas ?? 0;
-
-    this.argsDecoder = new ArgsDecoder(this.code, this.mask);
-    const basicBlocks = new BasicBlocks(this.code, this.mask);
-
+  constructor() {
+    this.argsDecoder = new ArgsDecoder();
+    this.basicBlocks = new BasicBlocks();
     const mathOps = new MathOps(this.registers);
     const shiftOps = new ShiftOps(this.registers);
     const bitOps = new BitOps(this.registers);
     const booleanOps = new BooleanOps(this.registers);
     const moveOps = new MoveOps(this.registers);
-    const branchOps = new BranchOps(this.registers, this.instructionResult, basicBlocks);
+    const branchOps = new BranchOps(this.registers, this.instructionResult, this.basicBlocks);
     const loadOps = new LoadOps(this.registers, this.memory, this.instructionResult);
     const storeOps = new StoreOps(this.registers, this.memory, this.instructionResult);
     const noArgsOps = new NoArgsOps(this.instructionResult);
-    const dynamicJumpOps = new DynamicJumpOps(this.registers, jumpTable, this.instructionResult, basicBlocks);
+    const dynamicJumpOps = new DynamicJumpOps(this.registers, this.jumpTable, this.instructionResult, this.basicBlocks);
     const hostCallOps = new HostCallOps(this.instructionResult);
     const memoryOps = new MemoryOps(this.registers, this.memory);
 
@@ -131,6 +113,31 @@ export class Pvm {
     this.oneImmDispatcher = new OneImmDispatcher(hostCallOps);
   }
 
+  reset(rawProgram: Uint8Array, pc: number, gas: number, maybeRegisters?: Registers, maybeMemory?: Memory) {
+    const programDecoder = new ProgramDecoder(rawProgram);
+    this.code = programDecoder.getCode();
+    this.mask = programDecoder.getMask();
+    this.jumpTable = programDecoder.getJumpTable();
+
+    this.pc = pc;
+    this.gas = gas;
+    this.argsDecoder.reset(this.code, this.mask);
+    this.basicBlocks.reset(this.code, this.mask);
+    this.instructionResult.reset();
+
+    if (maybeRegisters) {
+      this.registers.copyFrom(maybeRegisters);
+    } else {
+      this.registers.reset();
+    }
+
+    if (maybeMemory) {
+      this.memory.copyFrom(maybeMemory);
+    } else {
+      this.memory.reset();
+    }
+  }
+
   printProgram() {
     const p = assemblify(this.code, this.mask);
     console.table(p);
@@ -138,6 +145,12 @@ export class Pvm {
 
   runProgram() {
     while (this.nextStep() === Status.OK) {}
+  }
+
+  resume(nextPc: number, gas: number) {
+    this.pc = nextPc;
+    this.gas = gas;
+    this.runProgram();
   }
 
   nextStep() {
@@ -153,7 +166,7 @@ export class Pvm {
     this.gas -= instructionGasMap[currentInstruction];
 
     if (this.gas < 0) {
-      this.status = Status.OUT_OF_GAS;
+      this.status = Status.OOG;
       return this.status;
     }
     const argsType = instructionArgumentTypeMap[currentInstruction];
@@ -216,6 +229,9 @@ export class Pvm {
         case Result.PANIC:
           this.status = Status.PANIC;
           break;
+        case Result.HOST:
+          this.status = Status.HOST;
+          break;
       }
       return this.status;
     }
@@ -225,11 +241,15 @@ export class Pvm {
   }
 
   getRegisters() {
-    return this.registers.asUnsigned;
+    return this.registers;
   }
 
   getPC() {
     return this.pc;
+  }
+
+  getNextPC() {
+    return this.instructionResult.nextPc;
   }
 
   getGas() {
@@ -238,6 +258,14 @@ export class Pvm {
 
   getStatus() {
     return this.status;
+  }
+
+  getExitParam() {
+    return this.instructionResult.exitParam;
+  }
+
+  getMemory() {
+    return this.memory;
   }
 
   getMemoryPage(pageNumber: number): null | Uint8Array {

@@ -1,4 +1,4 @@
-import type { BitVec } from "@typeberry/bytes";
+import { BitVec } from "@typeberry/bytes";
 import { check } from "@typeberry/utils";
 export class Mask {
   /**
@@ -65,5 +65,9 @@ export class Mask {
       table[i] = lastInstructionOffset;
     }
     return table;
+  }
+
+  static empty() {
+    return new Mask(BitVec.empty(0));
   }
 }

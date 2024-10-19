@@ -13,18 +13,34 @@ type InitialMemoryState = {
 };
 
 export class Memory {
-  private sbrkIndex = createMemoryIndex(0);
-  private virtualSbrkIndex = createMemoryIndex(0);
-  private endHeapIndex = createMemoryIndex(MEMORY_SIZE);
-  private memory: Map<PageNumber, MemoryPage> = new Map();
+  static fromInitialMemory(initialMemoryState: InitialMemoryState) {
+    return new Memory(
+      initialMemoryState?.sbrkIndex,
+      initialMemoryState?.sbrkIndex,
+      initialMemoryState?.endHeapIndex,
+      initialMemoryState?.memory,
+    );
+  }
 
-  constructor(initialMemoryState?: InitialMemoryState) {
-    if (initialMemoryState) {
-      this.memory = initialMemoryState.memory;
-      this.sbrkIndex = initialMemoryState.sbrkIndex;
-      this.virtualSbrkIndex = initialMemoryState.sbrkIndex;
-      this.endHeapIndex = initialMemoryState.endHeapIndex;
-    }
+  constructor(
+    private sbrkIndex = createMemoryIndex(0),
+    private virtualSbrkIndex = createMemoryIndex(0),
+    private endHeapIndex = createMemoryIndex(MEMORY_SIZE),
+    private memory = new Map<PageNumber, MemoryPage>(),
+  ) {}
+
+  reset() {
+    this.sbrkIndex = createMemoryIndex(0);
+    this.virtualSbrkIndex = createMemoryIndex(0);
+    this.endHeapIndex = createMemoryIndex(MEMORY_SIZE);
+    this.memory = new Map<PageNumber, MemoryPage>(); // TODO [MaSi]: We should keep allocated pages somewhere and reuse it when it is possible
+  }
+
+  copyFrom(memory: Memory) {
+    this.sbrkIndex = memory.sbrkIndex;
+    this.virtualSbrkIndex = memory.virtualSbrkIndex;
+    this.endHeapIndex = memory.endHeapIndex;
+    this.memory = memory.memory;
   }
 
   storeFrom(address: MemoryIndex, bytes: Uint8Array) {

@@ -1,4 +1,4 @@
-import type { Mask } from "../program-decoder/mask";
+import { Mask } from "../program-decoder/mask";
 import { ArgumentType } from "./argument-type";
 import { ImmediateDecoder } from "./decoders/immediate-decoder";
 import { NibblesDecoder } from "./decoders/nibbles-decoder";
@@ -107,11 +107,13 @@ type Args =
 export class ArgsDecoder {
   private nibblesDecoder = new NibblesDecoder();
   private offsetDecoder = new ImmediateDecoder();
+  private code: Uint8Array = new Uint8Array();
+  private mask: Mask = Mask.empty();
 
-  constructor(
-    private code: Uint8Array,
-    private mask: Mask,
-  ) {}
+  reset(code: Uint8Array, mask: Mask) {
+    this.code = code;
+    this.mask = mask;
+  }
 
   fillArgs<T extends Args>(pc: number, result: T) {
     const nextInstructionDistance = 1 + this.mask.getNoOfBytesToNextInstruction(pc + 1);

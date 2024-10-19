@@ -93,7 +93,6 @@ export class StoreOps {
 
   private store(address: number, bytes: Uint8Array) {
     const storeResult = this.memory.storeFrom(createMemoryIndex(address), bytes);
-
     if (storeResult !== null) {
       this.instructionResult.status = Result.FAULT;
       this.instructionResult.exitParam = address;

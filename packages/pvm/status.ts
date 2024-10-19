@@ -1,6 +1,8 @@
 export enum Status {
-  OK = 0,
-  HALT = 1,
-  PANIC = 2,
-  OUT_OF_GAS = 3,
+  OK = -1,
+  HALT = 0,
+  PANIC = 1,
+  FAULT = 2,
+  HOST = 3,
+  OOG = 4,
 }

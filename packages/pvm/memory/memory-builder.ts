@@ -141,7 +141,7 @@ export class MemoryBuilder {
       }
     }
 
-    const memory = new Memory({
+    const memory = Memory.fromInitialMemory({
       memory: this.initialMemory,
       sbrkIndex,
       endHeapIndex,
