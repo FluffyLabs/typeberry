@@ -19,6 +19,7 @@
     "packages/numbers",
     "packages/pvm",
     "packages/pvm-debugger-adapter",
+    "packages/pvm-host-call-extension",
     "packages/pvm-standard-program-decoder",
     "packages/safrole",
     "packages/state-machine",
