@@ -54,16 +54,16 @@ export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {
     code,
     memory: {
       readable: [
-        getMemorySegment(readonlyDataStart, readonlyDataEnd, readOnlyMemory),
-        getMemorySegment(readonlyDataEnd, readOnlyZerosEnd),
-        getMemorySegment(argsStart, argsEnd, args),
-        getMemorySegment(argsEnd, argsZerosEnd),
-      ],
+        readOnlyLength > 0 && getMemorySegment(readonlyDataStart, readonlyDataEnd, readOnlyMemory),
+        readonlyDataEnd < readOnlyZerosEnd && getMemorySegment(readonlyDataEnd, readOnlyZerosEnd),
+        argsLength > 0 && getMemorySegment(argsStart, argsEnd, args),
+        argsEnd < argsZerosEnd && getMemorySegment(argsEnd, argsZerosEnd),
+      ].filter((x) => !!x),
       writeable: [
-        getMemorySegment(heapDataStart, heapDataEnd, initialHeap),
-        getMemorySegment(heapDataEnd, heapZerosEnd),
-        getMemorySegment(stackStart, stackEnd),
-      ],
+        heapLength > 0 && getMemorySegment(heapDataStart, heapDataEnd, initialHeap),
+        heapDataEnd < heapZerosEnd && getMemorySegment(heapDataEnd, heapZerosEnd),
+        stackStart < stackEnd && getMemorySegment(stackStart, stackEnd),
+      ].filter((x) => !!x),
 
       sbrkIndex: heapZerosEnd,
     },
@@ -76,13 +76,13 @@ function getMemorySegment(start: number, end: number, data: Uint8Array | null = 
 }
 
 function getRegisters(argsLength: number) {
-  const regs = new Uint8Array(NO_OF_REGISTERS);
+  const regs = new Uint32Array(NO_OF_REGISTERS);
 
   // GP reference: https://graypaper.fluffylabs.dev/#WyIxYjA4MWZlM2U3IiwiMjciLG51bGwsbnVsbCxbIjxkaXYgY2xhc3M9XCJ0IG0wIHgxMCBoYyB5MTU5OSBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiIsIjxkaXYgY2xhc3M9XCJ0IG0wIHgxMCBoYyB5MTU5OSBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
-  regs[1] = LAST_PAGE;
-  regs[2] = STACK_SEGMENT;
-  regs[10] = ARGS_SEGMENT;
-  regs[11] = argsLength;
+  regs[0] = LAST_PAGE;
+  regs[1] = STACK_SEGMENT;
+  regs[7] = ARGS_SEGMENT;
+  regs[8] = argsLength;
 
   return regs;
 }

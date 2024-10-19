@@ -30,7 +30,7 @@ describe("Memory", () => {
       memoryMap.set(createPageNumber(0), page);
       const sbrkIndex = createMemoryIndex(0);
       const endHeapIndex = createMemoryIndex(MEMORY_SIZE);
-      const memory = new Memory({ memory: memoryMap, sbrkIndex, endHeapIndex });
+      const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const lengthToLoad = 4;
       const result = new Uint8Array(lengthToLoad);
       const addressToLoad = createMemoryIndex(1);
@@ -56,7 +56,7 @@ describe("Memory", () => {
       memoryMap.set(createPageNumber(1), secondPage);
       const sbrkIndex = createMemoryIndex(0);
       const endHeapIndex = createMemoryIndex(MEMORY_SIZE);
-      const memory = new Memory({ memory: memoryMap, sbrkIndex, endHeapIndex });
+      const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const lengthToLoad = 4;
       const result = new Uint8Array(lengthToLoad);
       const addressToLoad = createMemoryIndex(PAGE_SIZE - 2);
@@ -76,7 +76,7 @@ describe("Memory", () => {
       memoryMap.set(createPageNumber(0), page);
       const sbrkIndex = createMemoryIndex(0);
       const endHeapIndex = createMemoryIndex(MEMORY_SIZE);
-      const memory = new Memory({ memory: memoryMap, sbrkIndex, endHeapIndex });
+      const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const lengthToLoad = 4;
       const result = new Uint8Array(lengthToLoad);
       const addressToLoad = createMemoryIndex(PAGE_SIZE - 2);
@@ -103,7 +103,7 @@ describe("Memory", () => {
       memoryMap.set(secondPageNumber, secondPage);
       const sbrkIndex = createMemoryIndex(0);
       const endHeapIndex = createMemoryIndex(MEMORY_SIZE);
-      const memory = new Memory({ memory: memoryMap, sbrkIndex, endHeapIndex });
+      const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const lengthToLoad = 4;
       const result = new Uint8Array(lengthToLoad);
       const addressToLoad = createMemoryIndex(MEMORY_SIZE - 1);
@@ -133,7 +133,7 @@ describe("Memory", () => {
       const sbrkIndex = createMemoryIndex(0);
       const endHeapIndex = createMemoryIndex(MEMORY_SIZE);
       memoryMap.set(pageNumber, page);
-      const memory = new Memory({ memory: memoryMap, sbrkIndex, endHeapIndex });
+      const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const dataToStore = new Uint8Array([1, 2, 3, 4]);
       const addressToStore = createMemoryIndex(1);
       const expectedMemoryMap = new Map();
@@ -167,7 +167,7 @@ describe("Memory", () => {
       const endHeapIndex = createMemoryIndex(MEMORY_SIZE);
       memoryMap.set(firstPageNumber, firstPage);
       memoryMap.set(secondPageNumber, secondPage);
-      const memory = new Memory({ memory: memoryMap, sbrkIndex, endHeapIndex });
+      const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const dataToStore = new Uint8Array([1, 2, 3, 4]);
       const addressToStore = createMemoryIndex(PAGE_SIZE - 2);
       const expectedMemoryMap = new Map();
@@ -200,7 +200,7 @@ describe("Memory", () => {
       memoryMap.set(createPageNumber(0), page);
       const sbrkIndex = createMemoryIndex(0);
       const endHeapIndex = createMemoryIndex(MEMORY_SIZE);
-      const memory = new Memory({ memory: memoryMap, sbrkIndex, endHeapIndex });
+      const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const addressToStore = createMemoryIndex(PAGE_SIZE - 2);
 
       const storeResult = memory.storeFrom(addressToStore, new Uint8Array(4));
@@ -218,7 +218,7 @@ describe("Memory", () => {
       const endHeapIndex = createMemoryIndex(MEMORY_SIZE);
       memoryMap.set(firstPageNumber, firstPage);
       memoryMap.set(secondPageNumber, secondPage);
-      const memory = new Memory({ memory: memoryMap, sbrkIndex, endHeapIndex });
+      const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const dataToStore = new Uint8Array([1, 2, 3, 4]);
       const addressToStore = createMemoryIndex(MEMORY_SIZE - 1);
       const expectedMemoryMap = new Map();

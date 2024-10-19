@@ -36,8 +36,8 @@ describe("decodeStandardProgram", () => {
     assert.deepStrictEqual(decodedProgram.code, C);
   });
 
-  it("should write args length to 12th register", () => {
-    const registerIndex = 11;
+  it("should write args length to 9th register", () => {
+    const registerIndex = 8;
 
     assert.strictEqual(decodedProgram.registers[registerIndex], ARGS.length);
   });
