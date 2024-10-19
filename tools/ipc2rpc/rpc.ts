@@ -6,6 +6,7 @@ import type { JSONRPCID, JSONRPCSuccessResponse } from "./../../node_modules/jso
 import type { Header } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import * as ce129 from "@typeberry/ext-ipc/protocol/ce-129-state-request";
+import { hashString } from "@typeberry/hash";
 import { JSONRPCServer } from "json-rpc-2.0";
 import type { MessageHandler } from "../../extensions/ipc/handler";
 
@@ -24,7 +25,7 @@ export function startRpc(db: Database, client: MessageHandler) {
       client.withNewStream<typeof ce129.STREAM_KIND, ce129.Handler>(ce129.STREAM_KIND, (handler, sender) => {
         if (!db.bestHeader) return;
 
-        const key = request.params.accountId;
+        const key: string = request.params.accountId;
         const handleResponse = (response: ce129.StateResponse) => {
           const rpcResponse: JSONRPCSuccessResponse = {
             jsonrpc: request.jsonrpc,
@@ -34,7 +35,12 @@ export function startRpc(db: Database, client: MessageHandler) {
           resolve(rpcResponse);
         };
 
-        handler.getStateByKey(sender, db.bestHeader.parentHeaderHash, key, handleResponse);
+        handler.getStateByKey(
+          sender,
+          db.bestHeader.parentHeaderHash,
+          Bytes.fromBlob(hashString(key).raw.subarray(0, 31), 31),
+          handleResponse,
+        );
         sender.close();
       });
     });
