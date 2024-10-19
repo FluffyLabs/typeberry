@@ -134,7 +134,7 @@ export class Pvm {
     if (maybeMemory) {
       this.memory.copyFrom(maybeMemory);
     } else {
-      this.memory = new Memory();
+      this.memory.reset();
     }
   }
 

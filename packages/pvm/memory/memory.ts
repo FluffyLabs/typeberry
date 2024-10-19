@@ -29,6 +29,20 @@ export class Memory {
     private memory = new Map<PageNumber, MemoryPage>(),
   ) {}
 
+  reset() {
+    this.sbrkIndex = createMemoryIndex(0);
+    this.virtualSbrkIndex = createMemoryIndex(0);
+    this.endHeapIndex = createMemoryIndex(MEMORY_SIZE);
+    this.memory = new Map<PageNumber, MemoryPage>(); // TODO [MaSi]: We should keep allocated pages somewhere and reuse it when it is possible
+  }
+
+  copyFrom(memory: Memory) {
+    this.sbrkIndex = memory.sbrkIndex;
+    this.virtualSbrkIndex = memory.virtualSbrkIndex;
+    this.endHeapIndex = memory.endHeapIndex;
+    this.memory = memory.memory;
+  }
+
   storeFrom(address: MemoryIndex, bytes: Uint8Array) {
     const pageNumber = getPageNumber(address);
     const page = this.memory.get(pageNumber);
