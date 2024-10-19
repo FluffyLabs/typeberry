@@ -1,9 +1,10 @@
 import { EventEmitter } from "node:events";
 import { HASH_SIZE, type Header, type HeaderHash, type TimeSlot, type WithHash } from "@typeberry/block";
-import { Bytes } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { Listener } from "@typeberry/state-machine";
 import { Announcement, Handshake, HashAndSlot } from "./protocol/up-0-block-announcement";
 import { startIpcServer } from "./server";
+import {KeyValuePair} from "./protocol/ce-129-state-request";
 
 export interface ExtensionApi {
   bestHeader: Listener<WithHash<HeaderHash, Header>>;
@@ -32,7 +33,10 @@ export function startExtension(api: ExtensionApi) {
   };
 
   const getKeyValuePairs = () => {
-    return [];
+    return [new KeyValuePair(
+      Bytes.fill(31, 5),
+      BytesBlob.fromNumbers([255, 255, 255, 255])
+    )];
   };
 
   const ipcServer = startIpcServer(announcements, getHandshake, getBoundaryNodes, getKeyValuePairs);
