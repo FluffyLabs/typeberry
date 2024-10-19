@@ -27,7 +27,15 @@ export function startExtension(api: ExtensionApi) {
     return new Handshake(final, []);
   };
 
-  const ipcServer = startIpcServer(announcements, getHandshake);
+  const getBoundaryNodes = () => {
+    return [];
+  };
+
+  const getKeyValuePairs = () => {
+    return [];
+  };
+
+  const ipcServer = startIpcServer(announcements, getHandshake, getBoundaryNodes, getKeyValuePairs);
 
   return () => {
     // stop accepting new connections
