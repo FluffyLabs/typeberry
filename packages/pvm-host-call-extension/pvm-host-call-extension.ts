@@ -40,16 +40,17 @@ export class PvmHostCallExtension {
           return [];
         }
 
+        const resultStartIdx = (i - firstPage) * PAGE_SIZE;
         if (i === firstPage) {
           const startPageIndex = getStartPageIndexFromPageNumber(i);
           const startIndex = startAddress - startPageIndex;
-          result.set(pageDump.subarray(startIndex), (i - firstPage) * PAGE_SIZE);
+          result.set(pageDump.subarray(startIndex), resultStartIdx);
         } else if (i === lastPage) {
           const startPageIndex = getStartPageIndexFromPageNumber(i);
           const endIndex = endAddress - startPageIndex;
-          result.set(pageDump.subarray(0, endIndex), (i - firstPage) * PAGE_SIZE);
+          result.set(pageDump.subarray(0, endIndex), resultStartIdx);
         } else {
-          result.set(pageDump, (i - firstPage) * PAGE_SIZE);
+          result.set(pageDump, resultStartIdx);
         }
       }
 
@@ -66,6 +67,7 @@ export class PvmHostCallExtension {
       if (status !== Status.HOST) {
         return this.getReturnValue(status, pvmInstance.getMemory(), pvmInstance.getRegisters());
       }
+      check(pvmInstance.getExitParam() !== null, "We know that the exit param is not null, because the status is `Status.HOST`");
       const hostCallIndex = pvmInstance.getExitParam() ?? -1;
       const nextPc = pvmInstance.getNextPC();
       const gas = pvmInstance.getGas();

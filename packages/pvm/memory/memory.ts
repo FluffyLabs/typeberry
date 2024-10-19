@@ -27,19 +27,21 @@ export class Memory {
     }
   }
 
-  reset() {
-    this.sbrkIndex = createMemoryIndex(0);
-    this.virtualSbrkIndex = createMemoryIndex(0);
-    this.endHeapIndex = createMemoryIndex(MEMORY_SIZE);
-    this.memory = new Map();
+  static fromInitialMemory(initialMemoryState?: InitialMemoryState) {
+    return new Memory(
+       initialMemoryState?.sbrkIndex,
+       initialMemoryState?.virtualSbrkIndex,
+       initialMemoryState?.endHeapIndex,
+       initialMemoryState?.memory
+     )
   }
 
-  copyFrom(memory: Memory) {
-    this.sbrkIndex = memory.sbrkIndex;
-    this.virtualSbrkIndex = memory.virtualSbrkIndex;
-    this.endHeapIndex = memory.endHeapIndex;
-    this.memory = memory.memory;
-  }
+  constructor(
+    private sbrkIndex = createMemoryIndex(0),
+    private virtualSbrkIndex = createMemoryIndex(0),
+    private endHeapIndex = createMemoryIndex(MEMORY_SIZE),
+    private memory = new Map<PageNumber, MemoryPage>(),
+  ){}
 
   storeFrom(address: MemoryIndex, bytes: Uint8Array) {
     const pageNumber = getPageNumber(address);
