@@ -35,7 +35,12 @@ export function startExtension(api: ExtensionApi) {
 
   const getKeyValuePairs = (_hash: HeaderHash, startKey: Bytes<KEY_SIZE>) => {
     let value = BytesBlob.fromNumbers([255, 255, 0, 0]);
-    if (Bytes.fromBlob(hashString("0x83bd3bde264a79a2e67c487696c1d7f0b549da89").raw.subarray(0, KEY_SIZE), KEY_SIZE)) {
+    if (
+      Bytes.fromBlob(
+        hashString("0x83bd3bde264a79a2e67c487696c1d7f0b549da89").raw.subarray(0, KEY_SIZE),
+        KEY_SIZE,
+      ).isEqualTo(startKey)
+    ) {
       value = BytesBlob.fromNumbers([255, 255, 255, 0]);
     }
     return [new KeyValuePair(startKey, value)];
