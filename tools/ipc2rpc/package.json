@@ -6,6 +6,7 @@
   "dependencies": {
     "@typeberry/block": "0.0.1",
     "@typeberry/logger": "0.0.1",
+    "@typeberry/hash": "0.0.1",
     "@typeberry/bytes": "0.0.1",
     "@typeberry/ext-ipc": "0.0.1",
     "json-rpc-2.0": "^1.7.0"
