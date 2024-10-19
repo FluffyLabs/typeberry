@@ -34,7 +34,12 @@ export function startRpc(db: Database, client: MessageHandler) {
           resolve(rpcResponse);
         };
 
-        handler.getStateByKey(sender, db.bestHeader.parentHeaderHash, key, handleResponse);
+        handler.getStateByKey(
+          sender,
+          db.bestHeader.parentHeaderHash,
+          key,
+          handleResponse
+        );
         sender.close();
       });
     });
