@@ -5,7 +5,7 @@ import { Logger } from "@typeberry/logger";
 import type { U32 } from "@typeberry/numbers";
 import { TrieNode } from "@typeberry/trie/nodes";
 import type { StreamHandler, StreamSender } from "../handler";
-import type { StreamKind } from "./stream";
+import type { StreamId, StreamKind } from "./stream";
 
 /**
  * JAM-SNP CE-129 stream.
@@ -81,8 +81,8 @@ const logger = Logger.new(__filename, "protocol/ce-129");
 export class Handler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
-  private boundaryNodes: TrieNode[] = [];
-  private onResponse: (state: StateResponse) => void = () => {};
+  private boundaryNodes: Map<StreamId, TrieNode[]> = new Map();
+  private onResponse: Map<StreamId, (state: StateResponse) => void> = new Map();
 
   constructor(
     private readonly isServer: boolean = false,
@@ -119,19 +119,19 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
       return;
     }
 
-    if (!this.boundaryNodes.length) {
-      this.boundaryNodes = Decoder.decodeObject(codec.sequenceVarLen(trieNodeCodec), message);
+    if (!this.boundaryNodes.has(sender.streamId)) {
+      this.boundaryNodes.set(sender.streamId, Decoder.decodeObject(codec.sequenceVarLen(trieNodeCodec), message));
       logger.info(`[${sender.streamId}][client]: Received boundary nodes.`);
       return;
     }
 
-    this.onResponse(Decoder.decodeObject(StateResponse.Codec, message));
+    this.onResponse.get(sender.streamId)?.(Decoder.decodeObject(StateResponse.Codec, message));
     logger.info(`[${sender.streamId}][client]: Received state values.`);
   }
 
-  onClose(): void {
-    this.boundaryNodes = [];
-    this.onResponse = () => {};
+  onClose(streamId: StreamId) {
+    this.boundaryNodes.delete(streamId);
+    this.onResponse.delete(streamId);
   }
 
   getStateByKey(
@@ -140,7 +140,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
     key: StateRequest["startKey"],
     onResponse: (state: StateResponse) => void,
   ) {
-    this.onResponse = onResponse;
+    this.onResponse.set(sender.streamId, onResponse);
     sender.send(Encoder.encodeObject(StateRequest.Codec, new StateRequest(hash, key, key, 4096 as U32)));
   }
 }
