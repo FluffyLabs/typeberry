@@ -1,10 +1,5 @@
 import { Pvm } from "@typeberry/pvm";
 
-type Instance = {
-  pvm: Pvm;
-  busy: boolean;
-};
-
 type ResolveFn = (pvm: Pvm) => void;
 
 export class PvmInstanceManager {
@@ -20,19 +15,18 @@ export class PvmInstanceManager {
   async getInstance(): Promise<Pvm> {
     const instance = this.instances.pop();
     if (instance) {
-       return Promise.resolve(instance);
+      return Promise.resolve(instance);
     }
     return new Promise((resolve) => {
-       this.waitingQueue.push(resolve);
+      this.waitingQueue.push(resolve);
     });
   }
 
   releaseInstance(pvm: Pvm) {
-    const waiting = this.waitingQueue.unshift();
+    const waiting = this.waitingQueue.shift();
     if (waiting) {
-       return waiting(pvm);
+      return waiting(pvm);
     }
     this.instances.push(pvm);
   }
-    
 }

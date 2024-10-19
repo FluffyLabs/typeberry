@@ -13,27 +13,13 @@ type InitialMemoryState = {
 };
 
 export class Memory {
-  private sbrkIndex = createMemoryIndex(0);
-  private virtualSbrkIndex = createMemoryIndex(0);
-  private endHeapIndex = createMemoryIndex(MEMORY_SIZE);
-  private memory: Map<PageNumber, MemoryPage> = new Map();
-
-  constructor(initialMemoryState?: InitialMemoryState) {
-    if (initialMemoryState) {
-      this.memory = initialMemoryState.memory;
-      this.sbrkIndex = initialMemoryState.sbrkIndex;
-      this.virtualSbrkIndex = initialMemoryState.sbrkIndex;
-      this.endHeapIndex = initialMemoryState.endHeapIndex;
-    }
-  }
-
-  static fromInitialMemory(initialMemoryState?: InitialMemoryState) {
+  static fromInitialMemory(initialMemoryState: InitialMemoryState) {
     return new Memory(
-       initialMemoryState?.sbrkIndex,
-       initialMemoryState?.virtualSbrkIndex,
-       initialMemoryState?.endHeapIndex,
-       initialMemoryState?.memory
-     )
+      initialMemoryState?.sbrkIndex,
+      initialMemoryState?.sbrkIndex,
+      initialMemoryState?.endHeapIndex,
+      initialMemoryState?.memory,
+    );
   }
 
   constructor(
@@ -41,7 +27,7 @@ export class Memory {
     private virtualSbrkIndex = createMemoryIndex(0),
     private endHeapIndex = createMemoryIndex(MEMORY_SIZE),
     private memory = new Map<PageNumber, MemoryPage>(),
-  ){}
+  ) {}
 
   storeFrom(address: MemoryIndex, bytes: Uint8Array) {
     const pageNumber = getPageNumber(address);

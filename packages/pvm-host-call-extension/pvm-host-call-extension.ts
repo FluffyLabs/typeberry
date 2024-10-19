@@ -67,7 +67,10 @@ export class PvmHostCallExtension {
       if (status !== Status.HOST) {
         return this.getReturnValue(status, pvmInstance.getMemory(), pvmInstance.getRegisters());
       }
-      check(pvmInstance.getExitParam() !== null, "We know that the exit param is not null, because the status is `Status.HOST`");
+      check(
+        pvmInstance.getExitParam() !== null,
+        "We know that the exit param is not null, because the status is `Status.HOST`",
+      );
       const hostCallIndex = pvmInstance.getExitParam() ?? -1;
       const nextPc = pvmInstance.getNextPC();
       const gas = pvmInstance.getGas();
