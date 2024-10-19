@@ -41,7 +41,6 @@ export function startRpc(db: Database, client: MessageHandler) {
           Bytes.fromBlob(hashString(key).raw.subarray(0, 31), 31),
           handleResponse,
         );
-        sender.close();
       });
     });
   });

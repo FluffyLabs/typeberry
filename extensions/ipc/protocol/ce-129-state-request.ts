@@ -115,6 +115,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
       logger.info(`[${sender.streamId}][server]: <-- responding with boundary nodes and key value pairs.`);
       sender.send(Encoder.encodeObject(codec.sequenceVarLen(trieNodeCodec), boundaryNodes));
       sender.send(Encoder.encodeObject(StateResponse.Codec, new StateResponse(keyValuePairs)));
+      sender.close();
 
       return;
     }
@@ -142,5 +143,6 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
   ) {
     this.onResponse.set(sender.streamId, onResponse);
     sender.send(Encoder.encodeObject(StateRequest.Codec, new StateRequest(hash, key, key, 4096 as U32)));
+    sender.close();
   }
 }
