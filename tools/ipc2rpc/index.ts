@@ -21,8 +21,6 @@ async function main() {
     bestHeader: null,
   };
 
-  const _rpcServer = startRpc(db);
-
   const getHandshake = () => {
     const final = new up0.HashAndSlot(Bytes.zero(HASH_SIZE) as HeaderHash, 0 as TimeSlot);
     return new up0.Handshake(final, []);
@@ -37,6 +35,8 @@ async function main() {
     logger.info("Sending handshake.");
     handler.sendHandshake(sender, getHandshake());
   });
+
+  const _rpcServer = startRpc(db, client);
 
   // TODO [ToDr] reconnect?
 }

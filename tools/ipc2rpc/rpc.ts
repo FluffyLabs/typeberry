@@ -1,19 +1,43 @@
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
+import type { JSONRPCID, JSONRPCSuccessResponse } from "./../../node_modules/json-rpc-2.0/dist/models.d";
 
 import type { Header } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import * as ce129 from "@typeberry/ext-ipc/protocol/ce-129-state-request";
 import { JSONRPCServer } from "json-rpc-2.0";
+import type { MessageHandler } from "../../extensions/ipc/handler";
 
 export interface Database {
   bestHeader: Header | null;
 }
 
-export function startRpc(db: Database) {
+export function startRpc(db: Database, client: MessageHandler) {
   const server = new JSONRPCServer();
   server.addMethod("jam_bestHeader", () => {
     return db.bestHeader;
+  });
+
+  server.addMethodAdvanced("jam_getBalance", (request) => {
+    return new Promise((resolve) => {
+      client.withNewStream<typeof ce129.STREAM_KIND, ce129.Handler>(ce129.STREAM_KIND, (handler, sender) => {
+        if (!db.bestHeader) return;
+
+        const key = request.params.accountId;
+        const handleResponse = (response: ce129.StateResponse) => {
+          const rpcResponse: JSONRPCSuccessResponse = {
+            jsonrpc: request.jsonrpc,
+            id: request.id as JSONRPCID,
+            result: response.keyValuePairs[0].value,
+          };
+          resolve(rpcResponse);
+        };
+
+        handler.getStateByKey(sender, db.bestHeader.parentHeaderHash, key, handleResponse);
+        sender.close();
+      });
+    });
   });
 
   const httpServer = http.createServer((req, res) => {
