@@ -5,6 +5,7 @@
   "main": "index.ts",
   "dependencies": {
     "@typeberry/block-generator": "0.0.1",
+    "@typeberry/config": "0.0.1",
     "@typeberry/logger": "0.0.1",
     "@typeberry/importer": "0.0.1"
   },

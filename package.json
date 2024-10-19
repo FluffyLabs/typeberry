@@ -32,7 +32,8 @@
     "workers/block-generator",
     "workers/generic",
     "workers/importer",
-    "packages/database-lmdb"
+    "packages/database-lmdb",
+    "packages/config"
   ],
   "engines": {
     "node": ">=22",

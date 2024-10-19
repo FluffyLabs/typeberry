@@ -4,7 +4,7 @@ import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { TrieHash } from "@typeberry/trie";
 import { type EntropyHash, type TimeSlot, type ValidatorIndex, WithDebug, WithHash } from "./common";
-import { EST_EPOCH_LENGTH, EST_VALIDATORS, withContext } from "./context";
+import { withContext } from "./context";
 import {
   BANDERSNATCH_KEY_BYTES,
   BANDERSNATCH_VRF_SIGNATURE_BYTES,
@@ -15,6 +15,7 @@ import {
 } from "./crypto";
 import type { ExtrinsicHash, HeaderHash } from "./hash";
 import { Ticket } from "./tickets";
+import {EST_EPOCH_LENGTH, EST_VALIDATORS} from "@typeberry/config";
 
 /**
  * For the first block in a new epoch, the epoch marker is set

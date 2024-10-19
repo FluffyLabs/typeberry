@@ -22,7 +22,8 @@ if (!isMainThread) {
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
   const machine = importerStateMachine();
   const channel = MessageChannelStateMachine.receiveChannel(machine, parentPort);
-  channel.then((channel) => main(channel)).catch((e) => logger.error(e));
+  channel.then((channel) => main(channel));
+  // .catch((e) => logger.error(e));
 }
 
 /**
@@ -38,10 +39,10 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
 
   const finished = await ready.doUntil<Finished>("finished", async (worker, port) => {
     logger.info("Importer waiting for blocks.");
-    const chainSpec = worker.getChainSpec();
+    const config = worker.getConfig();
     const importer = new Importer(
-      new TransitionHasher(chainSpec, new SimpleAllocator()),
-      new LmdbBlocks(chainSpec, "blocks-db"),
+      new TransitionHasher(config.chainSpec, new SimpleAllocator()),
+      new LmdbBlocks(config.chainSpec, config.blocksDbPath),
     );
 
     worker.onBlock.on(async (b) => {

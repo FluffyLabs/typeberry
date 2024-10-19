@@ -1,11 +1,11 @@
 import assert from "node:assert";
 import fs from "node:fs";
 import type { Ed25519Signature } from "@typeberry/block";
-import { tinyChainSpec } from "@typeberry/block/context";
 import type { TicketAttempt } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type Codec, Decoder, Encoder } from "@typeberry/codec";
 import { type FromJson, json } from "@typeberry/json-parser";
+import {tinyChainSpec} from "@typeberry/config";
 
 export namespace fromJson {
   export const bytes32 = <T extends Bytes<32>>() => json.fromString((v) => Bytes.parseBytes(v, 32) as T);

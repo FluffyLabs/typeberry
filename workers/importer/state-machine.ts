@@ -6,8 +6,8 @@ import {
   type WithHash,
   headerWithHashCodec,
 } from "@typeberry/block";
-import { ChainSpec } from "@typeberry/block/context";
 import { Decoder, Encoder } from "@typeberry/codec";
+import {ChainSpec, Config} from "@typeberry/config";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
 import { Logger } from "@typeberry/logger";
 import { Listener, type TypedChannel } from "@typeberry/state-machine";
@@ -17,7 +17,10 @@ export type ImporterInit = WorkerInit<ImporterReady>;
 export type ImporterStates = ImporterInit | ImporterReady | Finished;
 
 export function importerStateMachine() {
-  const initialized = new WorkerInit<ImporterReady>("ready(importer)", (config) => new ChainSpec(config as ChainSpec));
+  const initialized = new WorkerInit<ImporterReady>(
+    "ready(importer)",
+    Config.reinit
+  );
   const ready = new ImporterReady();
   const finished = new Finished();
 
@@ -26,7 +29,7 @@ export function importerStateMachine() {
 
 const logger = Logger.new(__filename, "importer");
 
-export class MainReady extends State<"ready(main)", Finished, ChainSpec> {
+export class MainReady extends State<"ready(main)", Finished, Config> {
   public readonly onBestBlock = new Listener<WithHash<HeaderHash, Header>>();
 
   constructor() {
@@ -61,7 +64,7 @@ export class MainReady extends State<"ready(main)", Finished, ChainSpec> {
   }
 }
 
-export class ImporterReady extends State<"ready(importer)", Finished, ChainSpec> {
+export class ImporterReady extends State<"ready(importer)", Finished, Config> {
   public readonly onBlock = new Listener<BlockView>();
 
   constructor() {
@@ -75,7 +78,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, ChainSpec>
     });
   }
 
-  getChainSpec(): ChainSpec {
+  getConfig(): Config {
     if (!this.data) {
       throw new Error("Did not receive chain spec config!");
     }
@@ -84,13 +87,15 @@ export class ImporterReady extends State<"ready(importer)", Finished, ChainSpec>
   }
 
   announce(sender: TypedChannel, headerWithHash: WithHash<HeaderHash, Header>) {
-    const encoded = Encoder.encodeObject(headerWithHashCodec, headerWithHash, this.data).buffer;
+    const config = this.getConfig();
+    const encoded = Encoder.encodeObject(headerWithHashCodec, headerWithHash, config.chainSpec).buffer;
     sender.sendSignal("bestBlock", encoded, [encoded.buffer as ArrayBuffer]);
   }
 
   private triggerOnBlock(block: unknown) {
     if (block instanceof Uint8Array) {
-      this.onBlock.emit(Block.Codec.View.fromBytesBlob(block, this.data));
+      const config = this.getConfig();
+      this.onBlock.emit(Block.Codec.View.fromBytesBlob(block, config.chainSpec));
     } else {
       logger.error(`${this.constructor.name} got invalid signal type: ${JSON.stringify(block)}.`);
     }

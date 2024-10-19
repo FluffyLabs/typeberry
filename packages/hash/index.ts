@@ -1,5 +1,5 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { check } from "@typeberry/utils";
+import { Opaque, check } from "@typeberry/utils";
 import blake2b from "blake2b";
 
 /**
@@ -10,15 +10,20 @@ import blake2b from "blake2b";
  */
 export const HASH_SIZE = 32;
 
+/**
+ * Opaque, unknown hash.
+ */
+export type OpaqueHash = Bytes<typeof HASH_SIZE>;
+
 /** Allocator interface - returns an empty bytes vector that can be filled with the hash. */
 export interface HashAllocator {
   /** Return a new hash destination. */
-  emptyHash(): Bytes<typeof HASH_SIZE>;
+  emptyHash(): OpaqueHash;
 }
 
 /** The simplest allocator returning just a fresh copy of bytes each time. */
 export class SimpleAllocator implements HashAllocator {
-  emptyHash(): Bytes<typeof HASH_SIZE> {
+  emptyHash(): OpaqueHash {
     return Bytes.zero(HASH_SIZE);
   }
 }
@@ -40,7 +45,7 @@ export class PageAllocator implements HashAllocator {
     this.page = new Uint8Array(pageSizeBytes);
   }
 
-  emptyHash(): Bytes<typeof HASH_SIZE> {
+  emptyHash(): OpaqueHash {
     const startIdx = this.currentHash * HASH_SIZE;
     const endIdx = startIdx + HASH_SIZE;
 
@@ -56,7 +61,7 @@ export class PageAllocator implements HashAllocator {
 export const defaultAllocator = new SimpleAllocator();
 
 /** Blob of bytes with a lazy-evaluated hash. */
-export class HashableBlob<THash extends Bytes<typeof HASH_SIZE> = Bytes<typeof HASH_SIZE>> {
+export class HashableBlob<THash extends OpaqueHash = OpaqueHash> {
   constructor(
     public readonly blob: BytesBlob,
     private hash?: THash,

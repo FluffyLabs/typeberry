@@ -13,7 +13,6 @@ import {
 } from "@typeberry/block";
 import type { AssurancesExtrinsic, AvailabilityAssurance } from "@typeberry/block/assurances";
 import { Extrinsic } from "@typeberry/block/block";
-import type { ChainSpec } from "@typeberry/block/context";
 import { type Culprit, DisputesExtrinsic, type Fault, Judgement, Verdict } from "@typeberry/block/disputes";
 import type { GuaranteesExtrinsic, ReportGuarantee } from "@typeberry/block/gaurantees";
 import { Preimage } from "@typeberry/block/preimage";
@@ -22,9 +21,9 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { SimpleAllocator } from "@typeberry/hash";
-import { InMemoryKvdb } from "../../packages/database";
-import type { LmdbBlocks } from "../../packages/database-lmdb";
-import { TransitionHasher } from "../../packages/transition";
+import { BlocksDb, InMemoryKvdb } from "@typeberry/database";
+import { TransitionHasher } from "@typeberry/transition";
+import {ChainSpec} from "@typeberry/config";
 
 export class Generator {
   public readonly database = new InMemoryKvdb();
@@ -34,7 +33,7 @@ export class Generator {
 
   constructor(
     public readonly chainSpec: ChainSpec,
-    private readonly blocks: LmdbBlocks,
+    private readonly blocks: BlocksDb,
   ) {
     this.lastHeaderHash = blocks.getBestHeaderHash();
     this.lastHeader = blocks.getHeader(this.lastHeaderHash)?.materialize() ?? null;

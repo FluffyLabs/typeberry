@@ -22,7 +22,7 @@ export class WorkPackage extends WithDebug {
   static Codec = codec.Class(WorkPackage, {
     authorization: codec.blob,
     authCodeHost: codec.u32.cast(),
-    authorizationCodeHash: codec.bytes(HASH_SIZE).cast(),
+    authCodeHash: codec.bytes(HASH_SIZE).cast(),
     parametrization: codec.blob,
     context: RefineContext.Codec,
     // TODO [ToDr] Constrain the size of the sequence during decoding.
@@ -32,7 +32,7 @@ export class WorkPackage extends WithDebug {
   static fromCodec({
     authorization,
     authCodeHost,
-    authorizationCodeHash,
+    authCodeHash,
     parametrization,
     context,
     items,
@@ -40,7 +40,7 @@ export class WorkPackage extends WithDebug {
     return new WorkPackage(
       authorization,
       authCodeHost,
-      authorizationCodeHash,
+      authCodeHash,
       parametrization,
       context,
       new FixedSizeArray(items, items.length),
@@ -53,7 +53,7 @@ export class WorkPackage extends WithDebug {
     /** `h`: index of the service that hosts the authorization code */
     public readonly authCodeHost: ServiceId,
     /** `u`: authorization code hash */
-    public readonly authorizationCodeHash: CodeHash,
+    public readonly authCodeHash: CodeHash,
     /** `p`: authorization parametrization blob */
     public readonly parametrization: BytesBlob,
     /** `x`: context in which the refine function should run */

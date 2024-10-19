@@ -1,48 +1,46 @@
-import type { Block, Header, HeaderHash, WithHash } from "@typeberry/block";
-import { HashDictionary, SortedArray } from "@typeberry/collections";
-import type { TransitionHasher } from "../transition";
+import { HASH_SIZE, type BlockView, type ExtrinsicView, type HeaderHash, type HeaderView, type WithHash } from "@typeberry/block";
+import { HashDictionary } from "@typeberry/collections";
+import {Bytes} from "@typeberry/bytes";
 
-export class InMemoryBlocks {
-  private blockByHash: HashDictionary<HeaderHash, Block> = new HashDictionary();
-  private blockByTimeSlot: Map<number, SortedArray<Block>> = new Map();
+export interface BlocksDb {
+  insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void>;
 
-  constructor(private hasher: TransitionHasher) {}
+  setBestHeaderHash(hash: HeaderHash): Promise<void>;
 
-  // TODO [ToDr] This should only store verified blocks (e.g. we know
-  // e.g. that extrinsic hash matches the one in header).
-  insert(block: Block): WithHash<HeaderHash, Header> {
-    const headerWithHash = this.hasher.header(block.header);
-    const timeSlot = block.header.timeSlotIndex;
+  getBestHeaderHash(): HeaderHash;
 
-    // We already know about that block, so do nothing.
-    if (this.blockByHash.has(headerWithHash.hash)) {
-      return headerWithHash;
-    }
+  getHeader(hash: HeaderHash): HeaderView | null;
 
-    // It's a new block, let's insert.
-    this.blockByHash.set(headerWithHash.hash, block);
-    const blocksByTimeSlot = this.blockByTimeSlot.get(timeSlot) ?? new SortedArray(blockCmp);
-    blocksByTimeSlot.insert(block);
-    this.blockByTimeSlot.set(timeSlot, blocksByTimeSlot);
-
-    return headerWithHash;
-  }
-
-  get(hash: HeaderHash) {
-    return this.blockByHash.get(hash);
-  }
-
-  bestBlock(): Block | undefined {
-    const max = Math.max(...this.blockByTimeSlot.keys());
-
-    if (max === Number.NEGATIVE_INFINITY) {
-      return undefined;
-    }
-
-    return this.blockByTimeSlot.get(max)?.slice()[0];
-  }
+  getExtrinsic(hash: HeaderHash): ExtrinsicView | null;
 }
 
-const blockCmp = (self: Block, other: Block) => {
-  return self.header.bandersnatchBlockAuthorIndex - other.header.bandersnatchBlockAuthorIndex;
-};
+export class InMemoryBlocks implements BlocksDb {
+  private readonly headersByHash: HashDictionary<HeaderHash, HeaderView> = new HashDictionary();
+  private readonly extrinsicsByHeaderHash: HashDictionary<HeaderHash, ExtrinsicView> = new HashDictionary();
+  private bestHeaderHash = Bytes.zero(HASH_SIZE) as HeaderHash;
+
+  insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void> {
+    this.headersByHash.set(block.hash, block.data.headerView() as HeaderView);
+    this.extrinsicsByHeaderHash.set(block.hash, block.data.extrinsicView() as ExtrinsicView);
+
+    return Promise.resolve();
+  }
+
+  setBestHeaderHash(hash: HeaderHash): Promise<void> {
+    this.bestHeaderHash = hash;
+
+    return Promise.resolve();
+  }
+
+  getBestHeaderHash(): HeaderHash {
+    return this.bestHeaderHash;
+  }
+
+  getHeader(hash: HeaderHash): HeaderView | null {
+    return this.headersByHash.get(hash) ?? null;
+  }
+
+  getExtrinsic(hash: HeaderHash): ExtrinsicView | null {
+    return this.extrinsicsByHeaderHash.get(hash) ?? null;
+  }
+}

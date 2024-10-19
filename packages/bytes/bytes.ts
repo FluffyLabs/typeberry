@@ -1,4 +1,4 @@
-import { check } from "@typeberry/utils";
+import { WithOpaque, check } from "@typeberry/utils";
 
 /**
  * A variable-length blob of bytes with a concise text representation.
@@ -77,6 +77,7 @@ export class BytesBlob {
     return BytesBlob.parseBlobNoPrefix(v.substring(2));
   }
 }
+
 
 /**
  * A convenience wrapper for a fix-length sequence of bytes.
