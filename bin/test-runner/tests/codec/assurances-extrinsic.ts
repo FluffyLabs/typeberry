@@ -1,9 +1,9 @@
 import { type AssurancesExtrinsic, AvailabilityAssurance, assurancesExtrinsicCodec } from "@typeberry/block/assurances";
 import { BitVec, Bytes } from "@typeberry/bytes";
+import { tinyChainSpec } from "@typeberry/config";
 import { json } from "@typeberry/json-parser";
 import type { JsonObject } from "../../json-format";
 import { fromJson, runCodecTest } from "./common";
-import {tinyChainSpec} from "@typeberry/config";
 
 const availabilityAssuranceFromJson = json.object<JsonObject<AvailabilityAssurance>, AvailabilityAssurance>(
   {

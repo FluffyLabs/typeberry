@@ -7,7 +7,7 @@ import {
   headerWithHashCodec,
 } from "@typeberry/block";
 import { Decoder, Encoder } from "@typeberry/codec";
-import {ChainSpec, Config} from "@typeberry/config";
+import { Config } from "@typeberry/config";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
 import { Logger } from "@typeberry/logger";
 import { Listener, type TypedChannel } from "@typeberry/state-machine";
@@ -17,10 +17,7 @@ export type ImporterInit = WorkerInit<ImporterReady>;
 export type ImporterStates = ImporterInit | ImporterReady | Finished;
 
 export function importerStateMachine() {
-  const initialized = new WorkerInit<ImporterReady>(
-    "ready(importer)",
-    Config.reinit
-  );
+  const initialized = new WorkerInit<ImporterReady>("ready(importer)", Config.reinit);
   const ready = new ImporterReady();
   const finished = new Finished();
 

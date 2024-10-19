@@ -1,4 +1,3 @@
-
 /**
  * Estimated number of validators.
  *
@@ -44,7 +43,7 @@ export class ChainSpec {
   /** The maximum number of tickets each validator can submit. */
   readonly ticketsPerValidator: number;
 
-  constructor(data: Omit<ChainSpec, 'validatorsSuperMajority'>) {
+  constructor(data: Omit<ChainSpec, "validatorsSuperMajority">) {
     this.validatorsCount = data.validatorsCount;
     this.validatorsSuperMajority = Math.floor(data.validatorsCount / 3) * 2 + 1;
     this.coresCount = data.coresCount;

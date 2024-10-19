@@ -1,15 +1,13 @@
-import {CodeHash, ServiceId, WithHash} from "@typeberry/block";
+import { type CodeHash, type ServiceId, WithHash } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
-import { HASH_SIZE, hashBytes, hashString, type HashableBlob, type OpaqueHash } from "@typeberry/hash";
+import { HASH_SIZE, type HashableBlob, type OpaqueHash, hashString } from "@typeberry/hash";
 import { InMemoryTrie, type StateKey, type TrieHash } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/blake2b.node";
 import { WriteableNodesDb } from "@typeberry/trie/nodesDb";
 
 export class StateDb {
-  constructor(
-    private readonly db: InMemoryKvdb,
-  ) {}
+  constructor(private readonly db: InMemoryKvdb) {}
 
   stateAt(root: TrieHash): State | null {
     const hasRootNode = this.db.has(root as OpaqueHash as StateKey);
@@ -36,10 +34,7 @@ export class State {
     const hash = blob.buffer.subarray(0, HASH_SIZE);
     const code = blob.buffer.subarray(HASH_SIZE);
 
-    return new WithHash(
-      Bytes.fromBlob(hash, HASH_SIZE) as CodeHash,
-      BytesBlob.fromBlob(code)
-    );
+    return new WithHash(Bytes.fromBlob(hash, HASH_SIZE) as CodeHash, BytesBlob.fromBlob(code));
   }
 }
 

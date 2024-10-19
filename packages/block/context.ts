@@ -1,4 +1,4 @@
-import {ChainSpec} from "@typeberry/config";
+import { ChainSpec } from "@typeberry/config";
 
 export function withContext<T>(name: string, cb: (ctx: ChainSpec) => T) {
   return (context: unknown) => {

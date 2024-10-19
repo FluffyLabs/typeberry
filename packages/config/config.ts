@@ -1,12 +1,9 @@
-import {ChainSpec} from "./chainSpec";
+import { ChainSpec } from "./chainSpec";
 
 export class Config {
   static reinit(config: unknown) {
     const { chainSpec, blocksDbPath } = config as Config;
-    return new Config(
-      new ChainSpec(chainSpec),
-      blocksDbPath
-    );
+    return new Config(new ChainSpec(chainSpec), blocksDbPath);
   }
 
   constructor(

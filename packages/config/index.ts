@@ -1,3 +1,2 @@
-export * from './chainSpec';
-export * from './config';
-
+export * from "./chainSpec";
+export * from "./config";

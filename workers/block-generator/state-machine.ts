@@ -1,5 +1,5 @@
 import type { BytesBlob } from "@typeberry/bytes";
-import {Config, ChainSpec } from "@typeberry/config";
+import { Config } from "@typeberry/config";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
 import { Logger } from "@typeberry/logger";
 import { Listener, type TypedChannel } from "@typeberry/state-machine";
@@ -9,10 +9,7 @@ export type GeneratorInit = WorkerInit<GeneratorReady>;
 export type GeneratorStates = GeneratorInit | GeneratorReady | Finished;
 
 export function generatorStateMachine() {
-  const initialized = new WorkerInit<GeneratorReady>(
-    "ready(generator)",
-    Config.reinit,
-  );
+  const initialized = new WorkerInit<GeneratorReady>("ready(generator)", Config.reinit);
   const ready = new GeneratorReady();
   const finished = new Finished();
 

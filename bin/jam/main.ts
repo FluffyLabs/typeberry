@@ -18,10 +18,7 @@ export async function main() {
     const bestHeader = importerInit.getState<MainReady>("ready(main)").onBestBlock;
     const closeExtensions = initializeExtensions({ bestHeader });
 
-    const config = new Config(
-      tinyChainSpec,
-      "blocks-db"
-    );
+    const config = new Config(tinyChainSpec, "blocks-db");
 
     // initialize both workers
     const generatorReady = generatorInit.transition((state, port) => {

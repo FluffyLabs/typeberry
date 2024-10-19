@@ -1,5 +1,5 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import {OpaqueHash} from "@typeberry/hash";
+import type { OpaqueHash } from "@typeberry/hash";
 import { type Opaque, check } from "@typeberry/utils";
 
 export type StateKey = Opaque<OpaqueHash, "stateKey">;

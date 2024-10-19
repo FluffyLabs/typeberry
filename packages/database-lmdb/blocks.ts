@@ -10,9 +10,9 @@ import {
 } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
+import type { ChainSpec } from "@typeberry/config";
+import type { BlocksDb } from "@typeberry/database/blocks";
 import lmdb from "lmdb";
-import {BlocksDb} from "@typeberry/database/blocks";
-import {ChainSpec} from "@typeberry/config";
 
 const BEST_BLOCK_KEY = "best block";
 

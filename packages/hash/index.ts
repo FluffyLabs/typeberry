@@ -1,5 +1,5 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Opaque, check } from "@typeberry/utils";
+import { check } from "@typeberry/utils";
 import blake2b from "blake2b";
 
 /**

@@ -1,6 +1,13 @@
-import { HASH_SIZE, type BlockView, type ExtrinsicView, type HeaderHash, type HeaderView, type WithHash } from "@typeberry/block";
+import {
+  type BlockView,
+  type ExtrinsicView,
+  HASH_SIZE,
+  type HeaderHash,
+  type HeaderView,
+  type WithHash,
+} from "@typeberry/block";
+import { Bytes } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
-import {Bytes} from "@typeberry/bytes";
 
 export interface BlocksDb {
   insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void>;

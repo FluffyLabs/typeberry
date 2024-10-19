@@ -20,10 +20,10 @@ import type { SignedTicket, TicketsExtrinsic } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
+import type { ChainSpec } from "@typeberry/config";
+import { type BlocksDb, InMemoryKvdb } from "@typeberry/database";
 import { SimpleAllocator } from "@typeberry/hash";
-import { BlocksDb, InMemoryKvdb } from "@typeberry/database";
 import { TransitionHasher } from "@typeberry/transition";
-import {ChainSpec} from "@typeberry/config";
 
 export class Generator {
   public readonly database = new InMemoryKvdb();

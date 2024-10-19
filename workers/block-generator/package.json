@@ -4,14 +4,15 @@
   "description": "A test block generator simulating blocks received over the network.",
   "main": "index.ts",
   "dependencies": {
-    "@typeberry/state-machine": "0.0.1",
     "@typeberry/block": "0.0.1",
+    "@typeberry/bytes": "0.0.1",
     "@typeberry/codec": "0.0.1",
     "@typeberry/config": "0.0.1",
+    "@typeberry/database": "0.0.1",
     "@typeberry/generic-worker": "0.0.1",
-    "@typeberry/logger": "0.0.1",
     "@typeberry/hash": "0.0.1",
-    "@typeberry/bytes": "0.0.1"
+    "@typeberry/logger": "0.0.1",
+    "@typeberry/state-machine": "0.0.1"
   },
   "scripts": {
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

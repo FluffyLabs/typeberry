@@ -2,9 +2,9 @@ import { isMainThread, parentPort } from "node:worker_threads";
 
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
+import { LmdbBlocks } from "@typeberry/database-lmdb";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { Level, Logger } from "@typeberry/logger";
-import { LmdbBlocks } from "@typeberry/database-lmdb";
 import { Generator } from "./generator";
 import {
   type GeneratorInit,
@@ -20,14 +20,13 @@ if (!isMainThread) {
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
   const machine = generatorStateMachine();
   const channel = MessageChannelStateMachine.receiveChannel(machine, parentPort);
-  channel
-    .then((channel) => main(channel));
-    // .catch((e) => {
-    //   logger.error(e);
-    //   if (e.stack) {
-    //     logger.error(e.stack);
-    //   }
-    // });
+  channel.then((channel) => main(channel));
+  // .catch((e) => {
+  //   logger.error(e);
+  //   if (e.stack) {
+  //     logger.error(e.stack);
+  //   }
+  // });
 }
 
 /**

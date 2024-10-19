@@ -1,13 +1,21 @@
-import { Extrinsic, type ExtrinsicHash, Header, type HeaderHash, WithHash, ServiceId, CodeHash } from "@typeberry/block";
+import {
+  type CodeHash,
+  Extrinsic,
+  type ExtrinsicHash,
+  Header,
+  type HeaderHash,
+  type ServiceId,
+  WithHash,
+} from "@typeberry/block";
 import type { WorkPackage } from "@typeberry/block/work-package";
 import type { WorkReport } from "@typeberry/block/work-report";
+import type { BytesBlob } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
+import type { ChainSpec } from "@typeberry/config";
 import { type HashAllocator, hashBytes } from "@typeberry/hash";
+import { Pvm } from "@typeberry/pvm";
+import { Result } from "@typeberry/utils";
 import type { BlocksDb, StateDb } from "../database";
-import {Result } from "@typeberry/utils";
-import {ChainSpec} from "@typeberry/config";
-import {Pvm} from "@typeberry/pvm";
-import {BytesBlob} from "@typeberry/bytes";
 
 export class TransitionHasher {
   constructor(
@@ -29,10 +37,10 @@ export class TransitionHasher {
 }
 
 enum ServiceExecutorError {
-  NoLookup,
-  NoState,
-  NoServiceCode,
-  ServiceCodeMismatch,
+  NoLookup = 0,
+  NoState = 1,
+  NoServiceCode = 2,
+  ServiceCodeMismatch = 3,
 }
 
 export class WorkPackageExecutor {
@@ -49,7 +57,7 @@ export class WorkPackageExecutor {
       // TODO [ToDr] should this be anchor or lookupAnchor?
       pack.context.lookupAnchor,
       pack.authCodeHost,
-      pack.authCodeHash
+      pack.authCodeHash,
     );
     if (authExec.isError()) {
       // TODO [ToDr] most likely shouldn't be throw.
@@ -63,7 +71,7 @@ export class WorkPackageExecutor {
   getServiceExecutor(
     lookupAnchor: HeaderHash,
     serviceId: ServiceId,
-    expectedCodeHash: CodeHash
+    expectedCodeHash: CodeHash,
   ): Result<PvmExecutor, ServiceExecutorError> {
     const header = this.blocks.getHeader(lookupAnchor);
     if (!header) {
@@ -94,6 +102,5 @@ class PvmExecutor {
 
   constructor(serviceCode: BytesBlob) {
     this.pvm = new Pvm(serviceCode.buffer);
-
   }
 }

@@ -1,8 +1,8 @@
-import {WithHash} from "@typeberry/block";
-import {BytesBlob} from "@typeberry/bytes";
-import {OpaqueHash} from "@typeberry/hash";
-import {PreimageDb} from "../database/preimage";
+import type { WithHash } from "@typeberry/block";
+import { BytesBlob } from "@typeberry/bytes";
+import type { OpaqueHash } from "@typeberry/hash";
 import lmdb from "lmdb";
+import type { PreimageDb } from "../database/preimage";
 
 // TODO [ToDr] Preimages should probably have an availability information.
 // i.e. we might have something in the DB, but it souhld not be available
@@ -10,13 +10,11 @@ import lmdb from "lmdb";
 export class LmdbPreimages implements PreimageDb {
   readonly root: lmdb.RootDatabase<Uint8Array, lmdb.Key>;
 
-  constructor(
-    dbPath: string,
-  ) {
+  constructor(dbPath: string) {
     this.root = lmdb.open(dbPath, {
       compression: true,
-      keyEncoding: 'binary',
-      encoding: 'binary',
+      keyEncoding: "binary",
+      encoding: "binary",
     });
   }
 
