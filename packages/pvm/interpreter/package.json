@@ -1,5 +1,5 @@
 {
-  "name": "@typeberry/pvm",
+  "name": "@typeberry/pvm-interpreter",
   "version": "0.0.1",
   "description": "A PVM implementation based on the Gray Paper.",
   "main": "index.ts",

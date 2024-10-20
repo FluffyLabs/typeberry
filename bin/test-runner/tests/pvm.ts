@@ -1,12 +1,12 @@
 import assert from "node:assert";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { MemoryBuilder } from "@typeberry/pvm/memory";
-import { PAGE_SIZE } from "@typeberry/pvm/memory/memory-consts";
-import { type MemoryIndex, createMemoryIndex } from "@typeberry/pvm/memory/memory-index";
-import { getPageNumber, getStartPageIndex } from "@typeberry/pvm/memory/memory-utils";
-import type { PageNumber } from "@typeberry/pvm/memory/pages/page-utils";
-import { Pvm, type RegistersArray } from "@typeberry/pvm/pvm";
-import { Registers } from "@typeberry/pvm/registers";
+import { Interpreter } from "@typeberry/pvm-interpreter";
+import { MemoryBuilder } from "@typeberry/pvm-interpreter/memory";
+import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
+import { type MemoryIndex, createMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { getPageNumber, getStartPageIndex } from "@typeberry/pvm-interpreter/memory/memory-utils";
+import type { PageNumber } from "@typeberry/pvm-interpreter/memory/pages/page-utils";
+import { Registers } from "@typeberry/pvm-interpreter/registers";
 
 namespace fromJson {
   export const uint8Array = json.fromAny((v) => {
@@ -54,7 +54,7 @@ export class PvmTest {
     "initial-gas": "number",
     program: fromJson.uint8Array,
     "expected-status": "string",
-    "expected-regs": json.array("number"),
+    "expected-regs": fromJson.uint32Array,
     "expected-pc": "number",
     "expected-memory": json.array(MemoryChunkItem.fromJson),
     "expected-gas": "number",
@@ -68,7 +68,7 @@ export class PvmTest {
   "initial-gas": number;
   program!: Uint8Array;
   "expected-status": string;
-  "expected-regs": RegistersArray;
+  "expected-regs": Uint32Array;
   "expected-pc": number;
   "expected-memory": MemoryChunkItem[];
   "expected-gas": number;
@@ -112,13 +112,13 @@ export async function runPvmTest(testContent: PvmTest) {
   const regs = new Registers();
   regs.copyFrom(testContent["initial-regs"]);
 
-  const pvm = new Pvm();
+  const pvm = new Interpreter();
   pvm.reset(testContent.program, testContent["initial-pc"], testContent["initial-gas"], regs, memory);
   pvm.runProgram();
 
   assert.strictEqual(pvm.getGas(), testContent["expected-gas"]);
   assert.strictEqual(pvm.getPC(), testContent["expected-pc"]);
-  assert.deepStrictEqual(Array.from(pvm.getRegisters().asUnsigned), testContent["expected-regs"]);
+  assert.deepStrictEqual(pvm.getRegisters().asUnsigned, testContent["expected-regs"]);
   const pvmStatus = pvm.getStatus();
   const testStatus = pvmStatus < 1 ? "halt" : "trap";
   assert.strictEqual(testStatus, testContent["expected-status"]);
