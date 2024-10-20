@@ -8,7 +8,7 @@ import type { HeaderHash } from "@typeberry/block";
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
 import type { TrieNode } from "@typeberry/trie/nodes";
-import { MessageHandler, type MessageSender } from "./handler";
+import { MessageHandler, type MessageSender, handleFragmentation, sendWithLengthPrefix } from "./handler";
 import * as ce129 from "./protocol/ce-129-state-request";
 import * as up0 from "./protocol/up-0-block-announcement";
 
@@ -16,7 +16,7 @@ export class MessageSenderAdapter implements MessageSender {
   constructor(private readonly socket: Socket) {}
 
   send(data: BytesBlob): void {
-    this.socket.write(data.buffer);
+    sendWithLengthPrefix(this.socket, data.buffer);
   }
 
   close(): void {
@@ -60,14 +60,17 @@ export function startIpcServer(
     announcements.on("announcement", listener);
 
     // Handle incoming data from the client
-    socket.on("data", (data: Buffer) => {
-      try {
-        messageHandler.onSocketMessage(data);
-      } catch (e) {
-        logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
-        socket.end();
-      }
-    });
+    socket.on(
+      "data",
+      handleFragmentation((data: Buffer) => {
+        try {
+          messageHandler.onSocketMessage(data);
+        } catch (e) {
+          logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
+          socket.end();
+        }
+      }),
+    );
 
     // Handle client disconnection
     socket.on("end", () => {

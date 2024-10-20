@@ -1,6 +1,6 @@
 import { Socket } from "node:net";
 
-import { MessageHandler } from "@typeberry/ext-ipc/handler";
+import { MessageHandler, handleFragmentation } from "@typeberry/ext-ipc/handler";
 import * as ce129 from "@typeberry/ext-ipc/protocol/ce-129-state-request";
 import * as up0 from "@typeberry/ext-ipc/protocol/up-0-block-announcement";
 import { MessageSenderAdapter } from "@typeberry/ext-ipc/server";
@@ -26,9 +26,17 @@ export function startClient(
       resolve(messageHandler);
     });
 
-    client.on("data", (data) => {
-      messageHandler.onSocketMessage(data);
-    });
+    client.on(
+      "data",
+      handleFragmentation((data) => {
+        try {
+          messageHandler.onSocketMessage(data);
+        } catch (e) {
+          logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
+          client.end();
+        }
+      }),
+    );
 
     client.on("error", (e) => {
       throw e;

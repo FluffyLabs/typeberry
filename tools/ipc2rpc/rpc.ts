@@ -47,8 +47,16 @@ export function startRpc(db: Database, client: MessageHandler) {
 
   const httpServer = http.createServer((req, res) => {
     if (req.method !== "POST") {
-      res.writeHead(200);
-      fs.createReadStream(path.join(__dirname, "index.html")).pipe(res);
+      const isOptions = req.method !== "OPTIONS";
+      res.writeHead(isOptions ? 204 : 200, {
+        "Access-Control-Allow-Methods": "POST",
+        "access-control-allow-origin": "*",
+      });
+      if (isOptions) {
+        fs.createReadStream(path.join(__dirname, "index.html")).pipe(res);
+      } else {
+        res.end();
+      }
       return;
     }
 
