@@ -1,6 +1,6 @@
 import type { HostCallHandler } from "./host-call-handler";
 
-export class HostCalls {
+export class HostCallsManager {
   private hostCallMap = new Map<number, HostCallHandler>();
 
   get(hostCallIndex: number): HostCallHandler | null {

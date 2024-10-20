@@ -1,15 +1,15 @@
-import { MemoryBuilder } from "@typeberry/pvm/memory";
-import { createMemoryIndex } from "@typeberry/pvm/memory/memory-index";
-import { Registers } from "@typeberry/pvm/registers";
-import { decodeStandardProgram } from "../pvm-standard-program-decoder";
-import { STACK_SEGMENT } from "../pvm-standard-program-decoder/memory-conts";
+import { MemoryBuilder } from "@typeberry/pvm-interpreter/memory";
+import { createMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { Registers } from "@typeberry/pvm-interpreter/registers";
+import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
+import { STACK_SEGMENT } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { HostCalls } from "./host-calls";
-import { PvmHostCallExtension } from "./pvm-host-call-extension";
-import { PvmInstanceManager } from "./pvm-instance-manager";
+import { HostCallsManager } from "./host-calls-manager";
+import { InterpreterInstanceManager } from "./interpreter-instance-manager";
 
-const hostCalls = new HostCalls();
-const pvmInstanceManager = new PvmInstanceManager(1);
-const pvmHostCallExtension = new PvmHostCallExtension(pvmInstanceManager, hostCalls);
+const hostCalls = new HostCallsManager();
+const pvmInstanceManager = new InterpreterInstanceManager(1);
+const pvmHostCallExtension = new HostCalls(pvmInstanceManager, hostCalls);
 
 const program = new Uint8Array([
   0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x10, 0x1, 0x0, 0x0, 0xf9, 0x0, 0x0, 0x0, 0x0, 0x0, 0x80, 0xd9, 0x5, 0x12, 0x0,

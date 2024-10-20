@@ -1,8 +1,8 @@
-import { type Memory, Pvm } from "@typeberry/pvm";
-import { PAGE_SIZE } from "@typeberry/pvm/memory/memory-consts";
-import type { Registers } from "@typeberry/pvm/registers";
+import { type Memory, Pvm } from "@typeberry/pvm-interpreter";
+import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
+import type { Registers } from "@typeberry/pvm-interpreter/registers";
 
-export class PvmDebuggerAdapter {
+export class DebuggerAdapter {
   private pvm: Pvm;
 
   constructor(...args: ConstructorParameters<typeof Pvm>) {

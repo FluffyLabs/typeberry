@@ -1,18 +1,18 @@
-import { Pvm } from "@typeberry/pvm";
+import { Interpreter } from "@typeberry/pvm-interpreter";
 
-type ResolveFn = (pvm: Pvm) => void;
+type ResolveFn = (pvm: Interpreter) => void;
 
-export class PvmInstanceManager {
-  private instances: Pvm[] = [];
+export class InterpreterInstanceManager {
+  private instances: Interpreter[] = [];
   private waitingQueue: ResolveFn[] = [];
 
   constructor(noOfPvmInstances: number) {
     for (let i = 0; i < noOfPvmInstances; i++) {
-      this.instances.push(new Pvm());
+      this.instances.push(new Interpreter());
     }
   }
 
-  async getInstance(): Promise<Pvm> {
+  async getInstance(): Promise<Interpreter> {
     const instance = this.instances.pop();
     if (instance) {
       return Promise.resolve(instance);
@@ -22,7 +22,7 @@ export class PvmInstanceManager {
     });
   }
 
-  releaseInstance(pvm: Pvm) {
+  releaseInstance(pvm: Interpreter) {
     const waiting = this.waitingQueue.shift();
     if (waiting) {
       return waiting(pvm);

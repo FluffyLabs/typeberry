@@ -44,12 +44,7 @@ import { Registers } from "./registers";
 import { Result } from "./result";
 import { Status } from "./status";
 
-type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N ? A : GrowToSize<T, N, [...A, T]>;
-
-type FixedArray<T, N extends number> = GrowToSize<T, N, []>;
-
-export type RegistersArray = FixedArray<number, 13>;
-export class Pvm {
+export class Interpreter {
   private registers = new Registers();
   private code = new Uint8Array();
   private mask = Mask.empty();

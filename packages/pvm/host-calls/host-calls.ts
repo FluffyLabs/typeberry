@@ -1,20 +1,20 @@
 import { Logger } from "@typeberry/logger";
-import type { Memory, Pvm } from "@typeberry/pvm";
-import { createMemoryIndex } from "@typeberry/pvm/memory/memory-index";
-import { getPageNumber, getStartPageIndexFromPageNumber } from "@typeberry/pvm/memory/memory-utils";
-import type { Registers } from "@typeberry/pvm/registers";
-import { Status } from "@typeberry/pvm/status";
+import type { Memory, Pvm } from "@typeberry/pvm-interpreter";
+import { createMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { getPageNumber, getStartPageIndexFromPageNumber } from "@typeberry/pvm-interpreter/memory/memory-utils";
+import type { Registers } from "@typeberry/pvm-interpreter/registers";
+import { Status } from "@typeberry/pvm-interpreter/status";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { check } from "@typeberry/utils";
-import { PAGE_SIZE } from "../pvm-standard-program-decoder/memory-conts";
-import type { HostCalls } from "./host-calls";
-import type { PvmInstanceManager } from "./pvm-instance-manager";
+import type { HostCallsManager } from "./host-calls-manager";
+import type { InterpreterInstanceManager } from "./interpreter-instance-manager";
 
 const logger = Logger.new(__filename, "pvm-host-call-extension");
 
-export class PvmHostCallExtension {
+export class HostCalls {
   constructor(
-    private pvmInstanceManager: PvmInstanceManager,
-    private hostCalls: HostCalls,
+    private pvmInstanceManager: InterpreterInstanceManager,
+    private hostCalls: HostCallsManager,
   ) {}
 
   private getReturnValue(status: Status, memory: Memory, regs: Registers) {

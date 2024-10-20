@@ -1,5 +1,5 @@
 {
-  "name": "@typeberry/pvm-standard-program-decoder",
+  "name": "@typeberry/pvm-spi-decoder",
   "version": "0.0.1",
   "description": "PVM standard program initialization based on the Gray Paper.",
   "main": "index.ts",
