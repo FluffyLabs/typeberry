@@ -3,7 +3,7 @@ import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 
 export class DebuggerAdapter {
-  private pvm: Interpreter;
+  private readonly pvm: Interpreter;
 
   constructor() {
     this.pvm = new Interpreter();

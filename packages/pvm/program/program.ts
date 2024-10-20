@@ -30,8 +30,8 @@ export class Program {
   }
 
   private constructor(
-    public code: Uint8Array,
-    public registers: Registers,
-    public memory: Memory,
+    public readonly code: Uint8Array,
+    public readonly registers: Registers,
+    public readonly memory: Memory,
   ) {}
 }
