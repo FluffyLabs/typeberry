@@ -26,6 +26,7 @@
     "packages/trie",
     "packages/utils",
     "packages/pvm/debugger-adapter",
+    "packages/pvm/program",
     "packages/pvm/spi-decoder",
     "packages/pvm/interpreter",
     "packages/pvm/host-calls",

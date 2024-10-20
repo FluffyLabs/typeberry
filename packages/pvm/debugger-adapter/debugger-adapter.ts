@@ -1,12 +1,12 @@
-import { type Memory, Pvm } from "@typeberry/pvm-interpreter";
+import { Interpreter, type Memory } from "@typeberry/pvm-interpreter";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 
 export class DebuggerAdapter {
-  private pvm: Pvm;
+  private pvm: Interpreter;
 
-  constructor(...args: ConstructorParameters<typeof Pvm>) {
-    this.pvm = new Pvm(...args);
+  constructor() {
+    this.pvm = new Interpreter();
   }
 
   nextStep() {

@@ -1,5 +1,5 @@
 import { Logger } from "@typeberry/logger";
-import type { Memory, Pvm } from "@typeberry/pvm-interpreter";
+import type { Interpreter, Memory } from "@typeberry/pvm-interpreter";
 import { createMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { getPageNumber, getStartPageIndexFromPageNumber } from "@typeberry/pvm-interpreter/memory/memory-utils";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
@@ -61,7 +61,7 @@ export class HostCalls {
     return Status.PANIC;
   }
 
-  private async execute(pvmInstance: Pvm) {
+  private async execute(pvmInstance: Interpreter) {
     pvmInstance.runProgram();
     for (;;) {
       let status = pvmInstance.getStatus();

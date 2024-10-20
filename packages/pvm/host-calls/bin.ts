@@ -1,8 +1,4 @@
-import { MemoryBuilder } from "@typeberry/pvm-interpreter/memory";
-import { createMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import { Registers } from "@typeberry/pvm-interpreter/registers";
-import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
-import { STACK_SEGMENT } from "@typeberry/pvm-spi-decoder/memory-conts";
+import { Program } from "@typeberry/pvm-program";
 import { HostCalls } from "./host-calls";
 import { HostCallsManager } from "./host-calls-manager";
 import { InterpreterInstanceManager } from "./interpreter-instance-manager";
@@ -27,27 +23,8 @@ const program = new Uint8Array([
   0xa9, 0x24, 0x29, 0x49, 0x4a, 0x52, 0x2a, 0xa9, 0x0,
 ]);
 const args = new Uint8Array();
-const { code, memory: rawMemory, registers } = decodeStandardProgram(program, args);
-const regs = new Registers();
-regs.copyFrom(registers);
-const memoryBuilder = new MemoryBuilder();
-
-for (const { start, end, data } of rawMemory.readable) {
-  const startIndex = createMemoryIndex(start);
-  const endIndex = createMemoryIndex(end);
-  memoryBuilder.setReadablePages(startIndex, endIndex, data ?? new Uint8Array());
-}
-
-for (const { start, end, data } of rawMemory.writeable) {
-  const startIndex = createMemoryIndex(start);
-  const endIndex = createMemoryIndex(end);
-  memoryBuilder.setWriteablePages(startIndex, endIndex, data ?? new Uint8Array());
-}
-
-const heapStart = createMemoryIndex(rawMemory.sbrkIndex);
-const heapEnd = createMemoryIndex(STACK_SEGMENT - 2 ** 24);
-const memory = memoryBuilder.finalize(heapStart, heapEnd);
+const { code, memory, registers } = Program.fromSpi(program, args);
 
 (async () => {
-  await pvmHostCallExtension.runProgram(code, 5, 1000, regs, memory);
+  await pvmHostCallExtension.runProgram(code, 5, 1000, registers, memory);
 })();
