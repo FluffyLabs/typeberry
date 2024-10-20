@@ -9,7 +9,7 @@ import { check } from "@typeberry/utils";
 import type { HostCallsManager } from "./host-calls-manager";
 import type { InterpreterInstanceManager } from "./interpreter-instance-manager";
 
-const logger = Logger.new(__filename, "pvm-host-call-extension");
+const logger = Logger.new(__filename, "pvm-host-calls");
 
 export class HostCalls {
   constructor(
