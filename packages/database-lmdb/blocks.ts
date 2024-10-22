@@ -67,7 +67,7 @@ export class LmdbBlocks implements BlocksDb {
       return null;
     }
 
-    return Header.Codec.View.fromBytesBlob(BytesBlob.fromBlob(data), this.chainSpec) as HeaderView;
+    return Header.Codec.View.fromBytesBlob(BytesBlob.from(data), this.chainSpec) as HeaderView;
   }
 
   getExtrinsic(hash: HeaderHash): ExtrinsicView | null {
@@ -75,6 +75,6 @@ export class LmdbBlocks implements BlocksDb {
     if (!data) {
       return null;
     }
-    return Extrinsic.Codec.View.fromBytesBlob(BytesBlob.fromBlob(data), this.chainSpec) as ExtrinsicView;
+    return Extrinsic.Codec.View.fromBytesBlob(BytesBlob.from(data), this.chainSpec) as ExtrinsicView;
   }
 }

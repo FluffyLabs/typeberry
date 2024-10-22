@@ -166,6 +166,6 @@ class PvmExecutor {
     if (!result || !(result instanceof Uint8Array)) {
       return BytesBlob.fromNumbers([]);
     }
-    return BytesBlob.fromBlob(result);
+    return BytesBlob.from(result);
   }
 }

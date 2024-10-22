@@ -65,6 +65,12 @@ export abstract class WithDebug {
   }
 }
 
+/**
+ * Container for some object with a hash that is related to this object.
+ *
+ * After calculating the hash these two should be passed together to avoid
+ * unnecessary re-hashing of the data.
+ */
 export class WithHash<THash extends Bytes<typeof HASH_SIZE>, TData> extends WithDebug {
   constructor(
     public readonly hash: THash,
@@ -74,6 +80,9 @@ export class WithHash<THash extends Bytes<typeof HASH_SIZE>, TData> extends With
   }
 }
 
+/**
+ * Extension of [`WithHash`] additionally containing an encoded version of the object.
+ */
 export class WithHashAndBytes<THash extends Bytes<typeof HASH_SIZE>, TData> extends WithHash<THash, TData> {
   constructor(
     hash: THash,

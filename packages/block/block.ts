@@ -58,6 +58,7 @@ export class Extrinsic extends WithDebug {
   }
 }
 
+/** Undecoded View of an [`Extrinsic`]. */
 export type ExtrinsicView = View<Extrinsic, "tickets" | "disputes" | "assurances" | "guarantees" | "preimages">;
 
 /**
@@ -85,4 +86,6 @@ export class Block extends WithDebug {
     super();
   }
 }
+
+/** Undecoded View of a [`Block`]. */
 export type BlockView = View<Block, "header" | "extrinsic">;

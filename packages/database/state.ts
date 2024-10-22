@@ -34,7 +34,7 @@ export class State {
     const hash = blob.buffer.subarray(0, HASH_SIZE);
     const code = blob.buffer.subarray(HASH_SIZE);
 
-    return new WithHash(Bytes.fromBlob(hash, HASH_SIZE) as CodeHash, BytesBlob.fromBlob(code));
+    return new WithHash(Bytes.fromBlob(hash, HASH_SIZE) as CodeHash, BytesBlob.from(code));
   }
 }
 

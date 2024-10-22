@@ -24,7 +24,7 @@ export function runCodecTest<T>(codec: Codec<T>, test: T, file: string) {
   const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
 
   const myEncoded = Encoder.encodeObject(codec, test, tinyChainSpec);
-  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.fromBlob(encoded).toString());
+  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.from(encoded).toString());
 
   const decoded = Decoder.decodeObject(codec, encoded, tinyChainSpec);
   assert.deepStrictEqual(decoded, test);

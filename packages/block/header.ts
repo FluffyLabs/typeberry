@@ -133,11 +133,16 @@ export class Header extends WithDebug {
   }
 }
 
+/** Undecoded View of the [`Header`]. */
 export type HeaderView = View<Header, "epochMarker">;
 
-// TODO [ToDr] It seems that it's impossible to create a codec for generic class.
-// The typescript type system really needs concrete objects to resolve the types:
-// `DescriptorRecord` or `CodecRecord` for some reason.
+/**
+ *  A codec-aware header with hash.
+ *
+ * TODO [ToDr] It seems that it's impossible to create a codec for generic class.
+ * The typescript type system really needs concrete objects to resolve the types:
+ * `DescriptorRecord` or `CodecRecord` for some reason.
+ */
 class HeaderWithHash extends WithHash<HeaderHash, Header> {
   static Codec = codec.Class(HeaderWithHash, {
     hash: codec.bytes(HASH_SIZE).cast(),
@@ -148,5 +153,5 @@ class HeaderWithHash extends WithHash<HeaderHash, Header> {
     return new WithHash(hash, data);
   }
 }
-
+/** Encoding of header + hash. */
 export const headerWithHashCodec = HeaderWithHash.Codec;

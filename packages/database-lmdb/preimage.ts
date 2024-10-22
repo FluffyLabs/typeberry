@@ -20,7 +20,7 @@ export class LmdbPreimages implements PreimageDb {
 
   get<T extends OpaqueHash>(hash: T): BytesBlob | null {
     const preimage = this.root.get(hash.raw);
-    return preimage ? BytesBlob.fromBlob(preimage) : null;
+    return preimage ? BytesBlob.from(preimage) : null;
   }
 
   set<T extends OpaqueHash>(...data: WithHash<T, BytesBlob>[]): Promise<void> {

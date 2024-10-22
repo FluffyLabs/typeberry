@@ -198,7 +198,7 @@ export class LeafNode {
    */
   getValue(): BytesBlob {
     const len = this.getValueLength();
-    return BytesBlob.fromBlob(this.node.data.subarray(HASH_BYTES, HASH_BYTES + len));
+    return BytesBlob.from(this.node.data.subarray(HASH_BYTES, HASH_BYTES + len));
   }
 
   /**

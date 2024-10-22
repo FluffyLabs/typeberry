@@ -274,7 +274,7 @@ export namespace codec {
   export const string = descriptor<string>(
     "string",
     TYPICAL_SEQUENCE_LENGTH,
-    (e, v) => e.bytesBlob(BytesBlob.fromBlob(new TextEncoder().encode(v))),
+    (e, v) => e.bytesBlob(BytesBlob.from(new TextEncoder().encode(v))),
     (d) => new TextDecoder("utf8", { fatal: true }).decode(d.bytesBlob().buffer),
   );
 

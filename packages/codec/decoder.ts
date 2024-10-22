@@ -236,7 +236,7 @@ export class Decoder {
     this.ensureHasBytes(len);
     const bytes = this.source.subarray(this.offset, this.offset + len);
     this.offset += len;
-    return BytesBlob.fromBlob(bytes);
+    return BytesBlob.from(bytes);
   }
 
   /** Decode a fixed-length sequence of bits of given length. */

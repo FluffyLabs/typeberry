@@ -1,5 +1,9 @@
 import { ChainSpec } from "@typeberry/config";
 
+/**
+ * Helper function to cast the context to the expected type when
+ * implementing context-dependent codecs.
+ */
 export function withContext<T>(name: string, cb: (ctx: ChainSpec) => T) {
   return (context: unknown) => {
     if (context instanceof ChainSpec) {
