@@ -141,6 +141,9 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
     key: StateRequest["startKey"],
     onResponse: (state: StateResponse) => void,
   ) {
+    if (this.onResponse.has(sender.streamId)) {
+       throw new Error('It is disallowed to use the same stream for multiple requests.');
+    }
     this.onResponse.set(sender.streamId, onResponse);
     sender.send(Encoder.encodeObject(StateRequest.Codec, new StateRequest(hash, key, key, 4096 as U32)));
     sender.close();
