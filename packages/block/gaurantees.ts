@@ -61,7 +61,7 @@ export class ReportGuarantee extends WithDebug {
 }
 
 /**
- * `E_G`: Series of guarantees, at most one for each cMapOfHashesore.
+ * `E_G`: Series of guarantees, at most one for each core.
  *
  * Each core index (within work-report) must be unique and guarantees
  * must be in ascending order of this.

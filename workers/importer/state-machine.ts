@@ -17,7 +17,7 @@ export type ImporterInit = WorkerInit<ImporterReady>;
 export type ImporterStates = ImporterInit | ImporterReady | Finished;
 
 export function importerStateMachine() {
-  const initialized = new WorkerInit<ImporterReady>("ready(importer)", Config.reinit);
+  const initialized = new WorkerInit<ImporterReady>("ready(importer)", Config.reInit);
   const ready = new ImporterReady();
   const finished = new Finished();
 

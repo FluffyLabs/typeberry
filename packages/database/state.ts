@@ -1,7 +1,7 @@
 import { type CodeHash, type ServiceId, WithHash } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
-import { HASH_SIZE, type HashableBlob, type OpaqueHash, hashString } from "@typeberry/hash";
+import { HASH_SIZE, type OpaqueHash, hashString } from "@typeberry/hash";
 import { InMemoryTrie, type StateKey, type TrieHash } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/blake2b.node";
 import { WriteableNodesDb } from "@typeberry/trie/nodesDb";
@@ -22,11 +22,12 @@ export class StateDb {
 export class State {
   constructor(
     private readonly db: InMemoryKvdb,
-    private readonly root: TrieHash,
+    public readonly root: TrieHash,
   ) {}
 
   getServiceCode(serviceId: ServiceId): WithHash<CodeHash, BytesBlob> | null {
     const key = hashString(`serviceCodeHash:${serviceId}`);
+    // TODO [ToDr] here we need to make sure that the key is part of the root!
     const blob = this.db.get(key as StateKey);
     if (!blob) {
       return null;
@@ -59,7 +60,7 @@ export interface KeyValueDatabase<Tx extends Transaction> {
 /** Database-altering transaction. */
 export interface Transaction {
   /** Insert/Overwrite key in the database. */
-  insert(key: StateKey, value: HashableBlob<TrieHash>): void;
+  insert(key: StateKey, value: WithHash<TrieHash, BytesBlob>): void;
 
   /** Remove a key from the database. */
   remove(key: StateKey): void;
@@ -67,7 +68,7 @@ export interface Transaction {
 
 export class InMemoryKvdb implements KeyValueDatabase<InMemoryTransaction> {
   private readonly db: WriteableNodesDb;
-  private readonly flat: HashDictionary<StateKey, HashableBlob>;
+  private readonly flat: HashDictionary<StateKey, WithHash<TrieHash, BytesBlob>>;
   private readonly trie: InMemoryTrie;
 
   constructor() {
@@ -78,7 +79,7 @@ export class InMemoryKvdb implements KeyValueDatabase<InMemoryTransaction> {
 
   get(key: StateKey): BytesBlob | null {
     const value = this.flat.get(key);
-    return value?.blob ?? null;
+    return value?.data ?? null;
   }
 
   has(key: StateKey): boolean {
@@ -97,7 +98,7 @@ export class InMemoryKvdb implements KeyValueDatabase<InMemoryTransaction> {
   commit(tx: InMemoryTransaction): Promise<TrieHash> {
     for (const [key, value] of tx.writes) {
       if (value) {
-        this.trie.set(key, value.blob, value.getHash());
+        this.trie.set(key, value.data, value.hash);
         this.flat.set(key, value);
       } else {
         this.trie.remove(key);
@@ -109,9 +110,9 @@ export class InMemoryKvdb implements KeyValueDatabase<InMemoryTransaction> {
 }
 
 export class InMemoryTransaction implements Transaction {
-  readonly writes: [StateKey, HashableBlob<TrieHash> | null][] = [];
+  readonly writes: [StateKey, WithHash<TrieHash, BytesBlob> | null][] = [];
 
-  insert(key: StateKey, value: HashableBlob<TrieHash>): void {
+  insert(key: StateKey, value: WithHash<TrieHash, BytesBlob>): void {
     this.writes.push([key, value]);
   }
 

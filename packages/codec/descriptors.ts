@@ -467,6 +467,7 @@ const logger = Logger.new(__filename, "codec/descriptors");
 abstract class AbstractView<T> {
   private lastDecodedIdx = -1;
   private readonly cache = new Map<keyof T, T[keyof T]>();
+  private readonly decoderStateCache = new Map<keyof T, Decoder>();
   private readonly viewCache = new Map<keyof T, View<T[keyof T]>>();
 
   constructor(
@@ -506,6 +507,7 @@ abstract class AbstractView<T> {
     for (let i = this.lastDecodedIdx + 1; i <= needIdx; i += 1) {
       const key = descriptorKeys[i] as keyof DescriptorRecord<T>;
       const descriptor = this.descriptors[key];
+      this.decoderStateCache.set(key, this.d.clone());
       const val = descriptor.decode(this.d);
       this.cache.set(key, val);
       lastVal = val;
@@ -553,7 +555,7 @@ abstract class AbstractView<T> {
     // decode up to the previous field and then get the view.
     const descriptorKeys = Object.keys(this.descriptors);
     const needIdx = descriptorKeys.findIndex((k) => k === field);
-    if (needIdx > 0) {
+    if (needIdx > 0 && needIdx - 1 > this.lastDecodedIdx) {
       this.decodeUpTo(descriptorKeys[needIdx - 1] as keyof T);
     }
     // return the view
@@ -564,7 +566,8 @@ abstract class AbstractView<T> {
       throw new Error(`Attempting to decode a 'View' of a field ${String(field)} which doesn't have one.`);
     }
 
-    const view = new val.View(this.d.clone());
+    const decoder = this.decoderStateCache.get(field) ?? this.d;
+    const view = new val.View(decoder.clone());
     const typedView = view as unknown as View<T[keyof T]>;
     this.viewCache.set(field, typedView);
     return typedView;

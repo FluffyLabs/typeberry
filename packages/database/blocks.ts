@@ -1,26 +1,29 @@
-import {
-  type BlockView,
-  type ExtrinsicView,
-  HASH_SIZE,
-  type HeaderHash,
-  type HeaderView,
-  type WithHash,
-} from "@typeberry/block";
+import type { BlockView, ExtrinsicView, HeaderHash, HeaderView, WithHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
+import { HASH_SIZE } from "@typeberry/hash";
 
+/**
+ * Blockchain database interface.
+ */
 export interface BlocksDb {
+  /** Insert and flush a new block into the database. */
   insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void>;
-
+  /** Mark given header hash as the best block. */
   setBestHeaderHash(hash: HeaderHash): Promise<void>;
-
+  /** Retrieve current best block. */
   getBestHeaderHash(): HeaderHash;
-
+  /** Retrieve header by hash. */
   getHeader(hash: HeaderHash): HeaderView | null;
-
+  /**
+   * Retrieve extrinsic data by hash of the header they are part of.
+   *
+   * NOTE: this is not extrinsic hash!
+   */
   getExtrinsic(hash: HeaderHash): ExtrinsicView | null;
 }
 
+/** In-memory (non-persistent) blocks database. */
 export class InMemoryBlocks implements BlocksDb {
   private readonly headersByHash: HashDictionary<HeaderHash, HeaderView> = new HashDictionary();
   private readonly extrinsicsByHeaderHash: HashDictionary<HeaderHash, ExtrinsicView> = new HashDictionary();
@@ -28,6 +31,7 @@ export class InMemoryBlocks implements BlocksDb {
 
   insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void> {
     this.headersByHash.set(block.hash, block.data.headerView() as HeaderView);
+    block.data.headerView().materialize();
     this.extrinsicsByHeaderHash.set(block.hash, block.data.extrinsicView() as ExtrinsicView);
 
     return Promise.resolve();

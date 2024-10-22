@@ -1,20 +1,26 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { WithHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
-import { HashableBlob, hashString } from "@typeberry/hash";
-import type { StateKey } from "@typeberry/trie";
+import { hashBytes, hashString } from "@typeberry/hash";
+import type { StateKey, TrieHash } from "@typeberry/trie";
 import { InMemoryKvdb } from ".";
 
 function key(v: string): StateKey {
   return hashString(v) as StateKey;
 }
 
+const hash = (data: BytesBlob) => {
+  const h = hashBytes(data) as TrieHash;
+  return new WithHash(h, data);
+};
+
 describe("InMemoryDatabase", () => {
   it("should write some data to the db", async () => {
     const db = new InMemoryKvdb();
     const tx = db.newTransaction();
-    tx.insert(key("a"), new HashableBlob(BytesBlob.fromString("hello world!")));
-    tx.insert(key("b"), new HashableBlob(BytesBlob.fromString("xyz")));
+    tx.insert(key("a"), hash(BytesBlob.fromString("hello world!")));
+    tx.insert(key("b"), hash(BytesBlob.fromString("xyz")));
     assert.strictEqual(db.getRoot().toString(), "0x0000000000000000000000000000000000000000000000000000000000000000");
 
     await db.commit(tx);

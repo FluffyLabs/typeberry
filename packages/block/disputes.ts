@@ -1,10 +1,11 @@
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { EST_VALIDATORS_SUPER_MAJORITY } from "@typeberry/config";
+import { HASH_SIZE } from "@typeberry/hash";
 import { type Epoch, type ValidatorIndex, WithDebug } from "./common";
 import { withContext } from "./context";
 import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Key, type Ed25519Signature } from "./crypto";
-import { HASH_SIZE, type WorkReportHash } from "./hash";
+import type { WorkReportHash } from "./hash";
 
 /**
  * Proof of signing a contradictory [`Judgement`] of a work report.

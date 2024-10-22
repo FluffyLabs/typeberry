@@ -9,6 +9,7 @@ import blake2b from "blake2b";
  *
  */
 export const HASH_SIZE = 32;
+/** A type for the above value. */
 export type HASH_SIZE = typeof HASH_SIZE;
 
 /**
@@ -60,25 +61,6 @@ export class PageAllocator implements HashAllocator {
 }
 
 export const defaultAllocator = new SimpleAllocator();
-
-/** Blob of bytes with a lazy-evaluated hash. */
-export class HashableBlob<THash extends OpaqueHash = OpaqueHash> {
-  constructor(
-    public readonly blob: BytesBlob,
-    private hash?: THash,
-    private allocator: HashAllocator = defaultAllocator,
-  ) {}
-
-  /** Get or compute the hash of the data. */
-  getHash(): THash {
-    if (this.hash) {
-      return this.hash;
-    }
-
-    this.hash = hashBytes(this.blob, this.allocator) as THash;
-    return this.hash;
-  }
-}
 
 /** Hash given blob of bytes. */
 export function hashBytes(blob: BytesBlob, allocator: HashAllocator = defaultAllocator) {

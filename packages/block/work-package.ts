@@ -1,8 +1,9 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
+import { HASH_SIZE } from "@typeberry/hash";
 import { type ServiceId, WithDebug } from "./common";
-import { type CodeHash, HASH_SIZE } from "./hash";
+import type { CodeHash } from "./hash";
 import { RefineContext } from "./refine-context";
 import { WorkItem } from "./work-item";
 

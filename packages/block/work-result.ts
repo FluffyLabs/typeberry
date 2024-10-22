@@ -1,8 +1,9 @@
-import type { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
+import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import { type ServiceGas, type ServiceId, WithDebug } from "./common";
-import { type CodeHash, HASH_SIZE } from "./hash";
+import type { CodeHash } from "./hash";
 
 /** The tag to describe the [`WorkExecResult`] union. */
 export enum WorkExecResultKind {
@@ -86,7 +87,7 @@ export class WorkResult {
      *
      * https://graypaper.fluffylabs.dev/#/c71229b/132201132201
      */
-    public readonly payloadHash: Bytes<typeof HASH_SIZE>,
+    public readonly payloadHash: OpaqueHash,
     /**
      * `g`: Gas prioritization ratio.
      *

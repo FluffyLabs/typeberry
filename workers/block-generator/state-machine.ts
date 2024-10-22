@@ -9,7 +9,7 @@ export type GeneratorInit = WorkerInit<GeneratorReady>;
 export type GeneratorStates = GeneratorInit | GeneratorReady | Finished;
 
 export function generatorStateMachine() {
-  const initialized = new WorkerInit<GeneratorReady>("ready(generator)", Config.reinit);
+  const initialized = new WorkerInit<GeneratorReady>("ready(generator)", Config.reInit);
   const ready = new GeneratorReady();
   const finished = new Finished();
 

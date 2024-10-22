@@ -191,6 +191,23 @@ describe("Codec Descriptors / nested views", () => {
     assert.strictEqual(`${headerView.extrinsicHash()}`, `${data.extrinsicHash}`);
     assert.strictEqual(`${headerView.priorStateRoot()}`, `${data.priorStateRoot}`);
   });
+
+  it("should create a view after field was decoded", () => {
+    // given
+    const data = testData();
+    const blockView = new TestBlock.Codec.View(Decoder.fromBytesBlob(data.bytes));
+
+    // when
+    const header = blockView.header();
+    const headerView = blockView.headerView();
+
+    // then
+    assert.strictEqual(`${header.extrinsicHash}`, `${data.extrinsicHash}`);
+    assert.strictEqual(`${header.priorStateRoot}`, `${data.priorStateRoot}`);
+    // view?
+    assert.strictEqual(`${headerView.extrinsicHash()}`, `${data.extrinsicHash}`);
+    assert.strictEqual(`${headerView.priorStateRoot()}`, `${data.priorStateRoot}`);
+  });
 });
 
 describe("Codec Descriptors / generic class", () => {

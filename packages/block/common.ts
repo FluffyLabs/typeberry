@@ -1,7 +1,7 @@
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { OpaqueHash } from "@typeberry/hash";
 import type { U16, U32, U64 } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
-import type { HASH_SIZE } from "./hash";
 
 /** Opaque Blake2B. */
 export type Blake2bHash = Bytes<32>;
@@ -71,7 +71,7 @@ export abstract class WithDebug {
  * After calculating the hash these two should be passed together to avoid
  * unnecessary re-hashing of the data.
  */
-export class WithHash<THash extends Bytes<typeof HASH_SIZE>, TData> extends WithDebug {
+export class WithHash<THash extends OpaqueHash, TData> extends WithDebug {
   constructor(
     public readonly hash: THash,
     public readonly data: TData,
@@ -83,7 +83,7 @@ export class WithHash<THash extends Bytes<typeof HASH_SIZE>, TData> extends With
 /**
  * Extension of [`WithHash`] additionally containing an encoded version of the object.
  */
-export class WithHashAndBytes<THash extends Bytes<typeof HASH_SIZE>, TData> extends WithHash<THash, TData> {
+export class WithHashAndBytes<THash extends OpaqueHash, TData> extends WithHash<THash, TData> {
   constructor(
     hash: THash,
     data: TData,
