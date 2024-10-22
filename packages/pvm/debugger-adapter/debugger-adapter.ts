@@ -1,11 +1,12 @@
-import { Pvm } from "@typeberry/pvm";
-import { PAGE_SIZE } from "@typeberry/pvm/memory/memory-consts";
+import { Interpreter, type Memory } from "@typeberry/pvm-interpreter";
+import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
+import type { Registers } from "@typeberry/pvm-interpreter/registers";
 
-export class PvmDebuggerAdapter {
-  private pvm: Pvm;
+export class DebuggerAdapter {
+  private readonly pvm: Interpreter;
 
-  constructor(...args: ConstructorParameters<typeof Pvm>) {
-    this.pvm = new Pvm(...args);
+  constructor() {
+    this.pvm = new Interpreter();
   }
 
   nextStep() {
@@ -26,6 +27,14 @@ export class PvmDebuggerAdapter {
 
   getStatus() {
     return this.pvm.getStatus();
+  }
+
+  reset(rawProgram: Uint8Array, pc: number, gas: number, maybeRegisters?: Registers, maybeMemory?: Memory) {
+    this.pvm.reset(rawProgram, pc, gas, maybeRegisters, maybeMemory);
+  }
+
+  resume(nextPc: number, gas: number) {
+    this.pvm.resume(nextPc, gas);
   }
 
   getMemoryPage(pageNumber: number): null | Uint8Array {

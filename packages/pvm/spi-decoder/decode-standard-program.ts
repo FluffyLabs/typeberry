@@ -66,6 +66,7 @@ export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {
       ].filter((x) => !!x),
 
       sbrkIndex: heapZerosEnd,
+      heapEnd: stackStart,
     },
     registers: getRegisters(args.length),
   };
@@ -78,7 +79,7 @@ function getMemorySegment(start: number, end: number, data: Uint8Array | null = 
 function getRegisters(argsLength: number) {
   const regs = new Uint32Array(NO_OF_REGISTERS);
 
-  // GP reference: https://graypaper.fluffylabs.dev/#WyIxYjA4MWZlM2U3IiwiMjciLG51bGwsbnVsbCxbIjxkaXYgY2xhc3M9XCJ0IG0wIHgxMCBoYyB5MTU5OSBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiIsIjxkaXYgY2xhc3M9XCJ0IG0wIHgxMCBoYyB5MTU5OSBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
+  // GP reference: https://graypaper.fluffylabs.dev/#/293bf5a/29860129bb01
   regs[0] = LAST_PAGE;
   regs[1] = STACK_SEGMENT;
   regs[7] = ARGS_SEGMENT;

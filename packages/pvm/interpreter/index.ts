@@ -1,2 +1,2 @@
-export * from "./pvm";
+export * from "./interpreter";
 export { Memory, MemoryBuilder } from "./memory";

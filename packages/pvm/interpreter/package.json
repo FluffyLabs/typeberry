@@ -1,5 +1,5 @@
 {
-  "name": "@typeberry/pvm",
+  "name": "@typeberry/pvm-interpreter",
   "version": "0.0.1",
   "description": "A PVM implementation based on the Gray Paper.",
   "main": "index.ts",
@@ -13,8 +13,8 @@
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
     "build": "npm run build -w @typeberry/builder -- --environment PACKAGE_NAME:@typeberry/pvm-debugger-adapter,PACKAGE_OUT:pvm",
     "preobfuscate": "npm run build",
-    "obfuscate": "npx javascript-obfuscator ../../dist/pvm --output ../../dist/pvm-obfuscated --compact true --control-flow-flattening true && npm run cp-package-json",
-    "cp-package-json": "cp ../../dist/pvm/package.json ../../dist/pvm-obfuscated/"
+    "obfuscate": "npx javascript-obfuscator ../../../dist/pvm --output ../../../dist/pvm-obfuscated --compact true --control-flow-flattening true && npm run cp-package-json",
+    "cp-package-json": "cp ../../../dist/pvm/package.json ../../../dist/pvm-obfuscated/"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0"

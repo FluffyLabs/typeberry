@@ -16,14 +16,10 @@ import { type Codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type HashAllocator, hashBytes } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
-import { MemoryBuilder } from "@typeberry/pvm";
-import { decodeStandardProgram } from "@typeberry/pvm-debugger-adapter";
-import { createMemoryIndex } from "@typeberry/pvm/memory/memory-index";
-import { Registers } from "@typeberry/pvm/registers";
 import { Result } from "@typeberry/utils";
 import type { BlocksDb, StateDb } from "../database";
-import { HostCalls, PvmHostCallExtension, PvmInstanceManager } from "../pvm-host-call-extension";
-import { STACK_SEGMENT } from "../pvm-standard-program-decoder/memory-conts";
+import {HostCalls, PvmHostCallExtension, PvmInstanceManager} from "@typeberry/pvm-host-calls";
+import {Program} from "@typeberry/pvm-program";
 
 export class TransitionHasher {
   constructor(
@@ -163,33 +159,13 @@ class PvmExecutor {
     this.pvm = new PvmHostCallExtension(this.pvmInstanceManager, this.hostCalls);
   }
 
-  run(args: BytesBlob, gas: ServiceGas): Promise<BytesBlob> {
-    const { code, memory: rawMemory, registers } = decodeStandardProgram(this.serviceCode.buffer, args.buffer);
-    const regs = new Registers();
-    regs.copyFrom(registers);
-    const memoryBuilder = new MemoryBuilder();
+  async run(args: BytesBlob, gas: ServiceGas): Promise<BytesBlob> {
+    const program = Program.fromSpi(this.serviceCode.buffer, args.buffer);
 
-    for (const { start, end, data } of rawMemory.readable) {
-      const startIndex = createMemoryIndex(start);
-      const endIndex = createMemoryIndex(end);
-      memoryBuilder.setReadablePages(startIndex, endIndex, data ?? new Uint8Array());
+    const result = await this.pvm.runProgram(program.code, 5, Number(gas), program.registers, program.memory);
+    if (!result || !(result instanceof Uint8Array)) {
+      return BytesBlob.fromNumbers([]);
     }
-
-    for (const { start, end, data } of rawMemory.writeable) {
-      const startIndex = createMemoryIndex(start);
-      const endIndex = createMemoryIndex(end);
-      memoryBuilder.setWriteablePages(startIndex, endIndex, data ?? new Uint8Array());
-    }
-
-    const heapStart = createMemoryIndex(rawMemory.sbrkIndex);
-    const heapEnd = createMemoryIndex(STACK_SEGMENT - 2 ** 24);
-    const memory = memoryBuilder.finalize(heapStart, heapEnd);
-
-    return this.pvm.runProgram(code, 5, Number(gas), regs, memory).then((result) => {
-      if (!result || !(result instanceof Uint8Array)) {
-        return BytesBlob.fromNumbers([]);
-      }
-      return BytesBlob.fromBlob(result);
-    });
+    return BytesBlob.fromBlob(result);
   }
 }
