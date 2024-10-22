@@ -1,0 +1,16 @@
+{
+  "name": "@typeberry/pvm-spi-decoder",
+  "version": "0.0.1",
+  "description": "PVM standard program initialization based on the Gray Paper.",
+  "main": "index.ts",
+  "dependencies": {
+    "@typeberry/bytes": "0.0.1",
+    "@typeberry/utils": "0.0.1",
+    "@typeberry/codec": "0.0.1"
+  },
+  "scripts": {
+    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts'     | tr '\\n' ' ')"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0"
+}

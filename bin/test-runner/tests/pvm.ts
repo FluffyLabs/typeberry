@@ -1,16 +1,25 @@
 import assert from "node:assert";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { MemoryBuilder } from "@typeberry/pvm/memory";
-import { PAGE_SIZE } from "@typeberry/pvm/memory/memory-consts";
-import { type MemoryIndex, createMemoryIndex } from "@typeberry/pvm/memory/memory-index";
-import { getPageNumber, getStartPageIndex } from "@typeberry/pvm/memory/memory-utils";
-import type { PageNumber } from "@typeberry/pvm/memory/pages/page-utils";
-import { Pvm, type RegistersArray } from "@typeberry/pvm/pvm";
+import { Interpreter } from "@typeberry/pvm-interpreter";
+import { MemoryBuilder } from "@typeberry/pvm-interpreter/memory";
+import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
+import { type MemoryIndex, createMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { getPageNumber, getStartPageIndex } from "@typeberry/pvm-interpreter/memory/memory-utils";
+import type { PageNumber } from "@typeberry/pvm-interpreter/memory/pages/page-utils";
+import { Registers } from "@typeberry/pvm-interpreter/registers";
 
 namespace fromJson {
   export const uint8Array = json.fromAny((v) => {
     if (Array.isArray(v)) {
       return new Uint8Array(v);
+    }
+
+    throw new Error(`Expected an array, got ${typeof v} instead.`);
+  });
+
+  export const uint32Array = json.fromAny((v) => {
+    if (Array.isArray(v)) {
+      return new Uint32Array(v);
     }
 
     throw new Error(`Expected an array, got ${typeof v} instead.`);
@@ -38,28 +47,28 @@ class PageMapItem {
 export class PvmTest {
   static fromJson: FromJson<PvmTest> = {
     name: "string",
-    "initial-regs": json.array("number"),
+    "initial-regs": fromJson.uint32Array,
     "initial-pc": "number",
     "initial-page-map": json.array(PageMapItem.fromJson),
     "initial-memory": json.array(MemoryChunkItem.fromJson),
     "initial-gas": "number",
     program: fromJson.uint8Array,
     "expected-status": "string",
-    "expected-regs": json.array("number"),
+    "expected-regs": fromJson.uint32Array,
     "expected-pc": "number",
     "expected-memory": json.array(MemoryChunkItem.fromJson),
     "expected-gas": "number",
   };
 
   name!: string;
-  "initial-regs": RegistersArray;
+  "initial-regs": Uint32Array;
   "initial-pc": number;
   "initial-page-map": PageMapItem[];
   "initial-memory": MemoryChunkItem[];
   "initial-gas": number;
   program!: Uint8Array;
   "expected-status": string;
-  "expected-regs": RegistersArray;
+  "expected-regs": Uint32Array;
   "expected-pc": number;
   "expected-memory": MemoryChunkItem[];
   "expected-gas": number;
@@ -100,21 +109,18 @@ export async function runPvmTest(testContent: PvmTest) {
   const HEAP_START_PAGE = 16;
   const HEAP_END_PAGE = 32;
   const memory = memoryBuilder.finalize(createMemoryIndex(HEAP_START_PAGE), createMemoryIndex(HEAP_END_PAGE));
+  const regs = new Registers();
+  regs.copyFrom(testContent["initial-regs"]);
 
-  const pvm = new Pvm(testContent.program, {
-    gas: testContent["initial-gas"],
-    memory: memory,
-    pc: testContent["initial-pc"],
-    regs: testContent["initial-regs"],
-  });
-
+  const pvm = new Interpreter();
+  pvm.reset(testContent.program, testContent["initial-pc"], testContent["initial-gas"], regs, memory);
   pvm.runProgram();
 
   assert.strictEqual(pvm.getGas(), testContent["expected-gas"]);
   assert.strictEqual(pvm.getPC(), testContent["expected-pc"]);
-  assert.deepStrictEqual(Array.from(pvm.getRegisters()), testContent["expected-regs"]);
+  assert.deepStrictEqual(pvm.getRegisters().asUnsigned, testContent["expected-regs"]);
   const pvmStatus = pvm.getStatus();
-  const testStatus = pvmStatus <= 1 ? "halt" : "trap";
+  const testStatus = pvmStatus < 1 ? "halt" : "trap";
   assert.strictEqual(testStatus, testContent["expected-status"]);
 
   const dirtyPages = memory.getDirtyPages();
