@@ -25,8 +25,10 @@ export class HostCalls {
     if (status === Status.HALT) {
       const maybeAddress = regs.asUnsigned[10];
       const maybeLength = regs.asUnsigned[11];
-      if (maybeAddress >= 0 && maybeLength > 0 && maybeAddress + maybeLength < 2 ** 32) {
-        return [];
+      if (!(maybeAddress >= 0 && maybeLength > 0 && maybeAddress + maybeLength < 2 ** 32)) {
+        // TODO [ToDr] Should this rather be a panic? Check GP.
+        logger.error("Invalid memory range to return.");
+        return new Uint8Array(0);
       }
       const length = maybeLength;
       const startAddress = createMemoryIndex(maybeAddress);
@@ -38,7 +40,9 @@ export class HostCalls {
       for (let i = firstPage; i <= lastPage; i++) {
         const pageDump = memory.getPageDump(i);
         if (!pageDump) {
-          return [];
+          // TODO [ToDr] Should this rather be a panic? Check GP.
+          logger.error("Returning data from a non-existent page.");
+          return new Uint8Array(0);
         }
 
         const resultStartIdx = (i - firstPage) * PAGE_SIZE;
@@ -100,7 +104,6 @@ export class HostCalls {
     pvmInstance.reset(rawProgram, initialPc, initialGas, maybeRegisters, maybeMemory);
     try {
       return await this.execute(pvmInstance);
-    } catch {
     } finally {
       this.pvmInstanceManager.releaseInstance(pvmInstance);
     }

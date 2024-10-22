@@ -16,10 +16,10 @@ import { type Codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type HashAllocator, hashBytes } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
+import { HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
+import { Program } from "@typeberry/pvm-program";
 import { Result } from "@typeberry/utils";
 import type { BlocksDb, StateDb } from "../database";
-import {HostCalls, PvmHostCallExtension, PvmInstanceManager} from "@typeberry/pvm-host-calls";
-import {Program} from "@typeberry/pvm-program";
 
 export class TransitionHasher {
   constructor(
