@@ -46,12 +46,5 @@ export function startExtension(api: ExtensionApi) {
     return [new KeyValuePair(startKey, value)];
   };
 
-  const ipcServer = startIpcServer(announcements, getHandshake, getBoundaryNodes, getKeyValuePairs);
-
-  return () => {
-    // stop accepting new connections
-    ipcServer.server.close();
-    // abort the server
-    ipcServer.close();
-  };
+  return startIpcServer(announcements, getHandshake, getBoundaryNodes, getKeyValuePairs);
 }

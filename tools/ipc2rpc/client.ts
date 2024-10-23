@@ -26,6 +26,8 @@ export function startClient(
       resolve(messageHandler);
     });
 
+    client.setTimeout(10000);
+
     client.on(
       "data",
       handleFragmentation((data) => {
@@ -38,8 +40,19 @@ export function startClient(
       }),
     );
 
-    client.on("error", (e) => {
-      throw e;
+    client.on("timeout", () => {
+      messageHandler.onClose({ error: new Error("socket timeout") });
+      client.end();
+    });
+
+    client.on("error", (error) => {
+      logger.error(`${error}`);
+      messageHandler.onClose({ error });
+      client.end();
+    });
+
+    client.on("close", () => {
+      messageHandler.onClose({});
     });
 
     resolve(messageHandler);
