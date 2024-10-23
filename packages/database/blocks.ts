@@ -1,7 +1,7 @@
-import type { BlockView, ExtrinsicView, HeaderHash, HeaderView, WithHash } from "@typeberry/block";
+import type { BlockView, ExtrinsicView, HeaderHash, HeaderView } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
-import { HASH_SIZE } from "@typeberry/hash";
+import { HASH_SIZE, type WithHash } from "@typeberry/hash";
 
 /**
  * Blockchain database interface.

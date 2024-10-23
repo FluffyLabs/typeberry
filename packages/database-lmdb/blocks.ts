@@ -2,16 +2,15 @@ import {
   type BlockView,
   Extrinsic,
   type ExtrinsicView,
-  HASH_SIZE,
   Header,
   type HeaderHash,
   type HeaderView,
-  type WithHash,
 } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database/blocks";
+import { HASH_SIZE, type WithHash } from "@typeberry/hash";
 import lmdb from "lmdb";
 
 const BEST_BLOCK_KEY = "best block";

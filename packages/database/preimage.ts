@@ -1,7 +1,6 @@
-import { WithHash } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
-import type { OpaqueHash } from "@typeberry/hash";
+import { type OpaqueHash, WithHash } from "@typeberry/hash";
 
 /**
  * Interface for preimage database.

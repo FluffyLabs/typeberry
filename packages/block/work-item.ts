@@ -3,8 +3,8 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import type { U16, U32 } from "@typeberry/numbers";
-import type { Opaque } from "@typeberry/utils";
-import { type ServiceGas, type ServiceId, WithDebug } from "./common";
+import { type Opaque, WithDebug } from "@typeberry/utils";
+import type { ServiceGas, ServiceId } from "./common";
 import type { CodeHash } from "./hash";
 
 type WorkItemExtrinsicHash = Opaque<OpaqueHash, "ExtrinsicHash">;

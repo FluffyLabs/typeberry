@@ -2,9 +2,10 @@ import { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, type View, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { EST_EPOCH_LENGTH, EST_VALIDATORS } from "@typeberry/config";
-import { HASH_SIZE } from "@typeberry/hash";
+import { HASH_SIZE, WithHash } from "@typeberry/hash";
 import type { TrieHash } from "@typeberry/trie";
-import { type EntropyHash, type TimeSlot, type ValidatorIndex, WithDebug, WithHash } from "./common";
+import { WithDebug } from "@typeberry/utils";
+import type { EntropyHash, TimeSlot, ValidatorIndex } from "./common";
 import { withContext } from "./context";
 import {
   BANDERSNATCH_KEY_BYTES,

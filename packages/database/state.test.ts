@@ -1,8 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { WithHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
-import { hashBytes, hashString } from "@typeberry/hash";
+import { WithHash, hashBytes, hashString } from "@typeberry/hash";
 import type { StateKey, TrieHash } from "@typeberry/trie";
 import { InMemoryKvdb } from ".";
 

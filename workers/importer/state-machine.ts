@@ -1,14 +1,8 @@
-import {
-  Block,
-  type BlockView,
-  type Header,
-  type HeaderHash,
-  type WithHash,
-  headerWithHashCodec,
-} from "@typeberry/block";
+import { Block, type BlockView, type Header, type HeaderHash, headerWithHashCodec } from "@typeberry/block";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { Config } from "@typeberry/config";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
+import type { WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { Listener, type TypedChannel } from "@typeberry/state-machine";
 import { type RespondAndTransitionTo, State, StateMachine, type TransitionTo } from "@typeberry/state-machine";

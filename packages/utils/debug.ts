@@ -31,3 +31,39 @@ export function ensure<T, U extends T>(a: T, condition: boolean, message?: strin
 
   throw new Error(`Assertion failure: ${message || ""}`);
 }
+
+/** A class that adds `toString` method that prints all properties of an object. */
+export abstract class WithDebug {
+  toString() {
+    const nest = (v: string) =>
+      v
+        .split("\n")
+        .map((x) => `  ${x}`)
+        .join("\n")
+        .trim();
+    const asStr = (v: unknown) => {
+      if (v === null) {
+        return "<null>";
+      }
+      if (v === undefined) {
+        return "<undefined>";
+      }
+      if (Array.isArray(v)) {
+        return `[${v}]`;
+      }
+      return `${v}`;
+    };
+    let v = `${this.constructor.name} {`;
+    const keys = Object.keys(this);
+    const oneLine = keys.length < 3;
+    for (const k of keys) {
+      if (typeof k === "string") {
+        v += oneLine ? "" : "\n  ";
+        v += `${k}: ${nest(asStr(this[k as keyof WithDebug]))}`;
+        v += oneLine ? "," : "";
+      }
+    }
+    v += oneLine ? "}" : "\n}";
+    return v;
+  }
+}

@@ -1,6 +1,7 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { type ServiceId, WithDebug } from "./common";
+import { WithDebug } from "@typeberry/utils";
+import type { ServiceId } from "./common";
 
 /**
  * Service index (requester) and the data (blob).

@@ -1,8 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { WithHash } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
-import { HASH_SIZE, hashBytes } from "@typeberry/hash";
+import { HASH_SIZE, WithHash, hashBytes } from "@typeberry/hash";
 import { InMemoryPreimages } from "./preimage";
 
 const hash = (data: BytesBlob) => {

@@ -3,7 +3,6 @@ import {
   Block,
   type Ed25519Signature,
   type Epoch,
-  HASH_SIZE,
   Header,
   type HeaderHash,
   type ServiceId,
@@ -22,7 +21,7 @@ import { Encoder } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type BlocksDb, InMemoryKvdb } from "@typeberry/database";
-import { SimpleAllocator } from "@typeberry/hash";
+import { HASH_SIZE, SimpleAllocator } from "@typeberry/hash";
 import { TransitionHasher } from "@typeberry/transition";
 
 export class Generator {

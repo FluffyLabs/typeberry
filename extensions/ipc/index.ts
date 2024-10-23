@@ -1,6 +1,7 @@
 import { EventEmitter } from "node:events";
-import { HASH_SIZE, type Header, type HeaderHash, type TimeSlot, type WithHash } from "@typeberry/block";
+import type { Header, HeaderHash, TimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
+import { HASH_SIZE, type WithHash } from "@typeberry/hash";
 import type { Listener } from "@typeberry/state-machine";
 import { Announcement, Handshake, HashAndSlot } from "./protocol/up-0-block-announcement";
 import { startIpcServer } from "./server";

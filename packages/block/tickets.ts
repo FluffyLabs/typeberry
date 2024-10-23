@@ -2,8 +2,7 @@ import type { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { Opaque } from "@typeberry/utils";
-import { WithDebug } from "./common";
+import { type Opaque, WithDebug } from "@typeberry/utils";
 import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "./crypto";
 
 /**

@@ -1,11 +1,11 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Header, type HeaderHash, WithHash } from "@typeberry/block";
+import { Header, type HeaderHash } from "@typeberry/block";
 import { testBlockView } from "@typeberry/block/test-helpers";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
-import { HASH_SIZE, hashBytes } from "@typeberry/hash";
+import { HASH_SIZE, WithHash, hashBytes } from "@typeberry/hash";
 import { InMemoryBlocks } from ".";
 
 describe("InMemoryDatabase", () => {

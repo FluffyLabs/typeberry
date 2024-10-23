@@ -3,6 +3,7 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { EST_CORES } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
+import { WithDebug } from "@typeberry/utils";
 import type { ValidatorIndex } from "./common";
 import { withContext } from "./context";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "./crypto";
@@ -15,7 +16,7 @@ import type { HeaderHash } from "./hash";
  * the block's assurance extrinsic.
  * https://graypaper.fluffylabs.dev/#/c71229b/135201135601
  */
-export class AvailabilityAssurance {
+export class AvailabilityAssurance extends WithDebug {
   static Codec = codec.Class(AvailabilityAssurance, {
     anchor: codec.bytes(HASH_SIZE).cast(),
     bitfield: codec.select(
@@ -52,7 +53,9 @@ export class AvailabilityAssurance {
     public readonly validatorIndex: ValidatorIndex,
     /** Signature over the anchor and the bitfield. */
     public readonly signature: Ed25519Signature,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /**

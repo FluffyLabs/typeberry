@@ -6,7 +6,6 @@ import {
   type HeaderHash,
   type ServiceGas,
   type ServiceId,
-  WithHashAndBytes,
 } from "@typeberry/block";
 import { WorkPackage } from "@typeberry/block/work-package";
 import { type CoreIndex, type WorkPackageHash, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
@@ -14,7 +13,7 @@ import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type Codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { HASH_SIZE, type HashAllocator, hashBytes } from "@typeberry/hash";
+import { HASH_SIZE, type HashAllocator, WithHashAndBytes, hashBytes } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import { HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
 import { Program } from "@typeberry/pvm-program";

@@ -1,5 +1,6 @@
-import { type BlockView, type Header, type HeaderHash, WithHash } from "@typeberry/block";
+import type { BlockView, Header, HeaderHash } from "@typeberry/block";
 import { type BlocksDb, InMemoryKvdb } from "@typeberry/database";
+import { WithHash } from "@typeberry/hash";
 import type { TransitionHasher } from "@typeberry/transition";
 
 export class Importer {

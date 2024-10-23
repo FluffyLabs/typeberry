@@ -1,6 +1,6 @@
 import { type CodecRecord, type View, codec } from "@typeberry/codec";
+import { WithDebug } from "@typeberry/utils";
 import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "./assurances";
-import { WithDebug } from "./common";
 import { DisputesExtrinsic } from "./disputes";
 import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "./gaurantees";
 import { Header } from "./header";

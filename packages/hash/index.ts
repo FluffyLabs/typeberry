@@ -1,5 +1,5 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { check } from "@typeberry/utils";
+import { WithDebug, check } from "@typeberry/utils";
 import blake2b from "blake2b";
 
 /**
@@ -71,6 +71,35 @@ export function hashBytes(blob: BytesBlob, allocator: HashAllocator = defaultAll
   return out;
 }
 
+/** Convert given string into bytes and hash it. */
 export function hashString(str: string, allocator: HashAllocator = defaultAllocator) {
   return hashBytes(BytesBlob.fromString(str), allocator);
+}
+
+/**
+ * Container for some object with a hash that is related to this object.
+ *
+ * After calculating the hash these two should be passed together to avoid
+ * unnecessary re-hashing of the data.
+ */
+export class WithHash<THash extends OpaqueHash, TData> extends WithDebug {
+  constructor(
+    public readonly hash: THash,
+    public readonly data: TData,
+  ) {
+    super();
+  }
+}
+
+/**
+ * Extension of [`WithHash`] additionally containing an encoded version of the object.
+ */
+export class WithHashAndBytes<THash extends OpaqueHash, TData> extends WithHash<THash, TData> {
+  constructor(
+    hash: THash,
+    data: TData,
+    public readonly encoded: BytesBlob,
+  ) {
+    super(hash, data);
+  }
 }
