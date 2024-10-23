@@ -22,8 +22,7 @@ if (!isMainThread) {
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
   const machine = importerStateMachine();
   const channel = MessageChannelStateMachine.receiveChannel(machine, parentPort);
-  channel.then((channel) => main(channel));
-  // .catch((e) => logger.error(e));
+  channel.then((channel) => main(channel)).catch((e) => logger.error(e));
 }
 
 /**

@@ -20,13 +20,17 @@ if (!isMainThread) {
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
   const machine = generatorStateMachine();
   const channel = MessageChannelStateMachine.receiveChannel(machine, parentPort);
-  channel.then((channel) => main(channel));
-  // .catch((e) => {
-  //   logger.error(e);
-  //   if (e.stack) {
-  //     logger.error(e.stack);
-  //   }
-  // });
+  channel
+    .then((channel) => main(channel))
+    .catch((e) => {
+      logger.error(e);
+      if (e.stack) {
+        logger.error(e.stack);
+      }
+      if (e.cause) {
+        logger.error(e.cause);
+      }
+    });
 }
 
 /**
