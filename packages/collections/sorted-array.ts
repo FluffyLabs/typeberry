@@ -53,6 +53,11 @@ export class SortedArray<V> {
 
     return -1;
   }
+  /** Return the exact element that's in the array if present. */
+  public get(v: V): V | undefined {
+    const findIdx = this.findIndex(v);
+    return findIdx >= 0 ? this.array[findIdx] : undefined;
+  }
 
   /** Remove one matching element from the collection. */
   public removeOne(v: V) {

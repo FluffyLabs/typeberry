@@ -1,0 +1,14 @@
+{
+  "name": "Map vs SortedArray for small element count",
+  "date": "2024-10-23T20:32:16.451Z",
+  "version": null,
+  "results": null,
+  "fastest": {
+    "name": "Map",
+    "index": 0
+  },
+  "slowest": {
+    "name": "SortedArray",
+    "index": 2
+  }
+}
