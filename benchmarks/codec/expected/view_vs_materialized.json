@@ -5,32 +5,32 @@
   "results": [
     {
       "name": "Get the first field from View",
-      "ops": 2621035.65,
+      "ops": 2631399.21,
       "margin": 5
     },
     {
       "name": "Get the first field from Decoded",
-      "ops": 1447234.7,
+      "ops": 1468670.73,
       "margin": 5
     },
     {
       "name": "Get two fields from View",
-      "ops": 2247821.39,
+      "ops": 1132173.27,
       "margin": 5
     },
     {
       "name": "Get two fields from Decoded",
-      "ops": 1451740.45,
+      "ops": 1463975.46,
       "margin": 5
     },
     {
       "name": "Get only third fields from View",
-      "ops": 1693088.54,
+      "ops": 1675002.75,
       "margin": 5
     },
     {
       "name": "Get only third fields from Decoded",
-      "ops": 1474779.29,
+      "ops": 1481856.33,
       "margin": 5
     }
   ],
