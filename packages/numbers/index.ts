@@ -17,3 +17,28 @@ export type U32 = FixedSizeNumber<4>;
 export type U64 = bigint & WithBytesRepresentation<8>;
 
 // TODO [ToDr] Safe casting / math operations?
+
+/** A result of modulo arithmetic. */
+export type Result<T> = {
+  /** Was there an overflow/underflow? */
+  overflow: boolean;
+  /** What's the value after the operation. */
+  value: T;
+};
+
+/**
+ * Sum all provided U32 values using modulo arithmetic.
+ * NOTE that the overflow may happen multiple times here!
+ */
+export function sumU32(...values: U32[]) {
+  let sum = 0;
+  let overflow = false;
+
+  for (const v of values) {
+    const prev = sum;
+    sum = (sum + v) >>> 0;
+    overflow = overflow || prev > sum;
+  }
+
+  return { overflow, value: sum };
+}
