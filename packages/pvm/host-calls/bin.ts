@@ -1,8 +1,8 @@
+import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import { Program } from "@typeberry/pvm-program";
 import { HostCalls } from "./host-calls";
 import { HostCallsManager } from "./host-calls-manager";
 import { InterpreterInstanceManager } from "./interpreter-instance-manager";
-import {Gas} from "@typeberry/pvm-interpreter/gas";
 
 const hostCalls = new HostCallsManager();
 const pvmInstanceManager = new InterpreterInstanceManager(1);

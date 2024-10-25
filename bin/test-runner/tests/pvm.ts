@@ -1,13 +1,13 @@
 import assert from "node:assert";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Interpreter } from "@typeberry/pvm-interpreter";
+import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder } from "@typeberry/pvm-interpreter/memory";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { type MemoryIndex, createMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { getPageNumber, getStartPageIndex } from "@typeberry/pvm-interpreter/memory/memory-utils";
 import type { PageNumber } from "@typeberry/pvm-interpreter/memory/pages/page-utils";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
-import {Gas} from "@typeberry/pvm-interpreter/gas";
 
 namespace fromJson {
   export const uint8Array = json.fromAny((v) => {
@@ -114,13 +114,7 @@ export async function runPvmTest(testContent: PvmTest) {
   regs.copyFrom(testContent["initial-regs"]);
 
   const pvm = new Interpreter();
-  pvm.reset(
-    testContent.program,
-    testContent["initial-pc"],
-    testContent["initial-gas"] as Gas,
-    regs,
-    memory
-  );
+  pvm.reset(testContent.program, testContent["initial-pc"], testContent["initial-gas"] as Gas, regs, memory);
   pvm.runProgram();
 
   assert.strictEqual(pvm.getGas(), testContent["expected-gas"]);

@@ -1,5 +1,5 @@
-import {U32, U64} from "@typeberry/numbers";
-import {Opaque, WithOpaque} from "@typeberry/utils";
+import type { U32, U64 } from "@typeberry/numbers";
+import type { Opaque } from "@typeberry/utils";
 
 export type Gas = Opaque<U32 | U64, "Gas">;
 export type SmallGas = Opaque<U32, "SmallGas">;
@@ -9,29 +9,38 @@ export function gasCounter(gas: Gas): GasCounter {
 }
 
 export interface GasCounter {
+  /** Return remaining gas. */
+  get(): Gas;
+
+  /** Overwite remaining gas. Prefer add/sub methods instead. */
+  set(g: Gas): void;
+
   /** Returns true if there was an overflow. */
   add(g: SmallGas): void;
 
   /** Returns true if there was an underflow. */
   sub(g: SmallGas): boolean;
-
-  get(): Gas;
 }
 
 export class GasCounterU64 implements GasCounter {
   constructor(private gas: U64) {}
 
-  get(): Gas {
+  set(g: Gas) {
+    this.gas = BigInt(g) as U64;
+  }
+
+  get() {
     return this.gas as Gas;
   }
 
-  add(g: SmallGas): boolean {
-    this.gas = this.gas + BigInt(g) as U64;
+  add(g: SmallGas) {
+    this.gas = (this.gas + BigInt(g)) as U64;
     // TODO [ToDr] Overflow
     return false;
   }
-  sub(g: SmallGas): boolean {
-    this.gas = this.gas - BigInt(g) as U64;
+
+  sub(g: SmallGas) {
+    this.gas = (this.gas - BigInt(g)) as U64;
     return this.gas < 0n;
   }
 }

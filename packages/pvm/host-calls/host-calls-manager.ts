@@ -1,4 +1,4 @@
-import {check} from "@typeberry/utils";
+import { check } from "@typeberry/utils";
 import type { HostCallHandler, HostCallIndex } from "./host-call-handler";
 
 // TODO [ToDr] Rename to just `HostCalls`

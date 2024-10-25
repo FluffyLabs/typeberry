@@ -1,5 +1,5 @@
 import { byteToOpCodeMap } from "./assemblify";
-import {SmallGas} from "./gas";
+import type { SmallGas } from "./gas";
 import { HIGHEST_INSTRUCTION_NUMBER } from "./instruction";
 
 export const instructionGasMap = (() => {

@@ -1,8 +1,8 @@
-import {U32} from "@typeberry/numbers";
-import {GasCounter, SmallGas} from "@typeberry/pvm-interpreter/gas";
+import type { U32 } from "@typeberry/numbers";
+import type { GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
 import type { Memory } from "@typeberry/pvm-interpreter/memory";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
-import {Opaque} from "@typeberry/utils";
+import type { Opaque } from "@typeberry/utils";
 
 /** Strictly-typed host call index. */
 export type HostCallIndex = Opaque<U32, "HostCallIndex">;

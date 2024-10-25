@@ -1,10 +1,11 @@
-import {U32} from "@typeberry/numbers";
+import type { U32 } from "@typeberry/numbers";
 import { ArgsDecoder } from "./args-decoder/args-decoder";
 import { createResults } from "./args-decoder/args-decoding-results";
 import { ArgumentType } from "./args-decoder/argument-type";
 import { instructionArgumentTypeMap } from "./args-decoder/instruction-argument-type-map";
 import { assemblify } from "./assemblify";
 import { BasicBlocks } from "./basic-blocks";
+import { type Gas, type GasCounter, gasCounter } from "./gas";
 import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
 import { InstructionResult } from "./instruction-result";
@@ -44,7 +45,6 @@ import { ProgramDecoder } from "./program-decoder/program-decoder";
 import { Registers } from "./registers";
 import { Result } from "./result";
 import { Status } from "./status";
-import {Gas, GasCounter, gasCounter} from "./gas";
 
 export class Interpreter {
   private registers = new Registers();

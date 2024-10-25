@@ -1,15 +1,15 @@
 import { Logger } from "@typeberry/logger";
 import type { Interpreter, Memory } from "@typeberry/pvm-interpreter";
+import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import { createMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { getPageNumber, getStartPageIndexFromPageNumber } from "@typeberry/pvm-interpreter/memory/memory-utils";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { check } from "@typeberry/utils";
+import type { HostCallIndex } from "./host-call-handler";
 import type { HostCallsManager } from "./host-calls-manager";
 import type { InterpreterInstanceManager } from "./interpreter-instance-manager";
-import {HostCallIndex} from "./host-call-handler";
-import {Gas} from "@typeberry/pvm-interpreter/gas";
 
 const logger = Logger.new(__filename, "pvm-host-calls");
 

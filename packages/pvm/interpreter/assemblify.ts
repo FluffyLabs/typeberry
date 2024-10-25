@@ -1,4 +1,4 @@
-import {SmallGas} from "./gas";
+import type { SmallGas } from "./gas";
 import { Instruction } from "./instruction";
 import type { Mask } from "./program-decoder/mask";
 
