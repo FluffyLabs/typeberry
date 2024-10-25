@@ -37,7 +37,7 @@ export function sumU32(...values: U32[]) {
   for (const v of values) {
     const prev = sum;
     sum = (sum + v) >>> 0;
-    overflow = overflow || prev > sum;
+    overflow ||= prev > sum;
   }
 
   return { overflow, value: sum };
