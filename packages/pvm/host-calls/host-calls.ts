@@ -26,7 +26,7 @@ export class HostCalls {
       const maybeAddress = regs.asUnsigned[10];
       const maybeLength = regs.asUnsigned[11];
       if (!(maybeAddress >= 0 && maybeLength > 0 && maybeAddress + maybeLength < 2 ** 32)) {
-        // TODO [ToDr] Should this rather be a panic? Check GP.
+        // https://graypaper-reader.netlify.app/#/293bf5a/296c02296c02
         logger.error("Invalid memory range to return.");
         return new Uint8Array(0);
       }
@@ -40,7 +40,7 @@ export class HostCalls {
       for (let i = firstPage; i <= lastPage; i++) {
         const pageDump = memory.getPageDump(i);
         if (!pageDump) {
-          // TODO [ToDr] Should this rather be a panic? Check GP.
+          // https://graypaper-reader.netlify.app/#/293bf5a/296c02296c02
           logger.error("Returning data from a non-existent page.");
           return new Uint8Array(0);
         }
