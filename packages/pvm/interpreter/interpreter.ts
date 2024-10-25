@@ -1,3 +1,4 @@
+import {U32} from "@typeberry/numbers";
 import { ArgsDecoder } from "./args-decoder/args-decoder";
 import { createResults } from "./args-decoder/args-decoding-results";
 import { ArgumentType } from "./args-decoder/argument-type";
@@ -43,13 +44,14 @@ import { ProgramDecoder } from "./program-decoder/program-decoder";
 import { Registers } from "./registers";
 import { Result } from "./result";
 import { Status } from "./status";
+import {Gas, GasCounter, gasCounter} from "./gas";
 
 export class Interpreter {
   private registers = new Registers();
   private code = new Uint8Array();
   private mask = Mask.empty();
   private pc = 0;
-  private gas = 0;
+  private gas = gasCounter(0 as Gas);
   private argsDecoder: ArgsDecoder;
   private threeRegsDispatcher: ThreeRegsDispatcher;
   private twoRegsOneImmDispatcher: TwoRegsOneImmDispatcher;
@@ -108,14 +110,14 @@ export class Interpreter {
     this.oneImmDispatcher = new OneImmDispatcher(hostCallOps);
   }
 
-  reset(rawProgram: Uint8Array, pc: number, gas: number, maybeRegisters?: Registers, maybeMemory?: Memory) {
+  reset(rawProgram: Uint8Array, pc: number, gas: Gas, maybeRegisters?: Registers, maybeMemory?: Memory) {
     const programDecoder = new ProgramDecoder(rawProgram);
     this.code = programDecoder.getCode();
     this.mask = programDecoder.getMask();
     this.jumpTable = programDecoder.getJumpTable();
 
     this.pc = pc;
-    this.gas = gas;
+    this.gas = gasCounter(gas);
     this.argsDecoder.reset(this.code, this.mask);
     this.basicBlocks.reset(this.code, this.mask);
     this.instructionResult.reset();
@@ -142,12 +144,6 @@ export class Interpreter {
     while (this.nextStep() === Status.OK) {}
   }
 
-  resume(nextPc: number, gas: number) {
-    this.pc = nextPc;
-    this.gas = gas;
-    this.runProgram();
-  }
-
   nextStep() {
     /**
      * We have two options to handle an invalid instruction:
@@ -158,9 +154,9 @@ export class Interpreter {
      */
     const currentInstruction = this.code[this.pc] ?? Instruction.TRAP;
 
-    this.gas -= instructionGasMap[currentInstruction];
+    const underflow = this.gas.sub(instructionGasMap[currentInstruction]);
 
-    if (this.gas < 0) {
+    if (underflow) {
       this.status = Status.OOG;
       return this.status;
     }
@@ -211,7 +207,8 @@ export class Interpreter {
     if (this.instructionResult.status !== null) {
       // All abnormal terminations should be interpreted as TRAP and we should subtract the gas. In case of FAULT we have to do it manually at the very end.
       if (this.instructionResult.status === Result.FAULT) {
-        this.gas -= instructionGasMap[Instruction.TRAP];
+        // TODO [ToDr] underflow?
+        this.gas.sub(instructionGasMap[Instruction.TRAP]);
       }
 
       switch (this.instructionResult.status) {
@@ -243,11 +240,15 @@ export class Interpreter {
     return this.pc;
   }
 
-  getNextPC() {
-    return this.instructionResult.nextPc;
+  setNextPC(nextPc: number) {
+    this.pc = nextPc;
   }
 
-  getGas() {
+  getGas(): Gas {
+    return this.gas.get();
+  }
+
+  getGasCounter(): GasCounter {
     return this.gas;
   }
 
@@ -255,8 +256,8 @@ export class Interpreter {
     return this.status;
   }
 
-  getExitParam() {
-    return this.instructionResult.exitParam;
+  getExitParam(): U32 {
+    return this.instructionResult.exitParam as U32;
   }
 
   getMemory() {

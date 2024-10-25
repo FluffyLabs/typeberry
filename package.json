@@ -33,7 +33,8 @@
     "tools/ipc2rpc",
     "workers/block-generator",
     "workers/generic",
-    "workers/importer"
+    "workers/importer",
+    "packages/pvm/host-calls-jam"
   ],
   "engines": {
     "node": ">=22",

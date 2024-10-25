@@ -8,6 +8,8 @@ import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { check } from "@typeberry/utils";
 import type { HostCallsManager } from "./host-calls-manager";
 import type { InterpreterInstanceManager } from "./interpreter-instance-manager";
+import {HostCallIndex} from "./host-call-handler";
+import {Gas} from "@typeberry/pvm-interpreter/gas";
 
 const logger = Logger.new(__filename, "pvm-host-calls");
 
@@ -73,18 +75,17 @@ export class HostCalls {
         "We know that the exit param is not null, because the status is `Status.HOST`",
       );
       const hostCallIndex = pvmInstance.getExitParam() ?? -1;
-      const nextPc = pvmInstance.getNextPC();
-      const gas = pvmInstance.getGas();
+      const gas = pvmInstance.getGasCounter();
       const regs = pvmInstance.getRegisters();
       const memory = pvmInstance.getMemory();
-      const hostCall = this.hostCalls.get(hostCallIndex);
+      const hostCall = this.hostCalls.get(hostCallIndex as HostCallIndex);
       if (!hostCall) {
         logger.warn(`host call ${hostCallIndex} is not implemented!`);
         return Status.PANIC;
       }
       await hostCall.execute(gas, regs, memory);
 
-      pvmInstance.resume(nextPc, gas);
+      pvmInstance.runProgram();
       status = pvmInstance.getStatus();
     }
   }
@@ -92,7 +93,7 @@ export class HostCalls {
   async runProgram(
     rawProgram: Uint8Array,
     initialPc: number,
-    initialGas: number,
+    initialGas: Gas,
     maybeRegisters?: Registers,
     maybeMemory?: Memory,
   ) {

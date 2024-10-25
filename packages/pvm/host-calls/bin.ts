@@ -2,6 +2,7 @@ import { Program } from "@typeberry/pvm-program";
 import { HostCalls } from "./host-calls";
 import { HostCallsManager } from "./host-calls-manager";
 import { InterpreterInstanceManager } from "./interpreter-instance-manager";
+import {Gas} from "@typeberry/pvm-interpreter/gas";
 
 const hostCalls = new HostCallsManager();
 const pvmInstanceManager = new InterpreterInstanceManager(1);
@@ -26,5 +27,5 @@ const args = new Uint8Array();
 const { code, memory, registers } = Program.fromSpi(program, args);
 
 (async () => {
-  await pvmHostCallExtension.runProgram(code, 5, 1000, registers, memory);
+  await pvmHostCallExtension.runProgram(code, 5, 1000 as Gas, registers, memory);
 })();

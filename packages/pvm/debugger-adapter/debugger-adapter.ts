@@ -33,8 +33,12 @@ export class DebuggerAdapter {
     this.pvm.reset(rawProgram, pc, gas, maybeRegisters, maybeMemory);
   }
 
-  resume(nextPc: number, gas: number) {
-    this.pvm.resume(nextPc, gas);
+  setNextPC(nextPc: number) {
+    this.pvm.setNextPC(nextPc);
+  }
+
+  setGasLeft(gas: number) {
+    // TODO[ToDr]
   }
 
   getMemoryPage(pageNumber: number): null | Uint8Array {
