@@ -47,7 +47,7 @@ module.exports = () =>
 
       for (let k = 0; k < READS; k += 1) {
         for (const field of keys) {
-          map.get({ key: field });
+          map.findExact({ key: field });
         }
       }
     }),
