@@ -4,16 +4,19 @@ import { type Socket, createServer } from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import type { BytesBlob } from "@typeberry/bytes";
+import type { HeaderHash } from "@typeberry/block";
+import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
-import { MessageHandler, type MessageSender } from "./handler";
+import type { TrieNode } from "@typeberry/trie/nodes";
+import { MessageHandler, type MessageSender, handleFragmentation, sendWithLengthPrefix } from "./handler";
+import * as ce129 from "./protocol/ce-129-state-request";
 import * as up0 from "./protocol/up-0-block-announcement";
 
 export class MessageSenderAdapter implements MessageSender {
   constructor(private readonly socket: Socket) {}
 
   send(data: BytesBlob): void {
-    this.socket.write(data.buffer);
+    sendWithLengthPrefix(this.socket, data.buffer);
   }
 
   close(): void {
@@ -21,7 +24,16 @@ export class MessageSenderAdapter implements MessageSender {
   }
 }
 
-export function startIpcServer(announcements: EventEmitter, getHandshake: () => up0.Handshake) {
+export function startIpcServer(
+  announcements: EventEmitter,
+  getHandshake: () => up0.Handshake,
+  getBoundaryNodes: (hash: HeaderHash, startKey: Bytes<ce129.KEY_SIZE>, endKey: Bytes<ce129.KEY_SIZE>) => TrieNode[],
+  getKeyValuePairs: (
+    hash: HeaderHash,
+    startKey: Bytes<ce129.KEY_SIZE>,
+    endKey: Bytes<ce129.KEY_SIZE>,
+  ) => ce129.KeyValuePair[],
+) {
   // Define the path for the socket or named pipe
   const isWindows = os.platform() === "win32";
   const socketPath = isWindows ? "\\\\.\\pipe\\typeberry" : path.join(os.tmpdir(), "typeberry.ipc");
@@ -33,6 +45,7 @@ export function startIpcServer(announcements: EventEmitter, getHandshake: () => 
     logger.log("Client connected");
     const messageHandler = new MessageHandler(new MessageSenderAdapter(socket));
     messageHandler.registerHandlers(new up0.Handler(getHandshake, () => {}));
+    messageHandler.registerHandlers(new ce129.Handler(true, getBoundaryNodes, getKeyValuePairs));
 
     // Send block announcements
     const listener = (announcement: unknown) => {
@@ -47,14 +60,17 @@ export function startIpcServer(announcements: EventEmitter, getHandshake: () => 
     announcements.on("announcement", listener);
 
     // Handle incoming data from the client
-    socket.on("data", (data: Buffer) => {
-      try {
-        messageHandler.onSocketMessage(data);
-      } catch (e) {
-        logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
-        socket.end();
-      }
-    });
+    socket.on(
+      "data",
+      handleFragmentation((data: Buffer) => {
+        try {
+          messageHandler.onSocketMessage(data);
+        } catch (e) {
+          logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
+          socket.end();
+        }
+      }),
+    );
 
     // Handle client disconnection
     socket.on("end", () => {

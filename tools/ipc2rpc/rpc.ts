@@ -1,25 +1,62 @@
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
+import type { JSONRPCID, JSONRPCSuccessResponse } from "./../../node_modules/json-rpc-2.0/dist/models.d";
 
 import type { Header } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import * as ce129 from "@typeberry/ext-ipc/protocol/ce-129-state-request";
+import { hashString } from "@typeberry/hash";
 import { JSONRPCServer } from "json-rpc-2.0";
+import type { MessageHandler } from "../../extensions/ipc/handler";
 
 export interface Database {
   bestHeader: Header | null;
 }
 
-export function startRpc(db: Database) {
+export function startRpc(db: Database, client: MessageHandler) {
   const server = new JSONRPCServer();
   server.addMethod("jam_bestHeader", () => {
     return db.bestHeader;
   });
 
+  server.addMethodAdvanced("jam_getBalance", (request) => {
+    return new Promise((resolve) => {
+      client.withNewStream<typeof ce129.STREAM_KIND, ce129.Handler>(ce129.STREAM_KIND, (handler, sender) => {
+        if (!db.bestHeader) return;
+
+        const key: string = request.params.accountId;
+        const handleResponse = (response: ce129.StateResponse) => {
+          const rpcResponse: JSONRPCSuccessResponse = {
+            jsonrpc: request.jsonrpc,
+            id: request.id as JSONRPCID,
+            result: response.keyValuePairs[0].value,
+          };
+          resolve(rpcResponse);
+        };
+
+        handler.getStateByKey(
+          sender,
+          db.bestHeader.parentHeaderHash,
+          Bytes.fromBlob(hashString(key).raw.subarray(0, 31), 31),
+          handleResponse,
+        );
+      });
+    });
+  });
+
   const httpServer = http.createServer((req, res) => {
     if (req.method !== "POST") {
-      res.writeHead(200);
-      fs.createReadStream(path.join(__dirname, "index.html")).pipe(res);
+      const isOptions = req.method !== "OPTIONS";
+      res.writeHead(isOptions ? 204 : 200, {
+        "Access-Control-Allow-Methods": "POST",
+        "access-control-allow-origin": "*",
+      });
+      if (isOptions) {
+        fs.createReadStream(path.join(__dirname, "index.html")).pipe(res);
+      } else {
+        res.end();
+      }
       return;
     }
 

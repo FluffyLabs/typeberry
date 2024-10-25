@@ -1,8 +1,8 @@
-import type { BytesBlob } from "@typeberry/bytes";
+import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import type { U16, U32 } from "@typeberry/numbers";
+import { type U16, type U32, sumU32 } from "@typeberry/numbers";
 import { type Opaque, WithDebug } from "@typeberry/utils";
 import type { ServiceGas, ServiceId } from "./common";
 import type { CodeHash } from "./hash";
@@ -55,6 +55,51 @@ export class WorkItemExtrinsicSpec extends WithDebug {
   ) {
     super();
   }
+}
+/**
+ * Extrinsics that are needed by [`WorkItem`]s and are specified via [`WorkItemExtrinsicSpec`].
+ */
+export type WorkItemExtrinsics = KnownSizeArray<
+  Bytes<U32>,
+  "Count of all extrinsics within work items in a work package"
+>;
+/**
+ * To encode/decode extrinsics that are specified via [`WorkItemExtrinsicSpec`]
+ * we need to know their lenghts. Hence this is created dynamically.
+ *
+ * TODO [ToDr] Consider passing a hash and exit early on hash mismatch?
+ */
+export function workItemExtrinsicsCodec(workItems: WorkItem[]) {
+  const extrinsicLengths = Array<U32>();
+  for (const item of workItems) {
+    for (const extrinsic of item.extrinsic) {
+      extrinsicLengths.push(extrinsic.len);
+    }
+  }
+  const sum = sumU32(...extrinsicLengths);
+  if (sum.overflow) {
+    throw new Error("Unable to create a decoder, because the length of extrinsics overflows!");
+  }
+
+  return codec.custom<WorkItemExtrinsics>(
+    {
+      name: "WorkItemExtrinsics",
+      sizeHintBytes: sum.value,
+    },
+    (e, val) => {
+      for (const bytes of val) {
+        e.bytes(bytes);
+      }
+    },
+    (d) => {
+      const extrinsics = Array<Bytes<U32>>();
+      for (const len of extrinsicLengths) {
+        const bytes = d.bytes(len);
+        extrinsics.push(bytes);
+      }
+      return extrinsics as WorkItemExtrinsics;
+    },
+  );
 }
 
 /**

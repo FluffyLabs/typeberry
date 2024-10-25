@@ -8,7 +8,9 @@ import type { StreamHandler, StreamSender } from "../handler";
 import type { StreamId, StreamKind } from "./stream";
 
 /**
- * JAM-SNP UP0 stream.
+ * JAMNP-S UP 0 stream.
+ *
+ * Block annoucements.
  *
  * https://github.com/zdave-parity/jam-np/blob/main/simple.md#up-0-block-announcement
  */
