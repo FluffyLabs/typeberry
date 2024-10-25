@@ -7,6 +7,7 @@ import { type MemoryIndex, createMemoryIndex } from "@typeberry/pvm-interpreter/
 import { getPageNumber, getStartPageIndex } from "@typeberry/pvm-interpreter/memory/memory-utils";
 import type { PageNumber } from "@typeberry/pvm-interpreter/memory/pages/page-utils";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
+import {Gas} from "@typeberry/pvm-interpreter/gas";
 
 namespace fromJson {
   export const uint8Array = json.fromAny((v) => {
@@ -113,7 +114,13 @@ export async function runPvmTest(testContent: PvmTest) {
   regs.copyFrom(testContent["initial-regs"]);
 
   const pvm = new Interpreter();
-  pvm.reset(testContent.program, testContent["initial-pc"], testContent["initial-gas"], regs, memory);
+  pvm.reset(
+    testContent.program,
+    testContent["initial-pc"],
+    testContent["initial-gas"] as Gas,
+    regs,
+    memory
+  );
   pvm.runProgram();
 
   assert.strictEqual(pvm.getGas(), testContent["expected-gas"]);

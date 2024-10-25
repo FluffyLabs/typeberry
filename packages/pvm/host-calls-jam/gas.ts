@@ -1,7 +1,7 @@
 import { HostCallHandler } from "@typeberry/pvm-host-calls";
 import {Registers, Memory} from "../debugger-adapter";
-import {U32} from "@typeberry/numbers";
 import {HostCallIndex} from "@typeberry/pvm-host-calls/host-call-handler";
+import {GasCounter, SmallGas} from "@typeberry/pvm-interpreter/gas";
 
 /**
  * Return remaining gas to the PVM.
@@ -10,9 +10,9 @@ import {HostCallIndex} from "@typeberry/pvm-host-calls/host-call-handler";
  */
 export class Gas implements HostCallHandler {
   index = 0 as HostCallIndex;
-  gasCost = 10;
+  gasCost = 10 as SmallGas;
 
-  execute(gas: number, regs: Registers, memory: Memory): Promise<void> {
+  execute(gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
     throw new Error('todo');
   }
 }

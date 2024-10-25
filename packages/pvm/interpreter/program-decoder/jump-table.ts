@@ -40,4 +40,8 @@ export class JumpTable {
   static empty() {
     return new JumpTable(0, new Uint8Array());
   }
+
+  copyFrom(jt: JumpTable) {
+    this.indices = jt.indices;
+  }
 }

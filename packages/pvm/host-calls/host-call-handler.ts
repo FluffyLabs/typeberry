@@ -13,7 +13,7 @@ export interface HostCallHandler {
   index: HostCallIndex;
 
   /** The gas cost of invokation of that host call. */
-  gastCost: SmallGas | ((reg: Registers) => SmallGas);
+  gasCost: SmallGas | ((reg: Registers) => SmallGas);
 
   /**
    * Actually execute the host call.

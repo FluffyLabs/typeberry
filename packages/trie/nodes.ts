@@ -57,8 +57,10 @@ export enum NodeType {
  *  - a hash of the value
  */
 export class TrieNode {
-  /** Exactly 512 bits / 64 bytes */
-  readonly data: Uint8Array = new Uint8Array(64);
+  constructor(
+    /** Exactly 512 bits / 64 bytes */
+    public readonly data: Uint8Array = new Uint8Array(64),
+  ) {}
 
   /** Returns the type of the node */
   getNodeType(): NodeType {

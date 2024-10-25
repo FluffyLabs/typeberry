@@ -114,10 +114,11 @@ export class Interpreter {
     const programDecoder = new ProgramDecoder(rawProgram);
     this.code = programDecoder.getCode();
     this.mask = programDecoder.getMask();
-    this.jumpTable = programDecoder.getJumpTable();
+    this.jumpTable.copyFrom(programDecoder.getJumpTable());
 
     this.pc = pc;
     this.gas = gasCounter(gas);
+    this.status = Status.OK;
     this.argsDecoder.reset(this.code, this.mask);
     this.basicBlocks.reset(this.code, this.mask);
     this.instructionResult.reset();

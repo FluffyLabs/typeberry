@@ -1,4 +1,5 @@
 import { Interpreter, type Memory } from "@typeberry/pvm-interpreter";
+import {Gas} from "@typeberry/pvm-interpreter/gas";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 
@@ -30,7 +31,7 @@ export class DebuggerAdapter {
   }
 
   reset(rawProgram: Uint8Array, pc: number, gas: number, maybeRegisters?: Registers, maybeMemory?: Memory) {
-    this.pvm.reset(rawProgram, pc, gas, maybeRegisters, maybeMemory);
+    this.pvm.reset(rawProgram, pc, gas as Gas, maybeRegisters, maybeMemory);
   }
 
   setNextPC(nextPc: number) {

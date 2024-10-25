@@ -1,7 +1,9 @@
 import { EventEmitter } from "node:events";
 import { HASH_SIZE, type Header, type HeaderHash, type TimeSlot, type WithHash } from "@typeberry/block";
-import { Bytes } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { hashString } from "@typeberry/hash";
 import type { Listener } from "@typeberry/state-machine";
+import { KEY_SIZE, KeyValuePair } from "./protocol/ce-129-state-request";
 import { Announcement, Handshake, HashAndSlot } from "./protocol/up-0-block-announcement";
 import { startIpcServer } from "./server";
 
@@ -27,7 +29,24 @@ export function startExtension(api: ExtensionApi) {
     return new Handshake(final, []);
   };
 
-  const ipcServer = startIpcServer(announcements, getHandshake);
+  const getBoundaryNodes = () => {
+    return [];
+  };
+
+  const getKeyValuePairs = (_hash: HeaderHash, startKey: Bytes<KEY_SIZE>) => {
+    let value = BytesBlob.fromNumbers([255, 255, 0, 0]);
+    if (
+      Bytes.fromBlob(
+        hashString("0x83bd3bde264a79a2e67c487696c1d7f0b549da89").raw.subarray(0, KEY_SIZE),
+        KEY_SIZE,
+      ).isEqualTo(startKey)
+    ) {
+      value = BytesBlob.fromNumbers([255, 255, 255, 0]);
+    }
+    return [new KeyValuePair(startKey, value)];
+  };
+
+  const ipcServer = startIpcServer(announcements, getHandshake, getBoundaryNodes, getKeyValuePairs);
 
   return () => {
     // stop accepting new connections
