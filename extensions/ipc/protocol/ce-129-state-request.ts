@@ -96,16 +96,17 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
       startKey: Bytes<KEY_SIZE>,
       endKey: Bytes<KEY_SIZE>,
     ) => KeyValuePair[],
-  ) {}
+  ) {
+    if (isServer && (!getBoundaryNodes || !getKeyValuePairs)) {
+      throw new Error("getBoundaryNodes and getKeyValuePairs are required in server mode.");
+    }
+  }
 
   onStreamMessage(sender: StreamSender, message: BytesBlob): void {
     if (this.isServer) {
       logger.info(`[${sender.streamId}][server]: Received request.`);
-      if (!this.getBoundaryNodes || !this.getKeyValuePairs) {
-        const msg = "Tried running in server mode without defining data getters.";
-        logger.error(msg);
-        throw new Error(msg);
-      }
+
+      if (!this.getBoundaryNodes || !this.getKeyValuePairs) return;
 
       const request = Decoder.decodeObject(StateRequest.Codec, message);
 
@@ -142,7 +143,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
     onResponse: (state: StateResponse) => void,
   ) {
     if (this.onResponse.has(sender.streamId)) {
-       throw new Error('It is disallowed to use the same stream for multiple requests.');
+      throw new Error("It is disallowed to use the same stream for multiple requests.");
     }
     this.onResponse.set(sender.streamId, onResponse);
     sender.send(Encoder.encodeObject(StateRequest.Codec, new StateRequest(hash, key, key, 4096 as U32)));
