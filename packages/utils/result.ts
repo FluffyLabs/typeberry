@@ -6,7 +6,7 @@ export class Result<Ok, Error> {
     public readonly ok?: Ok,
     public readonly error?: Error,
   ) {
-    check(ok === error && ok === undefined, "Either `ok` or `error` has to be provided.");
+    check(ok === undefined && error === undefined, "Either `ok` or `error` has to be provided.");
     check(ok !== undefined && error !== undefined, "Can't have both `ok` AND `error`.");
   }
 
