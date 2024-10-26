@@ -56,6 +56,10 @@ export class WriteablePage extends MemoryPage {
     return null;
   }
 
+  isWriteable() {
+    return true;
+  }
+
   getPageDump() {
     return this.view;
   }

@@ -1,3 +1,4 @@
+import type { HASH_SIZE, ServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { hashBytes } from "@typeberry/hash";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
@@ -6,23 +7,52 @@ import type { GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
 import type { Memory } from "@typeberry/pvm-interpreter/memory";
 import { createMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
+import { HostCallResult } from "./results";
+
+/** Account data interface for Lookup host call. */
+export interface Account {
+  // NOTE: a special case of `2**32 - 1` should be handled as "current service"
+  lookup(serviceId: ServiceId, hash: Bytes<typeof HASH_SIZE>): Promise<BytesBlob | null>;
+}
+
+const IN_OUT_REG = 7;
 
 export class Lookup implements HostCallHandler {
   index = 1 as HostCallIndex;
   gasCost = 10 as SmallGas;
 
-  execute(gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
-    // h_0
-    const hashStartAddress = regs.asUnsigned[8];
-    // b_0
-    const destinationStart = regs.asUnsigned[9];
-    // b_z
-    const destinationEnd = regs.asUnsigned[10];
+  constructor(private readonly account: Account) {}
 
-    const hash = Bytes.zero(32);
-    memory.loadInto(hash.raw, createMemoryIndex(hashStartAddress));
+  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
+    // a
+    const serviceId = regs.asUnsigned[IN_OUT_REG] as ServiceId;
+    // h_0
+    const hashStartAddress = createMemoryIndex(regs.asUnsigned[8]);
+    // b_0
+    const destinationStart = createMemoryIndex(regs.asUnsigned[9]);
+    // b_z
+    const destinationLen = regs.asUnsigned[10];
+
+    const key = Bytes.zero(32);
+    const hashLoadingFault = memory.loadInto(key.raw, hashStartAddress);
+    const destinationWriteable = memory.isWriteable(destinationStart, destinationLen);
+    // we return OOB in case the destination is not writeable or the key can't be loaded.
+    if (hashLoadingFault || !destinationWriteable) {
+      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+      return Promise.resolve();
+    }
     // TODO [ToDr] Remove conversion, after #141
-    const keyHash = hashBytes(BytesBlob.fromBlob(hash.raw));
+    const keyHash = hashBytes(BytesBlob.fromBlob(key.raw));
+    const value = await this.account.lookup(serviceId, keyHash);
+
+    if (value === null) {
+      regs.asUnsigned[IN_OUT_REG] = HostCallResult.NONE;
+      return Promise.resolve();
+    }
+
+    // copy value to the memory and set the length to register 7
+    memory.storeFrom(destinationStart, value.buffer.subarray(0, destinationLen));
+    regs.asUnsigned[IN_OUT_REG] = value.buffer.length;
     return Promise.resolve();
   }
 }

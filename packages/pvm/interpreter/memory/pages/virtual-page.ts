@@ -56,6 +56,14 @@ export class VirtualPage extends MemoryPage {
     this.chunks.sort((a, b) => a[0] - b[0]);
   }
 
+  // TODO [ToDr] Optimize
+  isWriteable(startIndex: PageIndex, length: number) {
+    const dump = this.getPageDump();
+    const v = dump.subarray(startIndex, startIndex + length);
+
+    return this.storeFrom(startIndex, v) === null;
+  }
+
   storeFrom(startIndex: PageIndex, dataToStore: Uint8Array) {
     // find the first chunk to load from
     let chunkIndex = this.chunks.findIndex(

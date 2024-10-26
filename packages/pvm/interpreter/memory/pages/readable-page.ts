@@ -28,6 +28,10 @@ export class ReadablePage extends MemoryPage {
     return new PageFault(address);
   }
 
+  isWriteable() {
+    return false;
+  }
+
   getPageDump() {
     return this.data;
   }

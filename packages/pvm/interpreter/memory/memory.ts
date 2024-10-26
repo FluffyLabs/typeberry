@@ -87,6 +87,40 @@ export class Memory {
   }
 
   /**
+   * Check if given memory slice `[destinationStart, destinationEnd)` is valid
+   * and writeable.
+   *
+   * Returns false otherwise.
+   */
+  isWriteable(destinationStart: MemoryIndex, length: number): boolean {
+    // TODO [ToDr] potential edge case - is `0`-length slice writeable whereever?
+    // TODO [ToDr] Handle U32 overflow!
+    const destinationEnd = createMemoryIndex(destinationStart + length);
+    const pageOffsetZero = createPageIndex(0);
+
+    const startPage = getPageNumber(destinationStart);
+    const lastPage = getPageNumber(destinationEnd);
+    let pageOffset = createPageIndex(destinationStart - getStartPageIndexFromPageNumber(startPage));
+    for (let i = startPage; i <= lastPage; i++) {
+      const page = this.memory.get(i);
+      if (!page) {
+        return false;
+      }
+
+      const pageOffsetEnd =
+        i === lastPage ? createPageIndex(destinationEnd - getStartPageIndexFromPageNumber(lastPage)) : PAGE_SIZE;
+      const len = pageOffsetEnd - pageOffset;
+      if (!page.isWriteable(pageOffset, len)) {
+        return false;
+      }
+      // reset page offset.
+      pageOffset = pageOffsetZero;
+    }
+
+    return true;
+  }
+
+  /**
    * Read content of the memory at `[address, address + result.length)` and
    * write the result into the `result` buffer.
    *

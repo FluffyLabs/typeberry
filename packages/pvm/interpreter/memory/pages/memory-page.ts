@@ -11,6 +11,9 @@ export abstract class MemoryPage {
     this.start = getStartPageIndexFromPageNumber(pageNumber);
   }
 
+  /** Returns `true` if given `[pageIndex, pageStart + length)` range is writeable. */
+  abstract isWriteable(pageIndex: PageIndex, length: number): boolean;
+
   /**
    * Load exactly `length` bytes from memory page, starting at index `address`
    * into the `res` array.
