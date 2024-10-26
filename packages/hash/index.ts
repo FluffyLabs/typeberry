@@ -75,9 +75,10 @@ export class HashableBlob<THash extends Bytes<typeof HASH_SIZE> = Bytes<typeof H
 }
 
 /** Hash given blob of bytes. */
-export function hashBytes(blob: BytesBlob, allocator: HashAllocator = defaultAllocator) {
+export function hashBytes(blob: BytesBlob | Uint8Array, allocator: HashAllocator = defaultAllocator) {
   const hasher = blake2b(HASH_SIZE);
-  hasher?.update(blob.buffer);
+  const bytes = blob instanceof BytesBlob ? blob.buffer : blob;
+  hasher?.update(bytes);
   const out = allocator.emptyHash();
   hasher?.digest(out.raw);
   return out;
