@@ -10,7 +10,7 @@ import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { HostCallResult } from "./results";
 
 /** Account data interface for Lookup host call. */
-export interface Account {
+export interface Accounts {
   // NOTE: a special case of `2**32 - 1` should be handled as "current service"
   lookup(serviceId: ServiceId, hash: Bytes<typeof HASH_SIZE>): Promise<BytesBlob | null>;
 }
@@ -21,20 +21,20 @@ export class Lookup implements HostCallHandler {
   index = 1 as HostCallIndex;
   gasCost = 10 as SmallGas;
 
-  constructor(private readonly account: Account) {}
+  constructor(private readonly account: Accounts) {}
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
     // a
     const serviceId = regs.asUnsigned[IN_OUT_REG] as ServiceId;
     // h_0
-    const hashStartAddress = createMemoryIndex(regs.asUnsigned[8]);
+    const keyStartAddress = createMemoryIndex(regs.asUnsigned[8]);
     // b_0
     const destinationStart = createMemoryIndex(regs.asUnsigned[9]);
     // b_z
     const destinationLen = regs.asUnsigned[10];
 
     const key = Bytes.zero(32);
-    const hashLoadingFault = memory.loadInto(key.raw, hashStartAddress);
+    const hashLoadingFault = memory.loadInto(key.raw, keyStartAddress);
     const destinationWriteable = memory.isWriteable(destinationStart, destinationLen);
     // we return OOB in case the destination is not writeable or the key can't be loaded.
     if (hashLoadingFault || !destinationWriteable) {

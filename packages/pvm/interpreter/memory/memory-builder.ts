@@ -19,6 +19,11 @@ export class MemoryBuilder {
     }
   }
 
+  /**
+   * Create a new virtual writeable chunk between `[start, end)` containing given data.
+   *
+   * Note the range might be bigger than the provided data - in that case the rest is filled with 0.
+   */
   setWriteable(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
     this.ensureNotFinalized();
     check(start < end, "end has to be bigger than start");
@@ -42,6 +47,11 @@ export class MemoryBuilder {
     return this;
   }
 
+  /**
+   * Create a new virtual readable chunk between `[start, end)` containing given data.
+   *
+   * Note the range might be bigger than the provided data - in that case the rest is filled with 0.
+   */
   setReadable(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
     this.ensureNotFinalized();
     check(start < end, "end has to be bigger than start");
@@ -65,6 +75,15 @@ export class MemoryBuilder {
     return this;
   }
 
+  /**
+   * Create entire readable pages to handle the `[start, end)` range.
+   *
+   * Note that both `start` and `end` must be multiple of the `PAGE_SIZE`, i.e.
+   * they need to be the start indices of the pages.
+   *
+   * The data passed will be placed at `start`, but might be shorter than the requested range,
+   * prepend it with zeros if you don't wish to have it at the beginning of the page.
+   */
   setReadablePages(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
     this.ensureNotFinalized();
     check(start < end, "end has to be bigger than start");
@@ -85,6 +104,15 @@ export class MemoryBuilder {
     return this;
   }
 
+  /**
+   * Create entire writeable pages to handle the `[start, end)` range.
+   *
+   * Note that both `start` and `end` must be multiple of the `PAGE_SIZE`, i.e.
+   * they need to be the start indices of the pages.
+   *
+   * The data passed will be placed at `start`, but might be shorter than the requested range,
+   * prepend it with zeros if you don't wish to have it at the beginning of the page.
+   */
   setWriteablePages(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
     this.ensureNotFinalized();
     check(start < end, "end has to be bigger than start");
