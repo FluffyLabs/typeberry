@@ -4,10 +4,15 @@ import type { Opaque } from "@typeberry/utils";
 export type Gas = Opaque<U32 | U64, "Gas">;
 export type SmallGas = Opaque<U32, "SmallGas">;
 
+/** Create a new gas counter instance depending on the gas value. */
 export function gasCounter(gas: Gas): GasCounter {
   return new GasCounterU64(BigInt(gas) as U64);
 }
 
+/** An abstraction over gas counter.
+ *
+ * It can be optimized to use numbers instead of bigint in case of small gas.
+ */
 export interface GasCounter {
   /** Return remaining gas. */
   get(): Gas;
@@ -22,7 +27,7 @@ export interface GasCounter {
   sub(g: SmallGas): boolean;
 }
 
-export class GasCounterU64 implements GasCounter {
+class GasCounterU64 implements GasCounter {
   constructor(private gas: U64) {}
 
   set(g: Gas) {
