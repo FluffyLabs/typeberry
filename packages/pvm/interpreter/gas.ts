@@ -17,11 +17,8 @@ export interface GasCounter {
   /** Return remaining gas. */
   get(): Gas;
 
-  /** Overwite remaining gas. Prefer add/sub methods instead. */
+  /** Overwite remaining gas. Prefer sub method instead. */
   set(g: Gas): void;
-
-  /** Returns true if there was an overflow. */
-  add(g: SmallGas): void;
 
   /** Returns true if there was an underflow. */
   sub(g: SmallGas): boolean;
@@ -36,12 +33,6 @@ class GasCounterU64 implements GasCounter {
 
   get() {
     return this.gas as Gas;
-  }
-
-  add(g: SmallGas) {
-    this.gas = (this.gas + BigInt(g)) as U64;
-    // TODO [ToDr] Overflow
-    return false;
   }
 
   sub(g: SmallGas) {
