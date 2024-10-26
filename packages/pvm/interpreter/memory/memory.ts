@@ -94,7 +94,14 @@ export class Memory {
    */
   isWriteable(destinationStart: MemoryIndex, length: number): boolean {
     // TODO [ToDr] potential edge case - is `0`-length slice writeable whereever?
-    // TODO [ToDr] Handle U32 overflow!
+    if (length === 0) {
+      return true;
+    }
+
+    if (destinationStart + length > MAX_MEMORY_INDEX) {
+      return false;
+    }
+
     const destinationEnd = createMemoryIndex(destinationStart + length);
     const pageOffsetZero = createPageIndex(0);
 

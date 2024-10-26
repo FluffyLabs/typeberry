@@ -164,4 +164,36 @@ describe("HostCalls: Lookup", () => {
     // then
     assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
   });
+
+  it("should fail gracefuly if the destination is beyond mem limit", async () => {
+    const accounts = new TestAccounts();
+    const lookup = new Lookup(accounts);
+    const serviceId = 10_000 as ServiceId;
+    const key = Bytes.fill(32, 3);
+    const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
+    accounts.add(serviceId, key, BytesBlob.fromString("hello world"));
+    registers.asUnsigned[DEST_START_REG] = 2**32 - 1;
+    registers.asUnsigned[DEST_LEN_REG] = 2**10;
+
+    // when
+    await lookup.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+  });
+
+  it("should handle 0-length destination", async () => {
+    const accounts = new TestAccounts();
+    const lookup = new Lookup(accounts);
+    const serviceId = 10_000 as ServiceId;
+    const key = Bytes.fill(32, 3);
+    const { registers, memory } = prepareRegsAndMemory(serviceId, key, 0, { skipValue: true });
+    accounts.add(serviceId, key, BytesBlob.fromString("hello world"));
+
+    // when
+    await lookup.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], 'hello world'.length);
+  });
 });
