@@ -2,6 +2,8 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Registers } from "./registers";
 
+const U32_BYTES = 4;
+
 describe("Registers", () => {
   describe("loading values", () => {
     it("should return 0xff_ff_ff_ff correctly loaded into register", () => {
@@ -47,7 +49,7 @@ describe("Registers", () => {
 
       regs.asUnsigned[1] = num;
 
-      assert.deepStrictEqual(regs.getBytesAsLittleEndian(1), expectedBytes);
+      assert.deepStrictEqual(regs.getBytesAsLittleEndian(1, U32_BYTES), expectedBytes);
     });
 
     it("should return u8 number correctly encoded as little endian", () => {
@@ -58,7 +60,7 @@ describe("Registers", () => {
 
       regs.asUnsigned[1] = num;
 
-      assert.deepStrictEqual(regs.getBytesAsLittleEndian(1), expectedBytes);
+      assert.deepStrictEqual(regs.getBytesAsLittleEndian(1, U32_BYTES), expectedBytes);
     });
 
     it("should return u16 number correctly encoded as little endian", () => {
@@ -69,7 +71,7 @@ describe("Registers", () => {
 
       regs.asUnsigned[1] = num;
 
-      assert.deepStrictEqual(regs.getBytesAsLittleEndian(1), expectedBytes);
+      assert.deepStrictEqual(regs.getBytesAsLittleEndian(1, U32_BYTES), expectedBytes);
     });
 
     it("should return u32 number correctly encoded as little endian", () => {
@@ -80,7 +82,7 @@ describe("Registers", () => {
 
       regs.asUnsigned[1] = num;
 
-      assert.deepStrictEqual(regs.getBytesAsLittleEndian(1), expectedBytes);
+      assert.deepStrictEqual(regs.getBytesAsLittleEndian(1, U32_BYTES), expectedBytes);
     });
   });
 });

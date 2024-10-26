@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type Gas, gasCounter } from "@typeberry/pvm-interpreter/gas";
-import { Registers } from "../debugger-adapter";
+import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { Gas as GasHostCall } from "./gas";
 
 const REG_LOWER = 7;

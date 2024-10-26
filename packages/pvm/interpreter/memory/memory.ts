@@ -1,7 +1,7 @@
 import { PageFault } from "./errors";
-import { MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
+import { MAX_MEMORY_INDEX, MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
 import { type MemoryIndex, createMemoryIndex } from "./memory-index";
-import { alignToPageSize, getPageNumber } from "./memory-utils";
+import { alignToPageSize, getPageNumber, getStartPageIndexFromPageNumber } from "./memory-utils";
 import { WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, createPageIndex, getNextPageNumber } from "./pages/page-utils";
@@ -25,14 +25,14 @@ export class Memory {
   constructor(
     private sbrkIndex = createMemoryIndex(0),
     private virtualSbrkIndex = createMemoryIndex(0),
-    private endHeapIndex = createMemoryIndex(MEMORY_SIZE),
+    private endHeapIndex = createMemoryIndex(MAX_MEMORY_INDEX),
     private memory = new Map<PageNumber, MemoryPage>(),
   ) {}
 
   reset() {
     this.sbrkIndex = createMemoryIndex(0);
     this.virtualSbrkIndex = createMemoryIndex(0);
-    this.endHeapIndex = createMemoryIndex(MEMORY_SIZE);
+    this.endHeapIndex = createMemoryIndex(MAX_MEMORY_INDEX);
     this.memory = new Map<PageNumber, MemoryPage>(); // TODO [MaSi]: We should keep allocated pages somewhere and reuse it when it is possible
   }
 
@@ -43,6 +43,7 @@ export class Memory {
     this.memory = memory.memory;
   }
 
+  // TODO [ToDr] This should support writing to more than two pages.
   storeFrom(address: MemoryIndex, bytes: Uint8Array) {
     const pageNumber = getPageNumber(address);
     const page = this.memory.get(pageNumber);
@@ -85,46 +86,54 @@ export class Memory {
     );
   }
 
-  loadInto(result: Uint8Array, address: MemoryIndex, length: 1 | 2 | 4) {
-    const pageNumber = getPageNumber(address);
-    const page = this.memory.get(pageNumber);
-    if (!page) {
-      return new PageFault(address);
-    }
-
-    if (address >= this.virtualSbrkIndex && address < this.sbrkIndex) {
+  /**
+   * Read content of the memory at `[address, address + result.length)` and
+   * write the result into the `result` buffer.
+   *
+   * Returns `null` if the data was read successfuly or `PageFault` otherwise.
+   * NOTE That the `result` might be partially modified in case `PageFault` occurs!
+   */
+  loadInto(result: Uint8Array, startAddress: MemoryIndex): null | PageFault {
+    if (startAddress >= this.virtualSbrkIndex && startAddress < this.sbrkIndex) {
       // [virtualSbrkIndex; sbrkIndex) is allocated but shouldn't be available before sbrk is called
-      return new PageFault(address);
+      return new PageFault(startAddress);
     }
 
-    const firstPageIndex = createPageIndex(address - page.start);
-    const pageEnd = page.start + PAGE_SIZE;
+    const pageIndexZero = createPageIndex(0);
 
-    if (address + length <= pageEnd) {
-      return page.loadInto(result, firstPageIndex, length);
+    const wrappedEndAddress = (startAddress + result.length) % MEMORY_SIZE;
+    const lastPage = getPageNumber(createMemoryIndex(wrappedEndAddress));
+    const endAddressOnPage = wrappedEndAddress % PAGE_SIZE;
+    const pageAfterLast = getNextPageNumber(lastPage);
+
+    let resultOffset = 0;
+    let currentPage = getPageNumber(startAddress);
+    let pageOffset = createPageIndex(startAddress - getStartPageIndexFromPageNumber(currentPage));
+
+    while (currentPage !== pageAfterLast) {
+      const page = this.memory.get(currentPage);
+      if (!page) {
+        return new PageFault(pageOffset + getStartPageIndexFromPageNumber(currentPage));
+      }
+
+      // for full pages we will want to read up to `PAGE_SIZE`, but
+      // we have an edge case for the last page.
+      const end = currentPage === lastPage ? endAddressOnPage : PAGE_SIZE;
+      const len = end - pageOffset;
+
+      // load the result and move the result offset
+      const res = page.loadInto(result.subarray(resultOffset), pageOffset, len);
+      resultOffset += len;
+      if (res !== null) {
+        return res;
+      }
+
+      // jump to the next page (we might wrap) and reset the page offset
+      currentPage = getNextPageNumber(currentPage);
+      pageOffset = pageIndexZero;
     }
 
-    // bytes span two pages, so we need to split it and load separately.
-    const toReadFromFirstPage = address + length - pageEnd;
-    const toReadFromSecondPage = length - toReadFromFirstPage;
-    // secondPageNumber will be 0 if pageNumber is the last page
-    const secondPageNumber = getNextPageNumber(pageNumber);
-    const secondPage = this.memory.get(secondPageNumber);
-    if (!secondPage) {
-      return new PageFault(pageEnd);
-    }
-
-    const firstPageLoadResult = page.loadInto(
-      result.subarray(0, toReadFromFirstPage),
-      firstPageIndex,
-      toReadFromFirstPage,
-    );
-
-    if (firstPageLoadResult !== null) {
-      return firstPageLoadResult;
-    }
-
-    return secondPage.loadInto(result.subarray(toReadFromFirstPage), createPageIndex(0), toReadFromSecondPage);
+    return null;
   }
 
   sbrk(length: number): MemoryIndex {
@@ -132,7 +141,7 @@ export class Memory {
     const currentVirtualSbrkIndex = this.virtualSbrkIndex;
 
     // new index is bigger than 2 ** 32 or endHeapIndex
-    if (MEMORY_SIZE - length >= currentVirtualSbrkIndex || currentVirtualSbrkIndex + length >= this.endHeapIndex) {
+    if (MAX_MEMORY_INDEX - length >= currentVirtualSbrkIndex || currentVirtualSbrkIndex + length >= this.endHeapIndex) {
       // OoM but idk how to handle it
     }
 

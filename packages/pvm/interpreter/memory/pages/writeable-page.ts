@@ -1,3 +1,4 @@
+import { PageFault } from "../errors";
 import { MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "../memory-consts";
 import { MemoryPage } from "./memory-page";
 import type { PageIndex, PageNumber } from "./page-utils";
@@ -32,8 +33,14 @@ export class WriteablePage extends MemoryPage {
     }
   }
 
-  loadInto(result: Uint8Array, startIndex: PageIndex, length: 1 | 2 | 3 | 4) {
-    const bytes = this.view.subarray(startIndex, startIndex + length);
+  loadInto(result: Uint8Array, startIndex: PageIndex, length: number) {
+    const endIndex = startIndex + length;
+    if (endIndex > PAGE_SIZE) {
+      return new PageFault(PAGE_SIZE);
+    }
+
+    const bytes = this.view.subarray(startIndex, endIndex);
+    // we zero the bytes, since the view might not yet be initialized at `endIndex`.
     result.fill(0, 0, length);
     result.set(bytes);
     return null;

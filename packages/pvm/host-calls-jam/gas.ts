@@ -1,7 +1,7 @@
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import type { GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
-import type { Registers } from "../debugger-adapter";
+import type { Registers } from "@typeberry/pvm-interpreter/registers";
 
 /**
  * Return remaining gas to the PVM.

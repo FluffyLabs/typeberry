@@ -11,7 +11,26 @@ export abstract class MemoryPage {
     this.start = getStartPageIndexFromPageNumber(pageNumber);
   }
 
+  /**
+   * Load exactly `length` bytes from memory page, starting at index `address`
+   * into the `res` array.
+   *
+   * Note that the `res` might be bigger than the number of bytes length, but cannot be smaller.
+   *
+   * Returns `null` if copying was successful and [`PageFault`] otherwise.
+   * NOTE That the `result` might be partially modified in case `PageFault` occurs!
+   */
   abstract loadInto(res: Uint8Array, address: PageIndex, length: number): null | PageFault;
+
+  /**
+   * Copy all bytes from the `data` into the page at index `address`.
+   *
+   * Returns `null` if copying was successful and [`PageFault`] otherwise.
+   */
   abstract storeFrom(address: PageIndex, data: Uint8Array): null | PageFault;
+  /**
+   * Get dump of the entire page. Should only be used for the debugger-adapter because it
+   * might be inefficient.
+   */
   abstract getPageDump(): Uint8Array;
 }

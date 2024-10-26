@@ -141,13 +141,13 @@ describe("LoadOps", () => {
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -8756;
-      const expectedUnsignedValue = 4294958540;
+      const expectedUnsignedValue = 0xffffddcc;
       const registerIndex = 0;
 
       loadOps.loadI16(address, registerIndex);
 
-      assert.deepStrictEqual(registers.asSigned[registerIndex], expectedSignedValue);
       assert.deepStrictEqual(registers.asUnsigned[registerIndex], expectedUnsignedValue);
+      assert.deepStrictEqual(registers.asSigned[registerIndex], expectedSignedValue);
     });
   });
 

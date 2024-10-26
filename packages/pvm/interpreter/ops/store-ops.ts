@@ -14,42 +14,42 @@ export class StoreOps {
   ) {}
 
   storeU8(address: number, registerIndex: number) {
-    this.storeByte(address, this.regs.getBytesAsLittleEndian(registerIndex));
+    this.store(address, this.regs.getBytesAsLittleEndian(registerIndex, 1));
   }
 
   storeU16(address: number, registerIndex: number) {
-    this.store2Bytes(address, this.regs.getBytesAsLittleEndian(registerIndex));
+    this.store(address, this.regs.getBytesAsLittleEndian(registerIndex, 2));
   }
 
   storeU32(address: number, registerIndex: number) {
-    this.store4Bytes(address, this.regs.getBytesAsLittleEndian(registerIndex));
+    this.store(address, this.regs.getBytesAsLittleEndian(registerIndex, 4));
   }
 
   storeIndU8(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
     const address = addWithOverflow(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
-    this.storeByte(address, this.regs.getBytesAsLittleEndian(secondRegisterIndex));
+    this.store(address, this.regs.getBytesAsLittleEndian(secondRegisterIndex, 1));
   }
 
   storeIndU16(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
     const address = addWithOverflow(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
-    this.store2Bytes(address, this.regs.getBytesAsLittleEndian(secondRegisterIndex));
+    this.store(address, this.regs.getBytesAsLittleEndian(secondRegisterIndex, 2));
   }
 
   storeIndU32(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
     const address = addWithOverflow(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
-    this.store4Bytes(address, this.regs.getBytesAsLittleEndian(secondRegisterIndex));
+    this.store(address, this.regs.getBytesAsLittleEndian(secondRegisterIndex, 4));
   }
 
   storeImmediateU8(address: number, immediateDecoder: ImmediateDecoder) {
-    this.storeByte(address, immediateDecoder.getBytesAsLittleEndian());
+    this.store(address, immediateDecoder.getBytesAsLittleEndian().subarray(0, 1));
   }
 
   storeImmediateU16(address: number, immediateDecoder: ImmediateDecoder) {
-    this.store2Bytes(address, immediateDecoder.getBytesAsLittleEndian());
+    this.store(address, immediateDecoder.getBytesAsLittleEndian().subarray(0, 2));
   }
 
   storeImmediateU32(address: number, immediateDecoder: ImmediateDecoder) {
-    this.store4Bytes(address, immediateDecoder.getBytesAsLittleEndian());
+    this.store(address, immediateDecoder.getBytesAsLittleEndian().subarray(0, 4));
   }
 
   storeImmediateIndU8(
@@ -58,7 +58,7 @@ export class StoreOps {
     secondImmediateDecoder: ImmediateDecoder,
   ) {
     const address = addWithOverflow(this.regs.asUnsigned[registerIndex], firstImmediateDecoder.getUnsigned());
-    this.storeByte(address, secondImmediateDecoder.getBytesAsLittleEndian());
+    this.store(address, secondImmediateDecoder.getBytesAsLittleEndian().subarray(0, 1));
   }
 
   storeImmediateIndU16(
@@ -67,7 +67,7 @@ export class StoreOps {
     secondImmediateDecoder: ImmediateDecoder,
   ) {
     const address = addWithOverflow(this.regs.asUnsigned[registerIndex], firstImmediateDecoder.getUnsigned());
-    this.store2Bytes(address, secondImmediateDecoder.getBytesAsLittleEndian());
+    this.store(address, secondImmediateDecoder.getBytesAsLittleEndian().subarray(0, 2));
   }
 
   storeImmediateIndU32(
@@ -76,19 +76,7 @@ export class StoreOps {
     secondImmediateDecoder: ImmediateDecoder,
   ) {
     const address = addWithOverflow(this.regs.asUnsigned[registerIndex], firstImmediateDecoder.getUnsigned());
-    this.store4Bytes(address, secondImmediateDecoder.getBytesAsLittleEndian());
-  }
-
-  private storeByte(address: number, bytes: Uint8Array) {
-    this.store(address, bytes.subarray(0, 1));
-  }
-
-  private store2Bytes(address: number, bytes: Uint8Array) {
-    this.store(address, bytes.subarray(0, 2));
-  }
-
-  private store4Bytes(address: number, bytes: Uint8Array) {
-    this.store(address, bytes.subarray(0, 4));
+    this.store(address, secondImmediateDecoder.getBytesAsLittleEndian().subarray(0, 4));
   }
 
   private store(address: number, bytes: Uint8Array) {

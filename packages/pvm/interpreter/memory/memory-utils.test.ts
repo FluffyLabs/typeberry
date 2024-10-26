@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
+import { MAX_MEMORY_INDEX, PAGE_SIZE } from "./memory-consts";
 import { createMemoryIndex } from "./memory-index";
 import { alignToPageSize, getPageNumber, getStartPageIndex, getStartPageIndexFromPageNumber } from "./memory-utils";
 import { createPageNumber } from "./pages/page-utils";
@@ -91,7 +91,7 @@ describe("memory-utils", () => {
     });
 
     it("should return a correct start index for the last page", () => {
-      const lastMemoryIndex = createMemoryIndex(MEMORY_SIZE);
+      const lastMemoryIndex = createMemoryIndex(MAX_MEMORY_INDEX);
       const pageNumber = getPageNumber(lastMemoryIndex);
 
       const startIndex = getStartPageIndexFromPageNumber(pageNumber);

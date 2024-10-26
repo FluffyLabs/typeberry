@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { decodeStandardProgram } from "./decode-standard-program";
+import { MemorySegment, decodeStandardProgram } from "./decode-standard-program";
 
 // E_3(|o|) = 04 00 00
 const O_LENGTH = new Uint8Array([0x04, 0x00, 0x00]);
@@ -56,7 +56,7 @@ describe("decodeStandardProgram", () => {
         data: ARGS,
       },
       { start: 4278124547, end: 4278140931, data: null },
-    ];
+    ].map(MemorySegment.from);
 
     assert.deepStrictEqual(decodedProgram.memory.readable, expectedMemory);
   });
@@ -66,7 +66,7 @@ describe("decodeStandardProgram", () => {
       { start: 196608, end: 196610, data: W },
       { start: 196610, end: 262144, data: null },
       { start: 4278042624, end: 4278059008, data: null },
-    ];
+    ].map(MemorySegment.from);
 
     assert.deepStrictEqual(decodedProgram.memory.writeable, expectedMemory);
   });

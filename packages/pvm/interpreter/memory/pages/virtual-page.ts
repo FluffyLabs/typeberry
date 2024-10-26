@@ -98,7 +98,7 @@ export class VirtualPage extends MemoryPage {
     return null;
   }
 
-  loadInto(res: Uint8Array, startIndex: PageIndex, length: 1 | 2 | 3 | 4) {
+  loadInto(res: Uint8Array, startIndex: PageIndex, length: number) {
     // find the first chunk to load from
     let chunkIndex = this.chunks.findIndex(
       ([chunkStartIndex, chunkEndIndex]) => chunkStartIndex <= startIndex && startIndex < chunkEndIndex,
