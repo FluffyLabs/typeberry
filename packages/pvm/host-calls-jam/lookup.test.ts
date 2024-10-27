@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import type { ServiceId } from "@typeberry/block";
+import type { Blake2bHash, ServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { hashBytes } from "@typeberry/hash";
@@ -11,13 +11,13 @@ import { type Accounts, Lookup } from "./lookup";
 import { HostCallResult } from "./results";
 
 class TestAccounts implements Accounts {
-  public readonly data: Map<ServiceId, HashDictionary<Bytes<32>, BytesBlob>> = new Map();
+  public readonly data: Map<ServiceId, HashDictionary<Blake2bHash, BytesBlob>> = new Map();
 
-  lookup(serviceId: ServiceId, hash: Bytes<32>): Promise<BytesBlob | null> {
+  lookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null> {
     return Promise.resolve(this.data.get(serviceId)?.get(hash) ?? null);
   }
 
-  add(serviceId: ServiceId, key: Bytes<32>, value: BytesBlob) {
+  add(serviceId: ServiceId, key: Blake2bHash, value: BytesBlob) {
     let forAccount = this.data.get(serviceId);
     if (!forAccount) {
       forAccount = new HashDictionary();
@@ -36,7 +36,7 @@ const DEST_LEN_REG = 10;
 
 function prepareRegsAndMemory(
   serviceId: ServiceId,
-  key: Bytes<32>,
+  key: Blake2bHash,
   destinationLength: number,
   { skipKey = false, skipValue = false }: { skipKey?: boolean; skipValue?: boolean } = {},
 ) {

@@ -22,6 +22,12 @@ export class BytesBlob {
     return bytesToHexString(this.buffer);
   }
 
+  /** Decode contained bytes as string. */
+  asText() {
+    const decoder = new TextDecoder();
+    return decoder.decode(this.buffer);
+  }
+
   /** Create a new [`BytesBlob'] by converting given UTF-u encoded string into bytes. */
   static fromString(v: string): BytesBlob {
     const encoder = new TextEncoder();

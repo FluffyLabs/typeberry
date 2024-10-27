@@ -17,13 +17,15 @@ export interface Accounts {
    *
    * `null` indicates the storage entry should be removed.
    *
-   * Returns `true` if value was successful (i.e. a_t <= a_b).
-   * https://graypaper.fluffylabs.dev/#/439ca37/2d2a022d2e02
-   *
-   * Conversely, returns `false` if the storage threshold is reached.
-   *
    */
-  write(serviceId: ServiceId, hash: Blake2bHash, data: BytesBlob | null): Promise<boolean>;
+  write(serviceId: ServiceId, hash: Blake2bHash, data: BytesBlob | null): Promise<void>;
+
+  /**
+   * Returns true if the storage is already full.
+   *
+   * https://graypaper.fluffylabs.dev/#/439ca37/2d2a022d2e02
+   */
+  isStorageFull(serviceId: ServiceId): Promise<boolean>;
 
   /**
    * Read the length of some value from account snapshot state.
@@ -69,11 +71,10 @@ export class Write implements HostCallHandler {
     const keyHash = hashBytes(key);
     const maybeValue = valueLen === 0 ? null : BytesBlob.fromBlob(value);
 
-    const prevLenPromise = this.account.readSnapshotLen(this.currentServiceId, keyHash);
-    const isWritten = await this.account.write(this.currentServiceId, keyHash, maybeValue);
+    const isStorageFull = await this.account.isStorageFull(this.currentServiceId);
 
     // Storage is full (i.e. `a_t > a_b`).
-    if (!isWritten) {
+    if (isStorageFull) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.FULL;
       return Promise.resolve();
     }
@@ -87,6 +88,9 @@ export class Write implements HostCallHandler {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
       return Promise.resolve();
     }
+
+    const prevLenPromise = this.account.readSnapshotLen(this.currentServiceId, keyHash);
+    await this.account.write(this.currentServiceId, keyHash, maybeValue);
 
     // Successful write or removal. We store previous value length in omega_7
     const prevLen = await prevLenPromise;

@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import type { Blake2bHash, ServiceId } from "@typeberry/block";
-import { type Bytes, BytesBlob } from "@typeberry/bytes";
+import { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { hashBytes } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
@@ -12,7 +12,7 @@ import { HostCallResult } from "./results";
 import { SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
 
 class TestAccounts implements Accounts {
-  public readonly data: Map<ServiceId, HashDictionary<Bytes<32>, BytesBlob>> = new Map();
+  public readonly data: Map<ServiceId, HashDictionary<Blake2bHash, BytesBlob>> = new Map();
 
   read(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null> {
     return Promise.resolve(this.data.get(serviceId)?.get(hash) ?? null);
