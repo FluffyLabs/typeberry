@@ -3,6 +3,7 @@ import type { U16, U32, U64 } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
 import type { HASH_SIZE } from "./hash";
 
+// TODO [ToDr] Move to HASH;
 /** Opaque Blake2B. */
 export type Blake2bHash = Bytes<32>;
 /**

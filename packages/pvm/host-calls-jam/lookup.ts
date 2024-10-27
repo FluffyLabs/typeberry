@@ -1,4 +1,4 @@
-import type { HASH_SIZE, ServiceId } from "@typeberry/block";
+import type { Blake2bHash, ServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { hashBytes } from "@typeberry/hash";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
@@ -8,24 +8,31 @@ import type { Memory } from "@typeberry/pvm-interpreter/memory";
 import { createMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { HostCallResult } from "./results";
+import { getServiceId } from "./utils";
 
 /** Account data interface for Lookup host call. */
 export interface Accounts {
-  // NOTE: a special case of `2**32 - 1` should be handled as "current service"
-  lookup(serviceId: ServiceId, hash: Bytes<typeof HASH_SIZE>): Promise<BytesBlob | null>;
+  /** Lookup a preimage. */
+  lookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null>;
 }
 
 const IN_OUT_REG = 7;
 
+/**
+ * Lookup a preimage.
+ *
+ * https://graypaper.fluffylabs.dev/#/439ca37/2ca7012ca701
+ */
 export class Lookup implements HostCallHandler {
   index = 1 as HostCallIndex;
   gasCost = 10 as SmallGas;
+  currentServiceId = (2 ** 32 - 1) as ServiceId;
 
   constructor(private readonly account: Accounts) {}
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
     // a
-    const serviceId = regs.asUnsigned[IN_OUT_REG] as ServiceId;
+    const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // h_0
     const keyStartAddress = createMemoryIndex(regs.asUnsigned[8]);
     // b_0
@@ -41,7 +48,7 @@ export class Lookup implements HostCallHandler {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
       return Promise.resolve();
     }
-    // TODO [ToDr] Remove conversion, after #141
+    // TODO [ToDr] Remove conversion, after #150
     const keyHash = hashBytes(BytesBlob.fromBlob(key.raw));
     const value = await this.account.lookup(serviceId, keyHash);
 

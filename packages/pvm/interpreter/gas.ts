@@ -1,8 +1,8 @@
 import type { U32, U64 } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
 
-export type Gas = Opaque<U32 | U64, "Gas">;
-export type SmallGas = Opaque<U32, "SmallGas">;
+export type Gas = Opaque<U32 | U64, "Gas[U64]">;
+export type SmallGas = Opaque<U32, "SmallGas[U32]">;
 
 /** Create a new gas counter instance depending on the gas value. */
 export function gasCounter(gas: Gas): GasCounter {

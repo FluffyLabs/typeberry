@@ -1,3 +1,4 @@
+import type { ServiceId } from "@typeberry/block";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import type { GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
@@ -13,9 +14,9 @@ import type { Registers } from "@typeberry/pvm-interpreter/registers";
 export class Gas implements HostCallHandler {
   index = 0 as HostCallIndex;
   gasCost = 10 as SmallGas;
+  currentServiceId = (2 ** 32 - 1) as ServiceId;
 
   execute(gas: GasCounter, regs: Registers): Promise<void> {
-    // TODO [ToDr] Assuming the gas has been already deducted!
     const bigGas = BigInt(gas.get());
     const upper = bigGas >> 32n;
     const lower = bigGas & 0xffffffffn;

@@ -1,4 +1,3 @@
-import { Logger } from "@typeberry/logger";
 import type { Interpreter, Memory } from "@typeberry/pvm-interpreter";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import { createMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
@@ -8,8 +7,6 @@ import { check } from "@typeberry/utils";
 import type { HostCallIndex } from "./host-call-handler";
 import type { HostCallsManager } from "./host-calls-manager";
 import type { InterpreterInstanceManager } from "./interpreter-instance-manager";
-
-const logger = Logger.new(__filename, "pvm-host-calls");
 
 export class HostCalls {
   constructor(
@@ -52,9 +49,9 @@ export class HostCalls {
       const regs = pvmInstance.getRegisters();
       const memory = pvmInstance.getMemory();
       const hostCall = this.hostCalls.get(hostCallIndex as HostCallIndex);
-      if (!hostCall) {
-        logger.warn(`host call ${hostCallIndex} is not implemented!`);
-        return Status.PANIC;
+      const underflow = gas.sub(typeof hostCall.gasCost === "number" ? hostCall.gasCost : hostCall.gasCost(regs));
+      if (underflow) {
+        return Status.OOG;
       }
       await hostCall.execute(gas, regs, memory);
 

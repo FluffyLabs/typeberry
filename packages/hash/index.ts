@@ -1,3 +1,4 @@
+import type { Blake2bHash } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { check } from "@typeberry/utils";
 import blake2b from "blake2b";
@@ -75,7 +76,7 @@ export class HashableBlob<THash extends Bytes<typeof HASH_SIZE> = Bytes<typeof H
 }
 
 /** Hash given blob of bytes. */
-export function hashBytes(blob: BytesBlob | Uint8Array, allocator: HashAllocator = defaultAllocator) {
+export function hashBytes(blob: BytesBlob | Uint8Array, allocator: HashAllocator = defaultAllocator): Blake2bHash {
   const hasher = blake2b(HASH_SIZE);
   const bytes = blob instanceof BytesBlob ? blob.buffer : blob;
   hasher?.update(bytes);
