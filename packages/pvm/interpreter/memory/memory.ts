@@ -98,11 +98,11 @@ export class Memory {
       return true;
     }
 
-    if (destinationStart + length > MAX_MEMORY_INDEX) {
+    if (destinationStart + length > MEMORY_SIZE) {
       return false;
     }
 
-    const destinationEnd = createMemoryIndex(destinationStart + length);
+    const destinationEnd = createMemoryIndex(destinationStart + length - 1);
     const pageOffsetZero = createPageIndex(0);
 
     const startPage = getPageNumber(destinationStart);
@@ -115,7 +115,7 @@ export class Memory {
       }
 
       const pageOffsetEnd =
-        i === lastPage ? createPageIndex(destinationEnd - getStartPageIndexFromPageNumber(lastPage)) : PAGE_SIZE;
+        i === lastPage ? createPageIndex(1 + destinationEnd - getStartPageIndexFromPageNumber(lastPage)) : PAGE_SIZE;
       const len = pageOffsetEnd - pageOffset;
       if (!page.isWriteable(pageOffset, len)) {
         return false;
