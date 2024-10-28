@@ -8,9 +8,12 @@ import { Level, Logger } from "@typeberry/logger";
 import { startClient } from "./client";
 import { type Database, startRpc } from "./rpc";
 
-main();
-
 const logger = Logger.new(__filename, "ipc2rpc");
+
+main().catch((e) => {
+  logger.error(`Main error: ${e}`);
+  process.exit(-1);
+});
 
 async function main() {
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
@@ -37,7 +40,11 @@ async function main() {
     handler.sendHandshake(sender, getHandshake());
   });
 
-  const _rpcServer = startRpc(db, client);
+  const rpcServer = startRpc(db, client);
 
-  // TODO [ToDr] reconnect?
+  // wait for the client to finish and then close the server.
+  await client.waitForEnd();
+  logger.info("Client closed, terminating the RPC server.");
+  rpcServer.close();
+  logger.info("Server RPC terminated.");
 }

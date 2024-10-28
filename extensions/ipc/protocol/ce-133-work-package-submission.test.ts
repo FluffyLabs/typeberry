@@ -37,7 +37,7 @@ describe("CE133", () => {
           handlers.server.onSocketMessage(data.buffer);
         },
         () => {
-          handlers.server.onClose();
+          handlers.server.onClose({});
         },
       ),
     );
@@ -47,7 +47,7 @@ describe("CE133", () => {
           handlers.client.onSocketMessage(data.buffer);
         },
         () => {
-          handlers.client.onClose();
+          handlers.client.onClose({});
         },
       ),
     );

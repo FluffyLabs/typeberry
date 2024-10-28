@@ -3,4 +3,7 @@ import { main } from "./main";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 
-main();
+main().catch((e) => {
+  console.error(e);
+  process.exit(-1);
+});

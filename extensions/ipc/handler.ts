@@ -8,17 +8,24 @@ export type ResponseHandler = (err: Error | null, response?: BytesBlob) => void;
 
 const logger = Logger.new(__filename, "ext-ipc");
 
+/** Abstraction over sending messages. May be tied to a particular stream. */
 export interface MessageSender {
+  /** Send data blob to the other end. */
   send(data: BytesBlob): void;
+  /** Close the connection on our side (FIN). */
   close(): void;
 }
 
+/** Protocol handler for many streams of the same, given kind. */
 export interface StreamHandler<TStreamKind extends StreamKind = StreamKind> {
+  /** Kind of the stream */
   readonly kind: TStreamKind;
 
+  /** Handle message for that particular stream kind. */
   onStreamMessage(streamSender: StreamSender, message: BytesBlob): void;
 
-  onClose(streamId: StreamId): void;
+  /** Handle closing of given `streamId`. */
+  onClose(streamId: StreamId, isError: boolean): void;
 }
 
 export class StreamSender implements MessageSender {
@@ -50,6 +57,13 @@ export class StreamSender implements MessageSender {
   }
 }
 
+type OnEnd = {
+  finished: boolean;
+  listen: Promise<void>;
+  resolve: () => void;
+  reject: (error: Error) => void;
+};
+
 export class MessageHandler {
   // already initiated streams
   private readonly streams: Map<StreamId, StreamHandler> = new Map();
@@ -57,16 +71,27 @@ export class MessageHandler {
   private readonly pendingStreams: Map<StreamId, boolean> = new Map();
   // a collection of handlers for particular stream kind
   private readonly streamHandlers: Map<StreamKind, StreamHandler> = new Map();
+  // termination promise + resolvers
+  private readonly onEnd: OnEnd;
 
-  constructor(private readonly sender: MessageSender) {}
+  constructor(private readonly sender: MessageSender) {
+    const onEnd = { finished: false } as OnEnd;
+    onEnd.listen = new Promise((resolve, reject) => {
+      onEnd.resolve = resolve;
+      onEnd.reject = reject;
+    });
+    this.onEnd = onEnd;
+  }
 
-  public registerHandlers(...handlers: StreamHandler[]) {
+  /** Register stream handlers. */
+  registerHandlers(...handlers: StreamHandler[]) {
     for (const handler of handlers) {
       this.streamHandlers.set(handler.kind, handler);
     }
   }
 
-  public withStream(streamId: StreamId, work: (handler: StreamHandler, sender: StreamSender) => void) {
+  /** Perform some work on a specific stream. */
+  withStream(streamId: StreamId, work: (handler: StreamHandler, sender: StreamSender) => void) {
     const handler = this.streams.get(streamId);
     if (!handler) {
       return false;
@@ -76,7 +101,8 @@ export class MessageHandler {
     return true;
   }
 
-  public withStreamOfKind<TStreamKind extends StreamKind, THandler extends StreamHandler<TStreamKind>>(
+  /** Re-use an existing stream of given kind if present. */
+  withStreamOfKind<TStreamKind extends StreamKind, THandler extends StreamHandler<TStreamKind>>(
     streamKind: TStreamKind,
     work: (handler: THandler, sender: StreamSender) => void,
   ) {
@@ -90,7 +116,8 @@ export class MessageHandler {
     return false;
   }
 
-  public withNewStream<TStreamKind extends StreamKind, THandler extends StreamHandler<TStreamKind>>(
+  /** Open a new stream of given kind. */
+  withNewStream<TStreamKind extends StreamKind, THandler extends StreamHandler<TStreamKind>>(
     kind: TStreamKind,
     work: (handler: THandler, sender: StreamSender) => void,
   ) {
@@ -120,7 +147,8 @@ export class MessageHandler {
     work(handler as THandler, sender);
   }
 
-  public onSocketMessage(msg: Uint8Array) {
+  /** Handle incoming message on that socket. */
+  onSocketMessage(msg: Uint8Array) {
     // decode the message as `StreamEnvelope`
     const envelope = Decoder.decodeObject(StreamEnvelope.Codec, msg);
     const streamId = envelope.streamId;
@@ -153,7 +181,7 @@ export class MessageHandler {
     // close the stream
     if (envelope.type === StreamEnvelopeType.Close) {
       const handler = this.streams.get(streamId);
-      handler?.onClose(streamId);
+      handler?.onClose(streamId, false);
       this.streams.delete(streamId);
       return;
     }
@@ -170,12 +198,28 @@ export class MessageHandler {
     streamHandler.onStreamMessage(streamSender, envelope.data);
   }
 
-  onClose() {
+  /** Notify about termination of the underlying socket. */
+  onClose({ error }: { error?: Error }) {
+    logger.log(`Closing the handler. Reason: ${error ? `${error.message}` : "close"}.`);
     // Socket closed - we should probably clear everything.
     for (const [streamId, handler] of this.streams.entries()) {
-      handler.onClose(streamId);
+      handler.onClose(streamId, !!error);
     }
     this.streams.clear();
+
+    // finish the handler.
+    this.onEnd.finished = true;
+    if (error) {
+      this.onEnd.reject(error);
+    } else {
+      this.onEnd.resolve();
+    }
+  }
+
+  /** Wait for the handler to be finished either via close or error. */
+  waitForEnd(): Promise<void> {
+    logger.log("Waiting for the handler to be closed.");
+    return this.onEnd.listen;
   }
 }
 
