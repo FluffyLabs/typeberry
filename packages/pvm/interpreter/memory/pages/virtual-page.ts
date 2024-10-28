@@ -1,4 +1,4 @@
-import { type Opaque, ensure } from "@typeberry/utils";
+import { ensure } from "@typeberry/utils";
 import { ChunkOverlap, ChunkTooLong, PageFault } from "../errors";
 import { PAGE_SIZE } from "../memory-consts";
 import { MemoryPage } from "./memory-page";
@@ -9,9 +9,9 @@ export const writeable = Symbol("writeable");
 
 type AccessType = typeof readable | typeof writeable;
 
-export type ChunkEndIndex = Opaque<number, "End of chunk index">;
+export type ChunkEndIndex = PageIndex | typeof PAGE_SIZE;
 
-/** Ensure that given memory `index` is within `0...PAGE_SIZE` and can be used to index a page */
+/** Ensure that given memory `index` is within `[0...PAGE_SIZE]` and can be used to index a page */
 export function createEndChunkIndex(index: number) {
   return ensure<number, ChunkEndIndex>(
     index,
@@ -28,6 +28,8 @@ export class VirtualPage extends MemoryPage {
   /**
    * [start, end, data, accessType]
    * end of chunk cannot be PageIndex as PAGE_SIZE is not a correct PageIndex
+   *
+   * sorted by `start`.
    */
   private chunks: [PageIndex, ChunkEndIndex, Uint8Array, AccessType][] = [];
 
@@ -54,6 +56,39 @@ export class VirtualPage extends MemoryPage {
     }
     // the chunks have to be sorted to load from / store into a few chunks
     this.chunks.sort((a, b) => a[0] - b[0]);
+  }
+
+  isWriteable(startIndex: PageIndex, length: number) {
+    const endIndex = createEndChunkIndex(startIndex + length);
+    let currentIndex = startIndex as ChunkEndIndex;
+
+    for (const [chunkStart, chunkEnd, _data, accessType] of this.chunks) {
+      // we'are not in the right chunk yet.
+      if (chunkEnd < currentIndex) {
+        continue;
+      }
+
+      // the range we want should have been handled earlier,
+      // and since it wasn't there is a gap or it was readable.
+      if (chunkStart > currentIndex) {
+        return false;
+      }
+
+      // we got the right chunk (i.e. `chunkStart <= currentIndex < chunkEnd`)
+      // but it's not writeable, so bummer.
+      if (accessType !== writeable) {
+        return false;
+      }
+
+      // last case - our range might span multiple chunks, so update `currentIndex`.
+      if (endIndex <= chunkEnd) {
+        return true;
+      }
+
+      currentIndex = chunkEnd;
+    }
+
+    return false;
   }
 
   storeFrom(startIndex: PageIndex, dataToStore: Uint8Array) {
@@ -98,7 +133,7 @@ export class VirtualPage extends MemoryPage {
     return null;
   }
 
-  loadInto(res: Uint8Array, startIndex: PageIndex, length: 1 | 2 | 3 | 4) {
+  loadInto(res: Uint8Array, startIndex: PageIndex, length: number) {
     // find the first chunk to load from
     let chunkIndex = this.chunks.findIndex(
       ([chunkStartIndex, chunkEndIndex]) => chunkStartIndex <= startIndex && startIndex < chunkEndIndex,

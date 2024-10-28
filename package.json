@@ -21,6 +21,7 @@
     "packages/numbers",
     "packages/pvm/debugger-adapter",
     "packages/pvm/host-calls",
+    "packages/pvm/host-calls-jam",
     "packages/pvm/interpreter",
     "packages/pvm/program",
     "packages/pvm/spi-decoder",

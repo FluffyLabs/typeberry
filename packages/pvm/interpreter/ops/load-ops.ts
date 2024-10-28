@@ -6,6 +6,8 @@ import type { Registers } from "../registers";
 import { Result } from "../result";
 import { addWithOverflow } from "./math-utils";
 
+const REG_SIZE_BYTES = 4;
+
 export class LoadOps {
   constructor(
     private regs: Registers,
@@ -18,8 +20,8 @@ export class LoadOps {
   }
 
   private loadNumber(address: number, registerIndex: number, numberLength: 1 | 2 | 4) {
-    const registerBytes = this.regs.getBytesAsLittleEndian(registerIndex);
-    const loadResult = this.memory.loadInto(registerBytes, createMemoryIndex(address), numberLength);
+    const registerBytes = this.regs.getBytesAsLittleEndian(registerIndex, numberLength);
+    const loadResult = this.memory.loadInto(registerBytes, createMemoryIndex(address));
     if (loadResult !== null) {
       this.instructionResult.status = Result.FAULT;
       this.instructionResult.exitParam = address;
@@ -27,8 +29,9 @@ export class LoadOps {
   }
 
   private loadSignedNumber(address: number, registerIndex: number, numberLength: 1 | 2) {
-    const registerBytes = this.regs.getBytesAsLittleEndian(registerIndex);
-    const loadResult = this.memory.loadInto(registerBytes, createMemoryIndex(address), numberLength);
+    // load all bytes from register to correctly handle the sign.
+    const registerBytes = this.regs.getBytesAsLittleEndian(registerIndex, REG_SIZE_BYTES);
+    const loadResult = this.memory.loadInto(registerBytes.subarray(0, numberLength), createMemoryIndex(address));
     if (loadResult !== null) {
       this.instructionResult.status = Result.FAULT;
       this.instructionResult.exitParam = address;

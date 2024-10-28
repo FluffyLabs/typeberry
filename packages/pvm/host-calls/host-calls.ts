@@ -1,11 +1,11 @@
 import { Logger } from "@typeberry/logger";
 import type { Interpreter, Memory } from "@typeberry/pvm-interpreter";
+import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import { createMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import { getPageNumber, getStartPageIndexFromPageNumber } from "@typeberry/pvm-interpreter/memory/memory-utils";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { Status } from "@typeberry/pvm-interpreter/status";
-import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { check } from "@typeberry/utils";
+import type { HostCallIndex } from "./host-call-handler";
 import type { HostCallsManager } from "./host-calls-manager";
 import type { InterpreterInstanceManager } from "./interpreter-instance-manager";
 
@@ -25,41 +25,12 @@ export class HostCalls {
     if (status === Status.HALT) {
       const maybeAddress = regs.asUnsigned[10];
       const maybeLength = regs.asUnsigned[11];
-      if (!(maybeAddress >= 0 && maybeLength > 0 && maybeAddress + maybeLength < 2 ** 32)) {
-        // https://graypaper-reader.netlify.app/#/293bf5a/296c02296c02
-        logger.error("Invalid memory range to return.");
-        return new Uint8Array(0);
-      }
-      const length = maybeLength;
+
+      const result = new Uint8Array(maybeLength);
       const startAddress = createMemoryIndex(maybeAddress);
-      const endAddress = createMemoryIndex(maybeAddress + length);
-      const firstPage = getPageNumber(startAddress);
-      const lastPage = getPageNumber(endAddress);
-
-      const result = new Uint8Array(length);
-      for (let i = firstPage; i <= lastPage; i++) {
-        const pageDump = memory.getPageDump(i);
-        if (!pageDump) {
-          // https://graypaper-reader.netlify.app/#/293bf5a/296c02296c02
-          logger.error("Returning data from a non-existent page.");
-          return new Uint8Array(0);
-        }
-
-        const resultStartIdx = (i - firstPage) * PAGE_SIZE;
-        if (i === firstPage) {
-          const startPageIndex = getStartPageIndexFromPageNumber(i);
-          const startIndex = startAddress - startPageIndex;
-          result.set(pageDump.subarray(startIndex), resultStartIdx);
-        } else if (i === lastPage) {
-          const startPageIndex = getStartPageIndexFromPageNumber(i);
-          const endIndex = endAddress - startPageIndex;
-          result.set(pageDump.subarray(0, endIndex), resultStartIdx);
-        } else {
-          result.set(pageDump, resultStartIdx);
-        }
-      }
-
-      return result;
+      const pageFault = memory.loadInto(result, startAddress);
+      // https://graypaper-reader.netlify.app/#/293bf5a/296c02296c02
+      return pageFault !== null ? new Uint8Array(0) : result;
     }
 
     return Status.PANIC;
@@ -77,18 +48,17 @@ export class HostCalls {
         "We know that the exit param is not null, because the status is `Status.HOST`",
       );
       const hostCallIndex = pvmInstance.getExitParam() ?? -1;
-      const nextPc = pvmInstance.getNextPC();
-      const gas = pvmInstance.getGas();
+      const gas = pvmInstance.getGasCounter();
       const regs = pvmInstance.getRegisters();
       const memory = pvmInstance.getMemory();
-      const hostCall = this.hostCalls.get(hostCallIndex);
+      const hostCall = this.hostCalls.get(hostCallIndex as HostCallIndex);
       if (!hostCall) {
         logger.warn(`host call ${hostCallIndex} is not implemented!`);
         return Status.PANIC;
       }
       await hostCall.execute(gas, regs, memory);
 
-      pvmInstance.resume(nextPc, gas);
+      pvmInstance.runProgram();
       status = pvmInstance.getStatus();
     }
   }
@@ -96,7 +66,7 @@ export class HostCalls {
   async runProgram(
     rawProgram: Uint8Array,
     initialPc: number,
-    initialGas: number,
+    initialGas: Gas,
     maybeRegisters?: Registers,
     maybeMemory?: Memory,
   ): Promise<Status | Uint8Array> {

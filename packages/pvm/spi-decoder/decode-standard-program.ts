@@ -19,6 +19,34 @@ const NO_OF_REGISTERS = 13;
  */
 type InputLength = Opaque<number, "Number that is lower than 2 ** 24 (Z_I from GP)">;
 
+export class MemorySegment {
+  static from({ start, end, data }: Omit<MemorySegment, never>) {
+    return new MemorySegment(start, end, data);
+  }
+
+  constructor(
+    public readonly start: number,
+    public readonly end: number,
+    public readonly data: Uint8Array | null,
+  ) {}
+}
+export class SpiMemory {
+  constructor(
+    public readonly readable: MemorySegment[],
+    public readonly writeable: MemorySegment[],
+    public readonly sbrkIndex: number,
+    public readonly heapEnd: number,
+  ) {}
+}
+
+export class SpiProgram {
+  constructor(
+    public readonly code: Uint8Array,
+    public readonly memory: SpiMemory,
+    public readonly registers: Uint32Array,
+  ) {}
+}
+
 export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {
   const decoder = Decoder.fromBlob(program);
   const oLength = decoder.u24();
@@ -50,30 +78,31 @@ export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {
   const argsEnd = argsStart + argsLength;
   const argsZerosEnd = argsEnd + alignToPageSize(argsLength);
 
-  return {
-    code,
-    memory: {
-      readable: [
-        readOnlyLength > 0 && getMemorySegment(readonlyDataStart, readonlyDataEnd, readOnlyMemory),
-        readonlyDataEnd < readOnlyZerosEnd && getMemorySegment(readonlyDataEnd, readOnlyZerosEnd),
-        argsLength > 0 && getMemorySegment(argsStart, argsEnd, args),
-        argsEnd < argsZerosEnd && getMemorySegment(argsEnd, argsZerosEnd),
-      ].filter((x) => !!x),
-      writeable: [
-        heapLength > 0 && getMemorySegment(heapDataStart, heapDataEnd, initialHeap),
-        heapDataEnd < heapZerosEnd && getMemorySegment(heapDataEnd, heapZerosEnd),
-        stackStart < stackEnd && getMemorySegment(stackStart, stackEnd),
-      ].filter((x) => !!x),
+  function nonEmpty(s: MemorySegment | false): s is MemorySegment {
+    return s !== false;
+  }
 
-      sbrkIndex: heapZerosEnd,
-      heapEnd: stackStart,
-    },
-    registers: getRegisters(args.length),
-  };
+  const readableMemory = [
+    readOnlyLength > 0 && getMemorySegment(readonlyDataStart, readonlyDataEnd, readOnlyMemory),
+    readonlyDataEnd < readOnlyZerosEnd && getMemorySegment(readonlyDataEnd, readOnlyZerosEnd),
+    argsLength > 0 && getMemorySegment(argsStart, argsEnd, args),
+    argsEnd < argsZerosEnd && getMemorySegment(argsEnd, argsZerosEnd),
+  ].filter(nonEmpty);
+  const writeableMemory = [
+    heapLength > 0 && getMemorySegment(heapDataStart, heapDataEnd, initialHeap),
+    heapDataEnd < heapZerosEnd && getMemorySegment(heapDataEnd, heapZerosEnd),
+    stackStart < stackEnd && getMemorySegment(stackStart, stackEnd),
+  ].filter(nonEmpty);
+
+  return new SpiProgram(
+    code,
+    new SpiMemory(readableMemory, writeableMemory, heapZerosEnd, stackStart),
+    getRegisters(args.length),
+  );
 }
 
 function getMemorySegment(start: number, end: number, data: Uint8Array | null = null) {
-  return { start, end, data };
+  return new MemorySegment(start, end, data);
 }
 
 function getRegisters(argsLength: number) {

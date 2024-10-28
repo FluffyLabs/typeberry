@@ -399,4 +399,22 @@ describe("VirtualPage", () => {
     assert.deepStrictEqual(storeResult, null);
     assert.deepEqual(virtualPage, expectedPage);
   });
+
+  it("should return true if given range is writeable", () => {
+    const pageIdx = createPageIndex;
+    const pageNumber = createPageNumber(0);
+    const virtualPage = new VirtualPage(pageNumber);
+    const startIndex = createPageIndex(PAGE_SIZE - 5);
+    const endIndex = createEndChunkIndex(PAGE_SIZE);
+    virtualPage.set(startIndex, endIndex, new Uint8Array(), writeable);
+
+    // then
+    assert.deepStrictEqual(virtualPage.isWriteable(pageIdx(0), startIndex), false);
+    assert.deepStrictEqual(virtualPage.isWriteable(pageIdx(PAGE_SIZE - 6), 1), false);
+    assert.deepStrictEqual(virtualPage.isWriteable(pageIdx(PAGE_SIZE - 6), 6), false);
+    assert.deepStrictEqual(virtualPage.isWriteable(startIndex, 5), true);
+    assert.deepStrictEqual(virtualPage.isWriteable(startIndex, 1), true);
+    assert.deepStrictEqual(virtualPage.isWriteable(pageIdx(startIndex + 1), 1), true);
+    assert.deepStrictEqual(virtualPage.isWriteable(pageIdx(startIndex + 1), 4), true);
+  });
 });

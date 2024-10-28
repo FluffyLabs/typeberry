@@ -7,9 +7,9 @@ export class Registers {
   asUnsigned = new Uint32Array(this.buffer);
   private bytes = new Uint8Array(this.buffer);
 
-  getBytesAsLittleEndian(index: number) {
+  getBytesAsLittleEndian(index: number, len: number) {
     const offset = index << REGISTER_SIZE_SHIFT;
-    return this.bytes.subarray(offset, offset + 4);
+    return this.bytes.subarray(offset, offset + len);
   }
 
   copyFrom(regs: Registers | Uint32Array) {

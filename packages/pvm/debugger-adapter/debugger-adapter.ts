@@ -1,6 +1,9 @@
+import type { U64 } from "@typeberry/numbers";
 import { Interpreter, type Memory } from "@typeberry/pvm-interpreter";
+import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
+import type { Status } from "@typeberry/pvm-interpreter/status";
 
 export class DebuggerAdapter {
   private readonly pvm: Interpreter;
@@ -9,32 +12,36 @@ export class DebuggerAdapter {
     this.pvm = new Interpreter();
   }
 
-  nextStep() {
+  nextStep(): Status {
     return this.pvm.nextStep();
   }
 
-  getRegisters() {
+  getRegisters(): Uint32Array {
     return this.pvm.getRegisters().asUnsigned;
   }
 
-  getPC() {
+  getPC(): number {
     return this.pvm.getPC();
   }
 
-  getGas() {
-    return this.pvm.getGas();
+  getGas(): U64 {
+    return BigInt(this.pvm.getGas()) as U64;
   }
 
-  getStatus() {
+  getStatus(): Status {
     return this.pvm.getStatus();
   }
 
   reset(rawProgram: Uint8Array, pc: number, gas: number, maybeRegisters?: Registers, maybeMemory?: Memory) {
-    this.pvm.reset(rawProgram, pc, gas, maybeRegisters, maybeMemory);
+    this.pvm.reset(rawProgram, pc, gas as Gas, maybeRegisters, maybeMemory);
   }
 
-  resume(nextPc: number, gas: number) {
-    this.pvm.resume(nextPc, gas);
+  setNextPC(nextPc: number) {
+    this.pvm.setNextPC(nextPc);
+  }
+
+  setGasLeft(gas: U64) {
+    this.pvm.getGasCounter().set(gas as Gas);
   }
 
   getMemoryPage(pageNumber: number): null | Uint8Array {
