@@ -1,6 +1,6 @@
-import type { Blake2bHash, ServiceId } from "@typeberry/block";
+import type { ServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
-import { hashBytes } from "@typeberry/hash";
+import { type Blake2bHash, hashBytes } from "@typeberry/hash";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import type { GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";

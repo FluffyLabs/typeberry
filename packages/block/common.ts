@@ -1,10 +1,7 @@
-import type { Bytes } from "@typeberry/bytes";
+import type { Blake2bHash } from "@typeberry/hash";
 import type { U16, U32, U64 } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
 
-// TODO [ToDr] Move to HASH;
-/** Opaque Blake2B. */
-export type Blake2bHash = Bytes<32>;
 /**
  * Time slot index.
  *

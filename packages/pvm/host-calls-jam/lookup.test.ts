@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import type { Blake2bHash, ServiceId } from "@typeberry/block";
+import type { ServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
-import { hashBytes } from "@typeberry/hash";
+import { type Blake2bHash, hashBytes } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { type Gas, gasCounter } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, createMemoryIndex as memIdx } from "@typeberry/pvm-interpreter/memory";

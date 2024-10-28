@@ -1,4 +1,3 @@
-import type { Blake2bHash } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { WithDebug, check } from "@typeberry/utils";
 import blake2b from "blake2b";
@@ -13,10 +12,11 @@ export const HASH_SIZE = 32;
 /** A type for the above value. */
 export type HASH_SIZE = typeof HASH_SIZE;
 
-/**
- * Opaque, unknown hash.
- */
+/** Opaque, unknown hash. */
 export type OpaqueHash = Bytes<HASH_SIZE>;
+
+/** Opaque Blake2B. */
+export type Blake2bHash = Bytes<32>;
 
 /** Allocator interface - returns an empty bytes vector that can be filled with the hash. */
 export interface HashAllocator {
