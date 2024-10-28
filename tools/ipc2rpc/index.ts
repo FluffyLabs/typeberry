@@ -1,8 +1,9 @@
 import * as os from "node:os";
 import * as path from "node:path";
-import { HASH_SIZE, type HeaderHash, type TimeSlot } from "@typeberry/block";
+import type { HeaderHash, TimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import * as up0 from "@typeberry/ext-ipc/protocol/up-0-block-announcement";
+import { HASH_SIZE } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { startClient } from "./client";
 import { type Database, startRpc } from "./rpc";

@@ -2,6 +2,7 @@ import { isMainThread, parentPort } from "node:worker_threads";
 
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
+import { LmdbBlocks } from "@typeberry/database-lmdb";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { Level, Logger } from "@typeberry/logger";
 import { Generator } from "./generator";
@@ -19,7 +20,17 @@ if (!isMainThread) {
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
   const machine = generatorStateMachine();
   const channel = MessageChannelStateMachine.receiveChannel(machine, parentPort);
-  channel.then((channel) => main(channel)).catch((e) => logger.error(e));
+  channel
+    .then((channel) => main(channel))
+    .catch((e) => {
+      logger.error(e);
+      if (e.stack) {
+        logger.error(e.stack);
+      }
+      if (e.cause) {
+        logger.error(e.cause);
+      }
+    });
 }
 
 /**
@@ -29,12 +40,13 @@ export async function main(channel: MessageChannelStateMachine<GeneratorInit, Ge
   logger.info(`Block Generator running ${channel.currentState()}`);
   // Await the configuration object
   const ready = await channel.waitForState<GeneratorReady>("ready(generator)");
-  const chainSpec = ready.currentState().getChainSpec();
+  const config = ready.currentState().getConfig();
+  const blocks = new LmdbBlocks(config.chainSpec, config.blocksDbPath);
 
   // Generate blocks until the close signal is received.
   const finished = await ready.doUntil<Finished>("finished", async (worker, port, isFinished) => {
     let counter = 0;
-    const generator = new Generator(chainSpec);
+    const generator = new Generator(config.chainSpec, blocks);
     while (!isFinished()) {
       counter += 1;
       const newBlock = await generator.nextEncodedBlock();

@@ -1,6 +1,7 @@
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
-import { type TimeSlot, type ValidatorIndex, WithDebug } from "./common";
+import { WithDebug } from "@typeberry/utils";
+import type { TimeSlot, ValidatorIndex } from "./common";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "./crypto";
 import { WorkReport } from "./work-report";
 
@@ -61,7 +62,7 @@ export class ReportGuarantee extends WithDebug {
 }
 
 /**
- * `E_G`: Series of guarantees, at most one for each cMapOfHashesore.
+ * `E_G`: Series of guarantees, at most one for each core.
  *
  * Each core index (within work-report) must be unique and guarantees
  * must be in ascending order of this.

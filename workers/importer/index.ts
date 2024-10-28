@@ -5,6 +5,7 @@ import { MessageChannelStateMachine } from "@typeberry/state-machine";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { SimpleAllocator } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
+import { LmdbBlocks } from "../../packages/database-lmdb";
 import { TransitionHasher } from "../../packages/transition";
 import { Importer } from "./importer";
 import {
@@ -37,14 +38,18 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
 
   const finished = await ready.doUntil<Finished>("finished", async (worker, port) => {
     logger.info("Importer waiting for blocks.");
-    const importer = new Importer(new TransitionHasher(worker.getChainSpec(), new SimpleAllocator()));
+    const config = worker.getConfig();
+    const importer = new Importer(
+      new TransitionHasher(config.chainSpec, new SimpleAllocator()),
+      new LmdbBlocks(config.chainSpec, config.blocksDbPath),
+    );
 
     worker.onBlock.on(async (b) => {
-      logger.info(`Got block: ${b.header}`);
+      logger.info(`Got block: ${b.headerView().timeSlotIndex()}`);
       const bestHeader = await importer.importBlock(b);
 
       worker.announce(port, bestHeader);
-      logger.info(`Best block: ${importer.bestBlockHeader()}`);
+      logger.info(`Best block: ${importer.bestBlockHash()}`);
     });
   });
 

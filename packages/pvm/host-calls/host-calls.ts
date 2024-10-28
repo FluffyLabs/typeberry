@@ -17,7 +17,7 @@ export class HostCalls {
     private hostCalls: HostCallsManager,
   ) {}
 
-  private getReturnValue(status: Status, memory: Memory, regs: Registers) {
+  private getReturnValue(status: Status, memory: Memory, regs: Registers): Status | Uint8Array {
     if (status === Status.OOG) {
       return Status.OOG;
     }
@@ -25,8 +25,10 @@ export class HostCalls {
     if (status === Status.HALT) {
       const maybeAddress = regs.asUnsigned[10];
       const maybeLength = regs.asUnsigned[11];
-      if (maybeAddress >= 0 && maybeLength > 0 && maybeAddress + maybeLength < 2 ** 32) {
-        return [];
+      if (!(maybeAddress >= 0 && maybeLength > 0 && maybeAddress + maybeLength < 2 ** 32)) {
+        // https://graypaper-reader.netlify.app/#/293bf5a/296c02296c02
+        logger.error("Invalid memory range to return.");
+        return new Uint8Array(0);
       }
       const length = maybeLength;
       const startAddress = createMemoryIndex(maybeAddress);
@@ -38,7 +40,9 @@ export class HostCalls {
       for (let i = firstPage; i <= lastPage; i++) {
         const pageDump = memory.getPageDump(i);
         if (!pageDump) {
-          return [];
+          // https://graypaper-reader.netlify.app/#/293bf5a/296c02296c02
+          logger.error("Returning data from a non-existent page.");
+          return new Uint8Array(0);
         }
 
         const resultStartIdx = (i - firstPage) * PAGE_SIZE;
@@ -95,12 +99,11 @@ export class HostCalls {
     initialGas: number,
     maybeRegisters?: Registers,
     maybeMemory?: Memory,
-  ) {
+  ): Promise<Status | Uint8Array> {
     const pvmInstance = await this.pvmInstanceManager.getInstance();
     pvmInstance.reset(rawProgram, initialPc, initialGas, maybeRegisters, maybeMemory);
     try {
       return await this.execute(pvmInstance);
-    } catch {
     } finally {
       this.pvmInstanceManager.releaseInstance(pvmInstance);
     }

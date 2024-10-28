@@ -1,10 +1,10 @@
-import type { HASH_SIZE } from "@typeberry/block";
 import type { RefineContext } from "@typeberry/block/refine-context";
 import { MAX_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package";
 import { type CoreIndex, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
 import type { WorkResult } from "@typeberry/block/work-result";
-import { type Bytes, BytesBlob } from "@typeberry/bytes";
+import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
+import type { OpaqueHash } from "@typeberry/hash";
 import { json } from "@typeberry/json-parser";
 import type { JsonObject } from "../../json-format";
 import { fromJson, runCodecTest } from "./common";
@@ -46,7 +46,7 @@ type JsonWorkReport = {
   package_spec: WorkPackageSpec;
   context: RefineContext;
   core_index: CoreIndex;
-  authorizer_hash: Bytes<typeof HASH_SIZE>;
+  authorizer_hash: OpaqueHash;
   auth_output: BytesBlob;
   results: WorkResult[];
 };

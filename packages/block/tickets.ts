@@ -1,10 +1,9 @@
 import type { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
-import type { Opaque } from "@typeberry/utils";
-import { WithDebug } from "./common";
+import { HASH_SIZE } from "@typeberry/hash";
+import { type Opaque, WithDebug } from "@typeberry/utils";
 import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "./crypto";
-import { HASH_SIZE } from "./hash";
 
 /**
  * The index of a ticket entry per validator.
