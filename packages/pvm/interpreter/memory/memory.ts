@@ -135,7 +135,7 @@ export class Memory {
    * NOTE That the `result` might be partially modified in case `PageFault` occurs!
    */
   loadInto(result: Uint8Array, startAddress: MemoryIndex): null | PageFault {
-    // TODO [ToDr] potential edge case - is `0`-length slice writeable whereever?
+    // TODO [ToDr] potential edge case - is `0`-length slice readable whereever?
     if (result.length === 0) {
       return null;
     }
