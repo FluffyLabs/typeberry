@@ -23,7 +23,7 @@ class TestAccounts implements Accounts {
       forAccount = new HashDictionary();
       this.data.set(serviceId, forAccount);
     }
-    forAccount.set(hashBytes(BytesBlob.fromBlob(key.raw)), value);
+    forAccount.set(hashBytes(BytesBlob.from(key.raw)), value);
   }
 }
 
@@ -62,7 +62,7 @@ function prepareRegsAndMemory(
     readResult: () => {
       const result = new Uint8Array(destinationLength);
       assert.strictEqual(memory.loadInto(result, memIdx(memStart)), null);
-      return BytesBlob.fromBlob(result);
+      return BytesBlob.from(result);
     },
   };
 }
@@ -172,8 +172,8 @@ describe("HostCalls: Lookup", () => {
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
     accounts.add(serviceId, key, BytesBlob.fromString("hello world"));
-    registers.asUnsigned[DEST_START_REG] = 2**32 - 1;
-    registers.asUnsigned[DEST_LEN_REG] = 2**10;
+    registers.asUnsigned[DEST_START_REG] = 2 ** 32 - 1;
+    registers.asUnsigned[DEST_LEN_REG] = 2 ** 10;
 
     // when
     await lookup.execute(gas, registers, memory);
@@ -194,6 +194,6 @@ describe("HostCalls: Lookup", () => {
     await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], 'hello world'.length);
+    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], "hello world".length);
   });
 });

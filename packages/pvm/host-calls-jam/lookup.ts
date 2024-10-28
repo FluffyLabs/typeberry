@@ -1,6 +1,6 @@
-import type { HASH_SIZE, ServiceId } from "@typeberry/block";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { hashBytes } from "@typeberry/hash";
+import type { ServiceId } from "@typeberry/block";
+import { Bytes, type BytesBlob } from "@typeberry/bytes";
+import { type OpaqueHash, hashBytes } from "@typeberry/hash";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import type { GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
@@ -12,7 +12,7 @@ import { HostCallResult } from "./results";
 /** Account data interface for Lookup host call. */
 export interface Accounts {
   // NOTE: a special case of `2**32 - 1` should be handled as "current service"
-  lookup(serviceId: ServiceId, hash: Bytes<typeof HASH_SIZE>): Promise<BytesBlob | null>;
+  lookup(serviceId: ServiceId, hash: OpaqueHash): Promise<BytesBlob | null>;
 }
 
 const IN_OUT_REG = 7;
@@ -41,8 +41,7 @@ export class Lookup implements HostCallHandler {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
       return Promise.resolve();
     }
-    // TODO [ToDr] Remove conversion, after #141
-    const keyHash = hashBytes(BytesBlob.fromBlob(key.raw));
+    const keyHash = hashBytes(key);
     const value = await this.account.lookup(serviceId, keyHash);
 
     if (value === null) {

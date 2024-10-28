@@ -14,8 +14,9 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type Codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type HashAllocator, WithHashAndBytes, hashBytes } from "@typeberry/hash";
-import type { U32 } from "@typeberry/numbers";
+import type { U32, U64 } from "@typeberry/numbers";
 import { HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
+import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import { Program } from "@typeberry/pvm-program";
 import { Result } from "@typeberry/utils";
 import type { BlocksDb, StateDb } from "../database";
@@ -161,7 +162,7 @@ class PvmExecutor {
   async run(args: BytesBlob, gas: ServiceGas): Promise<BytesBlob> {
     const program = Program.fromSpi(this.serviceCode.buffer, args.buffer);
 
-    const result = await this.pvm.runProgram(program.code, 5, Number(gas), program.registers, program.memory);
+    const result = await this.pvm.runProgram(program.code, 5, gas as U64 as Gas, program.registers, program.memory);
     if (!result || !(result instanceof Uint8Array)) {
       return BytesBlob.fromNumbers([]);
     }
