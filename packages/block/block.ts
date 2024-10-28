@@ -1,6 +1,6 @@
-import { type CodecRecord, codec } from "@typeberry/codec";
+import { type CodecRecord, type View, codec } from "@typeberry/codec";
+import { WithDebug } from "@typeberry/utils";
 import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "./assurances";
-import { WithDebug } from "./common";
 import { DisputesExtrinsic } from "./disputes";
 import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "./gaurantees";
 import { Header } from "./header";
@@ -58,6 +58,9 @@ export class Extrinsic extends WithDebug {
   }
 }
 
+/** Undecoded View of an [`Extrinsic`]. */
+export type ExtrinsicView = View<Extrinsic, "tickets" | "disputes" | "assurances" | "guarantees" | "preimages">;
+
 /**
  * The block consists of the header and some external input data (extrinsic).
  *
@@ -83,3 +86,6 @@ export class Block extends WithDebug {
     super();
   }
 }
+
+/** Undecoded View of a [`Block`]. */
+export type BlockView = View<Block, "header" | "extrinsic">;

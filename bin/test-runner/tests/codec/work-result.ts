@@ -1,7 +1,8 @@
-import type { CodeHash, HASH_SIZE } from "@typeberry/block";
+import type { CodeHash } from "@typeberry/block";
 import type { ServiceGas, ServiceId } from "@typeberry/block";
 import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
-import { type Bytes, BytesBlob } from "@typeberry/bytes";
+import { BytesBlob } from "@typeberry/bytes";
+import type { OpaqueHash } from "@typeberry/hash";
 import { json } from "@typeberry/json-parser";
 import type { U32 } from "@typeberry/numbers";
 import { fromJson, runCodecTest } from "./common";
@@ -60,7 +61,7 @@ export const workResultFromJson = json.object<JsonWorkResult, WorkResult>(
 type JsonWorkResult = {
   service: ServiceId;
   code_hash: CodeHash;
-  payload_hash: Bytes<typeof HASH_SIZE>;
+  payload_hash: OpaqueHash;
   // TODO [ToDr] We don't have enough precision here for full bigint so 🤞
   // otherwise we will need to use a custom JSON parser.
   gas_ratio: number;

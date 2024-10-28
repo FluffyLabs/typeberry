@@ -1,15 +1,16 @@
 import { type CodecRecord, codec } from "@typeberry/codec";
-import type { Bytes, TrieHash } from "@typeberry/trie";
-import type { Opaque } from "@typeberry/utils";
-import { type TimeSlot, WithDebug } from "./common";
-import { HASH_SIZE, type HeaderHash } from "./hash";
+import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
+import type { TrieHash } from "@typeberry/trie";
+import { type Opaque, WithDebug } from "@typeberry/utils";
+import type { TimeSlot } from "./common";
+import type { HeaderHash } from "./hash";
 
 /**
  * Keccak-256 hash of the BEEFY MMR root.
  *
  * https://graypaper.fluffylabs.dev/#/c71229b/1e76001e7900
  */
-export type BeefyHash = Opaque<Bytes<typeof HASH_SIZE>, "BeefyHash">;
+export type BeefyHash = Opaque<OpaqueHash, "BeefyHash">;
 
 /**
  * `X`: Refinement Context - state of the chain at the point
@@ -50,7 +51,7 @@ export class RefineContext extends WithDebug {
     /** `t`: Lookup anchor time slot. */
     public readonly lookupAnchorSlot: TimeSlot,
     /** `p`: Optional hash of the prerequisite work-package. */
-    public readonly prerequisite: Bytes<typeof HASH_SIZE> | null = null,
+    public readonly prerequisite: OpaqueHash | null = null,
   ) {
     super();
   }

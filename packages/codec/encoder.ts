@@ -123,7 +123,7 @@ export class Encoder {
    * underlying `destination`.
    */
   viewResult() {
-    return BytesBlob.fromBlob(this.destination.subarray(0, this.offset));
+    return BytesBlob.from(this.destination.subarray(0, this.offset));
   }
 
   /**

@@ -10,7 +10,7 @@ export class BytesBlob {
   readonly buffer: Uint8Array = new Uint8Array([]);
   readonly length: number = 0;
 
-  private constructor(data: Uint8Array) {
+  protected constructor(data: Uint8Array) {
     this.buffer = data;
     this.length = data.byteLength;
   }
@@ -22,15 +22,43 @@ export class BytesBlob {
     return bytesToHexString(this.buffer);
   }
 
+  /** Compare the sequence to another one. */
+  isEqualTo(other: BytesBlob): boolean {
+    if (this.length !== other.length) {
+      return false;
+    }
+
+    for (let i = 0; i < this.length; i++) {
+      if (this.buffer[i] !== other.buffer[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   /** Create a new [`BytesBlob'] by converting given UTF-u encoded string into bytes. */
   static fromString(v: string): BytesBlob {
     const encoder = new TextEncoder();
-    return BytesBlob.fromBlob(encoder.encode(v));
+    return BytesBlob.from(encoder.encode(v));
   }
 
   /** Create a new [`BytesBlob`] from existing [`Uint8Array`]. */
-  static fromBlob(v: Uint8Array): BytesBlob {
+  static from(v: Uint8Array): BytesBlob {
     return new BytesBlob(v);
+  }
+
+  /** Create a new [`BytesBlob`] by concatenating data from multiple `Uint8Array`s. */
+  static copyFromBlobs(v: Uint8Array, ...rest: Uint8Array[]) {
+    const totalLength = v.length + rest.reduce((a, v) => a + v.length, 0);
+    const buffer = new Uint8Array(totalLength);
+    buffer.set(v, 0);
+    let offset = v.length;
+    for (const r of rest) {
+      buffer.set(r, offset);
+      offset += r.length;
+    }
+    return new BytesBlob(buffer);
   }
 
   /** Create a new [`BytesBlob`] from an array of bytes. */
@@ -68,36 +96,19 @@ export class BytesBlob {
 /**
  * A convenience wrapper for a fix-length sequence of bytes.
  */
-export class Bytes<T extends number> {
-  /** Raw bytes array. */
-  readonly raw: Uint8Array;
+export class Bytes<T extends number> extends BytesBlob {
   /** Length of the bytes array. */
   readonly length: T;
 
   private constructor(raw: Uint8Array, len: T) {
+    super(raw);
     check(raw.byteLength === len, `Given buffer has incorrect size ${raw.byteLength} vs expected ${len}`);
-    this.raw = raw;
     this.length = len;
   }
 
-  /** Return hex encoding of the sequence. */
-  toString() {
-    return bytesToHexString(this.raw);
-  }
-
-  /** Compare the sequence to another one. */
-  isEqualTo(other: Bytes<T>): boolean {
-    if (this.length !== other.length) {
-      return false;
-    }
-
-    for (let i = 0; i < this.length; i++) {
-      if (this.raw[i] !== other.raw[i]) {
-        return false;
-      }
-    }
-
-    return true;
+  /** Raw bytes array. */
+  get raw(): Uint8Array {
+    return this.buffer;
   }
 
   /** Create new [`Bytes<X>`] given a backing buffer and it's length. */

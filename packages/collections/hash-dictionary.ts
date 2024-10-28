@@ -1,8 +1,7 @@
-import type { Bytes } from "@typeberry/bytes";
-import type { HASH_SIZE } from "@typeberry/hash";
+import type { OpaqueHash } from "@typeberry/hash";
 
 /** A map which uses hashes as keys. */
-export class HashDictionary<K extends Bytes<typeof HASH_SIZE>, V> {
+export class HashDictionary<K extends OpaqueHash, V> {
   // TODO [ToDr] [crit] We can't use `TrieHash` directly in the map,
   // because of the way it's being compared. Hence having `string` here.
   // This has to be benchmarked and re-written to a custom map most likely.

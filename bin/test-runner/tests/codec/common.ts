@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import fs from "node:fs";
 import type { Ed25519Signature } from "@typeberry/block";
-import { tinyChainSpec } from "@typeberry/block/context";
 import type { TicketAttempt } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type Codec, Decoder, Encoder } from "@typeberry/codec";
+import { tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 
 export namespace fromJson {
@@ -24,7 +24,7 @@ export function runCodecTest<T>(codec: Codec<T>, test: T, file: string) {
   const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
 
   const myEncoded = Encoder.encodeObject(codec, test, tinyChainSpec);
-  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.fromBlob(encoded).toString());
+  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.from(encoded).toString());
 
   const decoded = Decoder.decodeObject(codec, encoded, tinyChainSpec);
   assert.deepStrictEqual(decoded, test);

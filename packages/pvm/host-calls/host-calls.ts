@@ -17,7 +17,7 @@ export class HostCalls {
     private hostCalls: HostCallsManager,
   ) {}
 
-  private getReturnValue(status: Status, memory: Memory, regs: Registers) {
+  private getReturnValue(status: Status, memory: Memory, regs: Registers): Status | Uint8Array {
     if (status === Status.OOG) {
       return Status.OOG;
     }
@@ -28,9 +28,9 @@ export class HostCalls {
 
       const result = new Uint8Array(maybeLength);
       const startAddress = createMemoryIndex(maybeAddress);
-      memory.loadInto(result, startAddress);
-
-      return result;
+      const pageFault = memory.loadInto(result, startAddress);
+      // https://graypaper-reader.netlify.app/#/293bf5a/296c02296c02
+      return pageFault !== null ? new Uint8Array(0) : result;
     }
 
     return Status.PANIC;
@@ -69,7 +69,7 @@ export class HostCalls {
     initialGas: Gas,
     maybeRegisters?: Registers,
     maybeMemory?: Memory,
-  ) {
+  ): Promise<Status | Uint8Array> {
     const pvmInstance = await this.pvmInstanceManager.getInstance();
     pvmInstance.reset(rawProgram, initialPc, initialGas, maybeRegisters, maybeMemory);
     try {

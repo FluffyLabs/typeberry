@@ -1,16 +1,16 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { OpaqueHash } from "@typeberry/hash";
 import { type Opaque, check } from "@typeberry/utils";
 
-export type Hash = Bytes<32>;
-export type StateKey = Opaque<Bytes<32>, "stateKey">;
+export type StateKey = Opaque<OpaqueHash, "stateKey">;
 export type TruncatedStateKey = Opaque<Bytes<31>, "stateKey">;
 /**
  * A state commitment.
  *
  * https://graypaper.fluffylabs.dev/#/387103d/0cb0000cb400
  */
-export type TrieHash = Opaque<Hash, "trie">;
-export type ValueHash = Opaque<Hash, "trieValue">;
+export type TrieHash = Opaque<OpaqueHash, "trie">;
+export type ValueHash = Opaque<OpaqueHash, "trieValue">;
 
 /** Regular hash length */
 export const HASH_BYTES = 32;
@@ -200,7 +200,7 @@ export class LeafNode {
    */
   getValue(): BytesBlob {
     const len = this.getValueLength();
-    return BytesBlob.fromBlob(this.node.data.subarray(HASH_BYTES, HASH_BYTES + len));
+    return BytesBlob.from(this.node.data.subarray(HASH_BYTES, HASH_BYTES + len));
   }
 
   /**
