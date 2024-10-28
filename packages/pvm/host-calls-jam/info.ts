@@ -1,11 +1,13 @@
-import { type CodeHash, HASH_SIZE, type ServiceId, WithDebug } from "@typeberry/block";
+import type { CodeHash, ServiceId } from "@typeberry/block";
 import { type CodecRecord, Encoder, codec } from "@typeberry/codec";
+import { HASH_SIZE } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, createMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
+import { WithDebug } from "@typeberry/utils";
 import { HostCallResult } from "./results";
 import { getServiceId } from "./utils";
 

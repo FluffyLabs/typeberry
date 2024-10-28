@@ -39,7 +39,7 @@ function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = 32 + 8 +
     readInfo: () => {
       const result = new Uint8Array(accountInfoLength);
       assert.strictEqual(memory.loadInto(result, memIdx(memStart)), null);
-      const data = BytesBlob.fromBlob(result);
+      const data = BytesBlob.from(result);
       return Decoder.decodeObject(AccountInfo.Codec, data);
     },
   };
