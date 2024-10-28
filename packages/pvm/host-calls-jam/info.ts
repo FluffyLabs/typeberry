@@ -1,13 +1,13 @@
-import { HASH_SIZE, type CodeHash, type ServiceId } from "@typeberry/block";
+import { type CodeHash, HASH_SIZE, type ServiceId, WithDebug } from "@typeberry/block";
+import { type CodecRecord, Encoder, codec } from "@typeberry/codec";
+import type { U32, U64 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
-import { createMemoryIndex, type Memory } from "@typeberry/pvm-interpreter/memory";
+import { type Memory, createMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { HostCallResult } from "./results";
 import { getServiceId } from "./utils";
-import {U32, U64} from "@typeberry/numbers";
-import {CodecRecord, Encoder, codec} from "@typeberry/codec";
 
 /**
  * Service account details.
@@ -18,19 +18,46 @@ import {CodecRecord, Encoder, codec} from "@typeberry/codec";
  *
  * https://graypaper.fluffylabs.dev/#/439ca37/10e70010e700
  */
-export class AccountInfo {
+export class AccountInfo extends WithDebug {
   static Codec = codec.Class(AccountInfo, {
-   codeHash: codec.bytes(HASH_SIZE).cast(),
-   balance: codec.u64,
-   thresholdBalance: codec.u64,
-   accumulateMinGas: codec.u64.convert(g => BigInt(g) as U64, i => BigInt(i) as Gas),
-   onTransferMinGas: codec.u64.convert(g => BigInt(g) as U64, i => BigInt(i) as Gas),
-   storageUtilisationBytes: codec.u64,
-   storageUtilisationCount: codec.u32,
+    codeHash: codec.bytes(HASH_SIZE).cast(),
+    balance: codec.u64,
+    thresholdBalance: codec.u64,
+    accumulateMinGas: codec.u64.convert(
+      (g) => BigInt(g) as U64,
+      (i) => BigInt(i) as Gas,
+    ),
+    onTransferMinGas: codec.u64.convert(
+      (g) => BigInt(g) as U64,
+      (i) => BigInt(i) as Gas,
+    ),
+    storageUtilisationBytes: codec.u64,
+    storageUtilisationCount: codec.u32,
   });
 
   static fromCodec(a: CodecRecord<AccountInfo>) {
-    return new AccountInfo(a.codeHash, a.balance, a.thresholdBalance, a.accumulateMinGas, a.onTransferMinGas, a.storageUtilisationBytes, a.storageUtilisationCount);
+    return new AccountInfo(
+      a.codeHash,
+      a.balance,
+      a.thresholdBalance,
+      a.accumulateMinGas,
+      a.onTransferMinGas,
+      a.storageUtilisationBytes,
+      a.storageUtilisationCount,
+    );
+  }
+
+  /** `a_t = BS + BI * a_i + BL * a_l` */
+  static calculateThresholdBalance(items: U32, bytes: U64): U64 {
+    /** https://graypaper.fluffylabs.dev/#/439ca37/3d30003d3000 */
+    const B_S = 100n;
+    /** https://graypaper.fluffylabs.dev/#/439ca37/3d28003d2800 */
+    const B_I = 10n;
+    /** https://graypaper.fluffylabs.dev/#/439ca37/3d2c003d2d00 */
+    const B_L = 1n;
+
+    // TODO [ToDr] Overflows?
+    return (B_S + B_I * BigInt(items) + B_L * bytes) as U64;
   }
 
   constructor(
@@ -48,7 +75,9 @@ export class AccountInfo {
     public readonly storageUtilisationBytes: U64,
     /** `a_i`: Number of items in storage. */
     public readonly storageUtilisationCount: U32,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /** Account data interface for Info host call. */
