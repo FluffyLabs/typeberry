@@ -1,7 +1,9 @@
-import { HASH_SIZE, Header, type HeaderHash, type TimeSlot, WithDebug } from "@typeberry/block";
+import { Header, type HeaderHash, type TimeSlot } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
+import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
+import { WithDebug } from "@typeberry/utils";
 import type { StreamHandler, StreamSender } from "../handler";
 import type { StreamId, StreamKind } from "./stream";
 

@@ -41,7 +41,7 @@ export class WriteablePage extends MemoryPage {
 
     const bytes = this.view.subarray(startIndex, endIndex);
     // we zero the bytes, since the view might not yet be initialized at `endIndex`.
-    result.fill(0, 0, length);
+    result.fill(0, bytes.length, length);
     result.set(bytes);
     return null;
   }

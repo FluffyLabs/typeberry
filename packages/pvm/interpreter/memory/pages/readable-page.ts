@@ -19,7 +19,7 @@ export class ReadablePage extends MemoryPage {
 
     const bytes = this.data.subarray(startIndex, endIndex);
     // we zero the bytes, since data might not yet be initialized at `endIndex`.
-    result.fill(0, 0, length);
+    result.fill(0, bytes.length, length);
     result.set(bytes);
     return null;
   }

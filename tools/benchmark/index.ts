@@ -137,8 +137,8 @@ function compareResults(currentResults: BennyResults, expectedResults: BennyResu
     }
 
     // we work on normalized results
-    const currNormalized = curr[i].ops / currMinOps;
-    const prevNormalized = prev[i].ops / prevMinOps;
+    const currNormalized = Math.sqrt(curr[i].ops / currMinOps);
+    const prevNormalized = Math.sqrt(prev[i].ops / prevMinOps);
 
     // compare the difference between results
     const diff = Math.abs(currNormalized - prevNormalized);

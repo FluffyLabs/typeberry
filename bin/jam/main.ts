@@ -2,7 +2,7 @@ import { isMainThread } from "node:worker_threads";
 import { Logger } from "@typeberry/logger";
 
 import * as blockGenerator from "@typeberry/block-generator";
-import { tinyChainSpec } from "@typeberry/block/context";
+import { Config, tinyChainSpec } from "@typeberry/config";
 import type { Finished } from "@typeberry/generic-worker";
 import * as blockImporter from "@typeberry/importer";
 import type { MainReady } from "@typeberry/importer/state-machine";
@@ -18,12 +18,14 @@ export async function main() {
     const bestHeader = importerInit.getState<MainReady>("ready(main)").onBestBlock;
     const closeExtensions = initializeExtensions({ bestHeader });
 
+    const config = new Config(tinyChainSpec, "blocks-db");
+
     // initialize both workers
     const generatorReady = generatorInit.transition((state, port) => {
-      return state.sendConfig(port, tinyChainSpec);
+      return state.sendConfig(port, config);
     });
     const importerReady = importerInit.transition((state, port) => {
-      return state.sendConfig(port, tinyChainSpec);
+      return state.sendConfig(port, config);
     });
 
     // relay blocks from generator to importer

@@ -53,6 +53,18 @@ export class SortedArray<V> {
 
     return -1;
   }
+  /**
+   * Return the exact (in terms of comparator) element that's in the array if present.
+   *
+   * Note this API might look redundant on a first glance, but it really depends on the
+   * comparator. We might have a complex object inside the array, yet the comparator
+   * will consider two objects equal just by looking at the id. With this API
+   * we are able to retrieve the exact object that's stored.
+   */
+  public findExact(v: V): V | undefined {
+    const findIdx = this.findIndex(v);
+    return findIdx >= 0 ? this.array[findIdx] : undefined;
+  }
 
   /** Remove one matching element from the collection. */
   public removeOne(v: V) {

@@ -1,6 +1,6 @@
 import type { Blake2bHash } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { check } from "@typeberry/utils";
+import { WithDebug, check } from "@typeberry/utils";
 import blake2b from "blake2b";
 
 /**
@@ -10,16 +10,23 @@ import blake2b from "blake2b";
  *
  */
 export const HASH_SIZE = 32;
+/** A type for the above value. */
+export type HASH_SIZE = typeof HASH_SIZE;
+
+/**
+ * Opaque, unknown hash.
+ */
+export type OpaqueHash = Bytes<HASH_SIZE>;
 
 /** Allocator interface - returns an empty bytes vector that can be filled with the hash. */
 export interface HashAllocator {
   /** Return a new hash destination. */
-  emptyHash(): Bytes<typeof HASH_SIZE>;
+  emptyHash(): OpaqueHash;
 }
 
 /** The simplest allocator returning just a fresh copy of bytes each time. */
 export class SimpleAllocator implements HashAllocator {
-  emptyHash(): Bytes<typeof HASH_SIZE> {
+  emptyHash(): OpaqueHash {
     return Bytes.zero(HASH_SIZE);
   }
 }
@@ -41,7 +48,7 @@ export class PageAllocator implements HashAllocator {
     this.page = new Uint8Array(pageSizeBytes);
   }
 
-  emptyHash(): Bytes<typeof HASH_SIZE> {
+  emptyHash(): OpaqueHash {
     const startIdx = this.currentHash * HASH_SIZE;
     const endIdx = startIdx + HASH_SIZE;
 
@@ -56,25 +63,6 @@ export class PageAllocator implements HashAllocator {
 
 export const defaultAllocator = new SimpleAllocator();
 
-/** Blob of bytes with a lazy-evaluated hash. */
-export class HashableBlob<THash extends Bytes<typeof HASH_SIZE> = Bytes<typeof HASH_SIZE>> {
-  constructor(
-    public readonly blob: BytesBlob,
-    private hash?: THash,
-    private allocator: HashAllocator = defaultAllocator,
-  ) {}
-
-  /** Get or compute the hash of the data. */
-  getHash(): THash {
-    if (this.hash) {
-      return this.hash;
-    }
-
-    this.hash = hashBytes(this.blob, this.allocator) as THash;
-    return this.hash;
-  }
-}
-
 /** Hash given blob of bytes. */
 export function hashBytes(blob: BytesBlob | Uint8Array, allocator: HashAllocator = defaultAllocator): Blake2bHash {
   const hasher = blake2b(HASH_SIZE);
@@ -85,6 +73,35 @@ export function hashBytes(blob: BytesBlob | Uint8Array, allocator: HashAllocator
   return out;
 }
 
+/** Convert given string into bytes and hash it. */
 export function hashString(str: string, allocator: HashAllocator = defaultAllocator) {
   return hashBytes(BytesBlob.fromString(str), allocator);
+}
+
+/**
+ * Container for some object with a hash that is related to this object.
+ *
+ * After calculating the hash these two should be passed together to avoid
+ * unnecessary re-hashing of the data.
+ */
+export class WithHash<THash extends OpaqueHash, TData> extends WithDebug {
+  constructor(
+    public readonly hash: THash,
+    public readonly data: TData,
+  ) {
+    super();
+  }
+}
+
+/**
+ * Extension of [`WithHash`] additionally containing an encoded version of the object.
+ */
+export class WithHashAndBytes<THash extends OpaqueHash, TData> extends WithHash<THash, TData> {
+  constructor(
+    hash: THash,
+    data: TData,
+    public readonly encoded: BytesBlob,
+  ) {
+    super(hash, data);
+  }
 }

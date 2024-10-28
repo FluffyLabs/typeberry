@@ -1,10 +1,9 @@
-import type { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
+import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import type { U16, U32 } from "@typeberry/numbers";
-import type { Opaque } from "@typeberry/utils";
-import { WithDebug } from "./common";
-import { HASH_SIZE } from "./hash";
+import { type Opaque, WithDebug } from "@typeberry/utils";
 import { RefineContext } from "./refine-context";
 import type { WorkItemsCount } from "./work-package";
 import { WorkResult } from "./work-result";
@@ -12,7 +11,7 @@ import { WorkResult } from "./work-result";
 /** Index of the core on which the execution of the work package is done. */
 export type CoreIndex = Opaque<U16, "CoreIndex[u16]">;
 /** Blake2B hash of a work package. */
-export type WorkPackageHash = Opaque<Bytes<typeof HASH_SIZE>, "WorkPackageHash">;
+export type WorkPackageHash = Opaque<OpaqueHash, "WorkPackageHash">;
 
 /** Details about the work package being reported on. */
 export class WorkPackageSpec extends WithDebug {
@@ -33,9 +32,9 @@ export class WorkPackageSpec extends WithDebug {
     /** Encoded length of the work package. */
     public readonly len: U32,
     /** The root hash of the erasure coding merkle tree of that work package. */
-    public readonly erasureRoot: Bytes<typeof HASH_SIZE>,
+    public readonly erasureRoot: OpaqueHash,
     /** The root hash of all data segments exported by this work package. */
-    public readonly exportsRoot: Bytes<typeof HASH_SIZE>,
+    public readonly exportsRoot: OpaqueHash,
   ) {
     super();
   }
@@ -83,14 +82,14 @@ export class WorkReport extends WithDebug {
     /** `c`: Core index on which the work is done. */
     public readonly coreIndex: CoreIndex,
     /** `a`: Hash of the authorizer. */
-    public readonly authorizerHash: Bytes<typeof HASH_SIZE>,
+    public readonly authorizerHash: OpaqueHash,
     /** `o`: Authorization output. */
     public readonly authorizationOutput: BytesBlob,
     /**
      * TODO [ToDr] a segment-root lookup dictionary is mentioned in the GP but missing in JSON tests for now.
      * https://graypaper.fluffylabs.dev/#/c71229b/137a00137d00
      */
-    // public readonly segmentRootLookup: MapOfHashes<Bytes<typeof HASH_SIZE>>,
+    // public readonly segmentRootLookup: MapOfHashes<OpaqueHash>,
     /** `r`: The results of evaluation of each of the items in the work package. */
     public readonly results: FixedSizeArray<WorkResult, WorkItemsCount>,
   ) {

@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
-import { HASH_SIZE, type Header, type HeaderHash, type TimeSlot, type WithHash } from "@typeberry/block";
+import type { Header, HeaderHash, TimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { hashString } from "@typeberry/hash";
+import { HASH_SIZE, type WithHash, hashString } from "@typeberry/hash";
 import type { Listener } from "@typeberry/state-machine";
 import { KEY_SIZE, KeyValuePair } from "./protocol/ce-129-state-request";
 import { Announcement, Handshake, HashAndSlot } from "./protocol/up-0-block-announcement";

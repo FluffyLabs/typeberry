@@ -48,8 +48,7 @@ export class Lookup implements HostCallHandler {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
       return Promise.resolve();
     }
-    // TODO [ToDr] Remove conversion, after #150
-    const keyHash = hashBytes(BytesBlob.fromBlob(key.raw));
+    const keyHash = hashBytes(key);
     const value = await this.account.lookup(serviceId, keyHash);
 
     if (value === null) {
