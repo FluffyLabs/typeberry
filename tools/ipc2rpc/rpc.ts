@@ -94,7 +94,14 @@ export function startRpc(db: Database, client: MessageHandler) {
     });
   });
 
-  httpServer.listen(3000, () => {
-    console.info("Listening for RPC at :3000");
-  });
+  httpServer.listen(
+    {
+      port: 3000,
+    },
+    () => {
+      console.info("Listening for RPC at :3000");
+    },
+  );
+
+  return httpServer;
 }

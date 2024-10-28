@@ -75,13 +75,13 @@ export function startIpcServer(
     // Handle client disconnection
     socket.on("end", () => {
       logger.log("Client disconnected");
-      messageHandler.onClose();
+      messageHandler.onClose({});
       announcements.off("annoucement", listener);
     });
 
-    socket.on("error", (err) => {
-      logger.error(`Socket error: ${err}`);
-      messageHandler.onClose();
+    socket.on("error", (error) => {
+      logger.error(`Socket error: ${error}`);
+      messageHandler.onClose({ error });
       socket.end();
     });
   });
@@ -107,8 +107,13 @@ export function startIpcServer(
     throw err;
   });
 
-  return {
-    server,
-    close: () => controller.abort(),
+  return () => {
+    logger.info("Closing IPC server.");
+    // stop accepting new connections
+    server.close();
+    // abort the server
+    controller.abort();
+    // unrefing
+    server.unref();
   };
 }
