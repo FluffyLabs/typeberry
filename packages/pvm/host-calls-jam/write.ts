@@ -23,6 +23,9 @@ export interface Accounts {
   /**
    * Returns true if the storage is already full.
    *
+   * It means that the threshold balance `a_t` is greater than current account balance `a_b`.
+   * TODO [ToDr] Can be computed from `AccountInfo` - might need to be merged later.
+   *
    * https://graypaper.fluffylabs.dev/#/439ca37/2d2a022d2e02
    */
   isStorageFull(serviceId: ServiceId): Promise<boolean>;
@@ -44,13 +47,23 @@ const SERVICE_ID_BYTES = 4;
  * https://graypaper.fluffylabs.dev/#/439ca37/2d4e012d4e01
  */
 export class Write implements HostCallHandler {
-  index = 2 as HostCallIndex;
+  index = 3 as HostCallIndex;
   gasCost = 10 as SmallGas;
   currentServiceId = (2 ** 32 - 1) as ServiceId;
 
   constructor(private readonly account: Accounts) {}
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
+    // Storage is full (i.e. `a_t > a_b` - threshold balance is greater than current balance).
+    // NOTE that we first need to know if the storage is full, since the result
+    // does not depend on the success of reading the key or value:
+    // https://graypaper.fluffylabs.dev/#/439ca37/2d2a022d2a02
+    const isStorageFull = await this.account.isStorageFull(this.currentServiceId);
+    if (isStorageFull) {
+      regs.asUnsigned[IN_OUT_REG] = HostCallResult.FULL;
+      return Promise.resolve();
+    }
+
     // k_0
     const keyStartAddress = createMemoryIndex(regs.asUnsigned[7]);
     // k_z
@@ -71,18 +84,6 @@ export class Write implements HostCallHandler {
     const keyHash = hashBytes(key);
     const maybeValue = valueLen === 0 ? null : BytesBlob.fromBlob(value);
 
-    const isStorageFull = await this.account.isStorageFull(this.currentServiceId);
-
-    // Storage is full (i.e. `a_t > a_b`).
-    if (isStorageFull) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.FULL;
-      return Promise.resolve();
-    }
-
-    // NOTE that we first need to know if the storage is full, since the result
-    // does not depend on the success of reading the key or value:
-    // https://graypaper.fluffylabs.dev/#/439ca37/2d2a022d2a02
-    //
     // we return OOB in case the value cannot be read or the key can't be loaded.
     if (keyLoadingFault || valueLoadingFault) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;

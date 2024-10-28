@@ -12,7 +12,11 @@ import { getServiceId, writeServiceIdAsLeBytes } from "./utils";
 
 /** Account data interface for Read host call. */
 export interface Accounts {
-  /** Read service storage. */
+  /**
+   * Read service storage.
+   *
+   * If `serviceId === currentServiceId` we should read from snapshot state.
+   */
   read(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null>;
 }
 
