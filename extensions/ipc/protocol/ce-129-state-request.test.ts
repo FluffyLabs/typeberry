@@ -41,7 +41,7 @@ describe("CE 129: State Request", () => {
           handlers.server.onSocketMessage(data.buffer);
         },
         () => {
-          handlers.server.onClose();
+          handlers.server.onClose({});
         },
       ),
     );
@@ -51,7 +51,7 @@ describe("CE 129: State Request", () => {
           handlers.client.onSocketMessage(data.buffer);
         },
         () => {
-          handlers.client.onClose();
+          handlers.client.onClose({});
         },
       ),
     );
