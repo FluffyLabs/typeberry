@@ -35,6 +35,13 @@ const packageJson = JSON.stringify(
 fs.mkdirSync(DIST, { recursive: true });
 fs.writeFileSync(`${DIST}/package.json`, packageJson);
 
+fs.writeFileSync(
+  `${DIST}/.npmignore`,
+  `tools/**
+packages/**
+`,
+);
+
 module.exports = {
   outFile: `${DIST}/index.js`,
   typesInput: `${DIST}/tools/builder/pkg.d.ts`,
