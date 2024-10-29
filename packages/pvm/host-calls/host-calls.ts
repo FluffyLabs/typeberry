@@ -49,7 +49,8 @@ export class HostCalls {
       const regs = pvmInstance.getRegisters();
       const memory = pvmInstance.getMemory();
       const hostCall = this.hostCalls.get(hostCallIndex as HostCallIndex);
-      const underflow = gas.sub(typeof hostCall.gasCost === "number" ? hostCall.gasCost : hostCall.gasCost(regs));
+      const gasCost = typeof hostCall.gasCost === "number" ? hostCall.gasCost : hostCall.gasCost(regs);
+      const underflow = gas.sub(gasCost);
       if (underflow) {
         return Status.OOG;
       }
