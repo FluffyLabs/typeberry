@@ -14,6 +14,6 @@ export function writeServiceIdAsLeBytes(serviceId: ServiceId, destination: Uint8
   let serviceIdBytes = serviceId as number;
   for (let i = 0; i < SERVICE_ID_BYTES; i += 1) {
     destination[i] = serviceIdBytes & 0xff;
-    serviceIdBytes >>= 8;
+    serviceIdBytes >>>= 8;
   }
 }
