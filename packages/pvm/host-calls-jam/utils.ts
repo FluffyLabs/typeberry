@@ -3,10 +3,11 @@ import type { Registers } from "@typeberry/pvm-interpreter";
 import { check } from "@typeberry/utils";
 
 export const SERVICE_ID_BYTES = 4;
+const CURRENT_SERVICE_ID = 2 ** 32 - 1;
 
 export function getServiceId(regNumber: number, regs: Registers, currentServiceId: ServiceId) {
   const serviceId = regs.asUnsigned[regNumber];
-  return serviceId === 2 ** 32 - 1 ? currentServiceId : (serviceId as ServiceId);
+  return serviceId === CURRENT_SERVICE_ID ? currentServiceId : (serviceId as ServiceId);
 }
 
 export function writeServiceIdAsLeBytes(serviceId: ServiceId, destination: Uint8Array) {
