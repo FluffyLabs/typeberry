@@ -1,0 +1,101 @@
+import type { ServiceId } from "@typeberry/block";
+import { BytesBlob } from "@typeberry/bytes";
+import { type Blake2bHash, hashBytes } from "@typeberry/hash";
+import type { HostCallHandler } from "@typeberry/pvm-host-calls";
+import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import type { GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
+import type { Memory } from "@typeberry/pvm-interpreter/memory";
+import { createMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import type { Registers } from "@typeberry/pvm-interpreter/registers";
+import { HostCallResult } from "./results";
+import { writeServiceIdAsLeBytes } from "./utils";
+
+/** Account data interface for Write host call. */
+export interface Accounts {
+  /**
+   * Alter the account storage. Put `data` under given key hash.
+   *
+   * `null` indicates the storage entry should be removed.
+   *
+   */
+  write(serviceId: ServiceId, hash: Blake2bHash, data: BytesBlob | null): Promise<void>;
+
+  /**
+   * Returns true if the storage is already full.
+   *
+   * It means that the threshold balance `a_t` is greater than current account balance `a_b`.
+   * TODO [ToDr] Can be computed from `AccountInfo` - might need to be merged later.
+   *
+   * https://graypaper.fluffylabs.dev/#/439ca37/2d2a022d2e02
+   */
+  isStorageFull(serviceId: ServiceId): Promise<boolean>;
+
+  /**
+   * Read the length of some value from account snapshot state.
+   *
+   * Returns `null` if the storage entry was empty.
+   */
+  readSnapshotLen(serviceId: ServiceId, hash: Blake2bHash): Promise<number | null>;
+}
+
+const IN_OUT_REG = 7;
+const SERVICE_ID_BYTES = 4;
+
+/**
+ * Write account storage.
+ *
+ * https://graypaper.fluffylabs.dev/#/439ca37/2d4e012d4e01
+ */
+export class Write implements HostCallHandler {
+  index = 3 as HostCallIndex;
+  gasCost = 10 as SmallGas;
+  currentServiceId = (2 ** 32 - 1) as ServiceId;
+
+  constructor(private readonly account: Accounts) {}
+
+  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
+    // Storage is full (i.e. `a_t > a_b` - threshold balance is greater than current balance).
+    // NOTE that we first need to know if the storage is full, since the result
+    // does not depend on the success of reading the key or value:
+    // https://graypaper.fluffylabs.dev/#/439ca37/2d2a022d2a02
+    const isStorageFull = await this.account.isStorageFull(this.currentServiceId);
+    if (isStorageFull) {
+      regs.asUnsigned[IN_OUT_REG] = HostCallResult.FULL;
+      return Promise.resolve();
+    }
+
+    // k_0
+    const keyStartAddress = createMemoryIndex(regs.asUnsigned[7]);
+    // k_z
+    const keyLen = regs.asUnsigned[8];
+    // v_0
+    const valueStart = createMemoryIndex(regs.asUnsigned[9]);
+    // v_z
+    const valueLen = regs.asUnsigned[10];
+
+    // allocate extra bytes for the serviceId
+    const key = new Uint8Array(SERVICE_ID_BYTES + keyLen);
+    writeServiceIdAsLeBytes(this.currentServiceId, key);
+    const keyLoadingFault = memory.loadInto(key.subarray(SERVICE_ID_BYTES), keyStartAddress);
+
+    const value = new Uint8Array(valueLen);
+    const valueLoadingFault = memory.loadInto(value, valueStart);
+
+    const keyHash = hashBytes(key);
+    const maybeValue = valueLen === 0 ? null : BytesBlob.from(value);
+
+    // we return OOB in case the value cannot be read or the key can't be loaded.
+    if (keyLoadingFault || valueLoadingFault) {
+      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+      return Promise.resolve();
+    }
+
+    const prevLenPromise = this.account.readSnapshotLen(this.currentServiceId, keyHash);
+    await this.account.write(this.currentServiceId, keyHash, maybeValue);
+
+    // Successful write or removal. We store previous value length in omega_7
+    const prevLen = await prevLenPromise;
+    regs.asUnsigned[IN_OUT_REG] = prevLen === null ? HostCallResult.NONE : prevLen;
+    return Promise.resolve();
+  }
+}

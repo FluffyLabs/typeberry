@@ -12,10 +12,11 @@ export const HASH_SIZE = 32;
 /** A type for the above value. */
 export type HASH_SIZE = typeof HASH_SIZE;
 
-/**
- * Opaque, unknown hash.
- */
+/** Opaque, unknown hash. */
 export type OpaqueHash = Bytes<HASH_SIZE>;
+
+/** Opaque Blake2B. */
+export type Blake2bHash = Bytes<32>;
 
 /** Allocator interface - returns an empty bytes vector that can be filled with the hash. */
 export interface HashAllocator {
@@ -63,9 +64,10 @@ export class PageAllocator implements HashAllocator {
 export const defaultAllocator = new SimpleAllocator();
 
 /** Hash given blob of bytes. */
-export function hashBytes(blob: BytesBlob, allocator: HashAllocator = defaultAllocator) {
+export function hashBytes(blob: BytesBlob | Uint8Array, allocator: HashAllocator = defaultAllocator): Blake2bHash {
   const hasher = blake2b(HASH_SIZE);
-  hasher?.update(blob.buffer);
+  const bytes = blob instanceof BytesBlob ? blob.buffer : blob;
+  hasher?.update(bytes);
   const out = allocator.emptyHash();
   hasher?.digest(out.raw);
   return out;

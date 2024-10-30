@@ -22,6 +22,12 @@ export class BytesBlob {
     return bytesToHexString(this.buffer);
   }
 
+  /** Decode contained bytes as string. */
+  asText() {
+    const decoder = new TextDecoder();
+    return decoder.decode(this.buffer);
+  }
+
   /** Compare the sequence to another one. */
   isEqualTo(other: BytesBlob): boolean {
     if (this.length !== other.length) {

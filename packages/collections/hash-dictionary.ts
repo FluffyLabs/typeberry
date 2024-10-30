@@ -7,23 +7,28 @@ export class HashDictionary<K extends OpaqueHash, V> {
   // This has to be benchmarked and re-written to a custom map most likely.
   private readonly map = new Map<string, V>();
 
+  /** Return number of items in the dictionary. */
+  get size(): number {
+    return this.map.size;
+  }
+
   /** Return true if the key is present in the dictionary. */
-  public has(key: K): boolean {
+  has(key: K): boolean {
     return this.map.has(key.toString());
   }
 
   /** Get the value under given key or `null` if the value is not present. */
-  public get(key: K): V | undefined {
+  get(key: K): V | undefined {
     return this.map.get(key.toString());
   }
 
   /** Insert/overwrite the value at given key. */
-  public set(key: K, value: V) {
+  set(key: K, value: V) {
     this.map.set(key.toString(), value);
   }
 
   /** Remove the key and any value from the dictionary. */
-  public delete(key: K) {
+  delete(key: K) {
     this.map.delete(key.toString());
   }
 }

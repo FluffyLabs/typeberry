@@ -135,6 +135,11 @@ export class Memory {
    * NOTE That the `result` might be partially modified in case `PageFault` occurs!
    */
   loadInto(result: Uint8Array, startAddress: MemoryIndex): null | PageFault {
+    // TODO [ToDr] potential edge case - is `0`-length slice readable whereever?
+    if (result.length === 0) {
+      return null;
+    }
+
     if (startAddress >= this.virtualSbrkIndex && startAddress < this.sbrkIndex) {
       // [virtualSbrkIndex; sbrkIndex) is allocated but shouldn't be available before sbrk is called
       return new PageFault(startAddress);
