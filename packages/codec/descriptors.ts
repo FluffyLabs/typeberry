@@ -366,7 +366,7 @@ export namespace codec {
     },
   ) =>
     descriptor<Map<K, V>>(
-      "Dictionary",
+      `Dictionary<${key.name}, ${value.name}>`,
       TYPICAL_DICTIONARY_LENGTH * (key.sizeHintBytes + value.sizeHintBytes),
       (e, v) => {
         const data = Array.from(v.entries());
