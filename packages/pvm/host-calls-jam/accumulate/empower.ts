@@ -33,7 +33,7 @@ const IN_OUT_REG = 7;
 const ENCODED_SIZE_OF_SERVICE_ID_AND_GAS = 4 + 8;
 
 export class Empower implements HostCallHandler {
-  index = 4 as HostCallIndex;
+  index = 5 as HostCallIndex;
   gasCost = 10 as SmallGas;
   currentServiceId = (2 ** 32 - 1) as ServiceId;
 
