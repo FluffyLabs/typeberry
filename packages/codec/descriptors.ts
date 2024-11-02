@@ -10,6 +10,11 @@ import type { Encode, Encoder } from "./encoder";
  * TODO [ToDr] [opti] This value should be updated when we run some real-data bechmarks.
  */
 const TYPICAL_SEQUENCE_LENGTH = 64;
+/**
+ * For the size hint for encoding typical dictionaries.
+ * TODO [ToDr] [opti] This value should be updated when we run some real-data bechmarks.
+ */
+const TYPICAL_DICTIONARY_LENGTH = 32;
 
 /**
  * A full codec type, i.e. the `Encode` and `Decode`.
@@ -346,6 +351,54 @@ export namespace codec {
       len * (type.sizeHintBytes ?? 0),
       (e, v) => e.sequenceFixLen(type, v),
       (d) => d.sequenceFixLen(type, len),
+    );
+
+  /** Small dictionary codec. */
+  export const dictionary = <K, V>(
+    key: Descriptor<K>,
+    value: Descriptor<V>,
+    {
+      sortKeys,
+      fixedLength,
+    }: {
+      sortKeys: (a: K, b: K) => number;
+      fixedLength?: number;
+    },
+  ) =>
+    descriptor<Map<K, V>>(
+      "Dictionary",
+      TYPICAL_DICTIONARY_LENGTH * (key.sizeHintBytes + value.sizeHintBytes),
+      (e, v) => {
+        const data = Array.from(v.entries());
+        data.sort((a, b) => sortKeys(a[0], b[0]));
+
+        // length prefix
+        if (!fixedLength) {
+          e.varU32(data.length as U32);
+        }
+        for (const [k, v] of data) {
+          key.encode(e, k);
+          value.encode(e, v);
+        }
+      },
+      (d) => {
+        const map = new Map<K, V>();
+        const len = fixedLength === undefined ? d.varU32() : fixedLength;
+        let prevKey = null as null | K;
+        for (let i = 0; i < len; i += 1) {
+          const k = key.decode(d);
+          const v = value.decode(d);
+          if (map.has(k)) {
+            throw new Error(`Duplicate item in the dictionary encoding: "${k}"!`);
+          }
+          if (prevKey !== null && sortKeys(prevKey, k) >= 0) {
+            throw new Error(`The keys in dictionary encoding are not sorted "${prevKey}" >= "${k}"!`);
+          }
+          map.set(k, v);
+          prevKey = k;
+        }
+        return map;
+      },
     );
 
   /** Custom encoding / decoding logic. */
