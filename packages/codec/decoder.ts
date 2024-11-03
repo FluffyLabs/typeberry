@@ -302,7 +302,7 @@ export class Decoder {
    * Note the offset can actually be smaller than the current offset
    * (i.e. one can go back).
    */
-  moveTo(newOffset: number) {
+  resetTo(newOffset: number) {
     if (this.offset < newOffset) {
       this.skip(newOffset - this.offset);
     } else {

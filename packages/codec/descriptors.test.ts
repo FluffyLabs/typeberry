@@ -241,3 +241,46 @@ describe("Codec Descriptors / generic class", () => {
     assert.deepStrictEqual(decoded, input);
   });
 });
+
+describe("Codec Descriptors / dictionary", () => {
+  it("should encode/decode a dictionary", () => {
+    const input = new Map<U32, Bytes<32>>();
+    input.set(10 as U32, Bytes.fill(32, 10));
+    input.set(1 as U32, Bytes.fill(32, 1));
+    input.set(15 as U32, Bytes.fill(32, 15));
+
+    const dictCodec = codec.dictionary(codec.u32, codec.bytes(32), {
+      sortKeys: (a, b) => a - b,
+    });
+
+    const encoded = Encoder.encodeObject(dictCodec, input);
+    const decoded = Decoder.decodeObject(dictCodec, encoded);
+
+    assert.deepStrictEqual(decoded, input);
+    assert.deepStrictEqual(
+      encoded.toString(),
+      "0x030100000001010101010101010101010101010101010101010101010101010101010101010a0000000a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0f0000000f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+    );
+  });
+
+  it("should encode/decode a known-length dictionary", () => {
+    const input = new Map<U32, Bytes<32>>();
+    input.set(10 as U32, Bytes.fill(32, 10));
+    input.set(1 as U32, Bytes.fill(32, 1));
+    input.set(15 as U32, Bytes.fill(32, 15));
+
+    const dictCodec = codec.dictionary(codec.u32, codec.bytes(32), {
+      sortKeys: (a, b) => a - b,
+      fixedLength: 3,
+    });
+
+    const encoded = Encoder.encodeObject(dictCodec, input);
+    const decoded = Decoder.decodeObject(dictCodec, encoded);
+
+    assert.deepStrictEqual(decoded, input);
+    assert.deepStrictEqual(
+      encoded.toString(),
+      "0x0100000001010101010101010101010101010101010101010101010101010101010101010a0000000a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0f0000000f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
+    );
+  });
+});

@@ -302,7 +302,7 @@ describe("JAM decoder / numbers", () => {
     const decoder = Decoder.fromBytesBlob(input);
 
     const l = decoder.varU32();
-    decoder.moveTo(0);
+    decoder.resetTo(0);
     const ln = decoder.varU64();
     decoder.finish();
 
@@ -317,7 +317,7 @@ describe("JAM decoder / numbers", () => {
     const ln = decoder.varU64();
     assert.deepStrictEqual(ln, 2n ** 32n);
 
-    decoder.moveTo(0);
+    decoder.resetTo(0);
     assert.throws(() => decoder.varU32(), {
       name: "Error",
       message: "Unexpectedly large value for u32. l=4, mostSignificantByte=1",
