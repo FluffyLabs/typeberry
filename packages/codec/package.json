@@ -5,8 +5,9 @@
   "main": "index.ts",
   "dependencies": {
     "@typeberry/bytes": "0.0.1",
-    "@typeberry/utils": "0.0.1",
-    "@typeberry/logger": "0.0.1"
+    "@typeberry/logger": "0.0.1",
+    "@typeberry/numbers": "0.0.1",
+    "@typeberry/utils": "0.0.1"
   },
   "scripts": {
     "build": "npm run build -w @typeberry/builder -- --environment PACKAGE_NAME:@typeberry/codec",
