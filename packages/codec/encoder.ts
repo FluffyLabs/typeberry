@@ -1,6 +1,6 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { BitVec } from "@typeberry/bytes";
-import type { U32 } from "@typeberry/numbers";
+import { type U32, u32 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
 
 /** An encoder for some specific type `T`. */
@@ -202,7 +202,7 @@ export class Encoder {
    * https://graypaper.fluffylabs.dev/#WyJlMjA2ZTI2NjNjIiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEzIGg2IHkxZGZlIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeDEwIGhjIHkxZGZmIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+Il1d
    */
   bool(bool: boolean) {
-    this.varU32((bool ? 1 : 0) as U32);
+    this.varU32(u32(bool ? 1 : 0));
   }
 
   /**
@@ -313,7 +313,7 @@ export class Encoder {
    */
   blob(blob: Uint8Array) {
     // first encode the length
-    this.varU32(blob.length as U32);
+    this.varU32(u32(blob.length));
 
     // now encode the bytes
     this.ensureBigEnough(blob.length);
@@ -356,7 +356,7 @@ export class Encoder {
    */
   bitVecVarLen(bitvec: BitVec) {
     const len = bitvec.bitLength;
-    this.varU32(len as U32);
+    this.varU32(u32(len));
     this.bitVecFixLen(bitvec);
   }
 
@@ -404,7 +404,7 @@ export class Encoder {
    */
   sequenceVarLen<T>(encode: Encode<T>, elements: T[]) {
     check(elements.length <= 2 ** 32, "Wow, that's a nice long sequence you've got here.");
-    this.varU32(elements.length as U32);
+    this.varU32(u32(elements.length));
     this.sequenceFixLen(encode, elements);
   }
 

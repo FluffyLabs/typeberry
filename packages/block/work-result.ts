@@ -1,7 +1,7 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import type { U32 } from "@typeberry/numbers";
+import { u32 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
 import type { ServiceGas, ServiceId } from "./common";
 import type { CodeHash } from "./hash";
@@ -28,7 +28,7 @@ export class WorkExecResult extends WithDebug {
       sizeHintBytes: 1,
     },
     (e, x) => {
-      e.varU32(x.kind as number as U32);
+      e.varU32(u32(x.kind as number));
       if (x.kind === WorkExecResultKind.ok && x.okBlob) {
         e.bytesBlob(x.okBlob);
       }

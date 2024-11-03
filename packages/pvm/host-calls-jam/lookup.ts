@@ -8,7 +8,7 @@ import type { Memory } from "@typeberry/pvm-interpreter/memory";
 import { createMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { HostCallResult } from "./results";
-import { getServiceId } from "./utils";
+import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
 
 /** Account data interface for Lookup host call. */
 export interface Accounts {
@@ -26,7 +26,7 @@ const IN_OUT_REG = 7;
 export class Lookup implements HostCallHandler {
   index = 1 as HostCallIndex;
   gasCost = 10 as SmallGas;
-  currentServiceId = (2 ** 32 - 1) as ServiceId;
+  currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(private readonly account: Accounts) {}
 

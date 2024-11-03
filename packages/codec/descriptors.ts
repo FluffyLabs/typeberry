@@ -1,6 +1,6 @@
 import { type BitVec, type Bytes, BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
-import type { U8, U16, U32, U64 } from "@typeberry/numbers";
+import { type U8, type U16, type U32, type U64, u32 as asU32 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
 import { type Decode, Decoder } from "./decoder";
 import type { Encode, Encoder } from "./encoder";
@@ -374,7 +374,7 @@ export namespace codec {
 
         // length prefix
         if (!fixedLength) {
-          e.varU32(data.length as U32);
+          e.varU32(asU32(data.length));
         }
         for (const [k, v] of data) {
           key.encode(e, k);

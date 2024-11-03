@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import type { CodeHash, ServiceId } from "@typeberry/block";
+import { type CodeHash, type ServiceId, serviceId as asServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
-import type { U32, U64 } from "@typeberry/numbers";
+import { u32, u64 } from "@typeberry/numbers";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { type Gas, gasCounter } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, createMemoryIndex as memIdx } from "@typeberry/pvm-interpreter/memory";
@@ -46,20 +46,19 @@ function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = 32 + 8 +
 }
 
 describe("HostCalls: Info", () => {
-  // TODO OK / OOB / NONE;
   it("should write account info data into memory", async () => {
     const accounts = new TestAccounts();
     const info = new Info(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     info.currentServiceId = serviceId;
     const { registers, memory, readInfo } = prepareRegsAndMemory(serviceId);
-    const storageUtilisationBytes = 10_000n as U64;
-    const storageUtilisationCount = 1_000 as U32;
+    const storageUtilisationBytes = u64(10_000);
+    const storageUtilisationCount = u32(1_000);
     accounts.data.set(
       serviceId,
       AccountInfo.fromCodec({
         codeHash: Bytes.fill(32, 5) as CodeHash,
-        balance: 150_000n as U64,
+        balance: u64(150_000),
         thresholdBalance: AccountInfo.calculateThresholdBalance(storageUtilisationCount, storageUtilisationBytes),
         accumulateMinGas: 0n as Gas,
         onTransferMinGas: 0n as Gas,
@@ -79,7 +78,7 @@ describe("HostCalls: Info", () => {
   it("should write none if account info is missing", async () => {
     const accounts = new TestAccounts();
     const info = new Info(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(serviceId);
 
     // when
@@ -92,16 +91,16 @@ describe("HostCalls: Info", () => {
   it("should write OOB if not enough memory allocated", async () => {
     const accounts = new TestAccounts();
     const info = new Info(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     info.currentServiceId = serviceId;
     const { registers, memory } = prepareRegsAndMemory(serviceId, 10);
-    const storageUtilisationBytes = 10_000n as U64;
-    const storageUtilisationCount = 1_000 as U32;
+    const storageUtilisationBytes = u64(10_000);
+    const storageUtilisationCount = u32(1_000);
     accounts.data.set(
       serviceId,
       AccountInfo.fromCodec({
         codeHash: Bytes.fill(32, 5) as CodeHash,
-        balance: 150_000n as U64,
+        balance: u64(150_000),
         thresholdBalance: AccountInfo.calculateThresholdBalance(storageUtilisationCount, storageUtilisationBytes),
         accumulateMinGas: 0n as Gas,
         onTransferMinGas: 0n as Gas,

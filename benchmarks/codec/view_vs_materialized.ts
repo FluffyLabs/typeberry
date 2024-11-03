@@ -3,7 +3,7 @@ import { add, complete, configure, cycle, save, suite } from "@typeberry/benchma
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { type CodecRecord, type View, codec } from "@typeberry/codec/descriptors";
-import type { U64 } from "@typeberry/numbers";
+import { type U64, u64 } from "@typeberry/numbers";
 
 class TestHeader {
   static Codec = codec.Class(TestHeader, {
@@ -38,7 +38,7 @@ const extrinsicHash = Bytes.fill(32, 0x42);
 TestHeader.Codec.encode(
   encoder,
   new TestHeader({
-    blockNumber: 10_000_000n as U64,
+    blockNumber: u64(10_000_000n),
     parentHeaderHash,
     priorStateRoot,
     extrinsicHash,

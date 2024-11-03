@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import type { ServiceId } from "@typeberry/block";
+import { type ServiceId, serviceId as asServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { type Blake2bHash, hashBytes } from "@typeberry/hash";
@@ -97,7 +97,7 @@ describe("HostCalls: Write", () => {
   it("should write data to account state", async () => {
     const accounts = new TestAccounts();
     const write = new Write(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     write.currentServiceId = serviceId;
     const { key, hash } = prepareKey(write.currentServiceId, "imma key");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.fromString("hello world!"));
@@ -114,7 +114,7 @@ describe("HostCalls: Write", () => {
   it("should remove data from account state", async () => {
     const accounts = new TestAccounts();
     const write = new Write(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     write.currentServiceId = serviceId;
     const { key, hash } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.fromNumbers([]));
@@ -133,7 +133,7 @@ describe("HostCalls: Write", () => {
   it("should fail if there is no memory for key", async () => {
     const accounts = new TestAccounts();
     const write = new Write(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.fromString("hello world!"), { skipKey: true });
@@ -149,7 +149,7 @@ describe("HostCalls: Write", () => {
   it("should fail if there is no memory for result", async () => {
     const accounts = new TestAccounts();
     const write = new Write(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.fromString("hello world!"), { skipValue: true });
@@ -165,7 +165,7 @@ describe("HostCalls: Write", () => {
   it("should fail if the key is not fully readable", async () => {
     const accounts = new TestAccounts();
     const write = new Write(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.fromString("hello world!"));
@@ -182,7 +182,7 @@ describe("HostCalls: Write", () => {
   it("should fail if the value is not fully readable", async () => {
     const accounts = new TestAccounts();
     const write = new Write(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.fromString("hello world!"));
@@ -199,7 +199,7 @@ describe("HostCalls: Write", () => {
   it("should handle storage full", async () => {
     const accounts = new TestAccounts();
     const write = new Write(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     write.currentServiceId = serviceId;
     const { key, hash } = prepareKey(write.currentServiceId, "imma key");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.fromString("hello world!"));

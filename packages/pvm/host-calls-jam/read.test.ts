@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import type { ServiceId } from "@typeberry/block";
+import { type ServiceId, serviceId as asServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { type Blake2bHash, hashBytes } from "@typeberry/hash";
@@ -82,10 +82,10 @@ describe("HostCalls: Read", () => {
   it("should read key from an account state", async () => {
     const accounts = new TestAccounts();
     const read = new Read(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "hello world");
-    const { registers, memory, readResult } = prepareRegsAndMemory((2 ** 32 - 1) as ServiceId, key, 64);
+    const { registers, memory, readResult } = prepareRegsAndMemory(asServiceId(2 ** 32 - 1), key, 64);
     accounts.add(serviceId, hash, BytesBlob.fromString("hello world"));
 
     // when
@@ -102,8 +102,8 @@ describe("HostCalls: Read", () => {
   it("should read key from different service Id", async () => {
     const accounts = new TestAccounts();
     const read = new Read(accounts);
-    read.currentServiceId = 10_000 as ServiceId;
-    const serviceId = 11_000 as ServiceId;
+    read.currentServiceId = asServiceId(10_000);
+    const serviceId = asServiceId(11_000);
     const { key, hash } = prepareKey(read.currentServiceId, "hello world");
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 64);
     accounts.add(serviceId, hash, BytesBlob.fromString("hello world"));
@@ -122,7 +122,7 @@ describe("HostCalls: Read", () => {
   it("should read key longer than destination", async () => {
     const accounts = new TestAccounts();
     const read = new Read(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 3);
@@ -139,7 +139,7 @@ describe("HostCalls: Read", () => {
   it("should handle missing value", async () => {
     const accounts = new TestAccounts();
     const read = new Read(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     read.currentServiceId = serviceId;
     const { key } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 32);
@@ -158,7 +158,7 @@ describe("HostCalls: Read", () => {
   it("should fail if there is no memory for key", async () => {
     const accounts = new TestAccounts();
     const read = new Read(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32, { skipKey: true });
@@ -174,7 +174,7 @@ describe("HostCalls: Read", () => {
   it("should fail if there is no memory for result", async () => {
     const accounts = new TestAccounts();
     const read = new Read(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32, { skipValue: true });
@@ -190,7 +190,7 @@ describe("HostCalls: Read", () => {
   it("should fail if the destination is not fully writeable", async () => {
     const accounts = new TestAccounts();
     const read = new Read(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
@@ -207,7 +207,7 @@ describe("HostCalls: Read", () => {
   it("should fail gracefuly if the destination is beyond mem limit", async () => {
     const accounts = new TestAccounts();
     const read = new Read(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
@@ -225,7 +225,7 @@ describe("HostCalls: Read", () => {
   it("should handle 0-length destination", async () => {
     const accounts = new TestAccounts();
     const read = new Read(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 0, { skipValue: true });

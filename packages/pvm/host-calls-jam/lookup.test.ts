@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import type { ServiceId } from "@typeberry/block";
+import { type ServiceId, serviceId as asServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { type Blake2bHash, hashBytes } from "@typeberry/hash";
@@ -71,7 +71,7 @@ describe("HostCalls: Lookup", () => {
   it("should lookup key from an account", async () => {
     const accounts = new TestAccounts();
     const lookup = new Lookup(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 64);
     accounts.add(serviceId, key, BytesBlob.fromString("hello world"));
@@ -90,7 +90,7 @@ describe("HostCalls: Lookup", () => {
   it("should lookup key longer than destination", async () => {
     const accounts = new TestAccounts();
     const lookup = new Lookup(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 3);
     accounts.add(serviceId, key, BytesBlob.fromString("hello world"));
@@ -106,7 +106,7 @@ describe("HostCalls: Lookup", () => {
   it("should handle missing value", async () => {
     const accounts = new TestAccounts();
     const lookup = new Lookup(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 32);
 
@@ -124,7 +124,7 @@ describe("HostCalls: Lookup", () => {
   it("should fail if there is no memory for key", async () => {
     const accounts = new TestAccounts();
     const lookup = new Lookup(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32, { skipKey: true });
 
@@ -138,7 +138,7 @@ describe("HostCalls: Lookup", () => {
   it("should fail if there is no memory for result", async () => {
     const accounts = new TestAccounts();
     const lookup = new Lookup(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32, { skipValue: true });
 
@@ -152,7 +152,7 @@ describe("HostCalls: Lookup", () => {
   it("should fail if the destination is not fully writeable", async () => {
     const accounts = new TestAccounts();
     const lookup = new Lookup(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
     accounts.add(serviceId, key, BytesBlob.fromString("hello world"));
@@ -168,7 +168,7 @@ describe("HostCalls: Lookup", () => {
   it("should fail gracefuly if the destination is beyond mem limit", async () => {
     const accounts = new TestAccounts();
     const lookup = new Lookup(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
     accounts.add(serviceId, key, BytesBlob.fromString("hello world"));
@@ -185,7 +185,7 @@ describe("HostCalls: Lookup", () => {
   it("should handle 0-length destination", async () => {
     const accounts = new TestAccounts();
     const lookup = new Lookup(accounts);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 0, { skipValue: true });
     accounts.add(serviceId, key, BytesBlob.fromString("hello world"));

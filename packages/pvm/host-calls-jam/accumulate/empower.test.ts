@@ -1,27 +1,13 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import type { ServiceId } from "@typeberry/block";
+import { type ServiceId, serviceId as asServiceId } from "@typeberry/block";
 import { Encoder } from "@typeberry/codec";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { type Gas, gasCounter } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, createMemoryIndex as memIdx } from "@typeberry/pvm-interpreter/memory";
 import { HostCallResult } from "../results";
-import { type AccumulationPartialState, Empower } from "./empower";
-
-type CallData = {
-  m: ServiceId;
-  a: ServiceId;
-  v: ServiceId;
-  g: Map<ServiceId, Gas>;
-};
-
-class TestAccumulate implements AccumulationPartialState {
-  public readonly data: CallData[] = [];
-
-  updatePriviligedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: Map<ServiceId, Gas>): void {
-    this.data.push({ m, a, v, g });
-  }
-}
+import { Empower } from "./empower";
+import { TestAccumulate } from "./partial-state.test";
 
 const gas = gasCounter(0 as Gas);
 const RESULT_REG = 7;
@@ -33,8 +19,8 @@ const DICTIONARY_COUNT = 11;
 
 function prepareDictionary(cb?: (d: Map<ServiceId, Gas>) => void) {
   const dictionary = new Map();
-  dictionary.set(10_000 as ServiceId, 15_000 as Gas);
-  dictionary.set(20_000 as ServiceId, 15_000 as Gas);
+  dictionary.set(asServiceId(10_000), 15_000 as Gas);
+  dictionary.set(asServiceId(20_000), 15_000 as Gas);
   if (cb) {
     cb(dictionary);
   }
@@ -50,9 +36,9 @@ function prepareRegsAndMemory(
 ) {
   const memStart = 20_000;
   const registers = new Registers();
-  registers.asUnsigned[SERVICE_M] = 5 as ServiceId;
-  registers.asUnsigned[SERVICE_A] = 10 as ServiceId;
-  registers.asUnsigned[SERVICE_V] = 15 as ServiceId;
+  registers.asUnsigned[SERVICE_M] = asServiceId(5);
+  registers.asUnsigned[SERVICE_A] = asServiceId(10);
+  registers.asUnsigned[SERVICE_V] = asServiceId(15);
   registers.asUnsigned[DICTIONARY_START] = memStart;
   registers.asUnsigned[DICTIONARY_COUNT] = dictionary.length;
 
@@ -79,7 +65,7 @@ describe("HostCalls: Empower", () => {
   it("should set new privileged services and auto-accumualte services", async () => {
     const accumulate = new TestAccumulate();
     const empower = new Empower(accumulate);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     empower.currentServiceId = serviceId;
     const { flat, expected } = prepareDictionary();
     const { registers, memory } = prepareRegsAndMemory(flat);
@@ -89,20 +75,15 @@ describe("HostCalls: Empower", () => {
 
     // then
     assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
-    assert.deepStrictEqual(accumulate.data, [
-      {
-        m: 5 as ServiceId,
-        a: 10 as ServiceId,
-        v: 15 as ServiceId,
-        g: expected,
-      },
+    assert.deepStrictEqual(accumulate.privilegedServices, [
+      [asServiceId(5), asServiceId(10), asServiceId(15), expected],
     ]);
   });
 
   it("should fail when dictionary is not readable", async () => {
     const accumulate = new TestAccumulate();
     const empower = new Empower(accumulate);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     empower.currentServiceId = serviceId;
     const { flat } = prepareDictionary();
     const { registers, memory } = prepareRegsAndMemory(flat, { skipDictionary: true });
@@ -112,16 +93,16 @@ describe("HostCalls: Empower", () => {
 
     // then
     assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
-    assert.deepStrictEqual(accumulate.data, []);
+    assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 
   it("should fail when dictionary is out of order", async () => {
     const accumulate = new TestAccumulate();
     const empower = new Empower(accumulate);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     empower.currentServiceId = serviceId;
     const { flat } = prepareDictionary((d) => {
-      d.set(5 as ServiceId, 10_000 as Gas);
+      d.set(asServiceId(5), 10_000 as Gas);
     });
     const { registers, memory } = prepareRegsAndMemory(flat);
 
@@ -130,13 +111,13 @@ describe("HostCalls: Empower", () => {
 
     // then
     assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
-    assert.deepStrictEqual(accumulate.data, []);
+    assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 
   it("should fail when dictionary contains duplicates", async () => {
     const accumulate = new TestAccumulate();
     const empower = new Empower(accumulate);
-    const serviceId = 10_000 as ServiceId;
+    const serviceId = asServiceId(10_000);
     empower.currentServiceId = serviceId;
     const { flat } = prepareDictionary();
     flat.push(flat[flat.length - 1]);
@@ -147,6 +128,6 @@ describe("HostCalls: Empower", () => {
 
     // then
     assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
-    assert.deepStrictEqual(accumulate.data, []);
+    assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 });

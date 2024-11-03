@@ -1,7 +1,7 @@
 import type { CodeHash, ServiceId } from "@typeberry/block";
 import { type CodecRecord, Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { U32, U64 } from "@typeberry/numbers";
+import { type U32, type U64, u64 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
@@ -9,7 +9,7 @@ import { type Memory, createMemoryIndex } from "@typeberry/pvm-interpreter/memor
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { WithDebug } from "@typeberry/utils";
 import { HostCallResult } from "./results";
-import { getServiceId } from "./utils";
+import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
 
 /**
  * Service account details.
@@ -26,12 +26,12 @@ export class AccountInfo extends WithDebug {
     balance: codec.u64,
     thresholdBalance: codec.u64,
     accumulateMinGas: codec.u64.convert(
-      (g) => BigInt(g) as U64,
-      (i) => BigInt(i) as Gas,
+      (g) => u64(g),
+      (i) => u64(i) as Gas,
     ),
     onTransferMinGas: codec.u64.convert(
-      (g) => BigInt(g) as U64,
-      (i) => BigInt(i) as Gas,
+      (g) => u64(g),
+      (i) => u64(i) as Gas,
     ),
     storageUtilisationBytes: codec.u64,
     storageUtilisationCount: codec.u32,
@@ -107,7 +107,7 @@ const IN_OUT_REG = 7;
 export class Info implements HostCallHandler {
   index = 4 as HostCallIndex;
   gasCost = 10 as SmallGas;
-  currentServiceId = (2 ** 32 - 1) as ServiceId;
+  currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(private readonly account: Accounts) {}
 

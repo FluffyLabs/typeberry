@@ -1,4 +1,4 @@
-import type { U32 } from "@typeberry/numbers";
+import { type U32, u32 } from "@typeberry/numbers";
 import { ArgsDecoder } from "./args-decoder/args-decoder";
 import { createResults } from "./args-decoder/args-decoding-results";
 import { ArgumentType } from "./args-decoder/argument-type";
@@ -257,8 +257,9 @@ export class Interpreter {
     return this.status;
   }
 
-  getExitParam(): U32 {
-    return this.instructionResult.exitParam as U32;
+  getExitParam(): null | U32 {
+    const p = this.instructionResult.exitParam;
+    return p !== null ? u32(p) : p;
   }
 
   getMemory() {

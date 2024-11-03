@@ -1,4 +1,7 @@
 // TODO [ToDr] This should be `unique symbol`, but for some reason
+
+import { check } from "@typeberry/utils";
+
 // I can't figure out how to build `@typeberry/blocks` package.
 declare const __REPRESENTATION_BYTES__: "REPRESENTATION_BYTES";
 
@@ -17,6 +20,31 @@ export type U32 = FixedSizeNumber<4>;
 export type U64 = bigint & WithBytesRepresentation<8>;
 
 // TODO [ToDr] Safe casting / math operations?
+
+/** Attempt to cast an input number into U8. */
+export const u8 = (v: number): U8 => {
+  check((v & 0xff) === v, `input must have one-byte representation, got ${v}`);
+  return v as U8;
+};
+
+/** Attempt to cast an input number into U16. */
+export const u16 = (v: number): U16 => {
+  check((v & 0xffff) === v, `input must have two-byte representation, got ${v}`);
+  return v as U16;
+};
+
+/** Attempt to cast an input number into U32. */
+export const u32 = (v: number): U32 => {
+  check((v & 0xffffffff) >>> 0 === v, `input must have four-byte representation, got ${v}`);
+  return v as U32;
+};
+
+/** Attempt to cast an input number into U64. */
+export const u64 = (x: number | bigint): U64 => {
+  const v = BigInt(x);
+  check((v & 0xffff_ffff_ffff_ffffn) === v, `input must have eight-byte representation, got ${x}`);
+  return v as U64;
+};
 
 /** A result of modulo arithmetic. */
 export type Result<T> = {

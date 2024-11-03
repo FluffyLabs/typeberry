@@ -2,14 +2,13 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import type { U16, U32 } from "@typeberry/numbers";
+import type { U32 } from "@typeberry/numbers";
 import { type Opaque, WithDebug } from "@typeberry/utils";
+import type { CoreIndex } from "./common";
 import { RefineContext } from "./refine-context";
 import type { WorkItemsCount } from "./work-package";
 import { WorkResult } from "./work-result";
 
-/** Index of the core on which the execution of the work package is done. */
-export type CoreIndex = Opaque<U16, "CoreIndex[u16]">;
 /** Blake2B hash of a work package. */
 export type WorkPackageHash = Opaque<OpaqueHash, "WorkPackageHash">;
 
