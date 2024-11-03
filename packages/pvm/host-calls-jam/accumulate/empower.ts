@@ -14,6 +14,11 @@ const IN_OUT_REG = 7;
 
 const ENCODED_SIZE_OF_SERVICE_ID_AND_GAS = 4 + 8;
 
+/**
+ * Modify privileged services and services that auto-accumulate every block.
+ *
+ * https://graypaper.fluffylabs.dev/#/364735a/2e3a002e3a00
+ */
 export class Empower implements HostCallHandler {
   index = 5 as HostCallIndex;
   gasCost = 10 as SmallGas;
@@ -22,7 +27,7 @@ export class Empower implements HostCallHandler {
   constructor(private readonly partialState: AccumulationPartialState) {}
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
-    // `m`: manager service (can change priviledged services)
+    // `m`: manager service (can change privileged services)
     const m = regs.asUnsigned[IN_OUT_REG] as ServiceId;
     // `a`: manages authorization queue
     const a = regs.asUnsigned[8] as ServiceId;

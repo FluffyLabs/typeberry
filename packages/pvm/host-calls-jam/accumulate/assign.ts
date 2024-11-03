@@ -13,6 +13,11 @@ import { AUTHORIZATION_QUEUE_SIZE, type AccumulationPartialState } from "./parti
 
 const IN_OUT_REG = 7;
 
+/**
+ * Assign new fixed-length authorization queue to some core.
+ *
+ * https://graypaper.fluffylabs.dev/#/364735a/2ebf002ebf00
+ */
 export class Assign implements HostCallHandler {
   index = 6 as HostCallIndex;
   gasCost = 10 as SmallGas;
