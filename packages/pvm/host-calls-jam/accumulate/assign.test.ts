@@ -55,10 +55,10 @@ describe("HostCalls: Assign", () => {
     const assign = new Assign(accumulate, tinyChainSpec);
     const serviceId = asServiceId(10_000);
     assign.currentServiceId = serviceId;
-    const { registers, memory } = prepareRegsAndMemory(coreIndex(15), [
+    const { registers, memory } = prepareRegsAndMemory(coreIndex(0), [
       Bytes.fill(HASH_SIZE, 1),
       Bytes.fill(HASH_SIZE, 2),
-      Bytes.fill(HASH_SIZE, 3), // one extra, but doesn't matter.
+      Bytes.fill(HASH_SIZE, 3),
     ]);
 
     // when
@@ -66,6 +66,61 @@ describe("HostCalls: Assign", () => {
 
     // then
     assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
-    assert.deepStrictEqual(accumulate.authQueue, [coreIndex(15), [Bytes.fill(HASH_SIZE, 1), Bytes.fill(HASH_SIZE, 2)]]);
+    assert.deepStrictEqual(accumulate.authQueue[0][0], coreIndex(0));
+    const expected = new Array(AUTHORIZATION_QUEUE_SIZE);
+    expected[0] = Bytes.fill(HASH_SIZE, 1);
+    expected[1] = Bytes.fill(HASH_SIZE, 2);
+    expected[2] = Bytes.fill(HASH_SIZE, 3);
+    for (let i = 3; i < AUTHORIZATION_QUEUE_SIZE; i += 1) {
+      expected[i] = Bytes.zero(HASH_SIZE);
+    }
+    assert.deepStrictEqual(accumulate.authQueue[0][1], expected);
+    assert.deepStrictEqual(accumulate.authQueue.length, 1);
+  });
+
+  it("should return an error if core index is too large", async () => {
+    const accumulate = new TestAccumulate();
+    const assign = new Assign(accumulate, tinyChainSpec);
+    const serviceId = asServiceId(10_000);
+    assign.currentServiceId = serviceId;
+    const { registers, memory } = prepareRegsAndMemory(coreIndex(3), []);
+
+    // when
+    await assign.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.CORE);
+    assert.deepStrictEqual(accumulate.authQueue.length, 0);
+  });
+
+  it("should return an error if core index is waay too large", async () => {
+    const accumulate = new TestAccumulate();
+    const assign = new Assign(accumulate, tinyChainSpec);
+    const serviceId = asServiceId(10_000);
+    assign.currentServiceId = serviceId;
+    const { registers, memory } = prepareRegsAndMemory(coreIndex(3), []);
+    registers.asUnsigned[CORE_INDEX_REG] = 2 ** 16 + 3;
+
+    // when
+    await assign.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.CORE);
+    assert.deepStrictEqual(accumulate.authQueue.length, 0);
+  });
+
+  it("should return an error if data not readable", async () => {
+    const accumulate = new TestAccumulate();
+    const assign = new Assign(accumulate, tinyChainSpec);
+    const serviceId = asServiceId(10_000);
+    assign.currentServiceId = serviceId;
+    const { registers, memory } = prepareRegsAndMemory(coreIndex(3), [], { skipAuthQueue: true });
+
+    // when
+    await assign.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(accumulate.authQueue.length, 0);
   });
 });
