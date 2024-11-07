@@ -52,6 +52,33 @@ describe("BytesBlob", () => {
 
     assert.deepStrictEqual(result.raw, new Uint8Array([47, 163, 246, 134]));
   });
+
+  it("isLessThan should compare two equal blobs and return false", () => {
+    const blob1 = BytesBlob.fromNumbers([47, 163, 246, 134]);
+    const blob2 = BytesBlob.fromNumbers([47, 163, 246, 134]);
+
+    const result = blob1.isLessThan(blob2);
+
+    assert.strictEqual(result, false);
+  });
+
+  it("isLessThan should compare two blobs and return false", () => {
+    const blob1 = BytesBlob.fromNumbers([48, 163, 246, 134]);
+    const blob2 = BytesBlob.fromNumbers([47, 163, 246, 134]);
+
+    const result = blob1.isLessThan(blob2);
+
+    assert.strictEqual(result, false);
+  });
+
+  it("isLessThan should compare two blobs and return true", () => {
+    const blob1 = BytesBlob.fromNumbers([48, 163, 246, 134]);
+    const blob2 = BytesBlob.fromNumbers([49, 163, 246, 134]);
+
+    const result = blob1.isLessThan(blob2);
+
+    assert.strictEqual(result, true);
+  });
 });
 
 describe("Bytes", () => {

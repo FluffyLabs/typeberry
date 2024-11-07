@@ -18,6 +18,7 @@ import { runWorkItemTest, workItemFromJson } from "./tests/codec/work-item";
 import { runWorkPackageTest, workPackageFromJson } from "./tests/codec/work-package";
 import { runWorkReportTest, workReportFromJson } from "./tests/codec/work-report";
 import { runWorkResultTest, workResultFromJson } from "./tests/codec/work-result";
+import { DisputesTest, runDisputesFullTest, runDisputesTinyTest } from "./tests/disputes";
 import {
   EcTest,
   PageProof,
@@ -140,6 +141,9 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
   const handleError = (name: string, e: unknown) => errors.push([name, e]);
 
   function prepRunner<T>(name: string, fromJson: FromJson<T>, run: (t: T, path: string) => Promise<void>) {
+    if (!path.includes(name)) {
+      return null;
+    }
     const r = tryToPrepareTestRunner(name, file, path, testContent, fromJson, run, handleError);
     return r;
   }
@@ -158,6 +162,8 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
     prepRunner("codec/work_package", workPackageFromJson, runWorkPackageTest),
     prepRunner("codec/work_report", workReportFromJson, runWorkReportTest),
     prepRunner("codec/work_result", workResultFromJson, runWorkResultTest),
+    prepRunner("disputes/tiny", DisputesTest.fromJson, runDisputesTinyTest),
+    prepRunner("disputes/full", DisputesTest.fromJson, runDisputesFullTest),
     prepRunner("erasure-coding", EcTest.fromJson, runEcTest),
     prepRunner("erasure-coding/page-proof", PageProof.fromJson, runPageProofTest),
     prepRunner("erasure-coding/segment-ec", SegmentEcTest.fromJson, runSegmentEcTest),
