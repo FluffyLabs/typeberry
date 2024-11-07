@@ -141,7 +141,7 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
   const handleError = (name: string, e: unknown) => errors.push([name, e]);
 
   function prepRunner<T>(name: string, fromJson: FromJson<T>, run: (t: T, path: string) => Promise<void>) {
-    if (!path.includes(name)) {
+    if (!path.includes(name) && !file.includes(name)) {
       return null;
     }
     const r = tryToPrepareTestRunner(name, file, path, testContent, fromJson, run, handleError);
