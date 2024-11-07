@@ -1,8 +1,9 @@
 import type { Ed25519Key, TimeSlot, WorkReportHash } from "@typeberry/block";
-import type { DisputesExtrinsic, Judgement } from "@typeberry/block/disputes";
-import type { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { DisputesExtrinsic } from "@typeberry/block/disputes";
+import type { Bytes } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
 import type { ValidatorData } from "@typeberry/safrole";
+import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
 
 export class DisputesRecords {
   constructor(
@@ -132,7 +133,7 @@ export class Disputes {
     }
 
     // https://graypaper.fluffylabs.dev/#/364735a/122102122202
-    if (!disputes.verdicts.every((verdict) => isSortedByIndex(verdict.votes))) {
+    if (!disputes.verdicts.every((verdict) => isUniqueSortedByIndex(verdict.votes))) {
       return DisputesErrorCode.JudgementsNotSortedUnique;
     }
 
@@ -243,24 +244,4 @@ export class Disputes {
 
     return Result.ok(offendersMarks);
   }
-}
-
-function isUniqueSortedBy<T extends Record<K, BytesBlob>, K extends keyof T>(arr: T[], key: K) {
-  for (let i = 1; i < arr.length; i++) {
-    if (!arr[i - 1][key].isLessThan(arr[i][key])) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-function isSortedByIndex(judgements: Judgement[]) {
-  for (let i = 1; i < judgements.length; i++) {
-    if (judgements[i - 1].index >= judgements[i].index) {
-      return false;
-    }
-  }
-
-  return true;
 }
