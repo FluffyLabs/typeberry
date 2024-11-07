@@ -39,6 +39,9 @@ export class Decoder {
     return obj;
   }
 
+  /**
+   * Decode a sequence of objects from all of the source bytes.
+   */
   static decodeSequence<T>(decode: Decode<T>, source: BytesBlob | Uint8Array, context?: unknown): T[] {
     const decoder = source instanceof BytesBlob ? Decoder.fromBytesBlob(source) : Decoder.fromBlob(source);
     decoder.attachContext(context);
