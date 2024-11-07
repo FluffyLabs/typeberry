@@ -131,28 +131,19 @@ export class DisputesTest {
   post_state!: TestState;
 }
 
-export async function runDisputesTinyTest(testContent: DisputesTest) {
-  const chainSpec = new ChainSpec({
-    validatorsCount: 6,
-    epochLength: 12,
-    coresCount: 1,
-    contestLength: 1,
-    slotDuration: 1,
-    ticketsPerValidator: 1,
-  });
-  const preState = testContent.pre_state;
+function getChainSpec(path: string) {
+  if (path.includes("tiny")) {
+    return new ChainSpec({
+      validatorsCount: 6,
+      epochLength: 12,
+      coresCount: 1,
+      contestLength: 1,
+      slotDuration: 1,
+      ticketsPerValidator: 1,
+    });
+  }
 
-  const disputes = new Disputes(TestState.toDisputesState(preState), chainSpec);
-
-  const result = await disputes.transition(testContent.input.disputes);
-
-  assert.deepEqual(result.err, testContent.output.err);
-  assert.deepEqual(result.offendersMarks, testContent.output.ok?.offenders_mark);
-  assert.deepEqual(disputes.state, TestState.toDisputesState(testContent.post_state));
-}
-
-export async function runDisputesFullTest(testContent: DisputesTest) {
-  const chainSpec = new ChainSpec({
+  return new ChainSpec({
     validatorsCount: 1023,
     epochLength: 600,
     coresCount: 1,
@@ -160,7 +151,10 @@ export async function runDisputesFullTest(testContent: DisputesTest) {
     slotDuration: 1,
     ticketsPerValidator: 1,
   });
+}
 
+export async function runDisputesTest(testContent: DisputesTest, path: string) {
+  const chainSpec = getChainSpec(path);
   const preState = testContent.pre_state;
 
   const disputes = new Disputes(TestState.toDisputesState(preState), chainSpec);
