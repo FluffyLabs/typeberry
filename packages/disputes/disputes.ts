@@ -4,7 +4,7 @@ import type { Bytes } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
 import type { ValidatorData } from "@typeberry/safrole";
 import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
-import { verifySignature } from "./verification-utils";
+import { verifyCulpritSignature, verifyVoteSignature } from "./verification-utils";
 
 export class DisputesRecords {
   constructor(
@@ -71,7 +71,7 @@ export class Disputes {
   ) {}
 
   private verifyCulprits(disputes: DisputesExtrinsic) {
-    for (const { key, workReportHash } of disputes.culprits) {
+    for (const { key, workReportHash, signature } of disputes.culprits) {
       // https://graypaper.fluffylabs.dev/#/364735a/123e01123e01
       const isInPunishSet = !!this.state.disputesRecords.punishSet.find((item) => item.isEqualTo(key));
       if (isInPunishSet) {
@@ -82,6 +82,10 @@ export class Disputes {
       const hasVerdict = disputes.verdicts.find((verdict) => verdict.workReportHash.isEqualTo(workReportHash));
       if (!hasVerdict) {
         return DisputesErrorCode.CulpritsVerdictNotBad;
+      }
+
+      if (!verifyCulpritSignature(signature, key, workReportHash)) {
+        return DisputesErrorCode.BadSignature;
       }
     }
 
@@ -94,7 +98,7 @@ export class Disputes {
   }
 
   private verifyFaults(disputes: DisputesExtrinsic) {
-    for (const { key, workReportHash, signature } of disputes.faults) {
+    for (const { key, workReportHash, signature, wasConsideredValid } of disputes.faults) {
       // https://graypaper.fluffylabs.dev/#/364735a/128b01128b01
       const isInPunishSet = !!this.state.disputesRecords.punishSet.find((item) => item.isEqualTo(key));
 
@@ -108,6 +112,10 @@ export class Disputes {
         if (hasVote) {
           return DisputesErrorCode.FaultVerdictWrong;
         }
+      }
+
+      if (!verifyVoteSignature(signature, key, workReportHash, wasConsideredValid)) {
+        return DisputesErrorCode.BadSignature;
       }
     }
 
@@ -131,7 +139,7 @@ export class Disputes {
       for (const { index, signature, isWorkReportValid } of votes) {
         const key = k[index].ed25519;
         // https://graypaper.fluffylabs.dev/#/364735a/12b70012b700
-        if (!verifySignature(signature, key, workReportHash, isWorkReportValid)) {
+        if (!verifyVoteSignature(signature, key, workReportHash, isWorkReportValid)) {
           return DisputesErrorCode.BadSignature;
         }
       }
