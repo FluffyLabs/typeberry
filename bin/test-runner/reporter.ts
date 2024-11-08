@@ -66,7 +66,7 @@ function myTransform(this: Reporter, event: TestEvent, _encoding: BufferEncoding
       if (failureCause instanceof Error) {
         errorMsg = failureCause.message;
       }
-      callback(null, `| ${this.currentTest} | ❌ | \`\`\`${errorMsg}\`\`\`|\n`);
+      callback(null, `| ${this.currentTest} | ❌ | \`\`\`${errorMsg.replace(/\n/g, " ")}\`\`\`|\n`);
       break;
     }
     default:
