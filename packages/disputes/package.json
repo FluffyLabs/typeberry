@@ -12,6 +12,7 @@
     "@noble/curves": "^1.6.0",
     "@typeberry/block": "0.0.1",
     "@typeberry/bytes": "0.0.1",
+    "@typeberry/codec": "0.0.1",
     "@typeberry/config": "0.0.1",
     "@typeberry/safrole": "0.0.1"
   }
