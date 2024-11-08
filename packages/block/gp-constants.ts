@@ -7,6 +7,10 @@ import { MAX_NUMBER_OF_WORK_ITEMS } from "./work-package";
  * NOTE: Avoid using the constants directly, prefer "named" constants defined
  * in a semantical proximity to where they are used.
  *
+ * NOTE: This file will most likely be removed in the future. The constants
+ * here are only temporarily for convenience. When we figure out better names
+ * and places for these this file will be eradicated.
+ *
  * https://graypaper.fluffylabs.dev/#/364735a/3d22003d2200
  */
 
