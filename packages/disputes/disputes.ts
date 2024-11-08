@@ -4,6 +4,7 @@ import type { Bytes } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
 import type { ValidatorData } from "@typeberry/safrole";
 import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
+import { verifySignature } from "./verification-utils";
 
 export class DisputesRecords {
   constructor(
@@ -120,10 +121,19 @@ export class Disputes {
 
   private verifyVerdicts(disputes: DisputesExtrinsic) {
     const currentEpoch = Math.floor(this.state.timeslot / this.context.epochLength);
-    for (const { votesEpoch } of disputes.verdicts) {
+    for (const { votesEpoch, votes, workReportHash } of disputes.verdicts) {
       // https://graypaper.fluffylabs.dev/#/364735a/12a50012a600
       if (votesEpoch !== currentEpoch && votesEpoch + 1 !== currentEpoch) {
         return DisputesErrorCode.BadJudgementAge;
+      }
+
+      const k = votesEpoch === currentEpoch ? this.state.currentValidatorData : this.state.previousValidatorData;
+      for (const { index, signature, isWorkReportValid } of votes) {
+        const key = k[index].ed25519;
+        // https://graypaper.fluffylabs.dev/#/364735a/12b70012b700
+        if (!verifySignature(signature, key, workReportHash, isWorkReportValid)) {
+          return DisputesErrorCode.BadSignature;
+        }
       }
     }
 
