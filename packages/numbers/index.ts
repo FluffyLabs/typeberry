@@ -22,29 +22,22 @@ export type U64 = bigint & WithBytesRepresentation<8>;
 // TODO [ToDr] Safe casting / math operations?
 
 /** Attempt to cast an input number into U8. */
-export const u8 = (v: number): U8 => {
-  check((v & 0xff) === v, `input must have one-byte representation, got ${v}`);
-  return v as U8;
-};
+export const u8 = (v: number): U8 => 
+  ensure<number, U8>(v, (v & 0xff) === v, `input must have one-byte representation, got ${v}`);
 
 /** Attempt to cast an input number into U16. */
-export const u16 = (v: number): U16 => {
-  check((v & 0xffff) === v, `input must have two-byte representation, got ${v}`);
-  return v as U16;
-};
+export const u16 = (v: number): U16 => 
+  ensure<number, U16>(v, (v & 0xff_ff) === v, `input must have two-byte representation, got ${v}`);
 
 /** Attempt to cast an input number into U32. */
-export const u32 = (v: number): U32 => {
-  check((v & 0xffffffff) >>> 0 === v, `input must have four-byte representation, got ${v}`);
-  return v as U32;
-};
+export const u32 = (v: number): U32 => 
+  ensure<number, U32>(v, (v & 0xff_ff_ff_ff) >>> 0 === v, `input must have four-byte representation, got ${v}`);
 
 /** Attempt to cast an input number into U64. */
 export const u64 = (x: number | bigint): U64 => {
   const v = BigInt(x);
-  check((v & 0xffff_ffff_ffff_ffffn) === v, `input must have eight-byte representation, got ${x}`);
-  return v as U64;
-};
+  return ensure<bigint, U64>(v, (v & 0xffff_ffff_ffff_ffffn) === v, `input must have eight-byte representation, got ${x}`);
+}
 
 /** A result of modulo arithmetic. */
 export type Result<T> = {
