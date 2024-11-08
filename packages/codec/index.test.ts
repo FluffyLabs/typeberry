@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { BytesBlob } from "@typeberry/bytes";
 import { BitVec } from "@typeberry/bytes";
-import { u8, u16, u32, u64 } from "@typeberry/numbers";
+import { tryAsU8, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { Decoder } from "./decoder";
 import { type Descriptor, codec } from "./descriptors";
 import { Encoder } from "./encoder";
@@ -28,13 +28,13 @@ describe("JAM encoder / decoder", () => {
 
   // biome-ignore lint/suspicious/noExplicitAny: I need to make sure that the generator output matches the type.
   const types: Generator<any>[] = [
-    generator(() => u64(BigInt(Math.floor(random() * 2 ** 32)) ** 2n), codec.varU64),
-    generator(() => u32(Math.floor(random() * 2 ** 32)), codec.varU32),
-    generator(() => u64(BigInt(Math.floor(random() * 2 ** 32)) ** 2n), codec.u64),
-    generator(() => u32(Math.floor(random() * 2 ** 32)), codec.u32),
+    generator(() => tryAsU64(BigInt(Math.floor(random() * 2 ** 32)) ** 2n), codec.varU64),
+    generator(() => tryAsU32(Math.floor(random() * 2 ** 32)), codec.varU32),
+    generator(() => tryAsU64(BigInt(Math.floor(random() * 2 ** 32)) ** 2n), codec.u64),
+    generator(() => tryAsU32(Math.floor(random() * 2 ** 32)), codec.u32),
     generator(() => Math.floor(random() * 2 ** 24), codec.u24),
-    generator(() => u16(Math.floor(random() * 2 ** 16)), codec.u16),
-    generator(() => u8(Math.floor(random() * 2 ** 8)), codec.u8),
+    generator(() => tryAsU16(Math.floor(random() * 2 ** 16)), codec.u16),
+    generator(() => tryAsU8(Math.floor(random() * 2 ** 8)), codec.u8),
     generator(() => BigInt(Math.floor(random() * 2 ** 32)) ** 2n - 2n ** 63n, codec.i64),
     generator(() => Math.floor(random() * 2 ** 32) - 2 ** 31, codec.i32),
     generator(() => Math.floor(random() * 2 ** 24) - 2 ** 23, codec.i24),

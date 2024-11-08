@@ -5,7 +5,7 @@ import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { InstructionResult } from "../instruction-result";
 import { MemoryBuilder } from "../memory";
 import { PAGE_SIZE } from "../memory/memory-consts";
-import { type MemoryIndex, createMemoryIndex } from "../memory/memory-index";
+import { type MemoryIndex, tryAsMemoryIndex } from "../memory/memory-index";
 import { getPageNumber, getStartPageIndex } from "../memory/memory-utils";
 import { Registers } from "../registers";
 import { StoreOps } from "./store-ops";
@@ -21,12 +21,12 @@ describe("StoreOps", () => {
     it("should store u8 number", () => {
       const instructionResult = new InstructionResult();
       const regs = new Registers();
-      const address = createMemoryIndex(1);
+      const address = tryAsMemoryIndex(1);
       const registerIndex = 1;
       regs.asUnsigned[registerIndex] = 0xfe_dc_ba_98;
       const memory = new MemoryBuilder()
-        .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
-        .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array())
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
       const expectedPage = getExpectedPage(address, new Uint8Array([0x98]), PAGE_SIZE);
 
@@ -39,12 +39,12 @@ describe("StoreOps", () => {
     it("should store u16 number", () => {
       const instructionResult = new InstructionResult();
       const regs = new Registers();
-      const address = createMemoryIndex(1);
+      const address = tryAsMemoryIndex(1);
       const registerIndex = 1;
       regs.asUnsigned[registerIndex] = 0xfe_dc_ba_98;
       const memory = new MemoryBuilder()
-        .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
-        .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array())
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
       const expectedPage = getExpectedPage(address, new Uint8Array([0x98, 0xba]), PAGE_SIZE);
 
@@ -57,12 +57,12 @@ describe("StoreOps", () => {
     it("should store u32 number", () => {
       const instructionResult = new InstructionResult();
       const regs = new Registers();
-      const address = createMemoryIndex(1);
+      const address = tryAsMemoryIndex(1);
       const registerIndex = 1;
       regs.asUnsigned[registerIndex] = 0xfe_dc_ba_98;
       const memory = new MemoryBuilder()
-        .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
-        .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array())
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
       const expectedPage = getExpectedPage(address, new Uint8Array([0x98, 0xba, 0xdc, 0xfe]), PAGE_SIZE);
 
@@ -77,12 +77,12 @@ describe("StoreOps", () => {
     it("should store u8 number", () => {
       const instructionResult = new InstructionResult();
       const regs = new Registers();
-      const address = createMemoryIndex(1);
+      const address = tryAsMemoryIndex(1);
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([0xfe, 0xdc, 0xba, 0x98]));
       const memory = new MemoryBuilder()
-        .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
-        .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array())
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
       const expectedPage = getExpectedPage(address, new Uint8Array([0xfe]), PAGE_SIZE);
 
@@ -95,12 +95,12 @@ describe("StoreOps", () => {
     it("should store u16 number", () => {
       const instructionResult = new InstructionResult();
       const regs = new Registers();
-      const address = createMemoryIndex(1);
+      const address = tryAsMemoryIndex(1);
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([0xfe, 0xdc, 0xba, 0x98]));
       const memory = new MemoryBuilder()
-        .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
-        .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array())
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
       const expectedPage = getExpectedPage(address, new Uint8Array([0xfe, 0xdc]), PAGE_SIZE);
 
@@ -113,12 +113,12 @@ describe("StoreOps", () => {
     it("should store u32 number", () => {
       const instructionResult = new InstructionResult();
       const regs = new Registers();
-      const address = createMemoryIndex(1);
+      const address = tryAsMemoryIndex(1);
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([0xfe, 0xdc, 0xba, 0x98]));
       const memory = new MemoryBuilder()
-        .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
-        .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array())
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
       const expectedPage = getExpectedPage(address, new Uint8Array([0xfe, 0xdc, 0xba, 0x98]), PAGE_SIZE);
 
@@ -135,14 +135,14 @@ describe("StoreOps", () => {
       const regs = new Registers();
       const registerIndex = 0;
       regs.asUnsigned[registerIndex] = 1;
-      const address = createMemoryIndex(2);
+      const address = tryAsMemoryIndex(2);
       const fistimmediateDecoder = new ImmediateDecoder();
       fistimmediateDecoder.setBytes(new Uint8Array([1]));
       const secondimmediateDecoder = new ImmediateDecoder();
       secondimmediateDecoder.setBytes(new Uint8Array([0xfe, 0xdc, 0xba, 0x98]));
       const memory = new MemoryBuilder()
-        .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
-        .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array())
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
       const expectedPage = getExpectedPage(address, new Uint8Array([0xfe]), PAGE_SIZE);
 
@@ -157,14 +157,14 @@ describe("StoreOps", () => {
       const regs = new Registers();
       const registerIndex = 0;
       regs.asUnsigned[registerIndex] = 1;
-      const address = createMemoryIndex(2);
+      const address = tryAsMemoryIndex(2);
       const fistimmediateDecoder = new ImmediateDecoder();
       fistimmediateDecoder.setBytes(new Uint8Array([1]));
       const secondimmediateDecoder = new ImmediateDecoder();
       secondimmediateDecoder.setBytes(new Uint8Array([0xfe, 0xdc, 0xba, 0x98]));
       const memory = new MemoryBuilder()
-        .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
-        .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array())
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
       const expectedPage = getExpectedPage(address, new Uint8Array([0xfe, 0xdc]), PAGE_SIZE);
 
@@ -179,14 +179,14 @@ describe("StoreOps", () => {
       const regs = new Registers();
       const registerIndex = 0;
       regs.asUnsigned[registerIndex] = 1;
-      const address = createMemoryIndex(2);
+      const address = tryAsMemoryIndex(2);
       const fistimmediateDecoder = new ImmediateDecoder();
       fistimmediateDecoder.setBytes(new Uint8Array([1]));
       const secondimmediateDecoder = new ImmediateDecoder();
       secondimmediateDecoder.setBytes(new Uint8Array([0xfe, 0xdc, 0xba, 0x98]));
       const memory = new MemoryBuilder()
-        .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
-        .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array())
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
       const expectedPage = getExpectedPage(address, new Uint8Array([0xfe, 0xdc, 0xba, 0x98]), PAGE_SIZE);
 
@@ -201,7 +201,7 @@ describe("StoreOps", () => {
     it("should store u8 number", () => {
       const instructionResult = new InstructionResult();
       const regs = new Registers();
-      const address = createMemoryIndex(2);
+      const address = tryAsMemoryIndex(2);
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
       regs.asUnsigned[firstRegisterIndex] = 1;
@@ -209,8 +209,8 @@ describe("StoreOps", () => {
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([1]));
       const memory = new MemoryBuilder()
-        .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
-        .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array())
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
       const expectedPage = getExpectedPage(address, new Uint8Array([0x98]), PAGE_SIZE);
 
@@ -223,7 +223,7 @@ describe("StoreOps", () => {
     it("should store u16 number", () => {
       const instructionResult = new InstructionResult();
       const regs = new Registers();
-      const address = createMemoryIndex(2);
+      const address = tryAsMemoryIndex(2);
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
       regs.asUnsigned[firstRegisterIndex] = 1;
@@ -231,8 +231,8 @@ describe("StoreOps", () => {
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([1]));
       const memory = new MemoryBuilder()
-        .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
-        .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array())
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
       const expectedPage = getExpectedPage(address, new Uint8Array([0x98, 0xba]), PAGE_SIZE);
 
@@ -245,7 +245,7 @@ describe("StoreOps", () => {
     it("should store u32 number", () => {
       const instructionResult = new InstructionResult();
       const regs = new Registers();
-      const address = createMemoryIndex(2);
+      const address = tryAsMemoryIndex(2);
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
       regs.asUnsigned[firstRegisterIndex] = 1;
@@ -253,8 +253,8 @@ describe("StoreOps", () => {
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([1]));
       const memory = new MemoryBuilder()
-        .setWriteable(address, createMemoryIndex(4096), new Uint8Array())
-        .finalize(createMemoryIndex(PAGE_SIZE), createMemoryIndex(5 * PAGE_SIZE));
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array())
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const storeOps = new StoreOps(regs, memory, instructionResult);
       const expectedPage = getExpectedPage(address, new Uint8Array([0x98, 0xba, 0xdc, 0xfe]), PAGE_SIZE);
 

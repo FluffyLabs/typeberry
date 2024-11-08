@@ -4,7 +4,7 @@ import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block
 import { BytesBlob } from "@typeberry/bytes";
 import type { OpaqueHash } from "@typeberry/hash";
 import { json } from "@typeberry/json-parser";
-import { u32 } from "@typeberry/numbers";
+import { tryAsU32 } from "@typeberry/numbers";
 import { fromJson, runCodecTest } from "./common";
 
 // TODO [ToDr] Introduce fromJson.union?
@@ -19,19 +19,19 @@ const workExecResultFromJson = json.object<JsonWorkExecResult, WorkExecResult>(
   (val) => {
     const { ok, out_of_gas, panic, bad_code, code_oversize } = val;
     if (ok) {
-      return new WorkExecResult(u32(WorkExecResultKind.ok), ok);
+      return new WorkExecResult(tryAsU32(WorkExecResultKind.ok), ok);
     }
     if (out_of_gas === null) {
-      return new WorkExecResult(u32(WorkExecResultKind.outOfGas));
+      return new WorkExecResult(tryAsU32(WorkExecResultKind.outOfGas));
     }
     if (panic === null) {
-      return new WorkExecResult(u32(WorkExecResultKind.panic));
+      return new WorkExecResult(tryAsU32(WorkExecResultKind.panic));
     }
     if (bad_code === null) {
-      return new WorkExecResult(u32(WorkExecResultKind.badCode));
+      return new WorkExecResult(tryAsU32(WorkExecResultKind.badCode));
     }
     if (code_oversize === null) {
-      return new WorkExecResult(u32(WorkExecResultKind.codeOversize));
+      return new WorkExecResult(tryAsU32(WorkExecResultKind.codeOversize));
     }
 
     throw new Error("Invalid WorkExecResult");

@@ -1,13 +1,13 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { type CoreIndex, serviceId as asServiceId, coreIndex } from "@typeberry/block";
+import { type CoreIndex, tryAsCoreIndex, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { type Blake2bHash, HASH_SIZE } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { type Gas, gasCounter } from "@typeberry/pvm-interpreter/gas";
-import { MemoryBuilder, createMemoryIndex as memIdx } from "@typeberry/pvm-interpreter/memory";
+import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { HostCallResult } from "../results";
 import { Assign } from "./assign";
 import { AUTHORIZATION_QUEUE_SIZE } from "./partial-state";
@@ -39,9 +39,9 @@ function prepareRegsAndMemory(
   const data = encoder.viewResult();
 
   if (!skipAuthQueue) {
-    builder.setReadable(memIdx(memStart), memIdx(memStart + data.buffer.length), data.buffer);
+    builder.setReadable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + data.buffer.length), data.buffer);
   }
-  const memory = builder.finalize(memIdx(0), memIdx(0));
+  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
   return {
     registers,
     memory,
@@ -53,9 +53,9 @@ describe("HostCalls: Assign", () => {
   it("should assign authorization queue to a core", async () => {
     const accumulate = new TestAccumulate();
     const assign = new Assign(accumulate, tinyChainSpec);
-    const serviceId = asServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
     assign.currentServiceId = serviceId;
-    const { registers, memory } = prepareRegsAndMemory(coreIndex(0), [
+    const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [
       Bytes.fill(HASH_SIZE, 1),
       Bytes.fill(HASH_SIZE, 2),
       Bytes.fill(HASH_SIZE, 3),
@@ -66,7 +66,7 @@ describe("HostCalls: Assign", () => {
 
     // then
     assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
-    assert.deepStrictEqual(accumulate.authQueue[0][0], coreIndex(0));
+    assert.deepStrictEqual(accumulate.authQueue[0][0], tryAsCoreIndex(0));
     const expected = new Array(AUTHORIZATION_QUEUE_SIZE);
     expected[0] = Bytes.fill(HASH_SIZE, 1);
     expected[1] = Bytes.fill(HASH_SIZE, 2);
@@ -81,9 +81,9 @@ describe("HostCalls: Assign", () => {
   it("should return an error if core index is too large", async () => {
     const accumulate = new TestAccumulate();
     const assign = new Assign(accumulate, tinyChainSpec);
-    const serviceId = asServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
     assign.currentServiceId = serviceId;
-    const { registers, memory } = prepareRegsAndMemory(coreIndex(3), []);
+    const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(3), []);
 
     // when
     await assign.execute(gas, registers, memory);
@@ -96,9 +96,9 @@ describe("HostCalls: Assign", () => {
   it("should return an error if core index is waay too large", async () => {
     const accumulate = new TestAccumulate();
     const assign = new Assign(accumulate, tinyChainSpec);
-    const serviceId = asServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
     assign.currentServiceId = serviceId;
-    const { registers, memory } = prepareRegsAndMemory(coreIndex(3), []);
+    const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(3), []);
     registers.asUnsigned[CORE_INDEX_REG] = 2 ** 16 + 3;
 
     // when
@@ -112,9 +112,9 @@ describe("HostCalls: Assign", () => {
   it("should return an error if data not readable", async () => {
     const accumulate = new TestAccumulate();
     const assign = new Assign(accumulate, tinyChainSpec);
-    const serviceId = asServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
     assign.currentServiceId = serviceId;
-    const { registers, memory } = prepareRegsAndMemory(coreIndex(3), [], { skipAuthQueue: true });
+    const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(3), [], { skipAuthQueue: true });
 
     // when
     await assign.execute(gas, registers, memory);

@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { type ServiceId, serviceId as asServiceId } from "@typeberry/block";
+import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Encoder } from "@typeberry/codec";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { type Gas, gasCounter } from "@typeberry/pvm-interpreter/gas";
-import { MemoryBuilder, createMemoryIndex as memIdx } from "@typeberry/pvm-interpreter/memory";
+import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { HostCallResult } from "../results";
 import { Empower } from "./empower";
 import { TestAccumulate } from "./partial-state.test";
@@ -19,8 +19,8 @@ const DICTIONARY_COUNT = 11;
 
 function prepareDictionary(cb?: (d: Map<ServiceId, Gas>) => void) {
   const dictionary = new Map();
-  dictionary.set(asServiceId(10_000), 15_000 as Gas);
-  dictionary.set(asServiceId(20_000), 15_000 as Gas);
+  dictionary.set(tryAsServiceId(10_000), 15_000 as Gas);
+  dictionary.set(tryAsServiceId(20_000), 15_000 as Gas);
   if (cb) {
     cb(dictionary);
   }
@@ -36,9 +36,9 @@ function prepareRegsAndMemory(
 ) {
   const memStart = 20_000;
   const registers = new Registers();
-  registers.asUnsigned[SERVICE_M] = asServiceId(5);
-  registers.asUnsigned[SERVICE_A] = asServiceId(10);
-  registers.asUnsigned[SERVICE_V] = asServiceId(15);
+  registers.asUnsigned[SERVICE_M] = tryAsServiceId(5);
+  registers.asUnsigned[SERVICE_A] = tryAsServiceId(10);
+  registers.asUnsigned[SERVICE_V] = tryAsServiceId(15);
   registers.asUnsigned[DICTIONARY_START] = memStart;
   registers.asUnsigned[DICTIONARY_COUNT] = dictionary.length;
 
@@ -52,9 +52,9 @@ function prepareRegsAndMemory(
   const data = encoder.viewResult();
 
   if (!skipDictionary) {
-    builder.setReadable(memIdx(memStart), memIdx(memStart + data.buffer.length), data.buffer);
+    builder.setReadable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + data.buffer.length), data.buffer);
   }
-  const memory = builder.finalize(memIdx(0), memIdx(0));
+  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
   return {
     registers,
     memory,
@@ -65,7 +65,7 @@ describe("HostCalls: Empower", () => {
   it("should set new privileged services and auto-accumualte services", async () => {
     const accumulate = new TestAccumulate();
     const empower = new Empower(accumulate);
-    const serviceId = asServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
     const { flat, expected } = prepareDictionary();
     const { registers, memory } = prepareRegsAndMemory(flat);
@@ -76,14 +76,14 @@ describe("HostCalls: Empower", () => {
     // then
     assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
     assert.deepStrictEqual(accumulate.privilegedServices, [
-      [asServiceId(5), asServiceId(10), asServiceId(15), expected],
+      [tryAsServiceId(5), tryAsServiceId(10), tryAsServiceId(15), expected],
     ]);
   });
 
   it("should fail when dictionary is not readable", async () => {
     const accumulate = new TestAccumulate();
     const empower = new Empower(accumulate);
-    const serviceId = asServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
     const { flat } = prepareDictionary();
     const { registers, memory } = prepareRegsAndMemory(flat, { skipDictionary: true });
@@ -99,10 +99,10 @@ describe("HostCalls: Empower", () => {
   it("should fail when dictionary is out of order", async () => {
     const accumulate = new TestAccumulate();
     const empower = new Empower(accumulate);
-    const serviceId = asServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
     const { flat } = prepareDictionary((d) => {
-      d.set(asServiceId(5), 10_000 as Gas);
+      d.set(tryAsServiceId(5), 10_000 as Gas);
     });
     const { registers, memory } = prepareRegsAndMemory(flat);
 
@@ -117,7 +117,7 @@ describe("HostCalls: Empower", () => {
   it("should fail when dictionary contains duplicates", async () => {
     const accumulate = new TestAccumulate();
     const empower = new Empower(accumulate);
-    const serviceId = asServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
     const { flat } = prepareDictionary();
     flat.push(flat[flat.length - 1]);

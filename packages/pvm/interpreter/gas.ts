@@ -1,4 +1,4 @@
-import { type U32, type U64, u64 } from "@typeberry/numbers";
+import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
 
 export type Gas = BigGas | SmallGas;
@@ -7,7 +7,7 @@ export type SmallGas = Opaque<U32, "SmallGas[U32]">;
 
 /** Create a new gas counter instance depending on the gas value. */
 export function gasCounter(gas: Gas): GasCounter {
-  return new GasCounterU64(u64(gas));
+  return new GasCounterU64(tryAsU64(gas));
 }
 
 /** An abstraction over gas counter.
@@ -29,7 +29,7 @@ class GasCounterU64 implements GasCounter {
   constructor(private gas: U64) {}
 
   set(g: Gas) {
-    this.gas = u64(g);
+    this.gas = tryAsU64(g);
   }
 
   get() {
@@ -38,7 +38,7 @@ class GasCounterU64 implements GasCounter {
 
   sub(g: SmallGas) {
     // TODO [ToDr] This should rather be I64?
-    this.gas = (this.gas - u64(g)) as U64;
+    this.gas = (this.gas - tryAsU64(g)) as U64;
     return this.gas < 0n;
   }
 }

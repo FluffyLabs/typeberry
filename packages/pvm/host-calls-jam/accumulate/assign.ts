@@ -1,11 +1,11 @@
-import { coreIndex as asCoreIndex } from "@typeberry/block";
+import { tryAsCoreIndex } from "@typeberry/block";
 import { Decoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import type { GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
-import { type Memory, createMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
@@ -31,7 +31,7 @@ export class Assign implements HostCallHandler {
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
     const coreIndex = regs.asUnsigned[IN_OUT_REG];
     // o
-    const authorizationQueueStart = createMemoryIndex(regs.asUnsigned[8]);
+    const authorizationQueueStart = tryAsMemoryIndex(regs.asUnsigned[8]);
 
     const res = new Uint8Array(32 * AUTHORIZATION_QUEUE_SIZE);
     const pageFault = memory.loadInto(res, authorizationQueueStart);
@@ -51,7 +51,7 @@ export class Assign implements HostCallHandler {
     const authQueue = d.sequenceFixLen(codec.bytes(HASH_SIZE), AUTHORIZATION_QUEUE_SIZE);
 
     regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
-    this.partialState.updateAuthorizationQueue(asCoreIndex(coreIndex), authQueue);
+    this.partialState.updateAuthorizationQueue(tryAsCoreIndex(coreIndex), authQueue);
     return Promise.resolve();
   }
 }

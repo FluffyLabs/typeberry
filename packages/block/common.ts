@@ -1,5 +1,5 @@
 import type { Blake2bHash } from "@typeberry/hash";
-import { type U16, type U32, type U64, u16, u32 } from "@typeberry/numbers";
+import { type U16, type U32, type U64, tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { type Opaque, asOpaqueType } from "@typeberry/utils";
 
 /**
@@ -11,22 +11,22 @@ import { type Opaque, asOpaqueType } from "@typeberry/utils";
  */
 export type TimeSlot = Opaque<U32, "TimeSlot[u32]">;
 /** Attempt to convert a number into `TimeSlot`. */
-export function timeSlot(v: number): TimeSlot {
-  return asOpaqueType(u32(v));
+export function tryAsTimeSlot(v: number): TimeSlot {
+  return asOpaqueType(tryAsU32(v));
 }
 
 /** Index of the validator in current validators set. */
 export type ValidatorIndex = Opaque<U16, "ValidatorIndex[u16]">;
 /** Attempt to convert a number into `ValidatorIndex`. */
-export function validatorIndex(v: number): ValidatorIndex {
-  return asOpaqueType(u16(v));
+export function tryAsValidatorIndex(v: number): ValidatorIndex {
+  return asOpaqueType(tryAsU16(v));
 }
 
 /** Unique service identifier. */
 export type ServiceId = Opaque<U32, "ServiceId[u32]">;
 /** Attempt to convert a number into `ServiceId`. */
-export function serviceId(v: number): ServiceId {
-  return asOpaqueType(u32(v));
+export function tryAsServiceId(v: number): ServiceId {
+  return asOpaqueType(tryAsU32(v));
 }
 
 // TODO [ToDr] Unify with `pvm/gas`.
@@ -36,8 +36,8 @@ export type ServiceGas = Opaque<U64, "Gas[u64]">;
 /** Index of the core on which the execution of the work package is done. */
 export type CoreIndex = Opaque<U16, "CoreIndex[u16]">;
 /** Attempt to convert a number into `CoreIndex`. */
-export function coreIndex(v: number): CoreIndex {
-  return asOpaqueType(u16(v));
+export function tryAsCoreIndex(v: number): CoreIndex {
+  return asOpaqueType(tryAsU16(v));
 }
 
 /** `eta`: epoch randomness */
@@ -50,6 +50,6 @@ export type EntropyHash = Opaque<Blake2bHash, "EntropyHash">;
  */
 export type Epoch = Opaque<U32, "Epoch">;
 /** Attempt to convert a number into `Epoch`. */
-export function epoch(v: number): Epoch {
-  return asOpaqueType(u32(v));
+export function tryAsEpoch(v: number): Epoch {
+  return asOpaqueType(tryAsU32(v));
 }

@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Memory, MemoryBuilder } from "../memory";
 import { MAX_MEMORY_INDEX, PAGE_SIZE } from "../memory/memory-consts";
-import { createMemoryIndex } from "../memory/memory-index";
+import { tryAsMemoryIndex } from "../memory/memory-index";
 import { Registers } from "../registers";
 import { MemoryOps } from "./memory-ops";
 
@@ -15,7 +15,7 @@ describe("MemoryOps", () => {
     const lengthIndex = 0;
     const length = PAGE_SIZE;
     regs.asUnsigned[lengthIndex] = length;
-    const expectedMemory = new MemoryBuilder().finalize(createMemoryIndex(0), createMemoryIndex(MAX_MEMORY_INDEX));
+    const expectedMemory = new MemoryBuilder().finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(MAX_MEMORY_INDEX));
     expectedMemory.sbrk(length);
 
     memoryOps.sbrk(lengthIndex, resultIndex);
@@ -32,7 +32,7 @@ describe("MemoryOps", () => {
     const lengthIndex = 0;
     const length = 2 * PAGE_SIZE;
     regs.asUnsigned[lengthIndex] = length;
-    const expectedMemory = new MemoryBuilder().finalize(createMemoryIndex(0), createMemoryIndex(MAX_MEMORY_INDEX));
+    const expectedMemory = new MemoryBuilder().finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(MAX_MEMORY_INDEX));
     expectedMemory.sbrk(length);
 
     memoryOps.sbrk(lengthIndex, resultIndex);
@@ -49,7 +49,7 @@ describe("MemoryOps", () => {
     const lengthIndex = 0;
     const length = PAGE_SIZE;
     regs.asUnsigned[lengthIndex] = length;
-    const expectedMemory = new MemoryBuilder().finalize(createMemoryIndex(0), createMemoryIndex(MAX_MEMORY_INDEX));
+    const expectedMemory = new MemoryBuilder().finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(MAX_MEMORY_INDEX));
     expectedMemory.sbrk(length);
     expectedMemory.sbrk(length);
 

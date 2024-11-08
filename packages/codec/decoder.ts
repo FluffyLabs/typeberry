@@ -1,6 +1,6 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { BitVec } from "@typeberry/bytes";
-import { type U8, type U16, type U32, type U64, u64 } from "@typeberry/numbers";
+import { type U8, type U16, type U32, type U64, tryAsU64 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
 
 /** A decoder for some specific type `T` */
@@ -203,19 +203,19 @@ export class Decoder {
     this.offset += 1;
 
     if (l === 0) {
-      return u64(firstByte);
+      return tryAsU64(firstByte);
     }
 
     this.offset += l;
     if (l === 8) {
-      return u64(this.dataView.getBigUint64(this.offset - l, true));
+      return tryAsU64(this.dataView.getBigUint64(this.offset - l, true));
     }
 
     let num = BigInt(firstByte + 2 ** (8 - l) - 2 ** 8) << BigInt(8 * l);
     for (let i = 0; i < l; i += 1) {
       num |= BigInt(this.source[this.offset - l + i]) << BigInt(8 * i);
     }
-    return u64(num);
+    return tryAsU64(num);
   }
 
   /** Decode a fixed-length sequence of bytes. */

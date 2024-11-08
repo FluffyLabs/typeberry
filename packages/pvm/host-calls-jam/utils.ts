@@ -1,9 +1,9 @@
-import { type ServiceId, serviceId } from "@typeberry/block";
+import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import type { Registers } from "@typeberry/pvm-interpreter";
 import { check } from "@typeberry/utils";
 
 export const SERVICE_ID_BYTES = 4;
-export const CURRENT_SERVICE_ID = serviceId(2 ** 32 - 1);
+export const CURRENT_SERVICE_ID = tryAsServiceId(2 ** 32 - 1);
 
 export function getServiceId(regNumber: number, regs: Registers, currentServiceId: ServiceId) {
   const serviceId = regs.asUnsigned[regNumber];

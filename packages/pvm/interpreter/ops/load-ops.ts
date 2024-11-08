@@ -1,7 +1,7 @@
 import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import type { InstructionResult } from "../instruction-result";
 import type { Memory } from "../memory";
-import { createMemoryIndex } from "../memory/memory-index";
+import { tryAsMemoryIndex } from "../memory/memory-index";
 import type { Registers } from "../registers";
 import { Result } from "../result";
 import { addWithOverflow } from "./math-utils";
@@ -21,7 +21,7 @@ export class LoadOps {
 
   private loadNumber(address: number, registerIndex: number, numberLength: 1 | 2 | 4) {
     const registerBytes = this.regs.getBytesAsLittleEndian(registerIndex, numberLength);
-    const loadResult = this.memory.loadInto(registerBytes, createMemoryIndex(address));
+    const loadResult = this.memory.loadInto(registerBytes, tryAsMemoryIndex(address));
     if (loadResult !== null) {
       this.instructionResult.status = Result.FAULT;
       this.instructionResult.exitParam = address;
@@ -31,7 +31,7 @@ export class LoadOps {
   private loadSignedNumber(address: number, registerIndex: number, numberLength: 1 | 2) {
     // load all bytes from register to correctly handle the sign.
     const registerBytes = this.regs.getBytesAsLittleEndian(registerIndex, REG_SIZE_BYTES);
-    const loadResult = this.memory.loadInto(registerBytes.subarray(0, numberLength), createMemoryIndex(address));
+    const loadResult = this.memory.loadInto(registerBytes.subarray(0, numberLength), tryAsMemoryIndex(address));
     if (loadResult !== null) {
       this.instructionResult.status = Result.FAULT;
       this.instructionResult.exitParam = address;

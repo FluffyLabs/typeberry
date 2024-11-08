@@ -3,7 +3,8 @@ import { Decoder } from "@typeberry/codec";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
-import { type Memory, createMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { asOpaqueType } from "@typeberry/utils";
 import { HostCallResult } from "../results";
@@ -33,7 +34,7 @@ export class Empower implements HostCallHandler {
     const a = regs.asUnsigned[8] as ServiceId;
     // `v`: manages validator keys
     const v = regs.asUnsigned[9] as ServiceId;
-    const sourceStart = createMemoryIndex(regs.asUnsigned[10]);
+    const sourceStart = tryAsMemoryIndex(regs.asUnsigned[10]);
     // `n`: number of items in the auto-accumulate dictionary
     const numberOfItems = regs.asUnsigned[11];
 
@@ -67,7 +68,9 @@ export class Empower implements HostCallHandler {
         return;
       }
       g.set(serviceId, gas);
-      memIndex = createMemoryIndex(memIndex + decoder.bytesRead());
+      // TODO [ToDr] we might need to wrap to the first page here!!!!
+      // we should have a test for this!
+      memIndex = tryAsMemoryIndex((memIndex + decoder.bytesRead()) % MEMORY_SIZE);
       previousServiceId = serviceId;
     }
 

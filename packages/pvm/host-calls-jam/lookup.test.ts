@@ -1,12 +1,12 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { type ServiceId, serviceId as asServiceId } from "@typeberry/block";
+import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { type Blake2bHash, hashBytes } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { type Gas, gasCounter } from "@typeberry/pvm-interpreter/gas";
-import { MemoryBuilder, createMemoryIndex as memIdx } from "@typeberry/pvm-interpreter/memory";
+import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { type Accounts, Lookup } from "./lookup";
 import { HostCallResult } from "./results";
 
@@ -50,18 +50,18 @@ function prepareRegsAndMemory(
 
   const builder = new MemoryBuilder();
   if (!skipKey) {
-    builder.setReadable(memIdx(keyAddress), memIdx(keyAddress + 32), key.raw);
+    builder.setReadable(tryAsMemoryIndex(keyAddress), tryAsMemoryIndex(keyAddress + 32), key.raw);
   }
   if (!skipValue) {
-    builder.setWriteable(memIdx(memStart), memIdx(memStart + destinationLength));
+    builder.setWriteable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + destinationLength));
   }
-  const memory = builder.finalize(memIdx(0), memIdx(0));
+  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
   return {
     registers,
     memory,
     readResult: () => {
       const result = new Uint8Array(destinationLength);
-      assert.strictEqual(memory.loadInto(result, memIdx(memStart)), null);
+      assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)), null);
       return BytesBlob.from(result);
     },
   };
@@ -71,7 +71,7 @@ describe("HostCalls: Lookup", () => {
   it("should lookup key from an account", async () => {
     const accounts = new TestAccounts();
     const lookup = new Lookup(accounts);
-    const serviceId = asServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 64);
     accounts.add(serviceId, key, BytesBlob.fromString("hello world"));
@@ -90,7 +90,7 @@ describe("HostCalls: Lookup", () => {
   it("should lookup key longer than destination", async () => {
     const accounts = new TestAccounts();
     const lookup = new Lookup(accounts);
-    const serviceId = asServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 3);
     accounts.add(serviceId, key, BytesBlob.fromString("hello world"));
@@ -106,7 +106,7 @@ describe("HostCalls: Lookup", () => {
   it("should handle missing value", async () => {
     const accounts = new TestAccounts();
     const lookup = new Lookup(accounts);
-    const serviceId = asServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 32);
 
@@ -124,7 +124,7 @@ describe("HostCalls: Lookup", () => {
   it("should fail if there is no memory for key", async () => {
     const accounts = new TestAccounts();
     const lookup = new Lookup(accounts);
-    const serviceId = asServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32, { skipKey: true });
 
@@ -138,7 +138,7 @@ describe("HostCalls: Lookup", () => {
   it("should fail if there is no memory for result", async () => {
     const accounts = new TestAccounts();
     const lookup = new Lookup(accounts);
-    const serviceId = asServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32, { skipValue: true });
 
@@ -152,7 +152,7 @@ describe("HostCalls: Lookup", () => {
   it("should fail if the destination is not fully writeable", async () => {
     const accounts = new TestAccounts();
     const lookup = new Lookup(accounts);
-    const serviceId = asServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
     accounts.add(serviceId, key, BytesBlob.fromString("hello world"));
@@ -168,7 +168,7 @@ describe("HostCalls: Lookup", () => {
   it("should fail gracefuly if the destination is beyond mem limit", async () => {
     const accounts = new TestAccounts();
     const lookup = new Lookup(accounts);
-    const serviceId = asServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
     accounts.add(serviceId, key, BytesBlob.fromString("hello world"));
@@ -185,7 +185,7 @@ describe("HostCalls: Lookup", () => {
   it("should handle 0-length destination", async () => {
     const accounts = new TestAccounts();
     const lookup = new Lookup(accounts);
-    const serviceId = asServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 0, { skipValue: true });
     accounts.add(serviceId, key, BytesBlob.fromString("hello world"));

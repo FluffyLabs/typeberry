@@ -6,7 +6,7 @@ import {
   type HeaderHash,
   type ServiceGas,
   type ServiceId,
-  coreIndex as asCoreIndex,
+  tryAsCoreIndex as asCoreIndex,
 } from "@typeberry/block";
 import { WorkPackage } from "@typeberry/block/work-package";
 import { type WorkPackageHash, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
@@ -15,7 +15,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type Codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type HashAllocator, WithHashAndBytes, hashBytes } from "@typeberry/hash";
-import { u32, u64 } from "@typeberry/numbers";
+import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import { Program } from "@typeberry/pvm-program";
@@ -110,7 +110,7 @@ export class WorkPackageExecutor {
     const workPackage = this.hasher.workPackage(pack);
     const workPackageSpec = new WorkPackageSpec(
       workPackage.hash,
-      u32(workPackage.encoded.length),
+      tryAsU32(workPackage.encoded.length),
       Bytes.zero(HASH_SIZE),
       Bytes.zero(HASH_SIZE),
     );
@@ -163,7 +163,7 @@ class PvmExecutor {
   async run(args: BytesBlob, gas: ServiceGas): Promise<BytesBlob> {
     const program = Program.fromSpi(this.serviceCode.buffer, args.buffer);
 
-    const result = await this.pvm.runProgram(program.code, 5, u64(gas) as Gas, program.registers, program.memory);
+    const result = await this.pvm.runProgram(program.code, 5, tryAsU64(gas) as Gas, program.registers, program.memory);
     if (!result || !(result instanceof Uint8Array)) {
       return BytesBlob.fromNumbers([]);
     }

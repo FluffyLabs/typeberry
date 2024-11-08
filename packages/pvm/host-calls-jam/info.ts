@@ -1,11 +1,11 @@
 import type { CodeHash, ServiceId } from "@typeberry/block";
 import { type CodecRecord, Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U32, type U64, u64 } from "@typeberry/numbers";
+import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
-import { type Memory, createMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { WithDebug } from "@typeberry/utils";
 import { HostCallResult } from "./results";
@@ -26,12 +26,12 @@ export class AccountInfo extends WithDebug {
     balance: codec.u64,
     thresholdBalance: codec.u64,
     accumulateMinGas: codec.u64.convert(
-      (g) => u64(g),
-      (i) => u64(i) as Gas,
+      (g) => tryAsU64(g),
+      (i) => tryAsU64(i) as Gas,
     ),
     onTransferMinGas: codec.u64.convert(
-      (g) => u64(g),
-      (i) => u64(i) as Gas,
+      (g) => tryAsU64(g),
+      (i) => tryAsU64(i) as Gas,
     ),
     storageUtilisationBytes: codec.u64,
     storageUtilisationCount: codec.u32,
@@ -115,7 +115,7 @@ export class Info implements HostCallHandler {
     // t
     const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // o
-    const outputStart = createMemoryIndex(regs.asUnsigned[8]);
+    const outputStart = tryAsMemoryIndex(regs.asUnsigned[8]);
 
     // t
     const accountInfo = await this.account.getInfo(serviceId);

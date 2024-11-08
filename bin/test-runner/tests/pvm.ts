@@ -4,7 +4,7 @@ import { Interpreter } from "@typeberry/pvm-interpreter";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder } from "@typeberry/pvm-interpreter/memory";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
-import { type MemoryIndex, createMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { type MemoryIndex, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { getPageNumber, getStartPageIndex } from "@typeberry/pvm-interpreter/memory/memory-utils";
 import type { PageNumber } from "@typeberry/pvm-interpreter/memory/pages/page-utils";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
@@ -87,8 +87,8 @@ export async function runPvmTest(testContent: PvmTest) {
   const memoryBuilder = new MemoryBuilder();
 
   for (const page of pageMap) {
-    const startPageIndex = createMemoryIndex(page.address);
-    const endPageIndex = createMemoryIndex(startPageIndex + page.length);
+    const startPageIndex = tryAsMemoryIndex(page.address);
+    const endPageIndex = tryAsMemoryIndex(startPageIndex + page.length);
     const isWriteable = page["is-writable"];
 
     if (isWriteable) {
@@ -99,7 +99,7 @@ export async function runPvmTest(testContent: PvmTest) {
   }
 
   for (const memoryChunk of initialMemory) {
-    const address = createMemoryIndex(memoryChunk.address);
+    const address = tryAsMemoryIndex(memoryChunk.address);
     memoryBuilder.setData(address, memoryChunk.contents);
   }
 
@@ -109,7 +109,7 @@ export async function runPvmTest(testContent: PvmTest) {
    */
   const HEAP_START_PAGE = 16;
   const HEAP_END_PAGE = 32;
-  const memory = memoryBuilder.finalize(createMemoryIndex(HEAP_START_PAGE), createMemoryIndex(HEAP_END_PAGE));
+  const memory = memoryBuilder.finalize(tryAsMemoryIndex(HEAP_START_PAGE), tryAsMemoryIndex(HEAP_END_PAGE));
   const regs = new Registers();
   regs.copyFrom(testContent["initial-regs"]);
 
@@ -128,7 +128,7 @@ export async function runPvmTest(testContent: PvmTest) {
   const checkedPages = new Set<PageNumber>();
   const expectedMemory = testContent["expected-memory"];
   for (const memoryChunk of expectedMemory) {
-    const address = createMemoryIndex(memoryChunk.address);
+    const address = tryAsMemoryIndex(memoryChunk.address);
     const expectedPage = getExpectedPage(address, memoryChunk.contents, PAGE_SIZE);
     const pageNumber = getPageNumber(address);
     checkedPages.add(pageNumber);

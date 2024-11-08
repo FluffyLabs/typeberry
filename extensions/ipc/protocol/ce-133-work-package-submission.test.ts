@@ -1,11 +1,11 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { type CoreIndex, coreIndex } from "@typeberry/block";
+import { type CoreIndex, tryAsCoreIndex } from "@typeberry/block";
 import type { WorkItemExtrinsics } from "@typeberry/block/work-item";
 import { WorkPackage } from "@typeberry/block/work-package";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
-import { u32 } from "@typeberry/numbers";
+import { tryAsU32 } from "@typeberry/numbers";
 import { MessageHandler, type MessageSender } from "../handler";
 import { ClientHandler, STREAM_KIND, ServerHandler } from "./ce-133-work-package-submission";
 
@@ -64,13 +64,13 @@ describe("CE133", () => {
     handlers.client.withNewStream(STREAM_KIND, (handler: ClientHandler, sender) => {
       const workPackage = Decoder.decodeObject(WorkPackage.Codec, BytesBlob.parseBlob(testWorkPackage));
       const extrinsic = testExtrinsicData() as WorkItemExtrinsics;
-      handler.sendWorkPackage(sender, coreIndex(0), workPackage, extrinsic);
+      handler.sendWorkPackage(sender, tryAsCoreIndex(0), workPackage, extrinsic);
     });
 
     await new Promise((resolve) => {
       setImmediate(() => {
         // then
-        assert.deepStrictEqual(receivedData.coreIndex, coreIndex(0));
+        assert.deepStrictEqual(receivedData.coreIndex, tryAsCoreIndex(0));
         assert.deepStrictEqual(
           receivedData.workPackage,
           Decoder.decodeObject(WorkPackage.Codec, BytesBlob.parseBlob(testWorkPackage)),
@@ -89,6 +89,6 @@ const testExtrinsicData = () => {
   // this is coming from work items in the `testWorkPackage`;
   const lengths = [16, 17, 32, 33, 34];
   return lengths.map((len, idx) => {
-    return Bytes.fill(u32(len), idx);
+    return Bytes.fill(tryAsU32(len), idx);
   });
 };
