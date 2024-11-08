@@ -4,7 +4,7 @@ import type { DisputesExtrinsic } from "@typeberry/block/disputes";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { ChainSpec } from "@typeberry/config";
 import { Disputes } from "@typeberry/disputes";
-import { AvailabilityAssignment, DisputesRecords, DisputesState } from "@typeberry/disputes/disputes";
+import { AvailabilityAssignment, DisputesRecords, DisputesState } from "@typeberry/disputes";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { ValidatorData } from "@typeberry/safrole";
 import type { BlsKey } from "@typeberry/safrole/crypto";

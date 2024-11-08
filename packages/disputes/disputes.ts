@@ -1,69 +1,14 @@
-import type { Ed25519Key, TimeSlot, WorkReportHash } from "@typeberry/block";
+import type { Ed25519Key, WorkReportHash } from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
-import type { Bytes } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
 import { hashBytes } from "@typeberry/hash";
-import type { ValidatorData } from "@typeberry/safrole";
+import { DisputesErrorCode } from "./disputes-error-code";
+import { DisputesResult } from "./disputes-result";
+import type { DisputesState } from "./disputes-state";
 import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
 import { verifyCulpritSignature, verifyVoteSignature } from "./verification-utils";
 
-export class DisputesRecords {
-  constructor(
-    public goodSet: WorkReportHash[],
-    public badSet: WorkReportHash[],
-    public wonkySet: WorkReportHash[],
-    public punishSet: Ed25519Key[],
-  ) {}
-}
-
-export class AvailabilityAssignment {
-  constructor(
-    public workReport: Bytes<354>,
-    public timeout: number,
-  ) {}
-}
-
-export class DisputesState {
-  constructor(
-    public disputesRecords: DisputesRecords,
-    public availabilityAssignment: Array<AvailabilityAssignment | undefined>,
-    public timeslot: TimeSlot,
-    public currentValidatorData: ValidatorData[],
-    public previousValidatorData: ValidatorData[],
-  ) {}
-}
-
-export enum DisputesErrorCode {
-  AlreadyJudged = "already_judged",
-  BadVoteSplit = "bad_vote_split",
-  VerdictsNotSortedUnique = "verdicts_not_sorted_unique",
-  JudgementsNotSortedUnique = "judgements_not_sorted_unique",
-  CulpritsNotSortedUnique = "culprits_not_sorted_unique",
-  FaultsNotSortedUnique = "faults_not_sorted_unique",
-  NotEnoughCulprits = "not_enough_culprits",
-  NotEnoughFaults = "not_enough_faults",
-  CulpritsVerdictNotBad = "culprits_verdict_not_bad",
-  FaultVerdictWrong = "fault_verdict_wrong",
-  OffenderAlreadyReported = "offender_already_reported",
-  BadJudgementAge = "bad_judgement_age",
-  BadValidatorIndex = "bad_validator_index", // TODO
-  BadSignature = "bad_signature", // TODO
-}
-
-class Result {
-  private constructor(
-    public offendersMarks: Ed25519Key[] | undefined,
-    public err: DisputesErrorCode | undefined,
-  ) {}
-
-  static ok(offendersMarks: Ed25519Key[]) {
-    return new Result(offendersMarks, undefined);
-  }
-
-  static error(error: DisputesErrorCode) {
-    return new Result(undefined, error);
-  }
-}
+type V = [WorkReportHash, number][];
 
 export class Disputes {
   constructor(
@@ -85,6 +30,7 @@ export class Disputes {
         return DisputesErrorCode.CulpritsVerdictNotBad;
       }
 
+      // https://graypaper.fluffylabs.dev/#/364735a/124501124501
       if (!verifyCulpritSignature(signature, key, workReportHash)) {
         return DisputesErrorCode.BadSignature;
       }
@@ -107,6 +53,7 @@ export class Disputes {
         return DisputesErrorCode.OffenderAlreadyReported;
       }
 
+      // This condition is concluded from jam test vectors. I cannot see any related formula in GP.
       const verdict = disputes.verdicts.find((verdict) => verdict.workReportHash.isEqualTo(workReportHash));
       if (verdict) {
         const hasVote = verdict.votes.find((vote) => vote.signature.isEqualTo(signature));
@@ -167,6 +114,7 @@ export class Disputes {
       const isInWonkySet = this.state.disputesRecords.wonkySet.find((record) =>
         record.isEqualTo(verdict.workReportHash),
       );
+
       if (isInGoodSet || isInBadSet || isInWonkySet) {
         return DisputesErrorCode.AlreadyJudged;
       }
@@ -177,7 +125,7 @@ export class Disputes {
 
   private buildV(disputes: DisputesExtrinsic) {
     // https://graypaper.fluffylabs.dev/#/364735a/12760212cd02
-    const v: [WorkReportHash, number][] = [];
+    const v: V = [];
 
     for (const verdict of disputes.verdicts) {
       const j = verdict.votes;
@@ -196,7 +144,7 @@ export class Disputes {
     return v;
   }
 
-  private verifyV(v: [WorkReportHash, number][], disputes: DisputesExtrinsic) {
+  private verifyV(v: V, disputes: DisputesExtrinsic) {
     // https://graypaper.fluffylabs.dev/#/364735a/12e50212fa02
 
     for (const [r, sum] of v) {
@@ -219,26 +167,9 @@ export class Disputes {
     return null;
   }
 
-  async transition(disputes: DisputesExtrinsic) {
-    const inputError =
-      this.verifyVerdicts(disputes) ||
-      this.verifyCulprits(disputes) ||
-      this.verifyFaults(disputes) ||
-      this.verifyIfAlreadyJudged(disputes);
-
-    if (inputError !== null) {
-      return Result.error(inputError);
-    }
-
-    const V = this.buildV(disputes);
-
-    const vError = this.verifyV(V, disputes);
-
-    if (vError !== null) {
-      return Result.error(vError);
-    }
-
-    for (const [r, sum] of V) {
+  updateDisputesRecords(v: V) {
+    // https://graypaper.fluffylabs.dev/#/364735a/123403128f03
+    for (const [r, sum] of v) {
       if (sum >= this.context.validatorsSuperMajority) {
         this.state.disputesRecords.goodSet.push(r);
       } else if (sum === 0) {
@@ -247,12 +178,15 @@ export class Disputes {
         this.state.disputesRecords.wonkySet.push(r);
       }
     }
+  }
 
+  clearCoreAssignment(v: V) {
+    // https://graypaper.fluffylabs.dev/#/364735a/120403122903
     for (let c = 0; c < this.state.availabilityAssignment.length; c++) {
       const assignment = this.state.availabilityAssignment[c];
       if (assignment) {
         const hash = hashBytes(assignment.workReport);
-        const item = V.find(
+        const item = v.find(
           ([vHash, noOfVotes]) => hash.isEqualTo(vHash) && noOfVotes < this.context.validatorsSuperMajority,
         );
         if (item) {
@@ -260,6 +194,29 @@ export class Disputes {
         }
       }
     }
+  }
+
+  async transition(disputes: DisputesExtrinsic) {
+    const inputError =
+      this.verifyVerdicts(disputes) ||
+      this.verifyCulprits(disputes) ||
+      this.verifyFaults(disputes) ||
+      this.verifyIfAlreadyJudged(disputes);
+
+    if (inputError !== null) {
+      return DisputesResult.error(inputError);
+    }
+
+    const v = this.buildV(disputes);
+
+    const vError = this.verifyV(v, disputes);
+
+    if (vError !== null) {
+      return DisputesResult.error(vError);
+    }
+
+    this.updateDisputesRecords(v);
+    this.clearCoreAssignment(v);
 
     // GP: https://graypaper.fluffylabs.dev/#/364735a/12b00312cd03
     const offendersMarks: Ed25519Key[] = [];
@@ -274,6 +231,6 @@ export class Disputes {
       this.state.disputesRecords.punishSet.push(key);
     }
 
-    return Result.ok(offendersMarks);
+    return DisputesResult.ok(offendersMarks);
   }
 }
