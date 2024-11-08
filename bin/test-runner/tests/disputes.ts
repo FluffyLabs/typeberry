@@ -28,10 +28,10 @@ namespace fromJson {
 
 class TestAvailabilityAssignment {
   static fromJson: FromJson<TestAvailabilityAssignment> = {
-    dummy_work_report: json.fromString((v) => Bytes.parseBytes(v, 353)),
+    dummy_work_report: json.fromString((v) => Bytes.parseBytes(v, 354)),
     timeout: "number",
   };
-  dummy_work_report!: Bytes<353>;
+  dummy_work_report!: Bytes<354>;
   timeout!: number;
 }
 

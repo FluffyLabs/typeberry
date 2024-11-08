@@ -2,6 +2,7 @@ import type { Ed25519Key, TimeSlot, WorkReportHash } from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
 import type { Bytes } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
+import { hashBytes } from "@typeberry/hash";
 import type { ValidatorData } from "@typeberry/safrole";
 import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
 import { verifyCulpritSignature, verifyVoteSignature } from "./verification-utils";
@@ -17,7 +18,7 @@ export class DisputesRecords {
 
 export class AvailabilityAssignment {
   constructor(
-    public workReport: Bytes<353>,
+    public workReport: Bytes<354>,
     public timeout: number,
   ) {}
 }
@@ -244,6 +245,19 @@ export class Disputes {
         this.state.disputesRecords.badSet.push(r);
       } else if (sum >= Math.floor(this.context.validatorsCount / 3)) {
         this.state.disputesRecords.wonkySet.push(r);
+      }
+    }
+
+    for (let c = 0; c < this.state.availabilityAssignment.length; c++) {
+      const assignment = this.state.availabilityAssignment[c];
+      if (assignment) {
+        const hash = hashBytes(assignment.workReport);
+        const item = V.find(
+          ([vHash, noOfVotes]) => hash.isEqualTo(vHash) && noOfVotes < this.context.validatorsSuperMajority,
+        );
+        if (item) {
+          this.state.availabilityAssignment[c] = undefined;
+        }
       }
     }
 
