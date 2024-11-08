@@ -2,16 +2,16 @@ import { ed25519 } from "@noble/curves/ed25519";
 import type { Ed25519Key, Ed25519Signature, WorkReportHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
+import { JAM_INVALID, JAM_VALID } from "@typeberry/signing-context";
 
 export function verifySignature(
   signature: Ed25519Signature,
   pubKey: Ed25519Key,
   workReportHash: WorkReportHash,
-  vote: boolean,
+  isWorkReportValid: boolean,
 ) {
   const encoder = Encoder.create();
-  const textEncoder = new TextEncoder();
-  const v = textEncoder.encode(vote ? "jam_valid" : "jam_invalid"); // TODO extract to signing context package
+  const v = isWorkReportValid ? JAM_VALID : JAM_INVALID;
   encoder.bytes(Bytes.fromBlob(v, v.length));
   encoder.bytes(workReportHash);
   const message = encoder.viewResult();
