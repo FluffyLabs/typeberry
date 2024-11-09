@@ -114,7 +114,7 @@ describe("Codec Descriptors / class", () => {
     const result = Encoder.encodeObject(TestHeader.Codec, header);
 
     assert.deepStrictEqual(result, data.bytes);
-    assert.deepStrictEqual(TestHeader.Codec.sizeHintBytes, 3 * 32);
+    assert.deepStrictEqual(TestHeader.Codec.sizeHint, { bytes: 3 * 32, isExact: true });
   });
 });
 

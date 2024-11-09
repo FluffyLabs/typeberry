@@ -31,7 +31,7 @@ export class EpochMarker extends WithDebug {
     validators: codec.select(
       {
         name: "EpochMark.validators",
-        sizeHintBytes: EST_VALIDATORS * BANDERSNATCH_KEY_BYTES,
+        sizeHint: { bytes: EST_VALIDATORS * BANDERSNATCH_KEY_BYTES, isExact: false },
       },
       withContext("EpochMark.validators", (context) => {
         return codec.sequenceFixLen(codec.bytes(BANDERSNATCH_KEY_BYTES), context.validatorsCount).cast();
@@ -70,7 +70,7 @@ export class Header extends WithDebug {
       codec.select(
         {
           name: "Header.ticketsMark",
-          sizeHintBytes: EST_EPOCH_LENGTH * Ticket.Codec.sizeHintBytes,
+          sizeHint: { bytes: EST_EPOCH_LENGTH * (Ticket.Codec.sizeHint.bytes ?? 1), isExact: false },
         },
         withContext("Header.ticketsMark", (context) => {
           return codec.sequenceFixLen(Ticket.Codec, context.epochLength).cast();

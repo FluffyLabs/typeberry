@@ -84,7 +84,7 @@ export function workItemExtrinsicsCodec(workItems: WorkItem[]) {
   return codec.custom<WorkItemExtrinsics>(
     {
       name: "WorkItemExtrinsics",
-      sizeHintBytes: sum.value,
+      sizeHint: { bytes: sum.value, isExact: true },
     },
     (e, val) => {
       for (const bytes of val) {

@@ -103,7 +103,7 @@ export class Verdict extends WithDebug {
     votes: codec.select(
       {
         name: "Verdict.votes",
-        sizeHintBytes: EST_VALIDATORS_SUPER_MAJORITY * Judgement.Codec.sizeHintBytes,
+        sizeHint: { bytes: EST_VALIDATORS_SUPER_MAJORITY * (Judgement.Codec.sizeHint.bytes ?? 1), isExact: false },
       },
       withContext("Verdicts.votes", (context) => {
         return codec.sequenceFixLen(Judgement.Codec, context.validatorsSuperMajority).cast();
