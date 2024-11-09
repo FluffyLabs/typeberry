@@ -1,8 +1,9 @@
-import type { ServiceId } from "@typeberry/block";
-import { Decoder } from "@typeberry/codec";
+import { type ServiceId, tryAsServiceId } from "@typeberry/block";
+import { Decoder, codec, tryAsExactBytes } from "@typeberry/codec";
+import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
-import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
+import type { BigGas, Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
@@ -13,7 +14,13 @@ import type { AccumulationPartialState } from "./partial-state";
 
 const IN_OUT_REG = 7;
 
-const ENCODED_SIZE_OF_SERVICE_ID_AND_GAS = 4 + 8;
+const serviceIdAndGasCodec = codec.object({
+  serviceId: codec.u32.cast<ServiceId>(),
+  gas: codec.u64.convert(
+    (i: Gas) => tryAsU64(i),
+    (i): BigGas => asOpaqueType(i),
+  ),
+});
 
 /**
  * Modify privileged services and services that auto-accumulate every block.
@@ -29,11 +36,11 @@ export class Empower implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
     // `m`: manager service (can change privileged services)
-    const m = regs.asUnsigned[IN_OUT_REG] as ServiceId;
+    const m = tryAsServiceId(regs.asUnsigned[IN_OUT_REG]);
     // `a`: manages authorization queue
-    const a = regs.asUnsigned[8] as ServiceId;
+    const a = tryAsServiceId(regs.asUnsigned[8]);
     // `v`: manages validator keys
-    const v = regs.asUnsigned[9] as ServiceId;
+    const v = tryAsServiceId(regs.asUnsigned[9]);
     const sourceStart = tryAsMemoryIndex(regs.asUnsigned[10]);
     // `n`: number of items in the auto-accumulate dictionary
     const numberOfItems = regs.asUnsigned[11];
@@ -41,7 +48,7 @@ export class Empower implements HostCallHandler {
     // `g`: dictionary of serviceId -> gas that auto-accumulate every block
     const g = new Map<ServiceId, Gas>();
     // TODO [ToDr] Is it better to read everything in one go instead?
-    const result = new Uint8Array(ENCODED_SIZE_OF_SERVICE_ID_AND_GAS);
+    const result = new Uint8Array(tryAsExactBytes(serviceIdAndGasCodec.sizeHint));
     const decoder = Decoder.fromBlob(result);
     let memIndex = sourceStart;
     let previousServiceId = 0;
@@ -54,8 +61,7 @@ export class Empower implements HostCallHandler {
         return;
       }
 
-      const serviceId: ServiceId = asOpaqueType(decoder.u32());
-      const gas = decoder.u64() as Gas;
+      const { serviceId, gas } = decoder.object(serviceIdAndGasCodec);
       // Since the GP does not allow non-canonical representation of encodings,
       // a set with duplicates should not be decoded correctly.
       if (g.has(serviceId)) {

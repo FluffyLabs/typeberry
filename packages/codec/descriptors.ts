@@ -3,7 +3,7 @@ import { Logger } from "@typeberry/logger";
 import { type U8, type U16, type U32, type U64, tryAsU32 as asU32 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
 import { type Decode, Decoder } from "./decoder";
-import { addSizeHints, type Encode, type Encoder, type SizeHint } from "./encoder";
+import { type Encode, type Encoder, type SizeHint, addSizeHints } from "./encoder";
 
 /**
  * For sequences with unknown length we need to give some size hint.
@@ -459,13 +459,16 @@ export namespace codec {
    * the object here.
    */
   export const object = <T>(descriptors: SimpleDescriptorRecord<T>, name?: string) => {
-    return Class<T, DescriptorRecord<T>>({
-      name: `${name ?? 'object'}`,
-      fromCodec(o: CodecRecord<T>) {
-        return o as T;
-      }
-    }, descriptors);
-  }
+    return Class<T, DescriptorRecord<T>>(
+      {
+        name: `${name ?? "object"}`,
+        fromCodec(o: CodecRecord<T>) {
+          return o as T;
+        },
+      },
+      descriptors,
+    );
+  };
 
   /**
    * A descriptor for a more complex class type.

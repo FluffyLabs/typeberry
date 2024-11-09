@@ -1,12 +1,17 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { BitVec } from "@typeberry/bytes";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
-import { check } from "@typeberry/utils";
+import { check, ensure } from "@typeberry/utils";
 
 export type SizeHint = {
-  bytes?: number,
-  isExact: boolean,
+  bytes?: number;
+  isExact: boolean;
 };
+
+export function tryAsExactBytes(a: SizeHint): number {
+  check(a.isExact, "The value is not exact size estimation!");
+  return ensure(a.bytes, a.bytes !== undefined, "The value is undefined!");
+}
 
 export function addSizeHints(a: SizeHint, b: SizeHint): SizeHint {
   return {
