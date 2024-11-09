@@ -188,7 +188,7 @@ export namespace codec {
   /** Variable-length U32. */
   export const varU32 = descriptor<U32>(
     "var_u32",
-    exactHint(4),
+    { bytes: 4, isExact: false },
     (e, v) => e.varU32(v),
     (d) => d.varU32(),
   );
@@ -196,7 +196,7 @@ export namespace codec {
   /** Variable-length U64. */
   export const varU64 = descriptor<U64>(
     "var_u64",
-    exactHint(8),
+    { bytes: 8, isExact: false },
     (e, v) => e.varU64(v),
     (d) => d.varU64(),
   );
@@ -380,10 +380,12 @@ export namespace codec {
     },
   ) =>
     descriptor<Map<K, V>>(
-      `Dictionary<${key.name}, ${value.name}>`,
+      `Dictionary<${key.name}, ${value.name}>[${fixedLength ?? '?'}]`,
       {
-        bytes: TYPICAL_DICTIONARY_LENGTH * (addSizeHints(key.sizeHint, value.sizeHint).bytes ?? 0),
-        isExact: false,
+        bytes: fixedLength
+          ? fixedLength * (addSizeHints(key.sizeHint, value.sizeHint).bytes ?? 0)
+          : TYPICAL_DICTIONARY_LENGTH * (addSizeHints(key.sizeHint, value.sizeHint).bytes ?? 0),
+        isExact: fixedLength ? key.sizeHint.isExact && value.sizeHint.isExact : false,
       },
       (e, v) => {
         const data = Array.from(v.entries());
