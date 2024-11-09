@@ -118,6 +118,13 @@ type DescriptorRecord<T> = {
   [K in PropertyKeys<T>]: Descriptor<T[K]> | ClassDescriptor<T[K]>;
 };
 
+/**
+ * Simplified `DescriptorRecord`, where all keys must be used as descriptor keys.
+ */
+type SimpleDescriptorRecord<T> = {
+  [K in keyof T]: Descriptor<T[K]> | ClassDescriptor<T[K]>;
+};
+
 /** Only keys that contain properties, not methods. */
 export type PropertyKeys<T> = {
   // biome-ignore lint/complexity/noBannedTypes: We want to skip any function-like types here.
@@ -433,6 +440,22 @@ export namespace codec {
       (e, x) => chooser(e.getContext()).encode(e, x),
       (d) => chooser(d.getContext()).decode(d),
     );
+
+  /**
+   * A descriptor for a more complex POJO.
+   *
+   * This descriptor is very similar to `Class`, but it DOES NOT maintain the
+   * prototype chain of the resulting object - we only care about the shape of
+   * the object here.
+   */
+  export const object = <T>(descriptors: SimpleDescriptorRecord<T>, name?: string) => {
+    return Class<T, DescriptorRecord<T>>({
+      name: `${name ?? 'object'}`,
+      fromCodec(o: CodecRecord<T>) {
+        return o as T;
+      }
+    }, descriptors);
+  }
 
   /**
    * A descriptor for a more complex class type.

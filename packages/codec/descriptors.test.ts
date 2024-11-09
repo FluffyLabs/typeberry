@@ -26,6 +26,27 @@ class TestHeader {
   ) {}
 }
 
+describe("Codec Descriptors / object", () => {
+  it('should encode & decode', () => {
+    const headerCodec = codec.object({
+      parentHeaderHash: codec.bytes(32),
+      priorStateRoot: codec.bytes(32),
+      extrinsicHash: codec.bytes(32),
+    });
+
+    const elem = {
+      parentHeaderHash: Bytes.fill(32, 1),
+      priorStateRoot: Bytes.fill(32, 2),
+      extrinsicHash: Bytes.fill(32, 3),
+    };
+    const encoded = Encoder.encodeObject(headerCodec, elem);
+    assert.deepStrictEqual(encoded.toString(), '0x010101010101010101010101010101010101010101010101010101010101010102020202020202020202020202020202020202020202020202020202020202020303030303030303030303030303030303030303030303030303030303030303');
+
+    const decoded = Decoder.decodeObject(headerCodec, encoded);
+    assert.deepStrictEqual(decoded, elem);
+  });
+});
+
 describe("Codec Descriptors / class", () => {
   const testData = () => {
     const encoder = Encoder.create();
