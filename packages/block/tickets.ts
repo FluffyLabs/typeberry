@@ -65,6 +65,9 @@ export class Ticket extends WithDebug {
   }
 }
 
+/** `K`: Max number of tickets which may be submitted in a single extrinsic. */
+export const MAX_NUMBER_OF_TICKETS = 16;
+
 /**
  * A sequence of proofs of valid tickets.
  *
@@ -73,7 +76,7 @@ export class Ticket extends WithDebug {
  * Constrained by `K = 16`:
  * https://graypaper.fluffylabs.dev/#/c71229b/3d59003d5b00
  */
-export type TicketsExtrinsic = KnownSizeArray<SignedTicket, "Size: 0..16">;
+export type TicketsExtrinsic = KnownSizeArray<SignedTicket, `Size: 0..{MAX_NUMBER_OF_TICKETS}`>;
 
 // TODO [ToDr] constrain the sequence length during decoding.
 export const ticketsExtrinsicCodec = codec.sequenceVarLen(SignedTicket.Codec).cast<TicketsExtrinsic>();

@@ -1,6 +1,6 @@
 import type { Interpreter, Memory } from "@typeberry/pvm-interpreter";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
-import { createMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { check } from "@typeberry/utils";
@@ -24,7 +24,7 @@ export class HostCalls {
       const maybeLength = regs.asUnsigned[11];
 
       const result = new Uint8Array(maybeLength);
-      const startAddress = createMemoryIndex(maybeAddress);
+      const startAddress = tryAsMemoryIndex(maybeAddress);
       const pageFault = memory.loadInto(result, startAddress);
       // https://graypaper-reader.netlify.app/#/293bf5a/296c02296c02
       return pageFault !== null ? new Uint8Array(0) : result;

@@ -2,26 +2,26 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { MAX_MEMORY_INDEX, PAGE_SIZE } from "./memory-consts";
-import { createMemoryIndex } from "./memory-index";
+import { tryAsMemoryIndex } from "./memory-index";
 import { alignToPageSize, getPageNumber, getStartPageIndex, getStartPageIndexFromPageNumber } from "./memory-utils";
-import { createPageNumber } from "./pages/page-utils";
+import { tryAsPageNumber } from "./pages/page-utils";
 
 describe("memory-utils", () => {
   describe("getPageNumber", () => {
     it("should return 0 if address is less than page size", () => {
-      const address = createMemoryIndex(5 % PAGE_SIZE);
+      const address = tryAsMemoryIndex(5 % PAGE_SIZE);
 
       const pageNumber = getPageNumber(address);
 
-      assert.strictEqual(pageNumber, createPageNumber(0));
+      assert.strictEqual(pageNumber, tryAsPageNumber(0));
     });
 
     it("should return 1 if address is bigger than page size but less than 2x page size", () => {
-      const address = createMemoryIndex(PAGE_SIZE + ((PAGE_SIZE + 5) % PAGE_SIZE));
+      const address = tryAsMemoryIndex(PAGE_SIZE + ((PAGE_SIZE + 5) % PAGE_SIZE));
 
       const pageNumber = getPageNumber(address);
 
-      assert.strictEqual(pageNumber, createPageNumber(1));
+      assert.strictEqual(pageNumber, tryAsPageNumber(1));
     });
   });
 
@@ -53,7 +53,7 @@ describe("memory-utils", () => {
 
   describe("getStartPageIndex", () => {
     it("should return start index of 1st page", () => {
-      const address = createMemoryIndex(1);
+      const address = tryAsMemoryIndex(1);
       const expectedAddress = 0;
 
       const startPageIndex = getStartPageIndex(address);
@@ -62,7 +62,7 @@ describe("memory-utils", () => {
     });
 
     it("should return start index of 10th page", () => {
-      const address = createMemoryIndex(1 + 10 * PAGE_SIZE);
+      const address = tryAsMemoryIndex(1 + 10 * PAGE_SIZE);
       const expectedAddress = 10 * PAGE_SIZE;
 
       const startPageIndex = getStartPageIndex(address);
@@ -73,8 +73,8 @@ describe("memory-utils", () => {
 
   describe("getStartPageIndexFromPageNumber", () => {
     it("should return a correct start index for page 0", () => {
-      const pageNumber = createPageNumber(0);
-      const expectedMemoryIndex = createMemoryIndex(0);
+      const pageNumber = tryAsPageNumber(0);
+      const expectedMemoryIndex = tryAsMemoryIndex(0);
 
       const startIndex = getStartPageIndexFromPageNumber(pageNumber);
 
@@ -82,8 +82,8 @@ describe("memory-utils", () => {
     });
 
     it("should return a correct start index for page 1", () => {
-      const pageNumber = createPageNumber(1);
-      const expectedMemoryIndex = createMemoryIndex(PAGE_SIZE);
+      const pageNumber = tryAsPageNumber(1);
+      const expectedMemoryIndex = tryAsMemoryIndex(PAGE_SIZE);
 
       const startIndex = getStartPageIndexFromPageNumber(pageNumber);
 
@@ -91,7 +91,7 @@ describe("memory-utils", () => {
     });
 
     it("should return a correct start index for the last page", () => {
-      const lastMemoryIndex = createMemoryIndex(MAX_MEMORY_INDEX);
+      const lastMemoryIndex = tryAsMemoryIndex(MAX_MEMORY_INDEX);
       const pageNumber = getPageNumber(lastMemoryIndex);
 
       const startIndex = getStartPageIndexFromPageNumber(pageNumber);

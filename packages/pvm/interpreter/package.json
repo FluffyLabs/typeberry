@@ -5,8 +5,9 @@
   "main": "index.ts",
   "dependencies": {
     "@typeberry/bytes": "0.0.1",
-    "@typeberry/utils": "0.0.1",
-    "@typeberry/codec": "0.0.1"
+    "@typeberry/codec": "0.0.1",
+    "@typeberry/numbers": "0.0.1",
+    "@typeberry/utils": "0.0.1"
   },
   "scripts": {
     "start": "ts-node ./bin.ts",

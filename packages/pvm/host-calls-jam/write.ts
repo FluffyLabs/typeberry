@@ -5,10 +5,10 @@ import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import type { GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
 import type { Memory } from "@typeberry/pvm-interpreter/memory";
-import { createMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { HostCallResult } from "./results";
-import { writeServiceIdAsLeBytes } from "./utils";
+import { CURRENT_SERVICE_ID, writeServiceIdAsLeBytes } from "./utils";
 
 /** Account data interface for Write host call. */
 export interface Accounts {
@@ -49,7 +49,7 @@ const SERVICE_ID_BYTES = 4;
 export class Write implements HostCallHandler {
   index = 3 as HostCallIndex;
   gasCost = 10 as SmallGas;
-  currentServiceId = (2 ** 32 - 1) as ServiceId;
+  currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(private readonly account: Accounts) {}
 
@@ -65,11 +65,11 @@ export class Write implements HostCallHandler {
     }
 
     // k_0
-    const keyStartAddress = createMemoryIndex(regs.asUnsigned[7]);
+    const keyStartAddress = tryAsMemoryIndex(regs.asUnsigned[7]);
     // k_z
     const keyLen = regs.asUnsigned[8];
     // v_0
-    const valueStart = createMemoryIndex(regs.asUnsigned[9]);
+    const valueStart = tryAsMemoryIndex(regs.asUnsigned[9]);
     // v_z
     const valueLen = regs.asUnsigned[10];
 

@@ -1,7 +1,7 @@
 import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import type { InstructionResult } from "../instruction-result";
 import type { Memory } from "../memory";
-import { createMemoryIndex } from "../memory/memory-index";
+import { tryAsMemoryIndex } from "../memory/memory-index";
 import type { Registers } from "../registers";
 import { Result } from "../result";
 import { addWithOverflow } from "./math-utils";
@@ -80,7 +80,7 @@ export class StoreOps {
   }
 
   private store(address: number, bytes: Uint8Array) {
-    const storeResult = this.memory.storeFrom(createMemoryIndex(address), bytes);
+    const storeResult = this.memory.storeFrom(tryAsMemoryIndex(address), bytes);
     if (storeResult !== null) {
       this.instructionResult.status = Result.FAULT;
       this.instructionResult.exitParam = address;

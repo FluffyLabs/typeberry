@@ -25,3 +25,7 @@ export type WithOpaque<Token extends string> = {
 };
 
 export type Opaque<Type, Token extends string> = Token extends StringLiteral<Token> ? Type & WithOpaque<Token> : never;
+
+export function asOpaqueType<Token extends string, T>(v: T): Opaque<T, Token> {
+  return v as Opaque<T, Token>;
+}

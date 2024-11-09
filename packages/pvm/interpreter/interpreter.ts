@@ -1,4 +1,4 @@
-import type { U32 } from "@typeberry/numbers";
+import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { ArgsDecoder } from "./args-decoder/args-decoder";
 import { createResults } from "./args-decoder/args-decoding-results";
 import { ArgumentType } from "./args-decoder/argument-type";
@@ -10,7 +10,7 @@ import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
 import { InstructionResult } from "./instruction-result";
 import { Memory } from "./memory";
-import { createPageNumber } from "./memory/pages/page-utils";
+import { tryAsPageNumber } from "./memory/pages/page-utils";
 import {
   BitOps,
   BooleanOps,
@@ -257,8 +257,9 @@ export class Interpreter {
     return this.status;
   }
 
-  getExitParam(): U32 {
-    return this.instructionResult.exitParam as U32;
+  getExitParam(): null | U32 {
+    const p = this.instructionResult.exitParam;
+    return p !== null ? tryAsU32(p) : p;
   }
 
   getMemory() {
@@ -266,6 +267,6 @@ export class Interpreter {
   }
 
   getMemoryPage(pageNumber: number): null | Uint8Array {
-    return this.memory.getPageDump(createPageNumber(pageNumber));
+    return this.memory.getPageDump(tryAsPageNumber(pageNumber));
   }
 }

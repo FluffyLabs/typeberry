@@ -2,7 +2,7 @@ import { ensure } from "@typeberry/utils";
 import { ChunkOverlap, ChunkTooLong, PageFault } from "../errors";
 import { PAGE_SIZE } from "../memory-consts";
 import { MemoryPage } from "./memory-page";
-import { type PageIndex, createPageIndex } from "./page-utils";
+import { type PageIndex, tryAsPageIndex } from "./page-utils";
 
 export const readable = Symbol("readable");
 export const writeable = Symbol("writeable");
@@ -52,7 +52,7 @@ export class VirtualPage extends MemoryPage {
       // "length < end - start" and the chunk is writeable so we need to allocate zeros from "start + length" to "end"
       // to have possibility to store data from "start" to "end"
       const emptyChunk = new Uint8Array(end - start - chunk.length);
-      this.chunks.push([createPageIndex(start + chunk.length), end, emptyChunk, accessType]);
+      this.chunks.push([tryAsPageIndex(start + chunk.length), end, emptyChunk, accessType]);
     }
     // the chunks have to be sorted to load from / store into a few chunks
     this.chunks.sort((a, b) => a[0] - b[0]);

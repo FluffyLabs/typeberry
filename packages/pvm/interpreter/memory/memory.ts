@@ -1,10 +1,10 @@
 import { PageFault } from "./errors";
 import { MAX_MEMORY_INDEX, MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
-import { type MemoryIndex, createMemoryIndex } from "./memory-index";
+import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
 import { alignToPageSize, getPageNumber, getStartPageIndexFromPageNumber } from "./memory-utils";
 import { WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
-import { type PageNumber, createPageIndex, getNextPageNumber } from "./pages/page-utils";
+import { type PageNumber, getNextPageNumber, tryAsPageIndex } from "./pages/page-utils";
 
 type InitialMemoryState = {
   memory: Map<PageNumber, MemoryPage>;
@@ -23,16 +23,16 @@ export class Memory {
   }
 
   constructor(
-    private sbrkIndex = createMemoryIndex(0),
-    private virtualSbrkIndex = createMemoryIndex(0),
-    private endHeapIndex = createMemoryIndex(MAX_MEMORY_INDEX),
+    private sbrkIndex = tryAsMemoryIndex(0),
+    private virtualSbrkIndex = tryAsMemoryIndex(0),
+    private endHeapIndex = tryAsMemoryIndex(MAX_MEMORY_INDEX),
     private memory = new Map<PageNumber, MemoryPage>(),
   ) {}
 
   reset() {
-    this.sbrkIndex = createMemoryIndex(0);
-    this.virtualSbrkIndex = createMemoryIndex(0);
-    this.endHeapIndex = createMemoryIndex(MAX_MEMORY_INDEX);
+    this.sbrkIndex = tryAsMemoryIndex(0);
+    this.virtualSbrkIndex = tryAsMemoryIndex(0);
+    this.endHeapIndex = tryAsMemoryIndex(MAX_MEMORY_INDEX);
     this.memory = new Map<PageNumber, MemoryPage>(); // TODO [MaSi]: We should keep allocated pages somewhere and reuse it when it is possible
   }
 
@@ -56,7 +56,7 @@ export class Memory {
       return new PageFault(address);
     }
 
-    const firstPageIndex = createPageIndex(address - page.start);
+    const firstPageIndex = tryAsPageIndex(address - page.start);
     const pageEnd = page.start + PAGE_SIZE;
 
     if (address + bytes.length <= pageEnd) {
@@ -81,7 +81,7 @@ export class Memory {
     }
 
     return secondPage.storeFrom(
-      createPageIndex(0),
+      tryAsPageIndex(0),
       bytes.subarray(toStoreOnFirstPage, toStoreOnFirstPage + toStoreOnSecondPage),
     );
   }
@@ -102,12 +102,12 @@ export class Memory {
       return false;
     }
 
-    const destinationEnd = createMemoryIndex(destinationStart + length - 1);
-    const pageOffsetZero = createPageIndex(0);
+    const destinationEnd = tryAsMemoryIndex(destinationStart + length - 1);
+    const pageOffsetZero = tryAsPageIndex(0);
 
     const startPage = getPageNumber(destinationStart);
     const lastPage = getPageNumber(destinationEnd);
-    let pageOffset = createPageIndex(destinationStart - getStartPageIndexFromPageNumber(startPage));
+    let pageOffset = tryAsPageIndex(destinationStart - getStartPageIndexFromPageNumber(startPage));
     for (let i = startPage; i <= lastPage; i++) {
       const page = this.memory.get(i);
       if (!page) {
@@ -115,7 +115,7 @@ export class Memory {
       }
 
       const pageOffsetEnd =
-        i === lastPage ? createPageIndex(1 + destinationEnd - getStartPageIndexFromPageNumber(lastPage)) : PAGE_SIZE;
+        i === lastPage ? tryAsPageIndex(1 + destinationEnd - getStartPageIndexFromPageNumber(lastPage)) : PAGE_SIZE;
       const len = pageOffsetEnd - pageOffset;
       if (!page.isWriteable(pageOffset, len)) {
         return false;
@@ -145,16 +145,16 @@ export class Memory {
       return new PageFault(startAddress);
     }
 
-    const pageIndexZero = createPageIndex(0);
+    const pageIndexZero = tryAsPageIndex(0);
 
     const wrappedEndAddress = (startAddress + result.length) % MEMORY_SIZE;
-    const lastPage = getPageNumber(createMemoryIndex(wrappedEndAddress));
+    const lastPage = getPageNumber(tryAsMemoryIndex(wrappedEndAddress));
     const endAddressOnPage = wrappedEndAddress % PAGE_SIZE;
     const pageAfterLast = getNextPageNumber(lastPage);
 
     let resultOffset = 0;
     let currentPage = getPageNumber(startAddress);
-    let pageOffset = createPageIndex(startAddress - getStartPageIndexFromPageNumber(currentPage));
+    let pageOffset = tryAsPageIndex(startAddress - getStartPageIndexFromPageNumber(currentPage));
 
     while (currentPage !== pageAfterLast) {
       const page = this.memory.get(currentPage);
@@ -191,7 +191,7 @@ export class Memory {
       // OoM but idk how to handle it
     }
 
-    const newVirtualSbrkIndex = createMemoryIndex(this.virtualSbrkIndex + length);
+    const newVirtualSbrkIndex = tryAsMemoryIndex(this.virtualSbrkIndex + length);
 
     // no alllocation needed
     if (newVirtualSbrkIndex <= currentSbrkIndex) {
@@ -200,17 +200,17 @@ export class Memory {
     }
 
     // standard allocation using "Writeable" pages
-    const newSbrkIndex = createMemoryIndex(alignToPageSize(this.sbrkIndex + length));
+    const newSbrkIndex = tryAsMemoryIndex(alignToPageSize(this.sbrkIndex + length));
     const pagesToAllocate = (newSbrkIndex - currentSbrkIndex) / PAGE_SIZE;
 
     for (let i = 0; i < pagesToAllocate; i++) {
-      const startMemoryIndex = createMemoryIndex(currentSbrkIndex + i * PAGE_SIZE);
+      const startMemoryIndex = tryAsMemoryIndex(currentSbrkIndex + i * PAGE_SIZE);
       const pageNumber = getPageNumber(startMemoryIndex);
       const page = new WriteablePage(pageNumber);
       this.memory.set(pageNumber, page);
     }
 
-    this.virtualSbrkIndex = createMemoryIndex(currentSbrkIndex + length);
+    this.virtualSbrkIndex = tryAsMemoryIndex(currentSbrkIndex + length);
     this.sbrkIndex = newSbrkIndex;
     return currentSbrkIndex;
   }

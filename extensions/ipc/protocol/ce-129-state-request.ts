@@ -3,7 +3,7 @@ import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
-import type { U32 } from "@typeberry/numbers";
+import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { TrieNode } from "@typeberry/trie/nodes";
 import { WithDebug } from "@typeberry/utils";
 import type { StreamHandler, StreamSender } from "../handler";
@@ -148,7 +148,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
       throw new Error("It is disallowed to use the same stream for multiple requests.");
     }
     this.onResponse.set(sender.streamId, onResponse);
-    sender.send(Encoder.encodeObject(StateRequest.Codec, new StateRequest(hash, key, key, 4096 as U32)));
+    sender.send(Encoder.encodeObject(StateRequest.Codec, new StateRequest(hash, key, key, tryAsU32(4096))));
     sender.close();
   }
 }

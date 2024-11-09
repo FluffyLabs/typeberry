@@ -1,11 +1,11 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { LAST_PAGE_NUMBER } from "../memory-consts";
-import { createPageNumber, getNextPageNumber } from "./page-utils";
+import { getNextPageNumber, tryAsPageNumber } from "./page-utils";
 
 describe("page-utils / getNextPageNumber", () => {
   it("should increment the page number", () => {
-    const pageNumber = createPageNumber(5);
+    const pageNumber = tryAsPageNumber(5);
 
     const nextPageNumber = getNextPageNumber(pageNumber);
 
@@ -13,7 +13,7 @@ describe("page-utils / getNextPageNumber", () => {
   });
 
   it("should return 0 for the last page number", () => {
-    const pageNumber = createPageNumber(LAST_PAGE_NUMBER);
+    const pageNumber = tryAsPageNumber(LAST_PAGE_NUMBER);
 
     const nextPageNumber = getNextPageNumber(pageNumber);
 

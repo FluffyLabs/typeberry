@@ -4,7 +4,7 @@ import { MAX_MEMORY_INDEX } from "./memory-consts";
 
 export type MemoryIndex = Opaque<number, "memory index">;
 
-export function createMemoryIndex(index: number) {
+export function tryAsMemoryIndex(index: number) {
   return ensure<number, MemoryIndex>(
     index,
     index >= 0 && index <= MAX_MEMORY_INDEX,

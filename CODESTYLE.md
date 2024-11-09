@@ -81,6 +81,24 @@ Avoid copying large chunks of memory (i.e. `Uint8Array`s) to some other arrays.
 Prefer returning subarrays from a larger allocated chunk and creating view objects.
 Note there is `subarray` function that should be preferred over `slice`.
 
+# Opaque types and naming
+
+1. Prefer using `Opaque` types, like `U32/U16/U8` to represent fixed-size numbers.
+2. Cast using `as` ONLY when there is no other option, since over time the `as`
+   cast might be easily broken.
+3. When you have a function that converts between one type to another use `ensure`
+   or `check` to verify that the value is correct.
+4. Use `tryAs*` convention to indicate that there might be exception being thrown
+   (however never rely on the exception - do any checks BEFORE attempting to cast).
+
+# Exceptions
+
+1. Usage of exceptions should be rare - it should indicate development bug not
+   regular behaviour.
+2. You should not rely on specific exceptions to be thrown and caught in other
+   places - rather use explicit return types for this.
+3. Especially avoid catching exceptions coming from `check` and `ensure` since
+   these might be removed in the production code.
 
 # Reviews
 

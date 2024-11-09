@@ -1,6 +1,6 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import type { U8, U16 } from "@typeberry/numbers";
+import { type U8, type U16, tryAsU8 } from "@typeberry/numbers";
 
 export type StreamId = U16;
 export type StreamKind = U8;
@@ -15,7 +15,7 @@ export class StreamEnvelope {
   static Codec = codec.Class(StreamEnvelope, {
     streamId: codec.u16,
     type: codec.u8.convert<StreamEnvelopeType>(
-      (i) => i as U8,
+      (i) => tryAsU8(i),
       (o: U8) => {
         switch (o) {
           case StreamEnvelopeType.Msg:

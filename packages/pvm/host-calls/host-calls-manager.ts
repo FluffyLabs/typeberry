@@ -1,8 +1,8 @@
 import type { ServiceId } from "@typeberry/block";
+import { CURRENT_SERVICE_ID, HostCallResult } from "@typeberry/jam-host-calls";
 import type { Memory, Registers } from "@typeberry/pvm-interpreter";
 import type { GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
 import { check } from "@typeberry/utils";
-import { HostCallResult } from "../host-calls-jam/results";
 import type { HostCallHandler, HostCallIndex } from "./host-call-handler";
 
 // TODO [ToDr] Rename to just `HostCalls`
@@ -34,7 +34,7 @@ export class HostCallsManager {
 class Missing implements HostCallHandler {
   index = (2 ** 32 - 1) as HostCallIndex;
   gasCost = 10 as SmallGas;
-  currentServiceId = (2 ** 32 - 1) as ServiceId;
+  currentServiceId = CURRENT_SERVICE_ID;
 
   execute(_gas: GasCounter, regs: Registers, _memory: Memory): Promise<void> {
     regs.asUnsigned[7] = HostCallResult.WHAT;

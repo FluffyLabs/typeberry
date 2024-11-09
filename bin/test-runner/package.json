@@ -12,6 +12,7 @@
     "@typeberry/erasure-coding": "0.0.1",
     "@typeberry/json-parser": "0.0.1",
     "@typeberry/logger": "0.0.1",
+    "@typeberry/numbers": "0.0.1",
     "@typeberry/pvm-interpreter": "0.0.1",
     "@typeberry/safrole": "0.0.1",
     "@typeberry/trie": "0.0.1"

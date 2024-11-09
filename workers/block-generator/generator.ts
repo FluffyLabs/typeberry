@@ -5,10 +5,10 @@ import {
   type Epoch,
   Header,
   type HeaderHash,
-  type ServiceId,
   type TimeSlot,
   type ValidatorIndex,
   type WorkReportHash,
+  tryAsServiceId,
 } from "@typeberry/block";
 import type { AssurancesExtrinsic, AvailabilityAssurance } from "@typeberry/block/assurances";
 import { Extrinsic } from "@typeberry/block/block";
@@ -72,7 +72,7 @@ export class Generator {
         [] as Culprit[],
         [] as Fault[],
       ),
-      [new Preimage(1 as ServiceId, BytesBlob.parseBlob("0x1234"))],
+      [new Preimage(tryAsServiceId(1), BytesBlob.parseBlob("0x1234"))],
       [] as AvailabilityAssurance[] as AssurancesExtrinsic,
       [] as ReportGuarantee[] as GuaranteesExtrinsic,
     );

@@ -2,26 +2,26 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { ChunkOverlap, ChunkTooLong, PageFault } from "../errors";
 import { PAGE_SIZE } from "../memory-consts";
-import { createMemoryIndex } from "../memory-index";
-import { createPageIndex, createPageNumber } from "./page-utils";
+import { tryAsMemoryIndex } from "../memory-index";
+import { tryAsPageIndex, tryAsPageNumber } from "./page-utils";
 import { VirtualPage, createEndChunkIndex, readable, writeable } from "./virtual-page";
 
 describe("VirtualPage", () => {
   it("should throw an error when chunks overlap each other", () => {
-    const pageNumber = createPageNumber(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
 
-    virtualPage.set(createPageIndex(5), createEndChunkIndex(10), new Uint8Array(), readable);
+    virtualPage.set(tryAsPageIndex(5), createEndChunkIndex(10), new Uint8Array(), readable);
     const tryToSetOverlapingChunk = () =>
-      virtualPage.set(createPageIndex(8), createEndChunkIndex(12), new Uint8Array(), writeable);
+      virtualPage.set(tryAsPageIndex(8), createEndChunkIndex(12), new Uint8Array(), writeable);
 
     assert.throws(tryToSetOverlapingChunk, new ChunkOverlap());
   });
 
   it("should throw an error when chunk is longher than address range", () => {
-    const pageNumber = createPageNumber(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
-    const startIndex = createPageIndex(5);
+    const startIndex = tryAsPageIndex(5);
     const endIndex = createEndChunkIndex(6);
     const data = new Uint8Array([1, 2, 3, 4, 5, 6]);
 
@@ -31,11 +31,11 @@ describe("VirtualPage", () => {
   });
 
   it("should check if readable chunk is correctly created", () => {
-    const startPageIndex = createMemoryIndex(0);
-    const pageNumber = createPageNumber(0);
+    const startPageIndex = tryAsMemoryIndex(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
-    const startIndex = createPageIndex(5);
+    const startIndex = tryAsPageIndex(5);
     const endIndex = createEndChunkIndex(startIndex + bytes.length);
     const expectedPage = {
       chunks: [[startIndex, endIndex, bytes, readable]],
@@ -48,11 +48,11 @@ describe("VirtualPage", () => {
   });
 
   it("should check if writable chunk is correctly created (length === end - start)", () => {
-    const startPageIndex = createMemoryIndex(0);
-    const pageNumber = createPageNumber(0);
+    const startPageIndex = tryAsMemoryIndex(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
-    const startIndex = createPageIndex(5);
+    const startIndex = tryAsPageIndex(5);
     const endIndex = createEndChunkIndex(startIndex + bytes.length);
     const expectedPage = {
       chunks: [[startIndex, endIndex, bytes, writeable]],
@@ -65,12 +65,12 @@ describe("VirtualPage", () => {
   });
 
   it("should check if writable chunk is correctly created (length < end - start)", () => {
-    const startPageIndex = createMemoryIndex(0);
-    const pageNumber = createPageNumber(0);
+    const startPageIndex = tryAsMemoryIndex(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
     const extraBytes = new Uint8Array([0, 0, 0, 0, 0]);
-    const startIndex = createPageIndex(5);
+    const startIndex = tryAsPageIndex(5);
     const endIndex = createEndChunkIndex(startIndex + bytes.length + extraBytes.length);
     const expectedPage = {
       chunks: [
@@ -86,12 +86,12 @@ describe("VirtualPage", () => {
   });
 
   it("should return PageFault as the address is not part of any chunk", () => {
-    const pageNumber = createPageNumber(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
-    const startIndex = createPageIndex(5);
+    const startIndex = tryAsPageIndex(5);
     const endIndex = createEndChunkIndex(startIndex + bytes.length);
-    const indexToLoad = createPageIndex(3);
+    const indexToLoad = tryAsPageIndex(3);
     virtualPage.set(startIndex, endIndex, bytes, writeable);
     const result = new Uint8Array(4);
 
@@ -101,12 +101,12 @@ describe("VirtualPage", () => {
   });
 
   it("should not return PageFault when loading from the end of page", () => {
-    const pageNumber = createPageNumber(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
-    const startIndex = createPageIndex(PAGE_SIZE - bytes.length);
+    const startIndex = tryAsPageIndex(PAGE_SIZE - bytes.length);
     const endIndex = createEndChunkIndex(PAGE_SIZE);
-    const indexToLoad = createPageIndex(PAGE_SIZE - 2);
+    const indexToLoad = tryAsPageIndex(PAGE_SIZE - 2);
     virtualPage.set(startIndex, endIndex, bytes, writeable);
     const result = new Uint8Array(2);
 
@@ -117,12 +117,12 @@ describe("VirtualPage", () => {
   });
 
   it("should load 4 bytes from one chunk of readable memory", () => {
-    const pageNumber = createPageNumber(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
-    const startIndex = createPageIndex(5);
+    const startIndex = tryAsPageIndex(5);
     const endIndex = createEndChunkIndex(startIndex + bytes.length);
-    const indexToLoad = createPageIndex(6);
+    const indexToLoad = tryAsPageIndex(6);
     virtualPage.set(startIndex, endIndex, bytes, readable);
     const result = new Uint8Array(4);
 
@@ -133,12 +133,12 @@ describe("VirtualPage", () => {
   });
 
   it("should load 4 bytes from one chunk of readable memory (2 bytes from chunk and 2 bytes from 0s)", () => {
-    const pageNumber = createPageNumber(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
-    const startIndex = createPageIndex(5);
+    const startIndex = tryAsPageIndex(5);
     const endIndex = createEndChunkIndex(15);
-    const indexToLoad = createPageIndex(8);
+    const indexToLoad = tryAsPageIndex(8);
     virtualPage.set(startIndex, endIndex, bytes, readable);
     const result = new Uint8Array(4);
 
@@ -149,12 +149,12 @@ describe("VirtualPage", () => {
   });
 
   it("should load 4 bytes from one chunk of writeable memory (2 bytes from chunk and 2 bytes from 0s)", () => {
-    const pageNumber = createPageNumber(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
-    const startIndex = createPageIndex(5);
+    const startIndex = tryAsPageIndex(5);
     const endIndex = createEndChunkIndex(15);
-    const indexToLoad = createPageIndex(8);
+    const indexToLoad = tryAsPageIndex(8);
     virtualPage.set(startIndex, endIndex, bytes, writeable);
     const result = new Uint8Array(4);
 
@@ -165,12 +165,12 @@ describe("VirtualPage", () => {
   });
 
   it("should load 4 bytes from one chunk of writeable memory", () => {
-    const pageNumber = createPageNumber(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
-    const startIndex = createPageIndex(5);
+    const startIndex = tryAsPageIndex(5);
     const endIndex = createEndChunkIndex(10);
-    const indexToLoad = createPageIndex(6);
+    const indexToLoad = tryAsPageIndex(6);
     virtualPage.set(startIndex, endIndex, bytes, writeable);
     const result = new Uint8Array(4);
 
@@ -181,12 +181,12 @@ describe("VirtualPage", () => {
   });
 
   it("should load 1 byte from one chunk that have 1 byte length", () => {
-    const pageNumber = createPageNumber(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1]);
-    const startIndex = createPageIndex(5);
+    const startIndex = tryAsPageIndex(5);
     const endIndex = createEndChunkIndex(6);
-    const indexToLoad = createPageIndex(5);
+    const indexToLoad = tryAsPageIndex(5);
     virtualPage.set(startIndex, endIndex, bytes, writeable);
     const result = new Uint8Array(1);
 
@@ -197,12 +197,12 @@ describe("VirtualPage", () => {
   });
 
   it("should load 4 bytes from one chunk that have 4 bytes length", () => {
-    const pageNumber = createPageNumber(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4]);
-    const startIndex = createPageIndex(5);
+    const startIndex = tryAsPageIndex(5);
     const endIndex = createEndChunkIndex(10);
-    const indexToLoad = createPageIndex(5);
+    const indexToLoad = tryAsPageIndex(5);
     virtualPage.set(startIndex, endIndex, bytes, writeable);
     const result = new Uint8Array(4);
 
@@ -213,14 +213,14 @@ describe("VirtualPage", () => {
   });
 
   it("should load 4 bytes from two chunks of memory", () => {
-    const pageNumber = createPageNumber(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
-    const firstStartIndex = createPageIndex(5);
+    const firstStartIndex = tryAsPageIndex(5);
     const firstEndIndex = createEndChunkIndex(10);
-    const secondStartIndex = createPageIndex(firstEndIndex);
+    const secondStartIndex = tryAsPageIndex(firstEndIndex);
     const secondEndIndex = createEndChunkIndex(15);
-    const indexToLoad = createPageIndex(8);
+    const indexToLoad = tryAsPageIndex(8);
     virtualPage.set(secondStartIndex, secondEndIndex, bytes, readable);
     virtualPage.set(firstStartIndex, firstEndIndex, bytes, writeable);
     const result = new Uint8Array(4);
@@ -232,14 +232,14 @@ describe("VirtualPage", () => {
   });
 
   it("should return PageFault when load 4 bytes from two chunks of memory but there is a gap between them", () => {
-    const pageNumber = createPageNumber(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
-    const firstStartIndex = createPageIndex(5);
+    const firstStartIndex = tryAsPageIndex(5);
     const firstEndIndex = createEndChunkIndex(10);
-    const secondStartIndex = createPageIndex(firstEndIndex + 1);
+    const secondStartIndex = tryAsPageIndex(firstEndIndex + 1);
     const secondEndIndex = createEndChunkIndex(secondStartIndex + 5);
-    const indexToLoad = createPageIndex(8);
+    const indexToLoad = tryAsPageIndex(8);
     virtualPage.set(secondStartIndex, secondEndIndex, bytes, readable);
     virtualPage.set(firstStartIndex, firstEndIndex, bytes, writeable);
     const result = new Uint8Array(4);
@@ -250,12 +250,12 @@ describe("VirtualPage", () => {
   });
 
   it("should return PageFaul when store 4 bytes into readable memory", () => {
-    const pageNumber = createPageNumber(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4]);
-    const startIndex = createPageIndex(5);
+    const startIndex = tryAsPageIndex(5);
     const endIndex = createEndChunkIndex(10);
-    const indexToStore = createPageIndex(6);
+    const indexToStore = tryAsPageIndex(6);
     virtualPage.set(startIndex, endIndex, bytes, readable);
 
     const storeResult = virtualPage.storeFrom(indexToStore, bytes);
@@ -264,12 +264,12 @@ describe("VirtualPage", () => {
   });
 
   it("should return PageFault when store 4 bytes into inacessible memory", () => {
-    const pageNumber = createPageNumber(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4]);
-    const startIndex = createPageIndex(5);
+    const startIndex = tryAsPageIndex(5);
     const endIndex = createEndChunkIndex(10);
-    const indexToStore = createPageIndex(0);
+    const indexToStore = tryAsPageIndex(0);
     virtualPage.set(startIndex, endIndex, bytes, readable);
 
     const storeResult = virtualPage.storeFrom(indexToStore, bytes);
@@ -278,13 +278,13 @@ describe("VirtualPage", () => {
   });
 
   it("should correctly store 4 bytes on one chunk", () => {
-    const startPageIndex = createMemoryIndex(0);
-    const pageNumber = createPageNumber(0);
+    const startPageIndex = tryAsMemoryIndex(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4]);
-    const startIndex = createPageIndex(5);
+    const startIndex = tryAsPageIndex(5);
     const endIndex = createEndChunkIndex(10);
-    const indexToStore = createPageIndex(5);
+    const indexToStore = tryAsPageIndex(5);
     virtualPage.set(startIndex, endIndex, new Uint8Array(), writeable);
     const expectedPage = {
       chunks: [[startIndex, endIndex, new Uint8Array([...bytes, 0]), writeable]],
@@ -298,13 +298,13 @@ describe("VirtualPage", () => {
   });
 
   it("should correctly store 1 byte on one chunk that have 1 byte length", () => {
-    const startPageIndex = createMemoryIndex(0);
-    const pageNumber = createPageNumber(0);
+    const startPageIndex = tryAsMemoryIndex(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1]);
-    const startIndex = createPageIndex(5);
+    const startIndex = tryAsPageIndex(5);
     const endIndex = createEndChunkIndex(6);
-    const indexToStore = createPageIndex(5);
+    const indexToStore = tryAsPageIndex(5);
     virtualPage.set(startIndex, endIndex, new Uint8Array(), writeable);
     const expectedPage = {
       chunks: [[startIndex, endIndex, bytes, writeable]],
@@ -318,13 +318,13 @@ describe("VirtualPage", () => {
   });
 
   it("should correctly store 4 bytes on one chunk that have 4 bytes length", () => {
-    const startPageIndex = createMemoryIndex(0);
-    const pageNumber = createPageNumber(0);
+    const startPageIndex = tryAsMemoryIndex(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytes = new Uint8Array([1, 2, 3, 4]);
-    const startIndex = createPageIndex(5);
+    const startIndex = tryAsPageIndex(5);
     const endIndex = createEndChunkIndex(9);
-    const indexToStore = createPageIndex(5);
+    const indexToStore = tryAsPageIndex(5);
     virtualPage.set(startIndex, endIndex, new Uint8Array(), writeable);
     const expectedPage = {
       chunks: [[startIndex, endIndex, bytes, writeable]],
@@ -338,15 +338,15 @@ describe("VirtualPage", () => {
   });
 
   it("should correctly store 4 bytes on two chunks", () => {
-    const startPageIndex = createMemoryIndex(0);
-    const pageNumber = createPageNumber(0);
+    const startPageIndex = tryAsMemoryIndex(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytesToStore = new Uint8Array([1, 2, 3, 4]);
-    const firstStartIndex = createPageIndex(5);
+    const firstStartIndex = tryAsPageIndex(5);
     const firstEndIndex = createEndChunkIndex(10);
-    const secondStartIndex = createPageIndex(firstEndIndex);
+    const secondStartIndex = tryAsPageIndex(firstEndIndex);
     const secondEndIndex = createEndChunkIndex(15);
-    const indexToStore = createPageIndex(8);
+    const indexToStore = tryAsPageIndex(8);
     virtualPage.set(secondStartIndex, secondEndIndex, new Uint8Array(), writeable);
     virtualPage.set(firstStartIndex, firstEndIndex, new Uint8Array(), writeable);
     const expectedPage = {
@@ -364,14 +364,14 @@ describe("VirtualPage", () => {
   });
 
   it("should return PageFault when storing 4 bytes on 2 chunks but there is a gap between them", () => {
-    const pageNumber = createPageNumber(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytesToStore = new Uint8Array([1, 2, 3, 4]);
-    const firstStartIndex = createPageIndex(5);
+    const firstStartIndex = tryAsPageIndex(5);
     const firstEndIndex = createEndChunkIndex(10);
-    const secondStartIndex = createPageIndex(11);
+    const secondStartIndex = tryAsPageIndex(11);
     const secondEndIndex = createEndChunkIndex(15);
-    const indexToStore = createPageIndex(8);
+    const indexToStore = tryAsPageIndex(8);
     virtualPage.set(secondStartIndex, secondEndIndex, new Uint8Array(), writeable);
     virtualPage.set(firstStartIndex, firstEndIndex, new Uint8Array(), writeable);
 
@@ -381,13 +381,13 @@ describe("VirtualPage", () => {
   });
 
   it("should not return PageFault when storing at the end of page", () => {
-    const startPageIndex = createMemoryIndex(0);
-    const pageNumber = createPageNumber(0);
+    const startPageIndex = tryAsMemoryIndex(0);
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
     const bytesToStore = new Uint8Array([1, 2]);
-    const startIndex = createPageIndex(PAGE_SIZE - 5);
+    const startIndex = tryAsPageIndex(PAGE_SIZE - 5);
     const endIndex = createEndChunkIndex(PAGE_SIZE);
-    const indexToStore = createPageIndex(PAGE_SIZE - 2);
+    const indexToStore = tryAsPageIndex(PAGE_SIZE - 2);
     virtualPage.set(startIndex, endIndex, new Uint8Array(), writeable);
     const expectedPage = {
       chunks: [[startIndex, endIndex, new Uint8Array([0, 0, 0, 1, 2]), writeable]],
@@ -401,10 +401,10 @@ describe("VirtualPage", () => {
   });
 
   it("should return true if given range is writeable", () => {
-    const pageIdx = createPageIndex;
-    const pageNumber = createPageNumber(0);
+    const pageIdx = tryAsPageIndex;
+    const pageNumber = tryAsPageNumber(0);
     const virtualPage = new VirtualPage(pageNumber);
-    const startIndex = createPageIndex(PAGE_SIZE - 5);
+    const startIndex = tryAsPageIndex(PAGE_SIZE - 5);
     const endIndex = createEndChunkIndex(PAGE_SIZE);
     virtualPage.set(startIndex, endIndex, new Uint8Array(), writeable);
 

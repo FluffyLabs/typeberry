@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
-import type { U32 } from "@typeberry/numbers";
+import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { Decoder } from "./decoder";
 import { type CodecRecord, codec } from "./descriptors";
 import { Encoder } from "./encoder";
@@ -234,7 +234,7 @@ describe("Codec Descriptors / generic class", () => {
   }
 
   it("should encode/decode concrete instance of generic class", () => {
-    const input = new Concrete(15 as U32, true);
+    const input = new Concrete(tryAsU32(15), true);
     const encoded = Encoder.encodeObject(Concrete.Codec, input);
     const decoded = Decoder.decodeObject(Concrete.Codec, encoded);
 
@@ -245,9 +245,9 @@ describe("Codec Descriptors / generic class", () => {
 describe("Codec Descriptors / dictionary", () => {
   it("should encode/decode a dictionary", () => {
     const input = new Map<U32, Bytes<32>>();
-    input.set(10 as U32, Bytes.fill(32, 10));
-    input.set(1 as U32, Bytes.fill(32, 1));
-    input.set(15 as U32, Bytes.fill(32, 15));
+    input.set(tryAsU32(10), Bytes.fill(32, 10));
+    input.set(tryAsU32(1), Bytes.fill(32, 1));
+    input.set(tryAsU32(15), Bytes.fill(32, 15));
 
     const dictCodec = codec.dictionary(codec.u32, codec.bytes(32), {
       sortKeys: (a, b) => a - b,
@@ -265,9 +265,9 @@ describe("Codec Descriptors / dictionary", () => {
 
   it("should encode/decode a known-length dictionary", () => {
     const input = new Map<U32, Bytes<32>>();
-    input.set(10 as U32, Bytes.fill(32, 10));
-    input.set(1 as U32, Bytes.fill(32, 1));
-    input.set(15 as U32, Bytes.fill(32, 15));
+    input.set(tryAsU32(10), Bytes.fill(32, 10));
+    input.set(tryAsU32(1), Bytes.fill(32, 1));
+    input.set(tryAsU32(15), Bytes.fill(32, 15));
 
     const dictCodec = codec.dictionary(codec.u32, codec.bytes(32), {
       sortKeys: (a, b) => a - b,

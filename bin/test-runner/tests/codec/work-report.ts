@@ -1,6 +1,7 @@
+import type { CoreIndex } from "@typeberry/block";
 import type { RefineContext } from "@typeberry/block/refine-context";
 import { MAX_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package";
-import { type CoreIndex, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
+import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
 import type { WorkResult } from "@typeberry/block/work-result";
 import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";

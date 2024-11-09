@@ -3,50 +3,38 @@ import { Decoder } from "@typeberry/codec";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
-import { type Memory, createMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
+import { asOpaqueType } from "@typeberry/utils";
 import { HostCallResult } from "../results";
-/**
- * `U`: state components mutated by the accumulation.
- * - `d`: service accounts state
- * - `i`: upcoming validator keys
- * - `q`: queue of work reports
- * - `x`: priviliges state
- *
- * https://graypaper.fluffylabs.dev/#/439ca37/161402161402
- */
-export interface AccumulationPartialState {
-  /**
-   * Update priviliged services and their gas.
-   *
-   * `m`: manager service (can change priviledged services)
-   * `a`: manages authorization queue
-   * `v`: manages validator keys
-   * `g`: dictionary of serviceId -> gas that auto-accumulate every block
-   *
-   */
-  updatePriviligedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: Map<ServiceId, Gas>): void;
-}
+import { CURRENT_SERVICE_ID } from "../utils";
+import type { AccumulationPartialState } from "./partial-state";
 
 const IN_OUT_REG = 7;
 
 const ENCODED_SIZE_OF_SERVICE_ID_AND_GAS = 4 + 8;
 
+/**
+ * Modify privileged services and services that auto-accumulate every block.
+ *
+ * https://graypaper.fluffylabs.dev/#/364735a/2e3a002e3a00
+ */
 export class Empower implements HostCallHandler {
   index = 5 as HostCallIndex;
   gasCost = 10 as SmallGas;
-  currentServiceId = (2 ** 32 - 1) as ServiceId;
+  currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
-    // `m`: manager service (can change priviledged services)
+    // `m`: manager service (can change privileged services)
     const m = regs.asUnsigned[IN_OUT_REG] as ServiceId;
     // `a`: manages authorization queue
     const a = regs.asUnsigned[8] as ServiceId;
     // `v`: manages validator keys
     const v = regs.asUnsigned[9] as ServiceId;
-    const sourceStart = createMemoryIndex(regs.asUnsigned[10]);
+    const sourceStart = tryAsMemoryIndex(regs.asUnsigned[10]);
     // `n`: number of items in the auto-accumulate dictionary
     const numberOfItems = regs.asUnsigned[11];
 
@@ -66,7 +54,7 @@ export class Empower implements HostCallHandler {
         return;
       }
 
-      const serviceId = decoder.u32() as ServiceId;
+      const serviceId: ServiceId = asOpaqueType(decoder.u32());
       const gas = decoder.u64() as Gas;
       // Since the GP does not allow non-canonical representation of encodings,
       // a set with duplicates should not be decoded correctly.
@@ -80,11 +68,13 @@ export class Empower implements HostCallHandler {
         return;
       }
       g.set(serviceId, gas);
-      memIndex = createMemoryIndex(memIndex + decoder.bytesRead());
+      // TODO [ToDr] we might need to wrap to the first page here!!!!
+      // we should have a test for this!
+      memIndex = tryAsMemoryIndex((memIndex + decoder.bytesRead()) % MEMORY_SIZE);
       previousServiceId = serviceId;
     }
 
-    this.partialState.updatePriviligedServices(m, a, v, g);
+    this.partialState.updatePrivilegedServices(m, a, v, g);
     regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
 
     return Promise.resolve();

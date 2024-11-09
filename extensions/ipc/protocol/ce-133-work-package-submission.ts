@@ -1,6 +1,6 @@
+import type { CoreIndex } from "@typeberry/block";
 import { type WorkItemExtrinsics, workItemExtrinsicsCodec } from "@typeberry/block/work-item";
 import { WorkPackage } from "@typeberry/block/work-package";
-import type { CoreIndex } from "@typeberry/block/work-report";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
 import { Logger } from "@typeberry/logger";
