@@ -344,7 +344,7 @@ export namespace codec {
   export const optional = <T>(type: Descriptor<T>) =>
     descriptor<T | null>(
       `Optional<${type.name}>`,
-      addSizeHints(exactHint(1), type.sizeHint),
+      addSizeHints({ bytes: 1, isExact: false }, type.sizeHint),
       (e, v) => e.optional(type, v),
       (d) => d.optional(type),
     );
