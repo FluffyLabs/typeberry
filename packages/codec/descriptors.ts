@@ -380,7 +380,7 @@ export namespace codec {
     },
   ) =>
     descriptor<Map<K, V>>(
-      `Dictionary<${key.name}, ${value.name}>[${fixedLength ?? '?'}]`,
+      `Dictionary<${key.name}, ${value.name}>[${fixedLength ?? "?"}]`,
       {
         bytes: fixedLength
           ? fixedLength * (addSizeHints(key.sizeHint, value.sizeHint).bytes ?? 0)

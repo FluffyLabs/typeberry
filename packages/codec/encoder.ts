@@ -15,7 +15,7 @@ export function tryAsExactBytes(a: SizeHint): number {
 
 export function addSizeHints(a: SizeHint, b: SizeHint): SizeHint {
   return {
-    bytes: a.bytes ? a.bytes + (b.bytes ?? 0) : b.bytes,
+    bytes: a.bytes !== undefined ? a.bytes + (b.bytes ?? 0) : b.bytes,
     isExact: a.isExact && b.isExact,
   };
 }
