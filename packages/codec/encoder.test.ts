@@ -229,6 +229,8 @@ describe("JAM encoder / generics", () => {
       encoder.bool(elem.y);
       encoder.bytes(elem.z);
     }
+
+    static sizeHint = { bytes: 4 + 1 + 4, isExact: true };
   }
 
   it("should encode an optional value", () => {

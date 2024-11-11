@@ -22,7 +22,7 @@ export class AvailabilityAssurance extends WithDebug {
     bitfield: codec.select(
       {
         name: "AvailabilityAssurance.bitfield",
-        sizeHintBytes: Math.ceil(EST_CORES / 8),
+        sizeHint: { bytes: Math.ceil(EST_CORES / 8), isExact: true },
       },
       withContext("AvailabilityAssurance.bitfield", (context) => {
         return codec.bitVecFixLen(Math.ceil(context.coresCount / 8) * 8);

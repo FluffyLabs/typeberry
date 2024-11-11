@@ -33,7 +33,7 @@ export class Assign implements HostCallHandler {
     // o
     const authorizationQueueStart = tryAsMemoryIndex(regs.asUnsigned[8]);
 
-    const res = new Uint8Array(32 * AUTHORIZATION_QUEUE_SIZE);
+    const res = new Uint8Array(HASH_SIZE * AUTHORIZATION_QUEUE_SIZE);
     const pageFault = memory.loadInto(res, authorizationQueueStart);
     // page fault while reading the memory.
     if (pageFault !== null) {

@@ -1,6 +1,6 @@
 import type { ServiceId } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
-import { type Blake2bHash, hashBytes } from "@typeberry/hash";
+import { type Blake2bHash, HASH_SIZE, hashBytes } from "@typeberry/hash";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import type { GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
@@ -40,7 +40,7 @@ export class Lookup implements HostCallHandler {
     // b_z
     const destinationLen = regs.asUnsigned[10];
 
-    const key = Bytes.zero(32);
+    const key = Bytes.zero(HASH_SIZE);
     const hashLoadingFault = memory.loadInto(key.raw, keyStartAddress);
     const destinationWriteable = memory.isWriteable(destinationStart, destinationLen);
     // we return OOB in case the destination is not writeable or the key can't be loaded.

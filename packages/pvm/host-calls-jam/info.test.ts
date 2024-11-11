@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type CodeHash, type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Decoder } from "@typeberry/codec";
+import { Decoder, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { type Gas, gasCounter } from "@typeberry/pvm-interpreter/gas";
@@ -24,7 +24,7 @@ const DEST_START_REG = 8;
 
 const gas = gasCounter(0 as Gas);
 
-function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = 32 + 8 + 8 + 8 + 8 + 8 + 4) {
+function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = tryAsExactBytes(AccountInfo.Codec.sizeHint)) {
   const memStart = 20_000;
   const registers = new Registers();
   registers.asUnsigned[SERVICE_ID_REG] = serviceId;

@@ -8,7 +8,7 @@ import type { Memory } from "@typeberry/pvm-interpreter/memory";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { HostCallResult } from "./results";
-import { CURRENT_SERVICE_ID, writeServiceIdAsLeBytes } from "./utils";
+import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
 
 /** Account data interface for Write host call. */
 export interface Accounts {
@@ -39,7 +39,6 @@ export interface Accounts {
 }
 
 const IN_OUT_REG = 7;
-const SERVICE_ID_BYTES = 4;
 
 /**
  * Write account storage.
