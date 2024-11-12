@@ -25,7 +25,7 @@ export class WorkExecResult extends WithDebug {
   static Codec = codec.custom<WorkExecResult>(
     {
       name: "WorkExecResult",
-      sizeHint: { bytes: 1, isExact: true },
+      sizeHint: { bytes: 1, isExact: false },
     },
     (e, x) => {
       e.varU32(tryAsU32(x.kind as number));
@@ -45,6 +45,12 @@ export class WorkExecResult extends WithDebug {
       }
 
       return new WorkExecResult(kind);
+    },
+    (s) => {
+      const kind = s.decoder.varU32();
+      if (kind === WorkExecResultKind.ok) {
+        s.bytesBlob();
+      }
     },
   );
 

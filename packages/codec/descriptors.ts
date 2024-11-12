@@ -4,6 +4,7 @@ import { type U8, type U16, type U32, type U64, tryAsU32 as asU32 } from "@typeb
 import { check } from "@typeberry/utils";
 import { type Decode, Decoder } from "./decoder";
 import { type Encode, type Encoder, type SizeHint, addSizeHints } from "./encoder";
+import { type Skip, Skipper } from "./skip";
 
 /**
  * For sequences with unknown length we need to give some size hint.
@@ -29,16 +30,18 @@ export type Codec<T> = Encode<T> & Decode<T>;
  *
  * Descriptors can be composed to form more complex typings.
  */
-export class Descriptor<T> implements Codec<T> {
+export class Descriptor<T> implements Codec<T>, Skip {
   public constructor(
     /** Descriptive name of the coded data. */
-    public name: string,
+    public readonly name: string,
     /** A byte size hint for encoded data. */
-    public sizeHint: SizeHint,
+    public readonly sizeHint: SizeHint,
     /** Encoding function. */
-    public encode: (e: Encoder, elem: T) => void,
+    public readonly encode: (e: Encoder, elem: T) => void,
     /** Decoding function. */
-    public decode: (d: Decoder) => T,
+    public readonly decode: (d: Decoder) => T,
+    /** Skipping function. */
+    public readonly skip: (s: Skipper) => void,
   ) {}
 
   /** Return a new descriptor that converts data into some other type. */
@@ -48,6 +51,7 @@ export class Descriptor<T> implements Codec<T> {
       this.sizeHint,
       (e: Encoder, elem: F) => this.encode(e, input(elem)),
       (d: Decoder) => output(this.decode(d)),
+      this.skip,
     );
   }
 
@@ -72,7 +76,7 @@ export class ClassDescriptor<T, D extends DescriptorRecord<T> = DescriptorRecord
   [VIEW_FIELD]: ViewConstructor<T, KeysWithView<T, D>>;
 
   public constructor(desc: Descriptor<T>, view: ViewConstructor<T, KeysWithView<T, D>>) {
-    super(desc.name, desc.sizeHint, desc.encode, desc.decode);
+    super(desc.name, desc.sizeHint, desc.encode, desc.decode, desc.skip);
     this[VIEW_FIELD] = view;
   }
 }
@@ -191,6 +195,7 @@ export namespace codec {
     { bytes: 4, isExact: false },
     (e, v) => e.varU32(v),
     (d) => d.varU32(),
+    (d) => d.varU32(),
   );
 
   /** Variable-length U64. */
@@ -198,6 +203,7 @@ export namespace codec {
     "var_u64",
     { bytes: 8, isExact: false },
     (e, v) => e.varU64(v),
+    (d) => d.varU64(),
     (d) => d.varU64(),
   );
 
@@ -207,6 +213,7 @@ export namespace codec {
     exactHint(8),
     (e, v) => e.i64(v),
     (d) => d.u64(),
+    (d) => d.u64(),
   );
 
   /** Unsigned 32-bit number. */
@@ -214,6 +221,7 @@ export namespace codec {
     "u32",
     exactHint(4),
     (e, v) => e.i32(v),
+    (d) => d.u32(),
     (d) => d.u32(),
   );
 
@@ -223,6 +231,7 @@ export namespace codec {
     exactHint(3),
     (e, v) => e.i24(v),
     (d) => d.u24(),
+    (d) => d.u24(),
   );
 
   /** Unsigned 16-bit number. */
@@ -230,6 +239,7 @@ export namespace codec {
     "u16",
     exactHint(2),
     (e, v) => e.i16(v),
+    (d) => d.u16(),
     (d) => d.u16(),
   );
 
@@ -239,6 +249,7 @@ export namespace codec {
     exactHint(1),
     (e, v) => e.i8(v),
     (d) => d.u8(),
+    (d) => d.u8(),
   );
 
   /** Signed 64-bit number. */
@@ -247,6 +258,7 @@ export namespace codec {
     exactHint(8),
     (e, v) => e.i64(v),
     (d) => d.i64(),
+    (s) => s.u64(),
   );
 
   /** Signed 32-bit number. */
@@ -255,6 +267,7 @@ export namespace codec {
     exactHint(4),
     (e, v) => e.i32(v),
     (d) => d.i32(),
+    (s) => s.u32(),
   );
 
   /** Signed 24-bit number. */
@@ -263,6 +276,7 @@ export namespace codec {
     exactHint(3),
     (e, v) => e.i24(v),
     (d) => d.i24(),
+    (s) => s.u24(),
   );
 
   /** Signed 16-bit number. */
@@ -271,6 +285,7 @@ export namespace codec {
     exactHint(2),
     (e, v) => e.i16(v),
     (d) => d.i16(),
+    (s) => s.u16(),
   );
 
   /** Signed 8-bit number. */
@@ -279,6 +294,7 @@ export namespace codec {
     exactHint(1),
     (e, v) => e.i8(v),
     (d) => d.i8(),
+    (s) => s.u8(),
   );
 
   /** 1-byte boolean value. */
@@ -287,6 +303,7 @@ export namespace codec {
     exactHint(1),
     (e, v) => e.bool(v),
     (d) => d.bool(),
+    (s) => s.bool(),
   );
 
   /** String encoded as variable-length bytes blob. */
@@ -295,6 +312,7 @@ export namespace codec {
     { bytes: TYPICAL_SEQUENCE_LENGTH, isExact: false },
     (e, v) => e.bytesBlob(BytesBlob.from(new TextEncoder().encode(v))),
     (d) => new TextDecoder("utf8", { fatal: true }).decode(d.bytesBlob().buffer),
+    (s) => s.bytesBlob(),
   );
 
   /** Variable-length bytes blob. */
@@ -303,6 +321,7 @@ export namespace codec {
     { bytes: TYPICAL_SEQUENCE_LENGTH, isExact: false },
     (e, v) => e.bytesBlob(v),
     (d) => d.bytesBlob(),
+    (s) => s.bytesBlob(),
   );
 
   /** Fixed-length bytes sequence. */
@@ -316,6 +335,7 @@ export namespace codec {
           exactHint(len),
           (e, v) => e.bytes(v),
           (d) => d.bytes(len),
+          (s) => s.bytes(len),
         );
         cache.set(len, ret);
       }
@@ -329,6 +349,7 @@ export namespace codec {
     { bytes: TYPICAL_SEQUENCE_LENGTH >>> 3, isExact: false },
     (e, v) => e.bitVecVarLen(v),
     (d) => d.bitVecVarLen(),
+    (s) => s.bitVecVarLen(),
   );
 
   /** Fixed-length bit vector. */
@@ -338,6 +359,7 @@ export namespace codec {
       exactHint(len >>> 3),
       (e, v) => e.bitVecFixLen(v),
       (d) => d.bitVecFixLen(len),
+      (s) => s.bitVecFixLen(len),
     );
 
   /** Optionality wrapper for given type. */
@@ -347,6 +369,7 @@ export namespace codec {
       addSizeHints({ bytes: 1, isExact: false }, type.sizeHint),
       (e, v) => e.optional(type, v),
       (d) => d.optional(type),
+      (s) => s.optional(type),
     );
 
   /** Variable-length sequence of given type. */
@@ -356,6 +379,7 @@ export namespace codec {
       { bytes: TYPICAL_SEQUENCE_LENGTH * (type.sizeHint.bytes ?? 0), isExact: false },
       (e, v) => e.sequenceVarLen(type, v),
       (d) => d.sequenceVarLen(type),
+      (s) => s.sequenceVarLen(type),
     );
 
   /** Fixed-length sequence of given type. */
@@ -365,6 +389,7 @@ export namespace codec {
       { bytes: len * (type.sizeHint.bytes ?? 0), isExact: type.sizeHint.isExact },
       (e, v) => e.sequenceFixLen(type, v),
       (d) => d.sequenceFixLen(type, len),
+      (s) => s.sequenceFixLen(type, len),
     );
 
   /** Small dictionary codec. */
@@ -418,6 +443,11 @@ export namespace codec {
         }
         return map;
       },
+      (s) => {
+        const len = fixedLength === undefined ? s.decoder.varU32() : fixedLength;
+        s.sequenceFixLen(key, len);
+        s.sequenceFixLen(value, len);
+      },
     );
 
   /** Custom encoding / decoding logic. */
@@ -431,7 +461,8 @@ export namespace codec {
     },
     encode: (e: Encoder, x: T) => void,
     decode: (d: Decoder) => T,
-  ): Descriptor<T> => descriptor(name, sizeHint, encode, decode);
+    skip: (s: Skipper) => void,
+  ): Descriptor<T> => descriptor(name, sizeHint, encode, decode, skip);
 
   /** Choose a descriptor depending on the encoding/decoding context. */
   export const select = <T>(
@@ -451,6 +482,7 @@ export namespace codec {
       },
       (e, x) => chooser(e.getContext()).encode(e, x),
       (d) => chooser(d.getContext()).decode(d),
+      (s) => chooser(s.decoder.getContext()).skip(s),
     );
 
   /**
@@ -544,6 +576,15 @@ export namespace codec {
         });
         return Class.fromCodec(constructorParams as CodecRecord<T>);
       },
+      (s) => {
+        // optimized case for fixed size complex values.
+        if (sizeHint.isExact) {
+          return s.decoder.skip(sizeHint.bytes ?? 0);
+        }
+        forEachDescriptor(descriptors, (_key, descriptor) => {
+          descriptor.skip(s);
+        });
+      },
     );
 
     return new ClassDescriptor(desc, ViewTyped);
@@ -556,9 +597,15 @@ const logger = Logger.new(__filename, "codec/descriptors");
  * A base class for all the lazy views.
  */
 abstract class AbstractView<T> {
-  private lastDecodedIdx = -1;
-  private readonly cache = new Map<keyof T, T[keyof T]>();
+  private lastCachedIdx = -1;
+  /**
+   * Cache of state of the decoder just before particular field.
+   * NOTE: make sure to clone the decoder every time you get it from cache!
+   */
   private readonly decoderStateCache = new Map<keyof T, Decoder>();
+  /** Cache for field values. */
+  private readonly cache = new Map<keyof T, T[keyof T]>();
+  /** Cache for views of fields. */
   private readonly viewCache = new Map<keyof T, View<T[keyof T]>>();
 
   constructor(
@@ -574,48 +621,13 @@ abstract class AbstractView<T> {
   public materialize(): T {
     const fields = Object.keys(this.descriptors) as (keyof T)[];
     // make sure to fully populate the cache.
-    if (this.lastDecodedIdx + 1 !== fields.length) {
-      this.decodeUpTo(fields[fields.length - 1], false);
+    for (const key of fields) {
+      if (!this.cache.has(key)) {
+        this.decodeField(key);
+      }
     }
     const constructorParams = Object.fromEntries(fields.map((key) => [key, this.cache.get(key)]));
     return this.materializedConstructor.fromCodec(constructorParams as CodecRecord<T>);
-  }
-
-  /**
-   * Decode all of the fields up to the given one and return the value for that field.
-   *
-   * NOTE: this method should not be called if the value is already in the cache!
-   */
-  private decodeUpTo(field: keyof T, shouldWarn = true): T[keyof T] {
-    let lastVal = undefined;
-    const descriptorKeys = Object.keys(this.descriptors);
-    const needIdx = descriptorKeys.findIndex((k) => k === field);
-    check(
-      this.lastDecodedIdx < needIdx,
-      `Unjustified request to decode data: lastDecodedIdx: ${this.lastDecodedIdx}, need: ${needIdx} (${String(field)})`,
-    );
-
-    for (let i = this.lastDecodedIdx + 1; i <= needIdx; i += 1) {
-      const key = descriptorKeys[i] as keyof DescriptorRecord<T>;
-      const descriptor = this.descriptors[key];
-      this.decoderStateCache.set(key, this.d.clone());
-      const val = descriptor.decode(this.d);
-      this.cache.set(key, val);
-      lastVal = val;
-    }
-    this.lastDecodedIdx = needIdx;
-    if (shouldWarn && this.lastDecodedIdx + 1 === descriptorKeys.length) {
-      logger.warn(
-        `Decoded an entire object of class ${this.materializedConstructor.name}
-         by accessing ${String(field)}. You should rather materialize.`,
-      );
-    }
-
-    if (lastVal === undefined) {
-      throw new Error(`Unable to decode field ${String(field)}: ${this.lastDecodedIdx} vs ${needIdx}`);
-    }
-
-    return lastVal;
   }
 
   /**
@@ -623,13 +635,57 @@ abstract class AbstractView<T> {
    */
   protected getOrDecode(field: keyof T): T[keyof T] {
     const cached = this.cache.get(field);
-    return cached !== undefined ? cached : this.decodeUpTo(field);
+    return cached !== undefined ? cached : this.decodeField(field);
+  }
+
+  /**
+   * Traverse the encoded data by skipping bytes up to the give `field`.
+   *
+   * This method populates the cache of decoder states (i.e. we will
+   * know where exactly each previous field is in the data buffer).
+   *
+   * Returns the `descriptor` for given field and it's index.
+   */
+  private populateDecoderStateCache(field: keyof T) {
+    const descriptorKeys = Object.keys(this.descriptors);
+    const needIdx = descriptorKeys.findIndex((k) => k === field);
+    // make sure we have the decoder state at that field.
+    const skip = new Skipper(this.d);
+    for (let i = this.lastCachedIdx + 1; i <= needIdx; i += 1) {
+      const key = descriptorKeys[i] as keyof DescriptorRecord<T>;
+      const descriptor = this.descriptors[key];
+      this.decoderStateCache.set(key, this.d.clone());
+      descriptor.skip(skip);
+    }
+    this.lastCachedIdx = needIdx;
+    // now select the current field.
+    const key = descriptorKeys[needIdx] as keyof DescriptorRecord<T>;
+    return this.descriptors[key];
+  }
+
+  /**
+   * Decode just given field.
+   *
+   * During the process we will skip all previous fields and populate the cache
+   * of decoder states.
+   *
+   * NOTE: this method should not be called if the value is already in the cache!
+   */
+  private decodeField(field: keyof T): T[keyof T] {
+    check(!this.cache.has(field), `Unjustified request to decode field ${String(field)}`);
+
+    const descriptor = this.populateDecoderStateCache(field);
+    const decoder = this.decoderStateCache.get(field) ?? this.d;
+    const val = descriptor.decode(decoder.clone());
+    this.cache.set(field, val);
+    return val;
   }
 
   /**
    * Get the view of the field from cache or decode it.
    */
   protected getOrDecodeView(field: keyof DescriptorRecord<T>): View<T[keyof T]> {
+    // check if we have the materialized field
     const cached = this.cache.get(field);
     if (cached !== undefined) {
       logger.warn(
@@ -638,27 +694,21 @@ abstract class AbstractView<T> {
         `,
       );
     }
-
+    // and check if we already have the view in cache.
     const viewCached = this.viewCache.get(field);
     if (viewCached !== undefined) {
       return viewCached;
     }
-    // decode up to the previous field and then get the view.
-    const descriptorKeys = Object.keys(this.descriptors);
-    const needIdx = descriptorKeys.findIndex((k) => k === field);
-    if (needIdx > 0 && needIdx - 1 > this.lastDecodedIdx) {
-      this.decodeUpTo(descriptorKeys[needIdx - 1] as keyof T);
-    }
-    // return the view
-    const val = this.descriptors[field];
-    // we need to clone the decoder here, to make sure further calls
-    // to the original view do not disrupt the nested one.
-    if (!(VIEW_FIELD in val)) {
+    // decode up to the previous field
+    const descriptor = this.populateDecoderStateCache(field);
+    if (!(VIEW_FIELD in descriptor)) {
       throw new Error(`Attempting to decode a 'View' of a field ${String(field)} which doesn't have one.`);
     }
 
     const decoder = this.decoderStateCache.get(field) ?? this.d;
-    const view = new val.View(decoder.clone());
+    // we need to clone the decoder here, to make sure further calls
+    // to the original view do not disrupt the nested one.
+    const view = new descriptor.View(decoder.clone());
     const typedView = view as unknown as View<T[keyof T]>;
     this.viewCache.set(field, typedView);
     return typedView;
@@ -684,6 +734,7 @@ function descriptor<T>(
   sizeHint: SizeHint,
   encode: (e: Encoder, elem: T) => void,
   decode: (d: Decoder) => T,
+  skip: (s: Skipper) => void,
 ): Descriptor<T> {
-  return new Descriptor(name, sizeHint, encode, decode);
+  return new Descriptor(name, sizeHint, encode, decode, skip);
 }
