@@ -99,6 +99,7 @@ export function workItemExtrinsicsCodec(workItems: WorkItem[]) {
       }
       return asOpaqueType(extrinsics);
     },
+    (s) => s.decoder.skip(sum.value),
   );
 }
 
