@@ -4,6 +4,8 @@ import { describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { BitVec } from "@typeberry/bytes";
 import { Decoder } from "./decoder";
+import { codec } from "./descriptors";
+import { Encoder } from "./encoder";
 
 function decodeVarU32(source: Uint8Array, finish = true) {
   const decoder = Decoder.fromBlob(source);
@@ -531,5 +533,24 @@ describe("JAM decoder / generics", () => {
 
     assert.deepStrictEqual(result1, expected);
     assert.deepStrictEqual(result2, expected);
+  });
+});
+
+describe("JAM decoder / decodeSequence", () => {
+  const data = ["is", "there", "anybody", "out", "there", "?"];
+  const encodedData = Encoder.encodeObject(codec.sequenceFixLen(codec.string, data.length), data);
+
+  it("should decode a sequence of unknown length", () => {
+    assert.deepStrictEqual(Decoder.decodeSequence(codec.string, encodedData), data);
+  });
+
+  it("should throw an error when data is invalid", () => {
+    const invalidData = BytesBlob.parseBlob("0xf60587061670964567267744557f1270333e84696620669775705265f6");
+    assert.throws(() => Decoder.decodeSequence(codec.string, invalidData), Error);
+  });
+
+  it("should throw an error when there's extra data past valid data", () => {
+    const dataWithExtraData = Bytes.parseBlob(`${encodedData.toString()}deadbeef`);
+    assert.throws(() => Decoder.decodeSequence(codec.string, dataWithExtraData), Error);
   });
 });

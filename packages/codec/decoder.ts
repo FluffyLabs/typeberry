@@ -47,16 +47,8 @@ export class Decoder {
     decoder.attachContext(context);
     const seq = [] as T[];
 
-    for (;;) {
-      try {
-        seq.push(decoder.object(decode));
-      } catch (e) {
-        if (e instanceof DataEndedError) {
-          break;
-        }
-
-        throw e;
-      }
+    while (decoder.bytesRead() < decoder.source.length) {
+      seq.push(decoder.object(decode));
     }
 
     decoder.finish();
@@ -364,7 +356,7 @@ export class Decoder {
   private ensureHasBytes(bytes: number) {
     check(bytes >= 0, "Negative number of bytes given.");
     if (this.offset + bytes > this.source.length) {
-      throw new DataEndedError(
+      throw new Error(
         `Attempting to decode more data than there is left. Need ${bytes}, left: ${this.source.length - this.offset}.`,
       );
     }
@@ -382,5 +374,3 @@ function decodeLengthAfterFirstByte(firstByte: number) {
 
   return 0;
 }
-
-export class DataEndedError extends Error {}

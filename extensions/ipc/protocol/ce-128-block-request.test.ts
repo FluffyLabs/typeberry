@@ -1,13 +1,13 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import type { Block, HeaderHash } from "@typeberry/block";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { HASH_SIZE, hashString } from "@typeberry/hash";
-import { MessageHandler, type MessageSender } from "../handler";
-import { ClientHandler, SEQUENCE_DIRECTION, ServerHandler, STREAM_KIND } from "./ce-128-block-request";
-import { U32 } from "@typeberry/numbers";
 import { testBlock } from "@typeberry/block/test-helpers";
+import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { tinyChainSpec } from "@typeberry/config";
+import { HASH_SIZE, hashString } from "@typeberry/hash";
+import type { U32 } from "@typeberry/numbers";
+import { MessageHandler, type MessageSender } from "../handler";
+import { ClientHandler, Direction, STREAM_KIND, ServerHandler } from "./ce-128-block-request";
 
 const HEADER_HASH = Bytes.fromBlob(
   hashString("0x7e1b07b8039cf840d51c4825362948c8ecb8fce1d290f705c269b6bcc7992731").raw,
@@ -64,9 +64,7 @@ describe("CE 128: Block Request", () => {
 
     const receivedData: Block[] = await new Promise((resolve) => {
       handlers.client.withNewStream(STREAM_KIND, (handler: ClientHandler, sender) => {
-        handler
-          .getBlockSequence(sender, HEADER_HASH, SEQUENCE_DIRECTION.DESC_INCL, MAX_BLOCKS)
-          .then((blocks) => resolve(blocks));
+        handler.getBlockSequence(sender, HEADER_HASH, Direction.DescIncl, MAX_BLOCKS).then((blocks) => resolve(blocks));
       });
     });
 
@@ -74,6 +72,6 @@ describe("CE 128: Block Request", () => {
   });
 });
 
-const getBlockSequence = (hash: HeaderHash, direction: Bytes<1>, maxBlocks: U32): Block[] => {
+const getBlockSequence = (hash: HeaderHash, direction: Direction, maxBlocks: U32): Block[] => {
   return [TEST_BLOCK, TEST_BLOCK];
 };
