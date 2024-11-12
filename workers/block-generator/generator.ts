@@ -1,28 +1,23 @@
 import {
-  type BandersnatchVrfSignature,
   Block,
-  type Ed25519Signature,
-  type Epoch,
   Header,
   type HeaderHash,
-  type TimeSlot,
-  type ValidatorIndex,
-  type WorkReportHash,
+  tryAsEpoch,
   tryAsServiceId,
+  tryAsTimeSlot,
+  tryAsValidatorIndex,
 } from "@typeberry/block";
-import type { AssurancesExtrinsic, AvailabilityAssurance } from "@typeberry/block/assurances";
 import { Extrinsic } from "@typeberry/block/block";
-import { type Culprit, DisputesExtrinsic, type Fault, Judgement, Verdict } from "@typeberry/block/disputes";
-import type { GuaranteesExtrinsic, ReportGuarantee } from "@typeberry/block/gaurantees";
+import { DisputesExtrinsic, Judgement, Verdict } from "@typeberry/block/disputes";
 import { Preimage } from "@typeberry/block/preimage";
-import type { SignedTicket, TicketsExtrinsic } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
-import type { KnownSizeArray } from "@typeberry/collections";
+import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type BlocksDb, InMemoryKvdb } from "@typeberry/database";
 import { HASH_SIZE, SimpleAllocator } from "@typeberry/hash";
 import { TransitionHasher } from "@typeberry/transition";
+import { asOpaqueType } from "@typeberry/utils";
 
 export class Generator {
   public readonly database = new InMemoryKvdb();
@@ -32,7 +27,7 @@ export class Generator {
 
   constructor(
     public readonly chainSpec: ChainSpec,
-    private readonly blocks: BlocksDb,
+    blocks: BlocksDb,
   ) {
     this.lastHeaderHash = blocks.getBestHeaderHash();
     this.lastHeader = blocks.getHeader(this.lastHeaderHash)?.materialize() ?? null;
@@ -54,27 +49,27 @@ export class Generator {
     const stateRoot = await this.database.getRoot();
 
     const extrinsic = new Extrinsic(
-      [] as SignedTicket[] as TicketsExtrinsic,
+      asOpaqueType([]),
       new DisputesExtrinsic(
         [
           new Verdict(
-            Bytes.fill(HASH_SIZE, blockNumber % 256) as WorkReportHash,
-            (blockNumber / this.chainSpec.epochLength) as Epoch,
-            [
-              new Judgement(true, 0 as ValidatorIndex, Bytes.fill(64, 0) as Ed25519Signature),
-              new Judgement(true, 1 as ValidatorIndex, Bytes.fill(64, 1) as Ed25519Signature),
-              new Judgement(true, 2 as ValidatorIndex, Bytes.fill(64, 2) as Ed25519Signature),
-              new Judgement(true, 3 as ValidatorIndex, Bytes.fill(64, 3) as Ed25519Signature),
-              new Judgement(true, 4 as ValidatorIndex, Bytes.fill(64, 4) as Ed25519Signature),
-            ] as KnownSizeArray<Judgement, "Validators super majority">,
+            Bytes.fill(HASH_SIZE, blockNumber % 256).asOpaque(),
+            tryAsEpoch(blockNumber / this.chainSpec.epochLength),
+            asKnownSize([
+              new Judgement(true, tryAsValidatorIndex(0), Bytes.fill(64, 0).asOpaque()),
+              new Judgement(true, tryAsValidatorIndex(1), Bytes.fill(64, 1).asOpaque()),
+              new Judgement(true, tryAsValidatorIndex(2), Bytes.fill(64, 2).asOpaque()),
+              new Judgement(true, tryAsValidatorIndex(3), Bytes.fill(64, 3).asOpaque()),
+              new Judgement(true, tryAsValidatorIndex(4), Bytes.fill(64, 4).asOpaque()),
+            ]),
           ),
         ],
-        [] as Culprit[],
-        [] as Fault[],
+        [],
+        [],
       ),
       [new Preimage(tryAsServiceId(1), BytesBlob.parseBlob("0x1234"))],
-      [] as AvailabilityAssurance[] as AssurancesExtrinsic,
-      [] as ReportGuarantee[] as GuaranteesExtrinsic,
+      asOpaqueType([]),
+      asOpaqueType([]),
     );
     const extrinsicHash = hasher.extrinsic(extrinsic).hash;
 
@@ -82,13 +77,13 @@ export class Generator {
       parentHeaderHash,
       priorStateRoot: stateRoot,
       extrinsicHash,
-      timeSlotIndex: blockNumber as TimeSlot,
+      timeSlotIndex: tryAsTimeSlot(blockNumber),
       epochMarker: null,
       ticketsMarker: null,
       offendersMarker: [],
-      bandersnatchBlockAuthorIndex: 0 as ValidatorIndex,
-      entropySource: Bytes.fill(96, (blockNumber * 42) % 256) as BandersnatchVrfSignature,
-      seal: Bytes.fill(96, (blockNumber * 69) % 256) as BandersnatchVrfSignature,
+      bandersnatchBlockAuthorIndex: tryAsValidatorIndex(0),
+      entropySource: Bytes.fill(96, (blockNumber * 42) % 256).asOpaque(),
+      seal: Bytes.fill(96, (blockNumber * 69) % 256).asOpaque(),
     });
 
     this.lastHeaderHash = hasher.header(header).hash;

@@ -2,8 +2,8 @@ import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, hashBytes } from "@typeberry/hash";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
-import type { GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
+import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import type { Memory } from "@typeberry/pvm-interpreter/memory";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
@@ -28,8 +28,8 @@ const IN_OUT_REG = 7;
  * https://graypaper.fluffylabs.dev/#/439ca37/2d3a002d3a00
  */
 export class Read implements HostCallHandler {
-  index = 2 as HostCallIndex;
-  gasCost = 10 as SmallGas;
+  index = tryAsHostCallIndex(2);
+  gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(private readonly account: Accounts) {}

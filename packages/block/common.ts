@@ -11,23 +11,17 @@ import { type Opaque, asOpaqueType } from "@typeberry/utils";
  */
 export type TimeSlot = Opaque<U32, "TimeSlot[u32]">;
 /** Attempt to convert a number into `TimeSlot`. */
-export function tryAsTimeSlot(v: number): TimeSlot {
-  return asOpaqueType(tryAsU32(v));
-}
+export const tryAsTimeSlot = (v: number): TimeSlot => asOpaqueType(tryAsU32(v));
 
 /** Index of the validator in current validators set. */
 export type ValidatorIndex = Opaque<U16, "ValidatorIndex[u16]">;
 /** Attempt to convert a number into `ValidatorIndex`. */
-export function tryAsValidatorIndex(v: number): ValidatorIndex {
-  return asOpaqueType(tryAsU16(v));
-}
+export const tryAsValidatorIndex = (v: number): ValidatorIndex => asOpaqueType(tryAsU16(v));
 
 /** Unique service identifier. */
 export type ServiceId = Opaque<U32, "ServiceId[u32]">;
 /** Attempt to convert a number into `ServiceId`. */
-export function tryAsServiceId(v: number): ServiceId {
-  return asOpaqueType(tryAsU32(v));
-}
+export const tryAsServiceId = (v: number): ServiceId => asOpaqueType(tryAsU32(v));
 
 // TODO [ToDr] Unify with `pvm/gas`.
 /** Service gas - a measure of execution time/complexity. */
@@ -36,9 +30,7 @@ export type ServiceGas = Opaque<U64, "Gas[u64]">;
 /** Index of the core on which the execution of the work package is done. */
 export type CoreIndex = Opaque<U16, "CoreIndex[u16]">;
 /** Attempt to convert a number into `CoreIndex`. */
-export function tryAsCoreIndex(v: number): CoreIndex {
-  return asOpaqueType(tryAsU16(v));
-}
+export const tryAsCoreIndex = (v: number): CoreIndex => asOpaqueType(tryAsU16(v));
 
 /** `eta`: epoch randomness */
 export type EntropyHash = Opaque<Blake2bHash, "EntropyHash">;
@@ -50,6 +42,4 @@ export type EntropyHash = Opaque<Blake2bHash, "EntropyHash">;
  */
 export type Epoch = Opaque<U32, "Epoch">;
 /** Attempt to convert a number into `Epoch`. */
-export function tryAsEpoch(v: number): Epoch {
-  return asOpaqueType(tryAsU32(v));
-}
+export const tryAsEpoch = (v: number): Epoch => asOpaqueType(tryAsU32(v));

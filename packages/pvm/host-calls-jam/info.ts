@@ -3,11 +3,11 @@ import { type CodecRecord, Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
-import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
+import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import { type Gas, type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
-import { WithDebug } from "@typeberry/utils";
+import { WithDebug, asOpaqueType } from "@typeberry/utils";
 import { HostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
 
@@ -27,11 +27,11 @@ export class AccountInfo extends WithDebug {
     thresholdBalance: codec.u64,
     accumulateMinGas: codec.u64.convert(
       (g) => tryAsU64(g),
-      (i) => tryAsU64(i) as Gas,
+      (i) => asOpaqueType<"BigGas[U64]", U64>(i),
     ),
     onTransferMinGas: codec.u64.convert(
       (g) => tryAsU64(g),
-      (i) => tryAsU64(i) as Gas,
+      (i) => asOpaqueType<"BigGas[U64]", U64>(i),
     ),
     storageUtilisationBytes: codec.u64,
     storageUtilisationCount: codec.u32,
@@ -59,7 +59,7 @@ export class AccountInfo extends WithDebug {
     const B_L = 1n;
 
     // TODO [ToDr] Overflows?
-    return (B_S + B_I * BigInt(items) + B_L * bytes) as U64;
+    return tryAsU64(B_S + B_I * BigInt(items) + B_L * bytes);
   }
 
   constructor(
@@ -105,8 +105,8 @@ const IN_OUT_REG = 7;
  * https://graypaper.fluffylabs.dev/#/439ca37/2d45022d4502
  */
 export class Info implements HostCallHandler {
-  index = 4 as HostCallIndex;
-  gasCost = 10 as SmallGas;
+  index = tryAsHostCallIndex(4);
+  gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(private readonly account: Accounts) {}

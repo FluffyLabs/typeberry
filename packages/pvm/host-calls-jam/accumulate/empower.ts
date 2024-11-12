@@ -2,8 +2,8 @@ import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Decoder, codec, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
-import type { BigGas, Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
+import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import { type BigGas, type Gas, type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
@@ -16,8 +16,8 @@ const IN_OUT_REG = 7;
 
 const serviceIdAndGasCodec = codec.object({
   serviceId: codec.u32.cast<ServiceId>(),
-  gas: codec.u64.convert(
-    (i: Gas) => tryAsU64(i),
+  gas: codec.u64.convert<Gas>(
+    (i) => tryAsU64(i),
     (i): BigGas => asOpaqueType(i),
   ),
 });
@@ -28,8 +28,8 @@ const serviceIdAndGasCodec = codec.object({
  * https://graypaper.fluffylabs.dev/#/364735a/2e3a002e3a00
  */
 export class Empower implements HostCallHandler {
-  index = 5 as HostCallIndex;
-  gasCost = 10 as SmallGas;
+  index = tryAsHostCallIndex(5);
+  gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(private readonly partialState: AccumulationPartialState) {}

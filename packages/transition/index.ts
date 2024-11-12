@@ -4,9 +4,8 @@ import {
   type ExtrinsicHash,
   Header,
   type HeaderHash,
-  type ServiceGas,
   type ServiceId,
-  tryAsCoreIndex as asCoreIndex,
+  tryAsCoreIndex,
 } from "@typeberry/block";
 import { WorkPackage } from "@typeberry/block/work-package";
 import { type WorkPackageHash, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
@@ -17,9 +16,9 @@ import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type HashAllocator, WithHashAndBytes, hashBytes } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
-import type { Gas } from "@typeberry/pvm-interpreter/gas";
+import { type Gas, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { Program } from "@typeberry/pvm-program";
-import { Result } from "@typeberry/utils";
+import { Result, asOpaqueType } from "@typeberry/utils";
 import type { BlocksDb, StateDb } from "../database";
 
 export class TransitionHasher {
@@ -43,7 +42,7 @@ export class TransitionHasher {
   private encode<T, THash extends Bytes<HASH_SIZE>>(codec: Codec<T>, data: T): WithHashAndBytes<THash, T> {
     // TODO [ToDr] Use already allocated encoding destination and hash bytes from some arena.
     const encoded = Encoder.encodeObject(codec, data, this.context);
-    return new WithHashAndBytes(hashBytes(encoded, this.allocator) as THash, data, encoded);
+    return new WithHashAndBytes(hashBytes(encoded, this.allocator).asOpaque(), data, encoded);
   }
 }
 
@@ -79,14 +78,14 @@ export class WorkPackageExecutor {
     }
 
     const pvm = authExec.ok;
-    const authGas = 15_000n as ServiceGas;
+    const authGas = tryAsGas(15_000n);
     const result = await pvm.run(pack.parametrization, authGas);
 
     if (!result.isEqualTo(pack.authorization)) {
       throw new Error("Authorization is invalid.");
     }
 
-    const results = [] as WorkResult[];
+    const results: WorkResult[] = [];
     for (const item of pack.items) {
       const exec = this.getServiceExecutor(headerHash, item.service, item.codeHash);
       if (!exec.isOk()) {
@@ -94,8 +93,8 @@ export class WorkPackageExecutor {
       }
       const pvm = exec.ok;
 
-      const gasRatio = 3_000n as ServiceGas;
-      const ret = await pvm.run(item.payload, item.gasLimit);
+      const gasRatio = asOpaqueType(tryAsU64(3_000n));
+      const ret = await pvm.run(item.payload, tryAsGas(item.gasLimit));
       results.push(
         new WorkResult(
           item.service,
@@ -114,7 +113,7 @@ export class WorkPackageExecutor {
       Bytes.zero(HASH_SIZE),
       Bytes.zero(HASH_SIZE),
     );
-    const coreIndex = asCoreIndex(0);
+    const coreIndex = tryAsCoreIndex(0);
     const authorizerHash = Bytes.fill(HASH_SIZE, 5);
 
     return Promise.resolve(
@@ -160,10 +159,10 @@ class PvmExecutor {
     this.pvm = new PvmHostCallExtension(this.pvmInstanceManager, this.hostCalls);
   }
 
-  async run(args: BytesBlob, gas: ServiceGas): Promise<BytesBlob> {
+  async run(args: BytesBlob, gas: Gas): Promise<BytesBlob> {
     const program = Program.fromSpi(this.serviceCode.raw, args.raw);
 
-    const result = await this.pvm.runProgram(program.code, 5, tryAsU64(gas) as Gas, program.registers, program.memory);
+    const result = await this.pvm.runProgram(program.code, 5, gas, program.registers, program.memory);
     if (!result || !(result instanceof Uint8Array)) {
       return BytesBlob.blobFromNumbers([]);
     }

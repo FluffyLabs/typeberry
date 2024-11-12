@@ -3,7 +3,7 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type U16, type U32, sumU32 } from "@typeberry/numbers";
-import { type Opaque, WithDebug } from "@typeberry/utils";
+import { type Opaque, WithDebug, asOpaqueType } from "@typeberry/utils";
 import type { ServiceGas, ServiceId } from "./common";
 import type { CodeHash } from "./hash";
 
@@ -97,7 +97,7 @@ export function workItemExtrinsicsCodec(workItems: WorkItem[]) {
         const bytes = d.bytes(len);
         extrinsics.push(bytes);
       }
-      return extrinsics as WorkItemExtrinsics;
+      return asOpaqueType(extrinsics);
     },
     (s) => s.decoder.skip(sum.value),
   );

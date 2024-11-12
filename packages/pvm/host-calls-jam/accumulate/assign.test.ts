@@ -6,14 +6,14 @@ import { Encoder, codec } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { type Blake2bHash, HASH_SIZE } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
-import { type Gas, gasCounter } from "@typeberry/pvm-interpreter/gas";
+import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { HostCallResult } from "../results";
 import { Assign } from "./assign";
 import { AUTHORIZATION_QUEUE_SIZE } from "./partial-state";
 import { TestAccumulate } from "./partial-state.test";
 
-const gas = gasCounter(0 as Gas);
+const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
 const CORE_INDEX_REG = 7;
 const AUTH_QUEUE_START_REG = 8;
@@ -49,7 +49,6 @@ function prepareRegsAndMemory(
 }
 
 describe("HostCalls: Assign", () => {
-  // TODO [ToDr] Check large core index (greater than 2**16)
   it("should assign authorization queue to a core", async () => {
     const accumulate = new TestAccumulate();
     const assign = new Assign(accumulate, tinyChainSpec);

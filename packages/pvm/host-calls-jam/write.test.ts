@@ -5,7 +5,7 @@ import { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { type Blake2bHash, hashBytes } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
-import { type Gas, gasCounter } from "@typeberry/pvm-interpreter/gas";
+import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { HostCallResult } from "./results";
 import { SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
@@ -51,7 +51,7 @@ class TestAccounts implements Accounts {
   }
 }
 
-const gas = gasCounter(0 as Gas);
+const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
 const KEY_START_REG = 7;
 const KEY_LEN_REG = 8;
