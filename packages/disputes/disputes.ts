@@ -85,7 +85,12 @@ export class Disputes {
 
       const k = votesEpoch === currentEpoch ? this.state.currentValidatorData : this.state.previousValidatorData;
       for (const { index, signature, isWorkReportValid } of votes) {
-        const key = k[index].ed25519;
+        const key = k[index]?.ed25519;
+
+        if (!key) {
+          return DisputesErrorCode.BadValidatorIndex;
+        }
+
         // https://graypaper.fluffylabs.dev/#/364735a/12b70012b700
         if (!verifyVoteSignature(signature, key, workReportHash, isWorkReportValid)) {
           return DisputesErrorCode.BadSignature;
