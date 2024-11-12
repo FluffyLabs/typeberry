@@ -6,10 +6,10 @@ import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { ValidatorData } from "@typeberry/safrole";
+import { asOpaqueType } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
-import {asOpaqueType} from "@typeberry/utils";
 
 const IN_OUT_REG = 7;
 export const VALIDATOR_DATA_BYTES = tryAsExactBytes(ValidatorData.Codec.sizeHint);
