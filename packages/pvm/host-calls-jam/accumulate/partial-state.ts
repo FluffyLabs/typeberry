@@ -19,18 +19,15 @@ export type AUTHORIZATION_QUEUE_SIZE = typeof AUTHORIZATION_QUEUE_SIZE;
  * https://graypaper.fluffylabs.dev/#/439ca37/161402161402
  */
 export interface AccumulationPartialState {
-  /**
-   * Update validator data
-   */
+  /** Designate new validators given their key and meta data. */
   updateValidatorsData(validatorsData: KnownSizeArray<ValidatorData, "ValidatorsCount">): void;
 
-  /**
-   * TODO [ToDr] docs
-   */
+  /** Update authorization queue for given core. */
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
     authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
   ): void;
+
   /**
    * Update priviliged services and their gas.
    *

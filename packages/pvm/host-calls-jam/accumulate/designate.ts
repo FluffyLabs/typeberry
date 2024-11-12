@@ -1,5 +1,4 @@
-import { Decoder } from "@typeberry/codec";
-import type { KnownSizeArray } from "@typeberry/collections";
+import { Decoder, tryAsExactBytes } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
@@ -10,9 +9,10 @@ import { ValidatorData } from "@typeberry/safrole";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
+import {asOpaqueType} from "@typeberry/utils";
 
 const IN_OUT_REG = 7;
-export const VALIDATOR_DATA_BYTES = ValidatorData.Codec.sizeHint;
+export const VALIDATOR_DATA_BYTES = tryAsExactBytes(ValidatorData.Codec.sizeHint);
 
 /**
  * Designate a new set of validator keys.
