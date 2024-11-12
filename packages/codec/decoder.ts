@@ -39,6 +39,22 @@ export class Decoder {
     return obj;
   }
 
+  /**
+   * Decode a sequence of objects from all of the source bytes.
+   */
+  static decodeSequence<T>(decode: Decode<T>, source: BytesBlob | Uint8Array, context?: unknown): T[] {
+    const decoder = source instanceof BytesBlob ? Decoder.fromBytesBlob(source) : Decoder.fromBlob(source);
+    decoder.attachContext(context);
+    const seq = [] as T[];
+
+    while (decoder.bytesRead() < decoder.source.length) {
+      seq.push(decoder.object(decode));
+    }
+
+    decoder.finish();
+    return seq;
+  }
+
   private readonly dataView: DataView;
 
   private constructor(
@@ -165,7 +181,7 @@ export class Decoder {
    */
   varU32(): U32 {
     const firstByte = this.source[this.offset];
-    const l = decodeLengthAfterFirstByte(firstByte);
+    const l = decodeVariableLengthExtraBytes(firstByte);
     this.offset += 1;
 
     if (l === 0) {
@@ -199,7 +215,7 @@ export class Decoder {
   /** Decode a variable-length encoding of natural numbers (up to 2**64). */
   varU64(): U64 {
     const firstByte = this.source[this.offset];
-    const l = decodeLengthAfterFirstByte(firstByte);
+    const l = decodeVariableLengthExtraBytes(firstByte);
     this.offset += 1;
 
     if (l === 0) {
@@ -348,7 +364,7 @@ export class Decoder {
 }
 
 const MASKS = [0xff, 0xfe, 0xfc, 0xf8, 0xf0, 0xe0, 0xc0, 0x80];
-function decodeLengthAfterFirstByte(firstByte: number) {
+export function decodeVariableLengthExtraBytes(firstByte: number) {
   check(firstByte >= 0 && firstByte < 256, `Incorrect byte value: ${firstByte}`);
   for (let i = 0; i < MASKS.length; i++) {
     if (firstByte >= MASKS[i]) {

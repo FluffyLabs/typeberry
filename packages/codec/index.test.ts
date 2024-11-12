@@ -6,6 +6,7 @@ import { tryAsU8, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { Decoder } from "./decoder";
 import { type Descriptor, codec } from "./descriptors";
 import { Encoder } from "./encoder";
+import { Skipper } from "./skip";
 
 let seed = 1;
 function random() {
@@ -79,6 +80,12 @@ describe("JAM encoder / decoder", () => {
         const encoded = encoder.viewResult();
 
         const decoder = Decoder.fromBytesBlob(encoded);
+        // skipping
+        const skip = new Skipper(decoder.clone());
+        g.descriptor.skip(skip);
+        skip.decoder.finish();
+
+        // decoding
         const result = g.descriptor.decode(decoder);
         decoder.finish();
         assert.deepStrictEqual(result, expected);
