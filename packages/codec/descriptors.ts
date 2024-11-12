@@ -656,11 +656,14 @@ abstract class AbstractView<T> {
       const descriptor = this.descriptors[key];
       this.decoderStateCache.set(key, this.d.clone());
       descriptor.skip(skip);
+      this.lastCachedIdx = i;
     }
-    this.lastCachedIdx = needIdx;
     // now select the current field.
     const key = descriptorKeys[needIdx] as keyof DescriptorRecord<T>;
-    return this.descriptors[key];
+    const descriptor = this.descriptors[key];
+
+    const decoder = this.decoderStateCache.get(field) ?? this.d;
+    return { descriptor, decoder: decoder.clone() };
   }
 
   /**
@@ -674,9 +677,8 @@ abstract class AbstractView<T> {
   private decodeField(field: keyof T): T[keyof T] {
     check(!this.cache.has(field), `Unjustified request to decode field ${String(field)}`);
 
-    const descriptor = this.populateDecoderStateCache(field);
-    const decoder = this.decoderStateCache.get(field) ?? this.d;
-    const val = descriptor.decode(decoder.clone());
+    const { descriptor, decoder } = this.populateDecoderStateCache(field);
+    const val = descriptor.decode(decoder);
     this.cache.set(field, val);
     return val;
   }
@@ -700,15 +702,14 @@ abstract class AbstractView<T> {
       return viewCached;
     }
     // decode up to the previous field
-    const descriptor = this.populateDecoderStateCache(field);
+    const { descriptor, decoder } = this.populateDecoderStateCache(field);
     if (!(VIEW_FIELD in descriptor)) {
       throw new Error(`Attempting to decode a 'View' of a field ${String(field)} which doesn't have one.`);
     }
 
-    const decoder = this.decoderStateCache.get(field) ?? this.d;
     // we need to clone the decoder here, to make sure further calls
     // to the original view do not disrupt the nested one.
-    const view = new descriptor.View(decoder.clone());
+    const view = new descriptor.View(decoder);
     const typedView = view as unknown as View<T[keyof T]>;
     this.viewCache.set(field, typedView);
     return typedView;

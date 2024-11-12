@@ -31,7 +31,6 @@ export class InMemoryBlocks implements BlocksDb {
 
   insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void> {
     this.headersByHash.set(block.hash, block.data.headerView() as HeaderView);
-    block.data.headerView().materialize();
     this.extrinsicsByHeaderHash.set(block.hash, block.data.extrinsicView() as ExtrinsicView);
 
     return Promise.resolve();
