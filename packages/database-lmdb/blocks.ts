@@ -57,7 +57,7 @@ export class LmdbBlocks implements BlocksDb {
 
   getBestHeaderHash(): HeaderHash {
     const data = this.root.get(BEST_BLOCK_KEY);
-    return (data ? Bytes.fromBlob(data, HASH_SIZE) : Bytes.zero(HASH_SIZE)) as HeaderHash;
+    return (data ? Bytes.fromBlob(data, HASH_SIZE) : Bytes.zero(HASH_SIZE)).asOpaque();
   }
 
   getHeader(hash: HeaderHash): HeaderView | null {

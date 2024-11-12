@@ -1,7 +1,7 @@
 import type { CodeHash, ServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
-import { HASH_SIZE, type OpaqueHash, WithHash, hashString } from "@typeberry/hash";
+import { HASH_SIZE, WithHash, hashString } from "@typeberry/hash";
 import { InMemoryTrie, type StateKey, type TrieHash } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/blake2b.node";
 import { WriteableNodesDb } from "@typeberry/trie/nodesDb";
@@ -10,7 +10,7 @@ export class StateDb {
   constructor(private readonly db: InMemoryKvdb) {}
 
   stateAt(root: TrieHash): State | null {
-    const hasRootNode = this.db.has(root as OpaqueHash as StateKey);
+    const hasRootNode = this.db.has(root.asOpaque());
     // we don't know about that trie.
     if (!hasRootNode) {
       return null;
@@ -28,14 +28,14 @@ export class State {
   getServiceCode(serviceId: ServiceId): WithHash<CodeHash, BytesBlob> | null {
     const key = hashString(`serviceCodeHash:${serviceId}`);
     // TODO [ToDr] here we need to make sure that the key is part of the root!
-    const blob = this.db.get(key as StateKey);
+    const blob = this.db.get(key.asOpaque());
     if (!blob) {
       return null;
     }
     const hash = blob.buffer.subarray(0, HASH_SIZE);
     const code = blob.buffer.subarray(HASH_SIZE);
 
-    return new WithHash(Bytes.fromBlob(hash, HASH_SIZE) as CodeHash, BytesBlob.from(code));
+    return new WithHash(Bytes.fromBlob(hash, HASH_SIZE).asOpaque(), BytesBlob.from(code));
   }
 }
 

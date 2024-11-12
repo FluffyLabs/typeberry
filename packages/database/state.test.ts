@@ -6,11 +6,11 @@ import type { StateKey, TrieHash } from "@typeberry/trie";
 import { InMemoryKvdb } from ".";
 
 function key(v: string): StateKey {
-  return hashString(v) as StateKey;
+  return hashString(v).asOpaque();
 }
 
 const hash = (data: BytesBlob) => {
-  const h = hashBytes(data) as TrieHash;
+  const h: TrieHash = hashBytes(data).asOpaque();
   return new WithHash(h, data);
 };
 

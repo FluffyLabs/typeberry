@@ -1,4 +1,4 @@
-import type { Gas } from "@typeberry/pvm-interpreter/gas";
+import { tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { Program } from "@typeberry/pvm-program";
 import { HostCalls } from "./host-calls";
 import { HostCallsManager } from "./host-calls-manager";
@@ -27,5 +27,5 @@ const args = new Uint8Array();
 const { code, memory, registers } = Program.fromSpi(program, args);
 
 (async () => {
-  await pvmHostCallExtension.runProgram(code, 5, 1000 as Gas, registers, memory);
+  await pvmHostCallExtension.runProgram(code, 5, tryAsGas(1000), registers, memory);
 })();

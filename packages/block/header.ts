@@ -5,7 +5,7 @@ import { EST_EPOCH_LENGTH, EST_VALIDATORS } from "@typeberry/config";
 import { HASH_SIZE, WithHash } from "@typeberry/hash";
 import type { TrieHash } from "@typeberry/trie";
 import { WithDebug } from "@typeberry/utils";
-import type { EntropyHash, TimeSlot, ValidatorIndex } from "./common";
+import { type EntropyHash, type TimeSlot, type ValidatorIndex, tryAsTimeSlot, tryAsValidatorIndex } from "./common";
 import { withContext } from "./context";
 import {
   BANDERSNATCH_KEY_BYTES,
@@ -92,13 +92,13 @@ export class Header extends WithDebug {
    *
    * In case of the genesis block, the hash will be zero.
    */
-  public parentHeaderHash: HeaderHash = Bytes.zero(HASH_SIZE) as HeaderHash;
+  public parentHeaderHash: HeaderHash = Bytes.zero(HASH_SIZE).asOpaque();
   /** `H_r`: The state trie root hash before executing that block. */
-  public priorStateRoot: TrieHash = Bytes.zero(HASH_SIZE) as TrieHash;
+  public priorStateRoot: TrieHash = Bytes.zero(HASH_SIZE).asOpaque();
   /** `H_x`: The hash of block extrinsic. */
-  public extrinsicHash: ExtrinsicHash = Bytes.zero(HASH_SIZE) as ExtrinsicHash;
+  public extrinsicHash: ExtrinsicHash = Bytes.zero(HASH_SIZE).asOpaque();
   /** `H_t`: JAM time-slot index. */
-  public timeSlotIndex: TimeSlot = 0 as TimeSlot;
+  public timeSlotIndex: TimeSlot = tryAsTimeSlot(0);
   /**
    * `H_e`: Key and entropy relevant to the following epoch in case the ticket
    *        contest does not complete adequately.
@@ -112,17 +112,15 @@ export class Header extends WithDebug {
   /** `H_o`: Sequence of keys of newly misbehaving validators. */
   public offendersMarker: Ed25519Key[] = [];
   /** `H_i`: Block author's index in the current validator set. */
-  public bandersnatchBlockAuthorIndex: ValidatorIndex = 0 as ValidatorIndex;
+  public bandersnatchBlockAuthorIndex: ValidatorIndex = tryAsValidatorIndex(0);
   /** `H_v`: Entropy-yielding VRF signature. */
-  public entropySource: BandersnatchVrfSignature = Bytes.zero(
-    BANDERSNATCH_VRF_SIGNATURE_BYTES,
-  ) as BandersnatchVrfSignature;
+  public entropySource: BandersnatchVrfSignature = Bytes.zero(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque();
   /**
    * `H_s`: Block seal.
    *
    * https://graypaper.fluffylabs.dev/#/387103d/0de8000dee00
    */
-  public seal: BandersnatchVrfSignature = Bytes.zero(BANDERSNATCH_VRF_SIGNATURE_BYTES) as BandersnatchVrfSignature;
+  public seal: BandersnatchVrfSignature = Bytes.zero(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque();
 
   private constructor() {
     super();

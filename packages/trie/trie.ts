@@ -40,7 +40,7 @@ export class InMemoryTrie {
 
   getRoot(): TrieHash {
     if (this.root === null) {
-      return Bytes.zero(HASH_BYTES) as TrieHash;
+      return Bytes.zero(HASH_BYTES).asOpaque();
     }
 
     return this.nodes.hashNode(this.root);
@@ -194,7 +194,7 @@ function createSubtreeForBothLeaves(
   }
 
   // Now construct the common branches, and insert zero hash in place of other sub-trees.
-  const zero = Bytes.zero(HASH_BYTES) as TrieHash;
+  const zero = Bytes.zero(HASH_BYTES).asOpaque();
 
   // In case we move the leaf from left to right it's hash needs to be re-calculated (missing bit).
   // TODO [ToDr] [opti] might be better to store the original bit value instead of recalculating.

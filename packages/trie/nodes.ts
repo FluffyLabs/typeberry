@@ -19,7 +19,7 @@ const TRUNCATED_KEY_BYTES = 31;
 export const TRUNCATED_KEY_BITS = TRUNCATED_KEY_BYTES * 8;
 
 export function parseStateKey(v: string): StateKey {
-  return Bytes.parseBytesNoPrefix(v, HASH_BYTES) as StateKey;
+  return Bytes.parseBytesNoPrefix(v, HASH_BYTES).asOpaque();
 }
 
 /**
@@ -117,12 +117,12 @@ export class BranchNode {
 
   /** Get the hash of the left sub-trie. */
   getLeft(): TrieHash {
-    return Bytes.fromBlob(this.node.data.subarray(0, HASH_BYTES), HASH_BYTES) as TrieHash;
+    return Bytes.fromBlob(this.node.data.subarray(0, HASH_BYTES), HASH_BYTES).asOpaque();
   }
 
   /** Get the hash of the right sub-trie. */
   getRight(): TrieHash {
-    return Bytes.fromBlob(this.node.data.subarray(HASH_BYTES), HASH_BYTES) as TrieHash;
+    return Bytes.fromBlob(this.node.data.subarray(HASH_BYTES), HASH_BYTES).asOpaque();
   }
 }
 
@@ -175,10 +175,7 @@ export class LeafNode {
 
   /** Get the key (truncated to 31 bytes). */
   getKey(): TruncatedStateKey {
-    return Bytes.fromBlob(
-      this.node.data.subarray(1, TRUNCATED_KEY_BYTES + 1),
-      TRUNCATED_KEY_BYTES,
-    ) as TruncatedStateKey;
+    return Bytes.fromBlob(this.node.data.subarray(1, TRUNCATED_KEY_BYTES + 1), TRUNCATED_KEY_BYTES).asOpaque();
   }
 
   /**
@@ -210,6 +207,6 @@ export class LeafNode {
    * Note that for embedded value this is going to be full 0-padded 32 bytes.
    */
   getValueHash(): ValueHash {
-    return Bytes.fromBlob(this.node.data.subarray(HASH_BYTES), HASH_BYTES) as ValueHash;
+    return Bytes.fromBlob(this.node.data.subarray(HASH_BYTES), HASH_BYTES).asOpaque();
   }
 }

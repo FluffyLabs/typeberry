@@ -1,11 +1,11 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { type CodeHash, type ServiceId, tryAsServiceId } from "@typeberry/block";
+import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { Registers } from "@typeberry/pvm-interpreter";
-import { type Gas, gasCounter } from "@typeberry/pvm-interpreter/gas";
+import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { AccountInfo, type Accounts, Info } from "./info";
 import { HostCallResult } from "./results";
@@ -22,7 +22,7 @@ const SERVICE_ID_REG = 7;
 const RESULT_REG = SERVICE_ID_REG;
 const DEST_START_REG = 8;
 
-const gas = gasCounter(0 as Gas);
+const gas = gasCounter(tryAsGas(0));
 
 function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = tryAsExactBytes(AccountInfo.Codec.sizeHint)) {
   const memStart = 20_000;
@@ -57,11 +57,11 @@ describe("HostCalls: Info", () => {
     accounts.data.set(
       serviceId,
       AccountInfo.fromCodec({
-        codeHash: Bytes.fill(32, 5) as CodeHash,
+        codeHash: Bytes.fill(32, 5).asOpaque(),
         balance: tryAsU64(150_000),
         thresholdBalance: AccountInfo.calculateThresholdBalance(storageUtilisationCount, storageUtilisationBytes),
-        accumulateMinGas: 0n as Gas,
-        onTransferMinGas: 0n as Gas,
+        accumulateMinGas: tryAsGas(0n),
+        onTransferMinGas: tryAsGas(0n),
         storageUtilisationBytes,
         storageUtilisationCount,
       }),
@@ -99,11 +99,11 @@ describe("HostCalls: Info", () => {
     accounts.data.set(
       serviceId,
       AccountInfo.fromCodec({
-        codeHash: Bytes.fill(32, 5) as CodeHash,
+        codeHash: Bytes.fill(32, 5).asOpaque(),
         balance: tryAsU64(150_000),
         thresholdBalance: AccountInfo.calculateThresholdBalance(storageUtilisationCount, storageUtilisationBytes),
-        accumulateMinGas: 0n as Gas,
-        onTransferMinGas: 0n as Gas,
+        accumulateMinGas: tryAsGas(0n),
+        onTransferMinGas: tryAsGas(0n),
         storageUtilisationBytes,
         storageUtilisationCount,
       }),

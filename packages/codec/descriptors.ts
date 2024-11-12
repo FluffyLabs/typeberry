@@ -51,6 +51,7 @@ export class Descriptor<T> implements Codec<T> {
     );
   }
 
+  /** Safely cast the descriptor value to it's sub-type. */
   public cast<F extends T>() {
     return this.convert<F>(
       (i) => i,

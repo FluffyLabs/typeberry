@@ -3,8 +3,8 @@ import { Decoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import type { HostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
-import type { GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
+import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { HostCallResult } from "../results";
@@ -19,8 +19,8 @@ const IN_OUT_REG = 7;
  * https://graypaper.fluffylabs.dev/#/364735a/2ebf002ebf00
  */
 export class Assign implements HostCallHandler {
-  index = 6 as HostCallIndex;
-  gasCost = 10 as SmallGas;
+  index = tryAsHostCallIndex(6);
+  gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(
