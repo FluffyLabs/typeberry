@@ -43,7 +43,7 @@ export class Decoder {
 
   private constructor(
     public readonly source: Uint8Array,
-    protected offset = 0,
+    private offset = 0,
     private context?: unknown,
   ) {
     this.dataView = new DataView(source.buffer, source.byteOffset, source.byteLength);

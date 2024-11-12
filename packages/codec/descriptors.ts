@@ -620,13 +620,7 @@ abstract class AbstractView<T> {
    */
   public materialize(): T {
     const fields = Object.keys(this.descriptors) as (keyof T)[];
-    // make sure to fully populate the cache.
-    for (const key of fields) {
-      if (!this.cache.has(key)) {
-        this.decodeField(key);
-      }
-    }
-    const constructorParams = Object.fromEntries(fields.map((key) => [key, this.cache.get(key)]));
+    const constructorParams = Object.fromEntries(fields.map((key) => [key, this.getOrDecode(key)]));
     return this.materializedConstructor.fromCodec(constructorParams as CodecRecord<T>);
   }
 
