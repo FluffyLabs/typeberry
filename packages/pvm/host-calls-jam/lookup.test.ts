@@ -23,7 +23,7 @@ class TestAccounts implements Accounts {
       forAccount = new HashDictionary();
       this.data.set(serviceId, forAccount);
     }
-    forAccount.set(hashBytes(BytesBlob.from(key.raw)), value);
+    forAccount.set(hashBytes(BytesBlob.blobFrom(key.raw)), value);
   }
 }
 
@@ -62,7 +62,7 @@ function prepareRegsAndMemory(
     readResult: () => {
       const result = new Uint8Array(destinationLength);
       assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)), null);
-      return BytesBlob.from(result);
+      return BytesBlob.blobFrom(result);
     },
   };
 }
@@ -74,7 +74,7 @@ describe("HostCalls: Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 64);
-    accounts.add(serviceId, key, BytesBlob.fromString("hello world"));
+    accounts.add(serviceId, key, BytesBlob.blobFromString("hello world"));
 
     // when
     await lookup.execute(gas, registers, memory);
@@ -93,7 +93,7 @@ describe("HostCalls: Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 3);
-    accounts.add(serviceId, key, BytesBlob.fromString("hello world"));
+    accounts.add(serviceId, key, BytesBlob.blobFromString("hello world"));
 
     // when
     await lookup.execute(gas, registers, memory);
@@ -155,7 +155,7 @@ describe("HostCalls: Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
-    accounts.add(serviceId, key, BytesBlob.fromString("hello world"));
+    accounts.add(serviceId, key, BytesBlob.blobFromString("hello world"));
     registers.asUnsigned[DEST_LEN_REG] = 34;
 
     // when
@@ -171,7 +171,7 @@ describe("HostCalls: Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
-    accounts.add(serviceId, key, BytesBlob.fromString("hello world"));
+    accounts.add(serviceId, key, BytesBlob.blobFromString("hello world"));
     registers.asUnsigned[DEST_START_REG] = 2 ** 32 - 1;
     registers.asUnsigned[DEST_LEN_REG] = 2 ** 10;
 
@@ -188,7 +188,7 @@ describe("HostCalls: Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 0, { skipValue: true });
-    accounts.add(serviceId, key, BytesBlob.fromString("hello world"));
+    accounts.add(serviceId, key, BytesBlob.blobFromString("hello world"));
 
     // when
     await lookup.execute(gas, registers, memory);

@@ -79,7 +79,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, Config> {
 
   announce(sender: TypedChannel, headerWithHash: WithHash<HeaderHash, Header>) {
     const config = this.getConfig();
-    const encoded = Encoder.encodeObject(headerWithHashCodec, headerWithHash, config.chainSpec).buffer;
+    const encoded = Encoder.encodeObject(headerWithHashCodec, headerWithHash, config.chainSpec).raw;
     sender.sendSignal("bestBlock", encoded, [encoded.buffer as ArrayBuffer]);
   }
 

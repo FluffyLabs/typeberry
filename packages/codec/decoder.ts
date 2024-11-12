@@ -15,7 +15,7 @@ export class Decoder {
    * Create a new [`Decoder`] instance from given bytes blob and starting offset.
    */
   static fromBytesBlob(source: BytesBlob, offset?: number) {
-    return new Decoder(source.buffer, offset);
+    return new Decoder(source.raw, offset);
   }
 
   /**
@@ -236,7 +236,7 @@ export class Decoder {
     this.ensureHasBytes(len);
     const bytes = this.source.subarray(this.offset, this.offset + len);
     this.offset += len;
-    return BytesBlob.from(bytes);
+    return BytesBlob.blobFrom(bytes);
   }
 
   /** Decode a fixed-length sequence of bits of given length. */

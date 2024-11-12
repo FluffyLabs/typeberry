@@ -66,7 +66,7 @@ export const defaultAllocator = new SimpleAllocator();
 /** Hash given blob of bytes. */
 export function hashBytes(blob: BytesBlob | Uint8Array, allocator: HashAllocator = defaultAllocator): Blake2bHash {
   const hasher = blake2b(HASH_SIZE);
-  const bytes = blob instanceof BytesBlob ? blob.buffer : blob;
+  const bytes = blob instanceof BytesBlob ? blob.raw : blob;
   hasher?.update(bytes);
   const out = allocator.emptyHash();
   hasher?.digest(out.raw);
@@ -75,7 +75,7 @@ export function hashBytes(blob: BytesBlob | Uint8Array, allocator: HashAllocator
 
 /** Convert given string into bytes and hash it. */
 export function hashString(str: string, allocator: HashAllocator = defaultAllocator) {
-  return hashBytes(BytesBlob.fromString(str), allocator);
+  return hashBytes(BytesBlob.blobFromString(str), allocator);
 }
 
 /**

@@ -47,7 +47,7 @@ describe("JAM encoder / decoder", () => {
       while (--len >= 0) {
         res[len] = Math.floor(random() * 256);
       }
-      return BytesBlob.from(res);
+      return BytesBlob.blobFrom(res);
     }, codec.blob),
 
     generator(() => {

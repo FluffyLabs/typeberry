@@ -293,8 +293,8 @@ export namespace codec {
   export const string = descriptor<string>(
     "string",
     { bytes: TYPICAL_SEQUENCE_LENGTH, isExact: false },
-    (e, v) => e.bytesBlob(BytesBlob.from(new TextEncoder().encode(v))),
-    (d) => new TextDecoder("utf8", { fatal: true }).decode(d.bytesBlob().buffer),
+    (e, v) => e.bytesBlob(BytesBlob.blobFrom(new TextEncoder().encode(v))),
+    (d) => new TextDecoder("utf8", { fatal: true }).decode(d.bytesBlob().raw),
   );
 
   /** Variable-length bytes blob. */

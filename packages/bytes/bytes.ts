@@ -7,11 +7,11 @@ import { check } from "@typeberry/utils";
  * especially if the data is coming from a hex-encoded string.
  */
 export class BytesBlob {
-  readonly buffer: Uint8Array = new Uint8Array([]);
+  readonly raw: Uint8Array;
   readonly length: number = 0;
 
   protected constructor(data: Uint8Array) {
-    this.buffer = data;
+    this.raw = data;
     this.length = data.byteLength;
   }
 
@@ -19,13 +19,13 @@ export class BytesBlob {
    * Display a hex-encoded version of this byte blob.
    */
   toString() {
-    return bytesToHexString(this.buffer);
+    return bytesToHexString(this.raw);
   }
 
   /** Decode contained bytes as string. */
   asText() {
     const decoder = new TextDecoder();
-    return decoder.decode(this.buffer);
+    return decoder.decode(this.raw);
   }
 
   /** Compare the sequence to another one. */
@@ -34,28 +34,22 @@ export class BytesBlob {
       return false;
     }
 
-    for (let i = 0; i < this.length; i++) {
-      if (this.buffer[i] !== other.buffer[i]) {
-        return false;
-      }
-    }
-
-    return true;
+    return u8ArraySameLengthEqual(this.raw, other.raw);
   }
 
   /** Create a new [`BytesBlob'] by converting given UTF-u encoded string into bytes. */
-  static fromString(v: string): BytesBlob {
+  static blobFromString(v: string): BytesBlob {
     const encoder = new TextEncoder();
-    return BytesBlob.from(encoder.encode(v));
+    return BytesBlob.blobFrom(encoder.encode(v));
   }
 
   /** Create a new [`BytesBlob`] from existing [`Uint8Array`]. */
-  static from(v: Uint8Array): BytesBlob {
+  static blobFrom(v: Uint8Array): BytesBlob {
     return new BytesBlob(v);
   }
 
   /** Create a new [`BytesBlob`] by concatenating data from multiple `Uint8Array`s. */
-  static copyFromBlobs(v: Uint8Array, ...rest: Uint8Array[]) {
+  static blobFromParts(v: Uint8Array, ...rest: Uint8Array[]) {
     const totalLength = v.length + rest.reduce((a, v) => a + v.length, 0);
     const buffer = new Uint8Array(totalLength);
     buffer.set(v, 0);
@@ -68,8 +62,8 @@ export class BytesBlob {
   }
 
   /** Create a new [`BytesBlob`] from an array of bytes. */
-  static fromNumbers(v: number[]): BytesBlob {
-    check(v.find((x) => (x & 0xff) !== x) === undefined, "BytesBlob.fromNumbers used with non-byte number array.");
+  static blobFromNumbers(v: number[]): BytesBlob {
+    check(v.find((x) => (x & 0xff) !== x) === undefined, "BytesBlob.blobFromNumbers used with non-byte number array.");
     const arr = new Uint8Array(v);
     return new BytesBlob(arr);
   }
@@ -112,14 +106,16 @@ export class Bytes<T extends number> extends BytesBlob {
     this.length = len;
   }
 
-  /** Raw bytes array. */
-  get raw(): Uint8Array {
-    return this.buffer;
-  }
-
   /** Create new [`Bytes<X>`] given a backing buffer and it's length. */
   static fromBlob<X extends number>(v: Uint8Array, len: X): Bytes<X> {
     return new Bytes(v, len);
+  }
+
+  /** Create new [`Bytes<X>`] given an array of bytes and it's length. */
+  static fromNumbers<X extends number>(v: number[], len: X): Bytes<X> {
+    check(v.find((x) => (x & 0xff) !== x) === undefined, "Bytes.fromNumbers used with non-byte number array.");
+    const x = new Uint8Array(v);
+    return new Bytes(x, len);
   }
 
   /** Create an empty [`Bytes<X>`] of given length. */
@@ -142,7 +138,7 @@ export class Bytes<T extends number> extends BytesBlob {
     }
 
     const blob = BytesBlob.parseBlobNoPrefix(v);
-    return new Bytes(blob.buffer, len);
+    return new Bytes(blob.raw, len);
   }
 
   /** Parse a hex-encoded fixed-length bytes with `0x` prefix. */
@@ -152,7 +148,13 @@ export class Bytes<T extends number> extends BytesBlob {
     }
 
     const blob = BytesBlob.parseBlob(v);
-    return new Bytes(blob.buffer, len);
+    return new Bytes(blob.raw, len);
+  }
+
+  /** Compare the sequence to another one. */
+  isEqualTo(other: Bytes<T>): boolean {
+    check(this.length === other.length, "Comparing incorrectly typed bytes!");
+    return u8ArraySameLengthEqual(this.raw, other.raw);
   }
 }
 
@@ -201,4 +203,13 @@ function bytesToHexString(buffer: Uint8Array): string {
     s += nibbleToString(v & 0xf);
   }
   return s;
+}
+
+function u8ArraySameLengthEqual(self: Uint8Array, other: Uint8Array) {
+  for (let i = 0; i < self.length; i += 1) {
+    if (self[i] !== other[i]) {
+      return false;
+    }
+  }
+  return true;
 }

@@ -83,21 +83,21 @@ export async function runEcTest(test: EcTest) {
   }
 
   it("should encode data", () => {
-    const encoded = encodeData(test.data.buffer);
+    const encoded = encodeData(test.data.raw);
     // slice(0, 1023) is needed because test data is incorrect (1026 length)
-    const expected = test.chunks.slice(0, 1023).map((x) => x.buffer);
+    const expected = test.chunks.slice(0, 1023).map((x) => x.raw);
 
     assert.deepStrictEqual(encoded, expected);
   });
 
   it("should decode data", () => {
     // slice(0, 1023) is needed because test data is incorrect (1026 length)
-    const chunks = test.chunks.slice(0, 1023).map((chunk, idx) => [idx, chunk.buffer] as [number, Uint8Array]);
+    const chunks = test.chunks.slice(0, 1023).map((chunk, idx) => [idx, chunk.raw] as [number, Uint8Array]);
     const selectedChunks = getRandomItems(chunks, 342);
 
-    const decoded = decodeData(selectedChunks, test.data.buffer.length);
+    const decoded = decodeData(selectedChunks, test.data.raw.length);
 
-    assert.deepStrictEqual(decoded, test.data.buffer);
+    assert.deepStrictEqual(decoded, test.data.raw);
   });
 }
 

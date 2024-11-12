@@ -18,7 +18,7 @@ describe("Trie", async () => {
   it("Leaf Node", () => {
     const key = parseStateKey("16c72e0c2e0b78157e3a116d86d90461a199e439325317aea160b30347adb8ec");
     const value = BytesBlob.parseBlob("0x4227b4a465084852cd87d8f23bec0db6fa7766b9685ab5e095ef9cda9e15e49dff");
-    const valueHash = blake2bTrieHasher.hashConcat(value.buffer);
+    const valueHash = blake2bTrieHasher.hashConcat(value.raw);
     const node = LeafNode.fromValue(key, value, valueHash);
 
     assert.deepStrictEqual(
@@ -26,7 +26,7 @@ describe("Trie", async () => {
       Bytes.parseBytes("0x16c72e0c2e0b78157e3a116d86d90461a199e439325317aea160b30347adb8", 31),
     );
     assert.deepStrictEqual(node.getValueLength(), 0);
-    assert.deepStrictEqual(node.getValue().buffer, Bytes.zero(0).raw);
+    assert.deepStrictEqual(node.getValue().raw, Bytes.zero(0).raw);
     assert.deepStrictEqual(node.getValueHash(), valueHash);
   });
 
@@ -35,7 +35,7 @@ describe("Trie", async () => {
 
     trie.set(
       parseStateKey("16c72e0c2e0b78157e3a116d86d90461a199e439325317aea160b30347adb8ec"),
-      BytesBlob.fromNumbers([]),
+      BytesBlob.blobFromNumbers([]),
     );
 
     assert.deepStrictEqual(
@@ -49,7 +49,7 @@ describe("Trie", async () => {
 
     trie.set(
       parseStateKey("645eece27fdce6fd3852790131a50dc5b2dd655a855421b88700e6eb43279ad9"),
-      BytesBlob.fromNumbers([0x72]),
+      BytesBlob.blobFromNumbers([0x72]),
     );
 
     assert.deepStrictEqual(

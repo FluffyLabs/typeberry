@@ -39,7 +39,7 @@ function prepareRegsAndMemory(
   const data = encoder.viewResult();
 
   if (!skipAuthQueue) {
-    builder.setReadable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + data.buffer.length), data.buffer);
+    builder.setReadable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + data.raw.length), data.raw);
   }
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
   return {

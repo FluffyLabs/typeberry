@@ -126,7 +126,7 @@ export class Info implements HostCallHandler {
     }
 
     const encodedInfo = Encoder.encodeObject(AccountInfo.Codec, accountInfo);
-    const writeOk = memory.storeFrom(outputStart, encodedInfo.buffer);
+    const writeOk = memory.storeFrom(outputStart, encodedInfo.raw);
 
     regs.asUnsigned[IN_OUT_REG] = writeOk !== null ? HostCallResult.OOB : HostCallResult.OK;
     return Promise.resolve();

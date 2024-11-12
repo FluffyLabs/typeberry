@@ -28,7 +28,7 @@ export class InMemoryTrie {
 
   set(key: StateKey, value: BytesBlob, maybeValueHash?: TrieHash) {
     this.flat.set(key.toString(), value);
-    const valueHash = maybeValueHash ?? this.nodes.hasher.hashConcat(value.buffer);
+    const valueHash = maybeValueHash ?? this.nodes.hasher.hashConcat(value.raw);
     const leafNode = LeafNode.fromValue(key, value, valueHash);
     this.root = trieInsert(this.root, this.nodes, leafNode);
   }

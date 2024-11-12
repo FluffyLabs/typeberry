@@ -11,7 +11,7 @@ function generateBlob(): BytesBlob {
     const val = Math.floor(Math.random() * 255);
     result[i] = val;
   }
-  return BytesBlob.from(result);
+  return BytesBlob.blobFrom(result);
 }
 
 module.exports = () =>

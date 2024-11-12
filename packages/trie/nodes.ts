@@ -161,7 +161,7 @@ export class LeafNode {
       // truncate & copy the key
       node.data.set(key.raw.subarray(0, TRUNCATED_KEY_BYTES), 1);
       // copy the value
-      node.data.set(value.buffer, TRUNCATED_KEY_BYTES + 1);
+      node.data.set(value.raw, TRUNCATED_KEY_BYTES + 1);
     } else {
       node.data[0] = 0b11;
       // truncate & copy the key
@@ -200,7 +200,7 @@ export class LeafNode {
    */
   getValue(): BytesBlob {
     const len = this.getValueLength();
-    return BytesBlob.from(this.node.data.subarray(HASH_BYTES, HASH_BYTES + len));
+    return BytesBlob.blobFrom(this.node.data.subarray(HASH_BYTES, HASH_BYTES + len));
   }
 
   /**
