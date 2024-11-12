@@ -27,7 +27,7 @@ export interface BlocksDb {
 export class InMemoryBlocks implements BlocksDb {
   private readonly headersByHash: HashDictionary<HeaderHash, HeaderView> = new HashDictionary();
   private readonly extrinsicsByHeaderHash: HashDictionary<HeaderHash, ExtrinsicView> = new HashDictionary();
-  private bestHeaderHash = Bytes.zero(HASH_SIZE) as HeaderHash;
+  private bestHeaderHash: HeaderHash = Bytes.zero(HASH_SIZE).asOpaque();
 
   insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void> {
     this.headersByHash.set(block.hash, block.data.headerView() as HeaderView);

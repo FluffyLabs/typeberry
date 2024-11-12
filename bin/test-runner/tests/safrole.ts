@@ -1,11 +1,22 @@
-import type { BandersnatchKey, BandersnatchProof, Ed25519Key, EntropyHash } from "@typeberry/block";
+import {
+  BANDERSNATCH_PROOF_BYTES,
+  type BandersnatchKey,
+  type BandersnatchProof,
+  type Ed25519Key,
+  type EntropyHash,
+} from "@typeberry/block";
 import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
 import type { State as SafroleState } from "@typeberry/safrole";
-import { Safrole, type StateDiff as SafroleStateDiff, type ValidatorData } from "@typeberry/safrole";
-import type { BlsKey } from "@typeberry/safrole/crypto";
+import {
+  Safrole,
+  type StateDiff as SafroleStateDiff,
+  VALIDATOR_META_BYTES,
+  type ValidatorData,
+} from "@typeberry/safrole";
+import { BLS_KEY_BYTES, type BlsKey } from "@typeberry/safrole/crypto";
 
 type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}` ? `${T}${Capitalize<SnakeToCamel<U>>}` : S;
 
@@ -23,8 +34,8 @@ namespace fromJson {
   export const validatorData: FromJson<ValidatorData> = {
     ed25519: bytes32(),
     bandersnatch: bytes32(),
-    bls: json.fromString((v) => Bytes.parseBytes(v, 144) as BlsKey),
-    metadata: bytesBlob,
+    bls: json.fromString((v) => Bytes.parseBytes(v, BLS_KEY_BYTES) as BlsKey),
+    metadata: json.fromString((v) => Bytes.parseBytes(v, VALIDATOR_META_BYTES)),
   };
 
   export const ticketBody: FromJson<Ticket> = {
@@ -34,7 +45,7 @@ namespace fromJson {
 
   export const ticketEnvelope: FromJson<SignedTicket> = {
     attempt: "number",
-    signature: json.fromString((v) => Bytes.parseBytes(v, 784) as BandersnatchProof),
+    signature: json.fromString((v) => Bytes.parseBytes(v, BANDERSNATCH_PROOF_BYTES) as BandersnatchProof),
   };
 }
 

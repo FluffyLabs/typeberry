@@ -1,25 +1,26 @@
-import { tryAsCoreIndex } from "@typeberry/block";
-import { Decoder, codec } from "@typeberry/codec";
+import { Decoder, tryAsExactBytes } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
+import { ValidatorData } from "@typeberry/safrole";
+import { asOpaqueType } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import { AUTHORIZATION_QUEUE_SIZE, type AccumulationPartialState } from "./partial-state";
+import type { AccumulationPartialState } from "./partial-state";
 
 const IN_OUT_REG = 7;
+export const VALIDATOR_DATA_BYTES = tryAsExactBytes(ValidatorData.Codec.sizeHint);
 
 /**
- * Assign new fixed-length authorization queue to some core.
+ * Designate a new set of validator keys.
  *
- * https://graypaper.fluffylabs.dev/#/364735a/2ebf002ebf00
+ * https://graypaper.fluffylabs.dev/#/364735a/2e4e012e4e01
  */
-export class Assign implements HostCallHandler {
-  index = tryAsHostCallIndex(6);
+export class Designate implements HostCallHandler {
+  index = tryAsHostCallIndex(7);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
@@ -29,29 +30,22 @@ export class Assign implements HostCallHandler {
   ) {}
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
-    const coreIndex = regs.asUnsigned[IN_OUT_REG];
-    // o
-    const authorizationQueueStart = tryAsMemoryIndex(regs.asUnsigned[8]);
+    // `o`
+    const validatorsStart = tryAsMemoryIndex(regs.asUnsigned[IN_OUT_REG]);
 
-    const res = new Uint8Array(HASH_SIZE * AUTHORIZATION_QUEUE_SIZE);
-    const pageFault = memory.loadInto(res, authorizationQueueStart);
+    const res = new Uint8Array(VALIDATOR_DATA_BYTES * this.chainSpec.validatorsCount);
+    const pageFault = memory.loadInto(res, validatorsStart);
     // page fault while reading the memory.
     if (pageFault !== null) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
       return;
     }
 
-    // the core is unknown
-    if (coreIndex >= this.chainSpec.coresCount) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.CORE;
-      return;
-    }
-
     const d = Decoder.fromBlob(res);
-    const authQueue = d.sequenceFixLen(codec.bytes(HASH_SIZE), AUTHORIZATION_QUEUE_SIZE);
+    const validatorsData = d.sequenceFixLen(ValidatorData.Codec, this.chainSpec.validatorsCount);
 
     regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
-    this.partialState.updateAuthorizationQueue(tryAsCoreIndex(coreIndex), authQueue);
+    this.partialState.updateValidatorsData(asOpaqueType(validatorsData));
     return Promise.resolve();
   }
 }

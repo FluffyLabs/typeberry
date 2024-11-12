@@ -3,13 +3,13 @@ import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Encoder } from "@typeberry/codec";
 import { Registers } from "@typeberry/pvm-interpreter";
-import { type Gas, gasCounter } from "@typeberry/pvm-interpreter/gas";
+import { type Gas, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { HostCallResult } from "../results";
 import { Empower } from "./empower";
 import { TestAccumulate } from "./partial-state.test";
 
-const gas = gasCounter(0 as Gas);
+const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
 const SERVICE_M = 7;
 const SERVICE_A = 8;

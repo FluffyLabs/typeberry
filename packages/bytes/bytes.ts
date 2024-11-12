@@ -1,4 +1,4 @@
-import { check } from "@typeberry/utils";
+import { asOpaqueType, check } from "@typeberry/utils";
 
 /**
  * A variable-length blob of bytes with a concise text representation.
@@ -26,6 +26,11 @@ export class BytesBlob {
   asText() {
     const decoder = new TextDecoder();
     return decoder.decode(this.buffer);
+  }
+
+  /** Converts current type into some opaque extension. */
+  asOpaque() {
+    return asOpaqueType(this);
   }
 
   /** Compare the sequence to another one. */

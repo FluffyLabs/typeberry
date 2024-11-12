@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { type Gas, gasCounter } from "@typeberry/pvm-interpreter/gas";
+import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { Gas as GasHostCall } from "./gas";
 
@@ -11,7 +11,7 @@ describe("HostCalls: Gas", () => {
   it("should write U32 gas to registers", () => {
     const gas = new GasHostCall();
 
-    const counter = gasCounter(10_000 as Gas);
+    const counter = gasCounter(tryAsGas(10_000));
     const regs = new Registers();
 
     assert.deepStrictEqual(regs.asUnsigned[REG_LOWER], 0);
@@ -28,7 +28,7 @@ describe("HostCalls: Gas", () => {
   it("should write U64 gas to registers", () => {
     const gas = new GasHostCall();
 
-    const counter = gasCounter((2n ** 42n - 1n) as Gas);
+    const counter = gasCounter(tryAsGas(2n ** 42n - 1n));
     const regs = new Registers();
 
     assert.deepStrictEqual(regs.asUnsigned[REG_LOWER], 0);

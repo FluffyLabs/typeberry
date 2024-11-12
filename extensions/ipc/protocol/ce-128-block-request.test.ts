@@ -72,6 +72,6 @@ describe("CE 128: Block Request", () => {
   });
 });
 
-const getBlockSequence = (hash: HeaderHash, direction: Direction, maxBlocks: U32): Block[] => {
+const getBlockSequence = (_hash: HeaderHash, _direction: Direction, _maxBlocks: U32): Block[] => {
   return [TEST_BLOCK, TEST_BLOCK];
 };

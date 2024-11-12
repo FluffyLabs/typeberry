@@ -44,7 +44,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "qa": "biome ci; eslint .",
+    "qa": "biome ci && eslint .",
     "qa-fix": "npm run format; npm run lint",
     "format": "biome format --write",
     "lint": "biome lint --write; biome check --write",
