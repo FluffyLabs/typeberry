@@ -12,7 +12,7 @@ import { CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
 
 const IN_OUT_REG = 7;
-export const VALIDATOR_DATA_BYTES = 336;
+export const VALIDATOR_DATA_BYTES = ValidatorData.Codec.sizeHint;
 
 /**
  * Designate a new set of validator keys.
@@ -45,7 +45,7 @@ export class Designate implements HostCallHandler {
     const validatorsData = d.sequenceFixLen(ValidatorData.Codec, this.chainSpec.validatorsCount);
 
     regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
-    this.partialState.updateValidatorsData(validatorsData as KnownSizeArray<ValidatorData, "ValidatorsCount">);
+    this.partialState.updateValidatorsData(asOpaqueType(validatorsData));
     return Promise.resolve();
   }
 }
