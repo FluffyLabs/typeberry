@@ -9,6 +9,11 @@ export class TestAccumulate implements AccumulationPartialState {
   public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
   public readonly authQueue: Parameters<TestAccumulate["updateAuthorizationQueue"]>[] = [];
   public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
+  public checkpointCalled = 0;
+
+  checkpoint(): void {
+    this.checkpointCalled += 1;
+  }
 
   updateValidatorsData(validatorsData: KnownSizeArray<ValidatorData, "ValidatorsCount">): void {
     this.validatorsData.push(validatorsData);
