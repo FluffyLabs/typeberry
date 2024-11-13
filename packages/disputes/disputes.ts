@@ -7,7 +7,14 @@ import { DisputesErrorCode } from "./disputes-error-code";
 import { DisputesResult } from "./disputes-result";
 import { type DisputesState, hashComparator } from "./disputes-state";
 import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
-import { verifyCulpritSignature, verifyVoteSignature } from "./verification-utils";
+import {
+  type VerificationInput,
+  type VerificationOutput,
+  prepareCulpritSignature,
+  prepareFaultSignature,
+  prepareJudgementSignature,
+  vefifyAllSignatures,
+} from "./verification-utils";
 
 type V = [WorkReportHash, number][];
 
@@ -16,14 +23,20 @@ type NewDisputesRecordsItems = {
   toAddToBadSet: SortedSet<WorkReportHash>;
   toAddToWonkySet: SortedSet<WorkReportHash>;
 };
-
+const JUDGEMENT_INDEX = 0;
+const CULPRITS_INDEX = 1;
+const FAULTS_INDEX = 2;
 export class Disputes {
   constructor(
     public state: DisputesState,
     private readonly context: ChainSpec,
   ) {}
 
-  private verifyCulprits(disputes: DisputesExtrinsic, newItems: NewDisputesRecordsItems) {
+  private verifyCulprits(
+    disputes: DisputesExtrinsic,
+    newItems: NewDisputesRecordsItems,
+    verificationResult: VerificationOutput,
+  ) {
     for (const { key, workReportHash, signature } of disputes.culprits) {
       // check if some offenders weren't reported earlier
       // https://graypaper.fluffylabs.dev/#/364735a/123e01123e01
@@ -41,7 +54,8 @@ export class Disputes {
 
       // verify culprit signature
       // https://graypaper.fluffylabs.dev/#/364735a/124501124501
-      if (!verifyCulpritSignature(signature, key, workReportHash)) {
+      const result = verificationResult[CULPRITS_INDEX].find((f) => f.signature.isEqualTo(signature));
+      if (result && !result.isValid) {
         return DisputesErrorCode.BadSignature;
       }
     }
@@ -55,7 +69,11 @@ export class Disputes {
     return null;
   }
 
-  private verifyFaults(disputes: DisputesExtrinsic, newItems: NewDisputesRecordsItems) {
+  private verifyFaults(
+    disputes: DisputesExtrinsic,
+    newItems: NewDisputesRecordsItems,
+    verificationResult: VerificationOutput,
+  ) {
     for (const { key, workReportHash, signature, wasConsideredValid } of disputes.faults) {
       // check if some offenders weren't reported earlier
       // https://graypaper.fluffylabs.dev/#/364735a/128b01128b01
@@ -79,9 +97,10 @@ export class Disputes {
         }
       }
 
-      // verify fault signature
+      // verify fault signature. Verification was done earlier, here we only check the result.
       // https://graypaper.fluffylabs.dev/#/364735a/129201129201
-      if (!verifyVoteSignature(signature, key, workReportHash, wasConsideredValid)) {
+      const result = verificationResult[FAULTS_INDEX].find((f) => f.signature.isEqualTo(signature));
+      if (result && !result.isValid) {
         return DisputesErrorCode.BadSignature;
       }
     }
@@ -95,16 +114,16 @@ export class Disputes {
     return null;
   }
 
-  private verifyVerdicts(disputes: DisputesExtrinsic) {
+  private verifyVerdicts(disputes: DisputesExtrinsic, verificationResult: VerificationOutput) {
     const currentEpoch = Math.floor(this.state.timeslot / this.context.epochLength);
-    for (const { votesEpoch, votes, workReportHash } of disputes.verdicts) {
+    for (const { votesEpoch, votes } of disputes.verdicts) {
       // https://graypaper.fluffylabs.dev/#/364735a/12a50012a600
       if (votesEpoch !== currentEpoch && votesEpoch + 1 !== currentEpoch) {
         return DisputesErrorCode.BadJudgementAge;
       }
 
       const k = votesEpoch === currentEpoch ? this.state.currentValidatorData : this.state.previousValidatorData;
-      for (const { index, signature, isWorkReportValid } of votes) {
+      for (const { index, signature } of votes) {
         const key = k[index]?.ed25519;
 
         // no particular GP fragment but I think we don't belive in ghosts
@@ -112,9 +131,10 @@ export class Disputes {
           return DisputesErrorCode.BadValidatorIndex;
         }
 
-        // verify vote signature. Here we have a performance bottleneck
+        // verify vote signature. Verification was done earlier, here we only check the result.
         // https://graypaper.fluffylabs.dev/#/364735a/12b70012b700
-        if (!verifyVoteSignature(signature, key, workReportHash, isWorkReportValid)) {
+        const result = verificationResult[JUDGEMENT_INDEX].find((j) => j.signature.isEqualTo(signature));
+        if (result && !result.isValid) {
           return DisputesErrorCode.BadSignature;
         }
       }
@@ -274,15 +294,58 @@ export class Disputes {
     }
   }
 
+  private prepareSignaturesToVerification(disputes: DisputesExtrinsic) {
+    // Signature verification is heavy so we prepare array to verify it in the meantime,
+    const signaturesToVerification: VerificationInput = [[], [], []];
+    const currentEpoch = Math.floor(this.state.timeslot / this.context.epochLength);
+
+    for (const { votesEpoch, votes, workReportHash } of disputes.verdicts) {
+      const k = votesEpoch === currentEpoch ? this.state.currentValidatorData : this.state.previousValidatorData;
+      for (const j of votes) {
+        const validator = k[j.index];
+
+        // no particular GP fragment but I think we don't belive in ghosts
+        if (!validator) {
+          return DisputesErrorCode.BadValidatorIndex;
+        }
+
+        const key = validator.ed25519;
+        // verify vote signature
+        // https://graypaper.fluffylabs.dev/#/364735a/12b70012b700
+        signaturesToVerification[JUDGEMENT_INDEX].push(prepareJudgementSignature(j, workReportHash, key));
+      }
+    }
+
+    // verify culprit signature
+    // https://graypaper.fluffylabs.dev/#/364735a/124501124501
+    for (const c of disputes.culprits) {
+      signaturesToVerification[CULPRITS_INDEX].push(prepareCulpritSignature(c));
+    }
+
+    // verify fault signature
+    // https://graypaper.fluffylabs.dev/#/364735a/129201129201
+    for (const f of disputes.faults) {
+      signaturesToVerification[FAULTS_INDEX].push(prepareFaultSignature(f));
+    }
+
+    return signaturesToVerification;
+  }
+
   async transition(disputes: DisputesExtrinsic) {
+    const signaturesToVerifyOrError = this.prepareSignaturesToVerification(disputes);
+    if (signaturesToVerifyOrError === DisputesErrorCode.BadValidatorIndex) {
+      return DisputesResult.error(signaturesToVerifyOrError);
+    }
+    const verificationPromise = vefifyAllSignatures(signaturesToVerifyOrError);
     const v = this.buildV(disputes);
     const newItems = this.getDisputesRecordsNewItems(v);
 
+    const verificationResult = await verificationPromise;
     const inputError =
-      this.verifyVerdicts(disputes) ||
+      (await this.verifyVerdicts(disputes, verificationResult)) ||
       this.verifyV(v, disputes) ||
-      this.verifyCulprits(disputes, newItems) ||
-      this.verifyFaults(disputes, newItems) ||
+      (await this.verifyCulprits(disputes, newItems, verificationResult)) ||
+      (await this.verifyFaults(disputes, newItems, verificationResult)) ||
       this.verifyIfAlreadyJudged(disputes);
 
     if (inputError !== null) {

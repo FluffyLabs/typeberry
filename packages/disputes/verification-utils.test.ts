@@ -1,13 +1,13 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import type { Ed25519Key, Ed25519Signature, WorkReportHash } from "@typeberry/block";
+import type { Ed25519Key, Ed25519Signature, ValidatorIndex, WorkReportHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { verifyCulpritSignature, verifyVoteSignature } from "./verification-utils";
+import { prepareCulpritSignature, prepareJudgementSignature, vefifyAllSignatures } from "./verification-utils";
 
 describe("verification-utils", () => {
   describe("verifyVoteSignature", () => {
-    it("should return true for valid signature and valid work report", () => {
+    it("should return true for valid signature and valid work report", async () => {
       const signature = Bytes.parseBytes(
         "0x0b1e29dbda5e3bba5dde21c81a8178b115ebf0cf5920fe1a38e897ecadd91718e34bf01c9fc7fdd0df31d83020231b6e8338c8dc204b618cbde16a03cb269d05",
         64,
@@ -21,13 +21,18 @@ describe("verification-utils", () => {
         32,
       ) as WorkReportHash;
       const isWorkReportValid = true;
+      const item = prepareJudgementSignature(
+        { index: 0 as ValidatorIndex, isWorkReportValid, signature },
+        workReportHash,
+        key,
+      );
 
-      const result = verifyVoteSignature(signature, key, workReportHash, isWorkReportValid);
+      const [[result]] = await vefifyAllSignatures([[item]]);
 
-      assert.strictEqual(result, true);
+      assert.strictEqual(result.isValid, true);
     });
 
-    it("should return false for invalid signature (value of isWorkReportValid is changed)", () => {
+    it("should return false for invalid signature (value of isWorkReportValid is changed)", async () => {
       const signature = Bytes.parseBytes(
         "0x0b1e29dbda5e3bba5dde21c81a8178b115ebf0cf5920fe1a38e897ecadd91718e34bf01c9fc7fdd0df31d83020231b6e8338c8dc204b618cbde16a03cb269d05",
         64,
@@ -41,13 +46,18 @@ describe("verification-utils", () => {
         32,
       ) as WorkReportHash;
       const isWorkReportValid = false;
+      const item = prepareJudgementSignature(
+        { index: 0 as ValidatorIndex, isWorkReportValid, signature },
+        workReportHash,
+        key,
+      );
 
-      const result = verifyVoteSignature(signature, key, workReportHash, isWorkReportValid);
+      const [[result]] = await vefifyAllSignatures([[item]]);
 
-      assert.strictEqual(result, false);
+      assert.strictEqual(result.isValid, false);
     });
 
-    it("should return true for valid signature and invalid work report", () => {
+    it("should return true for valid signature and invalid work report", async () => {
       const signature = Bytes.parseBytes(
         "0xd76bba06ffb8042bedce3f598e22423660e64f2108566cbd548f6d2c42b1a39607a214bddfa7ccccf83fe993728a58393c64283b8a9ab8f3dff49cbc3cc2350e",
         64,
@@ -61,13 +71,18 @@ describe("verification-utils", () => {
         32,
       ) as WorkReportHash;
       const isWorkReportValid = false;
+      const item = prepareJudgementSignature(
+        { index: 0 as ValidatorIndex, isWorkReportValid, signature },
+        workReportHash,
+        key,
+      );
 
-      const result = verifyVoteSignature(signature, key, workReportHash, isWorkReportValid);
+      const [[result]] = await vefifyAllSignatures([[item]]);
 
-      assert.strictEqual(result, true);
+      assert.strictEqual(result.isValid, true);
     });
 
-    it("should return false for invalid signature (the first byte in signature is changed)", () => {
+    it("should return false for invalid signature (the first byte in signature is changed)", async () => {
       const signature = Bytes.parseBytes(
         "0x1b1e29dbda5e3bba5dde21c81a8178b115ebf0cf5920fe1a38e897ecadd91718e34bf01c9fc7fdd0df31d83020231b6e8338c8dc204b618cbde16a03cb269d05",
         64,
@@ -81,15 +96,20 @@ describe("verification-utils", () => {
         32,
       ) as WorkReportHash;
       const isWorkReportValid = true;
+      const item = prepareJudgementSignature(
+        { index: 0 as ValidatorIndex, isWorkReportValid, signature },
+        workReportHash,
+        key,
+      );
 
-      const result = verifyVoteSignature(signature, key, workReportHash, isWorkReportValid);
+      const [[result]] = await vefifyAllSignatures([[item]]);
 
-      assert.strictEqual(result, false);
+      assert.strictEqual(result.isValid, false);
     });
   });
 
   describe("verifyCulpritSignature", () => {
-    it("should return true for valid signature", () => {
+    it("should return true for valid signature", async () => {
       const signature = Bytes.parseBytes(
         "0xf23e45d7f8977a8eda61513bd5cab1451eb64f265edf340c415f25480123391364521f9bb4c14f840a0dae20eb4dc4a735c961d9966da51dde0d85281dc1dc0b",
         64,
@@ -102,13 +122,14 @@ describe("verification-utils", () => {
         "0x11da6d1f761ddf9bdb4c9d6e5303ebd41f61858d0a5647a1a7bfe089bf921be9",
         32,
       ) as WorkReportHash;
+      const item = prepareCulpritSignature({ key, signature, workReportHash });
 
-      const result = verifyCulpritSignature(signature, key, workReportHash);
+      const [[result]] = await vefifyAllSignatures([[item]]);
 
-      assert.strictEqual(result, true);
+      assert.strictEqual(result.isValid, true);
     });
 
-    it("should return false for invalid signature (the first byte in signature is changed)", () => {
+    it("should return false for invalid signature (the first byte in signature is changed)", async () => {
       const signature = Bytes.parseBytes(
         "0xe23e45d7f8977a8eda61513bd5cab1451eb64f265edf340c415f25480123391364521f9bb4c14f840a0dae20eb4dc4a735c961d9966da51dde0d85281dc1dc0b",
         64,
@@ -121,10 +142,11 @@ describe("verification-utils", () => {
         "0x11da6d1f761ddf9bdb4c9d6e5303ebd41f61858d0a5647a1a7bfe089bf921be9",
         32,
       ) as WorkReportHash;
+      const item = prepareCulpritSignature({ key, signature, workReportHash });
 
-      const result = verifyCulpritSignature(signature, key, workReportHash);
+      const [[result]] = await vefifyAllSignatures([[item]]);
 
-      assert.strictEqual(result, false);
+      assert.strictEqual(result.isValid, false);
     });
   });
 });
