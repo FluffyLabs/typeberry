@@ -24,14 +24,34 @@ export type Comparator<V> = (self: V, other: V) => Ordering;
  * Duplicates are allowed, so make sure to check presence before inserting.
  */
 export class SortedArray<V> {
-  private readonly array: V[];
-  private readonly comparator: Comparator<V>;
-
-  constructor(comparator: Comparator<V>, data: V[] = []) {
-    this.array = data.slice();
-    this.array.sort(comparator);
-    this.comparator = comparator;
+  static fromArray<V>(comparator: Comparator<V>, array: V[] = []) {
+    const data = array.slice();
+    data.sort(comparator);
+    return new SortedArray(data, comparator);
   }
+
+  static fromSortedArray<V>(comparator: Comparator<V>, array: V[] = []) {
+    const dataLength = array.length;
+
+    if (dataLength === 0) {
+      return new SortedArray([], comparator);
+    }
+
+    const data = array.slice();
+
+    for (let i = 1; i < dataLength; i++) {
+      if (comparator(data[i - 1], data[i]) === Ordering.Greater) {
+        throw new Error("Array is not sorted!");
+      }
+    }
+
+    return new SortedArray(data, comparator);
+  }
+
+  protected constructor(
+    protected readonly array: V[],
+    protected readonly comparator: Comparator<V>,
+  ) {}
 
   /** Insert new element to the collection. */
   public insert(v: V) {
@@ -92,7 +112,7 @@ export class SortedArray<V> {
     return this.array.slice(start, end);
   }
 
-  private binarySearch(v: V) {
+  protected binarySearch(v: V) {
     const arr = this.array;
     const cmp = this.comparator;
 

@@ -19,7 +19,7 @@ export class Disputes {
   private verifyCulprits(disputes: DisputesExtrinsic) {
     for (const { key, workReportHash, signature } of disputes.culprits) {
       // https://graypaper.fluffylabs.dev/#/364735a/123e01123e01
-      const isInPunishSet = !!this.state.disputesRecords.punishSet.find((item) => item.isEqualTo(key));
+      const isInPunishSet = !!this.state.disputesRecords.punishSet.findExact(key);
       if (isInPunishSet) {
         return DisputesErrorCode.OffenderAlreadyReported;
       }
@@ -47,7 +47,7 @@ export class Disputes {
   private verifyFaults(disputes: DisputesExtrinsic) {
     for (const { key, workReportHash, signature, wasConsideredValid } of disputes.faults) {
       // https://graypaper.fluffylabs.dev/#/364735a/128b01128b01
-      const isInPunishSet = !!this.state.disputesRecords.punishSet.find((item) => item.isEqualTo(key));
+      const isInPunishSet = !!this.state.disputesRecords.punishSet.findExact(key);
 
       if (isInPunishSet) {
         return DisputesErrorCode.OffenderAlreadyReported;
@@ -114,11 +114,9 @@ export class Disputes {
   private verifyIfAlreadyJudged(disputes: DisputesExtrinsic) {
     for (const verdict of disputes.verdicts) {
       // https://graypaper.fluffylabs.dev/#/364735a/120b02120b02
-      const isInGoodSet = this.state.disputesRecords.goodSet.find((record) => record.isEqualTo(verdict.workReportHash));
-      const isInBadSet = this.state.disputesRecords.badSet.find((record) => record.isEqualTo(verdict.workReportHash));
-      const isInWonkySet = this.state.disputesRecords.wonkySet.find((record) =>
-        record.isEqualTo(verdict.workReportHash),
-      );
+      const isInGoodSet = this.state.disputesRecords.goodSet.findExact(verdict.workReportHash);
+      const isInBadSet = this.state.disputesRecords.badSet.findExact(verdict.workReportHash);
+      const isInWonkySet = this.state.disputesRecords.wonkySet.findExact(verdict.workReportHash);
 
       if (isInGoodSet || isInBadSet || isInWonkySet) {
         return DisputesErrorCode.AlreadyJudged;
@@ -172,20 +170,20 @@ export class Disputes {
     return null;
   }
 
-  updateDisputesRecords(v: V) {
+  private updateDisputesRecords(v: V) {
     // https://graypaper.fluffylabs.dev/#/364735a/123403128f03
     for (const [r, sum] of v) {
       if (sum >= this.context.validatorsSuperMajority) {
-        this.state.disputesRecords.goodSet.push(r);
+        this.state.disputesRecords.goodSet.insert(r);
       } else if (sum === 0) {
-        this.state.disputesRecords.badSet.push(r);
+        this.state.disputesRecords.badSet.insert(r);
       } else if (sum >= Math.floor(this.context.validatorsCount / 3)) {
-        this.state.disputesRecords.wonkySet.push(r);
+        this.state.disputesRecords.wonkySet.insert(r);
       }
     }
   }
 
-  clearCoreAssignment(v: V) {
+  private clearCoreAssignment(v: V) {
     // https://graypaper.fluffylabs.dev/#/364735a/120403122903
     for (let c = 0; c < this.state.availabilityAssignment.length; c++) {
       const assignment = this.state.availabilityAssignment[c];
@@ -198,6 +196,27 @@ export class Disputes {
           this.state.availabilityAssignment[c] = undefined;
         }
       }
+    }
+  }
+
+  private getOffenders(disputes: DisputesExtrinsic) {
+    const offendersMarks: Ed25519Key[] = [];
+
+    for (const { key } of disputes.culprits) {
+      offendersMarks.push(key);
+    }
+
+    for (const { key } of disputes.faults) {
+      offendersMarks.push(key);
+    }
+
+    return offendersMarks;
+  }
+
+  private updatePunishSet(offenders: Ed25519Key[]) {
+    // GP: https://graypaper.fluffylabs.dev/#/364735a/12b00312cd03
+    for (const offender of offenders) {
+      this.state.disputesRecords.punishSet.insert(offender);
     }
   }
 
@@ -224,18 +243,8 @@ export class Disputes {
     this.clearCoreAssignment(v);
 
     // GP: https://graypaper.fluffylabs.dev/#/364735a/12b00312cd03
-    const offendersMarks: Ed25519Key[] = [];
-
-    for (const { key } of disputes.culprits) {
-      offendersMarks.push(key);
-      this.state.disputesRecords.punishSet.push(key);
-    }
-
-    for (const { key } of disputes.faults) {
-      offendersMarks.push(key);
-      this.state.disputesRecords.punishSet.push(key);
-    }
-
+    const offendersMarks = this.getOffenders(disputes);
+    this.updatePunishSet(offendersMarks);
     return DisputesResult.ok(offendersMarks);
   }
 }

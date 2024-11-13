@@ -33,6 +33,19 @@ class TestAvailabilityAssignment {
   };
   dummy_work_report!: Bytes<354>;
   timeout!: number;
+
+  static fromAvailabilityAssignment(availabilityAssignments: (AvailabilityAssignment | undefined)[]) {
+    return availabilityAssignments.map((availabilityAssignment) => {
+      if (!availabilityAssignment) {
+        return availabilityAssignment;
+      }
+
+      const rho = new TestAvailabilityAssignment();
+      rho.dummy_work_report = availabilityAssignment.workReport;
+      rho.timeout = availabilityAssignment.timeout;
+      return rho;
+    });
+  }
 }
 
 class DisputesOutputMarks {
@@ -54,6 +67,15 @@ class TestDisputesRecords {
   psi_b!: WorkReportHash[];
   psi_w!: WorkReportHash[];
   psi_o!: Ed25519Key[];
+
+  static fromDisputesRecords(disputesRecords: DisputesRecords) {
+    const psi = new TestDisputesRecords();
+    psi.psi_g = disputesRecords.goodSet.slice();
+    psi.psi_b = disputesRecords.badSet.slice();
+    psi.psi_w = disputesRecords.wonkySet.slice();
+    psi.psi_o = disputesRecords.punishSet.slice();
+    return psi;
+  }
 }
 
 class TestState {
@@ -71,9 +93,21 @@ class TestState {
   kappa!: ValidatorData[];
   lambda!: ValidatorData[];
 
+  static fromDisputesState(disputesState: DisputesState) {
+    const state = new TestState();
+
+    state.psi = TestDisputesRecords.fromDisputesRecords(disputesState.disputesRecords);
+    state.rho = TestAvailabilityAssignment.fromAvailabilityAssignment(disputesState.availabilityAssignment);
+    state.tau = disputesState.timeslot;
+    state.kappa = disputesState.currentValidatorData;
+    state.lambda = disputesState.previousValidatorData;
+
+    return state;
+  }
+
   static toDisputesState(testState: TestState) {
     const psi = testState.psi;
-    const disputesRecords = new DisputesRecords(psi.psi_g, psi.psi_b, psi.psi_w, psi.psi_o);
+    const disputesRecords = DisputesRecords.tryToCreateFromArrays(psi.psi_g, psi.psi_b, psi.psi_w, psi.psi_o);
     const rho = testState.rho;
     const availabilityAssignment = rho.map((item) =>
       !item ? item : new AvailabilityAssignment(item.dummy_work_report, item.timeout),
@@ -163,5 +197,5 @@ export async function runDisputesTest(testContent: DisputesTest, path: string) {
 
   assert.deepEqual(result.err, testContent.output.err);
   assert.deepEqual(result.offendersMarks, testContent.output.ok?.offenders_mark);
-  assert.deepEqual(disputes.state, TestState.toDisputesState(testContent.post_state));
+  assert.deepEqual(TestState.fromDisputesState(disputes.state), testContent.post_state);
 }
