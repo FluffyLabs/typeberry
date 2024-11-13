@@ -1,8 +1,8 @@
 import assert from "node:assert";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
 import { Bytes } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
-import { type CodecRecord, type View, codec } from "@typeberry/codec/descriptors";
+import { type CodecRecord, Decoder, Encoder, type View } from "@typeberry/codec";
+import { codec } from "@typeberry/codec/descriptors";
 import { type U64, tryAsU64 } from "@typeberry/numbers";
 
 class TestHeader {
