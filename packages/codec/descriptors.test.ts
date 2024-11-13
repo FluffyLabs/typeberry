@@ -82,6 +82,7 @@ describe("Codec Descriptors / class", () => {
     assert.deepStrictEqual(headerView.parentHeaderHash(), data.parentHeaderHash);
     assert.deepStrictEqual(headerView.extrinsicHash(), data.extrinsicHash);
     assert.deepStrictEqual(headerView.priorStateRoot(), data.priorStateRoot);
+    assert.deepStrictEqual(headerView.encoded(), data.bytes);
   });
 
   it("should materialize a lazy view", () => {
@@ -96,6 +97,7 @@ describe("Codec Descriptors / class", () => {
     assert.deepStrictEqual(header.parentHeaderHash, data.parentHeaderHash);
     assert.deepStrictEqual(header.extrinsicHash, data.extrinsicHash);
     assert.deepStrictEqual(header.priorStateRoot, data.priorStateRoot);
+    assert.deepStrictEqual(headerView.encoded(), data.bytes);
   });
 
   it("should decode a class", () => {
@@ -195,12 +197,14 @@ describe("Codec Descriptors / nested views", () => {
   it("should encode in the same way", () => {
     // given
     const block = Decoder.decodeObject(TestBlock.Codec, testData().bytes);
+    const blockView = TestBlock.Codec.View.fromBytesBlob(testData().bytes);
 
     // when
     const encoded = Encoder.encodeObject(TestBlock.Codec, block);
 
     // then
     assert.strictEqual(encoded.toString(), testData().bytes.toString());
+    assert.strictEqual(blockView.encoded().toString(), testData().bytes.toString());
   });
 
   it("should return a nested view", () => {
@@ -214,6 +218,20 @@ describe("Codec Descriptors / nested views", () => {
     // then
     assert.strictEqual(`${headerView.extrinsicHash()}`, `${data.extrinsicHash}`);
     assert.strictEqual(`${headerView.priorStateRoot()}`, `${data.priorStateRoot}`);
+  });
+
+  it("should return encoded data of the nested view", () => {
+    // given
+    const data = testData();
+    const blockView = new TestBlock.Codec.View(Decoder.fromBytesBlob(data.bytes));
+    const block = Decoder.decodeObject(TestBlock.Codec, data.bytes);
+    const headerEncoded = Encoder.encodeObject(TestHeader.Codec, block.header);
+
+    // when
+    const headerView = blockView.headerView();
+
+    // then
+    assert.strictEqual(`${headerView.encoded()}`, `${headerEncoded}`);
   });
 
   it("should create a view after field was decoded", () => {
