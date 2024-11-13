@@ -41,7 +41,7 @@ describe("Codec Descriptors / object", () => {
     };
     const encoded = Encoder.encodeObject(headerCodec, elem);
     assert.deepStrictEqual(
-      encoded.toString(),
+      `${encoded}`,
       "0x010101010101010101010101010101010101010101010101010101010101010102020202020202020202020202020202020202020202020202020202020202020303030303030303030303030303030303030303030303030303030303030303",
     );
 
@@ -187,24 +187,25 @@ describe("Codec Descriptors / nested views", () => {
     assert.strictEqual(block.someUnrelatedField, 0xdeadbeef);
 
     const header = block.header;
-    assert.strictEqual(header.parentHeaderHash.toString(), data.parentHeaderHash.toString());
-    assert.strictEqual(header.priorStateRoot.toString(), data.priorStateRoot.toString());
-    assert.strictEqual(header.extrinsicHash.toString(), data.extrinsicHash.toString());
+    assert.strictEqual(`${header.parentHeaderHash}`, `${data.parentHeaderHash}`);
+    assert.strictEqual(`${header.priorStateRoot}`, `${data.priorStateRoot}`);
+    assert.strictEqual(`${header.extrinsicHash}`, `${data.extrinsicHash}`);
 
     assert.deepStrictEqual(block.extrinsic, new TestExtrinsic("hello world!"));
   });
 
   it("should encode in the same way", () => {
     // given
-    const block = Decoder.decodeObject(TestBlock.Codec, testData().bytes);
-    const blockView = TestBlock.Codec.View.fromBytesBlob(testData().bytes);
+    const blockBytes = testData().bytes;
+    const block = Decoder.decodeObject(TestBlock.Codec, blockBytes);
+    const blockView = TestBlock.Codec.View.fromBytesBlob(blockBytes);
 
     // when
     const encoded = Encoder.encodeObject(TestBlock.Codec, block);
 
     // then
-    assert.strictEqual(encoded.toString(), testData().bytes.toString());
-    assert.strictEqual(blockView.encoded().toString(), testData().bytes.toString());
+    assert.strictEqual(`${encoded}`, `${blockBytes}`);
+    assert.strictEqual(`${blockView.encoded()}`, `${blockBytes}`);
   });
 
   it("should return a nested view", () => {
@@ -300,7 +301,7 @@ describe("Codec Descriptors / dictionary", () => {
 
     assert.deepStrictEqual(decoded, input);
     assert.deepStrictEqual(
-      encoded.toString(),
+      `${encoded}`,
       "0x030100000001010101010101010101010101010101010101010101010101010101010101010a0000000a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0f0000000f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
     );
   });
@@ -321,7 +322,7 @@ describe("Codec Descriptors / dictionary", () => {
 
     assert.deepStrictEqual(decoded, input);
     assert.deepStrictEqual(
-      encoded.toString(),
+      `${encoded}`,
       "0x0100000001010101010101010101010101010101010101010101010101010101010101010a0000000a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0f0000000f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
     );
   });
