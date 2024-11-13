@@ -5,7 +5,7 @@
   "results": [
     {
       "name": "Get the first field from View",
-      "ops": 2631399.21,
+      "ops": 1891643.6,
       "margin": 5
     },
     {
@@ -25,7 +25,7 @@
     },
     {
       "name": "Get only third field from View",
-      "ops": 1675002.75,
+      "ops": 1875002.75,
       "margin": 5
     },
     {
@@ -35,7 +35,7 @@
     }
   ],
   "fastest": {
-    "name": "Get the first field from View",
+    "name": "Get only third field from View",
     "index": 0
   },
   "slowest": {
