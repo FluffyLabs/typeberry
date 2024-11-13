@@ -59,7 +59,7 @@ export class GeneratorReady extends State<"ready(generator)", Finished, Config> 
   sendBlock(port: TypedChannel, block: BytesBlob) {
     // TODO [ToDr] How to make a better API to pass this binary data around?
     // Currently we don't guarantee that the underlying buffer is actually `ArrayBuffer`.
-    port.sendSignal("block", block.buffer, [block.buffer.buffer as ArrayBuffer]);
+    port.sendSignal("block", block.raw, [block.raw.buffer as ArrayBuffer]);
   }
 
   getConfig(): Config {

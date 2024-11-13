@@ -45,8 +45,8 @@ export class LmdbBlocks implements BlocksDb {
     // TODO [ToDr] we could use a single Uint8Array to perform the encoding instead of doing allocs.
     const header = Encoder.encodeObject(Header.Codec, block.data.header(), this.chainSpec);
     const extrinsic = Encoder.encodeObject(Extrinsic.Codec, block.data.extrinsic(), this.chainSpec);
-    const a = this.headers.put(block.hash.raw, header.buffer);
-    const b = this.extrinsics.put(block.hash.raw, extrinsic.buffer);
+    const a = this.headers.put(block.hash.raw, header.raw);
+    const b = this.extrinsics.put(block.hash.raw, extrinsic.raw);
     await Promise.all([a, b]);
     return;
   }
@@ -66,7 +66,7 @@ export class LmdbBlocks implements BlocksDb {
       return null;
     }
 
-    return Header.Codec.View.fromBytesBlob(BytesBlob.from(data), this.chainSpec) as HeaderView;
+    return Header.Codec.View.fromBytesBlob(BytesBlob.blobFrom(data), this.chainSpec) as HeaderView;
   }
 
   getExtrinsic(hash: HeaderHash): ExtrinsicView | null {
@@ -74,6 +74,6 @@ export class LmdbBlocks implements BlocksDb {
     if (!data) {
       return null;
     }
-    return Extrinsic.Codec.View.fromBytesBlob(BytesBlob.from(data), this.chainSpec) as ExtrinsicView;
+    return Extrinsic.Codec.View.fromBytesBlob(BytesBlob.blobFrom(data), this.chainSpec) as ExtrinsicView;
   }
 }

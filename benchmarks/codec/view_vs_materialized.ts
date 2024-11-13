@@ -88,7 +88,7 @@ module.exports = () =>
     ),
 
     ...compare(
-      "only third fields",
+      "only third field",
       (view) => {
         view.parentHeaderHash();
       },

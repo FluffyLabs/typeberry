@@ -57,8 +57,8 @@ export class Lookup implements HostCallHandler {
     }
 
     // copy value to the memory and set the length to register 7
-    memory.storeFrom(destinationStart, value.buffer.subarray(0, destinationLen));
-    regs.asUnsigned[IN_OUT_REG] = value.buffer.length;
+    memory.storeFrom(destinationStart, value.raw.subarray(0, destinationLen));
+    regs.asUnsigned[IN_OUT_REG] = value.raw.length;
     return Promise.resolve();
   }
 }

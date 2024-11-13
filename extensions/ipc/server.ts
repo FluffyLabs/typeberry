@@ -16,7 +16,7 @@ export class MessageSenderAdapter implements MessageSender {
   constructor(private readonly socket: Socket) {}
 
   send(data: BytesBlob): void {
-    sendWithLengthPrefix(this.socket, data.buffer);
+    sendWithLengthPrefix(this.socket, data.raw);
   }
 
   close(): void {

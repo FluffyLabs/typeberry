@@ -59,10 +59,10 @@ const DEST_START_REG = 9;
 const DEST_LEN_REG = 10;
 
 function prepareKey(serviceId: ServiceId, key: string) {
-  const keyBytes = BytesBlob.fromString(key);
+  const keyBytes = BytesBlob.blobFromString(key);
   const serviceIdAndKey = new Uint8Array(SERVICE_ID_BYTES + keyBytes.length);
   writeServiceIdAsLeBytes(serviceId, serviceIdAndKey);
-  serviceIdAndKey.set(keyBytes.buffer, SERVICE_ID_BYTES);
+  serviceIdAndKey.set(keyBytes.raw, SERVICE_ID_BYTES);
   return { key: keyBytes, hash: hashBytes(serviceIdAndKey) };
 }
 
@@ -81,14 +81,10 @@ function prepareRegsAndMemory(
 
   const builder = new MemoryBuilder();
   if (!skipKey) {
-    builder.setReadable(tryAsMemoryIndex(keyAddress), tryAsMemoryIndex(keyAddress + key.length), key.buffer);
+    builder.setReadable(tryAsMemoryIndex(keyAddress), tryAsMemoryIndex(keyAddress + key.length), key.raw);
   }
   if (!skipValue && dataInMemory.length > 0) {
-    builder.setReadable(
-      tryAsMemoryIndex(memStart),
-      tryAsMemoryIndex(memStart + dataInMemory.length),
-      dataInMemory.buffer,
-    );
+    builder.setReadable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + dataInMemory.length), dataInMemory.raw);
   }
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
   return {
@@ -104,8 +100,8 @@ describe("HostCalls: Write", () => {
     const serviceId = tryAsServiceId(10_000);
     write.currentServiceId = serviceId;
     const { key, hash } = prepareKey(write.currentServiceId, "imma key");
-    const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.fromString("hello world!"));
-    accounts.setSnapshotData(serviceId, hash, BytesBlob.fromString("old data"));
+    const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
+    accounts.setSnapshotData(serviceId, hash, BytesBlob.blobFromString("old data"));
 
     // when
     await write.execute(gas, registers, memory);
@@ -121,9 +117,9 @@ describe("HostCalls: Write", () => {
     const serviceId = tryAsServiceId(10_000);
     write.currentServiceId = serviceId;
     const { key, hash } = prepareKey(write.currentServiceId, "xyz");
-    const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.fromNumbers([]));
+    const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromNumbers([]));
     const h = new HashDictionary<Blake2bHash, BytesBlob>();
-    h.set(hash, BytesBlob.fromString("hello world!"));
+    h.set(hash, BytesBlob.blobFromString("hello world!"));
     accounts.data.set(serviceId, h);
 
     // when
@@ -140,7 +136,9 @@ describe("HostCalls: Write", () => {
     const serviceId = tryAsServiceId(10_000);
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
-    const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.fromString("hello world!"), { skipKey: true });
+    const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"), {
+      skipKey: true,
+    });
 
     // when
     await write.execute(gas, registers, memory);
@@ -156,7 +154,9 @@ describe("HostCalls: Write", () => {
     const serviceId = tryAsServiceId(10_000);
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
-    const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.fromString("hello world!"), { skipValue: true });
+    const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"), {
+      skipValue: true,
+    });
 
     // when
     await write.execute(gas, registers, memory);
@@ -172,7 +172,7 @@ describe("HostCalls: Write", () => {
     const serviceId = tryAsServiceId(10_000);
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
-    const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.fromString("hello world!"));
+    const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
     registers.asUnsigned[KEY_LEN_REG] = 10;
 
     // when
@@ -189,7 +189,7 @@ describe("HostCalls: Write", () => {
     const serviceId = tryAsServiceId(10_000);
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
-    const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.fromString("hello world!"));
+    const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
     registers.asUnsigned[DEST_LEN_REG] = 50;
 
     // when
@@ -206,8 +206,8 @@ describe("HostCalls: Write", () => {
     const serviceId = tryAsServiceId(10_000);
     write.currentServiceId = serviceId;
     const { key, hash } = prepareKey(write.currentServiceId, "imma key");
-    const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.fromString("hello world!"));
-    accounts.setSnapshotData(serviceId, hash, BytesBlob.fromString("old data"));
+    const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
+    accounts.setSnapshotData(serviceId, hash, BytesBlob.blobFromString("old data"));
     accounts.isFull = true;
 
     // when

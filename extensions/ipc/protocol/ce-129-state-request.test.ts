@@ -11,7 +11,7 @@ const HEADER_HASH = Bytes.fromBlob(
   HASH_SIZE,
 ) as HeaderHash;
 const KEY = Bytes.fromBlob(hashString("0x83bd3bde264a79a2e67c487696c1d7f0b549da89").raw.subarray(0, 31), 31);
-const EXPECTED_VALUE = BytesBlob.fromNumbers([255, 255, 255, 0]);
+const EXPECTED_VALUE = BytesBlob.blobFromNumbers([255, 255, 255, 0]);
 
 class FakeMessageSender implements MessageSender {
   constructor(
@@ -38,7 +38,7 @@ describe("CE 129: State Request", () => {
     handlers.client = new MessageHandler(
       new FakeMessageSender(
         (data) => {
-          handlers.server.onSocketMessage(data.buffer);
+          handlers.server.onSocketMessage(data.raw);
         },
         () => {
           handlers.server.onClose({});
@@ -48,7 +48,7 @@ describe("CE 129: State Request", () => {
     handlers.server = new MessageHandler(
       new FakeMessageSender(
         (data) => {
-          handlers.client.onSocketMessage(data.buffer);
+          handlers.client.onSocketMessage(data.raw);
         },
         () => {
           handlers.client.onClose({});
@@ -76,7 +76,7 @@ const getBoundaryNodes = () => {
 };
 
 const getKeyValuePairs = (_hash: HeaderHash, startKey: Bytes<KEY_SIZE>) => {
-  let value = BytesBlob.fromNumbers([255, 255, 0, 0]);
+  let value = BytesBlob.blobFromNumbers([255, 255, 0, 0]);
   if (
     Bytes.fromBlob(
       hashString("0x83bd3bde264a79a2e67c487696c1d7f0b549da89").raw.subarray(0, KEY_SIZE),

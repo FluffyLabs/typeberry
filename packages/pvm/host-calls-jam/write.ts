@@ -81,7 +81,7 @@ export class Write implements HostCallHandler {
     const valueLoadingFault = memory.loadInto(value, valueStart);
 
     const keyHash = hashBytes(key);
-    const maybeValue = valueLen === 0 ? null : BytesBlob.from(value);
+    const maybeValue = valueLen === 0 ? null : BytesBlob.blobFrom(value);
 
     // we return OOB in case the value cannot be read or the key can't be loaded.
     if (keyLoadingFault || valueLoadingFault) {
