@@ -24,12 +24,12 @@
       "margin": 5
     },
     {
-      "name": "Get only third fields from View",
+      "name": "Get only third field from View",
       "ops": 1675002.75,
       "margin": 5
     },
     {
-      "name": "Get only third fields from Decoded",
+      "name": "Get only third field from Decoded",
       "ops": 1481856.33,
       "margin": 5
     }

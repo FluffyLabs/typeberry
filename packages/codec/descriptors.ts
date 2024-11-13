@@ -646,10 +646,12 @@ abstract class AbstractView<T> {
     const needIdx = descriptorKeys.findIndex((k) => k === field);
     // make sure we have the decoder state at that field.
     const skip = new Skipper(this.d);
+    let lastDecoder = this.d;
     for (let i = this.lastCachedIdx + 1; i <= needIdx; i += 1) {
       const key = descriptorKeys[i] as keyof DescriptorRecord<T>;
       const descriptor = this.descriptors[key];
-      this.decoderStateCache.set(key, this.d.clone());
+      lastDecoder = this.d.clone();
+      this.decoderStateCache.set(key, lastDecoder);
       descriptor.skip(skip);
       this.lastCachedIdx = i;
     }
@@ -657,8 +659,7 @@ abstract class AbstractView<T> {
     const key = descriptorKeys[needIdx] as keyof DescriptorRecord<T>;
     const descriptor = this.descriptors[key];
 
-    const decoder = this.decoderStateCache.get(field) ?? this.d;
-    return { descriptor, decoder: decoder.clone() };
+    return { descriptor, decoder: lastDecoder.clone() };
   }
 
   /**
