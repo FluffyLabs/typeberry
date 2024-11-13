@@ -32,10 +32,10 @@ export class State {
     if (!blob) {
       return null;
     }
-    const hash = blob.buffer.subarray(0, HASH_SIZE);
-    const code = blob.buffer.subarray(HASH_SIZE);
+    const hash = blob.raw.subarray(0, HASH_SIZE);
+    const code = blob.raw.subarray(HASH_SIZE);
 
-    return new WithHash(Bytes.fromBlob(hash, HASH_SIZE).asOpaque(), BytesBlob.from(code));
+    return new WithHash(Bytes.fromBlob(hash, HASH_SIZE).asOpaque(), BytesBlob.blobFrom(code));
   }
 }
 

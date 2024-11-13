@@ -26,7 +26,7 @@ describe("BytesBlob", () => {
     const result = BytesBlob.parseBlob(input);
 
     assert.deepStrictEqual(
-      result.buffer,
+      result.raw,
       new Uint8Array([
         47, 163, 246, 134, 223, 135, 105, 149, 22, 126, 124, 46, 93, 116, 196, 199, 182, 228, 143, 128, 104, 254, 14,
         68, 32, 131, 68, 212, 128, 247, 144, 76,
@@ -39,7 +39,7 @@ describe("BytesBlob", () => {
     const result = BytesBlob.parseBlobNoPrefix(input);
 
     assert.deepStrictEqual(
-      result.buffer,
+      result.raw,
       new Uint8Array([
         47, 163, 246, 134, 223, 135, 105, 149, 22, 126, 124, 46, 93, 116, 196, 199, 182, 228, 143, 128, 104, 254, 14,
         68, 32, 131, 68, 212, 128, 247, 144, 76,
@@ -48,9 +48,9 @@ describe("BytesBlob", () => {
   });
 
   it("from bytes", () => {
-    const result = BytesBlob.fromNumbers([47, 163, 246, 134]);
+    const result = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
 
-    assert.deepStrictEqual(result.buffer, new Uint8Array([47, 163, 246, 134]));
+    assert.deepStrictEqual(result.raw, new Uint8Array([47, 163, 246, 134]));
   });
 });
 

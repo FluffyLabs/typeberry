@@ -19,13 +19,13 @@ export class LmdbPreimages implements PreimageDb {
 
   get<T extends OpaqueHash>(hash: T): WithHash<T, BytesBlob> | null {
     const preimage = this.root.get(hash.raw);
-    return preimage ? new WithHash(hash, BytesBlob.from(preimage)) : null;
+    return preimage ? new WithHash(hash, BytesBlob.blobFrom(preimage)) : null;
   }
 
   set<T extends OpaqueHash>(...data: WithHash<T, BytesBlob>[]): Promise<void> {
     return this.root.transaction(() => {
       for (const d of data) {
-        this.root.put(d.hash.raw, d.data.buffer);
+        this.root.put(d.hash.raw, d.data.raw);
       }
     });
   }

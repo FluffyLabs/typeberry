@@ -311,8 +311,8 @@ export namespace codec {
   export const string = descriptor<string>(
     "string",
     { bytes: TYPICAL_SEQUENCE_LENGTH, isExact: false },
-    (e, v) => e.bytesBlob(BytesBlob.from(new TextEncoder().encode(v))),
-    (d) => new TextDecoder("utf8", { fatal: true }).decode(d.bytesBlob().buffer),
+    (e, v) => e.bytesBlob(BytesBlob.blobFrom(new TextEncoder().encode(v))),
+    (d) => new TextDecoder("utf8", { fatal: true }).decode(d.bytesBlob().raw),
     (s) => s.bytesBlob(),
   );
 
@@ -634,18 +634,18 @@ abstract class AbstractView<T> {
   }
 
   /** Return an encoded value of that object. */
-  public encoded() {
+  public encoded(): BytesBlob {
     const fields = this.descriptorsKeys;
     // edge case?
     if (fields.length === 0) {
-      return BytesBlob.fromNumbers([]);
+      return BytesBlob.blobFromNumbers([]);
     }
 
     const lastField = fields[fields.length - 1];
     this.populateDecoderStateCache(lastField as keyof T);
     // now our `this.d` points to the end of the object, so we can use
     // it to determine where is the end of the encoded data.
-    return BytesBlob.from(this.d.source.subarray(this.initialOffset, this.d.bytesRead()));
+    return BytesBlob.blobFrom(this.d.source.subarray(this.initialOffset, this.d.bytesRead()));
   }
 
   /**
@@ -665,22 +665,25 @@ abstract class AbstractView<T> {
    * Returns the `descriptor` for given field and it's index.
    */
   private populateDecoderStateCache(field: keyof T) {
-    const descriptorKeys = this.descriptorsKeys;
-    const needIdx = descriptorKeys.findIndex((k) => k === field);
-    // make sure we have the decoder state at that field.
-    const skip = new Skipper(this.d);
-    for (let i = this.lastCachedIdx + 1; i <= needIdx; i += 1) {
-      const key = descriptorKeys[i] as keyof DescriptorRecord<T>;
-      const descriptor = this.descriptors[key];
-      this.decoderStateCache.set(key, this.d.clone());
-      descriptor.skip(skip);
-      this.lastCachedIdx = i;
-    }
-    // now select the current field.
-    const key = descriptorKeys[needIdx] as keyof DescriptorRecord<T>;
-    const descriptor = this.descriptors[key];
+    const descriptor = this.descriptors[field as keyof DescriptorRecord<T>];
+    let decoder = this.decoderStateCache.get(field);
 
-    const decoder = this.decoderStateCache.get(field) ?? this.d;
+    if (!decoder) {
+      decoder = this.d;
+      const descriptorKeys = this.descriptorsKeys;
+      const needIdx = descriptorKeys.findIndex((k) => k === field);
+      // make sure we have the decoder state at that field.
+      const skip = new Skipper(this.d);
+      for (let i = this.lastCachedIdx + 1; i <= needIdx; i += 1) {
+        const key = descriptorKeys[i] as keyof DescriptorRecord<T>;
+        const descriptor = this.descriptors[key];
+        decoder = skip.decoder.clone();
+        this.decoderStateCache.set(key, decoder);
+        descriptor.skip(skip);
+        this.lastCachedIdx = i;
+      }
+    }
+
     return { descriptor, decoder: decoder.clone() };
   }
 

@@ -140,7 +140,7 @@ export class Encoder {
    * underlying `destination`.
    */
   viewResult() {
-    return BytesBlob.from(this.destination.subarray(0, this.offset));
+    return BytesBlob.blobFrom(this.destination.subarray(0, this.offset));
   }
 
   /**
@@ -317,7 +317,7 @@ export class Encoder {
    * That's just a convenience wrapper for [`blob`] function.
    */
   bytesBlob(blob: BytesBlob) {
-    this.blob(blob.buffer);
+    this.blob(blob.raw);
   }
 
   /**

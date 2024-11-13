@@ -39,7 +39,7 @@ function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = tryAsExa
     readInfo: () => {
       const result = new Uint8Array(accountInfoLength);
       assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)), null);
-      const data = BytesBlob.from(result);
+      const data = BytesBlob.blobFrom(result);
       return Decoder.decodeObject(AccountInfo.Codec, data);
     },
   };

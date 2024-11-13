@@ -51,7 +51,7 @@ export class StreamSender implements MessageSender {
     this.sender.send(
       Encoder.encodeObject(
         StreamEnvelope.Codec,
-        new StreamEnvelope(this.streamId, StreamEnvelopeType.Close, BytesBlob.fromNumbers([])),
+        new StreamEnvelope(this.streamId, StreamEnvelopeType.Close, BytesBlob.blobFromNumbers([])),
       ),
     );
   }

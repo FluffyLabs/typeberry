@@ -37,10 +37,10 @@ const DEST_START_REG = 10;
 const DEST_LEN_REG = 11;
 
 function prepareKey(serviceId: ServiceId, key: string) {
-  const keyBytes = BytesBlob.fromString(key);
+  const keyBytes = BytesBlob.blobFromString(key);
   const serviceIdAndKey = new Uint8Array(SERVICE_ID_BYTES + keyBytes.length);
   writeServiceIdAsLeBytes(serviceId, serviceIdAndKey);
-  serviceIdAndKey.set(keyBytes.buffer, SERVICE_ID_BYTES);
+  serviceIdAndKey.set(keyBytes.raw, SERVICE_ID_BYTES);
   return { key: keyBytes, hash: hashBytes(serviceIdAndKey) };
 }
 
@@ -61,7 +61,7 @@ function prepareRegsAndMemory(
 
   const builder = new MemoryBuilder();
   if (!skipKey) {
-    builder.setReadable(tryAsMemoryIndex(keyAddress), tryAsMemoryIndex(keyAddress + key.length), key.buffer);
+    builder.setReadable(tryAsMemoryIndex(keyAddress), tryAsMemoryIndex(keyAddress + key.length), key.raw);
   }
   if (!skipValue) {
     builder.setWriteable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + destinationLength));
@@ -73,7 +73,7 @@ function prepareRegsAndMemory(
     readResult: () => {
       const result = new Uint8Array(destinationLength);
       assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)), null);
-      return BytesBlob.from(result);
+      return BytesBlob.blobFrom(result);
     },
   };
 }
@@ -86,7 +86,7 @@ describe("HostCalls: Read", () => {
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "hello world");
     const { registers, memory, readResult } = prepareRegsAndMemory(tryAsServiceId(2 ** 32 - 1), key, 64);
-    accounts.add(serviceId, hash, BytesBlob.fromString("hello world"));
+    accounts.add(serviceId, hash, BytesBlob.blobFromString("hello world"));
 
     // when
     await read.execute(gas, registers, memory);
@@ -106,7 +106,7 @@ describe("HostCalls: Read", () => {
     const serviceId = tryAsServiceId(11_000);
     const { key, hash } = prepareKey(read.currentServiceId, "hello world");
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 64);
-    accounts.add(serviceId, hash, BytesBlob.fromString("hello world"));
+    accounts.add(serviceId, hash, BytesBlob.blobFromString("hello world"));
 
     // when
     await read.execute(gas, registers, memory);
@@ -126,7 +126,7 @@ describe("HostCalls: Read", () => {
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 3);
-    accounts.add(serviceId, hash, BytesBlob.fromString("hello world"));
+    accounts.add(serviceId, hash, BytesBlob.blobFromString("hello world"));
 
     // when
     await read.execute(gas, registers, memory);
@@ -162,7 +162,7 @@ describe("HostCalls: Read", () => {
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32, { skipKey: true });
-    accounts.add(serviceId, hash, BytesBlob.fromString("hello world"));
+    accounts.add(serviceId, hash, BytesBlob.blobFromString("hello world"));
 
     // when
     await read.execute(gas, registers, memory);
@@ -178,7 +178,7 @@ describe("HostCalls: Read", () => {
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32, { skipValue: true });
-    accounts.add(serviceId, hash, BytesBlob.fromString("hello world"));
+    accounts.add(serviceId, hash, BytesBlob.blobFromString("hello world"));
 
     // when
     await read.execute(gas, registers, memory);
@@ -194,7 +194,7 @@ describe("HostCalls: Read", () => {
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
-    accounts.add(serviceId, hash, BytesBlob.fromString("hello world"));
+    accounts.add(serviceId, hash, BytesBlob.blobFromString("hello world"));
     registers.asUnsigned[DEST_LEN_REG] = 34;
 
     // when
@@ -211,7 +211,7 @@ describe("HostCalls: Read", () => {
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
-    accounts.add(serviceId, hash, BytesBlob.fromString("hello world"));
+    accounts.add(serviceId, hash, BytesBlob.blobFromString("hello world"));
     registers.asUnsigned[DEST_START_REG] = 2 ** 32 - 1;
     registers.asUnsigned[DEST_LEN_REG] = 2 ** 10;
 
@@ -229,7 +229,7 @@ describe("HostCalls: Read", () => {
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 0, { skipValue: true });
-    accounts.add(serviceId, hash, BytesBlob.fromString("hello world"));
+    accounts.add(serviceId, hash, BytesBlob.blobFromString("hello world"));
 
     // when
     await read.execute(gas, registers, memory);

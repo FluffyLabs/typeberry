@@ -41,7 +41,7 @@ describe("CE 128: Block Request", () => {
     handlers.client = new MessageHandler(
       new FakeMessageSender(
         (data) => {
-          handlers.server.onSocketMessage(data.buffer);
+          handlers.server.onSocketMessage(data.raw);
         },
         () => {
           handlers.server.onClose({});
@@ -51,7 +51,7 @@ describe("CE 128: Block Request", () => {
     handlers.server = new MessageHandler(
       new FakeMessageSender(
         (data) => {
-          handlers.client.onSocketMessage(data.buffer);
+          handlers.client.onSocketMessage(data.raw);
         },
         () => {
           handlers.client.onClose({});
