@@ -22,7 +22,7 @@ namespace fromJson {
     ed25519: bytes32(),
     bandersnatch: bytes32(),
     bls: json.fromString((v) => Bytes.parseBytes(v, 144) as BlsKey),
-    metadata: bytesBlob,
+    metadata: json.fromString((v) => Bytes.parseBytes(v, 128)),
   };
 }
 
