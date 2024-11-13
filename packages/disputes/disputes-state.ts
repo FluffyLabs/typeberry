@@ -3,7 +3,7 @@ import type { Bytes } from "@typeberry/bytes";
 import { Ordering, SortedSet } from "@typeberry/collections";
 import type { ValidatorData } from "@typeberry/safrole";
 
-function hashComparator<V extends WorkReportHash | Ed25519Key>(a: V, b: V) {
+export function hashComparator<V extends WorkReportHash | Ed25519Key>(a: V, b: V) {
   if (a.isLessThan(b)) {
     return Ordering.Less;
   }
