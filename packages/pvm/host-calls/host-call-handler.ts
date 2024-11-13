@@ -13,10 +13,10 @@ export const tryAsHostCallIndex = (v: number): HostCallIndex => asOpaqueType(try
 /** An interface for a host call implementation */
 export interface HostCallHandler {
   /** Index of that host call (i.e. what PVM invokes via `ecalli`) */
-  index: HostCallIndex;
+  readonly index: HostCallIndex;
 
   /** The gas cost of invokation of that host call. */
-  gasCost: SmallGas | ((reg: Registers) => SmallGas);
+  readonly gasCost: SmallGas | ((reg: Registers) => SmallGas);
 
   /** Currently executing service id. */
   currentServiceId: ServiceId;

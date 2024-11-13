@@ -22,6 +22,15 @@ export interface AccumulationPartialState {
   /** Designate new validators given their key and meta data. */
   updateValidatorsData(validatorsData: KnownSizeArray<ValidatorData, "ValidatorsCount">): void;
 
+  /**
+   * Checkpoint this partial state.
+   *
+   * I.e. assign the "regular dimension" of the context to
+   * the "exceptional dimension".
+   * https://graypaper.fluffylabs.dev/#/364735a/2a96022a9602
+   */
+  checkpoint(): void;
+
   /** Update authorization queue for given core. */
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
