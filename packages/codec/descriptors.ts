@@ -642,24 +642,26 @@ abstract class AbstractView<T> {
    * Returns the `descriptor` for given field and it's index.
    */
   private populateDecoderStateCache(field: keyof T) {
-    const descriptorKeys = Object.keys(this.descriptors);
-    const needIdx = descriptorKeys.findIndex((k) => k === field);
-    // make sure we have the decoder state at that field.
-    const skip = new Skipper(this.d);
-    let lastDecoder = this.d;
-    for (let i = this.lastCachedIdx + 1; i <= needIdx; i += 1) {
-      const key = descriptorKeys[i] as keyof DescriptorRecord<T>;
-      const descriptor = this.descriptors[key];
-      lastDecoder = this.d.clone();
-      this.decoderStateCache.set(key, lastDecoder);
-      descriptor.skip(skip);
-      this.lastCachedIdx = i;
-    }
-    // now select the current field.
-    const key = descriptorKeys[needIdx] as keyof DescriptorRecord<T>;
-    const descriptor = this.descriptors[key];
+    const descriptor = this.descriptors[field as keyof DescriptorRecord<T>];
+    let decoder = this.decoderStateCache.get(field);
 
-    return { descriptor, decoder: lastDecoder.clone() };
+    if (!decoder) {
+      decoder = this.d;
+      const descriptorKeys = Object.keys(this.descriptors);
+      const needIdx = descriptorKeys.findIndex((k) => k === field);
+      // make sure we have the decoder state at that field.
+      const skip = new Skipper(this.d);
+      for (let i = this.lastCachedIdx + 1; i <= needIdx; i += 1) {
+        const key = descriptorKeys[i] as keyof DescriptorRecord<T>;
+        const descriptor = this.descriptors[key];
+        decoder = skip.decoder.clone();
+        this.decoderStateCache.set(key, decoder);
+        descriptor.skip(skip);
+        this.lastCachedIdx = i;
+      }
+    }
+
+    return { descriptor, decoder: decoder.clone() };
   }
 
   /**
