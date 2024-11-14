@@ -216,7 +216,7 @@ export class Encoder {
   /**
    * Encode a single boolean discriminator using variable encoding.
    *
-   * https://graypaper.fluffylabs.dev/#WyJlMjA2ZTI2NjNjIiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEzIGg2IHkxZGZlIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeDEwIGhjIHkxZGZmIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+Il1d
+   * https://graypaper.fluffylabs.dev/#/364735a/335200335200
    */
   bool(bool: boolean) {
     this.varU32(tryAsU32(bool ? 1 : 0));
@@ -229,7 +229,7 @@ export class Encoder {
    * The encoding will always occupy N bytes in little-endian ordering.
    * Negative numbers are represented as a two-complement.
    *
-   * https://graypaper.fluffylabs.dev/#WyJlMjA2ZTI2NjNjIiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEwIGg2IHk0YyBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiIsIjxkaXYgY2xhc3M9XCJ0IG0wIHgxMCBoNiB5NGQgZmY3IGZzMCBmYzAgc2MwIGxzMCB3czBcIj4iXV0=
+   * https://graypaper.fluffylabs.dev/#/364735a/320402320402
    */
   private prepareIntegerN(num: number, bytesToEncode: 1 | 2 | 3 | 4) {
     const BITS = 8;
@@ -250,7 +250,7 @@ export class Encoder {
    *
    * The encoding can take variable amount of bytes depending on the actual value.
    *
-   * https://graypaper.fluffylabs.dev/#WyJlMjA2ZTI2NjNjIiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEzIGg2IHkxZGJlIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeDYxIGhkIHkxZGJmIGZmMTcgZnM1IGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
+   * https://graypaper.fluffylabs.dev/#/364735a/325a02325a02
    */
   varU32(num: U32) {
     check(num >= 0, "Only for natural numbers.");
@@ -263,7 +263,7 @@ export class Encoder {
    *
    * The encoding can take variable amount of bytes depending on the actual value.
    *
-   * https://graypaper.fluffylabs.dev/#WyJlMjA2ZTI2NjNjIiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEzIGg2IHkxZGJlIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeDYxIGhkIHkxZGJmIGZmMTcgZnM1IGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
+   * https://graypaper.fluffylabs.dev/#/364735a/325a02325a02
    */
   varU64(num: bigint) {
     if (num === 0n) {
@@ -326,7 +326,7 @@ export class Encoder {
    * The data is placed in the destination, but with an
    * extra length-discriminator (see [`u32`]) encoded in a compact form.
    *
-   * https://graypaper.fluffylabs.dev/#WyJlMjA2ZTI2NjNjIiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEzIGg2IHkxZGYzIGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeDEwIGhiIHkxZGY0IGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+Il1d
+   * https://graypaper.fluffylabs.dev/#/364735a/332500332500
    */
   blob(blob: Uint8Array) {
     // first encode the length
@@ -344,7 +344,7 @@ export class Encoder {
    * The data is simply copied to the destination
    * without any discriminator (i.e. no length prefix).
    *
-   * https://graypaper.fluffylabs.dev/#WyJlMjA2ZTI2NjNjIiwiMzAiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEzIGg2IHkxZDk2IGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeDEwIGhiIHkxZDk3IGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+Il1d
+   * https://graypaper.fluffylabs.dev/#/364735a/331000331000
    *
    */
   bytes<N extends number>(bytes: Bytes<N>) {
@@ -358,7 +358,7 @@ export class Encoder {
    * Encode a bit vector with known length.
    *
    * The bits are packed into bytes and just placed as-is in the destination.
-   * https://graypaper.fluffylabs.dev/#WyI3YWU1MWY5MzI1IiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeGYgaDYgeTFlNjEgZmY3IGZzMCBmYzAgc2MwIGxzMCB3czBcIj4iLCI8ZGl2IGNsYXNzPVwidCBtMCB4ZiBoNiB5MWU2MiBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
+   * https://graypaper.fluffylabs.dev/#/364735a/337f00337f00
    */
   bitVecFixLen(bitvec: BitVec) {
     const bytes = bitvec.raw();
@@ -369,7 +369,7 @@ export class Encoder {
    * Encode a bit vector with variable length.
    *
    * A bit-length discriminator (varU32) is placed before the packed bit content.
-   * https://graypaper.fluffylabs.dev/#WyI3YWU1MWY5MzI1IiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeGYgaDYgeTFlNjEgZmY3IGZzMCBmYzAgc2MwIGxzMCB3czBcIj4iLCI8ZGl2IGNsYXNzPVwidCBtMCB4ZiBoNiB5MWU2MiBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
+   * https://graypaper.fluffylabs.dev/#/364735a/338100338100
    */
   bitVecVarLen(bitvec: BitVec) {
     const len = bitvec.bitLength;
@@ -389,7 +389,7 @@ export class Encoder {
    * Encode a potentially empty value.
    *
    * A 0 or 1 is placed before the element to indicate it's presence.
-   * https://graypaper.fluffylabs.dev/#WyI3YWU1MWY5MzI1IiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEyIGg2IHkxZTU2IGZmNyBmczAgZmMwIHNjMCBsczAgd3MwXCI+IiwiPGRpdiBjbGFzcz1cInQgbTAgeGYgaGMgeTFlNTcgZmY3IGZzMCBmYzAgc2MwIGxzMCB3czBcIj4iXV0=
+   * https://graypaper.fluffylabs.dev/#/364735a/335e00335e00
    */
   optional<T>(encode: Encode<T>, element?: T | null) {
     const isSet = element !== null && element !== undefined;
@@ -403,7 +403,7 @@ export class Encoder {
   /**
    * Encode a fixed-length sequence of elements of some type.
    *
-   * https://graypaper.fluffylabs.dev/#WyI3YWU1MWY5MzI1IiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeGYgaGIgeTFlNDIgZmY3IGZzMCBmYzAgc2MwIGxzMCB3czBcIj4iLCI8ZGl2IGNsYXNzPVwidCBtMCB4ZiBoYSB5MWU0MyBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
+   * https://graypaper.fluffylabs.dev/#/364735a/331000331000
    */
   sequenceFixLen<T>(encode: Encode<T>, elements: T[]) {
     this.applySizeHint(encode, elements.length);
@@ -417,7 +417,7 @@ export class Encoder {
    *
    * A length discriminator is placed before the concatentation of encodings of all the elements.
    *
-   * https://graypaper.fluffylabs.dev/#WyI3YWU1MWY5MzI1IiwiMzEiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeGYgaGIgeTFlNDIgZmY3IGZzMCBmYzAgc2MwIGxzMCB3czBcIj4iLCI8ZGl2IGNsYXNzPVwidCBtMCB4ZiBoYSB5MWU0MyBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
+   * https://graypaper.fluffylabs.dev/#/364735a/334300334300
    */
   sequenceVarLen<T>(encode: Encode<T>, elements: T[]) {
     check(elements.length <= 2 ** 32, "Wow, that's a nice long sequence you've got here.");

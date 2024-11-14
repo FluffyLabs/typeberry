@@ -5,7 +5,7 @@ const SHARD_ALIGNMENT = 64; // Shard size must be multiple of 64 bytes. (reed-so
 
 /**
  * The following values ​​are the consequences of the coding rate 342:1023
- * https://graypaper.fuffylabs.dev/#/387103d/35d00235d002
+ * https://graypaper.fluffylabs.dev/#/364735a/382100382100
  */
 const N_SHARDS = 342;
 const RESULT_SHARDS = 1023;
@@ -20,7 +20,7 @@ const SECOND_POINT_INDEX = 32;
 
 /**
  * The shards are 2 bytes length because the encoding function is defined in GF(16)
- * https://graypaper.fluffylabs.dev/#/387103d/35d10235d302
+ * https://graypaper.fluffylabs.dev/#/364735a/37d10237d102
  */
 const SHARD_LENGTH = 2;
 
