@@ -10,7 +10,7 @@ describe("Trie", async () => {
     const trie = InMemoryTrie.empty(blake2bTrieHasher);
 
     assert.deepStrictEqual(
-      trie.getRoot(),
+      trie.getRootHash(),
       Bytes.parseBytesNoPrefix("0000000000000000000000000000000000000000000000000000000000000000", 32),
     );
   });
@@ -39,7 +39,7 @@ describe("Trie", async () => {
     );
 
     assert.deepStrictEqual(
-      trie.getRoot(),
+      trie.getRootHash(),
       Bytes.parseBytesNoPrefix("17d7a1c738dfa055bc810110004585ca79be323586764e14179ee20e54376592", 32),
     );
   });
@@ -53,7 +53,7 @@ describe("Trie", async () => {
     );
 
     assert.deepStrictEqual(
-      trie.getRoot(),
+      trie.getRootHash(),
       Bytes.parseBytesNoPrefix("75978696ab7bd70492c2abbecf26fd03eb2c41e0d83daf968f45c20f566b9a9b", 32),
     );
   });
@@ -67,7 +67,7 @@ describe("Trie", async () => {
     );
 
     assert.deepStrictEqual(
-      trie.getRoot(),
+      trie.getRootHash(),
       Bytes.parseBytesNoPrefix("9ea1799e255f9b5edb960cf6640aa42ec2fac24a199be8155853ddcce9b896c4", 32),
     );
   });
@@ -87,7 +87,7 @@ describe("Trie", async () => {
     );
 
     assert.deepStrictEqual(
-      trie.getRoot(),
+      trie.getRootHash(),
       Bytes.parseBytesNoPrefix("b9c99f66e5784879a178795b63ae178f8a49ee113652a122cd4b3b2a321418c1", 32),
     );
   });
@@ -114,7 +114,7 @@ describe("Trie", async () => {
     );
 
     assert.deepStrictEqual(
-      trie.getRoot().toString(),
+      trie.getRootHash().toString(),
       "0xdc2fda54f07a9774c4bf553322e66a998807d88f0bea3eca308407b215b5f492",
     );
   });
@@ -130,7 +130,7 @@ describe("Trie", async () => {
       trie.set(parseInputKey(k), BytesBlob.parseBlob(v));
     }
     assert.deepStrictEqual(
-      trie.getRoot().toString(),
+      trie.getRootHash().toString(),
       "0xdc2fda54f07a9774c4bf553322e66a998807d88f0bea3eca308407b215b5f492",
     );
 
@@ -140,7 +140,7 @@ describe("Trie", async () => {
       BytesBlob.parseBlob("0x1234"),
     );
     assert.deepStrictEqual(
-      trie.getRoot().toString(),
+      trie.getRootHash().toString(),
       "0x40ab9b14f53a2e3299afa802792df4cd02dd27dff71df3e3056d558c88965fc0",
     );
   });
@@ -230,6 +230,6 @@ describe("Trie", async () => {
     }
 
     const expected = Bytes.parseBytesNoPrefix(vector.output, 32);
-    assert.deepStrictEqual(trie.getRoot().toString(), expected.toString());
+    assert.deepStrictEqual(trie.getRootHash().toString(), expected.toString());
   }
 });

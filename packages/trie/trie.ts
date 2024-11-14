@@ -16,9 +16,10 @@ import {
 import { type NodesDb, type TrieHasher, WriteableNodesDb } from "./nodesDb";
 
 export class InMemoryTrie {
+  // Exposed for trie-visualiser
+  public readonly nodes: WriteableNodesDb;
   // TODO [ToDr] Consider using HashDictionary?
   private readonly flat: Map<string, BytesBlob> = new Map();
-  private readonly nodes: WriteableNodesDb;
   private root: TrieNode | null = null;
 
   static empty(hasher: TrieHasher): InMemoryTrie {
@@ -42,7 +43,11 @@ export class InMemoryTrie {
     throw new Error("Removing from the trie not implemented yet.");
   }
 
-  getRoot(): TrieHash {
+  getRootNode(): TrieNode | null {
+    return this.root;
+  }
+
+  getRootHash(): TrieHash {
     if (this.root === null) {
       return Bytes.zero(HASH_BYTES).asOpaque();
     }
