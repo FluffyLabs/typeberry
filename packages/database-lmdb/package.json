@@ -11,7 +11,6 @@
   "dependencies": {
     "@typeberry/block": "0.0.1",
     "@typeberry/bytes": "0.0.1",
-    "@typeberry/codec": "0.0.1",
     "@typeberry/hash": "0.0.1",
     "lmdb": "^3.1.3"
   }

@@ -3,7 +3,10 @@ import type { OpaqueHash } from "@typeberry/hash";
 import { type Opaque, check } from "@typeberry/utils";
 
 export type StateKey = Opaque<OpaqueHash, "stateKey">;
-export type TruncatedStateKey = Opaque<Bytes<31>, "stateKey">;
+export type TruncatedStateKey = Opaque<Bytes<TRUNCATED_KEY_BYTES>, "stateKey">;
+
+export type InputKey = StateKey | TruncatedStateKey;
+
 /**
  * A state commitment.
  *
@@ -15,11 +18,15 @@ export type ValueHash = Opaque<OpaqueHash, "trieValue">;
 /** Regular hash length */
 export const HASH_BYTES = 32;
 /** Value nodes have the key truncated to 31 bytes. */
-const TRUNCATED_KEY_BYTES = 31;
+export const TRUNCATED_KEY_BYTES = 31;
+export type TRUNCATED_KEY_BYTES = 31;
 export const TRUNCATED_KEY_BITS = TRUNCATED_KEY_BYTES * 8;
 
-export function parseStateKey(v: string): StateKey {
-  return Bytes.parseBytesNoPrefix(v, HASH_BYTES).asOpaque();
+export function parseInputKey(v: string): InputKey {
+  if (v.length === HASH_BYTES * 2) {
+    return Bytes.parseBytesNoPrefix(v, HASH_BYTES).asOpaque();
+  }
+  return Bytes.parseBytesNoPrefix(v, TRUNCATED_KEY_BYTES).asOpaque();
 }
 
 /**
@@ -152,7 +159,7 @@ export class LeafNode {
     this.node = node;
   }
 
-  static fromValue(key: StateKey, value: BytesBlob, valueHash: TrieHash): LeafNode {
+  static fromValue(key: InputKey, value: BytesBlob, valueHash: TrieHash): LeafNode {
     const node = new TrieNode();
     // The value will fit in the leaf itself.
     if (value.length <= HASH_BYTES) {

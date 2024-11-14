@@ -43,7 +43,7 @@ export async function runTrieTest(testContent: TrieTestSuite) {
         trie.set(key, value);
       }
 
-      assert.deepStrictEqual(testData.output, trie.getRoot());
+      assert.deepStrictEqual(testData.output, trie.getRootHash());
     });
   }
 }

@@ -7,7 +7,6 @@ import {
   type HeaderView,
 } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database/blocks";
 import { HASH_SIZE, type WithHash } from "@typeberry/hash";
@@ -39,12 +38,8 @@ export class LmdbBlocks implements BlocksDb {
   }
 
   async insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void> {
-    // TODO [ToDr] This is currently inefficient, we need a way to figure
-    // out boundaries of fields within the view type, to just get
-    // subarrays of the underlying BlockView.
-    // TODO [ToDr] we could use a single Uint8Array to perform the encoding instead of doing allocs.
-    const header = Encoder.encodeObject(Header.Codec, block.data.header(), this.chainSpec);
-    const extrinsic = Encoder.encodeObject(Extrinsic.Codec, block.data.extrinsic(), this.chainSpec);
+    const header = block.data.headerView().encoded();
+    const extrinsic = block.data.extrinsicView().encoded();
     const a = this.headers.put(block.hash.raw, header.raw);
     const b = this.extrinsics.put(block.hash.raw, extrinsic.raw);
     await Promise.all([a, b]);

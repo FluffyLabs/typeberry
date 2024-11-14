@@ -609,20 +609,43 @@ abstract class AbstractView<T> {
   /** Cache for views of fields. */
   private readonly viewCache = new Map<keyof T, View<T[keyof T]>>();
 
+  /** Keys of all descriptors. */
+  private readonly descriptorsKeys;
+  /** Initial offset of the decoder - used to calculate encoded data boundaries. */
+  private readonly initialOffset;
+
   constructor(
     private readonly d: Decoder,
     protected readonly materializedConstructor: ClassConstructor<T>,
     protected readonly descriptors: DescriptorRecord<T>,
-  ) {}
+  ) {
+    this.descriptorsKeys = Object.keys(descriptors);
+    this.initialOffset = d.bytesRead();
+  }
 
   /**
    * Create a concrete instance of `T` by decoding all of the remaining
    * fields that are not yet there in the cache.
    */
   public materialize(): T {
-    const fields = Object.keys(this.descriptors) as (keyof T)[];
-    const constructorParams = Object.fromEntries(fields.map((key) => [key, this.getOrDecode(key)]));
+    const fields = this.descriptorsKeys;
+    const constructorParams = Object.fromEntries(fields.map((key) => [key, this.getOrDecode(key as keyof T)]));
     return this.materializedConstructor.fromCodec(constructorParams as CodecRecord<T>);
+  }
+
+  /** Return an encoded value of that object. */
+  public encoded(): BytesBlob {
+    const fields = this.descriptorsKeys;
+    // edge case?
+    if (fields.length === 0) {
+      return BytesBlob.blobFromNumbers([]);
+    }
+
+    const lastField = fields[fields.length - 1];
+    this.populateDecoderStateCache(lastField as keyof T);
+    // now our `this.d` points to the end of the object, so we can use
+    // it to determine where is the end of the encoded data.
+    return BytesBlob.blobFrom(this.d.source.subarray(this.initialOffset, this.d.bytesRead()));
   }
 
   /**
@@ -647,7 +670,7 @@ abstract class AbstractView<T> {
 
     if (!decoder) {
       decoder = this.d;
-      const descriptorKeys = Object.keys(this.descriptors);
+      const descriptorKeys = this.descriptorsKeys;
       const needIdx = descriptorKeys.findIndex((k) => k === field);
       // make sure we have the decoder state at that field.
       const skip = new Skipper(this.d);

@@ -3,10 +3,12 @@ import { check } from "@typeberry/utils";
 import {
   BranchNode,
   HASH_BYTES,
+  type InputKey,
   LeafNode,
   NodeType,
   type StateKey,
   TRUNCATED_KEY_BITS,
+  TRUNCATED_KEY_BYTES,
   type TrieHash,
   type TrieNode,
   type TruncatedStateKey,
@@ -14,8 +16,10 @@ import {
 import { type NodesDb, type TrieHasher, WriteableNodesDb } from "./nodesDb";
 
 export class InMemoryTrie {
+  // Exposed for trie-visualiser
+  public readonly nodes: WriteableNodesDb;
+  // TODO [ToDr] Consider using HashDictionary?
   private readonly flat: Map<string, BytesBlob> = new Map();
-  private readonly nodes: WriteableNodesDb;
   private root: TrieNode | null = null;
 
   static empty(hasher: TrieHasher): InMemoryTrie {
@@ -26,8 +30,9 @@ export class InMemoryTrie {
     this.nodes = nodes;
   }
 
-  set(key: StateKey, value: BytesBlob, maybeValueHash?: TrieHash) {
-    this.flat.set(key.toString(), value);
+  set(key: InputKey, value: BytesBlob, maybeValueHash?: TrieHash) {
+    const truncatedKey = Bytes.fromBlob(key.raw.subarray(0, TRUNCATED_KEY_BYTES), TRUNCATED_KEY_BYTES);
+    this.flat.set(truncatedKey.toString(), value);
     const valueHash = maybeValueHash ?? this.nodes.hasher.hashConcat(value.raw);
     const leafNode = LeafNode.fromValue(key, value, valueHash);
     this.root = trieInsert(this.root, this.nodes, leafNode);
@@ -38,7 +43,11 @@ export class InMemoryTrie {
     throw new Error("Removing from the trie not implemented yet.");
   }
 
-  getRoot(): TrieHash {
+  getRootNode(): TrieNode | null {
+    return this.root;
+  }
+
+  getRootHash(): TrieHash {
     if (this.root === null) {
       return Bytes.zero(HASH_BYTES).asOpaque();
     }
