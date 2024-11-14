@@ -15,7 +15,7 @@ const NO_OF_REGISTERS = 13;
  * s - stack size
  * c - program code
  *
- * GP reference: https://graypaper.fluffylabs.dev/#WyIxYjA4MWZlM2U3IiwiMjciLG51bGwsbnVsbCxbIjxkaXYgY2xhc3M9XCJ0IG0wIHgxMCBoNiB5MTUzMCBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiIsIjxkaXYgY2xhc3M9XCJ0IG0wIHgxMCBoNiB5MTUzOCBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
+ * GP reference: https://graypaper.fluffylabs.dev/#/364735a/284a03284a03
  */
 type InputLength = Opaque<number, "Number that is lower than 2 ** 24 (Z_I from GP)">;
 

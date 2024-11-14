@@ -18,10 +18,10 @@ export const tryAsPageNumber = (index: number): PageNumber =>
  *
  * GP references:
  * 1. The modulo subscription operator is used in all load/store instructions, for example:
- * https://graypaper.fluffylabs.dev/#WyI3YWU1MWY5MzI1IiwiMjMiLCJBY2tub3dsZWRnZW1lbnRzIixudWxsLFsiPGRpdiBjbGFzcz1cInQgbTAgeDllIGg2IHk3NjcgZmY3IGZzMCBmYzAgc2MwIGxzMCB3czBcIj4iLCI8ZGl2IGNsYXNzPVwidCBtMCB4OWUgaDYgeTc2NyBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiJdXQ==
+ * https://graypaper.fluffylabs.dev/#/364735a/244501244501
  *
  * 2. Here is the definition of the modulo subscription operator:
- * https://graypaper.fluffylabs.dev/#WyI3YWU1MWY5MzI1IiwiNyIsIk5vdGF0aW9uYWwgQ29udmVudGlvbnMiLCJDcnlwdG9ncmFwaHkiLFsiPGRpdiBjbGFzcz1cInQgbTAgeDEyIGhiIHk0YyBmZjcgZnMwIGZjMCBzYzAgbHMwIHdzMFwiPiIsIjxkaXYgY2xhc3M9XCJ0IG0wIHgzOCBoYiB5NGMgZmYxMyBmczAgZmMwIHNjMCBsczAgd3MwXCI+Il1d
+ * https://graypaper.fluffylabs.dev/#/364735a/073900073900
  */
 export function getNextPageNumber(pageNumber: PageNumber): PageNumber {
   const newPageNumber = pageNumber === LAST_PAGE_NUMBER ? 0 : pageNumber + 1;
