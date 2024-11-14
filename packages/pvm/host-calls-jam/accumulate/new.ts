@@ -1,6 +1,7 @@
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
+import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { type U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
@@ -9,7 +10,6 @@ import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
-import {Bytes} from "@typeberry/bytes";
 
 const IN_OUT_REG = 7;
 
@@ -40,7 +40,9 @@ export class New implements HostCallHandler {
     const pageFault = memory.loadInto(codeHash.raw, codeHashStart);
     if (pageFault !== null) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+      return Promise.resolve();
     }
+
     const gas = asU64(g_l, g_h);
     const allowance = asU64(m_l, m_h);
 
@@ -57,8 +59,8 @@ export class New implements HostCallHandler {
   }
 }
 
-function asU64(lower: U32, higher: U32): U64 {
-  return tryAsU64((BigInt(higher) << 4n) + BigInt(lower));
+function asU64(lower: U32, higher: U32) {
+  return tryAsU64((BigInt(higher) << 32n) + BigInt(lower));
 }
 
 function bump(serviceId: ServiceId) {
