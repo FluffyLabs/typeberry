@@ -88,7 +88,7 @@ export class InMemoryKvdb implements KeyValueDatabase<InMemoryTransaction> {
   }
 
   getRoot(): TrieHash {
-    return this.trie.getRoot();
+    return this.trie.getRootHash();
   }
 
   newTransaction(): InMemoryTransaction {
