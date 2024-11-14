@@ -1,0 +1,220 @@
+openapi: 3.1.0
+info:
+  title: Typeberry Codec API
+  version: 1.0.0
+servers:
+  - url: /api/v1
+paths:
+  /types:
+    get:
+      summary: "An overview of all available types. Only a subset of types is exposed here for testing. More will follow."
+      operationId: getTypes
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Type"
+      tags:
+      - Types
+  /types/{id}/codec_to_json:
+    post:
+      description: "This decodes the CODEC value into the given type and then re-encodes it as JSON."
+      operationId: codecToJson
+      parameters:
+      - description: Type name
+        example: Header
+        in: path
+        name: id
+        required: true
+        schema:
+          enum: ['Header', 'Block', 'Extrinsic', 'EpochMarker', 'AvailabilityAssurance', 'AssurancesExtrinsic', 'Culprit', 'Fault', 'Judgement', 'Verdict', 'DisputesExtrinsic', 'Credential', 'ReportGuarantee', 'GuaranteesExtrinsic', 'Preimage', 'PreimageExtrinsic', 'RefineContext', 'SignedTicket', 'Ticket', 'TicketExtrinsic', 'ImportSpec', 'WorkItem', 'WorkItemExtrinsicSpec', 'WorkPackage', 'WorkPackageSpec', 'WorkReport', 'WorkExecResult', 'WorkResult']
+          type: string   
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CodecParams"
+              example:
+                codec: '0x5c743dbc514284b2ea57798787c5a155ef9d7ac1e9499ec65910a7a3d65897b72591ebd047489f1006361a4254731466a946174af02fe1d86681d254cfd4a00b74a9e79d2618e0ce8720ff61811b10e045c02224a09299f04e404a9656e85c812a00000001ae85d6635e9ae539d0846b911ec86a27fe000f619b78bcac8a74b77e36f6dbcf5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0aa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e3348e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3f16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d00013b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da290300ae85d6635e9ae539d0846b911ec86a27fe000f619b78bcac8a74b77e36f6dbcf49a52360f74a0233cea0775356ab0512fafff0683df08fae3cb848122e296cbc50fed22418ea55f19e55b3c75eb8b0ec71dcae0d79823d39920bf8d6a2256c5f31dc5b1e9423eccff9bccd6549eae8034162158000d5be9339919cc03d14046e6431c14cbb172b3aed702b9e9869904b1f39a6fe1f3e904b0fd536f13e8cac496682e1c81898e88e604904fa7c3e496f9a8771ef1102cc29d567c4aad283f7b0'
+        description: Type Decode Params
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/JsonResponse"
+          description: Type
+      summary: Convert a CODEC value to a JSON value.
+      tags:
+      - Types
+  /types/{id}/json_to_codec:
+    post:
+      description: This decodes the JSON value into the given type and then re-encodes it as CODEC.
+      operationId: jsonToCodec
+      parameters:
+      - description: Type name
+        example: Header
+        in: path
+        name: id
+        required: true
+        schema:
+          enum: ['Header', 'Block', 'Extrinsic', 'EpochMarker', 'AvailabilityAssurance', 'AssurancesExtrinsic', 'Culprit', 'Fault', 'Judgement', 'Verdict', 'DisputesExtrinsic', 'Credential', 'ReportGuarantee', 'GuaranteesExtrinsic', 'Preimage', 'PreimageExtrinsic', 'RefineContext', 'SignedTicket', 'Ticket', 'TicketExtrinsic', 'ImportSpec', 'WorkItem', 'WorkItemExtrinsicSpec', 'WorkPackage', 'WorkPackageSpec', 'WorkReport', 'WorkExecResult', 'WorkResult']
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/JsonParams"
+              example:
+                json: '{"parentHeaderHash":"0x5c743dbc514284b2ea57798787c5a155ef9d7ac1e9499ec65910a7a3d65897b7","priorStateRoot":"0x2591ebd047489f1006361a4254731466a946174af02fe1d86681d254cfd4a00b","extrinsicHash":"0x74a9e79d2618e0ce8720ff61811b10e045c02224a09299f04e404a9656e85c81","timeSlotIndex":42,"epochMarker":{"entropy":"0xae85d6635e9ae539d0846b911ec86a27fe000f619b78bcac8a74b77e36f6dbcf","validators":["0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d","0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0","0xaa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc","0x7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33","0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3","0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d"]},"ticketsMarker":null,"offendersMarker":["0x3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29"],"bandersnatchBlockAuthorIndex":3,"entropySource":"0xae85d6635e9ae539d0846b911ec86a27fe000f619b78bcac8a74b77e36f6dbcf49a52360f74a0233cea0775356ab0512fafff0683df08fae3cb848122e296cbc50fed22418ea55f19e55b3c75eb8b0ec71dcae0d79823d39920bf8d6a2256c5f","seal":"0x31dc5b1e9423eccff9bccd6549eae8034162158000d5be9339919cc03d14046e6431c14cbb172b3aed702b9e9869904b1f39a6fe1f3e904b0fd536f13e8cac496682e1c81898e88e604904fa7c3e496f9a8771ef1102cc29d567c4aad283f7b0"}'
+        description: Type Decode Params
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CodecResponse"
+          description: Type
+      summary: Convert a JSON value to a CODEC value.
+      tags:
+      - Types
+components:
+  schemas:
+    Arbitrary:
+      description: "An arbitrary but valid instance of a specific type."
+      example:
+        codec: '0x66ce79ce829d0c80590356df94f6e958864ed7ac6661b688fe20e6f19f8b4ad48fb9fc0a814d2f71de2e84e7c43fd57bcbd31256d039e00bb08529c940173a03d2eaa7802aa688b35f8a82714b04cd36dff723b781ce61e8cddc98553090a0f068849c1af9e9759948f278f42aa0636b3e5c815d930aec18074205c8c30b221e42260e0f285b91ae7516b00d4c8c2c9f724f912da1def39fe4c45ff3b0caef3c4d18bb2a9f6879224bfa044505e2e3dd55200a4b4e4311505b6fd9953c78652b2ad978c04ef60043af294f81329b4364b5103cff71ec34a7166a18183ad32534ef9ad951d96ce1ec673eedc6f0bb4a55802800a2b9d49db7dd392d5e70e0cd8f5b4f9ee3aab227b61a286ed73a1e7f3f0eb08538657e4f2a683829c83b148405f21cb947443857956afc5b30db8a24d1cf154e9f4ee99e066caaa901571003a97178adf85fed49ef36a99380cd244502'
+        json: '{"bandersnatch": "0x66ce79ce829d0c80590356df94f6e958864ed7ac6661b688fe20e6f19f8b4ad4",
+          "ed25519": "0x8fb9fc0a814d2f71de2e84e7c43fd57bcbd31256d039e00bb08529c940173a03",
+          "bls": "0xd2eaa7802aa688b35f8a82714b04cd36dff723b781ce61e8cddc98553090a0f068849c1af9e9759948f278f42aa0636b3e5c815d930aec18074205c8c30b221e42260e0f285b91ae7516b00d4c8c2c9f724f912da1def39fe4c45ff3b0caef3c4d18bb2a9f6879224bfa044505e2e3dd55200a4b4e4311505b6fd9953c78652b2ad978c04ef60043af294f81329b4364",
+          "metadata": "0xb5103cff71ec34a7166a18183ad32534ef9ad951d96ce1ec673eedc6f0bb4a55802800a2b9d49db7dd392d5e70e0cd8f5b4f9ee3aab227b61a286ed73a1e7f3f0eb08538657e4f2a683829c83b148405f21cb947443857956afc5b30db8a24d1cf154e9f4ee99e066caaa901571003a97178adf85fed49ef36a99380cd244502"}'
+      properties:
+        codec:
+          description: CODEC hex value
+          pattern: 0x([a-f0-9][a-f0-9])+
+          type: string
+        json:
+          description: JSON escaped string
+          type: string
+      title: Arbitrary
+      type: object
+    ArbitraryResponse:
+      description: "An arbitrary instance of a specific type."
+      example:
+        data:
+          codec: '0x66ce79ce829d0c80590356df94f6e958864ed7ac6661b688fe20e6f19f8b4ad48fb9fc0a814d2f71de2e84e7c43fd57bcbd31256d039e00bb08529c940173a03d2eaa7802aa688b35f8a82714b04cd36dff723b781ce61e8cddc98553090a0f068849c1af9e9759948f278f42aa0636b3e5c815d930aec18074205c8c30b221e42260e0f285b91ae7516b00d4c8c2c9f724f912da1def39fe4c45ff3b0caef3c4d18bb2a9f6879224bfa044505e2e3dd55200a4b4e4311505b6fd9953c78652b2ad978c04ef60043af294f81329b4364b5103cff71ec34a7166a18183ad32534ef9ad951d96ce1ec673eedc6f0bb4a55802800a2b9d49db7dd392d5e70e0cd8f5b4f9ee3aab227b61a286ed73a1e7f3f0eb08538657e4f2a683829c83b148405f21cb947443857956afc5b30db8a24d1cf154e9f4ee99e066caaa901571003a97178adf85fed49ef36a99380cd244502'
+          json: '{"bandersnatch": "0x66ce79ce829d0c80590356df94f6e958864ed7ac6661b688fe20e6f19f8b4ad4",
+            "ed25519": "0x8fb9fc0a814d2f71de2e84e7c43fd57bcbd31256d039e00bb08529c940173a03",
+            "bls": "0xd2eaa7802aa688b35f8a82714b04cd36dff723b781ce61e8cddc98553090a0f068849c1af9e9759948f278f42aa0636b3e5c815d930aec18074205c8c30b221e42260e0f285b91ae7516b00d4c8c2c9f724f912da1def39fe4c45ff3b0caef3c4d18bb2a9f6879224bfa044505e2e3dd55200a4b4e4311505b6fd9953c78652b2ad978c04ef60043af294f81329b4364",
+            "metadata": "0xb5103cff71ec34a7166a18183ad32534ef9ad951d96ce1ec673eedc6f0bb4a55802800a2b9d49db7dd392d5e70e0cd8f5b4f9ee3aab227b61a286ed73a1e7f3f0eb08538657e4f2a683829c83b148405f21cb947443857956afc5b30db8a24d1cf154e9f4ee99e066caaa901571003a97178adf85fed49ef36a99380cd244502"}'
+      properties:
+        data:
+          "$ref": "#/components/schemas/Arbitrary"
+      title: ArbitraryResponse
+      type: object
+    CodecParams:
+      description: "Parameters for decoding a CODEC value to JSON."
+      # example:
+      #   codec: "0x66ce79ce829d0c80590356df94f6e958864ed7ac6661b688fe20e6f19f8b4ad48fb9fc0a814d2f71de2e84e7c43fd57bcbd31256d039e00bb08529c940173a03d2eaa7802aa688b35f8a82714b04cd36dff723b781ce61e8cddc98553090a0f068849c1af9e9759948f278f42aa0636b3e5c815d930aec18074205c8c30b221e42260e0f285b91ae7516b00d4c8c2c9f724f912da1def39fe4c45ff3b0caef3c4d18bb2a9f6879224bfa044505e2e3dd55200a4b4e4311505b6fd9953c78652b2ad978c04ef60043af294f81329b4364b5103cff71ec34a7166a18183ad32534ef9ad951d96ce1ec673eedc6f0bb4a55802800a2b9d49db7dd392d5e70e0cd8f5b4f9ee3aab227b61a286ed73a1e7f3f0eb08538657e4f2a683829c83b148405f21cb947443857956afc5b30db8a24d1cf154e9f4ee99e066caaa901571003a97178adf85fed49ef36a99380cd244502"
+      properties:
+        codec:
+          description: CODEC Hex value (0x prefixed)
+          pattern: 0x([a-f0-9][a-f0-9])+
+          type: string
+      required:
+      - codec
+      title: CodecParams
+      type: object
+    CodecResponse:
+      description: "A CODEC value."
+      example:
+        data:
+          codec: '0x66ce79ce829d0c80590356df94f6e958864ed7ac6661b688fe20e6f19f8b4ad48fb9fc0a814d2f71de2e84e7c43fd57bcbd31256d039e00bb08529c940173a03d2eaa7802aa688b35f8a82714b04cd36dff723b781ce61e8cddc98553090a0f068849c1af9e9759948f278f42aa0636b3e5c815d930aec18074205c8c30b221e42260e0f285b91ae7516b00d4c8c2c9f724f912da1def39fe4c45ff3b0caef3c4d18bb2a9f6879224bfa044505e2e3dd55200a4b4e4311505b6fd9953c78652b2ad978c04ef60043af294f81329b4364b5103cff71ec34a7166a18183ad32534ef9ad951d96ce1ec673eedc6f0bb4a55802800a2b9d49db7dd392d5e70e0cd8f5b4f9ee3aab227b61a286ed73a1e7f3f0eb08538657e4f2a683829c83b148405f21cb947443857956afc5b30db8a24d1cf154e9f4ee99e066caaa901571003a97178adf85fed49ef36a99380cd244502'
+      properties:
+        data:
+          properties:
+            codec:
+              description: CODEC hex value (0x prefixed)
+              pattern: 0x([a-f0-9][a-f0-9])+
+              type: string
+          type: object
+      title: CodecResponse
+      type: object
+    JsonErrorResponse:
+      properties:
+        errors:
+          items:
+            properties:
+              detail:
+                example: null value where string expected
+                type: string
+              title:
+                example: Invalid value
+                type: string
+            required:
+            - title
+            - detail
+            type: object
+          type: array
+      required:
+      - errors
+      title: JsonErrorResponse
+      type: object
+    JsonParams:
+      description: "Parameters for encoding a JSON value to CODEC."
+      properties:
+        json:
+          description: JSON escaped value
+          type: string
+      required:
+      - json
+      title: JsonParams
+      type: object
+    JsonResponse:
+      description: "A JSON value."
+      example:
+        data:
+          json: '{"bandersnatch": "0x66ce79ce829d0c80590356df94f6e958864ed7ac6661b688fe20e6f19f8b4ad4",
+            "ed25519": "0x8fb9fc0a814d2f71de2e84e7c43fd57bcbd31256d039e00bb08529c940173a03",
+            "bls": "0xd2eaa7802aa688b35f8a82714b04cd36dff723b781ce61e8cddc98553090a0f068849c1af9e9759948f278f42aa0636b3e5c815d930aec18074205c8c30b221e42260e0f285b91ae7516b00d4c8c2c9f724f912da1def39fe4c45ff3b0caef3c4d18bb2a9f6879224bfa044505e2e3dd55200a4b4e4311505b6fd9953c78652b2ad978c04ef60043af294f81329b4364",
+            "metadata": "0xb5103cff71ec34a7166a18183ad32534ef9ad951d96ce1ec673eedc6f0bb4a55802800a2b9d49db7dd392d5e70e0cd8f5b4f9ee3aab227b61a286ed73a1e7f3f0eb08538657e4f2a683829c83b148405f21cb947443857956afc5b30db8a24d1cf154e9f4ee99e066caaa901571003a97178adf85fed49ef36a99380cd244502"}'
+      properties:
+        data:
+          properties:
+            json:
+              description: JSON escaped value
+              type: string
+          type: object
+      title: JsonResponse
+      type: object
+    Type:
+      description: "A type as defined in the Graypaper."
+      example:
+        id: Header
+      properties:
+        id:
+          description: Unique type name
+          pattern: "[a-zA-Z ]+"
+          type: string
+      title: Type
+      type: object
+    TypesResponse:
+      description: "A list of types as defined in the Graypaper."
+      example:
+        data:
+        - id: ValidatorKeyTuple
+        - id: AvailabilitySpec
+      properties:
+        data:
+          description: Type list
+          items:
+            "$ref": "#/components/schemas/Type"
+          type: array
+      title: TypesResponse
+      type: object

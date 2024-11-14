@@ -32,6 +32,7 @@
     "packages/utils",
     "tools/benchmark",
     "tools/builder",
+    "tools/codec-api",
     "tools/commit-hash",
     "tools/ipc2rpc",
     "workers/block-generator",
