@@ -1,7 +1,8 @@
-import type { CoreIndex, ServiceId } from "@typeberry/block";
+import type { CodeHash, CoreIndex, ServiceId } from "@typeberry/block";
 import { Q } from "@typeberry/block/gp-constants";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
+import type { U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { ValidatorData } from "@typeberry/safrole";
 
@@ -19,6 +20,9 @@ export type AUTHORIZATION_QUEUE_SIZE = typeof AUTHORIZATION_QUEUE_SIZE;
  * https://graypaper.fluffylabs.dev/#/439ca37/161402161402
  */
 export interface AccumulationPartialState {
+  /** Upgrade code of currently running service. */
+  upgrade(codeHash: CodeHash, gas: U64, allowance: U64): void;
+
   /** Designate new validators given their key and meta data. */
   updateValidatorsData(validatorsData: KnownSizeArray<ValidatorData, "ValidatorsCount">): void;
 
