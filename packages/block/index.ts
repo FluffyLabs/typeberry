@@ -7,6 +7,7 @@ export * from "./header";
 // TODO [ToDr] Temporary re-export to make the published package complete.
 export * as codec from "@typeberry/codec";
 export * as bytes from "@typeberry/bytes";
+export * as config from "@typeberry/config";
 
 export * as context from "./context";
 export * as assurances from "./assurances";
