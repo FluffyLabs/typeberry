@@ -16,7 +16,7 @@
   },
   "scripts": {
     "dev": "ts-node src/index.ts",
-    "build": "tsc",
+    "build": "tsc --noEmit false",
     "start": "node dist/index.js",
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
