@@ -35,7 +35,7 @@ export interface GasCounter {
   set(g: Gas): void;
 
   /** Returns true if there was an underflow. */
-  sub(g: SmallGas): boolean;
+  sub(g: Gas): boolean;
 }
 
 class GasCounterU64 implements GasCounter {
@@ -49,7 +49,7 @@ class GasCounterU64 implements GasCounter {
     return this.gas as Gas;
   }
 
-  sub(g: SmallGas) {
+  sub(g: Gas) {
     // TODO [ToDr] This should rather be I64?
     this.gas = (this.gas - tryAsU64(g)) as U64;
     return this.gas < 0n;
