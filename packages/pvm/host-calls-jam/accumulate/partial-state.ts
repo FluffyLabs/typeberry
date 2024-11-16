@@ -1,9 +1,9 @@
-import type { CoreIndex, ServiceId } from "@typeberry/block";
+import type { CodeHash, CoreIndex, ServiceId } from "@typeberry/block";
 import { Q, W_T } from "@typeberry/block/gp-constants";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
-import type { U64 } from "@typeberry/numbers";
+import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { ValidatorData } from "@typeberry/safrole";
 import type { Result } from "@typeberry/utils";
@@ -56,6 +56,24 @@ export interface AccumulationPartialState {
     suppliedGas: Gas,
     memo: Bytes<TRANSFER_MEMO_BYTES>,
   ): Result<null, TransferError>;
+
+  /**
+   * Create a new service with requested id, codeHash, gas and balance.
+   *
+   * Note the assigned id might be different than requested
+   * in case of a conflict.
+   * https://graypaper.fluffylabs.dev/#/364735a/2b5c012b5c01
+   *
+   * An error can be returned in case the account does not
+   * have the required balance.
+   */
+  newService(
+    requestedServiceId: ServiceId,
+    codeHash: CodeHash,
+    codeLength: U32,
+    gas: U64,
+    balance: U64,
+  ): Result<ServiceId, "insufficient funds">;
 
   /** Designate new validators given their key and meta data. */
   updateValidatorsData(validatorsData: KnownSizeArray<ValidatorData, "ValidatorsCount">): void;
