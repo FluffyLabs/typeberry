@@ -1,19 +1,38 @@
 import type { CodeHash, CoreIndex, ServiceId } from "@typeberry/block";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
-import type { U64 } from "@typeberry/numbers";
+import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { ValidatorData } from "@typeberry/safrole";
+import { Result } from "@typeberry/utils";
 import type { AUTHORIZATION_QUEUE_SIZE, AccumulationPartialState } from "./partial-state";
 
 export class TestAccumulate implements AccumulationPartialState {
-  public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
   public readonly authQueue: Parameters<TestAccumulate["updateAuthorizationQueue"]>[] = [];
+  public readonly newServiceCalled: Parameters<TestAccumulate["newService"]>[] = [];
+  public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
+  public readonly upgradeData: Parameters<TestAccumulate["upgradeService"]>[] = [];
   public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
-  public readonly upgradeData: Parameters<TestAccumulate["upgrade"]>[] = [];
-  public checkpointCalled = 0;
 
-  upgrade(codeHash: CodeHash, gas: U64, allowance: U64): void {
+  public checkpointCalled = 0;
+  public newServiceResponse: ServiceId | null = null;
+
+  newService(
+    requestedServiceId: ServiceId,
+    codeHash: CodeHash,
+    codeLength: U32,
+    gas: U64,
+    balance: U64,
+  ): Result<ServiceId, "insufficient funds"> {
+    this.newServiceCalled.push([requestedServiceId, codeHash, codeLength, gas, balance]);
+    if (this.newServiceResponse !== null) {
+      return Result.ok(this.newServiceResponse);
+    }
+
+    return Result.error("insufficient funds");
+  }
+
+  upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void {
     this.upgradeData.push([codeHash, gas, allowance]);
   }
 

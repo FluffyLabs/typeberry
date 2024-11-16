@@ -1,6 +1,7 @@
+import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU32, u64FromParts } from "@typeberry/numbers";
+import { type U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
@@ -13,12 +14,12 @@ import type { AccumulationPartialState } from "./partial-state";
 const IN_OUT_REG = 7;
 
 /**
- * Upgrade the code of the service.
+ * Create a new service account.
  *
- * https://graypaper.fluffylabs.dev/#/364735a/2e01032e0103
+ * https://graypaper.fluffylabs.dev/#/364735a/2e11022e1102
  */
-export class Upgrade implements HostCallHandler {
-  index = tryAsHostCallIndex(10);
+export class New implements HostCallHandler {
+  index = tryAsHostCallIndex(9);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
@@ -27,10 +28,12 @@ export class Upgrade implements HostCallHandler {
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
     // `o`
     const codeHashStart = tryAsMemoryIndex(regs.asUnsigned[IN_OUT_REG]);
-    const g_h = tryAsU32(regs.asUnsigned[8]);
+    // `l`
+    const codeLength = tryAsU32(regs.asUnsigned[8]);
     const g_l = tryAsU32(regs.asUnsigned[9]);
-    const m_h = tryAsU32(regs.asUnsigned[10]);
+    const g_h = tryAsU32(regs.asUnsigned[10]);
     const m_l = tryAsU32(regs.asUnsigned[11]);
+    const m_h = tryAsU32(regs.asUnsigned[12]);
 
     // `c`
     const codeHash = Bytes.zero(HASH_SIZE);
@@ -40,12 +43,27 @@ export class Upgrade implements HostCallHandler {
       return Promise.resolve();
     }
 
-    const gas = u64FromParts({ lower: g_l, upper: g_h });
-    const allowance = u64FromParts({ lower: m_l, upper: m_h });
+    const gas = asU64(g_l, g_h);
+    const allowance = asU64(m_l, m_h);
 
-    this.partialState.upgradeService(codeHash.asOpaque(), gas, allowance);
+    const newServiceId = bump(this.currentServiceId);
 
-    regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
+    const assignedId = this.partialState.newService(newServiceId, codeHash.asOpaque(), codeLength, gas, allowance);
+
+    if (assignedId.isOk()) {
+      regs.asUnsigned[IN_OUT_REG] = assignedId.ok;
+    } else {
+      regs.asUnsigned[IN_OUT_REG] = HostCallResult.CASH;
+    }
     return Promise.resolve();
   }
+}
+
+function asU64(lower: U32, higher: U32) {
+  return tryAsU64((BigInt(higher) << 32n) + BigInt(lower));
+}
+
+function bump(serviceId: ServiceId) {
+  const mod = 2 ** 32 - 2 ** 9;
+  return tryAsServiceId(2 ** 8 + ((serviceId - 2 ** 8 + 42 + mod) % mod));
 }
