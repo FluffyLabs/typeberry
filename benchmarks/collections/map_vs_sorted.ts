@@ -27,6 +27,26 @@ module.exports = () =>
       };
     }),
 
+    add("Map-array", () => {
+      const map = new Map();
+      map.set(0, {key: keys[0], value: true});
+      map.set(1, {key: keys[1], value: false});
+      map.set(2, {key: keys[2], value: true});
+      const len = map.size;
+      return () => {
+        for (let k = 0; k < READS; k += 1) {
+          for (const field of converted) {
+            for (let i = 0; i < len; i += 1) {
+              const v = map.get(i);
+              if (dataCmp(v, field) === Ordering.Equal) {
+                break;
+              }
+            }
+          }
+        }
+      };
+    }),
+
     add("Array", () => {
       const map: Data[] = [];
       map.push({key: keys[0], value: true });

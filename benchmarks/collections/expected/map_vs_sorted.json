@@ -8,7 +8,7 @@
     "index": 0
   },
   "slowest": {
-    "name": "Array",
+    "name": "Map-array",
     "index": 1
   }
 }
