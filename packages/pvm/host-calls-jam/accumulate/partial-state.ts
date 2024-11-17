@@ -46,9 +46,28 @@ export enum TransferError {
  */
 export interface AccumulationPartialState {
   /**
+   * Remove current service account and transfer all remaining
+   * funds to the destination account (i.e. invoke transfer).
+   *
+   * `a`: amount to transfer = balance - threshold + B_S: basic minimum balance
+   */
+  quitAndTransfer(
+    destination: ServiceId,
+    suppliedGas: Gas,
+    memo: Bytes<TRANSFER_MEMO_BYTES>,
+  ): Result<null, TransferError>;
+
+  /**
+   * Remove current service account and burn the remaining funds.
+   */
+  quitAndBurn(): void;
+
+  /**
    * Transfer given `amount` of funds to the `destination`,
    * passing `suppliedGas` to invoke `OnTransfer` entry point
    * and given `memo`.
+   *
+   * TODO [ToDr] is it possible to transfer to self?
    */
   transfer(
     destination: ServiceId,

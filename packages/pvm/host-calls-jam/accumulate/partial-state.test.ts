@@ -17,12 +17,27 @@ export class TestAccumulate implements AccumulationPartialState {
   public readonly authQueue: Parameters<TestAccumulate["updateAuthorizationQueue"]>[] = [];
   public readonly newServiceCalled: Parameters<TestAccumulate["newService"]>[] = [];
   public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
+  public readonly quitAndTransferData: Parameters<TestAccumulate["quitAndTransfer"]>[] = [];
   public readonly transferData: Parameters<TestAccumulate["transfer"]>[] = [];
   public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
 
   public checkpointCalled = 0;
+  public quitAndBurnCalled = 0;
   public newServiceResponse: ServiceId | null = null;
   public transferReturnValue: Result<null, TransferError> = Result.ok(null);
+
+  quitAndTransfer(
+    destination: ServiceId,
+    suppliedGas: Gas,
+    memo: Bytes<TRANSFER_MEMO_BYTES>,
+  ): Result<null, TransferError> {
+    this.quitAndTransferData.push([destination, suppliedGas, memo]);
+    return this.transferReturnValue;
+  }
+
+  quitAndBurn(): void {
+    this.quitAndBurnCalled += 1;
+  }
 
   transfer(
     destination: ServiceId,
