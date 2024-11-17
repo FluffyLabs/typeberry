@@ -42,7 +42,7 @@ export class SortedArray<V> {
   /**
    * Returns index of SOME (it's not guaranteed it's first or last)
    * equal element or -1 if the element does not exist.
-  */
+   */
   public findIndex(v: V) {
     const findIdx = this.binarySearch(v);
     if (findIdx.isEqual) {
@@ -105,7 +105,7 @@ export class SortedArray<V> {
       if (r === Ordering.Equal) {
         return {
           idx: mid,
-          isEqual: true
+          isEqual: true,
         };
       }
 

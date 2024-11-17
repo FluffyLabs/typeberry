@@ -3,7 +3,7 @@ import { Ordering, SortedArray } from "@typeberry/collections";
 
 const READS = 100;
 const keys = ["xyz", "abc", "123", "def", "Abb"];
-const converted = keys.map(key => ({ key }));
+const converted = keys.map((key) => ({ key }));
 
 module.exports = () =>
   suite(
@@ -11,9 +11,9 @@ module.exports = () =>
 
     add("Map", () => {
       const map = new Map();
-      map.set(keys[0], {key: keys[0], value: true});
-      map.set(keys[1], {key: keys[1], value: false});
-      map.set(keys[2], {key: keys[2], value: true});
+      map.set(keys[0], { key: keys[0], value: true });
+      map.set(keys[1], { key: keys[1], value: false });
+      map.set(keys[2], { key: keys[2], value: true });
 
       return () => {
         for (let k = 0; k < READS; k += 1) {
@@ -29,9 +29,9 @@ module.exports = () =>
 
     add("Map-array", () => {
       const map = new Map();
-      map.set(0, {key: keys[0], value: true});
-      map.set(1, {key: keys[1], value: false});
-      map.set(2, {key: keys[2], value: true});
+      map.set(0, { key: keys[0], value: true });
+      map.set(1, { key: keys[1], value: false });
+      map.set(2, { key: keys[2], value: true });
       const len = map.size;
       return () => {
         for (let k = 0; k < READS; k += 1) {
@@ -49,9 +49,9 @@ module.exports = () =>
 
     add("Array", () => {
       const map: Data[] = [];
-      map.push({key: keys[0], value: true });
-      map.push({key: keys[1], value: false});
-      map.push({key: keys[2], value: true });
+      map.push({ key: keys[0], value: true });
+      map.push({ key: keys[1], value: false });
+      map.push({ key: keys[2], value: true });
 
       return () => {
         for (let k = 0; k < READS; k += 1) {
