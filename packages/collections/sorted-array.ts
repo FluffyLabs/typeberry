@@ -36,19 +36,17 @@ export class SortedArray<V> {
   /** Insert new element to the collection. */
   public insert(v: V) {
     const findIdx = this.binarySearch(v);
-    this.array.splice(findIdx, 0, v);
+    this.array.splice(findIdx.idx, 0, v);
   }
 
-  /** Returns index of SOME (it's not guaranteed it's first or last) element or -1 if the element does not exist */
-  private findIndex(v: V) {
+  /**
+   * Returns index of SOME (it's not guaranteed it's first or last)
+   * equal element or -1 if the element does not exist.
+  */
+  public findIndex(v: V) {
     const findIdx = this.binarySearch(v);
-    if (findIdx >= this.array.length) {
-      return -1;
-    }
-
-    const existing = this.array[findIdx];
-    if (this.comparator(existing, v) === Ordering.Equal) {
-      return findIdx;
+    if (findIdx.isEqual) {
+      return findIdx.idx;
     }
 
     return -1;
@@ -62,22 +60,26 @@ export class SortedArray<V> {
    * we are able to retrieve the exact object that's stored.
    */
   public findExact(v: V): V | undefined {
-    const findIdx = this.findIndex(v);
-    return findIdx >= 0 ? this.array[findIdx] : undefined;
+    const findIdx = this.binarySearch(v);
+    if (findIdx.isEqual) {
+      return this.array[findIdx.idx];
+    }
+
+    return undefined;
   }
 
   /** Remove one matching element from the collection. */
   public removeOne(v: V) {
-    const findIdx = this.findIndex(v);
-    if (findIdx >= 0) {
+    const findIdx = this.binarySearch(v);
+    if (findIdx.isEqual) {
       // remove the element
-      this.array.splice(findIdx, 1);
+      this.array.splice(findIdx.idx, 1);
     }
   }
 
   /** Check if element is present in the collection. */
   public has(v: V) {
-    return this.findIndex(v) >= 0;
+    return this.binarySearch(v).isEqual;
   }
 
   /** Return the number of items in the array. */
@@ -91,15 +93,20 @@ export class SortedArray<V> {
   }
 
   private binarySearch(v: V) {
+    const arr = this.array;
     const cmp = this.comparator;
+
     let low = 0;
-    let high = this.array.length;
+    let high = arr.length;
 
     while (low < high) {
       const mid = (high + low) >> 1;
-      const r = cmp(this.array[mid], v);
+      const r = cmp(arr[mid], v);
       if (r === Ordering.Equal) {
-        return mid;
+        return {
+          idx: mid,
+          isEqual: true
+        };
       }
 
       if (r <= Ordering.Less) {
@@ -109,6 +116,8 @@ export class SortedArray<V> {
       }
     }
 
-    return low;
+    return {
+      idx: low,
+    };
   }
 }

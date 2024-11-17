@@ -8,7 +8,7 @@
     "index": 0
   },
   "slowest": {
-    "name": "SortedArray",
-    "index": 2
+    "name": "Array",
+    "index": 1
   }
 }

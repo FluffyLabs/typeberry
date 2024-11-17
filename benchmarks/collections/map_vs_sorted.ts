@@ -3,6 +3,7 @@ import { Ordering, SortedArray } from "@typeberry/collections";
 
 const READS = 100;
 const keys = ["xyz", "abc", "123", "def", "Abb"];
+const converted = keys.map(key => ({ key }));
 
 module.exports = () =>
   suite(
@@ -10,33 +11,35 @@ module.exports = () =>
 
     add("Map", () => {
       const map = new Map();
-      map.set(keys[0], true);
-      map.set(keys[1], false);
-      map.set(keys[2], true);
+      map.set(keys[0], {key: keys[0], value: true});
+      map.set(keys[1], {key: keys[1], value: false});
+      map.set(keys[2], {key: keys[2], value: true});
 
-      for (let k = 0; k < READS; k += 1) {
-        for (const field of keys) {
-          map.get(field);
-        }
-      }
-    }),
-
-    add("Array", () => {
-      const map = Array(3);
-      map.push(keys[0]);
-      map.push(keys[1]);
-      map.push(keys[2]);
-
-      const len = map.length;
-      for (let k = 0; k < READS; k += 1) {
-        for (const field of keys) {
-          for (let i = 0; i < len; i += 1) {
-            if (map[i] === field) {
-              break;
+      return () => {
+        for (let k = 0; k < READS; k += 1) {
+          for (const field of converted) {
+            const v = map.get(field.key);
+            if (v) {
+              dataCmp(v, field) === Ordering.Equal;
             }
           }
         }
-      }
+      };
+    }),
+
+    add("Array", () => {
+      const map: Data[] = [];
+      map.push({key: keys[0], value: true });
+      map.push({key: keys[1], value: false});
+      map.push({key: keys[2], value: true });
+
+      return () => {
+        for (let k = 0; k < READS; k += 1) {
+          for (const field of converted) {
+            map.findIndex((v) => dataCmp(v, field) === Ordering.Equal);
+          }
+        }
+      };
     }),
 
     add("SortedArray", () => {
@@ -45,11 +48,13 @@ module.exports = () =>
       map.insert({ key: keys[1], value: false });
       map.insert({ key: keys[2], value: true });
 
-      for (let k = 0; k < READS; k += 1) {
-        for (const field of keys) {
-          map.findExact({ key: field });
+      return () => {
+        for (let k = 0; k < READS; k += 1) {
+          for (const field of converted) {
+            map.findIndex(field);
+          }
         }
-      }
+      };
     }),
 
     cycle(),
@@ -63,9 +68,11 @@ function dataCmp(a: Data, b: Data) {
   if (a.key < b.key) {
     return Ordering.Less;
   }
+
   if (a.key > b.key) {
     return Ordering.Greater;
   }
+
   return Ordering.Equal;
 }
 
