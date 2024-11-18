@@ -29,7 +29,7 @@ function decodeVarU64(source: Uint8Array, finish = true) {
   return { value, bytesToSkip };
 }
 
-describe("decode natural number", () => {
+describe("JAM decoder / finish", () => {
   it("should fail when there are some bytes left", () => {
     const encodedBytes = new Uint8Array([0]);
     const decoder = Decoder.fromBlob(encodedBytes);
@@ -41,6 +41,38 @@ describe("decode natural number", () => {
       {
         name: "Error",
         message: "Expecting end of input, yet there are still 1 bytes left.",
+      },
+    );
+  });
+});
+
+describe("JAM decoder / natural number", () => {
+  it("should fail when there is not enough bytes for varU32", () => {
+    const encodedBytes = new Uint8Array([]);
+    const decoder = Decoder.fromBlob(encodedBytes);
+
+    assert.throws(
+      () => {
+        decoder.varU32();
+      },
+      {
+        name: "Error",
+        message: "Attempting to decode more data than there is left. Need 1, left: 0.",
+      },
+    );
+  });
+
+  it("should fail when there is not enough bytes for varU64", () => {
+    const encodedBytes = new Uint8Array([240]);
+    const decoder = Decoder.fromBlob(encodedBytes);
+
+    assert.throws(
+      () => {
+        decoder.varU64();
+      },
+      {
+        name: "Error",
+        message: "Attempting to decode more data than there is left. Need 4, left: 0.",
       },
     );
   });
