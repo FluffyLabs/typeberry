@@ -54,8 +54,8 @@ describe("BytesBlob", () => {
   });
 
   it("isLessThan should compare two equal blobs and return false", () => {
-    const blob1 = BytesBlob.fromNumbers([47, 163, 246, 134]);
-    const blob2 = BytesBlob.fromNumbers([47, 163, 246, 134]);
+    const blob1 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
+    const blob2 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
 
     const result = blob1.isLessThan(blob2);
 
@@ -63,8 +63,8 @@ describe("BytesBlob", () => {
   });
 
   it("isLessThan should compare two blobs and return false", () => {
-    const blob1 = BytesBlob.fromNumbers([48, 163, 246, 134]);
-    const blob2 = BytesBlob.fromNumbers([47, 163, 246, 134]);
+    const blob1 = BytesBlob.blobFromNumbers([48, 163, 246, 134]);
+    const blob2 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
 
     const result = blob1.isLessThan(blob2);
 
@@ -72,8 +72,8 @@ describe("BytesBlob", () => {
   });
 
   it("isLessThan should compare two blobs and return true", () => {
-    const blob1 = BytesBlob.fromNumbers([48, 163, 246, 134]);
-    const blob2 = BytesBlob.fromNumbers([49, 163, 246, 134]);
+    const blob1 = BytesBlob.blobFromNumbers([48, 163, 246, 134]);
+    const blob2 = BytesBlob.blobFromNumbers([49, 163, 246, 134]);
 
     const result = blob1.isLessThan(blob2);
 
