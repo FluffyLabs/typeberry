@@ -47,7 +47,7 @@ describe("JAM decoder / finish", () => {
 });
 
 describe("JAM decoder / natural number", () => {
-  it("should fail when there is not enough bytes", () => {
+  it("should fail when there is not enough bytes for varU32", () => {
     const encodedBytes = new Uint8Array([]);
     const decoder = Decoder.fromBlob(encodedBytes);
 
@@ -62,7 +62,7 @@ describe("JAM decoder / natural number", () => {
     );
   });
 
-  it("should fail when there is not enough bytes", () => {
+  it("should fail when there is not enough bytes for varU64", () => {
     const encodedBytes = new Uint8Array([240]);
     const decoder = Decoder.fromBlob(encodedBytes);
 
