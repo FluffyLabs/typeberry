@@ -1,19 +1,27 @@
 import type { CodeHash, CoreIndex, ServiceId } from "@typeberry/block";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
-import type { Blake2bHash } from "@typeberry/hash";
+import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { ValidatorData } from "@typeberry/safrole";
 import { Result } from "@typeberry/utils";
-import type { AUTHORIZATION_QUEUE_SIZE, AccumulationPartialState } from "./partial-state";
+import type { AUTHORIZATION_QUEUE_SIZE, AccumulationPartialState, RequestPreimageError } from "./partial-state";
 
 export class TestAccumulate implements AccumulationPartialState {
   public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
   public readonly authQueue: Parameters<TestAccumulate["updateAuthorizationQueue"]>[] = [];
   public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
   public readonly newServiceCalled: Parameters<TestAccumulate["newService"]>[] = [];
+  public readonly requestPreimageData: Parameters<TestAccumulate["requestPreimage"]>[] = [];
+
   public newServiceResponse: ServiceId | null = null;
+  public requestPreimageResponse: Result<null, RequestPreimageError> = Result.ok(null);
   public checkpointCalled = 0;
+
+  requestPreimage(hash: OpaqueHash, length: U32): Result<null, RequestPreimageError> {
+    this.requestPreimageData.push([hash, length]);
+    return this.requestPreimageResponse;
+  }
 
   newService(
     requestedServiceId: ServiceId,

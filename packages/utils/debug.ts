@@ -32,6 +32,18 @@ export function ensure<T, U extends T>(a: T, condition: boolean, message?: strin
   throw new Error(`Assertion failure: ${message || ""}`);
 }
 
+/**
+ * The function can be used to make sure that a particular type is `never`
+ * at some point in the code.
+ *
+ * Basically that means that all other options are exhaustively handled
+ * earlier and the assertion should make sure that an unhandled case
+ * is not introduced in the future.
+ */
+export function assertNever(value: never): never {
+  throw new Error(`Unexpected value: ${value}`);
+}
+
 /** A class that adds `toString` method that prints all properties of an object. */
 export abstract class WithDebug {
   toString() {

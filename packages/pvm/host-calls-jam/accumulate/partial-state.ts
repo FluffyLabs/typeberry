@@ -1,7 +1,7 @@
 import type { CodeHash, CoreIndex, ServiceId } from "@typeberry/block";
 import { Q } from "@typeberry/block/gp-constants";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
-import type { Blake2bHash } from "@typeberry/hash";
+import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { ValidatorData } from "@typeberry/safrole";
@@ -10,6 +10,16 @@ import type { Result } from "@typeberry/utils";
 /** Size of the authorization queue. */
 export const AUTHORIZATION_QUEUE_SIZE = Q;
 export type AUTHORIZATION_QUEUE_SIZE = typeof AUTHORIZATION_QUEUE_SIZE;
+
+/** Possible error when requesting a preimage. */
+export enum RequestPreimageError {
+  /** The preimage is already requested. */
+  AlreadyRequested = 0,
+  /** The preimage is already available. */
+  AlreadyAvailable = 1,
+  /** The account does not have enough balance to store more preimages. */
+  InsufficientFunds = 2,
+}
 
 /**
  * `U`: state components mutated by the accumulation.
@@ -21,6 +31,14 @@ export type AUTHORIZATION_QUEUE_SIZE = typeof AUTHORIZATION_QUEUE_SIZE;
  * https://graypaper.fluffylabs.dev/#/439ca37/161402161402
  */
 export interface AccumulationPartialState {
+  /**
+   * Request (solicit) a preimage to be (re-)available.
+   *
+   * States:
+   * https://graypaper.fluffylabs.dev/#/364735a/113000113000
+   */
+  requestPreimage(hash: OpaqueHash, length: U32): Result<null, RequestPreimageError>;
+
   /**
    * Create a new service with requested id, codeHash, gas and balance.
    *
