@@ -8,7 +8,7 @@ import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
 describe("sort-utils", () => {
   describe("isUniqueSortedBy", () => {
     const buildTestData = (key: string, arrays: number[][]) => ({
-      data: arrays.map((arr) => ({ [key]: BytesBlob.fromNumbers(arr) })),
+      data: arrays.map((arr) => ({ [key]: BytesBlob.blobFromNumbers(arr) })),
       key,
     });
 
