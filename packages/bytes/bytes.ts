@@ -45,13 +45,15 @@ export class BytesBlob {
   /** Compare the sequence to another one. */
   isLessThan(other: BytesBlob): boolean {
     const min = Math.min(this.length, other.length);
+    const thisRaw = this.raw;
+    const otherRaw = other.raw;
 
     for (let i = 0; i < min; i++) {
-      if (this.buffer[i] < other.buffer[i]) {
+      if (thisRaw[i] < otherRaw[i]) {
         return true;
       }
 
-      if (this.buffer[i] > other.buffer[i]) {
+      if (thisRaw[i] > otherRaw[i]) {
         return false;
       }
     }
