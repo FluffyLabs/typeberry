@@ -63,9 +63,13 @@ class TestDisputesRecords {
     psi_w: json.array(codecFromJson.bytes32<WorkReportHash>()),
     psi_o: json.array(codecFromJson.bytes32<Ed25519Key>()),
   };
+  /** "Good" set */
   psi_g!: WorkReportHash[];
+  /** "Bad" set */
   psi_b!: WorkReportHash[];
+  /** "Wonky" set */
   psi_w!: WorkReportHash[];
+  /** "Punish" set */
   psi_o!: Ed25519Key[];
 
   static fromDisputesRecords(disputesRecords: DisputesRecords) {
