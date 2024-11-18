@@ -11,7 +11,7 @@ export function hashComparator<V extends WorkReportHash | Ed25519Key>(a: V, b: V
   if (b.isLessThen(a)) {
     return Ordering.Greater;
   }
-  
+
   return Ordering.Equal;
 }
 

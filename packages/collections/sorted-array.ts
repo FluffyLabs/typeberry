@@ -47,7 +47,7 @@ export class SortedArray<V> {
 
     for (let i = 1; i < dataLength; i++) {
       if (comparator(data[i - 1], data[i]) === Ordering.Greater) {
-        throw new Error("Array is not sorted!");
+        throw new Error(`Expected sorted array, got: ${data}`);
       }
     }
 

@@ -79,7 +79,7 @@ describe("SortedArray", { timeout: 10 }, () => {
 
     const tryToCreate = () => SortedArray.fromSortedArray(cmp, data);
 
-    assert.throws(tryToCreate, new Error("Array is not sorted!"));
+    assert.throws(tryToCreate, new Error(`Expected sorted array, got: ${data}`));
   });
 
   it("should not throw when using fromSortedArray and array is sorted", () => {

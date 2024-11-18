@@ -34,7 +34,7 @@ describe("SortedSet", () => {
 
       const tryToCreate = () => SortedSet.fromSortedArray(cmp, data);
 
-      assert.throws(tryToCreate, new Error("Array is not sorted or contains duplicates!"));
+      assert.throws(tryToCreate, new Error(`Expected sorted array without duplicates, got: ${data}`));
     });
 
     it("should not throw when using fromSortedArray and array is sorted", () => {
@@ -50,7 +50,7 @@ describe("SortedSet", () => {
 
       const tryToCreate = () => SortedSet.fromSortedArray(cmp, data);
 
-      assert.throws(tryToCreate, new Error("Array is not sorted or contains duplicates!"));
+      assert.throws(tryToCreate, new Error(`Expected sorted array without duplicates, got: ${data}`));
     });
   });
 

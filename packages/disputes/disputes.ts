@@ -3,8 +3,8 @@ import type { DisputesExtrinsic } from "@typeberry/block/disputes";
 import { SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { hashBytes } from "@typeberry/hash";
+import type { Result } from "@typeberry/utils";
 import { DisputesErrorCode } from "./disputes-error-code";
-import { DisputesResult } from "./disputes-result";
 import { type DisputesState, hashComparator } from "./disputes-state";
 import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
 import {
@@ -28,6 +28,7 @@ const JUDGEMENT_INDEX = 0;
 const CULPRITS_INDEX = 1;
 const FAULTS_INDEX = 2;
 
+type Ok = null;
 export class Disputes {
   constructor(
     public readonly state: DisputesState,
@@ -215,7 +216,7 @@ export class Disputes {
         if (c1 === c2) {
           return DisputesErrorCode.NotEnoughCulprits;
         }
-      } else if (sum !== thirdOfValidators) {
+      } else if (sum !== this.context.thirdOfValidators) {
         // positive votes count is not correct
         // https://graypaper.fluffylabs.dev/#/364735a/123a02126b02
         return DisputesErrorCode.BadVoteSplit;
@@ -226,7 +227,7 @@ export class Disputes {
   }
 
   private getDisputesRecordsNewItems(v: VotesForWorkReports) {
-    const toAddToGoodSet:  = SortedSet.fromArray<WorkReportHash>(hashComparator);
+    const toAddToGoodSet = SortedSet.fromArray<WorkReportHash>(hashComparator);
     const toAddToBadSet = SortedSet.fromArray<WorkReportHash>(hashComparator);
     const toAddToWonkySet = SortedSet.fromArray<WorkReportHash>(hashComparator);
 
