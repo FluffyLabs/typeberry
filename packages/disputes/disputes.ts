@@ -16,7 +16,7 @@ import {
   vefifyAllSignatures,
 } from "./verification-utils";
 
-type V = [WorkReportHash, number][];
+type VotesForWorkReports = [WorkReportHash, number][];
 
 type NewDisputesRecordsItems = {
   toAddToGoodSet: SortedSet<WorkReportHash>;
@@ -171,10 +171,10 @@ export class Disputes {
     return null;
   }
 
-  private buildV(disputes: DisputesExtrinsic) {
+  private calculateVotesForWorkReports(disputes: DisputesExtrinsic) {
     // calculate total votes for each work report
     // https://graypaper.fluffylabs.dev/#/364735a/12760212cd02
-    const v: V = [];
+    const v: VotesForWorkReports = [];
 
     for (const verdict of disputes.verdicts) {
       const j = verdict.votes;
@@ -193,7 +193,7 @@ export class Disputes {
     return v;
   }
 
-  private verifyV(v: V, disputes: DisputesExtrinsic) {
+  private verifyVotesForWorkReports(v: VotesForWorkReports, disputes: DisputesExtrinsic) {
     // verify if the vote split is correct and if number of faults/culprints is correct
     // https://graypaper.fluffylabs.dev/#/364735a/12e50212fa02
 
@@ -223,7 +223,7 @@ export class Disputes {
     return null;
   }
 
-  private getDisputesRecordsNewItems(v: V) {
+  private getDisputesRecordsNewItems(v: VotesForWorkReports) {
     const toAddToGoodSet: SortedSet<WorkReportHash> = SortedSet.fromArray(hashComparator);
     const toAddToBadSet: SortedSet<WorkReportHash> = SortedSet.fromArray(hashComparator);
     const toAddToWonkySet: SortedSet<WorkReportHash> = SortedSet.fromArray(hashComparator);
@@ -244,7 +244,7 @@ export class Disputes {
     return { toAddToGoodSet, toAddToBadSet, toAddToWonkySet };
   }
 
-  private clearCoreAssignment(v: V) {
+  private clearCoreAssignment(v: VotesForWorkReports) {
     // https://graypaper.fluffylabs.dev/#/364735a/120403122903
     for (let c = 0; c < this.state.availabilityAssignment.length; c++) {
       const assignment = this.state.availabilityAssignment[c];
@@ -318,15 +318,11 @@ export class Disputes {
 
     // verify culprit signature
     // https://graypaper.fluffylabs.dev/#/364735a/124501124501
-    for (const c of disputes.culprits) {
-      signaturesToVerification[CULPRITS_INDEX].push(prepareCulpritSignature(c));
-    }
+    signaturesToVerification[CULPRITS_INDEX] = disputes.culprits.map(prepareCulpritSignature);
 
     // verify fault signature
     // https://graypaper.fluffylabs.dev/#/364735a/129201129201
-    for (const f of disputes.faults) {
-      signaturesToVerification[FAULTS_INDEX].push(prepareFaultSignature(f));
-    }
+    signaturesToVerification[FAULTS_INDEX] = disputes.faults.map(prepareFaultSignature);
 
     return signaturesToVerification;
   }
@@ -337,13 +333,13 @@ export class Disputes {
       return DisputesResult.error(signaturesToVerifyOrError);
     }
     const verificationPromise = vefifyAllSignatures(signaturesToVerifyOrError);
-    const v = this.buildV(disputes);
+    const v = this.calculateVotesForWorkReports(disputes);
     const newItems = this.getDisputesRecordsNewItems(v);
 
     const verificationResult = await verificationPromise;
     const inputError =
       (await this.verifyVerdicts(disputes, verificationResult)) ||
-      this.verifyV(v, disputes) ||
+      this.verifyVotesForWorkReports(v, disputes) ||
       (await this.verifyCulprits(disputes, newItems, verificationResult)) ||
       (await this.verifyFaults(disputes, newItems, verificationResult)) ||
       this.verifyIfAlreadyJudged(disputes);

@@ -12,8 +12,8 @@ import { fromJson as codecFromJson } from "./codec/common";
 import { disputesExtrinsicFromJson } from "./codec/disputes-extrinsic";
 
 namespace fromJson {
-  export function bytes32<TInto extends Bytes<32>>() {
-    return json.fromString((v) => Bytes.parseBytes(v, 32) as TInto);
+  export function bytes32() {
+    return json.fromString((v) => Bytes.parseBytes(v, 32).asOpaque());
   }
 
   export const bytesBlob = json.fromString(BytesBlob.parseBlob);

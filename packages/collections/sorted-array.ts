@@ -24,12 +24,18 @@ export type Comparator<V> = (self: V, other: V) => Ordering;
  * Duplicates are allowed, so make sure to check presence before inserting.
  */
 export class SortedArray<V> {
+  /**
+   * Create SortedArray from array that is not sorted. This function sorts the array.
+   */
   static fromArray<V>(comparator: Comparator<V>, array: V[] = []) {
     const data = array.slice();
     data.sort(comparator);
     return new SortedArray(data, comparator);
   }
 
+  /**
+   * Create SortedArray from array that is sorted. This function does not sort the array. Unsorted array will not work correctly!
+   */
   static fromSortedArray<V>(comparator: Comparator<V>, array: V[] = []) {
     const dataLength = array.length;
 
