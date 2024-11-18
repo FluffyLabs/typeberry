@@ -1,4 +1,4 @@
-import { ensure } from "@typeberry/utils";
+import { asOpaqueType, ensure } from "@typeberry/utils";
 
 /**
  * TODO [ToDr] This should be `unique symbol`, but for some reason
@@ -40,6 +40,23 @@ export const tryAsU64 = (x: number | bigint): U64 => {
     (v & 0xffff_ffff_ffff_ffffn) === v,
     `input must have eight-byte representation, got ${x}`,
   );
+};
+
+/** Collate two U32 parts into one U64. */
+export const u64FromParts = ({ lower, upper }: { lower: U32; upper: U32 }): U64 => {
+  const val = (BigInt(upper) << 32n) + BigInt(lower);
+  return asOpaqueType(val);
+};
+
+/** Split U64 into lower & upper parts. */
+export const u64IntoParts = (v: U64): { lower: U32; upper: U32 } => {
+  const lower = v & (2n ** 32n - 1n);
+  const upper = v >> 32n;
+
+  return {
+    lower: asOpaqueType(Number(lower)),
+    upper: asOpaqueType(Number(upper)),
+  };
 };
 
 /** A result of modulo arithmetic. */

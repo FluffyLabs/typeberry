@@ -64,6 +64,9 @@ export interface AccumulationPartialState {
     balance: U64,
   ): Result<ServiceId, "insufficient funds">;
 
+  /** Upgrade code of currently running service. */
+  upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void;
+
   /** Designate new validators given their key and meta data. */
   updateValidatorsData(validatorsData: KnownSizeArray<ValidatorData, "ValidatorsCount">): void;
 

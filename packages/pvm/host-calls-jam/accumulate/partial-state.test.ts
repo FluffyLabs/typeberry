@@ -8,17 +8,18 @@ import { Result } from "@typeberry/utils";
 import type { AUTHORIZATION_QUEUE_SIZE, AccumulationPartialState, RequestPreimageError } from "./partial-state";
 
 export class TestAccumulate implements AccumulationPartialState {
-  public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
   public readonly authQueue: Parameters<TestAccumulate["updateAuthorizationQueue"]>[] = [];
-  public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
-  public readonly newServiceCalled: Parameters<TestAccumulate["newService"]>[] = [];
-  public readonly requestPreimageData: Parameters<TestAccumulate["requestPreimage"]>[] = [];
   public readonly forgetPreimageData: Parameters<TestAccumulate["forgetPreimage"]>[] = [];
+  public readonly newServiceCalled: Parameters<TestAccumulate["newService"]>[] = [];
+  public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
+  public readonly requestPreimageData: Parameters<TestAccumulate["requestPreimage"]>[] = [];
+  public readonly upgradeData: Parameters<TestAccumulate["upgradeService"]>[] = [];
+  public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
 
+  public checkpointCalled = 0;
+  public forgetPreimageResponse: Result<null, null> = Result.ok(null);
   public newServiceResponse: ServiceId | null = null;
   public requestPreimageResponse: Result<null, RequestPreimageError> = Result.ok(null);
-  public forgetPreimageResponse: Result<null, null> = Result.ok(null);
-  public checkpointCalled = 0;
 
   requestPreimage(hash: Blake2bHash, length: U32): Result<null, RequestPreimageError> {
     this.requestPreimageData.push([hash, length]);
@@ -43,6 +44,10 @@ export class TestAccumulate implements AccumulationPartialState {
     }
 
     return Result.error("insufficient funds");
+  }
+
+  upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void {
+    this.upgradeData.push([codeHash, gas, allowance]);
   }
 
   checkpoint(): void {
