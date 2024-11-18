@@ -1,6 +1,6 @@
 import type { CodeHash, CoreIndex, ServiceId } from "@typeberry/block";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
-import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
+import type { Blake2bHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { ValidatorData } from "@typeberry/safrole";
@@ -13,14 +13,21 @@ export class TestAccumulate implements AccumulationPartialState {
   public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
   public readonly newServiceCalled: Parameters<TestAccumulate["newService"]>[] = [];
   public readonly requestPreimageData: Parameters<TestAccumulate["requestPreimage"]>[] = [];
+  public readonly forgetPreimageData: Parameters<TestAccumulate["forgetPreimage"]>[] = [];
 
   public newServiceResponse: ServiceId | null = null;
   public requestPreimageResponse: Result<null, RequestPreimageError> = Result.ok(null);
+  public forgetPreimageResponse: Result<null, null> = Result.ok(null);
   public checkpointCalled = 0;
 
-  requestPreimage(hash: OpaqueHash, length: U32): Result<null, RequestPreimageError> {
+  requestPreimage(hash: Blake2bHash, length: U32): Result<null, RequestPreimageError> {
     this.requestPreimageData.push([hash, length]);
     return this.requestPreimageResponse;
+  }
+
+  forgetPreimage(hash: Blake2bHash, length: U32): Result<null, null> {
+    this.forgetPreimageData.push([hash, length]);
+    return this.forgetPreimageResponse;
   }
 
   newService(

@@ -1,7 +1,7 @@
 import type { CodeHash, CoreIndex, ServiceId } from "@typeberry/block";
 import { Q } from "@typeberry/block/gp-constants";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
-import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
+import type { Blake2bHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { ValidatorData } from "@typeberry/safrole";
@@ -37,7 +37,14 @@ export interface AccumulationPartialState {
    * States:
    * https://graypaper.fluffylabs.dev/#/364735a/113000113000
    */
-  requestPreimage(hash: OpaqueHash, length: U32): Result<null, RequestPreimageError>;
+  requestPreimage(hash: Blake2bHash, length: U32): Result<null, RequestPreimageError>;
+
+  /**
+   * Mark a preimage hash as unavailable (forget it).
+   *
+   * https://graypaper.fluffylabs.dev/#/364735a/30a20030a200
+   */
+  forgetPreimage(hash: Blake2bHash, length: U32): Result<null, null>;
 
   /**
    * Create a new service with requested id, codeHash, gas and balance.
