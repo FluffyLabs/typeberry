@@ -8,12 +8,14 @@ import { Result } from "@typeberry/utils";
 import type { AUTHORIZATION_QUEUE_SIZE, AccumulationPartialState } from "./partial-state";
 
 export class TestAccumulate implements AccumulationPartialState {
-  public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
   public readonly authQueue: Parameters<TestAccumulate["updateAuthorizationQueue"]>[] = [];
-  public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
   public readonly newServiceCalled: Parameters<TestAccumulate["newService"]>[] = [];
-  public newServiceResponse: ServiceId | null = null;
+  public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
+  public readonly upgradeData: Parameters<TestAccumulate["upgradeService"]>[] = [];
+  public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
+
   public checkpointCalled = 0;
+  public newServiceResponse: ServiceId | null = null;
 
   newService(
     requestedServiceId: ServiceId,
@@ -28,6 +30,10 @@ export class TestAccumulate implements AccumulationPartialState {
     }
 
     return Result.error("insufficient funds");
+  }
+
+  upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void {
+    this.upgradeData.push([codeHash, gas, allowance]);
   }
 
   checkpoint(): void {
