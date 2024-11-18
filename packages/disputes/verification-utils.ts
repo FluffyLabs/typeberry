@@ -19,7 +19,7 @@ export function prepareCulpritSignature({ key, signature, workReportHash }: Culp
   const encoder = Encoder.create();
   encoder.bytes(Bytes.fromBlob(JAM_GUARANTEE, JAM_GUARANTEE.length));
   encoder.bytes(workReportHash);
-  const message = encoder.viewResult().buffer;
+  const message = encoder.viewResult().raw;
   return {
     key: key.raw,
     signature: signature.raw,
@@ -32,7 +32,7 @@ export function prepareFaultSignature({ workReportHash, wasConsideredValid, sign
   const signingContext = wasConsideredValid ? JAM_VALID : JAM_INVALID;
   encoder.bytes(Bytes.fromBlob(signingContext, signingContext.length));
   encoder.bytes(workReportHash);
-  const message = encoder.viewResult().buffer;
+  const message = encoder.viewResult().raw;
   return {
     key: key.raw,
     signature: signature.raw,
@@ -46,7 +46,7 @@ export function prepareJudgementSignature(j: Judgement, workReportHash: WorkRepo
   const encoder = Encoder.create();
   encoder.bytes(Bytes.fromBlob(signingContext, signingContext.length));
   encoder.bytes(workReportHash);
-  const message = encoder.viewResult().buffer;
+  const message = encoder.viewResult().raw;
   return {
     key: key.raw,
     signature: signature.raw,
