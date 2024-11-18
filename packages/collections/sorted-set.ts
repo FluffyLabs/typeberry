@@ -41,9 +41,8 @@ export class SortedSet<V> extends SortedArray<V> {
   /** Insert new element to the collection if not exist. */
   public insert(v: V) {
     const findIdx = this.binarySearch(v);
-    const maybeItem = this.array[findIdx];
-    if (!maybeItem || this.comparator(this.array[findIdx], v) !== Ordering.Equal) {
-      this.array.splice(findIdx, 0, v);
+    if (!findIdx.isEqual) {
+      this.array.splice(findIdx.idx, 0, v);
     }
   }
 }
