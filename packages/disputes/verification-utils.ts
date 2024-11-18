@@ -1,9 +1,8 @@
 import { ed25519 } from "@noble/curves/ed25519";
 import type { Ed25519Key, Ed25519Signature, WorkReportHash } from "@typeberry/block";
 import type { Culprit, Fault, Judgement } from "@typeberry/block/disputes";
-import { Bytes } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
-import { JAM_GUARANTEE, JAM_INVALID, JAM_VALID } from "@typeberry/signing-context";
 
 type InputItem = {
   signature: Uint8Array;
@@ -14,6 +13,10 @@ type InputItem = {
 export type VerificationInput = InputItem[][];
 type VerificationResultItem = { signature: Ed25519Signature; isValid: boolean };
 export type VerificationOutput = VerificationResultItem[][];
+
+export const JAM_VALID = BytesBlob.blobFromString("jam_valid").raw;
+export const JAM_INVALID = BytesBlob.blobFromString("jam_invalid").raw;
+export const JAM_GUARANTEE = BytesBlob.blobFromString("jam_guarantee").raw;
 
 export function prepareCulpritSignature({ key, signature, workReportHash }: Culprit): InputItem {
   const encoder = Encoder.create();
