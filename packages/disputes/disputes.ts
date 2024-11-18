@@ -23,12 +23,14 @@ type NewDisputesRecordsItems = {
   toAddToBadSet: SortedSet<WorkReportHash>;
   toAddToWonkySet: SortedSet<WorkReportHash>;
 };
+
 const JUDGEMENT_INDEX = 0;
 const CULPRITS_INDEX = 1;
 const FAULTS_INDEX = 2;
+
 export class Disputes {
   constructor(
-    public state: DisputesState,
+    public readonly state: DisputesState,
     private readonly context: ChainSpec,
   ) {}
 
@@ -36,7 +38,7 @@ export class Disputes {
     disputes: DisputesExtrinsic,
     newItems: NewDisputesRecordsItems,
     verificationResult: VerificationOutput,
-  ) {
+  ): Result<Ok, DisputesErrorCode> {
     for (const { key, workReportHash, signature } of disputes.culprits) {
       // check if some offenders weren't reported earlier
       // https://graypaper.fluffylabs.dev/#/364735a/123e01123e01
@@ -213,7 +215,7 @@ export class Disputes {
         if (c1 === c2) {
           return DisputesErrorCode.NotEnoughCulprits;
         }
-      } else if (sum !== Math.floor(this.context.validatorsCount / 3)) {
+      } else if (sum !== thirdOfValidators) {
         // positive votes count is not correct
         // https://graypaper.fluffylabs.dev/#/364735a/123a02126b02
         return DisputesErrorCode.BadVoteSplit;
@@ -224,9 +226,9 @@ export class Disputes {
   }
 
   private getDisputesRecordsNewItems(v: VotesForWorkReports) {
-    const toAddToGoodSet: SortedSet<WorkReportHash> = SortedSet.fromArray(hashComparator);
-    const toAddToBadSet: SortedSet<WorkReportHash> = SortedSet.fromArray(hashComparator);
-    const toAddToWonkySet: SortedSet<WorkReportHash> = SortedSet.fromArray(hashComparator);
+    const toAddToGoodSet:  = SortedSet.fromArray<WorkReportHash>(hashComparator);
+    const toAddToBadSet = SortedSet.fromArray<WorkReportHash>(hashComparator);
+    const toAddToWonkySet = SortedSet.fromArray<WorkReportHash>(hashComparator);
 
     // prepare new disputes records items but do not update the state yet
     // the state will be updated after verification

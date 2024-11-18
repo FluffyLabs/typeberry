@@ -8,21 +8,22 @@ export function hashComparator<V extends WorkReportHash | Ed25519Key>(a: V, b: V
     return Ordering.Less;
   }
 
-  if (a.isEqualTo(b)) {
-    return Ordering.Equal;
+  if (b.isLessThen(a)) {
+    return Ordering.Greater;
   }
-
-  return Ordering.Greater;
+  
+  return Ordering.Equal;
 }
+
 export class DisputesRecords {
   constructor(
-    public goodSet: SortedSet<WorkReportHash>,
-    public badSet: SortedSet<WorkReportHash>,
-    public wonkySet: SortedSet<WorkReportHash>,
-    public punishSet: SortedSet<Ed25519Key>,
+    public readonly goodSet: SortedSet<WorkReportHash>,
+    public readonly badSet: SortedSet<WorkReportHash>,
+    public readonly wonkySet: SortedSet<WorkReportHash>,
+    public readonly punishSet: SortedSet<Ed25519Key>,
   ) {}
 
-  static tryToCreateFromArrays(
+  static fromSortedArrays(
     goodSet: WorkReportHash[],
     badSet: WorkReportHash[],
     wonkySet: WorkReportHash[],
@@ -46,10 +47,10 @@ export class AvailabilityAssignment {
 
 export class DisputesState {
   constructor(
-    public disputesRecords: DisputesRecords,
-    public availabilityAssignment: Array<AvailabilityAssignment | undefined>,
-    public timeslot: TimeSlot,
-    public currentValidatorData: ValidatorData[],
-    public previousValidatorData: ValidatorData[],
+    public readonly disputesRecords: DisputesRecords,
+    public readonly availabilityAssignment: Array<AvailabilityAssignment | undefined>,
+    public readonly timeslot: TimeSlot,
+    public readonly currentValidatorData: ValidatorData[],
+    public readonly previousValidatorData: ValidatorData[],
   ) {}
 }

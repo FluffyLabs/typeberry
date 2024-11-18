@@ -31,14 +31,14 @@ export class SortedSet<V> extends SortedArray<V> {
 
     for (let i = 1; i < dataLength; i++) {
       if (comparator(data[i - 1], data[i]) !== Ordering.Less) {
-        throw new Error("Array is not sorted or contains duplicates!");
+        throw new Error(`Expected sorted array without duplicates, got: ${data}`);
       }
     }
 
     return new SortedSet(data, comparator);
   }
 
-  /** Insert new element to the collection if not exist. */
+  /** Insert given element to the sorted set unless it's already there. */
   public insert(v: V) {
     const findIdx = this.binarySearch(v);
     if (!findIdx.isEqual) {
