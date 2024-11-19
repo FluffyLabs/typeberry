@@ -19,11 +19,12 @@ export class TestAccumulate implements AccumulationPartialState {
   public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
   public readonly quitAndTransferData: Parameters<TestAccumulate["quitAndTransfer"]>[] = [];
   public readonly transferData: Parameters<TestAccumulate["transfer"]>[] = [];
+  public readonly upgradeData: Parameters<TestAccumulate["upgradeService"]>[] = [];
   public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
 
   public checkpointCalled = 0;
-  public quitAndBurnCalled = 0;
   public newServiceResponse: ServiceId | null = null;
+  public quitAndBurnCalled = 0;
   public transferReturnValue: Result<null, TransferError> = Result.ok(null);
 
   quitAndTransfer(
@@ -62,6 +63,10 @@ export class TestAccumulate implements AccumulationPartialState {
     }
 
     return Result.error("insufficient funds");
+  }
+
+  upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void {
+    this.upgradeData.push([codeHash, gas, allowance]);
   }
 
   checkpoint(): void {

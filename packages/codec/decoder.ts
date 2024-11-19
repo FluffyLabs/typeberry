@@ -180,6 +180,8 @@ export class Decoder {
    *       in the source.
    */
   varU32(): U32 {
+    this.ensureHasBytes(1);
+
     const firstByte = this.source[this.offset];
     const l = decodeVariableLengthExtraBytes(firstByte);
     this.offset += 1;
@@ -192,6 +194,7 @@ export class Decoder {
       throw new Error(`Unexpectedly large value for u32. l=${l}`);
     }
 
+    this.ensureHasBytes(l);
     const mostSignificantByte = (firstByte + 2 ** (8 - l) - 2 ** 8) << (l * 8);
     if (l === 1) {
       return (mostSignificantByte + this.u8()) as U32;
@@ -214,6 +217,8 @@ export class Decoder {
 
   /** Decode a variable-length encoding of natural numbers (up to 2**64). */
   varU64(): U64 {
+    this.ensureHasBytes(1);
+
     const firstByte = this.source[this.offset];
     const l = decodeVariableLengthExtraBytes(firstByte);
     this.offset += 1;
@@ -222,6 +227,7 @@ export class Decoder {
       return tryAsU64(firstByte);
     }
 
+    this.ensureHasBytes(l);
     this.offset += l;
     if (l === 8) {
       return tryAsU64(this.dataView.getBigUint64(this.offset - l, true));
