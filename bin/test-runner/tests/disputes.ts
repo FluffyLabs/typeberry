@@ -63,6 +63,11 @@ class TestDisputesRecords {
     psi_w: json.array(codecFromJson.bytes32<WorkReportHash>()),
     psi_o: json.array(codecFromJson.bytes32<Ed25519Key>()),
   };
+
+  /**
+   * psi = {psi_g, psi_b, psi_w, psi_o}
+   * GP: https://graypaper.fluffylabs.dev/#/364735a/121400123100
+   */
   /** "Good" set */
   psi_g!: WorkReportHash[];
   /** "Bad" set */

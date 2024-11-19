@@ -3,7 +3,7 @@ import type { DisputesExtrinsic } from "@typeberry/block/disputes";
 import { SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { hashBytes } from "@typeberry/hash";
-import type { Result } from "@typeberry/utils";
+import { Result } from "@typeberry/utils";
 import { DisputesErrorCode } from "./disputes-error-code";
 import { type DisputesState, hashComparator } from "./disputes-state";
 import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
@@ -45,45 +45,45 @@ export class Disputes {
       // https://graypaper.fluffylabs.dev/#/364735a/123e01123e01
       const isInPunishSet = !!this.state.disputesRecords.punishSet.findExact(key);
       if (isInPunishSet) {
-        return DisputesErrorCode.OffenderAlreadyReported;
+        return Result.error(DisputesErrorCode.OffenderAlreadyReported);
       }
 
       // verify if the culprit will be in new bad set
       // https://graypaper.fluffylabs.dev/#/364735a/122f01122f01
       const isInNewBadSet = newItems.toAddToBadSet.findExact(workReportHash);
       if (!isInNewBadSet) {
-        return DisputesErrorCode.CulpritsVerdictNotBad;
+        return Result.error(DisputesErrorCode.CulpritsVerdictNotBad);
       }
 
       // verify culprit signature
       // https://graypaper.fluffylabs.dev/#/364735a/124501124501
       const result = verificationResult[CULPRITS_INDEX].find((f) => f.signature.isEqualTo(signature));
       if (result && !result.isValid) {
-        return DisputesErrorCode.BadSignature;
+        return Result.error(DisputesErrorCode.BadSignature);
       }
     }
 
     // check if culprits are sorted by key
     // https://graypaper.fluffylabs.dev/#/364735a/12ae0112af01
     if (!isUniqueSortedBy(disputes.culprits, "key")) {
-      return DisputesErrorCode.CulpritsNotSortedUnique;
+      return Result.error(DisputesErrorCode.CulpritsNotSortedUnique);
     }
 
-    return null;
+    return Result.ok(null);
   }
 
   private verifyFaults(
     disputes: DisputesExtrinsic,
     newItems: NewDisputesRecordsItems,
     verificationResult: VerificationOutput,
-  ) {
+  ): Result<Ok, DisputesErrorCode> {
     for (const { key, workReportHash, signature, wasConsideredValid } of disputes.faults) {
       // check if some offenders weren't reported earlier
       // https://graypaper.fluffylabs.dev/#/364735a/128b01128b01
       const isInPunishSet = !!this.state.disputesRecords.punishSet.findExact(key);
 
       if (isInPunishSet) {
-        return DisputesErrorCode.OffenderAlreadyReported;
+        return Result.error(DisputesErrorCode.OffenderAlreadyReported);
       }
 
       // verify if the fault will be included in new good/bad set
@@ -96,7 +96,7 @@ export class Disputes {
         const isInNewBadSet = newItems.toAddToBadSet.findExact(workReportHash);
 
         if (isInNewGoodSet || !isInNewBadSet) {
-          return DisputesErrorCode.FaultVerdictWrong;
+          return Result.error(DisputesErrorCode.FaultVerdictWrong);
         }
       }
 
@@ -104,25 +104,28 @@ export class Disputes {
       // https://graypaper.fluffylabs.dev/#/364735a/129201129201
       const result = verificationResult[FAULTS_INDEX].find((f) => f.signature.isEqualTo(signature));
       if (result && !result.isValid) {
-        return DisputesErrorCode.BadSignature;
+        return Result.error(DisputesErrorCode.BadSignature);
       }
     }
 
     // check if faults are sorted by key
     // https://graypaper.fluffylabs.dev/#/364735a/12ae0112af01
     if (!isUniqueSortedBy(disputes.faults, "key")) {
-      return DisputesErrorCode.FaultsNotSortedUnique;
+      return Result.error(DisputesErrorCode.FaultsNotSortedUnique);
     }
 
-    return null;
+    return Result.ok(null);
   }
 
-  private verifyVerdicts(disputes: DisputesExtrinsic, verificationResult: VerificationOutput) {
+  private verifyVerdicts(
+    disputes: DisputesExtrinsic,
+    verificationResult: VerificationOutput,
+  ): Result<Ok, DisputesErrorCode> {
     const currentEpoch = Math.floor(this.state.timeslot / this.context.epochLength);
     for (const { votesEpoch, votes } of disputes.verdicts) {
       // https://graypaper.fluffylabs.dev/#/364735a/12a50012a600
       if (votesEpoch !== currentEpoch && votesEpoch + 1 !== currentEpoch) {
-        return DisputesErrorCode.BadJudgementAge;
+        return Result.error(DisputesErrorCode.BadJudgementAge);
       }
 
       const k = votesEpoch === currentEpoch ? this.state.currentValidatorData : this.state.previousValidatorData;
@@ -131,14 +134,14 @@ export class Disputes {
 
         // no particular GP fragment but I think we don't belive in ghosts
         if (!key) {
-          return DisputesErrorCode.BadValidatorIndex;
+          return Result.error(DisputesErrorCode.BadValidatorIndex);
         }
 
         // verify vote signature. Verification was done earlier, here we only check the result.
         // https://graypaper.fluffylabs.dev/#/364735a/12b70012b700
         const result = verificationResult[JUDGEMENT_INDEX].find((j) => j.signature.isEqualTo(signature));
         if (result && !result.isValid) {
-          return DisputesErrorCode.BadSignature;
+          return Result.error(DisputesErrorCode.BadSignature);
         }
       }
     }
@@ -146,19 +149,19 @@ export class Disputes {
     // check if verdicts are correctly sorted
     // https://graypaper.fluffylabs.dev/#/364735a/12ad0112ad01
     if (!isUniqueSortedBy(disputes.verdicts, "workReportHash")) {
-      return DisputesErrorCode.VerdictsNotSortedUnique;
+      return Result.error(DisputesErrorCode.VerdictsNotSortedUnique);
     }
 
     // check if judgement are correctly sorted
     // https://graypaper.fluffylabs.dev/#/364735a/122102122202
     if (!disputes.verdicts.every((verdict) => isUniqueSortedByIndex(verdict.votes))) {
-      return DisputesErrorCode.JudgementsNotSortedUnique;
+      return Result.error(DisputesErrorCode.JudgementsNotSortedUnique);
     }
 
-    return null;
+    return Result.ok(null);
   }
 
-  private verifyIfAlreadyJudged(disputes: DisputesExtrinsic) {
+  private verifyIfAlreadyJudged(disputes: DisputesExtrinsic): Result<Ok, DisputesErrorCode> {
     for (const verdict of disputes.verdicts) {
       // current verdicts should not be reported earlier
       // https://graypaper.fluffylabs.dev/#/364735a/120b02120b02
@@ -167,11 +170,11 @@ export class Disputes {
       const isInWonkySet = this.state.disputesRecords.wonkySet.findExact(verdict.workReportHash);
 
       if (isInGoodSet || isInBadSet || isInWonkySet) {
-        return DisputesErrorCode.AlreadyJudged;
+        return Result.error(DisputesErrorCode.AlreadyJudged);
       }
     }
 
-    return null;
+    return Result.ok(null);
   }
 
   private calculateVotesForWorkReports(disputes: DisputesExtrinsic) {
@@ -196,7 +199,10 @@ export class Disputes {
     return v;
   }
 
-  private verifyVotesForWorkReports(v: VotesForWorkReports, disputes: DisputesExtrinsic) {
+  private verifyVotesForWorkReports(
+    v: VotesForWorkReports,
+    disputes: DisputesExtrinsic,
+  ): Result<Ok, DisputesErrorCode> {
     // verify if the vote split is correct and if number of faults/culprints is correct
     // https://graypaper.fluffylabs.dev/#/364735a/12e50212fa02
 
@@ -206,7 +212,7 @@ export class Disputes {
         // https://graypaper.fluffylabs.dev/#/364735a/12db0212e602
         const f = disputes.faults.find((x) => x.workReportHash.isEqualTo(r));
         if (!f) {
-          return DisputesErrorCode.NotEnoughFaults;
+          return Result.error(DisputesErrorCode.NotEnoughFaults);
         }
       } else if (sum === 0) {
         // there has to be at least 2 culprits with the same work report hash
@@ -214,16 +220,16 @@ export class Disputes {
         const c1 = disputes.culprits.find((x) => x.workReportHash.isEqualTo(r));
         const c2 = disputes.culprits.findLast((x) => x.workReportHash.isEqualTo(r));
         if (c1 === c2) {
-          return DisputesErrorCode.NotEnoughCulprits;
+          return Result.error(DisputesErrorCode.NotEnoughCulprits);
         }
       } else if (sum !== this.context.thirdOfValidators) {
         // positive votes count is not correct
         // https://graypaper.fluffylabs.dev/#/364735a/123a02126b02
-        return DisputesErrorCode.BadVoteSplit;
+        return Result.error(DisputesErrorCode.BadVoteSplit);
       }
     }
 
-    return null;
+    return Result.ok(null);
   }
 
   private getDisputesRecordsNewItems(v: VotesForWorkReports) {
@@ -297,7 +303,7 @@ export class Disputes {
     }
   }
 
-  private prepareSignaturesToVerification(disputes: DisputesExtrinsic) {
+  private prepareSignaturesToVerification(disputes: DisputesExtrinsic): Result<VerificationInput, DisputesErrorCode> {
     // Signature verification is heavy so we prepare array to verify it in the meantime,
     const signaturesToVerification: VerificationInput = [[], [], []];
     const currentEpoch = Math.floor(this.state.timeslot / this.context.epochLength);
@@ -309,7 +315,7 @@ export class Disputes {
 
         // no particular GP fragment but I think we don't belive in ghosts
         if (!validator) {
-          return DisputesErrorCode.BadValidatorIndex;
+          return Result.error(DisputesErrorCode.BadValidatorIndex);
         }
 
         const key = validator.ed25519;
@@ -327,15 +333,18 @@ export class Disputes {
     // https://graypaper.fluffylabs.dev/#/364735a/129201129201
     signaturesToVerification[FAULTS_INDEX] = disputes.faults.map(prepareFaultSignature);
 
-    return signaturesToVerification;
+    return Result.ok(signaturesToVerification);
   }
 
-  async transition(disputes: DisputesExtrinsic) {
-    const signaturesToVerifyOrError = this.prepareSignaturesToVerification(disputes);
-    if (signaturesToVerifyOrError === DisputesErrorCode.BadValidatorIndex) {
-      return DisputesResult.error(signaturesToVerifyOrError);
+  async transition(disputes: DisputesExtrinsic): Promise<Result<Ed25519Key[], DisputesErrorCode>> {
+    const signaturesToVerifyResult = this.prepareSignaturesToVerification(disputes);
+    if (signaturesToVerifyResult.isError()) {
+      return Result.error(signaturesToVerifyResult.error);
     }
-    const verificationPromise = vefifyAllSignatures(signaturesToVerifyOrError);
+
+    /** becasue of the condition above this should be always true but TS is stupid */
+    const signaturesToVerify = signaturesToVerifyResult.isOk() ? signaturesToVerifyResult.ok : [];
+    const verificationPromise = vefifyAllSignatures(signaturesToVerify);
     const v = this.calculateVotesForWorkReports(disputes);
     const newItems = this.getDisputesRecordsNewItems(v);
 
@@ -347,14 +356,14 @@ export class Disputes {
       (await this.verifyFaults(disputes, newItems, verificationResult)) ||
       this.verifyIfAlreadyJudged(disputes);
 
-    if (inputError !== null) {
-      return DisputesResult.error(inputError);
+    if (inputError.isError()) {
+      return Result.error(inputError.error);
     }
 
     // GP: https://graypaper.fluffylabs.dev/#/364735a/12b00312cd03
     const offendersMarks = this.getOffenders(disputes);
     this.updateDisputesRecords(newItems, offendersMarks);
     this.clearCoreAssignment(v);
-    return DisputesResult.ok(offendersMarks);
+    return Result.ok(offendersMarks);
   }
 }
