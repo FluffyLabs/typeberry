@@ -96,10 +96,15 @@ class TestState {
     lambda: json.array(fromJson.validatorData),
   };
 
+  /** Disputes records. */
   psi!: TestDisputesRecords;
+  /** Availability assignments. */
   rho!: Array<TestAvailabilityAssignment | undefined>;
+  /** Time slot. */
   tau!: TimeSlot;
+  /** Current validator set. */
   kappa!: ValidatorData[];
+  /** Previous validator set. */
   lambda!: ValidatorData[];
 
   static fromDisputesState(disputesState: DisputesState) {
