@@ -2,7 +2,7 @@ import { tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { tryAsU32, u64FromParts } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type BigGas, type Gas, type GasCounter, tryAsGas, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
@@ -40,7 +40,7 @@ export class Transfer implements HostCallHandler {
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 
-  async execute(gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
+  async execute(gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // `d`: destination
     const destination = tryAsServiceId(regs.asUnsigned[IN_OUT_REG]);
     // amount

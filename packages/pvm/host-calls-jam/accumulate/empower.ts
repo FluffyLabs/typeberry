@@ -2,7 +2,7 @@ import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Decoder, codec, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type BigGas, type Gas, type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
@@ -34,7 +34,7 @@ export class Empower implements HostCallHandler {
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
+  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // `m`: manager service (can change privileged services)
     const m = tryAsServiceId(regs.asUnsigned[IN_OUT_REG]);
     // `a`: manages authorization queue
@@ -83,6 +83,6 @@ export class Empower implements HostCallHandler {
     this.partialState.updatePrivilegedServices(m, a, v, g);
     regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
 
-    return Promise.resolve();
+    return;
   }
 }

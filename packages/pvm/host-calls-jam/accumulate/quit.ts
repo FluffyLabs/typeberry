@@ -1,7 +1,7 @@
 import { tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
@@ -25,7 +25,7 @@ export class Quit implements HostCallHandler {
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 
-  async execute(gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
+  async execute(gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // `d`: where to transfer remaining funds
     const destination = tryAsServiceId(regs.asUnsigned[IN_OUT_REG]);
 
@@ -35,7 +35,7 @@ export class Quit implements HostCallHandler {
     if (noTransfer) {
       this.partialState.quitAndBurn();
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
-      return;
+      return Promise.resolve(PvmExecution.Halt);
     }
 
     // when we transfer it's more complicated, we need to handle
@@ -59,7 +59,7 @@ export class Quit implements HostCallHandler {
     // All good!
     if (!transferResult.isError()) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
-      return;
+      return Promise.resolve(PvmExecution.Halt);
     }
 
     const e = transferResult.error;
