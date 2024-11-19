@@ -1,5 +1,6 @@
 import type { CodeHash, CoreIndex, ServiceId } from "@typeberry/block";
-import { Q } from "@typeberry/block/gp-constants";
+import { Q, W_T } from "@typeberry/block/gp-constants";
+import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
@@ -11,6 +12,10 @@ import type { Result } from "@typeberry/utils";
 export const AUTHORIZATION_QUEUE_SIZE = Q;
 export type AUTHORIZATION_QUEUE_SIZE = typeof AUTHORIZATION_QUEUE_SIZE;
 
+/** Size of the transfer memo. */
+export const TRANSFER_MEMO_BYTES = W_T;
+export type TRANSFER_MEMO_BYTES = typeof TRANSFER_MEMO_BYTES;
+
 /** Possible error when requesting a preimage. */
 export enum RequestPreimageError {
   /** The preimage is already requested. */
@@ -19,6 +24,25 @@ export enum RequestPreimageError {
   AlreadyAvailable = 1,
   /** The account does not have enough balance to store more preimages. */
   InsufficientFunds = 2,
+}
+
+/**
+ * Errors that may occur when the transfer is invoked.
+ *
+ * TODO [ToDr] Since I don't fully understand yet which of these
+ * could be checked directly in the host call (i.e. if we will
+ * have access to the service account state there) for now I keep
+ * them safely in the `AccumulationPartialState` implementation.
+ * However, if possible, these should be moved directly to the
+ * host call implementation.
+ */
+export enum TransferError {
+  /** The destination service does not exist. */
+  DestinationNotFound = 0,
+  /** The supplied gas is too low to execute `OnTransfer` entry point. */
+  GasTooLow = 1,
+  /** After transfering the funds account balance would be below the threshold. */
+  BalanceBelowThreshold = 2,
 }
 
 /**
@@ -45,6 +69,18 @@ export interface AccumulationPartialState {
    * https://graypaper.fluffylabs.dev/#/364735a/30a20030a200
    */
   forgetPreimage(hash: Blake2bHash, length: U32): Result<null, null>;
+
+  /**
+   * Transfer given `amount` of funds to the `destination`,
+   * passing `suppliedGas` to invoke `OnTransfer` entry point
+   * and given `memo`.
+   */
+  transfer(
+    destination: ServiceId,
+    amount: U64,
+    suppliedGas: Gas,
+    memo: Bytes<TRANSFER_MEMO_BYTES>,
+  ): Result<null, TransferError>;
 
   /**
    * Create a new service with requested id, codeHash, gas and balance.

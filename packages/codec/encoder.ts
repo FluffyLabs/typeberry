@@ -265,7 +265,9 @@ export class Encoder {
    *
    * https://graypaper.fluffylabs.dev/#/364735a/325a02325a02
    */
-  varU64(num: bigint) {
+  varU64(value: bigint) {
+    const num = BigInt(value); // this should be a no-op, but fixes incorrect usage in JS
+
     if (num === 0n) {
       this.ensureBigEnough(1);
       this.destination[this.offset] = 0;

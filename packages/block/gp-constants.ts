@@ -26,5 +26,8 @@ export const Q = 80;
 /** `W_C`: The maximum size of service code in octets. */
 export const W_C = 4_000_000;
 
+/** `W_T`: The size of a transfer memo in octets. */
+export const W_T = 128;
+
 /** `Y`: The number of slots into an epoch at which ticket-submission ends. */
 export const Y = 500;
