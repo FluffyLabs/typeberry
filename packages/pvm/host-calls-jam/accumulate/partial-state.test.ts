@@ -1,21 +1,39 @@
 import type { CodeHash, CoreIndex, ServiceId } from "@typeberry/block";
+import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { ValidatorData } from "@typeberry/safrole";
 import { Result } from "@typeberry/utils";
-import type { AUTHORIZATION_QUEUE_SIZE, AccumulationPartialState } from "./partial-state";
+import type {
+  AUTHORIZATION_QUEUE_SIZE,
+  AccumulationPartialState,
+  TRANSFER_MEMO_BYTES,
+  TransferError,
+} from "./partial-state";
 
 export class TestAccumulate implements AccumulationPartialState {
   public readonly authQueue: Parameters<TestAccumulate["updateAuthorizationQueue"]>[] = [];
   public readonly newServiceCalled: Parameters<TestAccumulate["newService"]>[] = [];
   public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
+  public readonly transferData: Parameters<TestAccumulate["transfer"]>[] = [];
   public readonly upgradeData: Parameters<TestAccumulate["upgradeService"]>[] = [];
   public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
 
   public checkpointCalled = 0;
   public newServiceResponse: ServiceId | null = null;
+  public transferReturnValue: Result<null, TransferError> = Result.ok(null);
+
+  transfer(
+    destination: ServiceId,
+    amount: U64,
+    suppliedGas: Gas,
+    memo: Bytes<TRANSFER_MEMO_BYTES>,
+  ): Result<null, TransferError> {
+    this.transferData.push([destination, amount, suppliedGas, memo]);
+    return this.transferReturnValue;
+  }
 
   newService(
     requestedServiceId: ServiceId,
