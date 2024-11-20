@@ -70,3 +70,16 @@ export const tinyChainSpec = new ChainSpec({
   contestLength: 10,
   ticketsPerValidator: 3,
 });
+
+/**
+ * Set of values for "full" chain as defined in JAM test vectors.
+ * Please note that only validatorsCount and epochLength are "full", the rest is copied from "tiny".
+ */
+export const fullChainSpec = new ChainSpec({
+  validatorsCount: 1023,
+  epochLength: 600,
+  coresCount: 2,
+  slotDuration: 6,
+  contestLength: 10,
+  ticketsPerValidator: 3,
+});
