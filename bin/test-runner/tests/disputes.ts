@@ -1,31 +1,30 @@
 import assert from "node:assert";
-import type { Ed25519Key, TimeSlot, WorkReportHash } from "@typeberry/block";
+import type { Ed25519Key, TimeSlot, ValidatorData, WorkReportHash } from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Bytes } from "@typeberry/bytes";
 import { ChainSpec } from "@typeberry/config";
 import { Disputes } from "@typeberry/disputes";
 import { AvailabilityAssignment, DisputesRecords, DisputesState } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
 import { type FromJson, json } from "@typeberry/json-parser";
-import type { ValidatorData } from "@typeberry/safrole";
-import type { BlsKey } from "@typeberry/safrole/crypto";
 import { fromJson as codecFromJson } from "./codec/common";
 import { disputesExtrinsicFromJson } from "./codec/disputes-extrinsic";
+import { fromJson } from "./safrole";
 
-namespace fromJson {
-  export function bytes32() {
-    return json.fromString((v) => Bytes.parseBytes(v, 32).asOpaque());
-  }
+// namespace fromJson {
+//   export function bytes32() {
+//     return json.fromString((v) => Bytes.parseBytes(v, 32).asOpaque());
+//   }
 
-  export const bytesBlob = json.fromString(BytesBlob.parseBlob);
+//   export const bytesBlob = json.fromString(BytesBlob.parseBlob);
 
-  export const validatorData: FromJson<ValidatorData> = {
-    ed25519: bytes32(),
-    bandersnatch: bytes32(),
-    bls: json.fromString((v) => Bytes.parseBytes(v, 144) as BlsKey),
-    metadata: json.fromString((v) => Bytes.parseBytes(v, 128)),
-  };
-}
+//   export const validatorData: FromJson<ValidatorData> = {
+//     ed25519: bytes32(),
+//     bandersnatch: bytes32(),
+//     bls: json.fromString((v) => Bytes.parseBytes(v, 144) as BlsKey),
+//     metadata: json.fromString((v) => Bytes.parseBytes(v, 128)),
+//   };
+// }
 
 class TestAvailabilityAssignment {
   static fromJson: FromJson<TestAvailabilityAssignment> = {

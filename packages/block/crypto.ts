@@ -47,3 +47,7 @@ export type BandersnatchVrfSignature = Opaque<Bytes<BANDERSNATCH_VRF_SIGNATURE_B
  * https://graypaper.fluffylabs.dev/#/c71229b/082d00083a00
  */
 export type BandersnatchProof = Opaque<Bytes<BANDERSNATCH_PROOF_BYTES>, "BandersnatchRingSignature">;
+
+export const BLS_KEY_BYTES = 144;
+export type BLS_KEY_BYTES = typeof BLS_KEY_BYTES;
+export type BlsKey = Opaque<Bytes<BLS_KEY_BYTES>, "BlsKey">;
