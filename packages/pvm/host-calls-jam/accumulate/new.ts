@@ -50,7 +50,7 @@ export class New implements HostCallHandler {
 
     const assignedId = this.partialState.newService(newServiceId, codeHash.asOpaque(), codeLength, gas, allowance);
 
-    if (assignedId.isOk()) {
+    if (assignedId.isOk) {
       regs.asUnsigned[IN_OUT_REG] = assignedId.ok;
     } else {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.CASH;
