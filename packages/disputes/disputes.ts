@@ -349,14 +349,15 @@ export class Disputes {
     const newItems = this.getDisputesRecordsNewItems(v);
 
     const verificationResult = await verificationPromise;
-    const inputError =
-      (await this.verifyVerdicts(disputes, verificationResult)) ||
-      this.verifyVotesForWorkReports(v, disputes) ||
-      (await this.verifyCulprits(disputes, newItems, verificationResult)) ||
-      (await this.verifyFaults(disputes, newItems, verificationResult)) ||
-      this.verifyIfAlreadyJudged(disputes);
+    const inputError = [
+      this.verifyVerdicts(disputes, verificationResult),
+      this.verifyVotesForWorkReports(v, disputes),
+      this.verifyCulprits(disputes, newItems, verificationResult),
+      this.verifyFaults(disputes, newItems, verificationResult),
+      this.verifyIfAlreadyJudged(disputes),
+    ].find((result) => result.isError());
 
-    if (inputError.isError()) {
+    if (inputError?.isError()) {
       return Result.error(inputError.error);
     }
 

@@ -192,7 +192,6 @@ export async function runDisputesTest(testContent: DisputesTest, path: string) {
   const disputes = new Disputes(TestState.toDisputesState(preState), chainSpec);
 
   const result = await disputes.transition(testContent.input.disputes);
-
   assert.deepEqual(result.error, testContent.output.err);
   assert.deepEqual(result.ok, testContent.output.ok?.offenders_mark);
   assert.deepEqual(TestState.fromDisputesState(disputes.state), testContent.post_state);
