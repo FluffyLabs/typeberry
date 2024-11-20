@@ -1,8 +1,7 @@
 import { ed25519 } from "@noble/curves/ed25519";
-import type { Ed25519Key, Ed25519Signature, WorkReportHash } from "@typeberry/block";
+import { ED25519_SIGNATURE_BYTES, type Ed25519Key, type Ed25519Signature, type WorkReportHash } from "@typeberry/block";
 import type { Culprit, Fault, Judgement } from "@typeberry/block/disputes";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Encoder } from "@typeberry/codec";
 
 type InputItem = {
   signature: Uint8Array;
@@ -19,10 +18,8 @@ export const JAM_INVALID = BytesBlob.blobFromString("jam_invalid").raw;
 export const JAM_GUARANTEE = BytesBlob.blobFromString("jam_guarantee").raw;
 
 export function prepareCulpritSignature({ key, signature, workReportHash }: Culprit): InputItem {
-  const encoder = Encoder.create();
-  encoder.bytes(Bytes.fromBlob(JAM_GUARANTEE, JAM_GUARANTEE.length));
-  encoder.bytes(workReportHash);
-  const message = encoder.viewResult().raw;
+  const message = BytesBlob.blobFromParts(JAM_GUARANTEE, workReportHash.raw).raw;
+
   return {
     key: key.raw,
     signature: signature.raw,
@@ -31,11 +28,8 @@ export function prepareCulpritSignature({ key, signature, workReportHash }: Culp
 }
 
 export function prepareFaultSignature({ workReportHash, wasConsideredValid, signature, key }: Fault): InputItem {
-  const encoder = Encoder.create();
   const signingContext = wasConsideredValid ? JAM_VALID : JAM_INVALID;
-  encoder.bytes(Bytes.fromBlob(signingContext, signingContext.length));
-  encoder.bytes(workReportHash);
-  const message = encoder.viewResult().raw;
+  const message = BytesBlob.blobFromParts(signingContext, workReportHash.raw).raw;
   return {
     key: key.raw,
     signature: signature.raw,
@@ -46,18 +40,13 @@ export function prepareFaultSignature({ workReportHash, wasConsideredValid, sign
 export function prepareJudgementSignature(j: Judgement, workReportHash: WorkReportHash, key: Ed25519Key): InputItem {
   const { isWorkReportValid, signature } = j;
   const signingContext = isWorkReportValid ? JAM_VALID : JAM_INVALID;
-  const encoder = Encoder.create();
-  encoder.bytes(Bytes.fromBlob(signingContext, signingContext.length));
-  encoder.bytes(workReportHash);
-  const message = encoder.viewResult().raw;
+  const message = BytesBlob.blobFromParts(signingContext, workReportHash.raw).raw;
   return {
     key: key.raw,
     signature: signature.raw,
     message,
   };
 }
-
-const SIGNATURE_LENGTH = 64;
 
 // Verification is heavy and currently it is a bottleneck so in the future it will be outsourced to Rust.
 // This is why the data structure is complicated but it should allow to pass whole data to Rust at once.
@@ -69,7 +58,7 @@ export function vefifyAllSignatures(input: VerificationInput): Promise<Verificat
     for (const { key, message, signature } of signatureGroup) {
       const isValid = ed25519.verify(signature, message, key);
       verificationGroup.push({
-        signature: Bytes.fromBlob(signature, SIGNATURE_LENGTH) as Ed25519Signature,
+        signature: Bytes.fromBlob(signature, ED25519_SIGNATURE_BYTES) as Ed25519Signature,
         isValid,
       });
     }

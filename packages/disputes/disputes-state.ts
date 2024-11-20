@@ -1,7 +1,6 @@
-import type { Ed25519Key, TimeSlot, WorkReportHash } from "@typeberry/block";
+import type { Ed25519Key, TimeSlot, ValidatorData, WorkReportHash } from "@typeberry/block";
 import type { Bytes } from "@typeberry/bytes";
 import { Ordering, SortedSet } from "@typeberry/collections";
-import type { ValidatorData } from "@typeberry/safrole";
 
 export function hashComparator<V extends WorkReportHash | Ed25519Key>(a: V, b: V) {
   if (a.isLessThan(b)) {

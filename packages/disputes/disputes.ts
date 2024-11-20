@@ -1,6 +1,6 @@
 import type { Ed25519Key, WorkReportHash } from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
-import { SortedSet } from "@typeberry/collections";
+import { HashDictionary, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { hashBytes } from "@typeberry/hash";
 import { Result } from "@typeberry/utils";
@@ -16,7 +16,7 @@ import {
   vefifyAllSignatures,
 } from "./verification-utils";
 
-type VotesForWorkReports = [WorkReportHash, number][];
+type VotesForWorkReports = HashDictionary<WorkReportHash, number>;
 
 type NewDisputesRecordsItems = {
   toAddToGoodSet: SortedSet<WorkReportHash>;
@@ -58,13 +58,17 @@ export class Disputes {
       // verify culprit signature
       // https://graypaper.fluffylabs.dev/#/364735a/124501124501
       const result = verificationResult[CULPRITS_INDEX].find((f) => f.signature.isEqualTo(signature));
-      if (result && !result.isValid) {
+      if (!result || !result.isValid) {
         return Result.error(DisputesErrorCode.BadSignature);
       }
     }
 
     // check if culprits are sorted by key
+    // this check it should be done as as the first one (because it is cheap)
+    // but one test (progress_with_bad_signatures-2.json) has 2 problems and order is important
     // https://graypaper.fluffylabs.dev/#/364735a/12ae0112af01
+    //
+    // TODO [MaSi]: Move it to the first line when progress_with_bad_signatures-2.json is fixed.
     if (!isUniqueSortedBy(disputes.culprits, "key")) {
       return Result.error(DisputesErrorCode.CulpritsNotSortedUnique);
     }
@@ -77,6 +81,12 @@ export class Disputes {
     newItems: NewDisputesRecordsItems,
     verificationResult: VerificationOutput,
   ): Result<Ok, DisputesErrorCode> {
+    // check if faults are sorted by key
+    // https://graypaper.fluffylabs.dev/#/364735a/12ae0112af01
+    if (!isUniqueSortedBy(disputes.faults, "key")) {
+      return Result.error(DisputesErrorCode.FaultsNotSortedUnique);
+    }
+
     for (const { key, workReportHash, signature, wasConsideredValid } of disputes.faults) {
       // check if some offenders weren't reported earlier
       // https://graypaper.fluffylabs.dev/#/364735a/128b01128b01
@@ -103,15 +113,9 @@ export class Disputes {
       // verify fault signature. Verification was done earlier, here we only check the result.
       // https://graypaper.fluffylabs.dev/#/364735a/129201129201
       const result = verificationResult[FAULTS_INDEX].find((f) => f.signature.isEqualTo(signature));
-      if (result && !result.isValid) {
+      if (!result || !result.isValid) {
         return Result.error(DisputesErrorCode.BadSignature);
       }
-    }
-
-    // check if faults are sorted by key
-    // https://graypaper.fluffylabs.dev/#/364735a/12ae0112af01
-    if (!isUniqueSortedBy(disputes.faults, "key")) {
-      return Result.error(DisputesErrorCode.FaultsNotSortedUnique);
     }
 
     return Result.ok(null);
@@ -121,6 +125,12 @@ export class Disputes {
     disputes: DisputesExtrinsic,
     verificationResult: VerificationOutput,
   ): Result<Ok, DisputesErrorCode> {
+    // check if judgement are correctly sorted
+    // https://graypaper.fluffylabs.dev/#/364735a/122102122202
+    if (!disputes.verdicts.every((verdict) => isUniqueSortedByIndex(verdict.votes))) {
+      return Result.error(DisputesErrorCode.JudgementsNotSortedUnique);
+    }
+
     const currentEpoch = Math.floor(this.state.timeslot / this.context.epochLength);
     for (const { votesEpoch, votes } of disputes.verdicts) {
       // https://graypaper.fluffylabs.dev/#/364735a/12a50012a600
@@ -140,7 +150,7 @@ export class Disputes {
         // verify vote signature. Verification was done earlier, here we only check the result.
         // https://graypaper.fluffylabs.dev/#/364735a/12b70012b700
         const result = verificationResult[JUDGEMENT_INDEX].find((j) => j.signature.isEqualTo(signature));
-        if (result && !result.isValid) {
+        if (!result || !result.isValid) {
           return Result.error(DisputesErrorCode.BadSignature);
         }
       }
@@ -150,12 +160,6 @@ export class Disputes {
     // https://graypaper.fluffylabs.dev/#/364735a/12ad0112ad01
     if (!isUniqueSortedBy(disputes.verdicts, "workReportHash")) {
       return Result.error(DisputesErrorCode.VerdictsNotSortedUnique);
-    }
-
-    // check if judgement are correctly sorted
-    // https://graypaper.fluffylabs.dev/#/364735a/122102122202
-    if (!disputes.verdicts.every((verdict) => isUniqueSortedByIndex(verdict.votes))) {
-      return Result.error(DisputesErrorCode.JudgementsNotSortedUnique);
     }
 
     return Result.ok(null);
@@ -180,7 +184,7 @@ export class Disputes {
   private calculateVotesForWorkReports(disputes: DisputesExtrinsic) {
     // calculate total votes for each work report
     // https://graypaper.fluffylabs.dev/#/364735a/12760212cd02
-    const v: VotesForWorkReports = [];
+    const v = new HashDictionary<WorkReportHash, number>();
 
     for (const verdict of disputes.verdicts) {
       const j = verdict.votes;
@@ -193,7 +197,7 @@ export class Disputes {
         }
       }
 
-      v.push([r, sum]);
+      v.set(r, sum);
     }
 
     return v;
@@ -206,7 +210,9 @@ export class Disputes {
     // verify if the vote split is correct and if number of faults/culprints is correct
     // https://graypaper.fluffylabs.dev/#/364735a/12e50212fa02
 
-    for (const [r, sum] of v) {
+    for (const { workReportHash } of disputes.verdicts) {
+      const r = workReportHash;
+      const sum = v.get(r);
       if (sum === this.context.validatorsSuperMajority) {
         // there has to be at least 1 fault with the same work report hash
         // https://graypaper.fluffylabs.dev/#/364735a/12db0212e602
@@ -232,7 +238,7 @@ export class Disputes {
     return Result.ok(null);
   }
 
-  private getDisputesRecordsNewItems(v: VotesForWorkReports) {
+  private getDisputesRecordsNewItems(disputes: DisputesExtrinsic, v: VotesForWorkReports) {
     const toAddToGoodSet = SortedSet.fromArray<WorkReportHash>(hashComparator);
     const toAddToBadSet = SortedSet.fromArray<WorkReportHash>(hashComparator);
     const toAddToWonkySet = SortedSet.fromArray<WorkReportHash>(hashComparator);
@@ -240,12 +246,18 @@ export class Disputes {
     // prepare new disputes records items but do not update the state yet
     // the state will be updated after verification
     // https://graypaper.fluffylabs.dev/#/364735a/123403128f03
-    for (const [r, sum] of v) {
+    for (const { workReportHash } of disputes.verdicts) {
+      const r = workReportHash;
+      const sum = v.get(r);
+      if (sum === undefined) {
+        continue;
+      }
+
       if (sum >= this.context.validatorsSuperMajority) {
         toAddToGoodSet.insert(r);
       } else if (sum === 0) {
         toAddToBadSet.insert(r);
-      } else if (sum >= Math.floor(this.context.validatorsCount / 3)) {
+      } else if (sum >= this.context.thirdOfValidators) {
         toAddToWonkySet.insert(r);
       }
     }
@@ -258,11 +270,9 @@ export class Disputes {
     for (let c = 0; c < this.state.availabilityAssignment.length; c++) {
       const assignment = this.state.availabilityAssignment[c];
       if (assignment) {
-        const hash = hashBytes(assignment.workReport);
-        const item = v.find(
-          ([vHash, noOfVotes]) => hash.isEqualTo(vHash) && noOfVotes < this.context.validatorsSuperMajority,
-        );
-        if (item) {
+        const hash = hashBytes(assignment.workReport) as WorkReportHash;
+        const item = v.get(hash);
+        if (item !== undefined && item < this.context.validatorsSuperMajority) {
           this.state.availabilityAssignment[c] = undefined;
         }
       }
@@ -346,7 +356,7 @@ export class Disputes {
     const signaturesToVerify = signaturesToVerifyResult.isOk() ? signaturesToVerifyResult.ok : [];
     const verificationPromise = vefifyAllSignatures(signaturesToVerify);
     const v = this.calculateVotesForWorkReports(disputes);
-    const newItems = this.getDisputesRecordsNewItems(v);
+    const newItems = this.getDisputesRecordsNewItems(disputes, v);
 
     const verificationResult = await verificationPromise;
     const inputError = [

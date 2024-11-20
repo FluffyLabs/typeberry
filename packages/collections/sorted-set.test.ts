@@ -26,6 +26,14 @@ describe("SortedSet", () => {
 
       assert.deepStrictEqual(result.slice(), [1, 2, 3]);
     });
+
+    it("should throw when using fromArray and array contains duplicates", () => {
+      const data = [1, 3, 3, 2];
+
+      const tryToCreate = () => SortedSet.fromArray(cmp, data);
+
+      assert.throws(tryToCreate, new Error(`Expected array without duplicates, got: ${data}`));
+    });
   });
 
   describe("fromSortedArray", () => {

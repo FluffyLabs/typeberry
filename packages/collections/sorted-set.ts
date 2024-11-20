@@ -15,6 +15,14 @@ export class SortedSet<V> extends SortedArray<V> {
   static fromArray<V>(comparator: Comparator<V>, array: V[] = []) {
     const data = array.slice();
     data.sort(comparator);
+    const dataLength = data.length;
+
+    for (let i = 1; i < dataLength; i++) {
+      if (comparator(data[i - 1], data[i]) !== Ordering.Less) {
+        throw new Error(`Expected array without duplicates, got: ${array}`);
+      }
+    }
+
     return new SortedSet(data, comparator);
   }
 
