@@ -14,6 +14,7 @@ export function hashComparator<V extends WorkReportHash | Ed25519Key>(a: V, b: V
   return Ordering.Equal;
 }
 
+// TODO [MaSi]: add docs and gp references
 export class DisputesRecords {
   constructor(
     public readonly goodSet: SortedSet<WorkReportHash>,

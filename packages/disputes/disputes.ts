@@ -210,9 +210,7 @@ export class Disputes {
     // verify if the vote split is correct and if number of faults/culprints is correct
     // https://graypaper.fluffylabs.dev/#/364735a/12e50212fa02
 
-    for (const { workReportHash } of disputes.verdicts) {
-      const r = workReportHash;
-      const sum = v.get(r);
+    for (const [r, sum] of v) {
       if (sum === this.context.validatorsSuperMajority) {
         // there has to be at least 1 fault with the same work report hash
         // https://graypaper.fluffylabs.dev/#/364735a/12db0212e602
@@ -238,7 +236,7 @@ export class Disputes {
     return Result.ok(null);
   }
 
-  private getDisputesRecordsNewItems(disputes: DisputesExtrinsic, v: VotesForWorkReports) {
+  private getDisputesRecordsNewItems(v: VotesForWorkReports) {
     const toAddToGoodSet = SortedSet.fromArray<WorkReportHash>(hashComparator);
     const toAddToBadSet = SortedSet.fromArray<WorkReportHash>(hashComparator);
     const toAddToWonkySet = SortedSet.fromArray<WorkReportHash>(hashComparator);
@@ -246,13 +244,7 @@ export class Disputes {
     // prepare new disputes records items but do not update the state yet
     // the state will be updated after verification
     // https://graypaper.fluffylabs.dev/#/364735a/123403128f03
-    for (const { workReportHash } of disputes.verdicts) {
-      const r = workReportHash;
-      const sum = v.get(r);
-      if (sum === undefined) {
-        continue;
-      }
-
+    for (const [r, sum] of v) {
       if (sum >= this.context.validatorsSuperMajority) {
         toAddToGoodSet.insert(r);
       } else if (sum === 0) {
@@ -356,7 +348,7 @@ export class Disputes {
     const signaturesToVerify = signaturesToVerifyResult.isOk() ? signaturesToVerifyResult.ok : [];
     const verificationPromise = vefifyAllSignatures(signaturesToVerify);
     const v = this.calculateVotesForWorkReports(disputes);
-    const newItems = this.getDisputesRecordsNewItems(disputes, v);
+    const newItems = this.getDisputesRecordsNewItems(v);
 
     const verificationResult = await verificationPromise;
     const inputError = [
