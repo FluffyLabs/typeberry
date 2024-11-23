@@ -1,17 +1,15 @@
-import {check} from "@typeberry/utils";
+import { check } from "@typeberry/utils";
 
-type NestedMaps<TKeys extends readonly unknown[], TValue> =
-  TKeys extends [infer THead, ... infer TTail]
+type NestedMaps<TKeys extends readonly unknown[], TValue> = TKeys extends [infer THead, ...infer TTail]
   ? Map<THead, NestedMaps<TTail, TValue>>
   : TValue;
 
-type KeyMappers<TKeys extends readonly unknown[]> =
-  TKeys extends [infer THead, ... infer TTail]
-  ? [KeyMapper<THead> | null, ... KeyMappers<TTail>]
+type KeyMappers<TKeys extends readonly unknown[]> = TKeys extends [infer THead, ...infer TTail]
+  ? [KeyMapper<THead> | null, ...KeyMappers<TTail>]
   : [];
 
 /** Key representation that can be stored in a map. */
-export type KeyMapper<K> = (key: K) => string | number | Symbol;
+export type KeyMapper<K> = (key: K) => string | number | bigint | symbol;
 
 /**
  * A multi-key map, implemented as nested maps.
@@ -30,22 +28,18 @@ export class MultiMap<TKeys extends readonly unknown[], TValue> {
    * Pass the number of keys and optionally mappers from keys to primitive types
    * if needed.
    */
-  constructor(
-    keysLength: TKeys['length'],
-    keyMappers?: KeyMappers<TKeys>,
-  ) {
-    check(keysLength > 0, 'Keys cannot be empty.');
+  constructor(keysLength: TKeys["length"], keyMappers?: KeyMappers<TKeys>) {
+    check(keysLength > 0, "Keys cannot be empty.");
     check(keyMappers === undefined || keyMappers.length === keysLength, "Incorrect number of key mappers given!");
     this.data = new Map() as NestedMaps<TKeys, TValue>;
-    this.keyMappers = keyMappers === undefined ? Array(keysLength).fill(null) as KeyMappers<TKeys> : keyMappers;
+    this.keyMappers = keyMappers === undefined ? (Array(keysLength).fill(null) as KeyMappers<TKeys>) : keyMappers;
   }
-
 
   /** Convert input keys into primitive types. */
   private primitiveKeys(keys: TKeys) {
     return keys.map((key, idx) => {
       const mapper = this.keyMappers[idx];
-      return (mapper !== null) ? mapper(key) : key;
+      return mapper !== null ? mapper(key) : key;
     });
   }
 
@@ -105,8 +99,8 @@ export class MultiMap<TKeys extends readonly unknown[], TValue> {
    * Returns the last map `Map<LastKey, TValue>` and the last key.
    */
   private findLastMapAndKey(inKeys: TKeys): {
-    map: Map<unknown, TValue> | undefined,
-    key: unknown,
+    map: Map<unknown, TValue> | undefined;
+    key: unknown;
   } {
     const keys = this.primitiveKeys(inKeys);
     const lastKey = keys[keys.length - 1];
