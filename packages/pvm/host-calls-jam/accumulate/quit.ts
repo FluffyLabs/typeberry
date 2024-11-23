@@ -56,7 +56,7 @@ export class Quit implements HostCallHandler {
     const transferResult = this.partialState.quitAndTransfer(destination, remainingGas, memo);
 
     // All good!
-    if (!transferResult.isError()) {
+    if (transferResult.isOk) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
       return Promise.resolve(PvmExecution.Halt);
     }
