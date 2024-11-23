@@ -36,6 +36,20 @@ export enum TransferError {
 }
 
 /**
+ * Errors that may occur when `quit` is invoked.
+ *
+ * Note there is partial overlap with `TransferError`, except
+ * for `BalanceBelowThreshold`, since it doesn't matter,
+ * because the account is removed anyway.
+ */
+export enum QuitError {
+  /** The destination service does not exist. */
+  DestinationNotFound = 0,
+  /** The supplied gas is too low to execute `OnTransfer` entry point. */
+  GasTooLow = 1,
+}
+
+/**
  * `U`: state components mutated by the accumulation.
  * - `d`: service accounts state
  * - `i`: upcoming validator keys
@@ -55,7 +69,7 @@ export interface AccumulationPartialState {
     destination: ServiceId,
     suppliedGas: Gas,
     memo: Bytes<TRANSFER_MEMO_BYTES>,
-  ): Result<null, TransferError>;
+  ): Result<null, QuitError>;
 
   /**
    * Remove current service account and burn the remaining funds.

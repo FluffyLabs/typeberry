@@ -9,7 +9,7 @@ import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import { TRANSFER_MEMO_BYTES, TransferError } from "./partial-state";
+import { QuitError, TRANSFER_MEMO_BYTES } from "./partial-state";
 import { TestAccumulate } from "./partial-state.test";
 import { Quit } from "./quit";
 
@@ -124,7 +124,7 @@ describe("HostCalls: Quit", () => {
     const { registers, memory } = prepareRegsAndMemory(tryAsServiceId(15_000), Bytes.fill(TRANSFER_MEMO_BYTES, 33));
 
     // when
-    accumulate.transferReturnValue = Result.error(TransferError.GasTooLow);
+    accumulate.quitReturnValue = Result.error(QuitError.GasTooLow);
     await quit.execute(gas, registers, memory);
 
     // then
@@ -141,7 +141,7 @@ describe("HostCalls: Quit", () => {
     const { registers, memory } = prepareRegsAndMemory(tryAsServiceId(15_000), Bytes.fill(TRANSFER_MEMO_BYTES, 33));
 
     // when
-    accumulate.transferReturnValue = Result.error(TransferError.DestinationNotFound);
+    accumulate.quitReturnValue = Result.error(QuitError.DestinationNotFound);
     await quit.execute(gas, registers, memory);
 
     // then

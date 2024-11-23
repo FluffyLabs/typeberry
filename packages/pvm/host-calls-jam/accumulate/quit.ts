@@ -8,7 +8,7 @@ import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { assertNever } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import { type AccumulationPartialState, TRANSFER_MEMO_BYTES, TransferError } from "./partial-state";
+import { type AccumulationPartialState, TRANSFER_MEMO_BYTES, QuitError } from "./partial-state";
 
 const IN_OUT_REG = 7;
 
@@ -19,7 +19,6 @@ const IN_OUT_REG = 7;
  */
 export class Quit implements HostCallHandler {
   index = tryAsHostCallIndex(12);
-  // TODO [ToDr] 0.4.5 GP says it depends on omega_8, omega_9 but it's fixed to 10 in the main branch.
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
@@ -43,9 +42,9 @@ export class Quit implements HostCallHandler {
 
     // `o`: memo start memory index
     const memoStart = tryAsMemoryIndex(regs.asUnsigned[8]);
-    // `g`
+    // `g`: onTransfer gas
     const remainingGas = gas.get();
-    // `m`
+    // `m`: transfer memo (message)
     const memo = Bytes.zero(TRANSFER_MEMO_BYTES);
     const pageFault = memory.loadInto(memo.raw, memoStart);
     if (pageFault !== null) {
@@ -64,18 +63,14 @@ export class Quit implements HostCallHandler {
 
     const e = transferResult.error;
 
-    if (e === TransferError.DestinationNotFound) {
+    if (e === QuitError.DestinationNotFound) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.WHO;
       return;
     }
 
-    if (e === TransferError.GasTooLow) {
+    if (e === QuitError.GasTooLow) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.LOW;
       return;
-    }
-
-    if (e === TransferError.BalanceBelowThreshold) {
-      throw new Error("Unreachable. The account is being removed, so balance below threshold does not matter.");
     }
 
     assertNever(e);
