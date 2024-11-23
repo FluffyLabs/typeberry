@@ -24,6 +24,6 @@ export class Gas implements HostCallHandler {
     regs.asUnsigned[7] = Number(lower);
     regs.asUnsigned[8] = Number(upper);
 
-    return;
+    return Promise.resolve(undefined);
   }
 }

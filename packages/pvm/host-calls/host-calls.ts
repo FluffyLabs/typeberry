@@ -58,7 +58,7 @@ export class HostCalls {
 
       if (result === PvmExecution.Halt) {
         status = Status.HALT;
-        return;
+        return this.getReturnValue(status, pvmInstance.getMemory(), pvmInstance.getRegisters());
       }
 
       pvmInstance.runProgram();
