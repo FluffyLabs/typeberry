@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
-import { HashDictionary } from "@typeberry/collections";
+import { MultiMap } from "@typeberry/collections";
 import { type Blake2bHash, hashBytes } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
@@ -12,19 +12,17 @@ import { HostCallResult } from "./results";
 import { SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
 
 class TestAccounts implements Accounts {
-  public readonly data: Map<ServiceId, HashDictionary<Blake2bHash, BytesBlob>> = new Map();
+  public readonly data: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
+    null,
+    (hash) => hash.toString(),
+  ]);
 
   read(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null> {
-    return Promise.resolve(this.data.get(serviceId)?.get(hash) ?? null);
-  }
-
-  add(serviceId: ServiceId, hash: Blake2bHash, value: BytesBlob) {
-    let forAccount = this.data.get(serviceId);
-    if (!forAccount) {
-      forAccount = new HashDictionary();
-      this.data.set(serviceId, forAccount);
+    const d = this.data.get(serviceId, hash);
+    if (d === undefined) {
+      throw new Error(`Unexpected call to read with ${serviceId}, ${hash}`);
     }
-    forAccount.set(hash, value);
+    return Promise.resolve(d);
   }
 }
 
@@ -86,7 +84,7 @@ describe("HostCalls: Read", () => {
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "hello world");
     const { registers, memory, readResult } = prepareRegsAndMemory(tryAsServiceId(2 ** 32 - 1), key, 64);
-    accounts.add(serviceId, hash, BytesBlob.blobFromString("hello world"));
+    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
 
     // when
     await read.execute(gas, registers, memory);
@@ -106,7 +104,7 @@ describe("HostCalls: Read", () => {
     const serviceId = tryAsServiceId(11_000);
     const { key, hash } = prepareKey(read.currentServiceId, "hello world");
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 64);
-    accounts.add(serviceId, hash, BytesBlob.blobFromString("hello world"));
+    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
 
     // when
     await read.execute(gas, registers, memory);
@@ -126,7 +124,7 @@ describe("HostCalls: Read", () => {
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 3);
-    accounts.add(serviceId, hash, BytesBlob.blobFromString("hello world"));
+    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
 
     // when
     await read.execute(gas, registers, memory);
@@ -141,8 +139,9 @@ describe("HostCalls: Read", () => {
     const read = new Read(accounts);
     const serviceId = tryAsServiceId(10_000);
     read.currentServiceId = serviceId;
-    const { key } = prepareKey(read.currentServiceId, "xyz");
+    const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 32);
+    accounts.data.set(null, serviceId, hash);
 
     // when
     await read.execute(gas, registers, memory);
@@ -162,7 +161,7 @@ describe("HostCalls: Read", () => {
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32, { skipKey: true });
-    accounts.add(serviceId, hash, BytesBlob.blobFromString("hello world"));
+    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
 
     // when
     await read.execute(gas, registers, memory);
@@ -178,7 +177,7 @@ describe("HostCalls: Read", () => {
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32, { skipValue: true });
-    accounts.add(serviceId, hash, BytesBlob.blobFromString("hello world"));
+    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
 
     // when
     await read.execute(gas, registers, memory);
@@ -194,7 +193,7 @@ describe("HostCalls: Read", () => {
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
-    accounts.add(serviceId, hash, BytesBlob.blobFromString("hello world"));
+    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
     registers.asUnsigned[DEST_LEN_REG] = 34;
 
     // when
@@ -211,7 +210,7 @@ describe("HostCalls: Read", () => {
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
-    accounts.add(serviceId, hash, BytesBlob.blobFromString("hello world"));
+    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
     registers.asUnsigned[DEST_START_REG] = 2 ** 32 - 1;
     registers.asUnsigned[DEST_LEN_REG] = 2 ** 10;
 
@@ -229,7 +228,7 @@ describe("HostCalls: Read", () => {
     read.currentServiceId = serviceId;
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 0, { skipValue: true });
-    accounts.add(serviceId, hash, BytesBlob.blobFromString("hello world"));
+    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
 
     // when
     await read.execute(gas, registers, memory);

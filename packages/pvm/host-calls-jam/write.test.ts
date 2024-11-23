@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
-import { HashDictionary } from "@typeberry/collections";
+import { MultiMap } from "@typeberry/collections";
 import { type Blake2bHash, hashBytes } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
@@ -12,8 +12,14 @@ import { SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
 import { type Accounts, Write } from "./write";
 
 class TestAccounts implements Accounts {
-  public readonly data: Map<ServiceId, HashDictionary<Blake2bHash, BytesBlob>> = new Map();
-  public readonly snapshotData: Map<ServiceId, HashDictionary<Blake2bHash, BytesBlob>> = new Map();
+  public readonly data: MultiMap<[ServiceId, Blake2bHash], BytesBlob> = new MultiMap(2, [
+    null,
+    (hash) => hash.toString(),
+  ]);
+  public readonly snapshotData: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
+    null,
+    (hash) => hash.toString(),
+  ]);
   public isFull = false;
 
   isStorageFull(_serviceId: ServiceId): Promise<boolean> {
@@ -21,33 +27,21 @@ class TestAccounts implements Accounts {
   }
 
   write(serviceId: ServiceId, hash: Blake2bHash, data: BytesBlob | null): Promise<void> {
-    let perService = this.data.get(serviceId);
-    if (!perService) {
-      perService = new HashDictionary();
-      this.data.set(serviceId, perService);
-    }
-
     if (data === null) {
-      perService.delete(hash);
+      this.data.delete(serviceId, hash);
     } else {
-      perService.set(hash, data);
+      this.data.set(data, serviceId, hash);
     }
 
     return Promise.resolve();
   }
 
   readSnapshotLen(serviceId: ServiceId, hash: Blake2bHash): Promise<number | null> {
-    const data = this.snapshotData.get(serviceId)?.get(hash);
-    return Promise.resolve(data?.length ?? null);
-  }
-
-  setSnapshotData(serviceId: ServiceId, hash: Blake2bHash, data: BytesBlob) {
-    let perService = this.snapshotData.get(serviceId);
-    if (!perService) {
-      perService = new HashDictionary();
-      this.snapshotData.set(serviceId, perService);
+    const data = this.snapshotData.get(serviceId, hash);
+    if (data === undefined) {
+      throw new Error(`Unexpected readSnapshotLen call with ${serviceId} ${hash}`);
     }
-    perService.set(hash, data);
+    return Promise.resolve(data?.length || null);
   }
 }
 
@@ -101,14 +95,14 @@ describe("HostCalls: Write", () => {
     write.currentServiceId = serviceId;
     const { key, hash } = prepareKey(write.currentServiceId, "imma key");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
-    accounts.setSnapshotData(serviceId, hash, BytesBlob.blobFromString("old data"));
+    accounts.snapshotData.set(BytesBlob.blobFromString("old data"), serviceId, hash);
 
     // when
     await write.execute(gas, registers, memory);
 
     // then
     assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], "old data".length);
-    assert.deepStrictEqual(accounts.data.get(serviceId)?.get(hash)?.asText(), "hello world!");
+    assert.deepStrictEqual(accounts.data.get(serviceId, hash)?.asText(), "hello world!");
   });
 
   it("should remove data from account state", async () => {
@@ -118,16 +112,15 @@ describe("HostCalls: Write", () => {
     write.currentServiceId = serviceId;
     const { key, hash } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromNumbers([]));
-    const h = new HashDictionary<Blake2bHash, BytesBlob>();
-    h.set(hash, BytesBlob.blobFromString("hello world!"));
-    accounts.data.set(serviceId, h);
+    accounts.data.set(BytesBlob.blobFromString("hello world!"), serviceId, hash);
+    accounts.snapshotData.set(null, serviceId, hash);
 
     // when
     await write.execute(gas, registers, memory);
 
     // then
     assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.NONE);
-    assert.deepStrictEqual(accounts.data.get(serviceId)?.get(hash), undefined);
+    assert.deepStrictEqual(accounts.data.get(serviceId, hash), undefined);
   });
 
   it("should fail if there is no memory for key", async () => {
@@ -145,7 +138,7 @@ describe("HostCalls: Write", () => {
 
     // then
     assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
-    assert.deepStrictEqual(accounts.data.size, 0);
+    assert.deepStrictEqual(accounts.data.data.size, 0);
   });
 
   it("should fail if there is no memory for result", async () => {
@@ -163,7 +156,7 @@ describe("HostCalls: Write", () => {
 
     // then
     assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
-    assert.deepStrictEqual(accounts.data.size, 0);
+    assert.deepStrictEqual(accounts.data.data.size, 0);
   });
 
   it("should fail if the key is not fully readable", async () => {
@@ -180,7 +173,7 @@ describe("HostCalls: Write", () => {
 
     // then
     assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
-    assert.deepStrictEqual(accounts.data.size, 0);
+    assert.deepStrictEqual(accounts.data.data.size, 0);
   });
 
   it("should fail if the value is not fully readable", async () => {
@@ -197,7 +190,7 @@ describe("HostCalls: Write", () => {
 
     // then
     assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
-    assert.deepStrictEqual(accounts.data.size, 0);
+    assert.deepStrictEqual(accounts.data.data.size, 0);
   });
 
   it("should handle storage full", async () => {
@@ -207,7 +200,7 @@ describe("HostCalls: Write", () => {
     write.currentServiceId = serviceId;
     const { key, hash } = prepareKey(write.currentServiceId, "imma key");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
-    accounts.setSnapshotData(serviceId, hash, BytesBlob.blobFromString("old data"));
+    accounts.snapshotData.set(BytesBlob.blobFromString("old data"), serviceId, hash);
     accounts.isFull = true;
 
     // when
@@ -215,6 +208,6 @@ describe("HostCalls: Write", () => {
 
     // then
     assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.FULL);
-    assert.deepStrictEqual(accounts.data.size, 0);
+    assert.deepStrictEqual(accounts.data.data.size, 0);
   });
 });
