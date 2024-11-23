@@ -72,7 +72,7 @@ export class Transfer implements HostCallHandler {
     const transferResult = this.partialState.transfer(destination, amount, onTransferGas, memo);
 
     // All good!
-    if (!transferResult.isError()) {
+    if (transferResult.isOk) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
       return;
     }

@@ -72,7 +72,7 @@ export class WorkPackageExecutor {
       pack.authCodeHash,
     );
 
-    if (!authExec.isOk()) {
+    if (authExec.isError) {
       // TODO [ToDr] most likely shouldn't be throw.
       throw new Error(`Could not get authorization executor: ${authExec.error}`);
     }
@@ -88,7 +88,7 @@ export class WorkPackageExecutor {
     const results: WorkResult[] = [];
     for (const item of pack.items) {
       const exec = this.getServiceExecutor(headerHash, item.service, item.codeHash);
-      if (!exec.isOk()) {
+      if (exec.isError) {
         throw new Error(`Could not get item executor: ${exec.error}`);
       }
       const pvm = exec.ok;
