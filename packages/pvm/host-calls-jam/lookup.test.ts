@@ -11,13 +11,18 @@ import { type Accounts, Lookup } from "./lookup";
 import { HostCallResult } from "./results";
 
 class TestAccounts implements Accounts {
-  public readonly data: MultiMap<[ServiceId, Blake2bHash], BytesBlob> = new MultiMap(2, [
+  public readonly data: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
     null,
     (hash) => hash.toString(),
   ]);
 
   lookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null> {
-    return Promise.resolve(this.data.get(serviceId, hash) ?? null);
+    const val = this.data.get(serviceId, hash);
+    if (val === undefined) {
+      throw new Error(`Unexpected lookup call with ${serviceId}, ${hash}`);
+    }
+
+    return Promise.resolve(val);
   }
 }
 
@@ -103,6 +108,7 @@ describe("HostCalls: Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 32);
+    accounts.data.set(null, serviceId, hashBytes(key));
 
     // when
     await lookup.execute(gas, registers, memory);
