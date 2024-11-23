@@ -65,11 +65,7 @@ export interface AccumulationPartialState {
    *
    * `a`: amount to transfer = balance - threshold + B_S: basic minimum balance
    */
-  quitAndTransfer(
-    destination: ServiceId,
-    suppliedGas: Gas,
-    memo: Bytes<TRANSFER_MEMO_BYTES>,
-  ): Result<null, QuitError>;
+  quitAndTransfer(destination: ServiceId, suppliedGas: Gas, memo: Bytes<TRANSFER_MEMO_BYTES>): Result<null, QuitError>;
 
   /**
    * Remove current service account and burn the remaining funds.

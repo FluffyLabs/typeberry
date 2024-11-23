@@ -29,11 +29,7 @@ export class TestAccumulate implements AccumulationPartialState {
   public transferReturnValue: Result<null, TransferError> = Result.ok(null);
   public quitReturnValue: Result<null, QuitError> = Result.ok(null);
 
-  quitAndTransfer(
-    destination: ServiceId,
-    suppliedGas: Gas,
-    memo: Bytes<TRANSFER_MEMO_BYTES>,
-  ): Result<null, QuitError> {
+  quitAndTransfer(destination: ServiceId, suppliedGas: Gas, memo: Bytes<TRANSFER_MEMO_BYTES>): Result<null, QuitError> {
     this.quitAndTransferData.push([destination, suppliedGas, memo]);
     return this.quitReturnValue;
   }

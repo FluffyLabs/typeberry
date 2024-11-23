@@ -3,7 +3,7 @@ import { CURRENT_SERVICE_ID, HostCallResult } from "@typeberry/jam-host-calls";
 import type { Memory, Registers } from "@typeberry/pvm-interpreter";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { check } from "@typeberry/utils";
-import { type HostCallHandler, type HostCallIndex, tryAsHostCallIndex, PvmExecution } from "./host-call-handler";
+import { type HostCallHandler, type HostCallIndex, type PvmExecution, tryAsHostCallIndex } from "./host-call-handler";
 
 // TODO [ToDr] Rename to just `HostCalls`
 /** Container for all available host calls. */

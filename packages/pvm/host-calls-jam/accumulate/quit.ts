@@ -8,7 +8,7 @@ import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { assertNever } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import { type AccumulationPartialState, TRANSFER_MEMO_BYTES, QuitError } from "./partial-state";
+import { type AccumulationPartialState, QuitError, TRANSFER_MEMO_BYTES } from "./partial-state";
 
 const IN_OUT_REG = 7;
 
