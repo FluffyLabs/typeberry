@@ -32,11 +32,6 @@ export type CoreIndex = Opaque<U16, "CoreIndex[u16]">;
 /** Attempt to convert a number into `CoreIndex`. */
 export const tryAsCoreIndex = (v: number): CoreIndex => asOpaqueType(tryAsU16(v));
 
-/** Index of an segment. */
-export type SegmentIndex = Opaque<U16, "Segment Index [U16]">;
-/** Attempt to convert a number into `SegmentIndex`. */
-export const tryAsSegmentIndex = (v: number): SegmentIndex => asOpaqueType(tryAsU16(v));
-
 /** `eta`: epoch randomness */
 export type EntropyHash = Opaque<Blake2bHash, "EntropyHash">;
 

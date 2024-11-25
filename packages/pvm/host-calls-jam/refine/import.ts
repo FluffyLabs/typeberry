@@ -1,6 +1,6 @@
-import { W_E, W_S } from "@typeberry/block/gp-constants";
+import { SEGMENT_BYTES } from "@typeberry/block";
 import { isU16 } from "@typeberry/numbers";
-import { type HostCallHandler, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
+import { type HostCallHandler, type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import {
   type GasCounter,
   type Memory,
@@ -14,7 +14,6 @@ import { CURRENT_SERVICE_ID } from "../utils";
 import type { RefineExternalities } from "./refine-externalities";
 
 const IN_OUT_REG = 7;
-const MAX_EC_SEGMENT_BYTES = W_E * W_S;
 
 /**
  * Import a segment that was exported by some previous `refine` of the current service.
@@ -28,13 +27,13 @@ export class Import implements HostCallHandler {
 
   constructor(private readonly refine: RefineExternalities) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
+  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
     // idx
     const segmentIndex = regs.asUnsigned[IN_OUT_REG];
     // `o`: destination start
     const destinationStart = tryAsMemoryIndex(regs.asUnsigned[8]);
     // `l`: destination length
-    const destinationLen = Math.min(regs.asUnsigned[9], MAX_EC_SEGMENT_BYTES);
+    const destinationLen = Math.min(regs.asUnsigned[9], SEGMENT_BYTES);
 
     // we check writeability separately in case the `|v| < l`
     // i.e. the `store` would succeed, but some cell at `|v|...l`

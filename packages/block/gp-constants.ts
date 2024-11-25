@@ -26,14 +26,8 @@ export const Q = 80;
 /** `W_C`: The maximum size of service code in octets. */
 export const W_C = 4_000_000;
 
-/** `W_E`: The basic size of erasure-coded pieces in octets. See equation H.6. */
-export const W_E = 685;
-
 /** `W_T`: The size of a transfer memo in octets. */
 export const W_T = 128;
-
-/** `W_S`: The size of an exported segment in erasure-coded pieces in octets. */
-export const W_S = 6;
 
 /** `Y`: The number of slots into an epoch at which ticket-submission ends. */
 export const Y = 500;

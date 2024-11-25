@@ -1,0 +1,101 @@
+import assert from "node:assert";
+import { describe, it } from "node:test";
+import { SEGMENT_BYTES, type Segment, tryAsSegmentIndex, tryAsServiceId } from "@typeberry/block";
+import { Bytes } from "@typeberry/bytes";
+import { Registers } from "@typeberry/pvm-interpreter";
+import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
+import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { Result } from "@typeberry/utils";
+import { HostCallResult } from "../results";
+import { Export } from "./export";
+import { SEGMENT_EXPORT_ERROR } from "./refine-externalities";
+import { TestRefineExt } from "./refine-externalities.test";
+
+const gas = gasCounter(tryAsGas(0));
+const SEGMENT_START_REG = 7;
+const RESULT_REG = SEGMENT_START_REG;
+const SEGMENT_LENGTH_REG = 8;
+
+function prepareRegsAndMemory(
+  segment: Segment,
+  segmentLength: number = segment.length,
+  { skipSegment = false }: { skipSegment?: boolean } = {},
+) {
+  const memStart = 3_145_728;
+  const registers = new Registers();
+  registers.asUnsigned[SEGMENT_START_REG] = memStart;
+  registers.asUnsigned[SEGMENT_LENGTH_REG] = segmentLength;
+
+  const builder = new MemoryBuilder();
+  if (!skipSegment) {
+    builder.setReadable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + segment.length), segment.raw);
+  }
+  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
+  return {
+    registers,
+    memory,
+  };
+}
+
+describe("HostCalls: Export", () => {
+  it("should export a segment", async () => {
+    const refine = new TestRefineExt();
+    const exp = new Export(refine);
+    exp.currentServiceId = tryAsServiceId(10_000);
+    const segment = Bytes.fill(SEGMENT_BYTES, 15).asOpaque();
+    const { registers, memory } = prepareRegsAndMemory(segment);
+    refine.exportSegmentData.set(Result.ok(tryAsSegmentIndex(15)), segment);
+
+    // when
+    await exp.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], 15);
+  });
+
+  it("should zero-pad when exported value is small", async () => {
+    const refine = new TestRefineExt();
+    const exp = new Export(refine);
+    exp.currentServiceId = tryAsServiceId(10_000);
+    const segment = Bytes.fill(SEGMENT_BYTES, 15).asOpaque();
+    const { registers, memory } = prepareRegsAndMemory(segment, 2);
+    const expectedSegment = Bytes.zero(SEGMENT_BYTES);
+    expectedSegment.raw[0] = 15;
+    expectedSegment.raw[1] = 15;
+    refine.exportSegmentData.set(Result.ok(tryAsSegmentIndex(5)), expectedSegment);
+    // when
+    await exp.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], 5);
+  });
+
+  it("should fail if memory is not readable", async () => {
+    const refine = new TestRefineExt();
+    const exp = new Export(refine);
+    exp.currentServiceId = tryAsServiceId(10_000);
+    const segment: Segment = Bytes.fill(SEGMENT_BYTES, 15).asOpaque();
+    const { registers, memory } = prepareRegsAndMemory(segment, segment.length, { skipSegment: true });
+
+    // when
+    await exp.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+  });
+
+  it("should fail with FULL if export limit is reached", async () => {
+    const refine = new TestRefineExt();
+    const exp = new Export(refine);
+    exp.currentServiceId = tryAsServiceId(10_000);
+    const segment: Segment = Bytes.fill(SEGMENT_BYTES, 15).asOpaque();
+    const { registers, memory } = prepareRegsAndMemory(segment);
+    refine.exportSegmentData.set(Result.error(SEGMENT_EXPORT_ERROR), segment);
+
+    // when
+    await exp.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.FULL);
+  });
+});

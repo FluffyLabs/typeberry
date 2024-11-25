@@ -5,7 +5,7 @@ import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
-import type { Result } from "@typeberry/utils";
+import type { OK, Result } from "@typeberry/utils";
 
 /** Size of the authorization queue. */
 export const AUTHORIZATION_QUEUE_SIZE = Q;
@@ -108,7 +108,7 @@ export interface AccumulationPartialState {
     amount: U64,
     suppliedGas: Gas,
     memo: Bytes<TRANSFER_MEMO_BYTES>,
-  ): Result<null, TransferError>;
+  ): Result<OK, TransferError>;
 
   /**
    * Create a new service with requested id, codeHash, gas and balance.

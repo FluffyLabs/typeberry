@@ -4,6 +4,7 @@ import {
   BANDERSNATCH_KEY_BYTES,
   BLS_KEY_BYTES,
   ED25519_KEY_BYTES,
+  VALIDATOR_META_BYTES,
   ValidatorData,
   tryAsServiceId,
 } from "@typeberry/block";
@@ -13,7 +14,6 @@ import { tinyChainSpec } from "@typeberry/config";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
-import { VALIDATOR_META_BYTES } from "@typeberry/safrole";
 import { HostCallResult } from "../results";
 import { Designate } from "./designate";
 import { TestAccumulate } from "./partial-state.test";

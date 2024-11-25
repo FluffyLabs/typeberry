@@ -1,7 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { type SegmentIndex, tryAsSegmentIndex, tryAsServiceId } from "@typeberry/block";
-import { W_E, W_S } from "@typeberry/block/gp-constants";
+import { SEGMENT_BYTES, type SegmentIndex, tryAsSegmentIndex, tryAsServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
@@ -141,7 +140,7 @@ describe("HostCalls: Import", () => {
     const imp = new Import(refine);
     imp.currentServiceId = tryAsServiceId(10_000);
     const segmentIdx = tryAsSegmentIndex(48879);
-    const expectedDestinationLength = W_E * W_S;
+    const expectedDestinationLength = SEGMENT_BYTES;
     const destinationLength = expectedDestinationLength + 10;
     const { registers, memory, readResult } = prepareRegsAndMemory(segmentIdx, expectedDestinationLength);
     registers.asUnsigned[DEST_LEN_REG] = destinationLength;
@@ -154,7 +153,7 @@ describe("HostCalls: Import", () => {
     assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
     const res = readResult();
     assert.deepStrictEqual(res.toString().substr(0, 32), "0x68656c6c6f20776f726c6421000000");
-    assert.deepStrictEqual(res.length, 4110);
+    assert.deepStrictEqual(res.length, 4104);
     assert.ok(res.length < destinationLength, `${res.length} < ${destinationLength}`);
   });
 });

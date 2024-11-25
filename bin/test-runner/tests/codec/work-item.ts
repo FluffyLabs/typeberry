@@ -1,7 +1,6 @@
 import type { CodeHash, ServiceGas, ServiceId } from "@typeberry/block";
 import { ImportSpec, WorkItem, WorkItemExtrinsicSpec } from "@typeberry/block/work-item";
 import { BytesBlob } from "@typeberry/bytes";
-import type { KnownSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
 import type { U16 } from "@typeberry/numbers";
 import type { JsonObject } from "../../json-format";
@@ -50,7 +49,7 @@ type JsonWorkItem = {
   code_hash: CodeHash;
   payload: BytesBlob;
   gas_limit: number;
-  import_segments: KnownSizeArray<ImportSpec, "Less than 2**11">;
+  import_segments: WorkItem["importSegments"];
   extrinsic: WorkItemExtrinsicSpec[];
   export_count: U16;
 };

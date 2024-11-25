@@ -4,6 +4,7 @@ export * from "./crypto";
 export * from "./hash";
 export * from "./header";
 export * from "./validator-data";
+export * from "./work-item-segment";
 
 // TODO [ToDr] Temporary re-export to make the published package complete.
 export * as codec from "@typeberry/codec";

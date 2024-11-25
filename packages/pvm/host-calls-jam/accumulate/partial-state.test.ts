@@ -4,7 +4,7 @@ import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
-import { Result } from "@typeberry/utils";
+import { OK, Result } from "@typeberry/utils";
 import type {
   AUTHORIZATION_QUEUE_SIZE,
   AccumulationPartialState,
@@ -31,7 +31,7 @@ export class TestAccumulate implements AccumulationPartialState {
   public quitAndBurnCalled = 0;
   public quitReturnValue: Result<null, QuitError> = Result.ok(null);
   public requestPreimageResponse: Result<null, RequestPreimageError> = Result.ok(null);
-  public transferReturnValue: Result<null, TransferError> = Result.ok(null);
+  public transferReturnValue: Result<OK, TransferError> = Result.ok(OK);
 
   quitAndTransfer(destination: ServiceId, suppliedGas: Gas, memo: Bytes<TRANSFER_MEMO_BYTES>): Result<null, QuitError> {
     this.quitAndTransferData.push([destination, suppliedGas, memo]);
@@ -57,7 +57,7 @@ export class TestAccumulate implements AccumulationPartialState {
     amount: U64,
     suppliedGas: Gas,
     memo: Bytes<TRANSFER_MEMO_BYTES>,
-  ): Result<null, TransferError> {
+  ): Result<OK, TransferError> {
     this.transferData.push([destination, amount, suppliedGas, memo]);
     return this.transferReturnValue;
   }
