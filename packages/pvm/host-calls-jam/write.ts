@@ -2,7 +2,7 @@ import type { ServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, hashBytes } from "@typeberry/hash";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import type { Memory } from "@typeberry/pvm-interpreter/memory";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
@@ -52,7 +52,7 @@ export class Write implements HostCallHandler {
 
   constructor(private readonly account: Accounts) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
+  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // Storage is full (i.e. `a_t > a_b` - threshold balance is greater than current balance).
     // NOTE that we first need to know if the storage is full, since the result
     // does not depend on the success of reading the key or value:
@@ -60,7 +60,7 @@ export class Write implements HostCallHandler {
     const isStorageFull = await this.account.isStorageFull(this.currentServiceId);
     if (isStorageFull) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.FULL;
-      return Promise.resolve();
+      return;
     }
 
     // k_0
@@ -86,7 +86,7 @@ export class Write implements HostCallHandler {
     // we return OOB in case the value cannot be read or the key can't be loaded.
     if (keyLoadingFault || valueLoadingFault) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
-      return Promise.resolve();
+      return;
     }
 
     const prevLenPromise = this.account.readSnapshotLen(this.currentServiceId, keyHash);
@@ -95,6 +95,6 @@ export class Write implements HostCallHandler {
     // Successful write or removal. We store previous value length in omega_7
     const prevLen = await prevLenPromise;
     regs.asUnsigned[IN_OUT_REG] = prevLen === null ? HostCallResult.NONE : prevLen;
-    return Promise.resolve();
+    return;
   }
 }

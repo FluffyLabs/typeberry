@@ -9,6 +9,7 @@ import { Result } from "@typeberry/utils";
 import type {
   AUTHORIZATION_QUEUE_SIZE,
   AccumulationPartialState,
+  QuitError,
   TRANSFER_MEMO_BYTES,
   TransferError,
 } from "./partial-state";
@@ -17,13 +18,25 @@ export class TestAccumulate implements AccumulationPartialState {
   public readonly authQueue: Parameters<TestAccumulate["updateAuthorizationQueue"]>[] = [];
   public readonly newServiceCalled: Parameters<TestAccumulate["newService"]>[] = [];
   public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
+  public readonly quitAndTransferData: Parameters<TestAccumulate["quitAndTransfer"]>[] = [];
   public readonly transferData: Parameters<TestAccumulate["transfer"]>[] = [];
   public readonly upgradeData: Parameters<TestAccumulate["upgradeService"]>[] = [];
   public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
 
   public checkpointCalled = 0;
   public newServiceResponse: ServiceId | null = null;
+  public quitAndBurnCalled = 0;
   public transferReturnValue: Result<null, TransferError> = Result.ok(null);
+  public quitReturnValue: Result<null, QuitError> = Result.ok(null);
+
+  quitAndTransfer(destination: ServiceId, suppliedGas: Gas, memo: Bytes<TRANSFER_MEMO_BYTES>): Result<null, QuitError> {
+    this.quitAndTransferData.push([destination, suppliedGas, memo]);
+    return this.quitReturnValue;
+  }
+
+  quitAndBurn(): void {
+    this.quitAndBurnCalled += 1;
+  }
 
   transfer(
     destination: ServiceId,

@@ -3,7 +3,7 @@ import { type CodecRecord, Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type Gas, type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
@@ -111,7 +111,7 @@ export class Info implements HostCallHandler {
 
   constructor(private readonly account: Accounts) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
+  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // t
     const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // o
@@ -122,13 +122,13 @@ export class Info implements HostCallHandler {
 
     if (accountInfo === null) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.NONE;
-      return Promise.resolve();
+      return;
     }
 
     const encodedInfo = Encoder.encodeObject(AccountInfo.Codec, accountInfo);
     const writeOk = memory.storeFrom(outputStart, encodedInfo.raw);
 
     regs.asUnsigned[IN_OUT_REG] = writeOk !== null ? HostCallResult.OOB : HostCallResult.OK;
-    return Promise.resolve();
+    return;
   }
 }
