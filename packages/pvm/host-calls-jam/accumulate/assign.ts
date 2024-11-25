@@ -3,7 +3,7 @@ import { Decoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
@@ -28,7 +28,7 @@ export class Assign implements HostCallHandler {
     private readonly chainSpec: ChainSpec,
   ) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
+  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     const coreIndex = regs.asUnsigned[IN_OUT_REG];
     // o
     const authorizationQueueStart = tryAsMemoryIndex(regs.asUnsigned[8]);
@@ -52,6 +52,6 @@ export class Assign implements HostCallHandler {
 
     regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
     this.partialState.updateAuthorizationQueue(tryAsCoreIndex(coreIndex), authQueue);
-    return Promise.resolve();
+    return;
   }
 }

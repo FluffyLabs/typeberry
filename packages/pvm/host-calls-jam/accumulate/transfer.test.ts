@@ -52,6 +52,28 @@ function prepareRegsAndMemory(
 const gas = gasCounter(tryAsGas(10_000));
 
 describe("HostCalls: Transfer", () => {
+  it("should perform a transfer to self?", async () => {
+    const accumulate = new TestAccumulate();
+    const transfer = new Transfer(accumulate);
+    transfer.currentServiceId = tryAsServiceId(10_000);
+
+    const { registers, memory } = prepareRegsAndMemory(
+      transfer.currentServiceId,
+      tryAsU64(2n ** 45n),
+      tryAsU64(1_000),
+      Bytes.fill(TRANSFER_MEMO_BYTES, 33),
+    );
+
+    // when
+    await transfer.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
+    assert.deepStrictEqual(accumulate.transferData, [
+      [transfer.currentServiceId, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)],
+    ]);
+  });
+
   it("should perform a transfer to different account", async () => {
     const accumulate = new TestAccumulate();
     const transfer = new Transfer(accumulate);

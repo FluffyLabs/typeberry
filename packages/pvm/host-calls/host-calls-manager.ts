@@ -3,7 +3,7 @@ import { CURRENT_SERVICE_ID, HostCallResult } from "@typeberry/jam-host-calls";
 import type { Memory, Registers } from "@typeberry/pvm-interpreter";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { check } from "@typeberry/utils";
-import { type HostCallHandler, type HostCallIndex, tryAsHostCallIndex } from "./host-call-handler";
+import { type HostCallHandler, type HostCallIndex, type PvmExecution, tryAsHostCallIndex } from "./host-call-handler";
 
 // TODO [ToDr] Rename to just `HostCalls`
 /** Container for all available host calls. */
@@ -36,8 +36,8 @@ class Missing implements HostCallHandler {
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
-  execute(_gas: GasCounter, regs: Registers, _memory: Memory): Promise<void> {
+  execute(_gas: GasCounter, regs: Registers, _memory: Memory): Promise<PvmExecution | undefined> {
     regs.asUnsigned[7] = HostCallResult.WHAT;
-    return Promise.resolve();
+    return Promise.resolve(undefined);
   }
 }

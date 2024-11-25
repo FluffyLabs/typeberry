@@ -3,7 +3,7 @@ import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
@@ -25,7 +25,7 @@ export class New implements HostCallHandler {
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
+  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // `o`
     const codeHashStart = tryAsMemoryIndex(regs.asUnsigned[IN_OUT_REG]);
     // `l`
@@ -40,7 +40,7 @@ export class New implements HostCallHandler {
     const pageFault = memory.loadInto(codeHash.raw, codeHashStart);
     if (pageFault !== null) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
-      return Promise.resolve();
+      return;
     }
 
     const gas = asU64(g_l, g_h);
@@ -55,7 +55,7 @@ export class New implements HostCallHandler {
     } else {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.CASH;
     }
-    return Promise.resolve();
+    return;
   }
 }
 
