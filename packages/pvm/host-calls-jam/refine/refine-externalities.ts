@@ -1,4 +1,4 @@
-import type { ServiceId } from "@typeberry/block";
+import type { SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { Blake2bHash } from "@typeberry/hash";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
@@ -50,6 +50,9 @@ export interface RefineExternalities {
 
   /** Start an inner PVM instance with given entry point and starting code. */
   machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId>;
+
+  /** Retrieve a segment exported by some earlier refine invokation. */
+  importSegment(segmentIndex: SegmentIndex): Promise<BytesBlob | null>;
 
   /** Lookup a historical preimage. */
   historicalLookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null>;

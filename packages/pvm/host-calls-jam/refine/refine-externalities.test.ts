@@ -1,4 +1,4 @@
-import type { ServiceId } from "@typeberry/block";
+import type { SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
@@ -8,6 +8,7 @@ import type { Result } from "@typeberry/utils";
 import type { MachineId, PeekPokeError, RefineExternalities } from "./refine-externalities";
 
 export class TestRefineExt implements RefineExternalities {
+  public readonly importSegmentData: Map<SegmentIndex, BytesBlob | null> = new Map();
   public readonly historicalLookupData: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
     null,
     (key) => key.toString(),
@@ -57,6 +58,14 @@ export class TestRefineExt implements RefineExternalities {
       throw new Error(
         `Unexpected call to machinePokeInto with: ${[machineIndex, sourceStart, destinationStart, length, source]}`,
       );
+    }
+    return Promise.resolve(val);
+  }
+
+  importSegment(segmentIndex: SegmentIndex): Promise<BytesBlob | null> {
+    const val = this.importSegmentData.get(segmentIndex);
+    if (val === undefined) {
+      throw new Error(`Unexpected call to importSegment with: ${segmentIndex}`);
     }
     return Promise.resolve(val);
   }

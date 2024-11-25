@@ -4,7 +4,7 @@ import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type U16, type U32, sumU32 } from "@typeberry/numbers";
 import { type Opaque, WithDebug, asOpaqueType } from "@typeberry/utils";
-import type { ServiceGas, ServiceId } from "./common";
+import type { SegmentIndex, ServiceGas, ServiceId } from "./common";
 import type { CodeHash } from "./hash";
 
 type WorkItemExtrinsicHash = Opaque<OpaqueHash, "ExtrinsicHash">;
@@ -16,7 +16,7 @@ type WorkItemExtrinsicHash = Opaque<OpaqueHash, "ExtrinsicHash">;
 export class ImportSpec extends WithDebug {
   static Codec = codec.Class(ImportSpec, {
     treeRoot: codec.bytes(HASH_SIZE),
-    index: codec.u16,
+    index: codec.u16.cast(),
   });
 
   static fromCodec({ treeRoot, index }: CodecRecord<ImportSpec>) {
@@ -30,7 +30,7 @@ export class ImportSpec extends WithDebug {
      */
     public readonly treeRoot: OpaqueHash,
     /** Index of the prior exported segment. */
-    public readonly index: U16,
+    public readonly index: SegmentIndex,
   ) {
     super();
   }
