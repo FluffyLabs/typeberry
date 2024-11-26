@@ -4,7 +4,7 @@ import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { check } from "@typeberry/utils";
-import type { HostCallIndex } from "./host-call-handler";
+import { type HostCallIndex, PvmExecution } from "./host-call-handler";
 import type { HostCallsManager } from "./host-calls-manager";
 import type { InterpreterInstanceManager } from "./interpreter-instance-manager";
 
@@ -54,7 +54,12 @@ export class HostCalls {
       if (underflow) {
         return Status.OOG;
       }
-      await hostCall.execute(gas, regs, memory);
+      const result = await hostCall.execute(gas, regs, memory);
+
+      if (result === PvmExecution.Halt) {
+        status = Status.HALT;
+        return this.getReturnValue(status, pvmInstance.getMemory(), pvmInstance.getRegisters());
+      }
 
       pvmInstance.runProgram();
       status = pvmInstance.getStatus();

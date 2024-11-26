@@ -1,32 +1,37 @@
 import { check } from "./debug";
 
 /** An indication of two possible outcomes returned from a function. */
-export class Result<Ok, Error> {
-  private constructor(
-    public readonly ok?: Ok,
-    public readonly error?: Error,
-  ) {
-    check(ok !== undefined || error !== undefined, "Either `ok` or `error` has to be provided.");
-    check(ok === undefined || error === undefined, "Can't have both `ok` AND `error`.");
-  }
+export type Result<Ok, Error> =
+  | {
+      isOk: true;
+      isError: false;
+      ok: Ok;
+    }
+  | {
+      isOk: false;
+      isError: true;
+      error: Error;
+    };
 
+/** An indication of two possible outcomes returned from a function. */
+export const Result = {
   /** Create new [`Result`] with `Ok` status. */
-  static ok<Ok, Error>(ok: Ok): Result<Ok, Error> {
-    return new Result(ok);
-  }
+  ok: <Ok, Error>(ok: Ok): Result<Ok, Error> => {
+    check(ok !== undefined, "`Ok` type cannot be undefined.");
+    return {
+      isOk: true,
+      isError: false,
+      ok,
+    };
+  },
 
   /** Create new [`Result`] with `Error` status. */
-  static error<Ok, Error>(error: Error): Result<Ok, Error> {
-    return new Result(undefined as Ok | undefined, error);
-  }
-
-  /** The result contains `Ok` status. */
-  isOk(): this is { ok: Ok } {
-    return this.ok !== undefined;
-  }
-
-  /** The result contains `Error` status. */
-  isError(): this is { error: Error } {
-    return this.error !== undefined;
-  }
-}
+  error: <Ok, Error>(error: Error): Result<Ok, Error> => {
+    check(error !== undefined, "`Error` type cannot be undefined.");
+    return {
+      isOk: false,
+      isError: true,
+      error,
+    };
+  },
+};

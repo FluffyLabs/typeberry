@@ -46,6 +46,20 @@ export enum TransferError {
 }
 
 /**
+ * Errors that may occur when `quit` is invoked.
+ *
+ * Note there is partial overlap with `TransferError`, except
+ * for `BalanceBelowThreshold`, since it doesn't matter,
+ * because the account is removed anyway.
+ */
+export enum QuitError {
+  /** The destination service does not exist. */
+  DestinationNotFound = 0,
+  /** The supplied gas is too low to execute `OnTransfer` entry point. */
+  GasTooLow = 1,
+}
+
+/**
  * `U`: state components mutated by the accumulation.
  * - `d`: service accounts state
  * - `i`: upcoming validator keys
@@ -71,9 +85,24 @@ export interface AccumulationPartialState {
   forgetPreimage(hash: Blake2bHash, length: U32): Result<null, null>;
 
   /**
+   * Remove current service account and transfer all remaining
+   * funds to the destination account (i.e. invoke transfer).
+   *
+   * `a`: amount to transfer = balance - threshold + B_S: basic minimum balance
+   */
+  quitAndTransfer(destination: ServiceId, suppliedGas: Gas, memo: Bytes<TRANSFER_MEMO_BYTES>): Result<null, QuitError>;
+
+  /**
+   * Remove current service account and burn the remaining funds.
+   */
+  quitAndBurn(): void;
+
+  /**
    * Transfer given `amount` of funds to the `destination`,
    * passing `suppliedGas` to invoke `OnTransfer` entry point
    * and given `memo`.
+   *
+   * TODO [ToDr] is it possible to transfer to self?
    */
   transfer(
     destination: ServiceId,

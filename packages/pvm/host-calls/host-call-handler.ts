@@ -10,6 +10,10 @@ export type HostCallIndex = Opaque<U32, "HostCallIndex[U32]">;
 /** Attempt to convert a number into `HostCallIndex`. */
 export const tryAsHostCallIndex = (v: number): HostCallIndex => asOpaqueType(tryAsU32(v));
 
+export enum PvmExecution {
+  Halt = 0,
+}
+
 /** An interface for a host call implementation */
 export interface HostCallHandler {
   /** Index of that host call (i.e. what PVM invokes via `ecalli`) */
@@ -26,5 +30,5 @@ export interface HostCallHandler {
    *
    * NOTE the call is ALLOWED and expected to modify registers and memory.
    */
-  execute(gas: GasCounter, regs: Registers, memory: Memory): Promise<void>;
+  execute(gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution>;
 }

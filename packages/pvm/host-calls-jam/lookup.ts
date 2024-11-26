@@ -2,7 +2,7 @@ import type { ServiceId } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, HASH_SIZE, hashBytes } from "@typeberry/hash";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import type { Memory } from "@typeberry/pvm-interpreter/memory";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
@@ -30,7 +30,7 @@ export class Lookup implements HostCallHandler {
 
   constructor(private readonly account: Accounts) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<void> {
+  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // a
     const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // h_0
@@ -46,19 +46,19 @@ export class Lookup implements HostCallHandler {
     // we return OOB in case the destination is not writeable or the key can't be loaded.
     if (hashLoadingFault || !destinationWriteable) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
-      return Promise.resolve();
+      return;
     }
     const keyHash = hashBytes(key);
     const value = await this.account.lookup(serviceId, keyHash);
 
     if (value === null) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.NONE;
-      return Promise.resolve();
+      return;
     }
 
     // copy value to the memory and set the length to register 7
     memory.storeFrom(destinationStart, value.raw.subarray(0, destinationLen));
     regs.asUnsigned[IN_OUT_REG] = value.raw.length;
-    return Promise.resolve();
+    return;
   }
 }
