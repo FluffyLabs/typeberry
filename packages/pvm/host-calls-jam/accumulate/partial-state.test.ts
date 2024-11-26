@@ -10,24 +10,29 @@ import type {
   AUTHORIZATION_QUEUE_SIZE,
   AccumulationPartialState,
   QuitError,
+  RequestPreimageError,
   TRANSFER_MEMO_BYTES,
   TransferError,
 } from "./partial-state";
 
 export class TestAccumulate implements AccumulationPartialState {
   public readonly authQueue: Parameters<TestAccumulate["updateAuthorizationQueue"]>[] = [];
+  public readonly forgetPreimageData: Parameters<TestAccumulate["forgetPreimage"]>[] = [];
   public readonly newServiceCalled: Parameters<TestAccumulate["newService"]>[] = [];
   public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
   public readonly quitAndTransferData: Parameters<TestAccumulate["quitAndTransfer"]>[] = [];
+  public readonly requestPreimageData: Parameters<TestAccumulate["requestPreimage"]>[] = [];
   public readonly transferData: Parameters<TestAccumulate["transfer"]>[] = [];
   public readonly upgradeData: Parameters<TestAccumulate["upgradeService"]>[] = [];
   public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
 
   public checkpointCalled = 0;
+  public forgetPreimageResponse: Result<null, null> = Result.ok(null);
   public newServiceResponse: ServiceId | null = null;
   public quitAndBurnCalled = 0;
-  public transferReturnValue: Result<null, TransferError> = Result.ok(null);
   public quitReturnValue: Result<null, QuitError> = Result.ok(null);
+  public requestPreimageResponse: Result<null, RequestPreimageError> = Result.ok(null);
+  public transferReturnValue: Result<null, TransferError> = Result.ok(null);
 
   quitAndTransfer(destination: ServiceId, suppliedGas: Gas, memo: Bytes<TRANSFER_MEMO_BYTES>): Result<null, QuitError> {
     this.quitAndTransferData.push([destination, suppliedGas, memo]);
@@ -36,6 +41,16 @@ export class TestAccumulate implements AccumulationPartialState {
 
   quitAndBurn(): void {
     this.quitAndBurnCalled += 1;
+  }
+
+  requestPreimage(hash: Blake2bHash, length: U32): Result<null, RequestPreimageError> {
+    this.requestPreimageData.push([hash, length]);
+    return this.requestPreimageResponse;
+  }
+
+  forgetPreimage(hash: Blake2bHash, length: U32): Result<null, null> {
+    this.forgetPreimageData.push([hash, length]);
+    return this.forgetPreimageResponse;
   }
 
   transfer(
