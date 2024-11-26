@@ -24,7 +24,7 @@ describe("DynamicJumpOps", () => {
     const registerIndex = 0;
     regs.asUnsigned[registerIndex] = 3;
 
-    dynamicJumpOps.jumpInd(5, registerIndex);
+    dynamicJumpOps.jumpInd(1, registerIndex);
 
     assert.strictEqual(instructionResult.nextPc, 3);
     assert.strictEqual(instructionResult.status, null);
@@ -42,7 +42,7 @@ describe("DynamicJumpOps", () => {
     const registerIndex = 0;
     regs.asUnsigned[registerIndex] = MAX_VALUE;
 
-    dynamicJumpOps.jumpInd(9, registerIndex);
+    dynamicJumpOps.jumpInd(5, registerIndex);
 
     assert.strictEqual(instructionResult.nextPc, 3);
     assert.strictEqual(instructionResult.status, null);
