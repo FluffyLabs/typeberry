@@ -20,8 +20,8 @@ export type MachineId = Opaque<U32, "MachineId[u32]">;
 /** Convert a number into PVM instance identifier. */
 export const tryAsMachineId = (v: number): MachineId => asOpaqueType(tryAsU32(v));
 
-/** An error that may occur during `peek` host call. */
-export enum PeekError {
+/** An error that may occur during `peek` or `poke` host call. */
+export enum PeekPokeError {
   /** Source or destination page fault. */
   PageFault = 0,
   /** No machine under given machine index. */
@@ -31,13 +31,22 @@ export enum PeekError {
 /** Host functions external invokations available during refine phase. */
 export interface RefineExternalities {
   /** Copy a fragment of memory from `machineIndex` into given destination memory. */
-  machinePeek(
+  machinePeekFrom(
     machineIndex: MachineId,
     destinationStart: MemoryIndex,
     sourceStart: MemoryIndex,
     length: U32,
-    memory: Memory,
-  ): Promise<Result<null, PeekError>>;
+    destination: Memory,
+  ): Promise<Result<null, PeekPokeError>>;
+
+  /** Write a fragment of memory into `machineIndex` from given source memory. */
+  machinePokeInto(
+    machineIndex: MachineId,
+    sourceStart: MemoryIndex,
+    destinationStart: MemoryIndex,
+    length: U32,
+    source: Memory,
+  ): Promise<Result<null, PeekPokeError>>;
 
   /** Start an inner PVM instance with given entry point and starting code. */
   machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId>;

@@ -15,12 +15,12 @@ import { PeekPokeError, type RefineExternalities, tryAsMachineId } from "./refin
 const IN_OUT_REG = 7;
 
 /**
- * Peek a piece memory of a running nested machine.
+ * Copy a piece of local memory into nested PVM instance.
  *
- * https://graypaper.fluffylabs.dev/#/911af30/338801338801
+ * https://graypaper.fluffylabs.dev/#/911af30/332302332302
  */
-export class Peek implements HostCallHandler {
-  index = tryAsHostCallIndex(19);
+export class Poke implements HostCallHandler {
+  index = tryAsHostCallIndex(20);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
@@ -29,20 +29,20 @@ export class Peek implements HostCallHandler {
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
     // `n`: machine index
     const machineIndex = tryAsMachineId(regs.asUnsigned[IN_OUT_REG]);
-    // `o`: destination memory start (local)
-    const destinationStart = tryAsMemoryIndex(regs.asUnsigned[8]);
     // `s`: source memory start (nested vm)
-    const sourceStart = tryAsMemoryIndex(regs.asUnsigned[9]);
+    const sourceStart = tryAsMemoryIndex(regs.asUnsigned[8]);
+    // `o`: destination memory start (local)
+    const destinationStart = tryAsMemoryIndex(regs.asUnsigned[9]);
     // `z`: memory length
     const length = tryAsU32(regs.asUnsigned[10]);
 
-    const peekResult = await this.refine.machinePeekFrom(machineIndex, destinationStart, sourceStart, length, memory);
-    if (peekResult.isOk) {
+    const pokeResult = await this.refine.machinePokeInto(machineIndex, sourceStart, destinationStart, length, memory);
+    if (pokeResult.isOk) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
       return;
     }
 
-    const e = peekResult.error;
+    const e = pokeResult.error;
 
     if (e === PeekPokeError.NoMachine) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.WHO;

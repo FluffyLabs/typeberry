@@ -5,7 +5,7 @@ import type { Blake2bHash } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import type { Memory, MemoryIndex } from "@typeberry/pvm-interpreter";
 import type { Result } from "@typeberry/utils";
-import type { MachineId, PeekError, RefineExternalities } from "./refine-externalities";
+import type { MachineId, PeekPokeError, RefineExternalities } from "./refine-externalities";
 
 export class TestRefineExt implements RefineExternalities {
   public readonly historicalLookupData: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
@@ -16,7 +16,9 @@ export class TestRefineExt implements RefineExternalities {
     (code) => code.toString(),
     null,
   ]);
-  public readonly machinePeekData: MultiMap<Parameters<TestRefineExt["machinePeek"]>, Result<null, PeekError>> =
+  public readonly machinePeekData: MultiMap<Parameters<TestRefineExt["machinePeekFrom"]>, Result<null, PeekPokeError>> =
+    new MultiMap(5);
+  public readonly machinePokeData: MultiMap<Parameters<TestRefineExt["machinePokeInto"]>, Result<null, PeekPokeError>> =
     new MultiMap(5);
 
   machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId> {
@@ -27,17 +29,33 @@ export class TestRefineExt implements RefineExternalities {
     return Promise.resolve(val);
   }
 
-  machinePeek(
+  machinePeekFrom(
     machineIndex: MachineId,
     destinationStart: MemoryIndex,
     sourceStart: MemoryIndex,
     length: U32,
-    memory: Memory,
-  ): Promise<Result<null, PeekError>> {
-    const val = this.machinePeekData.get(machineIndex, destinationStart, sourceStart, length, memory);
+    destination: Memory,
+  ): Promise<Result<null, PeekPokeError>> {
+    const val = this.machinePeekData.get(machineIndex, destinationStart, sourceStart, length, destination);
     if (val === undefined) {
       throw new Error(
-        `Unexpected call to machineStart with: ${[machineIndex, destinationStart, sourceStart, length, memory]}`,
+        `Unexpected call to machinePeekFrom with: ${[machineIndex, destinationStart, sourceStart, length, destination]}`,
+      );
+    }
+    return Promise.resolve(val);
+  }
+
+  machinePokeInto(
+    machineIndex: MachineId,
+    sourceStart: MemoryIndex,
+    destinationStart: MemoryIndex,
+    length: U32,
+    source: Memory,
+  ): Promise<Result<null, PeekPokeError>> {
+    const val = this.machinePokeData.get(machineIndex, sourceStart, destinationStart, length, source);
+    if (val === undefined) {
+      throw new Error(
+        `Unexpected call to machinePokeInto with: ${[machineIndex, sourceStart, destinationStart, length, source]}`,
       );
     }
     return Promise.resolve(val);
