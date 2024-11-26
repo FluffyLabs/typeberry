@@ -4,9 +4,9 @@ import { tryAsServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
-import { asOpaqueType } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { Machine } from "./machine";
+import { tryAsMachineId } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));
@@ -40,7 +40,7 @@ describe("HostCalls: Machine", () => {
     machine.currentServiceId = tryAsServiceId(10_000);
     const code = BytesBlob.blobFromString("amazing PVM code");
     const { registers, memory } = prepareRegsAndMemory(code, tryAsU32(5));
-    refine.startMachineData.set(asOpaqueType(tryAsU32(10_000)), code, tryAsU32(5));
+    refine.machineStartData.set(tryAsMachineId(10_000), code, tryAsU32(5));
 
     // when
     await machine.execute(gas, registers, memory);

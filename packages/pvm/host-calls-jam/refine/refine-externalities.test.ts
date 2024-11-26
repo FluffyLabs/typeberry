@@ -3,22 +3,42 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
-import type { MachineId, RefineExternalities } from "./refine-externalities";
+import type { Memory, MemoryIndex } from "@typeberry/pvm-interpreter";
+import type { Result } from "@typeberry/utils";
+import type { MachineId, PeekError, RefineExternalities } from "./refine-externalities";
 
 export class TestRefineExt implements RefineExternalities {
   public readonly historicalLookupData: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
     null,
     (key) => key.toString(),
   ]);
-  public readonly startMachineData: MultiMap<[BytesBlob, U32], MachineId> = new MultiMap(2, [
+  public readonly machineStartData: MultiMap<[BytesBlob, U32], MachineId> = new MultiMap(2, [
     (code) => code.toString(),
     null,
   ]);
+  public readonly machinePeekData: MultiMap<Parameters<TestRefineExt["machinePeek"]>, Result<null, PeekError>> =
+    new MultiMap(5);
 
-  startMachine(code: BytesBlob, programCounter: U32): Promise<MachineId> {
-    const val = this.startMachineData.get(code, programCounter);
+  machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId> {
+    const val = this.machineStartData.get(code, programCounter);
     if (val === undefined) {
-      throw new Error(`Unexpected call to startMachine with: ${code}, ${programCounter}`);
+      throw new Error(`Unexpected call to machineStart with: ${code}, ${programCounter}`);
+    }
+    return Promise.resolve(val);
+  }
+
+  machinePeek(
+    machineIndex: MachineId,
+    destinationStart: MemoryIndex,
+    sourceStart: MemoryIndex,
+    length: U32,
+    memory: Memory,
+  ): Promise<Result<null, PeekError>> {
+    const val = this.machinePeekData.get(machineIndex, destinationStart, sourceStart, length, memory);
+    if (val === undefined) {
+      throw new Error(
+        `Unexpected call to machineStart with: ${[machineIndex, destinationStart, sourceStart, length, memory]}`,
+      );
     }
     return Promise.resolve(val);
   }

@@ -42,7 +42,7 @@ export class Machine implements HostCallHandler {
       return;
     }
 
-    const machineId = await this.refine.startMachine(BytesBlob.blobFrom(code), entrypoint);
+    const machineId = await this.refine.machineStart(BytesBlob.blobFrom(code), entrypoint);
     regs.asUnsigned[IN_OUT_REG] = machineId;
     return;
   }
