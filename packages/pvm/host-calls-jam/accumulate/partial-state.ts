@@ -16,6 +16,16 @@ export type AUTHORIZATION_QUEUE_SIZE = typeof AUTHORIZATION_QUEUE_SIZE;
 export const TRANSFER_MEMO_BYTES = W_T;
 export type TRANSFER_MEMO_BYTES = typeof TRANSFER_MEMO_BYTES;
 
+/** Possible error when requesting a preimage. */
+export enum RequestPreimageError {
+  /** The preimage is already requested. */
+  AlreadyRequested = 0,
+  /** The preimage is already available. */
+  AlreadyAvailable = 1,
+  /** The account does not have enough balance to store more preimages. */
+  InsufficientFunds = 2,
+}
+
 /**
  * Errors that may occur when the transfer is invoked.
  *
@@ -59,6 +69,21 @@ export enum QuitError {
  * https://graypaper.fluffylabs.dev/#/439ca37/161402161402
  */
 export interface AccumulationPartialState {
+  /**
+   * Request (solicit) a preimage to be (re-)available.
+   *
+   * States:
+   * https://graypaper.fluffylabs.dev/#/364735a/113000113000
+   */
+  requestPreimage(hash: Blake2bHash, length: U32): Result<null, RequestPreimageError>;
+
+  /**
+   * Mark a preimage hash as unavailable (forget it).
+   *
+   * https://graypaper.fluffylabs.dev/#/364735a/30a20030a200
+   */
+  forgetPreimage(hash: Blake2bHash, length: U32): Result<null, null>;
+
   /**
    * Remove current service account and transfer all remaining
    * funds to the destination account (i.e. invoke transfer).
