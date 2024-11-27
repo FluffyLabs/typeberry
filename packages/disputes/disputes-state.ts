@@ -1,5 +1,6 @@
 import type { Ed25519Key, TimeSlot, ValidatorData, WorkReportHash } from "@typeberry/block";
-import type { Bytes } from "@typeberry/bytes";
+import type { WorkReport } from "@typeberry/block/work-report";
+import type { BytesBlob } from "@typeberry/bytes";
 import { Ordering, SortedSet } from "@typeberry/collections";
 
 export function hashComparator<V extends WorkReportHash | Ed25519Key>(a: V, b: V) {
@@ -40,15 +41,16 @@ export class DisputesRecords {
 
 export class AvailabilityAssignment {
   constructor(
-    public workReport: Bytes<354>,
+    public workReport: WorkReport,
     public timeout: number,
+    public workReportBytes: BytesBlob,
   ) {}
 }
 
 export class DisputesState {
   constructor(
     public readonly disputesRecords: DisputesRecords,
-    public readonly availabilityAssignment: Array<AvailabilityAssignment | undefined>,
+    public readonly availabilityAssignment: Array<AvailabilityAssignment | null>,
     public readonly timeslot: TimeSlot,
     public readonly currentValidatorData: ValidatorData[],
     public readonly previousValidatorData: ValidatorData[],

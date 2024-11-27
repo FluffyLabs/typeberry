@@ -262,10 +262,10 @@ export class Disputes {
     for (let c = 0; c < this.state.availabilityAssignment.length; c++) {
       const assignment = this.state.availabilityAssignment[c];
       if (assignment) {
-        const hash = hashBytes(assignment.workReport) as WorkReportHash;
+        const hash = hashBytes(assignment.workReportBytes) as WorkReportHash;
         const item = v.get(hash);
         if (item !== undefined && item < this.context.validatorsSuperMajority) {
-          this.state.availabilityAssignment[c] = undefined;
+          this.state.availabilityAssignment[c] = null;
         }
       }
     }

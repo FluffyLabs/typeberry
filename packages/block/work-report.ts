@@ -2,7 +2,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import type { U32 } from "@typeberry/numbers";
+import type { U16, U32 } from "@typeberry/numbers";
 import { type Opaque, WithDebug } from "@typeberry/utils";
 import type { CoreIndex } from "./common";
 import { RefineContext } from "./refine-context";
@@ -19,10 +19,11 @@ export class WorkPackageSpec extends WithDebug {
     len: codec.u32,
     erasureRoot: codec.bytes(HASH_SIZE),
     exportsRoot: codec.bytes(HASH_SIZE),
+    exportsCount: codec.u16,
   });
 
-  static fromCodec({ hash, len, erasureRoot, exportsRoot }: CodecRecord<WorkPackageSpec>) {
-    return new WorkPackageSpec(hash, len, erasureRoot, exportsRoot);
+  static fromCodec({ hash, len, erasureRoot, exportsRoot, exportsCount }: CodecRecord<WorkPackageSpec>) {
+    return new WorkPackageSpec(hash, len, erasureRoot, exportsRoot, exportsCount);
   }
 
   constructor(
@@ -34,11 +35,27 @@ export class WorkPackageSpec extends WithDebug {
     public readonly erasureRoot: OpaqueHash,
     /** The root hash of all data segments exported by this work package. */
     public readonly exportsRoot: OpaqueHash,
+    public readonly exportsCount: U16,
   ) {
     super();
   }
 }
 
+export class SegmentRootLookupItem {
+  static Codec = codec.Class(SegmentRootLookupItem, {
+    workPackageHash: codec.bytes(HASH_SIZE).cast(),
+    segmentTreeRoot: codec.bytes(HASH_SIZE).cast(),
+  });
+
+  constructor(
+    public workPackageHash: WorkPackageHash,
+    public segmentTreeRoot: OpaqueHash,
+  ) {}
+
+  static fromCodec({ workPackageHash, segmentTreeRoot }: CodecRecord<SegmentRootLookupItem>) {
+    return new SegmentRootLookupItem(workPackageHash, segmentTreeRoot);
+  }
+}
 /**
  * A report of execution of some work package.
  *
@@ -51,6 +68,7 @@ export class WorkReport extends WithDebug {
     coreIndex: codec.u16.cast(),
     authorizerHash: codec.bytes(HASH_SIZE),
     authorizationOutput: codec.blob,
+    segmentRootLookup: codec.sequenceVarLen(SegmentRootLookupItem.Codec),
     // TODO [ToDr] Constrain the size of the sequence during decoding.
     results: codec.sequenceVarLen(WorkResult.Codec).cast(),
   });
@@ -62,6 +80,7 @@ export class WorkReport extends WithDebug {
     authorizerHash,
     authorizationOutput,
     results,
+    segmentRootLookup,
   }: CodecRecord<WorkReport>) {
     return new WorkReport(
       workPackageSpec,
@@ -70,6 +89,7 @@ export class WorkReport extends WithDebug {
       authorizerHash,
       authorizationOutput,
       new FixedSizeArray(results, results.length),
+      segmentRootLookup,
     );
   }
 
@@ -91,6 +111,7 @@ export class WorkReport extends WithDebug {
     // public readonly segmentRootLookup: MapOfHashes<OpaqueHash>,
     /** `r`: The results of evaluation of each of the items in the work package. */
     public readonly results: FixedSizeArray<WorkResult, WorkItemsCount>,
+    public readonly segmentRootLookup: SegmentRootLookupItem[],
   ) {
     super();
   }
