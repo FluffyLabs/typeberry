@@ -28,8 +28,19 @@ export enum PeekPokeError {
   NoMachine = 1,
 }
 
+/** Error for `zero` and `void` host calls when machine is not found. */
+export const NoMachineError = Symbol("Machine index not found.");
+export type NoMachineError = typeof NoMachineError;
+
 /** Host functions external invokations available during refine phase. */
 export interface RefineExternalities {
+  /** Set given range of pages as writeable and initialize them with zeros. */
+  machineZeroPages(
+    machineIndex: MachineId,
+    pageStart: U32,
+    pageCount: U32
+  ): Promise<Result<null, NoMachineError>>;
+
   /** Copy a fragment of memory from `machineIndex` into given destination memory. */
   machinePeekFrom(
     machineIndex: MachineId,
