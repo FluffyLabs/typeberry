@@ -6,7 +6,8 @@ import { Result } from "../result";
 import { addWithOverflow } from "./math-utils";
 
 const EXIT = 0xff_ff_00_00;
-const JUMP_ALIGMENT_FACTOR = 4;
+/** `Z_A`: https://graypaper.fluffylabs.dev/#/911af30/24ed0124ee01 */
+const JUMP_ALIGMENT_FACTOR = 2;
 
 export class DynamicJumpOps {
   constructor(
