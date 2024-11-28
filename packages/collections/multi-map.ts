@@ -51,10 +51,11 @@ export class MultiMap<TKeys extends readonly unknown[], TValue> {
   set(value: TValue, ...inKeys: TKeys) {
     let current = this.data as Map<unknown, unknown>;
     const keys = this.primitiveKeys(inKeys);
-    const keysWithoutLast = keys.slice(0, keys.length - 1);
-    const lastKey = keys[keys.length - 1];
+    const lastKeyIndex = keys.length - 1;
+    const lastKey = keys[lastKeyIndex];
 
-    for (const key of keysWithoutLast) {
+    for (let i = 0; i < lastKeyIndex; i += 1) {
+      const key = keys[i];
       const nested = current.get(key);
       if (nested === undefined) {
         const fresh = new Map();
@@ -103,17 +104,19 @@ export class MultiMap<TKeys extends readonly unknown[], TValue> {
     key: unknown;
   } {
     const keys = this.primitiveKeys(inKeys);
-    const lastKey = keys[keys.length - 1];
-    const keysWithoutLast = keys.slice(0, keys.length - 1);
+    const lastKeyIndex = keys.length - 1;
+    const lastKey = keys[lastKeyIndex];
     let current = this.data as Map<unknown, unknown> | undefined;
 
-    for (const key of keysWithoutLast) {
+    for (let i = 0; i < lastKeyIndex; i += 1) {
       if (!current) {
         return {
           map: undefined,
           key: lastKey,
         };
       }
+
+      const key = keys[i];
       current = current.get(key) as Map<unknown, unknown> | undefined;
     }
 
