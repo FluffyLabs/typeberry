@@ -340,12 +340,11 @@ export class Disputes {
 
   async transition(disputes: DisputesExtrinsic): Promise<Result<Ed25519Key[], DisputesErrorCode>> {
     const signaturesToVerifyResult = this.prepareSignaturesToVerification(disputes);
-    if (signaturesToVerifyResult.isError()) {
+    if (signaturesToVerifyResult.isError) {
       return Result.error(signaturesToVerifyResult.error);
     }
 
-    /** becasue of the condition above this should be always true but TS is stupid */
-    const signaturesToVerify = signaturesToVerifyResult.isOk() ? signaturesToVerifyResult.ok : [];
+    const signaturesToVerify = signaturesToVerifyResult.ok;
     const verificationPromise = vefifyAllSignatures(signaturesToVerify);
     const v = this.calculateVotesForWorkReports(disputes);
     const newItems = this.getDisputesRecordsNewItems(v);
@@ -357,9 +356,9 @@ export class Disputes {
       this.verifyCulprits(disputes, newItems, verificationResult),
       this.verifyFaults(disputes, newItems, verificationResult),
       this.verifyIfAlreadyJudged(disputes),
-    ].find((result) => result.isError());
+    ].find((result) => result.isError);
 
-    if (inputError?.isError()) {
+    if (inputError?.isError) {
       return Result.error(inputError.error);
     }
 
