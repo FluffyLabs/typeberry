@@ -14,7 +14,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type Codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type HashAllocator, WithHashAndBytes, hashBytes } from "@typeberry/hash";
-import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { type U16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
 import { type Gas, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { Program } from "@typeberry/pvm-program";
@@ -112,12 +112,13 @@ export class WorkPackageExecutor {
       tryAsU32(workPackage.encoded.length),
       Bytes.zero(HASH_SIZE),
       Bytes.zero(HASH_SIZE),
+      0 as U16,
     );
     const coreIndex = tryAsCoreIndex(0);
     const authorizerHash = Bytes.fill(HASH_SIZE, 5);
 
     return Promise.resolve(
-      new WorkReport(workPackageSpec, pack.context, coreIndex, authorizerHash, pack.authorization, results),
+      new WorkReport(workPackageSpec, pack.context, coreIndex, authorizerHash, pack.authorization, [], results),
     );
   }
 
