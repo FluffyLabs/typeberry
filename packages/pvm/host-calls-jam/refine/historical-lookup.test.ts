@@ -2,29 +2,13 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { MultiMap } from "@typeberry/collections";
 import { type Blake2bHash, hashBytes } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
-import { type Accounts, Lookup } from "./lookup";
-import { HostCallResult } from "./results";
-
-class TestAccounts implements Accounts {
-  public readonly data: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
-    null,
-    (hash) => hash.toString(),
-  ]);
-
-  lookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null> {
-    const val = this.data.get(serviceId, hash);
-    if (val === undefined) {
-      throw new Error(`Unexpected lookup call with ${serviceId}, ${hash}`);
-    }
-
-    return Promise.resolve(val);
-  }
-}
+import { HostCallResult } from "../results";
+import { HistoricalLookup } from "./historical-lookup";
+import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));
 const SERVICE_ID_REG = 7;
@@ -66,14 +50,14 @@ function prepareRegsAndMemory(
   };
 }
 
-describe("HostCalls: Lookup", () => {
+describe("HostCalls: Historical Lookup", () => {
   it("should lookup key from an account", async () => {
-    const accounts = new TestAccounts();
-    const lookup = new Lookup(accounts);
+    const refine = new TestRefineExt();
+    const lookup = new HistoricalLookup(refine);
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 64);
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
+    refine.historicalLookupData.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
 
     // when
     await lookup.execute(gas, registers, memory);
@@ -87,12 +71,12 @@ describe("HostCalls: Lookup", () => {
   });
 
   it("should lookup key longer than destination", async () => {
-    const accounts = new TestAccounts();
-    const lookup = new Lookup(accounts);
+    const refine = new TestRefineExt();
+    const lookup = new HistoricalLookup(refine);
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 3);
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
+    refine.historicalLookupData.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
 
     // when
     await lookup.execute(gas, registers, memory);
@@ -103,12 +87,12 @@ describe("HostCalls: Lookup", () => {
   });
 
   it("should handle missing value", async () => {
-    const accounts = new TestAccounts();
-    const lookup = new Lookup(accounts);
+    const refine = new TestRefineExt();
+    const lookup = new HistoricalLookup(refine);
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 32);
-    accounts.data.set(null, serviceId, hashBytes(key));
+    refine.historicalLookupData.set(null, serviceId, hashBytes(key));
 
     // when
     await lookup.execute(gas, registers, memory);
@@ -122,8 +106,8 @@ describe("HostCalls: Lookup", () => {
   });
 
   it("should fail if there is no memory for key", async () => {
-    const accounts = new TestAccounts();
-    const lookup = new Lookup(accounts);
+    const refine = new TestRefineExt();
+    const lookup = new HistoricalLookup(refine);
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32, { skipKey: true });
@@ -136,8 +120,8 @@ describe("HostCalls: Lookup", () => {
   });
 
   it("should fail if there is no memory for result", async () => {
-    const accounts = new TestAccounts();
-    const lookup = new Lookup(accounts);
+    const refine = new TestRefineExt();
+    const lookup = new HistoricalLookup(refine);
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32, { skipValue: true });
@@ -150,12 +134,11 @@ describe("HostCalls: Lookup", () => {
   });
 
   it("should fail if the destination is not fully writeable", async () => {
-    const accounts = new TestAccounts();
-    const lookup = new Lookup(accounts);
+    const refine = new TestRefineExt();
+    const lookup = new HistoricalLookup(refine);
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
     registers.asUnsigned[DEST_LEN_REG] = 34;
 
     // when
@@ -166,12 +149,11 @@ describe("HostCalls: Lookup", () => {
   });
 
   it("should fail gracefuly if the destination is beyond mem limit", async () => {
-    const accounts = new TestAccounts();
-    const lookup = new Lookup(accounts);
+    const refine = new TestRefineExt();
+    const lookup = new HistoricalLookup(refine);
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
     registers.asUnsigned[DEST_START_REG] = 2 ** 32 - 1;
     registers.asUnsigned[DEST_LEN_REG] = 2 ** 10;
 
@@ -183,12 +165,12 @@ describe("HostCalls: Lookup", () => {
   });
 
   it("should handle 0-length destination", async () => {
-    const accounts = new TestAccounts();
-    const lookup = new Lookup(accounts);
+    const refine = new TestRefineExt();
+    const lookup = new HistoricalLookup(refine);
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 0, { skipValue: true });
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
+    refine.historicalLookupData.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
 
     // when
     await lookup.execute(gas, registers, memory);
