@@ -6,12 +6,14 @@ export const ED25519_SIGNATURE_BYTES = 64;
 export const BANDERSNATCH_KEY_BYTES = 32;
 export const BANDERSNATCH_VRF_SIGNATURE_BYTES = 96;
 export const BANDERSNATCH_PROOF_BYTES = 784;
+export const BLS_KEY_BYTES = 144;
 
 export type ED25519_KEY_BYTES = typeof ED25519_KEY_BYTES;
 export type ED25519_SIGNATURE_BYTES = typeof ED25519_SIGNATURE_BYTES;
 export type BANDERSNATCH_KEY_BYTES = typeof BANDERSNATCH_KEY_BYTES;
 export type BANDERSNATCH_VRF_SIGNATURE_BYTES = typeof BANDERSNATCH_VRF_SIGNATURE_BYTES;
 export type BANDERSNATCH_PROOF_BYTES = typeof BANDERSNATCH_PROOF_BYTES;
+export type BLS_KEY_BYTES = typeof BLS_KEY_BYTES;
 
 /**
  * Potentially valid Ed25519 public key.
@@ -48,6 +50,9 @@ export type BandersnatchVrfSignature = Opaque<Bytes<BANDERSNATCH_VRF_SIGNATURE_B
  */
 export type BandersnatchProof = Opaque<Bytes<BANDERSNATCH_PROOF_BYTES>, "BandersnatchRingSignature">;
 
-export const BLS_KEY_BYTES = 144;
-export type BLS_KEY_BYTES = typeof BLS_KEY_BYTES;
+/**
+ * A public key for BLS signature scheme
+ *
+ * https://graypaper.fluffylabs.dev/#/c71229b/081c00082100
+ */
 export type BlsKey = Opaque<Bytes<BLS_KEY_BYTES>, "BlsKey">;
