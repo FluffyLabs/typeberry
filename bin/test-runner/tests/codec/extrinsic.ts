@@ -10,13 +10,13 @@ import { ticketsExtrinsicFromJson } from "./tickets-extrinsic";
 export const extrinsicFromJson = json.object<Extrinsic>(
   {
     tickets: ticketsExtrinsicFromJson,
-    disputes: disputesExtrinsicFromJson,
     preimages: preimagesExtrinsicFromJson,
-    assurances: assurancesExtrinsicFromJson,
     guarantees: guaranteesExtrinsicFromJson,
+    assurances: assurancesExtrinsicFromJson,
+    disputes: disputesExtrinsicFromJson,
   },
-  ({ tickets, disputes, preimages, assurances, guarantees }) =>
-    new Extrinsic(tickets, disputes, preimages, assurances, guarantees),
+  ({ tickets, preimages, guarantees, assurances, disputes }) =>
+    new Extrinsic(tickets, preimages, guarantees, assurances, disputes),
 );
 
 export async function runExtrinsicTest(test: Extrinsic, file: string) {

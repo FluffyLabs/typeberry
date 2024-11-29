@@ -16,25 +16,26 @@ export type WorkPackageHash = Opaque<OpaqueHash, "WorkPackageHash">;
 export class WorkPackageSpec extends WithDebug {
   static Codec = codec.Class(WorkPackageSpec, {
     hash: codec.bytes(HASH_SIZE).cast(),
-    len: codec.u32,
+    length: codec.u32,
     erasureRoot: codec.bytes(HASH_SIZE),
     exportsRoot: codec.bytes(HASH_SIZE),
     exportsCount: codec.u16,
   });
 
-  static fromCodec({ hash, len, erasureRoot, exportsRoot, exportsCount }: CodecRecord<WorkPackageSpec>) {
-    return new WorkPackageSpec(hash, len, erasureRoot, exportsRoot, exportsCount);
+  static fromCodec({ hash, length, erasureRoot, exportsRoot, exportsCount }: CodecRecord<WorkPackageSpec>) {
+    return new WorkPackageSpec(hash, length, erasureRoot, exportsRoot, exportsCount);
   }
 
   constructor(
     /** The hash of the work package. */
     public readonly hash: WorkPackageHash,
     /** Encoded length of the work package. */
-    public readonly len: U32,
+    public readonly length: U32,
     /** The root hash of the erasure coding merkle tree of that work package. */
     public readonly erasureRoot: OpaqueHash,
     /** The root hash of all data segments exported by this work package. */
     public readonly exportsRoot: OpaqueHash,
+    /** Encoded length of all data segments exported by this work package. */
     public readonly exportsCount: U16,
   ) {
     super();
@@ -79,8 +80,8 @@ export class WorkReport extends WithDebug {
     coreIndex,
     authorizerHash,
     authorizationOutput,
-    results,
     segmentRootLookup,
+    results,
   }: CodecRecord<WorkReport>) {
     return new WorkReport(
       workPackageSpec,
@@ -88,8 +89,8 @@ export class WorkReport extends WithDebug {
       coreIndex,
       authorizerHash,
       authorizationOutput,
-      new FixedSizeArray(results, results.length),
       segmentRootLookup,
+      new FixedSizeArray(results, results.length),
     );
   }
 
@@ -104,14 +105,13 @@ export class WorkReport extends WithDebug {
     public readonly authorizerHash: OpaqueHash,
     /** `o`: Authorization output. */
     public readonly authorizationOutput: BytesBlob,
-    /**
-     * TODO [ToDr] a segment-root lookup dictionary is mentioned in the GP but missing in JSON tests for now.
-     * https://graypaper.fluffylabs.dev/#/c71229b/137a00137d00
+    /** `l`: Segment-root lookup
+     * TODO [MaSi] in GP segment-root lookup is a dictionary but in current tests vectors it is an array.
+     * https://graypaper.fluffylabs.dev/#/911af30/13ab0013af00
      */
-    // public readonly segmentRootLookup: MapOfHashes<OpaqueHash>,
+    public readonly segmentRootLookup: SegmentRootLookupItem[],
     /** `r`: The results of evaluation of each of the items in the work package. */
     public readonly results: FixedSizeArray<WorkResult, WorkItemsCount>,
-    public readonly segmentRootLookup: SegmentRootLookupItem[],
   ) {
     super();
   }

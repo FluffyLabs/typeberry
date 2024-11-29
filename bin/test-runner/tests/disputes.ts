@@ -45,7 +45,7 @@ class TestPackageSpec {
     packageSpec.exports_count = workPackageSpec.exportsCount;
     packageSpec.exports_root = workPackageSpec.exportsRoot;
     packageSpec.hash = workPackageSpec.hash;
-    packageSpec.length = workPackageSpec.len;
+    packageSpec.length = workPackageSpec.length;
     return packageSpec;
   }
 
@@ -134,10 +134,10 @@ class TestResult {
     return results.map((result) => {
       const testResult = new TestResult();
       testResult.code_hash = result.codeHash;
-      testResult.gas = result.gasRatio;
+      testResult.gas = result.gas;
       testResult.payload_hash = result.payloadHash;
       testResult.result = TestResultDetail.fromWorkExecResult(result.result);
-      testResult.service_id = result.service;
+      testResult.service_id = result.serviceId;
       return testResult;
     });
   }
@@ -217,8 +217,8 @@ export class TestWorkReport {
       testWorkReport.core_index,
       testWorkReport.authorizer_hash,
       testWorkReport.auth_output,
-      TestResult.toResults(testWorkReport.results),
       testWorkReport.segment_root_lookup.map((item) => TestSegmentRootLookupItem.toSegmentRootLookupItem(item)),
+      TestResult.toResults(testWorkReport.results),
     );
   }
 

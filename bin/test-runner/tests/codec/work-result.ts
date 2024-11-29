@@ -48,23 +48,23 @@ type JsonWorkExecResult = {
 
 export const workResultFromJson = json.object<JsonWorkResult, WorkResult>(
   {
-    service: "number",
+    service_id: "number",
     code_hash: fromJson.bytes32(),
     payload_hash: fromJson.bytes32(),
-    gas_ratio: "number",
+    gas: "number",
     result: workExecResultFromJson,
   },
-  ({ service, code_hash, payload_hash, gas_ratio, result }) =>
-    new WorkResult(service, code_hash, payload_hash, BigInt(gas_ratio) as ServiceGas, result),
+  ({ service_id, code_hash, payload_hash, gas, result }) =>
+    new WorkResult(service_id, code_hash, payload_hash, BigInt(gas) as ServiceGas, result),
 );
 
 type JsonWorkResult = {
-  service: ServiceId;
+  service_id: ServiceId;
   code_hash: CodeHash;
   payload_hash: OpaqueHash;
   // TODO [ToDr] We don't have enough precision here for full bigint so 🤞
   // otherwise we will need to use a custom JSON parser.
-  gas_ratio: number;
+  gas: number;
   result: WorkExecResult;
 };
 
