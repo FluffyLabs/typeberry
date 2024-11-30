@@ -1,4 +1,4 @@
 export * from "./interpreter";
-export { Memory, MemoryBuilder, tryAsMemoryIndex } from "./memory";
-export { Gas, GasCounter, SmallGas, BigGas, tryAsSmallGas, tryAsBigGas, tryAsGas } from "./gas";
+export { Memory, MemoryBuilder, tryAsMemoryIndex, MemoryIndex } from "./memory";
+export { Gas, GasCounter, gasCounter, SmallGas, BigGas, tryAsSmallGas, tryAsBigGas, tryAsGas } from "./gas";
 export { Registers } from "./registers";
