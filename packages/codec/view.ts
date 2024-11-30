@@ -1,8 +1,8 @@
 import { BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
 import { check } from "@typeberry/utils";
-import type { Decoder } from "./decoder";
-import type { ClassConstructor, CodecRecord, DescriptorRecord, PropertyKeys } from "./descriptors";
+import { Decoder } from "./decoder";
+import { forEachDescriptor, type ClassConstructor, type ClassDescriptor, type CodecRecord, type DescriptorRecord, type PropertyKeys } from "./descriptors";
 import { Skipper } from "./skip";
 
 /** An extra key for `View` or `*View` method. */
@@ -59,7 +59,54 @@ export type ViewConstructor<T, NestedViewKeys extends keyof T> = {
 /** Extract the view type given the constructor. */
 type ViewOf<C> = C extends ViewConstructor<infer T, infer N> ? View<T, N> : never;
 
+export type KeysWithView<T, D extends DescriptorRecord<T>> = {
+  [K in PropertyKeys<T>]: D[K] extends ClassDescriptor<T[K], infer _> ? K : never;
+}[PropertyKeys<T>];
+
 const logger = Logger.new(__filename, "codec/descriptors");
+
+function viewMethod(key: string) {
+  return `${key}${VIEW_FIELD}`;
+}
+
+export function viewFor<T, D extends DescriptorRecord<T>>(Class: ClassConstructor<T>, descriptors: D) {
+  // Create a View, based on the `AbstractView`.
+  class ClassView extends AbstractView<T> {
+    constructor(d: Decoder) {
+      super(d, Class, descriptors);
+    }
+  }
+
+  // We need to dynamically extend the prototype to add these extra lazy getters.
+  forEachDescriptor(descriptors, (key) => {
+    if (typeof key === "string") {
+      Object.defineProperty(ClassView.prototype, key, {
+        value: function (this: ClassView) {
+          return this.getOrDecode(key);
+        },
+      });
+
+      if (VIEW_FIELD in descriptors[key]) {
+        // add view method.
+        Object.defineProperty(ClassView.prototype, viewMethod(key), {
+          value: function (this: ClassView) {
+            return this.getOrDecodeView(key);
+          },
+        });
+      }
+    }
+  });
+
+  // Also add a static builder method to avoid boilerplate.
+  const ViewTyped = ClassView as ViewConstructor<T, KeysWithView<T, D>>;
+  ViewTyped.fromBytesBlob = (bytes: BytesBlob | Uint8Array, context?: unknown) => {
+    const decoder = bytes instanceof Uint8Array ? Decoder.fromBlob(bytes) : Decoder.fromBytesBlob(bytes);
+    decoder.attachContext(context);
+    return new ViewTyped(decoder);
+  };
+
+  return ClassView;
+}
 
 /**
  * A base class for all the lazy views.

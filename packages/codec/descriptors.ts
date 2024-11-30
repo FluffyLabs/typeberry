@@ -3,7 +3,7 @@ import { type U8, type U16, type U32, type U64, tryAsU32 as asU32 } from "@typeb
 import { type Decode, Decoder } from "./decoder";
 import { type Encode, type Encoder, type SizeHint, addSizeHints } from "./encoder";
 import type { Skip, Skipper } from "./skip";
-import { AbstractView, VIEW_FIELD, type ViewConstructor } from "./view";
+import { AbstractView, KeysWithView, VIEW_FIELD, viewFor, type ViewConstructor } from "./view";
 
 /**
  * For sequences with unknown length we need to give some size hint.
@@ -86,10 +86,6 @@ export type CodecRecord<T> = {
   [K in PropertyKeys<T>]: T[K];
 };
 
-function viewMethod(key: string) {
-  return `${key}${VIEW_FIELD}`;
-}
-
 /**
  * Same as `CodecRecord<T>`, but the fields are all optional.
  */
@@ -116,10 +112,6 @@ export type PropertyKeys<T> = {
   // biome-ignore lint/complexity/noBannedTypes: We want to skip any function-like types here.
   [K in Extract<keyof T, string>]: T[K] extends Function ? never : K;
 }[Extract<keyof T, string>];
-
-type KeysWithView<T, D extends DescriptorRecord<T>> = {
-  [K in PropertyKeys<T>]: D[K] extends ClassDescriptor<T[K], infer _> ? K : never;
-}[PropertyKeys<T>];
 
 /** A constructor of basic data object that takes a `Record<T>`. */
 export type ClassConstructor<T> = {
@@ -464,41 +456,6 @@ export namespace codec {
     Class: ClassConstructor<T>,
     descriptors: D,
   ): ClassDescriptor<T, D> => {
-    // Create a View, based on the `AbstractView`.
-    class ClassView extends AbstractView<T> {
-      constructor(d: Decoder) {
-        super(d, Class, descriptors);
-      }
-    }
-
-    // We need to dynamically extend the prototype to add these extra lazy getters.
-    forEachDescriptor(descriptors, (key) => {
-      if (typeof key === "string") {
-        Object.defineProperty(ClassView.prototype, key, {
-          value: function (this: ClassView) {
-            return this.getOrDecode(key);
-          },
-        });
-
-        if (VIEW_FIELD in descriptors[key]) {
-          // add view method.
-          Object.defineProperty(ClassView.prototype, viewMethod(key), {
-            value: function (this: ClassView) {
-              return this.getOrDecodeView(key);
-            },
-          });
-        }
-      }
-    });
-
-    // Also add a static builder method to avoid boilerplate.
-    const ViewTyped = ClassView as ViewConstructor<T, KeysWithView<T, D>>;
-    ViewTyped.fromBytesBlob = (bytes: BytesBlob | Uint8Array, context?: unknown) => {
-      const decoder = bytes instanceof Uint8Array ? Decoder.fromBlob(bytes) : Decoder.fromBytesBlob(bytes);
-      decoder.attachContext(context);
-      return new ViewTyped(decoder);
-    };
-
     // Calculate a size hint for this class.
     let sizeHint = exactHint(0);
     forEachDescriptor(descriptors, (_k, val) => {
@@ -534,12 +491,14 @@ export namespace codec {
       },
     );
 
+    const ClassView = viewFor(Class, descriptors);
+    const ViewTyped = ClassView as ViewConstructor<T, KeysWithView<T, D>>;
     return new ClassDescriptor(desc, ViewTyped);
   };
 }
 
 /** Typesafe iteration of every descriptor in the record object. */
-function forEachDescriptor<T>(
+export function forEachDescriptor<T>(
   descriptors: DescriptorRecord<T>,
   f: <K extends keyof DescriptorRecord<T>>(key: K, val: Descriptor<T[K]>) => void,
 ) {
@@ -561,3 +520,4 @@ function descriptor<T>(
 ): Descriptor<T> {
   return new Descriptor(name, sizeHint, encode, decode, skip);
 }
+
