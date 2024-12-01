@@ -265,8 +265,8 @@ export class Disputes {
       const assignment = this.state.availabilityAssignment[c];
       if (assignment) {
         const hash = hashBytes(assignment.workReportBytes) as WorkReportHash;
-        const item = v.get(hash);
-        if (item !== undefined && item < this.context.validatorsSuperMajority) {
+        const sum = v.get(hash);
+        if (sum !== undefined && sum < this.context.validatorsSuperMajority) {
           this.state.availabilityAssignment[c] = null;
         }
       }
