@@ -24,10 +24,6 @@ type NewDisputesRecordsItems = {
   toAddToWonkySet: SortedSet<WorkReportHash>;
 };
 
-const JUDGEMENT_INDEX = 0;
-const CULPRITS_INDEX = 1;
-const FAULTS_INDEX = 2;
-
 type Ok = null;
 export class Disputes {
   constructor(
@@ -40,7 +36,9 @@ export class Disputes {
     newItems: NewDisputesRecordsItems,
     verificationResult: VerificationOutput,
   ): Result<Ok, DisputesErrorCode> {
-    for (const { key, workReportHash, signature } of disputes.culprits) {
+    const culprintsLength = disputes.culprits.length;
+    for (let i = 0; i < culprintsLength; i++) {
+      const { key, workReportHash } = disputes.culprits[i];
       // check if some offenders weren't reported earlier
       // https://graypaper.fluffylabs.dev/#/364735a/123e01123e01
       const isInPunishSet = !!this.state.disputesRecords.punishSet.findExact(key);
@@ -57,7 +55,7 @@ export class Disputes {
 
       // verify culprit signature
       // https://graypaper.fluffylabs.dev/#/364735a/124501124501
-      const result = verificationResult[CULPRITS_INDEX].find((f) => f.signature.isEqualTo(signature));
+      const result = verificationResult.culprits[i];
       if (!result || !result.isValid) {
         return Result.error(DisputesErrorCode.BadSignature);
       }
@@ -87,7 +85,9 @@ export class Disputes {
       return Result.error(DisputesErrorCode.FaultsNotSortedUnique);
     }
 
-    for (const { key, workReportHash, signature, wasConsideredValid } of disputes.faults) {
+    const faultsLength = disputes.faults.length;
+    for (let i = 0; i < faultsLength; i++) {
+      const { key, workReportHash, wasConsideredValid } = disputes.faults[i];
       // check if some offenders weren't reported earlier
       // https://graypaper.fluffylabs.dev/#/364735a/128b01128b01
       const isInPunishSet = !!this.state.disputesRecords.punishSet.findExact(key);
@@ -112,8 +112,8 @@ export class Disputes {
 
       // verify fault signature. Verification was done earlier, here we only check the result.
       // https://graypaper.fluffylabs.dev/#/364735a/129201129201
-      const result = verificationResult[FAULTS_INDEX].find((f) => f.signature.isEqualTo(signature));
-      if (!result || !result.isValid) {
+      const result = verificationResult.faults[i];
+      if (!result.isValid) {
         return Result.error(DisputesErrorCode.BadSignature);
       }
     }
@@ -125,13 +125,20 @@ export class Disputes {
     disputes: DisputesExtrinsic,
     verificationResult: VerificationOutput,
   ): Result<Ok, DisputesErrorCode> {
+    // check if verdicts are correctly sorted
+    // https://graypaper.fluffylabs.dev/#/364735a/12ad0112ad01
+    if (!isUniqueSortedBy(disputes.verdicts, "workReportHash")) {
+      return Result.error(DisputesErrorCode.VerdictsNotSortedUnique);
+    }
+
     // check if judgement are correctly sorted
     // https://graypaper.fluffylabs.dev/#/364735a/122102122202
-    if (!disputes.verdicts.every((verdict) => isUniqueSortedByIndex(verdict.votes))) {
+    if (disputes.verdicts.some((verdict) => !isUniqueSortedByIndex(verdict.votes))) {
       return Result.error(DisputesErrorCode.JudgementsNotSortedUnique);
     }
 
     const currentEpoch = Math.floor(this.state.timeslot / this.context.epochLength);
+    let voteSignatureIndex = 0;
     for (const { votesEpoch, votes } of disputes.verdicts) {
       // https://graypaper.fluffylabs.dev/#/364735a/12a50012a600
       if (votesEpoch !== currentEpoch && votesEpoch + 1 !== currentEpoch) {
@@ -139,7 +146,7 @@ export class Disputes {
       }
 
       const k = votesEpoch === currentEpoch ? this.state.currentValidatorData : this.state.previousValidatorData;
-      for (const { index, signature } of votes) {
+      for (const { index } of votes) {
         const key = k[index]?.ed25519;
 
         // no particular GP fragment but I think we don't belive in ghosts
@@ -149,17 +156,12 @@ export class Disputes {
 
         // verify vote signature. Verification was done earlier, here we only check the result.
         // https://graypaper.fluffylabs.dev/#/364735a/12b70012b700
-        const result = verificationResult[JUDGEMENT_INDEX].find((j) => j.signature.isEqualTo(signature));
-        if (!result || !result.isValid) {
+        const result = verificationResult.judgements[voteSignatureIndex];
+        if (!result.isValid) {
           return Result.error(DisputesErrorCode.BadSignature);
         }
+        voteSignatureIndex += 1;
       }
-    }
-
-    // check if verdicts are correctly sorted
-    // https://graypaper.fluffylabs.dev/#/364735a/12ad0112ad01
-    if (!isUniqueSortedBy(disputes.verdicts, "workReportHash")) {
-      return Result.error(DisputesErrorCode.VerdictsNotSortedUnique);
     }
 
     return Result.ok(null);
@@ -306,8 +308,8 @@ export class Disputes {
   }
 
   private prepareSignaturesToVerification(disputes: DisputesExtrinsic): Result<VerificationInput, DisputesErrorCode> {
-    // Signature verification is heavy so we prepare array to verify it in the meantime,
-    const signaturesToVerification: VerificationInput = [[], [], []];
+    // Signature verification is heavy so we prepare data to verify it in the meantime,
+    const signaturesToVerification: VerificationInput = { culprits: [], judgements: [], faults: [] };
     const currentEpoch = Math.floor(this.state.timeslot / this.context.epochLength);
 
     for (const { votesEpoch, votes, workReportHash } of disputes.verdicts) {
@@ -323,17 +325,17 @@ export class Disputes {
         const key = validator.ed25519;
         // verify vote signature
         // https://graypaper.fluffylabs.dev/#/364735a/12b70012b700
-        signaturesToVerification[JUDGEMENT_INDEX].push(prepareJudgementSignature(j, workReportHash, key));
+        signaturesToVerification.judgements.push(prepareJudgementSignature(j, workReportHash, key));
       }
     }
 
     // verify culprit signature
     // https://graypaper.fluffylabs.dev/#/364735a/124501124501
-    signaturesToVerification[CULPRITS_INDEX] = disputes.culprits.map(prepareCulpritSignature);
+    signaturesToVerification.culprits = disputes.culprits.map(prepareCulpritSignature);
 
     // verify fault signature
     // https://graypaper.fluffylabs.dev/#/364735a/129201129201
-    signaturesToVerification[FAULTS_INDEX] = disputes.faults.map(prepareFaultSignature);
+    signaturesToVerification.faults = disputes.faults.map(prepareFaultSignature);
 
     return Result.ok(signaturesToVerification);
   }

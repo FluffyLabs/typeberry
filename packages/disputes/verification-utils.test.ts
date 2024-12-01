@@ -27,9 +27,9 @@ describe("verification-utils", () => {
         key,
       );
 
-      const [[result]] = await vefifyAllSignatures([[item]]);
+      const { judgements } = await vefifyAllSignatures({ culprits: [], faults: [], judgements: [item] });
 
-      assert.strictEqual(result.isValid, true);
+      assert.strictEqual(judgements[0].isValid, true);
     });
 
     it("should return false for invalid signature (value of isWorkReportValid is changed)", async () => {
@@ -52,9 +52,9 @@ describe("verification-utils", () => {
         key,
       );
 
-      const [[result]] = await vefifyAllSignatures([[item]]);
+      const { judgements } = await vefifyAllSignatures({ culprits: [], faults: [], judgements: [item] });
 
-      assert.strictEqual(result.isValid, false);
+      assert.strictEqual(judgements[0].isValid, false);
     });
 
     it("should return true for valid signature and invalid work report", async () => {
@@ -77,9 +77,9 @@ describe("verification-utils", () => {
         key,
       );
 
-      const [[result]] = await vefifyAllSignatures([[item]]);
+      const { judgements } = await vefifyAllSignatures({ culprits: [], faults: [], judgements: [item] });
 
-      assert.strictEqual(result.isValid, true);
+      assert.strictEqual(judgements[0].isValid, true);
     });
 
     it("should return false for invalid signature (the first byte in signature is changed)", async () => {
@@ -102,9 +102,9 @@ describe("verification-utils", () => {
         key,
       );
 
-      const [[result]] = await vefifyAllSignatures([[item]]);
+      const { judgements } = await vefifyAllSignatures({ culprits: [], faults: [], judgements: [item] });
 
-      assert.strictEqual(result.isValid, false);
+      assert.strictEqual(judgements[0].isValid, false);
     });
   });
 
@@ -124,9 +124,9 @@ describe("verification-utils", () => {
       ) as WorkReportHash;
       const item = prepareCulpritSignature({ key, signature, workReportHash });
 
-      const [[result]] = await vefifyAllSignatures([[item]]);
+      const { culprits } = await vefifyAllSignatures({ culprits: [item], faults: [], judgements: [] });
 
-      assert.strictEqual(result.isValid, true);
+      assert.strictEqual(culprits[0].isValid, true);
     });
 
     it("should return false for invalid signature (the first byte in signature is changed)", async () => {
@@ -144,9 +144,9 @@ describe("verification-utils", () => {
       ) as WorkReportHash;
       const item = prepareCulpritSignature({ key, signature, workReportHash });
 
-      const [[result]] = await vefifyAllSignatures([[item]]);
+      const { culprits } = await vefifyAllSignatures({ culprits: [item], faults: [], judgements: [] });
 
-      assert.strictEqual(result.isValid, false);
+      assert.strictEqual(culprits[0].isValid, false);
     });
   });
 });

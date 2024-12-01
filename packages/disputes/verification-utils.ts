@@ -9,9 +9,17 @@ type InputItem = {
   message: Uint8Array;
 };
 
-export type VerificationInput = InputItem[][];
+export type VerificationInput = {
+  judgements: InputItem[];
+  culprits: InputItem[];
+  faults: InputItem[];
+};
 type VerificationResultItem = { signature: Ed25519Signature; isValid: boolean };
-export type VerificationOutput = VerificationResultItem[][];
+export type VerificationOutput = {
+  judgements: VerificationResultItem[];
+  culprits: VerificationResultItem[];
+  faults: VerificationResultItem[];
+};
 
 export const JAM_VALID = BytesBlob.blobFromString("jam_valid").raw;
 export const JAM_INVALID = BytesBlob.blobFromString("jam_invalid").raw;
@@ -51,9 +59,9 @@ export function prepareJudgementSignature(j: Judgement, workReportHash: WorkRepo
 // Verification is heavy and currently it is a bottleneck so in the future it will be outsourced to Rust.
 // This is why the data structure is complicated but it should allow to pass whole data to Rust at once.
 export function vefifyAllSignatures(input: VerificationInput): Promise<VerificationOutput> {
-  const output: VerificationOutput = [];
-
-  for (const signatureGroup of input) {
+  const output: VerificationOutput = { culprits: [], faults: [], judgements: [] };
+  const inputEntries = Object.entries(input) as [keyof VerificationInput, InputItem[]][];
+  for (const [key, signatureGroup] of inputEntries) {
     const verificationGroup: VerificationResultItem[] = [];
     for (const { key, message, signature } of signatureGroup) {
       const isValid = ed25519.verify(signature, message, key);
@@ -62,7 +70,7 @@ export function vefifyAllSignatures(input: VerificationInput): Promise<Verificat
         isValid,
       });
     }
-    output.push(verificationGroup);
+    output[key] = verificationGroup;
   }
 
   return Promise.resolve(output);
