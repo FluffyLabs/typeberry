@@ -150,16 +150,9 @@ export class SortedArray<V> {
     };
   }
 
-  /** Insert all elements from given sorted collection to the sorted set  */
-  public mergeWith(other: SortedCollection<V>) {
-    for (const item of other) {
-      this.insert(item);
-    }
-  }
-
   /** Create a new SortedSet from two sorted collections. */
-  static fromTwoMergedCollections<V>(first: SortedCollection<V>, second: SortedCollection<V>) {
-    check(first.comparator === second.comparator, "Cannot merge array if they do not use the same comparator");
+  static fromTwoSortedCollections<V>(first: SortedCollection<V>, second: SortedCollection<V>) {
+    check(first.comparator === second.comparator, "Cannot merge arrays if they do not use the same comparator");
     const comparator = first.comparator;
     const arr1 = first.array;
     const arr1Length = arr1.length;
@@ -174,11 +167,11 @@ export class SortedArray<V> {
         result.push(arr1[i]);
         i++;
       } else if (comparator(arr1[i], arr2[j]) === Ordering.Greater) {
-        result.push(arr2[i]);
+        result.push(arr2[j]);
         j++;
       } else {
         result.push(arr1[i]);
-        result.push(arr2[i]);
+        result.push(arr2[j]);
         i++;
         j++;
       }
@@ -190,7 +183,7 @@ export class SortedArray<V> {
     }
 
     while (j < arr2Length) {
-      result.push(arr2[i]);
+      result.push(arr2[j]);
       j++;
     }
 

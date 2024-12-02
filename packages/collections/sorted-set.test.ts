@@ -85,4 +85,27 @@ describe("SortedSet", () => {
       assert.deepStrictEqual(data.length, 3);
     });
   });
+
+  describe("fromTwoSortedCollections", () => {
+    it("should merge two sorted sets", () => {
+      const arr1 = [1, 2, 3];
+      const arr2 = [4, 5, 6];
+      const toMerge1 = SortedSet.fromArray(cmp, arr1);
+      const toMerge2 = SortedSet.fromArray(cmp, arr2);
+
+      const result = SortedSet.fromTwoSortedCollections(toMerge1, toMerge2);
+
+      assert.deepStrictEqual(result.slice(), [...arr1, ...arr2]);
+    });
+
+    it("should merge two sorted sets with duplicates", () => {
+      const arr = [1, 2, 3];
+      const toMerge1 = SortedSet.fromArray(cmp, arr);
+      const toMerge2 = SortedSet.fromArray(cmp, arr);
+
+      const result = SortedSet.fromTwoSortedCollections(toMerge1, toMerge2);
+
+      assert.deepStrictEqual(result.slice(), arr);
+    });
+  });
 });
