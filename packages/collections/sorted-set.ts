@@ -1,4 +1,6 @@
+import { check } from "@typeberry/utils";
 import { type Comparator, Ordering, SortedArray } from "./sorted-array";
+import type { SortedCollection } from "./sorted-collection";
 
 /**
  * Collection of elements of type `V` that has some strict ordering and does not have dupliocates.
@@ -52,5 +54,58 @@ export class SortedSet<V> extends SortedArray<V> {
     if (!findIdx.isEqual) {
       this.array.splice(findIdx.idx, 0, v);
     }
+  }
+
+  /** Insert all elements from given sorted collection to the sorted set  */
+  public mergeWith(other: SortedCollection<V>) {
+    for (const item of other) {
+      this.insert(item);
+    }
+  }
+
+  /** Create a new SortedSet from two sorted collections. */
+  static fromTwoMergedCollections<V>(first: SortedCollection<V>, second: SortedCollection<V>) {
+    check(first.comparator === second.comparator, "Cannot merge array if they do not use the same comparator");
+    const comparator = first.comparator;
+    const arr1 = first.array;
+    const arr1Length = arr1.length;
+    const arr2 = second.array;
+    const arr2Length = arr2.length;
+    let i = 0;
+    let j = 0;
+    const result: V[] = [];
+
+    const pushIfNotEqual = (lastItem: V, itemToPush: V) => {
+      if (comparator(lastItem, itemToPush) !== Ordering.Equal) {
+        result.push(itemToPush);
+      }
+    };
+
+    while (i < arr1Length && j < arr2Length) {
+      if (comparator(arr1[i], arr2[j]) === Ordering.Less) {
+        pushIfNotEqual(result[result.length - 1], arr1[i]);
+        i++;
+      } else if (comparator(arr1[i], arr2[j]) === Ordering.Greater) {
+        pushIfNotEqual(result[result.length - 1], arr2[i]);
+        j++;
+      } else {
+        pushIfNotEqual(result[result.length - 1], arr1[i]);
+        i++;
+        j++;
+      }
+    }
+
+    while (i < arr1Length) {
+      pushIfNotEqual(result[result.length - 1], arr1[i]);
+
+      i++;
+    }
+
+    while (j < arr2Length) {
+      pushIfNotEqual(result[result.length - 1], arr2[i]);
+      j++;
+    }
+
+    return SortedSet.fromSortedArray(comparator, result);
   }
 }

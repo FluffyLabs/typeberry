@@ -1,3 +1,6 @@
+import { check } from "@typeberry/utils";
+import type { SortedCollection } from "./sorted-collection";
+
 /** A return value of some comparator. */
 export enum Ordering {
   /** `self < other` */
@@ -55,8 +58,8 @@ export class SortedArray<V> {
   }
 
   protected constructor(
-    protected readonly array: V[],
-    protected readonly comparator: Comparator<V>,
+    public readonly array: V[],
+    public readonly comparator: Comparator<V>,
   ) {}
 
   /** Insert new element to the collection. */
@@ -145,5 +148,59 @@ export class SortedArray<V> {
     return {
       idx: low,
     };
+  }
+
+  /** Insert all elements from given sorted collection to the sorted set  */
+  public mergeWith(other: SortedCollection<V>) {
+    for (const item of other) {
+      this.insert(item);
+    }
+  }
+
+  /** Create a new SortedSet from two sorted collections. */
+  static fromTwoMergedCollections<V>(first: SortedCollection<V>, second: SortedCollection<V>) {
+    check(first.comparator === second.comparator, "Cannot merge array if they do not use the same comparator");
+    const comparator = first.comparator;
+    const arr1 = first.array;
+    const arr1Length = arr1.length;
+    const arr2 = second.array;
+    const arr2Length = arr2.length;
+    let i = 0;
+    let j = 0;
+    const result: V[] = [];
+
+    while (i < arr1Length && j < arr2Length) {
+      if (comparator(arr1[i], arr2[j]) === Ordering.Less) {
+        result.push(arr1[i]);
+        i++;
+      } else if (comparator(arr1[i], arr2[j]) === Ordering.Greater) {
+        result.push(arr2[i]);
+        j++;
+      } else {
+        result.push(arr1[i]);
+        result.push(arr2[i]);
+        i++;
+        j++;
+      }
+    }
+
+    while (i < arr1Length) {
+      result.push(arr1[i]);
+      i++;
+    }
+
+    while (j < arr2Length) {
+      result.push(arr2[i]);
+      j++;
+    }
+
+    return SortedArray.fromSortedArray(comparator, result);
+  }
+
+  /** it allows to use SortedArray in for-of loop */
+  *[Symbol.iterator]() {
+    for (const value of this.array) {
+      yield value;
+    }
   }
 }
