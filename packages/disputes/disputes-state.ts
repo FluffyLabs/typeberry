@@ -15,7 +15,15 @@ export function hashComparator<V extends WorkReportHash | Ed25519Key>(a: V, b: V
   return Ordering.Equal;
 }
 
-// TODO [MaSi]: add docs and gp references
+/**
+ * Disputes state that is consist of 4 items:
+ * - goodSet - all work-reports hashes which were judged to be correct
+ * - badSet - all work-reports hashes which were judged to be incorrect
+ * - wonkySet - all work-reports hashes which appear to be impossible to judge
+ * - punishSet - set of Ed25519 keys representing validators which were found to have misjudged a work-report
+ *
+ * https://graypaper.fluffylabs.dev/#/911af30/122b00124700
+ */
 export class DisputesRecords {
   constructor(
     public goodSet: SortedSet<WorkReportHash>,
