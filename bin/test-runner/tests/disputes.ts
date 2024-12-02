@@ -391,8 +391,17 @@ export async function runDisputesTest(testContent: DisputesTest, path: string) {
 
   const result = await disputes.transition(testContent.input.disputes);
   const error = result.isError ? result.error : undefined;
-  const ok = result.isOk ? result.ok : undefined;
-  assert.deepEqual(error, testContent.output.err);
+  const ok = result.isOk ? result.ok.slice() : undefined;
+  /**
+   * TODO [MaSi]: this condition should be removed!
+   *
+   * bad_signatures-2 has more than one problem and the result depends on order of checks.
+   *
+   * https://github.com/w3f/jamtestvectors/pull/9#issuecomment-2509867864
+   */
+  if (!path.includes("bad_signatures-2")) {
+    assert.deepEqual(error, testContent.output.err);
+  }
   assert.deepEqual(ok, testContent.output.ok?.offenders_mark);
   assert.deepEqual(TestState.fromDisputesState(disputes.state), testContent.post_state);
 }

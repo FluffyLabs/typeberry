@@ -18,10 +18,10 @@ export function hashComparator<V extends WorkReportHash | Ed25519Key>(a: V, b: V
 // TODO [MaSi]: add docs and gp references
 export class DisputesRecords {
   constructor(
-    public readonly goodSet: SortedSet<WorkReportHash>,
-    public readonly badSet: SortedSet<WorkReportHash>,
-    public readonly wonkySet: SortedSet<WorkReportHash>,
-    public readonly punishSet: SortedSet<Ed25519Key>,
+    public goodSet: SortedSet<WorkReportHash>,
+    public badSet: SortedSet<WorkReportHash>,
+    public wonkySet: SortedSet<WorkReportHash>,
+    public punishSet: SortedSet<Ed25519Key>,
   ) {}
 
   static fromSortedArrays(

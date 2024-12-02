@@ -1,6 +1,6 @@
 import type { Ed25519Key, WorkReportHash } from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
-import { HashDictionary, SortedSet } from "@typeberry/collections";
+import { HashDictionary, SortedArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { hashBytes } from "@typeberry/hash";
 import { Result } from "@typeberry/utils";
@@ -36,6 +36,14 @@ export class Disputes {
     newItems: NewDisputesRecordsItems,
     verificationResult: VerificationOutput,
   ): Result<Ok, DisputesErrorCode> {
+    // check if culprits are sorted by key
+    // this check it should be done as as the first one (because it is cheap)
+    // but one test (progress_with_bad_signatures-2.json) has 2 problems and order is important
+    // https://graypaper.fluffylabs.dev/#/364735a/12ae0112af01
+    if (!isUniqueSortedBy(disputes.culprits, "key")) {
+      return Result.error(DisputesErrorCode.CulpritsNotSortedUnique);
+    }
+
     const culprintsLength = disputes.culprits.length;
     for (let i = 0; i < culprintsLength; i++) {
       const { key, workReportHash } = disputes.culprits[i];
@@ -59,16 +67,6 @@ export class Disputes {
       if (!result || !result.isValid) {
         return Result.error(DisputesErrorCode.BadSignature);
       }
-    }
-
-    // check if culprits are sorted by key
-    // this check it should be done as as the first one (because it is cheap)
-    // but one test (progress_with_bad_signatures-2.json) has 2 problems and order is important
-    // https://graypaper.fluffylabs.dev/#/364735a/12ae0112af01
-    //
-    // TODO [MaSi]: Move it to the first line when progress_with_bad_signatures-2.json is fixed.
-    if (!isUniqueSortedBy(disputes.culprits, "key")) {
-      return Result.error(DisputesErrorCode.CulpritsNotSortedUnique);
     }
 
     return Result.ok(null);
@@ -239,24 +237,28 @@ export class Disputes {
   }
 
   private getDisputesRecordsNewItems(v: VotesForWorkReports) {
-    const toAddToGoodSet = SortedSet.fromArray<WorkReportHash>(hashComparator);
-    const toAddToBadSet = SortedSet.fromArray<WorkReportHash>(hashComparator);
-    const toAddToWonkySet = SortedSet.fromArray<WorkReportHash>(hashComparator);
+    const toAddToGoodSet: WorkReportHash[] = [];
+    const toAddToBadSet: WorkReportHash[] = [];
+    const toAddToWonkySet: WorkReportHash[] = [];
 
     // prepare new disputes records items but do not update the state yet
     // the state will be updated after verification
     // https://graypaper.fluffylabs.dev/#/364735a/123403128f03
     for (const [r, sum] of v) {
       if (sum >= this.context.validatorsSuperMajority) {
-        toAddToGoodSet.insert(r);
+        toAddToGoodSet.push(r);
       } else if (sum === 0) {
-        toAddToBadSet.insert(r);
+        toAddToBadSet.push(r);
       } else if (sum >= this.context.thirdOfValidators) {
-        toAddToWonkySet.insert(r);
+        toAddToWonkySet.push(r);
       }
     }
 
-    return { toAddToGoodSet, toAddToBadSet, toAddToWonkySet };
+    return {
+      toAddToGoodSet: SortedSet.fromArray(hashComparator, toAddToGoodSet),
+      toAddToBadSet: SortedSet.fromArray(hashComparator, toAddToBadSet),
+      toAddToWonkySet: SortedSet.fromArray(hashComparator, toAddToWonkySet),
+    };
   }
 
   private clearCoreAssignment(v: VotesForWorkReports) {
@@ -290,21 +292,23 @@ export class Disputes {
 
   private updateDisputesRecords(newItems: NewDisputesRecordsItems, offenders: Ed25519Key[]) {
     // https://graypaper.fluffylabs.dev/#/364735a/12530312a603
-    for (const newGoodSetItem of newItems.toAddToGoodSet.slice()) {
-      this.state.disputesRecords.goodSet.insert(newGoodSetItem);
-    }
-
-    for (const newBadSetItem of newItems.toAddToBadSet.slice()) {
-      this.state.disputesRecords.badSet.insert(newBadSetItem);
-    }
-
-    for (const newWonkySetItem of newItems.toAddToWonkySet.slice()) {
-      this.state.disputesRecords.wonkySet.insert(newWonkySetItem);
-    }
-
-    for (const offender of offenders) {
-      this.state.disputesRecords.punishSet.insert(offender);
-    }
+    this.state.disputesRecords.goodSet = SortedSet.fromTwoSortedCollections(
+      this.state.disputesRecords.goodSet,
+      newItems.toAddToGoodSet,
+    );
+    this.state.disputesRecords.badSet = SortedSet.fromTwoSortedCollections(
+      this.state.disputesRecords.badSet,
+      newItems.toAddToBadSet,
+    );
+    this.state.disputesRecords.wonkySet = SortedSet.fromTwoSortedCollections(
+      this.state.disputesRecords.wonkySet,
+      newItems.toAddToWonkySet,
+    );
+    const toAddToPunishSet = SortedArray.fromArray(hashComparator, offenders);
+    this.state.disputesRecords.punishSet = SortedSet.fromTwoSortedCollections(
+      this.state.disputesRecords.punishSet,
+      toAddToPunishSet,
+    );
   }
 
   private prepareSignaturesToVerification(disputes: DisputesExtrinsic): Result<VerificationInput, DisputesErrorCode> {
