@@ -11,6 +11,6 @@ export enum DisputesErrorCode {
   FaultVerdictWrong = "fault_verdict_wrong",
   OffenderAlreadyReported = "offender_already_reported",
   BadJudgementAge = "bad_judgement_age",
-  BadValidatorIndex = "bad_validator_index", // TODO [MaSi] this case is not covered by jam test vectors
+  BadValidatorIndex = "bad_validator_index",
   BadSignature = "bad_signature",
 }
