@@ -30,7 +30,7 @@ export class SortedSet<V> extends SortedArray<V> {
 
   /**
    * Create SortedSet from array that is sorted using given `comparator`.
-   * 
+   *
    * NOTE: This function does not sort the array. Unsorted array will throw an error.
    */
   static fromSortedArray<V>(comparator: Comparator<V>, array: V[] = []) {
