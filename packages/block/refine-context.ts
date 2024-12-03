@@ -25,7 +25,7 @@ export class RefineContext extends WithDebug {
     beefyRoot: codec.bytes(HASH_SIZE).cast(),
     lookupAnchor: codec.bytes(HASH_SIZE).cast(),
     lookupAnchorSlot: codec.u32.cast(),
-    prerequisite: codec.optional(codec.bytes(HASH_SIZE)),
+    prerequisites: codec.sequenceVarLen(codec.bytes(HASH_SIZE)),
   });
 
   static fromCodec({
@@ -34,9 +34,9 @@ export class RefineContext extends WithDebug {
     beefyRoot,
     lookupAnchor,
     lookupAnchorSlot,
-    prerequisite,
+    prerequisites,
   }: CodecRecord<RefineContext>) {
-    return new RefineContext(anchor, stateRoot, beefyRoot, lookupAnchor, lookupAnchorSlot, prerequisite);
+    return new RefineContext(anchor, stateRoot, beefyRoot, lookupAnchor, lookupAnchorSlot, prerequisites);
   }
 
   constructor(
@@ -51,7 +51,7 @@ export class RefineContext extends WithDebug {
     /** `t`: Lookup anchor time slot. */
     public readonly lookupAnchorSlot: TimeSlot,
     /** `p`: Optional hash of the prerequisite work-package. */
-    public readonly prerequisite: OpaqueHash | null = null,
+    public readonly prerequisites: OpaqueHash[] = [],
   ) {
     super();
   }

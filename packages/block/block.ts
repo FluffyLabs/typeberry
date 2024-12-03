@@ -17,14 +17,14 @@ import { type TicketsExtrinsic, ticketsExtrinsicCodec } from "./tickets";
 export class Extrinsic extends WithDebug {
   static Codec = codec.Class(Extrinsic, {
     tickets: ticketsExtrinsicCodec,
-    disputes: DisputesExtrinsic.Codec,
     preimages: preimagesExtrinsicCodec,
-    assurances: assurancesExtrinsicCodec,
     guarantees: guaranteesExtrinsicCodec,
+    assurances: assurancesExtrinsicCodec,
+    disputes: DisputesExtrinsic.Codec,
   });
 
-  static fromCodec({ tickets, disputes, preimages, assurances, guarantees }: CodecRecord<Extrinsic>) {
-    return new Extrinsic(tickets, disputes, preimages, assurances, guarantees);
+  static fromCodec({ tickets, preimages, assurances, disputes, guarantees }: CodecRecord<Extrinsic>) {
+    return new Extrinsic(tickets, preimages, guarantees, assurances, disputes);
   }
 
   constructor(
@@ -34,25 +34,25 @@ export class Extrinsic extends WithDebug {
      */
     public readonly tickets: TicketsExtrinsic,
     /**
-     * `E_D`: Votes, by validators, on dispute(s) arising between them presently
-     *        taking place.
-     */
-    public readonly disputes: DisputesExtrinsic,
-    /**
      * `E_P`: Static data which is presently being requested to be available for
      *        workloads to be able to fetch on demand.
      */
     public readonly preimages: PreimagesExtrinsic,
+    /**
+     * `E_G`: Reports of newly completed workloads whose accuracy is guaranteed
+     *        by specific validators.
+     */
+    public readonly guarantees: GuaranteesExtrinsic,
     /**
      * `E_A`: Assurances by each validator concerning which of the input data of
      *        workloads they have correctly received and are storing locally.
      */
     public readonly assurances: AssurancesExtrinsic,
     /**
-     * `E_G`: Reports of newly completed workloads whose accuracy is guaranteed
-     *        by specific validators.
+     * `E_D`: Votes, by validators, on dispute(s) arising between them presently
+     *        taking place.
      */
-    public readonly guarantees: GuaranteesExtrinsic,
+    public readonly disputes: DisputesExtrinsic,
   ) {
     super();
   }

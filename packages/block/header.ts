@@ -28,6 +28,7 @@ import { Ticket } from "./tickets";
 export class EpochMarker extends WithDebug {
   static Codec = codec.Class(EpochMarker, {
     entropy: codec.bytes(HASH_SIZE).cast(),
+    ticketsEntropy: codec.bytes(HASH_SIZE).cast(),
     validators: codec.select(
       {
         name: "EpochMark.validators",
@@ -39,13 +40,15 @@ export class EpochMarker extends WithDebug {
     ),
   });
 
-  static fromCodec({ entropy, validators }: CodecRecord<EpochMarker>) {
-    return new EpochMarker(entropy, validators);
+  static fromCodec({ entropy, ticketsEntropy, validators }: CodecRecord<EpochMarker>) {
+    return new EpochMarker(entropy, ticketsEntropy, validators);
   }
 
   public constructor(
     /** `eta_1'`: Randomness for the NEXT epoch. */
     public readonly entropy: EntropyHash,
+    /** TODO [MaSi]: docs */
+    public readonly ticketsEntropy: EntropyHash,
     // TODO [ToDr] constrain the sequence length during decoding.
     /** `kappa_b`: Bandernsatch validator keys for the NEXT epoch. */
     public readonly validators: KnownSizeArray<BandersnatchKey, "ValidatorsCount">,

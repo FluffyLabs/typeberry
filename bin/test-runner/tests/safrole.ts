@@ -1,22 +1,19 @@
 import {
   BANDERSNATCH_PROOF_BYTES,
+  BLS_KEY_BYTES,
   type BandersnatchKey,
   type BandersnatchProof,
+  type BlsKey,
   type Ed25519Key,
   type EntropyHash,
+  type ValidatorData,
 } from "@typeberry/block";
 import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
 import type { State as SafroleState } from "@typeberry/safrole";
-import {
-  Safrole,
-  type StateDiff as SafroleStateDiff,
-  VALIDATOR_META_BYTES,
-  type ValidatorData,
-} from "@typeberry/safrole";
-import { BLS_KEY_BYTES, type BlsKey } from "@typeberry/safrole/crypto";
+import { Safrole, type StateDiff as SafroleStateDiff, VALIDATOR_META_BYTES } from "@typeberry/safrole";
 
 type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}` ? `${T}${Capitalize<SnakeToCamel<U>>}` : S;
 
@@ -24,7 +21,7 @@ function snakeToCamel<T extends string>(s: T): SnakeToCamel<T> {
   return s.replace(/(_\w)/g, (matches) => matches[1].toUpperCase()) as SnakeToCamel<T>;
 }
 
-namespace fromJson {
+export namespace fromJson {
   export function bytes32<TInto extends Bytes<32>>() {
     return json.fromString((v) => Bytes.parseBytes(v, 32) as TInto);
   }

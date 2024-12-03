@@ -12,10 +12,10 @@ export const refineContextFromJson = json.object<JsonRefineContext, RefineContex
     beefy_root: fromJson.bytes32(),
     lookup_anchor: fromJson.bytes32(),
     lookup_anchor_slot: "number",
-    prerequisite: json.optional(fromJson.bytes32()),
+    prerequisites: json.array(fromJson.bytes32()),
   },
-  ({ anchor, state_root, beefy_root, lookup_anchor, lookup_anchor_slot, prerequisite }) =>
-    new RefineContext(anchor, state_root, beefy_root, lookup_anchor, lookup_anchor_slot, prerequisite),
+  ({ anchor, state_root, beefy_root, lookup_anchor, lookup_anchor_slot, prerequisites }) =>
+    new RefineContext(anchor, state_root, beefy_root, lookup_anchor, lookup_anchor_slot, prerequisites),
 );
 
 type JsonRefineContext = {
@@ -24,7 +24,7 @@ type JsonRefineContext = {
   beefy_root: BeefyHash;
   lookup_anchor: HeaderHash;
   lookup_anchor_slot: TimeSlot;
-  prerequisite?: Bytes<32>;
+  prerequisites: Bytes<32>[];
 };
 
 export async function runRefineContextTest(test: RefineContext, file: string) {

@@ -1,11 +1,10 @@
-import type { CodeHash, CoreIndex, ServiceId } from "@typeberry/block";
+import type { CodeHash, CoreIndex, ServiceId, ValidatorData } from "@typeberry/block";
 import { Q, W_T } from "@typeberry/block/gp-constants";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
-import type { ValidatorData } from "@typeberry/safrole";
 import type { Result } from "@typeberry/utils";
 
 /** Size of the authorization queue. */

@@ -17,7 +17,7 @@ describe("SortedArray", { timeout: 10 }, () => {
   };
 
   it("should insert a bunch of items and keep the in order", () => {
-    const data = new SortedArray(cmp, [5, 2, 3]);
+    const data = SortedArray.fromArray(cmp, [5, 2, 3]);
 
     data.insert(1);
     data.insert(10);
@@ -28,7 +28,7 @@ describe("SortedArray", { timeout: 10 }, () => {
   });
 
   it("should work with duplicates", () => {
-    const data = new SortedArray(cmp);
+    const data = SortedArray.fromArray(cmp);
     data.insert(1);
     data.insert(2);
     data.insert(3);
@@ -41,7 +41,7 @@ describe("SortedArray", { timeout: 10 }, () => {
   });
 
   it("should return true if element is present", () => {
-    const data = new SortedArray(cmp);
+    const data = SortedArray.fromArray(cmp);
     data.insert(1);
     data.insert(2);
     data.insert(3);
@@ -55,7 +55,7 @@ describe("SortedArray", { timeout: 10 }, () => {
   });
 
   it("should remove one element", () => {
-    const data = new SortedArray(cmp);
+    const data = SortedArray.fromArray(cmp);
     data.insert(1);
     data.insert(2);
     data.insert(3);
@@ -72,5 +72,52 @@ describe("SortedArray", { timeout: 10 }, () => {
 
     data.removeOne(2);
     assert.deepStrictEqual(data.slice(), [3]);
+  });
+
+  it("should throw when using fromSortedArray and array is not sorted", () => {
+    const data = [1, 3, 2];
+
+    const tryToCreate = () => SortedArray.fromSortedArray(cmp, data);
+
+    assert.throws(tryToCreate, new Error(`Expected sorted array, got: ${data}`));
+  });
+
+  it("should not throw when using fromSortedArray and array is sorted", () => {
+    const data = [1, 2, 3];
+
+    const result = SortedArray.fromSortedArray(cmp, data);
+
+    assert.deepStrictEqual(result.slice(), data);
+  });
+
+  it("should not throw when using fromSortedArray and array is sorted and contains duplicates", () => {
+    const data = [1, 2, 2, 3];
+
+    const result = SortedArray.fromSortedArray(cmp, data);
+
+    assert.deepStrictEqual(result.slice(), data);
+  });
+
+  describe("fromTwoSortedCollections", () => {
+    it("should merge two sorted sets", () => {
+      const arr1 = [1, 2, 3];
+      const arr2 = [4, 5, 6];
+      const toMerge1 = SortedArray.fromArray(cmp, arr1);
+      const toMerge2 = SortedArray.fromArray(cmp, arr2);
+
+      const result = SortedArray.fromTwoSortedCollections(toMerge1, toMerge2);
+
+      assert.deepStrictEqual(result.slice(), [...arr1, ...arr2]);
+    });
+
+    it("should merge two sorted sets with duplicates", () => {
+      const arr = [1, 2, 3];
+      const toMerge1 = SortedArray.fromArray(cmp, arr);
+      const toMerge2 = SortedArray.fromArray(cmp, arr);
+
+      const result = SortedArray.fromTwoSortedCollections(toMerge1, toMerge2);
+
+      assert.deepStrictEqual(result.slice(), [1, 1, 2, 2, 3, 3]);
+    });
   });
 });

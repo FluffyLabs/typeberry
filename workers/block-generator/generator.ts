@@ -50,6 +50,9 @@ export class Generator {
 
     const extrinsic = new Extrinsic(
       asOpaqueType([]),
+      [new Preimage(tryAsServiceId(1), BytesBlob.parseBlob("0x1234"))],
+      asOpaqueType([]),
+      asOpaqueType([]),
       new DisputesExtrinsic(
         [
           new Verdict(
@@ -67,9 +70,6 @@ export class Generator {
         [],
         [],
       ),
-      [new Preimage(tryAsServiceId(1), BytesBlob.parseBlob("0x1234"))],
-      asOpaqueType([]),
-      asOpaqueType([]),
     );
     const extrinsicHash = hasher.extrinsic(extrinsic).hash;
 

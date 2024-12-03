@@ -2,6 +2,7 @@ import {
   type BandersnatchKey,
   type BandersnatchVrfSignature,
   type Ed25519Key,
+  type EntropyHash,
   EpochMarker,
   type ExtrinsicHash,
   Header,
@@ -18,12 +19,19 @@ import { fromJson, runCodecTest } from "./common";
 
 const bandersnatchVrfSignature = json.fromString((v) => Bytes.parseBytes(v, 96) as BandersnatchVrfSignature);
 
-const epochMark = json.object<EpochMarker>(
+type JsonEpochMarker = {
+  entropy: EntropyHash;
+  tickets_entropy: EntropyHash;
+  validators: KnownSizeArray<BandersnatchKey, "ValidatorsCount">;
+};
+
+const epochMark = json.object<JsonEpochMarker, EpochMarker>(
   {
     entropy: fromJson.bytes32(),
+    tickets_entropy: fromJson.bytes32(),
     validators: json.array(fromJson.bytes32<BandersnatchKey>()),
   },
-  (x) => new EpochMarker(x.entropy, x.validators),
+  (x) => new EpochMarker(x.entropy, x.tickets_entropy, x.validators),
 );
 
 const ticketsMark = json.object<Ticket>(

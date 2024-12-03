@@ -18,6 +18,7 @@ import { runWorkItemTest, workItemFromJson } from "./tests/codec/work-item";
 import { runWorkPackageTest, workPackageFromJson } from "./tests/codec/work-package";
 import { runWorkReportTest, workReportFromJson } from "./tests/codec/work-report";
 import { runWorkResultTest, workResultFromJson } from "./tests/codec/work-result";
+import { DisputesTest, runDisputesTest } from "./tests/disputes";
 import {
   EcTest,
   PageProof,
@@ -158,6 +159,7 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
     prepRunner("codec/work_package", workPackageFromJson, runWorkPackageTest),
     prepRunner("codec/work_report", workReportFromJson, runWorkReportTest),
     prepRunner("codec/work_result", workResultFromJson, runWorkResultTest),
+    prepRunner("disputes", DisputesTest.fromJson, runDisputesTest),
     prepRunner("erasure-coding", EcTest.fromJson, runEcTest),
     prepRunner("erasure-coding/page-proof", PageProof.fromJson, runPageProofTest),
     prepRunner("erasure-coding/segment-ec", SegmentEcTest.fromJson, runSegmentEcTest),

@@ -42,6 +42,25 @@ export class BytesBlob {
     return u8ArraySameLengthEqual(this.raw, other.raw);
   }
 
+  /** Compare the sequence to another one lexicographically. */
+  isLessThan(other: BytesBlob): boolean {
+    const min = Math.min(this.length, other.length);
+    const thisRaw = this.raw;
+    const otherRaw = other.raw;
+
+    for (let i = 0; i < min; i++) {
+      if (thisRaw[i] < otherRaw[i]) {
+        return true;
+      }
+
+      if (thisRaw[i] > otherRaw[i]) {
+        return false;
+      }
+    }
+
+    return this.length < other.length;
+  }
+
   /** Create a new [`BytesBlob'] by converting given UTF-u encoded string into bytes. */
   static blobFromString(v: string): BytesBlob {
     const encoder = new TextEncoder();

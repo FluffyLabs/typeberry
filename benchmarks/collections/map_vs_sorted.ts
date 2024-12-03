@@ -63,7 +63,7 @@ module.exports = () =>
     }),
 
     add("SortedArray", () => {
-      const map = new SortedArray<Data>(dataCmp);
+      const map = SortedArray.fromArray<Data>(dataCmp);
       map.insert({ key: keys[0], value: true });
       map.insert({ key: keys[1], value: false });
       map.insert({ key: keys[2], value: true });

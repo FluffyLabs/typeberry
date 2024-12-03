@@ -30,6 +30,8 @@ export const EST_EPOCH_LENGTH = 600;
 export class ChainSpec {
   /** Number of validators. */
   readonly validatorsCount: number;
+  /** 1/3 of number of validators */
+  readonly thirdOfValidators: number;
   /** 2/3 of number of validators + 1 */
   readonly validatorsSuperMajority: number;
   /** Number of cores. */
@@ -43,8 +45,9 @@ export class ChainSpec {
   /** The maximum number of tickets each validator can submit. */
   readonly ticketsPerValidator: number;
 
-  constructor(data: Omit<ChainSpec, "validatorsSuperMajority">) {
+  constructor(data: Omit<ChainSpec, "validatorsSuperMajority" | "thirdOfValidators">) {
     this.validatorsCount = data.validatorsCount;
+    this.thirdOfValidators = Math.floor(data.validatorsCount / 3);
     this.validatorsSuperMajority = Math.floor(data.validatorsCount / 3) * 2 + 1;
     this.coresCount = data.coresCount;
     this.slotDuration = data.slotDuration;
@@ -64,6 +67,19 @@ export const tinyChainSpec = new ChainSpec({
   coresCount: 2,
   slotDuration: 6,
   epochLength: 12,
+  contestLength: 10,
+  ticketsPerValidator: 3,
+});
+
+/**
+ * Set of values for "full" chain as defined in JAM test vectors.
+ * Please note that only validatorsCount and epochLength are "full", the rest is copied from "tiny".
+ */
+export const fullChainSpec = new ChainSpec({
+  validatorsCount: 1023,
+  epochLength: 600,
+  coresCount: 2,
+  slotDuration: 6,
   contestLength: 10,
   ticketsPerValidator: 3,
 });

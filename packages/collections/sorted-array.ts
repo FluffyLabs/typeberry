@@ -1,3 +1,6 @@
+import { check } from "@typeberry/utils";
+import type { SortedCollection } from "./sorted-collection";
+
 /** A return value of some comparator. */
 export enum Ordering {
   /** `self < other` */
@@ -24,14 +27,40 @@ export type Comparator<V> = (self: V, other: V) => Ordering;
  * Duplicates are allowed, so make sure to check presence before inserting.
  */
 export class SortedArray<V> {
-  private readonly array: V[];
-  private readonly comparator: Comparator<V>;
-
-  constructor(comparator: Comparator<V>, data: V[] = []) {
-    this.array = data.slice();
-    this.array.sort(comparator);
-    this.comparator = comparator;
+  /**
+   * Create SortedArray from array that is not sorted. This function sorts the array.
+   */
+  static fromArray<V>(comparator: Comparator<V>, array: V[] = []) {
+    const data = array.slice();
+    data.sort(comparator);
+    return new SortedArray(data, comparator);
   }
+
+  /**
+   * Create SortedArray from array that is sorted. This function does not sort the array. Unsorted array will not work correctly!
+   */
+  static fromSortedArray<V>(comparator: Comparator<V>, array: V[] = []) {
+    const dataLength = array.length;
+
+    if (dataLength === 0) {
+      return new SortedArray([], comparator);
+    }
+
+    const data = array.slice();
+
+    for (let i = 1; i < dataLength; i++) {
+      if (comparator(data[i - 1], data[i]) === Ordering.Greater) {
+        throw new Error(`Expected sorted array, got: ${data}`);
+      }
+    }
+
+    return new SortedArray(data, comparator);
+  }
+
+  protected constructor(
+    public readonly array: V[],
+    public readonly comparator: Comparator<V>,
+  ) {}
 
   /** Insert new element to the collection. */
   public insert(v: V) {
@@ -92,7 +121,7 @@ export class SortedArray<V> {
     return this.array.slice(start, end);
   }
 
-  private binarySearch(v: V) {
+  protected binarySearch(v: V) {
     const arr = this.array;
     const cmp = this.comparator;
 
@@ -119,5 +148,52 @@ export class SortedArray<V> {
     return {
       idx: low,
     };
+  }
+
+  /** Create a new SortedSet from two sorted collections. */
+  static fromTwoSortedCollections<V>(first: SortedCollection<V>, second: SortedCollection<V>) {
+    check(first.comparator === second.comparator, "Cannot merge arrays if they do not use the same comparator");
+    const comparator = first.comparator;
+    const arr1 = first.array;
+    const arr1Length = arr1.length;
+    const arr2 = second.array;
+    const arr2Length = arr2.length;
+    let i = 0;
+    let j = 0;
+    const result: V[] = [];
+
+    while (i < arr1Length && j < arr2Length) {
+      if (comparator(arr1[i], arr2[j]) === Ordering.Less) {
+        result.push(arr1[i]);
+        i++;
+      } else if (comparator(arr1[i], arr2[j]) === Ordering.Greater) {
+        result.push(arr2[j]);
+        j++;
+      } else {
+        result.push(arr1[i]);
+        result.push(arr2[j]);
+        i++;
+        j++;
+      }
+    }
+
+    while (i < arr1Length) {
+      result.push(arr1[i]);
+      i++;
+    }
+
+    while (j < arr2Length) {
+      result.push(arr2[j]);
+      j++;
+    }
+
+    return SortedArray.fromSortedArray(comparator, result);
+  }
+
+  /** it allows to use SortedArray in for-of loop */
+  *[Symbol.iterator]() {
+    for (const value of this.array) {
+      yield value;
+    }
   }
 }

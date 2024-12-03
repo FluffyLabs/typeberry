@@ -27,6 +27,11 @@ export namespace json {
     return ["optional", from] as FromJson<T | undefined>;
   }
 
+  /** Handle a potentially optional value that can be `null` in JSON. */
+  export function nullable<T>(from: FromJson<T>): FromJson<T | null> {
+    return ["optional", from] as FromJson<T | null>;
+  }
+
   /** Expect an array of given type in JSON. */
   export function array<TInto>(from: FromJson<TInto>): FromJson<TInto[]> {
     return ["array", from];

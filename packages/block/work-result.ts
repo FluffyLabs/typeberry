@@ -71,20 +71,20 @@ export class WorkExecResult extends WithDebug {
  */
 export class WorkResult {
   static Codec = codec.Class(WorkResult, {
-    service: codec.u32.cast(),
+    serviceId: codec.u32.cast(),
     codeHash: codec.bytes(HASH_SIZE).cast(),
     payloadHash: codec.bytes(HASH_SIZE),
-    gasRatio: codec.u64.cast(),
+    gas: codec.u64.cast(),
     result: WorkExecResult.Codec,
   });
 
-  static fromCodec({ service, codeHash, payloadHash, gasRatio, result }: CodecRecord<WorkResult>) {
-    return new WorkResult(service, codeHash, payloadHash, gasRatio, result);
+  static fromCodec({ serviceId, codeHash, payloadHash, gas, result }: CodecRecord<WorkResult>) {
+    return new WorkResult(serviceId, codeHash, payloadHash, gas, result);
   }
 
   constructor(
     /** `s`: Index of the service whose state is to be altered (refine already executed). */
-    public readonly service: ServiceId,
+    public readonly serviceId: ServiceId,
     /** `c`: Hash of the code of the service at the time of being reported. */
     public readonly codeHash: CodeHash,
     /**
@@ -101,7 +101,7 @@ export class WorkResult {
      * Used when determining how much gas should be allocated to execute
      * of this item's accumulate.
      */
-    public readonly gasRatio: ServiceGas,
+    public readonly gas: ServiceGas,
     /** `o`: The output or error of the execution of the code. */
     public readonly result: WorkExecResult,
   ) {}
