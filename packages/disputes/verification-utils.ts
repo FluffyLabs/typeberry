@@ -2,6 +2,7 @@ import { ed25519 } from "@noble/curves/ed25519";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Key, type Ed25519Signature, type WorkReportHash } from "@typeberry/block";
 import type { Culprit, Fault, Judgement } from "@typeberry/block/disputes";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { asOpaqueType } from "@typeberry/utils";
 
 type InputItem = {
   signature: Uint8Array;
@@ -66,7 +67,7 @@ export function vefifyAllSignatures(input: VerificationInput): Promise<Verificat
     for (const { key, message, signature } of signatureGroup) {
       const isValid = ed25519.verify(signature, message, key);
       verificationGroup.push({
-        signature: Bytes.fromBlob(signature, ED25519_SIGNATURE_BYTES) as Ed25519Signature,
+        signature: asOpaqueType(Bytes.fromBlob(signature, ED25519_SIGNATURE_BYTES)),
         isValid,
       });
     }

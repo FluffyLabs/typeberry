@@ -3,7 +3,7 @@ import type { DisputesExtrinsic } from "@typeberry/block/disputes";
 import { HashDictionary, SortedArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { hashBytes } from "@typeberry/hash";
-import { Result } from "@typeberry/utils";
+import { Result, asOpaqueType } from "@typeberry/utils";
 import { DisputesErrorCode } from "./disputes-error-code";
 import { type DisputesState, hashComparator } from "./disputes-state";
 import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
@@ -37,8 +37,6 @@ export class Disputes {
     verificationResult: VerificationOutput,
   ): Result<Ok, DisputesErrorCode> {
     // check if culprits are sorted by key
-    // this check it should be done as as the first one (because it is cheap)
-    // but one test (progress_with_bad_signatures-2.json) has 2 problems and order is important
     // https://graypaper.fluffylabs.dev/#/364735a/12ae0112af01
     if (!isUniqueSortedBy(disputes.culprits, "key")) {
       return Result.error(DisputesErrorCode.CulpritsNotSortedUnique);
@@ -266,7 +264,7 @@ export class Disputes {
     for (let c = 0; c < this.state.availabilityAssignment.length; c++) {
       const assignment = this.state.availabilityAssignment[c];
       if (assignment) {
-        const hash = hashBytes(assignment.workReportBytes) as WorkReportHash;
+        const hash: WorkReportHash = asOpaqueType(hashBytes(assignment.workReportBytes));
         const sum = v.get(hash);
         if (sum !== undefined && sum < this.context.validatorsSuperMajority) {
           this.state.availabilityAssignment[c] = null;
