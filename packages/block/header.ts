@@ -23,7 +23,7 @@ import { Ticket } from "./tickets";
  * and contains the epoch randomness and Bandersnatch keys
  * of validators for the NEXT epoch.
  *
- * https://graypaper.fluffylabs.dev/#/387103d/0e1f020e2502
+ * https://graypaper.fluffylabs.dev/#/911af30/0e30030e6903
  */
 export class EpochMarker extends WithDebug {
   static Codec = codec.Class(EpochMarker, {
@@ -47,7 +47,7 @@ export class EpochMarker extends WithDebug {
   public constructor(
     /** `eta_1'`: Randomness for the NEXT epoch. */
     public readonly entropy: EntropyHash,
-    /** TODO [MaSi]: docs */
+    /** `eta_2'`: Randomness for the CURRENT epoch. */
     public readonly ticketsEntropy: EntropyHash,
     // TODO [ToDr] constrain the sequence length during decoding.
     /** `kappa_b`: Bandernsatch validator keys for the NEXT epoch. */

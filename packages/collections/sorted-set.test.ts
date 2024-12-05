@@ -87,7 +87,7 @@ describe("SortedSet", () => {
   });
 
   describe("fromTwoSortedCollections", () => {
-    it("should merge two sorted sets", () => {
+    it("should merge two sorted sets without duplicates", () => {
       const arr1 = [1, 2, 3];
       const arr2 = [4, 5, 6];
       const toMerge1 = SortedSet.fromArray(cmp, arr1);
@@ -100,6 +100,26 @@ describe("SortedSet", () => {
 
     it("should merge two sorted sets with duplicates", () => {
       const arr = [1, 2, 3];
+      const toMerge1 = SortedSet.fromArray(cmp, arr);
+      const toMerge2 = SortedSet.fromArray(cmp, arr);
+
+      const result = SortedSet.fromTwoSortedCollections(toMerge1, toMerge2);
+
+      assert.deepStrictEqual(result.slice(), arr);
+    });
+
+    it("should merge two empty sets", () => {
+      const arr: number[] = [];
+      const toMerge1 = SortedSet.fromArray(cmp, arr);
+      const toMerge2 = SortedSet.fromArray(cmp, arr);
+
+      const result = SortedSet.fromTwoSortedCollections(toMerge1, toMerge2);
+
+      assert.deepStrictEqual(result.slice(), arr);
+    });
+
+    it("should merge two sets with one duplicated item", () => {
+      const arr: number[] = [0];
       const toMerge1 = SortedSet.fromArray(cmp, arr);
       const toMerge2 = SortedSet.fromArray(cmp, arr);
 

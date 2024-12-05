@@ -1,6 +1,5 @@
 import { check } from "@typeberry/utils";
 import { type Comparator, Ordering, SortedArray } from "./sorted-array";
-import type { SortedCollection } from "./sorted-collection";
 
 /**
  * Collection of elements of type `V` that has some strict ordering and does not have dupliocates.
@@ -59,47 +58,30 @@ export class SortedSet<V> extends SortedArray<V> {
   }
 
   /** Create a new SortedSet from two sorted collections. */
-  static fromTwoSortedCollections<V>(first: SortedCollection<V>, second: SortedCollection<V>) {
+  static fromTwoSortedCollections<V>(first: SortedArray<V>, second: SortedArray<V>) {
     check(first.comparator === second.comparator, "Cannot merge arrays if they do not use the same comparator");
     const comparator = first.comparator;
-    const arr1 = first.array;
-    const arr1Length = arr1.length;
-    const arr2 = second.array;
-    const arr2Length = arr2.length;
-    let i = 0;
-    let j = 0;
-    const result: V[] = [];
 
-    const pushIfNotEqual = (lastItem: V | undefined, itemToPush: V) => {
-      if (!lastItem || comparator(lastItem, itemToPush) !== Ordering.Equal) {
-        result.push(itemToPush);
-      }
-    };
+    if (first.length === 0) {
+      return SortedSet.fromSortedArray(comparator, second.array);
+    }
 
-    while (i < arr1Length && j < arr2Length) {
-      if (comparator(arr1[i], arr2[j]) === Ordering.Less) {
-        pushIfNotEqual(result[result.length - 1], arr1[i]);
-        i++;
-      } else if (comparator(arr1[i], arr2[j]) === Ordering.Greater) {
-        pushIfNotEqual(result[result.length - 1], arr2[j]);
-        j++;
-      } else {
-        pushIfNotEqual(result[result.length - 1], arr1[i]);
-        i++;
-        j++;
+    if (second.length === 0) {
+      return SortedSet.fromSortedArray(comparator, first.array);
+    }
+
+    const mergedArray = SortedArray.fromTwoSortedCollections(first, second).array;
+    const mergedLength = mergedArray.length;
+
+    let j = 1;
+    for (let i = 1; i < mergedLength; i++) {
+      if (comparator(mergedArray[i - 1], mergedArray[i]) !== Ordering.Equal) {
+        mergedArray[j++] = mergedArray[i];
       }
     }
 
-    while (i < arr1Length) {
-      pushIfNotEqual(result[result.length - 1], arr1[i]);
-      i++;
-    }
+    mergedArray.length = j;
 
-    while (j < arr2Length) {
-      pushIfNotEqual(result[result.length - 1], arr2[j]);
-      j++;
-    }
-
-    return SortedSet.fromSortedArray(comparator, result);
+    return SortedSet.fromSortedArray(comparator, mergedArray);
   }
 }
