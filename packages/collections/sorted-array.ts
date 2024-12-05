@@ -1,5 +1,4 @@
 import { check } from "@typeberry/utils";
-import type { SortedCollection } from "./sorted-collection";
 
 /** A return value of some comparator. */
 export enum Ordering {
@@ -151,40 +150,38 @@ export class SortedArray<V> {
   }
 
   /** Create a new SortedSet from two sorted collections. */
-  static fromTwoSortedCollections<V>(first: SortedCollection<V>, second: SortedCollection<V>) {
+  static fromTwoSortedCollections<V>(first: SortedArray<V>, second: SortedArray<V>) {
     check(first.comparator === second.comparator, "Cannot merge arrays if they do not use the same comparator");
     const comparator = first.comparator;
     const arr1 = first.array;
     const arr1Length = arr1.length;
     const arr2 = second.array;
     const arr2Length = arr2.length;
-    let i = 0;
-    let j = 0;
-    const result: V[] = [];
+
+    const resultLength = arr1Length + arr2Length;
+    const result: V[] = new Array(resultLength);
+
+    let i = 0; // arr1 index
+    let j = 0; // arr2 index
+    let k = 0; // result array index
 
     while (i < arr1Length && j < arr2Length) {
       if (comparator(arr1[i], arr2[j]) === Ordering.Less) {
-        result.push(arr1[i]);
-        i++;
+        result[k++] = arr1[i++];
       } else if (comparator(arr1[i], arr2[j]) === Ordering.Greater) {
-        result.push(arr2[j]);
-        j++;
+        result[k++] = arr2[j++];
       } else {
-        result.push(arr1[i]);
-        result.push(arr2[j]);
-        i++;
-        j++;
+        result[k++] = arr1[i++];
+        result[k++] = arr2[j++];
       }
     }
 
     while (i < arr1Length) {
-      result.push(arr1[i]);
-      i++;
+      result[k++] = arr1[i++];
     }
 
     while (j < arr2Length) {
-      result.push(arr2[j]);
-      j++;
+      result[k++] = arr2[j++];
     }
 
     return SortedArray.fromSortedArray(comparator, result);
