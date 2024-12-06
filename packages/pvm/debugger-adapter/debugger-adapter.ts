@@ -44,6 +44,10 @@ export class DebuggerAdapter {
     this.pvm.getMemory().storeFrom(tryAsMemoryIndex(address), value);
   }
 
+  getExitArg(): number {
+    return this.pvm.getExitParam() || 0;
+  }
+
   getStatus(): Status {
     return this.pvm.getStatus();
   }
