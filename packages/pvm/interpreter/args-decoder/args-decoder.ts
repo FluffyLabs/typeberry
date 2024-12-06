@@ -90,7 +90,7 @@ export type OneOffsetArgs = {
   nextPc: number;
 };
 
-type Args =
+export type Args =
   | EmptyArgs
   | OneImmediateArgs
   | TwoRegistersArgs
