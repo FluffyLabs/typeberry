@@ -7,4 +7,5 @@ export { instructionArgumentTypeMap } from "@typeberry/pvm-interpreter/args-deco
 export { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
 export { Registers } from "@typeberry/pvm-interpreter/registers";
 export { Program } from "@typeberry/pvm-program";
+export { BasicBlocks } from "@typeberry/pvm-interpreter/basic-blocks";
 export { DebuggerAdapter as Pvm } from "./debugger-adapter";
