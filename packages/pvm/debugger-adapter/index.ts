@@ -1,5 +1,5 @@
 export * from "@typeberry/pvm-interpreter";
-export {Mask} from "@typeberry/pvm-interpreter/program-decoder/mask";
+export { Mask } from "@typeberry/pvm-interpreter/program-decoder/mask";
 export { ProgramDecoder } from "@typeberry/pvm-interpreter/program-decoder/program-decoder";
 export { ArgsDecoder, Args } from "@typeberry/pvm-interpreter/args-decoder/args-decoder";
 export { ArgumentType } from "@typeberry/pvm-interpreter/args-decoder/argument-type";

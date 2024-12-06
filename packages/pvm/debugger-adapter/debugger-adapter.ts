@@ -20,11 +20,11 @@ export class DebuggerAdapter {
     return this.pvm.getRegisters().asUnsigned;
   }
 
-  getPC(): number {
+  getProgramCounter(): number {
     return this.pvm.getPC();
   }
 
-  getGas(): U64 {
+  getGasLeft(): U64 {
     return tryAsU64(this.pvm.getGas());
   }
 
@@ -32,7 +32,7 @@ export class DebuggerAdapter {
     return this.pvm.getStatus();
   }
 
-  reset(rawProgram: Uint8Array, pc: number, gas: number, maybeRegisters?: Registers, maybeMemory?: Memory) {
+  reset(rawProgram: Uint8Array, pc: number, gas: bigint, maybeRegisters?: Registers, maybeMemory?: Memory) {
     this.pvm.reset(rawProgram, pc, tryAsGas(gas), maybeRegisters, maybeMemory);
   }
 
@@ -40,11 +40,11 @@ export class DebuggerAdapter {
     this.pvm.setNextPC(nextPc);
   }
 
-  setGasLeft(gas: U64) {
+  setGasLeft(gas: bigint) {
     this.pvm.getGasCounter().set(tryAsGas(gas));
   }
 
-  getMemoryPage(pageNumber: number): null | Uint8Array {
+  getPageDump(pageNumber: number): null | Uint8Array {
     const page = this.pvm.getMemoryPage(pageNumber);
 
     if (!page) {
