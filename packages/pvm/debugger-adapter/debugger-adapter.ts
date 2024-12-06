@@ -1,9 +1,9 @@
 import { type U64, tryAsU64 } from "@typeberry/numbers";
-import { Interpreter, type Memory } from "@typeberry/pvm-interpreter";
+import { Interpreter, type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
-import type { Registers } from "@typeberry/pvm-interpreter/registers";
-import type { Status } from "@typeberry/pvm-interpreter/status";
+import { Registers } from "@typeberry/pvm-interpreter/registers";
+import { Status } from "@typeberry/pvm-interpreter/status";
 
 export class DebuggerAdapter {
   private readonly pvm: Interpreter;
@@ -12,36 +12,12 @@ export class DebuggerAdapter {
     this.pvm = new Interpreter();
   }
 
-  nextStep(): Status {
-    return this.pvm.nextStep();
-  }
-
-  getRegisters(): Uint32Array {
-    return this.pvm.getRegisters().asUnsigned;
-  }
-
-  getProgramCounter(): number {
-    return this.pvm.getPC();
-  }
-
-  getGasLeft(): U64 {
-    return tryAsU64(this.pvm.getGas());
-  }
-
-  getStatus(): Status {
-    return this.pvm.getStatus();
+  resetGeneric(rawProgram: Uint8Array, flatRegisters: Uint8Array, initialGas: bigint) {
+    this.pvm.reset(rawProgram, 0, tryAsGas(initialGas), new Registers(flatRegisters));
   }
 
   reset(rawProgram: Uint8Array, pc: number, gas: bigint, maybeRegisters?: Registers, maybeMemory?: Memory) {
     this.pvm.reset(rawProgram, pc, tryAsGas(gas), maybeRegisters, maybeMemory);
-  }
-
-  setNextPC(nextPc: number) {
-    this.pvm.setNextPC(nextPc);
-  }
-
-  setGasLeft(gas: bigint) {
-    this.pvm.getGasCounter().set(tryAsGas(gas));
   }
 
   getPageDump(pageNumber: number): null | Uint8Array {
@@ -61,5 +37,51 @@ export class DebuggerAdapter {
     const fullPage = new Uint8Array(PAGE_SIZE);
     fullPage.set(page);
     return fullPage;
+  }
+
+  setMemory(address: number, value: Uint8Array) {
+    this.pvm.getMemory().storeFrom(tryAsMemoryIndex(address), value);
+  }
+
+  getStatus(): Status {
+    return this.pvm.getStatus();
+  }
+
+  nextStep(): boolean {
+    return this.pvm.nextStep() === Status.OK;
+  }
+
+  run(steps: number): boolean {
+    for (let i = 0; i < steps; i++) {
+      const isOk = this.nextStep();
+      if (!isOk) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  getRegisters(): Uint32Array {
+    return this.pvm.getRegisters().asUnsigned;
+  }
+
+  setRegisters(registers: Uint8Array) {
+    this.pvm.getRegisters().copyFrom(new Registers(registers));
+  }
+
+  getProgramCounter(): number {
+    return this.pvm.getPC();
+  }
+
+  setNextProgramCounter(nextPc: number) {
+    this.pvm.setNextPC(nextPc);
+  }
+
+  getGasLeft(): U64 {
+    return tryAsU64(this.pvm.getGas());
+  }
+
+  setGasLeft(gas: bigint) {
+    this.pvm.getGasCounter().set(tryAsGas(gas));
   }
 }
