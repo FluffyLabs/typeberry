@@ -4,6 +4,7 @@ import { tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { Status } from "@typeberry/pvm-interpreter/status";
+import { check } from "@typeberry/utils";
 
 export class DebuggerAdapter {
   private readonly pvm: Interpreter;
@@ -52,6 +53,7 @@ export class DebuggerAdapter {
   }
 
   run(steps: number): boolean {
+    check(steps >>> 0 > 0, `Expected a positive integer got ${steps}`);
     for (let i = 0; i < steps; i++) {
       const isOk = this.nextStep();
       if (!isOk) {
