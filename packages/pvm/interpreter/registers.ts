@@ -1,11 +1,17 @@
+import { check } from "@typeberry/utils";
+
 export const NO_OF_REGISTERS = 13;
 const REGISTER_SIZE_SHIFT = 2;
 
 export class Registers {
-  private buffer = new ArrayBuffer(NO_OF_REGISTERS << REGISTER_SIZE_SHIFT);
-  asSigned = new Int32Array(this.buffer);
-  asUnsigned = new Uint32Array(this.buffer);
-  private bytes = new Uint8Array(this.buffer);
+  asSigned: Int32Array;
+  asUnsigned: Uint32Array;
+
+  constructor(private readonly bytes = new Uint8Array(NO_OF_REGISTERS << REGISTER_SIZE_SHIFT)) {
+    check(bytes.length === NO_OF_REGISTERS << REGISTER_SIZE_SHIFT, "Invalid size of registers array.");
+    this.asSigned = new Int32Array(bytes.buffer, bytes.byteOffset);
+    this.asUnsigned = new Uint32Array(bytes.buffer, bytes.byteOffset);
+  }
 
   getBytesAsLittleEndian(index: number, len: number) {
     const offset = index << REGISTER_SIZE_SHIFT;
