@@ -1,10 +1,12 @@
-export { Memory, MemoryBuilder } from "@typeberry/pvm-interpreter";
+export * from "@typeberry/pvm-interpreter";
+export { Mask } from "@typeberry/pvm-interpreter/program-decoder/mask";
 export { ProgramDecoder } from "@typeberry/pvm-interpreter/program-decoder/program-decoder";
-export { ArgsDecoder } from "@typeberry/pvm-interpreter/args-decoder/args-decoder";
+export { ArgsDecoder, Args } from "@typeberry/pvm-interpreter/args-decoder/args-decoder";
 export { ArgumentType } from "@typeberry/pvm-interpreter/args-decoder/argument-type";
 export { createResults } from "@typeberry/pvm-interpreter/args-decoder/args-decoding-results";
 export { instructionArgumentTypeMap } from "@typeberry/pvm-interpreter/args-decoder/instruction-argument-type-map";
 export { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
-export { Registers } from "@typeberry/pvm-interpreter/registers";
+export { Registers, NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers";
 export { Program } from "@typeberry/pvm-program";
+export { BasicBlocks } from "@typeberry/pvm-interpreter/basic-blocks";
 export { DebuggerAdapter as Pvm } from "./debugger-adapter";

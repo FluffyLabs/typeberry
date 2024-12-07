@@ -106,7 +106,7 @@ export class WorkReport extends WithDebug {
     /** `o`: Authorization output. */
     public readonly authorizationOutput: BytesBlob,
     /** `l`: Segment-root lookup
-     * TODO [MaSi] in GP segment-root lookup is a dictionary but in current tests vectors it is an array.
+     * In GP segment-root lookup is a dictionary but dictionary and var-len sequence are equal from codec perspective
      * https://graypaper.fluffylabs.dev/#/911af30/13ab0013af00
      */
     public readonly segmentRootLookup: SegmentRootLookupItem[],
