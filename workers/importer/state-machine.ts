@@ -86,7 +86,8 @@ export class ImporterReady extends State<"ready(importer)", Finished, Config> {
   private triggerOnBlock(block: unknown) {
     if (block instanceof Uint8Array) {
       const config = this.getConfig();
-      this.onBlock.emit(Block.Codec.View.fromBytesBlob(block, config.chainSpec));
+      const blockView = Decoder.decodeObject(Block.Codec.View, block, config.chainSpec);
+      this.onBlock.emit(blockView);
     } else {
       logger.error(`${this.constructor.name} got invalid signal type: ${JSON.stringify(block)}.`);
     }

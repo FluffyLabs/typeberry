@@ -1,9 +1,9 @@
 import { type BitVec, type Bytes, BytesBlob } from "@typeberry/bytes";
 import { type U8, type U16, type U32, type U64, tryAsU32 as asU32 } from "@typeberry/numbers";
-import { type Decode, Decoder } from "./decoder";
+import type { Decode, Decoder } from "./decoder";
 import { type Encode, type Encoder, type SizeHint, addSizeHints } from "./encoder";
 import type { Skip, Skipper } from "./skip";
-import { AbstractView, KeysWithView, VIEW_FIELD, viewFor, type ViewConstructor } from "./view";
+import { type ViewOf, objectView } from "./view";
 
 /**
  * For sequences with unknown length we need to give some size hint.
@@ -22,15 +22,18 @@ const TYPICAL_DICTIONARY_LENGTH = 32;
 export type Codec<T> = Encode<T> & Decode<T>;
 
 /**
- * Type descriptor defition.
+ * Type descriptor definition.
  *
  * The type descriptor can encode & decode given type `T`, but
  * also have a `name` and a byte-size hint.
  *
  * Descriptors can be composed to form more complex typings.
  */
-export class Descriptor<T> implements Codec<T>, Skip {
-  public constructor(
+export class Descriptor<T, V = T> implements Codec<T>, Skip {
+  /** A "lightweight" version of the object. */
+  public View: Descriptor<V>;
+
+  constructor(
     /** Descriptive name of the coded data. */
     public readonly name: string,
     /** A byte size hint for encoded data. */
@@ -41,41 +44,31 @@ export class Descriptor<T> implements Codec<T>, Skip {
     public readonly decode: (d: Decoder) => T,
     /** Skipping function. */
     public readonly skip: (s: Skipper) => void,
-  ) {}
+    view: Descriptor<V> | null,
+  ) {
+    // We cast here to make sure that the field is always set.
+    this.View = view || (this as unknown as Descriptor<V>);
+  }
 
   /** Return a new descriptor that converts data into some other type. */
-  public convert<F>(input: (i: F) => T, output: (i: T) => F): Descriptor<F> {
+  public convert<F>(input: (i: F) => T, output: (i: T) => F): Descriptor<F, V> {
     return new Descriptor(
       this.name,
       this.sizeHint,
       (e: Encoder, elem: F) => this.encode(e, input(elem)),
       (d: Decoder) => output(this.decode(d)),
       this.skip,
+      this.View,
     );
   }
 
+  // TODO [ToDr] probably too lenient typing!
   /** Safely cast the descriptor value to it's sub-type. */
   public cast<F extends T>() {
     return this.convert<F>(
       (i) => i,
       (o) => o as F,
     );
-  }
-}
-
-/**
- * A more sophisticated descriptor for an object that represents a record (aka class).
- *
- * The second optional generic parameter is there to specialise the `record` type
- * in case it's required for nested views.
- */
-export class ClassDescriptor<T, D extends DescriptorRecord<T> = DescriptorRecord<T>> extends Descriptor<T> {
-  /** A lazy view of the class (if any). */
-  [VIEW_FIELD]: ViewConstructor<T, KeysWithView<T, D>>;
-
-  public constructor(desc: Descriptor<T>, view: ViewConstructor<T, KeysWithView<T, D>>) {
-    super(desc.name, desc.sizeHint, desc.encode, desc.decode, desc.skip);
-    this[VIEW_FIELD] = view;
   }
 }
 
@@ -97,14 +90,14 @@ type OptionalRecord<T> = {
  * `Descriptor` of a complex type of some class with a bunch of public fields.
  */
 export type DescriptorRecord<T> = {
-  [K in PropertyKeys<T>]: Descriptor<T[K]> | ClassDescriptor<T[K]>;
+  [K in PropertyKeys<T>]: Descriptor<T[K], unknown>;
 };
 
 /**
  * Simplified `DescriptorRecord`, where all keys must be used as descriptor keys.
  */
 type SimpleDescriptorRecord<T> = {
-  [K in keyof T]: Descriptor<T[K]> | ClassDescriptor<T[K]>;
+  [K in keyof T]: Descriptor<T[K], unknown>;
 };
 
 /** Only keys that contain properties, not methods. */
@@ -128,6 +121,25 @@ function exactHint(bytes: number): SizeHint {
 
 /** Descriptors for data types that can be read/written from/to codec. */
 export namespace codec {
+  /** Fixed-length bytes sequence. */
+  export const bytes = (() => {
+    const cache = new Map<number, unknown>();
+    return <N extends number>(len: N): Descriptor<Bytes<N>> => {
+      let ret = cache.get(len) as Descriptor<Bytes<N>>;
+      if (!ret) {
+        ret = descriptor<Bytes<N>>(
+          `Bytes<${len}>`,
+          exactHint(len),
+          (e, v) => e.bytes(v),
+          (d) => d.bytes(len),
+          (s) => s.bytes(len),
+        );
+        cache.set(len, ret);
+      }
+      return ret;
+    };
+  })();
+
   /** Variable-length U32. */
   export const varU32 = descriptor<U32>(
     "var_u32",
@@ -147,39 +159,43 @@ export namespace codec {
   );
 
   /** Unsigned 64-bit number. */
-  export const u64 = descriptor<U64>(
+  export const u64 = descriptor<U64, Bytes<8>>(
     "u64",
     exactHint(8),
     (e, v) => e.i64(v),
     (d) => d.u64(),
     (d) => d.u64(),
+    codec.bytes(8),
   );
 
   /** Unsigned 32-bit number. */
-  export const u32 = descriptor<U32>(
+  export const u32 = descriptor<U32, Bytes<4>>(
     "u32",
     exactHint(4),
     (e, v) => e.i32(v),
     (d) => d.u32(),
     (d) => d.u32(),
+    codec.bytes(4),
   );
 
   /** Unsigned 24-bit number. */
-  export const u24 = descriptor<number>(
+  export const u24 = descriptor<number, Bytes<3>>(
     "u24",
     exactHint(3),
     (e, v) => e.i24(v),
     (d) => d.u24(),
     (d) => d.u24(),
+    codec.bytes(3),
   );
 
   /** Unsigned 16-bit number. */
-  export const u16 = descriptor<U16>(
+  export const u16 = descriptor<U16, Bytes<2>>(
     "u16",
     exactHint(2),
     (e, v) => e.i16(v),
     (d) => d.u16(),
     (d) => d.u16(),
+    codec.bytes(2),
   );
 
   /** Unsigned 8-bit number. */
@@ -192,39 +208,43 @@ export namespace codec {
   );
 
   /** Signed 64-bit number. */
-  export const i64 = descriptor<bigint>(
+  export const i64 = descriptor<bigint, Bytes<8>>(
     "u64",
     exactHint(8),
     (e, v) => e.i64(v),
     (d) => d.i64(),
     (s) => s.u64(),
+    codec.bytes(8),
   );
 
   /** Signed 32-bit number. */
-  export const i32 = descriptor<number>(
+  export const i32 = descriptor<number, Bytes<4>>(
     "i32",
     exactHint(4),
     (e, v) => e.i32(v),
     (d) => d.i32(),
     (s) => s.u32(),
+    codec.bytes(4),
   );
 
   /** Signed 24-bit number. */
-  export const i24 = descriptor<number>(
+  export const i24 = descriptor<number, Bytes<3>>(
     "i24",
     exactHint(3),
     (e, v) => e.i24(v),
     (d) => d.i24(),
     (s) => s.u24(),
+    codec.bytes(3),
   );
 
   /** Signed 16-bit number. */
-  export const i16 = descriptor<number>(
+  export const i16 = descriptor<number, Bytes<2>>(
     "i16",
     exactHint(2),
     (e, v) => e.i16(v),
     (d) => d.i16(),
     (s) => s.u16(),
+    codec.bytes(2),
   );
 
   /** Signed 8-bit number. */
@@ -245,15 +265,6 @@ export namespace codec {
     (s) => s.bool(),
   );
 
-  /** String encoded as variable-length bytes blob. */
-  export const string = descriptor<string>(
-    "string",
-    { bytes: TYPICAL_SEQUENCE_LENGTH, isExact: false },
-    (e, v) => e.bytesBlob(BytesBlob.blobFrom(new TextEncoder().encode(v))),
-    (d) => new TextDecoder("utf8", { fatal: true }).decode(d.bytesBlob().raw),
-    (s) => s.bytesBlob(),
-  );
-
   /** Variable-length bytes blob. */
   export const blob = descriptor<BytesBlob>(
     "BytesBlob",
@@ -263,24 +274,15 @@ export namespace codec {
     (s) => s.bytesBlob(),
   );
 
-  /** Fixed-length bytes sequence. */
-  export const bytes = (() => {
-    const cache = new Map<number, unknown>();
-    return <N extends number>(len: N): Descriptor<Bytes<N>> => {
-      let ret = cache.get(len) as Descriptor<Bytes<N>>;
-      if (!ret) {
-        ret = descriptor<Bytes<N>>(
-          `Bytes<${len}>`,
-          exactHint(len),
-          (e, v) => e.bytes(v),
-          (d) => d.bytes(len),
-          (s) => s.bytes(len),
-        );
-        cache.set(len, ret);
-      }
-      return ret;
-    };
-  })();
+  /** String encoded as variable-length bytes blob. */
+  export const string = descriptor<string, BytesBlob>(
+    "string",
+    { bytes: TYPICAL_SEQUENCE_LENGTH, isExact: false },
+    (e, v) => e.bytesBlob(BytesBlob.blobFrom(new TextEncoder().encode(v))),
+    (d) => new TextDecoder("utf8", { fatal: true }).decode(d.bytesBlob().raw),
+    (s) => s.bytesBlob(),
+    codec.blob,
+  );
 
   /** Variable-length bit vector. */
   export const bitVecVarLen = descriptor<BitVec>(
@@ -302,39 +304,44 @@ export namespace codec {
     );
 
   /** Optionality wrapper for given type. */
-  export const optional = <T>(type: Descriptor<T>) =>
-    descriptor<T | null>(
+  export const optional = <T, V = T>(type: Descriptor<T, V>): Descriptor<T | null, V | null> =>
+    descriptor<T | null, V | null>(
       `Optional<${type.name}>`,
       addSizeHints({ bytes: 1, isExact: false }, type.sizeHint),
       (e, v) => e.optional(type, v),
       (d) => d.optional(type),
       (s) => s.optional(type),
+      mapIfNotSame(type, type.View, codec.optional),
     );
 
   /** Variable-length sequence of given type. */
-  export const sequenceVarLen = <T>(type: Descriptor<T>) =>
-    descriptor<T[]>(
+  export const sequenceVarLen = <T, V = T>(type: Descriptor<T, V>): Descriptor<T[], V[]> =>
+    descriptor<T[], V[]>(
       `Sequence<${type.name}>[?]`,
       { bytes: TYPICAL_SEQUENCE_LENGTH * (type.sizeHint.bytes ?? 0), isExact: false },
       (e, v) => e.sequenceVarLen(type, v),
       (d) => d.sequenceVarLen(type),
       (s) => s.sequenceVarLen(type),
+      // TODO [ToDr] Array view!
+      mapIfNotSame(type, type.View, codec.sequenceVarLen),
     );
 
   /** Fixed-length sequence of given type. */
-  export const sequenceFixLen = <T>(type: Descriptor<T>, len: number) =>
-    descriptor<T[]>(
+  export const sequenceFixLen = <T, V = T>(type: Descriptor<T, V>, len: number): Descriptor<T[]> =>
+    descriptor<T[], V[]>(
       `Sequence<${type.name}>[${len}]`,
       { bytes: len * (type.sizeHint.bytes ?? 0), isExact: type.sizeHint.isExact },
       (e, v) => e.sequenceFixLen(type, v),
       (d) => d.sequenceFixLen(type, len),
       (s) => s.sequenceFixLen(type, len),
+      // TODO [ToDr] Array view!
+      mapIfNotSame(type, type.View, (v) => codec.sequenceFixLen(v, len)),
     );
 
   /** Small dictionary codec. */
-  export const dictionary = <K, V>(
+  export const dictionary = <K, V, V2 = V>(
     key: Descriptor<K>,
-    value: Descriptor<V>,
+    value: Descriptor<V, V2>,
     {
       sortKeys,
       fixedLength,
@@ -342,8 +349,8 @@ export namespace codec {
       sortKeys: (a: K, b: K) => number;
       fixedLength?: number;
     },
-  ) =>
-    descriptor<Map<K, V>>(
+  ): Descriptor<Map<K, V>, Map<K, V2>> =>
+    descriptor<Map<K, V>, Map<K, V2>>(
       `Dictionary<${key.name}, ${value.name}>[${fixedLength ?? "?"}]`,
       {
         bytes: fixedLength
@@ -387,6 +394,7 @@ export namespace codec {
         s.sequenceFixLen(key, len);
         s.sequenceFixLen(value, len);
       },
+      mapIfNotSame(value, value.View, (v) => codec.dictionary(key, v, { sortKeys, fixedLength })),
     );
 
   /** Custom encoding / decoding logic. */
@@ -431,16 +439,12 @@ export namespace codec {
    * prototype chain of the resulting object - we only care about the shape of
    * the object here.
    */
-  export const object = <T>(descriptors: SimpleDescriptorRecord<T>, name?: string) => {
-    return Class<T, DescriptorRecord<T>>(
-      {
-        name: `${name ?? "object"}`,
-        fromCodec(o: CodecRecord<T>) {
-          return o as T;
-        },
-      },
-      descriptors,
-    );
+  export const object = <T>(
+    descriptors: SimpleDescriptorRecord<T>,
+    name = "object",
+    fromCodec: (o: CodecRecord<T>) => T = (o) => o as T,
+  ) => {
+    return Class({ name, fromCodec }, descriptors);
   };
 
   /**
@@ -449,21 +453,33 @@ export namespace codec {
    * The resulting descriptor is able to encode & decode all of the public fields of
    * the class, given the map of descriptors for each one of them.
    *
-   * Additionally a `View<T>` is generated, which allows partially-decoding these class
-   * elements.
+   * The resulting decoded object will be an instance of given `Class` unlike simpler,
+   * shape-based `object` method.
    */
-  export const Class = <T, D extends DescriptorRecord<T>>(
+  export const Class = <T, D extends DescriptorRecord<T> = DescriptorRecord<T>>(
     Class: ClassConstructor<T>,
     descriptors: D,
-  ): ClassDescriptor<T, D> => {
+  ): Descriptor<T, ViewOf<T, D>> => {
     // Calculate a size hint for this class.
     let sizeHint = exactHint(0);
     forEachDescriptor(descriptors, (_k, val) => {
       sizeHint = addSizeHints(sizeHint, val.sizeHint);
     });
 
-    // and finally create the descriptor for the entire class.
-    const desc = descriptor<T>(
+    const skipper = (s: Skipper) => {
+      // optimized case for fixed size complex values.
+      if (sizeHint.isExact) {
+        return s.decoder.skip(sizeHint.bytes ?? 0);
+      }
+      forEachDescriptor(descriptors, (_key, descriptor) => {
+        descriptor.skip(s);
+      });
+    };
+
+    const view = objectView(Class, descriptors, sizeHint, skipper);
+
+    // and create the descriptor for the entire class.
+    return descriptor<T, ViewOf<T, D>>(
       Class.name,
       sizeHint,
       (e, t) => {
@@ -480,20 +496,9 @@ export namespace codec {
         });
         return Class.fromCodec(constructorParams as CodecRecord<T>);
       },
-      (s) => {
-        // optimized case for fixed size complex values.
-        if (sizeHint.isExact) {
-          return s.decoder.skip(sizeHint.bytes ?? 0);
-        }
-        forEachDescriptor(descriptors, (_key, descriptor) => {
-          descriptor.skip(s);
-        });
-      },
+      skipper,
+      view,
     );
-
-    const ClassView = viewFor(Class, descriptors);
-    const ViewTyped = ClassView as ViewConstructor<T, KeysWithView<T, D>>;
-    return new ClassDescriptor(desc, ViewTyped);
   };
 }
 
@@ -511,13 +516,20 @@ export function forEachDescriptor<T>(
 }
 
 /** Convenience method to create descriptors and avoid the superfluous typing. */
-function descriptor<T>(
+export function descriptor<T, V = T>(
   name: string,
   sizeHint: SizeHint,
   encode: (e: Encoder, elem: T) => void,
   decode: (d: Decoder) => T,
   skip: (s: Skipper) => void,
-): Descriptor<T> {
-  return new Descriptor(name, sizeHint, encode, decode, skip);
+  View: Descriptor<V> | null = null,
+): Descriptor<T, V> {
+  return new Descriptor(name, sizeHint, encode, decode, skip, View);
 }
 
+function mapIfNotSame<V, X>(a: unknown, b: V, map: (v: V) => X): X | null {
+  if (a === b) {
+    return null;
+  }
+  return map(b);
+}

@@ -1,5 +1,5 @@
 import { Bytes } from "@typeberry/bytes";
-import { type CodecRecord, type View, codec } from "@typeberry/codec";
+import { type CodecRecord, type ViewType, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { EST_EPOCH_LENGTH, EST_VALIDATORS } from "@typeberry/config";
 import { HASH_SIZE, WithHash } from "@typeberry/hash";
@@ -29,7 +29,7 @@ export class EpochMarker extends WithDebug {
   static Codec = codec.Class(EpochMarker, {
     entropy: codec.bytes(HASH_SIZE).cast(),
     ticketsEntropy: codec.bytes(HASH_SIZE).cast(),
-    validators: codec.select(
+    validators: codec.select<KnownSizeArray<BandersnatchKey, "ValidatorsCount">>(
       {
         name: "EpochMark.validators",
         sizeHint: { bytes: EST_VALIDATORS * BANDERSNATCH_KEY_BYTES, isExact: false },
@@ -70,7 +70,7 @@ export class Header extends WithDebug {
     timeSlotIndex: codec.u32.cast(),
     epochMarker: codec.optional(EpochMarker.Codec),
     ticketsMarker: codec.optional(
-      codec.select(
+      codec.select<KnownSizeArray<Ticket, "EpochLength">>(
         {
           name: "Header.ticketsMark",
           sizeHint: { bytes: EST_EPOCH_LENGTH * (Ticket.Codec.sizeHint.bytes ?? 1), isExact: false },
@@ -136,7 +136,7 @@ export class Header extends WithDebug {
 }
 
 /** Undecoded View of the [`Header`]. */
-export type HeaderView = View<Header, "epochMarker">;
+export type HeaderView = ViewType<typeof Header.Codec.View>;
 
 /**
  *  A codec-aware header with hash.

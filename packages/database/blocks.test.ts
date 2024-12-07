@@ -1,10 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Header } from "@typeberry/block";
 import { testBlockView } from "@typeberry/block/test-helpers";
 import { Bytes } from "@typeberry/bytes";
-import { Encoder } from "@typeberry/codec";
-import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, WithHash, hashBytes } from "@typeberry/hash";
 import { InMemoryBlocks } from ".";
 
@@ -23,10 +20,10 @@ describe("InMemoryDatabase", () => {
   it("should store and retrieve a block", () => {
     const db = new InMemoryBlocks();
     const block = testBlockView();
-    const headerHash = hashBytes(Encoder.encodeObject(Header.Codec, block.header(), tinyChainSpec)).asOpaque();
+    const headerHash = hashBytes(block.header.view().encoded()).asOpaque();
     db.insertBlock(new WithHash(headerHash, block));
 
-    assert.deepStrictEqual(db.getHeader(headerHash)?.materialize(), block.header());
-    assert.deepStrictEqual(db.getExtrinsic(headerHash)?.materialize(), block.extrinsic());
+    assert.deepStrictEqual(db.getHeader(headerHash)?.materialize(), block.header.materialize());
+    assert.deepStrictEqual(db.getExtrinsic(headerHash)?.materialize(), block.extrinsic.materialize());
   });
 });

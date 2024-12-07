@@ -1,5 +1,5 @@
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, codec } from "@typeberry/codec";
+import { type CodecRecord, type ViewType, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { WithDebug } from "@typeberry/utils";
@@ -71,3 +71,5 @@ export class WorkPackage extends WithDebug {
     super();
   }
 }
+
+export type WorkPackageView = ViewType<typeof WorkPackage.Codec.View>;

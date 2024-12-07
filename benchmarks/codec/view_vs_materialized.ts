@@ -1,8 +1,7 @@
 import assert from "node:assert";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
 import { Bytes } from "@typeberry/bytes";
-import { type CodecRecord, Decoder, Encoder, type View } from "@typeberry/codec";
-import { codec } from "@typeberry/codec/descriptors";
+import { type CodecRecord, Decoder, Encoder, type ViewType, codec } from "@typeberry/codec";
 import { type U64, tryAsU64 } from "@typeberry/numbers";
 
 class TestHeader {
@@ -30,35 +29,73 @@ class TestHeader {
   }
 }
 
+class TestBlock {
+  static Codec = codec.Class(TestBlock, {
+    extrinsic: codec.sequenceFixLen(codec.bytes(128), 10),
+    header1: TestHeader.Codec,
+    header2: TestHeader.Codec,
+  });
+
+  static fromCodec(o: CodecRecord<TestBlock>) {
+    return new TestBlock(o);
+  }
+
+  public readonly extrinsic: Bytes<128>[];
+  public readonly header1: TestHeader;
+  public readonly header2: TestHeader;
+
+  constructor(o: CodecRecord<TestBlock>) {
+    this.extrinsic = o.extrinsic;
+    this.header1 = o.header1;
+    this.header2 = o.header2;
+  }
+}
+
 const encoder = Encoder.create();
 const parentHeaderHash = Bytes.fill(32, 1);
 const priorStateRoot = Bytes.fill(32, 5);
 const extrinsicHash = Bytes.fill(32, 0x42);
+const testHeader = new TestHeader({
+  blockNumber: tryAsU64(10_000_000n),
+  parentHeaderHash,
+  priorStateRoot,
+  extrinsicHash,
+});
+const testExtrinsic = Array(10).fill(Bytes.fill(128, 0x69));
 
-TestHeader.Codec.encode(
+TestBlock.Codec.encode(
   encoder,
-  new TestHeader({
-    blockNumber: tryAsU64(10_000_000n),
-    parentHeaderHash,
-    priorStateRoot,
-    extrinsicHash,
+  new TestBlock({
+    header1: testHeader,
+    header2: testHeader,
+    extrinsic: testExtrinsic,
   }),
 );
 
 const encodedData = encoder.viewResult();
 
-function compare(name: string, runView: (view: View<TestHeader>) => void, runHeader: (header: TestHeader) => void) {
-  return [
+function compare(
+  name: string,
+  runView: (view: ViewType<typeof TestBlock.Codec.View>) => void,
+  runHeader?: (header: TestBlock) => void,
+) {
+  const res = [
     add(`Get ${name} from View`, () => {
-      const view = TestHeader.Codec.View.fromBytesBlob(encodedData);
+      const view = TestBlock.Codec.View.decode(Decoder.fromBytesBlob(encodedData));
       runView(view);
     }),
-
-    add(`Get ${name} from Decoded`, () => {
-      const header = TestHeader.Codec.decode(Decoder.fromBytesBlob(encodedData));
-      runHeader(header);
-    }),
   ];
+
+  if (runHeader) {
+    res.unshift(
+      add(`Get ${name} from Decoded`, () => {
+        const header = TestBlock.Codec.decode(Decoder.fromBytesBlob(encodedData));
+        runHeader(header);
+      }),
+    );
+  }
+
+  return res;
 }
 
 module.exports = () =>
@@ -68,34 +105,55 @@ module.exports = () =>
     ...compare(
       "the first field",
       (view) => {
-        assert.deepStrictEqual(view.blockNumber(), 10_000_000n);
+        assert.deepStrictEqual(view.header2.view().blockNumber.materialize(), 10_000_000n);
       },
-      (header) => {
-        assert.deepStrictEqual(header.blockNumber, 10_000_000n);
+      (block) => {
+        assert.deepStrictEqual(block.header2.blockNumber, 10_000_000n);
       },
     ),
+
+    ...compare("the first field as view", (view) => {
+      assert.deepStrictEqual(view.header2.view().blockNumber.view(), 10_000_000n);
+    }),
 
     ...compare(
       "two fields",
       (view) => {
-        assert.deepStrictEqual(view.blockNumber(), 10_000_000n);
-        view.priorStateRoot();
+        const headerView = view.header2.view();
+        assert.deepStrictEqual(headerView.blockNumber.materialize(), 10_000_000n);
+        headerView.priorStateRoot.materialize();
       },
-      (header) => {
-        assert.deepStrictEqual(header.blockNumber, 10_000_000n);
-        header.priorStateRoot;
+      (block) => {
+        assert.deepStrictEqual(block.header2.blockNumber, 10_000_000n);
+        block.header2.priorStateRoot;
       },
     ),
+
+    ...compare("two fields from materialized", (view) => {
+      const headerView = view.header2.materialize();
+      assert.deepStrictEqual(headerView.blockNumber, 10_000_000n);
+      headerView.priorStateRoot;
+    }),
+
+    ...compare("two fields as views", (view) => {
+      const headerView = view.header2.view();
+      assert.deepStrictEqual(headerView.blockNumber.view(), 10_000_000n);
+      headerView.priorStateRoot.view();
+    }),
 
     ...compare(
       "only third field",
       (view) => {
-        view.parentHeaderHash();
+        view.header2.view().parentHeaderHash.materialize();
       },
-      (header) => {
-        header.parentHeaderHash;
+      (block) => {
+        block.header2.parentHeaderHash;
       },
     ),
+
+    ...compare("only third field as view", (view) => {
+      view.header2.view().parentHeaderHash.view();
+    }),
 
     cycle(),
     complete(),

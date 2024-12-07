@@ -100,7 +100,7 @@ export class Verdict extends WithDebug {
   static Codec = codec.Class(Verdict, {
     workReportHash: codec.bytes(HASH_SIZE).cast(),
     votesEpoch: codec.u32.cast(),
-    votes: codec.select(
+    votes: codec.select<KnownSizeArray<Judgement, "Validators super majority">>(
       {
         name: "Verdict.votes",
         sizeHint: { bytes: EST_VALIDATORS_SUPER_MAJORITY * (Judgement.Codec.sizeHint.bytes ?? 1), isExact: false },

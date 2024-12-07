@@ -74,14 +74,14 @@ describe("Codec Descriptors / class", () => {
     // given
     const data = testData();
 
-    const headerView = TestHeader.Codec.View.fromBytesBlob(data.bytes);
-    assert.deepStrictEqual(headerView.parentHeaderHash(), data.parentHeaderHash);
-    assert.deepStrictEqual(headerView.extrinsicHash(), data.extrinsicHash);
-    assert.deepStrictEqual(headerView.priorStateRoot(), data.priorStateRoot);
+    const headerView = Decoder.decodeObject(TestHeader.Codec.View, data.bytes);
+    assert.deepStrictEqual(headerView.parentHeaderHash.view(), data.parentHeaderHash);
+    assert.deepStrictEqual(headerView.extrinsicHash.view(), data.extrinsicHash);
+    assert.deepStrictEqual(headerView.priorStateRoot.view(), data.priorStateRoot);
     // now this should come from cache
-    assert.deepStrictEqual(headerView.parentHeaderHash(), data.parentHeaderHash);
-    assert.deepStrictEqual(headerView.extrinsicHash(), data.extrinsicHash);
-    assert.deepStrictEqual(headerView.priorStateRoot(), data.priorStateRoot);
+    assert.deepStrictEqual(headerView.parentHeaderHash.materialize(), data.parentHeaderHash);
+    assert.deepStrictEqual(headerView.extrinsicHash.materialize(), data.extrinsicHash);
+    assert.deepStrictEqual(headerView.priorStateRoot.materialize(), data.priorStateRoot);
     assert.deepStrictEqual(headerView.encoded(), data.bytes);
   });
 
@@ -89,9 +89,9 @@ describe("Codec Descriptors / class", () => {
     // given
     const data = testData();
 
-    const headerView = TestHeader.Codec.View.fromBytesBlob(data.bytes);
+    const headerView = Decoder.decodeObject(TestHeader.Codec.View, data.bytes);
     // read one data point to have something in cache, but not everything
-    assert.deepStrictEqual(headerView.parentHeaderHash(), data.parentHeaderHash);
+    assert.deepStrictEqual(headerView.parentHeaderHash.view(), data.parentHeaderHash);
 
     const header = headerView.materialize();
     assert.deepStrictEqual(header.parentHeaderHash, data.parentHeaderHash);
@@ -198,7 +198,7 @@ describe("Codec Descriptors / nested views", () => {
     // given
     const blockBytes = testData().bytes;
     const block = Decoder.decodeObject(TestBlock.Codec, blockBytes);
-    const blockView = TestBlock.Codec.View.fromBytesBlob(blockBytes);
+    const blockView = Decoder.decodeObject(TestBlock.Codec.View, blockBytes);
 
     // when
     const encoded = Encoder.encodeObject(TestBlock.Codec, block);
@@ -211,25 +211,25 @@ describe("Codec Descriptors / nested views", () => {
   it("should return a nested view", () => {
     // given
     const data = testData();
-    const blockView = new TestBlock.Codec.View(Decoder.fromBytesBlob(data.bytes));
+    const blockView = Decoder.decodeObject(TestBlock.Codec.View, data.bytes);
 
     // when
-    const headerView = blockView.headerView();
+    const headerView = blockView.header.view();
 
     // then
-    assert.strictEqual(`${headerView.extrinsicHash()}`, `${data.extrinsicHash}`);
-    assert.strictEqual(`${headerView.priorStateRoot()}`, `${data.priorStateRoot}`);
+    assert.strictEqual(`${headerView.extrinsicHash.view()}`, `${data.extrinsicHash}`);
+    assert.strictEqual(`${headerView.priorStateRoot.materialize()}`, `${data.priorStateRoot}`);
   });
 
   it("should return encoded data of the nested view", () => {
     // given
     const data = testData();
-    const blockView = new TestBlock.Codec.View(Decoder.fromBytesBlob(data.bytes));
+    const blockView = Decoder.decodeObject(TestBlock.Codec.View, data.bytes);
     const block = Decoder.decodeObject(TestBlock.Codec, data.bytes);
     const headerEncoded = Encoder.encodeObject(TestHeader.Codec, block.header);
 
     // when
-    const headerView = blockView.headerView();
+    const headerView = blockView.header.view();
 
     // then
     assert.strictEqual(`${headerView.encoded()}`, `${headerEncoded}`);
@@ -238,18 +238,18 @@ describe("Codec Descriptors / nested views", () => {
   it("should create a view after field was decoded", () => {
     // given
     const data = testData();
-    const blockView = new TestBlock.Codec.View(Decoder.fromBytesBlob(data.bytes));
+    const blockView = Decoder.decodeObject(TestBlock.Codec.View, data.bytes);
 
     // when
-    const header = blockView.header();
-    const headerView = blockView.headerView();
+    const header = blockView.header.materialize();
+    const headerView = blockView.header.view();
 
     // then
     assert.strictEqual(`${header.extrinsicHash}`, `${data.extrinsicHash}`);
     assert.strictEqual(`${header.priorStateRoot}`, `${data.priorStateRoot}`);
     // view?
-    assert.strictEqual(`${headerView.extrinsicHash()}`, `${data.extrinsicHash}`);
-    assert.strictEqual(`${headerView.priorStateRoot()}`, `${data.priorStateRoot}`);
+    assert.strictEqual(`${headerView.extrinsicHash.materialize()}`, `${data.extrinsicHash}`);
+    assert.strictEqual(`${headerView.priorStateRoot.materialize()}`, `${data.priorStateRoot}`);
   });
 });
 
