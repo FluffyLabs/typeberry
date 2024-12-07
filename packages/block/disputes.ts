@@ -13,10 +13,10 @@ import type { WorkReportHash } from "./hash";
  */
 export class Fault extends WithDebug {
   static Codec = codec.Class(Fault, {
-    workReportHash: codec.bytes(HASH_SIZE).cast(),
+    workReportHash: codec.bytes(HASH_SIZE).asOpaque(),
     wasConsideredValid: codec.bool,
-    key: codec.bytes(ED25519_KEY_BYTES).cast(),
-    signature: codec.bytes(ED25519_SIGNATURE_BYTES).cast(),
+    key: codec.bytes(ED25519_KEY_BYTES).asOpaque(),
+    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque(),
   });
 
   static fromCodec({ workReportHash, wasConsideredValid, key, signature }: CodecRecord<Fault>) {
@@ -42,9 +42,9 @@ export class Fault extends WithDebug {
  */
 export class Culprit extends WithDebug {
   static Codec = codec.Class(Culprit, {
-    workReportHash: codec.bytes(HASH_SIZE).cast(),
-    key: codec.bytes(ED25519_KEY_BYTES).cast(),
-    signature: codec.bytes(ED25519_SIGNATURE_BYTES).cast(),
+    workReportHash: codec.bytes(HASH_SIZE).asOpaque(),
+    key: codec.bytes(ED25519_KEY_BYTES).asOpaque(),
+    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque(),
   });
 
   static fromCodec({ workReportHash, key, signature }: CodecRecord<Culprit>) {
@@ -69,8 +69,8 @@ export class Culprit extends WithDebug {
 export class Judgement extends WithDebug {
   static Codec = codec.Class(Judgement, {
     isWorkReportValid: codec.bool,
-    index: codec.u16.cast(),
-    signature: codec.bytes(ED25519_SIGNATURE_BYTES).cast(),
+    index: codec.u16.asOpaque(),
+    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque(),
   });
 
   static fromCodec({ isWorkReportValid, index, signature }: CodecRecord<Judgement>) {
@@ -98,15 +98,15 @@ export class Judgement extends WithDebug {
  */
 export class Verdict extends WithDebug {
   static Codec = codec.Class(Verdict, {
-    workReportHash: codec.bytes(HASH_SIZE).cast(),
-    votesEpoch: codec.u32.cast(),
+    workReportHash: codec.bytes(HASH_SIZE).asOpaque(),
+    votesEpoch: codec.u32.asOpaque(),
     votes: codec.select<KnownSizeArray<Judgement, "Validators super majority">>(
       {
         name: "Verdict.votes",
         sizeHint: { bytes: EST_VALIDATORS_SUPER_MAJORITY * (Judgement.Codec.sizeHint.bytes ?? 1), isExact: false },
       },
       withContext("Verdicts.votes", (context) => {
-        return codec.sequenceFixLen(Judgement.Codec, context.validatorsSuperMajority).cast();
+        return codec.sequenceFixLen(Judgement.Codec, context.validatorsSuperMajority).asOpaque();
       }),
     ),
   });

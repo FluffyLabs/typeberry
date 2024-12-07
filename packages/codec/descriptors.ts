@@ -4,6 +4,7 @@ import type { Decode, Decoder } from "./decoder";
 import { type Encode, type Encoder, type SizeHint, addSizeHints } from "./encoder";
 import type { Skip, Skipper } from "./skip";
 import { type ViewOf, objectView } from "./view";
+import {Opaque, asOpaqueType} from "@typeberry/utils";
 
 /**
  * For sequences with unknown length we need to give some size hint.
@@ -62,12 +63,11 @@ export class Descriptor<T, V = T> implements Codec<T>, Skip {
     );
   }
 
-  // TODO [ToDr] probably too lenient typing!
-  /** Safely cast the descriptor value to it's sub-type. */
-  public cast<F extends T>() {
-    return this.convert<F>(
+  /** Safely cast the descriptor value to a opaque type. */
+  public asOpaque<Token extends string>() {
+    return this.convert<Opaque<T, Token>>(
       (i) => i,
-      (o) => o as F,
+      (o) => asOpaqueType(o),
     );
   }
 }

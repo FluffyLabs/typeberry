@@ -23,8 +23,8 @@ export const MAX_NUMBER_OF_WORK_ITEMS = 4;
 export class WorkPackage extends WithDebug {
   static Codec = codec.Class(WorkPackage, {
     authorization: codec.blob,
-    authCodeHost: codec.u32.cast(),
-    authCodeHash: codec.bytes(HASH_SIZE).cast(),
+    authCodeHost: codec.u32.asOpaque(),
+    authCodeHash: codec.bytes(HASH_SIZE).asOpaque(),
     parametrization: codec.blob,
     context: RefineContext.Codec,
     // TODO [ToDr] Constrain the size of the sequence during decoding.

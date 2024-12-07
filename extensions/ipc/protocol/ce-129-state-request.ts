@@ -26,7 +26,7 @@ const trieNodeCodec = codec.bytes<64>(64).convert<TrieNode>(
 
 export class KeyValuePair extends WithDebug {
   static Codec = codec.Class(KeyValuePair, {
-    key: codec.bytes(KEY_SIZE).cast(),
+    key: codec.bytes(KEY_SIZE),
     value: codec.blob,
   });
 
@@ -58,7 +58,7 @@ export class StateResponse extends WithDebug {
 
 export class StateRequest extends WithDebug {
   static Codec = codec.Class(StateRequest, {
-    headerHash: codec.bytes(HASH_SIZE).cast(),
+    headerHash: codec.bytes(HASH_SIZE).asOpaque(),
     startKey: codec.bytes(KEY_SIZE),
     endKey: codec.bytes(KEY_SIZE),
     maximumSize: codec.u32,

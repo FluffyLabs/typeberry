@@ -1,6 +1,6 @@
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
-import { WithDebug } from "@typeberry/utils";
+import { WithDebug, asOpaqueType } from "@typeberry/utils";
 import type { TimeSlot, ValidatorIndex } from "./common";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "./crypto";
 import { WorkReport } from "./work-report";
@@ -8,8 +8,8 @@ import { WorkReport } from "./work-report";
 /** Unique validator index & signature. */
 export class Credential extends WithDebug {
   static Codec = codec.Class(Credential, {
-    validatorIndex: codec.u16.cast(),
-    signature: codec.bytes(ED25519_SIGNATURE_BYTES).cast(),
+    validatorIndex: codec.u16.asOpaque(),
+    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque(),
   });
 
   static fromCodec({ validatorIndex, signature }: CodecRecord<Credential>) {
@@ -34,9 +34,9 @@ export class Credential extends WithDebug {
 export class ReportGuarantee extends WithDebug {
   static Codec = codec.Class(ReportGuarantee, {
     report: WorkReport.Codec,
-    slot: codec.u32.cast(),
+    slot: codec.u32.asOpaque(),
     // TODO [ToDr] constrain the sequence length during decoding.
-    credentials: codec.sequenceVarLen(Credential.Codec).cast(),
+    credentials: codec.sequenceVarLen(Credential.Codec).asOpaque(),
   });
 
   static fromCodec({ report, slot, credentials }: CodecRecord<ReportGuarantee>) {
@@ -72,4 +72,7 @@ export class ReportGuarantee extends WithDebug {
 export type GuaranteesExtrinsic = KnownSizeArray<ReportGuarantee, "0..CoresCount">;
 
 // TODO [ToDr] constrain the sequence length during decoding.
-export const guaranteesExtrinsicCodec = codec.sequenceVarLen(ReportGuarantee.Codec).cast<GuaranteesExtrinsic>();
+export const guaranteesExtrinsicCodec = codec.sequenceVarLen(ReportGuarantee.Codec).convert<GuaranteesExtrinsic>(
+  i => i,
+  asOpaqueType,
+);
