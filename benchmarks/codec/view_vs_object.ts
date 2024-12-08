@@ -77,7 +77,7 @@ const encodedData = encoder.viewResult();
 function compare(
   name: string,
   runView: (view: DescribedBy<typeof TestBlock.Codec.View>) => void,
-  runHeader?: (header: TestBlock) => void,
+  runBlock?: (block: TestBlock) => void,
 ) {
   const res = [
     add(`Get ${name} from View`, () => {
@@ -86,11 +86,11 @@ function compare(
     }),
   ];
 
-  if (runHeader) {
+  if (runBlock) {
     res.unshift(
       add(`Get ${name} from Decoded`, () => {
         const header = TestBlock.Codec.decode(Decoder.fromBytesBlob(encodedData));
-        runHeader(header);
+        runBlock(header);
       }),
     );
   }
