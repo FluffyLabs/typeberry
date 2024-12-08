@@ -60,7 +60,7 @@ describe("LoadOps", () => {
       assert.deepStrictEqual(registers.asUnsigned[registerIndex], expectedValue);
     });
 
-    it("should load u8 from memory to register and fill the rest of bytes with zeros", () => {
+    it("should load u8 from memory to register and extend the number to the register size", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
 
@@ -96,7 +96,7 @@ describe("LoadOps", () => {
       assert.deepStrictEqual(registers.asUnsigned[registerIndex], expectedValue);
     });
 
-    it("should load u16 from memory to register and fill the rest of bytes with zeros", () => {
+    it("should load u16 from memory to register and extend the number to the register size", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
@@ -169,7 +169,7 @@ describe("LoadOps", () => {
       assert.deepStrictEqual(registers.asUnsigned[registerIndex], expectedUnsignedValue);
     });
 
-    it("should load i8 from memory to register and fill the rest of bytes with zeros", () => {
+    it("should load i8 from memory to register and extend the number to the register size", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
@@ -206,7 +206,7 @@ describe("LoadOps", () => {
       assert.deepStrictEqual(registers.asSigned[registerIndex], expectedSignedValue);
     });
 
-    it("should load i16 from memory to register and fill the rest of bytes with zeros", () => {
+    it("should load i16 from memory to register and extend the number to the register size", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
@@ -249,7 +249,7 @@ describe("LoadOps", () => {
       assert.deepStrictEqual(registers.asUnsigned[secondRegisterIndex], expectedUnsignedValue);
     });
 
-    it("should load i8 from memory to register and fill the rest of bytes with zeros", () => {
+    it("should load i8 from memory to register and extend the number to the register size", () => {
       const instructionResult = new InstructionResult();
       const registers = new Registers();
       const address = tryAsMemoryIndex(2);
@@ -294,7 +294,7 @@ describe("LoadOps", () => {
       assert.deepStrictEqual(registers.asUnsigned[secondRegisterIndex], expectedUnsignedValue);
     });
 
-    it("should load i16 from memory to register and fill the rest of bytes with zeros", () => {
+    it("should load i16 from memory to register and extend the number to the register size", () => {
       const instructionResult = new InstructionResult();
       const registers = new Registers();
       const address = tryAsMemoryIndex(2);
@@ -340,7 +340,7 @@ describe("LoadOps", () => {
       assert.deepStrictEqual(registers.asUnsigned[secondRegisterIndex], expectedValue);
     });
 
-    it("should load u8 from memory to register and fill the rest of bytes with zeros", () => {
+    it("should load u8 from memory to register and extend the number to the register size", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(2);
       const memory = new MemoryBuilder()
@@ -383,7 +383,7 @@ describe("LoadOps", () => {
       assert.deepStrictEqual(registers.asUnsigned[secondRegisterIndex], expectedValue);
     });
 
-    it("should load u16 from memory to register and fill the rest of bytes with zeros", () => {
+    it("should load u16 from memory to register and extend the number to the register size", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(2);
       const memory = new MemoryBuilder()
