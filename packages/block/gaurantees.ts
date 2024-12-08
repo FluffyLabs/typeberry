@@ -72,7 +72,6 @@ export class ReportGuarantee extends WithDebug {
 export type GuaranteesExtrinsic = KnownSizeArray<ReportGuarantee, "0..CoresCount">;
 
 // TODO [ToDr] constrain the sequence length during decoding.
-export const guaranteesExtrinsicCodec = codec.sequenceVarLen(ReportGuarantee.Codec).convert<GuaranteesExtrinsic>(
-  i => i,
-  asOpaqueType,
-);
+export const guaranteesExtrinsicCodec = codec
+  .sequenceVarLen(ReportGuarantee.Codec)
+  .convert<GuaranteesExtrinsic>((i) => i, asOpaqueType);

@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
 import { Bytes } from "@typeberry/bytes";
-import { type CodecRecord, Decoder, Encoder, type ViewType, codec } from "@typeberry/codec";
+import { type CodecRecord, Decoder, type DescribedBy, Encoder, codec } from "@typeberry/codec";
 import { type U64, tryAsU64 } from "@typeberry/numbers";
 
 class TestHeader {
@@ -76,7 +76,7 @@ const encodedData = encoder.viewResult();
 
 function compare(
   name: string,
-  runView: (view: ViewType<typeof TestBlock.Codec.View>) => void,
+  runView: (view: DescribedBy<typeof TestBlock.Codec.View>) => void,
   runHeader?: (header: TestBlock) => void,
 ) {
   const res = [

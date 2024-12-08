@@ -79,7 +79,6 @@ export const MAX_NUMBER_OF_TICKETS = 16;
 export type TicketsExtrinsic = KnownSizeArray<SignedTicket, `Size: 0..{MAX_NUMBER_OF_TICKETS}`>;
 
 // TODO [ToDr] constrain the sequence length during decoding.
-export const ticketsExtrinsicCodec = codec.sequenceVarLen(SignedTicket.Codec).convert<TicketsExtrinsic>(
-  i => i,
-  asOpaqueType,
-);
+export const ticketsExtrinsicCodec = codec
+  .sequenceVarLen(SignedTicket.Codec)
+  .convert<TicketsExtrinsic>((i) => i, asOpaqueType);

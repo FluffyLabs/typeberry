@@ -67,7 +67,6 @@ export class AvailabilityAssurance extends WithDebug {
 export type AssurancesExtrinsic = KnownSizeArray<AvailabilityAssurance, "0 .. ValidatorsCount">;
 
 // TODO [ToDr] constrain the sequence length during decoding.
-export const assurancesExtrinsicCodec = codec.sequenceVarLen(AvailabilityAssurance.Codec).convert<AssurancesExtrinsic>(
-  i => i,
-  asOpaqueType,
-);
+export const assurancesExtrinsicCodec = codec
+  .sequenceVarLen(AvailabilityAssurance.Codec)
+  .convert<AssurancesExtrinsic>((i) => i, asOpaqueType);

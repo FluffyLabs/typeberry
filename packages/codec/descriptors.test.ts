@@ -26,6 +26,64 @@ class TestHeader {
   ) {}
 }
 
+describe("Codec Descriptors / sequence view", () => {
+  class MyHash {
+    static Codec = codec.Class(MyHash, {
+      hash: codec.bytes(32),
+    });
+    static fromCodec = ({ hash }: CodecRecord<MyHash>) => new MyHash(hash);
+    constructor(public readonly hash: Bytes<32>) {}
+  }
+
+  const headerSeq = codec.sequenceFixLen(MyHash.Codec, 10);
+  const data = [
+    new MyHash(Bytes.fill(32, 0)),
+    new MyHash(Bytes.fill(32, 1)),
+    new MyHash(Bytes.fill(32, 2)),
+    new MyHash(Bytes.fill(32, 3)),
+    new MyHash(Bytes.fill(32, 4)),
+    new MyHash(Bytes.fill(32, 5)),
+    new MyHash(Bytes.fill(32, 6)),
+    new MyHash(Bytes.fill(32, 7)),
+    new MyHash(Bytes.fill(32, 8)),
+    new MyHash(Bytes.fill(32, 9)),
+  ];
+  const encoded = Encoder.encodeObject(headerSeq, data);
+
+  it("should encode & decode", () => {
+    const seqView = Decoder.decodeObject(headerSeq.View, encoded);
+
+    // when
+    const reEncoded = Encoder.encodeObject(headerSeq.View, seqView);
+
+    // then
+    assert.deepStrictEqual(reEncoded, encoded);
+  });
+
+  it("should retrieve one item", () => {
+    const seqView = Decoder.decodeObject(headerSeq.View, encoded);
+
+    // when
+    const item5 = seqView.get(5);
+
+    // then
+    assert.deepStrictEqual(item5?.materialize(), new MyHash(Bytes.fill(32, 5)));
+    assert.deepStrictEqual(item5?.view().hash.materialize(), Bytes.fill(32, 5));
+    assert.deepStrictEqual(item5?.view().hash.view(), Bytes.fill(32, 5));
+  });
+
+  it("should iterate over all items", () => {
+    const seqView = Decoder.decodeObject(headerSeq.View, encoded);
+
+    let i = 0;
+    for (const item of seqView) {
+      assert.deepStrictEqual(item?.materialize(), new MyHash(Bytes.fill(32, i)));
+      i++;
+    }
+    assert.deepStrictEqual(i, 10);
+  });
+});
+
 describe("Codec Descriptors / object", () => {
   it("should encode & decode", () => {
     const headerCodec = codec.object({

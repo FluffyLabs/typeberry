@@ -1,71 +1,48 @@
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
-import { check } from "@typeberry/utils";
+import { check, ensure } from "@typeberry/utils";
 import type { Decoder } from "./decoder";
-import {
-  type ClassConstructor,
-  type CodecRecord,
-  type Descriptor,
-  type DescriptorRecord,
-  descriptor,
-  forEachDescriptor,
-} from "./descriptors";
-import type { SizeHint } from "./encoder";
-import { type Skip, Skipper } from "./skip";
+import type { ClassConstructor, CodecRecord, Descriptor, DescriptorRecord } from "./descriptors";
+import { Skipper } from "./skip";
 
-export type ViewType<T> = T extends Descriptor<infer V> ? V : never;
-
-export type ViewField<T, V> = {
-  materialize(): T;
-  view(): V;
-};
-
+/** View type for given complex object `T`. */
 export type ViewOf<T, D extends DescriptorRecord<T>> = ObjectView<T> & {
   [K in keyof D]: D[K] extends Descriptor<infer T, infer V> ? ViewField<T, V> : never;
 };
 
-export function objectView<T, D extends DescriptorRecord<T>>(
-  Class: ClassConstructor<T>,
-  descriptors: D,
-  sizeHint: SizeHint,
-  skipper: Skip["skip"],
-): Descriptor<ViewOf<T, D>> {
-  // Create a View, based on the `AbstractView`.
-  class ClassView extends ObjectView<T> {
-    constructor(d: Decoder) {
-      super(d, Class, descriptors);
+/** Object or sequence item that can be either materialized or viewed. */
+export type ViewField<T, V> = {
+  /** Fully decode the underlying data. */
+  materialize(): T;
+  /** Decode just the view of the underlying data. */
+  view(): V;
+};
+
+/** A caching wrapper for either object or sequence item. */
+class ViewFieldInternal<T, V> implements ViewField<T, V> {
+  private cachedValue: T | undefined;
+  private cachedView: V | undefined;
+
+  constructor(
+    private readonly getView: () => V,
+    private readonly getValue: () => T,
+  ) {}
+
+  /** Fully decode the underlying data. */
+  materialize(): T {
+    if (this.cachedValue === undefined) {
+      this.cachedValue = this.getValue();
     }
+    return this.cachedValue;
   }
 
-  // We need to dynamically extend the prototype to add these extra lazy getters.
-  forEachDescriptor(descriptors, (key) => {
-    if (typeof key === "string") {
-      // add method that returns a nested view.
-      Object.defineProperty(ClassView.prototype, key, {
-        get: function (this: ClassView): ViewField<unknown, unknown> {
-          return {
-            view: () => this.getOrDecodeView(key),
-            materialize: () => this.getOrDecode(key),
-          };
-        },
-      });
+  /** Decode just the view of the underlying data. */
+  view(): V {
+    if (this.cachedView === undefined) {
+      this.cachedView = this.getView();
     }
-  });
-
-  return descriptor(
-    `View<${Class.name}>`,
-    sizeHint,
-    (e, t) => {
-      const encoded = t.encoded();
-      e.bytes(Bytes.fromBlob(encoded.raw, encoded.length));
-    },
-    (d) => {
-      const view = new ClassView(d.clone()) as ViewOf<T, D>;
-      skipper(new Skipper(d));
-      return view;
-    },
-    skipper,
-  );
+    return this.cachedView;
+  }
 }
 
 const logger = Logger.new(__filename, "codec/descriptors");
@@ -75,6 +52,9 @@ const logger = Logger.new(__filename, "codec/descriptors");
  */
 export abstract class ObjectView<T> {
   private lastCachedIdx = -1;
+  // TODO [ToDr] Do we really need 3 separate maps?
+  // TODO [ToDr] Return ViewField from here already!
+
   /**
    * Cache of state of the decoder just before particular field.
    * NOTE: make sure to clone the decoder every time you get it from cache!
@@ -209,5 +189,106 @@ export abstract class ObjectView<T> {
     const view = decoder.object<unknown>(descriptor.View);
     this.viewCache.set(field, view);
     return view;
+  }
+}
+
+/**
+ * A lazy-evaluated decoder of a sequence.
+ *
+ * Instead of decoding/allocating the whole collection at once,
+ * you can wrap the decoder into `SequenceView` to do it lazily.
+ *
+ * Collection items can be decoded fully (materialized) or can
+ * just be requested as views.
+ */
+export class SequenceView<T, V = T> {
+  private readonly itemsCache = new Map<number, ViewField<T, V>>();
+  private readonly length: number;
+  private readonly initialDecoderOffset;
+  private lastDecodedIdx = -1;
+
+  constructor(
+    private readonly decoder: Decoder,
+    private readonly descriptor: Descriptor<T, V>,
+    fixedLength?: number,
+  ) {
+    this.initialDecoderOffset = this.decoder.bytesRead();
+    this.length = fixedLength ?? decoder.varU32();
+  }
+
+  /** Iterate over field elements of the view. */
+  *[Symbol.iterator]() {
+    for (let i = 0; i < this.length; i++) {
+      const val = this.get(i);
+      const v: ViewField<T, V> = ensure(
+        val,
+        val !== undefined,
+        "We are within 0..this.length so all items are defined.",
+      );
+      yield v;
+    }
+  }
+
+  /**
+   * Retrieve item at given index.
+   *
+   * The item can be either materialized or it's view can be requested.
+   */
+  get(index: number): ViewField<T, V> | undefined {
+    if (index >= this.length) {
+      return undefined;
+    }
+
+    const v = this.itemsCache.get(index);
+    if (v !== undefined) {
+      return v;
+    }
+
+    // populate the cache
+    return this.decodeUpTo(index);
+  }
+
+  /** Return an encoded value of that object. */
+  encoded(): BytesBlob {
+    // edge case?
+    if (this.length === 0) {
+      return BytesBlob.blobFromNumbers([]);
+    }
+
+    if (this.lastDecodedIdx < this.length - 1) {
+      this.decodeUpTo(this.length - 1);
+    }
+    // now our `this.decoder` points to the end of the object, so we can use
+    // it to determine where is the end of the encoded data.
+    return BytesBlob.blobFrom(this.decoder.source.subarray(this.initialDecoderOffset, this.decoder.bytesRead()));
+  }
+
+  private decodeUpTo(index: number): ViewField<T, V> {
+    check(this.lastDecodedIdx < index, "Unjustified call to `decodeUpTo` - the index is already decodec.");
+    let lastItem = this.itemsCache.get(this.lastDecodedIdx);
+    const skipper = new Skipper(this.decoder);
+
+    // now skip all of the fields and further populate the cache.
+    for (let i = this.lastDecodedIdx + 1; i <= index; i++) {
+      // create new cached prop
+      const fieldDecoder = skipper.decoder.clone();
+      const type = this.descriptor;
+      lastItem = new ViewFieldInternal(
+        () => type.View.decode(fieldDecoder.clone()),
+        () => type.decode(fieldDecoder.clone()),
+      );
+      // skip the field
+      type.skip(skipper);
+      // cache data
+      this.itemsCache.set(i, lastItem);
+      this.lastDecodedIdx = i;
+    }
+
+    const last: ViewField<T, V> = ensure(
+      lastItem,
+      lastItem !== undefined,
+      "Last item must be set, since the loop turns at least once.",
+    );
+    return last;
   }
 }

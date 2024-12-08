@@ -1,10 +1,10 @@
-import { type BitVec, type Bytes, BytesBlob } from "@typeberry/bytes";
+import { type BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { type U8, type U16, type U32, type U64, tryAsU32 as asU32 } from "@typeberry/numbers";
+import { type Opaque, asOpaqueType } from "@typeberry/utils";
 import type { Decode, Decoder } from "./decoder";
 import { type Encode, type Encoder, type SizeHint, addSizeHints } from "./encoder";
-import type { Skip, Skipper } from "./skip";
-import { type ViewOf, objectView } from "./view";
-import {Opaque, asOpaqueType} from "@typeberry/utils";
+import { type Skip, Skipper } from "./skip";
+import { ObjectView, SequenceView, type ViewField, type ViewOf } from "./view";
 
 /**
  * For sequences with unknown length we need to give some size hint.
@@ -71,6 +71,9 @@ export class Descriptor<T, V = T> implements Codec<T>, Skip {
     );
   }
 }
+
+/** Infer the type that is described by given descriptor `T` */
+export type DescribedBy<T> = T extends Descriptor<infer V> ? V : never;
 
 /**
  * Converts a class `T` into an object with the same fields as the class.
@@ -315,27 +318,25 @@ export namespace codec {
     );
 
   /** Variable-length sequence of given type. */
-  export const sequenceVarLen = <T, V = T>(type: Descriptor<T, V>): Descriptor<T[], V[]> =>
-    descriptor<T[], V[]>(
+  export const sequenceVarLen = <T, V = T>(type: Descriptor<T, V>) =>
+    descriptor<T[], SequenceView<T, V>>(
       `Sequence<${type.name}>[?]`,
       { bytes: TYPICAL_SEQUENCE_LENGTH * (type.sizeHint.bytes ?? 0), isExact: false },
       (e, v) => e.sequenceVarLen(type, v),
       (d) => d.sequenceVarLen(type),
       (s) => s.sequenceVarLen(type),
-      // TODO [ToDr] Array view!
-      mapIfNotSame(type, type.View, codec.sequenceVarLen),
+      sequenceView(type),
     );
 
   /** Fixed-length sequence of given type. */
-  export const sequenceFixLen = <T, V = T>(type: Descriptor<T, V>, len: number): Descriptor<T[]> =>
-    descriptor<T[], V[]>(
+  export const sequenceFixLen = <T, V = T>(type: Descriptor<T, V>, len: number) =>
+    descriptor<T[], SequenceView<T, V>>(
       `Sequence<${type.name}>[${len}]`,
       { bytes: len * (type.sizeHint.bytes ?? 0), isExact: type.sizeHint.isExact },
       (e, v) => e.sequenceFixLen(type, v),
       (d) => d.sequenceFixLen(type, len),
       (s) => s.sequenceFixLen(type, len),
-      // TODO [ToDr] Array view!
-      mapIfNotSame(type, type.View, (v) => codec.sequenceFixLen(v, len)),
+      sequenceView(type, { fixedLength: len }),
     );
 
   /** Small dictionary codec. */
@@ -532,4 +533,78 @@ function mapIfNotSame<V, X>(a: unknown, b: V, map: (v: V) => X): X | null {
     return null;
   }
   return map(b);
+}
+
+function objectView<T, D extends DescriptorRecord<T>>(
+  Class: ClassConstructor<T>,
+  descriptors: D,
+  sizeHint: SizeHint,
+  skipper: Skip["skip"],
+): Descriptor<ViewOf<T, D>> {
+  // Create a View, based on the `AbstractView`.
+  class ClassView extends ObjectView<T> {
+    constructor(d: Decoder) {
+      super(d, Class, descriptors);
+    }
+  }
+
+  // We need to dynamically extend the prototype to add these extra lazy getters.
+  forEachDescriptor(descriptors, (key) => {
+    if (typeof key === "string") {
+      // add method that returns a nested view.
+      Object.defineProperty(ClassView.prototype, key, {
+        get: function (this: ClassView): ViewField<unknown, unknown> {
+          return {
+            view: () => this.getOrDecodeView(key),
+            materialize: () => this.getOrDecode(key),
+          };
+        },
+      });
+    }
+  });
+
+  return descriptor(
+    `View<${Class.name}>`,
+    sizeHint,
+    (e, t) => {
+      const encoded = t.encoded();
+      e.bytes(Bytes.fromBlob(encoded.raw, encoded.length));
+    },
+    (d) => {
+      const view = new ClassView(d.clone()) as ViewOf<T, D>;
+      skipper(new Skipper(d));
+      return view;
+    },
+    skipper,
+  );
+}
+
+function sequenceView<T, V = T>(
+  type: Descriptor<T, V>,
+  { fixedLength }: { fixedLength?: number } = {},
+): Descriptor<SequenceView<T, V>> {
+  const isFixLength = fixedLength !== undefined;
+  const typeBytes = type.sizeHint.bytes ?? 0;
+  const sizeHint = isFixLength
+    ? { bytes: typeBytes * fixedLength, isExact: type.sizeHint.isExact }
+    : { bytes: typeBytes * TYPICAL_SEQUENCE_LENGTH, isExact: false };
+
+  const skipper = (s: Skipper) => {
+    return isFixLength ? s.sequenceFixLen(type, fixedLength) : s.sequenceVarLen(type);
+  };
+
+  return descriptor(
+    `SeqView<${type.name}>[${isFixLength ? fixedLength : "?"}]`,
+    sizeHint,
+    (e, t) => {
+      const encoded = t.encoded();
+      e.bytes(Bytes.fromBlob(encoded.raw, encoded.length));
+    },
+    (d) => {
+      const view = new SequenceView(d.clone(), type, fixedLength);
+      skipper(new Skipper(d));
+      return view;
+    },
+    skipper,
+  );
 }

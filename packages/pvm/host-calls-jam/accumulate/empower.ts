@@ -16,8 +16,8 @@ const IN_OUT_REG = 7;
 
 const serviceIdAndGasCodec = codec.object({
   serviceId: codec.u32.convert<ServiceId>(
-    i => i,
-    o => asOpaqueType(o),
+    (i) => i,
+    (o) => asOpaqueType(o),
   ),
   gas: codec.u64.convert<Gas>(
     (i) => tryAsU64(i),

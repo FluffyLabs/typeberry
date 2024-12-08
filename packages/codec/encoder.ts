@@ -4,6 +4,7 @@ import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { check, ensure } from "@typeberry/utils";
 
 export type SizeHint = {
+  // TODO [ToDr] Can we make bytes non-optional?
   bytes?: number;
   isExact: boolean;
 };
