@@ -20,12 +20,14 @@ export class LoadOps {
   }
 
   private loadNumber(address: number, registerIndex: number, numberLength: 1 | 2 | 4) {
-    const registerBytes = this.regs.getBytesAsLittleEndian(registerIndex, numberLength);
-    const loadResult = this.memory.loadInto(registerBytes, tryAsMemoryIndex(address));
+    const registerBytes = this.regs.getBytesAsLittleEndian(registerIndex, REG_SIZE_BYTES);
+    const loadResult = this.memory.loadInto(registerBytes.subarray(0, numberLength), tryAsMemoryIndex(address));
     if (loadResult !== null) {
       this.instructionResult.status = Result.FAULT;
       this.instructionResult.exitParam = address;
     }
+
+    registerBytes.fill(0, numberLength);
   }
 
   private loadSignedNumber(address: number, registerIndex: number, numberLength: 1 | 2) {
@@ -41,6 +43,8 @@ export class LoadOps {
     const msb = registerBytes[numberLength - 1] & 0x80;
     if (msb > 0) {
       registerBytes.fill(0xff, numberLength);
+    } else {
+      registerBytes.fill(0x00, numberLength);
     }
   }
 
