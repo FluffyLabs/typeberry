@@ -554,10 +554,7 @@ function objectView<T, D extends DescriptorRecord<T>>(
       // add method that returns a nested view.
       Object.defineProperty(ClassView.prototype, key, {
         get: function (this: ClassView): ViewField<unknown, unknown> {
-          return {
-            view: () => this.getOrDecodeView(key),
-            materialize: () => this.getOrDecode(key),
-          };
+          return this.get(key);
         },
       });
     }
