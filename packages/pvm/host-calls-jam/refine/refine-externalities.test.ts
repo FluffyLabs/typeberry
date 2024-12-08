@@ -5,7 +5,13 @@ import type { Blake2bHash } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import type { Memory, MemoryIndex } from "@typeberry/pvm-interpreter";
 import type { Result } from "@typeberry/utils";
-import type { InvalidPageError, MachineId, NoMachineError, PeekPokeError, RefineExternalities } from "./refine-externalities";
+import type {
+  InvalidPageError,
+  MachineId,
+  NoMachineError,
+  PeekPokeError,
+  RefineExternalities,
+} from "./refine-externalities";
 
 export class TestRefineExt implements RefineExternalities {
   public readonly historicalLookupData: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
@@ -16,16 +22,36 @@ export class TestRefineExt implements RefineExternalities {
     (code) => code.toString(),
     null,
   ]);
+  public readonly machineExpungeData: MultiMap<
+    Parameters<TestRefineExt["machineExpunge"]>,
+    Result<null, NoMachineError>
+  > = new MultiMap(1);
   public readonly machinePeekData: MultiMap<Parameters<TestRefineExt["machinePeekFrom"]>, Result<null, PeekPokeError>> =
     new MultiMap(5);
   public readonly machinePokeData: MultiMap<Parameters<TestRefineExt["machinePokeInto"]>, Result<null, PeekPokeError>> =
     new MultiMap(5);
-  public readonly machineZeroPagesData: MultiMap<Parameters<TestRefineExt["machineZeroPages"]>, Result<null, NoMachineError>> =
-    new MultiMap(3);
-  public readonly machineVoidPagesData: MultiMap<Parameters<TestRefineExt["machineVoidPages"]>, Result<null, NoMachineError | InvalidPageError>> =
-    new MultiMap(3);
+  public readonly machineVoidPagesData: MultiMap<
+    Parameters<TestRefineExt["machineVoidPages"]>,
+    Result<null, NoMachineError | InvalidPageError>
+  > = new MultiMap(3);
+  public readonly machineZeroPagesData: MultiMap<
+    Parameters<TestRefineExt["machineZeroPages"]>,
+    Result<null, NoMachineError>
+  > = new MultiMap(3);
 
-  machineVoidPages(machineIndex: MachineId, pageStart: U32, pageCount: U32): Promise<Result<null, typeof NoMachineError | InvalidPageError>> {
+  machineExpunge(machineIndex: MachineId): Promise<Result<null, NoMachineError>> {
+    const val = this.machineExpungeData.get(machineIndex);
+    if (val === undefined) {
+      throw new Error(`Unexpected call to machineExpunge with: ${machineIndex}`);
+    }
+    return Promise.resolve(val);
+  }
+
+  machineVoidPages(
+    machineIndex: MachineId,
+    pageStart: U32,
+    pageCount: U32,
+  ): Promise<Result<null, NoMachineError | InvalidPageError>> {
     const val = this.machineVoidPagesData.get(machineIndex, pageStart, pageCount);
     if (val === undefined) {
       throw new Error(`Unexpected call to machineVoidPages with: ${machineIndex}, ${pageStart}, ${pageCount}`);

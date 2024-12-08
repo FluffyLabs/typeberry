@@ -1,21 +1,17 @@
 import { sumU32, tryAsU32 } from "@typeberry/numbers";
 import { type HostCallHandler, type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import {
-  type GasCounter,
-  type Registers,
-  tryAsSmallGas,
-} from "@typeberry/pvm-interpreter";
+import { type GasCounter, type Registers, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { type RefineExternalities, tryAsMachineId } from "./refine-externalities";
-import {MEMORY_SIZE} from "@typeberry/pvm-interpreter/memory/memory-consts";
 
 const IN_OUT_REG = 7;
 
 /** https://graypaper.fluffylabs.dev/#/911af30/333f03333f03 */
 const RESERVED_NUMBER_OF_PAGES = 16;
 /** https://graypaper.fluffylabs.dev/#/911af30/333f03333f03 */
-export const MAX_NUMBER_OF_PAGES = MEMORY_SIZE / 2**12;
+export const MAX_NUMBER_OF_PAGES = MEMORY_SIZE / 2 ** 12;
 
 /**
  * Initialize some pages of memory for writing for a nested PVM.
@@ -43,11 +39,7 @@ export class Zero implements HostCallHandler {
       return;
     }
 
-    const zeroResult = await this.refine.machineZeroPages(
-      machineIndex,
-      pageStart,
-      pageCount,
-    );
+    const zeroResult = await this.refine.machineZeroPages(machineIndex, pageStart, pageCount);
 
     if (zeroResult.isOk) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;

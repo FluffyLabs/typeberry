@@ -1,15 +1,11 @@
 import { sumU32, tryAsU32 } from "@typeberry/numbers";
 import { type HostCallHandler, type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import {
-  type GasCounter,
-  type Registers,
-  tryAsSmallGas,
-} from "@typeberry/pvm-interpreter";
+import { type GasCounter, type Registers, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { assertNever } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import { type RefineExternalities, tryAsMachineId, NoMachineError, InvalidPageError } from "./refine-externalities";
-import {assertNever} from "@typeberry/utils";
-import {MAX_NUMBER_OF_PAGES} from "./zero";
+import { InvalidPageError, NoMachineError, type RefineExternalities, tryAsMachineId } from "./refine-externalities";
+import { MAX_NUMBER_OF_PAGES } from "./zero";
 
 const IN_OUT_REG = 7;
 
@@ -39,11 +35,7 @@ export class Void implements HostCallHandler {
       return;
     }
 
-    const voidResult = await this.refine.machineVoidPages(
-      machineIndex,
-      pageStart,
-      pageCount,
-    );
+    const voidResult = await this.refine.machineVoidPages(machineIndex, pageStart, pageCount);
 
     if (voidResult.isOk) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;

@@ -38,19 +38,18 @@ export type InvalidPageError = typeof InvalidPageError;
 
 /** Host functions external invokations available during refine phase. */
 export interface RefineExternalities {
+  /** Forget a previously started nested VM. */
+  machineExpunge(machineIndex: MachineId): Promise<Result<null, NoMachineError>>;
+
   /** Set given range of pages as non-accessible and re-initialize them with zeros. */
   machineVoidPages(
     machineIndex: MachineId,
     pageStart: U32,
-    pageCount: U32
+    pageCount: U32,
   ): Promise<Result<null, NoMachineError | InvalidPageError>>;
 
   /** Set given range of pages as writeable and initialize them with zeros. */
-  machineZeroPages(
-    machineIndex: MachineId,
-    pageStart: U32,
-    pageCount: U32
-  ): Promise<Result<null, NoMachineError>>;
+  machineZeroPages(machineIndex: MachineId, pageStart: U32, pageCount: U32): Promise<Result<null, NoMachineError>>;
 
   /** Copy a fragment of memory from `machineIndex` into given destination memory. */
   machinePeekFrom(
