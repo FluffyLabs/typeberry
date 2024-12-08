@@ -7,23 +7,19 @@ import {
 } from "@typeberry/pvm-interpreter";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import { type RefineExternalities, tryAsMachineId } from "./refine-externalities";
-import {MEMORY_SIZE} from "@typeberry/pvm-interpreter/memory/memory-consts";
+import { type RefineExternalities, tryAsMachineId, NoMachineError, InvalidPageError } from "./refine-externalities";
+import {assertNever} from "@typeberry/utils";
+import {MAX_NUMBER_OF_PAGES} from "./zero";
 
 const IN_OUT_REG = 7;
 
-/** https://graypaper.fluffylabs.dev/#/911af30/333f03333f03 */
-const RESERVED_NUMBER_OF_PAGES = 16;
-/** https://graypaper.fluffylabs.dev/#/911af30/333f03333f03 */
-export const MAX_NUMBER_OF_PAGES = MEMORY_SIZE / 2**12;
-
 /**
- * Initialize some pages of memory for writing for a nested PVM.
+ * Mark some pages as unavailable and zero their content.
  *
- * https://graypaper.fluffylabs.dev/#/911af30/33bf0233bf02
+ * https://graypaper.fluffylabs.dev/#/5b732de/343b00343b00
  */
-export class Zero implements HostCallHandler {
-  index = tryAsHostCallIndex(21);
+export class Void implements HostCallHandler {
+  index = tryAsHostCallIndex(22);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
@@ -38,21 +34,25 @@ export class Zero implements HostCallHandler {
     const pageCount = tryAsU32(regs.asUnsigned[9]);
 
     const endPage = sumU32(pageStart, pageCount);
-    if (pageStart < RESERVED_NUMBER_OF_PAGES || endPage.overflow || endPage.value >= MAX_NUMBER_OF_PAGES) {
+    if (endPage.overflow || endPage.value >= MAX_NUMBER_OF_PAGES) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
       return;
     }
 
-    const zeroResult = await this.refine.machineZeroPages(
+    const voidResult = await this.refine.machineVoidPages(
       machineIndex,
       pageStart,
       pageCount,
     );
 
-    if (zeroResult.isOk) {
+    if (voidResult.isOk) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
-    } else {
+    } else if (voidResult.error === NoMachineError) {
       regs.asUnsigned[IN_OUT_REG] = HostCallResult.WHO;
+    } else if (voidResult.error === InvalidPageError) {
+      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+    } else {
+      assertNever(voidResult.error);
     }
   }
 }

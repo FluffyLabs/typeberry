@@ -32,8 +32,19 @@ export enum PeekPokeError {
 export const NoMachineError = Symbol("Machine index not found.");
 export type NoMachineError = typeof NoMachineError;
 
+/** Error for `void` host call when there is already a non-accssible page in the range. */
+export const InvalidPageError = Symbol("Attempting to void non-accessible page.");
+export type InvalidPageError = typeof InvalidPageError;
+
 /** Host functions external invokations available during refine phase. */
 export interface RefineExternalities {
+  /** Set given range of pages as non-accessible and re-initialize them with zeros. */
+  machineVoidPages(
+    machineIndex: MachineId,
+    pageStart: U32,
+    pageCount: U32
+  ): Promise<Result<null, NoMachineError | InvalidPageError>>;
+
   /** Set given range of pages as writeable and initialize them with zeros. */
   machineZeroPages(
     machineIndex: MachineId,
