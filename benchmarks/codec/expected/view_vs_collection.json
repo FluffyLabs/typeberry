@@ -1,0 +1,51 @@
+{
+  "name": "Sequence Views",
+  "date": "2024-12-08T09:35:35.899Z",
+  "version": null,
+  "results": [
+    {
+      "name": "Get first element from Decoded",
+      "ops": 21297.38,
+      "margin": 0.56,
+      "percentSlower": 77.66
+    },
+    {
+      "name": "Get first element from View",
+      "ops": 95347.24,
+      "margin": 0.2,
+      "percentSlower": 0
+    },
+    {
+      "name": "Get 50th element from Decoded",
+      "ops": 21082.75,
+      "margin": 0.45,
+      "percentSlower": 77.89
+    },
+    {
+      "name": "Get 50th element from View",
+      "ops": 45900.93,
+      "margin": 2.02,
+      "percentSlower": 51.86
+    },
+    {
+      "name": "Get last element from Decoded",
+      "ops": 20601.7,
+      "margin": 0.33,
+      "percentSlower": 78.39
+    },
+    {
+      "name": "Get last element from View",
+      "ops": 29891.52,
+      "margin": 0.6,
+      "percentSlower": 68.65
+    }
+  ],
+  "fastest": {
+    "name": "Get first element from View",
+    "index": 1
+  },
+  "slowest": {
+    "name": "Get last element from Decoded",
+    "index": 4
+  }
+}
