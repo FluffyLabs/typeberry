@@ -6,6 +6,7 @@ import { type U16, type U32, sumU32 } from "@typeberry/numbers";
 import { type Opaque, WithDebug, asOpaqueType } from "@typeberry/utils";
 import type { ServiceGas, ServiceId } from "./common";
 import type { CodeHash } from "./hash";
+import type { MAX_NUMBER_OF_SEGMENTS, SegmentIndex } from "./work-item-segment";
 
 type WorkItemExtrinsicHash = Opaque<OpaqueHash, "ExtrinsicHash">;
 
@@ -16,7 +17,7 @@ type WorkItemExtrinsicHash = Opaque<OpaqueHash, "ExtrinsicHash">;
 export class ImportSpec extends WithDebug {
   static Codec = codec.Class(ImportSpec, {
     treeRoot: codec.bytes(HASH_SIZE),
-    index: codec.u16,
+    index: codec.u16.cast(),
   });
 
   static fromCodec({ treeRoot, index }: CodecRecord<ImportSpec>) {
@@ -30,7 +31,7 @@ export class ImportSpec extends WithDebug {
      */
     public readonly treeRoot: OpaqueHash,
     /** Index of the prior exported segment. */
-    public readonly index: U16,
+    public readonly index: SegmentIndex,
   ) {
     super();
   }
@@ -148,7 +149,7 @@ export class WorkItem extends WithDebug {
     /** `g`: execution gas limit */
     public readonly gasLimit: ServiceGas,
     /** `i`: sequence of imported data segments, which identify a prior exported segment. */
-    public readonly importSegments: KnownSizeArray<ImportSpec, "Less than 2**11">,
+    public readonly importSegments: KnownSizeArray<ImportSpec, `Less than ${typeof MAX_NUMBER_OF_SEGMENTS}`>,
     /** `x`: sequence of blob hashes and lengths to be introduced in this block */
     public readonly extrinsic: WorkItemExtrinsicSpec[],
     /** `e`: number of data segments exported by this work item. */

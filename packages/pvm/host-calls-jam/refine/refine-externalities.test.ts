@@ -1,13 +1,17 @@
-import type { ServiceId } from "@typeberry/block";
+import type { Segment, SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import type { Memory, MemoryIndex } from "@typeberry/pvm-interpreter";
 import type { Result } from "@typeberry/utils";
-import type { MachineId, PeekPokeError, RefineExternalities } from "./refine-externalities";
+import type { MachineId, PeekPokeError, RefineExternalities, SEGMENT_EXPORT_ERROR } from "./refine-externalities";
 
 export class TestRefineExt implements RefineExternalities {
+  public readonly importSegmentData: Map<SegmentIndex, Segment | null> = new Map();
+  public readonly exportSegmentData: MultiMap<[Segment], Result<SegmentIndex, SEGMENT_EXPORT_ERROR>> = new MultiMap(1, [
+    (segment) => segment.toString(),
+  ]);
   public readonly historicalLookupData: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
     null,
     (key) => key.toString(),
@@ -57,6 +61,22 @@ export class TestRefineExt implements RefineExternalities {
       throw new Error(
         `Unexpected call to machinePokeInto with: ${[machineIndex, sourceStart, destinationStart, length, source]}`,
       );
+    }
+    return Promise.resolve(val);
+  }
+
+  exportSegment(segment: Segment): Result<SegmentIndex, SEGMENT_EXPORT_ERROR> {
+    const result = this.exportSegmentData.get(segment);
+    if (result === undefined) {
+      throw new Error(`Unexpected call to exportSegment with: ${segment}`);
+    }
+    return result;
+  }
+
+  importSegment(segmentIndex: SegmentIndex): Promise<Segment | null> {
+    const val = this.importSegmentData.get(segmentIndex);
+    if (val === undefined) {
+      throw new Error(`Unexpected call to importSegment with: ${segmentIndex}`);
     }
     return Promise.resolve(val);
   }

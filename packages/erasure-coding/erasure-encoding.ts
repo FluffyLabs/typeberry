@@ -4,7 +4,7 @@ import { ShardsCollection, decode, encode } from "reed-solomon-wasm/pkg";
 const SHARD_ALIGNMENT = 64; // Shard size must be multiple of 64 bytes. (reed-solomon-simd limitation: https://github.com/ordian/reed-solomon-simd)
 
 /**
- * The following values ​​are the consequences of the coding rate 342:1023
+ * The following values are the consequences of the coding rate 342:1023
  * https://graypaper.fluffylabs.dev/#/364735a/382100382100
  */
 const N_SHARDS = 342;
