@@ -1,22 +1,24 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { BitVec } from "@typeberry/bytes";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
-import { check, ensure } from "@typeberry/utils";
+import { check } from "@typeberry/utils";
 
+/** Hint for how big the encoded object will be. */
 export type SizeHint = {
-  // TODO [ToDr] Can we make bytes non-optional?
-  bytes?: number;
+  /** Number of bytes in the encoding. */
+  bytes: number;
+  /** Is `bytes` the exact number of bytes that will be used or just a hint? */
   isExact: boolean;
 };
 
 export function tryAsExactBytes(a: SizeHint): number {
   check(a.isExact, "The value is not exact size estimation!");
-  return ensure(a.bytes, a.bytes !== undefined, "The value is undefined!");
+  return a.bytes;
 }
 
 export function addSizeHints(a: SizeHint, b: SizeHint): SizeHint {
   return {
-    bytes: a.bytes !== undefined ? a.bytes + (b.bytes ?? 0) : b.bytes,
+    bytes: a.bytes + b.bytes,
     isExact: a.isExact && b.isExact,
   };
 }
@@ -94,7 +96,7 @@ export class Encoder {
    */
   static encodeObject<T>(encode: Encode<T>, object: T, context?: unknown): BytesBlob {
     const encoder = Encoder.create({
-      expectedLength: encode.sizeHint.bytes ?? DEFAULT_START_LENGTH,
+      expectedLength: encode.sizeHint.bytes || DEFAULT_START_LENGTH,
     });
     encoder.attachContext(context);
     encoder.object(encode, object);
@@ -429,7 +431,7 @@ export class Encoder {
   }
 
   private applySizeHint<T>(encode: Encode<T>, multiply = 1) {
-    const sizeHint = encode.sizeHint.bytes ?? 0;
+    const sizeHint = encode.sizeHint.bytes;
     if (sizeHint > 0 && multiply > 0) {
       this.ensureBigEnough(sizeHint * multiply, { silent: true });
     }

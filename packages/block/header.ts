@@ -76,7 +76,7 @@ export class Header extends WithDebug {
       codec.select<KnownSizeArray<Ticket, "EpochLength">>(
         {
           name: "Header.ticketsMark",
-          sizeHint: { bytes: EST_EPOCH_LENGTH * (Ticket.Codec.sizeHint.bytes ?? 1), isExact: false },
+          sizeHint: { bytes: EST_EPOCH_LENGTH * Ticket.Codec.sizeHint.bytes, isExact: false },
         },
         withContext("Header.ticketsMark", (context) => {
           return codec.sequenceFixLen(Ticket.Codec, context.epochLength).asOpaque();

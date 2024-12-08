@@ -321,7 +321,7 @@ export namespace codec {
   export const sequenceVarLen = <T, V = T>(type: Descriptor<T, V>) =>
     descriptor<T[], SequenceView<T, V>>(
       `Sequence<${type.name}>[?]`,
-      { bytes: TYPICAL_SEQUENCE_LENGTH * (type.sizeHint.bytes ?? 0), isExact: false },
+      { bytes: TYPICAL_SEQUENCE_LENGTH * type.sizeHint.bytes, isExact: false },
       (e, v) => e.sequenceVarLen(type, v),
       (d) => d.sequenceVarLen(type),
       (s) => s.sequenceVarLen(type),
@@ -332,7 +332,7 @@ export namespace codec {
   export const sequenceFixLen = <T, V = T>(type: Descriptor<T, V>, len: number) =>
     descriptor<T[], SequenceView<T, V>>(
       `Sequence<${type.name}>[${len}]`,
-      { bytes: len * (type.sizeHint.bytes ?? 0), isExact: type.sizeHint.isExact },
+      { bytes: len * type.sizeHint.bytes, isExact: type.sizeHint.isExact },
       (e, v) => e.sequenceFixLen(type, v),
       (d) => d.sequenceFixLen(type, len),
       (s) => s.sequenceFixLen(type, len),
@@ -355,7 +355,7 @@ export namespace codec {
       `Dictionary<${key.name}, ${value.name}>[${fixedLength ?? "?"}]`,
       {
         bytes: fixedLength
-          ? fixedLength * (addSizeHints(key.sizeHint, value.sizeHint).bytes ?? 0)
+          ? fixedLength * addSizeHints(key.sizeHint, value.sizeHint).bytes
           : TYPICAL_DICTIONARY_LENGTH * (addSizeHints(key.sizeHint, value.sizeHint).bytes ?? 0),
         isExact: fixedLength ? key.sizeHint.isExact && value.sizeHint.isExact : false,
       },
@@ -402,7 +402,7 @@ export namespace codec {
   export const custom = <T>(
     {
       name,
-      sizeHint = { isExact: false },
+      sizeHint = { bytes: 0, isExact: false },
     }: {
       name: string;
       sizeHint: SizeHint;
@@ -416,7 +416,7 @@ export namespace codec {
   export const select = <T>(
     {
       name,
-      sizeHint = { isExact: false },
+      sizeHint,
     }: {
       name: string;
       sizeHint: SizeHint;
@@ -470,7 +470,7 @@ export namespace codec {
     const skipper = (s: Skipper) => {
       // optimized case for fixed size complex values.
       if (sizeHint.isExact) {
-        return s.decoder.skip(sizeHint.bytes ?? 0);
+        return s.decoder.skip(sizeHint.bytes);
       }
       forEachDescriptor(descriptors, (_key, descriptor) => {
         descriptor.skip(s);
@@ -581,7 +581,7 @@ function sequenceView<T, V = T>(
   { fixedLength }: { fixedLength?: number } = {},
 ): Descriptor<SequenceView<T, V>> {
   const isFixLength = fixedLength !== undefined;
-  const typeBytes = type.sizeHint.bytes ?? 0;
+  const typeBytes = type.sizeHint.bytes;
   const sizeHint = isFixLength
     ? { bytes: typeBytes * fixedLength, isExact: type.sizeHint.isExact }
     : { bytes: typeBytes * TYPICAL_SEQUENCE_LENGTH, isExact: false };

@@ -103,7 +103,7 @@ export class Verdict extends WithDebug {
     votes: codec.select<KnownSizeArray<Judgement, "Validators super majority">>(
       {
         name: "Verdict.votes",
-        sizeHint: { bytes: EST_VALIDATORS_SUPER_MAJORITY * (Judgement.Codec.sizeHint.bytes ?? 1), isExact: false },
+        sizeHint: { bytes: EST_VALIDATORS_SUPER_MAJORITY * Judgement.Codec.sizeHint.bytes, isExact: false },
       },
       withContext("Verdicts.votes", (context) => {
         return codec.sequenceFixLen(Judgement.Codec, context.validatorsSuperMajority).asOpaque();
