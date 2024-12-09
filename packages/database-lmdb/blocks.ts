@@ -6,7 +6,8 @@ import {
   type HeaderHash,
   type HeaderView,
 } from "@typeberry/block";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Bytes } from "@typeberry/bytes";
+import { Decoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database/blocks";
 import { HASH_SIZE, type WithHash } from "@typeberry/hash";
@@ -38,8 +39,8 @@ export class LmdbBlocks implements BlocksDb {
   }
 
   async insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void> {
-    const header = block.data.headerView().encoded();
-    const extrinsic = block.data.extrinsicView().encoded();
+    const header = block.data.header.view().encoded();
+    const extrinsic = block.data.extrinsic.view().encoded();
     const a = this.headers.put(block.hash.raw, header.raw);
     const b = this.extrinsics.put(block.hash.raw, extrinsic.raw);
     await Promise.all([a, b]);
@@ -61,7 +62,7 @@ export class LmdbBlocks implements BlocksDb {
       return null;
     }
 
-    return Header.Codec.View.fromBytesBlob(BytesBlob.blobFrom(data), this.chainSpec) as HeaderView;
+    return Decoder.decodeObject(Header.Codec.View, data, this.chainSpec);
   }
 
   getExtrinsic(hash: HeaderHash): ExtrinsicView | null {
@@ -69,6 +70,6 @@ export class LmdbBlocks implements BlocksDb {
     if (!data) {
       return null;
     }
-    return Extrinsic.Codec.View.fromBytesBlob(BytesBlob.blobFrom(data), this.chainSpec) as ExtrinsicView;
+    return Decoder.decodeObject(Extrinsic.Codec.View, data, this.chainSpec);
   }
 }

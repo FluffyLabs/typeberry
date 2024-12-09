@@ -30,8 +30,8 @@ export class InMemoryBlocks implements BlocksDb {
   private bestHeaderHash: HeaderHash = Bytes.zero(HASH_SIZE).asOpaque();
 
   insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void> {
-    this.headersByHash.set(block.hash, block.data.headerView() as HeaderView);
-    this.extrinsicsByHeaderHash.set(block.hash, block.data.extrinsicView() as ExtrinsicView);
+    this.headersByHash.set(block.hash, block.data.header.view());
+    this.extrinsicsByHeaderHash.set(block.hash, block.data.extrinsic.view());
 
     return Promise.resolve();
   }

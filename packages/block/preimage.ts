@@ -10,7 +10,7 @@ import type { ServiceId } from "./common";
  */
 export class Preimage extends WithDebug {
   static Codec = codec.Class(Preimage, {
-    requester: codec.u32.cast(),
+    requester: codec.u32.asOpaque(),
     blob: codec.blob,
   });
   static fromCodec({ requester, blob }: CodecRecord<Preimage>) {

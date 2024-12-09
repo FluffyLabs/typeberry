@@ -1,10 +1,10 @@
 import { Bytes } from "@typeberry/bytes";
-import { type CodecRecord, type View, codec } from "@typeberry/codec";
+import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { EST_EPOCH_LENGTH, EST_VALIDATORS } from "@typeberry/config";
 import { HASH_SIZE, WithHash } from "@typeberry/hash";
 import type { TrieHash } from "@typeberry/trie";
-import { WithDebug } from "@typeberry/utils";
+import { WithDebug, asOpaqueType } from "@typeberry/utils";
 import { type EntropyHash, type TimeSlot, type ValidatorIndex, tryAsTimeSlot, tryAsValidatorIndex } from "./common";
 import { withContext } from "./context";
 import {
@@ -27,15 +27,18 @@ import { Ticket } from "./tickets";
  */
 export class EpochMarker extends WithDebug {
   static Codec = codec.Class(EpochMarker, {
-    entropy: codec.bytes(HASH_SIZE).cast(),
-    ticketsEntropy: codec.bytes(HASH_SIZE).cast(),
-    validators: codec.select(
+    entropy: codec.bytes(HASH_SIZE).asOpaque(),
+    ticketsEntropy: codec.bytes(HASH_SIZE).asOpaque(),
+    validators: codec.select<EpochMarker["validators"]>(
       {
         name: "EpochMark.validators",
         sizeHint: { bytes: EST_VALIDATORS * BANDERSNATCH_KEY_BYTES, isExact: false },
       },
       withContext("EpochMark.validators", (context) => {
-        return codec.sequenceFixLen(codec.bytes(BANDERSNATCH_KEY_BYTES), context.validatorsCount).cast();
+        return codec.sequenceFixLen(codec.bytes(BANDERSNATCH_KEY_BYTES), context.validatorsCount).convert(
+          (i) => i,
+          (o) => asOpaqueType(o.map((x): BandersnatchKey => asOpaqueType(x))),
+        );
       }),
     ),
   });
@@ -64,26 +67,26 @@ export class EpochMarker extends WithDebug {
  */
 export class Header extends WithDebug {
   static Codec = codec.Class(Header, {
-    parentHeaderHash: codec.bytes(HASH_SIZE).cast(),
-    priorStateRoot: codec.bytes(HASH_SIZE).cast(),
-    extrinsicHash: codec.bytes(HASH_SIZE).cast(),
-    timeSlotIndex: codec.u32.cast(),
+    parentHeaderHash: codec.bytes(HASH_SIZE).asOpaque(),
+    priorStateRoot: codec.bytes(HASH_SIZE).asOpaque(),
+    extrinsicHash: codec.bytes(HASH_SIZE).asOpaque(),
+    timeSlotIndex: codec.u32.asOpaque(),
     epochMarker: codec.optional(EpochMarker.Codec),
     ticketsMarker: codec.optional(
-      codec.select(
+      codec.select<KnownSizeArray<Ticket, "EpochLength">>(
         {
           name: "Header.ticketsMark",
-          sizeHint: { bytes: EST_EPOCH_LENGTH * (Ticket.Codec.sizeHint.bytes ?? 1), isExact: false },
+          sizeHint: { bytes: EST_EPOCH_LENGTH * Ticket.Codec.sizeHint.bytes, isExact: false },
         },
         withContext("Header.ticketsMark", (context) => {
-          return codec.sequenceFixLen(Ticket.Codec, context.epochLength).cast();
+          return codec.sequenceFixLen(Ticket.Codec, context.epochLength).asOpaque();
         }),
       ),
     ),
-    offendersMarker: codec.sequenceVarLen(codec.bytes(ED25519_KEY_BYTES).cast()),
-    bandersnatchBlockAuthorIndex: codec.u16.cast(),
-    entropySource: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).cast(),
-    seal: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).cast(),
+    offendersMarker: codec.sequenceVarLen(codec.bytes(ED25519_KEY_BYTES).asOpaque()),
+    bandersnatchBlockAuthorIndex: codec.u16.asOpaque(),
+    entropySource: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque(),
+    seal: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque(),
   });
 
   static fromCodec(h: CodecRecord<Header>) {
@@ -136,7 +139,7 @@ export class Header extends WithDebug {
 }
 
 /** Undecoded View of the [`Header`]. */
-export type HeaderView = View<Header, "epochMarker">;
+export type HeaderView = DescribedBy<typeof Header.Codec.View>;
 
 /**
  *  A codec-aware header with hash.
@@ -147,7 +150,7 @@ export type HeaderView = View<Header, "epochMarker">;
  */
 class HeaderWithHash extends WithHash<HeaderHash, Header> {
   static Codec = codec.Class(HeaderWithHash, {
-    hash: codec.bytes(HASH_SIZE).cast(),
+    hash: codec.bytes(HASH_SIZE).asOpaque(),
     data: Header.Codec,
   });
 

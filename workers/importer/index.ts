@@ -45,7 +45,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
     );
 
     worker.onBlock.on(async (b) => {
-      logger.info(`Got block: ${b.headerView().timeSlotIndex()}`);
+      logger.info(`Got block: ${b.header.view().timeSlotIndex.materialize()}`);
       const bestHeader = await importer.importBlock(b);
 
       worker.announce(port, bestHeader);

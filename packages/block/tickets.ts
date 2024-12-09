@@ -2,7 +2,7 @@ import type { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type Opaque, WithDebug } from "@typeberry/utils";
+import { type Opaque, WithDebug, asOpaqueType } from "@typeberry/utils";
 import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "./crypto";
 
 /**
@@ -23,7 +23,7 @@ export const ticketAttemptCodec = codec.bool.convert<TicketAttempt>(
 export class SignedTicket extends WithDebug {
   static Codec = codec.Class(SignedTicket, {
     attempt: ticketAttemptCodec,
-    signature: codec.bytes(BANDERSNATCH_PROOF_BYTES).cast(),
+    signature: codec.bytes(BANDERSNATCH_PROOF_BYTES).asOpaque(),
   });
 
   static fromCodec({ attempt, signature }: CodecRecord<SignedTicket>) {
@@ -79,4 +79,6 @@ export const MAX_NUMBER_OF_TICKETS = 16;
 export type TicketsExtrinsic = KnownSizeArray<SignedTicket, `Size: 0..{MAX_NUMBER_OF_TICKETS}`>;
 
 // TODO [ToDr] constrain the sequence length during decoding.
-export const ticketsExtrinsicCodec = codec.sequenceVarLen(SignedTicket.Codec).cast<TicketsExtrinsic>();
+export const ticketsExtrinsicCodec = codec
+  .sequenceVarLen(SignedTicket.Codec)
+  .convert<TicketsExtrinsic>((i) => i, asOpaqueType);

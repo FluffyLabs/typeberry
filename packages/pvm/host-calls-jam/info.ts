@@ -22,7 +22,7 @@ import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
  */
 export class AccountInfo extends WithDebug {
   static Codec = codec.Class(AccountInfo, {
-    codeHash: codec.bytes(HASH_SIZE).cast(),
+    codeHash: codec.bytes(HASH_SIZE).asOpaque(),
     balance: codec.u64,
     thresholdBalance: codec.u64,
     accumulateMinGas: codec.u64.convert(

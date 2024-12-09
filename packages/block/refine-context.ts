@@ -20,11 +20,11 @@ export type BeefyHash = Opaque<OpaqueHash, "BeefyHash">;
  */
 export class RefineContext extends WithDebug {
   static Codec = codec.Class(RefineContext, {
-    anchor: codec.bytes(HASH_SIZE).cast(),
-    stateRoot: codec.bytes(HASH_SIZE).cast(),
-    beefyRoot: codec.bytes(HASH_SIZE).cast(),
-    lookupAnchor: codec.bytes(HASH_SIZE).cast(),
-    lookupAnchorSlot: codec.u32.cast(),
+    anchor: codec.bytes(HASH_SIZE).asOpaque(),
+    stateRoot: codec.bytes(HASH_SIZE).asOpaque(),
+    beefyRoot: codec.bytes(HASH_SIZE).asOpaque(),
+    lookupAnchor: codec.bytes(HASH_SIZE).asOpaque(),
+    lookupAnchorSlot: codec.u32.asOpaque(),
     prerequisites: codec.sequenceVarLen(codec.bytes(HASH_SIZE)),
   });
 

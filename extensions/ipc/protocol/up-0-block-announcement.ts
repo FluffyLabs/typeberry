@@ -19,8 +19,8 @@ export const STREAM_KIND = 0 as StreamKind;
 
 export class HashAndSlot extends WithDebug {
   static Codec = codec.Class(HashAndSlot, {
-    hash: codec.bytes(HASH_SIZE).cast(),
-    slot: codec.u32.cast(),
+    hash: codec.bytes(HASH_SIZE).asOpaque(),
+    slot: codec.u32.asOpaque(),
   });
 
   static fromCodec({ hash, slot }: CodecRecord<HashAndSlot>) {

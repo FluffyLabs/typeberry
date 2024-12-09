@@ -40,7 +40,7 @@ export class ImportSpec extends WithDebug {
 /** Introduced blob hashes and their lengths. */
 export class WorkItemExtrinsicSpec extends WithDebug {
   static Codec = codec.Class(WorkItemExtrinsicSpec, {
-    hash: codec.bytes(HASH_SIZE).cast(),
+    hash: codec.bytes(HASH_SIZE).asOpaque(),
     len: codec.u32,
   });
 
@@ -111,12 +111,12 @@ export function workItemExtrinsicsCodec(workItems: WorkItem[]) {
  */
 export class WorkItem extends WithDebug {
   static Codec = codec.Class(WorkItem, {
-    service: codec.u32.cast(),
-    codeHash: codec.bytes(HASH_SIZE).cast(),
+    service: codec.u32.asOpaque(),
+    codeHash: codec.bytes(HASH_SIZE).asOpaque(),
     payload: codec.blob,
-    gasLimit: codec.u64.cast(),
+    gasLimit: codec.u64.asOpaque(),
     // TODO [ToDr] Limit the number of items when decoding.
-    importSegments: codec.sequenceVarLen(ImportSpec.Codec).cast(),
+    importSegments: codec.sequenceVarLen(ImportSpec.Codec).asOpaque(),
     extrinsic: codec.sequenceVarLen(WorkItemExtrinsicSpec.Codec),
     // TODO [ToDr] Verify the size is lower than 2**11 when importing
     exportCount: codec.u16,
