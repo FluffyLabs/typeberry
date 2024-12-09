@@ -17,7 +17,7 @@ type WorkItemExtrinsicHash = Opaque<OpaqueHash, "ExtrinsicHash">;
 export class ImportSpec extends WithDebug {
   static Codec = codec.Class(ImportSpec, {
     treeRoot: codec.bytes(HASH_SIZE),
-    index: codec.u16.cast(),
+    index: codec.u16.asOpaque(),
   });
 
   static fromCodec({ treeRoot, index }: CodecRecord<ImportSpec>) {
