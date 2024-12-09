@@ -37,7 +37,7 @@ class Missing implements HostCallHandler {
   currentServiceId = CURRENT_SERVICE_ID;
 
   execute(_gas: GasCounter, regs: Registers, _memory: Memory): Promise<PvmExecution | undefined> {
-    regs.set(7, HostCallResult.WHAT);
+    regs.setU32(7, HostCallResult.WHAT);
     return Promise.resolve(undefined);
   }
 }

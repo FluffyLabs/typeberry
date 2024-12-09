@@ -22,7 +22,7 @@ describe("DynamicJumpOps", () => {
     basicBlocks.reset(code, mask);
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
-    regs.set(registerIndex, 3);
+    regs.setU32(registerIndex, 3);
 
     dynamicJumpOps.jumpInd(1, registerIndex);
 
@@ -40,7 +40,7 @@ describe("DynamicJumpOps", () => {
     basicBlocks.reset(code, mask);
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
-    regs.set(registerIndex, MAX_VALUE);
+    regs.setU32(registerIndex, MAX_VALUE);
 
     dynamicJumpOps.jumpInd(5, registerIndex);
 
@@ -55,7 +55,7 @@ describe("DynamicJumpOps", () => {
     const basicBlocks = new BasicBlocks();
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
-    regs.set(registerIndex, 0xff_ff_00_00);
+    regs.setU32(registerIndex, 0xff_ff_00_00);
 
     dynamicJumpOps.jumpInd(0, registerIndex);
 
@@ -69,7 +69,7 @@ describe("DynamicJumpOps", () => {
     const basicBlocks = new BasicBlocks();
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
-    regs.set(registerIndex, 0);
+    regs.setU32(registerIndex, 0);
 
     dynamicJumpOps.jumpInd(0, registerIndex);
 
@@ -83,7 +83,7 @@ describe("DynamicJumpOps", () => {
     const basicBlocks = new BasicBlocks();
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
-    regs.set(registerIndex, 11);
+    regs.setU32(registerIndex, 11);
 
     dynamicJumpOps.jumpInd(5, registerIndex);
 
@@ -97,7 +97,7 @@ describe("DynamicJumpOps", () => {
     const basicBlocks = new BasicBlocks();
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
-    regs.set(registerIndex, 4);
+    regs.setU32(registerIndex, 4);
 
     dynamicJumpOps.jumpInd(5, registerIndex);
 
@@ -111,7 +111,7 @@ describe("DynamicJumpOps", () => {
     const basicBlocks = new BasicBlocks();
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
-    regs.set(registerIndex, 3);
+    regs.setU32(registerIndex, 3);
 
     dynamicJumpOps.jumpInd(5, registerIndex);
 
@@ -128,7 +128,7 @@ describe("DynamicJumpOps", () => {
     basicBlocks.reset(code, mask);
     const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
     const registerIndex = 0;
-    regs.set(registerIndex, 3);
+    regs.setU32(registerIndex, 3);
 
     dynamicJumpOps.jumpInd(5, registerIndex);
 

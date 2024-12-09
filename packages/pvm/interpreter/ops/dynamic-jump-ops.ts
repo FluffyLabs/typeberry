@@ -40,7 +40,7 @@ export class DynamicJumpOps {
   }
 
   jumpInd(immediateValue: number, registerIndex: number) {
-    const registerValue = this.regs.get(registerIndex);
+    const registerValue = this.regs.getU32(registerIndex);
     const address = addWithOverflow(registerValue, immediateValue);
     this.djump(address);
   }

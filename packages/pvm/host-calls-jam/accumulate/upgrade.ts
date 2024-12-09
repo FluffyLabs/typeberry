@@ -30,17 +30,17 @@ export class Upgrade implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // `o`
-    const codeHashStart = tryAsMemoryIndex(regs.get(IN_OUT_REG));
-    const g_h = tryAsU32(regs.get(8));
-    const g_l = tryAsU32(regs.get(9));
-    const m_h = tryAsU32(regs.get(10));
-    const m_l = tryAsU32(regs.get(11));
+    const codeHashStart = tryAsMemoryIndex(regs.getU32(IN_OUT_REG));
+    const g_h = tryAsU32(regs.getU32(8));
+    const g_l = tryAsU32(regs.getU32(9));
+    const m_h = tryAsU32(regs.getU32(10));
+    const m_l = tryAsU32(regs.getU32(11));
 
     // `c`
     const codeHash = Bytes.zero(HASH_SIZE);
     const pageFault = memory.loadInto(codeHash.raw, codeHashStart);
     if (pageFault !== null) {
-      regs.set(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 
@@ -49,7 +49,7 @@ export class Upgrade implements HostCallHandler {
 
     this.partialState.upgradeService(codeHash.asOpaque(), gas, allowance);
 
-    regs.set(IN_OUT_REG, HostCallResult.OK);
+    regs.setU32(IN_OUT_REG, HostCallResult.OK);
     return;
   }
 }

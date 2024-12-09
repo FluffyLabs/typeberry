@@ -27,8 +27,8 @@ const gas = gasCounter(tryAsGas(0));
 function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = tryAsExactBytes(AccountInfo.Codec.sizeHint)) {
   const memStart = 20_000;
   const registers = new Registers();
-  registers.set(SERVICE_ID_REG, serviceId);
-  registers.set(DEST_START_REG, memStart);
+  registers.setU32(SERVICE_ID_REG, serviceId);
+  registers.setU32(DEST_START_REG, memStart);
 
   const builder = new MemoryBuilder();
   builder.setWriteable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + accountInfoLength));
@@ -71,7 +71,7 @@ describe("HostCalls: Info", () => {
     await info.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(readInfo(), accounts.data.get(serviceId));
   });
 
@@ -85,7 +85,7 @@ describe("HostCalls: Info", () => {
     await info.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.NONE);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.NONE);
   });
 
   it("should write OOB if not enough memory allocated", async () => {
@@ -113,6 +113,6 @@ describe("HostCalls: Info", () => {
     await info.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
   });
 });

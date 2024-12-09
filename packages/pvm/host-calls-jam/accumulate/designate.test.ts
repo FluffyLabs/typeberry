@@ -28,7 +28,7 @@ function prepareRegsAndMemory(
 ) {
   const memStart = 20_000;
   const registers = new Registers();
-  registers.set(VALIDATORS_DATA_START_REG, memStart);
+  registers.setU32(VALIDATORS_DATA_START_REG, memStart);
 
   const builder = new MemoryBuilder();
 
@@ -69,7 +69,7 @@ describe("HostCalls: Designate", () => {
     await designate.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accumulate.validatorsData.length, 0);
   });
 
@@ -97,7 +97,7 @@ describe("HostCalls: Designate", () => {
     await designate.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(
       accumulate.validatorsData[0][0].toString(),
       `ValidatorData {

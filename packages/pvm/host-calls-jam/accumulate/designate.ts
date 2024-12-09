@@ -30,20 +30,20 @@ export class Designate implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // `o`
-    const validatorsStart = tryAsMemoryIndex(regs.get(IN_OUT_REG));
+    const validatorsStart = tryAsMemoryIndex(regs.getU32(IN_OUT_REG));
 
     const res = new Uint8Array(VALIDATOR_DATA_BYTES * this.chainSpec.validatorsCount);
     const pageFault = memory.loadInto(res, validatorsStart);
     // page fault while reading the memory.
     if (pageFault !== null) {
-      regs.set(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 
     const d = Decoder.fromBlob(res);
     const validatorsData = d.sequenceFixLen(ValidatorData.Codec, this.chainSpec.validatorsCount);
 
-    regs.set(IN_OUT_REG, HostCallResult.OK);
+    regs.setU32(IN_OUT_REG, HostCallResult.OK);
     this.partialState.updateValidatorsData(asOpaqueType(validatorsData));
     return;
   }

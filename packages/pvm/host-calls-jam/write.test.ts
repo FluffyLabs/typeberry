@@ -68,10 +68,10 @@ function prepareRegsAndMemory(
   const keyAddress = 150_000;
   const memStart = 20_000;
   const registers = new Registers();
-  registers.set(KEY_START_REG, keyAddress);
-  registers.set(KEY_LEN_REG, key.length);
-  registers.set(DEST_START_REG, memStart);
-  registers.set(DEST_LEN_REG, dataInMemory.length);
+  registers.setU32(KEY_START_REG, keyAddress);
+  registers.setU32(KEY_LEN_REG, key.length);
+  registers.setU32(DEST_START_REG, memStart);
+  registers.setU32(DEST_LEN_REG, dataInMemory.length);
 
   const builder = new MemoryBuilder();
   if (!skipKey) {
@@ -101,7 +101,7 @@ describe("HostCalls: Write", () => {
     await write.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), "old data".length);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), "old data".length);
     assert.deepStrictEqual(accounts.data.get(serviceId, hash)?.asText(), "hello world!");
   });
 
@@ -119,7 +119,7 @@ describe("HostCalls: Write", () => {
     await write.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.NONE);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.NONE);
     assert.deepStrictEqual(accounts.data.get(serviceId, hash), undefined);
   });
 
@@ -137,7 +137,7 @@ describe("HostCalls: Write", () => {
     await write.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accounts.data.data.size, 0);
   });
 
@@ -155,7 +155,7 @@ describe("HostCalls: Write", () => {
     await write.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accounts.data.data.size, 0);
   });
 
@@ -166,13 +166,13 @@ describe("HostCalls: Write", () => {
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
-    registers.set(KEY_LEN_REG, 10);
+    registers.setU32(KEY_LEN_REG, 10);
 
     // when
     await write.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accounts.data.data.size, 0);
   });
 
@@ -183,13 +183,13 @@ describe("HostCalls: Write", () => {
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
-    registers.set(DEST_LEN_REG, 50);
+    registers.setU32(DEST_LEN_REG, 50);
 
     // when
     await write.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accounts.data.data.size, 0);
   });
 
@@ -207,7 +207,7 @@ describe("HostCalls: Write", () => {
     await write.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.FULL);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.FULL);
     assert.deepStrictEqual(accounts.data.data.size, 0);
   });
 });

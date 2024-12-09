@@ -1,7 +1,7 @@
 import { type Opaque, check, ensure } from "@typeberry/utils";
 
 export const NO_OF_REGISTERS = 13;
-const REGISTER_SIZE_SHIFT = 2;
+const REGISTER_SIZE_SHIFT = 3;
 
 export type RegisterIndex = Opaque<number, "register index">;
 
@@ -9,13 +9,13 @@ export const tryAsRegisterIndex = (index: number): RegisterIndex =>
   ensure(index, index >= 0 && index <= NO_OF_REGISTERS, `Incorrect register index: ${index}!`);
 
 export class Registers {
-  private asSigned: Int32Array;
-  private asUnsigned: Uint32Array;
+  private asSigned: BigInt64Array;
+  private asUnsigned: BigUint64Array;
 
   constructor(private readonly bytes = new Uint8Array(NO_OF_REGISTERS << REGISTER_SIZE_SHIFT)) {
     check(bytes.length === NO_OF_REGISTERS << REGISTER_SIZE_SHIFT, "Invalid size of registers array.");
-    this.asSigned = new Int32Array(bytes.buffer, bytes.byteOffset);
-    this.asUnsigned = new Uint32Array(bytes.buffer, bytes.byteOffset);
+    this.asSigned = new BigInt64Array(bytes.buffer, bytes.byteOffset);
+    this.asUnsigned = new BigUint64Array(bytes.buffer, bytes.byteOffset);
   }
 
   getBytesAsLittleEndian(index: number, len: number) {
@@ -23,30 +23,46 @@ export class Registers {
     return this.bytes.subarray(offset, offset + len);
   }
 
-  copyFrom(regs: Registers | Uint32Array) {
-    const array = regs instanceof Uint32Array ? regs : regs.asUnsigned;
+  copyFrom(regs: Registers | BigUint64Array) {
+    const array = regs instanceof BigUint64Array ? regs : regs.asUnsigned;
     this.asUnsigned.set(array);
   }
 
   reset() {
     for (let i = 0; i < NO_OF_REGISTERS; i++) {
-      this.asUnsigned[i] = 0;
+      this.asUnsigned[i] = 0n;
     }
   }
 
-  get(registerIndex: number, asSigned = false) {
-    if (asSigned) {
-      return this.asSigned[registerIndex];
-    }
+  getU32(registerIndex: number) {
+    return Number(this.asUnsigned[registerIndex] & 0xff_ff_ff_ffn);
+  }
 
+  getI32(registerIndex: number) {
+    return Number(this.asSigned[registerIndex]) >> 0;
+  }
+
+  setU32(registerIndex: number, value: number) {
+    this.asUnsigned[registerIndex] = BigInt(value);
+  }
+
+  setI32(registerIndex: number, value: number) {
+    this.asSigned[registerIndex] = BigInt(value);
+  }
+
+  getU64(registerIndex: number) {
     return this.asUnsigned[registerIndex];
   }
 
-  set(registerIndex: number, value: number, asSigned = false) {
-    if (asSigned) {
-      this.asSigned[registerIndex] = value;
-    } else {
-      this.asUnsigned[registerIndex] = value;
-    }
+  getI64(registerIndex: number) {
+    return this.asSigned[registerIndex];
+  }
+
+  setU64(registerIndex: number, value: bigint) {
+    this.asUnsigned[registerIndex] = value;
+  }
+
+  setI64(registerIndex: number, value: bigint) {
+    this.asSigned[registerIndex] = value;
   }
 }

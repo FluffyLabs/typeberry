@@ -8,6 +8,6 @@ export class MemoryOps {
   ) {}
 
   sbrk(firstIndex: number, resultIndex: number) {
-    this.regs.set(resultIndex, this.memory.sbrk(this.regs.get(firstIndex)));
+    this.regs.setU32(resultIndex, this.memory.sbrk(this.regs.getU32(firstIndex)));
   }
 }

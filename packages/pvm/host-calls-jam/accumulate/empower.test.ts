@@ -36,11 +36,11 @@ function prepareRegsAndMemory(
 ) {
   const memStart = 20_000;
   const registers = new Registers();
-  registers.set(SERVICE_M, tryAsServiceId(5));
-  registers.set(SERVICE_A, tryAsServiceId(10));
-  registers.set(SERVICE_V, tryAsServiceId(15));
-  registers.set(DICTIONARY_START, memStart);
-  registers.set(DICTIONARY_COUNT, dictionary.length);
+  registers.setU32(SERVICE_M, tryAsServiceId(5));
+  registers.setU32(SERVICE_A, tryAsServiceId(10));
+  registers.setU32(SERVICE_V, tryAsServiceId(15));
+  registers.setU32(DICTIONARY_START, memStart);
+  registers.setU32(DICTIONARY_COUNT, dictionary.length);
 
   const builder = new MemoryBuilder();
 
@@ -74,7 +74,7 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.privilegedServices, [
       [tryAsServiceId(5), tryAsServiceId(10), tryAsServiceId(15), expected],
     ]);
@@ -92,7 +92,7 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 
@@ -110,7 +110,7 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 
@@ -127,7 +127,7 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 });

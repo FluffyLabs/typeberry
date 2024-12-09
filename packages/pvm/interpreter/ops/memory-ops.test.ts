@@ -14,13 +14,13 @@ describe("MemoryOps", () => {
     const resultIndex = 1;
     const lengthIndex = 0;
     const length = PAGE_SIZE;
-    regs.set(lengthIndex, length);
+    regs.setU32(lengthIndex, length);
     const expectedMemory = new MemoryBuilder().finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(MAX_MEMORY_INDEX));
     expectedMemory.sbrk(length);
 
     memoryOps.sbrk(lengthIndex, resultIndex);
 
-    assert.deepEqual(regs.get(resultIndex), 0);
+    assert.deepEqual(regs.getU32(resultIndex), 0);
     assert.deepStrictEqual(memory, expectedMemory);
   });
 
@@ -31,13 +31,13 @@ describe("MemoryOps", () => {
     const resultIndex = 1;
     const lengthIndex = 0;
     const length = 2 * PAGE_SIZE;
-    regs.set(lengthIndex, length);
+    regs.setU32(lengthIndex, length);
     const expectedMemory = new MemoryBuilder().finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(MAX_MEMORY_INDEX));
     expectedMemory.sbrk(length);
 
     memoryOps.sbrk(lengthIndex, resultIndex);
 
-    assert.deepEqual(regs.get(resultIndex), 0);
+    assert.deepEqual(regs.getU32(resultIndex), 0);
     assert.deepStrictEqual(memory, expectedMemory);
   });
 
@@ -48,7 +48,7 @@ describe("MemoryOps", () => {
     const resultIndex = 1;
     const lengthIndex = 0;
     const length = PAGE_SIZE;
-    regs.set(lengthIndex, length);
+    regs.setU32(lengthIndex, length);
     const expectedMemory = new MemoryBuilder().finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(MAX_MEMORY_INDEX));
     expectedMemory.sbrk(length);
     expectedMemory.sbrk(length);
@@ -56,7 +56,7 @@ describe("MemoryOps", () => {
     memoryOps.sbrk(lengthIndex, resultIndex);
     memoryOps.sbrk(lengthIndex, resultIndex);
 
-    assert.deepEqual(regs.get(resultIndex), PAGE_SIZE);
+    assert.deepEqual(regs.getU32(resultIndex), PAGE_SIZE);
     assert.deepStrictEqual(memory, expectedMemory);
   });
 });

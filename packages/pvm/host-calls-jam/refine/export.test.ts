@@ -23,8 +23,8 @@ function prepareRegsAndMemory(
 ) {
   const memStart = 3_145_728;
   const registers = new Registers();
-  registers.set(SEGMENT_START_REG, memStart);
-  registers.set(SEGMENT_LENGTH_REG, segmentLength);
+  registers.setU32(SEGMENT_START_REG, memStart);
+  registers.setU32(SEGMENT_LENGTH_REG, segmentLength);
 
   const builder = new MemoryBuilder();
   if (!skipSegment) {
@@ -50,7 +50,7 @@ describe("HostCalls: Export", () => {
     await exp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), 15);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), 15);
   });
 
   it("should zero-pad when exported value is small", async () => {
@@ -67,7 +67,7 @@ describe("HostCalls: Export", () => {
     await exp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), 5);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), 5);
   });
 
   it("should fail if memory is not readable", async () => {
@@ -81,7 +81,7 @@ describe("HostCalls: Export", () => {
     await exp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
   });
 
   it("should fail with FULL if export limit is reached", async () => {
@@ -96,6 +96,6 @@ describe("HostCalls: Export", () => {
     await exp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.FULL);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.FULL);
   });
 });

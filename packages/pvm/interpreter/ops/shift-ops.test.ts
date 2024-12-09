@@ -12,7 +12,7 @@ const getRegisters = (data: number[]) => {
   const regs = new Registers();
 
   for (const [i, byte] of data.entries()) {
-    regs.set(i, byte);
+    regs.setU32(i, byte);
   }
 
   return regs;
@@ -28,7 +28,7 @@ test("ShiftOps", async (t) => {
 
     shiftOps.shiftLogicalLeft(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftLogicalLeft with arg overflow", () => {
@@ -40,7 +40,7 @@ test("ShiftOps", async (t) => {
 
     shiftOps.shiftLogicalLeft(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftLogicalLeft with result overflow", () => {
@@ -52,7 +52,7 @@ test("ShiftOps", async (t) => {
 
     shiftOps.shiftLogicalLeft(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftLogicalLeftImmediateAlternative", () => {
@@ -64,7 +64,7 @@ test("ShiftOps", async (t) => {
 
     shiftOps.shiftLogicalLeftImmediateAlternative(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftLogicalLeftImmediateAlternative with arg overflow", () => {
@@ -76,7 +76,7 @@ test("ShiftOps", async (t) => {
 
     shiftOps.shiftLogicalLeftImmediateAlternative(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftLogicalLeftImmediateAlternative with result overflow", () => {
@@ -88,7 +88,7 @@ test("ShiftOps", async (t) => {
 
     shiftOps.shiftLogicalLeftImmediateAlternative(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftLogicalLeftImmediate", () => {
@@ -100,7 +100,7 @@ test("ShiftOps", async (t) => {
 
     shiftOps.shiftLogicalLeftImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftLogicalLeftImmediate with arg overflow", () => {
@@ -112,7 +112,7 @@ test("ShiftOps", async (t) => {
 
     shiftOps.shiftLogicalLeftImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftLogicalLeftImmediate with result overflow", () => {
@@ -124,7 +124,7 @@ test("ShiftOps", async (t) => {
 
     shiftOps.shiftLogicalLeftImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftLogicalRight", () => {
@@ -136,7 +136,7 @@ test("ShiftOps", async (t) => {
 
     shiftOps.shiftLogicalRight(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftLogicalRight with arg overflow", () => {
@@ -148,7 +148,7 @@ test("ShiftOps", async (t) => {
 
     shiftOps.shiftLogicalRight(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftLogicalRightImmediateAlternative", () => {
@@ -160,7 +160,7 @@ test("ShiftOps", async (t) => {
 
     shiftOps.shiftLogicalRightImmediateAlternative(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftLogicalLeftImmediateAlternative with arg overflow", () => {
@@ -172,7 +172,7 @@ test("ShiftOps", async (t) => {
 
     shiftOps.shiftLogicalRightImmediateAlternative(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftLogicalRightImmediate", () => {
@@ -184,7 +184,7 @@ test("ShiftOps", async (t) => {
 
     shiftOps.shiftLogicalRightImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftLogicalRightImmediate with arg overflow", () => {
@@ -196,7 +196,7 @@ test("ShiftOps", async (t) => {
 
     shiftOps.shiftLogicalRightImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftArithmeticRight (positive number)", () => {
@@ -204,13 +204,13 @@ test("ShiftOps", async (t) => {
     const secondValue = 0b10000;
     const resultValue = 0b00010;
     const regs = new Registers();
-    regs.set(FIRST_REGISTER, firstValue);
-    regs.set(SECOND_REGISTER, secondValue, true);
+    regs.setU32(FIRST_REGISTER, firstValue);
+    regs.setI32(SECOND_REGISTER, secondValue);
     const shiftOps = new ShiftOps(regs);
 
     shiftOps.shiftArithmeticRight(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER, true), resultValue);
+    assert.strictEqual(regs.getI32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftArithmeticRight (negative number)", () => {
@@ -218,13 +218,13 @@ test("ShiftOps", async (t) => {
     const secondValue = 0xff_ff_ff_f8; // -8
     const resultValue = 0xff_ff_ff_ff | 0; // -1
     const regs = new Registers();
-    regs.set(FIRST_REGISTER, firstValue);
-    regs.set(SECOND_REGISTER, secondValue, true);
+    regs.setU32(FIRST_REGISTER, firstValue);
+    regs.setI32(SECOND_REGISTER, secondValue);
     const shiftOps = new ShiftOps(regs);
 
     shiftOps.shiftArithmeticRight(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER, true), resultValue);
+    assert.strictEqual(regs.getI32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftArithmeticRight with arg overflow", () => {
@@ -232,13 +232,13 @@ test("ShiftOps", async (t) => {
     const secondValue = 0b10000;
     const resultValue = 0b00010;
     const regs = new Registers();
-    regs.set(FIRST_REGISTER, firstValue);
-    regs.set(SECOND_REGISTER, secondValue, true);
+    regs.setU32(FIRST_REGISTER, firstValue);
+    regs.setI32(SECOND_REGISTER, secondValue);
     const shiftOps = new ShiftOps(regs);
 
     shiftOps.shiftArithmeticRight(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER, true), resultValue);
+    assert.strictEqual(regs.getI32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftArithmeticRightImmediateAlternative (positive number)", () => {
@@ -246,12 +246,12 @@ test("ShiftOps", async (t) => {
     const secondValue = 0b10000;
     const resultValue = 0b00010;
     const regs = new Registers();
-    regs.set(FIRST_REGISTER, firstValue);
+    regs.setU32(FIRST_REGISTER, firstValue);
     const shiftOps = new ShiftOps(regs);
 
     shiftOps.shiftArithmeticRightImmediateAlternative(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER, true), resultValue);
+    assert.strictEqual(regs.getI32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftArithmeticRightImmediateAlternative (negative number)", () => {
@@ -259,12 +259,12 @@ test("ShiftOps", async (t) => {
     const secondValue = 0xff_ff_ff_f8; // -8
     const resultValue = 0xff_ff_ff_ff | 0; // -1
     const regs = new Registers();
-    regs.set(FIRST_REGISTER, firstValue);
+    regs.setU32(FIRST_REGISTER, firstValue);
     const shiftOps = new ShiftOps(regs);
 
     shiftOps.shiftArithmeticRightImmediateAlternative(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER, true), resultValue);
+    assert.strictEqual(regs.getI32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftArithmeticRightImmediateAlternative with arg overflow", () => {
@@ -272,12 +272,12 @@ test("ShiftOps", async (t) => {
     const secondValue = 0b10000;
     const resultValue = 0b00010;
     const regs = new Registers();
-    regs.set(FIRST_REGISTER, firstValue);
+    regs.setU32(FIRST_REGISTER, firstValue);
     const shiftOps = new ShiftOps(regs);
 
     shiftOps.shiftArithmeticRightImmediateAlternative(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER, true), resultValue);
+    assert.strictEqual(regs.getI32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftArithmeticRightImmediate (positive number)", () => {
@@ -285,12 +285,12 @@ test("ShiftOps", async (t) => {
     const secondValue = 3;
     const resultValue = 0b00010;
     const regs = new Registers();
-    regs.set(FIRST_REGISTER, firstValue);
+    regs.setU32(FIRST_REGISTER, firstValue);
     const shiftOps = new ShiftOps(regs);
 
     shiftOps.shiftArithmeticRightImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER, true), resultValue);
+    assert.strictEqual(regs.getI32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftArithmeticRightImmediate (negative number)", () => {
@@ -298,12 +298,12 @@ test("ShiftOps", async (t) => {
     const secondValue = 3;
     const resultValue = 0xff_ff_ff_ff | 0; // -1
     const regs = new Registers();
-    regs.set(FIRST_REGISTER, firstValue);
+    regs.setU32(FIRST_REGISTER, firstValue);
     const shiftOps = new ShiftOps(regs);
 
     shiftOps.shiftArithmeticRightImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER, true), resultValue);
+    assert.strictEqual(regs.getI32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("shiftArithmeticRightImmediate with arg overflow", () => {
@@ -311,11 +311,11 @@ test("ShiftOps", async (t) => {
     const secondValue = 35;
     const resultValue = 0b00010;
     const regs = new Registers();
-    regs.set(FIRST_REGISTER, firstValue);
+    regs.setU32(FIRST_REGISTER, firstValue);
     const shiftOps = new ShiftOps(regs);
 
     shiftOps.shiftArithmeticRightImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER, true), resultValue);
+    assert.strictEqual(regs.getI32(RESULT_REGISTER), resultValue);
   });
 });

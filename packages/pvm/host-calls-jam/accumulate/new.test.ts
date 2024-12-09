@@ -39,12 +39,12 @@ function prepareRegsAndMemory(
 ) {
   const memStart = 20_000;
   const registers = new Registers();
-  registers.set(CODE_HASH_START_REG, memStart);
-  registers.set(CODE_LENGTH_REG, codeLength);
-  registers.set(GAS_LOW_REG, u64AsParts(gas).lower);
-  registers.set(GAS_HIG_REG, u64AsParts(gas).upper);
-  registers.set(BALANCE_LOW_REG, u64AsParts(balance).lower);
-  registers.set(BALANCE_HIG_REG, u64AsParts(balance).upper);
+  registers.setU32(CODE_HASH_START_REG, memStart);
+  registers.setU32(CODE_LENGTH_REG, codeLength);
+  registers.setU32(GAS_LOW_REG, u64AsParts(gas).lower);
+  registers.setU32(GAS_HIG_REG, u64AsParts(gas).upper);
+  registers.setU32(BALANCE_LOW_REG, u64AsParts(balance).lower);
+  registers.setU32(BALANCE_HIG_REG, u64AsParts(balance).upper);
 
   const builder = new MemoryBuilder();
 
@@ -76,7 +76,7 @@ describe("HostCalls: New", () => {
     await n.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsServiceId(23_000));
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), tryAsServiceId(23_000));
     assert.deepStrictEqual(accumulate.newServiceCalled, [
       [10_042, Bytes.fill(HASH_SIZE, 0x69), 4_096, 2n ** 40n, 2n ** 50n],
     ]);
@@ -99,7 +99,7 @@ describe("HostCalls: New", () => {
     await n.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.CASH);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.CASH);
     assert.deepStrictEqual(accumulate.newServiceCalled.length, 1);
   });
 
@@ -121,7 +121,7 @@ describe("HostCalls: New", () => {
     await n.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accumulate.newServiceCalled, []);
   });
 });

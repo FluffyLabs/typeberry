@@ -25,8 +25,8 @@ function prepareRegsAndMemory(
 ) {
   const memStart = 20_000;
   const registers = new Registers();
-  registers.set(CORE_INDEX_REG, coreIndex);
-  registers.set(AUTH_QUEUE_START_REG, memStart);
+  registers.setU32(CORE_INDEX_REG, coreIndex);
+  registers.setU32(AUTH_QUEUE_START_REG, memStart);
 
   const builder = new MemoryBuilder();
 
@@ -64,7 +64,7 @@ describe("HostCalls: Assign", () => {
     await assign.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.authQueue[0][0], tryAsCoreIndex(0));
     const expected = new Array(AUTHORIZATION_QUEUE_SIZE);
     expected[0] = Bytes.fill(HASH_SIZE, 1);
@@ -88,7 +88,7 @@ describe("HostCalls: Assign", () => {
     await assign.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.CORE);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.CORE);
     assert.deepStrictEqual(accumulate.authQueue.length, 0);
   });
 
@@ -98,13 +98,13 @@ describe("HostCalls: Assign", () => {
     const serviceId = tryAsServiceId(10_000);
     assign.currentServiceId = serviceId;
     const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(3), []);
-    registers.set(CORE_INDEX_REG, 2 ** 16 + 3);
+    registers.setU32(CORE_INDEX_REG, 2 ** 16 + 3);
 
     // when
     await assign.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.CORE);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.CORE);
     assert.deepStrictEqual(accumulate.authQueue.length, 0);
   });
 
@@ -119,7 +119,7 @@ describe("HostCalls: Assign", () => {
     await assign.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accumulate.authQueue.length, 0);
   });
 });

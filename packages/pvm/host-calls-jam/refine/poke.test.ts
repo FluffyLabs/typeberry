@@ -19,7 +19,7 @@ describe("HostCalls: Poke", () => {
     await poke.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
   });
 
   it("should fail if machine does not exist", async () => {
@@ -29,7 +29,7 @@ describe("HostCalls: Poke", () => {
     await poke.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.WHO);
   });
 
   it("should fail if there is a page fault on any side", async () => {
@@ -39,16 +39,16 @@ describe("HostCalls: Poke", () => {
     await poke.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
   });
 });
 
 function prepareRegsAndMemory(machineId: MachineId, sourceStart: number, destinationStart: number, length: number) {
   const registers = new Registers();
-  registers.set(7, machineId);
-  registers.set(8, sourceStart);
-  registers.set(9, destinationStart);
-  registers.set(10, length);
+  registers.setU32(7, machineId);
+  registers.setU32(8, sourceStart);
+  registers.setU32(9, destinationStart);
+  registers.setU32(10, length);
 
   const builder = new MemoryBuilder();
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));

@@ -26,17 +26,17 @@ export class StoreOps {
   }
 
   storeIndU8(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.get(firstRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.store(address, this.regs.getBytesAsLittleEndian(secondRegisterIndex, 1));
   }
 
   storeIndU16(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.get(firstRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.store(address, this.regs.getBytesAsLittleEndian(secondRegisterIndex, 2));
   }
 
   storeIndU32(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.get(firstRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.store(address, this.regs.getBytesAsLittleEndian(secondRegisterIndex, 4));
   }
 
@@ -57,7 +57,7 @@ export class StoreOps {
     firstImmediateDecoder: ImmediateDecoder,
     secondImmediateDecoder: ImmediateDecoder,
   ) {
-    const address = addWithOverflow(this.regs.get(registerIndex), firstImmediateDecoder.getUnsigned());
+    const address = addWithOverflow(this.regs.getU32(registerIndex), firstImmediateDecoder.getUnsigned());
     this.store(address, secondImmediateDecoder.getBytesAsLittleEndian().subarray(0, 1));
   }
 
@@ -66,7 +66,7 @@ export class StoreOps {
     firstImmediateDecoder: ImmediateDecoder,
     secondImmediateDecoder: ImmediateDecoder,
   ) {
-    const address = addWithOverflow(this.regs.get(registerIndex), firstImmediateDecoder.getUnsigned());
+    const address = addWithOverflow(this.regs.getU32(registerIndex), firstImmediateDecoder.getUnsigned());
     this.store(address, secondImmediateDecoder.getBytesAsLittleEndian().subarray(0, 2));
   }
 
@@ -75,7 +75,7 @@ export class StoreOps {
     firstImmediateDecoder: ImmediateDecoder,
     secondImmediateDecoder: ImmediateDecoder,
   ) {
-    const address = addWithOverflow(this.regs.get(registerIndex), firstImmediateDecoder.getUnsigned());
+    const address = addWithOverflow(this.regs.getU32(registerIndex), firstImmediateDecoder.getUnsigned());
     this.store(address, secondImmediateDecoder.getBytesAsLittleEndian().subarray(0, 4));
   }
 

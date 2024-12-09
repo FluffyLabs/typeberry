@@ -28,29 +28,29 @@ export class Poke implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
     // `n`: machine index
-    const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG));
+    const machineIndex = tryAsMachineId(regs.getU32(IN_OUT_REG));
     // `s`: source memory start (nested vm)
-    const sourceStart = tryAsMemoryIndex(regs.get(8));
+    const sourceStart = tryAsMemoryIndex(regs.getU32(8));
     // `o`: destination memory start (local)
-    const destinationStart = tryAsMemoryIndex(regs.get(9));
+    const destinationStart = tryAsMemoryIndex(regs.getU32(9));
     // `z`: memory length
-    const length = tryAsU32(regs.get(10));
+    const length = tryAsU32(regs.getU32(10));
 
     const pokeResult = await this.refine.machinePokeInto(machineIndex, sourceStart, destinationStart, length, memory);
     if (pokeResult.isOk) {
-      regs.set(IN_OUT_REG, HostCallResult.OK);
+      regs.setU32(IN_OUT_REG, HostCallResult.OK);
       return;
     }
 
     const e = pokeResult.error;
 
     if (e === PeekPokeError.NoMachine) {
-      regs.set(IN_OUT_REG, HostCallResult.WHO);
+      regs.setU32(IN_OUT_REG, HostCallResult.WHO);
       return;
     }
 
     if (e === PeekPokeError.PageFault) {
-      regs.set(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 

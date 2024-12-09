@@ -22,9 +22,9 @@ function prepareRegsAndMemory(
 ) {
   const memStart = 3_145_728;
   const registers = new Registers();
-  registers.set(SEGMENT_INDEX_REG, segmentIndex);
-  registers.set(DEST_START_REG, memStart);
-  registers.set(DEST_LEN_REG, destinationLength);
+  registers.setU32(SEGMENT_INDEX_REG, segmentIndex);
+  registers.setU32(DEST_START_REG, memStart);
+  registers.setU32(DEST_LEN_REG, destinationLength);
 
   const builder = new MemoryBuilder();
   if (!skipValue) {
@@ -56,7 +56,7 @@ describe("HostCalls: Import", () => {
     await imp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x68656c6c6f20776f726c64210000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -76,7 +76,7 @@ describe("HostCalls: Import", () => {
     await imp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.NONE);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.NONE);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -90,13 +90,13 @@ describe("HostCalls: Import", () => {
     const segmentIdx = tryAsSegmentIndex(48879);
     const destinationLength = 32;
     const { registers, memory, readResult } = prepareRegsAndMemory(segmentIdx, destinationLength);
-    registers.set(SEGMENT_INDEX_REG, 2 ** 30);
+    registers.setU32(SEGMENT_INDEX_REG, 2 ** 30);
 
     // when
     await imp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.NONE);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.NONE);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -115,7 +115,7 @@ describe("HostCalls: Import", () => {
     await imp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
   });
 
   it("should trim the result if only few bytes requested", async () => {
@@ -131,7 +131,7 @@ describe("HostCalls: Import", () => {
     await imp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(readResult().toString(), "0x6865");
   });
 
@@ -143,14 +143,14 @@ describe("HostCalls: Import", () => {
     const expectedDestinationLength = SEGMENT_BYTES;
     const destinationLength = expectedDestinationLength + 10;
     const { registers, memory, readResult } = prepareRegsAndMemory(segmentIdx, expectedDestinationLength);
-    registers.set(DEST_LEN_REG, destinationLength);
+    registers.setU32(DEST_LEN_REG, destinationLength);
     refine.importSegmentData.set(segmentIdx, BytesBlob.blobFromString("hello world!"));
 
     // when
     await imp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
     const res = readResult();
     assert.deepStrictEqual(res.toString().substr(0, 32), "0x68656c6c6f20776f726c6421000000");
     assert.deepStrictEqual(res.length, 4104);

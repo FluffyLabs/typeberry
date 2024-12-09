@@ -12,7 +12,7 @@ const getRegisters = (data: number[]) => {
   const regs = new Registers();
 
   for (const [i, byte] of data.entries()) {
-    regs.set(i, byte);
+    regs.setU32(i, byte);
   }
 
   return regs;
@@ -28,7 +28,7 @@ test("BitOps", async (t) => {
 
     bitOps.or(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("orImmediate", () => {
@@ -40,7 +40,7 @@ test("BitOps", async (t) => {
 
     bitOps.orImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("and", () => {
@@ -52,7 +52,7 @@ test("BitOps", async (t) => {
 
     bitOps.and(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("andImmediate", () => {
@@ -64,7 +64,7 @@ test("BitOps", async (t) => {
 
     bitOps.andImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("xor", () => {
@@ -76,7 +76,7 @@ test("BitOps", async (t) => {
 
     bitOps.xor(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 
   await t.test("xorImmediate", () => {
@@ -88,6 +88,6 @@ test("BitOps", async (t) => {
 
     bitOps.xorImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
 });

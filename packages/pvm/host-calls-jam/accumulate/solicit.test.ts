@@ -25,8 +25,8 @@ function prepareRegsAndMemory(
 ) {
   const memStart = 20_000;
   const registers = new Registers();
-  registers.set(HASH_START_REG, memStart);
-  registers.set(LENGTH_REG, preimageLength);
+  registers.setU32(HASH_START_REG, memStart);
+  registers.setU32(LENGTH_REG, preimageLength);
 
   const builder = new MemoryBuilder();
 
@@ -55,7 +55,7 @@ describe("HostCalls: Solicit", () => {
     await solicit.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.requestPreimageData, [[Bytes.fill(HASH_SIZE, 0x69), 4_096]]);
   });
 
@@ -71,7 +71,7 @@ describe("HostCalls: Solicit", () => {
     await solicit.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accumulate.requestPreimageData, []);
   });
 
@@ -87,7 +87,7 @@ describe("HostCalls: Solicit", () => {
     await solicit.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.HUH);
     assert.deepStrictEqual(accumulate.requestPreimageData, [[Bytes.fill(HASH_SIZE, 0x69), 4_096]]);
   });
 
@@ -103,7 +103,7 @@ describe("HostCalls: Solicit", () => {
     await solicit.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.HUH);
     assert.deepStrictEqual(accumulate.requestPreimageData, [[Bytes.fill(HASH_SIZE, 0x69), 4_096]]);
   });
 
@@ -119,7 +119,7 @@ describe("HostCalls: Solicit", () => {
     await solicit.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.FULL);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.FULL);
     assert.deepStrictEqual(accumulate.requestPreimageData, [[Bytes.fill(HASH_SIZE, 0x69), 4_096]]);
   });
 });

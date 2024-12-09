@@ -23,7 +23,7 @@ describe("StoreOps", () => {
       const regs = new Registers();
       const address = tryAsMemoryIndex(1);
       const registerIndex = 1;
-      regs.set(registerIndex, 0xfe_dc_ba_98);
+      regs.setU32(registerIndex, 0xfe_dc_ba_98);
       const memory = new MemoryBuilder()
         .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array())
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
@@ -41,7 +41,7 @@ describe("StoreOps", () => {
       const regs = new Registers();
       const address = tryAsMemoryIndex(1);
       const registerIndex = 1;
-      regs.set(registerIndex, 0xfe_dc_ba_98);
+      regs.setU32(registerIndex, 0xfe_dc_ba_98);
       const memory = new MemoryBuilder()
         .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array())
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
@@ -59,7 +59,7 @@ describe("StoreOps", () => {
       const regs = new Registers();
       const address = tryAsMemoryIndex(1);
       const registerIndex = 1;
-      regs.set(registerIndex, 0xfe_dc_ba_98);
+      regs.setU32(registerIndex, 0xfe_dc_ba_98);
       const memory = new MemoryBuilder()
         .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array())
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
@@ -134,7 +134,7 @@ describe("StoreOps", () => {
       const instructionResult = new InstructionResult();
       const regs = new Registers();
       const registerIndex = 0;
-      regs.set(registerIndex, 1);
+      regs.setU32(registerIndex, 1);
       const address = tryAsMemoryIndex(2);
       const fistimmediateDecoder = new ImmediateDecoder();
       fistimmediateDecoder.setBytes(new Uint8Array([1]));
@@ -156,7 +156,7 @@ describe("StoreOps", () => {
       const instructionResult = new InstructionResult();
       const regs = new Registers();
       const registerIndex = 0;
-      regs.set(registerIndex, 1);
+      regs.setU32(registerIndex, 1);
       const address = tryAsMemoryIndex(2);
       const fistimmediateDecoder = new ImmediateDecoder();
       fistimmediateDecoder.setBytes(new Uint8Array([1]));
@@ -178,7 +178,7 @@ describe("StoreOps", () => {
       const instructionResult = new InstructionResult();
       const regs = new Registers();
       const registerIndex = 0;
-      regs.set(registerIndex, 1);
+      regs.setU32(registerIndex, 1);
       const address = tryAsMemoryIndex(2);
       const fistimmediateDecoder = new ImmediateDecoder();
       fistimmediateDecoder.setBytes(new Uint8Array([1]));
@@ -204,8 +204,8 @@ describe("StoreOps", () => {
       const address = tryAsMemoryIndex(2);
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.set(firstRegisterIndex, 1);
-      regs.set(secondRegisterIndex, 0xfe_dc_ba_98);
+      regs.setU32(firstRegisterIndex, 1);
+      regs.setU32(secondRegisterIndex, 0xfe_dc_ba_98);
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([1]));
       const memory = new MemoryBuilder()
@@ -226,8 +226,8 @@ describe("StoreOps", () => {
       const address = tryAsMemoryIndex(2);
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.set(firstRegisterIndex, 1);
-      regs.set(secondRegisterIndex, 0xfe_dc_ba_98);
+      regs.setU32(firstRegisterIndex, 1);
+      regs.setU32(secondRegisterIndex, 0xfe_dc_ba_98);
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([1]));
       const memory = new MemoryBuilder()
@@ -248,8 +248,8 @@ describe("StoreOps", () => {
       const address = tryAsMemoryIndex(2);
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.set(firstRegisterIndex, 1);
-      regs.set(secondRegisterIndex, 0xfe_dc_ba_98);
+      regs.setU32(firstRegisterIndex, 1);
+      regs.setU32(secondRegisterIndex, 0xfe_dc_ba_98);
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([1]));
       const memory = new MemoryBuilder()
