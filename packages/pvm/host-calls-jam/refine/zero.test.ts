@@ -1,0 +1,95 @@
+import assert from "node:assert";
+import { describe, it } from "node:test";
+import { tryAsServiceId } from "@typeberry/block";
+import { tryAsU32 } from "@typeberry/numbers";
+import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
+import { Result } from "@typeberry/utils";
+import { HostCallResult } from "../results";
+import { type MachineId, NoMachineError, tryAsMachineId } from "./refine-externalities";
+import { TestRefineExt } from "./refine-externalities.test";
+import { Zero } from "./zero";
+
+const gas = gasCounter(tryAsGas(0));
+const RESULT_REG = 7;
+
+describe("HostCalls: Zero", () => {
+  it("should zero memory", async () => {
+    const { zero, registers } = prepareTest(Result.ok(null), 10_000, 5);
+
+    // when
+    await zero.execute(gas, registers);
+
+    // then
+    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
+  });
+
+  it("should fail when page is too low", async () => {
+    const { zero, registers } = prepareTest(Result.ok(null), 12, 5);
+
+    // when
+    await zero.execute(gas, registers);
+
+    // then
+    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+  });
+
+  it("should fail when page is too large", async () => {
+    const { zero, registers } = prepareTest(Result.ok(null), 2 ** 32 - 1, 12_000);
+
+    // when
+    await zero.execute(gas, registers);
+
+    // then
+    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+  });
+
+  it("should fail when page is too large 2", async () => {
+    const { zero, registers } = prepareTest(Result.ok(null), 2 ** 20 - 5, 5);
+
+    // when
+    await zero.execute(gas, registers);
+
+    // then
+    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+  });
+
+  it("should fail if machine is not known", async () => {
+    const { zero, registers } = prepareTest(Result.error(NoMachineError), 10_000, 5);
+
+    // when
+    await zero.execute(gas, registers);
+
+    // then
+    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.WHO);
+  });
+});
+
+function prepareRegsAndMemory(machineId: MachineId, pageStart: number, pageCount: number) {
+  const registers = new Registers();
+  registers.asUnsigned[7] = machineId;
+  registers.asUnsigned[8] = pageStart;
+  registers.asUnsigned[9] = pageCount;
+
+  const builder = new MemoryBuilder();
+  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
+
+  return {
+    registers,
+    memory,
+  };
+}
+
+function prepareTest(result: Result<null, NoMachineError>, pageStart: number, pageCount: number) {
+  const refine = new TestRefineExt();
+  const zero = new Zero(refine);
+  zero.currentServiceId = tryAsServiceId(10_000);
+  const machineId = tryAsMachineId(10_000);
+  const { registers, memory } = prepareRegsAndMemory(machineId, pageStart, pageCount);
+  refine.machineZeroPagesData.set(result, machineId, tryAsU32(pageStart), tryAsU32(pageCount));
+
+  return {
+    zero,
+    registers,
+    memory,
+  };
+}
