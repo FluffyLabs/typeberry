@@ -13,6 +13,11 @@ export class DebuggerAdapter {
     this.pvm = new Interpreter();
   }
 
+  // TODO [MaSi]: a temporary solution that is needed to implement host calls in PVM debugger
+  getInterpreter() {
+    return this.pvm;
+  }
+
   resetGeneric(rawProgram: Uint8Array, flatRegisters: Uint8Array, initialGas: bigint) {
     this.pvm.reset(rawProgram, 0, tryAsGas(initialGas), new Registers(flatRegisters));
   }
@@ -38,11 +43,6 @@ export class DebuggerAdapter {
     const fullPage = new Uint8Array(PAGE_SIZE);
     fullPage.set(page);
     return fullPage;
-  }
-
-  // TODO [MaSi]: a temporary solution that is needed to implement host calls in PVM debugger
-  getMemory() {
-    this.pvm.getMemory();
   }
 
   setMemory(address: number, value: Uint8Array) {
