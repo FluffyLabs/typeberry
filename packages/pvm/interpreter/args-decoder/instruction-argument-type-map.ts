@@ -126,10 +126,10 @@ export const instructionArgumentTypeMap = (() => {
   instructionArgumentTypeMap[Instruction.SHLO_L_64] = ArgumentType.THREE_REGISTERS;
   instructionArgumentTypeMap[Instruction.SHLO_R_64] = ArgumentType.THREE_REGISTERS;
   instructionArgumentTypeMap[Instruction.SHAR_R_64] = ArgumentType.THREE_REGISTERS;
-  instructionArgumentTypeMap[Instruction.CMOV_IZ] = ArgumentType.THREE_REGISTERS
+  instructionArgumentTypeMap[Instruction.CMOV_IZ] = ArgumentType.THREE_REGISTERS;
   instructionArgumentTypeMap[Instruction.CMOV_NZ] = ArgumentType.THREE_REGISTERS;
 
   instructionArgumentTypeMap[Instruction.LOAD_IMM_64] = ArgumentType.ONE_REGISTER_ONE_EXTENDED_WIDTH_IMMEDIATE;
-  
+
   return instructionArgumentTypeMap;
 })();

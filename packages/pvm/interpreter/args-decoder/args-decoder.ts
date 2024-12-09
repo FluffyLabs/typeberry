@@ -1,6 +1,6 @@
 import { Mask } from "../program-decoder/mask";
 import { ArgumentType } from "./argument-type";
-import { ExtendedWitdthImmediateDecoder } from "./decoders/extended-with-immediate-decoder";
+import type { ExtendedWitdthImmediateDecoder } from "./decoders/extended-with-immediate-decoder";
 import { ImmediateDecoder } from "./decoders/immediate-decoder";
 import { NibblesDecoder } from "./decoders/nibbles-decoder";
 

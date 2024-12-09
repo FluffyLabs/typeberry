@@ -16,9 +16,9 @@ export class OneRegTwoImmsDispatcher {
       case Instruction.STORE_IMM_IND_U32:
         this.storeOps.storeImmediateIndU32(args.registerIndex, args.firstImmediateDecoder, args.secondImmediateDecoder);
         break;
-        case Instruction.STORE_IMM_IND_U64:
-          this.storeOps.storeImmediateIndU64(args.registerIndex, args.firstImmediateDecoder, args.secondImmediateDecoder);
-          break;
+      case Instruction.STORE_IMM_IND_U64:
+        this.storeOps.storeImmediateIndU64(args.registerIndex, args.firstImmediateDecoder, args.secondImmediateDecoder);
+        break;
     }
   }
 }

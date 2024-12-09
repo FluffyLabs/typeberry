@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { ExtendedWitdthImmediateDecoder } from './extended-with-immediate-decoder';
+import { ExtendedWitdthImmediateDecoder } from "./extended-with-immediate-decoder";
 
 describe("ExtendedWitdthImmediateDecoder", () => {
   describe("reading bytes as unsigned number", () => {
@@ -17,14 +17,14 @@ describe("ExtendedWitdthImmediateDecoder", () => {
   });
 
   describe("read immediate as bytes (little endian)", () => {
-      it("8-bytes number", () => {
-        const decoder = new ExtendedWitdthImmediateDecoder();
-        const encodedBytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88]);
-        const expectedBytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88]);
+    it("8-bytes number", () => {
+      const decoder = new ExtendedWitdthImmediateDecoder();
+      const encodedBytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88]);
+      const expectedBytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88]);
 
-        decoder.setBytes(encodedBytes);
-  
-        assert.deepStrictEqual(decoder.getBytesAsLittleEndian(), expectedBytes);
-      });
+      decoder.setBytes(encodedBytes);
+
+      assert.deepStrictEqual(decoder.getBytesAsLittleEndian(), expectedBytes);
+    });
   });
 });

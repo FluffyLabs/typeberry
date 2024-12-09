@@ -172,10 +172,10 @@ export class TwoRegsOneImmDispatcher {
         this.storeOps.storeIndU32(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
         break;
 
-        case Instruction.STORE_IND_U64:
-          this.storeOps.storeIndU64(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
-          break;
-  
+      case Instruction.STORE_IND_U64:
+        this.storeOps.storeIndU64(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
+        break;
+
       case Instruction.LOAD_IND_U8:
         this.loadOps.loadIndU8(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
         break;
@@ -188,21 +188,21 @@ export class TwoRegsOneImmDispatcher {
         this.loadOps.loadIndU32(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
         break;
 
-        case Instruction.LOAD_IND_U64:
-          this.loadOps.loadIndU64(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
-          break;
-      
-          case Instruction.LOAD_IND_I8:
+      case Instruction.LOAD_IND_U64:
+        this.loadOps.loadIndU64(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
+        break;
+
+      case Instruction.LOAD_IND_I8:
         this.loadOps.loadIndI8(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
         break;
 
       case Instruction.LOAD_IND_I16:
         this.loadOps.loadIndI16(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
         break;
-        
-        case Instruction.LOAD_IND_I32:
-          this.loadOps.loadIndI32(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
-          break;
+
+      case Instruction.LOAD_IND_I32:
+        this.loadOps.loadIndI32(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
+        break;
     }
   }
 }

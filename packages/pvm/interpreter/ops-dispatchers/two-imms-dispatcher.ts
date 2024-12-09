@@ -16,9 +16,9 @@ export class TwoImmsDispatcher {
       case Instruction.STORE_IMM_U32:
         this.storeOps.storeImmediateU32(args.firstImmediateDecoder.getUnsigned(), args.secondImmediateDecoder);
         break;
-        case Instruction.STORE_IMM_U64:
-          this.storeOps.storeImmediateU64(args.firstImmediateDecoder.getUnsigned(), args.secondImmediateDecoder);
-          break;
+      case Instruction.STORE_IMM_U64:
+        this.storeOps.storeImmediateU64(args.firstImmediateDecoder.getUnsigned(), args.secondImmediateDecoder);
+        break;
     }
   }
 }

@@ -2,8 +2,8 @@ const IMMEDIATE_SIZE = 4;
 
 export class ImmediateDecoder {
   private unsignedImmediate: Uint32Array;
-  private signedImmediate: Int32Array; 
-  private view:DataView 
+  private signedImmediate: Int32Array;
+  private view: DataView;
   private bytes: Uint8Array;
 
   constructor() {
@@ -13,7 +13,7 @@ export class ImmediateDecoder {
     this.view = new DataView(buffer);
     this.bytes = new Uint8Array(buffer);
   }
-  
+
   setBytes(bytes: Uint8Array) {
     const n = bytes.length;
     const msb = n > 0 ? bytes[n - 1] & 0x80 : 0;
