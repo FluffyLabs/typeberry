@@ -2,10 +2,14 @@ import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import {
+  type Memory,
+  type PvmExecution,
+  type Registers,
+  tryAsHostCallIndex,
+} from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
-import type { Registers } from "@typeberry/pvm-interpreter/registers";
+import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";

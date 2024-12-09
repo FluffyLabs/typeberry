@@ -2,10 +2,14 @@ import { tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { tryAsU32, u64FromParts } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import {
+  type Memory,
+  type PvmExecution,
+  type Registers,
+  tryAsHostCallIndex,
+} from "@typeberry/pvm-host-calls/host-call-handler";
+import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { type BigGas, type Gas, type GasCounter, tryAsGas, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
-import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { asOpaqueType, assertNever } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";

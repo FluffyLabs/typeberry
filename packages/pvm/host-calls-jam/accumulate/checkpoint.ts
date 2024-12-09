@@ -1,7 +1,6 @@
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import { type PvmExecution, type Registers, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { Gas } from "../gas";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
