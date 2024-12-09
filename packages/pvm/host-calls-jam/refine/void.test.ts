@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { tryAsU32 } from "@typeberry/numbers";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
-import { Result } from "@typeberry/utils";
+import { OK, Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { InvalidPageError, type MachineId, NoMachineError, tryAsMachineId } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
@@ -14,7 +14,7 @@ const RESULT_REG = 7;
 
 describe("HostCalls: Void", () => {
   it("should void memory", async () => {
-    const { voi, registers } = prepareTest(Result.ok(null), 10_000, 5);
+    const { voi, registers } = prepareTest(Result.ok(OK), 10_000, 5);
 
     // when
     await voi.execute(gas, registers);
@@ -34,7 +34,7 @@ describe("HostCalls: Void", () => {
   });
 
   it("should fail when page is too large", async () => {
-    const { voi, registers } = prepareTest(Result.ok(null), 2 ** 32 - 1, 12_000);
+    const { voi, registers } = prepareTest(Result.ok(OK), 2 ** 32 - 1, 12_000);
 
     // when
     await voi.execute(gas, registers);
@@ -44,7 +44,7 @@ describe("HostCalls: Void", () => {
   });
 
   it("should fail when page is too large 2", async () => {
-    const { voi, registers } = prepareTest(Result.ok(null), 2 ** 20 - 5, 5);
+    const { voi, registers } = prepareTest(Result.ok(OK), 2 ** 20 - 5, 5);
 
     // when
     await voi.execute(gas, registers);
@@ -79,7 +79,7 @@ function prepareRegsAndMemory(machineId: MachineId, pageStart: number, pageCount
   };
 }
 
-function prepareTest(result: Result<null, NoMachineError | InvalidPageError>, pageStart: number, pageCount: number) {
+function prepareTest(result: Result<OK, NoMachineError | InvalidPageError>, pageStart: number, pageCount: number) {
   const refine = new TestRefineExt();
   const voi = new Void(refine);
   voi.currentServiceId = tryAsServiceId(10_000);

@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
-import { Result } from "@typeberry/utils";
+import { OK, Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { Expunge } from "./expunge";
 import { type MachineId, NoMachineError, tryAsMachineId } from "./refine-externalities";
@@ -13,7 +13,7 @@ const RESULT_REG = 7;
 
 describe("HostCalls: Expunge", () => {
   it("should expunge machine", async () => {
-    const { expunge, registers } = prepareTest(Result.ok(null));
+    const { expunge, registers } = prepareTest(Result.ok(OK));
 
     // when
     await expunge.execute(gas, registers);
@@ -46,7 +46,7 @@ function prepareRegsAndMemory(machineId: MachineId) {
   };
 }
 
-function prepareTest(result: Result<null, NoMachineError>) {
+function prepareTest(result: Result<OK, NoMachineError>) {
   const refine = new TestRefineExt();
   const expunge = new Expunge(refine);
   expunge.currentServiceId = tryAsServiceId(10_000);

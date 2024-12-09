@@ -4,7 +4,7 @@ import type { Blake2bHash } from "@typeberry/hash";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 import type { Memory } from "@typeberry/pvm-interpreter";
 import type { MemoryIndex } from "@typeberry/pvm-interpreter/memory";
-import { type Opaque, type Result, asOpaqueType } from "@typeberry/utils";
+import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/utils";
 
 /**
  * Running PVM instance identifier.
@@ -37,23 +37,23 @@ export const InvalidPageError = Symbol("Attempting to void non-accessible page."
 export type InvalidPageError = typeof InvalidPageError;
 
 /** Too many segments already exported. */
-export const SEGMENT_EXPORT_ERROR = Symbol("Too many segments already exported.");
-export type SEGMENT_EXPORT_ERROR = typeof SEGMENT_EXPORT_ERROR;
+export const SegmentExportError = Symbol("Too many segments already exported.");
+export type SegmentExportError = typeof SegmentExportError;
 
 /** Host functions external invokations available during refine phase. */
 export interface RefineExternalities {
   /** Forget a previously started nested VM. */
-  machineExpunge(machineIndex: MachineId): Promise<Result<null, NoMachineError>>;
+  machineExpunge(machineIndex: MachineId): Promise<Result<OK, NoMachineError>>;
 
   /** Set given range of pages as non-accessible and re-initialize them with zeros. */
   machineVoidPages(
     machineIndex: MachineId,
     pageStart: U32,
     pageCount: U32,
-  ): Promise<Result<null, NoMachineError | InvalidPageError>>;
+  ): Promise<Result<OK, NoMachineError | InvalidPageError>>;
 
   /** Set given range of pages as writeable and initialize them with zeros. */
-  machineZeroPages(machineIndex: MachineId, pageStart: U32, pageCount: U32): Promise<Result<null, NoMachineError>>;
+  machineZeroPages(machineIndex: MachineId, pageStart: U32, pageCount: U32): Promise<Result<OK, NoMachineError>>;
 
   /** Copy a fragment of memory from `machineIndex` into given destination memory. */
   machinePeekFrom(
@@ -62,7 +62,7 @@ export interface RefineExternalities {
     sourceStart: MemoryIndex,
     length: U32,
     destination: Memory,
-  ): Promise<Result<null, PeekPokeError>>;
+  ): Promise<Result<OK, PeekPokeError>>;
 
   /** Write a fragment of memory into `machineIndex` from given source memory. */
   machinePokeInto(
@@ -71,7 +71,7 @@ export interface RefineExternalities {
     destinationStart: MemoryIndex,
     length: U32,
     source: Memory,
-  ): Promise<Result<null, PeekPokeError>>;
+  ): Promise<Result<OK, PeekPokeError>>;
 
   /** Start an inner PVM instance with given entry point and starting code. */
   machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId>;
@@ -81,7 +81,7 @@ export interface RefineExternalities {
    *
    * Returns the index assigned to that segment or an error if there is too many already exported.
    */
-  exportSegment(segment: Segment): Result<SegmentIndex, SEGMENT_EXPORT_ERROR>;
+  exportSegment(segment: Segment): Result<SegmentIndex, SegmentExportError>;
 
   /** Retrieve a segment exported by some earlier refine invokation. */
   importSegment(segmentIndex: SegmentIndex): Promise<Segment | null>;

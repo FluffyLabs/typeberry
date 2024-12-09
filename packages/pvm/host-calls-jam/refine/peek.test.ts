@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { tryAsU32 } from "@typeberry/numbers";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
-import { Result } from "@typeberry/utils";
+import { OK, Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { Peek } from "./peek";
 import { type MachineId, PeekPokeError, tryAsMachineId } from "./refine-externalities";
@@ -14,7 +14,7 @@ const RESULT_REG = 7;
 
 describe("HostCalls: Peek", () => {
   it("should request to copy a piece of memory from a running machine", async () => {
-    const { peek, registers, memory } = prepareTest(Result.ok(null));
+    const { peek, registers, memory } = prepareTest(Result.ok(OK));
     // when
     await peek.execute(gas, registers, memory);
 
@@ -59,7 +59,7 @@ function prepareRegsAndMemory(machineId: MachineId, destinationStart: number, so
   };
 }
 
-function prepareTest(result: Result<null, PeekPokeError>) {
+function prepareTest(result: Result<OK, PeekPokeError>) {
   const refine = new TestRefineExt();
   const peek = new Peek(refine);
   peek.currentServiceId = tryAsServiceId(10_000);
