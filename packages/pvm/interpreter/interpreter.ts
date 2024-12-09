@@ -159,6 +159,7 @@ export class Interpreter {
     if (this.status === Status.HOST) {
       this.status = Status.OK;
       this.pc = this.instructionResult.nextPc;
+      this.instructionResult.reset();
     }
 
     const underflow = this.gas.sub(instructionGasMap[currentInstruction]);
