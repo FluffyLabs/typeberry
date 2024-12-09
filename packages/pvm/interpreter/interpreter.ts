@@ -146,6 +146,13 @@ export class Interpreter {
   }
 
   nextStep() {
+    // we are being resumed from a host call, assume all good.
+    if (this.status === Status.HOST) {
+      this.status = Status.OK;
+      this.pc = this.instructionResult.nextPc;
+      this.instructionResult.reset();
+    }
+
     /**
      * We have two options to handle an invalid instruction:
      * - change status to panic and quit program immediately,
@@ -154,13 +161,6 @@ export class Interpreter {
      * Reference: https://graypaper.fluffylabs.dev/#/364735a/232f02233002
      */
     const currentInstruction = this.code[this.pc] ?? Instruction.TRAP;
-
-    // we are being resumed from a host call, assume all good.
-    if (this.status === Status.HOST) {
-      this.status = Status.OK;
-      this.pc = this.instructionResult.nextPc;
-      this.instructionResult.reset();
-    }
 
     const underflow = this.gas.sub(instructionGasMap[currentInstruction]);
     if (underflow) {
