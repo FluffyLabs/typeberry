@@ -41,7 +41,7 @@ describe("LoadOps", () => {
     });
   });
 
-  describe("load (U8, U16 and U32)", () => {
+  describe("load (U8, U16, U32 and U64)", () => {
     it("should load u8 from memory to register", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
@@ -51,13 +51,13 @@ describe("LoadOps", () => {
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
-      const expectedValue = 0xff;
+      const expectedValue = 0xffn;
       const registerIndex = 0;
 
       loadOps.loadU8(address, registerIndex);
 
-      assert.deepStrictEqual(registers.getI32(registerIndex), expectedValue);
-      assert.deepStrictEqual(registers.getU32(registerIndex), expectedValue);
+      assert.deepStrictEqual(registers.getI64(registerIndex), expectedValue);
+      assert.deepStrictEqual(registers.getU64(registerIndex), expectedValue);
     });
 
     it("should load u8 from memory to register and extend the number to the register size", () => {
@@ -69,14 +69,14 @@ describe("LoadOps", () => {
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
-      const expectedValue = 0xff;
+      const expectedValue = 0xffn;
       const registerIndex = 0;
       registers.setU32(registerIndex, 0x11_22_33_44);
 
       loadOps.loadU8(address, registerIndex);
 
-      assert.deepStrictEqual(registers.getI32(registerIndex), expectedValue);
-      assert.deepStrictEqual(registers.getU32(registerIndex), expectedValue);
+      assert.deepStrictEqual(registers.getI64(registerIndex), expectedValue);
+      assert.deepStrictEqual(registers.getU64(registerIndex), expectedValue);
     });
 
     it("should load u16 from memory to register", () => {
@@ -87,13 +87,13 @@ describe("LoadOps", () => {
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
-      const expectedValue = 61183;
+      const expectedValue = 61183n;
       const registerIndex = 0;
 
       loadOps.loadU16(address, registerIndex);
 
-      assert.deepStrictEqual(registers.getI32(registerIndex), expectedValue);
-      assert.deepStrictEqual(registers.getU32(registerIndex), expectedValue);
+      assert.deepStrictEqual(registers.getI64(registerIndex), expectedValue);
+      assert.deepStrictEqual(registers.getU64(registerIndex), expectedValue);
     });
 
     it("should load u16 from memory to register and extend the number to the register size", () => {
@@ -104,14 +104,14 @@ describe("LoadOps", () => {
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
-      const expectedValue = 61183;
+      const expectedValue = 61183n;
       const registerIndex = 0;
       registers.setU32(registerIndex, 0x11_22_33_44);
 
       loadOps.loadU16(address, registerIndex);
 
-      assert.deepStrictEqual(registers.getI32(registerIndex), expectedValue);
-      assert.deepStrictEqual(registers.getU32(registerIndex), expectedValue);
+      assert.deepStrictEqual(registers.getI64(registerIndex), expectedValue);
+      assert.deepStrictEqual(registers.getU64(registerIndex), expectedValue);
     });
 
     it("should load u32 from memory to register", () => {
@@ -122,35 +122,71 @@ describe("LoadOps", () => {
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
-      const expectedValue = 215871231;
+      const expectedValue = 215871231n;
       const registerIndex = 0;
 
       loadOps.loadU32(address, registerIndex);
 
-      assert.deepStrictEqual(registers.getI32(registerIndex), expectedValue);
-      assert.deepStrictEqual(registers.getU32(registerIndex), expectedValue);
+      assert.deepStrictEqual(registers.getI64(registerIndex), expectedValue);
+      assert.deepStrictEqual(registers.getU64(registerIndex), expectedValue);
     });
-
-    it("should load u32 from memory to register (negative number)", () => {
+    
+    it("should load u32 from memory to register and extend the number to the register size", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xff, 0xff, 0xff]))
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0x0c]))
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
-      const expectedSignedValue = -1;
-      const expectedUnsignedValue = 2 ** 32 - 1;
+      const expectedValue = 215871231n;
       const registerIndex = 0;
+      registers.setU64(registerIndex, 0x11_22_33_44_55_66_77_88n);
 
       loadOps.loadU32(address, registerIndex);
 
-      assert.deepStrictEqual(registers.getI32(registerIndex), expectedSignedValue);
-      assert.deepStrictEqual(registers.getU32(registerIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getI64(registerIndex), expectedValue);
+      assert.deepStrictEqual(registers.getU64(registerIndex), expectedValue);
+
+    });
+
+    it("should load u64 from memory to register (negative number)", () => {
+      const instructionResult = new InstructionResult();
+      const address = tryAsMemoryIndex(1);
+      const memory = new MemoryBuilder()
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]))
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+      const registers = new Registers();
+      const loadOps = new LoadOps(registers, memory, instructionResult);
+      const expectedSignedValue = -1n;
+      const expectedUnsignedValue = 2n ** 64n - 1n;
+      const registerIndex = 0;
+
+      loadOps.loadU64(address, registerIndex);
+
+      assert.deepStrictEqual(registers.getI64(registerIndex), expectedSignedValue);
+      assert.deepStrictEqual(registers.getU64(registerIndex), expectedUnsignedValue);
+    });
+
+    it("should load u64 from memory to register", () => {
+      const instructionResult = new InstructionResult();
+      const address = tryAsMemoryIndex(1);
+      const memory = new MemoryBuilder()
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x08]))
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+      const registers = new Registers();
+      const loadOps = new LoadOps(registers, memory, instructionResult);
+      const expectedValue = 0x08_99_aa_bb_cc_dd_ee_ffn;
+      const registerIndex = 0;
+
+      loadOps.loadU64(address, registerIndex);
+
+      assert.deepStrictEqual(registers.getI64(registerIndex), expectedValue);
+      assert.deepStrictEqual(registers.getU64(registerIndex), expectedValue);
     });
   });
 
-  describe("load (I8 and I16)", () => {
+  describe("load (I8, I16 and I32)", () => {
     it("should load i8 from memory to register", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
@@ -159,14 +195,14 @@ describe("LoadOps", () => {
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
-      const expectedSignedValue = -52;
-      const expectedUnsignedValue = 4294967244;
+      const expectedSignedValue = -52n;
+      const expectedUnsignedValue = 18446744073709551564n;
       const registerIndex = 0;
 
       loadOps.loadI8(address, registerIndex);
 
-      assert.deepStrictEqual(registers.getI32(registerIndex), expectedSignedValue);
-      assert.deepStrictEqual(registers.getU32(registerIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getU64(registerIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getI64(registerIndex), expectedSignedValue);
     });
 
     it("should load i8 from memory to register and extend the number to the register size", () => {
@@ -177,15 +213,15 @@ describe("LoadOps", () => {
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
-      const expectedSignedValue = -52;
-      const expectedUnsignedValue = 4294967244;
+      const expectedSignedValue = -52n;
+      const expectedUnsignedValue = 18446744073709551564n;
       const registerIndex = 0;
-      registers.setU32(registerIndex, 0x11_22_33_44);
+      registers.setU64(registerIndex, 0x11_22_33_44_55_66_77_88n);
 
       loadOps.loadI8(address, registerIndex);
 
-      assert.deepStrictEqual(registers.getI32(registerIndex), expectedSignedValue);
-      assert.deepStrictEqual(registers.getU32(registerIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getU64(registerIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getI64(registerIndex), expectedSignedValue);
     });
 
     it("should load i16 from memory to register", () => {
@@ -196,14 +232,14 @@ describe("LoadOps", () => {
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
-      const expectedSignedValue = -8756;
-      const expectedUnsignedValue = 0xffffddcc;
+      const expectedSignedValue = -8756n;
+      const expectedUnsignedValue = 18446744073709542860n;
       const registerIndex = 0;
 
       loadOps.loadI16(address, registerIndex);
 
-      assert.deepStrictEqual(registers.getU32(registerIndex), expectedUnsignedValue);
-      assert.deepStrictEqual(registers.getI32(registerIndex), expectedSignedValue);
+      assert.deepStrictEqual(registers.getU64(registerIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getI64(registerIndex), expectedSignedValue);
     });
 
     it("should load i16 from memory to register and extend the number to the register size", () => {
@@ -214,19 +250,56 @@ describe("LoadOps", () => {
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
-      const expectedSignedValue = -8756;
-      const expectedUnsignedValue = 0xffffddcc;
+      const expectedSignedValue = -8756n;
+      const expectedUnsignedValue = 18446744073709542860n;
       const registerIndex = 0;
-      registers.setU32(registerIndex, 0x11_22_33_44);
+      registers.setU64(registerIndex, 0x11_22_33_44_55_66_77_88n);
 
       loadOps.loadI16(address, registerIndex);
 
-      assert.deepStrictEqual(registers.getU32(registerIndex), expectedUnsignedValue);
-      assert.deepStrictEqual(registers.getI32(registerIndex), expectedSignedValue);
+      assert.deepStrictEqual(registers.getU64(registerIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getI64(registerIndex), expectedSignedValue);
+    });
+
+    it("should load i32 from memory to register", () => {
+      const instructionResult = new InstructionResult();
+      const address = tryAsMemoryIndex(1);
+      const memory = new MemoryBuilder()
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xdd, 0xff, 0xff]))
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+      const registers = new Registers();
+      const loadOps = new LoadOps(registers, memory, instructionResult);
+      const expectedSignedValue = -8756n;
+      const expectedUnsignedValue = 18446744073709542860n;
+      const registerIndex = 0;
+
+      loadOps.loadI32(address, registerIndex);
+
+      assert.deepStrictEqual(registers.getU64(registerIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getI64(registerIndex), expectedSignedValue);
+    });
+
+    it("should load i32 from memory to register and extend the number to the register size", () => {
+      const instructionResult = new InstructionResult();
+      const address = tryAsMemoryIndex(1);
+      const memory = new MemoryBuilder()
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xdd, 0xff, 0xff]))
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+      const registers = new Registers();
+      const loadOps = new LoadOps(registers, memory, instructionResult);
+      const expectedSignedValue = -8756n;
+      const expectedUnsignedValue = 18446744073709542860n;
+      const registerIndex = 0;
+      registers.setU64(registerIndex, 0x11_22_33_44_55_66_77_88n);
+
+      loadOps.loadI32(address, registerIndex);
+
+      assert.deepStrictEqual(registers.getU64(registerIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getI64(registerIndex), expectedSignedValue);
     });
   });
 
-  describe("loadInd (I8 and I16)", () => {
+  describe("loadInd (I8 I16 and I32)", () => {
     it("should load i8 from memory to register", () => {
       const instructionResult = new InstructionResult();
       const registers = new Registers();
@@ -238,15 +311,15 @@ describe("LoadOps", () => {
         .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xff, 0xff, 0xff]))
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const loadOps = new LoadOps(registers, memory, instructionResult);
-      const expectedSignedValue = -52;
-      const expectedUnsignedValue = 4294967244;
+      const expectedSignedValue = -52n;
+      const expectedUnsignedValue = 18446744073709551564n;
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([1]));
 
       loadOps.loadIndI8(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
 
-      assert.deepStrictEqual(registers.getI32(secondRegisterIndex), expectedSignedValue);
-      assert.deepStrictEqual(registers.getU32(secondRegisterIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getU64(secondRegisterIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getI64(secondRegisterIndex), expectedSignedValue);
     });
 
     it("should load i8 from memory to register and extend the number to the register size", () => {
@@ -260,16 +333,16 @@ describe("LoadOps", () => {
         .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xff, 0xff, 0xff]))
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const loadOps = new LoadOps(registers, memory, instructionResult);
-      const expectedSignedValue = -52;
-      const expectedUnsignedValue = 4294967244;
+      const expectedSignedValue = -52n;
+      const expectedUnsignedValue = 18446744073709551564n;
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([1]));
-      registers.setU32(secondRegisterIndex, 0x11_22_33_44);
+      registers.setU64(secondRegisterIndex, 0x11_22_33_44_55_66_77_88n);
 
       loadOps.loadIndI8(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
 
-      assert.deepStrictEqual(registers.getI32(secondRegisterIndex), expectedSignedValue);
-      assert.deepStrictEqual(registers.getU32(secondRegisterIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getU64(secondRegisterIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getI64(secondRegisterIndex), expectedSignedValue);
     });
 
     it("should load i16 from memory to register", () => {
@@ -283,15 +356,15 @@ describe("LoadOps", () => {
         .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xdd, 0xff, 0xff]))
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const loadOps = new LoadOps(registers, memory, instructionResult);
-      const expectedSignedValue = -8756;
-      const expectedUnsignedValue = 4294958540;
+      const expectedSignedValue = -8756n;
+      const expectedUnsignedValue = 18446744073709542860n;
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([1]));
 
       loadOps.loadIndI16(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
 
-      assert.deepStrictEqual(registers.getI32(secondRegisterIndex), expectedSignedValue);
-      assert.deepStrictEqual(registers.getU32(secondRegisterIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getU64(secondRegisterIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getI64(secondRegisterIndex), expectedSignedValue);
     });
 
     it("should load i16 from memory to register and extend the number to the register size", () => {
@@ -305,16 +378,61 @@ describe("LoadOps", () => {
         .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xdd, 0xff, 0xff]))
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const loadOps = new LoadOps(registers, memory, instructionResult);
-      const expectedSignedValue = -8756;
-      const expectedUnsignedValue = 4294958540;
+      const expectedSignedValue = -8756n;
+      const expectedUnsignedValue = 18446744073709542860n;
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([1]));
-      registers.setU32(secondRegisterIndex, 0x11_22_33_44);
+      registers.setU64(secondRegisterIndex, 0x11_22_33_44_55_66_77_88n);
 
       loadOps.loadIndI16(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
 
-      assert.deepStrictEqual(registers.getI32(secondRegisterIndex), expectedSignedValue);
-      assert.deepStrictEqual(registers.getU32(secondRegisterIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getU64(secondRegisterIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getI64(secondRegisterIndex), expectedSignedValue);      
+    });
+
+    it("should load i32 from memory to register", () => {
+      const instructionResult = new InstructionResult();
+      const registers = new Registers();
+      const address = tryAsMemoryIndex(2);
+      const firstRegisterIndex = 0;
+      const secondRegisterIndex = 1;
+      registers.setU32(firstRegisterIndex, 1);
+      const memory = new MemoryBuilder()
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xdd, 0xff, 0xff]))
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+      const loadOps = new LoadOps(registers, memory, instructionResult);
+      const expectedSignedValue = -8756n;
+      const expectedUnsignedValue = 18446744073709542860n;
+      const immediateDecoder = new ImmediateDecoder();
+      immediateDecoder.setBytes(new Uint8Array([1]));
+
+      loadOps.loadIndI32(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
+
+      assert.deepStrictEqual(registers.getU64(secondRegisterIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getI64(secondRegisterIndex), expectedSignedValue);
+    });
+
+    it("should load i32 from memory to register and extend the number to the register size", () => {
+      const instructionResult = new InstructionResult();
+      const registers = new Registers();
+      const address = tryAsMemoryIndex(2);
+      const firstRegisterIndex = 0;
+      const secondRegisterIndex = 1;
+      registers.setU32(firstRegisterIndex, 1);
+      const memory = new MemoryBuilder()
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xdd, 0xff, 0xff]))
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+      const loadOps = new LoadOps(registers, memory, instructionResult);
+      const expectedSignedValue = -8756n;
+      const expectedUnsignedValue = 18446744073709542860n;
+      const immediateDecoder = new ImmediateDecoder();
+      immediateDecoder.setBytes(new Uint8Array([1]));
+      registers.setU64(secondRegisterIndex, 0x11_22_33_44_55_66_77_88n);
+
+      loadOps.loadIndI32(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
+
+      assert.deepStrictEqual(registers.getU64(secondRegisterIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getI64(secondRegisterIndex), expectedSignedValue);      
     });
   });
 
@@ -332,12 +450,12 @@ describe("LoadOps", () => {
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([1]));
-      const expectedValue = 0xff;
+      const expectedValue = 0xffn;
 
       loadOps.loadIndU8(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
 
-      assert.deepStrictEqual(registers.getI32(secondRegisterIndex), expectedValue);
-      assert.deepStrictEqual(registers.getU32(secondRegisterIndex), expectedValue);
+      assert.deepStrictEqual(registers.getU64(secondRegisterIndex), expectedValue);
+      assert.deepStrictEqual(registers.getI64(secondRegisterIndex), expectedValue);
     });
 
     it("should load u8 from memory to register and extend the number to the register size", () => {
@@ -353,13 +471,13 @@ describe("LoadOps", () => {
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([1]));
-      const expectedValue = 0xff;
-      registers.setU32(secondRegisterIndex, 0x11_22_33_44);
+      const expectedValue = 0xffn;
+      registers.setU64(secondRegisterIndex, 0x11_22_33_44_55_66_77_88n);
 
       loadOps.loadIndU8(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
 
-      assert.deepStrictEqual(registers.getI32(secondRegisterIndex), expectedValue);
-      assert.deepStrictEqual(registers.getU32(secondRegisterIndex), expectedValue);
+      assert.deepStrictEqual(registers.getU64(secondRegisterIndex), expectedValue);
+      assert.deepStrictEqual(registers.getI64(secondRegisterIndex), expectedValue);
     });
 
     it("should load u16 from memory to register", () => {
@@ -375,12 +493,12 @@ describe("LoadOps", () => {
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([1]));
-      const expectedValue = 61183;
+      const expectedValue = 61183n;
 
       loadOps.loadIndU16(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
 
-      assert.deepStrictEqual(registers.getI32(secondRegisterIndex), expectedValue);
-      assert.deepStrictEqual(registers.getU32(secondRegisterIndex), expectedValue);
+      assert.deepStrictEqual(registers.getU64(secondRegisterIndex), expectedValue);
+      assert.deepStrictEqual(registers.getI64(secondRegisterIndex), expectedValue);
     });
 
     it("should load u16 from memory to register and extend the number to the register size", () => {
@@ -396,13 +514,13 @@ describe("LoadOps", () => {
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([1]));
-      const expectedValue = 61183;
-      registers.setU32(secondRegisterIndex, 0x11_22_33_44);
+      const expectedValue = 61183n;
+      registers.setU64(secondRegisterIndex, 0x11_22_33_44_55_66_77_88n);
 
       loadOps.loadIndU16(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
 
-      assert.deepStrictEqual(registers.getI32(secondRegisterIndex), expectedValue);
-      assert.deepStrictEqual(registers.getU32(secondRegisterIndex), expectedValue);
+      assert.deepStrictEqual(registers.getU64(secondRegisterIndex), expectedValue);
+      assert.deepStrictEqual(registers.getI64(secondRegisterIndex), expectedValue);
     });
 
     it("should load u32 from memory to register", () => {
@@ -413,40 +531,83 @@ describe("LoadOps", () => {
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;
-      const secondRegisterIndex = 0;
+      const secondRegisterIndex = 1;
       registers.setU32(firstRegisterIndex, 1);
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([1]));
-      const expectedValue = 215871231;
+      const expectedValue = 215871231n;
 
       loadOps.loadIndU32(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
 
-      assert.deepStrictEqual(registers.getI32(secondRegisterIndex), expectedValue);
-      assert.deepStrictEqual(registers.getU32(secondRegisterIndex), expectedValue);
+      assert.deepStrictEqual(registers.getU64(secondRegisterIndex), expectedValue);
+      assert.deepStrictEqual(registers.getI64(secondRegisterIndex), expectedValue);
     });
 
-    it("should load u32 from memory to register (negative number)", () => {
+    it("should load u32 from memory to register and extend the number to the register size", () => {
+      const instructionResult = new InstructionResult();
+      const address = tryAsMemoryIndex(2);
+      const memory = new MemoryBuilder()
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0x0c]))
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+      const registers = new Registers();
+      const firstRegisterIndex = 0;
+      const secondRegisterIndex = 1;
+      registers.setU32(firstRegisterIndex, 1);
+      const loadOps = new LoadOps(registers, memory, instructionResult);
+      const immediateDecoder = new ImmediateDecoder();
+      immediateDecoder.setBytes(new Uint8Array([1]));
+      const expectedValue = 215871231n;
+      registers.setU64(secondRegisterIndex, 0x11_22_33_44_55_66_77_88n);
+
+      loadOps.loadIndU32(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
+
+      assert.deepStrictEqual(registers.getU64(secondRegisterIndex), expectedValue);
+      assert.deepStrictEqual(registers.getI64(secondRegisterIndex), expectedValue);
+    });
+
+    it("should load u64 from memory to register", () => {
+      const instructionResult = new InstructionResult();
+      const address = tryAsMemoryIndex(2);
+      const memory = new MemoryBuilder()
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x08]))
+        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+      const registers = new Registers();
+      const firstRegisterIndex = 0;
+      const secondRegisterIndex = 1;
+      registers.setU32(firstRegisterIndex, 1);
+      const loadOps = new LoadOps(registers, memory, instructionResult);
+      const immediateDecoder = new ImmediateDecoder();
+      immediateDecoder.setBytes(new Uint8Array([1]));
+      const expectedValue = 619714147312856831n;
+
+      loadOps.loadIndU64(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
+
+      assert.deepStrictEqual(registers.getU64(secondRegisterIndex), expectedValue);
+      assert.deepStrictEqual(registers.getI64(secondRegisterIndex), expectedValue);
+    });
+
+    it("should load u64 from memory to register (negative number)", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(2);
 
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xff, 0xff, 0xff]))
+        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]))
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;
-      const secondRegisterIndex = 0;
+      const secondRegisterIndex = 1;
       registers.setU32(firstRegisterIndex, 1);
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([1]));
-      const expectedSignedValue = -1;
-      const expectedUnsignedValue = 2 ** 32 - 1;
+      const expectedSignedValue = -1n;
+      const expectedUnsignedValue = 2n ** 64n - 1n;
 
-      loadOps.loadIndU32(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
+      loadOps.loadIndU64(firstRegisterIndex, secondRegisterIndex, immediateDecoder);
 
-      assert.deepStrictEqual(registers.getI32(secondRegisterIndex), expectedSignedValue);
-      assert.deepStrictEqual(registers.getU32(secondRegisterIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getU64(secondRegisterIndex), expectedUnsignedValue);
+      assert.deepStrictEqual(registers.getI64(secondRegisterIndex), expectedSignedValue);
     });
   });
 });

@@ -1,5 +1,6 @@
 import { Mask } from "../program-decoder/mask";
 import { ArgumentType } from "./argument-type";
+import { ExtendedWitdthImmediateDecoder } from "./decoders/extended-with-immediate-decoder";
 import { ImmediateDecoder } from "./decoders/immediate-decoder";
 import { NibblesDecoder } from "./decoders/nibbles-decoder";
 
@@ -42,6 +43,13 @@ export type OneRegisterOneImmediateArgs = {
   noOfBytesToSkip: number;
   registerIndex: number;
   immediateDecoder: ImmediateDecoder;
+};
+
+export type OneRegisterOneExtendedWidthImmediateArgs = {
+  type: ArgumentType.ONE_REGISTER_ONE_EXTENDED_WIDTH_IMMEDIATE;
+  noOfBytesToSkip: number;
+  registerIndex: number;
+  immediateDecoder: ExtendedWitdthImmediateDecoder;
 };
 
 export type TwoRegistersTwoImmediatesArgs = {
@@ -102,7 +110,8 @@ export type Args =
   | OneRegisterOneImmediateArgs
   | OneOffsetArgs
   | TwoImmediatesArgs
-  | OneRegisterTwoImmediatesArgs;
+  | OneRegisterTwoImmediatesArgs
+  | OneRegisterOneExtendedWidthImmediateArgs;
 
 export class ArgsDecoder {
   private nibblesDecoder = new NibblesDecoder();
@@ -275,6 +284,19 @@ export class ArgsDecoder {
         const secondImmediateEndIndex = secondImmediateStartIndex + secondImmediateLength;
         const secondImmediateBytes = this.code.subarray(secondImmediateStartIndex, secondImmediateEndIndex);
         result.secondImmediateDecoder.setBytes(secondImmediateBytes);
+        break;
+      }
+
+      case ArgumentType.ONE_REGISTER_ONE_EXTENDED_WIDTH_IMMEDIATE: {
+        const firstByte = this.code[pc + 1];
+        this.nibblesDecoder.setByte(firstByte);
+        result.registerIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
+
+        const immediateLength = nextInstructionDistance - 2;
+        const immediateStartIndex = pc + 2;
+        const immediateEndIndex = immediateStartIndex + immediateLength;
+        const immediateBytes = this.code.subarray(immediateStartIndex, immediateEndIndex);
+        result.immediateDecoder.setBytes(immediateBytes);
         break;
       }
     }

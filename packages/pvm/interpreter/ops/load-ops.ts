@@ -6,7 +6,7 @@ import type { Registers } from "../registers";
 import { Result } from "../result";
 import { addWithOverflow } from "./math-utils";
 
-const REG_SIZE_BYTES = 4;
+const REG_SIZE_BYTES = 8;
 
 export class LoadOps {
   constructor(
@@ -19,7 +19,7 @@ export class LoadOps {
     this.regs.setU32(registerIndex, immediate);
   }
 
-  private loadNumber(address: number, registerIndex: number, numberLength: 1 | 2 | 4) {
+  private loadNumber(address: number, registerIndex: number, numberLength: 1 | 2 | 4 | 8) {
     const registerBytes = this.regs.getBytesAsLittleEndian(registerIndex, REG_SIZE_BYTES);
     const loadResult = this.memory.loadInto(registerBytes.subarray(0, numberLength), tryAsMemoryIndex(address));
     if (loadResult !== null) {
@@ -30,7 +30,7 @@ export class LoadOps {
     registerBytes.fill(0, numberLength);
   }
 
-  private loadSignedNumber(address: number, registerIndex: number, numberLength: 1 | 2) {
+  private loadSignedNumber(address: number, registerIndex: number, numberLength: 1 | 2 | 4) {
     // load all bytes from register to correctly handle the sign.
     const registerBytes = this.regs.getBytesAsLittleEndian(registerIndex, REG_SIZE_BYTES);
     const loadResult = this.memory.loadInto(registerBytes.subarray(0, numberLength), tryAsMemoryIndex(address));
@@ -60,12 +60,20 @@ export class LoadOps {
     this.loadNumber(address, registerIndex, 4);
   }
 
+  loadU64(address: number, registerIndex: number) {
+    this.loadNumber(address, registerIndex, 8);
+  }
+
   loadI8(address: number, registerIndex: number) {
     this.loadSignedNumber(address, registerIndex, 1);
   }
 
   loadI16(address: number, registerIndex: number) {
     this.loadSignedNumber(address, registerIndex, 2);
+  }
+
+  loadI32(address: number, registerIndex: number) {
+    this.loadSignedNumber(address, registerIndex, 4);
   }
 
   loadIndU8(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
@@ -83,6 +91,11 @@ export class LoadOps {
     this.loadNumber(address, secondRegisterIndex, 4);
   }
 
+  loadIndU64(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
+    const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
+    this.loadNumber(address, secondRegisterIndex, 8);
+  }
+
   loadIndI8(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
     const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.loadSignedNumber(address, secondRegisterIndex, 1);
@@ -91,5 +104,10 @@ export class LoadOps {
   loadIndI16(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
     const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.loadSignedNumber(address, secondRegisterIndex, 2);
+  }
+
+  loadIndI32(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
+    const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
+    this.loadSignedNumber(address, secondRegisterIndex, 4);
   }
 }

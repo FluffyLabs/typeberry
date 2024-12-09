@@ -16,7 +16,7 @@ describe("DynamicJumpOps", () => {
     const regs = new Registers();
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
-    const code = new Uint8Array([Instruction.TRAP, Instruction.TRAP, Instruction.TRAP, Instruction.ADD, 5, 6]);
+    const code = new Uint8Array([Instruction.TRAP, Instruction.TRAP, Instruction.TRAP, Instruction.ADD_32, 5, 6]);
     const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1111]), code.length));
     const basicBlocks = new BasicBlocks();
     basicBlocks.reset(code, mask);
@@ -34,7 +34,7 @@ describe("DynamicJumpOps", () => {
     const regs = new Registers();
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
-    const code = new Uint8Array([Instruction.TRAP, Instruction.TRAP, Instruction.TRAP, Instruction.ADD, 5, 6]);
+    const code = new Uint8Array([Instruction.TRAP, Instruction.TRAP, Instruction.TRAP, Instruction.ADD_32, 5, 6]);
     const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1111]), code.length));
     const basicBlocks = new BasicBlocks();
     basicBlocks.reset(code, mask);
@@ -122,7 +122,7 @@ describe("DynamicJumpOps", () => {
     const regs = new Registers();
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
-    const code = new Uint8Array([Instruction.ADD, 5, 6, Instruction.SUB, 5, 6]);
+    const code = new Uint8Array([Instruction.ADD_32, 5, 6, Instruction.SUB_32, 5, 6]);
     const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length));
     const basicBlocks = new BasicBlocks();
     basicBlocks.reset(code, mask);
