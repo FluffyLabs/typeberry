@@ -3,7 +3,7 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { EST_CORES } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { WithDebug } from "@typeberry/utils";
+import { WithDebug, asOpaqueType } from "@typeberry/utils";
 import type { ValidatorIndex } from "./common";
 import { withContext } from "./context";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "./crypto";
@@ -18,7 +18,7 @@ import type { HeaderHash } from "./hash";
  */
 export class AvailabilityAssurance extends WithDebug {
   static Codec = codec.Class(AvailabilityAssurance, {
-    anchor: codec.bytes(HASH_SIZE).cast(),
+    anchor: codec.bytes(HASH_SIZE).asOpaque(),
     bitfield: codec.select(
       {
         name: "AvailabilityAssurance.bitfield",
@@ -28,8 +28,8 @@ export class AvailabilityAssurance extends WithDebug {
         return codec.bitVecFixLen(Math.ceil(context.coresCount / 8) * 8);
       }),
     ),
-    validatorIndex: codec.u16.cast(),
-    signature: codec.bytes(ED25519_SIGNATURE_BYTES).cast(),
+    validatorIndex: codec.u16.asOpaque(),
+    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque(),
   });
 
   static fromCodec({ anchor, bitfield, validatorIndex, signature }: CodecRecord<AvailabilityAssurance>) {
@@ -67,4 +67,6 @@ export class AvailabilityAssurance extends WithDebug {
 export type AssurancesExtrinsic = KnownSizeArray<AvailabilityAssurance, "0 .. ValidatorsCount">;
 
 // TODO [ToDr] constrain the sequence length during decoding.
-export const assurancesExtrinsicCodec = codec.sequenceVarLen(AvailabilityAssurance.Codec).cast<AssurancesExtrinsic>();
+export const assurancesExtrinsicCodec = codec
+  .sequenceVarLen(AvailabilityAssurance.Codec)
+  .convert<AssurancesExtrinsic>((i) => i, asOpaqueType);

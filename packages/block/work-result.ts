@@ -71,10 +71,10 @@ export class WorkExecResult extends WithDebug {
  */
 export class WorkResult {
   static Codec = codec.Class(WorkResult, {
-    serviceId: codec.u32.cast(),
-    codeHash: codec.bytes(HASH_SIZE).cast(),
+    serviceId: codec.u32.asOpaque(),
+    codeHash: codec.bytes(HASH_SIZE).asOpaque(),
     payloadHash: codec.bytes(HASH_SIZE),
-    gas: codec.u64.cast(),
+    gas: codec.u64.asOpaque(),
     result: WorkExecResult.Codec,
   });
 

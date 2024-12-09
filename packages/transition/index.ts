@@ -133,7 +133,7 @@ export class WorkPackageExecutor {
     }
 
     // TODO [ToDr] we should probably store posteriorStateRoots in the blocks db.
-    const state = this.state.stateAt(header.priorStateRoot());
+    const state = this.state.stateAt(header.priorStateRoot.materialize());
     if (!state) {
       return Result.error(ServiceExecutorError.NoState);
     }

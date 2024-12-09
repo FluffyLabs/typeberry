@@ -19,7 +19,7 @@ export const STREAM_KIND = 133 as StreamKind;
 
 export class CoreWorkPackage extends WithDebug {
   static Codec = codec.Class(CoreWorkPackage, {
-    coreIndex: codec.u16.cast(),
+    coreIndex: codec.u16.asOpaque(),
     workPackage: WorkPackage.Codec,
   });
 

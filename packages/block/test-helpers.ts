@@ -9,5 +9,5 @@ export function testBlock() {
 }
 
 export function testBlockView() {
-  return Block.Codec.View.fromBytesBlob(BytesBlob.parseBlob(testData), tinyChainSpec);
+  return Decoder.decodeObject(Block.Codec.View, BytesBlob.parseBlob(testData), tinyChainSpec);
 }

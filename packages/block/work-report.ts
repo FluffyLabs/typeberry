@@ -15,7 +15,7 @@ export type WorkPackageHash = Opaque<OpaqueHash, "WorkPackageHash">;
 /** Details about the work package being reported on. */
 export class WorkPackageSpec extends WithDebug {
   static Codec = codec.Class(WorkPackageSpec, {
-    hash: codec.bytes(HASH_SIZE).cast(),
+    hash: codec.bytes(HASH_SIZE).asOpaque(),
     length: codec.u32,
     erasureRoot: codec.bytes(HASH_SIZE),
     exportsRoot: codec.bytes(HASH_SIZE),
@@ -44,8 +44,8 @@ export class WorkPackageSpec extends WithDebug {
 
 export class SegmentRootLookupItem {
   static Codec = codec.Class(SegmentRootLookupItem, {
-    workPackageHash: codec.bytes(HASH_SIZE).cast(),
-    segmentTreeRoot: codec.bytes(HASH_SIZE).cast(),
+    workPackageHash: codec.bytes(HASH_SIZE).asOpaque(),
+    segmentTreeRoot: codec.bytes(HASH_SIZE),
   });
 
   constructor(
@@ -66,12 +66,12 @@ export class WorkReport extends WithDebug {
   static Codec = codec.Class(WorkReport, {
     workPackageSpec: WorkPackageSpec.Codec,
     context: RefineContext.Codec,
-    coreIndex: codec.u16.cast(),
+    coreIndex: codec.u16.asOpaque(),
     authorizerHash: codec.bytes(HASH_SIZE),
     authorizationOutput: codec.blob,
     segmentRootLookup: codec.sequenceVarLen(SegmentRootLookupItem.Codec),
     // TODO [ToDr] Constrain the size of the sequence during decoding.
-    results: codec.sequenceVarLen(WorkResult.Codec).cast(),
+    results: codec.sequenceVarLen(WorkResult.Codec),
   });
 
   static fromCodec({
