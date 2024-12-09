@@ -40,6 +40,11 @@ export class DebuggerAdapter {
     return fullPage;
   }
 
+  // TODO [MaSi]: a temporary solution that is needed to implement host calls in PVM debugger
+  getMemory() {
+    this.pvm.getMemory();
+  }
+
   setMemory(address: number, value: Uint8Array) {
     this.pvm.getMemory().storeFrom(tryAsMemoryIndex(address), value);
   }
