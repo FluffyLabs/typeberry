@@ -25,14 +25,14 @@ export class Quit implements HostCallHandler {
 
   async execute(gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // `d`: where to transfer remaining funds
-    const destination = tryAsServiceId(regs.asUnsigned[IN_OUT_REG]);
+    const destination = tryAsServiceId(regs.get(IN_OUT_REG));
 
     const noTransfer = destination === this.currentServiceId || destination === CURRENT_SERVICE_ID;
 
     // we burn the remaining funds, no transfer added.
     if (noTransfer) {
       this.partialState.quitAndBurn();
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
+      regs.set(IN_OUT_REG, HostCallResult.OK);
       return Promise.resolve(PvmExecution.Halt);
     }
 
@@ -40,14 +40,14 @@ export class Quit implements HostCallHandler {
     // some extra cases, because the transfer might fail.
 
     // `o`: memo start memory index
-    const memoStart = tryAsMemoryIndex(regs.asUnsigned[8]);
+    const memoStart = tryAsMemoryIndex(regs.get(8));
     // `g`: onTransfer gas
     const remainingGas = gas.get();
     // `m`: transfer memo (message)
     const memo = Bytes.zero(TRANSFER_MEMO_BYTES);
     const pageFault = memory.loadInto(memo.raw, memoStart);
     if (pageFault !== null) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+      regs.set(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 
@@ -56,19 +56,19 @@ export class Quit implements HostCallHandler {
 
     // All good!
     if (transferResult.isOk) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
+      regs.set(IN_OUT_REG, HostCallResult.OK);
       return Promise.resolve(PvmExecution.Halt);
     }
 
     const e = transferResult.error;
 
     if (e === QuitError.DestinationNotFound) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.WHO;
+      regs.set(IN_OUT_REG, HostCallResult.WHO);
       return;
     }
 
     if (e === QuitError.GasTooLow) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.LOW;
+      regs.set(IN_OUT_REG, HostCallResult.LOW);
       return;
     }
 

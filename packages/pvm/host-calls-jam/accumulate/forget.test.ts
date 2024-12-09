@@ -24,8 +24,8 @@ function prepareRegsAndMemory(
 ) {
   const memStart = 20_000;
   const registers = new Registers();
-  registers.asUnsigned[HASH_START_REG] = memStart;
-  registers.asUnsigned[LENGTH_REG] = preimageLength;
+  registers.set(HASH_START_REG, memStart);
+  registers.set(LENGTH_REG, preimageLength);
 
   const builder = new MemoryBuilder();
 
@@ -54,7 +54,7 @@ describe("HostCalls: Solicit", () => {
     await forget.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.forgetPreimageData, [[Bytes.fill(HASH_SIZE, 0x69), 4_096]]);
   });
 
@@ -70,7 +70,7 @@ describe("HostCalls: Solicit", () => {
     await forget.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accumulate.forgetPreimageData, []);
   });
 
@@ -86,7 +86,7 @@ describe("HostCalls: Solicit", () => {
     await forget.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.HUH);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
     assert.deepStrictEqual(accumulate.forgetPreimageData, [[Bytes.fill(HASH_SIZE, 0x69), 4_096]]);
   });
 });

@@ -8,6 +8,6 @@ export class MemoryOps {
   ) {}
 
   sbrk(firstIndex: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = this.memory.sbrk(this.regs.asUnsigned[firstIndex]);
+    this.regs.set(resultIndex, this.memory.sbrk(this.regs.get(firstIndex)));
   }
 }

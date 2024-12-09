@@ -20,8 +20,8 @@ export class Gas implements HostCallHandler {
     const upper = bigGas >> 32n;
     const lower = bigGas & 0xffffffffn;
 
-    regs.asUnsigned[7] = Number(lower);
-    regs.asUnsigned[8] = Number(upper);
+    regs.set(7, Number(lower));
+    regs.set(8, Number(upper));
 
     return Promise.resolve(undefined);
   }

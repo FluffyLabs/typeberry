@@ -33,28 +33,28 @@ export class Assign implements HostCallHandler {
   ) {}
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
-    const coreIndex = regs.asUnsigned[IN_OUT_REG];
+    const coreIndex = regs.get(IN_OUT_REG);
     // o
-    const authorizationQueueStart = tryAsMemoryIndex(regs.asUnsigned[8]);
+    const authorizationQueueStart = tryAsMemoryIndex(regs.get(8));
 
     const res = new Uint8Array(HASH_SIZE * AUTHORIZATION_QUEUE_SIZE);
     const pageFault = memory.loadInto(res, authorizationQueueStart);
     // page fault while reading the memory.
     if (pageFault !== null) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+      regs.set(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 
     // the core is unknown
     if (coreIndex >= this.chainSpec.coresCount) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.CORE;
+      regs.set(IN_OUT_REG, HostCallResult.CORE);
       return;
     }
 
     const d = Decoder.fromBlob(res);
     const authQueue = d.sequenceFixLen(codec.bytes(HASH_SIZE), AUTHORIZATION_QUEUE_SIZE);
 
-    regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
+    regs.set(IN_OUT_REG, HostCallResult.OK);
     this.partialState.updateAuthorizationQueue(tryAsCoreIndex(coreIndex), authQueue);
     return;
   }

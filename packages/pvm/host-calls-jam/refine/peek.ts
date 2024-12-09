@@ -28,29 +28,29 @@ export class Peek implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
     // `n`: machine index
-    const machineIndex = tryAsMachineId(regs.asUnsigned[IN_OUT_REG]);
+    const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG));
     // `o`: destination memory start (local)
-    const destinationStart = tryAsMemoryIndex(regs.asUnsigned[8]);
+    const destinationStart = tryAsMemoryIndex(regs.get(8));
     // `s`: source memory start (nested vm)
-    const sourceStart = tryAsMemoryIndex(regs.asUnsigned[9]);
+    const sourceStart = tryAsMemoryIndex(regs.get(9));
     // `z`: memory length
-    const length = tryAsU32(regs.asUnsigned[10]);
+    const length = tryAsU32(regs.get(10));
 
     const peekResult = await this.refine.machinePeekFrom(machineIndex, destinationStart, sourceStart, length, memory);
     if (peekResult.isOk) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
+      regs.set(IN_OUT_REG, HostCallResult.OK);
       return;
     }
 
     const e = peekResult.error;
 
     if (e === PeekPokeError.NoMachine) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.WHO;
+      regs.set(IN_OUT_REG, HostCallResult.WHO);
       return;
     }
 
     if (e === PeekPokeError.PageFault) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+      regs.set(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 

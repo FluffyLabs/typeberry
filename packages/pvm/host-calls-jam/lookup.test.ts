@@ -42,10 +42,10 @@ function prepareRegsAndMemory(
   const keyAddress = 15_000;
   const memStart = 3_400_000;
   const registers = new Registers();
-  registers.asUnsigned[SERVICE_ID_REG] = serviceId;
-  registers.asUnsigned[KEY_START_REG] = keyAddress;
-  registers.asUnsigned[DEST_START_REG] = memStart;
-  registers.asUnsigned[DEST_LEN_REG] = destinationLength;
+  registers.set(SERVICE_ID_REG, serviceId);
+  registers.set(KEY_START_REG, keyAddress);
+  registers.set(DEST_START_REG, memStart);
+  registers.set(DEST_LEN_REG, destinationLength);
 
   const builder = new MemoryBuilder();
   if (!skipKey) {
@@ -79,7 +79,7 @@ describe("HostCalls: Lookup", () => {
     await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], "hello world".length);
+    assert.deepStrictEqual(registers.get(RESULT_REG), "hello world".length);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x68656c6c6f20776f726c640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -98,7 +98,7 @@ describe("HostCalls: Lookup", () => {
     await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], "hello world".length);
+    assert.deepStrictEqual(registers.get(RESULT_REG), "hello world".length);
     assert.deepStrictEqual(readResult().toString(), "0x68656c");
   });
 
@@ -114,7 +114,7 @@ describe("HostCalls: Lookup", () => {
     await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.NONE);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.NONE);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -132,7 +132,7 @@ describe("HostCalls: Lookup", () => {
     await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
   });
 
   it("should fail if there is no memory for result", async () => {
@@ -146,7 +146,7 @@ describe("HostCalls: Lookup", () => {
     await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
   });
 
   it("should fail if the destination is not fully writeable", async () => {
@@ -156,13 +156,13 @@ describe("HostCalls: Lookup", () => {
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
     accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
-    registers.asUnsigned[DEST_LEN_REG] = 34;
+    registers.set(DEST_LEN_REG, 34);
 
     // when
     await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
   });
 
   it("should fail gracefuly if the destination is beyond mem limit", async () => {
@@ -172,14 +172,14 @@ describe("HostCalls: Lookup", () => {
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
     accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
-    registers.asUnsigned[DEST_START_REG] = 2 ** 32 - 1;
-    registers.asUnsigned[DEST_LEN_REG] = 2 ** 10;
+    registers.set(DEST_START_REG, 2 ** 32 - 1);
+    registers.set(DEST_LEN_REG, 2 ** 10);
 
     // when
     await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
   });
 
   it("should handle 0-length destination", async () => {
@@ -194,6 +194,6 @@ describe("HostCalls: Lookup", () => {
     await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], "hello world".length);
+    assert.deepStrictEqual(registers.get(RESULT_REG), "hello world".length);
   });
 });

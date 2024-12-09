@@ -30,12 +30,12 @@ function prepareRegsAndMemory(
 ) {
   const memStart = 20_000;
   const registers = new Registers();
-  registers.asUnsigned[DESTINATION_REG] = destination;
-  registers.asUnsigned[AMOUNT_LOW_REG] = u64IntoParts(amount).lower;
-  registers.asUnsigned[AMOUNT_HIG_REG] = u64IntoParts(amount).upper;
-  registers.asUnsigned[GAS_LOW_REG] = u64IntoParts(gas).lower;
-  registers.asUnsigned[GAS_HIG_REG] = u64IntoParts(gas).upper;
-  registers.asUnsigned[MEMO_START_REG] = memStart;
+  registers.set(DESTINATION_REG, destination);
+  registers.set(AMOUNT_LOW_REG, u64IntoParts(amount).lower);
+  registers.set(AMOUNT_HIG_REG, u64IntoParts(amount).upper);
+  registers.set(GAS_LOW_REG, u64IntoParts(gas).lower);
+  registers.set(GAS_HIG_REG, u64IntoParts(gas).upper);
+  registers.set(MEMO_START_REG, memStart);
 
   const builder = new MemoryBuilder();
   if (!skipMemo) {
@@ -68,7 +68,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.transferData, [
       [transfer.currentServiceId, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)],
     ]);
@@ -90,7 +90,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
   });
 
@@ -130,7 +130,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accumulate.transferData, []);
   });
 
@@ -150,7 +150,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.HIGH);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HIGH);
     assert.deepStrictEqual(accumulate.transferData, []);
   });
 
@@ -171,7 +171,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.LOW);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.LOW);
     assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
   });
 
@@ -192,7 +192,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.CASH);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.CASH);
     assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
   });
 
@@ -213,7 +213,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.WHO);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
     assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
   });
 });

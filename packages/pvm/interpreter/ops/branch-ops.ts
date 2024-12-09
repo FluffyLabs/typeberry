@@ -32,66 +32,66 @@ export class BranchOps {
   }
 
   branchEqImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asUnsigned[registerIndex] === immediate);
+    this.branch(nextPc, this.regs.get(registerIndex) === immediate);
   }
 
   branchEq(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchEqImmediate(firstIndex, this.regs.asUnsigned[secondIndex], nextPc);
+    this.branchEqImmediate(firstIndex, this.regs.get(secondIndex), nextPc);
   }
 
   branchNeImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asUnsigned[registerIndex] !== immediate);
+    this.branch(nextPc, this.regs.get(registerIndex) !== immediate);
   }
 
   branchNe(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchNeImmediate(firstIndex, this.regs.asUnsigned[secondIndex], nextPc);
+    this.branchNeImmediate(firstIndex, this.regs.get(secondIndex), nextPc);
   }
 
   branchLtUnsignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asUnsigned[registerIndex] < immediate);
+    this.branch(nextPc, this.regs.get(registerIndex) < immediate);
   }
 
   branchLtUnsigned(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchLtUnsignedImmediate(firstIndex, this.regs.asUnsigned[secondIndex], nextPc);
+    this.branchLtUnsignedImmediate(firstIndex, this.regs.get(secondIndex), nextPc);
   }
 
   branchLeUnsignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asUnsigned[registerIndex] <= immediate);
+    this.branch(nextPc, this.regs.get(registerIndex) <= immediate);
   }
 
   branchGtUnsignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asUnsigned[registerIndex] > immediate);
+    this.branch(nextPc, this.regs.get(registerIndex) > immediate);
   }
 
   branchGeUnsignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asUnsigned[registerIndex] >= immediate);
+    this.branch(nextPc, this.regs.get(registerIndex) >= immediate);
   }
 
   branchGeUnsigned(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchGeUnsignedImmediate(firstIndex, this.regs.asUnsigned[secondIndex], nextPc);
+    this.branchGeUnsignedImmediate(firstIndex, this.regs.get(secondIndex), nextPc);
   }
 
   branchLtSignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asSigned[registerIndex] < immediate);
+    this.branch(nextPc, this.regs.get(registerIndex, true) < immediate);
   }
 
   branchLtSigned(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchLtSignedImmediate(firstIndex, this.regs.asSigned[secondIndex], nextPc);
+    this.branchLtSignedImmediate(firstIndex, this.regs.get(secondIndex, true), nextPc);
   }
 
   branchLeSignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asSigned[registerIndex] <= immediate);
+    this.branch(nextPc, this.regs.get(registerIndex, true) <= immediate);
   }
 
   branchGtSignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asSigned[registerIndex] > immediate);
+    this.branch(nextPc, this.regs.get(registerIndex, true) > immediate);
   }
 
   branchGeSignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asSigned[registerIndex] >= immediate);
+    this.branch(nextPc, this.regs.get(registerIndex, true) >= immediate);
   }
 
   branchGeSigned(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchGeSignedImmediate(firstIndex, this.regs.asSigned[secondIndex], nextPc);
+    this.branchGeSignedImmediate(firstIndex, this.regs.get(secondIndex, true), nextPc);
   }
 }

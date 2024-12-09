@@ -16,7 +16,7 @@ export class LoadOps {
   ) {}
 
   loadImmediate(registerIndex: number, immediate: number) {
-    this.regs.asUnsigned[registerIndex] = immediate;
+    this.regs.set(registerIndex, immediate);
   }
 
   private loadNumber(address: number, registerIndex: number, numberLength: 1 | 2 | 4) {
@@ -69,27 +69,27 @@ export class LoadOps {
   }
 
   loadIndU8(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
+    const address = addWithOverflow(this.regs.get(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.loadNumber(address, secondRegisterIndex, 1);
   }
 
   loadIndU16(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
+    const address = addWithOverflow(this.regs.get(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.loadNumber(address, secondRegisterIndex, 2);
   }
 
   loadIndU32(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
+    const address = addWithOverflow(this.regs.get(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.loadNumber(address, secondRegisterIndex, 4);
   }
 
   loadIndI8(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
+    const address = addWithOverflow(this.regs.get(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.loadSignedNumber(address, secondRegisterIndex, 1);
   }
 
   loadIndI16(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.asUnsigned[firstRegisterIndex], immediateDecoder.getUnsigned());
+    const address = addWithOverflow(this.regs.get(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.loadSignedNumber(address, secondRegisterIndex, 2);
   }
 }

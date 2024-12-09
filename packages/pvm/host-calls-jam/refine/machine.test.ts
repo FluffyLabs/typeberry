@@ -18,9 +18,9 @@ const PC_REG = 9;
 function prepareRegsAndMemory(code: BytesBlob, pc: U32, { skipCode = false }: { skipCode?: boolean } = {}) {
   const memStart = 3_400_000;
   const registers = new Registers();
-  registers.asUnsigned[CODE_START_REG] = memStart;
-  registers.asUnsigned[CODE_LEN_REG] = code.length;
-  registers.asUnsigned[PC_REG] = pc;
+  registers.set(CODE_START_REG, memStart);
+  registers.set(CODE_LEN_REG, code.length);
+  registers.set(PC_REG, pc);
 
   const builder = new MemoryBuilder();
   if (!skipCode) {
@@ -46,7 +46,7 @@ describe("HostCalls: Machine", () => {
     await machine.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], 10_000);
+    assert.deepStrictEqual(registers.get(RESULT_REG), 10_000);
   });
 
   it("should fail when code is unavailable", async () => {
@@ -60,6 +60,6 @@ describe("HostCalls: Machine", () => {
     await machine.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
   });
 });

@@ -32,8 +32,8 @@ export class Transfer implements HostCallHandler {
    * https://graypaper.fluffylabs.dev/#/364735a/2f3c002f3f00
    */
   gasCost = (regs: Registers): Gas => {
-    const smallGas = 10 + regs.asUnsigned[AMOUNT_LOW_REG];
-    const big = regs.asUnsigned[AMOUNT_HIG_REG];
+    const smallGas = 10 + regs.get(AMOUNT_LOW_REG);
+    const big = regs.get(AMOUNT_HIG_REG);
     if (big === 0 && smallGas < 2 ** 32) {
       return tryAsSmallGas(smallGas);
     }
@@ -46,21 +46,21 @@ export class Transfer implements HostCallHandler {
 
   async execute(gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // `d`: destination
-    const destination = tryAsServiceId(regs.asUnsigned[IN_OUT_REG]);
+    const destination = tryAsServiceId(regs.get(IN_OUT_REG));
     // amount
-    const a_l = tryAsU32(regs.asUnsigned[AMOUNT_LOW_REG]);
-    const a_h = tryAsU32(regs.asUnsigned[AMOUNT_HIG_REG]);
+    const a_l = tryAsU32(regs.get(AMOUNT_LOW_REG));
+    const a_h = tryAsU32(regs.get(AMOUNT_HIG_REG));
     // gas
-    const g_l = tryAsU32(regs.asUnsigned[10]);
-    const g_h = tryAsU32(regs.asUnsigned[11]);
+    const g_l = tryAsU32(regs.get(10));
+    const g_h = tryAsU32(regs.get(11));
     // `o`: transfer memo
-    const memoStart = tryAsMemoryIndex(regs.asUnsigned[12]);
+    const memoStart = tryAsMemoryIndex(regs.get(12));
 
     const memo = Bytes.zero(TRANSFER_MEMO_BYTES);
     const pageFault = memory.loadInto(memo.raw, memoStart);
     // page fault while reading the memory.
     if (pageFault !== null) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+      regs.set(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 
@@ -69,7 +69,7 @@ export class Transfer implements HostCallHandler {
 
     // We don't have enough gas left
     if (gas.get() < onTransferGas) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.HIGH;
+      regs.set(IN_OUT_REG, HostCallResult.HIGH);
       return;
     }
 
@@ -77,24 +77,24 @@ export class Transfer implements HostCallHandler {
 
     // All good!
     if (transferResult.isOk) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
+      regs.set(IN_OUT_REG, HostCallResult.OK);
       return;
     }
 
     const e = transferResult.error;
 
     if (e === TransferError.DestinationNotFound) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.WHO;
+      regs.set(IN_OUT_REG, HostCallResult.WHO);
       return;
     }
 
     if (e === TransferError.GasTooLow) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.LOW;
+      regs.set(IN_OUT_REG, HostCallResult.LOW);
       return;
     }
 
     if (e === TransferError.BalanceBelowThreshold) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.CASH;
+      regs.set(IN_OUT_REG, HostCallResult.CASH);
       return;
     }
 

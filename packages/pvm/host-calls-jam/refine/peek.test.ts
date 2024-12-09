@@ -19,7 +19,7 @@ describe("HostCalls: Peek", () => {
     await peek.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
   });
 
   it("should fail if there is no machine", async () => {
@@ -29,7 +29,7 @@ describe("HostCalls: Peek", () => {
     await peek.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.WHO);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
   });
 
   it("should fail if there is a page fault on any side", async () => {
@@ -39,16 +39,16 @@ describe("HostCalls: Peek", () => {
     await peek.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
   });
 });
 
 function prepareRegsAndMemory(machineId: MachineId, destinationStart: number, sourceStart: number, length: number) {
   const registers = new Registers();
-  registers.asUnsigned[7] = machineId;
-  registers.asUnsigned[8] = destinationStart;
-  registers.asUnsigned[9] = sourceStart;
-  registers.asUnsigned[10] = length;
+  registers.set(7, machineId);
+  registers.set(8, destinationStart);
+  registers.set(9, sourceStart);
+  registers.set(10, length);
 
   const builder = new MemoryBuilder();
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));

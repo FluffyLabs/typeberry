@@ -12,7 +12,7 @@ const getRegisters = (data: number[]) => {
   const regs = new Registers();
 
   for (const [i, byte] of data.entries()) {
-    regs.asUnsigned[i] = byte;
+    regs.set(i, byte);
   }
 
   return regs;
@@ -27,7 +27,7 @@ test("MoveOps", async (t) => {
 
     moveOps.moveRegister(FIRST_REGISTER, RESULT_REGISTER);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
   });
 
   await t.test("cmovIfZero (condition satisfied)", () => {
@@ -39,7 +39,7 @@ test("MoveOps", async (t) => {
 
     moveOps.cmovIfZero(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
   });
 
   await t.test("cmovIfZero (condition not satisfied)", () => {
@@ -51,7 +51,7 @@ test("MoveOps", async (t) => {
 
     moveOps.cmovIfZero(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
   });
 
   await t.test("cmovIfNotZero (condition satisfied)", () => {
@@ -63,7 +63,7 @@ test("MoveOps", async (t) => {
 
     moveOps.cmovIfNotZero(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
   });
 
   await t.test("cmovIfNotZero (condition not satisfied)", () => {
@@ -75,7 +75,7 @@ test("MoveOps", async (t) => {
 
     moveOps.cmovIfNotZero(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
   });
 
   await t.test("cmovIfZeroImmediate (condition satisfied)", () => {
@@ -87,7 +87,7 @@ test("MoveOps", async (t) => {
 
     moveOps.cmovIfZeroImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
   });
 
   await t.test("cmovIfZeroImmediate (condition not satisfied)", () => {
@@ -99,7 +99,7 @@ test("MoveOps", async (t) => {
 
     moveOps.cmovIfZeroImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
   });
 
   await t.test("cmovIfNotZeroImmediate (condition satisfied)", () => {
@@ -111,7 +111,7 @@ test("MoveOps", async (t) => {
 
     moveOps.cmovIfNotZeroImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
   });
 
   await t.test("cmovIfNotZeroImmediate (condition not satisfied)", () => {
@@ -123,6 +123,6 @@ test("MoveOps", async (t) => {
 
     moveOps.cmovIfNotZeroImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.get(RESULT_REGISTER), resultValue);
   });
 });

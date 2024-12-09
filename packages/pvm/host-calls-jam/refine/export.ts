@@ -28,24 +28,24 @@ export class Export implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
     // `p`: segment start address
-    const segmentStart = tryAsMemoryIndex(regs.asUnsigned[IN_OUT_REG]);
+    const segmentStart = tryAsMemoryIndex(regs.get(IN_OUT_REG));
     // `z`: segment bounded length
-    const segmentLength = Math.min(regs.asUnsigned[8], SEGMENT_BYTES);
+    const segmentLength = Math.min(regs.get(8), SEGMENT_BYTES);
     // destination (padded with zeros).
     const segment: Segment = Bytes.zero(SEGMENT_BYTES);
 
     const segmentReadPageFault = memory.loadInto(segment.raw.subarray(0, segmentLength), segmentStart);
     if (segmentReadPageFault !== null) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+      regs.set(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 
     // attempt to export a segment and fail if it's above the maximum.
     const segmentExported = this.refine.exportSegment(segment);
     if (segmentExported.isOk) {
-      regs.asUnsigned[IN_OUT_REG] = segmentExported.ok;
+      regs.set(IN_OUT_REG, segmentExported.ok);
     } else {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.FULL;
+      regs.set(IN_OUT_REG, HostCallResult.FULL);
     }
     return;
   }

@@ -27,11 +27,11 @@ function prepareRegsAndMemory(
 ) {
   const memStart = 20_000;
   const registers = new Registers();
-  registers.asUnsigned[CODE_HASH_START_REG] = memStart;
-  registers.asUnsigned[GAS_LOW_REG] = u64IntoParts(gas).lower;
-  registers.asUnsigned[GAS_HIG_REG] = u64IntoParts(gas).upper;
-  registers.asUnsigned[BALANCE_LOW_REG] = u64IntoParts(balance).lower;
-  registers.asUnsigned[BALANCE_HIG_REG] = u64IntoParts(balance).upper;
+  registers.set(CODE_HASH_START_REG, memStart);
+  registers.set(GAS_LOW_REG, u64IntoParts(gas).lower);
+  registers.set(GAS_HIG_REG, u64IntoParts(gas).upper);
+  registers.set(BALANCE_LOW_REG, u64IntoParts(balance).lower);
+  registers.set(BALANCE_HIG_REG, u64IntoParts(balance).upper);
 
   const builder = new MemoryBuilder();
 
@@ -60,7 +60,7 @@ describe("HostCalls: Upgrade", () => {
     await upgrade.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.upgradeData, [[Bytes.fill(HASH_SIZE, 0x69), 2n ** 40n, 2n ** 50n]]);
   });
 
@@ -80,7 +80,7 @@ describe("HostCalls: Upgrade", () => {
     await upgrade.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accumulate.upgradeData, []);
   });
 });

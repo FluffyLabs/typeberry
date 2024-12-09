@@ -30,23 +30,23 @@ export class Forget implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
     // `o`
-    const hashStart = tryAsMemoryIndex(regs.asUnsigned[IN_OUT_REG]);
+    const hashStart = tryAsMemoryIndex(regs.get(IN_OUT_REG));
     // `z`
-    const length = tryAsU32(regs.asUnsigned[8]);
+    const length = tryAsU32(regs.get(8));
 
     const hash = Bytes.zero(HASH_SIZE);
     const pageFault = memory.loadInto(hash.raw, hashStart);
     if (pageFault !== null) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+      regs.set(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 
     const result = this.partialState.forgetPreimage(hash, length);
 
     if (result.isOk) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
+      regs.set(IN_OUT_REG, HostCallResult.OK);
     } else {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.HUH;
+      regs.set(IN_OUT_REG, HostCallResult.HUH);
     }
   }
 }

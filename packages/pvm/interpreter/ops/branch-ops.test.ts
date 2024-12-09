@@ -55,8 +55,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asUnsigned[firstRegisterIndex] = 5;
-      regs.asUnsigned[secondRegisterIndex] = 5;
+      regs.set(firstRegisterIndex, 5);
+      regs.set(secondRegisterIndex, 5);
 
       branchOps.branchEq(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -74,8 +74,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asUnsigned[firstRegisterIndex] = 5;
-      regs.asUnsigned[secondRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 5);
+      regs.set(secondRegisterIndex, 6);
 
       branchOps.branchEq(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -95,8 +95,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asUnsigned[firstRegisterIndex] = 5;
-      regs.asUnsigned[secondRegisterIndex] = 5;
+      regs.set(firstRegisterIndex, 5);
+      regs.set(secondRegisterIndex, 5);
 
       branchOps.branchEq(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -116,8 +116,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asUnsigned[firstRegisterIndex] = 5;
-      regs.asUnsigned[secondRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 5);
+      regs.set(secondRegisterIndex, 6);
 
       branchOps.branchEq(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -137,7 +137,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 5;
-      regs.asUnsigned[firstRegisterIndex] = 5;
+      regs.set(firstRegisterIndex, 5);
 
       branchOps.branchEqImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -154,7 +154,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
-      regs.asUnsigned[firstRegisterIndex] = 5;
+      regs.set(firstRegisterIndex, 5);
       const immediate = 6;
 
       branchOps.branchEqImmediate(firstRegisterIndex, immediate, nextPc);
@@ -175,7 +175,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 5;
-      regs.asUnsigned[firstRegisterIndex] = 5;
+      regs.set(firstRegisterIndex, 5);
 
       branchOps.branchEqImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -195,7 +195,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 6;
-      regs.asUnsigned[firstRegisterIndex] = 5;
+      regs.set(firstRegisterIndex, 5);
 
       branchOps.branchEqImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -215,8 +215,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asUnsigned[firstRegisterIndex] = 6;
-      regs.asUnsigned[secondRegisterIndex] = 5;
+      regs.set(firstRegisterIndex, 6);
+      regs.set(secondRegisterIndex, 5);
 
       branchOps.branchNe(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -234,8 +234,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asUnsigned[firstRegisterIndex] = 6;
-      regs.asUnsigned[secondRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
+      regs.set(secondRegisterIndex, 6);
 
       branchOps.branchNe(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -255,8 +255,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asUnsigned[firstRegisterIndex] = 6;
-      regs.asUnsigned[secondRegisterIndex] = 5;
+      regs.set(firstRegisterIndex, 6);
+      regs.set(secondRegisterIndex, 5);
 
       branchOps.branchNe(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -276,8 +276,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asUnsigned[firstRegisterIndex] = 6;
-      regs.asUnsigned[secondRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
+      regs.set(secondRegisterIndex, 6);
 
       branchOps.branchNe(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -297,7 +297,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 5;
-      regs.asUnsigned[firstRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
 
       branchOps.branchNeImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -315,7 +315,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
       const immediate = 6;
-      regs.asUnsigned[firstRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
 
       branchOps.branchNeImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -335,7 +335,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 5;
-      regs.asUnsigned[firstRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
 
       branchOps.branchNeImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -355,7 +355,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 6;
-      regs.asUnsigned[firstRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
 
       branchOps.branchNeImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -375,8 +375,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asUnsigned[firstRegisterIndex] = 5;
-      regs.asUnsigned[secondRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 5);
+      regs.set(secondRegisterIndex, 6);
 
       branchOps.branchLtUnsigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -394,8 +394,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asUnsigned[firstRegisterIndex] = 6;
-      regs.asUnsigned[secondRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
+      regs.set(secondRegisterIndex, 6);
 
       branchOps.branchLtUnsigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -415,8 +415,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asUnsigned[firstRegisterIndex] = 5;
-      regs.asUnsigned[secondRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 5);
+      regs.set(secondRegisterIndex, 6);
 
       branchOps.branchLtUnsigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -436,8 +436,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asUnsigned[firstRegisterIndex] = 6;
-      regs.asUnsigned[secondRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
+      regs.set(secondRegisterIndex, 6);
 
       branchOps.branchLtUnsigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -457,7 +457,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 6;
-      regs.asUnsigned[firstRegisterIndex] = 5;
+      regs.set(firstRegisterIndex, 5);
 
       branchOps.branchLtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -475,7 +475,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
       const immediate = 6;
-      regs.asUnsigned[firstRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
 
       branchOps.branchLtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -495,7 +495,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 6;
-      regs.asUnsigned[firstRegisterIndex] = 5;
+      regs.set(firstRegisterIndex, 5);
 
       branchOps.branchLtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -515,7 +515,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 6;
-      regs.asUnsigned[firstRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
 
       branchOps.branchLtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -535,8 +535,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asUnsigned[firstRegisterIndex] = 5;
-      regs.asUnsigned[secondRegisterIndex] = 5;
+      regs.set(firstRegisterIndex, 5);
+      regs.set(secondRegisterIndex, 5);
 
       branchOps.branchGeUnsigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -554,8 +554,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asUnsigned[firstRegisterIndex] = 5;
-      regs.asUnsigned[secondRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 5);
+      regs.set(secondRegisterIndex, 6);
 
       branchOps.branchGeUnsigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -575,8 +575,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asUnsigned[firstRegisterIndex] = 7;
-      regs.asUnsigned[secondRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 7);
+      regs.set(secondRegisterIndex, 6);
 
       branchOps.branchGeUnsigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -596,8 +596,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asUnsigned[firstRegisterIndex] = 5;
-      regs.asUnsigned[secondRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 5);
+      regs.set(secondRegisterIndex, 6);
 
       branchOps.branchGeUnsigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -617,7 +617,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 5;
-      regs.asUnsigned[firstRegisterIndex] = 5;
+      regs.set(firstRegisterIndex, 5);
 
       branchOps.branchGeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -635,7 +635,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
       const immediate = 6;
-      regs.asUnsigned[firstRegisterIndex] = 5;
+      regs.set(firstRegisterIndex, 5);
 
       branchOps.branchGeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -655,7 +655,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 6;
-      regs.asUnsigned[firstRegisterIndex] = 7;
+      regs.set(firstRegisterIndex, 7);
 
       branchOps.branchGeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -675,7 +675,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 6;
-      regs.asUnsigned[firstRegisterIndex] = 5;
+      regs.set(firstRegisterIndex, 5);
 
       branchOps.branchGeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -695,7 +695,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 6;
-      regs.asUnsigned[firstRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
 
       branchOps.branchLeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -713,7 +713,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
       const immediate = 5;
-      regs.asUnsigned[firstRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
 
       branchOps.branchLeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -733,7 +733,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 6;
-      regs.asUnsigned[firstRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
 
       branchOps.branchLeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -753,7 +753,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 5;
-      regs.asUnsigned[firstRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
 
       branchOps.branchLeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -773,7 +773,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 5;
-      regs.asUnsigned[firstRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
 
       branchOps.branchGtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -791,7 +791,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
       const immediate = 6;
-      regs.asUnsigned[firstRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
 
       branchOps.branchGtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -811,7 +811,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 5;
-      regs.asUnsigned[firstRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
 
       branchOps.branchGtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -831,7 +831,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = 6;
-      regs.asUnsigned[firstRegisterIndex] = 6;
+      regs.set(firstRegisterIndex, 6);
 
       branchOps.branchGtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -851,7 +851,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = -5;
-      regs.asSigned[firstRegisterIndex] = -6;
+      regs.set(firstRegisterIndex, -6, true);
 
       branchOps.branchLtSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -869,7 +869,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
       const immediate = -6;
-      regs.asSigned[firstRegisterIndex] = -6;
+      regs.set(firstRegisterIndex, -6, true);
 
       branchOps.branchLtSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -889,7 +889,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = -5;
-      regs.asSigned[firstRegisterIndex] = -6;
+      regs.set(firstRegisterIndex, -6, true);
 
       branchOps.branchLtSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -909,7 +909,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = -6;
-      regs.asSigned[firstRegisterIndex] = -6;
+      regs.set(firstRegisterIndex, -6, true);
 
       branchOps.branchLtSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -929,8 +929,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asSigned[firstRegisterIndex] = -6;
-      regs.asSigned[secondRegisterIndex] = -5;
+      regs.set(firstRegisterIndex, -6, true);
+      regs.set(secondRegisterIndex, -5, true);
 
       branchOps.branchLtSigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -948,8 +948,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asSigned[firstRegisterIndex] = -6;
-      regs.asSigned[secondRegisterIndex] = -6;
+      regs.set(firstRegisterIndex, -6, true);
+      regs.set(secondRegisterIndex, -6, true);
 
       branchOps.branchLtSigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -969,8 +969,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asSigned[firstRegisterIndex] = -6;
-      regs.asSigned[secondRegisterIndex] = -5;
+      regs.set(firstRegisterIndex, -6, true);
+      regs.set(secondRegisterIndex, -5, true);
 
       branchOps.branchLtSigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -990,7 +990,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = -6;
-      regs.asSigned[firstRegisterIndex] = -6;
+      regs.set(firstRegisterIndex, -6, true);
 
       branchOps.branchLeSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -1008,7 +1008,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
       const immediate = -6;
-      regs.asSigned[firstRegisterIndex] = -5;
+      regs.set(firstRegisterIndex, -5, true);
 
       branchOps.branchLeSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -1028,7 +1028,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = -6;
-      regs.asSigned[firstRegisterIndex] = -6;
+      regs.set(firstRegisterIndex, -6, true);
 
       branchOps.branchLeSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -1048,7 +1048,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = -6;
-      regs.asSigned[firstRegisterIndex] = -5;
+      regs.set(firstRegisterIndex, -5, true);
 
       branchOps.branchLeSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -1068,7 +1068,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = -6;
-      regs.asSigned[firstRegisterIndex] = -5;
+      regs.set(firstRegisterIndex, -5, true);
 
       branchOps.branchGtSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -1086,7 +1086,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
       const immediate = -6;
-      regs.asSigned[firstRegisterIndex] = -6;
+      regs.set(firstRegisterIndex, -6, true);
 
       branchOps.branchGtSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -1106,7 +1106,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = -6;
-      regs.asSigned[firstRegisterIndex] = -5;
+      regs.set(firstRegisterIndex, -5, true);
 
       branchOps.branchGtSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -1126,7 +1126,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = -6;
-      regs.asSigned[firstRegisterIndex] = -6;
+      regs.set(firstRegisterIndex, -6, true);
 
       branchOps.branchGtSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -1146,7 +1146,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = -5;
-      regs.asSigned[firstRegisterIndex] = -5;
+      regs.set(firstRegisterIndex, -5, true);
 
       branchOps.branchGeSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -1164,7 +1164,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
       const immediate = -5;
-      regs.asSigned[firstRegisterIndex] = -6;
+      regs.set(firstRegisterIndex, -6, true);
 
       branchOps.branchGeSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -1184,7 +1184,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = -7;
-      regs.asSigned[firstRegisterIndex] = -6;
+      regs.set(firstRegisterIndex, -6, true);
 
       branchOps.branchGeSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -1204,7 +1204,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const immediate = -5;
-      regs.asSigned[firstRegisterIndex] = -6;
+      regs.set(firstRegisterIndex, -6, true);
 
       branchOps.branchGeSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -1224,8 +1224,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asSigned[firstRegisterIndex] = -5;
-      regs.asSigned[secondRegisterIndex] = -5;
+      regs.set(firstRegisterIndex, -5, true);
+      regs.set(secondRegisterIndex, -5, true);
 
       branchOps.branchGeSigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -1243,8 +1243,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asSigned[firstRegisterIndex] = -6;
-      regs.asSigned[secondRegisterIndex] = -5;
+      regs.set(firstRegisterIndex, -6, true);
+      regs.set(secondRegisterIndex, -5, true);
 
       branchOps.branchGeSigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -1264,8 +1264,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asSigned[firstRegisterIndex] = -6;
-      regs.asSigned[secondRegisterIndex] = -7;
+      regs.set(firstRegisterIndex, -6, true);
+      regs.set(secondRegisterIndex, -7, true);
 
       branchOps.branchGeSigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
@@ -1285,8 +1285,8 @@ describe("BranchOps", () => {
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
-      regs.asSigned[firstRegisterIndex] = -6;
-      regs.asSigned[secondRegisterIndex] = -5;
+      regs.set(firstRegisterIndex, -6, true);
+      regs.set(secondRegisterIndex, -5, true);
 
       branchOps.branchGeSigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
