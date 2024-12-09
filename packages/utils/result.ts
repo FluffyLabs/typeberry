@@ -13,6 +13,15 @@ export type Result<Ok, Error> =
       error: Error;
     };
 
+/**
+ * A generic `OK` response to be used instead of some empty/null value.
+ *
+ * NOTE that generic error is not provided to rather have a more
+ * descriptive value.
+ */
+export const OK = Symbol("ok");
+export type OK = typeof OK;
+
 /** An indication of two possible outcomes returned from a function. */
 export const Result = {
   /** Create new [`Result`] with `Ok` status. */

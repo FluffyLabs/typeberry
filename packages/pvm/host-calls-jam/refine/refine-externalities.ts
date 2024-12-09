@@ -1,4 +1,4 @@
-import type { ServiceId } from "@typeberry/block";
+import type { Segment, SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { Blake2bHash } from "@typeberry/hash";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
@@ -36,6 +36,10 @@ export type NoMachineError = typeof NoMachineError;
 export const InvalidPageError = Symbol("Attempting to void non-accessible page.");
 export type InvalidPageError = typeof InvalidPageError;
 
+/** Too many segments already exported. */
+export const SEGMENT_EXPORT_ERROR = Symbol("Too many segments already exported.");
+export type SEGMENT_EXPORT_ERROR = typeof SEGMENT_EXPORT_ERROR;
+
 /** Host functions external invokations available during refine phase. */
 export interface RefineExternalities {
   /** Forget a previously started nested VM. */
@@ -71,6 +75,16 @@ export interface RefineExternalities {
 
   /** Start an inner PVM instance with given entry point and starting code. */
   machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId>;
+
+  /**
+   * Export segment for future retrieval.
+   *
+   * Returns the index assigned to that segment or an error if there is too many already exported.
+   */
+  exportSegment(segment: Segment): Result<SegmentIndex, SEGMENT_EXPORT_ERROR>;
+
+  /** Retrieve a segment exported by some earlier refine invokation. */
+  importSegment(segmentIndex: SegmentIndex): Promise<Segment | null>;
 
   /** Lookup a historical preimage. */
   historicalLookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null>;
