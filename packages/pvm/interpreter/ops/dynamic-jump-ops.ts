@@ -3,7 +3,7 @@ import type { InstructionResult } from "../instruction-result";
 import type { JumpTable } from "../program-decoder/jump-table";
 import type { Registers } from "../registers";
 import { Result } from "../result";
-import { addWithOverflow } from "./math-utils";
+import { addWithOverflowU32 } from "./math-utils";
 
 const EXIT = 0xff_ff_00_00;
 /** `Z_A`: https://graypaper.fluffylabs.dev/#/911af30/24ed0124ee01 */
@@ -39,9 +39,12 @@ export class DynamicJumpOps {
     this.instructionResult.nextPc = destination;
   }
 
-  jumpInd(immediateValue: number, registerIndex: number) {
+  caluclateJumpAddress(immediateValue: number, registerIndex: number) {
     const registerValue = this.regs.getU32(registerIndex);
-    const address = addWithOverflow(registerValue, immediateValue);
+    return addWithOverflowU32(registerValue, immediateValue);
+  }
+
+  jumpInd(address: number) {
     this.djump(address);
   }
 }

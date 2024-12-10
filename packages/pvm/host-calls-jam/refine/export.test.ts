@@ -10,6 +10,7 @@ import { HostCallResult } from "../results";
 import { Export } from "./export";
 import { SegmentExportError } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 
 const gas = gasCounter(tryAsGas(0));
 const SEGMENT_START_REG = 7;
@@ -21,14 +22,14 @@ function prepareRegsAndMemory(
   segmentLength: number = segment.length,
   { skipSegment = false }: { skipSegment?: boolean } = {},
 ) {
-  const memStart = 3_145_728;
+  const memStart = 2 ** 23;
   const registers = new Registers();
   registers.setU32(SEGMENT_START_REG, memStart);
   registers.setU32(SEGMENT_LENGTH_REG, segmentLength);
 
   const builder = new MemoryBuilder();
   if (!skipSegment) {
-    builder.setReadable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + segment.length), segment.raw);
+    builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + 2 * PAGE_SIZE), segment.raw);
   }
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
   return {

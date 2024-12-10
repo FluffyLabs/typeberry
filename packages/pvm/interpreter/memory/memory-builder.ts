@@ -1,13 +1,12 @@
 import { check } from "@typeberry/utils";
-import { FinalizedBuilderModification, IncorrectSbrkIndex, PageNotExist, PageOverride, WrongPage } from "./errors";
+import { FinalizedBuilderModification, IncorrectSbrkIndex, PageNotExist } from "./errors";
 import { Memory } from "./memory";
 import { PAGE_SIZE } from "./memory-consts";
 import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
 import { getPageNumber } from "./memory-utils";
-import { ReadablePage, VirtualPage, WriteablePage } from "./pages";
+import { ReadablePage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, tryAsPageIndex } from "./pages/page-utils";
-import { createEndChunkIndex, readable, writeable } from "./pages/virtual-page";
 
 export class MemoryBuilder {
   private readonly initialMemory: Map<PageNumber, MemoryPage> = new Map();
@@ -17,62 +16,6 @@ export class MemoryBuilder {
     if (this.isFinalized) {
       throw new FinalizedBuilderModification();
     }
-  }
-
-  /**
-   * Create a new virtual writeable chunk between `[start, end)` containing given data.
-   *
-   * Note the range might be bigger than the provided data - in that case the rest is filled with 0.
-   */
-  setWriteable(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
-    this.ensureNotFinalized();
-    check(start < end, "end has to be bigger than start");
-    check(data.length <= end - start, "the initial data is longer than address range");
-    check(data.length <= PAGE_SIZE, "chunk cannot be longer than one page");
-    check(
-      getPageNumber(start) === getPageNumber(tryAsMemoryIndex(end - 1)),
-      "start and end have to be on the same page",
-    );
-
-    const pageNumber = getPageNumber(start);
-    const page = this.initialMemory.get(pageNumber) ?? new VirtualPage(pageNumber);
-    if (!(page instanceof VirtualPage)) {
-      throw new PageOverride();
-    }
-
-    const startPageIndex = tryAsPageIndex(start - page.start);
-    const endChunkIndex = createEndChunkIndex(end - page.start);
-    page.set(startPageIndex, endChunkIndex, data, writeable);
-    this.initialMemory.set(pageNumber, page);
-    return this;
-  }
-
-  /**
-   * Create a new virtual readable chunk between `[start, end)` containing given data.
-   *
-   * Note the range might be bigger than the provided data - in that case the rest is filled with 0.
-   */
-  setReadable(start: MemoryIndex, end: MemoryIndex, data: Uint8Array = new Uint8Array()) {
-    this.ensureNotFinalized();
-    check(start < end, "end has to be bigger than start");
-    check(data.length <= end - start, "the initial data is longer than address range");
-    check(data.length <= PAGE_SIZE, "chunk cannot be longer than one page");
-    check(
-      getPageNumber(start) === getPageNumber(tryAsMemoryIndex(end - 1)),
-      "start and end have to be on the same page",
-    );
-
-    const pageNumber = getPageNumber(start);
-    const page = this.initialMemory.get(pageNumber) ?? new VirtualPage(pageNumber);
-    if (!(page instanceof VirtualPage)) {
-      throw new PageOverride();
-    }
-
-    const startPageIndex = tryAsPageIndex(start - page.start);
-    const endChunkIndex = createEndChunkIndex(end - page.start);
-    page.set(startPageIndex, endChunkIndex, data, readable);
-    this.initialMemory.set(pageNumber, page);
-    return this;
   }
 
   /**
@@ -89,7 +32,7 @@ export class MemoryBuilder {
     check(start < end, "end has to be bigger than start");
     check(start % PAGE_SIZE === 0, `start needs to be a multiple of page size (${PAGE_SIZE})`);
     check(end % PAGE_SIZE === 0, `end needs to be a multiple of page size (${PAGE_SIZE})`);
-    check(data.length < end - start, "the initial data is longer than address range");
+    check(data.length <= end - start, "the initial data is longer than address range");
 
     const noOfPages = (end - start) / PAGE_SIZE;
 
@@ -118,7 +61,7 @@ export class MemoryBuilder {
     check(start < end, "end has to be bigger than start");
     check(start % PAGE_SIZE === 0, `start needs to be a multiple of page size (${PAGE_SIZE})`);
     check(end % PAGE_SIZE === 0, `end needs to be a multiple of page size (${PAGE_SIZE})`);
-    check(data.length < end - start, "the initial data is longer than address range");
+    check(data.length <= end - start, "the initial data is longer than address range");
 
     const noOfPages = (end - start) / PAGE_SIZE;
 
@@ -148,12 +91,8 @@ export class MemoryBuilder {
       throw new PageNotExist();
     }
 
-    if (page instanceof VirtualPage) {
-      const startPageIndex = tryAsPageIndex(start - page.start);
-      page.storeFrom(startPageIndex, data);
-    } else {
-      throw new WrongPage();
-    }
+    const startPageIndex = tryAsPageIndex(start - page.start);
+    page.storeFrom(startPageIndex, data);
 
     return this;
   }

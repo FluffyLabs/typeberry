@@ -7,6 +7,7 @@ import { type U64, tryAsU64, u64IntoParts } from "@typeberry/numbers";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { HostCallResult } from "../results";
 import { TestAccumulate } from "./partial-state.test";
 import { Upgrade } from "./upgrade";
@@ -25,7 +26,7 @@ function prepareRegsAndMemory(
   balance: U64,
   { skipCodeHash = false }: { skipCodeHash?: boolean } = {},
 ) {
-  const memStart = 20_000;
+  const memStart = 2 ** 16;
   const registers = new Registers();
   registers.setU32(CODE_HASH_START_REG, memStart);
   registers.setU32(GAS_LOW_REG, u64IntoParts(gas).lower);
@@ -36,7 +37,7 @@ function prepareRegsAndMemory(
   const builder = new MemoryBuilder();
 
   if (!skipCodeHash) {
-    builder.setReadable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + codeHash.raw.length), codeHash.raw);
+    builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), codeHash.raw);
   }
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
   return {

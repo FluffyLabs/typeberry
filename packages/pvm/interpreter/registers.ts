@@ -10,7 +10,7 @@ export const tryAsRegisterIndex = (index: number): RegisterIndex =>
 
 export class Registers {
   private asSigned: BigInt64Array;
-  private asUnsigned: BigUint64Array;
+  public asUnsigned: BigUint64Array;
 
   constructor(private readonly bytes = new Uint8Array(NO_OF_REGISTERS << REGISTER_SIZE_SHIFT)) {
     check(bytes.length === NO_OF_REGISTERS << REGISTER_SIZE_SHIFT, "Invalid size of registers array.");
@@ -65,4 +65,22 @@ export class Registers {
   setI64(registerIndex: number, value: bigint) {
     this.asSigned[registerIndex] = value;
   }
+}
+
+export function signExtend32To64(value: number | bigint): bigint {
+  // Convert to BigInt if the value is a number
+  const bigValue = typeof value === "number" ? BigInt(value) : value;
+
+  // Ensure the value is treated as a 32-bit integer
+  const mask32 = BigInt(0xffffffff);
+  const signBit = BigInt(0x80000000);
+  const maskedValue = bigValue & mask32;
+
+  // Check the sign bit and extend the sign if necessary
+  if ((maskedValue & signBit) !== BigInt(0)) {
+    // If the sign bit is set, extend with ones
+    return maskedValue | ~mask32;
+  }
+  // If the sign bit is not set, return as is
+  return maskedValue;
 }

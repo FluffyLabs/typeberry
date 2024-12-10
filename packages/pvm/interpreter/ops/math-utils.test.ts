@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { MAX_VALUE } from "./math-consts";
-import { addWithOverflow, mulLowerUnsigned, mulUpperSigned, mulUpperUnsigned, sub } from "./math-utils";
+import { addWithOverflowU32, mulLowerUnsignedU32, mulUpperSigned, mulUpperUnsigned, subU32 } from "./math-utils";
 
 describe("math-utils", () => {
   describe("addWithOverflow", () => {
@@ -11,7 +11,7 @@ describe("math-utils", () => {
       const b = 6;
       const expectedResult = 11;
 
-      const result = addWithOverflow(a, b);
+      const result = addWithOverflowU32(a, b);
 
       assert.strictEqual(result, expectedResult);
     });
@@ -21,7 +21,7 @@ describe("math-utils", () => {
       const b = 6;
       const expectedResult = 5;
 
-      const result = addWithOverflow(a, b);
+      const result = addWithOverflowU32(a, b);
 
       assert.strictEqual(result, expectedResult);
     });
@@ -31,7 +31,7 @@ describe("math-utils", () => {
       const b = 2 ** 31 + 6;
       const expectedResult = 11;
 
-      const result = addWithOverflow(a, b);
+      const result = addWithOverflowU32(a, b);
 
       assert.strictEqual(result, expectedResult);
     });
@@ -41,7 +41,7 @@ describe("math-utils", () => {
       const b = MAX_VALUE;
       const expectedResult = MAX_VALUE - 1;
 
-      const result = addWithOverflow(a, b);
+      const result = addWithOverflowU32(a, b);
 
       assert.strictEqual(result, expectedResult);
     });
@@ -53,7 +53,7 @@ describe("math-utils", () => {
       const b = 6;
       const expectedResult = 1;
 
-      const result = sub(a, b);
+      const result = subU32(a, b);
 
       assert.strictEqual(result, expectedResult);
     });
@@ -63,7 +63,7 @@ describe("math-utils", () => {
       const b = 5;
       const expectedResult = MAX_VALUE;
 
-      const result = sub(a, b);
+      const result = subU32(a, b);
 
       assert.strictEqual(result, expectedResult);
     });
@@ -75,7 +75,7 @@ describe("math-utils", () => {
       const b = 6;
       const expectedResult = 30;
 
-      const result = mulLowerUnsigned(a, b);
+      const result = mulLowerUnsignedU32(a, b);
 
       assert.strictEqual(result, expectedResult);
     });
@@ -85,7 +85,7 @@ describe("math-utils", () => {
       const b = 2 ** 18;
       const expectedResult = 262144;
 
-      const result = mulLowerUnsigned(a, b);
+      const result = mulLowerUnsignedU32(a, b);
 
       assert.strictEqual(result, expectedResult);
     });

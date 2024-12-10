@@ -14,13 +14,19 @@ export class ThreeRegsDispatcher {
   dispatch(instruction: Instruction, args: ThreeRegistersArgs) {
     switch (instruction) {
       case Instruction.ADD_32:
+        this.mathOps.addU32(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
+
       case Instruction.ADD_64:
-        this.mathOps.add(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        this.mathOps.addU64(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
         break;
 
       case Instruction.MUL_32:
+        this.mathOps.mulU32(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
+
       case Instruction.MUL_64:
-        this.mathOps.mul(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        this.mathOps.mulU64(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
         break;
 
       case Instruction.MUL_UPPER_U_U:
@@ -36,43 +42,71 @@ export class ThreeRegsDispatcher {
         break;
 
       case Instruction.SUB_32:
+        this.mathOps.subU32(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
+
       case Instruction.SUB_64:
-        this.mathOps.sub(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        this.mathOps.subU64(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
         break;
 
       case Instruction.DIV_S_32:
+        this.mathOps.divSignedU32(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
       case Instruction.DIV_S_64:
-        this.mathOps.divSigned(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        this.mathOps.divSignedU64(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
         break;
 
       case Instruction.DIV_U_32:
+        this.mathOps.divUnsignedU32(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
       case Instruction.DIV_U_64:
-        this.mathOps.divUnsigned(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        this.mathOps.divUnsignedU64(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
         break;
 
       case Instruction.REM_S_32:
+        this.mathOps.remSignedU32(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
       case Instruction.REM_S_64:
-        this.mathOps.remSigned(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        this.mathOps.remSignedU64(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
         break;
 
       case Instruction.REM_U_32:
+        this.mathOps.remUnsignedU32(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
       case Instruction.REM_U_64:
-        this.mathOps.remUnsigned(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        this.mathOps.remUnsignedU64(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
         break;
 
       case Instruction.SHLO_L_32:
+        this.shiftOps.shiftLogicalLeftU32(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
+
       case Instruction.SHLO_L_64:
-        this.shiftOps.shiftLogicalLeft(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        this.shiftOps.shiftLogicalLeftU64(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
         break;
 
       case Instruction.SHLO_R_32:
+        this.shiftOps.shiftLogicalRightU32(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
+
       case Instruction.SHLO_R_64:
-        this.shiftOps.shiftLogicalRight(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        this.shiftOps.shiftLogicalRightU64(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
         break;
 
       case Instruction.SHAR_R_32:
+        this.shiftOps.shiftArithmeticRightU32(
+          args.firstRegisterIndex,
+          args.secondRegisterIndex,
+          args.thirdRegisterIndex,
+        );
+        break;
+
       case Instruction.SHAR_R_64:
-        this.shiftOps.shiftArithmeticRight(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        this.shiftOps.shiftArithmeticRightU64(
+          args.firstRegisterIndex,
+          args.secondRegisterIndex,
+          args.thirdRegisterIndex,
+        );
         break;
 
       case Instruction.OR:

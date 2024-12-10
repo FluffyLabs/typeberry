@@ -4,7 +4,7 @@ import type { Memory } from "../memory";
 import { tryAsMemoryIndex } from "../memory/memory-index";
 import type { Registers } from "../registers";
 import { Result } from "../result";
-import { addWithOverflow } from "./math-utils";
+import { addWithOverflowU32 } from "./math-utils";
 
 const ZEROS = new Uint8Array([0, 0, 0, 0]);
 
@@ -32,22 +32,22 @@ export class StoreOps {
   }
 
   storeIndU8(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.store(address, this.regs.getBytesAsLittleEndian(secondRegisterIndex, 1));
   }
 
   storeIndU16(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.store(address, this.regs.getBytesAsLittleEndian(secondRegisterIndex, 2));
   }
 
   storeIndU32(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.store(address, this.regs.getBytesAsLittleEndian(secondRegisterIndex, 4));
   }
 
   storeIndU64(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.store(address, this.regs.getBytesAsLittleEndian(secondRegisterIndex, 8));
   }
 
@@ -73,7 +73,7 @@ export class StoreOps {
     firstImmediateDecoder: ImmediateDecoder,
     secondImmediateDecoder: ImmediateDecoder,
   ) {
-    const address = addWithOverflow(this.regs.getU32(registerIndex), firstImmediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getU32(registerIndex), firstImmediateDecoder.getUnsigned());
     this.store(address, secondImmediateDecoder.getBytesAsLittleEndian().subarray(0, 1));
   }
 
@@ -82,7 +82,7 @@ export class StoreOps {
     firstImmediateDecoder: ImmediateDecoder,
     secondImmediateDecoder: ImmediateDecoder,
   ) {
-    const address = addWithOverflow(this.regs.getU32(registerIndex), firstImmediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getU32(registerIndex), firstImmediateDecoder.getUnsigned());
     this.store(address, secondImmediateDecoder.getBytesAsLittleEndian().subarray(0, 2));
   }
 
@@ -91,7 +91,7 @@ export class StoreOps {
     firstImmediateDecoder: ImmediateDecoder,
     secondImmediateDecoder: ImmediateDecoder,
   ) {
-    const address = addWithOverflow(this.regs.getU32(registerIndex), firstImmediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getU32(registerIndex), firstImmediateDecoder.getUnsigned());
     this.store(address, secondImmediateDecoder.getBytesAsLittleEndian().subarray(0, 4));
   }
 
@@ -100,9 +100,9 @@ export class StoreOps {
     firstImmediateDecoder: ImmediateDecoder,
     secondImmediateDecoder: ImmediateDecoder,
   ) {
-    const address = addWithOverflow(this.regs.getU32(registerIndex), firstImmediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getU32(registerIndex), firstImmediateDecoder.getUnsigned());
     this.store(address + 4, ZEROS);
-    this.store(address, secondImmediateDecoder.getBytesAsLittleEndian().subarray(0, 8));
+    this.store(address, secondImmediateDecoder.getBytesAsLittleEndian().subarray(0, 4));
   }
 
   private store(address: number, bytes: Uint8Array) {

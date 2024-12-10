@@ -1,27 +1,21 @@
 import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
-import type { OneRegisterOneImmediateArgs } from "../args-decoder/args-decoder";
+import type { OneRegisterOneExtendedWidthImmediateArgs } from "../args-decoder/args-decoder";
 import { ArgumentType } from "../args-decoder/argument-type";
-import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
+import { ExtendedWitdthImmediateDecoder } from "../args-decoder/decoders/extended-with-immediate-decoder";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
-import { BasicBlocks } from "../basic-blocks";
 import { Instruction } from "../instruction";
 import { InstructionResult } from "../instruction-result";
 import { Memory } from "../memory";
-import { DynamicJumpOps, LoadOps, StoreOps } from "../ops";
-import { JumpTable } from "../program-decoder/jump-table";
+import { LoadOps } from "../ops";
 import { Registers } from "../registers";
-import { OneRegOneImmDispatcher } from "./one-reg-one-imm-dispatcher";
+import { OneRegOneExtImmDispatcher } from "./one-reg-one-ext-imm-dispatcher";
 
-describe("OneRegOneImmDispatcher", () => {
+describe("OneRegOneExtImmDispatcher", () => {
   const regs = new Registers();
   const memory = new Memory();
-  const jumpTable = new JumpTable(1, new Uint8Array([1]));
   const instructionResult = new InstructionResult();
-  const storeOps = new StoreOps(regs, memory, instructionResult);
   const loadOps = new LoadOps(regs, memory, instructionResult);
-  const basicBlocks = new BasicBlocks();
-  const dynamicJumpOps = new DynamicJumpOps(regs, jumpTable, instructionResult, basicBlocks);
   const mockFn = mock.fn();
 
   function mockAllMethods(obj: object) {
@@ -33,9 +27,7 @@ describe("OneRegOneImmDispatcher", () => {
   }
 
   before(() => {
-    mockAllMethods(storeOps);
     mockAllMethods(loadOps);
-    mockAllMethods(dynamicJumpOps);
   });
 
   after(() => {
@@ -47,31 +39,30 @@ describe("OneRegOneImmDispatcher", () => {
   });
 
   const argsMock = {
-    immediateDecoder: new ImmediateDecoder(),
-  } as OneRegisterOneImmediateArgs;
+    immediateDecoder: new ExtendedWitdthImmediateDecoder(),
+  } as OneRegisterOneExtendedWidthImmediateArgs;
 
   const relevantInstructions = Object.entries(Instruction)
     .filter((entry): entry is [string, number] => typeof entry[0] === "string" && typeof entry[1] === "number")
-    .filter((entry) => instructionArgumentTypeMap[entry[1]] === ArgumentType.ONE_REGISTER_ONE_IMMEDIATE);
+    .filter((entry) => instructionArgumentTypeMap[entry[1]] === ArgumentType.ONE_REGISTER_ONE_EXTENDED_WIDTH_IMMEDIATE);
 
   for (const [name, instruction] of relevantInstructions) {
     it(`checks if instruction ${name} = ${instruction} is handled by TwoImmsDispatcher`, () => {
-      const dispatcher = new OneRegOneImmDispatcher(loadOps, storeOps, dynamicJumpOps);
+      const dispatcher = new OneRegOneExtImmDispatcher(loadOps);
 
       dispatcher.dispatch(instruction, argsMock);
 
-      const expectedResult = instruction === Instruction.JUMP_IND ? 2 : 1;
-      assert.strictEqual(mockFn.mock.calls.length, expectedResult);
+      assert.strictEqual(mockFn.mock.calls.length, 1);
     });
   }
 
   const otherInstructions = Object.entries(Instruction)
     .filter((entry): entry is [string, number] => typeof entry[0] === "string" && typeof entry[1] === "number")
-    .filter((entry) => instructionArgumentTypeMap[entry[1]] !== ArgumentType.ONE_REGISTER_ONE_IMMEDIATE);
+    .filter((entry) => instructionArgumentTypeMap[entry[1]] !== ArgumentType.ONE_REGISTER_ONE_EXTENDED_WIDTH_IMMEDIATE);
 
   for (const [name, instruction] of otherInstructions) {
     it(`checks if instruction ${name} = ${instruction} is not handled by TwoImmsDispatcher`, () => {
-      const dispatcher = new OneRegOneImmDispatcher(loadOps, storeOps, dynamicJumpOps);
+      const dispatcher = new OneRegOneExtImmDispatcher(loadOps);
 
       dispatcher.dispatch(instruction, argsMock);
 

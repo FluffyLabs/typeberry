@@ -7,6 +7,7 @@ import { MemoryBuilder } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { TRANSFER_MEMO_BYTES, TransferError } from "./partial-state";
@@ -28,7 +29,7 @@ function prepareRegsAndMemory(
   memo: Bytes<TRANSFER_MEMO_BYTES>,
   { skipMemo = false }: { skipMemo?: boolean } = {},
 ) {
-  const memStart = 20_000;
+  const memStart = 2 ** 16;
   const registers = new Registers();
   registers.setU32(DESTINATION_REG, destination);
   registers.setU32(AMOUNT_LOW_REG, u64IntoParts(amount).lower);
@@ -39,7 +40,7 @@ function prepareRegsAndMemory(
 
   const builder = new MemoryBuilder();
   if (!skipMemo) {
-    builder.setReadable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + memo.raw.length), memo.raw);
+    builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), memo.raw);
   }
 
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));

@@ -48,9 +48,14 @@ export class OneRegOneImmDispatcher {
       case Instruction.LOAD_I32:
         this.loadOps.loadI32(args.immediateDecoder.getUnsigned(), args.registerIndex);
         break;
-      case Instruction.JUMP_IND:
-        this.dynamicJumpOps.jumpInd(args.immediateDecoder.getUnsigned(), args.registerIndex);
+      case Instruction.JUMP_IND: {
+        const address = this.dynamicJumpOps.caluclateJumpAddress(
+          args.immediateDecoder.getUnsigned(),
+          args.registerIndex,
+        );
+        this.dynamicJumpOps.jumpInd(address);
         break;
+      }
     }
   }
 }

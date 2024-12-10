@@ -18,9 +18,9 @@ namespace fromJson {
     throw new Error(`Expected an array, got ${typeof v} instead.`);
   });
 
-  export const uint32Array = json.fromAny((v) => {
+  export const bigUint64Array = json.fromAny((v) => {
     if (Array.isArray(v)) {
-      return new Uint32Array(v);
+      return new BigUint64Array(v.map((x) => BigInt(x)));
     }
 
     throw new Error(`Expected an array, got ${typeof v} instead.`);
@@ -48,28 +48,28 @@ class PageMapItem {
 export class PvmTest {
   static fromJson: FromJson<PvmTest> = {
     name: "string",
-    "initial-regs": fromJson.uint32Array,
+    "initial-regs": fromJson.bigUint64Array,
     "initial-pc": "number",
     "initial-page-map": json.array(PageMapItem.fromJson),
     "initial-memory": json.array(MemoryChunkItem.fromJson),
     "initial-gas": "number",
     program: fromJson.uint8Array,
     "expected-status": "string",
-    "expected-regs": fromJson.uint32Array,
+    "expected-regs": fromJson.bigUint64Array,
     "expected-pc": "number",
     "expected-memory": json.array(MemoryChunkItem.fromJson),
     "expected-gas": "number",
   };
 
   name!: string;
-  "initial-regs": Uint32Array;
+  "initial-regs": BigUint64Array;
   "initial-pc": number;
   "initial-page-map": PageMapItem[];
   "initial-memory": MemoryChunkItem[];
   "initial-gas": number;
   program!: Uint8Array;
   "expected-status": string;
-  "expected-regs": Uint32Array;
+  "expected-regs": BigUint64Array;
   "expected-pc": number;
   "expected-memory": MemoryChunkItem[];
   "expected-gas": number;
@@ -92,9 +92,9 @@ export async function runPvmTest(testContent: PvmTest) {
     const isWriteable = page["is-writable"];
 
     if (isWriteable) {
-      memoryBuilder.setWriteable(startPageIndex, endPageIndex, new Uint8Array(page.length));
+      memoryBuilder.setWriteablePages(startPageIndex, endPageIndex, new Uint8Array(page.length));
     } else {
-      memoryBuilder.setReadable(startPageIndex, endPageIndex, new Uint8Array(page.length));
+      memoryBuilder.setReadablePages(startPageIndex, endPageIndex, new Uint8Array(page.length));
     }
   }
 
@@ -114,6 +114,7 @@ export async function runPvmTest(testContent: PvmTest) {
   regs.copyFrom(testContent["initial-regs"]);
 
   const pvm = new Interpreter();
+
   pvm.reset(testContent.program, testContent["initial-pc"], testContent["initial-gas"] as Gas, regs, memory);
   pvm.runProgram();
 

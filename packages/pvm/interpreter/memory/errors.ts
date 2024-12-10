@@ -13,12 +13,6 @@ export class ChunkTooLong extends Error {
   }
 }
 
-export class PageOverride extends Error {
-  constructor() {
-    super("You try to override existing memory page!");
-  }
-}
-
 export class IncorrectSbrkIndex extends Error {
   constructor() {
     super("Space between sbrk index and max heap index should be empty!");
@@ -34,12 +28,6 @@ export class FinalizedBuilderModification extends Error {
 export class PageNotExist extends Error {
   constructor() {
     super("You try to fill data on memory page that does not exist!");
-  }
-}
-
-export class WrongPage extends Error {
-  constructor() {
-    super("Page is not an instance of VirtualPage");
   }
 }
 

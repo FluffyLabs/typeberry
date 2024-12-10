@@ -5,6 +5,7 @@ import { Encoder } from "@typeberry/codec";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { type Gas, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { HostCallResult } from "../results";
 import { Empower } from "./empower";
 import { TestAccumulate } from "./partial-state.test";
@@ -34,7 +35,7 @@ function prepareRegsAndMemory(
   dictionary: [ServiceId, Gas][],
   { skipDictionary = false }: { skipDictionary?: boolean } = {},
 ) {
-  const memStart = 20_000;
+  const memStart = 2 ** 16;
   const registers = new Registers();
   registers.setU32(SERVICE_M, tryAsServiceId(5));
   registers.setU32(SERVICE_A, tryAsServiceId(10));
@@ -52,7 +53,7 @@ function prepareRegsAndMemory(
   const data = encoder.viewResult();
 
   if (!skipDictionary) {
-    builder.setReadable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + data.raw.length), data.raw);
+    builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), data.raw);
   }
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
   return {

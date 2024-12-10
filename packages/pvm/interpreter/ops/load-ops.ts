@@ -2,9 +2,9 @@ import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decode
 import type { InstructionResult } from "../instruction-result";
 import type { Memory } from "../memory";
 import { tryAsMemoryIndex } from "../memory/memory-index";
-import type { Registers } from "../registers";
+import { type Registers, signExtend32To64 } from "../registers";
 import { Result } from "../result";
-import { addWithOverflow } from "./math-utils";
+import { addWithOverflowU32 } from "./math-utils";
 
 const REG_SIZE_BYTES = 8;
 
@@ -16,7 +16,11 @@ export class LoadOps {
   ) {}
 
   loadImmediate(registerIndex: number, immediate: number) {
-    this.regs.setU32(registerIndex, immediate);
+    this.regs.setU64(registerIndex, signExtend32To64(immediate));
+  }
+
+  loadImmediateU64(registerIndex: number, immediate: bigint) {
+    this.regs.setU64(registerIndex, immediate);
   }
 
   private loadNumber(address: number, registerIndex: number, numberLength: 1 | 2 | 4 | 8) {
@@ -77,37 +81,37 @@ export class LoadOps {
   }
 
   loadIndU8(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.loadNumber(address, secondRegisterIndex, 1);
   }
 
   loadIndU16(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.loadNumber(address, secondRegisterIndex, 2);
   }
 
   loadIndU32(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.loadNumber(address, secondRegisterIndex, 4);
   }
 
   loadIndU64(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.loadNumber(address, secondRegisterIndex, 8);
   }
 
   loadIndI8(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.loadSignedNumber(address, secondRegisterIndex, 1);
   }
 
   loadIndI16(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.loadSignedNumber(address, secondRegisterIndex, 2);
   }
 
   loadIndI32(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflow(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
     this.loadSignedNumber(address, secondRegisterIndex, 4);
   }
 }

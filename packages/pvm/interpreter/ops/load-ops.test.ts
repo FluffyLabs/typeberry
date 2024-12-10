@@ -6,6 +6,7 @@ import { InstructionResult } from "../instruction-result";
 import { Memory, MemoryBuilder } from "../memory";
 import { PAGE_SIZE } from "../memory/memory-consts";
 import { tryAsMemoryIndex } from "../memory/memory-index";
+import { getStartPageIndex } from "../memory/memory-utils";
 import { Registers } from "../registers";
 import { LoadOps } from "./load-ops";
 
@@ -47,7 +48,11 @@ describe("LoadOps", () => {
       const address = tryAsMemoryIndex(1);
 
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0xcc]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0xcc]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
@@ -65,7 +70,11 @@ describe("LoadOps", () => {
       const address = tryAsMemoryIndex(1);
 
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0xcc]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0xcc]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
@@ -83,7 +92,11 @@ describe("LoadOps", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0xcc]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0xcc]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
@@ -100,7 +113,11 @@ describe("LoadOps", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0xcc]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0xcc]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
@@ -118,7 +135,11 @@ describe("LoadOps", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0x0c]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0x0c]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
@@ -135,7 +156,11 @@ describe("LoadOps", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0x0c]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0x0c]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
@@ -153,7 +178,11 @@ describe("LoadOps", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
@@ -171,7 +200,11 @@ describe("LoadOps", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x08]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x08]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
@@ -190,7 +223,11 @@ describe("LoadOps", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xff, 0xff, 0xff]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0xcc, 0xff, 0xff, 0xff]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
@@ -208,7 +245,11 @@ describe("LoadOps", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xff, 0xff, 0xff]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0xcc, 0xff, 0xff, 0xff]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
@@ -227,7 +268,11 @@ describe("LoadOps", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xdd, 0xff, 0xff]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0xcc, 0xdd, 0xff, 0xff]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
@@ -245,7 +290,11 @@ describe("LoadOps", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xdd, 0xff, 0xff]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0xcc, 0xdd, 0xff, 0xff]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
@@ -264,7 +313,11 @@ describe("LoadOps", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xdd, 0xff, 0xff]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0xcc, 0xdd, 0xff, 0xff]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
@@ -282,7 +335,11 @@ describe("LoadOps", () => {
       const instructionResult = new InstructionResult();
       const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xdd, 0xff, 0xff]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0xcc, 0xdd, 0xff, 0xff]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
@@ -307,7 +364,11 @@ describe("LoadOps", () => {
       const secondRegisterIndex = 1;
       registers.setU32(firstRegisterIndex, 1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xff, 0xff, 0xff]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0x11, 0xcc, 0xff, 0xff, 0xff]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -52n;
@@ -324,12 +385,16 @@ describe("LoadOps", () => {
     it("should load i8 from memory to register and extend the number to the register size", () => {
       const instructionResult = new InstructionResult();
       const registers = new Registers();
-      const address = tryAsMemoryIndex(2);
+      const address = tryAsMemoryIndex(1);
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
       registers.setU32(firstRegisterIndex, 1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xff, 0xff, 0xff]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0x11, 0xcc, 0xff, 0xff, 0xff]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -52n;
@@ -347,12 +412,16 @@ describe("LoadOps", () => {
     it("should load i16 from memory to register", () => {
       const instructionResult = new InstructionResult();
       const registers = new Registers();
-      const address = tryAsMemoryIndex(2);
+      const address = tryAsMemoryIndex(1);
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
       registers.setU32(firstRegisterIndex, 1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xdd, 0xff, 0xff]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0x11, 0xcc, 0xdd, 0xff, 0xff]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -8756n;
@@ -369,12 +438,16 @@ describe("LoadOps", () => {
     it("should load i16 from memory to register and extend the number to the register size", () => {
       const instructionResult = new InstructionResult();
       const registers = new Registers();
-      const address = tryAsMemoryIndex(2);
+      const address = tryAsMemoryIndex(1);
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
       registers.setU32(firstRegisterIndex, 1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xdd, 0xff, 0xff]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0x11, 0xcc, 0xdd, 0xff, 0xff]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -8756n;
@@ -392,12 +465,16 @@ describe("LoadOps", () => {
     it("should load i32 from memory to register", () => {
       const instructionResult = new InstructionResult();
       const registers = new Registers();
-      const address = tryAsMemoryIndex(2);
+      const address = tryAsMemoryIndex(1);
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
       registers.setU32(firstRegisterIndex, 1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xdd, 0xff, 0xff]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0x11, 0xcc, 0xdd, 0xff, 0xff]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -8756n;
@@ -414,12 +491,16 @@ describe("LoadOps", () => {
     it("should load i32 from memory to register and extend the number to the register size", () => {
       const instructionResult = new InstructionResult();
       const registers = new Registers();
-      const address = tryAsMemoryIndex(2);
+      const address = tryAsMemoryIndex(1);
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
       registers.setU32(firstRegisterIndex, 1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xcc, 0xdd, 0xff, 0xff]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0x11, 0xcc, 0xdd, 0xff, 0xff]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -8756n;
@@ -438,9 +519,13 @@ describe("LoadOps", () => {
   describe("loadInd (U8, U16 and U32)", () => {
     it("should load u8 from memory to register", () => {
       const instructionResult = new InstructionResult();
-      const address = tryAsMemoryIndex(2);
+      const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0xcc]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0xcc]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;
@@ -459,9 +544,13 @@ describe("LoadOps", () => {
 
     it("should load u8 from memory to register and extend the number to the register size", () => {
       const instructionResult = new InstructionResult();
-      const address = tryAsMemoryIndex(2);
+      const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0xcc]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0xcc]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;
@@ -481,9 +570,13 @@ describe("LoadOps", () => {
 
     it("should load u16 from memory to register", () => {
       const instructionResult = new InstructionResult();
-      const address = tryAsMemoryIndex(2);
+      const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0xcc]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0xcc]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;
@@ -502,9 +595,13 @@ describe("LoadOps", () => {
 
     it("should load u16 from memory to register and extend the number to the register size", () => {
       const instructionResult = new InstructionResult();
-      const address = tryAsMemoryIndex(2);
+      const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0xcc]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0xcc]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;
@@ -524,9 +621,13 @@ describe("LoadOps", () => {
 
     it("should load u32 from memory to register", () => {
       const instructionResult = new InstructionResult();
-      const address = tryAsMemoryIndex(2);
+      const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0x0c]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0x0c]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;
@@ -545,9 +646,13 @@ describe("LoadOps", () => {
 
     it("should load u32 from memory to register and extend the number to the register size", () => {
       const instructionResult = new InstructionResult();
-      const address = tryAsMemoryIndex(2);
+      const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0x0c]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0x0c]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;
@@ -567,9 +672,13 @@ describe("LoadOps", () => {
 
     it("should load u64 from memory to register", () => {
       const instructionResult = new InstructionResult();
-      const address = tryAsMemoryIndex(2);
+      const address = tryAsMemoryIndex(1);
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x08]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x08]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;
@@ -588,10 +697,14 @@ describe("LoadOps", () => {
 
     it("should load u64 from memory to register (negative number)", () => {
       const instructionResult = new InstructionResult();
-      const address = tryAsMemoryIndex(2);
+      const address = tryAsMemoryIndex(1);
 
       const memory = new MemoryBuilder()
-        .setWriteable(address, tryAsMemoryIndex(4096), new Uint8Array([0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]))
+        .setWriteablePages(
+          getStartPageIndex(address),
+          tryAsMemoryIndex(4096),
+          new Uint8Array([0x11, 0x11, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]),
+        )
         .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;

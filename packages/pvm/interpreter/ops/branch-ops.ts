@@ -31,67 +31,67 @@ export class BranchOps {
     this.branch(nextPc, true);
   }
 
-  branchEqImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.getU32(registerIndex) === immediate);
+  branchEqImmediate(registerIndex: number, immediate: bigint, nextPc: number) {
+    this.branch(nextPc, this.regs.getU64(registerIndex) === immediate);
   }
 
   branchEq(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchEqImmediate(firstIndex, this.regs.getU32(secondIndex), nextPc);
+    this.branchEqImmediate(firstIndex, this.regs.getU64(secondIndex), nextPc);
   }
 
-  branchNeImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.getU32(registerIndex) !== immediate);
+  branchNeImmediate(registerIndex: number, immediate: bigint, nextPc: number) {
+    this.branch(nextPc, this.regs.getU64(registerIndex) !== immediate);
   }
 
   branchNe(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchNeImmediate(firstIndex, this.regs.getU32(secondIndex), nextPc);
+    this.branchNeImmediate(firstIndex, this.regs.getU64(secondIndex), nextPc);
   }
 
-  branchLtUnsignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.getU32(registerIndex) < immediate);
+  branchLtUnsignedImmediate(registerIndex: number, immediate: bigint, nextPc: number) {
+    this.branch(nextPc, this.regs.getU64(registerIndex) < immediate);
   }
 
   branchLtUnsigned(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchLtUnsignedImmediate(firstIndex, this.regs.getU32(secondIndex), nextPc);
+    this.branchLtUnsignedImmediate(firstIndex, this.regs.getU64(secondIndex), nextPc);
   }
 
-  branchLeUnsignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.getU32(registerIndex) <= immediate);
+  branchLeUnsignedImmediate(registerIndex: number, immediate: bigint, nextPc: number) {
+    this.branch(nextPc, this.regs.getU64(registerIndex) <= immediate);
   }
 
-  branchGtUnsignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.getU32(registerIndex) > immediate);
+  branchGtUnsignedImmediate(registerIndex: number, immediate: bigint, nextPc: number) {
+    this.branch(nextPc, this.regs.getU64(registerIndex) > immediate);
   }
 
-  branchGeUnsignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.getU32(registerIndex) >= immediate);
+  branchGeUnsignedImmediate(registerIndex: number, immediate: bigint, nextPc: number) {
+    this.branch(nextPc, this.regs.getU64(registerIndex) >= immediate);
   }
 
   branchGeUnsigned(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchGeUnsignedImmediate(firstIndex, this.regs.getU32(secondIndex), nextPc);
+    this.branchGeUnsignedImmediate(firstIndex, this.regs.getU64(secondIndex), nextPc);
   }
 
-  branchLtSignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.getI32(registerIndex) < immediate);
+  branchLtSignedImmediate(registerIndex: number, immediate: bigint, nextPc: number) {
+    this.branch(nextPc, this.regs.getI64(registerIndex) < immediate);
   }
 
   branchLtSigned(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchLtSignedImmediate(firstIndex, this.regs.getI32(secondIndex), nextPc);
+    this.branchLtSignedImmediate(firstIndex, this.regs.getI64(secondIndex), nextPc);
   }
 
-  branchLeSignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.getI32(registerIndex) <= immediate);
+  branchLeSignedImmediate(registerIndex: number, immediate: bigint, nextPc: number) {
+    this.branch(nextPc, this.regs.getI64(registerIndex) <= immediate);
   }
 
-  branchGtSignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.getI32(registerIndex) > immediate);
+  branchGtSignedImmediate(registerIndex: number, immediate: bigint, nextPc: number) {
+    this.branch(nextPc, this.regs.getI64(registerIndex) > immediate);
   }
 
-  branchGeSignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.getI32(registerIndex) >= immediate);
+  branchGeSignedImmediate(registerIndex: number, immediate: bigint, nextPc: number) {
+    this.branch(nextPc, this.regs.getI64(registerIndex) >= immediate);
   }
 
   branchGeSigned(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchGeSignedImmediate(firstIndex, this.regs.getI32(secondIndex), nextPc);
+    this.branchGeSignedImmediate(firstIndex, this.regs.getI64(secondIndex), nextPc);
   }
 }

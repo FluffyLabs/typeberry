@@ -136,7 +136,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = 5;
+      const immediate = 5n;
       regs.setU32(firstRegisterIndex, 5);
 
       branchOps.branchEqImmediate(firstRegisterIndex, immediate, nextPc);
@@ -155,7 +155,7 @@ describe("BranchOps", () => {
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
       regs.setU32(firstRegisterIndex, 5);
-      const immediate = 6;
+      const immediate = 6n;
 
       branchOps.branchEqImmediate(firstRegisterIndex, immediate, nextPc);
 
@@ -174,7 +174,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = 5;
+      const immediate = 5n;
       regs.setU32(firstRegisterIndex, 5);
 
       branchOps.branchEqImmediate(firstRegisterIndex, immediate, nextPc);
@@ -194,7 +194,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = 6;
+      const immediate = 6n;
       regs.setU32(firstRegisterIndex, 5);
 
       branchOps.branchEqImmediate(firstRegisterIndex, immediate, nextPc);
@@ -299,7 +299,7 @@ describe("BranchOps", () => {
       const immediate = 5;
       regs.setU32(firstRegisterIndex, 6);
 
-      branchOps.branchNeImmediate(firstRegisterIndex, immediate, nextPc);
+      branchOps.branchNeImmediate(firstRegisterIndex, BigInt(immediate), nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
       assert.strictEqual(instructionResult.status, null);
@@ -317,7 +317,7 @@ describe("BranchOps", () => {
       const immediate = 6;
       regs.setU32(firstRegisterIndex, 6);
 
-      branchOps.branchNeImmediate(firstRegisterIndex, immediate, nextPc);
+      branchOps.branchNeImmediate(firstRegisterIndex, BigInt(immediate), nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
       assert.strictEqual(instructionResult.status, null);
@@ -334,7 +334,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = 5;
+      const immediate = 5n;
       regs.setU32(firstRegisterIndex, 6);
 
       branchOps.branchNeImmediate(firstRegisterIndex, immediate, nextPc);
@@ -354,7 +354,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = 6;
+      const immediate = 6n;
       regs.setU32(firstRegisterIndex, 6);
 
       branchOps.branchNeImmediate(firstRegisterIndex, immediate, nextPc);
@@ -456,7 +456,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = 6;
+      const immediate = 6n;
       regs.setU32(firstRegisterIndex, 5);
 
       branchOps.branchLtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -474,7 +474,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
-      const immediate = 6;
+      const immediate = 6n;
       regs.setU32(firstRegisterIndex, 6);
 
       branchOps.branchLtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -494,7 +494,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = 6;
+      const immediate = 6n;
       regs.setU32(firstRegisterIndex, 5);
 
       branchOps.branchLtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -514,7 +514,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = 6;
+      const immediate = 6n;
       regs.setU32(firstRegisterIndex, 6);
 
       branchOps.branchLtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -616,7 +616,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = 5;
+      const immediate = 5n;
       regs.setU32(firstRegisterIndex, 5);
 
       branchOps.branchGeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -634,7 +634,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
-      const immediate = 6;
+      const immediate = 6n;
       regs.setU32(firstRegisterIndex, 5);
 
       branchOps.branchGeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -654,7 +654,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = 6;
+      const immediate = 6n;
       regs.setU32(firstRegisterIndex, 7);
 
       branchOps.branchGeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -674,7 +674,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = 6;
+      const immediate = 6n;
       regs.setU32(firstRegisterIndex, 5);
 
       branchOps.branchGeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -694,7 +694,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = 6;
+      const immediate = 6n;
       regs.setU32(firstRegisterIndex, 6);
 
       branchOps.branchLeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -712,7 +712,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
-      const immediate = 5;
+      const immediate = 5n;
       regs.setU32(firstRegisterIndex, 6);
 
       branchOps.branchLeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -732,7 +732,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = 6;
+      const immediate = 6n;
       regs.setU32(firstRegisterIndex, 6);
 
       branchOps.branchLeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -752,7 +752,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = 5;
+      const immediate = 5n;
       regs.setU32(firstRegisterIndex, 6);
 
       branchOps.branchLeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -772,7 +772,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = 5;
+      const immediate = 5n;
       regs.setU32(firstRegisterIndex, 6);
 
       branchOps.branchGtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -790,7 +790,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
-      const immediate = 6;
+      const immediate = 6n;
       regs.setU32(firstRegisterIndex, 6);
 
       branchOps.branchGtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -810,7 +810,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = 5;
+      const immediate = 5n;
       regs.setU32(firstRegisterIndex, 6);
 
       branchOps.branchGtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -830,7 +830,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = 6;
+      const immediate = 6n;
       regs.setU32(firstRegisterIndex, 6);
 
       branchOps.branchGtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -850,7 +850,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = -5;
+      const immediate = -5n;
       regs.setI32(firstRegisterIndex, -6);
 
       branchOps.branchLtSignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -868,7 +868,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
-      const immediate = -6;
+      const immediate = -6n;
       regs.setI32(firstRegisterIndex, -6);
 
       branchOps.branchLtSignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -888,7 +888,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = -5;
+      const immediate = -5n;
       regs.setI32(firstRegisterIndex, -6);
 
       branchOps.branchLtSignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -908,7 +908,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = -6;
+      const immediate = -6n;
       regs.setI32(firstRegisterIndex, -6);
 
       branchOps.branchLtSignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -989,7 +989,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = -6;
+      const immediate = -6n;
       regs.setI32(firstRegisterIndex, -6);
 
       branchOps.branchLeSignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -1007,7 +1007,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
-      const immediate = -6;
+      const immediate = -6n;
       regs.setI32(firstRegisterIndex, -5);
 
       branchOps.branchLeSignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -1027,7 +1027,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = -6;
+      const immediate = -6n;
       regs.setI32(firstRegisterIndex, -6);
 
       branchOps.branchLeSignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -1047,7 +1047,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = -6;
+      const immediate = -6n;
       regs.setI32(firstRegisterIndex, -5);
 
       branchOps.branchLeSignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -1067,7 +1067,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = -6;
+      const immediate = -6n;
       regs.setI32(firstRegisterIndex, -5);
 
       branchOps.branchGtSignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -1085,7 +1085,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
-      const immediate = -6;
+      const immediate = -6n;
       regs.setI32(firstRegisterIndex, -6);
 
       branchOps.branchGtSignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -1105,7 +1105,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = -6;
+      const immediate = -6n;
       regs.setI32(firstRegisterIndex, -5);
 
       branchOps.branchGtSignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -1125,7 +1125,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = -6;
+      const immediate = -6n;
       regs.setI32(firstRegisterIndex, -6);
 
       branchOps.branchGtSignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -1145,7 +1145,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = -5;
+      const immediate = -5n;
       regs.setI32(firstRegisterIndex, -5);
 
       branchOps.branchGeSignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -1163,7 +1163,7 @@ describe("BranchOps", () => {
       const nextPc = 0;
       const expectedNextPc = 1;
       const firstRegisterIndex = 0;
-      const immediate = -5;
+      const immediate = -5n;
       regs.setI32(firstRegisterIndex, -6);
 
       branchOps.branchGeSignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -1183,7 +1183,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = -7;
+      const immediate = -7n;
       regs.setI32(firstRegisterIndex, -6);
 
       branchOps.branchGeSignedImmediate(firstRegisterIndex, immediate, nextPc);
@@ -1203,7 +1203,7 @@ describe("BranchOps", () => {
       const nextPc = 3;
       const expectedNextPc = 0;
       const firstRegisterIndex = 0;
-      const immediate = -5;
+      const immediate = -5n;
       regs.setI32(firstRegisterIndex, -6);
 
       branchOps.branchGeSignedImmediate(firstRegisterIndex, immediate, nextPc);

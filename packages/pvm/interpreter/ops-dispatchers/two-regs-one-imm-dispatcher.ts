@@ -16,8 +16,15 @@ export class TwoRegsOneImmDispatcher {
   dispatch(instruction: Instruction, args: TwoRegistersOneImmediateArgs) {
     switch (instruction) {
       case Instruction.ADD_IMM_32:
+        this.mathOps.addImmediateU32(
+          args.firstRegisterIndex,
+          args.immediateDecoder.getUnsigned(),
+          args.secondRegisterIndex,
+        );
+        break;
+
       case Instruction.ADD_IMM_64:
-        this.mathOps.addImmediate(
+        this.mathOps.addImmediateU64(
           args.firstRegisterIndex,
           args.immediateDecoder.getUnsigned(),
           args.secondRegisterIndex,
@@ -25,13 +32,31 @@ export class TwoRegsOneImmDispatcher {
         break;
 
       case Instruction.MUL_IMM_32:
+        this.mathOps.mulImmediateU32(
+          args.firstRegisterIndex,
+          args.immediateDecoder.getSigned(),
+          args.secondRegisterIndex,
+        );
+        break;
+
       case Instruction.MUL_IMM_64:
-        this.mathOps.mulImmediate(args.firstRegisterIndex, args.immediateDecoder.getSigned(), args.secondRegisterIndex);
+        this.mathOps.mulImmediateU64(
+          args.firstRegisterIndex,
+          args.immediateDecoder.getSigned(),
+          args.secondRegisterIndex,
+        );
         break;
 
       case Instruction.NEG_ADD_IMM_32:
+        this.mathOps.negAddImmediateU32(
+          args.firstRegisterIndex,
+          args.immediateDecoder.getUnsigned(),
+          args.secondRegisterIndex,
+        );
+        break;
+
       case Instruction.NEG_ADD_IMM_64:
-        this.mathOps.negAddImmediate(
+        this.mathOps.negAddImmediateU64(
           args.firstRegisterIndex,
           args.immediateDecoder.getUnsigned(),
           args.secondRegisterIndex,
@@ -39,8 +64,15 @@ export class TwoRegsOneImmDispatcher {
         break;
 
       case Instruction.SHLO_L_IMM_32:
+        this.shiftOps.shiftLogicalLeftImmediateU32(
+          args.firstRegisterIndex,
+          args.immediateDecoder.getUnsigned(),
+          args.secondRegisterIndex,
+        );
+        break;
+
       case Instruction.SHLO_L_IMM_64:
-        this.shiftOps.shiftLogicalLeftImmediate(
+        this.shiftOps.shiftLogicalLeftImmediateU64(
           args.firstRegisterIndex,
           args.immediateDecoder.getUnsigned(),
           args.secondRegisterIndex,
@@ -48,17 +80,31 @@ export class TwoRegsOneImmDispatcher {
         break;
 
       case Instruction.SHLO_L_IMM_ALT_32:
-      case Instruction.SHLO_L_IMM_ALT_64:
-        this.shiftOps.shiftLogicalLeftImmediateAlternative(
+        this.shiftOps.shiftLogicalLeftImmediateAlternativeU32(
           args.firstRegisterIndex,
           args.immediateDecoder.getUnsigned(),
           args.secondRegisterIndex,
         );
         break;
 
+      case Instruction.SHLO_L_IMM_ALT_64:
+        this.shiftOps.shiftLogicalLeftImmediateAlternativeU64(
+          args.firstRegisterIndex,
+          BigInt(args.immediateDecoder.getUnsigned()),
+          args.secondRegisterIndex,
+        );
+        break;
+
       case Instruction.SHLO_R_IMM_32:
+        this.shiftOps.shiftLogicalRightImmediateU32(
+          args.firstRegisterIndex,
+          args.immediateDecoder.getUnsigned(),
+          args.secondRegisterIndex,
+        );
+        break;
+
       case Instruction.SHLO_R_IMM_64:
-        this.shiftOps.shiftLogicalRightImmediate(
+        this.shiftOps.shiftLogicalRightImmediateU64(
           args.firstRegisterIndex,
           args.immediateDecoder.getUnsigned(),
           args.secondRegisterIndex,
@@ -66,17 +112,31 @@ export class TwoRegsOneImmDispatcher {
         break;
 
       case Instruction.SHLO_R_IMM_ALT_32:
-      case Instruction.SHLO_R_IMM_ALT_64:
-        this.shiftOps.shiftLogicalRightImmediateAlternative(
+        this.shiftOps.shiftLogicalRightImmediateAlternativeU32(
           args.firstRegisterIndex,
           args.immediateDecoder.getUnsigned(),
           args.secondRegisterIndex,
         );
         break;
 
+      case Instruction.SHLO_R_IMM_ALT_64:
+        this.shiftOps.shiftLogicalRightImmediateAlternativeU64(
+          args.firstRegisterIndex,
+          BigInt(args.immediateDecoder.getUnsigned()),
+          args.secondRegisterIndex,
+        );
+        break;
+
       case Instruction.SHAR_R_IMM_32:
+        this.shiftOps.shiftArithmeticRightImmediateU32(
+          args.firstRegisterIndex,
+          args.immediateDecoder.getSigned(),
+          args.secondRegisterIndex,
+        );
+        break;
+
       case Instruction.SHAR_R_IMM_64:
-        this.shiftOps.shiftArithmeticRightImmediate(
+        this.shiftOps.shiftArithmeticRightImmediateU64(
           args.firstRegisterIndex,
           args.immediateDecoder.getSigned(),
           args.secondRegisterIndex,
@@ -84,10 +144,17 @@ export class TwoRegsOneImmDispatcher {
         break;
 
       case Instruction.SHAR_R_IMM_ALT_32:
-      case Instruction.SHAR_R_IMM_ALT_64:
-        this.shiftOps.shiftArithmeticRightImmediateAlternative(
+        this.shiftOps.shiftArithmeticRightImmediateAlternativeU32(
           args.firstRegisterIndex,
           args.immediateDecoder.getSigned(),
+          args.secondRegisterIndex,
+        );
+        break;
+
+      case Instruction.SHAR_R_IMM_ALT_64:
+        this.shiftOps.shiftArithmeticRightImmediateAlternativeU64(
+          args.firstRegisterIndex,
+          BigInt(args.immediateDecoder.getSigned()),
           args.secondRegisterIndex,
         );
         break;

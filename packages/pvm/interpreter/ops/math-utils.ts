@@ -1,9 +1,10 @@
+import { check } from "@typeberry/utils";
 import { MAX_VALUE } from "./math-consts";
 
 /**
  * Overflowing addition for two-complement representation of 32-bit signed numbers.
  */
-export function addWithOverflow(a: number, b: number) {
+export function addWithOverflowU32(a: number, b: number) {
   if (a > MAX_VALUE - b) {
     /**
      * MAX_VALUE is equal to 2 ** 32 - 1
@@ -26,14 +27,28 @@ export function addWithOverflow(a: number, b: number) {
 }
 
 /**
+ * Overflowing addition for two-complement representation of 64-bit signed numbers.
+ */
+export function addWithOverflowU64(a: bigint, b: bigint) {
+  return (a + b) % 2n ** 64n;
+}
+
+/**
  * Overflowing subtraction for two-complement representation of 32-bit signed numbers.
  */
-export function sub(a: number, b: number) {
+export function subU32(a: number, b: number) {
   if (a > b) {
     return MAX_VALUE - a + b + 1;
   }
 
   return b - a;
+}
+
+/**
+ * Overflowing subtraction for two-complement representation of 64-bit signed numbers.
+ */
+export function subU64(a: bigint, b: bigint) {
+  return (2n ** 64n + b - a) % 2n ** 64n;
 }
 
 const MUL_THRESHOLD = 2 ** 16;
@@ -46,7 +61,7 @@ const MUL_THRESHOLD = 2 ** 16;
  * and perform the multiplication separately to make sure we don't overflow
  * the 2**32 and `MAX_SAFE_INTEGER`.
  */
-export function mulLowerUnsigned(a: number, b: number) {
+export function mulLowerUnsignedU32(a: number, b: number) {
   if (a > MUL_THRESHOLD || b > MUL_THRESHOLD) {
     const aHigh = a >> 16;
     const aLow = a & 0xffff;
@@ -62,6 +77,10 @@ export function mulLowerUnsigned(a: number, b: number) {
   }
 
   return a * b;
+}
+
+export function mulU64(a: bigint, b: bigint) {
+  return (a * b) % 2n ** 64n;
 }
 
 /**
@@ -104,4 +123,17 @@ export function mulUpperSigned(a: number, b: number) {
     return ~mulUpperUnsigned(aAbs, bAbs) + 1;
   }
   return mulUpperUnsigned(aAbs, bAbs);
+}
+
+export function unsignedRightShiftBigInt(value: bigint, shift: bigint): bigint {
+  check(shift >= 0, "Shift count must be non-negative");
+
+  // Convert the BigInt to its binary representation
+  const binaryRepresentation = value.toString(2);
+
+  // If the value is negative, emulate unsigned behavior
+  const unsignedRepresentation = value < 0n ? (1n << BigInt(binaryRepresentation.length)) + value : value;
+
+  // Perform the right shift
+  return unsignedRepresentation >> shift;
 }

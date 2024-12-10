@@ -27,7 +27,7 @@ test("MathOps", async (t) => {
     const regs = getRegisters([firstValue, secondValue]);
     const mathOps = new MathOps(regs);
 
-    mathOps.add(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.addU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
@@ -39,7 +39,7 @@ test("MathOps", async (t) => {
     const regs = getRegisters([firstValue, secondValue]);
     const mathOps = new MathOps(regs);
 
-    mathOps.add(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.addU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
@@ -51,7 +51,7 @@ test("MathOps", async (t) => {
     const regs = getRegisters([firstValue]);
     const mathOps = new MathOps(regs);
 
-    mathOps.addImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    mathOps.addImmediateU32(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
     assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
@@ -63,7 +63,7 @@ test("MathOps", async (t) => {
     const regs = getRegisters([firstValue]);
     const mathOps = new MathOps(regs);
 
-    mathOps.addImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    mathOps.addImmediateU32(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
     assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
@@ -75,7 +75,7 @@ test("MathOps", async (t) => {
     const regs = getRegisters([firstValue, secondValue]);
     const mathOps = new MathOps(regs);
 
-    mathOps.sub(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.subU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
@@ -87,7 +87,7 @@ test("MathOps", async (t) => {
     const regs = getRegisters([firstValue, secondValue]);
     const mathOps = new MathOps(regs);
 
-    mathOps.sub(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.subU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
@@ -99,7 +99,7 @@ test("MathOps", async (t) => {
     const regs = getRegisters([firstValue]);
     const mathOps = new MathOps(regs);
 
-    mathOps.negAddImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    mathOps.negAddImmediateU32(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
     assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
@@ -111,7 +111,7 @@ test("MathOps", async (t) => {
     const regs = getRegisters([firstValue]);
     const mathOps = new MathOps(regs);
 
-    mathOps.negAddImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    mathOps.negAddImmediateU32(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
     assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
@@ -123,7 +123,7 @@ test("MathOps", async (t) => {
     const regs = getRegisters([firstValue, secondValue]);
     const mathOps = new MathOps(regs);
 
-    mathOps.mul(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.mulU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
@@ -135,7 +135,7 @@ test("MathOps", async (t) => {
     const regs = getRegisters([firstValue, secondValue]);
     const mathOps = new MathOps(regs);
 
-    mathOps.mul(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.mulU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
@@ -147,7 +147,7 @@ test("MathOps", async (t) => {
     const regs = getRegisters([firstValue]);
     const mathOps = new MathOps(regs);
 
-    mathOps.mulImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    mathOps.mulImmediateU32(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
     assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
@@ -159,7 +159,7 @@ test("MathOps", async (t) => {
     const regs = getRegisters([firstValue]);
     const mathOps = new MathOps(regs);
 
-    mathOps.mulImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    mathOps.mulImmediateU32(FIRST_REGISTER, secondValue, RESULT_REGISTER);
 
     assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
@@ -365,7 +365,7 @@ test("MathOps", async (t) => {
     const regs = getRegisters([firstValue, secondValue]);
     const mathOps = new MathOps(regs);
 
-    mathOps.divUnsigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divUnsignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
@@ -377,7 +377,7 @@ test("MathOps", async (t) => {
     const regs = getRegisters([firstValue, secondValue]);
     const mathOps = new MathOps(regs);
 
-    mathOps.divUnsigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divUnsignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
@@ -389,7 +389,7 @@ test("MathOps", async (t) => {
     const regs = getRegisters([firstValue, secondValue]);
     const mathOps = new MathOps(regs);
 
-    mathOps.divUnsigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divUnsignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
@@ -403,7 +403,7 @@ test("MathOps", async (t) => {
     regs.setI32(SECOND_REGISTER, secondValue);
     const mathOps = new MathOps(regs);
 
-    mathOps.divSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getI32(RESULT_REGISTER), resultValue);
   });
@@ -417,7 +417,7 @@ test("MathOps", async (t) => {
     regs.setI32(SECOND_REGISTER, secondValue);
     const mathOps = new MathOps(regs);
 
-    mathOps.divSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getI32(RESULT_REGISTER), resultValue);
   });
@@ -431,7 +431,7 @@ test("MathOps", async (t) => {
     regs.setI32(SECOND_REGISTER, secondValue);
     const mathOps = new MathOps(regs);
 
-    mathOps.divSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getI32(RESULT_REGISTER), resultValue);
   });
@@ -445,7 +445,7 @@ test("MathOps", async (t) => {
     regs.setI32(SECOND_REGISTER, secondValue);
     const mathOps = new MathOps(regs);
 
-    mathOps.divSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getI32(RESULT_REGISTER), resultValue);
   });
@@ -459,7 +459,7 @@ test("MathOps", async (t) => {
     regs.setI32(SECOND_REGISTER, secondValue);
     const mathOps = new MathOps(regs);
 
-    mathOps.divSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getI32(RESULT_REGISTER), resultValue);
   });
@@ -473,7 +473,7 @@ test("MathOps", async (t) => {
     regs.setI32(SECOND_REGISTER, secondValue);
     const mathOps = new MathOps(regs);
 
-    mathOps.divSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getI32(RESULT_REGISTER), resultValue);
   });
@@ -487,7 +487,7 @@ test("MathOps", async (t) => {
     regs.setI32(SECOND_REGISTER, secondValue);
     const mathOps = new MathOps(regs);
 
-    mathOps.divSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getI32(RESULT_REGISTER), resultValue);
   });
@@ -501,7 +501,7 @@ test("MathOps", async (t) => {
     regs.setI32(SECOND_REGISTER, secondValue);
     const mathOps = new MathOps(regs);
 
-    mathOps.divSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getI32(RESULT_REGISTER), resultValue);
   });
@@ -513,7 +513,7 @@ test("MathOps", async (t) => {
     const regs = getRegisters([firstValue, secondValue]);
     const mathOps = new MathOps(regs);
 
-    mathOps.remUnsigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.remUnsignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });
@@ -525,7 +525,7 @@ test("MathOps", async (t) => {
     const regs = getRegisters([firstValue, secondValue]);
     const mathOps = new MathOps(regs);
 
-    mathOps.remUnsigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.remUnsignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
 
     assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
   });

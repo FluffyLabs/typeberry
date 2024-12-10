@@ -29,6 +29,7 @@ import {
   NoArgsDispatcher,
   OneImmDispatcher,
   OneOffsetDispatcher,
+  OneRegOneExtImmDispatcher,
   OneRegOneImmDispatcher,
   OneRegOneImmOneOffsetDispatcher,
   OneRegTwoImmsDispatcher,
@@ -67,6 +68,7 @@ export class Interpreter {
   private noArgsDispatcher: NoArgsDispatcher;
   private twoRegsTwoImmsDispatcher: TwoRegsTwoImmsDispatcher;
   private oneImmDispatcher: OneImmDispatcher;
+  private oneRegOneExtImmDispatcher: OneRegOneExtImmDispatcher;
   private status = Status.OK;
   private argsDecodingResults = createResults();
   private basicBlocks: BasicBlocks;
@@ -108,6 +110,7 @@ export class Interpreter {
     this.noArgsDispatcher = new NoArgsDispatcher(noArgsOps);
     this.twoRegsTwoImmsDispatcher = new TwoRegsTwoImmsDispatcher(loadOps, dynamicJumpOps);
     this.oneImmDispatcher = new OneImmDispatcher(hostCallOps);
+    this.oneRegOneExtImmDispatcher = new OneRegOneExtImmDispatcher(loadOps);
   }
 
   reset(rawProgram: Uint8Array, pc: number, gas: Gas, maybeRegisters?: Registers, maybeMemory?: Memory) {
@@ -208,6 +211,9 @@ export class Interpreter {
         break;
       case ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES:
         this.twoRegsTwoImmsDispatcher.dispatch(currentInstruction, argsResult);
+        break;
+      case ArgumentType.ONE_REGISTER_ONE_EXTENDED_WIDTH_IMMEDIATE:
+        this.oneRegOneExtImmDispatcher.dispatch(currentInstruction, argsResult);
         break;
     }
 

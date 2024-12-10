@@ -7,6 +7,7 @@ import { type Blake2bHash, hashBytes } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { type Accounts, Lookup } from "./lookup";
 import { HostCallResult } from "./results";
 
@@ -39,8 +40,8 @@ function prepareRegsAndMemory(
   destinationLength: number,
   { skipKey = false, skipValue = false }: { skipKey?: boolean; skipValue?: boolean } = {},
 ) {
-  const keyAddress = 15_000;
-  const memStart = 3_400_000;
+  const keyAddress = 2 ** 16;
+  const memStart = 2 ** 22;
   const registers = new Registers();
   registers.setU32(SERVICE_ID_REG, serviceId);
   registers.setU32(KEY_START_REG, keyAddress);
@@ -49,10 +50,10 @@ function prepareRegsAndMemory(
 
   const builder = new MemoryBuilder();
   if (!skipKey) {
-    builder.setReadable(tryAsMemoryIndex(keyAddress), tryAsMemoryIndex(keyAddress + 32), key.raw);
+    builder.setReadablePages(tryAsMemoryIndex(keyAddress), tryAsMemoryIndex(keyAddress + PAGE_SIZE), key.raw);
   }
   if (!skipValue) {
-    builder.setWriteable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + destinationLength));
+    builder.setWriteablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE));
   }
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
   return {
@@ -156,7 +157,7 @@ describe("HostCalls: Lookup", () => {
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
     accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
-    registers.setU32(DEST_LEN_REG, 34);
+    registers.setU32(DEST_LEN_REG, PAGE_SIZE + 1);
 
     // when
     await lookup.execute(gas, registers, memory);

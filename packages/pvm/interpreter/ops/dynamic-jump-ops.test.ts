@@ -24,7 +24,8 @@ describe("DynamicJumpOps", () => {
     const registerIndex = 0;
     regs.setU32(registerIndex, 3);
 
-    dynamicJumpOps.jumpInd(1, registerIndex);
+    const address = dynamicJumpOps.caluclateJumpAddress(1, registerIndex);
+    dynamicJumpOps.jumpInd(address);
 
     assert.strictEqual(instructionResult.nextPc, 3);
     assert.strictEqual(instructionResult.status, null);
@@ -42,7 +43,8 @@ describe("DynamicJumpOps", () => {
     const registerIndex = 0;
     regs.setU32(registerIndex, MAX_VALUE);
 
-    dynamicJumpOps.jumpInd(5, registerIndex);
+    const address = dynamicJumpOps.caluclateJumpAddress(5, registerIndex);
+    dynamicJumpOps.jumpInd(address);
 
     assert.strictEqual(instructionResult.nextPc, 3);
     assert.strictEqual(instructionResult.status, null);
@@ -57,7 +59,8 @@ describe("DynamicJumpOps", () => {
     const registerIndex = 0;
     regs.setU32(registerIndex, 0xff_ff_00_00);
 
-    dynamicJumpOps.jumpInd(0, registerIndex);
+    const address = dynamicJumpOps.caluclateJumpAddress(0, registerIndex);
+    dynamicJumpOps.jumpInd(address);
 
     assert.strictEqual(instructionResult.status, Result.HALT);
   });
@@ -71,7 +74,8 @@ describe("DynamicJumpOps", () => {
     const registerIndex = 0;
     regs.setU32(registerIndex, 0);
 
-    dynamicJumpOps.jumpInd(0, registerIndex);
+    const address = dynamicJumpOps.caluclateJumpAddress(0, registerIndex);
+    dynamicJumpOps.jumpInd(address);
 
     assert.strictEqual(instructionResult.status, Result.PANIC);
   });
@@ -85,7 +89,8 @@ describe("DynamicJumpOps", () => {
     const registerIndex = 0;
     regs.setU32(registerIndex, 11);
 
-    dynamicJumpOps.jumpInd(5, registerIndex);
+    const address = dynamicJumpOps.caluclateJumpAddress(5, registerIndex);
+    dynamicJumpOps.jumpInd(address);
 
     assert.strictEqual(instructionResult.status, Result.PANIC);
   });
@@ -99,7 +104,8 @@ describe("DynamicJumpOps", () => {
     const registerIndex = 0;
     regs.setU32(registerIndex, 4);
 
-    dynamicJumpOps.jumpInd(5, registerIndex);
+    const address = dynamicJumpOps.caluclateJumpAddress(5, registerIndex);
+    dynamicJumpOps.jumpInd(address);
 
     assert.strictEqual(instructionResult.status, Result.PANIC);
   });
@@ -113,7 +119,8 @@ describe("DynamicJumpOps", () => {
     const registerIndex = 0;
     regs.setU32(registerIndex, 3);
 
-    dynamicJumpOps.jumpInd(5, registerIndex);
+    const address = dynamicJumpOps.caluclateJumpAddress(5, registerIndex);
+    dynamicJumpOps.jumpInd(address);
 
     assert.strictEqual(instructionResult.status, Result.PANIC);
   });
@@ -130,7 +137,8 @@ describe("DynamicJumpOps", () => {
     const registerIndex = 0;
     regs.setU32(registerIndex, 3);
 
-    dynamicJumpOps.jumpInd(5, registerIndex);
+    const address = dynamicJumpOps.caluclateJumpAddress(5, registerIndex);
+    dynamicJumpOps.jumpInd(address);
 
     assert.strictEqual(instructionResult.status, Result.PANIC);
   });

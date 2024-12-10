@@ -1,3 +1,4 @@
 export const MAX_VALUE = 4294967295;
 export const MIN_VALUE = -(2 ** 31);
-export const MAX_SHIFT = 32;
+export const MAX_SHIFT_U32 = 32;
+export const MAX_SHIFT_U64 = 64n;

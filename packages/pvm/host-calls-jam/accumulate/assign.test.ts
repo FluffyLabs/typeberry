@@ -8,6 +8,7 @@ import { type Blake2bHash, HASH_SIZE } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { HostCallResult } from "../results";
 import { Assign } from "./assign";
 import { AUTHORIZATION_QUEUE_SIZE } from "./partial-state";
@@ -23,7 +24,7 @@ function prepareRegsAndMemory(
   authQueue: Blake2bHash[],
   { skipAuthQueue = false }: { skipAuthQueue?: boolean } = {},
 ) {
-  const memStart = 20_000;
+  const memStart = 2 ** 16;
   const registers = new Registers();
   registers.setU32(CORE_INDEX_REG, coreIndex);
   registers.setU32(AUTH_QUEUE_START_REG, memStart);
@@ -39,7 +40,7 @@ function prepareRegsAndMemory(
   const data = encoder.viewResult();
 
   if (!skipAuthQueue) {
-    builder.setReadable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + data.raw.length), data.raw);
+    builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), data.raw);
   }
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
   return {

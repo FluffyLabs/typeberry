@@ -7,6 +7,7 @@ import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { Forget } from "./forget";
@@ -22,7 +23,7 @@ function prepareRegsAndMemory(
   preimageLength: U32,
   { skipPreimageHash = false }: { skipPreimageHash?: boolean } = {},
 ) {
-  const memStart = 20_000;
+  const memStart = 2 ** 16;
   const registers = new Registers();
   registers.setU32(HASH_START_REG, memStart);
   registers.setU32(LENGTH_REG, preimageLength);
@@ -30,11 +31,7 @@ function prepareRegsAndMemory(
   const builder = new MemoryBuilder();
 
   if (!skipPreimageHash) {
-    builder.setReadable(
-      tryAsMemoryIndex(memStart),
-      tryAsMemoryIndex(memStart + preimageHash.raw.length),
-      preimageHash.raw,
-    );
+    builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), preimageHash.raw);
   }
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
   return {

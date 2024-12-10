@@ -10,6 +10,7 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { HostCallResult } from "./results";
 import { SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
 import { type Accounts, Write } from "./write";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 
 class TestAccounts implements Accounts {
   public readonly data: MultiMap<[ServiceId, Blake2bHash], BytesBlob> = new MultiMap(2, [
@@ -65,8 +66,8 @@ function prepareRegsAndMemory(
   dataInMemory: BytesBlob,
   { skipKey = false, skipValue = false }: { skipKey?: boolean; skipValue?: boolean } = {},
 ) {
-  const keyAddress = 150_000;
-  const memStart = 20_000;
+  const keyAddress = 2 ** 18;
+  const memStart = 2 ** 16;
   const registers = new Registers();
   registers.setU32(KEY_START_REG, keyAddress);
   registers.setU32(KEY_LEN_REG, key.length);
@@ -75,10 +76,10 @@ function prepareRegsAndMemory(
 
   const builder = new MemoryBuilder();
   if (!skipKey) {
-    builder.setReadable(tryAsMemoryIndex(keyAddress), tryAsMemoryIndex(keyAddress + key.length), key.raw);
+    builder.setReadablePages(tryAsMemoryIndex(keyAddress), tryAsMemoryIndex(keyAddress + PAGE_SIZE), key.raw);
   }
   if (!skipValue && dataInMemory.length > 0) {
-    builder.setReadable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + dataInMemory.length), dataInMemory.raw);
+    builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), dataInMemory.raw);
   }
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
   return {
@@ -166,7 +167,7 @@ describe("HostCalls: Write", () => {
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
-    registers.setU32(KEY_LEN_REG, 10);
+    registers.setU32(KEY_LEN_REG, PAGE_SIZE + 1);
 
     // when
     await write.execute(gas, registers, memory);
@@ -183,7 +184,7 @@ describe("HostCalls: Write", () => {
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
-    registers.setU32(DEST_LEN_REG, 50);
+    registers.setU32(DEST_LEN_REG, PAGE_SIZE + 1);
 
     // when
     await write.execute(gas, registers, memory);

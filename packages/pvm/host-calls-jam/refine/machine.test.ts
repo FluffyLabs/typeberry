@@ -8,6 +8,7 @@ import { HostCallResult } from "../results";
 import { Machine } from "./machine";
 import { tryAsMachineId } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 
 const gas = gasCounter(tryAsGas(0));
 const CODE_START_REG = 7;
@@ -16,7 +17,7 @@ const CODE_LEN_REG = 8;
 const PC_REG = 9;
 
 function prepareRegsAndMemory(code: BytesBlob, pc: U32, { skipCode = false }: { skipCode?: boolean } = {}) {
-  const memStart = 3_400_000;
+  const memStart = 2 ** 20;
   const registers = new Registers();
   registers.setU32(CODE_START_REG, memStart);
   registers.setU32(CODE_LEN_REG, code.length);
@@ -24,7 +25,7 @@ function prepareRegsAndMemory(code: BytesBlob, pc: U32, { skipCode = false }: { 
 
   const builder = new MemoryBuilder();
   if (!skipCode) {
-    builder.setReadable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + code.length), code.raw);
+    builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), code.raw);
   }
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
   return {
