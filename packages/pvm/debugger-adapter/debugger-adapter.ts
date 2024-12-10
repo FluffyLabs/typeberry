@@ -72,7 +72,7 @@ export class DebuggerAdapter {
     return true;
   }
 
-  getRegisters(): Uint32Array {
+  getRegisters(): BigUint64Array {
     return this.pvm.getRegisters().asUnsigned;
   }
 
