@@ -39,7 +39,7 @@ describe("decodeStandardProgram", () => {
   it("should write args length to 9th register", () => {
     const registerIndex = 8;
 
-    assert.strictEqual(decodedProgram.registers[registerIndex], ARGS.length);
+    assert.strictEqual(decodedProgram.registers[registerIndex], BigInt(ARGS.length));
   });
 
   it("should prepare readable memory segments", () => {
