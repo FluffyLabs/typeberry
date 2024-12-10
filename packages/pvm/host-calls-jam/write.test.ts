@@ -7,10 +7,10 @@ import { type Blake2bHash, hashBytes } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { HostCallResult } from "./results";
 import { SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
 import { type Accounts, Write } from "./write";
-import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 
 class TestAccounts implements Accounts {
   public readonly data: MultiMap<[ServiceId, Blake2bHash], BytesBlob> = new MultiMap(2, [

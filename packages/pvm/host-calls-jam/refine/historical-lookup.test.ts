@@ -6,10 +6,10 @@ import { type Blake2bHash, hashBytes } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { HostCallResult } from "../results";
 import { HistoricalLookup } from "./historical-lookup";
 import { TestRefineExt } from "./refine-externalities.test";
-import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 
 const gas = gasCounter(tryAsGas(0));
 const SERVICE_ID_REG = 7;

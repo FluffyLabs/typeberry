@@ -27,7 +27,7 @@ const gas = gasCounter(tryAsGas(0));
 
 function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = tryAsExactBytes(AccountInfo.Codec.sizeHint)) {
   const pageStart = 2 ** 16;
-  const memStart = pageStart + PAGE_SIZE - accountInfoLength -1;
+  const memStart = pageStart + PAGE_SIZE - accountInfoLength - 1;
   const registers = new Registers();
   registers.setU32(SERVICE_ID_REG, serviceId);
   registers.setU32(DEST_START_REG, memStart);

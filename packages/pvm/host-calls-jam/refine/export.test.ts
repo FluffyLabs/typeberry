@@ -5,12 +5,12 @@ import { Bytes } from "@typeberry/bytes";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { Export } from "./export";
 import { SegmentExportError } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
-import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 
 const gas = gasCounter(tryAsGas(0));
 const SEGMENT_START_REG = 7;
