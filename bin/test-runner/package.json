@@ -17,6 +17,7 @@
     "@typeberry/numbers": "0.0.1",
     "@typeberry/pvm-interpreter": "0.0.1",
     "@typeberry/safrole": "0.0.1",
+    "@typeberry/shuffling": "0.0.1",
     "@typeberry/trie": "0.0.1"
   },
   "scripts": {
