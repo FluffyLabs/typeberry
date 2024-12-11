@@ -5,7 +5,35 @@ import test from "node:test";
 
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
+import { assurancesExtrinsicFromJson, runAssurancesExtrinsicTest } from "./tests/codec/assurances-extrinsic";
+import { blockFromJson, runBlockTest } from "./tests/codec/block";
+import { disputesExtrinsicFromJson, runDisputesExtrinsicTest } from "./tests/codec/disputes-extrinsic";
+import { extrinsicFromJson, runExtrinsicTest } from "./tests/codec/extrinsic";
+import { guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest } from "./tests/codec/guarantees-extrinsic";
+import { headerFromJson, runHeaderTest } from "./tests/codec/header";
+import { preimagesExtrinsicFromJson, runPreimagesExtrinsicTest } from "./tests/codec/preimages-extrinsic";
+import { refineContextFromJson, runRefineContextTest } from "./tests/codec/refine-context";
+import { runTicketsExtrinsicTest, ticketsExtrinsicFromJson } from "./tests/codec/tickets-extrinsic";
+import { runWorkItemTest, workItemFromJson } from "./tests/codec/work-item";
+import { runWorkPackageTest, workPackageFromJson } from "./tests/codec/work-package";
+import { runWorkReportTest, workReportFromJson } from "./tests/codec/work-report";
+import { runWorkResultTest, workResultFromJson } from "./tests/codec/work-result";
+import { DisputesTest, runDisputesTest } from "./tests/disputes";
+import {
+  EcTest,
+  PageProof,
+  SegmentEcTest,
+  SegmentRoot,
+  runEcTest,
+  runPageProofTest,
+  runSegmentEcTest,
+  runSegmentRootTest,
+} from "./tests/erasure-coding";
+import { PvmTest, runPvmTest } from "./tests/pvm";
+import { SafroleTest, runSafroleTest } from "./tests/safrole";
+import { JsonSchema, ignoreSchemaFiles } from "./tests/schema";
 import { runShufflingTests, shufflingTests } from "./tests/shuffling";
+import { runTrieTest, trieTestSuiteFromJson } from "./tests/trie";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 const logger = Logger.new(__filename, "test-runner");
@@ -119,29 +147,29 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
   }
 
   const runners = [
-    // prepRunner("codec/assurances_extrinsic", assurancesExtrinsicFromJson, runAssurancesExtrinsicTest),
-    // prepRunner("codec/block", blockFromJson, runBlockTest),
-    // prepRunner("codec/disputes_extrinsic", disputesExtrinsicFromJson, runDisputesExtrinsicTest),
-    // prepRunner("codec/extrinsic", extrinsicFromJson, runExtrinsicTest),
-    // prepRunner("codec/guarantees_extrinsic", guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest),
-    // prepRunner("codec/header", headerFromJson, runHeaderTest),
-    // prepRunner("codec/preimages_extrinsic", preimagesExtrinsicFromJson, runPreimagesExtrinsicTest),
-    // prepRunner("codec/refine_context", refineContextFromJson, runRefineContextTest),
-    // prepRunner("codec/tickets_extrinsic", ticketsExtrinsicFromJson, runTicketsExtrinsicTest),
-    // prepRunner("codec/work_item", workItemFromJson, runWorkItemTest),
-    // prepRunner("codec/work_package", workPackageFromJson, runWorkPackageTest),
-    // prepRunner("codec/work_report", workReportFromJson, runWorkReportTest),
-    // prepRunner("codec/work_result", workResultFromJson, runWorkResultTest),
-    // prepRunner("disputes", DisputesTest.fromJson, runDisputesTest),
-    // prepRunner("erasure-coding", EcTest.fromJson, runEcTest),
-    // prepRunner("erasure-coding/page-proof", PageProof.fromJson, runPageProofTest),
-    // prepRunner("erasure-coding/segment-ec", SegmentEcTest.fromJson, runSegmentEcTest),
-    // prepRunner("erasure-coding/segment-root", SegmentRoot.fromJson, runSegmentRootTest),
-    // prepRunner("ignored", JsonSchema.fromJson, ignoreSchemaFiles),
-    // prepRunner("pvm", PvmTest.fromJson, runPvmTest),
-    // prepRunner("safrole", SafroleTest.fromJson, runSafroleTest),
+    prepRunner("codec/assurances_extrinsic", assurancesExtrinsicFromJson, runAssurancesExtrinsicTest),
+    prepRunner("codec/block", blockFromJson, runBlockTest),
+    prepRunner("codec/disputes_extrinsic", disputesExtrinsicFromJson, runDisputesExtrinsicTest),
+    prepRunner("codec/extrinsic", extrinsicFromJson, runExtrinsicTest),
+    prepRunner("codec/guarantees_extrinsic", guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest),
+    prepRunner("codec/header", headerFromJson, runHeaderTest),
+    prepRunner("codec/preimages_extrinsic", preimagesExtrinsicFromJson, runPreimagesExtrinsicTest),
+    prepRunner("codec/refine_context", refineContextFromJson, runRefineContextTest),
+    prepRunner("codec/tickets_extrinsic", ticketsExtrinsicFromJson, runTicketsExtrinsicTest),
+    prepRunner("codec/work_item", workItemFromJson, runWorkItemTest),
+    prepRunner("codec/work_package", workPackageFromJson, runWorkPackageTest),
+    prepRunner("codec/work_report", workReportFromJson, runWorkReportTest),
+    prepRunner("codec/work_result", workResultFromJson, runWorkResultTest),
+    prepRunner("disputes", DisputesTest.fromJson, runDisputesTest),
+    prepRunner("erasure-coding", EcTest.fromJson, runEcTest),
+    prepRunner("erasure-coding/page-proof", PageProof.fromJson, runPageProofTest),
+    prepRunner("erasure-coding/segment-ec", SegmentEcTest.fromJson, runSegmentEcTest),
+    prepRunner("erasure-coding/segment-root", SegmentRoot.fromJson, runSegmentRootTest),
+    prepRunner("ignored", JsonSchema.fromJson, ignoreSchemaFiles),
+    prepRunner("pvm", PvmTest.fromJson, runPvmTest),
+    prepRunner("safrole", SafroleTest.fromJson, runSafroleTest),
     prepRunner("shuffling", shufflingTests, runShufflingTests),
-    // prepRunner("trie", trieTestSuiteFromJson, runTrieTest),
+    prepRunner("trie", trieTestSuiteFromJson, runTrieTest),
   ];
 
   const nonEmptyRunners = runners.filter((x): x is TestAndRunner => x !== null);
