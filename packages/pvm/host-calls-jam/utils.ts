@@ -1,5 +1,5 @@
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
-import type { Registers } from "@typeberry/pvm-interpreter";
+import type { Registers } from "@typeberry/pvm-host-calls/host-call-handler";
 import { check } from "@typeberry/utils";
 
 export const SERVICE_ID_BYTES = 4;

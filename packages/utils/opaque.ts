@@ -18,7 +18,8 @@
 
 type StringLiteral<Type> = Type extends string ? (string extends Type ? never : Type) : never;
 
-declare const __OPAQUE_TYPE__: unique symbol;
+// TODO [MaSi]: it should be "unique symbol" but in debugger adapter we have opaque types from different packages and it is problematic.
+declare const __OPAQUE_TYPE__ = "__INTERNAL_OPAQUE_ID__";
 
 export type WithOpaque<Token extends string> = {
   readonly [__OPAQUE_TYPE__]: Token;

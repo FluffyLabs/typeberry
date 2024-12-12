@@ -146,6 +146,13 @@ export class Interpreter {
   }
 
   nextStep() {
+    // we are being resumed from a host call, assume all good.
+    if (this.status === Status.HOST) {
+      this.status = Status.OK;
+      this.pc = this.instructionResult.nextPc;
+      this.instructionResult.reset();
+    }
+
     /**
      * We have two options to handle an invalid instruction:
      * - change status to panic and quit program immediately,
@@ -156,7 +163,6 @@ export class Interpreter {
     const currentInstruction = this.code[this.pc] ?? Instruction.TRAP;
 
     const underflow = this.gas.sub(instructionGasMap[currentInstruction]);
-
     if (underflow) {
       this.status = Status.OOG;
       return this.status;
