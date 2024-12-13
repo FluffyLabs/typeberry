@@ -2,14 +2,6 @@ import type { Bytes } from "@typeberry/bytes";
 import { hashBytes } from "@typeberry/hash";
 import { check } from "@typeberry/utils";
 
-function concatUint8Array(arr1: Uint8Array, arr2: Uint8Array) {
-  const newLength = arr1.length + arr2.length;
-  const result = new Uint8Array(newLength);
-  result.set(arr1);
-  result.set(arr2, arr1.length);
-  return result;
-}
-
 function uint8ArrayToNumberLE(uint8Array: Uint8Array): number {
   check(uint8Array.length === 4, "Input must be a Uint8Array of length 4");
   return uint8Array[0] | (uint8Array[1] << 8) | (uint8Array[2] << 16) | (uint8Array[3] << 24);
@@ -27,11 +19,13 @@ function numberToUint8ArrayLE(num: number): Uint8Array {
 
 function hashToNumberSequence(entropy: Bytes<32>, length: number) {
   const result: number[] = new Array(length);
+  const randomBytes = new Uint8Array(36);
+  randomBytes.set(entropy.raw);
 
   for (let i = 0; i < length; i++) {
     const toConcat = numberToUint8ArrayLE(Math.floor(i / 8));
-    const bytes = concatUint8Array(entropy.raw, toConcat);
-    const newHash = hashBytes(bytes);
+    randomBytes.set(toConcat, 32);
+    const newHash = hashBytes(randomBytes);
     const numberStartIndex = (4 * i) % 32;
     const numberEndIndex = numberStartIndex + 4;
     const number = uint8ArrayToNumberLE(newHash.raw.subarray(numberStartIndex, numberEndIndex)) >>> 0;
