@@ -46,11 +46,14 @@ export function fisherYatesShuffle<T>(arr: T[], entropy: Bytes<32>): T[] {
   const randomNumbers = hashToNumberSequence(entropy, arr.length);
   const result: T[] = new Array<T>(n);
 
+  let itemsLeft = n;
   for (let i = 0; i < n; i++) {
-    const j = randomNumbers[i] % arr.length;
+    const j = randomNumbers[i] % itemsLeft;
     result[i] = arr[j];
-    arr[j] = arr[arr.length - 1];
-    arr.length = arr.length - 1;
+    // swap with last and remove
+    itemsLeft--;
+    arr[j] = arr[itemsLeft];
+    arr.length = itemsLeft;
   }
 
   return result;
