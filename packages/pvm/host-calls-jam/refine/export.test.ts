@@ -8,7 +8,7 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { Export } from "./export";
-import { SEGMENT_EXPORT_ERROR } from "./refine-externalities";
+import { SegmentExportError } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));
@@ -90,7 +90,7 @@ describe("HostCalls: Export", () => {
     exp.currentServiceId = tryAsServiceId(10_000);
     const segment: Segment = Bytes.fill(SEGMENT_BYTES, 15).asOpaque();
     const { registers, memory } = prepareRegsAndMemory(segment);
-    refine.exportSegmentData.set(Result.error(SEGMENT_EXPORT_ERROR), segment);
+    refine.exportSegmentData.set(Result.error(SegmentExportError), segment);
 
     // when
     await exp.execute(gas, registers, memory);

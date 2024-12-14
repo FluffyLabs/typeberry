@@ -85,5 +85,5 @@ export function sumU32(...values: U32[]) {
     overflow ||= prev > sum;
   }
 
-  return { overflow, value: sum };
+  return { overflow, value: sum as U32 };
 }

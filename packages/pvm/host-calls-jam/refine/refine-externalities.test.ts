@@ -4,12 +4,19 @@ import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import type { Memory, MemoryIndex } from "@typeberry/pvm-interpreter";
-import type { Result } from "@typeberry/utils";
-import type { MachineId, PeekPokeError, RefineExternalities, SEGMENT_EXPORT_ERROR } from "./refine-externalities";
+import type { OK, Result } from "@typeberry/utils";
+import type {
+  InvalidPageError,
+  MachineId,
+  NoMachineError,
+  PeekPokeError,
+  RefineExternalities,
+  SegmentExportError,
+} from "./refine-externalities";
 
 export class TestRefineExt implements RefineExternalities {
   public readonly importSegmentData: Map<SegmentIndex, Segment | null> = new Map();
-  public readonly exportSegmentData: MultiMap<[Segment], Result<SegmentIndex, SEGMENT_EXPORT_ERROR>> = new MultiMap(1, [
+  public readonly exportSegmentData: MultiMap<[Segment], Result<SegmentIndex, SegmentExportError>> = new MultiMap(1, [
     (segment) => segment.toString(),
   ]);
   public readonly historicalLookupData: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
@@ -20,10 +27,50 @@ export class TestRefineExt implements RefineExternalities {
     (code) => code.toString(),
     null,
   ]);
-  public readonly machinePeekData: MultiMap<Parameters<TestRefineExt["machinePeekFrom"]>, Result<null, PeekPokeError>> =
+  public readonly machineExpungeData: MultiMap<
+    Parameters<TestRefineExt["machineExpunge"]>,
+    Result<OK, NoMachineError>
+  > = new MultiMap(1);
+  public readonly machinePeekData: MultiMap<Parameters<TestRefineExt["machinePeekFrom"]>, Result<OK, PeekPokeError>> =
     new MultiMap(5);
-  public readonly machinePokeData: MultiMap<Parameters<TestRefineExt["machinePokeInto"]>, Result<null, PeekPokeError>> =
+  public readonly machinePokeData: MultiMap<Parameters<TestRefineExt["machinePokeInto"]>, Result<OK, PeekPokeError>> =
     new MultiMap(5);
+  public readonly machineVoidPagesData: MultiMap<
+    Parameters<TestRefineExt["machineVoidPages"]>,
+    Result<OK, NoMachineError | InvalidPageError>
+  > = new MultiMap(3);
+  public readonly machineZeroPagesData: MultiMap<
+    Parameters<TestRefineExt["machineZeroPages"]>,
+    Result<OK, NoMachineError>
+  > = new MultiMap(3);
+
+  machineExpunge(machineIndex: MachineId): Promise<Result<OK, NoMachineError>> {
+    const val = this.machineExpungeData.get(machineIndex);
+    if (val === undefined) {
+      throw new Error(`Unexpected call to machineExpunge with: ${machineIndex}`);
+    }
+    return Promise.resolve(val);
+  }
+
+  machineVoidPages(
+    machineIndex: MachineId,
+    pageStart: U32,
+    pageCount: U32,
+  ): Promise<Result<OK, NoMachineError | InvalidPageError>> {
+    const val = this.machineVoidPagesData.get(machineIndex, pageStart, pageCount);
+    if (val === undefined) {
+      throw new Error(`Unexpected call to machineVoidPages with: ${machineIndex}, ${pageStart}, ${pageCount}`);
+    }
+    return Promise.resolve(val);
+  }
+
+  machineZeroPages(machineIndex: MachineId, pageStart: U32, pageCount: U32): Promise<Result<OK, NoMachineError>> {
+    const val = this.machineZeroPagesData.get(machineIndex, pageStart, pageCount);
+    if (val === undefined) {
+      throw new Error(`Unexpected call to machineZeroPages with: ${machineIndex}, ${pageStart}, ${pageCount}`);
+    }
+    return Promise.resolve(val);
+  }
 
   machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId> {
     const val = this.machineStartData.get(code, programCounter);
@@ -39,7 +86,7 @@ export class TestRefineExt implements RefineExternalities {
     sourceStart: MemoryIndex,
     length: U32,
     destination: Memory,
-  ): Promise<Result<null, PeekPokeError>> {
+  ): Promise<Result<OK, PeekPokeError>> {
     const val = this.machinePeekData.get(machineIndex, destinationStart, sourceStart, length, destination);
     if (val === undefined) {
       throw new Error(
@@ -55,7 +102,7 @@ export class TestRefineExt implements RefineExternalities {
     destinationStart: MemoryIndex,
     length: U32,
     source: Memory,
-  ): Promise<Result<null, PeekPokeError>> {
+  ): Promise<Result<OK, PeekPokeError>> {
     const val = this.machinePokeData.get(machineIndex, sourceStart, destinationStart, length, source);
     if (val === undefined) {
       throw new Error(
@@ -65,7 +112,7 @@ export class TestRefineExt implements RefineExternalities {
     return Promise.resolve(val);
   }
 
-  exportSegment(segment: Segment): Result<SegmentIndex, SEGMENT_EXPORT_ERROR> {
+  exportSegment(segment: Segment): Result<SegmentIndex, SegmentExportError> {
     const result = this.exportSegmentData.get(segment);
     if (result === undefined) {
       throw new Error(`Unexpected call to exportSegment with: ${segment}`);
