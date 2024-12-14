@@ -27,6 +27,7 @@
     "packages/pvm/program",
     "packages/pvm/spi-decoder",
     "packages/safrole",
+    "packages/shuffling",
     "packages/state-machine",
     "packages/transition",
     "packages/trie",

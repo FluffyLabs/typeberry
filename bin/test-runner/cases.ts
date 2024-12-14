@@ -32,6 +32,7 @@ import {
 import { PvmTest, runPvmTest } from "./tests/pvm";
 import { SafroleTest, runSafroleTest } from "./tests/safrole";
 import { JsonSchema, ignoreSchemaFiles } from "./tests/schema";
+import { runShufflingTests, shufflingTests } from "./tests/shuffling";
 import { runTrieTest, trieTestSuiteFromJson } from "./tests/trie";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
@@ -167,6 +168,7 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
     prepRunner("ignored", JsonSchema.fromJson, ignoreSchemaFiles),
     prepRunner("pvm", PvmTest.fromJson, runPvmTest),
     prepRunner("safrole", SafroleTest.fromJson, runSafroleTest),
+    prepRunner("shuffling", shufflingTests, runShufflingTests),
     prepRunner("trie", trieTestSuiteFromJson, runTrieTest),
   ];
 
