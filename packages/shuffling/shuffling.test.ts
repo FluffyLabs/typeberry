@@ -49,4 +49,17 @@ describe("fisherYatesShuffle", () => {
 
     assert.deepStrictEqual(result, expectedData);
   });
+
+  it("should correcty shuffle an array of length 37 (different entropy)", () => {
+    const data = prepareArrayToShuffle(37);
+    const entropy = Bytes.fill(32, 0xff);
+    const expectedData = [
+      5, 1, 21, 30, 24, 15, 35, 23, 34, 27, 22, 3, 33, 28, 19, 17, 13, 20, 36, 26, 25, 4, 11, 16, 14, 9, 8, 29, 10, 7,
+      31, 6, 18, 0, 32, 2, 12,
+    ];
+
+    const result = fisherYatesShuffle(data, entropy);
+
+    assert.deepStrictEqual(result, expectedData);
+  });
 });
