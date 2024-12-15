@@ -73,7 +73,7 @@ export class DebuggerAdapter {
   }
 
   getRegisters(): BigUint64Array {
-    return this.pvm.getRegisters().asUnsigned;
+    return this.pvm.getRegisters().getAllU64();
   }
 
   setRegisters(registers: Uint8Array) {

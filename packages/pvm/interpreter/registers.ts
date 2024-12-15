@@ -10,7 +10,7 @@ export const tryAsRegisterIndex = (index: number): RegisterIndex =>
 
 export class Registers {
   private asSigned: BigInt64Array;
-  public asUnsigned: BigUint64Array;
+  private asUnsigned: BigUint64Array;
 
   constructor(private readonly bytes = new Uint8Array(NO_OF_REGISTERS << REGISTER_SIZE_SHIFT)) {
     check(bytes.length === NO_OF_REGISTERS << REGISTER_SIZE_SHIFT, "Invalid size of registers array.");
@@ -64,6 +64,10 @@ export class Registers {
 
   setI64(registerIndex: number, value: bigint) {
     this.asSigned[registerIndex] = value;
+  }
+
+  getAllU64() {
+    return this.asUnsigned;
   }
 }
 
