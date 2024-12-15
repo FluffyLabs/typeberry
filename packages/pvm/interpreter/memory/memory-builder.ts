@@ -78,7 +78,7 @@ export class MemoryBuilder {
 
   /**
    * This function can be useful when page map and initial memory data are provided separatelly.
-   * You can use setWriteable/setReadable to create empty pages and then setData to fill them
+   * You can use setWriteablePages/setReadablePages to create empty pages and then setData to fill them
    */
   setData(start: MemoryIndex, data: Uint8Array) {
     this.ensureNotFinalized();
@@ -92,7 +92,7 @@ export class MemoryBuilder {
     }
 
     const startPageIndex = tryAsPageIndex(start - page.start);
-    page.storeFrom(startPageIndex, data);
+    page.setData(startPageIndex, data);
 
     return this;
   }
