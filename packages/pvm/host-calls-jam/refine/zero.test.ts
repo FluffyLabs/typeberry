@@ -20,7 +20,7 @@ describe("HostCalls: Zero", () => {
     await zero.execute(gas, registers);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
   });
 
   it("should fail when page is too low", async () => {
@@ -30,7 +30,7 @@ describe("HostCalls: Zero", () => {
     await zero.execute(gas, registers);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
   });
 
   it("should fail when page is too large", async () => {
@@ -40,7 +40,7 @@ describe("HostCalls: Zero", () => {
     await zero.execute(gas, registers);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
   });
 
   it("should fail when page is too large 2", async () => {
@@ -50,7 +50,7 @@ describe("HostCalls: Zero", () => {
     await zero.execute(gas, registers);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
   });
 
   it("should fail if machine is not known", async () => {
@@ -60,15 +60,15 @@ describe("HostCalls: Zero", () => {
     await zero.execute(gas, registers);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.WHO);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.WHO);
   });
 });
 
 function prepareRegsAndMemory(machineId: MachineId, pageStart: number, pageCount: number) {
   const registers = new Registers();
-  registers.asUnsigned[7] = machineId;
-  registers.asUnsigned[8] = pageStart;
-  registers.asUnsigned[9] = pageCount;
+  registers.setU32(7, machineId);
+  registers.setU32(8, pageStart);
+  registers.setU32(9, pageCount);
 
   const builder = new MemoryBuilder();
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));

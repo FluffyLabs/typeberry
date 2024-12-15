@@ -19,7 +19,7 @@ describe("HostCalls: Expunge", () => {
     await expunge.execute(gas, registers);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
   });
 
   it("should fail if machine unknown", async () => {
@@ -29,13 +29,13 @@ describe("HostCalls: Expunge", () => {
     await expunge.execute(gas, registers);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.WHO);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.WHO);
   });
 });
 
 function prepareRegsAndMemory(machineId: MachineId) {
   const registers = new Registers();
-  registers.asUnsigned[7] = machineId;
+  registers.setU32(7, machineId);
 
   const builder = new MemoryBuilder();
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
