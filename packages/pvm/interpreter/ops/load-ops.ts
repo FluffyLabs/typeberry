@@ -29,6 +29,7 @@ export class LoadOps {
     if (loadResult !== null) {
       this.instructionResult.status = Result.FAULT;
       this.instructionResult.exitParam = address;
+      return;
     }
 
     registerBytes.fill(0, numberLength);
