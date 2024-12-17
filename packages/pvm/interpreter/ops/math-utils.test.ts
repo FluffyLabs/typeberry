@@ -2,7 +2,17 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { MAX_VALUE } from "./math-consts";
-import { addWithOverflowU32, mulLowerUnsignedU32, mulUpperSigned, mulUpperUnsigned, subU32 } from "./math-utils";
+import {
+  addWithOverflowU32,
+  addWithOverflowU64,
+  mulLowerUnsignedU32,
+  mulU64,
+  mulUpperSigned,
+  mulUpperUnsigned,
+  subU32,
+  subU64,
+  unsignedRightShiftBigInt,
+} from "./math-utils";
 
 describe("math-utils", () => {
   describe("addWithOverflow", () => {
@@ -205,6 +215,134 @@ describe("math-utils", () => {
         const result = mulUpperSigned(a, b);
 
         assert.strictEqual(result, expectedResult);
+      });
+    });
+  });
+
+  describe("unsignedRightShiftBigInt", () => {
+    it("0 >>> 5 === 0", () => {
+      const value = 0n;
+      const shift = 5n;
+      const expectedResult = 0n;
+
+      const result = unsignedRightShiftBigInt(value, shift);
+
+      assert.deepStrictEqual(result, expectedResult);
+    });
+
+    it("-5 >>> 0 === 2 ** 64 - 5", () => {
+      const value = -5n;
+      const shift = 0n;
+      const expectedResult = 2n ** 64n - 5n;
+
+      const result = unsignedRightShiftBigInt(value, shift);
+
+      assert.deepStrictEqual(result, expectedResult);
+    });
+
+    it("5 >>> 0 === 5", () => {
+      const value = 5n;
+      const shift = 0n;
+      const expectedResult = 5n;
+
+      const result = unsignedRightShiftBigInt(value, shift);
+
+      assert.deepStrictEqual(result, expectedResult);
+    });
+
+    it("1 >>> 5 === 0", () => {
+      const value = 1n;
+      const shift = 5n;
+      const expectedResult = 0n;
+
+      const result = unsignedRightShiftBigInt(value, shift);
+
+      assert.deepStrictEqual(result, expectedResult);
+    });
+
+    it("0xffff_ffff_ffff_ffff >>> 20 === 0x0000_0fff_ffff_ffff", () => {
+      const value = 0xffff_ffff_ffff_ffffn;
+      const shift = 20n;
+      const expectedResult = 0x0000_0fff_ffff_ffffn;
+
+      const result = unsignedRightShiftBigInt(value, shift);
+
+      assert.deepStrictEqual(result, expectedResult);
+    });
+
+    describe("addWithOverflowU64", () => {
+      it("5 + 5 === 10", () => {
+        const value1 = 5n;
+        const value2 = 5n;
+        const expectedResult = 10n;
+
+        const result = addWithOverflowU64(value1, value2);
+
+        assert.deepStrictEqual(result, expectedResult);
+      });
+
+      it("5 + 2 ** 64 === 5", () => {
+        const value1 = 5n;
+        const value2 = 2n ** 64n;
+        const expectedResult = 5n;
+
+        const result = addWithOverflowU64(value1, value2);
+
+        assert.deepStrictEqual(result, expectedResult);
+      });
+    });
+
+    describe("subU64", () => {
+      it("2 - 5 === 2 ** 64 - 3", () => {
+        const value1 = 5n;
+        const value2 = 2n;
+        const expectedResult = 2n ** 64n - 3n;
+
+        const result = subU64(value1, value2);
+
+        assert.deepStrictEqual(result, expectedResult);
+      });
+
+      it("5 - 2 === 3", () => {
+        const value1 = 2n;
+        const value2 = 5n;
+        const expectedResult = 3n;
+
+        const result = subU64(value1, value2);
+
+        assert.deepStrictEqual(result, expectedResult);
+      });
+    });
+
+    describe("mulU64", () => {
+      it("5 * 5 === 25", () => {
+        const value1 = 5n;
+        const value2 = 5n;
+        const expectedResult = 25n;
+
+        const result = mulU64(value1, value2);
+
+        assert.deepStrictEqual(result, expectedResult);
+      });
+
+      it("2 ** 63 * 2 === 0", () => {
+        const value1 = 2n ** 63n;
+        const value2 = 2n;
+        const expectedResult = 0n;
+
+        const result = mulU64(value1, value2);
+
+        assert.deepStrictEqual(result, expectedResult);
+      });
+
+      it("2 ** 63 * (2 ** 63 + 1) === 2 ** 63 * 2 ** 63 + 2 ** 63 === 2 ** 63", () => {
+        const value1 = 2n ** 63n;
+        const value2 = 2n ** 63n + 1n;
+        const expectedResult = 2n ** 63n;
+
+        const result = mulU64(value1, value2);
+
+        assert.deepStrictEqual(result, expectedResult);
       });
     });
   });

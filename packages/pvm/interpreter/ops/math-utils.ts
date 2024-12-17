@@ -128,8 +128,9 @@ export function mulUpperSigned(a: number, b: number) {
 export function unsignedRightShiftBigInt(value: bigint, shift: bigint): bigint {
   check(shift >= 0, "Shift count must be non-negative");
 
+  const fillBit = value < 0 ? "1" : "0";
   // Convert the BigInt to its binary representation
-  const binaryRepresentation = value.toString(2);
+  const binaryRepresentation = value.toString(2).padStart(64, fillBit);
 
   // If the value is negative, emulate unsigned behavior
   const unsignedRepresentation = value < 0n ? (1n << BigInt(binaryRepresentation.length)) + value : value;
