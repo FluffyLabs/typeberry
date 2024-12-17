@@ -350,7 +350,7 @@ describe("StoreOps", () => {
       const storeOps = new StoreOps(regs, memory, instructionResult);
       const expectedPage = getExpectedPage(
         tryAsMemoryIndex(0),
-        new Uint8Array([1, 2, 0x98, 0xba, 0xdc, 0xfe, 0, 0, 0, 0]),
+        new Uint8Array([1, 2, 0x98, 0xba, 0xdc, 0xfe, 0xff, 0xff, 0xff, 0xff]),
         32,
       );
 

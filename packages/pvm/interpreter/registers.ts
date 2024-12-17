@@ -43,11 +43,11 @@ export class Registers {
   }
 
   setU32(registerIndex: number, value: number) {
-    this.asUnsigned[registerIndex] = BigInt(value);
+    this.asUnsigned[registerIndex] = signExtend32To64(value);
   }
 
   setI32(registerIndex: number, value: number) {
-    this.asSigned[registerIndex] = BigInt(value);
+    this.asSigned[registerIndex] = signExtend32To64(value);
   }
 
   getU64(registerIndex: number) {
