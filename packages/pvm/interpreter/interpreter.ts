@@ -175,52 +175,51 @@ export class Interpreter {
     const parsingargsResult = this.argsDecoder.fillArgs(this.pc, argsResult);
 
     if (parsingargsResult !== null) {
-      this.status = Status.PANIC;
-      return this.status;
-    }
+      this.instructionResult.status = Result.PANIC;
+    } else {
+      this.instructionResult.nextPc = this.pc + argsResult.noOfBytesToSkip;
 
-    this.instructionResult.nextPc = this.pc + argsResult.noOfBytesToSkip;
-
-    switch (argsResult.type) {
-      case ArgumentType.NO_ARGUMENTS:
-        this.noArgsDispatcher.dispatch(currentInstruction);
-        break;
-      case ArgumentType.ONE_IMMEDIATE:
-        this.oneImmDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET:
-        this.oneRegOneImmOneOffsetDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.TWO_REGISTERS:
-        this.twoRegsDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.THREE_REGISTERS:
-        this.threeRegsDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE:
-        this.twoRegsOneImmDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.TWO_REGISTERS_ONE_OFFSET:
-        this.twoRegsOneOffsetDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.ONE_OFFSET:
-        this.oneOffsetDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE:
-        this.oneRegOneImmDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.TWO_IMMEDIATES:
-        this.twoImmsDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.ONE_REGISTER_TWO_IMMEDIATES:
-        this.oneRegTwoImmsDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES:
-        this.twoRegsTwoImmsDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.ONE_REGISTER_ONE_EXTENDED_WIDTH_IMMEDIATE:
-        this.oneRegOneExtImmDispatcher.dispatch(currentInstruction, argsResult);
-        break;
+      switch (argsResult.type) {
+        case ArgumentType.NO_ARGUMENTS:
+          this.noArgsDispatcher.dispatch(currentInstruction);
+          break;
+        case ArgumentType.ONE_IMMEDIATE:
+          this.oneImmDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET:
+          this.oneRegOneImmOneOffsetDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.TWO_REGISTERS:
+          this.twoRegsDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.THREE_REGISTERS:
+          this.threeRegsDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE:
+          this.twoRegsOneImmDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.TWO_REGISTERS_ONE_OFFSET:
+          this.twoRegsOneOffsetDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.ONE_OFFSET:
+          this.oneOffsetDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE:
+          this.oneRegOneImmDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.TWO_IMMEDIATES:
+          this.twoImmsDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.ONE_REGISTER_TWO_IMMEDIATES:
+          this.oneRegTwoImmsDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES:
+          this.twoRegsTwoImmsDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.ONE_REGISTER_ONE_EXTENDED_WIDTH_IMMEDIATE:
+          this.oneRegOneExtImmDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+      }
     }
 
     if (this.instructionResult.status !== null) {
