@@ -172,9 +172,9 @@ export class Interpreter {
     }
     const argsType = instructionArgumentTypeMap[currentInstruction] ?? ArgumentType.NO_ARGUMENTS;
     const argsResult = this.argsDecodingResults[argsType];
-    const parsingargsResult = this.argsDecoder.fillArgs(this.pc, argsResult);
+    const parsingArgsResult = this.argsDecoder.fillArgs(this.pc, argsResult);
 
-    if (parsingargsResult !== null) {
+    if (parsingArgsResult !== null) {
       this.instructionResult.status = Result.PANIC;
     } else {
       this.instructionResult.nextPc = this.pc + argsResult.noOfBytesToSkip;

@@ -64,7 +64,7 @@ export class StoreOps {
   }
 
   storeImmediateU64(address: number, immediateDecoder: ImmediateDecoder) {
-    this.store(address + 4, ZEROS);
+    this.store(addWithOverflowU32(address, 4), ZEROS);
     this.store(address, immediateDecoder.getBytesAsLittleEndian().subarray(0, 4));
   }
 
@@ -101,7 +101,7 @@ export class StoreOps {
     secondImmediateDecoder: ImmediateDecoder,
   ) {
     const address = addWithOverflowU32(this.regs.getU32(registerIndex), firstImmediateDecoder.getUnsigned());
-    this.store(address + 4, ZEROS);
+    this.store(addWithOverflowU32(address, 4), ZEROS);
     this.store(address, secondImmediateDecoder.getBytesAsLittleEndian().subarray(0, 4));
   }
 
