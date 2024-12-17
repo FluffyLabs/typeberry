@@ -165,7 +165,8 @@ export class Interpreter {
      */
     const currentInstruction = this.code[this.pc] ?? Instruction.TRAP;
 
-    const underflow = this.gas.sub(instructionGasMap[currentInstruction] ?? 0);
+    const gasCost = instructionGasMap[currentInstruction];
+    const underflow = this.gas.sub(gasCost ?? instructionGasMap[Instruction.TRAP]);
     if (underflow) {
       this.status = Status.OOG;
       return this.status;
@@ -174,7 +175,7 @@ export class Interpreter {
     const argsResult = this.argsDecodingResults[argsType];
     const parsingArgsResult = this.argsDecoder.fillArgs(this.pc, argsResult);
 
-    if (parsingArgsResult !== null) {
+    if (parsingArgsResult !== null || gasCost === undefined) {
       this.instructionResult.status = Result.PANIC;
     } else {
       this.instructionResult.nextPc = this.pc + argsResult.noOfBytesToSkip;
