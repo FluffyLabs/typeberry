@@ -146,7 +146,7 @@ export class ArgsDecoder {
         result.firstRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
         result.secondRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
         this.nibblesDecoder.setByte(secondByte);
-        result.thirdRegisterIndex = this.nibblesDecoder.getLowNibble();
+        result.thirdRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
         break;
       }
 
@@ -257,7 +257,7 @@ export class ArgsDecoder {
         const firstImmediateBytes = this.code.subarray(firstImmediateStartIndex, firstImmediateEndIndex);
         result.firstImmediateDecoder.setBytes(firstImmediateBytes);
 
-        const secondImmediateLength = nextInstructionDistance - 2 - firstImmediateLength;
+        const secondImmediateLength = Math.min(4, nextInstructionDistance - 2 - firstImmediateLength);
         const secondImmediateStartIndex = firstImmediateEndIndex;
         const secondImmediateEndIndex = secondImmediateStartIndex + secondImmediateLength;
         const secondImmediateBytes = this.code.subarray(secondImmediateStartIndex, secondImmediateEndIndex);

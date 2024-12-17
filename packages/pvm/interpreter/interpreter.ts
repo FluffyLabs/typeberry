@@ -165,12 +165,12 @@ export class Interpreter {
      */
     const currentInstruction = this.code[this.pc] ?? Instruction.TRAP;
 
-    const underflow = this.gas.sub(instructionGasMap[currentInstruction]);
+    const underflow = this.gas.sub(instructionGasMap[currentInstruction] ?? 0);
     if (underflow) {
       this.status = Status.OOG;
       return this.status;
     }
-    const argsType = instructionArgumentTypeMap[currentInstruction];
+    const argsType = instructionArgumentTypeMap[currentInstruction] ?? ArgumentType.NO_ARGUMENTS;
     const argsResult = this.argsDecodingResults[argsType];
     this.argsDecoder.fillArgs(this.pc, argsResult);
     this.instructionResult.nextPc = this.pc + argsResult.noOfBytesToSkip;

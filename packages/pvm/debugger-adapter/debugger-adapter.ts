@@ -1,4 +1,3 @@
-import { type U64, tryAsU64 } from "@typeberry/numbers";
 import { Interpreter, type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
@@ -88,8 +87,8 @@ export class DebuggerAdapter {
     this.pvm.setNextPC(nextPc);
   }
 
-  getGasLeft(): U64 {
-    return tryAsU64(this.pvm.getGas());
+  getGasLeft(): bigint {
+    return BigInt(this.pvm.getGas());
   }
 
   setGasLeft(gas: bigint) {
