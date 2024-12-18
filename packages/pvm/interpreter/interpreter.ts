@@ -164,9 +164,9 @@ export class Interpreter {
      * Reference: https://graypaper.fluffylabs.dev/#/364735a/232f02233002
      */
     const currentInstruction = this.code[this.pc] ?? Instruction.TRAP;
-
-    const gasCost = instructionGasMap[currentInstruction];
-    const underflow = this.gas.sub(gasCost ?? instructionGasMap[Instruction.TRAP]);
+    const isValidInstruction = !!Instruction[currentInstruction];
+    const gasCost = instructionGasMap[currentInstruction] ?? instructionGasMap[Instruction.TRAP];
+    const underflow = this.gas.sub(gasCost);
     if (underflow) {
       this.status = Status.OOG;
       return this.status;
@@ -175,7 +175,7 @@ export class Interpreter {
     const argsResult = this.argsDecodingResults[argsType];
     const parsingArgsResult = this.argsDecoder.fillArgs(this.pc, argsResult);
 
-    if (parsingArgsResult !== null || gasCost === undefined) {
+    if (parsingArgsResult !== null || !isValidInstruction) {
       this.instructionResult.status = Result.PANIC;
     } else {
       this.instructionResult.nextPc = this.pc + argsResult.noOfBytesToSkip;
