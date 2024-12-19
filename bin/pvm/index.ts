@@ -3,10 +3,7 @@ import { Status } from "@typeberry/pvm-interpreter/status";
 
 const pvm = new Interpreter();
 
-const program = new Uint8Array([
-  0, 0, 22, 147, 41, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 147, 255, 255, 255, 255, 147, 93, 10,
-  1, 1, 1,
-]);
+const program = new Uint8Array([0, 0, 13, 137, 57, 10, 10, 10, 137, 11, 134, 143, 154, 118, 118, 205, 1, 1]);
 
 pvm.reset(program, 0, 1000n as Gas);
 pvm.printProgram();
