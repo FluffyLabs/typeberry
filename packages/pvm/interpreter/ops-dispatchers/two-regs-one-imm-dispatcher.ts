@@ -107,7 +107,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SHLO_R_IMM_64:
         this.shiftOps.shiftLogicalRightImmediateU64(
           args.firstRegisterIndex,
-          BigInt(args.immediateDecoder.getUnsigned()),
+          signExtend32To64(args.immediateDecoder.getUnsigned()),
           args.secondRegisterIndex,
         );
         break;
@@ -123,7 +123,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SHLO_R_IMM_ALT_64:
         this.shiftOps.shiftLogicalRightImmediateAlternativeU64(
           args.firstRegisterIndex,
-          BigInt(args.immediateDecoder.getUnsigned()),
+          signExtend32To64(args.immediateDecoder.getUnsigned()),
           args.secondRegisterIndex,
         );
         break;
@@ -163,7 +163,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.OR_IMM:
         this.bitOps.orImmediate(
           args.firstRegisterIndex,
-          BigInt(args.immediateDecoder.getUnsigned()),
+          signExtend32To64(args.immediateDecoder.getUnsigned()),
           args.secondRegisterIndex,
         );
         break;
@@ -171,7 +171,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.AND_IMM:
         this.bitOps.andImmediate(
           args.firstRegisterIndex,
-          BigInt(args.immediateDecoder.getUnsigned()),
+          signExtend32To64(args.immediateDecoder.getUnsigned()),
           args.secondRegisterIndex,
         );
         break;
@@ -179,7 +179,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.XOR_IMM:
         this.bitOps.xorImmediate(
           args.firstRegisterIndex,
-          BigInt(args.immediateDecoder.getUnsigned()),
+          signExtend32To64(args.immediateDecoder.getUnsigned()),
           args.secondRegisterIndex,
         );
         break;
@@ -187,7 +187,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SET_LT_S_IMM:
         this.booleanOps.setLessThanSignedImmediate(
           args.firstRegisterIndex,
-          args.immediateDecoder.getSigned(),
+          signExtend32To64(args.immediateDecoder.getSigned()),
           args.secondRegisterIndex,
         );
         break;
@@ -195,7 +195,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SET_LT_U_IMM:
         this.booleanOps.setLessThanUnsignedImmediate(
           args.firstRegisterIndex,
-          args.immediateDecoder.getUnsigned(),
+          signExtend32To64(args.immediateDecoder.getUnsigned()),
           args.secondRegisterIndex,
         );
         break;
@@ -203,7 +203,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SET_GT_S_IMM:
         this.booleanOps.setGreaterThanSignedImmediate(
           args.firstRegisterIndex,
-          args.immediateDecoder.getSigned(),
+          signExtend32To64(args.immediateDecoder.getSigned()),
           args.secondRegisterIndex,
         );
         break;
@@ -211,7 +211,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SET_GT_U_IMM:
         this.booleanOps.setGreaterThanUnsignedImmediate(
           args.firstRegisterIndex,
-          args.immediateDecoder.getUnsigned(),
+          signExtend32To64(args.immediateDecoder.getUnsigned()),
           args.secondRegisterIndex,
         );
         break;
@@ -219,7 +219,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.CMOV_IZ_IMM:
         this.moveOps.cmovIfZeroImmediate(
           args.firstRegisterIndex,
-          args.immediateDecoder.getUnsigned(),
+          signExtend32To64(args.immediateDecoder.getUnsigned()),
           args.secondRegisterIndex,
         );
         break;
@@ -227,7 +227,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.CMOV_NZ_IMM:
         this.moveOps.cmovIfNotZeroImmediate(
           args.firstRegisterIndex,
-          args.immediateDecoder.getUnsigned(),
+          signExtend32To64(args.immediateDecoder.getUnsigned()),
           args.secondRegisterIndex,
         );
         break;
