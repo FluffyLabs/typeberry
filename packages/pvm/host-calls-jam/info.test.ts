@@ -10,6 +10,7 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { AccountInfo, type Accounts, Info } from "./info";
 import { HostCallResult } from "./results";
+import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 
 class TestAccounts implements Accounts {
   public readonly data = new Map<ServiceId, AccountInfo>();
@@ -34,7 +35,7 @@ function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = tryAsExa
 
   const builder = new MemoryBuilder();
   builder.setWriteablePages(tryAsMemoryIndex(pageStart), tryAsMemoryIndex(pageStart + PAGE_SIZE));
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
+  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
     memory,

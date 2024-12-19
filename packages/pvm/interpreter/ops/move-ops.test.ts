@@ -80,7 +80,7 @@ test("MoveOps", async (t) => {
 
   await t.test("cmovIfZeroImmediate (condition satisfied)", () => {
     const firstValue = 0;
-    const secondValue = 5;
+    const secondValue = 5n;
     const resultValue = secondValue;
     const regs = getRegisters([firstValue]);
     const moveOps = new MoveOps(regs);
@@ -92,7 +92,7 @@ test("MoveOps", async (t) => {
 
   await t.test("cmovIfZeroImmediate (condition not satisfied)", () => {
     const firstValue = 3;
-    const secondValue = 5;
+    const secondValue = 5n;
     const resultValue = 0;
     const regs = getRegisters([firstValue]);
     const moveOps = new MoveOps(regs);
@@ -104,7 +104,7 @@ test("MoveOps", async (t) => {
 
   await t.test("cmovIfNotZeroImmediate (condition satisfied)", () => {
     const firstValue = 3;
-    const secondValue = 5;
+    const secondValue = 5n;
     const resultValue = secondValue;
     const regs = getRegisters([firstValue]);
     const moveOps = new MoveOps(regs);
@@ -116,7 +116,7 @@ test("MoveOps", async (t) => {
 
   await t.test("cmovIfNotZeroImmediate (condition not satisfied)", () => {
     const firstValue = 0;
-    const secondValue = 5;
+    const secondValue = 5n;
     const resultValue = 0;
     const regs = getRegisters([firstValue]);
     const moveOps = new MoveOps(regs);

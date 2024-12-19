@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { MAX_VALUE } from "./math-consts";
+import { MAX_VALUE, MAX_VALUE_U64 } from "./math-consts";
 import {
   addWithOverflowU32,
   addWithOverflowU64,
@@ -115,7 +115,7 @@ describe("math-utils", () => {
       it("should multiply negative and positive numbers", () => {
         const a = -5n;
         const b = 6n;
-        const expectedResult = 0n;
+        const expectedResult = 0xffff_ffff_ffff_ffffn;
 
         const result = mulUpper(a, b);
 
@@ -125,7 +125,7 @@ describe("math-utils", () => {
       it("should multiply positive and negative numbers", () => {
         const a = 5n;
         const b = -6n;
-        const expectedResult = 0n;
+        const expectedResult = 0xffff_ffff_ffff_ffffn;
 
         const result = mulUpper(a, b);
 
@@ -144,34 +144,37 @@ describe("math-utils", () => {
     });
 
     describe("max values", () => {
-      // it("should multiply two positive numbers", () => {
-      //   const a = MAX_VALUE_U64;
-      //   const b = MAX_VALUE_U64;
-      //   const expectedResult = (MAX_VALUE_U64 - 1n) | 0n;
-      //   const result = mulUpper(a, b);
-      //   assert.strictEqual(result, expectedResult);
-      // });
-      //     it("should multiply positive and negative numbers", () => {
-      //       const a = MAX_VALUE_U64;
-      //       const b = -MAX_VALUE_U64;
-      //       const expectedResult = -(MAX_VALUE_U64 - 1n) | 0n;
-      //       const result = mulUpper(a, b);
-      //       assert.strictEqual(result, expectedResult);
-      //     });
-      //     it("should multiply negative and positive numbers", () => {
-      //       const a = -MAX_VALUE_U64;
-      //       const b = MAX_VALUE_U64;
-      //       const expectedResult = -(MAX_VALUE - 1) | 0;
-      //       const result = mulUpper(a, b);
-      //       assert.strictEqual(result, expectedResult);
-      //     });
-      //     it("should multiply two negative numbers", () => {
-      //       const a = -MAX_VALUE_U64;
-      //       const b = -MAX_VALUE_U64;
-      //       const expectedResult = (MAX_VALUE_U64 - 1n) | 0n;
-      //       const result = mulUpper(a, b);
-      //       assert.strictEqual(result, expectedResult);
-      //     });
+      it("should multiply two positive numbers", () => {
+        const a = MAX_VALUE_U64;
+        const b = MAX_VALUE_U64;
+        const expectedResult = 0x4000000000000000n;
+        const result = mulUpper(a, b);
+        assert.strictEqual(result, expectedResult);
+      });
+
+          it("should multiply positive and negative numbers", () => {
+            const a = MAX_VALUE_U64;
+            const b = -MAX_VALUE_U64;
+            const expectedResult = 13835058055282163712n;
+            const result = mulUpper(a, b);
+            assert.strictEqual(result, expectedResult);
+          });
+
+          it("should multiply negative and positive numbers", () => {
+            const a = -MAX_VALUE_U64;
+            const b = MAX_VALUE_U64;
+            const expectedResult = 13835058055282163712n;
+            const result = mulUpper(a, b);
+            assert.strictEqual(result, expectedResult);
+          });
+
+          it("should multiply two negative numbers", () => {
+            const a = -MAX_VALUE_U64;
+            const b = -MAX_VALUE_U64;
+            const expectedResult = 0x4000000000000000n;
+            const result = mulUpper(a, b);
+            assert.strictEqual(result, expectedResult);
+          });
     });
   });
 

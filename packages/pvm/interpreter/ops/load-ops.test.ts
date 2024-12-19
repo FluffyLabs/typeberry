@@ -5,7 +5,7 @@ import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { InstructionResult } from "../instruction-result";
 import { Memory, MemoryBuilder } from "../memory";
 import { PAGE_SIZE } from "../memory/memory-consts";
-import { tryAsMemoryIndex } from "../memory/memory-index";
+import { tryAsMemoryIndex, tryAsSbrkIndex } from "../memory/memory-index";
 import { getStartPageIndex } from "../memory/memory-utils";
 import { Registers } from "../registers";
 import { LoadOps } from "./load-ops";
@@ -53,7 +53,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0xcc]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedValue = 0xffn;
@@ -75,7 +75,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0xcc]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedValue = 0xffn;
@@ -97,7 +97,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0xcc]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedValue = 61183n;
@@ -118,7 +118,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0xcc]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedValue = 61183n;
@@ -140,7 +140,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0x0c]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedValue = 215871231n;
@@ -161,7 +161,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0x0c]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedValue = 215871231n;
@@ -183,7 +183,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -1n;
@@ -205,7 +205,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x08]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedValue = 0x08_99_aa_bb_cc_dd_ee_ffn;
@@ -228,7 +228,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0xcc, 0xff, 0xff, 0xff]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -52n;
@@ -250,7 +250,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0xcc, 0xff, 0xff, 0xff]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -52n;
@@ -273,7 +273,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0xcc, 0xdd, 0xff, 0xff]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -8756n;
@@ -295,7 +295,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0xcc, 0xdd, 0xff, 0xff]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -8756n;
@@ -318,7 +318,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0xcc, 0xdd, 0xff, 0xff]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -8756n;
@@ -340,7 +340,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0xcc, 0xdd, 0xff, 0xff]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -8756n;
@@ -369,7 +369,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0x11, 0xcc, 0xff, 0xff, 0xff]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -52n;
       const expectedUnsignedValue = 18446744073709551564n;
@@ -395,7 +395,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0x11, 0xcc, 0xff, 0xff, 0xff]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -52n;
       const expectedUnsignedValue = 18446744073709551564n;
@@ -422,7 +422,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0x11, 0xcc, 0xdd, 0xff, 0xff]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -8756n;
       const expectedUnsignedValue = 18446744073709542860n;
@@ -448,7 +448,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0x11, 0xcc, 0xdd, 0xff, 0xff]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -8756n;
       const expectedUnsignedValue = 18446744073709542860n;
@@ -475,7 +475,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0x11, 0xcc, 0xdd, 0xff, 0xff]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -8756n;
       const expectedUnsignedValue = 18446744073709542860n;
@@ -501,7 +501,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0x11, 0xcc, 0xdd, 0xff, 0xff]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const expectedSignedValue = -8756n;
       const expectedUnsignedValue = 18446744073709542860n;
@@ -526,7 +526,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0xcc]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
@@ -551,7 +551,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0xcc]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
@@ -577,7 +577,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0xcc]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
@@ -602,7 +602,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0xcc]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
@@ -628,7 +628,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0x0c]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
@@ -653,7 +653,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0x0c]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
@@ -679,7 +679,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x08]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;
@@ -705,7 +705,7 @@ describe("LoadOps", () => {
           tryAsMemoryIndex(4096),
           new Uint8Array([0x11, 0x11, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]),
         )
-        .finalize(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(5 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
       const registers = new Registers();
       const firstRegisterIndex = 0;
       const secondRegisterIndex = 1;

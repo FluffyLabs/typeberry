@@ -7,6 +7,7 @@ import { HostCallResult } from "../results";
 import { Expunge } from "./expunge";
 import { type MachineId, NoMachineError, tryAsMachineId } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
+import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
@@ -38,7 +39,7 @@ function prepareRegsAndMemory(machineId: MachineId) {
   registers.setU32(7, machineId);
 
   const builder = new MemoryBuilder();
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
+  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0))
 
   return {
     registers,

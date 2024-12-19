@@ -4,7 +4,7 @@ import { describe, it } from "node:test";
 import { PageFault } from "./errors";
 import { Memory } from "./memory";
 import { MAX_MEMORY_INDEX, MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "./memory-consts";
-import { tryAsMemoryIndex } from "./memory-index";
+import { tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
 import { ReadablePage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, tryAsPageNumber } from "./pages/page-utils";
@@ -28,8 +28,8 @@ describe("Memory", () => {
       const page = new ReadablePage(pageNumber, bytes);
       const memoryMap = new Map<PageNumber, MemoryPage>();
       memoryMap.set(tryAsPageNumber(0), page);
-      const sbrkIndex = tryAsMemoryIndex(0);
-      const endHeapIndex = tryAsMemoryIndex(MAX_MEMORY_INDEX);
+      const sbrkIndex = tryAsSbrkIndex(0);
+      const endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX);
       const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const lengthToLoad = 4;
       const result = new Uint8Array(lengthToLoad);
@@ -54,8 +54,8 @@ describe("Memory", () => {
       const memoryMap = new Map<PageNumber, MemoryPage>();
       memoryMap.set(tryAsPageNumber(0), firstPage);
       memoryMap.set(tryAsPageNumber(1), secondPage);
-      const sbrkIndex = tryAsMemoryIndex(0);
-      const endHeapIndex = tryAsMemoryIndex(MAX_MEMORY_INDEX);
+      const sbrkIndex = tryAsSbrkIndex(0);
+      const endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX);
       const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const lengthToLoad = 4;
       const result = new Uint8Array(lengthToLoad);
@@ -74,8 +74,8 @@ describe("Memory", () => {
       const page = new ReadablePage(pageNumber, bytes);
       const memoryMap = new Map<PageNumber, MemoryPage>();
       memoryMap.set(tryAsPageNumber(0), page);
-      const sbrkIndex = tryAsMemoryIndex(0);
-      const endHeapIndex = tryAsMemoryIndex(MAX_MEMORY_INDEX);
+      const sbrkIndex = tryAsSbrkIndex(0);
+      const endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX);
       const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const lengthToLoad = 4;
       const result = new Uint8Array(lengthToLoad);
@@ -101,8 +101,8 @@ describe("Memory", () => {
       const memoryMap = new Map<PageNumber, MemoryPage>();
       memoryMap.set(firstPageNumber, firstPage);
       memoryMap.set(secondPageNumber, secondPage);
-      const sbrkIndex = tryAsMemoryIndex(0);
-      const endHeapIndex = tryAsMemoryIndex(MAX_MEMORY_INDEX);
+      const sbrkIndex = tryAsSbrkIndex(0);
+      const endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX);
       const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const lengthToLoad = 4;
       const result = new Uint8Array(lengthToLoad);
@@ -130,8 +130,8 @@ describe("Memory", () => {
       const pageNumber = tryAsPageNumber(0);
       const page = new WriteablePage(pageNumber, new Uint8Array());
       const memoryMap = new Map<PageNumber, MemoryPage>();
-      const sbrkIndex = tryAsMemoryIndex(0);
-      const endHeapIndex = tryAsMemoryIndex(MAX_MEMORY_INDEX);
+      const sbrkIndex = tryAsSbrkIndex(0);
+      const endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX);
       memoryMap.set(pageNumber, page);
       const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const dataToStore = new Uint8Array([1, 2, 3, 4]);
@@ -163,8 +163,8 @@ describe("Memory", () => {
       const firstPage = new WriteablePage(firstPageNumber, new Uint8Array(PAGE_SIZE));
       const secondPage = new WriteablePage(secondPageNumber, new Uint8Array());
       const memoryMap = new Map<PageNumber, MemoryPage>();
-      const sbrkIndex = tryAsMemoryIndex(0);
-      const endHeapIndex = tryAsMemoryIndex(MAX_MEMORY_INDEX);
+      const sbrkIndex = tryAsSbrkIndex(0);
+      const endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX);
       memoryMap.set(firstPageNumber, firstPage);
       memoryMap.set(secondPageNumber, secondPage);
       const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
@@ -198,8 +198,8 @@ describe("Memory", () => {
       const page = new ReadablePage(pageNumber, bytes);
       const memoryMap = new Map<PageNumber, MemoryPage>();
       memoryMap.set(tryAsPageNumber(0), page);
-      const sbrkIndex = tryAsMemoryIndex(0);
-      const endHeapIndex = tryAsMemoryIndex(MAX_MEMORY_INDEX);
+      const sbrkIndex = tryAsSbrkIndex(0);
+      const endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX);
       const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const addressToStore = tryAsMemoryIndex(PAGE_SIZE - 2);
 
@@ -214,8 +214,8 @@ describe("Memory", () => {
       const firstPage = new WriteablePage(firstPageNumber, new Uint8Array(PAGE_SIZE));
       const secondPage = new WriteablePage(secondPageNumber, new Uint8Array(PAGE_SIZE));
       const memoryMap = new Map<PageNumber, MemoryPage>();
-      const sbrkIndex = tryAsMemoryIndex(0);
-      const endHeapIndex = tryAsMemoryIndex(MAX_MEMORY_INDEX);
+      const sbrkIndex = tryAsSbrkIndex(0);
+      const endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX);
       memoryMap.set(firstPageNumber, firstPage);
       memoryMap.set(secondPageNumber, secondPage);
       const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });

@@ -11,6 +11,7 @@ import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { type Accounts, Read } from "./read";
 import { HostCallResult } from "./results";
 import { SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
+import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 
 class TestAccounts implements Accounts {
   public readonly data: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
@@ -65,7 +66,7 @@ function prepareRegsAndMemory(
   if (!skipValue) {
     builder.setWriteablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE));
   }
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
+  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0))
   return {
     registers,
     memory,

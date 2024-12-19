@@ -20,7 +20,7 @@ const getRegisters = (data: number[]) => {
 test("BooleanOps", async (t) => {
   await t.test("setLessThanUnsignedImmediate - true", () => {
     const firstValue = 1;
-    const secondValue = 2;
+    const secondValue = 2n;
     const initialResultRegister = 3;
     const resultValue = 1;
     const regs = getRegisters([firstValue, initialResultRegister]);
@@ -33,7 +33,7 @@ test("BooleanOps", async (t) => {
 
   await t.test("setLessThanUnsignedImmediate - false", () => {
     const firstValue = 3;
-    const secondValue = 2;
+    const secondValue = 2n;
     const initialResultRegister = 3;
     const resultValue = 0;
     const regs = getRegisters([firstValue, initialResultRegister]);
@@ -46,7 +46,7 @@ test("BooleanOps", async (t) => {
 
   await t.test("setGreaterThanUnsignedImmediate - true", () => {
     const firstValue = 3;
-    const secondValue = 2;
+    const secondValue = 2n;
     const initialResultRegister = 3;
     const resultValue = 1;
     const regs = getRegisters([firstValue, initialResultRegister]);
@@ -59,7 +59,7 @@ test("BooleanOps", async (t) => {
 
   await t.test("setGreaterThanUnsignedImmediate - false", () => {
     const firstValue = 1;
-    const secondValue = 2;
+    const secondValue = 2n;
     const initialResultRegister = 3;
     const resultValue = 0;
     const regs = getRegisters([firstValue, initialResultRegister]);
@@ -72,7 +72,7 @@ test("BooleanOps", async (t) => {
 
   await t.test("setLessThanSignedImmediate - true", () => {
     const firstValue = -3;
-    const secondValue = -2;
+    const secondValue = -2n;
     const initialResultRegister = 3;
     const resultValue = 1;
     const regs = new Registers();
@@ -87,7 +87,7 @@ test("BooleanOps", async (t) => {
 
   await t.test("setLessThanSignedImmediate - false", () => {
     const firstValue = -1;
-    const secondValue = -2;
+    const secondValue = -2n;
     const initialResultRegister = 3;
     const resultValue = 0;
     const regs = new Registers();
@@ -102,7 +102,7 @@ test("BooleanOps", async (t) => {
 
   await t.test("setGreaterThanSignedImmediate - true", () => {
     const firstValue = -1;
-    const secondValue = -2;
+    const secondValue = -2n;
     const initialResultRegister = 3;
     const resultValue = 1;
     const regs = new Registers();
@@ -117,7 +117,7 @@ test("BooleanOps", async (t) => {
 
   await t.test("setGreaterThanSignedImmediate - false", () => {
     const firstValue = -3;
-    const secondValue = -2;
+    const secondValue = -2n;
     const initialResultRegister = 3;
     const resultValue = 0;
     const regs = new Registers();

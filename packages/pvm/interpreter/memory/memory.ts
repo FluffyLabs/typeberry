@@ -1,6 +1,6 @@
 import { PageFault } from "./errors";
 import { MAX_MEMORY_INDEX, MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
-import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
+import { type MemoryIndex, SbrkIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
 import { alignToPageSize, getPageNumber, getStartPageIndexFromPageNumber } from "./memory-utils";
 import { WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
@@ -8,8 +8,8 @@ import { type PageNumber, getNextPageNumber, tryAsPageIndex } from "./pages/page
 
 type InitialMemoryState = {
   memory: Map<PageNumber, MemoryPage>;
-  sbrkIndex: MemoryIndex;
-  endHeapIndex: MemoryIndex;
+  sbrkIndex: SbrkIndex;
+  endHeapIndex: SbrkIndex;
 };
 
 export class Memory {
@@ -23,16 +23,16 @@ export class Memory {
   }
 
   constructor(
-    private sbrkIndex = tryAsMemoryIndex(0),
-    private virtualSbrkIndex = tryAsMemoryIndex(0),
-    private endHeapIndex = tryAsMemoryIndex(MAX_MEMORY_INDEX),
+    private sbrkIndex = tryAsSbrkIndex(0),
+    private virtualSbrkIndex = tryAsSbrkIndex(0),
+    private endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX),
     private memory = new Map<PageNumber, MemoryPage>(),
   ) {}
 
   reset() {
-    this.sbrkIndex = tryAsMemoryIndex(0);
-    this.virtualSbrkIndex = tryAsMemoryIndex(0);
-    this.endHeapIndex = tryAsMemoryIndex(MAX_MEMORY_INDEX);
+    this.sbrkIndex = tryAsSbrkIndex(0);
+    this.virtualSbrkIndex = tryAsSbrkIndex(0);
+    this.endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX);
     this.memory = new Map<PageNumber, MemoryPage>(); // TODO [MaSi]: We should keep allocated pages somewhere and reuse it when it is possible
   }
 
@@ -182,7 +182,7 @@ export class Memory {
     return null;
   }
 
-  sbrk(length: number): MemoryIndex {
+  sbrk(length: number): SbrkIndex {
     const currentSbrkIndex = this.sbrkIndex;
     const currentVirtualSbrkIndex = this.virtualSbrkIndex;
 
@@ -191,7 +191,7 @@ export class Memory {
       // OoM but idk how to handle it
     }
 
-    const newVirtualSbrkIndex = tryAsMemoryIndex(this.virtualSbrkIndex + length);
+    const newVirtualSbrkIndex = tryAsSbrkIndex(this.virtualSbrkIndex + length);
 
     // no alllocation needed
     if (newVirtualSbrkIndex <= currentSbrkIndex) {
@@ -200,7 +200,7 @@ export class Memory {
     }
 
     // standard allocation using "Writeable" pages
-    const newSbrkIndex = tryAsMemoryIndex(alignToPageSize(this.sbrkIndex + length));
+    const newSbrkIndex = tryAsSbrkIndex(alignToPageSize(this.sbrkIndex + length));
     const pagesToAllocate = (newSbrkIndex - currentSbrkIndex) / PAGE_SIZE;
 
     for (let i = 0; i < pagesToAllocate; i++) {
@@ -210,7 +210,7 @@ export class Memory {
       this.memory.set(pageNumber, page);
     }
 
-    this.virtualSbrkIndex = tryAsMemoryIndex(currentSbrkIndex + length);
+    this.virtualSbrkIndex = tryAsSbrkIndex(currentSbrkIndex + length);
     this.sbrkIndex = newSbrkIndex;
     return currentSbrkIndex;
   }

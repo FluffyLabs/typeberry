@@ -2,7 +2,7 @@ import { check } from "@typeberry/utils";
 import { FinalizedBuilderModification, IncorrectSbrkIndex, PageNotExist } from "./errors";
 import { Memory } from "./memory";
 import { PAGE_SIZE } from "./memory-consts";
-import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
+import { type MemoryIndex, SbrkIndex, tryAsMemoryIndex } from "./memory-index";
 import { getPageNumber } from "./memory-utils";
 import { ReadablePage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
@@ -97,7 +97,7 @@ export class MemoryBuilder {
     return this;
   }
 
-  finalize(sbrkIndex: MemoryIndex, endHeapIndex: MemoryIndex): Memory {
+  finalize(sbrkIndex: SbrkIndex, endHeapIndex: SbrkIndex): Memory {
     this.ensureNotFinalized();
     const firstPage = getPageNumber(sbrkIndex);
     const lastPage = getPageNumber(endHeapIndex);

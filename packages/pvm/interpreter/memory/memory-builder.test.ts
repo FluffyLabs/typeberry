@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { IncorrectSbrkIndex } from "./errors";
 import { MemoryBuilder } from "./memory-builder";
 import { PAGE_SIZE } from "./memory-consts";
-import { tryAsMemoryIndex } from "./memory-index";
+import { tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
 import { ReadablePage, WriteablePage } from "./pages";
 import { tryAsPageNumber } from "./pages/page-utils";
 
@@ -24,7 +24,7 @@ describe("MemoryBuilder", () => {
       const memory = builder
         .setReadablePages(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(2 * PAGE_SIZE), new Uint8Array())
         .setWriteablePages(tryAsMemoryIndex(2 * PAGE_SIZE), tryAsMemoryIndex(3 * PAGE_SIZE), new Uint8Array())
-        .finalize(tryAsMemoryIndex(3 * PAGE_SIZE), tryAsMemoryIndex(4 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(3 * PAGE_SIZE), tryAsSbrkIndex(4 * PAGE_SIZE));
 
       assert.deepEqual(memory, expectedMemory);
     });
@@ -36,7 +36,7 @@ describe("MemoryBuilder", () => {
         builder
           .setReadablePages(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(2 * PAGE_SIZE), new Uint8Array())
           .setWriteablePages(tryAsMemoryIndex(2 * PAGE_SIZE), tryAsMemoryIndex(3 * PAGE_SIZE), new Uint8Array())
-          .finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(4 * PAGE_SIZE));
+          .finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(4 * PAGE_SIZE));
 
       assert.throws(tryToBuildMemory, new IncorrectSbrkIndex());
     });
@@ -56,7 +56,7 @@ describe("MemoryBuilder", () => {
 
       const memory = builder
         .setReadablePages(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(2 * PAGE_SIZE), new Uint8Array())
-        .finalize(tryAsMemoryIndex(3 * PAGE_SIZE), tryAsMemoryIndex(4 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(3 * PAGE_SIZE), tryAsSbrkIndex(4 * PAGE_SIZE));
 
       assert.deepEqual(memory, expectedMemory);
     });
@@ -74,7 +74,7 @@ describe("MemoryBuilder", () => {
 
       const memory = builder
         .setWriteablePages(tryAsMemoryIndex(2 * PAGE_SIZE), tryAsMemoryIndex(3 * PAGE_SIZE), new Uint8Array())
-        .finalize(tryAsMemoryIndex(3 * PAGE_SIZE), tryAsMemoryIndex(4 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(3 * PAGE_SIZE), tryAsSbrkIndex(4 * PAGE_SIZE));
 
       assert.deepEqual(memory, expectedMemory);
     });
@@ -94,7 +94,7 @@ describe("MemoryBuilder", () => {
       const memory = builder
         .setReadablePages(tryAsMemoryIndex(PAGE_SIZE), tryAsMemoryIndex(2 * PAGE_SIZE), new Uint8Array())
         .setWriteablePages(tryAsMemoryIndex(2 * PAGE_SIZE), tryAsMemoryIndex(3 * PAGE_SIZE), new Uint8Array())
-        .finalize(tryAsMemoryIndex(3 * PAGE_SIZE), tryAsMemoryIndex(4 * PAGE_SIZE));
+        .finalize(tryAsSbrkIndex(3 * PAGE_SIZE), tryAsSbrkIndex(4 * PAGE_SIZE));
 
       assert.deepEqual(memory, expectedMemory);
     });

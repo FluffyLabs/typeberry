@@ -9,6 +9,7 @@ import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { HostCallResult } from "../results";
 import { Import } from "./import";
 import { TestRefineExt } from "./refine-externalities.test";
+import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 
 const gas = gasCounter(tryAsGas(0));
 const SEGMENT_INDEX_REG = 7;
@@ -31,7 +32,7 @@ function prepareRegsAndMemory(
   if (!skipValue) {
     builder.setWriteablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + 2 * PAGE_SIZE));
   }
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
+  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0))
   return {
     registers,
     memory,

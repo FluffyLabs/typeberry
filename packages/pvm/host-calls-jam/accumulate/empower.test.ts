@@ -9,6 +9,7 @@ import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { HostCallResult } from "../results";
 import { Empower } from "./empower";
 import { TestAccumulate } from "./partial-state.test";
+import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
@@ -55,7 +56,7 @@ function prepareRegsAndMemory(
   if (!skipDictionary) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), data.raw);
   }
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
+  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0))
   return {
     registers,
     memory,
