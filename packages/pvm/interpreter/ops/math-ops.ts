@@ -28,7 +28,7 @@ export class MathOps {
     this.regs.setU64(resultIndex, signExtend32To64(addWithOverflowU32(this.regs.getU32(firstIndex), immediateValue)));
   }
 
-  addImmediateU64(firstIndex: number, immediateValue: number, resultIndex: number) {
+  addImmediateU64(firstIndex: number, immediateValue: bigint, resultIndex: number) {
     this.regs.setU64(resultIndex, addWithOverflowU64(this.regs.getU64(firstIndex), BigInt(immediateValue)));
   }
 
@@ -68,7 +68,7 @@ export class MathOps {
     this.regs.setU64(resultIndex, signExtend32To64(mulLowerUnsignedU32(this.regs.getU32(firstIndex), immediateValue)));
   }
 
-  mulImmediateU64(firstIndex: number, immediateValue: number, resultIndex: number) {
+  mulImmediateU64(firstIndex: number, immediateValue: bigint, resultIndex: number) {
     this.regs.setU64(resultIndex, mulU64(this.regs.getU64(firstIndex), BigInt(immediateValue)));
   }
 
@@ -94,7 +94,7 @@ export class MathOps {
     this.regs.setU64(resultIndex, signExtend32To64(subU32(this.regs.getU32(firstIndex), immediateValue)));
   }
 
-  negAddImmediateU64(firstIndex: number, immediateValue: number, resultIndex: number) {
+  negAddImmediateU64(firstIndex: number, immediateValue: bigint, resultIndex: number) {
     this.regs.setU64(resultIndex, subU64(this.regs.getU64(firstIndex), BigInt(immediateValue)));
   }
 
