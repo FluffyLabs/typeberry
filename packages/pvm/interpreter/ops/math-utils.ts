@@ -97,7 +97,7 @@ export function mulU64(a: bigint, b: bigint) {
  * So `0xfffffffe` is returned.
  */
 export function mulUpper(a: bigint, b: bigint) {
-  return (a * b && 0xffff_ffff_ffff_ffffn) >> 64n;
+  return ((a * b) >> 64n) & 0xffff_ffff_ffff_ffffn;
 }
 
 export function unsignedRightShiftBigInt(value: bigint, shift: bigint): bigint {

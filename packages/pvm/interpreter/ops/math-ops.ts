@@ -44,10 +44,7 @@ export class MathOps {
   }
 
   mulUpperUU(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.setU64(
-      resultIndex,
-      signExtend32To64(mulUpper(this.regs.getU64(firstIndex), this.regs.getU64(secondIndex))),
-    );
+    this.regs.setU64(resultIndex, mulUpper(this.regs.getU64(firstIndex), this.regs.getU64(secondIndex)));
   }
 
   mulUpperSS(firstIndex: number, secondIndex: number, resultIndex: number) {
