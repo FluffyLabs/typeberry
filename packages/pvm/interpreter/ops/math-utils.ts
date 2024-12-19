@@ -96,33 +96,8 @@ export function mulU64(a: bigint, b: bigint) {
  *
  * So `0xfffffffe` is returned.
  */
-export function mulUpperUnsigned(a: number, b: number) {
-  const aHigh = a >> 16;
-  const aLow = a & 0xffff;
-  const bHigh = b >> 16;
-  const bLow = b & 0xffff;
-
-  const lowLow = aLow * bLow;
-  const lowHigh = aLow * bHigh;
-  const highLow = aHigh * bLow;
-  const highHigh = aHigh * bHigh;
-  const carry = (lowLow >> 16) + (lowHigh & 0xffff) + (highLow & 0xffff);
-
-  return highHigh + (lowLow >> 16) + (highLow >> 16) + (carry >> 16);
-}
-
-/**
- * Same as [mulUpperUnsigned] but treat the arguments as signed (two-complement) 32-bit numbers and the result alike.
- */
-export function mulUpperSigned(a: number, b: number) {
-  const sign = Math.sign(a) * Math.sign(b);
-  const aAbs = a < 0 ? ~a + 1 : a;
-  const bAbs = b < 0 ? ~b + 1 : b;
-
-  if (sign < 0) {
-    return ~mulUpperUnsigned(aAbs, bAbs) + 1;
-  }
-  return mulUpperUnsigned(aAbs, bAbs);
+export function mulUpper(a: bigint, b: bigint) {
+  return (a * b && 0xffff_ffff_ffff_ffffn) >> 64n;
 }
 
 export function unsignedRightShiftBigInt(value: bigint, shift: bigint): bigint {

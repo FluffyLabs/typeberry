@@ -160,13 +160,17 @@ export class TwoRegsOneImmDispatcher {
         break;
 
       case Instruction.OR_IMM:
-        this.bitOps.orImmediate(args.firstRegisterIndex, args.immediateDecoder.getUnsigned(), args.secondRegisterIndex);
+        this.bitOps.orImmediate(
+          args.firstRegisterIndex,
+          BigInt(args.immediateDecoder.getUnsigned()),
+          args.secondRegisterIndex,
+        );
         break;
 
       case Instruction.AND_IMM:
         this.bitOps.andImmediate(
           args.firstRegisterIndex,
-          args.immediateDecoder.getUnsigned(),
+          BigInt(args.immediateDecoder.getUnsigned()),
           args.secondRegisterIndex,
         );
         break;
@@ -174,7 +178,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.XOR_IMM:
         this.bitOps.xorImmediate(
           args.firstRegisterIndex,
-          args.immediateDecoder.getUnsigned(),
+          BigInt(args.immediateDecoder.getUnsigned()),
           args.secondRegisterIndex,
         );
         break;
