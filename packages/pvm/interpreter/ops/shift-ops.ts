@@ -44,7 +44,7 @@ export class ShiftOps {
   shiftLogicalRightImmediateU64(firstIndex: number, immediateValue: bigint, resultIndex: number) {
     this.regs.setU64(
       resultIndex,
-      unsignedRightShiftBigInt(this.regs.getU64(firstIndex), immediateValue % MAX_SHIFT_U64),
+      unsignedRightShiftBigInt(this.regs.getU64(firstIndex), (0xffn & immediateValue) % MAX_SHIFT_U64),
     );
   }
 
