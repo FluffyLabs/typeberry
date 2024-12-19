@@ -49,11 +49,11 @@ export class ShiftOps {
   }
 
   shiftArithmeticRightImmediateU32(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.setU32(resultIndex, this.regs.getU32(firstIndex) >> (immediateValue % MAX_SHIFT_U32));
+    this.regs.setU32(resultIndex, this.regs.getI32(firstIndex) >> (immediateValue % MAX_SHIFT_U32));
   }
 
   shiftArithmeticRightImmediateU64(firstIndex: number, immediateValue: bigint, resultIndex: number) {
-    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) >> ((0xffn & immediateValue) % MAX_SHIFT_U64));
+    this.regs.setU64(resultIndex, this.regs.getI64(firstIndex) >> ((0xffn & immediateValue) % MAX_SHIFT_U64));
   }
 
   shiftLogicalLeftImmediateAlternativeU32(firstIndex: number, immediateValue: number, resultIndex: number) {
