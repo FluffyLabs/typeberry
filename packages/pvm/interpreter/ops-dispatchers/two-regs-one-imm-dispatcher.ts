@@ -107,7 +107,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SHLO_R_IMM_64:
         this.shiftOps.shiftLogicalRightImmediateU64(
           args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getUnsigned()),
+          BigInt(args.immediateDecoder.getUnsigned()),
           args.secondRegisterIndex,
         );
         break;
@@ -123,7 +123,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SHLO_R_IMM_ALT_64:
         this.shiftOps.shiftLogicalRightImmediateAlternativeU64(
           args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getUnsigned()),
+          BigInt(args.immediateDecoder.getUnsigned()),
           args.secondRegisterIndex,
         );
         break;

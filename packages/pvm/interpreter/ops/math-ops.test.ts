@@ -165,9 +165,9 @@ test("MathOps", async (t) => {
   });
 
   await t.test("mulUpperUUImmediate", () => {
-    const firstValue = 2 ** 30;
-    const secondValue = 2 ** 30;
-    const resultValue = 268435456;
+    const firstValue = 2 ** 60;
+    const secondValue = 2 ** 60;
+    const resultValue = 2 ** 61;
     const regs = getRegisters([firstValue]);
     const mathOps = new MathOps(regs);
 
