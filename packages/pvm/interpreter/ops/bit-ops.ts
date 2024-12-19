@@ -1,4 +1,4 @@
-import type { Registers } from "../registers";
+import { type Registers, signExtend32To64 } from "../registers";
 
 export class BitOps {
   constructor(private regs: Registers) {}
@@ -8,7 +8,7 @@ export class BitOps {
   }
 
   orImmediate(firstIndex: number, immediateValue: bigint, resultIndex: number) {
-    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) | immediateValue);
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) | signExtend32To64(immediateValue));
   }
 
   and(firstIndex: number, secondIndex: number, resultIndex: number) {
@@ -16,7 +16,7 @@ export class BitOps {
   }
 
   andImmediate(firstIndex: number, immediateValue: bigint, resultIndex: number) {
-    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) & immediateValue);
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) & signExtend32To64(immediateValue));
   }
 
   xor(firstIndex: number, secondIndex: number, resultIndex: number) {
@@ -24,6 +24,6 @@ export class BitOps {
   }
 
   xorImmediate(firstIndex: number, immediateValue: bigint, resultIndex: number) {
-    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) ^ immediateValue);
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) ^ signExtend32To64(immediateValue));
   }
 }
