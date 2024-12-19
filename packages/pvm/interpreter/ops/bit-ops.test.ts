@@ -33,7 +33,7 @@ test("BitOps", async (t) => {
 
   await t.test("orImmediate", () => {
     const firstValue = 0b01;
-    const secondValue = 0b10;
+    const secondValue = 0b10n;
     const resultValue = 0b11;
     const regs = getRegisters([firstValue]);
     const bitOps = new BitOps(regs);
@@ -57,7 +57,7 @@ test("BitOps", async (t) => {
 
   await t.test("andImmediate", () => {
     const firstValue = 0b101;
-    const secondValue = 0b011;
+    const secondValue = 0b011n;
     const resultValue = 0b001;
     const regs = getRegisters([firstValue]);
     const bitOps = new BitOps(regs);
@@ -81,7 +81,7 @@ test("BitOps", async (t) => {
 
   await t.test("xorImmediate", () => {
     const firstValue = 0b101;
-    const secondValue = 0b110;
+    const secondValue = 0b110n;
     const resultValue = 0b011;
     const regs = getRegisters([firstValue]);
     const bitOps = new BitOps(regs);
