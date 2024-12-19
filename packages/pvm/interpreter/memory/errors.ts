@@ -36,3 +36,8 @@ export class ChunkNotFound extends Error {
     super("Chunk does not exist or is too short");
   }
 }
+export class OutOfMemory extends Error {
+  constructor() {
+    super("Out of memory");
+  }
+}

@@ -1,8 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { InstructionResult } from "../instruction-result";
 import { Memory, MemoryBuilder } from "../memory";
 import { MAX_MEMORY_INDEX, PAGE_SIZE } from "../memory/memory-consts";
-import { tryAsMemoryIndex, tryAsSbrkIndex } from "../memory/memory-index";
+import { tryAsSbrkIndex } from "../memory/memory-index";
 import { Registers } from "../registers";
 import { MemoryOps } from "./memory-ops";
 
@@ -10,7 +11,8 @@ describe("MemoryOps", () => {
   it("should allocate one memory page", () => {
     const regs = new Registers();
     const memory = new Memory();
-    const memoryOps = new MemoryOps(regs, memory);
+    const instructionResult = new InstructionResult();
+    const memoryOps = new MemoryOps(regs, memory, instructionResult);
     const resultIndex = 1;
     const lengthIndex = 0;
     const length = PAGE_SIZE;
@@ -27,7 +29,8 @@ describe("MemoryOps", () => {
   it("should allocate two memory pages", () => {
     const regs = new Registers();
     const memory = new Memory();
-    const memoryOps = new MemoryOps(regs, memory);
+    const instructionResult = new InstructionResult();
+    const memoryOps = new MemoryOps(regs, memory, instructionResult);
     const resultIndex = 1;
     const lengthIndex = 0;
     const length = 2 * PAGE_SIZE;
@@ -44,7 +47,8 @@ describe("MemoryOps", () => {
   it("should allocate two memory pages one by one", () => {
     const regs = new Registers();
     const memory = new Memory();
-    const memoryOps = new MemoryOps(regs, memory);
+    const instructionResult = new InstructionResult();
+    const memoryOps = new MemoryOps(regs, memory, instructionResult);
     const resultIndex = 1;
     const lengthIndex = 0;
     const length = PAGE_SIZE;

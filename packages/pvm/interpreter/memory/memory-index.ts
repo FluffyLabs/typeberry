@@ -1,6 +1,6 @@
 import { type Opaque, ensure } from "@typeberry/utils";
 
-import { MAX_MEMORY_INDEX, PAGE_SIZE } from "./memory-consts";
+import { MAX_MEMORY_INDEX } from "./memory-consts";
 
 export type MemoryIndex = Opaque<number, "memory index">;
 

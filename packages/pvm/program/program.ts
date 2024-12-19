@@ -1,5 +1,5 @@
 import { type Memory, MemoryBuilder } from "@typeberry/pvm-interpreter/memory";
-import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
 
@@ -22,8 +22,8 @@ export class Program {
       memoryBuilder.setWriteablePages(startIndex, endIndex, data ?? new Uint8Array());
     }
 
-    const heapStart = tryAsMemoryIndex(rawMemory.sbrkIndex);
-    const heapEnd = tryAsMemoryIndex(rawMemory.heapEnd);
+    const heapStart = tryAsSbrkIndex(rawMemory.sbrkIndex);
+    const heapEnd = tryAsSbrkIndex(rawMemory.heapEnd);
     const memory = memoryBuilder.finalize(heapStart, heapEnd);
 
     return new Program(code, regs, memory);

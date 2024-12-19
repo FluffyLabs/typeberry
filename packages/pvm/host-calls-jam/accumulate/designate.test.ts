@@ -15,10 +15,10 @@ import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
+import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { HostCallResult } from "../results";
 import { Designate } from "./designate";
 import { TestAccumulate } from "./partial-state.test";
-import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
@@ -52,7 +52,7 @@ function prepareRegsAndMemory(
   if (!skipValidators) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), data.raw);
   }
-  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0))
+  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
     memory,

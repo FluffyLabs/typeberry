@@ -1,5 +1,5 @@
 import { PAGE_SIZE, PAGE_SIZE_SHIFT } from "./memory-consts";
-import { type MemoryIndex, SbrkIndex, tryAsMemoryIndex } from "./memory-index";
+import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex } from "./memory-index";
 import { type PageNumber, tryAsPageNumber } from "./pages/page-utils";
 
 export function alignToPageSize(length: number) {

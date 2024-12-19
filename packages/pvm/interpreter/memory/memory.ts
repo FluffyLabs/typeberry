@@ -1,6 +1,6 @@
-import { PageFault } from "./errors";
+import { OutOfMemory, PageFault } from "./errors";
 import { MAX_MEMORY_INDEX, MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
-import { type MemoryIndex, SbrkIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
+import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
 import { alignToPageSize, getPageNumber, getStartPageIndexFromPageNumber } from "./memory-utils";
 import { WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
@@ -186,9 +186,9 @@ export class Memory {
     const currentSbrkIndex = this.sbrkIndex;
     const currentVirtualSbrkIndex = this.virtualSbrkIndex;
 
-    // new index is bigger than 2 ** 32 or endHeapIndex
-    if (MAX_MEMORY_INDEX - length >= currentVirtualSbrkIndex || currentVirtualSbrkIndex + length >= this.endHeapIndex) {
-      // OoM but idk how to handle it
+    // new sbrk index is bigger than 2 ** 32 or endHeapIndex
+    if (MAX_MEMORY_INDEX < currentVirtualSbrkIndex + length || currentVirtualSbrkIndex + length >= this.endHeapIndex) {
+      throw new OutOfMemory();
     }
 
     const newVirtualSbrkIndex = tryAsSbrkIndex(this.virtualSbrkIndex + length);

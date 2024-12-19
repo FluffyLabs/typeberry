@@ -2,7 +2,7 @@ import { check } from "@typeberry/utils";
 import { FinalizedBuilderModification, IncorrectSbrkIndex, PageNotExist } from "./errors";
 import { Memory } from "./memory";
 import { PAGE_SIZE } from "./memory-consts";
-import { type MemoryIndex, SbrkIndex, tryAsMemoryIndex } from "./memory-index";
+import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex } from "./memory-index";
 import { getPageNumber } from "./memory-utils";
 import { ReadablePage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";

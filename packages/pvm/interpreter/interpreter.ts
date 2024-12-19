@@ -88,7 +88,7 @@ export class Interpreter {
     const noArgsOps = new NoArgsOps(this.instructionResult);
     const dynamicJumpOps = new DynamicJumpOps(this.registers, this.jumpTable, this.instructionResult, this.basicBlocks);
     const hostCallOps = new HostCallOps(this.instructionResult);
-    const memoryOps = new MemoryOps(this.registers, this.memory);
+    const memoryOps = new MemoryOps(this.registers, this.memory, this.instructionResult);
 
     this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
     this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(

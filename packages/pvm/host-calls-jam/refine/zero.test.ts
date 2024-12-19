@@ -2,13 +2,13 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { tryAsU32 } from "@typeberry/numbers";
-import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
+import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
+import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { OK, Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { type MachineId, NoMachineError, tryAsMachineId } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
 import { Zero } from "./zero";
-import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
@@ -72,7 +72,7 @@ function prepareRegsAndMemory(machineId: MachineId, pageStart: number, pageCount
   registers.setU32(9, pageCount);
 
   const builder = new MemoryBuilder();
-  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0))
+  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
 
   return {
     registers,
