@@ -71,8 +71,8 @@ export class ClientHandler
   onClose() {}
 
   sendTicket(sender: StreamSender, epochIndex: Epoch, ticket: SignedTicket) {
-    const ticketDistribution = new TicketDistributionRequest(epochIndex, ticket);
-    sender.send(Encoder.encodeObject(TicketDistributionRequest.Codec, ticketDistribution));
+    const request = new TicketDistributionRequest(epochIndex, ticket);
+    sender.send(Encoder.encodeObject(TicketDistributionRequest.Codec, request));
     sender.close();
   }
 }
