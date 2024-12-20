@@ -4,7 +4,7 @@ import { Interpreter } from "@typeberry/pvm-interpreter";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder } from "@typeberry/pvm-interpreter/memory";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
-import { type MemoryIndex, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { type MemoryIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { getPageNumber, getStartPageIndex } from "@typeberry/pvm-interpreter/memory/memory-utils";
 import type { PageNumber } from "@typeberry/pvm-interpreter/memory/pages/page-utils";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
@@ -109,7 +109,7 @@ export async function runPvmTest(testContent: PvmTest) {
    */
   const HEAP_START_PAGE = 16;
   const HEAP_END_PAGE = 32;
-  const memory = memoryBuilder.finalize(tryAsMemoryIndex(HEAP_START_PAGE), tryAsMemoryIndex(HEAP_END_PAGE));
+  const memory = memoryBuilder.finalize(tryAsSbrkIndex(HEAP_START_PAGE), tryAsSbrkIndex(HEAP_END_PAGE));
   const regs = new Registers();
   regs.copyFrom(testContent["initial-regs"]);
 
