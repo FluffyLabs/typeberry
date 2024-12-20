@@ -84,20 +84,41 @@ export function mulU64(a: bigint, b: bigint) {
 }
 
 /**
- * Multiply two unsigned 32-bit numbers and take the upper 32-bits of the result.
+ * Multiply two unsigned 64-bit numbers and take the upper 64-bits of the result.
  *  
  * The result of multiplication is a 64-bits number and we are only interested in the part that lands in the upper 32-bits.
  * For example if we multiply `0xffffffff * 0xffffffff`, we get:
  
- * |   32-bits  |   32-bits  |
- * +------------+------------+
- * |    upper   |    lower   |
- * | 0xfffffffe | 0x00000001 |
+ * |       64-bits      |       64-bits      |
+ * +--------------------+--------------------+
+ * |        upper       |        lower       |
+ * | 0xfffffffffffffffe | 0x0000000000000001 |
  *
- * So `0xfffffffe` is returned.
+ * So `0xfffffffffffffffe` is returned.
  */
 export function mulUpper(a: bigint, b: bigint) {
   return ((a * b) >> 64n) & 0xffff_ffff_ffff_ffffn;
+}
+
+export function mulUpperUU(a: bigint, b: bigint) {
+  const aUnsigned = a & 0xffff_ffff_ffff_ffffn;
+  const bUnsigned = b & 0xffff_ffff_ffff_ffffn;
+  return ((aUnsigned * bUnsigned) >> 64n) & 0xffff_ffff_ffff_ffffn;
+}
+
+export function mulUpperSU(a: bigint, b: bigint) {
+  const bUnsigned = b & 0xffff_ffff_ffff_ffffn;
+  const signedResult = (a * bUnsigned) >> 64n;
+  const resultLimitedTo64Bits = signedResult & 0xffff_ffff_ffff_ffffn;
+  const resultIsNegative = signedResult < 0;
+  return resultIsNegative ? -resultLimitedTo64Bits : resultLimitedTo64Bits;
+}
+
+export function mulUpperSS(a: bigint, b: bigint) {
+  const signedResult = (a * b) >> 64n;
+  const resultLimitedTo64Bits = signedResult & 0xffff_ffff_ffff_ffffn;
+  const resultIsNegative = signedResult < 0;
+  return resultIsNegative ? -resultLimitedTo64Bits : resultLimitedTo64Bits;
 }
 
 export function unsignedRightShiftBigInt(value: bigint, shift: bigint): bigint {
