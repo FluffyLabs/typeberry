@@ -46,6 +46,7 @@ import { ProgramDecoder } from "./program-decoder/program-decoder";
 import { Registers } from "./registers";
 import { Result } from "./result";
 import { Status } from "./status";
+import { Fault } from "@typeberry/block/disputes";
 
 export class Interpreter {
   private registers = new Registers();

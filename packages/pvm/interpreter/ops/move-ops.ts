@@ -16,11 +16,15 @@ export class MoveOps {
   }
 
   cmovIfZero(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.cmovIfZeroImmediate(firstIndex, this.regs.getU64(secondIndex), resultIndex);
+    if (this.regs.getU64(firstIndex) === 0n) {
+      this.regs.setU64(resultIndex, this.regs.getU64(secondIndex));
+    }
   }
 
   cmovIfNotZero(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.cmovIfNotZeroImmediate(firstIndex, this.regs.getU64(secondIndex), resultIndex);
+    if (this.regs.getU64(firstIndex) !== 0n) {
+      this.regs.setU64(resultIndex, this.regs.getU64(secondIndex));
+    }
   }
 
   moveRegister(firstIndex: number, resultIndex: number) {

@@ -13,11 +13,11 @@ export class BooleanOps {
   }
 
   setLessThanSigned(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.setLessThanSignedImmediate(secondIndex, this.regs.getI64(firstIndex), resultIndex);
+    this.regs.setU64(resultIndex, this.regs.getI64(secondIndex) < this.regs.getI64(firstIndex) ? 1n : 0n);
   }
 
   setLessThanUnsigned(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.setLessThanUnsignedImmediate(secondIndex, this.regs.getU64(firstIndex), resultIndex);
+    this.regs.setU64(resultIndex, this.regs.getU64(secondIndex) < this.regs.getU64(firstIndex) ? 1n : 0n);
   }
 
   setGreaterThanSignedImmediate(firstIndex: number, immediateValue: bigint, resultIndex: number) {

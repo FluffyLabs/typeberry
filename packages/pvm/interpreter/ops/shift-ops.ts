@@ -6,27 +6,30 @@ export class ShiftOps {
   constructor(private regs: Registers) {}
 
   shiftLogicalLeftU32(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.shiftLogicalLeftImmediateAlternativeU32(firstIndex, this.regs.getU32(secondIndex), resultIndex);
+    this.regs.setU32(resultIndex, this.regs.getU32(secondIndex) << (this.regs.getU32(firstIndex) % MAX_SHIFT_U32));
   }
 
   shiftLogicalLeftU64(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.shiftLogicalLeftImmediateAlternativeU64(firstIndex, this.regs.getU64(secondIndex), resultIndex);
+    this.regs.setU64(resultIndex, this.regs.getU64(secondIndex) << ((0xffn & this.regs.getU64(firstIndex)) % MAX_SHIFT_U64));
   }
 
   shiftLogicalRightU32(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.shiftLogicalRightImmediateAlternativeU32(firstIndex, this.regs.getU32(secondIndex), resultIndex);
+    this.regs.setU32(resultIndex, this.regs.getU32(secondIndex) >>> (this.regs.getU32(firstIndex) % MAX_SHIFT_U32));
   }
 
   shiftLogicalRightU64(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.shiftLogicalRightImmediateAlternativeU64(firstIndex, this.regs.getU64(secondIndex), resultIndex);
+    this.regs.setU64(
+      resultIndex,
+      unsignedRightShiftBigInt(this.regs.getU64(secondIndex), (0xffn & this.regs.getU64(firstIndex)) % MAX_SHIFT_U64),
+    );
   }
 
   shiftArithmeticRightU32(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.shiftArithmeticRightImmediateAlternativeU32(firstIndex, this.regs.getI32(secondIndex), resultIndex);
+    this.regs.setI32(resultIndex, this.regs.getI32(secondIndex) >> (this.regs.getU32(firstIndex) % MAX_SHIFT_U32));
   }
 
   shiftArithmeticRightU64(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.shiftArithmeticRightImmediateAlternativeU64(firstIndex, this.regs.getI64(secondIndex), resultIndex);
+    this.regs.setI64(resultIndex, this.regs.getI64(secondIndex) >> ((0xffn & this.regs.getU64(firstIndex)) % MAX_SHIFT_U64));
   }
 
   shiftLogicalLeftImmediateU32(firstIndex: number, immediateValue: number, resultIndex: number) {

@@ -4,7 +4,7 @@ export class BitOps {
   constructor(private regs: Registers) {}
 
   or(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.orImmediate(firstIndex, this.regs.getU64(secondIndex), resultIndex);
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) | this.regs.getU64(secondIndex));
   }
 
   orImmediate(firstIndex: number, immediateValue: bigint, resultIndex: number) {
@@ -12,7 +12,7 @@ export class BitOps {
   }
 
   and(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.andImmediate(firstIndex, this.regs.getU64(secondIndex), resultIndex);
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) & this.regs.getU64(secondIndex));
   }
 
   andImmediate(firstIndex: number, immediateValue: bigint, resultIndex: number) {
@@ -20,7 +20,7 @@ export class BitOps {
   }
 
   xor(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.xorImmediate(firstIndex, this.regs.getU64(secondIndex), resultIndex);
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) ^ this.regs.getU64(secondIndex));
   }
 
   xorImmediate(firstIndex: number, immediateValue: bigint, resultIndex: number) {

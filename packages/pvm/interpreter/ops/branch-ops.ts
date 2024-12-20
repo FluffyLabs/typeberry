@@ -36,7 +36,7 @@ export class BranchOps {
   }
 
   branchEq(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchEqImmediate(firstIndex, this.regs.getU64(secondIndex), nextPc);
+    this.branch(nextPc, this.regs.getU64(firstIndex) === this.regs.getU64(secondIndex));
   }
 
   branchNeImmediate(registerIndex: number, immediate: bigint, nextPc: number) {
@@ -44,7 +44,7 @@ export class BranchOps {
   }
 
   branchNe(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchNeImmediate(firstIndex, this.regs.getU64(secondIndex), nextPc);
+    this.branch(nextPc, this.regs.getU64(firstIndex) !== this.regs.getU64(secondIndex));
   }
 
   branchLtUnsignedImmediate(registerIndex: number, immediate: bigint, nextPc: number) {
@@ -52,7 +52,7 @@ export class BranchOps {
   }
 
   branchLtUnsigned(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchLtUnsignedImmediate(firstIndex, this.regs.getU64(secondIndex), nextPc);
+    this.branch(nextPc, this.regs.getU64(firstIndex) < this.regs.getU64(secondIndex));
   }
 
   branchLeUnsignedImmediate(registerIndex: number, immediate: bigint, nextPc: number) {
@@ -68,7 +68,7 @@ export class BranchOps {
   }
 
   branchGeUnsigned(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchGeUnsignedImmediate(firstIndex, this.regs.getU64(secondIndex), nextPc);
+    this.branch(nextPc, this.regs.getU64(firstIndex) >= this.regs.getU64(secondIndex));
   }
 
   branchLtSignedImmediate(registerIndex: number, immediate: bigint, nextPc: number) {
@@ -76,7 +76,7 @@ export class BranchOps {
   }
 
   branchLtSigned(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchLtSignedImmediate(firstIndex, this.regs.getI64(secondIndex), nextPc);
+    this.branch(nextPc, this.regs.getI64(firstIndex) < this.regs.getI64(secondIndex));
   }
 
   branchLeSignedImmediate(registerIndex: number, immediate: bigint, nextPc: number) {
@@ -92,6 +92,6 @@ export class BranchOps {
   }
 
   branchGeSigned(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchGeSignedImmediate(firstIndex, this.regs.getI64(secondIndex), nextPc);
+    this.branch(nextPc, this.regs.getI64(firstIndex) >= this.regs.getI64(secondIndex));
   }
 }
