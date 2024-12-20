@@ -5,7 +5,9 @@ import {
   addWithOverflowU64,
   mulLowerUnsignedU32,
   mulU64,
-  mulUpper,
+  mulUpperSS,
+  mulUpperSU,
+  mulUpperUU,
   subU32,
   subU64,
 } from "./math-utils";
@@ -44,21 +46,15 @@ export class MathOps {
   }
 
   mulUpperUU(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.setU64(resultIndex, mulUpper(this.regs.getU64(firstIndex), this.regs.getU64(secondIndex)));
+    this.regs.setU64(resultIndex, mulUpperUU(this.regs.getU64(firstIndex), this.regs.getU64(secondIndex)));
   }
 
   mulUpperSS(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.setI64(
-      resultIndex,
-      signExtend32To64(mulUpper(this.regs.getI64(firstIndex), this.regs.getI64(secondIndex))),
-    );
+    this.regs.setI64(resultIndex, mulUpperSS(this.regs.getI64(firstIndex), this.regs.getI64(secondIndex)));
   }
 
   mulUpperSU(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.setI64(
-      resultIndex,
-      signExtend32To64(mulUpper(this.regs.getI64(firstIndex), this.regs.getU64(secondIndex))),
-    );
+    this.regs.setI64(resultIndex, mulUpperSU(this.regs.getI64(firstIndex), this.regs.getU64(secondIndex)));
   }
 
   mulImmediateU32(firstIndex: number, immediateValue: number, resultIndex: number) {
@@ -66,15 +62,15 @@ export class MathOps {
   }
 
   mulImmediateU64(firstIndex: number, immediateValue: bigint, resultIndex: number) {
-    this.regs.setU64(resultIndex, mulU64(this.regs.getU64(firstIndex), BigInt(immediateValue)));
+    this.regs.setU64(resultIndex, mulU64(this.regs.getU64(firstIndex), signExtend32To64(immediateValue)));
   }
 
   mulUpperSSImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.setI64(resultIndex, signExtend32To64(mulUpper(this.regs.getI64(firstIndex), BigInt(immediateValue))));
+    this.regs.setI64(resultIndex, mulUpperSS(this.regs.getI64(firstIndex), signExtend32To64(immediateValue)));
   }
 
   mulUpperUUImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.setU64(resultIndex, signExtend32To64(mulUpper(this.regs.getU64(firstIndex), BigInt(immediateValue))));
+    this.regs.setU64(resultIndex, mulUpperUU(this.regs.getU64(firstIndex), signExtend32To64(immediateValue)));
   }
 
   subU32(firstIndex: number, secondIndex: number, resultIndex: number) {

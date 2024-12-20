@@ -100,6 +100,17 @@ export function mulUpper(a: bigint, b: bigint) {
   return ((a * b) >> 64n) & 0xffff_ffff_ffff_ffffn;
 }
 
+function interpretAsSigned(value: bigint) {
+  const unsignedLimit = 1n << 64n;
+  const signedLimit = 1n << 63n;
+
+  if (value >= signedLimit) {
+    return value - unsignedLimit;
+  }
+
+  return value;
+}
+
 export function mulUpperUU(a: bigint, b: bigint) {
   const aUnsigned = a & 0xffff_ffff_ffff_ffffn;
   const bUnsigned = b & 0xffff_ffff_ffff_ffffn;
@@ -110,15 +121,13 @@ export function mulUpperSU(a: bigint, b: bigint) {
   const bUnsigned = b & 0xffff_ffff_ffff_ffffn;
   const signedResult = (a * bUnsigned) >> 64n;
   const resultLimitedTo64Bits = signedResult & 0xffff_ffff_ffff_ffffn;
-  const resultIsNegative = signedResult < 0;
-  return resultIsNegative ? -resultLimitedTo64Bits : resultLimitedTo64Bits;
+  return interpretAsSigned(resultLimitedTo64Bits);
 }
 
 export function mulUpperSS(a: bigint, b: bigint) {
   const signedResult = (a * b) >> 64n;
   const resultLimitedTo64Bits = signedResult & 0xffff_ffff_ffff_ffffn;
-  const resultIsNegative = signedResult < 0;
-  return resultIsNegative ? -resultLimitedTo64Bits : resultLimitedTo64Bits;
+  return interpretAsSigned(resultLimitedTo64Bits);
 }
 
 export function unsignedRightShiftBigInt(value: bigint, shift: bigint): bigint {

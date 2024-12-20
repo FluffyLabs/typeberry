@@ -11,7 +11,7 @@
   },
   "scripts": {
     "start": "ts-node ./bin.ts",
-    "test": "node --test --require ts-node/register $(find . -type f -name 'math-ops.test.ts' | tr '\\n' ' ')",
+    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
     "build": "npm run build -w @typeberry/builder -- --environment PACKAGE_NAME:@typeberry/pvm-debugger-adapter,PACKAGE_OUT:pvm",
     "preobfuscate": "npm run build",
     "obfuscate": "npx javascript-obfuscator ../../../dist/pvm --output ../../../dist/pvm-obfuscated --compact true --control-flow-flattening true && npm run cp-package-json && npm run cp-types",
