@@ -1,3 +1,4 @@
+import { type Epoch, tryAsEpoch } from "@typeberry/block";
 import { SignedTicket } from "@typeberry/block/tickets";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
@@ -18,7 +19,10 @@ export const STREAM_KIND_PROXY_TO_ALL = 132 as StreamKind;
 
 export class TicketDistributionRequest extends WithDebug {
   static Codec = codec.Class(TicketDistributionRequest, {
-    epochIndex: codec.u32,
+    epochIndex: codec.u32.convert<Epoch>(
+      (i) => i as U32,
+      (i) => tryAsEpoch(i),
+    ),
     ticket: SignedTicket.Codec,
   });
 
@@ -27,7 +31,7 @@ export class TicketDistributionRequest extends WithDebug {
   }
 
   constructor(
-    public readonly epochIndex: U32,
+    public readonly epochIndex: Epoch,
     public readonly ticket: SignedTicket,
   ) {
     super();
@@ -41,7 +45,7 @@ export class ServerHandler
 {
   constructor(
     public readonly kind: typeof STREAM_KIND_GENERATOR_TO_PROXY | typeof STREAM_KIND_PROXY_TO_ALL,
-    private readonly onTicketReceived: (epochIndex: U32, ticket: SignedTicket) => void,
+    private readonly onTicketReceived: (epochIndex: Epoch, ticket: SignedTicket) => void,
   ) {}
 
   onStreamMessage(sender: StreamSender, message: BytesBlob): void {
@@ -66,7 +70,7 @@ export class ClientHandler
 
   onClose() {}
 
-  sendTicket(sender: StreamSender, epochIndex: U32, ticket: SignedTicket) {
+  sendTicket(sender: StreamSender, epochIndex: Epoch, ticket: SignedTicket) {
     const ticketDistribution = new TicketDistributionRequest(epochIndex, ticket);
     sender.send(Encoder.encodeObject(TicketDistributionRequest.Codec, ticketDistribution));
     sender.close();
