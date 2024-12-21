@@ -1,3 +1,4 @@
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { type Registers, signExtend32To64 } from "../registers";
 import { MIN_VALUE } from "./math-consts";
 import {
@@ -26,12 +27,15 @@ export class MathOps {
     this.regs.setU64(resultIndex, addWithOverflowU64(this.regs.getU64(firstIndex), this.regs.getU64(secondIndex)));
   }
 
-  addImmediateU32(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.setU64(resultIndex, signExtend32To64(addWithOverflowU32(this.regs.getU32(firstIndex), immediateValue)));
+  addImmediateU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(
+      resultIndex,
+      signExtend32To64(addWithOverflowU32(this.regs.getU32(firstIndex), immediate.getU32())),
+    );
   }
 
-  addImmediateU64(firstIndex: number, immediateValue: bigint, resultIndex: number) {
-    this.regs.setU64(resultIndex, addWithOverflowU64(this.regs.getU64(firstIndex), BigInt(immediateValue)));
+  addImmediateU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, addWithOverflowU64(this.regs.getU64(firstIndex), immediate.getU64()));
   }
 
   mulU32(firstIndex: number, secondIndex: number, resultIndex: number) {
@@ -57,20 +61,23 @@ export class MathOps {
     this.regs.setI64(resultIndex, mulUpperSU(this.regs.getI64(firstIndex), this.regs.getU64(secondIndex)));
   }
 
-  mulImmediateU32(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.setU64(resultIndex, signExtend32To64(mulLowerUnsignedU32(this.regs.getU32(firstIndex), immediateValue)));
+  mulImmediateU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(
+      resultIndex,
+      signExtend32To64(mulLowerUnsignedU32(this.regs.getU32(firstIndex), immediate.getU32())),
+    );
   }
 
-  mulImmediateU64(firstIndex: number, immediateValue: bigint, resultIndex: number) {
-    this.regs.setU64(resultIndex, mulU64(this.regs.getU64(firstIndex), signExtend32To64(immediateValue)));
+  mulImmediateU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, mulU64(this.regs.getU64(firstIndex), immediate.getU64()));
   }
 
-  mulUpperSSImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.setI64(resultIndex, mulUpperSS(this.regs.getI64(firstIndex), signExtend32To64(immediateValue)));
+  mulUpperSSImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setI64(resultIndex, mulUpperSS(this.regs.getI64(firstIndex), immediate.getI64()));
   }
 
-  mulUpperUUImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.setU64(resultIndex, mulUpperUU(this.regs.getU64(firstIndex), signExtend32To64(immediateValue)));
+  mulUpperUUImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, mulUpperUU(this.regs.getU64(firstIndex), immediate.getU64()));
   }
 
   subU32(firstIndex: number, secondIndex: number, resultIndex: number) {
@@ -83,12 +90,12 @@ export class MathOps {
     this.regs.setU64(resultIndex, subU64(this.regs.getU64(firstIndex), this.regs.getU64(secondIndex)));
   }
 
-  negAddImmediateU32(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.setU64(resultIndex, signExtend32To64(subU32(this.regs.getU32(firstIndex), immediateValue)));
+  negAddImmediateU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, signExtend32To64(subU32(this.regs.getU32(firstIndex), immediate.getU32())));
   }
 
-  negAddImmediateU64(firstIndex: number, immediateValue: bigint, resultIndex: number) {
-    this.regs.setU64(resultIndex, subU64(this.regs.getU64(firstIndex), BigInt(immediateValue)));
+  negAddImmediateU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, subU64(this.regs.getU64(firstIndex), immediate.getU64()));
   }
 
   divSignedU32(firstIndex: number, secondIndex: number, resultIndex: number) {

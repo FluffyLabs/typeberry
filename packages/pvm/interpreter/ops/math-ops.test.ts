@@ -1,811 +1,829 @@
 import assert from "node:assert";
-import { test } from "node:test";
+import { describe, it } from "node:test";
 
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { Registers } from "../registers";
+import { bigintToUint8ArrayLE } from "../test-utils";
 import { MathOps } from "./math-ops";
 
-const FIRST_REGISTER = 0;
-const SECOND_REGISTER = 1;
-const RESULT_REGISTER = 12;
+describe("MathOps", () => {
+  function prepareData(firstValue: bigint, secondValue: bigint) {
+    const regs = new Registers();
+    const firstRegisterIndex = 0;
+    const secondRegisterIndex = 1;
+    const resultRegisterIndex = 12;
 
-const getRegisters = (data: bigint[]) => {
-  const regs = new Registers();
+    regs.setU64(firstRegisterIndex, firstValue);
+    regs.setU64(secondRegisterIndex, secondValue);
 
-  for (const [i, byte] of data.entries()) {
-    regs.setU64(i, byte);
+    const immediate = new ImmediateDecoder();
+    immediate.setBytes(bigintToUint8ArrayLE(secondValue));
+
+    const mathOps = new MathOps(regs);
+
+    return { regs, mathOps, immediate, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex };
   }
 
-  return regs;
-};
-
-test("MathOps", async (t) => {
-  await t.test("add U32", () => {
+  it("add U32", () => {
     const firstValue = 12n;
     const secondValue = 13n;
     const resultValue = 25n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.addU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.addU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("add with overflow U32", () => {
+  it("add with overflow U32", () => {
     const firstValue = 2n ** 32n - 1n;
     const secondValue = 13n;
     const resultValue = 12n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.addU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.addU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("addImmediateU32", () => {
-    const firstValue = 12n;
-    const secondValue = 13;
-    const resultValue = 25n;
-    const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
-
-    mathOps.addImmediateU32(FIRST_REGISTER, secondValue, RESULT_REGISTER);
-
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
-  });
-
-  await t.test("addImmediateU64", () => {
+  it("addImmediateU32", () => {
     const firstValue = 12n;
     const secondValue = 13n;
     const resultValue = 25n;
-    const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    mathOps.addImmediateU64(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    mathOps.addImmediateU32(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("addImmediate with overflow U32", () => {
+  it("addImmediateU64", () => {
+    const firstValue = 12n;
+    const secondValue = 13n;
+    const resultValue = 25n;
+    const { regs, mathOps, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
+
+    mathOps.addImmediateU64(firstRegisterIndex, immediate, resultRegisterIndex);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+  });
+
+  it("addImmediate with overflow U32", () => {
     const firstValue = 2n ** 32n - 1n;
-    const secondValue = 13;
+    const secondValue = 13n;
     const resultValue = 12n;
-    const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    mathOps.addImmediateU32(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    mathOps.addImmediateU32(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("sub", () => {
+  it("sub", () => {
     const firstValue = 12n;
     const secondValue = 13n;
     const resultValue = 1n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.subU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.subU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("sub U64", () => {
+  it("sub U64", () => {
     const firstValue = 12n;
     const secondValue = 13n;
     const resultValue = 1n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.subU64(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.subU64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("sub with overflow U32", () => {
+  it("sub with overflow U32", () => {
     const firstValue = 13n;
     const secondValue = 12n;
     const resultValue = 2n ** 64n - 1n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.subU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.subU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("sub with overflow U64", () => {
+  it("sub with overflow U64", () => {
     const firstValue = 13n;
     const secondValue = 12n;
     const resultValue = 2n ** 64n - 1n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.subU64(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.subU64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("negAddImmediate U32", () => {
-    const firstValue = 12n;
-    const secondValue = 13;
-    const resultValue = 1n;
-    const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
-
-    mathOps.negAddImmediateU32(FIRST_REGISTER, secondValue, RESULT_REGISTER);
-
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
-  });
-
-  await t.test("negAddImmediate U64", () => {
+  it("negAddImmediate U32", () => {
     const firstValue = 12n;
     const secondValue = 13n;
     const resultValue = 1n;
-    const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    mathOps.negAddImmediateU64(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    mathOps.negAddImmediateU32(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("negAddImmediate with overflow U32", () => {
-    const firstValue = 13n;
-    const secondValue = 12;
-    const resultValue = 2n ** 64n - 1n;
-    const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+  it("negAddImmediate U64", () => {
+    const firstValue = 12n;
+    const secondValue = 13n;
+    const resultValue = 1n;
+    const { regs, mathOps, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    mathOps.negAddImmediateU32(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    mathOps.negAddImmediateU64(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("negAddImmediate with overflow U64", () => {
+  it("negAddImmediate with overflow U32", () => {
     const firstValue = 13n;
     const secondValue = 12n;
     const resultValue = 2n ** 64n - 1n;
-    const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    mathOps.negAddImmediateU64(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    mathOps.negAddImmediateU32(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("mul U32", () => {
+  it("negAddImmediate with overflow U64", () => {
+    const firstValue = 13n;
+    const secondValue = 12n;
+    const resultValue = 2n ** 64n - 1n;
+    const { regs, mathOps, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
+
+    mathOps.negAddImmediateU64(firstRegisterIndex, immediate, resultRegisterIndex);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+  });
+
+  it("mul U32", () => {
     const firstValue = 12n;
     const secondValue = 13n;
     const resultValue = 156n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.mulU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.mulU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("mul U64", () => {
+  it("mul U64", () => {
     const firstValue = 12n;
     const secondValue = 13n;
     const resultValue = 156n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.mulU64(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.mulU64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("mul with overflow U32", () => {
+  it("mul with overflow U32", () => {
     const firstValue = 2n ** 17n + 1n;
     const secondValue = 2n ** 18n;
     const resultValue = 262144n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.mulU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.mulU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("mul with overflow U64", () => {
+  it("mul with overflow U64", () => {
     const firstValue = 2n ** 57n + 1n;
     const secondValue = 2n ** 58n;
     const resultValue = 288230376151711744n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.mulU64(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.mulU64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("mulImmediate U32", () => {
-    const firstValue = 12n;
-    const secondValue = 13;
-    const resultValue = 156n;
-    const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
-
-    mathOps.mulImmediateU32(FIRST_REGISTER, secondValue, RESULT_REGISTER);
-
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
-  });
-
-  await t.test("mulImmediate U64", () => {
+  it("mulImmediate U32", () => {
     const firstValue = 12n;
     const secondValue = 13n;
     const resultValue = 156n;
-    const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    mathOps.mulImmediateU64(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    mathOps.mulImmediateU32(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("mulImmediate with overflow U32", () => {
+  it("mulImmediate U64", () => {
+    const firstValue = 12n;
+    const secondValue = 13n;
+    const resultValue = 156n;
+    const { regs, mathOps, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
+
+    mathOps.mulImmediateU64(firstRegisterIndex, immediate, resultRegisterIndex);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+  });
+
+  it("mulImmediate with overflow U32", () => {
     const firstValue = 2n ** 17n + 1n;
-    const secondValue = 2 ** 18;
+    const secondValue = 2n ** 18n;
     const resultValue = 262144n;
-    const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    mathOps.mulImmediateU32(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    mathOps.mulImmediateU32(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("mulImmediate with overflow U64", () => {
+  it("mulImmediate with overflow U64", () => {
     const firstValue = 2n ** 64n - 1n;
     const secondValue = 2n ** 18n;
     const resultValue = 18446744073709289472n;
-    const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    mathOps.mulImmediateU64(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    mathOps.mulImmediateU64(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("mulUpperUUImmediate", () => {
+  it("mulUpperUUImmediate", () => {
     const firstValue = 2n ** 60n;
-    const secondValue = 2 ** 30;
+    const secondValue = 2n ** 30n;
     const resultValue = 2n ** 26n;
-    const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    mathOps.mulUpperUUImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    mathOps.mulUpperUUImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("mulUpperUUImmediate (max unsigned value)", () => {
+  it("mulUpperUUImmediate (max unsigned value)", () => {
     const firstValue = 2n ** 64n - 1n;
-    const secondValue = 2 ** 32 - 1;
+    const secondValue = 2n ** 32n - 1n;
     const resultValue = 2n ** 64n - 2n;
-    const regs = getRegisters([firstValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    mathOps.mulUpperUUImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    mathOps.mulUpperUUImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("mulUpperUU", () => {
+  it("mulUpperUU", () => {
     const firstValue = 2n ** 60n;
     const secondValue = 2n ** 60n;
     const resultValue = 2n ** 56n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.mulUpperUU(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.mulUpperUU(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("mulUpperUU (max unsigned value)", () => {
+  it("mulUpperUU (max unsigned value)", () => {
     const firstValue = 2n ** 64n - 1n;
     const secondValue = 2n ** 64n - 1n;
     const resultValue = 2n ** 64n - 2n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.mulUpperUU(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.mulUpperUU(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("mulUpperSSImmediate (positive numbers)", () => {
+  it("mulUpperSSImmediate (positive numbers)", () => {
     const firstValue = 2n ** 60n;
-    const secondValue = 2 ** 30;
+    const secondValue = 2n ** 30n;
     const resultValue = 2n ** 26n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
+    const { regs, mathOps, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    const mathOps = new MathOps(regs);
+    mathOps.mulUpperSSImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    mathOps.mulUpperSSImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
-
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("mulUpperSSImmediate (negative numbers)", () => {
+  it("mulUpperSSImmediate (negative numbers)", () => {
     const firstValue = -(2n ** 60n);
-    const secondValue = -(2 ** 30);
+    const secondValue = -(2n ** 30n);
     const resultValue = 2n ** 26n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
+    const { regs, mathOps, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    const mathOps = new MathOps(regs);
+    mathOps.mulUpperSSImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    mathOps.mulUpperSSImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
-
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("mulUpperSSImmediate (positive and negative)", () => {
+  it("mulUpperSSImmediate (positive and negative)", () => {
     const firstValue = 2n ** 60n;
-    const secondValue = -(2 ** 30);
+    const secondValue = -(2n ** 30n);
     const resultValue = -(2n ** 26n);
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
+    const { regs, mathOps, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    const mathOps = new MathOps(regs);
+    mathOps.mulUpperSSImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    mathOps.mulUpperSSImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
-
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("mulUpperSSImmediate (negative and positive)", () => {
-    const firstValue = -(2n ** 60n);
-    const secondValue = 2 ** 30;
-    const resultValue = -(2n ** 26n);
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-
-    const mathOps = new MathOps(regs);
-
-    mathOps.mulUpperSSImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
-
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
-  });
-
-  await t.test("mulUpperSS (positive numbers)", () => {
-    const firstValue = 2n ** 60n;
-    const secondValue = 2n ** 60n;
-    const resultValue = 2n ** 56n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-
-    const mathOps = new MathOps(regs);
-
-    mathOps.mulUpperSS(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
-
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
-  });
-
-  await t.test("mulUpperSS (negative numbers)", () => {
-    const firstValue = -(2n ** 60n);
-    const secondValue = -(2n ** 60n);
-    const resultValue = 2n ** 56n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-
-    const mathOps = new MathOps(regs);
-
-    mathOps.mulUpperSS(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
-
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
-  });
-
-  await t.test("mulUpperSS (positive and negative)", () => {
-    const firstValue = 2n ** 60n;
-    const secondValue = -(2n ** 60n);
-    const resultValue = -(2n ** 56n);
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-
-    const mathOps = new MathOps(regs);
-
-    mathOps.mulUpperSS(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
-
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
-  });
-
-  await t.test("mulUpperSS (negative and positive)", () => {
+  it("mulUpperSSImmediate (negative and positive)", () => {
     const firstValue = -(2n ** 60n);
     const secondValue = 2n ** 30n;
     const resultValue = -(2n ** 26n);
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
+    const { regs, mathOps, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    const mathOps = new MathOps(regs);
+    mathOps.mulUpperSSImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    mathOps.mulUpperSS(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
-
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("mulUpperSU (positive numbers)", () => {
+  it("mulUpperSS (positive numbers)", () => {
     const firstValue = 2n ** 60n;
     const secondValue = 2n ** 60n;
     const resultValue = 2n ** 56n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setU64(SECOND_REGISTER, secondValue);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    const mathOps = new MathOps(regs);
+    mathOps.mulUpperSS(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    mathOps.mulUpperSU(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
-
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("mulUpperSU (negative and positive)", () => {
+  it("mulUpperSS (negative numbers)", () => {
+    const firstValue = -(2n ** 60n);
+    const secondValue = -(2n ** 60n);
+    const resultValue = 2n ** 56n;
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    mathOps.mulUpperSS(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
+  });
+
+  it("mulUpperSS (positive and negative)", () => {
+    const firstValue = 2n ** 60n;
+    const secondValue = -(2n ** 60n);
+    const resultValue = -(2n ** 56n);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    mathOps.mulUpperSS(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
+  });
+
+  it("mulUpperSS (negative and positive)", () => {
+    const firstValue = -(2n ** 60n);
+    const secondValue = 2n ** 30n;
+    const resultValue = -(2n ** 26n);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    mathOps.mulUpperSS(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
+  });
+
+  it("mulUpperSU (positive numbers)", () => {
+    const firstValue = 2n ** 60n;
+    const secondValue = 2n ** 60n;
+    const resultValue = 2n ** 56n;
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    mathOps.mulUpperSU(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
+  });
+
+  it("mulUpperSU (negative and positive)", () => {
     const firstValue = -(2n ** 60n);
     const secondValue = 2n ** 60n;
     const resultValue = -(2n ** 56n);
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setU64(SECOND_REGISTER, secondValue);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    const mathOps = new MathOps(regs);
+    mathOps.mulUpperSU(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    mathOps.mulUpperSU(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
-
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divUnsigned U32", () => {
+  it("divUnsigned U32", () => {
     const firstValue = 2n;
     const secondValue = 26n;
     const resultValue = 13n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divUnsignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divUnsignedU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divUnsigned U64", () => {
+  it("divUnsigned U64", () => {
     const firstValue = 2n;
     const secondValue = 26n;
     const resultValue = 13n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divUnsignedU64(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divUnsignedU64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divUnsigned (rounding) U32", () => {
+  it("divUnsigned (rounding) U32", () => {
     const firstValue = 2n;
     const secondValue = 25n;
     const resultValue = 12n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divUnsignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divUnsignedU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divUnsigned (rounding) U64", () => {
+  it("divUnsigned (rounding) U64", () => {
     const firstValue = 2n;
     const secondValue = 25n;
     const resultValue = 12n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divUnsignedU64(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divUnsignedU64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divUnsigned (by zero) U32", () => {
+  it("divUnsigned (by zero) U32", () => {
     const firstValue = 0n;
     const secondValue = 25n;
     const resultValue = 2n ** 64n - 1n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divUnsignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divUnsignedU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divUnsigned (by zero) U64", () => {
+  it("divUnsigned (by zero) U64", () => {
     const firstValue = 0n;
     const secondValue = 25n;
     const resultValue = 2n ** 64n - 1n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divUnsignedU64(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divUnsignedU64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divSigned (positive numbers) U32", () => {
+  it("divSigned (positive numbers) U32", () => {
     const firstValue = 2n;
     const secondValue = 26n;
     const resultValue = 13n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divSignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divSigned (positive numbers) U64", () => {
+  it("divSigned (positive numbers) U64", () => {
     const firstValue = 2n;
     const secondValue = 26n;
     const resultValue = 13n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divSignedU64(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divSigned (negative numbers) U32", () => {
+  it("divSigned (negative numbers) U32", () => {
     const firstValue = -2n;
     const secondValue = -26n;
     const resultValue = 13n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divSignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divSigned (negative numbers) U64", () => {
+  it("divSigned (negative numbers) U64", () => {
     const firstValue = -2n;
     const secondValue = -26n;
     const resultValue = 13n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divSignedU64(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divSigned (positive and negative numbers) U32", () => {
+  it("divSigned (positive and negative numbers) U32", () => {
     const firstValue = 2n;
     const secondValue = -26n;
     const resultValue = -13n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divSignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divSigned (positive and negative numbers) U64", () => {
+  it("divSigned (positive and negative numbers) U64", () => {
     const firstValue = 2n;
     const secondValue = -26n;
     const resultValue = -13n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divSignedU64(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divSigned (negative and positive numbers) U32", () => {
+  it("divSigned (negative and positive numbers) U32", () => {
     const firstValue = -2n;
     const secondValue = 26n;
     const resultValue = -13n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divSignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divSigned (negative and positive numbers) U64", () => {
+  it("divSigned (negative and positive numbers) U64", () => {
     const firstValue = -2n;
     const secondValue = 26n;
     const resultValue = -13n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divSignedU64(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divSigned (rounding positive number) U32", () => {
+  it("divSigned (rounding positive number) U32", () => {
     const firstValue = 2n;
     const secondValue = 25n;
     const resultValue = 12n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divSignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divSigned (rounding positive number) U64", () => {
+  it("divSigned (rounding positive number) U64", () => {
     const firstValue = 2n;
     const secondValue = 25n;
     const resultValue = 12n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divSignedU64(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divSigned (rounding negative number) U32", () => {
+  it("divSigned (rounding negative number) U32", () => {
     const firstValue = 2n;
     const secondValue = -25n;
     const resultValue = -12n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divSignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divSigned (rounding negative number) U64", () => {
+  it("divSigned (rounding negative number) U64", () => {
     const firstValue = 2n;
     const secondValue = -25n;
     const resultValue = -12n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divSignedU64(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divSigned (by zero) U32", () => {
+  it("divSigned (by zero) U32", () => {
     const firstValue = 0n;
     const secondValue = 25n;
     const resultValue = -1n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divSignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divSigned (by zero) U64", () => {
+  it("divSigned (by zero) U64", () => {
     const firstValue = 0n;
     const secondValue = 25n;
     const resultValue = -1n;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divSignedU64(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divSigned with overflow U32", () => {
+  it("divSigned with overflow U32", () => {
     const firstValue = -1n;
     const secondValue = -(2n ** 31n);
     const resultValue = secondValue;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divSignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("divSigned with overflow U64", () => {
+  it("divSigned with overflow U64", () => {
     const firstValue = -1n;
     const secondValue = -(2n ** 63n);
     const resultValue = secondValue;
-    const regs = new Registers();
-    regs.setI64(FIRST_REGISTER, firstValue);
-    regs.setI64(SECOND_REGISTER, secondValue);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.divSignedU64(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.divSignedU64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getI64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("remUnsigned U32", () => {
+  it("remUnsigned U32", () => {
     const firstValue = 5n;
     const secondValue = 26n;
     const resultValue = 1n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.remUnsignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.remUnsignedU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("remUnsigned U64", () => {
+  it("remUnsigned U64", () => {
     const firstValue = 5n;
     const secondValue = 26n;
     const resultValue = 1n;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.remUnsignedU64(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.remUnsignedU64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("remUnsigned (by zero) U32", () => {
+  it("remUnsigned (by zero) U32", () => {
     const firstValue = 0n;
     const secondValue = 25n;
     const resultValue = secondValue;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.remUnsignedU32(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.remUnsignedU32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("remUnsigned (by zero) U64", () => {
+  it("remUnsigned (by zero) U64", () => {
     const firstValue = 0n;
     const secondValue = 25n;
     const resultValue = secondValue;
-    const regs = getRegisters([firstValue, secondValue]);
-    const mathOps = new MathOps(regs);
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    mathOps.remUnsignedU64(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    mathOps.remUnsignedU64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU64(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 });

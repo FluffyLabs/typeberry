@@ -1,17 +1,18 @@
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import type { Registers } from "../registers";
 
 export class MoveOps {
   constructor(private regs: Registers) {}
 
-  cmovIfZeroImmediate(firstIndex: number, immediateValue: bigint, resultIndex: number) {
+  cmovIfZeroImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
     if (this.regs.getU64(firstIndex) === 0n) {
-      this.regs.setU64(resultIndex, immediateValue);
+      this.regs.setU64(resultIndex, immediate.getU64());
     }
   }
 
-  cmovIfNotZeroImmediate(firstIndex: number, immediateValue: bigint, resultIndex: number) {
+  cmovIfNotZeroImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
     if (this.regs.getU64(firstIndex) !== 0n) {
-      this.regs.setU64(resultIndex, immediateValue);
+      this.regs.setU64(resultIndex, immediate.getU64());
     }
   }
 

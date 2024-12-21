@@ -17,51 +17,27 @@ export class TwoRegsOneImmDispatcher {
   dispatch(instruction: Instruction, args: TwoRegistersOneImmediateArgs) {
     switch (instruction) {
       case Instruction.ADD_IMM_32:
-        this.mathOps.addImmediateU32(
-          args.firstRegisterIndex,
-          args.immediateDecoder.getUnsigned(),
-          args.secondRegisterIndex,
-        );
+        this.mathOps.addImmediateU32(args.firstRegisterIndex, args.immediateDecoder, args.secondRegisterIndex);
         break;
 
       case Instruction.ADD_IMM_64:
-        this.mathOps.addImmediateU64(
-          args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getUnsigned()),
-          args.secondRegisterIndex,
-        );
+        this.mathOps.addImmediateU64(args.firstRegisterIndex, args.immediateDecoder, args.secondRegisterIndex);
         break;
 
       case Instruction.MUL_IMM_32:
-        this.mathOps.mulImmediateU32(
-          args.firstRegisterIndex,
-          args.immediateDecoder.getSigned(),
-          args.secondRegisterIndex,
-        );
+        this.mathOps.mulImmediateU32(args.firstRegisterIndex, args.immediateDecoder, args.secondRegisterIndex);
         break;
 
       case Instruction.MUL_IMM_64:
-        this.mathOps.mulImmediateU64(
-          args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getSigned()),
-          args.secondRegisterIndex,
-        );
+        this.mathOps.mulImmediateU64(args.firstRegisterIndex, args.immediateDecoder, args.secondRegisterIndex);
         break;
 
       case Instruction.NEG_ADD_IMM_32:
-        this.mathOps.negAddImmediateU32(
-          args.firstRegisterIndex,
-          args.immediateDecoder.getUnsigned(),
-          args.secondRegisterIndex,
-        );
+        this.mathOps.negAddImmediateU32(args.firstRegisterIndex, args.immediateDecoder, args.secondRegisterIndex);
         break;
 
       case Instruction.NEG_ADD_IMM_64:
-        this.mathOps.negAddImmediateU64(
-          args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getUnsigned()),
-          args.secondRegisterIndex,
-        );
+        this.mathOps.negAddImmediateU64(args.firstRegisterIndex, args.immediateDecoder, args.secondRegisterIndex);
         break;
 
       case Instruction.SHLO_L_IMM_32:
@@ -205,19 +181,11 @@ export class TwoRegsOneImmDispatcher {
         break;
 
       case Instruction.CMOV_IZ_IMM:
-        this.moveOps.cmovIfZeroImmediate(
-          args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getUnsigned()),
-          args.secondRegisterIndex,
-        );
+        this.moveOps.cmovIfZeroImmediate(args.firstRegisterIndex, args.immediateDecoder, args.secondRegisterIndex);
         break;
 
       case Instruction.CMOV_NZ_IMM:
-        this.moveOps.cmovIfNotZeroImmediate(
-          args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getUnsigned()),
-          args.secondRegisterIndex,
-        );
+        this.moveOps.cmovIfNotZeroImmediate(args.firstRegisterIndex, args.immediateDecoder, args.secondRegisterIndex);
         break;
 
       case Instruction.STORE_IND_U8:
