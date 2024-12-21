@@ -1,190 +1,171 @@
 import assert from "node:assert";
-import { test } from "node:test";
+import { describe, it } from "node:test";
 
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { Registers } from "../registers";
+import { bigintToUint8ArrayLE } from "../test-utils";
 import { BooleanOps } from "./boolean-ops";
 
-const FIRST_REGISTER = 0;
-const RESULT_REGISTER = 1;
-const SECOND_REGISTER = 2;
-const getRegisters = (data: number[]) => {
-  const regs = new Registers();
+describe("BooleanOps", () => {
+  function prepareData(firstValue: bigint, secondValue: bigint) {
+    const regs = new Registers();
+    const firstRegisterIndex = 0;
+    const secondRegisterIndex = 1;
+    const resultRegisterIndex = 12;
 
-  for (const [i, byte] of data.entries()) {
-    regs.setU32(i, byte);
+    regs.setU64(firstRegisterIndex, firstValue);
+    regs.setU64(secondRegisterIndex, secondValue);
+    regs.setU64(resultRegisterIndex, 0xdeadbeefn);
+
+    const immediate = new ImmediateDecoder();
+    immediate.setBytes(bigintToUint8ArrayLE(secondValue));
+
+    const bitOps = new BooleanOps(regs);
+
+    return { regs, bitOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex, immediate };
   }
 
-  return regs;
-};
-
-test("BooleanOps", async (t) => {
-  await t.test("setLessThanUnsignedImmediate - true", () => {
-    const firstValue = 1;
+  it("setLessThanUnsignedImmediate - true", () => {
+    const firstValue = 1n;
     const secondValue = 2n;
-    const initialResultRegister = 3;
-    const resultValue = 1;
-    const regs = getRegisters([firstValue, initialResultRegister]);
-    const bitOps = new BooleanOps(regs);
+    const resultValue = 1n;
+    const { bitOps, firstRegisterIndex, immediate, resultRegisterIndex, regs } = prepareData(firstValue, secondValue);
 
-    bitOps.setLessThanUnsignedImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    bitOps.setLessThanUnsignedImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("setLessThanUnsignedImmediate - false", () => {
-    const firstValue = 3;
+  it("setLessThanUnsignedImmediate - false", () => {
+    const firstValue = 3n;
     const secondValue = 2n;
-    const initialResultRegister = 3;
-    const resultValue = 0;
-    const regs = getRegisters([firstValue, initialResultRegister]);
-    const bitOps = new BooleanOps(regs);
+    const resultValue = 0n;
+    const { bitOps, firstRegisterIndex, immediate, resultRegisterIndex, regs } = prepareData(firstValue, secondValue);
 
-    bitOps.setLessThanUnsignedImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    bitOps.setLessThanUnsignedImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("setGreaterThanUnsignedImmediate - true", () => {
-    const firstValue = 3;
+  it("setGreaterThanUnsignedImmediate - true", () => {
+    const firstValue = 3n;
     const secondValue = 2n;
-    const initialResultRegister = 3;
-    const resultValue = 1;
-    const regs = getRegisters([firstValue, initialResultRegister]);
-    const bitOps = new BooleanOps(regs);
+    const resultValue = 1n;
+    const { bitOps, firstRegisterIndex, immediate, resultRegisterIndex, regs } = prepareData(firstValue, secondValue);
 
-    bitOps.setGreaterThanUnsignedImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    bitOps.setGreaterThanUnsignedImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("setGreaterThanUnsignedImmediate - false", () => {
-    const firstValue = 1;
+  it("setGreaterThanUnsignedImmediate - false", () => {
+    const firstValue = 1n;
     const secondValue = 2n;
-    const initialResultRegister = 3;
-    const resultValue = 0;
-    const regs = getRegisters([firstValue, initialResultRegister]);
-    const bitOps = new BooleanOps(regs);
+    const resultValue = 0n;
+    const { bitOps, firstRegisterIndex, immediate, resultRegisterIndex, regs } = prepareData(firstValue, secondValue);
 
-    bitOps.setGreaterThanUnsignedImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    bitOps.setGreaterThanUnsignedImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("setLessThanSignedImmediate - true", () => {
-    const firstValue = -3;
+  it("setLessThanSignedImmediate - true", () => {
+    const firstValue = -3n;
     const secondValue = -2n;
-    const initialResultRegister = 3;
-    const resultValue = 1;
-    const regs = new Registers();
-    regs.setI32(FIRST_REGISTER, firstValue);
-    regs.setI32(RESULT_REGISTER, initialResultRegister);
-    const bitOps = new BooleanOps(regs);
+    const resultValue = 1n;
+    const { bitOps, firstRegisterIndex, immediate, resultRegisterIndex, regs } = prepareData(firstValue, secondValue);
 
-    bitOps.setLessThanSignedImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    bitOps.setLessThanSignedImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("setLessThanSignedImmediate - false", () => {
-    const firstValue = -1;
+  it("setLessThanSignedImmediate - false", () => {
+    const firstValue = -1n;
     const secondValue = -2n;
-    const initialResultRegister = 3;
-    const resultValue = 0;
-    const regs = new Registers();
-    regs.setI32(FIRST_REGISTER, firstValue);
-    regs.setI32(RESULT_REGISTER, initialResultRegister);
-    const bitOps = new BooleanOps(regs);
+    const resultValue = 0n;
+    const { bitOps, firstRegisterIndex, immediate, resultRegisterIndex, regs } = prepareData(firstValue, secondValue);
 
-    bitOps.setLessThanSignedImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    bitOps.setLessThanSignedImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("setGreaterThanSignedImmediate - true", () => {
-    const firstValue = -1;
+  it("setGreaterThanSignedImmediate - true", () => {
+    const firstValue = -1n;
     const secondValue = -2n;
-    const initialResultRegister = 3;
-    const resultValue = 1;
-    const regs = new Registers();
-    regs.setI32(FIRST_REGISTER, firstValue);
-    regs.setI32(RESULT_REGISTER, initialResultRegister);
-    const bitOps = new BooleanOps(regs);
+    const resultValue = 1n;
+    const { bitOps, firstRegisterIndex, immediate, resultRegisterIndex, regs } = prepareData(firstValue, secondValue);
 
-    bitOps.setGreaterThanSignedImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    bitOps.setGreaterThanSignedImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("setGreaterThanSignedImmediate - false", () => {
-    const firstValue = -3;
+  it("setGreaterThanSignedImmediate - false", () => {
+    const firstValue = -3n;
     const secondValue = -2n;
-    const initialResultRegister = 3;
-    const resultValue = 0;
-    const regs = new Registers();
-    regs.setI32(FIRST_REGISTER, firstValue);
-    regs.setI32(RESULT_REGISTER, initialResultRegister);
-    const bitOps = new BooleanOps(regs);
+    const resultValue = 0n;
+    const { bitOps, firstRegisterIndex, immediate, resultRegisterIndex, regs } = prepareData(firstValue, secondValue);
 
-    bitOps.setGreaterThanSignedImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    bitOps.setGreaterThanSignedImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("setLessThanUnsigned - true", () => {
-    const firstValue = 2;
-    const secondValue = 1;
-    const initialResultRegister = 3;
-    const resultValue = 1;
-    const regs = getRegisters([firstValue, initialResultRegister, secondValue]);
-    const bitOps = new BooleanOps(regs);
+  it("setLessThanUnsigned - true", () => {
+    const firstValue = 2n;
+    const secondValue = 1n;
+    const resultValue = 1n;
+    const { bitOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex, regs } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    bitOps.setLessThanUnsigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    bitOps.setLessThanUnsigned(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("setLessThanUnsigned - false", () => {
-    const firstValue = 2;
-    const secondValue = 3;
-    const initialResultRegister = 3;
-    const resultValue = 0;
-    const regs = getRegisters([firstValue, initialResultRegister, secondValue]);
-    const bitOps = new BooleanOps(regs);
+  it("setLessThanUnsigned - false", () => {
+    const firstValue = 2n;
+    const secondValue = 3n;
+    const resultValue = 0n;
+    const { bitOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex, regs } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    bitOps.setLessThanUnsigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    bitOps.setLessThanUnsigned(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("setLessThanSigned - true", () => {
-    const firstValue = -2;
-    const secondValue = -3;
-    const initialResultRegister = 3;
-    const resultValue = 1;
-    const regs = new Registers();
-    regs.setI32(FIRST_REGISTER, firstValue);
-    regs.setI32(SECOND_REGISTER, secondValue);
-    regs.setI32(RESULT_REGISTER, initialResultRegister);
-    const bitOps = new BooleanOps(regs);
+  it("setLessThanSigned - true", () => {
+    const firstValue = -2n;
+    const secondValue = -3n;
+    const resultValue = 1n;
+    const { bitOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex, regs } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    bitOps.setLessThanSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    bitOps.setLessThanSigned(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("setLessThanSigned - false", () => {
-    const firstValue = -2;
-    const secondValue = -1;
-    const initialResultRegister = 3;
-    const resultValue = 0;
-    const regs = new Registers();
-    regs.setI32(FIRST_REGISTER, firstValue);
-    regs.setI32(SECOND_REGISTER, secondValue);
-    regs.setI32(RESULT_REGISTER, initialResultRegister);
-    const bitOps = new BooleanOps(regs);
+  it("setLessThanSigned - false", () => {
+    const firstValue = -2n;
+    const secondValue = -1n;
+    const resultValue = 0n;
+    const { bitOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex, regs } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    bitOps.setLessThanSigned(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    bitOps.setLessThanSigned(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.getU32(RESULT_REGISTER), resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 });

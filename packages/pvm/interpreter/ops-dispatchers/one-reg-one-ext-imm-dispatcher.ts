@@ -8,7 +8,7 @@ export class OneRegOneExtImmDispatcher {
   dispatch(instruction: Instruction, args: OneRegisterOneExtendedWidthImmediateArgs) {
     switch (instruction) {
       case Instruction.LOAD_IMM_64:
-        this.loadOps.loadImmediateU64(args.registerIndex, args.immediateDecoder.getValue());
+        this.loadOps.loadImmediateU64(args.registerIndex, args.immediateDecoder);
         break;
     }
   }

@@ -15,7 +15,7 @@ export class TwoRegsTwoImmsDispatcher {
           args.secondImmediateDecoder.getUnsigned(),
           args.secondRegisterIndex,
         );
-        this.loadOps.loadImmediate(args.firstRegisterIndex, args.firstImmediateDecoder.getUnsigned());
+        this.loadOps.loadImmediate(args.firstRegisterIndex, args.firstImmediateDecoder);
         this.dynamicJumpOps.jumpInd(address);
         break;
       }

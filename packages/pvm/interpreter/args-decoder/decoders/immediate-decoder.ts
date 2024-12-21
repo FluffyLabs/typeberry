@@ -41,16 +41,16 @@ export class ImmediateDecoder {
     }
   }
 
-/**
- * @deprecated Use getU32 instead
- */
+  /**
+   * @deprecated Use getU32 instead
+   */
   getUnsigned() {
     return this.unsignedImmediate[0];
   }
 
-/**
- * @deprecated Use getI32 instead
- */
+  /**
+   * @deprecated Use getI32 instead
+   */
   getSigned() {
     return this.signedImmediate[0];
   }

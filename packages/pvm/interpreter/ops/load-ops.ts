@@ -1,8 +1,9 @@
+import type { ExtendedWitdthImmediateDecoder } from "../args-decoder/decoders/extended-with-immediate-decoder";
 import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import type { InstructionResult } from "../instruction-result";
 import type { Memory } from "../memory";
 import { tryAsMemoryIndex } from "../memory/memory-index";
-import { type Registers, signExtend32To64 } from "../registers";
+import type { Registers } from "../registers";
 import { Result } from "../result";
 import { addWithOverflowU32 } from "./math-utils";
 
@@ -15,12 +16,12 @@ export class LoadOps {
     private instructionResult: InstructionResult,
   ) {}
 
-  loadImmediate(registerIndex: number, immediate: number) {
-    this.regs.setU64(registerIndex, signExtend32To64(immediate));
+  loadImmediate(registerIndex: number, immediate: ImmediateDecoder) {
+    this.regs.setU64(registerIndex, immediate.getU64());
   }
 
-  loadImmediateU64(registerIndex: number, immediate: bigint) {
-    this.regs.setU64(registerIndex, immediate);
+  loadImmediateU64(registerIndex: number, immediate: ExtendedWitdthImmediateDecoder) {
+    this.regs.setU64(registerIndex, immediate.getValue());
   }
 
   private loadNumber(address: number, registerIndex: number, numberLength: 1 | 2 | 4 | 8) {

@@ -1,4 +1,5 @@
-import { type Registers, signExtend32To64 } from "../registers";
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
+import type { Registers } from "../registers";
 
 export class BitOps {
   constructor(private regs: Registers) {}
@@ -7,23 +8,23 @@ export class BitOps {
     this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) | this.regs.getU64(secondIndex));
   }
 
-  orImmediate(firstIndex: number, immediateValue: bigint, resultIndex: number) {
-    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) | signExtend32To64(immediateValue));
+  orImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) | immediate.getU64());
   }
 
   and(firstIndex: number, secondIndex: number, resultIndex: number) {
     this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) & this.regs.getU64(secondIndex));
   }
 
-  andImmediate(firstIndex: number, immediateValue: bigint, resultIndex: number) {
-    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) & signExtend32To64(immediateValue));
+  andImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) & immediate.getU64());
   }
 
   xor(firstIndex: number, secondIndex: number, resultIndex: number) {
     this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) ^ this.regs.getU64(secondIndex));
   }
 
-  xorImmediate(firstIndex: number, immediateValue: bigint, resultIndex: number) {
-    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) ^ signExtend32To64(immediateValue));
+  xorImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) ^ immediate.getU64());
   }
 }

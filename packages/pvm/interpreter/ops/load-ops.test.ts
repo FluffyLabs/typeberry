@@ -8,37 +8,48 @@ import { PAGE_SIZE } from "../memory/memory-consts";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "../memory/memory-index";
 import { getStartPageIndex } from "../memory/memory-utils";
 import { Registers } from "../registers";
+import { bigintToUint8ArrayLE } from "../test-utils";
 import { LoadOps } from "./load-ops";
 
 const RESULT_REGISTER = 12;
 
 describe("LoadOps", () => {
   describe("loadImmediate", () => {
-    it("should load positive number into register", () => {
+    function prepareData(numberToLoad: bigint) {
       const instructionResult = new InstructionResult();
       const registers = new Registers();
       const memory = new Memory();
       const loadOps = new LoadOps(registers, memory, instructionResult);
-      const numberToLoad = 15;
+      const immediateDecoder = new ImmediateDecoder();
+      immediateDecoder.setBytes(bigintToUint8ArrayLE(numberToLoad));
 
-      loadOps.loadImmediate(RESULT_REGISTER, numberToLoad);
+      return {
+        registers,
+        loadOps,
+        immediateDecoder,
+        resultRegister: 12,
+      };
+    }
 
-      assert.strictEqual(registers.getI32(RESULT_REGISTER), numberToLoad);
-      assert.strictEqual(registers.getU32(RESULT_REGISTER), numberToLoad);
+    it("should load positive number into register", () => {
+      const numberToLoad = 15n;
+      const { resultRegister, loadOps, registers, immediateDecoder } = prepareData(numberToLoad);
+
+      loadOps.loadImmediate(resultRegister, immediateDecoder);
+
+      assert.strictEqual(registers.getI64(RESULT_REGISTER), numberToLoad);
+      assert.strictEqual(registers.getU64(RESULT_REGISTER), numberToLoad);
     });
 
     it("should load negative number into register", () => {
-      const instructionResult = new InstructionResult();
-      const registers = new Registers();
-      const memory = new Memory();
-      const loadOps = new LoadOps(registers, memory, instructionResult);
-      const numberToLoad = -1;
-      const expectedUnsignedNumber = 0xff_ff_ff_ff;
+      const numberToLoad = -1n;
+      const { resultRegister, loadOps, registers, immediateDecoder } = prepareData(numberToLoad);
+      const expectedUnsignedNumber = 2n ** 64n - 1n;
 
-      loadOps.loadImmediate(RESULT_REGISTER, numberToLoad);
+      loadOps.loadImmediate(resultRegister, immediateDecoder);
 
-      assert.strictEqual(registers.getI32(RESULT_REGISTER), numberToLoad);
-      assert.strictEqual(registers.getU32(RESULT_REGISTER), expectedUnsignedNumber);
+      assert.strictEqual(registers.getI64(RESULT_REGISTER), numberToLoad);
+      assert.strictEqual(registers.getU64(RESULT_REGISTER), expectedUnsignedNumber);
     });
   });
 

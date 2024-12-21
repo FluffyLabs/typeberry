@@ -161,33 +161,21 @@ export class TwoRegsOneImmDispatcher {
         break;
 
       case Instruction.OR_IMM:
-        this.bitOps.orImmediate(
-          args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getUnsigned()),
-          args.secondRegisterIndex,
-        );
+        this.bitOps.orImmediate(args.firstRegisterIndex, args.immediateDecoder, args.secondRegisterIndex);
         break;
 
       case Instruction.AND_IMM:
-        this.bitOps.andImmediate(
-          args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getUnsigned()),
-          args.secondRegisterIndex,
-        );
+        this.bitOps.andImmediate(args.firstRegisterIndex, args.immediateDecoder, args.secondRegisterIndex);
         break;
 
       case Instruction.XOR_IMM:
-        this.bitOps.xorImmediate(
-          args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getUnsigned()),
-          args.secondRegisterIndex,
-        );
+        this.bitOps.xorImmediate(args.firstRegisterIndex, args.immediateDecoder, args.secondRegisterIndex);
         break;
 
       case Instruction.SET_LT_S_IMM:
         this.booleanOps.setLessThanSignedImmediate(
           args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getSigned()),
+          args.immediateDecoder,
           args.secondRegisterIndex,
         );
         break;
@@ -195,7 +183,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SET_LT_U_IMM:
         this.booleanOps.setLessThanUnsignedImmediate(
           args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getUnsigned()),
+          args.immediateDecoder,
           args.secondRegisterIndex,
         );
         break;
@@ -203,7 +191,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SET_GT_S_IMM:
         this.booleanOps.setGreaterThanSignedImmediate(
           args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getSigned()),
+          args.immediateDecoder,
           args.secondRegisterIndex,
         );
         break;
@@ -211,7 +199,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SET_GT_U_IMM:
         this.booleanOps.setGreaterThanUnsignedImmediate(
           args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getUnsigned()),
+          args.immediateDecoder,
           args.secondRegisterIndex,
         );
         break;

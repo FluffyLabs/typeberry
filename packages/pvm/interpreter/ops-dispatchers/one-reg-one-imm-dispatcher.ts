@@ -13,7 +13,7 @@ export class OneRegOneImmDispatcher {
   dispatch(instruction: Instruction, args: OneRegisterOneImmediateArgs) {
     switch (instruction) {
       case Instruction.LOAD_IMM:
-        this.loadOps.loadImmediate(args.registerIndex, args.immediateDecoder.getUnsigned());
+        this.loadOps.loadImmediate(args.registerIndex, args.immediateDecoder);
         break;
       case Instruction.STORE_U8:
         this.storeOps.storeU8(args.immediateDecoder.getUnsigned(), args.registerIndex);
