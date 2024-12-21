@@ -1,7 +1,6 @@
 import type { TwoRegistersOneImmediateArgs } from "../args-decoder/args-decoder";
 import { Instruction } from "../instruction";
 import type { BitOps, BooleanOps, LoadOps, MathOps, MoveOps, ShiftOps, StoreOps } from "../ops";
-import { signExtend32To64 } from "../registers";
 
 export class TwoRegsOneImmDispatcher {
   constructor(
@@ -43,7 +42,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SHLO_L_IMM_32:
         this.shiftOps.shiftLogicalLeftImmediateU32(
           args.firstRegisterIndex,
-          args.immediateDecoder.getUnsigned(),
+          args.immediateDecoder,
           args.secondRegisterIndex,
         );
         break;
@@ -51,7 +50,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SHLO_L_IMM_64:
         this.shiftOps.shiftLogicalLeftImmediateU64(
           args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getUnsigned()),
+          args.immediateDecoder,
           args.secondRegisterIndex,
         );
         break;
@@ -59,7 +58,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SHLO_L_IMM_ALT_32:
         this.shiftOps.shiftLogicalLeftImmediateAlternativeU32(
           args.firstRegisterIndex,
-          args.immediateDecoder.getUnsigned(),
+          args.immediateDecoder,
           args.secondRegisterIndex,
         );
         break;
@@ -67,7 +66,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SHLO_L_IMM_ALT_64:
         this.shiftOps.shiftLogicalLeftImmediateAlternativeU64(
           args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getUnsigned()),
+          args.immediateDecoder,
           args.secondRegisterIndex,
         );
         break;
@@ -75,7 +74,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SHLO_R_IMM_32:
         this.shiftOps.shiftLogicalRightImmediateU32(
           args.firstRegisterIndex,
-          args.immediateDecoder.getUnsigned(),
+          args.immediateDecoder,
           args.secondRegisterIndex,
         );
         break;
@@ -83,7 +82,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SHLO_R_IMM_64:
         this.shiftOps.shiftLogicalRightImmediateU64(
           args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getUnsigned()),
+          args.immediateDecoder,
           args.secondRegisterIndex,
         );
         break;
@@ -91,7 +90,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SHLO_R_IMM_ALT_32:
         this.shiftOps.shiftLogicalRightImmediateAlternativeU32(
           args.firstRegisterIndex,
-          args.immediateDecoder.getUnsigned(),
+          args.immediateDecoder,
           args.secondRegisterIndex,
         );
         break;
@@ -99,7 +98,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SHLO_R_IMM_ALT_64:
         this.shiftOps.shiftLogicalRightImmediateAlternativeU64(
           args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getUnsigned()),
+          args.immediateDecoder,
           args.secondRegisterIndex,
         );
         break;
@@ -107,7 +106,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SHAR_R_IMM_32:
         this.shiftOps.shiftArithmeticRightImmediateU32(
           args.firstRegisterIndex,
-          args.immediateDecoder.getSigned(),
+          args.immediateDecoder,
           args.secondRegisterIndex,
         );
         break;
@@ -115,7 +114,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SHAR_R_IMM_64:
         this.shiftOps.shiftArithmeticRightImmediateU64(
           args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getSigned()),
+          args.immediateDecoder,
           args.secondRegisterIndex,
         );
         break;
@@ -123,7 +122,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SHAR_R_IMM_ALT_32:
         this.shiftOps.shiftArithmeticRightImmediateAlternativeU32(
           args.firstRegisterIndex,
-          args.immediateDecoder.getSigned(),
+          args.immediateDecoder,
           args.secondRegisterIndex,
         );
         break;
@@ -131,7 +130,7 @@ export class TwoRegsOneImmDispatcher {
       case Instruction.SHAR_R_IMM_ALT_64:
         this.shiftOps.shiftArithmeticRightImmediateAlternativeU64(
           args.firstRegisterIndex,
-          signExtend32To64(args.immediateDecoder.getSigned()),
+          args.immediateDecoder,
           args.secondRegisterIndex,
         );
         break;
