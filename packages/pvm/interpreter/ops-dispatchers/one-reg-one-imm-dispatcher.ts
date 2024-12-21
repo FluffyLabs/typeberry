@@ -49,10 +49,7 @@ export class OneRegOneImmDispatcher {
         this.loadOps.loadI32(args.immediateDecoder.getUnsigned(), args.registerIndex);
         break;
       case Instruction.JUMP_IND: {
-        const address = this.dynamicJumpOps.caluclateJumpAddress(
-          args.immediateDecoder.getUnsigned(),
-          args.registerIndex,
-        );
+        const address = this.dynamicJumpOps.caluclateJumpAddress(args.immediateDecoder, args.registerIndex);
         this.dynamicJumpOps.jumpInd(address);
         break;
       }

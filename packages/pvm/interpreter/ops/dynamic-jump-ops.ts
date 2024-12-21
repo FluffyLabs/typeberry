@@ -1,3 +1,4 @@
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import type { BasicBlocks } from "../basic-blocks";
 import type { InstructionResult } from "../instruction-result";
 import type { JumpTable } from "../program-decoder/jump-table";
@@ -39,9 +40,9 @@ export class DynamicJumpOps {
     this.instructionResult.nextPc = destination;
   }
 
-  caluclateJumpAddress(immediateValue: number, registerIndex: number) {
+  caluclateJumpAddress(immediate: ImmediateDecoder, registerIndex: number) {
     const registerValue = this.regs.getU32(registerIndex);
-    return addWithOverflowU32(registerValue, immediateValue);
+    return addWithOverflowU32(registerValue, immediate.getU32());
   }
 
   jumpInd(address: number) {

@@ -147,7 +147,9 @@ describe("math-utils", () => {
       const a = MAX_VALUE_U64;
       const b = MAX_VALUE_U64;
       const expectedResult = 0x4000000000000000n;
+
       const result = mulUpperUU(a, b);
+
       assert.strictEqual(result, expectedResult);
     });
 
@@ -155,7 +157,9 @@ describe("math-utils", () => {
       const a = MAX_VALUE_U64;
       const b = -MAX_VALUE_U64;
       const expectedResult = 4611686018427387904n;
+
       const result = mulUpperUU(a, b);
+
       assert.strictEqual(result, expectedResult);
     });
 
@@ -163,7 +167,9 @@ describe("math-utils", () => {
       const a = -MAX_VALUE_U64;
       const b = MAX_VALUE_U64;
       const expectedResult = 4611686018427387904n;
+
       const result = mulUpperUU(a, b);
+
       assert.strictEqual(result, expectedResult);
     });
 
@@ -171,7 +177,9 @@ describe("math-utils", () => {
       const a = -MAX_VALUE_U64;
       const b = -MAX_VALUE_U64;
       const expectedResult = 0x4000000000000000n;
+
       const result = mulUpperUU(a, b);
+
       assert.strictEqual(result, expectedResult);
     });
   });
@@ -221,7 +229,9 @@ describe("math-utils", () => {
       const a = MAX_VALUE_U64;
       const b = MAX_VALUE_U64;
       const expectedResult = 0x4000000000000000n;
+
       const result = mulUpperSU(a, b);
+
       assert.strictEqual(result, expectedResult);
     });
 
@@ -229,7 +239,9 @@ describe("math-utils", () => {
       const a = 2n ** 60n;
       const b = -(2n ** 60n);
       const expectedResult = 0xf00000000000000n;
+
       const result = mulUpperSU(a, b);
+
       assert.strictEqual(result, expectedResult);
     });
 
@@ -237,7 +249,9 @@ describe("math-utils", () => {
       const a = -(2n ** 60n);
       const b = 2n ** 60n;
       const expectedResult = -(2n ** 56n);
+
       const result = mulUpperSU(a, b);
+
       assert.strictEqual(result, expectedResult);
     });
 
@@ -245,7 +259,9 @@ describe("math-utils", () => {
       const a = -(2n ** 60n);
       const b = -(2n ** 60n);
       const expectedResult = -0xf00000000000000n;
+
       const result = mulUpperSU(a, b);
+
       assert.strictEqual(result, expectedResult);
     });
   });
@@ -295,7 +311,9 @@ describe("math-utils", () => {
       const a = 2n ** 60n;
       const b = 2n ** 60n;
       const expectedResult = 2n ** 56n;
+
       const result = mulUpperSS(a, b);
+
       assert.strictEqual(result, expectedResult);
     });
 
@@ -303,7 +321,9 @@ describe("math-utils", () => {
       const a = 2n ** 60n;
       const b = -(2n ** 60n);
       const expectedResult = -0x100000000000000n;
+
       const result = mulUpperSS(a, b);
+
       assert.strictEqual(result, expectedResult);
     });
 
@@ -311,7 +331,9 @@ describe("math-utils", () => {
       const a = -(2n ** 60n);
       const b = 2n ** 60n;
       const expectedResult = -0x100000000000000n;
+
       const result = mulUpperSS(a, b);
+
       assert.strictEqual(result, expectedResult);
     });
 
@@ -319,7 +341,9 @@ describe("math-utils", () => {
       const a = -(2n ** 60n);
       const b = -(2n ** 60n);
       const expectedResult = 2n ** 56n;
+
       const result = mulUpperSS(a, b);
+
       assert.strictEqual(result, expectedResult);
     });
   });
