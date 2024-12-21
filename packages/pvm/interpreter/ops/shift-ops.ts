@@ -11,10 +11,7 @@ export class ShiftOps {
   }
 
   shiftLogicalLeftU64(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.setU64(
-      resultIndex,
-      this.regs.getU64(secondIndex) << ((0xffn & this.regs.getU64(firstIndex)) % MAX_SHIFT_U64),
-    );
+    this.regs.setU64(resultIndex, this.regs.getU64(secondIndex) << (this.regs.getU64(firstIndex) % MAX_SHIFT_U64));
   }
 
   shiftLogicalRightU32(firstIndex: number, secondIndex: number, resultIndex: number) {
@@ -24,7 +21,7 @@ export class ShiftOps {
   shiftLogicalRightU64(firstIndex: number, secondIndex: number, resultIndex: number) {
     this.regs.setU64(
       resultIndex,
-      unsignedRightShiftBigInt(this.regs.getU64(secondIndex), (0xffn & this.regs.getU64(firstIndex)) % MAX_SHIFT_U64),
+      unsignedRightShiftBigInt(this.regs.getU64(secondIndex), this.regs.getU64(firstIndex) % MAX_SHIFT_U64),
     );
   }
 
@@ -33,10 +30,7 @@ export class ShiftOps {
   }
 
   shiftArithmeticRightU64(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.setI64(
-      resultIndex,
-      this.regs.getI64(secondIndex) >> ((0xffn & this.regs.getU64(firstIndex)) % MAX_SHIFT_U64),
-    );
+    this.regs.setI64(resultIndex, this.regs.getI64(secondIndex) >> (this.regs.getU64(firstIndex) % MAX_SHIFT_U64));
   }
 
   shiftLogicalLeftImmediateU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
@@ -44,7 +38,7 @@ export class ShiftOps {
   }
 
   shiftLogicalLeftImmediateU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
-    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) << ((0xffn & immediate.getU64()) % MAX_SHIFT_U64));
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) << (immediate.getU64() % MAX_SHIFT_U64));
   }
 
   shiftLogicalRightImmediateU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
@@ -54,7 +48,7 @@ export class ShiftOps {
   shiftLogicalRightImmediateU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
     this.regs.setU64(
       resultIndex,
-      unsignedRightShiftBigInt(this.regs.getU64(firstIndex), (0xffn & immediate.getU64()) % MAX_SHIFT_U64),
+      unsignedRightShiftBigInt(this.regs.getU64(firstIndex), immediate.getU64() % MAX_SHIFT_U64),
     );
   }
 
@@ -63,7 +57,7 @@ export class ShiftOps {
   }
 
   shiftArithmeticRightImmediateU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
-    this.regs.setU64(resultIndex, this.regs.getI64(firstIndex) >> ((0xffn & immediate.getU64()) % MAX_SHIFT_U64));
+    this.regs.setU64(resultIndex, this.regs.getI64(firstIndex) >> (immediate.getU64() % MAX_SHIFT_U64));
   }
 
   shiftLogicalLeftImmediateAlternativeU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
@@ -71,7 +65,7 @@ export class ShiftOps {
   }
 
   shiftLogicalLeftImmediateAlternativeU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
-    this.regs.setU64(resultIndex, immediate.getU64() << ((0xffn & this.regs.getU64(firstIndex)) % MAX_SHIFT_U64));
+    this.regs.setU64(resultIndex, immediate.getU64() << (this.regs.getU64(firstIndex) % MAX_SHIFT_U64));
   }
 
   shiftLogicalRightImmediateAlternativeU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
@@ -81,7 +75,7 @@ export class ShiftOps {
   shiftLogicalRightImmediateAlternativeU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
     this.regs.setU64(
       resultIndex,
-      unsignedRightShiftBigInt(immediate.getU64(), (0xffn & this.regs.getU64(firstIndex)) % MAX_SHIFT_U64),
+      unsignedRightShiftBigInt(immediate.getU64(), this.regs.getU64(firstIndex) % MAX_SHIFT_U64),
     );
   }
 
@@ -90,6 +84,6 @@ export class ShiftOps {
   }
 
   shiftArithmeticRightImmediateAlternativeU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
-    this.regs.setI64(resultIndex, immediate.getI64() >> ((0xffn & this.regs.getU64(firstIndex)) % MAX_SHIFT_U64));
+    this.regs.setI64(resultIndex, immediate.getI64() >> (this.regs.getU64(firstIndex) % MAX_SHIFT_U64));
   }
 }
