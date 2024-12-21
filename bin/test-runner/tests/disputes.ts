@@ -126,7 +126,7 @@ class TestResult {
     service_id: "number",
     code_hash: codecFromJson.bytes32(),
     payload_hash: codecFromJson.bytes32(),
-    gas: json.fromNumber((x) => BigInt(x)),
+    accumulate_gas: json.fromNumber((x) => BigInt(x)),
     result: TestResultDetail.fromJson,
   };
 
@@ -134,7 +134,7 @@ class TestResult {
     return results.map((result) => {
       const testResult = new TestResult();
       testResult.code_hash = result.codeHash;
-      testResult.gas = result.gas;
+      testResult.accumulate_gas = result.gas;
       testResult.payload_hash = result.payloadHash;
       testResult.result = TestResultDetail.fromWorkExecResult(result.result);
       testResult.service_id = result.serviceId;
@@ -148,7 +148,7 @@ class TestResult {
         testResult.service_id as ServiceId,
         testResult.code_hash as CodeHash,
         testResult.payload_hash,
-        testResult.gas as ServiceGas,
+        testResult.accumulate_gas as ServiceGas,
         TestResultDetail.toWorkExecResult(testResult.result),
       );
     }) as FixedSizeArray<WorkResult, WorkItemsCount>;
@@ -157,7 +157,7 @@ class TestResult {
   service_id!: number;
   code_hash!: Bytes<HASH_SIZE>;
   payload_hash!: Bytes<HASH_SIZE>;
-  gas!: bigint;
+  accumulate_gas!: bigint;
   result!: TestResultDetail;
 }
 
