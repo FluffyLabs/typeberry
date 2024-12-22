@@ -66,6 +66,7 @@ class JsonState {
     gamma_a: json.array(fromJson.ticketBody),
     gamma_s: TicketsOrKeys.fromJson,
     gamma_z: json.fromString((v) => Bytes.parseBytes(v, 144)),
+    post_offenders: json.array(fromJson.bytes32()),
   };
   // timeslot
   tau!: number;
@@ -85,15 +86,19 @@ class JsonState {
   gamma_s!: TicketsOrKeys;
   // bandersnatch ring comittment
   gamma_z!: Bytes<144>;
+  // posterior offenders sequence
+  post_offenders!: Ed25519Key[];
 }
 
 export class EpochMark {
   static fromJson: FromJson<EpochMark> = {
     entropy: fromJson.bytes32(),
+    tickets_entropy: fromJson.bytes32(),
     validators: json.array(fromJson.bytes32()),
   };
 
   entropy!: EntropyHash;
+  tickets_entropy!: EntropyHash;
   validators!: BandersnatchKey[];
 }
 
@@ -121,7 +126,6 @@ export class SafroleTest {
     input: {
       slot: "number",
       entropy: fromJson.bytes32(),
-      offenders: json.array(fromJson.bytes32()),
       extrinsic: json.array(fromJson.ticketEnvelope),
     },
     pre_state: JsonState.fromJson,
@@ -132,7 +136,7 @@ export class SafroleTest {
   input!: {
     slot: number;
     entropy: EntropyHash;
-    offenders: Ed25519Key[];
+    // offenders: Ed25519Key[];
     extrinsic: SignedTicket[];
   };
   pre_state!: JsonState;
