@@ -13,7 +13,7 @@ export namespace fromJson {
   export const ed25519Signature = json.fromString<Ed25519Signature>((v) => Bytes.parseBytes(v, 64).asOpaque());
 
   export const ticketAttempt = json.fromNumber((v) => {
-    if (v !== 0 && v !== 1) {
+    if (v !== 0 && v !== 1 && v !== 2) {
       throw new Error("Invalid TicketAttempt value.");
     }
     return v as TicketAttempt;
