@@ -94,7 +94,7 @@ export class WorkPackageExecutor {
       const pvm = exec.ok;
 
       const gasRatio = asOpaqueType(tryAsU64(3_000n));
-      const ret = await pvm.run(item.payload, tryAsGas(item.gasLimit));
+      const ret = await pvm.run(item.payload, tryAsGas(item.refineGasLimit)); // or accumulateGasLimit?
       results.push(
         new WorkResult(
           item.service,
