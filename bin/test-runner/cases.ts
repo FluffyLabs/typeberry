@@ -6,6 +6,12 @@ import test from "node:test";
 import { tinyChainSpec } from "@typeberry/config";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
+import {
+  AssurancesTestFull,
+  AssurancesTestTiny,
+  runAssurancesTestFull,
+  runAssurancesTestTiny,
+} from "./tests/assurances";
 import { getAssurancesExtrinsicFromJson, runAssurancesExtrinsicTest } from "./tests/codec/assurances-extrinsic";
 import { blockFromJson, runBlockTest } from "./tests/codec/block";
 import { disputesExtrinsicFromJson, runDisputesExtrinsicTest } from "./tests/codec/disputes-extrinsic";
@@ -30,6 +36,7 @@ import {
   runSegmentEcTest,
   runSegmentRootTest,
 } from "./tests/erasure-coding";
+import { HistoryTest, runHistoryTest } from "./tests/history";
 import { PvmTest, runPvmTest } from "./tests/pvm";
 import { ReportsTest, runReportsTest } from "./tests/reports";
 import { SafroleTest, runSafroleTest } from "./tests/safrole";
@@ -161,6 +168,8 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
   }
 
   const runners = [
+    prepRunner("assurances/tiny", AssurancesTestTiny.fromJson, runAssurancesTestTiny),
+    prepRunner("assurances/full", AssurancesTestFull.fromJson, runAssurancesTestFull),
     prepRunner("codec/assurances_extrinsic", getAssurancesExtrinsicFromJson(tinyChainSpec), runAssurancesExtrinsicTest),
     prepRunner("codec/block", blockFromJson, runBlockTest),
     prepRunner("codec/disputes_extrinsic", disputesExtrinsicFromJson, runDisputesExtrinsicTest),
@@ -179,6 +188,7 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
     prepRunner("erasure-coding/page_proof", PageProof.fromJson, runPageProofTest),
     prepRunner("erasure-coding/segment_ec", SegmentEcTest.fromJson, runSegmentEcTest),
     prepRunner("erasure-coding/segment_root", SegmentRoot.fromJson, runSegmentRootTest),
+    prepRunner("history", HistoryTest.fromJson, runHistoryTest),
     prepRunner("ignored", JsonSchema.fromJson, ignoreSchemaFiles),
     prepRunner("pvm", PvmTest.fromJson, runPvmTest),
     prepRunner("reports", ReportsTest.fromJson, runReportsTest),
