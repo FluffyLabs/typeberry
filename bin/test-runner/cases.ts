@@ -181,7 +181,7 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
     prepRunner("ignored", JsonSchema.fromJson, ignoreSchemaFiles),
     prepRunner("pvm", PvmTest.fromJson, runPvmTest),
     prepRunner("safrole", SafroleTest.fromJson, runSafroleTest),
-    prepRunner("shuffling", shufflingTests, runShufflingTests),
+    prepRunner("shuffle", shufflingTests, runShufflingTests),
     prepRunner("statistics/tiny", StatisticsTestTiny.fromJson, runStatisticsTestTiny),
     prepRunner("statistics/full", StatisticsTestFull.fromJson, runStatisticsTestFull),
     prepRunner("trie", trieTestSuiteFromJson, runTrieTest),
