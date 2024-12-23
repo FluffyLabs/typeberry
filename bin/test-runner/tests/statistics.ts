@@ -47,8 +47,8 @@ class TestActivityRecord {
   assurances!: U32;
 }
 
-class StatisticsState {
-  static fromJson: FromJson<StatisticsState> = {
+class TestState {
+  static fromJson: FromJson<TestState> = {
     pi: {
       current: json.array(TestActivityRecord.fromJson),
       last: json.array(TestActivityRecord.fromJson),
@@ -68,27 +68,27 @@ class StatisticsState {
 export class StatisticsTestTiny {
   static fromJson: FromJson<StatisticsTestTiny> = {
     input: TinyInput.fromJson,
-    pre_state: StatisticsState.fromJson,
+    pre_state: TestState.fromJson,
     output: json.fromAny(() => null),
-    post_state: StatisticsState.fromJson,
+    post_state: TestState.fromJson,
   };
   input!: TinyInput;
-  pre_state!: StatisticsState;
+  pre_state!: TestState;
   output!: null;
-  post_state!: StatisticsState;
+  post_state!: TestState;
 }
 
 export class StatisticsTestFull {
   static fromJson: FromJson<StatisticsTestFull> = {
     input: FullInput.fromJson,
-    pre_state: StatisticsState.fromJson,
+    pre_state: TestState.fromJson,
     output: json.fromAny(() => null),
-    post_state: StatisticsState.fromJson,
+    post_state: TestState.fromJson,
   };
   input!: FullInput;
-  pre_state!: StatisticsState;
+  pre_state!: TestState;
   output!: null;
-  post_state!: StatisticsState;
+  post_state!: TestState;
 }
 
 export async function runStatisticsTestTiny(_testContent: StatisticsTestTiny) {

@@ -18,8 +18,8 @@ class Input {
   slot!: TimeSlot;
 }
 
-class ServiceInfo {
-  static fromJson: FromJson<ServiceInfo> = {
+class TestServiceInfo {
+  static fromJson: FromJson<TestServiceInfo> = {
     code_hash: commonFromJson.bytes32(),
     balance: "number",
     min_item_gas: "number",
@@ -36,18 +36,18 @@ class ServiceInfo {
   items!: U32;
 }
 
-class ServiceItem {
-  static fromJson: FromJson<ServiceItem> = {
+class TestServiceItem {
+  static fromJson: FromJson<TestServiceItem> = {
     id: "number",
-    info: ServiceInfo.fromJson,
+    info: TestServiceInfo.fromJson,
   };
 
   id!: ServiceId;
-  info!: ServiceInfo;
+  info!: TestServiceInfo;
 }
 
-class ReportedWorkPackage {
-  static fromJson: FromJson<ReportedWorkPackage> = {
+class TestReportedWorkPackage {
+  static fromJson: FromJson<TestReportedWorkPackage> = {
     hash: commonFromJson.bytes32(),
     exports_root: commonFromJson.bytes32(),
   };
@@ -56,14 +56,14 @@ class ReportedWorkPackage {
   exports_root!: OpaqueHash;
 }
 
-class BlocksInfo {
-  static fromJson: FromJson<BlocksInfo> = {
+class TestBlocksInfo {
+  static fromJson: FromJson<TestBlocksInfo> = {
     header_hash: commonFromJson.bytes32(),
     mmr: {
       peaks: json.array(json.nullable(commonFromJson.bytes32())),
     },
     state_root: commonFromJson.bytes32(),
-    reported: json.array(ReportedWorkPackage.fromJson),
+    reported: json.array(TestReportedWorkPackage.fromJson),
   };
 
   header_hash!: HeaderHash;
@@ -71,19 +71,19 @@ class BlocksInfo {
     peaks: Array<OpaqueHash | null>;
   };
   state_root!: OpaqueHash;
-  reported!: ReportedWorkPackage[];
+  reported!: TestReportedWorkPackage[];
 }
 
-class ReportsState {
-  static fromJson: FromJson<ReportsState> = {
+class TestState {
+  static fromJson: FromJson<TestState> = {
     avail_assignments: json.array(json.nullable(TestAvailabilityAssignment.fromJson)),
     curr_validators: json.array(commonFromJson.validatorData),
     prev_validators: json.array(commonFromJson.validatorData),
     entropy: json.array(commonFromJson.bytes32()),
     offenders: json.array(codecFromJson.bytes32<Ed25519Key>()),
     auth_pools: ["array", json.array(codecFromJson.bytes32())],
-    recent_blocks: json.array(BlocksInfo.fromJson),
-    services: json.array(ServiceItem.fromJson),
+    recent_blocks: json.array(TestBlocksInfo.fromJson),
+    services: json.array(TestServiceItem.fromJson),
   };
   avail_assignments!: Array<TestAvailabilityAssignment | null>;
   curr_validators!: ValidatorData[];
@@ -91,8 +91,8 @@ class ReportsState {
   entropy!: Bytes<32>[];
   offenders!: Ed25519Key[];
   auth_pools!: OpaqueHash[][];
-  recent_blocks!: BlocksInfo[];
-  services!: ServiceItem[];
+  recent_blocks!: TestBlocksInfo[];
+  services!: TestServiceItem[];
 }
 
 enum ReportsErrorCode {
@@ -144,14 +144,14 @@ class Output {
 export class ReportsTest {
   static fromJson: FromJson<ReportsTest> = {
     input: Input.fromJson,
-    pre_state: ReportsState.fromJson,
+    pre_state: TestState.fromJson,
     output: Output.fromJson,
-    post_state: ReportsState.fromJson,
+    post_state: TestState.fromJson,
   };
   input!: Input;
-  pre_state!: ReportsState;
+  pre_state!: TestState;
   output!: Output;
-  post_state!: ReportsState;
+  post_state!: TestState;
 }
 
 export async function runReportsTest(_testContent: ReportsTest) {
