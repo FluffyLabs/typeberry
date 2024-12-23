@@ -1,9 +1,7 @@
 import {
   BANDERSNATCH_PROOF_BYTES,
-  BLS_KEY_BYTES,
   type BandersnatchKey,
   type BandersnatchProof,
-  type BlsKey,
   type Ed25519Key,
   type EntropyHash,
   type ValidatorData,
@@ -13,7 +11,8 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
 import type { State as SafroleState } from "@typeberry/safrole";
-import { Safrole, type StateDiff as SafroleStateDiff, VALIDATOR_META_BYTES } from "@typeberry/safrole";
+import { Safrole, type StateDiff as SafroleStateDiff } from "@typeberry/safrole";
+import { commonFromJson } from "./common-types";
 
 type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}` ? `${T}${Capitalize<SnakeToCamel<U>>}` : S;
 
@@ -21,22 +20,11 @@ function snakeToCamel<T extends string>(s: T): SnakeToCamel<T> {
   return s.replace(/(_\w)/g, (matches) => matches[1].toUpperCase()) as SnakeToCamel<T>;
 }
 
-export namespace fromJson {
-  export function bytes32<TInto extends Bytes<32>>() {
-    return json.fromString((v) => Bytes.parseBytes(v, 32) as TInto);
-  }
-
+namespace safroleFromJson {
   export const bytesBlob = json.fromString(BytesBlob.parseBlob);
 
-  export const validatorData: FromJson<ValidatorData> = {
-    ed25519: bytes32(),
-    bandersnatch: bytes32(),
-    bls: json.fromString((v) => Bytes.parseBytes(v, BLS_KEY_BYTES) as BlsKey),
-    metadata: json.fromString((v) => Bytes.parseBytes(v, VALIDATOR_META_BYTES)),
-  };
-
   export const ticketBody: FromJson<Ticket> = {
-    id: bytes32(),
+    id: commonFromJson.bytes32(),
     attempt: "number",
   };
 
@@ -48,8 +36,8 @@ export namespace fromJson {
 
 export class TicketsOrKeys {
   static fromJson: FromJson<TicketsOrKeys> = {
-    tickets: json.optional<Ticket[]>(json.array(fromJson.ticketBody)),
-    keys: json.optional<BandersnatchKey[]>(json.array(fromJson.bytes32())),
+    tickets: json.optional<Ticket[]>(json.array(safroleFromJson.ticketBody)),
+    keys: json.optional<BandersnatchKey[]>(json.array(commonFromJson.bytes32())),
   };
   tickets?: Ticket[];
   keys?: BandersnatchKey[];
@@ -58,15 +46,15 @@ export class TicketsOrKeys {
 class JsonState {
   static fromJson: FromJson<JsonState> = {
     tau: "number",
-    eta: json.array(fromJson.bytes32()),
-    lambda: json.array(fromJson.validatorData),
-    kappa: json.array(fromJson.validatorData),
-    gamma_k: json.array(fromJson.validatorData),
-    iota: json.array(fromJson.validatorData),
-    gamma_a: json.array(fromJson.ticketBody),
+    eta: json.array(commonFromJson.bytes32()),
+    lambda: json.array(commonFromJson.validatorData),
+    kappa: json.array(commonFromJson.validatorData),
+    gamma_k: json.array(commonFromJson.validatorData),
+    iota: json.array(commonFromJson.validatorData),
+    gamma_a: json.array(safroleFromJson.ticketBody),
     gamma_s: TicketsOrKeys.fromJson,
     gamma_z: json.fromString((v) => Bytes.parseBytes(v, 144)),
-    post_offenders: json.array(fromJson.bytes32()),
+    post_offenders: json.array(commonFromJson.bytes32()),
   };
   // timeslot
   tau!: number;
@@ -92,9 +80,9 @@ class JsonState {
 
 export class EpochMark {
   static fromJson: FromJson<EpochMark> = {
-    entropy: fromJson.bytes32(),
-    tickets_entropy: fromJson.bytes32(),
-    validators: json.array(fromJson.bytes32()),
+    entropy: commonFromJson.bytes32(),
+    tickets_entropy: commonFromJson.bytes32(),
+    validators: json.array(commonFromJson.bytes32()),
   };
 
   entropy!: EntropyHash;
@@ -105,7 +93,7 @@ export class EpochMark {
 export class OkOutput {
   static fromJson: FromJson<OkOutput> = {
     epoch_mark: json.optional(EpochMark.fromJson),
-    tickets_mark: json.optional<Ticket[]>(json.array(fromJson.ticketBody)),
+    tickets_mark: json.optional<Ticket[]>(json.array(safroleFromJson.ticketBody)),
   };
   epoch_mark?: EpochMark;
   tickets_mark?: Ticket[];
@@ -125,8 +113,8 @@ export class SafroleTest {
   static fromJson: FromJson<SafroleTest> = {
     input: {
       slot: "number",
-      entropy: fromJson.bytes32(),
-      extrinsic: json.array(fromJson.ticketEnvelope),
+      entropy: commonFromJson.bytes32(),
+      extrinsic: json.array(safroleFromJson.ticketEnvelope),
     },
     pre_state: JsonState.fromJson,
     output: Output.fromJson,

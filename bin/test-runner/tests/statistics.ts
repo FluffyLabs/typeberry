@@ -3,7 +3,7 @@ import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { U32 } from "@typeberry/numbers";
 import { getExtrinsicFromJson } from "./codec/extrinsic";
-import { fromJson } from "./safrole";
+import { commonFromJson } from "./common-types";
 
 class TinyInput {
   static fromJson: FromJson<TinyInput> = {
@@ -54,7 +54,7 @@ class StatisticsState {
       last: json.array(TestActivityRecord.fromJson),
     },
     tau: "number",
-    kappa_prime: json.array(fromJson.validatorData),
+    kappa_prime: json.array(commonFromJson.validatorData),
   };
 
   pi!: {

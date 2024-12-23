@@ -31,6 +31,7 @@ import {
   runSegmentRootTest,
 } from "./tests/erasure-coding";
 import { PvmTest, runPvmTest } from "./tests/pvm";
+import { ReportsTest, runReportsTest } from "./tests/reports";
 import { SafroleTest, runSafroleTest } from "./tests/safrole";
 import { JsonSchema, ignoreSchemaFiles } from "./tests/schema";
 import { runShufflingTests, shufflingTests } from "./tests/shuffling";
@@ -180,6 +181,7 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
     prepRunner("erasure-coding/segment_root", SegmentRoot.fromJson, runSegmentRootTest),
     prepRunner("ignored", JsonSchema.fromJson, ignoreSchemaFiles),
     prepRunner("pvm", PvmTest.fromJson, runPvmTest),
+    prepRunner("reports", ReportsTest.fromJson, runReportsTest),
     prepRunner("safrole", SafroleTest.fromJson, runSafroleTest),
     prepRunner("shuffle", shufflingTests, runShufflingTests),
     prepRunner("statistics/tiny", StatisticsTestTiny.fromJson, runStatisticsTestTiny),
