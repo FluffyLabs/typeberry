@@ -12,6 +12,7 @@ import {
   runAssurancesTestFull,
   runAssurancesTestTiny,
 } from "./tests/assurances";
+import { AuthorizationsTest, runAuthorizationsTest } from "./tests/authorizations";
 import { getAssurancesExtrinsicFromJson, runAssurancesExtrinsicTest } from "./tests/codec/assurances-extrinsic";
 import { blockFromJson, runBlockTest } from "./tests/codec/block";
 import { disputesExtrinsicFromJson, runDisputesExtrinsicTest } from "./tests/codec/disputes-extrinsic";
@@ -37,6 +38,7 @@ import {
   runSegmentRootTest,
 } from "./tests/erasure-coding";
 import { HistoryTest, runHistoryTest } from "./tests/history";
+import { PreImagesTest, runPreImagesTest } from "./tests/preimages";
 import { PvmTest, runPvmTest } from "./tests/pvm";
 import { ReportsTest, runReportsTest } from "./tests/reports";
 import { SafroleTest, runSafroleTest } from "./tests/safrole";
@@ -170,6 +172,7 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
   const runners = [
     prepRunner("assurances/tiny", AssurancesTestTiny.fromJson, runAssurancesTestTiny),
     prepRunner("assurances/full", AssurancesTestFull.fromJson, runAssurancesTestFull),
+    prepRunner("authorizations", AuthorizationsTest.fromJson, runAuthorizationsTest),
     prepRunner("codec/assurances_extrinsic", getAssurancesExtrinsicFromJson(tinyChainSpec), runAssurancesExtrinsicTest),
     prepRunner("codec/block", blockFromJson, runBlockTest),
     prepRunner("codec/disputes_extrinsic", disputesExtrinsicFromJson, runDisputesExtrinsicTest),
@@ -190,6 +193,7 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
     prepRunner("erasure-coding/segment_root", SegmentRoot.fromJson, runSegmentRootTest),
     prepRunner("history", HistoryTest.fromJson, runHistoryTest),
     prepRunner("ignored", JsonSchema.fromJson, ignoreSchemaFiles),
+    prepRunner("preimages", PreImagesTest.fromJson, runPreImagesTest),
     prepRunner("pvm", PvmTest.fromJson, runPvmTest),
     prepRunner("reports", ReportsTest.fromJson, runReportsTest),
     prepRunner("safrole", SafroleTest.fromJson, runSafroleTest),
