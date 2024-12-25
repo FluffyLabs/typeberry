@@ -28,10 +28,6 @@ export namespace commonFromJson {
     return json.fromString((v) => Bytes.parseBytes(v, 32) as TInto);
   }
 
-  export function bytes64<TInto extends Bytes<64>>() {
-    return json.fromString((v) => Bytes.parseBytes(v, 64) as TInto);
-  }
-
   export const validatorData: FromJson<ValidatorData> = {
     ed25519: bytes32(),
     bandersnatch: bytes32(),
