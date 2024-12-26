@@ -69,6 +69,7 @@ export class InMemoryTrie {
  * New root node is returned.
  */
 function trieInsert(root: TrieNode | null, nodes: WriteableNodesDb, leaf: LeafNode): TrieNode {
+  // console.log('aaa', root, nodes, leaf)
   if (root === null) {
     nodes.insert(leaf.node);
     return leaf.node;
@@ -240,12 +241,11 @@ function createSubtreeForBothLeaves(
  */
 function getBit(key: TruncatedStateKey, bitIndex: number): boolean {
   check(bitIndex < TRUNCATED_KEY_BITS);
-  const byte = bitIndex >> 3;
+  const byte = bitIndex >>> 3;
   const bit = bitIndex - (byte << 3);
-  const mask = 1 << bit;
-
+  const mask = 0b10_00_00_00 >>> bit;
   const val = key.raw[byte] & mask;
-  return val > 0;
+  return val !== 0;
 }
 
 function trieStringify(root: TrieNode | null, nodes: NodesDb): string {

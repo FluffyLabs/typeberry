@@ -71,11 +71,11 @@ export class TrieNode {
 
   /** Returns the type of the node */
   getNodeType(): NodeType {
-    if ((this.data[0] & 0b1) === 0b0) {
+    if ((this.data[0] & 0b10_00_00_00) === 0b0) {
       return NodeType.Branch;
     }
 
-    if ((this.data[0] & 0b11) === 0b11) {
+    if ((this.data[0] & 0b11_00_00_00) === 0b11_00_00_00) {
       return NodeType.EmbedLeaf;
     }
 
@@ -117,7 +117,7 @@ export class BranchNode {
     node.data.set(right.raw, HASH_BYTES);
 
     // set the first bit to 0 (branch node)
-    node.data[0] &= 0b1111_1110;
+    node.data[0] &= 0b01_11_11_11;
 
     return new BranchNode(node);
   }
@@ -163,14 +163,13 @@ export class LeafNode {
     const node = new TrieNode();
     // The value will fit in the leaf itself.
     if (value.length <= HASH_BYTES) {
-      node.data[0] = value.length << 2;
-      node.data[0] |= 0b01;
+      node.data[0] = 0b10_00_00_00 | value.length;
       // truncate & copy the key
       node.data.set(key.raw.subarray(0, TRUNCATED_KEY_BYTES), 1);
       // copy the value
       node.data.set(value.raw, TRUNCATED_KEY_BYTES + 1);
     } else {
-      node.data[0] = 0b11;
+      node.data[0] = 0b11_00_00_00;
       // truncate & copy the key
       node.data.set(key.raw.subarray(0, TRUNCATED_KEY_BYTES), 1);
       // copy the value hash
@@ -192,8 +191,8 @@ export class LeafNode {
    * Note in case this node only contains hash this is going to be 0.
    */
   getValueLength(): number {
-    const firstByte = this.node.data[0] >> 2;
-    return firstByte;
+    const firstByte = this.node.data[0];
+    return firstByte & 0b00_11_11_11;
   }
 
   /**
