@@ -7,15 +7,6 @@ import { getAssurancesExtrinsicFromJson } from "./codec/assurances-extrinsic";
 import { workReportFromJson } from "./codec/work-report";
 import { TestAvailabilityAssignment, commonFromJson } from "./common-types";
 
-/*
-State ::= SEQUENCE {
-    -- [κ'] Posterior active validators.
-    curr-validators ValidatorsData
-}
-
-
-*/
-
 class InputTiny {
   static fromJson: FromJson<InputTiny> = {
     assurances: getAssurancesExtrinsicFromJson(tinyChainSpec),
