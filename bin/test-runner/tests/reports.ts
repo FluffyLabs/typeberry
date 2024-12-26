@@ -1,4 +1,4 @@
-import type { Ed25519Key, HeaderHash, ServiceId, TimeSlot, ValidatorData, WorkReportHash } from "@typeberry/block";
+import type { Ed25519Key, ServiceId, TimeSlot, ValidatorData } from "@typeberry/block";
 import type { GuaranteesExtrinsic } from "@typeberry/block/gaurantees";
 import type { Bytes } from "@typeberry/bytes";
 import type { OpaqueHash } from "@typeberry/hash";
@@ -6,7 +6,7 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import type { U32 } from "@typeberry/numbers";
 import { fromJson as codecFromJson } from "./codec/common";
 import { guaranteesExtrinsicFromJson } from "./codec/guarantees-extrinsic";
-import { TestAvailabilityAssignment, TestSegmentRootLookupItem, commonFromJson } from "./common-types";
+import { TestAvailabilityAssignment, TestBlocksInfo, TestSegmentRootLookupItem, commonFromJson } from "./common-types";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -44,34 +44,6 @@ class TestServiceItem {
 
   id!: ServiceId;
   info!: TestServiceInfo;
-}
-
-class TestReportedWorkPackage {
-  static fromJson: FromJson<TestReportedWorkPackage> = {
-    hash: commonFromJson.bytes32(),
-    exports_root: commonFromJson.bytes32(),
-  };
-
-  hash!: WorkReportHash;
-  exports_root!: OpaqueHash;
-}
-
-class TestBlocksInfo {
-  static fromJson: FromJson<TestBlocksInfo> = {
-    header_hash: commonFromJson.bytes32(),
-    mmr: {
-      peaks: json.array(json.nullable(commonFromJson.bytes32())),
-    },
-    state_root: commonFromJson.bytes32(),
-    reported: json.array(TestReportedWorkPackage.fromJson),
-  };
-
-  header_hash!: HeaderHash;
-  mmr!: {
-    peaks: Array<OpaqueHash | null>;
-  };
-  state_root!: OpaqueHash;
-  reported!: TestReportedWorkPackage[];
 }
 
 class TestState {

@@ -11,6 +11,7 @@ import {
   type TimeSlot,
   VALIDATOR_META_BYTES,
   type ValidatorData,
+  type WorkReportHash,
 } from "@typeberry/block";
 import { type BeefyHash, RefineContext } from "@typeberry/block/refine-context";
 import type { WorkItemsCount } from "@typeberry/block/work-package";
@@ -257,4 +258,32 @@ export class TestAvailabilityAssignment {
       return rho;
     });
   }
+}
+
+export class TestReportedWorkPackage {
+  static fromJson: FromJson<TestReportedWorkPackage> = {
+    hash: commonFromJson.bytes32(),
+    exports_root: commonFromJson.bytes32(),
+  };
+
+  hash!: WorkReportHash;
+  exports_root!: OpaqueHash;
+}
+
+export class TestBlocksInfo {
+  static fromJson: FromJson<TestBlocksInfo> = {
+    header_hash: commonFromJson.bytes32(),
+    mmr: {
+      peaks: json.array(json.nullable(commonFromJson.bytes32())),
+    },
+    state_root: commonFromJson.bytes32(),
+    reported: json.array(TestReportedWorkPackage.fromJson),
+  };
+
+  header_hash!: HeaderHash;
+  mmr!: {
+    peaks: Array<OpaqueHash | null>;
+  };
+  state_root!: OpaqueHash;
+  reported!: TestReportedWorkPackage[];
 }
