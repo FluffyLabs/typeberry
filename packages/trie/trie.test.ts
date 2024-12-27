@@ -39,8 +39,8 @@ describe("Trie", async () => {
     );
 
     assert.deepStrictEqual(
-      trie.getRootHash(),
-      Bytes.parseBytesNoPrefix("17d7a1c738dfa055bc810110004585ca79be323586764e14179ee20e54376592", 32),
+      trie.getRootHash().toString(),
+      Bytes.parseBytesNoPrefix("99ecb1509d2cbc16bab389714e5933932977e742472fcd9277d67f45699e076a", 32).toString(),
     );
   });
 
@@ -53,8 +53,8 @@ describe("Trie", async () => {
     );
 
     assert.deepStrictEqual(
-      trie.getRootHash(),
-      Bytes.parseBytesNoPrefix("75978696ab7bd70492c2abbecf26fd03eb2c41e0d83daf968f45c20f566b9a9b", 32),
+      trie.getRootHash().toString(),
+      Bytes.parseBytesNoPrefix("e9a89ab2f10d45a46d47127110e8353d6443b635b08e989a743c27bb82740d7d", 32).toString(),
     );
   });
 
@@ -67,8 +67,8 @@ describe("Trie", async () => {
     );
 
     assert.deepStrictEqual(
-      trie.getRootHash(),
-      Bytes.parseBytesNoPrefix("9ea1799e255f9b5edb960cf6640aa42ec2fac24a199be8155853ddcce9b896c4", 32),
+      trie.getRootHash().toString(),
+      Bytes.parseBytesNoPrefix("5fd68f074c914741601931d64c6c772c18ab8a4cd0cd3a4fff0611a5d97ecc94", 32).toString(),
     );
   });
 
@@ -87,8 +87,8 @@ describe("Trie", async () => {
     );
 
     assert.deepStrictEqual(
-      trie.getRootHash(),
-      Bytes.parseBytesNoPrefix("b9c99f66e5784879a178795b63ae178f8a49ee113652a122cd4b3b2a321418c1", 32),
+      trie.getRootHash().toString(),
+      Bytes.parseBytesNoPrefix("fb4bc560e0c314b09a29fc3f83a7f063ec118ff3fc1fba4430fcc0fbea09a207", 32).toString(),
     );
   });
 
@@ -115,7 +115,7 @@ describe("Trie", async () => {
 
     assert.deepStrictEqual(
       trie.getRootHash().toString(),
-      "0xdc2fda54f07a9774c4bf553322e66a998807d88f0bea3eca308407b215b5f492",
+      "0xf07003b9d508b5b017960d069ada7893146c3425be6293b7ac3d4a9709d33b47",
     );
   });
 
@@ -131,7 +131,7 @@ describe("Trie", async () => {
     }
     assert.deepStrictEqual(
       trie.getRootHash().toString(),
-      "0xdc2fda54f07a9774c4bf553322e66a998807d88f0bea3eca308407b215b5f492",
+      "0xf07003b9d508b5b017960d069ada7893146c3425be6293b7ac3d4a9709d33b47",
     );
 
     // now set the same key again
@@ -141,7 +141,7 @@ describe("Trie", async () => {
     );
     assert.deepStrictEqual(
       trie.getRootHash().toString(),
-      "0x40ab9b14f53a2e3299afa802792df4cd02dd27dff71df3e3056d558c88965fc0",
+      "0xd6349d4e62a4288ba3d80b94421f2933b13f6f882b2c69a90508aa92ff88343f",
     );
   });
 
@@ -156,7 +156,7 @@ describe("Trie", async () => {
         "15207c233b055f921701fc62b41a440d01dfa488016a97cc653a84afb5f94fd5": "157b6c821169dacabcf26690df",
         b05ff8a05bb23c0d7b177d47ce466ee58fd55c6a0351a3040cf3cbf5225aab19: "6a208734106f38b73880684b",
       },
-      output: "55634c70b9dca56f2f40b343f750a5c9744798370cbf3f669e29ebe0b8d64ceb",
+      output: "f6ac87ea6258a68bd3288cf73ac9d03419b548858c5466b1927b796f29db13fc",
     };
 
     runTestVector(vector);
@@ -183,7 +183,7 @@ describe("Trie", async () => {
         "03345958f90731bce89d07c2722dc693425a541b5230f99a6867882993576a23":
           "cd759a8d88edb46dda489a45ba6e48a42ce7efd36f1ca31d3bdfa40d2091f27740c5ec5de746d90d9841b986f575d545d0fb642398914eaab5",
       },
-      output: "0120dd8239fdc65ef0485215493b6de1b4b31b96d9bae99617afb6178e4d43e3",
+      output: "7d874bf70ea045e278f5cd2eafb28b74cdaee9c225ca884dee82532caa7bad0f",
     };
 
     runTestVector(vector);
@@ -211,7 +211,7 @@ describe("Trie", async () => {
         "03345958f90731bce89d07c2722dc693425a541b5230f99a6867882993576a23":
           "cd759a8d88edb46dda489a45ba6e48a42ce7efd36f1ca31d3bdfa40d2091f27740c5ec5de746d90d9841b986f575d545d0fb642398914eaab5",
       },
-      output: "0120dd8239fdc65ef0485215493b6de1b4b31b96d9bae99617afb6178e4d43e3",
+      output: "7d874bf70ea045e278f5cd2eafb28b74cdaee9c225ca884dee82532caa7bad0f",
     };
 
     runTestVector(vector);
