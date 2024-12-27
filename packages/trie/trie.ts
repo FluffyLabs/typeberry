@@ -69,7 +69,6 @@ export class InMemoryTrie {
  * New root node is returned.
  */
 function trieInsert(root: TrieNode | null, nodes: WriteableNodesDb, leaf: LeafNode): TrieNode {
-  // console.log('aaa', root, nodes, leaf)
   if (root === null) {
     nodes.insert(leaf.node);
     return leaf.node;

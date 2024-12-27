@@ -1,4 +1,5 @@
 import { HashDictionary } from "@typeberry/collections";
+import { NAGATED_EMBED_LEAF_NODE_MASK } from "./masks";
 import type { TrieHash, TrieNode } from "./nodes";
 
 /**
@@ -41,7 +42,7 @@ export class NodesDb {
    */
   protected static withHashCompat<T>(hash: TrieHash, exe: (hash: TrieHash) => T): T {
     const prevValue = hash.raw[0];
-    hash.raw[0] &= 0b0111_1111;
+    hash.raw[0] &= NAGATED_EMBED_LEAF_NODE_MASK;
     const returnValue = exe(hash);
     // restore the original byte, so that we have correct value in case it
     // ends up in the right part of the subtree.
