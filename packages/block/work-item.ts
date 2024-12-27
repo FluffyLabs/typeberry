@@ -107,14 +107,15 @@ export function workItemExtrinsicsCodec(workItems: WorkItem[]) {
 /**
  * Work Item which is a part of some work package.
  *
- * https://graypaper.fluffylabs.dev/#/c71229b/194e00195800
+ * https://graypaper.fluffylabs.dev/#/5b732de/199100199c00
  */
 export class WorkItem extends WithDebug {
   static Codec = codec.Class(WorkItem, {
     service: codec.u32.asOpaque(),
     codeHash: codec.bytes(HASH_SIZE).asOpaque(),
     payload: codec.blob,
-    gasLimit: codec.u64.asOpaque(),
+    refineGasLimit: codec.u64.asOpaque(),
+    accumulateGasLimit: codec.u64.asOpaque(),
     // TODO [ToDr] Limit the number of items when decoding.
     importSegments: codec.sequenceVarLen(ImportSpec.Codec).asOpaque(),
     extrinsic: codec.sequenceVarLen(WorkItemExtrinsicSpec.Codec),
@@ -126,12 +127,22 @@ export class WorkItem extends WithDebug {
     service,
     codeHash,
     payload,
-    gasLimit,
+    refineGasLimit,
+    accumulateGasLimit,
     importSegments,
     extrinsic,
     exportCount,
   }: CodecRecord<WorkItem>) {
-    return new WorkItem(service, codeHash, payload, gasLimit, importSegments, extrinsic, exportCount);
+    return new WorkItem(
+      service,
+      codeHash,
+      payload,
+      refineGasLimit,
+      accumulateGasLimit,
+      importSegments,
+      extrinsic,
+      exportCount,
+    );
   }
 
   constructor(
@@ -146,8 +157,10 @@ export class WorkItem extends WithDebug {
     public readonly codeHash: CodeHash,
     /** `y`: payload blob */
     public readonly payload: BytesBlob,
-    /** `g`: execution gas limit */
-    public readonly gasLimit: ServiceGas,
+    /** `g`: refine execution gas limit */
+    public readonly refineGasLimit: ServiceGas,
+    /** `a`: accumulate execution gas limit */
+    public readonly accumulateGasLimit: ServiceGas,
     /** `i`: sequence of imported data segments, which identify a prior exported segment. */
     public readonly importSegments: KnownSizeArray<ImportSpec, `Less than ${typeof MAX_NUMBER_OF_SEGMENTS}`>,
     /** `x`: sequence of blob hashes and lengths to be introduced in this block */

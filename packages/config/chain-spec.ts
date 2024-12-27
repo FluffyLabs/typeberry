@@ -78,7 +78,7 @@ export const tinyChainSpec = new ChainSpec({
 export const fullChainSpec = new ChainSpec({
   validatorsCount: 1023,
   epochLength: 600,
-  coresCount: 2,
+  coresCount: 341,
   slotDuration: 6,
   contestLength: 10,
   ticketsPerValidator: 3,

@@ -3,12 +3,20 @@ import * as fs from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 
+import { tinyChainSpec } from "@typeberry/config";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
-import { assurancesExtrinsicFromJson, runAssurancesExtrinsicTest } from "./tests/codec/assurances-extrinsic";
+import {
+  AssurancesTestFull,
+  AssurancesTestTiny,
+  runAssurancesTestFull,
+  runAssurancesTestTiny,
+} from "./tests/assurances";
+import { AuthorizationsTest, runAuthorizationsTest } from "./tests/authorizations";
+import { getAssurancesExtrinsicFromJson, runAssurancesExtrinsicTest } from "./tests/codec/assurances-extrinsic";
 import { blockFromJson, runBlockTest } from "./tests/codec/block";
 import { disputesExtrinsicFromJson, runDisputesExtrinsicTest } from "./tests/codec/disputes-extrinsic";
-import { extrinsicFromJson, runExtrinsicTest } from "./tests/codec/extrinsic";
+import { getExtrinsicFromJson, runExtrinsicTest } from "./tests/codec/extrinsic";
 import { guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest } from "./tests/codec/guarantees-extrinsic";
 import { headerFromJson, runHeaderTest } from "./tests/codec/header";
 import { preimagesExtrinsicFromJson, runPreimagesExtrinsicTest } from "./tests/codec/preimages-extrinsic";
@@ -29,10 +37,19 @@ import {
   runSegmentEcTest,
   runSegmentRootTest,
 } from "./tests/erasure-coding";
+import { HistoryTest, runHistoryTest } from "./tests/history";
+import { PreImagesTest, runPreImagesTest } from "./tests/preimages";
 import { PvmTest, runPvmTest } from "./tests/pvm";
+import { ReportsTest, runReportsTest } from "./tests/reports";
 import { SafroleTest, runSafroleTest } from "./tests/safrole";
 import { JsonSchema, ignoreSchemaFiles } from "./tests/schema";
 import { runShufflingTests, shufflingTests } from "./tests/shuffling";
+import {
+  StatisticsTestFull,
+  StatisticsTestTiny,
+  runStatisticsTestFull,
+  runStatisticsTestTiny,
+} from "./tests/statistics";
 import { runTrieTest, trieTestSuiteFromJson } from "./tests/trie";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
@@ -117,6 +134,12 @@ function tryToPrepareTestRunner<T>(
   run: (t: T, path: string) => Promise<void>,
   onError: (name: string, e: unknown) => void,
 ): TestAndRunner | null {
+  // the condition is needed to distinguish between tiny and full chain spec
+  // without the condition some tests (for example statistics) will be run twice
+  if (!name.split("/").every((pathPart) => path.includes(pathPart))) {
+    return null;
+  }
+
   try {
     const parsedTest = parseFromJson(testContent, fromJson);
 
@@ -147,10 +170,13 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
   }
 
   const runners = [
-    prepRunner("codec/assurances_extrinsic", assurancesExtrinsicFromJson, runAssurancesExtrinsicTest),
+    prepRunner("assurances/tiny", AssurancesTestTiny.fromJson, runAssurancesTestTiny),
+    prepRunner("assurances/full", AssurancesTestFull.fromJson, runAssurancesTestFull),
+    prepRunner("authorizations", AuthorizationsTest.fromJson, runAuthorizationsTest),
+    prepRunner("codec/assurances_extrinsic", getAssurancesExtrinsicFromJson(tinyChainSpec), runAssurancesExtrinsicTest),
     prepRunner("codec/block", blockFromJson, runBlockTest),
     prepRunner("codec/disputes_extrinsic", disputesExtrinsicFromJson, runDisputesExtrinsicTest),
-    prepRunner("codec/extrinsic", extrinsicFromJson, runExtrinsicTest),
+    prepRunner("codec/extrinsic", getExtrinsicFromJson(tinyChainSpec), runExtrinsicTest),
     prepRunner("codec/guarantees_extrinsic", guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest),
     prepRunner("codec/header", headerFromJson, runHeaderTest),
     prepRunner("codec/preimages_extrinsic", preimagesExtrinsicFromJson, runPreimagesExtrinsicTest),
@@ -161,14 +187,19 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
     prepRunner("codec/work_report", workReportFromJson, runWorkReportTest),
     prepRunner("codec/work_result", workResultFromJson, runWorkResultTest),
     prepRunner("disputes", DisputesTest.fromJson, runDisputesTest),
-    prepRunner("erasure-coding", EcTest.fromJson, runEcTest),
-    prepRunner("erasure-coding/page-proof", PageProof.fromJson, runPageProofTest),
-    prepRunner("erasure-coding/segment-ec", SegmentEcTest.fromJson, runSegmentEcTest),
-    prepRunner("erasure-coding/segment-root", SegmentRoot.fromJson, runSegmentRootTest),
-    prepRunner("ignored", JsonSchema.fromJson, ignoreSchemaFiles),
+    prepRunner("erasure_coding", EcTest.fromJson, runEcTest),
+    prepRunner("erasure_coding/page_proof", PageProof.fromJson, runPageProofTest),
+    prepRunner("erasure_coding/segment_ec", SegmentEcTest.fromJson, runSegmentEcTest),
+    prepRunner("erasure_coding/segment_root", SegmentRoot.fromJson, runSegmentRootTest),
+    prepRunner("history", HistoryTest.fromJson, runHistoryTest),
+    prepRunner("schema", JsonSchema.fromJson, ignoreSchemaFiles), // ignore schema files
+    prepRunner("preimages", PreImagesTest.fromJson, runPreImagesTest),
     prepRunner("pvm", PvmTest.fromJson, runPvmTest),
+    prepRunner("reports", ReportsTest.fromJson, runReportsTest),
     prepRunner("safrole", SafroleTest.fromJson, runSafroleTest),
-    prepRunner("shuffling", shufflingTests, runShufflingTests),
+    prepRunner("shuffle", shufflingTests, runShufflingTests),
+    prepRunner("statistics/tiny", StatisticsTestTiny.fromJson, runStatisticsTestTiny),
+    prepRunner("statistics/full", StatisticsTestFull.fromJson, runStatisticsTestFull),
     prepRunner("trie", trieTestSuiteFromJson, runTrieTest),
   ];
 
