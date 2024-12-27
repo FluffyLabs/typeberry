@@ -1,7 +1,7 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { OpaqueHash } from "@typeberry/hash";
 import { type Opaque, check } from "@typeberry/utils";
-import { EMBED_LEAF_NODE_MASK, LEAF_NODE_MASK, NAGATED_EMBED_LEAF_NODE_MASK, NAGATED_LEAF_NODE_MASK } from "./masks";
+import { FIRST_BIT_SET, FIRST_BIT_SET_NEG, FIRST_TWO_BITS_SET, FIRST_TWO_BITS_SET_NEG } from "./masks";
 
 export type StateKey = Opaque<OpaqueHash, "stateKey">;
 export type TruncatedStateKey = Opaque<Bytes<TRUNCATED_KEY_BYTES>, "stateKey">;
@@ -72,11 +72,11 @@ export class TrieNode {
 
   /** Returns the type of the node */
   getNodeType(): NodeType {
-    if ((this.data[0] & EMBED_LEAF_NODE_MASK) === 0) {
+    if ((this.data[0] & FIRST_BIT_SET) === 0) {
       return NodeType.Branch;
     }
 
-    if ((this.data[0] & LEAF_NODE_MASK) === LEAF_NODE_MASK) {
+    if ((this.data[0] & FIRST_TWO_BITS_SET) === FIRST_TWO_BITS_SET) {
       return NodeType.Leaf;
     }
 
@@ -118,7 +118,7 @@ export class BranchNode {
     node.data.set(right.raw, HASH_BYTES);
 
     // set the first bit to 0 (branch node)
-    node.data[0] &= NAGATED_EMBED_LEAF_NODE_MASK;
+    node.data[0] &= FIRST_BIT_SET_NEG;
 
     return new BranchNode(node);
   }
@@ -164,13 +164,13 @@ export class LeafNode {
     const node = new TrieNode();
     // The value will fit in the leaf itself.
     if (value.length <= HASH_BYTES) {
-      node.data[0] = EMBED_LEAF_NODE_MASK | value.length;
+      node.data[0] = FIRST_BIT_SET | value.length;
       // truncate & copy the key
       node.data.set(key.raw.subarray(0, TRUNCATED_KEY_BYTES), 1);
       // copy the value
       node.data.set(value.raw, TRUNCATED_KEY_BYTES + 1);
     } else {
-      node.data[0] = LEAF_NODE_MASK;
+      node.data[0] = FIRST_TWO_BITS_SET;
       // truncate & copy the key
       node.data.set(key.raw.subarray(0, TRUNCATED_KEY_BYTES), 1);
       // copy the value hash
@@ -194,7 +194,7 @@ export class LeafNode {
   getValueLength(): number {
     const firstByte = this.node.data[0];
     // we only store values up to `HASH_BYTES`, so they fit on the last 6 bits.
-    return firstByte & NAGATED_LEAF_NODE_MASK;
+    return firstByte & FIRST_TWO_BITS_SET_NEG;
   }
 
   /**
