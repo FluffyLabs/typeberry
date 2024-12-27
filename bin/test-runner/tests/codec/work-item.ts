@@ -27,17 +27,19 @@ export const workItemFromJson = json.object<JsonWorkItem, WorkItem>(
     service: "number",
     code_hash: fromJson.bytes32(),
     payload: json.fromString(BytesBlob.parseBlob),
-    gas_limit: "number",
+    refine_gas_limit: "number",
+    accumulate_gas_limit: "number",
     import_segments: json.array(importSpecFromJson),
     extrinsic: json.array(workItemExtrinsicSpecFromJson),
     export_count: "number",
   },
-  ({ service, code_hash, payload, gas_limit, import_segments, extrinsic, export_count }) =>
+  ({ service, code_hash, payload, refine_gas_limit, accumulate_gas_limit, import_segments, extrinsic, export_count }) =>
     new WorkItem(
       service,
       code_hash,
       payload,
-      BigInt(gas_limit) as ServiceGas,
+      BigInt(refine_gas_limit) as ServiceGas,
+      BigInt(accumulate_gas_limit) as ServiceGas,
       import_segments,
       extrinsic,
       export_count,
@@ -48,7 +50,8 @@ type JsonWorkItem = {
   service: ServiceId;
   code_hash: CodeHash;
   payload: BytesBlob;
-  gas_limit: number;
+  refine_gas_limit: number;
+  accumulate_gas_limit: number;
   import_segments: WorkItem["importSegments"];
   extrinsic: WorkItemExtrinsicSpec[];
   export_count: U16;

@@ -1,4 +1,4 @@
-import type { Ed25519Key, EntropyHash, ValidatorData } from "@typeberry/block";
+import type { EntropyHash, ValidatorData } from "@typeberry/block";
 import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
 import { verifyBandersnatch } from "./bandersnatch";
 
@@ -35,7 +35,6 @@ export class Safrole {
   async transition(input: {
     slot: number;
     entropy: EntropyHash;
-    offenders: Ed25519Key[];
     extrinsic: SignedTicket[];
   }): Promise<StateDiff> {
     const newState: StateDiff = {};
