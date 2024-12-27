@@ -193,7 +193,7 @@ export class LeafNode {
   getValueLength(): number {
     const firstByte = this.node.data[0];
     // we only store values up to `HASH_BYTES`, so they fit on the last 6 bits.
-    return Math.min(firstByte, HASH_BYTES);
+    return firstByte & 0b00_11_11_11;
   }
 
   /**
