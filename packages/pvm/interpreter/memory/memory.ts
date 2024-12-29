@@ -187,7 +187,7 @@ export class Memory {
     const currentVirtualSbrkIndex = this.virtualSbrkIndex;
 
     // new sbrk index is bigger than 2 ** 32 or endHeapIndex
-    if (MAX_MEMORY_INDEX < currentVirtualSbrkIndex + length || currentVirtualSbrkIndex + length >= this.endHeapIndex) {
+    if (MAX_MEMORY_INDEX < currentVirtualSbrkIndex + length || currentVirtualSbrkIndex + length > this.endHeapIndex) {
       throw new OutOfMemory();
     }
 
