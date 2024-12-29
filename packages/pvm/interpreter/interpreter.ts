@@ -10,6 +10,8 @@ import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
 import { InstructionResult } from "./instruction-result";
 import { Memory } from "./memory";
+import { PAGE_SIZE } from "./memory/memory-consts";
+import { alignToPageSize } from "./memory/memory-utils";
 import { tryAsPageNumber } from "./memory/pages/page-utils";
 import {
   BitOps,
@@ -191,6 +193,17 @@ export class Interpreter {
           this.oneRegOneImmOneOffsetDispatcher.dispatch(currentInstruction, argsResult);
           break;
         case ArgumentType.TWO_REGISTERS:
+          if (currentInstruction === Instruction.SBRK) {
+            const calculateSbrkCost = (length: number) => (alignToPageSize(length) / PAGE_SIZE) * 16;
+            const underflow = this.gas.sub(
+              calculateSbrkCost(this.registers.getU32(argsResult.firstRegisterIndex)) as Gas,
+            );
+            if (underflow) {
+              this.status = Status.OOG;
+              return this.status;
+            }
+          }
+
           this.twoRegsDispatcher.dispatch(currentInstruction, argsResult);
           break;
         case ArgumentType.THREE_REGISTERS:
