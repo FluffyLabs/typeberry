@@ -23,7 +23,7 @@ jobs:
         with:
           repository: FluffyLabs/jamtestvectors
           path: "./jamtestvectors"
-          ref: "0746da541814a6e1bb5da0ece4b1d249a10e5a13"
+          ref: "704fb34c3ec781bd8222d91c66ea71d247f7c31f"
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
