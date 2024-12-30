@@ -1,5 +1,5 @@
 import { BytesBlob } from "@typeberry/bytes";
-// TODO [ToDr] compare with blake2b from hash-wasm?
+// TODO [ToDr] (#212) compare with blake2b from hash-wasm?
 import blake2b from "blake2b";
 
 import { type HashAllocator, defaultAllocator } from "./allocator";
