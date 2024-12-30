@@ -6,7 +6,8 @@
   "dependencies": {
     "@typeberry/bytes": "0.0.1",
     "@typeberry/utils": "0.0.1",
-    "blake2b": "^2.1.4"
+    "blake2b": "^2.1.4",
+    "hash-wasm": "^4.12.0"
   },
   "scripts": {
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

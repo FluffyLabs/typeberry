@@ -1,0 +1,46 @@
+import type { Bytes, BytesBlob } from "@typeberry/bytes";
+import { WithDebug } from "@typeberry/utils";
+
+/**
+ * Size of the output of the hash functions.
+ *
+ * https://graypaper.fluffylabs.dev/#/387103d/071401071f01
+ *
+ */
+export const HASH_SIZE = 32;
+/** A type for the above value. */
+export type HASH_SIZE = typeof HASH_SIZE;
+
+/** Opaque, unknown hash. */
+export type OpaqueHash = Bytes<HASH_SIZE>;
+
+/** Opaque Blake2B. */
+export type Blake2bHash = Bytes<32>;
+
+/**
+ * Container for some object with a hash that is related to this object.
+ *
+ * After calculating the hash these two should be passed together to avoid
+ * unnecessary re-hashing of the data.
+ */
+export class WithHash<THash extends OpaqueHash, TData> extends WithDebug {
+  constructor(
+    public readonly hash: THash,
+    public readonly data: TData,
+  ) {
+    super();
+  }
+}
+
+/**
+ * Extension of [`WithHash`] additionally containing an encoded version of the object.
+ */
+export class WithHashAndBytes<THash extends OpaqueHash, TData> extends WithHash<THash, TData> {
+  constructor(
+    hash: THash,
+    data: TData,
+    public readonly encoded: BytesBlob,
+  ) {
+    super(hash, data);
+  }
+}

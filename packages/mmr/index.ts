@@ -34,7 +34,6 @@ export class MerkleMountainRange<H extends OpaqueHash> {
   static fromPeaks<H extends OpaqueHash>(hasher: MmrHasher<H>, mmr: MmrPeaks<H>) {
     return new MerkleMountainRange(
       hasher,
-      // TODO [ToDr] how do we know how many items is in the mountain?
       mmr.peaks.reduce((acc: Mountain<H>[], peak, index) => {
         if (peak) {
           acc.push(Mountain.fromPeak(hasher, peak, 2 ** index));
@@ -55,17 +54,23 @@ export class MerkleMountainRange<H extends OpaqueHash> {
 
     for (;;) {
       const last = this.mountains.pop();
-      if (!last || last.size !== newMountain.size) {
+      if (!last) {
         this.mountains.push(newMountain);
         return;
       }
 
-      newMountain = newMountain.mergeWith(last);
+      if (last.size !== newMountain.size) {
+        this.mountains.push(last);
+        this.mountains.push(newMountain);
+        return;
+      }
+
+      newMountain = last.mergeWith(newMountain);
     }
   }
 
   /** Root of the entire structure. */
-  getSuperPeak(): H {
+  getSuperPeakHash(): H {
     if (this.mountains.length === 0) {
       return Bytes.zero(HASH_SIZE).asOpaque();
     }
@@ -78,9 +83,24 @@ export class MerkleMountainRange<H extends OpaqueHash> {
 
   /** Get current peaks. */
   getPeaks(): MmrPeaks<H> {
-    return {
-      peaks: this.mountains.map((m) => m.peak),
-    };
+    const ret: MmrPeaks<H> = { peaks: [] };
+    const mountains = this.mountains.slice();
+
+    // always 2**index
+    let currentSize = 1;
+    let currentItem = mountains.pop();
+    while (currentItem !== undefined) {
+      // console.log(currentItem.size, currentSize, 2 * currentSize);
+      if (currentItem.size >= currentSize && currentItem.size < 2 * currentSize) {
+        ret.peaks.push(currentItem.peak);
+        currentItem = mountains.pop();
+      } else {
+        ret.peaks.push(null);
+      }
+      // move to the next index.
+      currentSize = currentSize << 1;
+    }
+    return ret;
   }
 }
 

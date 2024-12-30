@@ -1,6 +1,5 @@
-import { hashConcat } from "@typeberry/blake2b";
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
-import type { OpaqueHash } from "@typeberry/hash";
+import { type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
 import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "@typeberry/transition/recent-history";
@@ -44,8 +43,8 @@ export class HistoryTest {
 
 export async function runHistoryTest(testContent: HistoryTest) {
   const hasher: MmrHasher<OpaqueHash> = {
-    hashConcat: (a, b) => hashConcat(a.raw, [b.raw]),
-    hashConcatPrepend: (id, a, b) => hashConcat(id.raw, [a.raw, b.raw]),
+    hashConcat: (a, b) => blake2b.hashBlobs([a, b]),
+    hashConcatPrepend: (id, a, b) => blake2b.hashBlobs([id, a, b]),
   };
 
   const state: RecentHistoryState = testContent.pre_state.beta.map((x) => ({
