@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import type { Header, HeaderHash, TimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { HASH_SIZE, type WithHash, hashString } from "@typeberry/hash";
+import { HASH_SIZE, type WithHash, blake2b } from "@typeberry/hash";
 import type { Listener } from "@typeberry/state-machine";
 import { KEY_SIZE, KeyValuePair } from "./protocol/ce-129-state-request";
 import { Announcement, Handshake, HashAndSlot } from "./protocol/up-0-block-announcement";
@@ -37,7 +37,7 @@ export function startExtension(api: ExtensionApi) {
     let value = BytesBlob.blobFromNumbers([255, 255, 0, 0]);
     if (
       Bytes.fromBlob(
-        hashString("0x83bd3bde264a79a2e67c487696c1d7f0b549da89").raw.subarray(0, KEY_SIZE),
+        blake2b.hashString("0x83bd3bde264a79a2e67c487696c1d7f0b549da89").raw.subarray(0, KEY_SIZE),
         KEY_SIZE,
       ).isEqualTo(startKey)
     ) {

@@ -1,7 +1,7 @@
 import type { CodeHash, ServiceId, StateRootHash } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
-import { HASH_SIZE, WithHash, hashString } from "@typeberry/hash";
+import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import { InMemoryTrie, type StateKey, type TrieHash } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher";
 import { WriteableNodesDb } from "@typeberry/trie/nodesDb";
@@ -26,7 +26,7 @@ export class State {
   ) {}
 
   getServiceCode(serviceId: ServiceId): WithHash<CodeHash, BytesBlob> | null {
-    const key = hashString(`serviceCodeHash:${serviceId}`);
+    const key = blake2b.hashString(`serviceCodeHash:${serviceId}`);
     // TODO [ToDr] here we need to make sure that the key is part of the root!
     const blob = this.db.get(key.asOpaque());
     if (!blob) {

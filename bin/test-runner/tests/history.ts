@@ -1,12 +1,12 @@
 import assert from "node:assert";
 
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
-import { type OpaqueHash, keccak, KeccakHash } from "@typeberry/hash";
+import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
 import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "@typeberry/transition/recent-history";
+import { inspect } from "@typeberry/utils";
 import { TestBlocksInfo, TestReportedWorkPackage, commonFromJson } from "./common-types";
-import {inspect} from "@typeberry/utils";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -65,10 +65,7 @@ export async function runHistoryTest(testContent: HistoryTest) {
   const transition = new RecentHistory(hasher, state);
   transition.transition(input);
 
-  assert.deepEqual(
-    inspect(transition.state),
-    inspect(convertState(testContent.post_state))
-  );
+  assert.deepEqual(inspect(transition.state), inspect(convertState(testContent.post_state)));
 }
 
 function convertState(state: TestState): RecentHistoryState {
@@ -82,4 +79,3 @@ function convertState(state: TestState): RecentHistoryState {
     })),
   }));
 }
-

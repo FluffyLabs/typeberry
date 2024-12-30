@@ -3,7 +3,7 @@ import type { WorkPackage } from "@typeberry/block/work-package";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
 import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { HASH_SIZE, hashBytes } from "@typeberry/hash";
+import { HASH_SIZE, blake2b } from "@typeberry/hash";
 import { type U16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
 import { type Gas, tryAsGas } from "@typeberry/pvm-interpreter/gas";
@@ -65,7 +65,7 @@ export class WorkPackageExecutor {
         new WorkResult(
           item.service,
           item.codeHash,
-          hashBytes(item.payload),
+          blake2b.hashBytes(item.payload),
           gasRatio,
           new WorkExecResult(WorkExecResultKind.ok, ret),
         ),

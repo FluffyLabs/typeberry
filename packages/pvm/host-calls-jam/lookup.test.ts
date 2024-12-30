@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
-import { type Blake2bHash, hashBytes } from "@typeberry/hash";
+import { type Blake2bHash, blake2b } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
@@ -73,7 +73,7 @@ describe("HostCalls: Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 64);
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
+    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, blake2b.hashBytes(key));
 
     // when
     await lookup.execute(gas, registers, memory);
@@ -92,7 +92,7 @@ describe("HostCalls: Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 3);
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
+    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, blake2b.hashBytes(key));
 
     // when
     await lookup.execute(gas, registers, memory);
@@ -108,7 +108,7 @@ describe("HostCalls: Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 32);
-    accounts.data.set(null, serviceId, hashBytes(key));
+    accounts.data.set(null, serviceId, blake2b.hashBytes(key));
 
     // when
     await lookup.execute(gas, registers, memory);
@@ -155,7 +155,7 @@ describe("HostCalls: Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
+    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, blake2b.hashBytes(key));
     registers.asUnsigned[DEST_LEN_REG] = 34;
 
     // when
@@ -171,7 +171,7 @@ describe("HostCalls: Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
+    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, blake2b.hashBytes(key));
     registers.asUnsigned[DEST_START_REG] = 2 ** 32 - 1;
     registers.asUnsigned[DEST_LEN_REG] = 2 ** 10;
 
@@ -188,7 +188,7 @@ describe("HostCalls: Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 0, { skipValue: true });
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
+    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, blake2b.hashBytes(key));
 
     // when
     await lookup.execute(gas, registers, memory);

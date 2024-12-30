@@ -3,7 +3,7 @@ import { WorkPackage } from "@typeberry/block/work-package";
 import type { WorkPackageHash } from "@typeberry/block/work-report";
 import { type Codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { type HashAllocator, type OpaqueHash, WithHashAndBytes, hashBytes } from "@typeberry/hash";
+import { type HashAllocator, type OpaqueHash, WithHashAndBytes, blake2b } from "@typeberry/hash";
 
 export class TransitionHasher {
   constructor(
@@ -26,6 +26,6 @@ export class TransitionHasher {
   private encode<T, THash extends OpaqueHash>(codec: Codec<T>, data: T): WithHashAndBytes<THash, T> {
     // TODO [ToDr] Use already allocated encoding destination and hash bytes from some arena.
     const encoded = Encoder.encodeObject(codec, data, this.context);
-    return new WithHashAndBytes(hashBytes(encoded, this.allocator).asOpaque(), data, encoded);
+    return new WithHashAndBytes(blake2b.hashBytes(encoded, this.allocator).asOpaque(), data, encoded);
   }
 }

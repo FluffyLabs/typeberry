@@ -2,15 +2,17 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import type { HeaderHash } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { HASH_SIZE, hashString } from "@typeberry/hash";
+import { blake2b } from "@typeberry/hash";
 import { MessageHandler, type MessageSender } from "../handler";
 import { Handler, KEY_SIZE, KeyValuePair, STREAM_KIND } from "./ce-129-state-request";
 
-const HEADER_HASH = Bytes.fromBlob(
-  hashString("0x7e1b07b8039cf840d51c4825362948c8ecb8fce1d290f705c269b6bcc7992731").raw,
-  HASH_SIZE,
-) as HeaderHash;
-const KEY = Bytes.fromBlob(hashString("0x83bd3bde264a79a2e67c487696c1d7f0b549da89").raw.subarray(0, 31), 31);
+const HEADER_HASH: HeaderHash = blake2b
+  .hashString("0x7e1b07b8039cf840d51c4825362948c8ecb8fce1d290f705c269b6bcc7992731")
+  .asOpaque();
+const KEY = Bytes.fromBlob(
+  blake2b.hashString("0x83bd3bde264a79a2e67c487696c1d7f0b549da89").raw.subarray(0, KEY_SIZE),
+  KEY_SIZE,
+);
 const EXPECTED_VALUE = BytesBlob.blobFromNumbers([255, 255, 255, 0]);
 
 class FakeMessageSender implements MessageSender {
@@ -79,7 +81,7 @@ const getKeyValuePairs = (_hash: HeaderHash, startKey: Bytes<KEY_SIZE>) => {
   let value = BytesBlob.blobFromNumbers([255, 255, 0, 0]);
   if (
     Bytes.fromBlob(
-      hashString("0x83bd3bde264a79a2e67c487696c1d7f0b549da89").raw.subarray(0, KEY_SIZE),
+      blake2b.hashString("0x83bd3bde264a79a2e67c487696c1d7f0b549da89").raw.subarray(0, KEY_SIZE),
       KEY_SIZE,
     ).isEqualTo(startKey)
   ) {

@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
-import { type Blake2bHash, hashBytes } from "@typeberry/hash";
+import { type Blake2bHash, blake2b } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
@@ -39,7 +39,7 @@ function prepareKey(serviceId: ServiceId, key: string) {
   const serviceIdAndKey = new Uint8Array(SERVICE_ID_BYTES + keyBytes.length);
   writeServiceIdAsLeBytes(serviceId, serviceIdAndKey);
   serviceIdAndKey.set(keyBytes.raw, SERVICE_ID_BYTES);
-  return { key: keyBytes, hash: hashBytes(serviceIdAndKey) };
+  return { key: keyBytes, hash: blake2b.hashBytes(serviceIdAndKey) };
 }
 
 function prepareRegsAndMemory(

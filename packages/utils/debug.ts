@@ -45,13 +45,13 @@ export function assertNever(value: never): never {
 }
 
 /** Debug print an object. */
-export function inspect<T>(val: T, recursive: boolean = true): string {
+export function inspect<T>(val: T, recursive = true): string {
   const nest = (v: string) =>
     v
-  .split("\n")
-  .map((x) => `  ${x}`)
-  .join("\n")
-  .trim();
+      .split("\n")
+      .map((x) => `  ${x}`)
+      .join("\n")
+      .trim();
 
   if (val === null) {
     return "<null>";
@@ -62,22 +62,22 @@ export function inspect<T>(val: T, recursive: boolean = true): string {
   }
 
   if (Array.isArray(val)) {
-    return `[${recursive ? val.map(x => inspect(x, recursive)) : val}]`;
+    return `[${recursive ? val.map((x) => inspect(x, recursive)) : val}]`;
   }
 
-  if (typeof val === 'number') {
+  if (typeof val === "number") {
     return `${val} (0x${val.toString(16)})`;
   }
 
-  if (typeof val !== 'object') {
+  if (typeof val !== "object") {
     return `${val}`;
   }
-  if ('toString' in val && Object.prototype.toString !== val.toString) {
+  if ("toString" in val && Object.prototype.toString !== val.toString) {
     return `${val}`;
   }
 
   const name = val.constructor.name;
-  let v = (name !== 'Object') ? `${name} {` : '{';
+  let v = name !== "Object" ? `${name} {` : "{";
   const keys = Object.keys(val);
   const oneLine = keys.length < 3;
   for (const k of keys) {
