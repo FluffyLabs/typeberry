@@ -18,7 +18,8 @@
     "@typeberry/pvm-interpreter": "0.0.1",
     "@typeberry/safrole": "0.0.1",
     "@typeberry/shuffling": "0.0.1",
-    "@typeberry/trie": "0.0.1"
+    "@typeberry/trie": "0.0.1",
+    "@typeberry/utils": "0.0.1"
   },
   "scripts": {
     "report": "ts-node ./index.ts",
