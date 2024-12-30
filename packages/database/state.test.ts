@@ -24,7 +24,7 @@ describe("InMemoryDatabase", () => {
 
     await db.commit(tx);
 
-    assert.strictEqual(db.getRoot().toString(), "0x18408cf941c7b3cb3ad8e431a283d812bdc087ce9a43c573498f5bbf1265f2a6");
+    assert.strictEqual(db.getRoot().toString(), "0x6f8f62991ca1c4e906ecb53838672376a462f7f29f75d16ce8fdc1bda1b2247b");
     assert.deepStrictEqual(db.get(key("a")), BytesBlob.blobFromString("hello world!"));
     assert.deepStrictEqual(db.get(key("b")), BytesBlob.blobFromString("xyz"));
   });

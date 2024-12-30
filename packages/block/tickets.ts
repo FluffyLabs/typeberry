@@ -2,6 +2,7 @@ import type { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
+import type { U8 } from "@typeberry/numbers";
 import { type Opaque, WithDebug, asOpaqueType } from "@typeberry/utils";
 import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "./crypto";
 
@@ -11,18 +12,12 @@ import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "./crypto";
  * Constrained by `N = 2`:
  * https://graypaper.fluffylabs.dev/#/c71229b/3d5f003d6100
  */
-export type TicketAttempt = Opaque<0 | 1, "TicketAttempt[0|1]">;
-export const ticketAttemptCodec = codec.bool.convert<TicketAttempt>(
-  (i) => i > 0,
-  (o) => {
-    return (o ? 1 : 0) as TicketAttempt;
-  },
-);
+export type TicketAttempt = Opaque<U8, "TicketAttempt[0|1|2]">;
 
 /* Bandernsatch-signed ticket contest entry. */
 export class SignedTicket extends WithDebug {
   static Codec = codec.Class(SignedTicket, {
-    attempt: ticketAttemptCodec,
+    attempt: codec.u8.asOpaque(),
     signature: codec.bytes(BANDERSNATCH_PROOF_BYTES).asOpaque(),
   });
 
@@ -44,7 +39,7 @@ export class SignedTicket extends WithDebug {
 export class Ticket extends WithDebug {
   static Codec = codec.Class(Ticket, {
     id: codec.bytes(HASH_SIZE),
-    attempt: ticketAttemptCodec,
+    attempt: codec.u8.asOpaque(),
   });
 
   static fromCodec({ id, attempt }: CodecRecord<Ticket>) {
