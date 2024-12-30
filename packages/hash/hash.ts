@@ -15,7 +15,10 @@ export type HASH_SIZE = typeof HASH_SIZE;
 export type OpaqueHash = Bytes<HASH_SIZE>;
 
 /** Opaque Blake2B. */
-export type Blake2bHash = Bytes<32>;
+export type Blake2bHash = Bytes<HASH_SIZE>;
+
+/** Opaque KeccakHash. */
+export type KeccakHash = Bytes<HASH_SIZE>;
 
 /**
  * Container for some object with a hash that is related to this object.

@@ -27,24 +27,29 @@ export interface MmrHasher<H extends OpaqueHash> {
  * https://graypaper.fluffylabs.dev/#/6e1c0cd/399c00399c00
  */
 export class MerkleMountainRange<H extends OpaqueHash> {
+  /** Construct an empty MMR. */
   static empty<H extends OpaqueHash>(hasher: MmrHasher<H>) {
     return new MerkleMountainRange(hasher);
   }
 
+  /** Construct a new MMR from existing peaks. */
   static fromPeaks<H extends OpaqueHash>(hasher: MmrHasher<H>, mmr: MmrPeaks<H>) {
     return new MerkleMountainRange(
       hasher,
-      mmr.peaks.reduce((acc: Mountain<H>[], peak, index) => {
-        if (peak) {
-          acc.push(Mountain.fromPeak(hasher, peak, 2 ** index));
-        }
-        return acc;
-      }, []),
+      mmr.peaks
+        .reduce((acc: Mountain<H>[], peak, index) => {
+          if (peak) {
+            acc.push(Mountain.fromPeak(hasher, peak, 2 ** index));
+          }
+          return acc;
+        }, [])
+        .reverse(),
     );
   }
 
   private constructor(
     private readonly hasher: MmrHasher<H>,
+    /** Store non-empty merkle tries (mountains) ordered by ascending size. */
     private readonly mountains: Mountain<H>[] = [],
   ) {}
 
@@ -90,7 +95,6 @@ export class MerkleMountainRange<H extends OpaqueHash> {
     let currentSize = 1;
     let currentItem = mountains.pop();
     while (currentItem !== undefined) {
-      // console.log(currentItem.size, currentSize, 2 * currentSize);
       if (currentItem.size >= currentSize && currentItem.size < 2 * currentSize) {
         ret.peaks.push(currentItem.peak);
         currentItem = mountains.pop();
@@ -104,6 +108,7 @@ export class MerkleMountainRange<H extends OpaqueHash> {
   }
 }
 
+/** An internal helper structure to represent a merkle trie for MMR. */
 class Mountain<H extends OpaqueHash> {
   #hasher: MmrHasher<H>;
   #size: number;

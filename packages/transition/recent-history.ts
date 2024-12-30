@@ -4,6 +4,13 @@ import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher, type MmrPeaks } from "@typeberry/mmr";
 
+/**
+ * `H = 8`: The size of recent history, in blocks.
+ *
+ * https://graypaper.fluffylabs.dev/#/6e1c0cd/3f5d003f5f00
+ */
+export const MAX_RECENT_HISTORY = 8;
+
 /** Even more distilled version of [`WorkPackageSpec`]. */
 export type WorkPackageInfo = {
   hash: WorkPackageHash;
@@ -69,7 +76,8 @@ export class RecentHistory {
       ? MerkleMountainRange.fromPeaks(this.hasher, lastState.mmr)
       : MerkleMountainRange.empty(this.hasher);
 
-    // TODO [ToDr] MMR append?
+    // append the accumulation root
+    mmr.append(input.accumulateRoot);
 
     // push new state item
     this.state.push({
@@ -78,5 +86,8 @@ export class RecentHistory {
       postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
       reported: input.workPackages,
     });
+    if (this.state.length > MAX_RECENT_HISTORY) {
+      this.state.shift();
+    }
   }
 }

@@ -1,9 +1,12 @@
+import assert from "node:assert";
+
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
-import { type OpaqueHash, blake2b } from "@typeberry/hash";
+import { type OpaqueHash, keccak, KeccakHash } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
 import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "@typeberry/transition/recent-history";
 import { TestBlocksInfo, TestReportedWorkPackage, commonFromJson } from "./common-types";
+import {inspect} from "@typeberry/utils";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -42,20 +45,13 @@ export class HistoryTest {
 }
 
 export async function runHistoryTest(testContent: HistoryTest) {
-  const hasher: MmrHasher<OpaqueHash> = {
-    hashConcat: (a, b) => blake2b.hashBlobs([a, b]),
-    hashConcatPrepend: (id, a, b) => blake2b.hashBlobs([id, a, b]),
+  const keccakHasher = await keccak.KeccakHasher.create();
+  const hasher: MmrHasher<KeccakHash> = {
+    hashConcat: (a, b) => keccak.hashBlobs(keccakHasher, [a, b]),
+    hashConcatPrepend: (id, a, b) => keccak.hashBlobs(keccakHasher, [id, a, b]),
   };
 
-  const state: RecentHistoryState = testContent.pre_state.beta.map((x) => ({
-    headerHash: x.header_hash,
-    mmr: x.mmr,
-    postStateRoot: x.state_root,
-    reported: x.reported.map((r) => ({
-      hash: r.hash,
-      exportsRoot: r.exports_root,
-    })),
-  }));
+  const state = convertState(testContent.pre_state);
 
   const input: RecentHistoryInput = {
     headerHash: testContent.input.header_hash,
@@ -68,4 +64,22 @@ export async function runHistoryTest(testContent: HistoryTest) {
   };
   const transition = new RecentHistory(hasher, state);
   transition.transition(input);
+
+  assert.deepEqual(
+    inspect(transition.state),
+    inspect(convertState(testContent.post_state))
+  );
 }
+
+function convertState(state: TestState): RecentHistoryState {
+  return state.beta.map((x) => ({
+    headerHash: x.header_hash,
+    mmr: x.mmr,
+    postStateRoot: x.state_root,
+    reported: x.reported.map((r) => ({
+      hash: r.hash,
+      exportsRoot: r.exports_root,
+    })),
+  }));
+}
+
