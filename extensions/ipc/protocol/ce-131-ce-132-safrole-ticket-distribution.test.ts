@@ -68,9 +68,12 @@ describe("CE 131 and CE 132: Safrole Ticket Distribution", () => {
       );
       handlers.client.registerHandlers(new ClientHandler(STREAM_KIND_GENERATOR_TO_PROXY));
 
-      handlers.client.withNewStream(STREAM_KIND_GENERATOR_TO_PROXY, (handler: ClientHandler, sender) => {
-        handler.sendTicket(sender, TEST_EPOCH, TEST_TICKET);
-      });
+      handlers.client.withNewStream(
+        STREAM_KIND_GENERATOR_TO_PROXY,
+        (handler: ClientHandler<typeof STREAM_KIND_GENERATOR_TO_PROXY>, sender) => {
+          handler.sendTicket(sender, TEST_EPOCH, TEST_TICKET);
+        },
+      );
     });
   });
 });
