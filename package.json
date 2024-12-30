@@ -39,8 +39,7 @@
     "tools/ipc2rpc",
     "workers/block-generator",
     "workers/generic",
-    "workers/importer",
-    "packages/blake2b"
+    "workers/importer"
   ],
   "engines": {
     "node": ">=22",
