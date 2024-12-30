@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "Hashing utilities for typeberry.",
   "main": "index.ts",
+  "devDependencies": {
+    "@types/blake2b": "^2.1.3"
+  },
   "dependencies": {
     "@typeberry/bytes": "0.0.1",
     "@typeberry/utils": "0.0.1",
