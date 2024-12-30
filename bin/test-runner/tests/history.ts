@@ -1,6 +1,9 @@
-import type { HeaderHash } from "@typeberry/block";
+import { hashConcat } from "@typeberry/blake2b";
+import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import type { OpaqueHash } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
+import type { MmrHasher } from "@typeberry/mmr";
+import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "@typeberry/transition/recent-history";
 import { TestBlocksInfo, TestReportedWorkPackage, commonFromJson } from "./common-types";
 
 class Input {
@@ -12,7 +15,7 @@ class Input {
   };
 
   header_hash!: HeaderHash;
-  parent_state_root!: OpaqueHash;
+  parent_state_root!: StateRootHash;
   accumulate_root!: OpaqueHash;
   work_packages!: TestReportedWorkPackage[];
 }
@@ -39,6 +42,31 @@ export class HistoryTest {
   post_state!: TestState;
 }
 
-export async function runHistoryTest(_testContent: HistoryTest) {
-  // TODO [MaSi] Implement
+export async function runHistoryTest(testContent: HistoryTest) {
+  const hasher: MmrHasher<OpaqueHash> = {
+    hashConcat: (a, b) => hashConcat(a.raw, [b.raw]),
+    hashConcatPrepend: (id, a, b) => hashConcat(id.raw, [a.raw, b.raw]),
+  };
+
+  const state: RecentHistoryState = testContent.pre_state.beta.map((x) => ({
+    headerHash: x.header_hash,
+    mmr: x.mmr,
+    postStateRoot: x.state_root,
+    reported: x.reported.map((r) => ({
+      hash: r.hash,
+      exportsRoot: r.exports_root,
+    })),
+  }));
+
+  const input: RecentHistoryInput = {
+    headerHash: testContent.input.header_hash,
+    priorStateRoot: testContent.input.parent_state_root,
+    accumulateRoot: testContent.input.accumulate_root,
+    workPackages: testContent.input.work_packages.map((p) => ({
+      hash: p.hash,
+      exportsRoot: p.exports_root,
+    })),
+  };
+  const transition = new RecentHistory(hasher, state);
+  transition.transition(input);
 }

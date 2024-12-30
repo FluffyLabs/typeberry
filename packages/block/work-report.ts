@@ -11,6 +11,8 @@ import { WorkResult } from "./work-result";
 
 /** Blake2B hash of a work package. */
 export type WorkPackageHash = Opaque<OpaqueHash, "WorkPackageHash">;
+/** Work package exported segments merkle root hash. */
+export type ExportsRootHash = Opaque<OpaqueHash, "ExportsRootHash">;
 
 /** Details about the work package being reported on. */
 export class WorkPackageSpec extends WithDebug {
@@ -18,7 +20,7 @@ export class WorkPackageSpec extends WithDebug {
     hash: codec.bytes(HASH_SIZE).asOpaque(),
     length: codec.u32,
     erasureRoot: codec.bytes(HASH_SIZE),
-    exportsRoot: codec.bytes(HASH_SIZE),
+    exportsRoot: codec.bytes(HASH_SIZE).asOpaque(),
     exportsCount: codec.u16,
   });
 
@@ -34,7 +36,7 @@ export class WorkPackageSpec extends WithDebug {
     /** The root hash of the erasure coding merkle tree of that work package. */
     public readonly erasureRoot: OpaqueHash,
     /** The root hash of all data segments exported by this work package. */
-    public readonly exportsRoot: OpaqueHash,
+    public readonly exportsRoot: ExportsRootHash,
     /** Encoded length of all data segments exported by this work package. */
     public readonly exportsCount: U16,
   ) {

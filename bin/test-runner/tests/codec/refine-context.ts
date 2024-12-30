@@ -1,8 +1,7 @@
-import type { HeaderHash, TimeSlot } from "@typeberry/block";
+import type { HeaderHash, StateRootHash, TimeSlot } from "@typeberry/block";
 import { type BeefyHash, RefineContext } from "@typeberry/block/refine-context";
 import type { Bytes } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
-import type { TrieHash } from "@typeberry/trie";
 import { fromJson, runCodecTest } from "./common";
 
 export const refineContextFromJson = json.object<JsonRefineContext, RefineContext>(
@@ -20,7 +19,7 @@ export const refineContextFromJson = json.object<JsonRefineContext, RefineContex
 
 type JsonRefineContext = {
   anchor: HeaderHash;
-  state_root: TrieHash;
+  state_root: StateRootHash;
   beefy_root: BeefyHash;
   lookup_anchor: HeaderHash;
   lookup_anchor_slot: TimeSlot;

@@ -19,6 +19,7 @@
     "packages/hash",
     "packages/json-parser",
     "packages/logger",
+    "packages/mmr",
     "packages/numbers",
     "packages/pvm/debugger-adapter",
     "packages/pvm/host-calls",
@@ -38,7 +39,8 @@
     "tools/ipc2rpc",
     "workers/block-generator",
     "workers/generic",
-    "workers/importer"
+    "workers/importer",
+    "packages/blake2b"
   ],
   "engines": {
     "node": ">=22",

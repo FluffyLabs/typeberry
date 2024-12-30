@@ -3,9 +3,15 @@ import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { EST_EPOCH_LENGTH, EST_VALIDATORS } from "@typeberry/config";
 import { HASH_SIZE, WithHash } from "@typeberry/hash";
-import type { TrieHash } from "@typeberry/trie";
 import { WithDebug, asOpaqueType } from "@typeberry/utils";
-import { type EntropyHash, type TimeSlot, type ValidatorIndex, tryAsTimeSlot, tryAsValidatorIndex } from "./common";
+import {
+  type EntropyHash,
+  type StateRootHash,
+  type TimeSlot,
+  type ValidatorIndex,
+  tryAsTimeSlot,
+  tryAsValidatorIndex,
+} from "./common";
 import { withContext } from "./context";
 import {
   BANDERSNATCH_KEY_BYTES,
@@ -100,7 +106,7 @@ export class Header extends WithDebug {
    */
   public parentHeaderHash: HeaderHash = Bytes.zero(HASH_SIZE).asOpaque();
   /** `H_r`: The state trie root hash before executing that block. */
-  public priorStateRoot: TrieHash = Bytes.zero(HASH_SIZE).asOpaque();
+  public priorStateRoot: StateRootHash = Bytes.zero(HASH_SIZE).asOpaque();
   /** `H_x`: The hash of block extrinsic. */
   public extrinsicHash: ExtrinsicHash = Bytes.zero(HASH_SIZE).asOpaque();
   /** `H_t`: JAM time-slot index. */

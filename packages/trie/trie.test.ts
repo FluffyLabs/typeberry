@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { blake2bTrieHasher } from "./blake2b.node";
+import { blake2bTrieHasher } from "./hasher";
 import { LeafNode, parseInputKey } from "./nodes";
 import { InMemoryTrie } from "./trie";
 
