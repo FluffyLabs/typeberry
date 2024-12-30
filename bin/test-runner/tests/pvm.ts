@@ -3,11 +3,12 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import { Interpreter } from "@typeberry/pvm-interpreter";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder } from "@typeberry/pvm-interpreter/memory";
-import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
+import { MAX_MEMORY_INDEX, PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { type MemoryIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { getPageNumber, getStartPageIndex } from "@typeberry/pvm-interpreter/memory/memory-utils";
 import type { PageNumber } from "@typeberry/pvm-interpreter/memory/pages/page-utils";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
+import { Status } from "@typeberry/pvm-interpreter/status";
 
 namespace fromJson {
   export const uint8Array = json.fromAny((v) => {
@@ -102,18 +103,30 @@ export async function runPvmTest(testContent: PvmTest) {
     const address = tryAsMemoryIndex(memoryChunk.address);
     memoryBuilder.setData(address, memoryChunk.contents);
   }
-
-  /**
-   * The values of HEAP_START_PAGE and HEAP_END_PAGE are not important.
-   * For now it is enough that the heap is behind the space used by tests.
-   */
-  const HEAP_START_PAGE = 16;
-  const HEAP_END_PAGE = 32;
+  const maxAddressFromPageMap = Math.max(0, ...pageMap.map((page) => page.address));
+  const HEAP_START_PAGE = maxAddressFromPageMap === 0 ? 0 : maxAddressFromPageMap + PAGE_SIZE;
+  const HEAP_END_PAGE = MAX_MEMORY_INDEX;
   const memory = memoryBuilder.finalize(tryAsSbrkIndex(HEAP_START_PAGE), tryAsSbrkIndex(HEAP_END_PAGE));
   const regs = new Registers();
   regs.copyFrom(testContent["initial-regs"]);
 
   const pvm = new Interpreter();
+
+  const mapPvmStatus = (status: Status) => {
+    if (status === Status.PANIC || status === Status.FAULT) {
+      return "trap";
+    }
+
+    if (status === Status.OOG) {
+      return "oog";
+    }
+
+    if (status === Status.HOST) {
+      return "host";
+    }
+
+    return "halt";
+  };
 
   pvm.reset(testContent.program, testContent["initial-pc"], testContent["initial-gas"] as Gas, regs, memory);
   pvm.runProgram();
@@ -121,13 +134,14 @@ export async function runPvmTest(testContent: PvmTest) {
   assert.strictEqual(pvm.getGas(), BigInt(testContent["expected-gas"]));
   assert.strictEqual(pvm.getPC(), testContent["expected-pc"]);
   assert.deepStrictEqual(pvm.getRegisters().getAllU64(), testContent["expected-regs"]);
-  const pvmStatus = pvm.getStatus();
-  const testStatus = pvmStatus < 1 ? "halt" : "trap";
+
+  const testStatus = mapPvmStatus(pvm.getStatus());
   assert.strictEqual(testStatus, testContent["expected-status"]);
 
   const dirtyPages = memory.getDirtyPages();
   const checkedPages = new Set<PageNumber>();
   const expectedMemory = testContent["expected-memory"];
+
   for (const memoryChunk of expectedMemory) {
     const address = tryAsMemoryIndex(memoryChunk.address);
     const expectedPage = getExpectedPage(address, memoryChunk.contents, PAGE_SIZE);
@@ -136,10 +150,10 @@ export async function runPvmTest(testContent: PvmTest) {
     assert.deepStrictEqual(pvm.getMemoryPage(pageNumber), expectedPage);
   }
 
-  const emptyPage = new Uint8Array(PAGE_SIZE);
   const pageThatShouldBeEmpty = Array.from(dirtyPages).filter((pageNumber) => !checkedPages.has(pageNumber));
 
   for (const pageNumber of pageThatShouldBeEmpty) {
-    assert.deepStrictEqual(pvm.getMemoryPage(pageNumber), emptyPage);
+    const max = Math.max(...(pvm.getMemoryPage(pageNumber) || []));
+    assert.deepStrictEqual(max, 0);
   }
 }
