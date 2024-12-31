@@ -144,6 +144,7 @@ export class Interpreter {
   printProgram() {
     const p = assemblify(this.code, this.mask);
     console.table(p);
+    return p;
   }
 
   runProgram() {
