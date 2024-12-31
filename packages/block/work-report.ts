@@ -6,7 +6,7 @@ import type { U16, U32 } from "@typeberry/numbers";
 import { type Opaque, WithDebug } from "@typeberry/utils";
 import type { CoreIndex } from "./common";
 import { RefineContext } from "./refine-context";
-import type { WorkItemsCount } from "./work-package";
+import { type WorkItemsCount, tryAsWorkItemsCount } from "./work-package";
 import { WorkResult } from "./work-result";
 
 /** Blake2B hash of a work package. */
@@ -72,8 +72,10 @@ export class WorkReport extends WithDebug {
     authorizerHash: codec.bytes(HASH_SIZE),
     authorizationOutput: codec.blob,
     segmentRootLookup: codec.sequenceVarLen(SegmentRootLookupItem.Codec),
-    // TODO [ToDr] Constrain the size of the sequence during decoding.
-    results: codec.sequenceVarLen(WorkResult.Codec),
+    results: codec.sequenceVarLen(WorkResult.Codec).convert(
+      (x) => x,
+      (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
+    ),
   });
 
   static fromCodec({
@@ -92,7 +94,7 @@ export class WorkReport extends WithDebug {
       authorizerHash,
       authorizationOutput,
       segmentRootLookup,
-      new FixedSizeArray(results, results.length),
+      results,
     );
   }
 

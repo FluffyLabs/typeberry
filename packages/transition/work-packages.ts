@@ -1,8 +1,9 @@
 import { type CodeHash, type HeaderHash, type ServiceId, tryAsCoreIndex } from "@typeberry/block";
-import type { WorkPackage } from "@typeberry/block/work-package";
+import { type WorkPackage, tryAsWorkItemsCount } from "@typeberry/block/work-package";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
 import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, blake2b } from "@typeberry/hash";
 import { type U16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
@@ -83,8 +84,10 @@ export class WorkPackageExecutor {
     const coreIndex = tryAsCoreIndex(0);
     const authorizerHash = Bytes.fill(HASH_SIZE, 5);
 
+    const workResults = FixedSizeArray.new(results, tryAsWorkItemsCount(results.length));
+
     return Promise.resolve(
-      new WorkReport(workPackageSpec, pack.context, coreIndex, authorizerHash, pack.authorization, [], results),
+      new WorkReport(workPackageSpec, pack.context, coreIndex, authorizerHash, pack.authorization, [], workResults),
     );
   }
 

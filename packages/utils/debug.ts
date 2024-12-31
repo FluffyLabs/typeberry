@@ -62,7 +62,7 @@ export function inspect<T>(val: T, recursive = true): string {
   }
 
   if (Array.isArray(val)) {
-    return `[${recursive ? val.map((x) => inspect(x, recursive)) : val}]`;
+    return `[${val.map((x) => inspect(x, false))}]`;
   }
 
   if (typeof val === "number") {
@@ -72,7 +72,12 @@ export function inspect<T>(val: T, recursive = true): string {
   if (typeof val !== "object") {
     return `${val}`;
   }
-  if ("toString" in val && Object.prototype.toString !== val.toString) {
+
+  if (
+    "toString" in val &&
+    Object.prototype.toString !== val.toString &&
+    WithDebug.prototype.toString !== val.toString
+  ) {
     return `${val}`;
   }
 

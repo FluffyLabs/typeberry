@@ -12,6 +12,7 @@ import { HostCallResult } from "../results";
 import { Assign } from "./assign";
 import { AUTHORIZATION_QUEUE_SIZE } from "./partial-state";
 import { TestAccumulate } from "./partial-state.test";
+import {FixedSizeArray} from "@typeberry/collections";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
@@ -73,7 +74,8 @@ describe("HostCalls: Assign", () => {
     for (let i = 3; i < AUTHORIZATION_QUEUE_SIZE; i += 1) {
       expected[i] = Bytes.zero(HASH_SIZE);
     }
-    assert.deepStrictEqual(accumulate.authQueue[0][1], expected);
+    const x = FixedSizeArray.new(expected, AUTHORIZATION_QUEUE_SIZE);
+    assert.deepStrictEqual(accumulate.authQueue[0][1], x);
     assert.deepStrictEqual(accumulate.authQueue.length, 1);
   });
 

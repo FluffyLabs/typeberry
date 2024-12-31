@@ -1,5 +1,6 @@
 import { tryAsCoreIndex } from "@typeberry/block";
 import { Decoder, codec } from "@typeberry/codec";
+import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
@@ -53,9 +54,10 @@ export class Assign implements HostCallHandler {
 
     const d = Decoder.fromBlob(res);
     const authQueue = d.sequenceFixLen(codec.bytes(HASH_SIZE), AUTHORIZATION_QUEUE_SIZE);
+    const fixedSizeAuthQueue = FixedSizeArray.new(authQueue, AUTHORIZATION_QUEUE_SIZE);
 
     regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
-    this.partialState.updateAuthorizationQueue(tryAsCoreIndex(coreIndex), authQueue);
+    this.partialState.updateAuthorizationQueue(tryAsCoreIndex(coreIndex), fixedSizeAuthQueue);
     return;
   }
 }
