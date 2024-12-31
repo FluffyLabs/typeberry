@@ -34,6 +34,18 @@ describe("MoveOps", () => {
     assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
+  it("moveRegister u64", () => {
+    const firstValue = 0x7fff_ffff_ffff_ffffn;
+    const resultValue = firstValue;
+    const { moveOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(firstValue, 0n);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), 0n);
+
+    moveOps.moveRegister(firstRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+  });
+
   it("cmovIfZero (condition satisfied)", () => {
     const firstValue = 0n;
     const secondValue = 5n;
