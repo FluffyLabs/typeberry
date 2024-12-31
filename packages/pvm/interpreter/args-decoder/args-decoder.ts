@@ -338,7 +338,7 @@ export class ArgsDecoder {
         this.nibblesDecoder.setByte(firstByte);
         result.registerIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
 
-        const immediateLength = nextInstructionDistance - 2;
+        const immediateLength = Math.min(nextInstructionDistance - 2, 8);
         if (immediateLength !== EXTENDED_WIDTH_IMMEDIATE_LENGTH) {
           return new ParsingArgsError();
         }
