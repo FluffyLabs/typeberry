@@ -39,7 +39,7 @@ export class Registers {
   }
 
   getI32(registerIndex: number) {
-    return Number(this.asSigned[registerIndex]) >> 0;
+    return Number(this.getU32(registerIndex)) >> 0;
   }
 
   setU32(registerIndex: number, value: number) {
