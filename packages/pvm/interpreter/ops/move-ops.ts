@@ -29,6 +29,6 @@ export class MoveOps {
   }
 
   moveRegister(firstIndex: number, resultIndex: number) {
-    this.regs.setU32(resultIndex, this.regs.getU32(firstIndex));
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex));
   }
 }
