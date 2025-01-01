@@ -10,10 +10,12 @@ export class TwoRegsTwoImmsDispatcher {
 
   dispatch(instruction: Instruction, args: TwoRegistersTwoImmediatesArgs) {
     switch (instruction) {
-      case Instruction.LOAD_IMM_JUMP_IND:
-        this.loadOps.loadImmediate(args.firstRegisterIndex, args.firstImmediateDecoder.getUnsigned());
-        this.dynamicJumpOps.jumpInd(args.secondImmediateDecoder.getUnsigned(), args.secondRegisterIndex);
+      case Instruction.LOAD_IMM_JUMP_IND: {
+        const address = this.dynamicJumpOps.caluclateJumpAddress(args.secondImmediateDecoder, args.secondRegisterIndex);
+        this.loadOps.loadImmediate(args.firstRegisterIndex, args.firstImmediateDecoder);
+        this.dynamicJumpOps.jumpInd(address);
         break;
+      }
     }
   }
 }

@@ -20,7 +20,7 @@ describe("BasicBlocks", () => {
   });
 
   it("should return true for the first instruction after a termination block instruction", () => {
-    const code = new Uint8Array([Instruction.TRAP, Instruction.ADD, 5, 7]);
+    const code = new Uint8Array([Instruction.TRAP, Instruction.ADD_32, 5, 7]);
     const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_0011]), code.length));
     const basicBlocks = new BasicBlocks();
     basicBlocks.reset(code, mask);
@@ -32,7 +32,7 @@ describe("BasicBlocks", () => {
   });
 
   it("should return false for the second instruction after a termination block instruction", () => {
-    const code = new Uint8Array([Instruction.TRAP, Instruction.ADD, 5, 7, Instruction.SUB, 5, 7]);
+    const code = new Uint8Array([Instruction.TRAP, Instruction.ADD_32, 5, 7, Instruction.SUB_32, 5, 7]);
     const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0001_0011]), code.length));
     const basicBlocks = new BasicBlocks();
     basicBlocks.reset(code, mask);
@@ -44,7 +44,7 @@ describe("BasicBlocks", () => {
   });
 
   it("should return false for a termination block instruction that is not the first instruction in the program", () => {
-    const code = new Uint8Array([Instruction.TRAP, Instruction.ADD, 5, 7, Instruction.TRAP]);
+    const code = new Uint8Array([Instruction.TRAP, Instruction.ADD_32, 5, 7, Instruction.TRAP]);
     const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0001_0011]), code.length));
     const basicBlocks = new BasicBlocks();
     basicBlocks.reset(code, mask);
@@ -56,7 +56,7 @@ describe("BasicBlocks", () => {
   });
 
   it("should return true for a beginning of basic block instruction that is not the first instruction after a block termination instruction that has some args", () => {
-    const code = new Uint8Array([Instruction.BRANCH_EQ, 135, 25, Instruction.ADD, 5, 7, Instruction.TRAP]);
+    const code = new Uint8Array([Instruction.BRANCH_EQ, 135, 25, Instruction.ADD_32, 5, 7, Instruction.TRAP]);
     const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0100_1001]), code.length));
     const basicBlocks = new BasicBlocks();
     basicBlocks.reset(code, mask);

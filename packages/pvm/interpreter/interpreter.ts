@@ -10,6 +10,8 @@ import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
 import { InstructionResult } from "./instruction-result";
 import { Memory } from "./memory";
+import { PAGE_SIZE } from "./memory/memory-consts";
+import { alignToPageSize } from "./memory/memory-utils";
 import { tryAsPageNumber } from "./memory/pages/page-utils";
 import {
   BitOps,
@@ -29,6 +31,7 @@ import {
   NoArgsDispatcher,
   OneImmDispatcher,
   OneOffsetDispatcher,
+  OneRegOneExtImmDispatcher,
   OneRegOneImmDispatcher,
   OneRegOneImmOneOffsetDispatcher,
   OneRegTwoImmsDispatcher,
@@ -67,6 +70,7 @@ export class Interpreter {
   private noArgsDispatcher: NoArgsDispatcher;
   private twoRegsTwoImmsDispatcher: TwoRegsTwoImmsDispatcher;
   private oneImmDispatcher: OneImmDispatcher;
+  private oneRegOneExtImmDispatcher: OneRegOneExtImmDispatcher;
   private status = Status.OK;
   private argsDecodingResults = createResults();
   private basicBlocks: BasicBlocks;
@@ -86,7 +90,7 @@ export class Interpreter {
     const noArgsOps = new NoArgsOps(this.instructionResult);
     const dynamicJumpOps = new DynamicJumpOps(this.registers, this.jumpTable, this.instructionResult, this.basicBlocks);
     const hostCallOps = new HostCallOps(this.instructionResult);
-    const memoryOps = new MemoryOps(this.registers, this.memory);
+    const memoryOps = new MemoryOps(this.registers, this.memory, this.instructionResult);
 
     this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
     this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(
@@ -108,6 +112,7 @@ export class Interpreter {
     this.noArgsDispatcher = new NoArgsDispatcher(noArgsOps);
     this.twoRegsTwoImmsDispatcher = new TwoRegsTwoImmsDispatcher(loadOps, dynamicJumpOps);
     this.oneImmDispatcher = new OneImmDispatcher(hostCallOps);
+    this.oneRegOneExtImmDispatcher = new OneRegOneExtImmDispatcher(loadOps);
   }
 
   reset(rawProgram: Uint8Array, pc: number, gas: Gas, maybeRegisters?: Registers, maybeMemory?: Memory) {
@@ -139,6 +144,7 @@ export class Interpreter {
   printProgram() {
     const p = assemblify(this.code, this.mask);
     console.table(p);
+    return p;
   }
 
   runProgram() {
@@ -161,54 +167,74 @@ export class Interpreter {
      * Reference: https://graypaper.fluffylabs.dev/#/364735a/232f02233002
      */
     const currentInstruction = this.code[this.pc] ?? Instruction.TRAP;
-
-    const underflow = this.gas.sub(instructionGasMap[currentInstruction]);
+    const isValidInstruction = !!Instruction[currentInstruction];
+    const gasCost = instructionGasMap[currentInstruction] ?? instructionGasMap[Instruction.TRAP];
+    const underflow = this.gas.sub(gasCost);
     if (underflow) {
       this.status = Status.OOG;
       return this.status;
     }
-    const argsType = instructionArgumentTypeMap[currentInstruction];
+    const argsType = instructionArgumentTypeMap[currentInstruction] ?? ArgumentType.NO_ARGUMENTS;
     const argsResult = this.argsDecodingResults[argsType];
-    this.argsDecoder.fillArgs(this.pc, argsResult);
-    this.instructionResult.nextPc = this.pc + argsResult.noOfBytesToSkip;
+    const parsingArgsResult = this.argsDecoder.fillArgs(this.pc, argsResult);
 
-    switch (argsResult.type) {
-      case ArgumentType.NO_ARGUMENTS:
-        this.noArgsDispatcher.dispatch(currentInstruction);
-        break;
-      case ArgumentType.ONE_IMMEDIATE:
-        this.oneImmDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET:
-        this.oneRegOneImmOneOffsetDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.TWO_REGISTERS:
-        this.twoRegsDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.THREE_REGISTERS:
-        this.threeRegsDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE:
-        this.twoRegsOneImmDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.TWO_REGISTERS_ONE_OFFSET:
-        this.twoRegsOneOffsetDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.ONE_OFFSET:
-        this.oneOffsetDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE:
-        this.oneRegOneImmDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.TWO_IMMEDIATES:
-        this.twoImmsDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.ONE_REGISTER_TWO_IMMEDIATES:
-        this.oneRegTwoImmsDispatcher.dispatch(currentInstruction, argsResult);
-        break;
-      case ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES:
-        this.twoRegsTwoImmsDispatcher.dispatch(currentInstruction, argsResult);
-        break;
+    if (parsingArgsResult !== null || !isValidInstruction) {
+      this.instructionResult.status = Result.PANIC;
+    } else {
+      this.instructionResult.nextPc = this.pc + argsResult.noOfBytesToSkip;
+
+      switch (argsResult.type) {
+        case ArgumentType.NO_ARGUMENTS:
+          this.noArgsDispatcher.dispatch(currentInstruction);
+          break;
+        case ArgumentType.ONE_IMMEDIATE:
+          this.oneImmDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET:
+          this.oneRegOneImmOneOffsetDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.TWO_REGISTERS:
+          if (currentInstruction === Instruction.SBRK) {
+            const calculateSbrkCost = (length: number) => (alignToPageSize(length) / PAGE_SIZE) * 16;
+            const underflow = this.gas.sub(
+              calculateSbrkCost(this.registers.getU32(argsResult.firstRegisterIndex)) as Gas,
+            );
+            if (underflow) {
+              this.status = Status.OOG;
+              return this.status;
+            }
+          }
+
+          this.twoRegsDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.THREE_REGISTERS:
+          this.threeRegsDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE:
+          this.twoRegsOneImmDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.TWO_REGISTERS_ONE_OFFSET:
+          this.twoRegsOneOffsetDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.ONE_OFFSET:
+          this.oneOffsetDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.ONE_REGISTER_ONE_IMMEDIATE:
+          this.oneRegOneImmDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.TWO_IMMEDIATES:
+          this.twoImmsDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.ONE_REGISTER_TWO_IMMEDIATES:
+          this.oneRegTwoImmsDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES:
+          this.twoRegsTwoImmsDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+        case ArgumentType.ONE_REGISTER_ONE_EXTENDED_WIDTH_IMMEDIATE:
+          this.oneRegOneExtImmDispatcher.dispatch(currentInstruction, argsResult);
+          break;
+      }
     }
 
     if (this.instructionResult.status !== null) {

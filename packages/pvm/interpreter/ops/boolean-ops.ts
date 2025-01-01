@@ -1,29 +1,30 @@
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import type { Registers } from "../registers";
 
 export class BooleanOps {
   constructor(private regs: Registers) {}
 
-  setLessThanSignedImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = this.regs.asSigned[firstIndex] < immediateValue ? 1 : 0;
+  setLessThanSignedImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, this.regs.getI64(firstIndex) < immediate.getI64() ? 1n : 0n);
   }
 
-  setLessThanUnsignedImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = this.regs.asUnsigned[firstIndex] < immediateValue ? 1 : 0;
+  setLessThanUnsignedImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) < immediate.getU64() ? 1n : 0n);
   }
 
   setLessThanSigned(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.setLessThanSignedImmediate(secondIndex, this.regs.asSigned[firstIndex], resultIndex);
+    this.regs.setU64(resultIndex, this.regs.getI64(secondIndex) < this.regs.getI64(firstIndex) ? 1n : 0n);
   }
 
   setLessThanUnsigned(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.setLessThanUnsignedImmediate(secondIndex, this.regs.asUnsigned[firstIndex], resultIndex);
+    this.regs.setU64(resultIndex, this.regs.getU64(secondIndex) < this.regs.getU64(firstIndex) ? 1n : 0n);
   }
 
-  setGreaterThanSignedImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = this.regs.asSigned[firstIndex] > immediateValue ? 1 : 0;
+  setGreaterThanSignedImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, this.regs.getI64(firstIndex) > immediate.getI64() ? 1n : 0n);
   }
 
-  setGreaterThanUnsignedImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = this.regs.asUnsigned[firstIndex] > immediateValue ? 1 : 0;
+  setGreaterThanUnsignedImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) > immediate.getU64() ? 1n : 0n);
   }
 }

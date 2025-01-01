@@ -1,3 +1,4 @@
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import type { BasicBlocks } from "../basic-blocks";
 import type { InstructionResult } from "../instruction-result";
 import type { Registers } from "../registers";
@@ -31,67 +32,67 @@ export class BranchOps {
     this.branch(nextPc, true);
   }
 
-  branchEqImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asUnsigned[registerIndex] === immediate);
+  branchEqImmediate(registerIndex: number, immediate: ImmediateDecoder, nextPc: number) {
+    this.branch(nextPc, this.regs.getU64(registerIndex) === immediate.getU64());
   }
 
   branchEq(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchEqImmediate(firstIndex, this.regs.asUnsigned[secondIndex], nextPc);
+    this.branch(nextPc, this.regs.getU64(firstIndex) === this.regs.getU64(secondIndex));
   }
 
-  branchNeImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asUnsigned[registerIndex] !== immediate);
+  branchNeImmediate(registerIndex: number, immediate: ImmediateDecoder, nextPc: number) {
+    this.branch(nextPc, this.regs.getU64(registerIndex) !== immediate.getU64());
   }
 
   branchNe(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchNeImmediate(firstIndex, this.regs.asUnsigned[secondIndex], nextPc);
+    this.branch(nextPc, this.regs.getU64(firstIndex) !== this.regs.getU64(secondIndex));
   }
 
-  branchLtUnsignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asUnsigned[registerIndex] < immediate);
+  branchLtUnsignedImmediate(registerIndex: number, immediate: ImmediateDecoder, nextPc: number) {
+    this.branch(nextPc, this.regs.getU64(registerIndex) < immediate.getU64());
   }
 
   branchLtUnsigned(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchLtUnsignedImmediate(firstIndex, this.regs.asUnsigned[secondIndex], nextPc);
+    this.branch(nextPc, this.regs.getU64(firstIndex) < this.regs.getU64(secondIndex));
   }
 
-  branchLeUnsignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asUnsigned[registerIndex] <= immediate);
+  branchLeUnsignedImmediate(registerIndex: number, immediate: ImmediateDecoder, nextPc: number) {
+    this.branch(nextPc, this.regs.getU64(registerIndex) <= immediate.getU64());
   }
 
-  branchGtUnsignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asUnsigned[registerIndex] > immediate);
+  branchGtUnsignedImmediate(registerIndex: number, immediate: ImmediateDecoder, nextPc: number) {
+    this.branch(nextPc, this.regs.getU64(registerIndex) > immediate.getU64());
   }
 
-  branchGeUnsignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asUnsigned[registerIndex] >= immediate);
+  branchGeUnsignedImmediate(registerIndex: number, immediate: ImmediateDecoder, nextPc: number) {
+    this.branch(nextPc, this.regs.getU64(registerIndex) >= immediate.getU64());
   }
 
   branchGeUnsigned(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchGeUnsignedImmediate(firstIndex, this.regs.asUnsigned[secondIndex], nextPc);
+    this.branch(nextPc, this.regs.getU64(firstIndex) >= this.regs.getU64(secondIndex));
   }
 
-  branchLtSignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asSigned[registerIndex] < immediate);
+  branchLtSignedImmediate(registerIndex: number, immediate: ImmediateDecoder, nextPc: number) {
+    this.branch(nextPc, this.regs.getI64(registerIndex) < immediate.getI64());
   }
 
   branchLtSigned(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchLtSignedImmediate(firstIndex, this.regs.asSigned[secondIndex], nextPc);
+    this.branch(nextPc, this.regs.getI64(firstIndex) < this.regs.getI64(secondIndex));
   }
 
-  branchLeSignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asSigned[registerIndex] <= immediate);
+  branchLeSignedImmediate(registerIndex: number, immediate: ImmediateDecoder, nextPc: number) {
+    this.branch(nextPc, this.regs.getI64(registerIndex) <= immediate.getI64());
   }
 
-  branchGtSignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asSigned[registerIndex] > immediate);
+  branchGtSignedImmediate(registerIndex: number, immediate: ImmediateDecoder, nextPc: number) {
+    this.branch(nextPc, this.regs.getI64(registerIndex) > immediate.getI64());
   }
 
-  branchGeSignedImmediate(registerIndex: number, immediate: number, nextPc: number) {
-    this.branch(nextPc, this.regs.asSigned[registerIndex] >= immediate);
+  branchGeSignedImmediate(registerIndex: number, immediate: ImmediateDecoder, nextPc: number) {
+    this.branch(nextPc, this.regs.getI64(registerIndex) >= immediate.getI64());
   }
 
   branchGeSigned(firstIndex: number, secondIndex: number, nextPc: number) {
-    this.branchGeSignedImmediate(firstIndex, this.regs.asSigned[secondIndex], nextPc);
+    this.branch(nextPc, this.regs.getI64(firstIndex) >= this.regs.getI64(secondIndex));
   }
 }

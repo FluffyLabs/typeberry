@@ -1,42 +1,89 @@
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import type { Registers } from "../registers";
-import { MAX_SHIFT } from "./math-consts";
+import { MAX_SHIFT_U32, MAX_SHIFT_U64 } from "./math-consts";
+import { unsignedRightShiftBigInt } from "./math-utils";
 
 export class ShiftOps {
   constructor(private regs: Registers) {}
 
-  shiftLogicalLeft(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.shiftLogicalLeftImmediateAlternative(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
+  shiftLogicalLeftU32(firstIndex: number, secondIndex: number, resultIndex: number) {
+    this.regs.setU32(resultIndex, this.regs.getU32(secondIndex) << (this.regs.getU32(firstIndex) % MAX_SHIFT_U32));
   }
 
-  shiftLogicalRight(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.shiftLogicalRightImmediateAlternative(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
+  shiftLogicalLeftU64(firstIndex: number, secondIndex: number, resultIndex: number) {
+    this.regs.setU64(resultIndex, this.regs.getU64(secondIndex) << (this.regs.getU64(firstIndex) % MAX_SHIFT_U64));
   }
 
-  shiftArithmeticRight(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.shiftArithmeticRightImmediateAlternative(firstIndex, this.regs.asSigned[secondIndex], resultIndex);
+  shiftLogicalRightU32(firstIndex: number, secondIndex: number, resultIndex: number) {
+    this.regs.setU32(resultIndex, this.regs.getU32(secondIndex) >>> (this.regs.getU32(firstIndex) % MAX_SHIFT_U32));
   }
 
-  shiftLogicalLeftImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = this.regs.asUnsigned[firstIndex] << (immediateValue % MAX_SHIFT);
+  shiftLogicalRightU64(firstIndex: number, secondIndex: number, resultIndex: number) {
+    this.regs.setU64(
+      resultIndex,
+      unsignedRightShiftBigInt(this.regs.getU64(secondIndex), this.regs.getU64(firstIndex) % MAX_SHIFT_U64),
+    );
   }
 
-  shiftLogicalRightImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = this.regs.asUnsigned[firstIndex] >>> (immediateValue % MAX_SHIFT);
+  shiftArithmeticRightU32(firstIndex: number, secondIndex: number, resultIndex: number) {
+    this.regs.setI32(resultIndex, this.regs.getI32(secondIndex) >> (this.regs.getU32(firstIndex) % MAX_SHIFT_U32));
   }
 
-  shiftArithmeticRightImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = this.regs.asUnsigned[firstIndex] >> (immediateValue % MAX_SHIFT);
+  shiftArithmeticRightU64(firstIndex: number, secondIndex: number, resultIndex: number) {
+    this.regs.setI64(resultIndex, this.regs.getI64(secondIndex) >> (this.regs.getU64(firstIndex) % MAX_SHIFT_U64));
   }
 
-  shiftLogicalLeftImmediateAlternative(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = immediateValue << (this.regs.asUnsigned[firstIndex] % MAX_SHIFT);
+  shiftLogicalLeftImmediateU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU32(resultIndex, this.regs.getU32(firstIndex) << (immediate.getU32() % MAX_SHIFT_U32));
   }
 
-  shiftLogicalRightImmediateAlternative(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = immediateValue >>> (this.regs.asUnsigned[firstIndex] % MAX_SHIFT);
+  shiftLogicalLeftImmediateU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) << (immediate.getU64() % MAX_SHIFT_U64));
   }
 
-  shiftArithmeticRightImmediateAlternative(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asSigned[resultIndex] = immediateValue >> (this.regs.asUnsigned[firstIndex] % MAX_SHIFT);
+  shiftLogicalRightImmediateU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU32(resultIndex, this.regs.getU32(firstIndex) >>> (immediate.getU32() % MAX_SHIFT_U32));
+  }
+
+  shiftLogicalRightImmediateU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(
+      resultIndex,
+      unsignedRightShiftBigInt(this.regs.getU64(firstIndex), immediate.getU64() % MAX_SHIFT_U64),
+    );
+  }
+
+  shiftArithmeticRightImmediateU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU32(resultIndex, this.regs.getI32(firstIndex) >> (immediate.getU32() % MAX_SHIFT_U32));
+  }
+
+  shiftArithmeticRightImmediateU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, this.regs.getI64(firstIndex) >> (immediate.getU64() % MAX_SHIFT_U64));
+  }
+
+  shiftLogicalLeftImmediateAlternativeU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU32(resultIndex, immediate.getU32() << (this.regs.getU32(firstIndex) % MAX_SHIFT_U32));
+  }
+
+  shiftLogicalLeftImmediateAlternativeU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, immediate.getU64() << (this.regs.getU64(firstIndex) % MAX_SHIFT_U64));
+  }
+
+  shiftLogicalRightImmediateAlternativeU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU32(resultIndex, immediate.getU32() >>> (this.regs.getU32(firstIndex) % MAX_SHIFT_U32));
+  }
+
+  shiftLogicalRightImmediateAlternativeU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(
+      resultIndex,
+      unsignedRightShiftBigInt(immediate.getU64(), this.regs.getU64(firstIndex) % MAX_SHIFT_U64),
+    );
+  }
+
+  shiftArithmeticRightImmediateAlternativeU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setI32(resultIndex, immediate.getU32() >> (this.regs.getU32(firstIndex) % MAX_SHIFT_U32));
+  }
+
+  shiftArithmeticRightImmediateAlternativeU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setI64(resultIndex, immediate.getI64() >> (this.regs.getU64(firstIndex) % MAX_SHIFT_U64));
   }
 }

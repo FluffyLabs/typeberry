@@ -4,6 +4,7 @@ import type { TwoRegistersArgs } from "../args-decoder/args-decoder";
 import { ArgumentType } from "../args-decoder/argument-type";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
 import { Instruction } from "../instruction";
+import { InstructionResult } from "../instruction-result";
 import { Memory } from "../memory";
 import { MemoryOps, MoveOps } from "../ops";
 import { Registers } from "../registers";
@@ -11,9 +12,10 @@ import { TwoRegsDispatcher } from "./two-regs-dispatcher";
 
 describe("TwoRegsDispatcher", () => {
   describe("check if it handles expected instructions", () => {
+    const instructionResult = new InstructionResult();
     const regs = new Registers();
     const memory = new Memory();
-    const memoryOps = new MemoryOps(regs, memory);
+    const memoryOps = new MemoryOps(regs, memory, instructionResult);
     const moveOps = new MoveOps(regs);
     const sbrkMock = mock.fn();
     const moveRegisterMock = mock.fn();
@@ -52,9 +54,10 @@ describe("TwoRegsDispatcher", () => {
   });
 
   describe("check if it handles other instructions than expected", () => {
+    const instructionResult = new InstructionResult();
     const regs = new Registers();
     const memory = new Memory();
-    const memoryOps = new MemoryOps(regs, memory);
+    const memoryOps = new MemoryOps(regs, memory, instructionResult);
     const moveOps = new MoveOps(regs);
     const mockFn = mock.fn();
 

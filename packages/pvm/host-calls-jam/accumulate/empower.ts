@@ -38,14 +38,14 @@ export class Empower implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // `m`: manager service (can change privileged services)
-    const m = tryAsServiceId(regs.asUnsigned[IN_OUT_REG]);
+    const m = tryAsServiceId(regs.getU32(IN_OUT_REG));
     // `a`: manages authorization queue
-    const a = tryAsServiceId(regs.asUnsigned[8]);
+    const a = tryAsServiceId(regs.getU32(8));
     // `v`: manages validator keys
-    const v = tryAsServiceId(regs.asUnsigned[9]);
-    const sourceStart = tryAsMemoryIndex(regs.asUnsigned[10]);
+    const v = tryAsServiceId(regs.getU32(9));
+    const sourceStart = tryAsMemoryIndex(regs.getU32(10));
     // `n`: number of items in the auto-accumulate dictionary
-    const numberOfItems = regs.asUnsigned[11];
+    const numberOfItems = regs.getU32(11);
 
     // `g`: dictionary of serviceId -> gas that auto-accumulate every block
     const g = new Map<ServiceId, Gas>();
@@ -59,7 +59,7 @@ export class Empower implements HostCallHandler {
       decoder.resetTo(0);
       const pageFault = memory.loadInto(result, memIndex);
       if (pageFault !== null) {
-        regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+        regs.setU32(IN_OUT_REG, HostCallResult.OOB);
         return;
       }
 
@@ -67,12 +67,12 @@ export class Empower implements HostCallHandler {
       // Since the GP does not allow non-canonical representation of encodings,
       // a set with duplicates should not be decoded correctly.
       if (g.has(serviceId)) {
-        regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+        regs.setU32(IN_OUT_REG, HostCallResult.OOB);
         return;
       }
       // Verify if the items are properly sorted.
       if (previousServiceId > serviceId) {
-        regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+        regs.setU32(IN_OUT_REG, HostCallResult.OOB);
         return;
       }
       g.set(serviceId, gas);
@@ -83,7 +83,7 @@ export class Empower implements HostCallHandler {
     }
 
     this.partialState.updatePrivilegedServices(m, a, v, g);
-    regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
+    regs.setU32(IN_OUT_REG, HostCallResult.OK);
 
     return;
   }

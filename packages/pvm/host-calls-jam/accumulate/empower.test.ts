@@ -5,6 +5,8 @@ import { Encoder } from "@typeberry/codec";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { type Gas, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
+import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { HostCallResult } from "../results";
 import { Empower } from "./empower";
 import { TestAccumulate } from "./partial-state.test";
@@ -34,13 +36,13 @@ function prepareRegsAndMemory(
   dictionary: [ServiceId, Gas][],
   { skipDictionary = false }: { skipDictionary?: boolean } = {},
 ) {
-  const memStart = 20_000;
+  const memStart = 2 ** 16;
   const registers = new Registers();
-  registers.asUnsigned[SERVICE_M] = tryAsServiceId(5);
-  registers.asUnsigned[SERVICE_A] = tryAsServiceId(10);
-  registers.asUnsigned[SERVICE_V] = tryAsServiceId(15);
-  registers.asUnsigned[DICTIONARY_START] = memStart;
-  registers.asUnsigned[DICTIONARY_COUNT] = dictionary.length;
+  registers.setU32(SERVICE_M, tryAsServiceId(5));
+  registers.setU32(SERVICE_A, tryAsServiceId(10));
+  registers.setU32(SERVICE_V, tryAsServiceId(15));
+  registers.setU32(DICTIONARY_START, memStart);
+  registers.setU32(DICTIONARY_COUNT, dictionary.length);
 
   const builder = new MemoryBuilder();
 
@@ -52,9 +54,9 @@ function prepareRegsAndMemory(
   const data = encoder.viewResult();
 
   if (!skipDictionary) {
-    builder.setReadable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + data.raw.length), data.raw);
+    builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), data.raw);
   }
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
+  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
     memory,
@@ -74,7 +76,7 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.privilegedServices, [
       [tryAsServiceId(5), tryAsServiceId(10), tryAsServiceId(15), expected],
     ]);
@@ -92,7 +94,7 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 
@@ -110,7 +112,7 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 
@@ -127,7 +129,7 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 });

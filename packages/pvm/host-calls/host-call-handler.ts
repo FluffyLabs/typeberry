@@ -15,8 +15,14 @@ export enum PvmExecution {
 }
 
 export interface Registers {
-  asSigned: Int32Array;
-  asUnsigned: Uint32Array;
+  getU32(registerIndex: number): number;
+  getI32(registerIndex: number): number;
+  setU32(registerIndex: number, value: number): void;
+  setI32(registerIndex: number, value: number): void;
+  getU64(registerIndex: number): bigint;
+  getI64(registerIndex: number): bigint;
+  setU64(registerIndex: number, value: bigint): void;
+  setI64(registerIndex: number, value: bigint): void;
 }
 
 export interface Memory {

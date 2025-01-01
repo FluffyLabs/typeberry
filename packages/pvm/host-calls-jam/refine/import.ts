@@ -29,35 +29,35 @@ export class Import implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
     // idx
-    const segmentIndex = regs.asUnsigned[IN_OUT_REG];
+    const segmentIndex = regs.getU32(IN_OUT_REG);
     // `o`: destination start
-    const destinationStart = tryAsMemoryIndex(regs.asUnsigned[8]);
+    const destinationStart = tryAsMemoryIndex(regs.getU32(8));
     // `l`: destination length
-    const destinationLen = Math.min(regs.asUnsigned[9], SEGMENT_BYTES);
+    const destinationLen = Math.min(regs.getU32(9), SEGMENT_BYTES);
 
     // we check writeability separately in case the `|v| < l`
     // i.e. the `store` would succeed, but some cell at `|v|...l`
     // would cause a page fault.
     const destinationWriteable = memory.isWriteable(destinationStart, destinationLen);
     if (!destinationWriteable) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 
     const segment = isU16(segmentIndex) ? await this.refine.importSegment(asOpaqueType(segmentIndex)) : null;
     if (segment === null) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.NONE;
+      regs.setU32(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
     const l = Math.min(segment.length, destinationLen);
     const storeFault = memory.storeFrom(destinationStart, segment.raw.subarray(0, l));
     if (storeFault !== null) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 
-    regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
+    regs.setU32(IN_OUT_REG, HostCallResult.OK);
     return;
   }
 }

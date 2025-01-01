@@ -1,62 +1,60 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { InstructionResult } from "../instruction-result";
 import { Memory, MemoryBuilder } from "../memory";
 import { MAX_MEMORY_INDEX, PAGE_SIZE } from "../memory/memory-consts";
-import { tryAsMemoryIndex } from "../memory/memory-index";
+import { tryAsMemoryIndex, tryAsSbrkIndex } from "../memory/memory-index";
 import { Registers } from "../registers";
 import { MemoryOps } from "./memory-ops";
 
 describe("MemoryOps", () => {
-  it("should allocate one memory page", () => {
+  function prepareData(pagesToAllocate: number, lengthRegisterValue = PAGE_SIZE) {
     const regs = new Registers();
     const memory = new Memory();
-    const memoryOps = new MemoryOps(regs, memory);
+    const instructionResult = new InstructionResult();
+    const memoryOps = new MemoryOps(regs, memory, instructionResult);
     const resultIndex = 1;
     const lengthIndex = 0;
-    const length = PAGE_SIZE;
-    regs.asUnsigned[lengthIndex] = length;
-    const expectedMemory = new MemoryBuilder().finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(MAX_MEMORY_INDEX));
-    expectedMemory.sbrk(length);
+    regs.setU32(lengthIndex, lengthRegisterValue);
+    const expectedMemory = new MemoryBuilder()
+      .setWriteablePages(tryAsMemoryIndex(0), tryAsMemoryIndex(pagesToAllocate * PAGE_SIZE))
+      .finalize(tryAsSbrkIndex(pagesToAllocate * PAGE_SIZE), tryAsSbrkIndex(MAX_MEMORY_INDEX));
+    return { regs, memory, expectedMemory, instructionResult, memoryOps, resultIndex, lengthIndex };
+  }
+
+  it("should allocate one memory page", () => {
+    const pagesToAllocate = 1;
+    const { memoryOps, regs, resultIndex, lengthIndex, memory, expectedMemory } = prepareData(pagesToAllocate);
 
     memoryOps.sbrk(lengthIndex, resultIndex);
 
-    assert.deepEqual(regs.asUnsigned[resultIndex], 0);
+    assert.deepEqual(regs.getU32(resultIndex), 0);
     assert.deepStrictEqual(memory, expectedMemory);
   });
 
   it("should allocate two memory pages", () => {
-    const regs = new Registers();
-    const memory = new Memory();
-    const memoryOps = new MemoryOps(regs, memory);
-    const resultIndex = 1;
-    const lengthIndex = 0;
-    const length = 2 * PAGE_SIZE;
-    regs.asUnsigned[lengthIndex] = length;
-    const expectedMemory = new MemoryBuilder().finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(MAX_MEMORY_INDEX));
-    expectedMemory.sbrk(length);
+    const pagesToAllocate = 2;
+    const { memoryOps, regs, resultIndex, lengthIndex, memory, expectedMemory } = prepareData(
+      pagesToAllocate,
+      2 * PAGE_SIZE,
+    );
 
     memoryOps.sbrk(lengthIndex, resultIndex);
 
-    assert.deepEqual(regs.asUnsigned[resultIndex], 0);
+    assert.deepEqual(regs.getU32(resultIndex), 0);
     assert.deepStrictEqual(memory, expectedMemory);
   });
 
   it("should allocate two memory pages one by one", () => {
-    const regs = new Registers();
-    const memory = new Memory();
-    const memoryOps = new MemoryOps(regs, memory);
-    const resultIndex = 1;
-    const lengthIndex = 0;
-    const length = PAGE_SIZE;
-    regs.asUnsigned[lengthIndex] = length;
-    const expectedMemory = new MemoryBuilder().finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(MAX_MEMORY_INDEX));
-    expectedMemory.sbrk(length);
-    expectedMemory.sbrk(length);
+    const pagesToAllocate = 2;
+    const { memoryOps, regs, resultIndex, lengthIndex, memory, expectedMemory } = prepareData(pagesToAllocate);
 
     memoryOps.sbrk(lengthIndex, resultIndex);
+    assert.deepEqual(regs.getU32(resultIndex), 0);
+
     memoryOps.sbrk(lengthIndex, resultIndex);
 
-    assert.deepEqual(regs.asUnsigned[resultIndex], PAGE_SIZE);
+    assert.deepEqual(regs.getU32(resultIndex), PAGE_SIZE);
     assert.deepStrictEqual(memory, expectedMemory);
   });
 });

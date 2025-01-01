@@ -14,15 +14,15 @@ describe("HostCalls: Gas", () => {
     const counter = gasCounter(tryAsGas(10_000));
     const regs = new Registers();
 
-    assert.deepStrictEqual(regs.asUnsigned[REG_LOWER], 0);
-    assert.deepStrictEqual(regs.asUnsigned[REG_UPPER], 0);
+    assert.deepStrictEqual(regs.getU32(REG_LOWER), 0);
+    assert.deepStrictEqual(regs.getU32(REG_UPPER), 0);
 
     // when
     gas.execute(counter, regs);
 
     // then
-    assert.deepStrictEqual(regs.asUnsigned[REG_LOWER], 10_000);
-    assert.deepStrictEqual(regs.asUnsigned[REG_UPPER], 0);
+    assert.deepStrictEqual(regs.getU32(REG_LOWER), 10_000);
+    assert.deepStrictEqual(regs.getU32(REG_UPPER), 0);
   });
 
   it("should write U64 gas to registers", () => {
@@ -31,14 +31,14 @@ describe("HostCalls: Gas", () => {
     const counter = gasCounter(tryAsGas(2n ** 42n - 1n));
     const regs = new Registers();
 
-    assert.deepStrictEqual(regs.asUnsigned[REG_LOWER], 0);
-    assert.deepStrictEqual(regs.asUnsigned[REG_UPPER], 0);
+    assert.deepStrictEqual(regs.getU32(REG_LOWER), 0);
+    assert.deepStrictEqual(regs.getU32(REG_UPPER), 0);
 
     // when
     gas.execute(counter, regs);
 
     // then
-    assert.deepStrictEqual(regs.asUnsigned[REG_LOWER], 0xffffffff);
-    assert.deepStrictEqual(regs.asUnsigned[REG_UPPER], 0x3ff);
+    assert.deepStrictEqual(regs.getU32(REG_LOWER), 0xffffffff);
+    assert.deepStrictEqual(regs.getU32(REG_UPPER), 0x3ff);
   });
 });

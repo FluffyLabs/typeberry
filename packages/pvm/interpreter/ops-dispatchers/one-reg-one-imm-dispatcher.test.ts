@@ -60,7 +60,8 @@ describe("OneRegOneImmDispatcher", () => {
 
       dispatcher.dispatch(instruction, argsMock);
 
-      assert.strictEqual(mockFn.mock.calls.length, 1);
+      const expectedResult = instruction === Instruction.JUMP_IND ? 2 : 1;
+      assert.strictEqual(mockFn.mock.calls.length, expectedResult);
     });
   }
 
