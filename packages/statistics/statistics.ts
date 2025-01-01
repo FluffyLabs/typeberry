@@ -90,7 +90,7 @@ export class Statistics {
      * Please note I don't use Kappa' here so probably it is incorrect (despite it passes the tests)!
      * If I udnderstand GP correctly we should match validators from Kappa' and data from guarantees extrinsic using
      * signature (calculate a new signature using validator ed25519 public key and compare it with the signature from the extrinsic),
-     * but the problem is that everyting except validator index is empty in extrinsic (in the test vectors).
+     * but the problem is that everything except validator index is empty in extrinsic (in the test vectors).
      */
     for (const { credentials } of extrinsic.guarantees) {
       for (const { validatorIndex } of credentials) {
