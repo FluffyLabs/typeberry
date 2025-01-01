@@ -7,6 +7,8 @@ import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { Forget } from "./forget";
@@ -22,21 +24,17 @@ function prepareRegsAndMemory(
   preimageLength: U32,
   { skipPreimageHash = false }: { skipPreimageHash?: boolean } = {},
 ) {
-  const memStart = 20_000;
+  const memStart = 2 ** 16;
   const registers = new Registers();
-  registers.asUnsigned[HASH_START_REG] = memStart;
-  registers.asUnsigned[LENGTH_REG] = preimageLength;
+  registers.setU32(HASH_START_REG, memStart);
+  registers.setU32(LENGTH_REG, preimageLength);
 
   const builder = new MemoryBuilder();
 
   if (!skipPreimageHash) {
-    builder.setReadable(
-      tryAsMemoryIndex(memStart),
-      tryAsMemoryIndex(memStart + preimageHash.raw.length),
-      preimageHash.raw,
-    );
+    builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), preimageHash.raw);
   }
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
+  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
     memory,
@@ -54,7 +52,7 @@ describe("HostCalls: Solicit", () => {
     await forget.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.forgetPreimageData, [[Bytes.fill(HASH_SIZE, 0x69), 4_096]]);
   });
 
@@ -70,7 +68,7 @@ describe("HostCalls: Solicit", () => {
     await forget.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accumulate.forgetPreimageData, []);
   });
 
@@ -86,7 +84,7 @@ describe("HostCalls: Solicit", () => {
     await forget.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.HUH);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.HUH);
     assert.deepStrictEqual(accumulate.forgetPreimageData, [[Bytes.fill(HASH_SIZE, 0x69), 4_096]]);
   });
 });

@@ -43,7 +43,7 @@ export class SpiProgram {
   constructor(
     public readonly code: Uint8Array,
     public readonly memory: SpiMemory,
-    public readonly registers: Uint32Array,
+    public readonly registers: BigUint64Array,
   ) {}
 }
 
@@ -106,13 +106,13 @@ function getMemorySegment(start: number, end: number, data: Uint8Array | null = 
 }
 
 function getRegisters(argsLength: number) {
-  const regs = new Uint32Array(NO_OF_REGISTERS);
+  const regs = new BigUint64Array(NO_OF_REGISTERS);
 
   // GP reference: https://graypaper.fluffylabs.dev/#/293bf5a/29860129bb01
-  regs[0] = LAST_PAGE;
-  regs[1] = STACK_SEGMENT;
-  regs[7] = ARGS_SEGMENT;
-  regs[8] = argsLength;
+  regs[0] = BigInt(LAST_PAGE);
+  regs[1] = BigInt(STACK_SEGMENT);
+  regs[7] = BigInt(ARGS_SEGMENT);
+  regs[8] = BigInt(argsLength);
 
   return regs;
 }

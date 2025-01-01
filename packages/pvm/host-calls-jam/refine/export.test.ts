@@ -5,6 +5,8 @@ import { Bytes } from "@typeberry/bytes";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { Export } from "./export";
@@ -21,16 +23,16 @@ function prepareRegsAndMemory(
   segmentLength: number = segment.length,
   { skipSegment = false }: { skipSegment?: boolean } = {},
 ) {
-  const memStart = 3_145_728;
+  const memStart = 2 ** 23;
   const registers = new Registers();
-  registers.asUnsigned[SEGMENT_START_REG] = memStart;
-  registers.asUnsigned[SEGMENT_LENGTH_REG] = segmentLength;
+  registers.setU32(SEGMENT_START_REG, memStart);
+  registers.setU32(SEGMENT_LENGTH_REG, segmentLength);
 
   const builder = new MemoryBuilder();
   if (!skipSegment) {
-    builder.setReadable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + segment.length), segment.raw);
+    builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + 2 * PAGE_SIZE), segment.raw);
   }
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
+  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
     memory,
@@ -50,7 +52,7 @@ describe("HostCalls: Export", () => {
     await exp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], 15);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), 15);
   });
 
   it("should zero-pad when exported value is small", async () => {
@@ -67,7 +69,7 @@ describe("HostCalls: Export", () => {
     await exp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], 5);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), 5);
   });
 
   it("should fail if memory is not readable", async () => {
@@ -81,7 +83,7 @@ describe("HostCalls: Export", () => {
     await exp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
   });
 
   it("should fail with FULL if export limit is reached", async () => {
@@ -96,6 +98,6 @@ describe("HostCalls: Export", () => {
     await exp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.FULL);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.FULL);
   });
 });

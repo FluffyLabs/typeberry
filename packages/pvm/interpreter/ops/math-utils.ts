@@ -1,9 +1,10 @@
+import { check } from "@typeberry/utils";
 import { MAX_VALUE } from "./math-consts";
 
 /**
  * Overflowing addition for two-complement representation of 32-bit signed numbers.
  */
-export function addWithOverflow(a: number, b: number) {
+export function addWithOverflowU32(a: number, b: number) {
   if (a > MAX_VALUE - b) {
     /**
      * MAX_VALUE is equal to 2 ** 32 - 1
@@ -26,14 +27,28 @@ export function addWithOverflow(a: number, b: number) {
 }
 
 /**
+ * Overflowing addition for two-complement representation of 64-bit signed numbers.
+ */
+export function addWithOverflowU64(a: bigint, b: bigint) {
+  return (a + b) % 2n ** 64n;
+}
+
+/**
  * Overflowing subtraction for two-complement representation of 32-bit signed numbers.
  */
-export function sub(a: number, b: number) {
+export function subU32(a: number, b: number) {
   if (a > b) {
     return MAX_VALUE - a + b + 1;
   }
 
   return b - a;
+}
+
+/**
+ * Overflowing subtraction for two-complement representation of 64-bit signed numbers.
+ */
+export function subU64(a: bigint, b: bigint) {
+  return (2n ** 64n + b - a) % 2n ** 64n;
 }
 
 const MUL_THRESHOLD = 2 ** 16;
@@ -46,7 +61,7 @@ const MUL_THRESHOLD = 2 ** 16;
  * and perform the multiplication separately to make sure we don't overflow
  * the 2**32 and `MAX_SAFE_INTEGER`.
  */
-export function mulLowerUnsigned(a: number, b: number) {
+export function mulLowerUnsignedU32(a: number, b: number) {
   if (a > MUL_THRESHOLD || b > MUL_THRESHOLD) {
     const aHigh = a >> 16;
     const aLow = a & 0xffff;
@@ -64,44 +79,67 @@ export function mulLowerUnsigned(a: number, b: number) {
   return a * b;
 }
 
+export function mulU64(a: bigint, b: bigint) {
+  return (a * b) % 2n ** 64n;
+}
+
 /**
- * Multiply two unsigned 32-bit numbers and take the upper 32-bits of the result.
+ * Multiply two unsigned 64-bit numbers and take the upper 64-bits of the result.
  *  
  * The result of multiplication is a 64-bits number and we are only interested in the part that lands in the upper 32-bits.
  * For example if we multiply `0xffffffff * 0xffffffff`, we get:
  
- * |   32-bits  |   32-bits  |
- * +------------+------------+
- * |    upper   |    lower   |
- * | 0xfffffffe | 0x00000001 |
+ * |       64-bits      |       64-bits      |
+ * +--------------------+--------------------+
+ * |        upper       |        lower       |
+ * | 0xfffffffffffffffe | 0x0000000000000001 |
  *
- * So `0xfffffffe` is returned.
+ * So `0xfffffffffffffffe` is returned.
  */
-export function mulUpperUnsigned(a: number, b: number) {
-  const aHigh = a >> 16;
-  const aLow = a & 0xffff;
-  const bHigh = b >> 16;
-  const bLow = b & 0xffff;
-
-  const lowLow = aLow * bLow;
-  const lowHigh = aLow * bHigh;
-  const highLow = aHigh * bLow;
-  const highHigh = aHigh * bHigh;
-  const carry = (lowLow >> 16) + (lowHigh & 0xffff) + (highLow & 0xffff);
-
-  return highHigh + (lowLow >> 16) + (highLow >> 16) + (carry >> 16);
+export function mulUpper(a: bigint, b: bigint) {
+  return ((a * b) >> 64n) & 0xffff_ffff_ffff_ffffn;
 }
 
-/**
- * Same as [mulUpperUnsigned] but treat the arguments as signed (two-complement) 32-bit numbers and the result alike.
- */
-export function mulUpperSigned(a: number, b: number) {
-  const sign = Math.sign(a) * Math.sign(b);
-  const aAbs = a < 0 ? ~a + 1 : a;
-  const bAbs = b < 0 ? ~b + 1 : b;
+function interpretAsSigned(value: bigint) {
+  const unsignedLimit = 1n << 64n;
+  const signedLimit = 1n << 63n;
 
-  if (sign < 0) {
-    return ~mulUpperUnsigned(aAbs, bAbs) + 1;
+  if (value >= signedLimit) {
+    return value - unsignedLimit;
   }
-  return mulUpperUnsigned(aAbs, bAbs);
+
+  return value;
+}
+
+export function mulUpperUU(a: bigint, b: bigint) {
+  const aUnsigned = a & 0xffff_ffff_ffff_ffffn;
+  const bUnsigned = b & 0xffff_ffff_ffff_ffffn;
+  return ((aUnsigned * bUnsigned) >> 64n) & 0xffff_ffff_ffff_ffffn;
+}
+
+export function mulUpperSU(a: bigint, b: bigint) {
+  const bUnsigned = b & 0xffff_ffff_ffff_ffffn;
+  const signedResult = (a * bUnsigned) >> 64n;
+  const resultLimitedTo64Bits = signedResult & 0xffff_ffff_ffff_ffffn;
+  return interpretAsSigned(resultLimitedTo64Bits);
+}
+
+export function mulUpperSS(a: bigint, b: bigint) {
+  const signedResult = (a * b) >> 64n;
+  const resultLimitedTo64Bits = signedResult & 0xffff_ffff_ffff_ffffn;
+  return interpretAsSigned(resultLimitedTo64Bits);
+}
+
+export function unsignedRightShiftBigInt(value: bigint, shift: bigint): bigint {
+  check(shift >= 0, "Shift count must be non-negative");
+
+  const fillBit = value < 0 ? "1" : "0";
+  // Convert the BigInt to its binary representation
+  const binaryRepresentation = value.toString(2).padStart(64, fillBit);
+
+  // If the value is negative, emulate unsigned behavior
+  const unsignedRepresentation = value < 0n ? (1n << BigInt(binaryRepresentation.length)) + value : value;
+
+  // Perform the right shift
+  return unsignedRepresentation >> shift;
 }

@@ -1,96 +1,172 @@
-import type { Registers } from "../registers";
-import { MAX_VALUE, MIN_VALUE } from "./math-consts";
-import { addWithOverflow, mulLowerUnsigned, mulUpperSigned, mulUpperUnsigned, sub } from "./math-utils";
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
+import { type Registers, signExtend32To64 } from "../registers";
+import { MIN_VALUE } from "./math-consts";
+import {
+  addWithOverflowU32,
+  addWithOverflowU64,
+  mulLowerUnsignedU32,
+  mulU64,
+  mulUpperSS,
+  mulUpperSU,
+  mulUpperUU,
+  subU32,
+  subU64,
+} from "./math-utils";
 
 export class MathOps {
   constructor(private regs: Registers) {}
 
-  add(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = addWithOverflow(
-      this.regs.asUnsigned[firstIndex],
-      this.regs.asUnsigned[secondIndex],
+  addU32(firstIndex: number, secondIndex: number, resultIndex: number) {
+    this.regs.setU64(
+      resultIndex,
+      signExtend32To64(addWithOverflowU32(this.regs.getU32(firstIndex), this.regs.getU32(secondIndex))),
     );
   }
 
-  addImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = addWithOverflow(this.regs.asUnsigned[firstIndex], immediateValue);
+  addU64(firstIndex: number, secondIndex: number, resultIndex: number) {
+    this.regs.setU64(resultIndex, addWithOverflowU64(this.regs.getU64(firstIndex), this.regs.getU64(secondIndex)));
   }
 
-  mul(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = mulLowerUnsigned(
-      this.regs.asUnsigned[firstIndex],
-      this.regs.asUnsigned[secondIndex],
+  addImmediateU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(
+      resultIndex,
+      signExtend32To64(addWithOverflowU32(this.regs.getU32(firstIndex), immediate.getU32())),
     );
+  }
+
+  addImmediateU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, addWithOverflowU64(this.regs.getU64(firstIndex), immediate.getU64()));
+  }
+
+  mulU32(firstIndex: number, secondIndex: number, resultIndex: number) {
+    this.regs.setU64(
+      resultIndex,
+      signExtend32To64(mulLowerUnsignedU32(this.regs.getU32(firstIndex), this.regs.getU32(secondIndex))),
+    );
+  }
+
+  mulU64(firstIndex: number, secondIndex: number, resultIndex: number) {
+    this.regs.setU64(resultIndex, mulU64(this.regs.getU64(firstIndex), this.regs.getU64(secondIndex)));
   }
 
   mulUpperUU(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = mulUpperUnsigned(
-      this.regs.asUnsigned[firstIndex],
-      this.regs.asUnsigned[secondIndex],
-    );
+    this.regs.setU64(resultIndex, mulUpperUU(this.regs.getU64(firstIndex), this.regs.getU64(secondIndex)));
   }
 
   mulUpperSS(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.asSigned[resultIndex] = mulUpperSigned(this.regs.asSigned[firstIndex], this.regs.asSigned[secondIndex]);
+    this.regs.setI64(resultIndex, mulUpperSS(this.regs.getI64(firstIndex), this.regs.getI64(secondIndex)));
   }
 
   mulUpperSU(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.asSigned[resultIndex] = mulUpperSigned(this.regs.asSigned[firstIndex], this.regs.asUnsigned[secondIndex]);
+    this.regs.setI64(resultIndex, mulUpperSU(this.regs.getI64(firstIndex), this.regs.getU64(secondIndex)));
   }
 
-  mulImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = mulLowerUnsigned(this.regs.asUnsigned[firstIndex], immediateValue);
+  mulImmediateU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(
+      resultIndex,
+      signExtend32To64(mulLowerUnsignedU32(this.regs.getU32(firstIndex), immediate.getU32())),
+    );
   }
 
-  mulUpperSSImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asSigned[resultIndex] = mulUpperSigned(this.regs.asSigned[firstIndex], immediateValue);
+  mulImmediateU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, mulU64(this.regs.getU64(firstIndex), immediate.getU64()));
   }
 
-  mulUpperUUImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = mulUpperUnsigned(this.regs.asUnsigned[firstIndex], immediateValue);
+  mulUpperSSImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setI64(resultIndex, mulUpperSS(this.regs.getI64(firstIndex), immediate.getI64()));
   }
 
-  sub(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = sub(this.regs.asUnsigned[firstIndex], this.regs.asUnsigned[secondIndex]);
+  mulUpperUUImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, mulUpperUU(this.regs.getU64(firstIndex), immediate.getU64()));
   }
 
-  negAddImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = sub(this.regs.asUnsigned[firstIndex], immediateValue);
+  subU32(firstIndex: number, secondIndex: number, resultIndex: number) {
+    this.regs.setU64(
+      resultIndex,
+      signExtend32To64(subU32(this.regs.getU32(firstIndex), this.regs.getU32(secondIndex))),
+    );
+  }
+  subU64(firstIndex: number, secondIndex: number, resultIndex: number) {
+    this.regs.setU64(resultIndex, subU64(this.regs.getU64(firstIndex), this.regs.getU64(secondIndex)));
   }
 
-  divSigned(firstIndex: number, secondIndex: number, resultIndex: number) {
-    if (this.regs.asUnsigned[firstIndex] === 0) {
-      this.regs.asUnsigned[resultIndex] = MAX_VALUE;
-    } else if (this.regs.asSigned[firstIndex] === -1 && this.regs.asSigned[secondIndex] === MIN_VALUE) {
-      this.regs.asUnsigned[resultIndex] = this.regs.asUnsigned[secondIndex];
+  negAddImmediateU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, signExtend32To64(subU32(this.regs.getU32(firstIndex), immediate.getU32())));
+  }
+
+  negAddImmediateU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, subU64(this.regs.getU64(firstIndex), immediate.getU64()));
+  }
+
+  divSignedU32(firstIndex: number, secondIndex: number, resultIndex: number) {
+    if (this.regs.getU32(firstIndex) === 0) {
+      this.regs.setU64(resultIndex, 2n ** 64n - 1n);
+    } else if (this.regs.getI32(firstIndex) === -1 && this.regs.getI32(secondIndex) === MIN_VALUE) {
+      this.regs.setU64(resultIndex, signExtend32To64(this.regs.getU32(secondIndex)));
     } else {
-      this.regs.asSigned[resultIndex] = ~~(this.regs.asSigned[secondIndex] / this.regs.asSigned[firstIndex]);
+      this.regs.setI64(resultIndex, signExtend32To64(~~(this.regs.getI32(secondIndex) / this.regs.getI32(firstIndex))));
     }
   }
 
-  divUnsigned(firstIndex: number, secondIndex: number, resultIndex: number) {
-    if (this.regs.asUnsigned[firstIndex] === 0) {
-      this.regs.asUnsigned[resultIndex] = MAX_VALUE;
+  divSignedU64(firstIndex: number, secondIndex: number, resultIndex: number) {
+    if (this.regs.getU64(firstIndex) === 0n) {
+      this.regs.setU64(resultIndex, 2n ** 64n - 1n);
+    } else if (this.regs.getI64(firstIndex) === -1n && this.regs.getI64(secondIndex) === -(2n ** 63n)) {
+      this.regs.setU64(resultIndex, this.regs.getU64(secondIndex));
     } else {
-      this.regs.asUnsigned[resultIndex] = ~~(this.regs.asUnsigned[secondIndex] / this.regs.asUnsigned[firstIndex]);
+      this.regs.setI64(resultIndex, ~~(this.regs.getI64(secondIndex) / this.regs.getI64(firstIndex)));
     }
   }
 
-  remSigned(firstIndex: number, secondIndex: number, resultIndex: number) {
-    if (this.regs.asUnsigned[firstIndex] === 0) {
-      this.regs.asUnsigned[resultIndex] = this.regs.asUnsigned[secondIndex];
-    } else if (this.regs.asSigned[firstIndex] === -1 && this.regs.asSigned[secondIndex] === MIN_VALUE) {
-      this.regs.asUnsigned[resultIndex] = 0;
+  divUnsignedU32(firstIndex: number, secondIndex: number, resultIndex: number) {
+    if (this.regs.getU32(firstIndex) === 0) {
+      this.regs.setU64(resultIndex, 2n ** 64n - 1n);
     } else {
-      this.regs.asSigned[resultIndex] = this.regs.asSigned[secondIndex] % this.regs.asSigned[firstIndex];
+      this.regs.setU64(resultIndex, signExtend32To64(~~(this.regs.getU32(secondIndex) / this.regs.getU32(firstIndex))));
     }
   }
 
-  remUnsigned(firstIndex: number, secondIndex: number, resultIndex: number) {
-    if (this.regs.asUnsigned[firstIndex] === 0) {
-      this.regs.asUnsigned[resultIndex] = this.regs.asUnsigned[secondIndex];
+  divUnsignedU64(firstIndex: number, secondIndex: number, resultIndex: number) {
+    if (this.regs.getU64(firstIndex) === 0n) {
+      this.regs.setU64(resultIndex, 2n ** 64n - 1n);
     } else {
-      this.regs.asUnsigned[resultIndex] = this.regs.asUnsigned[secondIndex] % this.regs.asUnsigned[firstIndex];
+      this.regs.setU64(resultIndex, ~~(this.regs.getU64(secondIndex) / this.regs.getU64(firstIndex)));
+    }
+  }
+
+  remSignedU32(firstIndex: number, secondIndex: number, resultIndex: number) {
+    if (this.regs.getU32(firstIndex) === 0) {
+      this.regs.setU64(resultIndex, BigInt(this.regs.getI32(secondIndex)));
+    } else if (this.regs.getI32(firstIndex) === -1 && this.regs.getI32(secondIndex) === MIN_VALUE) {
+      this.regs.setU64(resultIndex, 0n);
+    } else {
+      this.regs.setI64(resultIndex, signExtend32To64(this.regs.getI32(secondIndex) % this.regs.getI32(firstIndex)));
+    }
+  }
+
+  remSignedU64(firstIndex: number, secondIndex: number, resultIndex: number) {
+    if (this.regs.getU64(firstIndex) === 0n) {
+      this.regs.setU64(resultIndex, this.regs.getU64(secondIndex));
+    } else if (this.regs.getI64(firstIndex) === -1n && this.regs.getI64(secondIndex) === -(2n ** 63n)) {
+      this.regs.setU64(resultIndex, 0n);
+    } else {
+      this.regs.setI64(resultIndex, this.regs.getI64(secondIndex) % this.regs.getI64(firstIndex));
+    }
+  }
+
+  remUnsignedU32(firstIndex: number, secondIndex: number, resultIndex: number) {
+    if (this.regs.getU32(firstIndex) === 0) {
+      this.regs.setU64(resultIndex, signExtend32To64(this.regs.getU32(secondIndex)));
+    } else {
+      this.regs.setU64(resultIndex, signExtend32To64(this.regs.getU32(secondIndex) % this.regs.getU32(firstIndex)));
+    }
+  }
+
+  remUnsignedU64(firstIndex: number, secondIndex: number, resultIndex: number) {
+    if (this.regs.getU64(firstIndex) === 0n) {
+      this.regs.setU64(resultIndex, this.regs.getU64(secondIndex));
+    } else {
+      this.regs.setU64(resultIndex, this.regs.getU64(secondIndex) % this.regs.getU64(firstIndex));
     }
   }
 }

@@ -27,24 +27,24 @@ export class Zero implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers): Promise<PvmExecution | undefined> {
     // `n`: machine index
-    const machineIndex = tryAsMachineId(regs.asUnsigned[IN_OUT_REG]);
+    const machineIndex = tryAsMachineId(regs.getU32(IN_OUT_REG));
     // `p`: start page
-    const pageStart = tryAsU32(regs.asUnsigned[8]);
+    const pageStart = tryAsU32(regs.getU32(8));
     // `c`: page count
-    const pageCount = tryAsU32(regs.asUnsigned[9]);
+    const pageCount = tryAsU32(regs.getU32(9));
 
     const endPage = sumU32(pageStart, pageCount);
     if (pageStart < RESERVED_NUMBER_OF_PAGES || endPage.overflow || endPage.value >= MAX_NUMBER_OF_PAGES) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 
     const zeroResult = await this.refine.machineZeroPages(machineIndex, pageStart, pageCount);
 
     if (zeroResult.isOk) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
+      regs.setU32(IN_OUT_REG, HostCallResult.OK);
     } else {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.WHO;
+      regs.setU32(IN_OUT_REG, HostCallResult.WHO);
     }
   }
 }

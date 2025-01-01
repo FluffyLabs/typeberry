@@ -28,31 +28,31 @@ export class HistoricalLookup implements HostCallHandler {
     // a
     const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // h_0
-    const keyStartAddress = tryAsMemoryIndex(regs.asUnsigned[8]);
+    const keyStartAddress = tryAsMemoryIndex(regs.getU32(8));
     // b_0
-    const destinationStart = tryAsMemoryIndex(regs.asUnsigned[9]);
+    const destinationStart = tryAsMemoryIndex(regs.getU32(9));
     // b_z
-    const destinationLen = regs.asUnsigned[10];
+    const destinationLen = regs.getU32(10);
 
     const key = Bytes.zero(HASH_SIZE);
     const hashLoadingFault = memory.loadInto(key.raw, keyStartAddress);
     const destinationWriteable = memory.isWriteable(destinationStart, destinationLen);
     // we return OOB in case the destination is not writeable or the key can't be loaded.
     if (hashLoadingFault || !destinationWriteable) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
     const keyHash = blake2b.hashBytes(key);
     const value = await this.refine.historicalLookup(serviceId, keyHash);
 
     if (value === null) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.NONE;
+      regs.setU32(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
     // copy value to the memory and set the length to register 7
     memory.storeFrom(destinationStart, value.raw.subarray(0, destinationLen));
-    regs.asUnsigned[IN_OUT_REG] = value.raw.length;
+    regs.setU32(IN_OUT_REG, value.raw.length);
     return;
   }
 }

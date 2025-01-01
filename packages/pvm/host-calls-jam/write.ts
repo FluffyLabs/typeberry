@@ -62,18 +62,18 @@ export class Write implements HostCallHandler {
     // https://graypaper.fluffylabs.dev/#/439ca37/2d2a022d2a02
     const isStorageFull = await this.account.isStorageFull(this.currentServiceId);
     if (isStorageFull) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.FULL;
+      regs.setU32(IN_OUT_REG, HostCallResult.FULL);
       return;
     }
 
     // k_0
-    const keyStartAddress = tryAsMemoryIndex(regs.asUnsigned[7]);
+    const keyStartAddress = tryAsMemoryIndex(regs.getU32(7));
     // k_z
-    const keyLen = regs.asUnsigned[8];
+    const keyLen = regs.getU32(8);
     // v_0
-    const valueStart = tryAsMemoryIndex(regs.asUnsigned[9]);
+    const valueStart = tryAsMemoryIndex(regs.getU32(9));
     // v_z
-    const valueLen = regs.asUnsigned[10];
+    const valueLen = regs.getU32(10);
 
     // allocate extra bytes for the serviceId
     const key = new Uint8Array(SERVICE_ID_BYTES + keyLen);
@@ -88,7 +88,7 @@ export class Write implements HostCallHandler {
 
     // we return OOB in case the value cannot be read or the key can't be loaded.
     if (keyLoadingFault || valueLoadingFault) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 
@@ -97,7 +97,7 @@ export class Write implements HostCallHandler {
 
     // Successful write or removal. We store previous value length in omega_7
     const prevLen = await prevLenPromise;
-    regs.asUnsigned[IN_OUT_REG] = prevLen === null ? HostCallResult.NONE : prevLen;
+    regs.setU32(IN_OUT_REG, prevLen === null ? HostCallResult.NONE : prevLen);
     return;
   }
 }

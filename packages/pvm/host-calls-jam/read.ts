@@ -41,13 +41,13 @@ export class Read implements HostCallHandler {
     // a
     const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // k_0
-    const keyStartAddress = tryAsMemoryIndex(regs.asUnsigned[8]);
+    const keyStartAddress = tryAsMemoryIndex(regs.getU32(8));
     // k_z
-    const keyLen = regs.asUnsigned[9];
+    const keyLen = regs.getU32(9);
     // b_0
-    const destinationStart = tryAsMemoryIndex(regs.asUnsigned[10]);
+    const destinationStart = tryAsMemoryIndex(regs.getU32(10));
     // b_z
-    const destinationLen = regs.asUnsigned[11];
+    const destinationLen = regs.getU32(11);
 
     // allocate extra bytes for the serviceId
     const key = new Uint8Array(SERVICE_ID_BYTES + keyLen);
@@ -57,7 +57,7 @@ export class Read implements HostCallHandler {
 
     // we return OOB in case the destination is not writeable or the key can't be loaded.
     if (keyLoadingFault || !destinationWriteable) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 
@@ -65,13 +65,13 @@ export class Read implements HostCallHandler {
     const value = await this.account.read(serviceId, keyHash);
 
     if (value === null) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.NONE;
+      regs.setU32(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
     // copy value to the memory and set the length to register 7
     memory.storeFrom(destinationStart, value.raw.subarray(0, destinationLen));
-    regs.asUnsigned[IN_OUT_REG] = value.raw.length;
+    regs.setU32(IN_OUT_REG, value.raw.length);
     return;
   }
 }

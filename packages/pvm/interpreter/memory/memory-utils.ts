@@ -1,12 +1,12 @@
 import { PAGE_SIZE, PAGE_SIZE_SHIFT } from "./memory-consts";
-import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
+import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex } from "./memory-index";
 import { type PageNumber, tryAsPageNumber } from "./pages/page-utils";
 
 export function alignToPageSize(length: number) {
   return PAGE_SIZE * Math.ceil(length / PAGE_SIZE);
 }
 
-export function getPageNumber(address: MemoryIndex) {
+export function getPageNumber(address: MemoryIndex | SbrkIndex) {
   return tryAsPageNumber(address >>> PAGE_SIZE_SHIFT);
 }
 

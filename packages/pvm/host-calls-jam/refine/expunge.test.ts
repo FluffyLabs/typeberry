@@ -1,7 +1,8 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
-import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
+import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
+import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { OK, Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { Expunge } from "./expunge";
@@ -19,7 +20,7 @@ describe("HostCalls: Expunge", () => {
     await expunge.execute(gas, registers);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
   });
 
   it("should fail if machine unknown", async () => {
@@ -29,16 +30,16 @@ describe("HostCalls: Expunge", () => {
     await expunge.execute(gas, registers);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.WHO);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.WHO);
   });
 });
 
 function prepareRegsAndMemory(machineId: MachineId) {
   const registers = new Registers();
-  registers.asUnsigned[7] = machineId;
+  registers.setU32(7, machineId);
 
   const builder = new MemoryBuilder();
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
+  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
 
   return {
     registers,

@@ -119,20 +119,20 @@ export class Info implements HostCallHandler {
     // t
     const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // o
-    const outputStart = tryAsMemoryIndex(regs.asUnsigned[8]);
+    const outputStart = tryAsMemoryIndex(regs.getU32(8));
 
     // t
     const accountInfo = await this.account.getInfo(serviceId);
 
     if (accountInfo === null) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.NONE;
+      regs.setU32(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
     const encodedInfo = Encoder.encodeObject(AccountInfo.Codec, accountInfo);
     const writeOk = memory.storeFrom(outputStart, encodedInfo.raw);
 
-    regs.asUnsigned[IN_OUT_REG] = writeOk !== null ? HostCallResult.OOB : HostCallResult.OK;
+    regs.setU32(IN_OUT_REG, writeOk !== null ? HostCallResult.OOB : HostCallResult.OK);
     return;
   }
 }

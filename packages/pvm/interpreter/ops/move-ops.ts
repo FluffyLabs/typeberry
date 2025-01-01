@@ -1,29 +1,34 @@
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import type { Registers } from "../registers";
 
 export class MoveOps {
   constructor(private regs: Registers) {}
 
-  cmovIfZeroImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    if (this.regs.asUnsigned[firstIndex] === 0) {
-      this.regs.asUnsigned[resultIndex] = immediateValue;
+  cmovIfZeroImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    if (this.regs.getU64(firstIndex) === 0n) {
+      this.regs.setU64(resultIndex, immediate.getU64());
     }
   }
 
-  cmovIfNotZeroImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    if (this.regs.asUnsigned[firstIndex] !== 0) {
-      this.regs.asUnsigned[resultIndex] = immediateValue;
+  cmovIfNotZeroImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    if (this.regs.getU64(firstIndex) !== 0n) {
+      this.regs.setU64(resultIndex, immediate.getU64());
     }
   }
 
   cmovIfZero(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.cmovIfZeroImmediate(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
+    if (this.regs.getU64(firstIndex) === 0n) {
+      this.regs.setU64(resultIndex, this.regs.getU64(secondIndex));
+    }
   }
 
   cmovIfNotZero(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.cmovIfNotZeroImmediate(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
+    if (this.regs.getU64(firstIndex) !== 0n) {
+      this.regs.setU64(resultIndex, this.regs.getU64(secondIndex));
+    }
   }
 
   moveRegister(firstIndex: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = this.regs.asUnsigned[firstIndex];
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex));
   }
 }

@@ -26,19 +26,19 @@ export class New implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // `o`
-    const codeHashStart = tryAsMemoryIndex(regs.asUnsigned[IN_OUT_REG]);
+    const codeHashStart = tryAsMemoryIndex(regs.getU32(IN_OUT_REG));
     // `l`
-    const codeLength = tryAsU32(regs.asUnsigned[8]);
-    const g_l = tryAsU32(regs.asUnsigned[9]);
-    const g_h = tryAsU32(regs.asUnsigned[10]);
-    const m_l = tryAsU32(regs.asUnsigned[11]);
-    const m_h = tryAsU32(regs.asUnsigned[12]);
+    const codeLength = tryAsU32(regs.getU32(8));
+    const g_l = tryAsU32(regs.getU32(9));
+    const g_h = tryAsU32(regs.getU32(10));
+    const m_l = tryAsU32(regs.getU32(11));
+    const m_h = tryAsU32(regs.getU32(12));
 
     // `c`
     const codeHash = Bytes.zero(HASH_SIZE);
     const pageFault = memory.loadInto(codeHash.raw, codeHashStart);
     if (pageFault !== null) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 
@@ -50,9 +50,9 @@ export class New implements HostCallHandler {
     const assignedId = this.partialState.newService(newServiceId, codeHash.asOpaque(), codeLength, gas, allowance);
 
     if (assignedId.isOk) {
-      regs.asUnsigned[IN_OUT_REG] = assignedId.ok;
+      regs.setU32(IN_OUT_REG, assignedId.ok);
     } else {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.CASH;
+      regs.setU32(IN_OUT_REG, HostCallResult.CASH);
     }
     return;
   }

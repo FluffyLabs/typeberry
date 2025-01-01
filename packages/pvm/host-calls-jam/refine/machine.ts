@@ -28,22 +28,22 @@ export class Machine implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
     // `p_o`: memory index where there program code starts
-    const codeStart = tryAsMemoryIndex(regs.asUnsigned[7]);
+    const codeStart = tryAsMemoryIndex(regs.getU32(7));
     // `p_z`: length of the program code
-    const codeLength = regs.asUnsigned[8];
+    const codeLength = regs.getU32(8);
     // `i`: starting program counter
-    const entrypoint = tryAsU32(regs.asUnsigned[9]);
+    const entrypoint = tryAsU32(regs.getU32(9));
 
     const code = new Uint8Array(codeLength);
     const codePageFault = memory.loadInto(code, codeStart);
     // we return OOB in case the program code couldn't be read
     if (codePageFault !== null) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OOB;
+      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 
     const machineId = await this.refine.machineStart(BytesBlob.blobFrom(code), entrypoint);
-    regs.asUnsigned[IN_OUT_REG] = machineId;
+    regs.setU32(IN_OUT_REG, machineId);
     return;
   }
 }

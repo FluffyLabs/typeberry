@@ -28,6 +28,10 @@ export class ReadablePage extends MemoryPage {
     return new PageFault(address);
   }
 
+  setData(pageIndex: PageIndex, data: Uint8Array) {
+    this.data.set(data, pageIndex);
+  }
+
   isWriteable() {
     return false;
   }
