@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { type CoreIndex, tryAsCoreIndex, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
+import { FixedSizeArray } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { type Blake2bHash, HASH_SIZE } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
@@ -12,7 +13,6 @@ import { HostCallResult } from "../results";
 import { Assign } from "./assign";
 import { AUTHORIZATION_QUEUE_SIZE } from "./partial-state";
 import { TestAccumulate } from "./partial-state.test";
-import {FixedSizeArray} from "@typeberry/collections";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
