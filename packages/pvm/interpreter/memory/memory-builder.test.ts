@@ -17,6 +17,7 @@ describe("MemoryBuilder", () => {
       const expectedMemory = {
         endHeapIndex: 4 * PAGE_SIZE,
         sbrkIndex: 3 * PAGE_SIZE,
+        virtualSbrkIndex: 3 * PAGE_SIZE,
         memory: pageMap,
       };
 
@@ -49,6 +50,7 @@ describe("MemoryBuilder", () => {
       const expectedMemory = {
         endHeapIndex: 4 * PAGE_SIZE,
         sbrkIndex: 3 * PAGE_SIZE,
+        virtualSbrkIndex: 3 * PAGE_SIZE,
         memory: pageMap,
       };
 
@@ -66,6 +68,7 @@ describe("MemoryBuilder", () => {
       const expectedMemory = {
         endHeapIndex: 4 * PAGE_SIZE,
         sbrkIndex: 3 * PAGE_SIZE,
+        virtualSbrkIndex: 3 * PAGE_SIZE,
         memory: pageMap,
       };
 
@@ -84,6 +87,7 @@ describe("MemoryBuilder", () => {
       const expectedMemory = {
         endHeapIndex: 4 * PAGE_SIZE,
         sbrkIndex: 3 * PAGE_SIZE,
+        virtualSbrkIndex: 3 * PAGE_SIZE,
         memory: pageMap,
       };
 

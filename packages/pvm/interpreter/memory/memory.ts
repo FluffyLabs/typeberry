@@ -14,23 +14,31 @@ type InitialMemoryState = {
 
 export class Memory {
   static fromInitialMemory(initialMemoryState: InitialMemoryState) {
-    return new Memory(initialMemoryState?.sbrkIndex, initialMemoryState?.endHeapIndex, initialMemoryState?.memory);
+    return new Memory(
+      initialMemoryState?.sbrkIndex,
+      initialMemoryState?.sbrkIndex,
+      initialMemoryState?.endHeapIndex,
+      initialMemoryState?.memory,
+    );
   }
 
   constructor(
     private sbrkIndex = tryAsSbrkIndex(0),
+    private virtualSbrkIndex = tryAsSbrkIndex(0),
     private endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX),
     private memory = new Map<PageNumber, MemoryPage>(),
   ) {}
 
   reset() {
     this.sbrkIndex = tryAsSbrkIndex(0);
+    this.virtualSbrkIndex = tryAsSbrkIndex(0);
     this.endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX);
     this.memory = new Map<PageNumber, MemoryPage>(); // TODO [MaSi]: We should keep allocated pages somewhere and reuse it when it is possible
   }
 
   copyFrom(memory: Memory) {
     this.sbrkIndex = memory.sbrkIndex;
+    this.virtualSbrkIndex = memory.virtualSbrkIndex;
     this.endHeapIndex = memory.endHeapIndex;
     this.memory = memory.memory;
   }
@@ -164,17 +172,25 @@ export class Memory {
     return null;
   }
 
-  sbrk(lengthToAllocate: number): SbrkIndex {
-    const length = alignToPageSize(lengthToAllocate);
+  sbrk(length: number): SbrkIndex {
     const currentSbrkIndex = this.sbrkIndex;
+    const currentVirtualSbrkIndex = this.virtualSbrkIndex;
 
     // new sbrk index is bigger than 2 ** 32 or endHeapIndex
-    if (MAX_MEMORY_INDEX < currentSbrkIndex + length || currentSbrkIndex + length > this.endHeapIndex) {
+    if (MAX_MEMORY_INDEX < currentVirtualSbrkIndex + length || currentVirtualSbrkIndex + length > this.endHeapIndex) {
       throw new OutOfMemory();
     }
 
+    const newVirtualSbrkIndex = tryAsSbrkIndex(this.virtualSbrkIndex + length);
+
+    // no alllocation needed
+    if (newVirtualSbrkIndex <= currentSbrkIndex) {
+      this.virtualSbrkIndex = newVirtualSbrkIndex;
+      return currentVirtualSbrkIndex;
+    }
+
     // standard allocation using "Writeable" pages
-    const newSbrkIndex = tryAsSbrkIndex(alignToPageSize(this.sbrkIndex + length));
+    const newSbrkIndex = tryAsSbrkIndex(alignToPageSize(newVirtualSbrkIndex));
     const pagesToAllocate = (newSbrkIndex - currentSbrkIndex) / PAGE_SIZE;
 
     for (let i = 0; i < pagesToAllocate; i++) {
@@ -184,8 +200,9 @@ export class Memory {
       this.memory.set(pageNumber, page);
     }
 
+    this.virtualSbrkIndex = newVirtualSbrkIndex;
     this.sbrkIndex = newSbrkIndex;
-    return currentSbrkIndex;
+    return currentVirtualSbrkIndex;
   }
 
   getPageDump(pageNumber: PageNumber) {
