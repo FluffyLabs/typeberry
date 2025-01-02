@@ -14,6 +14,8 @@ import { tinyChainSpec } from "@typeberry/config";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
+import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { HostCallResult } from "../results";
 import { Designate } from "./designate";
 import { TestAccumulate } from "./partial-state.test";
@@ -26,9 +28,9 @@ function prepareRegsAndMemory(
   validators: ValidatorData[],
   { skipValidators = false }: { skipValidators?: boolean } = {},
 ) {
-  const memStart = 20_000;
+  const memStart = 2 ** 16;
   const registers = new Registers();
-  registers.asUnsigned[VALIDATORS_DATA_START_REG] = memStart;
+  registers.setU32(VALIDATORS_DATA_START_REG, memStart);
 
   const builder = new MemoryBuilder();
 
@@ -48,9 +50,9 @@ function prepareRegsAndMemory(
   const data = encoder.viewResult();
 
   if (!skipValidators) {
-    builder.setReadable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + data.raw.length), data.raw);
+    builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), data.raw);
   }
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
+  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
     memory,
@@ -69,7 +71,7 @@ describe("HostCalls: Designate", () => {
     await designate.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accumulate.validatorsData.length, 0);
   });
 
@@ -97,7 +99,7 @@ describe("HostCalls: Designate", () => {
     await designate.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(
       accumulate.validatorsData[0][0].toString(),
       `ValidatorData {

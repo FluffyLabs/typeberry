@@ -36,4 +36,6 @@ export abstract class MemoryPage {
    * might be inefficient.
    */
   abstract getPageDump(): Uint8Array;
+
+  abstract setData(pageIndex: PageIndex, data: Uint8Array): void;
 }

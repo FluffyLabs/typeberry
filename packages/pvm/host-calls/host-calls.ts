@@ -20,8 +20,8 @@ export class HostCalls {
     }
 
     if (status === Status.HALT) {
-      const maybeAddress = regs.asUnsigned[10];
-      const maybeLength = regs.asUnsigned[11];
+      const maybeAddress = regs.getU32(10);
+      const maybeLength = regs.getU32(11);
 
       const result = new Uint8Array(maybeLength);
       const startAddress = tryAsMemoryIndex(maybeAddress);

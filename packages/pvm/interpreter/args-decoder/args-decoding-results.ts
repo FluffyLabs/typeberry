@@ -2,6 +2,7 @@ import type {
   EmptyArgs,
   OneImmediateArgs,
   OneOffsetArgs,
+  OneRegisterOneExtendedWidthImmediateArgs,
   OneRegisterOneImmediateArgs,
   OneRegisterOneImmediateOneOffsetArgs,
   OneRegisterTwoImmediatesArgs,
@@ -13,6 +14,7 @@ import type {
   TwoRegistersTwoImmediatesArgs,
 } from "./args-decoder";
 import { ArgumentType } from "./argument-type";
+import { ExtendedWitdthImmediateDecoder } from "./decoders/extended-with-immediate-decoder";
 import { ImmediateDecoder } from "./decoders/immediate-decoder";
 
 const ARGUMENT_TYPE_LENGTH = Object.keys(ArgumentType).length / 2;
@@ -30,6 +32,7 @@ type Results = [
   TwoRegistersOneOffsetArgs,
   TwoRegistersTwoImmediatesArgs,
   ThreeRegistersArgs,
+  OneRegisterOneExtendedWidthImmediateArgs,
 ];
 
 export const createResults = () => {
@@ -120,6 +123,13 @@ export const createResults = () => {
     secondImmediateDecoder: new ImmediateDecoder(),
     firstRegisterIndex: 0,
     secondRegisterIndex: 0,
+  };
+
+  results[ArgumentType.ONE_REGISTER_ONE_EXTENDED_WIDTH_IMMEDIATE] = {
+    type: ArgumentType.ONE_REGISTER_ONE_EXTENDED_WIDTH_IMMEDIATE,
+    noOfBytesToSkip: 9,
+    registerIndex: 0,
+    immediateDecoder: new ExtendedWitdthImmediateDecoder(),
   };
 
   return results;

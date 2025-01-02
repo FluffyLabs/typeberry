@@ -1,3 +1,4 @@
+import "json-bigint-patch";
 import { fail } from "node:assert";
 import * as fs from "node:fs/promises";
 import path from "node:path";

@@ -10,3 +10,4 @@ export { TwoImmsDispatcher } from "./two-imms-dispatcher";
 export { NoArgsDispatcher } from "./no-args-dispatcher";
 export { TwoRegsTwoImmsDispatcher } from "./two-regs-two-imms-dispatcher";
 export { OneImmDispatcher } from "./one-imm-dispatcher";
+export { OneRegOneExtImmDispatcher } from "./one-reg-one-ext-imm-dispatcher";

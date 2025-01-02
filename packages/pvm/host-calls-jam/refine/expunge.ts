@@ -20,14 +20,14 @@ export class Expunge implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers): Promise<PvmExecution | undefined> {
     // `n`: machine index
-    const machineIndex = tryAsMachineId(regs.asUnsigned[IN_OUT_REG]);
+    const machineIndex = tryAsMachineId(regs.getU32(IN_OUT_REG));
 
     const expungeResult = await this.refine.machineExpunge(machineIndex);
 
     if (expungeResult.isOk) {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.OK;
+      regs.setU32(IN_OUT_REG, HostCallResult.OK);
     } else {
-      regs.asUnsigned[IN_OUT_REG] = HostCallResult.WHO;
+      regs.setU32(IN_OUT_REG, HostCallResult.WHO);
     }
 
     return Promise.resolve(undefined);

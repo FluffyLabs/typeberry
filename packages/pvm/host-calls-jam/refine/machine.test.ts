@@ -4,6 +4,8 @@ import { tryAsServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
+import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { HostCallResult } from "../results";
 import { Machine } from "./machine";
 import { tryAsMachineId } from "./refine-externalities";
@@ -16,17 +18,17 @@ const CODE_LEN_REG = 8;
 const PC_REG = 9;
 
 function prepareRegsAndMemory(code: BytesBlob, pc: U32, { skipCode = false }: { skipCode?: boolean } = {}) {
-  const memStart = 3_400_000;
+  const memStart = 2 ** 20;
   const registers = new Registers();
-  registers.asUnsigned[CODE_START_REG] = memStart;
-  registers.asUnsigned[CODE_LEN_REG] = code.length;
-  registers.asUnsigned[PC_REG] = pc;
+  registers.setU32(CODE_START_REG, memStart);
+  registers.setU32(CODE_LEN_REG, code.length);
+  registers.setU32(PC_REG, pc);
 
   const builder = new MemoryBuilder();
   if (!skipCode) {
-    builder.setReadable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + code.length), code.raw);
+    builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), code.raw);
   }
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
+  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
     memory,
@@ -46,7 +48,7 @@ describe("HostCalls: Machine", () => {
     await machine.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], 10_000);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), 10_000);
   });
 
   it("should fail when code is unavailable", async () => {
@@ -60,6 +62,6 @@ describe("HostCalls: Machine", () => {
     await machine.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
   });
 });

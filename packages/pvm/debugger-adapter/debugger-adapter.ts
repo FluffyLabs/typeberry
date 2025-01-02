@@ -1,4 +1,3 @@
-import { type U64, tryAsU64 } from "@typeberry/numbers";
 import { Interpreter, type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
@@ -61,7 +60,7 @@ export class DebuggerAdapter {
     return this.pvm.nextStep() === Status.OK;
   }
 
-  run(steps: number): boolean {
+  nSteps(steps: number): boolean {
     check(steps >>> 0 > 0, `Expected a positive integer got ${steps}`);
     for (let i = 0; i < steps; i++) {
       const isOk = this.nextStep();
@@ -72,8 +71,8 @@ export class DebuggerAdapter {
     return true;
   }
 
-  getRegisters(): Uint32Array {
-    return this.pvm.getRegisters().asUnsigned;
+  getRegisters(): BigUint64Array {
+    return this.pvm.getRegisters().getAllU64();
   }
 
   setRegisters(registers: Uint8Array) {
@@ -88,8 +87,8 @@ export class DebuggerAdapter {
     this.pvm.setNextPC(nextPc);
   }
 
-  getGasLeft(): U64 {
-    return tryAsU64(this.pvm.getGas());
+  getGasLeft(): bigint {
+    return BigInt(this.pvm.getGas());
   }
 
   setGasLeft(gas: bigint) {

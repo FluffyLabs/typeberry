@@ -56,6 +56,10 @@ export class WriteablePage extends MemoryPage {
     return null;
   }
 
+  setData(pageIndex: PageIndex, data: Uint8Array) {
+    this.view.set(data, pageIndex);
+  }
+
   isWriteable() {
     return true;
   }

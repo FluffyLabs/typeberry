@@ -16,16 +16,16 @@ describe("HostCalls: Checkpoint", () => {
     const counter = gasCounter((2n ** 42n - 1n) as Gas);
     const regs = new Registers();
 
-    assert.deepStrictEqual(regs.asUnsigned[REG_LOWER], 0);
-    assert.deepStrictEqual(regs.asUnsigned[REG_UPPER], 0);
+    assert.deepStrictEqual(regs.getU32(REG_LOWER), 0);
+    assert.deepStrictEqual(regs.getU32(REG_UPPER), 0);
     assert.deepStrictEqual(accumulate.checkpointCalled, 0);
 
     // when
     checkpoint.execute(counter, regs);
 
     // then
-    assert.deepStrictEqual(regs.asUnsigned[REG_LOWER], 0xffffffff);
-    assert.deepStrictEqual(regs.asUnsigned[REG_UPPER], 0x3ff);
+    assert.deepStrictEqual(regs.getU32(REG_LOWER), 0xffffffff);
+    assert.deepStrictEqual(regs.getU32(REG_UPPER), 0x3ff);
     assert.deepStrictEqual(accumulate.checkpointCalled, 1);
   });
 });
