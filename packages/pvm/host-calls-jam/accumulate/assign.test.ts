@@ -76,8 +76,8 @@ describe("HostCalls: Assign", () => {
     for (let i = 3; i < AUTHORIZATION_QUEUE_SIZE; i += 1) {
       expected[i] = Bytes.zero(HASH_SIZE);
     }
-    const x = FixedSizeArray.new(expected, AUTHORIZATION_QUEUE_SIZE);
-    assert.deepStrictEqual(accumulate.authQueue[0][1], x);
+    const expectedAuthQueue = FixedSizeArray.new(expected, AUTHORIZATION_QUEUE_SIZE);
+    assert.deepStrictEqual(accumulate.authQueue[0][1], expectedAuthQueue);
     assert.deepStrictEqual(accumulate.authQueue.length, 1);
   });
 
