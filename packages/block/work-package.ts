@@ -13,11 +13,11 @@ export type WorkItemsCount = 1 | 2 | 3 | 4;
 
 /** Verify the value is within the `WorkItemsCount` bounds. */
 export function tryAsWorkItemsCount(len: number): WorkItemsCount {
-  if (len >= MIN_NUMBER_OF_WORK_ITEMS && len <= MAX_NUMBER_OF_WORK_ITEMS) {
-    return len as WorkItemsCount;
-  }
-
-  throw new Error(`WorkItemsCount: Expected 1|2|3|4 got ${len}`);
+  return ensure<number, WorkItemsCount>(
+    len,
+    len >= MIN_NUMBER_OF_WORK_ITEMS && len <= MAX_NUMBER_OF_WORK_ITEMS,
+    `WorkItemsCount: Expected 1|2|3|4 got ${len}`
+  );
 }
 
 /** Minimal number of work items in the work package or results in work report. */
