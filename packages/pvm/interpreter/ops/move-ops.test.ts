@@ -1,128 +1,148 @@
 import assert from "node:assert";
-import { test } from "node:test";
+import { describe, it } from "node:test";
 
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { Registers } from "../registers";
+import { bigintToUint8ArrayLE } from "../test-utils";
 import { MoveOps } from "./move-ops";
 
-const FIRST_REGISTER = 0;
-const SECOND_REGISTER = 1;
-const RESULT_REGISTER = 12;
+describe("MoveOps", () => {
+  function prepareData(firstValue: bigint, secondValue: bigint) {
+    const regs = new Registers();
+    const firstRegisterIndex = 0;
+    const secondRegisterIndex = 1;
+    const resultRegisterIndex = 12;
 
-const getRegisters = (data: number[]) => {
-  const regs = new Registers();
+    regs.setU64(firstRegisterIndex, firstValue);
+    regs.setU64(secondRegisterIndex, secondValue);
 
-  for (const [i, byte] of data.entries()) {
-    regs.asUnsigned[i] = byte;
+    const immediate = new ImmediateDecoder();
+    immediate.setBytes(bigintToUint8ArrayLE(secondValue));
+
+    const moveOps = new MoveOps(regs);
+
+    return { regs, moveOps, immediate, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex };
   }
 
-  return regs;
-};
-
-test("MoveOps", async (t) => {
-  await t.test("moveRegister", () => {
-    const firstValue = 5;
+  it("moveRegister", () => {
+    const firstValue = 5n;
     const resultValue = firstValue;
-    const regs = getRegisters([firstValue]);
-    const moveOps = new MoveOps(regs);
+    const { moveOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(firstValue, 0n);
 
-    moveOps.moveRegister(FIRST_REGISTER, RESULT_REGISTER);
+    moveOps.moveRegister(firstRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("cmovIfZero (condition satisfied)", () => {
-    const firstValue = 0;
-    const secondValue = 5;
+  it("moveRegister u64", () => {
+    const firstValue = 0x7fff_ffff_ffff_ffffn;
+    const resultValue = firstValue;
+    const { moveOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(firstValue, 0n);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), 0n);
+
+    moveOps.moveRegister(firstRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+  });
+
+  it("cmovIfZero (condition satisfied)", () => {
+    const firstValue = 0n;
+    const secondValue = 5n;
     const resultValue = secondValue;
-    const regs = getRegisters([firstValue, secondValue]);
-    const moveOps = new MoveOps(regs);
+    const { moveOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    moveOps.cmovIfZero(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    moveOps.cmovIfZero(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("cmovIfZero (condition not satisfied)", () => {
-    const firstValue = 3;
-    const secondValue = 5;
-    const resultValue = 0;
-    const regs = getRegisters([firstValue, secondValue]);
-    const moveOps = new MoveOps(regs);
+  it("cmovIfZero (condition not satisfied)", () => {
+    const firstValue = 3n;
+    const secondValue = 5n;
+    const resultValue = 0n;
+    const { moveOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    moveOps.cmovIfZero(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    moveOps.cmovIfZero(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("cmovIfNotZero (condition satisfied)", () => {
-    const firstValue = 3;
-    const secondValue = 5;
+  it("cmovIfNotZero (condition satisfied)", () => {
+    const firstValue = 3n;
+    const secondValue = 5n;
+    const resultValue = 5n;
+    const { moveOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    moveOps.cmovIfNotZero(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+  });
+
+  it("cmovIfNotZero (condition not satisfied)", () => {
+    const firstValue = 0n;
+    const secondValue = 5n;
+    const resultValue = 0n;
+    const { moveOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    moveOps.cmovIfNotZero(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+  });
+
+  it("cmovIfZeroImmediate (condition satisfied)", () => {
+    const firstValue = 0n;
+    const secondValue = 5n;
     const resultValue = secondValue;
-    const regs = getRegisters([firstValue, secondValue]);
-    const moveOps = new MoveOps(regs);
+    const { moveOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    moveOps.cmovIfNotZero(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    moveOps.cmovIfZeroImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("cmovIfNotZero (condition not satisfied)", () => {
-    const firstValue = 0;
-    const secondValue = 5;
-    const resultValue = 0;
-    const regs = getRegisters([firstValue, secondValue]);
-    const moveOps = new MoveOps(regs);
+  it("cmovIfZeroImmediate (condition not satisfied)", () => {
+    const firstValue = 3n;
+    const secondValue = 5n;
+    const resultValue = 0n;
+    const { moveOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    moveOps.cmovIfNotZero(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    moveOps.cmovIfZeroImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("cmovIfZeroImmediate (condition satisfied)", () => {
-    const firstValue = 0;
-    const secondValue = 5;
+  it("cmovIfNotZeroImmediate (condition satisfied)", () => {
+    const firstValue = 3n;
+    const secondValue = 5n;
     const resultValue = secondValue;
-    const regs = getRegisters([firstValue]);
-    const moveOps = new MoveOps(regs);
+    const { moveOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    moveOps.cmovIfZeroImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    moveOps.cmovIfNotZeroImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("cmovIfZeroImmediate (condition not satisfied)", () => {
-    const firstValue = 3;
-    const secondValue = 5;
-    const resultValue = 0;
-    const regs = getRegisters([firstValue]);
-    const moveOps = new MoveOps(regs);
+  it("cmovIfNotZeroImmediate (condition not satisfied)", () => {
+    const firstValue = 0n;
+    const secondValue = 5n;
+    const resultValue = 0n;
+    const { moveOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    moveOps.cmovIfZeroImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    moveOps.cmovIfNotZeroImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
-  });
-
-  await t.test("cmovIfNotZeroImmediate (condition satisfied)", () => {
-    const firstValue = 3;
-    const secondValue = 5;
-    const resultValue = secondValue;
-    const regs = getRegisters([firstValue]);
-    const moveOps = new MoveOps(regs);
-
-    moveOps.cmovIfNotZeroImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
-
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
-  });
-
-  await t.test("cmovIfNotZeroImmediate (condition not satisfied)", () => {
-    const firstValue = 0;
-    const secondValue = 5;
-    const resultValue = 0;
-    const regs = getRegisters([firstValue]);
-    const moveOps = new MoveOps(regs);
-
-    moveOps.cmovIfNotZeroImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
-
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 });

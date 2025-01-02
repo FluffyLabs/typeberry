@@ -39,7 +39,7 @@ describe("decodeStandardProgram", () => {
   it("should write args length to 9th register", () => {
     const registerIndex = 8;
 
-    assert.strictEqual(decodedProgram.registers[registerIndex], ARGS.length);
+    assert.strictEqual(decodedProgram.registers[registerIndex], BigInt(ARGS.length));
   });
 
   it("should prepare readable memory segments", () => {
@@ -49,13 +49,13 @@ describe("decodeStandardProgram", () => {
         end: 65540,
         data: O,
       },
-      { start: 65540, end: 81920, data: null },
+      { start: 65540, end: 69632, data: null },
       {
         start: 4278124544,
         end: 4278124547,
         data: ARGS,
       },
-      { start: 4278124547, end: 4278140931, data: null },
+      { start: 4278124547, end: 4278128643, data: null },
     ].map(MemorySegment.from);
 
     assert.deepStrictEqual(decodedProgram.memory.readable, expectedMemory);
@@ -64,15 +64,15 @@ describe("decodeStandardProgram", () => {
   it("should prepare writeable memory segments", () => {
     const expectedMemory = [
       { start: 196608, end: 196610, data: W },
-      { start: 196610, end: 262144, data: null },
-      { start: 4278042624, end: 4278059008, data: null },
+      { start: 196610, end: 212992, data: null },
+      { start: 4278054912, end: 4278059008, data: null },
     ].map(MemorySegment.from);
 
     assert.deepStrictEqual(decodedProgram.memory.writeable, expectedMemory);
   });
 
   it("sbrkIndex", () => {
-    const expectedSbreak = 262144;
+    const expectedSbreak = 212992;
 
     assert.strictEqual(decodedProgram.memory.sbrkIndex, expectedSbreak);
   });

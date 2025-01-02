@@ -13,10 +13,13 @@ const instructionsWithoutArgs: InstructionTuple[] = [
 
 const instructionsWithOneImmediate: InstructionTuple[] = [[Instruction.ECALLI, 1]];
 
+const instructionsWithOneRegisterAndOneExtendedWidthImmediate: InstructionTuple[] = [[Instruction.LOAD_IMM_64, 1]];
+
 const instructionsWithTwoImmediates: InstructionTuple[] = [
   [Instruction.STORE_IMM_U8, 1],
   [Instruction.STORE_IMM_U16, 1],
   [Instruction.STORE_IMM_U32, 1],
+  [Instruction.STORE_IMM_U64, 1],
 ];
 
 const instructionsWithOneOffset: InstructionTuple[] = [[Instruction.JUMP, 1]];
@@ -29,15 +32,19 @@ const instructionsWithOneRegisterAndOneImmediate: InstructionTuple[] = [
   [Instruction.LOAD_U16, 1],
   [Instruction.LOAD_I16, 1],
   [Instruction.LOAD_U32, 1],
+  [Instruction.LOAD_I32, 1],
+  [Instruction.LOAD_U64, 1],
   [Instruction.STORE_U8, 1],
   [Instruction.STORE_U16, 1],
   [Instruction.STORE_U32, 1],
+  [Instruction.STORE_U64, 1],
 ];
 
 const instructionsWithOneRegisterAndTwoImmediate: InstructionTuple[] = [
   [Instruction.STORE_IMM_IND_U8, 1],
   [Instruction.STORE_IMM_IND_U16, 1],
   [Instruction.STORE_IMM_IND_U32, 1],
+  [Instruction.STORE_IMM_IND_U64, 1],
 ];
 
 const instructionsWithOneRegisterOneImmediateAndOneOffset: InstructionTuple[] = [
@@ -63,31 +70,41 @@ const instructionsWithTwoRegistersAndOneImmediate: InstructionTuple[] = [
   [Instruction.STORE_IND_U8, 1],
   [Instruction.STORE_IND_U16, 1],
   [Instruction.STORE_IND_U32, 1],
+  [Instruction.STORE_IND_U64, 1],
   [Instruction.LOAD_IND_U8, 1],
   [Instruction.LOAD_IND_I8, 1],
   [Instruction.LOAD_IND_U16, 1],
   [Instruction.LOAD_IND_I16, 1],
   [Instruction.LOAD_IND_U32, 1],
-  [Instruction.ADD_IMM, 1],
+  [Instruction.LOAD_IND_I32, 1],
+  [Instruction.LOAD_IND_U64, 1],
+  [Instruction.ADD_IMM_32, 1],
   [Instruction.AND_IMM, 1],
   [Instruction.XOR_IMM, 1],
   [Instruction.OR_IMM, 1],
-  [Instruction.MUL_IMM, 1],
-  [Instruction.MUL_UPPER_S_S_IMM, 1],
-  [Instruction.MUL_UPPER_U_U_IMM, 1],
+  [Instruction.MUL_IMM_32, 1],
   [Instruction.SET_LT_U_IMM, 1],
   [Instruction.SET_LT_S_IMM, 1],
-  [Instruction.SHLO_L_IMM, 1],
-  [Instruction.SHLO_R_IMM, 1],
-  [Instruction.SHAR_R_IMM, 1],
-  [Instruction.NEG_ADD_IMM, 1],
+  [Instruction.SHLO_L_IMM_32, 1],
+  [Instruction.SHLO_R_IMM_32, 1],
+  [Instruction.SHAR_R_IMM_32, 1],
+  [Instruction.NEG_ADD_IMM_32, 1],
   [Instruction.SET_GT_U_IMM, 1],
   [Instruction.SET_GT_S_IMM, 1],
-  [Instruction.SHLO_L_IMM_ALT, 1],
-  [Instruction.SHLO_R_IMM_ALT, 1],
-  [Instruction.SHAR_R_IMM_ALT, 1],
+  [Instruction.SHLO_L_IMM_ALT_32, 1],
+  [Instruction.SHLO_R_IMM_ALT_32, 1],
+  [Instruction.SHAR_R_IMM_ALT_32, 1],
   [Instruction.CMOV_IZ_IMM, 1],
   [Instruction.CMOV_NZ_IMM, 1],
+  [Instruction.ADD_IMM_64, 1],
+  [Instruction.MUL_IMM_64, 1],
+  [Instruction.SHLO_L_IMM_64, 1],
+  [Instruction.SHLO_R_IMM_64, 1],
+  [Instruction.SHAR_R_IMM_64, 1],
+  [Instruction.NEG_ADD_IMM_64, 1],
+  [Instruction.SHLO_L_IMM_ALT_64, 1],
+  [Instruction.SHLO_R_IMM_ALT_64, 1],
+  [Instruction.SHAR_R_IMM_ALT_64, 1],
 ];
 
 const instructionsWithTwoRegistersAndOneOffset: InstructionTuple[] = [
@@ -102,24 +119,34 @@ const instructionsWithTwoRegistersAndOneOffset: InstructionTuple[] = [
 const instructionWithTwoRegistersAndTwoImmediates: InstructionTuple[] = [[Instruction.LOAD_IMM_JUMP_IND, 1]];
 
 const instructionsWithThreeRegisters: InstructionTuple[] = [
-  [Instruction.ADD, 1],
-  [Instruction.SUB, 1],
+  [Instruction.ADD_32, 1],
+  [Instruction.SUB_32, 1],
+  [Instruction.MUL_32, 1],
+  [Instruction.DIV_U_32, 1],
+  [Instruction.DIV_S_32, 1],
+  [Instruction.REM_U_32, 1],
+  [Instruction.REM_S_32, 1],
+  [Instruction.SHLO_L_32, 1],
+  [Instruction.SHLO_R_32, 1],
+  [Instruction.SHAR_R_32, 1],
+  [Instruction.ADD_64, 1],
+  [Instruction.SUB_64, 1],
+  [Instruction.MUL_64, 1],
+  [Instruction.DIV_U_64, 1],
+  [Instruction.DIV_S_64, 1],
+  [Instruction.REM_U_64, 1],
+  [Instruction.REM_S_64, 1],
+  [Instruction.SHLO_L_64, 1],
+  [Instruction.SHLO_R_64, 1],
+  [Instruction.SHAR_R_64, 1],
   [Instruction.AND, 1],
   [Instruction.XOR, 1],
   [Instruction.OR, 1],
-  [Instruction.MUL, 1],
   [Instruction.MUL_UPPER_S_S, 1],
   [Instruction.MUL_UPPER_U_U, 1],
   [Instruction.MUL_UPPER_S_U, 1],
-  [Instruction.DIV_U, 1],
-  [Instruction.DIV_S, 1],
-  [Instruction.REM_U, 1],
-  [Instruction.REM_S, 1],
   [Instruction.SET_LT_U, 1],
   [Instruction.SET_LT_S, 1],
-  [Instruction.SHLO_L, 1],
-  [Instruction.SHLO_R, 1],
-  [Instruction.SHAR_R, 1],
   [Instruction.CMOV_IZ, 1],
   [Instruction.CMOV_NZ, 1],
 ];
@@ -127,6 +154,7 @@ const instructionsWithThreeRegisters: InstructionTuple[] = [
 const instructions: InstructionTuple[] = [
   ...instructionsWithoutArgs,
   ...instructionsWithOneImmediate,
+  ...instructionsWithOneRegisterAndOneExtendedWidthImmediate,
   ...instructionsWithTwoImmediates,
   ...instructionsWithOneOffset,
   ...instructionsWithOneRegisterAndOneImmediate,

@@ -1,93 +1,101 @@
 import assert from "node:assert";
-import { test } from "node:test";
+import { describe, it } from "node:test";
 
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { Registers } from "../registers";
+import { bigintToUint8ArrayLE } from "../test-utils";
 import { BitOps } from "./bit-ops";
 
-const FIRST_REGISTER = 0;
-const SECOND_REGISTER = 1;
-const RESULT_REGISTER = 12;
+describe("BitOps", () => {
+  function prepareData(firstValue: bigint, secondValue: bigint) {
+    const regs = new Registers();
+    const firstRegisterIndex = 0;
+    const secondRegisterIndex = 1;
+    const resultRegisterIndex = 12;
 
-const getRegisters = (data: number[]) => {
-  const regs = new Registers();
+    regs.setU64(firstRegisterIndex, firstValue);
+    regs.setU64(secondRegisterIndex, secondValue);
 
-  for (const [i, byte] of data.entries()) {
-    regs.asUnsigned[i] = byte;
+    const immediate = new ImmediateDecoder();
+    immediate.setBytes(bigintToUint8ArrayLE(secondValue));
+
+    const bitOps = new BitOps(regs);
+
+    return { regs, bitOps, immediate, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex };
   }
 
-  return regs;
-};
+  it("or", () => {
+    const firstValue = 0b01n;
+    const secondValue = 0b10n;
+    const resultValue = 0b11n;
+    const { bitOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-test("BitOps", async (t) => {
-  await t.test("or", () => {
-    const firstValue = 0b01;
-    const secondValue = 0b10;
-    const resultValue = 0b11;
-    const regs = getRegisters([firstValue, secondValue]);
-    const bitOps = new BitOps(regs);
+    bitOps.or(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    bitOps.or(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
-
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("orImmediate", () => {
-    const firstValue = 0b01;
-    const secondValue = 0b10;
-    const resultValue = 0b11;
-    const regs = getRegisters([firstValue]);
-    const bitOps = new BitOps(regs);
+  it("orImmediate", () => {
+    const firstValue = 0b01n;
+    const secondValue = 0b10n;
+    const resultValue = 0b11n;
+    const { bitOps, regs, immediate, firstRegisterIndex, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    bitOps.orImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    bitOps.orImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("and", () => {
-    const firstValue = 0b101;
-    const secondValue = 0b011;
-    const resultValue = 0b001;
-    const regs = getRegisters([firstValue, secondValue]);
-    const bitOps = new BitOps(regs);
+  it("and", () => {
+    const firstValue = 0b101n;
+    const secondValue = 0b011n;
+    const resultValue = 0b001n;
+    const { bitOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    bitOps.and(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    bitOps.and(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("andImmediate", () => {
-    const firstValue = 0b101;
-    const secondValue = 0b011;
-    const resultValue = 0b001;
-    const regs = getRegisters([firstValue]);
-    const bitOps = new BitOps(regs);
+  it("andImmediate", () => {
+    const firstValue = 0b101n;
+    const secondValue = 0b011n;
+    const resultValue = 0b001n;
+    const { bitOps, regs, immediate, firstRegisterIndex, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    bitOps.andImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    bitOps.andImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("xor", () => {
-    const firstValue = 0b101;
-    const secondValue = 0b110;
-    const resultValue = 0b011;
-    const regs = getRegisters([firstValue, secondValue]);
-    const bitOps = new BitOps(regs);
+  it("xor", () => {
+    const firstValue = 0b101n;
+    const secondValue = 0b110n;
+    const resultValue = 0b011n;
+    const { bitOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
 
-    bitOps.xor(FIRST_REGISTER, SECOND_REGISTER, RESULT_REGISTER);
+    bitOps.xor(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
-  await t.test("xorImmediate", () => {
-    const firstValue = 0b101;
-    const secondValue = 0b110;
-    const resultValue = 0b011;
-    const regs = getRegisters([firstValue]);
-    const bitOps = new BitOps(regs);
+  it("xorImmediate", () => {
+    const firstValue = 0b101n;
+    const secondValue = 0b110n;
+    const resultValue = 0b011n;
+    const { bitOps, regs, immediate, firstRegisterIndex, resultRegisterIndex } = prepareData(firstValue, secondValue);
 
-    bitOps.xorImmediate(FIRST_REGISTER, secondValue, RESULT_REGISTER);
+    bitOps.xorImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
-    assert.strictEqual(regs.asUnsigned[RESULT_REGISTER], resultValue);
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 });

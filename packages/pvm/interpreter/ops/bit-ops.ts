@@ -1,29 +1,30 @@
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import type { Registers } from "../registers";
 
 export class BitOps {
   constructor(private regs: Registers) {}
 
   or(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.orImmediate(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) | this.regs.getU64(secondIndex));
   }
 
-  orImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = this.regs.asUnsigned[firstIndex] | immediateValue;
+  orImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) | immediate.getU64());
   }
 
   and(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.andImmediate(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) & this.regs.getU64(secondIndex));
   }
 
-  andImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = this.regs.asUnsigned[firstIndex] & immediateValue;
+  andImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) & immediate.getU64());
   }
 
   xor(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.xorImmediate(firstIndex, this.regs.asUnsigned[secondIndex], resultIndex);
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) ^ this.regs.getU64(secondIndex));
   }
 
-  xorImmediate(firstIndex: number, immediateValue: number, resultIndex: number) {
-    this.regs.asUnsigned[resultIndex] = this.regs.asUnsigned[firstIndex] ^ immediateValue;
+  xorImmediate(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) ^ immediate.getU64());
   }
 }

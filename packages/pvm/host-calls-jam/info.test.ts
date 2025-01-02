@@ -7,6 +7,8 @@ import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { AccountInfo, type Accounts, Info } from "./info";
 import { HostCallResult } from "./results";
 
@@ -25,14 +27,15 @@ const DEST_START_REG = 8;
 const gas = gasCounter(tryAsGas(0));
 
 function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = tryAsExactBytes(AccountInfo.Codec.sizeHint)) {
-  const memStart = 20_000;
+  const pageStart = 2 ** 16;
+  const memStart = pageStart + PAGE_SIZE - accountInfoLength - 1;
   const registers = new Registers();
-  registers.asUnsigned[SERVICE_ID_REG] = serviceId;
-  registers.asUnsigned[DEST_START_REG] = memStart;
+  registers.setU32(SERVICE_ID_REG, serviceId);
+  registers.setU32(DEST_START_REG, memStart);
 
   const builder = new MemoryBuilder();
-  builder.setWriteable(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + accountInfoLength));
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
+  builder.setWriteablePages(tryAsMemoryIndex(pageStart), tryAsMemoryIndex(pageStart + PAGE_SIZE));
+  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
     memory,
@@ -71,7 +74,7 @@ describe("HostCalls: Info", () => {
     await info.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(readInfo(), accounts.data.get(serviceId));
   });
 
@@ -85,7 +88,7 @@ describe("HostCalls: Info", () => {
     await info.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.NONE);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.NONE);
   });
 
   it("should write OOB if not enough memory allocated", async () => {
@@ -113,6 +116,6 @@ describe("HostCalls: Info", () => {
     await info.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
   });
 });

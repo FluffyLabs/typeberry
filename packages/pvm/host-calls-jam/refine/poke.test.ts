@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { tryAsU32 } from "@typeberry/numbers";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
+import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { OK, Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { Poke } from "./poke";
@@ -19,7 +20,7 @@ describe("HostCalls: Poke", () => {
     await poke.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
   });
 
   it("should fail if machine does not exist", async () => {
@@ -29,7 +30,7 @@ describe("HostCalls: Poke", () => {
     await poke.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.WHO);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.WHO);
   });
 
   it("should fail if there is a page fault on any side", async () => {
@@ -39,19 +40,19 @@ describe("HostCalls: Poke", () => {
     await poke.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.asUnsigned[RESULT_REG], HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
   });
 });
 
 function prepareRegsAndMemory(machineId: MachineId, sourceStart: number, destinationStart: number, length: number) {
   const registers = new Registers();
-  registers.asUnsigned[7] = machineId;
-  registers.asUnsigned[8] = sourceStart;
-  registers.asUnsigned[9] = destinationStart;
-  registers.asUnsigned[10] = length;
+  registers.setU32(7, machineId);
+  registers.setU32(8, sourceStart);
+  registers.setU32(9, destinationStart);
+  registers.setU32(10, length);
 
   const builder = new MemoryBuilder();
-  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsMemoryIndex(0));
+  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
 
   return {
     registers,

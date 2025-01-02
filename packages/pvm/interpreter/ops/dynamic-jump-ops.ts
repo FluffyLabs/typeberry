@@ -1,9 +1,10 @@
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import type { BasicBlocks } from "../basic-blocks";
 import type { InstructionResult } from "../instruction-result";
 import type { JumpTable } from "../program-decoder/jump-table";
 import type { Registers } from "../registers";
 import { Result } from "../result";
-import { addWithOverflow } from "./math-utils";
+import { addWithOverflowU32 } from "./math-utils";
 
 const EXIT = 0xff_ff_00_00;
 /** `Z_A`: https://graypaper.fluffylabs.dev/#/911af30/24ed0124ee01 */
@@ -39,9 +40,12 @@ export class DynamicJumpOps {
     this.instructionResult.nextPc = destination;
   }
 
-  jumpInd(immediateValue: number, registerIndex: number) {
-    const registerValue = this.regs.asUnsigned[registerIndex];
-    const address = addWithOverflow(registerValue, immediateValue);
+  caluclateJumpAddress(immediate: ImmediateDecoder, registerIndex: number) {
+    const registerValue = this.regs.getU32(registerIndex);
+    return addWithOverflowU32(registerValue, immediate.getU32());
+  }
+
+  jumpInd(address: number) {
     this.djump(address);
   }
 }

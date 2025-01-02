@@ -2,6 +2,7 @@ import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
 import type { OneRegisterOneImmediateOneOffsetArgs } from "../args-decoder/args-decoder";
 import { ArgumentType } from "../args-decoder/argument-type";
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
 import { BasicBlocks } from "../basic-blocks";
 import { Instruction } from "../instruction";
@@ -25,7 +26,7 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     });
 
     const argsMock = {
-      immediateDecoder: { getSigned: () => {}, getUnsigned: () => {} },
+      immediateDecoder: new ImmediateDecoder(),
     } as OneRegisterOneImmediateOneOffsetArgs;
 
     it("it should call BranchOps.jump and LoadOps.loadImmediate", () => {
@@ -174,7 +175,7 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
     });
 
     const argsMock = {
-      immediateDecoder: { getSigned: () => {}, getUnsigned: () => {} },
+      immediateDecoder: new ImmediateDecoder(),
     } as OneRegisterOneImmediateOneOffsetArgs;
 
     const otherInstructions = Object.entries(Instruction)

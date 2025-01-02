@@ -80,7 +80,7 @@ describe("ArgsDecoder", () => {
   });
 
   it("return correct result for instruction with 3 regs", () => {
-    const code = new Uint8Array([Instruction.ADD, 0x12, 0x03]);
+    const code = new Uint8Array([Instruction.ADD_32, 0x12, 0x03]);
     const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_0001]), code.length));
     const argsDecoder = new ArgsDecoder();
     argsDecoder.reset(code, mask);
@@ -100,7 +100,7 @@ describe("ArgsDecoder", () => {
   });
 
   it("return correct result for instruction with 3 regs (2 instructions)", () => {
-    const code = new Uint8Array([Instruction.ADD, 0x12, 0x03, Instruction.ADD, 0x12, 0x03]);
+    const code = new Uint8Array([Instruction.ADD_32, 0x12, 0x03, Instruction.ADD_32, 0x12, 0x03]);
     const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length));
     const argsDecoder = new ArgsDecoder();
     argsDecoder.reset(code, mask);
@@ -120,7 +120,7 @@ describe("ArgsDecoder", () => {
   });
 
   it("return correct result for instruction with 2 regs and 1 immediate", () => {
-    const code = new Uint8Array([Instruction.ADD_IMM, 0x12, 0xff]);
+    const code = new Uint8Array([Instruction.ADD_IMM_32, 0x12, 0xff]);
     const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_0001]), code.length));
     const argsDecoder = new ArgsDecoder();
     argsDecoder.reset(code, mask);
@@ -143,7 +143,7 @@ describe("ArgsDecoder", () => {
   });
 
   it("return correct result for instruction with 2 regs and 1 immediate (2 instructions)", () => {
-    const code = new Uint8Array([Instruction.ADD_IMM, 0x12, 0xff, Instruction.ADD_IMM, 0x12, 0xff]);
+    const code = new Uint8Array([Instruction.ADD_IMM_32, 0x12, 0xff, Instruction.ADD_IMM_32, 0x12, 0xff]);
     const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_1001]), code.length));
     const argsDecoder = new ArgsDecoder();
     argsDecoder.reset(code, mask);
