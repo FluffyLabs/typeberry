@@ -2,7 +2,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
-import { WithDebug } from "@typeberry/utils";
+import { WithDebug, ensure } from "@typeberry/utils";
 import type { ServiceId } from "./common";
 import type { CodeHash } from "./hash";
 import { RefineContext } from "./refine-context";
@@ -16,7 +16,7 @@ export function tryAsWorkItemsCount(len: number): WorkItemsCount {
   return ensure<number, WorkItemsCount>(
     len,
     len >= MIN_NUMBER_OF_WORK_ITEMS && len <= MAX_NUMBER_OF_WORK_ITEMS,
-    `WorkItemsCount: Expected 1|2|3|4 got ${len}`
+    `WorkItemsCount: Expected 1|2|3|4 got ${len}`,
   );
 }
 
