@@ -190,7 +190,7 @@ export class Memory {
     }
 
     // standard allocation using "Writeable" pages
-    const newSbrkIndex = tryAsSbrkIndex(alignToPageSize(this.sbrkIndex + length));
+    const newSbrkIndex = tryAsSbrkIndex(alignToPageSize(newVirtualSbrkIndex));
     const pagesToAllocate = (newSbrkIndex - currentSbrkIndex) / PAGE_SIZE;
 
     for (let i = 0; i < pagesToAllocate; i++) {
@@ -200,9 +200,9 @@ export class Memory {
       this.memory.set(pageNumber, page);
     }
 
-    this.virtualSbrkIndex = tryAsSbrkIndex(currentSbrkIndex + length);
+    this.virtualSbrkIndex = newVirtualSbrkIndex;
     this.sbrkIndex = newSbrkIndex;
-    return currentSbrkIndex;
+    return currentVirtualSbrkIndex;
   }
 
   getPageDump(pageNumber: PageNumber) {
