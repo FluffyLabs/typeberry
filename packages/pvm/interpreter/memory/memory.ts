@@ -51,11 +51,6 @@ export class Memory {
       return new PageFault(address);
     }
 
-    if (address >= this.virtualSbrkIndex && address < this.sbrkIndex) {
-      // the range [virtualSbrkIndex; sbrkIndex) is allocated but shouldn't be available yet
-      return new PageFault(address);
-    }
-
     const firstPageIndex = tryAsPageIndex(address - page.start);
     const pageEnd = page.start + PAGE_SIZE;
 
@@ -138,11 +133,6 @@ export class Memory {
     // TODO [ToDr] potential edge case - is `0`-length slice readable whereever?
     if (result.length === 0) {
       return null;
-    }
-
-    if (startAddress >= this.virtualSbrkIndex && startAddress < this.sbrkIndex) {
-      // [virtualSbrkIndex; sbrkIndex) is allocated but shouldn't be available before sbrk is called
-      return new PageFault(startAddress);
     }
 
     const pageIndexZero = tryAsPageIndex(0);
