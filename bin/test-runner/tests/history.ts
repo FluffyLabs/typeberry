@@ -62,8 +62,8 @@ export async function runHistoryTest(testContent: HistoryTest) {
       exportsRoot: p.exports_root,
     })),
   };
-  const transition = new RecentHistory(hasher, state);
-  transition.transition(input);
+  const recentHistory = new RecentHistory(hasher, state);
+  recentHistory.transition(input);
 
   assert.deepEqual(inspect(transition.state), inspect(convertState(testContent.post_state)));
 }
