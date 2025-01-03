@@ -9,9 +9,6 @@ on:
   schedule:
     - cron: '45 4 * * *'
 
-permissions:
-  pull-requests: write
-
 jobs:
   benchmarks:
     runs-on: self-hosted
