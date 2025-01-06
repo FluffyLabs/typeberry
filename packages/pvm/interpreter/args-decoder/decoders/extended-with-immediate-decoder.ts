@@ -1,5 +1,3 @@
-import { check } from "@typeberry/utils";
-
 const IMMEDIATE_SIZE = 8;
 
 export class ExtendedWitdthImmediateDecoder {
@@ -13,13 +11,13 @@ export class ExtendedWitdthImmediateDecoder {
   }
 
   setBytes(bytes: Uint8Array) {
-    check(
-      bytes.length === 8,
-      `Extended width immadiate has to have length that is equal to 8 but got: ${bytes.length}`,
-    );
-
-    for (let i = 0; i < IMMEDIATE_SIZE; i++) {
+    let i = 0;
+    for (; i < bytes.length; i++) {
       this.bytes[i] = bytes[i];
+    }
+
+    for (; i < IMMEDIATE_SIZE; i++) {
+      this.bytes[i] = 0;
     }
   }
 
