@@ -80,7 +80,9 @@ export class MerkleMountainRange<H extends OpaqueHash> {
       return Bytes.zero(HASH_SIZE).asOpaque();
     }
     let lastHash = this.mountains[0].peak;
-    for (const mountain of this.mountains.slice(1)) {
+    const length = this.mountains.length;
+    for (let i = 1; i < length; i++) {
+      const mountain = this.mountains[i];
       lastHash = this.hasher.hashConcatPrepend(SUPER_PEAK_STRING, lastHash, mountain.peak);
     }
     return lastHash;
