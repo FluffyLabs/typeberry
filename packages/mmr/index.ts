@@ -91,15 +91,16 @@ export class MerkleMountainRange<H extends OpaqueHash> {
   /** Get current peaks. */
   getPeaks(): MmrPeaks<H> {
     const ret: MmrPeaks<H> = { peaks: [] };
-    const mountains = this.mountains.slice();
+    const mountains = this.mountains;
 
     // always 2**index
     let currentSize = 1;
-    let currentItem = mountains.pop();
-    while (currentItem !== undefined) {
+    let currentIdx = mountains.length - 1;
+    while (currentIdx >= 0) {
+      const currentItem = mountains[currentIdx];
       if (currentItem.size >= currentSize && currentItem.size < 2 * currentSize) {
         ret.peaks.push(currentItem.peak);
-        currentItem = mountains.pop();
+        currentIdx -= 1;
       } else {
         ret.peaks.push(null);
       }
@@ -112,45 +113,35 @@ export class MerkleMountainRange<H extends OpaqueHash> {
 
 /** An internal helper structure to represent a merkle trie for MMR. */
 class Mountain<H extends OpaqueHash> {
-  #hasher: MmrHasher<H>;
-  #size: number;
-  #peak: H;
+  public readonly hasher: MmrHasher<H>;
+  public readonly size: number;
+  public readonly peak: H;
 
   static fromPeak<H extends OpaqueHash>(hasher: MmrHasher<H>, peak: H, size: number) {
     return new Mountain(hasher, peak, null, size);
   }
 
   private constructor(hasher: MmrHasher<H>, peak: H | null, children: [Mountain<H>, Mountain<H>] | null, size = 1) {
-    this.#hasher = hasher;
+    this.hasher = hasher;
 
     if (peak !== null) {
-      this.#peak = peak;
-      this.#size = size;
+      this.peak = peak;
+      this.size = size;
       return;
     }
 
     if (children !== null) {
       const [left, right] = children;
-      this.#peak = this.#hasher.hashConcat(left.peak, right.peak);
-      this.#size = left.size + right.size;
+      this.peak = this.hasher.hashConcat(left.peak, right.peak);
+      this.size = left.size + right.size;
       return;
     }
 
     throw new Error("Either peak or children need to be provided");
   }
 
-  /** Get number of nodes in this mountain. */
-  get size() {
-    return this.#size;
-  }
-
-  /** Return the peak hash. */
-  get peak(): H {
-    return this.#peak;
-  }
-
   /** Merge with another montain of the same size. */
   mergeWith(other: Mountain<H>): Mountain<H> {
-    return new Mountain(this.#hasher, null, [this, other]);
+    return new Mountain(this.hasher, null, [this, other]);
   }
 }
