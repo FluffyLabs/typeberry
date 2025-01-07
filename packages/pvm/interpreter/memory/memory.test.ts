@@ -146,6 +146,7 @@ describe("Memory", () => {
       );
       const expectedMemory = {
         sbrkIndex,
+        virtualSbrkIndex: sbrkIndex,
         endHeapIndex,
         memory: expectedMemoryMap,
       };
@@ -181,6 +182,7 @@ describe("Memory", () => {
 
       const expectedMemory = {
         sbrkIndex,
+        virtualSbrkIndex: sbrkIndex,
         endHeapIndex,
         memory: expectedMemoryMap,
       };
@@ -218,19 +220,20 @@ describe("Memory", () => {
       memoryMap.set(secondPageNumber, secondPage);
       const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const dataToStore = new Uint8Array([1, 2, 3, 4]);
-      const addressToStore = tryAsMemoryIndex(MAX_MEMORY_INDEX - 1);
+      const addressToStore = tryAsMemoryIndex(MAX_MEMORY_INDEX - 2);
       const expectedMemoryMap = new Map();
       expectedMemoryMap.set(
         firstPageNumber,
-        new WriteablePage(firstPageNumber, new Uint8Array([...new Uint8Array(PAGE_SIZE - 2), 1, 2])),
+        new WriteablePage(firstPageNumber, new Uint8Array([...new Uint8Array(PAGE_SIZE - 3), 1, 2, 3])),
       );
       expectedMemoryMap.set(
         secondPageNumber,
-        new WriteablePage(secondPageNumber, new Uint8Array([3, 4, ...new Uint8Array(PAGE_SIZE - 2)])),
+        new WriteablePage(secondPageNumber, new Uint8Array([4, ...new Uint8Array(PAGE_SIZE - 1)])),
       );
 
       const expectedMemory = {
         sbrkIndex,
+        virtualSbrkIndex: sbrkIndex,
         endHeapIndex,
         memory: expectedMemoryMap,
       };
@@ -253,6 +256,7 @@ describe("Memory", () => {
 
       const expectedMemory = {
         sbrkIndex: PAGE_SIZE,
+        virtualSbrkIndex: lengthToAllocate,
         endHeapIndex: MAX_MEMORY_INDEX,
         memory: expectedMemoryMap,
       };
@@ -277,6 +281,7 @@ describe("Memory", () => {
 
       const expectedMemory = {
         sbrkIndex: 2 * PAGE_SIZE,
+        virtualSbrkIndex: lengthToAllocate,
         endHeapIndex: MAX_MEMORY_INDEX,
         memory: expectedMemoryMap,
       };
@@ -284,6 +289,37 @@ describe("Memory", () => {
       memory.sbrk(lengthToAllocate);
 
       assert.deepEqual(memory, expectedMemory);
+    });
+
+    it("should not allocate if virtualSbrkIndex + length < sbrkIndex", () => {
+      const memory = new Memory();
+      const lengthToAllocate = 5;
+      const expectedMemoryMap = new Map();
+      const pageNumber = tryAsPageNumber(0);
+
+      expectedMemoryMap.set(pageNumber, new WriteablePage(pageNumber, new Uint8Array(MIN_ALLOCATION_LENGTH)));
+
+      const expectedMemoryAfterFirstAllocation = {
+        sbrkIndex: PAGE_SIZE,
+        virtualSbrkIndex: lengthToAllocate,
+        endHeapIndex: MAX_MEMORY_INDEX,
+        memory: expectedMemoryMap,
+      };
+
+      memory.sbrk(lengthToAllocate);
+
+      assert.deepEqual(memory, expectedMemoryAfterFirstAllocation);
+
+      const expectedMemoryAfterSecondAllocation = {
+        sbrkIndex: PAGE_SIZE,
+        virtualSbrkIndex: 2 * lengthToAllocate,
+        endHeapIndex: MAX_MEMORY_INDEX,
+        memory: expectedMemoryMap,
+      };
+
+      memory.sbrk(lengthToAllocate);
+
+      assert.deepEqual(memory, expectedMemoryAfterSecondAllocation);
     });
 
     it("should allocate two pages one by one", () => {
@@ -301,6 +337,7 @@ describe("Memory", () => {
 
       const expectedMemory = {
         sbrkIndex: 2 * PAGE_SIZE,
+        virtualSbrkIndex: 2 * PAGE_SIZE,
         endHeapIndex: MAX_MEMORY_INDEX,
         memory: expectedMemoryMap,
       };
