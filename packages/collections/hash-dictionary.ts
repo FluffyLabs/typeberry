@@ -5,7 +5,7 @@ export class HashDictionary<K extends OpaqueHash, V> {
   // TODO [ToDr] [crit] We can't use `TrieHash` directly in the map,
   // because of the way it's being compared. Hence having `string` here.
   // This has to be benchmarked and re-written to a custom map most likely.
-  protected readonly map = new Map<string, [K, V]>();
+  private readonly map = new Map<string, [K, V]>();
 
   /** Return number of items in the dictionary. */
   get size(): number {
