@@ -1,11 +1,11 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
-import { HASH_SIZE, WithHash, hashBytes } from "@typeberry/hash";
+import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import { InMemoryPreimages } from "./preimage";
 
 const hash = (data: BytesBlob) => {
-  const hash = hashBytes(data);
+  const hash = blake2b.hashBytes(data);
   return new WithHash(hash, data);
 };
 describe("InMemoryDatabase", () => {

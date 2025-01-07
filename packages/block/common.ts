@@ -1,4 +1,4 @@
-import type { Blake2bHash } from "@typeberry/hash";
+import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import { type U16, type U32, type U64, tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { type Opaque, asOpaqueType } from "@typeberry/utils";
 
@@ -34,6 +34,9 @@ export const tryAsCoreIndex = (v: number): CoreIndex => asOpaqueType(tryAsU16(v)
 
 /** `eta`: epoch randomness */
 export type EntropyHash = Opaque<Blake2bHash, "EntropyHash">;
+
+/** Hash of the merkle root of the state. */
+export type StateRootHash = Opaque<OpaqueHash, "StateRootHash">;
 
 /**
  * Index of an epoch.

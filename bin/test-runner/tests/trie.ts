@@ -4,7 +4,7 @@ import { test } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { InMemoryTrie, type StateKey, type TrieHash } from "@typeberry/trie";
-import { blake2bTrieHasher } from "@typeberry/trie/blake2b.node";
+import { blake2bTrieHasher } from "@typeberry/trie/hasher";
 
 export class TrieTest {
   static fromJson: FromJson<TrieTest> = {

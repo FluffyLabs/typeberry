@@ -1,6 +1,6 @@
 import type { ServiceId } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
-import { type Blake2bHash, HASH_SIZE, hashBytes } from "@typeberry/hash";
+import { type Blake2bHash, HASH_SIZE, blake2b } from "@typeberry/hash";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import {
   type Memory,
@@ -51,7 +51,7 @@ export class Lookup implements HostCallHandler {
       regs.setU32(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
-    const keyHash = hashBytes(key);
+    const keyHash = blake2b.hashBytes(key);
     const value = await this.account.lookup(serviceId, keyHash);
 
     if (value === null) {

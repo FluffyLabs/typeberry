@@ -1,4 +1,4 @@
-import { type Opaque, asOpaqueType, check } from "@typeberry/utils";
+import { type Opaque, asOpaqueType, check, inspect } from "@typeberry/utils";
 
 /** Regular array that has known, but not verified length. */
 export type KnownSizeArray<T, F extends string> = Opaque<T[], F>;
@@ -10,10 +10,24 @@ export function asKnownSize<T, F extends string>(data: T[]): KnownSizeArray<T, F
 
 /** An array with a known, fixed size. */
 export class FixedSizeArray<T, N extends number> extends Array<T> {
-  public constructor(data: T[], len: N) {
+  public readonly fixedLength: N;
+
+  private constructor(...args: T[]) {
+    super(...args);
+    // NOTE [ToDr] we know this is going to be set corrrectly,
+    // because the constructor is private (it has to be for things like `map`
+    // to work correctly) and we only invoke it in the `new` static function.
+    this.fixedLength = args.length as N;
+  }
+
+  static new<T, N extends number>(data: T[], len: N): FixedSizeArray<T, N> {
     check(data.length === len, `Expected an array of size: ${len}, got: ${data.length}`);
-    super();
-    this.push(...data);
-    Object.seal(this);
+    const arr = new FixedSizeArray<T, N>(...data);
+    Object.seal(arr);
+    return arr;
+  }
+
+  toString() {
+    return inspect(Array.from(this), false);
   }
 }

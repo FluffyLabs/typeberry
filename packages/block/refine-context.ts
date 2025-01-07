@@ -1,8 +1,7 @@
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import type { TrieHash } from "@typeberry/trie";
 import { type Opaque, WithDebug } from "@typeberry/utils";
-import type { TimeSlot } from "./common";
+import type { StateRootHash, TimeSlot } from "./common";
 import type { HeaderHash } from "./hash";
 
 /**
@@ -43,7 +42,7 @@ export class RefineContext extends WithDebug {
     /** `a`: Header hash at which the work-package was evaluated. */
     public readonly anchor: HeaderHash,
     /** `s`: **Posterior** state root of the anchor. */
-    public readonly stateRoot: TrieHash,
+    public readonly stateRoot: StateRootHash,
     /** `b`: **Posterior** BEEFY root. */
     public readonly beefyRoot: BeefyHash,
     /** `l`: Preimage lookup anchor. */

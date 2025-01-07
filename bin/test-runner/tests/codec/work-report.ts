@@ -1,6 +1,6 @@
 import type { CoreIndex } from "@typeberry/block";
 import type { RefineContext } from "@typeberry/block/refine-context";
-import { MAX_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package";
+import { tryAsWorkItemsCount } from "@typeberry/block/work-package";
 import { SegmentRootLookupItem, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
 import type { WorkResult } from "@typeberry/block/work-result";
 import { BytesBlob } from "@typeberry/bytes";
@@ -50,8 +50,7 @@ export const workReportFromJson = json.object<JsonWorkReport, WorkReport>(
       authorizer_hash,
       auth_output,
       segment_root_lookup,
-      // TODO [ToDr] Verify the length and throw an exception.
-      new FixedSizeArray(results, Math.min(results.length, MAX_NUMBER_OF_WORK_ITEMS)),
+      FixedSizeArray.new(results, tryAsWorkItemsCount(results.length)),
     ),
 );
 
