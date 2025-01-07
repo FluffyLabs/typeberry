@@ -1,5 +1,5 @@
 import type { CodeHash, CoreIndex, ServiceId, ValidatorData } from "@typeberry/block";
-import { W_T } from "@typeberry/block/gp-constants";
+import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
