@@ -20,7 +20,10 @@ export const I = MAX_NUMBER_OF_WORK_ITEMS;
 /** `K`: Max number of tickets which may be submitted in a single extrinsic. */
 export const K = MAX_NUMBER_OF_TICKETS;
 
-/** `Q`: Maximum number of items in the authorization queue. */
+/** `O`: Maximum number of items in the authorizations pool. */
+export const O = 8;
+
+/** `Q`: The number of items in the authorizations queue. */
 export const Q = 80;
 
 /** `W_C`: The maximum size of service code in octets. */

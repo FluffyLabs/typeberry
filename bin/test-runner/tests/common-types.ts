@@ -15,7 +15,7 @@ import {
 } from "@typeberry/block";
 import { type BeefyHash, RefineContext } from "@typeberry/block/refine-context";
 import type { WorkItemsCount } from "@typeberry/block/work-package";
-import { SegmentRootLookupItem, type WorkPackageHash, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
+import { SegmentRootLookupItem, type WorkPackageHash, WorkPackageSpec, WorkReport, AuthorizerHash } from "@typeberry/block/work-report";
 import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { AvailabilityAssignment } from "@typeberry/disputes";
@@ -23,6 +23,7 @@ import type { HASH_SIZE, OpaqueHash } from "@typeberry/hash";
 import type { U16, U32 } from "@typeberry/numbers";
 import { Bytes, BytesBlob, type TrieHash } from "@typeberry/trie";
 import { fromJson as codecFromJson } from "./codec/common";
+import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 
 export namespace commonFromJson {
   export function bytes32<TInto extends Bytes<32>>() {
@@ -35,6 +36,14 @@ export namespace commonFromJson {
     bls: json.fromString((v) => Bytes.parseBytes(v, BLS_KEY_BYTES) as BlsKey),
     metadata: json.fromString((v) => Bytes.parseBytes(v, VALIDATOR_META_BYTES)),
   };
+}
+
+export function getChainSpec(path: string) {
+  if (path.includes("tiny")) {
+    return tinyChainSpec;
+  }
+
+  return fullChainSpec;
 }
 
 class TestResultDetail {
@@ -232,7 +241,7 @@ export class TestWorkReport {
   package_spec!: TestPackageSpec;
   context!: TestContext;
   core_index!: CoreIndex;
-  authorizer_hash!: OpaqueHash;
+  authorizer_hash!: AuthorizerHash;
   auth_output!: BytesBlob;
   segment_root_lookup!: TestSegmentRootLookupItem[];
   results!: TestResult[];
