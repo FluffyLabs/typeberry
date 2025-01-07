@@ -1,16 +1,13 @@
-import type { CodeHash, CoreIndex } from "@typeberry/block";
-import { type WorkItemExtrinsics, workItemExtrinsicsCodec } from "@typeberry/block/work-item";
-import { WorkPackage } from "@typeberry/block/work-package";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { CoreIndex } from "@typeberry/block";
+import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/block/crypto";
+import type { WorkPackageHash } from "@typeberry/block/work-report";
+import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
+import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
 import type { StreamHandler, StreamSender } from "../handler";
 import type { StreamId, StreamKind } from "./stream";
-import { HASH_SIZE } from "@typeberry/hash";
-import { WorkPackageHash } from "@typeberry/block/work-report";
-import { errorMonitor } from "node:events";
-import { ED25519_SIGNATURE_BYTES, Ed25519Signature } from "@typeberry/block/crypto";
 
 /**
  * JAMNP-S CE 134 Stream
