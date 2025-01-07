@@ -11,9 +11,7 @@ export class Statistics {
   ) {}
 
   private getValidatorsStatistics(slot: TimeSlot) {
-    /**
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/18bd0118bd01
-     */
+    /** https://graypaper.fluffylabs.dev/#/6e1c0cd/18bd0118bd01 */
     const currentEpoch = Math.floor(this.state.tau / this.chainSpec.epochLength);
     const nextEpoch = Math.floor(slot / this.chainSpec.epochLength);
 
@@ -31,11 +29,7 @@ export class Statistics {
      *
      * https://graypaper.fluffylabs.dev/#/6e1c0cd/18fb0118fb01
      */
-    const current = new Array(this.chainSpec.validatorsCount);
-
-    for (let i = 0; i < this.chainSpec.validatorsCount; i++) {
-      current[i] = ActivityRecord.empty();
-    }
+    const current = Array(this.chainSpec.validatorsCount).fill(0).map(() => ActivityRecord.empty());
 
     return {
       current,
@@ -44,9 +38,7 @@ export class Statistics {
   }
 
   private sumPreimageSizes(preimages: PreimagesExtrinsic) {
-    /**
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/18a60218a602
-     */
+    /** https://graypaper.fluffylabs.dev/#/6e1c0cd/18a60218a602 */
     let sum = 0;
 
     for (const preimage of preimages) {
@@ -88,7 +80,7 @@ export class Statistics {
      * https://graypaper.fluffylabs.dev/#/6e1c0cd/18cc0218d002
      *
      * Please note I don't use Kappa' here so probably it is incorrect (despite it passes the tests)!
-     * If I udnderstand GP correctly we should match validators from Kappa' and data from guarantees extrinsic using
+     * If I understand GP correctly we should match validators from Kappa' and data from guarantees extrinsic using
      * signature (calculate a new signature using validator ed25519 public key and compare it with the signature from the extrinsic),
      * but the problem is that everything except validator index is empty in extrinsic (in the test vectors).
      */
