@@ -220,15 +220,15 @@ describe("Memory", () => {
       memoryMap.set(secondPageNumber, secondPage);
       const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const dataToStore = new Uint8Array([1, 2, 3, 4]);
-      const addressToStore = tryAsMemoryIndex(MAX_MEMORY_INDEX - 1);
+      const addressToStore = tryAsMemoryIndex(MAX_MEMORY_INDEX - 2);
       const expectedMemoryMap = new Map();
       expectedMemoryMap.set(
         firstPageNumber,
-        new WriteablePage(firstPageNumber, new Uint8Array([...new Uint8Array(PAGE_SIZE - 2), 1, 2])),
+        new WriteablePage(firstPageNumber, new Uint8Array([...new Uint8Array(PAGE_SIZE - 3), 1, 2, 3])),
       );
       expectedMemoryMap.set(
         secondPageNumber,
-        new WriteablePage(secondPageNumber, new Uint8Array([3, 4, ...new Uint8Array(PAGE_SIZE - 2)])),
+        new WriteablePage(secondPageNumber, new Uint8Array([4, ...new Uint8Array(PAGE_SIZE - 1)])),
       );
 
       const expectedMemory = {

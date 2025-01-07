@@ -59,8 +59,9 @@ export class Memory {
     }
 
     // bytes span two pages, so we need to split it and store separately.
-    const toStoreOnFirstPage = address + bytes.length - pageEnd;
-    const toStoreOnSecondPage = bytes.length - toStoreOnFirstPage;
+    const toStoreOnSecondPage = address + bytes.length - pageEnd;
+    const toStoreOnFirstPage = bytes.length - toStoreOnSecondPage;
+
     // secondPageNumber will be 0 if pageNumber is the last page
     const secondPageNumber = getNextPageNumber(pageNumber);
     const secondPage = this.memory.get(secondPageNumber);
