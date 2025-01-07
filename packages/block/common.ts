@@ -1,4 +1,4 @@
-import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
+import type { Blake2bHash } from "@typeberry/hash";
 import { type U16, type U32, type U64, tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { type Opaque, asOpaqueType } from "@typeberry/utils";
 

@@ -1,5 +1,5 @@
 import type { OpaqueHash } from "@typeberry/hash";
-import {HashDictionary} from "./hash-dictionary";
+import { HashDictionary } from "./hash-dictionary";
 
 /** A set specialized for storing hashes. */
 export class HashSet<V extends OpaqueHash> {
@@ -12,17 +12,17 @@ export class HashSet<V extends OpaqueHash> {
 
   /** Insert given hash to the set. */
   insert(value: V) {
-    this.map.set(value, true);
+    return this.map.set(value, true);
   }
 
   /** Check if given hash is in the set. */
   has(value: V) {
-    this.map.has(value);
+    return this.map.has(value);
   }
 
   /** Remove value from set. */
   delete(value: V) {
-    this.map.delete(value);
+    return this.map.delete(value);
   }
 
   /** it allows to use HashSet in for-of loop */

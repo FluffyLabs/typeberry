@@ -1,9 +1,14 @@
 import type { CoreIndex, TimeSlot } from "@typeberry/block";
+import type { AuthorizerHash } from "@typeberry/block/work-report";
+import { HashSet } from "@typeberry/collections/hash-set";
 import { type FromJson, json } from "@typeberry/json-parser";
+import {
+  Authorization,
+  type AuthorizationInput,
+  type AuthorizationState,
+  assertSameState,
+} from "@typeberry/transition/authorization";
 import { commonFromJson, getChainSpec } from "./common-types";
-import {Authorization, AuthorizationInput, AuthorizationState} from "@typeberry/transition/authorization";
-import {AuthorizerHash} from "@typeberry/block/work-report";
-import {HashSet} from "@typeberry/collections/hash-set";
 
 class TestCoreAuthorizer {
   static fromJson: FromJson<TestCoreAuthorizer> = {
@@ -30,8 +35,8 @@ class TestState {
     auth_queues: ["array", json.array(commonFromJson.bytes32())],
   };
 
-  auth_pools!: AuthorizationState['authPools'];
-  auth_queues!: AuthorizationState['authQueues'];
+  auth_pools!: AuthorizationState["authPools"];
+  auth_queues!: AuthorizationState["authQueues"];
 }
 
 export class AuthorizationsTest {
@@ -55,13 +60,19 @@ export async function runAuthorizationsTest(test: AuthorizationsTest, path: stri
     authQueues: test.pre_state.auth_queues,
   };
 
-  const input: AuthorizationInput = new Map();
+  const input: AuthorizationInput = {
+    slot: test.input.slot,
+    used: new Map(),
+  };
   for (const { core, auth_hash } of test.input.auths) {
-    const perCore = input.get(core) ?? new HashSet();
+    const perCore = input.used.get(core) ?? new HashSet();
     perCore.insert(auth_hash);
-    input.set(core, perCore);
+    input.used.set(core, perCore);
   }
 
   const authorization = new Authorization(chainSpec, state);
   authorization.transition(input);
+
+  assertSameState(test.post_state.auth_queues, authorization.state.authQueues, "auth queues");
+  assertSameState(test.post_state.auth_pools, authorization.state.authPools, "auth pools");
 }

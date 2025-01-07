@@ -34,3 +34,9 @@ export const W_T = 128;
 
 /** `Y`: The number of slots into an epoch at which ticket-submission ends. */
 export const Y = 500;
+
+// TODO [ToDr] Not sure where these should live yet :(
+
+/** Size of the authorization queue. */
+export const AUTHORIZATION_QUEUE_SIZE = Q;
+export type AUTHORIZATION_QUEUE_SIZE = typeof AUTHORIZATION_QUEUE_SIZE;

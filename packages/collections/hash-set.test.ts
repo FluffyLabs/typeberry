@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import {HashSet} from "./hash-set";
+import { HashSet } from "./hash-set";
 
 function key(n: number) {
   return Bytes.fill(HASH_SIZE, n);
