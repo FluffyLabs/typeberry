@@ -12,6 +12,7 @@ export class ActivityRecord {
 
     /**
      * The number of tickets introduced by the validator.
+     * 
      * https://graypaper.fluffylabs.dev/#/6e1c0cd/187e01188101
      */
     public tickets: U32,
@@ -24,7 +25,7 @@ export class ActivityRecord {
     public preImages: U32,
 
     /**
-     * The total number of octets across all preimagesintroduced by the validator.
+     * The total number of octets across all preimages introduced by the validator.
      *
      * https://graypaper.fluffylabs.dev/#/6e1c0cd/188701188a01
      */
@@ -46,17 +47,18 @@ export class ActivityRecord {
   ) {}
 
   static empty() {
-    return new ActivityRecord(0 as U32, 0 as U32, 0 as U32, 0 as U32, 0 as U32, 0 as U32);
+    const zero = tryAsU32(0);
+    return new ActivityRecord(zero, zero, zero, zero, zero, zero);
   }
 }
 export class StatisticsState {
   constructor(
     /**
-     * Previous and current statistics of each validator.
+     * `pi`: Previous and current statistics of each validator.
      *
      * https://graypaper.fluffylabs.dev/#/6e1c0cd/185d01185f01
      */
-    public pi: {
+    public statisticsPerValidator: {
       current: ActivityRecord[];
       last: ActivityRecord[];
     },
