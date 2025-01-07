@@ -1,4 +1,4 @@
-import type { CoreIndex } from "@typeberry/block";
+import type { CoreIndex, WorkReportHash } from "@typeberry/block";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/block/crypto";
 import type { WorkPackageHash } from "@typeberry/block/work-report";
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
@@ -70,7 +70,7 @@ export class WorkPackageSharingResponse extends WithDebug {
   }
 
   constructor(
-    public readonly workReportHash: WorkPackageHash,
+    public readonly workReportHash: WorkReportHash,
     public readonly signature: Ed25519Signature,
   ) {
     super();
@@ -84,18 +84,15 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 
   constructor(private readonly onWorkPackage: (i: CoreIndex, s: SegmentsRootMapping[], w: WorkPackageBundle) => void) {}
 
-  public readonly coreIndexWithSegmentsRootMappingsMap = new Map<StreamId, WorkPackageSharingRequest>();
+  public readonly requestsMap = new Map<StreamId, WorkPackageSharingRequest>();
 
   onStreamMessage(sender: StreamSender, message: BytesBlob): void {
     const streamId = sender.streamId;
-    const coreIndexWithSegmentsRootMappings = this.coreIndexWithSegmentsRootMappingsMap.get(streamId);
-    if (!coreIndexWithSegmentsRootMappings) {
+    const request = this.requestsMap.get(streamId);
+    if (!request) {
       try {
-        const receivedCoreIndexWithSegmentsRootMappings = Decoder.decodeObject(
-          WorkPackageSharingRequest.Codec,
-          message,
-        );
-        this.coreIndexWithSegmentsRootMappingsMap.set(streamId, receivedCoreIndexWithSegmentsRootMappings);
+        const receivedRequest = Decoder.decodeObject(WorkPackageSharingRequest.Codec, message);
+        this.requestsMap.set(streamId, receivedRequest);
       } catch (error) {
         logger.warn(`[${streamId}] Couldn't decode core index and segments root mappings. Closing stream.\n${error}`);
         sender.close();
@@ -104,30 +101,26 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
     }
     try {
       const workPackageBundle = Decoder.decodeObject(codec.blob, message);
-      this.onWorkPackage(
-        coreIndexWithSegmentsRootMappings.coreIndex,
-        coreIndexWithSegmentsRootMappings.segmentsRootMappings,
-        workPackageBundle,
-      );
+      this.onWorkPackage(request.coreIndex, request.segmentsRootMappings, workPackageBundle);
     } catch (error) {
       logger.warn(`[${streamId}] Couldn't decode work package bundle. Closing stream.\n${error}`);
     }
-    sender.close();
   }
 
   onClose(streamId: StreamId): void {
-    this.coreIndexWithSegmentsRootMappingsMap.delete(streamId);
+    this.requestsMap.delete(streamId);
   }
 
-  sendWorkReport(sender: StreamSender, workReportHash: WorkPackageHash, signature: Ed25519Signature) {
+  sendWorkReport(sender: StreamSender, workReportHash: WorkReportHash, signature: Ed25519Signature) {
     const workReport = new WorkPackageSharingResponse(workReportHash, signature);
     sender.send(Encoder.encodeObject(WorkPackageSharingResponse.Codec, workReport));
+    sender.close();
   }
 }
 
 export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
-  private onResponseMap = new Map<StreamId, (workReportHash: WorkPackageHash, signature: Ed25519Signature) => void>();
+  private onResponseMap = new Map<StreamId, (workReportHash: WorkReportHash, signature: Ed25519Signature) => void>();
 
   onStreamMessage(sender: StreamSender, message: BytesBlob): void {
     const streamId = sender.streamId;
@@ -158,12 +151,12 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     coreIndex: CoreIndex,
     segmentsRootMappings: SegmentsRootMapping[],
     workPackageBundle: WorkPackageBundle,
-    onResponse: (workReportHash: WorkPackageHash, signature: Ed25519Signature) => void,
+    onResponse: (workReportHash: WorkReportHash, signature: Ed25519Signature) => void,
   ) {
     this.onResponseMap.set(sender.streamId, onResponse);
-    const coreIndexWithSegmentsRootMappings = new WorkPackageSharingRequest(coreIndex, segmentsRootMappings);
+    const request = new WorkPackageSharingRequest(coreIndex, segmentsRootMappings);
     logger.trace(`[${sender.streamId}] Sending core index and segments-root mappings.`);
-    sender.send(Encoder.encodeObject(WorkPackageSharingRequest.Codec, coreIndexWithSegmentsRootMappings));
+    sender.send(Encoder.encodeObject(WorkPackageSharingRequest.Codec, request));
     logger.trace(`[${sender.streamId}] Sending work package bundle.`);
     sender.send(Encoder.encodeObject(codec.blob, workPackageBundle));
     sender.close();
