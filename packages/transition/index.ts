@@ -115,7 +115,7 @@ export class WorkPackageExecutor {
       0 as U16,
     );
     const coreIndex = tryAsCoreIndex(0);
-    const authorizerHash = Bytes.fill(HASH_SIZE, 5);
+    const authorizerHash = Bytes.fill(HASH_SIZE, 5).asOpaque();
 
     return Promise.resolve(
       new WorkReport(workPackageSpec, pack.context, coreIndex, authorizerHash, pack.authorization, [], results),
