@@ -1,6 +1,6 @@
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
 import { BytesBlob } from "@typeberry/bytes";
-import { PageAllocator, SimpleAllocator, hashBytes } from "@typeberry/hash";
+import { PageAllocator, SimpleAllocator, blake2b } from "@typeberry/hash";
 
 const BLOB_SIZE = 1 * 1024 * 1024;
 const NUMBER_OF_HASHES = 512;
@@ -24,7 +24,7 @@ module.exports = () =>
 
       return () => {
         for (let i = 0; i < NUMBER_OF_HASHES; i += 1) {
-          hashBytes(blob, allocator);
+          blake2b.hashBytes(blob, allocator);
         }
       };
     }),
@@ -35,7 +35,7 @@ module.exports = () =>
 
       return () => {
         for (let i = 0; i < NUMBER_OF_HASHES; i += 1) {
-          hashBytes(blob, allocator);
+          blake2b.hashBytes(blob, allocator);
         }
       };
     }),

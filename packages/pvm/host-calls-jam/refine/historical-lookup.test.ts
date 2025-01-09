@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { type Blake2bHash, hashBytes } from "@typeberry/hash";
+import { type Blake2bHash, blake2b } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
@@ -59,7 +59,7 @@ describe("HostCalls: Historical Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 64);
-    refine.historicalLookupData.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
+    refine.historicalLookupData.set(BytesBlob.blobFromString("hello world"), serviceId, blake2b.hashBytes(key));
 
     // when
     await lookup.execute(gas, registers, memory);
@@ -78,7 +78,7 @@ describe("HostCalls: Historical Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 3);
-    refine.historicalLookupData.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
+    refine.historicalLookupData.set(BytesBlob.blobFromString("hello world"), serviceId, blake2b.hashBytes(key));
 
     // when
     await lookup.execute(gas, registers, memory);
@@ -94,7 +94,7 @@ describe("HostCalls: Historical Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 32);
-    refine.historicalLookupData.set(null, serviceId, hashBytes(key));
+    refine.historicalLookupData.set(null, serviceId, blake2b.hashBytes(key));
 
     // when
     await lookup.execute(gas, registers, memory);
@@ -172,7 +172,7 @@ describe("HostCalls: Historical Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const key = Bytes.fill(32, 3);
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 0, { skipValue: true });
-    refine.historicalLookupData.set(BytesBlob.blobFromString("hello world"), serviceId, hashBytes(key));
+    refine.historicalLookupData.set(BytesBlob.blobFromString("hello world"), serviceId, blake2b.hashBytes(key));
 
     // when
     await lookup.execute(gas, registers, memory);

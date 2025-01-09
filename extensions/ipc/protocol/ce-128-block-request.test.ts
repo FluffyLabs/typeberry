@@ -2,17 +2,16 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import type { Block, HeaderHash } from "@typeberry/block";
 import { testBlock } from "@typeberry/block/test-helpers";
-import { Bytes, type BytesBlob } from "@typeberry/bytes";
+import type { BytesBlob } from "@typeberry/bytes";
 import { tinyChainSpec } from "@typeberry/config";
-import { HASH_SIZE, hashString } from "@typeberry/hash";
+import { blake2b } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import { MessageHandler, type MessageSender } from "../handler";
 import { ClientHandler, Direction, STREAM_KIND, ServerHandler } from "./ce-128-block-request";
 
-const HEADER_HASH = Bytes.fromBlob(
-  hashString("0x7e1b07b8039cf840d51c4825362948c8ecb8fce1d290f705c269b6bcc7992731").raw,
-  HASH_SIZE,
-) as HeaderHash;
+const HEADER_HASH: HeaderHash = blake2b
+  .hashString("0x7e1b07b8039cf840d51c4825362948c8ecb8fce1d290f705c269b6bcc7992731")
+  .asOpaque();
 const MAX_BLOCKS = 10 as U32;
 const TEST_BLOCK = testBlock();
 

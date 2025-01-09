@@ -8,7 +8,7 @@ describe("FixedSizeArray", () => {
 
     assert.throws(
       () => {
-        return new FixedSizeArray(data, 4);
+        return FixedSizeArray.new(data, 4);
       },
       {
         name: "Error",
@@ -19,7 +19,7 @@ describe("FixedSizeArray", () => {
 
   it("should prevent adding/removing items", () => {
     const data = [1, 2, 3, 4, 5];
-    const arr = new FixedSizeArray(data, 5);
+    const arr = FixedSizeArray.new(data, 5);
 
     assert.throws(
       () => {
@@ -34,7 +34,7 @@ describe("FixedSizeArray", () => {
 
   it("should allow modifications of items", () => {
     const data = [1, 2, 3, 4, 5];
-    const arr = new FixedSizeArray(data, 5);
+    const arr = FixedSizeArray.new(data, 5);
     assert.strictEqual(arr.length, 5);
     assert.strictEqual(arr[3], 4);
     arr[3] = 6;

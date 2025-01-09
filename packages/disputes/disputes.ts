@@ -2,8 +2,8 @@ import type { Ed25519Key, WorkReportHash } from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
 import { HashDictionary, SortedArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { hashBytes } from "@typeberry/hash";
-import { Result, asOpaqueType } from "@typeberry/utils";
+import { blake2b } from "@typeberry/hash";
+import { Result } from "@typeberry/utils";
 import { DisputesErrorCode } from "./disputes-error-code";
 import { type DisputesState, hashComparator } from "./disputes-state";
 import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
@@ -264,7 +264,7 @@ export class Disputes {
     for (let c = 0; c < this.state.availabilityAssignment.length; c++) {
       const assignment = this.state.availabilityAssignment[c];
       if (assignment) {
-        const hash: WorkReportHash = asOpaqueType(hashBytes(assignment.workReportBytes));
+        const hash: WorkReportHash = blake2b.hashBytes(assignment.workReportBytes).asOpaque();
         const sum = v.get(hash);
         if (sum !== undefined && sum < this.context.validatorsSuperMajority) {
           this.state.availabilityAssignment[c] = null;

@@ -1,5 +1,5 @@
 import { Bytes } from "@typeberry/bytes";
-import { HASH_SIZE, hashBytes } from "@typeberry/hash";
+import { HASH_SIZE, blake2b } from "@typeberry/hash";
 import { type HostCallHandler, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import type { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
@@ -42,7 +42,7 @@ export class HistoricalLookup implements HostCallHandler {
       regs.setU32(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
-    const keyHash = hashBytes(key);
+    const keyHash = blake2b.hashBytes(key);
     const value = await this.refine.historicalLookup(serviceId, keyHash);
 
     if (value === null) {
