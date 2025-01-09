@@ -157,7 +157,7 @@ export class Memory {
 
       pages[i] = page;
 
-      currentPageNumber = tryAsPageNumber((currentPageNumber + 1) % MAX_NUMBER_OF_PAGES);
+      currentPageNumber = getNextPageNumber(currentPageNumber);
       i++;
     }
 
