@@ -136,11 +136,7 @@ export class Memory {
     const wrappedEndAddress = (startAddress + length) % MEMORY_SIZE;
     const lastPageNumber = getPageNumber(tryAsMemoryIndex(wrappedEndAddress - 1)); // - 1 here is okay as length > 0
     const pageAfterLast = getNextPageNumber(lastPageNumber);
-    const pagesLength =
-      firstPageNumber <= lastPageNumber
-        ? lastPageNumber - firstPageNumber
-        : MAX_NUMBER_OF_PAGES - firstPageNumber + lastPageNumber + 1;
-    const pages = new Array<MemoryPage>(pagesLength);
+    const pages = [];
 
     let currentPageNumber = firstPageNumber;
     let i = 0;
@@ -155,7 +151,7 @@ export class Memory {
         return Result.error(fault);
       }
 
-      pages[i] = page;
+      pages.push(page);
 
       currentPageNumber = getNextPageNumber(currentPageNumber);
       i++;
@@ -189,7 +185,16 @@ export class Memory {
 
     const toRead = result.length;
 
-    const firstPage = pages[0];
+   let currentPosition = startAddress;
+   let bytesLeft = result.length;
+   for (const page of pages) {
+       const endIndex = Math.min(PAGE_SIZE, bytesLeft);
+       const destination = result.subarray(currentPosition - startAddress, endIndex);
+       page.loadInto(destination, currentPosition % PAGE_SIZE, endIndex);
+       
+       currentPosition += destination.length;
+       bytesLeft -= destination.length;
+   }
     const lastPage = pages[noOfPages - 1];
     const startIndexOnFirstPage = tryAsPageIndex(startAddress - firstPage.start);
     const endIndexOnFirstPage = Math.min(startIndexOnFirstPage + toRead, PAGE_SIZE);
