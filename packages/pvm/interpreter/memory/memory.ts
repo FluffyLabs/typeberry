@@ -1,4 +1,3 @@
-import { MAX_NUMBER_OF_PAGES } from "@typeberry/jam-host-calls/refine/zero";
 import { Result } from "@typeberry/utils";
 import { OutOfMemory, PageFault } from "./errors";
 import { MAX_MEMORY_INDEX, MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
@@ -6,15 +5,13 @@ import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex, tryAsSbrkIndex } fr
 import { alignToPageSize, getPageNumber, getStartPageIndexFromPageNumber } from "./memory-utils";
 import { WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
-import { type PageNumber, getNextPageNumber, tryAsPageIndex, tryAsPageNumber } from "./pages/page-utils";
+import { type PageNumber, getNextPageNumber, tryAsPageIndex } from "./pages/page-utils";
 
 type InitialMemoryState = {
   memory: Map<PageNumber, MemoryPage>;
   sbrkIndex: SbrkIndex;
   endHeapIndex: SbrkIndex;
 };
-
-const PAGE_INDEX_ZERO = tryAsPageIndex(0);
 
 export class Memory {
   static fromInitialMemory(initialMemoryState: InitialMemoryState) {
@@ -136,10 +133,9 @@ export class Memory {
     const wrappedEndAddress = (startAddress + length) % MEMORY_SIZE;
     const lastPageNumber = getPageNumber(tryAsMemoryIndex(wrappedEndAddress - 1)); // - 1 here is okay as length > 0
     const pageAfterLast = getNextPageNumber(lastPageNumber);
-    const pages = [];
+    const pages: MemoryPage[] = [];
 
     let currentPageNumber = firstPageNumber;
-    let i = 0;
 
     while (currentPageNumber !== pageAfterLast) {
       const page = this.memory.get(currentPageNumber);
@@ -154,7 +150,6 @@ export class Memory {
       pages.push(page);
 
       currentPageNumber = getNextPageNumber(currentPageNumber);
-      i++;
     }
 
     return Result.ok(pages);
@@ -183,41 +178,20 @@ export class Memory {
       return null;
     }
 
-    const toRead = result.length;
+    let currentPosition: number = startAddress;
+    let bytesLeft = result.length;
 
-   let currentPosition = startAddress;
-   let bytesLeft = result.length;
-   for (const page of pages) {
-       const endIndex = Math.min(PAGE_SIZE, bytesLeft);
-       const destination = result.subarray(currentPosition - startAddress, endIndex);
-       page.loadInto(destination, currentPosition % PAGE_SIZE, endIndex);
-       
-       currentPosition += destination.length;
-       bytesLeft -= destination.length;
-   }
-    const lastPage = pages[noOfPages - 1];
-    const startIndexOnFirstPage = tryAsPageIndex(startAddress - firstPage.start);
-    const endIndexOnFirstPage = Math.min(startIndexOnFirstPage + toRead, PAGE_SIZE);
-    const toReadFromFirstPage = endIndexOnFirstPage - startIndexOnFirstPage;
+    for (const page of pages) {
+      const pageStartIndex = tryAsPageIndex(currentPosition % PAGE_SIZE);
+      const bytesToRead = Math.min(PAGE_SIZE - pageStartIndex, bytesLeft);
+      const destinationStartIndex = currentPosition - startAddress;
+      const destination = result.subarray(destinationStartIndex);
 
-    firstPage.loadInto(result.subarray(0, toReadFromFirstPage), startIndexOnFirstPage, toReadFromFirstPage);
+      page.loadInto(destination, pageStartIndex, bytesToRead);
 
-    const lastMiddlePage = noOfPages - 1;
-    let resultOffset = toReadFromFirstPage;
-
-    for (let i = 1; i < lastMiddlePage; i++) {
-      const page = pages[i];
-      const resultSlice = result.subarray(resultOffset, resultOffset + PAGE_SIZE);
-      page.loadInto(resultSlice, PAGE_INDEX_ZERO, PAGE_SIZE);
-      resultOffset += PAGE_SIZE;
+      currentPosition += bytesToRead;
+      bytesLeft -= bytesToRead;
     }
-
-    const toReadFromLastPage = Math.max(0, toRead - toReadFromFirstPage) % PAGE_SIZE;
-
-    if (toReadFromLastPage > 0) {
-      lastPage.loadInto(result.subarray(resultOffset), PAGE_INDEX_ZERO, toReadFromLastPage);
-    }
-
     return null;
   }
 
