@@ -131,7 +131,9 @@ export class Memory {
 
     const firstPageNumber = getPageNumber(startAddress);
     const wrappedEndAddress = (startAddress + length) % MEMORY_SIZE;
-    const lastPageNumber = getPageNumber(tryAsMemoryIndex(wrappedEndAddress - 1)); // - 1 here is okay as length > 0
+    const lastPageNumber = getPageNumber(
+      tryAsMemoryIndex((wrappedEndAddress === 0 ? MEMORY_SIZE : wrappedEndAddress) - 1),
+    ); // - 1 here is okay as length > 0
     const pageAfterLast = getNextPageNumber(lastPageNumber);
     const pages: MemoryPage[] = [];
 
