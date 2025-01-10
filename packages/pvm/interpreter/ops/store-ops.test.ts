@@ -115,7 +115,7 @@ describe("StoreOps", () => {
     });
 
     it("should store u64 number", () => {
-      const valueToStore = 0xfe_dc_ba_98n;
+      const valueToStore = -19088744n;
       const { storeOps, immediate, address, memory, expectedPage } = prepareStoreData(valueToStore, 8);
 
       storeOps.storeImmediateU64(address, immediate);
@@ -125,7 +125,7 @@ describe("StoreOps", () => {
     });
   });
 
-  function prepareStorIndeData(
+  function prepareStoreIndData(
     valueToStore: bigint,
     noOfBytes: 1 | 2 | 4 | 8,
     addressRegisterValue: bigint,
@@ -170,7 +170,7 @@ describe("StoreOps", () => {
       const addressImmediateValue = 1n;
       const addressRegisterValue = 1n;
       const { storeOps, valueImmediate, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
-        prepareStorIndeData(valueToStore, 1, addressRegisterValue, addressImmediateValue);
+        prepareStoreIndData(valueToStore, 1, addressRegisterValue, addressImmediateValue);
 
       storeOps.storeImmediateIndU8(addressRegisterIndex, addressImmediate, valueImmediate);
 
@@ -183,7 +183,7 @@ describe("StoreOps", () => {
       const addressImmediateValue = 1n;
       const addressRegisterValue = 1n;
       const { storeOps, valueImmediate, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
-        prepareStorIndeData(valueToStore, 2, addressRegisterValue, addressImmediateValue);
+        prepareStoreIndData(valueToStore, 2, addressRegisterValue, addressImmediateValue);
 
       storeOps.storeImmediateIndU16(addressRegisterIndex, addressImmediate, valueImmediate);
 
@@ -196,7 +196,7 @@ describe("StoreOps", () => {
       const addressImmediateValue = 1n;
       const addressRegisterValue = 1n;
       const { storeOps, valueImmediate, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
-        prepareStorIndeData(valueToStore, 4, addressRegisterValue, addressImmediateValue);
+        prepareStoreIndData(valueToStore, 4, addressRegisterValue, addressImmediateValue);
 
       storeOps.storeImmediateIndU32(addressRegisterIndex, addressImmediate, valueImmediate);
 
@@ -205,11 +205,11 @@ describe("StoreOps", () => {
     });
 
     it("should store u64 number", () => {
-      const valueToStore = 0xfe_dc_ba_98n;
+      const valueToStore = -19088744n;
       const addressImmediateValue = 1n;
       const addressRegisterValue = 1n;
       const { storeOps, valueImmediate, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
-        prepareStorIndeData(valueToStore, 8, addressRegisterValue, addressImmediateValue);
+        prepareStoreIndData(valueToStore, 8, addressRegisterValue, addressImmediateValue);
 
       storeOps.storeImmediateIndU64(addressRegisterIndex, addressImmediate, valueImmediate);
 
@@ -224,7 +224,7 @@ describe("StoreOps", () => {
       const addressImmediateValue = 1n;
       const addressRegisterValue = 1n;
       const { storeOps, valueRegisterIndex, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
-        prepareStorIndeData(valueToStore, 1, addressRegisterValue, addressImmediateValue);
+        prepareStoreIndData(valueToStore, 1, addressRegisterValue, addressImmediateValue);
 
       storeOps.storeIndU8(addressRegisterIndex, valueRegisterIndex, addressImmediate);
 
@@ -237,7 +237,7 @@ describe("StoreOps", () => {
       const addressImmediateValue = 1n;
       const addressRegisterValue = 1n;
       const { storeOps, valueRegisterIndex, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
-        prepareStorIndeData(valueToStore, 2, addressRegisterValue, addressImmediateValue);
+        prepareStoreIndData(valueToStore, 2, addressRegisterValue, addressImmediateValue);
 
       storeOps.storeIndU16(addressRegisterIndex, valueRegisterIndex, addressImmediate);
 
@@ -250,7 +250,7 @@ describe("StoreOps", () => {
       const addressImmediateValue = 1n;
       const addressRegisterValue = 1n;
       const { storeOps, valueRegisterIndex, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
-        prepareStorIndeData(valueToStore, 4, addressRegisterValue, addressImmediateValue);
+        prepareStoreIndData(valueToStore, 4, addressRegisterValue, addressImmediateValue);
 
       storeOps.storeIndU32(addressRegisterIndex, valueRegisterIndex, addressImmediate);
 
@@ -263,7 +263,7 @@ describe("StoreOps", () => {
       const addressImmediateValue = 1n;
       const addressRegisterValue = 1n;
       const { storeOps, valueRegisterIndex, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
-        prepareStorIndeData(valueToStore, 8, addressRegisterValue, addressImmediateValue);
+        prepareStoreIndData(valueToStore, 8, addressRegisterValue, addressImmediateValue);
 
       storeOps.storeIndU64(addressRegisterIndex, valueRegisterIndex, addressImmediate);
 

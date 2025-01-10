@@ -12,6 +12,9 @@ function interpretAsSigned(value: bigint) {
 
   return value;
 }
+
+const POSITIVE_PREFIX = new Uint8Array(IMMEDIATE_SIZE).fill(0x00);
+const NEGATIVE_PREFIX = new Uint8Array(IMMEDIATE_SIZE).fill(0xff);
 export class ImmediateDecoder {
   private unsignedImmediate: Uint32Array;
   private signedImmediate: Int32Array;
@@ -72,6 +75,19 @@ export class ImmediateDecoder {
   }
 
   getBytesAsLittleEndian() {
-    return this.bytes.subarray(0, IMMEDIATE_SIZE);
+    return this.bytes;
+  }
+
+  getExtendedBytesAsLittleEndian() {
+    const result = new Uint8Array(8);
+    if ((this.bytes[IMMEDIATE_SIZE - 1] & 0x80) === 0) {
+      result.set(POSITIVE_PREFIX, IMMEDIATE_SIZE);
+    } else {
+      result.set(NEGATIVE_PREFIX, IMMEDIATE_SIZE);
+    }
+
+    result.set(this.bytes);
+
+    return result;
   }
 }

@@ -6,8 +6,6 @@ import type { Registers } from "../registers";
 import { Result } from "../result";
 import { addWithOverflowU32 } from "./math-utils";
 
-const ZEROS = new Uint8Array([0, 0, 0, 0]);
-
 export class StoreOps {
   constructor(
     private regs: Registers,
@@ -64,8 +62,7 @@ export class StoreOps {
   }
 
   storeImmediateU64(address: number, immediateDecoder: ImmediateDecoder) {
-    this.store(addWithOverflowU32(address, 4), ZEROS);
-    this.store(address, immediateDecoder.getBytesAsLittleEndian().subarray(0, 4));
+    this.store(address, immediateDecoder.getExtendedBytesAsLittleEndian());
   }
 
   storeImmediateIndU8(
@@ -101,8 +98,7 @@ export class StoreOps {
     secondImmediateDecoder: ImmediateDecoder,
   ) {
     const address = addWithOverflowU32(this.regs.getU32(registerIndex), firstImmediateDecoder.getUnsigned());
-    this.store(addWithOverflowU32(address, 4), ZEROS);
-    this.store(address, secondImmediateDecoder.getBytesAsLittleEndian().subarray(0, 4));
+    this.store(address, secondImmediateDecoder.getExtendedBytesAsLittleEndian());
   }
 
   private store(address: number, bytes: Uint8Array) {
