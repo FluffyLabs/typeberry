@@ -13,3 +13,4 @@ export * from "./utils";
 export * as bytes from "@typeberry/bytes";
 export * as hash from "@typeberry/hash";
 export * as block from "@typeberry/block";
+export { Registers, Memory } from "@typeberry/pvm-host-calls";
