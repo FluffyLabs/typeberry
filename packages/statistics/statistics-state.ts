@@ -1,47 +1,41 @@
 import type { TimeSlot, ValidatorData } from "@typeberry/block";
-import type { U32 } from "@typeberry/numbers";
+import { type U32, tryAsU32 } from "@typeberry/numbers";
 
+/**
+ * https://graypaper.fluffylabs.dev/#/6e1c0cd/187a01187a01
+ */
 export class ActivityRecord {
   constructor(
     /**
      * The number of blocks produced by the validator.
      *
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/187b01187b01
      */
     public blocks: U32,
 
     /**
      * The number of tickets introduced by the validator.
      *
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/187e01188101
      */
     public tickets: U32,
 
     /**
      * The number of preimages introduced by the validator.
      *
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/188201188501
      */
     public preImages: U32,
 
     /**
      * The total number of octets across all preimages introduced by the validator.
-     *
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/188701188a01
      */
     public preImagesSize: U32,
 
     /**
      * The number of reports guaranteed by the validator.
-     *
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/188b01188e01
      */
     public guarantees: U32,
 
     /**
      * The number of availability assurances made by the validator.
-     *
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/188f01189201
      */
     public assurances: U32,
   ) {}
@@ -60,7 +54,7 @@ export class StatisticsState {
      */
     public statisticsPerValidator: {
       current: ActivityRecord[];
-      last: ActivityRecord[];
+      previous: ActivityRecord[];
     },
 
     /**

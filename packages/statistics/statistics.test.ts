@@ -26,8 +26,8 @@ describe("Statistics", () => {
     const validatorIndex = 0 as ValidatorIndex;
     const currentStatistics = [ActivityRecord.empty()];
     const lastStatistics = [ActivityRecord.empty()];
-    const pi = { current: currentStatistics, last: lastStatistics };
-    const state = new StatisticsState(pi, previousSlot as TimeSlot, []);
+    const statisticsPerValidator = { current: currentStatistics, previous: lastStatistics };
+    const state = new StatisticsState(statisticsPerValidator, previousSlot as TimeSlot, []);
     const statistics = new Statistics(state, tinyChainSpec);
 
     return {
@@ -50,9 +50,9 @@ describe("Statistics", () => {
 
       statistics.transition(currentSlot, validatorIndex, emptyExtrinsic);
 
-      assert.strictEqual(statistics.state.pi.current, currentStatistics);
-      assert.strictEqual(statistics.state.pi.last, lastStatistics);
-      assert.deepStrictEqual(statistics.state.pi.last, lastStatistics);
+      assert.strictEqual(statistics.state.statisticsPerValidator.current, currentStatistics);
+      assert.strictEqual(statistics.state.statisticsPerValidator.previous, lastStatistics);
+      assert.deepStrictEqual(statistics.state.statisticsPerValidator.previous, lastStatistics);
     });
 
     it("should create a new 'current' statistics and previous current should be 'last' when the epoch is changed", () => {
@@ -65,8 +65,8 @@ describe("Statistics", () => {
 
       statistics.transition(currentSlot, validatorIndex, emptyExtrinsic);
 
-      assert.strictEqual(statistics.state.pi.last, currentStatistics);
-      assert.deepStrictEqual(statistics.state.pi.last, currentStatistics);
+      assert.strictEqual(statistics.state.statisticsPerValidator.previous, currentStatistics);
+      assert.deepStrictEqual(statistics.state.statisticsPerValidator.previous, currentStatistics);
     });
 
     it("should create a new current statistics object that have length equal to number of validators ", () => {
@@ -79,7 +79,7 @@ describe("Statistics", () => {
 
       statistics.transition(currentSlot, validatorIndex, emptyExtrinsic);
 
-      assert.deepStrictEqual(statistics.state.pi.current.length, tinyChainSpec.validatorsCount);
+      assert.deepStrictEqual(statistics.state.statisticsPerValidator.current.length, tinyChainSpec.validatorsCount);
     });
   });
 
@@ -90,8 +90,8 @@ describe("Statistics", () => {
       const validatorIndex = 0 as ValidatorIndex;
       const currentStatistics = [ActivityRecord.empty()];
       const lastStatistics = [ActivityRecord.empty()];
-      const pi = { current: currentStatistics, last: lastStatistics };
-      const state = new StatisticsState(pi, previousSlot as TimeSlot, []);
+      const statisticsPerValidator = { current: currentStatistics, previous: lastStatistics };
+      const state = new StatisticsState(statisticsPerValidator, previousSlot as TimeSlot, []);
       const statistics = new Statistics(state, tinyChainSpec);
 
       return {
@@ -112,11 +112,11 @@ describe("Statistics", () => {
       });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1 };
 
-      assert.strictEqual(statistics.state.pi.current[validatorIndex].blocks, 0);
+      assert.strictEqual(statistics.state.statisticsPerValidator.current[validatorIndex].blocks, 0);
 
       statistics.transition(currentSlot, validatorIndex, emptyExtrinsic);
 
-      assert.deepEqual(statistics.state.pi.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(statistics.state.statisticsPerValidator.current[validatorIndex], expectedStatistics);
     });
 
     it("should add tickets length from extrinstic to tickets in statistics", () => {
@@ -128,11 +128,11 @@ describe("Statistics", () => {
       });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1, tickets: tickets.length };
 
-      assert.strictEqual(statistics.state.pi.current[validatorIndex].tickets, 0);
+      assert.strictEqual(statistics.state.statisticsPerValidator.current[validatorIndex].tickets, 0);
 
       statistics.transition(currentSlot, validatorIndex, extrinsic);
 
-      assert.deepEqual(statistics.state.pi.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(statistics.state.statisticsPerValidator.current[validatorIndex], expectedStatistics);
     });
 
     it("should add preimages length from extrinstic to preImages in statistics", () => {
@@ -144,11 +144,11 @@ describe("Statistics", () => {
       });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1, preImages: preimages.length };
 
-      assert.strictEqual(statistics.state.pi.current[validatorIndex].preImages, 0);
+      assert.strictEqual(statistics.state.statisticsPerValidator.current[validatorIndex].preImages, 0);
 
       statistics.transition(currentSlot, validatorIndex, extrinsic);
 
-      assert.deepEqual(statistics.state.pi.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(statistics.state.statisticsPerValidator.current[validatorIndex], expectedStatistics);
     });
 
     it("should add preimages size length from extrinstic to preImagesSize in statistics", () => {
@@ -165,11 +165,11 @@ describe("Statistics", () => {
         preImagesSize: 6,
       };
 
-      assert.strictEqual(statistics.state.pi.current[validatorIndex].preImagesSize, 0);
+      assert.strictEqual(statistics.state.statisticsPerValidator.current[validatorIndex].preImagesSize, 0);
 
       statistics.transition(currentSlot, validatorIndex, extrinsic);
 
-      assert.deepEqual(statistics.state.pi.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(statistics.state.statisticsPerValidator.current[validatorIndex], expectedStatistics);
     });
 
     it("should update guarantees for each validator based on guarantees from extrinstic", () => {
@@ -184,11 +184,11 @@ describe("Statistics", () => {
       const extrinsic = getExtrinsic({ guarantees });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1, guarantees: 1 };
 
-      assert.strictEqual(statistics.state.pi.current[validatorIndex].guarantees, 0);
+      assert.strictEqual(statistics.state.statisticsPerValidator.current[validatorIndex].guarantees, 0);
 
       statistics.transition(currentSlot, validatorIndex, extrinsic);
 
-      assert.deepEqual(statistics.state.pi.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(statistics.state.statisticsPerValidator.current[validatorIndex], expectedStatistics);
     });
 
     it("should update assurances for each validator based on assurances from extrinstic", () => {
@@ -200,11 +200,11 @@ describe("Statistics", () => {
       const extrinsic = getExtrinsic({ assurances });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1, assurances: 1 };
 
-      assert.strictEqual(statistics.state.pi.current[validatorIndex].assurances, 0);
+      assert.strictEqual(statistics.state.statisticsPerValidator.current[validatorIndex].assurances, 0);
 
       statistics.transition(currentSlot, validatorIndex, extrinsic);
 
-      assert.deepEqual(statistics.state.pi.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(statistics.state.statisticsPerValidator.current[validatorIndex], expectedStatistics);
     });
   });
 });

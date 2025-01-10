@@ -1,6 +1,6 @@
 import type { Extrinsic, TimeSlot, ValidatorIndex } from "@typeberry/block";
-import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { ChainSpec } from "@typeberry/config";
+import { tryAsU32 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
 import { ActivityRecord, type StatisticsState } from "./statistics-state";
 
@@ -17,7 +17,7 @@ export class Statistics {
 
     /** e === e' */
     if (currentEpoch === nextEpoch) {
-      return this.state.pi;
+      return this.state.statisticsPerValidator;
     }
 
     /** e !== e' */
@@ -27,19 +27,8 @@ export class Statistics {
 
     return {
       current,
-      last: this.state.pi.current,
+      previous: this.state.statisticsPerValidator.current,
     };
-  }
-
-  private sumPreimageSizes(preimages: PreimagesExtrinsic) {
-    /** https://graypaper.fluffylabs.dev/#/6e1c0cd/18a60218a602 */
-    let sum = 0;
-
-    for (const preimage of preimages) {
-      sum += preimage.blob.length;
-    }
-
-    return sum;
   }
 
   transition(slot: TimeSlot, authorIndex: ValidatorIndex, extrinsic: Extrinsic) {
@@ -53,34 +42,38 @@ export class Statistics {
     /**
      * https://graypaper.fluffylabs.dev/#/6e1c0cd/184b02184b02
      */
-    current[authorIndex].blocks += 1;
+
+    current[authorIndex].blocks = tryAsU32(current[authorIndex].blocks + 1);
 
     /**
      * https://graypaper.fluffylabs.dev/#/6e1c0cd/185e02185e02
      */
-    current[authorIndex].tickets += extrinsic.tickets.length;
+    current[authorIndex].tickets = tryAsU32(current[authorIndex].tickets + extrinsic.tickets.length);
 
     /**
      * https://graypaper.fluffylabs.dev/#/6e1c0cd/188202189a02
      */
-    current[authorIndex].preImages += extrinsic.preimages.length;
+    current[authorIndex].preImages = tryAsU32(current[authorIndex].preImages + extrinsic.preimages.length);
 
     /**
      * https://graypaper.fluffylabs.dev/#/6e1c0cd/18a60218a602
+     *
+     * This value is well bounded by number of blocks in the epoch and maximal amount of preimage data in the extrinsics per one validator. So it can't reach 2GB.
      */
-    current[authorIndex].preImagesSize += this.sumPreimageSizes(extrinsic.preimages);
+    const preImagesSize = extrinsic.preimages.reduce((sum, preimage) => sum + preimage.blob.length, 0);
+    current[authorIndex].preImagesSize = tryAsU32(current[authorIndex].preImagesSize + preImagesSize);
 
     /**
      * https://graypaper.fluffylabs.dev/#/6e1c0cd/18cc0218d002
      *
-     * Please note I don't use Kappa' here so probably it is incorrect (despite it passes the tests)!
-     * If I understand GP correctly we should match validators from Kappa' and data from guarantees extrinsic using
-     * signature (calculate a new signature using validator ed25519 public key and compare it with the signature from the extrinsic),
-     * but the problem is that everything except validator index is empty in extrinsic (in the test vectors).
+     * Please note I don't use Kappa' here. If I understand correctly we don't need it.
+     * Kappa' is not needed because we can use validator indexes directly from guarantees extrinsic.
+     * I asked a question to ensure it is true but I didn't get any response yet:
+     * https://github.com/w3f/jamtestvectors/pull/28#discussion_r1907237004
      */
     for (const { credentials } of extrinsic.guarantees) {
       for (const { validatorIndex } of credentials) {
-        current[validatorIndex].guarantees += 1;
+        current[validatorIndex].guarantees = tryAsU32(current[validatorIndex].guarantees + 1);
       }
     }
 
@@ -88,12 +81,12 @@ export class Statistics {
      * https://graypaper.fluffylabs.dev/#/6e1c0cd/18dc0218dc02
      */
     for (const assurance of extrinsic.assurances) {
-      current[assurance.validatorIndex].assurances += 1;
+      current[assurance.validatorIndex].assurances = tryAsU32(current[assurance.validatorIndex].assurances + 1);
     }
 
     /**
      * update the state with the new validators statistics
      */
-    this.state.pi = validatorsStatistics;
+    this.state.statisticsPerValidator = validatorsStatistics;
   }
 }
