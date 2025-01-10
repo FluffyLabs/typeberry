@@ -12,7 +12,7 @@ export class ActivityRecord {
 
     /**
      * The number of tickets introduced by the validator.
-     * 
+     *
      * https://graypaper.fluffylabs.dev/#/6e1c0cd/187e01188101
      */
     public tickets: U32,

@@ -11,25 +11,19 @@ export class Statistics {
   ) {}
 
   private getValidatorsStatistics(slot: TimeSlot) {
-    /** https://graypaper.fluffylabs.dev/#/6e1c0cd/18bd0118bd01 */
+    /** https://graypaper.fluffylabs.dev/#/6e1c0cd/18fb0118fb01 */
     const currentEpoch = Math.floor(this.state.tau / this.chainSpec.epochLength);
     const nextEpoch = Math.floor(slot / this.chainSpec.epochLength);
 
-    /**
-     * e === e'
-     *
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/18fb0118fb01
-     */
+    /** e === e' */
     if (currentEpoch === nextEpoch) {
       return this.state.pi;
     }
 
-    /**
-     * e !== e'
-     *
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/18fb0118fb01
-     */
-    const current = Array(this.chainSpec.validatorsCount).fill(0).map(() => ActivityRecord.empty());
+    /** e !== e' */
+    const current = Array(this.chainSpec.validatorsCount)
+      .fill(0)
+      .map(() => ActivityRecord.empty());
 
     return {
       current,
