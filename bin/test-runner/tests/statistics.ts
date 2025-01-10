@@ -79,7 +79,7 @@ class TestState {
     return new StatisticsState(
       {
         current: TestActivityRecord.toActivityRecords(state.pi.current),
-        last: TestActivityRecord.toActivityRecords(state.pi.last),
+        previous: TestActivityRecord.toActivityRecords(state.pi.last),
       },
       state.tau,
       state.kappa_prime,
