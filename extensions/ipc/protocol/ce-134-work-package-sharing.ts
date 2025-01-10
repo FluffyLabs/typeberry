@@ -82,39 +82,62 @@ const logger = Logger.new(__filename, "protocol/ce-134");
 export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
-  constructor(private readonly onWorkPackage: (i: CoreIndex, s: SegmentsRootMapping[], w: WorkPackageBundle) => void) {}
+  constructor(
+    private readonly onWorkPackage: (
+      coreIndex: CoreIndex,
+      segmentsRootMappings: SegmentsRootMapping[],
+      workPackageBundle: WorkPackageBundle,
+    ) => Promise<{ workReportHash: WorkReportHash; signature: Ed25519Signature }>,
+  ) {}
 
   public readonly requestsMap = new Map<StreamId, WorkPackageSharingRequest>();
+
+  private static sendWorkReport(sender: StreamSender, workReportHash: WorkReportHash, signature: Ed25519Signature) {
+    const workReport = new WorkPackageSharingResponse(workReportHash, signature);
+    sender.send(Encoder.encodeObject(WorkPackageSharingResponse.Codec, workReport));
+    sender.close();
+  }
+
+  private handleError(sender: StreamSender, error: unknown, context: string) {
+    logger.warn(`[${sender.streamId}] ${context}\n${error}`);
+    this.requestsMap.delete(sender.streamId);
+    sender.close();
+  }
 
   onStreamMessage(sender: StreamSender, message: BytesBlob): void {
     const streamId = sender.streamId;
     const request = this.requestsMap.get(streamId);
+
     if (!request) {
       try {
         const receivedRequest = Decoder.decodeObject(WorkPackageSharingRequest.Codec, message);
         this.requestsMap.set(streamId, receivedRequest);
+        return;
       } catch (error) {
-        logger.warn(`[${streamId}] Couldn't decode core index and segments root mappings. Closing stream.\n${error}`);
-        sender.close();
+        this.handleError(sender, error, "Couldn't decode core index and segments root mappings");
+        return;
       }
+    }
+
+    let workPackageBundle: WorkPackageBundle;
+    try {
+      workPackageBundle = Decoder.decodeObject(codec.blob, message);
+    } catch (error) {
+      this.handleError(sender, error, "Couldn't decode work package bundle");
       return;
     }
-    try {
-      const workPackageBundle = Decoder.decodeObject(codec.blob, message);
-      this.onWorkPackage(request.coreIndex, request.segmentsRootMappings, workPackageBundle);
-    } catch (error) {
-      logger.warn(`[${streamId}] Couldn't decode work package bundle. Closing stream.\n${error}`);
-    }
+
+    this.onWorkPackage(request.coreIndex, request.segmentsRootMappings, workPackageBundle)
+      .then(({ workReportHash, signature }) => {
+        ServerHandler.sendWorkReport(sender, workReportHash, signature);
+      })
+      .catch((error) => {
+        this.handleError(sender, error, "Couldn't process work package");
+      });
   }
 
   onClose(streamId: StreamId): void {
     this.requestsMap.delete(streamId);
-  }
-
-  sendWorkReport(sender: StreamSender, workReportHash: WorkReportHash, signature: Ed25519Signature) {
-    const workReport = new WorkPackageSharingResponse(workReportHash, signature);
-    sender.send(Encoder.encodeObject(WorkPackageSharingResponse.Codec, workReport));
-    sender.close();
   }
 }
 
@@ -122,23 +145,29 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
   private onResponseMap = new Map<StreamId, (workReportHash: WorkReportHash, signature: Ed25519Signature) => void>();
 
+  private handleError(sender: StreamSender, error: unknown, context: string) {
+    logger.warn(`[${sender.streamId}] ${context}\n${error}`);
+    this.onResponseMap.delete(sender.streamId);
+    sender.close();
+  }
+
   onStreamMessage(sender: StreamSender, message: BytesBlob): void {
     const streamId = sender.streamId;
     const onResponse = this.onResponseMap.get(streamId);
+
     if (!onResponse) {
-      logger.warn(`[${streamId}] Got unexpected message on CE-134 stream. Closing.`);
-      sender.close();
+      this.handleError(sender, "Unexpected message", "Got unexpected message on CE-134 stream");
       return;
     }
+
     try {
       const response = Decoder.decodeObject(WorkPackageSharingResponse.Codec, message);
       logger.info(`[${sender.streamId}] Received work report hash and signature.`);
       onResponse(response.workReportHash, response.signature);
-    } catch (error) {
-      logger.warn(`[${sender.streamId}] Got unexpected message on CE-134 stream. Closing.\n${error}`);
-    } finally {
       this.onResponseMap.delete(streamId);
       sender.close();
+    } catch (error) {
+      this.handleError(sender, error, "Got unexpected message on CE-134 stream");
     }
   }
 
@@ -159,6 +188,5 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     sender.send(Encoder.encodeObject(WorkPackageSharingRequest.Codec, request));
     logger.trace(`[${sender.streamId}] Sending work package bundle.`);
     sender.send(Encoder.encodeObject(codec.blob, workPackageBundle));
-    sender.close();
   }
 }
