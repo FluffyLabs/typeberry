@@ -60,7 +60,7 @@ export class StatisticsState {
      */
     public statisticsPerValidator: {
       current: ActivityRecord[];
-      last: ActivityRecord[];
+      previous: ActivityRecord[];
     },
 
     /**
