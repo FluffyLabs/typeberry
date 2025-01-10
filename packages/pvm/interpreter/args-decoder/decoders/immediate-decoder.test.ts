@@ -232,7 +232,7 @@ describe("ImmediateDecoder", () => {
     });
   });
 
-  describe("read immediate as bytes (little endian)", () => {
+  describe("getBytesAsLittleEndian", () => {
     it("should return empty bytes array", () => {
       const decoder = new ImmediateDecoder();
 
@@ -275,6 +275,52 @@ describe("ImmediateDecoder", () => {
       decoder.setBytes(encodedBytes);
 
       assert.deepStrictEqual(decoder.getBytesAsLittleEndian(), expectedBytes);
+    });
+  });
+
+  describe("getExtendedBytesAsLittleEndian", () => {
+    it("should return empty bytes array", () => {
+      const decoder = new ImmediateDecoder();
+
+      const encodedBytes = new Uint8Array([]);
+      const expectedBytes = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0]);
+
+      decoder.setBytes(encodedBytes);
+
+      assert.deepStrictEqual(decoder.getExtendedBytesAsLittleEndian(), expectedBytes);
+    });
+
+    it("should return u8 number correctly encoded as little endian", () => {
+      const decoder = new ImmediateDecoder();
+
+      const encodedBytes = new Uint8Array([0xff]);
+      const expectedBytes = new Uint8Array([0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);
+
+      decoder.setBytes(encodedBytes);
+
+      assert.deepStrictEqual(decoder.getExtendedBytesAsLittleEndian(), expectedBytes);
+    });
+
+    it("should return u16 number correctly encoded as little endian", () => {
+      const decoder = new ImmediateDecoder();
+
+      const encodedBytes = new Uint8Array([0xff, 0xee]);
+      const expectedBytes = new Uint8Array([0xff, 0xee, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);
+
+      decoder.setBytes(encodedBytes);
+
+      assert.deepStrictEqual(decoder.getExtendedBytesAsLittleEndian(), expectedBytes);
+    });
+
+    it("should return u32 number correctly encoded as little endian", () => {
+      const decoder = new ImmediateDecoder();
+
+      const encodedBytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc]);
+      const expectedBytes = new Uint8Array([0xff, 0xee, 0xdd, 0xcc, 0xff, 0xff, 0xff, 0xff]);
+
+      decoder.setBytes(encodedBytes);
+
+      assert.deepStrictEqual(decoder.getExtendedBytesAsLittleEndian(), expectedBytes);
     });
   });
 });
