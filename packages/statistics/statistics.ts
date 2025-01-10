@@ -74,7 +74,7 @@ export class Statistics {
     /**
      * https://graypaper.fluffylabs.dev/#/6e1c0cd/18a60218a602
      */
-    current[authorIndex].preImagesSize += this.sumPreimageSizes(extrinsic.preimages);
+    current[authorIndex].preImagesSize += extrinsic.preimages.reduce((sum, preimage) => sum + preimage.blob.length, 0);
 
     /**
      * https://graypaper.fluffylabs.dev/#/6e1c0cd/18cc0218d002
