@@ -6,7 +6,7 @@ import type { JSONRPCID, JSONRPCSuccessResponse } from "./../../node_modules/jso
 import type { Header } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import * as ce129 from "@typeberry/ext-ipc/protocol/ce-129-state-request";
-import { hashString } from "@typeberry/hash";
+import { blake2b } from "@typeberry/hash";
 import { JSONRPCServer } from "json-rpc-2.0";
 import type { MessageHandler } from "../../extensions/ipc/handler";
 
@@ -38,7 +38,7 @@ export function startRpc(db: Database, client: MessageHandler) {
         handler.getStateByKey(
           sender,
           db.bestHeader.parentHeaderHash,
-          Bytes.fromBlob(hashString(key).raw.subarray(0, 31), 31),
+          Bytes.fromBlob(blake2b.hashString(key).raw.subarray(0, ce129.KEY_SIZE), ce129.KEY_SIZE),
           handleResponse,
         );
       });

@@ -4,6 +4,7 @@ import { type CoreIndex, tryAsCoreIndex, tryAsServiceId } from "@typeberry/block
 import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
+import { FixedSizeArray } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { type Blake2bHash, HASH_SIZE } from "@typeberry/hash";
 import { Registers } from "@typeberry/pvm-interpreter";
@@ -75,7 +76,8 @@ describe("HostCalls: Assign", () => {
     for (let i = 3; i < AUTHORIZATION_QUEUE_SIZE; i += 1) {
       expected[i] = Bytes.zero(HASH_SIZE);
     }
-    assert.deepStrictEqual(accumulate.authQueue[0][1], expected);
+    const expectedAuthQueue = FixedSizeArray.new(expected, AUTHORIZATION_QUEUE_SIZE);
+    assert.deepStrictEqual(accumulate.authQueue[0][1], expectedAuthQueue);
     assert.deepStrictEqual(accumulate.authQueue.length, 1);
   });
 

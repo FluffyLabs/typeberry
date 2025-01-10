@@ -1,5 +1,5 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import type { OpaqueHash } from "@typeberry/hash";
+import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type Opaque, check } from "@typeberry/utils";
 import { FIRST_BIT_SET, FIRST_BIT_SET_NEG, FIRST_TWO_BITS_SET, FIRST_TWO_BITS_SET_NEG } from "./masks";
 
@@ -16,16 +16,14 @@ export type InputKey = StateKey | TruncatedStateKey;
 export type TrieHash = Opaque<OpaqueHash, "trie">;
 export type ValueHash = Opaque<OpaqueHash, "trieValue">;
 
-/** Regular hash length */
-export const HASH_BYTES = 32;
 /** Value nodes have the key truncated to 31 bytes. */
 export const TRUNCATED_KEY_BYTES = 31;
 export type TRUNCATED_KEY_BYTES = 31;
 export const TRUNCATED_KEY_BITS = TRUNCATED_KEY_BYTES * 8;
 
 export function parseInputKey(v: string): InputKey {
-  if (v.length === HASH_BYTES * 2) {
-    return Bytes.parseBytesNoPrefix(v, HASH_BYTES).asOpaque();
+  if (v.length === HASH_SIZE * 2) {
+    return Bytes.parseBytesNoPrefix(v, HASH_SIZE).asOpaque();
   }
   return Bytes.parseBytesNoPrefix(v, TRUNCATED_KEY_BYTES).asOpaque();
 }
@@ -115,7 +113,7 @@ export class BranchNode {
   static fromSubNodes(left: TrieHash, right: TrieHash) {
     const node = new TrieNode();
     node.data.set(left.raw, 0);
-    node.data.set(right.raw, HASH_BYTES);
+    node.data.set(right.raw, HASH_SIZE);
 
     // set the first bit to 0 (branch node)
     node.data[0] &= FIRST_BIT_SET_NEG;
@@ -125,12 +123,12 @@ export class BranchNode {
 
   /** Get the hash of the left sub-trie. */
   getLeft(): TrieHash {
-    return Bytes.fromBlob(this.node.data.subarray(0, HASH_BYTES), HASH_BYTES).asOpaque();
+    return Bytes.fromBlob(this.node.data.subarray(0, HASH_SIZE), HASH_SIZE).asOpaque();
   }
 
   /** Get the hash of the right sub-trie. */
   getRight(): TrieHash {
-    return Bytes.fromBlob(this.node.data.subarray(HASH_BYTES), HASH_BYTES).asOpaque();
+    return Bytes.fromBlob(this.node.data.subarray(HASH_SIZE), HASH_SIZE).asOpaque();
   }
 }
 
@@ -163,7 +161,7 @@ export class LeafNode {
   static fromValue(key: InputKey, value: BytesBlob, valueHash: TrieHash): LeafNode {
     const node = new TrieNode();
     // The value will fit in the leaf itself.
-    if (value.length <= HASH_BYTES) {
+    if (value.length <= HASH_SIZE) {
       node.data[0] = FIRST_BIT_SET | value.length;
       // truncate & copy the key
       node.data.set(key.raw.subarray(0, TRUNCATED_KEY_BYTES), 1);
@@ -193,7 +191,7 @@ export class LeafNode {
    */
   getValueLength(): number {
     const firstByte = this.node.data[0];
-    // we only store values up to `HASH_BYTES`, so they fit on the last 6 bits.
+    // we only store values up to `HASH_SIZE`, so they fit on the last 6 bits.
     return firstByte & FIRST_TWO_BITS_SET_NEG;
   }
 
@@ -205,7 +203,7 @@ export class LeafNode {
    */
   getValue(): BytesBlob {
     const len = this.getValueLength();
-    return BytesBlob.blobFrom(this.node.data.subarray(HASH_BYTES, HASH_BYTES + len));
+    return BytesBlob.blobFrom(this.node.data.subarray(HASH_SIZE, HASH_SIZE + len));
   }
 
   /**
@@ -215,6 +213,6 @@ export class LeafNode {
    * Note that for embedded value this is going to be full 0-padded 32 bytes.
    */
   getValueHash(): ValueHash {
-    return Bytes.fromBlob(this.node.data.subarray(HASH_BYTES), HASH_BYTES).asOpaque();
+    return Bytes.fromBlob(this.node.data.subarray(HASH_SIZE), HASH_SIZE).asOpaque();
   }
 }

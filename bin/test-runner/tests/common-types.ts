@@ -8,15 +8,16 @@ import {
   type HeaderHash,
   type ServiceGas,
   type ServiceId,
+  type StateRootHash,
   type TimeSlot,
   VALIDATOR_META_BYTES,
   type ValidatorData,
-  type WorkReportHash,
 } from "@typeberry/block";
-import { type BeefyHash, RefineContext } from "@typeberry/block/refine-context";
+import { RefineContext } from "@typeberry/block/refine-context";
 import type { WorkItemsCount } from "@typeberry/block/work-package";
 import {
   type AuthorizerHash,
+  type ExportsRootHash,
   SegmentRootLookupItem,
   type WorkPackageHash,
   WorkPackageSpec,
@@ -28,7 +29,7 @@ import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import type { AvailabilityAssignment } from "@typeberry/disputes";
 import type { HASH_SIZE, OpaqueHash } from "@typeberry/hash";
 import type { U16, U32 } from "@typeberry/numbers";
-import { Bytes, BytesBlob, type TrieHash } from "@typeberry/trie";
+import { Bytes, BytesBlob } from "@typeberry/trie";
 import { fromJson as codecFromJson } from "./codec/common";
 
 export namespace commonFromJson {
@@ -141,7 +142,7 @@ class TestPackageSpec {
   hash!: WorkPackageHash;
   length!: number;
   erasure_root!: OpaqueHash;
-  exports_root!: OpaqueHash;
+  exports_root!: ExportsRootHash;
   exports_count!: number;
 }
 
@@ -168,10 +169,10 @@ class TestContext {
 
   static toRefineContext(context: TestContext) {
     return new RefineContext(
-      context.anchor as HeaderHash,
-      context.state_root as TrieHash,
-      context.beefy_root as BeefyHash,
-      context.lookup_anchor as HeaderHash,
+      context.anchor.asOpaque(),
+      context.state_root.asOpaque(),
+      context.beefy_root.asOpaque(),
+      context.lookup_anchor.asOpaque(),
       context.lookup_anchor_slot as TimeSlot,
     );
   }
@@ -281,8 +282,8 @@ export class TestReportedWorkPackage {
     exports_root: commonFromJson.bytes32(),
   };
 
-  hash!: WorkReportHash;
-  exports_root!: OpaqueHash;
+  hash!: WorkPackageHash;
+  exports_root!: ExportsRootHash;
 }
 
 export class TestBlocksInfo {
@@ -299,6 +300,6 @@ export class TestBlocksInfo {
   mmr!: {
     peaks: Array<OpaqueHash | null>;
   };
-  state_root!: OpaqueHash;
+  state_root!: StateRootHash;
   reported!: TestReportedWorkPackage[];
 }

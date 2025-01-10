@@ -1,15 +1,15 @@
-import type { CodeHash, ServiceId } from "@typeberry/block";
+import type { CodeHash, ServiceId, StateRootHash } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
-import { HASH_SIZE, WithHash, hashString } from "@typeberry/hash";
+import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import { InMemoryTrie, type StateKey, type TrieHash } from "@typeberry/trie";
-import { blake2bTrieHasher } from "@typeberry/trie/blake2b.node";
+import { blake2bTrieHasher } from "@typeberry/trie/hasher";
 import { WriteableNodesDb } from "@typeberry/trie/nodesDb";
 
 export class StateDb {
   constructor(private readonly db: InMemoryKvdb) {}
 
-  stateAt(root: TrieHash): State | null {
+  stateAt(root: StateRootHash): State | null {
     const hasRootNode = this.db.has(root.asOpaque());
     // we don't know about that trie.
     if (!hasRootNode) {
@@ -22,11 +22,11 @@ export class StateDb {
 export class State {
   constructor(
     private readonly db: InMemoryKvdb,
-    public readonly root: TrieHash,
+    public readonly root: StateRootHash,
   ) {}
 
   getServiceCode(serviceId: ServiceId): WithHash<CodeHash, BytesBlob> | null {
-    const key = hashString(`serviceCodeHash:${serviceId}`);
+    const key = blake2b.hashString(`serviceCodeHash:${serviceId}`);
     // TODO [ToDr] here we need to make sure that the key is part of the root!
     const blob = this.db.get(key.asOpaque());
     if (!blob) {
@@ -48,13 +48,13 @@ export interface KeyValueDatabase<Tx extends Transaction> {
   has(key: StateKey): boolean;
 
   /** Get database commitment (merkle root hash). */
-  getRoot(): TrieHash;
+  getRoot(): StateRootHash;
 
   /** Create new transaction to alter the database. */
   newTransaction(): Tx;
 
   /** Commit the changes from a transaction back to the database and get the root. */
-  commit(tx: Tx): Promise<TrieHash>;
+  commit(tx: Tx): Promise<StateRootHash>;
 }
 
 /** Database-altering transaction. */
@@ -87,15 +87,15 @@ export class InMemoryKvdb implements KeyValueDatabase<InMemoryTransaction> {
     return x !== null;
   }
 
-  getRoot(): TrieHash {
-    return this.trie.getRootHash();
+  getRoot(): StateRootHash {
+    return this.trie.getRootHash().asOpaque();
   }
 
   newTransaction(): InMemoryTransaction {
     return new InMemoryTransaction();
   }
 
-  commit(tx: InMemoryTransaction): Promise<TrieHash> {
+  commit(tx: InMemoryTransaction): Promise<StateRootHash> {
     for (const [key, value] of tx.writes) {
       if (value) {
         this.trie.set(key, value.data, value.hash);

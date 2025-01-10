@@ -1,6 +1,6 @@
 import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type Blake2bHash, hashBytes } from "@typeberry/hash";
+import { type Blake2bHash, blake2b } from "@typeberry/hash";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import {
   type Memory,
@@ -61,7 +61,7 @@ export class Read implements HostCallHandler {
       return;
     }
 
-    const keyHash = hashBytes(key);
+    const keyHash = blake2b.hashBytes(key);
     const value = await this.account.read(serviceId, keyHash);
 
     if (value === null) {

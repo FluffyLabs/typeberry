@@ -2,7 +2,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
-import { WithDebug } from "@typeberry/utils";
+import { WithDebug, ensure } from "@typeberry/utils";
 import type { ServiceId } from "./common";
 import type { CodeHash } from "./hash";
 import { RefineContext } from "./refine-context";
@@ -10,6 +10,18 @@ import { WorkItem } from "./work-item";
 
 /** Possible number of work items in the package or results in the report. */
 export type WorkItemsCount = 1 | 2 | 3 | 4;
+
+/** Verify the value is within the `WorkItemsCount` bounds. */
+export function tryAsWorkItemsCount(len: number): WorkItemsCount {
+  return ensure<number, WorkItemsCount>(
+    len,
+    len >= MIN_NUMBER_OF_WORK_ITEMS && len <= MAX_NUMBER_OF_WORK_ITEMS,
+    `WorkItemsCount: Expected 1|2|3|4 got ${len}`,
+  );
+}
+
+/** Minimal number of work items in the work package or results in work report. */
+export const MIN_NUMBER_OF_WORK_ITEMS = 1;
 /** Maximal number of work items in the work package or results in work report. */
 export const MAX_NUMBER_OF_WORK_ITEMS = 4;
 
@@ -27,8 +39,10 @@ export class WorkPackage extends WithDebug {
     authCodeHash: codec.bytes(HASH_SIZE).asOpaque(),
     parametrization: codec.blob,
     context: RefineContext.Codec,
-    // TODO [ToDr] Constrain the size of the sequence during decoding.
-    items: codec.sequenceVarLen(WorkItem.Codec),
+    items: codec.sequenceVarLen(WorkItem.Codec).convert(
+      (x) => x,
+      (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
+    ),
   });
 
   static fromCodec({
@@ -39,14 +53,7 @@ export class WorkPackage extends WithDebug {
     context,
     items,
   }: CodecRecord<WorkPackage>) {
-    return new WorkPackage(
-      authorization,
-      authCodeHost,
-      authCodeHash,
-      parametrization,
-      context,
-      new FixedSizeArray(items, items.length),
-    );
+    return new WorkPackage(authorization, authCodeHost, authCodeHash, parametrization, context, items);
   }
 
   constructor(

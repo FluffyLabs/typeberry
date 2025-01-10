@@ -78,9 +78,9 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
 
   sendWorkPackage(sender: StreamSender, coreIndex: CoreIndex, workPackage: WorkPackage, extrinsic: WorkItemExtrinsics) {
     const corePack = new CoreWorkPackage(coreIndex, workPackage);
-    logger.trace(`[${sender.streamId}] Sending work package: ${workPackage}`);
+    logger.trace(`[${sender.streamId}] Sending work package: ${corePack}`);
     sender.send(Encoder.encodeObject(CoreWorkPackage.Codec, corePack));
-    logger.trace(`[${sender.streamId}] Sending extrinsics: ${workPackage}`);
+    logger.trace(`[${sender.streamId}] Sending extrinsics: ${workPackage.items}`);
     sender.send(Encoder.encodeObject(workItemExtrinsicsCodec(workPackage.items), extrinsic));
     // now close the connection
     sender.close();

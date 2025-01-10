@@ -1,5 +1,5 @@
 import type { Bytes } from "@typeberry/bytes";
-import { hashBytes } from "@typeberry/hash";
+import { blake2b } from "@typeberry/hash";
 import { check } from "@typeberry/utils";
 
 /**
@@ -49,7 +49,7 @@ function hashToNumberSequence(entropy: Bytes<32>, length: number) {
   for (let i = 0; i < length; i++) {
     const toConcat = numberToUint8ArrayLE(Math.floor(i / 8));
     randomBytes.set(toConcat, 32);
-    const newHash = hashBytes(randomBytes);
+    const newHash = blake2b.hashBytes(randomBytes);
     const numberStartIndex = (4 * i) % 32;
     const numberEndIndex = numberStartIndex + 4;
     const number = uint8ArrayToNumberLE(newHash.raw.subarray(numberStartIndex, numberEndIndex)) >>> 0;

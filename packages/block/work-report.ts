@@ -6,7 +6,7 @@ import type { U16, U32 } from "@typeberry/numbers";
 import { type Opaque, WithDebug } from "@typeberry/utils";
 import type { CoreIndex } from "./common";
 import { RefineContext } from "./refine-context";
-import type { WorkItemsCount } from "./work-package";
+import { type WorkItemsCount, tryAsWorkItemsCount } from "./work-package";
 import { WorkResult } from "./work-result";
 
 /** Authorizer hash. */
@@ -14,6 +14,8 @@ export type AuthorizerHash = Opaque<OpaqueHash, "AuthorizerHash">;
 
 /** Blake2B hash of a work package. */
 export type WorkPackageHash = Opaque<OpaqueHash, "WorkPackageHash">;
+/** Work package exported segments merkle root hash. */
+export type ExportsRootHash = Opaque<OpaqueHash, "ExportsRootHash">;
 
 /** Details about the work package being reported on. */
 export class WorkPackageSpec extends WithDebug {
@@ -21,7 +23,7 @@ export class WorkPackageSpec extends WithDebug {
     hash: codec.bytes(HASH_SIZE).asOpaque(),
     length: codec.u32,
     erasureRoot: codec.bytes(HASH_SIZE),
-    exportsRoot: codec.bytes(HASH_SIZE),
+    exportsRoot: codec.bytes(HASH_SIZE).asOpaque(),
     exportsCount: codec.u16,
   });
 
@@ -37,7 +39,7 @@ export class WorkPackageSpec extends WithDebug {
     /** The root hash of the erasure coding merkle tree of that work package. */
     public readonly erasureRoot: OpaqueHash,
     /** The root hash of all data segments exported by this work package. */
-    public readonly exportsRoot: OpaqueHash,
+    public readonly exportsRoot: ExportsRootHash,
     /** Encoded length of all data segments exported by this work package. */
     public readonly exportsCount: U16,
   ) {
@@ -73,8 +75,10 @@ export class WorkReport extends WithDebug {
     authorizerHash: codec.bytes(HASH_SIZE).asOpaque(),
     authorizationOutput: codec.blob,
     segmentRootLookup: codec.sequenceVarLen(SegmentRootLookupItem.Codec),
-    // TODO [ToDr] Constrain the size of the sequence during decoding.
-    results: codec.sequenceVarLen(WorkResult.Codec),
+    results: codec.sequenceVarLen(WorkResult.Codec).convert(
+      (x) => x,
+      (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
+    ),
   });
 
   static fromCodec({
@@ -93,7 +97,7 @@ export class WorkReport extends WithDebug {
       authorizerHash,
       authorizationOutput,
       segmentRootLookup,
-      new FixedSizeArray(results, results.length),
+      results,
     );
   }
 

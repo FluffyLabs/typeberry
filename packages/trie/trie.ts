@@ -1,8 +1,8 @@
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
+import { HASH_SIZE } from "@typeberry/hash";
 import { check } from "@typeberry/utils";
 import {
   BranchNode,
-  HASH_BYTES,
   type InputKey,
   LeafNode,
   NodeType,
@@ -49,7 +49,7 @@ export class InMemoryTrie {
 
   getRootHash(): TrieHash {
     if (this.root === null) {
-      return Bytes.zero(HASH_BYTES).asOpaque();
+      return Bytes.zero(HASH_SIZE).asOpaque();
     }
 
     return this.nodes.hashNode(this.root);
@@ -146,7 +146,7 @@ function findNodeToReplace(root: TrieNode, nodes: NodesDb, key: TruncatedStateKe
 
     const nextNode = nodes.get(nextHash);
     if (nextNode === null) {
-      if (nextHash.isEqualTo(Bytes.zero(HASH_BYTES))) {
+      if (nextHash.isEqualTo(Bytes.zero(HASH_SIZE))) {
         return traversedPath;
       }
 
@@ -203,7 +203,7 @@ function createSubtreeForBothLeaves(
   }
 
   // Now construct the common branches, and insert zero hash in place of other sub-trees.
-  const zero = Bytes.zero(HASH_BYTES).asOpaque();
+  const zero = Bytes.zero(HASH_SIZE).asOpaque();
 
   // In case we move the leaf from left to right it's hash needs to be re-calculated (missing bit).
   // TODO [ToDr] [opti] might be better to store the original bit value instead of recalculating.

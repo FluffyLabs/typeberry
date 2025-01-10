@@ -1,16 +1,16 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { BytesBlob } from "@typeberry/bytes";
-import { WithHash, hashBytes, hashString } from "@typeberry/hash";
+import { WithHash, blake2b } from "@typeberry/hash";
 import type { StateKey, TrieHash } from "@typeberry/trie";
 import { InMemoryKvdb } from ".";
 
 function key(v: string): StateKey {
-  return hashString(v).asOpaque();
+  return blake2b.hashString(v).asOpaque();
 }
 
 const hash = (data: BytesBlob) => {
-  const h: TrieHash = hashBytes(data).asOpaque();
+  const h: TrieHash = blake2b.hashBytes(data).asOpaque();
   return new WithHash(h, data);
 };
 

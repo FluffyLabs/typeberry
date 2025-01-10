@@ -7,6 +7,7 @@ import {
   type ExtrinsicHash,
   Header,
   type HeaderHash,
+  type StateRootHash,
   type TimeSlot,
   type ValidatorIndex,
 } from "@typeberry/block";
@@ -14,7 +15,6 @@ import { Ticket } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
-import type { TrieHash } from "@typeberry/trie";
 import { fromJson, runCodecTest } from "./common";
 
 const bandersnatchVrfSignature = json.fromString((v) => Bytes.parseBytes(v, 96) as BandersnatchVrfSignature);
@@ -44,7 +44,7 @@ const ticketsMark = json.object<Ticket>(
 
 type JsonHeader = {
   parent: HeaderHash;
-  parent_state_root: TrieHash;
+  parent_state_root: StateRootHash;
   extrinsic_hash: ExtrinsicHash;
   slot: TimeSlot;
   epoch_mark?: EpochMarker;

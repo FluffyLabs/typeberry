@@ -44,38 +44,61 @@ export function assertNever(value: never): never {
   throw new Error(`Unexpected value: ${value}`);
 }
 
+/** Debug print an object. */
+export function inspect<T>(val: T, recursive = true): string {
+  const nest = (v: string) =>
+    v
+      .split("\n")
+      .map((x) => `  ${x}`)
+      .join("\n")
+      .trim();
+
+  if (val === null) {
+    return "<null>";
+  }
+
+  if (val === undefined) {
+    return "<undefined>";
+  }
+
+  if (Array.isArray(val)) {
+    return `[${val.map((x) => inspect(x, false))}]`;
+  }
+
+  if (typeof val === "number") {
+    return `${val} (0x${val.toString(16)})`;
+  }
+
+  if (typeof val !== "object") {
+    return `${val}`;
+  }
+
+  if (
+    "toString" in val &&
+    Object.prototype.toString !== val.toString &&
+    WithDebug.prototype.toString !== val.toString
+  ) {
+    return `${val}`;
+  }
+
+  const name = val.constructor.name;
+  let v = name !== "Object" ? `${name} {` : "{";
+  const keys = Object.keys(val);
+  const oneLine = keys.length < 3;
+  for (const k of keys) {
+    if (typeof k === "string") {
+      v += oneLine ? "" : "\n  ";
+      v += `${k}: ${nest(inspect(val[k as keyof T], recursive))}`;
+      v += oneLine ? "," : "";
+    }
+  }
+  v += oneLine ? "}" : "\n}";
+  return v;
+}
+
 /** A class that adds `toString` method that prints all properties of an object. */
 export abstract class WithDebug {
   toString() {
-    const nest = (v: string) =>
-      v
-        .split("\n")
-        .map((x) => `  ${x}`)
-        .join("\n")
-        .trim();
-    const asStr = (v: unknown) => {
-      if (v === null) {
-        return "<null>";
-      }
-      if (v === undefined) {
-        return "<undefined>";
-      }
-      if (Array.isArray(v)) {
-        return `[${v}]`;
-      }
-      return `${v}`;
-    };
-    let v = `${this.constructor.name} {`;
-    const keys = Object.keys(this);
-    const oneLine = keys.length < 3;
-    for (const k of keys) {
-      if (typeof k === "string") {
-        v += oneLine ? "" : "\n  ";
-        v += `${k}: ${nest(asStr(this[k as keyof WithDebug]))}`;
-        v += oneLine ? "," : "";
-      }
-    }
-    v += oneLine ? "}" : "\n}";
-    return v;
+    return inspect(this, false);
   }
 }
