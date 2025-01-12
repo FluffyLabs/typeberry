@@ -11,97 +11,65 @@ import { Registers } from "../registers";
 import { TwoRegsDispatcher } from "./two-regs-dispatcher";
 
 describe("TwoRegsDispatcher", () => {
-  describe("check if it handles expected instructions", () => {
-    const instructionResult = new InstructionResult();
-    const regs = new Registers();
-    const memory = new Memory();
-    const memoryOps = new MemoryOps(regs, memory, instructionResult);
-    const moveOps = new MoveOps(regs);
-    const bitOps = new BitOps(regs);
-    const bitRotationOps = new BitRotationOps(regs);
-    const sbrkMock = mock.fn();
-    const moveRegisterMock = mock.fn();
+  const instructionResult = new InstructionResult();
+  const regs = new Registers();
+  const memory = new Memory();
+  const memoryOps = new MemoryOps(regs, memory, instructionResult);
+  const moveOps = new MoveOps(regs);
+  const bitOps = new BitOps(regs);
+  const bitRotationOps = new BitRotationOps(regs);
+  const mockFn = mock.fn();
 
-    after(() => {
-      mock.restoreAll();
-    });
+  function mockAllMethods(obj: object) {
+    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(obj)) as (keyof typeof obj)[];
 
-    beforeEach(() => {
-      sbrkMock.mock.resetCalls();
-      moveRegisterMock.mock.resetCalls();
-    });
+    for (const method of methodNames) {
+      mock.method(obj, method, mockFn);
+    }
+  }
 
-    before(() => {
-      mock.method(memoryOps, "sbrk", sbrkMock);
-      mock.method(moveOps, "moveRegister", moveRegisterMock);
-    });
-
-    const argsMock = {} as TwoRegistersArgs;
-
-    it("should call MemoryOps.sbrk", () => {
-      const dispatcher = new TwoRegsDispatcher(moveOps, memoryOps, bitOps, bitRotationOps);
-
-      dispatcher.dispatch(Instruction.SBRK, argsMock);
-
-      assert.strictEqual(sbrkMock.mock.calls.length, 1);
-    });
-
-    it("should call MoveOps.moveRegister", () => {
-      const dispatcher = new TwoRegsDispatcher(moveOps, memoryOps, bitOps, bitRotationOps);
-
-      dispatcher.dispatch(Instruction.MOVE_REG, argsMock);
-
-      assert.strictEqual(moveRegisterMock.mock.calls.length, 1);
-    });
+  before(() => {
+    mockAllMethods(memoryOps);
+    mockAllMethods(moveOps);
+    mockAllMethods(bitOps);
+    mockAllMethods(bitRotationOps);
   });
 
-  describe("check if it handles other instructions than expected", () => {
-    const instructionResult = new InstructionResult();
-    const regs = new Registers();
-    const memory = new Memory();
-    const memoryOps = new MemoryOps(regs, memory, instructionResult);
-    const moveOps = new MoveOps(regs);
-    const bitOps = new BitOps(regs);
-    const bitRotationOps = new BitRotationOps(regs);
-    const mockFn = mock.fn();
-
-    function mockAllMethods(obj: object) {
-      const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(obj)) as (keyof typeof obj)[];
-
-      for (const method of methodNames) {
-        mock.method(obj, method, mockFn);
-      }
-    }
-
-    before(() => {
-      mockAllMethods(memoryOps);
-      mockAllMethods(moveOps);
-      mockAllMethods(bitOps);
-      mockAllMethods(bitRotationOps);
-    });
-
-    after(() => {
-      mock.restoreAll();
-    });
-
-    beforeEach(() => {
-      mockFn.mock.resetCalls();
-    });
-
-    const argsMock = {} as TwoRegistersArgs;
-
-    const otherInstructions = Object.entries(Instruction)
-      .filter((entry): entry is [string, number] => typeof entry[0] === "string" && typeof entry[1] === "number")
-      .filter((entry) => instructionArgumentTypeMap[entry[1]] !== ArgumentType.TWO_REGISTERS);
-
-    for (const [name, instruction] of otherInstructions) {
-      it(`checks if instruction ${name} = ${instruction} is not handled by TwoRegsDispatcher`, () => {
-        const dispatcher = new TwoRegsDispatcher(moveOps, memoryOps, bitOps, bitRotationOps);
-
-        dispatcher.dispatch(instruction, argsMock);
-
-        assert.strictEqual(mockFn.mock.calls.length, 0);
-      });
-    }
+  after(() => {
+    mock.restoreAll();
   });
+
+  beforeEach(() => {
+    mockFn.mock.resetCalls();
+  });
+
+  const argsMock = {} as TwoRegistersArgs;
+
+  const relevantInstructions = Object.entries(Instruction)
+    .filter((entry): entry is [string, number] => typeof entry[0] === "string" && typeof entry[1] === "number")
+    .filter((entry) => instructionArgumentTypeMap[entry[1]] === ArgumentType.TWO_REGISTERS);
+
+  for (const [name, instruction] of relevantInstructions) {
+    it(`checks if instruction ${name} = ${instruction} is handled by OneRegTwoImmsDispatcher`, () => {
+      const dispatcher = new TwoRegsDispatcher(moveOps, memoryOps, bitOps, bitRotationOps);
+
+      dispatcher.dispatch(instruction, argsMock);
+
+      assert.strictEqual(mockFn.mock.calls.length, 1);
+    });
+  }
+
+  const otherInstructions = Object.entries(Instruction)
+    .filter((entry): entry is [string, number] => typeof entry[0] === "string" && typeof entry[1] === "number")
+    .filter((entry) => instructionArgumentTypeMap[entry[1]] !== ArgumentType.TWO_REGISTERS);
+
+  for (const [name, instruction] of otherInstructions) {
+    it(`checks if instruction ${name} = ${instruction} is not handled by TwoRegsDispatcher`, () => {
+      const dispatcher = new TwoRegsDispatcher(moveOps, memoryOps, bitOps, bitRotationOps);
+
+      dispatcher.dispatch(instruction, argsMock);
+
+      assert.strictEqual(mockFn.mock.calls.length, 0);
+    });
+  }
 });
