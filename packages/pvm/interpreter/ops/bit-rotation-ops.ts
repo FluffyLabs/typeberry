@@ -19,8 +19,8 @@ export class BitRotationOps {
 
   private rotate32Left(value: number, shift: number) {
     const shiftNormalized = shift % 32;
-    const mask = (1 << 32) - 1;
-    const rotated = ((value << shiftNormalized) & mask) | (value >>> (32 - shiftNormalized));
+    const mask = 2 ** 32 - 1;
+    const rotated = (((value << shiftNormalized) & mask) | (value >>> (32 - shiftNormalized))) >>> 0;
     return rotated & mask;
   }
 
@@ -33,9 +33,9 @@ export class BitRotationOps {
   }
 
   private rotate32Right(value: number, shift: number) {
-    const shiftNormalized = shift % 64;
-    const mask = (1 << 64) - 1;
-    const rotated = (value >>> shiftNormalized) | ((value << (64 - shiftNormalized)) & mask);
+    const shiftNormalized = shift % 32;
+    const mask = 2 ** 32 - 1;
+    const rotated = (value >>> shiftNormalized) | ((value << (32 - shiftNormalized)) & mask);
     return rotated & mask;
   }
 
