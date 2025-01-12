@@ -6,7 +6,7 @@ import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument
 import { Instruction } from "../instruction";
 import { InstructionResult } from "../instruction-result";
 import { Memory } from "../memory";
-import { MemoryOps, MoveOps } from "../ops";
+import { BitOps, BitRotationOps, MemoryOps, MoveOps } from "../ops";
 import { Registers } from "../registers";
 import { TwoRegsDispatcher } from "./two-regs-dispatcher";
 
@@ -17,6 +17,8 @@ describe("TwoRegsDispatcher", () => {
     const memory = new Memory();
     const memoryOps = new MemoryOps(regs, memory, instructionResult);
     const moveOps = new MoveOps(regs);
+    const bitOps = new BitOps(regs);
+    const bitRotationOps = new BitRotationOps(regs);
     const sbrkMock = mock.fn();
     const moveRegisterMock = mock.fn();
 
@@ -37,7 +39,7 @@ describe("TwoRegsDispatcher", () => {
     const argsMock = {} as TwoRegistersArgs;
 
     it("should call MemoryOps.sbrk", () => {
-      const dispatcher = new TwoRegsDispatcher(moveOps, memoryOps);
+      const dispatcher = new TwoRegsDispatcher(moveOps, memoryOps, bitOps, bitRotationOps);
 
       dispatcher.dispatch(Instruction.SBRK, argsMock);
 
@@ -45,7 +47,7 @@ describe("TwoRegsDispatcher", () => {
     });
 
     it("should call MoveOps.moveRegister", () => {
-      const dispatcher = new TwoRegsDispatcher(moveOps, memoryOps);
+      const dispatcher = new TwoRegsDispatcher(moveOps, memoryOps, bitOps, bitRotationOps);
 
       dispatcher.dispatch(Instruction.MOVE_REG, argsMock);
 
@@ -59,6 +61,8 @@ describe("TwoRegsDispatcher", () => {
     const memory = new Memory();
     const memoryOps = new MemoryOps(regs, memory, instructionResult);
     const moveOps = new MoveOps(regs);
+    const bitOps = new BitOps(regs);
+    const bitRotationOps = new BitRotationOps(regs);
     const mockFn = mock.fn();
 
     function mockAllMethods(obj: object) {
@@ -72,6 +76,8 @@ describe("TwoRegsDispatcher", () => {
     before(() => {
       mockAllMethods(memoryOps);
       mockAllMethods(moveOps);
+      mockAllMethods(bitOps);
+      mockAllMethods(bitRotationOps);
     });
 
     after(() => {
@@ -90,7 +96,7 @@ describe("TwoRegsDispatcher", () => {
 
     for (const [name, instruction] of otherInstructions) {
       it(`checks if instruction ${name} = ${instruction} is not handled by TwoRegsDispatcher`, () => {
-        const dispatcher = new TwoRegsDispatcher(moveOps, memoryOps);
+        const dispatcher = new TwoRegsDispatcher(moveOps, memoryOps, bitOps, bitRotationOps);
 
         dispatcher.dispatch(instruction, argsMock);
 

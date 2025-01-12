@@ -4,6 +4,8 @@ import { MIN_VALUE } from "./math-consts";
 import {
   addWithOverflowU32,
   addWithOverflowU64,
+  maxBigInt,
+  minBigInt,
   mulLowerUnsignedU32,
   mulU64,
   mulUpperSS,
@@ -168,5 +170,21 @@ export class MathOps {
     } else {
       this.regs.setU64(resultIndex, this.regs.getU64(secondIndex) % this.regs.getU64(firstIndex));
     }
+  }
+
+  max(firstIndex: number, secondIndex: number, resultIndex: number) {
+    this.regs.setI64(resultIndex, maxBigInt(this.regs.getI64(firstIndex), this.regs.getI64(secondIndex)));
+  }
+
+  maxU(firstIndex: number, secondIndex: number, resultIndex: number) {
+    this.regs.setU64(resultIndex, maxBigInt(this.regs.getU64(firstIndex), this.regs.getU64(secondIndex)));
+  }
+
+  min(firstIndex: number, secondIndex: number, resultIndex: number) {
+    this.regs.setI64(resultIndex, minBigInt(this.regs.getI64(firstIndex), this.regs.getI64(secondIndex)));
+  }
+
+  minU(firstIndex: number, secondIndex: number, resultIndex: number) {
+    this.regs.setU64(resultIndex, minBigInt(this.regs.getU64(firstIndex), this.regs.getU64(secondIndex)));
   }
 }
