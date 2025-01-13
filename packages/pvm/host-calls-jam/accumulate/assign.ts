@@ -1,4 +1,5 @@
 import { tryAsCoreIndex } from "@typeberry/block";
+import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import { Decoder, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
@@ -14,7 +15,7 @@ import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import { AUTHORIZATION_QUEUE_SIZE, type AccumulationPartialState } from "./partial-state";
+import type { AccumulationPartialState } from "./partial-state";
 
 const IN_OUT_REG = 7;
 

@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type CoreIndex, tryAsCoreIndex, tryAsServiceId } from "@typeberry/block";
+import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
@@ -13,7 +14,6 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { HostCallResult } from "../results";
 import { Assign } from "./assign";
-import { AUTHORIZATION_QUEUE_SIZE } from "./partial-state";
 import { TestAccumulate } from "./partial-state.test";
 
 const gas = gasCounter(tryAsGas(0));

@@ -1,11 +1,10 @@
 import type { CoreIndex } from "@typeberry/block";
 import type { RefineContext } from "@typeberry/block/refine-context";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package";
-import { SegmentRootLookupItem, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
+import { type AuthorizerHash, SegmentRootLookupItem, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
 import type { WorkResult } from "@typeberry/block/work-result";
 import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
-import type { OpaqueHash } from "@typeberry/hash";
 import { json } from "@typeberry/json-parser";
 import type { JsonObject } from "../../json-format";
 import { fromJson, runCodecTest } from "./common";
@@ -58,7 +57,7 @@ type JsonWorkReport = {
   package_spec: WorkPackageSpec;
   context: RefineContext;
   core_index: CoreIndex;
-  authorizer_hash: OpaqueHash;
+  authorizer_hash: AuthorizerHash;
   auth_output: BytesBlob;
   segment_root_lookup: SegmentRootLookupItem[];
   results: WorkResult[];

@@ -82,7 +82,7 @@ export class WorkPackageExecutor {
       0 as U16,
     );
     const coreIndex = tryAsCoreIndex(0);
-    const authorizerHash = Bytes.fill(HASH_SIZE, 5);
+    const authorizerHash = Bytes.fill(HASH_SIZE, 5).asOpaque();
 
     const workResults = FixedSizeArray.new(results, tryAsWorkItemsCount(results.length));
 

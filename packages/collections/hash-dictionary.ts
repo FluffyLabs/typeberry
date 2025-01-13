@@ -27,9 +27,13 @@ export class HashDictionary<K extends OpaqueHash, V> {
     this.map.set(key.toString(), [key, value]);
   }
 
-  /** Remove the key and any value from the dictionary. */
+  /**
+   * Remove the key and any value from the dictionary.
+   *
+   * Returns `true` if element existed and was removed, `false` otherwise.
+   */
   delete(key: K) {
-    this.map.delete(key.toString());
+    return this.map.delete(key.toString());
   }
 
   /** it allows to use HashDictionary in for-of loop */

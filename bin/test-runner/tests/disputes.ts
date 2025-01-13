@@ -2,14 +2,13 @@ import assert from "node:assert";
 import { type Ed25519Key, type TimeSlot, type ValidatorData, type WorkReportHash, codec } from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
 import { WorkReport } from "@typeberry/block/work-report";
-import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { Disputes } from "@typeberry/disputes";
 import { AvailabilityAssignment, DisputesRecords, DisputesState } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { fromJson as codecFromJson } from "./codec/common";
 import { disputesExtrinsicFromJson } from "./codec/disputes-extrinsic";
-import { TestAvailabilityAssignment, TestWorkReport, commonFromJson } from "./common-types";
+import { TestAvailabilityAssignment, TestWorkReport, commonFromJson, getChainSpec } from "./common-types";
 
 class DisputesOutputMarks {
   static fromJson: FromJson<DisputesOutputMarks> = {
@@ -131,14 +130,6 @@ export class DisputesTest {
   pre_state!: TestState;
   output!: Output;
   post_state!: TestState;
-}
-
-function getChainSpec(path: string) {
-  if (path.includes("tiny")) {
-    return tinyChainSpec;
-  }
-
-  return fullChainSpec;
 }
 
 export async function runDisputesTest(testContent: DisputesTest, path: string) {

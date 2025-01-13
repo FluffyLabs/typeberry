@@ -1,4 +1,5 @@
 import type { CodeHash, CoreIndex, ServiceId, ValidatorData } from "@typeberry/block";
+import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
@@ -6,7 +7,6 @@ import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import { OK, Result } from "@typeberry/utils";
 import type {
-  AUTHORIZATION_QUEUE_SIZE,
   AccumulationPartialState,
   QuitError,
   RequestPreimageError,
