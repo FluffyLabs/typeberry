@@ -69,12 +69,8 @@ export class Authorization {
       if (usedHashes) {
         pool = asOpaqueType(
           pool.filter((x) => {
-            const shouldRemove = usedHashes.has(x);
-            // don't remove twice
-            if (shouldRemove) {
-              usedHashes.delete(x);
-            }
-            return !shouldRemove;
+            const  wasRemoved = usedHashes.delete(x);
+            return !wasRemoved;
           }),
         );
       }
