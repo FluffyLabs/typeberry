@@ -1,10 +1,12 @@
 import assert from "node:assert";
 import { it } from "node:test";
 
+import type { SegmentsRoot } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { decodeData, encodeData } from "@typeberry/erasure-coding";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
+import { fromJson as codecFromJson } from "./codec/common";
 
 namespace fromJson {
   export const bytesBlob = json.fromString(BytesBlob.parseBlobNoPrefix);
@@ -24,12 +26,12 @@ export class PageProof {
   static fromJson: FromJson<PageProof> = {
     data: fromJson.bytesBlob,
     page_proofs: json.array(fromJson.bytesBlob),
-    segments_root: fromJson.bytesBlob,
+    segments_root: codecFromJson.bytes32(),
   };
 
   data!: BytesBlob;
   page_proofs!: BytesBlob[];
-  segments_root!: BytesBlob;
+  segments_root!: SegmentsRoot;
 }
 
 export class SegmentEc {
@@ -44,12 +46,12 @@ export class SegmentEcTest {
   static fromJson: FromJson<SegmentEcTest> = {
     data: fromJson.bytesBlob,
     segments: json.array(SegmentEc.fromJson),
-    segments_root: fromJson.bytesBlob,
+    segments_root: codecFromJson.bytes32(),
   };
 
   data!: BytesBlob;
   segments!: SegmentEc[];
-  segments_root!: BytesBlob;
+  segments_root!: SegmentsRoot;
 }
 
 export class SegmentRoot {

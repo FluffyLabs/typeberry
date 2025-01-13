@@ -1,7 +1,7 @@
-import type { CoreIndex, WorkReportHash } from "@typeberry/block";
+import type { CoreIndex, SegmentsRoot, WorkReportHash } from "@typeberry/block";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/block/crypto";
 import type { WorkPackageHash } from "@typeberry/block/work-report";
-import type { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
@@ -18,15 +18,16 @@ import type { StreamId, StreamKind } from "./stream";
  */
 
 // temporary type until we have a proper type for auditable work packages
+
 type WorkPackageBundle = BytesBlob;
+const WorkPackageBundleCodec = codec.blob;
 
 export const STREAM_KIND = 134 as StreamKind;
-export const SEGMENTS_ROOT_SIZE = 32;
 
 export class SegmentsRootMapping extends WithDebug {
   static Codec = codec.Class(SegmentsRootMapping, {
     workPackageHash: codec.bytes(HASH_SIZE).asOpaque(),
-    segmentsRoot: codec.bytes(SEGMENTS_ROOT_SIZE),
+    segmentsRoot: codec.bytes(HASH_SIZE).asOpaque(),
   });
 
   static fromCodec({ workPackageHash, segmentsRoot }: CodecRecord<SegmentsRootMapping>) {
@@ -35,7 +36,7 @@ export class SegmentsRootMapping extends WithDebug {
 
   constructor(
     public readonly workPackageHash: WorkPackageHash,
-    public readonly segmentsRoot: Bytes<typeof SEGMENTS_ROOT_SIZE>,
+    public readonly segmentsRoot: SegmentsRoot,
   ) {
     super();
   }
@@ -90,17 +91,11 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
     ) => Promise<{ workReportHash: WorkReportHash; signature: Ed25519Signature }>,
   ) {}
 
-  public readonly requestsMap = new Map<StreamId, WorkPackageSharingRequest>();
+  private readonly requestsMap = new Map<StreamId, WorkPackageSharingRequest>();
 
   private static sendWorkReport(sender: StreamSender, workReportHash: WorkReportHash, signature: Ed25519Signature) {
     const workReport = new WorkPackageSharingResponse(workReportHash, signature);
     sender.send(Encoder.encodeObject(WorkPackageSharingResponse.Codec, workReport));
-    sender.close();
-  }
-
-  private handleError(sender: StreamSender, error: unknown, context: string) {
-    logger.warn(`[${sender.streamId}] ${context}\n${error}`);
-    this.requestsMap.delete(sender.streamId);
     sender.close();
   }
 
@@ -109,30 +104,20 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
     const request = this.requestsMap.get(streamId);
 
     if (!request) {
-      try {
-        const receivedRequest = Decoder.decodeObject(WorkPackageSharingRequest.Codec, message);
-        this.requestsMap.set(streamId, receivedRequest);
-        return;
-      } catch (error) {
-        this.handleError(sender, error, "Couldn't decode core index and segments root mappings");
-        return;
-      }
-    }
-
-    let workPackageBundle: WorkPackageBundle;
-    try {
-      workPackageBundle = Decoder.decodeObject(codec.blob, message);
-    } catch (error) {
-      this.handleError(sender, error, "Couldn't decode work package bundle");
+      const receivedRequest = Decoder.decodeObject(WorkPackageSharingRequest.Codec, message);
+      this.requestsMap.set(streamId, receivedRequest);
       return;
     }
+
+    const workPackageBundle = Decoder.decodeObject(WorkPackageBundleCodec, message);
 
     this.onWorkPackage(request.coreIndex, request.segmentsRootMappings, workPackageBundle)
       .then(({ workReportHash, signature }) => {
         ServerHandler.sendWorkReport(sender, workReportHash, signature);
       })
       .catch((error) => {
-        this.handleError(sender, error, "Couldn't process work package");
+        logger.error(`[${streamId}] Error processing work package: ${error}`);
+        this.onClose(streamId);
       });
   }
 
@@ -143,32 +128,23 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 
 export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
-  private onResponseMap = new Map<StreamId, (workReportHash: WorkReportHash, signature: Ed25519Signature) => void>();
-
-  private handleError(sender: StreamSender, error: unknown, context: string) {
-    logger.warn(`[${sender.streamId}] ${context}\n${error}`);
-    this.onResponseMap.delete(sender.streamId);
-    sender.close();
-  }
+  private readonly onResponseMap = new Map<
+    StreamId,
+    (workReportHash: WorkReportHash, signature: Ed25519Signature) => void
+  >();
 
   onStreamMessage(sender: StreamSender, message: BytesBlob): void {
     const streamId = sender.streamId;
     const onResponse = this.onResponseMap.get(streamId);
 
     if (!onResponse) {
-      this.handleError(sender, "Unexpected message", "Got unexpected message on CE-134 stream");
-      return;
+      throw new Error("Unexpected message");
     }
 
-    try {
-      const response = Decoder.decodeObject(WorkPackageSharingResponse.Codec, message);
-      logger.info(`[${sender.streamId}] Received work report hash and signature.`);
-      onResponse(response.workReportHash, response.signature);
-      this.onResponseMap.delete(streamId);
-      sender.close();
-    } catch (error) {
-      this.handleError(sender, error, "Got unexpected message on CE-134 stream");
-    }
+    const response = Decoder.decodeObject(WorkPackageSharingResponse.Codec, message);
+    logger.info(`[${sender.streamId}] Received work report hash and signature.`);
+    onResponse(response.workReportHash, response.signature);
+    sender.close();
   }
 
   onClose(streamId: StreamId): void {
@@ -187,6 +163,6 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     logger.trace(`[${sender.streamId}] Sending core index and segments-root mappings.`);
     sender.send(Encoder.encodeObject(WorkPackageSharingRequest.Codec, request));
     logger.trace(`[${sender.streamId}] Sending work package bundle.`);
-    sender.send(Encoder.encodeObject(codec.blob, workPackageBundle));
+    sender.send(Encoder.encodeObject(WorkPackageBundleCodec, workPackageBundle));
   }
 }

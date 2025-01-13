@@ -4,7 +4,7 @@ import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import type { U16, U32 } from "@typeberry/numbers";
 import { type Opaque, WithDebug } from "@typeberry/utils";
-import type { CoreIndex } from "./common";
+import type { CoreIndex, SegmentsRoot } from "./common";
 import { RefineContext } from "./refine-context";
 import { type WorkItemsCount, tryAsWorkItemsCount } from "./work-package";
 import { WorkResult } from "./work-result";
@@ -47,12 +47,12 @@ export class WorkPackageSpec extends WithDebug {
 export class SegmentRootLookupItem {
   static Codec = codec.Class(SegmentRootLookupItem, {
     workPackageHash: codec.bytes(HASH_SIZE).asOpaque(),
-    segmentTreeRoot: codec.bytes(HASH_SIZE),
+    segmentTreeRoot: codec.bytes(HASH_SIZE).asOpaque(),
   });
 
   constructor(
     public workPackageHash: WorkPackageHash,
-    public segmentTreeRoot: OpaqueHash,
+    public segmentTreeRoot: SegmentsRoot,
   ) {}
 
   static fromCodec({ workPackageHash, segmentTreeRoot }: CodecRecord<SegmentRootLookupItem>) {
