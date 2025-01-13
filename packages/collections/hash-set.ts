@@ -20,7 +20,11 @@ export class HashSet<V extends OpaqueHash> {
     return this.map.has(value);
   }
 
-  /** Remove value from set. */
+  /**
+   * Remove value from set.
+   *
+   * Returns `true` if element existed in the set and was removed, `false` otherwise.
+   */
   delete(value: V) {
     return this.map.delete(value);
   }

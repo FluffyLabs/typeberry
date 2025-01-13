@@ -69,7 +69,8 @@ export class Authorization {
       if (usedHashes) {
         pool = asOpaqueType(
           pool.filter((x) => {
-            const  wasRemoved = usedHashes.delete(x);
+            // we only remove the left-most first occurence.
+            const wasRemoved = usedHashes.delete(x);
             return !wasRemoved;
           }),
         );
