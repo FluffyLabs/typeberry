@@ -1,4 +1,4 @@
-name: Publish obfuscated PVM
+name: Publish PVM
 
 on:
   workflow_dispatch:
@@ -29,9 +29,9 @@ jobs:
     - name: Install dependencies
       run: npm ci
     - name: Build PVM
-      run: npm run obfuscate -w @typeberry/pvm-interpreter
+      run: npm run build -w @typeberry/pvm-interpreter
     - name: Publish package
-      working-directory: ./dist/pvm-obfuscated
+      working-directory: ./dist/pvm
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       run: npm publish --access public
