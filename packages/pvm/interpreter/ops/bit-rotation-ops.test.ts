@@ -75,8 +75,8 @@ describe("BitRotationOps", () => {
 
       it("should correctly rotate bits (negative number)", () => {
         const value = -0x12_34_56_78_9a_bc_de_f0n;
-        const shift = 32n;
-        const expectedValue = 0x65_43_21_10_ed_cb_a9_87n;
+        const shift = 28n;
+        const expectedValue = 0x765432110edcba98n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
           shift,
           value,
@@ -217,5 +217,413 @@ describe("BitRotationOps", () => {
     });
   });
 
-  describe("rot right", () => {});
+  describe("rot right", () => {
+    describe("rotR64", () => {
+      it("should correctly rotate bits (positive number)", () => {
+        const value = 0x12_34_56_78_9a_bc_de_f0n;
+        const shift = 28n;
+        const expectedValue = 0xa_bc_de_f0_12_34_56_78_9n;
+        const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+          shift,
+          value,
+        );
+
+        bitRotationOps.rotR64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (negative number)", () => {
+        const value = -0x12_34_56_78_9a_bc_de_f0n;
+        const shift = 28n;
+        const expectedValue = 0x5432110edcba9876n;
+        const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+          shift,
+          value,
+        );
+
+        bitRotationOps.rotR64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (no rotation)", () => {
+        const value = 0x12_34_56_78_9a_bc_de_f0n;
+        const shift = 0n;
+        const expectedValue = 0x12_34_56_78_9a_bc_de_f0n;
+        const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+          shift,
+          value,
+        );
+
+        bitRotationOps.rotR64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (full rotation)", () => {
+        const value = 0x12_34_56_78_9a_bc_de_f0n;
+        const shift = 64n;
+        const expectedValue = 0x12_34_56_78_9a_bc_de_f0n;
+        const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+          shift,
+          value,
+        );
+
+        bitRotationOps.rotR64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (shift overflow)", () => {
+        const value = 0x12_34_56_78_9a_bc_de_f0n;
+        const shift = 128n;
+        const expectedValue = 0x12_34_56_78_9a_bc_de_f0n;
+        const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+          shift,
+          value,
+        );
+
+        bitRotationOps.rotR64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+    });
+
+    describe("rotR32", () => {
+      it("should correctly rotate bits (positive number)", () => {
+        const value = 0x12_34_56_78n;
+        const shift = 12n;
+        const expectedValue = 0x67_81_23_45n;
+        const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+          shift,
+          value,
+        );
+
+        bitRotationOps.rotR32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (positive number, max value and max shift)", () => {
+        const value = 0x7f_ff_ff_fen;
+        const shift = 31n;
+        const expectedValue = 0xfffffffffffffffcn;
+        const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+          shift,
+          value,
+        );
+
+        bitRotationOps.rotR32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (negative number)", () => {
+        const value = -0x12_34_56_78n;
+        const shift = 16n;
+        const expectedValue = 0xffffffffa988edcbn;
+        const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+          shift,
+          value,
+        );
+
+        bitRotationOps.rotR32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (no rotation)", () => {
+        const value = 0x12_34_56_78_9a_bc_de_f0n;
+        const shift = 0n;
+        const expectedValue = 0xff_ff_ff_ff_9a_bc_de_f0n;
+        const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+          shift,
+          value,
+        );
+
+        bitRotationOps.rotR32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (full rotation)", () => {
+        const value = 0x12_34_56_78_9a_bc_de_f0n;
+        const shift = 32n;
+        const expectedValue = 0xff_ff_ff_ff_9a_bc_de_f0n;
+        const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+          shift,
+          value,
+        );
+
+        bitRotationOps.rotR32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (shift overflow)", () => {
+        const value = 0x12_34_56_78_9a_bc_de_f0n;
+        const shift = 128n;
+        const expectedValue = 0xff_ff_ff_ff_9a_bc_de_f0n;
+        const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+          shift,
+          value,
+        );
+
+        bitRotationOps.rotR32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+    });
+
+    describe("rotR64Imm", () => {
+      it("should correctly rotate bits (positive number)", () => {
+        const value = 0x12_34_56_78_9a_bc_de_f0n;
+        const shift = 28n;
+        const expectedValue = 0xa_bc_de_f0_12_34_56_78_9n;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(value, shift);
+
+        bitRotationOps.rotR64Imm(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (negative number)", () => {
+        const value = -0x12_34_56_78_9a_bc_de_f0n;
+        const shift = 28n;
+        const expectedValue = 0x5432110edcba9876n;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(value, shift);
+
+        bitRotationOps.rotR64Imm(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (no rotation)", () => {
+        const value = 0x12_34_56_78_9a_bc_de_f0n;
+        const shift = 0n;
+        const expectedValue = 0x12_34_56_78_9a_bc_de_f0n;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(value, shift);
+
+        bitRotationOps.rotR64Imm(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (full rotation)", () => {
+        const value = 0x12_34_56_78_9a_bc_de_f0n;
+        const shift = 64n;
+        const expectedValue = 0x12_34_56_78_9a_bc_de_f0n;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(value, shift);
+
+        bitRotationOps.rotR64Imm(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (shift overflow)", () => {
+        const value = 0x12_34_56_78_9a_bc_de_f0n;
+        const shift = 128n;
+        const expectedValue = 0x12_34_56_78_9a_bc_de_f0n;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(value, shift);
+
+        bitRotationOps.rotR64Imm(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+    });
+
+    describe("rotR64ImmAlt", () => {
+      it("should correctly rotate bits (positive number)", () => {
+        const value = 0x12_34_56_78n;
+        const shift = 28n;
+        const expectedValue = 0x2345678000000001n;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(shift, value);
+
+        bitRotationOps.rotR64ImmAlt(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (negative number)", () => {
+        const value = -0x12_34_56_78n;
+        const shift = 28n;
+        const expectedValue = 0xdcba988ffffffffen;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(shift, value);
+
+        bitRotationOps.rotR64ImmAlt(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (no rotation)", () => {
+        const value = 0x12_34_56_78n;
+        const shift = 0n;
+        const expectedValue = 0x12345678n;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(shift, value);
+
+        bitRotationOps.rotR64ImmAlt(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (full rotation)", () => {
+        const value = 0x12_34_56_78n;
+        const shift = 64n;
+        const expectedValue = 0x12345678n;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(shift, value);
+
+        bitRotationOps.rotR64ImmAlt(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (shift overflow)", () => {
+        const value = 0x12_34_56_78n;
+        const shift = 128n;
+        const expectedValue = 0x12345678n;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(shift, value);
+
+        bitRotationOps.rotR64ImmAlt(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+    });
+
+    describe("rotR32Imm", () => {
+      it("should correctly rotate bits (positive number)", () => {
+        const value = 0x12_34_56_78n;
+        const shift = 12n;
+        const expectedValue = 0x67_81_23_45n;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(value, shift);
+
+        bitRotationOps.rotR32Imm(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (positive number, max value and max shift)", () => {
+        const value = 0x7f_ff_ff_fen;
+        const shift = 31n;
+        const expectedValue = 0xfffffffffffffffcn;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(value, shift);
+
+        bitRotationOps.rotR32Imm(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (negative number)", () => {
+        const value = -0x12_34_56_78n;
+        const shift = 16n;
+        const expectedValue = 0xffffffffa988edcbn;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(value, shift);
+
+        bitRotationOps.rotR32Imm(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (no rotation)", () => {
+        const value = 0x12_34_56_78n;
+        const shift = 0n;
+        const expectedValue = 0x12345678n;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(value, shift);
+
+        bitRotationOps.rotR32Imm(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (full rotation)", () => {
+        const value = 0x12_34_56_78n;
+        const shift = 32n;
+        const expectedValue = 0x12345678n;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(value, shift);
+
+        bitRotationOps.rotR32Imm(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (shift overflow)", () => {
+        const value = 0x12_34_56_78n;
+        const shift = 128n;
+        const expectedValue = 0x12345678n;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(value, shift);
+
+        bitRotationOps.rotR32Imm(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+    });
+
+    describe("rotR32ImmAlt", () => {
+      it("should correctly rotate bits (positive number)", () => {
+        const value = 0x12_34_56_78n;
+        const shift = 12n;
+        const expectedValue = 0x67_81_23_45n;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(shift, value);
+
+        bitRotationOps.rotR32ImmAlt(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (positive number, max value and max shift)", () => {
+        const value = 0x7f_ff_ff_fen;
+        const shift = 31n;
+        const expectedValue = 0xfffffffffffffffcn;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(shift, value);
+
+        bitRotationOps.rotR32ImmAlt(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (negative number)", () => {
+        const value = -0x12_34_56_78n;
+        const shift = 16n;
+        const expectedValue = 0xffffffffa988edcbn;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(shift, value);
+
+        bitRotationOps.rotR32ImmAlt(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (no rotation)", () => {
+        const value = 0x12_34_56_78n;
+        const shift = 0n;
+        const expectedValue = 0x12345678n;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(shift, value);
+
+        bitRotationOps.rotR32ImmAlt(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (full rotation)", () => {
+        const value = 0x12_34_56_78n;
+        const shift = 32n;
+        const expectedValue = 0x12345678n;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(shift, value);
+
+        bitRotationOps.rotR32ImmAlt(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+
+      it("should correctly rotate bits (shift overflow)", () => {
+        const value = 0x12_34_56_78n;
+        const shift = 128n;
+        const expectedValue = 0x12345678n;
+        const { bitRotationOps, regs, firstRegisterIndex, immediate, resultRegisterIndex } = prepareData(shift, value);
+
+        bitRotationOps.rotR32ImmAlt(firstRegisterIndex, immediate, resultRegisterIndex);
+
+        assert.strictEqual(regs.getU64(resultRegisterIndex), expectedValue);
+      });
+    });
+  });
 });
