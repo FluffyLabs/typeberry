@@ -1,6 +1,6 @@
 import type { TwoRegistersOneImmediateArgs } from "../args-decoder/args-decoder";
 import { Instruction } from "../instruction";
-import type { BitOps, BooleanOps, LoadOps, MathOps, MoveOps, ShiftOps, StoreOps } from "../ops";
+import type { BitOps, BitRotationOps, BooleanOps, LoadOps, MathOps, MoveOps, ShiftOps, StoreOps } from "../ops";
 
 export class TwoRegsOneImmDispatcher {
   constructor(
@@ -11,6 +11,7 @@ export class TwoRegsOneImmDispatcher {
     private moveOps: MoveOps,
     private storeOps: StoreOps,
     private loadOps: LoadOps,
+    private bitRotationOps: BitRotationOps,
   ) {}
 
   dispatch(instruction: Instruction, args: TwoRegistersOneImmediateArgs) {
@@ -229,6 +230,22 @@ export class TwoRegsOneImmDispatcher {
 
       case Instruction.LOAD_IND_I32:
         this.loadOps.loadIndI32(args.firstRegisterIndex, args.secondRegisterIndex, args.immediateDecoder);
+        break;
+
+      case Instruction.ROT_R_64_IMM:
+        this.bitRotationOps.rotR64Imm(args.firstRegisterIndex, args.immediateDecoder, args.secondRegisterIndex);
+        break;
+
+      case Instruction.ROT_R_64_IMM_ALT:
+        this.bitRotationOps.rotR64ImmAlt(args.firstRegisterIndex, args.immediateDecoder, args.secondRegisterIndex);
+        break;
+
+      case Instruction.ROT_R_32_IMM:
+        this.bitRotationOps.rotR32Imm(args.firstRegisterIndex, args.immediateDecoder, args.secondRegisterIndex);
+        break;
+
+      case Instruction.ROT_R_32_IMM_ALT:
+        this.bitRotationOps.rotR32ImmAlt(args.firstRegisterIndex, args.immediateDecoder, args.secondRegisterIndex);
         break;
     }
   }

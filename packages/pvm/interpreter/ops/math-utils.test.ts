@@ -5,6 +5,8 @@ import { MAX_VALUE, MAX_VALUE_U64 } from "./math-consts";
 import {
   addWithOverflowU32,
   addWithOverflowU64,
+  maxBigInt,
+  minBigInt,
   mulLowerUnsignedU32,
   mulU64,
   mulUpperSS,
@@ -472,6 +474,30 @@ describe("math-utils", () => {
         const result = mulU64(value1, value2);
 
         assert.deepStrictEqual(result, expectedResult);
+      });
+    });
+
+    describe("min/max", () => {
+      it("should correctly calculate min value", () => {
+        const a = -10n;
+        const b = 11n;
+        const c = 0n;
+        const expectedResult = a;
+
+        const result = minBigInt(a, b, c);
+
+        assert.strictEqual(result, expectedResult);
+      });
+
+      it("should correctly calculate max value", () => {
+        const a = -10n;
+        const b = 11n;
+        const c = 0n;
+        const expectedResult = b;
+
+        const result = maxBigInt(a, b, c);
+
+        assert.strictEqual(result, expectedResult);
       });
     });
   });

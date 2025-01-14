@@ -7,7 +7,7 @@ import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument
 import { Instruction } from "../instruction";
 import { InstructionResult } from "../instruction-result";
 import { Memory } from "../memory";
-import { BitOps, BooleanOps, LoadOps, MathOps, MoveOps, ShiftOps, StoreOps } from "../ops";
+import { BitOps, BitRotationOps, BooleanOps, LoadOps, MathOps, MoveOps, ShiftOps, StoreOps } from "../ops";
 import { Registers } from "../registers";
 import { TwoRegsOneImmDispatcher } from "./two-regs-one-imm-dispatcher";
 
@@ -22,6 +22,7 @@ describe("TwoRegsOneImmDispatcher", () => {
   const moveOps = new MoveOps(regs);
   const storeOps = new StoreOps(regs, memory, instructionResult);
   const loadOps = new LoadOps(regs, memory, instructionResult);
+  const bitRotationOps = new BitRotationOps(regs);
 
   const mockFn = mock.fn();
 
@@ -41,6 +42,7 @@ describe("TwoRegsOneImmDispatcher", () => {
     mockAllMethods(moveOps);
     mockAllMethods(storeOps);
     mockAllMethods(loadOps);
+    mockAllMethods(bitRotationOps);
   });
 
   after(() => {
@@ -61,7 +63,16 @@ describe("TwoRegsOneImmDispatcher", () => {
 
   for (const [name, instruction] of relevantInstructions) {
     it(`checks if instruction ${name} = ${instruction} is handled by TwoRegsOneImmDispatcher`, () => {
-      const dispatcher = new TwoRegsOneImmDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps, storeOps, loadOps);
+      const dispatcher = new TwoRegsOneImmDispatcher(
+        mathOps,
+        shiftOps,
+        bitOps,
+        booleanOps,
+        moveOps,
+        storeOps,
+        loadOps,
+        bitRotationOps,
+      );
 
       dispatcher.dispatch(instruction, argsMock);
 
@@ -75,7 +86,16 @@ describe("TwoRegsOneImmDispatcher", () => {
 
   for (const [name, instruction] of otherInstructions) {
     it(`checks if instruction ${name} = ${instruction} is not handled by TwoRegsOneImmDispatcher`, () => {
-      const dispatcher = new TwoRegsOneImmDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps, storeOps, loadOps);
+      const dispatcher = new TwoRegsOneImmDispatcher(
+        mathOps,
+        shiftOps,
+        bitOps,
+        booleanOps,
+        moveOps,
+        storeOps,
+        loadOps,
+        bitRotationOps,
+      );
 
       dispatcher.dispatch(instruction, argsMock);
 

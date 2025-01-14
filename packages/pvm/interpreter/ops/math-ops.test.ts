@@ -826,4 +826,116 @@ describe("MathOps", () => {
 
     assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
+
+  it("should calculate min value (positive numbers)", () => {
+    const firstValue = 1n;
+    const secondValue = 25n;
+    const resultValue = firstValue;
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    mathOps.min(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+  });
+
+  it("should calculate min value (negative numbers)", () => {
+    const firstValue = -1n;
+    const secondValue = -25n;
+    const resultValue = secondValue;
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    mathOps.min(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
+  });
+
+  it("should calculate minU value (positive numbers)", () => {
+    const firstValue = 1n;
+    const secondValue = 25n;
+    const resultValue = firstValue;
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    mathOps.minU(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+  });
+
+  it("should calculate minU value (negative numbers)", () => {
+    const firstValue = 0n;
+    const secondValue = -25n;
+    const resultValue = firstValue;
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    mathOps.minU(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+  });
+
+  it("should calculate max value (positive numbers)", () => {
+    const firstValue = 1n;
+    const secondValue = 25n;
+    const resultValue = secondValue;
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    mathOps.max(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+  });
+
+  it("should calculate max value (negative numbers)", () => {
+    const firstValue = -1n;
+    const secondValue = -25n;
+    const resultValue = firstValue;
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    mathOps.max(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
+  });
+
+  it("should calculate maxU value (positive numbers)", () => {
+    const firstValue = 1n;
+    const secondValue = 25n;
+    const resultValue = secondValue;
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    mathOps.maxU(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+  });
+
+  it("should calculate maxU value (negative numbers)", () => {
+    const firstValue = 0n;
+    const secondValue = -25n;
+    const resultValue = secondValue;
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    mathOps.maxU(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
+  });
 });

@@ -235,8 +235,8 @@ describe("ArgsDecoder", () => {
       noOfBytesToSkip: 1,
       type: argumentType,
 
-      firstRegisterIndex: 10,
-      secondRegisterIndex: 10,
+      firstRegisterIndex: 11,
+      secondRegisterIndex: 12,
       thirdRegisterIndex: 2,
     };
 
@@ -334,8 +334,8 @@ describe("ArgsDecoder", () => {
       noOfBytesToSkip: 1,
       type: argumentType,
 
-      firstRegisterIndex: 7,
-      secondRegisterIndex: 9,
+      firstRegisterIndex: 8,
+      secondRegisterIndex: 3,
 
       immediateDecoder: expectedImmediateDecoder,
     };
@@ -516,8 +516,8 @@ describe("ArgsDecoder", () => {
       noOfBytesToSkip: 1,
       type: argumentType,
 
-      firstRegisterIndex: 6,
-      secondRegisterIndex: 9,
+      firstRegisterIndex: 10,
+      secondRegisterIndex: 10,
 
       nextPc: 0,
     };
@@ -1097,8 +1097,8 @@ describe("ArgsDecoder", () => {
       noOfBytesToSkip: 1,
       type: argumentType,
 
-      firstRegisterIndex: 0,
-      secondRegisterIndex: 10,
+      firstRegisterIndex: 4,
+      secondRegisterIndex: 11,
 
       firstImmediateDecoder: expectedfirstImmediateDecoder,
       secondImmediateDecoder: expectedSecondImmediateDecoder,

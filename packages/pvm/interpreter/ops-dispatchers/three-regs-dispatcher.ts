@@ -1,6 +1,6 @@
 import type { ThreeRegistersArgs } from "../args-decoder/args-decoder";
 import { Instruction } from "../instruction";
-import type { BitOps, BooleanOps, MathOps, MoveOps, ShiftOps } from "../ops";
+import type { BitOps, BitRotationOps, BooleanOps, MathOps, MoveOps, ShiftOps } from "../ops";
 
 export class ThreeRegsDispatcher {
   constructor(
@@ -9,6 +9,7 @@ export class ThreeRegsDispatcher {
     private bitOps: BitOps,
     private booleanOps: BooleanOps,
     private moveOps: MoveOps,
+    private bitRotationOps: BitRotationOps,
   ) {}
 
   dispatch(instruction: Instruction, args: ThreeRegistersArgs) {
@@ -134,6 +135,51 @@ export class ThreeRegsDispatcher {
         break;
       case Instruction.CMOV_NZ:
         this.moveOps.cmovIfNotZero(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
+
+      case Instruction.ROT_L_64:
+        this.bitRotationOps.rotL64(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
+
+      case Instruction.ROT_L_32:
+        this.bitRotationOps.rotL32(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
+
+      case Instruction.ROT_R_64:
+        this.bitRotationOps.rotR64(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
+
+      case Instruction.ROT_R_32:
+        this.bitRotationOps.rotR32(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
+
+      case Instruction.AND_INV:
+        this.bitOps.andInv(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
+
+      case Instruction.OR_INV:
+        this.bitOps.orInv(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
+
+      case Instruction.XNOR:
+        this.bitOps.xnor(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
+
+      case Instruction.MAX:
+        this.mathOps.max(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
+
+      case Instruction.MAX_U:
+        this.mathOps.maxU(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+        break;
+
+      case Instruction.MIN:
+        this.mathOps.min(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
+
+        break;
+
+      case Instruction.MIN_U:
+        this.mathOps.minU(args.firstRegisterIndex, args.secondRegisterIndex, args.thirdRegisterIndex);
         break;
     }
   }

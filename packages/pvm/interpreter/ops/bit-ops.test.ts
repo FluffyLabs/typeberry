@@ -7,7 +7,7 @@ import { bigintToUint8ArrayLE } from "../test-utils";
 import { BitOps } from "./bit-ops";
 
 describe("BitOps", () => {
-  function prepareData(firstValue: bigint, secondValue: bigint) {
+  function prepareData(firstValue: bigint, secondValue = 0n) {
     const regs = new Registers();
     const firstRegisterIndex = 0;
     const secondRegisterIndex = 1;
@@ -97,5 +97,295 @@ describe("BitOps", () => {
     bitOps.xorImmediate(firstRegisterIndex, immediate, resultRegisterIndex);
 
     assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+  });
+
+  it("andInv", () => {
+    const firstValue = 0b101n;
+    const secondValue = 0b011n;
+    const resultValue = 0b010n;
+    const { bitOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    bitOps.andInv(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+  });
+
+  it("orInv", () => {
+    const firstValue = 0b01n;
+    const secondValue = 0b10n;
+    const resultValue = 0xff_ff_ff_ff_ff_ff_ff_fen;
+    const { bitOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    bitOps.orInv(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+  });
+
+  it("xnor", () => {
+    const firstValue = 0b101n;
+    const secondValue = 0b110n;
+    const resultValue = 0xff_ff_ff_ff_ff_ff_ff_fcn;
+    const { bitOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    bitOps.xnor(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+  });
+
+  describe("countSetBits64", () => {
+    it("should return no of 1s in bigint", () => {
+      const value = 0b101n;
+      const resultValue = 2n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.countSetBits64(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+
+    it("should return no of 1s in bigint (min value)", () => {
+      const value = 0n;
+      const resultValue = 0n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.countSetBits64(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+
+    it("should return no of 1s in bigint (max value)", () => {
+      const value = 2n ** 64n - 1n;
+      const resultValue = 64n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.countSetBits64(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+  });
+
+  describe("countSetBits32", () => {
+    it("should return no of 1s in number", () => {
+      const value = 0b101n;
+      const resultValue = 2n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.countSetBits32(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+
+    it("should return no of 1s in number (min value)", () => {
+      const value = 0n;
+      const resultValue = 0n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.countSetBits32(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+
+    it("should return no of 1s in number (max value)", () => {
+      const value = 2n ** 64n - 1n;
+      const resultValue = 32n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.countSetBits32(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+  });
+
+  describe("leadingZeroBits64", () => {
+    it("should return no of leading 0s in bigint", () => {
+      const value = 0b101n;
+      const resultValue = 61n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.leadingZeroBits64(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+
+    it("should return no of leading 0s in bigint (min value)", () => {
+      const value = 0n;
+      const resultValue = 64n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.leadingZeroBits64(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+
+    it("should return no of leading 0s in bigint (max value)", () => {
+      const value = 2n ** 64n - 1n;
+      const resultValue = 0n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.leadingZeroBits64(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+  });
+
+  describe("leadingZeroBits32", () => {
+    it("should return no of leading 0s in number", () => {
+      const value = 0b101n;
+      const resultValue = 29n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.leadingZeroBits32(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+
+    it("should return no of leading 0s in number (min value)", () => {
+      const value = 0n;
+      const resultValue = 32n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.leadingZeroBits32(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+
+    it("should return no of leading 0s in number (max value)", () => {
+      const value = 2n ** 64n - 1n;
+      const resultValue = 0n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.leadingZeroBits32(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+  });
+
+  describe("trailingZeroBits64", () => {
+    it("should return no of trailing 0s in bigint", () => {
+      const value = 0b1010n;
+      const resultValue = 1n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.trailingZeroBits64(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+
+    it("should return no of trailing 0s in bigint (min value)", () => {
+      const value = 0n;
+      const resultValue = 64n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.trailingZeroBits64(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+
+    it("should return no of trailing 0s in bigint (max value)", () => {
+      const value = 2n ** 64n - 1n;
+      const resultValue = 0n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.trailingZeroBits64(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+  });
+
+  describe("leadingZeroBits32", () => {
+    it("should return no of trailing 0s in number", () => {
+      const value = 0b1010n;
+      const resultValue = 1n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.trailingZeroBits32(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+
+    it("should return no of trailing 0s in number (min value)", () => {
+      const value = 0n;
+      const resultValue = 32n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.trailingZeroBits32(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+
+    it("should return no of trailing 0s in number (max value)", () => {
+      const value = 2n ** 64n - 1n;
+      const resultValue = 0n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.trailingZeroBits32(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
+  });
+
+  describe("signExtend8", () => {
+    it("should extend sign", () => {
+      const value = 0x80n;
+      const resultValue = -0x80n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.signExtend8(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
+    });
+
+    it("should not extend sign", () => {
+      const value = 0x70n;
+      const resultValue = 0x70n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.signExtend8(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
+    });
+  });
+
+  describe("signExtend16", () => {
+    it("should extend sign", () => {
+      const value = 0x8000n;
+      const resultValue = -0x8000n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.signExtend16(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
+    });
+
+    it("should not extend sign", () => {
+      const value = 0x7000n;
+      const resultValue = 0x7000n;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.signExtend16(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
+    });
+  });
+
+  describe("zeroExtend16", () => {
+    it("should override 6 bytes with zeros", () => {
+      const value = 2n ** 64n - 1n;
+      const resultValue = 0xffffn;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.zeroExtend16(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
   });
 });

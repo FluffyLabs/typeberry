@@ -10,3 +10,4 @@ export { NoArgsOps } from "./no-args-ops";
 export { DynamicJumpOps } from "./dynamic-jump-ops";
 export { HostCallOps } from "./host-call-ops";
 export { MemoryOps } from "./memory-ops";
+export { BitRotationOps } from "./bit-rotation-ops";
