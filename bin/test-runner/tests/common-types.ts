@@ -17,6 +17,7 @@ import {
 import { RefineContext } from "@typeberry/block/refine-context";
 import type { WorkItemsCount } from "@typeberry/block/work-package";
 import {
+  type AuthorizerHash,
   type ExportsRootHash,
   SegmentRootLookupItem,
   type WorkPackageHash,
@@ -25,6 +26,7 @@ import {
 } from "@typeberry/block/work-report";
 import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
 import type { FixedSizeArray } from "@typeberry/collections";
+import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import type { AvailabilityAssignment } from "@typeberry/disputes";
 import type { HASH_SIZE, OpaqueHash } from "@typeberry/hash";
 import type { U16, U32 } from "@typeberry/numbers";
@@ -42,6 +44,14 @@ export namespace commonFromJson {
     bls: json.fromString((v) => Bytes.parseBytes(v, BLS_KEY_BYTES) as BlsKey),
     metadata: json.fromString((v) => Bytes.parseBytes(v, VALIDATOR_META_BYTES)),
   };
+}
+
+export function getChainSpec(path: string) {
+  if (path.includes("tiny")) {
+    return tinyChainSpec;
+  }
+
+  return fullChainSpec;
 }
 
 class TestResultDetail {
@@ -239,7 +249,7 @@ export class TestWorkReport {
   package_spec!: TestPackageSpec;
   context!: TestContext;
   core_index!: CoreIndex;
-  authorizer_hash!: OpaqueHash;
+  authorizer_hash!: AuthorizerHash;
   auth_output!: BytesBlob;
   segment_root_lookup!: TestSegmentRootLookupItem[];
   results!: TestResult[];

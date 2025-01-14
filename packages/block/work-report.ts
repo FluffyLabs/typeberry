@@ -9,6 +9,9 @@ import { RefineContext } from "./refine-context";
 import { type WorkItemsCount, tryAsWorkItemsCount } from "./work-package";
 import { WorkResult } from "./work-result";
 
+/** Authorizer hash. */
+export type AuthorizerHash = Opaque<OpaqueHash, "AuthorizerHash">;
+
 /** Blake2B hash of a work package. */
 export type WorkPackageHash = Opaque<OpaqueHash, "WorkPackageHash">;
 /** Work package exported segments merkle root hash. */
@@ -69,7 +72,7 @@ export class WorkReport extends WithDebug {
     workPackageSpec: WorkPackageSpec.Codec,
     context: RefineContext.Codec,
     coreIndex: codec.u16.asOpaque(),
-    authorizerHash: codec.bytes(HASH_SIZE),
+    authorizerHash: codec.bytes(HASH_SIZE).asOpaque(),
     authorizationOutput: codec.blob,
     segmentRootLookup: codec.sequenceVarLen(SegmentRootLookupItem.Codec),
     results: codec.sequenceVarLen(WorkResult.Codec).convert(
@@ -106,7 +109,7 @@ export class WorkReport extends WithDebug {
     /** `c`: Core index on which the work is done. */
     public readonly coreIndex: CoreIndex,
     /** `a`: Hash of the authorizer. */
-    public readonly authorizerHash: OpaqueHash,
+    public readonly authorizerHash: AuthorizerHash,
     /** `o`: Authorization output. */
     public readonly authorizationOutput: BytesBlob,
     /** `l`: Segment-root lookup

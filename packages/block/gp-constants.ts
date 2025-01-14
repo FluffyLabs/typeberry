@@ -20,7 +20,10 @@ export const I = MAX_NUMBER_OF_WORK_ITEMS;
 /** `K`: Max number of tickets which may be submitted in a single extrinsic. */
 export const K = MAX_NUMBER_OF_TICKETS;
 
-/** `Q`: Maximum number of items in the authorization queue. */
+/** `O`: Maximum number of items in the authorizations pool. */
+export const O = 8;
+
+/** `Q`: The number of items in the authorizations queue. */
 export const Q = 80;
 
 /** `W_C`: The maximum size of service code in octets. */
@@ -31,3 +34,9 @@ export const W_T = 128;
 
 /** `Y`: The number of slots into an epoch at which ticket-submission ends. */
 export const Y = 500;
+
+// TODO [ToDr] Not sure where these should live yet :(
+
+/** Size of the authorization queue. */
+export const AUTHORIZATION_QUEUE_SIZE = Q;
+export type AUTHORIZATION_QUEUE_SIZE = typeof AUTHORIZATION_QUEUE_SIZE;
