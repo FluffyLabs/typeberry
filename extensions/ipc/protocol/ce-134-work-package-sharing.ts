@@ -128,41 +128,48 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 
 export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
-  private readonly onResponseMap = new Map<
+  private pendingRequests = new Map<
     StreamId,
-    (workReportHash: WorkReportHash, signature: Ed25519Signature) => void
+    {
+      resolve: (response: { workReportHash: WorkReportHash; signature: Ed25519Signature }) => void;
+      reject: (error: Error) => void;
+    }
   >();
 
   onStreamMessage(sender: StreamSender, message: BytesBlob): void {
-    const streamId = sender.streamId;
-    const onResponse = this.onResponseMap.get(streamId);
-
-    if (!onResponse) {
-      throw new Error("Unexpected message");
+    const pendingRequest = this.pendingRequests.get(sender.streamId);
+    if (!pendingRequest) {
+      throw new Error("Unexpected message received.");
     }
 
     const response = Decoder.decodeObject(WorkPackageSharingResponse.Codec, message);
     logger.info(`[${sender.streamId}] Received work report hash and signature.`);
-    onResponse(response.workReportHash, response.signature);
+    pendingRequest.resolve({ workReportHash: response.workReportHash, signature: response.signature });
     sender.close();
   }
 
   onClose(streamId: StreamId): void {
-    this.onResponseMap.delete(streamId);
+    const pendingRequest = this.pendingRequests.get(streamId);
+    if (pendingRequest) {
+      pendingRequest.reject(new Error("Stream closed."));
+      this.pendingRequests.delete(streamId);
+    }
   }
 
-  sendWorkPackage(
+  async sendWorkPackage(
     sender: StreamSender,
     coreIndex: CoreIndex,
     segmentsRootMappings: SegmentsRootMapping[],
     workPackageBundle: WorkPackageBundle,
-    onResponse: (workReportHash: WorkReportHash, signature: Ed25519Signature) => void,
-  ) {
-    this.onResponseMap.set(sender.streamId, onResponse);
+  ): Promise<{ workReportHash: WorkReportHash; signature: Ed25519Signature }> {
     const request = new WorkPackageSharingRequest(coreIndex, segmentsRootMappings);
     logger.trace(`[${sender.streamId}] Sending core index and segments-root mappings.`);
     sender.send(Encoder.encodeObject(WorkPackageSharingRequest.Codec, request));
     logger.trace(`[${sender.streamId}] Sending work package bundle.`);
     sender.send(Encoder.encodeObject(WorkPackageBundleCodec, workPackageBundle));
+
+    return new Promise((resolve, reject) => {
+      this.pendingRequests.set(sender.streamId, { resolve, reject });
+    });
   }
 }

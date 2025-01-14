@@ -73,17 +73,13 @@ describe("CE 134: Work Package Sharing", () => {
       handlers.client.registerHandlers(new ClientHandler());
 
       handlers.client.withNewStream(STREAM_KIND, (handler: ClientHandler, sender) => {
-        handler.sendWorkPackage(
-          sender,
-          MOCK_CORE_INDEX,
-          MOCK_SEGMENTS_ROOT_MAPPINGS,
-          MOCK_WORK_PACKAGE_BUNDLE,
-          (workReportHash, signature) => {
+        handler
+          .sendWorkPackage(sender, MOCK_CORE_INDEX, MOCK_SEGMENTS_ROOT_MAPPINGS, MOCK_WORK_PACKAGE_BUNDLE)
+          .then(({ workReportHash, signature }) => {
             assert.deepStrictEqual(workReportHash, MOCK_WORK_REPORT_HASH);
             assert.deepStrictEqual(signature, MOCK_SIGNATURE);
             resolve(undefined);
-          },
-        );
+          });
       });
     });
   });
