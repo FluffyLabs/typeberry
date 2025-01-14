@@ -26,7 +26,7 @@ export class PageProof {
   static fromJson: FromJson<PageProof> = {
     data: fromJson.bytesBlob,
     page_proofs: json.array(fromJson.bytesBlob),
-    segments_root: codecFromJson.bytes32(),
+    segments_root: codecFromJson.bytes32NoPrefix(),
   };
 
   data!: BytesBlob;
@@ -46,7 +46,7 @@ export class SegmentEcTest {
   static fromJson: FromJson<SegmentEcTest> = {
     data: fromJson.bytesBlob,
     segments: json.array(SegmentEc.fromJson),
-    segments_root: codecFromJson.bytes32(),
+    segments_root: codecFromJson.bytes32NoPrefix(),
   };
 
   data!: BytesBlob;
