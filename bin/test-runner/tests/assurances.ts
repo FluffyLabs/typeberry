@@ -94,9 +94,9 @@ export class AssurancesTestFull {
 }
 
 export async function runAssurancesTestTiny(_testContent: AssurancesTestTiny) {
-  // TODO [MaSi] Implement
+  // TODO [MaSi] Assurances Test Tiny
 }
 
 export async function runAssurancesTestFull(_testContent: AssurancesTestFull) {
-  // TODO [MaSi] Implement
+  // TODO [MaSi] Assurances Test Full
 }

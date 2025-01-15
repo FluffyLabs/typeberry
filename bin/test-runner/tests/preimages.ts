@@ -91,5 +91,5 @@ export class PreImagesTest {
 }
 
 export async function runPreImagesTest(_testContent: PreImagesTest) {
-  // TODO [MaSi] Implement
+  // TODO [MaSi] Preimages tests
 }
