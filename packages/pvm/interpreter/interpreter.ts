@@ -15,6 +15,7 @@ import { alignToPageSize } from "./memory/memory-utils";
 import { tryAsPageNumber } from "./memory/pages/page-utils";
 import {
   BitOps,
+  BitRotationOps,
   BooleanOps,
   BranchOps,
   DynamicJumpOps,
@@ -91,8 +92,9 @@ export class Interpreter {
     const dynamicJumpOps = new DynamicJumpOps(this.registers, this.jumpTable, this.instructionResult, this.basicBlocks);
     const hostCallOps = new HostCallOps(this.instructionResult);
     const memoryOps = new MemoryOps(this.registers, this.memory, this.instructionResult);
+    const bitRotationOps = new BitRotationOps(this.registers);
 
-    this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
+    this.threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps, bitRotationOps);
     this.twoRegsOneImmDispatcher = new TwoRegsOneImmDispatcher(
       mathOps,
       shiftOps,
@@ -101,8 +103,9 @@ export class Interpreter {
       moveOps,
       storeOps,
       loadOps,
+      bitRotationOps,
     );
-    this.twoRegsDispatcher = new TwoRegsDispatcher(moveOps, memoryOps);
+    this.twoRegsDispatcher = new TwoRegsDispatcher(moveOps, memoryOps, bitOps, bitRotationOps);
     this.oneRegOneImmOneOffsetDispatcher = new OneRegOneImmOneOffsetDispatcher(branchOps, loadOps);
     this.twoRegsOneOffsetDispatcher = new TwoRegsOneOffsetDispatcher(branchOps);
     this.oneOffsetDispatcher = new OneOffsetDispatcher(branchOps);

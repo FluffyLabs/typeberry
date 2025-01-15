@@ -143,3 +143,17 @@ export function unsignedRightShiftBigInt(value: bigint, shift: bigint): bigint {
   // Perform the right shift
   return unsignedRepresentation >> shift;
 }
+
+export function maxBigInt(...args: bigint[]) {
+  if (args.length === 0) {
+    throw new Error("No arguments provided");
+  }
+  return args.reduce((max, current) => (current > max ? current : max));
+}
+
+export function minBigInt(...args: bigint[]) {
+  if (args.length === 0) {
+    throw new Error("No arguments provided");
+  }
+  return args.reduce((max, current) => (current < max ? current : max));
+}

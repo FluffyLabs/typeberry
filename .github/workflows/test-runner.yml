@@ -1,7 +1,7 @@
 name: Run JAM test vectors
 
 on:
-  pull_request:
+  pull_request_target:
     branches: ["main"]
     paths: ['.github/workflows/test-runner.yml', 'bin/test-runner/**']
   schedule:
@@ -34,7 +34,7 @@ jobs:
         if: always()
         run: cat ./dist/jamtestvectors.txt
       - name: Comment PR
-        if: always() && github.event_name == 'pull_request'
+        if: always() && github.event_name == 'pull_request_target'
         uses: thollander/actions-comment-pull-request@v2
         with:
           filePath: ./dist/jamtestvectors.txt

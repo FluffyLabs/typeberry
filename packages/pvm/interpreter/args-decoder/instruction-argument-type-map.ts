@@ -9,6 +9,8 @@ export const instructionArgumentTypeMap = (() => {
 
   instructionArgumentTypeMap[Instruction.ECALLI] = ArgumentType.ONE_IMMEDIATE;
 
+  instructionArgumentTypeMap[Instruction.LOAD_IMM_64] = ArgumentType.ONE_REGISTER_ONE_EXTENDED_WIDTH_IMMEDIATE;
+
   instructionArgumentTypeMap[Instruction.STORE_IMM_U8] = ArgumentType.TWO_IMMEDIATES;
   instructionArgumentTypeMap[Instruction.STORE_IMM_U16] = ArgumentType.TWO_IMMEDIATES;
   instructionArgumentTypeMap[Instruction.STORE_IMM_U32] = ArgumentType.TWO_IMMEDIATES;
@@ -49,6 +51,16 @@ export const instructionArgumentTypeMap = (() => {
 
   instructionArgumentTypeMap[Instruction.MOVE_REG] = ArgumentType.TWO_REGISTERS;
   instructionArgumentTypeMap[Instruction.SBRK] = ArgumentType.TWO_REGISTERS;
+  instructionArgumentTypeMap[Instruction.COUNT_SET_BITS_64] = ArgumentType.TWO_REGISTERS;
+  instructionArgumentTypeMap[Instruction.COUNT_SET_BITS_32] = ArgumentType.TWO_REGISTERS;
+  instructionArgumentTypeMap[Instruction.LEADING_ZERO_BITS_64] = ArgumentType.TWO_REGISTERS;
+  instructionArgumentTypeMap[Instruction.LEADING_ZERO_BITS_32] = ArgumentType.TWO_REGISTERS;
+  instructionArgumentTypeMap[Instruction.TRAILING_ZERO_BITS_64] = ArgumentType.TWO_REGISTERS;
+  instructionArgumentTypeMap[Instruction.TRAILING_ZERO_BITS_32] = ArgumentType.TWO_REGISTERS;
+  instructionArgumentTypeMap[Instruction.SIGN_EXTEND_8] = ArgumentType.TWO_REGISTERS;
+  instructionArgumentTypeMap[Instruction.SIGN_EXTEND_16] = ArgumentType.TWO_REGISTERS;
+  instructionArgumentTypeMap[Instruction.ZERO_EXTEND_16] = ArgumentType.TWO_REGISTERS;
+  instructionArgumentTypeMap[Instruction.REVERSE_BYTES] = ArgumentType.TWO_REGISTERS;
 
   instructionArgumentTypeMap[Instruction.STORE_IND_U8] = ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE;
   instructionArgumentTypeMap[Instruction.STORE_IND_U16] = ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE;
@@ -88,6 +100,10 @@ export const instructionArgumentTypeMap = (() => {
   instructionArgumentTypeMap[Instruction.SHAR_R_IMM_ALT_64] = ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE;
   instructionArgumentTypeMap[Instruction.CMOV_IZ_IMM] = ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE;
   instructionArgumentTypeMap[Instruction.CMOV_NZ_IMM] = ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE;
+  instructionArgumentTypeMap[Instruction.ROT_R_64_IMM] = ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE;
+  instructionArgumentTypeMap[Instruction.ROT_R_64_IMM_ALT] = ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE;
+  instructionArgumentTypeMap[Instruction.ROT_R_32_IMM] = ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE;
+  instructionArgumentTypeMap[Instruction.ROT_R_32_IMM_ALT] = ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE;
 
   instructionArgumentTypeMap[Instruction.BRANCH_EQ] = ArgumentType.TWO_REGISTERS_ONE_OFFSET;
   instructionArgumentTypeMap[Instruction.BRANCH_NE] = ArgumentType.TWO_REGISTERS_ONE_OFFSET;
@@ -128,8 +144,17 @@ export const instructionArgumentTypeMap = (() => {
   instructionArgumentTypeMap[Instruction.SHAR_R_64] = ArgumentType.THREE_REGISTERS;
   instructionArgumentTypeMap[Instruction.CMOV_IZ] = ArgumentType.THREE_REGISTERS;
   instructionArgumentTypeMap[Instruction.CMOV_NZ] = ArgumentType.THREE_REGISTERS;
-
-  instructionArgumentTypeMap[Instruction.LOAD_IMM_64] = ArgumentType.ONE_REGISTER_ONE_EXTENDED_WIDTH_IMMEDIATE;
+  instructionArgumentTypeMap[Instruction.ROT_L_64] = ArgumentType.THREE_REGISTERS;
+  instructionArgumentTypeMap[Instruction.ROT_L_32] = ArgumentType.THREE_REGISTERS;
+  instructionArgumentTypeMap[Instruction.ROT_R_64] = ArgumentType.THREE_REGISTERS;
+  instructionArgumentTypeMap[Instruction.ROT_R_32] = ArgumentType.THREE_REGISTERS;
+  instructionArgumentTypeMap[Instruction.AND_INV] = ArgumentType.THREE_REGISTERS;
+  instructionArgumentTypeMap[Instruction.OR_INV] = ArgumentType.THREE_REGISTERS;
+  instructionArgumentTypeMap[Instruction.XNOR] = ArgumentType.THREE_REGISTERS;
+  instructionArgumentTypeMap[Instruction.MAX] = ArgumentType.THREE_REGISTERS;
+  instructionArgumentTypeMap[Instruction.MAX_U] = ArgumentType.THREE_REGISTERS;
+  instructionArgumentTypeMap[Instruction.MIN] = ArgumentType.THREE_REGISTERS;
+  instructionArgumentTypeMap[Instruction.MIN_U] = ArgumentType.THREE_REGISTERS;
 
   return instructionArgumentTypeMap;
 })();

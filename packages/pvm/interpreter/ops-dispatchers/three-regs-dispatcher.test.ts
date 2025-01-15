@@ -4,7 +4,7 @@ import type { ThreeRegistersArgs } from "../args-decoder/args-decoder";
 import { ArgumentType } from "../args-decoder/argument-type";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
 import { Instruction } from "../instruction";
-import { BitOps, BooleanOps, MathOps, MoveOps, ShiftOps } from "../ops";
+import { BitOps, BitRotationOps, BooleanOps, MathOps, MoveOps, ShiftOps } from "../ops";
 import { Registers } from "../registers";
 import { ThreeRegsDispatcher } from "./three-regs-dispatcher";
 
@@ -15,6 +15,7 @@ test("ThreeRegsDispatcher", async (t) => {
   const shiftOps = new ShiftOps(regs);
   const booleanOps = new BooleanOps(regs);
   const moveOps = new MoveOps(regs);
+  const bitRotationOps = new BitRotationOps(regs);
 
   const mockFn = t.mock.fn();
 
@@ -33,6 +34,7 @@ test("ThreeRegsDispatcher", async (t) => {
     mockAllMethods(mathOps);
     mockAllMethods(bitOps);
     mockAllMethods(shiftOps);
+    mockAllMethods(bitRotationOps);
   });
 
   t.after(() => {
@@ -49,7 +51,14 @@ test("ThreeRegsDispatcher", async (t) => {
 
   for (const [name, instruction] of threeRegsInstructions) {
     await t.test(`checks if instruction ${name} = ${instruction} is handled by ThreeRegsDispatcher`, () => {
-      const threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
+      const threeRegsDispatcher = new ThreeRegsDispatcher(
+        mathOps,
+        shiftOps,
+        bitOps,
+        booleanOps,
+        moveOps,
+        bitRotationOps,
+      );
 
       threeRegsDispatcher.dispatch(instruction, {} as ThreeRegistersArgs);
 
@@ -63,7 +72,14 @@ test("ThreeRegsDispatcher", async (t) => {
 
   for (const [name, instruction] of otherInstructions) {
     await t.test(`checks if instruction ${name} = ${instruction} is not handled by ThreeRegsDispatcher`, () => {
-      const threeRegsDispatcher = new ThreeRegsDispatcher(mathOps, shiftOps, bitOps, booleanOps, moveOps);
+      const threeRegsDispatcher = new ThreeRegsDispatcher(
+        mathOps,
+        shiftOps,
+        bitOps,
+        booleanOps,
+        moveOps,
+        bitRotationOps,
+      );
 
       threeRegsDispatcher.dispatch(instruction, {} as ThreeRegistersArgs);
 
