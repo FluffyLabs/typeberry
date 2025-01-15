@@ -6,6 +6,7 @@ import {
   type CodeHash,
   type CoreIndex,
   type HeaderHash,
+  type SegmentsRoot,
   type ServiceGas,
   type ServiceId,
   type StateRootHash,
@@ -191,7 +192,7 @@ export class TestSegmentRootLookupItem {
   };
 
   work_package_hash!: WorkPackageHash;
-  segment_tree_root!: OpaqueHash;
+  segment_tree_root!: SegmentsRoot;
 
   static toSegmentRootLookupItem(testSegmentRootLookupItem: TestSegmentRootLookupItem) {
     return new SegmentRootLookupItem(

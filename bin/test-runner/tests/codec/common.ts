@@ -9,6 +9,8 @@ import { type FromJson, json } from "@typeberry/json-parser";
 
 export namespace fromJson {
   export const bytes32 = <T extends Bytes<32>>() => json.fromString<T>((v) => Bytes.parseBytes(v, 32).asOpaque());
+  export const bytes32NoPrefix = <T extends Bytes<32>>() =>
+    json.fromString<T>((v) => Bytes.parseBytesNoPrefix(v, 32).asOpaque());
 
   export const ed25519Signature = json.fromString<Ed25519Signature>((v) => Bytes.parseBytes(v, 64).asOpaque());
 

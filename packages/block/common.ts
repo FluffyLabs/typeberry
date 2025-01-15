@@ -46,3 +46,6 @@ export type StateRootHash = Opaque<OpaqueHash, "StateRootHash">;
 export type Epoch = Opaque<U32, "Epoch">;
 /** Attempt to convert a number into `Epoch`. */
 export const tryAsEpoch = (v: number): Epoch => asOpaqueType(tryAsU32(v));
+
+/** Hash of the merkle root of exported segments root of a work package. */
+export type SegmentsRoot = Opaque<OpaqueHash, "SegmentsRoot">;
