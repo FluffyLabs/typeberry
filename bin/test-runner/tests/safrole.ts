@@ -1,5 +1,7 @@
+import assert from "node:assert";
 import {
   BANDERSNATCH_PROOF_BYTES,
+  TimeSlot,
   type BandersnatchKey,
   type BandersnatchProof,
   type Ed25519Key,
@@ -10,9 +12,9 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
 import type { State as SafroleState } from "@typeberry/safrole";
-import { Safrole, type StateDiff as SafroleStateDiff } from "@typeberry/safrole";
+import { Safrole } from "@typeberry/safrole";
 import type { ValidatorData } from "@typeberry/state";
-import { commonFromJson } from "./common-types";
+import { commonFromJson, getChainSpec } from "./common-types";
 
 type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}` ? `${T}${Capitalize<SnakeToCamel<U>>}` : S;
 
@@ -36,11 +38,12 @@ namespace safroleFromJson {
 
 export class TicketsOrKeys {
   static fromJson: FromJson<TicketsOrKeys> = {
-    tickets: json.optional<Ticket[]>(json.array(safroleFromJson.ticketBody)),
     keys: json.optional<BandersnatchKey[]>(json.array(commonFromJson.bytes32())),
+    tickets: json.optional<Ticket[]>(json.array(safroleFromJson.ticketBody)),
   };
-  tickets?: Ticket[];
+
   keys?: BandersnatchKey[];
+  tickets?: Ticket[];
 }
 
 class JsonState {
@@ -109,24 +112,35 @@ export class Output {
   err?: string;
 }
 
+class Input {
+  static fromJson: FromJson<Input> = {
+    slot: "number",
+    entropy: commonFromJson.bytes32(),
+    extrinsic: json.array(safroleFromJson.ticketEnvelope),
+  };
+
+  slot!: number;
+  entropy!: EntropyHash;
+  extrinsic!: SignedTicket[];
+
+  static toSafroleInput(testInput: Input) {
+    return {
+      slot: testInput.slot as TimeSlot,
+      entropy: testInput.entropy as EntropyHash,
+      extrinsic: testInput.extrinsic as SignedTicket[],
+    };
+  }
+}
+
 export class SafroleTest {
   static fromJson: FromJson<SafroleTest> = {
-    input: {
-      slot: "number",
-      entropy: commonFromJson.bytes32(),
-      extrinsic: json.array(safroleFromJson.ticketEnvelope),
-    },
+    input: Input.fromJson,
     pre_state: JsonState.fromJson,
     output: Output.fromJson,
     post_state: JsonState.fromJson,
   };
 
-  input!: {
-    slot: number;
-    entropy: EntropyHash;
-    // offenders: Ed25519Key[];
-    extrinsic: SignedTicket[];
-  };
+  input!: Input;
   pre_state!: JsonState;
   output!: Output;
   post_state!: JsonState;
@@ -134,49 +148,50 @@ export class SafroleTest {
 
 const logger = Logger.new(__filename, "test-runner/safrole");
 
-export async function runSafroleTest(testContent: SafroleTest) {
+export async function runSafroleTest(testContent: SafroleTest, path: string) {
+  const chainSpec = getChainSpec(path);
   const preState = convertPreStateToModel(testContent.pre_state);
-  const safrole = new Safrole(preState);
+  const safrole = new Safrole(preState, chainSpec);
 
-  const output: Output = {};
-  let error = "";
-  let stateDiff: SafroleStateDiff = {};
-  try {
-    stateDiff = await safrole.transition(testContent.input);
-    output.ok = {
-      epoch_mark: undefined,
-      tickets_mark: undefined,
-    };
-  } catch (e) {
-    error = `${e}`;
-    logger.error(error);
-    output.err = "exception";
-  }
+  const result = await safrole.transition(Input.toSafroleInput(testContent.input));
+  const error = result.isError ? result.error : undefined;
+  const ok = result.isOk ? result.ok : undefined;
 
-  const postState = structuredClone(testContent.pre_state);
-  // TODO [ToDr] Didn't find a better way to do this :sad:
-  const unsafePostState = postState as unknown as { [key: string]: unknown };
-  const unsafeStateDiff = stateDiff as unknown as { [key: string]: unknown };
-  for (const k of Object.keys(postState)) {
-    const diffKey = snakeToCamel(k);
-    if (diffKey in stateDiff) {
-      unsafePostState[k] = unsafeStateDiff[diffKey];
-    }
-  }
-
-  // assert.deepStrictEqual(error, "RuntimeError: unreachable");
-  //assert.deepStrictEqual(output, testContent.output);
-  //assert.deepStrictEqual(postState, testContent.post_state);
+  assert.deepEqual(error, testContent.output.err);
+  assert.deepEqual(ok, convertResultToModel(testContent.output) as any);
+  // deepEqual(safrole.state, convertPreStateToModel(testContent.post_state), {context : 'postState'});
+  assert.deepEqual(safrole.state, convertPreStateToModel(testContent.post_state));
 }
 
 function convertPreStateToModel(preState: JsonState): SafroleState {
   return {
-    timeslot: () => preState.tau,
-    entropy: () => preState.eta,
-    prevValidators: () => preState.lambda,
-    currValidators: () => preState.kappa,
-    nextValidators: () => preState.gamma_k,
-    designedValidators: () => preState.iota,
-    ticketsAccumulator: () => preState.gamma_a,
+    timeslot: preState.tau,
+    entropy: preState.eta,
+    prevValidators: preState.lambda,
+    currValidators: preState.kappa,
+    nextValidators: preState.gamma_k,
+    designedValidators: preState.iota,
+    ticketsAccumulator: preState.gamma_a,
+    sealingKeySeries: preState.gamma_s,
+    epochRoot: preState.gamma_z.asOpaque(),
+    postOffenders: preState.post_offenders,
+  };
+}
+
+function convertResultToModel(output: Output) {
+  if (!output.ok) {
+    return undefined;
+  }
+
+  const epochMark = !output.ok?.epoch_mark
+    ? null
+    : {
+        entropy: output.ok.epoch_mark?.entropy,
+        ticketsEntropy: output.ok.epoch_mark?.tickets_entropy,
+        validators: output.ok.epoch_mark?.validators,
+      };
+  return {
+    epochMark,
+    ticketsMark: output.ok?.tickets_mark,
   };
 }

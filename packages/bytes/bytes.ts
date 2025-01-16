@@ -89,11 +89,15 @@ export class BytesBlob {
   }
 
   /** Create a new [`BytesBlob`] by concatenating data from multiple `Uint8Array`s. */
-  static blobFromParts(v: Uint8Array, ...rest: Uint8Array[]) {
-    const totalLength = v.length + rest.reduce((a, v) => a + v.length, 0);
+  static blobFromParts(v: Uint8Array | Uint8Array[], ...rest: Uint8Array[]) {
+    const vArr = v instanceof Uint8Array ? [v] : v;
+    const totalLength = vArr.reduce((a, v) => a + v.length, 0) + rest.reduce((a, v) => a + v.length, 0);
     const buffer = new Uint8Array(totalLength);
-    buffer.set(v, 0);
-    let offset = v.length;
+    let offset = 0;
+    for (const r of vArr) {
+      buffer.set(r, offset);
+      offset += r.length;
+    }
     for (const r of rest) {
       buffer.set(r, offset);
       offset += r.length;
@@ -130,6 +134,16 @@ export class BytesBlob {
       throw new Error(`Missing 0x prefix: ${v}.`);
     }
     return BytesBlob.parseBlobNoPrefix(v.substring(2));
+  }
+
+  /** Split BytesBlob into chunks of given size */
+  chunks(size: number): BytesBlob[] {
+    check(this.length % size === 0, "BytesBlob.chunks: size does not divide length.");
+    const chunks = [];
+    for (let i = 0; i < this.length; i += size) {
+      chunks.push(BytesBlob.blobFrom(this.raw.slice(i, i + size)));
+    }
+    return chunks;
   }
 }
 

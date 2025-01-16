@@ -69,8 +69,8 @@ export class SortedSet<V> extends SortedArray<V> {
     if (second.length === 0) {
       return SortedSet.fromSortedArray(comparator, first.array);
     }
-
     const mergedArray = SortedArray.fromTwoSortedCollections(first, second).array;
+
     const mergedLength = mergedArray.length;
 
     let j = 1;
