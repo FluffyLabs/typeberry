@@ -71,7 +71,7 @@ export class BitOps {
     const bitSign = 1 << (length - 1);
 
     if ((maskedValue & bitSign) > 0) {
-      return ~BigInt(maskedValue) + 1n;
+      return ~BigInt(mask) | BigInt(maskedValue);
     }
 
     return BigInt(maskedValue);
