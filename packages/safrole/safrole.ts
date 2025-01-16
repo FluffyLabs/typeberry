@@ -187,7 +187,6 @@ export class Safrole {
     const postOffenders = this.state.postOffenders; // postOffenders should be a dictionary
     const nextValidators = this.state.designedValidators.map((validator) => {
       const isOffender = !!postOffenders.find((x) => x.isEqualTo(validator.ed25519));
-
       if (isOffender) {
         return new ValidatorData(
           Bytes.zero(32).asOpaque(),
