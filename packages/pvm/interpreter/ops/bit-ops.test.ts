@@ -353,6 +353,16 @@ describe("BitOps", () => {
 
       assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
     });
+
+    it("should extend sign but should not change the least significant 8 bits", () => {
+      const value = 0x00006d6d6d6dd48dn;
+      const resultValue = 0xffffffffffffff8dn;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.signExtend8(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
+    });
   });
 
   describe("signExtend16", () => {
@@ -374,6 +384,16 @@ describe("BitOps", () => {
       bitOps.signExtend16(firstRegisterIndex, resultRegisterIndex);
 
       assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
+    });
+
+    it("should extend sign but should not change the least significant 16 bits", () => {
+      const value = 0x00006d6d6d6dd46dn;
+      const resultValue = 0xffffffffffffd46dn;
+      const { bitOps, regs, firstRegisterIndex, resultRegisterIndex } = prepareData(value);
+
+      bitOps.signExtend16(firstRegisterIndex, resultRegisterIndex);
+
+      assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
     });
   });
 
