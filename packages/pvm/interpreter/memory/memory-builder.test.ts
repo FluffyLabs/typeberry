@@ -99,4 +99,28 @@ describe("MemoryBuilder", () => {
       assert.deepEqual(memory, expectedMemory);
     });
   });
+
+  describe("setData", () => {
+    it("should add writeable page and set data separately", () => {
+      const builder = new MemoryBuilder();
+      const pageMap = new Map();
+      const data = new Uint8Array(PAGE_SIZE).fill(1);
+      const pageNumber = tryAsPageNumber(2);
+      const address = tryAsMemoryIndex(pageNumber * PAGE_SIZE);
+      pageMap.set(pageNumber, new WriteablePage(pageNumber, data));
+      const expectedMemory = {
+        endHeapIndex: 4 * PAGE_SIZE,
+        sbrkIndex: 3 * PAGE_SIZE,
+        virtualSbrkIndex: 3 * PAGE_SIZE,
+        memory: pageMap,
+      };
+
+      const memory = builder
+        .setWriteablePages(tryAsMemoryIndex(2 * PAGE_SIZE), tryAsMemoryIndex(3 * PAGE_SIZE))
+        .setData(address, data)
+        .finalize(tryAsSbrkIndex(3 * PAGE_SIZE), tryAsSbrkIndex(4 * PAGE_SIZE));
+
+      assert.deepEqual(memory, expectedMemory);
+    });
+  });
 });
