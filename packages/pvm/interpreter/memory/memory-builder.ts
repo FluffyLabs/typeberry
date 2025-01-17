@@ -82,8 +82,9 @@ export class MemoryBuilder {
    */
   setData(start: MemoryIndex, data: Uint8Array) {
     this.ensureNotFinalized();
-    const end = tryAsMemoryIndex(start + data.length);
-    check(getPageNumber(start) === getPageNumber(end), "The data has to fit into a single page.");
+    const pageOffset = start % PAGE_SIZE;
+    const remainingSpaceOnPage = PAGE_SIZE - pageOffset;
+    check(data.length <= remainingSpaceOnPage, "The data has to fit into a single page.");
     const pageNumber = getPageNumber(start);
     const page = this.initialMemory.get(pageNumber);
 
