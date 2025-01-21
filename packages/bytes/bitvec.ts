@@ -39,7 +39,7 @@ export class BitVec {
   }
 
   /** Return a raw in-memory representation of this [`BitVec`]. */
-  raw(): Uint8Array {
+  get raw(): Uint8Array {
     return this.data.subarray(0, this.byteLength);
   }
 
