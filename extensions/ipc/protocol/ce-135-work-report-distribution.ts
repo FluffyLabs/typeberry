@@ -1,5 +1,5 @@
-import type { TimeSlot, ValidatorIndex } from "@typeberry/block";
-import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/block/crypto";
+import type { TimeSlot } from "@typeberry/block";
+import { Credential } from "@typeberry/block/gaurantees";
 import { WorkReport } from "@typeberry/block/work-report";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
@@ -18,29 +18,11 @@ import type { StreamKind } from "./stream";
 
 export const STREAM_KIND = 135 as StreamKind;
 
-export class ValidatorSignature extends WithDebug {
-  static Codec = codec.Class(ValidatorSignature, {
-    validatorIndex: codec.u16.asOpaque(),
-    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque(),
-  });
-
-  static fromCodec({ validatorIndex, signature }: CodecRecord<ValidatorSignature>) {
-    return new ValidatorSignature(validatorIndex, signature);
-  }
-
-  constructor(
-    public readonly validatorIndex: ValidatorIndex,
-    public readonly signature: Ed25519Signature,
-  ) {
-    super();
-  }
-}
-
 export class GuaranteedWorkReport extends WithDebug {
   static Codec = codec.Class(GuaranteedWorkReport, {
     report: WorkReport.Codec,
     slot: codec.u32.asOpaque(),
-    signatures: codec.sequenceVarLen(ValidatorSignature.Codec),
+    signatures: codec.sequenceVarLen(Credential.Codec),
   });
 
   static fromCodec({ report, slot, signatures }: CodecRecord<GuaranteedWorkReport>) {
@@ -50,7 +32,7 @@ export class GuaranteedWorkReport extends WithDebug {
   constructor(
     public readonly report: WorkReport,
     public readonly slot: TimeSlot,
-    public readonly signatures: ValidatorSignature[],
+    public readonly signatures: Credential[],
   ) {
     super();
   }
@@ -65,7 +47,7 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 
   onStreamMessage(sender: StreamSender, message: BytesBlob): void {
     const guaranteedWorkReport = Decoder.decodeObject(GuaranteedWorkReport.Codec, message);
-    logger.info(`[${sender.streamId}] Received guaranteed work report.`);
+    logger.log(`[${sender.streamId}] Received guaranteed work report.`);
     this.onWorkReport(guaranteedWorkReport);
     sender.close();
   }

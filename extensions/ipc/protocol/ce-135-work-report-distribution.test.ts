@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { tryAsCoreIndex, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import type { ServiceGas, ServiceId } from "@typeberry/block";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/block/crypto";
+import { Credential } from "@typeberry/block/gaurantees";
 import { RefineContext } from "@typeberry/block/refine-context";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
@@ -12,13 +13,7 @@ import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { MessageHandler, type MessageSender } from "../handler";
-import {
-  ClientHandler,
-  GuaranteedWorkReport,
-  STREAM_KIND,
-  ServerHandler,
-  ValidatorSignature,
-} from "./ce-135-work-report-distribution";
+import { ClientHandler, GuaranteedWorkReport, STREAM_KIND, ServerHandler } from "./ce-135-work-report-distribution";
 
 const MOCK_SLOT = tryAsTimeSlot(1000);
 const MOCK_WORK_PACKAGE_SPEC = new WorkPackageSpec(
@@ -52,8 +47,8 @@ const MOCK_WORK_REPORT = new WorkReport(
   FixedSizeArray.new([MOCK_WORK_RESULT], tryAsWorkItemsCount(1)),
 );
 const MOCK_SIGNATURES = [
-  new ValidatorSignature(tryAsValidatorIndex(0), Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque() as Ed25519Signature),
-  new ValidatorSignature(tryAsValidatorIndex(1), Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque() as Ed25519Signature),
+  new Credential(tryAsValidatorIndex(0), Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque() as Ed25519Signature),
+  new Credential(tryAsValidatorIndex(1), Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque() as Ed25519Signature),
 ];
 const MOCK_GUARANTEED_WORK_REPORT = new GuaranteedWorkReport(MOCK_WORK_REPORT, MOCK_SLOT, MOCK_SIGNATURES);
 
