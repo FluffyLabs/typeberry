@@ -366,7 +366,7 @@ export class Encoder {
    * https://graypaper.fluffylabs.dev/#/364735a/337f00337f00
    */
   bitVecFixLen(bitvec: BitVec) {
-    const bytes = bitvec.raw();
+    const bytes = bitvec.raw;
     this.bytes(Bytes.fromBlob(bytes, bytes.length));
   }
 
