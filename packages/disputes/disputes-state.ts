@@ -22,7 +22,7 @@ export function hashComparator<V extends WorkReportHash | Ed25519Key>(a: V, b: V
  * - wonkySet - all work-reports hashes which appear to be impossible to judge
  * - punishSet - set of Ed25519 keys representing validators which were found to have misjudged a work-report
  *
- * https://graypaper.fluffylabs.dev/#/911af30/122b00124700
+ * https://graypaper.fluffylabs.dev/#/579bd12/122b00124700
  */
 export class DisputesRecords {
   constructor(

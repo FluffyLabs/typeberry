@@ -15,7 +15,7 @@ const NO_OF_REGISTERS = 13;
  * s - stack size
  * c - program code
  *
- * GP reference: https://graypaper.fluffylabs.dev/#/364735a/284a03284a03
+ * https://graypaper.fluffylabs.dev/#/579bd12/2b92022b9202
  */
 type InputLength = Opaque<number, "Number that is lower than 2 ** 24 (Z_I from GP)">;
 
@@ -108,7 +108,7 @@ function getMemorySegment(start: number, end: number, data: Uint8Array | null = 
 function getRegisters(argsLength: number) {
   const regs = new BigUint64Array(NO_OF_REGISTERS);
 
-  // GP reference: https://graypaper.fluffylabs.dev/#/293bf5a/29860129bb01
+  // GP reference: https://graypaper.fluffylabs.dev/#/579bd12/2c7c012cb101
   regs[0] = BigInt(LAST_PAGE);
   regs[1] = BigInt(STACK_SEGMENT);
   regs[7] = BigInt(ARGS_SEGMENT);

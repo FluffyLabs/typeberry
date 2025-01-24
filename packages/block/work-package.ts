@@ -30,7 +30,7 @@ export const MAX_NUMBER_OF_WORK_ITEMS = 4;
  *
  * `P = (j ∈ Y, h ∈ NS, u ∈ H, p ∈ Y, x ∈ X, w ∈ ⟦I⟧1∶I)
  *
- * https://graypaper.fluffylabs.dev/#/c71229b/193300193500
+ * https://graypaper.fluffylabs.dev/#/579bd12/197000197200
  */
 export class WorkPackage extends WithDebug {
   static Codec = codec.Class(WorkPackage, {
@@ -71,7 +71,7 @@ export class WorkPackage extends WithDebug {
      * `w`: sequence of work items.
      *
      * Constrained by `I=4`:
-     * https://graypaper.fluffylabs.dev/#/c71229b/3d56003d5800
+     * https://graypaper.fluffylabs.dev/#/579bd12/416600416800
      */
     public readonly items: FixedSizeArray<WorkItem, WorkItemsCount>,
   ) {

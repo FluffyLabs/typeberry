@@ -11,7 +11,7 @@ export class Statistics {
   ) {}
 
   private getValidatorsStatistics(slot: TimeSlot) {
-    /** https://graypaper.fluffylabs.dev/#/6e1c0cd/18fb0118fb01 */
+    /** https://graypaper.fluffylabs.dev/#/579bd12/18b80118b801 */
     const currentEpoch = Math.floor(this.state.tau / this.chainSpec.epochLength);
     const nextEpoch = Math.floor(slot / this.chainSpec.epochLength);
 
@@ -40,23 +40,23 @@ export class Statistics {
     check(current[authorIndex] !== undefined, "authorIndex is out of bounds");
 
     /**
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/184b02184b02
+     * https://graypaper.fluffylabs.dev/#/579bd12/180802180802
      */
 
     current[authorIndex].blocks = tryAsU32(current[authorIndex].blocks + 1);
 
     /**
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/185e02185e02
+     * https://graypaper.fluffylabs.dev/#/579bd12/181b02181b02
      */
     current[authorIndex].tickets = tryAsU32(current[authorIndex].tickets + extrinsic.tickets.length);
 
     /**
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/188202189a02
+     * https://graypaper.fluffylabs.dev/#/579bd12/183f02185702
      */
     current[authorIndex].preImages = tryAsU32(current[authorIndex].preImages + extrinsic.preimages.length);
 
     /**
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/18a60218a602
+     * https://graypaper.fluffylabs.dev/#/579bd12/186302186302
      *
      * This value is well bounded by number of blocks in the epoch and maximal amount of preimage data in the extrinsics per one validator. So it can't reach 2GB.
      */
@@ -64,7 +64,7 @@ export class Statistics {
     current[authorIndex].preImagesSize = tryAsU32(current[authorIndex].preImagesSize + preImagesSize);
 
     /**
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/18cc0218d002
+     * https://graypaper.fluffylabs.dev/#/579bd12/188902188d02
      *
      * Please note I don't use Kappa' here. If I understand correctly we don't need it.
      * Kappa' is not needed because we can use validator indexes directly from guarantees extrinsic.
@@ -78,7 +78,7 @@ export class Statistics {
     }
 
     /**
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/18dc0218dc02
+     * https://graypaper.fluffylabs.dev/#/579bd12/189902189902
      */
     for (const assurance of extrinsic.assurances) {
       current[assurance.validatorIndex].assurances = tryAsU32(current[assurance.validatorIndex].assurances + 1);

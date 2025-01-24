@@ -29,7 +29,7 @@ export class Credential extends WithDebug {
 /**
  * Tuple of work-report, a credential and it's corresponding timeslot.
  *
- * https://graypaper.fluffylabs.dev/#/c71229b/142e02144e02
+ * https://graypaper.fluffylabs.dev/#/579bd12/147102149102
  */
 export class ReportGuarantee extends WithDebug {
   static Codec = codec.Class(ReportGuarantee, {
@@ -53,7 +53,7 @@ export class ReportGuarantee extends WithDebug {
      * validator index and a signature.
      * Credentials must be ordered by their validator index.
      *
-     * https://graypaper.fluffylabs.dev/#/c71229b/147602147802
+     * https://graypaper.fluffylabs.dev/#/579bd12/14b90214bb02
      */
     public readonly credentials: KnownSizeArray<Credential, "0..ValidatorsCount">,
   ) {
@@ -67,7 +67,7 @@ export class ReportGuarantee extends WithDebug {
  * Each core index (within work-report) must be unique and guarantees
  * must be in ascending order of this.
  *
- * https://graypaper.fluffylabs.dev/#/c71229b/142102142402
+ * https://graypaper.fluffylabs.dev/#/579bd12/146402146702
  */
 export type GuaranteesExtrinsic = KnownSizeArray<ReportGuarantee, "0..CoresCount">;
 

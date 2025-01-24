@@ -22,7 +22,7 @@ import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
  * In case some of the things are computed (and the computation may be heavy)
  * this should be split.
  *
- * https://graypaper.fluffylabs.dev/#/439ca37/10e70010e700
+ * https://graypaper.fluffylabs.dev/#/579bd12/105a01105a01
  */
 export class AccountInfo extends WithDebug {
   static Codec = codec.Class(AccountInfo, {
@@ -55,11 +55,11 @@ export class AccountInfo extends WithDebug {
 
   /** `a_t = BS + BI * a_i + BL * a_l` */
   static calculateThresholdBalance(items: U32, bytes: U64): U64 {
-    /** https://graypaper.fluffylabs.dev/#/439ca37/3d30003d3000 */
+    /** https://graypaper.fluffylabs.dev/#/579bd12/413e00413e00 */
     const B_S = 100n;
-    /** https://graypaper.fluffylabs.dev/#/439ca37/3d28003d2800 */
+    /** https://graypaper.fluffylabs.dev/#/579bd12/413600413600 */
     const B_I = 10n;
-    /** https://graypaper.fluffylabs.dev/#/439ca37/3d2c003d2d00 */
+    /** https://graypaper.fluffylabs.dev/#/579bd12/413a00413b00 */
     const B_L = 1n;
 
     // TODO [ToDr] Overflows?
@@ -106,7 +106,7 @@ const IN_OUT_REG = 7;
  * i = number of items in the storage
  * l = total number of octets stored.
  *
- * https://graypaper.fluffylabs.dev/#/439ca37/2d45022d4502
+ * https://graypaper.fluffylabs.dev/#/579bd12/313b00313b00
  */
 export class Info implements HostCallHandler {
   index = tryAsHostCallIndex(4);

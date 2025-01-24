@@ -28,7 +28,7 @@ const IN_OUT_REG = 7;
 /**
  * Read account storage.
  *
- * https://graypaper.fluffylabs.dev/#/439ca37/2d3a002d3a00
+ * https://graypaper.fluffylabs.dev/#/579bd12/304101304101
  */
 export class Read implements HostCallHandler {
   index = tryAsHostCallIndex(2);

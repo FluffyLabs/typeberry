@@ -8,15 +8,15 @@ import { type RefineExternalities, tryAsMachineId } from "./refine-externalities
 
 const IN_OUT_REG = 7;
 
-/** https://graypaper.fluffylabs.dev/#/911af30/333f03333f03 */
+/** https://graypaper.fluffylabs.dev/#/579bd12/35f20135f201 */
 const RESERVED_NUMBER_OF_PAGES = 16;
-/** https://graypaper.fluffylabs.dev/#/911af30/333f03333f03 */
+/** https://graypaper.fluffylabs.dev/#/579bd12/35f20135f201 */
 export const MAX_NUMBER_OF_PAGES = MEMORY_SIZE / 2 ** 12;
 
 /**
  * Initialize some pages of memory for writing for a nested PVM.
  *
- * https://graypaper.fluffylabs.dev/#/911af30/33bf0233bf02
+ * https://graypaper.fluffylabs.dev/#/579bd12/357201357201
  */
 export class Zero implements HostCallHandler {
   index = tryAsHostCallIndex(21);

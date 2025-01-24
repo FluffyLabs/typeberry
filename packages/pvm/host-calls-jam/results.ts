@@ -1,7 +1,7 @@
 /**
  * Host call result constants.
  *
- * https://graypaper.fluffylabs.dev/#/439ca37/298002298002
+ * https://graypaper.fluffylabs.dev/#/579bd12/2c77022c7702
  */
 export enum HostCallResult {
   /** The return value indicating an item does not exist. */

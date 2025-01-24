@@ -27,7 +27,7 @@ export class ImportSpec extends WithDebug {
   constructor(
     /**
      * ??: TODO [ToDr] GP seems to mention a identity of a work-package:
-     * https://graypaper.fluffylabs.dev/#/c71229b/195500195500
+     * https://graypaper.fluffylabs.dev/#/579bd12/199300199300
      */
     public readonly treeRoot: OpaqueHash,
     /** Index of the prior exported segment. */
@@ -107,7 +107,7 @@ export function workItemExtrinsicsCodec(workItems: WorkItem[]) {
 /**
  * Work Item which is a part of some work package.
  *
- * https://graypaper.fluffylabs.dev/#/5b732de/199100199c00
+ * https://graypaper.fluffylabs.dev/#/579bd12/198b00199600
  */
 export class WorkItem extends WithDebug {
   static Codec = codec.Class(WorkItem, {

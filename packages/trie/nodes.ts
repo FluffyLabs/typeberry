@@ -11,7 +11,7 @@ export type InputKey = StateKey | TruncatedStateKey;
 /**
  * A state commitment.
  *
- * https://graypaper.fluffylabs.dev/#/387103d/0cb0000cb400
+ * https://graypaper.fluffylabs.dev/#/579bd12/0c1f010c2301
  */
 export type TrieHash = Opaque<OpaqueHash, "trie">;
 export type ValueHash = Opaque<OpaqueHash, "trieValue">;

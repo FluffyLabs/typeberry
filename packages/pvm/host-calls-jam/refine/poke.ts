@@ -17,7 +17,7 @@ const IN_OUT_REG = 7;
 /**
  * Copy a piece of local memory into nested PVM instance.
  *
- * https://graypaper.fluffylabs.dev/#/911af30/332302332302
+ * https://graypaper.fluffylabs.dev/#/579bd12/35d60035d600
  */
 export class Poke implements HostCallHandler {
   index = tryAsHostCallIndex(20);

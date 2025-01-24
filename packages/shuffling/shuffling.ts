@@ -5,7 +5,7 @@ import { check } from "@typeberry/utils";
 /**
  * Deterministic variant of the Fisher–Yates shuffle function
  *
- * https://graypaper.fluffylabs.dev/#/5b732de/393402393402
+ * https://graypaper.fluffylabs.dev/#/579bd12/3b9a013b9a01
  */
 export function fisherYatesShuffle<T>(arr: T[], entropy: Bytes<32>): T[] {
   check(entropy.length === 32, `Expected entropy of length 32, got ${entropy.length}`);

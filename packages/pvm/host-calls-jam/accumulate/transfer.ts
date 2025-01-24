@@ -22,14 +22,14 @@ const AMOUNT_HIG_REG = 9;
 /**
  * Transfer balance from one service account to another.
  *
- * https://graypaper.fluffylabs.dev/#/364735a/2f3a002f3a00
+ * https://graypaper.fluffylabs.dev/#/579bd12/32c20132c201
  */
 export class Transfer implements HostCallHandler {
   index = tryAsHostCallIndex(11);
   /**
    * `g = 10 + ω8 + 2**32 * ω9`
    *
-   * https://graypaper.fluffylabs.dev/#/364735a/2f3c002f3f00
+   * https://graypaper.fluffylabs.dev/#/579bd12/32c30132c601
    */
   gasCost = (regs: Registers): Gas => {
     const smallGas = 10 + regs.getU32(AMOUNT_LOW_REG);

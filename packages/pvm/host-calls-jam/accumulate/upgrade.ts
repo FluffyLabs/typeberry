@@ -19,7 +19,7 @@ const IN_OUT_REG = 7;
 /**
  * Upgrade the code of the service.
  *
- * https://graypaper.fluffylabs.dev/#/364735a/2e01032e0103
+ * https://graypaper.fluffylabs.dev/#/579bd12/324401324401
  */
 export class Upgrade implements HostCallHandler {
   index = tryAsHostCallIndex(10);

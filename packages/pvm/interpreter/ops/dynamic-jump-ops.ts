@@ -7,7 +7,7 @@ import { Result } from "../result";
 import { addWithOverflowU32 } from "./math-utils";
 
 const EXIT = 0xff_ff_00_00;
-/** `Z_A`: https://graypaper.fluffylabs.dev/#/911af30/24ed0124ee01 */
+/** `Z_A`: https://graypaper.fluffylabs.dev/#/579bd12/248402248402 */
 const JUMP_ALIGMENT_FACTOR = 2;
 
 export class DynamicJumpOps {

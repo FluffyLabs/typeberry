@@ -12,7 +12,7 @@ import { type TicketsExtrinsic, ticketsExtrinsicCodec } from "./tickets";
  *
  * `E = (E_T, E_D, E_P, E_A, E_G)`
  *
- * https://graypaper.fluffylabs.dev/#/c71229b/08ab0008ab00
+ * https://graypaper.fluffylabs.dev/#/579bd12/08ab0008ab00
  */
 export class Extrinsic extends WithDebug {
   static Codec = codec.Class(Extrinsic, {
@@ -65,7 +65,7 @@ export type ExtrinsicView = DescribedBy<typeof Extrinsic.Codec.View>;
  * The block consists of the header and some external input data (extrinsic).
  *
  * `B = (H, E)`
- * https://graypaper.fluffylabs.dev/#/c71229b/089900089900
+ * https://graypaper.fluffylabs.dev/#/579bd12/089900089900
  */
 export class Block extends WithDebug {
   static Codec = codec.Class(Block, {

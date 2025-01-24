@@ -1,6 +1,6 @@
 import { PAGE_SIZE, SEGMENT_SIZE } from "./memory-conts";
 
-// GP reference: https://graypaper.fluffylabs.dev/#/364735a/288c03288c03
+// GP reference: https://graypaper.fluffylabs.dev/#/579bd12/2bd2022bd202
 
 export function alignToSegmentSize(size: number) {
   // Q(x) from GP

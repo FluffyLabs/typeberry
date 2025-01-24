@@ -14,7 +14,7 @@ import type { HeaderHash } from "./hash";
  * A work-report is said to become available iff there are a clear
  * 2/3 supermajority of validators who have marked its core as set within
  * the block's assurance extrinsic.
- * https://graypaper.fluffylabs.dev/#/c71229b/135201135601
+ * https://graypaper.fluffylabs.dev/#/579bd12/145800145c00
  */
 export class AvailabilityAssurance extends WithDebug {
   static Codec = codec.Class(AvailabilityAssurance, {
@@ -39,7 +39,7 @@ export class AvailabilityAssurance extends WithDebug {
   constructor(
     /**
      * The assurances must all be anchored on the parent.
-     * https://graypaper.fluffylabs.dev/#/c71229b/135201135601
+     * https://graypaper.fluffylabs.dev/#/579bd12/145800145c00
      */
     public readonly anchor: HeaderHash,
     /**
@@ -62,7 +62,7 @@ export class AvailabilityAssurance extends WithDebug {
  * `E_A`: Sequence with at most one item per validator.
  *
  * Assurances must be ordered by validator index.
- * https://graypaper.fluffylabs.dev/#/c71229b/135201135601
+ * https://graypaper.fluffylabs.dev/#/579bd12/145800145c00
  */
 export type AssurancesExtrinsic = KnownSizeArray<AvailabilityAssurance, "0 .. ValidatorsCount">;
 

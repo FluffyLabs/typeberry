@@ -29,7 +29,7 @@ export interface Accounts {
    * It means that the threshold balance `a_t` is greater than current account balance `a_b`.
    * TODO [ToDr] Can be computed from `AccountInfo` - might need to be merged later.
    *
-   * https://graypaper.fluffylabs.dev/#/439ca37/2d2a022d2e02
+   * https://graypaper.fluffylabs.dev/#/579bd12/303103303503
    */
   isStorageFull(serviceId: ServiceId): Promise<boolean>;
 
@@ -46,7 +46,7 @@ const IN_OUT_REG = 7;
 /**
  * Write account storage.
  *
- * https://graypaper.fluffylabs.dev/#/439ca37/2d4e012d4e01
+ * https://graypaper.fluffylabs.dev/#/579bd12/305502305502
  */
 export class Write implements HostCallHandler {
   index = tryAsHostCallIndex(3);
@@ -59,7 +59,7 @@ export class Write implements HostCallHandler {
     // Storage is full (i.e. `a_t > a_b` - threshold balance is greater than current balance).
     // NOTE that we first need to know if the storage is full, since the result
     // does not depend on the success of reading the key or value:
-    // https://graypaper.fluffylabs.dev/#/439ca37/2d2a022d2a02
+    // https://graypaper.fluffylabs.dev/#/579bd12/303103303103
     const isStorageFull = await this.account.isStorageFull(this.currentServiceId);
     if (isStorageFull) {
       regs.setU32(IN_OUT_REG, HostCallResult.FULL);

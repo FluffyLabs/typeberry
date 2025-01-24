@@ -14,7 +14,9 @@ const IN_OUT_REG = 7;
 /**
  * Remove the current service id and transfer or burn the remaining account balance to some other account.
  *
- * https://graypaper.fluffylabs.dev/#/364735a/2f36012f3601
+ * TODO [ToDr] Rename to eject
+ *
+ * https://graypaper.fluffylabs.dev/#/579bd12/32c10232c102
  */
 export class Quit implements HostCallHandler {
   index = tryAsHostCallIndex(12);

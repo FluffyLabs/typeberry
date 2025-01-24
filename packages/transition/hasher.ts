@@ -16,6 +16,7 @@ export class TransitionHasher {
   }
 
   extrinsic(extrinsic: Extrinsic): WithHashAndBytes<ExtrinsicHash, Extrinsic> {
+    // TODO [ToDr] This is incorrect, since extrinc hash should be a merkle root.
     return this.encode(Extrinsic.Codec, extrinsic);
   }
 

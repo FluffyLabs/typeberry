@@ -22,7 +22,7 @@ const IN_OUT_REG = 7;
 /**
  * Assign new fixed-length authorization queue to some core.
  *
- * https://graypaper.fluffylabs.dev/#/364735a/2ebf002ebf00
+ * https://graypaper.fluffylabs.dev/#/579bd12/311702311702
  */
 export class Assign implements HostCallHandler {
   index = tryAsHostCallIndex(6);

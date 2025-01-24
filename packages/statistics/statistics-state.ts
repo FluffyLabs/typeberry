@@ -2,7 +2,7 @@ import type { TimeSlot, ValidatorData } from "@typeberry/block";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 
 /**
- * https://graypaper.fluffylabs.dev/#/6e1c0cd/187a01187a01
+ * https://graypaper.fluffylabs.dev/#/579bd12/183701183701
  */
 export class ActivityRecord {
   constructor(
@@ -50,7 +50,7 @@ export class StatisticsState {
     /**
      * `pi`: Previous and current statistics of each validator.
      *
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/185d01185f01
+     * https://graypaper.fluffylabs.dev/#/579bd12/181a01181c01
      */
     public statisticsPerValidator: {
       current: ActivityRecord[];
@@ -60,14 +60,14 @@ export class StatisticsState {
     /**
      * The current time slot.
      *
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/18a70118a701
+     * https://graypaper.fluffylabs.dev/#/579bd12/186401186401
      */
     public tau: TimeSlot,
 
     /**
      * Posterior active validators
      *
-     * https://graypaper.fluffylabs.dev/#/6e1c0cd/18cf0218d002
+     * https://graypaper.fluffylabs.dev/#/579bd12/188c02188d02
      */
     public kappaPrime: ValidatorData[],
   ) {}

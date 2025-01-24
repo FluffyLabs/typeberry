@@ -8,7 +8,7 @@ import type { AccumulationPartialState } from "./partial-state";
 /**
  * Checkpoint the partial state.
  *
- * https://graypaper.fluffylabs.dev/#/364735a/2ecd012ecd01
+ * https://graypaper.fluffylabs.dev/#/579bd12/312503312503
  */
 export class Checkpoint implements HostCallHandler {
   index = tryAsHostCallIndex(8);

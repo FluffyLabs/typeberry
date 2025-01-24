@@ -7,7 +7,7 @@ import { MerkleMountainRange, type MmrHasher, type MmrPeaks } from "@typeberry/m
 /**
  * `H = 8`: The size of recent history, in blocks.
  *
- * https://graypaper.fluffylabs.dev/#/6e1c0cd/3f5d003f5f00
+ * https://graypaper.fluffylabs.dev/#/579bd12/416300416500
  */
 export const MAX_RECENT_HISTORY = 8;
 
@@ -26,7 +26,7 @@ export type RecentHistoryInput = {
   /**
    * `C`: BEEFY commitment.
    *
-   * https://graypaper.fluffylabs.dev/#/6e1c0cd/173d03173f03
+   * https://graypaper.fluffylabs.dev/#/579bd12/172803172a03
    */
   accumulateRoot: OpaqueHash;
   /** Work packages in the guarantees extrinsic. */
@@ -36,7 +36,7 @@ export type RecentHistoryInput = {
 /**
  * `β`: State of the blocks from recent history.
  *
- * https://graypaper.fluffylabs.dev/#/6e1c0cd/0fb7010fb701
+ * https://graypaper.fluffylabs.dev/#/579bd12/0fb7010fb701
  */
 export type RecentHistoryState = BlockState[];
 
@@ -57,7 +57,7 @@ export type BlockState = {
 /**
  * Recent History transition function.
  *
- * https://graypaper.fluffylabs.dev/#/6e1c0cd/0faf010faf01
+ * https://graypaper.fluffylabs.dev/#/579bd12/0faf010faf01
  */
 export class RecentHistory {
   constructor(
