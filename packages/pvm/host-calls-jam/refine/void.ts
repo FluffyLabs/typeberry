@@ -12,7 +12,7 @@ const IN_OUT_REG = 7;
 /**
  * Mark some pages as unavailable and zero their content.
  *
- * https://graypaper.fluffylabs.dev/#/5b732de/343b00343b00
+ * https://graypaper.fluffylabs.dev/#/579bd12/352102352102
  */
 export class Void implements HostCallHandler {
   index = tryAsHostCallIndex(22);

@@ -65,7 +65,7 @@ export class SegmentRootLookupItem {
 /**
  * A report of execution of some work package.
  *
- * https://graypaper.fluffylabs.dev/#/c71229b/133e00134500
+ * https://graypaper.fluffylabs.dev/#/579bd12/136f00137600
  */
 export class WorkReport extends WithDebug {
   static Codec = codec.Class(WorkReport, {
@@ -114,7 +114,7 @@ export class WorkReport extends WithDebug {
     public readonly authorizationOutput: BytesBlob,
     /** `l`: Segment-root lookup
      * In GP segment-root lookup is a dictionary but dictionary and var-len sequence are equal from codec perspective
-     * https://graypaper.fluffylabs.dev/#/911af30/13ab0013af00
+     * https://graypaper.fluffylabs.dev/#/579bd12/13ab0013ad00
      */
     public readonly segmentRootLookup: SegmentRootLookupItem[],
     /** `r`: The results of evaluation of each of the items in the work package. */

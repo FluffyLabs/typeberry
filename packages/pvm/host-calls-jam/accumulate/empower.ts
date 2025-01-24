@@ -27,7 +27,7 @@ const serviceIdAndGasCodec = codec.object({
 /**
  * Modify privileged services and services that auto-accumulate every block.
  *
- * https://graypaper.fluffylabs.dev/#/364735a/2e3a002e3a00
+ * https://graypaper.fluffylabs.dev/#/579bd12/317d01317d01
  */
 export class Empower implements HostCallHandler {
   index = tryAsHostCallIndex(5);

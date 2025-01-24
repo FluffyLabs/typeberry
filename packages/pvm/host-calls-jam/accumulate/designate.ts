@@ -16,7 +16,7 @@ export const VALIDATOR_DATA_BYTES = tryAsExactBytes(ValidatorData.Codec.sizeHint
 /**
  * Designate a new set of validator keys.
  *
- * https://graypaper.fluffylabs.dev/#/364735a/2e4e012e4e01
+ * https://graypaper.fluffylabs.dev/#/579bd12/31a60231a602
  */
 export class Designate implements HostCallHandler {
   index = tryAsHostCallIndex(7);

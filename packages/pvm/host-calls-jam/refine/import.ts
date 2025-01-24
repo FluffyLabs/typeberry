@@ -18,7 +18,7 @@ const IN_OUT_REG = 7;
 /**
  * Import a segment that was exported by some previous `refine` of the current service.
  *
- * https://graypaper.fluffylabs.dev/#/911af30/328202328202
+ * https://graypaper.fluffylabs.dev/#/579bd12/345501345501
  */
 export class Import implements HostCallHandler {
   index = tryAsHostCallIndex(16);

@@ -19,7 +19,7 @@ const IN_OUT_REG = 7;
 /**
  * Mark a preimage hash as unavailable.
  *
- * https://graypaper.fluffylabs.dev/#/364735a/303a00303a00
+ * https://graypaper.fluffylabs.dev/#/579bd12/33ee0133ee01
  */
 export class Forget implements HostCallHandler {
   index = tryAsHostCallIndex(14);

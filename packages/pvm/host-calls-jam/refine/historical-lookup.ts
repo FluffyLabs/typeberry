@@ -15,7 +15,7 @@ const IN_OUT_REG = 7;
 /**
  * Lookup a historical preimage.
  *
- * https://graypaper.fluffylabs.dev/#/911af30/329501329501
+ * https://graypaper.fluffylabs.dev/#/579bd12/346800346800
  */
 export class HistoricalLookup implements HostCallHandler {
   index = tryAsHostCallIndex(15);

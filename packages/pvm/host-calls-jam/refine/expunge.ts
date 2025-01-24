@@ -9,7 +9,7 @@ const IN_OUT_REG = 7;
 /**
  * Forget a previously started nested machine.
  *
- * https://graypaper.fluffylabs.dev/#/5b732de/343102343102
+ * https://graypaper.fluffylabs.dev/#/579bd12/367c01367c01
  */
 export class Expunge implements HostCallHandler {
   index = tryAsHostCallIndex(24);

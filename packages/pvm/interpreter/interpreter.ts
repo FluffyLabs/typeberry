@@ -167,7 +167,7 @@ export class Interpreter {
      * - change status to panic and quit program immediately,
      * - treat the invalid instruction as a regular trap.
      * The difference is that in the second case we don't need any additional condition and gas will be subtracted automagically so this option is implemented
-     * Reference: https://graypaper.fluffylabs.dev/#/364735a/232f02233002
+     * Reference: https://graypaper.fluffylabs.dev/#/579bd12/251100251200
      */
     const currentInstruction = this.code[this.pc] ?? Instruction.TRAP;
     const isValidInstruction = !!Instruction[currentInstruction];

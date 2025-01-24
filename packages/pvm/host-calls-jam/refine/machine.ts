@@ -17,7 +17,7 @@ const IN_OUT_REG = 7;
 /**
  * Start a nested PVM instance with given program code and entrypoint (program counter).
  *
- * https://graypaper.fluffylabs.dev/#/911af30/33cb0033cb00
+ * https://graypaper.fluffylabs.dev/#/579bd12/349902349902
  */
 export class Machine implements HostCallHandler {
   index = tryAsHostCallIndex(18);

@@ -6,7 +6,7 @@ import type { ServiceId } from "./common";
 /**
  * Service index (requester) and the data (blob).
  *
- * https://graypaper.fluffylabs.dev/#/c71229b/153801154901
+ * https://graypaper.fluffylabs.dev/#/579bd12/181500181600
  */
 export class Preimage extends WithDebug {
   static Codec = codec.Class(Preimage, {

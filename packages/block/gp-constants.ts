@@ -11,7 +11,7 @@ import { MAX_NUMBER_OF_WORK_ITEMS } from "./work-package";
  * here are only temporarily for convenience. When we figure out better names
  * and places for these this file will be eradicated.
  *
- * https://graypaper.fluffylabs.dev/#/364735a/3d22003d2200
+ * https://graypaper.fluffylabs.dev/#/579bd12/413000413000
  */
 
 /** `I`: Maximum number of work items in a package. */
