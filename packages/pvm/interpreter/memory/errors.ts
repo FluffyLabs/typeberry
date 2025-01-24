@@ -1,6 +1,15 @@
+import { MEMORY_SIZE } from "./memory-consts";
+import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
+
 export class PageFault {
-  constructor(public address: number) {}
+  public address: MemoryIndex;
+  constructor(address: number) {
+    this.address = tryAsMemoryIndex(address % MEMORY_SIZE);
+  }
 }
+
+export class StoreOnReadablePage {}
+
 export class ChunkOverlap extends Error {
   constructor() {
     super("Memory chunks cannot overlap each other!");

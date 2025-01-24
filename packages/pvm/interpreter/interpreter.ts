@@ -182,7 +182,7 @@ export class Interpreter {
     this.argsDecoder.fillArgs(this.pc, argsResult);
 
     if (!isValidInstruction) {
-      this.instructionResult.status = Result.PANIC;
+      this.instructionResult.status = Result.TRAP;
     } else {
       this.instructionResult.nextPc = this.pc + argsResult.noOfBytesToSkip;
 
@@ -242,18 +242,19 @@ export class Interpreter {
 
     if (this.instructionResult.status !== null) {
       // All abnormal terminations should be interpreted as TRAP and we should subtract the gas. In case of FAULT we have to do it manually at the very end.
-      if (this.instructionResult.status === Result.FAULT) {
+      if (this.instructionResult.status === Result.FAULT || this.instructionResult.status === Result.PANIC) {
         // TODO [ToDr] underflow?
         this.gas.sub(instructionGasMap[Instruction.TRAP]);
       }
 
       switch (this.instructionResult.status) {
         case Result.FAULT:
-          this.status = Status.PANIC;
+          this.status = Status.FAULT;
           break;
         case Result.HALT:
           this.status = Status.HALT;
           break;
+        case Result.TRAP:
         case Result.PANIC:
           this.status = Status.PANIC;
           break;

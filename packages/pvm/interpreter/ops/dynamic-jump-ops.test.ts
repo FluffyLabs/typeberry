@@ -70,7 +70,7 @@ describe("DynamicJumpOps", () => {
     const address = dynamicJumpOps.caluclateJumpAddress(immediate, registerIndex);
     dynamicJumpOps.jumpInd(address);
 
-    assert.strictEqual(instructionResult.status, Result.PANIC);
+    assert.strictEqual(instructionResult.status, Result.TRAP);
   });
 
   it("should change status to PANIC because dynamic address does not exist in jump table", () => {
@@ -79,7 +79,7 @@ describe("DynamicJumpOps", () => {
     const address = dynamicJumpOps.caluclateJumpAddress(immediate, registerIndex);
     dynamicJumpOps.jumpInd(address);
 
-    assert.strictEqual(instructionResult.status, Result.PANIC);
+    assert.strictEqual(instructionResult.status, Result.TRAP);
   });
 
   it("should change status to PANIC because dynamic address is not a multiple of jump aligment factor (that is equal to 4) ", () => {
@@ -88,7 +88,7 @@ describe("DynamicJumpOps", () => {
     const address = dynamicJumpOps.caluclateJumpAddress(immediate, registerIndex);
     dynamicJumpOps.jumpInd(address);
 
-    assert.strictEqual(instructionResult.status, Result.PANIC);
+    assert.strictEqual(instructionResult.status, Result.TRAP);
   });
 
   it("should change status to PANIC because destination is not an instrction", () => {
@@ -97,7 +97,7 @@ describe("DynamicJumpOps", () => {
     const address = dynamicJumpOps.caluclateJumpAddress(immediate, registerIndex);
     dynamicJumpOps.jumpInd(address);
 
-    assert.strictEqual(instructionResult.status, Result.PANIC);
+    assert.strictEqual(instructionResult.status, Result.TRAP);
   });
 
   it("should change status to PANIC because destination is not an instruction that is the beginning of basic block", () => {
@@ -106,6 +106,6 @@ describe("DynamicJumpOps", () => {
     const address = dynamicJumpOps.caluclateJumpAddress(immediate, registerIndex);
     dynamicJumpOps.jumpInd(address);
 
-    assert.strictEqual(instructionResult.status, Result.PANIC);
+    assert.strictEqual(instructionResult.status, Result.TRAP);
   });
 });

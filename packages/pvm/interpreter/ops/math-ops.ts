@@ -60,7 +60,7 @@ export class MathOps {
   }
 
   mulUpperSU(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.setI64(resultIndex, mulUpperSU(this.regs.getI64(firstIndex), this.regs.getU64(secondIndex)));
+    this.regs.setI64(resultIndex, mulUpperSU(this.regs.getI64(secondIndex), this.regs.getU64(firstIndex)));
   }
 
   mulImmediateU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {

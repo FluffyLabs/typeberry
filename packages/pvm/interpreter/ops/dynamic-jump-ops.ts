@@ -25,15 +25,20 @@ export class DynamicJumpOps {
     }
 
     if (dynamicAddress === 0 || dynamicAddress % JUMP_ALIGMENT_FACTOR !== 0) {
-      this.instructionResult.status = Result.PANIC;
+      this.instructionResult.status = Result.TRAP;
       return;
     }
 
     const jumpTableIndex = dynamicAddress / JUMP_ALIGMENT_FACTOR - 1;
+
+    if (!this.jumpTable.hasIndex(jumpTableIndex)) {
+      this.instructionResult.status = Result.TRAP;
+      return;
+    }
     const destination = this.jumpTable.getDestination(jumpTableIndex);
 
-    if (!this.jumpTable.hasIndex(jumpTableIndex) || !this.basicBlocks.isBeginningOfBasicBlock(jumpTableIndex)) {
-      this.instructionResult.status = Result.PANIC;
+    if (!this.basicBlocks.isBeginningOfBasicBlock(destination)) {
+      this.instructionResult.status = Result.TRAP;
       return;
     }
 

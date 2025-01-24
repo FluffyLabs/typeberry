@@ -51,7 +51,7 @@ describe("BranchOps", () => {
       branchOps.jump(nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
-      assert.strictEqual(instructionResult.status, Result.PANIC);
+      assert.strictEqual(instructionResult.status, Result.TRAP);
     });
   });
 
@@ -87,7 +87,7 @@ describe("BranchOps", () => {
       branchOps.branchEq(firstRegisterIndex, secondRegisterIndex, nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
-      assert.strictEqual(instructionResult.status, Result.PANIC);
+      assert.strictEqual(instructionResult.status, Result.TRAP);
     });
 
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
@@ -133,7 +133,7 @@ describe("BranchOps", () => {
       branchOps.branchEqImmediate(firstRegisterIndex, immediate, nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
-      assert.strictEqual(instructionResult.status, Result.PANIC);
+      assert.strictEqual(instructionResult.status, Result.TRAP);
     });
 
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
@@ -179,7 +179,7 @@ describe("BranchOps", () => {
       branchOps.branchNe(firstRegisterIndex, secondRegisterIndex, nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
-      assert.strictEqual(instructionResult.status, Result.PANIC);
+      assert.strictEqual(instructionResult.status, Result.TRAP);
     });
 
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
@@ -225,7 +225,7 @@ describe("BranchOps", () => {
       branchOps.branchNeImmediate(firstRegisterIndex, immediate, nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
-      assert.strictEqual(instructionResult.status, Result.PANIC);
+      assert.strictEqual(instructionResult.status, Result.TRAP);
     });
 
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
@@ -271,7 +271,7 @@ describe("BranchOps", () => {
       branchOps.branchLtUnsigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
-      assert.strictEqual(instructionResult.status, Result.PANIC);
+      assert.strictEqual(instructionResult.status, Result.TRAP);
     });
 
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
@@ -317,7 +317,7 @@ describe("BranchOps", () => {
       branchOps.branchLtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
-      assert.strictEqual(instructionResult.status, Result.PANIC);
+      assert.strictEqual(instructionResult.status, Result.TRAP);
     });
 
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
@@ -363,7 +363,7 @@ describe("BranchOps", () => {
       branchOps.branchGeUnsigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
-      assert.strictEqual(instructionResult.status, Result.PANIC);
+      assert.strictEqual(instructionResult.status, Result.TRAP);
     });
 
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
@@ -409,7 +409,7 @@ describe("BranchOps", () => {
       branchOps.branchGeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
-      assert.strictEqual(instructionResult.status, Result.PANIC);
+      assert.strictEqual(instructionResult.status, Result.TRAP);
     });
 
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
@@ -455,7 +455,7 @@ describe("BranchOps", () => {
       branchOps.branchLeUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
-      assert.strictEqual(instructionResult.status, Result.PANIC);
+      assert.strictEqual(instructionResult.status, Result.TRAP);
     });
 
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
@@ -501,7 +501,7 @@ describe("BranchOps", () => {
       branchOps.branchGtUnsignedImmediate(firstRegisterIndex, immediate, nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
-      assert.strictEqual(instructionResult.status, Result.PANIC);
+      assert.strictEqual(instructionResult.status, Result.TRAP);
     });
 
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
@@ -547,7 +547,7 @@ describe("BranchOps", () => {
       branchOps.branchLtSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
-      assert.strictEqual(instructionResult.status, Result.PANIC);
+      assert.strictEqual(instructionResult.status, Result.TRAP);
     });
 
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
@@ -593,7 +593,7 @@ describe("BranchOps", () => {
       branchOps.branchLtSigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
-      assert.strictEqual(instructionResult.status, Result.PANIC);
+      assert.strictEqual(instructionResult.status, Result.TRAP);
     });
   });
 
@@ -628,7 +628,7 @@ describe("BranchOps", () => {
       branchOps.branchLeSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
-      assert.strictEqual(instructionResult.status, Result.PANIC);
+      assert.strictEqual(instructionResult.status, Result.TRAP);
     });
 
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
@@ -674,7 +674,7 @@ describe("BranchOps", () => {
       branchOps.branchGtSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
-      assert.strictEqual(instructionResult.status, Result.PANIC);
+      assert.strictEqual(instructionResult.status, Result.TRAP);
     });
 
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
@@ -720,7 +720,7 @@ describe("BranchOps", () => {
       branchOps.branchGeSignedImmediate(firstRegisterIndex, immediate, nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
-      assert.strictEqual(instructionResult.status, Result.PANIC);
+      assert.strictEqual(instructionResult.status, Result.TRAP);
     });
 
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
@@ -766,7 +766,7 @@ describe("BranchOps", () => {
       branchOps.branchGeSigned(firstRegisterIndex, secondRegisterIndex, nextPc);
 
       assert.strictEqual(instructionResult.nextPc, expectedNextPc);
-      assert.strictEqual(instructionResult.status, Result.PANIC);
+      assert.strictEqual(instructionResult.status, Result.TRAP);
     });
 
     it("should not update status to PANIC (nextPc is not the beginning of basic block but condition is not met)", () => {
