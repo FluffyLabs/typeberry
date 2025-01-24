@@ -21,7 +21,7 @@ export class BranchOps {
     }
 
     if (!this.basicBlocks.isBeginningOfBasicBlock(nextPc)) {
-      this.instructionResult.status = Result.PANIC;
+      this.instructionResult.status = Result.TRAP;
       return;
     }
 

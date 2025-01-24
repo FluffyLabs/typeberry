@@ -2,7 +2,7 @@ import type { ServiceId } from "@typeberry/block";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 import type { MemoryIndex } from "@typeberry/pvm-interpreter";
 import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
-import type { PageFault } from "@typeberry/pvm-interpreter/memory/errors";
+import type { PageFault, StoreOnReadablePage } from "@typeberry/pvm-interpreter/memory/errors";
 import { type Opaque, asOpaqueType } from "@typeberry/utils";
 
 /** Strictly-typed host call index. */
@@ -28,7 +28,7 @@ export interface Registers {
 export interface Memory {
   isWriteable(startAddress: MemoryIndex, length: number): boolean;
   loadInto(result: Uint8Array, startAddress: MemoryIndex): null | PageFault;
-  storeFrom(address: MemoryIndex, bytes: Uint8Array): null | PageFault;
+  storeFrom(address: MemoryIndex, bytes: Uint8Array): null | PageFault | StoreOnReadablePage;
 }
 
 /** An interface for a host call implementation */

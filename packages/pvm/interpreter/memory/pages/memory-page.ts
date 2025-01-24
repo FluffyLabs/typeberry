@@ -1,4 +1,4 @@
-import type { PageFault } from "../errors";
+import type { PageFault, StoreOnReadablePage } from "../errors";
 // import { PAGE_SIZE } from "../memory-consts";
 import type { MemoryIndex } from "../memory-index";
 import { getStartPageIndexFromPageNumber } from "../memory-utils";
@@ -30,7 +30,7 @@ export abstract class MemoryPage {
    *
    * Returns `null` if copying was successful and [`PageFault`] otherwise.
    */
-  abstract storeFrom(address: PageIndex, data: Uint8Array): null | PageFault;
+  abstract storeFrom(address: PageIndex, data: Uint8Array): null | PageFault | StoreOnReadablePage;
   /**
    * Get dump of the entire page. Should only be used for the debugger-adapter because it
    * might be inefficient.
