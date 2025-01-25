@@ -25,7 +25,7 @@ export class ReadablePage extends MemoryPage {
   }
 
   storeFrom(_address: PageIndex, _data: Uint8Array) {
-    return new PageFault(-1);
+    return new PageFault(0, false);
   }
 
   setData(pageIndex: PageIndex, data: Uint8Array) {

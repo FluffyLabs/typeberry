@@ -3,7 +3,10 @@ import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
 
 export class PageFault {
   public address: MemoryIndex;
-  constructor(address: number) {
+  constructor(
+    address: number,
+    public hasPage = true,
+  ) {
     this.address = tryAsMemoryIndex(address % MEMORY_SIZE);
   }
 }
