@@ -13,7 +13,7 @@ describe("NoArgsOps", () => {
 
       noArgsOps.trap();
 
-      assert.strictEqual(instructionResult.status, Result.TRAP);
+      assert.strictEqual(instructionResult.status, Result.PANIC);
     });
   });
 

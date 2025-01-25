@@ -1,4 +1,4 @@
-import { PageFault, StoreOnReadablePage } from "../errors";
+import { PageFault } from "../errors";
 import { PAGE_SIZE } from "../memory-consts";
 import { MemoryPage } from "./memory-page";
 import type { PageIndex, PageNumber } from "./page-utils";
@@ -25,7 +25,7 @@ export class ReadablePage extends MemoryPage {
   }
 
   storeFrom(_address: PageIndex, _data: Uint8Array) {
-    return new StoreOnReadablePage();
+    return new PageFault(-1);
   }
 
   setData(pageIndex: PageIndex, data: Uint8Array) {
