@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { StoreOnReadablePage } from "../errors";
+import { PageFault } from "../errors";
 import { tryAsMemoryIndex } from "../memory-index";
 import { tryAsPageIndex, tryAsPageNumber } from "./page-utils";
 import { ReadablePage } from "./readable-page";
@@ -48,6 +48,6 @@ describe("ReadablePage", () => {
 
     const storeResult = readablePage.storeFrom(storeIndex, new Uint8Array());
 
-    assert.deepStrictEqual(storeResult, new StoreOnReadablePage());
+    assert.deepStrictEqual(storeResult, new PageFault(-1));
   });
 });

@@ -1,7 +1,6 @@
 import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import type { InstructionResult } from "../instruction-result";
 import type { Memory } from "../memory";
-import { StoreOnReadablePage } from "../memory/errors";
 import { tryAsMemoryIndex } from "../memory/memory-index";
 import { getStartPageIndex } from "../memory/memory-utils";
 import type { Registers } from "../registers";
@@ -109,8 +108,8 @@ export class StoreOps {
       return;
     }
 
-    if (storeResult instanceof StoreOnReadablePage) {
-      this.instructionResult.status = Result.PANIC;
+    if (storeResult.address < 0) {
+      this.instructionResult.status = Result.FAULT_ACCESS;
     } else {
       this.instructionResult.status = Result.FAULT;
       this.instructionResult.exitParam = getStartPageIndex(storeResult.address);

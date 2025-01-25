@@ -8,8 +8,6 @@ export class PageFault {
   }
 }
 
-export class StoreOnReadablePage {}
-
 export class ChunkOverlap extends Error {
   constructor() {
     super("Memory chunks cannot overlap each other!");

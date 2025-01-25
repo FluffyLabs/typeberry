@@ -5,7 +5,7 @@ export class NoArgsOps {
   constructor(private instructionResult: InstructionResult) {}
 
   trap() {
-    this.instructionResult.status = Result.TRAP;
+    this.instructionResult.status = Result.PANIC;
   }
 
   fallthrough() {
