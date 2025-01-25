@@ -77,7 +77,7 @@ export class Interpreter {
   private basicBlocks: BasicBlocks;
   private jumpTable = JumpTable.empty();
 
-  constructor() {
+  constructor(private useSbrkGas = false) {
     this.argsDecoder = new ArgsDecoder();
     this.basicBlocks = new BasicBlocks();
     const mathOps = new MathOps(this.registers);
@@ -197,7 +197,7 @@ export class Interpreter {
           this.oneRegOneImmOneOffsetDispatcher.dispatch(currentInstruction, argsResult);
           break;
         case ArgumentType.TWO_REGISTERS:
-          if (currentInstruction === Instruction.SBRK) {
+          if (this.useSbrkGas && currentInstruction === Instruction.SBRK) {
             const calculateSbrkCost = (length: number) => (alignToPageSize(length) / PAGE_SIZE) * 16;
             const underflow = this.gas.sub(
               calculateSbrkCost(this.registers.getU32(argsResult.firstRegisterIndex)) as Gas,
