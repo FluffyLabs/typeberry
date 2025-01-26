@@ -18,11 +18,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Fetch the fork's code securely
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Checkout JAM test vectors
         uses: actions/checkout@v4
         with:
           repository: FluffyLabs/jamtestvectors
           path: "./jamtestvectors"
+          ref: 1497d9a820cc9f9719cdf00811f1368545f6610c
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
