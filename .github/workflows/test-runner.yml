@@ -1,11 +1,12 @@
 name: Run JAM test vectors
 
 on:
-  pull_request_target:
+  workflow_dispatch:
+  pull_request:
     branches: ["main"]
     paths: ['.github/workflows/test-runner.yml', 'bin/test-runner/**']
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '3 2 * * *'
 
 jobs:
   run:
@@ -17,12 +18,14 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Delete previous comment on PR
+        # Don't attempt to comment if PR is coming from a fork.
+        if: ${{ always() && github.event.pull_request.head.repo.full_name == github.repository }}
+        uses: thollander/actions-comment-pull-request@v2
         with:
-          # Fetch the fork's code securely
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.pull_request.head.ref }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          mode: delete
+          comment_tag: jamtestvectors
+      - uses: actions/checkout@v4
       - name: Checkout JAM test vectors
         uses: actions/checkout@v4
         with:
@@ -40,7 +43,8 @@ jobs:
         if: always()
         run: cat ./dist/jamtestvectors.txt
       - name: Comment PR
-        if: always() && github.event_name == 'pull_request_target'
+        # Don't attempt to comment if PR is coming from a fork.
+        if: ${{ always() && github.event.pull_request.head.repo.full_name == github.repository }}
         uses: thollander/actions-comment-pull-request@v2
         with:
           filePath: ./dist/jamtestvectors.txt
