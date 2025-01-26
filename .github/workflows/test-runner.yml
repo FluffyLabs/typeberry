@@ -21,10 +21,10 @@ jobs:
       - name: Delete previous comment on PR
         # Don't attempt to comment if PR is coming from a fork.
         if: ${{ always() && github.event.pull_request.head.repo.full_name == github.repository }}
-        uses: thollander/actions-comment-pull-request@v2
+        uses: thollander/actions-comment-pull-request@v3
         with:
           mode: delete
-          comment_tag: jamtestvectors
+          comment-tag: jamtestvectors
       - uses: actions/checkout@v4
       - name: Checkout JAM test vectors
         uses: actions/checkout@v4
@@ -45,10 +45,10 @@ jobs:
       - name: Comment PR
         # Don't attempt to comment if PR is coming from a fork.
         if: ${{ always() && github.event.pull_request.head.repo.full_name == github.repository }}
-        uses: thollander/actions-comment-pull-request@v2
+        uses: thollander/actions-comment-pull-request@v3
         with:
-          filePath: ./dist/jamtestvectors.txt
-          comment_tag: jamtestvectors
+          file-path: ./dist/jamtestvectors.txt
+          comment-tag: jamtestvectors
       - name: Upload new transaction log
         if: failure()
         uses: actions/upload-artifact@v4
