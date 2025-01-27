@@ -2,6 +2,7 @@ import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decode
 import type { InstructionResult } from "../instruction-result";
 import type { Memory } from "../memory";
 import { tryAsMemoryIndex } from "../memory/memory-index";
+import { getStartPageIndex } from "../memory/memory-utils";
 import type { Registers } from "../registers";
 import { Result } from "../result";
 import { addWithOverflowU32 } from "./math-utils";
@@ -103,9 +104,15 @@ export class StoreOps {
 
   private store(address: number, bytes: Uint8Array) {
     const storeResult = this.memory.storeFrom(tryAsMemoryIndex(address), bytes);
-    if (storeResult !== null) {
+    if (storeResult === null) {
+      return;
+    }
+
+    if (storeResult.hasPage) {
       this.instructionResult.status = Result.FAULT;
-      this.instructionResult.exitParam = address;
+      this.instructionResult.exitParam = getStartPageIndex(storeResult.address);
+    } else {
+      this.instructionResult.status = Result.FAULT_ACCESS;
     }
   }
 }

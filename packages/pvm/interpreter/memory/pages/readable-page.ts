@@ -14,7 +14,7 @@ export class ReadablePage extends MemoryPage {
   loadInto(result: Uint8Array, startIndex: PageIndex, length: number) {
     const endIndex = startIndex + length;
     if (endIndex > PAGE_SIZE) {
-      return new PageFault(PAGE_SIZE);
+      return new PageFault(this.start + PAGE_SIZE);
     }
 
     const bytes = this.data.subarray(startIndex, endIndex);
@@ -24,8 +24,8 @@ export class ReadablePage extends MemoryPage {
     return null;
   }
 
-  storeFrom(address: PageIndex, _data: Uint8Array) {
-    return new PageFault(address);
+  storeFrom(_address: PageIndex, _data: Uint8Array) {
+    return new PageFault(0, false);
   }
 
   setData(pageIndex: PageIndex, data: Uint8Array) {

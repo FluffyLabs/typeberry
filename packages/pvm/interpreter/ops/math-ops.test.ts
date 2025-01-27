@@ -450,8 +450,8 @@ describe("MathOps", () => {
   });
 
   it("mulUpperSU (negative and positive)", () => {
-    const firstValue = -(2n ** 60n);
-    const secondValue = 2n ** 60n;
+    const firstValue = 2n ** 60n;
+    const secondValue = -(2n ** 60n);
     const resultValue = -(2n ** 56n);
     const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -461,6 +461,20 @@ describe("MathOps", () => {
     mathOps.mulUpperSU(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
 
     assert.strictEqual(regs.getI64(resultRegisterIndex), resultValue);
+  });
+
+  it("mulUpperSU (a case from test vectors)", () => {
+    const firstValue = 0xffffffffffff8000n;
+    const secondValue = 0xffffffff80000000n;
+    const resultValue = 0xffffffff80000000n;
+    const { regs, mathOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
+      firstValue,
+      secondValue,
+    );
+
+    mathOps.mulUpperSU(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
+
+    assert.strictEqual(regs.getU64(resultRegisterIndex), resultValue);
   });
 
   it("divUnsigned U32", () => {

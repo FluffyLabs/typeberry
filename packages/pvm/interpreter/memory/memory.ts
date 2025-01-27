@@ -76,7 +76,6 @@ export class Memory {
     if (firstPageStoreResult !== null) {
       return firstPageStoreResult;
     }
-
     return secondPage.storeFrom(
       tryAsPageIndex(0),
       bytes.subarray(toStoreOnFirstPage, toStoreOnFirstPage + toStoreOnSecondPage),
