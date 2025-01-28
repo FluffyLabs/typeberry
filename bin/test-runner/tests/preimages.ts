@@ -1,8 +1,11 @@
-import type { TimeSlot } from "@typeberry/block";
+import assert from "node:assert";
+import { type TimeSlot, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import { BytesBlob } from "@typeberry/bytes";
-import type { OpaqueHash } from "@typeberry/hash";
+import { HashDictionary } from "@typeberry/collections";
+import { type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
+import { type Account, type PreimageHash, Preimages } from "@typeberry/preimages";
 import { preimagesExtrinsicFromJson } from "./codec/preimages-extrinsic";
 import { commonFromJson } from "./common-types";
 
@@ -35,7 +38,7 @@ class TestHistoryItem {
     value: ["array", "number"],
   };
   key!: {
-    hash: OpaqueHash;
+    hash: PreimageHash;
     length: number;
   };
   value!: number[];
@@ -90,6 +93,52 @@ export class PreImagesTest {
   post_state!: TestState;
 }
 
-export async function runPreImagesTest(_testContent: PreImagesTest) {
-  // TODO [MaSi] Preimages tests
+export async function runPreImagesTest(testContent: PreImagesTest) {
+  const preState = {
+    accounts: new Map(
+      testContent.pre_state.accounts.map((account) => [
+        tryAsServiceId(account.id),
+        testAccountsMapEntryToAccount(account),
+      ]),
+    ),
+  };
+  const postState = {
+    accounts: new Map(
+      testContent.post_state.accounts.map((account) => [
+        tryAsServiceId(account.id),
+        testAccountsMapEntryToAccount(account),
+      ]),
+    ),
+  };
+  const preimages = new Preimages(preState);
+  const result = preimages.integrate(testContent.input);
+
+  assert.deepEqual(result, deleteUndefinedKeys(testContent.output));
+  assert.deepEqual(preimages.state, postState);
+}
+
+function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Account {
+  const preimages = new HashDictionary<PreimageHash, BytesBlob>();
+
+  for (const preimage of entry.info.preimages) {
+    preimages.set(blake2b.hashBytes(preimage.blob).asOpaque(), preimage.blob);
+  }
+
+  const history = entry.info.history.map((item) => ({
+    hash: item.key.hash,
+    length: item.key.length,
+    slots: item.value.map((slot) => tryAsTimeSlot(slot)),
+  }));
+
+  return {
+    id: tryAsServiceId(entry.id),
+    info: {
+      preimages,
+      history,
+    },
+  };
+}
+
+function deleteUndefinedKeys(obj: object) {
+  return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v !== undefined));
 }

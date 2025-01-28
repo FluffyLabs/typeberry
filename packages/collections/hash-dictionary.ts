@@ -1,7 +1,7 @@
-import type { OpaqueHash } from "@typeberry/hash";
+import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 
 /** A map which uses hashes as keys. */
-export class HashDictionary<K extends OpaqueHash, V> {
+export class HashDictionary<K extends OpaqueHash | Blake2bHash, V> {
   // TODO [ToDr] [crit] We can't use `TrieHash` directly in the map,
   // because of the way it's being compared. Hence having `string` here.
   // This has to be benchmarked and re-written to a custom map most likely.

@@ -21,6 +21,7 @@
     "@typeberry/statistics": "0.0.1",
     "@typeberry/trie": "0.0.1",
     "@typeberry/utils": "0.0.1",
+    "@typeberry/preimages": "0.0.1",
     "json-bigint-patch": "^0.0.8"
   },
   "scripts": {

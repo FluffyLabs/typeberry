@@ -35,6 +35,7 @@
     "packages/transition",
     "packages/trie",
     "packages/utils",
+    "packages/preimages",
     "tools/benchmark",
     "tools/builder",
     "tools/commit-hash",
