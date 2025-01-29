@@ -8,6 +8,7 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import { type Account, type PreimageHash, Preimages } from "@typeberry/transition";
 import { preimagesExtrinsicFromJson } from "./codec/preimages-extrinsic";
 import { commonFromJson } from "./common-types";
+import { Result } from "@typeberry/utils";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -113,7 +114,7 @@ export async function runPreImagesTest(testContent: PreImagesTest) {
   const preimages = new Preimages(preState);
   const result = preimages.integrate(testContent.input);
 
-  assert.deepEqual(result, deleteUndefinedKeys(testContent.output));
+  assert.deepEqual(result, testOutputToResult(testContent.output));
   assert.deepEqual(preimages.state, postState);
 }
 
@@ -139,6 +140,6 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Account {
   };
 }
 
-function deleteUndefinedKeys(obj: object) {
-  return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v !== undefined));
+function testOutputToResult(testOutput: Output) {
+  return testOutput.err ? Result.error(testOutput.err) : Result.ok(testOutput.ok);
 }

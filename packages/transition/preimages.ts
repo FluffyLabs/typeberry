@@ -3,7 +3,7 @@ import type { Preimage, PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
-import type { Opaque } from "@typeberry/utils";
+import { Result, type Opaque } from "@typeberry/utils";
 
 export type PreimageHash = Opaque<Blake2bHash, "PreimageHash">;
 
@@ -25,7 +25,7 @@ type AccountsState = {
   accounts: Map<ServiceId, Account>;
 };
 
-export type LookupExtrinsic = {
+export type PreimagesInput = {
   preimages: PreimagesExtrinsic;
   slot: TimeSlot;
 };
@@ -37,19 +37,19 @@ enum PreimagesErrorCode {
 export class Preimages {
   constructor(public readonly state: AccountsState) {}
 
-  integrate(lookup: LookupExtrinsic) {
-    const { preimages, slot } = lookup;
+  integrate(input: PreimagesInput) {
+    const { preimages, slot } = input;
     let err: PreimagesErrorCode | null = null;
 
     for (const preimage of preimages) {
       const { requester, blob } = preimage;
+      const hash = blake2b.hashBytes(blob).asOpaque();
 
-      if (!this.isNeeded(preimage)) {
+      if (!this.isNeeded(hash)) {
         err = PreimagesErrorCode.PreimageUnneeded;
         continue;
       }
 
-      const hash = blake2b.hashBytes(blob).asOpaque();
       let account = this.state.accounts.get(requester);
 
       // create account if it doesn't exist
@@ -81,12 +81,10 @@ export class Preimages {
       }
     }
 
-    return err ? { err } : { ok: null };
+    return err ? Result.error(err) : Result.ok(null);
   }
 
-  private isNeeded(preimage: Preimage) {
-    const hash = blake2b.hashBytes(preimage.blob).asOpaque();
-
+  private isNeeded(hash: PreimageHash) {
     // check for duplicates
     for (const [_, account] of this.state.accounts) {
       if (account.info.preimages.has(hash)) {
