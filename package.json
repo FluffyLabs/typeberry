@@ -35,7 +35,6 @@
     "packages/transition",
     "packages/trie",
     "packages/utils",
-    "packages/preimages",
     "tools/benchmark",
     "tools/builder",
     "tools/commit-hash",
@@ -62,8 +61,8 @@
   "license": "MPL-2.0",
   "devDependencies": {
     "@biomejs/biome": "1.9.3",
-    "@tsconfig/node20": "^20.1.4",
     "@eslint/js": "^9.12.0",
+    "@tsconfig/node20": "^20.1.4",
     "@types/eslint__js": "^8.42.3",
     "eslint": "^9.12.0",
     "eslint-plugin-import": "^2.31.0",

@@ -5,7 +5,7 @@ import { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { type Account, type PreimageHash, Preimages } from "@typeberry/preimages";
+import { type Account, type PreimageHash, Preimages } from "@typeberry/transition";
 import { preimagesExtrinsicFromJson } from "./codec/preimages-extrinsic";
 import { commonFromJson } from "./common-types";
 
