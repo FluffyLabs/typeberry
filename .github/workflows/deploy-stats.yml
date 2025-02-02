@@ -4,9 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: [ "main" ]
-  # TODO [ToDr] Temporary
-  pull_request:
-    branches: [ "main" ]
 
 # Sets the GITHUB_TOKEN permissions to allow deployment to GitHub Pages
 permissions:
