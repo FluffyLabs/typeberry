@@ -16,6 +16,7 @@ import {
 } from "@typeberry/block";
 import {
   type AssurancesExtrinsicView,
+  AvailabilityAssignment,
   AvailabilityAssurance,
   assurancesExtrinsicCodec,
 } from "@typeberry/block/assurances";
@@ -24,7 +25,6 @@ import { WorkReport } from "@typeberry/block/work-report";
 import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
-import { AvailabilityAssignment } from "@typeberry/disputes";
 import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { Assurances, AssurancesError, type AssurancesInput } from "./assurances";

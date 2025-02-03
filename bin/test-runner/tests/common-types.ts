@@ -15,6 +15,7 @@ import {
   type ValidatorData,
   tryAsTimeSlot,
 } from "@typeberry/block";
+import { AvailabilityAssignment } from "@typeberry/block/assurances";
 import { RefineContext } from "@typeberry/block/refine-context";
 import type { WorkItemsCount } from "@typeberry/block/work-package";
 import {
@@ -29,7 +30,6 @@ import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block
 import { Encoder } from "@typeberry/codec";
 import type { FixedSizeArray } from "@typeberry/collections";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import { AvailabilityAssignment } from "@typeberry/disputes";
 import { type HASH_SIZE, type OpaqueHash, WithHash, blake2b } from "@typeberry/hash";
 import type { U16, U32 } from "@typeberry/numbers";
 import { Bytes, BytesBlob } from "@typeberry/trie";

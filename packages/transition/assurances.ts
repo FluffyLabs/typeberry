@@ -1,11 +1,10 @@
 import type { HeaderHash, PerCore, PerValidator, TimeSlot, ValidatorData } from "@typeberry/block";
-import type { AssurancesExtrinsicView } from "@typeberry/block/assurances";
+import type { AssurancesExtrinsicView, AvailabilityAssignment } from "@typeberry/block/assurances";
 import type { WorkReport } from "@typeberry/block/work-report";
 import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
-import type { AvailabilityAssignment } from "@typeberry/disputes";
 import { blake2b } from "@typeberry/hash";
 import { OK, Result, check } from "@typeberry/utils";
 

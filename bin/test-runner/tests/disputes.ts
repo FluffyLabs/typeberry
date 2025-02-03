@@ -1,6 +1,14 @@
 import assert from "node:assert";
-import type { Ed25519Key, TimeSlot, ValidatorData, WorkReportHash } from "@typeberry/block";
+import {
+  type Ed25519Key,
+  type TimeSlot,
+  type ValidatorData,
+  type WorkReportHash,
+  tryAsPerCore,
+  tryAsPerValidator,
+} from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
+import type { ChainSpec } from "@typeberry/config";
 import { Disputes } from "@typeberry/disputes";
 import { DisputesRecords, DisputesState } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
@@ -59,15 +67,20 @@ class TestState {
   /** Previous validator set. */
   lambda!: ValidatorData[];
 
-  static toDisputesState(testState: TestState) {
+  static toDisputesState(testState: TestState, spec: ChainSpec) {
     const psi = testState.psi;
     const disputesRecords = DisputesRecords.fromSortedArrays(psi.good, psi.bad, psi.wonky, psi.offenders);
     const rho = testState.rho;
-    const availabilityAssignment = rho.map((item) => {
-      return item !== null ? TestAvailabilityAssignment.toAvailabilityAssignment(item) : null;
-    });
+    const availabilityAssignment = tryAsPerCore(
+      rho.map((item) => {
+        return item !== null ? TestAvailabilityAssignment.toAvailabilityAssignment(item) : null;
+      }),
+      spec,
+    );
+    const kappa = tryAsPerValidator(testState.kappa, spec);
+    const lambda = tryAsPerValidator(testState.lambda, spec);
 
-    return new DisputesState(disputesRecords, availabilityAssignment, testState.tau, testState.kappa, testState.lambda);
+    return new DisputesState(disputesRecords, availabilityAssignment, testState.tau, kappa, lambda);
   }
 }
 
@@ -106,7 +119,7 @@ export async function runDisputesTest(testContent: DisputesTest, path: string) {
   const chainSpec = getChainSpec(path);
   const preState = testContent.pre_state;
 
-  const disputes = new Disputes(TestState.toDisputesState(preState), chainSpec);
+  const disputes = new Disputes(TestState.toDisputesState(preState, chainSpec), chainSpec);
 
   const result = await disputes.transition(testContent.input.disputes);
   const error = result.isError ? result.error : undefined;
@@ -122,5 +135,5 @@ export async function runDisputesTest(testContent: DisputesTest, path: string) {
     assert.deepEqual(error, testContent.output.err);
   }
   assert.deepEqual(ok, testContent.output.ok?.offenders_mark);
-  assert.deepEqual(disputes.state, TestState.toDisputesState(testContent.post_state));
+  assert.deepEqual(disputes.state, TestState.toDisputesState(testContent.post_state, chainSpec));
 }
