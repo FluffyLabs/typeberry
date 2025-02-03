@@ -10,7 +10,7 @@ import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "./crypto";
  * The index of a ticket entry per validator.
  *
  * Constrained by `N = 2`:
- * https://graypaper.fluffylabs.dev/#/c71229b/3d5f003d6100
+ * https://graypaper.fluffylabs.dev/#/579bd12/417200417400
  */
 export type TicketAttempt = Opaque<U8, "TicketAttempt[0|1|2]">;
 
@@ -66,10 +66,10 @@ export const MAX_NUMBER_OF_TICKETS = 16;
 /**
  * A sequence of proofs of valid tickets.
  *
- * https://graypaper.fluffylabs.dev/#/387103d/0e90020e9502
+ * https://graypaper.fluffylabs.dev/#/579bd12/0f13000f1800
  *
  * Constrained by `K = 16`:
- * https://graypaper.fluffylabs.dev/#/c71229b/3d59003d5b00
+ * https://graypaper.fluffylabs.dev/#/579bd12/416c00416e00
  */
 export type TicketsExtrinsic = KnownSizeArray<SignedTicket, `Size: 0..{MAX_NUMBER_OF_TICKETS}`>;
 

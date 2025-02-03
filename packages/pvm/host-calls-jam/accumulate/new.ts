@@ -15,7 +15,7 @@ const IN_OUT_REG = 7;
 /**
  * Create a new service account.
  *
- * https://graypaper.fluffylabs.dev/#/364735a/2e11022e1102
+ * https://graypaper.fluffylabs.dev/#/579bd12/323f00323f00
  */
 export class New implements HostCallHandler {
   index = tryAsHostCallIndex(9);

@@ -30,7 +30,7 @@ import { Ticket } from "./tickets";
  * and contains the epoch randomness and Bandersnatch keys
  * of validators for the NEXT epoch.
  *
- * https://graypaper.fluffylabs.dev/#/911af30/0e30030e6903
+ * https://graypaper.fluffylabs.dev/#/579bd12/0e30030e6603
  */
 export class EpochMarker extends WithDebug {
   static Codec = codec.Class(EpochMarker, {
@@ -70,7 +70,7 @@ export class EpochMarker extends WithDebug {
 /**
  * The header of the JAM block.
  *
- * https://graypaper.fluffylabs.dev/#/387103d/0c48000c5400
+ * https://graypaper.fluffylabs.dev/#/579bd12/0c66000c7200
  */
 export class Header extends WithDebug {
   static Codec = codec.Class(Header, {
@@ -131,7 +131,7 @@ export class Header extends WithDebug {
   /**
    * `H_s`: Block seal.
    *
-   * https://graypaper.fluffylabs.dev/#/387103d/0de8000dee00
+   * https://graypaper.fluffylabs.dev/#/579bd12/0d0c010d1101
    */
   public seal: BandersnatchVrfSignature = Bytes.zero(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque();
 

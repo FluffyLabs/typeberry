@@ -67,7 +67,7 @@ export class WorkExecResult extends WithDebug {
 /**
  * A result of execution of some work package.
  *
- * https://graypaper.fluffylabs.dev/#/c71229b/131a01131f01
+ * https://graypaper.fluffylabs.dev/#/579bd12/133f01134401
  */
 export class WorkResult {
   static Codec = codec.Class(WorkResult, {
@@ -92,7 +92,7 @@ export class WorkResult {
      *
      * It has no immediate relevance, but is something provided to the accumulation logic of the service.
      *
-     * https://graypaper.fluffylabs.dev/#/c71229b/132201132201
+     * https://graypaper.fluffylabs.dev/#/579bd12/134701134701
      */
     public readonly payloadHash: OpaqueHash,
     /**

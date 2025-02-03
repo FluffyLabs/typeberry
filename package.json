@@ -56,7 +56,8 @@
     "lint": "biome lint --write; biome check --write",
     "start": "npm start -w @typeberry/jam",
     "test": "node --test --require ts-node/register $(find . -type d -name node_modules -prune -type f -o -name '*.test.ts' | tr '\\n' ' ')",
-    "test-only": "node --test-only --require ts-node/register $(find . -type d -name node_modules -prune -type f -o -name '*.test.ts' | tr '\\n' ' ')"
+    "test-only": "node --test-only --require ts-node/register $(find . -type d -name node_modules -prune -type f -o -name '*.test.ts' | tr '\\n' ' ')",
+    "reader-notes": "npx @fluffylabs/links-check --ignore-file=.gitignore --generate-notes ./web/links.json **/*.ts || exit 0"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

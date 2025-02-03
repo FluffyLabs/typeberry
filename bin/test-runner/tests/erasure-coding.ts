@@ -104,16 +104,19 @@ export async function runEcTest(test: EcTest) {
 }
 
 export async function runPageProofTest(test: PageProof) {
+  // TODO [ToDr] EC: Page Proof test
   logger.trace(JSON.stringify(test, null, 2));
   logger.error("Not implemented yet!");
 }
 
 export async function runSegmentEcTest(test: SegmentEcTest) {
+  // TODO [ToDr] EC: Segment EC test
   logger.trace(JSON.stringify(test, null, 2));
   logger.error("Not implemented yet!");
 }
 
 export async function runSegmentRootTest(test: SegmentRoot) {
+  // TODO [ToDr] EC: Segment root test
   logger.trace(JSON.stringify(test, null, 2));
   logger.error("Not implemented yet!");
 }

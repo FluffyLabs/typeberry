@@ -4,9 +4,9 @@ import { Interpreter } from "@typeberry/pvm-interpreter";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder } from "@typeberry/pvm-interpreter/memory";
 import { MAX_MEMORY_INDEX, PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
-import { type MemoryIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import { getPageNumber, getStartPageIndex } from "@typeberry/pvm-interpreter/memory/memory-utils";
-import type { PageNumber } from "@typeberry/pvm-interpreter/memory/pages/page-utils";
+import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { getPageNumber } from "@typeberry/pvm-interpreter/memory/memory-utils";
+import { type PageNumber, tryAsPageNumber } from "@typeberry/pvm-interpreter/memory/pages/page-utils";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { Status } from "@typeberry/pvm-interpreter/status";
 
@@ -60,6 +60,7 @@ export class PvmTest {
     "expected-pc": "number",
     "expected-memory": json.array(MemoryChunkItem.fromJson),
     "expected-gas": "number",
+    "expected-page-fault-address": json.optional("number"),
   };
 
   name!: string;
@@ -74,13 +75,8 @@ export class PvmTest {
   "expected-pc": number;
   "expected-memory": MemoryChunkItem[];
   "expected-gas": number;
+  "expected-page-fault-address"?: number;
 }
-
-const getExpectedPage = (address: MemoryIndex, contents: Uint8Array, length: number) => {
-  const pageStartIndex = getStartPageIndex(address);
-  const rawPage = [...new Uint8Array(address - pageStartIndex), ...contents];
-  return new Uint8Array([...rawPage, ...new Uint8Array(length - rawPage.length)]);
-};
 
 export async function runPvmTest(testContent: PvmTest) {
   const initialMemory = testContent["initial-memory"];
@@ -103,8 +99,9 @@ export async function runPvmTest(testContent: PvmTest) {
     const address = tryAsMemoryIndex(memoryChunk.address);
     memoryBuilder.setData(address, memoryChunk.contents);
   }
-  const maxAddressFromPageMap = Math.max(0, ...pageMap.map((page) => page.address));
-  const HEAP_START_PAGE = maxAddressFromPageMap === 0 ? 0 : maxAddressFromPageMap + PAGE_SIZE;
+  const maxAddressFromPageMap = Math.max(...pageMap.map((page) => page.address + page.length));
+  const hasMemoryLayout = maxAddressFromPageMap >= 0;
+  const HEAP_START_PAGE = hasMemoryLayout ? maxAddressFromPageMap + PAGE_SIZE : 0;
   const HEAP_END_PAGE = MAX_MEMORY_INDEX;
   const memory = memoryBuilder.finalize(tryAsSbrkIndex(HEAP_START_PAGE), tryAsSbrkIndex(HEAP_END_PAGE));
   const regs = new Registers();
@@ -113,8 +110,12 @@ export async function runPvmTest(testContent: PvmTest) {
   const pvm = new Interpreter();
 
   const mapPvmStatus = (status: Status) => {
-    if (status === Status.PANIC || status === Status.FAULT) {
-      return "trap";
+    if (status === Status.FAULT) {
+      return "page-fault";
+    }
+
+    if (status === Status.PANIC) {
+      return "panic";
     }
 
     if (status === Status.OOG) {
@@ -136,16 +137,33 @@ export async function runPvmTest(testContent: PvmTest) {
   assert.deepStrictEqual(pvm.getRegisters().getAllU64(), testContent["expected-regs"]);
 
   const testStatus = mapPvmStatus(pvm.getStatus());
+  const exitParam = pvm.getExitParam();
   assert.strictEqual(testStatus, testContent["expected-status"]);
+  assert.strictEqual(exitParam, testContent["expected-page-fault-address"] ?? null);
 
   const dirtyPages = memory.getDirtyPages();
   const checkedPages = new Set<PageNumber>();
   const expectedMemory = testContent["expected-memory"];
 
-  for (const memoryChunk of expectedMemory) {
-    const address = tryAsMemoryIndex(memoryChunk.address);
-    const expectedPage = getExpectedPage(address, memoryChunk.contents, PAGE_SIZE);
-    const pageNumber = getPageNumber(address);
+  const expectedMemoryByPageNumber = expectedMemory.reduce(
+    (acc, memoryChunk) => {
+      const memoryAddress = tryAsMemoryIndex(memoryChunk.address);
+      const pageNumber = getPageNumber(memoryAddress);
+      const chunksOnPage = acc[pageNumber] ?? [];
+      chunksOnPage.push(memoryChunk);
+      acc[pageNumber] = chunksOnPage;
+      return acc;
+    },
+    {} as { [key: number]: MemoryChunkItem[] },
+  );
+
+  for (const [pageNumberAsString, memoryChunks] of Object.entries(expectedMemoryByPageNumber)) {
+    const pageNumber = tryAsPageNumber(Number(pageNumberAsString));
+    const expectedPage = new Uint8Array(PAGE_SIZE);
+    for (const memoryChunk of memoryChunks) {
+      const pageIndex = memoryChunk.address % PAGE_SIZE;
+      expectedPage.set(memoryChunk.contents, pageIndex);
+    }
     checkedPages.add(pageNumber);
     assert.deepStrictEqual(pvm.getMemoryPage(pageNumber), expectedPage);
   }

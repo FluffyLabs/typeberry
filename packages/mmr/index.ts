@@ -24,7 +24,7 @@ export interface MmrHasher<H extends OpaqueHash> {
 /**
  * Merkle Mountain Range.
  *
- * https://graypaper.fluffylabs.dev/#/6e1c0cd/399c00399c00
+ * https://graypaper.fluffylabs.dev/#/579bd12/3aa0023aa002
  */
 export class MerkleMountainRange<H extends OpaqueHash> {
   /** Construct an empty MMR. */

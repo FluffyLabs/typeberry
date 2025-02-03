@@ -7,7 +7,7 @@ import { Result } from "../result";
 import { addWithOverflowU32 } from "./math-utils";
 
 const EXIT = 0xff_ff_00_00;
-/** `Z_A`: https://graypaper.fluffylabs.dev/#/911af30/24ed0124ee01 */
+/** `Z_A`: https://graypaper.fluffylabs.dev/#/579bd12/248402248402 */
 const JUMP_ALIGMENT_FACTOR = 2;
 
 export class DynamicJumpOps {
@@ -30,9 +30,14 @@ export class DynamicJumpOps {
     }
 
     const jumpTableIndex = dynamicAddress / JUMP_ALIGMENT_FACTOR - 1;
+
+    if (!this.jumpTable.hasIndex(jumpTableIndex)) {
+      this.instructionResult.status = Result.PANIC;
+      return;
+    }
     const destination = this.jumpTable.getDestination(jumpTableIndex);
 
-    if (!this.jumpTable.hasIndex(jumpTableIndex) || !this.basicBlocks.isBeginningOfBasicBlock(jumpTableIndex)) {
+    if (!this.basicBlocks.isBeginningOfBasicBlock(destination)) {
       this.instructionResult.status = Result.PANIC;
       return;
     }

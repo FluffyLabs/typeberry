@@ -219,7 +219,7 @@ export class Encoder {
   /**
    * Encode a single boolean discriminator using variable encoding.
    *
-   * https://graypaper.fluffylabs.dev/#/364735a/335200335200
+   * https://graypaper.fluffylabs.dev/#/579bd12/375300375300
    */
   bool(bool: boolean) {
     this.varU32(tryAsU32(bool ? 1 : 0));
@@ -232,7 +232,7 @@ export class Encoder {
    * The encoding will always occupy N bytes in little-endian ordering.
    * Negative numbers are represented as a two-complement.
    *
-   * https://graypaper.fluffylabs.dev/#/364735a/320402320402
+   * https://graypaper.fluffylabs.dev/#/579bd12/36fc0136fc01
    */
   private prepareIntegerN(num: number, bytesToEncode: 1 | 2 | 3 | 4) {
     const BITS = 8;
@@ -253,7 +253,7 @@ export class Encoder {
    *
    * The encoding can take variable amount of bytes depending on the actual value.
    *
-   * https://graypaper.fluffylabs.dev/#/364735a/325a02325a02
+   * https://graypaper.fluffylabs.dev/#/579bd12/365202365202
    */
   varU32(num: U32) {
     check(num >= 0, "Only for natural numbers.");
@@ -266,7 +266,7 @@ export class Encoder {
    *
    * The encoding can take variable amount of bytes depending on the actual value.
    *
-   * https://graypaper.fluffylabs.dev/#/364735a/325a02325a02
+   * https://graypaper.fluffylabs.dev/#/579bd12/365202365202
    */
   varU64(value: bigint) {
     const num = BigInt(value); // this should be a no-op, but fixes incorrect usage in JS
@@ -331,7 +331,7 @@ export class Encoder {
    * The data is placed in the destination, but with an
    * extra length-discriminator (see [`u32`]) encoded in a compact form.
    *
-   * https://graypaper.fluffylabs.dev/#/364735a/332500332500
+   * https://graypaper.fluffylabs.dev/#/579bd12/372600372600
    */
   blob(blob: Uint8Array) {
     // first encode the length
@@ -349,7 +349,7 @@ export class Encoder {
    * The data is simply copied to the destination
    * without any discriminator (i.e. no length prefix).
    *
-   * https://graypaper.fluffylabs.dev/#/364735a/331000331000
+   * https://graypaper.fluffylabs.dev/#/579bd12/371100371100
    *
    */
   bytes<N extends number>(bytes: Bytes<N>) {
@@ -363,10 +363,10 @@ export class Encoder {
    * Encode a bit vector with known length.
    *
    * The bits are packed into bytes and just placed as-is in the destination.
-   * https://graypaper.fluffylabs.dev/#/364735a/337f00337f00
+   * https://graypaper.fluffylabs.dev/#/579bd12/378000378000
    */
   bitVecFixLen(bitvec: BitVec) {
-    const bytes = bitvec.raw();
+    const bytes = bitvec.raw;
     this.bytes(Bytes.fromBlob(bytes, bytes.length));
   }
 
@@ -374,7 +374,7 @@ export class Encoder {
    * Encode a bit vector with variable length.
    *
    * A bit-length discriminator (varU32) is placed before the packed bit content.
-   * https://graypaper.fluffylabs.dev/#/364735a/338100338100
+   * https://graypaper.fluffylabs.dev/#/579bd12/378200378200
    */
   bitVecVarLen(bitvec: BitVec) {
     const len = bitvec.bitLength;
@@ -394,7 +394,7 @@ export class Encoder {
    * Encode a potentially empty value.
    *
    * A 0 or 1 is placed before the element to indicate it's presence.
-   * https://graypaper.fluffylabs.dev/#/364735a/335e00335e00
+   * https://graypaper.fluffylabs.dev/#/579bd12/375f00375f00
    */
   optional<T>(encode: Encode<T>, element?: T | null) {
     const isSet = element !== null && element !== undefined;
@@ -408,7 +408,7 @@ export class Encoder {
   /**
    * Encode a fixed-length sequence of elements of some type.
    *
-   * https://graypaper.fluffylabs.dev/#/364735a/331000331000
+   * https://graypaper.fluffylabs.dev/#/579bd12/371100371100
    */
   sequenceFixLen<T>(encode: Encode<T>, elements: T[]) {
     this.applySizeHint(encode, elements.length);
@@ -422,7 +422,7 @@ export class Encoder {
    *
    * A length discriminator is placed before the concatentation of encodings of all the elements.
    *
-   * https://graypaper.fluffylabs.dev/#/364735a/334300334300
+   * https://graypaper.fluffylabs.dev/#/579bd12/374400374400
    */
   sequenceVarLen<T>(encode: Encode<T>, elements: T[]) {
     check(elements.length <= 2 ** 32, "Wow, that's a nice long sequence you've got here.");

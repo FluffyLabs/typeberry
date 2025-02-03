@@ -94,7 +94,7 @@ export class Judgement extends WithDebug {
  * (either using keys from current epoch or previous)
  * over validity or invalidity of a particular [`WorkReport`].
  *
- * https://graypaper.fluffylabs.dev/#/c71229b/12af0012af00
+ * https://graypaper.fluffylabs.dev/#/579bd12/12cd0012cd00
  */
 export class Verdict extends WithDebug {
   static Codec = codec.Class(Verdict, {
@@ -128,10 +128,10 @@ export class Verdict extends WithDebug {
      * Votes coming from super majority of validators.
      *
      * NOTE: must be ordered by validator index.
-     * https://graypaper.fluffylabs.dev/#/c71229b/121802121902
+     * https://graypaper.fluffylabs.dev/#/579bd12/123702123802
      *
      * TODO [ToDr] The Gray Paper does not seem to imply that this has to be
-     * supermajority: https://graypaper.fluffylabs.dev/#/c71229b/123202123702 ?
+     * supermajority: https://graypaper.fluffylabs.dev/#/579bd12/124e02125502
      */
     public readonly votes: KnownSizeArray<Judgement, "Validators super majority">,
   ) {
@@ -146,7 +146,7 @@ export class Verdict extends WithDebug {
  *
  * `E_D = (v, c, f)`
  *
- * https://graypaper.fluffylabs.dev/#/c71229b/115d01115d01
+ * https://graypaper.fluffylabs.dev/#/579bd12/124900124900
  */
 export class DisputesExtrinsic extends WithDebug {
   static Codec = codec.Class(DisputesExtrinsic, {
@@ -164,21 +164,21 @@ export class DisputesExtrinsic extends WithDebug {
      * `v`: a collection of verdicts over validity of some [`WorkReport`]s.
      *
      *  NOTE: must be ordered by report hash.
-     *  https://graypaper.fluffylabs.dev/#/c71229b/12a50112a501
+     *  https://graypaper.fluffylabs.dev/#/579bd12/12c40112c401
      */
     public readonly verdicts: Verdict[],
     /**
      * `c`: proofs of validator misbehavior: gauranteeing an invalid [`WorkReport`].
      *
      * NOTE: must be ordered by the validator's Ed25519Key.
-     * https://graypaper.fluffylabs.dev/#/c71229b/12a50112a701
+     * https://graypaper.fluffylabs.dev/#/579bd12/12c40112c601
      */
     public readonly culprits: Culprit[],
     /**
      * `c`: proofs of validator misbehavior: signing a contradictory judgement of a [`WorkReport`] validity.
      *
      * NOTE: must be ordered by the validator's Ed25519Key.
-     * https://graypaper.fluffylabs.dev/#/c71229b/12a50112a701
+     * https://graypaper.fluffylabs.dev/#/579bd12/12c40112c601
      */
     public readonly faults: Fault[],
   ) {

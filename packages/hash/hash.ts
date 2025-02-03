@@ -4,7 +4,7 @@ import { WithDebug } from "@typeberry/utils";
 /**
  * Size of the output of the hash functions.
  *
- * https://graypaper.fluffylabs.dev/#/387103d/071401071f01
+ * https://graypaper.fluffylabs.dev/#/579bd12/073101073c01
  *
  */
 export const HASH_SIZE = 32;

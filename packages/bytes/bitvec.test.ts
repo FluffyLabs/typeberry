@@ -36,7 +36,7 @@ describe("BitVec", () => {
     b.sumWith(a);
     a.sumWith(b);
 
-    const asBits = (x: BitVec) => `0b${Number(BytesBlob.blobFrom(x.raw())).toString(2)}`;
+    const asBits = (x: BitVec) => `0b${Number(BytesBlob.blobFrom(x.raw)).toString(2)}`;
 
     // then
     assert.strictEqual(asBits(a), "0b1100000011");

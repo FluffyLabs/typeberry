@@ -7,7 +7,7 @@ import type { HeaderHash } from "./hash";
 /**
  * Keccak-256 hash of the BEEFY MMR root.
  *
- * https://graypaper.fluffylabs.dev/#/c71229b/1e76001e7900
+ * https://graypaper.fluffylabs.dev/#/579bd12/1e4f011e5201
  */
 export type BeefyHash = Opaque<OpaqueHash, "BeefyHash">;
 
@@ -15,7 +15,7 @@ export type BeefyHash = Opaque<OpaqueHash, "BeefyHash">;
  * `X`: Refinement Context - state of the chain at the point
  * that the report's corresponding work-package was evaluated.
  *
- * https://graypaper.fluffylabs.dev/#/c71229b/138600138900
+ * https://graypaper.fluffylabs.dev/#/579bd12/13b80013bb00
  */
 export class RefineContext extends WithDebug {
   static Codec = codec.Class(RefineContext, {

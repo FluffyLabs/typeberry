@@ -61,21 +61,21 @@ export enum QuitError {
  * - `q`: queue of work reports
  * - `x`: priviliges state
  *
- * https://graypaper.fluffylabs.dev/#/439ca37/161402161402
+ * https://graypaper.fluffylabs.dev/#/579bd12/163602163602
  */
 export interface AccumulationPartialState {
   /**
    * Request (solicit) a preimage to be (re-)available.
    *
    * States:
-   * https://graypaper.fluffylabs.dev/#/364735a/113000113000
+   * https://graypaper.fluffylabs.dev/#/579bd12/116f00116f00
    */
   requestPreimage(hash: Blake2bHash, length: U32): Result<null, RequestPreimageError>;
 
   /**
    * Mark a preimage hash as unavailable (forget it).
    *
-   * https://graypaper.fluffylabs.dev/#/364735a/30a20030a200
+   * https://graypaper.fluffylabs.dev/#/579bd12/335602335602
    */
   forgetPreimage(hash: Blake2bHash, length: U32): Result<null, null>;
 
@@ -111,7 +111,7 @@ export interface AccumulationPartialState {
    *
    * Note the assigned id might be different than requested
    * in case of a conflict.
-   * https://graypaper.fluffylabs.dev/#/364735a/2b5c012b5c01
+   * https://graypaper.fluffylabs.dev/#/579bd12/2e14012e1401
    *
    * An error can be returned in case the account does not
    * have the required balance.
@@ -135,7 +135,7 @@ export interface AccumulationPartialState {
    *
    * I.e. assign the "regular dimension" of the context to
    * the "exceptional dimension".
-   * https://graypaper.fluffylabs.dev/#/364735a/2a96022a9602
+   * https://graypaper.fluffylabs.dev/#/579bd12/2df4012df401
    */
   checkpoint(): void;
 

@@ -9,7 +9,7 @@ import { type Opaque, asOpaqueType, check } from "@typeberry/utils";
  *
  * "an index of a six-second timeslots from the JAM Common Era"
  *
- * https://graypaper.fluffylabs.dev/#/387103d/0b1d000b2100
+ * https://graypaper.fluffylabs.dev/#/579bd12/0b46000b4a00
  */
 export type TimeSlot = Opaque<U32, "TimeSlot[u32]">;
 /** Attempt to convert a number into `TimeSlot`. */
@@ -43,7 +43,7 @@ export type StateRootHash = Opaque<OpaqueHash, "StateRootHash">;
 /**
  * Index of an epoch.
  *
- * https://graypaper.fluffylabs.dev/#/c71229b/0b20000b2300
+ * https://graypaper.fluffylabs.dev/#/579bd12/0b39000b3c00
  */
 export type Epoch = Opaque<U32, "Epoch">;
 /** Attempt to convert a number into `Epoch`. */

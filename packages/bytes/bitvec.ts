@@ -39,7 +39,7 @@ export class BitVec {
   }
 
   /** Return a raw in-memory representation of this [`BitVec`]. */
-  raw(): Uint8Array {
+  get raw(): Uint8Array {
     return this.data.subarray(0, this.byteLength);
   }
 
@@ -47,7 +47,7 @@ export class BitVec {
   sumWith(other: BitVec) {
     check(other.bitLength === this.bitLength, `Invalid bit length for AND: ${other.bitLength} vs ${this.bitLength}`);
 
-    const otherRaw = other.raw();
+    const otherRaw = other.raw;
     for (let i = 0; i < this.byteLength; i++) {
       this.data[i] |= otherRaw[i];
     }
