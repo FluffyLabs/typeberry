@@ -139,14 +139,36 @@ export class AssurancesTestFull {
 }
 
 export async function runAssurancesTestTiny(testContent: AssurancesTestTiny, path: string) {
-  const preState = TestState.toAssurancesState(testContent.pre_state, tinyChainSpec);
-  const postState = TestState.toAssurancesState(testContent.post_state, tinyChainSpec);
-  const input = Input.toAssurancesInput(testContent.input, tinyChainSpec);
+  const spec = tinyChainSpec;
+  const preState = TestState.toAssurancesState(testContent.pre_state, spec);
+  const postState = TestState.toAssurancesState(testContent.post_state, spec);
+  const input = Input.toAssurancesInput(testContent.input, spec);
+  const expectedResult = Output.toAssurancesTransitionResult(testContent.output);
 
-  const assurances = new Assurances(tinyChainSpec, preState);
+  await runAssurancesTest(path, spec, preState, postState, input, expectedResult);
+}
+
+export async function runAssurancesTestFull(testContent: AssurancesTestFull, path: string) {
+  const spec = fullChainSpec;
+  const preState = TestState.toAssurancesState(testContent.pre_state, spec);
+  const postState = TestState.toAssurancesState(testContent.post_state, spec);
+  const input = Input.toAssurancesInput(testContent.input, spec);
+  const expectedResult = Output.toAssurancesTransitionResult(testContent.output);
+
+  await runAssurancesTest(path, spec, preState, postState, input, expectedResult);
+}
+
+async function runAssurancesTest(
+  path: string,
+  spec: ChainSpec,
+  preState: AssurancesState,
+  postState: AssurancesState,
+  input: AssurancesInput,
+  expectedResult: Result<WorkReport[], AssurancesError>,
+) {
+  const assurances = new Assurances(spec, preState);
   const res = await assurances.transition(input);
 
-  const expectedResult = Output.toAssurancesTransitionResult(testContent.output);
   // validators are in incorrect order as well so it depends which error is checked first
   if (path.includes("assurances_with_bad_validator_index-1")) {
     if (!expectedResult.isError) {
@@ -161,19 +183,4 @@ export async function runAssurancesTestTiny(testContent: AssurancesTestTiny, pat
     ignore: ["output.details"],
   });
   deepEqual(assurances.state, postState, { context: "state" });
-}
-
-export async function runAssurancesTestFull(testContent: AssurancesTestFull) {
-  const preState = TestState.toAssurancesState(testContent.pre_state, fullChainSpec);
-  const postState = TestState.toAssurancesState(testContent.post_state, fullChainSpec);
-  const input = Input.toAssurancesInput(testContent.input, fullChainSpec);
-
-  const assurances = new Assurances(fullChainSpec, preState);
-  const res = await assurances.transition(input);
-
-  deepEqual(assurances.state, postState, { context: "state" });
-  deepEqual(res, Output.toAssurancesTransitionResult(testContent.output), {
-    context: "output",
-    ignore: ["output.details"],
-  });
 }
