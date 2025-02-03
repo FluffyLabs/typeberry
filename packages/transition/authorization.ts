@@ -8,6 +8,7 @@ import { asOpaqueType } from "@typeberry/utils";
 
 export const MAX_NUMBER_OF_AUTHORIZATIONS_IN_POOL = O;
 
+// TODO [ToDr] most likely to some shared util?
 /** One entry of kind `T` for each core. */
 export type PerCore<T> = KnownSizeArray<T, "number of cores">;
 

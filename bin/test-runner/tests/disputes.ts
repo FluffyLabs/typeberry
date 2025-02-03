@@ -1,14 +1,13 @@
 import assert from "node:assert";
-import { type Ed25519Key, type TimeSlot, type ValidatorData, type WorkReportHash, codec } from "@typeberry/block";
+import type { Ed25519Key, TimeSlot, ValidatorData, WorkReportHash } from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
-import { WorkReport } from "@typeberry/block/work-report";
 import { Disputes } from "@typeberry/disputes";
-import { AvailabilityAssignment, DisputesRecords, DisputesState } from "@typeberry/disputes";
+import { DisputesRecords, DisputesState } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { fromJson as codecFromJson } from "./codec/common";
 import { disputesExtrinsicFromJson } from "./codec/disputes-extrinsic";
-import { TestAvailabilityAssignment, TestWorkReport, commonFromJson, getChainSpec } from "./common-types";
+import { TestAvailabilityAssignment, commonFromJson, getChainSpec } from "./common-types";
 
 class DisputesOutputMarks {
   static fromJson: FromJson<DisputesOutputMarks> = {
@@ -38,15 +37,6 @@ class TestDisputesRecords {
   wonky!: WorkReportHash[];
   /** "Punish" set */
   offenders!: Ed25519Key[];
-
-  static fromDisputesRecords(disputesRecords: DisputesRecords) {
-    const psi = new TestDisputesRecords();
-    psi.good = disputesRecords.goodSet.slice();
-    psi.bad = disputesRecords.badSet.slice();
-    psi.wonky = disputesRecords.wonkySet.slice();
-    psi.offenders = disputesRecords.punishSet.slice();
-    return psi;
-  }
 }
 
 class TestState {
@@ -69,32 +59,12 @@ class TestState {
   /** Previous validator set. */
   lambda!: ValidatorData[];
 
-  static fromDisputesState(disputesState: DisputesState) {
-    const state = new TestState();
-
-    state.psi = TestDisputesRecords.fromDisputesRecords(disputesState.disputesRecords);
-    state.rho = TestAvailabilityAssignment.fromAvailabilityAssignment(disputesState.availabilityAssignment);
-    state.tau = disputesState.timeslot;
-    state.kappa = disputesState.currentValidatorData;
-    state.lambda = disputesState.previousValidatorData;
-
-    return state;
-  }
-
   static toDisputesState(testState: TestState) {
     const psi = testState.psi;
     const disputesRecords = DisputesRecords.fromSortedArrays(psi.good, psi.bad, psi.wonky, psi.offenders);
     const rho = testState.rho;
     const availabilityAssignment = rho.map((item) => {
-      if (!item) {
-        return null;
-      }
-      const workReport = TestWorkReport.toWorkReport(item.report);
-      return new AvailabilityAssignment(
-        workReport,
-        item.timeout,
-        codec.Encoder.encodeObject(WorkReport.Codec, workReport),
-      );
+      return item !== null ? TestAvailabilityAssignment.toAvailabilityAssignment(item) : null;
     });
 
     return new DisputesState(disputesRecords, availabilityAssignment, testState.tau, testState.kappa, testState.lambda);
@@ -152,5 +122,5 @@ export async function runDisputesTest(testContent: DisputesTest, path: string) {
     assert.deepEqual(error, testContent.output.err);
   }
   assert.deepEqual(ok, testContent.output.ok?.offenders_mark);
-  assert.deepEqual(TestState.fromDisputesState(disputes.state), testContent.post_state);
+  assert.deepEqual(disputes.state, TestState.toDisputesState(testContent.post_state));
 }

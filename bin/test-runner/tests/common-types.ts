@@ -13,6 +13,7 @@ import {
   type TimeSlot,
   VALIDATOR_META_BYTES,
   type ValidatorData,
+  tryAsTimeSlot,
 } from "@typeberry/block";
 import { RefineContext } from "@typeberry/block/refine-context";
 import type { WorkItemsCount } from "@typeberry/block/work-package";
@@ -25,10 +26,11 @@ import {
   WorkReport,
 } from "@typeberry/block/work-report";
 import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
+import { Encoder } from "@typeberry/codec";
 import type { FixedSizeArray } from "@typeberry/collections";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import type { AvailabilityAssignment } from "@typeberry/disputes";
-import type { HASH_SIZE, OpaqueHash } from "@typeberry/hash";
+import { AvailabilityAssignment } from "@typeberry/disputes";
+import { type HASH_SIZE, type OpaqueHash, WithHash, blake2b } from "@typeberry/hash";
 import type { U16, U32 } from "@typeberry/numbers";
 import { Bytes, BytesBlob } from "@typeberry/trie";
 import { fromJson as codecFromJson } from "./codec/common";
@@ -220,20 +222,6 @@ export class TestWorkReport {
     results: json.array(TestResult.fromJson),
   };
 
-  static fromWorkReport(workReport: WorkReport) {
-    const testWorkReport = new TestWorkReport();
-    testWorkReport.auth_output = workReport.authorizationOutput;
-    testWorkReport.authorizer_hash = workReport.authorizerHash;
-    testWorkReport.core_index = workReport.coreIndex;
-    testWorkReport.context = TestContext.fromRefineContext(workReport.context);
-    testWorkReport.package_spec = TestPackageSpec.fromWorkPackageSpec(workReport.workPackageSpec);
-    testWorkReport.results = TestResult.fromResults(workReport.results);
-    testWorkReport.segment_root_lookup = workReport.segmentRootLookup.map((item) =>
-      TestSegmentRootLookupItem.fromSegmentRootLookupItem(item),
-    );
-    return testWorkReport;
-  }
-
   static toWorkReport(testWorkReport: TestWorkReport) {
     return new WorkReport(
       TestPackageSpec.toWorkPackageSpec(testWorkReport.package_spec),
@@ -263,17 +251,10 @@ export class TestAvailabilityAssignment {
   report!: TestWorkReport;
   timeout!: number;
 
-  static fromAvailabilityAssignment(availabilityAssignments: (AvailabilityAssignment | null)[]) {
-    return availabilityAssignments.map((availabilityAssignment) => {
-      if (!availabilityAssignment) {
-        return null;
-      }
-
-      const rho = new TestAvailabilityAssignment();
-      rho.report = TestWorkReport.fromWorkReport(availabilityAssignment.workReport);
-      rho.timeout = availabilityAssignment.timeout;
-      return rho;
-    });
+  static toAvailabilityAssignment(test: TestAvailabilityAssignment): AvailabilityAssignment {
+    const workReport = TestWorkReport.toWorkReport(test.report);
+    const workReportHash = blake2b.hashBytes(Encoder.encodeObject(WorkReport.Codec, workReport)).asOpaque();
+    return new AvailabilityAssignment(new WithHash(workReportHash, workReport), tryAsTimeSlot(test.timeout));
   }
 }
 

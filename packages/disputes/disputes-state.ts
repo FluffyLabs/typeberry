@@ -1,7 +1,8 @@
 import type { Ed25519Key, TimeSlot, ValidatorData, WorkReportHash } from "@typeberry/block";
 import type { WorkReport } from "@typeberry/block/work-report";
-import type { BytesBlob } from "@typeberry/bytes";
 import { Ordering, SortedSet } from "@typeberry/collections";
+import type { WithHash } from "@typeberry/hash";
+import { WithDebug } from "@typeberry/utils";
 
 export function hashComparator<V extends WorkReportHash | Ed25519Key>(a: V, b: V) {
   if (a.isLessThan(b)) {
@@ -47,12 +48,14 @@ export class DisputesRecords {
   }
 }
 
-export class AvailabilityAssignment {
+// TODO [ToDr] move to some shared place?
+export class AvailabilityAssignment extends WithDebug {
   constructor(
-    public workReport: WorkReport,
-    public timeout: number,
-    public workReportBytes: BytesBlob,
-  ) {}
+    public workReport: WithHash<WorkReportHash, WorkReport>,
+    public timeout: TimeSlot,
+  ) {
+    super();
+  }
 }
 
 export class DisputesState {

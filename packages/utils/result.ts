@@ -11,6 +11,7 @@ export type Result<Ok, Error> =
       isOk: false;
       isError: true;
       error: Error;
+      details: string;
     };
 
 /**
@@ -35,12 +36,13 @@ export const Result = {
   },
 
   /** Create new [`Result`] with `Error` status. */
-  error: <Ok, Error>(error: Error): Result<Ok, Error> => {
+  error: <Ok, Error>(error: Error, details = ""): Result<Ok, Error> => {
     check(error !== undefined, "`Error` type cannot be undefined.");
     return {
       isOk: false,
       isError: true,
       error,
+      details,
     };
   },
 };
