@@ -164,8 +164,8 @@ export async function runAssurancesTestTiny(testContent: AssurancesTestTiny, pat
 }
 
 export async function runAssurancesTestFull(testContent: AssurancesTestFull) {
-  const preState = TestState.toAssurancesState(testContent.pre_state, tinyChainSpec);
-  const postState = TestState.toAssurancesState(testContent.post_state, tinyChainSpec);
+  const preState = TestState.toAssurancesState(testContent.pre_state, fullChainSpec);
+  const postState = TestState.toAssurancesState(testContent.post_state, fullChainSpec);
   const input = Input.toAssurancesInput(testContent.input, fullChainSpec);
 
   const assurances = new Assurances(fullChainSpec, preState);
