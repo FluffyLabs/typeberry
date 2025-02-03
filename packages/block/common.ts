@@ -1,6 +1,8 @@
+import type { KnownSizeArray } from "@typeberry/collections";
+import type { ChainSpec } from "@typeberry/config";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import { type U16, type U32, type U64, tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { type Opaque, asOpaqueType } from "@typeberry/utils";
+import { type Opaque, asOpaqueType, check } from "@typeberry/utils";
 
 /**
  * Time slot index.
@@ -49,3 +51,24 @@ export const tryAsEpoch = (v: number): Epoch => asOpaqueType(tryAsU32(v));
 
 /** Hash of the merkle root of exported segments root of a work package. */
 export type SegmentsRoot = Opaque<OpaqueHash, "SegmentsRoot">;
+
+/** One entry of kind `T` for each core. */
+export type PerCore<T> = KnownSizeArray<T, "number of cores">;
+/** Check if given array has correct length before casting to the opaque type. */
+export function tryAsPerCore<T>(array: T[], spec: ChainSpec): PerCore<T> {
+  check(
+    array.length === spec.coresCount,
+    `Invalid per-core array length. Expected ${spec.coresCount}, got: ${array.length}`,
+  );
+  return asOpaqueType(array);
+}
+
+/** One entry of `T` per one validator. */
+export type PerValidator<T> = KnownSizeArray<T, "ValidatorsCount">;
+export function tryAsPerValidator<T>(array: T[], spec: ChainSpec): PerValidator<T> {
+  check(
+    array.length === spec.validatorsCount,
+    `Invalid per-validator array length. Expected ${spec.validatorsCount}, got: ${array.length}`,
+  );
+  return asOpaqueType(array);
+}

@@ -14,3 +14,4 @@
 export * from "./debug";
 export * from "./opaque";
 export * from "./result";
+export * from "./test";

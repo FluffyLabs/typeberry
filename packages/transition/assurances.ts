@@ -1,23 +1,25 @@
-import type { HeaderHash, TimeSlot, ValidatorData } from "@typeberry/block";
+import type { HeaderHash, PerCore, PerValidator, TimeSlot, ValidatorData } from "@typeberry/block";
 import type { AssurancesExtrinsicView } from "@typeberry/block/assurances";
 import type { WorkReport } from "@typeberry/block/work-report";
 import { BytesBlob } from "@typeberry/bytes";
-import { FixedSizeArray, type KnownSizeArray } from "@typeberry/collections";
+import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
 import type { AvailabilityAssignment } from "@typeberry/disputes";
 import { blake2b } from "@typeberry/hash";
 import { OK, Result, check } from "@typeberry/utils";
-import type { PerCore } from "./authorization";
 
+/** Assurances transition input. */
 export type AssurancesInput = {
+  /** A view of assurances extrinsic. */
   assurances: AssurancesExtrinsicView;
+  /** Current header time slot. */
   slot: TimeSlot;
+  /** Parent hash that all assurances need to be anchored at. */
   parentHash: HeaderHash;
 };
 
-export type PerValidator<T> = KnownSizeArray<T, "ValidatorsCount">;
-
+/** State of the assurances. */
 export type AssurancesState = {
   /**
    * `rho`: work-reports which have been reported but are not yet known to be
@@ -37,6 +39,7 @@ export type AssurancesState = {
   currentValidatorData: PerValidator<ValidatorData>;
 };
 
+/** Possible error during assurances transition. */
 export enum AssurancesError {
   /** Assurances must all be anchored in `parentHash`. */
   InvalidAnchor = 0,
@@ -57,6 +60,7 @@ export enum AssurancesError {
  */
 export const REPORT_TIMEOUT_GRACE_PERIOD = 5;
 
+/** Performs the transtion of assurances state given some input. */
 export class Assurances {
   constructor(
     public readonly chainSpec: ChainSpec,
@@ -151,9 +155,10 @@ export class Assurances {
     return Result.ok(availableReports);
   }
 
-  async verifySignatures(assurances: AssurancesExtrinsicView): Promise<Result<OK, AssurancesError>> {
+  /** Asynchronously verify all signatures. */
+  private async verifySignatures(assurances: AssurancesExtrinsicView): Promise<Result<OK, AssurancesError>> {
     const validatorData = this.state.currentValidatorData;
-    const signatures: ed25519.Input<BytesBlob>[] = [];
+    const signatures: ed25519.Input<BytesBlob>[] = Array(assurances.length);
     for (const assurance of assurances) {
       const v = assurance.view();
       const key = validatorData[v.validatorIndex.materialize()];
@@ -182,7 +187,7 @@ export class Assurances {
   }
 }
 
-export const JAM_AVAILABLE = BytesBlob.blobFromString("jam_available").raw;
+const JAM_AVAILABLE = BytesBlob.blobFromString("jam_available").raw;
 
 function signingPayload(anchor: BytesBlob, blob: BytesBlob): BytesBlob {
   return BytesBlob.blobFromParts(JAM_AVAILABLE, blake2b.hashBytes(BytesBlob.blobFromParts(anchor.raw, blob.raw)).raw);

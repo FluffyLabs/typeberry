@@ -6,6 +6,7 @@ import { HASH_SIZE, WithHash } from "@typeberry/hash";
 import { WithDebug, asOpaqueType } from "@typeberry/utils";
 import {
   type EntropyHash,
+  type PerValidator,
   type StateRootHash,
   type TimeSlot,
   type ValidatorIndex,
@@ -60,7 +61,7 @@ export class EpochMarker extends WithDebug {
     public readonly ticketsEntropy: EntropyHash,
     // TODO [ToDr] constrain the sequence length during decoding.
     /** `kappa_b`: Bandernsatch validator keys for the NEXT epoch. */
-    public readonly validators: KnownSizeArray<BandersnatchKey, "ValidatorsCount">,
+    public readonly validators: PerValidator<BandersnatchKey>,
   ) {
     super();
   }

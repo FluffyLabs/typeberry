@@ -1,7 +1,7 @@
-import type { CodeHash, CoreIndex, ServiceId, ValidatorData } from "@typeberry/block";
+import type { CodeHash, CoreIndex, PerValidator, ServiceId, ValidatorData } from "@typeberry/block";
 import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants";
 import type { Bytes } from "@typeberry/bytes";
-import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
+import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
@@ -128,7 +128,7 @@ export interface AccumulationPartialState {
   upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void;
 
   /** Designate new validators given their key and meta data. */
-  updateValidatorsData(validatorsData: KnownSizeArray<ValidatorData, "ValidatorsCount">): void;
+  updateValidatorsData(validatorsData: PerValidator<ValidatorData>): void;
 
   /**
    * Checkpoint this partial state.
