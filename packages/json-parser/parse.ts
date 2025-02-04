@@ -1,5 +1,7 @@
 import type { FromJson } from "./types";
 
+const NO_KEY: unique symbol = Symbol("no key");
+
 /** Given already parsed JSON, parse & validate it further to match the expected `jsonDescription` type. */
 export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>, context = "<root>"): T {
   const t = typeof jsonType;
@@ -101,12 +103,13 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
   // now parse the ones that we need (some might be optional, but that's fine).
   for (const key of Object.keys(jsonDescription)) {
     // we intentionally skip missing keys, to have them detected
-    // during key diffing. But for optional keys we put undefined value.
+    // during key diffing. But for optional keys we put NO_KEY value
+    // to make sure key diffing works fine.
     if (key in obj) {
       const v = obj[key];
       result[key] = parseFromJson(v, c[key], `${context}.${key}`);
     } else if (Array.isArray(c[key]) && c[key][0] === "optional") {
-      result[key] = undefined;
+      result[key] = NO_KEY;
     }
   }
 
@@ -119,6 +122,13 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
           Schema: ${Object.keys(jsonDescription)}`,
     );
     throw e;
+  }
+
+  // clean up keys with no value
+  for (const key of Object.keys(result)) {
+    if (result[key] === NO_KEY) {
+      delete result[key];
+    }
   }
 
   return result as T;
