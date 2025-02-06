@@ -139,7 +139,7 @@ export class BytesBlob {
   /** Split BytesBlob into chunks of given size */
   chunks(size: number): BytesBlob[] {
     check(this.length % size === 0, "BytesBlob.chunks: size does not divide length.");
-    const chunks = [];
+    const chunks: BytesBlob[] = [];
     for (let i = 0; i < this.length; i += size) {
       chunks.push(BytesBlob.blobFrom(this.raw.slice(i, i + size)));
     }

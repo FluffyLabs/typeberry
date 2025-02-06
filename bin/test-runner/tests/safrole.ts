@@ -10,18 +10,10 @@ import {
 import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { Logger } from "@typeberry/logger";
 import type { State as SafroleState } from "@typeberry/safrole";
 import { Safrole } from "@typeberry/safrole";
 import type { ValidatorData } from "@typeberry/state";
 import { commonFromJson, getChainSpec } from "./common-types";
-
-type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}` ? `${T}${Capitalize<SnakeToCamel<U>>}` : S;
-
-function snakeToCamel<T extends string>(s: T): SnakeToCamel<T> {
-  return s.replace(/(_\w)/g, (matches) => matches[1].toUpperCase()) as SnakeToCamel<T>;
-}
-
 namespace safroleFromJson {
   export const bytesBlob = json.fromString(BytesBlob.parseBlob);
 
@@ -146,8 +138,6 @@ export class SafroleTest {
   post_state!: JsonState;
 }
 
-const logger = Logger.new(__filename, "test-runner/safrole");
-
 export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const chainSpec = getChainSpec(path);
   const preState = convertPreStateToModel(testContent.pre_state);
@@ -158,8 +148,7 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const ok = result.isOk ? result.ok : undefined;
 
   assert.deepEqual(error, testContent.output.err);
-  assert.deepEqual(ok, convertResultToModel(testContent.output) as any);
-  // deepEqual(safrole.state, convertPreStateToModel(testContent.post_state), {context : 'postState'});
+  assert.deepEqual(ok, convertResultToModel(testContent.output));
   assert.deepEqual(safrole.state, convertPreStateToModel(testContent.post_state));
 }
 
