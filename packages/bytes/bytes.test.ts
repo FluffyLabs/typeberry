@@ -57,27 +57,27 @@ describe("BytesBlob", () => {
     it("should compare two equal blobs and return false", () => {
       const blob1 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
       const blob2 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
-  
+
       const result = blob1.isLessThan(blob2);
-  
+
       assert.strictEqual(result, false);
     });
-  
+
     it("should compare two blobs and return false", () => {
       const blob1 = BytesBlob.blobFromNumbers([48, 163, 246, 134]);
       const blob2 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
-  
+
       const result = blob1.isLessThan(blob2);
-  
+
       assert.strictEqual(result, false);
     });
-  
+
     it("should compare two blobs and return true", () => {
       const blob1 = BytesBlob.blobFromNumbers([48, 163, 246, 134]);
       const blob2 = BytesBlob.blobFromNumbers([49, 163, 246, 134]);
-  
+
       const result = blob1.isLessThan(blob2);
-  
+
       assert.strictEqual(result, true);
     });
   });
@@ -91,7 +91,7 @@ describe("BytesBlob", () => {
       const expectedChunks = [expectedChunk1, expectedChunk2];
 
       const result = blob.chunks(chunkSize);
-      
+
       assert.deepStrictEqual(result, expectedChunks);
     });
   });
