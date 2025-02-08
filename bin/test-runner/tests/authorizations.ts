@@ -2,12 +2,8 @@ import type { CoreIndex, TimeSlot } from "@typeberry/block";
 import type { AuthorizerHash } from "@typeberry/block/work-report";
 import { HashSet } from "@typeberry/collections/hash-set";
 import { type FromJson, json } from "@typeberry/json-parser";
-import {
-  Authorization,
-  type AuthorizationInput,
-  type AuthorizationState,
-  assertSameState,
-} from "@typeberry/transition/authorization";
+import { Authorization, type AuthorizationInput, type AuthorizationState } from "@typeberry/transition/authorization";
+import { deepEqual } from "@typeberry/utils";
 import { commonFromJson, getChainSpec } from "./common-types";
 
 class TestCoreAuthorizer {
@@ -20,20 +16,42 @@ class TestCoreAuthorizer {
   auth_hash!: AuthorizerHash;
 }
 class Input {
-  static fromJson: FromJson<Input> = {
-    slot: "number",
-    auths: json.array(TestCoreAuthorizer.fromJson),
-  };
+  static fromJson = json.object<Input, AuthorizationInput>(
+    {
+      slot: "number",
+      auths: json.array(TestCoreAuthorizer.fromJson),
+    },
+    ({ slot, auths }) => {
+      const input: AuthorizationInput = {
+        slot,
+        used: new Map(),
+      };
+      for (const { core, auth_hash } of auths) {
+        const perCore = input.used.get(core) ?? new HashSet();
+        perCore.insert(auth_hash);
+        input.used.set(core, perCore);
+      }
+      return input;
+    },
+  );
 
   slot!: TimeSlot;
   auths!: TestCoreAuthorizer[];
 }
 
 class TestState {
-  static fromJson: FromJson<TestState> = {
-    auth_pools: ["array", json.array(commonFromJson.bytes32())],
-    auth_queues: ["array", json.array(commonFromJson.bytes32())],
-  };
+  static fromJson = json.object<TestState, AuthorizationState>(
+    {
+      auth_pools: ["array", json.array(commonFromJson.bytes32())],
+      auth_queues: ["array", json.array(commonFromJson.bytes32())],
+    },
+    ({ auth_pools, auth_queues }) => {
+      return {
+        authPools: auth_pools,
+        authQueues: auth_queues,
+      };
+    },
+  );
 
   auth_pools!: AuthorizationState["authPools"];
   auth_queues!: AuthorizationState["authQueues"];
@@ -47,32 +65,17 @@ export class AuthorizationsTest {
     post_state: TestState.fromJson,
   };
 
-  input!: Input;
-  pre_state!: TestState;
+  input!: AuthorizationInput;
+  pre_state!: AuthorizationState;
   output!: null;
-  post_state!: TestState;
+  post_state!: AuthorizationState;
 }
 
 export async function runAuthorizationsTest(test: AuthorizationsTest, path: string) {
   const chainSpec = getChainSpec(path);
-  const state: AuthorizationState = {
-    authPools: test.pre_state.auth_pools,
-    authQueues: test.pre_state.auth_queues,
-  };
 
-  const input: AuthorizationInput = {
-    slot: test.input.slot,
-    used: new Map(),
-  };
-  for (const { core, auth_hash } of test.input.auths) {
-    const perCore = input.used.get(core) ?? new HashSet();
-    perCore.insert(auth_hash);
-    input.used.set(core, perCore);
-  }
+  const authorization = new Authorization(chainSpec, test.pre_state);
+  authorization.transition(test.input);
 
-  const authorization = new Authorization(chainSpec, state);
-  authorization.transition(input);
-
-  assertSameState(test.post_state.auth_queues, authorization.state.authQueues, "auth queues");
-  assertSameState(test.post_state.auth_pools, authorization.state.authPools, "auth pools");
+  deepEqual(test.post_state, authorization.state);
 }

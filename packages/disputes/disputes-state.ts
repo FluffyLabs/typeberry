@@ -46,12 +46,10 @@ export class DisputesRecords {
   }
 }
 
-export class DisputesState {
-  constructor(
-    public readonly disputesRecords: DisputesRecords,
-    public readonly availabilityAssignment: PerCore<AvailabilityAssignment | null>,
-    public readonly timeslot: TimeSlot,
-    public readonly currentValidatorData: PerValidator<ValidatorData>,
-    public readonly previousValidatorData: PerValidator<ValidatorData>,
-  ) {}
-}
+export type DisputesState = {
+  readonly disputesRecords: DisputesRecords;
+  readonly availabilityAssignment: PerCore<AvailabilityAssignment | null>;
+  readonly timeslot: TimeSlot;
+  readonly currentValidatorData: PerValidator<ValidatorData>;
+  readonly previousValidatorData: PerValidator<ValidatorData>;
+};

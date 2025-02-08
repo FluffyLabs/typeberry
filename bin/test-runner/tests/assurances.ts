@@ -1,6 +1,10 @@
 import assert from "node:assert";
 import { type HeaderHash, type TimeSlot, type ValidatorData, tryAsPerCore, tryAsPerValidator } from "@typeberry/block";
-import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "@typeberry/block/assurances";
+import {
+  type AssurancesExtrinsic,
+  type AvailabilityAssignment,
+  assurancesExtrinsicCodec,
+} from "@typeberry/block/assurances";
 import type { WorkReport } from "@typeberry/block/work-report";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
@@ -45,18 +49,15 @@ class TestState {
     curr_validators: json.array(commonFromJson.validatorData),
   };
 
-  avail_assignments!: Array<TestAvailabilityAssignment | null>;
+  avail_assignments!: Array<AvailabilityAssignment | null>;
   curr_validators!: ValidatorData[];
 
   static toAssurancesState(test: TestState, spec: ChainSpec): AssurancesState {
-    const availabilityAssignment = test.avail_assignments.map((x) => {
-      return x === null ? null : TestAvailabilityAssignment.toAvailabilityAssignment(x);
-    });
-    const currentValidatorData = test.curr_validators;
+    const { avail_assignments, curr_validators } = test;
 
     return {
-      availabilityAssignment: tryAsPerCore(availabilityAssignment, spec),
-      currentValidatorData: tryAsPerValidator(currentValidatorData, spec),
+      availabilityAssignment: tryAsPerCore(avail_assignments, spec),
+      currentValidatorData: tryAsPerValidator(curr_validators, spec),
     };
   }
 }

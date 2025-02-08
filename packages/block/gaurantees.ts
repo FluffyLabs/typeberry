@@ -1,4 +1,6 @@
-import { type CodecRecord, codec } from "@typeberry/codec";
+// TODO [ToDr] Rename the file to correct spelling mistake
+
+import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { WithDebug, asOpaqueType } from "@typeberry/utils";
 import type { TimeSlot, ValidatorIndex } from "./common";
@@ -75,3 +77,5 @@ export type GuaranteesExtrinsic = KnownSizeArray<ReportGuarantee, "0..CoresCount
 export const guaranteesExtrinsicCodec = codec
   .sequenceVarLen(ReportGuarantee.Codec)
   .convert<GuaranteesExtrinsic>((i) => i, asOpaqueType);
+
+export type GuaranteesExtrinsicView = DescribedBy<typeof guaranteesExtrinsicCodec.View>;

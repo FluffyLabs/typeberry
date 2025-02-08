@@ -15,7 +15,7 @@ export type AuthorizationState = {
    *
    * https://graypaper-reader.netlify.app/#/6e1c0cd/102400102400
    */
-  authPools: PerCore<KnownSizeArray<AuthorizerHash, "At most `O`">>;
+  readonly authPools: PerCore<KnownSizeArray<AuthorizerHash, `At most ${typeof O}`>>;
   /**
    * `φ`: A queue of authorizers for each core used to fill up the pool.
    *
@@ -23,7 +23,7 @@ export type AuthorizationState = {
    *
    * https://graypaper-reader.netlify.app/#/6e1c0cd/102400102400
    */
-  authQueues: PerCore<FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>>;
+  readonly authQueues: PerCore<FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>>;
 };
 
 /** Input to the authorization. */
@@ -84,32 +84,5 @@ export class Authorization {
       // assign back to state
       this.state.authPools[coreIndex] = pool;
     }
-  }
-}
-
-export function assertSameState(a: AuthorizerHash[][], b: AuthorizerHash[][], msg: string) {
-  const errors: string[] = [];
-  const cores = Math.max(a.length, b.length);
-  if (a.length !== b.length) {
-    errors.push(`(exp) ${a.length} !== ${b.length} (got) - cores length mismatch (${msg})`);
-  }
-  for (let core = 0; core < cores; core++) {
-    const aCore = a[core] ?? [];
-    const bCore = b[core] ?? [];
-    const items = Math.max(aCore.length, bCore.length);
-    if (aCore.length !== bCore.length) {
-      errors.push(`(exp) ${aCore.length} !== ${bCore.length} (got) - length mismatch at Core[${core}] (${msg})`);
-    }
-    for (let i = 0; i < items; i++) {
-      const a = aCore[i]?.toString();
-      const b = bCore[i]?.toString();
-      if (a !== b) {
-        errors.push(`(exp) ${a} !== ${b} (got) at Core[${core}][${i}] (${msg})`);
-      }
-    }
-  }
-
-  if (errors.length > 0) {
-    throw new Error(`\n${errors.join("\n")}`);
   }
 }

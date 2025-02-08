@@ -1,4 +1,4 @@
-import { type FromJson, json } from "@typeberry/json-parser";
+import { json } from "@typeberry/json-parser";
 
 import {
   BLS_KEY_BYTES,
@@ -12,12 +12,11 @@ import {
   type StateRootHash,
   type TimeSlot,
   VALIDATOR_META_BYTES,
-  type ValidatorData,
-  tryAsTimeSlot,
+  ValidatorData,
 } from "@typeberry/block";
 import { AvailabilityAssignment } from "@typeberry/block/assurances";
-import { RefineContext } from "@typeberry/block/refine-context";
-import type { WorkItemsCount } from "@typeberry/block/work-package";
+import { type BeefyHash, RefineContext } from "@typeberry/block/refine-context";
+import { type WorkItemsCount, tryAsWorkItemsCount } from "@typeberry/block/work-package";
 import {
   type AuthorizerHash,
   type ExportsRootHash,
@@ -28,11 +27,13 @@ import {
 } from "@typeberry/block/work-report";
 import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
 import { Encoder } from "@typeberry/codec";
-import type { FixedSizeArray } from "@typeberry/collections";
+import { FixedSizeArray } from "@typeberry/collections";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type HASH_SIZE, type OpaqueHash, WithHash, blake2b } from "@typeberry/hash";
-import type { U16, U32 } from "@typeberry/numbers";
+import { type U16, type U32, tryAsU64 } from "@typeberry/numbers";
+import type { BlockState, WorkPackageInfo } from "@typeberry/transition/recent-history";
 import { Bytes, BytesBlob } from "@typeberry/trie";
+import { asOpaqueType } from "@typeberry/utils";
 import { fromJson as codecFromJson } from "./codec/common";
 
 export namespace commonFromJson {
@@ -40,12 +41,15 @@ export namespace commonFromJson {
     return json.fromString((v) => Bytes.parseBytes(v, 32) as TInto);
   }
 
-  export const validatorData: FromJson<ValidatorData> = {
-    ed25519: bytes32(),
-    bandersnatch: bytes32(),
-    bls: json.fromString((v) => Bytes.parseBytes(v, BLS_KEY_BYTES) as BlsKey),
-    metadata: json.fromString((v) => Bytes.parseBytes(v, VALIDATOR_META_BYTES)),
-  };
+  export const validatorData = json.object<ValidatorData>(
+    {
+      ed25519: bytes32(),
+      bandersnatch: bytes32(),
+      bls: json.fromString((v) => Bytes.parseBytes(v, BLS_KEY_BYTES) as BlsKey),
+      metadata: json.fromString((v) => Bytes.parseBytes(v, VALIDATOR_META_BYTES)),
+    },
+    ({ ed25519, bandersnatch, bls, metadata }) => new ValidatorData(ed25519, bandersnatch, bls, metadata),
+  );
 }
 
 export function getChainSpec(path: string) {
@@ -56,232 +60,189 @@ export function getChainSpec(path: string) {
   return fullChainSpec;
 }
 
-class TestResultDetail {
-  static fromJson: FromJson<TestResultDetail> = {
-    ok: json.fromString(BytesBlob.parseBlob),
-  };
+class TestWorkExecResult {
+  static fromJson = json.object<TestWorkExecResult, WorkExecResult>(
+    {
+      ok: json.fromString(BytesBlob.parseBlob),
+    },
+    ({ ok }) => {
+      return new WorkExecResult(WorkExecResultKind.ok, ok);
+    },
+  );
 
-  static fromWorkExecResult(result: WorkExecResult) {
-    const testResult = new TestResultDetail();
-    testResult.ok = result.okBlob;
-    return testResult;
-  }
-
-  static toWorkExecResult(testResultDetail: TestResultDetail) {
-    return new WorkExecResult(WorkExecResultKind.ok, testResultDetail.ok);
-  }
   ok!: BytesBlob | null;
 }
 
 class TestResult {
-  static fromJson: FromJson<TestResult> = {
-    service_id: "number",
-    code_hash: codecFromJson.bytes32(),
-    payload_hash: codecFromJson.bytes32(),
-    accumulate_gas: json.fromNumber((x) => BigInt(x)),
-    result: TestResultDetail.fromJson,
-  };
+  static fromJson = json.object<TestResult, WorkResult>(
+    {
+      service_id: "number",
+      code_hash: codecFromJson.bytes32(),
+      payload_hash: codecFromJson.bytes32(),
+      accumulate_gas: json.fromNumber((x) => asOpaqueType(tryAsU64(x))),
+      result: TestWorkExecResult.fromJson,
+    },
+    ({ service_id, code_hash, payload_hash, accumulate_gas, result }) => {
+      return new WorkResult(service_id, code_hash, payload_hash, accumulate_gas, result);
+    },
+  );
 
-  static fromResults(results: FixedSizeArray<WorkResult, WorkItemsCount>) {
-    return results.map((result) => {
-      const testResult = new TestResult();
-      testResult.code_hash = result.codeHash;
-      testResult.accumulate_gas = result.gas;
-      testResult.payload_hash = result.payloadHash;
-      testResult.result = TestResultDetail.fromWorkExecResult(result.result);
-      testResult.service_id = result.serviceId;
-      return testResult;
-    });
-  }
-
-  static toResults(testResults: TestResult[]) {
-    return testResults.map((testResult) => {
-      return new WorkResult(
-        testResult.service_id as ServiceId,
-        testResult.code_hash as CodeHash,
-        testResult.payload_hash,
-        testResult.accumulate_gas as ServiceGas,
-        TestResultDetail.toWorkExecResult(testResult.result),
-      );
-    }) as FixedSizeArray<WorkResult, WorkItemsCount>;
-  }
-
-  service_id!: number;
-  code_hash!: Bytes<HASH_SIZE>;
+  service_id!: ServiceId;
+  code_hash!: CodeHash;
   payload_hash!: Bytes<HASH_SIZE>;
-  accumulate_gas!: bigint;
-  result!: TestResultDetail;
+  accumulate_gas!: ServiceGas;
+  result!: WorkExecResult;
 }
 
 class TestPackageSpec {
-  static fromJson: FromJson<TestPackageSpec> = {
-    hash: codecFromJson.bytes32(),
-    length: "number",
-    erasure_root: codecFromJson.bytes32(),
-    exports_root: codecFromJson.bytes32(),
-    exports_count: "number",
-  };
-
-  static fromWorkPackageSpec(workPackageSpec: WorkPackageSpec) {
-    const packageSpec = new TestPackageSpec();
-    packageSpec.erasure_root = workPackageSpec.erasureRoot;
-    packageSpec.exports_count = workPackageSpec.exportsCount;
-    packageSpec.exports_root = workPackageSpec.exportsRoot;
-    packageSpec.hash = workPackageSpec.hash;
-    packageSpec.length = workPackageSpec.length;
-    return packageSpec;
-  }
-
-  static toWorkPackageSpec(packageSpec: TestPackageSpec) {
-    return new WorkPackageSpec(
-      packageSpec.hash,
-      packageSpec.length as U32,
-      packageSpec.erasure_root,
-      packageSpec.exports_root,
-      packageSpec.exports_count as U16,
-    );
-  }
+  static fromJson = json.object<TestPackageSpec, WorkPackageSpec>(
+    {
+      hash: codecFromJson.bytes32(),
+      length: "number",
+      erasure_root: codecFromJson.bytes32(),
+      exports_root: codecFromJson.bytes32(),
+      exports_count: "number",
+    },
+    ({ hash, length, erasure_root, exports_root, exports_count }) => {
+      return new WorkPackageSpec(hash, length, erasure_root, exports_root, exports_count);
+    },
+  );
 
   hash!: WorkPackageHash;
-  length!: number;
+  length!: U32;
   erasure_root!: OpaqueHash;
   exports_root!: ExportsRootHash;
-  exports_count!: number;
+  exports_count!: U16;
 }
 
 class TestContext {
-  static fromJson: FromJson<TestContext> = {
-    anchor: codecFromJson.bytes32(),
-    state_root: codecFromJson.bytes32(),
-    beefy_root: codecFromJson.bytes32(),
-    lookup_anchor: codecFromJson.bytes32(),
-    lookup_anchor_slot: "number",
-    prerequisites: json.array(codecFromJson.bytes32()),
-  };
+  static fromJson = json.object<TestContext, RefineContext>(
+    {
+      anchor: codecFromJson.bytes32(),
+      state_root: codecFromJson.bytes32(),
+      beefy_root: codecFromJson.bytes32(),
+      lookup_anchor: codecFromJson.bytes32(),
+      lookup_anchor_slot: "number",
+      prerequisites: json.array(codecFromJson.bytes32()),
+    },
+    ({ anchor, state_root, beefy_root, lookup_anchor, lookup_anchor_slot, prerequisites }) => {
+      return new RefineContext(anchor, state_root, beefy_root, lookup_anchor, lookup_anchor_slot, prerequisites);
+    },
+  );
 
-  static fromRefineContext(refineContext: RefineContext) {
-    const context = new TestContext();
-    context.anchor = refineContext.anchor;
-    context.beefy_root = refineContext.beefyRoot;
-    context.lookup_anchor = refineContext.lookupAnchor;
-    context.lookup_anchor_slot = refineContext.lookupAnchorSlot;
-    context.state_root = refineContext.stateRoot;
-    context.prerequisites = refineContext.prerequisites;
-    return context;
-  }
-
-  static toRefineContext(context: TestContext) {
-    return new RefineContext(
-      context.anchor.asOpaque(),
-      context.state_root.asOpaque(),
-      context.beefy_root.asOpaque(),
-      context.lookup_anchor.asOpaque(),
-      context.lookup_anchor_slot as TimeSlot,
-    );
-  }
-  anchor!: OpaqueHash;
-  state_root!: OpaqueHash;
-  beefy_root!: OpaqueHash;
-  lookup_anchor!: OpaqueHash;
-  lookup_anchor_slot!: number;
+  anchor!: HeaderHash;
+  state_root!: StateRootHash;
+  beefy_root!: BeefyHash;
+  lookup_anchor!: HeaderHash;
+  lookup_anchor_slot!: TimeSlot;
   prerequisites!: OpaqueHash[];
 }
 
 export class TestSegmentRootLookupItem {
-  static fromJson: FromJson<TestSegmentRootLookupItem> = {
-    work_package_hash: codecFromJson.bytes32(),
-    segment_tree_root: codecFromJson.bytes32(),
-  };
+  static fromJson = json.object<TestSegmentRootLookupItem, SegmentRootLookupItem>(
+    {
+      work_package_hash: codecFromJson.bytes32(),
+      segment_tree_root: codecFromJson.bytes32(),
+    },
+    ({ work_package_hash, segment_tree_root }) => new SegmentRootLookupItem(work_package_hash, segment_tree_root),
+  );
 
   work_package_hash!: WorkPackageHash;
   segment_tree_root!: SegmentsRoot;
-
-  static toSegmentRootLookupItem(testSegmentRootLookupItem: TestSegmentRootLookupItem) {
-    return new SegmentRootLookupItem(
-      testSegmentRootLookupItem.work_package_hash,
-      testSegmentRootLookupItem.segment_tree_root,
-    );
-  }
-
-  static fromSegmentRootLookupItem(segmentRootLookupItem: SegmentRootLookupItem) {
-    const item = new TestSegmentRootLookupItem();
-    item.segment_tree_root = segmentRootLookupItem.segmentTreeRoot;
-    item.work_package_hash = segmentRootLookupItem.workPackageHash;
-    return item;
-  }
 }
 
 export class TestWorkReport {
-  static fromJson: FromJson<TestWorkReport> = {
-    package_spec: TestPackageSpec.fromJson,
-    context: TestContext.fromJson,
-    core_index: "number",
-    authorizer_hash: codecFromJson.bytes32(),
-    auth_output: json.fromString(BytesBlob.parseBlob),
-    segment_root_lookup: json.array(TestSegmentRootLookupItem.fromJson),
-    results: json.array(TestResult.fromJson),
-  };
+  static fromJson = json.object<TestWorkReport, WorkReport>(
+    {
+      package_spec: TestPackageSpec.fromJson,
+      context: TestContext.fromJson,
+      core_index: "number",
+      authorizer_hash: codecFromJson.bytes32(),
+      auth_output: json.fromString(BytesBlob.parseBlob),
+      segment_root_lookup: json.array(TestSegmentRootLookupItem.fromJson),
+      results: json.array(TestResult.fromJson),
+    },
+    ({ package_spec, context, core_index, authorizer_hash, auth_output, segment_root_lookup, results }) => {
+      const fixedSizeResults = FixedSizeArray.new(results, tryAsWorkItemsCount(results.length));
+      return new WorkReport(
+        package_spec,
+        context,
+        core_index,
+        authorizer_hash,
+        auth_output,
+        segment_root_lookup,
+        fixedSizeResults,
+      );
+    },
+  );
 
-  static toWorkReport(testWorkReport: TestWorkReport) {
-    return new WorkReport(
-      TestPackageSpec.toWorkPackageSpec(testWorkReport.package_spec),
-      TestContext.toRefineContext(testWorkReport.context),
-      testWorkReport.core_index,
-      testWorkReport.authorizer_hash,
-      testWorkReport.auth_output,
-      testWorkReport.segment_root_lookup.map((item) => TestSegmentRootLookupItem.toSegmentRootLookupItem(item)),
-      TestResult.toResults(testWorkReport.results),
-    );
-  }
-
-  package_spec!: TestPackageSpec;
-  context!: TestContext;
+  package_spec!: WorkPackageSpec;
+  context!: RefineContext;
   core_index!: CoreIndex;
   authorizer_hash!: AuthorizerHash;
   auth_output!: BytesBlob;
-  segment_root_lookup!: TestSegmentRootLookupItem[];
-  results!: TestResult[];
+  segment_root_lookup!: SegmentRootLookupItem[];
+  results!: FixedSizeArray<WorkResult, WorkItemsCount>;
 }
 
 export class TestAvailabilityAssignment {
-  static fromJson: FromJson<TestAvailabilityAssignment> = {
-    report: TestWorkReport.fromJson,
-    timeout: "number",
-  };
-  report!: TestWorkReport;
-  timeout!: number;
+  static fromJson = json.object<TestAvailabilityAssignment, AvailabilityAssignment>(
+    {
+      report: TestWorkReport.fromJson,
+      timeout: "number",
+    },
+    ({ report, timeout }) => {
+      const workReportHash = blake2b.hashBytes(Encoder.encodeObject(WorkReport.Codec, report)).asOpaque();
+      return new AvailabilityAssignment(new WithHash(workReportHash, report), timeout);
+    },
+  );
 
-  static toAvailabilityAssignment(test: TestAvailabilityAssignment): AvailabilityAssignment {
-    const workReport = TestWorkReport.toWorkReport(test.report);
-    const workReportHash = blake2b.hashBytes(Encoder.encodeObject(WorkReport.Codec, workReport)).asOpaque();
-    return new AvailabilityAssignment(new WithHash(workReportHash, workReport), tryAsTimeSlot(test.timeout));
-  }
+  report!: WorkReport;
+  timeout!: TimeSlot;
 }
 
-export class TestReportedWorkPackage {
-  static fromJson: FromJson<TestReportedWorkPackage> = {
-    hash: commonFromJson.bytes32(),
-    exports_root: commonFromJson.bytes32(),
-  };
+export class TestWorkPackageInfo {
+  static fromJson = json.object<TestWorkPackageInfo, WorkPackageInfo>(
+    {
+      hash: commonFromJson.bytes32(),
+      exports_root: commonFromJson.bytes32(),
+    },
+    ({ hash, exports_root }) => {
+      return {
+        hash,
+        exportsRoot: exports_root,
+      };
+    },
+  );
 
   hash!: WorkPackageHash;
   exports_root!: ExportsRootHash;
 }
 
-export class TestBlocksInfo {
-  static fromJson: FromJson<TestBlocksInfo> = {
-    header_hash: commonFromJson.bytes32(),
-    mmr: {
-      peaks: json.array(json.nullable(commonFromJson.bytes32())),
+export class TestBlockState {
+  static fromJson = json.object<TestBlockState, BlockState>(
+    {
+      header_hash: commonFromJson.bytes32(),
+      mmr: {
+        peaks: json.array(json.nullable(commonFromJson.bytes32())),
+      },
+      state_root: commonFromJson.bytes32(),
+      reported: json.array(TestWorkPackageInfo.fromJson),
     },
-    state_root: commonFromJson.bytes32(),
-    reported: json.array(TestReportedWorkPackage.fromJson),
-  };
+    ({ header_hash, mmr, state_root, reported }) => {
+      return {
+        headerHash: header_hash,
+        mmr,
+        postStateRoot: state_root,
+        reported,
+      };
+    },
+  );
 
   header_hash!: HeaderHash;
   mmr!: {
     peaks: Array<OpaqueHash | null>;
   };
   state_root!: StateRootHash;
-  reported!: TestReportedWorkPackage[];
+  reported!: WorkPackageInfo[];
 }

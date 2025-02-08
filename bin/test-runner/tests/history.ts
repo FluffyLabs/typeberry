@@ -1,33 +1,52 @@
-import assert from "node:assert";
-
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
-import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "@typeberry/transition/recent-history";
-import { inspect } from "@typeberry/utils";
-import { TestBlocksInfo, TestReportedWorkPackage, commonFromJson } from "./common-types";
+import {
+  type BlockState,
+  RecentHistory,
+  type RecentHistoryInput,
+  type RecentHistoryState,
+  type WorkPackageInfo,
+} from "@typeberry/transition/recent-history";
+import { asOpaqueType, deepEqual } from "@typeberry/utils";
+import { TestBlockState, TestWorkPackageInfo, commonFromJson } from "./common-types";
 
 class Input {
-  static fromJson: FromJson<Input> = {
-    header_hash: commonFromJson.bytes32(),
-    parent_state_root: commonFromJson.bytes32(),
-    accumulate_root: commonFromJson.bytes32(),
-    work_packages: json.array(TestReportedWorkPackage.fromJson),
-  };
+  static fromJson = json.object<Input, RecentHistoryInput>(
+    {
+      header_hash: commonFromJson.bytes32(),
+      parent_state_root: commonFromJson.bytes32(),
+      accumulate_root: commonFromJson.bytes32(),
+      work_packages: json.array(TestWorkPackageInfo.fromJson),
+    },
+    ({ header_hash, parent_state_root, accumulate_root, work_packages }) => {
+      return {
+        headerHash: header_hash,
+        priorStateRoot: parent_state_root,
+        accumulateRoot: accumulate_root,
+        workPackages: work_packages,
+      };
+    },
+  );
 
   header_hash!: HeaderHash;
   parent_state_root!: StateRootHash;
   accumulate_root!: OpaqueHash;
-  work_packages!: TestReportedWorkPackage[];
+  work_packages!: WorkPackageInfo[];
 }
 
 class TestState {
-  static fromJson: FromJson<TestState> = {
-    beta: json.array(TestBlocksInfo.fromJson),
-  };
+  static fromJson = json.object<TestState, RecentHistoryState>(
+    {
+      beta: json.array(TestBlockState.fromJson),
+    },
+    ({ beta }) => ({
+      recentBlocks: asOpaqueType(beta),
+    }),
+  );
 
-  beta!: TestBlocksInfo[];
+  beta!: BlockState[];
 }
 
 export class HistoryTest {
@@ -38,10 +57,10 @@ export class HistoryTest {
     post_state: TestState.fromJson,
   };
 
-  input!: Input;
-  pre_state!: TestState;
+  input!: RecentHistoryInput;
+  pre_state!: RecentHistoryState;
   output!: null;
-  post_state!: TestState;
+  post_state!: RecentHistoryState;
 }
 
 export async function runHistoryTest(testContent: HistoryTest) {
@@ -51,31 +70,8 @@ export async function runHistoryTest(testContent: HistoryTest) {
     hashConcatPrepend: (id, a, b) => keccak.hashBlobs(keccakHasher, [id, a, b]),
   };
 
-  const state = convertState(testContent.pre_state);
+  const recentHistory = new RecentHistory(hasher, testContent.pre_state);
+  recentHistory.transition(testContent.input);
 
-  const input: RecentHistoryInput = {
-    headerHash: testContent.input.header_hash,
-    priorStateRoot: testContent.input.parent_state_root,
-    accumulateRoot: testContent.input.accumulate_root,
-    workPackages: testContent.input.work_packages.map((p) => ({
-      hash: p.hash,
-      exportsRoot: p.exports_root,
-    })),
-  };
-  const recentHistory = new RecentHistory(hasher, state);
-  recentHistory.transition(input);
-
-  assert.deepEqual(inspect(recentHistory.state), inspect(convertState(testContent.post_state)));
-}
-
-function convertState(state: TestState): RecentHistoryState {
-  return state.beta.map((x) => ({
-    headerHash: x.header_hash,
-    mmr: x.mmr,
-    postStateRoot: x.state_root,
-    reported: x.reported.map((r) => ({
-      hash: r.hash,
-      exportsRoot: r.exports_root,
-    })),
-  }));
+  deepEqual(recentHistory.state, testContent.post_state);
 }

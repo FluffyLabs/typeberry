@@ -1,10 +1,11 @@
-import type { HeaderHash, PerCore, PerValidator, TimeSlot, ValidatorData } from "@typeberry/block";
-import type { AssurancesExtrinsicView, AvailabilityAssignment } from "@typeberry/block/assurances";
+import type { HeaderHash, TimeSlot } from "@typeberry/block";
+import type { AssurancesExtrinsicView } from "@typeberry/block/assurances";
 import type { WorkReport } from "@typeberry/block/work-report";
 import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
+import type { DisputesState } from "@typeberry/disputes";
 import { blake2b } from "@typeberry/hash";
 import { OK, Result, check } from "@typeberry/utils";
 
@@ -27,7 +28,7 @@ export type AssurancesState = {
    *
    *  https://graypaper.fluffylabs.dev/#/579bd12/135800135800
    */
-  availabilityAssignment: PerCore<AvailabilityAssignment | null>;
+  readonly availabilityAssignment: DisputesState["availabilityAssignment"];
   /**
    * `kappa`: Validators, who are the set of economic actors uniquely
    *          privileged to help build and maintain the Jam chain, are
@@ -35,7 +36,7 @@ export type AssurancesState = {
    *
    *  https://graypaper.fluffylabs.dev/#/579bd12/080201080601
    */
-  currentValidatorData: PerValidator<ValidatorData>;
+  readonly currentValidatorData: DisputesState["currentValidatorData"];
 };
 
 /** Possible error during assurances transition. */
