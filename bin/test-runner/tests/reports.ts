@@ -8,7 +8,7 @@ import {
   tryAsPerValidator,
 } from "@typeberry/block";
 import type { AvailabilityAssignment } from "@typeberry/block/assurances";
-import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "@typeberry/block/gaurantees";
+import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "@typeberry/block/guarantees";
 import type { SegmentRootLookupItem } from "@typeberry/block/work-report";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";

@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import type { Extrinsic, TimeSlot, ValidatorIndex } from "@typeberry/block";
 import type { AssurancesExtrinsic } from "@typeberry/block/assurances";
-import type { GuaranteesExtrinsic } from "@typeberry/block/gaurantees";
+import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { TicketsExtrinsic } from "@typeberry/block/tickets";
 import { tinyChainSpec } from "@typeberry/config";

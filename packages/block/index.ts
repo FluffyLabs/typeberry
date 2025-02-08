@@ -14,7 +14,7 @@ export * as config from "@typeberry/config";
 export * as context from "./context";
 export * as assurances from "./assurances";
 export * as disputes from "./disputes";
-export * as gaurantees from "./gaurantees";
+export * as guarantees from "./guarantees";
 export * as preimage from "./preimage";
 export * as refineContext from "./refine-context";
 export * as tickets from "./tickets";

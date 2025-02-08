@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { tryAsCoreIndex, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import type { ServiceGas, ServiceId } from "@typeberry/block";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/block/crypto";
-import { Credential } from "@typeberry/block/gaurantees";
+import { Credential } from "@typeberry/block/guarantees";
 import { RefineContext } from "@typeberry/block/refine-context";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";

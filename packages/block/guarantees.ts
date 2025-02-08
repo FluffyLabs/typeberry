@@ -1,5 +1,3 @@
-// TODO [ToDr] Rename the file to correct spelling mistake
-
 import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { WithDebug, asOpaqueType } from "@typeberry/utils";

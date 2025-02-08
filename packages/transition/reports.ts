@@ -1,5 +1,5 @@
 import type { Ed25519Key, EntropyHash, TimeSlot } from "@typeberry/block";
-import type { GuaranteesExtrinsicView } from "@typeberry/block/gaurantees";
+import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
 import type { SegmentRootLookupItem } from "@typeberry/block/work-report";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
