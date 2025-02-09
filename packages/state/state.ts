@@ -10,8 +10,19 @@ import type { Service } from "./service";
 import type { ActivityData } from "./statistics";
 import type { ValidatorData } from "./validator-data";
 
-// TODO [ToDr] Docs
-
+/**
+ * In addition to the entropy accumulator η_0, we retain
+ * three additional historical values of the accumulator at
+ * the point of each of the three most recently ended epochs,
+ * η_1, η_2 and η_3. The second-oldest of these η2 is utilized to
+ * help ensure future entropy is unbiased (see equation 6.29)
+ * and seed the fallback seal-key generation function with
+ * randomness (see equation 6.24). The oldest is used to re-
+ * generate this randomness when verifying the seal above
+ * (see equations 6.16 and 6.15).
+ *
+ * https://graypaper.fluffylabs.dev/#/579bd12/0ef5010ef501
+ */
 export const ENTROPY_ENTRIES = 4;
 export type ENTROPY_ENTRIES = typeof ENTROPY_ENTRIES;
 
@@ -21,7 +32,13 @@ export type ENTROPY_ENTRIES = typeof ENTROPY_ENTRIES;
  * https://graypaper.fluffylabs.dev/#/579bd12/416300416500
  */
 export const MAX_RECENT_HISTORY = 8;
+export type MAX_RECENT_HISTORY = typeof MAX_RECENT_HISTORY;
 
+/**
+ * Complete state tuple with all entries.
+ *
+ * https://graypaper.fluffylabs.dev/#/579bd12/08f10008f100
+ */
 export type State = {
   /**
    * `ρ rho`: work-reports which have been reported but are not yet known to be
@@ -98,8 +115,6 @@ export type State = {
    * `δ delta`:  In summary, δ is the portion of state dealing with
    *             services, analogous in Jam to the Yellow Paper’s (
    *             smart contract) accounts.
-   *
-   * TODO [ToDr] a dictionary?
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/08fb0008ff00
    */
