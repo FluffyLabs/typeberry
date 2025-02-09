@@ -9,7 +9,8 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { AccountInfo, type Accounts, Info } from "./info";
+import { AccountInfo } from "@typeberry/state";
+import { type Accounts, Info } from "./info";
 import { HostCallResult } from "./results";
 
 class TestAccounts implements Accounts {

@@ -1,19 +1,11 @@
 import assert from "node:assert";
-import {
-  type Ed25519Key,
-  type TimeSlot,
-  type ValidatorData,
-  type WorkReportHash,
-  tryAsPerCore,
-  tryAsPerValidator,
-} from "@typeberry/block";
-import type { AvailabilityAssignment } from "@typeberry/block/assurances";
+import { type Ed25519Key, type TimeSlot, type WorkReportHash, tryAsPerValidator } from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
 import type { ChainSpec } from "@typeberry/config";
-import { Disputes } from "@typeberry/disputes";
-import { DisputesRecords, type DisputesState } from "@typeberry/disputes";
+import { Disputes, type DisputesState } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
 import { type FromJson, json } from "@typeberry/json-parser";
+import { type AvailabilityAssignment, DisputesRecords, type ValidatorData, tryAsPerCore } from "@typeberry/state";
 import { fromJson as codecFromJson } from "./codec/common";
 import { disputesExtrinsicFromJson } from "./codec/disputes-extrinsic";
 import { TestAvailabilityAssignment, commonFromJson, getChainSpec } from "./common-types";

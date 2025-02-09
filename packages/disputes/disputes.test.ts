@@ -10,11 +10,8 @@ import {
   type Ed25519Key,
   type Ed25519Signature,
   type Epoch,
-  VALIDATOR_META_BYTES,
-  ValidatorData,
   type ValidatorIndex,
   type WorkReportHash,
-  tryAsPerCore,
   tryAsPerValidator,
   tryAsTimeSlot,
 } from "@typeberry/block";
@@ -22,9 +19,10 @@ import { Culprit, DisputesExtrinsic, Fault, Judgement, Verdict } from "@typeberr
 import { Bytes } from "@typeberry/bytes";
 import { SortedSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
+import { DisputesRecords, VALIDATOR_META_BYTES, ValidatorData, hashComparator, tryAsPerCore } from "@typeberry/state";
 import { Disputes } from "./disputes";
 import { DisputesErrorCode } from "./disputes-error-code";
-import { DisputesRecords, type DisputesState, hashComparator } from "./disputes-state";
+import type { DisputesState } from "./disputes-state";
 
 const createValidatorData = ({ bandersnatch, ed25519 }: { bandersnatch: string; ed25519: string }) =>
   new ValidatorData(

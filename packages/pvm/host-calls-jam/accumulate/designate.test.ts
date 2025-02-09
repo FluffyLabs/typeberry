@@ -1,13 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import {
-  BANDERSNATCH_KEY_BYTES,
-  BLS_KEY_BYTES,
-  ED25519_KEY_BYTES,
-  VALIDATOR_META_BYTES,
-  ValidatorData,
-  tryAsServiceId,
-} from "@typeberry/block";
+import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
@@ -16,6 +9,7 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { HostCallResult } from "../results";
 import { Designate } from "./designate";
 import { TestAccumulate } from "./partial-state.test";

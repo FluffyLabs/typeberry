@@ -42,7 +42,8 @@
     "workers/block-generator",
     "workers/generic",
     "workers/importer",
-    "packages/crypto"
+    "packages/crypto",
+    "packages/state"
   ],
   "engines": {
     "node": ">=22",

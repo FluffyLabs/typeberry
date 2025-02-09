@@ -11,10 +11,7 @@ import {
   type ServiceId,
   type StateRootHash,
   type TimeSlot,
-  VALIDATOR_META_BYTES,
-  ValidatorData,
 } from "@typeberry/block";
-import { AvailabilityAssignment } from "@typeberry/block/assurances";
 import { type BeefyHash, RefineContext } from "@typeberry/block/refine-context";
 import { type WorkItemsCount, tryAsWorkItemsCount } from "@typeberry/block/work-package";
 import {
@@ -31,7 +28,13 @@ import { FixedSizeArray } from "@typeberry/collections";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type HASH_SIZE, type OpaqueHash, WithHash, blake2b } from "@typeberry/hash";
 import { type U16, type U32, tryAsU64 } from "@typeberry/numbers";
-import type { BlockState, WorkPackageInfo } from "@typeberry/transition/recent-history";
+import {
+  AvailabilityAssignment,
+  type BlockState,
+  VALIDATOR_META_BYTES,
+  ValidatorData,
+  type WorkPackageInfo,
+} from "@typeberry/state";
 import { Bytes, BytesBlob } from "@typeberry/trie";
 import { asOpaqueType } from "@typeberry/utils";
 import { fromJson as codecFromJson } from "./codec/common";

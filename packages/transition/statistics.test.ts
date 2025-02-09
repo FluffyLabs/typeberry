@@ -1,13 +1,14 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import type { Extrinsic, TimeSlot, ValidatorIndex } from "@typeberry/block";
+import type { Extrinsic, PerValidator, TimeSlot, ValidatorIndex } from "@typeberry/block";
 import type { AssurancesExtrinsic } from "@typeberry/block/assurances";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { TicketsExtrinsic } from "@typeberry/block/tickets";
 import { tinyChainSpec } from "@typeberry/config";
-import { Statistics } from "./statistics";
-import { ActivityRecord, StatisticsState } from "./statistics-state";
+import { ActivityData, ActivityRecord } from "@typeberry/state";
+import { asOpaqueType } from "@typeberry/utils";
+import { Statistics, type StatisticsState } from "./statistics";
 
 describe("Statistics", () => {
   function getExtrinsic(overrides: Partial<Extrinsic> = {}): Extrinsic {
@@ -24,10 +25,14 @@ describe("Statistics", () => {
 
   function prepareData({ previousSlot, currentSlot }: { previousSlot: number; currentSlot: number }) {
     const validatorIndex = 0 as ValidatorIndex;
-    const currentStatistics = [ActivityRecord.empty()];
-    const lastStatistics = [ActivityRecord.empty()];
-    const statisticsPerValidator = { current: currentStatistics, previous: lastStatistics };
-    const state = new StatisticsState(statisticsPerValidator, previousSlot as TimeSlot, []);
+    const currentStatistics = asOpaqueType([ActivityRecord.empty()]);
+    const lastStatistics = asOpaqueType([ActivityRecord.empty()]);
+    const statisticsPerValidator = new ActivityData({ current: currentStatistics, previous: lastStatistics });
+    const state: StatisticsState = {
+      statisticsPerValidator,
+      tau: previousSlot as TimeSlot,
+      kappaPrime: asOpaqueType([]),
+    };
     const statistics = new Statistics(state, tinyChainSpec);
 
     return {
@@ -88,10 +93,14 @@ describe("Statistics", () => {
 
     function prepareData({ previousSlot, currentSlot }: { previousSlot: number; currentSlot: number }) {
       const validatorIndex = 0 as ValidatorIndex;
-      const currentStatistics = [ActivityRecord.empty()];
-      const lastStatistics = [ActivityRecord.empty()];
-      const statisticsPerValidator = { current: currentStatistics, previous: lastStatistics };
-      const state = new StatisticsState(statisticsPerValidator, previousSlot as TimeSlot, []);
+      const currentStatistics: PerValidator<ActivityRecord> = asOpaqueType([ActivityRecord.empty()]);
+      const lastStatistics = asOpaqueType([ActivityRecord.empty()]);
+      const statisticsPerValidator = new ActivityData({ current: currentStatistics, previous: lastStatistics });
+      const state: StatisticsState = {
+        statisticsPerValidator,
+        tau: previousSlot as TimeSlot,
+        kappaPrime: asOpaqueType([]),
+      };
       const statistics = new Statistics(state, tinyChainSpec);
 
       return {

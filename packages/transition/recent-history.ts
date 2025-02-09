@@ -1,22 +1,9 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
-import type { ExportsRootHash, WorkPackageHash } from "@typeberry/block/work-report";
 import { Bytes } from "@typeberry/bytes";
-import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { MerkleMountainRange, type MmrHasher, type MmrPeaks } from "@typeberry/mmr";
-
-/**
- * `H = 8`: The size of recent history, in blocks.
- *
- * https://graypaper.fluffylabs.dev/#/579bd12/416300416500
- */
-export const MAX_RECENT_HISTORY = 8;
-
-/** Even more distilled version of [`WorkPackageSpec`]. */
-export type WorkPackageInfo = {
-  hash: WorkPackageHash;
-  exportsRoot: ExportsRootHash;
-};
+import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
+import { MAX_RECENT_HISTORY, type State } from "@typeberry/state";
+import type { WorkPackageInfo } from "@typeberry/state";
 
 /** Current block input for the recent history transition. */
 export type RecentHistoryInput = {
@@ -36,26 +23,7 @@ export type RecentHistoryInput = {
 
 /** Recent history tests state. */
 export type RecentHistoryState = {
-  /**
-   * `β`: State of the blocks from recent history.
-   *
-   * https://graypaper.fluffylabs.dev/#/579bd12/0fb7010fb701
-   */
-  recentBlocks: KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
-};
-
-/**
- * Recent history of a single block.
- */
-export type BlockState = {
-  /** Header hash. */
-  headerHash: HeaderHash;
-  /** Merkle mountain range peaks. */
-  mmr: MmrPeaks<OpaqueHash>;
-  /** Posterior state root filled in with a 1-block delay. */
-  postStateRoot: StateRootHash;
-  /** Reported work packages (no more than number of cores). */
-  reported: WorkPackageInfo[];
+  recentBlocks: State["recentBlocks"];
 };
 
 /**

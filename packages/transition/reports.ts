@@ -1,13 +1,9 @@
-import type { Ed25519Key, EntropyHash, TimeSlot } from "@typeberry/block";
+import type { Ed25519Key, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
 import type { SegmentRootLookupItem } from "@typeberry/block/work-report";
-import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import type { DisputesState } from "@typeberry/disputes";
+import type { State } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
-import type { AssurancesState } from "./assurances";
-import type { AuthorizationState } from "./authorization";
-import type { RecentHistoryState } from "./recent-history";
 
 // TODO [ToDr] docs
 
@@ -16,22 +12,15 @@ export type ReportsInput = {
   slot: TimeSlot;
 };
 
-export const ENTROPY_ENTRIES = 4;
-export type ENTROPY_ENTRIES = typeof ENTROPY_ENTRIES;
-
 export type ReportsState = {
-  // TODO [ToDr] This stuff should be shared between different parts of the STF
-  // I imagine we can have a `State` type that contains everything
-  // and then here we would be just picking a bunch of fields from that full state.
-  availabilityAssignment: AssurancesState["availabilityAssignment"];
-  currentValidatorData: DisputesState["currentValidatorData"];
-  previousValidatorData: DisputesState["previousValidatorData"];
-  entropy: FixedSizeArray<EntropyHash, ENTROPY_ENTRIES>;
-  offenders: KnownSizeArray<Ed25519Key, "0..ValidatorsCount">;
-  authPools: AuthorizationState["authPools"];
-  recentBlocks: RecentHistoryState["recentBlocks"];
-  // TODO [ToDr] type?
-  services: unknown[];
+  readonly availabilityAssignment: State["availabilityAssignment"];
+  readonly currentValidatorData: State["currentValidatorData"];
+  readonly previousValidatorData: State["previousValidatorData"];
+  readonly entropy: State["entropy"];
+  readonly offenders: State["offenders"];
+  readonly authPools: State["authPools"];
+  readonly recentBlocks: State["recentBlocks"];
+  readonly services: State["services"];
 };
 
 export type ReportsOutput = {

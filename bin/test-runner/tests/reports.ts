@@ -1,13 +1,4 @@
-import {
-  type Ed25519Key,
-  type EntropyHash,
-  type ServiceId,
-  type TimeSlot,
-  type ValidatorData,
-  tryAsPerCore,
-  tryAsPerValidator,
-} from "@typeberry/block";
-import type { AvailabilityAssignment } from "@typeberry/block/assurances";
+import { type Ed25519Key, type EntropyHash, type ServiceId, type TimeSlot, tryAsPerValidator } from "@typeberry/block";
 import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "@typeberry/block/guarantees";
 import type { SegmentRootLookupItem } from "@typeberry/block/work-report";
 import { Decoder, Encoder } from "@typeberry/codec";
@@ -16,9 +7,14 @@ import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config"
 import type { OpaqueHash } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
-import type { BlockState } from "@typeberry/transition/recent-history";
 import {
+  type AvailabilityAssignment,
+  type BlockState,
   ENTROPY_ENTRIES,
+  type ValidatorData,
+  tryAsPerCore,
+} from "@typeberry/state";
+import {
   Reports,
   type ReportsError,
   type ReportsInput,

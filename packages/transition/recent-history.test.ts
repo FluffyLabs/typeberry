@@ -3,14 +3,9 @@ import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE, type KeccakHash, keccak } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
+import { type BlockState, MAX_RECENT_HISTORY } from "@typeberry/state";
 import { asOpaqueType, check } from "@typeberry/utils";
-import {
-  type BlockState,
-  MAX_RECENT_HISTORY,
-  RecentHistory,
-  type RecentHistoryInput,
-  type RecentHistoryState,
-} from "./recent-history";
+import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "./recent-history";
 
 const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then((hasher) => {
   return {

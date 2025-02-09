@@ -1,8 +1,21 @@
-import type { Extrinsic, TimeSlot, ValidatorIndex } from "@typeberry/block";
+import { type Extrinsic, type TimeSlot, type ValidatorIndex, tryAsPerValidator } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import { tryAsU32 } from "@typeberry/numbers";
+import type { State } from "@typeberry/state";
+import { ActivityRecord } from "@typeberry/state";
 import { check } from "@typeberry/utils";
-import { ActivityRecord, type StatisticsState } from "./statistics-state";
+
+export type StatisticsState = {
+  statisticsPerValidator: State["statisticsPerValidator"];
+
+  readonly tau: State["timeslot"];
+  /**
+   * Posterior active validators
+   *
+   * https://graypaper.fluffylabs.dev/#/579bd12/188c02188d02
+   */
+  readonly kappaPrime: State["currentValidatorData"];
+};
 
 export class Statistics {
   constructor(
@@ -26,7 +39,7 @@ export class Statistics {
       .map(() => ActivityRecord.empty());
 
     return {
-      current,
+      current: tryAsPerValidator(current, this.chainSpec),
       previous: this.state.statisticsPerValidator.current,
     };
   }

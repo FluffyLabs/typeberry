@@ -1,30 +1,13 @@
-import { type CoreIndex, type PerCore, type TimeSlot, tryAsCoreIndex } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE, O } from "@typeberry/block/gp-constants";
+import { type CoreIndex, type TimeSlot, tryAsCoreIndex } from "@typeberry/block";
+import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
 import type { AuthorizerHash } from "@typeberry/block/work-report";
-import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { HashSet } from "@typeberry/collections/hash-set";
 import type { ChainSpec } from "@typeberry/config";
+import type { State } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
 
-export const MAX_NUMBER_OF_AUTHORIZATIONS_IN_POOL = O;
-
 /** Authorization state. */
-export type AuthorizationState = {
-  /**
-   * `α`: Authorizers available for each core (authorizer pool).
-   *
-   * https://graypaper-reader.netlify.app/#/6e1c0cd/102400102400
-   */
-  readonly authPools: PerCore<KnownSizeArray<AuthorizerHash, `At most ${typeof O}`>>;
-  /**
-   * `φ`: A queue of authorizers for each core used to fill up the pool.
-   *
-   * Only updated by `accumulate` calls using `assign` host call.
-   *
-   * https://graypaper-reader.netlify.app/#/6e1c0cd/102400102400
-   */
-  readonly authQueues: PerCore<FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>>;
-};
+export type AuthorizationState = Pick<State, "authPools" | "authQueues">;
 
 /** Input to the authorization. */
 export type AuthorizationInput = {
@@ -77,7 +60,7 @@ export class Authorization {
       pool.push(queue[input.slot % AUTHORIZATION_QUEUE_SIZE]);
 
       // remove the excess from the front
-      while (pool.length > MAX_NUMBER_OF_AUTHORIZATIONS_IN_POOL) {
+      while (pool.length > MAX_AUTH_POOL_SIZE) {
         pool.shift();
       }
 

@@ -1,6 +1,3 @@
-import type { Bytes } from "@typeberry/bytes";
-import { type CodecRecord, codec } from "@typeberry/codec";
-import { WithDebug } from "@typeberry/utils";
 import {
   BANDERSNATCH_KEY_BYTES,
   BLS_KEY_BYTES,
@@ -8,7 +5,12 @@ import {
   type BlsKey,
   ED25519_KEY_BYTES,
   type Ed25519Key,
-} from "./crypto";
+} from "@typeberry/block/crypto";
+import type { Bytes } from "@typeberry/bytes";
+import { type CodecRecord, codec } from "@typeberry/codec";
+import { WithDebug } from "@typeberry/utils";
+
+// TODO [ToDr] Docs
 
 export const VALIDATOR_META_BYTES = 128;
 export type VALIDATOR_META_BYTES = typeof VALIDATOR_META_BYTES;

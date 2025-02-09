@@ -1,14 +1,11 @@
 import assert from "node:assert";
-import { type HeaderHash, type TimeSlot, type ValidatorData, tryAsPerCore, tryAsPerValidator } from "@typeberry/block";
-import {
-  type AssurancesExtrinsic,
-  type AvailabilityAssignment,
-  assurancesExtrinsicCodec,
-} from "@typeberry/block/assurances";
+import { type HeaderHash, type TimeSlot, tryAsPerValidator } from "@typeberry/block";
+import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "@typeberry/block/assurances";
 import type { WorkReport } from "@typeberry/block/work-report";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
+import { type AvailabilityAssignment, type ValidatorData, tryAsPerCore } from "@typeberry/state";
 import {
   Assurances,
   AssurancesError,

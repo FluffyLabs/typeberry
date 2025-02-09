@@ -6,17 +6,13 @@ import {
   ED25519_KEY_BYTES,
   ED25519_SIGNATURE_BYTES,
   type HeaderHash,
-  VALIDATOR_META_BYTES,
-  ValidatorData,
   tryAsCoreIndex,
-  tryAsPerCore,
   tryAsPerValidator,
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
 import {
   type AssurancesExtrinsicView,
-  AvailabilityAssignment,
   AvailabilityAssurance,
   assurancesExtrinsicCodec,
 } from "@typeberry/block/assurances";
@@ -26,6 +22,7 @@ import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
+import { AvailabilityAssignment, VALIDATOR_META_BYTES, ValidatorData, tryAsPerCore } from "@typeberry/state";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { Assurances, AssurancesError, type AssurancesInput } from "./assurances";
 
