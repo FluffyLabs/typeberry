@@ -1,4 +1,4 @@
-import type { CodeHash } from "@typeberry/block";
+import type { CodeHash, ServiceId } from "@typeberry/block";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
@@ -14,10 +14,12 @@ import { WithDebug, asOpaqueType } from "@typeberry/utils";
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/105a01105a01
  */
-export class AccountInfo extends WithDebug {
-  static Codec = codec.Class(AccountInfo, {
+export class ServiceAccountInfo extends WithDebug {
+  static Codec = codec.Class(ServiceAccountInfo, {
     codeHash: codec.bytes(HASH_SIZE).asOpaque(),
     balance: codec.u64,
+    // NOTE [ToDr] this can be either stored or recomputed,
+    // however we need to encode that for the `info` host call.
     thresholdBalance: codec.u64,
     accumulateMinGas: codec.u64.convert(
       (g) => tryAsU64(g),
@@ -31,8 +33,8 @@ export class AccountInfo extends WithDebug {
     storageUtilisationCount: codec.u32,
   });
 
-  static fromCodec(a: CodecRecord<AccountInfo>) {
-    return new AccountInfo(
+  static fromCodec(a: CodecRecord<ServiceAccountInfo>) {
+    return new ServiceAccountInfo(
       a.codeHash,
       a.balance,
       a.thresholdBalance,
@@ -71,6 +73,29 @@ export class AccountInfo extends WithDebug {
     public readonly storageUtilisationBytes: U64,
     /** `a_i`: Number of items in storage. */
     public readonly storageUtilisationCount: U32,
+  ) {
+    super();
+  }
+}
+
+/**
+ * Service dictionary entry.
+ */
+export class Service extends WithDebug {
+  static Codec = codec.Class(Service, {
+    id: codec.u32.asOpaque(),
+    info: ServiceAccountInfo.Codec,
+  });
+
+  static fromCodec({ id, info }: CodecRecord<Service>) {
+    return new Service(id, info);
+  }
+
+  constructor(
+    /** Service id. */
+    readonly id: ServiceId,
+    /** Service details. */
+    readonly info: ServiceAccountInfo,
   ) {
     super();
   }

@@ -9,14 +9,14 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { AccountInfo } from "@typeberry/state";
+import { ServiceAccountInfo } from "@typeberry/state";
 import { type Accounts, Info } from "./info";
 import { HostCallResult } from "./results";
 
 class TestAccounts implements Accounts {
-  public readonly data = new Map<ServiceId, AccountInfo>();
+  public readonly data = new Map<ServiceId, ServiceAccountInfo>();
 
-  getInfo(serviceId: ServiceId): Promise<AccountInfo | null> {
+  getInfo(serviceId: ServiceId): Promise<ServiceAccountInfo | null> {
     return Promise.resolve(this.data.get(serviceId) ?? null);
   }
 }
@@ -27,7 +27,10 @@ const DEST_START_REG = 8;
 
 const gas = gasCounter(tryAsGas(0));
 
-function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = tryAsExactBytes(AccountInfo.Codec.sizeHint)) {
+function prepareRegsAndMemory(
+  serviceId: ServiceId,
+  accountInfoLength = tryAsExactBytes(ServiceAccountInfo.Codec.sizeHint),
+) {
   const pageStart = 2 ** 16;
   const memStart = pageStart + PAGE_SIZE - accountInfoLength - 1;
   const registers = new Registers();
@@ -44,7 +47,7 @@ function prepareRegsAndMemory(serviceId: ServiceId, accountInfoLength = tryAsExa
       const result = new Uint8Array(accountInfoLength);
       assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)), null);
       const data = BytesBlob.blobFrom(result);
-      return Decoder.decodeObject(AccountInfo.Codec, data);
+      return Decoder.decodeObject(ServiceAccountInfo.Codec, data);
     },
   };
 }
@@ -60,10 +63,13 @@ describe("HostCalls: Info", () => {
     const storageUtilisationCount = tryAsU32(1_000);
     accounts.data.set(
       serviceId,
-      AccountInfo.fromCodec({
+      ServiceAccountInfo.fromCodec({
         codeHash: Bytes.fill(32, 5).asOpaque(),
         balance: tryAsU64(150_000),
-        thresholdBalance: AccountInfo.calculateThresholdBalance(storageUtilisationCount, storageUtilisationBytes),
+        thresholdBalance: ServiceAccountInfo.calculateThresholdBalance(
+          storageUtilisationCount,
+          storageUtilisationBytes,
+        ),
         accumulateMinGas: tryAsGas(0n),
         onTransferMinGas: tryAsGas(0n),
         storageUtilisationBytes,
@@ -102,10 +108,13 @@ describe("HostCalls: Info", () => {
     const storageUtilisationCount = tryAsU32(1_000);
     accounts.data.set(
       serviceId,
-      AccountInfo.fromCodec({
+      ServiceAccountInfo.fromCodec({
         codeHash: Bytes.fill(32, 5).asOpaque(),
         balance: tryAsU64(150_000),
-        thresholdBalance: AccountInfo.calculateThresholdBalance(storageUtilisationCount, storageUtilisationBytes),
+        thresholdBalance: ServiceAccountInfo.calculateThresholdBalance(
+          storageUtilisationCount,
+          storageUtilisationBytes,
+        ),
         accumulateMinGas: tryAsGas(0n),
         onTransferMinGas: tryAsGas(0n),
         storageUtilisationBytes,

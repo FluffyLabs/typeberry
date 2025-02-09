@@ -1,4 +1,11 @@
-import { type Ed25519Key, type EntropyHash, type ServiceId, type TimeSlot, tryAsPerValidator } from "@typeberry/block";
+import {
+  type CodeHash,
+  type Ed25519Key,
+  type EntropyHash,
+  type ServiceId,
+  type TimeSlot,
+  tryAsPerValidator,
+} from "@typeberry/block";
 import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "@typeberry/block/guarantees";
 import type { SegmentRootLookupItem } from "@typeberry/block/work-report";
 import { Decoder, Encoder } from "@typeberry/codec";
@@ -7,10 +14,13 @@ import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config"
 import type { OpaqueHash } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
+import type { SmallGas } from "@typeberry/pvm-interpreter";
 import {
   type AvailabilityAssignment,
   type BlockState,
   ENTROPY_ENTRIES,
+  Service,
+  ServiceAccountInfo,
   type ValidatorData,
   tryAsPerCore,
 } from "@typeberry/state";
@@ -47,31 +57,48 @@ class Input {
 }
 
 class TestServiceInfo {
-  static fromJson: FromJson<TestServiceInfo> = {
-    code_hash: commonFromJson.bytes32(),
-    balance: json.fromNumber((x) => tryAsU64(x)),
-    min_item_gas: "number",
-    min_memo_gas: "number",
-    bytes: "number",
-    items: "number",
-  };
+  static fromJson = json.object<TestServiceInfo, ServiceAccountInfo>(
+    {
+      code_hash: commonFromJson.bytes32(),
+      balance: json.fromNumber((x) => tryAsU64(x)),
+      min_item_gas: "number",
+      min_memo_gas: "number",
+      bytes: json.fromNumber((x) => tryAsU64(x)),
+      items: "number",
+    },
+    ({ code_hash, balance, min_item_gas, min_memo_gas, bytes, items }) => {
+      const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(items, bytes);
+      return ServiceAccountInfo.fromCodec({
+        codeHash: code_hash,
+        balance,
+        thresholdBalance,
+        accumulateMinGas: min_item_gas,
+        onTransferMinGas: min_memo_gas,
+        storageUtilisationBytes: bytes,
+        storageUtilisationCount: items,
+      });
+    },
+  );
 
-  code_hash!: OpaqueHash;
+  code_hash!: CodeHash;
   balance!: U64;
-  min_item_gas!: U32;
-  min_memo_gas!: U32;
-  bytes!: U32;
+  min_item_gas!: SmallGas;
+  min_memo_gas!: SmallGas;
+  bytes!: U64;
   items!: U32;
 }
 
 class TestServiceItem {
-  static fromJson: FromJson<TestServiceItem> = {
-    id: "number",
-    info: TestServiceInfo.fromJson,
-  };
+  static fromJson = json.object<TestServiceItem, Service>(
+    {
+      id: "number",
+      info: TestServiceInfo.fromJson,
+    },
+    ({ id, info }) => new Service(id, info),
+  );
 
   id!: ServiceId;
-  info!: TestServiceInfo;
+  info!: ServiceAccountInfo;
 }
 
 class TestState {

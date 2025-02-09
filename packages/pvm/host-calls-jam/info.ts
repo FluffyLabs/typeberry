@@ -9,14 +9,14 @@ import {
 } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
-import { AccountInfo } from "@typeberry/state";
+import { ServiceAccountInfo } from "@typeberry/state";
 import { HostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
 
 /** Account data interface for Info host call. */
 export interface Accounts {
   /** Get account info. */
-  getInfo(serviceId: ServiceId): Promise<AccountInfo | null>;
+  getInfo(serviceId: ServiceId): Promise<ServiceAccountInfo | null>;
 }
 
 const IN_OUT_REG = 7;
@@ -56,7 +56,7 @@ export class Info implements HostCallHandler {
       return;
     }
 
-    const encodedInfo = Encoder.encodeObject(AccountInfo.Codec, accountInfo);
+    const encodedInfo = Encoder.encodeObject(ServiceAccountInfo.Codec, accountInfo);
     const writeOk = memory.storeFrom(outputStart, encodedInfo.raw);
 
     regs.setU32(IN_OUT_REG, writeOk !== null ? HostCallResult.OOB : HostCallResult.OK);

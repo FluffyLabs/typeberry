@@ -1,6 +1,7 @@
 import type { Ed25519Key, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
 import type { SegmentRootLookupItem } from "@typeberry/block/work-report";
+import type { KnownSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { State } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
@@ -17,10 +18,12 @@ export type ReportsState = {
   readonly currentValidatorData: State["currentValidatorData"];
   readonly previousValidatorData: State["previousValidatorData"];
   readonly entropy: State["entropy"];
-  readonly offenders: State["offenders"];
   readonly authPools: State["authPools"];
   readonly recentBlocks: State["recentBlocks"];
   readonly services: State["services"];
+
+  // NOTE: this is most likely not strictly part of the state!
+  readonly offenders: KnownSizeArray<Ed25519Key, "0..ValidatorsCount">;
 };
 
 export type ReportsOutput = {
