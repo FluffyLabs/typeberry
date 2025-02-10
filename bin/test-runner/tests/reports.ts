@@ -26,7 +26,7 @@ import {
 } from "@typeberry/state";
 import {
   Reports,
-  type ReportsError,
+  ReportsError,
   type ReportsInput,
   type ReportsOutput,
   type ReportsState,
@@ -192,7 +192,36 @@ class TestReportsResult {
     }
 
     if (test.err) {
-      throw new Error("TODO - error conversion");
+      const map = {
+        [ReportsErrorCode.BadCoreIndex]: ReportsError.BadCoreIndex,
+        [ReportsErrorCode.FutureReportSlot]: ReportsError.FutureReportSlot,
+        [ReportsErrorCode.ReportEpochBeforeLast]: ReportsError.ReportEpochBeforeLast,
+        [ReportsErrorCode.InsufficientGuarantees]: ReportsError.InsufficientGuarantees,
+        [ReportsErrorCode.OutOfOrderGuarantee]: ReportsError.OutOfOrderGuarantee,
+        [ReportsErrorCode.NotSortedOrUniqueGuarantors]: ReportsError.NotSortedOrUniqueGuarantors,
+        [ReportsErrorCode.WrongAssignment]: ReportsError.WrongAssignment,
+        [ReportsErrorCode.CoreEngaged]: ReportsError.CoreEngaged,
+        [ReportsErrorCode.AnchorNotRecent]: ReportsError.AnchorNotRecent,
+        [ReportsErrorCode.BadServiceId]: ReportsError.BadServiceId,
+        [ReportsErrorCode.BadCodeHash]: ReportsError.BadCodeHash,
+        [ReportsErrorCode.DependencyMissing]: ReportsError.DependencyMissing,
+        [ReportsErrorCode.DuplicatePackage]: ReportsError.DuplicatePackage,
+        [ReportsErrorCode.BadStateRoot]: ReportsError.BadStateRoot,
+        [ReportsErrorCode.BadBeefyMmrRoot]: ReportsError.BadBeefyMmrRoot,
+        [ReportsErrorCode.CoreUnauthorized]: ReportsError.CoreUnauthorized,
+        [ReportsErrorCode.BadValidatorIndex]: ReportsError.BadValidatorIndex,
+        [ReportsErrorCode.WorkReportGasTooHigh]: ReportsError.WorkReportGasTooHigh,
+        [ReportsErrorCode.ServiceItemGasTooLow]: ReportsError.ServiceItemGasTooLow,
+        [ReportsErrorCode.TooManyDependencies]: ReportsError.TooManyDependencies,
+        [ReportsErrorCode.SegmentRootLookupInvalid]: ReportsError.SegmentRootLookupInvalid,
+        [ReportsErrorCode.BadSignature]: ReportsError.BadSignature,
+        [ReportsErrorCode.WorkReportTooBig]: ReportsError.WorkReportTooBig,
+      };
+
+      if (map[test.err] !== undefined) {
+        return Result.error(map[test.err]);
+      }
+      throw new Error(`Unknown expected reports error code: "${test.err}"`);
     }
 
     throw new Error('Neither "ok" nor "err" is defined in output.');
