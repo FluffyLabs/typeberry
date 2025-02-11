@@ -5,10 +5,10 @@ import { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { type Account, historyKey, type PreimageHash, Preimages } from "@typeberry/transition";
+import { type Account, type PreimageHash, Preimages, historyKey } from "@typeberry/transition";
+import { Result } from "@typeberry/utils";
 import { preimagesExtrinsicFromJson } from "./codec/preimages-extrinsic";
 import { commonFromJson } from "./common-types";
-import { Result } from "@typeberry/utils";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -113,8 +113,6 @@ export async function runPreImagesTest(testContent: PreImagesTest) {
   };
   const preimages = new Preimages(preState);
   const result = preimages.integrate(testContent.input);
-
-  console.log(result);
 
   assert.deepEqual(result, testOutputToResult(testContent.output));
   assert.deepEqual(preimages.state, postState);

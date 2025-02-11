@@ -3,7 +3,7 @@ import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { HashDictionary } from "@typeberry/collections";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
-import { Result, type Opaque } from "@typeberry/utils";
+import { type Opaque, Result } from "@typeberry/utils";
 
 export type PreimageHash = Opaque<Blake2bHash, "PreimageHash">;
 export type AccountHistoryKey = string;
