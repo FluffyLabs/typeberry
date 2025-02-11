@@ -55,7 +55,7 @@ export class ReportGuarantee extends WithDebug {
      *
      * https://graypaper.fluffylabs.dev/#/579bd12/14b90214bb02
      */
-    public readonly credentials: KnownSizeArray<Credential, "0..ValidatorsCount">,
+    public readonly credentials: KnownSizeArray<Credential, "0..ValidatorsCount/CoresCount">,
   ) {
     super();
   }

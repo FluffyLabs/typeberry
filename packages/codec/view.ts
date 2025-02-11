@@ -37,6 +37,7 @@ export class ViewField<T, V> implements ViewField<T, V> {
     return this.cachedView;
   }
 
+  /** Return an encoded value of that object. */
   encoded(): BytesBlob {
     if (this.cachedBlob === undefined) {
       this.cachedBlob = this.getEncoded();
@@ -66,6 +67,9 @@ export abstract class ObjectView<T> {
     this.descriptorsKeys = Object.keys(descriptors) as (keyof T)[];
     this.initialDecoderOffset = decoder.bytesRead();
   }
+
+  // TODO [ToDr] do we really need these methods?
+  // We already have them duplicated in the `ViewField`
 
   /**
    * Create a concrete instance of `T` by decoding all of the remaining

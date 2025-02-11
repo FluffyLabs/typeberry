@@ -31,7 +31,7 @@ import {
   type ReportsOutput,
   type ReportsState,
 } from "@typeberry/transition/reports";
-import { Result, asOpaqueType } from "@typeberry/utils";
+import { Result, asOpaqueType, deepEqual } from "@typeberry/utils";
 import { fromJson as codecFromJson } from "./codec/common";
 import { guaranteesExtrinsicFromJson } from "./codec/guarantees-extrinsic";
 import { TestAvailabilityAssignment, TestBlockState, TestSegmentRootLookupItem, commonFromJson } from "./common-types";
@@ -254,16 +254,16 @@ export async function runReportsTestFull(testContent: ReportsTest) {
 
 async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   const preState = TestState.toReportsState(testContent.pre_state, spec);
-  const _postState = TestState.toReportsState(testContent.post_state, spec);
+  const postState = TestState.toReportsState(testContent.post_state, spec);
   const input = Input.toReportsInput(testContent.input, spec);
-  const _expectedOutput = TestReportsResult.toReportsResult(testContent.output);
+  const expectedOutput = TestReportsResult.toReportsResult(testContent.output);
 
   const reports = new Reports(spec, preState);
 
-  const _output = reports.transition(input);
+  const output = reports.transition(input);
 
   // TODO [ToDr] Implement reports transition.
 
-  // deepEqual(output, expectedOutput, { context: "output" });
-  // deepEqual(reports.state, postState, { context: "postState" });
+  deepEqual(output, expectedOutput, { context: "output" });
+  deepEqual(reports.state, postState, { context: "postState" });
 }

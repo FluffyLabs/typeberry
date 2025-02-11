@@ -42,8 +42,8 @@ export type MAX_RECENT_HISTORY = typeof MAX_RECENT_HISTORY;
 export type State = {
   /**
    * `ρ rho`: work-reports which have been reported but are not yet known to be
-   *        available to a super-majority of validators, together with the time
-   *        at which each was reported.
+   *          available to a super-majority of validators, together with the time
+   *          at which each was reported.
    *
    *  https://graypaper.fluffylabs.dev/#/579bd12/135800135800
    */

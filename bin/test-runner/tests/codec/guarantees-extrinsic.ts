@@ -32,7 +32,7 @@ const reportGuaranteeFromJson = json.object<JsonReportGuarantee, ReportGuarantee
 type JsonReportGuarantee = {
   report: WorkReport;
   slot: TimeSlot;
-  signatures: KnownSizeArray<Credential, "0..ValidatorsCount">;
+  signatures: KnownSizeArray<Credential, "0..ValidatorsCount/CoresCount">;
 };
 
 export const guaranteesExtrinsicFromJson = json.array(reportGuaranteeFromJson);
