@@ -5,7 +5,7 @@ import { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { type Account, type PreimageHash, Preimages } from "@typeberry/transition";
+import { type Account, historyKey, type PreimageHash, Preimages } from "@typeberry/transition";
 import { preimagesExtrinsicFromJson } from "./codec/preimages-extrinsic";
 import { commonFromJson } from "./common-types";
 import { Result } from "@typeberry/utils";
@@ -114,6 +114,8 @@ export async function runPreImagesTest(testContent: PreImagesTest) {
   const preimages = new Preimages(preState);
   const result = preimages.integrate(testContent.input);
 
+  console.log(result);
+
   assert.deepEqual(result, testOutputToResult(testContent.output));
   assert.deepEqual(preimages.state, postState);
 }
@@ -125,11 +127,13 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Account {
     preimages.set(blake2b.hashBytes(preimage.blob).asOpaque(), preimage.blob);
   }
 
-  const history = entry.info.history.map((item) => ({
-    hash: item.key.hash,
-    length: item.key.length,
-    slots: item.value.map((slot) => tryAsTimeSlot(slot)),
-  }));
+  const history = new Map();
+
+  for (const item of entry.info.history) {
+    history.set(historyKey(item.key.hash, item.key.length), {
+      slots: item.value.map((slot) => tryAsTimeSlot(slot)),
+    });
+  }
 
   return {
     id: tryAsServiceId(entry.id),
