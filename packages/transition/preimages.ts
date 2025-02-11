@@ -53,6 +53,12 @@ export class Preimages {
     }
 
     const { preimages, slot } = input;
+    const pendingChanges: {
+      account: Account;
+      hash: PreimageHash;
+      blob: BytesBlob;
+      slot: TimeSlot;
+    }[] = [];
 
     for (const preimage of preimages) {
       const { requester, blob } = preimage;
@@ -67,14 +73,17 @@ export class Preimages {
         return Result.error(PreimagesErrorCode.PreimageUnneeded);
       }
 
-      // add preimage to the account
-      account.info.preimages.set(blake2b.hashBytes(blob).asOpaque(), blob);
+      pendingChanges.push({
+        account,
+        hash,
+        blob,
+        slot,
+      });
+    }
 
-      // update history
-      // As defined in equation 12.33:
-      // https://graypaper.fluffylabs.dev/#/5f542d7/18990018f300
-      // And historical metadata definition:
-      // https://graypaper.fluffylabs.dev/#/5f542d7/115400115800
+    for (const change of pendingChanges) {
+      const { account, hash, blob, slot } = change;
+      account.info.preimages.set(hash, blob);
       account.info.history.get(historyKey(hash, blob.length))?.slots.push(slot);
     }
 
