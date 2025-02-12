@@ -7,7 +7,10 @@
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
-    "@noble/curves": "^1.6.0"
+    "@noble/curves": "^1.6.0",
+    "@typeberry/block": "0.0.1",
+    "@typeberry/bytes": "0.0.1",
+    "@typeberry/utils": "0.0.1"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0"
