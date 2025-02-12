@@ -69,8 +69,8 @@ export class Assurances {
   async transition(input: AssurancesInput): Promise<Result<WorkReport[], AssurancesError>> {
     const coresCount = this.chainSpec.coresCount;
     /**
-     * The signature must be one whose public key is that of the validator assuring.
-     * assuring and whose message is the serialization of the parent hash Hp and the
+     * The signature must be one whose public key is that of the validator assuring
+     * and whose message is the serialization of the parent hash Hp and the
      * aforementioned bitstring.
      * https://graypaper.fluffylabs.dev/#/579bd12/14b40014b600
      */
