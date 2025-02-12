@@ -84,16 +84,14 @@ export class BitVec {
    * Iterate over indices of bits that are set.
    */
   *indicesOfSetBits() {
-    let idx = 0;
-    for (let b = 0; b < this.byteLength; b++) {
-      let byte = this.data[b];
-      const maxBit = Math.min(8, this.bitLength - b * 8);
-      for (let i = 0; i < maxBit; i++) {
-        if ((byte & 0b1) === 0b1) {
-          yield idx;
+    for (let b = 0; b < this.bitLength; b++) {
+      const byteIndex = b / 8;
+      const bitIndex = b % 8;
+      const byte = this.data[byteIndex];
+      const byteShifted = byte >> bitIndex;  
+      if ((byteShifted & 0b1) === 0b1) {
+          yield b;
         }
-        idx += 1;
-        byte >>= 1;
       }
     }
   }
