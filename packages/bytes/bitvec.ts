@@ -45,7 +45,7 @@ export class BitVec {
 
   /** Perform OR operation on all bits in place. */
   sumWith(other: BitVec) {
-    check(other.bitLength === this.bitLength, `Invalid bit length for AND: ${other.bitLength} vs ${this.bitLength}`);
+    check(other.bitLength === this.bitLength, `Invalid bit length for sumWith: ${other.bitLength} vs ${this.bitLength}`);
 
     const otherRaw = other.raw;
     for (let i = 0; i < this.byteLength; i++) {

@@ -71,7 +71,7 @@ export function deepEqual<T>(
     const actualKeys = Object.keys(actual) as (keyof T)[];
     const expectedKeys = Object.keys(expected) as (keyof T)[];
 
-    const allKeys = getAllKeys<T>(actualKeys, expectedKeys);
+    const allKeys = getAllKeysSorted<T>(actualKeys, expectedKeys);
     for (const key of allKeys) {
       deepEqual(actual[key], expected[key], { context: ctx.concat([String(key)]), errorsCollector: errors, ignore });
     }
@@ -88,23 +88,9 @@ export function deepEqual<T>(
   return errors.exitOrThrow();
 }
 
-function getAllKeys<T>(a: (keyof T)[], b: (keyof T)[]): (keyof T)[] {
-  const all = a.concat(b);
-  all.sort();
-  // now dedupe
-  return all.reduce(
-    (acc, v) => {
-      if (acc.length === 0) {
-        return [v];
-      }
-      const last = acc[acc.length - 1];
-      if (last !== v) {
-        acc.push(v);
-      }
-      return acc;
-    },
-    [] as (keyof T)[],
-  );
+function getAllKeysSorted<T>(a: (keyof T)[], b: (keyof T)[]): (keyof T)[] {
+  const all = new Set(a.concat(b));
+  return Array.from(all).sort();
 }
 
 /** Attempt to invoke assertions and catch any errors. */
