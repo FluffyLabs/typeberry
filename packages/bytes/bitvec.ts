@@ -89,7 +89,7 @@ export class BitVec {
   *indicesOfSetBits() {
     for (let b = 0; b < this.bitLength; b++) {
       const byteIndex = b >> 3;
-      const bitIndex = b - (b << 3);
+      const bitIndex = b - (byteIndex << 3);
 
       const byte = this.data[byteIndex];
       const bitValue = byte >> bitIndex;
