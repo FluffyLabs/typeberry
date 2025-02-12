@@ -45,7 +45,10 @@ export class BitVec {
 
   /** Perform OR operation on all bits in place. */
   sumWith(other: BitVec) {
-    check(other.bitLength === this.bitLength, `Invalid bit length for sumWith: ${other.bitLength} vs ${this.bitLength}`);
+    check(
+      other.bitLength === this.bitLength,
+      `Invalid bit length for sumWith: ${other.bitLength} vs ${this.bitLength}`,
+    );
 
     const otherRaw = other.raw;
     for (let i = 0; i < this.byteLength; i++) {
@@ -85,13 +88,13 @@ export class BitVec {
    */
   *indicesOfSetBits() {
     for (let b = 0; b < this.bitLength; b++) {
-      const byteIndex = b / 8;
-      const bitIndex = b % 8;
+      const byteIndex = b >> 3;
+      const bitIndex = b - (b << 3);
+
       const byte = this.data[byteIndex];
-      const byteShifted = byte >> bitIndex;  
-      if ((byteShifted & 0b1) === 0b1) {
-          yield b;
-        }
+      const bitValue = byte >> bitIndex;
+      if ((bitValue & 0b1) === 0b1) {
+        yield b;
       }
     }
   }
