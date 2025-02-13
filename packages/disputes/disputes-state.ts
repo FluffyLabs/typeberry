@@ -1,6 +1,5 @@
-import type { Ed25519Key, TimeSlot, ValidatorData, WorkReportHash } from "@typeberry/block";
-import type { WorkReport } from "@typeberry/block/work-report";
-import type { BytesBlob } from "@typeberry/bytes";
+import type { Ed25519Key, PerCore, PerValidator, TimeSlot, ValidatorData, WorkReportHash } from "@typeberry/block";
+import type { AvailabilityAssignment } from "@typeberry/block/assurances";
 import { Ordering, SortedSet } from "@typeberry/collections";
 
 export function hashComparator<V extends WorkReportHash | Ed25519Key>(a: V, b: V) {
@@ -47,20 +46,12 @@ export class DisputesRecords {
   }
 }
 
-export class AvailabilityAssignment {
-  constructor(
-    public workReport: WorkReport,
-    public timeout: number,
-    public workReportBytes: BytesBlob,
-  ) {}
-}
-
 export class DisputesState {
   constructor(
     public readonly disputesRecords: DisputesRecords,
-    public readonly availabilityAssignment: Array<AvailabilityAssignment | null>,
+    public readonly availabilityAssignment: PerCore<AvailabilityAssignment | null>,
     public readonly timeslot: TimeSlot,
-    public readonly currentValidatorData: ValidatorData[],
-    public readonly previousValidatorData: ValidatorData[],
+    public readonly currentValidatorData: PerValidator<ValidatorData>,
+    public readonly previousValidatorData: PerValidator<ValidatorData>,
   ) {}
 }

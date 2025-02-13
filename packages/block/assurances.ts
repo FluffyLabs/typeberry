@@ -1,13 +1,14 @@
 import type { BitVec } from "@typeberry/bytes";
-import { type CodecRecord, codec } from "@typeberry/codec";
+import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { EST_CORES } from "@typeberry/config";
-import { HASH_SIZE } from "@typeberry/hash";
+import { HASH_SIZE, type WithHash } from "@typeberry/hash";
 import { WithDebug, asOpaqueType } from "@typeberry/utils";
-import type { ValidatorIndex } from "./common";
+import type { TimeSlot, ValidatorIndex } from "./common";
 import { withContext } from "./context";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "./crypto";
-import type { HeaderHash } from "./hash";
+import type { HeaderHash, WorkReportHash } from "./hash";
+import type { WorkReport } from "./work-report";
 
 /**
  *
@@ -25,7 +26,7 @@ export class AvailabilityAssurance extends WithDebug {
         sizeHint: { bytes: Math.ceil(EST_CORES / 8), isExact: false },
       },
       withContext("AvailabilityAssurance.bitfield", (context) => {
-        return codec.bitVecFixLen(Math.ceil(context.coresCount / 8) * 8);
+        return codec.bitVecFixLen(context.coresCount);
       }),
     ),
     validatorIndex: codec.u16.asOpaque(),
@@ -59,6 +60,25 @@ export class AvailabilityAssurance extends WithDebug {
 }
 
 /**
+ * Assignment of particular work report to a core.
+ *
+ * Used by "Assurances" and "Disputes" subsystem, denoted by `rho`
+ * in state.
+ *
+ * https://graypaper.fluffylabs.dev/#/579bd12/135800135800
+ */
+export class AvailabilityAssignment extends WithDebug {
+  constructor(
+    /** Work report assigned to a core. */
+    public readonly workReport: WithHash<WorkReportHash, WorkReport>,
+    /** Time slot at which the report becomes obsolete. */
+    public readonly timeout: TimeSlot,
+  ) {
+    super();
+  }
+}
+
+/**
  * `E_A`: Sequence with at most one item per validator.
  *
  * Assurances must be ordered by validator index.
@@ -70,3 +90,5 @@ export type AssurancesExtrinsic = KnownSizeArray<AvailabilityAssurance, "0 .. Va
 export const assurancesExtrinsicCodec = codec
   .sequenceVarLen(AvailabilityAssurance.Codec)
   .convert<AssurancesExtrinsic>((i) => i, asOpaqueType);
+
+export type AssurancesExtrinsicView = DescribedBy<typeof assurancesExtrinsicCodec.View>;

@@ -10,8 +10,8 @@ const getAvailabilityAssuranceFromJson = (ctx: ChainSpec) =>
     {
       anchor: fromJson.bytes32(),
       bitfield: json.fromString((v) => {
-        const bytes = Math.ceil(ctx.coresCount / 8) * 8;
-        return BitVec.fromBytes(Bytes.parseBytes(v, bytes / 8), bytes);
+        const bytes = Math.ceil(ctx.coresCount / 8);
+        return BitVec.fromBytes(Bytes.parseBytes(v, bytes), ctx.coresCount);
       }),
       validator_index: "number",
       signature: fromJson.ed25519Signature,

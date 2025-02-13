@@ -1,4 +1,4 @@
-import { type CoreIndex, type TimeSlot, tryAsCoreIndex } from "@typeberry/block";
+import { type CoreIndex, type PerCore, type TimeSlot, tryAsCoreIndex } from "@typeberry/block";
 import { AUTHORIZATION_QUEUE_SIZE, O } from "@typeberry/block/gp-constants";
 import type { AuthorizerHash } from "@typeberry/block/work-report";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
@@ -7,9 +7,6 @@ import type { ChainSpec } from "@typeberry/config";
 import { asOpaqueType } from "@typeberry/utils";
 
 export const MAX_NUMBER_OF_AUTHORIZATIONS_IN_POOL = O;
-
-/** One entry of kind `T` for each core. */
-export type PerCore<T> = KnownSizeArray<T, "number of cores">;
 
 /** Authorization state. */
 export type AuthorizationState = {

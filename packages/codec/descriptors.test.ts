@@ -67,6 +67,10 @@ describe("Codec Descriptors / sequence view", () => {
     const item5 = seqView.get(5);
 
     // then
+    assert.deepStrictEqual(
+      item5?.encoded().toString(),
+      "0x0505050505050505050505050505050505050505050505050505050505050505",
+    );
     assert.deepStrictEqual(item5?.materialize(), new MyHash(Bytes.fill(32, 5)));
     assert.deepStrictEqual(item5?.view().hash.materialize(), Bytes.fill(32, 5));
     assert.deepStrictEqual(item5?.view().hash.view(), Bytes.fill(32, 5));
@@ -81,6 +85,18 @@ describe("Codec Descriptors / sequence view", () => {
       i++;
     }
     assert.deepStrictEqual(i, 10);
+  });
+
+  it("should map all items", () => {
+    const seqView = Decoder.decodeObject(headerSeq.View, encoded);
+
+    const mapped = seqView.map((x) => x.view().hash.encoded());
+    const materialized = seqView.map((x) => x.materialize().hash);
+    assert.deepStrictEqual(mapped.length, seqView.length);
+    assert.deepStrictEqual(materialized.length, seqView.length);
+    for (let i = 0; i < 10; i++) {
+      assert.strictEqual(mapped[i].toString(), materialized[i].toString());
+    }
   });
 });
 

@@ -1,7 +1,7 @@
-import type { CodeHash, CoreIndex, ServiceId, ValidatorData } from "@typeberry/block";
+import type { CodeHash, CoreIndex, PerValidator, ServiceId, ValidatorData } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import type { Bytes } from "@typeberry/bytes";
-import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
+import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
@@ -85,7 +85,7 @@ export class TestAccumulate implements AccumulationPartialState {
     this.checkpointCalled += 1;
   }
 
-  updateValidatorsData(validatorsData: KnownSizeArray<ValidatorData, "ValidatorsCount">): void {
+  updateValidatorsData(validatorsData: PerValidator<ValidatorData>): void {
     this.validatorsData.push(validatorsData);
   }
 
