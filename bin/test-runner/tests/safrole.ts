@@ -52,7 +52,7 @@ class JsonState {
     post_offenders: json.array(commonFromJson.bytes32()),
   };
   // timeslot
-  tau!: number;
+  tau!: TimeSlot;
   // entropy
   eta!: [EntropyHash, EntropyHash, EntropyHash, EntropyHash];
   // previous validators
@@ -61,7 +61,7 @@ class JsonState {
   kappa!: ValidatorData[];
   // next validators
   gamma_k!: ValidatorData[];
-  // designedValidators
+  // designatedValidators
   iota!: ValidatorData[];
   // Sealing-key contest ticket accumulator.
   gamma_a!: Ticket[];
@@ -159,7 +159,7 @@ function convertPreStateToModel(preState: JsonState): SafroleState {
     prevValidators: preState.lambda,
     currValidators: preState.kappa,
     nextValidators: preState.gamma_k,
-    designedValidators: preState.iota,
+    designatedValidators: preState.iota,
     ticketsAccumulator: preState.gamma_a,
     sealingKeySeries: preState.gamma_s,
     epochRoot: preState.gamma_z.asOpaque(),

@@ -31,12 +31,12 @@ const ticketComparator = (a: Ticket, b: Ticket) => {
 };
 
 export type State = {
-  timeslot: number;
+  timeslot: TimeSlot;
   entropy: [EntropyHash, EntropyHash, EntropyHash, EntropyHash];
   prevValidators: ValidatorData[];
   currValidators: ValidatorData[];
   nextValidators: ValidatorData[];
-  designedValidators: ValidatorData[];
+  designatedValidators: ValidatorData[];
   ticketsAccumulator: Ticket[];
   sealingKeySeries: {
     keys?: BandersnatchKey[];
@@ -47,12 +47,11 @@ export type State = {
 };
 
 export type StateDiff = {
-  timeslot?: number;
+  timeslot?: TimeSlot;
   entropy?: [EntropyHash, EntropyHash, EntropyHash, EntropyHash];
   prevValidators?: ValidatorData[];
   currValidators?: ValidatorData[];
   nextValidators?: ValidatorData[];
-  designedValidators?: ValidatorData[];
   ticketsAccumulator?: Ticket[];
   sealingKeySeries?: {
     keys?: BandersnatchKey[];
@@ -94,10 +93,17 @@ enum SafroleErrorCode {
   // Invalid ticket attempt value.
   BadTicketAttempt = "bad_ticket_attempt",
   // Reserved
-  Reserved = "reserved", // todo: it is not covered by test vectors
+  Reserved = "reserved", // TODO [MaSi]: it is not covered by test vectors
   // Found a ticket duplicate.
   DuplicateTicket = "duplicate_ticket",
 }
+
+type ValidatorKeys = {
+  prevValidators: ValidatorData[];
+  currValidators: ValidatorData[];
+  nextValidators: ValidatorData[];
+  epochRoot: BandersnatchRingRoot;
+};
 
 export class Safrole {
   constructor(
@@ -132,11 +138,12 @@ export class Safrole {
     return currentEpoch === previousEpoch + 1;
   }
 
-  private getPreviousSlotPhaseIndex() {
-    return this.state.timeslot % this.chainSpec.epochLength;
-  }
-
-  private getCurrentSlotPhaseIndex(timeslot: TimeSlot) {
+  /**
+   * Returns slot phase index for given timeslot
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/0d87000d8700
+   */
+  private getSlotPhaseIndex(timeslot: TimeSlot) {
     return timeslot % this.chainSpec.epochLength;
   }
 
@@ -154,9 +161,7 @@ export class Safrole {
     const newRandomnessAcc = blake2b.hashBlobs([randomnessAcc.raw, entropyHash]).asOpaque();
 
     /**
-     * Randomness history
-     *
-     * It is shifted when epoch is changed
+     * Randomness history is shifted when epoch is changed
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/0e57020e5702
      */
@@ -170,23 +175,27 @@ export class Safrole {
 
   private async getValidatorKeys(
     timeslot: TimeSlot,
-  ): Promise<
-    Result<
-      [ValidatorData[], ValidatorData[], ValidatorData[], BandersnatchRingRoot],
-      typeof SafroleErrorCode.IncorrectData
-    >
-  > {
+  ): Promise<Result<ValidatorKeys, typeof SafroleErrorCode.IncorrectData>> {
+    /**
+     * Epoch is not changed so the previous state is returned
+     */
     if (!this.isEpochChanged(timeslot)) {
-      const nextValidators = this.state.nextValidators;
-      const currentValidators = this.state.currValidators;
-      const previousValidators = this.state.prevValidators;
-      const epochRoot = this.state.epochRoot;
-      return Result.ok([nextValidators, currentValidators, previousValidators, epochRoot] as const);
+      const { nextValidators, currValidators, prevValidators, epochRoot } = this.state;
+      return Result.ok({ nextValidators, currValidators, prevValidators, epochRoot });
     }
 
-    const postOffenders = this.state.postOffenders; // postOffenders should be a dictionary
-    const nextValidators = this.state.designedValidators.map((validator) => {
+    /**
+     * Epoch is changed so we shift validators and calculate new epoch root commitment
+     */
+    const postOffenders = this.state.postOffenders; // TODO [MaSi]: postOffenders should be a dictionary
+    const newNextValidators = this.state.designatedValidators.map((validator) => {
       const isOffender = !!postOffenders.find((x) => x.isEqualTo(validator.ed25519));
+
+      /**
+       * Keys of validators that belongs to offenders are replaced with null keys
+       *
+       * https://graypaper.fluffylabs.dev/#/5f542d7/0ea2000ea200
+       */
       if (isOffender) {
         return new ValidatorData(
           Bytes.zero(32).asOpaque(),
@@ -199,9 +208,9 @@ export class Safrole {
       return validator;
     });
 
-    const currentValidators = this.state.nextValidators;
-    const previousValidators = this.state.currValidators;
-    const keys = nextValidators.reduce(
+    const { nextValidators, currValidators } = this.state;
+
+    const keys = newNextValidators.reduce(
       (acc, validator, i) => {
         acc.set(validator.bandersnatch.raw, i * 32);
         return acc;
@@ -212,12 +221,22 @@ export class Safrole {
     const epochRootResult = await getRingCommitment(keys);
 
     if (epochRootResult.isOk) {
-      return Result.ok([nextValidators, currentValidators, previousValidators, epochRootResult.ok] as const);
+      return Result.ok({
+        nextValidators: newNextValidators,
+        currValidators: nextValidators,
+        prevValidators: currValidators,
+        epochRoot: epochRootResult.ok,
+      });
     }
 
     return Result.error(SafroleErrorCode.IncorrectData);
   }
 
+  /**
+   * Ticket sequencer that is used in standard mode
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/0ea7020ea702
+   */
   private outsideInSequencer(tickets: Ticket[]) {
     const ticketsLength = tickets.length;
     const reorderedTickets = new Array<Ticket>(ticketsLength);
@@ -234,6 +253,11 @@ export class Safrole {
     return reorderedTickets;
   }
 
+  /**
+   * Ticket sequencer that is used in fallback mode
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/0ea7020ea702
+   */
   private fallbackKeySequencer(entropy: EntropyHash, newValidators: ValidatorData[]) {
     const epochLength = this.chainSpec.epochLength;
     const result: BandersnatchKey[] = [];
@@ -251,8 +275,17 @@ export class Safrole {
     return result;
   }
 
-  private getSlotSealerSeries(timeslot: TimeSlot, newValidators: ValidatorData[], newEntropy: EntropyHash) {
-    const m = this.getPreviousSlotPhaseIndex();
+  /**
+   * Returns a new slot sealer series that can consist of tickets or keys.
+   * In might return 1 of 3 results depends on circumstances:
+   * 1. reordered tickets accumulator in case of a new epoch
+   * 2. previous state in case of the same epoch
+   * 3. fallback keys sequence otherwise
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/0ea2020ea202
+   */
+  private getSlotKeySequence(timeslot: TimeSlot, newValidators: ValidatorData[], newEntropy: EntropyHash) {
+    const m = this.getSlotPhaseIndex(this.state.timeslot);
     if (
       this.isNextEpoch(timeslot) &&
       m >= this.chainSpec.contestLength &&
@@ -272,10 +305,18 @@ export class Safrole {
     };
   }
 
-  applyStateChanges(diff: StateDiff): void {
+  /**
+   * Apply the state changes
+   */
+  private applyStateChanges(diff: StateDiff): void {
     this.state = Object.assign(this.state, diff);
   }
 
+  /**
+   * Returns epoch markers if the epoch is changed and null otherwise
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/0e6e030e6e03
+   */
   private getEpochMark(timeslot: TimeSlot, nextValidators: ValidatorData[]): EpochMark | null {
     if (!this.isEpochChanged(timeslot)) {
       return null;
@@ -285,10 +326,13 @@ export class Safrole {
     return new EpochMark(
       entropy[0],
       entropy[1],
-      nextValidators.map((x) => x.bandersnatch),
+      nextValidators.map((validator) => validator.bandersnatch),
     );
   }
 
+  /**
+   * Verify if tickets array is sorted by id
+   */
   private areTicketsSorted(tickets: Ticket[]) {
     const ticketsLength = tickets.length;
 
@@ -301,6 +345,9 @@ export class Safrole {
     return true;
   }
 
+  /**
+   * Verify if tickets array has no duplicates
+   */
   private areTicketsUnique(tickets: Ticket[]) {
     const ticketsLength = tickets.length;
 
@@ -313,21 +360,32 @@ export class Safrole {
     return true;
   }
 
+  /**
+   * Returns a new tickets accumulator.
+   * If the epoch is not changed, it extends the accumulator with tickets from the extrinsic.
+   * Otherwise, returns a new accumulator consisting only of tickets from the extrinsic.
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/0f03010f0301
+   */
   private async getNewTicketAccumulator(
     timeslot: TimeSlot,
     extrinsic: SignedTicket[],
     validators: ValidatorData[],
     entropy: EntropyHash,
   ): Promise<Result<Ticket[], SafroleErrorCode>> {
-    const keys = validators
-      .map((validator) => validator.bandersnatch)
-      .reduce(
-        (acc, item, i) => {
-          acc.set(item.raw, i * 32);
-          return acc;
-        },
-        new Uint8Array(32 * validators.length),
-      );
+    const keys = validators.reduce(
+      (acc, item, i) => {
+        acc.set(item.bandersnatch.raw, i * 32);
+        return acc;
+      },
+      new Uint8Array(32 * validators.length),
+    );
+
+    /**
+     * Verify ticket proof of validity
+     *
+     * https://graypaper.fluffylabs.dev/#/5f542d7/0f59000f5900
+     */
     const verificationResult = await verifyTickets(keys, extrinsic, entropy);
     const tickets = extrinsic.map((ticket, i) => ({ attempt: ticket.attempt, id: verificationResult[i].entropyHash }));
 
@@ -335,6 +393,11 @@ export class Safrole {
       return Result.error(SafroleErrorCode.BadTicketProof);
     }
 
+    /**
+     * Verify if tickets are sorted and unique
+     *
+     * https://graypaper.fluffylabs.dev/#/5f542d7/0fe4000fe400
+     */
     if (!this.areTicketsUnique(tickets)) {
       return Result.error(SafroleErrorCode.DuplicateTicket);
     }
@@ -355,6 +418,11 @@ export class Safrole {
       return Result.error(SafroleErrorCode.DuplicateTicket);
     }
 
+    /**
+     * Remove tickets if size of accumulator exceed E (epoch length)
+     *
+     * https://graypaper.fluffylabs.dev/#/5f542d7/0f89010f8901
+     */
     if (mergedTickets.length > this.chainSpec.epochLength) {
       return Result.ok(mergedTickets.array.slice(0, this.chainSpec.epochLength));
     }
@@ -362,9 +430,15 @@ export class Safrole {
     return Result.ok(mergedTickets.array);
   }
 
+  /**
+   * Returns winning-tickets markers if the block is the first after the end of the submission period
+   * for tickets and if the ticket accumulator is saturated and null otherwise
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/0ea0030ea003
+   */
   private getTicketsMark(timeslot: TimeSlot) {
-    const m = this.getPreviousSlotPhaseIndex();
-    const mPrime = this.getCurrentSlotPhaseIndex(timeslot);
+    const m = this.getSlotPhaseIndex(this.state.timeslot);
+    const mPrime = this.getSlotPhaseIndex(timeslot);
     if (
       this.isSameEpoch(timeslot) &&
       m < this.chainSpec.contestLength &&
@@ -377,8 +451,13 @@ export class Safrole {
     return null;
   }
 
+  /**
+   * Verify if the length of the extrinsic is incorrect
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/0f83000f8300
+   */
   private isExitricLengthIncorrect(timeslot: TimeSlot, extrinsic: SignedTicket[]) {
-    const slotPhase = this.getCurrentSlotPhaseIndex(timeslot);
+    const slotPhase = this.getSlotPhaseIndex(timeslot);
 
     if (slotPhase < this.chainSpec.contestLength && extrinsic.length <= this.chainSpec.maxTicketsPerExtrinsic) {
       return false;
@@ -387,6 +466,11 @@ export class Safrole {
     return extrinsic.length > 0;
   }
 
+  /**
+   * Verify if attempt values are incorrect
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/0f23000f2400
+   */
   private areTicketAttemptsIncorrect(tickets: SignedTicket[]) {
     const ticketsLength = tickets.length;
     for (let i = 0; i < ticketsLength; i++) {
@@ -418,18 +502,21 @@ export class Safrole {
     }
 
     const validatorKeysResult = await this.getValidatorKeys(input.slot);
+
     if (validatorKeysResult.isError) {
       return Result.error(validatorKeysResult.error);
     }
-    const validatorKeys = validatorKeysResult.ok;
-    newState.nextValidators = validatorKeys[0];
-    newState.currValidators = validatorKeys[1];
-    newState.prevValidators = validatorKeys[2];
-    newState.epochRoot = validatorKeys[3];
+
+    const { nextValidators, currValidators, prevValidators, epochRoot } = validatorKeysResult.ok;
+    newState.nextValidators = nextValidators;
+    newState.currValidators = currValidators;
+    newState.prevValidators = prevValidators;
+    newState.epochRoot = epochRoot;
 
     newState.timeslot = input.slot;
     newState.entropy = this.getEntropy(input.slot, input.entropy);
-    newState.sealingKeySeries = this.getSlotSealerSeries(input.slot, validatorKeys[1], newState.entropy[2]);
+
+    newState.sealingKeySeries = this.getSlotKeySequence(input.slot, currValidators, newState.entropy[2]);
     const newTicketsAccumulatoResult = await this.getNewTicketAccumulator(
       input.slot,
       input.extrinsic,
@@ -444,7 +531,7 @@ export class Safrole {
     newState.ticketsAccumulator = newTicketsAccumulatoResult.ok;
 
     const result = Result.ok({
-      epochMark: this.getEpochMark(input.slot, validatorKeys[0]),
+      epochMark: this.getEpochMark(input.slot, nextValidators),
       ticketsMark: this.getTicketsMark(input.slot),
     });
 
