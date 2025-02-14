@@ -42,8 +42,10 @@ export class BytesBlob {
     return u8ArraySameLengthEqual(this.raw, other.raw);
   }
 
-  /** Compare the sequence to another one lexicographically. */
-  isLessThan(other: BytesBlob): boolean {
+  /** Compare the sequence to another one lexicographically.
+   *  https://graypaper.fluffylabs.dev/#/5f542d7/07c40007c400
+   */
+  isLessThan(other: BytesBlob, { orEqual = false } = {}): boolean {
     const min = Math.min(this.length, other.length);
     const thisRaw = this.raw;
     const otherRaw = other.raw;
@@ -58,6 +60,9 @@ export class BytesBlob {
       }
     }
 
+    if (orEqual) {
+      return this.length <= other.length;
+    }
     return this.length < other.length;
   }
 
