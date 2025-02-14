@@ -20,7 +20,9 @@ export async function getRingCommitment(keys: Uint8Array): Promise<Result<Bander
 
   return Result.ok(BytesBlob.blobFrom(commitmentResult.subarray(1)).asOpaque());
 }
+
 const X_T = BytesBlob.blobFromString("jam_ticket_seal").raw;
+
 export async function verifyTickets(
   keys: Uint8Array,
   tickets: SignedTicket[],

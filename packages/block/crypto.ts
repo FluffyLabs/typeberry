@@ -39,7 +39,7 @@ export type Ed25519Signature = Opaque<Bytes<ED25519_SIGNATURE_BYTES>, "Ed25519Si
 export type BandersnatchKey = Opaque<Bytes<BANDERSNATCH_KEY_BYTES>, "BandersnatchKey">;
 
 /**
- *
+ * Bandersnatch ring commitment
  */
 export type BandersnatchRingRoot = Opaque<Bytes<BANDERSNATCH_RING_ROOT_BYTES>, "BandersnatchRingRoot">;
 
