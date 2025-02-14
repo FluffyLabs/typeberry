@@ -1,8 +1,9 @@
 import type { ServiceId, TimeSlot } from "@typeberry/block";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import { BytesBlob } from "@typeberry/bytes";
+import { type CodecRecord, codec } from "@typeberry/codec";
 import { FixedSizeArray, type HashDictionary } from "@typeberry/collections";
-import { type Blake2bHash, blake2b } from "@typeberry/hash";
+import { type Blake2bHash, HASH_SIZE, blake2b } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import { type Opaque, Result } from "@typeberry/utils";
 
@@ -44,6 +45,19 @@ export type LookupHistorySlotsSize = 0 | 1 | 2 | typeof MAX_LOOKUP_HISTORY_SLOTS
 
 // https://graypaper.fluffylabs.dev/#/5f542d7/115400115800
 export class LookupHistoryItem {
+  static Codec = codec.Class(LookupHistoryItem, {
+    hash: codec.bytes(HASH_SIZE).asOpaque(),
+    length: codec.u32,
+    slots: codec.sequenceVarLen(codec.u32).convert(
+      (x) => x,
+      (items) => FixedSizeArray.new(items as TimeSlot[], items.length as LookupHistorySlotsSize),
+    ),
+  });
+
+  static fromCodec({ hash, length, slots }: CodecRecord<LookupHistoryItem>) {
+    return new LookupHistoryItem(hash, length, slots);
+  }
+
   constructor(
     public readonly hash: PreimageHash,
     public readonly length: U32,
@@ -51,7 +65,7 @@ export class LookupHistoryItem {
   ) {}
 
   // https://graypaper.fluffylabs.dev/#/5f542d7/116f0011a500
-  public transitionSlots(slot: TimeSlot) {
+  public transitionStatus(slot: TimeSlot) {
     if (this.slots.length < MAX_LOOKUP_HISTORY_SLOTS) {
       this.slots = FixedSizeArray.new([...this.slots, slot], (this.slots.length + 1) as LookupHistorySlotsSize);
     } else {
@@ -129,7 +143,7 @@ export class Preimages {
     for (const change of pendingChanges) {
       const { account, hash, blob, lookupHistoryItem, slot } = change;
       account.data.preimages.set(hash, blob);
-      lookupHistoryItem.transitionSlots(slot);
+      lookupHistoryItem.transitionStatus(slot);
     }
 
     // TODO: [SeKo] consider if this is the right place to mark unavailable preimages in lookup history
