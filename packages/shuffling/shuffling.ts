@@ -1,14 +1,18 @@
 import type { Bytes } from "@typeberry/bytes";
 import { blake2b } from "@typeberry/hash";
+import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { check } from "@typeberry/utils";
+
+const ENTROPY_BYTES = 32;
+type ENTROPY_BYTES = typeof ENTROPY_BYTES;
 
 /**
  * Deterministic variant of the Fisher–Yates shuffle function
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/3b9a013b9a01
  */
-export function fisherYatesShuffle<T>(arr: T[], entropy: Bytes<32>): T[] {
-  check(entropy.length === 32, `Expected entropy of length 32, got ${entropy.length}`);
+export function fisherYatesShuffle<T>(arr: T[], entropy: Bytes<ENTROPY_BYTES>): T[] {
+  check(entropy.length === ENTROPY_BYTES, `Expected entropy of length ${ENTROPY_BYTES}, got ${entropy.length}`);
   const n = arr.length;
   const randomNumbers = hashToNumberSequence(entropy, arr.length);
   const result: T[] = new Array<T>(n);
@@ -31,8 +35,7 @@ function uint8ArrayToNumberLE(uint8Array: Uint8Array): number {
   return uint8Array[0] | (uint8Array[1] << 8) | (uint8Array[2] << 16) | (uint8Array[3] << 24);
 }
 
-function numberToUint8ArrayLE(num: number): Uint8Array {
-  check(Number.isInteger(num) && num >= 0 && num < 0xffffffff, `Input must be a 32-bit unsigned integer, got: ${num}`);
+function numberToUint8ArrayLE(num: U32): Uint8Array {
   const uint8Array = new Uint8Array(4);
   uint8Array[0] = num & 0xff;
   uint8Array[1] = (num >> 8) & 0xff;
@@ -41,14 +44,14 @@ function numberToUint8ArrayLE(num: number): Uint8Array {
   return uint8Array;
 }
 
-function hashToNumberSequence(entropy: Bytes<32>, length: number) {
+function hashToNumberSequence(entropy: Bytes<ENTROPY_BYTES>, length: number) {
   const result: number[] = new Array(length);
   const randomBytes = new Uint8Array(36);
   randomBytes.set(entropy.raw);
 
   for (let i = 0; i < length; i++) {
-    const toConcat = numberToUint8ArrayLE(Math.floor(i / 8));
-    randomBytes.set(toConcat, 32);
+    const toConcat = numberToUint8ArrayLE(tryAsU32(Math.floor(i / 8)));
+    randomBytes.set(toConcat, ENTROPY_BYTES);
     const newHash = blake2b.hashBytes(randomBytes);
     const numberStartIndex = (4 * i) % 32;
     const numberEndIndex = numberStartIndex + 4;

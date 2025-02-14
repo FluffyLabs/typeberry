@@ -142,11 +142,20 @@ export class ErrorsCollector {
     const noOfErrors = this.errors.length;
     const stack = this.errors
       .map(({ context, e }) => addContext(e, context))
-      .map((e, idx) => `===== ${idx + 1}/${noOfErrors} =====\n ${e.stack}`)
+      .map((e, idx) => `===== ${idx + 1}/${noOfErrors} =====\n ${idx !== 0 ? trimStack(e.stack) : e.stack}`)
       .join("\n");
 
     const e = new Error();
     e.stack = stack;
     throw e;
   }
+}
+
+function trimStack(stack = "") {
+  const firstAt = /([\s\S]+?)\s+at /;
+  const res = stack.match(firstAt);
+  if (res !== null) {
+    return res[1];
+  }
+  return stack;
 }

@@ -8,7 +8,7 @@ import type { BytesBlob } from "@typeberry/bytes";
  */
 
 /** Signature verification input. */
-export type Input<T extends BytesBlob> = {
+export type Input<T extends BytesBlob = BytesBlob> = {
   /** Signature. */
   signature: Ed25519Signature;
   /** Public key. */

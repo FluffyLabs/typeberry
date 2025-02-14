@@ -7,7 +7,6 @@ import {
   tryAsPerValidator,
 } from "@typeberry/block";
 import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "@typeberry/block/guarantees";
-import type { SegmentRootLookupItem } from "@typeberry/block/work-report";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
@@ -174,8 +173,8 @@ class OutputData {
     }),
   );
 
-  reported!: SegmentRootLookupItem[];
-  reporters!: Ed25519Key[];
+  reported!: ReportsOutput["reported"];
+  reporters!: ReportsOutput["reporters"];
 }
 
 type ReportsResult = Result<ReportsOutput, ReportsError>;
@@ -260,10 +259,8 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
 
   const reports = new Reports(spec, preState);
 
-  const output = reports.transition(input);
+  const output = await reports.transition(input);
 
-  // TODO [ToDr] Implement reports transition.
-
-  deepEqual(output, expectedOutput, { context: "output" });
+  deepEqual(output, expectedOutput, { context: "output", ignore: ['output.details'] });
   deepEqual(reports.state, postState, { context: "postState" });
 }

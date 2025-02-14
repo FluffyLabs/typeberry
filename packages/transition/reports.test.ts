@@ -3,20 +3,24 @@ import {
   BANDERSNATCH_KEY_BYTES,
   BLS_KEY_BYTES,
   ED25519_KEY_BYTES,
+  ED25519_SIGNATURE_BYTES,
+  type Ed25519Signature,
   tryAsCoreIndex,
   tryAsPerValidator,
   tryAsTimeSlot,
+  tryAsValidatorIndex,
 } from "@typeberry/block";
 import {
+  Credential,
   type GuaranteesExtrinsicView,
-  type ReportGuarantee,
+  ReportGuarantee,
   guaranteesExtrinsicCodec,
 } from "@typeberry/block/guarantees";
 import testWorkReport from "@typeberry/block/test-work-report";
 import { WorkReport } from "@typeberry/block/work-report";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { FixedSizeArray } from "@typeberry/collections";
+import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import {
@@ -27,14 +31,14 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
-import { Reports, type ReportsInput, type ReportsState } from "./reports";
+import { Reports, ReportsError, type ReportsInput, type ReportsState } from "./reports";
 
 function guaranteesAsView(spec: ChainSpec, guarantees: ReportGuarantee[]): GuaranteesExtrinsicView {
   const encoded = Encoder.encodeObject(guaranteesExtrinsicCodec, asOpaqueType(guarantees), spec);
   return Decoder.decodeObject(guaranteesExtrinsicCodec.View, encoded, spec);
 }
 
-describe("Reports", () => {
+describe("Reports - top level", () => {
   it("should perform a transition with empty state", async () => {
     const reports = new Reports(tinyChainSpec, newReportsState());
 
@@ -43,15 +47,225 @@ describe("Reports", () => {
       slot: tryAsTimeSlot(12),
     };
 
-    const res = reports.transition(input);
+    const res = await reports.transition(input);
 
     deepEqual(res, {
       isOk: true,
       isError: false,
       ok: {
         reported: [],
-        reporters: [],
+        reporters: asKnownSize([]),
       },
+    });
+  });
+});
+
+describe("Reports.verifyReportsOrder", () => {
+  it("should reject out-of-order guarantees", async () => {
+    const reports = new Reports(tinyChainSpec, newReportsState());
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(5),
+        report: newWorkReport({ core: 1 }),
+        credentials: asOpaqueType([]),
+      }),
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(5),
+        report: newWorkReport({ core: 0 }),
+        credentials: asOpaqueType([]),
+      }),
+    ]);
+
+    const res = reports.verifyReportsOrder(guarantees);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.OutOfOrderGuarantee,
+      details: "Core indices of work reports are not unique or in order. Got: 0, expected: 2",
+    });
+  });
+
+  it("should reject invalid core index", async () => {
+    const reports = new Reports(tinyChainSpec, newReportsState());
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(5),
+        report: newWorkReport({ core: 3 }),
+        credentials: asOpaqueType([]),
+      }),
+    ]);
+
+    const res = reports.verifyReportsOrder(guarantees);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.BadCoreIndex,
+      details: "Invalid core index. Got: 3, max: 2",
+    });
+  });
+});
+
+describe("Reports.verifyCredentials", () => {
+  it("should reject insufficient credentials", async () => {
+    const reports = new Reports(tinyChainSpec, newReportsState());
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(5),
+        report: newWorkReport({ core: 0 }),
+        credentials: asOpaqueType([1].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const input = { guarantees, slot: tryAsTimeSlot(1) };
+    const res = reports.verifyCredentials(input);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.InsufficientGuarantees,
+      details: "Invalid number of credentials. Expected 2,3, got 1",
+    });
+  });
+
+  it("should reject too many credentials", async () => {
+    const reports = new Reports(tinyChainSpec, newReportsState());
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(5),
+        report: newWorkReport({ core: 0 }),
+        credentials: asOpaqueType([1, 2, 3, 4].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const input = { guarantees, slot: tryAsTimeSlot(1) };
+    const res = reports.verifyCredentials(input);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.InsufficientGuarantees,
+      details: "Invalid number of credentials. Expected 2,3, got 4",
+    });
+  });
+
+  it("should reject out-of-order credentials", async () => {
+    const reports = new Reports(tinyChainSpec, newReportsState());
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(5),
+        report: newWorkReport({ core: 1 }),
+        credentials: asOpaqueType([1, 0].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const input = { guarantees, slot: tryAsTimeSlot(6) };
+    const res = reports.verifyCredentials(input);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.NotSortedOrUniqueGuarantors,
+      details: "Credentials must be sorted by validator index. Got 0, expected 2",
+    });
+  });
+
+  it("should reject invalid core assignment", async () => {
+    const reports = new Reports(tinyChainSpec, newReportsState());
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(5),
+        report: newWorkReport({ core: 0 }),
+        credentials: asOpaqueType([0, 1].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const input = { guarantees, slot: tryAsTimeSlot(6) };
+    const res = reports.verifyCredentials(input);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.WrongAssignment,
+      details: "Invalid core assignment for validator 1. Expected: 1, got: 0",
+    });
+  });
+
+  it("should reject future reports", async () => {
+    const reports = new Reports(tinyChainSpec, newReportsState());
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(5),
+        report: newWorkReport({ core: 0 }),
+        credentials: asOpaqueType([0, 1].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const input = { guarantees, slot: tryAsTimeSlot(4) };
+    const res = reports.verifyCredentials(input);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.FutureReportSlot,
+      details: "Report slot is in future or too old. Block 4, Report: 5",
+    });
+  });
+
+  it("should reject old reports", async () => {
+    const reports = new Reports(tinyChainSpec, newReportsState());
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(9),
+        report: newWorkReport({ core: 0 }),
+        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const input = { guarantees, slot: tryAsTimeSlot(25) };
+    const res = reports.verifyCredentials(input);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.ReportEpochBeforeLast,
+      details: "Report slot is in future or too old. Block 25, Report: 9",
+    });
+  });
+
+  it("should return signatures for verification", async () => {
+    const reports = new Reports(tinyChainSpec, newReportsState());
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(10),
+        report: newWorkReport({ core: 0 }),
+        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const input = { guarantees, slot: tryAsTimeSlot(25) };
+    const res = reports.verifyCredentials(input);
+
+    const message = BytesBlob.parseBlob(
+      "0x6a616d5f67756172616e74656523d9dc0dcb965edddacb4522b56b5f22bf7db53f462f194070254dde92ccfd43",
+    );
+
+    deepEqual(res, {
+      isOk: true,
+      isError: false,
+      ok: [
+        {
+          signature: Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque(),
+          key: VALIDATORS[0].ed25519,
+          message,
+        },
+        {
+          signature: Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque(),
+          key: VALIDATORS[3].ed25519,
+          message,
+        },
+      ],
     });
   });
 });
@@ -59,6 +273,13 @@ describe("Reports", () => {
 type ReportStateOptions = {
   withCoreAssignment?: boolean;
 };
+
+function newCredential(index: number, signature?: Ed25519Signature) {
+  return Credential.fromCodec({
+    validatorIndex: tryAsValidatorIndex(index),
+    signature: signature ?? Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque(),
+  });
+}
 
 function newReportsState({ withCoreAssignment = false }: ReportStateOptions = {}): ReportsState {
   const spec = tinyChainSpec;
@@ -87,10 +308,10 @@ function getAuthPools(source: number[], spec: ChainSpec): ReportsState["authPool
 function getEntropy(e0: number, e1: number, e2: number, e3: number): ReportsState["entropy"] {
   return FixedSizeArray.new(
     [
-      Bytes.fill(e0, HASH_SIZE).asOpaque(),
-      Bytes.fill(e1, HASH_SIZE).asOpaque(),
-      Bytes.fill(e2, HASH_SIZE).asOpaque(),
-      Bytes.fill(e3, HASH_SIZE).asOpaque(),
+      Bytes.fill(HASH_SIZE, e0).asOpaque(),
+      Bytes.fill(HASH_SIZE, e1).asOpaque(),
+      Bytes.fill(HASH_SIZE, e2).asOpaque(),
+      Bytes.fill(HASH_SIZE, e3).asOpaque(),
     ],
     ENTROPY_ENTRIES,
   );
@@ -105,7 +326,7 @@ function intoValidatorData({ bandersnatch, ed25519 }: { bandersnatch: string; ed
   });
 }
 
-function newAvailabilityAssignment({ core, timeout }: { core: number; timeout: number }): AvailabilityAssignment {
+function newWorkReport({ core }: { core: number }): WorkReport {
   const source = BytesBlob.parseBlob(testWorkReport);
   const report = Decoder.decodeObject(WorkReport.Codec, source, tinyChainSpec);
   const workReport = new WorkReport(
@@ -117,9 +338,14 @@ function newAvailabilityAssignment({ core, timeout }: { core: number; timeout: n
     report.segmentRootLookup,
     report.results,
   );
+  return workReport;
+}
+
+function newAvailabilityAssignment({ core, timeout }: { core: number; timeout: number }): AvailabilityAssignment {
+  const workReport = newWorkReport({ core });
   const encoded = Encoder.encodeObject(WorkReport.Codec, workReport, tinyChainSpec);
   const hash = blake2b.hashBytes(encoded).asOpaque();
-  const workReportWithHash = new WithHash(hash, report);
+  const workReportWithHash = new WithHash(hash, workReport);
 
   return new AvailabilityAssignment(workReportWithHash, tryAsTimeSlot(timeout));
 }

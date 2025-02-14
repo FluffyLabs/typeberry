@@ -296,7 +296,7 @@ function newAvailabilityAssignment(core: number, timeout: number): AvailabilityA
   );
   const encoded = Encoder.encodeObject(WorkReport.Codec, workReport, tinyChainSpec);
   const hash = blake2b.hashBytes(encoded).asOpaque();
-  const workReportWithHash = new WithHash(hash, report);
+  const workReportWithHash = new WithHash(hash, workReport);
 
   return new AvailabilityAssignment(workReportWithHash, tryAsTimeSlot(timeout));
 }

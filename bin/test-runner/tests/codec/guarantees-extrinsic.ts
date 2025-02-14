@@ -6,7 +6,6 @@ import {
   guaranteesExtrinsicCodec,
 } from "@typeberry/block/guarantees";
 import type { WorkReport } from "@typeberry/block/work-report";
-import type { KnownSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
 import type { JsonObject } from "../../json-format";
 import { fromJson, runCodecTest } from "./common";
@@ -32,7 +31,7 @@ const reportGuaranteeFromJson = json.object<JsonReportGuarantee, ReportGuarantee
 type JsonReportGuarantee = {
   report: WorkReport;
   slot: TimeSlot;
-  signatures: KnownSizeArray<Credential, "0..ValidatorsCount/CoresCount">;
+  signatures: ReportGuarantee["credentials"];
 };
 
 export const guaranteesExtrinsicFromJson = json.array(reportGuaranteeFromJson);

@@ -2,6 +2,8 @@
  * Estimated number of validators.
  *
  * NOTE: Should ONLY be used to pre-allocate some data.
+ *
+ * https://graypaper.fluffylabs.dev/#/5f542d7/418800418800
  */
 export const EST_VALIDATORS = 1023;
 /**
@@ -14,12 +16,16 @@ export const EST_VALIDATORS_SUPER_MAJORITY = 683;
  * Estimated number of cores.
  *
  * NOTE: Should ONLY be used to pre-allocate some data.
+ *
+ * https://graypaper.fluffylabs.dev/#/5f542d7/414200414200
  */
-export const EST_CORES = 12;
+export const EST_CORES = 341;
 /**
  * Estimated epoch length (in time slots).
  *
  * NOTE: Should ONLY be used to pre-allocate some data.
+ *
+ * https://graypaper.fluffylabs.dev/#/5f542d7/414800414800
  */
 export const EST_EPOCH_LENGTH = 600;
 
