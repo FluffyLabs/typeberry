@@ -38,9 +38,9 @@ import {
   runSegmentEcTest,
   runSegmentRootTest,
 } from "./tests/erasure-coding";
-import { HistoryTest, runHistoryTest } from "./tests/history";
 import { PreImagesTest, runPreImagesTest } from "./tests/preimages";
 import { PvmTest, runPvmTest } from "./tests/pvm";
+import { HistoryTest, runHistoryTest } from "./tests/recent-history";
 import { ReportsTest, runReportsTestFull, runReportsTestTiny } from "./tests/reports";
 import { SafroleTest, runSafroleTest } from "./tests/safrole";
 import { JsonSchema, ignoreSchemaFiles } from "./tests/schema";
@@ -192,7 +192,7 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
     prepRunner("erasure_coding/page_proof", PageProof.fromJson, runPageProofTest),
     prepRunner("erasure_coding/segment_ec", SegmentEcTest.fromJson, runSegmentEcTest),
     prepRunner("erasure_coding/segment_root", SegmentRoot.fromJson, runSegmentRootTest),
-    prepRunner("history", HistoryTest.fromJson, runHistoryTest),
+    prepRunner("recent-history", HistoryTest.fromJson, runHistoryTest),
     prepRunner("schema", JsonSchema.fromJson, ignoreSchemaFiles), // ignore schema files
     prepRunner("preimages", PreImagesTest.fromJson, runPreImagesTest),
     prepRunner("pvm", PvmTest.fromJson, runPvmTest),

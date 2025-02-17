@@ -2,6 +2,7 @@ import {
   type CodeHash,
   type Ed25519Key,
   type EntropyHash,
+  type HeaderHash,
   type ServiceId,
   type TimeSlot,
   tryAsPerValidator,
@@ -10,8 +11,9 @@ import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "@typeberry/b
 import { Decoder, Encoder } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import type { OpaqueHash } from "@typeberry/hash";
+import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
+import type { MmrHasher } from "@typeberry/mmr";
 import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
 import type { SmallGas } from "@typeberry/pvm-interpreter";
 import {
@@ -257,10 +259,23 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   const input = Input.toReportsInput(testContent.input, spec);
   const expectedOutput = TestReportsResult.toReportsResult(testContent.output);
 
-  const reports = new Reports(spec, preState);
+  const keccakHasher = await keccak.KeccakHasher.create();
+  const hasher: MmrHasher<KeccakHash> = {
+    hashConcat: (a, b) => keccak.hashBlobs(keccakHasher, [a, b]),
+    hashConcatPrepend: (id, a, b) => keccak.hashBlobs(keccakHasher, [id, a, b]),
+  };
+  // TODO [ToDr] Seems like we don't have any additional source of information
+  // for which lookup headers are in chain, so we just use the recent blocks history.
+  const headerChain = {
+    isInChain(hash: HeaderHash) {
+      return preState.recentBlocks.find((x) => x.headerHash.isEqualTo(hash)) !== undefined;
+    },
+  };
+
+  const reports = new Reports(spec, preState, hasher, headerChain);
 
   const output = await reports.transition(input);
 
-  deepEqual(output, expectedOutput, { context: "output", ignore: ['output.details'] });
+  deepEqual(output, expectedOutput, { context: "output", ignore: ["output.details"] });
   deepEqual(reports.state, postState, { context: "postState" });
 }

@@ -5,6 +5,7 @@ import {
   ED25519_KEY_BYTES,
   ED25519_SIGNATURE_BYTES,
   type Ed25519Signature,
+  type HeaderHash,
   tryAsCoreIndex,
   tryAsPerValidator,
   tryAsTimeSlot,
@@ -22,7 +23,8 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
-import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
+import { HASH_SIZE, type KeccakHash, WithHash, blake2b, keccak } from "@typeberry/hash";
+import type { MmrHasher } from "@typeberry/mmr";
 import {
   AvailabilityAssignment,
   ENTROPY_ENTRIES,
@@ -38,9 +40,27 @@ function guaranteesAsView(spec: ChainSpec, guarantees: ReportGuarantee[]): Guara
   return Decoder.decodeObject(guaranteesExtrinsicCodec.View, encoded, spec);
 }
 
+const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then((hasher) => {
+  return {
+    hashConcat: (a, b) => keccak.hashBlobs(hasher, [a, b]),
+    hashConcatPrepend: (id, a, b) => keccak.hashBlobs(hasher, [id, a, b]),
+  };
+});
+
+async function newReports() {
+  const state = newReportsState();
+  const headerChain = {
+    isInChain(header: HeaderHash) {
+      return state.recentBlocks.find((x) => x.headerHash === header) !== undefined;
+    },
+  };
+
+  return new Reports(tinyChainSpec, state, await hasher, headerChain);
+}
+
 describe("Reports - top level", () => {
   it("should perform a transition with empty state", async () => {
-    const reports = new Reports(tinyChainSpec, newReportsState());
+    const reports = await newReports();
 
     const input: ReportsInput = {
       guarantees: guaranteesAsView(tinyChainSpec, []),
@@ -62,7 +82,7 @@ describe("Reports - top level", () => {
 
 describe("Reports.verifyReportsOrder", () => {
   it("should reject out-of-order guarantees", async () => {
-    const reports = new Reports(tinyChainSpec, newReportsState());
+    const reports = await newReports();
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.fromCodec({
         slot: tryAsTimeSlot(5),
@@ -87,7 +107,7 @@ describe("Reports.verifyReportsOrder", () => {
   });
 
   it("should reject invalid core index", async () => {
-    const reports = new Reports(tinyChainSpec, newReportsState());
+    const reports = await newReports();
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.fromCodec({
         slot: tryAsTimeSlot(5),
@@ -109,7 +129,7 @@ describe("Reports.verifyReportsOrder", () => {
 
 describe("Reports.verifyCredentials", () => {
   it("should reject insufficient credentials", async () => {
-    const reports = new Reports(tinyChainSpec, newReportsState());
+    const reports = await newReports();
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.fromCodec({
         slot: tryAsTimeSlot(5),
@@ -130,7 +150,7 @@ describe("Reports.verifyCredentials", () => {
   });
 
   it("should reject too many credentials", async () => {
-    const reports = new Reports(tinyChainSpec, newReportsState());
+    const reports = await newReports();
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.fromCodec({
         slot: tryAsTimeSlot(5),
@@ -151,7 +171,7 @@ describe("Reports.verifyCredentials", () => {
   });
 
   it("should reject out-of-order credentials", async () => {
-    const reports = new Reports(tinyChainSpec, newReportsState());
+    const reports = await newReports();
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.fromCodec({
         slot: tryAsTimeSlot(5),
@@ -172,7 +192,7 @@ describe("Reports.verifyCredentials", () => {
   });
 
   it("should reject invalid core assignment", async () => {
-    const reports = new Reports(tinyChainSpec, newReportsState());
+    const reports = await newReports();
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.fromCodec({
         slot: tryAsTimeSlot(5),
@@ -193,7 +213,7 @@ describe("Reports.verifyCredentials", () => {
   });
 
   it("should reject future reports", async () => {
-    const reports = new Reports(tinyChainSpec, newReportsState());
+    const reports = await newReports();
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.fromCodec({
         slot: tryAsTimeSlot(5),
@@ -214,7 +234,7 @@ describe("Reports.verifyCredentials", () => {
   });
 
   it("should reject old reports", async () => {
-    const reports = new Reports(tinyChainSpec, newReportsState());
+    const reports = await newReports();
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.fromCodec({
         slot: tryAsTimeSlot(9),
@@ -235,7 +255,7 @@ describe("Reports.verifyCredentials", () => {
   });
 
   it("should return signatures for verification", async () => {
-    const reports = new Reports(tinyChainSpec, newReportsState());
+    const reports = await newReports();
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.fromCodec({
         slot: tryAsTimeSlot(10),

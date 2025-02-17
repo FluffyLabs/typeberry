@@ -1,11 +1,16 @@
-import type { CoreIndex, Ed25519Key, PerValidator, TimeSlot, WorkReportHash } from "@typeberry/block";
+import type { CoreIndex, Ed25519Key, HeaderHash, PerValidator, TimeSlot, WorkReportHash } from "@typeberry/block";
+import { G_A, L } from "@typeberry/block/gp-constants";
 import { type GuaranteesExtrinsicView, REQUIRED_CREDENTIALS_RANGE } from "@typeberry/block/guarantees";
-import type { SegmentRootLookupItem } from "@typeberry/block/work-report";
+import type { RefineContext } from "@typeberry/block/refine-context";
+import type { SegmentRootLookupItem, WorkPackageHash } from "@typeberry/block/work-report";
 import { BytesBlob } from "@typeberry/bytes";
 import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
+import { HashSet } from "@typeberry/collections/hash-set";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
-import { blake2b } from "@typeberry/hash";
+import { type KeccakHash, blake2b } from "@typeberry/hash";
+import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
+import { sumU64 } from "@typeberry/numbers";
 import type { State } from "@typeberry/state";
 import { OK, Result, asOpaqueType, check } from "@typeberry/utils";
 import { ROTATION_PERIOD, generateCoreAssignment, rotationIndex } from "./guarantor-assignment";
@@ -53,7 +58,14 @@ export type ReportsState = {
 export type ReportsOutput = {
   // TODO [ToDr] length?
   reported: SegmentRootLookupItem[];
+  /** A set `R` of work package reporters. */
   reporters: KnownSizeArray<Ed25519Key, "Guarantees * Credentials (at most `cores*3`)">;
+};
+
+/** Recently imported blocks. */
+export type HeaderChain = {
+  /** Check whether given hash is part of the ancestor chain. */
+  isInChain(header: HeaderHash): boolean;
 };
 
 /** Error that may happen during reports processing. */
@@ -72,22 +84,37 @@ export enum ReportsError {
   NotSortedOrUniqueGuarantors = 5,
   /** Validator in credentials is assigned to a different core. */
   WrongAssignment = 6,
+  /** There is a report pending availability on that core already. */
   CoreEngaged = 7,
+  /** Anchor block is not found in recent blocks. */
   AnchorNotRecent = 8,
+  /** Service not foubd. */
   BadServiceId = 9,
+  /** Service code hash does not match the current one. */
   BadCodeHash = 10,
+  // TODO [ToDr]
   DependencyMissing = 11,
+  /** Results for the same package are in more than one report. */
   DuplicatePackage = 12,
+  /** Anchor block declared state root does not match the one we have in recent blocks. */
   BadStateRoot = 13,
+  /** BEEFY super hash mmr mismatch. */
   BadBeefyMmrRoot = 14,
+  /** The authorization hash is not found in the authorization pool. */
   CoreUnauthorized = 15,
   /** Validator index is greater than the number of validators. */
   BadValidatorIndex = 16,
+  /** Total gas of work report is too high. */
   WorkReportGasTooHigh = 17,
+  /** Work item has is smaller than required minimal accumulation gas of a service. */
   ServiceItemGasTooLow = 18,
+  // TODO [ToDr]
   TooManyDependencies = 19,
+  /** Segment root lookup block has invalid time slot or is not found in the header chain. */
   SegmentRootLookupInvalid = 20,
+  /** Signature in credentials is invalid. */
   BadSignature = 21,
+  // TODO [ToDr]
   WorkReportTooBig = 22,
 }
 
@@ -100,6 +127,8 @@ export class Reports {
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly state: ReportsState,
+    public readonly hasher: MmrHasher<KeccakHash>,
+    public readonly headerChain: HeaderChain,
   ) {}
 
   async transition(input: ReportsInput): Promise<Result<ReportsOutput, ReportsError>> {
@@ -119,28 +148,226 @@ export class Reports {
     // Actually verify signatures
     const verifySignaturesLater = ed25519.verify(signaturesToVerify.ok);
 
-    // TODO [ToDr] Perform rest of the work in the meantime.
+    // Perform rest of the work in the meantime.
+    const restResult = this.verifyPostSignatureChecks(input.guarantees);
+    if (restResult.isError) {
+      return restResult;
+    }
 
+    // confirm contextual validity
+    const contextualValidity = this.verifyContextualValidity(input);
+    if (contextualValidity.isError) {
+      return contextualValidity;
+    }
 
-    const signaturesValid = await verifySignaturesLater;
-    if (signaturesValid.some(isValid => !isValid)) {
-      // we have invalid signatures, let's return nice error messages
-      const invalidKeys = signaturesValid.map((isValid, idx) => {
-        if (isValid) {
-          return null;
-        }
-        return signaturesToVerify.ok[idx].key;
-      }).filter(x => x);
-      return Result.error(
-        ReportsError.BadSignature,
-        `Invalid signatures for validators with keys: ${invalidKeys.join(', ')}`
-      );
+    // check signatures correctness
+    const signaturesOk = this.checkSignatures(signaturesToVerify.ok, await verifySignaturesLater);
+    if (signaturesOk.isError) {
+      return signaturesOk;
     }
 
     return Result.ok({
       reported: [],
-      reporters: asKnownSize([]),
+      // TODO [ToDr] can there be duplicates?
+      reporters: asKnownSize(signaturesToVerify.ok.map((x) => x.key)),
     });
+  }
+
+  verifyContextualValidity(input: ReportsInput): Result<OK, ReportsError> {
+    const contexts: RefineContext[] = [];
+    const workPackageHashes = new HashSet<WorkPackageHash>();
+
+    for (const guaranteeView of input.guarantees) {
+      const guarantee = guaranteeView.materialize();
+      contexts.push(guarantee.report.context);
+      workPackageHashes.insert(guarantee.report.workPackageSpec.hash);
+
+      for (const result of guarantee.report.results) {
+        // TODO [ToDr] [opti] We should have a dictionary here rather than do slow lookups.
+        const service = this.state.services.find((x) => x.id === result.serviceId);
+        if (!service) {
+          return Result.error(ReportsError.BadServiceId);
+        }
+
+        // check service code hash
+        // https://graypaper.fluffylabs.dev/#/5f542d7/154b02154b02
+        if (!result.codeHash.isEqualTo(service.info.codeHash)) {
+          return Result.error(
+            ReportsError.BadCodeHash,
+            `Service (${result.serviceId}) code hash mismatch. Got: ${result.codeHash}, expected: ${service.info.codeHash}`,
+          );
+        }
+      }
+    }
+
+    /**
+     * There must be no duplicate work-package hashes (i.e.
+     * two work-reports of the same package).
+     *
+     * https://graypaper.fluffylabs.dev/#/5f542d7/151f01152101
+     */
+    if (workPackageHashes.size !== input.guarantees.length) {
+      return Result.error(ReportsError.DuplicatePackage, "Duplicate work package detected.");
+    }
+
+    const minLookupSlot = Math.max(0, input.slot - L);
+    for (const context of contexts) {
+      /**
+       * We require that the anchor block be within the last H
+       * blocks and that its details be correct by ensuring that it
+       * appears within our most recent blocks β †:
+       *
+       * https://graypaper.fluffylabs.dev/#/5f542d7/152801152b01
+       */
+      // TODO [ToDr] [opti] We should have a dictionary here rather than do slow lookups.
+      const recentBlocks = this.state.recentBlocks.find((x) => x.headerHash.isEqualTo(context.anchor));
+      if (recentBlocks === undefined) {
+        return Result.error(ReportsError.AnchorNotRecent, `Anchor block ${context.anchor} not found in recent blocks.`);
+      }
+      // check state root
+      if (recentBlocks.postStateRoot !== context.stateRoot) {
+        return Result.error(
+          ReportsError.BadStateRoot,
+          `Anchor state root mismatch. Got: ${context.stateRoot}, expected: ${recentBlocks.postStateRoot}.`,
+        );
+      }
+      // TODO [ToDr] [opti] Don't calculate super peak hash every time.
+      //                    use either some cache or pre-processing.
+      // check beefy root
+      const mmr = MerkleMountainRange.fromPeaks(this.hasher, recentBlocks.mmr);
+      const superPeakHash = mmr.getSuperPeakHash();
+      if (!superPeakHash.isEqualTo(context.beefyRoot)) {
+        return Result.error(
+          ReportsError.BadBeefyMmrRoot,
+          `Invalid BEEFY super peak hash. Got: ${context.beefyRoot}, expected: ${superPeakHash}`,
+        );
+      }
+
+      /**
+       * We require that each lookup-anchor block be within the
+       * last L timeslots.
+       *
+       * https://graypaper.fluffylabs.dev/#/5f542d7/154601154701
+       */
+      if (context.lookupAnchorSlot < minLookupSlot) {
+        return Result.error(
+          ReportsError.SegmentRootLookupInvalid,
+          `Lookup anchor slot's too old. Got: ${context.lookupAnchorSlot}, minimal: ${minLookupSlot}`,
+        );
+      }
+
+      /**
+       * We also require that we have a record of it; this is one of
+       * the few conditions which cannot be checked purely with
+       * on-chain state and must be checked by virtue of retaini
+       * ing the series of the last L headers as the ancestor set A.
+       *
+       * https://graypaper.fluffylabs.dev/#/5f542d7/155c01155f01
+       */
+      if (!this.headerChain.isInChain(context.lookupAnchor)) {
+        return Result.error(
+          ReportsError.SegmentRootLookupInvalid,
+          `Lookup anchor is not found in chain. Hash: ${context.lookupAnchor} (slot: ${context.lookupAnchorSlot})`,
+        );
+      }
+    }
+
+    return Result.ok(OK);
+  }
+
+  checkSignatures(
+    signaturesToVerify: ed25519.Input<BytesBlob>[],
+    signaturesValid: boolean[],
+  ): Result<OK, ReportsError> {
+    if (signaturesValid.every((isValid) => isValid)) {
+      return Result.ok(OK);
+    }
+
+    // we have invalid signatures, let's return nice error messages
+    const invalidKeys = signaturesValid
+      .map((isValid, idx) => {
+        if (isValid) {
+          return null;
+        }
+        return signaturesToVerify[idx].key;
+      })
+      .filter((x) => x);
+
+    return Result.error(
+      ReportsError.BadSignature,
+      `Invalid signatures for validators with keys: ${invalidKeys.join(", ")}`,
+    );
+  }
+
+  verifyPostSignatureChecks(input: GuaranteesExtrinsicView): Result<OK, ReportsError> {
+    for (const guaranteeView of input) {
+      const guarantee = guaranteeView.materialize();
+      const report = guarantee.report;
+      const coreIndex = report.coreIndex;
+      /**
+       * No reports may be placed on cores with a report pending
+       * availability on it.
+       *
+       * https://graypaper.fluffylabs.dev/#/5f542d7/15ea0015ea00
+       */
+      if (this.state.availabilityAssignment[coreIndex] !== null) {
+        return Result.error(ReportsError.CoreEngaged, `Report pending availability at core: ${coreIndex}`);
+      }
+
+      /**
+       * A report is valid only if the authorizer hash is present
+       * in the authorizer pool of the core on which the work is
+       * reported.
+       *
+       * https://graypaper.fluffylabs.dev/#/5f542d7/15eb0015ed00
+       */
+      const authorizerHash = report.authorizerHash;
+      const authorizerPool = this.state.authPools[coreIndex];
+      // TODO [ToDr] [opti] We should have a dictionary here rather than do slow lookups.
+      if (!authorizerPool.find((hash) => hash.isEqualTo(authorizerHash))) {
+        return Result.error(
+          ReportsError.CoreUnauthorized,
+          `Authorizer hash not found in the pool of core ${coreIndex}: ${authorizerHash}`,
+        );
+      }
+
+      // TODO [ToDr] shall we agregate items data before checking?
+      // We could first build a map of `serviceId -> minItemGas, codehash`
+      // and then check it only once.
+
+      /**
+       * We require that the gas allotted for accumulation of each
+       * work item in each work-report respects its service’s
+       * minimum gas requirements.
+       *
+       * https://graypaper.fluffylabs.dev/#/5f542d7/15f80015fa00
+       */
+      for (const result of report.results) {
+        // TODO [ToDr] [opti] We should have a dictionary here rather than do slow lookups.
+        const service = this.state.services.find((x) => x.id === result.serviceId);
+        if (service === undefined) {
+          return Result.error(ReportsError.BadServiceId, `No service with id: ${result.serviceId}`);
+        }
+
+        // check minimal accumulation gas
+        if (result.gas < service.info.accumulateMinGas) {
+          return Result.error(
+            ReportsError.ServiceItemGasTooLow,
+            `Service (${result.serviceId}) gas is less than minimal. Got: ${result.gas}, expected at least: ${service.info.accumulateMinGas}`,
+          );
+        }
+      }
+
+      const totalGas = sumU64(...report.results.map((x) => x.gas));
+      if (totalGas.overflow || totalGas.value > G_A) {
+        return Result.error(
+          ReportsError.WorkReportGasTooHigh,
+          `Total gas too high. Got: ${totalGas.value} (ovfl: ${totalGas.overflow}), minimal: ${G_A}`,
+        );
+      }
+    }
+
+    return Result.ok(OK);
   }
 
   verifyReportsOrder(input: GuaranteesExtrinsicView): Result<OK, ReportsError> {
@@ -311,7 +538,6 @@ export class Reports {
         });
       }
     }
-    // TODO [ToDr] Verify signatures
 
     return Result.ok(signaturesToVerify);
   }

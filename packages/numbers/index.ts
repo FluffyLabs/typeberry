@@ -72,6 +72,23 @@ export type Result<T> = {
 };
 
 /**
+ * Sum all provided U64 values using modulo arithmetic.
+ * NOTE that the overflow may happen multiple times here!
+ */
+export function sumU64(...values: U64[]) {
+  let sum = 0n;
+
+  for (const v of values) {
+    sum = sum + v;
+  }
+
+  const overflow = !isU64(sum);
+  sum = sum & 0xffff_ffff_ffff_ffffn;
+
+  return { overflow, value: sum as U64 };
+}
+
+/**
  * Sum all provided U32 values using modulo arithmetic.
  * NOTE that the overflow may happen multiple times here!
  */

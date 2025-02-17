@@ -20,6 +20,12 @@ export const I = MAX_NUMBER_OF_WORK_ITEMS;
 /** `K`: Max number of tickets which may be submitted in a single extrinsic. */
 export const K = MAX_NUMBER_OF_TICKETS;
 
+/** `L`: The maximum age in timeslots of the lookup anchor. */
+export const L = 14_400;
+
+/** `G_A`: The gas allocated to invoke a work-report’s Accumulation logic. */
+export const G_A = 10_000_000;
+
 /** `O`: Maximum number of items in the authorizations pool. */
 export const O = 8;
 
