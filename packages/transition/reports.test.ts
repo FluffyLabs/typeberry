@@ -8,9 +8,11 @@ import {
   type HeaderHash,
   tryAsCoreIndex,
   tryAsPerValidator,
+  tryAsServiceId,
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
+import { G_A } from "@typeberry/block/gp-constants";
 import {
   Credential,
   type GuaranteesExtrinsicView,
@@ -19,20 +21,25 @@ import {
 } from "@typeberry/block/guarantees";
 import testWorkReport from "@typeberry/block/test-work-report";
 import { WorkReport } from "@typeberry/block/work-report";
+import { WorkResult } from "@typeberry/block/work-result";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
-import { HASH_SIZE, type KeccakHash, WithHash, blake2b, keccak } from "@typeberry/hash";
+import { HASH_SIZE, type KeccakHash, type OpaqueHash, WithHash, blake2b, keccak } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
+import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   AvailabilityAssignment,
   ENTROPY_ENTRIES,
+  Service,
+  ServiceAccountInfo,
   VALIDATOR_META_BYTES,
   ValidatorData,
   tryAsPerCore,
 } from "@typeberry/state";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
+import { tryAsGas } from "../../dist/pvm";
 import { Reports, ReportsError, type ReportsInput, type ReportsState } from "./reports";
 
 function guaranteesAsView(spec: ChainSpec, guarantees: ReportGuarantee[]): GuaranteesExtrinsicView {
@@ -47,8 +54,8 @@ const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then
   };
 });
 
-async function newReports() {
-  const state = newReportsState();
+async function newReports(options: Parameters<typeof newReportsState>[0] = {}) {
+  const state = newReportsState(options);
   const headerChain = {
     isInChain(header: HeaderHash) {
       return state.recentBlocks.find((x) => x.headerHash === header) !== undefined;
@@ -290,8 +297,148 @@ describe("Reports.verifyCredentials", () => {
   });
 });
 
+describe("Reports.verifyPostSignatureChecks", () => {
+  it("should reject report on core with pending availability", async () => {
+    const reports = await newReports({ withCoreAssignment: true });
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(10),
+        report: newWorkReport({ core: 0 }),
+        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const res = reports.verifyPostSignatureChecks(guarantees);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.CoreEngaged,
+      details: "Report pending availability at core: 0",
+    });
+  });
+
+  it("should reject report without authorization", async () => {
+    const reports = await newReports();
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(10),
+        report: newWorkReport({ core: 0 }),
+        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const res = reports.verifyPostSignatureChecks(guarantees);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.CoreUnauthorized,
+      details:
+        "Authorizer hash not found in the pool of core 0: 0x022e5e165cc8bd586404257f5cd6f5a31177b5c951eb076c7c10174f90006eef",
+    });
+  });
+
+  it("should reject report with incorrect service id", async () => {
+    const reports = await newReports();
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(10),
+        report: newWorkReport({ core: 0, authorizer: Bytes.fill(HASH_SIZE, 1) }),
+        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const res = reports.verifyPostSignatureChecks(guarantees);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.BadServiceId,
+      details: "No service with id: 129",
+    });
+  });
+
+  it("should reject report with items with too low gas", async () => {
+    const reports = await newReports({
+      services: [
+        new Service(
+          tryAsServiceId(129),
+          ServiceAccountInfo.fromCodec({
+            codeHash: Bytes.fill(HASH_SIZE, 1).asOpaque(),
+            balance: tryAsU64(0),
+            thresholdBalance: tryAsU64(0),
+            accumulateMinGas: tryAsGas(10_000),
+            onTransferMinGas: tryAsGas(0),
+            storageUtilisationBytes: tryAsU64(1),
+            storageUtilisationCount: tryAsU32(1),
+          }),
+        ),
+      ],
+    });
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(10),
+        report: newWorkReport({ core: 0, authorizer: Bytes.fill(HASH_SIZE, 1) }),
+        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const res = reports.verifyPostSignatureChecks(guarantees);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.ServiceItemGasTooLow,
+      details: "Service (129) gas is less than minimal. Got: 120, expected at least: 10000",
+    });
+  });
+
+  it("should reject report with total gas too high", async () => {
+    const reports = await newReports({
+      services: [
+        new Service(
+          tryAsServiceId(129),
+          ServiceAccountInfo.fromCodec({
+            codeHash: Bytes.fill(HASH_SIZE, 1).asOpaque(),
+            balance: tryAsU64(0),
+            thresholdBalance: tryAsU64(0),
+            accumulateMinGas: tryAsGas(10_000),
+            onTransferMinGas: tryAsGas(0),
+            storageUtilisationBytes: tryAsU64(1),
+            storageUtilisationCount: tryAsU32(1),
+          }),
+        ),
+      ],
+    });
+    const workReport = newWorkReport({ core: 0, authorizer: Bytes.fill(HASH_SIZE, 1) });
+    // override gas to make it too high.
+    workReport.results[0] = WorkResult.fromCodec({
+      ...workReport.results[0],
+      gas: asOpaqueType(tryAsU64(G_A + 1)),
+    });
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(10),
+        report: workReport,
+        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const res = reports.verifyPostSignatureChecks(guarantees);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.WorkReportGasTooHigh,
+      details: "Total gas too high. Got: 10000001 (ovfl: false), maximal: 10000000",
+    });
+  });
+});
+
 type ReportStateOptions = {
   withCoreAssignment?: boolean;
+  services?: ReportsState["services"];
 };
 
 function newCredential(index: number, signature?: Ed25519Signature) {
@@ -301,7 +448,7 @@ function newCredential(index: number, signature?: Ed25519Signature) {
   });
 }
 
-function newReportsState({ withCoreAssignment = false }: ReportStateOptions = {}): ReportsState {
+function newReportsState({ withCoreAssignment = false, services = [] }: ReportStateOptions = {}): ReportsState {
   const spec = tinyChainSpec;
   return {
     availabilityAssignment: tryAsPerCore(withCoreAssignment ? INITIAL_ASSIGNMENT.slice() : [null, null], spec),
@@ -310,7 +457,7 @@ function newReportsState({ withCoreAssignment = false }: ReportStateOptions = {}
     entropy: getEntropy(1, 2, 3, 4),
     authPools: getAuthPools([1, 2, 3, 4], spec),
     recentBlocks: asOpaqueType([]),
-    services: [],
+    services,
     offenders: asOpaqueType([]),
   };
 }
@@ -318,8 +465,8 @@ function newReportsState({ withCoreAssignment = false }: ReportStateOptions = {}
 function getAuthPools(source: number[], spec: ChainSpec): ReportsState["authPools"] {
   return tryAsPerCore(
     [
-      asOpaqueType(source.map((x) => Bytes.fill(x, HASH_SIZE).asOpaque())),
-      asOpaqueType(source.map((x) => Bytes.fill(x, HASH_SIZE).asOpaque())),
+      asOpaqueType(source.map((x) => Bytes.fill(HASH_SIZE, x).asOpaque())),
+      asOpaqueType(source.map((x) => Bytes.fill(HASH_SIZE, x).asOpaque())),
     ],
     spec,
   );
@@ -346,14 +493,14 @@ function intoValidatorData({ bandersnatch, ed25519 }: { bandersnatch: string; ed
   });
 }
 
-function newWorkReport({ core }: { core: number }): WorkReport {
+function newWorkReport({ core, authorizer }: { core: number; authorizer?: OpaqueHash }): WorkReport {
   const source = BytesBlob.parseBlob(testWorkReport);
   const report = Decoder.decodeObject(WorkReport.Codec, source, tinyChainSpec);
   const workReport = new WorkReport(
     report.workPackageSpec,
     report.context,
     tryAsCoreIndex(core),
-    report.authorizerHash,
+    authorizer ? authorizer.asOpaque() : report.authorizerHash,
     report.authorizationOutput,
     report.segmentRootLookup,
     report.results,

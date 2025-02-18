@@ -362,7 +362,7 @@ export class Reports {
       if (totalGas.overflow || totalGas.value > G_A) {
         return Result.error(
           ReportsError.WorkReportGasTooHigh,
-          `Total gas too high. Got: ${totalGas.value} (ovfl: ${totalGas.overflow}), minimal: ${G_A}`,
+          `Total gas too high. Got: ${totalGas.value} (ovfl: ${totalGas.overflow}), maximal: ${G_A}`,
         );
       }
     }
