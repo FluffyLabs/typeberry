@@ -79,8 +79,8 @@ class TestState {
         current: tryAsPerValidator(state.pi.current, spec),
         previous: tryAsPerValidator(state.pi.last, spec),
       },
-      tau: state.tau,
-      kappaPrime: tryAsPerValidator(state.kappa_prime, spec),
+      timeSlot: state.tau,
+      posteriorActiveValidators: tryAsPerValidator(state.kappa_prime, spec),
     };
   }
 }

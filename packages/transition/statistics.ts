@@ -8,13 +8,16 @@ import { check } from "@typeberry/utils";
 export type StatisticsState = {
   statisticsPerValidator: State["statisticsPerValidator"];
 
-  readonly tau: State["timeslot"];
   /**
-   * Posterior active validators
+   * `τ` - tau; header slot
+   */
+  readonly timeSlot: State["timeslot"];
+  /**
+   * `kappa_prime`: Posterior active validators
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/188c02188d02
    */
-  readonly kappaPrime: State["currentValidatorData"];
+  readonly posteriorActiveValidators: State["currentValidatorData"];
 };
 
 export class Statistics {
@@ -25,7 +28,7 @@ export class Statistics {
 
   private getValidatorsStatistics(slot: TimeSlot) {
     /** https://graypaper.fluffylabs.dev/#/579bd12/18b80118b801 */
-    const currentEpoch = Math.floor(this.state.tau / this.chainSpec.epochLength);
+    const currentEpoch = Math.floor(this.state.timeSlot / this.chainSpec.epochLength);
     const nextEpoch = Math.floor(slot / this.chainSpec.epochLength);
 
     /** e === e' */

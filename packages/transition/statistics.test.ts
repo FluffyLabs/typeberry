@@ -30,8 +30,8 @@ describe("Statistics", () => {
     const statisticsPerValidator = new ActivityData({ current: currentStatistics, previous: lastStatistics });
     const state: StatisticsState = {
       statisticsPerValidator,
-      tau: previousSlot as TimeSlot,
-      kappaPrime: asOpaqueType([]),
+      timeSlot: previousSlot as TimeSlot,
+      posteriorActiveValidators: asOpaqueType([]),
     };
     const statistics = new Statistics(state, tinyChainSpec);
 
@@ -98,8 +98,8 @@ describe("Statistics", () => {
       const statisticsPerValidator = new ActivityData({ current: currentStatistics, previous: lastStatistics });
       const state: StatisticsState = {
         statisticsPerValidator,
-        tau: previousSlot as TimeSlot,
-        kappaPrime: asOpaqueType([]),
+        timeSlot: previousSlot as TimeSlot,
+        posteriorActiveValidators: asOpaqueType([]),
       };
       const statistics = new Statistics(state, tinyChainSpec);
 
