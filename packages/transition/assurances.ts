@@ -1,11 +1,12 @@
-import type { HeaderHash, PerCore, PerValidator, TimeSlot, ValidatorData } from "@typeberry/block";
-import type { AssurancesExtrinsicView, AvailabilityAssignment } from "@typeberry/block/assurances";
+import type { HeaderHash, TimeSlot } from "@typeberry/block";
+import type { AssurancesExtrinsicView } from "@typeberry/block/assurances";
 import type { WorkReport } from "@typeberry/block/work-report";
 import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
 import { blake2b } from "@typeberry/hash";
+import type { State } from "@typeberry/state";
 import { OK, Result, check } from "@typeberry/utils";
 
 /** Assurances transition input. */
@@ -19,24 +20,7 @@ export type AssurancesInput = {
 };
 
 /** State of the assurances. */
-export type AssurancesState = {
-  /**
-   * `rho`: work-reports which have been reported but are not yet known to be
-   *        available to a super-majority of validators, together with the time
-   *        at which each was reported.
-   *
-   *  https://graypaper.fluffylabs.dev/#/579bd12/135800135800
-   */
-  availabilityAssignment: PerCore<AvailabilityAssignment | null>;
-  /**
-   * `kappa`: Validators, who are the set of economic actors uniquely
-   *          privileged to help build and maintain the Jam chain, are
-   *          identified within κ, archived in λ and enqueued from ι.
-   *
-   *  https://graypaper.fluffylabs.dev/#/579bd12/080201080601
-   */
-  currentValidatorData: PerValidator<ValidatorData>;
-};
+export type AssurancesState = Pick<State, "availabilityAssignment" | "currentValidatorData">;
 
 /** Possible error during assurances transition. */
 export enum AssurancesError {

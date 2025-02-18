@@ -1,10 +1,11 @@
-import { ValidatorData, tryAsPerValidator } from "@typeberry/block";
+import { tryAsPerValidator } from "@typeberry/block";
 import { Decoder, tryAsExactBytes } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import { type PvmExecution, type Registers, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { ValidatorData } from "@typeberry/state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";

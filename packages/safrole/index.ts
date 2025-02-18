@@ -1,5 +1,6 @@
-import type { EntropyHash, ValidatorData } from "@typeberry/block";
+import type { EntropyHash } from "@typeberry/block";
 import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
+import type { ValidatorData } from "@typeberry/state";
 import { verifyBandersnatch } from "./bandersnatch";
 
 export const VALIDATOR_META_BYTES = 128;

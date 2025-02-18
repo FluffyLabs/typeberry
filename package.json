@@ -31,7 +31,6 @@
     "packages/safrole",
     "packages/shuffling",
     "packages/state-machine",
-    "packages/statistics",
     "packages/transition",
     "packages/trie",
     "packages/utils",
@@ -42,7 +41,8 @@
     "workers/block-generator",
     "workers/generic",
     "workers/importer",
-    "packages/crypto"
+    "packages/crypto",
+    "packages/state"
   ],
   "engines": {
     "node": ">=22",

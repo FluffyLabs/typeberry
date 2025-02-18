@@ -1,18 +1,11 @@
 import assert from "node:assert";
-import {
-  type Ed25519Key,
-  type TimeSlot,
-  type ValidatorData,
-  type WorkReportHash,
-  tryAsPerCore,
-  tryAsPerValidator,
-} from "@typeberry/block";
+import { type Ed25519Key, type TimeSlot, type WorkReportHash, tryAsPerValidator } from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
 import type { ChainSpec } from "@typeberry/config";
-import { Disputes } from "@typeberry/disputes";
-import { DisputesRecords, DisputesState } from "@typeberry/disputes";
+import { Disputes, type DisputesState } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
 import { type FromJson, json } from "@typeberry/json-parser";
+import { type AvailabilityAssignment, DisputesRecords, type ValidatorData, tryAsPerCore } from "@typeberry/state";
 import { fromJson as codecFromJson } from "./codec/common";
 import { disputesExtrinsicFromJson } from "./codec/disputes-extrinsic";
 import { TestAvailabilityAssignment, commonFromJson, getChainSpec } from "./common-types";
@@ -59,7 +52,7 @@ class TestState {
   /** Disputes records. */
   psi!: TestDisputesRecords;
   /** Availability assignments. */
-  rho!: Array<TestAvailabilityAssignment | null>;
+  rho!: Array<AvailabilityAssignment | null>;
   /** Time slot. */
   tau!: TimeSlot;
   /** Current validator set. */
@@ -67,20 +60,21 @@ class TestState {
   /** Previous validator set. */
   lambda!: ValidatorData[];
 
-  static toDisputesState(testState: TestState, spec: ChainSpec) {
+  static toDisputesState(testState: TestState, spec: ChainSpec): DisputesState {
     const psi = testState.psi;
     const disputesRecords = DisputesRecords.fromSortedArrays(psi.good, psi.bad, psi.wonky, psi.offenders);
-    const rho = testState.rho;
-    const availabilityAssignment = tryAsPerCore(
-      rho.map((item) => {
-        return item !== null ? TestAvailabilityAssignment.toAvailabilityAssignment(item) : null;
-      }),
-      spec,
-    );
-    const kappa = tryAsPerValidator(testState.kappa, spec);
-    const lambda = tryAsPerValidator(testState.lambda, spec);
+    const { rho, kappa, lambda } = testState;
+    const availabilityAssignment = tryAsPerCore(rho, spec);
+    const currentValidatorData = tryAsPerValidator(kappa, spec);
+    const previousValidatorData = tryAsPerValidator(lambda, spec);
 
-    return new DisputesState(disputesRecords, availabilityAssignment, testState.tau, kappa, lambda);
+    return {
+      disputesRecords,
+      availabilityAssignment,
+      timeslot: testState.tau,
+      currentValidatorData,
+      previousValidatorData,
+    };
   }
 }
 

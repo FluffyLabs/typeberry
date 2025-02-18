@@ -10,26 +10,24 @@ import {
   type Ed25519Key,
   type Ed25519Signature,
   type Epoch,
-  type TimeSlot,
-  VALIDATOR_META_BYTES,
-  ValidatorData,
   type ValidatorIndex,
   type WorkReportHash,
-  tryAsPerCore,
   tryAsPerValidator,
+  tryAsTimeSlot,
 } from "@typeberry/block";
 import { Culprit, DisputesExtrinsic, Fault, Judgement, Verdict } from "@typeberry/block/disputes";
 import { Bytes } from "@typeberry/bytes";
 import { SortedSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
+import { DisputesRecords, VALIDATOR_META_BYTES, ValidatorData, hashComparator, tryAsPerCore } from "@typeberry/state";
 import { Disputes } from "./disputes";
 import { DisputesErrorCode } from "./disputes-error-code";
-import { DisputesRecords, DisputesState, hashComparator } from "./disputes-state";
+import type { DisputesState } from "./disputes-state";
 
 const createValidatorData = ({ bandersnatch, ed25519 }: { bandersnatch: string; ed25519: string }) =>
   new ValidatorData(
-    Bytes.parseBytes(ed25519, ED25519_KEY_BYTES) as Ed25519Key,
     Bytes.parseBytes(bandersnatch, BANDERSNATCH_KEY_BYTES) as BandersnatchKey,
+    Bytes.parseBytes(ed25519, ED25519_KEY_BYTES) as Ed25519Key,
     Bytes.zero(BLS_KEY_BYTES) as BlsKey,
     Bytes.zero(VALIDATOR_META_BYTES),
   );
@@ -265,18 +263,18 @@ describe("Disputes", () => {
     },
   ].map(createFault);
 
-  const preState = new DisputesState(
-    new DisputesRecords(
+  const preState: DisputesState = {
+    disputesRecords: new DisputesRecords(
       SortedSet.fromArray(hashComparator),
       SortedSet.fromArray(hashComparator),
       SortedSet.fromArray(hashComparator),
       SortedSet.fromArray(hashComparator),
     ),
-    tryAsPerCore([null, null], tinyChainSpec),
-    0 as TimeSlot,
+    timeslot: tryAsTimeSlot(0),
+    availabilityAssignment: tryAsPerCore([null, null], tinyChainSpec),
     currentValidatorData,
     previousValidatorData,
-  );
+  };
 
   it("should perform correct state transition and return offenders", async () => {
     const dispuites = new Disputes(preState, tinyChainSpec);

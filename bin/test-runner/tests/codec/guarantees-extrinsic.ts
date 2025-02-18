@@ -4,7 +4,7 @@ import {
   type GuaranteesExtrinsic,
   ReportGuarantee,
   guaranteesExtrinsicCodec,
-} from "@typeberry/block/gaurantees";
+} from "@typeberry/block/guarantees";
 import type { WorkReport } from "@typeberry/block/work-report";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";

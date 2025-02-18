@@ -1,12 +1,40 @@
-import type { Ed25519Key, ServiceId, TimeSlot, ValidatorData } from "@typeberry/block";
-import type { GuaranteesExtrinsic } from "@typeberry/block/gaurantees";
-import type { Bytes } from "@typeberry/bytes";
+import {
+  type CodeHash,
+  type Ed25519Key,
+  type EntropyHash,
+  type ServiceId,
+  type TimeSlot,
+  tryAsPerValidator,
+} from "@typeberry/block";
+import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "@typeberry/block/guarantees";
+import type { SegmentRootLookupItem } from "@typeberry/block/work-report";
+import { Decoder, Encoder } from "@typeberry/codec";
+import { FixedSizeArray } from "@typeberry/collections";
+import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import type { OpaqueHash } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
-import type { U32 } from "@typeberry/numbers";
+import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
+import type { SmallGas } from "@typeberry/pvm-interpreter";
+import {
+  type AvailabilityAssignment,
+  type BlockState,
+  ENTROPY_ENTRIES,
+  Service,
+  ServiceAccountInfo,
+  type ValidatorData,
+  tryAsPerCore,
+} from "@typeberry/state";
+import {
+  Reports,
+  ReportsError,
+  type ReportsInput,
+  type ReportsOutput,
+  type ReportsState,
+} from "@typeberry/transition/reports";
+import { Result, asOpaqueType } from "@typeberry/utils";
 import { fromJson as codecFromJson } from "./codec/common";
 import { guaranteesExtrinsicFromJson } from "./codec/guarantees-extrinsic";
-import { TestAvailabilityAssignment, TestBlocksInfo, TestSegmentRootLookupItem, commonFromJson } from "./common-types";
+import { TestAvailabilityAssignment, TestBlockState, TestSegmentRootLookupItem, commonFromJson } from "./common-types";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -16,34 +44,61 @@ class Input {
 
   guarantees!: GuaranteesExtrinsic;
   slot!: TimeSlot;
+
+  static toReportsInput(input: Input, spec: ChainSpec): ReportsInput {
+    const encoded = Encoder.encodeObject(guaranteesExtrinsicCodec, input.guarantees, spec);
+    const view = Decoder.decodeObject(guaranteesExtrinsicCodec.View, encoded, spec);
+
+    return {
+      guarantees: view,
+      slot: input.slot,
+    };
+  }
 }
 
 class TestServiceInfo {
-  static fromJson: FromJson<TestServiceInfo> = {
-    code_hash: commonFromJson.bytes32(),
-    balance: "number",
-    min_item_gas: "number",
-    min_memo_gas: "number",
-    bytes: "number",
-    items: "number",
-  };
+  static fromJson = json.object<TestServiceInfo, ServiceAccountInfo>(
+    {
+      code_hash: commonFromJson.bytes32(),
+      balance: json.fromNumber((x) => tryAsU64(x)),
+      min_item_gas: "number",
+      min_memo_gas: "number",
+      bytes: json.fromNumber((x) => tryAsU64(x)),
+      items: "number",
+    },
+    ({ code_hash, balance, min_item_gas, min_memo_gas, bytes, items }) => {
+      const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(items, bytes);
+      return ServiceAccountInfo.fromCodec({
+        codeHash: code_hash,
+        balance,
+        thresholdBalance,
+        accumulateMinGas: min_item_gas,
+        onTransferMinGas: min_memo_gas,
+        storageUtilisationBytes: bytes,
+        storageUtilisationCount: items,
+      });
+    },
+  );
 
-  code_hash!: OpaqueHash;
-  balance!: U32; // it should be U64
-  min_item_gas!: U32;
-  min_memo_gas!: U32;
-  bytes!: U32;
+  code_hash!: CodeHash;
+  balance!: U64;
+  min_item_gas!: SmallGas;
+  min_memo_gas!: SmallGas;
+  bytes!: U64;
   items!: U32;
 }
 
 class TestServiceItem {
-  static fromJson: FromJson<TestServiceItem> = {
-    id: "number",
-    info: TestServiceInfo.fromJson,
-  };
+  static fromJson = json.object<TestServiceItem, Service>(
+    {
+      id: "number",
+      info: TestServiceInfo.fromJson,
+    },
+    ({ id, info }) => new Service(id, info),
+  );
 
   id!: ServiceId;
-  info!: TestServiceInfo;
+  info!: ServiceAccountInfo;
 }
 
 class TestState {
@@ -54,17 +109,31 @@ class TestState {
     entropy: json.array(commonFromJson.bytes32()),
     offenders: json.array(codecFromJson.bytes32<Ed25519Key>()),
     auth_pools: ["array", json.array(codecFromJson.bytes32())],
-    recent_blocks: json.array(TestBlocksInfo.fromJson),
+    recent_blocks: json.array(TestBlockState.fromJson),
     services: json.array(TestServiceItem.fromJson),
   };
-  avail_assignments!: Array<TestAvailabilityAssignment | null>;
+
+  avail_assignments!: Array<AvailabilityAssignment | null>;
   curr_validators!: ValidatorData[];
   prev_validators!: ValidatorData[];
-  entropy!: Bytes<32>[];
+  entropy!: EntropyHash[];
   offenders!: Ed25519Key[];
   auth_pools!: OpaqueHash[][];
-  recent_blocks!: TestBlocksInfo[];
+  recent_blocks!: BlockState[];
   services!: TestServiceItem[];
+
+  static toReportsState(pre: TestState, spec: ChainSpec): ReportsState {
+    return {
+      availabilityAssignment: tryAsPerCore(pre.avail_assignments, spec),
+      currentValidatorData: tryAsPerValidator(pre.curr_validators, spec),
+      previousValidatorData: tryAsPerValidator(pre.prev_validators, spec),
+      entropy: FixedSizeArray.new(pre.entropy, ENTROPY_ENTRIES),
+      offenders: asOpaqueType(pre.offenders),
+      authPools: tryAsPerCore(pre.auth_pools.map(asOpaqueType), spec),
+      recentBlocks: asOpaqueType(pre.recent_blocks),
+      services: pre.services,
+    };
+  }
 }
 
 enum ReportsErrorCode {
@@ -94,22 +163,71 @@ enum ReportsErrorCode {
 }
 
 class OutputData {
-  static fromJson: FromJson<OutputData> = {
-    reported: json.array(TestSegmentRootLookupItem.fromJson),
-    reporters: json.array(codecFromJson.bytes32()),
-  };
+  static fromJson = json.object<OutputData, ReportsOutput>(
+    {
+      reported: json.array(TestSegmentRootLookupItem.fromJson),
+      reporters: json.array(codecFromJson.bytes32()),
+    },
+    ({ reported, reporters }) => ({
+      reported,
+      reporters,
+    }),
+  );
 
-  reported!: TestSegmentRootLookupItem[];
+  reported!: SegmentRootLookupItem[];
   reporters!: Ed25519Key[];
 }
 
-class Output {
-  static fromJson: FromJson<Output> = {
+type ReportsResult = Result<ReportsOutput, ReportsError>;
+
+class TestReportsResult {
+  static fromJson: FromJson<TestReportsResult> = {
     ok: json.optional(OutputData.fromJson),
     err: json.optional("string"),
   };
 
-  ok?: OutputData;
+  static toReportsResult(test: TestReportsResult): ReportsResult {
+    if (test.ok) {
+      return Result.ok(test.ok);
+    }
+
+    if (test.err) {
+      const map = {
+        [ReportsErrorCode.BadCoreIndex]: ReportsError.BadCoreIndex,
+        [ReportsErrorCode.FutureReportSlot]: ReportsError.FutureReportSlot,
+        [ReportsErrorCode.ReportEpochBeforeLast]: ReportsError.ReportEpochBeforeLast,
+        [ReportsErrorCode.InsufficientGuarantees]: ReportsError.InsufficientGuarantees,
+        [ReportsErrorCode.OutOfOrderGuarantee]: ReportsError.OutOfOrderGuarantee,
+        [ReportsErrorCode.NotSortedOrUniqueGuarantors]: ReportsError.NotSortedOrUniqueGuarantors,
+        [ReportsErrorCode.WrongAssignment]: ReportsError.WrongAssignment,
+        [ReportsErrorCode.CoreEngaged]: ReportsError.CoreEngaged,
+        [ReportsErrorCode.AnchorNotRecent]: ReportsError.AnchorNotRecent,
+        [ReportsErrorCode.BadServiceId]: ReportsError.BadServiceId,
+        [ReportsErrorCode.BadCodeHash]: ReportsError.BadCodeHash,
+        [ReportsErrorCode.DependencyMissing]: ReportsError.DependencyMissing,
+        [ReportsErrorCode.DuplicatePackage]: ReportsError.DuplicatePackage,
+        [ReportsErrorCode.BadStateRoot]: ReportsError.BadStateRoot,
+        [ReportsErrorCode.BadBeefyMmrRoot]: ReportsError.BadBeefyMmrRoot,
+        [ReportsErrorCode.CoreUnauthorized]: ReportsError.CoreUnauthorized,
+        [ReportsErrorCode.BadValidatorIndex]: ReportsError.BadValidatorIndex,
+        [ReportsErrorCode.WorkReportGasTooHigh]: ReportsError.WorkReportGasTooHigh,
+        [ReportsErrorCode.ServiceItemGasTooLow]: ReportsError.ServiceItemGasTooLow,
+        [ReportsErrorCode.TooManyDependencies]: ReportsError.TooManyDependencies,
+        [ReportsErrorCode.SegmentRootLookupInvalid]: ReportsError.SegmentRootLookupInvalid,
+        [ReportsErrorCode.BadSignature]: ReportsError.BadSignature,
+        [ReportsErrorCode.WorkReportTooBig]: ReportsError.WorkReportTooBig,
+      };
+
+      if (map[test.err] !== undefined) {
+        return Result.error(map[test.err]);
+      }
+      throw new Error(`Unknown expected reports error code: "${test.err}"`);
+    }
+
+    throw new Error('Neither "ok" nor "err" is defined in output.');
+  }
+
+  ok?: ReportsOutput;
   err?: ReportsErrorCode;
 }
 
@@ -117,15 +235,35 @@ export class ReportsTest {
   static fromJson: FromJson<ReportsTest> = {
     input: Input.fromJson,
     pre_state: TestState.fromJson,
-    output: Output.fromJson,
+    output: TestReportsResult.fromJson,
     post_state: TestState.fromJson,
   };
   input!: Input;
   pre_state!: TestState;
-  output!: Output;
+  output!: TestReportsResult;
   post_state!: TestState;
 }
 
-export async function runReportsTest(_testContent: ReportsTest) {
-  // TODO [MaSi] Reports tests
+export async function runReportsTestTiny(testContent: ReportsTest) {
+  await runReportsTest(testContent, tinyChainSpec);
+}
+
+export async function runReportsTestFull(testContent: ReportsTest) {
+  await runReportsTest(testContent, fullChainSpec);
+}
+
+async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
+  const preState = TestState.toReportsState(testContent.pre_state, spec);
+  const _postState = TestState.toReportsState(testContent.post_state, spec);
+  const input = Input.toReportsInput(testContent.input, spec);
+  const _expectedOutput = TestReportsResult.toReportsResult(testContent.output);
+
+  const reports = new Reports(spec, preState);
+
+  const _output = reports.transition(input);
+
+  // TODO [ToDr] Implement reports transition.
+
+  // deepEqual(output, expectedOutput, { context: "output" });
+  // deepEqual(reports.state, postState, { context: "postState" });
 }

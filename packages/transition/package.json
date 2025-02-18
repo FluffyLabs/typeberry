@@ -15,6 +15,7 @@
     "@typeberry/numbers": "0.0.1",
     "@typeberry/pvm-host-calls": "0.0.1",
     "@typeberry/pvm-program": "0.0.1",
+    "@typeberry/state": "0.0.1",
     "@typeberry/utils": "0.0.1"
   },
   "scripts": {

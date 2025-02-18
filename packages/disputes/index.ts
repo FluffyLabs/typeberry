@@ -1,2 +1,2 @@
-export { Disputes } from "./disputes";
-export { DisputesRecords, DisputesState } from "./disputes-state";
+export * from "./disputes";
+export { DisputesState } from "./disputes-state";

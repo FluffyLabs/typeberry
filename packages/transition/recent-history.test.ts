@@ -3,7 +3,9 @@ import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE, type KeccakHash, keccak } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
-import { RecentHistory, type RecentHistoryInput } from "./recent-history";
+import { type BlockState, MAX_RECENT_HISTORY } from "@typeberry/state";
+import { asOpaqueType, check } from "@typeberry/utils";
+import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "./recent-history";
 
 const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then((hasher) => {
   return {
@@ -12,9 +14,16 @@ const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then
   };
 });
 
+const asRecentHistory = (arr: BlockState[]): RecentHistoryState => {
+  check(arr.length <= MAX_RECENT_HISTORY, "Invalid size of the state input.");
+  return {
+    recentBlocks: asOpaqueType(arr),
+  };
+};
+
 describe("Recent History", () => {
   it("should perform a transition with empty state", async () => {
-    const recentHistory = new RecentHistory(await hasher, []);
+    const recentHistory = new RecentHistory(await hasher, asRecentHistory([]));
     const input: RecentHistoryInput = {
       headerHash: Bytes.fill(HASH_SIZE, 3).asOpaque(),
       priorStateRoot: Bytes.fill(HASH_SIZE, 2).asOpaque(),
@@ -23,7 +32,7 @@ describe("Recent History", () => {
     };
     recentHistory.transition(input);
 
-    assert.deepStrictEqual(recentHistory.state, [
+    assert.deepStrictEqual(recentHistory.state.recentBlocks, [
       {
         headerHash: input.headerHash,
         mmr: {
@@ -44,7 +53,7 @@ describe("Recent History", () => {
       postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
       reported: [],
     };
-    const recentHistory = new RecentHistory(await hasher, [initialState]);
+    const recentHistory = new RecentHistory(await hasher, asRecentHistory([initialState]));
 
     const input: RecentHistoryInput = {
       headerHash: Bytes.fill(HASH_SIZE, 4).asOpaque(),
@@ -59,8 +68,9 @@ describe("Recent History", () => {
     };
     recentHistory.transition(input);
 
-    assert.deepStrictEqual(recentHistory.state.length, 2);
-    assert.deepStrictEqual(recentHistory.state[0], {
+    const recentBlocks = recentHistory.state.recentBlocks;
+    assert.deepStrictEqual(recentBlocks.length, 2);
+    assert.deepStrictEqual(recentBlocks[0], {
       headerHash: initialState.headerHash,
       mmr: initialState.mmr,
       // note we fill it up from the input
@@ -68,10 +78,10 @@ describe("Recent History", () => {
       reported: initialState.reported,
     });
     assert.deepStrictEqual(
-      recentHistory.state[1].mmr.peaks[1]?.toString(),
+      recentBlocks[1].mmr.peaks[1]?.toString(),
       "0x6ac9e94853a54beddd428600d8dd68f9c67ea0850f6d9407812a48c71e9f6958",
     );
-    assert.deepStrictEqual(recentHistory.state[1], {
+    assert.deepStrictEqual(recentBlocks[1], {
       headerHash: input.headerHash,
       mmr: {
         peaks: [
@@ -85,7 +95,7 @@ describe("Recent History", () => {
   });
 
   it("should only keep 8 entries", async () => {
-    const recentHistory = new RecentHistory(await hasher, []);
+    const recentHistory = new RecentHistory(await hasher, asRecentHistory([]));
 
     let input!: RecentHistoryInput;
     for (let i = 0; i < 10; i++) {
@@ -104,8 +114,9 @@ describe("Recent History", () => {
       recentHistory.transition(input);
     }
 
-    assert.deepStrictEqual(recentHistory.state.length, 8);
-    assert.deepStrictEqual(recentHistory.state[7], {
+    const recentBlocks = recentHistory.state.recentBlocks;
+    assert.deepStrictEqual(recentBlocks.length, 8);
+    assert.deepStrictEqual(recentBlocks[7], {
       headerHash: input.headerHash,
       mmr: {
         peaks: [

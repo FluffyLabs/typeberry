@@ -1,5 +1,5 @@
 import type { TimeSlot } from "@typeberry/block";
-import { Credential } from "@typeberry/block/gaurantees";
+import { Credential } from "@typeberry/block/guarantees";
 import { WorkReport } from "@typeberry/block/work-report";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";

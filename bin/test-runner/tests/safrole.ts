@@ -4,7 +4,6 @@ import {
   type BandersnatchProof,
   type Ed25519Key,
   type EntropyHash,
-  type ValidatorData,
 } from "@typeberry/block";
 import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
@@ -12,6 +11,7 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
 import type { State as SafroleState } from "@typeberry/safrole";
 import { Safrole, type StateDiff as SafroleStateDiff } from "@typeberry/safrole";
+import type { ValidatorData } from "@typeberry/state";
 import { commonFromJson } from "./common-types";
 
 type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}` ? `${T}${Capitalize<SnakeToCamel<U>>}` : S;

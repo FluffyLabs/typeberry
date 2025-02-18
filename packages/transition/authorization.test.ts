@@ -1,18 +1,13 @@
 import { describe, it } from "node:test";
 import { tryAsTimeSlot } from "@typeberry/block";
+import { MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
 import type { AuthorizerHash } from "@typeberry/block/work-report";
 import { Bytes } from "@typeberry/bytes";
 import { HashSet } from "@typeberry/collections/hash-set";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { asOpaqueType } from "@typeberry/utils";
-import {
-  Authorization,
-  type AuthorizationInput,
-  type AuthorizationState,
-  MAX_NUMBER_OF_AUTHORIZATIONS_IN_POOL,
-  assertSameState,
-} from "./authorization";
+import { asOpaqueType, deepEqual } from "@typeberry/utils";
+import { Authorization, type AuthorizationInput, type AuthorizationState } from "./authorization";
 
 const authQueues = (core1: AuthorizerHash[], core2: AuthorizerHash[]): AuthorizationState["authQueues"] => {
   return asOpaqueType([asOpaqueType(core1), asOpaqueType(core2)]);
@@ -46,8 +41,8 @@ describe("Authorization", () => {
     };
     authorization.transition(input);
 
-    assertSameState(authorization.state.authPools, authPools([h(1)], [h(1)]), "pools");
-    assertSameState(authorization.state.authQueues, authQueues([h(1)], [h(1)]), "queues");
+    deepEqual(authorization.state.authPools, authPools([h(1)], [h(1)]), { context: "pools" });
+    deepEqual(authorization.state.authQueues, authQueues([h(1)], [h(1)]), { context: "queues" });
   });
 
   it("should perform a transition and remove existing entries", async () => {
@@ -62,14 +57,14 @@ describe("Authorization", () => {
     };
     authorization.transition(input);
 
-    assertSameState(authorization.state.authPools, authPools([h(0), h(0), h(1)], [h(3), h(2), h(1)]), "pools");
-    assertSameState(authorization.state.authQueues, authQueues([h(1)], [h(1)]), "queues");
+    deepEqual(authorization.state.authPools, authPools([h(0), h(0), h(1)], [h(3), h(2), h(1)]), { context: "pools" });
+    deepEqual(authorization.state.authQueues, authQueues([h(1)], [h(1)]), { context: "queues" });
   });
 
   it("should perform a transition and keep last items in pool", async () => {
     const authorization = new Authorization(tinyChainSpec, {
       authPools: authPools(
-        Array(MAX_NUMBER_OF_AUTHORIZATIONS_IN_POOL + 1)
+        Array(MAX_AUTH_POOL_SIZE + 1)
           .fill(0)
           .map((_, idx) => h(idx)),
         [h(2), h(3), h(2)],
@@ -83,11 +78,11 @@ describe("Authorization", () => {
     };
     authorization.transition(input);
 
-    assertSameState(
+    deepEqual(
       authorization.state.authPools,
       authPools([h(2), h(3), h(4), h(5), h(6), h(7), h(8), h(11)], [h(3), h(2), h(2)]),
-      "pools",
+      { context: "pools" },
     );
-    assertSameState(authorization.state.authQueues, authQueues([h(10), h(11)], [h(1), h(2)]), "queues");
+    deepEqual(authorization.state.authQueues, authQueues([h(10), h(11)], [h(1), h(2)]), { context: "queues" });
   });
 });

@@ -1,10 +1,11 @@
-import type { CodeHash, CoreIndex, PerValidator, ServiceId, ValidatorData } from "@typeberry/block";
+import type { CodeHash, CoreIndex, PerValidator, ServiceId } from "@typeberry/block";
 import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
+import type { ValidatorData } from "@typeberry/state";
 import type { OK, Result } from "@typeberry/utils";
 
 /** Size of the transfer memo. */

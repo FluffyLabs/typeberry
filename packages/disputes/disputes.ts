@@ -2,9 +2,10 @@ import type { Ed25519Key, WorkReportHash } from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
 import { HashDictionary, SortedArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
+import { hashComparator } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import { DisputesErrorCode } from "./disputes-error-code";
-import { type DisputesState, hashComparator } from "./disputes-state";
+import type { DisputesState } from "./disputes-state";
 import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
 import {
   type VerificationInput,
