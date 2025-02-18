@@ -41,5 +41,6 @@ export const Y = 500;
 export const AUTHORIZATION_QUEUE_SIZE = Q;
 export type AUTHORIZATION_QUEUE_SIZE = typeof AUTHORIZATION_QUEUE_SIZE;
 
+/** Maximal authorization pool size. */
 export const MAX_AUTH_POOL_SIZE = O;
 export type MAX_AUTH_POOL_SIZE = typeof MAX_AUTH_POOL_SIZE;

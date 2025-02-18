@@ -26,8 +26,8 @@ import type { DisputesState } from "./disputes-state";
 
 const createValidatorData = ({ bandersnatch, ed25519 }: { bandersnatch: string; ed25519: string }) =>
   new ValidatorData(
-    Bytes.parseBytes(ed25519, ED25519_KEY_BYTES) as Ed25519Key,
     Bytes.parseBytes(bandersnatch, BANDERSNATCH_KEY_BYTES) as BandersnatchKey,
+    Bytes.parseBytes(ed25519, ED25519_KEY_BYTES) as Ed25519Key,
     Bytes.zero(BLS_KEY_BYTES) as BlsKey,
     Bytes.zero(VALIDATOR_META_BYTES),
   );

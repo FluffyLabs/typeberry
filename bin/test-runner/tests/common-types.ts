@@ -51,7 +51,7 @@ export namespace commonFromJson {
       bls: json.fromString((v) => Bytes.parseBytes(v, BLS_KEY_BYTES) as BlsKey),
       metadata: json.fromString((v) => Bytes.parseBytes(v, VALIDATOR_META_BYTES)),
     },
-    ({ ed25519, bandersnatch, bls, metadata }) => new ValidatorData(ed25519, bandersnatch, bls, metadata),
+    ({ ed25519, bandersnatch, bls, metadata }) => new ValidatorData(bandersnatch, ed25519, bls, metadata),
   );
 }
 
