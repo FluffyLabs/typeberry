@@ -224,13 +224,15 @@ export class Reports {
       if (recentBlocks === undefined) {
         return Result.error(ReportsError.AnchorNotRecent, `Anchor block ${context.anchor} not found in recent blocks.`);
       }
+
       // check state root
-      if (recentBlocks.postStateRoot !== context.stateRoot) {
+      if (!recentBlocks.postStateRoot.isEqualTo(context.stateRoot)) {
         return Result.error(
           ReportsError.BadStateRoot,
           `Anchor state root mismatch. Got: ${context.stateRoot}, expected: ${recentBlocks.postStateRoot}.`,
         );
       }
+
       // TODO [ToDr] [opti] Don't calculate super peak hash every time.
       //                    use either some cache or pre-processing.
       // check beefy root
