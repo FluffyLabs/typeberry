@@ -31,7 +31,6 @@
     "packages/safrole",
     "packages/shuffling",
     "packages/state-machine",
-    "packages/statistics",
     "packages/transition",
     "packages/trie",
     "packages/utils",
