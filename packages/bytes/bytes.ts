@@ -43,9 +43,10 @@ export class BytesBlob {
   }
 
   /** Compare the sequence to another one lexicographically.
+   *  Returns true if "this" blob is less than (or equal to) "other"
    *  https://graypaper.fluffylabs.dev/#/5f542d7/07c40007c400
    */
-  isLessThan(other: BytesBlob, { orEqual = false } = {}): boolean {
+  private cmp(other: BytesBlob, { orEqual = false } = {}): boolean {
     const min = Math.min(this.length, other.length);
     const thisRaw = this.raw;
     const otherRaw = other.raw;
@@ -64,6 +65,14 @@ export class BytesBlob {
       return this.length <= other.length;
     }
     return this.length < other.length;
+  }
+
+  isLessThan(other: BytesBlob): boolean {
+    return this.cmp(other, { orEqual: false });
+  }
+
+  isLessThanOrEqualTo(other: BytesBlob): boolean {
+    return this.cmp(other, { orEqual: true });
   }
 
   /** Create a new [`BytesBlob'] by converting given UTF-u encoded string into bytes. */

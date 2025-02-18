@@ -1,6 +1,6 @@
 import type { ServiceId, TimeSlot } from "@typeberry/block";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
-import { BytesBlob } from "@typeberry/bytes";
+import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { FixedSizeArray, type HashDictionary } from "@typeberry/collections";
 import { type Blake2bHash, HASH_SIZE, blake2b } from "@typeberry/hash";
@@ -87,20 +87,17 @@ export class Preimages {
     // "The lookup extrinsic is a sequence of pairs of service indices and data.
     // These pairs must be ordered and without duplicates."
     // https://graypaper.fluffylabs.dev/#/5f542d7/181700181700
-    let lastServiceId = -1;
-    let lastBlob = BytesBlob.blobFrom(new Uint8Array());
-    for (const preimage of input.preimages) {
-      if (lastServiceId > preimage.requester) {
+    for (let i = 1; i < input.preimages.length; i++) {
+      const prevPreimage = input.preimages[i - 1];
+      const currPreimage = input.preimages[i];
+
+      if (prevPreimage.requester < currPreimage.requester) {
+        continue;
+      }
+
+      if (prevPreimage.requester > currPreimage.requester || currPreimage.blob.isLessThanOrEqualTo(prevPreimage.blob)) {
         return Result.error(PreimagesErrorCode.PreimagesNotSortedUnique);
       }
-      if (lastServiceId === preimage.requester) {
-        if (preimage.blob.isLessThan(lastBlob, { orEqual: true })) {
-          // within the same service id, the blobs need to be ordered.
-          return Result.error(PreimagesErrorCode.PreimagesNotSortedUnique);
-        }
-      }
-      lastServiceId = preimage.requester;
-      lastBlob = preimage.blob;
     }
 
     const { preimages, slot } = input;
@@ -126,7 +123,11 @@ export class Preimages {
 
       // https://graypaper.fluffylabs.dev/#/5f542d7/181800181900
       // https://graypaper.fluffylabs.dev/#/5f542d7/116f0011a500
-      if (!lookupHistoryItem || lookupHistoryItem.getStatus() === PreimageStatus.Available) {
+      if (
+        account.data.preimages.has(hash) ||
+        !lookupHistoryItem ||
+        lookupHistoryItem.getStatus() !== PreimageStatus.Requested
+      ) {
         return Result.error(PreimagesErrorCode.PreimageUnneeded);
       }
 
@@ -139,14 +140,12 @@ export class Preimages {
       });
     }
 
-    // https://graypaper.fluffylabs.dev/#/5f542d7/181300181300
+    // https://graypaper.fluffylabs.dev/#/5f542d7/18c00018f300
     for (const change of pendingChanges) {
       const { account, hash, blob, lookupHistoryItem, slot } = change;
       account.data.preimages.set(hash, blob);
       lookupHistoryItem.transitionStatus(slot);
     }
-
-    // TODO: [SeKo] consider if this is the right place to mark unavailable preimages in lookup history
 
     return Result.ok(null);
   }
@@ -157,5 +156,5 @@ export function getLookupHistoryItem(
   hash: PreimageHash,
   length: number,
 ): LookupHistoryItem | undefined {
-  return lookupHistory.find((item) => item.hash.toString() === hash.toString() && item.length === length);
+  return lookupHistory.find((item) => item.hash.isEqualTo(hash) && item.length === length);
 }

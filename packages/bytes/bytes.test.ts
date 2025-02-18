@@ -79,6 +79,33 @@ describe("BytesBlob", () => {
 
     assert.strictEqual(result, true);
   });
+
+  it("isLessThanOrEqualTo should compare two equal blobs and return true", () => {
+    const blob1 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
+    const blob2 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
+
+    const result = blob1.isLessThanOrEqualTo(blob2);
+
+    assert.strictEqual(result, true);
+  });
+
+  it("isLessThanOrEqualTo should compare two blobs and return false", () => {
+    const blob1 = BytesBlob.blobFromNumbers([48, 163, 246, 134]);
+    const blob2 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
+
+    const result = blob1.isLessThanOrEqualTo(blob2);
+
+    assert.strictEqual(result, false);
+  });
+
+  it("isLessThanOrEqualTo should compare two blobs and return true", () => {
+    const blob1 = BytesBlob.blobFromNumbers([48, 163, 246, 134]);
+    const blob2 = BytesBlob.blobFromNumbers([49, 163, 246, 134]);
+
+    const result = blob1.isLessThanOrEqualTo(blob2);
+
+    assert.strictEqual(result, true);
+  });
 });
 
 describe("Bytes", () => {
