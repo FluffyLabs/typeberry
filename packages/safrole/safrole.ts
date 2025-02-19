@@ -80,7 +80,7 @@ type OkResult = {
   ticketsMark: TicketsMark | null;
 };
 
-enum SafroleErrorCode {
+export enum SafroleErrorCode {
   IncorrectData = "incorrect_data",
   // Timeslot value must be strictly monotonic.
   BadSlot = "bad_slot",
@@ -92,8 +92,6 @@ enum SafroleErrorCode {
   BadTicketProof = "bad_ticket_proof",
   // Invalid ticket attempt value.
   BadTicketAttempt = "bad_ticket_attempt",
-  // Reserved
-  Reserved = "reserved", // TODO [MaSi]: it is not covered by test vectors
   // Found a ticket duplicate.
   DuplicateTicket = "duplicate_ticket",
 }
