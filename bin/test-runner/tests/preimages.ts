@@ -2,17 +2,17 @@ import assert from "node:assert";
 import { type TimeSlot, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import { BytesBlob } from "@typeberry/bytes";
-import { FixedSizeArray, HashDictionary } from "@typeberry/collections";
+import { HashDictionary } from "@typeberry/collections";
 import { type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { U32 } from "@typeberry/numbers";
 import {
   type Account,
   LookupHistoryItem,
-  type LookupHistorySlotsSize,
   type PreimageHash,
   Preimages,
   type PreimagesErrorCode,
+  tryAsLookupHistorySlots,
 } from "@typeberry/transition";
 import { Result } from "@typeberry/utils";
 import { preimagesExtrinsicFromJson } from "./codec/preimages-extrinsic";
@@ -132,10 +132,7 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Account {
   const lookupHistory: LookupHistoryItem[] = [];
 
   for (const item of entry.data.lookup_meta) {
-    const slots = FixedSizeArray.new(
-      item.value.map((slot) => tryAsTimeSlot(slot)),
-      item.value.length as LookupHistorySlotsSize,
-    );
+    const slots = tryAsLookupHistorySlots(item.value.map((slot) => tryAsTimeSlot(slot)));
 
     lookupHistory.push(new LookupHistoryItem(item.key.hash, item.key.length as U32, slots));
   }

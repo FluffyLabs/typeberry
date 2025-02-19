@@ -2,7 +2,7 @@ import type { ServiceId, TimeSlot } from "@typeberry/block";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { FixedSizeArray, type HashDictionary } from "@typeberry/collections";
+import { type HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { type Blake2bHash, HASH_SIZE, blake2b } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import { type Opaque, Result } from "@typeberry/utils";
@@ -13,7 +13,8 @@ export type Account = {
   id: ServiceId;
   data: {
     preimages: HashDictionary<PreimageHash, BytesBlob>;
-    lookupHistory: LookupHistoryItem[]; // https://graypaper.fluffylabs.dev/#/5f542d7/115400115800
+    /** https://graypaper.fluffylabs.dev/#/5f542d7/115400115800 */
+    lookupHistory: LookupHistoryItem[];
   };
 };
 
@@ -32,7 +33,12 @@ export enum PreimagesErrorCode {
   AccountNotFound = "account_not_found",
 }
 
-// docs: https://graypaper.fluffylabs.dev/#/5f542d7/116f00116f00
+/**
+ * Preimage status is determined by the number of timeslots in a lookup history
+ * item, where each timeslot describes when the particular status was achieved.
+ * Status transitions can only happen one step at a time in the following order:
+ * Requested (denoted by empty array) -> Available -> Unavailable -> Reavailable
+ * docs: https://graypaper.fluffylabs.dev/#/5f542d7/116f00116f00 */
 export enum PreimageStatus {
   Requested = 0,
   Available = 1,
@@ -41,16 +47,23 @@ export enum PreimageStatus {
 }
 
 const MAX_LOOKUP_HISTORY_SLOTS = 3;
-export type LookupHistorySlotsSize = 0 | 1 | 2 | typeof MAX_LOOKUP_HISTORY_SLOTS;
+export type LookupHistorySlots = KnownSizeArray<TimeSlot, "0-3 timeslots">;
+export function tryAsLookupHistorySlots(items: TimeSlot[]): LookupHistorySlots {
+  const knownSize = asKnownSize(items) as LookupHistorySlots;
+  if (knownSize.length > MAX_LOOKUP_HISTORY_SLOTS) {
+    throw new Error("Lookup history items must contain 0-3 timeslots.");
+  }
+  return knownSize;
+}
 
-// https://graypaper.fluffylabs.dev/#/5f542d7/115400115800
+/** https://graypaper.fluffylabs.dev/#/5f542d7/115400115800 */
 export class LookupHistoryItem {
   static Codec = codec.Class(LookupHistoryItem, {
     hash: codec.bytes(HASH_SIZE).asOpaque(),
     length: codec.u32,
     slots: codec.sequenceVarLen(codec.u32).convert(
       (x) => x,
-      (items) => FixedSizeArray.new(items as TimeSlot[], items.length as LookupHistorySlotsSize),
+      (items) => tryAsLookupHistorySlots(items as TimeSlot[]),
     ),
   });
 
@@ -61,16 +74,36 @@ export class LookupHistoryItem {
   constructor(
     public readonly hash: PreimageHash,
     public readonly length: U32,
-    public slots: FixedSizeArray<TimeSlot, LookupHistorySlotsSize>,
+    /**
+     * Preimage availability history as a sequence of time slots.
+     * See PreimageStatus and the following GP fragment for more details.
+     * https://graypaper.fluffylabs.dev/#/5f542d7/11780011a500 */
+    public slots: LookupHistorySlots,
   ) {}
 
   // https://graypaper.fluffylabs.dev/#/5f542d7/116f0011a500
-  public transitionStatus(slot: TimeSlot) {
-    if (this.slots.length < MAX_LOOKUP_HISTORY_SLOTS) {
-      this.slots = FixedSizeArray.new([...this.slots, slot], (this.slots.length + 1) as LookupHistorySlotsSize);
-    } else {
-      throw new Error("Illegal transition. Cannot add more than 3 slots to a lookup history item.");
+  public setAvailable(slot: TimeSlot) {
+    if (this.slots.length > 0) {
+      throw new Error('Illegal transition: To set preimage state to "available", it must be "requested" first.');
     }
+
+    this.slots = tryAsLookupHistorySlots([slot]);
+  }
+
+  public setUnavailable(slot: TimeSlot) {
+    if (this.slots.length !== 1) {
+      throw new Error('Illegal transition: To set preimage state to "unavailable", it must be "available" first.');
+    }
+
+    this.slots = tryAsLookupHistorySlots([this.slots[0], slot]);
+  }
+
+  public setReavailable(slot: TimeSlot) {
+    if (this.slots.length !== 2) {
+      throw new Error('Illegal transition: To set preimage state to "re-available", it must be "unavailable" first.');
+    }
+
+    this.slots = tryAsLookupHistorySlots([this.slots[0], this.slots[1], slot]);
   }
 
   public getStatus(): PreimageStatus {
@@ -144,7 +177,7 @@ export class Preimages {
     for (const change of pendingChanges) {
       const { account, hash, blob, lookupHistoryItem, slot } = change;
       account.data.preimages.set(hash, blob);
-      lookupHistoryItem.transitionStatus(slot);
+      lookupHistoryItem.setAvailable(slot);
     }
 
     return Result.ok(null);
