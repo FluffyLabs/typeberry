@@ -110,7 +110,7 @@ in [CODESTYLE](./CODESTYLE.md).
 ## Add Typeberry's remote notes to Gray Paper Reader
 
 1. Open **Gray Paper Reader** and go to **Notes** > **Settings** (⚙️).<br/>
-![obraz](https://github.com/user-attachments/assets/945152f4-a8f1-4167-af86-9c1e41102615)
+![gpr-source-notes-1](https://github.com/user-attachments/assets/945152f4-a8f1-4167-af86-9c1e41102615)
 2. Click **"+ New Source"**.
 ![gpr-source-notes-2](https://github.com/user-attachments/assets/7356dbe3-fa05-4fcb-99c3-28cb4b9553df)
 3. Set **Source Name** to **Typeberry**.
