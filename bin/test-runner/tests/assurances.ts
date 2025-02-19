@@ -1,35 +1,44 @@
-import type { HeaderHash, TimeSlot, ValidatorData } from "@typeberry/block";
-import type { AssurancesExtrinsic } from "@typeberry/block/assurances";
+import assert from "node:assert";
+import { type HeaderHash, type TimeSlot, tryAsPerValidator } from "@typeberry/block";
+import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "@typeberry/block/assurances";
 import type { WorkReport } from "@typeberry/block/work-report";
-import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import { Decoder, Encoder } from "@typeberry/codec";
+import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
+import { type AvailabilityAssignment, type ValidatorData, tryAsPerCore } from "@typeberry/state";
+import {
+  Assurances,
+  AssurancesError,
+  type AssurancesInput,
+  type AssurancesState,
+} from "@typeberry/transition/assurances";
+import { Result, deepEqual } from "@typeberry/utils";
 import { getAssurancesExtrinsicFromJson } from "./codec/assurances-extrinsic";
 import { workReportFromJson } from "./codec/work-report";
 import { TestAvailabilityAssignment, commonFromJson } from "./common-types";
 
-class InputTiny {
-  static fromJson: FromJson<InputTiny> = {
-    assurances: getAssurancesExtrinsicFromJson(tinyChainSpec),
-    slot: "number",
-    parent: commonFromJson.bytes32(),
-  };
-
+class Input {
   assurances!: AssurancesExtrinsic;
   slot!: TimeSlot;
   parent!: HeaderHash;
+
+  static toAssurancesInput(input: Input, chainSpec: ChainSpec): AssurancesInput {
+    const encoded = Encoder.encodeObject(assurancesExtrinsicCodec, input.assurances, chainSpec);
+    const assurances = Decoder.decodeObject(assurancesExtrinsicCodec.View, encoded, chainSpec);
+
+    return {
+      assurances,
+      slot: input.slot,
+      parentHash: input.parent,
+    };
+  }
 }
 
-class InputFull {
-  static fromJson: FromJson<InputFull> = {
-    assurances: getAssurancesExtrinsicFromJson(fullChainSpec),
-    slot: "number",
-    parent: commonFromJson.bytes32(),
-  };
-
-  assurances!: AssurancesExtrinsic;
-  slot!: TimeSlot;
-  parent!: HeaderHash;
-}
+const inputFromJson = (spec: ChainSpec): FromJson<Input> => ({
+  assurances: getAssurancesExtrinsicFromJson(spec),
+  slot: "number",
+  parent: commonFromJson.bytes32(),
+});
 
 class TestState {
   static fromJson: FromJson<TestState> = {
@@ -37,8 +46,17 @@ class TestState {
     curr_validators: json.array(commonFromJson.validatorData),
   };
 
-  avail_assignments!: Array<TestAvailabilityAssignment | null>;
+  avail_assignments!: Array<AvailabilityAssignment | null>;
   curr_validators!: ValidatorData[];
+
+  static toAssurancesState(test: TestState, spec: ChainSpec): AssurancesState {
+    const { avail_assignments, curr_validators } = test;
+
+    return {
+      availabilityAssignment: tryAsPerCore(avail_assignments, spec),
+      currentValidatorData: tryAsPerValidator(curr_validators, spec),
+    };
+  }
 }
 
 enum AssurancesErrorCode {
@@ -65,16 +83,41 @@ class Output {
 
   ok?: OutputData;
   err?: AssurancesErrorCode;
+
+  static toAssurancesTransitionResult(out: Output): Result<WorkReport[], AssurancesError> {
+    if (out.ok) {
+      return Result.ok(out.ok.reported);
+    }
+
+    if (out.err) {
+      switch (out.err) {
+        case AssurancesErrorCode.BAD_ATTESTATION_PARENT:
+          return Result.error(AssurancesError.InvalidAnchor);
+        case AssurancesErrorCode.BAD_VALIDATOR_INDEX:
+          return Result.error(AssurancesError.InvalidValidatorIndex);
+        case AssurancesErrorCode.CORE_NOT_ENGAGED:
+          return Result.error(AssurancesError.NoReportPending);
+        case AssurancesErrorCode.BAD_SIGNATURE:
+          return Result.error(AssurancesError.InvalidSignature);
+        case AssurancesErrorCode.NOT_SORTED_OR_UNIQUE_ASSURERS:
+          return Result.error(AssurancesError.InvalidOrder);
+        default:
+          throw new Error(`Unhandled output error: ${out.err}`);
+      }
+    }
+
+    throw new Error("Invalid output.");
+  }
 }
 
 export class AssurancesTestTiny {
   static fromJson: FromJson<AssurancesTestTiny> = {
-    input: InputTiny.fromJson,
+    input: inputFromJson(tinyChainSpec),
     pre_state: TestState.fromJson,
     output: Output.fromJson,
     post_state: TestState.fromJson,
   };
-  input!: InputTiny;
+  input!: Input;
   pre_state!: TestState;
   output!: Output;
   post_state!: TestState;
@@ -82,21 +125,60 @@ export class AssurancesTestTiny {
 
 export class AssurancesTestFull {
   static fromJson: FromJson<AssurancesTestFull> = {
-    input: InputFull.fromJson,
+    input: inputFromJson(fullChainSpec),
     pre_state: TestState.fromJson,
     output: Output.fromJson,
     post_state: TestState.fromJson,
   };
-  input!: InputFull;
+  input!: Input;
   pre_state!: TestState;
   output!: Output;
   post_state!: TestState;
 }
 
-export async function runAssurancesTestTiny(_testContent: AssurancesTestTiny) {
-  // TODO [MaSi] Assurances Test Tiny
+export async function runAssurancesTestTiny(testContent: AssurancesTestTiny, path: string) {
+  const spec = tinyChainSpec;
+  const preState = TestState.toAssurancesState(testContent.pre_state, spec);
+  const postState = TestState.toAssurancesState(testContent.post_state, spec);
+  const input = Input.toAssurancesInput(testContent.input, spec);
+  const expectedResult = Output.toAssurancesTransitionResult(testContent.output);
+
+  await runAssurancesTest(path, spec, preState, postState, input, expectedResult);
 }
 
-export async function runAssurancesTestFull(_testContent: AssurancesTestFull) {
-  // TODO [MaSi] Assurances Test Full
+export async function runAssurancesTestFull(testContent: AssurancesTestFull, path: string) {
+  const spec = fullChainSpec;
+  const preState = TestState.toAssurancesState(testContent.pre_state, spec);
+  const postState = TestState.toAssurancesState(testContent.post_state, spec);
+  const input = Input.toAssurancesInput(testContent.input, spec);
+  const expectedResult = Output.toAssurancesTransitionResult(testContent.output);
+
+  await runAssurancesTest(path, spec, preState, postState, input, expectedResult);
+}
+
+async function runAssurancesTest(
+  path: string,
+  spec: ChainSpec,
+  preState: AssurancesState,
+  postState: AssurancesState,
+  input: AssurancesInput,
+  expectedResult: Result<WorkReport[], AssurancesError>,
+) {
+  const assurances = new Assurances(spec, preState);
+  const res = await assurances.transition(input);
+
+  // validators are in incorrect order as well so it depends which error is checked first
+  if (path.includes("assurances_with_bad_validator_index-1")) {
+    if (!expectedResult.isError) {
+      throw new Error(`Expected success in ${path}?`);
+    }
+    assert.strictEqual(expectedResult.error, AssurancesError.InvalidValidatorIndex);
+    expectedResult.error = AssurancesError.InvalidOrder;
+  }
+
+  deepEqual(res, expectedResult, {
+    context: "output",
+    ignore: ["output.details"],
+  });
+  deepEqual(assurances.state, postState, { context: "state" });
 }

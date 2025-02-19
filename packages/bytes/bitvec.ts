@@ -43,6 +43,19 @@ export class BitVec {
     return this.data.subarray(0, this.byteLength);
   }
 
+  /** Perform OR operation on all bits in place. */
+  sumWith(other: BitVec) {
+    check(
+      other.bitLength === this.bitLength,
+      `Invalid bit length for sumWith: ${other.bitLength} vs ${this.bitLength}`,
+    );
+
+    const otherRaw = other.raw;
+    for (let i = 0; i < this.byteLength; i++) {
+      this.data[i] |= otherRaw[i];
+    }
+  }
+
   /**
    * Set the bit at index `idx` to value `val`.
    */
@@ -68,5 +81,21 @@ export class BitVec {
     const bitIndexInByte = idx % 8;
     const mask = 1 << bitIndexInByte;
     return (this.data[byteIndex] & mask) > 0;
+  }
+
+  /**
+   * Iterate over indices of bits that are set.
+   */
+  *indicesOfSetBits() {
+    for (let b = 0; b < this.bitLength; b++) {
+      const byteIndex = b >> 3;
+      const bitIndex = b - (byteIndex << 3);
+
+      const byte = this.data[byteIndex];
+      const bitValue = byte >> bitIndex;
+      if ((bitValue & 0b1) === 0b1) {
+        yield b;
+      }
+    }
   }
 }

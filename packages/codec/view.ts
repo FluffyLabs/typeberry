@@ -13,10 +13,12 @@ export type ViewOf<T, D extends DescriptorRecord<T>> = ObjectView<T> & {
 export class ViewField<T, V> implements ViewField<T, V> {
   private cachedValue: T | undefined;
   private cachedView: V | undefined;
+  private cachedBlob: BytesBlob | undefined;
 
   constructor(
     private readonly getView: () => V,
     private readonly getValue: () => T,
+    private readonly getEncoded: () => BytesBlob,
   ) {}
 
   /** Fully decode the underlying data. */
@@ -33,6 +35,13 @@ export class ViewField<T, V> implements ViewField<T, V> {
       this.cachedView = this.getView();
     }
     return this.cachedView;
+  }
+
+  encoded(): BytesBlob {
+    if (this.cachedBlob === undefined) {
+      this.cachedBlob = this.getEncoded();
+    }
+    return this.cachedBlob;
   }
 }
 
@@ -103,7 +112,7 @@ export abstract class ObjectView<T> {
     check(
       this.lastDecodedFieldIdx < index,
       `Unjustified call to 'decodeUpTo' -
-       the index (${index}, ${String(field)})
+       the index ($Blobindex}, ${String(field)})
        is already decoded (${this.lastDecodedFieldIdx}, ${String(lastField)}).
       `,
     );
@@ -120,6 +129,7 @@ export abstract class ObjectView<T> {
       lastItem = new ViewField(
         () => type.View.decode(fieldDecoder.clone()),
         () => type.decode(fieldDecoder.clone()),
+        () => type.skipEncoded(fieldDecoder.clone()),
       );
       // skip the field
       type.skip(skipper);
@@ -147,10 +157,10 @@ export abstract class ObjectView<T> {
  * just be requested as views.
  */
 export class SequenceView<T, V = T> {
+  /** Length of the sequence (either already decoded or given if fixed). */
+  public readonly length: number;
   /** Already decoded items. */
   private readonly cache = new Map<number, ViewField<T, V>>();
-  /** Length of the sequence (either already decoded or given if fixed). */
-  private readonly length: number;
   /** Initial decoder state. */
   private readonly initialDecoderOffset;
   /** Last decoded index that we have in the cache already. */
@@ -176,6 +186,17 @@ export class SequenceView<T, V = T> {
       );
       yield v;
     }
+  }
+
+  /** Create an array of all views mapped to some particular value. */
+  map<R>(cb: (v: ViewField<T, V>) => R): R[] {
+    const res = new Array(this.length);
+    let i = 0;
+    for (const v of this) {
+      res[i] = cb(v);
+      i++;
+    }
+    return res;
   }
 
   /**
@@ -228,6 +249,7 @@ export class SequenceView<T, V = T> {
       lastItem = new ViewField(
         () => type.View.decode(fieldDecoder.clone()),
         () => type.decode(fieldDecoder.clone()),
+        () => type.skipEncoded(fieldDecoder.clone()),
       );
       // skip the field
       type.skip(skipper);

@@ -51,6 +51,19 @@ export class Descriptor<T, V = T> implements Codec<T>, Skip {
     this.View = view || (this as unknown as Descriptor<V>);
   }
 
+  /**
+   * Extract an encoded version of this type from the decoder.
+   *
+   * This function skips the object instead of decoding it,
+   * allowing to retrieve the encoded portion of the object from `Decoder`.
+   */
+  public skipEncoded(decoder: Decoder) {
+    const initBytes = decoder.bytesRead();
+    this.skip(new Skipper(decoder));
+    const endBytes = decoder.bytesRead();
+    return BytesBlob.blobFrom(decoder.source.subarray(initBytes, endBytes));
+  }
+
   /** Return a new descriptor that converts data into some other type. */
   public convert<F>(input: (i: F) => T, output: (i: T) => F): Descriptor<F, V> {
     return new Descriptor(
@@ -297,13 +310,13 @@ export namespace codec {
   );
 
   /** Fixed-length bit vector. */
-  export const bitVecFixLen = (len: number) =>
+  export const bitVecFixLen = (bitLen: number) =>
     descriptor<BitVec>(
-      `BitVec[${len}]`,
-      exactHint(len >>> 3),
+      `BitVec[${bitLen}]`,
+      exactHint(bitLen >>> 3),
       (e, v) => e.bitVecFixLen(v),
-      (d) => d.bitVecFixLen(len),
-      (s) => s.bitVecFixLen(len),
+      (d) => d.bitVecFixLen(bitLen),
+      (s) => s.bitVecFixLen(bitLen),
     );
 
   /** Optionality wrapper for given type. */

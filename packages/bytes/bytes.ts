@@ -1,4 +1,4 @@
-import { asOpaqueType, check } from "@typeberry/utils";
+import { TEST_COMPARE_VIA_STRING, asOpaqueType, check } from "@typeberry/utils";
 
 /**
  * A variable-length blob of bytes with a concise text representation.
@@ -7,6 +7,8 @@ import { asOpaqueType, check } from "@typeberry/utils";
  * especially if the data is coming from a hex-encoded string.
  */
 export class BytesBlob {
+  [TEST_COMPARE_VIA_STRING] = true;
+
   readonly raw: Uint8Array;
   readonly length: number = 0;
 

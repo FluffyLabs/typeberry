@@ -2,10 +2,10 @@ import type { Ed25519Key, WorkReportHash } from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
 import { HashDictionary, SortedArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { blake2b } from "@typeberry/hash";
+import { hashComparator } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import { DisputesErrorCode } from "./disputes-error-code";
-import { type DisputesState, hashComparator } from "./disputes-state";
+import type { DisputesState } from "./disputes-state";
 import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
 import {
   type VerificationInput,
@@ -205,7 +205,7 @@ export class Disputes {
     v: VotesForWorkReports,
     disputes: DisputesExtrinsic,
   ): Result<Ok, DisputesErrorCode> {
-    // verify if the vote split is correct and if number of faults/culprints is correct
+    // verify if the vote split is correct and if number of faults/culprits is correct
     // https://graypaper.fluffylabs.dev/#/579bd12/12fb02121003
 
     for (const [r, sum] of v) {
@@ -260,12 +260,15 @@ export class Disputes {
   }
 
   private clearCoreAssignment(v: VotesForWorkReports) {
-    // https://graypaper.fluffylabs.dev/#/579bd12/121a03123f03
+    /**
+     * We clear any work-reports which we judged as uncer-
+tain or invalid from their core.
+     * https://graypaper.fluffylabs.dev/#/579bd12/121a03123f03
+     */
     for (let c = 0; c < this.state.availabilityAssignment.length; c++) {
       const assignment = this.state.availabilityAssignment[c];
       if (assignment) {
-        const hash: WorkReportHash = blake2b.hashBytes(assignment.workReportBytes).asOpaque();
-        const sum = v.get(hash);
+        const sum = v.get(assignment.workReport.hash);
         if (sum !== undefined && sum < this.context.validatorsSuperMajority) {
           this.state.availabilityAssignment[c] = null;
         }

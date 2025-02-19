@@ -1,10 +1,11 @@
 import assert from "node:assert";
 
-import type { Extrinsic, TimeSlot, ValidatorData, ValidatorIndex } from "@typeberry/block";
-import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import { type Extrinsic, type TimeSlot, type ValidatorIndex, tryAsPerValidator } from "@typeberry/block";
+import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { U32 } from "@typeberry/numbers";
-import { ActivityRecord, Statistics, StatisticsState } from "@typeberry/statistics";
+import { ActivityRecord, type ValidatorData } from "@typeberry/state";
+import { Statistics, type StatisticsState } from "@typeberry/transition/statistics";
 import { getExtrinsicFromJson } from "./codec/extrinsic";
 import { commonFromJson } from "./common-types";
 
@@ -33,14 +34,19 @@ class FullInput {
 }
 
 class TestActivityRecord {
-  static fromJson: FromJson<TestActivityRecord> = {
-    blocks: "number",
-    tickets: "number",
-    pre_images: "number",
-    pre_images_size: "number",
-    guarantees: "number",
-    assurances: "number",
-  };
+  static fromJson = json.object<TestActivityRecord, ActivityRecord>(
+    {
+      blocks: "number",
+      tickets: "number",
+      pre_images: "number",
+      pre_images_size: "number",
+      guarantees: "number",
+      assurances: "number",
+    },
+    (ar) => {
+      return new ActivityRecord(ar.blocks, ar.tickets, ar.pre_images, ar.pre_images_size, ar.guarantees, ar.assurances);
+    },
+  );
 
   blocks!: U32;
   tickets!: U32;
@@ -48,14 +54,6 @@ class TestActivityRecord {
   pre_images_size!: U32;
   guarantees!: U32;
   assurances!: U32;
-
-  static toActivityRecords(ars: TestActivityRecord[]): ActivityRecord[] {
-    return ars.map(TestActivityRecord.toActivityRecord);
-  }
-
-  static toActivityRecord(ar: TestActivityRecord): ActivityRecord {
-    return new ActivityRecord(ar.blocks, ar.tickets, ar.pre_images, ar.pre_images_size, ar.guarantees, ar.assurances);
-  }
 }
 
 class TestState {
@@ -69,21 +67,21 @@ class TestState {
   };
 
   pi!: {
-    current: TestActivityRecord[];
-    last: TestActivityRecord[];
+    current: ActivityRecord[];
+    last: ActivityRecord[];
   };
   tau!: TimeSlot;
   kappa_prime!: ValidatorData[];
 
-  static toStatisticsState(state: TestState): StatisticsState {
-    return new StatisticsState(
-      {
-        current: TestActivityRecord.toActivityRecords(state.pi.current),
-        previous: TestActivityRecord.toActivityRecords(state.pi.last),
+  static toStatisticsState(state: TestState, spec: ChainSpec): StatisticsState {
+    return {
+      statisticsPerValidator: {
+        current: tryAsPerValidator(state.pi.current, spec),
+        previous: tryAsPerValidator(state.pi.last, spec),
       },
-      state.tau,
-      state.kappa_prime,
-    );
+      timeSlot: state.tau,
+      posteriorActiveValidators: tryAsPerValidator(state.kappa_prime, spec),
+    };
   }
 }
 
@@ -114,17 +112,19 @@ export class StatisticsTestFull {
 }
 
 export async function runStatisticsTestTiny({ input, pre_state, post_state }: StatisticsTestTiny) {
-  const statistics = new Statistics(TestState.toStatisticsState(pre_state), tinyChainSpec);
+  const spec = tinyChainSpec;
+  const statistics = new Statistics(TestState.toStatisticsState(pre_state, spec), spec);
 
   statistics.transition(input.slot, input.author_index, input.extrinsic);
 
-  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(post_state));
+  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(post_state, spec));
 }
 
 export async function runStatisticsTestFull({ input, pre_state, post_state }: StatisticsTestFull) {
-  const statistics = new Statistics(TestState.toStatisticsState(pre_state), fullChainSpec);
+  const spec = fullChainSpec;
+  const statistics = new Statistics(TestState.toStatisticsState(pre_state, spec), spec);
 
   statistics.transition(input.slot, input.author_index, input.extrinsic);
 
-  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(post_state));
+  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(post_state, spec));
 }

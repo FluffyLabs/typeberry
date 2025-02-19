@@ -1,14 +1,14 @@
 import assert from "node:assert";
-import { type Ed25519Key, type TimeSlot, type ValidatorData, type WorkReportHash, codec } from "@typeberry/block";
+import { type Ed25519Key, type TimeSlot, type WorkReportHash, tryAsPerValidator } from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
-import { WorkReport } from "@typeberry/block/work-report";
-import { Disputes } from "@typeberry/disputes";
-import { AvailabilityAssignment, DisputesRecords, DisputesState } from "@typeberry/disputes";
+import type { ChainSpec } from "@typeberry/config";
+import { Disputes, type DisputesState } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
 import { type FromJson, json } from "@typeberry/json-parser";
+import { type AvailabilityAssignment, DisputesRecords, type ValidatorData, tryAsPerCore } from "@typeberry/state";
 import { fromJson as codecFromJson } from "./codec/common";
 import { disputesExtrinsicFromJson } from "./codec/disputes-extrinsic";
-import { TestAvailabilityAssignment, TestWorkReport, commonFromJson, getChainSpec } from "./common-types";
+import { TestAvailabilityAssignment, commonFromJson, getChainSpec } from "./common-types";
 
 class DisputesOutputMarks {
   static fromJson: FromJson<DisputesOutputMarks> = {
@@ -38,15 +38,6 @@ class TestDisputesRecords {
   wonky!: WorkReportHash[];
   /** "Punish" set */
   offenders!: Ed25519Key[];
-
-  static fromDisputesRecords(disputesRecords: DisputesRecords) {
-    const psi = new TestDisputesRecords();
-    psi.good = disputesRecords.goodSet.slice();
-    psi.bad = disputesRecords.badSet.slice();
-    psi.wonky = disputesRecords.wonkySet.slice();
-    psi.offenders = disputesRecords.punishSet.slice();
-    return psi;
-  }
 }
 
 class TestState {
@@ -61,7 +52,7 @@ class TestState {
   /** Disputes records. */
   psi!: TestDisputesRecords;
   /** Availability assignments. */
-  rho!: Array<TestAvailabilityAssignment | null>;
+  rho!: Array<AvailabilityAssignment | null>;
   /** Time slot. */
   tau!: TimeSlot;
   /** Current validator set. */
@@ -69,35 +60,21 @@ class TestState {
   /** Previous validator set. */
   lambda!: ValidatorData[];
 
-  static fromDisputesState(disputesState: DisputesState) {
-    const state = new TestState();
-
-    state.psi = TestDisputesRecords.fromDisputesRecords(disputesState.disputesRecords);
-    state.rho = TestAvailabilityAssignment.fromAvailabilityAssignment(disputesState.availabilityAssignment);
-    state.tau = disputesState.timeslot;
-    state.kappa = disputesState.currentValidatorData;
-    state.lambda = disputesState.previousValidatorData;
-
-    return state;
-  }
-
-  static toDisputesState(testState: TestState) {
+  static toDisputesState(testState: TestState, spec: ChainSpec): DisputesState {
     const psi = testState.psi;
     const disputesRecords = DisputesRecords.fromSortedArrays(psi.good, psi.bad, psi.wonky, psi.offenders);
-    const rho = testState.rho;
-    const availabilityAssignment = rho.map((item) => {
-      if (!item) {
-        return null;
-      }
-      const workReport = TestWorkReport.toWorkReport(item.report);
-      return new AvailabilityAssignment(
-        workReport,
-        item.timeout,
-        codec.Encoder.encodeObject(WorkReport.Codec, workReport),
-      );
-    });
+    const { rho, kappa, lambda } = testState;
+    const availabilityAssignment = tryAsPerCore(rho, spec);
+    const currentValidatorData = tryAsPerValidator(kappa, spec);
+    const previousValidatorData = tryAsPerValidator(lambda, spec);
 
-    return new DisputesState(disputesRecords, availabilityAssignment, testState.tau, testState.kappa, testState.lambda);
+    return {
+      disputesRecords,
+      availabilityAssignment,
+      timeslot: testState.tau,
+      currentValidatorData,
+      previousValidatorData,
+    };
   }
 }
 
@@ -136,7 +113,7 @@ export async function runDisputesTest(testContent: DisputesTest, path: string) {
   const chainSpec = getChainSpec(path);
   const preState = testContent.pre_state;
 
-  const disputes = new Disputes(TestState.toDisputesState(preState), chainSpec);
+  const disputes = new Disputes(TestState.toDisputesState(preState, chainSpec), chainSpec);
 
   const result = await disputes.transition(testContent.input.disputes);
   const error = result.isError ? result.error : undefined;
@@ -152,5 +129,5 @@ export async function runDisputesTest(testContent: DisputesTest, path: string) {
     assert.deepEqual(error, testContent.output.err);
   }
   assert.deepEqual(ok, testContent.output.ok?.offenders_mark);
-  assert.deepEqual(TestState.fromDisputesState(disputes.state), testContent.post_state);
+  assert.deepEqual(disputes.state, TestState.toDisputesState(testContent.post_state, chainSpec));
 }

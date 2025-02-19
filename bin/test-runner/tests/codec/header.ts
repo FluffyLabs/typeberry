@@ -7,6 +7,7 @@ import {
   type ExtrinsicHash,
   Header,
   type HeaderHash,
+  type PerValidator,
   type StateRootHash,
   type TimeSlot,
   type ValidatorIndex,
@@ -22,7 +23,7 @@ const bandersnatchVrfSignature = json.fromString((v) => Bytes.parseBytes(v, 96) 
 type JsonEpochMarker = {
   entropy: EntropyHash;
   tickets_entropy: EntropyHash;
-  validators: KnownSizeArray<BandersnatchKey, "ValidatorsCount">;
+  validators: PerValidator<BandersnatchKey>;
 };
 
 const epochMark = json.object<JsonEpochMarker, EpochMarker>(

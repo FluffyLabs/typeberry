@@ -2,7 +2,7 @@ import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import { WithDebug } from "@typeberry/utils";
 import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "./assurances";
 import { DisputesExtrinsic } from "./disputes";
-import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "./gaurantees";
+import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "./guarantees";
 import { Header } from "./header";
 import { type PreimagesExtrinsic, preimagesExtrinsicCodec } from "./preimage";
 import { type TicketsExtrinsic, ticketsExtrinsicCodec } from "./tickets";

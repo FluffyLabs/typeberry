@@ -1,5 +1,5 @@
 import type { BitVec } from "@typeberry/bytes";
-import { type CodecRecord, codec } from "@typeberry/codec";
+import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { EST_CORES } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
@@ -25,7 +25,7 @@ export class AvailabilityAssurance extends WithDebug {
         sizeHint: { bytes: Math.ceil(EST_CORES / 8), isExact: false },
       },
       withContext("AvailabilityAssurance.bitfield", (context) => {
-        return codec.bitVecFixLen(Math.ceil(context.coresCount / 8) * 8);
+        return codec.bitVecFixLen(context.coresCount);
       }),
     ),
     validatorIndex: codec.u16.asOpaque(),
@@ -70,3 +70,5 @@ export type AssurancesExtrinsic = KnownSizeArray<AvailabilityAssurance, "0 .. Va
 export const assurancesExtrinsicCodec = codec
   .sequenceVarLen(AvailabilityAssurance.Codec)
   .convert<AssurancesExtrinsic>((i) => i, asOpaqueType);
+
+export type AssurancesExtrinsicView = DescribedBy<typeof assurancesExtrinsicCodec.View>;
