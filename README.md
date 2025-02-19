@@ -106,3 +106,20 @@ This command will automatically update the `workspaces` field in top-level `pack
 
 A brief, but evolving description of our codestyle and guideliness is availabe
 in [CODESTYLE](./CODESTYLE.md).
+
+## Add Typeberry's remote notes to Gray Paper Reader
+
+1. Open **Gray Paper Reader** and go to **Notes** > **Settings** (⚙️).<br/>
+![obraz](https://github.com/user-attachments/assets/945152f4-a8f1-4167-af86-9c1e41102615)
+2. Click **"+ New Source"**.
+![gpr-source-notes-2](https://github.com/user-attachments/assets/7356dbe3-fa05-4fcb-99c3-28cb4b9553df)
+3. Set **Source Name** to **Typeberry**.
+4. Paste the following in **Source URL:**
+```
+https://fluffylabs.dev/typeberry/links.json
+```
+5. Select **All Versions**.
+![gpr-source-notes-3](https://github.com/user-attachments/assets/877a6494-75fd-4c0c-b531-55af6f676c89)
+6. Click **OK**.
+7. Ensure the ✅ next to **Typeberry** is enabled.
+
