@@ -27,7 +27,7 @@ export enum PreimageStatus {
 /**
  *
  * Possible results when checking preimage status.
- * 
+ *
  * https://graypaper.fluffylabs.dev/#/5f542d7/117000117700
  */
 
