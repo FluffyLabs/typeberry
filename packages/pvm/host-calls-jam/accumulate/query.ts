@@ -38,7 +38,7 @@ export class Query implements HostCallHandler {
     const result = this.partialState.checkPreimageStatus(hash, length);
     if (result === null) {
       regs.setU32(IN_OUT_REG_1, HostCallResult.NONE);
-      regs.setU32(IN_OUT_REG_2, 0);
+      regs.setU64(IN_OUT_REG_2, 0n);
       return;
     }
 
