@@ -10,6 +10,7 @@ import { type AccumulationPartialState, PreimageStatus } from "./partial-state";
 
 const IN_OUT_REG_1 = 7;
 const IN_OUT_REG_2 = 8;
+const UPPER_BITS_SHIFT = 32n;
 
 /**
  * Query the state of the accumulator.
@@ -48,16 +49,16 @@ export class Query implements HostCallHandler {
         regs.setU64(IN_OUT_REG_2, 0n);
         return;
       case PreimageStatus.Available:
-        regs.setU64(IN_OUT_REG_1, (BigInt(result.data[0]) << 32n) + 1n);
+        regs.setU64(IN_OUT_REG_1, (BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 1n);
         regs.setU64(IN_OUT_REG_2, 0n);
         return;
       case PreimageStatus.Unavailable:
-        regs.setU64(IN_OUT_REG_1, (BigInt(result.data[0]) << 32n) + 2n);
+        regs.setU64(IN_OUT_REG_1, (BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 2n);
         regs.setU64(IN_OUT_REG_2, BigInt(result.data[1]));
         return;
       case PreimageStatus.Reavailable:
-        regs.setU64(IN_OUT_REG_1, (BigInt(result.data[0]) << 32n) + 3n);
-        regs.setU64(IN_OUT_REG_2, (BigInt(result.data[2]) << 32n) + BigInt(result.data[1]));
+        regs.setU64(IN_OUT_REG_1, (BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 3n);
+        regs.setU64(IN_OUT_REG_2, (BigInt(result.data[2]) << UPPER_BITS_SHIFT) + BigInt(result.data[1]));
         return;
     }
   }

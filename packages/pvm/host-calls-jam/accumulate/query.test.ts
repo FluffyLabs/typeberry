@@ -24,6 +24,7 @@ const HASH_START_REG = 7;
 const LENGTH_REG = 8;
 const RESULT_REG_1 = 7;
 const RESULT_REG_2 = 8;
+const UPPER_BITS_SHIFT = 32n;
 
 function prepareRegsAndMemory(
   hashStart: U32,
@@ -139,7 +140,7 @@ describe("HostCalls: Query", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG_1), (BigInt(timeslot1) << 32n) + 1n);
+    assert.deepStrictEqual(registers.getU64(RESULT_REG_1), (BigInt(timeslot1) << UPPER_BITS_SHIFT) + 1n);
     assert.deepStrictEqual(registers.getU64(RESULT_REG_2), 0n);
     assert.deepStrictEqual(accumulate.checkPreimageStatusData, [[Bytes.fill(HASH_SIZE, 0xaa), w8]]);
   });
@@ -168,7 +169,7 @@ describe("HostCalls: Query", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG_1), (BigInt(timeslot1) << 32n) + 2n);
+    assert.deepStrictEqual(registers.getU64(RESULT_REG_1), (BigInt(timeslot1) << UPPER_BITS_SHIFT) + 2n);
     assert.deepStrictEqual(registers.getU64(RESULT_REG_2), BigInt(timeslot2));
     assert.deepStrictEqual(accumulate.checkPreimageStatusData, [[Bytes.fill(HASH_SIZE, 0xaa), w8]]);
   });
@@ -198,8 +199,8 @@ describe("HostCalls: Query", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG_1), (BigInt(timeslot1) << 32n) + 3n);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG_2), (BigInt(timeslot3) << 32n) + BigInt(timeslot2));
+    assert.deepStrictEqual(registers.getU64(RESULT_REG_1), (BigInt(timeslot1) << UPPER_BITS_SHIFT) + 3n);
+    assert.deepStrictEqual(registers.getU64(RESULT_REG_2), (BigInt(timeslot3) << UPPER_BITS_SHIFT) + BigInt(timeslot2));
     assert.deepStrictEqual(accumulate.checkPreimageStatusData, [[Bytes.fill(HASH_SIZE, 0xaa), w8]]);
   });
 });
