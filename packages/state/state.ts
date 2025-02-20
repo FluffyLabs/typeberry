@@ -1,5 +1,6 @@
-import type { EntropyHash, PerValidator, TimeSlot } from "@typeberry/block";
+import type { BandersnatchKey, BandersnatchRingRoot, EntropyHash, PerValidator, TimeSlot } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
+import type { Ticket } from "@typeberry/block/tickets";
 import type { AuthorizerHash } from "@typeberry/block/work-report";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { AvailabilityAssignment } from "./assurances";
@@ -48,6 +49,16 @@ export type State = {
    *  https://graypaper.fluffylabs.dev/#/579bd12/135800135800
    */
   readonly availabilityAssignment: PerCore<AvailabilityAssignment | null>;
+
+  /**
+   * `ι iota`: The validator keys and metadata to be drawn from next.
+   */
+  readonly designatedValidatorData: PerValidator<ValidatorData>;
+
+  /**
+   * `γₖ gamma_k`: The keys for the validators of the next epoch, equivalent to those keys which constitute γ_z .
+   */
+  readonly nextValidatorData: PerValidator<ValidatorData>;
 
   /**
    * `κ kappa`: Validators, who are the set of economic actors uniquely
@@ -126,4 +137,22 @@ export type State = {
    * https://graypaper.fluffylabs.dev/#/579bd12/181a01181c01
    */
   readonly statisticsPerValidator: ActivityData;
+
+  /**
+   *
+   */
+  readonly ticketsAccumulator: Ticket[];
+
+  /**
+   *
+   */
+  readonly sealingKeySeries: {
+    keys?: BandersnatchKey[];
+    tickets?: Ticket[];
+  };
+
+  /**
+   *
+   */
+  readonly epochRoot: BandersnatchRingRoot;
 };

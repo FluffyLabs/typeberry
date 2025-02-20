@@ -1,1 +1,1 @@
-export { Safrole, State, StateDiff, VALIDATOR_META_BYTES } from "./safrole";
+export { Safrole, SafroleState as State, StateDiff, VALIDATOR_META_BYTES } from "./safrole";

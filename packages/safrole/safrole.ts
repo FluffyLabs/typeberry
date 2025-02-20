@@ -1,19 +1,13 @@
-import {
-  type BandersnatchKey,
-  type BandersnatchRingRoot,
-  type Ed25519Key,
-  type EntropyHash,
-  type TimeSlot,
-} from "@typeberry/block";
+import type { BandersnatchKey, EntropyHash, PerValidator, TimeSlot } from "@typeberry/block";
 import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { Ordering, SortedSet } from "@typeberry/collections";
+import { FixedSizeArray, Ordering, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { blake2b } from "@typeberry/hash";
-import { Result } from "@typeberry/utils";
+import { type State, ValidatorData } from "@typeberry/state";
+import { Result, asOpaqueType } from "@typeberry/utils";
 import { getRingCommitment, verifyTickets } from "./bandersnatch";
-import { ValidatorData } from "@typeberry/state";
 
 export const VALIDATOR_META_BYTES = 128;
 export type VALIDATOR_META_BYTES = typeof VALIDATOR_META_BYTES;
@@ -30,35 +24,27 @@ const ticketComparator = (a: Ticket, b: Ticket) => {
   return Ordering.Greater;
 };
 
-export type State = {
-  timeslot: TimeSlot;
-  entropy: [EntropyHash, EntropyHash, EntropyHash, EntropyHash];
-  prevValidators: ValidatorData[];
-  currValidators: ValidatorData[];
-  nextValidators: ValidatorData[];
-  designatedValidators: ValidatorData[];
-  ticketsAccumulator: Ticket[];
-  sealingKeySeries: {
-    keys?: BandersnatchKey[];
-    tickets?: Ticket[];
-  };
-  epochRoot: BandersnatchRingRoot;
-  postOffenders: Ed25519Key[];
+type Mutable<T> = {
+  -readonly [P in keyof T]: T[P];
 };
 
-export type StateDiff = {
-  timeslot?: TimeSlot;
-  entropy?: [EntropyHash, EntropyHash, EntropyHash, EntropyHash];
-  prevValidators?: ValidatorData[];
-  currValidators?: ValidatorData[];
-  nextValidators?: ValidatorData[];
-  ticketsAccumulator?: Ticket[];
-  sealingKeySeries?: {
-    keys?: BandersnatchKey[];
-    tickets?: Ticket[];
-  };
-  epochRoot?: BandersnatchRingRoot;
-};
+type MutablePick<T, K extends keyof T> = Mutable<Pick<T, K>>;
+
+export type SafroleState = Pick<State, "designatedValidatorData"> &
+  Pick<State["disputesRecords"], "punishSet"> &
+  MutablePick<
+    State,
+    | "timeslot"
+    | "previousValidatorData"
+    | "currentValidatorData"
+    | "nextValidatorData"
+    | "entropy"
+    | "ticketsAccumulator"
+    | "sealingKeySeries"
+    | "epochRoot"
+  >;
+
+export type StateDiff = Partial<SafroleState>;
 
 export class EpochMark {
   constructor(
@@ -96,16 +82,14 @@ export enum SafroleErrorCode {
   DuplicateTicket = "duplicate_ticket",
 }
 
-type ValidatorKeys = {
-  prevValidators: ValidatorData[];
-  currValidators: ValidatorData[];
-  nextValidators: ValidatorData[];
-  epochRoot: BandersnatchRingRoot;
-};
+type ValidatorKeys = Pick<
+  SafroleState,
+  "nextValidatorData" | "currentValidatorData" | "previousValidatorData" | "epochRoot"
+>;
 
 export class Safrole {
   constructor(
-    public state: State,
+    public state: SafroleState,
     private chainSpec: ChainSpec,
   ) {}
 
@@ -145,10 +129,7 @@ export class Safrole {
     return timeslot % this.chainSpec.epochLength;
   }
 
-  private getEntropy(
-    timeslot: TimeSlot,
-    entropyHash: EntropyHash,
-  ): [EntropyHash, EntropyHash, EntropyHash, EntropyHash] {
+  private getEntropy(timeslot: TimeSlot, entropyHash: EntropyHash): SafroleState["entropy"] {
     const [randomnessAcc, ...rest] = this.state.entropy;
 
     /**
@@ -165,10 +146,10 @@ export class Safrole {
      */
 
     if (this.isEpochChanged(timeslot)) {
-      return [newRandomnessAcc, randomnessAcc, rest[0], rest[1]];
+      return FixedSizeArray.new([newRandomnessAcc, randomnessAcc, rest[0], rest[1]], 4);
     }
 
-    return [newRandomnessAcc, ...rest];
+    return FixedSizeArray.new([newRandomnessAcc, ...rest], 4);
   }
 
   private async getValidatorKeys(
@@ -178,51 +159,53 @@ export class Safrole {
      * Epoch is not changed so the previous state is returned
      */
     if (!this.isEpochChanged(timeslot)) {
-      const { nextValidators, currValidators, prevValidators, epochRoot } = this.state;
-      return Result.ok({ nextValidators, currValidators, prevValidators, epochRoot });
+      const { nextValidatorData, currentValidatorData, previousValidatorData, epochRoot } = this.state;
+      return Result.ok({ nextValidatorData, currentValidatorData, previousValidatorData, epochRoot });
     }
 
     /**
      * Epoch is changed so we shift validators and calculate new epoch root commitment
      */
-    const postOffenders = this.state.postOffenders; // TODO [MaSi]: postOffenders should be a dictionary
-    const newNextValidators = this.state.designatedValidators.map((validator) => {
-      const isOffender = !!postOffenders.find((x) => x.isEqualTo(validator.ed25519));
+    const postOffenders = this.state.punishSet;
+    const newNextValidators: PerValidator<ValidatorData> = asOpaqueType(
+      this.state.designatedValidatorData.map((validator) => {
+        const isOffender = !!postOffenders.has(validator.ed25519);
 
-      /**
-       * Keys of validators that belongs to offenders are replaced with null keys
-       *
-       * https://graypaper.fluffylabs.dev/#/5f542d7/0ea2000ea200
-       */
-      if (isOffender) {
-        return new ValidatorData(
-          Bytes.zero(32).asOpaque(),
-          Bytes.zero(32).asOpaque(),
-          validator.bls,
-          validator.metadata,
-        );
-      }
+        /**
+         * Keys of validators that belongs to offenders are replaced with null keys
+         *
+         * https://graypaper.fluffylabs.dev/#/5f542d7/0ea2000ea200
+         */
+        if (isOffender) {
+          return new ValidatorData(
+            Bytes.zero(32).asOpaque(),
+            Bytes.zero(32).asOpaque(),
+            validator.bls,
+            validator.metadata,
+          );
+        }
 
-      return validator;
-    });
+        return validator;
+      }),
+    );
 
-    const { nextValidators, currValidators } = this.state;
+    const { nextValidatorData, currentValidatorData } = this.state;
 
     const keys = newNextValidators.reduce(
       (acc, validator, i) => {
         acc.set(validator.bandersnatch.raw, i * 32);
         return acc;
       },
-      new Uint8Array(32 * nextValidators.length),
+      new Uint8Array(32 * nextValidatorData.length),
     );
 
     const epochRootResult = await getRingCommitment(keys);
 
     if (epochRootResult.isOk) {
       return Result.ok({
-        nextValidators: newNextValidators,
-        currValidators: nextValidators,
-        prevValidators: currValidators,
+        nextValidatorData: newNextValidators,
+        currentValidatorData: nextValidatorData,
+        previousValidatorData: currentValidatorData,
         epochRoot: epochRootResult.ok,
       });
     }
@@ -505,20 +488,19 @@ export class Safrole {
       return Result.error(validatorKeysResult.error);
     }
 
-    const { nextValidators, currValidators, prevValidators, epochRoot } = validatorKeysResult.ok;
-    newState.nextValidators = nextValidators;
-    newState.currValidators = currValidators;
-    newState.prevValidators = prevValidators;
+    const { nextValidatorData, currentValidatorData, previousValidatorData, epochRoot } = validatorKeysResult.ok;
+    newState.nextValidatorData = nextValidatorData;
+    newState.currentValidatorData = currentValidatorData;
+    newState.previousValidatorData = previousValidatorData;
     newState.epochRoot = epochRoot;
-
     newState.timeslot = input.slot;
     newState.entropy = this.getEntropy(input.slot, input.entropy);
 
-    newState.sealingKeySeries = this.getSlotKeySequence(input.slot, currValidators, newState.entropy[2]);
+    newState.sealingKeySeries = this.getSlotKeySequence(input.slot, currentValidatorData, newState.entropy[2]);
     const newTicketsAccumulatoResult = await this.getNewTicketAccumulator(
       input.slot,
       input.extrinsic,
-      this.state.nextValidators,
+      this.state.nextValidatorData,
       newState.entropy[2],
     );
 
@@ -529,7 +511,7 @@ export class Safrole {
     newState.ticketsAccumulator = newTicketsAccumulatoResult.ok;
 
     const result = Result.ok({
-      epochMark: this.getEpochMark(input.slot, nextValidators),
+      epochMark: this.getEpochMark(input.slot, nextValidatorData),
       ticketsMark: this.getTicketsMark(input.slot),
     });
 

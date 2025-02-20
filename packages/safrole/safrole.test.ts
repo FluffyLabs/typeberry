@@ -1,11 +1,13 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
-import type { EntropyHash, TimeSlot } from "@typeberry/block";
+import type { Ed25519Key, EntropyHash, PerValidator, TimeSlot } from "@typeberry/block";
 import type { SignedTicket, TicketAttempt } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
+import { FixedSizeArray, Ordering, SortedSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
+import type { ValidatorData } from "@typeberry/state";
 import * as bandersnatch from "./bandersnatch";
-import { Safrole, SafroleErrorCode, type State } from "./safrole";
+import { Safrole, SafroleErrorCode, type SafroleState } from "./safrole";
 
 describe("Safrole", () => {
   beforeEach(() => {
@@ -22,7 +24,7 @@ describe("Safrole", () => {
   });
 
   it("should return incorrect timeslot error", async () => {
-    const state = { timeslot: 1 } as State;
+    const state = { timeslot: 1 } as SafroleState;
     const safrole = new Safrole(state, tinyChainSpec);
     const timeslot = 0 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(32).asOpaque();
@@ -42,7 +44,7 @@ describe("Safrole", () => {
   });
 
   it("should return unexpected ticket because of incorrect length of extrinsic", async () => {
-    const state = { timeslot: 1 } as State;
+    const state = { timeslot: 1 } as SafroleState;
     const safrole = new Safrole(state, tinyChainSpec);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(32).asOpaque();
@@ -63,7 +65,7 @@ describe("Safrole", () => {
   });
 
   it("should return bad ticket attempt because of incorrect ticket attempt", async () => {
-    const state = { timeslot: 1 } as State;
+    const state = { timeslot: 1 } as SafroleState;
     const safrole = new Safrole(state, tinyChainSpec);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(32).asOpaque();
@@ -92,19 +94,17 @@ describe("Safrole", () => {
     mock.method(bandersnatch, "verifyTickets", () =>
       Promise.resolve([{ isValid: false, entropyHash: Bytes.zero(32) }]),
     );
-    const state: State = {
+    const state: SafroleState = {
       timeslot: 1 as TimeSlot,
-      entropy: [
-        Bytes.zero(32).asOpaque(),
-        Bytes.zero(32).asOpaque(),
-        Bytes.zero(32).asOpaque(),
-        Bytes.zero(32).asOpaque(),
-      ],
-      prevValidators: [],
-      currValidators: [],
-      designatedValidators: [],
-      nextValidators: [],
-      postOffenders: [],
+      entropy: FixedSizeArray.new(
+        [Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque()],
+        4,
+      ),
+      previousValidatorData: [] as unknown as PerValidator<ValidatorData>,
+      currentValidatorData: [] as unknown as PerValidator<ValidatorData>,
+      designatedValidatorData: [] as unknown as PerValidator<ValidatorData>,
+      nextValidatorData: [] as unknown as PerValidator<ValidatorData>,
+      punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
       ticketsAccumulator: [],
       sealingKeySeries: {},
       epochRoot: Bytes.zero(32).asOpaque(),
@@ -140,19 +140,17 @@ describe("Safrole", () => {
         { isValid: true, entropyHash: Bytes.zero(32) },
       ]),
     );
-    const state: State = {
+    const state: SafroleState = {
       timeslot: 1 as TimeSlot,
-      entropy: [
-        Bytes.zero(32).asOpaque(),
-        Bytes.zero(32).asOpaque(),
-        Bytes.zero(32).asOpaque(),
-        Bytes.zero(32).asOpaque(),
-      ],
-      prevValidators: [],
-      currValidators: [],
-      designatedValidators: [],
-      nextValidators: [],
-      postOffenders: [],
+      entropy: FixedSizeArray.new(
+        [Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque()],
+        4,
+      ),
+      previousValidatorData: [] as unknown as PerValidator<ValidatorData>,
+      currentValidatorData: [] as unknown as PerValidator<ValidatorData>,
+      designatedValidatorData: [] as unknown as PerValidator<ValidatorData>,
+      nextValidatorData: [] as unknown as PerValidator<ValidatorData>,
+      punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
       ticketsAccumulator: [],
       sealingKeySeries: {},
       epochRoot: Bytes.zero(32).asOpaque(),
@@ -192,19 +190,17 @@ describe("Safrole", () => {
         { isValid: true, entropyHash: Bytes.zero(32) },
       ]),
     );
-    const state: State = {
+    const state: SafroleState = {
       timeslot: 1 as TimeSlot,
-      entropy: [
-        Bytes.zero(32).asOpaque(),
-        Bytes.zero(32).asOpaque(),
-        Bytes.zero(32).asOpaque(),
-        Bytes.zero(32).asOpaque(),
-      ],
-      prevValidators: [],
-      currValidators: [],
-      designatedValidators: [],
-      nextValidators: [],
-      postOffenders: [],
+      entropy: FixedSizeArray.new(
+        [Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque()],
+        4,
+      ),
+      previousValidatorData: [] as unknown as PerValidator<ValidatorData>,
+      currentValidatorData: [] as unknown as PerValidator<ValidatorData>,
+      designatedValidatorData: [] as unknown as PerValidator<ValidatorData>,
+      nextValidatorData: [] as unknown as PerValidator<ValidatorData>,
+      punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
       ticketsAccumulator: [],
       sealingKeySeries: {},
       epochRoot: Bytes.zero(32).asOpaque(),
@@ -238,19 +234,17 @@ describe("Safrole", () => {
   });
 
   it("should return correct result for empty data", async () => {
-    const state: State = {
+    const state: SafroleState = {
       timeslot: 1 as TimeSlot,
-      entropy: [
-        Bytes.zero(32).asOpaque(),
-        Bytes.zero(32).asOpaque(),
-        Bytes.zero(32).asOpaque(),
-        Bytes.zero(32).asOpaque(),
-      ],
-      prevValidators: [],
-      currValidators: [],
-      designatedValidators: [],
-      nextValidators: [],
-      postOffenders: [],
+      entropy: FixedSizeArray.new(
+        [Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque()],
+        4,
+      ),
+      previousValidatorData: [] as unknown as PerValidator<ValidatorData>,
+      currentValidatorData: [] as unknown as PerValidator<ValidatorData>,
+      designatedValidatorData: [] as unknown as PerValidator<ValidatorData>,
+      nextValidatorData: [] as unknown as PerValidator<ValidatorData>,
+      punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
       ticketsAccumulator: [],
       sealingKeySeries: {},
       epochRoot: Bytes.zero(32).asOpaque(),

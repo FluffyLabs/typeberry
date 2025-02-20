@@ -1,18 +1,21 @@
 import assert from "node:assert";
 import {
   BANDERSNATCH_PROOF_BYTES,
-  TimeSlot,
   type BandersnatchKey,
   type BandersnatchProof,
   type Ed25519Key,
   type EntropyHash,
+  type TimeSlot,
+  tryAsPerValidator,
 } from "@typeberry/block";
 import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { FixedSizeArray, SortedSet } from "@typeberry/collections";
+import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { State as SafroleState } from "@typeberry/safrole";
 import { Safrole } from "@typeberry/safrole";
-import type { ValidatorData } from "@typeberry/state";
+import { type ValidatorData, hashComparator } from "@typeberry/state";
 import { commonFromJson, getChainSpec } from "./common-types";
 namespace safroleFromJson {
   export const bytesBlob = json.fromString(BytesBlob.parseBlob);
@@ -140,7 +143,7 @@ export class SafroleTest {
 
 export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const chainSpec = getChainSpec(path);
-  const preState = convertPreStateToModel(testContent.pre_state);
+  const preState = convertPreStateToModel(testContent.pre_state, chainSpec);
   const safrole = new Safrole(preState, chainSpec);
 
   const result = await safrole.transition(Input.toSafroleInput(testContent.input));
@@ -149,21 +152,21 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
 
   assert.deepEqual(error, testContent.output.err);
   assert.deepEqual(ok, convertResultToModel(testContent.output));
-  assert.deepEqual(safrole.state, convertPreStateToModel(testContent.post_state));
+  assert.deepEqual(safrole.state, convertPreStateToModel(testContent.post_state, chainSpec));
 }
 
-function convertPreStateToModel(preState: JsonState): SafroleState {
+function convertPreStateToModel(preState: JsonState, chainSpec: ChainSpec): SafroleState {
   return {
     timeslot: preState.tau,
-    entropy: preState.eta,
-    prevValidators: preState.lambda,
-    currValidators: preState.kappa,
-    nextValidators: preState.gamma_k,
-    designatedValidators: preState.iota,
+    entropy: FixedSizeArray.new(preState.eta, 4),
+    previousValidatorData: tryAsPerValidator(preState.lambda, chainSpec),
+    currentValidatorData: tryAsPerValidator(preState.kappa, chainSpec),
+    nextValidatorData: tryAsPerValidator(preState.gamma_k, chainSpec),
+    designatedValidatorData: tryAsPerValidator(preState.iota, chainSpec),
     ticketsAccumulator: preState.gamma_a,
     sealingKeySeries: preState.gamma_s,
     epochRoot: preState.gamma_z.asOpaque(),
-    postOffenders: preState.post_offenders,
+    punishSet: SortedSet.fromSortedArray(hashComparator, preState.post_offenders),
   };
 }
 
