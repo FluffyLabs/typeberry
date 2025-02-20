@@ -118,7 +118,7 @@ export type State = {
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/08fb0008ff00
    */
-  readonly services: Service[];
+  readonly accounts: Service[];
 
   /**
    * `π pi`: Previous and current statistics of each validator.
