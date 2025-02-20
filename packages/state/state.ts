@@ -139,12 +139,16 @@ export type State = {
   readonly statisticsPerValidator: ActivityData;
 
   /**
+   * `γₐ gamma_a`: The ticket accumulator - a series of highest-scoring ticket identifiers to be used for the next epoch.
    *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/0dc3000dc500
    */
   readonly ticketsAccumulator: Ticket[];
 
   /**
+   * `γₛ gamma_s`: γs is the current epoch’s slot-sealer series, which is either a full complement of `E` tickets or, in the case of a fallback mode, a series of `E` Bandersnatch keys.
    *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/0dc6000dc800
    */
   readonly sealingKeySeries: {
     keys?: BandersnatchKey[];
@@ -152,7 +156,10 @@ export type State = {
   };
 
   /**
+   * `γ_z gamma_z`: The epoch’s root, a Bandersnatch ring root composed with the one Bandersnatch key of each of the next
+   * epoch’s validators, defined in γ_k.
    *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/0da8000db800
    */
   readonly epochRoot: BandersnatchRingRoot;
 };
