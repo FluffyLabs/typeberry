@@ -24,6 +24,13 @@ export enum PreimageStatus {
   Reavailable = 3,
 }
 
+/**
+ *
+ * Possible results when checking preimage status.
+ * 
+ * https://graypaper.fluffylabs.dev/#/5f542d7/117000117700
+ */
+
 export type PreimageStatusResult =
   | {
       status: typeof PreimageStatus.Requested;
