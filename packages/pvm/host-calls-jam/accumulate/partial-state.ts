@@ -102,7 +102,7 @@ export enum QuitError {
  */
 export interface AccumulationPartialState {
   /**
-   * Request (query) check preimage status.
+   * Request (query) preimage status.
    *
    * States:
    * https://graypaper.fluffylabs.dev/#/579bd12/116f00116f00
