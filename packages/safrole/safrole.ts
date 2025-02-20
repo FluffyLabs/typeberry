@@ -4,7 +4,6 @@ import {
   type Ed25519Key,
   type EntropyHash,
   type TimeSlot,
-  ValidatorData,
 } from "@typeberry/block";
 import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
@@ -14,6 +13,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { blake2b } from "@typeberry/hash";
 import { Result } from "@typeberry/utils";
 import { getRingCommitment, verifyTickets } from "./bandersnatch";
+import { ValidatorData } from "@typeberry/state";
 
 export const VALIDATOR_META_BYTES = 128;
 export type VALIDATOR_META_BYTES = typeof VALIDATOR_META_BYTES;
