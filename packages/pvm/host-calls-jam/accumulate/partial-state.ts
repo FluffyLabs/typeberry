@@ -25,7 +25,7 @@ export enum PreimageStatus {
   Reavailable = 3,
 }
 
-type PreimageStatusResult = {
+export type PreimageStatusResult = {
   status: typeof PreimageStatus.Requested;
 } | {
   status: typeof PreimageStatus.Available;

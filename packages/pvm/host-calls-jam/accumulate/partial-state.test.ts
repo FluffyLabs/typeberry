@@ -11,6 +11,7 @@ import type {
   AccumulationPartialState,
   QuitError,
   RequestPreimageError,
+  PreimageStatusResult,
   TRANSFER_MEMO_BYTES,
   TransferError,
 } from "./partial-state";
@@ -22,6 +23,7 @@ export class TestAccumulate implements AccumulationPartialState {
   public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
   public readonly quitAndTransferData: Parameters<TestAccumulate["quitAndTransfer"]>[] = [];
   public readonly requestPreimageData: Parameters<TestAccumulate["requestPreimage"]>[] = [];
+  public readonly checkPreimageStatusData: Parameters<TestAccumulate["checkPreimageStatus"]>[] = [];
   public readonly transferData: Parameters<TestAccumulate["transfer"]>[] = [];
   public readonly upgradeData: Parameters<TestAccumulate["upgradeService"]>[] = [];
   public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
@@ -32,6 +34,7 @@ export class TestAccumulate implements AccumulationPartialState {
   public quitAndBurnCalled = 0;
   public quitReturnValue: Result<null, QuitError> = Result.ok(null);
   public requestPreimageResponse: Result<null, RequestPreimageError> = Result.ok(null);
+  public checkPreimageStatusResponse: PreimageStatusResult | null = null;
   public transferReturnValue: Result<OK, TransferError> = Result.ok(OK);
 
   quitAndTransfer(destination: ServiceId, suppliedGas: Gas, memo: Bytes<TRANSFER_MEMO_BYTES>): Result<null, QuitError> {
@@ -41,6 +44,11 @@ export class TestAccumulate implements AccumulationPartialState {
 
   quitAndBurn(): void {
     this.quitAndBurnCalled += 1;
+  }
+
+  checkPreimageStatus(hash: Blake2bHash, length: U32): PreimageStatusResult | null {
+    this.checkPreimageStatusData.push([hash, length]);
+    return this.checkPreimageStatusResponse;
   }
 
   requestPreimage(hash: Blake2bHash, length: U32): Result<null, RequestPreimageError> {
