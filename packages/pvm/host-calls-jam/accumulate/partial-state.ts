@@ -1,6 +1,5 @@
 import type { CodeHash, CoreIndex, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
 import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants";
-import { Preimage } from "@typeberry/block/preimage";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
@@ -25,18 +24,22 @@ export enum PreimageStatus {
   Reavailable = 3,
 }
 
-export type PreimageStatusResult = {
-  status: typeof PreimageStatus.Requested;
-} | {
-  status: typeof PreimageStatus.Available;
-  data: [TimeSlot];
-} | {
-  status: typeof PreimageStatus.Unavailable;
-  data: [TimeSlot, TimeSlot];
-} | {
-  status: typeof PreimageStatus.Reavailable;
-  data: [TimeSlot, TimeSlot, TimeSlot];
-};
+export type PreimageStatusResult =
+  | {
+      status: typeof PreimageStatus.Requested;
+    }
+  | {
+      status: typeof PreimageStatus.Available;
+      data: [TimeSlot];
+    }
+  | {
+      status: typeof PreimageStatus.Unavailable;
+      data: [TimeSlot, TimeSlot];
+    }
+  | {
+      status: typeof PreimageStatus.Reavailable;
+      data: [TimeSlot, TimeSlot, TimeSlot];
+    };
 
 /** Possible error when requesting a preimage. */
 export enum RequestPreimageError {

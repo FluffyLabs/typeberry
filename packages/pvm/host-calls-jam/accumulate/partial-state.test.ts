@@ -9,9 +9,9 @@ import type { ValidatorData } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
 import type {
   AccumulationPartialState,
+  PreimageStatusResult,
   QuitError,
   RequestPreimageError,
-  PreimageStatusResult,
   TRANSFER_MEMO_BYTES,
   TransferError,
 } from "./partial-state";
