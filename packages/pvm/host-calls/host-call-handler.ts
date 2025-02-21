@@ -12,6 +12,7 @@ export const tryAsHostCallIndex = (v: number): HostCallIndex => asOpaqueType(try
 
 export enum PvmExecution {
   Halt = 0,
+  Panic = 1,
 }
 
 export interface Registers {

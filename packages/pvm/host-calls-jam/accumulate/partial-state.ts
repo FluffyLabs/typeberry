@@ -1,4 +1,4 @@
-import type { CodeHash, CoreIndex, PerValidator, ServiceId } from "@typeberry/block";
+import type { CodeHash, CoreIndex, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
 import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
@@ -11,6 +11,42 @@ import type { OK, Result } from "@typeberry/utils";
 /** Size of the transfer memo. */
 export const TRANSFER_MEMO_BYTES = W_T;
 export type TRANSFER_MEMO_BYTES = typeof TRANSFER_MEMO_BYTES;
+
+/** Possible states when checking preimage status. */
+export enum PreimageStatus {
+  /** The preimage is requested. */
+  Requested = 0,
+  /** The preimage is available */
+  Available = 1,
+  /** The preimage is unavailable. */
+  Unavailable = 2,
+  /** The preimage is reavailable. */
+  Reavailable = 3,
+}
+
+/**
+ *
+ * Possible results when checking preimage status.
+ *
+ * https://graypaper.fluffylabs.dev/#/5f542d7/117000117700
+ */
+
+export type PreimageStatusResult =
+  | {
+      status: typeof PreimageStatus.Requested;
+    }
+  | {
+      status: typeof PreimageStatus.Available;
+      data: [TimeSlot];
+    }
+  | {
+      status: typeof PreimageStatus.Unavailable;
+      data: [TimeSlot, TimeSlot];
+    }
+  | {
+      status: typeof PreimageStatus.Reavailable;
+      data: [TimeSlot, TimeSlot, TimeSlot];
+    };
 
 /** Possible error when requesting a preimage. */
 export enum RequestPreimageError {
@@ -65,6 +101,14 @@ export enum QuitError {
  * https://graypaper.fluffylabs.dev/#/579bd12/163602163602
  */
 export interface AccumulationPartialState {
+  /**
+   * Request (query) preimage status.
+   *
+   * States:
+   * https://graypaper.fluffylabs.dev/#/579bd12/116f00116f00
+   */
+  checkPreimageStatus(hash: Blake2bHash, length: U32): PreimageStatusResult | null;
+
   /**
    * Request (solicit) a preimage to be (re-)available.
    *
