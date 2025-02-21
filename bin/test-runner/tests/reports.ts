@@ -5,6 +5,7 @@ import {
   type HeaderHash,
   type ServiceId,
   type TimeSlot,
+  tryAsPerEpochBlock,
   tryAsPerValidator,
 } from "@typeberry/block";
 import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "@typeberry/block/guarantees";
@@ -125,6 +126,14 @@ class TestState {
 
   static toReportsState(pre: TestState, spec: ChainSpec): ReportsState {
     return {
+      accumulationQueue: tryAsPerEpochBlock(
+        FixedSizeArray.fill(() => [], spec.epochLength),
+        spec,
+      ),
+      recentlyAccumulated: tryAsPerEpochBlock(
+        FixedSizeArray.fill(() => [], spec.epochLength),
+        spec,
+      ),
       availabilityAssignment: tryAsPerCore(pre.avail_assignments, spec),
       currentValidatorData: tryAsPerValidator(pre.curr_validators, spec),
       previousValidatorData: tryAsPerValidator(pre.prev_validators, spec),

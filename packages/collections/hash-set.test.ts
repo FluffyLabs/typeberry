@@ -20,6 +20,14 @@ describe("HashSet", () => {
     assert.deepStrictEqual(set.has(key(3)), false);
   });
 
+  it("should insert multiple elements", () => {
+    const set = new HashSet();
+    set.insertAll([key(1), key(2)]);
+
+    assert.deepStrictEqual(set.has(key(1)), true);
+    assert.deepStrictEqual(set.has(key(2)), true);
+  });
+
   it("should remove some values", () => {
     const dict = new HashSet();
     dict.insert(key(1));
@@ -35,5 +43,19 @@ describe("HashSet", () => {
     assert.deepStrictEqual(dict.has(key(1)), false);
     assert.deepStrictEqual(dict.has(key(2)), true);
     assert.deepStrictEqual(dict.has(key(3)), false);
+  });
+
+  it("should return intersection of two sets", () => {
+    const dict1 = new HashSet();
+    dict1.insertAll([key(1), key(2)]);
+
+    const dict2 = new HashSet();
+    dict2.insertAll([key(2), key(3)]);
+
+    const intersect1 = Array.from(dict1.intersection(dict2));
+    const intersect2 = Array.from(dict2.intersection(dict1));
+
+    assert.deepStrictEqual(intersect1.toString(), intersect2.toString());
+    assert.deepStrictEqual(intersect1.toString(), "0x0202020202020202020202020202020202020202020202020202020202020202");
   });
 });

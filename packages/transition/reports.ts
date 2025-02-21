@@ -4,14 +4,14 @@ import { type GuaranteesExtrinsicView, REQUIRED_CREDENTIALS_RANGE } from "@typeb
 import type { RefineContext } from "@typeberry/block/refine-context";
 import type { SegmentRootLookupItem, WorkPackageHash } from "@typeberry/block/work-report";
 import { BytesBlob } from "@typeberry/bytes";
-import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
+import { HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
 import { type KeccakHash, blake2b } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
 import { sumU64 } from "@typeberry/numbers";
-import type { State } from "@typeberry/state";
+import type { BlockState, State } from "@typeberry/state";
 import { OK, Result, asOpaqueType, check } from "@typeberry/utils";
 import { ROTATION_PERIOD, generateCoreAssignment, rotationIndex } from "./guarantor-assignment";
 
@@ -42,15 +42,18 @@ export type ReportsInput = {
   slot: TimeSlot;
 };
 
-export type ReportsState = {
-  readonly availabilityAssignment: State["availabilityAssignment"];
-  readonly currentValidatorData: State["currentValidatorData"];
-  readonly previousValidatorData: State["previousValidatorData"];
-  readonly entropy: State["entropy"];
-  readonly authPools: State["authPools"];
-  readonly recentBlocks: State["recentBlocks"];
-  readonly services: State["services"];
-
+export type ReportsState = Pick<
+  State,
+  | "availabilityAssignment"
+  | "currentValidatorData"
+  | "previousValidatorData"
+  | "entropy"
+  | "authPools"
+  | "recentBlocks"
+  | "services"
+  | "accumulationQueue"
+  | "recentlyAccumulated"
+> & {
   // NOTE: this is most likely not strictly part of the state!
   readonly offenders: KnownSizeArray<Ed25519Key, "0..ValidatorsCount">;
 };
@@ -185,7 +188,7 @@ export class Reports {
       for (const result of guarantee.report.results) {
         // TODO [ToDr] [opti] We should have a dictionary here rather than do slow lookups.
         const service = this.state.services.find((x) => x.id === result.serviceId);
-        if (!service) {
+        if (service === undefined) {
           return Result.error(ReportsError.BadServiceId);
         }
 
@@ -211,6 +214,71 @@ export class Reports {
     }
 
     const minLookupSlot = Math.max(0, input.slot - L);
+    const contextResult = this.verifyRefineContexts(minLookupSlot, contexts);
+    if (contextResult.isError) {
+      return contextResult;
+    }
+
+    const workPackagesResult = this.verifyWorkPackageHashes(workPackageHashes);
+    if (workPackagesResult.isError) {
+      return workPackagesResult;
+    }
+
+    return Result.ok(OK);
+  }
+
+  verifyWorkPackageHashes(workPackageHashes: HashSet<WorkPackageHash>): Result<OK, ReportsError> {
+    /**
+     * Make sure that the package does not appear anywhere in the pipeline.
+     *
+     * https://graypaper.fluffylabs.dev/#/5f542d7/159101159101
+     */
+    // TODO [ToDr] [opti] this most likely should be cached and either
+    // re-computed on invalidity or we could maintain additional
+    // structure that's in-sync with the state.
+    // For now, for the sake of simplicity, let's compute it every time.
+    const packagesInPipeline = new HashSet();
+
+    // all work packages reported in recent blocks
+    for (const recentBlock of this.state.recentBlocks) {
+      packagesInPipeline.insertAll(recentBlock.reported.map((x) => x.hash));
+    }
+
+    // all work packages recently accumulated
+    for (const hashes of this.state.recentlyAccumulated) {
+      packagesInPipeline.insertAll(hashes);
+    }
+
+    // all work packages that are in reports, which await accumulation
+    for (const pendingAccumulation of this.state.accumulationQueue) {
+      packagesInPipeline.insertAll(pendingAccumulation.map((x) => x.report.workPackageSpec.hash));
+    }
+
+    // finally all packages from reports with pending availability
+    for (const pendingAvailability of this.state.availabilityAssignment) {
+      if (pendingAvailability !== null) {
+        packagesInPipeline.insert(pendingAvailability.workReport.data.workPackageSpec.hash);
+      }
+    }
+
+    // let's check if any of our packages is in the pipeline
+    const intersection = packagesInPipeline.intersection(workPackageHashes);
+    for (const packageHash of intersection) {
+      return Result.error(
+        ReportsError.DuplicatePackage,
+        `The same work package hash found in the pipeline (workPackageHash: ${packageHash})`,
+      );
+    }
+
+    return Result.ok(OK);
+  }
+
+  verifyRefineContexts(minLookupSlot: number, contexts: RefineContext[]): Result<OK, ReportsError> {
+    // TODO [ToDr] [opti] We should have a dictionary here rather than do slow lookups.
+    const recentBlocks = new HashDictionary<HeaderHash, BlockState>();
+    for (const recentBlock of this.state.recentBlocks) {
+      recentBlocks.set(recentBlock.headerHash, recentBlock);
+    }
     for (const context of contexts) {
       /**
        * We require that the anchor block be within the last H
@@ -219,24 +287,23 @@ export class Reports {
        *
        * https://graypaper.fluffylabs.dev/#/5f542d7/152801152b01
        */
-      // TODO [ToDr] [opti] We should have a dictionary here rather than do slow lookups.
-      const recentBlocks = this.state.recentBlocks.find((x) => x.headerHash.isEqualTo(context.anchor));
-      if (recentBlocks === undefined) {
+      const recentBlock = recentBlocks.get(context.anchor);
+      if (recentBlock === undefined) {
         return Result.error(ReportsError.AnchorNotRecent, `Anchor block ${context.anchor} not found in recent blocks.`);
       }
 
       // check state root
-      if (!recentBlocks.postStateRoot.isEqualTo(context.stateRoot)) {
+      if (!recentBlock.postStateRoot.isEqualTo(context.stateRoot)) {
         return Result.error(
           ReportsError.BadStateRoot,
-          `Anchor state root mismatch. Got: ${context.stateRoot}, expected: ${recentBlocks.postStateRoot}.`,
+          `Anchor state root mismatch. Got: ${context.stateRoot}, expected: ${recentBlock.postStateRoot}.`,
         );
       }
 
       // TODO [ToDr] [opti] Don't calculate super peak hash every time.
       //                    use either some cache or pre-processing.
       // check beefy root
-      const mmr = MerkleMountainRange.fromPeaks(this.hasher, recentBlocks.mmr);
+      const mmr = MerkleMountainRange.fromPeaks(this.hasher, recentBlock.mmr);
       const superPeakHash = mmr.getSuperPeakHash();
       if (!superPeakHash.isEqualTo(context.beefyRoot)) {
         return Result.error(

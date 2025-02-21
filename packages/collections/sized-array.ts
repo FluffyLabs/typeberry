@@ -27,6 +27,14 @@ export class FixedSizeArray<T, N extends number> extends Array<T> {
     return arr;
   }
 
+  static fill<T, N extends number>(generator: (idx: number) => T, len: N): FixedSizeArray<T, N> {
+    const data: T[] = [];
+    for (let i = 0; i < len; i++) {
+      data.push(generator(i));
+    }
+    return FixedSizeArray.new(data, len);
+  }
+
   toString() {
     return inspect(Array.from(this), false);
   }

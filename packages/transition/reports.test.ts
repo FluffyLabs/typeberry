@@ -8,6 +8,7 @@ import {
   type HeaderHash,
   type TimeSlot,
   tryAsCoreIndex,
+  tryAsPerEpochBlock,
   tryAsPerValidator,
   tryAsServiceId,
   tryAsTimeSlot,
@@ -22,7 +23,7 @@ import {
 } from "@typeberry/block/guarantees";
 import { RefineContext } from "@typeberry/block/refine-context";
 import testWorkReport from "@typeberry/block/test-work-report";
-import { WorkReport } from "@typeberry/block/work-report";
+import { type WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
 import { WorkResult } from "@typeberry/block/work-result";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
@@ -38,8 +39,10 @@ import {
   ServiceAccountInfo,
   VALIDATOR_META_BYTES,
   ValidatorData,
+  WorkPackageInfo,
   tryAsPerCore,
 } from "@typeberry/state";
+import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { tryAsGas } from "../../dist/pvm";
 import { Reports, ReportsError, type ReportsInput, type ReportsState } from "./reports";
@@ -60,7 +63,7 @@ async function newReports(options: Parameters<typeof newReportsState>[0] = {}) {
   const state = newReportsState(options);
   const headerChain = {
     isInChain(header: HeaderHash) {
-      return state.recentBlocks.find((x) => x.headerHash === header) !== undefined;
+      return state.recentBlocks.find((x) => x.headerHash.isEqualTo(header)) !== undefined;
     },
   };
 
@@ -550,7 +553,7 @@ describe("Reports.verifyContextualValidity", () => {
         slot: tryAsTimeSlot(10),
         report: newWorkReport({
           core: 0,
-          beefyRoot: Bytes.zero(HASH_SIZE).asOpaque(),
+          beefyRoot: Bytes.zero(HASH_SIZE),
           lookupAnchorSlot: tryAsTimeSlot(1),
         }),
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
@@ -576,7 +579,8 @@ describe("Reports.verifyContextualValidity", () => {
         slot: tryAsTimeSlot(10),
         report: newWorkReport({
           core: 0,
-          beefyRoot: Bytes.zero(HASH_SIZE).asOpaque(),
+          beefyRoot: Bytes.zero(HASH_SIZE),
+          lookupAnchor: Bytes.fill(HASH_SIZE, 1),
           lookupAnchorSlot: tryAsTimeSlot(1),
         }),
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
@@ -590,15 +594,128 @@ describe("Reports.verifyContextualValidity", () => {
       isError: true,
       error: ReportsError.SegmentRootLookupInvalid,
       details:
-        "Lookup anchor is not found in chain. Hash: 0x168490e085497fcb6cbe3b220e2fa32456f30c1570412edd76ccb93be9254fef (slot: 1)",
+        "Lookup anchor is not found in chain. Hash: 0x0101010101010101010101010101010101010101010101010101010101010101 (slot: 1)",
+    });
+  });
+
+  it("should reject duplicate work package that's pending", async () => {
+    const reports = await newReports({
+      withCoreAssignment: true,
+      services: initialServices(),
+    });
+    reports.state.availabilityAssignment[0] = null;
+
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(10),
+        report: newWorkReport({
+          core: 0,
+          beefyRoot: Bytes.zero(HASH_SIZE),
+        }),
+        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
+      }),
+    ]);
+    const input = { slot: tryAsTimeSlot(10), guarantees };
+    const res = reports.verifyContextualValidity(input);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.DuplicatePackage,
+      details:
+        "The same work package hash found in the pipeline (workPackageHash: 0x3930000063c03371b9dad9f1c60473ec0326c970984e9c90c0b5ed90eba6ada4)",
+    });
+  });
+
+  it("should reject duplicate work package from accumulation queue", async () => {
+    const reports = await newReports({
+      services: initialServices(),
+      accumulationQueue: [new NotYetAccumulatedReport(newWorkReport({ core: 1 }), [])],
+    });
+    reports.state.availabilityAssignment[0] = null;
+
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(10),
+        report: newWorkReport({
+          core: 0,
+          beefyRoot: Bytes.zero(HASH_SIZE),
+        }),
+        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
+      }),
+    ]);
+    const input = { slot: tryAsTimeSlot(10), guarantees };
+    const res = reports.verifyContextualValidity(input);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.DuplicatePackage,
+      details:
+        "The same work package hash found in the pipeline (workPackageHash: 0x3930000063c03371b9dad9f1c60473ec0326c970984e9c90c0b5ed90eba6ada4)",
+    });
+  });
+
+  it("should reject duplicate work package from recent blocks history", async () => {
+    const reports = await newReports({
+      services: initialServices(),
+      reportedInRecentBlocks: [
+        new WorkPackageInfo(newWorkReport({ core: 0 }).workPackageSpec.hash, Bytes.zero(HASH_SIZE).asOpaque()),
+      ],
+    });
+    reports.state.availabilityAssignment[0] = null;
+
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(10),
+        report: newWorkReport({
+          core: 0,
+          beefyRoot: Bytes.zero(HASH_SIZE),
+        }),
+        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
+      }),
+    ]);
+    const input = { slot: tryAsTimeSlot(10), guarantees };
+    const res = reports.verifyContextualValidity(input);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.DuplicatePackage,
+      details:
+        "The same work package hash found in the pipeline (workPackageHash: 0x3930000063c03371b9dad9f1c60473ec0326c970984e9c90c0b5ed90eba6ada4)",
+    });
+  });
+
+  it("should reject duplicate work package from recently accumulated work packages", async () => {
+    const reports = await newReports({
+      services: initialServices(),
+      recentlyAccumulated: [newWorkReport({ core: 0 }).workPackageSpec.hash],
+    });
+    reports.state.availabilityAssignment[0] = null;
+
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(10),
+        report: newWorkReport({
+          core: 0,
+          beefyRoot: Bytes.zero(HASH_SIZE),
+        }),
+        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
+      }),
+    ]);
+    const input = { slot: tryAsTimeSlot(10), guarantees };
+    const res = reports.verifyContextualValidity(input);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.DuplicatePackage,
+      details:
+        "The same work package hash found in the pipeline (workPackageHash: 0x3930000063c03371b9dad9f1c60473ec0326c970984e9c90c0b5ed90eba6ada4)",
     });
   });
 });
-
-type ReportStateOptions = {
-  withCoreAssignment?: boolean;
-  services?: ReportsState["services"];
-};
 
 function newCredential(index: number, signature?: Ed25519Signature) {
   return Credential.fromCodec({
@@ -607,15 +724,37 @@ function newCredential(index: number, signature?: Ed25519Signature) {
   });
 }
 
-function newReportsState({ withCoreAssignment = false, services = [] }: ReportStateOptions = {}): ReportsState {
+type ReportStateOptions = {
+  withCoreAssignment?: boolean;
+  services?: ReportsState["services"];
+  accumulationQueue?: NotYetAccumulatedReport[];
+  recentlyAccumulated?: WorkPackageHash[];
+  reportedInRecentBlocks?: WorkPackageInfo[];
+};
+
+function newReportsState({
+  withCoreAssignment = false,
+  services = [],
+  accumulationQueue = [],
+  recentlyAccumulated = [],
+  reportedInRecentBlocks = [],
+}: ReportStateOptions = {}): ReportsState {
   const spec = tinyChainSpec;
   return {
+    accumulationQueue: tryAsPerEpochBlock(
+      FixedSizeArray.fill((idx) => (idx === 0 ? accumulationQueue : []), spec.epochLength),
+      spec,
+    ),
+    recentlyAccumulated: tryAsPerEpochBlock(
+      FixedSizeArray.fill((idx) => (idx === 0 ? recentlyAccumulated : []), spec.epochLength),
+      spec,
+    ),
     availabilityAssignment: tryAsPerCore(withCoreAssignment ? initialAssignment() : [null, null], spec),
     currentValidatorData: tryAsPerValidator(initialValidators(), spec),
     previousValidatorData: tryAsPerValidator(initialValidators(), spec),
     entropy: getEntropy(1, 2, 3, 4),
     authPools: getAuthPools([1, 2, 3, 4], spec),
-    recentBlocks: asOpaqueType([
+    recentBlocks: asKnownSize([
       {
         headerHash: Bytes.parseBytes(
           "0x168490e085497fcb6cbe3b220e2fa32456f30c1570412edd76ccb93be9254fef",
@@ -623,7 +762,7 @@ function newReportsState({ withCoreAssignment = false, services = [] }: ReportSt
         ).asOpaque(),
         mmr: { peaks: [] },
         postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
-        reported: [],
+        reported: reportedInRecentBlocks,
       },
       {
         headerHash: Bytes.parseBytes(
@@ -639,9 +778,20 @@ function newReportsState({ withCoreAssignment = false, services = [] }: ReportSt
         ).asOpaque(),
         reported: [],
       },
+      {
+        headerHash: Bytes.parseBytes(
+          "0x168490e085497fcb6cbe3b220e2fa32456f30c1570412edd76ccb93be9254fef",
+          HASH_SIZE,
+        ).asOpaque(),
+        mmr: {
+          peaks: [],
+        },
+        postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
+        reported: [],
+      },
     ]),
     services,
-    offenders: asOpaqueType([]),
+    offenders: asKnownSize([]),
   };
 }
 
@@ -683,6 +833,7 @@ type WorkReportOptions = {
   stateRoot?: OpaqueHash;
   beefyRoot?: OpaqueHash;
   lookupAnchorSlot?: TimeSlot;
+  lookupAnchor?: OpaqueHash;
 };
 
 function newWorkReport({
@@ -692,6 +843,7 @@ function newWorkReport({
   stateRoot,
   beefyRoot,
   lookupAnchorSlot,
+  lookupAnchor,
 }: WorkReportOptions): WorkReport {
   const source = BytesBlob.parseBlob(testWorkReport);
   const report = Decoder.decodeObject(WorkReport.Codec, source, tinyChainSpec);
@@ -699,7 +851,7 @@ function newWorkReport({
     anchor: anchorBlock ? anchorBlock.asOpaque() : report.context.anchor,
     stateRoot: stateRoot ? stateRoot.asOpaque() : report.context.stateRoot,
     beefyRoot: beefyRoot ? beefyRoot.asOpaque() : report.context.beefyRoot,
-    lookupAnchor: report.context.lookupAnchor,
+    lookupAnchor: lookupAnchor ? lookupAnchor.asOpaque() : report.context.lookupAnchor,
     lookupAnchorSlot: lookupAnchorSlot ?? report.context.lookupAnchorSlot,
     prerequisites: report.context.prerequisites,
   });
