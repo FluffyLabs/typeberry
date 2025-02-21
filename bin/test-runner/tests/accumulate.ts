@@ -87,8 +87,8 @@ export class AccumulateTest {
 export async function runAccumulateTest(test: AccumulateTest, path: string) {
   const chainSpec = getChainSpec(path);
 
-  const authorization = new Accumulate(test.pre_state, chainSpec);
-  await authorization.transition(test.input);
+  const accumulate = new Accumulate(test.pre_state, chainSpec);
+  await accumulate.transition(test.input);
 
   // deepEqual(test.post_state, authorization.state);
 }
