@@ -20,15 +20,15 @@ export type ReadyRecordItem = {
 export type AccumulateState = {
   slot: TimeSlot;
   entropy: EntropyHash;
-  ready_queue: ReadyRecordItem[][];
+  readyQueue: ReadyRecordItem[][];
   accumulated: WorkPackageHash[][];
   privileges: {
     bless: number;
     assign: number;
     designate: number;
-    always_acc: { id: number; gas: number }[];
+    alwaysAcc: { id: number; gas: number }[];
   };
-  accounts: Service[];
+  services: Service[];
 };
 
 export type AccumulateOutput = {

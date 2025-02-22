@@ -32,22 +32,37 @@ class ReadyRecordItem {
 }
 
 class TestState {
-  static fromJson: FromJson<TestState> = {
-    slot: "number",
-    entropy: commonFromJson.bytes32(),
-    ready_queue: ["array", json.array(ReadyRecordItem.fromJson)],
-    accumulated: ["array", json.array(commonFromJson.bytes32())],
-    privileges: {
-      bless: "number",
-      assign: "number",
-      designate: "number",
-      always_acc: json.array({
-        id: "number",
-        gas: "number",
-      }),
+  static fromJson = json.object<TestState, AccumulateState>(
+    {
+      slot: "number",
+      entropy: commonFromJson.bytes32(),
+      ready_queue: ["array", json.array(ReadyRecordItem.fromJson)],
+      accumulated: ["array", json.array(commonFromJson.bytes32())],
+      privileges: {
+        bless: "number",
+        assign: "number",
+        designate: "number",
+        always_acc: json.array({
+          id: "number",
+          gas: "number",
+        }),
+      },
+      accounts: json.array(TestAccountItem.fromJson),
     },
-    accounts: json.array(TestAccountItem.fromJson),
-  };
+    ({ accounts, accumulated, entropy, privileges, ready_queue, slot }) => ({
+      slot,
+      entropy,
+      readyQueue: ready_queue,
+      accumulated,
+      privileges: {
+        bless: privileges.bless,
+        assign: privileges.assign,
+        designate: privileges.designate,
+        alwaysAcc: privileges.always_acc,
+      },
+      services: accounts,
+    }),
+  );
 
   slot!: TimeSlot;
   entropy!: EntropyHash;

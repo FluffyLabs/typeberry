@@ -20,7 +20,7 @@ export type ReportsState = {
   readonly entropy: State["entropy"];
   readonly authPools: State["authPools"];
   readonly recentBlocks: State["recentBlocks"];
-  readonly accounts: State["accounts"];
+  readonly accounts: State["services"];
 
   // NOTE: this is most likely not strictly part of the state!
   readonly offenders: KnownSizeArray<Ed25519Key, "0..ValidatorsCount">;
