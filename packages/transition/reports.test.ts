@@ -23,7 +23,7 @@ import {
 } from "@typeberry/block/guarantees";
 import { RefineContext } from "@typeberry/block/refine-context";
 import testWorkReport from "@typeberry/block/test-work-report";
-import { type WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
+import { type WorkPackageHash, WorkPackageInfo, WorkReport } from "@typeberry/block/work-report";
 import { WorkResult } from "@typeberry/block/work-result";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
@@ -39,7 +39,6 @@ import {
   ServiceAccountInfo,
   VALIDATOR_META_BYTES,
   ValidatorData,
-  WorkPackageInfo,
   tryAsPerCore,
 } from "@typeberry/state";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";

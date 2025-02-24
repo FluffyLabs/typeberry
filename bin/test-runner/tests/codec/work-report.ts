@@ -1,7 +1,7 @@
 import type { CoreIndex } from "@typeberry/block";
 import type { RefineContext } from "@typeberry/block/refine-context";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package";
-import { type AuthorizerHash, SegmentRootLookupItem, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
+import { type AuthorizerHash, WorkPackageInfo, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
 import type { WorkResult } from "@typeberry/block/work-result";
 import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
@@ -23,12 +23,12 @@ const workPackageSpecFromJson = json.object<JsonObject<WorkPackageSpec>, WorkPac
     new WorkPackageSpec(hash, length, erasure_root, exports_root, exports_count),
 );
 
-const segmentRootLookupItemFromJson = json.object<JsonObject<SegmentRootLookupItem>, SegmentRootLookupItem>(
+const segmentRootLookupItemFromJson = json.object<JsonObject<WorkPackageInfo>, WorkPackageInfo>(
   {
     work_package_hash: fromJson.bytes32(),
     segment_tree_root: fromJson.bytes32(),
   },
-  ({ work_package_hash, segment_tree_root }) => new SegmentRootLookupItem(work_package_hash, segment_tree_root),
+  ({ work_package_hash, segment_tree_root }) => new WorkPackageInfo(work_package_hash, segment_tree_root),
 );
 
 export const workReportFromJson = json.object<JsonWorkReport, WorkReport>(
@@ -59,7 +59,7 @@ type JsonWorkReport = {
   core_index: CoreIndex;
   authorizer_hash: AuthorizerHash;
   auth_output: BytesBlob;
-  segment_root_lookup: SegmentRootLookupItem[];
+  segment_root_lookup: WorkPackageInfo[];
   results: WorkResult[];
 };
 

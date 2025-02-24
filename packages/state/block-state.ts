@@ -1,30 +1,9 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
-import type { ExportsRootHash, WorkPackageHash } from "@typeberry/block/work-report";
+import { WorkPackageInfo } from "@typeberry/block/work-report";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, type KeccakHash } from "@typeberry/hash";
 import type { MmrPeaks } from "@typeberry/mmr";
 import { WithDebug } from "@typeberry/utils";
-
-/** Even more distilled version of [`WorkPackageSpec`]. */
-export class WorkPackageInfo extends WithDebug {
-  static Codec = codec.Class(WorkPackageInfo, {
-    hash: codec.bytes(HASH_SIZE).asOpaque(),
-    exportsRoot: codec.bytes(HASH_SIZE).asOpaque(),
-  });
-
-  static fromCodec({ hash, exportsRoot }: CodecRecord<WorkPackageInfo>) {
-    return new WorkPackageInfo(hash, exportsRoot);
-  }
-
-  constructor(
-    /** Hash of the described work package. */
-    public readonly hash: WorkPackageHash,
-    /** Exports root hash. */
-    public readonly exportsRoot: ExportsRootHash,
-  ) {
-    super();
-  }
-}
 
 /** Recent history of a single block. */
 export class BlockState extends WithDebug {

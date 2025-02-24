@@ -2,7 +2,7 @@ import type { CoreIndex, Ed25519Key, HeaderHash, PerValidator, TimeSlot, WorkRep
 import { G_A, L } from "@typeberry/block/gp-constants";
 import { type GuaranteesExtrinsicView, REQUIRED_CREDENTIALS_RANGE } from "@typeberry/block/guarantees";
 import type { RefineContext } from "@typeberry/block/refine-context";
-import type { SegmentRootLookupItem, WorkPackageHash } from "@typeberry/block/work-report";
+import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
 import { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set";
@@ -60,7 +60,7 @@ export type ReportsState = Pick<
 
 export type ReportsOutput = {
   // TODO [ToDr] length?
-  reported: SegmentRootLookupItem[];
+  reported: WorkPackageInfo[];
   /** A set `R` of work package reporters. */
   reporters: KnownSizeArray<Ed25519Key, "Guarantees * Credentials (at most `cores*3`)">;
 };
@@ -95,7 +95,7 @@ export enum ReportsError {
   BadServiceId = 9,
   /** Service code hash does not match the current one. */
   BadCodeHash = 10,
-  // TODO [ToDr]
+  /** Pre-requisite work package is missing in either recent blocks or lookup extrinsic. */
   DependencyMissing = 11,
   /** Results for the same package are in more than one report. */
   DuplicatePackage = 12,
@@ -111,15 +111,29 @@ export enum ReportsError {
   WorkReportGasTooHigh = 17,
   /** Work item has is smaller than required minimal accumulation gas of a service. */
   ServiceItemGasTooLow = 18,
-  // TODO [ToDr]
+  /** The report has too many dependencies (prerequisites and/or segment-root lookups). */
   TooManyDependencies = 19,
   /** Segment root lookup block has invalid time slot or is not found in the header chain. */
   SegmentRootLookupInvalid = 20,
   /** Signature in credentials is invalid. */
   BadSignature = 21,
-  // TODO [ToDr]
+  /** Size of authorizer output and all work-item successful output blobs is too big. */
   WorkReportTooBig = 22,
 }
+
+/**
+ * `J = 8`: The maximum sum of dependency items in a work-report.
+ *
+ * https://graypaper.fluffylabs.dev/#/5f542d7/416a00416a00?v=0.6.2
+ */
+const MAX_REPORT_DEPENDENCIES = 8;
+
+/**
+ * `W_R = 48 * 2**10`: The maximum total size of all output blobs in a work-report, in octets.
+ *
+ * https://graypaper.fluffylabs.dev/#/5f542d7/41a60041aa00?v=0.6.2
+ */
+const MAX_WORK_REPORT_SIZE_BYTES = 48 * 2 ** 10;
 
 type GuarantorAssignment = {
   core: CoreIndex;
@@ -135,9 +149,16 @@ export class Reports {
   ) {}
 
   async transition(input: ReportsInput): Promise<Result<ReportsOutput, ReportsError>> {
+    // verify ordering of work reports.
     const reportsOrderResult = this.verifyReportsOrder(input.guarantees);
     if (reportsOrderResult.isError) {
       return reportsOrderResult;
+    }
+
+    // check some basic reports validity
+    const reportsValidity = this.verifyReportsBasic(input.guarantees);
+    if (reportsValidity.isError) {
+      return reportsValidity;
     }
 
     // verifying credentials for all the work reports
@@ -170,26 +191,31 @@ export class Reports {
     }
 
     return Result.ok({
-      reported: [],
+      reported: contextualValidity.ok,
       // TODO [ToDr] can there be duplicates?
       reporters: asKnownSize(signaturesToVerify.ok.map((x) => x.key)),
     });
   }
 
-  verifyContextualValidity(input: ReportsInput): Result<OK, ReportsError> {
+  verifyContextualValidity(input: ReportsInput): Result<WorkPackageInfo[], ReportsError> {
     const contexts: RefineContext[] = [];
-    const workPackageHashes = new HashSet<WorkPackageHash>();
+    // hashes of work packages reported in this extrinsic
+    const currentWorkPackages = new HashDictionary<WorkPackageHash, ExportsRootHash>();
+    const prerequisiteHashes = HashSet.new<WorkPackageHash>();
+    const segmentRootLookupHashes = HashSet.new<WorkPackageHash>();
 
     for (const guaranteeView of input.guarantees) {
       const guarantee = guaranteeView.materialize();
       contexts.push(guarantee.report.context);
-      workPackageHashes.insert(guarantee.report.workPackageSpec.hash);
+      currentWorkPackages.set(guarantee.report.workPackageSpec.hash, guarantee.report.workPackageSpec.exportsRoot);
+      prerequisiteHashes.insertAll(guarantee.report.context.prerequisites);
+      segmentRootLookupHashes.insertAll(guarantee.report.segmentRootLookup.map((x) => x.workPackageHash));
 
       for (const result of guarantee.report.results) {
         // TODO [ToDr] [opti] We should have a dictionary here rather than do slow lookups.
         const service = this.state.services.find((x) => x.id === result.serviceId);
         if (service === undefined) {
-          return Result.error(ReportsError.BadServiceId);
+          return Result.error(ReportsError.BadServiceId, `No service with id: ${result.serviceId}`);
         }
 
         // check service code hash
@@ -209,7 +235,7 @@ export class Reports {
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/151f01152101
      */
-    if (workPackageHashes.size !== input.guarantees.length) {
+    if (currentWorkPackages.size !== input.guarantees.length) {
       return Result.error(ReportsError.DuplicatePackage, "Duplicate work package detected.");
     }
 
@@ -219,15 +245,114 @@ export class Reports {
       return contextResult;
     }
 
-    const workPackagesResult = this.verifyWorkPackageHashes(workPackageHashes);
-    if (workPackagesResult.isError) {
-      return workPackagesResult;
+    const uniquenessResult = this.verifyWorkPackagesUniqueness(HashSet.fromDictionary(currentWorkPackages));
+    if (uniquenessResult.isError) {
+      return uniquenessResult;
+    }
+
+    // construct dictionary of recently-reported work packages and their segment roots
+    const recentlyReported = new HashDictionary<WorkPackageHash, ExportsRootHash>();
+    for (const recentBlock of this.state.recentBlocks) {
+      // TODO [ToDr] [opti] we should have a dictionary in the state already
+      for (const reported of recentBlock.reported) {
+        recentlyReported.set(reported.workPackageHash, reported.segmentTreeRoot);
+      }
+    }
+
+    // Verify pre-requisites
+    const prerequisitesResult = this.verifyDependencies({
+      currentWorkPackages,
+      recentlyReported,
+      // TODO [ToDr] merge the two into `dependencies`?
+      prerequisiteHashes,
+      segmentRootLookupHashes,
+    });
+    if (prerequisitesResult.isError) {
+      return prerequisitesResult;
+    }
+
+    // check that every item in report.segmentRootLookup
+    // is matching the mapping in:
+    // - either currently work package info
+    // - recently reported work package info
+    // (i.e. segmentRootLookup needs to be a sub-dictionary)
+    for (const gurantee of input.guarantees) {
+      const report = gurantee.materialize().report;
+      for (const lookup of report.segmentRootLookup) {
+        let root = currentWorkPackages.get(lookup.workPackageHash);
+        if (root === undefined) {
+          root = recentlyReported.get(lookup.workPackageHash);
+        }
+        if (root === undefined || !root.isEqualTo(lookup.segmentTreeRoot)) {
+          return Result.error(
+            ReportsError.SegmentRootLookupInvalid,
+            `Mismatching segment tree root for package ${lookup.workPackageHash}. Got: ${lookup.segmentTreeRoot}, expected: ${root}`,
+          );
+        }
+      }
+    }
+
+    // TODO [ToDr] More efficient into-array serialization?
+    const reported: WorkPackageInfo[] = [];
+    for (const [key, val] of currentWorkPackages) {
+      reported.push(new WorkPackageInfo(key, val));
+    }
+
+    return Result.ok(reported);
+  }
+
+  verifyDependencies({
+    currentWorkPackages,
+    recentlyReported,
+    prerequisiteHashes,
+    segmentRootLookupHashes,
+  }: {
+    currentWorkPackages: HashDictionary<WorkPackageHash, ExportsRootHash>;
+    recentlyReported: HashDictionary<WorkPackageHash, ExportsRootHash>;
+    prerequisiteHashes: HashSet<WorkPackageHash>;
+    segmentRootLookupHashes: HashSet<WorkPackageHash>;
+  }): Result<OK, ReportsError> {
+    const checkDependencies = (dependencies: HashSet<WorkPackageHash>): Result<OK, ReportsError> => {
+      /**
+       * We require that the prerequisite work-packages, if
+       * present, and any work-packages mentioned in the
+       * segment-root lookup, be either in the extrinsic or in our
+       * recent history.
+       *
+       * https://graypaper.fluffylabs.dev/#/5f542d7/15ca0115cd01
+       */
+      for (const preReqHash of dependencies) {
+        if (currentWorkPackages.has(preReqHash)) {
+          continue;
+        }
+
+        if (recentlyReported.has(preReqHash)) {
+          continue;
+        }
+
+        return Result.error(
+          ReportsError.DependencyMissing,
+          `Missing work package ${preReqHash} in current extrinsic or recent history.`,
+        );
+      }
+
+      return Result.ok(OK);
+    };
+
+    const prerequisitesResult = checkDependencies(prerequisiteHashes);
+    if (prerequisitesResult.isError) {
+      return prerequisitesResult;
+    }
+    // TODO: do the same for segmentRootLookupHashes (maybe we don't need separate set?)
+    const segmentRootResult = checkDependencies(segmentRootLookupHashes);
+    if (segmentRootResult.isError) {
+      return segmentRootResult;
     }
 
     return Result.ok(OK);
   }
 
-  verifyWorkPackageHashes(workPackageHashes: HashSet<WorkPackageHash>): Result<OK, ReportsError> {
+  verifyWorkPackagesUniqueness(workPackageHashes: HashSet<WorkPackageHash>): Result<OK, ReportsError> {
     /**
      * Make sure that the package does not appear anywhere in the pipeline.
      *
@@ -237,11 +362,11 @@ export class Reports {
     // re-computed on invalidity or we could maintain additional
     // structure that's in-sync with the state.
     // For now, for the sake of simplicity, let's compute it every time.
-    const packagesInPipeline = new HashSet();
+    const packagesInPipeline = HashSet.new();
 
     // all work packages reported in recent blocks
     for (const recentBlock of this.state.recentBlocks) {
-      packagesInPipeline.insertAll(recentBlock.reported.map((x) => x.hash));
+      packagesInPipeline.insertAll(recentBlock.reported.map((x) => x.workPackageHash));
     }
 
     // all work packages recently accumulated
@@ -274,7 +399,7 @@ export class Reports {
   }
 
   verifyRefineContexts(minLookupSlot: number, contexts: RefineContext[]): Result<OK, ReportsError> {
-    // TODO [ToDr] [opti] We should have a dictionary here rather than do slow lookups.
+    // TODO [ToDr] [opti] This could be cached and updated efficiently between runs.
     const recentBlocks = new HashDictionary<HeaderHash, BlockState>();
     for (const recentBlock of this.state.recentBlocks) {
       recentBlocks.set(recentBlock.headerHash, recentBlock);
@@ -432,6 +557,50 @@ export class Reports {
         return Result.error(
           ReportsError.WorkReportGasTooHigh,
           `Total gas too high. Got: ${totalGas.value} (ovfl: ${totalGas.overflow}), maximal: ${G_A}`,
+        );
+      }
+    }
+
+    return Result.ok(OK);
+  }
+
+  verifyReportsBasic(input: GuaranteesExtrinsicView): Result<OK, ReportsError> {
+    for (const guarantee of input) {
+      const reportView = guarantee.view().report.view();
+      /**
+       * We limit the sum of the number of items in the
+       * segment-root lookup dictionary and the number of
+       * prerequisites to J = 8:
+       */
+      const noOfPrerequisites = reportView.context.view().prerequisites.view().length;
+      const noOfSegmentRootLookups = reportView.segmentRootLookup.view().length;
+      if (noOfPrerequisites + noOfSegmentRootLookups > MAX_REPORT_DEPENDENCIES) {
+        return Result.error(
+          ReportsError.TooManyDependencies,
+          `Report at ${reportView.coreIndex.encoded()} has too many depdencies. Got ${noOfPrerequisites} + ${noOfSegmentRootLookups}, max: ${MAX_REPORT_DEPENDENCIES}`,
+        );
+      }
+
+      /**
+       * In order to ensure fair use of a block’s extrinsic space,
+       * work-reports are limited in the maximum total size of the
+       * successful output blobs together with the authorizer output
+       * blob, effectively limiting their overall size:
+       *
+       * https://graypaper.fluffylabs.dev/#/5f542d7/141d00142000?v=0.6.2
+       */
+      // adding is safe here, since the total-encoded size of the report
+      // is limited as well. Even though we just have a view, the size
+      // should have been verified earlier.
+      const authOutputSize = reportView.authorizationOutput.view().length;
+      let totalOutputsSize = 0;
+      for (const item of reportView.results.view()) {
+        totalOutputsSize += item.view().result.view().okBlob?.raw.length ?? 0;
+      }
+      if (authOutputSize + totalOutputsSize > MAX_WORK_REPORT_SIZE_BYTES) {
+        return Result.error(
+          ReportsError.WorkReportTooBig,
+          `Work report at ${reportView.coreIndex.encoded()} too big. Got ${authOutputSize} + ${totalOutputsSize}, max: ${MAX_WORK_REPORT_SIZE_BYTES}`,
         );
       }
     }

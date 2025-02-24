@@ -10,7 +10,7 @@ function key(n: number) {
 
 describe("HashSet", () => {
   it("should return true/false for keys present in the dictionary", () => {
-    const set = new HashSet();
+    const set = HashSet.new();
     set.insert(key(1));
     set.insert(key(2));
 
@@ -21,7 +21,7 @@ describe("HashSet", () => {
   });
 
   it("should insert multiple elements", () => {
-    const set = new HashSet();
+    const set = HashSet.new();
     set.insertAll([key(1), key(2)]);
 
     assert.deepStrictEqual(set.has(key(1)), true);
@@ -29,7 +29,7 @@ describe("HashSet", () => {
   });
 
   it("should remove some values", () => {
-    const dict = new HashSet();
+    const dict = HashSet.new();
     dict.insert(key(1));
     dict.insert(key(2));
     assert.deepStrictEqual(dict.has(key(1)), true);
@@ -46,10 +46,10 @@ describe("HashSet", () => {
   });
 
   it("should return intersection of two sets", () => {
-    const dict1 = new HashSet();
+    const dict1 = HashSet.new();
     dict1.insertAll([key(1), key(2)]);
 
-    const dict2 = new HashSet();
+    const dict2 = HashSet.new();
     dict2.insertAll([key(2), key(3)]);
 
     const intersect1 = Array.from(dict1.intersection(dict2));

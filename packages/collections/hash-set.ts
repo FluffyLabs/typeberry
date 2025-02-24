@@ -3,7 +3,17 @@ import { HashDictionary } from "./hash-dictionary";
 
 /** A set specialized for storing hashes. */
 export class HashSet<V extends OpaqueHash> {
-  private readonly map = new HashDictionary<V, boolean>();
+  /** Wrap given dictionary into `HashSet` api for it's keys. */
+  static fromDictionary<V extends OpaqueHash>(dict: HashDictionary<V, unknown>): HashSet<V> {
+    return new HashSet(dict);
+  }
+
+  /** Create an empty set of hashes. */
+  static new<V extends OpaqueHash>(): HashSet<V> {
+    return new HashSet();
+  }
+
+  private constructor(private readonly map = new HashDictionary<V, unknown>()) {}
 
   /** Return number of items in the set. */
   get size(): number {

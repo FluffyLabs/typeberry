@@ -1,6 +1,6 @@
-import type { CoreIndex, SegmentsRoot, WorkReportHash } from "@typeberry/block";
+import type { CoreIndex, WorkReportHash } from "@typeberry/block";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/block/crypto";
-import type { WorkPackageHash } from "@typeberry/block/work-report";
+import { WorkPackageInfo } from "@typeberry/block/work-report";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
@@ -24,28 +24,10 @@ const WorkPackageBundleCodec = codec.blob;
 
 export const STREAM_KIND = 134 as StreamKind;
 
-export class SegmentsRootMapping extends WithDebug {
-  static Codec = codec.Class(SegmentsRootMapping, {
-    workPackageHash: codec.bytes(HASH_SIZE).asOpaque(),
-    segmentsRoot: codec.bytes(HASH_SIZE).asOpaque(),
-  });
-
-  static fromCodec({ workPackageHash, segmentsRoot }: CodecRecord<SegmentsRootMapping>) {
-    return new SegmentsRootMapping(workPackageHash, segmentsRoot);
-  }
-
-  constructor(
-    public readonly workPackageHash: WorkPackageHash,
-    public readonly segmentsRoot: SegmentsRoot,
-  ) {
-    super();
-  }
-}
-
 export class WorkPackageSharingRequest extends WithDebug {
   static Codec = codec.Class(WorkPackageSharingRequest, {
     coreIndex: codec.u16.asOpaque(),
-    segmentsRootMappings: codec.sequenceVarLen(SegmentsRootMapping.Codec),
+    segmentsRootMappings: codec.sequenceVarLen(WorkPackageInfo.Codec),
   });
 
   static fromCodec({ coreIndex, segmentsRootMappings }: CodecRecord<WorkPackageSharingRequest>) {
@@ -54,7 +36,7 @@ export class WorkPackageSharingRequest extends WithDebug {
 
   constructor(
     public readonly coreIndex: CoreIndex,
-    public readonly segmentsRootMappings: SegmentsRootMapping[],
+    public readonly segmentsRootMappings: WorkPackageInfo[],
   ) {
     super();
   }
@@ -86,7 +68,7 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   constructor(
     private readonly onWorkPackage: (
       coreIndex: CoreIndex,
-      segmentsRootMappings: SegmentsRootMapping[],
+      segmentsRootMappings: WorkPackageInfo[],
       workPackageBundle: WorkPackageBundle,
     ) => Promise<{ workReportHash: WorkReportHash; signature: Ed25519Signature }>,
   ) {}
@@ -159,7 +141,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   async sendWorkPackage(
     sender: StreamSender,
     coreIndex: CoreIndex,
-    segmentsRootMappings: SegmentsRootMapping[],
+    segmentsRootMappings: WorkPackageInfo[],
     workPackageBundle: WorkPackageBundle,
   ): Promise<{ workReportHash: WorkReportHash; signature: Ed25519Signature }> {
     const request = new WorkPackageSharingRequest(coreIndex, segmentsRootMappings);

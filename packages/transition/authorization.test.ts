@@ -21,7 +21,7 @@ const h = (n: number): AuthorizerHash => Bytes.fill(HASH_SIZE, n).asOpaque();
 const used = (...data: [number, AuthorizerHash][]) => {
   const used = new Map();
   for (const [core, hash] of data) {
-    const perCore = used.get(core) ?? new HashSet();
+    const perCore = used.get(core) ?? HashSet.new();
     perCore.insert(hash);
     used.set(core, perCore);
   }

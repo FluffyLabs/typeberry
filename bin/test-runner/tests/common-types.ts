@@ -6,7 +6,6 @@ import {
   type CodeHash,
   type CoreIndex,
   type HeaderHash,
-  type SegmentsRoot,
   type ServiceGas,
   type ServiceId,
   type StateRootHash,
@@ -17,8 +16,8 @@ import { type WorkItemsCount, tryAsWorkItemsCount } from "@typeberry/block/work-
 import {
   type AuthorizerHash,
   type ExportsRootHash,
-  SegmentRootLookupItem,
   type WorkPackageHash,
+  WorkPackageInfo,
   WorkPackageSpec,
   WorkReport,
 } from "@typeberry/block/work-report";
@@ -28,13 +27,7 @@ import { FixedSizeArray } from "@typeberry/collections";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type HASH_SIZE, type OpaqueHash, WithHash, blake2b } from "@typeberry/hash";
 import { type U16, type U32, tryAsU64 } from "@typeberry/numbers";
-import {
-  AvailabilityAssignment,
-  type BlockState,
-  VALIDATOR_META_BYTES,
-  ValidatorData,
-  type WorkPackageInfo,
-} from "@typeberry/state";
+import { AvailabilityAssignment, type BlockState, VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { Bytes, BytesBlob } from "@typeberry/trie";
 import { asOpaqueType } from "@typeberry/utils";
 import { fromJson as codecFromJson } from "./codec/common";
@@ -138,20 +131,20 @@ class TestContext {
   beefy_root!: BeefyHash;
   lookup_anchor!: HeaderHash;
   lookup_anchor_slot!: TimeSlot;
-  prerequisites!: OpaqueHash[];
+  prerequisites!: WorkPackageHash[];
 }
 
 export class TestSegmentRootLookupItem {
-  static fromJson = json.object<TestSegmentRootLookupItem, SegmentRootLookupItem>(
+  static fromJson = json.object<TestSegmentRootLookupItem, WorkPackageInfo>(
     {
       work_package_hash: codecFromJson.bytes32(),
       segment_tree_root: codecFromJson.bytes32(),
     },
-    ({ work_package_hash, segment_tree_root }) => new SegmentRootLookupItem(work_package_hash, segment_tree_root),
+    ({ work_package_hash, segment_tree_root }) => new WorkPackageInfo(work_package_hash, segment_tree_root),
   );
 
   work_package_hash!: WorkPackageHash;
-  segment_tree_root!: SegmentsRoot;
+  segment_tree_root!: ExportsRootHash;
 }
 
 export class TestWorkReport {
@@ -184,7 +177,7 @@ export class TestWorkReport {
   core_index!: CoreIndex;
   authorizer_hash!: AuthorizerHash;
   auth_output!: BytesBlob;
-  segment_root_lookup!: SegmentRootLookupItem[];
+  segment_root_lookup!: WorkPackageInfo[];
   results!: FixedSizeArray<WorkResult, WorkItemsCount>;
 }
 
@@ -211,10 +204,7 @@ export class TestWorkPackageInfo {
       exports_root: commonFromJson.bytes32(),
     },
     ({ hash, exports_root }) => {
-      return {
-        hash,
-        exportsRoot: exports_root,
-      };
+      return new WorkPackageInfo(hash, exports_root);
     },
   );
 

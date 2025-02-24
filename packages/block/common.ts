@@ -49,9 +49,6 @@ export type Epoch = Opaque<U32, "Epoch">;
 /** Attempt to convert a number into `Epoch`. */
 export const tryAsEpoch = (v: number): Epoch => asOpaqueType(tryAsU32(v));
 
-/** Hash of the merkle root of exported segments root of a work package. */
-export type SegmentsRoot = Opaque<OpaqueHash, "SegmentsRoot">;
-
 /** One entry of `T` per one validator. */
 export type PerValidator<T> = KnownSizeArray<T, "ValidatorsCount">;
 export function tryAsPerValidator<T>(array: T[], spec: ChainSpec): PerValidator<T> {

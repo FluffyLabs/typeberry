@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { it } from "node:test";
 
-import type { SegmentsRoot } from "@typeberry/block";
+import type { ExportsRootHash } from "@typeberry/block/work-report";
 import { BytesBlob } from "@typeberry/bytes";
 import { decodeData, encodeData } from "@typeberry/erasure-coding";
 import { type FromJson, json } from "@typeberry/json-parser";
@@ -31,7 +31,7 @@ export class PageProof {
 
   data!: BytesBlob;
   page_proofs!: BytesBlob[];
-  segments_root!: SegmentsRoot;
+  segments_root!: ExportsRootHash;
 }
 
 export class SegmentEc {
@@ -51,7 +51,7 @@ export class SegmentEcTest {
 
   data!: BytesBlob;
   segments!: SegmentEc[];
-  segments_root!: SegmentsRoot;
+  segments_root!: ExportsRootHash;
 }
 
 export class SegmentRoot {
