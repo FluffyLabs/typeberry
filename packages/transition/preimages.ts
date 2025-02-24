@@ -145,5 +145,6 @@ export function getLookupHistoryItem(
   hash: PreimageHash,
   length: number,
 ): LookupHistoryItem | undefined {
+  // TODO [ToDr] [opti] avoid linear lookup. Most likely we should decode state into a dictionary here.
   return lookupHistory.find((item) => item.hash.isEqualTo(hash) && item.length === length);
 }
