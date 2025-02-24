@@ -10,7 +10,8 @@
     "@noble/curves": "^1.6.0",
     "@typeberry/block": "0.0.1",
     "@typeberry/bytes": "0.0.1",
-    "@typeberry/utils": "0.0.1"
+    "@typeberry/utils": "0.0.1",
+    "ed25519-wasm": "github:fluffylabs/ed25519-wasm#bd00c180230eff5614cff0f62181357c8d58c5f6"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0"
