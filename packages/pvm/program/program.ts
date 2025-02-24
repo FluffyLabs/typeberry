@@ -1,4 +1,4 @@
-import { type Memory, MemoryBuilder } from "@typeberry/pvm-interpreter/memory";
+import { Memory, MemoryBuilder } from "@typeberry/pvm-interpreter/memory";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
@@ -27,6 +27,12 @@ export class Program {
     const memory = memoryBuilder.finalize(heapStart, heapEnd);
 
     return new Program(code, regs, memory);
+  }
+
+  static fromGeneric(rawProgram: Uint8Array) {
+    const regs = new Registers();
+    const memory = new Memory();
+    return new Program(rawProgram, regs, memory);
   }
 
   private constructor(

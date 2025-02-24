@@ -67,15 +67,14 @@ export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {
   decoder.finish();
 
   const readonlyDataStart = SEGMENT_SIZE;
-  const readonlyDataEnd = SEGMENT_SIZE + readOnlyLength;
-  const readOnlyZerosEnd = SEGMENT_SIZE + alignToPageSize(readOnlyLength);
+  const readonlyDataEnd = SEGMENT_SIZE + alignToPageSize(readOnlyLength);
   const heapDataStart = 2 * SEGMENT_SIZE + alignToSegmentSize(readOnlyLength);
-  const heapDataEnd = heapDataStart + heapLength;
+  const heapDataEnd = heapDataStart + alignToPageSize(heapLength);
   const heapZerosEnd = heapDataStart + alignToPageSize(heapLength) + noOfHeapZerosPages * PAGE_SIZE;
   const stackStart = STACK_SEGMENT - alignToPageSize(stackSize);
   const stackEnd = STACK_SEGMENT;
   const argsStart = ARGS_SEGMENT;
-  const argsEnd = argsStart + argsLength;
+  const argsEnd = argsStart + alignToPageSize(argsLength);
   const argsZerosEnd = argsEnd + alignToPageSize(argsLength);
 
   function nonEmpty(s: MemorySegment | false): s is MemorySegment {
@@ -84,7 +83,6 @@ export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {
 
   const readableMemory = [
     readOnlyLength > 0 && getMemorySegment(readonlyDataStart, readonlyDataEnd, readOnlyMemory),
-    readonlyDataEnd < readOnlyZerosEnd && getMemorySegment(readonlyDataEnd, readOnlyZerosEnd),
     argsLength > 0 && getMemorySegment(argsStart, argsEnd, args),
     argsEnd < argsZerosEnd && getMemorySegment(argsEnd, argsZerosEnd),
   ].filter(nonEmpty);

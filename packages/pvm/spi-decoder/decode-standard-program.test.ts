@@ -46,16 +46,15 @@ describe("decodeStandardProgram", () => {
     const expectedMemory = [
       {
         start: 65536,
-        end: 65540,
+        end: 69632,
         data: O,
       },
-      { start: 65540, end: 69632, data: null },
       {
         start: 4278124544,
-        end: 4278124547,
+        end: 4278128640,
         data: ARGS,
       },
-      { start: 4278124547, end: 4278128643, data: null },
+      { start: 4278128640, end: 4278132736, data: null },
     ].map(MemorySegment.from);
 
     assert.deepStrictEqual(decodedProgram.memory.readable, expectedMemory);
@@ -63,8 +62,8 @@ describe("decodeStandardProgram", () => {
 
   it("should prepare writeable memory segments", () => {
     const expectedMemory = [
-      { start: 196608, end: 196610, data: W },
-      { start: 196610, end: 212992, data: null },
+      { start: 196608, end: 200704, data: W },
+      { start: 200704, end: 212992, data: null },
       { start: 4278054912, end: 4278059008, data: null },
     ].map(MemorySegment.from);
 
