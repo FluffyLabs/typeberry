@@ -12,25 +12,21 @@ export function asKnownSize<T, F extends string>(data: T[]): KnownSizeArray<T, F
 export class FixedSizeArray<T, N extends number> extends Array<T> {
   public readonly fixedLength: N;
 
-  private constructor(...args: T[]) {
-    super(...args);
+  private constructor(len: N) {
+    super(len);
     // NOTE [ToDr] we know this is going to be set corrrectly,
     // because the constructor is private (it has to be for things like `map`
     // to work correctly) and we only invoke it in the `new` static function.
-    this.fixedLength = args.length as N;
+    this.fixedLength = len;
   }
 
   static new<T, N extends number>(data: T[], len: N): FixedSizeArray<T, N> {
     check(data.length === len, `Expected an array of size: ${len}, got: ${data.length}`);
 
-    let arr: FixedSizeArray<T, N>;
+    const arr = new FixedSizeArray<T, N>(len);
 
-    if (data.length === 1 && typeof data[0] === "number") {
-      // handling the special case when the only item is a number (n) and hence would create an array of n undefined entries
-      arr = new FixedSizeArray<T, N>();
-      arr.push(data[0]);
-    } else {
-      arr = new FixedSizeArray<T, N>(...data);
+    for (let i = 0; i < len; i++) {
+      arr[i] = data[i];
     }
 
     Object.seal(arr);
