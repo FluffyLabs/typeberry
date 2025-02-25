@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { type TimeSlot, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
-import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
+import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage";
 import { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { type OpaqueHash, blake2b } from "@typeberry/hash";
@@ -9,7 +9,6 @@ import type { U32 } from "@typeberry/numbers";
 import {
   type Account,
   LookupHistoryItem,
-  type PreimageHash,
   Preimages,
   type PreimagesErrorCode,
   tryAsLookupHistorySlots,
