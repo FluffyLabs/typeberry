@@ -21,7 +21,7 @@ export type Input<T extends BytesBlob> = {
 /**
  * Verify the entire batch of `ed25519` signatures and return the results.
  */
-export async function verifyWasm<T extends BytesBlob>(input: Input<T>[]): Promise<boolean[]> {
+export async function verify<T extends BytesBlob>(input: Input<T>[]): Promise<boolean[]> {
   if (input.length === 0) {
     return Promise.resolve([]);
   }
@@ -40,10 +40,10 @@ export async function verifyWasm<T extends BytesBlob>(input: Input<T>[]): Promis
 /**
  * Verify the entire batch of `ed25519` signatures and return the results.
  *
- * This function is faster than `verifyWasm` but it is not safe.
+ * This function is faster than `verify` but it is not safe.
  * See "Batch verification" at the bottom here: https://crates.io/crates/ed25519-dalek
  */
-export function verifyWasmBatch<T extends BytesBlob>(input: Input<T>[]): boolean {
+export function verifyBatch<T extends BytesBlob>(input: Input<T>[]): boolean {
   if (input.length === 0) {
     return true;
   }

@@ -155,7 +155,7 @@ export class Assurances {
         message: signingPayload(v.anchor.encoded(), v.bitfield.encoded()),
       });
     }
-    const signaturesValid = await ed25519.verifyWasm(signatures);
+    const signaturesValid = await ed25519.verify(signatures);
 
     const isAllSignaturesValid = signaturesValid.every((x) => x);
     if (!isAllSignaturesValid) {

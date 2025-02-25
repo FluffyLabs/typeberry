@@ -61,13 +61,13 @@ module.exports = () =>
     }),
 
     add("wasm lib", async () => {
-      const result = await ed25519.verifyWasm(data);
+      const result = await ed25519.verify(data);
       const isCorrect = result.every((x) => x);
       return isCorrect;
     }),
 
     add("wasm lib batch", () => {
-      const isCorrect = ed25519.verifyWasmBatch(data);
+      const isCorrect = ed25519.verifyBatch(data);
       return isCorrect;
     }),
 
