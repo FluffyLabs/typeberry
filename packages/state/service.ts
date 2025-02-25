@@ -1,7 +1,8 @@
 import type { CodeHash, ServiceId } from "@typeberry/block";
+import type { PreimageHash } from "@typeberry/block/preimage";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
+import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import { WithDebug, asOpaqueType } from "@typeberry/utils";
@@ -81,7 +82,7 @@ export class ServiceAccountInfo extends WithDebug {
 
 export class PreimageItem extends WithDebug {
   static Codec = codec.Class(PreimageItem, {
-    hash: codec.bytes(HASH_SIZE),
+    hash: codec.bytes(HASH_SIZE).asOpaque(),
     blob: codec.blob,
   });
 
@@ -90,7 +91,7 @@ export class PreimageItem extends WithDebug {
   }
 
   constructor(
-    readonly hash: OpaqueHash,
+    readonly hash: PreimageHash,
     readonly blob: BytesBlob,
   ) {
     super();
