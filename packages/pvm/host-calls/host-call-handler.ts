@@ -37,7 +37,7 @@ export interface HostCallHandler {
   /** Index of that host call (i.e. what PVM invokes via `ecalli`) */
   readonly index: HostCallIndex;
 
-  /** The gas cost of invokation of that host call. */
+  /** The gas cost of invocation of that host call. */
   readonly gasCost: SmallGas | ((reg: Registers) => Gas);
 
   /** Currently executing service id. */
