@@ -12,6 +12,7 @@ import {
   type StateRootHash,
   type TimeSlot,
 } from "@typeberry/block";
+import type { PreimageHash } from "@typeberry/block/preimage";
 import { type BeefyHash, RefineContext } from "@typeberry/block/refine-context";
 import { type WorkItemsCount, tryAsWorkItemsCount } from "@typeberry/block/work-package";
 import {
@@ -295,7 +296,7 @@ export class TestPreimageItem {
     ({ hash, blob }) => new PreimageItem(hash, blob),
   );
 
-  hash!: OpaqueHash;
+  hash!: PreimageHash;
   blob!: BytesBlob;
 }
 
