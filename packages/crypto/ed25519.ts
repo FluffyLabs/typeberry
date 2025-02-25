@@ -78,12 +78,10 @@ export async function verifyWasm<T extends BytesBlob>(input: Input<T>[]): Promis
     return Promise.resolve([]);
   }
 
-  const [first, ...rest] = input
-    .filter((item) => item !== undefined && item !== null)
-    .map(({ key, signature, message }) => {
-      const messageLength = message.raw.length;
-      return BytesBlob.blobFromParts(key.raw, signature.raw, Uint8Array.from([messageLength]), message.raw).raw;
-    });
+  const [first, ...rest] = input.map(({ key, signature, message }) => {
+    const messageLength = message.raw.length;
+    return BytesBlob.blobFromParts(key.raw, signature.raw, Uint8Array.from([messageLength]), message.raw).raw;
+  });
 
   const data = BytesBlob.blobFromParts(first, ...rest).raw;
 
