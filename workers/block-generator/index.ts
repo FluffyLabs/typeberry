@@ -1,5 +1,6 @@
 import { isMainThread, parentPort } from "node:worker_threads";
 
+import { setTimeout } from "node:timers/promises";
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
 import { LmdbBlocks } from "@typeberry/database-lmdb";
@@ -52,7 +53,7 @@ export async function main(channel: MessageChannelStateMachine<GeneratorInit, Ge
       const newBlock = await generator.nextEncodedBlock();
       logger.trace(`Sending block ${counter}`);
       worker.sendBlock(port, newBlock);
-      await wait(3000);
+      await setTimeout(3000);
     }
   });
 
@@ -64,9 +65,4 @@ export async function main(channel: MessageChannelStateMachine<GeneratorInit, Ge
 
 export async function spawnWorker() {
   return spawnWorkerGeneric(__dirname, logger, "ready(main)", new MainReady());
-}
-async function wait(time_ms: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, time_ms);
-  });
 }
