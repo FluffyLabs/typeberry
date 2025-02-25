@@ -12,12 +12,13 @@ export function asKnownSize<T, F extends string>(data: T[]): KnownSizeArray<T, F
 export class FixedSizeArray<T, N extends number> extends Array<T> {
   public readonly fixedLength: N;
 
-  private constructor(len: N) {
-    super(len);
+  private constructor(len: N);
+  private constructor(...data: T[]) {
+    super(...data);
     // NOTE [ToDr] we know this is going to be set corrrectly,
     // because the constructor is private (it has to be for things like `map`
     // to work correctly) and we only invoke it in the `new` static function.
-    this.fixedLength = len;
+    this.fixedLength = this.length as N;
   }
 
   static new<T, N extends number>(data: T[], len: N): FixedSizeArray<T, N> {
