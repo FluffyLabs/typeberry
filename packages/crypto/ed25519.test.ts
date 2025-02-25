@@ -6,8 +6,8 @@ import { asOpaqueType } from "@typeberry/utils";
 import { ed25519 } from ".";
 
 describe("crypto.ed25519", () => {
-  it("should verify a bunch of signatures", async () => {
-    const results = await ed25519.verify(
+  it("should verify a bunch of signatures using verifyWasm", async () => {
+    const results = await ed25519.verifyWasm(
       VALID_EXAMPLES.concat({
         ...VALID_EXAMPLES[0],
         message: BytesBlob.blobFromString("hello world"),
@@ -15,6 +15,23 @@ describe("crypto.ed25519", () => {
     );
 
     assert.deepStrictEqual(results, [true, true, false]);
+  });
+
+  it("should verify a bunch of signatures using verifyWasmBatch and return true", async () => {
+    const results = await ed25519.verifyWasmBatch(VALID_EXAMPLES);
+
+    assert.strictEqual(results, true);
+  });
+
+  it("should verify a bunch of signatures using verifyWasmBatch and return false", async () => {
+    const results = await ed25519.verifyWasmBatch(
+      VALID_EXAMPLES.concat({
+        ...VALID_EXAMPLES[0],
+        message: BytesBlob.blobFromString("hello world"),
+      }),
+    );
+
+    assert.strictEqual(results, false);
   });
 });
 
