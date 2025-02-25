@@ -1,7 +1,7 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 
-const SUPER_PEAK_STRING = BytesBlob.blobFromString("$node");
+const SUPER_PEAK_STRING = BytesBlob.blobFromString("$peak");
 
 /** Merkle Mountain Range peaks. */
 export interface MmrPeaks<H extends OpaqueHash> {
@@ -24,7 +24,7 @@ export interface MmrHasher<H extends OpaqueHash> {
 /**
  * Merkle Mountain Range.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/3aa0023aa002
+ * https://graypaper.fluffylabs.dev/#/5f542d7/3aa0023aa002?v=0.6.2
  */
 export class MerkleMountainRange<H extends OpaqueHash> {
   /** Construct an empty MMR. */
@@ -39,7 +39,7 @@ export class MerkleMountainRange<H extends OpaqueHash> {
       mmr.peaks
         .reduce((acc: Mountain<H>[], peak, index) => {
           if (peak) {
-            acc.push(Mountain.fromPeak(hasher, peak, 2 ** index));
+            acc.push(Mountain.fromPeak(peak, 2 ** index));
           }
           return acc;
         }, [])
@@ -49,13 +49,17 @@ export class MerkleMountainRange<H extends OpaqueHash> {
 
   private constructor(
     private readonly hasher: MmrHasher<H>,
-    /** Store non-empty merkle tries (mountains) ordered by ascending size. */
+    /** Store non-empty merkle tries (mountains) ordered by descending size. */
     private readonly mountains: Mountain<H>[] = [],
   ) {}
 
-  /** Append a new hash to the MMR structure. */
+  /**
+   * Append a new hash to the MMR structure.
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/3b11003b1100?v=0.6.2
+   */
   append(hash: H) {
-    let newMountain = Mountain.fromPeak(this.hasher, hash, 1);
+    let newMountain = Mountain.fromPeak(hash, 1);
 
     for (;;) {
       const last = this.mountains.pop();
@@ -70,20 +74,29 @@ export class MerkleMountainRange<H extends OpaqueHash> {
         return;
       }
 
-      newMountain = last.mergeWith(newMountain);
+      newMountain = last.mergeWith(this.hasher, newMountain);
     }
   }
 
-  /** Root of the entire structure. */
+  /**
+   * Root of the entire structure.
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/3b20013b2001?v=0.6.2
+   */
   getSuperPeakHash(): H {
     if (this.mountains.length === 0) {
       return Bytes.zero(HASH_SIZE).asOpaque();
     }
-    let lastHash = this.mountains[0].peak;
-    const length = this.mountains.length;
+    console.log(this.mountains.join("\n"));
+    const revMountains = this.mountains.slice().reverse();
+    const length = revMountains.length;
+    let lastHash = revMountains[0].peak;
+    console.log(`Starting hash: ${lastHash}`);
     for (let i = 1; i < length; i++) {
-      const mountain = this.mountains[i];
+      const mountain = revMountains[i];
+      console.log(`Hashing: ${SUPER_PEAK_STRING} ++ ${lastHash} ++ ${mountain.peak}`);
       lastHash = this.hasher.hashConcatPrepend(SUPER_PEAK_STRING, lastHash, mountain.peak);
+      console.log(`Got: ${lastHash}`);
     }
     return lastHash;
   }
@@ -113,35 +126,27 @@ export class MerkleMountainRange<H extends OpaqueHash> {
 
 /** An internal helper structure to represent a merkle trie for MMR. */
 class Mountain<H extends OpaqueHash> {
-  public readonly hasher: MmrHasher<H>;
-  public readonly size: number;
-  public readonly peak: H;
+  private constructor(
+    public readonly peak: H,
+    public readonly size: number,
+  ) {}
 
-  static fromPeak<H extends OpaqueHash>(hasher: MmrHasher<H>, peak: H, size: number) {
-    return new Mountain(hasher, peak, null, size);
+  static fromPeak<H extends OpaqueHash>(peak: H, size: number) {
+    return new Mountain(peak, size);
   }
 
-  private constructor(hasher: MmrHasher<H>, peak: H | null, children: [Mountain<H>, Mountain<H>] | null, size = 1) {
-    this.hasher = hasher;
-
-    if (peak !== null) {
-      this.peak = peak;
-      this.size = size;
-      return;
-    }
-
-    if (children !== null) {
-      const [left, right] = children;
-      this.peak = this.hasher.hashConcat(left.peak, right.peak);
-      this.size = left.size + right.size;
-      return;
-    }
-
-    throw new Error("Either peak or children need to be provided");
+  static fromChildren<H extends OpaqueHash>(hasher: MmrHasher<H>, children: [Mountain<H>, Mountain<H>]) {
+    const [left, right] = children;
+    const peak = hasher.hashConcat(left.peak, right.peak);
+    const size = left.size + right.size;
+    return new Mountain(peak, size);
   }
-
   /** Merge with another montain of the same size. */
-  mergeWith(other: Mountain<H>): Mountain<H> {
-    return new Mountain(this.hasher, null, [this, other]);
+  mergeWith(hasher: MmrHasher<H>, other: Mountain<H>): Mountain<H> {
+    return Mountain.fromChildren(hasher, [this, other]);
+  }
+
+  toString() {
+    return `${this.size} @ ${this.peak}`;
   }
 }

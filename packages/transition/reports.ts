@@ -433,7 +433,7 @@ export class Reports {
       if (!superPeakHash.isEqualTo(context.beefyRoot)) {
         return Result.error(
           ReportsError.BadBeefyMmrRoot,
-          `Invalid BEEFY super peak hash. Got: ${context.beefyRoot}, expected: ${superPeakHash}`,
+          `Invalid BEEFY super peak hash. Got: ${context.beefyRoot}, expected: ${superPeakHash}. Anchor: ${recentBlock.headerHash}`,
         );
       }
 
@@ -736,6 +736,7 @@ export class Reports {
         return maybeGuarantorAssignments;
       }
       const guarantorAssignments = maybeGuarantorAssignments.ok;
+      console.log(guarantorAssignments.map((x) => `${x.ed25519} -> ${x.core}`));
 
       /** Credentials must be ordered by their validator index. */
       let lastValidatorIndex = -1;

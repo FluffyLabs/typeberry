@@ -94,13 +94,17 @@ class TestServiceItem {
   static fromJson = json.object<TestServiceItem, Service>(
     {
       id: "number",
-      info: TestServiceInfo.fromJson,
+      data: {
+        service: TestServiceInfo.fromJson,
+      },
     },
-    ({ id, info }) => new Service(id, info),
+    ({ id, data }) => new Service(id, data.service),
   );
 
   id!: ServiceId;
-  info!: ServiceAccountInfo;
+  data!: {
+    service: ServiceAccountInfo;
+  };
 }
 
 class TestState {
@@ -112,7 +116,7 @@ class TestState {
     offenders: json.array(codecFromJson.bytes32<Ed25519Key>()),
     auth_pools: ["array", json.array(codecFromJson.bytes32())],
     recent_blocks: json.array(TestBlockState.fromJson),
-    services: json.array(TestServiceItem.fromJson),
+    accounts: json.array(TestServiceItem.fromJson),
   };
 
   avail_assignments!: Array<AvailabilityAssignment | null>;
@@ -122,7 +126,7 @@ class TestState {
   offenders!: Ed25519Key[];
   auth_pools!: OpaqueHash[][];
   recent_blocks!: BlockState[];
-  services!: TestServiceItem[];
+  accounts!: Service[];
 
   static toReportsState(pre: TestState, spec: ChainSpec): ReportsState {
     return {
@@ -141,7 +145,7 @@ class TestState {
       offenders: asOpaqueType(pre.offenders),
       authPools: tryAsPerCore(pre.auth_pools.map(asOpaqueType), spec),
       recentBlocks: asOpaqueType(pre.recent_blocks),
-      services: pre.services,
+      services: pre.accounts,
     };
   }
 }

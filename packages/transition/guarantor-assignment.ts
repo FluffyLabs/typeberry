@@ -10,6 +10,7 @@
  */
 
 import type { CoreIndex, EntropyHash, PerValidator, TimeSlot } from "@typeberry/block";
+import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type Opaque, asOpaqueType } from "@typeberry/utils";
 import { fisherYatesShuffle } from "../shuffling";
@@ -64,7 +65,7 @@ function permute(
   const coreAssignment = rotate(shuffledAssignment, shift, noOfCores);
 
   // we are sure this is PerValidator, since that's the array we create earlier.
-  return asOpaqueType(coreAssignment);
+  return asKnownSize(coreAssignment);
 }
 
 /** https://graypaper.fluffylabs.dev/#/5f542d7/14a50114a501 */

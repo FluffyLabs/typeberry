@@ -2,6 +2,7 @@
  * Utilities for tests.
  */
 import assert from "node:assert";
+import type { Result } from "./result";
 
 /** Unique symbol that can be added to a class to have it be compared by strings instead of defaults. */
 export const TEST_COMPARE_VIA_STRING: unique symbol = Symbol("compare via string");
@@ -50,6 +51,31 @@ export function deepEqual<T>(
     errors.tryAndCatch(() => {
       deepEqual(actual.toString(), expected.toString());
     }, ctx);
+    return errors.exitOrThrow();
+  }
+
+  if (isResult(actual) && isResult(expected)) {
+    if (actual.isOk && !expected.isOk) {
+      errors.tryAndCatch(() => {
+        throw new Error(`Expected OK, got ERROR: ${expected.error}: ${expected.details}`);
+      }, ctx);
+    }
+    if (!actual.isOk && expected.isOk) {
+      errors.tryAndCatch(() => {
+        throw new Error(`Got OK, Expected ERROR: ${actual.error}: ${actual.details}`);
+      }, ctx);
+    }
+    if (actual.isOk && expected.isOk) {
+      deepEqual(actual.ok, expected.ok, { context: ctx.concat(["ok"]), errorsCollector: errors, ignore });
+    }
+    if (actual.isError && expected.isError) {
+      deepEqual(actual.error, expected.error, { context: ctx.concat(["error"]), errorsCollector: errors, ignore });
+      deepEqual(actual.details, expected.details, {
+        context: ctx.concat(["details"]),
+        errorsCollector: errors,
+        ignore,
+      });
+    }
     return errors.exitOrThrow();
   }
 
@@ -158,4 +184,15 @@ function trimStack(stack = "") {
     return res[1];
   }
   return stack;
+}
+
+function isResult(x: unknown): x is Result<unknown, unknown> {
+  return (
+    x !== null &&
+    typeof x === "object" &&
+    "isOk" in x &&
+    "isError" in x &&
+    typeof x.isOk === "boolean" &&
+    typeof x.isError === "boolean"
+  );
 }

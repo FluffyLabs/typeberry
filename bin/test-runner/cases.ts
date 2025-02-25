@@ -192,7 +192,7 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
     prepRunner("erasure_coding/page_proof", PageProof.fromJson, runPageProofTest),
     prepRunner("erasure_coding/segment_ec", SegmentEcTest.fromJson, runSegmentEcTest),
     prepRunner("erasure_coding/segment_root", SegmentRoot.fromJson, runSegmentRootTest),
-    prepRunner("recent-history", HistoryTest.fromJson, runHistoryTest),
+    prepRunner("history", HistoryTest.fromJson, runHistoryTest),
     prepRunner("schema", JsonSchema.fromJson, ignoreSchemaFiles), // ignore schema files
     prepRunner("preimages", PreImagesTest.fromJson, runPreImagesTest),
     prepRunner("pvm", PvmTest.fromJson, runPvmTest),
