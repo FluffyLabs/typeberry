@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import type { ServiceId, TimeSlot } from "@typeberry/block";
-import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
+import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage";
 import { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { blake2b } from "@typeberry/hash";
@@ -10,7 +10,6 @@ import { tryAsU32 } from "@typeberry/numbers";
 import {
   type Account,
   LookupHistoryItem,
-  type PreimageHash,
   Preimages,
   PreimagesErrorCode,
   type PreimagesInput,

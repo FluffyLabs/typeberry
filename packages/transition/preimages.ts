@@ -1,13 +1,11 @@
 import type { ServiceId, TimeSlot } from "@typeberry/block";
-import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
+import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { type HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
-import { type Blake2bHash, HASH_SIZE, blake2b } from "@typeberry/hash";
+import { HASH_SIZE, blake2b } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
-import { type Opaque, Result } from "@typeberry/utils";
-
-export type PreimageHash = Opaque<Blake2bHash, "PreimageHash">;
+import { Result } from "@typeberry/utils";
 
 export type Account = {
   id: ServiceId;

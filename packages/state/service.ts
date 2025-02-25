@@ -1,4 +1,6 @@
 import type { CodeHash, ServiceId } from "@typeberry/block";
+import type { PreimageHash } from "@typeberry/block/preimage";
+import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
@@ -78,24 +80,42 @@ export class ServiceAccountInfo extends WithDebug {
   }
 }
 
+export class PreimageItem extends WithDebug {
+  static Codec = codec.Class(PreimageItem, {
+    hash: codec.bytes(HASH_SIZE).asOpaque(),
+    blob: codec.blob,
+  });
+
+  static fromCodec({ hash, blob }: CodecRecord<PreimageItem>) {
+    return new PreimageItem(hash, blob);
+  }
+
+  constructor(
+    readonly hash: PreimageHash,
+    readonly blob: BytesBlob,
+  ) {
+    super();
+  }
+}
+
 /**
  * Service dictionary entry.
  */
 export class Service extends WithDebug {
   static Codec = codec.Class(Service, {
     id: codec.u32.asOpaque(),
-    info: ServiceAccountInfo.Codec,
+    data: codec.object({ service: ServiceAccountInfo.Codec, preimages: codec.sequenceVarLen(PreimageItem.Codec) }),
   });
 
-  static fromCodec({ id, info }: CodecRecord<Service>) {
-    return new Service(id, info);
+  static fromCodec({ id, data }: CodecRecord<Service>) {
+    return new Service(id, data);
   }
 
   constructor(
     /** Service id. */
     readonly id: ServiceId,
     /** Service details. */
-    readonly info: ServiceAccountInfo,
+    readonly data: { service: ServiceAccountInfo; preimages: PreimageItem[] },
   ) {
     super();
   }

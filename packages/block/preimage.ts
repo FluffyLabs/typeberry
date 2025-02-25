@@ -1,7 +1,10 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { WithDebug } from "@typeberry/utils";
+import type { Blake2bHash } from "@typeberry/hash";
+import { type Opaque, WithDebug } from "@typeberry/utils";
 import type { ServiceId } from "./common";
+
+export type PreimageHash = Opaque<Blake2bHash, "PreimageHash">;
 
 /**
  * Service index (requester) and the data (blob).
