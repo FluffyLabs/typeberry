@@ -141,7 +141,7 @@ export class Assurances {
   /** Asynchronously verify all signatures. */
   private async verifySignatures(assurances: AssurancesExtrinsicView): Promise<Result<OK, AssurancesError>> {
     const validatorData = this.state.currentValidatorData;
-    const signatures: ed25519.Input<BytesBlob>[] = Array(assurances.length);
+    const signatures: ed25519.Input<BytesBlob>[] = [];
     for (const assurance of assurances) {
       const v = assurance.view();
       const key = validatorData[v.validatorIndex.materialize()];
@@ -160,7 +160,7 @@ export class Assurances {
     const isAllSignaturesValid = signaturesValid.every((x) => x);
     if (!isAllSignaturesValid) {
       const invalidIndices = signaturesValid.reduce(
-        (acc, isValid, idx) => (isValid ? acc : acc.concat([idx])),
+        (acc, isValid, idx) => (isValid ? acc : acc.concat(idx)),
         [] as number[],
       );
       return Result.error(AssurancesError.InvalidSignature, `invalid signatures at ${invalidIndices.join(", ")}`);
