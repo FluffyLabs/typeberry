@@ -1,5 +1,6 @@
 import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Key, type Ed25519Signature } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
+import { check } from "@typeberry/utils";
 import { verify_ed25519, verify_ed25519_batch } from "ed25519-wasm/pkg";
 
 /**
