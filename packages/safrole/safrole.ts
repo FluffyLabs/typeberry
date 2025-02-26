@@ -172,14 +172,14 @@ export class Safrole {
         const isOffender = !!postOffenders.has(validator.ed25519);
 
         /**
-         * Keys of validators that belongs to offenders are replaced with null keys
+         * Bandersnatch & ed25519 keys of validators that belongs to offenders are replaced with null keys
          *
          * https://graypaper.fluffylabs.dev/#/5f542d7/0ea2000ea200
          */
         if (isOffender) {
           return new ValidatorData(
-            Bytes.zero(32).asOpaque(),
-            Bytes.zero(32).asOpaque(),
+            Bytes.zero(BANDERSNATCH_KEY_SIZE).asOpaque(),
+            Bytes.zero(ED25519_KEY_SIZE).asOpaque(),
             validator.bls,
             validator.metadata,
           );
@@ -193,10 +193,10 @@ export class Safrole {
 
     const keys = newNextValidators.reduce(
       (acc, validator, i) => {
-        acc.set(validator.bandersnatch.raw, i * 32);
+        acc.set(validator.bandersnatch.raw, i * BANDERSNATCH_KEY_SIZE);
         return acc;
       },
-      new Uint8Array(32 * nextValidatorData.length),
+      new Uint8Array(BANDERSNATCH_KEY_SIZE * nextValidatorData.length),
     );
 
     const epochRootResult = await getRingCommitment(keys);
@@ -222,11 +222,12 @@ export class Safrole {
     const ticketsLength = tickets.length;
     const reorderedTickets = new Array<Ticket>(ticketsLength);
 
+    const middle = Math.floor(ticketsLength / 2);
     if (ticketsLength % 2 === 1) {
-      reorderedTickets[ticketsLength / 2] = tickets[ticketsLength / 2];
+      reorderedTickets[middle] = tickets[middle];
     }
 
-    for (let i = 0; i < ticketsLength / 2; i += 1) {
+    for (let i = 0; i < middle; i += 1) {
       reorderedTickets[2 * i] = tickets[i];
       reorderedTickets[2 * i + 1] = tickets[ticketsLength - i - 1];
     }
@@ -404,11 +405,7 @@ export class Safrole {
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/0f89010f8901
      */
-    if (mergedTickets.length > this.chainSpec.epochLength) {
-      return Result.ok(mergedTickets.array.slice(0, this.chainSpec.epochLength));
-    }
-
-    return Result.ok(mergedTickets.array);
+    return Result.ok(mergedTickets.array.slice(0, this.chainSpec.epochLength));
   }
 
   /**
@@ -433,26 +430,26 @@ export class Safrole {
   }
 
   /**
-   * Verify if the length of the extrinsic is incorrect
+   * Verify correctness of the ticket extrinsic length.
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/0f83000f8300
    */
-  private isExitricLengthIncorrect(timeslot: TimeSlot, extrinsic: SignedTicket[]) {
+  private isExtrinsicLengthValid(timeslot: TimeSlot, extrinsic: SignedTicket[]) {
     const slotPhase = this.getSlotPhaseIndex(timeslot);
 
     if (slotPhase < this.chainSpec.contestLength && extrinsic.length <= this.chainSpec.maxTicketsPerExtrinsic) {
-      return false;
+      return true;
     }
 
-    return extrinsic.length > 0;
+    return extrinsic.length === 0;
   }
 
   /**
-   * Verify if attempt values are incorrect
+   * Verify if attempt values are correct
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/0f23000f2400
    */
-  private areTicketAttemptsIncorrect(tickets: SignedTicket[]) {
+  private areTicketAttemptsValid(tickets: SignedTicket[]) {
     const ticketsLength = tickets.length;
     for (let i = 0; i < ticketsLength; i++) {
       if (tickets[i].attempt < 0 || tickets[i].attempt >= this.chainSpec.ticketsPerValidator) {
@@ -474,11 +471,11 @@ export class Safrole {
       return Result.error(SafroleErrorCode.BadSlot);
     }
 
-    if (this.isExitricLengthIncorrect(input.slot, input.extrinsic)) {
+    if (!this.isExtrinsicLengthValid(input.slot, input.extrinsic)) {
       return Result.error(SafroleErrorCode.UnexpectedTicket);
     }
 
-    if (this.areTicketAttemptsIncorrect(input.extrinsic)) {
+    if (!this.areTicketAttemptsValid(input.extrinsic)) {
       return Result.error(SafroleErrorCode.BadTicketAttempt);
     }
 
@@ -497,7 +494,7 @@ export class Safrole {
     newState.entropy = this.getEntropy(input.slot, input.entropy);
 
     newState.sealingKeySeries = this.getSlotKeySequence(input.slot, currentValidatorData, newState.entropy[2]);
-    const newTicketsAccumulatoResult = await this.getNewTicketAccumulator(
+    const newTicketsAccumulatorResult = await this.getNewTicketAccumulator(
       input.slot,
       input.extrinsic,
       this.state.nextValidatorData,
