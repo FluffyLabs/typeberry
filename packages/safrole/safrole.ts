@@ -400,7 +400,7 @@ export class Safrole {
     }
 
     /**
-     * Remove tickets if size of accumulator exceed E (epoch length)
+     * Remove tickets if size of accumulator exceeds E (epoch length).
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/0f89010f8901
      */
