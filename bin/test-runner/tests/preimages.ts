@@ -1,8 +1,19 @@
-import type { TimeSlot } from "@typeberry/block";
-import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
+import assert from "node:assert";
+import { type TimeSlot, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
+import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage";
 import { BytesBlob } from "@typeberry/bytes";
-import type { OpaqueHash } from "@typeberry/hash";
+import { HashDictionary } from "@typeberry/collections";
+import { type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
+import type { U32 } from "@typeberry/numbers";
+import {
+  type Account,
+  LookupHistoryItem,
+  Preimages,
+  type PreimagesErrorCode,
+  tryAsLookupHistorySlots,
+} from "@typeberry/transition";
+import { Result } from "@typeberry/utils";
 import { preimagesExtrinsicFromJson } from "./codec/preimages-extrinsic";
 import { commonFromJson } from "./common-types";
 
@@ -35,7 +46,7 @@ class TestHistoryItem {
     value: ["array", "number"],
   };
   key!: {
-    hash: OpaqueHash;
+    hash: PreimageHash;
     length: number;
   };
   value!: number[];
@@ -44,15 +55,15 @@ class TestHistoryItem {
 class TestAccountsMapEntry {
   static fromJson: FromJson<TestAccountsMapEntry> = {
     id: "number",
-    info: {
+    data: {
       preimages: json.array(TestPreimagesItem.fromJson),
-      history: json.array(TestHistoryItem.fromJson),
+      lookup_meta: json.array(TestHistoryItem.fromJson),
     },
   };
   id!: number;
-  info!: {
+  data!: {
     preimages: TestPreimagesItem[];
-    history: TestHistoryItem[];
+    lookup_meta: TestHistoryItem[];
   };
 }
 
@@ -61,10 +72,6 @@ class TestState {
     accounts: json.array(TestAccountsMapEntry.fromJson),
   };
   accounts!: TestAccountsMapEntry[];
-}
-
-enum PreimagesErrorCode {
-  PreimageUnneeded = "preimage_unneeded",
 }
 
 export class Output {
@@ -90,6 +97,54 @@ export class PreImagesTest {
   post_state!: TestState;
 }
 
-export async function runPreImagesTest(_testContent: PreImagesTest) {
-  // TODO [MaSi] Preimages tests
+export async function runPreImagesTest(testContent: PreImagesTest) {
+  const preState = {
+    accounts: new Map(
+      testContent.pre_state.accounts.map((account) => [
+        tryAsServiceId(account.id),
+        testAccountsMapEntryToAccount(account),
+      ]),
+    ),
+  };
+  const postState = {
+    accounts: new Map(
+      testContent.post_state.accounts.map((account) => [
+        tryAsServiceId(account.id),
+        testAccountsMapEntryToAccount(account),
+      ]),
+    ),
+  };
+  const preimages = new Preimages(preState);
+  const result = preimages.integrate(testContent.input);
+
+  assert.deepEqual(result, testOutputToResult(testContent.output));
+  assert.deepEqual(preimages.state, postState);
+}
+
+function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Account {
+  const preimages = new HashDictionary<PreimageHash, BytesBlob>();
+
+  for (const preimage of entry.data.preimages) {
+    preimages.set(blake2b.hashBytes(preimage.blob).asOpaque(), preimage.blob);
+  }
+
+  const lookupHistory: LookupHistoryItem[] = [];
+
+  for (const item of entry.data.lookup_meta) {
+    const slots = tryAsLookupHistorySlots(item.value.map((slot) => tryAsTimeSlot(slot)));
+
+    lookupHistory.push(new LookupHistoryItem(item.key.hash, item.key.length as U32, slots));
+  }
+
+  return {
+    id: tryAsServiceId(entry.id),
+    data: {
+      preimages,
+      lookupHistory,
+    },
+  };
+}
+
+function testOutputToResult(testOutput: Output) {
+  return testOutput.err ? Result.error(testOutput.err) : Result.ok(testOutput.ok);
 }

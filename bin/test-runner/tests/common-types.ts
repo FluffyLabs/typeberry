@@ -11,23 +11,33 @@ import {
   type StateRootHash,
   type TimeSlot,
 } from "@typeberry/block";
+import type { PreimageHash } from "@typeberry/block/preimage";
 import { type BeefyHash, RefineContext } from "@typeberry/block/refine-context";
 import { type WorkItemsCount, tryAsWorkItemsCount } from "@typeberry/block/work-package";
 import {
   type AuthorizerHash,
   type ExportsRootHash,
   type WorkPackageHash,
-  WorkPackageInfo,
   WorkPackageSpec,
   WorkReport,
+  WorkPackageInfo,
 } from "@typeberry/block/work-report";
 import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
 import { Encoder } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type HASH_SIZE, type OpaqueHash, WithHash, blake2b } from "@typeberry/hash";
-import { type U16, type U32, tryAsU64 } from "@typeberry/numbers";
-import { AvailabilityAssignment, type BlockState, VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
+import { type U16, type U32, type U64, tryAsU64 } from "@typeberry/numbers";
+import type { SmallGas } from "@typeberry/pvm-interpreter";
+import {
+  AvailabilityAssignment,
+  type BlockState,
+  PreimageItem,
+  Service,
+  ServiceAccountInfo,
+  VALIDATOR_META_BYTES,
+  ValidatorData,
+} from "@typeberry/state";
 import { Bytes, BytesBlob } from "@typeberry/trie";
 import { asOpaqueType } from "@typeberry/utils";
 import { fromJson as codecFromJson } from "./codec/common";
@@ -238,4 +248,65 @@ export class TestBlockState {
   };
   state_root!: StateRootHash;
   reported!: WorkPackageInfo[];
+}
+
+export class TestServiceInfo {
+  static fromJson = json.object<TestServiceInfo, ServiceAccountInfo>(
+    {
+      code_hash: commonFromJson.bytes32(),
+      balance: json.fromNumber((x) => tryAsU64(x)),
+      min_item_gas: "number",
+      min_memo_gas: "number",
+      bytes: json.fromNumber((x) => tryAsU64(x)),
+      items: "number",
+    },
+    ({ code_hash, balance, min_item_gas, min_memo_gas, bytes, items }) => {
+      const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(items, bytes);
+      return ServiceAccountInfo.fromCodec({
+        codeHash: code_hash,
+        balance,
+        thresholdBalance,
+        accumulateMinGas: min_item_gas,
+        onTransferMinGas: min_memo_gas,
+        storageUtilisationBytes: bytes,
+        storageUtilisationCount: items,
+      });
+    },
+  );
+
+  code_hash!: CodeHash;
+  balance!: U64;
+  min_item_gas!: SmallGas;
+  min_memo_gas!: SmallGas;
+  bytes!: U64;
+  items!: U32;
+}
+
+export class TestPreimageItem {
+  static fromJson = json.object<TestPreimageItem, PreimageItem>(
+    {
+      hash: commonFromJson.bytes32(),
+      blob: json.fromString(BytesBlob.parseBlob),
+    },
+    ({ hash, blob }) => new PreimageItem(hash, blob),
+  );
+
+  hash!: PreimageHash;
+  blob!: BytesBlob;
+}
+
+export class TestAccountItem {
+  static fromJson = json.object<TestAccountItem, Service>(
+    {
+      id: "number",
+      data: {
+        service: TestServiceInfo.fromJson,
+        preimages: json.optional(json.array(TestPreimageItem.fromJson)),
+      },
+    },
+    ({ id, data }) => new Service(id, { service: data.service, preimages: data.preimages ?? [] }),
+  );
+
+  id!: ServiceId;
+  data!: { service: ServiceAccountInfo; preimages?: TestPreimageItem[] };
 }

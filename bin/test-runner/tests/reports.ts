@@ -22,9 +22,9 @@ import {
   type BlockState,
   ENTROPY_ENTRIES,
   Service,
-  ServiceAccountInfo,
   type ValidatorData,
   tryAsPerCore,
+  ServiceAccountInfo,
 } from "@typeberry/state";
 import {
   Reports,
@@ -36,7 +36,13 @@ import {
 import { Result, asOpaqueType, deepEqual } from "@typeberry/utils";
 import { fromJson as codecFromJson } from "./codec/common";
 import { guaranteesExtrinsicFromJson } from "./codec/guarantees-extrinsic";
-import { TestAvailabilityAssignment, TestBlockState, TestSegmentRootLookupItem, commonFromJson } from "./common-types";
+import {
+  TestAccountItem,
+  TestAvailabilityAssignment,
+  TestBlockState,
+  TestSegmentRootLookupItem,
+  commonFromJson,
+} from "./common-types";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -58,54 +64,6 @@ class Input {
   }
 }
 
-class TestServiceInfo {
-  static fromJson = json.object<TestServiceInfo, ServiceAccountInfo>(
-    {
-      code_hash: commonFromJson.bytes32(),
-      balance: json.fromNumber((x) => tryAsU64(x)),
-      min_item_gas: "number",
-      min_memo_gas: "number",
-      bytes: json.fromNumber((x) => tryAsU64(x)),
-      items: "number",
-    },
-    ({ code_hash, balance, min_item_gas, min_memo_gas, bytes, items }) => {
-      const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(items, bytes);
-      return ServiceAccountInfo.fromCodec({
-        codeHash: code_hash,
-        balance,
-        thresholdBalance,
-        accumulateMinGas: min_item_gas,
-        onTransferMinGas: min_memo_gas,
-        storageUtilisationBytes: bytes,
-        storageUtilisationCount: items,
-      });
-    },
-  );
-
-  code_hash!: CodeHash;
-  balance!: U64;
-  min_item_gas!: SmallGas;
-  min_memo_gas!: SmallGas;
-  bytes!: U64;
-  items!: U32;
-}
-
-class TestServiceItem {
-  static fromJson = json.object<TestServiceItem, Service>(
-    {
-      id: "number",
-      data: {
-        service: TestServiceInfo.fromJson,
-      },
-    },
-    ({ id, data }) => new Service(id, data.service),
-  );
-
-  id!: ServiceId;
-  data!: {
-    service: ServiceAccountInfo;
-  };
-}
 
 class TestState {
   static fromJson: FromJson<TestState> = {
@@ -116,7 +74,7 @@ class TestState {
     offenders: json.array(codecFromJson.bytes32<Ed25519Key>()),
     auth_pools: ["array", json.array(codecFromJson.bytes32())],
     recent_blocks: json.array(TestBlockState.fromJson),
-    accounts: json.array(TestServiceItem.fromJson),
+    accounts: json.array(TestAccountItem.fromJson),
   };
 
   avail_assignments!: Array<AvailabilityAssignment | null>;

@@ -7,6 +7,7 @@ import test from "node:test";
 import { tinyChainSpec } from "@typeberry/config";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
+import { AccumulateTest, runAccumulateTest } from "./tests/accumulate";
 import {
   AssurancesTestFull,
   AssurancesTestTiny,
@@ -171,6 +172,7 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
   }
 
   const runners = [
+    prepRunner("accumulate", AccumulateTest.fromJson, runAccumulateTest),
     prepRunner("assurances/tiny", AssurancesTestTiny.fromJson, runAssurancesTestTiny),
     prepRunner("assurances/full", AssurancesTestFull.fromJson, runAssurancesTestFull),
     prepRunner("authorizations", AuthorizationsTest.fromJson, runAuthorizationsTest),

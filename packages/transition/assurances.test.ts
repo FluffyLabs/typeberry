@@ -155,7 +155,7 @@ describe("Assurances", () => {
         isOk: false,
         isError: true,
         error: AssurancesError.InvalidSignature,
-        details: "invalid signatures at 1",
+        details: "invalid signatures at 0",
       },
       { context: "result" },
     );

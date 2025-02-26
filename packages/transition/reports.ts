@@ -220,10 +220,10 @@ export class Reports {
 
         // check service code hash
         // https://graypaper.fluffylabs.dev/#/5f542d7/154b02154b02
-        if (!result.codeHash.isEqualTo(service.info.codeHash)) {
+        if (!result.codeHash.isEqualTo(service.data.service.codeHash)) {
           return Result.error(
             ReportsError.BadCodeHash,
-            `Service (${result.serviceId}) code hash mismatch. Got: ${result.codeHash}, expected: ${service.info.codeHash}`,
+            `Service (${result.serviceId}) code hash mismatch. Got: ${result.codeHash}, expected: ${service.data.service.codeHash}`,
           );
         }
       }
@@ -544,10 +544,10 @@ export class Reports {
         }
 
         // check minimal accumulation gas
-        if (result.gas < service.info.accumulateMinGas) {
+        if (result.gas < service.data.service.accumulateMinGas) {
           return Result.error(
             ReportsError.ServiceItemGasTooLow,
-            `Service (${result.serviceId}) gas is less than minimal. Got: ${result.gas}, expected at least: ${service.info.accumulateMinGas}`,
+            `Service (${result.serviceId}) gas is less than minimal. Got: ${result.gas}, expected at least: ${service.data.service.accumulateMinGas}`,
           );
         }
       }

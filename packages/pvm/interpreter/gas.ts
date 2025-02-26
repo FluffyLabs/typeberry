@@ -31,7 +31,7 @@ export interface GasCounter {
   /** Return remaining gas. */
   get(): Gas;
 
-  /** Overwite remaining gas. Prefer sub method instead. */
+  /** Overwrite remaining gas. Prefer sub method instead. */
   set(g: Gas): void;
 
   /** Returns true if there was an underflow. */

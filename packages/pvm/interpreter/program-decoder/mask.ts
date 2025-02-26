@@ -1,5 +1,16 @@
 import { BitVec } from "@typeberry/bytes";
 import { check } from "@typeberry/utils";
+
+/**
+ * In GP it is 24 but our implementation returns skip(n) + 1
+ */
+const MAX_INSTRUCTION_DISTANCE = 25;
+
+/**
+ * Mask class is an implementation of skip function defined in GP.
+ *
+ * https://graypaper.fluffylabs.dev/#/5f542d7/237201239801
+ */
 export class Mask {
   /**
    * The lookup table will have `0` at the index which corresponds to an instruction on the same index in the bytecode.
@@ -27,7 +38,7 @@ export class Mask {
 
   getNoOfBytesToNextInstruction(index: number) {
     check(index >= 0, `index (${index}) cannot be a negative number`);
-    return this.lookupTableForward[index] ?? 0;
+    return Math.min(this.lookupTableForward[index] ?? 0, MAX_INSTRUCTION_DISTANCE);
   }
 
   getNoOfBytesToPreviousInstruction(index: number) {
@@ -36,7 +47,7 @@ export class Mask {
       index < this.lookupTableBackward.length,
       `index (${index}) cannot be bigger than ${this.lookupTableBackward.length - 1}`,
     );
-    return this.lookupTableBackward[index];
+    return Math.min(this.lookupTableBackward[index], MAX_INSTRUCTION_DISTANCE);
   }
 
   private buildLookupTableForward(mask: BitVec) {

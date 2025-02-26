@@ -8,7 +8,7 @@ import type { AccumulationPartialState } from "./partial-state";
 /**
  * Checkpoint the partial state.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/312503312503
+ * https://graypaper.fluffylabs.dev/#/4bb8fd2/311502311502
  */
 export class Checkpoint implements HostCallHandler {
   index = tryAsHostCallIndex(8);
@@ -20,7 +20,7 @@ export class Checkpoint implements HostCallHandler {
   constructor(private readonly partialState: AccumulationPartialState) {}
 
   async execute(gas: GasCounter, regs: Registers): Promise<undefined | PvmExecution> {
-    this.gasHostCall.execute(gas, regs);
+    await this.gasHostCall.execute(gas, regs);
     this.partialState.checkpoint();
     return;
   }

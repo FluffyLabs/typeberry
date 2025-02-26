@@ -1,6 +1,7 @@
 import { isMainThread } from "node:worker_threads";
 import { Logger } from "@typeberry/logger";
 
+import { setTimeout } from "node:timers/promises";
 import * as blockGenerator from "@typeberry/block-generator";
 import { Config, tinyChainSpec } from "@typeberry/config";
 import type { Finished } from "@typeberry/generic-worker";
@@ -45,7 +46,7 @@ export async function main() {
     });
 
     // Just a dummy timer, to give some time to generate blocks.
-    await wait(5 * 60);
+    await setTimeout(5 * 60 * 1000);
 
     // Send a finish signal to the block generator.
     const generatorFinished = generatorReady.transition((ready, port) => {
@@ -63,8 +64,4 @@ export async function main() {
     logger.error("The main binary cannot be running as a Worker!");
     return;
   }
-}
-
-function wait(seconds: number) {
-  return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 }

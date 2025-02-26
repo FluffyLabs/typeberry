@@ -8,7 +8,7 @@ import { CURRENT_SERVICE_ID } from "./utils";
  *
  * NOTE it should be the gas left is AFTER this function is invoked.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/2f87012f8701
+ * https://graypaper.fluffylabs.dev/#/4bb8fd2/2f84012f8401
  */
 export class Gas implements HostCallHandler {
   index = tryAsHostCallIndex(0);
@@ -17,11 +17,8 @@ export class Gas implements HostCallHandler {
 
   execute(gas: GasCounter, regs: Registers): Promise<undefined | PvmExecution> {
     const bigGas = BigInt(gas.get());
-    const upper = bigGas >> 32n;
-    const lower = bigGas & 0xffffffffn;
 
-    regs.setU32(7, Number(lower));
-    regs.setU32(8, Number(upper));
+    regs.setU64(7, bigGas);
 
     return Promise.resolve(undefined);
   }

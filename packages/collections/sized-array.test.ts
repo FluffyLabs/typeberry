@@ -40,4 +40,12 @@ describe("FixedSizeArray", () => {
     arr[3] = 6;
     assert.strictEqual(arr[3], 6);
   });
+
+  it("should not create an array of undefined items if the only item passed as data is a number", () => {
+    const data = [20];
+    const arr = FixedSizeArray.new(data, 1);
+
+    assert.strictEqual(arr[0], 20);
+    assert.strictEqual(arr.length, 1);
+  });
 });

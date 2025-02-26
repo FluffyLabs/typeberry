@@ -1,6 +1,6 @@
 /** A type that can be read from a JSON-parsed object. */
 export type FromJson<T> = T extends (infer U)[]
-  ? ["array", FromJson<U>]
+  ? ["array", FromJson<U> | Parser<unknown, U[]>]
   : // parse a string from JSON into expected type
       | FromJsonWithParser<string, T>
       // parse a number from JSON into expected type

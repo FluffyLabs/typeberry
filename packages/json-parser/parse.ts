@@ -33,6 +33,11 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
     // an array type
     if (type === "array") {
       const expectedType = jsonDescription[1];
+
+      if (typeof expectedType === "function") {
+        return expectedType(jsonType, context) as T;
+      }
+
       if (!Array.isArray(jsonType)) {
         throw new Error(`[${context}] Expected array, got ${jsonType}`);
       }

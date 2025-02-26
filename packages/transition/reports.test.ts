@@ -878,17 +878,20 @@ function newAvailabilityAssignment({ core, timeout }: { core: number; timeout: n
 const initialServices = ({ withDummyCodeHash = false } = {}): Service[] => [
   new Service(
     tryAsServiceId(129),
-    ServiceAccountInfo.fromCodec({
-      codeHash: withDummyCodeHash
-        ? Bytes.fill(HASH_SIZE, 1).asOpaque()
-        : Bytes.parseBytes("0x8178abf4f459e8ed591be1f7f629168213a5ac2a487c28c0ef1a806198096c7a", HASH_SIZE).asOpaque(),
-      balance: tryAsU64(0),
-      thresholdBalance: tryAsU64(0),
-      accumulateMinGas: tryAsGas(10_000),
-      onTransferMinGas: tryAsGas(0),
-      storageUtilisationBytes: tryAsU64(1),
-      storageUtilisationCount: tryAsU32(1),
-    }),
+    {
+      preimages: [],
+      service: ServiceAccountInfo.fromCodec({
+        codeHash: withDummyCodeHash
+          ? Bytes.fill(HASH_SIZE, 1).asOpaque()
+          : Bytes.parseBytes("0x8178abf4f459e8ed591be1f7f629168213a5ac2a487c28c0ef1a806198096c7a", HASH_SIZE).asOpaque(),
+          balance: tryAsU64(0),
+          thresholdBalance: tryAsU64(0),
+          accumulateMinGas: tryAsGas(10_000),
+          onTransferMinGas: tryAsGas(0),
+          storageUtilisationBytes: tryAsU64(1),
+          storageUtilisationCount: tryAsU32(1),
+      }),
+    }
   ),
 ];
 
