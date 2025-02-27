@@ -143,7 +143,7 @@ describe("Safrole", () => {
     const state: SafroleState = {
       timeslot: 1 as TimeSlot,
       entropy: FixedSizeArray.new(
-        [Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque()],
+        [Bytes.zero(HASH_SIZE).asOpaque(), Bytes.zero(HASH_SIZE).asOpaque(), Bytes.zero(HASH_SIZE).asOpaque(), Bytes.zero(HASH_SIZE).asOpaque()],
         4,
       ),
       previousValidatorData: [] as unknown as PerValidator<ValidatorData>,

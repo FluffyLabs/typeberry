@@ -93,13 +93,11 @@ export class Safrole {
     private chainSpec: ChainSpec,
   ) {}
 
-  /**
-   * e' > e
-   */
+  /** `e' > e` */
   private isEpochChanged(timeslot: TimeSlot): boolean {
-    const previousEpoch = Math.floor(this.state.timeslot / this.chainSpec.epochLength);
-    const currentEpoch = Math.floor(timeslot / this.chainSpec.epochLength);
-    return currentEpoch > previousEpoch;
+    const stateEpoch = Math.floor(this.state.timeslot / this.chainSpec.epochLength);
+    const blockEpoch = Math.floor(timeslot / this.chainSpec.epochLength);
+    return blockEpoch > stateEpoch;
   }
 
   /**
@@ -245,9 +243,7 @@ export class Safrole {
     const result: BandersnatchKey[] = [];
     const validatorsCount = newValidators.length;
     for (let i = 0; i < epochLength; i++) {
-      const encoder = Encoder.create();
-      encoder.i32(i);
-      const iAsBytes = encoder.viewResult().raw;
+      const iAsBytes = i32AsLittleEndian(i);
       const bytes = blake2b.hashBlobs([entropy.raw, iAsBytes]).raw;
       const decoder = Decoder.fromBlob(bytes);
       const validatorIndex = decoder.u32() % validatorsCount;

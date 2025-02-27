@@ -11,7 +11,7 @@ enum ResultValues {
   Error = 1,
 }
 
-export async function getRingCommitment(keys: Uint8Array): Promise<Result<BandersnatchRingRoot, undefined>> {
+export async function getRingCommitment(keys: Uint8Array): Promise<Result<BandersnatchRingRoot, null>> {
   const commitmentResult = await ring_commitment(keys);
 
   if (commitmentResult[RESULT_INDEX] === ResultValues.Error) {
@@ -27,7 +27,7 @@ export async function verifyTickets(
   keys: Uint8Array,
   tickets: SignedTicket[],
   entropy: EntropyHash,
-): Promise<{ isValid: boolean; entropyHash: Bytes<32> }[]> {
+): Promise<{ isValid: boolean; entropyHash: EntropyHash }[]> {
   const contextLength = entropy.length + X_T.length + 1;
 
   const ticketsData = BytesBlob.blobFromParts(
