@@ -114,10 +114,35 @@ export function sumU32(...values: U32[]) {
 }
 
 /**
- * Transform provided number to little-endian representation.
+ * Transform provided U16 number to little-endian representation.
+ */
+export function u16AsLeBytes(value: U16): Uint8Array {
+  return new Uint8Array([value & 0xff, (value >> 8) & 0xff]);
+}
+
+/**
+ * Transform provided U32 number to little-endian representation.
  */
 export function u32AsLeBytes(value: U32): Uint8Array {
   return new Uint8Array([value & 0xff, (value >> 8) & 0xff, (value >> 16) & 0xff, (value >> 24) & 0xff]);
+}
+
+/**
+ * Transform provided U64 number to little-endian representation.
+ */
+export function u64AsLeBytes(value: U64): Uint8Array {
+  const lower = Number(value & 0xffff_ffffn);
+  const upper = Number((value >> 32n) & 0xffff_ffffn);
+  return new Uint8Array([
+    lower & 0xff,
+    (lower >> 8) & 0xff,
+    (lower >> 16) & 0xff,
+    (lower >> 24) & 0xff,
+    upper & 0xff,
+    (upper >> 8) & 0xff,
+    (upper >> 16) & 0xff,
+    (upper >> 24) & 0xff,
+  ]);
 }
 
 /**

@@ -156,9 +156,9 @@ class PvmExecutor {
     const program = Program.fromSpi(this.serviceCode.raw, args.raw, true);
 
     const result = await this.pvm.runProgram(program.code, 5, gas, program.registers, program.memory);
-    if (!(result instanceof Uint8Array)) {
+    if (!(result.statusOrMemorySlice instanceof Uint8Array)) {
       return BytesBlob.blobFromNumbers([]);
     }
-    return BytesBlob.blobFrom(result);
+    return BytesBlob.blobFrom(result.statusOrMemorySlice);
   }
 }
