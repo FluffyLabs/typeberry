@@ -1,5 +1,5 @@
 import type { Ed25519Key, HeaderHash, PerValidator, TimeSlot } from "@typeberry/block";
-import { G_A, L } from "@typeberry/block/gp-constants";
+import { L } from "@typeberry/block/gp-constants";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
 import type { RefineContext } from "@typeberry/block/refine-context";
 import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
@@ -10,14 +10,14 @@ import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
 import type { KeccakHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
-import { sumU64 } from "@typeberry/numbers";
 import type { BlockState, State } from "@typeberry/state";
 import { OK, Result, check } from "@typeberry/utils";
 import { ReportsError } from "./error";
 import { ROTATION_PERIOD, generateCoreAssignment, rotationIndex } from "./guarantor-assignment";
-import { verifyReportsBasic } from "./reports-basic";
-import { type GuarantorAssignment, verifyCredentials } from "./reports-credentials";
-import { verifyReportsOrder } from "./reports-order";
+import { verifyReportsBasic } from "./verify-basic";
+import { type GuarantorAssignment, verifyCredentials } from "./verify-credentials";
+import { verifyReportsOrder } from "./verify-order";
+import { verifyPostSignatureChecks } from "./verify-post-signature";
 
 /**
  * Work Report is presented on-chain within `GuaranteesExtrinsic`
@@ -135,6 +135,15 @@ export class Reports {
   verifyCredentials(input: ReportsInput) {
     return verifyCredentials(input.guarantees, input.slot, (headerTimeSlot, guaranteeTimeSlot) =>
       this.getGuarantorAssignment(headerTimeSlot, guaranteeTimeSlot),
+    );
+  }
+
+  verifyPostSignatureChecks(input: GuaranteesExtrinsicView) {
+    return verifyPostSignatureChecks(
+      input,
+      this.state.availabilityAssignment,
+      this.state.authPools,
+      this.state.services,
     );
   }
 
@@ -432,77 +441,6 @@ export class Reports {
       ReportsError.BadSignature,
       `Invalid signatures for validators with keys: ${invalidKeys.join(", ")}`,
     );
-  }
-
-  verifyPostSignatureChecks(input: GuaranteesExtrinsicView): Result<OK, ReportsError> {
-    for (const guaranteeView of input) {
-      const guarantee = guaranteeView.materialize();
-      const report = guarantee.report;
-      const coreIndex = report.coreIndex;
-      /**
-       * No reports may be placed on cores with a report pending
-       * availability on it.
-       *
-       * https://graypaper.fluffylabs.dev/#/5f542d7/15ea0015ea00
-       */
-      if (this.state.availabilityAssignment[coreIndex] !== null) {
-        return Result.error(ReportsError.CoreEngaged, `Report pending availability at core: ${coreIndex}`);
-      }
-
-      /**
-       * A report is valid only if the authorizer hash is present
-       * in the authorizer pool of the core on which the work is
-       * reported.
-       *
-       * https://graypaper.fluffylabs.dev/#/5f542d7/15eb0015ed00
-       */
-      const authorizerHash = report.authorizerHash;
-      const authorizerPool = this.state.authPools[coreIndex];
-      // TODO [ToDr] [opti] We should have a dictionary here rather than do slow lookups.
-      if (!authorizerPool.find((hash) => hash.isEqualTo(authorizerHash))) {
-        return Result.error(
-          ReportsError.CoreUnauthorized,
-          `Authorizer hash not found in the pool of core ${coreIndex}: ${authorizerHash}`,
-        );
-      }
-
-      // TODO [ToDr] shall we agregate items data before checking?
-      // We could first build a map of `serviceId -> minItemGas, codehash`
-      // and then check it only once.
-
-      /**
-       * We require that the gas allotted for accumulation of each
-       * work item in each work-report respects its service’s
-       * minimum gas requirements.
-       *
-       * https://graypaper.fluffylabs.dev/#/5f542d7/15f80015fa00
-       */
-      for (const result of report.results) {
-        // TODO [ToDr] [opti] We should have a dictionary here rather than do slow lookups.
-        const service = this.state.services.find((x) => x.id === result.serviceId);
-        if (service === undefined) {
-          return Result.error(ReportsError.BadServiceId, `No service with id: ${result.serviceId}`);
-        }
-
-        // check minimal accumulation gas
-        if (result.gas < service.data.service.accumulateMinGas) {
-          return Result.error(
-            ReportsError.ServiceItemGasTooLow,
-            `Service (${result.serviceId}) gas is less than minimal. Got: ${result.gas}, expected at least: ${service.data.service.accumulateMinGas}`,
-          );
-        }
-      }
-
-      const totalGas = sumU64(...report.results.map((x) => x.gas));
-      if (totalGas.overflow || totalGas.value > G_A) {
-        return Result.error(
-          ReportsError.WorkReportGasTooHigh,
-          `Total gas too high. Got: ${totalGas.value} (ovfl: ${totalGas.overflow}), maximal: ${G_A}`,
-        );
-      }
-    }
-
-    return Result.ok(OK);
   }
 
   /**

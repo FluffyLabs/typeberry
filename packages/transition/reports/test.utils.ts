@@ -9,6 +9,7 @@ import {
   tryAsCoreIndex,
   tryAsPerEpochBlock,
   tryAsPerValidator,
+  tryAsServiceId,
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
@@ -27,9 +28,13 @@ import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type KeccakHash, type OpaqueHash, WithHash, blake2b, keccak } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
+import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsGas } from "@typeberry/pvm-interpreter";
 import {
   AvailabilityAssignment,
   ENTROPY_ENTRIES,
+  Service,
+  ServiceAccountInfo,
   VALIDATOR_META_BYTES,
   ValidatorData,
   tryAsPerCore,
@@ -252,3 +257,20 @@ export const initialValidators = (): ValidatorData[] =>
       ed25519: "0x837ce344bc9defceb0d7de7e9e9925096768b7adb4dad932e532eb6551e0ea02",
     },
   ].map(intoValidatorData);
+
+export const initialServices = ({ withDummyCodeHash = false } = {}): Service[] => [
+  new Service(tryAsServiceId(129), {
+    preimages: [],
+    service: ServiceAccountInfo.fromCodec({
+      codeHash: withDummyCodeHash
+        ? Bytes.fill(HASH_SIZE, 1).asOpaque()
+        : Bytes.parseBytes("0x8178abf4f459e8ed591be1f7f629168213a5ac2a487c28c0ef1a806198096c7a", HASH_SIZE).asOpaque(),
+      balance: tryAsU64(0),
+      thresholdBalance: tryAsU64(0),
+      accumulateMinGas: tryAsGas(10_000),
+      onTransferMinGas: tryAsGas(0),
+      storageUtilisationBytes: tryAsU64(1),
+      storageUtilisationCount: tryAsU32(1),
+    }),
+  }),
+];

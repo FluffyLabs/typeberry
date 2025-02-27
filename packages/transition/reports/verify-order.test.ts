@@ -4,8 +4,8 @@ import { ReportGuarantee } from "@typeberry/block/guarantees";
 import { tinyChainSpec } from "@typeberry/config";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { ReportsError } from "./index";
-import { verifyReportsOrder } from "./reports-order";
 import { guaranteesAsView, newWorkReport } from "./test.utils";
+import { verifyReportsOrder } from "./verify-order";
 
 describe("Reports.verifyReportsOrder", () => {
   it("should reject out-of-order guarantees", async () => {

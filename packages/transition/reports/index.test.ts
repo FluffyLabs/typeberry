@@ -1,21 +1,16 @@
 import { describe, it } from "node:test";
-import { tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
-import { G_A } from "@typeberry/block/gp-constants";
+import { tryAsTimeSlot } from "@typeberry/block";
 import { ReportGuarantee } from "@typeberry/block/guarantees";
 import { WorkPackageInfo } from "@typeberry/block/work-report";
-import { WorkResult } from "@typeberry/block/work-result";
 import { Bytes } from "@typeberry/bytes";
 import { asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { tryAsGas } from "@typeberry/pvm-interpreter";
-import { Service, ServiceAccountInfo } from "@typeberry/state";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { ReportsError } from "./error";
 import type { ReportsInput } from "./reports";
-import { guaranteesAsView, newCredential, newReports, newWorkReport } from "./test.utils";
+import { guaranteesAsView, initialServices, newCredential, newReports, newWorkReport } from "./test.utils";
 
 describe("Reports - top level", () => {
   it("should perform a transition with empty state", async () => {
@@ -35,119 +30,6 @@ describe("Reports - top level", () => {
         reported: [],
         reporters: asKnownSize([]),
       },
-    });
-  });
-});
-
-describe("Reports.verifyPostSignatureChecks", () => {
-  it("should reject report on core with pending availability", async () => {
-    const reports = await newReports({ withCoreAssignment: true });
-    const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
-        slot: tryAsTimeSlot(10),
-        report: newWorkReport({ core: 0 }),
-        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
-      }),
-    ]);
-
-    const res = reports.verifyPostSignatureChecks(guarantees);
-
-    deepEqual(res, {
-      isOk: false,
-      isError: true,
-      error: ReportsError.CoreEngaged,
-      details: "Report pending availability at core: 0",
-    });
-  });
-
-  it("should reject report without authorization", async () => {
-    const reports = await newReports();
-    const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
-        slot: tryAsTimeSlot(10),
-        report: newWorkReport({ core: 0 }),
-        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
-      }),
-    ]);
-
-    const res = reports.verifyPostSignatureChecks(guarantees);
-
-    deepEqual(res, {
-      isOk: false,
-      isError: true,
-      error: ReportsError.CoreUnauthorized,
-      details:
-        "Authorizer hash not found in the pool of core 0: 0x022e5e165cc8bd586404257f5cd6f5a31177b5c951eb076c7c10174f90006eef",
-    });
-  });
-
-  it("should reject report with incorrect service id", async () => {
-    const reports = await newReports();
-    const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
-        slot: tryAsTimeSlot(10),
-        report: newWorkReport({ core: 0, authorizer: Bytes.fill(HASH_SIZE, 1) }),
-        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
-      }),
-    ]);
-
-    const res = reports.verifyPostSignatureChecks(guarantees);
-
-    deepEqual(res, {
-      isOk: false,
-      isError: true,
-      error: ReportsError.BadServiceId,
-      details: "No service with id: 129",
-    });
-  });
-
-  it("should reject report with items with too low gas", async () => {
-    const reports = await newReports({
-      services: initialServices(),
-    });
-    const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
-        slot: tryAsTimeSlot(10),
-        report: newWorkReport({ core: 0, authorizer: Bytes.fill(HASH_SIZE, 1) }),
-        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
-      }),
-    ]);
-
-    const res = reports.verifyPostSignatureChecks(guarantees);
-
-    deepEqual(res, {
-      isOk: false,
-      isError: true,
-      error: ReportsError.ServiceItemGasTooLow,
-      details: "Service (129) gas is less than minimal. Got: 120, expected at least: 10000",
-    });
-  });
-
-  it("should reject report with total gas too high", async () => {
-    const reports = await newReports({
-      services: initialServices(),
-    });
-    const workReport = newWorkReport({ core: 0, authorizer: Bytes.fill(HASH_SIZE, 1) });
-    // override gas to make it too high.
-    workReport.results[0] = WorkResult.fromCodec({
-      ...workReport.results[0],
-      gas: asOpaqueType(tryAsU64(G_A + 1)),
-    });
-    const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
-        slot: tryAsTimeSlot(10),
-        report: workReport,
-        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
-      }),
-    ]);
-
-    const res = reports.verifyPostSignatureChecks(guarantees);
-
-    deepEqual(res, {
-      isOk: false,
-      isError: true,
-      error: ReportsError.WorkReportGasTooHigh,
-      details: "Total gas too high. Got: 10000001 (ovfl: false), maximal: 10000000",
     });
   });
 });
@@ -276,7 +158,7 @@ describe("Reports.verifyContextualValidity", () => {
       isError: true,
       error: ReportsError.BadBeefyMmrRoot,
       details:
-        "Invalid BEEFY super peak hash. Got: 0x9329de635d4bbb8c47cdccbbc1285e48bf9dbad365af44b205343e99dea298f3, expected: 0x0000000000000000000000000000000000000000000000000000000000000000",
+        "Invalid BEEFY super peak hash. Got: 0x9329de635d4bbb8c47cdccbbc1285e48bf9dbad365af44b205343e99dea298f3, expected: 0x0000000000000000000000000000000000000000000000000000000000000000. Anchor: 0xc0564c5e0de0942589df4343ad1956da66797240e2a2f2d6f8116b5047768986",
     });
   });
 
@@ -452,20 +334,3 @@ describe("Reports.verifyContextualValidity", () => {
     });
   });
 });
-
-const initialServices = ({ withDummyCodeHash = false } = {}): Service[] => [
-  new Service(tryAsServiceId(129), {
-    preimages: [],
-    service: ServiceAccountInfo.fromCodec({
-      codeHash: withDummyCodeHash
-        ? Bytes.fill(HASH_SIZE, 1).asOpaque()
-        : Bytes.parseBytes("0x8178abf4f459e8ed591be1f7f629168213a5ac2a487c28c0ef1a806198096c7a", HASH_SIZE).asOpaque(),
-      balance: tryAsU64(0),
-      thresholdBalance: tryAsU64(0),
-      accumulateMinGas: tryAsGas(10_000),
-      onTransferMinGas: tryAsGas(0),
-      storageUtilisationBytes: tryAsU64(1),
-      storageUtilisationCount: tryAsU32(1),
-    }),
-  }),
-];
