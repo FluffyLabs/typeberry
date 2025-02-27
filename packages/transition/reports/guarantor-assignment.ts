@@ -12,8 +12,8 @@
 import type { CoreIndex, EntropyHash, PerValidator, TimeSlot } from "@typeberry/block";
 import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
+import { fisherYatesShuffle } from "@typeberry/shuffling";
 import { type Opaque, asOpaqueType } from "@typeberry/utils";
-import { fisherYatesShuffle } from "../shuffling";
 
 /**
  * `R`: The rotation period of validator-core assignments, in timeslots.

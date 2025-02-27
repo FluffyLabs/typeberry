@@ -1,9 +1,7 @@
 import {
-  type CodeHash,
   type Ed25519Key,
   type EntropyHash,
   type HeaderHash,
-  type ServiceId,
   type TimeSlot,
   tryAsPerEpochBlock,
   tryAsPerValidator,
@@ -15,16 +13,13 @@ import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config"
 import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
-import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
-import type { SmallGas } from "@typeberry/pvm-interpreter";
 import {
   type AvailabilityAssignment,
   type BlockState,
   ENTROPY_ENTRIES,
-  Service,
+  type Service,
   type ValidatorData,
   tryAsPerCore,
-  ServiceAccountInfo,
 } from "@typeberry/state";
 import {
   Reports,
@@ -63,7 +58,6 @@ class Input {
     };
   }
 }
-
 
 class TestState {
   static fromJson: FromJson<TestState> = {

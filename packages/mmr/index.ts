@@ -1,7 +1,7 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 
-const SUPER_PEAK_STRING = BytesBlob.blobFromString("$peak");
+const SUPER_PEAK_STRING = BytesBlob.blobFromString("peak");
 
 /** Merkle Mountain Range peaks. */
 export interface MmrPeaks<H extends OpaqueHash> {
@@ -87,16 +87,12 @@ export class MerkleMountainRange<H extends OpaqueHash> {
     if (this.mountains.length === 0) {
       return Bytes.zero(HASH_SIZE).asOpaque();
     }
-    console.log(this.mountains.join("\n"));
     const revMountains = this.mountains.slice().reverse();
     const length = revMountains.length;
     let lastHash = revMountains[0].peak;
-    console.log(`Starting hash: ${lastHash}`);
     for (let i = 1; i < length; i++) {
       const mountain = revMountains[i];
-      console.log(`Hashing: ${SUPER_PEAK_STRING} ++ ${lastHash} ++ ${mountain.peak}`);
       lastHash = this.hasher.hashConcatPrepend(SUPER_PEAK_STRING, lastHash, mountain.peak);
-      console.log(`Got: ${lastHash}`);
     }
     return lastHash;
   }

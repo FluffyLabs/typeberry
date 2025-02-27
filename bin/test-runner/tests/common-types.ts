@@ -18,9 +18,9 @@ import {
   type AuthorizerHash,
   type ExportsRootHash,
   type WorkPackageHash,
+  WorkPackageInfo,
   WorkPackageSpec,
   WorkReport,
-  WorkPackageInfo,
 } from "@typeberry/block/work-report";
 import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
 import { Encoder } from "@typeberry/codec";

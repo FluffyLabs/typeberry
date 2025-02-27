@@ -81,7 +81,7 @@ describe("MMR", () => {
     );
     assert.deepEqual(
       mmr.getSuperPeakHash().toString(),
-      "0x5276267e8c4f3cea1c5f13ed7342173750f79d0738ee3d005161a852f7e8e23f",
+      "0x1edf0b1f3291a8ffd2d17b8962b5aa58b3f9cf6ec8f9443a81bc786d4c64b7f4",
     );
   });
 
