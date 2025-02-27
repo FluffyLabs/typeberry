@@ -40,6 +40,8 @@ export type BandersnatchKey = Opaque<Bytes<BANDERSNATCH_KEY_BYTES>, "Bandersnatc
 
 /**
  * Bandersnatch ring commitment
+ *
+ * https://graypaper.fluffylabs.dev/#/5f542d7/0da8000dc200
  */
 export type BandersnatchRingRoot = Opaque<Bytes<BANDERSNATCH_RING_ROOT_BYTES>, "BandersnatchRingRoot">;
 

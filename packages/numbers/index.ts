@@ -87,3 +87,15 @@ export function sumU32(...values: U32[]) {
 
   return { overflow, value: sum as U32 };
 }
+
+/**
+ * Transform provided number to little-endian representation.
+ */
+export function i32AsLittleEndian(value: number) {
+  const result = new Uint8Array(4);
+  result[0] = value & 0xff;
+  result[1] = (value >> 8) & 0xff;
+  result[2] = (value >> 16) & 0xff;
+  result[3] = (value >> 24) & 0xff;
+  return result;
+}

@@ -5,6 +5,7 @@ import type { SignedTicket, TicketAttempt } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, Ordering, SortedSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
+import { HASH_SIZE } from "@typeberry/hash";
 import type { ValidatorData } from "@typeberry/state";
 import * as bandersnatch from "./bandersnatch";
 import { Safrole, SafroleErrorCode, type SafroleState } from "./safrole";
@@ -143,7 +144,12 @@ describe("Safrole", () => {
     const state: SafroleState = {
       timeslot: 1 as TimeSlot,
       entropy: FixedSizeArray.new(
-        [Bytes.zero(HASH_SIZE).asOpaque(), Bytes.zero(HASH_SIZE).asOpaque(), Bytes.zero(HASH_SIZE).asOpaque(), Bytes.zero(HASH_SIZE).asOpaque()],
+        [
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+        ],
         4,
       ),
       previousValidatorData: [] as unknown as PerValidator<ValidatorData>,

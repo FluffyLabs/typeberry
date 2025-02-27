@@ -1,21 +1,24 @@
-import assert from "node:assert";
 import {
   BANDERSNATCH_PROOF_BYTES,
+  BANDERSNATCH_RING_ROOT_BYTES,
   type BandersnatchKey,
   type BandersnatchProof,
+  type BandersnatchRingRoot,
   type Ed25519Key,
   type EntropyHash,
   type TimeSlot,
   tryAsPerValidator,
+  tryAsTimeSlot,
 } from "@typeberry/block";
 import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
-import type { State as SafroleState } from "@typeberry/safrole";
 import { Safrole } from "@typeberry/safrole";
-import { type ValidatorData, hashComparator } from "@typeberry/state";
+import type { Input, OkResult } from "@typeberry/safrole/safrole";
+import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
+import { deepEqual } from "@typeberry/utils";
 import { commonFromJson, getChainSpec } from "./common-types";
 namespace safroleFromJson {
   export const bytesBlob = json.fromString(BytesBlob.parseBlob);
@@ -51,7 +54,7 @@ class JsonState {
     iota: json.array(commonFromJson.validatorData),
     gamma_a: json.array(safroleFromJson.ticketBody),
     gamma_s: TicketsOrKeys.fromJson,
-    gamma_z: json.fromString((v) => Bytes.parseBytes(v, 144)),
+    gamma_z: json.fromString((v) => Bytes.parseBytes(v, BANDERSNATCH_RING_ROOT_BYTES).asOpaque()),
     post_offenders: json.array(commonFromJson.bytes32()),
   };
   // timeslot
@@ -71,9 +74,24 @@ class JsonState {
   // sealing-key series of current epoch
   gamma_s!: TicketsOrKeys;
   // bandersnatch ring comittment
-  gamma_z!: Bytes<144>;
+  gamma_z!: BandersnatchRingRoot;
   // posterior offenders sequence
   post_offenders!: Ed25519Key[];
+
+  static toSafroleState(state: JsonState, chainSpec: ChainSpec) {
+    return {
+      timeslot: state.tau,
+      entropy: FixedSizeArray.new(state.eta, ENTROPY_ENTRIES),
+      previousValidatorData: tryAsPerValidator(state.lambda, chainSpec),
+      currentValidatorData: tryAsPerValidator(state.kappa, chainSpec),
+      nextValidatorData: tryAsPerValidator(state.gamma_k, chainSpec),
+      designatedValidatorData: tryAsPerValidator(state.iota, chainSpec),
+      ticketsAccumulator: state.gamma_a,
+      sealingKeySeries: state.gamma_s,
+      epochRoot: state.gamma_z.asOpaque(),
+      punishSet: SortedSet.fromSortedArray(hashComparator, state.post_offenders),
+    };
+  }
 }
 
 export class EpochMark {
@@ -105,37 +123,50 @@ export class Output {
 
   ok?: OkOutput;
   err?: string;
-}
 
-class Input {
-  static fromJson: FromJson<Input> = {
-    slot: "number",
-    entropy: commonFromJson.bytes32(),
-    extrinsic: json.array(safroleFromJson.ticketEnvelope),
-  };
+  static toSafroleOutput(output: Output): OkResult | undefined {
+    if (!output.ok) {
+      return undefined;
+    }
 
-  slot!: number;
-  entropy!: EntropyHash;
-  extrinsic!: SignedTicket[];
-
-  static toSafroleInput(testInput: Input) {
+    const epochMark = !output.ok?.epoch_mark
+      ? null
+      : {
+          entropy: output.ok.epoch_mark?.entropy,
+          ticketsEntropy: output.ok.epoch_mark?.tickets_entropy,
+          validators: output.ok.epoch_mark?.validators,
+        };
     return {
-      slot: testInput.slot as TimeSlot,
-      entropy: testInput.entropy as EntropyHash,
-      extrinsic: testInput.extrinsic as SignedTicket[],
+      epochMark,
+      ticketsMark: output.ok?.tickets_mark ?? null,
     };
   }
 }
 
+class TestInput {
+  static fromJson = json.object<TestInput, Input>(
+    {
+      slot: "number",
+      entropy: commonFromJson.bytes32(),
+      extrinsic: json.array(safroleFromJson.ticketEnvelope),
+    },
+    ({ entropy, extrinsic, slot }) => ({ entropy, extrinsic, slot: tryAsTimeSlot(slot) }),
+  );
+
+  slot!: TimeSlot;
+  entropy!: EntropyHash;
+  extrinsic!: SignedTicket[];
+}
+
 export class SafroleTest {
   static fromJson: FromJson<SafroleTest> = {
-    input: Input.fromJson,
+    input: TestInput.fromJson,
     pre_state: JsonState.fromJson,
     output: Output.fromJson,
     post_state: JsonState.fromJson,
   };
 
-  input!: Input;
+  input!: TestInput;
   pre_state!: JsonState;
   output!: Output;
   post_state!: JsonState;
@@ -143,47 +174,14 @@ export class SafroleTest {
 
 export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const chainSpec = getChainSpec(path);
-  const preState = convertPreStateToModel(testContent.pre_state, chainSpec);
+  const preState = JsonState.toSafroleState(testContent.pre_state, chainSpec);
   const safrole = new Safrole(preState, chainSpec);
 
-  const result = await safrole.transition(Input.toSafroleInput(testContent.input));
+  const result = await safrole.transition(testContent.input);
   const error = result.isError ? result.error : undefined;
   const ok = result.isOk ? result.ok : undefined;
 
-  assert.deepEqual(error, testContent.output.err);
-  assert.deepEqual(ok, convertResultToModel(testContent.output));
-  assert.deepEqual(safrole.state, convertPreStateToModel(testContent.post_state, chainSpec));
-}
-
-function convertPreStateToModel(preState: JsonState, chainSpec: ChainSpec): SafroleState {
-  return {
-    timeslot: preState.tau,
-    entropy: FixedSizeArray.new(preState.eta, 4),
-    previousValidatorData: tryAsPerValidator(preState.lambda, chainSpec),
-    currentValidatorData: tryAsPerValidator(preState.kappa, chainSpec),
-    nextValidatorData: tryAsPerValidator(preState.gamma_k, chainSpec),
-    designatedValidatorData: tryAsPerValidator(preState.iota, chainSpec),
-    ticketsAccumulator: preState.gamma_a,
-    sealingKeySeries: preState.gamma_s,
-    epochRoot: preState.gamma_z.asOpaque(),
-    punishSet: SortedSet.fromSortedArray(hashComparator, preState.post_offenders),
-  };
-}
-
-function convertResultToModel(output: Output) {
-  if (!output.ok) {
-    return undefined;
-  }
-
-  const epochMark = !output.ok?.epoch_mark
-    ? null
-    : {
-        entropy: output.ok.epoch_mark?.entropy,
-        ticketsEntropy: output.ok.epoch_mark?.tickets_entropy,
-        validators: output.ok.epoch_mark?.validators,
-      };
-  return {
-    epochMark,
-    ticketsMark: output.ok?.tickets_mark,
-  };
+  deepEqual(error, testContent.output.err);
+  deepEqual(ok, Output.toSafroleOutput(testContent.output));
+  deepEqual(safrole.state, JsonState.toSafroleState(testContent.post_state, chainSpec));
 }

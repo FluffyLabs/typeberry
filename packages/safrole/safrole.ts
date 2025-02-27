@@ -1,10 +1,19 @@
-import type { BandersnatchKey, EntropyHash, PerValidator, TimeSlot } from "@typeberry/block";
+import {
+  BANDERSNATCH_KEY_BYTES,
+  BANDERSNATCH_PROOF_BYTES,
+  type BandersnatchKey,
+  ED25519_KEY_BYTES,
+  type EntropyHash,
+  type PerValidator,
+  type TimeSlot,
+} from "@typeberry/block";
 import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
-import { Bytes } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, Ordering, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { blake2b } from "@typeberry/hash";
+import { i32AsLittleEndian } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";
 import { Result, asOpaqueType } from "@typeberry/utils";
 import { getRingCommitment, verifyTickets } from "./bandersnatch";
@@ -55,15 +64,21 @@ export class EpochMark {
 }
 
 type TicketMark = {
-  id: string;
-  attempts: number;
+  id: Bytes<32>;
+  attempt: number;
 };
 
 type TicketsMark = TicketMark[];
 
-type OkResult = {
+export type OkResult = {
   epochMark: EpochMark | null;
   ticketsMark: TicketsMark | null;
+};
+
+export type Input = {
+  slot: TimeSlot;
+  entropy: EntropyHash;
+  extrinsic: SignedTicket[];
 };
 
 export enum SafroleErrorCode {
@@ -100,22 +115,18 @@ export class Safrole {
     return blockEpoch > stateEpoch;
   }
 
-  /**
-   * e' === e
-   */
+  /** `e' === e` */
   private isSameEpoch(timeslot: TimeSlot): boolean {
-    const previousEpoch = Math.floor(this.state.timeslot / this.chainSpec.epochLength);
-    const currentEpoch = Math.floor(timeslot / this.chainSpec.epochLength);
-    return currentEpoch === previousEpoch;
+    const stateEpoch = Math.floor(this.state.timeslot / this.chainSpec.epochLength);
+    const blockEpoch = Math.floor(timeslot / this.chainSpec.epochLength);
+    return blockEpoch === stateEpoch;
   }
 
-  /**
-   * e' === e + 1
-   */
+  /** `e' === e + 1` */
   private isNextEpoch(timeslot: TimeSlot): boolean {
-    const previousEpoch = Math.floor(this.state.timeslot / this.chainSpec.epochLength);
-    const currentEpoch = Math.floor(timeslot / this.chainSpec.epochLength);
-    return currentEpoch === previousEpoch + 1;
+    const stateEpoch = Math.floor(this.state.timeslot / this.chainSpec.epochLength);
+    const blockEpoch = Math.floor(timeslot / this.chainSpec.epochLength);
+    return blockEpoch === stateEpoch + 1;
   }
 
   /**
@@ -176,8 +187,8 @@ export class Safrole {
          */
         if (isOffender) {
           return new ValidatorData(
-            Bytes.zero(BANDERSNATCH_KEY_SIZE).asOpaque(),
-            Bytes.zero(ED25519_KEY_SIZE).asOpaque(),
+            Bytes.zero(BANDERSNATCH_KEY_BYTES).asOpaque(),
+            Bytes.zero(ED25519_KEY_BYTES).asOpaque(),
             validator.bls,
             validator.metadata,
           );
@@ -191,10 +202,10 @@ export class Safrole {
 
     const keys = newNextValidators.reduce(
       (acc, validator, i) => {
-        acc.set(validator.bandersnatch.raw, i * BANDERSNATCH_KEY_SIZE);
+        acc.set(validator.bandersnatch.raw, i * BANDERSNATCH_PROOF_BYTES);
         return acc;
       },
-      new Uint8Array(BANDERSNATCH_KEY_SIZE * nextValidatorData.length),
+      new Uint8Array(BANDERSNATCH_PROOF_BYTES * nextValidatorData.length),
     );
 
     const epochRootResult = await getRingCommitment(keys);
@@ -351,13 +362,7 @@ export class Safrole {
     validators: ValidatorData[],
     entropy: EntropyHash,
   ): Promise<Result<Ticket[], SafroleErrorCode>> {
-    const keys = validators.reduce(
-      (acc, item, i) => {
-        acc.set(item.bandersnatch.raw, i * 32);
-        return acc;
-      },
-      new Uint8Array(32 * validators.length),
-    );
+    const keys = BytesBlob.blobFromParts(validators.map((x) => x.bandersnatch.raw)).raw;
 
     /**
      * Verify ticket proof of validity
@@ -365,7 +370,10 @@ export class Safrole {
      * https://graypaper.fluffylabs.dev/#/5f542d7/0f59000f5900
      */
     const verificationResult = await verifyTickets(keys, extrinsic, entropy);
-    const tickets = extrinsic.map((ticket, i) => ({ attempt: ticket.attempt, id: verificationResult[i].entropyHash }));
+    const tickets: Ticket[] = extrinsic.map((ticket, i) => ({
+      id: verificationResult[i].entropyHash,
+      attempt: ticket.attempt,
+    }));
 
     if (!verificationResult.every((x) => x.isValid)) {
       return Result.error(SafroleErrorCode.BadTicketProof);
@@ -410,7 +418,7 @@ export class Safrole {
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/0ea0030ea003
    */
-  private getTicketsMark(timeslot: TimeSlot) {
+  private getTicketsMark(timeslot: TimeSlot): TicketsMark | null {
     const m = this.getSlotPhaseIndex(this.state.timeslot);
     const mPrime = this.getSlotPhaseIndex(timeslot);
     if (
@@ -449,18 +457,14 @@ export class Safrole {
     const ticketsLength = tickets.length;
     for (let i = 0; i < ticketsLength; i++) {
       if (tickets[i].attempt < 0 || tickets[i].attempt >= this.chainSpec.ticketsPerValidator) {
-        return true;
+        return false;
       }
     }
 
-    return false;
+    return true;
   }
 
-  async transition(input: {
-    slot: TimeSlot;
-    entropy: EntropyHash;
-    extrinsic: SignedTicket[];
-  }): Promise<Result<OkResult, SafroleErrorCode>> {
+  async transition(input: Input): Promise<Result<OkResult, SafroleErrorCode>> {
     const newState: StateDiff = {};
 
     if (this.state.timeslot >= input.slot) {
@@ -497,19 +501,19 @@ export class Safrole {
       newState.entropy[2],
     );
 
-    if (newTicketsAccumulatoResult.isError) {
-      return Result.error(newTicketsAccumulatoResult.error);
+    if (newTicketsAccumulatorResult.isError) {
+      return Result.error(newTicketsAccumulatorResult.error);
     }
 
-    newState.ticketsAccumulator = newTicketsAccumulatoResult.ok;
+    newState.ticketsAccumulator = newTicketsAccumulatorResult.ok;
 
-    const result = Result.ok({
+    const result = {
       epochMark: this.getEpochMark(input.slot, nextValidatorData),
       ticketsMark: this.getTicketsMark(input.slot),
-    });
+    };
 
     this.applyStateChanges(newState);
 
-    return result as Result<OkResult, SafroleErrorCode>;
+    return Result.ok(result);
   }
 }

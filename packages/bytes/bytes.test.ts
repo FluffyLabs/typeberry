@@ -90,7 +90,7 @@ describe("BytesBlob", () => {
       const expectedChunk2 = BytesBlob.blobFromNumbers([246, 134]);
       const expectedChunks = [expectedChunk1, expectedChunk2];
 
-      const result = blob.chunks(chunkSize);
+      const result = Array.from(blob.chunks(chunkSize));
 
       assert.deepStrictEqual(result, expectedChunks);
     });
