@@ -2,14 +2,18 @@ import {
   BANDERSNATCH_KEY_BYTES,
   BLS_KEY_BYTES,
   ED25519_KEY_BYTES,
+  ED25519_SIGNATURE_BYTES,
+  type Ed25519Signature,
   type HeaderHash,
   type TimeSlot,
   tryAsCoreIndex,
   tryAsPerEpochBlock,
   tryAsPerValidator,
   tryAsTimeSlot,
+  tryAsValidatorIndex,
 } from "@typeberry/block";
 import {
+  Credential,
   type GuaranteesExtrinsicView,
   type ReportGuarantee,
   guaranteesExtrinsicCodec,
@@ -96,6 +100,13 @@ export async function newReports(options: Parameters<typeof newReportsState>[0] 
   };
 
   return new Reports(tinyChainSpec, state, await hasher, headerChain);
+}
+
+export function newCredential(index: number, signature?: Ed25519Signature) {
+  return Credential.fromCodec({
+    validatorIndex: tryAsValidatorIndex(index),
+    signature: signature ?? Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque(),
+  });
 }
 
 type ReportStateOptions = {

@@ -1,20 +1,22 @@
-import type { CoreIndex, Ed25519Key, HeaderHash, PerValidator, TimeSlot, WorkReportHash } from "@typeberry/block";
+import type { Ed25519Key, HeaderHash, PerValidator, TimeSlot } from "@typeberry/block";
 import { G_A, L } from "@typeberry/block/gp-constants";
-import { type GuaranteesExtrinsicView, REQUIRED_CREDENTIALS_RANGE } from "@typeberry/block/guarantees";
+import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
 import type { RefineContext } from "@typeberry/block/refine-context";
 import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
-import { BytesBlob } from "@typeberry/bytes";
+import type { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
-import { type KeccakHash, blake2b } from "@typeberry/hash";
+import type { KeccakHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
 import { sumU64 } from "@typeberry/numbers";
 import type { BlockState, State } from "@typeberry/state";
-import { OK, Result, asOpaqueType, check } from "@typeberry/utils";
+import { OK, Result, check } from "@typeberry/utils";
 import { ReportsError } from "./error";
 import { ROTATION_PERIOD, generateCoreAssignment, rotationIndex } from "./guarantor-assignment";
+import { verifyReportsBasic } from "./reports-basic";
+import { type GuarantorAssignment, verifyCredentials } from "./reports-credentials";
 import { verifyReportsOrder } from "./reports-order";
 
 /**
@@ -73,25 +75,6 @@ export type HeaderChain = {
   isInChain(header: HeaderHash): boolean;
 };
 
-/**
- * `J = 8`: The maximum sum of dependency items in a work-report.
- *
- * https://graypaper.fluffylabs.dev/#/5f542d7/416a00416a00?v=0.6.2
- */
-const MAX_REPORT_DEPENDENCIES = 8;
-
-/**
- * `W_R = 48 * 2**10`: The maximum total size of all output blobs in a work-report, in octets.
- *
- * https://graypaper.fluffylabs.dev/#/5f542d7/41a60041aa00?v=0.6.2
- */
-const MAX_WORK_REPORT_SIZE_BYTES = 48 * 2 ** 10;
-
-type GuarantorAssignment = {
-  core: CoreIndex;
-  ed25519: Ed25519Key;
-};
-
 export class Reports {
   constructor(
     public readonly chainSpec: ChainSpec,
@@ -108,7 +91,7 @@ export class Reports {
     }
 
     // check some basic reports validity
-    const reportsValidity = this.verifyReportsBasic(input.guarantees);
+    const reportsValidity = verifyReportsBasic(input.guarantees);
     if (reportsValidity.isError) {
       return reportsValidity;
     }
@@ -147,6 +130,12 @@ export class Reports {
       // TODO [ToDr] can there be duplicates?
       reporters: asKnownSize(signaturesToVerify.ok.map((x) => x.key)),
     });
+  }
+
+  verifyCredentials(input: ReportsInput) {
+    return verifyCredentials(input.guarantees, input.slot, (headerTimeSlot, guaranteeTimeSlot) =>
+      this.getGuarantorAssignment(headerTimeSlot, guaranteeTimeSlot),
+    );
   }
 
   verifyContextualValidity(input: ReportsInput): Result<WorkPackageInfo[], ReportsError> {
@@ -516,50 +505,6 @@ export class Reports {
     return Result.ok(OK);
   }
 
-  verifyReportsBasic(input: GuaranteesExtrinsicView): Result<OK, ReportsError> {
-    for (const guarantee of input) {
-      const reportView = guarantee.view().report.view();
-      /**
-       * We limit the sum of the number of items in the
-       * segment-root lookup dictionary and the number of
-       * prerequisites to J = 8:
-       */
-      const noOfPrerequisites = reportView.context.view().prerequisites.view().length;
-      const noOfSegmentRootLookups = reportView.segmentRootLookup.view().length;
-      if (noOfPrerequisites + noOfSegmentRootLookups > MAX_REPORT_DEPENDENCIES) {
-        return Result.error(
-          ReportsError.TooManyDependencies,
-          `Report at ${reportView.coreIndex.encoded()} has too many depdencies. Got ${noOfPrerequisites} + ${noOfSegmentRootLookups}, max: ${MAX_REPORT_DEPENDENCIES}`,
-        );
-      }
-
-      /**
-       * In order to ensure fair use of a block’s extrinsic space,
-       * work-reports are limited in the maximum total size of the
-       * successful output blobs together with the authorizer output
-       * blob, effectively limiting their overall size:
-       *
-       * https://graypaper.fluffylabs.dev/#/5f542d7/141d00142000?v=0.6.2
-       */
-      // adding is safe here, since the total-encoded size of the report
-      // is limited as well. Even though we just have a view, the size
-      // should have been verified earlier.
-      const authOutputSize = reportView.authorizationOutput.view().length;
-      let totalOutputsSize = 0;
-      for (const item of reportView.results.view()) {
-        totalOutputsSize += item.view().result.view().okBlob?.raw.length ?? 0;
-      }
-      if (authOutputSize + totalOutputsSize > MAX_WORK_REPORT_SIZE_BYTES) {
-        return Result.error(
-          ReportsError.WorkReportTooBig,
-          `Work report at ${reportView.coreIndex.encoded()} too big. Got ${authOutputSize} + ${totalOutputsSize}, max: ${MAX_WORK_REPORT_SIZE_BYTES}`,
-        );
-      }
-    }
-
-    return Result.ok(OK);
-  }
-
   /**
    * Get the guarantor assignment (both core and validator data)
    * depending on the rotation.
@@ -620,102 +565,6 @@ export class Reports {
       })),
     );
   }
-
-  /**
-   * Verify guarantee credentials and return the signatures to verification.
-   */
-  verifyCredentials(input: ReportsInput): Result<ed25519.Input[], ReportsError> {
-    /**
-     * Collect signatures payload for later verification
-     * and construct the `reporters set R` from that data.
-     *
-     * https://graypaper.fluffylabs.dev/#/5f542d7/15cf0015cf00
-     */
-    const signaturesToVerify: ed25519.Input[] = [];
-    const headerTimeSlot = input.slot;
-    for (const guarantee of input.guarantees) {
-      const guaranteeView = guarantee.view();
-      const coreIndex = guaranteeView.report.view().coreIndex.materialize();
-      const workReportHash: WorkReportHash = asOpaqueType(blake2b.hashBytes(guaranteeView.report.encoded()));
-      /**
-       * The credential is a sequence of two or three tuples of a
-       * unique validator index and a signature.
-       *
-       * https://graypaper.fluffylabs.dev/#/5f542d7/14b90214bb02
-       */
-      const credentialsView = guaranteeView.credentials.view();
-      if (
-        credentialsView.length < REQUIRED_CREDENTIALS_RANGE[0] ||
-        credentialsView.length > REQUIRED_CREDENTIALS_RANGE[1]
-      ) {
-        return Result.error(
-          ReportsError.InsufficientGuarantees,
-          `Invalid number of credentials. Expected ${REQUIRED_CREDENTIALS_RANGE}, got ${credentialsView.length}`,
-        );
-      }
-
-      /** Retrieve current core assignment. */
-      const timeSlot = guaranteeView.slot.materialize();
-      const maybeGuarantorAssignments = this.getGuarantorAssignment(headerTimeSlot, timeSlot);
-      if (maybeGuarantorAssignments.isError) {
-        return maybeGuarantorAssignments;
-      }
-      const guarantorAssignments = maybeGuarantorAssignments.ok;
-
-      /** Credentials must be ordered by their validator index. */
-      let lastValidatorIndex = -1;
-      for (const credential of credentialsView) {
-        const credentialView = credential.view();
-        const validatorIndex = credentialView.validatorIndex.materialize();
-
-        if (lastValidatorIndex >= validatorIndex) {
-          return Result.error(
-            ReportsError.NotSortedOrUniqueGuarantors,
-            `Credentials must be sorted by validator index. Got ${validatorIndex}, expected ${lastValidatorIndex + 1}`,
-          );
-        }
-
-        lastValidatorIndex = validatorIndex;
-
-        const signature = credentialView.signature.materialize();
-        const guarantorData = guarantorAssignments[validatorIndex];
-        if (guarantorData === undefined) {
-          return Result.error(ReportsError.BadValidatorIndex, `Invalid validator index: ${validatorIndex}`);
-        }
-
-        /**
-         * Verify core assignment.
-         * https://graypaper.fluffylabs.dev/#/5f542d7/14e40214e602
-         */
-        if (guarantorData.core !== coreIndex) {
-          return Result.error(
-            ReportsError.WrongAssignment,
-            `Invalid core assignment for validator ${validatorIndex}. Expected: ${guarantorData.core}, got: ${coreIndex}`,
-          );
-        }
-
-        signaturesToVerify.push({
-          signature,
-          key: guarantorData.ed25519,
-          message: signingPayload(workReportHash),
-        });
-      }
-    }
-
-    return Result.ok(signaturesToVerify);
-  }
-}
-
-const JAM_GUARANTEE = BytesBlob.blobFromString("jam_guarantee").raw;
-
-/**
- * The signature [...] whose message is the serialization of the hash
- * of the work-report.
- *
- * https://graypaper.fluffylabs.dev/#/5f542d7/155200155200
- */
-function signingPayload(hash: WorkReportHash) {
-  return BytesBlob.blobFromParts(JAM_GUARANTEE, hash.raw);
 }
 
 function isPreviousRotationPreviousEpoch(

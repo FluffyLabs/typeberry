@@ -1,0 +1,172 @@
+import { describe, it } from "node:test";
+import { ED25519_SIGNATURE_BYTES, tryAsTimeSlot } from "@typeberry/block";
+import { ReportGuarantee } from "@typeberry/block/guarantees";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { tinyChainSpec } from "@typeberry/config";
+import { asOpaqueType, deepEqual } from "@typeberry/utils";
+import { ReportsError } from "./error";
+import { guaranteesAsView, initialValidators, newCredential, newReports, newWorkReport } from "./test.utils";
+
+describe("Reports.verifyCredentials", () => {
+  it("should reject insufficient credentials", async () => {
+    const reports = await newReports();
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(5),
+        report: newWorkReport({ core: 0 }),
+        credentials: asOpaqueType([1].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const input = { guarantees, slot: tryAsTimeSlot(1) };
+    const res = reports.verifyCredentials(input);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.InsufficientGuarantees,
+      details: "Invalid number of credentials. Expected 2,3, got 1",
+    });
+  });
+
+  it("should reject too many credentials", async () => {
+    const reports = await newReports();
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(5),
+        report: newWorkReport({ core: 0 }),
+        credentials: asOpaqueType([1, 2, 3, 4].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const input = { guarantees, slot: tryAsTimeSlot(1) };
+    const res = reports.verifyCredentials(input);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.InsufficientGuarantees,
+      details: "Invalid number of credentials. Expected 2,3, got 4",
+    });
+  });
+
+  it("should reject out-of-order credentials", async () => {
+    const reports = await newReports();
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(5),
+        report: newWorkReport({ core: 1 }),
+        credentials: asOpaqueType([1, 0].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const input = { guarantees, slot: tryAsTimeSlot(6) };
+    const res = reports.verifyCredentials(input);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.NotSortedOrUniqueGuarantors,
+      details: "Credentials must be sorted by validator index. Got 0, expected 2",
+    });
+  });
+
+  it("should reject invalid core assignment", async () => {
+    const reports = await newReports();
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(5),
+        report: newWorkReport({ core: 0 }),
+        credentials: asOpaqueType([0, 1].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const input = { guarantees, slot: tryAsTimeSlot(6) };
+    const res = reports.verifyCredentials(input);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.WrongAssignment,
+      details: "Invalid core assignment for validator 1. Expected: 1, got: 0",
+    });
+  });
+
+  it("should reject future reports", async () => {
+    const reports = await newReports();
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(5),
+        report: newWorkReport({ core: 0 }),
+        credentials: asOpaqueType([0, 1].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const input = { guarantees, slot: tryAsTimeSlot(4) };
+    const res = reports.verifyCredentials(input);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.FutureReportSlot,
+      details: "Report slot is in future or too old. Block 4, Report: 5",
+    });
+  });
+
+  it("should reject old reports", async () => {
+    const reports = await newReports();
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(9),
+        report: newWorkReport({ core: 0 }),
+        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const input = { guarantees, slot: tryAsTimeSlot(25) };
+    const res = reports.verifyCredentials(input);
+
+    deepEqual(res, {
+      isOk: false,
+      isError: true,
+      error: ReportsError.ReportEpochBeforeLast,
+      details: "Report slot is in future or too old. Block 25, Report: 9",
+    });
+  });
+
+  it("should return signatures for verification", async () => {
+    const reports = await newReports();
+    const guarantees = guaranteesAsView(tinyChainSpec, [
+      ReportGuarantee.fromCodec({
+        slot: tryAsTimeSlot(10),
+        report: newWorkReport({ core: 0 }),
+        credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
+      }),
+    ]);
+
+    const input = { guarantees, slot: tryAsTimeSlot(25) };
+    const res = reports.verifyCredentials(input);
+
+    const message = BytesBlob.parseBlob(
+      "0x6a616d5f67756172616e74656523d9dc0dcb965edddacb4522b56b5f22bf7db53f462f194070254dde92ccfd43",
+    );
+
+    const validators = initialValidators();
+    deepEqual(res, {
+      isOk: true,
+      isError: false,
+      ok: [
+        {
+          signature: Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque(),
+          key: validators[0].ed25519,
+          message,
+        },
+        {
+          signature: Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque(),
+          key: validators[3].ed25519,
+          message,
+        },
+      ],
+    });
+  });
+});
