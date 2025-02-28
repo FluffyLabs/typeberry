@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { Ordering } from "@typeberry/ordering";
 import { Bytes, BytesBlob } from "./bytes";
 
 describe("BytesBlob", () => {
@@ -54,15 +55,6 @@ describe("BytesBlob", () => {
   });
 
   describe("isLessThan", () => {
-    it("should compare two equal blobs and return false", () => {
-      const blob1 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
-      const blob2 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
-
-      const result = blob1.isLessThan(blob2);
-
-      assert.strictEqual(result, false);
-    });
-
     it("should compare two blobs and return false", () => {
       const blob1 = BytesBlob.blobFromNumbers([48, 163, 246, 134]);
       const blob2 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
@@ -93,6 +85,66 @@ describe("BytesBlob", () => {
       const result = Array.from(blob.chunks(chunkSize));
 
       assert.deepStrictEqual(result, expectedChunks);
+    });
+
+    it("should split array of length that is not divisible by chunk size ", () => {
+      const blob = BytesBlob.blobFromNumbers([48, 163, 246, 134, 93]);
+      const chunkSize = 2;
+      const expectedChunk1 = BytesBlob.blobFromNumbers([48, 163]);
+      const expectedChunk2 = BytesBlob.blobFromNumbers([246, 134]);
+      const expectedChunk3 = BytesBlob.blobFromNumbers([93]);
+      const expectedChunks = [expectedChunk1, expectedChunk2, expectedChunk3];
+
+      const result = Array.from(blob.chunks(chunkSize));
+
+      assert.deepStrictEqual(result, expectedChunks);
+    });
+  });
+
+  describe("compare", () => {
+    it("should compare two equal blobs and return 'equal'", () => {
+      const blob1 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
+      const blob2 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
+
+      const result = blob1.compare(blob2);
+
+      assert.strictEqual(result, Ordering.Equal);
+    });
+
+    it("should compare two blobs and return 'greater'", () => {
+      const blob1 = BytesBlob.blobFromNumbers([48, 163, 246, 134]);
+      const blob2 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
+
+      const result = blob1.compare(blob2);
+
+      assert.strictEqual(result, Ordering.Greater);
+    });
+
+    it("should compare two blobs and return 'less'", () => {
+      const blob1 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
+      const blob2 = BytesBlob.blobFromNumbers([48, 163, 246, 134]);
+
+      const result = blob1.compare(blob2);
+
+      assert.strictEqual(result, Ordering.Less);
+    });
+
+    it("should return 'less' when blob1 is shorter but blobs have the same prefix", () => {
+      const blob1 = BytesBlob.blobFromNumbers([163, 246, 134]);
+      const blob2 = BytesBlob.blobFromNumbers([163, 246, 134, 48]);
+
+      const result = blob1.compare(blob2);
+
+      assert.strictEqual(result, Ordering.Less);
+    });
+
+    it("should return 'greater' when blob1 is longer but blobs have the same prefix", () => {
+      const blob1 = BytesBlob.blobFromNumbers([163, 246, 134, 48]);
+      const blob2 = BytesBlob.blobFromNumbers([163, 246, 134]);
+
+      const result = blob1.compare(blob2);
+
+      assert.strictEqual(result, Ordering.Greater);
     });
   });
 

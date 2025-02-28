@@ -9,10 +9,11 @@ import {
 import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
-import { FixedSizeArray, Ordering, SortedSet } from "@typeberry/collections";
+import { FixedSizeArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { blake2b } from "@typeberry/hash";
 import { i32AsLittleEndian } from "@typeberry/numbers";
+import { Ordering } from "@typeberry/ordering";
 import { type State, ValidatorData } from "@typeberry/state";
 import { Result, asOpaqueType } from "@typeberry/utils";
 import { getRingCommitment, verifyTickets } from "./bandersnatch";
@@ -21,15 +22,7 @@ export const VALIDATOR_META_BYTES = 128;
 export type VALIDATOR_META_BYTES = typeof VALIDATOR_META_BYTES;
 
 const ticketComparator = (a: Ticket, b: Ticket) => {
-  if (a.id.isLessThan(b.id)) {
-    return Ordering.Less;
-  }
-
-  if (a.id.isEqualTo(b.id)) {
-    return Ordering.Equal;
-  }
-
-  return Ordering.Greater;
+  return a.id.compare(b.id);
 };
 
 type Mutable<T> = {
@@ -81,19 +74,19 @@ export type Input = {
 };
 
 export enum SafroleErrorCode {
-  IncorrectData = "incorrect_data",
+  IncorrectData = 1,
   // Timeslot value must be strictly monotonic.
-  BadSlot = "bad_slot",
+  BadSlot = 2,
   // Received a ticket while in epoch's tail.
-  UnexpectedTicket = "unexpected_ticket",
+  UnexpectedTicket = 3,
   // Tickets must be sorted.
-  BadTicketOrder = "bad_ticket_order",
+  BadTicketOrder = 4,
   // Invalid ticket ring proof.
-  BadTicketProof = "bad_ticket_proof",
+  BadTicketProof = 5,
   // Invalid ticket attempt value.
-  BadTicketAttempt = "bad_ticket_attempt",
+  BadTicketAttempt = 6,
   // Found a ticket duplicate.
-  DuplicateTicket = "duplicate_ticket",
+  DuplicateTicket = 7,
 }
 
 type ValidatorKeys = Pick<
@@ -283,6 +276,7 @@ export class Safrole {
     }
 
     return {
+      // TODO [MaSi]: the result of fallback sequencer should be cached
       keys: this.fallbackKeySequencer(newEntropy, newValidators),
     };
   }
@@ -313,33 +307,25 @@ export class Safrole {
   }
 
   /**
-   * Verify if tickets array is sorted by id
+   * Verify if tickets array has no duplicates and is sorted by id
    */
-  private areTicketsSorted(tickets: Ticket[]) {
+  private verifyTickets(
+    tickets: Ticket[],
+  ): Result<null, SafroleErrorCode.BadTicketOrder | SafroleErrorCode.DuplicateTicket> {
     const ticketsLength = tickets.length;
 
     for (let i = 1; i < ticketsLength; i++) {
-      if (!tickets[i - 1].id.isLessThan(tickets[i].id)) {
-        return false;
+      const order = tickets[i - 1].id.compare(tickets[i].id);
+      if (order === Ordering.Equal) {
+        return Result.error(SafroleErrorCode.DuplicateTicket);
+      }
+
+      if (order === Ordering.Greater) {
+        return Result.error(SafroleErrorCode.BadTicketOrder);
       }
     }
 
-    return true;
-  }
-
-  /**
-   * Verify if tickets array has no duplicates
-   */
-  private areTicketsUnique(tickets: Ticket[]) {
-    const ticketsLength = tickets.length;
-
-    for (let i = 1; i < ticketsLength; i++) {
-      if (tickets[i - 1].id.isEqualTo(tickets[i].id)) {
-        return false;
-      }
-    }
-
-    return true;
+    return Result.ok(null);
   }
 
   /**
@@ -377,12 +363,10 @@ export class Safrole {
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/0fe4000fe400
      */
-    if (!this.areTicketsUnique(tickets)) {
-      return Result.error(SafroleErrorCode.DuplicateTicket);
-    }
 
-    if (!this.areTicketsSorted(tickets)) {
-      return Result.error(SafroleErrorCode.BadTicketOrder);
+    const ticketsVerifcationResult = this.verifyTickets(tickets);
+    if (ticketsVerifcationResult.isError) {
+      return Result.error(ticketsVerifcationResult.error);
     }
 
     if (this.isEpochChanged(timeslot)) {

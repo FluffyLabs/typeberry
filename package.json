@@ -42,7 +42,8 @@
     "workers/generic",
     "workers/importer",
     "packages/crypto",
-    "packages/state"
+    "packages/state",
+    "packages/ordering"
   ],
   "engines": {
     "node": ">=22",

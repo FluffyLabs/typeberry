@@ -16,9 +16,9 @@ import { FixedSizeArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Safrole } from "@typeberry/safrole";
-import type { Input, OkResult } from "@typeberry/safrole/safrole";
+import { type Input, type OkResult, SafroleErrorCode } from "@typeberry/safrole/safrole";
 import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
-import { deepEqual } from "@typeberry/utils";
+import { Result, deepEqual } from "@typeberry/utils";
 import { commonFromJson, getChainSpec } from "./common-types";
 namespace safroleFromJson {
   export const bytesBlob = json.fromString(BytesBlob.parseBlob);
@@ -42,6 +42,22 @@ export class TicketsOrKeys {
 
   keys?: BandersnatchKey[];
   tickets?: Ticket[];
+}
+
+export enum TestErrorCode {
+  IncorrectData = "incorrect_data",
+  // Timeslot value must be strictly monotonic.
+  BadSlot = "bad_slot",
+  // Received a ticket while in epoch's tail.
+  UnexpectedTicket = "unexpected_ticket",
+  // Tickets must be sorted.
+  BadTicketOrder = "bad_ticket_order",
+  // Invalid ticket ring proof.
+  BadTicketProof = "bad_ticket_proof",
+  // Invalid ticket attempt value.
+  BadTicketAttempt = "bad_ticket_attempt",
+  // Found a ticket duplicate.
+  DuplicateTicket = "duplicate_ticket",
 }
 
 class JsonState {
@@ -122,11 +138,11 @@ export class Output {
   };
 
   ok?: OkOutput;
-  err?: string;
+  err?: TestErrorCode;
 
-  static toSafroleOutput(output: Output): OkResult | undefined {
-    if (!output.ok) {
-      return undefined;
+  static toSafroleOutput(output: Output): Result<OkResult, SafroleErrorCode> {
+    if (output.err) {
+      return Result.error(Output.toSafroleErrorCode(output.err));
     }
 
     const epochMark = !output.ok?.epoch_mark
@@ -136,10 +152,29 @@ export class Output {
           ticketsEntropy: output.ok.epoch_mark?.tickets_entropy,
           validators: output.ok.epoch_mark?.validators,
         };
-    return {
+    return Result.ok({
       epochMark,
       ticketsMark: output.ok?.tickets_mark ?? null,
-    };
+    });
+  }
+
+  static toSafroleErrorCode(error: TestErrorCode): SafroleErrorCode {
+    switch (error) {
+      case TestErrorCode.BadSlot:
+        return SafroleErrorCode.BadSlot;
+      case TestErrorCode.BadTicketAttempt:
+        return SafroleErrorCode.BadTicketAttempt;
+      case TestErrorCode.BadTicketOrder:
+        return SafroleErrorCode.BadTicketOrder;
+      case TestErrorCode.BadTicketProof:
+        return SafroleErrorCode.BadTicketProof;
+      case TestErrorCode.DuplicateTicket:
+        return SafroleErrorCode.DuplicateTicket;
+      case TestErrorCode.IncorrectData:
+        return SafroleErrorCode.IncorrectData;
+      case TestErrorCode.UnexpectedTicket:
+        return SafroleErrorCode.UnexpectedTicket;
+    }
   }
 }
 
@@ -178,10 +213,7 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const safrole = new Safrole(preState, chainSpec);
 
   const result = await safrole.transition(testContent.input);
-  const error = result.isError ? result.error : undefined;
-  const ok = result.isOk ? result.ok : undefined;
 
-  deepEqual(error, testContent.output.err);
-  deepEqual(ok, Output.toSafroleOutput(testContent.output));
+  deepEqual(result, Output.toSafroleOutput(testContent.output));
   deepEqual(safrole.state, JsonState.toSafroleState(testContent.post_state, chainSpec));
 }

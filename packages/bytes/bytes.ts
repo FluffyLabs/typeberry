@@ -1,3 +1,4 @@
+import { Ordering } from "@typeberry/ordering";
 import { TEST_COMPARE_VIA_STRING, asOpaqueType, check } from "@typeberry/utils";
 
 /**
@@ -48,33 +49,44 @@ export class BytesBlob {
    *  Returns true if "this" blob is less than (or equal to) "other"
    *  https://graypaper.fluffylabs.dev/#/5f542d7/07c40007c400
    */
-  private cmp(other: BytesBlob, { orEqual = false } = {}): boolean {
+  public compare(other: BytesBlob): Ordering {
     const min = Math.min(this.length, other.length);
     const thisRaw = this.raw;
     const otherRaw = other.raw;
 
     for (let i = 0; i < min; i++) {
       if (thisRaw[i] < otherRaw[i]) {
-        return true;
+        return Ordering.Less;
       }
 
       if (thisRaw[i] > otherRaw[i]) {
-        return false;
+        return Ordering.Greater;
       }
     }
 
-    if (orEqual) {
-      return this.length <= other.length;
+    if (this.length < other.length) {
+      return Ordering.Less;
     }
-    return this.length < other.length;
+
+    if (this.length > other.length) {
+      return Ordering.Greater;
+    }
+
+    return Ordering.Equal;
   }
 
+  /**
+   * @deprecated Use `compare` instead.
+   */
   isLessThan(other: BytesBlob): boolean {
-    return this.cmp(other, { orEqual: false });
+    return this.compare(other) === Ordering.Less;
   }
 
+  /**
+   * @deprecated Use `compare` instead.
+   */
   isLessThanOrEqualTo(other: BytesBlob): boolean {
-    return this.cmp(other, { orEqual: true });
+    return this.compare(other) !== Ordering.Greater;
   }
 
   /** Create a new [`BytesBlob'] by converting given UTF-u encoded string into bytes. */
