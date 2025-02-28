@@ -1,6 +1,5 @@
 import {
   BANDERSNATCH_KEY_BYTES,
-  BANDERSNATCH_PROOF_BYTES,
   type BandersnatchKey,
   ED25519_KEY_BYTES,
   type EntropyHash,
@@ -200,13 +199,7 @@ export class Safrole {
 
     const { nextValidatorData, currentValidatorData } = this.state;
 
-    const keys = newNextValidators.reduce(
-      (acc, validator, i) => {
-        acc.set(validator.bandersnatch.raw, i * BANDERSNATCH_PROOF_BYTES);
-        return acc;
-      },
-      new Uint8Array(BANDERSNATCH_PROOF_BYTES * nextValidatorData.length),
-    );
+    const keys = BytesBlob.blobFromParts(newNextValidators.map((x) => x.bandersnatch.raw)).raw;
 
     const epochRootResult = await getRingCommitment(keys);
 
