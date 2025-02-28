@@ -1,5 +1,6 @@
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
-import { Ordering, SortedArray } from "@typeberry/collections";
+import { SortedArray } from "@typeberry/collections";
+import { Ordering } from "@typeberry/ordering";
 
 const READS = 100;
 const keys = ["xyz", "abc", "123", "def", "Abb"];
