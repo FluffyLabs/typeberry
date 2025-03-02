@@ -38,7 +38,25 @@ export function deepEqual<T>(
 
   if (actual === null || expected === null || actual === undefined || expected === undefined) {
     errors.tryAndCatch(() => {
-      assert.strictEqual(actual, expected);
+      /**
+       * There is a problem with memory in node 22.12.0+
+       *
+       * This workaround can be removed when this issue is resolved: https://github.com/nodejs/node/issues/57242
+       */
+      const [major, minor] = process.versions.node.split(".").map(Number);
+      const isOoMWorkaroundNeeded = major > 22 || (major === 22 && minor >= 12);
+      const message = isOoMWorkaroundNeeded ? new Error(`${actual} != ${expected}`) : undefined;
+      if (isOoMWorkaroundNeeded) {
+        console.warn(
+          [
+            "Stacktrace may be crappy because of a problem in nodejs.",
+            "Use older version than 22.12.0 or check this issue: https://github.com/nodejs/node/issues/57242",
+            "Maybe we do not need it anymore",
+          ].join("\n"),
+        );
+      }
+
+      assert.strictEqual(actual, expected, message);
     }, ctx);
     return errors.exitOrThrow();
   }
