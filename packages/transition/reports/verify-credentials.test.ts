@@ -19,7 +19,8 @@ describe("Reports.verifyCredentials", () => {
     ]);
 
     const input = { guarantees, slot: tryAsTimeSlot(1) };
-    const res = reports.verifyCredentials(input);
+    const hashes = reports.workReportHashes(guarantees);
+    const res = reports.verifyCredentials(input, hashes);
 
     deepEqual(res, {
       isOk: false,
@@ -40,7 +41,8 @@ describe("Reports.verifyCredentials", () => {
     ]);
 
     const input = { guarantees, slot: tryAsTimeSlot(1) };
-    const res = reports.verifyCredentials(input);
+    const hashes = reports.workReportHashes(guarantees);
+    const res = reports.verifyCredentials(input, hashes);
 
     deepEqual(res, {
       isOk: false,
@@ -61,7 +63,8 @@ describe("Reports.verifyCredentials", () => {
     ]);
 
     const input = { guarantees, slot: tryAsTimeSlot(6) };
-    const res = reports.verifyCredentials(input);
+    const hashes = reports.workReportHashes(guarantees);
+    const res = reports.verifyCredentials(input, hashes);
 
     deepEqual(res, {
       isOk: false,
@@ -82,7 +85,8 @@ describe("Reports.verifyCredentials", () => {
     ]);
 
     const input = { guarantees, slot: tryAsTimeSlot(6) };
-    const res = reports.verifyCredentials(input);
+    const hashes = reports.workReportHashes(guarantees);
+    const res = reports.verifyCredentials(input, hashes);
 
     deepEqual(res, {
       isOk: false,
@@ -103,7 +107,8 @@ describe("Reports.verifyCredentials", () => {
     ]);
 
     const input = { guarantees, slot: tryAsTimeSlot(4) };
-    const res = reports.verifyCredentials(input);
+    const hashes = reports.workReportHashes(guarantees);
+    const res = reports.verifyCredentials(input, hashes);
 
     deepEqual(res, {
       isOk: false,
@@ -124,7 +129,8 @@ describe("Reports.verifyCredentials", () => {
     ]);
 
     const input = { guarantees, slot: tryAsTimeSlot(25) };
-    const res = reports.verifyCredentials(input);
+    const hashes = reports.workReportHashes(guarantees);
+    const res = reports.verifyCredentials(input, hashes);
 
     deepEqual(res, {
       isOk: false,
@@ -145,7 +151,8 @@ describe("Reports.verifyCredentials", () => {
     ]);
 
     const input = { guarantees, slot: tryAsTimeSlot(25) };
-    const res = reports.verifyCredentials(input);
+    const hashes = reports.workReportHashes(guarantees);
+    const res = reports.verifyCredentials(input, hashes);
 
     const message = BytesBlob.parseBlob(
       "0x6a616d5f67756172616e74656523d9dc0dcb965edddacb4522b56b5f22bf7db53f462f194070254dde92ccfd43",

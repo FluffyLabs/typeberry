@@ -1,14 +1,14 @@
-import type { Ed25519Key, PerValidator, TimeSlot } from "@typeberry/block";
+import type { CoreIndex, Ed25519Key, PerValidator, TimeSlot, WorkReportHash } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
 import type { WorkPackageInfo } from "@typeberry/block/work-report";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type KnownSizeArray, SortedSet, asKnownSize, bytesComparator } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
-import { type KeccakHash, WithHash, blake2b } from "@typeberry/hash";
+import { WithHash, blake2b, type KeccakHash } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
 import { AvailabilityAssignment, type State } from "@typeberry/state";
-import { OK, Result, check } from "@typeberry/utils";
+import { OK, Result, asOpaqueType, check } from "@typeberry/utils";
 import { ReportsError } from "./error";
 import { generateCoreAssignment, rotationIndex } from "./guarantor-assignment";
 import { verifyReportsBasic } from "./verify-basic";
@@ -73,7 +73,7 @@ export class Reports {
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly state: ReportsState,
-    public readonly hasher: MmrHasher<KeccakHash>,
+    public readonly mmrHasher: MmrHasher<KeccakHash>,
     public readonly headerChain: HeaderChain,
   ) {}
 
@@ -90,10 +90,13 @@ export class Reports {
       return reportsValidity;
     }
 
+    // calculate hashes of all work reports in the guarantees extrinsic (one per guarantee)
+    const workReportHashes = this.workReportHashes(input.guarantees);
+
     // verifying credentials for all the work reports
     // but also slot & core assignment.
     // returns actual signatures that need to be checked (async)
-    const signaturesToVerify = this.verifyCredentials(input);
+    const signaturesToVerify = this.verifyCredentials(input, workReportHashes);
     if (signaturesToVerify.isError) {
       return signaturesToVerify;
     }
@@ -124,13 +127,15 @@ export class Reports {
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/154c02154c02
      */
+    let index = 0;
     for (const guarantee of input.guarantees) {
-      // TODO [ToDr] clean up the code a bit (use transition hasher)
-      const reportView = guarantee.view().report.view();
-      this.state.availabilityAssignment[reportView.coreIndex.materialize()] = new AvailabilityAssignment(
-        new WithHash(blake2b.hashBytes(reportView.encoded()).asOpaque(), reportView.materialize()),
+      const report = guarantee.view().report.materialize();
+      const workPackageHash = workReportHashes[index];
+      this.state.availabilityAssignment[report.coreIndex] = new AvailabilityAssignment(
+        new WithHash(workPackageHash, report),
         input.slot,
       );
+      index += 1;
     }
 
     return Result.ok({
@@ -143,9 +148,16 @@ export class Reports {
       ),
     });
   }
+  workReportHashes(input: GuaranteesExtrinsicView): KnownSizeArray<WorkReportHash, "Guarantees"> {
+    const workReportHashes: WorkReportHash[] = [];
+    for (const guarantee of input) {
+      workReportHashes.push(asOpaqueType(blake2b.hashBytes(guarantee.view().report.encoded())));
+    }
+    return asKnownSize(workReportHashes);
+  }
 
-  verifyCredentials(input: ReportsInput) {
-    return verifyCredentials(input.guarantees, input.slot, (headerTimeSlot, guaranteeTimeSlot) =>
+  verifyCredentials(input: ReportsInput, workReportHashes: KnownSizeArray<WorkReportHash, "Guarantees">) {
+    return verifyCredentials(input.guarantees, workReportHashes, input.slot, (headerTimeSlot, guaranteeTimeSlot) =>
       this.getGuarantorAssignment(headerTimeSlot, guaranteeTimeSlot),
     );
   }
@@ -160,7 +172,7 @@ export class Reports {
   }
 
   verifyContextualValidity(input: ReportsInput) {
-    return verifyContextualValidity(input, this.state, this.hasher, this.headerChain);
+    return verifyContextualValidity(input, this.state, this.mmrHasher, this.headerChain);
   }
 
   checkSignatures(

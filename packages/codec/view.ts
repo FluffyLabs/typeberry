@@ -68,9 +68,6 @@ export abstract class ObjectView<T> {
     this.initialDecoderOffset = decoder.bytesRead();
   }
 
-  // TODO [ToDr] do we really need these methods?
-  // We already have them duplicated in the `ViewField`
-
   /**
    * Create a concrete instance of `T` by decoding all of the remaining
    * fields that are not yet there in the cache.

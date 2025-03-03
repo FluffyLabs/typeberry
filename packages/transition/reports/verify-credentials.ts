@@ -2,9 +2,9 @@ import type { CoreIndex, Ed25519Key, PerValidator, TimeSlot, WorkReportHash } fr
 import { type GuaranteesExtrinsicView, REQUIRED_CREDENTIALS_RANGE } from "@typeberry/block/guarantees";
 import { BytesBlob } from "@typeberry/bytes";
 import type { ed25519 } from "@typeberry/crypto";
-import { blake2b } from "@typeberry/hash";
-import { Result, asOpaqueType } from "@typeberry/utils";
+import { Result } from "@typeberry/utils";
 import { ReportsError } from "./error";
+import {KnownSizeArray} from "@typeberry/collections";
 
 export type GuarantorAssignment = {
   core: CoreIndex;
@@ -21,6 +21,8 @@ type GetGuarantorAssignment = (
  */
 export function verifyCredentials(
   guarantees: GuaranteesExtrinsicView,
+  // same number of items as in guarantees view
+  workReportHashes: KnownSizeArray<WorkReportHash, "Guarantees">,
   slot: TimeSlot,
   getGuarantorAssignment: GetGuarantorAssignment,
 ): Result<ed25519.Input[], ReportsError> {
@@ -32,10 +34,12 @@ export function verifyCredentials(
    */
   const signaturesToVerify: ed25519.Input[] = [];
   const headerTimeSlot = slot;
+  let index = 0;
   for (const guarantee of guarantees) {
     const guaranteeView = guarantee.view();
     const coreIndex = guaranteeView.report.view().coreIndex.materialize();
-    const workReportHash: WorkReportHash = asOpaqueType(blake2b.hashBytes(guaranteeView.report.encoded()));
+    const workReportHash = workReportHashes[index];
+    index += 1;
     /**
      * The credential is a sequence of two or three tuples of a
      * unique validator index and a signature.
