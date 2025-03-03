@@ -14,7 +14,7 @@ const MAX_REPORT_DEPENDENCIES = 8;
  *
  * https://graypaper.fluffylabs.dev/#/5f542d7/41a60041aa00?v=0.6.2
  */
-const MAX_WORK_REPORT_SIZE_BYTES = 48 * 2 ** 10;
+export const MAX_WORK_REPORT_SIZE_BYTES = 48 * 2 ** 10;
 
 export function verifyReportsBasic(input: GuaranteesExtrinsicView): Result<OK, ReportsError> {
   for (const guarantee of input) {
@@ -29,7 +29,7 @@ export function verifyReportsBasic(input: GuaranteesExtrinsicView): Result<OK, R
     if (noOfPrerequisites + noOfSegmentRootLookups > MAX_REPORT_DEPENDENCIES) {
       return Result.error(
         ReportsError.TooManyDependencies,
-        `Report at ${reportView.coreIndex.encoded()} has too many depdencies. Got ${noOfPrerequisites} + ${noOfSegmentRootLookups}, max: ${MAX_REPORT_DEPENDENCIES}`,
+        `Report at ${reportView.coreIndex.materialize()} has too many dependencies. Got ${noOfPrerequisites} + ${noOfSegmentRootLookups}, max: ${MAX_REPORT_DEPENDENCIES}`,
       );
     }
 
@@ -52,7 +52,7 @@ export function verifyReportsBasic(input: GuaranteesExtrinsicView): Result<OK, R
     if (authOutputSize + totalOutputsSize > MAX_WORK_REPORT_SIZE_BYTES) {
       return Result.error(
         ReportsError.WorkReportTooBig,
-        `Work report at ${reportView.coreIndex.encoded()} too big. Got ${authOutputSize} + ${totalOutputsSize}, max: ${MAX_WORK_REPORT_SIZE_BYTES}`,
+        `Work report at ${reportView.coreIndex.materialize()} too big. Got ${authOutputSize} + ${totalOutputsSize}, max: ${MAX_WORK_REPORT_SIZE_BYTES}`,
       );
     }
   }

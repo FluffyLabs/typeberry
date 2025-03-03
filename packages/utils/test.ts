@@ -75,13 +75,13 @@ export function deepEqual<T>(
   if (isResult(actual) && isResult(expected)) {
     if (actual.isOk && !expected.isOk) {
       errors.tryAndCatch(() => {
-        throw new Error(`Expected OK, got ERROR: ${expected.error}: ${expected.details}`);
+        throw new Error(`Got OK, expected ERROR: ${expected.error}: ${expected.details}`);
       }, ctx);
     }
 
     if (!actual.isOk && expected.isOk) {
       errors.tryAndCatch(() => {
-        throw new Error(`Got OK, Expected ERROR: ${actual.error}: ${actual.details}`);
+        throw new Error(`Expected OK, Got ERROR: ${actual.error}: ${actual.details}`);
       }, ctx);
     }
 

@@ -22,6 +22,7 @@ import {
 import { RefineContext } from "@typeberry/block/refine-context";
 import testWorkReport from "@typeberry/block/test-work-report";
 import { type WorkPackageHash, type WorkPackageInfo, WorkReport } from "@typeberry/block/work-report";
+import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
@@ -58,6 +59,8 @@ type WorkReportOptions = {
   beefyRoot?: OpaqueHash;
   lookupAnchorSlot?: TimeSlot;
   lookupAnchor?: OpaqueHash;
+  prerequisites?: OpaqueHash[];
+  resultSize?: number;
 };
 
 export function newWorkReport({
@@ -68,6 +71,8 @@ export function newWorkReport({
   beefyRoot,
   lookupAnchorSlot,
   lookupAnchor,
+  prerequisites,
+  resultSize,
 }: WorkReportOptions): WorkReport {
   const source = BytesBlob.parseBlob(testWorkReport);
   const report = Decoder.decodeObject(WorkReport.Codec, source, tinyChainSpec);
@@ -77,7 +82,7 @@ export function newWorkReport({
     beefyRoot: beefyRoot ? beefyRoot.asOpaque() : report.context.beefyRoot,
     lookupAnchor: lookupAnchor ? lookupAnchor.asOpaque() : report.context.lookupAnchor,
     lookupAnchorSlot: lookupAnchorSlot ?? report.context.lookupAnchorSlot,
-    prerequisites: report.context.prerequisites,
+    prerequisites: prerequisites ? prerequisites.map((x) => x.asOpaque()) : report.context.prerequisites,
   });
   const workReport = new WorkReport(
     report.workPackageSpec,
@@ -86,7 +91,19 @@ export function newWorkReport({
     authorizer ? authorizer.asOpaque() : report.authorizerHash,
     report.authorizationOutput,
     report.segmentRootLookup,
-    report.results,
+    FixedSizeArray.new(
+      report.results.map(
+        (x) =>
+          new WorkResult(
+            x.serviceId,
+            x.codeHash,
+            x.payloadHash,
+            x.gas,
+            resultSize ? new WorkExecResult(WorkExecResultKind.ok, Bytes.fill(resultSize, 0)) : x.result,
+          ),
+      ),
+      report.results.fixedLength,
+    ),
   );
   return workReport;
 }
