@@ -418,8 +418,8 @@ export class Safrole {
   private isExtrinsicLengthValid(timeslot: TimeSlot, extrinsic: SignedTicket[]) {
     const slotPhase = this.getSlotPhaseIndex(timeslot);
 
-    if (slotPhase < this.chainSpec.contestLength && extrinsic.length <= this.chainSpec.maxTicketsPerExtrinsic) {
-      return true;
+    if (slotPhase < this.chainSpec.contestLength) { {
+      return extrinsic.length <= this.chainSpec.maxTicketsPerExtrinsic;
     }
 
     return extrinsic.length === 0;
@@ -433,7 +433,7 @@ export class Safrole {
   private areTicketAttemptsValid(tickets: SignedTicket[]) {
     const ticketsLength = tickets.length;
     for (let i = 0; i < ticketsLength; i++) {
-      if (tickets[i].attempt < 0 || tickets[i].attempt >= this.chainSpec.ticketsPerValidator) {
+      if (tickets[i].attempt >= this.chainSpec.ticketsPerValidator) {
         return false;
       }
     }
