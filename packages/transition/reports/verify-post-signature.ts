@@ -44,10 +44,6 @@ export function verifyPostSignatureChecks(
       );
     }
 
-    // TODO [ToDr] shall we agregate items data before checking?
-    // We could first build a map of `serviceId -> minItemGas, codehash`
-    // and then check it only once.
-
     /**
      * We require that the gas allotted for accumulation of each
      * work item in each work-report respects its service’s

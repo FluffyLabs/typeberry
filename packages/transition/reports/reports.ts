@@ -1,11 +1,11 @@
-import type { CoreIndex, Ed25519Key, PerValidator, TimeSlot, WorkReportHash } from "@typeberry/block";
+import type { Ed25519Key, PerValidator, TimeSlot, WorkReportHash } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
 import type { WorkPackageInfo } from "@typeberry/block/work-report";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type KnownSizeArray, SortedSet, asKnownSize, bytesComparator } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
-import { WithHash, blake2b, type KeccakHash } from "@typeberry/hash";
+import { type KeccakHash, WithHash, blake2b } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
 import { AvailabilityAssignment, type State } from "@typeberry/state";
 import { OK, Result, asOpaqueType, check } from "@typeberry/utils";
@@ -217,10 +217,6 @@ export class Reports {
 
     // https://graypaper.fluffylabs.dev/#/5f542d7/155e00156900
     if (guaranteeTimeSlot > headerTimeSlot || guaranteeTimeSlot < minTimeSlot) {
-      // TODO [ToDr] The error from test vectors seems to suggest that the reports
-      // will be rejected if they are from an older epoch,
-      // but according to GP it seems that just being from a too-old rotation
-      // is sufficient.
       const error =
         guaranteeTimeSlot > headerTimeSlot ? ReportsError.FutureReportSlot : ReportsError.ReportEpochBeforeLast;
       return Result.error(

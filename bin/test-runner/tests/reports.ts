@@ -229,8 +229,9 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
     hashConcat: (a, b) => keccak.hashBlobs(keccakHasher, [a, b]),
     hashConcatPrepend: (id, a, b) => keccak.hashBlobs(keccakHasher, [id, a, b]),
   };
-  // TODO [ToDr] Seems like we don't have any additional source of information
-  // for which lookup headers are in chain, so we just use the recent blocks history.
+  // Seems like we don't have any additional source of information
+  // for which lookup headers are in chain, so we just use the recent
+  // blocks history.
   const headerChain = {
     isInChain(hash: HeaderHash) {
       return preState.recentBlocks.find((x) => x.headerHash.isEqualTo(hash)) !== undefined;

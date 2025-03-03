@@ -121,17 +121,12 @@ export function verifyContextualValidity(
     }
   }
 
-  // TODO [ToDr] More efficient into-array serialization?
-  const reported: WorkPackageInfo[] = [];
+  // TODO [ToDr] [opti] More efficient into-array serialization?
   const sortedWorkPackages = SortedSet.fromArray((x, y) => {
     return bytesComparator(x[0], y[0]);
   }, Array.from(currentWorkPackages));
 
-  for (const [key, val] of sortedWorkPackages) {
-    reported.push(new WorkPackageInfo(key, val));
-  }
-
-  return Result.ok(reported);
+  return Result.ok(sortedWorkPackages.slice().map(([key, val]) => new WorkPackageInfo(key, val)));
 }
 
 function verifyRefineContexts(
