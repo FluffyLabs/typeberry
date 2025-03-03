@@ -7,7 +7,7 @@ import {
   type TimeSlot,
 } from "@typeberry/block";
 import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Bytes, BytesBlob, bytesBlobComparator } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
@@ -21,9 +21,7 @@ import { getRingCommitment, verifyTickets } from "./bandersnatch";
 export const VALIDATOR_META_BYTES = 128;
 export type VALIDATOR_META_BYTES = typeof VALIDATOR_META_BYTES;
 
-const ticketComparator = (a: Ticket, b: Ticket) => {
-  return a.id.compare(b.id);
-};
+const ticketComparator = (a: Ticket, b: Ticket) => bytesBlobComparator(a.id, b.id);
 
 type Mutable<T> = {
   -readonly [P in keyof T]: T[P];
@@ -418,7 +416,7 @@ export class Safrole {
   private isExtrinsicLengthValid(timeslot: TimeSlot, extrinsic: SignedTicket[]) {
     const slotPhase = this.getSlotPhaseIndex(timeslot);
 
-    if (slotPhase < this.chainSpec.contestLength) { {
+    if (slotPhase < this.chainSpec.contestLength) {
       return extrinsic.length <= this.chainSpec.maxTicketsPerExtrinsic;
     }
 

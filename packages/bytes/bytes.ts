@@ -1,4 +1,4 @@
-import { Ordering } from "@typeberry/ordering";
+import { type Comparator, Ordering } from "@typeberry/ordering";
 import { TEST_COMPARE_VIA_STRING, asOpaqueType, check } from "@typeberry/utils";
 
 /**
@@ -280,3 +280,5 @@ function u8ArraySameLengthEqual(self: Uint8Array, other: Uint8Array) {
   }
   return true;
 }
+
+export const bytesBlobComparator: Comparator<BytesBlob> = <T extends BytesBlob>(a: T, b: T) => a.compare(b);

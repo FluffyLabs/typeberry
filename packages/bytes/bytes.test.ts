@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Ordering } from "@typeberry/ordering";
-import { Bytes, BytesBlob } from "./bytes";
+import { Bytes, BytesBlob, bytesBlobComparator } from "./bytes";
 
 describe("BytesBlob", () => {
   it("should fail if 0x is missing", () => {
@@ -173,6 +173,35 @@ describe("BytesBlob", () => {
     const result = blob1.isLessThanOrEqualTo(blob2);
 
     assert.strictEqual(result, true);
+  });
+
+  describe("comparator", () => {
+    it("should return Ordering.Equal", () => {
+      const a = Bytes.parseBlob("0x111111");
+      const b = Bytes.parseBlob("0x111111");
+
+      const result = bytesBlobComparator(a, b);
+
+      assert.strictEqual(result, Ordering.Equal);
+    });
+
+    it("should return Ordering.Less", () => {
+      const a = Bytes.parseBlob("0x011111");
+      const b = Bytes.parseBlob("0x111111");
+
+      const result = bytesBlobComparator(a, b);
+
+      assert.strictEqual(result, Ordering.Less);
+    });
+
+    it("should return Ordering.Greater", () => {
+      const a = Bytes.parseBlob("0x211111");
+      const b = Bytes.parseBlob("0x111111");
+
+      const result = bytesBlobComparator(a, b);
+
+      assert.strictEqual(result, Ordering.Greater);
+    });
   });
 });
 
