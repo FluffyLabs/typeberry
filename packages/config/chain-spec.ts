@@ -46,6 +46,12 @@ export class ChainSpec {
   readonly slotDuration: number;
   /** Length of the epoch in time slots. */
   readonly epochLength: number;
+  /**
+   * `R`: The rotation period of validator-core assignments, in timeslots.
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/417f00417f00
+   */
+  readonly rotationPeriod: number;
   /** Length of the ticket contest in time slots. */
   readonly contestLength: number;
   /** The maximum number of tickets each validator can submit. */
@@ -58,6 +64,7 @@ export class ChainSpec {
     this.coresCount = data.coresCount;
     this.slotDuration = data.slotDuration;
     this.epochLength = data.epochLength;
+    this.rotationPeriod = data.rotationPeriod;
     this.contestLength = data.contestLength;
     this.ticketsPerValidator = data.ticketsPerValidator;
   }
@@ -73,6 +80,7 @@ export const tinyChainSpec = new ChainSpec({
   coresCount: 2,
   slotDuration: 6,
   epochLength: 12,
+  rotationPeriod: 4,
   contestLength: 10,
   ticketsPerValidator: 3,
 });
@@ -83,9 +91,10 @@ export const tinyChainSpec = new ChainSpec({
  */
 export const fullChainSpec = new ChainSpec({
   validatorsCount: 1023,
-  epochLength: 600,
   coresCount: 341,
   slotDuration: 6,
+  epochLength: 600,
+  rotationPeriod: 10,
   contestLength: 10,
   ticketsPerValidator: 3,
 });

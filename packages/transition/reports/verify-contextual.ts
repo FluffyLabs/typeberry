@@ -2,7 +2,7 @@ import type { HeaderHash, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
 import type { RefineContext } from "@typeberry/block/refine-context";
 import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
-import { HashDictionary } from "@typeberry/collections";
+import { HashDictionary, SortedSet, bytesComparator } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set";
 import type { KeccakHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
@@ -93,7 +93,6 @@ export function verifyContextualValidity(
   const prerequisitesResult = verifyDependencies({
     currentWorkPackages,
     recentlyReported,
-    // TODO [ToDr] merge the two into `dependencies`?
     prerequisiteHashes,
     segmentRootLookupHashes,
   });
@@ -124,7 +123,11 @@ export function verifyContextualValidity(
 
   // TODO [ToDr] More efficient into-array serialization?
   const reported: WorkPackageInfo[] = [];
-  for (const [key, val] of currentWorkPackages) {
+  const sortedWorkPackages = SortedSet.fromArray((x, y) => {
+    return bytesComparator(x[0], y[0]);
+  }, Array.from(currentWorkPackages));
+
+  for (const [key, val] of sortedWorkPackages) {
     reported.push(new WorkPackageInfo(key, val));
   }
 
@@ -219,7 +222,10 @@ function verifyDependencies({
   prerequisiteHashes: HashSet<WorkPackageHash>;
   segmentRootLookupHashes: HashSet<WorkPackageHash>;
 }): Result<OK, ReportsError> {
-  const checkDependencies = (dependencies: HashSet<WorkPackageHash>): Result<OK, ReportsError> => {
+  const checkDependencies = (
+    dependencies: HashSet<WorkPackageHash>,
+    isSegmentRoot = false,
+  ): Result<OK, ReportsError> => {
     /**
      * We require that the prerequisite work-packages, if
      * present, and any work-packages mentioned in the
@@ -238,7 +244,7 @@ function verifyDependencies({
       }
 
       return Result.error(
-        ReportsError.DependencyMissing,
+        isSegmentRoot ? ReportsError.SegmentRootLookupInvalid : ReportsError.DependencyMissing,
         `Missing work package ${preReqHash} in current extrinsic or recent history.`,
       );
     }
@@ -250,8 +256,9 @@ function verifyDependencies({
   if (prerequisitesResult.isError) {
     return prerequisitesResult;
   }
-  // TODO: do the same for segmentRootLookupHashes (maybe we don't need separate set?)
-  const segmentRootResult = checkDependencies(segmentRootLookupHashes);
+  // do the same for segmentRootLookupHashes, we need a different set
+  // to return a different error for JAM test vectors.
+  const segmentRootResult = checkDependencies(segmentRootLookupHashes, true);
   if (segmentRootResult.isError) {
     return segmentRootResult;
   }

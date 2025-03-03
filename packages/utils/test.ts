@@ -78,20 +78,24 @@ export function deepEqual<T>(
         throw new Error(`Expected OK, got ERROR: ${expected.error}: ${expected.details}`);
       }, ctx);
     }
+
     if (!actual.isOk && expected.isOk) {
       errors.tryAndCatch(() => {
         throw new Error(`Got OK, Expected ERROR: ${actual.error}: ${actual.details}`);
       }, ctx);
     }
+
     if (actual.isOk && expected.isOk) {
       deepEqual(actual.ok, expected.ok, { context: ctx.concat(["ok"]), errorsCollector: errors, ignore });
     }
+
     if (actual.isError && expected.isError) {
       deepEqual(actual.error, expected.error, { context: ctx.concat(["error"]), errorsCollector: errors, ignore });
       deepEqual(actual.details, expected.details, {
         context: ctx.concat(["details"]),
         errorsCollector: errors,
-        ignore,
+        // display details when error does not match
+        ignore: actual.error === expected.error ? ignore : [],
       });
     }
     return errors.exitOrThrow();

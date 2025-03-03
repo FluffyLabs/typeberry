@@ -1,3 +1,4 @@
+import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsPerValidator, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
@@ -7,7 +8,7 @@ import { deepEqual } from "@typeberry/utils";
 import { generateCoreAssignment } from "./guarantor-assignment";
 
 describe("Core assignment", () => {
-  it("should assign valdiators to cores in tinyChainSpec", async () => {
+  it("should assign validators to cores in tinyChainSpec", async () => {
     const spec = tinyChainSpec;
     const entropy = Bytes.fill(HASH_SIZE, 1).asOpaque();
 
@@ -15,10 +16,24 @@ describe("Core assignment", () => {
     const coreAssignment2 = generateCoreAssignment(spec, entropy, tryAsTimeSlot(11));
 
     deepEqual(coreAssignment1, tryAsPerValidator([1, 1, 1, 0, 0, 0], spec));
-    deepEqual(coreAssignment2, tryAsPerValidator([0, 0, 0, 1, 1, 1], spec));
+    deepEqual(coreAssignment2, tryAsPerValidator([1, 1, 1, 0, 0, 0], spec));
   });
 
-  it("should assign valdiators to cores in fullChainSpec", async () => {
+  it("should assign validators to cores in tinyChainSpec - 2", async () => {
+    const spec = tinyChainSpec;
+    const entropy = Bytes.parseBytes(
+      "0x11da6d1f761ddf9bdb4c9d6e5303ebd41f61858d0a5647a1a7bfe089bf921be9",
+      HASH_SIZE,
+    ).asOpaque();
+
+    const coreAssignment1 = generateCoreAssignment(spec, entropy, tryAsTimeSlot(14));
+    const coreAssignment2 = generateCoreAssignment(spec, entropy, tryAsTimeSlot(11));
+
+    assert.deepStrictEqual(coreAssignment1, tryAsPerValidator([1, 0, 0, 1, 0, 1], spec));
+    assert.deepStrictEqual(coreAssignment2, tryAsPerValidator([1, 0, 0, 1, 0, 1], spec));
+  });
+
+  it("should assign validators to cores in fullChainSpec", async () => {
     const spec = fullChainSpec;
     const entropy = Bytes.fill(HASH_SIZE, 0xfe).asOpaque();
 

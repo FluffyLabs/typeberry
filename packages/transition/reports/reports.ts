@@ -2,15 +2,15 @@ import type { Ed25519Key, PerValidator, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
 import type { WorkPackageInfo } from "@typeberry/block/work-report";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
+import { type KnownSizeArray, SortedSet, asKnownSize, bytesComparator } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
-import type { KeccakHash } from "@typeberry/hash";
+import { type KeccakHash, WithHash, blake2b } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
-import type { State } from "@typeberry/state";
+import { AvailabilityAssignment, type State } from "@typeberry/state";
 import { OK, Result, check } from "@typeberry/utils";
 import { ReportsError } from "./error";
-import { ROTATION_PERIOD, generateCoreAssignment, rotationIndex } from "./guarantor-assignment";
+import { generateCoreAssignment, rotationIndex } from "./guarantor-assignment";
 import { verifyReportsBasic } from "./verify-basic";
 import { type HeaderChain, verifyContextualValidity } from "./verify-contextual";
 import { type GuarantorAssignment, verifyCredentials } from "./verify-credentials";
@@ -57,12 +57,14 @@ export type ReportsState = Pick<
   | "recentlyAccumulated"
 > & {
   // NOTE: this is most likely not strictly part of the state!
+  // TODO [ToDr] Seems that section 11 does not specify when this should be updated.
+  // I guess we need to check that later with the GP.
   readonly offenders: KnownSizeArray<Ed25519Key, "0..ValidatorsCount">;
 };
 
 export type ReportsOutput = {
-  // TODO [ToDr] length?
-  reported: WorkPackageInfo[];
+  /** All work Packages and their segment roots reported in the extrinsic. */
+  reported: KnownSizeArray<WorkPackageInfo, "Guarantees">;
   /** A set `R` of work package reporters. */
   reporters: KnownSizeArray<Ed25519Key, "Guarantees * Credentials (at most `cores*3`)">;
 };
@@ -117,10 +119,28 @@ export class Reports {
       return signaturesOk;
     }
 
+    /**
+     * Replace availability assignment.
+     *
+     * https://graypaper.fluffylabs.dev/#/5f542d7/154c02154c02
+     */
+    for (const guarantee of input.guarantees) {
+      // TODO [ToDr] clean up the code a bit (use transition hasher)
+      const reportView = guarantee.view().report.view();
+      this.state.availabilityAssignment[reportView.coreIndex.materialize()] = new AvailabilityAssignment(
+        new WithHash(blake2b.hashBytes(reportView.encoded()).asOpaque(), reportView.materialize()),
+        input.slot,
+      );
+    }
+
     return Result.ok({
-      reported: contextualValidity.ok,
-      // TODO [ToDr] can there be duplicates?
-      reporters: asKnownSize(signaturesToVerify.ok.map((x) => x.key)),
+      reported: asKnownSize(contextualValidity.ok),
+      reporters: asKnownSize(
+        SortedSet.fromArray(
+          bytesComparator,
+          signaturesToVerify.ok.map((x) => x.key),
+        ).slice(),
+      ),
     });
   }
 
@@ -178,9 +198,10 @@ export class Reports {
     guaranteeTimeSlot: TimeSlot,
   ): Result<PerValidator<GuarantorAssignment>, ReportsError> {
     const epochLength = this.chainSpec.epochLength;
-    const headerRotation = rotationIndex(headerTimeSlot);
-    const guaranteeRotation = rotationIndex(guaranteeTimeSlot);
-    const minTimeSlot = Math.max(0, headerRotation - 1) * ROTATION_PERIOD;
+    const rotationPeriod = this.chainSpec.rotationPeriod;
+    const headerRotation = rotationIndex(headerTimeSlot, rotationPeriod);
+    const guaranteeRotation = rotationIndex(guaranteeTimeSlot, rotationPeriod);
+    const minTimeSlot = Math.max(0, headerRotation - 1) * rotationPeriod;
 
     // https://graypaper.fluffylabs.dev/#/5f542d7/155e00156900
     if (guaranteeTimeSlot > headerTimeSlot || guaranteeTimeSlot < minTimeSlot) {
@@ -207,8 +228,8 @@ export class Reports {
     // we might need a different set of data
     if (headerRotation > guaranteeRotation) {
       // we can safely subtract here, because if `guaranteeRotation` is less
-      // than header rotation it must be greater than the `ROTATION_PERIOD`.
-      timeSlot = (headerTimeSlot - ROTATION_PERIOD) as TimeSlot;
+      // than header rotation it must be greater than the `rotationPeriod`.
+      timeSlot = (headerTimeSlot - rotationPeriod) as TimeSlot;
 
       // if the epoch changed, we need to take previous entropy and previous validator data.
       if (isPreviousRotationPreviousEpoch(timeSlot, headerTimeSlot, epochLength)) {

@@ -1,3 +1,4 @@
+import type { BytesBlob } from "@typeberry/bytes";
 import { check } from "@typeberry/utils";
 
 /** A return value of some comparator. */
@@ -16,6 +17,16 @@ export enum Ordering {
  * e.g. `self < other => Ordering.Less`, `self > other => Ordering.Greater`
  */
 export type Comparator<V> = (self: V, other: V) => Ordering;
+
+export function bytesComparator<T extends BytesBlob>(a: T, b: T): Ordering {
+  if (a.isLessThan(b)) {
+    return Ordering.Less;
+  }
+  if (a.isEqualTo(b)) {
+    return Ordering.Equal;
+  }
+  return Ordering.Greater;
+}
 
 /**
  * Collection of elements of type `V` that has some strict ordering.

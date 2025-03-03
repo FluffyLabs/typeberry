@@ -56,7 +56,7 @@ export class WorkPackageSpec extends WithDebug {
  *
  * Used to construct a dictionary.
  */
-export class WorkPackageInfo {
+export class WorkPackageInfo extends WithDebug {
   static Codec = codec.Class(WorkPackageInfo, {
     workPackageHash: codec.bytes(HASH_SIZE).asOpaque(),
     segmentTreeRoot: codec.bytes(HASH_SIZE).asOpaque(),
@@ -67,7 +67,9 @@ export class WorkPackageInfo {
     readonly workPackageHash: WorkPackageHash,
     /** Exports root hash. */
     readonly segmentTreeRoot: ExportsRootHash,
-  ) {}
+  ) {
+    super();
+  }
 
   static fromCodec({ workPackageHash, segmentTreeRoot }: CodecRecord<WorkPackageInfo>) {
     return new WorkPackageInfo(workPackageHash, segmentTreeRoot);

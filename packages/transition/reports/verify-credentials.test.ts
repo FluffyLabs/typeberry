@@ -34,7 +34,7 @@ describe("Reports.verifyCredentials", () => {
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.fromCodec({
         slot: tryAsTimeSlot(5),
-        report: newWorkReport({ core: 0 }),
+        report: newWorkReport({ core: 1 }),
         credentials: asOpaqueType([1, 2, 3, 4].map((x) => newCredential(x))),
       }),
     ]);
@@ -55,7 +55,7 @@ describe("Reports.verifyCredentials", () => {
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.fromCodec({
         slot: tryAsTimeSlot(5),
-        report: newWorkReport({ core: 1 }),
+        report: newWorkReport({ core: 0 }),
         credentials: asOpaqueType([1, 0].map((x) => newCredential(x))),
       }),
     ]);
@@ -76,7 +76,7 @@ describe("Reports.verifyCredentials", () => {
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.fromCodec({
         slot: tryAsTimeSlot(5),
-        report: newWorkReport({ core: 0 }),
+        report: newWorkReport({ core: 1 }),
         credentials: asOpaqueType([0, 1].map((x) => newCredential(x))),
       }),
     ]);
@@ -88,7 +88,7 @@ describe("Reports.verifyCredentials", () => {
       isOk: false,
       isError: true,
       error: ReportsError.WrongAssignment,
-      details: "Invalid core assignment for validator 1. Expected: 1, got: 0",
+      details: "Invalid core assignment for validator 1. Expected: 0, got: 1",
     });
   });
 
@@ -138,7 +138,7 @@ describe("Reports.verifyCredentials", () => {
     const reports = await newReports();
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.fromCodec({
-        slot: tryAsTimeSlot(10),
+        slot: tryAsTimeSlot(20),
         report: newWorkReport({ core: 0 }),
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),

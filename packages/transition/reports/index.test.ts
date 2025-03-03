@@ -21,7 +21,7 @@ describe("Reports - top level", () => {
       isOk: true,
       isError: false,
       ok: {
-        reported: [],
+        reported: asKnownSize([]),
         reporters: asKnownSize([]),
       },
     });

@@ -15,14 +15,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { fisherYatesShuffle } from "@typeberry/shuffling";
 import { type Opaque, asOpaqueType } from "@typeberry/utils";
 
-/**
- * `R`: The rotation period of validator-core assignments, in timeslots.
- *
- * https://graypaper.fluffylabs.dev/#/5f542d7/417f00417f00
- */
-export const ROTATION_PERIOD = 10;
-
-/** Index of the rotation calculated by dividing a timeslot by `ROTATION_PERIOD`. */
+/** Index of the rotation calculated by dividing a timeslot by rotation period. */
 export type RotationIndex = Opaque<number, "RotationIndex">;
 
 /**
@@ -37,32 +30,30 @@ export function generateCoreAssignment(
   /** timeslot */
   slot: TimeSlot,
 ): PerValidator<CoreIndex> {
-  return permute(eta2entropy, slot, spec.epochLength, spec.validatorsCount, spec.coresCount);
+  return permute(eta2entropy, slot, spec);
 }
 
 /** Calculate rotation index for given time slot. */
-export function rotationIndex(slot: TimeSlot): RotationIndex {
-  return asOpaqueType(Math.floor(slot / ROTATION_PERIOD));
+export function rotationIndex(slot: TimeSlot, rotationPeriod: number): RotationIndex {
+  return asOpaqueType(Math.floor(slot / rotationPeriod));
 }
 
 /** https://graypaper.fluffylabs.dev/#/5f542d7/14c00114c001 */
 function permute(
   entropy: EntropyHash,
   slot: TimeSlot,
-  epochLength: number,
-  noOfValidators: number,
-  noOfCores: number,
+  spec: Pick<ChainSpec, "epochLength" | "rotationPeriod" | "coresCount" | "validatorsCount">,
 ): PerValidator<CoreIndex> {
-  const shift = rotationIndex((slot % epochLength) as TimeSlot);
-  const initialAssignment = Array(noOfValidators)
+  const shift = rotationIndex((slot % spec.epochLength) as TimeSlot, spec.rotationPeriod);
+  const initialAssignment = Array(spec.validatorsCount)
     .fill(0)
     .map((_v, i) => {
       // we are moving within `[0..1)` in `i/noOfValidators` component, hence we will
       // get a valid `coreIndex` after multiplying by `noOfCores`.
-      return Math.floor((i * noOfCores) / noOfValidators) as CoreIndex;
+      return Math.floor((i * spec.coresCount) / spec.validatorsCount) as CoreIndex;
     });
   const shuffledAssignment = fisherYatesShuffle(initialAssignment, entropy);
-  const coreAssignment = rotate(shuffledAssignment, shift, noOfCores);
+  const coreAssignment = rotate(shuffledAssignment, shift, spec.coresCount);
 
   // we are sure this is PerValidator, since that's the array we create earlier.
   return asKnownSize(coreAssignment);
