@@ -13,6 +13,7 @@
     "packages/codec",
     "packages/collections",
     "packages/config",
+    "packages/crypto",
     "packages/database",
     "packages/database-lmdb",
     "packages/disputes",
@@ -22,6 +23,7 @@
     "packages/logger",
     "packages/mmr",
     "packages/numbers",
+    "packages/ordering",
     "packages/pvm/debugger-adapter",
     "packages/pvm/host-calls",
     "packages/pvm/host-calls-jam",
@@ -30,6 +32,7 @@
     "packages/pvm/spi-decoder",
     "packages/safrole",
     "packages/shuffling",
+    "packages/state",
     "packages/state-machine",
     "packages/transition",
     "packages/trie",
@@ -40,9 +43,7 @@
     "tools/ipc2rpc",
     "workers/block-generator",
     "workers/generic",
-    "workers/importer",
-    "packages/crypto",
-    "packages/state"
+    "workers/importer"
   ],
   "engines": {
     "node": ">=22",

@@ -44,6 +44,8 @@ export class ChainSpec {
   readonly contestLength: number;
   /** The maximum number of tickets each validator can submit. */
   readonly ticketsPerValidator: number;
+  /** The maximum number of tickets that can be included in a single block. */
+  readonly maxTicketsPerExtrinsic: number;
 
   constructor(data: Omit<ChainSpec, "validatorsSuperMajority" | "thirdOfValidators">) {
     this.validatorsCount = data.validatorsCount;
@@ -54,6 +56,7 @@ export class ChainSpec {
     this.epochLength = data.epochLength;
     this.contestLength = data.contestLength;
     this.ticketsPerValidator = data.ticketsPerValidator;
+    this.maxTicketsPerExtrinsic = data.maxTicketsPerExtrinsic;
   }
 
   toString() {
@@ -69,6 +72,7 @@ export const tinyChainSpec = new ChainSpec({
   epochLength: 12,
   contestLength: 10,
   ticketsPerValidator: 3,
+  maxTicketsPerExtrinsic: 3,
 });
 
 /**
@@ -80,6 +84,7 @@ export const fullChainSpec = new ChainSpec({
   epochLength: 600,
   coresCount: 341,
   slotDuration: 6,
-  contestLength: 10,
-  ticketsPerValidator: 3,
+  contestLength: 500,
+  ticketsPerValidator: 2,
+  maxTicketsPerExtrinsic: 16,
 });

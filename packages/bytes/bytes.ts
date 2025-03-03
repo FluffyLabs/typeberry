@@ -1,3 +1,4 @@
+import { type Comparator, Ordering } from "@typeberry/ordering";
 import { TEST_COMPARE_VIA_STRING, asOpaqueType, check } from "@typeberry/utils";
 
 /**
@@ -45,36 +46,47 @@ export class BytesBlob {
   }
 
   /** Compare the sequence to another one lexicographically.
-   *  Returns true if "this" blob is less than (or equal to) "other"
+   *  Returns `Ordering.Less` if "this" blob is less than (or shorter than) "other", `Ordering.Equal` if blobs are identical and `Ordering.Greater` otherwise.
    *  https://graypaper.fluffylabs.dev/#/5f542d7/07c40007c400
    */
-  private cmp(other: BytesBlob, { orEqual = false } = {}): boolean {
+  public compare(other: BytesBlob): Ordering {
     const min = Math.min(this.length, other.length);
     const thisRaw = this.raw;
     const otherRaw = other.raw;
 
     for (let i = 0; i < min; i++) {
       if (thisRaw[i] < otherRaw[i]) {
-        return true;
+        return Ordering.Less;
       }
 
       if (thisRaw[i] > otherRaw[i]) {
-        return false;
+        return Ordering.Greater;
       }
     }
 
-    if (orEqual) {
-      return this.length <= other.length;
+    if (this.length < other.length) {
+      return Ordering.Less;
     }
-    return this.length < other.length;
+
+    if (this.length > other.length) {
+      return Ordering.Greater;
+    }
+
+    return Ordering.Equal;
   }
 
+  /**
+   * @deprecated Use `compare` instead.
+   */
   isLessThan(other: BytesBlob): boolean {
-    return this.cmp(other, { orEqual: false });
+    return this.compare(other) === Ordering.Less;
   }
 
+  /**
+   * @deprecated Use `compare` instead.
+   */
   isLessThanOrEqualTo(other: BytesBlob): boolean {
-    return this.cmp(other, { orEqual: true });
+    return this.compare(other) !== Ordering.Greater;
   }
 
   /** Create a new [`BytesBlob'] by converting given UTF-u encoded string into bytes. */
@@ -89,11 +101,15 @@ export class BytesBlob {
   }
 
   /** Create a new [`BytesBlob`] by concatenating data from multiple `Uint8Array`s. */
-  static blobFromParts(v: Uint8Array, ...rest: Uint8Array[]) {
-    const totalLength = v.length + rest.reduce((a, v) => a + v.length, 0);
+  static blobFromParts(v: Uint8Array | Uint8Array[], ...rest: Uint8Array[]) {
+    const vArr = v instanceof Uint8Array ? [v] : v;
+    const totalLength = vArr.reduce((a, v) => a + v.length, 0) + rest.reduce((a, v) => a + v.length, 0);
     const buffer = new Uint8Array(totalLength);
-    buffer.set(v, 0);
-    let offset = v.length;
+    let offset = 0;
+    for (const r of vArr) {
+      buffer.set(r, offset);
+      offset += r.length;
+    }
     for (const r of rest) {
       buffer.set(r, offset);
       offset += r.length;
@@ -130,6 +146,17 @@ export class BytesBlob {
       throw new Error(`Missing 0x prefix: ${v}.`);
     }
     return BytesBlob.parseBlobNoPrefix(v.substring(2));
+  }
+
+  /**
+   * Split `BytesBlob` into chunks of given size.
+   *
+   * Last chunk might be smaller than `size`.
+   */
+  *chunks(size: number): Generator<BytesBlob> {
+    for (let i = 0; i < this.length; i += size) {
+      yield BytesBlob.blobFrom(this.raw.subarray(i, i + size));
+    }
   }
 }
 
@@ -253,3 +280,5 @@ function u8ArraySameLengthEqual(self: Uint8Array, other: Uint8Array) {
   }
   return true;
 }
+
+export const bytesBlobComparator: Comparator<BytesBlob> = <T extends BytesBlob>(a: T, b: T) => a.compare(b);

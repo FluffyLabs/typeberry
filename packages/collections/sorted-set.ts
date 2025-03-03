@@ -1,5 +1,6 @@
+import { type Comparator, Ordering } from "@typeberry/ordering";
 import { check } from "@typeberry/utils";
-import { type Comparator, Ordering, SortedArray } from "./sorted-array";
+import { SortedArray } from "./sorted-array";
 
 /**
  * Collection of elements of type `V` that has some strict ordering and does not have dupliocates.
@@ -69,8 +70,8 @@ export class SortedSet<V> extends SortedArray<V> {
     if (second.length === 0) {
       return SortedSet.fromSortedArray(comparator, first.array);
     }
-
     const mergedArray = SortedArray.fromTwoSortedCollections(first, second).array;
+
     const mergedLength = mergedArray.length;
 
     let j = 1;
