@@ -149,10 +149,10 @@ export class BytesBlob {
   }
 
   /**
-    * Split `BytesBlob` into chunks of given size.
-    * 
-    * Last chunk might be smaller than `size`.
-    */
+   * Split `BytesBlob` into chunks of given size.
+   *
+   * Last chunk might be smaller than `size`.
+   */
   *chunks(size: number): Generator<BytesBlob> {
     for (let i = 0; i < this.length; i += size) {
       yield BytesBlob.blobFrom(this.raw.subarray(i, i + size));

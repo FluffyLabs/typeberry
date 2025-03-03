@@ -174,8 +174,8 @@ export class Output {
         return SafroleErrorCode.IncorrectData;
       case TestErrorCode.UnexpectedTicket:
         return SafroleErrorCode.UnexpectedTicket;
-     default:
-       throw new Error(`Invalid error code: ${error}`);
+      default:
+        throw new Error(`Invalid error code: ${error}`);
     }
   }
 }

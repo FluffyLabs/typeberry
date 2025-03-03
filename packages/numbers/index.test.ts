@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { i32AsLittleEndian, sumU32, tryAsU32 } from "./index";
+import { i32AsLittleEndian, isI32, sumU32, tryAsU32 } from "./index";
 
 describe("sumU32", () => {
   it("should sum and handle overflow", () => {
@@ -16,17 +16,43 @@ describe("sumU32", () => {
   });
 });
 
+describe("isI32", () => {
+  const creteTestCase = (value: number, expectedResult: boolean) => ({ value, expectedResult });
+
+  const testCases = [
+    creteTestCase(0, true),
+    creteTestCase(-1, true),
+    creteTestCase(1, true),
+    creteTestCase(2147483648, false),
+    creteTestCase(-2147483649, false),
+    creteTestCase(3.14, false),
+  ];
+
+  for (const { value, expectedResult } of testCases) {
+    it(`should correctly checks if ${value} is ${expectedResult ? "" : " not "} i32 number`, () => {
+      const result = isI32(value);
+
+      assert.strictEqual(result, expectedResult);
+    });
+  }
+});
+
 describe("i32AsLittleEndian", () => {
-  it("should transform bunch of numbers into little-endian representation", () => {
-    const numbers: number[] = [-1, 2 ** 32 - 1, 5, 0];
+  const creteTestCase = (value: number, expectedResult: Uint8Array) => ({ value, expectedResult });
 
-    const expectedResult = [
-      new Uint8Array([0xff, 0xff, 0xff, 0xff]),
-      new Uint8Array([0xff, 0xff, 0xff, 0xff]),
-      new Uint8Array([0x5, 0, 0, 0]),
-      new Uint8Array([0, 0, 0, 0]),
-    ];
+  const testCases = [
+    creteTestCase(-1, new Uint8Array([0xff, 0xff, 0xff, 0xff])),
+    creteTestCase(2147483647, new Uint8Array([0xff, 0xff, 0xff, 0x7f])),
+    creteTestCase(-2147483648, new Uint8Array([0, 0, 0, 0x80])),
+    creteTestCase(5, new Uint8Array([5, 0, 0, 0])),
+    creteTestCase(0, new Uint8Array([0, 0, 0, 0])),
+  ];
 
-    assert.deepStrictEqual(numbers.map(i32AsLittleEndian), expectedResult);
-  });
+  for (const { value, expectedResult } of testCases) {
+    it(`should return little endian representation of ${value}`, () => {
+      const result = i32AsLittleEndian(value);
+
+      assert.deepStrictEqual(result, expectedResult);
+    });
+  }
 });

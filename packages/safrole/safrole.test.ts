@@ -1,6 +1,12 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
-import type { Ed25519Key, EntropyHash, PerValidator, TimeSlot } from "@typeberry/block";
+import {
+  BANDERSNATCH_PROOF_BYTES,
+  type Ed25519Key,
+  type EntropyHash,
+  type PerValidator,
+  type TimeSlot,
+} from "@typeberry/block";
 import type { SignedTicket, TicketAttempt } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet } from "@typeberry/collections";
@@ -67,8 +73,8 @@ describe("Safrole", () => {
   beforeEach(() => {
     mock.method(bandersnatch, "verifyTickets", () =>
       Promise.resolve([
-        { isValid: true, entropyHash: Bytes.zero(32) },
-        { isValid: true, entropyHash: Bytes.fill(32, 1) },
+        { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
+        { isValid: true, entropyHash: Bytes.fill(HASH_SIZE, 1) },
       ]),
     );
   });
@@ -81,7 +87,7 @@ describe("Safrole", () => {
     const state = { timeslot: 1 } as SafroleState;
     const safrole = new Safrole(state, tinyChainSpec);
     const timeslot = 0 as TimeSlot;
-    const entropy: EntropyHash = Bytes.zero(32).asOpaque();
+    const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: SignedTicket[] = [];
     const input = {
       slot: timeslot,
@@ -101,7 +107,7 @@ describe("Safrole", () => {
     const state = { timeslot: 1 } as SafroleState;
     const safrole = new Safrole(state, tinyChainSpec);
     const timeslot = 2 as TimeSlot;
-    const entropy: EntropyHash = Bytes.zero(32).asOpaque();
+    const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: SignedTicket[] = [];
     extrinsic.length = tinyChainSpec.epochLength + 1;
     const input = {
@@ -122,11 +128,11 @@ describe("Safrole", () => {
     const state = { timeslot: 1 } as SafroleState;
     const safrole = new Safrole(state, tinyChainSpec);
     const timeslot = 2 as TimeSlot;
-    const entropy: EntropyHash = Bytes.zero(32).asOpaque();
+    const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: SignedTicket[] = [
       {
         attempt: (tinyChainSpec.ticketsPerValidator + 2) as TicketAttempt,
-        signature: Bytes.zero(784).asOpaque(),
+        signature: Bytes.zero(BANDERSNATCH_PROOF_BYTES).asOpaque(),
       },
     ];
 
@@ -146,12 +152,17 @@ describe("Safrole", () => {
 
   it("should return bad ticket proof error", async () => {
     mock.method(bandersnatch, "verifyTickets", () =>
-      Promise.resolve([{ isValid: false, entropyHash: Bytes.zero(32) }]),
+      Promise.resolve([{ isValid: false, entropyHash: Bytes.zero(HASH_SIZE) }]),
     );
     const state: SafroleState = {
       timeslot: 1 as TimeSlot,
       entropy: FixedSizeArray.new(
-        [Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque()],
+        [
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+        ],
         4,
       ),
       previousValidatorData: validators,
@@ -161,15 +172,15 @@ describe("Safrole", () => {
       punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
       ticketsAccumulator: [],
       sealingKeySeries: {},
-      epochRoot: Bytes.zero(32).asOpaque(),
+      epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
     };
     const safrole = new Safrole(state, tinyChainSpec);
     const timeslot = 2 as TimeSlot;
-    const entropy: EntropyHash = Bytes.zero(32).asOpaque();
+    const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: SignedTicket[] = [
       {
         attempt: 0 as TicketAttempt,
-        signature: Bytes.zero(784).asOpaque(),
+        signature: Bytes.zero(BANDERSNATCH_PROOF_BYTES).asOpaque(),
       },
     ];
 
@@ -190,8 +201,8 @@ describe("Safrole", () => {
   it("should return duplocated ticket error", async () => {
     mock.method(bandersnatch, "verifyTickets", () =>
       Promise.resolve([
-        { isValid: true, entropyHash: Bytes.zero(32) },
-        { isValid: true, entropyHash: Bytes.zero(32) },
+        { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
+        { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
       ]),
     );
     const state: SafroleState = {
@@ -212,19 +223,19 @@ describe("Safrole", () => {
       punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
       ticketsAccumulator: [],
       sealingKeySeries: {},
-      epochRoot: Bytes.zero(32).asOpaque(),
+      epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
     };
     const safrole = new Safrole(state, tinyChainSpec);
     const timeslot = 2 as TimeSlot;
-    const entropy: EntropyHash = Bytes.zero(32).asOpaque();
+    const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: SignedTicket[] = [
       {
         attempt: 0 as TicketAttempt,
-        signature: Bytes.zero(784).asOpaque(),
+        signature: Bytes.zero(BANDERSNATCH_PROOF_BYTES).asOpaque(),
       },
       {
         attempt: 0 as TicketAttempt,
-        signature: Bytes.zero(784).asOpaque(),
+        signature: Bytes.zero(BANDERSNATCH_PROOF_BYTES).asOpaque(),
       },
     ];
 
@@ -245,14 +256,19 @@ describe("Safrole", () => {
   it("should return bad ticket order error", async () => {
     mock.method(bandersnatch, "verifyTickets", () =>
       Promise.resolve([
-        { isValid: true, entropyHash: Bytes.fill(32, 1) },
-        { isValid: true, entropyHash: Bytes.zero(32) },
+        { isValid: true, entropyHash: Bytes.fill(HASH_SIZE, 1) },
+        { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
       ]),
     );
     const state: SafroleState = {
       timeslot: 1 as TimeSlot,
       entropy: FixedSizeArray.new(
-        [Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque()],
+        [
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+        ],
         4,
       ),
       previousValidatorData: validators,
@@ -262,19 +278,19 @@ describe("Safrole", () => {
       punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
       ticketsAccumulator: [],
       sealingKeySeries: {},
-      epochRoot: Bytes.zero(32).asOpaque(),
+      epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
     };
     const safrole = new Safrole(state, tinyChainSpec);
     const timeslot = 2 as TimeSlot;
-    const entropy: EntropyHash = Bytes.zero(32).asOpaque();
+    const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: SignedTicket[] = [
       {
         attempt: 0 as TicketAttempt,
-        signature: Bytes.fill(784, 1).asOpaque(),
+        signature: Bytes.fill(BANDERSNATCH_PROOF_BYTES, 1).asOpaque(),
       },
       {
         attempt: 0 as TicketAttempt,
-        signature: Bytes.zero(784).asOpaque(),
+        signature: Bytes.zero(BANDERSNATCH_PROOF_BYTES).asOpaque(),
       },
     ];
 
@@ -296,7 +312,12 @@ describe("Safrole", () => {
     const state: SafroleState = {
       timeslot: 1 as TimeSlot,
       entropy: FixedSizeArray.new(
-        [Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque(), Bytes.zero(32).asOpaque()],
+        [
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+          Bytes.zero(HASH_SIZE).asOpaque(),
+        ],
         4,
       ),
       previousValidatorData: validators,
@@ -306,15 +327,15 @@ describe("Safrole", () => {
       punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
       ticketsAccumulator: [],
       sealingKeySeries: {},
-      epochRoot: Bytes.zero(32).asOpaque(),
+      epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
     };
     const safrole = new Safrole(state, tinyChainSpec);
     const timeslot = 2 as TimeSlot;
-    const entropy: EntropyHash = Bytes.zero(32).asOpaque();
+    const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: SignedTicket[] = [
       {
         attempt: 0 as TicketAttempt,
-        signature: Bytes.zero(784).asOpaque(),
+        signature: Bytes.zero(BANDERSNATCH_PROOF_BYTES).asOpaque(),
       },
     ];
 
