@@ -46,7 +46,7 @@ export class BytesBlob {
   }
 
   /** Compare the sequence to another one lexicographically.
-   *  Returns true if "this" blob is less than (or equal to) "other"
+   *  Returns `Ordering.Less` if "this" blob is less than (or shorter than) "other", `Ordering.Equal` if blobs are identical and `Ordering.Greater` otherwise.
    *  https://graypaper.fluffylabs.dev/#/5f542d7/07c40007c400
    */
   public compare(other: BytesBlob): Ordering {
@@ -148,7 +148,11 @@ export class BytesBlob {
     return BytesBlob.parseBlobNoPrefix(v.substring(2));
   }
 
-  /** Split BytesBlob into chunks of given size */
+  /**
+    * Split `BytesBlob` into chunks of given size.
+    * 
+    * Last chunk might be smaller than `size`.
+    */
   *chunks(size: number): Generator<BytesBlob> {
     for (let i = 0; i < this.length; i += size) {
       yield BytesBlob.blobFrom(this.raw.subarray(i, i + size));
