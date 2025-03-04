@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { Ordering } from "./sorted-array";
+import { Ordering } from "@typeberry/ordering";
 import { SortedSet } from "./sorted-set";
 
 describe("SortedSet", () => {

@@ -4,6 +4,7 @@
   "description": "Byte-related utilities and types.",
   "main": "index.ts",
   "dependencies": {
+    "@typeberry/ordering": "0.0.1",
     "@typeberry/utils": "0.0.1"
   },
   "scripts": {

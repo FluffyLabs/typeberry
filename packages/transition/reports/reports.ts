@@ -1,8 +1,8 @@
 import type { Ed25519Key, PerValidator, TimeSlot, WorkReportHash } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
 import type { WorkPackageInfo } from "@typeberry/block/work-report";
-import type { BytesBlob } from "@typeberry/bytes";
-import { type KnownSizeArray, SortedSet, asKnownSize, bytesComparator } from "@typeberry/collections";
+import { type BytesBlob, bytesBlobComparator } from "@typeberry/bytes";
+import { type KnownSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
 import { type KeccakHash, WithHash, blake2b } from "@typeberry/hash";
@@ -142,7 +142,7 @@ export class Reports {
       reported: asKnownSize(contextualValidity.ok),
       reporters: asKnownSize(
         SortedSet.fromArray(
-          bytesComparator,
+          bytesBlobComparator,
           signaturesToVerify.ok.map((x) => x.key),
         ).slice(),
       ),

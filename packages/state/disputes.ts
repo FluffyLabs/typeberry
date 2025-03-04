@@ -1,6 +1,6 @@
 import type { Ed25519Key, WorkReportHash } from "@typeberry/block";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { Ordering, SortedSet } from "@typeberry/collections";
+import { SortedSet } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { asOpaqueType } from "@typeberry/utils";
 
@@ -58,13 +58,5 @@ export class DisputesRecords {
 }
 
 export function hashComparator<V extends OpaqueHash>(a: V, b: V) {
-  if (a.isLessThan(b)) {
-    return Ordering.Less;
-  }
-
-  if (b.isLessThan(a)) {
-    return Ordering.Greater;
-  }
-
-  return Ordering.Equal;
+  return a.compare(b);
 }

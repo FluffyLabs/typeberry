@@ -1,5 +1,13 @@
-import type { EntropyHash, PerEpochBlock, PerValidator, TimeSlot } from "@typeberry/block";
+import type {
+  BandersnatchKey,
+  BandersnatchRingRoot,
+  EntropyHash,
+  PerEpochBlock,
+  PerValidator,
+  TimeSlot,
+} from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
+import type { Ticket } from "@typeberry/block/tickets";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { AvailabilityAssignment } from "./assurances";
@@ -49,6 +57,16 @@ export type State = {
    *  https://graypaper.fluffylabs.dev/#/579bd12/135800135800
    */
   readonly availabilityAssignment: PerCore<AvailabilityAssignment | null>;
+
+  /**
+   * `ι iota`: The validator keys and metadata to be drawn from next.
+   */
+  readonly designatedValidatorData: PerValidator<ValidatorData>;
+
+  /**
+   * `γₖ gamma_k`: The keys for the validators of the next epoch, equivalent to those keys which constitute γ_z .
+   */
+  readonly nextValidatorData: PerValidator<ValidatorData>;
 
   /**
    * `κ kappa`: Validators, who are the set of economic actors uniquely
@@ -146,4 +164,29 @@ export type State = {
    * https://graypaper.fluffylabs.dev/#/5f542d7/161a00161d00
    */
   readonly recentlyAccumulated: PerEpochBlock<WorkPackageHash[] /* actually a set */>;
+
+  /*
+   * `γₐ gamma_a`: The ticket accumulator - a series of highest-scoring ticket identifiers to be used for the next epoch.
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/0dc3000dc500
+   */
+  readonly ticketsAccumulator: Ticket[];
+
+  /**
+   * `γₛ gamma_s`: γs is the current epoch’s slot-sealer series, which is either a full complement of `E` tickets or, in the case of a fallback mode, a series of `E` Bandersnatch keys.
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/0dc6000dc800
+   */
+  readonly sealingKeySeries: {
+    keys?: BandersnatchKey[];
+    tickets?: Ticket[];
+  };
+
+  /**
+   * `γ_z gamma_z`: The epoch’s root, a Bandersnatch ring root composed with the one Bandersnatch key of each of the next
+   * epoch’s validators, defined in γ_k.
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/0da8000db800
+   */
+  readonly epochRoot: BandersnatchRingRoot;
 };

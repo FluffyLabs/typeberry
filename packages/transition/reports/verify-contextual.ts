@@ -2,7 +2,8 @@ import type { HeaderHash, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
 import type { RefineContext } from "@typeberry/block/refine-context";
 import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
-import { HashDictionary, SortedSet, bytesComparator } from "@typeberry/collections";
+import { bytesBlobComparator } from "@typeberry/bytes";
+import { HashDictionary, SortedSet } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set";
 import type { KeccakHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
@@ -123,7 +124,7 @@ export function verifyContextualValidity(
 
   // TODO [ToDr] [opti] More efficient into-array serialization?
   const sortedWorkPackages = SortedSet.fromArray((x, y) => {
-    return bytesComparator(x[0], y[0]);
+    return bytesBlobComparator(x[0], y[0]);
   }, Array.from(currentWorkPackages));
 
   return Result.ok(sortedWorkPackages.slice().map(([key, val]) => new WorkPackageInfo(key, val)));

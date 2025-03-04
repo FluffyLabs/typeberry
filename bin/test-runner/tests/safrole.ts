@@ -1,25 +1,25 @@
 import {
   BANDERSNATCH_PROOF_BYTES,
+  BANDERSNATCH_RING_ROOT_BYTES,
   type BandersnatchKey,
   type BandersnatchProof,
+  type BandersnatchRingRoot,
   type Ed25519Key,
   type EntropyHash,
+  type TimeSlot,
+  tryAsPerValidator,
+  tryAsTimeSlot,
 } from "@typeberry/block";
 import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { FixedSizeArray, SortedSet } from "@typeberry/collections";
+import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { Logger } from "@typeberry/logger";
-import type { State as SafroleState } from "@typeberry/safrole";
-import { Safrole, type StateDiff as SafroleStateDiff } from "@typeberry/safrole";
-import type { ValidatorData } from "@typeberry/state";
-import { commonFromJson } from "./common-types";
-
-type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}` ? `${T}${Capitalize<SnakeToCamel<U>>}` : S;
-
-function snakeToCamel<T extends string>(s: T): SnakeToCamel<T> {
-  return s.replace(/(_\w)/g, (matches) => matches[1].toUpperCase()) as SnakeToCamel<T>;
-}
-
+import { Safrole } from "@typeberry/safrole";
+import { type Input, type OkResult, SafroleErrorCode } from "@typeberry/safrole/safrole";
+import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
+import { Result, deepEqual } from "@typeberry/utils";
+import { commonFromJson, getChainSpec } from "./common-types";
 namespace safroleFromJson {
   export const bytesBlob = json.fromString(BytesBlob.parseBlob);
 
@@ -36,11 +36,28 @@ namespace safroleFromJson {
 
 export class TicketsOrKeys {
   static fromJson: FromJson<TicketsOrKeys> = {
-    tickets: json.optional<Ticket[]>(json.array(safroleFromJson.ticketBody)),
     keys: json.optional<BandersnatchKey[]>(json.array(commonFromJson.bytes32())),
+    tickets: json.optional<Ticket[]>(json.array(safroleFromJson.ticketBody)),
   };
-  tickets?: Ticket[];
+
   keys?: BandersnatchKey[];
+  tickets?: Ticket[];
+}
+
+export enum TestErrorCode {
+  IncorrectData = "incorrect_data",
+  // Timeslot value must be strictly monotonic.
+  BadSlot = "bad_slot",
+  // Received a ticket while in epoch's tail.
+  UnexpectedTicket = "unexpected_ticket",
+  // Tickets must be sorted.
+  BadTicketOrder = "bad_ticket_order",
+  // Invalid ticket ring proof.
+  BadTicketProof = "bad_ticket_proof",
+  // Invalid ticket attempt value.
+  BadTicketAttempt = "bad_ticket_attempt",
+  // Found a ticket duplicate.
+  DuplicateTicket = "duplicate_ticket",
 }
 
 class JsonState {
@@ -53,11 +70,11 @@ class JsonState {
     iota: json.array(commonFromJson.validatorData),
     gamma_a: json.array(safroleFromJson.ticketBody),
     gamma_s: TicketsOrKeys.fromJson,
-    gamma_z: json.fromString((v) => Bytes.parseBytes(v, 144)),
+    gamma_z: json.fromString((v) => Bytes.parseBytes(v, BANDERSNATCH_RING_ROOT_BYTES).asOpaque()),
     post_offenders: json.array(commonFromJson.bytes32()),
   };
   // timeslot
-  tau!: number;
+  tau!: TimeSlot;
   // entropy
   eta!: [EntropyHash, EntropyHash, EntropyHash, EntropyHash];
   // previous validators
@@ -66,16 +83,31 @@ class JsonState {
   kappa!: ValidatorData[];
   // next validators
   gamma_k!: ValidatorData[];
-  // designedValidators
+  // designatedValidators
   iota!: ValidatorData[];
   // Sealing-key contest ticket accumulator.
   gamma_a!: Ticket[];
   // sealing-key series of current epoch
   gamma_s!: TicketsOrKeys;
   // bandersnatch ring comittment
-  gamma_z!: Bytes<144>;
+  gamma_z!: BandersnatchRingRoot;
   // posterior offenders sequence
   post_offenders!: Ed25519Key[];
+
+  static toSafroleState(state: JsonState, chainSpec: ChainSpec) {
+    return {
+      timeslot: state.tau,
+      entropy: FixedSizeArray.new(state.eta, ENTROPY_ENTRIES),
+      previousValidatorData: tryAsPerValidator(state.lambda, chainSpec),
+      currentValidatorData: tryAsPerValidator(state.kappa, chainSpec),
+      nextValidatorData: tryAsPerValidator(state.gamma_k, chainSpec),
+      designatedValidatorData: tryAsPerValidator(state.iota, chainSpec),
+      ticketsAccumulator: state.gamma_a,
+      sealingKeySeries: state.gamma_s,
+      epochRoot: state.gamma_z.asOpaque(),
+      punishSet: SortedSet.fromSortedArray(hashComparator, state.post_offenders),
+    };
+  }
 }
 
 export class EpochMark {
@@ -106,77 +138,84 @@ export class Output {
   };
 
   ok?: OkOutput;
-  err?: string;
+  err?: TestErrorCode;
+
+  static toSafroleOutput(output: Output): Result<OkResult, SafroleErrorCode> {
+    if (output.err) {
+      return Result.error(Output.toSafroleErrorCode(output.err));
+    }
+
+    const epochMark = !output.ok?.epoch_mark
+      ? null
+      : {
+          entropy: output.ok.epoch_mark?.entropy,
+          ticketsEntropy: output.ok.epoch_mark?.tickets_entropy,
+          validators: output.ok.epoch_mark?.validators,
+        };
+    return Result.ok({
+      epochMark,
+      ticketsMark: output.ok?.tickets_mark ?? null,
+    });
+  }
+
+  static toSafroleErrorCode(error: TestErrorCode): SafroleErrorCode {
+    switch (error) {
+      case TestErrorCode.BadSlot:
+        return SafroleErrorCode.BadSlot;
+      case TestErrorCode.BadTicketAttempt:
+        return SafroleErrorCode.BadTicketAttempt;
+      case TestErrorCode.BadTicketOrder:
+        return SafroleErrorCode.BadTicketOrder;
+      case TestErrorCode.BadTicketProof:
+        return SafroleErrorCode.BadTicketProof;
+      case TestErrorCode.DuplicateTicket:
+        return SafroleErrorCode.DuplicateTicket;
+      case TestErrorCode.IncorrectData:
+        return SafroleErrorCode.IncorrectData;
+      case TestErrorCode.UnexpectedTicket:
+        return SafroleErrorCode.UnexpectedTicket;
+      default:
+        throw new Error(`Invalid error code: ${error}`);
+    }
+  }
 }
 
-export class SafroleTest {
-  static fromJson: FromJson<SafroleTest> = {
-    input: {
+class TestInput {
+  static fromJson = json.object<TestInput, Input>(
+    {
       slot: "number",
       entropy: commonFromJson.bytes32(),
       extrinsic: json.array(safroleFromJson.ticketEnvelope),
     },
+    ({ entropy, extrinsic, slot }) => ({ entropy, extrinsic, slot: tryAsTimeSlot(slot) }),
+  );
+
+  slot!: TimeSlot;
+  entropy!: EntropyHash;
+  extrinsic!: SignedTicket[];
+}
+
+export class SafroleTest {
+  static fromJson: FromJson<SafroleTest> = {
+    input: TestInput.fromJson,
     pre_state: JsonState.fromJson,
     output: Output.fromJson,
     post_state: JsonState.fromJson,
   };
 
-  input!: {
-    slot: number;
-    entropy: EntropyHash;
-    // offenders: Ed25519Key[];
-    extrinsic: SignedTicket[];
-  };
+  input!: TestInput;
   pre_state!: JsonState;
   output!: Output;
   post_state!: JsonState;
 }
 
-const logger = Logger.new(__filename, "test-runner/safrole");
+export async function runSafroleTest(testContent: SafroleTest, path: string) {
+  const chainSpec = getChainSpec(path);
+  const preState = JsonState.toSafroleState(testContent.pre_state, chainSpec);
+  const safrole = new Safrole(preState, chainSpec);
 
-export async function runSafroleTest(testContent: SafroleTest) {
-  const preState = convertPreStateToModel(testContent.pre_state);
-  const safrole = new Safrole(preState);
+  const result = await safrole.transition(testContent.input);
 
-  const output: Output = {};
-  let error = "";
-  let stateDiff: SafroleStateDiff = {};
-  try {
-    stateDiff = await safrole.transition(testContent.input);
-    output.ok = {
-      epoch_mark: undefined,
-      tickets_mark: undefined,
-    };
-  } catch (e) {
-    error = `${e}`;
-    logger.error(error);
-    output.err = "exception";
-  }
-
-  const postState = structuredClone(testContent.pre_state);
-  // TODO [ToDr] Didn't find a better way to do this :sad:
-  const unsafePostState = postState as unknown as { [key: string]: unknown };
-  const unsafeStateDiff = stateDiff as unknown as { [key: string]: unknown };
-  for (const k of Object.keys(postState)) {
-    const diffKey = snakeToCamel(k);
-    if (diffKey in stateDiff) {
-      unsafePostState[k] = unsafeStateDiff[diffKey];
-    }
-  }
-
-  // assert.deepStrictEqual(error, "RuntimeError: unreachable");
-  //assert.deepStrictEqual(output, testContent.output);
-  //assert.deepStrictEqual(postState, testContent.post_state);
-}
-
-function convertPreStateToModel(preState: JsonState): SafroleState {
-  return {
-    timeslot: () => preState.tau,
-    entropy: () => preState.eta,
-    prevValidators: () => preState.lambda,
-    currValidators: () => preState.kappa,
-    nextValidators: () => preState.gamma_k,
-    designedValidators: () => preState.iota,
-    ticketsAccumulator: () => preState.gamma_a,
-  };
+  deepEqual(result, Output.toSafroleOutput(testContent.output));
+  deepEqual(safrole.state, JsonState.toSafroleState(testContent.post_state, chainSpec));
 }

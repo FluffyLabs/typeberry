@@ -56,6 +56,8 @@ export class ChainSpec {
   readonly contestLength: number;
   /** The maximum number of tickets each validator can submit. */
   readonly ticketsPerValidator: number;
+  /** The maximum number of tickets that can be included in a single block. */
+  readonly maxTicketsPerExtrinsic: number;
 
   constructor(data: Omit<ChainSpec, "validatorsSuperMajority" | "thirdOfValidators">) {
     this.validatorsCount = data.validatorsCount;
@@ -67,6 +69,7 @@ export class ChainSpec {
     this.rotationPeriod = data.rotationPeriod;
     this.contestLength = data.contestLength;
     this.ticketsPerValidator = data.ticketsPerValidator;
+    this.maxTicketsPerExtrinsic = data.maxTicketsPerExtrinsic;
   }
 
   toString() {
@@ -76,13 +79,14 @@ export class ChainSpec {
 
 /** Set of values for "tiny" chain as defined in JAM test vectors. */
 export const tinyChainSpec = new ChainSpec({
-  validatorsCount: 6,
-  coresCount: 2,
-  slotDuration: 6,
-  epochLength: 12,
-  rotationPeriod: 4,
   contestLength: 10,
+  coresCount: 2,
+  epochLength: 12,
+  maxTicketsPerExtrinsic: 3,
+  rotationPeriod: 4,
+  slotDuration: 6,
   ticketsPerValidator: 3,
+  validatorsCount: 6,
 });
 
 /**
@@ -90,11 +94,12 @@ export const tinyChainSpec = new ChainSpec({
  * Please note that only validatorsCount and epochLength are "full", the rest is copied from "tiny".
  */
 export const fullChainSpec = new ChainSpec({
-  validatorsCount: 1023,
+  contestLength: 500,
   coresCount: 341,
-  slotDuration: 6,
   epochLength: 600,
+  maxTicketsPerExtrinsic: 16,
   rotationPeriod: 10,
-  contestLength: 10,
-  ticketsPerValidator: 3,
+  slotDuration: 6,
+  ticketsPerValidator: 2,
+  validatorsCount: 1023,
 });
