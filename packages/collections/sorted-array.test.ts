@@ -1,20 +1,20 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Ordering } from "@typeberry/ordering";
+import { EQUAL, GREATER, LESS } from "@typeberry/ordering";
 import { SortedArray } from "./sorted-array";
 
 describe("SortedArray", { timeout: 10 }, () => {
   const cmp = (self: number, other: number) => {
     const r = self - other;
     if (r > 0) {
-      return Ordering.Greater;
+      return GREATER;
     }
 
     if (r < 0) {
-      return Ordering.Less;
+      return LESS;
     }
 
-    return Ordering.Equal;
+    return EQUAL;
   };
 
   it("should insert a bunch of items and keep the in order", () => {

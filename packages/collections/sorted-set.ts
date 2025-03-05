@@ -1,4 +1,4 @@
-import { type Comparator, Ordering } from "@typeberry/ordering";
+import type { Comparator } from "@typeberry/ordering";
 import { check } from "@typeberry/utils";
 import { SortedArray } from "./sorted-array";
 
@@ -16,11 +16,11 @@ export class SortedSet<V> extends SortedArray<V> {
    */
   static fromArray<V>(comparator: Comparator<V>, array: V[] = []) {
     const data = array.slice();
-    data.sort(comparator);
+    data.sort((a, b) => comparator(a, b).value);
     const dataLength = data.length;
 
     for (let i = 1; i < dataLength; i++) {
-      if (comparator(data[i - 1], data[i]) !== Ordering.Less) {
+      if (comparator(data[i - 1], data[i]).isEqual()) {
         throw new Error(`Expected array without duplicates, got: ${array}`);
       }
     }
@@ -42,7 +42,7 @@ export class SortedSet<V> extends SortedArray<V> {
     const dataLength = data.length;
 
     for (let i = 1; i < dataLength; i++) {
-      if (comparator(data[i - 1], data[i]) !== Ordering.Less) {
+      if (comparator(data[i - 1], data[i]).isGreaterOrEqual()) {
         throw new Error(`Expected sorted array without duplicates, got: ${data}`);
       }
     }
@@ -76,7 +76,7 @@ export class SortedSet<V> extends SortedArray<V> {
 
     let j = 1;
     for (let i = 1; i < mergedLength; i++) {
-      if (comparator(mergedArray[i - 1], mergedArray[i]) !== Ordering.Equal) {
+      if (comparator(mergedArray[i - 1], mergedArray[i]).isNotEqual()) {
         mergedArray[j++] = mergedArray[i];
       }
     }

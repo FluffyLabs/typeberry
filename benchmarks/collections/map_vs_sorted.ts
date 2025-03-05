@@ -1,6 +1,6 @@
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
 import { SortedArray } from "@typeberry/collections";
-import { Ordering } from "@typeberry/ordering";
+import { EQUAL, GREATER, LESS } from "@typeberry/ordering";
 
 const READS = 100;
 const keys = ["xyz", "abc", "123", "def", "Abb"];
@@ -21,7 +21,7 @@ module.exports = () =>
           for (const field of converted) {
             const v = map.get(field.key);
             if (v) {
-              dataCmp(v, field) === Ordering.Equal;
+              dataCmp(v, field).isEqual();
             }
           }
         }
@@ -39,7 +39,7 @@ module.exports = () =>
           for (const field of converted) {
             for (let i = 0; i < len; i += 1) {
               const v = map.get(i);
-              if (dataCmp(v, field) === Ordering.Equal) {
+              if (dataCmp(v, field).isEqual()) {
                 break;
               }
             }
@@ -57,7 +57,7 @@ module.exports = () =>
       return () => {
         for (let k = 0; k < READS; k += 1) {
           for (const field of converted) {
-            map.findIndex((v) => dataCmp(v, field) === Ordering.Equal);
+            map.findIndex((v) => dataCmp(v, field).isEqual());
           }
         }
       };
@@ -87,14 +87,14 @@ module.exports = () =>
 type Data = { key: string; value?: boolean };
 function dataCmp(a: Data, b: Data) {
   if (a.key < b.key) {
-    return Ordering.Less;
+    return LESS;
   }
 
   if (a.key > b.key) {
-    return Ordering.Greater;
+    return GREATER;
   }
 
-  return Ordering.Equal;
+  return EQUAL;
 }
 
 if (require.main === module) {

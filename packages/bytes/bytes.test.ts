@@ -1,6 +1,5 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Ordering } from "@typeberry/ordering";
 import { Bytes, BytesBlob, bytesBlobComparator } from "./bytes";
 
 describe("BytesBlob", () => {
@@ -54,26 +53,6 @@ describe("BytesBlob", () => {
     assert.deepStrictEqual(result.raw, new Uint8Array([47, 163, 246, 134]));
   });
 
-  describe("isLessThan", () => {
-    it("should compare two blobs and return false", () => {
-      const blob1 = BytesBlob.blobFromNumbers([48, 163, 246, 134]);
-      const blob2 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
-
-      const result = blob1.isLessThan(blob2);
-
-      assert.strictEqual(result, false);
-    });
-
-    it("should compare two blobs and return true", () => {
-      const blob1 = BytesBlob.blobFromNumbers([48, 163, 246, 134]);
-      const blob2 = BytesBlob.blobFromNumbers([49, 163, 246, 134]);
-
-      const result = blob1.isLessThan(blob2);
-
-      assert.strictEqual(result, true);
-    });
-  });
-
   describe("chunks", () => {
     it("should split array into chunks of given size", () => {
       const blob = BytesBlob.blobFromNumbers([48, 163, 246, 134]);
@@ -108,7 +87,7 @@ describe("BytesBlob", () => {
 
       const result = blob1.compare(blob2);
 
-      assert.strictEqual(result, Ordering.Equal);
+      assert.strictEqual(result.isEqual(), true);
     });
 
     it("should compare two blobs and return 'greater'", () => {
@@ -117,7 +96,7 @@ describe("BytesBlob", () => {
 
       const result = blob1.compare(blob2);
 
-      assert.strictEqual(result, Ordering.Greater);
+      assert.strictEqual(result.isGreater(), true);
     });
 
     it("should compare two blobs and return 'less'", () => {
@@ -126,7 +105,7 @@ describe("BytesBlob", () => {
 
       const result = blob1.compare(blob2);
 
-      assert.strictEqual(result, Ordering.Less);
+      assert.strictEqual(result.isLess(), true);
     });
 
     it("should return 'less' when blob1 is shorter but blobs have the same prefix", () => {
@@ -135,7 +114,7 @@ describe("BytesBlob", () => {
 
       const result = blob1.compare(blob2);
 
-      assert.strictEqual(result, Ordering.Less);
+      assert.strictEqual(result.isLess(), true);
     });
 
     it("should return 'greater' when blob1 is longer but blobs have the same prefix", () => {
@@ -144,63 +123,36 @@ describe("BytesBlob", () => {
 
       const result = blob1.compare(blob2);
 
-      assert.strictEqual(result, Ordering.Greater);
+      assert.strictEqual(result.isGreater(), true);
     });
   });
 
-  it("isLessThanOrEqualTo should compare two equal blobs and return true", () => {
-    const blob1 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
-    const blob2 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
-
-    const result = blob1.isLessThanOrEqualTo(blob2);
-
-    assert.strictEqual(result, true);
-  });
-
-  it("isLessThanOrEqualTo should compare two blobs and return false", () => {
-    const blob1 = BytesBlob.blobFromNumbers([48, 163, 246, 134]);
-    const blob2 = BytesBlob.blobFromNumbers([47, 163, 246, 134]);
-
-    const result = blob1.isLessThanOrEqualTo(blob2);
-
-    assert.strictEqual(result, false);
-  });
-
-  it("isLessThanOrEqualTo should compare two blobs and return true", () => {
-    const blob1 = BytesBlob.blobFromNumbers([48, 163, 246, 134]);
-    const blob2 = BytesBlob.blobFromNumbers([49, 163, 246, 134]);
-
-    const result = blob1.isLessThanOrEqualTo(blob2);
-
-    assert.strictEqual(result, true);
-  });
-
   describe("comparator", () => {
-    it("should return Ordering.Equal", () => {
+    it("should return EQUAL", () => {
       const a = Bytes.parseBlob("0x111111");
       const b = Bytes.parseBlob("0x111111");
 
       const result = bytesBlobComparator(a, b);
 
-      assert.strictEqual(result, Ordering.Equal);
+      assert.strictEqual(result.isEqual(), true);
     });
 
-    it("should return Ordering.Less", () => {
+    it("should return LESS", () => {
       const a = Bytes.parseBlob("0x011111");
       const b = Bytes.parseBlob("0x111111");
 
       const result = bytesBlobComparator(a, b);
 
-      assert.strictEqual(result, Ordering.Less);
+      assert.strictEqual(result.isLess(), true);
     });
 
-    it("should return Ordering.Greater", () => {
+    it("should return GREATER", () => {
       const a = Bytes.parseBlob("0x211111");
       const b = Bytes.parseBlob("0x111111");
 
       const result = bytesBlobComparator(a, b);
 
-      assert.strictEqual(result, Ordering.Greater);
+      assert.strictEqual(result.isGreater(), true);
     });
   });
 });

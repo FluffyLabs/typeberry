@@ -1,21 +1,21 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { Ordering } from "@typeberry/ordering";
+import { EQUAL, GREATER, LESS } from "@typeberry/ordering";
 import { SortedSet } from "./sorted-set";
 
 describe("SortedSet", () => {
   const cmp = (self: number, other: number) => {
     const r = self - other;
     if (r > 0) {
-      return Ordering.Greater;
+      return GREATER;
     }
 
     if (r < 0) {
-      return Ordering.Less;
+      return LESS;
     }
 
-    return Ordering.Equal;
+    return EQUAL;
   };
 
   describe("fromArray", () => {
