@@ -216,12 +216,17 @@ export class Reports {
     const minTimeSlot = Math.max(0, headerRotation - 1) * rotationPeriod;
 
     // https://graypaper.fluffylabs.dev/#/5f542d7/155e00156900
-    if (guaranteeTimeSlot > headerTimeSlot || guaranteeTimeSlot < minTimeSlot) {
-      const error =
-        guaranteeTimeSlot > headerTimeSlot ? ReportsError.FutureReportSlot : ReportsError.ReportEpochBeforeLast;
+    if (guaranteeTimeSlot > headerTimeSlot) {
       return Result.error(
         error,
-        `Report slot is in future or too old. Block ${headerTimeSlot}, Report: ${guaranteeTimeSlot}`,
+        `Report slot is in future. Block ${headerTimeSlot}, Report: ${guaranteeTimeSlot}`,
+      );
+    }
+    
+    if (guaranteeTimeSlot < minTimeSlot) {
+      return Result.error(
+        error,
+        `Report slot is too old. Block ${headerTimeSlot}, Report: ${guaranteeTimeSlot}`,
       );
     }
 
