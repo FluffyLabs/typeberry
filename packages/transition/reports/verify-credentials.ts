@@ -74,7 +74,7 @@ export function verifyCredentials(
       if (lastValidatorIndex >= validatorIndex) {
         return Result.error(
           ReportsError.NotSortedOrUniqueGuarantors,
-          `Credentials must be sorted by validator index. Got ${validatorIndex}, expected ${lastValidatorIndex + 1}`,
+          `Credentials must be sorted by validator index. Got ${validatorIndex}, expected at least ${lastValidatorIndex + 1}`,
         );
       }
 

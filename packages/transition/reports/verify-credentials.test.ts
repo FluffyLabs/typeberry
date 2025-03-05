@@ -70,7 +70,7 @@ describe("Reports.verifyCredentials", () => {
       isOk: false,
       isError: true,
       error: ReportsError.NotSortedOrUniqueGuarantors,
-      details: "Credentials must be sorted by validator index. Got 0, expected 2",
+      details: "Credentials must be sorted by validator index. Got 0, expected at least 2",
     });
   });
 
@@ -114,7 +114,7 @@ describe("Reports.verifyCredentials", () => {
       isOk: false,
       isError: true,
       error: ReportsError.FutureReportSlot,
-      details: "Report slot is in future or too old. Block 4, Report: 5",
+      details: "Report slot is in future. Block 4, Report: 5",
     });
   });
 
@@ -136,7 +136,7 @@ describe("Reports.verifyCredentials", () => {
       isOk: false,
       isError: true,
       error: ReportsError.ReportEpochBeforeLast,
-      details: "Report slot is in future or too old. Block 25, Report: 9",
+      details: "Report slot is too old. Block 25, Report: 9",
     });
   });
 

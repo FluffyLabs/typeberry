@@ -23,6 +23,8 @@ export function verifyReportsBasic(input: GuaranteesExtrinsicView): Result<OK, R
      * We limit the sum of the number of items in the
      * segment-root lookup dictionary and the number of
      * prerequisites to J = 8:
+     *
+     * https://graypaper.fluffylabs.dev/#/5f542d7/13ab0013ad00?v=0.6.2
      */
     const noOfPrerequisites = reportView.context.view().prerequisites.view().length;
     const noOfSegmentRootLookups = reportView.segmentRootLookup.view().length;

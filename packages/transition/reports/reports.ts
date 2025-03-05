@@ -218,14 +218,14 @@ export class Reports {
     // https://graypaper.fluffylabs.dev/#/5f542d7/155e00156900
     if (guaranteeTimeSlot > headerTimeSlot) {
       return Result.error(
-        error,
+        ReportsError.FutureReportSlot,
         `Report slot is in future. Block ${headerTimeSlot}, Report: ${guaranteeTimeSlot}`,
       );
     }
-    
+
     if (guaranteeTimeSlot < minTimeSlot) {
       return Result.error(
-        error,
+        ReportsError.ReportEpochBeforeLast,
         `Report slot is too old. Block ${headerTimeSlot}, Report: ${guaranteeTimeSlot}`,
       );
     }
@@ -234,7 +234,7 @@ export class Reports {
     // The `G` and `G*` sets should only be computed once per rotation.
 
     // Default data for the current rotation
-    let eta2entropy = this.state.entropy[2];
+    let entropy = this.state.entropy[2];
     let validatorData = this.state.currentValidatorData;
     let timeSlot = headerTimeSlot;
 
@@ -246,14 +246,14 @@ export class Reports {
 
       // if the epoch changed, we need to take previous entropy and previous validator data.
       if (isPreviousRotationPreviousEpoch(timeSlot, headerTimeSlot, epochLength)) {
-        eta2entropy = this.state.entropy[3];
+        entropy = this.state.entropy[3];
         validatorData = this.state.previousValidatorData;
       }
     }
 
     // we know which entropy, timeSlot and validatorData should be used,
     // so we can compute `G` or `G*` here.
-    const coreAssignment = generateCoreAssignment(this.chainSpec, eta2entropy, timeSlot);
+    const coreAssignment = generateCoreAssignment(this.chainSpec, entropy, timeSlot);
     return Result.ok(
       zip(coreAssignment, validatorData, (core, validator) => ({
         core,

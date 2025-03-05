@@ -76,7 +76,7 @@ export function verifyContextualValidity(
     return contextResult;
   }
 
-  const uniquenessResult = verifyWorkPackagesUniqueness(HashSet.fromDictionary(currentWorkPackages), state);
+  const uniquenessResult = verifyWorkPackagesUniqueness(HashSet.viewDictionaryKeys(currentWorkPackages), state);
   if (uniquenessResult.isError) {
     return uniquenessResult;
   }

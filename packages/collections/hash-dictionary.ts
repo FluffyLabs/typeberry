@@ -1,5 +1,4 @@
 import type { OpaqueHash } from "@typeberry/hash";
-import { HashSet } from "./hash-set";
 
 /** A map which uses hashes as keys. */
 export class HashDictionary<K extends OpaqueHash, V> {
@@ -42,9 +41,5 @@ export class HashDictionary<K extends OpaqueHash, V> {
     for (const value of this.map.values()) {
       yield value;
     }
-  }
-
-  keys(): HashSet<K> {
-    return HashSet.fromDictionary(this);
   }
 }

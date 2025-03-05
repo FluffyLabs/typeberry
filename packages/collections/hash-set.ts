@@ -4,7 +4,7 @@ import { HashDictionary } from "./hash-dictionary";
 /** A set specialized for storing hashes. */
 export class HashSet<V extends OpaqueHash> {
   /** Wrap given dictionary into `HashSet` api for it's keys. */
-  static fromDictionary<V extends OpaqueHash>(dict: HashDictionary<V, unknown>): HashSet<V> {
+  static viewDictionaryKeys<V extends OpaqueHash>(dict: HashDictionary<V, unknown>): HashSet<V> {
     return new HashSet(dict);
   }
 
@@ -41,19 +41,15 @@ export class HashSet<V extends OpaqueHash> {
    * Return an iterator over elements that are in the intersection of both sets.
    * i.e. they exist in both.
    */
-  intersection(other: HashSet<V>) {
+  *intersection(other: HashSet<V>) {
     const iterate = this.size < other.size ? this : other;
     const second = iterate === this ? other : this;
 
-    return {
-      *[Symbol.iterator]() {
-        for (const elem of iterate) {
-          if (second.has(elem)) {
-            yield elem;
-          }
-        }
-      },
-    };
+    for (const elem of iterate) {
+      if (second.has(elem)) {
+        yield elem;
+      }
+    }
   }
 
   /**

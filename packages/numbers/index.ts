@@ -1,4 +1,4 @@
-import { asOpaqueType, check, ensure } from "@typeberry/utils";
+import { asOpaqueType, ensure } from "@typeberry/utils";
 
 /**
  * TODO [ToDr] This should be `unique symbol`, but for some reason
@@ -19,8 +19,7 @@ export type U16 = FixedSizeNumber<2>;
 export type U32 = FixedSizeNumber<4>;
 /** Unsigned integer that can be represented as 8 bytes. */
 export type U64 = bigint & WithBytesRepresentation<8>;
-/** Signed integer that can be represented as 4 bytes. */
-export type I32 = FixedSizeNumber<4>;
+
 /** Attempt to cast an input number into U8. */
 export const tryAsU8 = (v: number): U8 =>
   ensure<number, U8>(v, isU8(v), `input must have one-byte representation, got ${v}`);
@@ -38,12 +37,6 @@ export const tryAsU32 = (v: number): U32 =>
   ensure<number, U32>(v, isU32(v), `input must have four-byte representation, got ${v}`);
 /** Check if given number is a valid U32 number. */
 export const isU32 = (v: number): v is U32 => (v & 0xff_ff_ff_ff) >>> 0 === v;
-
-/** Attempt to cast an input number into I32. */
-export const tryAsI32 = (v: number): U32 =>
-  ensure<number, I32>(v, isI32(v), `input must have four-byte representation, got ${v}`);
-/** Check if given number is a valid U32 number. */
-export const isI32 = (v: number): v is I32 => Number.isInteger(v) && v >= -2147483648 && v <= 2147483647;
 
 /** Attempt to cast an input number into U64. */
 export const tryAsU64 = (x: number | bigint): U64 => {
@@ -115,12 +108,9 @@ export function sumU32(...values: U32[]) {
 /**
  * Transform provided number to little-endian representation.
  */
-export function i32AsLittleEndian(value: number) {
-  check(isI32(value));
-  const result = new Uint8Array(4);
-  result[0] = value & 0xff;
-  result[1] = (value >> 8) & 0xff;
-  result[2] = (value >> 16) & 0xff;
-  result[3] = (value >> 24) & 0xff;
-  return result;
+export function* u32AsLittleEndian(value: U32) {
+  yield value & 0xff;
+  yield (value >> 8) & 0xff;
+  yield (value >> 16) & 0xff;
+  yield (value >> 24) & 0xff;
 }
