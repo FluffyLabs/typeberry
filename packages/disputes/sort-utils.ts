@@ -6,7 +6,7 @@ import type { BytesBlob } from "@typeberry/bytes";
  */
 export function isUniqueSortedBy<T extends Record<K, BytesBlob>, K extends keyof T>(arr: T[], key: K) {
   for (let i = 1; i < arr.length; i++) {
-    if (!arr[i - 1][key].isLessThan(arr[i][key])) {
+    if (arr[i - 1][key].compare(arr[i][key]).isGreaterOrEqual()) {
       return false;
     }
   }

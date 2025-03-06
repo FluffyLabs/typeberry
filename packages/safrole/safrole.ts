@@ -13,7 +13,6 @@ import { FixedSizeArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { blake2b } from "@typeberry/hash";
 import { i32AsLittleEndian } from "@typeberry/numbers";
-import { Ordering } from "@typeberry/ordering";
 import { type State, ValidatorData } from "@typeberry/state";
 import { Result, asOpaqueType } from "@typeberry/utils";
 import { getRingCommitment, verifyTickets } from "./bandersnatch";
@@ -314,11 +313,11 @@ export class Safrole {
 
     for (let i = 1; i < ticketsLength; i++) {
       const order = tickets[i - 1].id.compare(tickets[i].id);
-      if (order === Ordering.Equal) {
+      if (order.isEqual()) {
         return Result.error(SafroleErrorCode.DuplicateTicket);
       }
 
-      if (order === Ordering.Greater) {
+      if (order.isGreater()) {
         return Result.error(SafroleErrorCode.BadTicketOrder);
       }
     }

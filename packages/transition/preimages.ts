@@ -88,7 +88,10 @@ export class Preimages {
         continue;
       }
 
-      if (prevPreimage.requester > currPreimage.requester || currPreimage.blob.isLessThanOrEqualTo(prevPreimage.blob)) {
+      if (
+        prevPreimage.requester > currPreimage.requester ||
+        currPreimage.blob.compare(prevPreimage.blob).isLessOrEqual()
+      ) {
         return Result.error(PreimagesErrorCode.PreimagesNotSortedUnique);
       }
     }

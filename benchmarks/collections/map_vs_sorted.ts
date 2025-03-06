@@ -21,7 +21,7 @@ module.exports = () =>
           for (const field of converted) {
             const v = map.get(field.key);
             if (v) {
-              dataCmp(v, field) === Ordering.Equal;
+              dataCmp(v, field).isEqual();
             }
           }
         }
@@ -39,7 +39,7 @@ module.exports = () =>
           for (const field of converted) {
             for (let i = 0; i < len; i += 1) {
               const v = map.get(i);
-              if (dataCmp(v, field) === Ordering.Equal) {
+              if (dataCmp(v, field).isEqual()) {
                 break;
               }
             }
@@ -57,7 +57,7 @@ module.exports = () =>
       return () => {
         for (let k = 0; k < READS; k += 1) {
           for (const field of converted) {
-            map.findIndex((v) => dataCmp(v, field) === Ordering.Equal);
+            map.findIndex((v) => dataCmp(v, field).isEqual());
           }
         }
       };
