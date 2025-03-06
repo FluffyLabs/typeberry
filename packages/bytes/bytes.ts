@@ -1,4 +1,4 @@
-import { type Comparator, EQUAL, GREATER, LESS } from "@typeberry/ordering";
+import { type Comparator, Ordering } from "@typeberry/ordering";
 import { TEST_COMPARE_VIA_STRING, asOpaqueType, check } from "@typeberry/utils";
 
 /**
@@ -56,23 +56,23 @@ export class BytesBlob {
 
     for (let i = 0; i < min; i++) {
       if (thisRaw[i] < otherRaw[i]) {
-        return LESS;
+        return Ordering.Less;
       }
 
       if (thisRaw[i] > otherRaw[i]) {
-        return GREATER;
+        return Ordering.Greater;
       }
     }
 
     if (this.length < other.length) {
-      return LESS;
+      return Ordering.Less;
     }
 
     if (this.length > other.length) {
-      return GREATER;
+      return Ordering.Greater;
     }
 
-    return EQUAL;
+    return Ordering.Equal;
   }
 
   /** Create a new [`BytesBlob'] by converting given UTF-u encoded string into bytes. */

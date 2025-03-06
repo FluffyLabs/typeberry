@@ -8,8 +8,13 @@ enum OrderingValue {
   Greater = 1,
 }
 
-class Ordering {
-  constructor(public readonly value: OrderingValue) {}
+/** A class that provides utility methods to check the type of ordering. */
+export class Ordering {
+  private constructor(public readonly value: OrderingValue) {}
+
+  static Less = new Ordering(OrderingValue.Less);
+  static Greater = new Ordering(OrderingValue.Greater);
+  static Equal = new Ordering(OrderingValue.Equal);
 
   isLess() {
     return this.value === OrderingValue.Less;
@@ -39,10 +44,6 @@ class Ordering {
 /**
  * A type that compares the `self` value to `other` and returns an ordering in respect to `self`.
  *
- * e.g. `self < other => LESS`, `self > other => GREATER`
+ * e.g. `self < other => Ordering.Less`, `self > other => Ordering.Greater`
  */
 export type Comparator<V> = (self: V, other: V) => Ordering;
-
-export const LESS = new Ordering(OrderingValue.Less);
-export const GREATER = new Ordering(OrderingValue.Greater);
-export const EQUAL = new Ordering(OrderingValue.Equal);

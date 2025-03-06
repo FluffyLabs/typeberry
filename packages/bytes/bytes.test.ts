@@ -128,7 +128,7 @@ describe("BytesBlob", () => {
   });
 
   describe("comparator", () => {
-    it("should return EQUAL", () => {
+    it("should return Ordering.Equal", () => {
       const a = Bytes.parseBlob("0x111111");
       const b = Bytes.parseBlob("0x111111");
 
@@ -137,7 +137,7 @@ describe("BytesBlob", () => {
       assert.strictEqual(result.isEqual(), true);
     });
 
-    it("should return LESS", () => {
+    it("should return Ordering.Less", () => {
       const a = Bytes.parseBlob("0x011111");
       const b = Bytes.parseBlob("0x111111");
 
@@ -146,7 +146,7 @@ describe("BytesBlob", () => {
       assert.strictEqual(result.isLess(), true);
     });
 
-    it("should return GREATER", () => {
+    it("should return Ordering.Greater", () => {
       const a = Bytes.parseBlob("0x211111");
       const b = Bytes.parseBlob("0x111111");
 

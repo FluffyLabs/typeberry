@@ -12,7 +12,7 @@ import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { EQUAL } from "@typeberry/ordering";
+import { Ordering } from "@typeberry/ordering";
 import type { ValidatorData } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
 import * as bandersnatch from "./bandersnatch";
@@ -169,7 +169,7 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      punishSet: SortedSet.fromArray<Ed25519Key>(() => EQUAL, []),
+      punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
       ticketsAccumulator: [],
       sealingKeySeries: {},
       epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
@@ -220,7 +220,7 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      punishSet: SortedSet.fromArray<Ed25519Key>(() => EQUAL, []),
+      punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
       ticketsAccumulator: [],
       sealingKeySeries: {},
       epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
@@ -275,7 +275,7 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      punishSet: SortedSet.fromArray<Ed25519Key>(() => EQUAL, []),
+      punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
       ticketsAccumulator: [],
       sealingKeySeries: {},
       epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
@@ -324,7 +324,7 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      punishSet: SortedSet.fromArray<Ed25519Key>(() => EQUAL, []),
+      punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
       ticketsAccumulator: [],
       sealingKeySeries: {},
       epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),

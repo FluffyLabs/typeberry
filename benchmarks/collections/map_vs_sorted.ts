@@ -1,6 +1,6 @@
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
 import { SortedArray } from "@typeberry/collections";
-import { EQUAL, GREATER, LESS } from "@typeberry/ordering";
+import { Ordering } from "@typeberry/ordering";
 
 const READS = 100;
 const keys = ["xyz", "abc", "123", "def", "Abb"];
@@ -87,14 +87,14 @@ module.exports = () =>
 type Data = { key: string; value?: boolean };
 function dataCmp(a: Data, b: Data) {
   if (a.key < b.key) {
-    return LESS;
+    return Ordering.Less;
   }
 
   if (a.key > b.key) {
-    return GREATER;
+    return Ordering.Greater;
   }
 
-  return EQUAL;
+  return Ordering.Equal;
 }
 
 if (require.main === module) {
