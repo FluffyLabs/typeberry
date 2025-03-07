@@ -49,7 +49,7 @@ export class BytesBlob {
    *  Returns `Ordering.Less` if "this" blob is less than (or shorter than) "other", `Ordering.Equal` if blobs are identical and `Ordering.Greater` otherwise.
    *  https://graypaper.fluffylabs.dev/#/5f542d7/07c40007c400
    */
-  public compare(other: BytesBlob): Ordering {
+  public compare(other: BytesBlob) {
     const min = Math.min(this.length, other.length);
     const thisRaw = this.raw;
     const otherRaw = other.raw;
@@ -73,20 +73,6 @@ export class BytesBlob {
     }
 
     return Ordering.Equal;
-  }
-
-  /**
-   * @deprecated Use `compare` instead.
-   */
-  isLessThan(other: BytesBlob): boolean {
-    return this.compare(other) === Ordering.Less;
-  }
-
-  /**
-   * @deprecated Use `compare` instead.
-   */
-  isLessThanOrEqualTo(other: BytesBlob): boolean {
-    return this.compare(other) !== Ordering.Greater;
   }
 
   /** Create a new [`BytesBlob'] by converting given UTF-u encoded string into bytes. */

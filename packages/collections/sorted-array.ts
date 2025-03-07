@@ -1,4 +1,4 @@
-import { type Comparator, Ordering } from "@typeberry/ordering";
+import type { Comparator } from "@typeberry/ordering";
 import { check } from "@typeberry/utils";
 
 /**
@@ -15,7 +15,7 @@ export class SortedArray<V> {
    */
   static fromArray<V>(comparator: Comparator<V>, array: V[] = []) {
     const data = array.slice();
-    data.sort(comparator);
+    data.sort((a, b) => comparator(a, b).value);
     return new SortedArray(data, comparator);
   }
 
@@ -32,7 +32,7 @@ export class SortedArray<V> {
     const data = array.slice();
 
     for (let i = 1; i < dataLength; i++) {
-      if (comparator(data[i - 1], data[i]) === Ordering.Greater) {
+      if (comparator(data[i - 1], data[i]).isGreater()) {
         throw new Error(`Expected sorted array, got: ${data}`);
       }
     }
@@ -114,14 +114,14 @@ export class SortedArray<V> {
     while (low < high) {
       const mid = (high + low) >> 1;
       const r = cmp(arr[mid], v);
-      if (r === Ordering.Equal) {
+      if (r.isEqual()) {
         return {
           idx: mid,
           isEqual: true,
         };
       }
 
-      if (r <= Ordering.Less) {
+      if (r.isLess()) {
         low = mid + 1;
       } else {
         high = mid;
@@ -150,9 +150,9 @@ export class SortedArray<V> {
     let k = 0; // result array index
 
     while (i < arr1Length && j < arr2Length) {
-      if (comparator(arr1[i], arr2[j]) === Ordering.Less) {
+      if (comparator(arr1[i], arr2[j]).isLess()) {
         result[k++] = arr1[i++];
-      } else if (comparator(arr1[i], arr2[j]) === Ordering.Greater) {
+      } else if (comparator(arr1[i], arr2[j]).isGreater()) {
         result[k++] = arr2[j++];
       } else {
         result[k++] = arr1[i++];
