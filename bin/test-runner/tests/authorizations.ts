@@ -27,7 +27,7 @@ class Input {
         used: new Map(),
       };
       for (const { core, auth_hash } of auths) {
-        const perCore = input.used.get(core) ?? new HashSet();
+        const perCore = input.used.get(core) ?? HashSet.new();
         perCore.insert(auth_hash);
         input.used.set(core, perCore);
       }

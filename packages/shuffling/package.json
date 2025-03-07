@@ -6,6 +6,7 @@
   "dependencies": {
     "@typeberry/bytes": "0.0.1",
     "@typeberry/hash": "0.0.1",
+    "@typeberry/numbers": "0.0.1",
     "@typeberry/utils": "0.0.1"
   },
   "scripts": {

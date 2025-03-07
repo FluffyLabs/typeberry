@@ -12,7 +12,7 @@ import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { blake2b } from "@typeberry/hash";
-import { i32AsLittleEndian } from "@typeberry/numbers";
+import { tryAsU32, u32AsLittleEndian } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";
 import { Result, asOpaqueType } from "@typeberry/utils";
 import { getRingCommitment, verifyTickets } from "./bandersnatch";
@@ -236,9 +236,9 @@ export class Safrole {
     const epochLength = this.chainSpec.epochLength;
     const result: BandersnatchKey[] = [];
     const validatorsCount = newValidators.length;
-    for (let i = 0; i < epochLength; i++) {
-      const iAsBytes = i32AsLittleEndian(i);
-      const bytes = blake2b.hashBlobs([entropy.raw, iAsBytes]).raw;
+    for (let i = tryAsU32(0); i < epochLength; i++) {
+      const iAsBytes = u32AsLittleEndian(i);
+      const bytes = blake2b.hashBlobs([entropy.raw, new Uint8Array(iAsBytes)]).raw;
       const decoder = Decoder.fromBlob(bytes);
       const validatorIndex = decoder.u32() % validatorsCount;
       result.push(newValidators[validatorIndex].bandersnatch);

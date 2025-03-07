@@ -1,6 +1,6 @@
 import type { HeaderHash, StateRootHash, TimeSlot } from "@typeberry/block";
 import { type BeefyHash, RefineContext } from "@typeberry/block/refine-context";
-import type { Bytes } from "@typeberry/bytes";
+import type { WorkPackageHash } from "@typeberry/block/work-report";
 import { json } from "@typeberry/json-parser";
 import { fromJson, runCodecTest } from "./common";
 
@@ -23,7 +23,7 @@ type JsonRefineContext = {
   beefy_root: BeefyHash;
   lookup_anchor: HeaderHash;
   lookup_anchor_slot: TimeSlot;
-  prerequisites: Bytes<32>[];
+  prerequisites: WorkPackageHash[];
 };
 
 export async function runRefineContextTest(test: RefineContext, file: string) {

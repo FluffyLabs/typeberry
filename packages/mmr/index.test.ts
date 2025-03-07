@@ -81,7 +81,25 @@ describe("MMR", () => {
     );
     assert.deepEqual(
       mmr.getSuperPeakHash().toString(),
-      "0xeabc669b60353b24855765b1fc2c60bafd033c97da0c3981bd7632ea1fa524f6",
+      "0x1edf0b1f3291a8ffd2d17b8962b5aa58b3f9cf6ec8f9443a81bc786d4c64b7f4",
+    );
+  });
+
+  it("should match reports", async () => {
+    // given
+    const mmr = MerkleMountainRange.fromPeaks(await hasher, {
+      peaks: [
+        "0x4c31a1024d553c6f5eb90a26f9c53507d6d58b7be1197c0f86054b084353de5f",
+        null,
+        "0x7f64e54f8be039cea06582eb38e7f36f924c1f59a0f3043b4df6f140cccd6ddf",
+        "0xd7cc7a7751048dbe8d0232b5d0273acd874e56c19e41a2e09b590ca00e59908d",
+      ].map((x) => (x !== null ? Bytes.parseBytes(x, HASH_SIZE) : x)),
+    });
+
+    // then
+    assert.deepEqual(
+      mmr.getSuperPeakHash().toString(),
+      "0xf5df0c11416d43c55b43e096572d450b7780ed0fd7b540f26c8ded8e0d41e183",
     );
   });
 });

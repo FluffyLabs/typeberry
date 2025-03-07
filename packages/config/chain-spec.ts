@@ -2,6 +2,8 @@
  * Estimated number of validators.
  *
  * NOTE: Should ONLY be used to pre-allocate some data.
+ *
+ * https://graypaper.fluffylabs.dev/#/5f542d7/418800418800
  */
 export const EST_VALIDATORS = 1023;
 /**
@@ -14,12 +16,16 @@ export const EST_VALIDATORS_SUPER_MAJORITY = 683;
  * Estimated number of cores.
  *
  * NOTE: Should ONLY be used to pre-allocate some data.
+ *
+ * https://graypaper.fluffylabs.dev/#/5f542d7/414200414200
  */
-export const EST_CORES = 12;
+export const EST_CORES = 341;
 /**
  * Estimated epoch length (in time slots).
  *
  * NOTE: Should ONLY be used to pre-allocate some data.
+ *
+ * https://graypaper.fluffylabs.dev/#/5f542d7/414800414800
  */
 export const EST_EPOCH_LENGTH = 600;
 
@@ -40,6 +46,12 @@ export class ChainSpec {
   readonly slotDuration: number;
   /** Length of the epoch in time slots. */
   readonly epochLength: number;
+  /**
+   * `R`: The rotation period of validator-core assignments, in timeslots.
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/417f00417f00
+   */
+  readonly rotationPeriod: number;
   /** Length of the ticket contest in time slots. */
   readonly contestLength: number;
   /** The maximum number of tickets each validator can submit. */
@@ -54,6 +66,7 @@ export class ChainSpec {
     this.coresCount = data.coresCount;
     this.slotDuration = data.slotDuration;
     this.epochLength = data.epochLength;
+    this.rotationPeriod = data.rotationPeriod;
     this.contestLength = data.contestLength;
     this.ticketsPerValidator = data.ticketsPerValidator;
     this.maxTicketsPerExtrinsic = data.maxTicketsPerExtrinsic;
@@ -66,13 +79,14 @@ export class ChainSpec {
 
 /** Set of values for "tiny" chain as defined in JAM test vectors. */
 export const tinyChainSpec = new ChainSpec({
-  validatorsCount: 6,
-  coresCount: 2,
-  slotDuration: 6,
-  epochLength: 12,
   contestLength: 10,
-  ticketsPerValidator: 3,
+  coresCount: 2,
+  epochLength: 12,
   maxTicketsPerExtrinsic: 3,
+  rotationPeriod: 4,
+  slotDuration: 6,
+  ticketsPerValidator: 3,
+  validatorsCount: 6,
 });
 
 /**
@@ -80,11 +94,12 @@ export const tinyChainSpec = new ChainSpec({
  * Please note that only validatorsCount and epochLength are "full", the rest is copied from "tiny".
  */
 export const fullChainSpec = new ChainSpec({
-  validatorsCount: 1023,
-  epochLength: 600,
-  coresCount: 341,
-  slotDuration: 6,
   contestLength: 500,
-  ticketsPerValidator: 2,
+  coresCount: 341,
+  epochLength: 600,
   maxTicketsPerExtrinsic: 16,
+  rotationPeriod: 10,
+  slotDuration: 6,
+  ticketsPerValidator: 2,
+  validatorsCount: 1023,
 });

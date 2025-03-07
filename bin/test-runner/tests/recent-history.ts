@@ -1,8 +1,9 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
+import type { WorkPackageInfo } from "@typeberry/block/work-report";
 import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
-import type { BlockState, WorkPackageInfo } from "@typeberry/state";
+import type { BlockState } from "@typeberry/state";
 import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "@typeberry/transition/recent-history";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { TestBlockState, TestWorkPackageInfo, commonFromJson } from "./common-types";

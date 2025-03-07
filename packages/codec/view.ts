@@ -37,6 +37,7 @@ export class ViewField<T, V> implements ViewField<T, V> {
     return this.cachedView;
   }
 
+  /** Return an encoded value of that object. */
   encoded(): BytesBlob {
     if (this.cachedBlob === undefined) {
       this.cachedBlob = this.getEncoded();

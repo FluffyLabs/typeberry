@@ -1,11 +1,18 @@
-import { type Ed25519Key, type EntropyHash, type TimeSlot, tryAsPerValidator } from "@typeberry/block";
+import {
+  type Ed25519Key,
+  type EntropyHash,
+  type HeaderHash,
+  type TimeSlot,
+  tryAsPerEpochBlock,
+  tryAsPerValidator,
+} from "@typeberry/block";
 import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "@typeberry/block/guarantees";
-import type { SegmentRootLookupItem } from "@typeberry/block/work-report";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import type { OpaqueHash } from "@typeberry/hash";
+import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
+import type { MmrHasher } from "@typeberry/mmr";
 import {
   type AvailabilityAssignment,
   type BlockState,
@@ -21,7 +28,7 @@ import {
   type ReportsOutput,
   type ReportsState,
 } from "@typeberry/transition/reports";
-import { Result, asOpaqueType } from "@typeberry/utils";
+import { Result, asOpaqueType, deepEqual } from "@typeberry/utils";
 import { fromJson as codecFromJson } from "./codec/common";
 import { guaranteesExtrinsicFromJson } from "./codec/guarantees-extrinsic";
 import {
@@ -75,6 +82,14 @@ class TestState {
 
   static toReportsState(pre: TestState, spec: ChainSpec): ReportsState {
     return {
+      accumulationQueue: tryAsPerEpochBlock(
+        FixedSizeArray.fill(() => [], spec.epochLength),
+        spec,
+      ),
+      recentlyAccumulated: tryAsPerEpochBlock(
+        FixedSizeArray.fill(() => [], spec.epochLength),
+        spec,
+      ),
       availabilityAssignment: tryAsPerCore(pre.avail_assignments, spec),
       currentValidatorData: tryAsPerValidator(pre.curr_validators, spec),
       previousValidatorData: tryAsPerValidator(pre.prev_validators, spec),
@@ -82,7 +97,7 @@ class TestState {
       offenders: asOpaqueType(pre.offenders),
       authPools: tryAsPerCore(pre.auth_pools.map(asOpaqueType), spec),
       recentBlocks: asOpaqueType(pre.recent_blocks),
-      accounts: pre.accounts,
+      services: pre.accounts,
     };
   }
 }
@@ -125,8 +140,8 @@ class OutputData {
     }),
   );
 
-  reported!: SegmentRootLookupItem[];
-  reporters!: Ed25519Key[];
+  reported!: ReportsOutput["reported"];
+  reporters!: ReportsOutput["reporters"];
 }
 
 type ReportsResult = Result<ReportsOutput, ReportsError>;
@@ -205,16 +220,28 @@ export async function runReportsTestFull(testContent: ReportsTest) {
 
 async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   const preState = TestState.toReportsState(testContent.pre_state, spec);
-  const _postState = TestState.toReportsState(testContent.post_state, spec);
+  const postState = TestState.toReportsState(testContent.post_state, spec);
   const input = Input.toReportsInput(testContent.input, spec);
-  const _expectedOutput = TestReportsResult.toReportsResult(testContent.output);
+  const expectedOutput = TestReportsResult.toReportsResult(testContent.output);
 
-  const reports = new Reports(spec, preState);
+  const keccakHasher = await keccak.KeccakHasher.create();
+  const hasher: MmrHasher<KeccakHash> = {
+    hashConcat: (a, b) => keccak.hashBlobs(keccakHasher, [a, b]),
+    hashConcatPrepend: (id, a, b) => keccak.hashBlobs(keccakHasher, [id, a, b]),
+  };
+  // Seems like we don't have any additional source of information
+  // for which lookup headers are in chain, so we just use the recent
+  // blocks history.
+  const headerChain = {
+    isInChain(hash: HeaderHash) {
+      return preState.recentBlocks.find((x) => x.headerHash.isEqualTo(hash)) !== undefined;
+    },
+  };
 
-  const _output = reports.transition(input);
+  const reports = new Reports(spec, preState, hasher, headerChain);
 
-  // TODO [ToDr] Implement reports transition.
+  const output = await reports.transition(input);
 
-  // deepEqual(output, expectedOutput, { context: "output" });
-  // deepEqual(reports.state, postState, { context: "postState" });
+  deepEqual(output, expectedOutput, { context: "output", ignore: ["output.details"] });
+  deepEqual(reports.state, postState, { context: "postState" });
 }

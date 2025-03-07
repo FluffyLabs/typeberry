@@ -1,12 +1,20 @@
-import type { BandersnatchKey, BandersnatchRingRoot, EntropyHash, PerValidator, TimeSlot } from "@typeberry/block";
+import type {
+  BandersnatchKey,
+  BandersnatchRingRoot,
+  EntropyHash,
+  PerEpochBlock,
+  PerValidator,
+  TimeSlot,
+} from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
 import type { Ticket } from "@typeberry/block/tickets";
-import type { AuthorizerHash } from "@typeberry/block/work-report";
+import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { AvailabilityAssignment } from "./assurances";
 import type { BlockState } from "./block-state";
 import type { PerCore } from "./common";
 import type { DisputesRecords } from "./disputes";
+import type { NotYetAccumulatedReport } from "./not-yet-accumulated";
 import type { Service } from "./service";
 import type { ActivityData } from "./statistics";
 import type { ValidatorData } from "./validator-data";
@@ -43,8 +51,8 @@ export type MAX_RECENT_HISTORY = typeof MAX_RECENT_HISTORY;
 export type State = {
   /**
    * `ρ rho`: work-reports which have been reported but are not yet known to be
-   *        available to a super-majority of validators, together with the time
-   *        at which each was reported.
+   *          available to a super-majority of validators, together with the time
+   *          at which each was reported.
    *
    *  https://graypaper.fluffylabs.dev/#/579bd12/135800135800
    */
@@ -139,6 +147,25 @@ export type State = {
   readonly statisticsPerValidator: ActivityData;
 
   /**
+   * `ϑ theta`: We also maintain knowledge of ready (i.e. available
+   * and/or audited) but not-yet-accumulated work-reports in
+   * the state item ϑ.
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/165300165500
+   */
+  readonly accumulationQueue: PerEpochBlock<NotYetAccumulatedReport[]>;
+
+  /**
+   * `ξ xi`: In order to know which work-packages have been
+   * accumulated already, we maintain a history of what has
+   * been accumulated. This history, ξ, is sufficiently large
+   * for an epoch worth of work-reports.
+   *
+   * https://graypaper.fluffylabs.dev/#/5f542d7/161a00161d00
+   */
+  readonly recentlyAccumulated: PerEpochBlock<WorkPackageHash[] /* actually a set */>;
+
+  /*
    * `γₐ gamma_a`: The ticket accumulator - a series of highest-scoring ticket identifiers to be used for the next epoch.
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/0dc3000dc500

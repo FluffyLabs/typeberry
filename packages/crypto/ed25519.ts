@@ -10,7 +10,7 @@ import { verify_ed25519, verify_ed25519_batch } from "ed25519-wasm/pkg";
  */
 
 /** Signature verification input. */
-export type Input<T extends BytesBlob> = {
+export type Input<T extends BytesBlob = BytesBlob> = {
   /** Signature. */
   signature: Ed25519Signature;
   /** Public key. */

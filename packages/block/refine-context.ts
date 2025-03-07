@@ -3,6 +3,7 @@ import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type Opaque, WithDebug } from "@typeberry/utils";
 import type { StateRootHash, TimeSlot } from "./common";
 import type { HeaderHash } from "./hash";
+import type { WorkPackageHash } from "./work-report";
 
 /**
  * Keccak-256 hash of the BEEFY MMR root.
@@ -24,7 +25,7 @@ export class RefineContext extends WithDebug {
     beefyRoot: codec.bytes(HASH_SIZE).asOpaque(),
     lookupAnchor: codec.bytes(HASH_SIZE).asOpaque(),
     lookupAnchorSlot: codec.u32.asOpaque(),
-    prerequisites: codec.sequenceVarLen(codec.bytes(HASH_SIZE)),
+    prerequisites: codec.sequenceVarLen(codec.bytes(HASH_SIZE).asOpaque()),
   });
 
   static fromCodec({
@@ -49,8 +50,8 @@ export class RefineContext extends WithDebug {
     public readonly lookupAnchor: HeaderHash,
     /** `t`: Lookup anchor time slot. */
     public readonly lookupAnchorSlot: TimeSlot,
-    /** `p`: Optional hash of the prerequisite work-package. */
-    public readonly prerequisites: OpaqueHash[] = [],
+    /** `p`: List of hashes of the prerequisite work-packages. */
+    public readonly prerequisites: WorkPackageHash[] = [],
   ) {
     super();
   }

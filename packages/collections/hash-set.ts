@@ -3,7 +3,17 @@ import { HashDictionary } from "./hash-dictionary";
 
 /** A set specialized for storing hashes. */
 export class HashSet<V extends OpaqueHash> {
-  private readonly map = new HashDictionary<V, boolean>();
+  /** Wrap given dictionary into `HashSet` api for it's keys. */
+  static viewDictionaryKeys<V extends OpaqueHash>(dict: HashDictionary<V, unknown>): HashSet<V> {
+    return new HashSet(dict);
+  }
+
+  /** Create an empty set of hashes. */
+  static new<V extends OpaqueHash>(): HashSet<V> {
+    return new HashSet();
+  }
+
+  private constructor(private readonly map = new HashDictionary<V, unknown>()) {}
 
   /** Return number of items in the set. */
   get size(): number {
@@ -15,9 +25,31 @@ export class HashSet<V extends OpaqueHash> {
     return this.map.set(value, true);
   }
 
+  /** Insert multiple items to the set. */
+  insertAll(values: V[]) {
+    for (const v of values) {
+      this.map.set(v, true);
+    }
+  }
+
   /** Check if given hash is in the set. */
   has(value: V) {
     return this.map.has(value);
+  }
+
+  /**
+   * Return an iterator over elements that are in the intersection of both sets.
+   * i.e. they exist in both.
+   */
+  *intersection(other: HashSet<V>) {
+    const iterate = this.size < other.size ? this : other;
+    const second = iterate === this ? other : this;
+
+    for (const elem of iterate) {
+      if (second.has(elem)) {
+        yield elem;
+      }
+    }
   }
 
   /**

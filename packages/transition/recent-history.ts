@@ -1,9 +1,9 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
+import type { WorkPackageInfo } from "@typeberry/block/work-report";
 import { Bytes } from "@typeberry/bytes";
-import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
+import { HASH_SIZE, type KeccakHash, type OpaqueHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
 import { MAX_RECENT_HISTORY, type State } from "@typeberry/state";
-import type { WorkPackageInfo } from "@typeberry/state";
 
 /** Current block input for the recent history transition. */
 export type RecentHistoryInput = {
@@ -33,7 +33,7 @@ export type RecentHistoryState = {
  */
 export class RecentHistory {
   constructor(
-    private readonly hasher: MmrHasher<OpaqueHash>,
+    private readonly hasher: MmrHasher<KeccakHash>,
     public readonly state: RecentHistoryState,
   ) {}
 

@@ -1,4 +1,4 @@
-import type { KnownSizeArray } from "@typeberry/collections";
+import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import { type U16, type U32, type U64, tryAsU16, tryAsU32 } from "@typeberry/numbers";
@@ -49,9 +49,6 @@ export type Epoch = Opaque<U32, "Epoch">;
 /** Attempt to convert a number into `Epoch`. */
 export const tryAsEpoch = (v: number): Epoch => asOpaqueType(tryAsU32(v));
 
-/** Hash of the merkle root of exported segments root of a work package. */
-export type SegmentsRoot = Opaque<OpaqueHash, "SegmentsRoot">;
-
 /** One entry of `T` per one validator. */
 export type PerValidator<T> = KnownSizeArray<T, "ValidatorsCount">;
 export function tryAsPerValidator<T>(array: T[], spec: ChainSpec): PerValidator<T> {
@@ -59,5 +56,15 @@ export function tryAsPerValidator<T>(array: T[], spec: ChainSpec): PerValidator<
     array.length === spec.validatorsCount,
     `Invalid per-validator array length. Expected ${spec.validatorsCount}, got: ${array.length}`,
   );
-  return asOpaqueType(array);
+  return asKnownSize(array);
+}
+
+/** One entry of `T` per one block in epoch. */
+export type PerEpochBlock<T> = KnownSizeArray<T, "EpochLength">;
+export function tryAsPerEpochBlock<T>(array: T[], spec: ChainSpec): PerEpochBlock<T> {
+  check(
+    array.length === spec.epochLength,
+    `Invalid per-epoch-block array length. Expected ${spec.epochLength}, got: ${array.length}`,
+  );
+  return asKnownSize(array);
 }

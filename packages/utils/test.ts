@@ -2,6 +2,7 @@
  * Utilities for tests.
  */
 import assert from "node:assert";
+import type { Result } from "./result";
 
 /** Unique symbol that can be added to a class to have it be compared by strings instead of defaults. */
 export const TEST_COMPARE_VIA_STRING: unique symbol = Symbol("compare via string");
@@ -68,6 +69,35 @@ export function deepEqual<T>(
     errors.tryAndCatch(() => {
       deepEqual(actual.toString(), expected.toString());
     }, ctx);
+    return errors.exitOrThrow();
+  }
+
+  if (isResult(actual) && isResult(expected)) {
+    if (actual.isOk && !expected.isOk) {
+      errors.tryAndCatch(() => {
+        throw new Error(`Got OK, expected ERROR: ${expected.error}: ${expected.details}`);
+      }, ctx);
+    }
+
+    if (!actual.isOk && expected.isOk) {
+      errors.tryAndCatch(() => {
+        throw new Error(`Expected OK, Got ERROR: ${actual.error}: ${actual.details}`);
+      }, ctx);
+    }
+
+    if (actual.isOk && expected.isOk) {
+      deepEqual(actual.ok, expected.ok, { context: ctx.concat(["ok"]), errorsCollector: errors, ignore });
+    }
+
+    if (actual.isError && expected.isError) {
+      deepEqual(actual.error, expected.error, { context: ctx.concat(["error"]), errorsCollector: errors, ignore });
+      deepEqual(actual.details, expected.details, {
+        context: ctx.concat(["details"]),
+        errorsCollector: errors,
+        // display details when error does not match
+        ignore: actual.error === expected.error ? ignore : [],
+      });
+    }
     return errors.exitOrThrow();
   }
 
@@ -160,11 +190,31 @@ export class ErrorsCollector {
     const noOfErrors = this.errors.length;
     const stack = this.errors
       .map(({ context, e }) => addContext(e, context))
-      .map((e, idx) => `===== ${idx + 1}/${noOfErrors} =====\n ${e.stack}`)
+      .map((e, idx) => `===== ${idx + 1}/${noOfErrors} =====\n ${idx !== 0 ? trimStack(e.stack) : e.stack}`)
       .join("\n");
 
     const e = new Error();
     e.stack = stack;
     throw e;
   }
+}
+
+function trimStack(stack = "") {
+  const firstAt = /([\s\S]+?)\s+at /;
+  const res = stack.match(firstAt);
+  if (res !== null) {
+    return res[1];
+  }
+  return stack;
+}
+
+function isResult(x: unknown): x is Result<unknown, unknown> {
+  return (
+    x !== null &&
+    typeof x === "object" &&
+    "isOk" in x &&
+    "isError" in x &&
+    typeof x.isOk === "boolean" &&
+    typeof x.isError === "boolean"
+  );
 }

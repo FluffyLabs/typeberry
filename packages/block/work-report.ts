@@ -4,7 +4,7 @@ import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import type { U16, U32 } from "@typeberry/numbers";
 import { type Opaque, WithDebug } from "@typeberry/utils";
-import type { CoreIndex, SegmentsRoot } from "./common";
+import type { CoreIndex } from "./common";
 import { RefineContext } from "./refine-context";
 import { type WorkItemsCount, tryAsWorkItemsCount } from "./work-package";
 import { WorkResult } from "./work-result";
@@ -17,7 +17,11 @@ export type WorkPackageHash = Opaque<OpaqueHash, "WorkPackageHash">;
 /** Work package exported segments merkle root hash. */
 export type ExportsRootHash = Opaque<OpaqueHash, "ExportsRootHash">;
 
-/** Details about the work package being reported on. */
+/**
+ * Details about the work package being reported on.
+ *
+ * https://graypaper.fluffylabs.dev/#/5f542d7/130e01130e01?v=0.6.2
+ */
 export class WorkPackageSpec extends WithDebug {
   static Codec = codec.Class(WorkPackageSpec, {
     hash: codec.bytes(HASH_SIZE).asOpaque(),
@@ -32,36 +36,46 @@ export class WorkPackageSpec extends WithDebug {
   }
 
   constructor(
-    /** The hash of the work package. */
+    /** `h`: The hash of the work package. */
     public readonly hash: WorkPackageHash,
-    /** Encoded length of the work package. */
+    /** `l`: Auditable work-bundle length. */
     public readonly length: U32,
-    /** The root hash of the erasure coding merkle tree of that work package. */
+    /** `u`: The root hash of the erasure coding merkle tree of that work package. */
     public readonly erasureRoot: OpaqueHash,
-    /** The root hash of all data segments exported by this work package. */
+    /** `e`: The root hash of all data segments exported by this work package. */
     public readonly exportsRoot: ExportsRootHash,
-    /** Encoded length of all data segments exported by this work package. */
+    /** `n`: Number of segments exported by this work package. */
     public readonly exportsCount: U16,
   ) {
     super();
   }
 }
 
-export class SegmentRootLookupItem {
-  static Codec = codec.Class(SegmentRootLookupItem, {
+/**
+ * Mapping between work package hash and root hash of it's exports.
+ *
+ * Used to construct a dictionary.
+ */
+export class WorkPackageInfo extends WithDebug {
+  static Codec = codec.Class(WorkPackageInfo, {
     workPackageHash: codec.bytes(HASH_SIZE).asOpaque(),
     segmentTreeRoot: codec.bytes(HASH_SIZE).asOpaque(),
   });
 
   constructor(
-    public workPackageHash: WorkPackageHash,
-    public segmentTreeRoot: SegmentsRoot,
-  ) {}
+    /** Hash of the described work package. */
+    readonly workPackageHash: WorkPackageHash,
+    /** Exports root hash. */
+    readonly segmentTreeRoot: ExportsRootHash,
+  ) {
+    super();
+  }
 
-  static fromCodec({ workPackageHash, segmentTreeRoot }: CodecRecord<SegmentRootLookupItem>) {
-    return new SegmentRootLookupItem(workPackageHash, segmentTreeRoot);
+  static fromCodec({ workPackageHash, segmentTreeRoot }: CodecRecord<WorkPackageInfo>) {
+    return new WorkPackageInfo(workPackageHash, segmentTreeRoot);
   }
 }
+
 /**
  * A report of execution of some work package.
  *
@@ -74,7 +88,7 @@ export class WorkReport extends WithDebug {
     coreIndex: codec.u16.asOpaque(),
     authorizerHash: codec.bytes(HASH_SIZE).asOpaque(),
     authorizationOutput: codec.blob,
-    segmentRootLookup: codec.sequenceVarLen(SegmentRootLookupItem.Codec),
+    segmentRootLookup: codec.sequenceVarLen(WorkPackageInfo.Codec),
     results: codec.sequenceVarLen(WorkResult.Codec).convert(
       (x) => x,
       (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
@@ -116,7 +130,7 @@ export class WorkReport extends WithDebug {
      * In GP segment-root lookup is a dictionary but dictionary and var-len sequence are equal from codec perspective
      * https://graypaper.fluffylabs.dev/#/579bd12/13ab0013ad00
      */
-    public readonly segmentRootLookup: SegmentRootLookupItem[],
+    public readonly segmentRootLookup: WorkPackageInfo[],
     /** `r`: The results of evaluation of each of the items in the work package. */
     public readonly results: FixedSizeArray<WorkResult, WorkItemsCount>,
   ) {

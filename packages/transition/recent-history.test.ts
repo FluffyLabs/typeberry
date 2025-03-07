@@ -61,8 +61,8 @@ describe("Recent History", () => {
       accumulateRoot: Bytes.fill(HASH_SIZE, 6).asOpaque(),
       workPackages: [
         {
-          hash: Bytes.fill(HASH_SIZE, 7).asOpaque(),
-          exportsRoot: Bytes.fill(HASH_SIZE, 8).asOpaque(),
+          workPackageHash: Bytes.fill(HASH_SIZE, 7).asOpaque(),
+          segmentTreeRoot: Bytes.fill(HASH_SIZE, 8).asOpaque(),
         },
       ],
     };
@@ -106,8 +106,8 @@ describe("Recent History", () => {
         accumulateRoot: Bytes.fill(HASH_SIZE, id(3)).asOpaque(),
         workPackages: [
           {
-            hash: Bytes.fill(HASH_SIZE, id(4)).asOpaque(),
-            exportsRoot: Bytes.fill(HASH_SIZE, id(5)).asOpaque(),
+            workPackageHash: Bytes.fill(HASH_SIZE, id(4)).asOpaque(),
+            segmentTreeRoot: Bytes.fill(HASH_SIZE, id(5)).asOpaque(),
           },
         ],
       };

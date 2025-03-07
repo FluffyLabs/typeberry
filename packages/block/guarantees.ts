@@ -5,6 +5,19 @@ import type { TimeSlot, ValidatorIndex } from "./common";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "./crypto";
 import { WorkReport } from "./work-report";
 
+/**
+ * Required number of credentials for each work report.
+ * The maximal value is `NoOfValidators / NoOfCores`
+ * (i.e. signatures from ALL validators assigned to the core)
+ * however 2/3rds is sufficent.
+ * Since GP defines that value explicitly as "two or three",
+ * we do that as well.
+ *
+ * https://graypaper.fluffylabs.dev/#/579bd12/14b90214bb02
+ */
+export type REQUIRED_CREDENTIALS = 2 | 3;
+export const REQUIRED_CREDENTIALS_RANGE = [2, 3];
+
 /** Unique validator index & signature. */
 export class Credential extends WithDebug {
   static Codec = codec.Class(Credential, {
@@ -55,7 +68,7 @@ export class ReportGuarantee extends WithDebug {
      *
      * https://graypaper.fluffylabs.dev/#/579bd12/14b90214bb02
      */
-    public readonly credentials: KnownSizeArray<Credential, "0..ValidatorsCount">,
+    public readonly credentials: KnownSizeArray<Credential, `${REQUIRED_CREDENTIALS}`>,
   ) {
     super();
   }

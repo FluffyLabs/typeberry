@@ -176,6 +176,7 @@ export class Bytes<T extends number> extends BytesBlob {
     return new Bytes(new Uint8Array(len), len);
   }
 
+  // TODO [ToDr] `fill` should have the argments swapped to align with the rest.
   /** Create a [`Bytes<X>`] with all bytes filled with given input number. */
   static fill<X extends number>(len: X, input: number): Bytes<X> {
     check((input & 0xff) === input, "Input has to be a byte.");
