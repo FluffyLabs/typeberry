@@ -2,11 +2,11 @@ import { isMainThread, parentPort } from "node:worker_threads";
 
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
+import { LmdbBlocks } from "@typeberry/database-lmdb";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { SimpleAllocator } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
-import { LmdbBlocks } from "../../packages/database-lmdb";
-import { TransitionHasher } from "../../packages/transition";
+import { TransitionHasher } from "@typeberry/transition";
 import { Importer } from "./importer";
 import {
   type ImporterInit,
