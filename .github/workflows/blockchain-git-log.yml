@@ -4,7 +4,7 @@ name: Publish Commits
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "td-commit"]
 
 env:
   LOG_FILENAME: blockchain-git-log.json
