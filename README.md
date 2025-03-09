@@ -7,11 +7,12 @@ Typeberry is a TypeScript implementation of [JAM protocol](https://graypaper.com
 ## Implementation status
 
 - [x] PVM
-- [ ] State Trie (ongoing)
-- [ ] Safrole (ongoing)
+- [ ] STF
+- [x] Safrole (without sealing)
+- [x] State Trie
 - [ ] Block Import
-- [ ] GRANDPA
 - [ ] Networking
+- [ ] GRANDPA
 - [ ] Data Availability
 
 ## Requirements
@@ -97,7 +98,8 @@ cases by altering the glob pattern in the path.
 ### Adding a new component / package
 
 ```bash
-$ npm init -w ./packages/mycomponent
+$ npm init -w ./packages/core/mycomponent
+$ npm init -w ./packages/jam/mycomponent
 ```
 
 This command will automatically update the `workspaces` field in top-level `package.json`.
