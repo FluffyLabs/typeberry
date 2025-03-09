@@ -6,8 +6,7 @@ on:
     branches: [ "main" ]
     paths: [
       'tools/builder/**',
-      'packages/pvm/**',
-      'packages/pvm-debugger-adapter/**',
+      'packages/core/pvm-*/**',
       '.github/workflows/publish-pvm.yml'
     ]
 

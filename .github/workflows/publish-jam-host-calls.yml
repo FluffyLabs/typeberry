@@ -6,7 +6,7 @@ on:
     branches: [ "main" ]
     paths: [
       'tools/builder/**',
-      'packages/pvm/**',
+      'packages/jam/jam-host-calls/**',
       '.github/workflows/publish-jam-host-calls.yml'
     ]
 

@@ -6,7 +6,7 @@ on:
     branches: [ "main" ]
     paths: [
       'tools/builder/**',
-      'packages/codec/**',
+      'packages/core/codec/**',
       '.github/workflows/publish-codec.yml'
     ]
 

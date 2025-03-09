@@ -6,8 +6,7 @@ on:
     branches: [ "main" ]
     paths: [
       'tools/builder/**',
-      'packages/trie/**',
-      'packages/bytes/**',
+      'packages/core/trie/**',
       '.github/workflows/publish-trie.yml'
     ]
 
