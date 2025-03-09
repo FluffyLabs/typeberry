@@ -1,6 +1,5 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import * as github from "@actions/github";
 import type { PushEvent } from "@octokit/webhooks-types";
 // @ts-ignore ECMAScript module being incompatible with CommonJS.
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
@@ -67,6 +66,19 @@ async function handleError(log: LogEntry[], transactionPayload: TransactionPaylo
   process.exit(1);
 }
 
+function readRequiredEnv(val: string | undefined, name: string) {
+  if (!val) {
+    throw new Error(`Required variable: ${name} is not populated!`);
+  }
+  return val;
+}
+
+async function readEventPayload() {
+  const ghEventPath = readRequiredEnv(process.env.GITHUB_EVENT_PATH, "GITHUB_EVENT_PATH");
+  const file = await fs.readFile(ghEventPath, { encoding: "utf8" });
+  return JSON.parse(file) as PushEvent;
+}
+
 async function main() {
   const log: LogEntry[] = [];
 
@@ -77,11 +89,12 @@ async function main() {
     logger.log("Previous log not found. Starting a new one.");
   }
 
-  const eventPayload = github.context.payload as PushEvent;
+  const eventPayload = await readEventPayload();
+  const githubRef = readRequiredEnv(process.env.GITHUB_REF, "GITHUB_REF");
   const previousBlockHash = log.filter((logEntry) => !logEntry.failed).pop()?.block || "";
   const transactionPayload: TransactionPayload = [
     eventPayload.repository.name,
-    github.context.ref,
+    githubRef,
     Date.now(),
     getPendingCommitIds(log, eventPayload),
     previousBlockHash,

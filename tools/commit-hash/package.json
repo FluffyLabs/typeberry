@@ -4,7 +4,6 @@
   "description": "Commit git hashes to a public blockchain.",
   "main": "index.ts",
   "devDependencies": {
-    "@actions/github": "^6.0.0",
     "@octokit/webhooks-types": "^7.5.1",
     "@polkadot/api": "^12.2.1",
     "@polkadot/types": "^12.2.1",
