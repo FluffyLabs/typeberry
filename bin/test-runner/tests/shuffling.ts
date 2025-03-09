@@ -3,7 +3,7 @@ import { it } from "node:test";
 import { type FromJson, json } from "@typeberry/json-parser";
 
 import { Bytes } from "@typeberry/bytes";
-import { fisherYatesShuffle } from "../../../packages/shuffling";
+import { fisherYatesShuffle } from "@typeberry/shuffling";
 
 const bytes32NoPrefix = <T extends Bytes<32>>() =>
   json.fromString<T>((v) => Bytes.parseBytesNoPrefix(v, 32).asOpaque());

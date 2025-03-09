@@ -11,13 +11,15 @@ environment (aka "core" files).
 
 ## Repository structure
 
-1. `./packages` - self-contained parts of the typeberry implementation.
-    Think: libraries. Always named `@typeberry/<name>`.
-2. `./bin` - full-featured binaries that are core to typeberry.
-3. `./tools` - auxiliary, stand-alone tools which can be executed separately.
-4. `./workers` - parts of typeberry that run as a worker. And communicate with
+1. `./packages/jam` - self-contained parts of the typeberry implementation.
+    Think: libraries, but specific to JAM. Always named `@typeberry/<name>`.
+2. `./packages/core` - re-usable libraries that are JAM-agnostic. May only depend
+    on other `core` packages and never `jam`.
+3. `./bin` - full-featured binaries that are core to typeberry.
+4. `./tools` - auxiliary, stand-alone tools which can be executed separately.
+5. `./workers` - parts of typeberry that run as a worker. And communicate with
     other components. Use `./packages` for their underlying logic.
-5. `./benchmarks` - contains all micro & macro benchmarks for the typeberry components
+6. `./benchmarks` - contains all micro & macro benchmarks for the typeberry components
     or simply tests to figure out the best way to solve some problem.
 
 ## NPM workspace

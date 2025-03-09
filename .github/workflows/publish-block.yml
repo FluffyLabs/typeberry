@@ -6,7 +6,7 @@ on:
     branches: [ "main" ]
     paths: [
       'tools/builder/**',
-      'packages/block/**',
+      'packages/jam/block/**',
       '.github/workflows/publish-block.yml'
     ]
 
