@@ -68,7 +68,7 @@ async function handleError(log: LogEntry[], transactionPayload: TransactionPaylo
 
 function readRequiredEnv(val: string | undefined, name: string) {
   if (!val) {
-    throw new Error(`Required varaiable: ${name} is not populated!`);
+    throw new Error(`Required variable: ${name} is not populated!`);
   }
   return val;
 }
