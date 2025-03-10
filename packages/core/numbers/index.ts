@@ -1,4 +1,4 @@
-import { asOpaqueType, ensure } from "@typeberry/utils";
+import { asOpaqueType, ensure, check } from "@typeberry/utils";
 
 /**
  * TODO [ToDr] This should be `unique symbol`, but for some reason
@@ -113,4 +113,16 @@ export function* u32AsLittleEndian(value: U32) {
   yield (value >> 8) & 0xff;
   yield (value >> 16) & 0xff;
   yield (value >> 24) & 0xff;
+}
+
+/**
+ * Write U32 as LE-bytes into the destination buffer.
+ */
+export function writeU32(destination: Uint8Array, value: U32) {
+  check(destination.length >= 4, "Not enough space in the destination.");
+  let i = 0;
+  for (const byte of u32AsLittleEndian(value)) {
+    destination[i] = byte;
+    i += 1;
+  }
 }

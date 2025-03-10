@@ -115,7 +115,7 @@ export type State = {
   readonly authPools: PerCore<KnownSizeArray<AuthorizerHash, `At most ${typeof MAX_AUTH_POOL_SIZE}`>>;
 
   /**
-   * `φ psi`: A queue of authorizers for each core used to fill up the pool.
+   * `φ phi`: A queue of authorizers for each core used to fill up the pool.
    *
    * Only updated by `accumulate` calls using `assign` host call.
    *
@@ -189,4 +189,7 @@ export type State = {
    * https://graypaper.fluffylabs.dev/#/5f542d7/0da8000db800
    */
   readonly epochRoot: BandersnatchRingRoot;
+
+
+  readonly privilegedServices: Priviledged
 };
