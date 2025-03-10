@@ -6,7 +6,7 @@ import { type PvmExecution, type Registers, tryAsHostCallIndex } from "@typeberr
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { ValidatorData } from "@typeberry/state";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
 
@@ -36,14 +36,14 @@ export class Designate implements HostCallHandler {
     const pageFault = memory.loadInto(res, validatorsStart);
     // page fault while reading the memory.
     if (pageFault !== null) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
 
     const d = Decoder.fromBlob(res);
     const validatorsData = d.sequenceFixLen(ValidatorData.Codec, this.chainSpec.validatorsCount);
 
-    regs.setU32(IN_OUT_REG, HostCallResult.OK);
+    regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
     this.partialState.updateValidatorsData(tryAsPerValidator(validatorsData, this.chainSpec));
     return;
   }

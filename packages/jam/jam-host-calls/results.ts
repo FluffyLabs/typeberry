@@ -3,7 +3,7 @@
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/2c77022c7702
  */
-export enum HostCallResult {
+export enum LegacyHostCallResult {
   /** The return value indicating an item does not exist. */
   NONE = 0xffffffff, // 2**32 - 1 = 4294967295
   /** Name unknown. */

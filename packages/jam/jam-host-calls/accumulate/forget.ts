@@ -10,7 +10,7 @@ import {
 } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
 
@@ -37,16 +37,16 @@ export class Forget implements HostCallHandler {
     const hash = Bytes.zero(HASH_SIZE);
     const pageFault = memory.loadInto(hash.raw, hashStart);
     if (pageFault !== null) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
 
     const result = this.partialState.forgetPreimage(hash, length);
 
     if (result.isOk) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OK);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
     } else {
-      regs.setU32(IN_OUT_REG, HostCallResult.HUH);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.HUH);
     }
   }
 }

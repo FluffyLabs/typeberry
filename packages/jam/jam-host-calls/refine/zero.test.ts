@@ -5,7 +5,7 @@ import { tryAsU32 } from "@typeberry/numbers";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { OK, Result } from "@typeberry/utils";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { type MachineId, NoMachineError, tryAsMachineId } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
 import { Zero } from "./zero";
@@ -21,7 +21,7 @@ describe("HostCalls: Zero", () => {
     await zero.execute(gas, registers);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
   });
 
   it("should fail when page is too low", async () => {
@@ -31,7 +31,7 @@ describe("HostCalls: Zero", () => {
     await zero.execute(gas, registers);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
   });
 
   it("should fail when page is too large", async () => {
@@ -41,7 +41,7 @@ describe("HostCalls: Zero", () => {
     await zero.execute(gas, registers);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
   });
 
   it("should fail when page is too large 2", async () => {
@@ -51,7 +51,7 @@ describe("HostCalls: Zero", () => {
     await zero.execute(gas, registers);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
   });
 
   it("should fail if machine is not known", async () => {
@@ -61,7 +61,7 @@ describe("HostCalls: Zero", () => {
     await zero.execute(gas, registers);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.WHO);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.WHO);
   });
 });
 

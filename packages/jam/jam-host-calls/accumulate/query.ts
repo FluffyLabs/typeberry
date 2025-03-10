@@ -4,7 +4,7 @@ import { tryAsU32 } from "@typeberry/numbers";
 import { type HostCallHandler, type Memory, PvmExecution, type Registers } from "@typeberry/pvm-host-calls";
 import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsMemoryIndex, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { type AccumulationPartialState, PreimageStatus } from "./partial-state";
 
@@ -38,7 +38,7 @@ export class Query implements HostCallHandler {
 
     const result = this.partialState.checkPreimageStatus(hash, length);
     if (result === null) {
-      regs.setU32(IN_OUT_REG_1, HostCallResult.NONE);
+      regs.setU32(IN_OUT_REG_1, LegacyHostCallResult.NONE);
       regs.setU64(IN_OUT_REG_2, 0n);
       return;
     }

@@ -7,7 +7,7 @@ import { type BigGas, type Gas, type GasCounter, tryAsSmallGas } from "@typeberr
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { asOpaqueType } from "@typeberry/utils";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
 
@@ -59,7 +59,7 @@ export class Empower implements HostCallHandler {
       decoder.resetTo(0);
       const pageFault = memory.loadInto(result, memIndex);
       if (pageFault !== null) {
-        regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+        regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
         return;
       }
 
@@ -67,12 +67,12 @@ export class Empower implements HostCallHandler {
       // Since the GP does not allow non-canonical representation of encodings,
       // a set with duplicates should not be decoded correctly.
       if (g.has(serviceId)) {
-        regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+        regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
         return;
       }
       // Verify if the items are properly sorted.
       if (previousServiceId > serviceId) {
-        regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+        regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
         return;
       }
       g.set(serviceId, gas);
@@ -83,7 +83,7 @@ export class Empower implements HostCallHandler {
     }
 
     this.partialState.updatePrivilegedServices(m, a, v, g);
-    regs.setU32(IN_OUT_REG, HostCallResult.OK);
+    regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
 
     return;
   }

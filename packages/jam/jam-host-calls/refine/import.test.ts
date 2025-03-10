@@ -7,7 +7,7 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { Import } from "./import";
 import { TestRefineExt } from "./refine-externalities.test";
 
@@ -58,7 +58,7 @@ describe("HostCalls: Import", () => {
     await imp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x68656c6c6f20776f726c64210000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -78,7 +78,7 @@ describe("HostCalls: Import", () => {
     await imp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.NONE);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.NONE);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -98,7 +98,7 @@ describe("HostCalls: Import", () => {
     await imp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.NONE);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.NONE);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -117,7 +117,7 @@ describe("HostCalls: Import", () => {
     await imp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
   });
 
   it("should trim the result if only few bytes requested", async () => {
@@ -133,7 +133,7 @@ describe("HostCalls: Import", () => {
     await imp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
     assert.deepStrictEqual(readResult().toString(), "0x6865");
   });
 
@@ -152,7 +152,7 @@ describe("HostCalls: Import", () => {
     await imp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
     const res = readResult();
     assert.deepStrictEqual(res.toString().substr(0, 32), "0x68656c6c6f20776f726c6421000000");
     assert.deepStrictEqual(res.length, 4104);

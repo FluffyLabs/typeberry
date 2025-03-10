@@ -10,7 +10,7 @@ import {
 } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import { HostCallResult } from "./results";
+import { LegacyHostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
 
 /** Account data interface for Lookup host call. */
@@ -48,14 +48,14 @@ export class Lookup implements HostCallHandler {
     const destinationWriteable = memory.isWriteable(destinationStart, destinationLen);
     // we return OOB in case the destination is not writeable or the key can't be loaded.
     if (hashLoadingFault || !destinationWriteable) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
     const keyHash = blake2b.hashBytes(key);
     const value = await this.account.lookup(serviceId, keyHash);
 
     if (value === null) {
-      regs.setU32(IN_OUT_REG, HostCallResult.NONE);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.NONE);
       return;
     }
 

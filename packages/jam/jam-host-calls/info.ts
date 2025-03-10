@@ -10,7 +10,7 @@ import {
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { ServiceAccountInfo } from "@typeberry/state";
-import { HostCallResult } from "./results";
+import { LegacyHostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
 
 /** Account data interface for Info host call. */
@@ -52,14 +52,14 @@ export class Info implements HostCallHandler {
     const accountInfo = await this.account.getInfo(serviceId);
 
     if (accountInfo === null) {
-      regs.setU32(IN_OUT_REG, HostCallResult.NONE);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.NONE);
       return;
     }
 
     const encodedInfo = Encoder.encodeObject(ServiceAccountInfo.Codec, accountInfo);
     const writeOk = memory.storeFrom(outputStart, encodedInfo.raw);
 
-    regs.setU32(IN_OUT_REG, writeOk !== null ? HostCallResult.OOB : HostCallResult.OK);
+    regs.setU32(IN_OUT_REG, writeOk !== null ? LegacyHostCallResult.OOB : LegacyHostCallResult.OK);
     return;
   }
 }

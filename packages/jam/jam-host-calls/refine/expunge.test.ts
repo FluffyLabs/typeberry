@@ -4,7 +4,7 @@ import { tryAsServiceId } from "@typeberry/block";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { OK, Result } from "@typeberry/utils";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { Expunge } from "./expunge";
 import { type MachineId, NoMachineError, tryAsMachineId } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
@@ -20,7 +20,7 @@ describe("HostCalls: Expunge", () => {
     await expunge.execute(gas, registers);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
   });
 
   it("should fail if machine unknown", async () => {
@@ -30,7 +30,7 @@ describe("HostCalls: Expunge", () => {
     await expunge.execute(gas, registers);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.WHO);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.WHO);
   });
 });
 

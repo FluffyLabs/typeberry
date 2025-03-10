@@ -10,7 +10,7 @@ import {
 } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import { HostCallResult } from "./results";
+import { LegacyHostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, getServiceId, writeServiceIdAsLeBytes } from "./utils";
 
 /** Account data interface for Read host call. */
@@ -57,7 +57,7 @@ export class Read implements HostCallHandler {
 
     // we return OOB in case the destination is not writeable or the key can't be loaded.
     if (keyLoadingFault || !destinationWriteable) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
 
@@ -65,7 +65,7 @@ export class Read implements HostCallHandler {
     const value = await this.account.read(serviceId, keyHash);
 
     if (value === null) {
-      regs.setU32(IN_OUT_REG, HostCallResult.NONE);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.NONE);
       return;
     }
 

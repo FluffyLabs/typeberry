@@ -6,7 +6,7 @@ import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { Machine } from "./machine";
 import { tryAsMachineId } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
@@ -62,6 +62,6 @@ describe("HostCalls: Machine", () => {
     await machine.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
   });
 });

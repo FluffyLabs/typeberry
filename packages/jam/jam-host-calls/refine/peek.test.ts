@@ -5,7 +5,7 @@ import { tryAsU32 } from "@typeberry/numbers";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { OK, Result } from "@typeberry/utils";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { Peek } from "./peek";
 import { type MachineId, PeekPokeError, tryAsMachineId } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
@@ -20,7 +20,7 @@ describe("HostCalls: Peek", () => {
     await peek.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
   });
 
   it("should fail if there is no machine", async () => {
@@ -30,7 +30,7 @@ describe("HostCalls: Peek", () => {
     await peek.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.WHO);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.WHO);
   });
 
   it("should fail if there is a page fault on any side", async () => {
@@ -40,7 +40,7 @@ describe("HostCalls: Peek", () => {
     await peek.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
   });
 });
 
