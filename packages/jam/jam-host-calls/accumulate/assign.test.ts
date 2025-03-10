@@ -12,7 +12,7 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { Assign } from "./assign";
 import { TestAccumulate } from "./partial-state.test";
 
@@ -67,7 +67,7 @@ describe("HostCalls: Assign", () => {
     await assign.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
     assert.deepStrictEqual(accumulate.authQueue[0][0], tryAsCoreIndex(0));
     const expected = new Array(AUTHORIZATION_QUEUE_SIZE);
     expected[0] = Bytes.fill(HASH_SIZE, 1);
@@ -92,7 +92,7 @@ describe("HostCalls: Assign", () => {
     await assign.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.CORE);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.CORE);
     assert.deepStrictEqual(accumulate.authQueue.length, 0);
   });
 
@@ -108,7 +108,7 @@ describe("HostCalls: Assign", () => {
     await assign.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.CORE);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.CORE);
     assert.deepStrictEqual(accumulate.authQueue.length, 0);
   });
 
@@ -123,7 +123,7 @@ describe("HostCalls: Assign", () => {
     await assign.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accumulate.authQueue.length, 0);
   });
 });

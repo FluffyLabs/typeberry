@@ -5,7 +5,7 @@ import { PvmExecution, type Registers, tryAsHostCallIndex } from "@typeberry/pvm
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { assertNever } from "@typeberry/utils";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { type AccumulationPartialState, QuitError, TRANSFER_MEMO_BYTES } from "./partial-state";
 
@@ -34,7 +34,7 @@ export class Quit implements HostCallHandler {
     // we burn the remaining funds, no transfer added.
     if (noTransfer) {
       this.partialState.quitAndBurn();
-      regs.setU32(IN_OUT_REG, HostCallResult.OK);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
       return Promise.resolve(PvmExecution.Halt);
     }
 
@@ -49,7 +49,7 @@ export class Quit implements HostCallHandler {
     const memo = Bytes.zero(TRANSFER_MEMO_BYTES);
     const pageFault = memory.loadInto(memo.raw, memoStart);
     if (pageFault !== null) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
 
@@ -58,19 +58,19 @@ export class Quit implements HostCallHandler {
 
     // All good!
     if (transferResult.isOk) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OK);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
       return Promise.resolve(PvmExecution.Halt);
     }
 
     const e = transferResult.error;
 
     if (e === QuitError.DestinationNotFound) {
-      regs.setU32(IN_OUT_REG, HostCallResult.WHO);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.WHO);
       return;
     }
 
     if (e === QuitError.GasTooLow) {
-      regs.setU32(IN_OUT_REG, HostCallResult.LOW);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.LOW);
       return;
     }
 

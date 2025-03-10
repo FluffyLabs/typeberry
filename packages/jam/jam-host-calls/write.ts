@@ -10,7 +10,7 @@ import {
 } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import { HostCallResult } from "./results";
+import { LegacyHostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
 
 /** Account data interface for Write host call. */
@@ -62,7 +62,7 @@ export class Write implements HostCallHandler {
     // https://graypaper.fluffylabs.dev/#/579bd12/303103303103
     const isStorageFull = await this.account.isStorageFull(this.currentServiceId);
     if (isStorageFull) {
-      regs.setU32(IN_OUT_REG, HostCallResult.FULL);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.FULL);
       return;
     }
 
@@ -88,7 +88,7 @@ export class Write implements HostCallHandler {
 
     // we return OOB in case the value cannot be read or the key can't be loaded.
     if (keyLoadingFault || valueLoadingFault) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
 
@@ -97,7 +97,7 @@ export class Write implements HostCallHandler {
 
     // Successful write or removal. We store previous value length in omega_7
     const prevLen = await prevLenPromise;
-    regs.setU32(IN_OUT_REG, prevLen === null ? HostCallResult.NONE : prevLen);
+    regs.setU32(IN_OUT_REG, prevLen === null ? LegacyHostCallResult.NONE : prevLen);
     return;
   }
 }

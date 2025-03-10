@@ -14,7 +14,7 @@ import {
   tryAsSbrkIndex,
 } from "@typeberry/pvm-interpreter";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { PreimageStatus, type PreimageStatusResult } from "./partial-state";
 import { TestAccumulate } from "./partial-state.test";
 import { Query } from "./query";
@@ -87,7 +87,7 @@ describe("HostCalls: Query", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG_1), HostCallResult.NONE);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG_1), LegacyHostCallResult.NONE);
     assert.deepStrictEqual(registers.getU64(RESULT_REG_2), 0n);
     assert.deepStrictEqual(accumulate.checkPreimageStatusData, [[Bytes.fill(HASH_SIZE, 0xaa), w8]]);
   });

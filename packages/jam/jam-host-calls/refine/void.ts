@@ -2,7 +2,7 @@ import { sumU32, tryAsU32 } from "@typeberry/numbers";
 import { type HostCallHandler, type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, type Registers, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { assertNever } from "@typeberry/utils";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { InvalidPageError, NoMachineError, type RefineExternalities, tryAsMachineId } from "./refine-externalities";
 import { MAX_NUMBER_OF_PAGES } from "./zero";
@@ -31,18 +31,18 @@ export class Void implements HostCallHandler {
 
     const endPage = sumU32(pageStart, pageCount);
     if (endPage.overflow || endPage.value >= MAX_NUMBER_OF_PAGES) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
 
     const voidResult = await this.refine.machineVoidPages(machineIndex, pageStart, pageCount);
 
     if (voidResult.isOk) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OK);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
     } else if (voidResult.error === NoMachineError) {
-      regs.setU32(IN_OUT_REG, HostCallResult.WHO);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.WHO);
     } else if (voidResult.error === InvalidPageError) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
     } else {
       assertNever(voidResult.error);
     }

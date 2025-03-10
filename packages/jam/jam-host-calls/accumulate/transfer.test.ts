@@ -10,7 +10,7 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { TRANSFER_MEMO_BYTES, TransferError } from "./partial-state";
 import { TestAccumulate } from "./partial-state.test";
 import { Transfer } from "./transfer";
@@ -70,7 +70,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
     assert.deepStrictEqual(accumulate.transferData, [
       [transfer.currentServiceId, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)],
     ]);
@@ -92,7 +92,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
     assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
   });
 
@@ -132,7 +132,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accumulate.transferData, []);
   });
 
@@ -152,7 +152,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.HIGH);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.HIGH);
     assert.deepStrictEqual(accumulate.transferData, []);
   });
 
@@ -173,7 +173,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.LOW);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.LOW);
     assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
   });
 
@@ -194,7 +194,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.CASH);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.CASH);
     assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
   });
 
@@ -215,7 +215,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.WHO);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.WHO);
     assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
   });
 });

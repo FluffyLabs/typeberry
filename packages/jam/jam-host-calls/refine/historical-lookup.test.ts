@@ -8,7 +8,7 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { HistoricalLookup } from "./historical-lookup";
 import { TestRefineExt } from "./refine-externalities.test";
 
@@ -100,7 +100,7 @@ describe("HostCalls: Historical Lookup", () => {
     await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.NONE);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.NONE);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -118,7 +118,7 @@ describe("HostCalls: Historical Lookup", () => {
     await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
   });
 
   it("should fail if there is no memory for result", async () => {
@@ -132,7 +132,7 @@ describe("HostCalls: Historical Lookup", () => {
     await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
   });
 
   it("should fail if the destination is not fully writeable", async () => {
@@ -147,7 +147,7 @@ describe("HostCalls: Historical Lookup", () => {
     await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
   });
 
   it("should fail gracefuly if the destination is beyond mem limit", async () => {
@@ -163,7 +163,7 @@ describe("HostCalls: Historical Lookup", () => {
     await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
   });
 
   it("should handle 0-length destination", async () => {

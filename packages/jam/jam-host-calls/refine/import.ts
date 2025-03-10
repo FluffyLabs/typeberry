@@ -9,7 +9,7 @@ import {
   tryAsSmallGas,
 } from "@typeberry/pvm-interpreter";
 import { asOpaqueType } from "@typeberry/utils";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { RefineExternalities } from "./refine-externalities";
 
@@ -40,24 +40,24 @@ export class Import implements HostCallHandler {
     // would cause a page fault.
     const destinationWriteable = memory.isWriteable(destinationStart, destinationLen);
     if (!destinationWriteable) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
 
     const segment = isU16(segmentIndex) ? await this.refine.importSegment(asOpaqueType(segmentIndex)) : null;
     if (segment === null) {
-      regs.setU32(IN_OUT_REG, HostCallResult.NONE);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.NONE);
       return;
     }
 
     const l = Math.min(segment.length, destinationLen);
     const storeFault = memory.storeFrom(destinationStart, segment.raw.subarray(0, l));
     if (storeFault !== null) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
 
-    regs.setU32(IN_OUT_REG, HostCallResult.OK);
+    regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
     return;
   }
 }

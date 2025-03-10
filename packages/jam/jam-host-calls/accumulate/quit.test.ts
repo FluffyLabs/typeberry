@@ -9,7 +9,7 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { QuitError, TRANSFER_MEMO_BYTES } from "./partial-state";
 import { TestAccumulate } from "./partial-state.test";
@@ -59,7 +59,7 @@ describe("HostCalls: Quit", () => {
     await quit.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
     assert.deepStrictEqual(accumulate.quitAndTransferData, []);
     assert.deepStrictEqual(accumulate.quitAndBurnCalled, 1);
   });
@@ -79,7 +79,7 @@ describe("HostCalls: Quit", () => {
     await quit.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
     assert.deepStrictEqual(accumulate.quitAndTransferData, []);
     assert.deepStrictEqual(accumulate.quitAndBurnCalled, 1);
   });
@@ -95,7 +95,7 @@ describe("HostCalls: Quit", () => {
     await quit.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
     assert.deepStrictEqual(accumulate.quitAndTransferData, [[15_000, 10_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
     assert.deepStrictEqual(accumulate.quitAndBurnCalled, 0);
   });
@@ -113,7 +113,7 @@ describe("HostCalls: Quit", () => {
     await quit.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accumulate.quitAndTransferData, []);
     assert.deepStrictEqual(accumulate.quitAndBurnCalled, 0);
   });
@@ -130,7 +130,7 @@ describe("HostCalls: Quit", () => {
     await quit.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.LOW);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.LOW);
     assert.deepStrictEqual(accumulate.quitAndTransferData, [[15_000, 10_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
     assert.deepStrictEqual(accumulate.quitAndBurnCalled, 0);
   });
@@ -147,7 +147,7 @@ describe("HostCalls: Quit", () => {
     await quit.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.WHO);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.WHO);
     assert.deepStrictEqual(accumulate.quitAndTransferData, [[15_000, 10_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
     assert.deepStrictEqual(accumulate.quitAndBurnCalled, 0);
   });
