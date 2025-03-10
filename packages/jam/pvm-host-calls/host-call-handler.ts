@@ -28,6 +28,7 @@ export interface Registers {
 
 export interface Memory {
   isWriteable(startAddress: MemoryIndex, length: number): boolean;
+  isReadable(startAddress: MemoryIndex, length: number): boolean;
   loadInto(result: Uint8Array, startAddress: MemoryIndex): null | PageFault;
   storeFrom(address: MemoryIndex, bytes: Uint8Array): null | PageFault;
 }
