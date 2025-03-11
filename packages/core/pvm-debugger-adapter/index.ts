@@ -1,6 +1,9 @@
 export * from "@typeberry/pvm-interpreter";
 export { Mask } from "@typeberry/pvm-interpreter/program-decoder/mask";
 export { ProgramDecoder } from "@typeberry/pvm-interpreter/program-decoder/program-decoder";
+export { ExtendedWitdthImmediateDecoder } from "@typeberry/pvm-interpreter/args-decoder/decoders/extended-with-immediate-decoder";
+export { ImmediateDecoder } from "@typeberry/pvm-interpreter/args-decoder/decoders/immediate-decoder";
+export { NibblesDecoder } from "@typeberry/pvm-interpreter/args-decoder/decoders/nibbles-decoder";
 export { ArgsDecoder, Args } from "@typeberry/pvm-interpreter/args-decoder/args-decoder";
 export { ArgumentType } from "@typeberry/pvm-interpreter/args-decoder/argument-type";
 export { createResults } from "@typeberry/pvm-interpreter/args-decoder/args-decoding-results";
