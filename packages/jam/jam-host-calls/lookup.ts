@@ -1,4 +1,5 @@
 import type { ServiceId } from "@typeberry/block";
+import { tryAsU32 } from "@typeberry/numbers";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
@@ -37,9 +38,9 @@ export class Lookup implements HostCallHandler {
     // a
     const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // h
-    const hashAddress = tryAsMemoryIndex(regs.getU64(8));
+    const hashAddress = tryAsMemoryIndex(tryAsU32(regs.getU64(8)));
     // o
-    const destinationAddress = tryAsMemoryIndex(regs.getU64(9));
+    const destinationAddress = tryAsMemoryIndex(tryAsU32(regs.getU64(9)));
 
     const isMemoryReadable = memory.isReadable(hashAddress, HASH_SIZE);
 
