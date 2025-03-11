@@ -48,3 +48,20 @@ describe("u32AsLittleEndian", () => {
     });
   }
 });
+
+describe("tryAsU32", () => {
+  it("should cast numbers", () => {
+    const v = 1234;
+    assert.deepStrictEqual(tryAsU32(v), 1234);
+  });
+
+  it("should cast bigint", () => {
+    const v = 1234n;
+    assert.deepStrictEqual(tryAsU32(v), 1234);
+  });
+
+  it("should throw if value exceeds u32", () => {
+    const v = 2n ** 32n;
+    assert.throws(() => tryAsU32(v), `input must have four-byte representation, got ${v}`);
+  });
+});
