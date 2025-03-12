@@ -77,18 +77,18 @@ export function newWorkReport({
   const source = BytesBlob.parseBlob(testWorkReport);
   const report = Decoder.decodeObject(WorkReport.Codec, source, tinyChainSpec);
   const context = RefineContext.fromCodec({
-    anchor: anchorBlock ? anchorBlock.asOpaque() : report.context.anchor,
-    stateRoot: stateRoot ? stateRoot.asOpaque() : report.context.stateRoot,
-    beefyRoot: beefyRoot ? beefyRoot.asOpaque() : report.context.beefyRoot,
-    lookupAnchor: lookupAnchor ? lookupAnchor.asOpaque() : report.context.lookupAnchor,
+    anchor: anchorBlock != null ? anchorBlock.asOpaque() : report.context.anchor,
+    stateRoot: stateRoot != null ? stateRoot.asOpaque() : report.context.stateRoot,
+    beefyRoot: beefyRoot != null ? beefyRoot.asOpaque() : report.context.beefyRoot,
+    lookupAnchor: lookupAnchor != null ? lookupAnchor.asOpaque() : report.context.lookupAnchor,
     lookupAnchorSlot: lookupAnchorSlot ?? report.context.lookupAnchorSlot,
-    prerequisites: prerequisites ? prerequisites.map((x) => x.asOpaque()) : report.context.prerequisites,
+    prerequisites: prerequisites != null ? prerequisites.map((x) => x.asOpaque()) : report.context.prerequisites,
   });
   const workReport = new WorkReport(
     report.workPackageSpec,
     context,
     tryAsCoreIndex(core),
-    authorizer ? authorizer.asOpaque() : report.authorizerHash,
+    authorizer != null ? authorizer.asOpaque() : report.authorizerHash,
     report.authorizationOutput,
     report.segmentRootLookup,
     FixedSizeArray.new(
@@ -99,7 +99,7 @@ export function newWorkReport({
             x.codeHash,
             x.payloadHash,
             x.gas,
-            resultSize ? new WorkExecResult(WorkExecResultKind.ok, Bytes.fill(resultSize, 0)) : x.result,
+            resultSize != null ? new WorkExecResult(WorkExecResultKind.ok, Bytes.fill(resultSize, 0)) : x.result,
           ),
       ),
       report.results.fixedLength,

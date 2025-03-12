@@ -53,12 +53,12 @@ export class LmdbBlocks implements BlocksDb {
 
   getBestHeaderHash(): HeaderHash {
     const data = this.root.get(BEST_BLOCK_KEY);
-    return (data ? Bytes.fromBlob(data, HASH_SIZE) : Bytes.zero(HASH_SIZE)).asOpaque();
+    return (data != null ? Bytes.fromBlob(data, HASH_SIZE) : Bytes.zero(HASH_SIZE)).asOpaque();
   }
 
   getHeader(hash: HeaderHash): HeaderView | null {
     const data = this.headers.get(hash.raw);
-    if (!data) {
+    if (data == null) {
       return null;
     }
 
@@ -67,7 +67,7 @@ export class LmdbBlocks implements BlocksDb {
 
   getExtrinsic(hash: HeaderHash): ExtrinsicView | null {
     const data = this.extrinsics.get(hash.raw);
-    if (!data) {
+    if (data == null) {
       return null;
     }
     return Decoder.decodeObject(Extrinsic.Codec.View, data, this.chainSpec);

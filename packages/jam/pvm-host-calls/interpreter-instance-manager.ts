@@ -14,7 +14,7 @@ export class InterpreterInstanceManager {
 
   async getInstance(): Promise<Interpreter> {
     const instance = this.instances.pop();
-    if (instance) {
+    if (instance !== undefined) {
       return Promise.resolve(instance);
     }
     return new Promise((resolve) => {
@@ -24,7 +24,7 @@ export class InterpreterInstanceManager {
 
   releaseInstance(pvm: Interpreter) {
     const waiting = this.waitingQueue.shift();
-    if (waiting) {
+    if (waiting !== undefined) {
       return waiting(pvm);
     }
     this.instances.push(pvm);
