@@ -28,8 +28,7 @@ export type Message = {
  * Some preliminary validation of incoming message.
  */
 export function isValidMessage(msg: unknown): msg is Message {
-  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-  if (!msg || typeof msg !== "object") {
+  if (msg === null || typeof msg !== "object") {
     return false;
   }
 

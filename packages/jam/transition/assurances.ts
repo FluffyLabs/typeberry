@@ -146,8 +146,7 @@ export class Assurances {
       const v = assurance.view();
       const key = validatorData[v.validatorIndex.materialize()];
       // TODO [ToDr] This shouldn't be required if we have validation.
-      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-      if (!key) {
+      if (key === undefined) {
         return Result.error(AssurancesError.InvalidValidatorIndex);
       }
       signatures.push({

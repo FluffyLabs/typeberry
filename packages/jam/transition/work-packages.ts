@@ -133,9 +133,7 @@ class PvmExecutor {
     const program = Program.fromSpi(this.serviceCode.raw, args.raw);
 
     const result = await this.pvm.runProgram(program.code, 5, gas, program.registers, program.memory);
-    // ToDo: is `!result` a type issue?
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    if (!result || !(result instanceof Uint8Array)) {
+    if (!(result instanceof Uint8Array)) {
       return BytesBlob.blobFromNumbers([]);
     }
     return BytesBlob.blobFrom(result);

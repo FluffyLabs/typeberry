@@ -203,8 +203,7 @@ export class MessageHandler {
     logger.log(`Closing the handler. Reason: ${error != null ? error.message : "close"}.`);
     // Socket closed - we should probably clear everything.
     for (const [streamId, handler] of this.streams.entries()) {
-      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-      handler.onClose(streamId, !!error);
+      handler.onClose(streamId, error === undefined);
     }
     this.streams.clear();
 
