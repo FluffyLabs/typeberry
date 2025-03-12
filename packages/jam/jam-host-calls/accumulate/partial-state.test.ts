@@ -27,6 +27,7 @@ export class TestAccumulate implements AccumulationPartialState {
   public readonly transferData: Parameters<TestAccumulate["transfer"]>[] = [];
   public readonly upgradeData: Parameters<TestAccumulate["upgradeService"]>[] = [];
   public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
+  public readonly yieldData: Parameters<TestAccumulate["yield"]>[] = [];
 
   public checkpointCalled = 0;
   public forgetPreimageResponse: Result<null, null> = Result.ok(null);
@@ -107,5 +108,9 @@ export class TestAccumulate implements AccumulationPartialState {
     authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
   ): void {
     this.authQueue.push([coreIndex, authQueue]);
+  }
+
+  yield(hash: Blake2bHash): void {
+    this.yieldData.push([hash]);
   }
 }

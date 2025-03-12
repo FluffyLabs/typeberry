@@ -200,4 +200,11 @@ export interface AccumulationPartialState {
    *
    */
   updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: Map<ServiceId, Gas>): void;
+
+  /**
+   * Yield the current execution to the service with the given hash.
+   *
+   * This is used to implement `yield` host call.
+   */
+  yield(hash: Blake2bHash): void;
 }
