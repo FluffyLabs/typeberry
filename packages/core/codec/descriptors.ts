@@ -48,7 +48,7 @@ export class Descriptor<T, V = T> implements Codec<T>, Skip {
     view: Descriptor<V> | null,
   ) {
     // We cast here to make sure that the field is always set.
-    this.View = view || (this as unknown as Descriptor<V>);
+    this.View = view ?? (this as unknown as Descriptor<V>);
   }
 
   /**
@@ -142,7 +142,7 @@ export namespace codec {
     const cache = new Map<number, unknown>();
     return <N extends number>(len: N): Descriptor<Bytes<N>> => {
       let ret = cache.get(len) as Descriptor<Bytes<N>>;
-      if (!ret) {
+      if (ret == null) {
         ret = descriptor<Bytes<N>>(
           `Bytes<${len}>`,
           exactHint(len),
@@ -367,17 +367,18 @@ export namespace codec {
     descriptor<Map<K, V>, Map<K, V2>>(
       `Dictionary<${key.name}, ${value.name}>[${fixedLength ?? "?"}]`,
       {
-        bytes: fixedLength
-          ? fixedLength * addSizeHints(key.sizeHint, value.sizeHint).bytes
-          : TYPICAL_DICTIONARY_LENGTH * (addSizeHints(key.sizeHint, value.sizeHint).bytes ?? 0),
-        isExact: fixedLength ? key.sizeHint.isExact && value.sizeHint.isExact : false,
+        bytes:
+          fixedLength != null
+            ? fixedLength * addSizeHints(key.sizeHint, value.sizeHint).bytes
+            : TYPICAL_DICTIONARY_LENGTH * (addSizeHints(key.sizeHint, value.sizeHint).bytes ?? 0),
+        isExact: fixedLength != null ? key.sizeHint.isExact && value.sizeHint.isExact : false,
       },
       (e, v) => {
         const data = Array.from(v.entries());
         data.sort((a, b) => sortKeys(a[0], b[0]));
 
         // length prefix
-        if (!fixedLength) {
+        if (fixedLength === undefined || fixedLength === 0) {
           e.varU32(asU32(data.length));
         }
         for (const [k, v] of data) {
@@ -387,7 +388,7 @@ export namespace codec {
       },
       (d) => {
         const map = new Map<K, V>();
-        const len = fixedLength === undefined ? d.varU32() : fixedLength;
+        const len = fixedLength ?? d.varU32();
         let prevKey = null as null | K;
         for (let i = 0; i < len; i += 1) {
           const k = key.decode(d);
@@ -404,7 +405,7 @@ export namespace codec {
         return map;
       },
       (s) => {
-        const len = fixedLength === undefined ? s.decoder.varU32() : fixedLength;
+        const len = fixedLength ?? s.decoder.varU32();
         s.sequenceFixLen(key, len);
         s.sequenceFixLen(value, len);
       },
