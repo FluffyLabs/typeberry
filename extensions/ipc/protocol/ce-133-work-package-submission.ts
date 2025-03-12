@@ -48,7 +48,7 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
     const streamId = sender.streamId;
     // initially we expect the `CoreWorkPackage`
     const workPackage = this.workPackages.get(streamId);
-    if (!workPackage) {
+    if (workPackage == null) {
       const coreWorkPackage = Decoder.decodeObject(CoreWorkPackage.Codec, message);
       this.workPackages.set(streamId, coreWorkPackage);
       return;

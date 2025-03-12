@@ -85,7 +85,7 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
     const streamId = sender.streamId;
     const request = this.requestsMap.get(streamId);
 
-    if (!request) {
+    if (request == null) {
       const receivedRequest = Decoder.decodeObject(WorkPackageSharingRequest.Codec, message);
       this.requestsMap.set(streamId, receivedRequest);
       return;
@@ -120,7 +120,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
 
   onStreamMessage(sender: StreamSender, message: BytesBlob): void {
     const pendingRequest = this.pendingRequests.get(sender.streamId);
-    if (!pendingRequest) {
+    if (pendingRequest == null) {
       throw new Error("Unexpected message received.");
     }
 
@@ -132,7 +132,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
 
   onClose(streamId: StreamId): void {
     const pendingRequest = this.pendingRequests.get(streamId);
-    if (pendingRequest) {
+    if (pendingRequest != null) {
       pendingRequest.reject(new Error("Stream closed."));
       this.pendingRequests.delete(streamId);
     }
