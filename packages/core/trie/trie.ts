@@ -83,9 +83,10 @@ function trieInsert(root: TrieNode | null, nodes: WriteableNodesDb, leaf: LeafNo
   //    traversed path from root.
   // 2. We found an empty spot (i.e. branch node with zero hash) - we can just update already
   //    traversed path from root.
-  const nodeToInsert: [TrieNode, TrieHash] = traversedPath.leafToReplace
-    ? createSubtreeForBothLeaves(traversedPath, nodes, traversedPath.leafToReplace, leaf)
-    : [leaf.node, nodes.insert(leaf.node)];
+  const nodeToInsert: [TrieNode, TrieHash] =
+    traversedPath.leafToReplace != null
+      ? createSubtreeForBothLeaves(traversedPath, nodes, traversedPath.leafToReplace, leaf)
+      : [leaf.node, nodes.insert(leaf.node)];
 
   // finally update the traversed path from `root` to the insertion location.
   let historicalBranch = traversedPath.branchingHistory.pop();

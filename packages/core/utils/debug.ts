@@ -7,7 +7,7 @@
  */
 export function check(condition: boolean, message?: string): asserts condition is true {
   if (!condition) {
-    throw new Error(`Assertion failure: ${message || ""}`);
+    throw new Error(`Assertion failure: ${message ?? ""}`);
   }
 }
 
@@ -29,7 +29,7 @@ export function ensure<T, U extends T>(a: T, condition: boolean, message?: strin
     return a;
   }
 
-  throw new Error(`Assertion failure: ${message || ""}`);
+  throw new Error(`Assertion failure: ${message ?? ""}`);
 }
 
 /**

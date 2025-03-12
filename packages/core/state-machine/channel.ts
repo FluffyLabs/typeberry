@@ -158,7 +158,7 @@ export class MessageChannelStateMachine<
   private async dispatchRequest(name: string, data: unknown, msg: Message) {
     const prevState = this.currentState();
     const handler = prevState.requestHandlers.get(name);
-    if (!handler) {
+    if (handler == null) {
       throw new Error(`Missing request handler for "${name}"`);
     }
 
@@ -169,7 +169,7 @@ export class MessageChannelStateMachine<
     const didStateChangeInMeantime = this.currentState() !== prevState;
 
     // Check if we want to perform a state transition.
-    if (res.transitionTo) {
+    if (res.transitionTo != null) {
       this.machine.transition(res.transitionTo.state, res.transitionTo.data);
     }
 
@@ -184,12 +184,12 @@ export class MessageChannelStateMachine<
   private dispatchSignal(name: string, data: unknown) {
     const handler = this.currentState().signalListeners.get(name);
 
-    if (!handler) {
+    if (handler == null) {
       throw new Error(`Unexpected signal "${name}"`);
     }
 
     const newState = handler(data);
-    if (newState) {
+    if (newState != null) {
       this.machine.transition(newState.state, newState.data);
     }
   }
@@ -235,7 +235,7 @@ export class MessageChannelStateMachine<
     machine: StateMachine<CurrentState, TStates>,
     parentPort: MessagePort | null,
   ) {
-    if (!parentPort) {
+    if (parentPort == null) {
       throw new Error("This code is expected to be run in a worker.");
     }
 

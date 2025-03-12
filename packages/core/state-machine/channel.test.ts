@@ -126,7 +126,9 @@ describe("MessageChannelStateMachine", () => {
     // then
     assert.strictEqual(machineB.currentState(), stateB);
     assert.strictEqual(stateB.getData(), "abc");
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     assert.ok(!result.initial);
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     assert.ok(result.final);
   });
 
