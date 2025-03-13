@@ -2,7 +2,7 @@ import type { CodeHash, CoreIndex, PerValidator, ServiceId } from "@typeberry/bl
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
-import type { Blake2bHash } from "@typeberry/hash";
+import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { ValidatorData } from "@typeberry/state";
@@ -29,7 +29,7 @@ export class TestAccumulate implements AccumulationPartialState {
   public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
 
   public checkpointCalled = 0;
-  public yieldHash: Blake2bHash | null = null;
+  public yieldHash: OpaqueHash | null = null;
   public forgetPreimageResponse: Result<null, null> = Result.ok(null);
   public newServiceResponse: ServiceId | null = null;
   public quitAndBurnCalled = 0;
@@ -110,7 +110,7 @@ export class TestAccumulate implements AccumulationPartialState {
     this.authQueue.push([coreIndex, authQueue]);
   }
 
-  yield(hash: Blake2bHash): void {
+  yield(hash: OpaqueHash): void {
     this.yieldHash = hash;
   }
 }
