@@ -38,7 +38,7 @@ export class HistoricalLookup implements HostCallHandler {
     const hashLoadingFault = memory.loadInto(key.raw, keyStartAddress);
     const destinationWriteable = memory.isWriteable(destinationStart, destinationLen);
     // we return OOB in case the destination is not writeable or the key can't be loaded.
-    if (hashLoadingFault || !destinationWriteable) {
+    if (hashLoadingFault != null || !destinationWriteable) {
       regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }

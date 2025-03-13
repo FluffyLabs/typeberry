@@ -41,7 +41,7 @@ export class Generator {
 
   async nextBlock() {
     const lastTimeSlot = this.lastHeader?.timeSlotIndex;
-    const blockNumber = lastTimeSlot ? lastTimeSlot + 1 : 1;
+    const blockNumber = lastTimeSlot != null ? lastTimeSlot + 1 : 1;
 
     const hasher = new TransitionHasher(this.chainSpec, this.hashAllocator);
     // TODO [ToDr] write benchmark to calculate many hashes.

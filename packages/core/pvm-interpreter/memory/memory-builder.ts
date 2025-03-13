@@ -88,7 +88,7 @@ export class MemoryBuilder {
     const pageNumber = getPageNumber(start);
     const page = this.initialMemory.get(pageNumber);
 
-    if (!page) {
+    if (page == null) {
       throw new PageNotExist();
     }
 

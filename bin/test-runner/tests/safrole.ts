@@ -89,7 +89,7 @@ class JsonState {
   gamma_a!: Ticket[];
   // sealing-key series of current epoch
   gamma_s!: TicketsOrKeys;
-  // bandersnatch ring comittment
+  // bandersnatch ring commitment
   gamma_z!: BandersnatchRingRoot;
   // posterior offenders sequence
   post_offenders!: Ed25519Key[];
@@ -141,17 +141,18 @@ export class Output {
   err?: TestErrorCode;
 
   static toSafroleOutput(output: Output): Result<OkResult, SafroleErrorCode> {
-    if (output.err) {
+    if (output.err != null) {
       return Result.error(Output.toSafroleErrorCode(output.err));
     }
 
-    const epochMark = !output.ok?.epoch_mark
-      ? null
-      : {
-          entropy: output.ok.epoch_mark?.entropy,
-          ticketsEntropy: output.ok.epoch_mark?.tickets_entropy,
-          validators: output.ok.epoch_mark?.validators,
-        };
+    const epochMark =
+      output.ok?.epoch_mark == null
+        ? null
+        : {
+            entropy: output.ok.epoch_mark?.entropy,
+            ticketsEntropy: output.ok.epoch_mark?.tickets_entropy,
+            validators: output.ok.epoch_mark?.validators,
+          };
     return Result.ok({
       epochMark,
       ticketsMark: output.ok?.tickets_mark ?? null,

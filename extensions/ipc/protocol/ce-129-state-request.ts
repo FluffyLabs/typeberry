@@ -99,7 +99,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
       endKey: Bytes<KEY_SIZE>,
     ) => KeyValuePair[],
   ) {
-    if (isServer && (!getBoundaryNodes || !getKeyValuePairs)) {
+    if (isServer && (getBoundaryNodes == null || getKeyValuePairs == null)) {
       throw new Error("getBoundaryNodes and getKeyValuePairs are required in server mode.");
     }
   }
@@ -108,7 +108,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
     if (this.isServer) {
       logger.info(`[${sender.streamId}][server]: Received request.`);
 
-      if (!this.getBoundaryNodes || !this.getKeyValuePairs) return;
+      if (this.getBoundaryNodes == null || this.getKeyValuePairs == null) return;
 
       const request = Decoder.decodeObject(StateRequest.Codec, message);
 

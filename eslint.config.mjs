@@ -19,6 +19,14 @@ export default tseslint.config(
     },
     rules: {
       "import/no-extraneous-dependencies": "error",
+      "@typescript-eslint/strict-boolean-expressions": [
+        "error",
+        {
+          allowNullableObject: false,
+          allowNullableNumber: false,
+          allowString: false,
+        },
+      ],
     },
   },
 );

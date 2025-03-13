@@ -56,7 +56,7 @@ export class Read implements HostCallHandler {
     const destinationWriteable = memory.isWriteable(destinationStart, destinationLen);
 
     // we return OOB in case the destination is not writeable or the key can't be loaded.
-    if (keyLoadingFault || !destinationWriteable) {
+    if (keyLoadingFault != null || !destinationWriteable) {
       regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }

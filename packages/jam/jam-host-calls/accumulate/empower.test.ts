@@ -23,7 +23,7 @@ function prepareDictionary(cb?: (d: Map<ServiceId, Gas>) => void) {
   const dictionary = new Map();
   dictionary.set(tryAsServiceId(10_000), 15_000 as Gas);
   dictionary.set(tryAsServiceId(20_000), 15_000 as Gas);
-  if (cb) {
+  if (cb != null) {
     cb(dictionary);
   }
   return {

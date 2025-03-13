@@ -28,7 +28,7 @@ export type Message = {
  * Some preliminary validation of incoming message.
  */
 export function isValidMessage(msg: unknown): msg is Message {
-  if (!msg || typeof msg !== "object") {
+  if (msg === null || typeof msg !== "object") {
     return false;
   }
 

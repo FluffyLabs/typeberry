@@ -87,7 +87,7 @@ export class Write implements HostCallHandler {
     const maybeValue = valueLen === 0 ? null : BytesBlob.blobFrom(value);
 
     // we return OOB in case the value cannot be read or the key can't be loaded.
-    if (keyLoadingFault || valueLoadingFault) {
+    if (keyLoadingFault != null || valueLoadingFault != null) {
       regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
