@@ -115,3 +115,10 @@ export function* u32AsLittleEndian(value: U32) {
   yield (value >> 16) & 0xff;
   yield (value >> 24) & 0xff;
 }
+
+/**
+ * Get the smallest value between U64 a and values given as input parameters.
+ */
+export function minU64(a: U64, ...values: U64[]): U64 {
+  return values.reduce((min, value) => (value > min ? min : value), a);
+}
