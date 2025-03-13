@@ -203,6 +203,8 @@ export interface AccumulationPartialState {
 
   /**
    * Yield accumulation trie result hash.
+   *
+   * https://graypaper.fluffylabs.dev/#/85129da/3f98003f9b00?v=0.6.3
    */
   yield(hash: OpaqueHash): void;
 }

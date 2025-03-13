@@ -13,6 +13,7 @@ const IN_OUT_REG = 7;
  * Yield accumulation trie result.
  *
  * https://graypaper.fluffylabs.dev/#/85129da/331c02331c02?v=0.6.3
+ * https://graypaper.fluffylabs.dev/#/85129da/3f98003f9b00?v=0.6.3
  */
 export class Yield implements HostCallHandler {
   index = tryAsHostCallIndex(16);
