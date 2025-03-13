@@ -1,7 +1,7 @@
 import type { ServiceId } from "@typeberry/block";
-import { tryAsU32 } from "@typeberry/numbers";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, HASH_SIZE } from "@typeberry/hash";
+import { tryAsU32 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import {
   type Memory,
@@ -42,12 +42,6 @@ export class Lookup implements HostCallHandler {
     // o
     const destinationAddress = tryAsMemoryIndex(tryAsU32(regs.getU64(9)));
 
-    const isMemoryReadable = memory.isReadable(hashAddress, HASH_SIZE);
-
-    if (!isMemoryReadable) {
-      return Promise.resolve(PvmExecution.Panic);
-    }
-
     const preImageHash = Bytes.zero(HASH_SIZE);
     const pageFault = memory.loadInto(preImageHash.raw, hashAddress);
     if (pageFault !== null) {
@@ -61,7 +55,7 @@ export class Lookup implements HostCallHandler {
 
     // v
     const preImage = await this.account.lookup(serviceId, preImageHash);
-    if (!preImage) {
+    if (preImage === null) {
       regs.setU64(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
