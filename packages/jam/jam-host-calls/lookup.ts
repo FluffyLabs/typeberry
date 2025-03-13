@@ -1,6 +1,7 @@
 import type { ServiceId } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, HASH_SIZE } from "@typeberry/hash";
+import { minU64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import {
   type Memory,
@@ -47,7 +48,7 @@ export class Lookup implements HostCallHandler {
       return Promise.resolve(PvmExecution.Panic);
     }
 
-    if (preImageHash.raw.byteLength === 0 || serviceId === null) {
+    if (serviceId === null) {
       regs.setU64(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
@@ -59,20 +60,19 @@ export class Lookup implements HostCallHandler {
       return;
     }
 
-    const preImageLength = preImage.raw.length;
-    const w10 = regs.getU64(10);
-    const w11 = regs.getU64(11);
+    const preImageLength = tryAsU64(preImage.raw.length);
+    const preimageBlobOffset = tryAsU64(regs.getU64(10));
+    const lengthToWrite = tryAsU64(regs.getU64(11));
 
-    const f = Number(w10 < preImageLength ? w10 : preImageLength);
-    const tmp = preImageLength - f;
-    const l = Number(w11 < tmp ? w11 : tmp);
+    const start = minU64(preimageBlobOffset, preImageLength);
+    const blobLength = minU64(lengthToWrite, tryAsU64(preImageLength - start));
 
-    const isDestinationMemoryWritable = memory.isWriteable(destinationAddress, l);
-    if (!isDestinationMemoryWritable) {
+    // casting to `Number` is safe here, since we are bounded by `preImageLength` in both cases, which is `U32`
+    const chunk = preImage.raw.subarray(Number(start), Number(start + blobLength));
+    const writePageFault = memory.storeFrom(destinationAddress, chunk);
+    if (writePageFault !== null) {
       return Promise.resolve(PvmExecution.Panic);
     }
-
-    regs.setU64(IN_OUT_REG, BigInt(preImageLength));
-    memory.storeFrom(destinationAddress, preImage.raw.subarray(f, l));
+    regs.setU64(IN_OUT_REG, preImageLength);
   }
 }
