@@ -59,7 +59,7 @@ describe("HostCalls: Yield", () => {
     // then
     assert.deepStrictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(registers.getU32(RESULT_REG), hashStart);
-    assert.deepStrictEqual(accumulate.yieldData, []);
+    assert.deepStrictEqual(accumulate.yieldHash, null);
   });
 
   it("should return status OK and yield hash", async () => {
@@ -78,6 +78,6 @@ describe("HostCalls: Yield", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.OK);
-    assert.deepStrictEqual(accumulate.yieldData, [[data]]);
+    assert.deepStrictEqual(accumulate.yieldHash, data);
   });
 });

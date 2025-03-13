@@ -27,9 +27,9 @@ export class TestAccumulate implements AccumulationPartialState {
   public readonly transferData: Parameters<TestAccumulate["transfer"]>[] = [];
   public readonly upgradeData: Parameters<TestAccumulate["upgradeService"]>[] = [];
   public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
-  public readonly yieldData: Parameters<TestAccumulate["yield"]>[] = [];
 
   public checkpointCalled = 0;
+  public yieldHash: Blake2bHash | null = null;
   public forgetPreimageResponse: Result<null, null> = Result.ok(null);
   public newServiceResponse: ServiceId | null = null;
   public quitAndBurnCalled = 0;
@@ -111,6 +111,6 @@ export class TestAccumulate implements AccumulationPartialState {
   }
 
   yield(hash: Blake2bHash): void {
-    this.yieldData.push([hash]);
+    this.yieldHash = hash;
   }
 }
