@@ -1,7 +1,6 @@
 import type { ServiceId } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, HASH_SIZE } from "@typeberry/hash";
-import { tryAsU32 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import {
   type Memory,
@@ -38,9 +37,9 @@ export class Lookup implements HostCallHandler {
     // a
     const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // h
-    const hashAddress = tryAsMemoryIndex(tryAsU32(regs.getU64(8)));
+    const hashAddress = tryAsMemoryIndex(regs.getU32(8));
     // o
-    const destinationAddress = tryAsMemoryIndex(tryAsU32(regs.getU64(9)));
+    const destinationAddress = tryAsMemoryIndex(regs.getU32(9));
 
     const preImageHash = Bytes.zero(HASH_SIZE);
     const pageFault = memory.loadInto(preImageHash.raw, hashAddress);
@@ -75,7 +74,5 @@ export class Lookup implements HostCallHandler {
 
     regs.setU64(IN_OUT_REG, BigInt(preImageLength));
     memory.storeFrom(destinationAddress, preImage.raw.subarray(f, l));
-
-    return;
   }
 }

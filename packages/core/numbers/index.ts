@@ -33,9 +33,8 @@ export const tryAsU16 = (v: number): U16 =>
 export const isU16 = (v: number): v is U16 => (v & 0xff_ff) === v;
 
 /** Attempt to cast an input number into U32. */
-export const tryAsU32 = (v: number | bigint): U32 => {
-  const value = Number(v);
-  return ensure<number, U32>(value, isU32(value), `input must have four-byte representation, got ${v}`);
+export const tryAsU32 = (v: number): U32 => {
+  return ensure<number, U32>(v, isU32(v), `input must have four-byte representation, got ${v}`);
 };
 /** Check if given number is a valid U32 number. */
 export const isU32 = (v: number): v is U32 => (v & 0xff_ff_ff_ff) >>> 0 === v;
