@@ -74,7 +74,7 @@ export class TypedPort {
 
     const promise = new Promise<TRes>((resolve, reject) => {
       this.responseListeners.once(reqEvent(this.messageId), (err, result) => {
-        return err instanceof Error ? reject(err) : resolve(result);
+        return err !== null ? reject(err) : resolve(result);
       });
     });
 
