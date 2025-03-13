@@ -1,5 +1,5 @@
 import type { ServiceId } from "@typeberry/block";
-import { CURRENT_SERVICE_ID, LegacyHostCallResult } from "@typeberry/jam-host-calls";
+import { LEGACY_CURRENT_SERVICE_ID, LegacyHostCallResult } from "@typeberry/jam-host-calls";
 import type { Memory, Registers } from "@typeberry/pvm-interpreter";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { check } from "@typeberry/utils";
@@ -34,7 +34,7 @@ export class HostCallsManager {
 class Missing implements HostCallHandler {
   index = tryAsHostCallIndex(2 ** 32 - 1);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
+  currentServiceId = LEGACY_CURRENT_SERVICE_ID;
 
   execute(_gas: GasCounter, regs: Registers, _memory: Memory): Promise<PvmExecution | undefined> {
     regs.setU32(7, LegacyHostCallResult.WHAT);

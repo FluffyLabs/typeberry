@@ -2,7 +2,7 @@ import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import { type PvmExecution, type Registers, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { Gas } from "../gas";
-import { CURRENT_SERVICE_ID } from "../utils";
+import { LEGACY_CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
 
 /**
@@ -13,7 +13,7 @@ import type { AccumulationPartialState } from "./partial-state";
 export class Checkpoint implements HostCallHandler {
   index = tryAsHostCallIndex(8);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
+  currentServiceId = LEGACY_CURRENT_SERVICE_ID;
 
   private readonly gasHostCall: Gas = new Gas();
 

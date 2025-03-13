@@ -9,7 +9,7 @@ import {
 } from "@typeberry/pvm-interpreter";
 import { assertNever } from "@typeberry/utils";
 import { LegacyHostCallResult } from "../results";
-import { CURRENT_SERVICE_ID } from "../utils";
+import { LEGACY_CURRENT_SERVICE_ID } from "../utils";
 import { PeekPokeError, type RefineExternalities, tryAsMachineId } from "./refine-externalities";
 
 const IN_OUT_REG = 7;
@@ -22,7 +22,7 @@ const IN_OUT_REG = 7;
 export class Poke implements HostCallHandler {
   index = tryAsHostCallIndex(20);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
+  currentServiceId = LEGACY_CURRENT_SERVICE_ID;
 
   constructor(private readonly refine: RefineExternalities) {}
 

@@ -3,7 +3,7 @@ import { type HostCallHandler, type PvmExecution, tryAsHostCallIndex } from "@ty
 import { type GasCounter, type Registers, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { LegacyHostCallResult } from "../results";
-import { CURRENT_SERVICE_ID } from "../utils";
+import { LEGACY_CURRENT_SERVICE_ID } from "../utils";
 import { type RefineExternalities, tryAsMachineId } from "./refine-externalities";
 
 const IN_OUT_REG = 7;
@@ -21,7 +21,7 @@ export const MAX_NUMBER_OF_PAGES = MEMORY_SIZE / 2 ** 12;
 export class Zero implements HostCallHandler {
   index = tryAsHostCallIndex(21);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
+  currentServiceId = LEGACY_CURRENT_SERVICE_ID;
 
   constructor(private readonly refine: RefineExternalities) {}
 

@@ -11,7 +11,7 @@ import {
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { LegacyHostCallResult } from "./results";
-import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
+import { LEGACY_CURRENT_SERVICE_ID, SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
 
 /** Account data interface for Write host call. */
 export interface Accounts {
@@ -51,7 +51,7 @@ const IN_OUT_REG = 7;
 export class Write implements HostCallHandler {
   index = tryAsHostCallIndex(3);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
+  currentServiceId = LEGACY_CURRENT_SERVICE_ID;
 
   constructor(private readonly account: Accounts) {}
 

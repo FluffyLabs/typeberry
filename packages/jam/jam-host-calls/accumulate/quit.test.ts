@@ -10,7 +10,7 @@ import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
 import { LegacyHostCallResult } from "../results";
-import { CURRENT_SERVICE_ID } from "../utils";
+import { LEGACY_CURRENT_SERVICE_ID } from "../utils";
 import { QuitError, TRANSFER_MEMO_BYTES } from "./partial-state";
 import { TestAccumulate } from "./partial-state.test";
 import { Quit } from "./quit";
@@ -50,7 +50,7 @@ describe("HostCalls: Quit", () => {
     quit.currentServiceId = tryAsServiceId(10_000);
 
     const { registers, memory } = prepareRegsAndMemory(
-      CURRENT_SERVICE_ID,
+      LEGACY_CURRENT_SERVICE_ID,
       Bytes.fill(TRANSFER_MEMO_BYTES, 33),
       { skipMemo: true }, // memo is not needed in the memory if we burn the funds.
     );

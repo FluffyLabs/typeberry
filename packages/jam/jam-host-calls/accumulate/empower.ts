@@ -8,7 +8,7 @@ import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory
 import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { asOpaqueType } from "@typeberry/utils";
 import { LegacyHostCallResult } from "../results";
-import { CURRENT_SERVICE_ID } from "../utils";
+import { LEGACY_CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
 
 const IN_OUT_REG = 7;
@@ -32,7 +32,7 @@ const serviceIdAndGasCodec = codec.object({
 export class Empower implements HostCallHandler {
   index = tryAsHostCallIndex(5);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
+  currentServiceId = LEGACY_CURRENT_SERVICE_ID;
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 

@@ -12,7 +12,7 @@ import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { type BigGas, type Gas, type GasCounter, tryAsGas, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { asOpaqueType, assertNever } from "@typeberry/utils";
 import { LegacyHostCallResult } from "../results";
-import { CURRENT_SERVICE_ID } from "../utils";
+import { LEGACY_CURRENT_SERVICE_ID } from "../utils";
 import { type AccumulationPartialState, TRANSFER_MEMO_BYTES, TransferError } from "./partial-state";
 
 const IN_OUT_REG = 7;
@@ -40,7 +40,7 @@ export class Transfer implements HostCallHandler {
 
     return tryAsGas(BigInt(big) * 2n ** 32n + BigInt(smallGas));
   };
-  currentServiceId = CURRENT_SERVICE_ID;
+  currentServiceId = LEGACY_CURRENT_SERVICE_ID;
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 

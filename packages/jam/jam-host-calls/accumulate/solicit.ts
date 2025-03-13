@@ -12,7 +12,7 @@ import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { assertNever } from "@typeberry/utils";
 import { LegacyHostCallResult } from "../results";
-import { CURRENT_SERVICE_ID } from "../utils";
+import { LEGACY_CURRENT_SERVICE_ID } from "../utils";
 import { type AccumulationPartialState, RequestPreimageError } from "./partial-state";
 
 const IN_OUT_REG = 7;
@@ -25,7 +25,7 @@ const IN_OUT_REG = 7;
 export class Solicit implements HostCallHandler {
   index = tryAsHostCallIndex(13);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
+  currentServiceId = LEGACY_CURRENT_SERVICE_ID;
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 

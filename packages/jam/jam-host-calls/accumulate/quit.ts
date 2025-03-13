@@ -6,7 +6,7 @@ import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { assertNever } from "@typeberry/utils";
 import { LegacyHostCallResult } from "../results";
-import { CURRENT_SERVICE_ID } from "../utils";
+import { LEGACY_CURRENT_SERVICE_ID } from "../utils";
 import { type AccumulationPartialState, QuitError, TRANSFER_MEMO_BYTES } from "./partial-state";
 
 const IN_OUT_REG = 7;
@@ -21,7 +21,7 @@ const IN_OUT_REG = 7;
 export class Quit implements HostCallHandler {
   index = tryAsHostCallIndex(12);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
+  currentServiceId = LEGACY_CURRENT_SERVICE_ID;
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 
@@ -29,7 +29,7 @@ export class Quit implements HostCallHandler {
     // `d`: where to transfer remaining funds
     const destination = tryAsServiceId(regs.getU32(IN_OUT_REG));
 
-    const noTransfer = destination === this.currentServiceId || destination === CURRENT_SERVICE_ID;
+    const noTransfer = destination === this.currentServiceId || destination === LEGACY_CURRENT_SERVICE_ID;
 
     // we burn the remaining funds, no transfer added.
     if (noTransfer) {
