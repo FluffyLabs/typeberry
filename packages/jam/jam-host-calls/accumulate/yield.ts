@@ -10,7 +10,7 @@ import type { AccumulationPartialState } from "./partial-state";
 const IN_OUT_REG = 7;
 
 /**
- * Yield the hash.
+ * Yield accumulation trie result.
  *
  * https://graypaper.fluffylabs.dev/#/5f542d7/323002323002
  */
