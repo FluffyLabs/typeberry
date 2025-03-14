@@ -12,7 +12,7 @@ import {
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { HostCallResult } from "./results";
-import { LEGACY_CURRENT_SERVICE_ID, getServiceId } from "./utils";
+import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
 
 /** Account data interface for Lookup host call. */
 export interface Accounts {
@@ -30,7 +30,7 @@ const IN_OUT_REG = 7;
 export class Lookup implements HostCallHandler {
   index = tryAsHostCallIndex(1);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = LEGACY_CURRENT_SERVICE_ID;
+  currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(private readonly account: Accounts) {}
 

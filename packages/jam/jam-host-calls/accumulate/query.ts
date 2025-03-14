@@ -5,7 +5,7 @@ import { type HostCallHandler, type Memory, PvmExecution, type Registers } from 
 import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsMemoryIndex, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { LegacyHostCallResult } from "../results";
-import { LEGACY_CURRENT_SERVICE_ID } from "../utils";
+import { CURRENT_SERVICE_ID } from "../utils";
 import { type AccumulationPartialState, PreimageStatus } from "./partial-state";
 
 const IN_OUT_REG_1 = 7;
@@ -20,7 +20,7 @@ const UPPER_BITS_SHIFT = 32n;
 export class Query implements HostCallHandler {
   index = tryAsHostCallIndex(13);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = LEGACY_CURRENT_SERVICE_ID;
+  currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 

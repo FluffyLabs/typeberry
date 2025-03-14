@@ -3,7 +3,7 @@ import { type HostCallHandler, type PvmExecution, tryAsHostCallIndex } from "@ty
 import { type GasCounter, type Registers, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { assertNever } from "@typeberry/utils";
 import { LegacyHostCallResult } from "../results";
-import { LEGACY_CURRENT_SERVICE_ID } from "../utils";
+import { CURRENT_SERVICE_ID } from "../utils";
 import { InvalidPageError, NoMachineError, type RefineExternalities, tryAsMachineId } from "./refine-externalities";
 import { MAX_NUMBER_OF_PAGES } from "./zero";
 
@@ -17,7 +17,7 @@ const IN_OUT_REG = 7;
 export class Void implements HostCallHandler {
   index = tryAsHostCallIndex(22);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = LEGACY_CURRENT_SERVICE_ID;
+  currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(private readonly refine: RefineExternalities) {}
 

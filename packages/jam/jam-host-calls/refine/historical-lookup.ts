@@ -7,7 +7,7 @@ import type { Memory } from "@typeberry/pvm-interpreter";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import type { Registers } from "@typeberry/pvm-interpreter";
 import { LegacyHostCallResult } from "../results";
-import { LEGACY_CURRENT_SERVICE_ID, legacyGetServiceId } from "../utils";
+import { CURRENT_SERVICE_ID, legacyGetServiceId } from "../utils";
 import type { RefineExternalities } from "./refine-externalities";
 
 const IN_OUT_REG = 7;
@@ -20,7 +20,7 @@ const IN_OUT_REG = 7;
 export class HistoricalLookup implements HostCallHandler {
   index = tryAsHostCallIndex(15);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = LEGACY_CURRENT_SERVICE_ID;
+  currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(private readonly refine: RefineExternalities) {}
 

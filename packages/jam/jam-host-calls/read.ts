@@ -11,7 +11,7 @@ import {
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { LegacyHostCallResult } from "./results";
-import { LEGACY_CURRENT_SERVICE_ID, SERVICE_ID_BYTES, legacyGetServiceId, writeServiceIdAsLeBytes } from "./utils";
+import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, legacyGetServiceId, writeServiceIdAsLeBytes } from "./utils";
 
 /** Account data interface for Read host call. */
 export interface Accounts {
@@ -33,7 +33,7 @@ const IN_OUT_REG = 7;
 export class Read implements HostCallHandler {
   index = tryAsHostCallIndex(2);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = LEGACY_CURRENT_SERVICE_ID;
+  currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(private readonly account: Accounts) {}
 
