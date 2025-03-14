@@ -65,7 +65,9 @@ export class Lookup implements HostCallHandler {
     const preimageBlobOffset = tryAsU64(regs.getU64(10));
     const lengthToWrite = tryAsU64(regs.getU64(11));
 
+    // f
     const start = minU64(preimageBlobOffset, preImageLength);
+    // l
     const blobLength = minU64(lengthToWrite, tryAsU64(preImageLength - start));
 
     // casting to `Number` is safe here, since we are bounded by `preImageLength` in both cases, which is `U32`
