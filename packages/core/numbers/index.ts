@@ -19,6 +19,7 @@ export type U16 = FixedSizeNumber<2>;
 export type U32 = FixedSizeNumber<4>;
 /** Unsigned integer that can be represented as 8 bytes. */
 export type U64 = bigint & WithBytesRepresentation<8>;
+export const MAX_U64 = 0xffff_ffff_ffff_ffffn;
 
 /** Attempt to cast an input number into U8. */
 export const tryAsU8 = (v: number): U8 =>
