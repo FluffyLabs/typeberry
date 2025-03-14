@@ -1,5 +1,5 @@
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
-import { MAX_U64 } from "@typeberry/numbers";
+import { MAX_U64, tryAsU64, u64IntoParts } from "@typeberry/numbers";
 import type { Registers } from "@typeberry/pvm-host-calls/host-call-handler";
 import { check } from "@typeberry/utils";
 
@@ -12,15 +12,17 @@ export function legacyGetServiceId(regNumber: number, regs: Registers, currentSe
 }
 
 export function getServiceId(regNumber: number, regs: Registers, currentServiceId: ServiceId): ServiceId | null {
-  const serviceId = regs.getU64(regNumber);
-  if (serviceId === MAX_U64) {
+  const omega_7 = regs.getU64(regNumber);
+  if (omega_7 === MAX_U64) {
     return currentServiceId;
   }
-  try {
-    return tryAsServiceId(Number(serviceId));
-  } catch (_err) {
-    return null;
+
+  const { lower, upper } = u64IntoParts(tryAsU64(omega_7));
+
+  if (upper === 0) {
+    return tryAsServiceId(lower);
   }
+  return null;
 }
 
 export function writeServiceIdAsLeBytes(serviceId: ServiceId, destination: Uint8Array) {
