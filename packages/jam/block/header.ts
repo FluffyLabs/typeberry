@@ -1,15 +1,16 @@
 import { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
-import { EST_EPOCH_LENGTH, EST_VALIDATORS } from "@typeberry/config";
+import { EST_EPOCH_LENGTH } from "@typeberry/config";
 import { HASH_SIZE, WithHash } from "@typeberry/hash";
-import { WithDebug, asOpaqueType } from "@typeberry/utils";
+import { WithDebug } from "@typeberry/utils";
 import {
   type EntropyHash,
   type PerValidator,
   type StateRootHash,
   type TimeSlot,
   type ValidatorIndex,
+  codecPerValidator,
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "./common";
@@ -36,18 +37,7 @@ export class EpochMarker extends WithDebug {
   static Codec = codec.Class(EpochMarker, {
     entropy: codec.bytes(HASH_SIZE).asOpaque(),
     ticketsEntropy: codec.bytes(HASH_SIZE).asOpaque(),
-    validators: codec.select<EpochMarker["validators"]>(
-      {
-        name: "EpochMark.validators",
-        sizeHint: { bytes: EST_VALIDATORS * BANDERSNATCH_KEY_BYTES, isExact: false },
-      },
-      withContext("EpochMark.validators", (context) => {
-        return codec.sequenceFixLen(codec.bytes(BANDERSNATCH_KEY_BYTES), context.validatorsCount).convert(
-          (i) => i,
-          (o) => asOpaqueType(o.map((x): BandersnatchKey => asOpaqueType(x))),
-        );
-      }),
-    ),
+    validators: codecPerValidator(codec.bytes(BANDERSNATCH_KEY_BYTES).asOpaque()),
   });
 
   static fromCodec({ entropy, ticketsEntropy, validators }: CodecRecord<EpochMarker>) {

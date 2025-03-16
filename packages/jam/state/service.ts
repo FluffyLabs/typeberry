@@ -47,7 +47,10 @@ export class ServiceAccountInfo extends WithDebug {
     );
   }
 
-  /** `a_t = BS + BI * a_i + BL * a_l` */
+  /**
+   * `a_t = BS + BI * a_i + BL * a_o`
+   * https://graypaper.fluffylabs.dev/#/579bd12/116e01116e01
+   */
   static calculateThresholdBalance(items: U32, bytes: U64): U64 {
     /** https://graypaper.fluffylabs.dev/#/579bd12/413e00413e00 */
     const B_S = 100n;
@@ -60,7 +63,7 @@ export class ServiceAccountInfo extends WithDebug {
     return tryAsU64(B_S + B_I * BigInt(items) + B_L * bytes);
   }
 
-  constructor(
+  private constructor(
     /** `a_c`: Hash of the service code. */
     public readonly codeHash: CodeHash,
     /** `a_b`: Current account balance. */
@@ -71,7 +74,7 @@ export class ServiceAccountInfo extends WithDebug {
     public readonly accumulateMinGas: Gas,
     /** `a_m`: Minimal gas required to execute On Transfer entrypoint. */
     public readonly onTransferMinGas: Gas,
-    /** `a_l`: Total number of octets in storage. */
+    /** `a_o`: Total number of octets in storage. */
     public readonly storageUtilisationBytes: U64,
     /** `a_i`: Number of items in storage. */
     public readonly storageUtilisationCount: U32,
@@ -104,7 +107,10 @@ export class PreimageItem extends WithDebug {
 export class Service extends WithDebug {
   static Codec = codec.Class(Service, {
     id: codec.u32.asOpaque(),
-    data: codec.object({ service: ServiceAccountInfo.Codec, preimages: codec.sequenceVarLen(PreimageItem.Codec) }),
+    data: codec.object({
+      service: ServiceAccountInfo.Codec,
+      preimages: codec.sequenceVarLen(PreimageItem.Codec),
+    }),
   });
 
   static fromCodec({ id, data }: CodecRecord<Service>) {

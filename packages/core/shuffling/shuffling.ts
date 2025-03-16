@@ -1,7 +1,7 @@
 import type { Bytes } from "@typeberry/bytes";
 import { blake2b } from "@typeberry/hash";
-import { type U32, tryAsU32, u32AsLittleEndian } from "@typeberry/numbers";
-import { asOpaqueType, check } from "@typeberry/utils";
+import { leBytesAsU32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
+import { check } from "@typeberry/utils";
 
 const ENTROPY_BYTES = 32;
 type ENTROPY_BYTES = typeof ENTROPY_BYTES;
@@ -30,26 +30,17 @@ export function fisherYatesShuffle<T>(arr: T[], entropy: Bytes<ENTROPY_BYTES>): 
   return result;
 }
 
-function toU32LittleEndian(uint8Array: Uint8Array): U32 {
-  check(uint8Array.length === 4, "Input must be a Uint8Array of length 4");
-  return asOpaqueType(uint8Array[0] | (uint8Array[1] << 8) | (uint8Array[2] << 16) | (uint8Array[3] << 24));
-}
-
 function hashToNumberSequence(entropy: Bytes<ENTROPY_BYTES>, length: number) {
   const result: number[] = new Array(length);
   const randomBytes = new Uint8Array(ENTROPY_BYTES + 4);
   randomBytes.set(entropy.raw);
 
   for (let i = 0; i < length; i++) {
-    let idx = ENTROPY_BYTES;
-    for (const byte of u32AsLittleEndian(tryAsU32(Math.floor(i / 8)))) {
-      randomBytes[idx] = byte;
-      idx += 1;
-    }
+    randomBytes.set(u32AsLeBytes(tryAsU32(Math.floor(i / 8))), ENTROPY_BYTES);
     const newHash = blake2b.hashBytes(randomBytes);
     const numberStartIndex = (4 * i) % 32;
     const numberEndIndex = numberStartIndex + 4;
-    const number = toU32LittleEndian(newHash.raw.subarray(numberStartIndex, numberEndIndex)) >>> 0;
+    const number = leBytesAsU32(newHash.raw.subarray(numberStartIndex, numberEndIndex)) >>> 0;
     result[i] = number;
   }
 

@@ -1,4 +1,4 @@
-import { asOpaqueType, ensure, check } from "@typeberry/utils";
+import { asOpaqueType, check, ensure } from "@typeberry/utils";
 
 /**
  * TODO [ToDr] This should be `unique symbol`, but for some reason
@@ -108,21 +108,14 @@ export function sumU32(...values: U32[]) {
 /**
  * Transform provided number to little-endian representation.
  */
-export function* u32AsLittleEndian(value: U32) {
-  yield value & 0xff;
-  yield (value >> 8) & 0xff;
-  yield (value >> 16) & 0xff;
-  yield (value >> 24) & 0xff;
+export function u32AsLeBytes(value: U32): Uint8Array {
+  return new Uint8Array([value & 0xff, (value >> 8) & 0xff, (value >> 16) & 0xff, (value >> 24) & 0xff]);
 }
 
 /**
- * Write U32 as LE-bytes into the destination buffer.
+ * Interpret 4-byte `Uint8Array` as U32 written as little endian.
  */
-export function writeU32(destination: Uint8Array, value: U32) {
-  check(destination.length >= 4, "Not enough space in the destination.");
-  let i = 0;
-  for (const byte of u32AsLittleEndian(value)) {
-    destination[i] = byte;
-    i += 1;
-  }
+export function leBytesAsU32(uint8Array: Uint8Array): U32 {
+  check(uint8Array.length === 4, "Input must be a Uint8Array of length 4");
+  return asOpaqueType(uint8Array[0] | (uint8Array[1] << 8) | (uint8Array[2] << 16) | (uint8Array[3] << 24));
 }

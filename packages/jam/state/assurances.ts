@@ -1,22 +1,23 @@
 import type { TimeSlot, WorkReportHash } from "@typeberry/block";
 import { WorkReport } from "@typeberry/block/work-report";
-import {CodecRecord, Descriptor, codec} from "@typeberry/codec";
-import { OpaqueHash, WithHash, blake2b } from "@typeberry/hash";
+import { type CodecRecord, Descriptor, codec } from "@typeberry/codec";
+import { type OpaqueHash, WithHash, blake2b } from "@typeberry/hash";
 import { WithDebug } from "@typeberry/utils";
 
-const codecWithHash = <T, V, H extends OpaqueHash>(val: Descriptor<T, V>): Descriptor<WithHash<H, T>, V> => new Descriptor(
-  val.name,
-  val.sizeHint,
-  (e, elem) => val.encode(e, elem.data),
-  (d): WithHash<H, T> => {
-    const decoder2 = d.clone();
-    const encoded = val.skipEncoded(decoder2);
-    const hash = blake2b.hashBytes(encoded);
-    return new WithHash(hash.asOpaque(), val.decode(d));
-  },
-  val.skip,
-  val.View,
-);
+const codecWithHash = <T, V, H extends OpaqueHash>(val: Descriptor<T, V>): Descriptor<WithHash<H, T>, V> =>
+  new Descriptor(
+    val.name,
+    val.sizeHint,
+    (e, elem) => val.encode(e, elem.data),
+    (d): WithHash<H, T> => {
+      const decoder2 = d.clone();
+      const encoded = val.skipEncoded(decoder2);
+      const hash = blake2b.hashBytes(encoded);
+      return new WithHash(hash.asOpaque(), val.decode(d));
+    },
+    val.skip,
+    val.View,
+  );
 
 /**
  * Assignment of particular work report to a core.
