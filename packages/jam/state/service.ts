@@ -103,7 +103,7 @@ export class ServiceAccountInfo extends WithDebug {
 }
 
 /**
- * Preimage item.
+ * Preimage dictionary entry.
  *
  * `δ[s]_p[h]`
  *
