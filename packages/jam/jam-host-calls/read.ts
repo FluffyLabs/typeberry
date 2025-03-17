@@ -11,7 +11,7 @@ import {
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { LegacyHostCallResult } from "./results";
-import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, getServiceId, writeServiceIdAsLeBytes } from "./utils";
+import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, legacyGetServiceId, writeServiceIdAsLeBytes } from "./utils";
 
 /** Account data interface for Read host call. */
 export interface Accounts {
@@ -39,7 +39,7 @@ export class Read implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // a
-    const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
+    const serviceId = legacyGetServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // k_0
     const keyStartAddress = tryAsMemoryIndex(regs.getU32(8));
     // k_z

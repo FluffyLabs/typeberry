@@ -7,7 +7,7 @@ import type { Memory } from "@typeberry/pvm-interpreter";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import type { Registers } from "@typeberry/pvm-interpreter";
 import { LegacyHostCallResult } from "../results";
-import { CURRENT_SERVICE_ID, getServiceId } from "../utils";
+import { CURRENT_SERVICE_ID, legacyGetServiceId } from "../utils";
 import type { RefineExternalities } from "./refine-externalities";
 
 const IN_OUT_REG = 7;
@@ -26,7 +26,7 @@ export class HistoricalLookup implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
     // a
-    const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
+    const serviceId = legacyGetServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // h_0
     const keyStartAddress = tryAsMemoryIndex(regs.getU32(8));
     // b_0
