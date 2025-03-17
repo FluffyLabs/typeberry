@@ -1,20 +1,19 @@
 import { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
-import type { KnownSizeArray } from "@typeberry/collections";
-import { EST_EPOCH_LENGTH } from "@typeberry/config";
 import { HASH_SIZE, WithHash } from "@typeberry/hash";
 import { WithDebug } from "@typeberry/utils";
 import {
   type EntropyHash,
+  type PerEpochBlock,
   type PerValidator,
   type StateRootHash,
   type TimeSlot,
   type ValidatorIndex,
+  codecPerEpochBlock,
   codecPerValidator,
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "./common";
-import { withContext } from "./context";
 import {
   BANDERSNATCH_KEY_BYTES,
   BANDERSNATCH_VRF_SIGNATURE_BYTES,
@@ -69,17 +68,7 @@ export class Header extends WithDebug {
     extrinsicHash: codec.bytes(HASH_SIZE).asOpaque(),
     timeSlotIndex: codec.u32.asOpaque(),
     epochMarker: codec.optional(EpochMarker.Codec),
-    ticketsMarker: codec.optional(
-      codec.select<KnownSizeArray<Ticket, "EpochLength">>(
-        {
-          name: "Header.ticketsMark",
-          sizeHint: { bytes: EST_EPOCH_LENGTH * Ticket.Codec.sizeHint.bytes, isExact: false },
-        },
-        withContext("Header.ticketsMark", (context) => {
-          return codec.sequenceFixLen(Ticket.Codec, context.epochLength).asOpaque();
-        }),
-      ),
-    ),
+    ticketsMarker: codec.optional(codecPerEpochBlock(Ticket.Codec)),
     offendersMarker: codec.sequenceVarLen(codec.bytes(ED25519_KEY_BYTES).asOpaque()),
     bandersnatchBlockAuthorIndex: codec.u16.asOpaque(),
     entropySource: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque(),
@@ -111,7 +100,7 @@ export class Header extends WithDebug {
    * `H_w`: Winning tickets provides the series of 600 slot sealing "tickets"
    *        for the next epoch.
    */
-  public ticketsMarker: KnownSizeArray<Ticket, "EpochLength"> | null = null;
+  public ticketsMarker: PerEpochBlock<Ticket> | null = null;
   /** `H_o`: Sequence of keys of newly misbehaving validators. */
   public offendersMarker: Ed25519Key[] = [];
   /** `H_i`: Block author's index in the current validator set. */

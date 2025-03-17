@@ -1,6 +1,6 @@
 import { type Descriptor, type SequenceView, codec } from "@typeberry/codec";
 import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
-import { type ChainSpec, EST_VALIDATORS } from "@typeberry/config";
+import { type ChainSpec, EST_EPOCH_LENGTH, EST_VALIDATORS } from "@typeberry/config";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import { type U16, type U32, type U64, tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { type Opaque, asOpaqueType, check } from "@typeberry/utils";
@@ -80,3 +80,13 @@ export function tryAsPerEpochBlock<T>(array: T[], spec: ChainSpec): PerEpochBloc
   );
   return asKnownSize(array);
 }
+export const codecPerEpochBlock = <T, V>(val: Descriptor<T, V>): Descriptor<PerEpochBlock<T>, SequenceView<T, V>> =>
+  codec.select(
+    {
+      name: `PerEpochBlock<${val.name}>`,
+      sizeHint: { bytes: EST_EPOCH_LENGTH * val.sizeHint.bytes, isExact: false },
+    },
+    withContext(`PerEpochBlock<${val.name}>`, (context) => {
+      return codec.sequenceFixLen(val, context.epochLength).asOpaque();
+    }),
+  );

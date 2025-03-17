@@ -1,10 +1,8 @@
-import type { PerEpochBlock, ServiceId } from "@typeberry/block";
-import { withContext } from "@typeberry/block/context";
+import { type ServiceId, codecPerEpochBlock, codecPerValidator } from "@typeberry/block";
 import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import { type Descriptor, type SequenceView, codec } from "@typeberry/codec";
 import { FixedSizeArray, type KnownSizeArray } from "@typeberry/collections";
-import { EST_CORES, EST_EPOCH_LENGTH } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import {
@@ -13,39 +11,18 @@ import {
   BlockState,
   DisputesRecords,
   ENTROPY_ENTRIES,
-  type PerCore,
   PrivilegedServices,
   ServiceAccountInfo,
   type State,
   ValidatorData,
+  codecPerCore,
 } from "@typeberry/state";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
+import { SafroleData } from "@typeberry/state/safrole-data";
 import { StateEntry } from "./entries";
 import { type StateKey, keys } from "./keys";
 
 // TODO [ToDr] Move codecs to a common place and refactor other usage.
-const codecPerCore = <T, V>(val: Descriptor<T, V>): Descriptor<PerCore<T>, SequenceView<T, V>> =>
-  codec.select(
-    {
-      name: `PerCore<${val.name}>`,
-      sizeHint: { bytes: Math.ceil(EST_CORES / 8), isExact: false },
-    },
-    withContext(`PerCore<${val.name}>`, (context) => {
-      return codec.sequenceFixLen(val, context.coresCount).asOpaque();
-    }),
-  );
-
-const codecPerEpochBlock = <T, V>(val: Descriptor<T, V>): Descriptor<PerEpochBlock<T>, SequenceView<T, V>> =>
-  codec.select(
-    {
-      name: `PerEpochBlock<${val.name}>`,
-      sizeHint: { bytes: EST_EPOCH_LENGTH * val.sizeHint.bytes, isExact: false },
-    },
-    withContext(`PerEpochBlock<${val.name}>`, (context) => {
-      return codec.sequenceFixLen(val, context.epochLength).asOpaque();
-    }),
-  );
-
 const codecKnownSizeArray = <T, V, F extends string>(
   val: Descriptor<T[], SequenceView<T, V>>,
 ): Descriptor<KnownSizeArray<T, F>, SequenceView<T, V>> => {
@@ -94,7 +71,7 @@ export namespace serialize {
   /** C(4): https://graypaper.fluffylabs.dev/#/85129da/38e60138e601?v=0.6.3 */
   export const safrole = {
     key: keys.index(StateEntry.Gamma),
-    Codec: SafroleState.Codec,
+    Codec: SafroleData.Codec,
   };
 
   /** C(5): https://graypaper.fluffylabs.dev/#/85129da/383d02383d02?v=0.6.3 */

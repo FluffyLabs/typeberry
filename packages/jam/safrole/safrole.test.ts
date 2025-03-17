@@ -9,11 +9,12 @@ import {
 } from "@typeberry/block";
 import type { SignedTicket, TicketAttempt } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
-import { FixedSizeArray, SortedSet } from "@typeberry/collections";
+import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Ordering } from "@typeberry/ordering";
 import type { ValidatorData } from "@typeberry/state";
+import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
 import { asOpaqueType } from "@typeberry/utils";
 import * as bandersnatch from "./bandersnatch";
 import { Safrole, SafroleErrorCode, type SafroleState } from "./safrole";
@@ -69,6 +70,13 @@ const validators: PerValidator<ValidatorData> = asOpaqueType(
     metadata: Bytes.parseBlob(metadata).asOpaque(),
   })),
 );
+
+const fakeSealingKeys: SafroleSealingKeys = {
+  kind: SafroleSealingKeysKind.Keys,
+  // cheating here a bit since it's unused
+  keys: asKnownSize([]),
+};
+
 describe("Safrole", () => {
   beforeEach(() => {
     mock.method(bandersnatch, "verifyTickets", () =>
@@ -170,8 +178,8 @@ describe("Safrole", () => {
       designatedValidatorData: validators,
       nextValidatorData: validators,
       punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
-      ticketsAccumulator: [],
-      sealingKeySeries: {},
+      ticketsAccumulator: asKnownSize([]),
+      sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
     };
     const safrole = new Safrole(state, tinyChainSpec);
@@ -221,8 +229,8 @@ describe("Safrole", () => {
       designatedValidatorData: validators,
       nextValidatorData: validators,
       punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
-      ticketsAccumulator: [],
-      sealingKeySeries: {},
+      ticketsAccumulator: asKnownSize([]),
+      sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
     };
     const safrole = new Safrole(state, tinyChainSpec);
@@ -276,8 +284,8 @@ describe("Safrole", () => {
       designatedValidatorData: validators,
       nextValidatorData: validators,
       punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
-      ticketsAccumulator: [],
-      sealingKeySeries: {},
+      ticketsAccumulator: asKnownSize([]),
+      sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
     };
     const safrole = new Safrole(state, tinyChainSpec);
@@ -325,8 +333,8 @@ describe("Safrole", () => {
       designatedValidatorData: validators,
       nextValidatorData: validators,
       punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
-      ticketsAccumulator: [],
-      sealingKeySeries: {},
+      ticketsAccumulator: asKnownSize([]),
+      sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
     };
     const safrole = new Safrole(state, tinyChainSpec);

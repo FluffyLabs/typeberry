@@ -18,7 +18,7 @@ import type { StateKey } from "./keys";
 
 export type SerializedState = HashDictionary<StateKey, BytesBlob>;
 
-export function serializeState(state: State): SerializedState {
+export function serializeState(_state: State): SerializedState {
   const map = new HashDictionary<StateKey, BytesBlob>();
   return map;
 }

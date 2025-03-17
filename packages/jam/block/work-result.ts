@@ -28,7 +28,7 @@ export class WorkExecResult extends WithDebug {
       sizeHint: { bytes: 1, isExact: false },
     },
     (e, x) => {
-      e.varU32(tryAsU32(x.kind as number));
+      e.varU32(tryAsU32(x.kind));
       if (x.kind === WorkExecResultKind.ok && x.okBlob) {
         e.bytesBlob(x.okBlob);
       }
