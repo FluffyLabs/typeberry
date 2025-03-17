@@ -12,12 +12,12 @@ export function legacyGetServiceId(regNumber: number, regs: Registers, currentSe
 }
 
 export function getServiceId(regNumber: number, regs: Registers, currentServiceId: ServiceId): ServiceId | null {
-  const omega_7 = regs.getU64(regNumber);
-  if (omega_7 === MAX_U64) {
+  const regValue = regs.getU64(regNumber);
+  if (regValue === MAX_U64) {
     return currentServiceId;
   }
 
-  const { lower, upper } = u64IntoParts(tryAsU64(omega_7));
+  const { lower, upper } = u64IntoParts(tryAsU64(regValue));
 
   if (upper === 0) {
     return tryAsServiceId(lower);
