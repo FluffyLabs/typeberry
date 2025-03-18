@@ -66,13 +66,13 @@ function prepareMachine(
   memory: Memory,
   entrypoint: U64,
   { registerMachine = true }: { registerMachine?: boolean } = {},
-): [TestRefineExt, MachineInstance] {
+): TestRefineExt {
   const refine = new TestRefineExt();
-  const machineInstance = MachineInstance.create(code, memory, entrypoint);
   if (registerMachine) {
+    const machineInstance = MachineInstance.create(code, memory, entrypoint);
     refine.machines.set(machineId, machineInstance);
   }
-  return [refine, machineInstance];
+  return refine;
 }
 
 describe("HostCalls: Invoke", () => {
@@ -98,7 +98,7 @@ describe("HostCalls: Invoke", () => {
     const machineCode = BytesBlob.blobFromString("amazing PVM code");
     const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
     const machineEntry = tryAsU64(42);
-    const [refine, _machine] = prepareMachine(machineId, machineCode, machineMemory, machineEntry, {
+    const refine = prepareMachine(machineId, machineCode, machineMemory, machineEntry, {
       registerMachine: false,
     });
 
@@ -122,7 +122,7 @@ describe("HostCalls: Invoke", () => {
     const machineCode = BytesBlob.blobFromString("amazing PVM code");
     const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
     const machineEntry = tryAsU64(42);
-    const [refine, _machine] = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
+    const refine = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
 
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
@@ -145,7 +145,7 @@ describe("HostCalls: Invoke", () => {
     const machineCode = BytesBlob.blobFromString("amazing PVM code");
     const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
     const machineEntry = tryAsU64(0);
-    const [refine, _machine] = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
+    const refine = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
     const machineStatus: MachineStatus = {
       status: Status.HOST,
       hostCallIndex,
@@ -173,7 +173,7 @@ describe("HostCalls: Invoke", () => {
     const machineCode = BytesBlob.blobFromString("amazing PVM code");
     const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
     const machineEntry = tryAsU64(0);
-    const [refine, _machine] = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
+    const refine = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
     const machineStatus: MachineStatus = {
       status: Status.FAULT,
       address,
@@ -200,7 +200,7 @@ describe("HostCalls: Invoke", () => {
     const machineCode = BytesBlob.blobFromString("amazing PVM code");
     const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
     const machineEntry = tryAsU64(0);
-    const [refine, _machine] = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
+    const refine = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
     const machineStatus: MachineStatus = {
       status: Status.OOG,
     };
@@ -226,7 +226,7 @@ describe("HostCalls: Invoke", () => {
     const machineCode = BytesBlob.blobFromString("amazing PVM code");
     const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
     const machineEntry = tryAsU64(0);
-    const [refine, _machine] = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
+    const refine = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
     const machineStatus: MachineStatus = {
       status: Status.PANIC,
     };
@@ -252,7 +252,7 @@ describe("HostCalls: Invoke", () => {
     const machineCode = BytesBlob.blobFromString("amazing PVM code");
     const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
     const machineEntry = tryAsU64(0);
-    const [refine, _machine] = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
+    const refine = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
     const machineStatus: MachineStatus = {
       status: Status.HALT,
     };
