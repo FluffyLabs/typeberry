@@ -5,7 +5,6 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { PvmExecution } from "@typeberry/pvm-host-calls";
 import {
-  type Memory,
   MemoryBuilder,
   Registers,
   gasCounter,
@@ -17,7 +16,7 @@ import { Status } from "@typeberry/pvm-interpreter/status";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { HostCallResult } from "../results";
 import { Invoke } from "./invoke";
-import { type MachineId, MachineInstance, type MachineStatus, tryAsMachineId } from "./machine-instance";
+import { MachineInstance, type MachineStatus, tryAsMachineId } from "./machine-instance";
 import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));
@@ -61,15 +60,15 @@ function prepareMemory(
 }
 
 function prepareMachine(
-  machineId: MachineId,
-  code: BytesBlob,
-  memory: Memory,
-  entrypoint: U64,
   { registerMachine = true }: { registerMachine?: boolean } = {},
 ): TestRefineExt {
   const refine = new TestRefineExt();
   if (registerMachine) {
-    const machineInstance = MachineInstance.create(code, memory, entrypoint);
+    const machineId = tryAsMachineId(MACHINE_ID);
+    const machineCode = BytesBlob.blobFromString("amazing PVM code");
+    const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
+    const machineEntry = tryAsU64(0);
+    const machineInstance = MachineInstance.create(machineCode, machineMemory, machineEntry);
     refine.machines.set(machineId, machineInstance);
   }
   return refine;
@@ -77,7 +76,14 @@ function prepareMachine(
 
 describe("HostCalls: Invoke", () => {
   it("should return panic if memory is unwritable", async () => {
-    const refine = new TestRefineExt();
+    const refine = prepareMachine({
+      registerMachine: false,
+    });
+    const machineStatus: MachineStatus = {
+      status: Status.OK,
+    };
+    refine.machineInvokeResult = machineStatus;
+
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
 
@@ -94,13 +100,13 @@ describe("HostCalls: Invoke", () => {
   });
 
   it("should return `who` if machine is not found #1", async () => {
-    const machineId = tryAsMachineId(MACHINE_ID);
-    const machineCode = BytesBlob.blobFromString("amazing PVM code");
-    const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
-    const machineEntry = tryAsU64(42);
-    const refine = prepareMachine(machineId, machineCode, machineMemory, machineEntry, {
+    const refine = prepareMachine({
       registerMachine: false,
     });
+    const machineStatus: MachineStatus = {
+      status: Status.OK,
+    };
+    refine.machineInvokeResult = machineStatus;
 
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
@@ -118,11 +124,11 @@ describe("HostCalls: Invoke", () => {
   });
 
   it("should return `who` if machine is not found #2", async () => {
-    const machineId = tryAsMachineId(MACHINE_ID);
-    const machineCode = BytesBlob.blobFromString("amazing PVM code");
-    const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
-    const machineEntry = tryAsU64(42);
-    const refine = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
+    const refine = prepareMachine();
+    const machineStatus: MachineStatus = {
+      status: Status.OK,
+    };
+    refine.machineInvokeResult = machineStatus;
 
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
@@ -141,11 +147,7 @@ describe("HostCalls: Invoke", () => {
 
   it("should run the machine and finish with `host` status", async () => {
     const hostCallIndex = tryAsU64(10);
-    const machineId = tryAsMachineId(MACHINE_ID);
-    const machineCode = BytesBlob.blobFromString("amazing PVM code");
-    const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
-    const machineEntry = tryAsU64(0);
-    const refine = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
+    const refine = prepareMachine();
     const machineStatus: MachineStatus = {
       status: Status.HOST,
       hostCallIndex,
@@ -169,11 +171,7 @@ describe("HostCalls: Invoke", () => {
 
   it("should run the machine and finish with `fault` status", async () => {
     const address = tryAsU64(2 ** 12);
-    const machineId = tryAsMachineId(MACHINE_ID);
-    const machineCode = BytesBlob.blobFromString("amazing PVM code");
-    const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
-    const machineEntry = tryAsU64(0);
-    const refine = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
+    const refine = prepareMachine();
     const machineStatus: MachineStatus = {
       status: Status.FAULT,
       address,
@@ -196,11 +194,7 @@ describe("HostCalls: Invoke", () => {
   });
 
   it("should run the machine and finish with `oog` status", async () => {
-    const machineId = tryAsMachineId(MACHINE_ID);
-    const machineCode = BytesBlob.blobFromString("amazing PVM code");
-    const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
-    const machineEntry = tryAsU64(0);
-    const refine = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
+    const refine = prepareMachine();
     const machineStatus: MachineStatus = {
       status: Status.OOG,
     };
@@ -222,11 +216,7 @@ describe("HostCalls: Invoke", () => {
   });
 
   it("should run the machine and finish with `panic` status", async () => {
-    const machineId = tryAsMachineId(MACHINE_ID);
-    const machineCode = BytesBlob.blobFromString("amazing PVM code");
-    const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
-    const machineEntry = tryAsU64(0);
-    const refine = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
+    const refine = prepareMachine();
     const machineStatus: MachineStatus = {
       status: Status.PANIC,
     };
@@ -248,11 +238,7 @@ describe("HostCalls: Invoke", () => {
   });
 
   it("should run the machine and finish with `halt` status", async () => {
-    const machineId = tryAsMachineId(MACHINE_ID);
-    const machineCode = BytesBlob.blobFromString("amazing PVM code");
-    const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
-    const machineEntry = tryAsU64(0);
-    const refine = prepareMachine(machineId, machineCode, machineMemory, machineEntry);
+    const refine = prepareMachine();
     const machineStatus: MachineStatus = {
       status: Status.HALT,
     };
