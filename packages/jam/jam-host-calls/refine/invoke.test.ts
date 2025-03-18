@@ -99,7 +99,7 @@ describe("HostCalls: Invoke", () => {
     assert.deepStrictEqual(registers.getU32(RESULT_REG_2), w8);
   });
 
-  it("should return `who` if machine is not found #1", async () => {
+  it("should return `who` if machine is not found (machine not initialized)", async () => {
     const refine = prepareMachine({
       registerMachine: false,
     });
@@ -123,7 +123,7 @@ describe("HostCalls: Invoke", () => {
     assert.deepStrictEqual(registers.getU32(RESULT_REG_2), w8);
   });
 
-  it("should return `who` if machine is not found #2", async () => {
+  it("should return `who` if machine is not found (machine id is not valid)", async () => {
     const refine = prepareMachine();
     const machineStatus: MachineStatus = {
       status: Status.OK,
