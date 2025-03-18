@@ -87,7 +87,7 @@ export class Write implements HostCallHandler {
     const maybeValue = valueLen === 0 ? null : BytesBlob.blobFrom(value);
 
     // we return OOB in case the value cannot be read or the key can't be loaded.
-    if (keyLoadingFault != null || valueLoadingFault != null) {
+    if (keyLoadingFault !== null || valueLoadingFault !== null) {
       regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
@@ -97,7 +97,6 @@ export class Write implements HostCallHandler {
 
     // Successful write or removal. We store previous value length in omega_7
     const prevLen = await prevLenPromise;
-    regs.setU32(IN_OUT_REG, prevLen === null ? LegacyHostCallResult.NONE : prevLen);
-    return;
+    regs.setU32(IN_OUT_REG, prevLen ?? LegacyHostCallResult.NONE);
   }
 }

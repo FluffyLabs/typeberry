@@ -18,7 +18,7 @@ export class InMemoryPreimages implements PreimageDb {
 
   get<T extends OpaqueHash>(hash: T): WithHash<T, BytesBlob> | null {
     const data = this.db.get(hash);
-    return data != null ? new WithHash(hash, data) : null;
+    return data !== undefined ? new WithHash(hash, data) : null;
   }
 
   set<T extends OpaqueHash>(...data: WithHash<T, BytesBlob>[]): Promise<void> {

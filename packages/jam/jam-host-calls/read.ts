@@ -56,7 +56,7 @@ export class Read implements HostCallHandler {
     const destinationWriteable = memory.isWriteable(destinationStart, destinationLen);
 
     // we return OOB in case the destination is not writeable or the key can't be loaded.
-    if (keyLoadingFault != null || !destinationWriteable) {
+    if (keyLoadingFault !== null || !destinationWriteable) {
       regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
@@ -72,6 +72,5 @@ export class Read implements HostCallHandler {
     // copy value to the memory and set the length to register 7
     memory.storeFrom(destinationStart, value.raw.subarray(0, destinationLen));
     regs.setU32(IN_OUT_REG, value.raw.length);
-    return;
   }
 }

@@ -97,18 +97,18 @@ export class WorkPackageExecutor {
     expectedCodeHash: CodeHash,
   ): Result<PvmExecutor, ServiceExecutorError> {
     const header = this.blocks.getHeader(lookupAnchor);
-    if (header == null) {
+    if (header === null) {
       return Result.error(ServiceExecutorError.NoLookup);
     }
 
     // TODO [ToDr] we should probably store posteriorStateRoots in the blocks db.
     const state = this.state.stateAt(header.priorStateRoot.materialize());
-    if (state == null) {
+    if (state === null) {
       return Result.error(ServiceExecutorError.NoState);
     }
 
     const serviceCode = state.getServiceCode(serviceId);
-    if (serviceCode == null) {
+    if (serviceCode === null) {
       return Result.error(ServiceExecutorError.NoServiceCode);
     }
 

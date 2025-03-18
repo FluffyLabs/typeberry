@@ -28,7 +28,7 @@ export type AuthorizationInput = {
  * host call (up to `Q` elements).
  * Each block we fill up the `pool` to always have `O` entries and we use the `queue`
  * to take missing values.
- * Every time there is a guaranteed work report (we know that from Gaurantees Extrinsic),
+ * Every time there is a guaranteed work report (we know that from Guarantees Extrinsic),
  * we check what `authorizerHash` was used for that work report and we remove it from
  * the `queue`.
  */
@@ -46,7 +46,7 @@ export class Authorization {
       const queue = this.state.authQueues[coreIndex];
       // if there were any used hashes - remove them
       const usedHashes = input.used.get(coreIndex);
-      if (usedHashes != null) {
+      if (usedHashes !== undefined) {
         pool = asOpaqueType(
           pool.filter((x) => {
             // we only remove the left-most first occurrence.
