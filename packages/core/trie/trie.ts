@@ -84,7 +84,7 @@ function trieInsert(root: TrieNode | null, nodes: WriteableNodesDb, leaf: LeafNo
   // 2. We found an empty spot (i.e. branch node with zero hash) - we can just update already
   //    traversed path from root.
   const nodeToInsert: [TrieNode, TrieHash] =
-    traversedPath.leafToReplace != null
+    traversedPath.leafToReplace !== undefined
       ? createSubtreeForBothLeaves(traversedPath, nodes, traversedPath.leafToReplace, leaf)
       : [leaf.node, nodes.insert(leaf.node)];
 

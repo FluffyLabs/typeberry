@@ -28,7 +28,7 @@ export class WriteablePage extends MemoryPage {
     const initialPageLength = Math.min(PAGE_SIZE, Math.max(dataLength, MIN_ALLOCATION_LENGTH));
     this.buffer = new ArrayBuffer(initialPageLength, { maxByteLength: PAGE_SIZE });
     this.view = new Uint8Array(this.buffer);
-    if (initialData != null) {
+    if (initialData !== undefined) {
       this.view.set(initialData);
     }
   }
