@@ -1,24 +1,11 @@
 import type { Segment, SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { Blake2bHash } from "@typeberry/hash";
-import { type U32, tryAsU32 } from "@typeberry/numbers";
-import type { Memory } from "@typeberry/pvm-interpreter";
+import type { U32, U64 } from "@typeberry/numbers";
+import type { BigGas, Memory, Registers } from "@typeberry/pvm-interpreter";
 import type { MemoryIndex } from "@typeberry/pvm-interpreter/memory";
-import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/utils";
-
-/**
- * Running PVM instance identifier.
- *
- * TODO [ToDr] [crit] GP does not specify a limit for this,
- * but we do store that in the registers.
- * Most likely it's impossible to have enough gas to keep
- * creating inner PVM instances until this overflows,
- * however a `bigint` might be a safer choice here for 64-bit
- * PVM?
- */
-export type MachineId = Opaque<U32, "MachineId[u32]">;
-/** Convert a number into PVM instance identifier. */
-export const tryAsMachineId = (v: number): MachineId => asOpaqueType(tryAsU32(v));
+import type { OK, Result } from "@typeberry/utils";
+import type { MachineId, MachineInstance, MachineResult } from "./machine-instance";
 
 /** An error that may occur during `peek` or `poke` host call. */
 export enum PeekPokeError {
@@ -42,6 +29,8 @@ export type SegmentExportError = typeof SegmentExportError;
 
 /** Host functions external invokations available during refine phase. */
 export interface RefineExternalities {
+  machines: Map<MachineId, MachineInstance>;
+  machineInvokeData: MachineResult;
   /** Forget a previously started nested VM. */
   machineExpunge(machineIndex: MachineId): Promise<Result<OK, NoMachineError>>;
 
@@ -73,8 +62,23 @@ export interface RefineExternalities {
     source: Memory,
   ): Promise<Result<OK, PeekPokeError>>;
 
-  /** Start an inner PVM instance with given entry point and starting code. */
+  /** Initialize a new PVM instance with given code, memory and program counter (entry point). */
+  machineInit(code: BytesBlob, memory: Memory, programCounter: U64): Promise<MachineId>;
+
+  /**
+   * Start an inner PVM instance with given entry point and starting code.
+   * TODO [MaSo]: This should be removed/merged in favor of `machineInit`.
+   */
   machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId>;
+
+  /** Run a PVM instance with given gas and registers. */
+  machineInvoke(
+    code: BytesBlob,
+    programCounter: U64,
+    gas: BigGas,
+    registers: Registers,
+    memory: Memory,
+  ): Promise<MachineResult>;
 
   /**
    * Export segment for future retrieval.

@@ -8,7 +8,7 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { LegacyHostCallResult } from "../results";
 import { Machine } from "./machine";
-import { tryAsMachineId } from "./refine-externalities";
+import { tryAsMachineId } from "./machine-instance";
 import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));

@@ -6,8 +6,9 @@ import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { OK, Result } from "@typeberry/utils";
 import { LegacyHostCallResult } from "../results";
+import { type MachineId, tryAsMachineId } from "./machine-instance";
 import { Poke } from "./poke";
-import { type MachineId, PeekPokeError, tryAsMachineId } from "./refine-externalities";
+import { PeekPokeError } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));
@@ -46,7 +47,7 @@ describe("HostCalls: Poke", () => {
 
 function prepareRegsAndMemory(machineId: MachineId, sourceStart: number, destinationStart: number, length: number) {
   const registers = new Registers();
-  registers.setU32(7, machineId);
+  registers.setU64(7, machineId);
   registers.setU32(8, sourceStart);
   registers.setU32(9, destinationStart);
   registers.setU32(10, length);

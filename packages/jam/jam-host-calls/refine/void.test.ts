@@ -6,7 +6,8 @@ import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-i
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { OK, Result } from "@typeberry/utils";
 import { LegacyHostCallResult } from "../results";
-import { InvalidPageError, type MachineId, NoMachineError, tryAsMachineId } from "./refine-externalities";
+import { type MachineId, tryAsMachineId } from "./machine-instance";
+import { InvalidPageError, NoMachineError } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
 import { Void } from "./void";
 
@@ -67,7 +68,7 @@ describe("HostCalls: Void", () => {
 
 function prepareRegsAndMemory(machineId: MachineId, pageStart: number, pageCount: number) {
   const registers = new Registers();
-  registers.setU32(7, machineId);
+  registers.setU64(7, machineId);
   registers.setU32(8, pageStart);
   registers.setU32(9, pageCount);
 

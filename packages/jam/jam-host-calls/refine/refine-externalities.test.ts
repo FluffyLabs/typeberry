@@ -2,12 +2,19 @@ import type { Segment, SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
-import type { U32 } from "@typeberry/numbers";
-import type { Memory, MemoryIndex } from "@typeberry/pvm-interpreter";
+import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
+import { type BigGas, Memory, type MemoryIndex, Registers, tryAsBigGas } from "@typeberry/pvm-interpreter";
+import { Status } from "@typeberry/pvm-interpreter/status";
 import type { OK, Result } from "@typeberry/utils";
+import {
+  type MachineId,
+  MachineInstance,
+  type MachineResult,
+  type MachineStatus,
+  tryAsMachineId,
+} from "./machine-instance";
 import type {
   InvalidPageError,
-  MachineId,
   NoMachineError,
   PeekPokeError,
   RefineExternalities,
@@ -23,6 +30,8 @@ export class TestRefineExt implements RefineExternalities {
     null,
     (key) => key.toString(),
   ]);
+
+  public readonly machines: Map<MachineId, MachineInstance> = new Map();
   public readonly machineStartData: MultiMap<[BytesBlob, U32], MachineId> = new MultiMap(2, [
     (code) => code.toString(),
     null,
@@ -43,6 +52,15 @@ export class TestRefineExt implements RefineExternalities {
     Parameters<TestRefineExt["machineZeroPages"]>,
     Result<OK, NoMachineError>
   > = new MultiMap(3);
+
+  public machineInvokeResult: MachineStatus = { status: Status.OK };
+  public machineInvokeData: MachineResult = {
+    result: { status: Status.OK },
+    programCounter: tryAsU64(0n),
+    gas: tryAsBigGas(0n),
+    registers: new Registers(),
+    memory: new Memory(),
+  };
 
   machineExpunge(machineIndex: MachineId): Promise<Result<OK, NoMachineError>> {
     const val = this.machineExpungeData.get(machineIndex);
@@ -70,6 +88,20 @@ export class TestRefineExt implements RefineExternalities {
       throw new Error(`Unexpected call to machineZeroPages with: ${machineIndex}, ${pageStart}, ${pageCount}`);
     }
     return Promise.resolve(val);
+  }
+
+  machineInit(
+    code: BytesBlob,
+    memory: Memory,
+    programCounter: U64,
+    { machineId }: { machineId?: MachineId } = {},
+  ): Promise<MachineId> {
+    if (machineId === undefined) {
+      machineId = tryAsMachineId(this.machines.size);
+    }
+    const machineInstance = MachineInstance.create(code, memory, programCounter);
+    this.machines.set(machineId, machineInstance);
+    return Promise.resolve(machineId);
   }
 
   machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId> {
@@ -110,6 +142,16 @@ export class TestRefineExt implements RefineExternalities {
       );
     }
     return Promise.resolve(val);
+  }
+
+  machineInvoke(
+    _code: BytesBlob,
+    programCounter: U64,
+    gas: BigGas,
+    registers: Registers,
+    memory: Memory,
+  ): Promise<MachineResult> {
+    return Promise.resolve({ result: this.machineInvokeResult, programCounter, gas, registers, memory });
   }
 
   exportSegment(segment: Segment): Result<SegmentIndex, SegmentExportError> {

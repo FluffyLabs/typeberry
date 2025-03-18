@@ -4,7 +4,8 @@ import { type GasCounter, type Registers, tryAsSmallGas } from "@typeberry/pvm-i
 import { assertNever } from "@typeberry/utils";
 import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import { InvalidPageError, NoMachineError, type RefineExternalities, tryAsMachineId } from "./refine-externalities";
+import { tryAsMachineId } from "./machine-instance";
+import { InvalidPageError, NoMachineError, type RefineExternalities } from "./refine-externalities";
 import { MAX_NUMBER_OF_PAGES } from "./zero";
 
 const IN_OUT_REG = 7;
