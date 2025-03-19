@@ -4,13 +4,7 @@ import { tryAsServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { PvmExecution } from "@typeberry/pvm-host-calls";
-import {
-  MemoryBuilder,
-  Registers,
-  gasCounter,
-  tryAsGas,
-  tryAsMemoryIndex,
-} from "@typeberry/pvm-interpreter";
+import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
@@ -59,9 +53,7 @@ function prepareMemory(
   return builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
 }
 
-function prepareMachine(
-  { registerMachine = true }: { registerMachine?: boolean } = {},
-): TestRefineExt {
+function prepareMachine({ registerMachine = true }: { registerMachine?: boolean } = {}): TestRefineExt {
   const refine = new TestRefineExt();
   if (registerMachine) {
     const machineId = tryAsMachineId(MACHINE_ID);
