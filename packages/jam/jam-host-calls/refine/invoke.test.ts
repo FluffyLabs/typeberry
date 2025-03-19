@@ -53,7 +53,10 @@ function prepareMemory(
   return builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
 }
 
-function prepareMachine({ registerMachine = true }: { registerMachine?: boolean } = {}): TestRefineExt {
+function prepareMachine(
+  machineResult: MachineStatus,
+  { registerMachine = true }: { registerMachine?: boolean } = {},
+): TestRefineExt {
   const refine = new TestRefineExt();
   if (registerMachine) {
     const machineId = tryAsMachineId(MACHINE_ID);
@@ -62,19 +65,22 @@ function prepareMachine({ registerMachine = true }: { registerMachine?: boolean 
     const machineEntry = tryAsU64(0);
     const machineInstance = MachineInstance.create(machineCode, machineMemory, machineEntry);
     refine.machines.set(machineId, machineInstance);
+
+    refine.machineInvokeResult = machineResult;
   }
   return refine;
 }
 
 describe("HostCalls: Invoke", () => {
   it("should return panic if memory is unwritable", async () => {
-    const refine = prepareMachine({
-      registerMachine: false,
-    });
-    const machineStatus: MachineStatus = {
-      status: Status.OK,
-    };
-    refine.machineInvokeResult = machineStatus;
+    const refine = prepareMachine(
+      {
+        status: Status.OK,
+      },
+      {
+        registerMachine: false,
+      },
+    );
 
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
@@ -92,13 +98,14 @@ describe("HostCalls: Invoke", () => {
   });
 
   it("should return `who` if machine is not found (machine not initialized)", async () => {
-    const refine = prepareMachine({
-      registerMachine: false,
-    });
-    const machineStatus: MachineStatus = {
-      status: Status.OK,
-    };
-    refine.machineInvokeResult = machineStatus;
+    const refine = prepareMachine(
+      {
+        status: Status.OK,
+      },
+      {
+        registerMachine: false,
+      },
+    );
 
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
@@ -116,11 +123,9 @@ describe("HostCalls: Invoke", () => {
   });
 
   it("should return `who` if machine is not found (machine id is not valid)", async () => {
-    const refine = prepareMachine();
-    const machineStatus: MachineStatus = {
+    const refine = prepareMachine({
       status: Status.OK,
-    };
-    refine.machineInvokeResult = machineStatus;
+    });
 
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
@@ -139,12 +144,10 @@ describe("HostCalls: Invoke", () => {
 
   it("should run the machine and finish with `host` status", async () => {
     const hostCallIndex = tryAsU64(10);
-    const refine = prepareMachine();
-    const machineStatus: MachineStatus = {
+    const refine = prepareMachine({
       status: Status.HOST,
       hostCallIndex,
-    };
-    refine.machineInvokeResult = machineStatus;
+    });
 
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
@@ -163,12 +166,10 @@ describe("HostCalls: Invoke", () => {
 
   it("should run the machine and finish with `fault` status", async () => {
     const address = tryAsU64(2 ** 12);
-    const refine = prepareMachine();
-    const machineStatus: MachineStatus = {
+    const refine = prepareMachine({
       status: Status.FAULT,
       address,
-    };
-    refine.machineInvokeResult = machineStatus;
+    });
 
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
@@ -186,11 +187,9 @@ describe("HostCalls: Invoke", () => {
   });
 
   it("should run the machine and finish with `oog` status", async () => {
-    const refine = prepareMachine();
-    const machineStatus: MachineStatus = {
+    const refine = prepareMachine({
       status: Status.OOG,
-    };
-    refine.machineInvokeResult = machineStatus;
+    });
 
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
@@ -208,11 +207,9 @@ describe("HostCalls: Invoke", () => {
   });
 
   it("should run the machine and finish with `panic` status", async () => {
-    const refine = prepareMachine();
-    const machineStatus: MachineStatus = {
+    const refine = prepareMachine({
       status: Status.PANIC,
-    };
-    refine.machineInvokeResult = machineStatus;
+    });
 
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
@@ -230,11 +227,9 @@ describe("HostCalls: Invoke", () => {
   });
 
   it("should run the machine and finish with `halt` status", async () => {
-    const refine = prepareMachine();
-    const machineStatus: MachineStatus = {
+    const refine = prepareMachine({
       status: Status.HALT,
-    };
-    refine.machineInvokeResult = machineStatus;
+    });
 
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
