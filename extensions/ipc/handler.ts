@@ -93,7 +93,7 @@ export class MessageHandler {
   /** Perform some work on a specific stream. */
   withStream(streamId: StreamId, work: (handler: StreamHandler, sender: StreamSender) => void) {
     const handler = this.streams.get(streamId);
-    if (handler == null) {
+    if (handler === undefined) {
       return false;
     }
 
@@ -122,7 +122,7 @@ export class MessageHandler {
     work: (handler: THandler, sender: StreamSender) => void,
   ) {
     const handler = this.streamHandlers.get(kind);
-    if (handler == null) {
+    if (handler === undefined) {
       throw new Error(`Stream with unregistered handler of kind: ${kind} was requested to be opened.`);
     }
 
@@ -200,7 +200,7 @@ export class MessageHandler {
 
   /** Notify about termination of the underlying socket. */
   onClose({ error }: { error?: Error }) {
-    logger.log(`Closing the handler. Reason: ${error != null ? error.message : "close"}.`);
+    logger.log(`Closing the handler. Reason: ${error !== undefined ? error.message : "close"}.`);
     // Socket closed - we should probably clear everything.
     for (const [streamId, handler] of this.streams.entries()) {
       handler.onClose(streamId, error === undefined);
@@ -209,7 +209,7 @@ export class MessageHandler {
 
     // finish the handler.
     this.onEnd.finished = true;
-    if (error != null) {
+    if (error !== undefined) {
       this.onEnd.reject(error);
     } else {
       this.onEnd.resolve();

@@ -66,7 +66,7 @@ async function runAllBenchmarks() {
 
   const hasErrors =
     Array.from(results.entries()).filter(([_key, result]) => {
-      return result.diff.find((e: OkResult | ErrorResult) => "err" in e) != null;
+      return result.diff.find((e: OkResult | ErrorResult) => "err" in e) !== undefined;
     }).length > 0;
 
   if (hasErrors) {
@@ -87,7 +87,7 @@ async function runBenchmark(benchPath: string, fileName: string): Promise<Result
 
   const currentResults = JSON.parse(fs.readFileSync(outputPath).toString());
   const expectedContent = tryReadFile(expectedPath);
-  if (expectedContent != null) {
+  if (expectedContent !== null) {
     const previousResults = JSON.parse(expectedContent.toString());
     return {
       diff: compareResults(currentResults, previousResults),

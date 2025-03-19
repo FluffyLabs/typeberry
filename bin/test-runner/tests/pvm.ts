@@ -172,7 +172,7 @@ export async function runPvmTest(testContent: PvmTest) {
 
   for (const pageNumber of pageThatShouldBeEmpty) {
     const memoryPage = pvm.getMemoryPage(pageNumber);
-    const max = memoryPage != null ? Math.max(...memoryPage) : 0;
+    const max = memoryPage !== null ? Math.max(...memoryPage) : 0;
     assert.deepStrictEqual(max, 0);
   }
 }

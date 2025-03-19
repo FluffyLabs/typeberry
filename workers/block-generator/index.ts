@@ -25,10 +25,10 @@ if (!isMainThread) {
     .then((channel) => main(channel))
     .catch((e) => {
       logger.error(e);
-      if (e.stack != null) {
+      if (e.stack !== undefined) {
         logger.error(e.stack);
       }
-      if (e.cause != null) {
+      if (e.cause !== undefined) {
         logger.error(e.cause);
       }
     });

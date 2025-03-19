@@ -141,12 +141,12 @@ export class Output {
   err?: TestErrorCode;
 
   static toSafroleOutput(output: Output): Result<OkResult, SafroleErrorCode> {
-    if (output.err != null) {
+    if (output.err !== undefined) {
       return Result.error(Output.toSafroleErrorCode(output.err));
     }
 
     const epochMark =
-      output.ok?.epoch_mark == null
+      output.ok?.epoch_mark === undefined
         ? null
         : {
             entropy: output.ok.epoch_mark?.entropy,
