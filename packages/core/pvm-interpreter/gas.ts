@@ -1,3 +1,4 @@
+import { type Descriptor, codec } from "@typeberry/codec";
 import { type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { type Opaque, asOpaqueType } from "@typeberry/utils";
 
@@ -17,6 +18,12 @@ export const tryAsBigGas = (v: number | bigint): BigGas => asOpaqueType(tryAsU64
 /** Attempt to convert given number into gas. */
 export const tryAsGas = (v: number | bigint): Gas =>
   typeof v === "number" && v < 2 ** 32 ? tryAsSmallGas(v) : tryAsBigGas(v);
+
+/** Encode/decode unsigned gas. */
+export const codecUnsignedGas: Descriptor<Gas> = codec.u64.convert(
+  (g) => tryAsU64(g),
+  (i) => tryAsGas(i),
+);
 
 /** Create a new gas counter instance depending on the gas value. */
 export function gasCounter(gas: Gas): GasCounter {

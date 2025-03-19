@@ -7,14 +7,8 @@ import { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { blake2b } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
-import {
-  type Account,
-  LookupHistoryItem,
-  Preimages,
-  PreimagesErrorCode,
-  type PreimagesInput,
-  tryAsLookupHistorySlots,
-} from "./preimages";
+import { LookupHistoryItem, tryAsLookupHistorySlots } from "@typeberry/state";
+import { type Account, Preimages, PreimagesErrorCode, type PreimagesInput } from "./preimages";
 
 function createInput(preimages: { requester: ServiceId; blob: BytesBlob }[], slot: number): PreimagesInput {
   return {

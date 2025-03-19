@@ -69,9 +69,10 @@ export namespace serialize {
   };
 
   /** C(4): https://graypaper.fluffylabs.dev/#/85129da/38e60138e601?v=0.6.3 */
-  export const safrole = {
+  export const safrole: StateCodec<SafroleData> = {
     key: keys.index(StateEntry.Gamma),
     Codec: SafroleData.Codec,
+    extract: (s) => new SafroleData(s.nextValidatorData, s.epochRoot, s.sealingKeySeries, s.ticketsAccumulator),
   };
 
   /** C(5): https://graypaper.fluffylabs.dev/#/85129da/383d02383d02?v=0.6.3 */
@@ -154,7 +155,6 @@ export namespace serialize {
   /** C(255, s): https://graypaper.fluffylabs.dev/#/85129da/383103383103?v=0.6.3 */
   export const serviceData = (serviceId: ServiceId) => ({
     key: keys.serviceInfo(serviceId),
-    // TODO [ToDr] without threshold balance!
     Codec: ServiceAccountInfo.Codec,
   });
 
