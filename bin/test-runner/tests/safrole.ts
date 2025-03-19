@@ -146,13 +146,12 @@ export class Output {
     }
 
     const epochMark =
-      // eslint-disable-next-line eqeqeq
-      output.ok?.epoch_mark == null
+      output.ok?.epoch_mark === undefined || output.ok.epoch_mark === null
         ? null
         : {
-            entropy: output.ok.epoch_mark?.entropy,
-            ticketsEntropy: output.ok.epoch_mark?.tickets_entropy,
-            validators: output.ok.epoch_mark?.validators,
+            entropy: output.ok.epoch_mark.entropy,
+            ticketsEntropy: output.ok.epoch_mark.tickets_entropy,
+            validators: output.ok.epoch_mark.validators,
           };
     return Result.ok({
       epochMark,
