@@ -39,6 +39,7 @@ import {
   runSegmentEcTest,
   runSegmentRootTest,
 } from "./tests/erasure-coding";
+import { HostCallGeneralTest, runHostCallGeneralTest } from "./tests/host-calls-general";
 import { PreImagesTest, runPreImagesTest } from "./tests/preimages";
 import { PvmTest, runPvmTest } from "./tests/pvm";
 import { HistoryTest, runHistoryTest } from "./tests/recent-history";
@@ -198,6 +199,7 @@ function prepareTests(testContent: unknown, file: string, path: string): TestAnd
     prepRunner("schema", JsonSchema.fromJson, ignoreSchemaFiles), // ignore schema files
     prepRunner("preimages", PreImagesTest.fromJson, runPreImagesTest),
     prepRunner("pvm", PvmTest.fromJson, runPvmTest),
+    prepRunner("host_function", HostCallGeneralTest.fromJson, runHostCallGeneralTest),
     prepRunner("reports/tiny", ReportsTest.fromJson, runReportsTestTiny),
     prepRunner("reports/full", ReportsTest.fromJson, runReportsTestFull),
     prepRunner("safrole", SafroleTest.fromJson, runSafroleTest),
