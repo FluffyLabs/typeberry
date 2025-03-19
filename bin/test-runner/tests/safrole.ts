@@ -127,8 +127,8 @@ export class OkOutput {
     epoch_mark: json.optional(EpochMark.fromJson),
     tickets_mark: json.optional<Ticket[]>(json.array(safroleFromJson.ticketBody)),
   };
-  epoch_mark?: EpochMark;
-  tickets_mark?: Ticket[];
+  epoch_mark?: EpochMark | null;
+  tickets_mark?: Ticket[] | null;
 }
 
 export class Output {
@@ -146,7 +146,8 @@ export class Output {
     }
 
     const epochMark =
-      output.ok?.epoch_mark === undefined
+      // eslint-disable-next-line eqeqeq
+      output.ok?.epoch_mark == null
         ? null
         : {
             entropy: output.ok.epoch_mark?.entropy,
