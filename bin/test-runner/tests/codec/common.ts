@@ -20,6 +20,24 @@ export namespace fromJson {
     }
     return v as TicketAttempt;
   }) as FromJson<TicketAttempt>;
+
+  export const uint8Array = json.fromAny((v) => {
+    if (Array.isArray(v)) {
+      return new Uint8Array(v);
+    }
+
+    throw new Error(`Expected an array, got ${typeof v} instead.`);
+  });
+
+  export const bigUint64Array = json.fromAny((v) => {
+    if (Array.isArray(v)) {
+      return new BigUint64Array(v.map((x) => BigInt(x)));
+    }
+
+    throw new Error(`Expected an array, got ${typeof v} instead.`);
+  });
+
+  export const bigUint64 = json.fromAny((v) => BigInt(v as bigint));
 }
 
 export function runCodecTest<T>(codec: Codec<T>, test: T, file: string) {
