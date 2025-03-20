@@ -41,7 +41,7 @@ export namespace json {
   export function record<TInto>(from: FromJson<TInto>): FromJson<Record<string, TInto>> {
     return fromAny<Record<string, TInto>>((inJson, context) => {
       if (typeof inJson !== "object" || inJson === null) {
-        throw new Error(`Expected object record for parsing`);
+        throw new Error("Expected object record for parsing");
       }
       const result: Record<string, TInto> = {};
       for (const [key, value] of Object.entries(inJson)) {

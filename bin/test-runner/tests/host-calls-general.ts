@@ -20,7 +20,7 @@ class MemoryPage {
   };
 }
 
-class Memory {
+export class Memory {
   static fromJson: FromJson<Memory> = {
     pages: json.record(MemoryPage.fromJson),
   };
@@ -30,7 +30,7 @@ class Memory {
   };
 }
 
-class ServiceAccount {
+export class ServiceAccount {
   static fromJson: FromJson<ServiceAccount> = {
     s_map: json.record(json.array("number")),
     l_map: json.record({
@@ -79,7 +79,7 @@ export class HostCallGeneralTest {
   "expected-gas": number;
   "expected-regs": Record<string, bigint>;
   "expected-memory": Memory;
-  "expected-delta": Record<string, ServiceAccount>;;
+  "expected-delta": Record<string, ServiceAccount>;
   "expected-service-account": ServiceAccount;
 }
 
