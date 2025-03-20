@@ -1,193 +1,86 @@
 import assert from "node:assert";
 import { type FromJson, json } from "@typeberry/json-parser";
+import { fromJson } from "./codec/common";
 
-namespace fromJson {
-  export const anyArray = (v: unknown) => {
-    if (Array.isArray(v)) {
-      return v;
-    }
-
-    throw new Error(`Expected an array, got ${typeof v} instead.`);
-  };
-
-  export const uint8Array = json.fromAny((v) => {
-    if (Array.isArray(v)) {
-      return new Uint8Array(v);
-    }
-
-    throw new Error(`Expected an array, got ${typeof v} instead.`);
-  });
-
-  export const bigUint64Array = json.fromAny((v) => {
-    if (Array.isArray(v)) {
-      return new BigUint64Array(v.map((x) => BigInt(x)));
-    }
-
-    throw new Error(`Expected an array, got ${typeof v} instead.`);
-  });
-
-  // Array of 13 elements
-  export const registersBigUint64Array = json.fromAny((v) => {
-    if (Array.isArray(v)) {
-      if (v.length !== 13) {
-        throw new Error(`Expected an array of 13 elements, got ${v.length} instead.`);
-      }
-
-      return new BigUint64Array(v.map((x) => BigInt(x)));
-    }
-
-    if (v !== null && typeof v === "object") {
-      if (Object.keys(v).every((key) => !Number.isNaN(Number(key)))) {
-        const array = new BigUint64Array(13);
-        const elements: [number, bigint][] = Object.entries(v).map(([_key, value]) => [Number(_key), BigInt(value)]);
-        for (const [i, value] of elements) {
-          array[i] = value;
-        }
-        return array;
-      }
-
-      throw new Error(`Expected an array, got ${typeof v} instead.`);
-    }
-
-    throw new Error(`Expected an array, got ${typeof v} instead.`);
-  });
-
-  export const bytes32 = json.fromAny((v) => {
-    if (typeof v === "string") {
-      return new Uint8Array(Buffer.from(v, "hex"));
-    }
-
-    throw new Error(`Expected a string, got ${typeof v} instead.`);
-  });
-
-  export const map_number = json.fromAny((v) => {
-    if (v !== null && typeof v === "object") {
-      const result: Record<string, number> = {};
-      for (const [key, value] of Object.entries(v)) {
-        if (typeof value === "number") {
-          result[key] = value;
-        } else {
-          throw new Error(`Invalid value for map key ${key}`);
-        }
-      }
-      return result;
-    }
-    throw new Error("Invalid map value {string:number}");
-  });
-
-  export const map_numberArray = json.fromAny((v) => {
-    if (v !== null && typeof v === "object") {
-      const result: Record<string, number[]> = {};
-      for (const [key, value] of Object.entries(v)) {
-        if (Array.isArray(value) && value.every((item) => typeof item === "number")) {
-          result[key] = value;
-        } else {
-          throw new Error(`Invalid value for map key ${key}`);
-        }
-      }
-      return result;
-    }
-    throw new Error("Invalid map value hash:[number]");
-  });
-
-  export const l_map = json.fromAny((v) => {
-    if (v !== null && typeof v === "object") {
-      const result: Record<string, { t: number[]; l: number }> = {};
-      for (const [key, value] of Object.entries(v)) {
-        if (value !== null && typeof value === "object" && "t" in value && "l" in value) {
-          const { t, l } = v as { t: number[]; l: number };
-          if (Array.isArray(t) && t.every((item) => typeof item === "number") && typeof l === "number") {
-            result[key] = { t, l };
-          }
-        } else {
-          throw new Error(`Invalid value for map key ${key}`);
-        }
-      }
-      return result;
-    }
-    throw new Error("Invalid l_map value");
-  });
-}
-
-class MemoryPageAccessItem {
-  static fromJson: FromJson<MemoryPageAccessItem> = {
-    inaccessible: "boolean",
-    writable: "boolean",
-    readable: "boolean",
-  };
-  inaccessible!: boolean;
-  writable!: boolean;
-  readable!: boolean;
-}
-
-class MemoryPageItem {
-  static fromJson: FromJson<MemoryPageItem> = {
+class MemoryPage {
+  static fromJson: FromJson<MemoryPage> = {
     value: fromJson.uint8Array,
-    access: MemoryPageAccessItem.fromJson,
+    access: {
+      inaccessible: "boolean",
+      writable: "boolean",
+      readable: "boolean",
+    },
   };
+
   value!: Uint8Array;
-  access!: MemoryPageAccessItem;
+  access!: {
+    inaccessible: boolean;
+    writable: boolean;
+    readable: boolean;
+  };
 }
 
-class MemoryPageIndexItem {
-  static fromJson: FromJson<MemoryPageIndexItem> = {
-    32: MemoryPageItem.fromJson,
+class Memory {
+  static fromJson: FromJson<Memory> = {
+    pages: json.record(MemoryPage.fromJson),
   };
-  32!: MemoryPageItem;
+
+  pages!: {
+    [key: string]: MemoryPage;
+  };
 }
 
-class MemoryItem {
-  static fromJson: FromJson<MemoryItem> = {
-    pages: MemoryPageIndexItem.fromJson,
+class ServiceAccount {
+  static fromJson: FromJson<ServiceAccount> = {
+    s_map: json.record(json.array("number")),
+    l_map: json.record({
+      t: fromJson.uint8Array,
+      l: "number",
+    }),
+    p_map: json.record(json.array("number")),
+    code_hash: "string",
+    balance: "number",
+    g: "number",
+    m: "number",
   };
-  pages!: MemoryPageIndexItem;
-}
 
-class DeltaItem {
-  static fromJson: FromJson<DeltaItem> = {
-    "code_hash": "string",
-    "balance": "number",
-    "g": "number",
-    "m": "number",
-    "s_map": fromJson.map_numberArray,
-    "l_map": fromJson.l_map,
-    "p_map": fromJson.map_numberArray,
-  };
-  "code_hash": string;
-  "balance": number;
-  "g": number;
-  "m": number;
-  "s_map": Record<string, number[]>;
-  "l_map": Record<string, { t: number[]; l: number }>;
-  "p_map": Record<string, number[]>;
+  s_map!: Record<string, number[]>;
+  l_map!: Record<string, { t: Uint8Array; l: number }>;
+  p_map!: Record<string, number[]>;
+  code_hash!: string;
+  balance!: number;
+  g!: number;
+  m!: number;
 }
 
 export class HostCallGeneralTest {
   static fromJson: FromJson<HostCallGeneralTest> = {
     name: "string",
     "initial-gas": "number",
-    "initial-regs": fromJson.registersBigUint64Array,
-    "initial-memory": MemoryItem.fromJson,
+    "initial-regs": json.record(fromJson.bigUint64),
+    "initial-memory": Memory.fromJson,
+    "initial-service-account": ServiceAccount.fromJson,
     "initial-service-index": "number",
-    "initial-service-account": DeltaItem.fromJson,
-    "initial-delta": json.array(DeltaItem.fromJson),
+    "initial-delta": json.record(ServiceAccount.fromJson),
     "expected-gas": "number",
-    "expected-regs": fromJson.bigUint64Array,
-    "expected-memory": MemoryItem.fromJson,
-    "expected-delta": json.array(DeltaItem.fromJson),
+    "expected-regs": json.record(fromJson.bigUint64),
+    "expected-memory": Memory.fromJson,
+    "expected-delta": json.record(ServiceAccount.fromJson),
+    "expected-service-account": ServiceAccount.fromJson,
   };
 
   name!: string;
   "initial-gas": number;
-  "initial-regs": BigUint64Array;
-  "initial-memory": MemoryItem;
-  "initial-service-account": DeltaItem;
+  "initial-regs": Record<string, bigint>;
+  "initial-memory": Memory;
+  "initial-service-account": ServiceAccount;
   "initial-service-index": number;
-  "initial-delta": DeltaItem[];
+  "initial-delta": Record<string, ServiceAccount>;
   "expected-gas": number;
-  "expected-regs": BigUint64Array;
-  "expected-memory": MemoryItem;
-  "expected-delta": DeltaItem[];
+  "expected-regs": Record<string, bigint>;
+  "expected-memory": Memory;
+  "expected-delta": Record<string, ServiceAccount>;;
+  "expected-service-account": ServiceAccount;
 }
 
 export async function runHostCallGeneralTest(testContent: HostCallGeneralTest) {
@@ -196,4 +89,5 @@ export async function runHostCallGeneralTest(testContent: HostCallGeneralTest) {
     assert.fail("name should be defined");
   }
   assert.strictEqual(name.substring(0, 4), "host");
+  assert.strictEqual(testContent["expected-regs"]["7"], 18446744073709551613n);
 }
