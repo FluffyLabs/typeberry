@@ -22,16 +22,16 @@ export class HostCallRefineTest {
     "initial-regs": json.record(fromJson.bigUint64),
     "initial-memory": Memory.fromJson,
     "initial-service-index": "number",
-    "initial-delta": json.record(ServiceAccount.fromJson),
+    "initial-delta": json.optional(json.record(ServiceAccount.fromJson)),
     "initial-timeslot": "number",
-    "initial-refine-map": json.record(MapItem.fromJson),
+    "initial-refine-map": json.optional(json.record(MapItem.fromJson)),
     "initial-export-segment": json.optional(json.array(fromJson.uint8Array)),
     "initial-import-segment": json.optional(json.array(fromJson.uint8Array)),
     "initial-export-segment-index": "number",
     "expected-gas": "number",
     "expected-regs": json.record(fromJson.bigUint64),
     "expected-memory": Memory.fromJson,
-    "expected-refine-map": json.record(MapItem.fromJson),
+    "expected-refine-map": json.optional(json.record(MapItem.fromJson)),
     "expected-export-segment": json.optional(json.array(fromJson.uint8Array)),
   };
 
@@ -40,16 +40,16 @@ export class HostCallRefineTest {
   "initial-regs": Record<string, bigint>;
   "initial-memory": Memory;
   "initial-service-index": number;
-  "initial-delta": Record<string, ServiceAccount>;
+  "initial-delta"?: Record<string, ServiceAccount>;
   "initial-timeslot": number;
-  "initial-refine-map": Record<string, MapItem>;
+  "initial-refine-map"?: Record<string, MapItem>;
   "initial-export-segment"?: Uint8Array[];
   "initial-import-segment"?: Uint8Array[];
   "initial-export-segment-index": number;
   "expected-gas": number;
   "expected-regs": Record<string, bigint>;
   "expected-memory": Memory;
-  "expected-refine-map": Record<string, MapItem>;
+  "expected-refine-map"?: Record<string, MapItem>;
   "expected-export-segment"?: Uint8Array[];
 }
 

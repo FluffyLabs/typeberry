@@ -89,5 +89,4 @@ export async function runHostCallGeneralTest(testContent: HostCallGeneralTest) {
     assert.fail("name should be defined");
   }
   assert.strictEqual(name.substring(0, 4), "host");
-  assert.strictEqual(testContent["expected-regs"]["7"], 18446744073709551613n);
 }

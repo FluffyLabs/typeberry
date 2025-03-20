@@ -52,15 +52,15 @@ class XContent {
   static fromJson: FromJson<XContent> = {
     I: "number",
     S: "number",
-    U: PartialState.fromJson,
-    T: json.array(DeferredTransfer.fromJson),
+    U: json.optional(PartialState.fromJson),
+    T: json.optional(json.array(DeferredTransfer.fromJson)),
     Y: json.optional(fromJson.bytes32()),
   };
 
   I!: number;
   S!: number;
-  U!: PartialState;
-  T!: DeferredTransfer[];
+  U?: PartialState;
+  T?: DeferredTransfer[];
   Y?: CodeHash;
 }
 
