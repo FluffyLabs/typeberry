@@ -7,13 +7,8 @@ import { type Codec, Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 
-const HASH_ZERO = "0x0000000000000000000000000000000000000000000000000000000000000000";
-
 export namespace fromJson {
-  export const bytes32 = <T extends Bytes<32>>() =>
-    json.fromString<T>((v) =>
-      v.length === 0 ? Bytes.parseBytes(HASH_ZERO, 32).asOpaque() : Bytes.parseBytes(v, 32).asOpaque(),
-    );
+  export const bytes32 = <T extends Bytes<32>>() => json.fromString<T>((v) => Bytes.parseBytes(v, 32).asOpaque());
   export const bytes32NoPrefix = <T extends Bytes<32>>() =>
     json.fromString<T>((v) => Bytes.parseBytesNoPrefix(v, 32).asOpaque());
 

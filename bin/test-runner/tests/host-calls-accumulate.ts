@@ -1,10 +1,16 @@
 import assert from "node:assert";
 import type { CodeHash } from "@typeberry/block";
+import { Bytes } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { ValidatorData } from "@typeberry/state";
 import { fromJson } from "./codec/common";
 import { commonFromJson } from "./common-types";
 import { Memory, ServiceAccount } from "./host-calls-general";
+
+namespace localFromJson {
+  export const bytes32 = <T extends Bytes<32>>() =>
+    json.fromString<T>((v) => (v.length === 0 ? Bytes.zero(32).asOpaque() : Bytes.parseBytes(v, 32).asOpaque()));
+}
 
 class PrivilegesState {
   static fromJson: FromJson<PrivilegesState> = {
@@ -54,7 +60,7 @@ class XContent {
     S: "number",
     U: json.optional(PartialState.fromJson),
     T: json.optional(json.array(DeferredTransfer.fromJson)),
-    Y: json.optional(fromJson.bytes32()),
+    Y: json.optional(localFromJson.bytes32()),
   };
 
   I!: number;
