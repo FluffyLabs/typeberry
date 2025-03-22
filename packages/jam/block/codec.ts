@@ -4,9 +4,13 @@ import { ChainSpec, fullChainSpec } from "@typeberry/config";
 
 /**
  * Helper function to declare a codec descriptor that depends on the context.
+ *
+ * NOTE: the returned values are cached based on the `ChainSpec` reference.
  */
 export function codecWithContext<T, V>(cb: (ctx: ChainSpec) => Descriptor<T, V>): Descriptor<T, V> {
-  const { name, sizeHint } = cb(fullChainSpec);
+  const defaultContext = fullChainSpec;
+  const { name, sizeHint } = cb(defaultContext);
+  const cache = new Map<ChainSpec, Descriptor<T, V>>();
   return codec.select(
     {
       name,
@@ -14,9 +18,20 @@ export function codecWithContext<T, V>(cb: (ctx: ChainSpec) => Descriptor<T, V>)
     },
     (context: unknown) => {
       if (context instanceof ChainSpec) {
-        return cb(context);
+        const cached = cache.get(context);
+        if (cached !== undefined) {
+          return cached;
+        }
+        const ret = cb(context);
+        cache.set(context, ret);
+        return ret;
       }
-      if (context != null) {
+      // resolving with default context.
+      if (context === null) {
+        return cb(defaultContext);
+      }
+      // invalid context type
+      if (context !== null) {
         throw new Error(`[${name}] Unexpected context type ${typeof context} while encoding/decoding.`);
       }
       throw new Error(`[${name}] Missing context while encoding/decoding!`);
@@ -37,7 +52,7 @@ export const codecKnownSizeArray = <F extends string, T, V>(
 export const codecFixedSizeArray = <N extends number, T, V>(
   val: Descriptor<T, V>,
   len: N,
-): Descriptor<FixedSizeArray<T, N>> => {
+): Descriptor<FixedSizeArray<T, N>, SequenceView<T>> => {
   const checkLength = (actual: number) => {
     if (len !== actual) {
       throw new Error(`[${val.name}] Invalid size of fixed-size array. Got ${actual}, expected: ${len}`);

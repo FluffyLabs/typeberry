@@ -13,10 +13,12 @@ import {
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
+import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec";
 import {
   Credential,
+  GuaranteesExtrinsicBounds,
   type GuaranteesExtrinsicView,
-  type ReportGuarantee,
+  ReportGuarantee,
   guaranteesExtrinsicCodec,
 } from "@typeberry/block/guarantees";
 import { RefineContext } from "@typeberry/block/refine-context";
@@ -24,7 +26,7 @@ import testWorkReport from "@typeberry/block/test-work-report";
 import { type WorkPackageHash, type WorkPackageInfo, WorkReport } from "@typeberry/block/work-report";
 import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Decoder, Encoder, codec } from "@typeberry/codec";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type KeccakHash, type OpaqueHash, WithHash, blake2b, keccak } from "@typeberry/hash";
@@ -107,7 +109,34 @@ export function newWorkReport({
   );
 }
 
-export function guaranteesAsView(spec: ChainSpec, guarantees: ReportGuarantee[]): GuaranteesExtrinsicView {
+export function guaranteesAsView(
+  spec: ChainSpec,
+  guarantees: ReportGuarantee[],
+  { disableCredentialsRangeCheck = false }: { disableCredentialsRangeCheck?: boolean } = {},
+): GuaranteesExtrinsicView {
+  if (disableCredentialsRangeCheck) {
+    const fakeCodec = codecWithContext((context) =>
+      codecKnownSizeArray(
+        codec.Class(ReportGuarantee, {
+          report: WorkReport.Codec,
+          slot: codec.u32.asOpaque(),
+          credentials: codecKnownSizeArray(Credential.Codec, {
+            minLength: 0,
+            maxLength: 5,
+          }),
+        }),
+        {
+          minLength: 0,
+          maxLength: context.coresCount,
+          typicalLength: context.coresCount,
+        },
+        GuaranteesExtrinsicBounds,
+      ),
+    );
+    const encoded = Encoder.encodeObject(fakeCodec, asOpaqueType(guarantees), spec);
+    return Decoder.decodeObject(fakeCodec.View, encoded, spec);
+  }
+
   const encoded = Encoder.encodeObject(guaranteesExtrinsicCodec, asOpaqueType(guarantees), spec);
   return Decoder.decodeObject(guaranteesExtrinsicCodec.View, encoded, spec);
 }

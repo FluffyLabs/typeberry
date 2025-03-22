@@ -51,7 +51,7 @@ export class ReportGuarantee extends WithDebug {
     slot: codec.u32.asOpaque(),
     credentials: codecKnownSizeArray(Credential.Codec, {
       minLength: REQUIRED_CREDENTIALS_RANGE[0],
-      maxLength: REQUIRED_CREDENTIALS_RANGE[1] + 1,
+      maxLength: REQUIRED_CREDENTIALS_RANGE[1],
       typicalLength: REQUIRED_CREDENTIALS_RANGE[1],
     }),
   });
@@ -78,7 +78,7 @@ export class ReportGuarantee extends WithDebug {
   }
 }
 
-const GuaranteesExtrinsicBounds = "0..CoresCount";
+export const GuaranteesExtrinsicBounds = "0..CoresCount";
 /**
  * `E_G`: Series of guarantees, at most one for each core.
  *

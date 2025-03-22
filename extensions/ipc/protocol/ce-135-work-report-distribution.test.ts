@@ -10,6 +10,7 @@ import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
 import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
+import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { MessageHandler, type MessageSender } from "../handler";
@@ -96,13 +97,13 @@ describe("CE 135: Work Report Distribution", () => {
     );
 
     await new Promise((resolve) => {
-      const serverHandler = new ServerHandler((workReport) => {
+      const serverHandler = new ServerHandler(tinyChainSpec, (workReport) => {
         assert.deepStrictEqual(workReport, MOCK_GUARANTEED_WORK_REPORT);
         resolve(undefined);
       });
 
       handlers.server.registerHandlers(serverHandler);
-      handlers.client.registerHandlers(new ClientHandler());
+      handlers.client.registerHandlers(new ClientHandler(tinyChainSpec));
 
       handlers.client.withNewStream(STREAM_KIND, (handler: ClientHandler, sender) => {
         handler.sendWorkReport(sender, MOCK_GUARANTEED_WORK_REPORT);

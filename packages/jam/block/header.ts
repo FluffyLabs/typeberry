@@ -72,7 +72,7 @@ export class Header extends WithDebug {
     timeSlotIndex: codec.u32.asOpaque(),
     epochMarker: codec.optional(EpochMarker.Codec),
     ticketsMarker: codec.optional(
-      codecWithContext((context): Descriptor<NonNullable<Header["ticketsMarker"]>> => {
+      codecWithContext((context) => {
         return codec.sequenceFixLen(Ticket.Codec, context.epochLength).asOpaque();
       }),
     ),
