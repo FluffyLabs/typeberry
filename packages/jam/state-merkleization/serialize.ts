@@ -159,8 +159,8 @@ export namespace serialize {
   });
 
   /** https://graypaper.fluffylabs.dev/#/85129da/384803384803?v=0.6.3 */
-  export const serviceState = (serviceId: ServiceId, key: StateKey) => ({
-    key: keys.serviceState(serviceId, key),
+  export const serviceStorage = (serviceId: ServiceId, key: StateKey) => ({
+    key: keys.serviceStorage(serviceId, key),
     Codec: codec.dump,
   });
 

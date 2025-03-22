@@ -31,7 +31,7 @@ export namespace keys {
   }
 
   /** https://graypaper.fluffylabs.dev/#/85129da/384103384103?v=0.6.3 */
-  export function serviceState(serviceId: ServiceId, key: StateKey): StateKey {
+  export function serviceStorage(serviceId: ServiceId, key: StateKey): StateKey {
     const out = Bytes.zero(HASH_SIZE);
     out.raw.set(u32AsLeBytes(tryAsU32(2 ** 32 - 1)), 0);
     out.raw.set(key.raw.subarray(0, HASH_SIZE - U32_BYTES), U32_BYTES);

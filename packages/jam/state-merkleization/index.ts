@@ -7,16 +7,17 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
+import type { ChainSpec } from "@typeberry/config";
 import type { State } from "@typeberry/state";
 import type { StateKey } from "./keys";
 import { type StateCodec, serialize } from "./serialize";
 
 export type SerializedState = HashDictionary<StateKey, BytesBlob>;
 
-export function serializeState(state: State): SerializedState {
+export function serializeState(state: State, spec: ChainSpec): SerializedState {
   const map = new HashDictionary<StateKey, BytesBlob>();
   function doSerialize<T>(codec: StateCodec<T>) {
-    map.set(codec.key, Encoder.encodeObject(codec.Codec, codec.extract(state)));
+    map.set(codec.key, Encoder.encodeObject(codec.Codec, codec.extract(state), spec));
   }
 
   doSerialize(serialize.authPools); // C(1)
@@ -37,18 +38,28 @@ export function serializeState(state: State): SerializedState {
 
   // services
   for (const service of state.services) {
+    const serviceId = service.id;
     // data
-    const { key, Codec } = serialize.serviceData(service.id);
+    const { key, Codec } = serialize.serviceData(serviceId);
     map.set(key, Encoder.encodeObject(Codec, service.data.info));
 
     // preimages
     for (const preimage of service.data.preimages) {
-      const { key, Codec } = serialize.servicePreimages(service.id, preimage.hash);
+      const { key, Codec } = serialize.servicePreimages(serviceId, preimage.hash);
       map.set(key, Encoder.encodeObject(Codec, preimage.blob));
     }
 
-    // TODO [ToDr] Serialize service state (no state entry yet).
-    // TODO [ToDr] Serialize lookup history (not state entry yet).
+    // storage
+    for (const storage of service.data.storage) {
+      const { key, Codec } = serialize.serviceStorage(serviceId, storage.hash);
+      map.set(key, Encoder.encodeObject(Codec, storage.blob));
+    }
+
+    // lookup history
+    for (const lookupHistory of service.data.lookupHistory) {
+      const { key, Codec } = serialize.serviceLookupHistory(serviceId, lookupHistory.hash, lookupHistory.length);
+      map.set(key, Encoder.encodeObject(Codec, lookupHistory.slots));
+    }
   }
 
   return map;

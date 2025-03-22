@@ -31,7 +31,7 @@ describe("State Serialization / keys", () => {
   });
 
   it("should construct a key for service state", () => {
-    const a = keys.serviceState(tryAsServiceId(0xbbbb_bbbb), EXAMPLE_HASH.asOpaque());
+    const a = keys.serviceStorage(tryAsServiceId(0xbbbb_bbbb), EXAMPLE_HASH.asOpaque());
     assert.strictEqual(`${a}`, "0xbbffbbffbbffbbff00112233445566778899aabbccddeeff0011223344556677");
   });
 

@@ -33,7 +33,7 @@ describe("Serialization keys", () => {
     ],
     [
       "state",
-      serialize.serviceState(tryAsServiceId(0xeeee), Bytes.fill(HASH_SIZE, 15).asOpaque()),
+      serialize.serviceStorage(tryAsServiceId(0xeeee), Bytes.fill(HASH_SIZE, 15).asOpaque()),
       "0xeeffeeff00ff00ff0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
     ],
     [

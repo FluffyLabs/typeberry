@@ -13,12 +13,13 @@ import { Ticket } from "@typeberry/block/tickets";
 import { type CodecRecord, type Descriptor, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { EST_EPOCH_LENGTH } from "@typeberry/config";
+import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
 import { ValidatorData } from "./validator-data";
 
 export enum SafroleSealingKeysKind {
-  Keys = 0,
-  Tickets = 1,
+  Tickets = 0,
+  Keys = 1,
 }
 
 export type SafroleSealingKeys =
@@ -33,17 +34,17 @@ export type SafroleSealingKeys =
 
 const codecBandersnatchKey: Descriptor<BandersnatchKey> = codec.bytes(BANDERSNATCH_KEY_BYTES).asOpaque();
 
-class SafroleSealingKeysData {
+export class SafroleSealingKeysData {
   static Codec = codec.select<SafroleSealingKeys>(
     {
       name: "SafroleSealingKeys",
-      sizeHint: { bytes: EST_EPOCH_LENGTH * BANDERSNATCH_KEY_BYTES, isExact: false },
+      sizeHint: { bytes: 1 + EST_EPOCH_LENGTH * BANDERSNATCH_KEY_BYTES, isExact: false },
     },
     withContext("SafroleSealingKeys", (context) => {
       return codec.custom<SafroleSealingKeys>(
         {
           name: "SafroleSealingKeys",
-          sizeHint: { bytes: 1, isExact: false },
+          sizeHint: { bytes: 1 + HASH_SIZE * EST_EPOCH_LENGTH, isExact: false },
         },
         (e, x) => {
           e.varU32(tryAsU32(x.kind));
@@ -58,20 +59,12 @@ class SafroleSealingKeysData {
           const kind = d.varU32();
           if (kind === SafroleSealingKeysKind.Keys) {
             const keys = d.sequenceFixLen<BandersnatchKey>(codecBandersnatchKey, epochLength);
-            return new SafroleSealingKeysData(
-              SafroleSealingKeysKind.Keys,
-              tryAsPerEpochBlock(keys, context),
-              undefined,
-            ) as SafroleSealingKeys;
+            return SafroleSealingKeysData.keys(tryAsPerEpochBlock(keys, context));
           }
 
           if (kind === SafroleSealingKeysKind.Tickets) {
             const tickets = d.sequenceFixLen(Ticket.Codec, epochLength);
-            return new SafroleSealingKeysData(
-              SafroleSealingKeysKind.Tickets,
-              undefined,
-              tryAsPerEpochBlock(tickets, context),
-            ) as SafroleSealingKeys;
+            return SafroleSealingKeysData.tickets(tryAsPerEpochBlock(tickets, context));
           }
 
           throw new Error(`Unexpected safrole sealing keys kind: ${kind}`);
@@ -92,6 +85,14 @@ class SafroleSealingKeysData {
       );
     }),
   );
+
+  static keys(keys: PerEpochBlock<BandersnatchKey>): SafroleSealingKeys {
+    return new SafroleSealingKeysData(SafroleSealingKeysKind.Keys, keys, undefined) as SafroleSealingKeys;
+  }
+
+  static tickets(tickets: PerEpochBlock<Ticket>): SafroleSealingKeys {
+    return new SafroleSealingKeysData(SafroleSealingKeysKind.Tickets, undefined, tickets) as SafroleSealingKeys;
+  }
 
   private constructor(
     readonly kind: SafroleSealingKeysKind,
