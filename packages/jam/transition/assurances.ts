@@ -85,7 +85,6 @@ export class Assurances {
       }
       prevValidatorIndex = assurance.validatorIndex;
 
-      // TODO [ToDr] This shouldn't be required if we have validation.
       check(bitfield.bitLength === coresCount, `Invalid bitfield length of ${bitfield.bitLength}`);
       const setBits = bitfield.indicesOfSetBits();
       for (const idx of setBits) {
@@ -145,7 +144,6 @@ export class Assurances {
     for (const assurance of assurances) {
       const v = assurance.view();
       const key = validatorData[v.validatorIndex.materialize()];
-      // TODO [ToDr] This shouldn't be required if we have validation.
       if (key === undefined) {
         return Result.error(AssurancesError.InvalidValidatorIndex);
       }
