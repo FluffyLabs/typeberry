@@ -7,6 +7,7 @@ import { asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsGas } from "@typeberry/pvm-interpreter";
 import {
   LookupHistoryItem,
   type PartialState,
@@ -16,7 +17,6 @@ import {
   type State,
 } from "@typeberry/state";
 import { serializeState } from ".";
-import { tryAsGas } from "../../../dist/pvm";
 import { serialize } from "./serialize";
 
 describe("State Serialization", () => {
