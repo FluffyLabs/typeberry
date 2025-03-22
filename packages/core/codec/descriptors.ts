@@ -4,6 +4,7 @@ import { type Opaque, asOpaqueType } from "@typeberry/utils";
 import type { Decode, Decoder } from "./decoder";
 import { type Encode, type Encoder, type SizeHint, addSizeHints } from "./encoder";
 import { type Skip, Skipper } from "./skip";
+import { type LengthRange, validateLength } from "./validation";
 import { ObjectView, SequenceView, type ViewField, type ViewOf } from "./view";
 
 /**
@@ -330,16 +331,40 @@ export namespace codec {
       mapIfNotSame(type, type.View, codec.optional),
     );
 
+  export type SequenceVarLenOptions = LengthRange & {
+    typicalLength?: number;
+  };
+
   /** Variable-length sequence of given type. */
-  export const sequenceVarLen = <T, V = T>(type: Descriptor<T, V>) =>
-    descriptor<T[], SequenceView<T, V>>(
-      `Sequence<${type.name}>[?]`,
-      { bytes: TYPICAL_SEQUENCE_LENGTH * type.sizeHint.bytes, isExact: false },
-      (e, v) => e.sequenceVarLen(type, v),
-      (d) => d.sequenceVarLen(type),
-      (s) => s.sequenceVarLen(type),
-      sequenceView(type),
+  export const sequenceVarLen = <T, V = T>(
+    type: Descriptor<T, V>,
+    options: SequenceVarLenOptions = {
+      minLength: 0,
+      maxLength: 2 ** 32 - 1,
+    },
+  ) => {
+    const name = `Sequence<${type.name}>[?]`;
+    const typicalLength = options.typicalLength ?? TYPICAL_SEQUENCE_LENGTH;
+    return descriptor<T[], SequenceView<T, V>>(
+      name,
+      { bytes: typicalLength * type.sizeHint.bytes, isExact: false },
+      (e, v) => {
+        validateLength(options, v.length, name);
+        e.sequenceVarLen(type, v);
+      },
+      (d) => {
+        const len = d.varU32();
+        validateLength(options, len, name);
+        return d.sequenceFixLen(type, len);
+      },
+      (s) => {
+        const len = s.decoder.varU32();
+        validateLength(options, len, name);
+        return s.sequenceFixLen(type, len);
+      },
+      sequenceViewVarLen(type, options),
     );
+  };
 
   /** Fixed-length sequence of given type. */
   export const sequenceFixLen = <T, V = T>(type: Descriptor<T, V>, len: number) =>
@@ -349,7 +374,7 @@ export namespace codec {
       (e, v) => e.sequenceFixLen(type, v),
       (d) => d.sequenceFixLen(type, len),
       (s) => s.sequenceFixLen(type, len),
-      sequenceView(type, { fixedLength: len }),
+      sequenceViewFixLen(type, { fixedLength: len }),
     );
 
   /** Small dictionary codec. */
@@ -590,22 +615,46 @@ function objectView<T, D extends DescriptorRecord<T>>(
   );
 }
 
-function sequenceView<T, V = T>(
-  type: Descriptor<T, V>,
-  { fixedLength }: { fixedLength?: number } = {},
-): Descriptor<SequenceView<T, V>> {
-  const isFixLength = fixedLength !== undefined;
+function sequenceViewVarLen<T, V = T>(type: Descriptor<T, V>, options: LengthRange): Descriptor<SequenceView<T, V>> {
   const typeBytes = type.sizeHint.bytes;
-  const sizeHint = isFixLength
-    ? { bytes: typeBytes * fixedLength, isExact: type.sizeHint.isExact }
-    : { bytes: typeBytes * TYPICAL_SEQUENCE_LENGTH, isExact: false };
+  const sizeHint = { bytes: typeBytes * TYPICAL_SEQUENCE_LENGTH, isExact: false };
+  const name = `SeqView<${type.name}>[?]`;
 
   const skipper = (s: Skipper) => {
-    return isFixLength ? s.sequenceFixLen(type, fixedLength) : s.sequenceVarLen(type);
+    const length = s.decoder.varU32();
+    validateLength(options, length, name);
+    return s.sequenceFixLen(type, length);
   };
 
   return descriptor(
-    `SeqView<${type.name}>[${isFixLength ? fixedLength : "?"}]`,
+    name,
+    sizeHint,
+    (e, t) => {
+      validateLength(options, t.length, name);
+      const encoded = t.encoded();
+      e.bytes(Bytes.fromBlob(encoded.raw, encoded.length));
+    },
+    (d) => {
+      const view = new SequenceView(d.clone(), type);
+      skipper(new Skipper(d));
+      return view;
+    },
+    skipper,
+  );
+}
+
+function sequenceViewFixLen<T, V = T>(
+  type: Descriptor<T, V>,
+  { fixedLength }: { fixedLength: number },
+): Descriptor<SequenceView<T, V>> {
+  const typeBytes = type.sizeHint.bytes;
+  const sizeHint = { bytes: typeBytes * fixedLength, isExact: type.sizeHint.isExact };
+
+  const skipper = (s: Skipper) => s.sequenceFixLen(type, fixedLength);
+
+  const name = `SeqView<${type.name}>[${fixedLength}]`;
+  return descriptor(
+    name,
     sizeHint,
     (e, t) => {
       const encoded = t.encoded();

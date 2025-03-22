@@ -2,6 +2,7 @@ import { type Opaque, asOpaqueType, check, inspect } from "@typeberry/utils";
 
 /** Regular array that has known, but not verified length. */
 export type KnownSizeArray<T, F extends string> = Opaque<T[], F>;
+export type KnownSizeArrayId<X> = X extends KnownSizeArray<infer _T, infer F> ? F : never;
 
 /** Converts a regular array into a `KnownSizeArray`. */
 export function asKnownSize<T, F extends string>(data: T[]): KnownSizeArray<T, F> {

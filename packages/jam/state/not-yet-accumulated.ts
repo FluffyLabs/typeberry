@@ -1,5 +1,8 @@
+import { codecKnownSizeArray } from "@typeberry/block/codec";
+import { MAX_REPORT_DEPENDENCIES } from "@typeberry/block/gp-constants";
 import { type WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
 import { type CodecRecord, codec } from "@typeberry/codec";
+import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { WithDebug } from "@typeberry/utils";
 
@@ -11,7 +14,11 @@ import { WithDebug } from "@typeberry/utils";
 export class NotYetAccumulatedReport extends WithDebug {
   static Codec = codec.Class(NotYetAccumulatedReport, {
     report: WorkReport.Codec,
-    unlocks: codec.sequenceVarLen(codec.bytes(HASH_SIZE).asOpaque()),
+    unlocks: codecKnownSizeArray(codec.bytes(HASH_SIZE).asOpaque(), {
+      typicalLength: MAX_REPORT_DEPENDENCIES / 2,
+      maxLength: MAX_REPORT_DEPENDENCIES,
+      minLength: 0,
+    }),
   });
 
   static fromCodec({ report, unlocks }: CodecRecord<NotYetAccumulatedReport>) {
@@ -30,7 +37,7 @@ export class NotYetAccumulatedReport extends WithDebug {
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/165800165800
      */
-    readonly unlocks: WorkPackageHash[],
+    readonly unlocks: KnownSizeArray<WorkPackageHash, `0..${MAX_REPORT_DEPENDENCIES}`>,
   ) {
     super();
   }

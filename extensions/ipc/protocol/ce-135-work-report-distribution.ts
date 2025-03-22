@@ -1,8 +1,10 @@
 import type { TimeSlot } from "@typeberry/block";
+import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec";
 import { Credential } from "@typeberry/block/guarantees";
 import { WorkReport } from "@typeberry/block/work-report";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
+import { type CodecRecord, Decoder, type Descriptor, Encoder, codec } from "@typeberry/codec";
+import type { KnownSizeArray } from "@typeberry/collections";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
 import type { StreamHandler, StreamSender } from "../handler";
@@ -22,7 +24,13 @@ export class GuaranteedWorkReport extends WithDebug {
   static Codec = codec.Class(GuaranteedWorkReport, {
     report: WorkReport.Codec,
     slot: codec.u32.asOpaque(),
-    signatures: codec.sequenceVarLen(Credential.Codec),
+    signatures: codecWithContext((context): Descriptor<GuaranteedWorkReport["signatures"]> => {
+      return codecKnownSizeArray(Credential.Codec, {
+        minLength: 0,
+        maxLength: context.validatorsCount,
+        typicalLength: context.validatorsCount / 2,
+      });
+    }),
   });
 
   static fromCodec({ report, slot, signatures }: CodecRecord<GuaranteedWorkReport>) {
@@ -32,7 +40,7 @@ export class GuaranteedWorkReport extends WithDebug {
   constructor(
     public readonly report: WorkReport,
     public readonly slot: TimeSlot,
-    public readonly signatures: Credential[],
+    public readonly signatures: KnownSizeArray<Credential, "0..ValidatorsCount">,
   ) {
     super();
   }

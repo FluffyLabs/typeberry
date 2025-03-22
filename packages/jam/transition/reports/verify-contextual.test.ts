@@ -3,6 +3,7 @@ import { tryAsTimeSlot } from "@typeberry/block";
 import { ReportGuarantee } from "@typeberry/block/guarantees";
 import { WorkPackageInfo } from "@typeberry/block/work-report";
 import { Bytes } from "@typeberry/bytes";
+import { asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
@@ -224,7 +225,7 @@ describe("Reports.verifyContextualValidity", () => {
   it("should reject duplicate work package from accumulation queue", async () => {
     const reports = await newReports({
       services: initialServices(),
-      accumulationQueue: [new NotYetAccumulatedReport(newWorkReport({ core: 1 }), [])],
+      accumulationQueue: [new NotYetAccumulatedReport(newWorkReport({ core: 1 }), asKnownSize([]))],
     });
     reports.state.availabilityAssignment[0] = null;
 

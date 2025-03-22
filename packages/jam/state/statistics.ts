@@ -1,7 +1,6 @@
 import { type PerValidator, tryAsPerValidator } from "@typeberry/block";
-import { withContext } from "@typeberry/block/context";
+import { codecWithContext } from "@typeberry/block/codec";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { EST_VALIDATORS } from "@typeberry/config";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 
 /**
@@ -43,18 +42,12 @@ export class ActivityRecord {
   }
 }
 
-const activityRecordPerValidatorCodec = codec.select<ActivityData["current"]>(
-  {
-    name: "ActivityData.perValidator",
-    sizeHint: { bytes: EST_VALIDATORS * ActivityRecord.Codec.sizeHint.bytes, isExact: false },
-  },
-  withContext("ActivityData.perValidator", (context) => {
-    return codec.sequenceFixLen(ActivityRecord.Codec, context.validatorsCount).convert(
-      (i) => i,
-      (o) => tryAsPerValidator(o, context),
-    );
-  }),
-);
+const activityRecordPerValidatorCodec = codecWithContext((context) => {
+  return codec.sequenceFixLen(ActivityRecord.Codec, context.validatorsCount).convert(
+    (i: PerValidator<ActivityRecord>) => i,
+    (o) => tryAsPerValidator(o, context),
+  );
+});
 
 /** `pi`: Previous and current statistics of each validator. */
 export class ActivityData {

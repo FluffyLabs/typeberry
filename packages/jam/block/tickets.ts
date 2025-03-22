@@ -3,7 +3,8 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U8 } from "@typeberry/numbers";
-import { type Opaque, WithDebug, asOpaqueType } from "@typeberry/utils";
+import { type Opaque, WithDebug } from "@typeberry/utils";
+import { codecKnownSizeArray } from "./codec";
 import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "./crypto";
 
 /**
@@ -62,7 +63,9 @@ export class Ticket extends WithDebug {
 
 /** `K`: Max number of tickets which may be submitted in a single extrinsic. */
 export const MAX_NUMBER_OF_TICKETS = 16;
+export type MAX_NUMBER_OF_TICKETS = typeof MAX_NUMBER_OF_TICKETS;
 
+const TicketsExtrinsicBounds = `Size: 0..${MAX_NUMBER_OF_TICKETS}`;
 /**
  * A sequence of proofs of valid tickets.
  *
@@ -71,9 +74,14 @@ export const MAX_NUMBER_OF_TICKETS = 16;
  * Constrained by `K = 16`:
  * https://graypaper.fluffylabs.dev/#/579bd12/416c00416e00
  */
-export type TicketsExtrinsic = KnownSizeArray<SignedTicket, `Size: 0..{MAX_NUMBER_OF_TICKETS}`>;
+export type TicketsExtrinsic = KnownSizeArray<SignedTicket, typeof TicketsExtrinsicBounds>;
 
-// TODO [ToDr] constrain the sequence length during decoding.
-export const ticketsExtrinsicCodec = codec
-  .sequenceVarLen(SignedTicket.Codec)
-  .convert<TicketsExtrinsic>((i) => i, asOpaqueType);
+export const ticketsExtrinsicCodec = codecKnownSizeArray(
+  SignedTicket.Codec,
+  {
+    minLength: 0,
+    maxLength: MAX_NUMBER_OF_TICKETS,
+    typicalLength: MAX_NUMBER_OF_TICKETS,
+  },
+  TicketsExtrinsicBounds,
+);

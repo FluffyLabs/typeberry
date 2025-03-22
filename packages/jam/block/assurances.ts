@@ -1,11 +1,10 @@
 import type { BitVec } from "@typeberry/bytes";
 import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
-import { EST_CORES } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { WithDebug, asOpaqueType } from "@typeberry/utils";
+import { WithDebug } from "@typeberry/utils";
+import { codecKnownSizeArray, codecWithContext } from "./codec";
 import type { ValidatorIndex } from "./common";
-import { withContext } from "./context";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "./crypto";
 import type { HeaderHash } from "./hash";
 
@@ -19,15 +18,9 @@ import type { HeaderHash } from "./hash";
 export class AvailabilityAssurance extends WithDebug {
   static Codec = codec.Class(AvailabilityAssurance, {
     anchor: codec.bytes(HASH_SIZE).asOpaque(),
-    bitfield: codec.select(
-      {
-        name: "AvailabilityAssurance.bitfield",
-        sizeHint: { bytes: Math.ceil(EST_CORES / 8), isExact: false },
-      },
-      withContext("AvailabilityAssurance.bitfield", (context) => {
-        return codec.bitVecFixLen(context.coresCount);
-      }),
-    ),
+    bitfield: codecWithContext((context) => {
+      return codec.bitVecFixLen(context.coresCount);
+    }),
     validatorIndex: codec.u16.asOpaque(),
     signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque(),
   });
@@ -58,17 +51,25 @@ export class AvailabilityAssurance extends WithDebug {
   }
 }
 
+const AssurancesExtrinsicBounds = "[0 .. ValidatorsCount)";
 /**
  * `E_A`: Sequence with at most one item per validator.
  *
  * Assurances must be ordered by validator index.
  * https://graypaper.fluffylabs.dev/#/579bd12/145800145c00
  */
-export type AssurancesExtrinsic = KnownSizeArray<AvailabilityAssurance, "0 .. ValidatorsCount">;
+export type AssurancesExtrinsic = KnownSizeArray<AvailabilityAssurance, typeof AssurancesExtrinsicBounds>;
 
-// TODO [ToDr] constrain the sequence length during decoding.
-export const assurancesExtrinsicCodec = codec
-  .sequenceVarLen(AvailabilityAssurance.Codec)
-  .convert<AssurancesExtrinsic>((i) => i, asOpaqueType);
+export const assurancesExtrinsicCodec = codecWithContext((context) => {
+  return codecKnownSizeArray(
+    AvailabilityAssurance.Codec,
+    {
+      minLength: 0,
+      maxLength: context.validatorsCount,
+      typicalLength: context.validatorsCount / 2,
+    },
+    AssurancesExtrinsicBounds,
+  );
+});
 
 export type AssurancesExtrinsicView = DescribedBy<typeof assurancesExtrinsicCodec.View>;

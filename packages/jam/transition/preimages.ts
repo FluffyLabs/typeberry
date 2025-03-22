@@ -1,4 +1,5 @@
 import type { ServiceId, TimeSlot } from "@typeberry/block";
+import { codecKnownSizeArray } from "@typeberry/block/codec";
 import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
@@ -34,7 +35,7 @@ export enum PreimagesErrorCode {
 const MAX_LOOKUP_HISTORY_SLOTS = 3;
 export type LookupHistorySlots = KnownSizeArray<TimeSlot, "0-3 timeslots">;
 export function tryAsLookupHistorySlots(items: TimeSlot[]): LookupHistorySlots {
-  const knownSize = asKnownSize(items) as LookupHistorySlots;
+  const knownSize: LookupHistorySlots = asKnownSize(items);
   if (knownSize.length > MAX_LOOKUP_HISTORY_SLOTS) {
     throw new Error("Lookup history items must contain 0-3 timeslots.");
   }
@@ -46,10 +47,11 @@ export class LookupHistoryItem {
   static Codec = codec.Class(LookupHistoryItem, {
     hash: codec.bytes(HASH_SIZE).asOpaque(),
     length: codec.u32,
-    slots: codec.sequenceVarLen(codec.u32).convert(
-      (x) => x,
-      (items) => tryAsLookupHistorySlots(items as TimeSlot[]),
-    ),
+    slots: codecKnownSizeArray(codec.u32.asOpaque(), {
+      minLength: 0,
+      maxLength: MAX_LOOKUP_HISTORY_SLOTS,
+      typicalLength: MAX_LOOKUP_HISTORY_SLOTS,
+    }),
   });
 
   static fromCodec({ hash, length, slots }: CodecRecord<LookupHistoryItem>) {

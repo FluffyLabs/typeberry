@@ -1,9 +1,9 @@
 import { Bytes } from "@typeberry/bytes";
-import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
-import type { KnownSizeArray } from "@typeberry/collections";
-import { EST_EPOCH_LENGTH, EST_VALIDATORS } from "@typeberry/config";
+import { type CodecRecord, type DescribedBy, type Descriptor, codec } from "@typeberry/codec";
+import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, WithHash } from "@typeberry/hash";
 import { WithDebug, asOpaqueType } from "@typeberry/utils";
+import { codecWithContext } from "./codec";
 import {
   type EntropyHash,
   type PerValidator,
@@ -13,7 +13,6 @@ import {
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "./common";
-import { withContext } from "./context";
 import {
   BANDERSNATCH_KEY_BYTES,
   BANDERSNATCH_VRF_SIGNATURE_BYTES,
@@ -36,18 +35,12 @@ export class EpochMarker extends WithDebug {
   static Codec = codec.Class(EpochMarker, {
     entropy: codec.bytes(HASH_SIZE).asOpaque(),
     ticketsEntropy: codec.bytes(HASH_SIZE).asOpaque(),
-    validators: codec.select<EpochMarker["validators"]>(
-      {
-        name: "EpochMark.validators",
-        sizeHint: { bytes: EST_VALIDATORS * BANDERSNATCH_KEY_BYTES, isExact: false },
-      },
-      withContext("EpochMark.validators", (context) => {
-        return codec.sequenceFixLen(codec.bytes(BANDERSNATCH_KEY_BYTES), context.validatorsCount).convert(
-          (i) => i,
-          (o) => asOpaqueType(o.map((x): BandersnatchKey => asOpaqueType(x))),
-        );
-      }),
-    ),
+    validators: codecWithContext((context): Descriptor<EpochMarker["validators"]> => {
+      return codec.sequenceFixLen(codec.bytes(BANDERSNATCH_KEY_BYTES), context.validatorsCount).convert(
+        (i) => i,
+        (o) => asKnownSize(o.map((x): BandersnatchKey => asOpaqueType(x))),
+      );
+    }),
   });
 
   static fromCodec({ entropy, ticketsEntropy, validators }: CodecRecord<EpochMarker>) {
@@ -59,7 +52,6 @@ export class EpochMarker extends WithDebug {
     public readonly entropy: EntropyHash,
     /** `eta_2'`: Randomness for the CURRENT epoch. */
     public readonly ticketsEntropy: EntropyHash,
-    // TODO [ToDr] constrain the sequence length during decoding.
     /** `kappa_b`: Bandernsatch validator keys for the NEXT epoch. */
     public readonly validators: PerValidator<BandersnatchKey>,
   ) {
@@ -80,15 +72,9 @@ export class Header extends WithDebug {
     timeSlotIndex: codec.u32.asOpaque(),
     epochMarker: codec.optional(EpochMarker.Codec),
     ticketsMarker: codec.optional(
-      codec.select<KnownSizeArray<Ticket, "EpochLength">>(
-        {
-          name: "Header.ticketsMark",
-          sizeHint: { bytes: EST_EPOCH_LENGTH * Ticket.Codec.sizeHint.bytes, isExact: false },
-        },
-        withContext("Header.ticketsMark", (context) => {
-          return codec.sequenceFixLen(Ticket.Codec, context.epochLength).asOpaque();
-        }),
-      ),
+      codecWithContext((context): Descriptor<NonNullable<Header["ticketsMarker"]>> => {
+        return codec.sequenceFixLen(Ticket.Codec, context.epochLength).asOpaque();
+      }),
     ),
     offendersMarker: codec.sequenceVarLen(codec.bytes(ED25519_KEY_BYTES).asOpaque()),
     bandersnatchBlockAuthorIndex: codec.u16.asOpaque(),
