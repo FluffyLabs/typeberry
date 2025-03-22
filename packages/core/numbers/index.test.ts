@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { sumU32, sumU64, tryAsU32, tryAsU64, u32AsLeBytes } from "./index";
+import { minU64, sumU32, sumU64, tryAsU32, tryAsU64, u32AsLeBytes } from "./index";
 
 describe("sumU32", () => {
   it("should sum and handle overflow", () => {
@@ -42,9 +42,29 @@ describe("u32AsLittleEndian", () => {
 
   for (const { value, expectedResult } of testCases) {
     it(`should return little endian representation of ${value}`, () => {
-      const result = new Uint8Array(u32AsLeBytes(value));
+      const result = u32AsLeBytes(value);
 
       assert.deepStrictEqual(result, expectedResult);
     });
   }
+});
+
+describe("tryAsU32", () => {
+  it("should cast numbers", () => {
+    const v = 1234;
+    assert.deepStrictEqual(tryAsU32(v), 1234);
+  });
+
+  it("should throw if value exceeds u32", () => {
+    const v = 2 ** 32;
+    assert.throws(() => tryAsU32(v), `input must have four-byte representation, got ${v}`);
+  });
+});
+
+describe("minU64", () => {
+  it("should return minimal value", () => {
+    const a = tryAsU64(3n);
+    const minimal = tryAsU64(1n);
+    assert.deepStrictEqual(minU64(a, tryAsU64(2n ** 64n - 1n), minimal), minimal);
+  });
 });

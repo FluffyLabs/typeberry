@@ -37,7 +37,7 @@ export function verifyPostSignatureChecks(
     const authorizerHash = report.authorizerHash;
     const authorizerPool = authPools[coreIndex];
     // TODO [ToDr] [opti] We should have a dictionary here rather than do slow lookups.
-    if (!authorizerPool.find((hash) => hash.isEqualTo(authorizerHash))) {
+    if (authorizerPool.find((hash) => hash.isEqualTo(authorizerHash)) == null) {
       return Result.error(
         ReportsError.CoreUnauthorized,
         `Authorizer hash not found in the pool of core ${coreIndex}: ${authorizerHash}`,

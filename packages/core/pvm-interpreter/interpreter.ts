@@ -131,13 +131,13 @@ export class Interpreter {
     this.basicBlocks.reset(this.code, this.mask);
     this.instructionResult.reset();
 
-    if (maybeRegisters) {
+    if (maybeRegisters != null) {
       this.registers.copyFrom(maybeRegisters);
     } else {
       this.registers.reset();
     }
 
-    if (maybeMemory) {
+    if (maybeMemory != null) {
       this.memory.copyFrom(maybeMemory);
     } else {
       this.memory.reset();
@@ -170,7 +170,7 @@ export class Interpreter {
      * Reference: https://graypaper.fluffylabs.dev/#/579bd12/251100251200
      */
     const currentInstruction = this.code[this.pc] ?? Instruction.TRAP;
-    const isValidInstruction = !!Instruction[currentInstruction];
+    const isValidInstruction = Instruction[currentInstruction] !== undefined;
     const gasCost = instructionGasMap[currentInstruction] ?? instructionGasMap[Instruction.TRAP];
     const underflow = this.gas.sub(gasCost);
     if (underflow) {

@@ -2,8 +2,14 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { Config } from "@typeberry/config";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
 import { Logger } from "@typeberry/logger";
-import { Listener, type TypedChannel } from "@typeberry/state-machine";
-import { type RespondAndTransitionTo, State, StateMachine, type TransitionTo } from "@typeberry/state-machine";
+import {
+  Listener,
+  type RespondAndTransitionTo,
+  State,
+  StateMachine,
+  type TransitionTo,
+  type TypedChannel,
+} from "@typeberry/state-machine";
 
 export type GeneratorInit = WorkerInit<GeneratorReady>;
 export type GeneratorStates = GeneratorInit | GeneratorReady | Finished;
@@ -63,7 +69,7 @@ export class GeneratorReady extends State<"ready(generator)", Finished, Config> 
   }
 
   getConfig(): Config {
-    if (!this.data) {
+    if (this.data == null) {
       throw new Error("Config not received.");
     }
 

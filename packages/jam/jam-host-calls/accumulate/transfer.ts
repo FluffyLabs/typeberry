@@ -11,7 +11,7 @@ import {
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { type BigGas, type Gas, type GasCounter, tryAsGas, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { asOpaqueType, assertNever } from "@typeberry/utils";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { type AccumulationPartialState, TRANSFER_MEMO_BYTES, TransferError } from "./partial-state";
 
@@ -60,7 +60,7 @@ export class Transfer implements HostCallHandler {
     const pageFault = memory.loadInto(memo.raw, memoStart);
     // page fault while reading the memory.
     if (pageFault !== null) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
 
@@ -69,7 +69,7 @@ export class Transfer implements HostCallHandler {
 
     // We don't have enough gas left
     if (gas.get() < onTransferGas) {
-      regs.setU32(IN_OUT_REG, HostCallResult.HIGH);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.HIGH);
       return;
     }
 
@@ -77,24 +77,24 @@ export class Transfer implements HostCallHandler {
 
     // All good!
     if (transferResult.isOk) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OK);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
       return;
     }
 
     const e = transferResult.error;
 
     if (e === TransferError.DestinationNotFound) {
-      regs.setU32(IN_OUT_REG, HostCallResult.WHO);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.WHO);
       return;
     }
 
     if (e === TransferError.GasTooLow) {
-      regs.setU32(IN_OUT_REG, HostCallResult.LOW);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.LOW);
       return;
     }
 
     if (e === TransferError.BalanceBelowThreshold) {
-      regs.setU32(IN_OUT_REG, HostCallResult.CASH);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.CASH);
       return;
     }
 

@@ -2,7 +2,7 @@ import type { CodeHash, CoreIndex, PerValidator, ServiceId, TimeSlot } from "@ty
 import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
-import type { Blake2bHash } from "@typeberry/hash";
+import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { ValidatorData } from "@typeberry/state";
@@ -200,4 +200,11 @@ export interface AccumulationPartialState {
    *
    */
   updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: Map<ServiceId, Gas>): void;
+
+  /**
+   * Yield accumulation trie result hash.
+   *
+   * https://graypaper.fluffylabs.dev/#/85129da/3f98003f9b00?v=0.6.3
+   */
+  yield(hash: OpaqueHash): void;
 }

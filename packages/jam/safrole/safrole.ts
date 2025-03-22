@@ -169,7 +169,7 @@ export class Safrole {
     const postOffenders = this.state.punishSet;
     const newNextValidators: PerValidator<ValidatorData> = asOpaqueType(
       this.state.designatedValidatorData.map((validator) => {
-        const isOffender = !!postOffenders.has(validator.ed25519);
+        const isOffender = postOffenders.has(validator.ed25519) !== false;
 
         /**
          * Bandersnatch & ed25519 keys of validators that belongs to offenders are replaced with null keys

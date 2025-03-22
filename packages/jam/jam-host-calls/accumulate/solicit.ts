@@ -11,7 +11,7 @@ import {
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { assertNever } from "@typeberry/utils";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { type AccumulationPartialState, RequestPreimageError } from "./partial-state";
 
@@ -38,24 +38,24 @@ export class Solicit implements HostCallHandler {
     const hash = Bytes.zero(HASH_SIZE);
     const pageFault = memory.loadInto(hash.raw, hashStart);
     if (pageFault !== null) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
 
     const result = this.partialState.requestPreimage(hash, length);
     if (result.isOk) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OK);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
       return;
     }
 
     const e = result.error;
     if (e === RequestPreimageError.AlreadyAvailable || e === RequestPreimageError.AlreadyRequested) {
-      regs.setU32(IN_OUT_REG, HostCallResult.HUH);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.HUH);
       return;
     }
 
     if (e === RequestPreimageError.InsufficientFunds) {
-      regs.setU32(IN_OUT_REG, HostCallResult.FULL);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.FULL);
       return;
     }
 

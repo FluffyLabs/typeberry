@@ -6,8 +6,8 @@ import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import type { Memory } from "@typeberry/pvm-interpreter";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import type { Registers } from "@typeberry/pvm-interpreter";
-import { HostCallResult } from "../results";
-import { CURRENT_SERVICE_ID, getServiceId } from "../utils";
+import { LegacyHostCallResult } from "../results";
+import { CURRENT_SERVICE_ID, legacyGetServiceId } from "../utils";
 import type { RefineExternalities } from "./refine-externalities";
 
 const IN_OUT_REG = 7;
@@ -26,7 +26,7 @@ export class HistoricalLookup implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
     // a
-    const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
+    const serviceId = legacyGetServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // h_0
     const keyStartAddress = tryAsMemoryIndex(regs.getU32(8));
     // b_0
@@ -38,15 +38,15 @@ export class HistoricalLookup implements HostCallHandler {
     const hashLoadingFault = memory.loadInto(key.raw, keyStartAddress);
     const destinationWriteable = memory.isWriteable(destinationStart, destinationLen);
     // we return OOB in case the destination is not writeable or the key can't be loaded.
-    if (hashLoadingFault || !destinationWriteable) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+    if (hashLoadingFault != null || !destinationWriteable) {
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
     const keyHash = blake2b.hashBytes(key);
     const value = await this.refine.historicalLookup(serviceId, keyHash);
 
     if (value === null) {
-      regs.setU32(IN_OUT_REG, HostCallResult.NONE);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.NONE);
       return;
     }
 

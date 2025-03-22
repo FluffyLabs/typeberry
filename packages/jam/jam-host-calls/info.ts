@@ -11,8 +11,8 @@ import {
 import { type GasCounter, codecUnsignedGas, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { ServiceAccountInfo } from "@typeberry/state";
-import { HostCallResult } from "./results";
-import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
+import { LegacyHostCallResult } from "./results";
+import { CURRENT_SERVICE_ID, legacyGetServiceId } from "./utils";
 
 /** Account data interface for Info host call. */
 export interface Accounts {
@@ -45,7 +45,7 @@ export class Info implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // t
-    const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
+    const serviceId = legacyGetServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // o
     const outputStart = tryAsMemoryIndex(regs.getU32(8));
 
@@ -53,7 +53,7 @@ export class Info implements HostCallHandler {
     const accountInfo = await this.account.getInfo(serviceId);
 
     if (accountInfo === null) {
-      regs.setU32(IN_OUT_REG, HostCallResult.NONE);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.NONE);
       return;
     }
 
@@ -66,7 +66,7 @@ export class Info implements HostCallHandler {
     });
     const writeOk = memory.storeFrom(outputStart, encodedInfo.raw);
 
-    regs.setU32(IN_OUT_REG, writeOk !== null ? HostCallResult.OOB : HostCallResult.OK);
+    regs.setU32(IN_OUT_REG, writeOk !== null ? LegacyHostCallResult.OOB : LegacyHostCallResult.OK);
     return;
   }
 }

@@ -10,7 +10,7 @@ import {
 } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
 
@@ -40,7 +40,7 @@ export class Upgrade implements HostCallHandler {
     const codeHash = Bytes.zero(HASH_SIZE);
     const pageFault = memory.loadInto(codeHash.raw, codeHashStart);
     if (pageFault !== null) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
 
@@ -49,7 +49,7 @@ export class Upgrade implements HostCallHandler {
 
     this.partialState.upgradeService(codeHash.asOpaque(), gas, allowance);
 
-    regs.setU32(IN_OUT_REG, HostCallResult.OK);
+    regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
     return;
   }
 }

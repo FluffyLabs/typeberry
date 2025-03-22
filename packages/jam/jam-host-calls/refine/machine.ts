@@ -8,7 +8,7 @@ import {
   tryAsMemoryIndex,
   tryAsSmallGas,
 } from "@typeberry/pvm-interpreter";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { RefineExternalities } from "./refine-externalities";
 
@@ -38,7 +38,7 @@ export class Machine implements HostCallHandler {
     const codePageFault = memory.loadInto(code, codeStart);
     // we return OOB in case the program code couldn't be read
     if (codePageFault !== null) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
 

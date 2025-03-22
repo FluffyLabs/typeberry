@@ -76,7 +76,7 @@ export class Encoder {
    * or with a minimal expected size.
    */
   static create(options?: Options) {
-    if (options && "destination" in options) {
+    if (options != null && "destination" in options) {
       return new Encoder(options.destination);
     }
 
@@ -112,7 +112,7 @@ export class Encoder {
     private readonly destination: Uint8Array,
     private readonly buffer?: ArrayBuffer,
   ) {
-    if (buffer) {
+    if (buffer != null) {
       this.dataView = new DataView(buffer);
     } else {
       this.dataView = new DataView(destination.buffer, destination.byteOffset, destination.byteLength);
@@ -460,7 +460,7 @@ export class Encoder {
 
     if (newLength > this.destination.length) {
       // we can try to resize the underlying buffer
-      if (this.buffer) {
+      if (this.buffer != null) {
         // make sure we at least double the size of the buffer every time.
         const minExtend = Math.max(newLength, this.buffer.byteLength << 1);
         // but we must never exceed the max length.

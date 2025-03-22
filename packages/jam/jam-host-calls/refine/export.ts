@@ -8,7 +8,7 @@ import {
   tryAsMemoryIndex,
   tryAsSmallGas,
 } from "@typeberry/pvm-interpreter";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { RefineExternalities } from "./refine-externalities";
 
@@ -36,7 +36,7 @@ export class Export implements HostCallHandler {
 
     const segmentReadPageFault = memory.loadInto(segment.raw.subarray(0, segmentLength), segmentStart);
     if (segmentReadPageFault !== null) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
 
@@ -45,7 +45,7 @@ export class Export implements HostCallHandler {
     if (segmentExported.isOk) {
       regs.setU32(IN_OUT_REG, segmentExported.ok);
     } else {
-      regs.setU32(IN_OUT_REG, HostCallResult.FULL);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.FULL);
     }
     return;
   }

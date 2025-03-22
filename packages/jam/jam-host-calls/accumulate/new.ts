@@ -6,7 +6,7 @@ import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import { type PvmExecution, type Registers, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
 
@@ -38,7 +38,7 @@ export class New implements HostCallHandler {
     const codeHash = Bytes.zero(HASH_SIZE);
     const pageFault = memory.loadInto(codeHash.raw, codeHashStart);
     if (pageFault !== null) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
 
@@ -52,7 +52,7 @@ export class New implements HostCallHandler {
     if (assignedId.isOk) {
       regs.setU32(IN_OUT_REG, assignedId.ok);
     } else {
-      regs.setU32(IN_OUT_REG, HostCallResult.CASH);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.CASH);
     }
     return;
   }

@@ -1,6 +1,6 @@
 import { type HostCallHandler, type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, type Registers, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { type RefineExternalities, tryAsMachineId } from "./refine-externalities";
 
@@ -25,9 +25,9 @@ export class Expunge implements HostCallHandler {
     const expungeResult = await this.refine.machineExpunge(machineIndex);
 
     if (expungeResult.isOk) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OK);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
     } else {
-      regs.setU32(IN_OUT_REG, HostCallResult.WHO);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.WHO);
     }
 
     return Promise.resolve(undefined);

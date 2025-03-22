@@ -150,10 +150,10 @@ function decode<T>(descriptor: Descriptor<T>, value: BytesBlob) {
 }
 
 function findOrAddService(s: PartialState, serviceId: ServiceId) {
-  const services = s.services || [];
+  const services = s.services ?? [];
   s.services = services;
   let service = s.services.find((s) => s.id === serviceId);
-  if (!service) {
+  if (service === undefined) {
     service = new Service(serviceId, {
       info: ServiceAccountInfo.fromCodec({
         codeHash: Bytes.zero(HASH_SIZE).asOpaque(),

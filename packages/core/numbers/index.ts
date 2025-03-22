@@ -19,6 +19,7 @@ export type U16 = FixedSizeNumber<2>;
 export type U32 = FixedSizeNumber<4>;
 /** Unsigned integer that can be represented as 8 bytes. */
 export type U64 = bigint & WithBytesRepresentation<8>;
+export const MAX_U64 = 0xffff_ffff_ffff_ffffn;
 
 /** Attempt to cast an input number into U8. */
 export const tryAsU8 = (v: number): U8 =>
@@ -35,6 +36,7 @@ export const isU16 = (v: number): v is U16 => (v & 0xff_ff) === v;
 /** Attempt to cast an input number into U32. */
 export const tryAsU32 = (v: number): U32 =>
   ensure<number, U32>(v, isU32(v), `input must have four-byte representation, got ${v}`);
+
 /** Check if given number is a valid U32 number. */
 export const isU32 = (v: number): v is U32 => (v & 0xff_ff_ff_ff) >>> 0 === v;
 
@@ -119,3 +121,8 @@ export function leBytesAsU32(uint8Array: Uint8Array): U32 {
   check(uint8Array.length === 4, "Input must be a Uint8Array of length 4");
   return asOpaqueType(uint8Array[0] | (uint8Array[1] << 8) | (uint8Array[2] << 16) | (uint8Array[3] << 24));
 }
+
+/**
+ * Get the smallest value between U64 a and values given as input parameters.
+ */
+export const minU64 = (a: U64, ...values: U64[]): U64 => values.reduce((min, value) => (value > min ? min : value), a);

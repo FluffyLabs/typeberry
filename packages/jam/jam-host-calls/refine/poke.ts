@@ -8,7 +8,7 @@ import {
   tryAsSmallGas,
 } from "@typeberry/pvm-interpreter";
 import { assertNever } from "@typeberry/utils";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { PeekPokeError, type RefineExternalities, tryAsMachineId } from "./refine-externalities";
 
@@ -38,19 +38,19 @@ export class Poke implements HostCallHandler {
 
     const pokeResult = await this.refine.machinePokeInto(machineIndex, sourceStart, destinationStart, length, memory);
     if (pokeResult.isOk) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OK);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
       return;
     }
 
     const e = pokeResult.error;
 
     if (e === PeekPokeError.NoMachine) {
-      regs.setU32(IN_OUT_REG, HostCallResult.WHO);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.WHO);
       return;
     }
 
     if (e === PeekPokeError.PageFault) {
-      regs.setU32(IN_OUT_REG, HostCallResult.OOB);
+      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }
 

@@ -11,7 +11,7 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { type Accounts, Info, codecServiceAccountInfoWithThresholdBalance } from "./info";
-import { HostCallResult } from "./results";
+import { LegacyHostCallResult } from "./results";
 
 class TestAccounts implements Accounts {
   public readonly data = new Map<ServiceId, ServiceAccountInfo>();
@@ -77,7 +77,7 @@ describe("HostCalls: Info", () => {
     await info.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
     assert.deepStrictEqual(readInfo(), {
       ...accounts.data.get(serviceId),
       thresholdBalance: 20_100n,
@@ -94,7 +94,7 @@ describe("HostCalls: Info", () => {
     await info.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.NONE);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.NONE);
   });
 
   it("should write OOB if not enough memory allocated", async () => {
@@ -121,6 +121,6 @@ describe("HostCalls: Info", () => {
     await info.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
   });
 });

@@ -7,7 +7,7 @@ import { type Gas, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { Empower } from "./empower";
 import { TestAccumulate } from "./partial-state.test";
 
@@ -23,7 +23,7 @@ function prepareDictionary(cb?: (d: Map<ServiceId, Gas>) => void) {
   const dictionary = new Map();
   dictionary.set(tryAsServiceId(10_000), 15_000 as Gas);
   dictionary.set(tryAsServiceId(20_000), 15_000 as Gas);
-  if (cb) {
+  if (cb != null) {
     cb(dictionary);
   }
   return {
@@ -76,7 +76,7 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
     assert.deepStrictEqual(accumulate.privilegedServices, [
       [tryAsServiceId(5), tryAsServiceId(10), tryAsServiceId(15), expected],
     ]);
@@ -94,7 +94,7 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 
@@ -112,7 +112,7 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 
@@ -129,7 +129,7 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 });

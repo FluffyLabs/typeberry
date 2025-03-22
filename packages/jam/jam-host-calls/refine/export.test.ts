@@ -8,7 +8,7 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
-import { HostCallResult } from "../results";
+import { LegacyHostCallResult } from "../results";
 import { Export } from "./export";
 import { SegmentExportError } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
@@ -83,7 +83,7 @@ describe("HostCalls: Export", () => {
     await exp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
   });
 
   it("should fail with FULL if export limit is reached", async () => {
@@ -98,6 +98,6 @@ describe("HostCalls: Export", () => {
     await exp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), HostCallResult.FULL);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.FULL);
   });
 });

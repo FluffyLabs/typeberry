@@ -23,10 +23,11 @@ export function formatResults(input: Map<string, Result>, commitHash?: string) {
 
   for (const [name, diffs] of input.entries()) {
     for (const [idx, diff] of diffs.diff.entries()) {
-      const filePath = commitHash ? `../blob/${commitHash}/${BENCHMARKS_DIR}/${name}` : `./${BENCHMARKS_DIR}/${name}`;
+      const filePath =
+        commitHash != null ? `../blob/${commitHash}/${BENCHMARKS_DIR}/${name}` : `./${BENCHMARKS_DIR}/${name}`;
       const curr = diffs.current.results?.[idx];
       const file = `${name}[${idx}]`;
-      if (curr) {
+      if (curr != null) {
         all.push({
           name: diff.name,
           file,
@@ -36,7 +37,7 @@ export function formatResults(input: Map<string, Result>, commitHash?: string) {
         });
       }
 
-      if ("err" in diff && diff.err) {
+      if ("err" in diff && diff.err != null) {
         errors.push({
           name: diff.name,
           file,

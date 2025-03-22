@@ -206,7 +206,7 @@ describe("Safrole", () => {
     }
   });
 
-  it("should return duplocated ticket error", async () => {
+  it("should return duplicated ticket error", async () => {
     mock.method(bandersnatch, "verifyTickets", () =>
       Promise.resolve([
         { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
