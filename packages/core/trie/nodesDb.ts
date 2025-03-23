@@ -19,7 +19,7 @@ export class NodesDb {
 
   constructor(hasher: TrieHasher) {
     this.hasher = hasher;
-    this.nodes = new HashDictionary();
+    this.nodes = HashDictionary.new();
   }
 
   get(hash: TrieHash): TrieNode | null {

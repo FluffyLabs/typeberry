@@ -122,18 +122,19 @@ export async function runPreImagesTest(testContent: PreImagesTest) {
 }
 
 function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Account {
-  const preimages = new HashDictionary<PreimageHash, BytesBlob>();
+  const preimages = HashDictionary.new<PreimageHash, BytesBlob>();
 
   for (const preimage of entry.data.preimages) {
     preimages.set(blake2b.hashBytes(preimage.blob).asOpaque(), preimage.blob);
   }
 
-  const lookupHistory: LookupHistoryItem[] = [];
-
+  const lookupHistory = HashDictionary.new<PreimageHash, LookupHistoryItem[]>();
   for (const item of entry.data.lookup_meta) {
     const slots = tryAsLookupHistorySlots(item.value.map((slot) => tryAsTimeSlot(slot)));
 
-    lookupHistory.push(new LookupHistoryItem(item.key.hash, item.key.length as U32, slots));
+    const arr = lookupHistory.get(item.key.hash) ?? [];
+    arr.push(new LookupHistoryItem(item.key.hash, item.key.length as U32, slots));
+    lookupHistory.set(item.key.hash, arr);
   }
 
   return {

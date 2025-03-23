@@ -13,7 +13,7 @@ export type Account = {
   data: {
     preimages: HashDictionary<PreimageHash, BytesBlob>;
     /** https://graypaper.fluffylabs.dev/#/5f542d7/115400115800 */
-    lookupHistory: LookupHistoryItem[];
+    lookupHistory: HashDictionary<PreimageHash, LookupHistoryItem[]>;
   };
 };
 
@@ -33,11 +33,13 @@ export enum PreimagesErrorCode {
 }
 
 const MAX_LOOKUP_HISTORY_SLOTS = 3;
-export type LookupHistorySlots = KnownSizeArray<TimeSlot, "0-3 timeslots">;
+type MAX_LOOKUP_HISTORY_SLOTS = typeof MAX_LOOKUP_HISTORY_SLOTS;
+
+export type LookupHistorySlots = KnownSizeArray<TimeSlot, `0-${MAX_LOOKUP_HISTORY_SLOTS} timeslots`>;
 export function tryAsLookupHistorySlots(items: TimeSlot[]): LookupHistorySlots {
   const knownSize: LookupHistorySlots = asKnownSize(items);
   if (knownSize.length > MAX_LOOKUP_HISTORY_SLOTS) {
-    throw new Error("Lookup history items must contain 0-3 timeslots.");
+    throw new Error(`Lookup history items must contain 0-${MAX_LOOKUP_HISTORY_SLOTS} timeslots.`);
   }
   return knownSize;
 }
@@ -116,7 +118,8 @@ export class Preimages {
         return Result.error(PreimagesErrorCode.AccountNotFound);
       }
 
-      const lookupHistoryItem = getLookupHistoryItem(account.data.lookupHistory, hash, blob.length);
+      const preimageHistory = account.data.lookupHistory.get(hash);
+      const lookupHistoryItem = getLookupHistoryItem(preimageHistory, hash, blob.length);
 
       // https://graypaper.fluffylabs.dev/#/5f542d7/181800181900
       // https://graypaper.fluffylabs.dev/#/5f542d7/116f0011a500
@@ -144,10 +147,9 @@ export class Preimages {
 }
 
 export function getLookupHistoryItem(
-  lookupHistory: LookupHistoryItem[],
+  lookupHistory: LookupHistoryItem[] | undefined,
   hash: PreimageHash,
   length: number,
 ): LookupHistoryItem | undefined {
-  // TODO [ToDr] [opti] avoid linear lookup. Most likely we should decode state into a dictionary here.
-  return lookupHistory.find((item) => item.hash.isEqualTo(hash) && item.length === length);
+  return lookupHistory?.find((item) => item.hash.isEqualTo(hash) && item.length === length);
 }

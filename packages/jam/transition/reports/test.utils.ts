@@ -5,6 +5,7 @@ import {
   ED25519_SIGNATURE_BYTES,
   type Ed25519Signature,
   type HeaderHash,
+  type ServiceId,
   type TimeSlot,
   tryAsCoreIndex,
   tryAsPerEpochBlock,
@@ -27,7 +28,8 @@ import { type WorkPackageHash, type WorkPackageInfo, WorkReport } from "@typeber
 import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder, codec } from "@typeberry/codec";
-import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
+import { FixedSizeArray, HashDictionary, asKnownSize } from "@typeberry/collections";
+import { HashSet } from "@typeberry/collections/hash-set";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type KeccakHash, type OpaqueHash, WithHash, blake2b, keccak } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
@@ -163,16 +165,16 @@ type ReportStateOptions = {
   withCoreAssignment?: boolean;
   services?: ReportsState["services"];
   accumulationQueue?: NotYetAccumulatedReport[];
-  recentlyAccumulated?: WorkPackageHash[];
-  reportedInRecentBlocks?: WorkPackageInfo[];
+  recentlyAccumulated?: HashSet<WorkPackageHash>;
+  reportedInRecentBlocks?: HashDictionary<WorkPackageHash, WorkPackageInfo>;
 };
 
 function newReportsState({
   withCoreAssignment = false,
-  services = [],
+  services = new Map(),
   accumulationQueue = [],
-  recentlyAccumulated = [],
-  reportedInRecentBlocks = [],
+  recentlyAccumulated = HashSet.new(),
+  reportedInRecentBlocks = HashDictionary.new(),
 }: ReportStateOptions = {}): ReportsState {
   const spec = tinyChainSpec;
   return {
@@ -181,7 +183,7 @@ function newReportsState({
       spec,
     ),
     recentlyAccumulated: tryAsPerEpochBlock(
-      FixedSizeArray.fill((idx) => (idx === 0 ? recentlyAccumulated : []), spec.epochLength),
+      FixedSizeArray.fill((idx) => (idx === 0 ? recentlyAccumulated : HashSet.new()), spec.epochLength),
       spec,
     ),
     availabilityAssignment: tryAsPerCore(withCoreAssignment ? initialAssignment() : [null, null], spec),
@@ -211,7 +213,7 @@ function newReportsState({
           "0xf6967658df626fa39cbfb6014b50196d23bc2cfbfa71a7591ca7715472dd2b48",
           HASH_SIZE,
         ).asOpaque(),
-        reported: [],
+        reported: HashDictionary.new(),
       },
       {
         headerHash: Bytes.parseBytes(
@@ -222,7 +224,7 @@ function newReportsState({
           peaks: [],
         },
         postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
-        reported: [],
+        reported: HashDictionary.new(),
       },
     ]),
     services,
@@ -303,19 +305,28 @@ export const initialValidators = (): ValidatorData[] =>
     },
   ].map(intoValidatorData);
 
-export const initialServices = ({ withDummyCodeHash = false } = {}): Service[] => [
-  new Service(tryAsServiceId(129), {
-    preimages: [],
-    service: ServiceAccountInfo.fromCodec({
-      codeHash: withDummyCodeHash
-        ? Bytes.fill(HASH_SIZE, 1).asOpaque()
-        : Bytes.parseBytes("0x8178abf4f459e8ed591be1f7f629168213a5ac2a487c28c0ef1a806198096c7a", HASH_SIZE).asOpaque(),
-      balance: tryAsU64(0),
-      thresholdBalance: tryAsU64(0),
-      accumulateMinGas: tryAsGas(10_000),
-      onTransferMinGas: tryAsGas(0),
-      storageUtilisationBytes: tryAsU64(1),
-      storageUtilisationCount: tryAsU32(1),
+export const initialServices = ({ withDummyCodeHash = false } = {}): Map<ServiceId, Service> => {
+  const m = new Map();
+  const id = tryAsServiceId(129);
+  m.set(
+    id,
+    new Service(tryAsServiceId(129), {
+      preimages: [],
+      service: ServiceAccountInfo.fromCodec({
+        codeHash: withDummyCodeHash
+          ? Bytes.fill(HASH_SIZE, 1).asOpaque()
+          : Bytes.parseBytes(
+              "0x8178abf4f459e8ed591be1f7f629168213a5ac2a487c28c0ef1a806198096c7a",
+              HASH_SIZE,
+            ).asOpaque(),
+        balance: tryAsU64(0),
+        thresholdBalance: tryAsU64(0),
+        accumulateMinGas: tryAsGas(10_000),
+        onTransferMinGas: tryAsGas(0),
+        storageUtilisationBytes: tryAsU64(1),
+        storageUtilisationCount: tryAsU32(1),
+      }),
     }),
-  }),
-];
+  );
+  return m;
+};

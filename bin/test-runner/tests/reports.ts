@@ -8,7 +8,7 @@ import {
 } from "@typeberry/block";
 import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "@typeberry/block/guarantees";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { FixedSizeArray } from "@typeberry/collections";
+import { FixedSizeArray, HashSet } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
@@ -87,7 +87,7 @@ class TestState {
         spec,
       ),
       recentlyAccumulated: tryAsPerEpochBlock(
-        FixedSizeArray.fill(() => [], spec.epochLength),
+        FixedSizeArray.fill(() => HashSet.new(), spec.epochLength),
         spec,
       ),
       availabilityAssignment: tryAsPerCore(pre.avail_assignments, spec),
@@ -97,7 +97,7 @@ class TestState {
       offenders: asOpaqueType(pre.offenders),
       authPools: tryAsPerCore(pre.auth_pools.map(asOpaqueType), spec),
       recentBlocks: asOpaqueType(pre.recent_blocks),
-      services: pre.accounts,
+      services: new Map(pre.accounts.map((x) => [x.id, x])),
     };
   }
 }

@@ -8,12 +8,19 @@ export class HashSet<V extends OpaqueHash> {
     return new HashSet(dict);
   }
 
+  /** Create new set from given array of values. */
+  static from<V extends OpaqueHash>(values: V[]): HashSet<V> {
+    const empty = HashSet.new<V>();
+    empty.insertAll(values);
+    return empty;
+  }
+
   /** Create an empty set of hashes. */
   static new<V extends OpaqueHash>(): HashSet<V> {
     return new HashSet();
   }
 
-  private constructor(private readonly map = new HashDictionary<V, unknown>()) {}
+  private constructor(private readonly map = HashDictionary.new<V, unknown>()) {}
 
   /** Return number of items in the set. */
   get size(): number {

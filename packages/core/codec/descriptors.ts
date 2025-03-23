@@ -1,5 +1,5 @@
 import { type BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
-import { type U8, type U16, type U32, type U64, tryAsU32 as asU32 } from "@typeberry/numbers";
+import { type U8, type U16, type U32, type U64, tryAsU32 } from "@typeberry/numbers";
 import { type Opaque, asOpaqueType } from "@typeberry/utils";
 import type { Decode, Decoder } from "./decoder";
 import { type Encode, type Encoder, type SizeHint, addSizeHints } from "./encoder";
@@ -16,7 +16,7 @@ const TYPICAL_SEQUENCE_LENGTH = 64;
  * For the size hint for encoding typical dictionaries.
  * TODO [ToDr] [opti] This value should be updated when we run some real-data bechmarks.
  */
-const TYPICAL_DICTIONARY_LENGTH = 32;
+export const TYPICAL_DICTIONARY_LENGTH = 32;
 
 /**
  * A full codec type, i.e. the `Encode` and `Decode`.
@@ -441,7 +441,7 @@ export namespace codec {
 
         // length prefix
         if (fixedLength === undefined || fixedLength === 0) {
-          e.varU32(asU32(data.length));
+          e.varU32(tryAsU32(data.length));
         }
         for (const [k, v] of data) {
           key.encode(e, k);

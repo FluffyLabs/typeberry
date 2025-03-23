@@ -24,7 +24,7 @@ import {
 } from "@typeberry/block/work-report";
 import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
 import { Encoder } from "@typeberry/codec";
-import { FixedSizeArray } from "@typeberry/collections";
+import { FixedSizeArray, HashDictionary } from "@typeberry/collections";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type HASH_SIZE, type OpaqueHash, WithHash, blake2b } from "@typeberry/hash";
 import { type U16, type U32, type U64, tryAsU64 } from "@typeberry/numbers";
@@ -237,7 +237,7 @@ export class TestBlockState {
         headerHash: header_hash,
         mmr,
         postStateRoot: state_root,
-        reported,
+        reported: HashDictionary.fromEntries(reported.map((x) => [x.workPackageHash, x])),
       };
     },
   );

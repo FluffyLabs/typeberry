@@ -4,12 +4,14 @@ import type {
   EntropyHash,
   PerEpochBlock,
   PerValidator,
+  ServiceId,
   TimeSlot,
 } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
 import type { Ticket } from "@typeberry/block/tickets";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
+import type { HashSet } from "@typeberry/collections/hash-set";
 import type { AvailabilityAssignment } from "./assurances";
 import type { BlockState } from "./block-state";
 import type { PerCore } from "./common";
@@ -137,7 +139,7 @@ export type State = {
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/08fb0008ff00
    */
-  readonly services: Service[];
+  readonly services: Map<ServiceId, Service>;
 
   /**
    * `π pi`: Previous and current statistics of each validator.
@@ -163,7 +165,7 @@ export type State = {
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/161a00161d00
    */
-  readonly recentlyAccumulated: PerEpochBlock<WorkPackageHash[] /* actually a set */>;
+  readonly recentlyAccumulated: PerEpochBlock<HashSet<WorkPackageHash>>;
 
   /*
    * `γₐ gamma_a`: The ticket accumulator - a series of highest-scoring ticket identifiers to be used for the next epoch.

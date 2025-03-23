@@ -1,6 +1,7 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
-import type { WorkPackageInfo } from "@typeberry/block/work-report";
+import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
 import { Bytes } from "@typeberry/bytes";
+import type { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, type OpaqueHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
 import { MAX_RECENT_HISTORY, type State } from "@typeberry/state";
@@ -18,7 +19,7 @@ export type RecentHistoryInput = {
    */
   accumulateRoot: OpaqueHash;
   /** Work packages in the guarantees extrinsic. */
-  workPackages: WorkPackageInfo[];
+  workPackages: HashDictionary<WorkPackageHash, WorkPackageInfo>;
 };
 
 /** Recent history tests state. */

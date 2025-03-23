@@ -1,6 +1,9 @@
-import { type Descriptor, type SequenceView, codec } from "@typeberry/codec";
-import { FixedSizeArray, type KnownSizeArray } from "@typeberry/collections";
+import { Descriptor, type SequenceView, TYPICAL_DICTIONARY_LENGTH, codec } from "@typeberry/codec";
+import { FixedSizeArray, HashDictionary, type KnownSizeArray } from "@typeberry/collections";
 import { ChainSpec, fullChainSpec } from "@typeberry/config";
+import type { OpaqueHash } from "@typeberry/hash";
+import { tryAsU32 } from "@typeberry/numbers";
+import type { Comparator } from "@typeberry/ordering";
 
 /**
  * Helper function to declare a codec descriptor that depends on the context.
@@ -67,6 +70,60 @@ export const codecFixedSizeArray = <N extends number, T, V>(
     (o) => {
       checkLength(o.length);
       return FixedSizeArray.new(o, len);
+    },
+  );
+};
+
+/** Codec for a hash-dictionary. */
+export type CodecHashDictionaryOptions<T> = {
+  typicalLength?: number;
+  compare?: Comparator<T>;
+};
+export const codecHashDictionary = <K extends OpaqueHash, T>(
+  value: Descriptor<T>,
+  extractKey: (val: T) => K,
+  {
+    typicalLength = TYPICAL_DICTIONARY_LENGTH,
+    compare = (a, b) => extractKey(a).compare(extractKey(b)),
+  }: CodecHashDictionaryOptions<T> = {},
+): Descriptor<HashDictionary<K, T>> => {
+  return Descriptor.new(
+    `HashDictionary<${value.name}>[?]`,
+    {
+      bytes: typicalLength * value.sizeHint.bytes,
+      isExact: false,
+    },
+    (e, v) => {
+      const data = Array.from(v.values());
+      data.sort((a, b) => compare(a, b).value);
+
+      e.varU32(tryAsU32(data.length));
+
+      for (const v of data) {
+        value.encode(e, v);
+      }
+    },
+    (d) => {
+      const map = HashDictionary.new<K, T>();
+      const len = d.varU32();
+      let prevValue = null as null | T;
+      for (let i = 0; i < len; i += 1) {
+        const v = value.decode(d);
+        const k = extractKey(v);
+        if (map.has(k)) {
+          throw new Error(`Duplicate item in the dictionary encoding: "${k}"!`);
+        }
+        if (prevValue !== null && compare(prevValue, v).isGreaterOrEqual()) {
+          throw new Error(`The keys in dictionary encoding are not sorted "${prevValue}" >= "${v}"!`);
+        }
+        map.set(k, v);
+        prevValue = v;
+      }
+      return map;
+    },
+    (s) => {
+      const len = s.decoder.varU32();
+      s.sequenceFixLen(value, len);
     },
   );
 };
