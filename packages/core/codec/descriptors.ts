@@ -142,7 +142,7 @@ export namespace codec {
     const cache = new Map<number, unknown>();
     return <N extends number>(len: N): Descriptor<Bytes<N>> => {
       let ret = cache.get(len) as Descriptor<Bytes<N>>;
-      if (ret == null) {
+      if (ret === undefined) {
         ret = descriptor<Bytes<N>>(
           `Bytes<${len}>`,
           exactHint(len),
@@ -377,10 +377,10 @@ export namespace codec {
       `Dictionary<${key.name}, ${value.name}>[${fixedLength ?? "?"}]`,
       {
         bytes:
-          fixedLength != null
+          fixedLength !== undefined
             ? fixedLength * addSizeHints(key.sizeHint, value.sizeHint).bytes
             : TYPICAL_DICTIONARY_LENGTH * (addSizeHints(key.sizeHint, value.sizeHint).bytes ?? 0),
-        isExact: fixedLength != null ? key.sizeHint.isExact && value.sizeHint.isExact : false,
+        isExact: fixedLength !== undefined ? key.sizeHint.isExact && value.sizeHint.isExact : false,
       },
       (e, v) => {
         const data = Array.from(v.entries());

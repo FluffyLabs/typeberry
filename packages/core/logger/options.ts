@@ -29,7 +29,7 @@ export function findLevel(options: Options, moduleName: string): Level {
   let parentModuleName = moduleName;
   for (;;) {
     const level = options.modules.get(parentModuleName);
-    if (level != null) {
+    if (level !== undefined) {
       return level;
     }
 

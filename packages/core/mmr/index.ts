@@ -38,7 +38,7 @@ export class MerkleMountainRange<H extends OpaqueHash> {
       hasher,
       mmr.peaks
         .reduce((acc: Mountain<H>[], peak, index) => {
-          if (peak != null) {
+          if (peak !== null) {
             acc.push(Mountain.fromPeak(peak, 2 ** index));
           }
           return acc;
@@ -63,7 +63,7 @@ export class MerkleMountainRange<H extends OpaqueHash> {
 
     for (;;) {
       const last = this.mountains.pop();
-      if (last == null) {
+      if (last === undefined) {
         this.mountains.push(newMountain);
         return;
       }

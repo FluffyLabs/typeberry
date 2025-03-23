@@ -76,7 +76,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, Config> {
   }
 
   getConfig(): Config {
-    if (this.data == null) {
+    if (this.data === null) {
       throw new Error("Did not receive chain spec config!");
     }
 

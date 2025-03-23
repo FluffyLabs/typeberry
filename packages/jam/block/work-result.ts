@@ -29,7 +29,7 @@ export class WorkExecResult extends WithDebug {
     },
     (e, x) => {
       e.varU32(tryAsU32(x.kind));
-      if (x.kind === WorkExecResultKind.ok && x.okBlob != null) {
+      if (x.kind === WorkExecResultKind.ok && x.okBlob !== null) {
         e.bytesBlob(x.okBlob);
       }
     },

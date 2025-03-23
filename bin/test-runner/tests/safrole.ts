@@ -147,8 +147,8 @@ export class OkOutput {
     epoch_mark: json.optional(EpochMark.fromJson),
     tickets_mark: json.optional<Ticket[]>(json.array(safroleFromJson.ticketBody)),
   };
-  epoch_mark?: EpochMark;
-  tickets_mark?: Ticket[];
+  epoch_mark?: EpochMark | null;
+  tickets_mark?: Ticket[] | null;
 }
 
 export class Output {
@@ -161,17 +161,17 @@ export class Output {
   err?: TestErrorCode;
 
   static toSafroleOutput(output: Output): Result<OkResult, SafroleErrorCode> {
-    if (output.err != null) {
+    if (output.err !== undefined) {
       return Result.error(Output.toSafroleErrorCode(output.err));
     }
 
     const epochMark =
-      output.ok?.epoch_mark == null
+      output.ok?.epoch_mark === undefined || output.ok.epoch_mark === null
         ? null
         : {
-            entropy: output.ok.epoch_mark?.entropy,
-            ticketsEntropy: output.ok.epoch_mark?.tickets_entropy,
-            validators: output.ok.epoch_mark?.validators,
+            entropy: output.ok.epoch_mark.entropy,
+            ticketsEntropy: output.ok.epoch_mark.tickets_entropy,
+            validators: output.ok.epoch_mark.validators,
           };
     return Result.ok({
       epochMark,

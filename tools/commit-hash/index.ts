@@ -26,7 +26,7 @@ interface LogEntry {
 const LOG_FILENAME = process.env.LOG_FILENAME as string;
 const AUTH = process.env.COMMIT_KEY_SECRET as string;
 
-if (LOG_FILENAME == null || AUTH == null) {
+if (LOG_FILENAME === undefined || AUTH === undefined) {
   throw new Error("Missing LOG_FILENAME or COMMIT_KEY_SECRET env variables");
 }
 
@@ -67,7 +67,7 @@ async function handleError(log: LogEntry[], transactionPayload: TransactionPaylo
 }
 
 function readRequiredEnv(val: string | undefined, name: string) {
-  if (val == null) {
+  if (val === undefined) {
     throw new Error(`Required variable: ${name} is not populated!`);
   }
   return val;
@@ -128,7 +128,7 @@ async function main() {
 
         unsub();
         await api.disconnect();
-      } else if (dispatchError != null) {
+      } else if (dispatchError !== undefined) {
         await handleError(log, transactionPayload, dispatchError.toString());
 
         unsub();

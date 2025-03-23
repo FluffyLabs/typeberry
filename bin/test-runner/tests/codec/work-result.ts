@@ -18,7 +18,7 @@ const workExecResultFromJson = json.object<JsonWorkExecResult, WorkExecResult>(
   },
   (val) => {
     const { ok, out_of_gas, panic, bad_code, code_oversize } = val;
-    if (ok != null) {
+    if (ok !== undefined) {
       return new WorkExecResult(tryAsU32(WorkExecResultKind.ok), ok);
     }
     if (out_of_gas === null) {

@@ -73,7 +73,7 @@ export class StateMachine<CurrentState extends TStates, TStates extends State<St
     }
 
     const newState = this.allStates.get(newStateName);
-    if (newState == null) {
+    if (newState === undefined) {
       throw new Error(`Unavailable state: ${newStateName}`);
     }
 

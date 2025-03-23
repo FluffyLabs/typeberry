@@ -95,7 +95,7 @@ export function decodeData(input: [number, Uint8Array][], expectedLength: number
   const resultIndices = decodingResult.take_indices(); // it has to be called before take_data
   const resultData = decodingResult.take_data(); // it destroys the result object in rust
 
-  if (resultIndices == null) {
+  if (resultIndices === undefined) {
     throw new Error("indices array in decoded result must exist!");
   }
 

@@ -23,7 +23,7 @@ export function startRpc(db: Database, client: MessageHandler) {
   server.addMethodAdvanced("jam_getBalance", (request) => {
     return new Promise((resolve) => {
       client.withNewStream<typeof ce129.STREAM_KIND, ce129.Handler>(ce129.STREAM_KIND, (handler, sender) => {
-        if (db.bestHeader == null) return;
+        if (db.bestHeader === null) return;
 
         const key: string = request.params.accountId;
         const handleResponse = (response: ce129.StateResponse) => {
@@ -69,7 +69,7 @@ export function startRpc(db: Database, client: MessageHandler) {
     // When all data has been received
     req.on("end", () => {
       server.receiveJSON(body).then((response) => {
-        if (response != null) {
+        if (response !== null) {
           res.writeHead(200, {
             "content-type": "application/json",
             "access-control-allow-origin": "*",

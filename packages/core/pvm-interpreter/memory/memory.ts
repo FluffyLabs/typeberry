@@ -48,7 +48,7 @@ export class Memory {
   storeFrom(address: MemoryIndex, bytes: Uint8Array) {
     const pageNumber = getPageNumber(address);
     const page = this.memory.get(pageNumber);
-    if (page == null) {
+    if (page === undefined) {
       return new PageFault(address);
     }
 
@@ -67,7 +67,7 @@ export class Memory {
     const secondPageNumber = getNextPageNumber(pageNumber);
     const secondPage = this.memory.get(secondPageNumber);
 
-    if (secondPage == null) {
+    if (secondPage === undefined) {
       return new PageFault(pageEnd);
     }
 
@@ -106,7 +106,7 @@ export class Memory {
     let pageOffset = tryAsPageIndex(destinationStart - getStartPageIndexFromPageNumber(startPage));
     for (let i = startPage; i <= lastPage; i++) {
       const page = this.memory.get(i);
-      if (page == null) {
+      if (page === undefined) {
         return false;
       }
 
@@ -141,7 +141,7 @@ export class Memory {
     while (currentPageNumber !== pageAfterLast) {
       const page = this.memory.get(currentPageNumber);
 
-      if (page == null) {
+      if (page === undefined) {
         const faultAddress =
           currentPageNumber === firstPageNumber ? startAddress : getStartPageIndexFromPageNumber(currentPageNumber);
         const fault = new PageFault(faultAddress);
