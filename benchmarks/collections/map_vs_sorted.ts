@@ -20,7 +20,7 @@ module.exports = () =>
         for (let k = 0; k < READS; k += 1) {
           for (const field of converted) {
             const v = map.get(field.key);
-            if (v != null) {
+            if (v !== undefined) {
               dataCmp(v, field).isEqual();
             }
           }

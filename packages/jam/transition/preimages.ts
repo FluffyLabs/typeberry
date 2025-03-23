@@ -110,7 +110,7 @@ export class Preimages {
       const hash = blake2b.hashBytes(blob).asOpaque();
       const account = this.state.accounts.get(requester);
 
-      if (account == null) {
+      if (account === undefined) {
         return Result.error(PreimagesErrorCode.AccountNotFound);
       }
 
@@ -118,7 +118,7 @@ export class Preimages {
 
       // https://graypaper.fluffylabs.dev/#/5f542d7/181800181900
       // https://graypaper.fluffylabs.dev/#/5f542d7/116f0011a500
-      if (account.data.preimages.has(hash) || lookupHistoryItem == null || !lookupHistoryItem.isRequested()) {
+      if (account.data.preimages.has(hash) || lookupHistoryItem === undefined || !lookupHistoryItem?.isRequested()) {
         return Result.error(PreimagesErrorCode.PreimageUnneeded);
       }
 

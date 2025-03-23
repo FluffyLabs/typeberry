@@ -69,7 +69,7 @@ export class GeneratorReady extends State<"ready(generator)", Finished, Config> 
   }
 
   getConfig(): Config {
-    if (this.data == null) {
+    if (this.data === null) {
       throw new Error("Config not received.");
     }
 

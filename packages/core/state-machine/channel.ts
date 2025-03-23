@@ -158,7 +158,7 @@ export class MessageChannelStateMachine<
   private async dispatchRequest(name: string, data: unknown, msg: Message) {
     const prevState = this.currentState();
     const handler = prevState.requestHandlers.get(name);
-    if (handler == null) {
+    if (handler === undefined) {
       throw new Error(`Missing request handler for "${name}"`);
     }
 
@@ -169,7 +169,7 @@ export class MessageChannelStateMachine<
     const didStateChangeInMeantime = this.currentState() !== prevState;
 
     // Check if we want to perform a state transition.
-    if (res.transitionTo != null) {
+    if (res.transitionTo !== undefined) {
       this.machine.transition(res.transitionTo.state, res.transitionTo.data);
     }
 
@@ -184,12 +184,12 @@ export class MessageChannelStateMachine<
   private dispatchSignal(name: string, data: unknown) {
     const handler = this.currentState().signalListeners.get(name);
 
-    if (handler == null) {
+    if (handler === undefined) {
       throw new Error(`Unexpected signal "${name}"`);
     }
 
     const newState = handler(data);
-    if (newState != null) {
+    if (newState !== undefined) {
       this.machine.transition(newState.state, newState.data);
     }
   }
@@ -200,7 +200,7 @@ export class MessageChannelStateMachine<
   }
 
   /**
-   * Creates a communcation channel and sends it over to the worker thread, which is
+   * Creates a communication channel and sends it over to the worker thread, which is
    * expected to await on that channel using [`receiveChannel`] method.
    *
    * The promise resolves when the worker has confirmed reception of the channel
@@ -235,7 +235,7 @@ export class MessageChannelStateMachine<
     machine: StateMachine<CurrentState, TStates>,
     parentPort: MessagePort | null,
   ) {
-    if (parentPort == null) {
+    if (parentPort === null) {
       throw new Error("This code is expected to be run in a worker.");
     }
 

@@ -47,7 +47,7 @@ export class Disputes {
       const { key, workReportHash } = disputes.culprits[i];
       // check if some offenders weren't reported earlier
       // https://graypaper.fluffylabs.dev/#/579bd12/125501125501
-      const isInPunishSet = this.state.disputesRecords.punishSet.findExact(key) != null;
+      const isInPunishSet = this.state.disputesRecords.punishSet.findExact(key) !== undefined;
       if (isInPunishSet) {
         return Result.error(DisputesErrorCode.OffenderAlreadyReported);
       }
@@ -55,7 +55,7 @@ export class Disputes {
       // verify if the culprit will be in new bad set
       // https://graypaper.fluffylabs.dev/#/579bd12/124601124601
       const isInNewBadSet = newItems.toAddToBadSet.findExact(workReportHash);
-      if (isInNewBadSet == null) {
+      if (isInNewBadSet === undefined) {
         return Result.error(DisputesErrorCode.CulpritsVerdictNotBad);
       }
 
@@ -86,7 +86,7 @@ export class Disputes {
       const { key, workReportHash, wasConsideredValid } = disputes.faults[i];
       // check if some offenders weren't reported earlier
       // https://graypaper.fluffylabs.dev/#/579bd12/12a20112a201
-      const isInPunishSet = this.state.disputesRecords.punishSet.findExact(key) != null;
+      const isInPunishSet = this.state.disputesRecords.punishSet.findExact(key) !== undefined;
 
       if (isInPunishSet) {
         return Result.error(DisputesErrorCode.OffenderAlreadyReported);
@@ -101,7 +101,7 @@ export class Disputes {
         const isInNewGoodSet = newItems.toAddToGoodSet.findExact(workReportHash);
         const isInNewBadSet = newItems.toAddToBadSet.findExact(workReportHash);
 
-        if (isInNewGoodSet != null || isInNewBadSet == null) {
+        if (isInNewGoodSet !== undefined || isInNewBadSet === undefined) {
           return Result.error(DisputesErrorCode.FaultVerdictWrong);
         }
       }
@@ -146,7 +146,7 @@ export class Disputes {
         const key = k[index]?.ed25519;
 
         // no particular GP fragment but I think we don't believe in ghosts
-        if (key == null) {
+        if (key === undefined) {
           return Result.error(DisputesErrorCode.BadValidatorIndex);
         }
 
@@ -171,7 +171,7 @@ export class Disputes {
       const isInBadSet = this.state.disputesRecords.badSet.findExact(verdict.workReportHash);
       const isInWonkySet = this.state.disputesRecords.wonkySet.findExact(verdict.workReportHash);
 
-      if (isInGoodSet != null || isInBadSet != null || isInWonkySet != null) {
+      if (isInGoodSet !== undefined || isInBadSet !== undefined || isInWonkySet !== undefined) {
         return Result.error(DisputesErrorCode.AlreadyJudged);
       }
     }
@@ -213,7 +213,7 @@ export class Disputes {
         // there has to be at least 1 fault with the same work report hash
         // https://graypaper.fluffylabs.dev/#/579bd12/12f10212fc02
         const f = disputes.faults.find((x) => x.workReportHash.isEqualTo(r));
-        if (f == null) {
+        if (f === undefined) {
           return Result.error(DisputesErrorCode.NotEnoughFaults);
         }
       } else if (sum === 0) {
@@ -266,7 +266,7 @@ export class Disputes {
      */
     for (let c = 0; c < this.state.availabilityAssignment.length; c++) {
       const assignment = this.state.availabilityAssignment[c];
-      if (assignment != null) {
+      if (assignment !== null) {
         const sum = v.get(assignment.workReport.hash);
         if (sum !== undefined && sum < this.context.validatorsSuperMajority) {
           this.state.availabilityAssignment[c] = null;
@@ -322,7 +322,7 @@ export class Disputes {
         const validator = k[j.index];
 
         // no particular GP fragment but I think we don't believe in ghosts
-        if (validator == null) {
+        if (validator === undefined) {
           return Result.error(DisputesErrorCode.BadValidatorIndex);
         }
 

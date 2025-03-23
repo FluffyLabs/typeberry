@@ -131,13 +131,13 @@ export class Interpreter {
     this.basicBlocks.reset(this.code, this.mask);
     this.instructionResult.reset();
 
-    if (maybeRegisters != null) {
+    if (maybeRegisters !== undefined) {
       this.registers.copyFrom(maybeRegisters);
     } else {
       this.registers.reset();
     }
 
-    if (maybeMemory != null) {
+    if (maybeMemory !== undefined) {
       this.memory.copyFrom(maybeMemory);
     } else {
       this.memory.reset();

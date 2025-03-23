@@ -19,7 +19,7 @@ export class LmdbPreimages implements PreimageDb {
 
   get<T extends OpaqueHash>(hash: T): WithHash<T, BytesBlob> | null {
     const preimage = this.root.get(hash.raw);
-    return preimage != null ? new WithHash(hash, BytesBlob.blobFrom(preimage)) : null;
+    return preimage !== undefined ? new WithHash(hash, BytesBlob.blobFrom(preimage)) : null;
   }
 
   set<T extends OpaqueHash>(...data: WithHash<T, BytesBlob>[]): Promise<void> {

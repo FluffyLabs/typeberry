@@ -109,7 +109,7 @@ export class MultiMap<TKeys extends readonly unknown[], TValue> {
     let current = this.data as Map<unknown, unknown> | undefined;
 
     for (let i = 0; i < lastKeyIndex; i += 1) {
-      if (current == null) {
+      if (current === undefined) {
         return {
           map: undefined,
           key: lastKey,

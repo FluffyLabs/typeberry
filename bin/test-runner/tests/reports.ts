@@ -153,11 +153,11 @@ class TestReportsResult {
   };
 
   static toReportsResult(test: TestReportsResult): ReportsResult {
-    if (test.ok != null) {
+    if (test.ok !== undefined) {
       return Result.ok(test.ok);
     }
 
-    if (test.err != null) {
+    if (test.err !== undefined) {
       const map = {
         [ReportsErrorCode.BadCoreIndex]: ReportsError.BadCoreIndex,
         [ReportsErrorCode.FutureReportSlot]: ReportsError.FutureReportSlot,

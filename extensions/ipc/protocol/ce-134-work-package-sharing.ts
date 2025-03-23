@@ -85,7 +85,7 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
     const streamId = sender.streamId;
     const request = this.requestsMap.get(streamId);
 
-    if (request == null) {
+    if (request === undefined) {
       const receivedRequest = Decoder.decodeObject(WorkPackageSharingRequest.Codec, message);
       this.requestsMap.set(streamId, receivedRequest);
       return;
@@ -110,7 +110,7 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 
 export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
-  private pendingRequests = new Map<
+  private readonly pendingRequests = new Map<
     StreamId,
     {
       resolve: (response: { workReportHash: WorkReportHash; signature: Ed25519Signature }) => void;
@@ -120,7 +120,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
 
   onStreamMessage(sender: StreamSender, message: BytesBlob): void {
     const pendingRequest = this.pendingRequests.get(sender.streamId);
-    if (pendingRequest == null) {
+    if (pendingRequest === undefined) {
       throw new Error("Unexpected message received.");
     }
 
@@ -132,7 +132,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
 
   onClose(streamId: StreamId): void {
     const pendingRequest = this.pendingRequests.get(streamId);
-    if (pendingRequest != null) {
+    if (pendingRequest !== undefined) {
       pendingRequest.reject(new Error("Stream closed."));
       this.pendingRequests.delete(streamId);
     }

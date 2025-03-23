@@ -41,12 +41,12 @@ export class RecentHistory {
     const { recentBlocks } = this.state;
     const lastState = recentBlocks.length > 0 ? recentBlocks[recentBlocks.length - 1] : null;
     // update the posterior root of previous state.
-    if (lastState != null) {
+    if (lastState !== null) {
       lastState.postStateRoot = input.priorStateRoot;
     }
 
     const mmr =
-      lastState != null
+      lastState !== null
         ? MerkleMountainRange.fromPeaks(this.hasher, lastState.mmr)
         : MerkleMountainRange.empty(this.hasher);
 

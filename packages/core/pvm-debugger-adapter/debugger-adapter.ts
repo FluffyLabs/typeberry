@@ -28,7 +28,7 @@ export class DebuggerAdapter {
   getPageDump(pageNumber: number): null | Uint8Array {
     const page = this.pvm.getMemoryPage(pageNumber);
 
-    if (page == null) {
+    if (page === null) {
       // page wasn't allocated so we return an empty page
       return new Uint8Array(PAGE_SIZE);
     }

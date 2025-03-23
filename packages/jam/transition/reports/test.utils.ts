@@ -77,18 +77,18 @@ export function newWorkReport({
   const source = BytesBlob.parseBlob(testWorkReport);
   const report = Decoder.decodeObject(WorkReport.Codec, source, tinyChainSpec);
   const context = RefineContext.fromCodec({
-    anchor: anchorBlock != null ? anchorBlock.asOpaque() : report.context.anchor,
-    stateRoot: stateRoot != null ? stateRoot.asOpaque() : report.context.stateRoot,
-    beefyRoot: beefyRoot != null ? beefyRoot.asOpaque() : report.context.beefyRoot,
-    lookupAnchor: lookupAnchor != null ? lookupAnchor.asOpaque() : report.context.lookupAnchor,
+    anchor: anchorBlock !== undefined ? anchorBlock.asOpaque() : report.context.anchor,
+    stateRoot: stateRoot !== undefined ? stateRoot.asOpaque() : report.context.stateRoot,
+    beefyRoot: beefyRoot !== undefined ? beefyRoot.asOpaque() : report.context.beefyRoot,
+    lookupAnchor: lookupAnchor !== undefined ? lookupAnchor.asOpaque() : report.context.lookupAnchor,
     lookupAnchorSlot: lookupAnchorSlot ?? report.context.lookupAnchorSlot,
-    prerequisites: prerequisites != null ? prerequisites.map((x) => x.asOpaque()) : report.context.prerequisites,
+    prerequisites: prerequisites !== undefined ? prerequisites.map((x) => x.asOpaque()) : report.context.prerequisites,
   });
-  const workReport = new WorkReport(
+  return new WorkReport(
     report.workPackageSpec,
     context,
     tryAsCoreIndex(core),
-    authorizer != null ? authorizer.asOpaque() : report.authorizerHash,
+    authorizer !== undefined ? authorizer.asOpaque() : report.authorizerHash,
     report.authorizationOutput,
     report.segmentRootLookup,
     FixedSizeArray.new(
@@ -99,13 +99,12 @@ export function newWorkReport({
             x.codeHash,
             x.payloadHash,
             x.gas,
-            resultSize != null ? new WorkExecResult(WorkExecResultKind.ok, Bytes.fill(resultSize, 0)) : x.result,
+            resultSize !== undefined ? new WorkExecResult(WorkExecResultKind.ok, Bytes.fill(resultSize, 0)) : x.result,
           ),
       ),
       report.results.fixedLength,
     ),
   );
-  return workReport;
 }
 
 export function guaranteesAsView(spec: ChainSpec, guarantees: ReportGuarantee[]): GuaranteesExtrinsicView {
