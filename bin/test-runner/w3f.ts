@@ -7,28 +7,23 @@ import test from "node:test";
 import { tinyChainSpec } from "@typeberry/config";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
-import { AccumulateTest, runAccumulateTest } from "./tests/accumulate";
-import {
-  AssurancesTestFull,
-  AssurancesTestTiny,
-  runAssurancesTestFull,
-  runAssurancesTestTiny,
-} from "./tests/assurances";
-import { AuthorizationsTest, runAuthorizationsTest } from "./tests/authorizations";
-import { getAssurancesExtrinsicFromJson, runAssurancesExtrinsicTest } from "./tests/codec/assurances-extrinsic";
-import { blockFromJson, runBlockTest } from "./tests/codec/block";
-import { disputesExtrinsicFromJson, runDisputesExtrinsicTest } from "./tests/codec/disputes-extrinsic";
-import { getExtrinsicFromJson, runExtrinsicTest } from "./tests/codec/extrinsic";
-import { guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest } from "./tests/codec/guarantees-extrinsic";
-import { headerFromJson, runHeaderTest } from "./tests/codec/header";
-import { preimagesExtrinsicFromJson, runPreimagesExtrinsicTest } from "./tests/codec/preimages-extrinsic";
-import { refineContextFromJson, runRefineContextTest } from "./tests/codec/refine-context";
-import { runTicketsExtrinsicTest, ticketsExtrinsicFromJson } from "./tests/codec/tickets-extrinsic";
-import { runWorkItemTest, workItemFromJson } from "./tests/codec/work-item";
-import { runWorkPackageTest, workPackageFromJson } from "./tests/codec/work-package";
-import { runWorkReportTest, workReportFromJson } from "./tests/codec/work-report";
-import { runWorkResultTest, workResultFromJson } from "./tests/codec/work-result";
-import { DisputesTest, runDisputesTest } from "./tests/disputes";
+import { AccumulateTest, runAccumulateTest } from "./w3f/accumulate";
+import { AssurancesTestFull, AssurancesTestTiny, runAssurancesTestFull, runAssurancesTestTiny } from "./w3f/assurances";
+import { AuthorizationsTest, runAuthorizationsTest } from "./w3f/authorizations";
+import { getAssurancesExtrinsicFromJson, runAssurancesExtrinsicTest } from "./w3f/codec/assurances-extrinsic";
+import { blockFromJson, runBlockTest } from "./w3f/codec/block";
+import { disputesExtrinsicFromJson, runDisputesExtrinsicTest } from "./w3f/codec/disputes-extrinsic";
+import { getExtrinsicFromJson, runExtrinsicTest } from "./w3f/codec/extrinsic";
+import { guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest } from "./w3f/codec/guarantees-extrinsic";
+import { headerFromJson, runHeaderTest } from "./w3f/codec/header";
+import { preimagesExtrinsicFromJson, runPreimagesExtrinsicTest } from "./w3f/codec/preimages-extrinsic";
+import { refineContextFromJson, runRefineContextTest } from "./w3f/codec/refine-context";
+import { runTicketsExtrinsicTest, ticketsExtrinsicFromJson } from "./w3f/codec/tickets-extrinsic";
+import { runWorkItemTest, workItemFromJson } from "./w3f/codec/work-item";
+import { runWorkPackageTest, workPackageFromJson } from "./w3f/codec/work-package";
+import { runWorkReportTest, workReportFromJson } from "./w3f/codec/work-report";
+import { runWorkResultTest, workResultFromJson } from "./w3f/codec/work-result";
+import { DisputesTest, runDisputesTest } from "./w3f/disputes";
 import {
   EcTest,
   PageProof,
@@ -38,24 +33,19 @@ import {
   runPageProofTest,
   runSegmentEcTest,
   runSegmentRootTest,
-} from "./tests/erasure-coding";
-import { HostCallAccumulateTest, runHostCallAccumulateTest } from "./tests/host-calls-accumulate";
-import { HostCallGeneralTest, runHostCallGeneralTest } from "./tests/host-calls-general";
-import { HostCallRefineTest, runHostCallRefineTest } from "./tests/host-calls-refine";
-import { PreImagesTest, runPreImagesTest } from "./tests/preimages";
-import { PvmTest, runPvmTest } from "./tests/pvm";
-import { HistoryTest, runHistoryTest } from "./tests/recent-history";
-import { ReportsTest, runReportsTestFull, runReportsTestTiny } from "./tests/reports";
-import { SafroleTest, runSafroleTest } from "./tests/safrole";
-import { JsonSchema, ignoreSchemaFiles } from "./tests/schema";
-import { runShufflingTests, shufflingTests } from "./tests/shuffling";
-import {
-  StatisticsTestFull,
-  StatisticsTestTiny,
-  runStatisticsTestFull,
-  runStatisticsTestTiny,
-} from "./tests/statistics";
-import { runTrieTest, trieTestSuiteFromJson } from "./tests/trie";
+} from "./w3f/erasure-coding";
+import { HostCallAccumulateTest, runHostCallAccumulateTest } from "./w3f/host-calls-accumulate";
+import { HostCallGeneralTest, runHostCallGeneralTest } from "./w3f/host-calls-general";
+import { HostCallRefineTest, runHostCallRefineTest } from "./w3f/host-calls-refine";
+import { PreImagesTest, runPreImagesTest } from "./w3f/preimages";
+import { PvmTest, runPvmTest } from "./w3f/pvm";
+import { HistoryTest, runHistoryTest } from "./w3f/recent-history";
+import { ReportsTest, runReportsTestFull, runReportsTestTiny } from "./w3f/reports";
+import { SafroleTest, runSafroleTest } from "./w3f/safrole";
+import { JsonSchema, ignoreSchemaFiles } from "./w3f/schema";
+import { runShufflingTests, shufflingTests } from "./w3f/shuffling";
+import { StatisticsTestFull, StatisticsTestTiny, runStatisticsTestFull, runStatisticsTestTiny } from "./w3f/statistics";
+import { runTrieTest, trieTestSuiteFromJson } from "./w3f/trie";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 const logger = Logger.new(__filename, "test-runner");

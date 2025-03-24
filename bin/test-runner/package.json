@@ -26,8 +26,8 @@
     "json-bigint-patch": "^0.0.8"
   },
   "scripts": {
-    "report": "ts-node ./index.ts",
-    "start": "ts-node ./cases.ts",
+    "start": "ts-node ./index.ts",
+    "w3f": "ts-node ./cases.ts",
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",
