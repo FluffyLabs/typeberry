@@ -31,4 +31,37 @@ describe("JAM types codec / HashDictionary", () => {
     assert.deepStrictEqual(encoded.toString(), reencoded.toString());
     assert.deepStrictEqual(list, Array.from(decoded.values()));
   });
+
+  it("should throw an error if order is incorrect", () => {
+    const list = [
+      new ImportSpec(hash(2), tryAsSegmentIndex(30)),
+      new ImportSpec(hash(3), tryAsSegmentIndex(65_300)),
+      new ImportSpec(hash(1), tryAsSegmentIndex(15)),
+    ];
+
+    const encoded = Encoder.encodeObject(arrayCodec, list);
+
+    assert.throws(() => {
+      Decoder.decodeObject(dictionaryCodec, encoded);
+    }, new Error(
+      'The keys in dictionary encoding are not sorted "ImportSpec {treeRoot: 0x0303030303030303030303030303030303030303030303030303030303030303,index: 65300 (0xff14),}" >= "ImportSpec {treeRoot: 0x0101010101010101010101010101010101010101010101010101010101010101,index: 15 (0xf),}"!',
+    ));
+  });
+
+  it("should throw an error if there are duplicates", () => {
+    const list = [
+      new ImportSpec(hash(1), tryAsSegmentIndex(15)),
+      new ImportSpec(hash(2), tryAsSegmentIndex(30)),
+      new ImportSpec(hash(3), tryAsSegmentIndex(65_300)),
+      new ImportSpec(hash(3), tryAsSegmentIndex(65_300)),
+    ];
+
+    const encoded = Encoder.encodeObject(arrayCodec, list);
+
+    assert.throws(() => {
+      Decoder.decodeObject(dictionaryCodec, encoded);
+    }, new Error(
+      'Duplicate item in the dictionary encoding: "0x0303030303030303030303030303030303030303030303030303030303030303"!',
+    ));
+  });
 });
