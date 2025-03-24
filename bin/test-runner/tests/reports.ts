@@ -6,8 +6,7 @@ import {
   tryAsPerEpochBlock,
   tryAsPerValidator,
 } from "@typeberry/block";
-import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "@typeberry/block/guarantees";
-import { Decoder, Encoder } from "@typeberry/codec";
+import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import { FixedSizeArray, HashSet } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
@@ -28,6 +27,7 @@ import {
   type ReportsOutput,
   type ReportsState,
 } from "@typeberry/transition/reports";
+import { guaranteesAsView } from "@typeberry/transition/reports/test.utils";
 import { Result, asOpaqueType, deepEqual } from "@typeberry/utils";
 import { fromJson as codecFromJson } from "./codec/common";
 import { guaranteesExtrinsicFromJson } from "./codec/guarantees-extrinsic";
@@ -49,8 +49,7 @@ class Input {
   slot!: TimeSlot;
 
   static toReportsInput(input: Input, spec: ChainSpec): ReportsInput {
-    const encoded = Encoder.encodeObject(guaranteesExtrinsicCodec, input.guarantees, spec);
-    const view = Decoder.decodeObject(guaranteesExtrinsicCodec.View, encoded, spec);
+    const view = guaranteesAsView(spec, input.guarantees, { disableCredentialsRangeCheck: true });
 
     return {
       guarantees: view,
