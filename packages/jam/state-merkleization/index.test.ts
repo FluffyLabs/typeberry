@@ -16,11 +16,11 @@ import {
   ServiceAccountInfo,
   type State,
 } from "@typeberry/state";
-import { serializeState } from ".";
+import { merkelizeState, serializeState } from ".";
 import { serialize } from "./serialize";
 
 describe("State Serialization", () => {
-  it("should serialize load and serialize the test state", () => {
+  it("should load and serialize the test state", () => {
     const state = loadState(TEST_STATE);
     const serialized = serializeState(state, tinyChainSpec);
     for (const [actualKey, actualValue] of serialized) {
@@ -36,6 +36,16 @@ describe("State Serialization", () => {
         throw new Error(`Unexpected key: ${actualKey} not found in the test state!`);
       }
     }
+  });
+});
+
+describe("State Merkleization", () => {
+  it("should load and merkelize the test state", () => {
+    const state = loadState(TEST_STATE);
+    const serialized = serializeState(state, tinyChainSpec);
+    const stateRoot = merkelizeState(serialized);
+
+    assert.strictEqual(stateRoot.toString(), TEST_STATE_ROOT);
   });
 });
 
@@ -177,6 +187,7 @@ function findOrAddService(s: PartialState, serviceId: ServiceId) {
   return service;
 }
 
+const TEST_STATE_ROOT = "0x99f227c2137bc71b415c18e4eb74c6450e575af3708d52cb40ea15dee1ce574a";
 const TEST_STATE = [
   [
     "0x00190000000000004948b8c6f5a11274b52216c70df4731eb79bbf85be9073e8",
