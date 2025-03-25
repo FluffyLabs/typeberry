@@ -83,8 +83,8 @@ const logger = Logger.new(__filename, "protocol/ce-129");
 export class Handler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
-  private boundaryNodes: Map<StreamId, TrieNode[]> = new Map();
-  private onResponse: Map<StreamId, (state: StateResponse) => void> = new Map();
+  private readonly boundaryNodes: Map<StreamId, TrieNode[]> = new Map();
+  private readonly onResponse: Map<StreamId, (state: StateResponse) => void> = new Map();
 
   constructor(
     private readonly isServer: boolean = false,
@@ -99,7 +99,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
       endKey: Bytes<KEY_SIZE>,
     ) => KeyValuePair[],
   ) {
-    if (isServer && (!getBoundaryNodes || !getKeyValuePairs)) {
+    if (isServer && (getBoundaryNodes === undefined || getKeyValuePairs === undefined)) {
       throw new Error("getBoundaryNodes and getKeyValuePairs are required in server mode.");
     }
   }
@@ -108,7 +108,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
     if (this.isServer) {
       logger.info(`[${sender.streamId}][server]: Received request.`);
 
-      if (!this.getBoundaryNodes || !this.getKeyValuePairs) return;
+      if (this.getBoundaryNodes === undefined || this.getKeyValuePairs === undefined) return;
 
       const request = Decoder.decodeObject(StateRequest.Codec, message);
 

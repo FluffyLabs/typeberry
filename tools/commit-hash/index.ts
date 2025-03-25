@@ -26,7 +26,7 @@ interface LogEntry {
 const LOG_FILENAME = process.env.LOG_FILENAME as string;
 const AUTH = process.env.COMMIT_KEY_SECRET as string;
 
-if (!LOG_FILENAME || !AUTH) {
+if (LOG_FILENAME === undefined || AUTH === undefined) {
   throw new Error("Missing LOG_FILENAME or COMMIT_KEY_SECRET env variables");
 }
 
@@ -67,7 +67,7 @@ async function handleError(log: LogEntry[], transactionPayload: TransactionPaylo
 }
 
 function readRequiredEnv(val: string | undefined, name: string) {
-  if (!val) {
+  if (val === undefined) {
     throw new Error(`Required variable: ${name} is not populated!`);
   }
   return val;
@@ -91,7 +91,7 @@ async function main() {
 
   const eventPayload = await readEventPayload();
   const githubRef = readRequiredEnv(process.env.GITHUB_REF, "GITHUB_REF");
-  const previousBlockHash = log.filter((logEntry) => !logEntry.failed).pop()?.block || "";
+  const previousBlockHash = log.filter((logEntry) => !logEntry.failed).pop()?.block ?? "";
   const transactionPayload: TransactionPayload = [
     eventPayload.repository.name,
     githubRef,
@@ -128,7 +128,7 @@ async function main() {
 
         unsub();
         await api.disconnect();
-      } else if (dispatchError) {
+      } else if (dispatchError !== undefined) {
         await handleError(log, transactionPayload, dispatchError.toString());
 
         unsub();

@@ -86,7 +86,7 @@ function compare(
     }),
   ];
 
-  if (runBlock) {
+  if (runBlock !== undefined) {
     res.unshift(
       add(`Get ${name} from Decoded`, () => {
         const header = TestBlock.Codec.decode(Decoder.fromBytesBlob(encodedData));

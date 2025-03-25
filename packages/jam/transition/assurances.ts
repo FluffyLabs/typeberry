@@ -43,7 +43,7 @@ export enum AssurancesError {
  */
 export const REPORT_TIMEOUT_GRACE_PERIOD = 5;
 
-/** Performs the transtion of assurances state given some input. */
+/** Performs the transition of assurances state given some input. */
 export class Assurances {
   constructor(
     public readonly chainSpec: ChainSpec,
@@ -146,7 +146,7 @@ export class Assurances {
       const v = assurance.view();
       const key = validatorData[v.validatorIndex.materialize()];
       // TODO [ToDr] This shouldn't be required if we have validation.
-      if (!key) {
+      if (key === undefined) {
         return Result.error(AssurancesError.InvalidValidatorIndex);
       }
       signatures.push({

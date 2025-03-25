@@ -155,7 +155,8 @@ export async function runPvmTest(testContent: PvmTest) {
   const pageThatShouldBeEmpty = Array.from(dirtyPages).filter((pageNumber) => !checkedPages.has(pageNumber));
 
   for (const pageNumber of pageThatShouldBeEmpty) {
-    const max = Math.max(...(pvm.getMemoryPage(pageNumber) || []));
+    const memoryPage = pvm.getMemoryPage(pageNumber);
+    const max = memoryPage !== null ? Math.max(...memoryPage) : 0;
     assert.deepStrictEqual(max, 0);
   }
 }

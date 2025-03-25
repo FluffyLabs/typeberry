@@ -9,7 +9,8 @@ export function withContext<T>(name: string, cb: (ctx: ChainSpec) => T) {
     if (context instanceof ChainSpec) {
       return cb(context);
     }
-    if (context) {
+
+    if (context !== undefined) {
       throw new Error(`[${name}] Unexpected context type ${typeof context} while encoding/decoding.`);
     }
     throw new Error(`[${name}] Missing context while encoding/decoding!`);

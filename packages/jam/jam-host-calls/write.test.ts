@@ -43,7 +43,7 @@ class TestAccounts implements Accounts {
     if (data === undefined) {
       throw new Error(`Unexpected readSnapshotLen call with ${serviceId} ${hash}`);
     }
-    return Promise.resolve(data?.length || null);
+    return Promise.resolve(data?.length ?? null);
   }
 }
 

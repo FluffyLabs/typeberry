@@ -158,7 +158,7 @@ function diffKeys(obj1: object, obj2: object): [string, string][] {
   }
 
   const diff: [string, string][] = [];
-  const id = (v?: string) => (v ? `"${v}"` : "<missing>");
+  const id = (v?: string) => (v !== undefined ? `"${v}"` : "<missing>");
   for (const [k, v] of Object.entries(keysCounter)) {
     if (v !== KEY1_SET + KEY2_SET && k !== "undefined") {
       diff.push(v === KEY1_SET ? [id(k), id(undefined)] : [id(undefined), id(k)]);

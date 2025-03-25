@@ -47,7 +47,7 @@ export class Disputes {
       const { key, workReportHash } = disputes.culprits[i];
       // check if some offenders weren't reported earlier
       // https://graypaper.fluffylabs.dev/#/579bd12/125501125501
-      const isInPunishSet = !!this.state.disputesRecords.punishSet.findExact(key);
+      const isInPunishSet = this.state.disputesRecords.punishSet.findExact(key) !== undefined;
       if (isInPunishSet) {
         return Result.error(DisputesErrorCode.OffenderAlreadyReported);
       }
@@ -55,14 +55,14 @@ export class Disputes {
       // verify if the culprit will be in new bad set
       // https://graypaper.fluffylabs.dev/#/579bd12/124601124601
       const isInNewBadSet = newItems.toAddToBadSet.findExact(workReportHash);
-      if (!isInNewBadSet) {
+      if (isInNewBadSet === undefined) {
         return Result.error(DisputesErrorCode.CulpritsVerdictNotBad);
       }
 
       // verify culprit signature
       // https://graypaper.fluffylabs.dev/#/579bd12/125c01125c01
       const result = verificationResult.culprits[i];
-      if (!result || !result.isValid) {
+      if (!result?.isValid) {
         return Result.error(DisputesErrorCode.BadSignature);
       }
     }
@@ -86,7 +86,7 @@ export class Disputes {
       const { key, workReportHash, wasConsideredValid } = disputes.faults[i];
       // check if some offenders weren't reported earlier
       // https://graypaper.fluffylabs.dev/#/579bd12/12a20112a201
-      const isInPunishSet = !!this.state.disputesRecords.punishSet.findExact(key);
+      const isInPunishSet = this.state.disputesRecords.punishSet.findExact(key) !== undefined;
 
       if (isInPunishSet) {
         return Result.error(DisputesErrorCode.OffenderAlreadyReported);
@@ -101,7 +101,7 @@ export class Disputes {
         const isInNewGoodSet = newItems.toAddToGoodSet.findExact(workReportHash);
         const isInNewBadSet = newItems.toAddToBadSet.findExact(workReportHash);
 
-        if (isInNewGoodSet || !isInNewBadSet) {
+        if (isInNewGoodSet !== undefined || isInNewBadSet === undefined) {
           return Result.error(DisputesErrorCode.FaultVerdictWrong);
         }
       }
@@ -145,8 +145,8 @@ export class Disputes {
       for (const { index } of votes) {
         const key = k[index]?.ed25519;
 
-        // no particular GP fragment but I think we don't belive in ghosts
-        if (!key) {
+        // no particular GP fragment but I think we don't believe in ghosts
+        if (key === undefined) {
           return Result.error(DisputesErrorCode.BadValidatorIndex);
         }
 
@@ -171,7 +171,7 @@ export class Disputes {
       const isInBadSet = this.state.disputesRecords.badSet.findExact(verdict.workReportHash);
       const isInWonkySet = this.state.disputesRecords.wonkySet.findExact(verdict.workReportHash);
 
-      if (isInGoodSet || isInBadSet || isInWonkySet) {
+      if (isInGoodSet !== undefined || isInBadSet !== undefined || isInWonkySet !== undefined) {
         return Result.error(DisputesErrorCode.AlreadyJudged);
       }
     }
@@ -213,7 +213,7 @@ export class Disputes {
         // there has to be at least 1 fault with the same work report hash
         // https://graypaper.fluffylabs.dev/#/579bd12/12f10212fc02
         const f = disputes.faults.find((x) => x.workReportHash.isEqualTo(r));
-        if (!f) {
+        if (f === undefined) {
           return Result.error(DisputesErrorCode.NotEnoughFaults);
         }
       } else if (sum === 0) {
@@ -261,13 +261,12 @@ export class Disputes {
 
   private clearCoreAssignment(v: VotesForWorkReports) {
     /**
-     * We clear any work-reports which we judged as uncer-
-tain or invalid from their core.
+     * We clear any work-reports which we judged as uncertain or invalid from their core.
      * https://graypaper.fluffylabs.dev/#/579bd12/121a03123f03
      */
     for (let c = 0; c < this.state.availabilityAssignment.length; c++) {
       const assignment = this.state.availabilityAssignment[c];
-      if (assignment) {
+      if (assignment !== null) {
         const sum = v.get(assignment.workReport.hash);
         if (sum !== undefined && sum < this.context.validatorsSuperMajority) {
           this.state.availabilityAssignment[c] = null;
@@ -322,8 +321,8 @@ tain or invalid from their core.
       for (const j of votes) {
         const validator = k[j.index];
 
-        // no particular GP fragment but I think we don't belive in ghosts
-        if (!validator) {
+        // no particular GP fragment but I think we don't believe in ghosts
+        if (validator === undefined) {
           return Result.error(DisputesErrorCode.BadValidatorIndex);
         }
 

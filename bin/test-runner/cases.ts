@@ -127,7 +127,7 @@ async function main() {
     }
   }
 
-  return "Tests registed successfuly";
+  return "Tests registered successfully";
 }
 
 function tryToPrepareTestRunner<T>(

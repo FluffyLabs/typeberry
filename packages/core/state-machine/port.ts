@@ -10,7 +10,7 @@ const logger = Logger.new(__filename, "state-machine/port");
 /**
  * Wrapper around `MessagePort` to communicate between workers or threads.
  *
- * Note this type is only used externall, since the users should only interact
+ * Note this type is only used externally, since the users should only interact
  * directly with the state machine.
  *
  * See also ['TypedChannel'].
@@ -74,7 +74,7 @@ export class TypedPort {
 
     const promise = new Promise<TRes>((resolve, reject) => {
       this.responseListeners.once(reqEvent(this.messageId), (err, result) => {
-        return err ? reject(err) : resolve(result);
+        return err !== null ? reject(err) : resolve(result);
       });
     });
 

@@ -130,6 +130,7 @@ export class SortedArray<V> {
 
     return {
       idx: low,
+      isEqual: false,
     };
   }
 

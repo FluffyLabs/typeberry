@@ -79,13 +79,13 @@ export class MultiMap<TKeys extends readonly unknown[], TValue> {
    */
   delete(...inKeys: TKeys): boolean {
     const last = this.findLastMapAndKey(inKeys);
-    return last.map?.delete(last.key) || false;
+    return last.map?.delete(last.key) ?? false;
   }
 
   /** Check presence of the value under `inKeys`. */
   has(...inKeys: TKeys): boolean {
     const last = this.findLastMapAndKey(inKeys);
-    return last.map?.has(last.key) || false;
+    return last.map?.has(last.key) ?? false;
   }
 
   /** Get the value under `inKeys` or `undefined` if not present. */
@@ -109,7 +109,7 @@ export class MultiMap<TKeys extends readonly unknown[], TValue> {
     let current = this.data as Map<unknown, unknown> | undefined;
 
     for (let i = 0; i < lastKeyIndex; i += 1) {
-      if (!current) {
+      if (current === undefined) {
         return {
           map: undefined,
           key: lastKey,

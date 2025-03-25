@@ -4,7 +4,7 @@ import { type OpaqueHash, WithHash } from "@typeberry/hash";
 import lmdb from "lmdb";
 
 // TODO [ToDr] Preimages should probably have an availability information.
-// i.e. we might have something in the DB, but it souhld not be available
+// i.e. we might have something in the DB, but it should not be available
 // in some block yet.
 export class LmdbPreimages implements PreimageDb {
   readonly root: lmdb.RootDatabase<Uint8Array, lmdb.Key>;
@@ -19,7 +19,7 @@ export class LmdbPreimages implements PreimageDb {
 
   get<T extends OpaqueHash>(hash: T): WithHash<T, BytesBlob> | null {
     const preimage = this.root.get(hash.raw);
-    return preimage ? new WithHash(hash, BytesBlob.blobFrom(preimage)) : null;
+    return preimage !== undefined ? new WithHash(hash, BytesBlob.blobFrom(preimage)) : null;
   }
 
   set<T extends OpaqueHash>(...data: WithHash<T, BytesBlob>[]): Promise<void> {
