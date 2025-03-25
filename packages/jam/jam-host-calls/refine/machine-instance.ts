@@ -17,7 +17,7 @@ export const tryAsMachineId = (v: number | bigint): MachineId => asOpaqueType(tr
 /** `M`: Machine instance */
 export type MachineInstance = Opaque<
   {
-    /** `p`: Code - PVM code */
+    /** `p`: Code - Generic PVM program */
     code: BytesBlob;
     /** `u`: Memory - RAM */
     memory: Memory;
@@ -50,8 +50,6 @@ export type MachineStatus =
 /** Data returned by a machine invocation. */
 export type MachineResult = {
   result: MachineStatus;
-  programCounter: U64;
   gas: BigGas;
   registers: Registers;
-  memory: Memory;
 };

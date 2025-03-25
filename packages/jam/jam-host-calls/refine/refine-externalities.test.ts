@@ -2,8 +2,8 @@ import type { Segment, SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
-import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
-import { type BigGas, Memory, type MemoryIndex, Registers, tryAsBigGas } from "@typeberry/pvm-interpreter";
+import type { U32, U64 } from "@typeberry/numbers";
+import { type BigGas, type Memory, type MemoryIndex, Registers, tryAsBigGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import type { OK, Result } from "@typeberry/utils";
 import {
@@ -56,10 +56,8 @@ export class TestRefineExt implements RefineExternalities {
   public machineInvokeResult: MachineStatus = { status: Status.OK };
   public machineInvokeData: MachineResult = {
     result: { status: Status.OK },
-    programCounter: tryAsU64(0n),
     gas: tryAsBigGas(0n),
     registers: new Registers(),
-    memory: new Memory(),
   };
 
   machineExpunge(machineIndex: MachineId): Promise<Result<OK, NoMachineError>> {
@@ -144,14 +142,11 @@ export class TestRefineExt implements RefineExternalities {
     return Promise.resolve(val);
   }
 
-  machineInvoke(
-    _code: BytesBlob,
-    programCounter: U64,
-    gas: BigGas,
-    registers: Registers,
-    memory: Memory,
-  ): Promise<MachineResult> {
-    return Promise.resolve({ result: this.machineInvokeResult, programCounter, gas, registers, memory });
+  machineInvoke(machineIndex: MachineId, gas: BigGas, registers: Registers): Promise<MachineResult | undefined> {
+    if (!this.machines.has(machineIndex)) {
+      return Promise.resolve(undefined);
+    }
+    return Promise.resolve({ result: this.machineInvokeResult, gas, registers });
   }
 
   exportSegment(segment: Segment): Result<SegmentIndex, SegmentExportError> {

@@ -23,6 +23,10 @@ export class Registers {
     return this.bytes.subarray(offset, offset + len);
   }
 
+  getAllBytesAsLittleEndian() {
+    return this.bytes;
+  }
+
   copyFrom(regs: Registers | BigUint64Array) {
     const array = regs instanceof BigUint64Array ? regs : regs.asUnsigned;
     this.asUnsigned.set(array);

@@ -67,18 +67,11 @@ export interface RefineExternalities {
 
   /**
    * Start an inner PVM instance with given entry point and starting code.
-   * TODO [MaSo]: This should be removed/merged in favor of `machineInit`.
    */
   machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId>;
 
   /** Run a PVM instance with given gas and registers. */
-  machineInvoke(
-    code: BytesBlob,
-    programCounter: U64,
-    gas: BigGas,
-    registers: Registers,
-    memory: Memory,
-  ): Promise<MachineResult>;
+  machineInvoke(machineIndex: MachineId, gas: BigGas, registers: Registers): Promise<MachineResult | undefined>;
 
   /**
    * Export segment for future retrieval.

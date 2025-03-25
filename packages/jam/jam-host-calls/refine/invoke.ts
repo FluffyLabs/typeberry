@@ -1,5 +1,5 @@
 import { Bytes } from "@typeberry/bytes";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Decoder, Encoder, codec, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU64 } from "@typeberry/numbers";
 import { type HostCallHandler, PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import {
@@ -10,6 +10,7 @@ import {
   tryAsMemoryIndex,
   tryAsSmallGas,
 } from "@typeberry/pvm-interpreter";
+import { NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
@@ -18,7 +19,11 @@ import type { RefineExternalities } from "./refine-externalities";
 
 const IN_OUT_REG_1 = 7;
 const IN_OUT_REG_2 = 8;
-const GAS_REG_SIZE = 112;
+const gasAndRegistersCodec = codec.object({
+  gas: codec.i64,
+  registers: codec.bytes(NO_OF_REGISTERS * 8),
+});
+const GAS_REGISTERS_SIZE = tryAsExactBytes(gasAndRegistersCodec.sizeHint);
 
 /**
  * Kick off (run) a PVM instance given the machine index and the destination memory (which contains gas and registers values).
@@ -38,48 +43,37 @@ export class Invoke implements HostCallHandler {
     // `o`
     const destinationStart = tryAsMemoryIndex(regs.getU32(IN_OUT_REG_2));
 
-    const destinationWriteable = memory.isWriteable(destinationStart, destinationStart + GAS_REG_SIZE);
+    const destinationWriteable = memory.isWriteable(destinationStart, destinationStart + GAS_REGISTERS_SIZE);
     if (!destinationWriteable) {
       return PvmExecution.Panic;
     }
 
     // extracting gas and registers from memory
-    const initialData = Bytes.zero(GAS_REG_SIZE);
+    const initialData = Bytes.zero(GAS_REGISTERS_SIZE);
     memory.loadInto(initialData.raw, destinationStart);
 
-    const decoder = Decoder.fromBytesBlob(initialData);
-
+    const gasRegisters = Decoder.decodeObject(gasAndRegistersCodec, initialData);
     // `g`
-    const gasCost = tryAsBigGas(decoder.i64());
+    const gasCost = tryAsBigGas(gasRegisters.gas);
     // `w`
-    // TODO [MaSo] can it be possible to extract rest bytes w/ decoder?
-    // and input it to register?
-    const registers = new Registers(initialData.raw.slice(8));
+    const registers = new Registers(gasRegisters.registers.raw);
 
-    const machine = this.refine.machines.get(machineIndex);
-    if (machine === undefined) {
+    // try run the machine
+    const state = await this.refine.machineInvoke(machineIndex, gasCost, registers);
+
+    // machine not found
+    if (state === undefined) {
       regs.setU64(IN_OUT_REG_1, HostCallResult.WHO);
       return;
     }
 
-    // run the machine
-    const state = await this.refine.machineInvoke(machine.code, machine.entrypoint, gasCost, registers, machine.memory);
-
     // save the result to the destination memory
-    const resultDataBytes = Bytes.zero(GAS_REG_SIZE);
-    const encoder = Encoder.create({ destination: resultDataBytes.raw });
-    encoder.i64(state.gas);
-    for (const register of state.registers.getAllU64()) {
-      encoder.varU64(register);
-    }
+    const resultDataBytes = Encoder.encodeObject(gasAndRegistersCodec, {
+      gas: state.gas,
+      registers: Bytes.fromBlob(state.registers.getAllBytesAsLittleEndian(), NO_OF_REGISTERS * 8),
+    });
+
     memory.storeFrom(destinationStart, resultDataBytes.raw);
-
-    // update machine
-    machine.memory = state.memory;
-    machine.entrypoint =
-      state.result.status === Status.HOST ? tryAsU64(state.programCounter + 1n) : state.programCounter;
-
-    this.refine.machines.set(machineIndex, machine);
 
     switch (state.result.status) {
       case Status.HOST:
@@ -99,6 +93,8 @@ export class Invoke implements HostCallHandler {
       case Status.OOG:
         regs.setU64(IN_OUT_REG_1, tryAsU64(Status.OOG));
         return;
+      default:
+        throw new Error(`Unexpected inner PVM result: ${state.result.status}`);
     }
   }
 }
