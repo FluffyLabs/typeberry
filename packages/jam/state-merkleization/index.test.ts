@@ -187,7 +187,7 @@ function findOrAddService(s: PartialState, serviceId: ServiceId) {
   return service;
 }
 
-const TEST_STATE_ROOT = "0x99f227c2137bc71b415c18e4eb74c6450e575af3708d52cb40ea15dee1ce574a";
+const TEST_STATE_ROOT = "0xc57f98ecf9a01e81ac754ed0d08f8484c683b8d55f00365cc41c557f492827c7";
 const TEST_STATE = [
   [
     "0x00190000000000004948b8c6f5a11274b52216c70df4731eb79bbf85be9073e8",

@@ -1,12 +1,5 @@
-import "json-bigint-patch";
-import { fail } from "node:assert";
-import * as fs from "node:fs/promises";
-import path from "node:path";
-import test from "node:test";
-
 import { tinyChainSpec } from "@typeberry/config";
-import { type FromJson, parseFromJson } from "@typeberry/json-parser";
-import { Level, Logger } from "@typeberry/logger";
+import { logger, main, runner } from "./common";
 import { AccumulateTest, runAccumulateTest } from "./w3f/accumulate";
 import { AssurancesTestFull, AssurancesTestTiny, runAssurancesTestFull, runAssurancesTestTiny } from "./w3f/assurances";
 import { AuthorizationsTest, runAuthorizationsTest } from "./w3f/authorizations";
@@ -47,185 +40,48 @@ import { runShufflingTests, shufflingTests } from "./w3f/shuffling";
 import { StatisticsTestFull, StatisticsTestTiny, runStatisticsTestFull, runStatisticsTestTiny } from "./w3f/statistics";
 import { runTrieTest, trieTestSuiteFromJson } from "./w3f/trie";
 
-Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
-const logger = Logger.new(__filename, "test-runner");
+const runners = [
+  runner("accumulate", AccumulateTest.fromJson, runAccumulateTest),
+  runner("assurances/tiny", AssurancesTestTiny.fromJson, runAssurancesTestTiny),
+  runner("assurances/full", AssurancesTestFull.fromJson, runAssurancesTestFull),
+  runner("authorizations", AuthorizationsTest.fromJson, runAuthorizationsTest),
+  runner("codec/assurances_extrinsic", getAssurancesExtrinsicFromJson(tinyChainSpec), runAssurancesExtrinsicTest),
+  runner("codec/block", blockFromJson, runBlockTest),
+  runner("codec/disputes_extrinsic", disputesExtrinsicFromJson, runDisputesExtrinsicTest),
+  runner("codec/extrinsic", getExtrinsicFromJson(tinyChainSpec), runExtrinsicTest),
+  runner("codec/guarantees_extrinsic", guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest),
+  runner("codec/header", headerFromJson, runHeaderTest),
+  runner("codec/preimages_extrinsic", preimagesExtrinsicFromJson, runPreimagesExtrinsicTest),
+  runner("codec/refine_context", refineContextFromJson, runRefineContextTest),
+  runner("codec/tickets_extrinsic", ticketsExtrinsicFromJson, runTicketsExtrinsicTest),
+  runner("codec/work_item", workItemFromJson, runWorkItemTest),
+  runner("codec/work_package", workPackageFromJson, runWorkPackageTest),
+  runner("codec/work_report", workReportFromJson, runWorkReportTest),
+  runner("codec/work_result", workResultFromJson, runWorkResultTest),
+  runner("disputes", DisputesTest.fromJson, runDisputesTest),
+  runner("erasure_coding", EcTest.fromJson, runEcTest),
+  runner("erasure_coding/page_proof", PageProof.fromJson, runPageProofTest),
+  runner("erasure_coding/segment_ec", SegmentEcTest.fromJson, runSegmentEcTest),
+  runner("erasure_coding/segment_root", SegmentRoot.fromJson, runSegmentRootTest),
+  runner("history", HistoryTest.fromJson, runHistoryTest),
+  runner("schema", JsonSchema.fromJson, ignoreSchemaFiles), // ignore schema files
+  runner("preimages", PreImagesTest.fromJson, runPreImagesTest),
+  runner("pvm", PvmTest.fromJson, runPvmTest),
+  runner("host_function", HostCallGeneralTest.fromJson, runHostCallGeneralTest),
+  runner("host_function", HostCallAccumulateTest.fromJson, runHostCallAccumulateTest),
+  runner("host_function", HostCallRefineTest.fromJson, runHostCallRefineTest),
+  runner("reports/tiny", ReportsTest.fromJson, runReportsTestTiny),
+  runner("reports/full", ReportsTest.fromJson, runReportsTestFull),
+  runner("safrole", SafroleTest.fromJson, runSafroleTest),
+  runner("shuffle", shufflingTests, runShufflingTests),
+  runner("statistics/tiny", StatisticsTestTiny.fromJson, runStatisticsTestTiny),
+  runner("statistics/full", StatisticsTestFull.fromJson, runStatisticsTestFull),
+  runner("trie", trieTestSuiteFromJson, runTrieTest),
+];
 
-main()
+main(runners, "jamtestvectors")
   .then((r) => logger.log(r))
   .catch((e) => {
     logger.error(e);
     process.exit(-1);
   });
-
-async function main() {
-  const relPath = `${__dirname}/../..`;
-  let files = process.argv.slice(2);
-  const tests: TestAndRunner[] = [];
-
-  if (files.length === 0) {
-    // scan the jamtestvectors directory
-    files = await scanDir(relPath, "jamtestvectors", ".json");
-  }
-
-  logger.info(`Creating tests for ${files.length} files.`);
-  for (const file of files) {
-    const absolutePath = path.resolve(`${relPath}/${file}`);
-    const data = await fs.readFile(absolutePath, "utf8");
-    // TODO [ToDr] We might want to implement a custom JSON parser
-    // to avoid-double converting to expected types.
-    const testContent = JSON.parse(data);
-    const testCases = prepareTests(testContent, file, absolutePath);
-
-    tests.push(...testCases);
-  }
-
-  // now we're going to aggregate the tests by their runner.
-  const aggregated = new Map<string, TestAndRunner[]>();
-  for (const test of tests) {
-    const sameRunner = aggregated.get(test.runner) ?? [];
-    sameRunner.push(test);
-    aggregated.set(test.runner, sameRunner);
-  }
-
-  logger.info(`Running all tests (${tests.length}).`);
-  // we have all of the tests now, let's run them in parallel and generate results.
-  for (const [key, values] of aggregated.entries()) {
-    // split large suites into parts to run them in parallel
-    const perPart = key === "safrole" ? 5 : 50;
-    const parts = Math.ceil(values.length / perPart);
-    for (let i = 0; i < parts; i += 1) {
-      // we use `setImmediate` here, to make sure to start each suite
-      // separately (faster feedback in the console when running tests).
-      setImmediate(() => {
-        const testName = `${key} tests [${i + 1}/${parts}]`;
-        logger.info(`Running ${testName}`);
-        test.describe(
-          testName,
-          {
-            concurrency: 100,
-            timeout: 60 * 1000,
-          },
-          () => {
-            const partValues = values.slice(i * perPart, (i + 1) * perPart);
-            for (const subTest of partValues) {
-              const fileName = subTest.file.replace(/.*jamtestvectors/, "");
-              test.it(fileName, subTest.test);
-            }
-          },
-        );
-      });
-    }
-  }
-
-  return "Tests registered successfully";
-}
-
-function tryToPrepareTestRunner<T>(
-  name: string,
-  file: string,
-  path: string,
-  testContent: unknown,
-  fromJson: FromJson<T>,
-  run: (t: T, path: string) => Promise<void>,
-  onError: (name: string, e: unknown) => void,
-): TestAndRunner | null {
-  // the condition is needed to distinguish between tiny and full chain spec
-  // without the condition some tests (for example statistics) will be run twice
-  if (!name.split("/").every((pathPart) => path.includes(pathPart))) {
-    return null;
-  }
-
-  try {
-    const parsedTest = parseFromJson(testContent, fromJson);
-
-    return {
-      runner: name,
-      file,
-      test: () => run(parsedTest, path),
-    };
-  } catch (e) {
-    onError(name, e);
-    return null;
-  }
-}
-
-type TestAndRunner = {
-  runner: string;
-  file: string;
-  test: () => Promise<void>;
-};
-
-function prepareTests(testContent: unknown, file: string, path: string): TestAndRunner[] {
-  const errors: [string, unknown][] = [];
-  const handleError = (name: string, e: unknown) => errors.push([name, e]);
-
-  function prepRunner<T>(name: string, fromJson: FromJson<T>, run: (t: T, path: string) => Promise<void>) {
-    const r = tryToPrepareTestRunner(name, file, path, testContent, fromJson, run, handleError);
-    return r;
-  }
-
-  const runners = [
-    prepRunner("accumulate", AccumulateTest.fromJson, runAccumulateTest),
-    prepRunner("assurances/tiny", AssurancesTestTiny.fromJson, runAssurancesTestTiny),
-    prepRunner("assurances/full", AssurancesTestFull.fromJson, runAssurancesTestFull),
-    prepRunner("authorizations", AuthorizationsTest.fromJson, runAuthorizationsTest),
-    prepRunner("codec/assurances_extrinsic", getAssurancesExtrinsicFromJson(tinyChainSpec), runAssurancesExtrinsicTest),
-    prepRunner("codec/block", blockFromJson, runBlockTest),
-    prepRunner("codec/disputes_extrinsic", disputesExtrinsicFromJson, runDisputesExtrinsicTest),
-    prepRunner("codec/extrinsic", getExtrinsicFromJson(tinyChainSpec), runExtrinsicTest),
-    prepRunner("codec/guarantees_extrinsic", guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest),
-    prepRunner("codec/header", headerFromJson, runHeaderTest),
-    prepRunner("codec/preimages_extrinsic", preimagesExtrinsicFromJson, runPreimagesExtrinsicTest),
-    prepRunner("codec/refine_context", refineContextFromJson, runRefineContextTest),
-    prepRunner("codec/tickets_extrinsic", ticketsExtrinsicFromJson, runTicketsExtrinsicTest),
-    prepRunner("codec/work_item", workItemFromJson, runWorkItemTest),
-    prepRunner("codec/work_package", workPackageFromJson, runWorkPackageTest),
-    prepRunner("codec/work_report", workReportFromJson, runWorkReportTest),
-    prepRunner("codec/work_result", workResultFromJson, runWorkResultTest),
-    prepRunner("disputes", DisputesTest.fromJson, runDisputesTest),
-    prepRunner("erasure_coding", EcTest.fromJson, runEcTest),
-    prepRunner("erasure_coding/page_proof", PageProof.fromJson, runPageProofTest),
-    prepRunner("erasure_coding/segment_ec", SegmentEcTest.fromJson, runSegmentEcTest),
-    prepRunner("erasure_coding/segment_root", SegmentRoot.fromJson, runSegmentRootTest),
-    prepRunner("history", HistoryTest.fromJson, runHistoryTest),
-    prepRunner("schema", JsonSchema.fromJson, ignoreSchemaFiles), // ignore schema files
-    prepRunner("preimages", PreImagesTest.fromJson, runPreImagesTest),
-    prepRunner("pvm", PvmTest.fromJson, runPvmTest),
-    prepRunner("host_function", HostCallGeneralTest.fromJson, runHostCallGeneralTest),
-    prepRunner("host_function", HostCallAccumulateTest.fromJson, runHostCallAccumulateTest),
-    prepRunner("host_function", HostCallRefineTest.fromJson, runHostCallRefineTest),
-    prepRunner("reports/tiny", ReportsTest.fromJson, runReportsTestTiny),
-    prepRunner("reports/full", ReportsTest.fromJson, runReportsTestFull),
-    prepRunner("safrole", SafroleTest.fromJson, runSafroleTest),
-    prepRunner("shuffle", shufflingTests, runShufflingTests),
-    prepRunner("statistics/tiny", StatisticsTestTiny.fromJson, runStatisticsTestTiny),
-    prepRunner("statistics/full", StatisticsTestFull.fromJson, runStatisticsTestFull),
-    prepRunner("trie", trieTestSuiteFromJson, runTrieTest),
-  ];
-
-  const nonEmptyRunners = runners.filter((x): x is TestAndRunner => x !== null);
-  if (nonEmptyRunners.length > 0) {
-    return nonEmptyRunners;
-  }
-
-  return [
-    {
-      runner: "Invalid",
-      file,
-      test: () => {
-        for (const [runner, error] of errors) {
-          logger.error(`[${runner}] Parsing error: ${error}`);
-        }
-
-        fail(`Unrecognized test case in ${file}`);
-      },
-    },
-  ];
-}
-
-async function scanDir(relPath: string, dir: string, filePattern: string): Promise<string[]> {
-  const files = await fs.readdir(`${relPath}/${dir}`, {
-    recursive: true,
-  });
-  return files.filter((f) => f.endsWith(filePattern)).map((f) => `${dir}/${f}`);
-}
