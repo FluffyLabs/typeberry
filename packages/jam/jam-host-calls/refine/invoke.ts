@@ -56,7 +56,7 @@ export class Invoke implements HostCallHandler {
     // `g`
     const gasCost = tryAsBigGas(gasRegisters.gas);
     // `w`
-    const registers = new Registers(gasRegisters.registers.raw);
+    const registers = Registers.fromBytes(gasRegisters.registers.raw);
 
     // try run the machine
     const state = await this.refine.machineInvoke(machineIndex, gasCost, registers);
