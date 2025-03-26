@@ -37,18 +37,18 @@ export function addWithOverflowU64(a: bigint, b: bigint) {
  * Overflowing subtraction for two-complement representation of 32-bit signed numbers.
  */
 export function subU32(a: number, b: number) {
-  if (a > b) {
-    return MAX_VALUE - a + b + 1;
+  if (b > a) {
+    return MAX_VALUE - b + a + 1;
   }
 
-  return b - a;
+  return a - b;
 }
 
 /**
  * Overflowing subtraction for two-complement representation of 64-bit signed numbers.
  */
 export function subU64(a: bigint, b: bigint) {
-  return (2n ** 64n + b - a) % 2n ** 64n;
+  return (2n ** 64n + a - b) % 2n ** 64n;
 }
 
 const MUL_THRESHOLD = 2 ** 16;

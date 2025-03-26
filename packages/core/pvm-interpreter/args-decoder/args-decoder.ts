@@ -14,66 +14,87 @@ export type EmptyArgs = {
 export type OneImmediateArgs = {
   type: ArgumentType.ONE_IMMEDIATE;
   noOfBytesToSkip: number;
+  /** V_X */
   immediateDecoder: ImmediateDecoder;
 };
 
 export type ThreeRegistersArgs = {
   type: ArgumentType.THREE_REGISTERS;
   noOfBytesToSkip: number;
+  /** W_A */
   firstRegisterIndex: number;
+  /** W_B */
   secondRegisterIndex: number;
+  /** W_D */
   thirdRegisterIndex: number;
 };
 
 export type TwoRegistersArgs = {
   type: ArgumentType.TWO_REGISTERS;
   noOfBytesToSkip: number;
+  /** W_A */
   firstRegisterIndex: number;
+  /** W_B */
   secondRegisterIndex: number;
 };
 
 export type TwoRegistersOneImmediateArgs = {
   type: ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE;
   noOfBytesToSkip: number;
+  /** W_A */
   firstRegisterIndex: number;
+  /** W_B */
   secondRegisterIndex: number;
+  /** V_X */
   immediateDecoder: ImmediateDecoder;
 };
 
 export type OneRegisterOneImmediateArgs = {
   type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE;
   noOfBytesToSkip: number;
+  /** W_A */
   registerIndex: number;
+  /** V_X */
   immediateDecoder: ImmediateDecoder;
 };
 
 export type OneRegisterOneExtendedWidthImmediateArgs = {
   type: ArgumentType.ONE_REGISTER_ONE_EXTENDED_WIDTH_IMMEDIATE;
   noOfBytesToSkip: number;
+  /** W_A */
   registerIndex: number;
+  /** V_X */
   immediateDecoder: ExtendedWitdthImmediateDecoder;
 };
 
 export type TwoRegistersTwoImmediatesArgs = {
   type: ArgumentType.TWO_REGISTERS_TWO_IMMEDIATES;
   noOfBytesToSkip: number;
+  /** W_A */
   firstRegisterIndex: number;
+  /** W_B */
   secondRegisterIndex: number;
+  /** V_X */
   firstImmediateDecoder: ImmediateDecoder;
+  /** V_Y */
   secondImmediateDecoder: ImmediateDecoder;
 };
 
 export type TwoImmediatesArgs = {
   type: ArgumentType.TWO_IMMEDIATES;
   noOfBytesToSkip: number;
+  /** V_X */
   firstImmediateDecoder: ImmediateDecoder;
+  /** V_Y */
   secondImmediateDecoder: ImmediateDecoder;
 };
 
 export type TwoRegistersOneOffsetArgs = {
   type: ArgumentType.TWO_REGISTERS_ONE_OFFSET;
   noOfBytesToSkip: number;
+  /** W_A */
   firstRegisterIndex: number;
+  /** W_B */
   secondRegisterIndex: number;
   nextPc: number;
 };
@@ -81,22 +102,29 @@ export type TwoRegistersOneOffsetArgs = {
 export type OneRegisterOneImmediateOneOffsetArgs = {
   type: ArgumentType.ONE_REGISTER_ONE_IMMEDIATE_ONE_OFFSET;
   noOfBytesToSkip: number;
+  /** W_A */
   registerIndex: number;
+  /** V_X */
   immediateDecoder: ImmediateDecoder;
+  /** V_Y */
   nextPc: number;
 };
 
 export type OneRegisterTwoImmediatesArgs = {
   type: ArgumentType.ONE_REGISTER_TWO_IMMEDIATES;
   noOfBytesToSkip: number;
+  /** W_A */
   registerIndex: number;
+  /** V_X */
   firstImmediateDecoder: ImmediateDecoder;
+  /** V_Y */
   secondImmediateDecoder: ImmediateDecoder;
 };
 
 export type OneOffsetArgs = {
   type: ArgumentType.ONE_OFFSET;
   noOfBytesToSkip: number;
+  /** V_X */
   nextPc: number;
 };
 
@@ -145,8 +173,8 @@ export class ArgsDecoder {
         const firstByte = this.code[pc + 1];
         const secondByte = this.code[pc + 2];
         this.nibblesDecoder.setByte(firstByte);
-        result.firstRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
-        result.secondRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
+        result.firstRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
+        result.secondRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
         this.nibblesDecoder.setByte(secondByte);
         result.thirdRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
         break;
