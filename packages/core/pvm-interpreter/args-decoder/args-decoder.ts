@@ -183,8 +183,8 @@ export class ArgsDecoder {
       case ArgumentType.TWO_REGISTERS_ONE_IMMEDIATE: {
         const firstByte = this.code[pc + 1];
         this.nibblesDecoder.setByte(firstByte);
-        result.firstRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
-        result.secondRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
+        result.firstRegisterIndex = this.nibblesDecoder.getLowNibbleAsRegisterIndex();
+        result.secondRegisterIndex = this.nibblesDecoder.getHighNibbleAsRegisterIndex();
 
         const immediateLength = Math.min(IMMEDIATE_AND_OFFSET_MAX_LENGTH, Math.max(0, nextInstructionDistance - 2));
         const immediateStartIndex = pc + 2;
