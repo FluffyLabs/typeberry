@@ -34,7 +34,7 @@ export type TwoRegistersArgs = {
   noOfBytesToSkip: number;
   /** W_A */
   firstRegisterIndex: number;
-  /** W_B */
+  /** W_D */
   secondRegisterIndex: number;
 };
 
