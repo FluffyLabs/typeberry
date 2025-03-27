@@ -210,7 +210,7 @@ describe("LoadOps", () => {
       const expectedSignedValue = -52n;
       const expectedUnsignedValue = 18446744073709551564n;
 
-      loadOps.loadIndI8(addressRegisterIndex, resultRegisterIndex, immediate);
+      loadOps.loadIndI8(resultRegisterIndex, addressRegisterIndex, immediate);
 
       assert.deepStrictEqual(registers.getU64(resultRegisterIndex), expectedUnsignedValue);
       assert.deepStrictEqual(registers.getI64(resultRegisterIndex), expectedSignedValue);
@@ -230,7 +230,7 @@ describe("LoadOps", () => {
       const immediateDecoder = new ImmediateDecoder();
       immediateDecoder.setBytes(new Uint8Array([1]));
 
-      loadOps.loadIndI16(addressRegisterIndex, resultRegisterIndex, immediate);
+      loadOps.loadIndI16(resultRegisterIndex, addressRegisterIndex, immediate);
 
       assert.deepStrictEqual(registers.getU64(resultRegisterIndex), expectedUnsignedValue);
       assert.deepStrictEqual(registers.getI64(resultRegisterIndex), expectedSignedValue);
@@ -248,7 +248,7 @@ describe("LoadOps", () => {
       const expectedSignedValue = -8756n;
       const expectedUnsignedValue = 18446744073709542860n;
 
-      loadOps.loadIndI32(addressRegisterIndex, resultRegisterIndex, immediate);
+      loadOps.loadIndI32(resultRegisterIndex, addressRegisterIndex, immediate);
 
       assert.deepStrictEqual(registers.getU64(resultRegisterIndex), expectedUnsignedValue);
       assert.deepStrictEqual(registers.getI64(resultRegisterIndex), expectedSignedValue);
@@ -267,7 +267,7 @@ describe("LoadOps", () => {
       );
       const expectedValue = 0xffn;
 
-      loadOps.loadIndU8(addressRegisterIndex, resultRegisterIndex, immediate);
+      loadOps.loadIndU8(resultRegisterIndex, addressRegisterIndex, immediate);
 
       assert.deepStrictEqual(registers.getU64(resultRegisterIndex), expectedValue);
       assert.deepStrictEqual(registers.getI64(resultRegisterIndex), expectedValue);
@@ -284,7 +284,7 @@ describe("LoadOps", () => {
       );
       const expectedValue = 61183n;
 
-      loadOps.loadIndU16(addressRegisterIndex, resultRegisterIndex, immediate);
+      loadOps.loadIndU16(resultRegisterIndex, addressRegisterIndex, immediate);
 
       assert.deepStrictEqual(registers.getU64(resultRegisterIndex), expectedValue);
       assert.deepStrictEqual(registers.getI64(resultRegisterIndex), expectedValue);
@@ -301,7 +301,7 @@ describe("LoadOps", () => {
       );
       const expectedValue = 215871231n;
 
-      loadOps.loadIndU32(addressRegisterIndex, resultRegisterIndex, immediate);
+      loadOps.loadIndU32(resultRegisterIndex, addressRegisterIndex, immediate);
 
       assert.deepStrictEqual(registers.getU64(resultRegisterIndex), expectedValue);
       assert.deepStrictEqual(registers.getI64(resultRegisterIndex), expectedValue);
@@ -318,7 +318,7 @@ describe("LoadOps", () => {
       );
       const expectedValue = 619714147312856831n;
 
-      loadOps.loadIndU64(addressRegisterIndex, resultRegisterIndex, immediate);
+      loadOps.loadIndU64(resultRegisterIndex, addressRegisterIndex, immediate);
 
       assert.deepStrictEqual(registers.getU64(resultRegisterIndex), expectedValue);
       assert.deepStrictEqual(registers.getI64(resultRegisterIndex), expectedValue);
@@ -336,7 +336,7 @@ describe("LoadOps", () => {
       const expectedSignedValue = -1n;
       const expectedUnsignedValue = 2n ** 64n - 1n;
 
-      loadOps.loadIndU64(addressRegisterIndex, resultRegisterIndex, immediate);
+      loadOps.loadIndU64(resultRegisterIndex, addressRegisterIndex, immediate);
 
       assert.deepStrictEqual(registers.getU64(resultRegisterIndex), expectedUnsignedValue);
       assert.deepStrictEqual(registers.getI64(resultRegisterIndex), expectedSignedValue);

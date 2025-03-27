@@ -226,7 +226,7 @@ describe("StoreOps", () => {
       const { storeOps, valueRegisterIndex, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
         prepareStoreIndData(valueToStore, 1, addressRegisterValue, addressImmediateValue);
 
-      storeOps.storeIndU8(addressRegisterIndex, valueRegisterIndex, addressImmediate);
+      storeOps.storeIndU8(valueRegisterIndex, addressRegisterIndex, addressImmediate);
 
       const page = memory.getPageDump(getPageNumber(address));
       assert.deepStrictEqual(page, expectedPage);
@@ -239,7 +239,7 @@ describe("StoreOps", () => {
       const { storeOps, valueRegisterIndex, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
         prepareStoreIndData(valueToStore, 2, addressRegisterValue, addressImmediateValue);
 
-      storeOps.storeIndU16(addressRegisterIndex, valueRegisterIndex, addressImmediate);
+      storeOps.storeIndU16(valueRegisterIndex, addressRegisterIndex, addressImmediate);
 
       const page = memory.getPageDump(getPageNumber(address));
       assert.deepStrictEqual(page, expectedPage);
@@ -252,7 +252,7 @@ describe("StoreOps", () => {
       const { storeOps, valueRegisterIndex, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
         prepareStoreIndData(valueToStore, 4, addressRegisterValue, addressImmediateValue);
 
-      storeOps.storeIndU32(addressRegisterIndex, valueRegisterIndex, addressImmediate);
+      storeOps.storeIndU32(valueRegisterIndex, addressRegisterIndex, addressImmediate);
 
       const page = memory.getPageDump(getPageNumber(address));
       assert.deepStrictEqual(page, expectedPage);
@@ -265,7 +265,7 @@ describe("StoreOps", () => {
       const { storeOps, valueRegisterIndex, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
         prepareStoreIndData(valueToStore, 8, addressRegisterValue, addressImmediateValue);
 
-      storeOps.storeIndU64(addressRegisterIndex, valueRegisterIndex, addressImmediate);
+      storeOps.storeIndU64(valueRegisterIndex, addressRegisterIndex, addressImmediate);
 
       const page = memory.getPageDump(getPageNumber(address));
       assert.deepStrictEqual(page, expectedPage);

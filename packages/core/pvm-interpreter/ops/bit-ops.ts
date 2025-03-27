@@ -30,11 +30,11 @@ export class BitOps {
   }
 
   andInv(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.setU64(resultIndex, ~this.regs.getU64(firstIndex) & this.regs.getU64(secondIndex));
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) & ~this.regs.getU64(secondIndex));
   }
 
   orInv(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.setU64(resultIndex, ~this.regs.getU64(firstIndex) | this.regs.getU64(secondIndex));
+    this.regs.setU64(resultIndex, this.regs.getU64(firstIndex) | ~this.regs.getU64(secondIndex));
   }
 
   xnor(firstIndex: number, secondIndex: number, resultIndex: number) {

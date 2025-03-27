@@ -72,26 +72,26 @@ export class BitRotationOps {
   }
 
   rotL64(firstIndex: number, secondIndex: number, resultIndex: number) {
-    const shift = this.regs.getU32(firstIndex);
-    const value = this.regs.getU64(secondIndex);
+    const value = this.regs.getU64(firstIndex);
+    const shift = this.regs.getU32(secondIndex);
     this.regs.setU64(resultIndex, this.rotate64Left(value, shift));
   }
 
   rotL32(firstIndex: number, secondIndex: number, resultIndex: number) {
-    const shift = this.regs.getU32(firstIndex);
-    const value = this.regs.getU32(secondIndex);
+    const value = this.regs.getU32(firstIndex);
+    const shift = this.regs.getU32(secondIndex);
     this.regs.setU32(resultIndex, this.rotate32Left(value, shift));
   }
 
   rotR64(firstIndex: number, secondIndex: number, resultIndex: number) {
-    const shift = this.regs.getU32(firstIndex);
-    const value = this.regs.getU64(secondIndex);
+    const value = this.regs.getU64(firstIndex);
+    const shift = this.regs.getU32(secondIndex);
     this.regs.setU64(resultIndex, this.rotate64Right(value, shift));
   }
 
   rotR32(firstIndex: number, secondIndex: number, resultIndex: number) {
-    const shift = this.regs.getU32(firstIndex);
-    const value = this.regs.getU32(secondIndex);
+    const value = this.regs.getU32(firstIndex);
+    const shift = this.regs.getU32(secondIndex);
     this.regs.setU32(resultIndex, this.rotate32Right(value, shift));
   }
 }
