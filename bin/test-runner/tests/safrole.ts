@@ -7,17 +7,19 @@ import {
   type Ed25519Key,
   type EntropyHash,
   type TimeSlot,
+  tryAsPerEpochBlock,
   tryAsPerValidator,
   tryAsTimeSlot,
 } from "@typeberry/block";
 import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { FixedSizeArray, SortedSet } from "@typeberry/collections";
+import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Safrole } from "@typeberry/safrole";
-import { type Input, type OkResult, SafroleErrorCode } from "@typeberry/safrole/safrole";
+import { type Input, type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole";
 import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
+import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
 import { Result, deepEqual } from "@typeberry/utils";
 import { commonFromJson, getChainSpec } from "./common-types";
 namespace safroleFromJson {
@@ -42,6 +44,24 @@ export class TicketsOrKeys {
 
   keys?: BandersnatchKey[];
   tickets?: Ticket[];
+
+  static toSafroleSealingKeys(data: TicketsOrKeys, chainSpec: ChainSpec): SafroleSealingKeys {
+    if (data.keys !== undefined) {
+      return {
+        kind: SafroleSealingKeysKind.Keys,
+        keys: tryAsPerEpochBlock(data.keys, chainSpec),
+      };
+    }
+
+    if (data.tickets !== undefined) {
+      return {
+        kind: SafroleSealingKeysKind.Tickets,
+        tickets: tryAsPerEpochBlock(data.tickets, chainSpec),
+      };
+    }
+
+    throw new Error("Neither tickets nor keys are defined!");
+  }
 }
 
 export enum TestErrorCode {
@@ -94,7 +114,7 @@ class JsonState {
   // posterior offenders sequence
   post_offenders!: Ed25519Key[];
 
-  static toSafroleState(state: JsonState, chainSpec: ChainSpec) {
+  static toSafroleState(state: JsonState, chainSpec: ChainSpec): SafroleState {
     return {
       timeslot: state.tau,
       entropy: FixedSizeArray.new(state.eta, ENTROPY_ENTRIES),
@@ -102,8 +122,8 @@ class JsonState {
       currentValidatorData: tryAsPerValidator(state.kappa, chainSpec),
       nextValidatorData: tryAsPerValidator(state.gamma_k, chainSpec),
       designatedValidatorData: tryAsPerValidator(state.iota, chainSpec),
-      ticketsAccumulator: state.gamma_a,
-      sealingKeySeries: state.gamma_s,
+      ticketsAccumulator: asKnownSize(state.gamma_a),
+      sealingKeySeries: TicketsOrKeys.toSafroleSealingKeys(state.gamma_s, chainSpec),
       epochRoot: state.gamma_z.asOpaque(),
       punishSet: SortedSet.fromSortedArray(hashComparator, state.post_offenders),
     };

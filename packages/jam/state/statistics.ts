@@ -1,7 +1,5 @@
-import { type PerValidator, tryAsPerValidator } from "@typeberry/block";
-import { withContext } from "@typeberry/block/context";
+import { type PerValidator, codecPerValidator } from "@typeberry/block";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { EST_VALIDATORS } from "@typeberry/config";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 
 /**
@@ -22,7 +20,8 @@ export class ActivityRecord {
   static fromCodec({ blocks, tickets, preImages, preImagesSize, guarantees, assurances }: CodecRecord<ActivityRecord>) {
     return new ActivityRecord(blocks, tickets, preImages, preImagesSize, guarantees, assurances);
   }
-  constructor(
+
+  private constructor(
     /** The number of blocks produced by the validator. */
     public blocks: U32,
     /** The number of tickets introduced by the validator. */
@@ -43,24 +42,11 @@ export class ActivityRecord {
   }
 }
 
-const activityRecordPerValidatorCodec = codec.select<ActivityData["current"]>(
-  {
-    name: "ActivityData.perValidator",
-    sizeHint: { bytes: EST_VALIDATORS * ActivityRecord.Codec.sizeHint.bytes, isExact: false },
-  },
-  withContext("ActivityData.perValidator", (context) => {
-    return codec.sequenceFixLen(ActivityRecord.Codec, context.validatorsCount).convert(
-      (i) => i,
-      (o) => tryAsPerValidator(o, context),
-    );
-  }),
-);
-
 /** `pi`: Previous and current statistics of each validator. */
 export class ActivityData {
   static Codec = codec.Class(ActivityData, {
-    current: activityRecordPerValidatorCodec,
-    previous: activityRecordPerValidatorCodec,
+    current: codecPerValidator(ActivityRecord.Codec),
+    previous: codecPerValidator(ActivityRecord.Codec),
   });
 
   static fromCodec(v: CodecRecord<ActivityData>) {

@@ -1,5 +1,6 @@
 import type { ServiceId } from "@typeberry/block";
-import { Encoder } from "@typeberry/codec";
+import { Encoder, codec } from "@typeberry/codec";
+import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import {
   type Memory,
@@ -7,7 +8,7 @@ import {
   type Registers,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls/host-call-handler";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
+import { type GasCounter, codecUnsignedGas, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { LegacyHostCallResult } from "./results";
@@ -56,10 +57,36 @@ export class Info implements HostCallHandler {
       return;
     }
 
-    const encodedInfo = Encoder.encodeObject(ServiceAccountInfo.Codec, accountInfo);
+    const encodedInfo = Encoder.encodeObject(codecServiceAccountInfoWithThresholdBalance, {
+      ...accountInfo,
+      thresholdBalance: ServiceAccountInfo.calculateThresholdBalance(
+        accountInfo.storageUtilisationCount,
+        accountInfo.storageUtilisationBytes,
+      ),
+    });
     const writeOk = memory.storeFrom(outputStart, encodedInfo.raw);
 
     regs.setU32(IN_OUT_REG, writeOk !== null ? LegacyHostCallResult.OOB : LegacyHostCallResult.OK);
     return;
   }
 }
+
+/**
+ * Service account details with threshold balance.
+ *
+ * Used exclusively by `info` host call.
+ *
+ * https://graypaper.fluffylabs.dev/#/85129da/307902307902?v=0.6.3
+ */
+export const codecServiceAccountInfoWithThresholdBalance = codec.object(
+  {
+    codeHash: codec.bytes(HASH_SIZE),
+    balance: codec.u64,
+    thresholdBalance: codec.u64,
+    accumulateMinGas: codecUnsignedGas,
+    onTransferMinGas: codecUnsignedGas,
+    storageUtilisationBytes: codec.u64,
+    storageUtilisationCount: codec.u32,
+  },
+  "ServiceAccountInfoWithThresholdBalance",
+);

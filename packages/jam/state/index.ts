@@ -2,6 +2,7 @@ export * from "./assurances";
 export * from "./block-state";
 export * from "./common";
 export * from "./disputes";
+export * from "./privileged-services";
 export * from "./service";
 export * from "./state";
 export * from "./statistics";
