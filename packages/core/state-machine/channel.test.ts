@@ -126,8 +126,8 @@ describe("MessageChannelStateMachine", () => {
     // then
     assert.strictEqual(machineB.currentState(), stateB);
     assert.strictEqual(stateB.getData(), "abc");
-    assert.ok(!result.initial);
-    assert.ok(result.final);
+    assert.ok(result.initial === false);
+    assert.ok(result.final === true);
   });
 
   it("should respond to a request", async (t) => {

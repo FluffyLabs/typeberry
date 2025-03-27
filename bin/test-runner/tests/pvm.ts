@@ -9,24 +9,8 @@ import { getPageNumber } from "@typeberry/pvm-interpreter/memory/memory-utils";
 import { type PageNumber, tryAsPageNumber } from "@typeberry/pvm-interpreter/memory/pages/page-utils";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { Status } from "@typeberry/pvm-interpreter/status";
+import { fromJson } from "./codec/common";
 
-namespace fromJson {
-  export const uint8Array = json.fromAny((v) => {
-    if (Array.isArray(v)) {
-      return new Uint8Array(v);
-    }
-
-    throw new Error(`Expected an array, got ${typeof v} instead.`);
-  });
-
-  export const bigUint64Array = json.fromAny((v) => {
-    if (Array.isArray(v)) {
-      return new BigUint64Array(v.map((x) => BigInt(x)));
-    }
-
-    throw new Error(`Expected an array, got ${typeof v} instead.`);
-  });
-}
 class MemoryChunkItem {
   static fromJson: FromJson<MemoryChunkItem> = {
     address: "number",
@@ -171,7 +155,8 @@ export async function runPvmTest(testContent: PvmTest) {
   const pageThatShouldBeEmpty = Array.from(dirtyPages).filter((pageNumber) => !checkedPages.has(pageNumber));
 
   for (const pageNumber of pageThatShouldBeEmpty) {
-    const max = Math.max(...(pvm.getMemoryPage(pageNumber) || []));
+    const memoryPage = pvm.getMemoryPage(pageNumber);
+    const max = memoryPage !== null ? Math.max(...memoryPage) : 0;
     assert.deepStrictEqual(max, 0);
   }
 }

@@ -34,7 +34,13 @@
       },
       "suspicious": {
         "noConsoleLog": "error",
-        "noEvolvingTypes": "error"
+        "noEvolvingTypes": "error",
+        "noDoubleEquals": {
+          "level": "error",
+          "options": {
+            "ignoreNull": false
+          }
+        }
       },
       "nursery": {
         "noSubstr": "error"

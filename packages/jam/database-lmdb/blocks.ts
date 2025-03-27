@@ -44,7 +44,6 @@ export class LmdbBlocks implements BlocksDb {
     const a = this.headers.put(block.hash.raw, header.raw);
     const b = this.extrinsics.put(block.hash.raw, extrinsic.raw);
     await Promise.all([a, b]);
-    return;
   }
 
   async setBestHeaderHash(hash: HeaderHash): Promise<void> {
@@ -53,12 +52,12 @@ export class LmdbBlocks implements BlocksDb {
 
   getBestHeaderHash(): HeaderHash {
     const data = this.root.get(BEST_BLOCK_KEY);
-    return (data ? Bytes.fromBlob(data, HASH_SIZE) : Bytes.zero(HASH_SIZE)).asOpaque();
+    return (data !== undefined ? Bytes.fromBlob(data, HASH_SIZE) : Bytes.zero(HASH_SIZE)).asOpaque();
   }
 
   getHeader(hash: HeaderHash): HeaderView | null {
     const data = this.headers.get(hash.raw);
-    if (!data) {
+    if (data === undefined) {
       return null;
     }
 
@@ -67,7 +66,7 @@ export class LmdbBlocks implements BlocksDb {
 
   getExtrinsic(hash: HeaderHash): ExtrinsicView | null {
     const data = this.extrinsics.get(hash.raw);
-    if (!data) {
+    if (data === undefined) {
       return null;
     }
     return Decoder.decodeObject(Extrinsic.Codec.View, data, this.chainSpec);

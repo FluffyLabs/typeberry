@@ -37,6 +37,20 @@ export namespace json {
     return ["array", from];
   }
 
+  /** Parse an object record with the given type. */
+  export function record<TInto>(from: FromJson<TInto>): FromJson<Record<string, TInto>> {
+    return fromAny<Record<string, TInto>>((inJson, context) => {
+      if (typeof inJson !== "object" || inJson === null) {
+        throw new Error("Expected object record for parsing");
+      }
+      const result: Record<string, TInto> = {};
+      for (const [key, value] of Object.entries(inJson)) {
+        result[key] = parseFromJson(value, from, `${context}.${key}`);
+      }
+      return result;
+    });
+  }
+
   /** Parse an object and create a class instance of given type using `builder` function. */
   export function object<TFrom, TInto = TFrom>(
     from: FromJson<TFrom>,

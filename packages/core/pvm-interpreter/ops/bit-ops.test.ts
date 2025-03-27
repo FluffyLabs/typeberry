@@ -100,8 +100,8 @@ describe("BitOps", () => {
   });
 
   it("andInv", () => {
-    const firstValue = 0b101n;
-    const secondValue = 0b011n;
+    const firstValue = 0b011n;
+    const secondValue = 0b101n;
     const resultValue = 0b010n;
     const { bitOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -114,8 +114,8 @@ describe("BitOps", () => {
   });
 
   it("orInv", () => {
-    const firstValue = 0b01n;
-    const secondValue = 0b10n;
+    const firstValue = 0b10n;
+    const secondValue = 0b01n;
     const resultValue = 0xff_ff_ff_ff_ff_ff_ff_fen;
     const { bitOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,

@@ -29,7 +29,7 @@ export function findLevel(options: Options, moduleName: string): Level {
   let parentModuleName = moduleName;
   for (;;) {
     const level = options.modules.get(parentModuleName);
-    if (level) {
+    if (level !== undefined) {
       return level;
     }
 
@@ -83,7 +83,7 @@ export function parseLoggerOptions(input: string, defaultLevel: Level, workingDi
 function parseLevel(lvl: string): Level {
   const typedLvl: keyof typeof Level = lvl === "debug" ? "LOG" : (lvl.toUpperCase() as keyof typeof Level);
 
-  if (!Level[typedLvl]) {
+  if (Level[typedLvl] === undefined) {
     throw new Error(`Unknown logging level: "${lvl}". Use one of "trace", "debug", "log","info", "warn", "error"`);
   }
 

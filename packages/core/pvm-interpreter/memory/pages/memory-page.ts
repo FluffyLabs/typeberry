@@ -1,5 +1,4 @@
 import type { PageFault } from "../errors";
-// import { PAGE_SIZE } from "../memory-consts";
 import type { MemoryIndex } from "../memory-index";
 import { getStartPageIndexFromPageNumber } from "../memory-utils";
 import type { PageIndex, PageNumber } from "./page-utils";

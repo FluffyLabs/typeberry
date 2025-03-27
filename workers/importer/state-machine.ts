@@ -4,8 +4,14 @@ import { Config } from "@typeberry/config";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
 import type { WithHash } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
-import { Listener, type TypedChannel } from "@typeberry/state-machine";
-import { type RespondAndTransitionTo, State, StateMachine, type TransitionTo } from "@typeberry/state-machine";
+import {
+  Listener,
+  type RespondAndTransitionTo,
+  State,
+  StateMachine,
+  type TransitionTo,
+  type TypedChannel,
+} from "@typeberry/state-machine";
 
 export type ImporterInit = WorkerInit<ImporterReady>;
 export type ImporterStates = ImporterInit | ImporterReady | Finished;
@@ -70,7 +76,7 @@ export class ImporterReady extends State<"ready(importer)", Finished, Config> {
   }
 
   getConfig(): Config {
-    if (!this.data) {
+    if (this.data === null) {
       throw new Error("Did not receive chain spec config!");
     }
 

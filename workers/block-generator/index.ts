@@ -25,10 +25,10 @@ if (!isMainThread) {
     .then((channel) => main(channel))
     .catch((e) => {
       logger.error(e);
-      if (e.stack) {
+      if (e.stack !== undefined) {
         logger.error(e.stack);
       }
-      if (e.cause) {
+      if (e.cause !== undefined) {
         logger.error(e.cause);
       }
     });
@@ -59,7 +59,7 @@ export async function main(channel: MessageChannelStateMachine<GeneratorInit, Ge
 
   logger.info("Block Generator finished. Closing channel.");
 
-  // Close the comms to gracefuly close the app.
+  // Close the comms to gracefully close the app.
   finished.currentState().close(channel);
 }
 

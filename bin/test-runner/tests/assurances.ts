@@ -85,11 +85,11 @@ class Output {
   err?: AssurancesErrorCode;
 
   static toAssurancesTransitionResult(out: Output): Result<WorkReport[], AssurancesError> {
-    if (out.ok) {
+    if (out.ok !== undefined) {
       return Result.ok(out.ok.reported);
     }
 
-    if (out.err) {
+    if (out.err !== undefined) {
       switch (out.err) {
         case AssurancesErrorCode.BAD_ATTESTATION_PARENT:
           return Result.error(AssurancesError.InvalidAnchor);

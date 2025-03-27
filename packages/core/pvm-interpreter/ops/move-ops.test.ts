@@ -47,9 +47,9 @@ describe("MoveOps", () => {
   });
 
   it("cmovIfZero (condition satisfied)", () => {
-    const firstValue = 0n;
-    const secondValue = 5n;
-    const resultValue = secondValue;
+    const firstValue = 5n;
+    const secondValue = 0n;
+    const resultValue = firstValue;
     const { moveOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
       secondValue,
@@ -61,8 +61,8 @@ describe("MoveOps", () => {
   });
 
   it("cmovIfZero (condition not satisfied)", () => {
-    const firstValue = 3n;
-    const secondValue = 5n;
+    const firstValue = 5n;
+    const secondValue = 3n;
     const resultValue = 0n;
     const { moveOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -75,8 +75,8 @@ describe("MoveOps", () => {
   });
 
   it("cmovIfNotZero (condition satisfied)", () => {
-    const firstValue = 3n;
-    const secondValue = 5n;
+    const firstValue = 5n;
+    const secondValue = 3n;
     const resultValue = 5n;
     const { moveOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -89,8 +89,8 @@ describe("MoveOps", () => {
   });
 
   it("cmovIfNotZero (condition not satisfied)", () => {
-    const firstValue = 0n;
-    const secondValue = 5n;
+    const firstValue = 5n;
+    const secondValue = 0n;
     const resultValue = 0n;
     const { moveOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,

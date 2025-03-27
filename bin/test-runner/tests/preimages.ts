@@ -146,5 +146,5 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Account {
 }
 
 function testOutputToResult(testOutput: Output) {
-  return testOutput.err ? Result.error(testOutput.err) : Result.ok(testOutput.ok);
+  return testOutput.err !== undefined ? Result.error(testOutput.err) : Result.ok(testOutput.ok);
 }

@@ -29,7 +29,7 @@ export class State {
     const key = blake2b.hashString(`serviceCodeHash:${serviceId}`);
     // TODO [ToDr] here we need to make sure that the key is part of the root!
     const blob = this.db.get(key.asOpaque());
-    if (!blob) {
+    if (blob === null) {
       return null;
     }
     const hash = blob.raw.subarray(0, HASH_SIZE);
@@ -97,7 +97,7 @@ export class InMemoryKvdb implements KeyValueDatabase<InMemoryTransaction> {
 
   commit(tx: InMemoryTransaction): Promise<StateRootHash> {
     for (const [key, value] of tx.writes) {
-      if (value) {
+      if (value !== null) {
         this.trie.set(key, value.data, value.hash);
         this.flat.set(key, value);
       } else {
