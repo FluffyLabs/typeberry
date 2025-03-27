@@ -17,14 +17,14 @@ export class MoveOps {
   }
 
   cmovIfZero(firstIndex: number, secondIndex: number, resultIndex: number) {
-    if (this.regs.getU64(firstIndex) === 0n) {
-      this.regs.setU64(resultIndex, this.regs.getU64(secondIndex));
+    if (this.regs.getU64(secondIndex) === 0n) {
+      this.regs.setU64(resultIndex, this.regs.getU64(firstIndex));
     }
   }
 
   cmovIfNotZero(firstIndex: number, secondIndex: number, resultIndex: number) {
-    if (this.regs.getU64(firstIndex) !== 0n) {
-      this.regs.setU64(resultIndex, this.regs.getU64(secondIndex));
+    if (this.regs.getU64(secondIndex) !== 0n) {
+      this.regs.setU64(resultIndex, this.regs.getU64(firstIndex));
     }
   }
 

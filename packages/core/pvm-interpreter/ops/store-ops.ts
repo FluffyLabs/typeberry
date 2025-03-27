@@ -31,23 +31,23 @@ export class StoreOps {
   }
 
   storeIndU8(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflowU32(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
-    this.store(address, this.regs.getBytesAsLittleEndian(secondRegisterIndex, 1));
+    const address = addWithOverflowU32(this.regs.getU32(secondRegisterIndex), immediateDecoder.getUnsigned());
+    this.store(address, this.regs.getBytesAsLittleEndian(firstRegisterIndex, 1));
   }
 
   storeIndU16(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflowU32(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
-    this.store(address, this.regs.getBytesAsLittleEndian(secondRegisterIndex, 2));
+    const address = addWithOverflowU32(this.regs.getU32(secondRegisterIndex), immediateDecoder.getUnsigned());
+    this.store(address, this.regs.getBytesAsLittleEndian(firstRegisterIndex, 2));
   }
 
   storeIndU32(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflowU32(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
-    this.store(address, this.regs.getBytesAsLittleEndian(secondRegisterIndex, 4));
+    const address = addWithOverflowU32(this.regs.getU32(secondRegisterIndex), immediateDecoder.getUnsigned());
+    this.store(address, this.regs.getBytesAsLittleEndian(firstRegisterIndex, 4));
   }
 
   storeIndU64(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflowU32(this.regs.getU32(firstRegisterIndex), immediateDecoder.getUnsigned());
-    this.store(address, this.regs.getBytesAsLittleEndian(secondRegisterIndex, 8));
+    const address = addWithOverflowU32(this.regs.getU32(secondRegisterIndex), immediateDecoder.getUnsigned());
+    this.store(address, this.regs.getBytesAsLittleEndian(firstRegisterIndex, 8));
   }
 
   storeImmediateU8(address: number, immediateDecoder: ImmediateDecoder) {

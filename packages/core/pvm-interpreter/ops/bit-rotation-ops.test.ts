@@ -64,8 +64,8 @@ describe("BitRotationOps", () => {
         const shift = 28n;
         const expectedValue = 0x8_9a_bc_de_f0_12_34_56_7n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotL64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -78,8 +78,8 @@ describe("BitRotationOps", () => {
         const shift = 28n;
         const expectedValue = 0x765432110edcba98n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotL64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -92,8 +92,8 @@ describe("BitRotationOps", () => {
         const shift = 0n;
         const expectedValue = 0x12_34_56_78_9a_bc_de_f0n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotL64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -106,8 +106,8 @@ describe("BitRotationOps", () => {
         const shift = 64n;
         const expectedValue = 0x12_34_56_78_9a_bc_de_f0n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotL64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -120,8 +120,8 @@ describe("BitRotationOps", () => {
         const shift = 128n;
         const expectedValue = 0x12_34_56_78_9a_bc_de_f0n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotL64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -136,8 +136,8 @@ describe("BitRotationOps", () => {
         const shift = 12n;
         const expectedValue = 0x4_56_78_12_3n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotL32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -150,8 +150,8 @@ describe("BitRotationOps", () => {
         const shift = 31n;
         const expectedValue = 0x3f_ff_ff_ffn;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotL32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -164,8 +164,8 @@ describe("BitRotationOps", () => {
         const shift = 16n;
         const expectedValue = 0xffffffffa988edcbn;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotL32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -178,8 +178,8 @@ describe("BitRotationOps", () => {
         const shift = 0n;
         const expectedValue = 0xff_ff_ff_ff_9a_bc_de_f0n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotL32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -192,8 +192,8 @@ describe("BitRotationOps", () => {
         const shift = 32n;
         const expectedValue = 0xff_ff_ff_ff_9a_bc_de_f0n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotL32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -206,8 +206,8 @@ describe("BitRotationOps", () => {
         const shift = 128n;
         const expectedValue = 0xff_ff_ff_ff_9a_bc_de_f0n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotL32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -224,8 +224,8 @@ describe("BitRotationOps", () => {
         const shift = 28n;
         const expectedValue = 0xa_bc_de_f0_12_34_56_78_9n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotR64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -238,8 +238,8 @@ describe("BitRotationOps", () => {
         const shift = 28n;
         const expectedValue = 0x5432110edcba9876n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotR64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -252,8 +252,8 @@ describe("BitRotationOps", () => {
         const shift = 0n;
         const expectedValue = 0x12_34_56_78_9a_bc_de_f0n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotR64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -266,8 +266,8 @@ describe("BitRotationOps", () => {
         const shift = 64n;
         const expectedValue = 0x12_34_56_78_9a_bc_de_f0n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotR64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -280,8 +280,8 @@ describe("BitRotationOps", () => {
         const shift = 128n;
         const expectedValue = 0x12_34_56_78_9a_bc_de_f0n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotR64(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -296,8 +296,8 @@ describe("BitRotationOps", () => {
         const shift = 12n;
         const expectedValue = 0x67_81_23_45n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotR32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -310,8 +310,8 @@ describe("BitRotationOps", () => {
         const shift = 31n;
         const expectedValue = 0xfffffffffffffffcn;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotR32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -324,8 +324,8 @@ describe("BitRotationOps", () => {
         const shift = 16n;
         const expectedValue = 0xffffffffa988edcbn;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotR32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -338,8 +338,8 @@ describe("BitRotationOps", () => {
         const shift = 0n;
         const expectedValue = 0xff_ff_ff_ff_9a_bc_de_f0n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotR32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -352,8 +352,8 @@ describe("BitRotationOps", () => {
         const shift = 32n;
         const expectedValue = 0xff_ff_ff_ff_9a_bc_de_f0n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotR32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
@@ -366,8 +366,8 @@ describe("BitRotationOps", () => {
         const shift = 128n;
         const expectedValue = 0xff_ff_ff_ff_9a_bc_de_f0n;
         const { bitRotationOps, regs, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
-          shift,
           value,
+          shift,
         );
 
         bitRotationOps.rotR32(firstRegisterIndex, secondRegisterIndex, resultRegisterIndex);
