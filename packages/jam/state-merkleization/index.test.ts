@@ -23,14 +23,18 @@ describe("State Serialization", () => {
   it("should serialize load and serialize the test state", () => {
     const state = loadState(TEST_STATE);
     const serialized = serializeState(state, tinyChainSpec);
-    outer: for (const [actualKey, actualValue] of serialized) {
+    for (const [actualKey, actualValue] of serialized) {
+      let foundKey = false;
       for (const [expectedKey, expectedValue] of TEST_STATE) {
         if (actualKey.isEqualTo(Bytes.parseBytes(expectedKey, HASH_SIZE))) {
           assert.strictEqual(actualValue.toString(), expectedValue);
-          continue outer;
+          foundKey = true;
+          break;
         }
       }
-      throw new Error(`Unexpected key: ${actualKey} not found in the test state!`);
+      if (!foundKey) {
+        throw new Error(`Unexpected key: ${actualKey} not found in the test state!`);
+      }
     }
   });
 });
