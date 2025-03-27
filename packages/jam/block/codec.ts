@@ -45,9 +45,12 @@ export function codecWithContext<T, V>(chooser: (ctx: ChainSpec) => Descriptor<T
 /** Codec for a known-size array with length validation. */
 export const codecKnownSizeArray = <F extends string, T, V>(
   val: Descriptor<T, V>,
-  options: codec.SequenceVarLenOptions,
+  options: codec.SequenceVarLenOptions | { fixedLength: number },
   _id?: F,
 ): Descriptor<KnownSizeArray<T, F>, SequenceView<T, V>> => {
+  if ("fixedLength" in options) {
+    return codec.sequenceFixLen(val, options.fixedLength).asOpaque();
+  }
   return codec.sequenceVarLen(val, options).asOpaque();
 };
 
@@ -74,11 +77,15 @@ export const codecFixedSizeArray = <N extends number, T, V>(
   );
 };
 
-/** Codec for a hash-dictionary. */
+export type CodecHashSetOptions = {
+  typicalLength?: number;
+};
+
 export type CodecHashDictionaryOptions<T> = {
   typicalLength?: number;
   compare?: Comparator<T>;
 };
+/** Codec for a hash-dictionary. */
 export const codecHashDictionary = <K extends OpaqueHash, T>(
   value: Descriptor<T>,
   extractKey: (val: T) => K,

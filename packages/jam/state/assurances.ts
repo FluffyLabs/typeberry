@@ -5,7 +5,7 @@ import { type OpaqueHash, WithHash, blake2b } from "@typeberry/hash";
 import { WithDebug } from "@typeberry/utils";
 
 const codecWithHash = <T, V, H extends OpaqueHash>(val: Descriptor<T, V>): Descriptor<WithHash<H, T>, V> =>
-  new Descriptor(
+  Descriptor.withView(
     val.name,
     val.sizeHint,
     (e, elem) => val.encode(e, elem.data),

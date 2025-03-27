@@ -307,7 +307,7 @@ export namespace codec {
   );
 
   /** Just dump the entire blob as-is. */
-  export const dump = descriptor<BytesBlob>(
+  export const dump = Descriptor.new<BytesBlob>(
     "Dump",
     { bytes: TYPICAL_SEQUENCE_LENGTH, isExact: false },
     (e, v) => e.bytes(Bytes.fromBlob(v.raw, v.raw.length)),

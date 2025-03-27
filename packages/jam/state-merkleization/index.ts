@@ -15,7 +15,7 @@ import { type StateCodec, serialize } from "./serialize";
 export type SerializedState = HashDictionary<StateKey, BytesBlob>;
 
 export function serializeState(state: State, spec: ChainSpec): SerializedState {
-  const map = new HashDictionary<StateKey, BytesBlob>();
+  const map = HashDictionary.new<StateKey, BytesBlob>();
   function doSerialize<T>(codec: StateCodec<T>) {
     map.set(codec.key, Encoder.encodeObject(codec.Codec, codec.extract(state), spec));
   }
@@ -37,7 +37,7 @@ export function serializeState(state: State, spec: ChainSpec): SerializedState {
   doSerialize(serialize.recentlyAccumulated); // C(15)
 
   // services
-  for (const service of state.services) {
+  for (const service of state.services.values()) {
     const serviceId = service.id;
     // data
     const { key, Codec } = serialize.serviceData(serviceId);

@@ -1,10 +1,10 @@
-import { type Descriptor, type SequenceView, codec } from "@typeberry/codec";
+import type { Descriptor, SequenceView } from "@typeberry/codec";
 import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import { type U16, type U32, type U64, tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { type Opaque, asOpaqueType, check } from "@typeberry/utils";
-import { codecWithContext } from "./codec";
+import { codecKnownSizeArray, codecWithContext } from "./codec";
 
 /**
  * Time slot index.
@@ -62,7 +62,9 @@ export function tryAsPerValidator<T>(array: T[], spec: ChainSpec): PerValidator<
 }
 export const codecPerValidator = <T, V>(val: Descriptor<T, V>): Descriptor<PerValidator<T>, SequenceView<T, V>> =>
   codecWithContext((context) => {
-    return codec.sequenceFixLen(val, context.validatorsCount).asOpaque();
+    return codecKnownSizeArray(val, {
+      fixedLength: context.validatorsCount,
+    });
   });
 
 /** One entry of `T` per one block in epoch. */
@@ -76,5 +78,5 @@ export function tryAsPerEpochBlock<T>(array: T[], spec: ChainSpec): PerEpochBloc
 }
 export const codecPerEpochBlock = <T, V>(val: Descriptor<T, V>): Descriptor<PerEpochBlock<T>, SequenceView<T, V>> =>
   codecWithContext((context) => {
-    return codec.sequenceFixLen(val, context.epochLength).asOpaque();
+    return codecKnownSizeArray(val, { fixedLength: context.epochLength });
   });
