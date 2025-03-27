@@ -41,7 +41,7 @@ export class GuaranteedWorkReport extends WithDebug {
   constructor(
     public readonly report: WorkReport,
     public readonly slot: TimeSlot,
-    public readonly signatures: KnownSizeArray<Credential, "0..ValidatorsCount">,
+    public readonly signatures: KnownSizeArray<Credential, "[0..ValidatorsCount)">,
   ) {
     super();
   }

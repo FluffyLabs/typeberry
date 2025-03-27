@@ -37,7 +37,7 @@ export class NotYetAccumulatedReport extends WithDebug {
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/165800165800
      */
-    readonly unlocks: KnownSizeArray<WorkPackageHash, `0..${MAX_REPORT_DEPENDENCIES}`>,
+    readonly unlocks: KnownSizeArray<WorkPackageHash, `[0..${MAX_REPORT_DEPENDENCIES})`>,
   ) {
     super();
   }

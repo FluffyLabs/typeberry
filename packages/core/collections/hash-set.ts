@@ -10,9 +10,9 @@ export class HashSet<V extends OpaqueHash> {
 
   /** Create new set from given array of values. */
   static from<V extends OpaqueHash>(values: V[]): HashSet<V> {
-    const empty = HashSet.new<V>();
-    empty.insertAll(values);
-    return empty;
+    const newSet = HashSet.new<V>();
+    newSet.insertAll(values);
+    return newSet;
   }
 
   /** Create an empty set of hashes. */

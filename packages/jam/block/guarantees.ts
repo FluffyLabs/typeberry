@@ -78,7 +78,7 @@ export class ReportGuarantee extends WithDebug {
   }
 }
 
-export const GuaranteesExtrinsicBounds = "0..CoresCount";
+export const GuaranteesExtrinsicBounds = "[0..CoresCount)";
 /**
  * `E_G`: Series of guarantees, at most one for each core.
  *

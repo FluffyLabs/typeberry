@@ -65,7 +65,7 @@ export class Ticket extends WithDebug {
 export const MAX_NUMBER_OF_TICKETS = 16;
 export type MAX_NUMBER_OF_TICKETS = typeof MAX_NUMBER_OF_TICKETS;
 
-const TicketsExtrinsicBounds = `Size: 0..${MAX_NUMBER_OF_TICKETS}`;
+const TicketsExtrinsicBounds = `Size: [0..${MAX_NUMBER_OF_TICKETS})`;
 /**
  * A sequence of proofs of valid tickets.
  *
