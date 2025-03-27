@@ -59,10 +59,10 @@ export function verifyPostSignatureChecks(
       }
 
       // check minimal accumulation gas
-      if (result.gas < service.data.service.accumulateMinGas) {
+      if (result.gas < service.data.info.accumulateMinGas) {
         return Result.error(
           ReportsError.ServiceItemGasTooLow,
-          `Service (${result.serviceId}) gas is less than minimal. Got: ${result.gas}, expected at least: ${service.data.service.accumulateMinGas}`,
+          `Service (${result.serviceId}) gas is less than minimal. Got: ${result.gas}, expected at least: ${service.data.info.accumulateMinGas}`,
         );
       }
     }

@@ -43,8 +43,15 @@ class TestActivityRecord {
       guarantees: "number",
       assurances: "number",
     },
-    (ar) => {
-      return new ActivityRecord(ar.blocks, ar.tickets, ar.pre_images, ar.pre_images_size, ar.guarantees, ar.assurances);
+    ({ blocks, tickets, pre_images, pre_images_size, guarantees, assurances }) => {
+      return ActivityRecord.fromCodec({
+        blocks,
+        tickets,
+        preImages: pre_images,
+        preImagesSize: pre_images_size,
+        guarantees,
+        assurances,
+      });
     },
   );
 

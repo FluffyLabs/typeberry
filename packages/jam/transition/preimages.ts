@@ -1,10 +1,9 @@
 import type { ServiceId, TimeSlot } from "@typeberry/block";
 import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, codec } from "@typeberry/codec";
-import { type HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
-import { HASH_SIZE, blake2b } from "@typeberry/hash";
-import type { U32 } from "@typeberry/numbers";
+import type { HashDictionary } from "@typeberry/collections";
+import { blake2b } from "@typeberry/hash";
+import { type LookupHistoryItem, tryAsLookupHistorySlots } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 
 export type Account = {
@@ -29,46 +28,6 @@ export enum PreimagesErrorCode {
   PreimageUnneeded = "preimage_unneeded",
   PreimagesNotSortedUnique = "preimages_not_sorted_unique",
   AccountNotFound = "account_not_found",
-}
-
-const MAX_LOOKUP_HISTORY_SLOTS = 3;
-export type LookupHistorySlots = KnownSizeArray<TimeSlot, "0-3 timeslots">;
-export function tryAsLookupHistorySlots(items: TimeSlot[]): LookupHistorySlots {
-  const knownSize = asKnownSize(items) as LookupHistorySlots;
-  if (knownSize.length > MAX_LOOKUP_HISTORY_SLOTS) {
-    throw new Error("Lookup history items must contain 0-3 timeslots.");
-  }
-  return knownSize;
-}
-
-/** https://graypaper.fluffylabs.dev/#/5f542d7/115400115800 */
-export class LookupHistoryItem {
-  static Codec = codec.Class(LookupHistoryItem, {
-    hash: codec.bytes(HASH_SIZE).asOpaque(),
-    length: codec.u32,
-    slots: codec.sequenceVarLen(codec.u32).convert(
-      (x) => x,
-      (items) => tryAsLookupHistorySlots(items as TimeSlot[]),
-    ),
-  });
-
-  static fromCodec({ hash, length, slots }: CodecRecord<LookupHistoryItem>) {
-    return new LookupHistoryItem(hash, length, slots);
-  }
-
-  constructor(
-    public readonly hash: PreimageHash,
-    public readonly length: U32,
-    /**
-     * Preimage availability history as a sequence of time slots.
-     * See PreimageStatus and the following GP fragment for more details.
-     * https://graypaper.fluffylabs.dev/#/5f542d7/11780011a500 */
-    public slots: LookupHistorySlots,
-  ) {}
-
-  public isRequested(): boolean {
-    return this.slots.length === 0;
-  }
 }
 
 // TODO [SeKo] consider whether this module is the right place to remove expired preimages

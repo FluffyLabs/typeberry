@@ -1,4 +1,5 @@
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
+import { u32AsLeBytes } from "@typeberry/numbers";
 import { MAX_U64, tryAsU64, u64IntoParts } from "@typeberry/numbers";
 import type { Registers } from "@typeberry/pvm-host-calls/host-call-handler";
 import { check } from "@typeberry/utils";
@@ -27,9 +28,5 @@ export function getServiceId(regNumber: number, regs: Registers, currentServiceI
 
 export function writeServiceIdAsLeBytes(serviceId: ServiceId, destination: Uint8Array) {
   check(destination.length >= SERVICE_ID_BYTES, "Not enough space in the destination.");
-  let serviceIdBytes = serviceId as number;
-  for (let i = 0; i < SERVICE_ID_BYTES; i += 1) {
-    destination[i] = serviceIdBytes & 0xff;
-    serviceIdBytes >>>= 8;
-  }
+  destination.set(u32AsLeBytes(serviceId));
 }
