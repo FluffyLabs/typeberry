@@ -62,8 +62,8 @@ describe("math-utils", () => {
 
   describe("sub", () => {
     it("should subtract two numbers without overflow", () => {
-      const a = 5;
-      const b = 6;
+      const a = 6;
+      const b = 5;
       const expectedResult = 1;
 
       const result = subU32(a, b);
@@ -72,8 +72,8 @@ describe("math-utils", () => {
     });
 
     it("should subtract two numbers with overflow", () => {
-      const a = 6;
-      const b = 5;
+      const a = 5;
+      const b = 6;
       const expectedResult = MAX_VALUE;
 
       const result = subU32(a, b);
@@ -425,8 +425,8 @@ describe("math-utils", () => {
 
     describe("subU64", () => {
       it("2 - 5 === 2 ** 64 - 3", () => {
-        const value1 = 5n;
-        const value2 = 2n;
+        const value1 = 2n;
+        const value2 = 5n;
         const expectedResult = 2n ** 64n - 3n;
 
         const result = subU64(value1, value2);
@@ -435,8 +435,8 @@ describe("math-utils", () => {
       });
 
       it("5 - 2 === 3", () => {
-        const value1 = 2n;
-        const value2 = 5n;
+        const value1 = 5n;
+        const value2 = 2n;
         const expectedResult = 3n;
 
         const result = subU64(value1, value2);

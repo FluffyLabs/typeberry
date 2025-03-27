@@ -25,8 +25,8 @@ describe("ShiftOps", () => {
   }
 
   it("shiftLogicalLeft U32", () => {
-    const firstValue = 3n;
-    const secondValue = 0b0001n;
+    const firstValue = 0b0001n;
+    const secondValue = 3n;
     const resultValue = 0b1000n;
     const { regs, shiftOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -39,8 +39,8 @@ describe("ShiftOps", () => {
   });
 
   it("shiftLogicalLeft with arg overflow U32", () => {
-    const firstValue = 35n;
-    const secondValue = 0b0001n;
+    const firstValue = 0b0001n;
+    const secondValue = 35n;
     const resultValue = 0b1000n;
     const { regs, shiftOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -53,8 +53,8 @@ describe("ShiftOps", () => {
   });
 
   it("shiftLogicalLeft with result overflow U32", () => {
-    const firstValue = 3n;
-    const secondValue = 0xa0_00_00_00n;
+    const firstValue = 0xa0_00_00_00n;
+    const secondValue = 3n;
     const resultValue = 0n;
     const { regs, shiftOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -67,8 +67,8 @@ describe("ShiftOps", () => {
   });
 
   it("shiftLogicalLeft U64", () => {
-    const firstValue = 3n;
-    const secondValue = 0b0001n;
+    const firstValue = 0b0001n;
+    const secondValue = 3n;
     const resultValue = 0b1000n;
     const { regs, shiftOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -81,8 +81,8 @@ describe("ShiftOps", () => {
   });
 
   it("shiftLogicalLeft with arg overflow U64", () => {
-    const firstValue = 67n;
-    const secondValue = 0b0001n;
+    const firstValue = 0b0001n;
+    const secondValue = 67n;
     const resultValue = 0b1000n;
     const { regs, shiftOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -95,8 +95,8 @@ describe("ShiftOps", () => {
   });
 
   it("shiftLogicalLeft with result overflow U64", () => {
-    const firstValue = 35n;
-    const secondValue = 0xa0_00_00_00n;
+    const firstValue = 0xa0_00_00_00n;
+    const secondValue = 35n;
     const resultValue = 0n;
     const { regs, shiftOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -241,8 +241,8 @@ describe("ShiftOps", () => {
   });
 
   it("shiftLogicalRight U32", () => {
-    const firstValue = 3n;
-    const secondValue = 0b10000n;
+    const firstValue = 0b10000n;
+    const secondValue = 3n;
     const resultValue = 0b00010n;
     const { regs, shiftOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -255,8 +255,8 @@ describe("ShiftOps", () => {
   });
 
   it("shiftLogicalRight with arg overflow U32", () => {
-    const firstValue = 35n;
-    const secondValue = 0b10000n;
+    const firstValue = 0b10000n;
+    const secondValue = 35n;
     const resultValue = 0b00010n;
     const { regs, shiftOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -269,8 +269,8 @@ describe("ShiftOps", () => {
   });
 
   it("shiftLogicalRight U64", () => {
-    const firstValue = 3n;
-    const secondValue = 0b10000n;
+    const firstValue = 0b10000n;
+    const secondValue = 3n;
     const resultValue = 0b00010n;
     const { regs, shiftOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -283,8 +283,8 @@ describe("ShiftOps", () => {
   });
 
   it("shiftLogicalRight with arg overflow U64", () => {
-    const firstValue = 67n;
-    const secondValue = 0b10000n;
+    const firstValue = 0b10000n;
+    const secondValue = 67n;
     const resultValue = 0b00010n;
     const { regs, shiftOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -385,8 +385,8 @@ describe("ShiftOps", () => {
   });
 
   it("shiftArithmeticRight (positive number) U32", () => {
-    const firstValue = 3n;
-    const secondValue = 0b10000n;
+    const firstValue = 0b10000n;
+    const secondValue = 3n;
     const resultValue = 0b00010n;
     const { regs, shiftOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -399,8 +399,8 @@ describe("ShiftOps", () => {
   });
 
   it("shiftArithmeticRight (negative number) U32", () => {
-    const firstValue = 3n;
-    const secondValue = -8n;
+    const firstValue = -8n;
+    const secondValue = 3n;
     const resultValue = -1n;
     const { regs, shiftOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -413,8 +413,8 @@ describe("ShiftOps", () => {
   });
 
   it("shiftArithmeticRight with arg overflow U32", () => {
-    const firstValue = 35n;
-    const secondValue = 0b10000n;
+    const firstValue = 0b10000n;
+    const secondValue = 35n;
     const resultValue = 0b00010n;
     const { regs, shiftOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -427,8 +427,8 @@ describe("ShiftOps", () => {
   });
 
   it("shiftArithmeticRight (positive number) U64", () => {
-    const firstValue = 3n;
-    const secondValue = 0b10000n;
+    const firstValue = 0b10000n;
+    const secondValue = 3n;
     const resultValue = 0b00010n;
     const { regs, shiftOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -441,8 +441,8 @@ describe("ShiftOps", () => {
   });
 
   it("shiftArithmeticRight (negative number) U64", () => {
-    const firstValue = 3n;
-    const secondValue = -8n;
+    const firstValue = -8n;
+    const secondValue = 3n;
     const resultValue = -1n;
     const { regs, shiftOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,
@@ -455,8 +455,8 @@ describe("ShiftOps", () => {
   });
 
   it("shiftArithmeticRight with arg overflow U64", () => {
-    const firstValue = 67n;
-    const secondValue = 0b10000n;
+    const firstValue = 0b10000n;
+    const secondValue = 67n;
     const resultValue = 0b00010n;
     const { regs, shiftOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex } = prepareData(
       firstValue,

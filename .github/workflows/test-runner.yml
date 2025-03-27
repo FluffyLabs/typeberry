@@ -26,17 +26,12 @@ jobs:
           mode: delete
           comment-tag: jamtestvectors
       - uses: actions/checkout@v4
-        with:
-          # Fetch the fork's code securely
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.pull_request.head.ref }}
-          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Checkout JAM test vectors
         uses: actions/checkout@v4
         with:
           repository: FluffyLabs/jamtestvectors
           path: "./jamtestvectors"
-          ref: 6d522080fbd2a56f4a7a3bbfd56e5fe590ca8dd5
+          ref: 177814f418d0bacedc03a86fb14af7b1c6cac3f2
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:

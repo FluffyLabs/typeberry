@@ -114,8 +114,8 @@ describe("BooleanOps", () => {
   });
 
   it("setLessThanUnsigned - true", () => {
-    const firstValue = 2n;
-    const secondValue = 1n;
+    const firstValue = 1n;
+    const secondValue = 2n;
     const resultValue = 1n;
     const { bitOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex, regs } = prepareData(
       firstValue,
@@ -128,8 +128,8 @@ describe("BooleanOps", () => {
   });
 
   it("setLessThanUnsigned - false", () => {
-    const firstValue = 2n;
-    const secondValue = 3n;
+    const firstValue = 3n;
+    const secondValue = 2n;
     const resultValue = 0n;
     const { bitOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex, regs } = prepareData(
       firstValue,
@@ -142,8 +142,8 @@ describe("BooleanOps", () => {
   });
 
   it("setLessThanSigned - true", () => {
-    const firstValue = -2n;
-    const secondValue = -3n;
+    const firstValue = -3n;
+    const secondValue = -2n;
     const resultValue = 1n;
     const { bitOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex, regs } = prepareData(
       firstValue,
@@ -156,8 +156,8 @@ describe("BooleanOps", () => {
   });
 
   it("setLessThanSigned - false", () => {
-    const firstValue = -2n;
-    const secondValue = -1n;
+    const firstValue = -1n;
+    const secondValue = -2n;
     const resultValue = 0n;
     const { bitOps, firstRegisterIndex, secondRegisterIndex, resultRegisterIndex, regs } = prepareData(
       firstValue,
