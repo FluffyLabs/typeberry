@@ -261,11 +261,9 @@ export class TestServiceInfo {
       items: "number",
     },
     ({ code_hash, balance, min_item_gas, min_memo_gas, bytes, items }) => {
-      const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(items, bytes);
       return ServiceAccountInfo.fromCodec({
         codeHash: code_hash,
         balance,
-        thresholdBalance,
         accumulateMinGas: min_item_gas,
         onTransferMinGas: min_memo_gas,
         storageUtilisationBytes: bytes,
@@ -304,7 +302,13 @@ export class TestAccountItem {
         preimages: json.optional(json.array(TestPreimageItem.fromJson)),
       },
     },
-    ({ id, data }) => new Service(id, { service: data.service, preimages: data.preimages ?? [] }),
+    ({ id, data }) =>
+      new Service(id, {
+        info: data.service,
+        preimages: data.preimages ?? [],
+        storage: [],
+        lookupHistory: [],
+      }),
   );
 
   id!: ServiceId;

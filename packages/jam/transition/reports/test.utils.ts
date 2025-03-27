@@ -312,7 +312,9 @@ export const initialServices = ({ withDummyCodeHash = false } = {}): Map<Service
     id,
     new Service(tryAsServiceId(129), {
       preimages: [],
-      service: ServiceAccountInfo.fromCodec({
+      storage: [],
+      lookupHistory: [],
+      info: ServiceAccountInfo.fromCodec({
         codeHash: withDummyCodeHash
           ? Bytes.fill(HASH_SIZE, 1).asOpaque()
           : Bytes.parseBytes(
@@ -320,7 +322,6 @@ export const initialServices = ({ withDummyCodeHash = false } = {}): Map<Service
               HASH_SIZE,
             ).asOpaque(),
         balance: tryAsU64(0),
-        thresholdBalance: tryAsU64(0),
         accumulateMinGas: tryAsGas(10_000),
         onTransferMinGas: tryAsGas(0),
         storageUtilisationBytes: tryAsU64(1),

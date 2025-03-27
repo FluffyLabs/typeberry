@@ -81,7 +81,7 @@ export class Encoder {
     }
 
     const startLength = options?.expectedLength ?? DEFAULT_START_LENGTH;
-    const buffer = new ArrayBuffer(Math.min(startLength, MAX_LENGTH), { maxByteLength: MAX_LENGTH });
+    const buffer = new ArrayBuffer(Math.min(MAX_LENGTH, startLength), { maxByteLength: MAX_LENGTH });
     const destination = new Uint8Array(buffer);
     return new Encoder(destination, buffer);
   }

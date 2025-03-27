@@ -10,7 +10,7 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { ServiceAccountInfo } from "@typeberry/state";
-import { type Accounts, Info } from "./info";
+import { type Accounts, Info, codecServiceAccountInfoWithThresholdBalance } from "./info";
 import { LegacyHostCallResult } from "./results";
 
 class TestAccounts implements Accounts {
@@ -29,7 +29,7 @@ const gas = gasCounter(tryAsGas(0));
 
 function prepareRegsAndMemory(
   serviceId: ServiceId,
-  accountInfoLength = tryAsExactBytes(ServiceAccountInfo.Codec.sizeHint),
+  accountInfoLength = tryAsExactBytes(codecServiceAccountInfoWithThresholdBalance.sizeHint),
 ) {
   const pageStart = 2 ** 16;
   const memStart = pageStart + PAGE_SIZE - accountInfoLength - 1;
@@ -47,7 +47,7 @@ function prepareRegsAndMemory(
       const result = new Uint8Array(accountInfoLength);
       assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)), null);
       const data = BytesBlob.blobFrom(result);
-      return Decoder.decodeObject(ServiceAccountInfo.Codec, data);
+      return Decoder.decodeObject(codecServiceAccountInfoWithThresholdBalance, data);
     },
   };
 }
@@ -66,10 +66,6 @@ describe("HostCalls: Info", () => {
       ServiceAccountInfo.fromCodec({
         codeHash: Bytes.fill(32, 5).asOpaque(),
         balance: tryAsU64(150_000),
-        thresholdBalance: ServiceAccountInfo.calculateThresholdBalance(
-          storageUtilisationCount,
-          storageUtilisationBytes,
-        ),
         accumulateMinGas: tryAsGas(0n),
         onTransferMinGas: tryAsGas(0n),
         storageUtilisationBytes,
@@ -82,7 +78,10 @@ describe("HostCalls: Info", () => {
 
     // then
     assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
-    assert.deepStrictEqual(readInfo(), accounts.data.get(serviceId));
+    assert.deepStrictEqual(readInfo(), {
+      ...accounts.data.get(serviceId),
+      thresholdBalance: 20_100n,
+    });
   });
 
   it("should write none if account info is missing", async () => {
@@ -111,10 +110,6 @@ describe("HostCalls: Info", () => {
       ServiceAccountInfo.fromCodec({
         codeHash: Bytes.fill(32, 5).asOpaque(),
         balance: tryAsU64(150_000),
-        thresholdBalance: ServiceAccountInfo.calculateThresholdBalance(
-          storageUtilisationCount,
-          storageUtilisationBytes,
-        ),
         accumulateMinGas: tryAsGas(0n),
         onTransferMinGas: tryAsGas(0n),
         storageUtilisationBytes,

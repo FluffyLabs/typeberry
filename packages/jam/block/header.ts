@@ -1,15 +1,16 @@
 import { Bytes } from "@typeberry/bytes";
-import { type CodecRecord, type DescribedBy, type Descriptor, codec } from "@typeberry/codec";
-import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
+import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import { HASH_SIZE, WithHash } from "@typeberry/hash";
-import { WithDebug, asOpaqueType } from "@typeberry/utils";
-import { codecWithContext } from "./codec";
+import { WithDebug } from "@typeberry/utils";
 import {
   type EntropyHash,
+  type PerEpochBlock,
   type PerValidator,
   type StateRootHash,
   type TimeSlot,
   type ValidatorIndex,
+  codecPerEpochBlock,
+  codecPerValidator,
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "./common";
@@ -35,12 +36,7 @@ export class EpochMarker extends WithDebug {
   static Codec = codec.Class(EpochMarker, {
     entropy: codec.bytes(HASH_SIZE).asOpaque(),
     ticketsEntropy: codec.bytes(HASH_SIZE).asOpaque(),
-    validators: codecWithContext((context): Descriptor<EpochMarker["validators"]> => {
-      return codec.sequenceFixLen(codec.bytes(BANDERSNATCH_KEY_BYTES), context.validatorsCount).convert(
-        (i) => i,
-        (o) => asKnownSize(o.map((x): BandersnatchKey => asOpaqueType(x))),
-      );
-    }),
+    validators: codecPerValidator(codec.bytes(BANDERSNATCH_KEY_BYTES).asOpaque()),
   });
 
   static fromCodec({ entropy, ticketsEntropy, validators }: CodecRecord<EpochMarker>) {
@@ -71,11 +67,7 @@ export class Header extends WithDebug {
     extrinsicHash: codec.bytes(HASH_SIZE).asOpaque(),
     timeSlotIndex: codec.u32.asOpaque(),
     epochMarker: codec.optional(EpochMarker.Codec),
-    ticketsMarker: codec.optional(
-      codecWithContext((context) => {
-        return codec.sequenceFixLen(Ticket.Codec, context.epochLength).asOpaque();
-      }),
-    ),
+    ticketsMarker: codec.optional(codecPerEpochBlock(Ticket.Codec)),
     offendersMarker: codec.sequenceVarLen(codec.bytes(ED25519_KEY_BYTES).asOpaque()),
     bandersnatchBlockAuthorIndex: codec.u16.asOpaque(),
     entropySource: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque(),
@@ -107,7 +99,7 @@ export class Header extends WithDebug {
    * `H_w`: Winning tickets provides the series of 600 slot sealing "tickets"
    *        for the next epoch.
    */
-  public ticketsMarker: KnownSizeArray<Ticket, "EpochLength"> | null = null;
+  public ticketsMarker: PerEpochBlock<Ticket> | null = null;
   /** `H_o`: Sequence of keys of newly misbehaving validators. */
   public offendersMarker: Ed25519Key[] = [];
   /** `H_i`: Block author's index in the current validator set. */

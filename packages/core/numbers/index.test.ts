@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { minU64, sumU32, sumU64, tryAsU32, tryAsU64, u32AsLittleEndian } from "./index";
+import { minU64, sumU32, sumU64, tryAsU32, tryAsU64, u32AsLeBytes } from "./index";
 
 describe("sumU32", () => {
   it("should sum and handle overflow", () => {
@@ -42,7 +42,7 @@ describe("u32AsLittleEndian", () => {
 
   for (const { value, expectedResult } of testCases) {
     it(`should return little endian representation of ${value}`, () => {
-      const result = new Uint8Array(u32AsLittleEndian(value));
+      const result = u32AsLeBytes(value);
 
       assert.deepStrictEqual(result, expectedResult);
     });

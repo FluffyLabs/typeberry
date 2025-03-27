@@ -50,10 +50,10 @@ export function verifyContextualValidity(
 
       // check service code hash
       // https://graypaper.fluffylabs.dev/#/5f542d7/154b02154b02
-      if (!result.codeHash.isEqualTo(service.data.service.codeHash)) {
+      if (!result.codeHash.isEqualTo(service.data.info.codeHash)) {
         return Result.error(
           ReportsError.BadCodeHash,
-          `Service (${result.serviceId}) code hash mismatch. Got: ${result.codeHash}, expected: ${service.data.service.codeHash}`,
+          `Service (${result.serviceId}) code hash mismatch. Got: ${result.codeHash}, expected: ${service.data.info.codeHash}`,
         );
       }
     }

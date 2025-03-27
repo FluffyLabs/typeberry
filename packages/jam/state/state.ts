@@ -1,14 +1,5 @@
-import type {
-  BandersnatchKey,
-  BandersnatchRingRoot,
-  EntropyHash,
-  PerEpochBlock,
-  PerValidator,
-  ServiceId,
-  TimeSlot,
-} from "@typeberry/block";
+import type { EntropyHash, PerEpochBlock, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
-import type { Ticket } from "@typeberry/block/tickets";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { HashSet } from "@typeberry/collections/hash-set";
@@ -17,6 +8,8 @@ import type { BlockState } from "./block-state";
 import type { PerCore } from "./common";
 import type { DisputesRecords } from "./disputes";
 import type { NotYetAccumulatedReport } from "./not-yet-accumulated";
+import type { PrivilegedServices } from "./privileged-services";
+import type { SafroleData } from "./safrole-data";
 import type { Service } from "./service";
 import type { ActivityData } from "./statistics";
 import type { ValidatorData } from "./validator-data";
@@ -45,6 +38,10 @@ export type ENTROPY_ENTRIES = typeof ENTROPY_ENTRIES;
 export const MAX_RECENT_HISTORY = 8;
 export type MAX_RECENT_HISTORY = typeof MAX_RECENT_HISTORY;
 
+export type PartialState = {
+  -readonly [P in keyof State]?: State[P];
+};
+
 /**
  * Complete state tuple with all entries.
  *
@@ -68,7 +65,7 @@ export type State = {
   /**
    * `γₖ gamma_k`: The keys for the validators of the next epoch, equivalent to those keys which constitute γ_z .
    */
-  readonly nextValidatorData: PerValidator<ValidatorData>;
+  readonly nextValidatorData: SafroleData["nextValidatorData"];
 
   /**
    * `κ kappa`: Validators, who are the set of economic actors uniquely
@@ -117,7 +114,7 @@ export type State = {
   readonly authPools: PerCore<KnownSizeArray<AuthorizerHash, `At most ${typeof MAX_AUTH_POOL_SIZE}`>>;
 
   /**
-   * `φ psi`: A queue of authorizers for each core used to fill up the pool.
+   * `φ phi`: A queue of authorizers for each core used to fill up the pool.
    *
    * Only updated by `accumulate` calls using `assign` host call.
    *
@@ -168,27 +165,36 @@ export type State = {
   readonly recentlyAccumulated: PerEpochBlock<HashSet<WorkPackageHash>>;
 
   /*
-   * `γₐ gamma_a`: The ticket accumulator - a series of highest-scoring ticket identifiers to be used for the next epoch.
+   * `γₐ gamma_a`: The ticket accumulator - a series of highest-scoring ticket identifiers to be
+   *               used for the next epoch.
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/0dc3000dc500
    */
-  readonly ticketsAccumulator: Ticket[];
+  readonly ticketsAccumulator: SafroleData["ticketsAccumulator"];
 
   /**
-   * `γₛ gamma_s`: γs is the current epoch’s slot-sealer series, which is either a full complement of `E` tickets or, in the case of a fallback mode, a series of `E` Bandersnatch keys.
+   * `γₛ gamma_s`: γs is the current epoch’s slot-sealer series, which is either a full complement
+   *                of `E` tickets or, in the case of a fallback mode, a series of `E` Bandersnatch
+   *                keys.
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/0dc6000dc800
    */
-  readonly sealingKeySeries: {
-    keys?: BandersnatchKey[];
-    tickets?: Ticket[];
-  };
+  readonly sealingKeySeries: SafroleData["sealingKeySeries"];
 
   /**
-   * `γ_z gamma_z`: The epoch’s root, a Bandersnatch ring root composed with the one Bandersnatch key of each of the next
-   * epoch’s validators, defined in γ_k.
+   * `γ_z gamma_z`: The epoch’s root, a Bandersnatch ring root composed with the one Bandersnatch
+   *                key of each of the next epoch’s validators, defined in γ_k.
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/0da8000db800
    */
-  readonly epochRoot: BandersnatchRingRoot;
+  readonly epochRoot: SafroleData["epochRoot"];
+
+  /**
+   * `χ chi`: Up to three services may be recognized as privileged. The portion of state in which
+   *           this is held is denoted χ and has three service index components together with
+   *           a gas limit.
+   *
+   * https://graypaper.fluffylabs.dev/#/85129da/116f01117201?v=0.6.3
+   */
+  readonly privilegedServices: PrivilegedServices;
 };

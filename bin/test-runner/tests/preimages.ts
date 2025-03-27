@@ -6,13 +6,8 @@ import { HashDictionary } from "@typeberry/collections";
 import { type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { U32 } from "@typeberry/numbers";
-import {
-  type Account,
-  LookupHistoryItem,
-  Preimages,
-  type PreimagesErrorCode,
-  tryAsLookupHistorySlots,
-} from "@typeberry/transition";
+import { LookupHistoryItem, tryAsLookupHistorySlots } from "@typeberry/state";
+import { type Account, Preimages, type PreimagesErrorCode } from "@typeberry/transition";
 import { Result } from "@typeberry/utils";
 import { preimagesExtrinsicFromJson } from "./codec/preimages-extrinsic";
 import { commonFromJson } from "./common-types";
