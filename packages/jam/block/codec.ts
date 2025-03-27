@@ -10,9 +10,9 @@ import type { Comparator } from "@typeberry/ordering";
  *
  * NOTE: the returned values are cached based on the `ChainSpec` reference.
  */
-export function codecWithContext<T, V>(cb: (ctx: ChainSpec) => Descriptor<T, V>): Descriptor<T, V> {
+export function codecWithContext<T, V>(chooser: (ctx: ChainSpec) => Descriptor<T, V>): Descriptor<T, V> {
   const defaultContext = fullChainSpec;
-  const { name, sizeHint } = cb(defaultContext);
+  const { name, sizeHint } = chooser(defaultContext);
   const cache = new Map<ChainSpec, Descriptor<T, V>>();
   return codec.select(
     {
@@ -25,13 +25,13 @@ export function codecWithContext<T, V>(cb: (ctx: ChainSpec) => Descriptor<T, V>)
         if (cached !== undefined) {
           return cached;
         }
-        const ret = cb(context);
+        const ret = chooser(context);
         cache.set(context, ret);
         return ret;
       }
       // resolving with default context.
       if (context === null) {
-        return cb(defaultContext);
+        return chooser(defaultContext);
       }
       // invalid context type
       if (context !== null) {
