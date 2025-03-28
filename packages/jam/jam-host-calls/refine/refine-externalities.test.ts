@@ -88,14 +88,12 @@ export class TestRefineExt implements RefineExternalities {
     return Promise.resolve(val);
   }
 
-  machineInit(
-    code: BytesBlob,
-    memory: Memory,
-    programCounter: U64,
-    { machineId }: { machineId?: MachineId } = {},
-  ): Promise<MachineId> {
-    if (machineId === undefined) {
-      machineId = tryAsMachineId(this.machines.size);
+  machineInit(code: BytesBlob, memory: Memory, programCounter: U64): Promise<MachineId> {
+    const lastId = Array.from(this.machines.keys()).reduce((acc, val) => Math.max(acc, Number(val)), 0);
+    const machineId = tryAsMachineId(lastId + 1);
+
+    if (this.machines.has(machineId)) {
+      throw new Error(`Machine already exists. Call to machineInit with: ${machineId}`);
     }
     const machineInstance = new MachineInstance(code, memory, programCounter);
     this.machines.set(machineId, machineInstance);

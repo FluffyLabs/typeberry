@@ -10,7 +10,7 @@ import { Status } from "@typeberry/pvm-interpreter/status";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { HostCallResult } from "../results";
 import { Invoke } from "./invoke";
-import { MachineInstance, type MachineStatus, tryAsMachineId } from "./machine-instance";
+import { type MachineId, type MachineStatus, tryAsMachineId } from "./machine-instance";
 import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));
@@ -19,7 +19,6 @@ const RESULT_REG_1 = MACHINE_INDEX_REG;
 const DEST_REG = 8;
 const RESULT_REG_2 = DEST_REG;
 const GAS_REG_SIZE = 112;
-const MACHINE_ID = 420;
 const MEM_START = 0;
 
 function prepareRegsAndMemory(
@@ -53,27 +52,26 @@ function prepareMemory(
   return builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
 }
 
-function prepareMachine(
+async function prepareMachine(
   machineStatus: MachineStatus,
   { registerMachine = true }: { registerMachine?: boolean } = {},
-): TestRefineExt {
+): Promise<[TestRefineExt, MachineId]> {
   const refine = new TestRefineExt();
+  let machineId = tryAsMachineId(10_000);
   if (registerMachine) {
-    const machineId = tryAsMachineId(MACHINE_ID);
     const machineCode = BytesBlob.blobFromString("amazing PVM code");
     const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
     const machineEntry = tryAsU64(0);
-    const machineInstance = new MachineInstance(machineCode, machineMemory, machineEntry);
-    refine.machines.set(machineId, machineInstance);
+    machineId = await refine.machineInit(machineCode, machineMemory, machineEntry);
 
     refine.machineInvokeStatus = machineStatus;
   }
-  return refine;
+  return [refine, machineId];
 }
 
 describe("HostCalls: Invoke", () => {
   it("should return panic if memory is unwritable", async () => {
-    const refine = prepareMachine(
+    const [refine, machineId] = await prepareMachine(
       {
         status: Status.OK,
       },
@@ -85,7 +83,7 @@ describe("HostCalls: Invoke", () => {
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
 
-    const w7 = tryAsU64(MACHINE_ID);
+    const w7 = tryAsU64(machineId);
     const w8 = tryAsU32(MEM_START);
     const code = Bytes.zero(GAS_REG_SIZE);
     const { registers, memory } = prepareRegsAndMemory(w7, w8, code, { registerMemory: false });
@@ -98,7 +96,7 @@ describe("HostCalls: Invoke", () => {
   });
 
   it("should return `who` if machine is not found (machine not initialized)", async () => {
-    const refine = prepareMachine(
+    const [refine, machineId] = await prepareMachine(
       {
         status: Status.OK,
       },
@@ -110,7 +108,7 @@ describe("HostCalls: Invoke", () => {
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
 
-    const w7 = tryAsU64(MACHINE_ID);
+    const w7 = tryAsU64(machineId);
     const w8 = tryAsU32(MEM_START);
     const code = Bytes.zero(GAS_REG_SIZE);
     const { registers, memory } = prepareRegsAndMemory(w7, w8, code);
@@ -123,14 +121,14 @@ describe("HostCalls: Invoke", () => {
   });
 
   it("should return `who` if machine is not found (machine id is not valid)", async () => {
-    const refine = prepareMachine({
+    const [refine, machineId] = await prepareMachine({
       status: Status.OK,
     });
 
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
 
-    const w7 = tryAsU64(MACHINE_ID + 1);
+    const w7 = tryAsU64(machineId + 1n);
     const w8 = tryAsU32(MEM_START);
     const code = Bytes.zero(GAS_REG_SIZE);
     const { registers, memory } = prepareRegsAndMemory(w7, w8, code);
@@ -144,7 +142,7 @@ describe("HostCalls: Invoke", () => {
 
   it("should run the machine and finish with `host` status", async () => {
     const hostCallIndex = tryAsU64(10);
-    const refine = prepareMachine({
+    const [refine, machineId] = await prepareMachine({
       status: Status.HOST,
       hostCallIndex,
     });
@@ -152,7 +150,7 @@ describe("HostCalls: Invoke", () => {
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
 
-    const w7 = tryAsU64(MACHINE_ID);
+    const w7 = tryAsU64(machineId);
     const w8 = tryAsU32(MEM_START);
     const code = Bytes.zero(GAS_REG_SIZE);
     const { registers, memory } = prepareRegsAndMemory(w7, w8, code);
@@ -166,7 +164,7 @@ describe("HostCalls: Invoke", () => {
 
   it("should run the machine and finish with `fault` status", async () => {
     const address = tryAsU64(2 ** 12);
-    const refine = prepareMachine({
+    const [refine, machineId] = await prepareMachine({
       status: Status.FAULT,
       address,
     });
@@ -174,7 +172,7 @@ describe("HostCalls: Invoke", () => {
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
 
-    const w7 = tryAsU64(MACHINE_ID);
+    const w7 = tryAsU64(machineId);
     const w8 = tryAsU32(MEM_START);
     const code = Bytes.zero(GAS_REG_SIZE);
     const { registers, memory } = prepareRegsAndMemory(w7, w8, code);
@@ -187,14 +185,14 @@ describe("HostCalls: Invoke", () => {
   });
 
   it("should run the machine and finish with `oog` status", async () => {
-    const refine = prepareMachine({
+    const [refine, machineId] = await prepareMachine({
       status: Status.OOG,
     });
 
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
 
-    const w7 = tryAsU64(MACHINE_ID);
+    const w7 = tryAsU64(machineId);
     const w8 = tryAsU32(MEM_START);
     const code = Bytes.zero(GAS_REG_SIZE);
     const { registers, memory } = prepareRegsAndMemory(w7, w8, code);
@@ -207,14 +205,14 @@ describe("HostCalls: Invoke", () => {
   });
 
   it("should run the machine and finish with `panic` status", async () => {
-    const refine = prepareMachine({
+    const [refine, machineId] = await prepareMachine({
       status: Status.PANIC,
     });
 
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
 
-    const w7 = tryAsU64(MACHINE_ID);
+    const w7 = tryAsU64(machineId);
     const w8 = tryAsU32(MEM_START);
     const code = Bytes.zero(GAS_REG_SIZE);
     const { registers, memory } = prepareRegsAndMemory(w7, w8, code);
@@ -227,14 +225,14 @@ describe("HostCalls: Invoke", () => {
   });
 
   it("should run the machine and finish with `halt` status", async () => {
-    const refine = prepareMachine({
+    const [refine, machineId] = await prepareMachine({
       status: Status.HALT,
     });
 
     const invoke = new Invoke(refine);
     invoke.currentServiceId = tryAsServiceId(10_000);
 
-    const w7 = tryAsU64(MACHINE_ID);
+    const w7 = tryAsU64(machineId);
     const w8 = tryAsU32(MEM_START);
     const code = Bytes.zero(GAS_REG_SIZE);
     const { registers, memory } = prepareRegsAndMemory(w7, w8, code);
