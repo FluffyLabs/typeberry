@@ -12,7 +12,6 @@ import { codecWithContext } from "@typeberry/block/codec";
 import { Ticket } from "@typeberry/block/tickets";
 import { type CodecRecord, type Descriptor, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
-import { EST_EPOCH_LENGTH } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
 import { ValidatorData } from "./validator-data";
@@ -39,7 +38,7 @@ export class SafroleSealingKeysData {
     return codec.custom<SafroleSealingKeys>(
       {
         name: "SafroleSealingKeys",
-        sizeHint: { bytes: 1 + HASH_SIZE * EST_EPOCH_LENGTH, isExact: false },
+        sizeHint: { bytes: 1 + HASH_SIZE * context.epochLength, isExact: false },
       },
       (e, x) => {
         e.varU32(tryAsU32(x.kind));
