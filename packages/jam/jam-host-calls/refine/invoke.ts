@@ -76,23 +76,20 @@ export class Invoke implements HostCallHandler {
 
     memory.storeFrom(destinationStart, resultData.raw);
 
+
     switch (machineState.result.status) {
       case Status.HOST:
-        regs.setU64(IN_OUT_REG_1, tryAsU64(Status.HOST));
+        regs.setU64(IN_OUT_REG_1, tryAsU64(machineState.result.status));
         regs.setU64(IN_OUT_REG_2, machineState.result.hostCallIndex);
         return;
       case Status.FAULT:
-        regs.setU64(IN_OUT_REG_1, tryAsU64(Status.FAULT));
+        regs.setU64(IN_OUT_REG_1, tryAsU64(machineState.result.status));
         regs.setU64(IN_OUT_REG_2, machineState.result.address);
         return;
       case Status.PANIC:
-        regs.setU64(IN_OUT_REG_1, tryAsU64(Status.PANIC));
-        return;
       case Status.HALT:
-        regs.setU64(IN_OUT_REG_1, tryAsU64(Status.HALT));
-        return;
       case Status.OOG:
-        regs.setU64(IN_OUT_REG_1, tryAsU64(Status.OOG));
+        regs.setU64(IN_OUT_REG_1, tryAsU64(machineState.result.status));
         return;
     }
     throw new Error(`Unexpected inner PVM result: ${machineState.result.status}`);
