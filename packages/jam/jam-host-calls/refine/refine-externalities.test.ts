@@ -5,7 +5,7 @@ import type { Blake2bHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
 import { type BigGas, type Memory, type MemoryIndex, Registers, tryAsBigGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status";
-import type { OK, Result } from "@typeberry/utils";
+import { type OK, Result } from "@typeberry/utils";
 import {
   type MachineId,
   MachineInstance,
@@ -13,12 +13,12 @@ import {
   type MachineStatus,
   tryAsMachineId,
 } from "./machine-instance";
-import type {
-  InvalidPageError,
+import {
+  type InvalidPageError,
   NoMachineError,
-  PeekPokeError,
-  RefineExternalities,
-  SegmentExportError,
+  type PeekPokeError,
+  type RefineExternalities,
+  type SegmentExportError,
 } from "./refine-externalities";
 
 export class TestRefineExt implements RefineExternalities {
@@ -53,8 +53,8 @@ export class TestRefineExt implements RefineExternalities {
     Result<OK, NoMachineError>
   > = new MultiMap(3);
 
-  public machineInvokeResult: MachineStatus = { status: Status.OK };
-  public machineInvokeData: MachineResult = {
+  public machineInvokeStatus: MachineStatus = { status: Status.OK };
+  public machineInvokeResult: MachineResult = {
     result: { status: Status.OK },
     gas: tryAsBigGas(0n),
     registers: new Registers(),
@@ -97,7 +97,7 @@ export class TestRefineExt implements RefineExternalities {
     if (machineId === undefined) {
       machineId = tryAsMachineId(this.machines.size);
     }
-    const machineInstance = MachineInstance.create(code, memory, programCounter);
+    const machineInstance = new MachineInstance(code, memory, programCounter);
     this.machines.set(machineId, machineInstance);
     return Promise.resolve(machineId);
   }
@@ -142,11 +142,20 @@ export class TestRefineExt implements RefineExternalities {
     return Promise.resolve(val);
   }
 
-  machineInvoke(machineIndex: MachineId, gas: BigGas, registers: Registers): Promise<MachineResult | undefined> {
-    if (!this.machines.has(machineIndex)) {
-      return Promise.resolve(undefined);
+  async machineInvoke(
+    machineIndex: MachineId,
+    gas: BigGas,
+    registers: Registers,
+  ): Promise<Result<MachineResult, NoMachineError>> {
+    const machine = this.machines.get(machineIndex);
+    if (machine === undefined) {
+      return Result.error(NoMachineError, `Machine not found. Call to machineInvoke with: ${machineIndex}`);
     }
-    return Promise.resolve({ result: this.machineInvokeResult, gas, registers });
+    // run machine with given gas and registers
+    this.machineInvokeResult = await machine.run(gas, registers);
+    // debug purposes
+    this.machineInvokeResult.result = this.machineInvokeStatus;
+    return Result.ok(this.machineInvokeResult);
   }
 
   exportSegment(segment: Segment): Result<SegmentIndex, SegmentExportError> {

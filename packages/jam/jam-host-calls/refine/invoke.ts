@@ -62,27 +62,28 @@ export class Invoke implements HostCallHandler {
     const state = await this.refine.machineInvoke(machineIndex, gasCost, registers);
 
     // machine not found
-    if (state === undefined) {
+    if (state.isError) {
       regs.setU64(IN_OUT_REG_1, HostCallResult.WHO);
       return;
     }
 
+    const machineState = state.ok;
     // save the result to the destination memory
     const resultDataBytes = Encoder.encodeObject(gasAndRegistersCodec, {
-      gas: state.gas,
-      registers: Bytes.fromBlob(state.registers.getAllBytesAsLittleEndian(), NO_OF_REGISTERS * 8),
+      gas: machineState.gas,
+      registers: Bytes.fromBlob(machineState.registers.getAllBytesAsLittleEndian(), NO_OF_REGISTERS * 8),
     });
 
     memory.storeFrom(destinationStart, resultDataBytes.raw);
 
-    switch (state.result.status) {
+    switch (machineState.result.status) {
       case Status.HOST:
         regs.setU64(IN_OUT_REG_1, tryAsU64(Status.HOST));
-        regs.setU64(IN_OUT_REG_2, state.result.hostCallIndex);
+        regs.setU64(IN_OUT_REG_2, machineState.result.hostCallIndex);
         return;
       case Status.FAULT:
         regs.setU64(IN_OUT_REG_1, tryAsU64(Status.FAULT));
-        regs.setU64(IN_OUT_REG_2, state.result.address);
+        regs.setU64(IN_OUT_REG_2, machineState.result.address);
         return;
       case Status.PANIC:
         regs.setU64(IN_OUT_REG_1, tryAsU64(Status.PANIC));
@@ -93,8 +94,7 @@ export class Invoke implements HostCallHandler {
       case Status.OOG:
         regs.setU64(IN_OUT_REG_1, tryAsU64(Status.OOG));
         return;
-      default:
-        throw new Error(`Unexpected inner PVM result: ${state.result.status}`);
     }
+    throw new Error(`Unexpected inner PVM result: ${machineState.result.status}`);
   }
 }

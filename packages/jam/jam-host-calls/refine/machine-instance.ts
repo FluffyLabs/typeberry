@@ -1,7 +1,7 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { type U64, tryAsU64 } from "@typeberry/numbers";
 import type { BigGas, Memory, Registers } from "@typeberry/pvm-interpreter";
-import type { Status } from "@typeberry/pvm-interpreter/status";
+import { Status } from "@typeberry/pvm-interpreter/status";
 import { type Opaque, asOpaqueType } from "@typeberry/utils";
 
 /**
@@ -15,24 +15,38 @@ export type MachineId = Opaque<U64, "MachineId[U64]">;
 export const tryAsMachineId = (v: number | bigint): MachineId => asOpaqueType(tryAsU64(v));
 
 /** `M`: Machine instance */
-export type MachineInstance = Opaque<
-  {
-    /** `p`: Code - Generic PVM program */
-    code: BytesBlob;
-    /** `u`: Memory - RAM */
-    memory: Memory;
-    /** `i`: Program counter - entry point */
-    entrypoint: U64;
-  },
-  "MachineInstance"
->;
+export interface MachineInterface {
+  /** `p`: Code - Generic PVM program */
+  code: BytesBlob;
+  /** `u`: Memory - RAM */
+  memory: Memory;
+  /** `i`: Program counter - entry point */
+  entrypoint: U64;
+  /** Execute the machine with given gas and registers. */
+  run(gas: BigGas, registers: Registers): Promise<MachineResult>;
+}
 
-export const MachineInstance = {
-  /** Create a new machine instance. */
-  create(code: BytesBlob, memory: Memory, entrypoint: U64): MachineInstance {
-    return asOpaqueType({ code, memory, entrypoint });
-  },
-};
+export class MachineInstance implements MachineInterface {
+  code: BytesBlob;
+  memory: Memory;
+  entrypoint: U64;
+
+  constructor(code: BytesBlob, memory: Memory, entrypoint: U64) {
+    this.code = code;
+    this.memory = memory;
+    this.entrypoint = entrypoint;
+  }
+
+  async run(gas: BigGas, registers: Registers): Promise<MachineResult> {
+    return {
+      result: {
+        status: Status.OK,
+      },
+      gas,
+      registers,
+    };
+  }
+}
 
 export type MachineStatus =
   | {

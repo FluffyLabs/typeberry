@@ -54,7 +54,7 @@ function prepareMemory(
 }
 
 function prepareMachine(
-  machineResult: MachineStatus,
+  machineStatus: MachineStatus,
   { registerMachine = true }: { registerMachine?: boolean } = {},
 ): TestRefineExt {
   const refine = new TestRefineExt();
@@ -63,10 +63,10 @@ function prepareMachine(
     const machineCode = BytesBlob.blobFromString("amazing PVM code");
     const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
     const machineEntry = tryAsU64(0);
-    const machineInstance = MachineInstance.create(machineCode, machineMemory, machineEntry);
+    const machineInstance = new MachineInstance(machineCode, machineMemory, machineEntry);
     refine.machines.set(machineId, machineInstance);
 
-    refine.machineInvokeResult = machineResult;
+    refine.machineInvokeStatus = machineStatus;
   }
   return refine;
 }

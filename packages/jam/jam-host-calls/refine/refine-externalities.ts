@@ -30,7 +30,7 @@ export type SegmentExportError = typeof SegmentExportError;
 /** Host functions external invokations available during refine phase. */
 export interface RefineExternalities {
   machines: Map<MachineId, MachineInstance>;
-  machineInvokeData: MachineResult;
+  machineInvokeResult: MachineResult;
   /** Forget a previously started nested VM. */
   machineExpunge(machineIndex: MachineId): Promise<Result<OK, NoMachineError>>;
 
@@ -65,13 +65,15 @@ export interface RefineExternalities {
   /** Initialize a new PVM instance with given code, memory and program counter (entry point). */
   machineInit(code: BytesBlob, memory: Memory, programCounter: U64): Promise<MachineId>;
 
-  /**
-   * Start an inner PVM instance with given entry point and starting code.
-   */
+  /** Start an inner PVM instance with given entry point and starting code. */
   machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId>;
 
-  /** Run a PVM instance with given gas and registers. */
-  machineInvoke(machineIndex: MachineId, gas: BigGas, registers: Registers): Promise<MachineResult | undefined>;
+  /** Run a previously initialized PVM instance with given gas and registers. */
+  machineInvoke(
+    machineIndex: MachineId,
+    gas: BigGas,
+    registers: Registers,
+  ): Promise<Result<MachineResult, NoMachineError>>;
 
   /**
    * Export segment for future retrieval.
