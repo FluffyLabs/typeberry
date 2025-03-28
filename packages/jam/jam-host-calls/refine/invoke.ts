@@ -69,12 +69,12 @@ export class Invoke implements HostCallHandler {
 
     const machineState = state.ok;
     // save the result to the destination memory
-    const resultDataBytes = Encoder.encodeObject(gasAndRegistersCodec, {
+    const resultData = Encoder.encodeObject(gasAndRegistersCodec, {
       gas: machineState.gas,
       registers: Bytes.fromBlob(machineState.registers.getAllBytesAsLittleEndian(), NO_OF_REGISTERS * 8),
     });
 
-    memory.storeFrom(destinationStart, resultDataBytes.raw);
+    memory.storeFrom(destinationStart, resultData.raw);
 
     switch (machineState.result.status) {
       case Status.HOST:
