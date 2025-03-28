@@ -1,9 +1,10 @@
 import type { Segment, SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { Blake2bHash } from "@typeberry/hash";
-import { type U32, tryAsU32 } from "@typeberry/numbers";
-import type { Memory } from "@typeberry/pvm-interpreter";
+import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
+import type { BigGas, Memory, Registers } from "@typeberry/pvm-interpreter";
 import type { MemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import { Status } from "@typeberry/pvm-interpreter/status";
 import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/utils";
 
 /**
@@ -16,9 +17,41 @@ import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/util
  * however a `bigint` might be a safer choice here for 64-bit
  * PVM?
  */
-export type MachineId = Opaque<U32, "MachineId[u32]">;
+export type MachineId = Opaque<U64, "MachineId[u64]">;
 /** Convert a number into PVM instance identifier. */
-export const tryAsMachineId = (v: number): MachineId => asOpaqueType(tryAsU32(v));
+export const tryAsMachineId = (v: number | bigint): MachineId => asOpaqueType(tryAsU64(v));
+
+export class MachineInstance {
+  async run(gas: BigGas, registers: Registers): Promise<MachineResult> {
+    return {
+      result: {
+        status: Status.OK,
+      },
+      gas,
+      registers,
+    };
+  }
+}
+
+export type MachineStatus =
+  | {
+      status: typeof Status.HOST;
+      hostCallIndex: U64;
+    }
+  | {
+      status: typeof Status.FAULT;
+      address: U64;
+    }
+  | {
+      status: typeof Status.OK | typeof Status.HALT | typeof Status.PANIC | typeof Status.OOG;
+    };
+
+/** Data returned by a machine invocation. */
+export type MachineResult = {
+  result: MachineStatus;
+  gas: BigGas;
+  registers: Registers;
+};
 
 /** An error that may occur during `peek` or `poke` host call. */
 export enum PeekPokeError {
@@ -75,6 +108,13 @@ export interface RefineExternalities {
 
   /** Start an inner PVM instance with given entry point and starting code. */
   machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId>;
+
+  /** Run a previously initialized PVM instance with given gas and registers. */
+  machineInvoke(
+    machineIndex: MachineId,
+    gas: BigGas,
+    registers: Registers,
+  ): Promise<Result<MachineResult, NoMachineError>>;
 
   /**
    * Export segment for future retrieval.

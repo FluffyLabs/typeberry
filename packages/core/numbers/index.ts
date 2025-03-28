@@ -31,14 +31,14 @@ export const isU8 = (v: number): v is U8 => (v & 0xff) === v;
 export const tryAsU16 = (v: number): U16 =>
   ensure<number, U16>(v, isU16(v), `input must have two-byte representation, got ${v}`);
 /** Check if given number is a valid U16 number. */
-export const isU16 = (v: number): v is U16 => (v & 0xff_ff) === v;
+export const isU16 = (v: number): v is U16 => (v & 0xffff) === v;
 
 /** Attempt to cast an input number into U32. */
 export const tryAsU32 = (v: number): U32 =>
   ensure<number, U32>(v, isU32(v), `input must have four-byte representation, got ${v}`);
 
 /** Check if given number is a valid U32 number. */
-export const isU32 = (v: number): v is U32 => (v & 0xff_ff_ff_ff) >>> 0 === v;
+export const isU32 = (v: number): v is U32 => (v & 0xffff_ffff) >>> 0 === v;
 
 /** Attempt to cast an input number into U64. */
 export const tryAsU64 = (x: number | bigint): U64 => {

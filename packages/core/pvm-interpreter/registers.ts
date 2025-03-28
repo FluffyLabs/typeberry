@@ -18,9 +18,18 @@ export class Registers {
     this.asUnsigned = new BigUint64Array(bytes.buffer, bytes.byteOffset);
   }
 
+  static fromBytes(bytes: Uint8Array) {
+    check(bytes.length === NO_OF_REGISTERS << REGISTER_SIZE_SHIFT, "Invalid size of registers array.");
+    return new Registers(bytes);
+  }
+
   getBytesAsLittleEndian(index: number, len: number) {
     const offset = index << REGISTER_SIZE_SHIFT;
     return this.bytes.subarray(offset, offset + len);
+  }
+
+  getAllBytesAsLittleEndian() {
+    return this.bytes;
   }
 
   copyFrom(regs: Registers | BigUint64Array) {

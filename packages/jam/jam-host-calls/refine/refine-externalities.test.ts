@@ -3,15 +3,19 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
-import type { Memory, MemoryIndex } from "@typeberry/pvm-interpreter";
-import type { OK, Result } from "@typeberry/utils";
-import type {
-  InvalidPageError,
-  MachineId,
+import type { BigGas, Memory, MemoryIndex, Registers } from "@typeberry/pvm-interpreter";
+import { Status } from "@typeberry/pvm-interpreter/status";
+import { type OK, Result } from "@typeberry/utils";
+import {
+  type InvalidPageError,
+  type MachineId,
+  type MachineInstance,
+  type MachineResult,
+  type MachineStatus,
   NoMachineError,
-  PeekPokeError,
-  RefineExternalities,
-  SegmentExportError,
+  type PeekPokeError,
+  type RefineExternalities,
+  type SegmentExportError,
 } from "./refine-externalities";
 
 export class TestRefineExt implements RefineExternalities {
@@ -23,6 +27,8 @@ export class TestRefineExt implements RefineExternalities {
     null,
     (key) => key.toString(),
   ]);
+
+  public readonly machineInvokeData: Map<MachineId, MachineInstance> = new Map();
   public readonly machineStartData: MultiMap<[BytesBlob, U32], MachineId> = new MultiMap(2, [
     (code) => code.toString(),
     null,
@@ -43,6 +49,8 @@ export class TestRefineExt implements RefineExternalities {
     Parameters<TestRefineExt["machineZeroPages"]>,
     Result<OK, NoMachineError>
   > = new MultiMap(3);
+
+  public machineInvokeStatus: MachineStatus = { status: Status.OK };
 
   machineExpunge(machineIndex: MachineId): Promise<Result<OK, NoMachineError>> {
     const val = this.machineExpungeData.get(machineIndex);
@@ -110,6 +118,22 @@ export class TestRefineExt implements RefineExternalities {
       );
     }
     return Promise.resolve(val);
+  }
+
+  async machineInvoke(
+    machineIndex: MachineId,
+    gas: BigGas,
+    registers: Registers,
+  ): Promise<Result<MachineResult, NoMachineError>> {
+    const machine = this.machineInvokeData.get(machineIndex);
+    if (machine === undefined) {
+      return Result.error(NoMachineError, `Machine not found. Call to machineInvoke with: ${machineIndex}`);
+    }
+    // run machine with given gas and registers
+    const machineInvokeResult = await machine.run(gas, registers);
+    // debug purposes
+    machineInvokeResult.result = this.machineInvokeStatus;
+    return Result.ok(machineInvokeResult);
   }
 
   exportSegment(segment: Segment): Result<SegmentIndex, SegmentExportError> {
