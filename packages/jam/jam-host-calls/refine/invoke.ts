@@ -76,7 +76,6 @@ export class Invoke implements HostCallHandler {
 
     memory.storeFrom(destinationStart, resultData.raw);
 
-
     switch (machineState.result.status) {
       case Status.HOST:
         regs.setU64(IN_OUT_REG_1, tryAsU64(machineState.result.status));
