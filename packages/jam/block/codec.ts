@@ -77,10 +77,6 @@ export const codecFixedSizeArray = <N extends number, T, V>(
   );
 };
 
-export type CodecHashSetOptions = {
-  typicalLength?: number;
-};
-
 export type CodecHashDictionaryOptions<T> = {
   typicalLength?: number;
   compare?: Comparator<T>;
