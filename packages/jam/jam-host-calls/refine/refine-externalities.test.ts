@@ -2,17 +2,11 @@ import type { Segment, SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
-import type { U32, U64 } from "@typeberry/numbers";
-import { type BigGas, type Memory, type MemoryIndex, Registers, tryAsBigGas } from "@typeberry/pvm-interpreter";
+import type { U32 } from "@typeberry/numbers";
+import type { BigGas, Memory, MemoryIndex, Registers } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { type OK, Result } from "@typeberry/utils";
-import {
-  type MachineId,
-  MachineInstance,
-  type MachineResult,
-  type MachineStatus,
-  tryAsMachineId,
-} from "./machine-instance";
+import type { MachineId, MachineInstance, MachineResult, MachineStatus } from "./machine-instance";
 import {
   type InvalidPageError,
   NoMachineError,
@@ -31,7 +25,7 @@ export class TestRefineExt implements RefineExternalities {
     (key) => key.toString(),
   ]);
 
-  public readonly machines: Map<MachineId, MachineInstance> = new Map();
+  public readonly machineInvokeData: Map<MachineId, MachineInstance> = new Map();
   public readonly machineStartData: MultiMap<[BytesBlob, U32], MachineId> = new MultiMap(2, [
     (code) => code.toString(),
     null,
@@ -54,11 +48,6 @@ export class TestRefineExt implements RefineExternalities {
   > = new MultiMap(3);
 
   public machineInvokeStatus: MachineStatus = { status: Status.OK };
-  public machineInvokeResult: MachineResult = {
-    result: { status: Status.OK },
-    gas: tryAsBigGas(0n),
-    registers: new Registers(),
-  };
 
   machineExpunge(machineIndex: MachineId): Promise<Result<OK, NoMachineError>> {
     const val = this.machineExpungeData.get(machineIndex);
@@ -86,18 +75,6 @@ export class TestRefineExt implements RefineExternalities {
       throw new Error(`Unexpected call to machineZeroPages with: ${machineIndex}, ${pageStart}, ${pageCount}`);
     }
     return Promise.resolve(val);
-  }
-
-  machineInit(code: BytesBlob, memory: Memory, programCounter: U64): Promise<MachineId> {
-    const lastId = Array.from(this.machines.keys()).reduce((acc, val) => Math.max(acc, Number(val)), 0);
-    const machineId = tryAsMachineId(lastId + 1);
-
-    if (this.machines.has(machineId)) {
-      throw new Error(`Machine already exists. Call to machineInit with: ${machineId}`);
-    }
-    const machineInstance = new MachineInstance(code, memory, programCounter);
-    this.machines.set(machineId, machineInstance);
-    return Promise.resolve(machineId);
   }
 
   machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId> {
@@ -145,15 +122,15 @@ export class TestRefineExt implements RefineExternalities {
     gas: BigGas,
     registers: Registers,
   ): Promise<Result<MachineResult, NoMachineError>> {
-    const machine = this.machines.get(machineIndex);
+    const machine = this.machineInvokeData.get(machineIndex);
     if (machine === undefined) {
       return Result.error(NoMachineError, `Machine not found. Call to machineInvoke with: ${machineIndex}`);
     }
     // run machine with given gas and registers
-    this.machineInvokeResult = await machine.run(gas, registers);
+    const machineInvokeResult = await machine.run(gas, registers);
     // debug purposes
-    this.machineInvokeResult.result = this.machineInvokeStatus;
-    return Result.ok(this.machineInvokeResult);
+    machineInvokeResult.result = this.machineInvokeStatus;
+    return Result.ok(machineInvokeResult);
   }
 
   exportSegment(segment: Segment): Result<SegmentIndex, SegmentExportError> {

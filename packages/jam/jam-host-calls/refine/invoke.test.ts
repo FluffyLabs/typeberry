@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { PvmExecution } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
@@ -10,7 +10,7 @@ import { Status } from "@typeberry/pvm-interpreter/status";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { HostCallResult } from "../results";
 import { Invoke } from "./invoke";
-import { type MachineId, type MachineStatus, tryAsMachineId } from "./machine-instance";
+import { type MachineId, MachineInstance, type MachineStatus, tryAsMachineId } from "./machine-instance";
 import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));
@@ -57,13 +57,9 @@ async function prepareMachine(
   { registerMachine = true }: { registerMachine?: boolean } = {},
 ): Promise<[TestRefineExt, MachineId]> {
   const refine = new TestRefineExt();
-  let machineId = tryAsMachineId(10_000);
+  const machineId = tryAsMachineId(10_000);
   if (registerMachine) {
-    const machineCode = BytesBlob.blobFromString("amazing PVM code");
-    const machineMemory = prepareMemory(Bytes.zero(PAGE_SIZE), PAGE_SIZE, PAGE_SIZE);
-    const machineEntry = tryAsU64(0);
-    machineId = await refine.machineInit(machineCode, machineMemory, machineEntry);
-
+    refine.machineInvokeData.set(machineId, new MachineInstance());
     refine.machineInvokeStatus = machineStatus;
   }
   return [refine, machineId];

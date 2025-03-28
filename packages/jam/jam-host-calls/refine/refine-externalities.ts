@@ -1,11 +1,11 @@
 import type { Segment, SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { Blake2bHash } from "@typeberry/hash";
-import type { U32, U64 } from "@typeberry/numbers";
+import type { U32 } from "@typeberry/numbers";
 import type { BigGas, Memory, Registers } from "@typeberry/pvm-interpreter";
 import type { MemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import type { OK, Result } from "@typeberry/utils";
-import type { MachineId, MachineInstance, MachineResult } from "./machine-instance";
+import type { MachineId, MachineResult } from "./machine-instance";
 
 /** An error that may occur during `peek` or `poke` host call. */
 export enum PeekPokeError {
@@ -29,8 +29,6 @@ export type SegmentExportError = typeof SegmentExportError;
 
 /** Host functions external invokations available during refine phase. */
 export interface RefineExternalities {
-  machines: Map<MachineId, MachineInstance>;
-  machineInvokeResult: MachineResult;
   /** Forget a previously started nested VM. */
   machineExpunge(machineIndex: MachineId): Promise<Result<OK, NoMachineError>>;
 
@@ -61,9 +59,6 @@ export interface RefineExternalities {
     length: U32,
     source: Memory,
   ): Promise<Result<OK, PeekPokeError>>;
-
-  /** Initialize a new PVM instance with given code, memory and program counter (entry point). */
-  machineInit(code: BytesBlob, memory: Memory, programCounter: U64): Promise<MachineId>;
 
   /** Start an inner PVM instance with given entry point and starting code. */
   machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId>;
