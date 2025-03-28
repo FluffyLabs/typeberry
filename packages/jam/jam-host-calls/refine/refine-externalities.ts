@@ -1,11 +1,57 @@
 import type { Segment, SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { Blake2bHash } from "@typeberry/hash";
-import type { U32 } from "@typeberry/numbers";
+import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
 import type { BigGas, Memory, Registers } from "@typeberry/pvm-interpreter";
 import type { MemoryIndex } from "@typeberry/pvm-interpreter/memory";
-import type { OK, Result } from "@typeberry/utils";
-import type { MachineId, MachineResult } from "./machine-instance";
+import { Status } from "@typeberry/pvm-interpreter/status";
+import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/utils";
+
+/**
+ * Running PVM instance identifier.
+ *
+ * TODO [ToDr] [crit] GP does not specify a limit for this,
+ * but we do store that in the registers.
+ * Most likely it's impossible to have enough gas to keep
+ * creating inner PVM instances until this overflows,
+ * however a `bigint` might be a safer choice here for 64-bit
+ * PVM?
+ */
+export type MachineId = Opaque<U64, "MachineId[u64]">;
+/** Convert a number into PVM instance identifier. */
+export const tryAsMachineId = (v: number | bigint): MachineId => asOpaqueType(tryAsU64(v));
+
+export class MachineInstance {
+  async run(gas: BigGas, registers: Registers): Promise<MachineResult> {
+    return {
+      result: {
+        status: Status.OK,
+      },
+      gas,
+      registers,
+    };
+  }
+}
+
+export type MachineStatus =
+  | {
+      status: typeof Status.HOST;
+      hostCallIndex: U64;
+    }
+  | {
+      status: typeof Status.FAULT;
+      address: U64;
+    }
+  | {
+      status: typeof Status.OK | typeof Status.HALT | typeof Status.PANIC | typeof Status.OOG;
+    };
+
+/** Data returned by a machine invocation. */
+export type MachineResult = {
+  result: MachineStatus;
+  gas: BigGas;
+  registers: Registers;
+};
 
 /** An error that may occur during `peek` or `poke` host call. */
 export enum PeekPokeError {

@@ -10,7 +10,7 @@ import { Status } from "@typeberry/pvm-interpreter/status";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { HostCallResult } from "../results";
 import { Invoke } from "./invoke";
-import { type MachineId, MachineInstance, type MachineStatus, tryAsMachineId } from "./machine-instance";
+import { type MachineId, MachineInstance, type MachineStatus, tryAsMachineId } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));

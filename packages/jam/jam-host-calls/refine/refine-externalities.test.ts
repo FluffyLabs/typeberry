@@ -6,9 +6,12 @@ import type { U32 } from "@typeberry/numbers";
 import type { BigGas, Memory, MemoryIndex, Registers } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { type OK, Result } from "@typeberry/utils";
-import type { MachineId, MachineInstance, MachineResult, MachineStatus } from "./machine-instance";
 import {
   type InvalidPageError,
+  type MachineId,
+  type MachineInstance,
+  type MachineResult,
+  type MachineStatus,
   NoMachineError,
   type PeekPokeError,
   type RefineExternalities,

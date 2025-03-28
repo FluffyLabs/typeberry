@@ -6,9 +6,8 @@ import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { OK, Result } from "@typeberry/utils";
 import { LegacyHostCallResult } from "../results";
-import { type MachineId, tryAsMachineId } from "./machine-instance";
 import { Peek } from "./peek";
-import { PeekPokeError } from "./refine-externalities";
+import { type MachineId, PeekPokeError, tryAsMachineId } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));

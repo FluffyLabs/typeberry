@@ -4,8 +4,7 @@ import { type GasCounter, type Registers, tryAsSmallGas } from "@typeberry/pvm-i
 import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import { tryAsMachineId } from "./machine-instance";
-import type { RefineExternalities } from "./refine-externalities";
+import { type RefineExternalities, tryAsMachineId } from "./refine-externalities";
 
 const IN_OUT_REG = 7;
 

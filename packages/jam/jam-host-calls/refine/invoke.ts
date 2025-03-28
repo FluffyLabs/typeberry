@@ -14,8 +14,7 @@ import { NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import { tryAsMachineId } from "./machine-instance";
-import type { RefineExternalities } from "./refine-externalities";
+import { type RefineExternalities, tryAsMachineId } from "./refine-externalities";
 
 const IN_OUT_REG_1 = 7;
 const IN_OUT_REG_2 = 8;
