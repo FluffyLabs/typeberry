@@ -1,5 +1,6 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import type { WorkPackageInfo } from "@typeberry/block/work-report";
+import { HashDictionary } from "@typeberry/collections";
 import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
@@ -21,7 +22,7 @@ class Input {
         headerHash: header_hash,
         priorStateRoot: parent_state_root,
         accumulateRoot: accumulate_root,
-        workPackages: work_packages,
+        workPackages: HashDictionary.fromEntries(work_packages.map((x) => [x.workPackageHash, x])),
       };
     },
   );

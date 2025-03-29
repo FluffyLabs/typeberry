@@ -11,7 +11,7 @@ export type Account = {
   data: {
     preimages: HashDictionary<PreimageHash, BytesBlob>;
     /** https://graypaper.fluffylabs.dev/#/5f542d7/115400115800 */
-    lookupHistory: LookupHistoryItem[];
+    lookupHistory: HashDictionary<PreimageHash, LookupHistoryItem[]>;
   };
 };
 
@@ -73,7 +73,8 @@ export class Preimages {
         return Result.error(PreimagesErrorCode.AccountNotFound);
       }
 
-      const lookupHistoryItem = getLookupHistoryItem(account.data.lookupHistory, hash, blob.length);
+      const preimageHistory = account.data.lookupHistory.get(hash);
+      const lookupHistoryItem = getLookupHistoryItem(preimageHistory, hash, blob.length);
 
       // https://graypaper.fluffylabs.dev/#/5f542d7/181800181900
       // https://graypaper.fluffylabs.dev/#/5f542d7/116f0011a500
@@ -101,10 +102,9 @@ export class Preimages {
 }
 
 export function getLookupHistoryItem(
-  lookupHistory: LookupHistoryItem[],
+  lookupHistory: LookupHistoryItem[] | undefined,
   hash: PreimageHash,
   length: number,
 ): LookupHistoryItem | undefined {
-  // TODO [ToDr] [opti] avoid linear lookup. Most likely we should decode state into a dictionary here.
-  return lookupHistory.find((item) => item.hash.isEqualTo(hash) && item.length === length);
+  return lookupHistory?.find((item) => item.hash.isEqualTo(hash) && item.length === length);
 }

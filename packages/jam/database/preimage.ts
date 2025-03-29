@@ -14,7 +14,7 @@ export interface PreimageDb {
 
 /** An in-memory implementation of the preimage database. */
 export class InMemoryPreimages implements PreimageDb {
-  private readonly db = new HashDictionary<OpaqueHash, BytesBlob>();
+  private readonly db = HashDictionary.new<OpaqueHash, BytesBlob>();
 
   get<T extends OpaqueHash>(hash: T): WithHash<T, BytesBlob> | null {
     const data = this.db.get(hash);

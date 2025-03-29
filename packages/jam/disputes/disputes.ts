@@ -182,7 +182,7 @@ export class Disputes {
   private calculateVotesForWorkReports(disputes: DisputesExtrinsic) {
     // calculate total votes for each work report
     // https://graypaper.fluffylabs.dev/#/579bd12/128c0212e302
-    const v = new HashDictionary<WorkReportHash, number>();
+    const v = HashDictionary.new<WorkReportHash, number>();
 
     for (const verdict of disputes.verdicts) {
       const j = verdict.votes;

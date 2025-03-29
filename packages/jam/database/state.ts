@@ -73,7 +73,7 @@ export class InMemoryKvdb implements KeyValueDatabase<InMemoryTransaction> {
 
   constructor() {
     this.db = new WriteableNodesDb(blake2bTrieHasher);
-    this.flat = new HashDictionary();
+    this.flat = HashDictionary.new();
     this.trie = new InMemoryTrie(this.db);
   }
 

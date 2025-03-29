@@ -119,8 +119,6 @@ export async function runDisputesTest(testContent: DisputesTest, path: string) {
   const error = result.isError ? result.error : undefined;
   const ok = result.isOk ? result.ok.slice() : undefined;
   /**
-   * TODO [MaSi]: this condition should be removed!
-   *
    * bad_signatures-2 has more than one problem and the result depends on order of checks.
    *
    * https://github.com/w3f/jamtestvectors/pull/9#issuecomment-2509867864

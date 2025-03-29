@@ -1,8 +1,11 @@
 import type { TimeSlot } from "@typeberry/block";
+import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec";
 import { Credential } from "@typeberry/block/guarantees";
 import { WorkReport } from "@typeberry/block/work-report";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
+import type { KnownSizeArray } from "@typeberry/collections";
+import type { ChainSpec } from "@typeberry/config";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
 import type { StreamHandler, StreamSender } from "../handler";
@@ -22,7 +25,13 @@ export class GuaranteedWorkReport extends WithDebug {
   static Codec = codec.Class(GuaranteedWorkReport, {
     report: WorkReport.Codec,
     slot: codec.u32.asOpaque(),
-    signatures: codec.sequenceVarLen(Credential.Codec),
+    signatures: codecWithContext((context) => {
+      return codecKnownSizeArray(Credential.Codec, {
+        minLength: 0,
+        maxLength: context.validatorsCount,
+        typicalLength: context.validatorsCount / 2,
+      });
+    }),
   });
 
   static fromCodec({ report, slot, signatures }: CodecRecord<GuaranteedWorkReport>) {
@@ -32,7 +41,7 @@ export class GuaranteedWorkReport extends WithDebug {
   constructor(
     public readonly report: WorkReport,
     public readonly slot: TimeSlot,
-    public readonly signatures: Credential[],
+    public readonly signatures: KnownSizeArray<Credential, "[0..ValidatorsCount)">,
   ) {
     super();
   }
@@ -43,10 +52,13 @@ const logger = Logger.new(__filename, "protocol/ce-135");
 export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
-  constructor(private readonly onWorkReport: (workReport: GuaranteedWorkReport) => void) {}
+  constructor(
+    private readonly chainSpec: ChainSpec,
+    private readonly onWorkReport: (workReport: GuaranteedWorkReport) => void,
+  ) {}
 
   onStreamMessage(sender: StreamSender, message: BytesBlob): void {
-    const guaranteedWorkReport = Decoder.decodeObject(GuaranteedWorkReport.Codec, message);
+    const guaranteedWorkReport = Decoder.decodeObject(GuaranteedWorkReport.Codec, message, this.chainSpec);
     logger.log(`[${sender.streamId}] Received guaranteed work report.`);
     this.onWorkReport(guaranteedWorkReport);
     sender.close();
@@ -58,6 +70,8 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
+  constructor(private readonly chainSpec: ChainSpec) {}
+
   onStreamMessage(sender: StreamSender): void {
     logger.warn(`[${sender.streamId}] Got unexpected message on CE-135 stream. Closing.`);
     sender.close();
@@ -67,7 +81,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
 
   sendWorkReport(sender: StreamSender, workReport: GuaranteedWorkReport) {
     logger.trace(`[${sender.streamId}] Sending guaranteed work report.`);
-    sender.send(Encoder.encodeObject(GuaranteedWorkReport.Codec, workReport));
+    sender.send(Encoder.encodeObject(GuaranteedWorkReport.Codec, workReport, this.chainSpec));
     sender.close();
   }
 }

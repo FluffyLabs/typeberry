@@ -1,6 +1,7 @@
 import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
-import { WithDebug, asOpaqueType } from "@typeberry/utils";
+import { WithDebug } from "@typeberry/utils";
+import { codecKnownSizeArray, codecWithContext } from "./codec";
 import type { TimeSlot, ValidatorIndex } from "./common";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "./crypto";
 import { WorkReport } from "./work-report";
@@ -48,8 +49,11 @@ export class ReportGuarantee extends WithDebug {
   static Codec = codec.Class(ReportGuarantee, {
     report: WorkReport.Codec,
     slot: codec.u32.asOpaque(),
-    // TODO [ToDr] constrain the sequence length during decoding.
-    credentials: codec.sequenceVarLen(Credential.Codec).asOpaque(),
+    credentials: codecKnownSizeArray(Credential.Codec, {
+      minLength: REQUIRED_CREDENTIALS_RANGE[0],
+      maxLength: REQUIRED_CREDENTIALS_RANGE[1],
+      typicalLength: REQUIRED_CREDENTIALS_RANGE[1],
+    }),
   });
 
   static fromCodec({ report, slot, credentials }: CodecRecord<ReportGuarantee>) {
@@ -74,6 +78,7 @@ export class ReportGuarantee extends WithDebug {
   }
 }
 
+export const GuaranteesExtrinsicBounds = "[0..CoresCount)";
 /**
  * `E_G`: Series of guarantees, at most one for each core.
  *
@@ -82,11 +87,18 @@ export class ReportGuarantee extends WithDebug {
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/146402146702
  */
-export type GuaranteesExtrinsic = KnownSizeArray<ReportGuarantee, "0..CoresCount">;
+export type GuaranteesExtrinsic = KnownSizeArray<ReportGuarantee, typeof GuaranteesExtrinsicBounds>;
 
-// TODO [ToDr] constrain the sequence length during decoding.
-export const guaranteesExtrinsicCodec = codec
-  .sequenceVarLen(ReportGuarantee.Codec)
-  .convert<GuaranteesExtrinsic>((i) => i, asOpaqueType);
+export const guaranteesExtrinsicCodec = codecWithContext((context) =>
+  codecKnownSizeArray(
+    ReportGuarantee.Codec,
+    {
+      minLength: 0,
+      maxLength: context.coresCount,
+      typicalLength: context.coresCount,
+    },
+    GuaranteesExtrinsicBounds,
+  ),
+);
 
 export type GuaranteesExtrinsicView = DescribedBy<typeof guaranteesExtrinsicCodec.View>;

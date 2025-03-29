@@ -10,13 +10,17 @@ import { guaranteesAsView, initialValidators, newCredential, newReports, newWork
 describe("Reports.verifyCredentials", () => {
   it("should reject insufficient credentials", async () => {
     const reports = await newReports();
-    const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
-        slot: tryAsTimeSlot(5),
-        report: newWorkReport({ core: 0 }),
-        credentials: asOpaqueType([1].map((x) => newCredential(x))),
-      }),
-    ]);
+    const guarantees = guaranteesAsView(
+      tinyChainSpec,
+      [
+        ReportGuarantee.fromCodec({
+          slot: tryAsTimeSlot(5),
+          report: newWorkReport({ core: 0 }),
+          credentials: asOpaqueType([1].map((x) => newCredential(x))),
+        }),
+      ],
+      { disableCredentialsRangeCheck: true },
+    );
 
     const input = { guarantees, slot: tryAsTimeSlot(1) };
     const hashes = reports.workReportHashes(guarantees);
@@ -32,13 +36,17 @@ describe("Reports.verifyCredentials", () => {
 
   it("should reject too many credentials", async () => {
     const reports = await newReports();
-    const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
-        slot: tryAsTimeSlot(5),
-        report: newWorkReport({ core: 1 }),
-        credentials: asOpaqueType([1, 2, 3, 4].map((x) => newCredential(x))),
-      }),
-    ]);
+    const guarantees = guaranteesAsView(
+      tinyChainSpec,
+      [
+        ReportGuarantee.fromCodec({
+          slot: tryAsTimeSlot(5),
+          report: newWorkReport({ core: 1 }),
+          credentials: asOpaqueType([1, 2, 3, 4].map((x) => newCredential(x))),
+        }),
+      ],
+      { disableCredentialsRangeCheck: true },
+    );
 
     const input = { guarantees, slot: tryAsTimeSlot(1) };
     const hashes = reports.workReportHashes(guarantees);

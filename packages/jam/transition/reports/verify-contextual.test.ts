@@ -3,6 +3,8 @@ import { tryAsTimeSlot } from "@typeberry/block";
 import { ReportGuarantee } from "@typeberry/block/guarantees";
 import { WorkPackageInfo } from "@typeberry/block/work-report";
 import { Bytes } from "@typeberry/bytes";
+import { HashDictionary, asKnownSize } from "@typeberry/collections";
+import { HashSet } from "@typeberry/collections/hash-set";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
@@ -224,7 +226,7 @@ describe("Reports.verifyContextualValidity", () => {
   it("should reject duplicate work package from accumulation queue", async () => {
     const reports = await newReports({
       services: initialServices(),
-      accumulationQueue: [new NotYetAccumulatedReport(newWorkReport({ core: 1 }), [])],
+      accumulationQueue: [new NotYetAccumulatedReport(newWorkReport({ core: 1 }), asKnownSize([]))],
     });
     reports.state.availabilityAssignment[0] = null;
 
@@ -253,9 +255,11 @@ describe("Reports.verifyContextualValidity", () => {
   it("should reject duplicate work package from recent blocks history", async () => {
     const reports = await newReports({
       services: initialServices(),
-      reportedInRecentBlocks: [
-        new WorkPackageInfo(newWorkReport({ core: 0 }).workPackageSpec.hash, Bytes.zero(HASH_SIZE).asOpaque()),
-      ],
+      reportedInRecentBlocks: HashDictionary.fromEntries(
+        [new WorkPackageInfo(newWorkReport({ core: 0 }).workPackageSpec.hash, Bytes.zero(HASH_SIZE).asOpaque())].map(
+          (x) => [x.workPackageHash, x],
+        ),
+      ),
     });
     reports.state.availabilityAssignment[0] = null;
 
@@ -284,7 +288,7 @@ describe("Reports.verifyContextualValidity", () => {
   it("should reject duplicate work package from recently accumulated work packages", async () => {
     const reports = await newReports({
       services: initialServices(),
-      recentlyAccumulated: [newWorkReport({ core: 0 }).workPackageSpec.hash],
+      recentlyAccumulated: HashSet.from([newWorkReport({ core: 0 }).workPackageSpec.hash]),
     });
     reports.state.availabilityAssignment[0] = null;
 

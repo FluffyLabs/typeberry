@@ -1,13 +1,7 @@
+import { MAX_REPORT_DEPENDENCIES } from "@typeberry/block/gp-constants";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
 import { OK, Result } from "@typeberry/utils";
 import { ReportsError } from "./error";
-
-/**
- * `J = 8`: The maximum sum of dependency items in a work-report.
- *
- * https://graypaper.fluffylabs.dev/#/5f542d7/416a00416a00?v=0.6.2
- */
-const MAX_REPORT_DEPENDENCIES = 8;
 
 /**
  * `W_R = 48 * 2**10`: The maximum total size of all output blobs in a work-report, in octets.

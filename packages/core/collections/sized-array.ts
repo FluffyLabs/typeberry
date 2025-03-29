@@ -1,10 +1,16 @@
 import { type Opaque, asOpaqueType, check, inspect } from "@typeberry/utils";
 
-/** Regular array that has known, but not verified length. */
-export type KnownSizeArray<T, F extends string> = Opaque<T[], F>;
+/** A collection that has a known, but not necessarily verified size. */
+export type KnownSize<T, F extends string> = Opaque<T, F>;
 
-/** Converts a regular array into a `KnownSizeArray`. */
-export function asKnownSize<T, F extends string>(data: T[]): KnownSizeArray<T, F> {
+/** Id of the known size collection. */
+export type KnownSizeId<X> = X extends KnownSizeArray<infer _T, infer F> ? F : never;
+
+/** Regular array that has known, but not verified length. */
+export type KnownSizeArray<T, F extends string> = KnownSize<T[], F>;
+
+/** Converts a regular collection into a `KnownSize`. */
+export function asKnownSize<T, F extends string>(data: T): KnownSize<T, F> {
   return asOpaqueType(data);
 }
 

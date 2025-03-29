@@ -48,7 +48,6 @@ export class EpochMarker extends WithDebug {
     public readonly entropy: EntropyHash,
     /** `eta_2'`: Randomness for the CURRENT epoch. */
     public readonly ticketsEntropy: EntropyHash,
-    // TODO [ToDr] constrain the sequence length during decoding.
     /** `kappa_b`: Bandernsatch validator keys for the NEXT epoch. */
     public readonly validators: PerValidator<BandersnatchKey>,
   ) {
