@@ -79,7 +79,7 @@ const runners = [
   runner("trie", trieTestSuiteFromJson, runTrieTest),
 ];
 
-main(runners, "jamtestvectors")
+main(runners, "jamtestvectors", process.argv.slice(2))
   .then((r) => logger.log(r))
   .catch((e) => {
     logger.error(e);

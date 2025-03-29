@@ -24,11 +24,11 @@ export type Runner<T> = {
   run: (test: T, path: string) => Promise<void>;
 };
 
-export async function main(runners: Runner<unknown>[], directoryToScan: string) {
+export async function main(runners: Runner<unknown>[], directoryToScan: string, inFiles: string[]) {
   const relPath = `${__dirname}/../..`;
-  let files = process.argv.slice(2);
   const tests: TestAndRunner[] = [];
 
+  let files = inFiles;
   if (files.length === 0) {
     // scan the jamtestvectors directory
     files = await scanDir(relPath, directoryToScan, ".json");
@@ -121,7 +121,6 @@ function prepareTest(runners: Runner<unknown>[], testContent: unknown, file: str
       };
     } catch (e) {
       handleError(name, e);
-      continue;
     }
   }
 
