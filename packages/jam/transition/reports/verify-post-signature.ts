@@ -36,7 +36,6 @@ export function verifyPostSignatureChecks(
      */
     const authorizerHash = report.authorizerHash;
     const authorizerPool = authPools[coreIndex];
-    // TODO [ToDr] [opti] We should have a dictionary here rather than do slow lookups.
     if (authorizerPool.find((hash) => hash.isEqualTo(authorizerHash)) === undefined) {
       return Result.error(
         ReportsError.CoreUnauthorized,
@@ -52,8 +51,7 @@ export function verifyPostSignatureChecks(
      * https://graypaper.fluffylabs.dev/#/5f542d7/15f80015fa00
      */
     for (const result of report.results) {
-      // TODO [ToDr] [opti] We should have a dictionary here rather than do slow lookups.
-      const service = services.find((x) => x.id === result.serviceId);
+      const service = services.get(result.serviceId);
       if (service === undefined) {
         return Result.error(ReportsError.BadServiceId, `No service with id: ${result.serviceId}`);
       }

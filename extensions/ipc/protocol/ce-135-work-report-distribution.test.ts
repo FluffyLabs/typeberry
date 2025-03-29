@@ -9,7 +9,8 @@ import { tryAsWorkItemsCount } from "@typeberry/block/work-package";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
 import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { FixedSizeArray } from "@typeberry/collections";
+import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
+import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { MessageHandler, type MessageSender } from "../handler";
@@ -46,10 +47,10 @@ const MOCK_WORK_REPORT = new WorkReport(
   [],
   FixedSizeArray.new([MOCK_WORK_RESULT], tryAsWorkItemsCount(1)),
 );
-const MOCK_SIGNATURES = [
+const MOCK_SIGNATURES = asKnownSize([
   new Credential(tryAsValidatorIndex(0), Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque() as Ed25519Signature),
   new Credential(tryAsValidatorIndex(1), Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque() as Ed25519Signature),
-];
+]);
 const MOCK_GUARANTEED_WORK_REPORT = new GuaranteedWorkReport(MOCK_WORK_REPORT, MOCK_SLOT, MOCK_SIGNATURES);
 
 class FakeMessageSender implements MessageSender {
@@ -96,13 +97,13 @@ describe("CE 135: Work Report Distribution", () => {
     );
 
     await new Promise((resolve) => {
-      const serverHandler = new ServerHandler((workReport) => {
+      const serverHandler = new ServerHandler(tinyChainSpec, (workReport) => {
         assert.deepStrictEqual(workReport, MOCK_GUARANTEED_WORK_REPORT);
         resolve(undefined);
       });
 
       handlers.server.registerHandlers(serverHandler);
-      handlers.client.registerHandlers(new ClientHandler());
+      handlers.client.registerHandlers(new ClientHandler(tinyChainSpec));
 
       handlers.client.withNewStream(STREAM_KIND, (handler: ClientHandler, sender) => {
         handler.sendWorkReport(sender, MOCK_GUARANTEED_WORK_REPORT);

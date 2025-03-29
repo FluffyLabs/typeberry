@@ -1,12 +1,13 @@
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import type { KnownSizeArray } from "@typeberry/collections";
+import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type U16, type U32, sumU32 } from "@typeberry/numbers";
-import { type Opaque, WithDebug, asOpaqueType } from "@typeberry/utils";
+import { type Opaque, WithDebug } from "@typeberry/utils";
+import { codecKnownSizeArray } from "./codec";
 import type { ServiceGas, ServiceId } from "./common";
 import type { CodeHash } from "./hash";
-import type { MAX_NUMBER_OF_SEGMENTS, SegmentIndex } from "./work-item-segment";
+import { MAX_NUMBER_OF_SEGMENTS, type SegmentIndex } from "./work-item-segment";
 
 type WorkItemExtrinsicHash = Opaque<OpaqueHash, "ExtrinsicHash">;
 
@@ -64,11 +65,10 @@ export type WorkItemExtrinsics = KnownSizeArray<
   Bytes<U32>,
   "Count of all extrinsics within work items in a work package"
 >;
+
 /**
  * To encode/decode extrinsics that are specified via [`WorkItemExtrinsicSpec`]
  * we need to know their lenghts. Hence this is created dynamically.
- *
- * TODO [ToDr] Consider passing a hash and exit early on hash mismatch?
  */
 export function workItemExtrinsicsCodec(workItems: WorkItem[]) {
   const extrinsicLengths = Array<U32>();
@@ -98,7 +98,7 @@ export function workItemExtrinsicsCodec(workItems: WorkItem[]) {
         const bytes = d.bytes(len);
         extrinsics.push(bytes);
       }
-      return asOpaqueType(extrinsics);
+      return asKnownSize(extrinsics);
     },
     (s) => s.decoder.skip(sum.value),
   );
@@ -116,10 +116,12 @@ export class WorkItem extends WithDebug {
     payload: codec.blob,
     refineGasLimit: codec.u64.asOpaque(),
     accumulateGasLimit: codec.u64.asOpaque(),
-    // TODO [ToDr] Limit the number of items when decoding.
-    importSegments: codec.sequenceVarLen(ImportSpec.Codec).asOpaque(),
+    importSegments: codecKnownSizeArray(ImportSpec.Codec, {
+      minLength: 0,
+      maxLength: MAX_NUMBER_OF_SEGMENTS,
+      typicalLength: MAX_NUMBER_OF_SEGMENTS,
+    }),
     extrinsic: codec.sequenceVarLen(WorkItemExtrinsicSpec.Codec),
-    // TODO [ToDr] Verify the size is lower than 2**11 when importing
     exportCount: codec.u16,
   });
 

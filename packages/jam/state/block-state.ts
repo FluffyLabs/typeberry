@@ -1,6 +1,8 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
-import { WorkPackageInfo } from "@typeberry/block/work-report";
+import { codecHashDictionary } from "@typeberry/block/codec";
+import { type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
 import { type CodecRecord, codec } from "@typeberry/codec";
+import type { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash } from "@typeberry/hash";
 import type { MmrPeaks } from "@typeberry/mmr";
 import { WithDebug } from "@typeberry/utils";
@@ -13,7 +15,7 @@ export class BlockState extends WithDebug {
       peaks: codec.sequenceVarLen(codec.optional(codec.bytes(HASH_SIZE))),
     }),
     postStateRoot: codec.bytes(HASH_SIZE).asOpaque(),
-    reported: codec.sequenceVarLen(WorkPackageInfo.Codec),
+    reported: codecHashDictionary(WorkPackageInfo.Codec, (x) => x.workPackageHash),
   });
 
   static fromCodec({ headerHash, mmr, postStateRoot, reported }: CodecRecord<BlockState>) {
@@ -28,7 +30,7 @@ export class BlockState extends WithDebug {
     /** Posterior state root filled in with a 1-block delay. */
     public postStateRoot: StateRootHash,
     /** Reported work packages (no more than number of cores). */
-    public readonly reported: WorkPackageInfo[],
+    public readonly reported: HashDictionary<WorkPackageHash, WorkPackageInfo>,
   ) {
     super();
   }

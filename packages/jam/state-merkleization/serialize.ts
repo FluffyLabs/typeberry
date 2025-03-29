@@ -1,8 +1,9 @@
 import { type ServiceId, codecPerEpochBlock, codecPerValidator } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
+import { codecFixedSizeArray, codecKnownSizeArray } from "@typeberry/block/codec";
+import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
 import type { PreimageHash } from "@typeberry/block/preimage";
-import { type Descriptor, type SequenceView, codec } from "@typeberry/codec";
-import { FixedSizeArray, type KnownSizeArray } from "@typeberry/collections";
+import { type Descriptor, codec } from "@typeberry/codec";
+import { HashSet } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import {
@@ -11,6 +12,7 @@ import {
   BlockState,
   DisputesRecords,
   ENTROPY_ENTRIES,
+  MAX_RECENT_HISTORY,
   PrivilegedServices,
   ServiceAccountInfo,
   type State,
@@ -21,23 +23,6 @@ import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
 import { SafroleData } from "@typeberry/state/safrole-data";
 import { StateEntry } from "./entries";
 import { type StateKey, keys } from "./keys";
-
-// TODO [ToDr] Move codecs to a common place and refactor other usage.
-const codecKnownSizeArray = <T, V, F extends string>(
-  val: Descriptor<T[], SequenceView<T, V>>,
-): Descriptor<KnownSizeArray<T, F>, SequenceView<T, V>> => {
-  return val.asOpaque();
-};
-
-const codecFixedSizeArray = <T, V, N extends number>(
-  val: Descriptor<T, V>,
-  len: N,
-): Descriptor<FixedSizeArray<T, N>> => {
-  return codec.sequenceFixLen(val, len).convert(
-    (i) => i,
-    (o) => FixedSizeArray.new(o, len),
-  );
-};
 
 export type StateCodec<T> = {
   key: StateKey;
@@ -50,7 +35,13 @@ export namespace serialize {
   /** C(1): https://graypaper.fluffylabs.dev/#/85129da/38a20138a201?v=0.6.3 */
   export const authPools: StateCodec<State["authPools"]> = {
     key: keys.index(StateEntry.Alpha),
-    Codec: codecPerCore(codecKnownSizeArray(codec.sequenceVarLen(codec.bytes(HASH_SIZE).asOpaque()))),
+    Codec: codecPerCore(
+      codecKnownSizeArray(codec.bytes(HASH_SIZE).asOpaque(), {
+        minLength: 0,
+        maxLength: MAX_AUTH_POOL_SIZE,
+        typicalLength: MAX_AUTH_POOL_SIZE,
+      }),
+    ),
     extract: (s) => s.authPools,
   };
 
@@ -64,7 +55,11 @@ export namespace serialize {
   /** C(3): https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6.3 */
   export const recentBlocks: StateCodec<State["recentBlocks"]> = {
     key: keys.index(StateEntry.Beta),
-    Codec: codecKnownSizeArray(codec.sequenceVarLen(BlockState.Codec)),
+    Codec: codecKnownSizeArray(BlockState.Codec, {
+      minLength: 0,
+      maxLength: MAX_RECENT_HISTORY,
+      typicalLength: MAX_RECENT_HISTORY,
+    }),
     extract: (s) => s.recentBlocks,
   };
 
@@ -148,7 +143,12 @@ export namespace serialize {
   /** C(15): https://graypaper.fluffylabs.dev/#/85129da/381903381903?v=0.6.3 */
   export const recentlyAccumulated: StateCodec<State["recentlyAccumulated"]> = {
     key: keys.index(StateEntry.Xi),
-    Codec: codecPerEpochBlock(codec.sequenceVarLen(codec.bytes(HASH_SIZE).asOpaque())),
+    Codec: codecPerEpochBlock(
+      codec.sequenceVarLen(codec.bytes(HASH_SIZE).asOpaque<"WorkPackageHash">()).convert(
+        (x) => Array.from(x),
+        (x) => HashSet.from(x),
+      ),
+    ),
     extract: (s) => s.recentlyAccumulated,
   };
 

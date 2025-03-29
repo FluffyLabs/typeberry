@@ -7,6 +7,22 @@ export class HashDictionary<K extends OpaqueHash, V> {
   // This has to be benchmarked and re-written to a custom map most likely.
   private readonly map = new Map<string, [K, V]>();
 
+  private constructor() {}
+
+  /** Create a new, empty hash dictionary. */
+  static new<K extends OpaqueHash, V>() {
+    return new HashDictionary<K, V>();
+  }
+
+  /** Create a new hash dictionary from given entires array. */
+  static fromEntries<K extends OpaqueHash, V>(entries: [K, V][]): HashDictionary<K, V> {
+    const dict = new HashDictionary<K, V>();
+    for (const [key, value] of entries) {
+      dict.set(key, value);
+    }
+    return dict;
+  }
+
   /** Return number of items in the dictionary. */
   get size(): number {
     return this.map.size;
@@ -40,6 +56,20 @@ export class HashDictionary<K extends OpaqueHash, V> {
   *[Symbol.iterator]() {
     for (const value of this.map.values()) {
       yield value;
+    }
+  }
+
+  /** Iterator over keys of the dictionary. */
+  *keys() {
+    for (const value of this.map.values()) {
+      yield value[0];
+    }
+  }
+
+  /** Iterator over values of the dictionary. */
+  *values() {
+    for (const value of this.map.values()) {
+      yield value[1];
     }
   }
 }

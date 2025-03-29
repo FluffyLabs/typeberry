@@ -163,9 +163,9 @@ function decode<T>(descriptor: Descriptor<T>, value: BytesBlob) {
 }
 
 function findOrAddService(s: PartialState, serviceId: ServiceId) {
-  const services = s.services ?? [];
+  const services = s.services ?? new Map();
   s.services = services;
-  let service = s.services.find((s) => s.id === serviceId);
+  let service = s.services.get(serviceId);
   if (service === undefined) {
     service = new Service(serviceId, {
       info: ServiceAccountInfo.fromCodec({
@@ -180,8 +180,7 @@ function findOrAddService(s: PartialState, serviceId: ServiceId) {
       lookupHistory: [],
       storage: [],
     });
-    s.services.push(service);
-    s.services.sort((a, b) => b.id - a.id);
+    s.services.set(serviceId, service);
   }
   return service;
 }

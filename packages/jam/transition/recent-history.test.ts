@@ -1,6 +1,8 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
 import { Bytes } from "@typeberry/bytes";
+import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, keccak } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
 import { type BlockState, MAX_RECENT_HISTORY } from "@typeberry/state";
@@ -28,7 +30,7 @@ describe("Recent History", () => {
       headerHash: Bytes.fill(HASH_SIZE, 3).asOpaque(),
       priorStateRoot: Bytes.fill(HASH_SIZE, 2).asOpaque(),
       accumulateRoot: Bytes.fill(HASH_SIZE, 1).asOpaque(),
-      workPackages: [],
+      workPackages: HashDictionary.new(),
     };
     recentHistory.transition(input);
 
@@ -39,7 +41,7 @@ describe("Recent History", () => {
           peaks: [Bytes.fill(HASH_SIZE, 1)],
         },
         postStateRoot: Bytes.zero(HASH_SIZE),
-        reported: [],
+        reported: HashDictionary.new(),
       },
     ]);
   });
@@ -51,7 +53,7 @@ describe("Recent History", () => {
         peaks: [Bytes.fill(HASH_SIZE, 1)],
       },
       postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
-      reported: [],
+      reported: HashDictionary.new<WorkPackageHash, WorkPackageInfo>(),
     };
     const recentHistory = new RecentHistory(await hasher, asRecentHistory([initialState]));
 
@@ -59,12 +61,14 @@ describe("Recent History", () => {
       headerHash: Bytes.fill(HASH_SIZE, 4).asOpaque(),
       priorStateRoot: Bytes.fill(HASH_SIZE, 5).asOpaque(),
       accumulateRoot: Bytes.fill(HASH_SIZE, 6).asOpaque(),
-      workPackages: [
-        {
-          workPackageHash: Bytes.fill(HASH_SIZE, 7).asOpaque(),
-          segmentTreeRoot: Bytes.fill(HASH_SIZE, 8).asOpaque(),
-        },
-      ],
+      workPackages: HashDictionary.fromEntries(
+        [
+          {
+            workPackageHash: Bytes.fill(HASH_SIZE, 7).asOpaque(),
+            segmentTreeRoot: Bytes.fill(HASH_SIZE, 8).asOpaque(),
+          },
+        ].map((x) => [x.workPackageHash, x]),
+      ),
     };
     recentHistory.transition(input);
 
@@ -104,12 +108,14 @@ describe("Recent History", () => {
         headerHash: Bytes.fill(HASH_SIZE, id(1)).asOpaque(),
         priorStateRoot: Bytes.fill(HASH_SIZE, id(2)).asOpaque(),
         accumulateRoot: Bytes.fill(HASH_SIZE, id(3)).asOpaque(),
-        workPackages: [
-          {
-            workPackageHash: Bytes.fill(HASH_SIZE, id(4)).asOpaque(),
-            segmentTreeRoot: Bytes.fill(HASH_SIZE, id(5)).asOpaque(),
-          },
-        ],
+        workPackages: HashDictionary.fromEntries(
+          [
+            {
+              workPackageHash: Bytes.fill(HASH_SIZE, id(4)).asOpaque(),
+              segmentTreeRoot: Bytes.fill(HASH_SIZE, id(5)).asOpaque(),
+            },
+          ].map((x) => [x.workPackageHash, x]),
+        ),
       };
       recentHistory.transition(input);
     }

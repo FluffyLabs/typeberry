@@ -1,3 +1,5 @@
+import { WithDebug } from "@typeberry/utils";
+
 /**
  * Estimated number of validators.
  *
@@ -32,8 +34,7 @@ export const EST_EPOCH_LENGTH = 600;
 /**
  * Additional data that has to be passed to the codec to correctly parse incoming bytes.
  */
-// TODO [ToDr] WithDebug
-export class ChainSpec {
+export class ChainSpec extends WithDebug {
   /** Number of validators. */
   readonly validatorsCount: number;
   /** 1/3 of number of validators */
@@ -60,6 +61,8 @@ export class ChainSpec {
   readonly maxTicketsPerExtrinsic: number;
 
   constructor(data: Omit<ChainSpec, "validatorsSuperMajority" | "thirdOfValidators">) {
+    super();
+
     this.validatorsCount = data.validatorsCount;
     this.thirdOfValidators = Math.floor(data.validatorsCount / 3);
     this.validatorsSuperMajority = Math.floor(data.validatorsCount / 3) * 2 + 1;
@@ -70,10 +73,6 @@ export class ChainSpec {
     this.contestLength = data.contestLength;
     this.ticketsPerValidator = data.ticketsPerValidator;
     this.maxTicketsPerExtrinsic = data.maxTicketsPerExtrinsic;
-  }
-
-  toString() {
-    return JSON.stringify(this, null, 2);
   }
 }
 

@@ -10,7 +10,7 @@ export * as codec from "@typeberry/codec";
 export * as bytes from "@typeberry/bytes";
 export * as config from "@typeberry/config";
 
-export * as context from "./context";
+export * as codecUtils from "./codec";
 export * as assurances from "./assurances";
 export * as disputes from "./disputes";
 export * as guarantees from "./guarantees";

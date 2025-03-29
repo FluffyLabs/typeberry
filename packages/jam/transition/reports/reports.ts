@@ -148,6 +148,7 @@ export class Reports {
       ),
     });
   }
+
   workReportHashes(input: GuaranteesExtrinsicView): KnownSizeArray<WorkReportHash, "Guarantees"> {
     const workReportHashes: WorkReportHash[] = [];
     for (const guarantee of input) {

@@ -1,10 +1,9 @@
-import { type CodecRecord, codec } from "@typeberry/codec";
+import { type CodecRecord, type Descriptor, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
-import { EST_VALIDATORS_SUPER_MAJORITY } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { WithDebug } from "@typeberry/utils";
+import { codecWithContext } from "./codec";
 import type { Epoch, ValidatorIndex } from "./common";
-import { withContext } from "./context";
 import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Key, type Ed25519Signature } from "./crypto";
 import type { WorkReportHash } from "./hash";
 
@@ -100,15 +99,9 @@ export class Verdict extends WithDebug {
   static Codec = codec.Class(Verdict, {
     workReportHash: codec.bytes(HASH_SIZE).asOpaque(),
     votesEpoch: codec.u32.asOpaque(),
-    votes: codec.select<KnownSizeArray<Judgement, "Validators super majority">>(
-      {
-        name: "Verdict.votes",
-        sizeHint: { bytes: EST_VALIDATORS_SUPER_MAJORITY * Judgement.Codec.sizeHint.bytes, isExact: false },
-      },
-      withContext("Verdicts.votes", (context) => {
-        return codec.sequenceFixLen(Judgement.Codec, context.validatorsSuperMajority).asOpaque();
-      }),
-    ),
+    votes: codecWithContext((context): Descriptor<Verdict["votes"]> => {
+      return codec.sequenceFixLen(Judgement.Codec, context.validatorsSuperMajority).asOpaque();
+    }),
   });
 
   static fromCodec({ workReportHash, votesEpoch, votes }: CodecRecord<Verdict>) {

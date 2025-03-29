@@ -31,7 +31,7 @@ export function verifyContextualValidity(
 ): Result<WorkPackageInfo[], ReportsError> {
   const contexts: RefineContext[] = [];
   // hashes of work packages reported in this extrinsic
-  const currentWorkPackages = new HashDictionary<WorkPackageHash, ExportsRootHash>();
+  const currentWorkPackages = HashDictionary.new<WorkPackageHash, ExportsRootHash>();
   const prerequisiteHashes = HashSet.new<WorkPackageHash>();
   const segmentRootLookupHashes = HashSet.new<WorkPackageHash>();
 
@@ -43,8 +43,7 @@ export function verifyContextualValidity(
     segmentRootLookupHashes.insertAll(guarantee.report.segmentRootLookup.map((x) => x.workPackageHash));
 
     for (const result of guarantee.report.results) {
-      // TODO [ToDr] [opti] We should have a dictionary here rather than do slow lookups.
-      const service = state.services.find((x) => x.id === result.serviceId);
+      const service = state.services.get(result.serviceId);
       if (service === undefined) {
         return Result.error(ReportsError.BadServiceId, `No service with id: ${result.serviceId}`);
       }
@@ -82,10 +81,9 @@ export function verifyContextualValidity(
   }
 
   // construct dictionary of recently-reported work packages and their segment roots
-  const recentlyReported = new HashDictionary<WorkPackageHash, ExportsRootHash>();
+  const recentlyReported = HashDictionary.new<WorkPackageHash, ExportsRootHash>();
   for (const recentBlock of state.recentBlocks) {
-    // TODO [ToDr] [opti] we should have a dictionary in the state already
-    for (const reported of recentBlock.reported) {
+    for (const reported of recentBlock.reported.values()) {
       recentlyReported.set(reported.workPackageHash, reported.segmentTreeRoot);
     }
   }
@@ -138,7 +136,7 @@ function verifyRefineContexts(
   headerChain: HeaderChain,
 ): Result<OK, ReportsError> {
   // TODO [ToDr] [opti] This could be cached and updated efficiently between runs.
-  const recentBlocks = new HashDictionary<HeaderHash, BlockState>();
+  const recentBlocks = HashDictionary.new<HeaderHash, BlockState>();
   for (const recentBlock of state.recentBlocks) {
     recentBlocks.set(recentBlock.headerHash, recentBlock);
   }
@@ -279,12 +277,12 @@ function verifyWorkPackagesUniqueness(
 
   // all work packages reported in recent blocks
   for (const recentBlock of state.recentBlocks) {
-    packagesInPipeline.insertAll(recentBlock.reported.map((x) => x.workPackageHash));
+    packagesInPipeline.insertAll(Array.from(recentBlock.reported.keys()));
   }
 
   // all work packages recently accumulated
   for (const hashes of state.recentlyAccumulated) {
-    packagesInPipeline.insertAll(hashes);
+    packagesInPipeline.insertAll(Array.from(hashes));
   }
 
   // all work packages that are in reports, which await accumulation

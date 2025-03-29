@@ -4,7 +4,7 @@ import { ReportGuarantee } from "@typeberry/block/guarantees";
 import { tinyChainSpec } from "@typeberry/config";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { ReportsError } from "./index";
-import { guaranteesAsView, newWorkReport } from "./test.utils";
+import { guaranteesAsView, newCredential, newWorkReport } from "./test.utils";
 import { verifyReportsOrder } from "./verify-order";
 
 describe("Reports.verifyReportsOrder", () => {
@@ -13,12 +13,12 @@ describe("Reports.verifyReportsOrder", () => {
       ReportGuarantee.fromCodec({
         slot: tryAsTimeSlot(5),
         report: newWorkReport({ core: 1 }),
-        credentials: asOpaqueType([]),
+        credentials: asOpaqueType([1, 2].map((x) => newCredential(x))),
       }),
       ReportGuarantee.fromCodec({
         slot: tryAsTimeSlot(5),
         report: newWorkReport({ core: 0 }),
-        credentials: asOpaqueType([]),
+        credentials: asOpaqueType([1, 2].map((x) => newCredential(x))),
       }),
     ]);
 
@@ -37,7 +37,7 @@ describe("Reports.verifyReportsOrder", () => {
       ReportGuarantee.fromCodec({
         slot: tryAsTimeSlot(5),
         report: newWorkReport({ core: 3 }),
-        credentials: asOpaqueType([]),
+        credentials: asOpaqueType([1, 2].map((x) => newCredential(x))),
       }),
     ]);
 

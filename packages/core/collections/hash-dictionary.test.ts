@@ -10,7 +10,7 @@ function key(n: number) {
 
 describe("HashDictionary", () => {
   it("should return true/false for keys present in the dictionary", () => {
-    const dict = new HashDictionary();
+    const dict = HashDictionary.new();
     dict.set(key(1), "Hello World!");
     dict.set(key(2), "Hello!");
 
@@ -21,7 +21,7 @@ describe("HashDictionary", () => {
   });
 
   it("should set and get some values", () => {
-    const dict = new HashDictionary();
+    const dict = HashDictionary.new();
     dict.set(key(1), "Hello World!");
     dict.set(key(2), "Hello!");
 
@@ -32,7 +32,7 @@ describe("HashDictionary", () => {
   });
 
   it("should remove some values", () => {
-    const dict = new HashDictionary();
+    const dict = HashDictionary.new();
     dict.set(key(1), "Hello World!");
     dict.set(key(2), "Hello!");
     assert.deepStrictEqual(dict.has(key(1)), true);
@@ -46,5 +46,38 @@ describe("HashDictionary", () => {
     assert.deepStrictEqual(dict.has(key(1)), false);
     assert.deepStrictEqual(dict.has(key(2)), true);
     assert.deepStrictEqual(dict.has(key(3)), false);
+  });
+
+  it("should iterate over values", () => {
+    const dict = HashDictionary.new();
+    dict.set(key(1), "Hello World!");
+    dict.set(key(2), "Hello!");
+
+    const values = Array.from(dict.values());
+
+    assert.deepStrictEqual(values, ["Hello World!", "Hello!"]);
+  });
+
+  it("should iterate over keys", () => {
+    const dict = HashDictionary.new();
+    dict.set(key(1), "Hello World!");
+    dict.set(key(2), "Hello!");
+
+    const keys = Array.from(dict.keys());
+
+    assert.deepStrictEqual(keys, [key(1), key(2)]);
+  });
+
+  it("should iterate over entries", () => {
+    const dict = HashDictionary.new();
+    dict.set(key(1), "Hello World!");
+    dict.set(key(2), "Hello!");
+
+    const values = Array.from(dict);
+
+    assert.deepStrictEqual(values, [
+      [key(1), "Hello World!"],
+      [key(2), "Hello!"],
+    ]);
   });
 });
