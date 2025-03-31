@@ -51,7 +51,7 @@ import { Result } from "./result";
 import { Status } from "./status";
 
 export class Interpreter {
-  private registers = new Registers();
+  private registers = Registers.empty();
   private code = new Uint8Array();
   private mask = Mask.empty();
   private pc = 0;
