@@ -12,15 +12,23 @@ export class Registers {
   private asSigned: BigInt64Array;
   private asUnsigned: BigUint64Array;
 
-  constructor(private readonly bytes = new Uint8Array(NO_OF_REGISTERS << REGISTER_SIZE_SHIFT)) {
-    check(bytes.length === NO_OF_REGISTERS << REGISTER_SIZE_SHIFT, "Invalid size of registers array.");
+  private constructor(private readonly bytes = new Uint8Array(NO_OF_REGISTERS << REGISTER_SIZE_SHIFT)) {
     this.asSigned = new BigInt64Array(bytes.buffer, bytes.byteOffset);
     this.asUnsigned = new BigUint64Array(bytes.buffer, bytes.byteOffset);
   }
 
   static fromBytes(bytes: Uint8Array) {
-    check(bytes.length === NO_OF_REGISTERS << REGISTER_SIZE_SHIFT, "Invalid size of registers array.");
+    check(bytes.length === NO_OF_REGISTERS << REGISTER_SIZE_SHIFT, "Invalid size of registers bytes.");
     return new Registers(bytes);
+  }
+
+  static fromBigUint64Array(array: BigUint64Array) {
+    check(array.length === NO_OF_REGISTERS, "Invalid size of registers array.");
+    return new Registers(new Uint8Array(array.buffer));
+  }
+
+  static empty() {
+    return new Registers();
   }
 
   getBytesAsLittleEndian(index: number, len: number) {
@@ -32,9 +40,10 @@ export class Registers {
     return this.bytes;
   }
 
-  copyFrom(regs: Registers | BigUint64Array) {
-    const array = regs instanceof BigUint64Array ? regs : regs.asUnsigned;
-    this.asUnsigned.set(array);
+  copy(regs: Registers) {
+    this.bytes.set(regs.bytes);
+    this.asSigned.set(regs.asSigned);
+    this.asUnsigned.set(regs.asUnsigned);
   }
 
   reset() {
