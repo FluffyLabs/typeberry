@@ -12,7 +12,7 @@ import { Registers } from "../registers";
 import { OneRegTwoImmsDispatcher } from "./one-reg-two-imms-dispatcher";
 
 describe("OneRegTwoImmsDispatcher", () => {
-  const regs = new Registers();
+  const regs = Registers.empty();
   const memory = new Memory();
   const instructionResult = new InstructionResult();
   const storeOps = new StoreOps(regs, memory, instructionResult);

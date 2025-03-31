@@ -27,7 +27,7 @@ function prepareRegsAndMemory(
   data: BytesBlob,
   { registerMemory = true }: { registerMemory?: boolean } = {},
 ) {
-  const registers = new Registers();
+  const registers = Registers.empty();
   registers.setU64(MACHINE_INDEX_REG, machineIndex);
   registers.setU32(DEST_REG, destinationStart);
 

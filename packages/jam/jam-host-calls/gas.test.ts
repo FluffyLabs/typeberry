@@ -11,7 +11,7 @@ describe("HostCalls: Gas", () => {
     const gas = new GasHostCall();
 
     const counter = gasCounter(tryAsGas(10_000));
-    const regs = new Registers();
+    const regs = Registers.empty();
 
     assert.deepStrictEqual(regs.getU64(REGISTER), 0n);
 
@@ -26,7 +26,7 @@ describe("HostCalls: Gas", () => {
     const gas = new GasHostCall();
 
     const counter = gasCounter(tryAsGas(2n ** 64n - 1n));
-    const regs = new Registers();
+    const regs = Registers.empty();
 
     assert.deepStrictEqual(regs.getU64(REGISTER), 0n);
 

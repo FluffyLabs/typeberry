@@ -6,8 +6,7 @@ import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
 export class Program {
   static fromSpi(rawProgram: Uint8Array, args: Uint8Array) {
     const { code, memory: rawMemory, registers } = decodeStandardProgram(rawProgram, args);
-    const regs = new Registers();
-    regs.copyFrom(registers);
+    const regs = Registers.fromBigUint64Array(registers);
     const memoryBuilder = new MemoryBuilder();
 
     for (const { start, end, data } of rawMemory.readable) {
@@ -30,7 +29,7 @@ export class Program {
   }
 
   static fromGeneric(rawProgram: Uint8Array) {
-    const regs = new Registers();
+    const regs = Registers.empty();
     const memory = new Memory();
     return new Program(rawProgram, regs, memory);
   }

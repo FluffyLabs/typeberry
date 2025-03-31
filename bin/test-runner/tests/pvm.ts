@@ -88,8 +88,7 @@ export async function runPvmTest(testContent: PvmTest) {
   const HEAP_START_PAGE = hasMemoryLayout ? maxAddressFromPageMap + PAGE_SIZE : 0;
   const HEAP_END_PAGE = MAX_MEMORY_INDEX;
   const memory = memoryBuilder.finalize(tryAsSbrkIndex(HEAP_START_PAGE), tryAsSbrkIndex(HEAP_END_PAGE));
-  const regs = new Registers();
-  regs.copyFrom(testContent["initial-regs"]);
+  const regs = Registers.fromBigUint64Array(testContent["initial-regs"]);
 
   const pvm = new Interpreter();
 

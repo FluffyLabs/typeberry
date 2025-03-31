@@ -13,7 +13,7 @@ describe("HostCalls: Checkpoint", () => {
     const checkpoint = new Checkpoint(accumulate);
 
     const counter = gasCounter(tryAsGas(2n ** 42n - 1n));
-    const regs = new Registers();
+    const regs = Registers.empty();
 
     assert.deepStrictEqual(regs.getU64(REGISTER), 0n);
     assert.deepStrictEqual(accumulate.checkpointCalled, 0);

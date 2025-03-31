@@ -8,7 +8,7 @@ import { BitOps } from "./bit-ops";
 
 describe("BitOps", () => {
   function prepareData(firstValue: bigint, secondValue = 0n) {
-    const regs = new Registers();
+    const regs = Registers.empty();
     const firstRegisterIndex = 0;
     const secondRegisterIndex = 1;
     const resultRegisterIndex = 12;

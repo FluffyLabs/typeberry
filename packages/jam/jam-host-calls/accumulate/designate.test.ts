@@ -23,7 +23,7 @@ function prepareRegsAndMemory(
   { skipValidators = false }: { skipValidators?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new Registers();
+  const registers = Registers.empty();
   registers.setU32(VALIDATORS_DATA_START_REG, memStart);
 
   const builder = new MemoryBuilder();

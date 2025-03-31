@@ -27,7 +27,7 @@ function prepareRegsAndMemory(
   data: BytesBlob,
   { registerMemory = true }: { registerMemory?: boolean } = {},
 ) {
-  const registers = new Registers();
+  const registers = Registers.empty();
   registers.setU32(HASH_START_REG, hashStart);
 
   const builder = new MemoryBuilder();

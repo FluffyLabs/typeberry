@@ -53,7 +53,7 @@ function prepareRegsAndMemory(
     preimageLength = 0,
   }: { skipKey?: boolean; skipValue?: boolean; preimageOffset?: number; preimageLength?: number } = {},
 ) {
-  const registers = new Registers();
+  const registers = Registers.empty();
   registers.setU32(SERVICE_ID_REG, serviceId);
   registers.setU32(HASH_ADDRESS_REG, PREIMAGE_HASH_ADDRESS);
   registers.setU32(DEST_ADDRESS_REG, DESTINATION_MEM_ADDRESS);

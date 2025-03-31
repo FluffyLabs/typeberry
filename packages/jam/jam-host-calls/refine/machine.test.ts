@@ -19,7 +19,7 @@ const PC_REG = 9;
 
 function prepareRegsAndMemory(code: BytesBlob, pc: U32, { skipCode = false }: { skipCode?: boolean } = {}) {
   const memStart = 2 ** 20;
-  const registers = new Registers();
+  const registers = Registers.empty();
   registers.setU32(CODE_START_REG, memStart);
   registers.setU32(CODE_LEN_REG, code.length);
   registers.setU32(PC_REG, pc);

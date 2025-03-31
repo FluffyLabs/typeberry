@@ -37,7 +37,7 @@ function prepareRegsAndMemory(
   { skipDictionary = false }: { skipDictionary?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new Registers();
+  const registers = Registers.empty();
   registers.setU32(SERVICE_M, tryAsServiceId(5));
   registers.setU32(SERVICE_A, tryAsServiceId(10));
   registers.setU32(SERVICE_V, tryAsServiceId(15));

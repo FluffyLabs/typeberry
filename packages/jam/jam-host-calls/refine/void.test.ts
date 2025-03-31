@@ -66,7 +66,7 @@ describe("HostCalls: Void", () => {
 });
 
 function prepareRegsAndMemory(machineId: MachineId, pageStart: number, pageCount: number) {
-  const registers = new Registers();
+  const registers = Registers.empty();
   registers.setU64(7, machineId);
   registers.setU32(8, pageStart);
   registers.setU32(9, pageCount);

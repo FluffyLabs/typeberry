@@ -12,7 +12,7 @@ import { Registers } from "../registers";
 import { OneRegOneExtImmDispatcher } from "./one-reg-one-ext-imm-dispatcher";
 
 describe("OneRegOneExtImmDispatcher", () => {
-  const regs = new Registers();
+  const regs = Registers.empty();
   const memory = new Memory();
   const instructionResult = new InstructionResult();
   const loadOps = new LoadOps(regs, memory, instructionResult);

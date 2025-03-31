@@ -9,7 +9,7 @@ import { Registers } from "../registers";
 import { ThreeRegsDispatcher } from "./three-regs-dispatcher";
 
 test("ThreeRegsDispatcher", async (t) => {
-  const regs = new Registers();
+  const regs = Registers.empty();
   const mathOps = new MathOps(regs);
   const bitOps = new BitOps(regs);
   const shiftOps = new ShiftOps(regs);

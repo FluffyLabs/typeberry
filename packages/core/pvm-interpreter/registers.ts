@@ -40,7 +40,7 @@ export class Registers {
     return this.bytes;
   }
 
-  copy(regs: Registers) {
+  copyFrom(regs: Registers) {
     this.bytes.set(regs.bytes);
     this.asSigned.set(regs.asSigned);
     this.asUnsigned.set(regs.asUnsigned);

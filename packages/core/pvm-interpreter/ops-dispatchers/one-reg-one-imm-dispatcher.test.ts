@@ -14,7 +14,7 @@ import { Registers } from "../registers";
 import { OneRegOneImmDispatcher } from "./one-reg-one-imm-dispatcher";
 
 describe("OneRegOneImmDispatcher", () => {
-  const regs = new Registers();
+  const regs = Registers.empty();
   const memory = new Memory();
   const jumpTable = new JumpTable(1, new Uint8Array([1]));
   const instructionResult = new InstructionResult();

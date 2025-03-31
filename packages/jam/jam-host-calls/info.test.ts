@@ -33,7 +33,7 @@ function prepareRegsAndMemory(
 ) {
   const pageStart = 2 ** 16;
   const memStart = pageStart + PAGE_SIZE - accountInfoLength - 1;
-  const registers = new Registers();
+  const registers = Registers.empty();
   registers.setU32(SERVICE_ID_REG, serviceId);
   registers.setU32(DEST_START_REG, memStart);
 

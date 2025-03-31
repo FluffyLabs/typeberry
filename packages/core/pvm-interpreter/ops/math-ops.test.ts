@@ -8,7 +8,7 @@ import { MathOps } from "./math-ops";
 
 describe("MathOps", () => {
   function prepareData(firstValue: bigint, secondValue: bigint) {
-    const regs = new Registers();
+    const regs = Registers.empty();
     const firstValRegIndex = 0;
     const secondValRegIndex = 1;
     const resultRegisterIndex = 12;

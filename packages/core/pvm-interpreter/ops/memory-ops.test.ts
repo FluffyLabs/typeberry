@@ -9,7 +9,7 @@ import { MemoryOps } from "./memory-ops";
 
 describe("MemoryOps", () => {
   function prepareData(pagesToAllocate: number, lengthRegisterValue = PAGE_SIZE) {
-    const regs = new Registers();
+    const regs = Registers.empty();
     const memory = new Memory();
     const instructionResult = new InstructionResult();
     const memoryOps = new MemoryOps(regs, memory, instructionResult);

@@ -13,7 +13,7 @@ import { BranchOps } from "./branch-ops";
 
 describe("BranchOps", () => {
   function prepareData(firstValue: bigint, secondValue: bigint, initialNextPc: number) {
-    const regs = new Registers();
+    const regs = Registers.empty();
     const instructionResult = new InstructionResult();
     const code = new Uint8Array([Instruction.ADD_32, 5, 6, Instruction.SUB_32, 5, 6]);
     const basicBlocks = new BasicBlocks();

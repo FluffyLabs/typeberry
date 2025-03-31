@@ -8,7 +8,7 @@ import { BooleanOps } from "./boolean-ops";
 
 describe("BooleanOps", () => {
   function prepareData(firstValue: bigint, secondValue: bigint) {
-    const regs = new Registers();
+    const regs = Registers.empty();
     const firstRegisterIndex = 0;
     const secondRegisterIndex = 1;
     const resultRegisterIndex = 12;

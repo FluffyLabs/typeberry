@@ -14,7 +14,7 @@ import { OneRegOneImmOneOffsetDispatcher } from "./one-reg-one-imm-one-offset-di
 
 describe("OneRegOneImmOneOffsetDispatcher", () => {
   describe("check if it handles expected instructions", () => {
-    const regs = new Registers();
+    const regs = Registers.empty();
     const memory = new Memory();
     const instructionResult = new InstructionResult();
     const basicBlocks = new BasicBlocks();
@@ -144,7 +144,7 @@ describe("OneRegOneImmOneOffsetDispatcher", () => {
   });
 
   describe("check if it handles other instructions than expected", () => {
-    const regs = new Registers();
+    const regs = Registers.empty();
     const memory = new Memory();
     const instructionResult = new InstructionResult();
     const basicBlocks = new BasicBlocks();

@@ -13,7 +13,7 @@ import { TwoRegsOneImmDispatcher } from "./two-regs-one-imm-dispatcher";
 
 describe("TwoRegsOneImmDispatcher", () => {
   const instructionResult = new InstructionResult();
-  const regs = new Registers();
+  const regs = Registers.empty();
   const memory = new Memory();
   const mathOps = new MathOps(regs);
   const shiftOps = new ShiftOps(regs);
