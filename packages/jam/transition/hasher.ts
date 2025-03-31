@@ -1,4 +1,4 @@
-import { Extrinsic, type ExtrinsicHash, Header, type HeaderHash } from "@typeberry/block";
+import { Extrinsic, type ExtrinsicHash, type HeaderHash, type HeaderView } from "@typeberry/block";
 import { WorkPackage } from "@typeberry/block/work-package";
 import type { WorkPackageHash } from "@typeberry/block/work-report";
 import type { BytesBlob } from "@typeberry/bytes";
@@ -8,6 +8,7 @@ import {
   type HashAllocator,
   type KeccakHash,
   type OpaqueHash,
+  WithHash,
   WithHashAndBytes,
   blake2b,
   keccak,
@@ -28,8 +29,8 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
     return keccak.hashBlobs(this.keccakHasher, [id, a, b]);
   }
 
-  header(header: Header): WithHashAndBytes<HeaderHash, Header> {
-    return this.encode(Header.Codec, header);
+  header(header: HeaderView): WithHash<HeaderHash, HeaderView> {
+    return new WithHash(blake2b.hashBytes(header.encoded(), this.allocator).asOpaque(), header);
   }
 
   extrinsic(extrinsic: Extrinsic): WithHashAndBytes<ExtrinsicHash, Extrinsic> {

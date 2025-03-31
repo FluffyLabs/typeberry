@@ -7,7 +7,8 @@ import {
   tryAsPerValidator,
 } from "@typeberry/block";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
-import { FixedSizeArray, HashSet } from "@typeberry/collections";
+import type { WorkPackageInfo } from "@typeberry/block/work-report";
+import { FixedSizeArray, HashDictionary, HashSet } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
@@ -139,12 +140,12 @@ class OutputData {
       reporters: json.array(codecFromJson.bytes32()),
     },
     ({ reported, reporters }) => ({
-      reported,
+      reported: HashDictionary.fromEntries(reported.map((x) => [x.workPackageHash, x])),
       reporters,
     }),
   );
 
-  reported!: ReportsOutput["reported"];
+  reported!: WorkPackageInfo[];
   reporters!: ReportsOutput["reporters"];
 }
 

@@ -11,7 +11,7 @@ import { Extrinsic } from "@typeberry/block/block";
 import { DisputesExtrinsic, Judgement, Verdict } from "@typeberry/block/disputes";
 import { Preimage } from "@typeberry/block/preimage";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Encoder } from "@typeberry/codec";
+import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type BlocksDb, InMemoryKvdb } from "@typeberry/database";
@@ -88,7 +88,9 @@ export class Generator {
       seal: Bytes.fill(96, (blockNumber * 69) % 256).asOpaque(),
     });
 
-    this.lastHeaderHash = hasher.header(header).hash;
+    const encoded = Encoder.encodeObject(Header.Codec, header, this.chainSpec);
+    const headerView = Decoder.decodeObject(Header.Codec.View, encoded, this.chainSpec);
+    this.lastHeaderHash = hasher.header(headerView).hash;
     this.lastHeader = header;
     return new Block(header, extrinsic);
   }

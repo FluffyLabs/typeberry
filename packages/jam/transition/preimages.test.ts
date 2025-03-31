@@ -203,13 +203,13 @@ describe("Preimages", () => {
     assert.ok(account0 !== undefined);
     const account0LookupHistory = Array.from(account0.data.lookupHistory.values());
     assert.strictEqual(account0.data.preimages.has(hash1), true);
-    assert.strictEqual(account0.data.preimages.get(hash1), blob1);
+    assert.strictEqual(account0.data.preimages.get(hash1)?.blob, blob1);
     assert.deepStrictEqual(account0LookupHistory[0][0].slots, tryAsLookupHistorySlots([tryAsTimeSlot(12)]));
 
     const account1 = state.services.get(tryAsServiceId(1));
     assert.ok(account1 !== undefined);
     assert.strictEqual(account1.data.preimages.has(hash2), true);
-    assert.strictEqual(account1.data.preimages.get(hash2), blob2);
+    assert.strictEqual(account1.data.preimages.get(hash2)?.blob, blob2);
     assert.deepStrictEqual(account0LookupHistory[1][0].slots, tryAsLookupHistorySlots([tryAsTimeSlot(12)]));
   });
 });

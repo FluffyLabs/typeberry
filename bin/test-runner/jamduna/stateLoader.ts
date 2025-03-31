@@ -88,7 +88,7 @@ const kindMapping: { [k: string]: Appender } = {
   account_lookup: (s, value, description) => {
     const { serviceId, hash, len } = Parser.lookup(description);
     const lookupHistory = findOrAddService(s, serviceId).data.lookupHistory;
-    const items = lookupHistory.get(hash) || [];
+    const items = lookupHistory.get(hash) ?? [];
     lookupHistory.set(hash, items);
     items.push(
       new LookupHistoryItem(

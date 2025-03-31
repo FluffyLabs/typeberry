@@ -1,23 +1,24 @@
-import { type BlockView, type HeaderHash, tryAsValidatorIndex } from "@typeberry/block";
+import type { BlockView, HeaderHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { HashDictionary, asKnownSize } from "@typeberry/collections";
+import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
 import { Disputes } from "@typeberry/disputes";
+import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Safrole } from "@typeberry/safrole";
+import type { SafroleErrorCode } from "@typeberry/safrole/safrole";
 import type { State } from "@typeberry/state";
-import { Assurances, AssurancesError } from "./assurances";
+import { OK, Result } from "@typeberry/utils";
+import { Assurances, type AssurancesError } from "./assurances";
 import { Authorization } from "./authorization";
+import type { Output as BlockVerificationOutput } from "./block-verification";
 import type { TransitionHasher } from "./hasher";
-import { Preimages, PreimagesErrorCode } from "./preimages";
+import { Preimages, type PreimagesErrorCode } from "./preimages";
 import { RecentHistory } from "./recent-history";
-import { Reports, ReportsError } from "./reports";
+import { Reports, type ReportsError } from "./reports";
 import type { HeaderChain } from "./reports/verify-contextual";
 import { Statistics } from "./statistics";
-import {OK, Result} from "@typeberry/utils";
-import {DisputesErrorCode} from "@typeberry/disputes/disputes-error-code";
-import {SafroleErrorCode} from "@typeberry/safrole/safrole";
 
 class DbHeaderChain implements HeaderChain {
   constructor(private readonly blocks: BlocksDb) {}
@@ -28,29 +29,34 @@ class DbHeaderChain implements HeaderChain {
 }
 
 export enum ErrorKind {
-  Assurances,
-  Disputes,
-  Safrole,
-  Reports,
-  Preimages,
-};
+  Assurances = 0,
+  Disputes = 1,
+  Safrole = 2,
+  Reports = 3,
+  Preimages = 4,
+}
 
-export type Error = {
-  kind: ErrorKind.Assurances;
-  error: AssurancesError;
-} | {
-  kind: ErrorKind.Reports;
-  error: ReportsError;
-} | {
-  kind: ErrorKind.Disputes;
-  error: DisputesErrorCode;
-} | {
-  kind: ErrorKind.Safrole;
-  error: SafroleErrorCode;
-} | {
-  kind: ErrorKind.Preimages;
-  error: PreimagesErrorCode;
-};
+export type Error =
+  | {
+      kind: ErrorKind.Assurances;
+      error: AssurancesError;
+    }
+  | {
+      kind: ErrorKind.Reports;
+      error: ReportsError;
+    }
+  | {
+      kind: ErrorKind.Disputes;
+      error: DisputesErrorCode;
+    }
+  | {
+      kind: ErrorKind.Safrole;
+      error: SafroleErrorCode;
+    }
+  | {
+      kind: ErrorKind.Preimages;
+      error: PreimagesErrorCode;
+    };
 
 export class OnChain {
   assurances: Assurances;
@@ -66,7 +72,7 @@ export class OnChain {
     public readonly chainSpec: ChainSpec,
     private readonly state: State,
     blocks: BlocksDb,
-    hasher: TransitionHasher,
+    public readonly hasher: TransitionHasher,
   ) {
     this.assurances = new Assurances(chainSpec, state);
     this.authorization = new Authorization(chainSpec, state);
@@ -79,9 +85,8 @@ export class OnChain {
   }
 
   // TODO [ToDr] some mechanism to revert to old state?
-  async transition(block: BlockView): Promise<Result<OK, Error>> {
+  async transition(block: BlockView, verification: BlockVerificationOutput): Promise<Result<OK, Error>> {
     // TODO [ToDr] Order from GP!
-    // TODO [ToDr] Generic validation (checking parent, integrity, etc).
 
     const header = block.header.materialize();
     const timeSlot = header.timeSlotIndex;
@@ -117,11 +122,9 @@ export class OnChain {
       });
     }
 
-    // TODO [ToDr] Entropy from the current state, but which one?
-    const entropy = this.state.entropy[0];
     const safroleResult = await this.safrole.transition({
       slot: timeSlot,
-      entropy: header.epochMarker?.entropy ?? entropy,
+      entropy: verification.entropy,
       extrinsic: block.extrinsic.view().tickets.materialize(),
     });
     if (safroleResult.isError) {
@@ -131,9 +134,7 @@ export class OnChain {
       });
     }
 
-    // TODO [ToDr] take n from safrole verification?
-    const authorIndex = tryAsValidatorIndex(0);
-    this.statistics.transition(timeSlot, authorIndex, block.extrinsic.materialize());
+    this.statistics.transition(timeSlot, header.bandersnatchBlockAuthorIndex, block.extrinsic.materialize());
 
     const disputesResult = await this.disputes.transition(block.extrinsic.view().disputes.materialize());
     if (disputesResult.isError) {
@@ -158,12 +159,10 @@ export class OnChain {
     const accumulateRoot = Bytes.zero(HASH_SIZE).asOpaque();
     // recent history
     this.recentHistory.transition({
-      // TODO [ToDr] should be current?
-      headerHash: header.parentHeaderHash,
+      headerHash: verification.headerHash,
       priorStateRoot: header.priorStateRoot,
       accumulateRoot: accumulateRoot,
-      // TODO [ToDr] this is already a dictionary inside reports?
-      workPackages: HashDictionary.fromEntries(reportsResult.ok.reported.map((x) => [x.workPackageHash, x])),
+      workPackages: reportsResult.ok.reported,
     });
 
     return Result.ok(OK);

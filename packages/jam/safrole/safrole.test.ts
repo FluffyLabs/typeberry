@@ -7,7 +7,7 @@ import {
   type PerValidator,
   type TimeSlot,
 } from "@typeberry/block";
-import type { SignedTicket, TicketAttempt, TicketsExtrinsic } from "@typeberry/block/tickets";
+import type { TicketAttempt, TicketsExtrinsic } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";

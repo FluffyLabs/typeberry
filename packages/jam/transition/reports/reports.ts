@@ -1,8 +1,8 @@
 import type { Ed25519Key, PerValidator, TimeSlot, WorkReportHash } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
-import type { WorkPackageInfo } from "@typeberry/block/work-report";
+import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
 import { type BytesBlob, bytesBlobComparator } from "@typeberry/bytes";
-import { type KnownSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
+import { type HashDictionary, type KnownSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
 import { type KeccakHash, WithHash, blake2b } from "@typeberry/hash";
@@ -65,8 +65,12 @@ export type ReportsState = Pick<
 */
 
 export type ReportsOutput = {
-  /** All work Packages and their segment roots reported in the extrinsic. */
-  reported: KnownSizeArray<WorkPackageInfo, "Guarantees">;
+  /**
+   * All work Packages and their segment roots reported in the extrinsic.
+   *
+   * This dictionary has the same number of items as in the input guarantees extrinsic.
+   */
+  reported: HashDictionary<WorkPackageHash, WorkPackageInfo>;
   /** A set `R` of work package reporters. */
   reporters: KnownSizeArray<Ed25519Key, "Guarantees * Credentials (at most `cores*3`)">;
 };
@@ -141,7 +145,7 @@ export class Reports {
     }
 
     return Result.ok({
-      reported: asKnownSize(contextualValidity.ok),
+      reported: contextualValidity.ok,
       reporters: asKnownSize(
         SortedSet.fromArray(
           bytesBlobComparator,

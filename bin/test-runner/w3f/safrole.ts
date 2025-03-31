@@ -213,7 +213,7 @@ class TestInput {
     ({ entropy, extrinsic, slot }) => ({
       entropy,
       extrinsic: asKnownSize(extrinsic),
-      slot: tryAsTimeSlot(slot)
+      slot: tryAsTimeSlot(slot),
     }),
   );
 
