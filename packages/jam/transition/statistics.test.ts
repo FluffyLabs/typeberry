@@ -30,10 +30,10 @@ describe("Statistics", () => {
     const statisticsPerValidator = new ActivityData({ current: currentStatistics, previous: lastStatistics });
     const state: StatisticsState = {
       statisticsPerValidator,
-      timeSlot: previousSlot as TimeSlot,
-      posteriorActiveValidators: asOpaqueType([]),
+      timeslot: previousSlot as TimeSlot,
+      currentValidatorData: asOpaqueType([]),
     };
-    const statistics = new Statistics(state, tinyChainSpec);
+    const statistics = new Statistics(tinyChainSpec, state);
 
     return {
       statistics,
@@ -98,10 +98,10 @@ describe("Statistics", () => {
       const statisticsPerValidator = new ActivityData({ current: currentStatistics, previous: lastStatistics });
       const state: StatisticsState = {
         statisticsPerValidator,
-        timeSlot: previousSlot as TimeSlot,
-        posteriorActiveValidators: asOpaqueType([]),
+        timeslot: previousSlot as TimeSlot,
+        currentValidatorData: asOpaqueType([]),
       };
-      const statistics = new Statistics(state, tinyChainSpec);
+      const statistics = new Statistics(tinyChainSpec, state);
 
       return {
         statistics,

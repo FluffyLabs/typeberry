@@ -80,6 +80,12 @@ class TestState {
   accounts!: Service[];
 
   static toReportsState(pre: TestState, spec: ChainSpec): ReportsState {
+    if (pre.offenders.length > 0) {
+      // TODO [ToDr] offenders are not used in `Reports` STF, so there is
+      // probably something wrong there.
+      throw new Error("Ignoring non-empty offenders!");
+    }
+
     return {
       accumulationQueue: tryAsPerEpochBlock(
         FixedSizeArray.fill(() => [], spec.epochLength),
@@ -93,7 +99,6 @@ class TestState {
       currentValidatorData: tryAsPerValidator(pre.curr_validators, spec),
       previousValidatorData: tryAsPerValidator(pre.prev_validators, spec),
       entropy: FixedSizeArray.new(pre.entropy, ENTROPY_ENTRIES),
-      offenders: asOpaqueType(pre.offenders),
       authPools: tryAsPerCore(pre.auth_pools.map(asOpaqueType), spec),
       recentBlocks: asOpaqueType(pre.recent_blocks),
       services: new Map(pre.accounts.map((x) => [x.id, x])),

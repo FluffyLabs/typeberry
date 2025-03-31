@@ -7,7 +7,7 @@ import {
   type TimeSlot,
   tryAsPerEpochBlock,
 } from "@typeberry/block";
-import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
+import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob, bytesBlobComparator } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
@@ -30,9 +30,9 @@ type Mutable<T> = {
 
 type MutablePick<T, K extends keyof T> = Mutable<Pick<T, K>>;
 
-export type SafroleState = Pick<State, "designatedValidatorData"> &
-  Pick<State["disputesRecords"], "punishSet"> &
-  MutablePick<
+export type SafroleState = Pick<State, "designatedValidatorData"> & {
+  disputesRecords: Pick<State["disputesRecords"], "punishSet">;
+} & MutablePick<
     State,
     | "timeslot"
     | "previousValidatorData"
@@ -67,9 +67,12 @@ export type OkResult = {
 };
 
 export type Input = {
+  /** Current block time slot. */
   slot: TimeSlot;
+  /** Y(H_v): a high-entropy hash yielded from bandersnatch block seal. */
   entropy: EntropyHash;
-  extrinsic: SignedTicket[];
+  /** Current block tickets extrinsic. */
+  extrinsic: TicketsExtrinsic;
 };
 
 export enum SafroleErrorCode {
@@ -95,8 +98,8 @@ type ValidatorKeys = Pick<
 
 export class Safrole {
   constructor(
-    public state: SafroleState,
     private chainSpec: ChainSpec,
+    public state: SafroleState,
   ) {}
 
   /** `e' > e` */
@@ -166,7 +169,7 @@ export class Safrole {
     /**
      * Epoch is changed so we shift validators and calculate new epoch root commitment
      */
-    const postOffenders = this.state.punishSet;
+    const postOffenders = this.state.disputesRecords.punishSet;
     const newNextValidators: PerValidator<ValidatorData> = asOpaqueType(
       this.state.designatedValidatorData.map((validator) => {
         const isOffender = postOffenders.has(validator.ed25519) !== false;

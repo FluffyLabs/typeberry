@@ -12,7 +12,7 @@ import type { Comparator } from "@typeberry/ordering";
  */
 export function codecWithContext<T, V>(chooser: (ctx: ChainSpec) => Descriptor<T, V>): Descriptor<T, V> {
   const defaultContext = fullChainSpec;
-  const { name, sizeHint } = chooser(defaultContext);
+  const { name, sizeHint, View} = chooser(defaultContext);
   const cache = new Map<ChainSpec, Descriptor<T, V>>();
   return codec.select(
     {

@@ -55,12 +55,14 @@ export type ReportsState = Pick<
   | "services"
   | "accumulationQueue"
   | "recentlyAccumulated"
-> & {
-  // NOTE: this is most likely not strictly part of the state!
+>;
+/**
+  // NOTE: this is most likely part of the `disputesState`, but I'm not sure what
+  // to do with that exactly. It's being passed in the JAM test vectors, but isn't used?
   // TODO [ToDr] Seems that section 11 does not specify when this should be updated.
   // I guess we need to check that later with the GP.
   readonly offenders: KnownSizeArray<Ed25519Key, "0..ValidatorsCount">;
-};
+*/
 
 export type ReportsOutput = {
   /** All work Packages and their segment roots reported in the extrinsic. */

@@ -4,7 +4,7 @@ import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
 import { LmdbBlocks } from "@typeberry/database-lmdb";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
-import { SimpleAllocator } from "@typeberry/hash";
+import { SimpleAllocator, keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { TransitionHasher } from "@typeberry/transition";
 import { Importer } from "./importer";
@@ -25,6 +25,7 @@ if (!isMainThread) {
   channel.then((channel) => main(channel)).catch((e) => logger.error(e));
 }
 
+const keccakHasher = keccak.KeccakHasher.create();
 /**
  * The `BlockImporter` listens to `block` signals, where it expects
  * RAW undecoded block objects (typically coming from the network).
@@ -40,7 +41,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
     logger.info("Importer waiting for blocks.");
     const config = worker.getConfig();
     const importer = new Importer(
-      new TransitionHasher(config.chainSpec, new SimpleAllocator()),
+      new TransitionHasher(config.chainSpec, await keccakHasher, new SimpleAllocator()),
       new LmdbBlocks(config.chainSpec, config.blocksDbPath),
     );
 

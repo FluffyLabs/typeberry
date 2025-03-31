@@ -662,7 +662,8 @@ function objectView<T, D extends DescriptorRecord<T>>(
 function sequenceViewVarLen<T, V>(type: Descriptor<T, V>, options: LengthRange): Descriptor<SequenceView<T, V>> {
   const typeBytes = type.sizeHint.bytes;
   const sizeHint = { bytes: typeBytes * TYPICAL_SEQUENCE_LENGTH, isExact: false };
-  const name = `SeqView<${type.name}>[?]`;
+  const view = type.name !== type.View.name ? `, ${type.View.name}` : '';
+  const name = `SeqView<${type.name}${view}>[?]`;
 
   const skipper = (s: Skipper) => {
     const length = s.decoder.varU32();
@@ -696,7 +697,8 @@ function sequenceViewFixLen<T, V>(
 
   const skipper = (s: Skipper) => s.sequenceFixLen(type, fixedLength);
 
-  const name = `SeqView<${type.name}>[${fixedLength}]`;
+  const view = type.name !== type.View.name ? `, ${type.View.name}` : '';
+  const name = `SeqView<${type.name}${view}>[${fixedLength}]`;
   return Descriptor.new(
     name,
     sizeHint,

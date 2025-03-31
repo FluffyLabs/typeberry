@@ -1,15 +1,32 @@
 import { Extrinsic, type ExtrinsicHash, Header, type HeaderHash } from "@typeberry/block";
 import { WorkPackage } from "@typeberry/block/work-package";
 import type { WorkPackageHash } from "@typeberry/block/work-report";
+import type { BytesBlob } from "@typeberry/bytes";
 import { type Codec, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { type HashAllocator, type OpaqueHash, WithHashAndBytes, blake2b } from "@typeberry/hash";
+import {
+  type HashAllocator,
+  type KeccakHash,
+  type OpaqueHash,
+  WithHashAndBytes,
+  blake2b,
+  keccak,
+} from "@typeberry/hash";
+import type { MmrHasher } from "@typeberry/mmr";
 
-export class TransitionHasher {
+export class TransitionHasher implements MmrHasher<KeccakHash> {
   constructor(
     private readonly context: ChainSpec,
+    private readonly keccakHasher: keccak.KeccakHasher,
     private readonly allocator: HashAllocator,
   ) {}
+
+  hashConcat(a: KeccakHash, b: KeccakHash): KeccakHash {
+    return keccak.hashBlobs(this.keccakHasher, [a, b]);
+  }
+  hashConcatPrepend(id: BytesBlob, a: KeccakHash, b: KeccakHash): KeccakHash {
+    return keccak.hashBlobs(this.keccakHasher, [id, a, b]);
+  }
 
   header(header: Header): WithHashAndBytes<HeaderHash, Header> {
     return this.encode(Header.Codec, header);

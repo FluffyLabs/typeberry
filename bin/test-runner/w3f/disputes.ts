@@ -113,7 +113,7 @@ export async function runDisputesTest(testContent: DisputesTest, path: string) {
   const chainSpec = getChainSpec(path);
   const preState = testContent.pre_state;
 
-  const disputes = new Disputes(TestState.toDisputesState(preState, chainSpec), chainSpec);
+  const disputes = new Disputes(chainSpec, TestState.toDisputesState(preState, chainSpec));
 
   const result = await disputes.transition(testContent.input.disputes);
   const error = result.isError ? result.error : undefined;

@@ -1,7 +1,7 @@
 import { type ServiceId, type StateRootHash, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, type Descriptor, codec } from "@typeberry/codec";
-import { asKnownSize } from "@typeberry/collections";
+import { HashDictionary, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
@@ -87,7 +87,10 @@ type Appender = (s: PartialState, value: BytesBlob, description: string) => void
 const kindMapping: { [k: string]: Appender } = {
   account_lookup: (s, value, description) => {
     const { serviceId, hash, len } = Parser.lookup(description);
-    findOrAddService(s, serviceId).data.lookupHistory.push(
+    const lookupHistory = findOrAddService(s, serviceId).data.lookupHistory;
+    const items = lookupHistory.get(hash) || [];
+    lookupHistory.set(hash, items);
+    items.push(
       new LookupHistoryItem(
         hash,
         len,
@@ -101,7 +104,7 @@ const kindMapping: { [k: string]: Appender } = {
   },
   account_preimage: (s, value, description) => {
     const { serviceId, hash } = Parser.preimage(description);
-    findOrAddService(s, serviceId).data.preimages.push(new PreimageItem(hash, value));
+    findOrAddService(s, serviceId).data.preimages.set(hash, new PreimageItem(hash, value));
   },
   service_account: (s, value, description) => {
     const { serviceId } = Parser.info(description);
@@ -179,8 +182,8 @@ function findOrAddService(s: PartialState, serviceId: ServiceId) {
       storageUtilisationBytes: tryAsU64(0),
       storageUtilisationCount: tryAsU32(0),
     }),
-    preimages: [],
-    lookupHistory: [],
+    preimages: HashDictionary.new(),
+    lookupHistory: HashDictionary.new(),
     storage: [],
   });
 

@@ -5,30 +5,25 @@ import type { State } from "@typeberry/state";
 import { ActivityRecord } from "@typeberry/state";
 import { check } from "@typeberry/utils";
 
-export type StatisticsState = {
+export type StatisticsState = Pick<State, "timeslot"> & {
   statisticsPerValidator: State["statisticsPerValidator"];
-
-  /**
-   * `τ` - tau; header slot
-   */
-  readonly timeSlot: State["timeslot"];
   /**
    * `kappa_prime`: Posterior active validators
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/188c02188d02
    */
-  readonly posteriorActiveValidators: State["currentValidatorData"];
+  readonly currentValidatorData: State["currentValidatorData"];
 };
 
 export class Statistics {
   constructor(
-    public readonly state: StatisticsState,
     private readonly chainSpec: ChainSpec,
+    public readonly state: StatisticsState,
   ) {}
 
   private getValidatorsStatistics(slot: TimeSlot) {
     /** https://graypaper.fluffylabs.dev/#/579bd12/18b80118b801 */
-    const currentEpoch = Math.floor(this.state.timeSlot / this.chainSpec.epochLength);
+    const currentEpoch = Math.floor(this.state.timeslot / this.chainSpec.epochLength);
     const nextEpoch = Math.floor(slot / this.chainSpec.epochLength);
 
     /** e === e' */

@@ -1,10 +1,16 @@
 import assert from "node:assert";
-import type { Block } from "@typeberry/block";
+import { Block } from "@typeberry/block";
+import { Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
+import { InMemoryBlocks } from "@typeberry/database";
+import { SimpleAllocator, keccak } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
+import { TransitionHasher } from "@typeberry/transition";
+import { OnChain } from "@typeberry/transition/chain-stf";
 import { blockFromJson } from "../w3f/codec/block";
 import { TestState, loadState } from "./stateLoader";
+import {deepEqual} from "@typeberry/utils";
 
 export class AssurancesStateTransition {
   static fromJson: FromJson<AssurancesStateTransition> = {
@@ -16,6 +22,8 @@ export class AssurancesStateTransition {
   post_state!: TestState;
   block!: Block;
 }
+
+const keccakHasher = keccak.KeccakHasher.create();
 
 export async function runAssurancesStateTransition(testContent: AssurancesStateTransition, _path: string) {
   const spec = tinyChainSpec;
@@ -29,8 +37,29 @@ export async function runAssurancesStateTransition(testContent: AssurancesStateT
   const preStateRoot = merkelizeState(preStateSerialized);
   const postStateRoot = merkelizeState(postStateSerialized);
 
-  // TODO [ToDr] Also run the state transition using testContent.block.
+  const encodedBlock = Encoder.encodeObject(Block.Codec, testContent.block, spec);
+  const blockView = Decoder.decodeObject(Block.Codec.View, encodedBlock, spec);
 
+  const stf = new OnChain(
+    spec,
+    preState,
+    new InMemoryBlocks(),
+    new TransitionHasher(spec, await keccakHasher, new SimpleAllocator()),
+  );
+
+  // verify that we compute the state root exactly the same.
   assert.deepStrictEqual(testContent.pre_state.state_root.toString(), preStateRoot.toString());
   assert.deepStrictEqual(testContent.post_state.state_root.toString(), postStateRoot.toString());
+
+  // now perform the state transition
+  const stfResult = await stf.transition(blockView);
+  if (stfResult.isError) {
+    assert.fail(`Expected the transition to go smoothly, got error: ${stfResult.error}`);
+  }
+
+  // if the stf was successful compare the resulting state and the root (redundant, but double checking).
+  const root = merkelizeState(serializeState(preState, spec));
+
+  deepEqual(preState, postState);
+  assert.deepStrictEqual(root.toString(), postStateRoot.toString());
 }

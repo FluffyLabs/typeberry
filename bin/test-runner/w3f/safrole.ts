@@ -11,7 +11,7 @@ import {
   tryAsPerValidator,
   tryAsTimeSlot,
 } from "@typeberry/block";
-import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
+import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
@@ -125,7 +125,9 @@ class JsonState {
       ticketsAccumulator: asKnownSize(state.gamma_a),
       sealingKeySeries: TicketsOrKeys.toSafroleSealingKeys(state.gamma_s, chainSpec),
       epochRoot: state.gamma_z.asOpaque(),
-      punishSet: SortedSet.fromSortedArray(hashComparator, state.post_offenders),
+      disputesRecords: {
+        punishSet: SortedSet.fromSortedArray(hashComparator, state.post_offenders),
+      },
     };
   }
 }
@@ -208,12 +210,16 @@ class TestInput {
       entropy: commonFromJson.bytes32(),
       extrinsic: json.array(safroleFromJson.ticketEnvelope),
     },
-    ({ entropy, extrinsic, slot }) => ({ entropy, extrinsic, slot: tryAsTimeSlot(slot) }),
+    ({ entropy, extrinsic, slot }) => ({
+      entropy,
+      extrinsic: asKnownSize(extrinsic),
+      slot: tryAsTimeSlot(slot)
+    }),
   );
 
   slot!: TimeSlot;
   entropy!: EntropyHash;
-  extrinsic!: SignedTicket[];
+  extrinsic!: TicketsExtrinsic;
 }
 
 export class SafroleTest {
@@ -233,7 +239,7 @@ export class SafroleTest {
 export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const chainSpec = getChainSpec(path);
   const preState = JsonState.toSafroleState(testContent.pre_state, chainSpec);
-  const safrole = new Safrole(preState, chainSpec);
+  const safrole = new Safrole(chainSpec, preState);
 
   const result = await safrole.transition(testContent.input);
 

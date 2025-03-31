@@ -228,7 +228,6 @@ function newReportsState({
       },
     ]),
     services,
-    offenders: asKnownSize([]),
   };
 }
 
@@ -311,9 +310,9 @@ export const initialServices = ({ withDummyCodeHash = false } = {}): Map<Service
   m.set(
     id,
     new Service(tryAsServiceId(129), {
-      preimages: [],
+      preimages: HashDictionary.new(),
       storage: [],
-      lookupHistory: [],
+      lookupHistory: HashDictionary.new(),
       info: ServiceAccountInfo.fromCodec({
         codeHash: withDummyCodeHash
           ? Bytes.fill(HASH_SIZE, 1).asOpaque()

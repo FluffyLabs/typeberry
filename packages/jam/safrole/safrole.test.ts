@@ -7,7 +7,7 @@ import {
   type PerValidator,
   type TimeSlot,
 } from "@typeberry/block";
-import type { SignedTicket, TicketAttempt } from "@typeberry/block/tickets";
+import type { SignedTicket, TicketAttempt, TicketsExtrinsic } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
@@ -93,10 +93,10 @@ describe("Safrole", () => {
 
   it("should return incorrect timeslot error", async () => {
     const state = { timeslot: 1 } as SafroleState;
-    const safrole = new Safrole(state, tinyChainSpec);
+    const safrole = new Safrole(tinyChainSpec, state);
     const timeslot = 0 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
-    const extrinsic: SignedTicket[] = [];
+    const extrinsic: TicketsExtrinsic = asKnownSize([]);
     const input = {
       slot: timeslot,
       entropy,
@@ -113,10 +113,10 @@ describe("Safrole", () => {
 
   it("should return unexpected ticket because of incorrect length of extrinsic", async () => {
     const state = { timeslot: 1 } as SafroleState;
-    const safrole = new Safrole(state, tinyChainSpec);
+    const safrole = new Safrole(tinyChainSpec, state);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
-    const extrinsic: SignedTicket[] = [];
+    const extrinsic: TicketsExtrinsic = asKnownSize([]);
     extrinsic.length = tinyChainSpec.epochLength + 1;
     const input = {
       slot: timeslot,
@@ -134,15 +134,15 @@ describe("Safrole", () => {
 
   it("should return bad ticket attempt because of incorrect ticket attempt", async () => {
     const state = { timeslot: 1 } as SafroleState;
-    const safrole = new Safrole(state, tinyChainSpec);
+    const safrole = new Safrole(tinyChainSpec, state);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
-    const extrinsic: SignedTicket[] = [
+    const extrinsic: TicketsExtrinsic = asKnownSize([
       {
         attempt: (tinyChainSpec.ticketsPerValidator + 2) as TicketAttempt,
         signature: Bytes.zero(BANDERSNATCH_PROOF_BYTES).asOpaque(),
       },
-    ];
+    ]);
 
     const input = {
       slot: timeslot,
@@ -177,20 +177,22 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
+      disputesRecords: {
+        punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
+      },
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
     };
-    const safrole = new Safrole(state, tinyChainSpec);
+    const safrole = new Safrole(tinyChainSpec, state);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
-    const extrinsic: SignedTicket[] = [
+    const extrinsic: TicketsExtrinsic = asKnownSize([
       {
         attempt: 0 as TicketAttempt,
         signature: Bytes.zero(BANDERSNATCH_PROOF_BYTES).asOpaque(),
       },
-    ];
+    ]);
 
     const input = {
       slot: timeslot,
@@ -228,15 +230,17 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
+      disputesRecords: {
+        punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
+      },
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
     };
-    const safrole = new Safrole(state, tinyChainSpec);
+    const safrole = new Safrole(tinyChainSpec, state);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
-    const extrinsic: SignedTicket[] = [
+    const extrinsic: TicketsExtrinsic = asKnownSize([
       {
         attempt: 0 as TicketAttempt,
         signature: Bytes.zero(BANDERSNATCH_PROOF_BYTES).asOpaque(),
@@ -245,7 +249,7 @@ describe("Safrole", () => {
         attempt: 0 as TicketAttempt,
         signature: Bytes.zero(BANDERSNATCH_PROOF_BYTES).asOpaque(),
       },
-    ];
+    ]);
 
     const input = {
       slot: timeslot,
@@ -283,15 +287,17 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
+      disputesRecords: {
+        punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
+      },
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
     };
-    const safrole = new Safrole(state, tinyChainSpec);
+    const safrole = new Safrole(tinyChainSpec, state);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
-    const extrinsic: SignedTicket[] = [
+    const extrinsic: TicketsExtrinsic = asKnownSize([
       {
         attempt: 0 as TicketAttempt,
         signature: Bytes.fill(BANDERSNATCH_PROOF_BYTES, 1).asOpaque(),
@@ -300,7 +306,7 @@ describe("Safrole", () => {
         attempt: 0 as TicketAttempt,
         signature: Bytes.zero(BANDERSNATCH_PROOF_BYTES).asOpaque(),
       },
-    ];
+    ]);
 
     const input = {
       slot: timeslot,
@@ -332,20 +338,22 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
+      disputesRecords: {
+        punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
+      },
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
     };
-    const safrole = new Safrole(state, tinyChainSpec);
+    const safrole = new Safrole(tinyChainSpec, state);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
-    const extrinsic: SignedTicket[] = [
+    const extrinsic: TicketsExtrinsic = asKnownSize([
       {
         attempt: 0 as TicketAttempt,
         signature: Bytes.zero(BANDERSNATCH_PROOF_BYTES).asOpaque(),
       },
-    ];
+    ]);
 
     const input = {
       slot: timeslot,

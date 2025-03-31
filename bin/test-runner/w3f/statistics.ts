@@ -86,8 +86,8 @@ class TestState {
         current: tryAsPerValidator(state.pi.current, spec),
         previous: tryAsPerValidator(state.pi.last, spec),
       },
-      timeSlot: state.tau,
-      posteriorActiveValidators: tryAsPerValidator(state.kappa_prime, spec),
+      timeslot: state.tau,
+      currentValidatorData: tryAsPerValidator(state.kappa_prime, spec),
     };
   }
 }
@@ -120,7 +120,7 @@ export class StatisticsTestFull {
 
 export async function runStatisticsTestTiny({ input, pre_state, post_state }: StatisticsTestTiny) {
   const spec = tinyChainSpec;
-  const statistics = new Statistics(TestState.toStatisticsState(pre_state, spec), spec);
+  const statistics = new Statistics(spec, TestState.toStatisticsState(pre_state, spec));
 
   statistics.transition(input.slot, input.author_index, input.extrinsic);
 
@@ -129,7 +129,7 @@ export async function runStatisticsTestTiny({ input, pre_state, post_state }: St
 
 export async function runStatisticsTestFull({ input, pre_state, post_state }: StatisticsTestFull) {
   const spec = fullChainSpec;
-  const statistics = new Statistics(TestState.toStatisticsState(pre_state, spec), spec);
+  const statistics = new Statistics(spec, TestState.toStatisticsState(pre_state, spec));
 
   statistics.transition(input.slot, input.author_index, input.extrinsic);
 
