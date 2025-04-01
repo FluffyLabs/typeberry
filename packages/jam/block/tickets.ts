@@ -15,7 +15,7 @@ import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "./crypto";
  */
 export type TicketAttempt = Opaque<U8, "TicketAttempt[0|1|2]">;
 
-/* Bandernsatch-signed ticket contest entry. */
+/* Bandersnatch-signed ticket contest entry. */
 export class SignedTicket extends WithDebug {
   static Codec = codec.Class(SignedTicket, {
     attempt: codec.u8.asOpaque(),

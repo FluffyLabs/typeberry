@@ -3,6 +3,7 @@ import { AssurancesStateTransition, runAssurancesStateTransition } from "./jamdu
 
 const runners = [
   runner("assurances/state_transitions", AssurancesStateTransition.fromJson, runAssurancesStateTransition),
+  runner("fallback/state_transitions", AssurancesStateTransition.fromJson, runAssurancesStateTransition),
 ];
 
 main(runners, "jamdunavectors", process.argv.slice(2))

@@ -2,12 +2,14 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import type { TicketAttempt } from "@typeberry/block/tickets";
-import { BytesBlob } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { getRingCommitment, verifyTickets } from "./bandersnatch";
+import {BANDERSNATCH_KEY_BYTES} from "@typeberry/block";
+import {asKnownSize} from "@typeberry/collections";
 
 describe("Bandersnatch verification", () => {
   describe("getRingCommitment", () => {
-    const bandersnatchKeys = [
+    const bandersnatchKeys = asKnownSize([
       {
         bandersnatch: "0xaa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc",
       },
@@ -26,13 +28,7 @@ describe("Bandersnatch verification", () => {
       {
         bandersnatch: "0x7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33",
       },
-    ].reduce(
-      (acc, item, i) => {
-        acc.set(BytesBlob.parseBlob(item.bandersnatch).raw, i * 32);
-        return acc;
-      },
-      new Uint8Array(32 * 6),
-    );
+    ].map(x => Bytes.parseBytes(x.bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque()));
 
     it("should return commitment", async () => {
       const result = await getRingCommitment(bandersnatchKeys);
@@ -46,7 +42,7 @@ describe("Bandersnatch verification", () => {
   });
 
   describe("verifyTickets", () => {
-    const bandersnatchKeys = [
+    const bandersnatchKeys =asKnownSize([
       {
         bandersnatch: "0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d",
       },
@@ -65,13 +61,7 @@ describe("Bandersnatch verification", () => {
       {
         bandersnatch: "0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d",
       },
-    ].reduce(
-      (acc, item, i) => {
-        acc.set(BytesBlob.parseBlob(item.bandersnatch).raw, i * 32);
-        return acc;
-      },
-      new Uint8Array(32 * 6),
-    );
+    ].map(x => Bytes.parseBytes(x.bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque()));
 
     it("should confirm that all tickets are valid and return correct ids", async () => {
       const tickets = [

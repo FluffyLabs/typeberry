@@ -6,6 +6,7 @@ import {
   type BandersnatchRingRoot,
   type Ed25519Key,
   type EntropyHash,
+  EpochMarker,
   type TimeSlot,
   tryAsPerEpochBlock,
   tryAsPerValidator,
@@ -162,7 +163,7 @@ export class Output {
   ok?: OkOutput;
   err?: TestErrorCode;
 
-  static toSafroleOutput(output: Output): Result<OkResult, SafroleErrorCode> {
+  static toSafroleOutput(output: Output, spec: ChainSpec): Result<OkResult, SafroleErrorCode> {
     if (output.err !== undefined) {
       return Result.error(Output.toSafroleErrorCode(output.err));
     }
@@ -170,14 +171,17 @@ export class Output {
     const epochMark =
       output.ok?.epoch_mark === undefined || output.ok.epoch_mark === null
         ? null
-        : {
+        : EpochMarker.fromCodec({
             entropy: output.ok.epoch_mark.entropy,
             ticketsEntropy: output.ok.epoch_mark.tickets_entropy,
-            validators: output.ok.epoch_mark.validators,
-          };
+            validators: tryAsPerValidator(output.ok.epoch_mark.validators, spec),
+          });
+    const tickets = output.ok?.tickets_mark ?? null;
+    const ticketsMark = tickets === null ? null : tryAsPerEpochBlock(tickets, spec);
+
     return Result.ok({
       epochMark,
-      ticketsMark: output.ok?.tickets_mark ?? null,
+      ticketsMark,
     });
   }
 
@@ -243,6 +247,6 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
 
   const result = await safrole.transition(testContent.input);
 
-  deepEqual(result, Output.toSafroleOutput(testContent.output));
+  deepEqual(result, Output.toSafroleOutput(testContent.output, chainSpec));
   deepEqual(safrole.state, JsonState.toSafroleState(testContent.post_state, chainSpec));
 }

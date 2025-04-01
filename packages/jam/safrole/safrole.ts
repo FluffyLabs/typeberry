@@ -3,6 +3,8 @@ import {
   type BandersnatchKey,
   ED25519_KEY_BYTES,
   type EntropyHash,
+  EpochMarker,
+  PerEpochBlock,
   type PerValidator,
   type TimeSlot,
   tryAsPerEpochBlock,
@@ -46,23 +48,10 @@ export type SafroleState = Pick<State, "designatedValidatorData"> & {
 
 export type StateDiff = Partial<SafroleState>;
 
-export class EpochMark {
-  constructor(
-    public entropy: EntropyHash,
-    public ticketsEntropy: EntropyHash,
-    public validators: BandersnatchKey[],
-  ) {}
-}
-
-type TicketMark = {
-  id: Bytes<32>;
-  attempt: number;
-};
-
-type TicketsMark = TicketMark[];
+type TicketsMark = PerEpochBlock<Ticket>;
 
 export type OkResult = {
-  epochMark: EpochMark | null;
+  epochMark: EpochMarker | null;
   ticketsMark: TicketsMark | null;
 };
 
@@ -194,9 +183,7 @@ export class Safrole {
 
     const { nextValidatorData, currentValidatorData } = this.state;
 
-    const keys = BytesBlob.blobFromParts(newNextValidators.map((x) => x.bandersnatch.raw)).raw;
-
-    const epochRootResult = await getRingCommitment(keys);
+    const epochRootResult = await getRingCommitment(newNextValidators.map(x => x.bandersnatch));
 
     if (epochRootResult.isOk) {
       return Result.ok({
@@ -301,16 +288,16 @@ export class Safrole {
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/0e6e030e6e03
    */
-  private getEpochMark(timeslot: TimeSlot, nextValidators: ValidatorData[]): EpochMark | null {
+  private getEpochMark(timeslot: TimeSlot, nextValidators: PerValidator<ValidatorData>): EpochMarker | null {
     if (!this.isEpochChanged(timeslot)) {
       return null;
     }
 
     const entropy = this.state.entropy;
-    return new EpochMark(
+    return new EpochMarker(
       entropy[0],
       entropy[1],
-      nextValidators.map((validator) => validator.bandersnatch),
+      asKnownSize(nextValidators.map((validator) => validator.bandersnatch)),
     );
   }
 
@@ -349,14 +336,12 @@ export class Safrole {
     validators: ValidatorData[],
     entropy: EntropyHash,
   ): Promise<Result<Ticket[], SafroleErrorCode>> {
-    const keys = BytesBlob.blobFromParts(validators.map((x) => x.bandersnatch.raw)).raw;
-
     /**
      * Verify ticket proof of validity
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/0f59000f5900
      */
-    const verificationResult = await verifyTickets(keys, extrinsic, entropy);
+    const verificationResult = await verifyTickets(validators.map(x => x.bandersnatch), extrinsic, entropy);
     const tickets: Ticket[] = extrinsic.map((ticket, i) => ({
       id: verificationResult[i].entropyHash,
       attempt: ticket.attempt,

@@ -14,7 +14,7 @@
     "@typeberry/ordering": "0.0.1",
     "@typeberry/state": "0.0.1",
     "@typeberry/utils": "0.0.1",
-    "bandersnatch-wasm": "github:fluffylabs/bandersnatch#abddd3494fb493a0688f4a8e6483871c575f2c7a"
+    "bandersnatch-wasm": "github:fluffylabs/bandersnatch#4a4e42587a3fdc3e5c8a4a6707d7bdc3635689bb"
   },
   "scripts": {
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
