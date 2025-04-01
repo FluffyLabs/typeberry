@@ -45,7 +45,7 @@ describe("HostCalls: Peek", () => {
 });
 
 function prepareRegsAndMemory(machineId: MachineId, destinationStart: number, sourceStart: number, length: number) {
-  const registers = Registers.empty();
+  const registers = Registers.new();
   registers.setU64(7, machineId);
   registers.setU32(8, destinationStart);
   registers.setU32(9, sourceStart);

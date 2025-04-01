@@ -14,7 +14,7 @@ import { DynamicJumpOps } from "./dynamic-jump-ops";
 
 describe("DynamicJumpOps", () => {
   function prepareData(firstValue: bigint, secondValue: bigint) {
-    const regs = Registers.empty();
+    const regs = Registers.new();
     const jumpTable = new JumpTable(1, new Uint8Array([0, 3]));
     const instructionResult = new InstructionResult();
     const code = new Uint8Array([Instruction.TRAP, Instruction.TRAP, Instruction.TRAP, Instruction.ADD_32, 5, 6]);

@@ -26,7 +26,7 @@ function prepareRegsAndMemory(
   { skipPreimageHash = false }: { skipPreimageHash?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = Registers.empty();
+  const registers = Registers.new();
   registers.setU32(HASH_START_REG, memStart);
   registers.setU32(LENGTH_REG, preimageLength);
 

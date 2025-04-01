@@ -23,7 +23,7 @@ function prepareRegsAndMemory(
   { skipDestination: skipValue = false }: { skipDestination?: boolean } = {},
 ) {
   const memStart = 2 ** 22;
-  const registers = Registers.empty();
+  const registers = Registers.new();
   registers.setU32(SEGMENT_INDEX_REG, segmentIndex);
   registers.setU32(DEST_START_REG, memStart);
   registers.setU32(DEST_LEN_REG, destinationLength);

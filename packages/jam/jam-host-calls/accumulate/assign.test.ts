@@ -27,7 +27,7 @@ function prepareRegsAndMemory(
   { skipAuthQueue = false }: { skipAuthQueue?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = Registers.empty();
+  const registers = Registers.new();
   registers.setU32(CORE_INDEX_REG, coreIndex);
   registers.setU32(AUTH_QUEUE_START_REG, memStart);
 

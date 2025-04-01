@@ -45,7 +45,7 @@ describe("HostCalls: Poke", () => {
 });
 
 function prepareRegsAndMemory(machineId: MachineId, sourceStart: number, destinationStart: number, length: number) {
-  const registers = Registers.empty();
+  const registers = Registers.new();
   registers.setU64(7, machineId);
   registers.setU32(8, sourceStart);
   registers.setU32(9, destinationStart);

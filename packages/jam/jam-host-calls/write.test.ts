@@ -69,7 +69,7 @@ function prepareRegsAndMemory(
 ) {
   const keyAddress = 2 ** 18;
   const memStart = 2 ** 16;
-  const registers = Registers.empty();
+  const registers = Registers.new();
   registers.setU32(KEY_START_REG, keyAddress);
   registers.setU32(KEY_LEN_REG, key.length);
   registers.setU32(DEST_START_REG, memStart);

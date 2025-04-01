@@ -35,7 +35,7 @@ describe("HostCalls: Expunge", () => {
 });
 
 function prepareRegsAndMemory(machineId: MachineId) {
-  const registers = Registers.empty();
+  const registers = Registers.new();
   registers.setU64(7, machineId);
 
   const builder = new MemoryBuilder();

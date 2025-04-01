@@ -27,7 +27,7 @@ export class Registers {
     return new Registers(new Uint8Array(array.buffer));
   }
 
-  static empty() {
+  static new() {
     return new Registers();
   }
 

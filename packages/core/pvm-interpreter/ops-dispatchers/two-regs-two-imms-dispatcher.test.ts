@@ -15,7 +15,7 @@ import { TwoRegsTwoImmsDispatcher } from "./two-regs-two-imms-dispatcher";
 
 describe("TwoRegsTwoImmsDispatcher", () => {
   describe("check if it handles expected instructions", () => {
-    const regs = Registers.empty();
+    const regs = Registers.new();
     const memory = new Memory();
     const jumpTable = new JumpTable(1, new Uint8Array([1]));
     const instructionResult = new InstructionResult();
@@ -65,7 +65,7 @@ describe("TwoRegsTwoImmsDispatcher", () => {
 
   describe("check if it handles other instructions than expected", () => {
     const instructionResult = new InstructionResult();
-    const regs = Registers.empty();
+    const regs = Registers.new();
     const memory = new Memory();
     const loadOps = new LoadOps(regs, memory, instructionResult);
     const jumpTable = new JumpTable(1, new Uint8Array([1]));

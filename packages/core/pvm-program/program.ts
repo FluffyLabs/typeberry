@@ -29,7 +29,7 @@ export class Program {
   }
 
   static fromGeneric(rawProgram: Uint8Array) {
-    const regs = Registers.empty();
+    const regs = Registers.new();
     const memory = new Memory();
     return new Program(rawProgram, regs, memory);
   }

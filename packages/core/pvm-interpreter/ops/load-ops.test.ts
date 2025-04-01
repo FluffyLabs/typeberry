@@ -15,7 +15,7 @@ describe("LoadOps", () => {
   describe("loadImmediate", () => {
     function prepareLoadImmediateData(numberToLoad: bigint) {
       const instructionResult = new InstructionResult();
-      const registers = Registers.empty();
+      const registers = Registers.new();
       const memory = new Memory();
       const loadOps = new LoadOps(registers, memory, instructionResult);
       const immediateDecoder = new ImmediateDecoder();
@@ -57,7 +57,7 @@ describe("LoadOps", () => {
     const memory = new MemoryBuilder()
       .setWriteablePages(getStartPageIndex(address), tryAsMemoryIndex(4096), data)
       .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
-    const registers = Registers.empty();
+    const registers = Registers.new();
     const loadOps = new LoadOps(registers, memory, instructionResult);
     const registerIndex = 0;
     registers.setU64(registerIndex, 0x11_22_33_44_55_66_77_88n);
@@ -179,7 +179,7 @@ describe("LoadOps", () => {
     const memory = new MemoryBuilder()
       .setWriteablePages(getStartPageIndex(address), tryAsMemoryIndex(4096), data)
       .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
-    const registers = Registers.empty();
+    const registers = Registers.new();
     const loadOps = new LoadOps(registers, memory, instructionResult);
     const addressRegisterIndex = 1;
     const resultRegisterIndex = 0;

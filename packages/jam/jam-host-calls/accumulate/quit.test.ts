@@ -25,7 +25,7 @@ function prepareRegsAndMemory(
   { skipMemo = false }: { skipMemo?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = Registers.empty();
+  const registers = Registers.new();
   registers.setU32(DESTINATION_REG, destination);
   registers.setU32(MEMO_START_REG, memStart);
 

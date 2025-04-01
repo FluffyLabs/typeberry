@@ -28,7 +28,7 @@ function prepareRegsAndMemory(
   { skipCodeHash = false }: { skipCodeHash?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = Registers.empty();
+  const registers = Registers.new();
   registers.setU32(CODE_HASH_START_REG, memStart);
   registers.setU32(GAS_LOW_REG, u64IntoParts(gas).lower);
   registers.setU32(GAS_HIG_REG, u64IntoParts(gas).upper);

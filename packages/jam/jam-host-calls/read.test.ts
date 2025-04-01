@@ -52,7 +52,7 @@ function prepareRegsAndMemory(
 ) {
   const keyAddress = 2 ** 20;
   const memStart = 2 ** 16;
-  const registers = Registers.empty();
+  const registers = Registers.new();
   registers.setU32(SERVICE_ID_REG, readServiceId);
   registers.setU32(KEY_START_REG, keyAddress);
   registers.setU32(KEY_LEN_REG, key.length);

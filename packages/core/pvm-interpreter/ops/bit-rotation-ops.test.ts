@@ -8,7 +8,7 @@ import { BitRotationOps } from "./bit-rotation-ops";
 describe("BitRotationOps", () => {
   describe("reverseBytes", () => {
     function prepareData(firstValue: bigint) {
-      const regs = Registers.empty();
+      const regs = Registers.new();
       const valueRegisterIndex = 0;
       const resultRegisterIndex = 12;
 
@@ -41,7 +41,7 @@ describe("BitRotationOps", () => {
   });
 
   function prepareData(firstValue: bigint, secondValue: bigint) {
-    const regs = Registers.empty();
+    const regs = Registers.new();
     const firstRegisterIndex = 0;
     const secondRegisterIndex = 1;
     const resultRegisterIndex = 12;

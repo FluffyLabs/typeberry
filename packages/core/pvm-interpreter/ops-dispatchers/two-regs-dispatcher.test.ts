@@ -12,7 +12,7 @@ import { TwoRegsDispatcher } from "./two-regs-dispatcher";
 
 describe("TwoRegsDispatcher", () => {
   const instructionResult = new InstructionResult();
-  const regs = Registers.empty();
+  const regs = Registers.new();
   const memory = new Memory();
   const memoryOps = new MemoryOps(regs, memory, instructionResult);
   const moveOps = new MoveOps(regs);

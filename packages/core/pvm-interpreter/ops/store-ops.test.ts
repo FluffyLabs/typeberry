@@ -24,7 +24,7 @@ const getExpectedPage = (address: MemoryIndex, contents: Uint8Array, length: num
 describe("StoreOps", () => {
   function prepareStoreData(valueToStore: bigint, noOfBytes: 1 | 2 | 4 | 8) {
     const instructionResult = new InstructionResult();
-    const regs = Registers.empty();
+    const regs = Registers.new();
     const address = tryAsMemoryIndex(1);
     const registerIndex = 1;
     regs.setU64(registerIndex, valueToStore);
@@ -132,7 +132,7 @@ describe("StoreOps", () => {
     addressImmediateValue: bigint,
   ) {
     const instructionResult = new InstructionResult();
-    const regs = Registers.empty();
+    const regs = Registers.new();
     const address = tryAsMemoryIndex(Number(addressRegisterValue + addressImmediateValue));
     const addressRegisterIndex = 0;
     const valueRegisterIndex = 1;
