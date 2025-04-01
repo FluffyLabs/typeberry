@@ -59,7 +59,10 @@ describe("HostCalls: Machine", () => {
     const machine = new Machine(refine);
     const machineId = tryAsMachineId(10_000);
     machine.currentServiceId = tryAsServiceId(10_000);
-    const code = BytesBlob.blobFromNumbers([0,0,33,51,8,1,51,9,1,40,3,0,149,119,255,81,7,12,100,138,200,152,8,100,169,40,243,100,135,51,8,51,9,1,50,0,73,147,82,213,0]);
+    const code = BytesBlob.blobFromNumbers([
+      0, 0, 33, 51, 8, 1, 51, 9, 1, 40, 3, 0, 149, 119, 255, 81, 7, 12, 100, 138, 200, 152, 8, 100, 169, 40, 243, 100,
+      135, 51, 8, 51, 9, 1, 50, 0, 73, 147, 82, 213, 0,
+    ]);
     const { registers, memory } = prepareRegsAndMemory(code, tryAsU32(5));
     refine.machineStartData.set(machineId, code, tryAsU32(5));
 
