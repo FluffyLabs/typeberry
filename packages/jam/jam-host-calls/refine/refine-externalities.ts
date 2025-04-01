@@ -107,7 +107,7 @@ export interface RefineExternalities {
   ): Promise<Result<OK, PeekPokeError>>;
 
   /** Start an inner PVM instance with given entry point and starting code. */
-  machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId>;
+  machineInit(code: BytesBlob, programCounter: U32): Promise<MachineId>;
 
   /** Run a previously initialized PVM instance with given gas and registers. */
   machineInvoke(

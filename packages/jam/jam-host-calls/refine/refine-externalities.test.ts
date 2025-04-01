@@ -80,7 +80,7 @@ export class TestRefineExt implements RefineExternalities {
     return Promise.resolve(val);
   }
 
-  machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId> {
+  machineInit(code: BytesBlob, programCounter: U32): Promise<MachineId> {
     const val = this.machineStartData.get(code, programCounter);
     if (val === undefined) {
       throw new Error(`Unexpected call to machineStart with: ${code}, ${programCounter}`);

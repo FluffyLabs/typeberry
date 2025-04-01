@@ -1,6 +1,6 @@
 import { BytesBlob } from "@typeberry/bytes";
 import { tryAsU32 } from "@typeberry/numbers";
-import { type HostCallHandler, type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
+import { type HostCallHandler, PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import {
   type GasCounter,
   type Memory,
@@ -8,19 +8,20 @@ import {
   tryAsMemoryIndex,
   tryAsSmallGas,
 } from "@typeberry/pvm-interpreter";
-import { LegacyHostCallResult } from "../results";
+import { ProgramDecoder } from "@typeberry/pvm-interpreter/program-decoder/program-decoder";
+import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { RefineExternalities } from "./refine-externalities";
 
 const IN_OUT_REG = 7;
 
 /**
- * Start a nested PVM instance with given program code and entrypoint (program counter).
+ * Initiate a PVM instance with given program code and entrypoint (program counter).
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/349902349902
  */
 export class Machine implements HostCallHandler {
-  index = tryAsHostCallIndex(18);
+  index = tryAsHostCallIndex(20);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
@@ -36,14 +37,19 @@ export class Machine implements HostCallHandler {
 
     const code = new Uint8Array(codeLength);
     const codePageFault = memory.loadInto(code, codeStart);
-    // we return OOB in case the program code couldn't be read
     if (codePageFault !== null) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
+      return PvmExecution.Panic;
+    }
+
+    // check if the code is valid
+    const program = ProgramDecoder.deblob(code);
+    if (program.isError) {
+      regs.setU64(IN_OUT_REG, HostCallResult.HUH);
       return;
     }
 
-    const machineId = await this.refine.machineStart(BytesBlob.blobFrom(code), entrypoint);
+    // TODO [MaSo] can machineId collide with HOST_CALL_RESULT?
+    const machineId = await this.refine.machineInit(BytesBlob.blobFrom(code), entrypoint);
     regs.setU64(IN_OUT_REG, machineId);
-    return;
   }
 }
