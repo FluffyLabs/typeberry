@@ -13,8 +13,8 @@ import { BlockVerifier } from "../../../packages/jam/transition/block-verificati
 import { blockFromJson } from "../w3f/codec/block";
 import { TestState, loadState } from "./stateLoader";
 
-export class AssurancesStateTransition {
-  static fromJson: FromJson<AssurancesStateTransition> = {
+export class StateTransition {
+  static fromJson: FromJson<StateTransition> = {
     pre_state: TestState.fromJson,
     post_state: TestState.fromJson,
     block: blockFromJson,
@@ -26,9 +26,8 @@ export class AssurancesStateTransition {
 
 const keccakHasher = keccak.KeccakHasher.create();
 
-export async function runAssurancesStateTransition(testContent: AssurancesStateTransition, _path: string) {
+export async function runStateTransition(testContent: StateTransition, _path: string) {
   const spec = tinyChainSpec;
-  // TODO [ToDr] bring in the hacky parser !!
   const preState = loadState(testContent.pre_state.keyvals);
   const preStateSerialized = serializeState(preState, spec);
 
@@ -66,9 +65,6 @@ export async function runAssurancesStateTransition(testContent: AssurancesStateT
 
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
   const root = merkelizeState(serializeState(preState, spec));
-
-  deepEqual(preState, postState, {
-    ignore: [],
-  });
+  deepEqual(preState, postState);
   assert.deepStrictEqual(root.toString(), postStateRoot.toString());
 }
