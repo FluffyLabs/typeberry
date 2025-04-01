@@ -1,11 +1,9 @@
 import { ProgramCounter } from "@typeberry/block/refine-context";
 import { BytesBlob } from "@typeberry/bytes";
-import { OpaqueHash } from "@typeberry/hash";
 import { type U64, tryAsU64 } from "@typeberry/numbers";
-import { Memory } from "@typeberry/pvm-host-calls";
-import type { BigGas, Registers } from "@typeberry/pvm-interpreter";
+import type { BigGas, Registers, Memory } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status";
-import { type Opaque, WithOpaque, asOpaqueType } from "@typeberry/utils";
+import { type Opaque, asOpaqueType } from "@typeberry/utils";
 
 /**
  * Machine - integrated PVM type
@@ -16,6 +14,20 @@ import { type Opaque, WithOpaque, asOpaqueType } from "@typeberry/utils";
 export type MachineId = Opaque<U64, "MachineId[u64]">;
 /** Convert a number into PVM instance identifier. */
 export const tryAsMachineId = (v: number | bigint): MachineId => asOpaqueType(tryAsU64(v));
+
+/** Machines id -> machine instance */
+export type Machines = Map<MachineId, MachineInterface>;
+
+export const MACHINES: Machines = new Map();
+
+export enum MachineErrorCode {
+  /** Machine not found. */
+  NOT_FOUND = 1,
+  /** Invalid machine ID. */
+  INVALID_ID = 2,
+  /** Machine already exists. */
+  ALREADY_EXISTS = 3,
+}
 
 /** Possible machine statuses. */
 export type MachineStatus =
@@ -66,6 +78,10 @@ export class MachineInstance implements MachineInterface {
   }
 
   async run(gas: BigGas, registers: Registers): Promise<MachineResult> {
+    if (this.memory === null) {
+      throw new Error("Memory is not initialized");
+    }
+    
     return {
       result: {
         status: Status.OK,
