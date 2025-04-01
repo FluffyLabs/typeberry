@@ -130,6 +130,8 @@ export class OnChain {
       });
     }
 
+    this.statistics.transition(timeSlot, header.bandersnatchBlockAuthorIndex, block.extrinsic.materialize());
+
     const sealState = this.safrole.getSafroleSealState(timeSlot);
     const sealResult = await this.safroleSeal.verifyHeaderSeal(block.header.view(), sealState);
     if (sealResult.isError) {
@@ -151,8 +153,6 @@ export class OnChain {
         error: safroleResult.error,
       });
     }
-
-    this.statistics.transition(timeSlot, header.bandersnatchBlockAuthorIndex, block.extrinsic.materialize());
 
     const disputesResult = await this.disputes.transition(block.extrinsic.view().disputes.materialize());
     if (disputesResult.isError) {
