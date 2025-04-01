@@ -331,6 +331,10 @@ export class Safrole {
     validators: ValidatorData[],
     entropy: EntropyHash,
   ): Promise<Result<Ticket[], SafroleErrorCode>> {
+    if (extrinsic.length === 0) {
+      return Result.ok([]);
+    }
+
     /**
      * Verify ticket proof of validity
      *
