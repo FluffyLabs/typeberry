@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { Blake2bHash } from "@typeberry/hash";
+import { PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
@@ -11,7 +12,6 @@ import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { HostCallResult } from "../results";
 import { HistoricalLookup } from "./historical-lookup";
 import { TestRefineExt } from "./refine-externalities.test";
-import { PvmExecution } from "@typeberry/pvm-host-calls";
 
 const gas = gasCounter(tryAsGas(0));
 const SERVICE_ID_REG = 7;
@@ -119,9 +119,8 @@ describe("HostCalls: Historical Lookup", () => {
     const lookup = new HistoricalLookup(refine);
     const serviceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(32, 3);
-    const data = null;
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, hash, 0, 32);
-    refine.historicalLookupData.set(data, serviceId, hash);
+    refine.historicalLookupData.set(null, serviceId, hash);
 
     // when
     const result = await lookup.execute(gas, registers, memory);

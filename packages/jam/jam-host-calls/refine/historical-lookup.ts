@@ -1,5 +1,5 @@
 import { Bytes } from "@typeberry/bytes";
-import { HASH_SIZE, blake2b } from "@typeberry/hash";
+import { HASH_SIZE } from "@typeberry/hash";
 import { type HostCallHandler, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
 import {
