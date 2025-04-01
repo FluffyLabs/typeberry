@@ -1,6 +1,8 @@
-import type { BlockView, HeaderHash } from "@typeberry/block";
+import type { BlockView, CoreIndex, HeaderHash } from "@typeberry/block";
+import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
+import type { AuthorizerHash } from "@typeberry/block/work-report";
 import { Bytes } from "@typeberry/bytes";
-import { asKnownSize } from "@typeberry/collections";
+import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
 import { Disputes } from "@typeberry/disputes";
@@ -8,11 +10,11 @@ import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code"
 import { HASH_SIZE } from "@typeberry/hash";
 import { Safrole } from "@typeberry/safrole";
 import type { SafroleErrorCode } from "@typeberry/safrole/safrole";
+import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal";
 import type { State } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
 import { Assurances, type AssurancesError } from "./assurances";
 import { Authorization } from "./authorization";
-import type { Output as BlockVerificationOutput } from "./block-verification";
 import type { TransitionHasher } from "./hasher";
 import { Preimages, type PreimagesErrorCode } from "./preimages";
 import { RecentHistory } from "./recent-history";
@@ -34,6 +36,7 @@ export enum ErrorKind {
   Safrole = 2,
   Reports = 3,
   Preimages = 4,
+  SafroleSeal = 5,
 }
 
 export type Error =
@@ -56,6 +59,10 @@ export type Error =
   | {
       kind: ErrorKind.Preimages;
       error: PreimagesErrorCode;
+    }
+  | {
+      kind: ErrorKind.SafroleSeal;
+      error: SafroleSealError;
     };
 
 export class OnChain {
@@ -65,12 +72,13 @@ export class OnChain {
   statistics: Statistics;
   disputes: Disputes;
   safrole: Safrole;
+  safroleSeal: SafroleSeal;
   reports: Reports;
   preimages: Preimages;
 
   constructor(
     public readonly chainSpec: ChainSpec,
-    private readonly state: State,
+    state: State,
     blocks: BlocksDb,
     public readonly hasher: TransitionHasher,
   ) {
@@ -81,11 +89,12 @@ export class OnChain {
     this.statistics = new Statistics(chainSpec, state);
     this.disputes = new Disputes(chainSpec, state);
     this.safrole = new Safrole(chainSpec, state);
+    this.safroleSeal = new SafroleSeal();
     this.reports = new Reports(chainSpec, state, hasher, new DbHeaderChain(blocks));
   }
 
   // TODO [ToDr] some mechanism to revert to old state?
-  async transition(block: BlockView, verification: BlockVerificationOutput): Promise<Result<OK, Error>> {
+  async transition(block: BlockView, headerHash: HeaderHash): Promise<Result<OK, Error>> {
     // TODO [ToDr] Order from GP!
 
     const header = block.header.materialize();
@@ -106,8 +115,7 @@ export class OnChain {
     // authorization
     this.authorization.transition({
       slot: timeSlot,
-      // TODO [ToDr] take from guarantees extrinsic
-      used: new Map(),
+      used: this.getUsedAuthorizerHashes(block.extrinsic.view().guarantees.view()),
     });
 
     // preimages
@@ -122,11 +130,21 @@ export class OnChain {
       });
     }
 
+    const sealState = this.safrole.getSafroleSealState(timeSlot);
+    const sealResult = await this.safroleSeal.verifyHeaderSeal(block.header.view(), sealState);
+    if (sealResult.isError) {
+      return Result.error({
+        kind: ErrorKind.SafroleSeal,
+        error: sealResult.error,
+      });
+    }
+
     const safroleResult = await this.safrole.transition({
       slot: timeSlot,
-      entropy: verification.entropy,
+      entropy: sealResult.ok,
       extrinsic: block.extrinsic.view().tickets.materialize(),
     });
+
     if (safroleResult.isError) {
       return Result.error({
         kind: ErrorKind.Safrole,
@@ -159,12 +177,24 @@ export class OnChain {
     const accumulateRoot = Bytes.zero(HASH_SIZE).asOpaque();
     // recent history
     this.recentHistory.transition({
-      headerHash: verification.headerHash,
+      headerHash,
       priorStateRoot: header.priorStateRoot,
       accumulateRoot: accumulateRoot,
       workPackages: reportsResult.ok.reported,
     });
 
     return Result.ok(OK);
+  }
+
+  private getUsedAuthorizerHashes(guarantees: GuaranteesExtrinsicView) {
+    const map = new Map<CoreIndex, HashSet<AuthorizerHash>>();
+    for (const guarantee of guarantees) {
+      const reportView = guarantee.view().report.view();
+      const coreIndex = reportView.coreIndex.materialize();
+      const ofCore = map.get(coreIndex) ?? HashSet.new();
+      ofCore.insert(reportView.authorizerHash.materialize());
+      map.set(coreIndex, ofCore);
+    }
+    return map;
   }
 }

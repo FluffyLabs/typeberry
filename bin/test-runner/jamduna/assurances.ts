@@ -1,15 +1,15 @@
 import assert from "node:assert";
 import { Block } from "@typeberry/block";
-import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
-import { HASH_SIZE, SimpleAllocator, keccak } from "@typeberry/hash";
+import { SimpleAllocator, keccak } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { OnChain } from "@typeberry/transition/chain-stf";
 import { deepEqual } from "@typeberry/utils";
+import { BlockVerifier } from "../../../packages/jam/transition/block-verification";
 import { blockFromJson } from "../w3f/codec/block";
 import { TestState, loadState } from "./stateLoader";
 
@@ -52,26 +52,23 @@ export async function runAssurancesStateTransition(testContent: AssurancesStateT
   assert.deepStrictEqual(testContent.pre_state.state_root.toString(), preStateRoot.toString());
   assert.deepStrictEqual(testContent.post_state.state_root.toString(), postStateRoot.toString());
 
+  const verifier = new BlockVerifier(stf.hasher);
+  const verificationResult = await verifier.verifyBlock(blockView);
+  if (verificationResult.isError) {
+    assert.fail(`Block verification failed, got: ${JSON.stringify(verificationResult.error)}`);
+  }
+
   // now perform the state transition
-  const stfResult = await stf.transition(blockView, {
-    headerHash: stf.hasher.header(blockView.header.view()).hash,
-    entropy: Bytes.parseBytes(
-      "0x69018618da771db3ff76d5849407ecb57f1dc7b7eb6d14beddb928cb032b3d31",
-      HASH_SIZE,
-    ).asOpaque(),
-  });
+  const stfResult = await stf.transition(blockView, verificationResult.ok);
   if (stfResult.isError) {
     assert.fail(`Expected the transition to go smoothly, got error: ${JSON.stringify(stfResult.error)}`);
   }
 
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
-  const _root = merkelizeState(serializeState(preState, spec));
+  const root = merkelizeState(serializeState(preState, spec));
 
   deepEqual(preState, postState, {
-    ignore: [
-      "sealingKeySeries.[keys]", // when decoding we end up with `undefined` keys
-      "entropy.[0]", //temporarily disable checking entropy, since it's not implemented.
-    ],
+    ignore: [],
   });
-  // assert.deepStrictEqual(root.toString(), postStateRoot.toString());
+  assert.deepStrictEqual(root.toString(), postStateRoot.toString());
 }

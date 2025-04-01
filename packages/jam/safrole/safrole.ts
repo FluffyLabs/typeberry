@@ -4,22 +4,23 @@ import {
   ED25519_KEY_BYTES,
   type EntropyHash,
   EpochMarker,
-  PerEpochBlock,
+  type PerEpochBlock,
   type PerValidator,
   type TimeSlot,
   tryAsPerEpochBlock,
 } from "@typeberry/block";
 import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets";
-import { Bytes, BytesBlob, bytesBlobComparator } from "@typeberry/bytes";
+import { Bytes, bytesBlobComparator } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { blake2b } from "@typeberry/hash";
 import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";
-import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
+import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data";
 import { Result, asOpaqueType } from "@typeberry/utils";
 import { getRingCommitment, verifyTickets } from "./bandersnatch";
+import type { SafroleSealState } from "./safrole-seal";
 
 export const VALIDATOR_META_BYTES = 128;
 export type VALIDATOR_META_BYTES = typeof VALIDATOR_META_BYTES;
@@ -183,7 +184,7 @@ export class Safrole {
 
     const { nextValidatorData, currentValidatorData } = this.state;
 
-    const epochRootResult = await getRingCommitment(newNextValidators.map(x => x.bandersnatch));
+    const epochRootResult = await getRingCommitment(newNextValidators.map((x) => x.bandersnatch));
 
     if (epochRootResult.isOk) {
       return Result.ok({
@@ -259,21 +260,15 @@ export class Safrole {
       m >= this.chainSpec.contestLength &&
       this.state.ticketsAccumulator.length === this.chainSpec.epochLength
     ) {
-      return {
-        kind: SafroleSealingKeysKind.Tickets,
-        tickets: this.outsideInSequencer(this.state.ticketsAccumulator),
-      };
+      return SafroleSealingKeysData.tickets(this.outsideInSequencer(this.state.ticketsAccumulator));
     }
 
     if (this.isSameEpoch(timeslot)) {
       return this.state.sealingKeySeries;
     }
 
-    return {
-      kind: SafroleSealingKeysKind.Keys,
-      // TODO [MaSi]: the result of fallback sequencer should be cached
-      keys: this.fallbackKeySequencer(newEntropy, newValidators),
-    };
+    // TODO [MaSi]: the result of fallback sequencer should be cached
+    return SafroleSealingKeysData.keys(this.fallbackKeySequencer(newEntropy, newValidators));
   }
 
   /**
@@ -341,7 +336,11 @@ export class Safrole {
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/0f59000f5900
      */
-    const verificationResult = await verifyTickets(validators.map(x => x.bandersnatch), extrinsic, entropy);
+    const verificationResult = await verifyTickets(
+      validators.map((x) => x.bandersnatch),
+      extrinsic,
+      entropy,
+    );
     const tickets: Ticket[] = extrinsic.map((ticket, i) => ({
       id: verificationResult[i].entropyHash,
       attempt: ticket.attempt,
@@ -432,6 +431,20 @@ export class Safrole {
     }
 
     return true;
+  }
+
+  getSafroleSealState(timeslot: TimeSlot): SafroleSealState {
+    const isFirstInNewEpoch = this.isEpochChanged(timeslot);
+    const currentValidatorData = isFirstInNewEpoch ? this.state.nextValidatorData : this.state.currentValidatorData;
+    const newEntropy = this.state.entropy[isFirstInNewEpoch ? 1 : 2];
+    const currentEntropy = this.state.entropy[isFirstInNewEpoch ? 2 : 3];
+    const sealingKeySeries = this.getSlotKeySequence(timeslot, currentValidatorData, newEntropy);
+
+    return {
+      currentValidatorData,
+      currentEntropy,
+      sealingKeySeries,
+    };
   }
 
   async transition(input: Input): Promise<Result<OkResult, SafroleErrorCode>> {

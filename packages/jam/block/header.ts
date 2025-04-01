@@ -55,8 +55,6 @@ export class EpochMarker extends WithDebug {
   }
 }
 
-
-
 /**
  * Return an encoded header without the seal components.
  *
@@ -68,7 +66,7 @@ export const encodeUnsealedHeader = (view: HeaderView): BytesBlob => {
   const encodedFullHeader = view.encoded().raw;
   const encodedUnsealedLen = encodedFullHeader.length - BANDERSNATCH_VRF_SIGNATURE_BYTES;
   return BytesBlob.blobFrom(encodedFullHeader.subarray(0, encodedUnsealedLen));
-}
+};
 /**
  * The header of the JAM block.
  *

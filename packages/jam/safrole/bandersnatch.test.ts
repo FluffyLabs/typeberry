@@ -1,34 +1,36 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
+import { BANDERSNATCH_KEY_BYTES } from "@typeberry/block";
 import type { TicketAttempt } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { asKnownSize } from "@typeberry/collections";
 import { getRingCommitment, verifyTickets } from "./bandersnatch";
-import {BANDERSNATCH_KEY_BYTES} from "@typeberry/block";
-import {asKnownSize} from "@typeberry/collections";
 
 describe("Bandersnatch verification", () => {
   describe("getRingCommitment", () => {
-    const bandersnatchKeys = asKnownSize([
-      {
-        bandersnatch: "0xaa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc",
-      },
-      {
-        bandersnatch: "0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d",
-      },
-      {
-        bandersnatch: "0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d",
-      },
-      {
-        bandersnatch: "0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3",
-      },
-      {
-        bandersnatch: "0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0",
-      },
-      {
-        bandersnatch: "0x7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33",
-      },
-    ].map(x => Bytes.parseBytes(x.bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque()));
+    const bandersnatchKeys = asKnownSize(
+      [
+        {
+          bandersnatch: "0xaa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc",
+        },
+        {
+          bandersnatch: "0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d",
+        },
+        {
+          bandersnatch: "0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d",
+        },
+        {
+          bandersnatch: "0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3",
+        },
+        {
+          bandersnatch: "0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0",
+        },
+        {
+          bandersnatch: "0x7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33",
+        },
+      ].map((x) => Bytes.parseBytes(x.bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque()),
+    );
 
     it("should return commitment", async () => {
       const result = await getRingCommitment(bandersnatchKeys);
@@ -42,26 +44,28 @@ describe("Bandersnatch verification", () => {
   });
 
   describe("verifyTickets", () => {
-    const bandersnatchKeys =asKnownSize([
-      {
-        bandersnatch: "0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d",
-      },
-      {
-        bandersnatch: "0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0",
-      },
-      {
-        bandersnatch: "0xaa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc",
-      },
-      {
-        bandersnatch: "0x7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33",
-      },
-      {
-        bandersnatch: "0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3",
-      },
-      {
-        bandersnatch: "0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d",
-      },
-    ].map(x => Bytes.parseBytes(x.bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque()));
+    const bandersnatchKeys = asKnownSize(
+      [
+        {
+          bandersnatch: "0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d",
+        },
+        {
+          bandersnatch: "0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0",
+        },
+        {
+          bandersnatch: "0xaa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc",
+        },
+        {
+          bandersnatch: "0x7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33",
+        },
+        {
+          bandersnatch: "0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3",
+        },
+        {
+          bandersnatch: "0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d",
+        },
+      ].map((x) => Bytes.parseBytes(x.bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque()),
+    );
 
     it("should confirm that all tickets are valid and return correct ids", async () => {
       const tickets = [

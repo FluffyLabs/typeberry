@@ -1,9 +1,15 @@
-import type { BandersnatchKey, BandersnatchRingRoot, BandersnatchVrfSignature, EntropyHash, ValidatorIndex } from "@typeberry/block";
+import type {
+  BandersnatchKey,
+  BandersnatchRingRoot,
+  BandersnatchVrfSignature,
+  EntropyHash,
+  ValidatorIndex,
+} from "@typeberry/block";
 import type { SignedTicket } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import {HASH_SIZE} from "@typeberry/hash";
+import { HASH_SIZE } from "@typeberry/hash";
 import { Result } from "@typeberry/utils";
-import { ring_commitment, batch_verify_tickets, verify_seal } from "bandersnatch-wasm/pkg";
+import { batch_verify_tickets, ring_commitment, verify_seal } from "bandersnatch-wasm/pkg";
 
 const RESULT_INDEX = 0 as const;
 
@@ -19,15 +25,8 @@ export async function verifySeal(
   payload: BytesBlob,
   encodedUnsealedHeader: BytesBlob,
 ): Promise<Result<EntropyHash, null>> {
-
-  const keys = BytesBlob.blobFromParts(validators.map(x => x.raw)).raw;
-  const sealResult = verify_seal(
-    keys,
-    author_index,
-    signature.raw,
-    payload.raw,
-    encodedUnsealedHeader.raw,
-  );
+  const keys = BytesBlob.blobFromParts(validators.map((x) => x.raw)).raw;
+  const sealResult = verify_seal(keys, author_index, signature.raw, payload.raw, encodedUnsealedHeader.raw);
 
   if (sealResult[RESULT_INDEX] === ResultValues.Error) {
     return Result.error(null);
@@ -37,7 +36,7 @@ export async function verifySeal(
 }
 
 export async function getRingCommitment(validators: BandersnatchKey[]): Promise<Result<BandersnatchRingRoot, null>> {
-  const keys = BytesBlob.blobFromParts(validators.map(x => x.raw)).raw;
+  const keys = BytesBlob.blobFromParts(validators.map((x) => x.raw)).raw;
   const commitmentResult = ring_commitment(keys);
 
   if (commitmentResult[RESULT_INDEX] === ResultValues.Error) {
@@ -62,7 +61,7 @@ export async function verifyTickets(
     ),
   ).raw;
 
-  const keys = BytesBlob.blobFromParts(validators.map(x => x.raw)).raw;
+  const keys = BytesBlob.blobFromParts(validators.map((x) => x.raw)).raw;
   const verificationResult = batch_verify_tickets(keys, ticketsData, contextLength);
 
   return Array.from(BytesBlob.blobFrom(verificationResult).chunks(33)).map((result) => ({
