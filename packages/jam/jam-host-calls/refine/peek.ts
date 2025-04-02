@@ -15,7 +15,7 @@ import { PeekPokeError, type RefineExternalities, tryAsMachineId } from "./refin
 const IN_OUT_REG = 7;
 
 /**
- * Peek a piece memory of a running nested machine.
+ * Peek into a piece of nested machine memory.
  *
  * https://graypaper.fluffylabs.dev/#/68eaa1f/350501350501?v=0.6.4
  */
