@@ -28,7 +28,7 @@ export class Poke implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
     // `n`: machine index
-    const machineIndex = tryAsMachineId(regs.getU32(IN_OUT_REG));
+    const machineIndex = tryAsMachineId(regs.getU64(IN_OUT_REG));
     // `s`: source memory start (nested vm)
     const sourceStart = tryAsMemoryIndex(regs.getU32(8));
     // `o`: destination memory start (local)
