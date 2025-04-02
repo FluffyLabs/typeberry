@@ -5,7 +5,6 @@ import { tryAsU32 } from "@typeberry/numbers";
 import { PvmExecution } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { OK, Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { Peek } from "./peek";
@@ -15,13 +14,7 @@ import { TestRefineExt } from "./refine-externalities.test";
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
 
-function prepareRegsAndMemory(
-  machineId: MachineId,
-  destinationStart: number,
-  sourceStart: number,
-  length: number,
-  isWritable: boolean,
-) {
+function prepareRegsAndMemory(machineId: MachineId, destinationStart: number, sourceStart: number, length: number) {
   const registers = new Registers();
   registers.setU64(7, machineId);
   registers.setU32(8, destinationStart);
@@ -29,9 +22,6 @@ function prepareRegsAndMemory(
   registers.setU32(10, length);
 
   const builder = new MemoryBuilder();
-  if (isWritable) {
-    builder.setWriteablePages(tryAsMemoryIndex(destinationStart), tryAsMemoryIndex(destinationStart + PAGE_SIZE));
-  }
   const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
 
   return {
@@ -40,7 +30,7 @@ function prepareRegsAndMemory(
   };
 }
 
-function prepareTest(result: Result<OK, PeekPokeError>, { isWritable = true }: { isWritable?: boolean } = {}) {
+function prepareTest(result: Result<OK, PeekPokeError>) {
   const refine = new TestRefineExt();
   const peek = new Peek(refine);
   peek.currentServiceId = tryAsServiceId(10_000);
@@ -48,7 +38,7 @@ function prepareTest(result: Result<OK, PeekPokeError>, { isWritable = true }: {
   const destinationStart = 2 ** 16;
   const memoryStart = 2 ** 20;
   const dataLength = 128;
-  const { registers, memory } = prepareRegsAndMemory(machineId, destinationStart, memoryStart, dataLength, isWritable);
+  const { registers, memory } = prepareRegsAndMemory(machineId, destinationStart, memoryStart, dataLength);
   refine.machinePeekData.set(
     result,
     machineId,
@@ -77,7 +67,7 @@ describe("HostCalls: Peek", () => {
     assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.OK);
   });
 
-  it("should fail if there is no machine", async () => {
+  it("should return WHO if there is no machine", async () => {
     const { peek, registers, memory } = prepareTest(Result.error(PeekPokeError.NoMachine));
 
     // when
@@ -88,8 +78,8 @@ describe("HostCalls: Peek", () => {
     assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.WHO);
   });
 
-  it("should fail if there is a page fault on any side", async () => {
-    const { peek, registers, memory } = prepareTest(Result.error(PeekPokeError.PageFault));
+  it("should return OOB if there is a page fault on machine side", async () => {
+    const { peek, registers, memory } = prepareTest(Result.error(PeekPokeError.DestinationPageFault));
 
     // when
     const result = await peek.execute(gas, registers, memory);
@@ -99,8 +89,8 @@ describe("HostCalls: Peek", () => {
     assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.OOB);
   });
 
-  it("should panic if memory is unwritable", async () => {
-    const { peek, registers, memory } = prepareTest(Result.error(PeekPokeError.PageFault), { isWritable: false });
+  it("should panic if there is a page fault on source side", async () => {
+    const { peek, registers, memory } = prepareTest(Result.error(PeekPokeError.SourcePageFault));
 
     // when
     const result = await peek.execute(gas, registers, memory);

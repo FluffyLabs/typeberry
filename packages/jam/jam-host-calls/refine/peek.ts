@@ -36,11 +36,6 @@ export class Peek implements HostCallHandler {
     // `z`: memory length
     const length = tryAsU32(regs.getU32(10));
 
-    const isWritable = memory.isWriteable(destinationStart, length);
-    if (!isWritable) {
-      return PvmExecution.Panic;
-    }
-
     const peekResult = await this.refine.machinePeekFrom(machineIndex, destinationStart, sourceStart, length, memory);
     if (peekResult.isOk) {
       regs.setU64(IN_OUT_REG, HostCallResult.OK);
@@ -54,7 +49,11 @@ export class Peek implements HostCallHandler {
       return;
     }
 
-    if (e === PeekPokeError.PageFault) {
+    if (e === PeekPokeError.SourcePageFault) {
+      return PvmExecution.Panic;
+    }
+
+    if (e === PeekPokeError.DestinationPageFault) {
       regs.setU64(IN_OUT_REG, HostCallResult.OOB);
       return;
     }

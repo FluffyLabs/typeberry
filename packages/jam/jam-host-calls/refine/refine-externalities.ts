@@ -55,10 +55,12 @@ export type MachineResult = {
 
 /** An error that may occur during `peek` or `poke` host call. */
 export enum PeekPokeError {
-  /** Source or destination page fault. */
-  PageFault = 0,
+  /** Source page fault. */
+  SourcePageFault = 0,
+  /** Destination page fault. */
+  DestinationPageFault = 1,
   /** No machine under given machine index. */
-  NoMachine = 1,
+  NoMachine = 2,
 }
 
 /** Error for `zero` and `void` host calls when machine is not found. */
