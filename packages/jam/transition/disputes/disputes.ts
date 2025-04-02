@@ -345,7 +345,7 @@ export class Disputes {
   }
 
   /**
-   * Transition the disputes and a list of offenders.
+   * Transition the disputes and return a list of offenders.
    */
   async transition(disputes: DisputesExtrinsic): Promise<Result<Ed25519Key[], DisputesErrorCode>> {
     const signaturesToVerifyResult = this.prepareSignaturesToVerification(disputes);

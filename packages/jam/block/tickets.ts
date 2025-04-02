@@ -2,8 +2,8 @@ import type { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { U8 } from "@typeberry/numbers";
-import { type Opaque, WithDebug } from "@typeberry/utils";
+import { type U8, tryAsU8 } from "@typeberry/numbers";
+import { type Opaque, WithDebug, asOpaqueType } from "@typeberry/utils";
 import { codecKnownSizeArray } from "./codec";
 import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "./crypto";
 
@@ -14,6 +14,9 @@ import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "./crypto";
  * https://graypaper.fluffylabs.dev/#/579bd12/417200417400
  */
 export type TicketAttempt = Opaque<U8, "TicketAttempt[0|1|2]">;
+export function tryAsTicketAttempt(x: number): TicketAttempt {
+  return asOpaqueType(tryAsU8(x));
+}
 
 /* Bandersnatch-signed ticket contest entry. */
 export class SignedTicket extends WithDebug {

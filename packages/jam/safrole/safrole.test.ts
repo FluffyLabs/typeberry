@@ -1,7 +1,11 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
 import {
+  BANDERSNATCH_KEY_BYTES,
   BANDERSNATCH_PROOF_BYTES,
+  BANDERSNATCH_RING_ROOT_BYTES,
+  BLS_KEY_BYTES,
+  ED25519_KEY_BYTES,
   type Ed25519Key,
   type EntropyHash,
   type PerValidator,
@@ -13,13 +17,12 @@ import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Ordering } from "@typeberry/ordering";
-import type { ValidatorData } from "@typeberry/state";
+import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
-import { asOpaqueType } from "@typeberry/utils";
 import * as bandersnatch from "./bandersnatch";
 import { Safrole, SafroleErrorCode, type SafroleState } from "./safrole";
 
-const validators: PerValidator<ValidatorData> = asOpaqueType(
+const validators: PerValidator<ValidatorData> = asKnownSize(
   [
     {
       bandersnatch: "0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d",
@@ -63,12 +66,14 @@ const validators: PerValidator<ValidatorData> = asOpaqueType(
       metadata:
         "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
     },
-  ].map(({ bandersnatch, bls, ed25519, metadata }) => ({
-    bandersnatch: Bytes.parseBlob(bandersnatch).asOpaque(),
-    bls: Bytes.parseBlob(bls).asOpaque(),
-    ed25519: Bytes.parseBlob(ed25519).asOpaque(),
-    metadata: Bytes.parseBlob(metadata).asOpaque(),
-  })),
+  ].map(({ bandersnatch, bls, ed25519, metadata }) =>
+    ValidatorData.fromCodec({
+      bandersnatch: Bytes.parseBytes(bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque(),
+      bls: Bytes.parseBytes(bls, BLS_KEY_BYTES).asOpaque(),
+      ed25519: Bytes.parseBytes(ed25519, ED25519_KEY_BYTES).asOpaque(),
+      metadata: Bytes.parseBytes(metadata, VALIDATOR_META_BYTES).asOpaque(),
+    }),
+  ),
 );
 
 const fakeSealingKeys: SafroleSealingKeys = {
@@ -182,7 +187,7 @@ describe("Safrole", () => {
       },
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
-      epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
+      epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
     };
     const safrole = new Safrole(tinyChainSpec, state);
     const timeslot = 2 as TimeSlot;
@@ -235,7 +240,7 @@ describe("Safrole", () => {
       },
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
-      epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
+      epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
     };
     const safrole = new Safrole(tinyChainSpec, state);
     const timeslot = 2 as TimeSlot;
@@ -292,7 +297,7 @@ describe("Safrole", () => {
       },
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
-      epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
+      epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
     };
     const safrole = new Safrole(tinyChainSpec, state);
     const timeslot = 2 as TimeSlot;
@@ -343,7 +348,7 @@ describe("Safrole", () => {
       },
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
-      epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
+      epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
     };
     const safrole = new Safrole(tinyChainSpec, state);
     const timeslot = 2 as TimeSlot;

@@ -1,15 +1,17 @@
-import type {
-  BandersnatchKey,
-  BandersnatchRingRoot,
-  BandersnatchVrfSignature,
-  EntropyHash,
-  ValidatorIndex,
+import {
+  BANDERSNATCH_RING_ROOT_BYTES,
+  type BandersnatchKey,
+  type BandersnatchRingRoot,
+  type BandersnatchVrfSignature,
+  type EntropyHash,
+  type ValidatorIndex,
 } from "@typeberry/block";
 import type { SignedTicket } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Result } from "@typeberry/utils";
 import { batch_verify_tickets, ring_commitment, verify_seal } from "bandersnatch-wasm/pkg";
+import { JAM_TICKET_SEAL } from "./constants";
 
 const RESULT_INDEX = 0 as const;
 
@@ -43,21 +45,21 @@ export async function getRingCommitment(validators: BandersnatchKey[]): Promise<
     return Result.error(null);
   }
 
-  return Result.ok(BytesBlob.blobFrom(commitmentResult.subarray(1)).asOpaque());
+  return Result.ok(Bytes.fromBlob(commitmentResult.subarray(1), BANDERSNATCH_RING_ROOT_BYTES).asOpaque());
 }
-
-const X_T = BytesBlob.blobFromString("jam_ticket_seal").raw;
 
 export async function verifyTickets(
   validators: BandersnatchKey[],
   tickets: SignedTicket[],
   entropy: EntropyHash,
 ): Promise<{ isValid: boolean; entropyHash: EntropyHash }[]> {
-  const contextLength = entropy.length + X_T.length + 1;
+  const contextLength = entropy.length + JAM_TICKET_SEAL.length + 1;
 
   const ticketsData = BytesBlob.blobFromParts(
     tickets.map(
-      (ticket) => BytesBlob.blobFromParts([ticket.signature.raw, X_T, entropy.raw, Uint8Array.of(ticket.attempt)]).raw,
+      (ticket) =>
+        BytesBlob.blobFromParts([ticket.signature.raw, JAM_TICKET_SEAL, entropy.raw, Uint8Array.of(ticket.attempt)])
+          .raw,
     ),
   ).raw;
 
@@ -66,6 +68,6 @@ export async function verifyTickets(
 
   return Array.from(BytesBlob.blobFrom(verificationResult).chunks(33)).map((result) => ({
     isValid: result.raw[RESULT_INDEX] === ResultValues.Ok,
-    entropyHash: BytesBlob.blobFrom(result.raw.subarray(1, 33)).asOpaque(),
+    entropyHash: Bytes.fromBlob(result.raw.subarray(1, 33), HASH_SIZE).asOpaque(),
   }));
 }

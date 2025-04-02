@@ -1,41 +1,31 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { BANDERSNATCH_KEY_BYTES } from "@typeberry/block";
+import { BANDERSNATCH_KEY_BYTES, BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/block";
 import type { TicketAttempt } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize } from "@typeberry/collections";
+import { HASH_SIZE } from "@typeberry/hash";
 import { getRingCommitment, verifyTickets } from "./bandersnatch";
 
 describe("Bandersnatch verification", () => {
   describe("getRingCommitment", () => {
     const bandersnatchKeys = asKnownSize(
       [
-        {
-          bandersnatch: "0xaa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc",
-        },
-        {
-          bandersnatch: "0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d",
-        },
-        {
-          bandersnatch: "0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d",
-        },
-        {
-          bandersnatch: "0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3",
-        },
-        {
-          bandersnatch: "0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0",
-        },
-        {
-          bandersnatch: "0x7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33",
-        },
-      ].map((x) => Bytes.parseBytes(x.bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque()),
+        "0xaa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc",
+        "0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d",
+        "0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d",
+        "0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3",
+        "0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0",
+        "0x7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33",
+      ].map((x) => Bytes.parseBytes(x, BANDERSNATCH_KEY_BYTES).asOpaque()),
     );
 
     it("should return commitment", async () => {
       const result = await getRingCommitment(bandersnatchKeys);
-      const expectedCommitment = BytesBlob.parseBlob(
+      const expectedCommitment = Bytes.parseBytes(
         "0xb3750bba87e39fb38579c880ff3b5c4e0aa90df8ff8be1ddc5fdd615c6780955f8fd85d99fd92a3f1d4585eb7ae8d627b01dd76d41720d73c9361a1dd2e830871155834c55db72de38fb875a9470faedb8cae54b34f7bfe196a9caca00c2911592e630ae2b14e758ab0960e372172203f4c9a41777dadd529971d7ab9d23ab29fe0e9c85ec450505dde7f5ac038274cf",
+        BANDERSNATCH_RING_ROOT_BYTES,
       );
 
       assert.strictEqual(result.isOk, true);
@@ -46,25 +36,13 @@ describe("Bandersnatch verification", () => {
   describe("verifyTickets", () => {
     const bandersnatchKeys = asKnownSize(
       [
-        {
-          bandersnatch: "0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d",
-        },
-        {
-          bandersnatch: "0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0",
-        },
-        {
-          bandersnatch: "0xaa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc",
-        },
-        {
-          bandersnatch: "0x7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33",
-        },
-        {
-          bandersnatch: "0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3",
-        },
-        {
-          bandersnatch: "0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d",
-        },
-      ].map((x) => Bytes.parseBytes(x.bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque()),
+        "0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d",
+        "0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0",
+        "0xaa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc",
+        "0x7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33",
+        "0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3",
+        "0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d",
+      ].map((x) => Bytes.parseBytes(x, BANDERSNATCH_KEY_BYTES).asOpaque()),
     );
 
     it("should confirm that all tickets are valid and return correct ids", async () => {
@@ -89,14 +67,15 @@ describe("Bandersnatch verification", () => {
         },
       ];
 
-      const entropy = BytesBlob.parseBlob(
+      const entropy = Bytes.parseBytes(
         "0xbb30a42c1e62f0afda5f0a4e8a562f7a13a24cea00ee81917b86b89e801314aa",
+        HASH_SIZE,
       ).asOpaque();
       const expectedIds = [
         "0x09a696b142112c0af1cd2b5f91726f2c050112078e3ef733198c5f43daa20d2b",
         "0x13fecb426e0a73b84b58b9a0832b11582dc971e79c5399e69f0baf1a244c7787",
         "0x3a5d10abc80dda33fe3f40b3bb2e3eefd3e97dda3d617a860c9d94eb70b832ad",
-      ].map(BytesBlob.parseBlob);
+      ].map((x) => Bytes.parseBytes(x, HASH_SIZE));
 
       const result = await verifyTickets(bandersnatchKeys, tickets, entropy);
 
@@ -132,14 +111,15 @@ describe("Bandersnatch verification", () => {
         },
       ];
 
-      const entropy = BytesBlob.parseBlob(
+      const entropy = Bytes.parseBytes(
         "0xbb30a42c1e62f0afda5f0a4e8a562f7a13a24cea00ee81917b86b89e801314aa",
+        HASH_SIZE,
       ).asOpaque();
       const expectedIds = [
         "0x0000000000000000000000000000000000000000000000000000000000000000",
         "0x13fecb426e0a73b84b58b9a0832b11582dc971e79c5399e69f0baf1a244c7787",
         "0x3a5d10abc80dda33fe3f40b3bb2e3eefd3e97dda3d617a860c9d94eb70b832ad",
-      ].map(BytesBlob.parseBlob);
+      ].map((x) => Bytes.parseBytes(x, HASH_SIZE));
 
       const result = await verifyTickets(bandersnatchKeys, tickets, entropy);
 
