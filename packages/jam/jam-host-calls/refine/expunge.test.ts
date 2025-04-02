@@ -1,38 +1,17 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
+import { type U64, tryAsU64 } from "@typeberry/numbers";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import { OK, Result } from "@typeberry/utils";
-import { LegacyHostCallResult } from "../results";
+import { Result } from "@typeberry/utils";
+import { HostCallResult } from "../results";
 import { Expunge } from "./expunge";
 import { type MachineId, NoMachineError, tryAsMachineId } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
-
-describe("HostCalls: Expunge", () => {
-  it("should expunge machine", async () => {
-    const { expunge, registers } = prepareTest(Result.ok(OK));
-
-    // when
-    await expunge.execute(gas, registers);
-
-    // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
-  });
-
-  it("should fail if machine unknown", async () => {
-    const { expunge, registers } = prepareTest(Result.error(NoMachineError));
-
-    // when
-    await expunge.execute(gas, registers);
-
-    // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.WHO);
-  });
-});
 
 function prepareRegsAndMemory(machineId: MachineId) {
   const registers = new Registers();
@@ -47,7 +26,7 @@ function prepareRegsAndMemory(machineId: MachineId) {
   };
 }
 
-function prepareTest(result: Result<OK, NoMachineError>) {
+function prepareTest(result: Result<U64, NoMachineError>) {
   const refine = new TestRefineExt();
   const expunge = new Expunge(refine);
   expunge.currentServiceId = tryAsServiceId(10_000);
@@ -61,3 +40,28 @@ function prepareTest(result: Result<OK, NoMachineError>) {
     memory,
   };
 }
+
+describe("HostCalls: Expunge", () => {
+  it("should expunge machine and return its program counter", async () => {
+    const programCounter = tryAsU64(0x1234_5678_9abc_def0n);
+    const { expunge, registers } = prepareTest(Result.ok(programCounter));
+
+    // when
+    const result = await expunge.execute(gas, registers);
+
+    // then
+    assert.strictEqual(result, undefined);
+    assert.deepStrictEqual(registers.getU64(RESULT_REG), programCounter);
+  });
+
+  it("should return WHO if machine unknown", async () => {
+    const { expunge, registers } = prepareTest(Result.error(NoMachineError));
+
+    // when
+    const result = await expunge.execute(gas, registers);
+
+    // then
+    assert.strictEqual(result, undefined);
+    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.WHO);
+  });
+});

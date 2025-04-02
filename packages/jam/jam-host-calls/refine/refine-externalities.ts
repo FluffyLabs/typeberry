@@ -78,7 +78,7 @@ export type SegmentExportError = typeof SegmentExportError;
 /** Host functions external invokations available during refine phase. */
 export interface RefineExternalities {
   /** Forget a previously started nested VM. */
-  machineExpunge(machineIndex: MachineId): Promise<Result<OK, NoMachineError>>;
+  machineExpunge(machineIndex: MachineId): Promise<Result<U64, NoMachineError>>;
 
   /** Set given range of pages as non-accessible and re-initialize them with zeros. */
   machineVoidPages(

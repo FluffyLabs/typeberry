@@ -2,7 +2,7 @@ import type { Segment, SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
-import type { U32 } from "@typeberry/numbers";
+import type { U32, U64 } from "@typeberry/numbers";
 import type { BigGas, Memory, MemoryIndex, Registers } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { type OK, Result } from "@typeberry/utils";
@@ -35,7 +35,7 @@ export class TestRefineExt implements RefineExternalities {
   ]);
   public readonly machineExpungeData: MultiMap<
     Parameters<TestRefineExt["machineExpunge"]>,
-    Result<OK, NoMachineError>
+    Result<U64, NoMachineError>
   > = new MultiMap(1);
   public readonly machinePeekData: MultiMap<Parameters<TestRefineExt["machinePeekFrom"]>, Result<OK, PeekPokeError>> =
     new MultiMap(5);
@@ -52,7 +52,7 @@ export class TestRefineExt implements RefineExternalities {
 
   public machineInvokeStatus: MachineStatus = { status: Status.OK };
 
-  machineExpunge(machineIndex: MachineId): Promise<Result<OK, NoMachineError>> {
+  machineExpunge(machineIndex: MachineId): Promise<Result<U64, NoMachineError>> {
     const val = this.machineExpungeData.get(machineIndex);
     if (val === undefined) {
       throw new Error(`Unexpected call to machineExpunge with: ${machineIndex}`);
