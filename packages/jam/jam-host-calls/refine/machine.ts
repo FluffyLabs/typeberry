@@ -18,7 +18,7 @@ const IN_OUT_REG = 7;
 /**
  * Initiate a PVM instance with given program code and entrypoint (program counter).
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/349902349902
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/353b00353b00?v=0.6.4
  */
 export class Machine implements HostCallHandler {
   index = tryAsHostCallIndex(20);
