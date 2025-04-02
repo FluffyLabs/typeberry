@@ -17,7 +17,7 @@ const IN_OUT_REG = 7;
 /**
  * Peek a piece memory of a running nested machine.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/353b00353b00
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/350501350501?v=0.6.4
  */
 export class Peek implements HostCallHandler {
   index = tryAsHostCallIndex(21);
