@@ -78,7 +78,7 @@ export class OnChain {
 
   constructor(
     public readonly chainSpec: ChainSpec,
-    state: State,
+    public readonly state: State,
     blocks: BlocksDb,
     public readonly hasher: TransitionHasher,
   ) {
