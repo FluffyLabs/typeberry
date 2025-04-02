@@ -331,20 +331,19 @@ export class Safrole {
     validators: ValidatorData[],
     entropy: EntropyHash,
   ): Promise<Result<Ticket[], SafroleErrorCode>> {
-    if (extrinsic.length === 0) {
-      return Result.ok([]);
-    }
-
     /**
      * Verify ticket proof of validity
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/0f59000f5900
      */
-    const verificationResult = await verifyTickets(
-      validators.map((x) => x.bandersnatch),
-      extrinsic,
-      entropy,
-    );
+    const verificationResult =
+      extrinsic.length === 0
+        ? []
+        : await verifyTickets(
+            validators.map((x) => x.bandersnatch),
+            extrinsic,
+            entropy,
+          );
     const tickets: Ticket[] = extrinsic.map((ticket, i) => ({
       id: verificationResult[i].entropyHash,
       attempt: ticket.attempt,
