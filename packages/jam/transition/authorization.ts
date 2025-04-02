@@ -31,6 +31,8 @@ export type AuthorizationInput = {
  * Every time there is a guaranteed work report (we know that from Guarantees Extrinsic),
  * we check what `authorizerHash` was used for that work report and we remove it from
  * the `queue`.
+ *
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/0f94020f9402?v=0.6.4
  */
 export class Authorization {
   constructor(
@@ -38,6 +40,12 @@ export class Authorization {
     public readonly state: AuthorizationState,
   ) {}
 
+  /**
+   * The state transition of a block involves placing a new authorization
+   * into the pool from the queue.
+   *
+   * https://graypaper.fluffylabs.dev/#/68eaa1f/103e00103f00?v=0.6.4
+   */
   transition(input: AuthorizationInput) {
     // we transition authorizations for each core.
     for (let coreIndex = tryAsCoreIndex(0); coreIndex < this.chainSpec.coresCount; coreIndex++) {
