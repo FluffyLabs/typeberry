@@ -1,17 +1,12 @@
 import { sumU32, tryAsU32 } from "@typeberry/numbers";
 import { type HostCallHandler, type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, type Registers, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { MEMORY_SIZE, PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
+import { MAX_NUMBER_OF_PAGES, RESERVED_NUMBER_OF_PAGES } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { type RefineExternalities, tryAsMachineId } from "./refine-externalities";
 
 const IN_OUT_REG = 7;
-
-/** https://graypaper.fluffylabs.dev/#/68eaa1f/35a60235a602?v=0.6.4 */
-const RESERVED_NUMBER_OF_PAGES = 16;
-/** https://graypaper.fluffylabs.dev/#/68eaa1f/35a60235a602?v=0.6.4 */
-export const MAX_NUMBER_OF_PAGES = MEMORY_SIZE / PAGE_SIZE;
 
 /**
  * Initialize some pages of memory for writing for a nested PVM.
