@@ -1,8 +1,8 @@
-import type { Segment, SegmentIndex, ServiceId } from "@typeberry/block";
+import { type Segment, type SegmentIndex, type ServiceId, tryAsSegmentIndex } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
-import type { U32 } from "@typeberry/numbers";
+import { type U32, isU16 } from "@typeberry/numbers";
 import type { BigGas, Memory, MemoryIndex, Registers } from "@typeberry/pvm-interpreter";
 import { type InvalidProgramError, ProgramDecoder } from "@typeberry/pvm-interpreter/program-decoder/program-decoder";
 import { Status } from "@typeberry/pvm-interpreter/status";
@@ -18,10 +18,11 @@ import {
   type ProgramCounter,
   type RefineExternalities,
   type SegmentExportError,
+  SegmentFetchError,
 } from "./refine-externalities";
 
 export class TestRefineExt implements RefineExternalities {
-  public readonly importSegmentData: Map<SegmentIndex, Segment | null> = new Map();
+  public readonly fetchSegmentData: Map<SegmentIndex, Segment | null> = new Map();
   public readonly exportSegmentData: MultiMap<[Segment], Result<SegmentIndex, SegmentExportError>> = new MultiMap(1, [
     (segment) => segment.toString(),
   ]);
@@ -152,12 +153,54 @@ export class TestRefineExt implements RefineExternalities {
     return result;
   }
 
-  importSegment(segmentIndex: SegmentIndex): Promise<Segment | null> {
-    const val = this.importSegmentData.get(segmentIndex);
-    if (val === undefined) {
-      throw new Error(`Unexpected call to importSegment with: ${segmentIndex}`);
+  fetchSegment(
+    regs: Registers,
+    segmentTypeReg: number,
+    segmentIdxReg: number,
+    _workItemIdxReg: number,
+  ): Promise<Result<Segment | null, SegmentFetchError>> {
+    const segmentTypeValue = regs.getU32(segmentTypeReg);
+    const segmentIdxValue = regs.getU32(segmentIdxReg);
+    let segmentIdx: SegmentIndex | null = null;
+    let value: Segment | null | undefined = null;
+
+    switch (segmentTypeValue) {
+      case 0:
+      case 1:
+      case 7:
+        segmentIdx = tryAsSegmentIndex(segmentTypeValue);
+        value = this.fetchSegmentData.get(segmentIdx);
+        if (value === undefined) {
+          return Promise.resolve(Result.error(SegmentFetchError));
+        }
+        return Promise.resolve(Result.ok(value));
+      case 2:
+      case 4:
+      case 6:
+        segmentIdx = isU16(segmentIdxValue) ? tryAsSegmentIndex(segmentIdxValue) : null;
+        if (segmentIdx === null) {
+          return Promise.resolve(Result.error(SegmentFetchError));
+        }
+        value = this.fetchSegmentData.get(segmentIdx);
+        if (value === undefined) {
+          return Promise.resolve(Result.error(SegmentFetchError));
+        }
+        return Promise.resolve(Result.ok(value));
+      case 3:
+      case 5:
+        // NOTE [MaSo]: different than 2, 4, 6, bcs it should utilize the work item index
+        segmentIdx = isU16(segmentIdxValue) ? tryAsSegmentIndex(segmentIdxValue) : null;
+        if (segmentIdx === null) {
+          return Promise.resolve(Result.error(SegmentFetchError));
+        }
+        value = this.fetchSegmentData.get(segmentIdx);
+        if (value === undefined) {
+          return Promise.resolve(Result.error(SegmentFetchError));
+        }
+        return Promise.resolve(Result.ok(value));
+      default:
+        throw Promise.resolve(Result.error(SegmentFetchError));
     }
-    return Promise.resolve(val);
   }
 
   historicalLookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null> {

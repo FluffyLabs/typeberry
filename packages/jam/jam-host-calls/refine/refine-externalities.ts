@@ -82,6 +82,10 @@ export type InvalidPageError = typeof InvalidPageError;
 export const SegmentExportError = Symbol("Too many segments already exported.");
 export type SegmentExportError = typeof SegmentExportError;
 
+/** Segment fetch error. */
+export const SegmentFetchError = Symbol("Segment fetch error.");
+export type SegmentFetchError = typeof SegmentFetchError;
+
 /** Host functions external invokations available during refine phase. */
 export interface RefineExternalities {
   /** Forget a previously started nested VM. */
@@ -133,7 +137,12 @@ export interface RefineExternalities {
   exportSegment(segment: Segment): Result<SegmentIndex, SegmentExportError>;
 
   /** Retrieve a segment exported by some earlier refine invokation. */
-  importSegment(segmentIndex: SegmentIndex): Promise<Segment | null>;
+  fetchSegment(
+    regs: Registers,
+    segmentTypeReg: number,
+    segmentIdxReg: number,
+    workItemIdxReg: number,
+  ): Promise<Result<Segment | null, SegmentFetchError>>;
 
   /** Lookup a historical preimage. */
   historicalLookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null>;
