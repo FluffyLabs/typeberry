@@ -2,14 +2,13 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
-import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { PvmExecution } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { HostCallResult } from "../results";
 import { Machine } from "./machine";
-import { tryAsMachineId } from "./refine-externalities";
+import { type ProgramCounter, tryAsMachineId, tryAsProgramCounter } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));
@@ -18,12 +17,12 @@ const RESULT_REG = CODE_START_REG;
 const CODE_LEN_REG = 8;
 const PC_REG = 9;
 
-function prepareRegsAndMemory(code: BytesBlob, pc: U32, { skipCode = false }: { skipCode?: boolean } = {}) {
+function prepareRegsAndMemory(code: BytesBlob, pc: ProgramCounter, { skipCode = false }: { skipCode?: boolean } = {}) {
   const memStart = 2 ** 20;
   const registers = new Registers();
   registers.setU32(CODE_START_REG, memStart);
   registers.setU32(CODE_LEN_REG, code.length);
-  registers.setU32(PC_REG, pc);
+  registers.setU64(PC_REG, pc);
 
   const builder = new MemoryBuilder();
   if (!skipCode) {
@@ -43,8 +42,9 @@ describe("HostCalls: Machine", () => {
     const machineId = tryAsMachineId(10_000);
     machine.currentServiceId = tryAsServiceId(10_000);
     const code = BytesBlob.blobFromNumbers([0, 0, 0]);
-    const { registers, memory } = prepareRegsAndMemory(code, tryAsU32(5));
-    refine.machineStartData.set(machineId, code, tryAsU32(5));
+    const programCounter = tryAsProgramCounter(5);
+    const { registers, memory } = prepareRegsAndMemory(code, programCounter);
+    refine.machineStartData.set(machineId, code, programCounter);
 
     // when
     const result = await machine.execute(gas, registers, memory);
@@ -63,8 +63,9 @@ describe("HostCalls: Machine", () => {
       0, 0, 33, 51, 8, 1, 51, 9, 1, 40, 3, 0, 149, 119, 255, 81, 7, 12, 100, 138, 200, 152, 8, 100, 169, 40, 243, 100,
       135, 51, 8, 51, 9, 1, 50, 0, 73, 147, 82, 213, 0,
     ]);
-    const { registers, memory } = prepareRegsAndMemory(code, tryAsU32(5));
-    refine.machineStartData.set(machineId, code, tryAsU32(5));
+    const programCounter = tryAsProgramCounter(5);
+    const { registers, memory } = prepareRegsAndMemory(code, programCounter);
+    refine.machineStartData.set(machineId, code, programCounter);
 
     // when
     const result = await machine.execute(gas, registers, memory);
@@ -79,7 +80,8 @@ describe("HostCalls: Machine", () => {
     const machine = new Machine(refine);
     machine.currentServiceId = tryAsServiceId(10_000);
     const code = BytesBlob.blobFromString("amazing PVM code");
-    const { registers, memory } = prepareRegsAndMemory(code, tryAsU32(5), { skipCode: true });
+    const programCounter = tryAsProgramCounter(5);
+    const { registers, memory } = prepareRegsAndMemory(code, programCounter, { skipCode: true });
 
     // when
     const result = await machine.execute(gas, registers, memory);
@@ -93,7 +95,8 @@ describe("HostCalls: Machine", () => {
     const machine = new Machine(refine);
     machine.currentServiceId = tryAsServiceId(10_000);
     const code = BytesBlob.blobFromString("invalid PVM code");
-    const { registers, memory } = prepareRegsAndMemory(code, tryAsU32(5));
+    const programCounter = tryAsProgramCounter(5);
+    const { registers, memory } = prepareRegsAndMemory(code, programCounter);
 
     // when
     const result = await machine.execute(gas, registers, memory);

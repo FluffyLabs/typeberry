@@ -30,7 +30,8 @@ export class Void implements HostCallHandler {
     const pageCount = tryAsU32(regs.getU32(9));
 
     const endPage = sumU32(pageStart, pageCount);
-    if (pageStart < RESERVED_NUMBER_OF_PAGES || endPage.overflow || endPage.value >= MAX_NUMBER_OF_PAGES) {
+    const isWithinBounds = pageStart >= RESERVED_NUMBER_OF_PAGES && endPage.value < MAX_NUMBER_OF_PAGES;
+    if (endPage.overflow || !isWithinBounds) {
       regs.setU64(IN_OUT_REG, HostCallResult.HUH);
       return;
     }

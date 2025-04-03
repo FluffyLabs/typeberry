@@ -1,13 +1,18 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
-import { type U64, tryAsU64 } from "@typeberry/numbers";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { Expunge } from "./expunge";
-import { type MachineId, NoMachineError, tryAsMachineId } from "./refine-externalities";
+import {
+  type MachineId,
+  NoMachineError,
+  type ProgramCounter,
+  tryAsMachineId,
+  tryAsProgramCounter,
+} from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));
@@ -26,7 +31,7 @@ function prepareRegsAndMemory(machineId: MachineId) {
   };
 }
 
-function prepareTest(result: Result<U64, NoMachineError>) {
+function prepareTest(result: Result<ProgramCounter, NoMachineError>) {
   const refine = new TestRefineExt();
   const expunge = new Expunge(refine);
   expunge.currentServiceId = tryAsServiceId(10_000);
@@ -43,7 +48,7 @@ function prepareTest(result: Result<U64, NoMachineError>) {
 
 describe("HostCalls: Expunge", () => {
   it("should expunge machine and return its program counter", async () => {
-    const programCounter = tryAsU64(0x1234_5678_9abc_def0n);
+    const programCounter = tryAsProgramCounter(0x1234_5678_9abc_def0n);
     const { expunge, registers } = prepareTest(Result.ok(programCounter));
 
     // when

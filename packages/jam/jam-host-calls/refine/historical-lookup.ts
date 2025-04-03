@@ -1,5 +1,6 @@
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
+import { minU64, tryAsU64 } from "@typeberry/numbers";
 import { type HostCallHandler, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
 import {
@@ -55,18 +56,25 @@ export class HistoricalLookup implements HostCallHandler {
       return;
     }
 
+    const length = tryAsU64(value.raw.length);
     // f
-    const offset = Math.min(regs.getU32(10), value.raw.length);
+    const offset = minU64(tryAsU64(regs.getU64(10)), length);
     // l
-    const destinationLen = Math.min(regs.getU32(11), value.raw.length - offset);
+    const destinationLen = minU64(tryAsU64(regs.getU64(11)), tryAsU64(length - offset));
 
-    const destinationWriteable = memory.isWriteable(destinationStart, destinationLen);
-    if (!destinationWriteable) {
+    // handle 0-length case
+    const data = value.raw.subarray(Number(offset), Number(offset + destinationLen));
+    if (data.length === 0) {
+      regs.setU64(IN_OUT_REG, length);
+      return;
+    }
+
+    const segmentWritePageFault = memory.storeFrom(destinationStart, data);
+    if (segmentWritePageFault !== null) {
       return PvmExecution.Panic;
     }
 
     // copy value to the memory and set the length to register 7
-    regs.setU32(IN_OUT_REG, value.raw.length);
-    memory.storeFrom(destinationStart, value.raw.subarray(offset, offset + destinationLen));
+    regs.setU64(IN_OUT_REG, length);
   }
 }

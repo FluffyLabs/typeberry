@@ -1,5 +1,4 @@
 import { BytesBlob } from "@typeberry/bytes";
-import { tryAsU32 } from "@typeberry/numbers";
 import { type HostCallHandler, PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import {
   type GasCounter,
@@ -8,10 +7,9 @@ import {
   tryAsMemoryIndex,
   tryAsSmallGas,
 } from "@typeberry/pvm-interpreter";
-import { ProgramDecoder } from "@typeberry/pvm-interpreter/program-decoder/program-decoder";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import type { RefineExternalities } from "./refine-externalities";
+import { type RefineExternalities, tryAsProgramCounter } from "./refine-externalities";
 
 const IN_OUT_REG = 7;
 
@@ -33,7 +31,7 @@ export class Machine implements HostCallHandler {
     // `p_z`: length of the program code
     const codeLength = regs.getU32(8);
     // `i`: starting program counter
-    const entrypoint = tryAsU32(regs.getU32(9));
+    const entrypoint = tryAsProgramCounter(regs.getU64(9));
 
     const code = new Uint8Array(codeLength);
     const codePageFault = memory.loadInto(code, codeStart);
@@ -41,15 +39,12 @@ export class Machine implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    // check if the code is valid
-    const program = ProgramDecoder.deblob(code);
-    if (program.isError) {
+    // NOTE: Highly unlikely, but machineId could potentially collide with HOST_CALL_RESULT.
+    const machinInitResult = await this.refine.machineInit(BytesBlob.blobFrom(code), entrypoint);
+    if (machinInitResult.isError) {
       regs.setU64(IN_OUT_REG, HostCallResult.HUH);
-      return;
+    } else {
+      regs.setU64(IN_OUT_REG, machinInitResult.ok);
     }
-
-    // TODO [MaSo] can machineId collide with HOST_CALL_RESULT?
-    const machineId = await this.refine.machineInit(BytesBlob.blobFrom(code), entrypoint);
-    regs.setU64(IN_OUT_REG, machineId);
   }
 }
