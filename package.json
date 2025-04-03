@@ -44,7 +44,8 @@
     "tools/ipc2rpc",
     "workers/block-generator",
     "workers/generic",
-    "workers/importer"
+    "workers/importer",
+    "packages/core/concurrent"
   ],
   "engines": {
     "node": ">=22",
