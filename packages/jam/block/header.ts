@@ -37,10 +37,10 @@ export class ValidatorKeys extends WithDebug {
   }
 
   public constructor(
-    /** `kappa_b`: Bandernsatch validator keys for the NEXT epoch. */
-    public readonly bandersnatchKey: BandersnatchKey,
+    /** `kappa_b`: Bandersnatch validator keys for the NEXT epoch. */
+    public readonly bandersnatch: BandersnatchKey,
     /** `kappa_e`: Ed25519 validator keys for the NEXT epoch. */
-    public readonly ed25519Key: Ed25519Key,
+    public readonly ed25519: Ed25519Key,
   ) {
     super();
   }
