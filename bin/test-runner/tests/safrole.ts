@@ -130,16 +130,25 @@ class JsonState {
   }
 }
 
+export class ValidatorKeys {
+  static fromJson: FromJson<ValidatorKeys> = {
+    bandersnatch: commonFromJson.bytes32(),
+    ed25519: commonFromJson.bytes32(),
+  };
+  bandersnatch!: BandersnatchKey;
+  ed25519!: Ed25519Key;
+}
+
 export class EpochMark {
   static fromJson: FromJson<EpochMark> = {
     entropy: commonFromJson.bytes32(),
     tickets_entropy: commonFromJson.bytes32(),
-    validators: json.array(commonFromJson.bytes32()),
+    validators: json.array(ValidatorKeys.fromJson),
   };
 
   entropy!: EntropyHash;
   tickets_entropy!: EntropyHash;
-  validators!: BandersnatchKey[];
+  validators!: ValidatorKeys[];
 }
 
 export class OkOutput {
