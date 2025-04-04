@@ -22,6 +22,7 @@ import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/
 import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
 import { Result, deepEqual } from "@typeberry/utils";
 import { commonFromJson, getChainSpec } from "./common-types";
+import {BandernsatchWasm} from "@typeberry/safrole/bandersnatch-wasm";
 namespace safroleFromJson {
   export const bytesBlob = json.fromString(BytesBlob.parseBlob);
 
@@ -230,10 +231,12 @@ export class SafroleTest {
   post_state!: JsonState;
 }
 
+export const bwasm = BandernsatchWasm.new({ synchronous: false });
+
 export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const chainSpec = getChainSpec(path);
   const preState = JsonState.toSafroleState(testContent.pre_state, chainSpec);
-  const safrole = new Safrole(preState, chainSpec);
+  const safrole = new Safrole(preState, chainSpec, bwasm);
 
   const result = await safrole.transition(testContent.input);
 

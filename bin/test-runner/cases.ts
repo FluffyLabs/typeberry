@@ -63,7 +63,7 @@ const logger = Logger.new(__filename, "test-runner");
 main()
   .then((r) => logger.log(r))
   .catch((e) => {
-    logger.error(e);
+    logger.error(`${e}`);
     process.exit(-1);
   });
 
@@ -101,7 +101,7 @@ async function main() {
   // we have all of the tests now, let's run them in parallel and generate results.
   for (const [key, values] of aggregated.entries()) {
     // split large suites into parts to run them in parallel
-    const perPart = key === "safrole" ? 5 : 50;
+    const perPart = 50;
     const parts = Math.ceil(values.length / perPart);
     for (let i = 0; i < parts; i += 1) {
       // we use `setImmediate` here, to make sure to start each suite

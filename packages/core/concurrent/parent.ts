@@ -1,49 +1,88 @@
 import { type MessagePort, Worker } from "node:worker_threads";
 import { check } from "@typeberry/utils";
-import type { MessageIn, MessageOut } from "./messages";
+import type { IExecutor, IWithTransferList, MessageIn, MessageOut } from "./messages";
 
-type Task<TParams, TResult> = {
-  params: TParams;
-  resolve: (x: TResult) => void;
-  reject: (x: Error) => void;
+// Amount of tasks in the queue that will trigger creation of new worker thread.
+// NOTE this might need to be configurable in the future.
+const QUEUE_SIZE_WORKER_THRESHOLD = 15;
+
+/** Executor options. */
+export type ExecutorOptions = {
+  /** Minimal and initial number of workers, initialized before start. */
+  minWorkers: number;
+  /**
+   * Maximal number of workers that can be created in total.
+   *
+   * Workers between `(minWorkers, maxWorkers]` are created on demand,
+   * when there is too many tasks pending in the queue.
+   */
+  maxWorkers: number;
 };
 
-// if we have 10 elements in the queue, we issue a warning.
-// NOTE this might need to be configurable in the future.
-const QUEUE_SIZE_WARNING = 10;
-
-export class Executor<TParams, TResult> {
+/** Execution pool manager. */
+export class Executor<TParams extends IWithTransferList, TResult> implements IExecutor<TParams, TResult> {
   /** Initialize a new concurrent executor given a path to the worker. */
-  static initialize<XParams, XResult>(worker: string, concurrency: number): Executor<XParams, XResult> {
-    check(concurrency > 0, "Invalid concurrency parameter");
+  static async initialize<XParams extends IWithTransferList, XResult extends IWithTransferList>(
+    workerPath: string,
+    options: ExecutorOptions,
+  ): Promise<Executor<XParams, XResult>> {
+    check(options.maxWorkers > 0, "Max workers has to be positive.");
+    check(options.minWorkers <= options.maxWorkers, "Min workers has to be lower or equal to max workers.");
 
     const workers: WorkerChannel<XParams, XResult>[] = [];
-    for (let i = 0; i < concurrency; i++) {
-      // create a worker and initialize communication channel
-      const { port1, port2 } = new MessageChannel();
-      const workerThread = new Worker(worker, {});
-      workerThread.postMessage(port1);
-
-      workers.push(new WorkerChannel(workerThread, port2));
+    for (let i = 0; i < options.minWorkers; i++) {
+      workers.push(await initWorker(workerPath));
     }
-    return new Executor(workers);
+    return new Executor(
+      workers,
+      options.maxWorkers,
+      workerPath,
+    );
   }
 
   private readonly freeWorkerIndices: number[] = [];
   private readonly taskQueue: Task<TParams, TResult>[] = [];
+  private isDestroyed = false;
 
-  private constructor(private readonly workers: WorkerChannel<TParams, TResult>[]) {
+  private constructor(
+    private readonly workers: WorkerChannel<TParams, TResult>[],
+    private readonly maxWorkers: number,
+    private readonly workerPath: string,
+  ) {
     // intial free workers.
     for (let i = 0; i < workers.length; i++) {
       this.freeWorkerIndices.push(i);
     }
   }
 
-  /**
-   * Execute a task with following parameters.
-   */
+  /** Attempt to initialize a new worker. */
+  async initNewWorker() {
+    if (this.workers.length >= this.maxWorkers) {
+      console.warn(`Task queue has ${this.taskQueue.length} pending items and we can't init any more workers.`);
+      return;
+    }
+    this.workers.push(await initWorker(this.workerPath));
+    this.freeWorkerIndices.push(this.workers.length - 1);
+  }
+
+  /** Terminate all workers and clear the executor. */
+  async destroy() {
+    for (const worker of this.workers) {
+      worker.port.close();
+      await worker.worker.terminate();
+    }
+    this.workers.length = 0;
+    this.isDestroyed = true;
+  }
+
+  /** Execute a task with given parameters. */
   async run(params: TParams): Promise<TResult> {
     return new Promise((resolve, reject) => {
+      if (this.isDestroyed) {
+        reject('pool destroyed');
+        return;
+      }
+
       this.taskQueue.push({
         params,
         resolve,
@@ -53,17 +92,15 @@ export class Executor<TParams, TResult> {
     });
   }
 
-  /**
-   * Process as many elements from the task queue as possible.
-   */
+  /** Process as many elements from the task queue as possible. */
   private processTaskQueue() {
     for (;;) {
       const freeWorker = this.freeWorkerIndices.pop();
       // no free workers available currently,
       // we will retry when one of the tasks completes.
       if (freeWorker === undefined) {
-        if (this.taskQueue.length > QUEUE_SIZE_WARNING) {
-          console.warn(`Task queue has ${this.taskQueue.length} pending items!`);
+        if (this.taskQueue.length > QUEUE_SIZE_WORKER_THRESHOLD) {
+          this.initNewWorker();
         }
         return;
       }
@@ -86,7 +123,28 @@ export class Executor<TParams, TResult> {
   }
 }
 
-class WorkerChannel<TParams, TResult> {
+type Task<TParams, TResult> = {
+  params: TParams;
+  resolve: (x: TResult) => void;
+  reject: (x: Error) => void;
+};
+
+async function initWorker<XParams extends IWithTransferList, XResult>(workerPath: string): Promise<WorkerChannel<XParams, XResult>> {
+  // create a worker and initialize communication channel
+  const { port1, port2 } = new MessageChannel();
+  const workerThread = new Worker(workerPath, {});
+  workerThread.postMessage(port1, [port1]);
+  // // wait for the worker to start
+  await new Promise((resolve, reject) => {
+    workerThread.once("message", resolve);
+    workerThread.once("error", reject);
+  });
+  // make sure the threads don't prevent the program from stopping.
+  workerThread.unref();
+  return new WorkerChannel(workerThread, port2);
+}
+
+class WorkerChannel<TParams extends IWithTransferList, TResult> {
   constructor(
     public readonly worker: Worker,
     public readonly port: MessagePort,
@@ -98,14 +156,14 @@ class WorkerChannel<TParams, TResult> {
     };
     // when we receive a response, make sure to process it
     this.port.once("message", (e: MessageOut<TResult>) => {
-      setImmediate(onFinish);
       if (e.isOk) {
         task.resolve(e.ok);
       } else {
         task.reject(new Error(e.error));
       }
+      onFinish();
     });
     // send the task to work on.
-    this.port.postMessage(message);
+    this.port.postMessage(message, message.params.getTransferList());
   }
 }

@@ -18,6 +18,9 @@ import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/stat
 import { asOpaqueType } from "@typeberry/utils";
 import * as bandersnatch from "./bandersnatch";
 import { Safrole, SafroleErrorCode, type SafroleState } from "./safrole";
+import {BandernsatchWasm} from "./bandersnatch-wasm";
+
+const bwasm = BandernsatchWasm.new({ synchronous: false });
 
 const validators: PerValidator<ValidatorData> = asOpaqueType(
   [
@@ -93,7 +96,7 @@ describe("Safrole", () => {
 
   it("should return incorrect timeslot error", async () => {
     const state = { timeslot: 1 } as SafroleState;
-    const safrole = new Safrole(state, tinyChainSpec);
+    const safrole = new Safrole(state, tinyChainSpec, bwasm);
     const timeslot = 0 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: SignedTicket[] = [];
@@ -113,7 +116,7 @@ describe("Safrole", () => {
 
   it("should return unexpected ticket because of incorrect length of extrinsic", async () => {
     const state = { timeslot: 1 } as SafroleState;
-    const safrole = new Safrole(state, tinyChainSpec);
+    const safrole = new Safrole(state, tinyChainSpec, bwasm);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: SignedTicket[] = [];
@@ -134,7 +137,7 @@ describe("Safrole", () => {
 
   it("should return bad ticket attempt because of incorrect ticket attempt", async () => {
     const state = { timeslot: 1 } as SafroleState;
-    const safrole = new Safrole(state, tinyChainSpec);
+    const safrole = new Safrole(state, tinyChainSpec, bwasm);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: SignedTicket[] = [
@@ -182,7 +185,7 @@ describe("Safrole", () => {
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
     };
-    const safrole = new Safrole(state, tinyChainSpec);
+    const safrole = new Safrole(state, tinyChainSpec, bwasm);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: SignedTicket[] = [
@@ -233,7 +236,7 @@ describe("Safrole", () => {
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
     };
-    const safrole = new Safrole(state, tinyChainSpec);
+    const safrole = new Safrole(state, tinyChainSpec, bwasm);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: SignedTicket[] = [
@@ -288,7 +291,7 @@ describe("Safrole", () => {
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
     };
-    const safrole = new Safrole(state, tinyChainSpec);
+    const safrole = new Safrole(state, tinyChainSpec, bwasm);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: SignedTicket[] = [
@@ -337,7 +340,7 @@ describe("Safrole", () => {
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(HASH_SIZE).asOpaque(),
     };
-    const safrole = new Safrole(state, tinyChainSpec);
+    const safrole = new Safrole(state, tinyChainSpec, bwasm);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: SignedTicket[] = [

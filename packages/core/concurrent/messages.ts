@@ -1,4 +1,14 @@
+import type { TransferListItem } from "node:worker_threads";
 import type { Result } from "@typeberry/utils";
+
+export interface IExecutor<TParams, TResult> {
+  run(params: TParams): Promise<TResult>;
+  destroy(): Promise<void>;
+}
+
+export type IWithTransferList = {
+  getTransferList(): TransferListItem[];
+};
 
 /** Message going from parent thread to worker thread. */
 export type MessageIn<TParams> = {
