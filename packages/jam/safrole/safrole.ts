@@ -2,6 +2,7 @@ import {
   BANDERSNATCH_KEY_BYTES,
   type BandersnatchKey,
   ED25519_KEY_BYTES,
+  type Ed25519Key,
   type EntropyHash,
   type PerValidator,
   type TimeSlot,
@@ -46,16 +47,26 @@ export type SafroleState = Pick<State, "designatedValidatorData"> &
 
 export type StateDiff = Partial<SafroleState>;
 
+export class ValidatorKeys {
+  constructor(
+    public bandersnatch: BandersnatchKey,
+    public ed25519: Ed25519Key,
+  ) {}
+}
+
 export class EpochMark {
   constructor(
     public entropy: EntropyHash,
     public ticketsEntropy: EntropyHash,
-    public validators: BandersnatchKey[],
+    public validators: ValidatorKeys[],
   ) {}
 }
 
+/** `C` */
 type TicketMark = {
+  /** `y`: random ticket id */
   id: Bytes<32>;
+  /** `r`: ticket attempt (entry idx) */
   attempt: number;
 };
 
@@ -88,7 +99,7 @@ export enum SafroleErrorCode {
   DuplicateTicket = 7,
 }
 
-type ValidatorKeys = Pick<
+type EpochValidators = Pick<
   SafroleState,
   "nextValidatorData" | "currentValidatorData" | "previousValidatorData" | "epochRoot"
 >;
@@ -154,7 +165,7 @@ export class Safrole {
 
   private async getValidatorKeys(
     timeslot: TimeSlot,
-  ): Promise<Result<ValidatorKeys, typeof SafroleErrorCode.IncorrectData>> {
+  ): Promise<Result<EpochValidators, typeof SafroleErrorCode.IncorrectData>> {
     /**
      * Epoch is not changed so the previous state is returned
      */
@@ -307,7 +318,7 @@ export class Safrole {
     return new EpochMark(
       entropy[0],
       entropy[1],
-      nextValidators.map((validator) => validator.bandersnatch),
+      nextValidators.map((validator) => new ValidatorKeys(validator.bandersnatch, validator.ed25519)),
     );
   }
 
