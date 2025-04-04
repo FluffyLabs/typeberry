@@ -17,12 +17,12 @@ import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Safrole } from "@typeberry/safrole";
+import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import { type Input, type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole";
 import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
 import { Result, deepEqual } from "@typeberry/utils";
 import { commonFromJson, getChainSpec } from "./common-types";
-import {BandernsatchWasm} from "@typeberry/safrole/bandersnatch-wasm";
 namespace safroleFromJson {
   export const bytesBlob = json.fromString(BytesBlob.parseBlob);
 

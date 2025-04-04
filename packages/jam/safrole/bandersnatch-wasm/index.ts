@@ -11,12 +11,14 @@ export class BandernsatchWasm {
     return this.executor.destroy();
   }
 
-  static async new({ synchronous }: { synchronous : boolean }) {
+  static async new({ synchronous }: { synchronous: boolean }) {
     return new BandernsatchWasm(
-      !synchronous ? await Executor.initialize<Params, Response>(resolve(__dirname, "./bootstrap.cjs"), {
-        minWorkers: 2,
-        maxWorkers: 8
-      }) : worker,
+      !synchronous
+        ? await Executor.initialize<Params, Response>(resolve(__dirname, "./bootstrap.cjs"), {
+            minWorkers: 8,
+            maxWorkers: 8,
+          })
+        : worker,
     );
   }
 

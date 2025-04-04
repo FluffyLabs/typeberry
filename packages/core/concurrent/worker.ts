@@ -19,7 +19,7 @@ export class ConcurrentWorker<TParams, TResult extends IWithTransferList, TInter
   ) {}
 
   listenToParentPort() {
-    if (!parentPort) {
+    if (parentPort === null) {
       throw new Error("This method is meant to be run inside a worker thread!");
     }
     parentPort.once("close", () => {

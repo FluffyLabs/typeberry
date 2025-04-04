@@ -4,7 +4,7 @@ import type { IExecutor, IWithTransferList, MessageIn, MessageOut } from "./mess
 
 // Amount of tasks in the queue that will trigger creation of new worker thread.
 // NOTE this might need to be configurable in the future.
-const QUEUE_SIZE_WORKER_THRESHOLD = 15;
+const QUEUE_SIZE_WORKER_THRESHOLD = 5;
 
 /** Executor options. */
 export type ExecutorOptions = {
@@ -33,16 +33,13 @@ export class Executor<TParams extends IWithTransferList, TResult> implements IEx
     for (let i = 0; i < options.minWorkers; i++) {
       workers.push(await initWorker(workerPath));
     }
-    return new Executor(
-      workers,
-      options.maxWorkers,
-      workerPath,
-    );
+    return new Executor(workers, options.maxWorkers, workerPath);
   }
 
   private readonly freeWorkerIndices: number[] = [];
   private readonly taskQueue: Task<TParams, TResult>[] = [];
   private isDestroyed = false;
+  private isWorkerInitializing = false;
 
   private constructor(
     private readonly workers: WorkerChannel<TParams, TResult>[],
@@ -61,8 +58,14 @@ export class Executor<TParams extends IWithTransferList, TResult> implements IEx
       console.warn(`Task queue has ${this.taskQueue.length} pending items and we can't init any more workers.`);
       return;
     }
+    if (this.isWorkerInitializing) {
+      return;
+    }
+
+    this.isWorkerInitializing = true;
     this.workers.push(await initWorker(this.workerPath));
     this.freeWorkerIndices.push(this.workers.length - 1);
+    this.isWorkerInitializing = false;
   }
 
   /** Terminate all workers and clear the executor. */
@@ -79,7 +82,7 @@ export class Executor<TParams extends IWithTransferList, TResult> implements IEx
   async run(params: TParams): Promise<TResult> {
     return new Promise((resolve, reject) => {
       if (this.isDestroyed) {
-        reject('pool destroyed');
+        reject("pool destroyed");
         return;
       }
 
@@ -129,7 +132,9 @@ type Task<TParams, TResult> = {
   reject: (x: Error) => void;
 };
 
-async function initWorker<XParams extends IWithTransferList, XResult>(workerPath: string): Promise<WorkerChannel<XParams, XResult>> {
+async function initWorker<XParams extends IWithTransferList, XResult>(
+  workerPath: string,
+): Promise<WorkerChannel<XParams, XResult>> {
   // create a worker and initialize communication channel
   const { port1, port2 } = new MessageChannel();
   const workerThread = new Worker(workerPath, {});

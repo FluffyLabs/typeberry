@@ -17,10 +17,10 @@ import type { ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
 import { asOpaqueType } from "@typeberry/utils";
 import * as bandersnatch from "./bandersnatch";
+import { BandernsatchWasm } from "./bandersnatch-wasm";
 import { Safrole, SafroleErrorCode, type SafroleState } from "./safrole";
-import {BandernsatchWasm} from "./bandersnatch-wasm";
 
-const bwasm = BandernsatchWasm.new({ synchronous: false });
+const bwasm = BandernsatchWasm.new({ synchronous: true });
 
 const validators: PerValidator<ValidatorData> = asOpaqueType(
   [
