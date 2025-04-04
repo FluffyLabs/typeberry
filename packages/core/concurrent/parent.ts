@@ -35,7 +35,7 @@ export class Executor<TParams extends IWithTransferList, TResult> implements IEx
     }
     return new Executor(workers, options.maxWorkers, workerPath);
   }
-
+  // keeps track of the indices of worker threads that are currently free and available to execute tasks
   private readonly freeWorkerIndices: number[] = [];
   private readonly taskQueue: Task<TParams, TResult>[] = [];
   private isDestroyed = false;
