@@ -11,6 +11,7 @@ import {
   type StateRootHash,
   type TimeSlot,
   type ValidatorIndex,
+  ValidatorKeys,
 } from "@typeberry/block";
 import { Ticket } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
@@ -20,17 +21,30 @@ import { fromJson, runCodecTest } from "./common";
 
 const bandersnatchVrfSignature = json.fromString((v) => Bytes.parseBytes(v, 96) as BandersnatchVrfSignature);
 
+type JsonValidatorKeys = {
+  bandersnatchKey: BandersnatchKey;
+  ed25519Key: Ed25519Key;
+};
+
+const validatorKeys = json.object<JsonValidatorKeys, ValidatorKeys>(
+  {
+    bandersnatchKey: fromJson.bytes32<BandersnatchKey>(),
+    ed25519Key: fromJson.bytes32<Ed25519Key>(),
+  },
+  (x) => new ValidatorKeys(x.bandersnatchKey, x.ed25519Key),
+);
+
 type JsonEpochMarker = {
   entropy: EntropyHash;
   tickets_entropy: EntropyHash;
-  validators: PerValidator<BandersnatchKey>;
+  validators: PerValidator<ValidatorKeys>;
 };
 
 const epochMark = json.object<JsonEpochMarker, EpochMarker>(
   {
     entropy: fromJson.bytes32(),
     tickets_entropy: fromJson.bytes32(),
-    validators: json.array(fromJson.bytes32<BandersnatchKey>()),
+    validators: json.array(validatorKeys),
   },
   (x) => new EpochMarker(x.entropy, x.tickets_entropy, x.validators),
 );

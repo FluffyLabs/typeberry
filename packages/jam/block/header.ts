@@ -25,10 +25,31 @@ import {
 import type { ExtrinsicHash, HeaderHash } from "./hash";
 import { Ticket } from "./tickets";
 
+/** Encoded validator keys. */
+export class ValidatorKeys extends WithDebug {
+  static Codec = codec.Class(ValidatorKeys, {
+    bandersnatchKey: codec.bytes(BANDERSNATCH_KEY_BYTES).asOpaque(),
+    ed25519Key: codec.bytes(ED25519_KEY_BYTES).asOpaque(),
+  });
+
+  static fromCodec({ bandersnatchKey, ed25519Key }: CodecRecord<ValidatorKeys>) {
+    return new ValidatorKeys(bandersnatchKey, ed25519Key);
+  }
+
+  public constructor(
+    /** `kappa_b`: Bandernsatch validator keys for the NEXT epoch. */
+    public readonly bandersnatchKey: BandersnatchKey,
+    /** `kappa_e`: Ed25519 validator keys for the NEXT epoch. */
+    public readonly ed25519Key: Ed25519Key,
+  ) {
+    super();
+  }
+}
+
 /**
  * For the first block in a new epoch, the epoch marker is set
- * and contains the epoch randomness and Bandersnatch keys
- * of validators for the NEXT epoch.
+ * and contains the epoch randomness and validator keys
+ * for the NEXT epoch.
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/0e30030e6603
  */
@@ -36,7 +57,7 @@ export class EpochMarker extends WithDebug {
   static Codec = codec.Class(EpochMarker, {
     entropy: codec.bytes(HASH_SIZE).asOpaque(),
     ticketsEntropy: codec.bytes(HASH_SIZE).asOpaque(),
-    validators: codecPerValidator(codec.bytes(BANDERSNATCH_KEY_BYTES).asOpaque()),
+    validators: codecPerValidator(ValidatorKeys.Codec),
   });
 
   static fromCodec({ entropy, ticketsEntropy, validators }: CodecRecord<EpochMarker>) {
@@ -49,7 +70,7 @@ export class EpochMarker extends WithDebug {
     /** `eta_2'`: Randomness for the CURRENT epoch. */
     public readonly ticketsEntropy: EntropyHash,
     /** `kappa_b`: Bandernsatch validator keys for the NEXT epoch. */
-    public readonly validators: PerValidator<BandersnatchKey>,
+    public readonly validators: PerValidator<ValidatorKeys>,
   ) {
     super();
   }
