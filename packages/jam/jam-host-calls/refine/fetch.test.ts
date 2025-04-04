@@ -76,29 +76,6 @@ describe("HostCalls: Fetch", () => {
     );
   });
 
-  it("should fetch a segment withour segmentIdx if in right type", async () => {
-    const refine = new TestRefineExt();
-    const fetch = new Fetch(refine);
-    fetch.currentServiceId = tryAsServiceId(10_000);
-    const segmentType = 0;
-    const segmentIdx = tryAsSegmentIndex(48879);
-    const destinationLength = 128;
-    const data = "hello world!";
-    const { registers, memory, readResult } = prepareRegsAndMemory(segmentType, segmentIdx, destinationLength);
-    refine.fetchSegmentData.set(tryAsSegmentIndex(segmentType), BytesBlob.blobFromString(data));
-
-    // when
-    const result = await fetch.execute(gas, registers, memory);
-
-    // then
-    assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), data.length);
-    assert.deepStrictEqual(
-      readResult().toString(),
-      "0x68656c6c6f20776f726c64210000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-    );
-  });
-
   it("should fetch a segment with offset and length", async () => {
     const refine = new TestRefineExt();
     const fetch = new Fetch(refine);

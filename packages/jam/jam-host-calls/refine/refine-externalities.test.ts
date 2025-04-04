@@ -155,52 +155,20 @@ export class TestRefineExt implements RefineExternalities {
 
   fetchSegment(
     regs: Registers,
-    segmentTypeReg: number,
+    _segmentTypeReg: number,
     segmentIdxReg: number,
     _workItemIdxReg: number,
   ): Promise<Result<Segment | null, SegmentFetchError>> {
-    const segmentTypeValue = regs.getU32(segmentTypeReg);
     const segmentIdxValue = regs.getU32(segmentIdxReg);
-    let segmentIdx: SegmentIndex | null = null;
-    let value: Segment | null | undefined = null;
-
-    switch (segmentTypeValue) {
-      case 0:
-      case 1:
-      case 7:
-        segmentIdx = tryAsSegmentIndex(segmentTypeValue);
-        value = this.fetchSegmentData.get(segmentIdx);
-        if (value === undefined) {
-          return Promise.resolve(Result.error(SegmentFetchError));
-        }
-        return Promise.resolve(Result.ok(value));
-      case 2:
-      case 4:
-      case 6:
-        segmentIdx = isU16(segmentIdxValue) ? tryAsSegmentIndex(segmentIdxValue) : null;
-        if (segmentIdx === null) {
-          return Promise.resolve(Result.error(SegmentFetchError));
-        }
-        value = this.fetchSegmentData.get(segmentIdx);
-        if (value === undefined) {
-          return Promise.resolve(Result.error(SegmentFetchError));
-        }
-        return Promise.resolve(Result.ok(value));
-      case 3:
-      case 5:
-        // NOTE [MaSo]: different than 2, 4, 6, bcs it should utilize the work item index
-        segmentIdx = isU16(segmentIdxValue) ? tryAsSegmentIndex(segmentIdxValue) : null;
-        if (segmentIdx === null) {
-          return Promise.resolve(Result.error(SegmentFetchError));
-        }
-        value = this.fetchSegmentData.get(segmentIdx);
-        if (value === undefined) {
-          return Promise.resolve(Result.error(SegmentFetchError));
-        }
-        return Promise.resolve(Result.ok(value));
-      default:
-        throw Promise.resolve(Result.error(SegmentFetchError));
+    const segmentIdx = isU16(segmentIdxValue) ? tryAsSegmentIndex(segmentIdxValue) : null;
+    if (segmentIdx === null) {
+      return Promise.resolve(Result.error(SegmentFetchError));
     }
+    const val = this.fetchSegmentData.get(segmentIdx);
+    if (val === undefined) {
+      throw new Error(`Unexpected call to fetchSegment with: ${segmentIdx}`);
+    }
+    return Promise.resolve(Result.ok(val));
   }
 
   historicalLookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null> {
