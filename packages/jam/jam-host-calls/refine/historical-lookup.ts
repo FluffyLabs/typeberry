@@ -62,13 +62,7 @@ export class HistoricalLookup implements HostCallHandler {
     // l
     const destinationLen = minU64(tryAsU64(regs.getU64(11)), tryAsU64(length - offset));
 
-    // handle 0-length case
     const data = value.raw.subarray(Number(offset), Number(offset + destinationLen));
-    if (data.length === 0) {
-      regs.setU64(IN_OUT_REG, length);
-      return;
-    }
-
     const segmentWritePageFault = memory.storeFrom(destinationStart, data);
     if (segmentWritePageFault !== null) {
       return PvmExecution.Panic;

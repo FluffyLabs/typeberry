@@ -213,7 +213,7 @@ describe("HostCalls: Historical Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(32, 3);
     const data = "hello world";
-    const { registers, memory } = prepareRegsAndMemory(serviceId, hash, 0, 0, { writableMemory: false });
+    const { registers, memory } = prepareRegsAndMemory(serviceId, hash, 0, 0);
     refine.historicalLookupData.set(BytesBlob.blobFromString(data), serviceId, hash);
 
     // when
