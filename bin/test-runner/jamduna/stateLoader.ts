@@ -165,22 +165,26 @@ function decode<T>(descriptor: Descriptor<T>, value: BytesBlob) {
 function findOrAddService(s: PartialState, serviceId: ServiceId) {
   const services = s.services ?? new Map();
   s.services = services;
-  let service = s.services.get(serviceId);
-  if (service === undefined) {
-    service = new Service(serviceId, {
-      info: ServiceAccountInfo.fromCodec({
-        codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
-        balance: tryAsU64(0),
-        accumulateMinGas: tryAsGas(10_000),
-        onTransferMinGas: tryAsGas(1_000),
-        storageUtilisationBytes: tryAsU64(0),
-        storageUtilisationCount: tryAsU32(0),
-      }),
-      preimages: [],
-      lookupHistory: [],
-      storage: [],
-    });
-    s.services.set(serviceId, service);
+  const maybe_service = s.services.get(serviceId);
+  
+  if (maybe_service !== undefined) {
+    return maybe_service;
   }
+  
+  const service = new Service(serviceId, {
+    info: ServiceAccountInfo.fromCodec({
+      codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
+      balance: tryAsU64(0),
+      accumulateMinGas: tryAsGas(10_000),
+      onTransferMinGas: tryAsGas(1_000),
+      storageUtilisationBytes: tryAsU64(0),
+      storageUtilisationCount: tryAsU32(0),
+    }),
+    preimages: [],
+    lookupHistory: [],
+    storage: [],
+  });
+    
+  s.services.set(serviceId, service);
   return service;
 }
