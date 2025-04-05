@@ -163,13 +163,13 @@ function decode<T>(descriptor: Descriptor<T>, value: BytesBlob) {
 }
 
 function findOrAddService(s: PartialState, serviceId: ServiceId) {
-  s.services ??=  new Map();
+  s.services ??= new Map();
   const maybe_service = s.services.get(serviceId);
-  
+
   if (maybe_service !== undefined) {
     return maybe_service;
   }
-  
+
   const service = new Service(serviceId, {
     info: ServiceAccountInfo.fromCodec({
       codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
@@ -183,7 +183,7 @@ function findOrAddService(s: PartialState, serviceId: ServiceId) {
     lookupHistory: [],
     storage: [],
   });
-    
+
   s.services.set(serviceId, service);
   return service;
 }
