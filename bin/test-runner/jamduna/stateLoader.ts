@@ -163,8 +163,7 @@ function decode<T>(descriptor: Descriptor<T>, value: BytesBlob) {
 }
 
 function findOrAddService(s: PartialState, serviceId: ServiceId) {
-  const services = s.services ?? new Map();
-  s.services = services;
+  s.services ??=  new Map();
   const maybe_service = s.services.get(serviceId);
   
   if (maybe_service !== undefined) {
