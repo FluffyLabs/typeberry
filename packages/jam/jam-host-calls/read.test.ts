@@ -149,6 +149,26 @@ describe("HostCalls: Read", () => {
       assert.deepStrictEqual(readResult().toString(), "0x776f726c64000000000000");
     });
 
+    it("with offset and length", async () => {
+      const accounts = new TestAccounts();
+      const read = new Read(accounts);
+      const serviceId = tryAsServiceId(10_000);
+      read.currentServiceId = serviceId;
+      const { key, hash } = prepareKey(read.currentServiceId, "key");
+      const value = "hello world";
+      const { registers, memory, readResult } = prepareRegsAndMemory(key, {
+        valueOffset: 6,
+        valueLength: 1,
+      });
+      accounts.data.set(BytesBlob.blobFromString(value), serviceId, hash);
+
+      const result = await read.execute(gas, registers, memory);
+
+      assert.deepStrictEqual(result, undefined);
+      assert.deepStrictEqual(registers.getU32(RESULT_REG), value.length);
+      assert.deepStrictEqual(readResult(value.length).toString(), "0x7700000000000000000000");
+    });
+
     it("with 0-length destination target", async () => {
       const accounts = new TestAccounts();
       const read = new Read(accounts);
