@@ -65,7 +65,6 @@ export class Read implements HostCallHandler {
 
     // v
     const value = await this.account.read(serviceId, keyHash);
-
     if (value === null) {
       regs.setU64(IN_OUT_REG, HostCallResult.NONE);
       return;

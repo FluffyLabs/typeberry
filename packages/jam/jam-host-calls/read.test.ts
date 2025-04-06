@@ -178,10 +178,8 @@ describe("HostCalls: Read", () => {
       const { registers, memory, readResult } = prepareRegsAndMemory(key, { valueLength: 0 });
       accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
 
-      // when
       const result = await read.execute(gas, registers, memory);
 
-      // then
       assert.deepStrictEqual(result, undefined);
       assert.deepStrictEqual(registers.getU32(RESULT_REG), "hello world".length);
       assert.deepStrictEqual(readResult().toString(), "0x");
@@ -195,11 +193,9 @@ describe("HostCalls: Read", () => {
     const { key } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key);
 
-    // given
     // serviceId out of range
     registers.setU64(SERVICE_ID_REG, BigInt(2n ** 32n));
 
-    // when
     const result = await read.execute(gas, registers, memory);
 
     assert.deepStrictEqual(result, undefined);
@@ -215,10 +211,8 @@ describe("HostCalls: Read", () => {
     const { registers, memory, readResult } = prepareRegsAndMemory(key);
     accounts.data.set(null, serviceId, hash);
 
-    // when
     const result = await read.execute(gas, registers, memory);
 
-    // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.NONE);
     assert.deepStrictEqual(readResult(3).toString(), "0x000000");
