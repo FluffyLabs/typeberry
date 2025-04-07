@@ -336,6 +336,7 @@ export class Safrole {
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/0f59000f5900
      */
+    // TODO [ToDr] Verify that ticket attempt is in correct range.
     const verificationResult =
       extrinsic.length === 0
         ? []
