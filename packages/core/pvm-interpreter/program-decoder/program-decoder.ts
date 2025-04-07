@@ -3,7 +3,9 @@ import { Result } from "@typeberry/utils";
 import { JumpTable } from "./jump-table";
 import { Mask } from "./mask";
 
-export type InvalidProgramError = Error;
+export type InvalidProgramError = {
+  description: string;
+}
 
 export class ProgramDecoder {
   private code: Uint8Array;
@@ -59,7 +61,7 @@ export class ProgramDecoder {
     try {
       return Result.ok(new ProgramDecoder(program));
     } catch (e) {
-      return Result.error(e as InvalidProgramError);
+      return Result.error({ description: `Invalid program: ${e}` });
     }
   }
 }
