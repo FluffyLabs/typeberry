@@ -18,11 +18,9 @@ import {
   type ProgramCounter,
   type RefineExternalities,
   type SegmentExportError,
-  SegmentFetchError,
 } from "./refine-externalities";
 
 export class TestRefineExt implements RefineExternalities {
-  public readonly fetchSegmentData: Map<SegmentIndex, Segment | null> = new Map();
   public readonly exportSegmentData: MultiMap<[Segment], Result<SegmentIndex, SegmentExportError>> = new MultiMap(1, [
     (segment) => segment.toString(),
   ]);
@@ -151,24 +149,6 @@ export class TestRefineExt implements RefineExternalities {
       throw new Error(`Unexpected call to exportSegment with: ${segment}`);
     }
     return result;
-  }
-
-  fetchSegment(
-    regs: Registers,
-    _segmentTypeReg: number,
-    segmentIdxReg: number,
-    _workItemIdxReg: number,
-  ): Promise<Result<Segment | null, SegmentFetchError>> {
-    const segmentIdxValue = regs.getU32(segmentIdxReg);
-    const segmentIdx = isU16(segmentIdxValue) ? tryAsSegmentIndex(segmentIdxValue) : null;
-    if (segmentIdx === null) {
-      return Promise.resolve(Result.error(SegmentFetchError));
-    }
-    const val = this.fetchSegmentData.get(segmentIdx);
-    if (val === undefined) {
-      throw new Error(`Unexpected call to fetchSegment with: ${segmentIdx}`);
-    }
-    return Promise.resolve(Result.ok(val));
   }
 
   historicalLookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null> {
