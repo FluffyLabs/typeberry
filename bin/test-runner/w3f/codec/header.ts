@@ -50,7 +50,7 @@ class ValidatorData {
     public readonly ed25519: Ed25519Key,
   ) {}
 }
-const epochMarkValidatorDataFromJson = json.fromAny<BandersnatchKey>((x, context) => {
+const _epochMarkValidatorDataFromJson = json.fromAny<BandersnatchKey>((x, context) => {
   if (typeof x === "string") {
     return parseFromJson(x, fromJson.bytes32(), context);
   }
