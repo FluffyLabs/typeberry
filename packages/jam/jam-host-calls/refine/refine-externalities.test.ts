@@ -1,8 +1,8 @@
-import { type Segment, type SegmentIndex, type ServiceId, tryAsSegmentIndex } from "@typeberry/block";
+import type { Segment, SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
-import { type U32, isU16 } from "@typeberry/numbers";
+import type { U32 } from "@typeberry/numbers";
 import type { BigGas, Memory, MemoryIndex, Registers } from "@typeberry/pvm-interpreter";
 import { type InvalidProgramError, ProgramDecoder } from "@typeberry/pvm-interpreter/program-decoder/program-decoder";
 import { Status } from "@typeberry/pvm-interpreter/status";
