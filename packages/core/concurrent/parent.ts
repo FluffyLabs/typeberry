@@ -53,7 +53,7 @@ export class Executor<TParams extends IWithTransferList, TResult> implements IEx
   }
 
   /** Attempt to initialize a new worker. */
-  async initNewWorker() {
+  async initNewWorker(onSuccess: () => void = () => {}) {
     if (this.workers.length >= this.maxWorkers) {
       console.warn(`Task queue has ${this.taskQueue.length} pending items and we can't init any more workers.`);
       return;
@@ -66,6 +66,7 @@ export class Executor<TParams extends IWithTransferList, TResult> implements IEx
     this.workers.push(await initWorker(this.workerPath));
     this.freeWorkerIndices.push(this.workers.length - 1);
     this.isWorkerInitializing = false;
+    onSuccess();
   }
 
   /** Terminate all workers and clear the executor. */
@@ -102,7 +103,7 @@ export class Executor<TParams extends IWithTransferList, TResult> implements IEx
     // we will retry when one of the tasks completes.
     if (freeWorker === undefined) {
       if (this.taskQueue.length > QUEUE_SIZE_WORKER_THRESHOLD) {
-        this.initNewWorker().then(() => {
+        this.initNewWorker(() => {
           // process an entry in this newly initialized worker.
           this.processEntryFromTaskQueue();
         });
