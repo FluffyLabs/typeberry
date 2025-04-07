@@ -91,38 +91,36 @@ export class Executor<TParams extends IWithTransferList, TResult> implements IEx
         resolve,
         reject,
       });
-      this.processTaskQueue();
+      this.processEntryFromTaskQueue();
     });
   }
 
-  /** Process as many elements from the task queue as possible. */
-  private processTaskQueue() {
-    for (;;) {
-      const freeWorker = this.freeWorkerIndices.pop();
-      // no free workers available currently,
-      // we will retry when one of the tasks completes.
-      if (freeWorker === undefined) {
-        if (this.taskQueue.length > QUEUE_SIZE_WORKER_THRESHOLD) {
-          this.initNewWorker();
-        }
-        return;
+  /** Process single element from the task queue. */
+  private processEntryFromTaskQueue() {
+    const freeWorker = this.freeWorkerIndices.pop();
+    // no free workers available currently,
+    // we will retry when one of the tasks completes.
+    if (freeWorker === undefined) {
+      if (this.taskQueue.length > QUEUE_SIZE_WORKER_THRESHOLD) {
+        this.initNewWorker();
       }
-
-      const task = this.taskQueue.pop();
-      // no tasks in the queue
-      if (task === undefined) {
-        this.freeWorkerIndices.push(freeWorker);
-        return;
-      }
-
-      const worker = this.workers[freeWorker];
-      worker.runTask(task, () => {
-        // mark the worker as available again
-        this.freeWorkerIndices.push(freeWorker);
-        // and continue processing the queue
-        this.processTaskQueue();
-      });
+      return;
     }
+
+    const task = this.taskQueue.pop();
+    // no tasks in the queue
+    if (task === undefined) {
+      this.freeWorkerIndices.push(freeWorker);
+      return;
+    }
+
+    const worker = this.workers[freeWorker];
+    worker.runTask(task, () => {
+      // mark the worker as available again
+      this.freeWorkerIndices.push(freeWorker);
+      // and continue processing the queue
+      this.processEntryFromTaskQueue();
+    });
   }
 }
 
