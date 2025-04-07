@@ -13,7 +13,7 @@ export class BandernsatchWasm {
   }
 
   static async new({ synchronous }: { synchronous: boolean }) {
-    const workers = Math.ceil((os.cpus().length * 2) / 3);
+    const workers = os.cpus().length;
     return new BandernsatchWasm(
       !synchronous
         ? await Executor.initialize<Params, Response>(resolve(__dirname, "./bootstrap.cjs"), {
