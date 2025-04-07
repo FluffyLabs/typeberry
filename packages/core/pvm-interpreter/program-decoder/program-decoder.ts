@@ -5,7 +5,7 @@ import { Mask } from "./mask";
 
 export type InvalidProgramError = {
   description: string;
-}
+};
 
 export class ProgramDecoder {
   private code: Uint8Array;
