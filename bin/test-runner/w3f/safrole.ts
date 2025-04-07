@@ -20,7 +20,7 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import { Safrole } from "@typeberry/safrole";
 import { type Input, type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole";
 import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
-import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
+import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data";
 import { Result, deepEqual } from "@typeberry/utils";
 import { commonFromJson, getChainSpec } from "./common-types";
 namespace safroleFromJson {
@@ -48,17 +48,11 @@ export class TicketsOrKeys {
 
   static toSafroleSealingKeys(data: TicketsOrKeys, chainSpec: ChainSpec): SafroleSealingKeys {
     if (data.keys !== undefined) {
-      return {
-        kind: SafroleSealingKeysKind.Keys,
-        keys: tryAsPerEpochBlock(data.keys, chainSpec),
-      };
+      return SafroleSealingKeysData.keys(tryAsPerEpochBlock(data.keys, chainSpec));
     }
 
     if (data.tickets !== undefined) {
-      return {
-        kind: SafroleSealingKeysKind.Tickets,
-        tickets: tryAsPerEpochBlock(data.tickets, chainSpec),
-      };
+      return SafroleSealingKeysData.tickets(tryAsPerEpochBlock(data.tickets, chainSpec));
     }
 
     throw new Error("Neither tickets nor keys are defined!");

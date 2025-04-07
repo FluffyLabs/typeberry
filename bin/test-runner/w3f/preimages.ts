@@ -15,7 +15,7 @@ import {
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { Preimages, type PreimagesErrorCode } from "@typeberry/transition";
-import { Result } from "@typeberry/utils";
+import { OK, Result } from "@typeberry/utils";
 import { preimagesExtrinsicFromJson } from "./codec/preimages-extrinsic";
 import { commonFromJson } from "./common-types";
 
@@ -78,11 +78,11 @@ class TestState {
 
 export class Output {
   static fromJson: FromJson<Output> = {
-    ok: json.optional(json.fromAny(() => null)),
+    ok: json.optional(json.fromAny(() => OK)),
     err: json.optional("string"),
   };
 
-  ok?: null;
+  ok?: OK;
   err?: PreimagesErrorCode;
 }
 
@@ -156,6 +156,6 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Service {
   });
 }
 
-function testOutputToResult(testOutput: Output) {
-  return testOutput.err !== undefined ? Result.error(testOutput.err) : Result.ok(testOutput.ok);
+function testOutputToResult(testOutput: Output): Result<OK, PreimagesErrorCode> {
+  return testOutput.err !== undefined ? Result.error(testOutput.err) : Result.ok(OK);
 }
