@@ -89,7 +89,7 @@ to execute them.
 
 ```bash
 $ git clone https://github.com/w3f/jamtestvectors.git
-$ npm start -w @typeberry/test-runner  --  jamtestvectors/**/*.json ../jamtestvectors/erasure_coding/vectors/*
+$ npm run w3f -w @typeberry/test-runner  --  jamtestvectors/**/*.json ../jamtestvectors/erasure_coding/vectors/*
 ```
 
 Obviously it's also possible to run just single test case or part of the test

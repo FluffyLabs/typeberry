@@ -19,6 +19,7 @@
     "@typeberry/safrole": "0.0.1",
     "@typeberry/shuffling": "0.0.1",
     "@typeberry/state": "0.0.1",
+    "@typeberry/state-merkleization": "0.0.1",
     "@typeberry/statistics": "0.0.1",
     "@typeberry/transition": "^0.0.1",
     "@typeberry/trie": "0.0.1",
@@ -26,8 +27,9 @@
     "json-bigint-patch": "^0.0.8"
   },
   "scripts": {
-    "report": "ts-node ./index.ts",
-    "start": "ts-node ./cases.ts",
+    "start": "ts-node ./index.ts",
+    "w3f": "ts-node ./w3f.ts",
+    "jamduna": "ts-node ./jamduna.ts",
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",

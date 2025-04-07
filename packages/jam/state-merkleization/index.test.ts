@@ -1,28 +1,52 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { type ServiceId, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
+import {
+  BANDERSNATCH_RING_ROOT_BYTES,
+  type Ed25519Key,
+  type WorkReportHash,
+  codecPerValidator,
+  tryAsPerEpochBlock,
+  tryAsPerValidator,
+  tryAsServiceId,
+  tryAsTimeSlot,
+} from "@typeberry/block";
+import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
+import { Ticket } from "@typeberry/block/tickets";
+import { type AuthorizerHash, WorkPackageInfo } from "@typeberry/block/work-report";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Decoder, type Descriptor, codec } from "@typeberry/codec";
-import { asKnownSize } from "@typeberry/collections";
+import { Decoder } from "@typeberry/codec";
+import { FixedSizeArray, HashDictionary, HashSet, SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU8, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import {
+  ActivityData,
+  ActivityRecord,
+  AvailabilityAssignment,
+  BlockState,
+  DisputesRecords,
+  ENTROPY_ENTRIES,
   LookupHistoryItem,
-  type PartialState,
   PreimageItem,
+  PrivilegedServices,
   Service,
   ServiceAccountInfo,
   type State,
+  ValidatorData,
+  hashComparator,
+  tryAsPerCore,
 } from "@typeberry/state";
-import { serializeState } from ".";
-import { serialize } from "./serialize";
+import { SafroleSealingKeysData } from "@typeberry/state/safrole-data";
+import { asOpaqueType } from "@typeberry/utils";
+import { merkelizeState, serializeState } from ".";
+
+const spec = tinyChainSpec;
 
 describe("State Serialization", () => {
-  it("should serialize load and serialize the test state", () => {
-    const state = loadState(TEST_STATE);
-    const serialized = serializeState(state, tinyChainSpec);
+  it("should load and serialize the test state", () => {
+    const state = testState();
+    const serialized = serializeState(state, spec);
     for (const [actualKey, actualValue] of serialized) {
       let foundKey = false;
       for (const [expectedKey, expectedValue] of TEST_STATE) {
@@ -39,142 +63,295 @@ describe("State Serialization", () => {
   });
 });
 
-// A hacky set of parsers to avoid decoding the state keys.
-class Parser {
-  static lookup(description: string) {
-    const [service, hashLen] = description.split("|");
-    const [hash, len] = hashLen.split(" ");
-    return {
-      serviceId: tryAsServiceId(Number.parseInt(service.replace("s=", ""))),
-      hash: Bytes.parseBytes(hash.replace("h=", ""), HASH_SIZE).asOpaque(),
-      len: tryAsU32(Number.parseInt(len.replace("l=", ""))),
-    };
-  }
+describe("State Merkleization", () => {
+  it("should load and merkelize the test state", () => {
+    const state = testState();
+    const serialized = serializeState(state, spec);
+    const stateRoot = merkelizeState(serialized);
 
-  static preimage(description: string) {
-    const [service, hash, len] = description.split("|");
-    return {
-      serviceId: tryAsServiceId(Number.parseInt(service.replace("s=", ""))),
-      hash: Bytes.parseBytes(hash.replace("h=", ""), HASH_SIZE).asOpaque(),
-      len: tryAsU32(Number.parseInt(len.replace("plen=", ""))),
-    };
-  }
+    assert.strictEqual(stateRoot.toString(), TEST_STATE_ROOT);
+  });
+});
 
-  static info(description: string) {
-    const [service] = description.split("|");
-    return {
-      serviceId: tryAsServiceId(Number.parseInt(service.replace("s=", ""))),
-    };
-  }
-}
-
-// TODO [ToDr] take state and value and insert it into the state.
-type Appender = (s: PartialState, value: BytesBlob, description: string) => void;
-const kindMapping: { [k: string]: Appender } = {
-  account_lookup: (s, value, description) => {
-    const { serviceId, hash, len } = Parser.lookup(description);
-    findOrAddService(s, serviceId).data.lookupHistory.push(
-      new LookupHistoryItem(
-        hash,
-        len,
-        asKnownSize(decode(codec.sequenceVarLen(codec.u32), value).map((x) => tryAsTimeSlot(x))),
+///*
+const testState = (): State => {
+  return {
+    availabilityAssignment: tryAsPerCore(
+      [
+        Decoder.decodeObject(AvailabilityAssignment.Codec, BytesBlob.parseBlob(TEST_AVAILABILITY_ASSIGNMENT), spec),
+        null,
+      ],
+      spec,
+    ),
+    designatedValidatorData: testValidatorData(),
+    nextValidatorData: testValidatorData(),
+    currentValidatorData: testValidatorData(),
+    previousValidatorData: testValidatorData(),
+    disputesRecords: new DisputesRecords(
+      SortedSet.fromArray<WorkReportHash>(hashComparator, []),
+      SortedSet.fromArray<WorkReportHash>(hashComparator, []),
+      SortedSet.fromArray<WorkReportHash>(hashComparator, []),
+      SortedSet.fromArray<Ed25519Key>(hashComparator, []),
+    ),
+    timeslot: tryAsTimeSlot(16),
+    entropy: FixedSizeArray.new(
+      [
+        b32("0x592170100ab4055c92a269faf579e29e7e453d13549c0dc4f0120fc670ff357d"),
+        b32("0x6f6ad2224d7d58aec6573c623ab110700eaca20a48dc2965d535e466d524af2a"),
+        b32("0x835ac82bfa2ce8390bb50680d4b7a73dfa2a4cff6d8c30694b24a605f9574eaf"),
+        b32("0xd2d34655ebcad804c56d2fd5f932c575b6a5dbb3f5652c5202bcc75ab9c2cc95"),
+      ],
+      ENTROPY_ENTRIES,
+    ),
+    authPools: tryAsPerCore(
+      [
+        asKnownSize([
+          b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
+          b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
+          b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
+          b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
+          b32("0x8c30f2c101674af1da31769e96ce72e81a4a44c89526d7d3ff0a1a511d5f3c9f"),
+          b32("0x8c30f2c101674af1da31769e96ce72e81a4a44c89526d7d3ff0a1a511d5f3c9f"),
+          b32("0x8c30f2c101674af1da31769e96ce72e81a4a44c89526d7d3ff0a1a511d5f3c9f"),
+          b32("0x8c30f2c101674af1da31769e96ce72e81a4a44c89526d7d3ff0a1a511d5f3c9f"),
+        ]),
+        asKnownSize([
+          b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
+          b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
+          b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
+          b32("0x8c30f2c101674af1da31769e96ce72e81a4a44c89526d7d3ff0a1a511d5f3c9f"),
+          b32("0x8c30f2c101674af1da31769e96ce72e81a4a44c89526d7d3ff0a1a511d5f3c9f"),
+          b32("0x8c30f2c101674af1da31769e96ce72e81a4a44c89526d7d3ff0a1a511d5f3c9f"),
+          b32("0x8c30f2c101674af1da31769e96ce72e81a4a44c89526d7d3ff0a1a511d5f3c9f"),
+          b32("0x8c30f2c101674af1da31769e96ce72e81a4a44c89526d7d3ff0a1a511d5f3c9f"),
+        ]),
+      ],
+      spec,
+    ),
+    authQueues: tryAsPerCore(
+      [
+        asKnownSize(
+          repeat<AuthorizerHash>(
+            AUTHORIZATION_QUEUE_SIZE,
+            b32("0x8c30f2c101674af1da31769e96ce72e81a4a44c89526d7d3ff0a1a511d5f3c9f"),
+          ),
+        ),
+        asKnownSize(
+          repeat<AuthorizerHash>(
+            AUTHORIZATION_QUEUE_SIZE,
+            b32("0x8c30f2c101674af1da31769e96ce72e81a4a44c89526d7d3ff0a1a511d5f3c9f"),
+          ),
+        ),
+      ],
+      spec,
+    ),
+    recentBlocks: asKnownSize([
+      BlockState.fromCodec({
+        headerHash: b32("0x4adc371699d8404e42c35b888e96b69979a91b618dae49abf6217781d85658c0"),
+        mmr: {
+          peaks: [b32("0x0000000000000000000000000000000000000000000000000000000000000000")],
+        },
+        postStateRoot: b32("0x4a16c5428fcc2178c0d733b8d91a66d0c7ec5da50c06945d0d471f0a06fe54dd"),
+        reported: HashDictionary.new(),
+      }),
+      BlockState.fromCodec({
+        headerHash: b32("0x3540a8aba05cc009a7b265dc3ae43624cf462e87b2ee1e8050da548556759f79"),
+        mmr: {
+          peaks: [null, b32("0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5")],
+        },
+        postStateRoot: b32("0x9dc2370c853b1eae3225ec5d5a67d1950c8c419c18352995d24e87210581223c"),
+        reported: HashDictionary.new(),
+      }),
+      BlockState.fromCodec({
+        headerHash: b32("0xe3720ba07db057fcaf798a415c917431bb072f4286e224f6ee97596ca41d3c8f"),
+        mmr: {
+          peaks: [
+            b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
+            b32("0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5"),
+          ],
+        },
+        postStateRoot: b32("0x12d4fa0ff0a3dc0e0dfb3c7059787718f216439ba6d4c71b64e815e84552deb2"),
+        reported: HashDictionary.new(),
+      }),
+      BlockState.fromCodec({
+        headerHash: b32("0x803d287dbd687ac27e70d933bd2dbc78daa907017cbb30e07f79ef7e4af2e192"),
+        mmr: {
+          peaks: [null, null, b32("0xb4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30")],
+        },
+        postStateRoot: b32("0x156d437c7dacfda7f6017f4431d581a85d5c216af5effb370522f650f2560f31"),
+        reported: HashDictionary.new(),
+      }),
+      BlockState.fromCodec({
+        headerHash: b32("0x38ba7a8d0cb7032bf5177893139fd337518b25f83a1d85dfae85f0117daf8eff"),
+        mmr: {
+          peaks: [
+            b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
+            null,
+            b32("0xb4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30"),
+          ],
+        },
+        postStateRoot: b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
+        reported: HashDictionary.fromEntries([
+          [
+            b32("0x86902a168769208cb475921728bfde976167b2a859280739d67f23128a35e95e"),
+            new WorkPackageInfo(
+              b32("0x86902a168769208cb475921728bfde976167b2a859280739d67f23128a35e95e"),
+              b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
+            ),
+          ],
+        ]),
+      }),
+    ]),
+    services: new Map([
+      [
+        tryAsServiceId(0),
+        new Service(tryAsServiceId(0), {
+          info: ServiceAccountInfo.fromCodec({
+            codeHash: b32("0xbd87fb6de829abf2bb25a15b82618432c94e82848d9dd204f5d775d4b880ae0d"),
+            balance: tryAsU64(10000000000),
+            accumulateMinGas: tryAsGas(100),
+            onTransferMinGas: tryAsGas(100),
+            storageUtilisationBytes: tryAsU64(1157),
+            storageUtilisationCount: tryAsU32(4),
+          }),
+          preimages: [
+            PreimageItem.fromCodec({
+              hash: b32("0x8c30f2c101674af1da31769e96ce72e81a4a44c89526d7d3ff0a1a511d5f3c9f"),
+              blob: BytesBlob.parseBlob("0x00000000000000000020000a00000000000628023307320015"),
+            }),
+            PreimageItem.fromCodec({
+              hash: b32("0xbd87fb6de829abf2bb25a15b82618432c94e82848d9dd204f5d775d4b880ae0d"),
+              blob: BytesBlob.parseBlob(
+                "0x0000000000000200002000bb030000040283464001e2017d02b00228ab00000028ae00000028e60251089b0064797c77510791005127ff0090006c7a570a09330a330828735527c0000d330a01330b80284a5527e0000e330a02330b40ff283c5527f0000e330a03330b20ff282e5527f8000e330a04330b10ff28205527fc000e330a05330b08ff2812887afe00330b04ff93ab02ff85aa0701ae8a2b3308c8b70764ab01c8b90c7ccc97880895bbffd4c808520bf28aa903cf9707c88707320032000000003308249577043200951130ff7b10c8007b15c0007b16b80064859555f8510523029577087d783306015a085d848aff0083a8ff8488ff003306025328bf004c84a8e0003306035128c0004084a8f0003306045128e0003484a8f8003306055128f0002884a8fc003306065128f8001c84a8fe003306075128fc001088a8fe00858601976603017b15ac65b90164756468501002d2fe510728821aaa6aa801c856077c78957b018567ffc87a0a5108183305330695a8c05208a20028180133053306281101510a7d7db73305015a075a8477ff008378ff848cff00330502532cbf0049847ce000330503512cc0003d847cf000330504512ce00031847cf800330505512cf00025847cfc00330506512cf80019847cfe00330507512cfc000d3305085327fe00207b1aac5a1b0164b7645864b650100430fe6458646b6476821a28073308330601c88b05c8650bc88607c97a0a95a8c051087d95b7407d7a3309015a0a6b84aaff0083a9ff849bff00330cbf00330902accb5384abe000330cc000330903aacb4584abf000330ce000330904aacb3784abf800330cf000330905aacb2984abfc00330cf800330906aacb1b84abfe00330cfc00330907aacb0d330bfe00330908acba0dac987c649850100695fdc856068068fc330964330a6464570a0964757b1708481114951714330804951908330a040a0395171833098000330850100848330820a107330964951a1864570a0b8217084921b0004921a8004921a0007b179800330820951798008210c8008215c0008216b8009511d00032000000000000330732008d7a84aa07c8a70b510a0e647c0178c895cc01acbcfbc9a903843cf8c8cb0a580c1d8482ff0014090101010101010101ca920c017bbc95bb08acabfb843907520905280ec8a9090178a895aa01ac9afb320021242a825285a49028240a8942a288c894a62449524f8a8828919248244442244442244442248b0a2952925422959444222112222112222112128a2a545593244949242289482292882422894822492149aa24494a1421a94444242222fa5592962449049025495912",
+              ),
+            }),
+          ],
+          lookupHistory: [
+            new LookupHistoryItem(
+              b32("0x8c30f2c101674af1da31769e96ce72e81a4a44c89526d7d3ff0a1a511d5f3c9f"),
+              tryAsU32(25),
+              asKnownSize([tryAsTimeSlot(0)]),
+            ),
+            new LookupHistoryItem(
+              b32("0xbd87fb6de829abf2bb25a15b82618432c94e82848d9dd204f5d775d4b880ae0d"),
+              tryAsU32(970),
+              asKnownSize([tryAsTimeSlot(0)]),
+            ),
+          ],
+          storage: [],
+        }),
+      ],
+    ]),
+    statisticsPerValidator: ActivityData.fromCodec({
+      current: tryAsPerValidator(
+        [
+          activityRecord(1, 3, 0, 0, 0, 0),
+          activityRecord(0, 0, 0, 0, 1, 0),
+          activityRecord(0, 0, 0, 0, 1, 0),
+          activityRecord(0, 0, 0, 0, 1, 0),
+          activityRecord(3, 6, 0, 0, 0, 0),
+          activityRecord(1, 3, 0, 0, 0, 0),
+        ],
+        spec,
       ),
-    );
-  },
-  account_preimage: (s, value, description) => {
-    const { serviceId, hash } = Parser.preimage(description);
-    findOrAddService(s, serviceId).data.preimages.push(new PreimageItem(hash, value));
-  },
-  service_account: (s, value, description) => {
-    const { serviceId } = Parser.info(description);
-    findOrAddService(s, serviceId).data.info = decode(ServiceAccountInfo.Codec, value);
-  },
-  c1: (s, value) => {
-    s.authPools = decode(serialize.authPools.Codec, value);
-  },
-  c2: (s, value) => {
-    s.authQueues = decode(serialize.authQueues.Codec, value);
-  },
-  c3: (s, value) => {
-    s.recentBlocks = decode(serialize.recentBlocks.Codec, value);
-  },
-  c4: (s, value) => {
-    const safrole = decode(serialize.safrole.Codec, value);
-    s.nextValidatorData = safrole.nextValidatorData;
-    s.epochRoot = safrole.epochRoot;
-    s.sealingKeySeries = safrole.sealingKeySeries;
-    s.ticketsAccumulator = safrole.ticketsAccumulator;
-  },
-  c5: (s, value) => {
-    s.disputesRecords = decode(serialize.disputesRecords.Codec, value);
-  },
-  c6: (s, value) => {
-    s.entropy = decode(serialize.entropy.Codec, value);
-  },
-  c7: (s, value) => {
-    s.designatedValidatorData = decode(serialize.designatedValidators.Codec, value);
-  },
-  c8: (s, value) => {
-    s.currentValidatorData = decode(serialize.currentValidators.Codec, value);
-  },
-  c9: (s, value) => {
-    s.previousValidatorData = decode(serialize.previousValidators.Codec, value);
-  },
-  c10: (s, value) => {
-    s.availabilityAssignment = decode(serialize.availabilityAssignment.Codec, value);
-  },
-  c11: (s, value) => {
-    s.timeslot = decode(serialize.timeslot.Codec, value);
-  },
-  c12: (s, value) => {
-    s.privilegedServices = decode(serialize.privilegedServices.Codec, value);
-  },
-  c13: (s, value) => {
-    s.statisticsPerValidator = decode(serialize.statistics.Codec, value);
-  },
-  c14: (s, value) => {
-    s.accumulationQueue = decode(serialize.accumulationQueue.Codec, value);
-  },
-  c15: (s, value) => {
-    s.recentlyAccumulated = decode(serialize.recentlyAccumulated.Codec, value);
-  },
+      previous: tryAsPerValidator(
+        [
+          activityRecord(0, 0, 0, 0, 0, 0),
+          activityRecord(0, 0, 0, 0, 0, 0),
+          activityRecord(0, 0, 0, 0, 0, 0),
+          activityRecord(0, 0, 0, 0, 0, 0),
+          activityRecord(0, 0, 0, 0, 0, 0),
+          activityRecord(0, 0, 0, 0, 0, 0),
+        ],
+        spec,
+      ),
+    }),
+    accumulationQueue: tryAsPerEpochBlock(repeat(spec.epochLength, []), spec),
+    recentlyAccumulated: tryAsPerEpochBlock(repeat(spec.epochLength, HashSet.new()), spec),
+    ticketsAccumulator: asKnownSize([
+      new Ticket(b32("0x0b7537993b0a700def26bb16e99ed0bfb530f616e4c13cf63ecb60bcbe83387d"), attempt(2)),
+      new Ticket(b32("0x1912baa74049a4cad89dc3f0646144459b691b926cf8b9c1c4a5bbfa1ee0c331"), attempt(1)),
+      new Ticket(b32("0x22fdcfa858e5195e222174597d7d33bd66d97748c413b876f7a132134ce9baef"), attempt(0)),
+      new Ticket(b32("0x23bd628fd365a0f3ecd10db746dd04ec5efe61f96da19ae070c44b97d3c9a7b8"), attempt(2)),
+      new Ticket(b32("0x31d6a25525ff4bd6e47e611646d7b5835b94b5c0a69c225371b2b762c93095a2"), attempt(1)),
+      new Ticket(b32("0x31e9b8070f42d7c9083eca5879e5528191259a395761b8fcc068dcdd36b06be4"), attempt(1)),
+      new Ticket(b32("0x39120d5b82981c7f5aba8247925f358afb9539839b61602a0726f51efb35ef4c"), attempt(0)),
+      new Ticket(b32("0x39e2d23807ff3788156eac40cc0a622a9fd23e9468bf962aebe48079c0fd2f1a"), attempt(0)),
+      new Ticket(b32("0x39f7d99b86f90cada4aa3b08adfe310024813fca0bdcdff944873a2cc2e47074"), attempt(1)),
+      new Ticket(b32("0x665df13fd353ffe92e9bd68ae952f4511681f04bd2ffb9a6da1b1f5f706c53ec"), attempt(2)),
+      new Ticket(b32("0x6b5cc620ed50042cd517ec8267706c82482f07ebcb3c65bfb6288ef5984141a7"), attempt(1)),
+      new Ticket(b32("0x7914d0dc71014a8106875c440ec79dc8358ef5e65700f8780f0af56d317314e0"), attempt(0)),
+    ]),
+    sealingKeySeries: SafroleSealingKeysData.keys(
+      tryAsPerEpochBlock(
+        [
+          b32("0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3"),
+          b32("0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3"),
+          b32("0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3"),
+          b32("0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d"),
+          b32("0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d"),
+          b32("0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3"),
+          b32("0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d"),
+          b32("0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3"),
+          b32("0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0"),
+          b32("0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d"),
+          b32("0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0"),
+          b32("0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3"),
+        ],
+        spec,
+      ),
+    ),
+    epochRoot: Bytes.parseBytes(
+      "0xa949a60ad754d683d398a0fb674a9bbe525ca26b0b0b9c8d79f210291b40d286d9886a9747a4587d497f2700baee229ca72c54ad652e03e74f35f075d0189a40d41e5ee65703beb5d7ae8394da07aecf9056b98c61156714fd1d9982367bee2992e630ae2b14e758ab0960e372172203f4c9a41777dadd529971d7ab9d23ab29fe0e9c85ec450505dde7f5ac038274cf",
+      BANDERSNATCH_RING_ROOT_BYTES,
+    ).asOpaque(),
+    privilegedServices: PrivilegedServices.fromCodec({
+      manager: tryAsServiceId(0),
+      authManager: tryAsServiceId(0),
+      validatorsManager: tryAsServiceId(0),
+      autoAccumulateServices: [],
+    }),
+  };
+};
+//*/
+
+const attempt = (x: number) => asOpaqueType(tryAsU8(x));
+const b32 = (s: string) => Bytes.parseBytes(s, HASH_SIZE).asOpaque();
+const repeat = <T>(len: number, item: T) =>
+  Array(len)
+    .join(",")
+    .split(",")
+    .map((_) => item);
+
+const activityRecord = (
+  blocks: number,
+  tickets: number,
+  preimages: number,
+  preimagesSize: number,
+  guarantees: number,
+  assurances: number,
+) => {
+  return ActivityRecord.fromCodec({
+    blocks: tryAsU32(blocks),
+    tickets: tryAsU32(tickets),
+    preImages: tryAsU32(preimages),
+    preImagesSize: tryAsU32(preimagesSize),
+    guarantees: tryAsU32(guarantees),
+    assurances: tryAsU32(assurances),
+  });
 };
 
-function loadState(testState: typeof TEST_STATE): State {
-  const partial: PartialState = {};
-  for (const [_key, value, kind, description] of testState) {
-    const appender = kindMapping[kind];
-    appender(partial, BytesBlob.parseBlob(value), description);
-  }
-  return partial as State;
+function testValidatorData() {
+  return Decoder.decodeObject(codecPerValidator(ValidatorData.Codec), BytesBlob.parseBlob(TEST_VALIDATOR_DATA), spec);
 }
 
-function decode<T>(descriptor: Descriptor<T>, value: BytesBlob) {
-  return Decoder.decodeObject(descriptor, value, tinyChainSpec);
-}
+const TEST_AVAILABILITY_ASSIGNMENT =
+  "0x86902a168769208cb475921728bfde976167b2a859280739d67f23128a35e95e0e010000bb282495d322aec3f0057ef6199198a95e76b786972eebc84b5e9708a42a13b8000000000000000000000000000000000000000000000000000000000000000000003540a8aba05cc009a7b265dc3ae43624cf462e87b2ee1e8050da548556759f799dc2370c853b1eae3225ec5d5a67d1950c8c419c18352995d24e87210581223cad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5e3720ba07db057fcaf798a415c917431bb072f4286e224f6ee97596ca41d3c8f0e0000000000008c30f2c101674af1da31769e96ce72e81a4a44c89526d7d3ff0a1a511d5f3c9f00000100000000bd87fb6de829abf2bb25a15b82618432c94e82848d9dd204f5d775d4b880ae0d316c450c3b4168e21548aa50ef4305f621e28d2874af41a21b4d338a9d188be5e80300000000000000245ec86700ef12e6942b10bd3c0f41c8636cecda19347b4673a82cdee5c62df045860d000010000000";
 
-function findOrAddService(s: PartialState, serviceId: ServiceId) {
-  const services = s.services ?? new Map();
-  s.services = services;
-  let service = s.services.get(serviceId);
-  if (service === undefined) {
-    service = new Service(serviceId, {
-      info: ServiceAccountInfo.fromCodec({
-        codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
-        balance: tryAsU64(0),
-        accumulateMinGas: tryAsGas(10_000),
-        onTransferMinGas: tryAsGas(1_000),
-        storageUtilisationBytes: tryAsU64(0),
-        storageUtilisationCount: tryAsU32(0),
-      }),
-      preimages: [],
-      lookupHistory: [],
-      storage: [],
-    });
-    s.services.set(serviceId, service);
-  }
-  return service;
-}
+const TEST_VALIDATOR_DATA =
+  "0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29b27150a1f1cd24bccc792ba7ba4220a1e8c36636e35a969d1d14b4c89bce7d1d463474fb186114a89dd70e88506fefc9830756c27a7845bec1cb6ee31e07211afd0dde34f0dc5d89231993cd323973faa23d84d521fd574e840b8617c75d1a1d0102aa3c71999137001a77464ced6bb2885c460be760c709009e26395716a52c8c52e6e23906a455b4264e7d0c75466e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d022351e22105a19aabb42589162ad7f1ea0df1c25cebf0e4a9fcd261301274862a2534be5b2f761dc898160a9b4762eb46bd171222f6cdf87f5127a9e8970a54c44fe7b2e12dda098854a9aaab03c3a47953085668673a84b0cedb4b0391ed6ae2deb1c3e04f0bc618a2bc1287d8599e8a1c47ff715cd4cbd3fe80e2607744d4514b491ed2ef76ae114ecb1af99ba6af32189bf0471c06aa3e6acdaf82e7a959cb24a5c1444cac3a6678f5182459fd8ce0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000aa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bce68e0cf7f26c59f963b5846202d2327cc8bc0c4eff8cb9abd4012f9a71decf008faee314528448651e50bea6d2e7e5d3176698fea0b932405a4ec0a19775e72325e44a6d28f99fba887e04eb818f13d1b73f75f0161644283df61e7fbaad7713fae0ef79fe92499202834c97f512d744515a57971badf2df62e23697e9fe347f168fed0adb9ace131f49bbd500a324e2469569423f37c5d3b430990204ae17b383fcd582cb864168c8b46be8d779e7ca00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33b3e0e096b02e2ec98a3441410aeddd78c95e27a0da6f411a09c631c0f2bea6e98dfdac3e2f604ecda637e4969a139ceb70c534bd5edc4210eb5ac71178c1d62f0c977197a2c6a9e8ada6a14395bc9aa3a384d35f40c3493e20cb7efaa799f66d1cedd5b2928f8e34438b07072bbae404d7dfcee3f457f9103173805ee163ba550854e4660ccec49e25fafdb00e6adfbc8e875de1a9541e1721e956b972ef2b135cc7f71682615e12bb7d6acd353d7681000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000048e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e35c7f34a4bd4f2d04076a8c6f9060a0c8d2c6bdd082ceb3eda7df381cb260faffb78a95d81f6c7cdc517a36d81191b6f7718dcf44e76c0ce9fb724d3aea39fdb3c5f4ee31eb1f45e55b783b687b1e9087b092a18341c7cda102b4100685b0a014d55f1ccdb7600ec0db14bb90f7fc3126dc2625945bb44f302fc80df0c225546c06fa1952ef05bdc83ceb7a23373de0637cd9914272e3e3d1a455db6c48cc6b2b2c17e1dcf7cd1586a235821308aee0010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d837ce344bc9defceb0d7de7e9e9925096768b7adb4dad932e532eb6551e0ea02b0b9121622bf8a9a9e811ee926740a876dd0d9036f2f3060ebfab0c7c489a338a7728ee2da4a265696edcc389fe02b2caf20b5b83aeb64aaf4184bedf127f4eea1d737875854411d58ca4a2b69b066b0a0c09d2a0b7121ade517687c51954df913fe930c227723dd8f58aa2415946044dc3fb15c367a2185d0fc1f7d2bb102ff14a230d5f81cfc8ad445e51efddbf4260000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+
+const TEST_STATE_ROOT = "0xc57f98ecf9a01e81ac754ed0d08f8484c683b8d55f00365cc41c557f492827c7";
 
 const TEST_STATE = [
   [
