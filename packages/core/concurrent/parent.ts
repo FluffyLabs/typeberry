@@ -102,7 +102,10 @@ export class Executor<TParams extends IWithTransferList, TResult> implements IEx
     // we will retry when one of the tasks completes.
     if (freeWorker === undefined) {
       if (this.taskQueue.length > QUEUE_SIZE_WORKER_THRESHOLD) {
-        this.initNewWorker();
+        this.initNewWorker().then(() => {
+          // process an entry in this newly initialized worker.
+          this.processEntryFromTaskQueue();
+        });
       }
       return;
     }
