@@ -15,7 +15,7 @@ import {
 import { Ticket } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
 import type { KnownSizeArray } from "@typeberry/collections";
-import { json } from "@typeberry/json-parser";
+import { json, parseFromJson } from "@typeberry/json-parser";
 import { fromJson, runCodecTest } from "./common";
 
 const bandersnatchVrfSignature = json.fromString((v) => Bytes.parseBytes(v, 96) as BandersnatchVrfSignature);
@@ -26,11 +26,37 @@ type JsonEpochMarker = {
   validators: PerValidator<BandersnatchKey>;
 };
 
+// TODO [ToDr] Temporary fix for old test vectors we have.
+// i.e. previously epoch mark only had `BandersnatchKey`,
+// now it's also `Ed25519Key`. I want to load jamduna test vectors
+// for tests and need that.
+class ValidatorData {
+  constructor(
+    public readonly bandersnatch: BandersnatchKey,
+    public readonly ed25519: Ed25519Key,
+  ) {}
+}
+const epochMarkValidatorDataFromJson = json.fromAny<BandersnatchKey>((x, context) => {
+  if (typeof x === "string") {
+    return parseFromJson(x, fromJson.bytes32(), context);
+  }
+  return parseFromJson(
+    x,
+    json.object<ValidatorData, BandersnatchKey>(
+      {
+        bandersnatch: fromJson.bytes32(),
+        ed25519: fromJson.bytes32(),
+      },
+      ({ bandersnatch }) => bandersnatch,
+    ),
+  );
+});
+
 const epochMark = json.object<JsonEpochMarker, EpochMarker>(
   {
     entropy: fromJson.bytes32(),
     tickets_entropy: fromJson.bytes32(),
-    validators: json.array(fromJson.bytes32<BandersnatchKey>()),
+    validators: json.array(epochMarkValidatorDataFromJson),
   },
   (x) => new EpochMarker(x.entropy, x.tickets_entropy, x.validators),
 );

@@ -4,16 +4,30 @@
  * https://graypaper.fluffylabs.dev/#/5f542d7/389f00389f00
  */
 
+import type { StateRootHash } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { State } from "@typeberry/state";
+import { InMemoryTrie, WriteableNodesDb } from "@typeberry/trie";
+import { blake2bTrieHasher } from "@typeberry/trie/hasher";
+import { asOpaqueType } from "@typeberry/utils";
 import type { StateKey } from "./keys";
 import { type StateCodec, serialize } from "./serialize";
 
 export type SerializedState = HashDictionary<StateKey, BytesBlob>;
 
+/** https://graypaper.fluffylabs.dev/#/68eaa1f/391600391600?v=0.6.4 */
+export function merkelizeState(state: SerializedState): StateRootHash {
+  const trie = new InMemoryTrie(new WriteableNodesDb(blake2bTrieHasher));
+  for (const [key, value] of state) {
+    trie.set(key, value);
+  }
+  return asOpaqueType(trie.getRootHash());
+}
+
+/** https://graypaper.fluffylabs.dev/#/68eaa1f/38a50038a500?v=0.6.4 */
 export function serializeState(state: State, spec: ChainSpec): SerializedState {
   const map = HashDictionary.new<StateKey, BytesBlob>();
   function doSerialize<T>(codec: StateCodec<T>) {
