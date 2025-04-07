@@ -25,7 +25,10 @@ import {
 import type { ExtrinsicHash, HeaderHash } from "./hash";
 import { Ticket } from "./tickets";
 
-/** Encoded validator keys. */
+/**
+ * Encoded validator keys.
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/0e34030e3603?v=0.6.4
+*/
 export class ValidatorKeys extends WithDebug {
   static Codec = codec.Class(ValidatorKeys, {
     bandersnatch: codec.bytes(BANDERSNATCH_KEY_BYTES).asOpaque(),
