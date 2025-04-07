@@ -1,12 +1,12 @@
 import { type MessagePort, parentPort } from "node:worker_threads";
 import { Result } from "@typeberry/utils";
-import type { IExecutor, IWithTransferList, MessageIn, MessageOut } from "./messages";
+import type { IExecutor, MessageIn, MessageOut, WithTransferList } from "./messages";
 
 /** A in-worker abstraction. */
-export class ConcurrentWorker<TParams, TResult extends IWithTransferList, TInternalState>
+export class ConcurrentWorker<TParams, TResult extends WithTransferList, TInternalState>
   implements IExecutor<TParams, TResult>
 {
-  static new<XParams, XResult extends IWithTransferList, XInternalState>(
+  static new<XParams, XResult extends WithTransferList, XInternalState>(
     run: (params: XParams, state: XInternalState) => Promise<XResult>,
     state: XInternalState,
   ) {

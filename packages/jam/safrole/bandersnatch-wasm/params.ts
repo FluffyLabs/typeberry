@@ -1,10 +1,12 @@
 import type { TransferListItem } from "node:worker_threads";
-import type { IWithTransferList } from "@typeberry/concurrent/messages";
-import type * as bandersnatchWasm from "bandersnatch-wasm/pkg";
+import type { WithTransferList } from "@typeberry/concurrent/messages";
 
-export type Method = keyof typeof bandersnatchWasm;
+export enum Method {
+  RingCommitment = 0,
+  VerifyTickets = 1,
+}
 
-export class Response implements IWithTransferList {
+export class Response implements WithTransferList {
   constructor(public readonly data: Uint8Array) {}
 
   getTransferList(): TransferListItem[] {
@@ -12,16 +14,20 @@ export class Response implements IWithTransferList {
   }
 }
 
-export type IParams = {
-  [M in Method]: { method: M } & (M extends "ring_commitment"
-    ? { keys: Uint8Array }
-    : M extends "verify_ticket"
-      ? { keys: Uint8Array; ticketsData: Uint8Array; contextLength: number }
-      : never);
-}[Method];
+export type RawParams =
+  | {
+      method: Method.RingCommitment;
+      keys: Uint8Array;
+    }
+  | {
+      method: Method.VerifyTickets;
+      keys: Uint8Array;
+      ticketsData: Uint8Array;
+      contextLength: number;
+    };
 
-export class Params implements IWithTransferList {
-  constructor(public readonly params: IParams) {}
+export class Params implements WithTransferList {
+  constructor(public readonly params: RawParams) {}
 
   getTransferList(): TransferListItem[] {
     return [];

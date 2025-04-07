@@ -2,7 +2,7 @@ import os from "node:os";
 import { resolve } from "node:path";
 import type { IExecutor } from "@typeberry/concurrent";
 import { Executor } from "@typeberry/concurrent";
-import { Params, type Response } from "./params";
+import { Method, Params, type Response } from "./params";
 import { worker } from "./worker";
 
 export class BandernsatchWasm {
@@ -27,7 +27,7 @@ export class BandernsatchWasm {
   async getRingCommitment(keys: Uint8Array) {
     const x = await this.executor.run(
       new Params({
-        method: "ring_commitment",
+        method: Method.RingCommitment,
         keys,
       }),
     );
@@ -37,7 +37,7 @@ export class BandernsatchWasm {
   async verifyTicket(keys: Uint8Array, ticketsData: Uint8Array, contextLength: number) {
     const x = await this.executor.run(
       new Params({
-        method: "verify_ticket",
+        method: Method.VerifyTickets,
         keys,
         ticketsData,
         contextLength,

@@ -6,7 +6,7 @@ export interface IExecutor<TParams, TResult> {
   destroy(): Promise<void>;
 }
 
-export type IWithTransferList = {
+export type WithTransferList = {
   getTransferList(): TransferListItem[];
 };
 
