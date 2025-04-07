@@ -31,7 +31,9 @@ export class TestState {
 export type StateKeyVal = string[];
 
 export function loadState(testState: StateKeyVal[]): State {
-  const partial: PartialState = {};
+  const partial: PartialState = {
+    services: new Map(),
+  };
   for (const [_key, value, kind, description] of testState) {
     const appender = kindMapping[kind];
     if (appender === undefined) {
