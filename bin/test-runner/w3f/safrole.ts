@@ -35,12 +35,12 @@ namespace safroleFromJson {
 
   export const ticketEnvelope: FromJson<SignedTicket> = {
     attempt: "number",
-    signature: json.fromString((v) => Bytes.parseBytes(v, BANDERSNATCH_PROOF_BYTES) as BandersnatchProof),
+    signature: json.fromString((v) => Bytes.parseBytes(v, BANDERSNATCH_PROOF_BYTES).asOpaque()),
   };
 
   export const validatorKeys: FromJson<ValidatorKeys> = {
-    bandersnatch: json.fromString((v) => Bytes.parseBytes(v, BANDERSNATCH_KEY_BYTES) as BandersnatchKey),
-    ed25519: json.fromString((v) => Bytes.parseBytes(v, ED25519_KEY_BYTES) as Ed25519Key),
+    bandersnatch: json.fromString((v) => Bytes.parseBytes(v, BANDERSNATCH_KEY_BYTES).asOpaque()),
+    ed25519: json.fromString((v) => Bytes.parseBytes(v, ED25519_KEY_BYTES).asOpaque()),
   };
 }
 

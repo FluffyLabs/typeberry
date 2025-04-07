@@ -16,22 +16,17 @@ import {
 import { Ticket } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
 import type { KnownSizeArray } from "@typeberry/collections";
-import { json, parseFromJson } from "@typeberry/json-parser";
+import { json } from "@typeberry/json-parser";
 import { fromJson, runCodecTest } from "./common";
 
 const bandersnatchVrfSignature = json.fromString((v) => Bytes.parseBytes(v, 96) as BandersnatchVrfSignature);
 
-type JsonValidatorKeys = {
-  bandersnatchKey: BandersnatchKey;
-  ed25519Key: Ed25519Key;
-};
-
-const validatorKeys = json.object<JsonValidatorKeys, ValidatorKeys>(
+const validatorKeys = json.object<ValidatorKeys, ValidatorKeys>(
   {
-    bandersnatchKey: fromJson.bytes32<BandersnatchKey>(),
-    ed25519Key: fromJson.bytes32<Ed25519Key>(),
+    bandersnatch: fromJson.bytes32<BandersnatchKey>(),
+    ed25519: fromJson.bytes32<Ed25519Key>(),
   },
-  (x) => new ValidatorKeys(x.bandersnatchKey, x.ed25519Key),
+  (x) => new ValidatorKeys(x.bandersnatch, x.ed25519),
 );
 
 type JsonEpochMarker = {
@@ -39,32 +34,6 @@ type JsonEpochMarker = {
   tickets_entropy: EntropyHash;
   validators: PerValidator<ValidatorKeys>;
 };
-
-// TODO [ToDr] Temporary fix for old test vectors we have.
-// i.e. previously epoch mark only had `BandersnatchKey`,
-// now it's also `Ed25519Key`. I want to load jamduna test vectors
-// for tests and need that.
-class ValidatorData {
-  constructor(
-    public readonly bandersnatch: BandersnatchKey,
-    public readonly ed25519: Ed25519Key,
-  ) {}
-}
-const _epochMarkValidatorDataFromJson = json.fromAny<BandersnatchKey>((x, context) => {
-  if (typeof x === "string") {
-    return parseFromJson(x, fromJson.bytes32(), context);
-  }
-  return parseFromJson(
-    x,
-    json.object<ValidatorData, BandersnatchKey>(
-      {
-        bandersnatch: fromJson.bytes32(),
-        ed25519: fromJson.bytes32(),
-      },
-      ({ bandersnatch }) => bandersnatch,
-    ),
-  );
-});
 
 const epochMark = json.object<JsonEpochMarker, EpochMarker>(
   {
