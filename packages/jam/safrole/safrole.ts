@@ -2,10 +2,10 @@ import {
   BANDERSNATCH_KEY_BYTES,
   type BandersnatchKey,
   ED25519_KEY_BYTES,
-  type Ed25519Key,
   type EntropyHash,
   type PerValidator,
   type TimeSlot,
+  ValidatorKeys,
   tryAsPerEpochBlock,
 } from "@typeberry/block";
 import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
@@ -46,13 +46,6 @@ export type SafroleState = Pick<State, "designatedValidatorData"> &
   >;
 
 export type StateDiff = Partial<SafroleState>;
-
-export class ValidatorKeys {
-  constructor(
-    public bandersnatch: BandersnatchKey,
-    public ed25519: Ed25519Key,
-  ) {}
-}
 
 export class EpochMark {
   constructor(

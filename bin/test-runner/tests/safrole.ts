@@ -1,12 +1,15 @@
 import {
+  BANDERSNATCH_KEY_BYTES,
   BANDERSNATCH_PROOF_BYTES,
   BANDERSNATCH_RING_ROOT_BYTES,
   type BandersnatchKey,
   type BandersnatchProof,
   type BandersnatchRingRoot,
+  ED25519_KEY_BYTES,
   type Ed25519Key,
   type EntropyHash,
   type TimeSlot,
+  type ValidatorKeys,
   tryAsPerEpochBlock,
   tryAsPerValidator,
   tryAsTimeSlot,
@@ -33,6 +36,11 @@ namespace safroleFromJson {
   export const ticketEnvelope: FromJson<SignedTicket> = {
     attempt: "number",
     signature: json.fromString((v) => Bytes.parseBytes(v, BANDERSNATCH_PROOF_BYTES) as BandersnatchProof),
+  };
+
+  export const validatorKeys: FromJson<ValidatorKeys> = {
+    bandersnatch: json.fromString((v) => Bytes.parseBytes(v, BANDERSNATCH_KEY_BYTES) as BandersnatchKey),
+    ed25519: json.fromString((v) => Bytes.parseBytes(v, ED25519_KEY_BYTES) as Ed25519Key),
   };
 }
 
@@ -130,20 +138,11 @@ class JsonState {
   }
 }
 
-export class ValidatorKeys {
-  static fromJson: FromJson<ValidatorKeys> = {
-    bandersnatch: commonFromJson.bytes32(),
-    ed25519: commonFromJson.bytes32(),
-  };
-  bandersnatch!: BandersnatchKey;
-  ed25519!: Ed25519Key;
-}
-
 export class EpochMark {
   static fromJson: FromJson<EpochMark> = {
     entropy: commonFromJson.bytes32(),
     tickets_entropy: commonFromJson.bytes32(),
-    validators: json.array(ValidatorKeys.fromJson),
+    validators: json.array(commonFromJson.validatorData),
   };
 
   entropy!: EntropyHash;
