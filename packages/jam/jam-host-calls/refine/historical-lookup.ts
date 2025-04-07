@@ -62,6 +62,7 @@ export class HistoricalLookup implements HostCallHandler {
     // l
     const destinationLen = minU64(tryAsU64(regs.getU64(11)), tryAsU64(length - offset));
 
+    // NOTE: casting to u32 (number) is safe here because the length of the value is always less than 2^32 (for sure).
     const data = value.raw.subarray(Number(offset), Number(offset + destinationLen));
     const segmentWritePageFault = memory.storeFrom(destinationStart, data);
     if (segmentWritePageFault !== null) {
