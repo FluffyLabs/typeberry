@@ -4,6 +4,7 @@ import type { State } from "@typeberry/state";
 import { SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
 import { Result } from "@typeberry/utils";
 import { verifySeal } from "./bandersnatch";
+import { BandernsatchWasm } from "./bandersnatch-wasm";
 import { JAM_ENTROPY, JAM_FALLBACK_SEAL, JAM_TICKET_SEAL } from "./constants";
 
 export enum SafroleSealError {
@@ -19,6 +20,7 @@ export type SafroleSealState = Pick<State, "currentValidatorData" | "sealingKeyS
 };
 
 export class SafroleSeal {
+  constructor(private readonly bandersnatch: Promise<BandernsatchWasm> = BandernsatchWasm.new({ synchronous: true })) {}
   /**
    * Note the verification needs to be done AFTER the state transition,
    * hence the state is passed as an argument for more control.
@@ -35,6 +37,7 @@ export class SafroleSeal {
     // verify entropySource
     const payload = BytesBlob.blobFromParts(JAM_ENTROPY, sealResult.ok.raw);
     const entropySourceResult = await verifySeal(
+      await this.bandersnatch,
       state.currentValidatorData.map((x) => x.bandersnatch),
       headerView.bandersnatchBlockAuthorIndex.materialize(),
       headerView.entropySource.materialize(),
@@ -72,6 +75,7 @@ export class SafroleSeal {
       const payload = BytesBlob.blobFromParts(JAM_TICKET_SEAL, entropy.raw, new Uint8Array([attempt]));
       // verify seal correctness
       const result = await verifySeal(
+        await this.bandersnatch,
         validators.map((x) => x.bandersnatch),
         validatorIndex,
         headerView.seal.materialize(),
@@ -100,6 +104,7 @@ export class SafroleSeal {
     // verify seal correctness
     const payload = BytesBlob.blobFromParts(JAM_FALLBACK_SEAL, entropy.raw);
     const result = await verifySeal(
+      await this.bandersnatch,
       validators.map((x) => x.bandersnatch),
       validatorIndex,
       headerView.seal.materialize(),

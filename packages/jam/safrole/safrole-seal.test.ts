@@ -19,7 +19,10 @@ import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { SafroleSealingKeysData } from "@typeberry/state/safrole-data";
+import { BandernsatchWasm } from "./bandersnatch-wasm";
 import { SafroleSeal } from "./safrole-seal";
+
+const bandersnatch = BandernsatchWasm.new({ synchronous: true });
 
 describe("Safrole Seal verification", () => {
   it("should verify a valid fallback mode seal and entropySource", async () => {
@@ -72,7 +75,7 @@ describe("Safrole Seal verification", () => {
     const encoded = Encoder.encodeObject(Header.Codec, header, tinyChainSpec);
     const headerView = Decoder.decodeObject(Header.Codec.View, encoded, tinyChainSpec);
 
-    const safroleSeal = new SafroleSeal();
+    const safroleSeal = new SafroleSeal(bandersnatch);
     const result = await safroleSeal.verifyHeaderSeal(headerView, {
       currentValidatorData: TEST_VALIDATOR_DATA,
       sealingKeySeries: SafroleSealingKeysData.keys(
@@ -160,7 +163,7 @@ describe("Safrole Seal verification", () => {
     const encoded = Encoder.encodeObject(Header.Codec, header, tinyChainSpec);
     const headerView = Decoder.decodeObject(Header.Codec.View, encoded, tinyChainSpec);
 
-    const safroleSeal = new SafroleSeal();
+    const safroleSeal = new SafroleSeal(bandersnatch);
     const result = await safroleSeal.verifyHeaderSeal(headerView, {
       currentValidatorData: TEST_VALIDATOR_DATA,
       sealingKeySeries: SafroleSealingKeysData.tickets(

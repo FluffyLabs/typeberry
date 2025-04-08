@@ -20,7 +20,10 @@ import { Ordering } from "@typeberry/ordering";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
 import * as bandersnatch from "./bandersnatch";
+import { BandernsatchWasm } from "./bandersnatch-wasm";
 import { Safrole, SafroleErrorCode, type SafroleState } from "./safrole";
+
+const bwasm = BandernsatchWasm.new({ synchronous: true });
 
 const validators: PerValidator<ValidatorData> = asKnownSize(
   [
@@ -98,7 +101,7 @@ describe("Safrole", () => {
 
   it("should return incorrect timeslot error", async () => {
     const state = { timeslot: 1 } as SafroleState;
-    const safrole = new Safrole(tinyChainSpec, state);
+    const safrole = new Safrole(tinyChainSpec, state, bwasm);
     const timeslot = 0 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: TicketsExtrinsic = asKnownSize([]);
@@ -118,7 +121,7 @@ describe("Safrole", () => {
 
   it("should return unexpected ticket because of incorrect length of extrinsic", async () => {
     const state = { timeslot: 1 } as SafroleState;
-    const safrole = new Safrole(tinyChainSpec, state);
+    const safrole = new Safrole(tinyChainSpec, state, bwasm);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: TicketsExtrinsic = asKnownSize([]);
@@ -139,7 +142,7 @@ describe("Safrole", () => {
 
   it("should return bad ticket attempt because of incorrect ticket attempt", async () => {
     const state = { timeslot: 1 } as SafroleState;
-    const safrole = new Safrole(tinyChainSpec, state);
+    const safrole = new Safrole(tinyChainSpec, state, bwasm);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: TicketsExtrinsic = asKnownSize([
@@ -189,7 +192,7 @@ describe("Safrole", () => {
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
     };
-    const safrole = new Safrole(tinyChainSpec, state);
+    const safrole = new Safrole(tinyChainSpec, state, bwasm);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: TicketsExtrinsic = asKnownSize([
@@ -242,7 +245,7 @@ describe("Safrole", () => {
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
     };
-    const safrole = new Safrole(tinyChainSpec, state);
+    const safrole = new Safrole(tinyChainSpec, state, bwasm);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: TicketsExtrinsic = asKnownSize([
@@ -299,7 +302,7 @@ describe("Safrole", () => {
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
     };
-    const safrole = new Safrole(tinyChainSpec, state);
+    const safrole = new Safrole(tinyChainSpec, state, bwasm);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: TicketsExtrinsic = asKnownSize([
@@ -350,7 +353,7 @@ describe("Safrole", () => {
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
     };
-    const safrole = new Safrole(tinyChainSpec, state);
+    const safrole = new Safrole(tinyChainSpec, state, bwasm);
     const timeslot = 2 as TimeSlot;
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
     const extrinsic: TicketsExtrinsic = asKnownSize([

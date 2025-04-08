@@ -9,6 +9,7 @@ import { Disputes } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Safrole } from "@typeberry/safrole";
+import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import type { SafroleErrorCode } from "@typeberry/safrole/safrole";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal";
 import type { State } from "@typeberry/state";
@@ -90,10 +91,11 @@ export class OnChain {
     blocks: BlocksDb,
     public readonly hasher: TransitionHasher,
   ) {
+    const bandersnatch = BandernsatchWasm.new({ synchronous: true });
     this.statistics = new Statistics(chainSpec, state);
 
-    this.safrole = new Safrole(chainSpec, state);
-    this.safroleSeal = new SafroleSeal();
+    this.safrole = new Safrole(chainSpec, state, bandersnatch);
+    this.safroleSeal = new SafroleSeal(bandersnatch);
 
     this.recentHistory = new RecentHistory(hasher, state);
 

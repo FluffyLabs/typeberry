@@ -10,7 +10,7 @@ import type { SignedTicket } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Result } from "@typeberry/utils";
-import { batch_verify_tickets, ring_commitment, verify_seal } from "bandersnatch-wasm/pkg";
+import type { BandernsatchWasm } from "./bandersnatch-wasm";
 import { JAM_TICKET_SEAL } from "./constants";
 
 const RESULT_INDEX = 0 as const;
@@ -21,14 +21,21 @@ enum ResultValues {
 }
 
 export async function verifySeal(
+  bandersnatch: BandernsatchWasm,
   validators: BandersnatchKey[],
-  author_index: ValidatorIndex,
+  authorIndex: ValidatorIndex,
   signature: BandersnatchVrfSignature,
   payload: BytesBlob,
   encodedUnsealedHeader: BytesBlob,
 ): Promise<Result<EntropyHash, null>> {
   const keys = BytesBlob.blobFromParts(validators.map((x) => x.raw)).raw;
-  const sealResult = verify_seal(keys, author_index, signature.raw, payload.raw, encodedUnsealedHeader.raw);
+  const sealResult = await bandersnatch.verifySeal(
+    keys,
+    authorIndex,
+    signature.raw,
+    payload.raw,
+    encodedUnsealedHeader.raw,
+  );
 
   if (sealResult[RESULT_INDEX] === ResultValues.Error) {
     return Result.error(null);
@@ -37,9 +44,12 @@ export async function verifySeal(
   return Result.ok(Bytes.fromBlob(sealResult.subarray(1), HASH_SIZE).asOpaque());
 }
 
-export async function getRingCommitment(validators: BandersnatchKey[]): Promise<Result<BandersnatchRingRoot, null>> {
+export async function getRingCommitment(
+  bandersnatch: BandernsatchWasm,
+  validators: BandersnatchKey[],
+): Promise<Result<BandersnatchRingRoot, null>> {
   const keys = BytesBlob.blobFromParts(validators.map((x) => x.raw)).raw;
-  const commitmentResult = ring_commitment(keys);
+  const commitmentResult = await bandersnatch.getRingCommitment(keys);
 
   if (commitmentResult[RESULT_INDEX] === ResultValues.Error) {
     return Result.error(null);
@@ -49,6 +59,7 @@ export async function getRingCommitment(validators: BandersnatchKey[]): Promise<
 }
 
 export async function verifyTickets(
+  bandersnatch: BandernsatchWasm,
   validators: BandersnatchKey[],
   tickets: SignedTicket[],
   entropy: EntropyHash,
@@ -64,7 +75,7 @@ export async function verifyTickets(
   ).raw;
 
   const keys = BytesBlob.blobFromParts(validators.map((x) => x.raw)).raw;
-  const verificationResult = batch_verify_tickets(keys, ticketsData, contextLength);
+  const verificationResult = await bandersnatch.batchVerifyTicket(keys, ticketsData, contextLength);
 
   return Array.from(BytesBlob.blobFrom(verificationResult).chunks(33)).map((result) => ({
     isValid: result.raw[RESULT_INDEX] === ResultValues.Ok,
