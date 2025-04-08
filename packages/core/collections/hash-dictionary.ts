@@ -74,6 +74,7 @@ export class HashDictionary<K extends OpaqueHash, V> {
     }
   }
 
+  /** Returns an array of the map's values, sorted by their corresponding keys */
   toSortedArray(compare: Comparator<K>): V[] {
     const vals = Array.from(this.map.values());
     vals.sort((a, b) => compare(a[0], b[0]).value);
