@@ -9,7 +9,7 @@ import { BANDERSNATCH_VRF_SIGNATURE_BYTES } from "./crypto";
 import { Header, encodeUnsealedHeader } from "./header";
 
 describe("Header", () => {
-  it("should encoded unsigned header", () => {
+  it("should encode unsigned header", () => {
     const spec = tinyChainSpec;
     const header = Header.fromCodec({
       parentHeaderHash: Bytes.fill(HASH_SIZE, 0xa).asOpaque(),
