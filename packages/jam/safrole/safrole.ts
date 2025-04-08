@@ -19,6 +19,7 @@ import { type State, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
 import { Result, asOpaqueType } from "@typeberry/utils";
 import { getRingCommitment, verifyTickets } from "./bandersnatch";
+import { BandernsatchWasm } from "./bandersnatch-wasm";
 
 export const VALIDATOR_META_BYTES = 128;
 export type VALIDATOR_META_BYTES = typeof VALIDATOR_META_BYTES;
@@ -101,6 +102,7 @@ export class Safrole {
   constructor(
     public state: SafroleState,
     private chainSpec: ChainSpec,
+    private readonly bandersnatch: Promise<BandernsatchWasm> = BandernsatchWasm.new({ synchronous: true }),
   ) {}
 
   /** `e' > e` */
@@ -197,7 +199,7 @@ export class Safrole {
 
     const keys = BytesBlob.blobFromParts(newNextValidators.map((x) => x.bandersnatch.raw)).raw;
 
-    const epochRootResult = await getRingCommitment(keys);
+    const epochRootResult = await getRingCommitment(await this.bandersnatch, keys);
 
     if (epochRootResult.isOk) {
       return Result.ok({
@@ -357,7 +359,7 @@ export class Safrole {
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/0f59000f5900
      */
-    const verificationResult = await verifyTickets(keys, extrinsic, entropy);
+    const verificationResult = await verifyTickets(await this.bandersnatch, keys, extrinsic, entropy);
     const tickets: Ticket[] = extrinsic.map((ticket, i) => ({
       id: verificationResult[i].entropyHash,
       attempt: ticket.attempt,

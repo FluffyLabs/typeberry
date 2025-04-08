@@ -2,7 +2,7 @@ import type { BandersnatchRingRoot, EntropyHash } from "@typeberry/block";
 import type { SignedTicket } from "@typeberry/block/tickets";
 import { BytesBlob } from "@typeberry/bytes";
 import { Result } from "@typeberry/utils";
-import { ring_commitment, verify_ticket } from "bandersnatch-wasm/pkg";
+import type { BandernsatchWasm } from "./bandersnatch-wasm";
 
 const RESULT_INDEX = 0 as const;
 
@@ -11,8 +11,11 @@ enum ResultValues {
   Error = 1,
 }
 
-export async function getRingCommitment(keys: Uint8Array): Promise<Result<BandersnatchRingRoot, null>> {
-  const commitmentResult = await ring_commitment(keys);
+export async function getRingCommitment(
+  bandersnatch: BandernsatchWasm,
+  keys: Uint8Array,
+): Promise<Result<BandersnatchRingRoot, null>> {
+  const commitmentResult = await bandersnatch.getRingCommitment(keys);
 
   if (commitmentResult[RESULT_INDEX] === ResultValues.Error) {
     return Result.error(null);
@@ -24,6 +27,7 @@ export async function getRingCommitment(keys: Uint8Array): Promise<Result<Bander
 const X_T = BytesBlob.blobFromString("jam_ticket_seal").raw;
 
 export async function verifyTickets(
+  bandersnatch: BandernsatchWasm,
   keys: Uint8Array,
   tickets: SignedTicket[],
   entropy: EntropyHash,
@@ -36,7 +40,7 @@ export async function verifyTickets(
     ),
   ).raw;
 
-  const verificationResult = await verify_ticket(keys, ticketsData, contextLength);
+  const verificationResult = await bandersnatch.verifyTicket(keys, ticketsData, contextLength);
 
   return Array.from(BytesBlob.blobFrom(verificationResult).chunks(33)).map((result) => ({
     isValid: result.raw[RESULT_INDEX] === ResultValues.Ok,
