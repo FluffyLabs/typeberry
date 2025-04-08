@@ -46,7 +46,7 @@ export class Read implements HostCallHandler {
       return;
     }
 
-    // k_0
+    // k_o
     const keyStartAddress = tryAsMemoryIndex(regs.getU32(8));
     // k_z
     const keyLen = tryAsMemoryIndex(regs.getU32(9));
@@ -75,13 +75,14 @@ export class Read implements HostCallHandler {
     const lengthToWrite = tryAsU64(regs.getU64(12));
 
     // f
-    const start = minU64(valueBlobOffset, valueLength);
+    const offset = minU64(valueBlobOffset, valueLength);
     // l
-    const blobLength = minU64(lengthToWrite, tryAsU64(valueLength - start));
+    const blobLength = minU64(lengthToWrite, tryAsU64(valueLength - offset));
 
     const writePageFault = memory.storeFrom(
       destinationAddress,
-      value.raw.subarray(Number(start), Number(start + blobLength)),
+      // NOTE casting to `U32` is safe here, since we are bounded by `valueLength`.
+      value.raw.subarray(Number(offset), Number(offset + blobLength)),
     );
     if (writePageFault !== null) {
       return Promise.resolve(PvmExecution.Panic);

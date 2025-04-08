@@ -175,13 +175,13 @@ describe("HostCalls: Read", () => {
       const serviceId = tryAsServiceId(10_000);
       read.currentServiceId = serviceId;
       const { key, hash } = prepareKey(read.currentServiceId, "xyz");
+      const value = "hello world";
       const { registers, memory, readResult } = prepareRegsAndMemory(key, { valueLength: 0 });
-      accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
-
+      accounts.data.set(BytesBlob.blobFromString(value), serviceId, hash);
       const result = await read.execute(gas, registers, memory);
 
       assert.deepStrictEqual(result, undefined);
-      assert.deepStrictEqual(registers.getU32(RESULT_REG), "hello world".length);
+      assert.deepStrictEqual(registers.getU32(RESULT_REG), value.length);
       assert.deepStrictEqual(readResult().toString(), "0x");
     });
   });
