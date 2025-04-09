@@ -42,6 +42,12 @@ import { Bytes, BytesBlob } from "@typeberry/trie";
 import { asOpaqueType } from "@typeberry/utils";
 import { fromJson as codecFromJson } from "./codec/common";
 
+/***
+ * POTRZEBUJE WCZYTYWANIE JSONÓW PRZESUNĄĆ DO JAKIEJŚ PACZKI.
+ *
+ * packages/jam/block-json ?
+ */
+
 export namespace commonFromJson {
   export function bytes32<TInto extends Bytes<32>>() {
     return json.fromString((v) => Bytes.parseBytes(v, 32) as TInto);

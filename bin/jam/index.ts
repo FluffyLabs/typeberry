@@ -3,7 +3,10 @@ import { main } from "./main";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 
-main().catch((e) => {
+const relPath = `${__dirname}/../..`;
+const files = process.argv.slice(2).map((f) => `${relPath}/${f}`);
+
+main(files.length ? files : undefined).catch((e) => {
   console.error(e);
   process.exit(-1);
 });

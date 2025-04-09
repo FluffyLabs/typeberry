@@ -58,7 +58,7 @@ export class ConsoleTransport implements Transport {
       return;
     }
 
-    const msg = `${lvlText} [${shortModule}] ${val} @ ${shortName}`;
+    const msg = `${lvlText} [${shortModule}] ${val}\n\t@ ${shortName}`;
     if (level === Level.WARN) {
       console.warn(msg);
     } else if (level === Level.ERROR) {

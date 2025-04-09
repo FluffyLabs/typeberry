@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import type { Header, HeaderHash, TimeSlot } from "@typeberry/block";
+import type { HeaderHash, HeaderView, TimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE, type WithHash, blake2b } from "@typeberry/hash";
 import type { Listener } from "@typeberry/state-machine";
@@ -8,7 +8,7 @@ import { Announcement, Handshake, HashAndSlot } from "./protocol/up-0-block-anno
 import { startIpcServer } from "./server";
 
 export interface ExtensionApi {
-  bestHeader: Listener<WithHash<HeaderHash, Header>>;
+  bestHeader: Listener<WithHash<HeaderHash, HeaderView>>;
 }
 
 export function startExtension(api: ExtensionApi) {
@@ -16,7 +16,7 @@ export function startExtension(api: ExtensionApi) {
   let bestBlock = null as HashAndSlot | null;
 
   api.bestHeader.on((headerWithHash) => {
-    const header = headerWithHash.data;
+    const header = headerWithHash.data.materialize();
     const hash = headerWithHash.hash;
     const final = new HashAndSlot(hash, header.timeSlotIndex);
     bestBlock = final;

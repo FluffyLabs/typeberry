@@ -1,0 +1,14 @@
+{
+  "name": "@typeberry/block-json",
+  "version": "0.0.1",
+  "description": "JSON definition of block",
+  "license": "MPL-2.0",
+  "author": "Fluffy Labs",
+  "main": "index.ts",
+  "scripts": {
+    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "dependencies": {
+    "@typeberry/json-parser": "0.0.1"
+  }
+}

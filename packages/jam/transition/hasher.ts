@@ -1,4 +1,4 @@
-import { Extrinsic, type ExtrinsicHash, Header, type HeaderHash } from "@typeberry/block";
+import { Extrinsic, type ExtrinsicHash, Header, type HeaderHash, type HeaderView } from "@typeberry/block";
 import { WorkPackage } from "@typeberry/block/work-package";
 import type { WorkPackageHash } from "@typeberry/block/work-report";
 import { type Codec, Encoder } from "@typeberry/codec";
@@ -11,8 +11,8 @@ export class TransitionHasher {
     private readonly allocator: HashAllocator,
   ) {}
 
-  header(header: Header): WithHashAndBytes<HeaderHash, Header> {
-    return this.encode(Header.Codec, header);
+  header(header: HeaderView): WithHashAndBytes<HeaderHash, HeaderView> {
+    return this.encode(Header.Codec.View, header);
   }
 
   extrinsic(extrinsic: Extrinsic): WithHashAndBytes<ExtrinsicHash, Extrinsic> {
