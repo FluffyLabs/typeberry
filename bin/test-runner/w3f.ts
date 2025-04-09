@@ -82,6 +82,6 @@ const runners = [
 main(runners, "jamtestvectors", process.argv.slice(2))
   .then((r) => logger.log(r))
   .catch((e) => {
-    logger.error(e);
+    logger.error(`${e}`);
     process.exit(-1);
   });

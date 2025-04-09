@@ -1,0 +1,14 @@
+{
+  "name": "@typeberry/concurrent",
+  "version": "0.0.1",
+  "description": "Create a concurrent executor of some work.",
+  "license": "MPL-2.0",
+  "author": "Fluffy Labs",
+  "main": "index.ts",
+  "scripts": {
+    "test": "node --test --require ts-node/register $(find . -type f -o -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "dependencies": {
+    "@typeberry/utils": "0.0.1"
+  }
+}

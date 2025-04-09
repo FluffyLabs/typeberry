@@ -17,6 +17,7 @@ import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Safrole } from "@typeberry/safrole";
+import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import { type Input, type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole";
 import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
@@ -230,10 +231,12 @@ export class SafroleTest {
   post_state!: JsonState;
 }
 
+export const bwasm = BandernsatchWasm.new({ synchronous: false });
+
 export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const chainSpec = getChainSpec(path);
   const preState = JsonState.toSafroleState(testContent.pre_state, chainSpec);
-  const safrole = new Safrole(preState, chainSpec);
+  const safrole = new Safrole(preState, chainSpec, bwasm);
 
   const result = await safrole.transition(testContent.input);
 
