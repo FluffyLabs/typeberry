@@ -39,6 +39,6 @@ function readJsonBlock(file: string, chainSpec: ChainSpec): BlockView {
   const jsonData = fs.readFileSync(file, "utf-8");
   const parsedData = JSON.parse(jsonData);
   const block = parseFromJson(parsedData, blockFromJson(chainSpec));
-  const encoded = Encoder.encodeObject(Block.Codec, block);
-  return Decoder.decodeObject(Block.Codec.View, encoded);
+  const encoded = Encoder.encodeObject(Block.Codec, block, chainSpec);
+  return Decoder.decodeObject(Block.Codec.View, encoded, chainSpec);
 }
