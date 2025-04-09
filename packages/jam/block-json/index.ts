@@ -5,6 +5,7 @@ export * from "./disputes-extrinsic";
 export * from "./extrinsic";
 export * from "./guarantees-extrinsic";
 export * from "./header";
+export * from "./json-format";
 export * from "./preimages-extrinsic";
 export * from "./refine-context";
 export * from "./tickets-extrinsic";

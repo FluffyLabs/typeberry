@@ -2,8 +2,8 @@ import type { TimeSlot } from "@typeberry/block";
 import { Credential, ReportGuarantee } from "@typeberry/block/guarantees";
 import type { WorkReport } from "@typeberry/block/work-report";
 import { json } from "@typeberry/json-parser";
-import type { JsonObject } from "../../../bin/test-runner/json-format";
 import { fromJson } from "./common";
+import type { JsonObject } from "./json-format";
 import { workReportFromJson } from "./work-report";
 
 const validatorSignatureFromJson = json.object<JsonObject<Credential>, Credential>(

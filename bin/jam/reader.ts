@@ -1,8 +1,10 @@
 import fs from "node:fs";
 import { Block, type BlockView } from "@typeberry/block";
+import { blockFromJson } from "@typeberry/block-json";
 import { BytesBlob } from "@typeberry/bytes";
-import { Decoder } from "@typeberry/codec";
+import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
+import { parseFromJson } from "@typeberry/json-parser";
 
 export type BlocksImporterConfig = {
   /**
@@ -33,10 +35,10 @@ function readCodecBlock(file: string, chainSpec: ChainSpec): BlockView {
   return Decoder.decodeObject(Block.Codec.View, bytes, chainSpec);
 }
 
-function readJsonBlock(file: string, _chainSpec: ChainSpec): BlockView {
+function readJsonBlock(file: string, chainSpec: ChainSpec): BlockView {
   const jsonData = fs.readFileSync(file, "utf-8");
-  const _parsedData = JSON.parse(jsonData);
-  // parse JSON data.
-  // parseFromJson(JSON.parse(jsonData), blockFromJson);
-  throw new Error("not implemented yet");
+  const parsedData = JSON.parse(jsonData);
+  const block = parseFromJson(parsedData, blockFromJson(chainSpec));
+  const encoded = Encoder.encodeObject(Block.Codec, block);
+  return Decoder.decodeObject(Block.Codec.View, encoded);
 }
