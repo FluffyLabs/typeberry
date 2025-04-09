@@ -3,9 +3,9 @@ import type { ChainSpec } from "@typeberry/config";
 import { json } from "@typeberry/json-parser";
 import { fromJson } from "./common";
 
+import { AvailabilityAssurance } from "@typeberry/block/assurances";
 // TODO [ToDr] wrong import
-import {JsonObject} from "../../../bin/test-runner/json-format";
-import {AvailabilityAssurance} from "@typeberry/block/assurances";
+import type { JsonObject } from "../../../bin/test-runner/json-format";
 
 const getAvailabilityAssuranceFromJson = (ctx: ChainSpec) =>
   json.object<JsonObject<AvailabilityAssurance>, AvailabilityAssurance>(

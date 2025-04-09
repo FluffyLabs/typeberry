@@ -1,13 +1,13 @@
 import assert from "node:assert";
 
 import { type Extrinsic, type TimeSlot, type ValidatorIndex, tryAsPerValidator } from "@typeberry/block";
+import { getExtrinsicFromJson } from "@typeberry/block-json";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { U32 } from "@typeberry/numbers";
 import { ActivityRecord, type ValidatorData } from "@typeberry/state";
 import { Statistics, type StatisticsState } from "@typeberry/transition/statistics";
 import { commonFromJson } from "./common-types";
-import {getExtrinsicFromJson} from "@typeberry/block-json";
 
 class TinyInput {
   static fromJson: FromJson<TinyInput> = {

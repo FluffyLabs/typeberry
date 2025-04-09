@@ -11,6 +11,7 @@ import {
   type StateRootHash,
   type TimeSlot,
 } from "@typeberry/block";
+import { fromJson } from "@typeberry/block-json";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import { type BeefyHash, RefineContext } from "@typeberry/block/refine-context";
 import { type WorkItemsCount, tryAsWorkItemsCount } from "@typeberry/block/work-package";
@@ -40,7 +41,6 @@ import {
 } from "@typeberry/state";
 import { Bytes, BytesBlob } from "@typeberry/trie";
 import { asOpaqueType } from "@typeberry/utils";
-import {fromJson} from "@typeberry/block-json";
 
 export namespace commonFromJson {
   export function bytes32<TInto extends Bytes<32>>() {

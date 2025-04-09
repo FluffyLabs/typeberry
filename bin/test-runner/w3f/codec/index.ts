@@ -1,14 +1,14 @@
+import { Header } from "@typeberry/block";
 import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "@typeberry/block/assurances";
 import { Block, Extrinsic } from "@typeberry/block/block";
+import { DisputesExtrinsic } from "@typeberry/block/disputes";
+import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "@typeberry/block/guarantees";
+import { type PreimagesExtrinsic, preimagesExtrinsicCodec } from "@typeberry/block/preimage";
+import { RefineContext } from "@typeberry/block/refine-context";
+import { type TicketsExtrinsic, ticketsExtrinsicCodec } from "@typeberry/block/tickets";
+import { WorkReport } from "@typeberry/block/work-report";
+import { WorkResult } from "@typeberry/block/work-result";
 import { runCodecTest } from "./common";
-import {DisputesExtrinsic} from "@typeberry/block/disputes";
-import {GuaranteesExtrinsic, guaranteesExtrinsicCodec} from "@typeberry/block/guarantees";
-import {Header} from "@typeberry/block";
-import {PreimagesExtrinsic, preimagesExtrinsicCodec} from "@typeberry/block/preimage";
-import {RefineContext} from "@typeberry/block/refine-context";
-import {TicketsExtrinsic, ticketsExtrinsicCodec} from "@typeberry/block/tickets";
-import {WorkReport} from "@typeberry/block/work-report";
-import {WorkResult} from "@typeberry/block/work-result";
 
 export async function runAssurancesExtrinsicTest(test: AssurancesExtrinsic, file: string) {
   runCodecTest(assurancesExtrinsicCodec, test, file);

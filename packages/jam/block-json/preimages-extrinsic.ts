@@ -11,4 +11,3 @@ const preimageFromJson = json.object<Preimage>(
 );
 
 export const preimagesExtrinsicFromJson = json.array(preimageFromJson);
-

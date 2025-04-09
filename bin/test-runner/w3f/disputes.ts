@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { type Ed25519Key, type TimeSlot, type WorkReportHash, tryAsPerValidator } from "@typeberry/block";
+import { disputesExtrinsicFromJson, fromJson } from "@typeberry/block-json";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
 import type { ChainSpec } from "@typeberry/config";
 import { Disputes, type DisputesState } from "@typeberry/disputes";
@@ -7,7 +8,6 @@ import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code"
 import { type FromJson, json } from "@typeberry/json-parser";
 import { type AvailabilityAssignment, DisputesRecords, type ValidatorData, tryAsPerCore } from "@typeberry/state";
 import { TestAvailabilityAssignment, commonFromJson, getChainSpec } from "./common-types";
-import {disputesExtrinsicFromJson, fromJson} from "@typeberry/block-json";
 
 class DisputesOutputMarks {
   static fromJson: FromJson<DisputesOutputMarks> = {

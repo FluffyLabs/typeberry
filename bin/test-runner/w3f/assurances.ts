@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { type HeaderHash, type TimeSlot, tryAsPerValidator } from "@typeberry/block";
+import { getAssurancesExtrinsicFromJson, workReportFromJson } from "@typeberry/block-json";
 import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "@typeberry/block/assurances";
 import type { WorkReport } from "@typeberry/block/work-report";
 import { Decoder, Encoder } from "@typeberry/codec";
@@ -14,7 +15,6 @@ import {
 } from "@typeberry/transition/assurances";
 import { Result, deepEqual } from "@typeberry/utils";
 import { TestAvailabilityAssignment, commonFromJson } from "./common-types";
-import {getAssurancesExtrinsicFromJson, workReportFromJson} from "@typeberry/block-json";
 
 class Input {
   assurances!: AssurancesExtrinsic;

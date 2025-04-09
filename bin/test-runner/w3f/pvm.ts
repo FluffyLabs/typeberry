@@ -1,4 +1,5 @@
 import assert from "node:assert";
+import { fromJson } from "@typeberry/block-json";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Interpreter } from "@typeberry/pvm-interpreter";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
@@ -9,7 +10,6 @@ import { getPageNumber } from "@typeberry/pvm-interpreter/memory/memory-utils";
 import { type PageNumber, tryAsPageNumber } from "@typeberry/pvm-interpreter/memory/pages/page-utils";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { Status } from "@typeberry/pvm-interpreter/status";
-import {fromJson} from "@typeberry/block-json";
 
 class MemoryChunkItem {
   static fromJson: FromJson<MemoryChunkItem> = {

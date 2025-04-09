@@ -1,8 +1,34 @@
+import {
+  blockFromJson,
+  disputesExtrinsicFromJson,
+  getAssurancesExtrinsicFromJson,
+  getExtrinsicFromJson,
+  guaranteesExtrinsicFromJson,
+  headerFromJson,
+  preimagesExtrinsicFromJson,
+  refineContextFromJson,
+  ticketsExtrinsicFromJson,
+  workReportFromJson,
+  workResultFromJson,
+} from "@typeberry/block-json";
 import { tinyChainSpec } from "@typeberry/config";
 import { logger, main, runner } from "./common";
 import { AccumulateTest, runAccumulateTest } from "./w3f/accumulate";
 import { AssurancesTestFull, AssurancesTestTiny, runAssurancesTestFull, runAssurancesTestTiny } from "./w3f/assurances";
 import { AuthorizationsTest, runAuthorizationsTest } from "./w3f/authorizations";
+import {
+  runAssurancesExtrinsicTest,
+  runBlockTest,
+  runDisputesExtrinsicTest,
+  runExtrinsicTest,
+  runGuaranteesExtrinsicTest,
+  runHeaderTest,
+  runPreimagesExtrinsicTest,
+  runRefineContextTest,
+  runTicketsExtrinsicTest,
+  runWorkReportTest,
+  runWorkResultTest,
+} from "./w3f/codec";
 import { runWorkItemTest, workItemFromJson } from "./w3f/codec/work-item";
 import { runWorkPackageTest, workPackageFromJson } from "./w3f/codec/work-package";
 import { DisputesTest, runDisputesTest } from "./w3f/disputes";
@@ -28,8 +54,6 @@ import { JsonSchema, ignoreSchemaFiles } from "./w3f/schema";
 import { runShufflingTests, shufflingTests } from "./w3f/shuffling";
 import { StatisticsTestFull, StatisticsTestTiny, runStatisticsTestFull, runStatisticsTestTiny } from "./w3f/statistics";
 import { runTrieTest, trieTestSuiteFromJson } from "./w3f/trie";
-import {blockFromJson, disputesExtrinsicFromJson, getAssurancesExtrinsicFromJson, getExtrinsicFromJson, guaranteesExtrinsicFromJson, headerFromJson, preimagesExtrinsicFromJson, refineContextFromJson, ticketsExtrinsicFromJson, workReportFromJson, workResultFromJson} from "@typeberry/block-json";
-import {runAssurancesExtrinsicTest, runBlockTest, runDisputesExtrinsicTest, runExtrinsicTest, runGuaranteesExtrinsicTest, runHeaderTest, runPreimagesExtrinsicTest, runRefineContextTest, runTicketsExtrinsicTest, runWorkReportTest, runWorkResultTest} from "./w3f/codec";
 
 const runners = [
   runner("accumulate", AccumulateTest.fromJson, runAccumulateTest),

@@ -1,4 +1,5 @@
 import type { EntropyHash, TimeSlot } from "@typeberry/block";
+import { workReportFromJson } from "@typeberry/block-json";
 import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { Service } from "@typeberry/state";
@@ -10,7 +11,6 @@ import {
   type AccumulateState,
 } from "@typeberry/transition/accumulate";
 import { TestAccountItem, commonFromJson, getChainSpec } from "./common-types";
-import {workReportFromJson} from "@typeberry/block-json";
 
 class Input {
   static fromJson: FromJson<Input> = {

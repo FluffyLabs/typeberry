@@ -1,5 +1,5 @@
 import { type ServiceId, type StateRootHash, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
-import {fromJson} from "@typeberry/block-json";
+import { fromJson } from "@typeberry/block-json";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, type Descriptor, codec } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";

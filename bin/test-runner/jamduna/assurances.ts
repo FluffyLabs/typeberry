@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import type { Block } from "@typeberry/block";
+import { blockFromJson } from "@typeberry/block-json";
 import { tinyChainSpec } from "@typeberry/config";
 import type { FromJson } from "@typeberry/json-parser";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import { TestState, loadState } from "./stateLoader";
-import {blockFromJson} from "@typeberry/block-json";
 
 export class AssurancesStateTransition {
   static fromJson: FromJson<AssurancesStateTransition> = {

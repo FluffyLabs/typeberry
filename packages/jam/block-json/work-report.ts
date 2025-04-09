@@ -6,10 +6,10 @@ import type { WorkResult } from "@typeberry/block/work-result";
 import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
+import type { JsonObject } from "../../../bin/test-runner/json-format";
 import { fromJson } from "./common";
 import { refineContextFromJson } from "./refine-context";
 import { workResultFromJson } from "./work-result";
-import {JsonObject} from "../../../bin/test-runner/json-format";
 
 const workPackageSpecFromJson = json.object<JsonObject<WorkPackageSpec>, WorkPackageSpec>(
   {
@@ -62,4 +62,3 @@ type JsonWorkReport = {
   segment_root_lookup: WorkPackageInfo[];
   results: WorkResult[];
 };
-

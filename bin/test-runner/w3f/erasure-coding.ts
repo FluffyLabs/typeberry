@@ -1,12 +1,12 @@
 import assert from "node:assert";
 import { it } from "node:test";
 
+import { fromJson } from "@typeberry/block-json";
 import type { ExportsRootHash } from "@typeberry/block/work-report";
-import { BytesBlob } from "@typeberry/bytes";
+import type { BytesBlob } from "@typeberry/bytes";
 import { decodeData, encodeData } from "@typeberry/erasure-coding";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
-import {fromJson} from "@typeberry/block-json";
 
 export class EcTest {
   static fromJson: FromJson<EcTest> = {

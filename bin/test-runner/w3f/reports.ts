@@ -6,6 +6,7 @@ import {
   tryAsPerEpochBlock,
   tryAsPerValidator,
 } from "@typeberry/block";
+import { fromJson, guaranteesExtrinsicFromJson } from "@typeberry/block-json";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import { FixedSizeArray, HashSet } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
@@ -36,7 +37,6 @@ import {
   TestSegmentRootLookupItem,
   commonFromJson,
 } from "./common-types";
-import {fromJson, guaranteesExtrinsicFromJson} from "@typeberry/block-json";
 
 class Input {
   static fromJson: FromJson<Input> = {
