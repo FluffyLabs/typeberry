@@ -3,9 +3,9 @@ import type { CodeHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { ValidatorData } from "@typeberry/state";
-import { fromJson } from "./codec/common";
 import { commonFromJson } from "./common-types";
 import { Memory, ServiceAccount } from "./host-calls-general";
+import {fromJson} from "@typeberry/block-json";
 
 namespace localFromJson {
   export const bytes32 = <T extends Bytes<32>>() =>

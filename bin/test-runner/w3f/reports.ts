@@ -29,8 +29,6 @@ import {
 } from "@typeberry/transition/reports";
 import { guaranteesAsView } from "@typeberry/transition/reports/test.utils";
 import { Result, asOpaqueType, deepEqual } from "@typeberry/utils";
-import { fromJson as codecFromJson } from "./codec/common";
-import { guaranteesExtrinsicFromJson } from "./codec/guarantees-extrinsic";
 import {
   TestAccountItem,
   TestAvailabilityAssignment,
@@ -38,6 +36,7 @@ import {
   TestSegmentRootLookupItem,
   commonFromJson,
 } from "./common-types";
+import {fromJson, guaranteesExtrinsicFromJson} from "@typeberry/block-json";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -64,8 +63,8 @@ class TestState {
     curr_validators: json.array(commonFromJson.validatorData),
     prev_validators: json.array(commonFromJson.validatorData),
     entropy: json.array(commonFromJson.bytes32()),
-    offenders: json.array(codecFromJson.bytes32<Ed25519Key>()),
-    auth_pools: ["array", json.array(codecFromJson.bytes32())],
+    offenders: json.array(fromJson.bytes32<Ed25519Key>()),
+    auth_pools: ["array", json.array(fromJson.bytes32())],
     recent_blocks: json.array(TestBlockState.fromJson),
     accounts: json.array(TestAccountItem.fromJson),
   };
@@ -131,7 +130,7 @@ class OutputData {
   static fromJson = json.object<OutputData, ReportsOutput>(
     {
       reported: json.array(TestSegmentRootLookupItem.fromJson),
-      reporters: json.array(codecFromJson.bytes32()),
+      reporters: json.array(fromJson.bytes32()),
     },
     ({ reported, reporters }) => ({
       reported,

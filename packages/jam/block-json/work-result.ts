@@ -5,7 +5,7 @@ import { BytesBlob } from "@typeberry/bytes";
 import type { OpaqueHash } from "@typeberry/hash";
 import { json } from "@typeberry/json-parser";
 import { tryAsU32 } from "@typeberry/numbers";
-import { fromJson, runCodecTest } from "./common";
+import { fromJson } from "./common";
 
 // TODO [ToDr] Introduce fromJson.union?
 const workExecResultFromJson = json.object<JsonWorkExecResult, WorkExecResult>(
@@ -67,7 +67,3 @@ type JsonWorkResult = {
   accumulate_gas: number;
   result: WorkExecResult;
 };
-
-export async function runWorkResultTest(test: WorkResult, file: string) {
-  runCodecTest(WorkResult.Codec, test, file);
-}

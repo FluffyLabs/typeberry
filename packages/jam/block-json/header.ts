@@ -16,7 +16,7 @@ import { Ticket } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { json, parseFromJson } from "@typeberry/json-parser";
-import { fromJson, runCodecTest } from "./common";
+import { fromJson } from "./common";
 
 const bandersnatchVrfSignature = json.fromString((v) => Bytes.parseBytes(v, 96) as BandersnatchVrfSignature);
 
@@ -36,6 +36,7 @@ class ValidatorData {
     public readonly ed25519: Ed25519Key,
   ) {}
 }
+
 const epochMarkValidatorDataFromJson = json.fromAny<BandersnatchKey>((x, context) => {
   if (typeof x === "string") {
     return parseFromJson(x, fromJson.bytes32(), context);
@@ -121,7 +122,3 @@ export const headerFromJson = json.object<JsonHeader, Header>(
     return header;
   },
 );
-
-export async function runHeaderTest(test: Header, file: string) {
-  runCodecTest(Header.Codec, test, file);
-}

@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { fromJson } from "./codec/common";
+import {fromJson} from "@typeberry/block-json";
 
 class MemoryPage {
   static fromJson: FromJson<MemoryPage> = {

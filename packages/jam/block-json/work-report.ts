@@ -6,10 +6,10 @@ import type { WorkResult } from "@typeberry/block/work-result";
 import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
-import type { JsonObject } from "../../json-format";
-import { fromJson, runCodecTest } from "./common";
+import { fromJson } from "./common";
 import { refineContextFromJson } from "./refine-context";
 import { workResultFromJson } from "./work-result";
+import {JsonObject} from "../../../bin/test-runner/json-format";
 
 const workPackageSpecFromJson = json.object<JsonObject<WorkPackageSpec>, WorkPackageSpec>(
   {
@@ -63,6 +63,3 @@ type JsonWorkReport = {
   results: WorkResult[];
 };
 
-export async function runWorkReportTest(test: WorkReport, file: string) {
-  runCodecTest(WorkReport.Codec, test, file);
-}

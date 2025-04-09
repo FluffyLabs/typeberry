@@ -13,9 +13,8 @@ import {
   type AssurancesState,
 } from "@typeberry/transition/assurances";
 import { Result, deepEqual } from "@typeberry/utils";
-import { getAssurancesExtrinsicFromJson } from "./codec/assurances-extrinsic";
-import { workReportFromJson } from "./codec/work-report";
 import { TestAvailabilityAssignment, commonFromJson } from "./common-types";
+import {getAssurancesExtrinsicFromJson, workReportFromJson} from "@typeberry/block-json";
 
 class Input {
   assurances!: AssurancesExtrinsic;

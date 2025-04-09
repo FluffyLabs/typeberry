@@ -9,8 +9,8 @@ import {
   type AccumulateRoot,
   type AccumulateState,
 } from "@typeberry/transition/accumulate";
-import { workReportFromJson } from "./codec/work-report";
 import { TestAccountItem, commonFromJson, getChainSpec } from "./common-types";
+import {workReportFromJson} from "@typeberry/block-json";
 
 class Input {
   static fromJson: FromJson<Input> = {

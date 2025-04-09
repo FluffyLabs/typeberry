@@ -9,8 +9,8 @@ import type { U32 } from "@typeberry/numbers";
 import { LookupHistoryItem, tryAsLookupHistorySlots } from "@typeberry/state";
 import { type Account, Preimages, type PreimagesErrorCode } from "@typeberry/transition";
 import { Result } from "@typeberry/utils";
-import { preimagesExtrinsicFromJson } from "./codec/preimages-extrinsic";
 import { commonFromJson } from "./common-types";
+import {preimagesExtrinsicFromJson} from "@typeberry/block-json";
 
 class Input {
   static fromJson: FromJson<Input> = {

@@ -6,13 +6,12 @@ import { Disputes, type DisputesState } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { type AvailabilityAssignment, DisputesRecords, type ValidatorData, tryAsPerCore } from "@typeberry/state";
-import { fromJson as codecFromJson } from "./codec/common";
-import { disputesExtrinsicFromJson } from "./codec/disputes-extrinsic";
 import { TestAvailabilityAssignment, commonFromJson, getChainSpec } from "./common-types";
+import {disputesExtrinsicFromJson, fromJson} from "@typeberry/block-json";
 
 class DisputesOutputMarks {
   static fromJson: FromJson<DisputesOutputMarks> = {
-    offenders_mark: json.array(codecFromJson.bytes32<Ed25519Key>()),
+    offenders_mark: json.array(fromJson.bytes32<Ed25519Key>()),
   };
 
   offenders_mark!: Ed25519Key[];
@@ -20,10 +19,10 @@ class DisputesOutputMarks {
 
 class TestDisputesRecords {
   static fromJson: FromJson<TestDisputesRecords> = {
-    good: json.array(codecFromJson.bytes32<WorkReportHash>()),
-    bad: json.array(codecFromJson.bytes32<WorkReportHash>()),
-    wonky: json.array(codecFromJson.bytes32<WorkReportHash>()),
-    offenders: json.array(codecFromJson.bytes32<Ed25519Key>()),
+    good: json.array(fromJson.bytes32<WorkReportHash>()),
+    bad: json.array(fromJson.bytes32<WorkReportHash>()),
+    wonky: json.array(fromJson.bytes32<WorkReportHash>()),
+    offenders: json.array(fromJson.bytes32<Ed25519Key>()),
   };
 
   /**

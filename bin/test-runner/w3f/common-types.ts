@@ -40,13 +40,7 @@ import {
 } from "@typeberry/state";
 import { Bytes, BytesBlob } from "@typeberry/trie";
 import { asOpaqueType } from "@typeberry/utils";
-import { fromJson as codecFromJson } from "./codec/common";
-
-/***
- * POTRZEBUJE WCZYTYWANIE JSONÓW PRZESUNĄĆ DO JAKIEJŚ PACZKI.
- *
- * packages/jam/block-json ?
- */
+import {fromJson} from "@typeberry/block-json";
 
 export namespace commonFromJson {
   export function bytes32<TInto extends Bytes<32>>() {
@@ -89,8 +83,8 @@ class TestResult {
   static fromJson = json.object<TestResult, WorkResult>(
     {
       service_id: "number",
-      code_hash: codecFromJson.bytes32(),
-      payload_hash: codecFromJson.bytes32(),
+      code_hash: fromJson.bytes32(),
+      payload_hash: fromJson.bytes32(),
       accumulate_gas: json.fromNumber((x) => asOpaqueType(tryAsU64(x))),
       result: TestWorkExecResult.fromJson,
     },
@@ -109,10 +103,10 @@ class TestResult {
 class TestPackageSpec {
   static fromJson = json.object<TestPackageSpec, WorkPackageSpec>(
     {
-      hash: codecFromJson.bytes32(),
+      hash: fromJson.bytes32(),
       length: "number",
-      erasure_root: codecFromJson.bytes32(),
-      exports_root: codecFromJson.bytes32(),
+      erasure_root: fromJson.bytes32(),
+      exports_root: fromJson.bytes32(),
       exports_count: "number",
     },
     ({ hash, length, erasure_root, exports_root, exports_count }) => {
@@ -130,12 +124,12 @@ class TestPackageSpec {
 class TestContext {
   static fromJson = json.object<TestContext, RefineContext>(
     {
-      anchor: codecFromJson.bytes32(),
-      state_root: codecFromJson.bytes32(),
-      beefy_root: codecFromJson.bytes32(),
-      lookup_anchor: codecFromJson.bytes32(),
+      anchor: fromJson.bytes32(),
+      state_root: fromJson.bytes32(),
+      beefy_root: fromJson.bytes32(),
+      lookup_anchor: fromJson.bytes32(),
       lookup_anchor_slot: "number",
-      prerequisites: json.array(codecFromJson.bytes32()),
+      prerequisites: json.array(fromJson.bytes32()),
     },
     ({ anchor, state_root, beefy_root, lookup_anchor, lookup_anchor_slot, prerequisites }) => {
       return new RefineContext(anchor, state_root, beefy_root, lookup_anchor, lookup_anchor_slot, prerequisites);
@@ -153,8 +147,8 @@ class TestContext {
 export class TestSegmentRootLookupItem {
   static fromJson = json.object<TestSegmentRootLookupItem, WorkPackageInfo>(
     {
-      work_package_hash: codecFromJson.bytes32(),
-      segment_tree_root: codecFromJson.bytes32(),
+      work_package_hash: fromJson.bytes32(),
+      segment_tree_root: fromJson.bytes32(),
     },
     ({ work_package_hash, segment_tree_root }) => new WorkPackageInfo(work_package_hash, segment_tree_root),
   );
@@ -169,7 +163,7 @@ export class TestWorkReport {
       package_spec: TestPackageSpec.fromJson,
       context: TestContext.fromJson,
       core_index: "number",
-      authorizer_hash: codecFromJson.bytes32(),
+      authorizer_hash: fromJson.bytes32(),
       auth_output: json.fromString(BytesBlob.parseBlob),
       segment_root_lookup: json.array(TestSegmentRootLookupItem.fromJson),
       results: json.array(TestResult.fromJson),

@@ -4,7 +4,8 @@ import { BytesBlob } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
 import type { U16 } from "@typeberry/numbers";
 import type { JsonObject } from "../../json-format";
-import { fromJson, runCodecTest } from "./common";
+import { runCodecTest } from "./common";
+import {fromJson} from "@typeberry/block-json";
 
 const importSpecFromJson = json.object<JsonObject<ImportSpec>, ImportSpec>(
   {

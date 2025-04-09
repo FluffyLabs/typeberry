@@ -3,19 +3,8 @@ import { logger, main, runner } from "./common";
 import { AccumulateTest, runAccumulateTest } from "./w3f/accumulate";
 import { AssurancesTestFull, AssurancesTestTiny, runAssurancesTestFull, runAssurancesTestTiny } from "./w3f/assurances";
 import { AuthorizationsTest, runAuthorizationsTest } from "./w3f/authorizations";
-import { getAssurancesExtrinsicFromJson, runAssurancesExtrinsicTest } from "./w3f/codec/assurances-extrinsic";
-import { blockFromJson, runBlockTest } from "./w3f/codec/block";
-import { disputesExtrinsicFromJson, runDisputesExtrinsicTest } from "./w3f/codec/disputes-extrinsic";
-import { getExtrinsicFromJson, runExtrinsicTest } from "./w3f/codec/extrinsic";
-import { guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest } from "./w3f/codec/guarantees-extrinsic";
-import { headerFromJson, runHeaderTest } from "./w3f/codec/header";
-import { preimagesExtrinsicFromJson, runPreimagesExtrinsicTest } from "./w3f/codec/preimages-extrinsic";
-import { refineContextFromJson, runRefineContextTest } from "./w3f/codec/refine-context";
-import { runTicketsExtrinsicTest, ticketsExtrinsicFromJson } from "./w3f/codec/tickets-extrinsic";
 import { runWorkItemTest, workItemFromJson } from "./w3f/codec/work-item";
 import { runWorkPackageTest, workPackageFromJson } from "./w3f/codec/work-package";
-import { runWorkReportTest, workReportFromJson } from "./w3f/codec/work-report";
-import { runWorkResultTest, workResultFromJson } from "./w3f/codec/work-result";
 import { DisputesTest, runDisputesTest } from "./w3f/disputes";
 import {
   EcTest,
@@ -39,6 +28,8 @@ import { JsonSchema, ignoreSchemaFiles } from "./w3f/schema";
 import { runShufflingTests, shufflingTests } from "./w3f/shuffling";
 import { StatisticsTestFull, StatisticsTestTiny, runStatisticsTestFull, runStatisticsTestTiny } from "./w3f/statistics";
 import { runTrieTest, trieTestSuiteFromJson } from "./w3f/trie";
+import {blockFromJson, disputesExtrinsicFromJson, getAssurancesExtrinsicFromJson, getExtrinsicFromJson, guaranteesExtrinsicFromJson, headerFromJson, preimagesExtrinsicFromJson, refineContextFromJson, ticketsExtrinsicFromJson, workReportFromJson, workResultFromJson} from "@typeberry/block-json";
+import {runAssurancesExtrinsicTest, runBlockTest, runDisputesExtrinsicTest, runExtrinsicTest, runGuaranteesExtrinsicTest, runHeaderTest, runPreimagesExtrinsicTest, runRefineContextTest, runTicketsExtrinsicTest, runWorkReportTest, runWorkResultTest} from "./w3f/codec";
 
 const runners = [
   runner("accumulate", AccumulateTest.fromJson, runAccumulateTest),
@@ -46,7 +37,7 @@ const runners = [
   runner("assurances/full", AssurancesTestFull.fromJson, runAssurancesTestFull),
   runner("authorizations", AuthorizationsTest.fromJson, runAuthorizationsTest),
   runner("codec/assurances_extrinsic", getAssurancesExtrinsicFromJson(tinyChainSpec), runAssurancesExtrinsicTest),
-  runner("codec/block", blockFromJson, runBlockTest),
+  runner("codec/block", blockFromJson(tinyChainSpec), runBlockTest),
   runner("codec/disputes_extrinsic", disputesExtrinsicFromJson, runDisputesExtrinsicTest),
   runner("codec/extrinsic", getExtrinsicFromJson(tinyChainSpec), runExtrinsicTest),
   runner("codec/guarantees_extrinsic", guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest),

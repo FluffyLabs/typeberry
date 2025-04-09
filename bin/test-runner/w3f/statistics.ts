@@ -6,8 +6,8 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import type { U32 } from "@typeberry/numbers";
 import { ActivityRecord, type ValidatorData } from "@typeberry/state";
 import { Statistics, type StatisticsState } from "@typeberry/transition/statistics";
-import { getExtrinsicFromJson } from "./codec/extrinsic";
 import { commonFromJson } from "./common-types";
+import {getExtrinsicFromJson} from "@typeberry/block-json";
 
 class TinyInput {
   static fromJson: FromJson<TinyInput> = {

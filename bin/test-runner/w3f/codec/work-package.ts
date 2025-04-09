@@ -5,9 +5,9 @@ import { WorkPackage, tryAsWorkItemsCount } from "@typeberry/block/work-package"
 import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { fromJson, runCodecTest } from "./common";
-import { refineContextFromJson } from "./refine-context";
+import { runCodecTest } from "./common";
 import { workItemFromJson } from "./work-item";
+import {fromJson, refineContextFromJson} from "@typeberry/block-json";
 
 type Authorizer = {
   code_hash: CodeHash;
