@@ -1,6 +1,5 @@
 import { BytesBlob } from "@typeberry/bytes";
-import { tryAsU32 } from "@typeberry/numbers";
-import { type HostCallHandler, type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
+import { type HostCallHandler, PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import {
   type GasCounter,
   type Memory,
@@ -8,19 +7,19 @@ import {
   tryAsMemoryIndex,
   tryAsSmallGas,
 } from "@typeberry/pvm-interpreter";
-import { LegacyHostCallResult } from "../results";
+import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import type { RefineExternalities } from "./refine-externalities";
+import { type RefineExternalities, tryAsProgramCounter } from "./refine-externalities";
 
 const IN_OUT_REG = 7;
 
 /**
- * Start a nested PVM instance with given program code and entrypoint (program counter).
+ * Initiate a PVM instance with given program code and entrypoint (program counter).
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/349902349902
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/353b00353b00?v=0.6.4
  */
 export class Machine implements HostCallHandler {
-  index = tryAsHostCallIndex(18);
+  index = tryAsHostCallIndex(20);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
@@ -32,18 +31,20 @@ export class Machine implements HostCallHandler {
     // `p_z`: length of the program code
     const codeLength = regs.getU32(8);
     // `i`: starting program counter
-    const entrypoint = tryAsU32(regs.getU32(9));
+    const entrypoint = tryAsProgramCounter(regs.getU64(9));
 
     const code = new Uint8Array(codeLength);
     const codePageFault = memory.loadInto(code, codeStart);
-    // we return OOB in case the program code couldn't be read
     if (codePageFault !== null) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
-      return;
+      return PvmExecution.Panic;
     }
 
-    const machineId = await this.refine.machineStart(BytesBlob.blobFrom(code), entrypoint);
-    regs.setU64(IN_OUT_REG, machineId);
-    return;
+    // NOTE: Highly unlikely, but machineId could potentially collide with HOST_CALL_RESULT.
+    const machinInitResult = await this.refine.machineInit(BytesBlob.blobFrom(code), entrypoint);
+    if (machinInitResult.isError) {
+      regs.setU64(IN_OUT_REG, HostCallResult.HUH);
+    } else {
+      regs.setU64(IN_OUT_REG, machinInitResult.ok);
+    }
   }
 }

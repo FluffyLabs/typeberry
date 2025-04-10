@@ -2,42 +2,46 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { type Blake2bHash, blake2b } from "@typeberry/hash";
+import type { Blake2bHash } from "@typeberry/hash";
+import { PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { LegacyHostCallResult } from "../results";
+import { HostCallResult } from "../results";
 import { HistoricalLookup } from "./historical-lookup";
 import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));
 const SERVICE_ID_REG = 7;
 const RESULT_REG = SERVICE_ID_REG;
-const KEY_START_REG = 8;
+const HASH_START_REG = 8;
 const DEST_START_REG = 9;
-const DEST_LEN_REG = 10;
+const DEST_OFFSET_REG = 10;
+const DEST_LEN_REG = 11;
 
 function prepareRegsAndMemory(
   serviceId: ServiceId,
-  key: Blake2bHash,
+  hash: Blake2bHash,
+  offset: number,
   destinationLength: number,
-  { skipKey = false, skipValue = false }: { skipKey?: boolean; skipValue?: boolean } = {},
+  { skipHash = false, writableMemory = true }: { skipHash?: boolean; writableMemory?: boolean } = {},
 ) {
-  const keyAddress = 2 ** 16;
+  const hashAddress = 2 ** 16;
   const memStart = 2 ** 20;
   const registers = new Registers();
   registers.setU32(SERVICE_ID_REG, serviceId);
-  registers.setU32(KEY_START_REG, keyAddress);
+  registers.setU32(HASH_START_REG, hashAddress);
   registers.setU32(DEST_START_REG, memStart);
+  registers.setU32(DEST_OFFSET_REG, offset);
   registers.setU32(DEST_LEN_REG, destinationLength);
 
   const builder = new MemoryBuilder();
-  if (!skipKey) {
-    builder.setReadablePages(tryAsMemoryIndex(keyAddress), tryAsMemoryIndex(keyAddress + PAGE_SIZE), key.raw);
+  if (!skipHash) {
+    builder.setReadablePages(tryAsMemoryIndex(hashAddress), tryAsMemoryIndex(hashAddress + PAGE_SIZE), hash.raw);
   }
-  if (!skipValue) {
+  if (writableMemory) {
     builder.setWriteablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE));
   }
   const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
@@ -57,15 +61,17 @@ describe("HostCalls: Historical Lookup", () => {
     const refine = new TestRefineExt();
     const lookup = new HistoricalLookup(refine);
     const serviceId = tryAsServiceId(10_000);
-    const key = Bytes.fill(32, 3);
-    const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 64);
-    refine.historicalLookupData.set(BytesBlob.blobFromString("hello world"), serviceId, blake2b.hashBytes(key));
+    const hash = Bytes.fill(32, 3);
+    const data = "hello world";
+    const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, hash, 0, 64);
+    refine.historicalLookupData.set(BytesBlob.blobFromString(data), serviceId, hash);
 
     // when
-    await lookup.execute(gas, registers, memory);
+    const result = await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), "hello world".length);
+    assert.strictEqual(result, undefined);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), data.length);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x68656c6c6f20776f726c640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -76,108 +82,145 @@ describe("HostCalls: Historical Lookup", () => {
     const refine = new TestRefineExt();
     const lookup = new HistoricalLookup(refine);
     const serviceId = tryAsServiceId(10_000);
-    const key = Bytes.fill(32, 3);
-    const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 3);
-    refine.historicalLookupData.set(BytesBlob.blobFromString("hello world"), serviceId, blake2b.hashBytes(key));
+    const hash = Bytes.fill(32, 3);
+    const data = "hello world";
+    const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, hash, 0, 3);
+    refine.historicalLookupData.set(BytesBlob.blobFromString(data), serviceId, hash);
 
     // when
-    await lookup.execute(gas, registers, memory);
+    const result = await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), "hello world".length);
+    assert.strictEqual(result, undefined);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), data.length);
     assert.deepStrictEqual(readResult().toString(), "0x68656c");
+  });
+
+  it("should lookup key longer than destination + offset", async () => {
+    const refine = new TestRefineExt();
+    const lookup = new HistoricalLookup(refine);
+    const serviceId = tryAsServiceId(10_000);
+    const hash = Bytes.fill(32, 3);
+    const data = "hello world";
+    const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, hash, 4, 3);
+    refine.historicalLookupData.set(BytesBlob.blobFromString(data), serviceId, hash);
+
+    // when
+    const result = await lookup.execute(gas, registers, memory);
+
+    // then
+    assert.strictEqual(result, undefined);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), data.length);
+    assert.deepStrictEqual(readResult().toString(), "0x6f2077");
   });
 
   it("should handle missing value", async () => {
     const refine = new TestRefineExt();
     const lookup = new HistoricalLookup(refine);
     const serviceId = tryAsServiceId(10_000);
-    const key = Bytes.fill(32, 3);
-    const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 32);
-    refine.historicalLookupData.set(null, serviceId, blake2b.hashBytes(key));
+    const hash = Bytes.fill(32, 3);
+    const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, hash, 0, 32);
+    refine.historicalLookupData.set(null, serviceId, hash);
 
     // when
-    await lookup.execute(gas, registers, memory);
+    const result = await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.NONE);
+    assert.strictEqual(result, undefined);
+    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.NONE);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x0000000000000000000000000000000000000000000000000000000000000000",
     );
   });
 
-  it("should fail if there is no memory for key", async () => {
+  it("should panic if no memory for key", async () => {
     const refine = new TestRefineExt();
     const lookup = new HistoricalLookup(refine);
     const serviceId = tryAsServiceId(10_000);
-    const key = Bytes.fill(32, 3);
-    const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32, { skipKey: true });
+    const hash = Bytes.fill(32, 3);
+    const { registers, memory } = prepareRegsAndMemory(serviceId, hash, 0, 32, { skipHash: true });
 
     // when
-    await lookup.execute(gas, registers, memory);
+    const result = await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.strictEqual(result, PvmExecution.Panic);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), serviceId);
   });
 
-  it("should fail if there is no memory for result", async () => {
+  it("should panic if memory is not writable", async () => {
     const refine = new TestRefineExt();
     const lookup = new HistoricalLookup(refine);
     const serviceId = tryAsServiceId(10_000);
-    const key = Bytes.fill(32, 3);
-    const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32, { skipValue: true });
+    const hash = Bytes.fill(32, 3);
+    const data = "hello world";
+    const { registers, memory } = prepareRegsAndMemory(serviceId, hash, 0, 32, { writableMemory: false });
+    refine.historicalLookupData.set(BytesBlob.blobFromString(data), serviceId, hash);
 
     // when
-    await lookup.execute(gas, registers, memory);
+    const result = await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.strictEqual(result, PvmExecution.Panic);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), serviceId);
   });
 
-  it("should fail if the destination is not fully writeable", async () => {
+  it("should handle if the destination length is greater than data length", async () => {
     const refine = new TestRefineExt();
     const lookup = new HistoricalLookup(refine);
     const serviceId = tryAsServiceId(10_000);
-    const key = Bytes.fill(32, 3);
-    const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
+    const hash = Bytes.fill(32, 3);
+    const data = "hello world";
+    const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, hash, 0, 32);
+    refine.historicalLookupData.set(BytesBlob.blobFromString(data), serviceId, hash);
     registers.setU32(DEST_LEN_REG, PAGE_SIZE + 1);
 
     // when
-    await lookup.execute(gas, registers, memory);
+    const result = await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.strictEqual(result, undefined);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), data.length);
+    assert.deepStrictEqual(
+      readResult().toString(),
+      "0x68656c6c6f20776f726c64000000000000000000000000000000000000000000",
+    );
   });
 
-  it("should fail gracefuly if the destination is beyond mem limit", async () => {
+  it("should panic if the destination is beyond mem limit", async () => {
     const refine = new TestRefineExt();
     const lookup = new HistoricalLookup(refine);
     const serviceId = tryAsServiceId(10_000);
-    const key = Bytes.fill(32, 3);
-    const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
+    const hash = Bytes.fill(32, 3);
+    const data = "hello world";
+    const { registers, memory } = prepareRegsAndMemory(serviceId, hash, 0, 32);
+    refine.historicalLookupData.set(BytesBlob.blobFromString(data), serviceId, hash);
     registers.setU32(DEST_START_REG, 2 ** 32 - 1);
     registers.setU32(DEST_LEN_REG, 2 ** 10);
 
     // when
-    await lookup.execute(gas, registers, memory);
+    const result = await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.strictEqual(result, PvmExecution.Panic);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), serviceId);
   });
 
   it("should handle 0-length destination", async () => {
     const refine = new TestRefineExt();
     const lookup = new HistoricalLookup(refine);
     const serviceId = tryAsServiceId(10_000);
-    const key = Bytes.fill(32, 3);
-    const { registers, memory } = prepareRegsAndMemory(serviceId, key, 0, { skipValue: true });
-    refine.historicalLookupData.set(BytesBlob.blobFromString("hello world"), serviceId, blake2b.hashBytes(key));
+    const hash = Bytes.fill(32, 3);
+    const data = "hello world";
+    const { registers, memory } = prepareRegsAndMemory(serviceId, hash, 0, 0);
+    refine.historicalLookupData.set(BytesBlob.blobFromString(data), serviceId, hash);
 
     // when
-    await lookup.execute(gas, registers, memory);
+    const result = await lookup.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), "hello world".length);
+    assert.strictEqual(result, undefined);
+    assert.deepStrictEqual(registers.getU32(RESULT_REG), data.length);
   });
 });

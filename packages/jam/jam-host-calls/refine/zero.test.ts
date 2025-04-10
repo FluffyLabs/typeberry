@@ -5,65 +5,13 @@ import { tryAsU32 } from "@typeberry/numbers";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { OK, Result } from "@typeberry/utils";
-import { LegacyHostCallResult } from "../results";
+import { HostCallResult } from "../results";
 import { type MachineId, NoMachineError, tryAsMachineId } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
 import { Zero } from "./zero";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
-
-describe("HostCalls: Zero", () => {
-  it("should zero memory", async () => {
-    const { zero, registers } = prepareTest(Result.ok(OK), 10_000, 5);
-
-    // when
-    await zero.execute(gas, registers);
-
-    // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
-  });
-
-  it("should fail when page is too low", async () => {
-    const { zero, registers } = prepareTest(Result.ok(OK), 12, 5);
-
-    // when
-    await zero.execute(gas, registers);
-
-    // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
-  });
-
-  it("should fail when page is too large", async () => {
-    const { zero, registers } = prepareTest(Result.ok(OK), 2 ** 32 - 1, 12_000);
-
-    // when
-    await zero.execute(gas, registers);
-
-    // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
-  });
-
-  it("should fail when page is too large 2", async () => {
-    const { zero, registers } = prepareTest(Result.ok(OK), 2 ** 20 - 5, 5);
-
-    // when
-    await zero.execute(gas, registers);
-
-    // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
-  });
-
-  it("should fail if machine is not known", async () => {
-    const { zero, registers } = prepareTest(Result.error(NoMachineError), 10_000, 5);
-
-    // when
-    await zero.execute(gas, registers);
-
-    // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.WHO);
-  });
-});
 
 function prepareRegsAndMemory(machineId: MachineId, pageStart: number, pageCount: number) {
   const registers = new Registers();
@@ -94,3 +42,60 @@ function prepareTest(result: Result<OK, NoMachineError>, pageStart: number, page
     memory,
   };
 }
+
+describe("HostCalls: Zero", () => {
+  it("should return OK and set memory readable and zeroed", async () => {
+    const { zero, registers } = prepareTest(Result.ok(OK), 10_000, 5);
+
+    // when
+    const result = await zero.execute(gas, registers);
+
+    // then
+    assert.deepStrictEqual(result, undefined);
+    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.OK);
+  });
+
+  it("should return HUH when page is too low", async () => {
+    const { zero, registers } = prepareTest(Result.ok(OK), 12, 5);
+
+    // when
+    const result = await zero.execute(gas, registers);
+
+    // then
+    assert.deepStrictEqual(result, undefined);
+    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.HUH);
+  });
+
+  it("should return HUH when page is too large", async () => {
+    const { zero, registers } = prepareTest(Result.ok(OK), 2 ** 32 - 1, 12_000);
+
+    // when
+    const result = await zero.execute(gas, registers);
+
+    // then
+    assert.deepStrictEqual(result, undefined);
+    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.HUH);
+  });
+
+  it("should return HUH when page is too large 2", async () => {
+    const { zero, registers } = prepareTest(Result.ok(OK), 2 ** 20 - 5, 5);
+
+    // when
+    const result = await zero.execute(gas, registers);
+
+    // then
+    assert.deepStrictEqual(result, undefined);
+    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.HUH);
+  });
+
+  it("should return WHO if machine is not known", async () => {
+    const { zero, registers } = prepareTest(Result.error(NoMachineError), 10_000, 5);
+
+    // when
+    const result = await zero.execute(gas, registers);
+
+    // then
+    assert.deepStrictEqual(result, undefined);
+    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.WHO);
+  });
+});
