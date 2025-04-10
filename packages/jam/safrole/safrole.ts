@@ -313,7 +313,7 @@ export class Safrole {
     return new EpochMark(
       entropy[0],
       entropy[1],
-      nextValidators.map((validator) => new ValidatorKeys(validator.bandersnatch, validator.ed25519)),
+      nextValidators.map((validator) => ValidatorKeys.fromCodec(validator)),
     );
   }
 

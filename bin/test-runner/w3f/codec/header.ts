@@ -26,7 +26,7 @@ const validatorKeys = json.object<ValidatorKeys, ValidatorKeys>(
     bandersnatch: fromJson.bytes32<BandersnatchKey>(),
     ed25519: fromJson.bytes32<Ed25519Key>(),
   },
-  (x) => new ValidatorKeys(x.bandersnatch, x.ed25519),
+  ValidatorKeys.fromCodec,
 );
 
 type JsonEpochMarker = {
