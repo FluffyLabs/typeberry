@@ -1,10 +1,11 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import type { Extrinsic, PerValidator, TimeSlot, ValidatorIndex } from "@typeberry/block";
+import { Extrinsic, type PerValidator, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import type { AssurancesExtrinsic } from "@typeberry/block/assurances";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { TicketsExtrinsic } from "@typeberry/block/tickets";
+import { asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { ActivityData, ActivityRecord } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
@@ -12,25 +13,23 @@ import { Statistics, type StatisticsState } from "./statistics";
 
 describe("Statistics", () => {
   function getExtrinsic(overrides: Partial<Extrinsic> = {}): Extrinsic {
-    const emptyExtrinsic = {
-      assurances: [],
-      guarantees: [],
-      disputes: [],
-      preimages: [],
-      tickets: [],
-    };
-
-    return { ...emptyExtrinsic, ...overrides } as unknown as Extrinsic;
+    return Extrinsic.fromCodec({
+      assurances: overrides.assurances ?? asKnownSize([]),
+      guarantees: overrides.guarantees ?? asKnownSize([]),
+      disputes: overrides.disputes ?? asKnownSize([]),
+      preimages: overrides.preimages ?? asKnownSize([]),
+      tickets: overrides.tickets ?? asKnownSize([]),
+    });
   }
 
   function prepareData({ previousSlot, currentSlot }: { previousSlot: number; currentSlot: number }) {
-    const validatorIndex = 0 as ValidatorIndex;
+    const validatorIndex = tryAsValidatorIndex(0);
     const currentStatistics = asOpaqueType([ActivityRecord.empty()]);
     const lastStatistics = asOpaqueType([ActivityRecord.empty()]);
     const statisticsPerValidator = new ActivityData({ current: currentStatistics, previous: lastStatistics });
     const state: StatisticsState = {
       statisticsPerValidator,
-      timeslot: previousSlot as TimeSlot,
+      timeslot: tryAsTimeSlot(previousSlot),
       currentValidatorData: asOpaqueType([]),
     };
     const statistics = new Statistics(tinyChainSpec, state);
@@ -41,7 +40,7 @@ describe("Statistics", () => {
       lastStatistics,
       state,
       validatorIndex,
-      currentSlot: currentSlot as TimeSlot,
+      currentSlot: tryAsTimeSlot(currentSlot),
     };
   }
 
@@ -92,13 +91,13 @@ describe("Statistics", () => {
     const createPreimage = (blobLength: number) => ({ blob: { length: blobLength } });
 
     function prepareData({ previousSlot, currentSlot }: { previousSlot: number; currentSlot: number }) {
-      const validatorIndex = 0 as ValidatorIndex;
+      const validatorIndex = tryAsValidatorIndex(0);
       const currentStatistics: PerValidator<ActivityRecord> = asOpaqueType([ActivityRecord.empty()]);
       const lastStatistics = asOpaqueType([ActivityRecord.empty()]);
       const statisticsPerValidator = new ActivityData({ current: currentStatistics, previous: lastStatistics });
       const state: StatisticsState = {
         statisticsPerValidator,
-        timeslot: previousSlot as TimeSlot,
+        timeslot: tryAsTimeSlot(previousSlot),
         currentValidatorData: asOpaqueType([]),
       };
       const statistics = new Statistics(tinyChainSpec, state);
@@ -109,7 +108,7 @@ describe("Statistics", () => {
         lastStatistics,
         state,
         validatorIndex,
-        currentSlot: currentSlot as TimeSlot,
+        currentSlot: tryAsTimeSlot(currentSlot),
       };
     }
 
@@ -145,7 +144,7 @@ describe("Statistics", () => {
     });
 
     it("should add preimages length from extrinstic to preImages in statistics", () => {
-      const preimages = [createPreimage(0), createPreimage(0), createPreimage(0)] as unknown as PreimagesExtrinsic;
+      const preimages: PreimagesExtrinsic = asKnownSize([createPreimage(0), createPreimage(0), createPreimage(0)]);
       const extrinsic = getExtrinsic({ preimages });
       const { statistics, currentSlot, validatorIndex, currentStatistics } = prepareData({
         previousSlot: 0,
@@ -161,7 +160,7 @@ describe("Statistics", () => {
     });
 
     it("should add preimages size length from extrinstic to preImagesSize in statistics", () => {
-      const preimages = [createPreimage(1), createPreimage(2), createPreimage(3)] as unknown as PreimagesExtrinsic;
+      const preimages: PreimagesExtrinsic = asKnownSize([createPreimage(1), createPreimage(2), createPreimage(3)]);
       const extrinsic = getExtrinsic({ preimages });
       const { statistics, currentSlot, validatorIndex, currentStatistics } = prepareData({
         previousSlot: 0,
