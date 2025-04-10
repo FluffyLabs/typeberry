@@ -1,10 +1,11 @@
 import { isMainThread } from "node:worker_threads";
 import { Logger } from "@typeberry/logger";
 
-import { Config, fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import type { Finished } from "@typeberry/generic-worker";
+import { type ChainSpec, Config, fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import type { Finished, MainInit } from "@typeberry/generic-worker";
 import * as blockImporter from "@typeberry/importer";
 import type { MainReady } from "@typeberry/importer/state-machine";
+import type { MessageChannelStateMachine } from "@typeberry/state-machine";
 import { startBlockGenerator } from "./author";
 import { initializeExtensions } from "./extensions";
 import { startBlocksReader } from "./reader";
@@ -65,34 +66,8 @@ export async function main(files?: string[]) {
     return state.sendConfig(port, config);
   });
 
-  // block reader
-  const blocksToImport = options.blocksToImport;
-  const blockReader =
-    blocksToImport !== undefined
-      ? (() => {
-          logger.info(`📖 Reading ${blocksToImport.length} blocks`);
-          return new Promise((resolve, reject) => {
-            importerReady.doUntil<Finished>("finished", async (importer, port) => {
-              try {
-                const reader = startBlocksReader({
-                  files: blocksToImport,
-                  chainSpec,
-                });
-                for (const block of reader) {
-                  logger.log(`📖 Importing block: #${block.header.view().timeSlotIndex.materialize()}`);
-                  importer.sendBlock(port, block.encoded().raw);
-                }
-                return resolve(null);
-              } catch (e) {
-                return reject(e);
-              }
-            });
-          });
-        })()
-      : noop();
-
-  // wait for block reader to finish
-  await blockReader;
+  // initialize block reader and wait for it to finish
+  await initBlocksReader(importerReady, chainSpec, options.blocksToImport);
 
   // Authorship initialization.
   const closeAuthorship = await (options.isAuthoring
@@ -123,6 +98,35 @@ export async function main(files?: string[]) {
   closeExtensions();
   logger.info("[main] ✅ Done.");
 }
+
+const initBlocksReader = async (
+  importerReady: MessageChannelStateMachine<MainReady, Finished | MainReady | MainInit<MainReady>>,
+  chainSpec: ChainSpec,
+  blocksToImport?: string[],
+) => {
+  if (blocksToImport !== undefined) {
+    logger.info(`📖 Reading ${blocksToImport.length} blocks`);
+    return new Promise((resolve, reject) => {
+      importerReady.doUntil<Finished>("finished", async (importer, port) => {
+        try {
+          const reader = startBlocksReader({
+            files: blocksToImport,
+            chainSpec,
+          });
+          for (const block of reader) {
+            logger.log(`📖 Importing block: #${block.header.view().timeSlotIndex.materialize()}`);
+            importer.sendBlock(port, block.encoded().raw);
+          }
+          return resolve(null);
+        } catch (e) {
+          return reject(e);
+        }
+      });
+    });
+  }
+
+  return Promise.resolve();
+};
 
 const noop = () => Promise.resolve();
 
