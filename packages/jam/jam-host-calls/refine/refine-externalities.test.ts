@@ -4,6 +4,7 @@ import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import type { BigGas, Memory, MemoryIndex, Registers } from "@typeberry/pvm-interpreter";
+import { ProgramDecoder, type ProgramDecoderError } from "@typeberry/pvm-interpreter/program-decoder/program-decoder";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { type OK, Result } from "@typeberry/utils";
 import {
@@ -14,12 +15,12 @@ import {
   type MachineStatus,
   NoMachineError,
   type PeekPokeError,
+  type ProgramCounter,
   type RefineExternalities,
   type SegmentExportError,
 } from "./refine-externalities";
 
 export class TestRefineExt implements RefineExternalities {
-  public readonly importSegmentData: Map<SegmentIndex, Segment | null> = new Map();
   public readonly exportSegmentData: MultiMap<[Segment], Result<SegmentIndex, SegmentExportError>> = new MultiMap(1, [
     (segment) => segment.toString(),
   ]);
@@ -29,13 +30,13 @@ export class TestRefineExt implements RefineExternalities {
   ]);
 
   public readonly machineInvokeData: Map<MachineId, MachineInstance> = new Map();
-  public readonly machineStartData: MultiMap<[BytesBlob, U32], MachineId> = new MultiMap(2, [
+  public readonly machineStartData: MultiMap<[BytesBlob, ProgramCounter], MachineId> = new MultiMap(2, [
     (code) => code.toString(),
     null,
   ]);
   public readonly machineExpungeData: MultiMap<
     Parameters<TestRefineExt["machineExpunge"]>,
-    Result<OK, NoMachineError>
+    Result<ProgramCounter, NoMachineError>
   > = new MultiMap(1);
   public readonly machinePeekData: MultiMap<Parameters<TestRefineExt["machinePeekFrom"]>, Result<OK, PeekPokeError>> =
     new MultiMap(5);
@@ -52,7 +53,7 @@ export class TestRefineExt implements RefineExternalities {
 
   public machineInvokeStatus: MachineStatus = { status: Status.OK };
 
-  machineExpunge(machineIndex: MachineId): Promise<Result<OK, NoMachineError>> {
+  machineExpunge(machineIndex: MachineId): Promise<Result<ProgramCounter, NoMachineError>> {
     const val = this.machineExpungeData.get(machineIndex);
     if (val === undefined) {
       throw new Error(`Unexpected call to machineExpunge with: ${machineIndex}`);
@@ -80,12 +81,18 @@ export class TestRefineExt implements RefineExternalities {
     return Promise.resolve(val);
   }
 
-  machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId> {
+  machineInit(code: BytesBlob, programCounter: ProgramCounter): Promise<Result<MachineId, ProgramDecoderError>> {
+    // check if the code is valid
+    const program = ProgramDecoder.deblob(code.raw);
+    if (program.isError) {
+      return Promise.resolve(Result.error(program.error));
+    }
+
     const val = this.machineStartData.get(code, programCounter);
     if (val === undefined) {
       throw new Error(`Unexpected call to machineStart with: ${code}, ${programCounter}`);
     }
-    return Promise.resolve(val);
+    return Promise.resolve(Result.ok(val));
   }
 
   machinePeekFrom(
@@ -142,14 +149,6 @@ export class TestRefineExt implements RefineExternalities {
       throw new Error(`Unexpected call to exportSegment with: ${segment}`);
     }
     return result;
-  }
-
-  importSegment(segmentIndex: SegmentIndex): Promise<Segment | null> {
-    const val = this.importSegmentData.get(segmentIndex);
-    if (val === undefined) {
-      throw new Error(`Unexpected call to importSegment with: ${segmentIndex}`);
-    }
-    return Promise.resolve(val);
   }
 
   historicalLookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null> {

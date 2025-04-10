@@ -1,6 +1,6 @@
 import { type HostCallHandler, type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, type Registers, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { LegacyHostCallResult } from "../results";
+import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { type RefineExternalities, tryAsMachineId } from "./refine-externalities";
 
@@ -9,10 +9,10 @@ const IN_OUT_REG = 7;
 /**
  * Forget a previously started nested machine.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/367c01367c01
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/367d01367d01?v=0.6.4
  */
 export class Expunge implements HostCallHandler {
-  index = tryAsHostCallIndex(24);
+  index = tryAsHostCallIndex(26);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
@@ -20,16 +20,16 @@ export class Expunge implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers): Promise<PvmExecution | undefined> {
     // `n`: machine index
-    const machineIndex = tryAsMachineId(regs.getU32(IN_OUT_REG));
+    const machineIndex = tryAsMachineId(regs.getU64(IN_OUT_REG));
 
     const expungeResult = await this.refine.machineExpunge(machineIndex);
 
     if (expungeResult.isOk) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
+      regs.setU64(IN_OUT_REG, expungeResult.ok);
     } else {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.WHO);
+      regs.setU64(IN_OUT_REG, HostCallResult.WHO);
     }
 
-    return Promise.resolve(undefined);
+    return;
   }
 }

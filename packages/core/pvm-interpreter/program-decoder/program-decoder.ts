@@ -1,6 +1,12 @@
 import { Decoder } from "@typeberry/codec";
+import { Result } from "@typeberry/utils";
+import { logger } from "../../../../bin/test-runner/common";
 import { JumpTable } from "./jump-table";
 import { Mask } from "./mask";
+
+export enum ProgramDecoderError {
+  InvalidProgramError = 0,
+}
 
 export class ProgramDecoder {
   private code: Uint8Array;
@@ -49,5 +55,15 @@ export class ProgramDecoder {
 
   getJumpTable() {
     return this.jumpTable;
+  }
+
+  /** https://graypaper.fluffylabs.dev/#/68eaa1f/23f400234701?v=0.6.4 */
+  static deblob(program: Uint8Array): Result<ProgramDecoder, ProgramDecoderError> {
+    try {
+      return Result.ok(new ProgramDecoder(program));
+    } catch (e) {
+      logger.error(`Invalid program: ${e}`);
+      return Result.error(ProgramDecoderError.InvalidProgramError);
+    }
   }
 }

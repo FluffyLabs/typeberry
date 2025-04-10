@@ -120,6 +120,15 @@ describe("Memory", () => {
     it("should return PageFault if the page does not exist", () => {
       const memory = new Memory();
       const addressToStore = tryAsMemoryIndex(1);
+      const dataToStore = new Uint8Array([1, 2, 3, 4]);
+      const storeResult = memory.storeFrom(addressToStore, dataToStore);
+
+      assert.deepStrictEqual(storeResult, new PageFault(addressToStore));
+    });
+
+    it("should return PageFault if the page does not exist and stored array length is 0", () => {
+      const memory = new Memory();
+      const addressToStore = tryAsMemoryIndex(1);
 
       const storeResult = memory.storeFrom(addressToStore, new Uint8Array());
 
