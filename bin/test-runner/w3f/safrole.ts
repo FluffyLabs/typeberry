@@ -3,7 +3,6 @@ import {
   BANDERSNATCH_PROOF_BYTES,
   BANDERSNATCH_RING_ROOT_BYTES,
   type BandersnatchKey,
-  type BandersnatchProof,
   type BandersnatchRingRoot,
   ED25519_KEY_BYTES,
   type Ed25519Key,
