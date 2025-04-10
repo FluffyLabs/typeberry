@@ -30,14 +30,14 @@ function prepareRegsAndMemory(machineId: MachineId, pageStart: number, pageCount
 
 function prepareTest(result: Result<OK, NoMachineError | InvalidPageError>, pageStart: number, pageCount: number) {
   const refine = new TestRefineExt();
-  const voi = new Void(refine);
-  voi.currentServiceId = tryAsServiceId(10_000);
+  const _void = new Void(refine);
+  _void.currentServiceId = tryAsServiceId(10_000);
   const machineId = tryAsMachineId(10_000);
   const { registers, memory } = prepareRegsAndMemory(machineId, pageStart, pageCount);
   refine.machineVoidPagesData.set(result, machineId, tryAsU32(pageStart), tryAsU32(pageCount));
 
   return {
-    voi,
+    _void,
     registers,
     memory,
   };
@@ -45,10 +45,10 @@ function prepareTest(result: Result<OK, NoMachineError | InvalidPageError>, page
 
 describe("HostCalls: Void", () => {
   it("should return OK and void memory", async () => {
-    const { voi, registers } = prepareTest(Result.ok(OK), 10_000, 5);
+    const { _void, registers } = prepareTest(Result.ok(OK), 10_000, 5);
 
     // when
-    const result = await voi.execute(gas, registers);
+    const result = await _void.execute(gas, registers);
 
     // then
     assert.deepStrictEqual(result, undefined);
@@ -56,10 +56,10 @@ describe("HostCalls: Void", () => {
   });
 
   it("should return HUH if invalid page is given", async () => {
-    const { voi, registers } = prepareTest(Result.error(InvalidPageError), 12, 5);
+    const { _void, registers } = prepareTest(Result.error(InvalidPageError), 12, 5);
 
     // when
-    const result = await voi.execute(gas, registers);
+    const result = await _void.execute(gas, registers);
 
     // then
     assert.deepStrictEqual(result, undefined);
@@ -67,10 +67,10 @@ describe("HostCalls: Void", () => {
   });
 
   it("should return HUH when page is too low", async () => {
-    const { voi, registers } = prepareTest(Result.ok(OK), 12, 5);
+    const { _void, registers } = prepareTest(Result.ok(OK), 12, 5);
 
     // when
-    const result = await voi.execute(gas, registers);
+    const result = await _void.execute(gas, registers);
 
     // then
     assert.deepStrictEqual(result, undefined);
@@ -78,10 +78,10 @@ describe("HostCalls: Void", () => {
   });
 
   it("should return HUH when page is too large", async () => {
-    const { voi, registers } = prepareTest(Result.ok(OK), 2 ** 32 - 1, 12_000);
+    const { _void, registers } = prepareTest(Result.ok(OK), 2 ** 32 - 1, 12_000);
 
     // when
-    const result = await voi.execute(gas, registers);
+    const result = await _void.execute(gas, registers);
 
     // then
     assert.deepStrictEqual(result, undefined);
@@ -89,10 +89,10 @@ describe("HostCalls: Void", () => {
   });
 
   it("should return HUH when page is too large 2", async () => {
-    const { voi, registers } = prepareTest(Result.ok(OK), 2 ** 20 - 5, 5);
+    const { _void, registers } = prepareTest(Result.ok(OK), 2 ** 20 - 5, 5);
 
     // when
-    const result = await voi.execute(gas, registers);
+    const result = await _void.execute(gas, registers);
 
     // then
     assert.deepStrictEqual(result, undefined);
@@ -100,10 +100,10 @@ describe("HostCalls: Void", () => {
   });
 
   it("should fail if machine is not known", async () => {
-    const { voi, registers } = prepareTest(Result.error(NoMachineError), 10_000, 5);
+    const { _void, registers } = prepareTest(Result.error(NoMachineError), 10_000, 5);
 
     // when
-    const result = await voi.execute(gas, registers);
+    const result = await _void.execute(gas, registers);
 
     // then
     assert.deepStrictEqual(result, undefined);
