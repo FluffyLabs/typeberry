@@ -4,7 +4,7 @@ import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import type { BigGas, Memory, MemoryIndex, Registers } from "@typeberry/pvm-interpreter";
-import { type InvalidProgramError, ProgramDecoder } from "@typeberry/pvm-interpreter/program-decoder/program-decoder";
+import { ProgramDecoder, type ProgramDecoderError } from "@typeberry/pvm-interpreter/program-decoder/program-decoder";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { type OK, Result } from "@typeberry/utils";
 import {
@@ -81,7 +81,7 @@ export class TestRefineExt implements RefineExternalities {
     return Promise.resolve(val);
   }
 
-  machineInit(code: BytesBlob, programCounter: ProgramCounter): Promise<Result<MachineId, InvalidProgramError>> {
+  machineInit(code: BytesBlob, programCounter: ProgramCounter): Promise<Result<MachineId, ProgramDecoderError>> {
     // check if the code is valid
     const program = ProgramDecoder.deblob(code.raw);
     if (program.isError) {

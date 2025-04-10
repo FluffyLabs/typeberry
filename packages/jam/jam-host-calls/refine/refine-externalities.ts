@@ -4,7 +4,7 @@ import type { Blake2bHash } from "@typeberry/hash";
 import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
 import type { BigGas, Memory, Registers } from "@typeberry/pvm-interpreter";
 import type { MemoryIndex } from "@typeberry/pvm-interpreter/memory";
-import type { InvalidProgramError } from "@typeberry/pvm-interpreter/program-decoder/program-decoder";
+import type { ProgramDecoderError } from "@typeberry/pvm-interpreter/program-decoder/program-decoder";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/utils";
 
@@ -116,7 +116,7 @@ export interface RefineExternalities {
   ): Promise<Result<OK, PeekPokeError>>;
 
   /** Start an inner PVM instance with given entry point and starting code. */
-  machineInit(code: BytesBlob, programCounter: ProgramCounter): Promise<Result<MachineId, InvalidProgramError>>;
+  machineInit(code: BytesBlob, programCounter: ProgramCounter): Promise<Result<MachineId, ProgramDecoderError>>;
 
   /** Run a previously initialized PVM instance with given gas and registers. */
   machineInvoke(
