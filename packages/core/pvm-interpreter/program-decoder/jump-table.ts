@@ -30,10 +30,6 @@ export class JumpTable {
         const lowerPart = decoder.u32();
         const higherPart = decoder.u32();
 
-        /**
-         * jump to an index that is bigger than 2 ** 32 will cause panic
-         * so the destination does not matter and we can clamp it
-         */
         if (higherPart === 0) {
           return Number(lowerPart);
         }
