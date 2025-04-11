@@ -29,7 +29,7 @@ import {
 } from "@typeberry/transition/reports";
 import { guaranteesAsView } from "@typeberry/transition/reports/test.utils";
 import { Result, asOpaqueType, deepEqual } from "@typeberry/utils";
-import { fromJson as codecFromJson } from "./codec/common";
+import { fromJson as codecFromJson, fromJson } from "./codec/common";
 import { guaranteesExtrinsicFromJson } from "./codec/guarantees-extrinsic";
 import {
   TestAccountItem,
@@ -43,10 +43,12 @@ class Input {
   static fromJson: FromJson<Input> = {
     guarantees: guaranteesExtrinsicFromJson,
     slot: "number",
+    known_packages: json.array(codecFromJson.bytes32()),
   };
 
   guarantees!: GuaranteesExtrinsic;
   slot!: TimeSlot;
+  known_packages!: OpaqueHash[];
 
   static toReportsInput(input: Input, spec: ChainSpec): ReportsInput {
     const view = guaranteesAsView(spec, input.guarantees, { disableCredentialsRangeCheck: true });
@@ -58,6 +60,67 @@ class Input {
   }
 }
 
+class TestCoreStatistics {
+  static fromJson: FromJson<TestCoreStatistics> = {
+    da_load: "number",
+    popularity: "number",
+    imports: "number",
+    exports: "number",
+    extrinsic_size: "number",
+    extrinsic_count: "number",
+    bundle_size: "number",
+    gas_used: "number",
+  };
+
+  da_load!: number;
+  popularity!: number;
+  imports!: number;
+  exports!: number;
+  extrinsic_size!: number;
+  extrinsic_count!: number;
+  bundle_size!: number;
+  gas_used!: number;
+}
+
+class TestServiceRecord {
+  static fromJson: FromJson<TestServiceRecord> = {
+    provided_count: "number",
+    provided_size: "number",
+    refinement_count: "number",
+    refinement_gas_used: "number",
+    imports: "number",
+    exports: "number",
+    extrinsic_size: "number",
+    extrinsic_count: "number",
+    accumulate_count: "number",
+    accumulate_gas_used: "number",
+    on_transfers_count: "number",
+    on_transfers_gas_used: "number",
+  };
+  provided_count!: number;
+  provided_size!: number;
+  refinement_count!: number;
+  refinement_gas_used!: number;
+  imports!: number;
+  exports!: number;
+  extrinsic_size!: number;
+  extrinsic_count!: number;
+  accumulate_count!: number;
+  accumulate_gas_used!: number;
+  on_transfers_count!: number;
+  on_transfers_gas_used!: number;
+}
+
+class TestServiceStatistics {
+  static fromJson: FromJson<TestServiceStatistics> = {
+    id: "number",
+    record: TestServiceRecord.fromJson,
+  };
+
+  id!: number;
+  record!: TestServiceRecord;
+}
+
 class TestState {
   static fromJson: FromJson<TestState> = {
     avail_assignments: json.array(json.nullable(TestAvailabilityAssignment.fromJson)),
@@ -65,9 +128,11 @@ class TestState {
     prev_validators: json.array(commonFromJson.validatorData),
     entropy: json.array(commonFromJson.bytes32()),
     offenders: json.array(codecFromJson.bytes32<Ed25519Key>()),
-    auth_pools: ["array", json.array(codecFromJson.bytes32())],
     recent_blocks: json.array(TestBlockState.fromJson),
+    auth_pools: ["array", json.array(codecFromJson.bytes32())],
     accounts: json.array(TestAccountItem.fromJson),
+    cores_statistics: json.array(TestCoreStatistics.fromJson),
+    services_statistics: json.array(TestServiceStatistics.fromJson),
   };
 
   avail_assignments!: Array<AvailabilityAssignment | null>;
@@ -75,9 +140,11 @@ class TestState {
   prev_validators!: ValidatorData[];
   entropy!: EntropyHash[];
   offenders!: Ed25519Key[];
-  auth_pools!: OpaqueHash[][];
   recent_blocks!: BlockState[];
+  auth_pools!: OpaqueHash[][];
   accounts!: Service[];
+  cores_statistics!: TestCoreStatistics[];
+  services_statistics!: TestServiceStatistics[];
 
   static toReportsState(pre: TestState, spec: ChainSpec): ReportsState {
     return {

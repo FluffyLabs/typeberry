@@ -22,7 +22,7 @@ import {
   WorkPackageSpec,
   WorkReport,
 } from "@typeberry/block/work-report";
-import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
+import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result";
 import { Encoder } from "@typeberry/codec";
 import { FixedSizeArray, HashDictionary } from "@typeberry/collections";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
@@ -79,6 +79,27 @@ class TestWorkExecResult {
   ok!: BytesBlob | null;
 }
 
+export class TestWorkRefineLoad {
+  static fromJson = json.object<TestWorkRefineLoad, WorkRefineLoad>(
+    {
+      gas_used: "number",
+      imports: "number",
+      extrinsic_count: "number",
+      extrinsic_size: "number",
+      exports: "number",
+    },
+    ({ gas_used, imports, extrinsic_count, extrinsic_size, exports }) => {
+      return new WorkRefineLoad(gas_used, imports, extrinsic_count, extrinsic_size, exports);
+    },
+  );
+
+  gas_used!: U32;
+  imports!: U32;
+  extrinsic_count!: U32;
+  extrinsic_size!: U32;
+  exports!: U32;
+}
+
 class TestResult {
   static fromJson = json.object<TestResult, WorkResult>(
     {
@@ -87,6 +108,7 @@ class TestResult {
       payload_hash: codecFromJson.bytes32(),
       accumulate_gas: json.fromNumber((x) => asOpaqueType(tryAsU64(x))),
       result: TestWorkExecResult.fromJson,
+      refine_load: TestWorkRefineLoad.fromJson,
     },
     ({ service_id, code_hash, payload_hash, accumulate_gas, result }) => {
       return new WorkResult(service_id, code_hash, payload_hash, accumulate_gas, result);
@@ -98,6 +120,7 @@ class TestResult {
   payload_hash!: Bytes<HASH_SIZE>;
   accumulate_gas!: ServiceGas;
   result!: WorkExecResult;
+  refine_load!: WorkRefineLoad;
 }
 
 class TestPackageSpec {
@@ -167,6 +190,7 @@ export class TestWorkReport {
       auth_output: json.fromString(BytesBlob.parseBlob),
       segment_root_lookup: json.array(TestSegmentRootLookupItem.fromJson),
       results: json.array(TestResult.fromJson),
+      auth_gas_used: json.fromNumber((x) => asOpaqueType(tryAsU64(x))),
     },
     ({ package_spec, context, core_index, authorizer_hash, auth_output, segment_root_lookup, results }) => {
       const fixedSizeResults = FixedSizeArray.new(results, tryAsWorkItemsCount(results.length));
@@ -189,6 +213,7 @@ export class TestWorkReport {
   auth_output!: BytesBlob;
   segment_root_lookup!: WorkPackageInfo[];
   results!: FixedSizeArray<WorkResult, WorkItemsCount>;
+  auth_gas_used!: ServiceGas;
 }
 
 export class TestAvailabilityAssignment {
