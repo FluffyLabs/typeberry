@@ -142,7 +142,7 @@ export class EpochMark {
   static fromJson: FromJson<EpochMark> = {
     entropy: commonFromJson.bytes32(),
     tickets_entropy: commonFromJson.bytes32(),
-    validators: json.array(commonFromJson.validatorData),
+    validators: json.array(safroleFromJson.validatorKeys),
   };
 
   entropy!: EntropyHash;
