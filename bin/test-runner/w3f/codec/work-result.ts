@@ -1,6 +1,6 @@
 import type { CodeHash } from "@typeberry/block";
 import type { ServiceGas, ServiceId } from "@typeberry/block";
-import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
+import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result";
 import { BytesBlob } from "@typeberry/bytes";
 import type { OpaqueHash } from "@typeberry/hash";
 import { json } from "@typeberry/json-parser";
@@ -46,6 +46,32 @@ type JsonWorkExecResult = {
   code_oversize?: null;
 };
 
+const workRefineLoadFromJson = json.object<JsonWorkRefineLoad, WorkRefineLoad>(
+  {
+    gas_used: "number",
+    imports: "number",
+    extrinsic_count: "number",
+    extrinsic_size: "number",
+    exports: "number",
+  },
+  ({ gas_used, imports, extrinsic_count, extrinsic_size, exports }) =>
+    new WorkRefineLoad(
+      tryAsU32(gas_used),
+      tryAsU32(imports),
+      tryAsU32(extrinsic_count),
+      tryAsU32(extrinsic_size),
+      tryAsU32(exports),
+    ),
+);
+
+type JsonWorkRefineLoad = {
+  gas_used: number;
+  imports: number;
+  extrinsic_count: number;
+  extrinsic_size: number;
+  exports: number;
+};
+
 export const workResultFromJson = json.object<JsonWorkResult, WorkResult>(
   {
     service_id: "number",
@@ -53,6 +79,7 @@ export const workResultFromJson = json.object<JsonWorkResult, WorkResult>(
     payload_hash: fromJson.bytes32(),
     accumulate_gas: "number",
     result: workExecResultFromJson,
+    refine_load: workRefineLoadFromJson,
   },
   ({ service_id, code_hash, payload_hash, accumulate_gas, result }) =>
     new WorkResult(service_id, code_hash, payload_hash, BigInt(accumulate_gas) as ServiceGas, result),
@@ -66,6 +93,7 @@ type JsonWorkResult = {
   // otherwise we will need to use a custom JSON parser.
   accumulate_gas: number;
   result: WorkExecResult;
+  refine_load: WorkRefineLoad;
 };
 
 export async function runWorkResultTest(test: WorkResult, file: string) {

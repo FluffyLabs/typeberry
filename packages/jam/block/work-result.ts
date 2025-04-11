@@ -1,7 +1,7 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { tryAsU32 } from "@typeberry/numbers";
+import { tryAsU32, U32 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
 import type { ServiceGas, ServiceId } from "./common";
 import type { CodeHash } from "./hash";
@@ -18,6 +18,34 @@ export enum WorkExecResultKind {
   badCode = 3,
   /** `BIG`: the code was too big (beyond the maximum allowed size `W_C`) */
   codeOversize = 4,
+}
+
+export class WorkRefineLoad extends WithDebug {
+  static Codec = codec.Class(WorkRefineLoad, {
+    gasUsed: codec.u32,
+    imports: codec.u32,
+    extrinsicCount: codec.u32,
+    extrinsicSize: codec.u32,
+    exports: codec.u32,
+  });
+  static fromCodec({
+    gasUsed,
+    imports,
+    extrinsicCount,
+    extrinsicSize,
+    exports,
+  }: CodecRecord<WorkRefineLoad>) {
+    return new WorkRefineLoad(gasUsed, imports, extrinsicCount, extrinsicSize, exports);
+  }
+  constructor(
+    public gasUsed: U32,
+    public imports: U32,
+    public extrinsicCount: U32,
+    public extrinsicSize: U32,
+    public exports: U32,
+  ) {
+    super();
+  }
 }
 
 /** The execution result of some work-package. */

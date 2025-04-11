@@ -1,4 +1,4 @@
-import type { CoreIndex } from "@typeberry/block";
+import type { CoreIndex, ServiceGas } from "@typeberry/block";
 import type { RefineContext } from "@typeberry/block/refine-context";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package";
 import { type AuthorizerHash, WorkPackageInfo, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
@@ -10,6 +10,8 @@ import type { JsonObject } from "../../json-format";
 import { fromJson, runCodecTest } from "./common";
 import { refineContextFromJson } from "./refine-context";
 import { workResultFromJson } from "./work-result";
+import { asOpaqueType } from "@typeberry/utils";
+import { tryAsU64 } from "@typeberry/numbers";
 
 const workPackageSpecFromJson = json.object<JsonObject<WorkPackageSpec>, WorkPackageSpec>(
   {
@@ -40,6 +42,7 @@ export const workReportFromJson = json.object<JsonWorkReport, WorkReport>(
     auth_output: json.fromString(BytesBlob.parseBlob),
     segment_root_lookup: json.array(segmentRootLookupItemFromJson),
     results: json.array(workResultFromJson),
+    auth_gas_used: json.fromNumber((x) => asOpaqueType(tryAsU64(x))),
   },
   ({ package_spec, context, core_index, authorizer_hash, auth_output, results, segment_root_lookup }) =>
     new WorkReport(
@@ -61,6 +64,7 @@ type JsonWorkReport = {
   auth_output: BytesBlob;
   segment_root_lookup: WorkPackageInfo[];
   results: WorkResult[];
+  auth_gas_used: ServiceGas;
 };
 
 export async function runWorkReportTest(test: WorkReport, file: string) {
