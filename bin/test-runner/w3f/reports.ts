@@ -29,7 +29,7 @@ import {
 } from "@typeberry/transition/reports";
 import { guaranteesAsView } from "@typeberry/transition/reports/test.utils";
 import { Result, asOpaqueType, deepEqual } from "@typeberry/utils";
-import { fromJson as codecFromJson, fromJson } from "./codec/common";
+import { fromJson as codecFromJson } from "./codec/common";
 import { guaranteesExtrinsicFromJson } from "./codec/guarantees-extrinsic";
 import {
   TestAccountItem,

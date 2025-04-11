@@ -6,12 +6,12 @@ import type { WorkResult } from "@typeberry/block/work-result";
 import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
+import { tryAsU64 } from "@typeberry/numbers";
+import { asOpaqueType } from "@typeberry/utils";
 import type { JsonObject } from "../../json-format";
 import { fromJson, runCodecTest } from "./common";
 import { refineContextFromJson } from "./refine-context";
 import { workResultFromJson } from "./work-result";
-import { asOpaqueType } from "@typeberry/utils";
-import { tryAsU64 } from "@typeberry/numbers";
 
 const workPackageSpecFromJson = json.object<JsonObject<WorkPackageSpec>, WorkPackageSpec>(
   {
