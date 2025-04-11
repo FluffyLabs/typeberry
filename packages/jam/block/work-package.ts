@@ -8,6 +8,7 @@ import type { CodeHash } from "./hash";
 import { RefineContext } from "./refine-context";
 import { WorkItem } from "./work-item";
 
+/** NOTE [MaSo] WorkItemCount in big_work_report_output-1.json is 16!!! */
 /** Possible number of work items in the package or results in the report. */
 export type WorkItemsCount = 1 | 2 | 3 | 4;
 
