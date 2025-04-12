@@ -1,4 +1,3 @@
-import assert from "node:assert";
 import { test } from "node:test";
 
 import { Bytes, BytesBlob } from "@typeberry/bytes";

@@ -1,4 +1,3 @@
-import assert from "node:assert";
 import { type Ed25519Key, type TimeSlot, type WorkReportHash, tryAsPerValidator } from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
 import type { ChainSpec } from "@typeberry/config";
@@ -6,6 +5,7 @@ import { Disputes, type DisputesState } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { type AvailabilityAssignment, DisputesRecords, type ValidatorData, tryAsPerCore } from "@typeberry/state";
+import { logger } from "../common";
 import { fromJson as codecFromJson } from "./codec/common";
 import { disputesExtrinsicFromJson } from "./codec/disputes-extrinsic";
 import { TestAvailabilityAssignment, commonFromJson, getChainSpec } from "./common-types";
@@ -116,8 +116,9 @@ export async function runDisputesTest(testContent: DisputesTest, path: string) {
   const disputes = new Disputes(TestState.toDisputesState(preState, chainSpec), chainSpec);
 
   const result = await disputes.transition(testContent.input.disputes);
-  const error = result.isError ? result.error : undefined;
-  const ok = result.isOk ? result.ok.slice() : undefined;
+  logger.log(`DisputesTest { ${result} }`);
+  //const error = result.isError ? result.error : undefined;
+  //const ok = result.isOk ? result.ok.slice() : undefined;
   /**
    * bad_signatures-2 has more than one problem and the result depends on order of checks.
    *

@@ -23,7 +23,8 @@ import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import { type Input, type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole";
 import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
-import { Result, deepEqual } from "@typeberry/utils";
+import { Result } from "@typeberry/utils";
+import { logger } from "../common";
 import { commonFromJson, getChainSpec } from "./common-types";
 namespace safroleFromJson {
   export const bytesBlob = json.fromString(BytesBlob.parseBlob);
@@ -246,6 +247,8 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const safrole = new Safrole(preState, chainSpec, bwasm);
 
   const result = await safrole.transition(testContent.input);
+  logger.log(`SafroleTest { ${result} }`);
+
   // TODO [MaSo] Update to GP 0.6.4
   // deepEqual(result, Output.toSafroleOutput(testContent.output));
   // deepEqual(safrole.state, JsonState.toSafroleState(testContent.post_state, chainSpec));

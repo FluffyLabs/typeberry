@@ -28,7 +28,8 @@ import {
   type ReportsState,
 } from "@typeberry/transition/reports";
 import { guaranteesAsView } from "@typeberry/transition/reports/test.utils";
-import { Result, asOpaqueType, deepEqual } from "@typeberry/utils";
+import { Result, asOpaqueType } from "@typeberry/utils";
+import { logger } from "../common";
 import { fromJson as codecFromJson } from "./codec/common";
 import { guaranteesExtrinsicFromJson } from "./codec/guarantees-extrinsic";
 import {
@@ -286,9 +287,9 @@ export async function runReportsTestFull(testContent: ReportsTest) {
 
 async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   const preState = TestState.toReportsState(testContent.pre_state, spec);
-  const postState = TestState.toReportsState(testContent.post_state, spec);
+  //const postState = TestState.toReportsState(testContent.post_state, spec);
   const input = Input.toReportsInput(testContent.input, spec);
-  const expectedOutput = TestReportsResult.toReportsResult(testContent.output);
+  //const expectedOutput = TestReportsResult.toReportsResult(testContent.output);
 
   const keccakHasher = await keccak.KeccakHasher.create();
   const hasher: MmrHasher<KeccakHash> = {
@@ -307,6 +308,8 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   const reports = new Reports(spec, preState, hasher, headerChain);
 
   const output = await reports.transition(input);
+  logger.log(`ReportsTest { ${output} }`);
+
   // TODO [MaSo] Update to GP 0.6.4
   // deepEqual(output, expectedOutput, { context: "output", ignore: ["output.details"] });
   // deepEqual(reports.state, postState, { context: "postState" });

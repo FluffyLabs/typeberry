@@ -2,7 +2,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
-import { WithDebug, ensure } from "@typeberry/utils";
+import { WithDebug } from "@typeberry/utils";
 import type { ServiceId } from "./common";
 import type { CodeHash } from "./hash";
 import { RefineContext } from "./refine-context";

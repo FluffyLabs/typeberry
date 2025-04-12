@@ -1,11 +1,9 @@
-import assert from "node:assert";
-
-import { type Extrinsic, type TimeSlot, type ValidatorIndex, tryAsPerValidator } from "@typeberry/block";
-import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import type { Extrinsic, TimeSlot, ValidatorIndex } from "@typeberry/block";
+import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { U32 } from "@typeberry/numbers";
 import { ActivityRecord, type ValidatorData } from "@typeberry/state";
-import { Statistics, type StatisticsState } from "@typeberry/transition/statistics";
+import { logger } from "../common";
 import { getExtrinsicFromJson } from "./codec/extrinsic";
 import { commonFromJson } from "./common-types";
 
@@ -177,18 +175,18 @@ export class StatisticsTestFull {
 }
 
 export async function runStatisticsTestTiny({ input, pre_state, post_state }: StatisticsTestTiny) {
-  const spec = tinyChainSpec;
+  logger.log(`StatisticsTestFull { ${input}, ${pre_state}, ${post_state} }`);
+  //const spec = tinyChainSpec;
   //const statistics = new Statistics(TestState.toStatisticsState(pre_state, spec), spec);
-
   //statistics.transition(input.slot, input.author_index, input.extrinsic);
   // TODO [MaSo] Update to GP 0.6.4
   // assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(post_state, spec));
 }
 
 export async function runStatisticsTestFull({ input, pre_state, post_state }: StatisticsTestFull) {
-  const spec = fullChainSpec;
+  logger.log(`StatisticsTestFull { ${input}, ${pre_state}, ${post_state} }`);
+  // const spec = fullChainSpec;
   //const statistics = new Statistics(TestState.toStatisticsState(pre_state, spec), spec);
-
   //statistics.transition(input.slot, input.author_index, input.extrinsic);
   // TODO [MaSo] Update to GP 0.6.4
   // assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(post_state, spec));

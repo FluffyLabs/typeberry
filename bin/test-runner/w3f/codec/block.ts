@@ -1,7 +1,7 @@
 import { Block } from "@typeberry/block/block";
 import { tinyChainSpec } from "@typeberry/config";
 import { json } from "@typeberry/json-parser";
-import { runCodecTest } from "./common";
+import { logger } from "../../common";
 import { getExtrinsicFromJson } from "./extrinsic";
 import { headerFromJson } from "./header";
 
@@ -14,6 +14,7 @@ export const blockFromJson = json.object<Block>(
 );
 
 export async function runBlockTest(test: Block, file: string) {
+  logger.log(`BlockTest { ${test}, ${file} }`);
   // TODO [MaSo] Update to GP 0.6.4
   // runCodecTest(Block.Codec, test, file);
 }
