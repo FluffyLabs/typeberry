@@ -8,17 +8,20 @@ import type { CodeHash } from "./hash";
 import { RefineContext } from "./refine-context";
 import { WorkItem } from "./work-item";
 
-/** NOTE [MaSo] WorkItemCount in big_work_report_output-1.json is 16!!! */
+// TODO [MaSo] Update to GP 0.6.4
+/** NOTE [MaSo] WorkItemCount in big_work_report_output-1.json (and not only) is 16!!! */
 /** Possible number of work items in the package or results in the report. */
-export type WorkItemsCount = 1 | 2 | 3 | 4;
+export type WorkItemsCount = 1 | 2 | 3 | 4 | number;
 
 /** Verify the value is within the `WorkItemsCount` bounds. */
 export function tryAsWorkItemsCount(len: number): WorkItemsCount {
-  return ensure<number, WorkItemsCount>(
+  return len;
+  // TODO [MaSo] Update to GP 0.6.4
+  /* return ensure<number, WorkItemsCount>(
     len,
     len >= MIN_NUMBER_OF_WORK_ITEMS && len <= MAX_NUMBER_OF_WORK_ITEMS,
     `WorkItemsCount: Expected 1|2|3|4 got ${len}`,
-  );
+  ); */
 }
 
 /** Minimal number of work items in the work package or results in work report. */

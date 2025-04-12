@@ -31,6 +31,9 @@ const reportGuaranteeFromJson = json.object<JsonReportGuarantee, ReportGuarantee
 type JsonReportGuarantee = {
   report: WorkReport;
   slot: TimeSlot;
+  // TODO [MaSo] Update to GP 0.6.4
+  // Error: Sequence<Credential>[?]: length is below minimal. 0 < 2
+  // eg. jamtestvectors/codec/data/extrinsic.json, jamtestvectors/codec/data/guarantees_extrinsic.json
   signatures: ReportGuarantee["credentials"];
 };
 
