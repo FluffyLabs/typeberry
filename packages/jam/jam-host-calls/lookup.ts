@@ -38,11 +38,6 @@ export class Lookup implements HostCallHandler {
     // a
     const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
 
-    if (serviceId === null) {
-      regs.setU64(IN_OUT_REG, HostCallResult.NONE);
-      return;
-    }
-
     // h
     const hashAddress = tryAsMemoryIndex(regs.getU32(8));
     // o
@@ -55,13 +50,9 @@ export class Lookup implements HostCallHandler {
     }
 
     // v
-    const preImage = await this.account.lookup(serviceId, preImageHash);
-    if (preImage === null) {
-      regs.setU64(IN_OUT_REG, HostCallResult.NONE);
-      return;
-    }
+    const preImage = serviceId !== null ? await this.account.lookup(serviceId, preImageHash) : null;
 
-    const preImageLength = tryAsU64(preImage.raw.length);
+    const preImageLength = preImage === null ? tryAsU64(0) : tryAsU64(preImage.raw.length);
     const preimageBlobOffset = tryAsU64(regs.getU64(10));
     const lengthToWrite = tryAsU64(regs.getU64(11));
 
@@ -70,12 +61,19 @@ export class Lookup implements HostCallHandler {
     // l
     const blobLength = minU64(lengthToWrite, tryAsU64(preImageLength - start));
 
-    // casting to `Number` is safe here, since we are bounded by `preImageLength` in both cases, which is `U32`
-    const chunk = preImage.raw.subarray(Number(start), Number(start + blobLength));
-    const writePageFault = memory.storeFrom(destinationAddress, chunk);
-    if (writePageFault !== null) {
+    const isWriteable = memory.isWriteable(destinationAddress, Number(blobLength));
+    if (!isWriteable) {
       return Promise.resolve(PvmExecution.Panic);
     }
+
+    if (preImage === null) {
+      regs.setU64(IN_OUT_REG, HostCallResult.NONE);
+      return;
+    }
+
+    // casting to `Number` is safe here, since we are bounded by `preImageLength` in both cases, which is `U32`
+    const chunk = preImage.raw.subarray(Number(start), Number(start + blobLength));
+    memory.storeFrom(destinationAddress, chunk);
     regs.setU64(IN_OUT_REG, preImageLength);
   }
 }
