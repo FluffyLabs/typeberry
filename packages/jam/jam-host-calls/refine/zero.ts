@@ -1,25 +1,20 @@
 import { sumU32, tryAsU32 } from "@typeberry/numbers";
 import { type HostCallHandler, type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, type Registers, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
-import { LegacyHostCallResult } from "../results";
+import { MAX_NUMBER_OF_PAGES, RESERVED_NUMBER_OF_PAGES } from "@typeberry/pvm-interpreter/memory/memory-consts";
+import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { type RefineExternalities, tryAsMachineId } from "./refine-externalities";
 
 const IN_OUT_REG = 7;
 
-/** https://graypaper.fluffylabs.dev/#/579bd12/35f20135f201 */
-const RESERVED_NUMBER_OF_PAGES = 16;
-/** https://graypaper.fluffylabs.dev/#/579bd12/35f20135f201 */
-export const MAX_NUMBER_OF_PAGES = MEMORY_SIZE / 2 ** 12;
-
 /**
  * Initialize some pages of memory for writing for a nested PVM.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/357201357201
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/352602352602?v=0.6.4
  */
 export class Zero implements HostCallHandler {
-  index = tryAsHostCallIndex(21);
+  index = tryAsHostCallIndex(23);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
@@ -27,24 +22,25 @@ export class Zero implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers): Promise<PvmExecution | undefined> {
     // `n`: machine index
-    const machineIndex = tryAsMachineId(regs.getU32(IN_OUT_REG));
+    const machineIndex = tryAsMachineId(regs.getU64(IN_OUT_REG));
     // `p`: start page
     const pageStart = tryAsU32(regs.getU32(8));
     // `c`: page count
     const pageCount = tryAsU32(regs.getU32(9));
 
     const endPage = sumU32(pageStart, pageCount);
-    if (pageStart < RESERVED_NUMBER_OF_PAGES || endPage.overflow || endPage.value >= MAX_NUMBER_OF_PAGES) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
+    const isWithinBounds = pageStart >= RESERVED_NUMBER_OF_PAGES && endPage.value < MAX_NUMBER_OF_PAGES;
+    if (endPage.overflow || !isWithinBounds) {
+      regs.setU64(IN_OUT_REG, HostCallResult.HUH);
       return;
     }
 
     const zeroResult = await this.refine.machineZeroPages(machineIndex, pageStart, pageCount);
 
     if (zeroResult.isOk) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
+      regs.setU64(IN_OUT_REG, HostCallResult.OK);
     } else {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.WHO);
+      regs.setU64(IN_OUT_REG, HostCallResult.WHO);
     }
   }
 }
