@@ -7,7 +7,8 @@ import {
   tryAsPerValidator,
 } from "@typeberry/block";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
-import { FixedSizeArray, HashSet } from "@typeberry/collections";
+import type { WorkPackageInfo } from "@typeberry/block/work-report";
+import { FixedSizeArray, HashDictionary, HashSet } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
@@ -80,6 +81,12 @@ class TestState {
   accounts!: Service[];
 
   static toReportsState(pre: TestState, spec: ChainSpec): ReportsState {
+    if (pre.offenders.length > 0) {
+      // TODO [ToDr] offenders are not used in `Reports` STF, so there is
+      // probably something wrong there.
+      throw new Error("Ignoring non-empty offenders!");
+    }
+
     return {
       accumulationQueue: tryAsPerEpochBlock(
         FixedSizeArray.fill(() => [], spec.epochLength),
@@ -93,7 +100,6 @@ class TestState {
       currentValidatorData: tryAsPerValidator(pre.curr_validators, spec),
       previousValidatorData: tryAsPerValidator(pre.prev_validators, spec),
       entropy: FixedSizeArray.new(pre.entropy, ENTROPY_ENTRIES),
-      offenders: asOpaqueType(pre.offenders),
       authPools: tryAsPerCore(pre.auth_pools.map(asOpaqueType), spec),
       recentBlocks: asOpaqueType(pre.recent_blocks),
       services: new Map(pre.accounts.map((x) => [x.id, x])),
@@ -134,12 +140,12 @@ class OutputData {
       reporters: json.array(codecFromJson.bytes32()),
     },
     ({ reported, reporters }) => ({
-      reported,
+      reported: HashDictionary.fromEntries(reported.map((x) => [x.workPackageHash, x])),
       reporters,
     }),
   );
 
-  reported!: ReportsOutput["reported"];
+  reported!: WorkPackageInfo[];
   reporters!: ReportsOutput["reporters"];
 }
 

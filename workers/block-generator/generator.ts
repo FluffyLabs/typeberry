@@ -11,11 +11,12 @@ import { Extrinsic } from "@typeberry/block/block";
 import { DisputesExtrinsic, Judgement, Verdict } from "@typeberry/block/disputes";
 import { Preimage } from "@typeberry/block/preimage";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Encoder } from "@typeberry/codec";
+import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type BlocksDb, InMemoryKvdb } from "@typeberry/database";
 import { HASH_SIZE, SimpleAllocator } from "@typeberry/hash";
+import type { KeccakHasher } from "@typeberry/hash/keccak";
 import { TransitionHasher } from "@typeberry/transition";
 import { asOpaqueType } from "@typeberry/utils";
 
@@ -27,6 +28,7 @@ export class Generator {
 
   constructor(
     public readonly chainSpec: ChainSpec,
+    public readonly keccakHasher: KeccakHasher,
     blocks: BlocksDb,
   ) {
     this.lastHeaderHash = blocks.getBestHeaderHash();
@@ -43,7 +45,7 @@ export class Generator {
     const lastTimeSlot = this.lastHeader?.timeSlotIndex;
     const blockNumber = lastTimeSlot !== undefined ? lastTimeSlot + 1 : 1;
 
-    const hasher = new TransitionHasher(this.chainSpec, this.hashAllocator);
+    const hasher = new TransitionHasher(this.chainSpec, this.keccakHasher, this.hashAllocator);
     // TODO [ToDr] write benchmark to calculate many hashes.
     const parentHeaderHash = this.lastHeaderHash;
     const stateRoot = await this.database.getRoot();
@@ -86,7 +88,9 @@ export class Generator {
       seal: Bytes.fill(96, (blockNumber * 69) % 256).asOpaque(),
     });
 
-    this.lastHeaderHash = hasher.header(header).hash;
+    const encoded = Encoder.encodeObject(Header.Codec, header, this.chainSpec);
+    const headerView = Decoder.decodeObject(Header.Codec.View, encoded, this.chainSpec);
+    this.lastHeaderHash = hasher.header(headerView).hash;
     this.lastHeader = header;
     return new Block(header, extrinsic);
   }

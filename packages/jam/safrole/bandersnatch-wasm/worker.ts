@@ -1,6 +1,6 @@
 import { ConcurrentWorker } from "@typeberry/concurrent";
 import { assertNever } from "@typeberry/utils";
-import { ring_commitment, verify_ticket } from "bandersnatch-wasm/pkg";
+import { batch_verify_tickets, ring_commitment, verify_seal } from "bandersnatch-wasm/pkg";
 import { Method, type Params, Response } from "./params";
 
 export const worker = ConcurrentWorker.new<Params, Response, null>((p: Params) => {
@@ -10,8 +10,14 @@ export const worker = ConcurrentWorker.new<Params, Response, null>((p: Params) =
     return Promise.resolve(new Response(ring_commitment(params.keys)));
   }
 
-  if (method === Method.VerifyTickets) {
-    return Promise.resolve(new Response(verify_ticket(params.keys, params.ticketsData, params.contextLength)));
+  if (method === Method.BatchVerifyTickets) {
+    return Promise.resolve(new Response(batch_verify_tickets(params.keys, params.ticketsData, params.contextLength)));
+  }
+
+  if (method === Method.VerifySeal) {
+    return Promise.resolve(
+      new Response(verify_seal(params.keys, params.authorIndex, params.signature, params.payload, params.auxData)),
+    );
   }
   assertNever(method);
 }, null);

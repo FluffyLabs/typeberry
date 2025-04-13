@@ -16,10 +16,10 @@ export class Importer {
   async importBlock(b: BlockView): Promise<WithHash<HeaderHash, Header>> {
     // TODO [ToDr] verify block?
     // TODO [ToDr] execute block and populate the state.
-    const headerWithHash = this.hasher.header(b.header.materialize());
+    const headerWithHash = this.hasher.header(b.header.view());
     await this.blocks.insertBlock(new WithHash(headerWithHash.hash, b));
     await this.blocks.setBestHeaderHash(headerWithHash.hash);
-    return headerWithHash;
+    return new WithHash(headerWithHash.hash, b.header.materialize());
   }
 
   bestBlockHash() {

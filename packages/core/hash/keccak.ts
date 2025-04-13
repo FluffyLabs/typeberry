@@ -15,5 +15,6 @@ export function hashBlobs(hasher: KeccakHasher, blobs: BytesBlob[]) {
   for (const blob of blobs) {
     hasher.hasher.update(blob.raw);
   }
+  // NOTE we can't use an allocator here because the library does not allow that.
   return Bytes.fromBlob(hasher.hasher.digest("binary"), HASH_SIZE);
 }

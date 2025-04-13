@@ -2,7 +2,7 @@ import type { CodeHash, ServiceId, TimeSlot } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
+import { type HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
 import { type Gas, codecUnsignedGas } from "@typeberry/pvm-interpreter/gas";
@@ -144,9 +144,9 @@ export class Service extends WithDebug {
       /** https://graypaper.fluffylabs.dev/#/85129da/383303383303?v=0.6.3 */
       info: ServiceAccountInfo;
       /** https://graypaper.fluffylabs.dev/#/85129da/10f90010f900?v=0.6.3 */
-      preimages: PreimageItem[];
+      preimages: HashDictionary<PreimageHash, PreimageItem>;
       /** https://graypaper.fluffylabs.dev/#/85129da/115400115800?v=0.6.3 */
-      lookupHistory: LookupHistoryItem[];
+      lookupHistory: HashDictionary<PreimageHash, LookupHistoryItem[]>;
       /** https://graypaper.fluffylabs.dev/#/85129da/10f80010f800?v=0.6.3 */
       storage: StateItem[];
     },
