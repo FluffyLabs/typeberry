@@ -41,10 +41,6 @@ export class Read implements HostCallHandler {
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // a
     const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
-    if (serviceId === null) {
-      regs.setU64(IN_OUT_REG, HostCallResult.NONE);
-      return;
-    }
 
     // k_o
     const keyStartAddress = tryAsMemoryIndex(regs.getU32(8));
@@ -64,7 +60,7 @@ export class Read implements HostCallHandler {
     const keyHash = blake2b.hashBytes(key);
 
     // v
-    const value = await this.account.read(serviceId, keyHash);
+    const value = serviceId !== null ? await this.account.read(serviceId, keyHash) : null;
 
     const valueLength = value === null ? tryAsU64(0) : tryAsU64(value.raw.length);
     const valueBlobOffset = tryAsU64(regs.getU64(11));
