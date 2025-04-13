@@ -70,21 +70,7 @@ export async function main(files?: string[]) {
   await initBlocksReader(importerReady, chainSpec, options.blocksToImport);
 
   // Authorship initialization.
-  const closeAuthorship = await (options.isAuthoring
-    ? (async () => {
-        logger.info("✍️  Starting block generator.");
-        const { generator, finish } = await startBlockGenerator(config);
-        // relay blocks from generator to importer
-        importerReady.doUntil<Finished>("finished", async (importer, port) => {
-          generator.currentState().onBlock.on((b) => {
-            logger.log(`✍️  Produced block: ${b.length}`);
-            importer.sendBlock(port, b);
-          });
-        });
-
-        return finish;
-      })()
-    : noop);
+  const closeAuthorship = await initAuthorship(options.isAuthoring, config, importerReady);
 
   // start regular operation
   const whenImporterDone = importerReady.doUntil<Finished>("finished", async () => {});
@@ -99,36 +85,50 @@ export async function main(files?: string[]) {
   logger.info("[main] ✅ Done.");
 }
 
-const initBlocksReader = async (
-  importerReady: MessageChannelStateMachine<MainReady, Finished | MainReady | MainInit<MainReady>>,
-  chainSpec: ChainSpec,
-  blocksToImport?: string[],
-) => {
-  if (blocksToImport !== undefined) {
-    logger.info(`📖 Reading ${blocksToImport.length} blocks`);
-    return new Promise((resolve, reject) => {
-      importerReady.doUntil<Finished>("finished", async (importer, port) => {
-        try {
-          const reader = startBlocksReader({
-            files: blocksToImport,
-            chainSpec,
-          });
-          for (const block of reader) {
-            logger.log(`📖 Importing block: #${block.header.view().timeSlotIndex.materialize()}`);
-            importer.sendBlock(port, block.encoded().raw);
-          }
-          return resolve(null);
-        } catch (e) {
-          return reject(e);
-        }
-      });
-    });
+type ImporterReady = MessageChannelStateMachine<MainReady, Finished | MainReady | MainInit<MainReady>>;
+
+const initAuthorship = async (isAuthoring: boolean, config: Config, importerReady: ImporterReady) => {
+  if (!isAuthoring) {
+    return () => Promise.resolve();
   }
 
-  return Promise.resolve();
+  logger.info("✍️  Starting block generator.");
+  const { generator, finish } = await startBlockGenerator(config);
+  // relay blocks from generator to importer
+  importerReady.doUntil<Finished>("finished", async (importer, port) => {
+    generator.currentState().onBlock.on((b) => {
+      logger.log(`✍️  Produced block: ${b.length}`);
+      importer.sendBlock(port, b);
+    });
+  });
+
+  return finish;
 };
 
-const noop = () => Promise.resolve();
+const initBlocksReader = async (importerReady: ImporterReady, chainSpec: ChainSpec, blocksToImport?: string[]) => {
+  if (blocksToImport === undefined) {
+    return Promise.resolve();
+  }
+
+  logger.info(`📖 Reading ${blocksToImport.length} blocks`);
+  return new Promise((resolve, reject) => {
+    importerReady.doUntil<Finished>("finished", async (importer, port) => {
+      try {
+        const reader = startBlocksReader({
+          files: blocksToImport,
+          chainSpec,
+        });
+        for (const block of reader) {
+          logger.log(`📖 Importing block: #${block.header.view().timeSlotIndex.materialize()}`);
+          importer.sendBlock(port, block.encoded().raw);
+        }
+        return resolve(null);
+      } catch (e) {
+        return reject(e);
+      }
+    });
+  });
+};
 
 const getChainSpec = (name: KnownChainSpec) => {
   if (name === KnownChainSpec.Full) {
