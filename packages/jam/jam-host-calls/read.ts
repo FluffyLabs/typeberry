@@ -65,12 +65,8 @@ export class Read implements HostCallHandler {
 
     // v
     const value = await this.account.read(serviceId, keyHash);
-    if (value === null) {
-      regs.setU64(IN_OUT_REG, HostCallResult.NONE);
-      return;
-    }
 
-    const valueLength = tryAsU64(value.raw.length);
+    const valueLength = value === null ? tryAsU64(0) : tryAsU64(value.raw.length);
     const valueBlobOffset = tryAsU64(regs.getU64(11));
     const lengthToWrite = tryAsU64(regs.getU64(12));
 
@@ -79,14 +75,21 @@ export class Read implements HostCallHandler {
     // l
     const blobLength = minU64(lengthToWrite, tryAsU64(valueLength - offset));
 
-    const writePageFault = memory.storeFrom(
+    const isWritable = memory.isWriteable(destinationAddress, Number(blobLength));
+    if (!isWritable) {
+      return Promise.resolve(PvmExecution.Panic);
+    }
+
+    if (value === null) {
+      regs.setU64(IN_OUT_REG, HostCallResult.NONE);
+      return;
+    }
+
+    memory.storeFrom(
       destinationAddress,
       // NOTE casting to `U32` is safe here, since we are bounded by `valueLength`.
       value.raw.subarray(Number(offset), Number(offset + blobLength)),
     );
-    if (writePageFault !== null) {
-      return Promise.resolve(PvmExecution.Panic);
-    }
     regs.setU64(IN_OUT_REG, valueLength);
   }
 }
