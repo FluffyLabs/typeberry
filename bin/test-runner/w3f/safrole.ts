@@ -23,7 +23,7 @@ import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import { type Input, type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole";
 import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
-import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
+import type { SafroleSealingKeys } from "@typeberry/state/safrole-data";
 import { Result } from "@typeberry/utils";
 import { logger } from "../common";
 import { commonFromJson, getChainSpec } from "./common-types";
