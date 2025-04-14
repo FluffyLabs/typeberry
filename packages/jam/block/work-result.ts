@@ -32,11 +32,11 @@ export class WorkRefineLoad extends WithDebug {
     return new WorkRefineLoad(gasUsed, imports, extrinsicCount, extrinsicSize, exports);
   }
   constructor(
-    public gasUsed: U32,
-    public imports: U32,
-    public extrinsicCount: U32,
-    public extrinsicSize: U32,
-    public exports: U32,
+    public readonly gasUsed: U32,
+    public readonly imports: U32,
+    public readonly extrinsicCount: U32,
+    public readonly extrinsicSize: U32,
+    public readonly exports: U32,
   ) {
     super();
   }
