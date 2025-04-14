@@ -11,7 +11,8 @@ import { WorkItem } from "./work-item";
 // TODO [MaSo] Update to GP 0.6.4
 /** NOTE [MaSo] WorkItemCount in big_work_report_output-1.json (and not only) is 16!!! */
 /** Possible number of work items in the package or results in the report. */
-export type WorkItemsCount = 1 | 2 | 3 | 4 | number;
+/** Constrained by I=16 https://graypaper.fluffylabs.dev/#/68eaa1f/417a00417a00?v=0.6.4 */
+export type WorkItemsCount = U8;
 
 /** Verify the value is within the `WorkItemsCount` bounds. */
 export function tryAsWorkItemsCount(len: number): WorkItemsCount {
