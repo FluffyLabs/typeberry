@@ -20,6 +20,7 @@ export enum WorkExecResultKind {
   codeOversize = 4,
 }
 
+/** https://graypaper.fluffylabs.dev/#/68eaa1f/141300141b00?v=0.6.4 */
 export class WorkRefineLoad extends WithDebug {
   static Codec = codec.Class(WorkRefineLoad, {
     gasUsed: codec.u32,
