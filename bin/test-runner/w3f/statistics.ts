@@ -177,7 +177,7 @@ export class StatisticsTestFull {
 export async function runStatisticsTestTiny({ input, pre_state, post_state }: StatisticsTestTiny) {
   logger.log(`StatisticsTestFull { ${input}, ${pre_state}, ${post_state} }`);
   //const spec = tinyChainSpec;
-  //const statistics = new Statistics(TestState.toStatisticsState(pre_state, spec), spec);
+  //const statistics = new Statistics(spec, TestState.toStatisticsState(pre_state, spec));
   //statistics.transition(input.slot, input.author_index, input.extrinsic);
   // TODO [MaSo] Update to GP 0.6.4
   // assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(post_state, spec));
@@ -186,7 +186,7 @@ export async function runStatisticsTestTiny({ input, pre_state, post_state }: St
 export async function runStatisticsTestFull({ input, pre_state, post_state }: StatisticsTestFull) {
   logger.log(`StatisticsTestFull { ${input}, ${pre_state}, ${post_state} }`);
   // const spec = fullChainSpec;
-  //const statistics = new Statistics(TestState.toStatisticsState(pre_state, spec), spec);
+  //const statistics = new Statistics(spec, TestState.toStatisticsState(pre_state, spec));
   //statistics.transition(input.slot, input.author_index, input.extrinsic);
   // TODO [MaSo] Update to GP 0.6.4
   // assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(post_state, spec));

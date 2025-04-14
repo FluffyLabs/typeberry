@@ -7,13 +7,14 @@ import {
   ED25519_KEY_BYTES,
   type Ed25519Key,
   type EntropyHash,
+  EpochMarker,
   type TimeSlot,
   type ValidatorKeys,
   tryAsPerEpochBlock,
   tryAsPerValidator,
   tryAsTimeSlot,
 } from "@typeberry/block";
-import type { SignedTicket, Ticket } from "@typeberry/block/tickets";
+import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
@@ -56,17 +57,11 @@ export class TicketsOrKeys {
 
   static toSafroleSealingKeys(data: TicketsOrKeys, chainSpec: ChainSpec): SafroleSealingKeys {
     if (data.keys !== undefined) {
-      return {
-        kind: SafroleSealingKeysKind.Keys,
-        keys: tryAsPerEpochBlock(data.keys, chainSpec),
-      };
+      return SafroleSealingKeysData.keys(tryAsPerEpochBlock(data.keys, chainSpec));
     }
 
     if (data.tickets !== undefined) {
-      return {
-        kind: SafroleSealingKeysKind.Tickets,
-        tickets: tryAsPerEpochBlock(data.tickets, chainSpec),
-      };
+      return SafroleSealingKeysData.tickets(tryAsPerEpochBlock(data.tickets, chainSpec));
     }
 
     throw new Error("Neither tickets nor keys are defined!");
@@ -134,7 +129,9 @@ class JsonState {
       ticketsAccumulator: asKnownSize(state.gamma_a),
       sealingKeySeries: TicketsOrKeys.toSafroleSealingKeys(state.gamma_s, chainSpec),
       epochRoot: state.gamma_z.asOpaque(),
-      punishSet: SortedSet.fromSortedArray(hashComparator, state.post_offenders),
+      disputesRecords: {
+        punishSet: SortedSet.fromSortedArray(hashComparator, state.post_offenders),
+      },
     };
   }
 }
@@ -169,7 +166,7 @@ export class Output {
   ok?: OkOutput;
   err?: TestErrorCode;
 
-  static toSafroleOutput(output: Output): Result<OkResult, SafroleErrorCode> {
+  static toSafroleOutput(output: Output, spec: ChainSpec): Result<OkResult, SafroleErrorCode> {
     if (output.err !== undefined) {
       return Result.error(Output.toSafroleErrorCode(output.err));
     }
@@ -177,14 +174,17 @@ export class Output {
     const epochMark =
       output.ok?.epoch_mark === undefined || output.ok.epoch_mark === null
         ? null
-        : {
+        : EpochMarker.fromCodec({
             entropy: output.ok.epoch_mark.entropy,
             ticketsEntropy: output.ok.epoch_mark.tickets_entropy,
-            validators: output.ok.epoch_mark.validators,
-          };
+            validators: tryAsPerValidator(output.ok.epoch_mark.validators, spec),
+          });
+    const tickets = output.ok?.tickets_mark ?? null;
+    const ticketsMark = tickets === null ? null : tryAsPerEpochBlock(tickets, spec);
+
     return Result.ok({
       epochMark,
-      ticketsMark: output.ok?.tickets_mark ?? null,
+      ticketsMark,
     });
   }
 
@@ -217,12 +217,16 @@ class TestInput {
       entropy: commonFromJson.bytes32(),
       extrinsic: json.array(safroleFromJson.ticketEnvelope),
     },
-    ({ entropy, extrinsic, slot }) => ({ entropy, extrinsic, slot: tryAsTimeSlot(slot) }),
+    ({ entropy, extrinsic, slot }) => ({
+      entropy,
+      extrinsic: asKnownSize(extrinsic),
+      slot: tryAsTimeSlot(slot),
+    }),
   );
 
   slot!: TimeSlot;
   entropy!: EntropyHash;
-  extrinsic!: SignedTicket[];
+  extrinsic!: TicketsExtrinsic;
 }
 
 export class SafroleTest {
@@ -244,12 +248,12 @@ export const bwasm = BandernsatchWasm.new({ synchronous: false });
 export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const chainSpec = getChainSpec(path);
   const preState = JsonState.toSafroleState(testContent.pre_state, chainSpec);
-  const safrole = new Safrole(preState, chainSpec, bwasm);
+  const safrole = new Safrole(chainSpec, preState, bwasm);
 
   const result = await safrole.transition(testContent.input);
   logger.log(`SafroleTest { ${result} }`);
 
   // TODO [MaSo] Update to GP 0.6.4
-  // deepEqual(result, Output.toSafroleOutput(testContent.output));
+  // deepEqual(result, Output.toSafroleOutput(testContent.output, chainSpec));
   // deepEqual(safrole.state, JsonState.toSafroleState(testContent.post_state, chainSpec));
 }

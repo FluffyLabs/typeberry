@@ -1,4 +1,4 @@
-import { Bytes } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import { HASH_SIZE, WithHash } from "@typeberry/hash";
 import { WithDebug } from "@typeberry/utils";
@@ -79,6 +79,18 @@ export class EpochMarker extends WithDebug {
   }
 }
 
+/**
+ * Return an encoded header without the seal components.
+ *
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/370202370302?v=0.6.4
+ */
+export const encodeUnsealedHeader = (view: HeaderView): BytesBlob => {
+  // we basically need to omit the last field, perhaps there is better
+  // way to do that, but this seems like the most straightforward
+  const encodedFullHeader = view.encoded().raw;
+  const encodedUnsealedLen = encodedFullHeader.length - BANDERSNATCH_VRF_SIGNATURE_BYTES;
+  return BytesBlob.blobFrom(encodedFullHeader.subarray(0, encodedUnsealedLen));
+};
 /**
  * The header of the JAM block.
  *

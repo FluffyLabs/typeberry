@@ -277,7 +277,7 @@ describe("Disputes", () => {
   };
 
   it("should perform correct state transition and return offenders", async () => {
-    const dispuites = new Disputes(preState, tinyChainSpec);
+    const disputes = new Disputes(tinyChainSpec, preState);
     const disputesExtrinsic = new DisputesExtrinsic(verdicts, culprits, faults);
     const offenders = [
       "0x22351e22105a19aabb42589162ad7f1ea0df1c25cebf0e4a9fcd261301274862",
@@ -285,7 +285,7 @@ describe("Disputes", () => {
       "0x3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29",
     ].map(createOffender);
 
-    const result = await dispuites.transition(disputesExtrinsic);
+    const result = await disputes.transition(disputesExtrinsic);
     const error = result.isError ? result.error : undefined;
     const ok = result.isOk ? result.ok.slice() : undefined;
 
@@ -294,10 +294,10 @@ describe("Disputes", () => {
   });
 
   it("should return incorrect validator index error", async () => {
-    const dispuites = new Disputes(preState, tinyChainSpec);
+    const disputes = new Disputes(tinyChainSpec, preState);
     const disputesExtrinsic = new DisputesExtrinsic(verdictsWithIncorrectValidatorIndex, culprits, faults);
 
-    const result = await dispuites.transition(disputesExtrinsic);
+    const result = await disputes.transition(disputesExtrinsic);
     const error = result.isError ? result.error : undefined;
     const ok = result.isOk ? result.ok.slice() : undefined;
 

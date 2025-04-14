@@ -9,6 +9,7 @@
     "@typeberry/codec": "0.0.1",
     "@typeberry/collections": "0.0.1",
     "@typeberry/config": "0.0.1",
+    "@typeberry/database": "0.0.1",
     "@typeberry/disputes": "0.0.1",
     "@typeberry/erasure-coding": "0.0.1",
     "@typeberry/hash": "0.0.1",

@@ -2,8 +2,7 @@ import type { HeaderHash, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
 import type { RefineContext } from "@typeberry/block/refine-context";
 import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
-import { bytesBlobComparator } from "@typeberry/bytes";
-import { HashDictionary, SortedSet } from "@typeberry/collections";
+import { HashDictionary } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set";
 import type { KeccakHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
@@ -28,17 +27,21 @@ export function verifyContextualValidity(
   >,
   hasher: MmrHasher<KeccakHash>,
   headerChain: HeaderChain,
-): Result<WorkPackageInfo[], ReportsError> {
+): Result<HashDictionary<WorkPackageHash, WorkPackageInfo>, ReportsError> {
   const contexts: RefineContext[] = [];
   // hashes of work packages reported in this extrinsic
-  const currentWorkPackages = HashDictionary.new<WorkPackageHash, ExportsRootHash>();
+  const currentWorkPackages = HashDictionary.new<WorkPackageHash, WorkPackageInfo>();
   const prerequisiteHashes = HashSet.new<WorkPackageHash>();
   const segmentRootLookupHashes = HashSet.new<WorkPackageHash>();
 
   for (const guaranteeView of input.guarantees) {
     const guarantee = guaranteeView.materialize();
     contexts.push(guarantee.report.context);
-    currentWorkPackages.set(guarantee.report.workPackageSpec.hash, guarantee.report.workPackageSpec.exportsRoot);
+    const info = new WorkPackageInfo(
+      guarantee.report.workPackageSpec.hash,
+      guarantee.report.workPackageSpec.exportsRoot,
+    );
+    currentWorkPackages.set(info.workPackageHash, info);
     prerequisiteHashes.insertAll(guarantee.report.context.prerequisites);
     segmentRootLookupHashes.insertAll(guarantee.report.segmentRootLookup.map((x) => x.workPackageHash));
 
@@ -109,23 +112,19 @@ export function verifyContextualValidity(
     for (const lookup of report.segmentRootLookup) {
       let root = currentWorkPackages.get(lookup.workPackageHash);
       if (root === undefined) {
-        root = recentlyReported.get(lookup.workPackageHash);
+        const exportsRoot = recentlyReported.get(lookup.workPackageHash);
+        root = exportsRoot !== undefined ? new WorkPackageInfo(lookup.workPackageHash, exportsRoot) : undefined;
       }
-      if (root === undefined || !root.isEqualTo(lookup.segmentTreeRoot)) {
+      if (root === undefined || !root.segmentTreeRoot.isEqualTo(lookup.segmentTreeRoot)) {
         return Result.error(
           ReportsError.SegmentRootLookupInvalid,
-          `Mismatching segment tree root for package ${lookup.workPackageHash}. Got: ${lookup.segmentTreeRoot}, expected: ${root}`,
+          `Mismatching segment tree root for package ${lookup.workPackageHash}. Got: ${lookup.segmentTreeRoot}, expected: ${root?.segmentTreeRoot}`,
         );
       }
     }
   }
 
-  // TODO [ToDr] [opti] More efficient into-array serialization?
-  const sortedWorkPackages = SortedSet.fromArray((x, y) => {
-    return bytesBlobComparator(x[0], y[0]);
-  }, Array.from(currentWorkPackages));
-
-  return Result.ok(sortedWorkPackages.slice().map(([key, val]) => new WorkPackageInfo(key, val)));
+  return Result.ok(currentWorkPackages);
 }
 
 function verifyRefineContexts(
@@ -211,7 +210,7 @@ function verifyDependencies({
   prerequisiteHashes,
   segmentRootLookupHashes,
 }: {
-  currentWorkPackages: HashDictionary<WorkPackageHash, ExportsRootHash>;
+  currentWorkPackages: HashDictionary<WorkPackageHash, WorkPackageInfo>;
   recentlyReported: HashDictionary<WorkPackageHash, ExportsRootHash>;
   prerequisiteHashes: HashSet<WorkPackageHash>;
   segmentRootLookupHashes: HashSet<WorkPackageHash>;

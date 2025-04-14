@@ -1,4 +1,5 @@
 import type { OpaqueHash } from "@typeberry/hash";
+import type { Comparator } from "@typeberry/ordering";
 
 /** A map which uses hashes as keys. */
 export class HashDictionary<K extends OpaqueHash, V> {
@@ -71,5 +72,12 @@ export class HashDictionary<K extends OpaqueHash, V> {
     for (const value of this.map.values()) {
       yield value[1];
     }
+  }
+
+  /** Returns an array of the map's values, sorted by their corresponding keys */
+  toSortedArray(compare: Comparator<K>): V[] {
+    const vals = Array.from(this.map.values());
+    vals.sort((a, b) => compare(a[0], b[0]).value);
+    return vals.map((x) => x[1]);
   }
 }

@@ -27,8 +27,8 @@ type NewDisputesRecordsItems = {
 type Ok = null;
 export class Disputes {
   constructor(
+    private readonly chainSpec: ChainSpec,
     public readonly state: DisputesState,
-    private readonly context: ChainSpec,
   ) {}
 
   private verifyCulprits(
@@ -133,7 +133,7 @@ export class Disputes {
       return Result.error(DisputesErrorCode.JudgementsNotSortedUnique);
     }
 
-    const currentEpoch = Math.floor(this.state.timeslot / this.context.epochLength);
+    const currentEpoch = Math.floor(this.state.timeslot / this.chainSpec.epochLength);
     let voteSignatureIndex = 0;
     for (const { votesEpoch, votes } of disputes.verdicts) {
       // https://graypaper.fluffylabs.dev/#/579bd12/12bb0012bc00
@@ -209,7 +209,7 @@ export class Disputes {
     // https://graypaper.fluffylabs.dev/#/579bd12/12fb02121003
 
     for (const [r, sum] of v) {
-      if (sum === this.context.validatorsSuperMajority) {
+      if (sum === this.chainSpec.validatorsSuperMajority) {
         // there has to be at least 1 fault with the same work report hash
         // https://graypaper.fluffylabs.dev/#/579bd12/12f10212fc02
         const f = disputes.faults.find((x) => x.workReportHash.isEqualTo(r));
@@ -224,7 +224,7 @@ export class Disputes {
         if (c1 === c2) {
           return Result.error(DisputesErrorCode.NotEnoughCulprits);
         }
-      } else if (sum !== this.context.thirdOfValidators) {
+      } else if (sum !== this.chainSpec.thirdOfValidators) {
         // positive votes count is not correct
         // https://graypaper.fluffylabs.dev/#/579bd12/125002128102
         return Result.error(DisputesErrorCode.BadVoteSplit);
@@ -243,11 +243,11 @@ export class Disputes {
     // the state will be updated after verification
     // https://graypaper.fluffylabs.dev/#/579bd12/124a0312a503
     for (const [r, sum] of v) {
-      if (sum >= this.context.validatorsSuperMajority) {
+      if (sum >= this.chainSpec.validatorsSuperMajority) {
         toAddToGoodSet.push(r);
       } else if (sum === 0) {
         toAddToBadSet.push(r);
-      } else if (sum >= this.context.thirdOfValidators) {
+      } else if (sum >= this.chainSpec.thirdOfValidators) {
         toAddToWonkySet.push(r);
       }
     }
@@ -268,7 +268,7 @@ export class Disputes {
       const assignment = this.state.availabilityAssignment[c];
       if (assignment !== null) {
         const sum = v.get(assignment.workReport.hash);
-        if (sum !== undefined && sum < this.context.validatorsSuperMajority) {
+        if (sum !== undefined && sum < this.chainSpec.validatorsSuperMajority) {
           this.state.availabilityAssignment[c] = null;
         }
       }
@@ -314,7 +314,7 @@ export class Disputes {
   private prepareSignaturesToVerification(disputes: DisputesExtrinsic): Result<VerificationInput, DisputesErrorCode> {
     // Signature verification is heavy so we prepare data to verify it in the meantime,
     const signaturesToVerification: VerificationInput = { culprits: [], judgements: [], faults: [] };
-    const currentEpoch = Math.floor(this.state.timeslot / this.context.epochLength);
+    const currentEpoch = Math.floor(this.state.timeslot / this.chainSpec.epochLength);
 
     for (const { votesEpoch, votes, workReportHash } of disputes.verdicts) {
       const k = votesEpoch === currentEpoch ? this.state.currentValidatorData : this.state.previousValidatorData;
@@ -344,6 +344,9 @@ export class Disputes {
     return Result.ok(signaturesToVerification);
   }
 
+  /**
+   * Transition the disputes and return a list of offenders.
+   */
   async transition(disputes: DisputesExtrinsic): Promise<Result<Ed25519Key[], DisputesErrorCode>> {
     const signaturesToVerifyResult = this.prepareSignaturesToVerification(disputes);
     if (signaturesToVerifyResult.isError) {

@@ -14,6 +14,7 @@ import { type CodecRecord, type Descriptor, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
+import { WithDebug } from "@typeberry/utils";
 import { ValidatorData } from "./validator-data";
 
 export enum SafroleSealingKeysKind {
@@ -33,7 +34,7 @@ export type SafroleSealingKeys =
 
 const codecBandersnatchKey: Descriptor<BandersnatchKey> = codec.bytes(BANDERSNATCH_KEY_BYTES).asOpaque();
 
-export class SafroleSealingKeysData {
+export class SafroleSealingKeysData extends WithDebug {
   static Codec = codecWithContext((context) => {
     return codec.custom<SafroleSealingKeys>(
       {
@@ -91,7 +92,9 @@ export class SafroleSealingKeysData {
     readonly kind: SafroleSealingKeysKind,
     readonly keys?: PerEpochBlock<BandersnatchKey>,
     readonly tickets?: PerEpochBlock<Ticket>,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 export class SafroleData {

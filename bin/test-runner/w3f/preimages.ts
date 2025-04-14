@@ -1,14 +1,21 @@
 import assert from "node:assert";
 import { type TimeSlot, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage";
-import { BytesBlob } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
-import { type OpaqueHash, blake2b } from "@typeberry/hash";
+import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
-import type { U32 } from "@typeberry/numbers";
-import { LookupHistoryItem, tryAsLookupHistorySlots } from "@typeberry/state";
-import { type Account, Preimages, type PreimagesErrorCode } from "@typeberry/transition";
-import { Result } from "@typeberry/utils";
+import { type U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsGas } from "@typeberry/pvm-interpreter";
+import {
+  LookupHistoryItem,
+  PreimageItem,
+  Service,
+  ServiceAccountInfo,
+  tryAsLookupHistorySlots,
+} from "@typeberry/state";
+import { Preimages, type PreimagesErrorCode } from "@typeberry/transition";
+import { OK, Result } from "@typeberry/utils";
 import { preimagesExtrinsicFromJson } from "./codec/preimages-extrinsic";
 import { commonFromJson } from "./common-types";
 
@@ -71,11 +78,11 @@ class TestState {
 
 export class Output {
   static fromJson: FromJson<Output> = {
-    ok: json.optional(json.fromAny(() => null)),
+    ok: json.optional(json.fromAny(() => OK)),
     err: json.optional("string"),
   };
 
-  ok?: null;
+  ok?: OK;
   err?: PreimagesErrorCode;
 }
 
@@ -94,7 +101,7 @@ export class PreImagesTest {
 
 export async function runPreImagesTest(testContent: PreImagesTest) {
   const preState = {
-    accounts: new Map(
+    services: new Map(
       testContent.pre_state.accounts.map((account) => [
         tryAsServiceId(account.id),
         testAccountsMapEntryToAccount(account),
@@ -102,7 +109,7 @@ export async function runPreImagesTest(testContent: PreImagesTest) {
     ),
   };
   const postState = {
-    accounts: new Map(
+    services: new Map(
       testContent.post_state.accounts.map((account) => [
         tryAsServiceId(account.id),
         testAccountsMapEntryToAccount(account),
@@ -116,12 +123,14 @@ export async function runPreImagesTest(testContent: PreImagesTest) {
   assert.deepEqual(preimages.state, postState);
 }
 
-function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Account {
-  const preimages = HashDictionary.new<PreimageHash, BytesBlob>();
-
-  for (const preimage of entry.data.preimages) {
-    preimages.set(blake2b.hashBytes(preimage.blob).asOpaque(), preimage.blob);
-  }
+function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Service {
+  const preimages = HashDictionary.fromEntries(
+    entry.data.preimages
+      .map((x) => {
+        return new PreimageItem(blake2b.hashBytes(x.blob).asOpaque(), x.blob);
+      })
+      .map((x) => [x.hash, x]),
+  );
 
   const lookupHistory = HashDictionary.new<PreimageHash, LookupHistoryItem[]>();
   for (const item of entry.data.lookup_meta) {
@@ -132,15 +141,21 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Account {
     lookupHistory.set(item.key.hash, arr);
   }
 
-  return {
-    id: tryAsServiceId(entry.id),
-    data: {
-      preimages,
-      lookupHistory,
-    },
-  };
+  return new Service(tryAsServiceId(entry.id), {
+    info: ServiceAccountInfo.fromCodec({
+      codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
+      balance: tryAsU64(0),
+      accumulateMinGas: tryAsGas(0),
+      onTransferMinGas: tryAsGas(0),
+      storageUtilisationBytes: tryAsU64(0),
+      storageUtilisationCount: tryAsU32(0),
+    }),
+    storage: [],
+    preimages,
+    lookupHistory,
+  });
 }
 
-function testOutputToResult(testOutput: Output) {
-  return testOutput.err !== undefined ? Result.error(testOutput.err) : Result.ok(testOutput.ok);
+function testOutputToResult(testOutput: Output): Result<OK, PreimagesErrorCode> {
+  return testOutput.err !== undefined ? Result.error(testOutput.err) : Result.ok(OK);
 }

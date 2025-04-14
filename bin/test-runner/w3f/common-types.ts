@@ -330,9 +330,9 @@ export class TestAccountItem {
     ({ id, data }) =>
       new Service(id, {
         info: data.service,
-        preimages: data.preimages ?? [],
+        preimages: HashDictionary.fromEntries((data.preimages ?? []).map((x) => [x.hash, x])),
         storage: [],
-        lookupHistory: [],
+        lookupHistory: HashDictionary.new(),
       }),
   );
 
