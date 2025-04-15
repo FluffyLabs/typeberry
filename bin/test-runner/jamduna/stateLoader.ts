@@ -153,7 +153,7 @@ const kindMapping: { [k: string]: Appender } = {
     s.privilegedServices = decode(serialize.privilegedServices.Codec, value);
   },
   c13: (s, value) => {
-    s.statisticsPerValidator = decode(serialize.statistics.Codec, value);
+    s.statistics = decode(serialize.statistics.Codec, value);
   },
   c14: (s, value) => {
     s.accumulationQueue = decode(serialize.accumulationQueue.Codec, value);

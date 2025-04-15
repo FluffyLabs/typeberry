@@ -140,10 +140,11 @@ export type State = {
 
   /**
    * `π pi`: Previous and current statistics of each validator.
+   *         Cores statistics and services statistics are also included.
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/181a01181c01
    */
-  readonly statisticsPerValidator: ActivityData;
+  readonly statistics: ActivityData;
 
   /**
    * `ϑ theta`: We also maintain knowledge of ready (i.e. available

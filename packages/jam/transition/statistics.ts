@@ -1,16 +1,28 @@
 import { type Extrinsic, type TimeSlot, type ValidatorIndex, tryAsPerValidator } from "@typeberry/block";
+import type { WorkReport } from "@typeberry/block/work-report";
 import type { ChainSpec } from "@typeberry/config";
 import { tryAsU32 } from "@typeberry/numbers";
 import type { State } from "@typeberry/state";
 import { ActivityRecord } from "@typeberry/state";
 import { check } from "@typeberry/utils";
 
-export type StatisticsState = Pick<State, "timeslot"> & {
-  statisticsPerValidator: State["statisticsPerValidator"];
+export type Input = {
+  slot: TimeSlot;
+  authorIndex: ValidatorIndex;
+  extrinsic: Extrinsic;
+  availableReports: WorkReport[];
+};
+
+/**
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/18f60118f601?v=0.6.4
+ */
+export type StatisticsState = {
+  slot: State["timeslot"];
+  statistics: State["statistics"];
   /**
-   * `kappa_prime`: Posterior active validators
+   * `κ' kappa_prime`: Posterior active validators
    *
-   * https://graypaper.fluffylabs.dev/#/579bd12/188c02188d02
+   * https://graypaper.fluffylabs.dev/#/68eaa1f/187103187103?v=0.6.4
    */
   readonly currentValidatorData: State["currentValidatorData"];
 };
@@ -21,14 +33,14 @@ export class Statistics {
     public readonly state: StatisticsState,
   ) {}
 
-  private getValidatorsStatistics(slot: TimeSlot) {
+  private getStatistics(slot: TimeSlot) {
     /** https://graypaper.fluffylabs.dev/#/579bd12/18b80118b801 */
-    const currentEpoch = Math.floor(this.state.timeslot / this.chainSpec.epochLength);
+    const currentEpoch = Math.floor(this.state.slot / this.chainSpec.epochLength);
     const nextEpoch = Math.floor(slot / this.chainSpec.epochLength);
 
     /** e === e' */
     if (currentEpoch === nextEpoch) {
-      return this.state.statisticsPerValidator;
+      return this.state.statistics;
     }
 
     /** e !== e' */
@@ -38,16 +50,19 @@ export class Statistics {
 
     return {
       current: tryAsPerValidator(current, this.chainSpec),
-      previous: this.state.statisticsPerValidator.current,
+      previous: this.state.statistics.current,
+      cores: this.state.statistics.cores,
+      services: this.state.statistics.services,
     };
   }
 
-  transition(slot: TimeSlot, authorIndex: ValidatorIndex, extrinsic: Extrinsic) {
+  transition(input: Input) {
+    const { slot, authorIndex, extrinsic } = input;
     /**
      * get the validators statistics for the current epoch
      */
-    const validatorsStatistics = this.getValidatorsStatistics(slot);
-    const { current } = validatorsStatistics;
+    const statistics = this.getStatistics(slot);
+    const { current } = statistics;
     check(current[authorIndex] !== undefined, "authorIndex is out of bounds");
 
     /**
@@ -82,22 +97,26 @@ export class Statistics {
      * I asked a question to ensure it is true but I didn't get any response yet:
      * https://github.com/w3f/jamtestvectors/pull/28#discussion_r1907237004
      */
+
     for (const { credentials } of extrinsic.guarantees) {
-      for (const { validatorIndex } of credentials) {
-        current[validatorIndex].guarantees = tryAsU32(current[validatorIndex].guarantees + 1);
+      if (credentials.find(({ validatorIndex }) => validatorIndex === authorIndex) !== undefined) {
+        current[authorIndex].guarantees = tryAsU32(current[authorIndex].guarantees + 1);
+        break;
       }
     }
 
     /**
      * https://graypaper.fluffylabs.dev/#/579bd12/189902189902
      */
-    for (const assurance of extrinsic.assurances) {
-      current[assurance.validatorIndex].assurances = tryAsU32(current[assurance.validatorIndex].assurances + 1);
+    if (extrinsic.assurances.find(({ validatorIndex }) => validatorIndex === authorIndex) !== undefined) {
+      current[authorIndex].assurances = tryAsU32(current[authorIndex].assurances + 1);
     }
 
-    /**
-     * update the state with the new validators statistics
-     */
-    this.state.statisticsPerValidator = validatorsStatistics;
+    /** Update core statistics */
+
+    /** Update services statistics */
+
+    /** Update state */
+    this.state.statistics = statistics;
   }
 }

@@ -1,18 +1,37 @@
-import type { Extrinsic, TimeSlot, ValidatorIndex } from "@typeberry/block";
+import assert from "node:assert";
+import {
+  type Extrinsic,
+  type TimeSlot,
+  type ValidatorIndex,
+  tryAsPerValidator,
+  tryAsServiceId,
+} from "@typeberry/block";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
-import type { U32 } from "@typeberry/numbers";
-import { ActivityRecord, type ValidatorData } from "@typeberry/state";
+import type { U16, U32 } from "@typeberry/numbers";
+import type { Gas } from "@typeberry/pvm-interpreter/gas";
+import { ActivityRecord, CoreRecord, ServiceRecord, type ValidatorData, tryAsPerCore } from "@typeberry/state";
+import { type Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics";
 import { logger } from "../common";
 import { getExtrinsicFromJson } from "./codec/extrinsic";
 import { commonFromJson } from "./common-types";
 
 class TinyInput {
-  static fromJson: FromJson<TinyInput> = {
-    slot: "number",
-    author_index: "number",
-    extrinsic: getExtrinsicFromJson(tinyChainSpec),
-  };
+  static fromJson = json.object<TinyInput, Input>(
+    {
+      slot: "number",
+      author_index: "number",
+      extrinsic: getExtrinsicFromJson(tinyChainSpec),
+    },
+    ({ slot, author_index, extrinsic }) => {
+      return {
+        slot,
+        authorIndex: author_index,
+        extrinsic,
+        availableReports: [],
+      };
+    },
+  );
 
   slot!: TimeSlot;
   author_index!: ValidatorIndex;
@@ -20,11 +39,21 @@ class TinyInput {
 }
 
 class FullInput {
-  static fromJson: FromJson<FullInput> = {
-    slot: "number",
-    author_index: "number",
-    extrinsic: getExtrinsicFromJson(fullChainSpec),
-  };
+  static fromJson = json.object<FullInput, Input>(
+    {
+      slot: "number",
+      author_index: "number",
+      extrinsic: getExtrinsicFromJson(fullChainSpec),
+    },
+    ({ slot, author_index, extrinsic }) => {
+      return {
+        slot,
+        authorIndex: author_index,
+        extrinsic,
+        availableReports: [],
+      };
+    },
+  );
 
   slot!: TimeSlot;
   author_index!: ValidatorIndex;
@@ -62,54 +91,100 @@ class TestActivityRecord {
 }
 
 class TestCoreStatistics {
-  static fromJson: FromJson<TestCoreStatistics> = {
-    da_load: "number",
-    popularity: "number",
-    imports: "number",
-    exports: "number",
-    extrinsic_size: "number",
-    extrinsic_count: "number",
-    bundle_size: "number",
-    gas_used: "number",
-  };
+  static fromJson = json.object<TestCoreStatistics, CoreRecord>(
+    {
+      da_load: "number",
+      popularity: "number",
+      imports: "number",
+      exports: "number",
+      extrinsic_size: "number",
+      extrinsic_count: "number",
+      bundle_size: "number",
+      gas_used: "number",
+    },
+    ({ da_load, popularity, imports, exports, extrinsic_size, extrinsic_count, bundle_size, gas_used }) => {
+      return CoreRecord.fromCodec({
+        dataAvailabilityLoad: da_load,
+        popularity,
+        imports,
+        exports,
+        extrinsicSize: extrinsic_size,
+        extrinsicCount: extrinsic_count,
+        bandleSize: bundle_size,
+        gasUsed: gas_used,
+      });
+    },
+  );
 
-  da_load!: number;
-  popularity!: number;
-  imports!: number;
-  exports!: number;
-  extrinsic_size!: number;
-  extrinsic_count!: number;
-  bundle_size!: number;
-  gas_used!: number;
+  da_load!: U32;
+  popularity!: U16;
+  imports!: U16;
+  exports!: U16;
+  extrinsic_size!: U32;
+  extrinsic_count!: U16;
+  bundle_size!: U32;
+  gas_used!: Gas;
 }
 
 class TestServiceRecord {
-  static fromJson: FromJson<TestServiceRecord> = {
-    provided_count: "number",
-    provided_size: "number",
-    refinement_count: "number",
-    refinement_gas_used: "number",
-    imports: "number",
-    exports: "number",
-    extrinsic_size: "number",
-    extrinsic_count: "number",
-    accumulate_count: "number",
-    accumulate_gas_used: "number",
-    on_transfers_count: "number",
-    on_transfers_gas_used: "number",
-  };
-  provided_count!: number;
-  provided_size!: number;
-  refinement_count!: number;
-  refinement_gas_used!: number;
-  imports!: number;
-  exports!: number;
-  extrinsic_size!: number;
-  extrinsic_count!: number;
-  accumulate_count!: number;
-  accumulate_gas_used!: number;
-  on_transfers_count!: number;
-  on_transfers_gas_used!: number;
+  static fromJson = json.object<TestServiceRecord, ServiceRecord>(
+    {
+      provided_count: "number",
+      provided_size: "number",
+      refinement_count: "number",
+      refinement_gas_used: "number",
+      imports: "number",
+      exports: "number",
+      extrinsic_size: "number",
+      extrinsic_count: "number",
+      accumulate_count: "number",
+      accumulate_gas_used: "number",
+      on_transfers_count: "number",
+      on_transfers_gas_used: "number",
+    },
+    ({
+      provided_count,
+      provided_size,
+      refinement_count,
+      refinement_gas_used,
+      imports,
+      exports,
+      extrinsic_size,
+      extrinsic_count,
+      accumulate_count,
+      accumulate_gas_used,
+      on_transfers_count,
+      on_transfers_gas_used,
+    }) => {
+      return ServiceRecord.fromCodec({
+        providedCount: provided_count,
+        providedSize: provided_size,
+        refinementCount: refinement_count,
+        refinementGasUsed: refinement_gas_used,
+        imports,
+        exports,
+        extrinsicSize: extrinsic_size,
+        extrinsicCount: extrinsic_count,
+        accumulateCount: accumulate_count,
+        accumulateGasUsed: accumulate_gas_used,
+        onTransfersCount: on_transfers_count,
+        onTransfersGasUsed: on_transfers_gas_used,
+      });
+    },
+  );
+
+  provided_count!: U16;
+  provided_size!: U32;
+  refinement_count!: U32;
+  refinement_gas_used!: Gas;
+  imports!: U16;
+  exports!: U16;
+  extrinsic_size!: U32;
+  extrinsic_count!: U16;
+  accumulate_count!: U32;
+  accumulate_gas_used!: Gas;
+  on_transfers_count!: U32;
+  on_transfers_gas_used!: Gas;
 }
 
 class TestServiceStatistics {
@@ -119,7 +194,7 @@ class TestServiceStatistics {
   };
 
   id!: number;
-  record!: TestServiceRecord;
+  record!: ServiceRecord;
 }
 
 class TestStatisticsState {
@@ -132,7 +207,7 @@ class TestStatisticsState {
 
   vals_current!: ActivityRecord[];
   vals_last!: ActivityRecord[];
-  cores!: TestCoreStatistics[];
+  cores!: CoreRecord[];
   services!: TestServiceStatistics[];
 }
 
@@ -146,6 +221,24 @@ class TestState {
   statistics!: TestStatisticsState;
   slot!: TimeSlot;
   curr_validators!: ValidatorData[];
+
+  static toStatisticsState(spec: typeof tinyChainSpec | typeof fullChainSpec, state: TestState): StatisticsState {
+    return {
+      statistics: {
+        current: tryAsPerValidator(state.statistics.vals_current, spec),
+        previous: tryAsPerValidator(state.statistics.vals_last, spec),
+        cores: tryAsPerCore(state.statistics.cores, spec),
+        services: new Map(
+          state.statistics.services.map((service) => [
+            tryAsServiceId(service.id),
+            ServiceRecord.fromCodec(service.record),
+          ]),
+        ),
+      },
+      slot: state.slot,
+      currentValidatorData: tryAsPerValidator(state.curr_validators, spec),
+    };
+  }
 }
 
 export class StatisticsTestTiny {
@@ -155,7 +248,7 @@ export class StatisticsTestTiny {
     output: json.fromAny(() => null),
     post_state: TestState.fromJson,
   };
-  input!: TinyInput;
+  input!: Input;
   pre_state!: TestState;
   output!: null;
   post_state!: TestState;
@@ -168,7 +261,7 @@ export class StatisticsTestFull {
     output: json.fromAny(() => null),
     post_state: TestState.fromJson,
   };
-  input!: FullInput;
+  input!: Input;
   pre_state!: TestState;
   output!: null;
   post_state!: TestState;
@@ -176,18 +269,16 @@ export class StatisticsTestFull {
 
 export async function runStatisticsTestTiny({ input, pre_state, post_state }: StatisticsTestTiny) {
   logger.log(`StatisticsTestFull { ${input}, ${pre_state}, ${post_state} }`);
-  //const spec = tinyChainSpec;
-  //const statistics = new Statistics(spec, TestState.toStatisticsState(pre_state, spec));
-  //statistics.transition(input.slot, input.author_index, input.extrinsic);
-  // TODO [MaSo] Update to GP 0.6.4
-  // assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(post_state, spec));
+  const spec = tinyChainSpec;
+  const statistics = new Statistics(spec, TestState.toStatisticsState(spec, pre_state));
+  statistics.transition(input);
+  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, post_state));
 }
 
 export async function runStatisticsTestFull({ input, pre_state, post_state }: StatisticsTestFull) {
   logger.log(`StatisticsTestFull { ${input}, ${pre_state}, ${post_state} }`);
-  // const spec = fullChainSpec;
-  //const statistics = new Statistics(spec, TestState.toStatisticsState(pre_state, spec));
-  //statistics.transition(input.slot, input.author_index, input.extrinsic);
-  // TODO [MaSo] Update to GP 0.6.4
-  // assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(post_state, spec));
+  const spec = fullChainSpec;
+  const statistics = new Statistics(spec, TestState.toStatisticsState(spec, pre_state));
+  statistics.transition(input);
+  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, post_state));
 }
