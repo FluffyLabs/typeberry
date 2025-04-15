@@ -7,7 +7,7 @@ import { HashSet } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import {
-  ActivityData,
+  StatisticsData,
   AvailabilityAssignment,
   BlockState,
   DisputesRecords,
@@ -129,7 +129,7 @@ export namespace serialize {
   /** C(13): https://graypaper.fluffylabs.dev/#/85129da/38e10238e102?v=0.6.3 */
   export const statistics: StateCodec<State["statistics"]> = {
     key: keys.index(StateEntry.Pi),
-    Codec: ActivityData.Codec,
+    Codec: StatisticsData.Codec,
     extract: (s) => s.statistics,
   };
 

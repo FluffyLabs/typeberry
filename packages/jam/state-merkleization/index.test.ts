@@ -21,8 +21,8 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU8, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import {
-  ActivityData,
-  ActivityRecord,
+  StatisticsData,
+  ValidatorStatistics,
   AvailabilityAssignment,
   BlockState,
   DisputesRecords,
@@ -246,7 +246,7 @@ const testState = (): State => {
         }),
       ],
     ]),
-    statisticsPerValidator: ActivityData.fromCodec({
+    statisticsPerValidator: StatisticsData.fromCodec({
       current: tryAsPerValidator(
         [
           activityRecord(1, 3, 0, 0, 0, 0),
@@ -335,7 +335,7 @@ const activityRecord = (
   guarantees: number,
   assurances: number,
 ) => {
-  return ActivityRecord.fromCodec({
+  return ValidatorStatistics.fromCodec({
     blocks: tryAsU32(blocks),
     tickets: tryAsU32(tickets),
     preImages: tryAsU32(preimages),

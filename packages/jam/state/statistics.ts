@@ -1,7 +1,7 @@
 import { type PerValidator, type ServiceId, codecPerValidator, tryAsServiceId } from "@typeberry/block";
 import { type CodecRecord, type Descriptor, codec } from "@typeberry/codec";
-import { type U16, type U32, tryAsU32 } from "@typeberry/numbers";
-import { codecUnsignedGas } from "@typeberry/pvm-interpreter/gas";
+import { type U16, type U32, tryAsU16, tryAsU32 } from "@typeberry/numbers";
+import { codecUnsignedGas, tryAsBigGas } from "@typeberry/pvm-interpreter/gas";
 import type { Gas } from "../../core/pvm-debugger-adapter";
 import { type PerCore, codecPerCore } from "./common";
 
@@ -14,8 +14,8 @@ export const codecServiceId: Descriptor<ServiceId> = codec.u32.convert(
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/183701183701
  */
-export class ActivityRecord {
-  static Codec = codec.Class(ActivityRecord, {
+export class ValidatorStatistics {
+  static Codec = codec.Class(ValidatorStatistics, {
     blocks: codec.u32,
     tickets: codec.u32,
     preImages: codec.u32,
@@ -24,8 +24,8 @@ export class ActivityRecord {
     assurances: codec.u32,
   });
 
-  static fromCodec({ blocks, tickets, preImages, preImagesSize, guarantees, assurances }: CodecRecord<ActivityRecord>) {
-    return new ActivityRecord(blocks, tickets, preImages, preImagesSize, guarantees, assurances);
+  static fromCodec({ blocks, tickets, preImages, preImagesSize, guarantees, assurances }: CodecRecord<ValidatorStatistics>) {
+    return new ValidatorStatistics(blocks, tickets, preImages, preImagesSize, guarantees, assurances);
   }
 
   private constructor(
@@ -45,7 +45,7 @@ export class ActivityRecord {
 
   static empty() {
     const zero = tryAsU32(0);
-    return new ActivityRecord(zero, zero, zero, zero, zero, zero);
+    return new ValidatorStatistics(zero, zero, zero, zero, zero, zero);
   }
 }
 
@@ -56,8 +56,8 @@ export class ActivityRecord {
  * https://graypaper.fluffylabs.dev/#/68eaa1f/18f10318f103?v=0.6.4
  * https://github.com/gavofyork/graypaper/blob/main/text/statistics.tex#L65
  */
-export class CoreRecord {
-  static Codec = codec.Class(CoreRecord, {
+export class CoreStatistics {
+  static Codec = codec.Class(CoreStatistics, {
     dataAvailabilityLoad: codec.u32,
     popularity: codec.u16,
     imports: codec.u16,
@@ -68,8 +68,8 @@ export class CoreRecord {
     gasUsed: codecUnsignedGas,
   });
 
-  static fromCodec(v: CodecRecord<CoreRecord>) {
-    return new CoreRecord(
+  static fromCodec(v: CodecRecord<CoreStatistics>) {
+    return new CoreStatistics(
       v.dataAvailabilityLoad,
       v.popularity,
       v.imports,
@@ -99,6 +99,13 @@ export class CoreRecord {
     /** `u` */
     public readonly gasUsed: Gas,
   ) {}
+
+  static empty() {
+    const zero = tryAsU32(0);
+    const zero16 = tryAsU16(0);
+    const zeroGas = tryAsBigGas(0);
+    return new CoreStatistics(zero, zero16, zero16, zero16, zero, zero16, zero, zeroGas);
+  }
 }
 
 /**
@@ -108,8 +115,8 @@ export class CoreRecord {
  * https://graypaper.fluffylabs.dev/#/68eaa1f/185104185104?v=0.6.4
  * https://github.com/gavofyork/graypaper/blob/main/text/statistics.tex#L77
  */
-export class ServiceRecord {
-  static Codec = codec.Class(ServiceRecord, {
+export class ServiceStatistics {
+  static Codec = codec.Class(ServiceStatistics, {
     providedCount: codec.u16,
     providedSize: codec.u32,
     refinementCount: codec.u32,
@@ -124,8 +131,8 @@ export class ServiceRecord {
     onTransfersGasUsed: codecUnsignedGas,
   });
 
-  static fromCodec(v: CodecRecord<ServiceRecord>) {
-    return new ServiceRecord(
+  static fromCodec(v: CodecRecord<ServiceStatistics>) {
+    return new ServiceStatistics(
       v.providedCount,
       v.providedSize,
       v.refinementCount,
@@ -167,27 +174,47 @@ export class ServiceRecord {
     /** `t.1` */
     public readonly onTransfersGasUsed: Gas,
   ) {}
+
+  static empty() {
+    const zero = tryAsU32(0);
+    const zero16 = tryAsU16(0);
+    const zeroGas = tryAsBigGas(0);
+    return new ServiceStatistics(
+      zero16,
+      zero,
+      zero,
+      zeroGas,
+      zero16,
+      zero16,
+      zero,
+      zero16,
+      zero,
+      zeroGas,
+      zero,
+      zeroGas,
+    );
+  }
 }
 
-/** `pi`: Previous and current statistics of each validator. */
-export class ActivityData {
-  static Codec = codec.Class(ActivityData, {
-    current: codecPerValidator(ActivityRecord.Codec),
-    previous: codecPerValidator(ActivityRecord.Codec),
-    cores: codecPerCore(CoreRecord.Codec),
-    services: codec.dictionary(codecServiceId, ServiceRecord.Codec, {
+/** `pi`: Statistics of each validator, cores statistics and services statistics. */
+export class StatisticsData {
+  static Codec = codec.Class(StatisticsData, {
+    current: codecPerValidator(ValidatorStatistics.Codec),
+    previous: codecPerValidator(ValidatorStatistics.Codec),
+    cores: codecPerCore(CoreStatistics.Codec),
+    services: codec.dictionary(codecServiceId, ServiceStatistics.Codec, {
       sortKeys: (a, b) => a - b,
     }),
   });
 
-  static fromCodec(v: CodecRecord<ActivityData>) {
-    return new ActivityData(v.current, v.previous, v.cores, v.services);
+  static fromCodec(v: CodecRecord<StatisticsData>) {
+    return new StatisticsData(v.current, v.previous, v.cores, v.services);
   }
 
   constructor(
-    public current: PerValidator<ActivityRecord>,
-    public previous: PerValidator<ActivityRecord>,
-    public cores: PerCore<CoreRecord>,
-    public services: Map<ServiceId, ServiceRecord>,
+    public current: PerValidator<ValidatorStatistics>,
+    public previous: PerValidator<ValidatorStatistics>,
+    public cores: PerCore<CoreStatistics>,
+    public services: Map<ServiceId, ServiceStatistics>,
   ) {}
 }

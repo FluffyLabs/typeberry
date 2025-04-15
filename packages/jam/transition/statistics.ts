@@ -3,7 +3,7 @@ import type { WorkReport } from "@typeberry/block/work-report";
 import type { ChainSpec } from "@typeberry/config";
 import { tryAsU32 } from "@typeberry/numbers";
 import type { State } from "@typeberry/state";
-import { ActivityRecord } from "@typeberry/state";
+import { ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
 
 export type Input = {
@@ -17,8 +17,8 @@ export type Input = {
  * https://graypaper.fluffylabs.dev/#/68eaa1f/18f60118f601?v=0.6.4
  */
 export type StatisticsState = {
-  slot: State["timeslot"];
   statistics: State["statistics"];
+  slot: State["timeslot"];
   /**
    * `κ' kappa_prime`: Posterior active validators
    *
@@ -46,7 +46,7 @@ export class Statistics {
     /** e !== e' */
     const current = Array(this.chainSpec.validatorsCount)
       .fill(0)
-      .map(() => ActivityRecord.empty());
+      .map(() => ValidatorStatistics.empty());
 
     return {
       current: tryAsPerValidator(current, this.chainSpec),

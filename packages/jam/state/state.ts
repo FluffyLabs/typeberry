@@ -11,7 +11,7 @@ import type { NotYetAccumulatedReport } from "./not-yet-accumulated";
 import type { PrivilegedServices } from "./privileged-services";
 import type { SafroleData } from "./safrole-data";
 import type { Service } from "./service";
-import type { ActivityData } from "./statistics";
+import type { StatisticsData } from "./statistics";
 import type { ValidatorData } from "./validator-data";
 
 /**
@@ -144,7 +144,7 @@ export type State = {
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/181a01181c01
    */
-  readonly statistics: ActivityData;
+  readonly statistics: StatisticsData;
 
   /**
    * `ϑ theta`: We also maintain knowledge of ready (i.e. available

@@ -10,7 +10,7 @@ import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { U16, U32 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
-import { ActivityRecord, CoreRecord, ServiceRecord, type ValidatorData, tryAsPerCore } from "@typeberry/state";
+import { ValidatorStatistics, CoreStatistics, ServiceStatistics, type ValidatorData, tryAsPerCore } from "@typeberry/state";
 import { type Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics";
 import { logger } from "../common";
 import { getExtrinsicFromJson } from "./codec/extrinsic";
@@ -60,8 +60,8 @@ class FullInput {
   extrinsic!: Extrinsic;
 }
 
-class TestActivityRecord {
-  static fromJson = json.object<TestActivityRecord, ActivityRecord>(
+class TestValidatorStatistics {
+  static fromJson = json.object<TestValidatorStatistics, ValidatorStatistics>(
     {
       blocks: "number",
       tickets: "number",
@@ -71,7 +71,7 @@ class TestActivityRecord {
       assurances: "number",
     },
     ({ blocks, tickets, pre_images, pre_images_size, guarantees, assurances }) => {
-      return ActivityRecord.fromCodec({
+      return ValidatorStatistics.fromCodec({
         blocks,
         tickets,
         preImages: pre_images,
@@ -91,7 +91,7 @@ class TestActivityRecord {
 }
 
 class TestCoreStatistics {
-  static fromJson = json.object<TestCoreStatistics, CoreRecord>(
+  static fromJson = json.object<TestCoreStatistics, CoreStatistics>(
     {
       da_load: "number",
       popularity: "number",
@@ -103,7 +103,7 @@ class TestCoreStatistics {
       gas_used: "number",
     },
     ({ da_load, popularity, imports, exports, extrinsic_size, extrinsic_count, bundle_size, gas_used }) => {
-      return CoreRecord.fromCodec({
+      return CoreStatistics.fromCodec({
         dataAvailabilityLoad: da_load,
         popularity,
         imports,
@@ -126,8 +126,8 @@ class TestCoreStatistics {
   gas_used!: Gas;
 }
 
-class TestServiceRecord {
-  static fromJson = json.object<TestServiceRecord, ServiceRecord>(
+class TestServiceStatistics {
+  static fromJson = json.object<TestServiceStatistics, ServiceStatistics>(
     {
       provided_count: "number",
       provided_size: "number",
@@ -156,7 +156,7 @@ class TestServiceRecord {
       on_transfers_count,
       on_transfers_gas_used,
     }) => {
-      return ServiceRecord.fromCodec({
+      return ServiceStatistics.fromCodec({
         providedCount: provided_count,
         providedSize: provided_size,
         refinementCount: refinement_count,
@@ -187,28 +187,28 @@ class TestServiceRecord {
   on_transfers_gas_used!: Gas;
 }
 
-class TestServiceStatistics {
-  static fromJson: FromJson<TestServiceStatistics> = {
+class TestServicesStatistics {
+  static fromJson: FromJson<TestServicesStatistics> = {
     id: "number",
-    record: TestServiceRecord.fromJson,
+    record: TestServiceStatistics.fromJson,
   };
 
   id!: number;
-  record!: ServiceRecord;
+  record!: ServiceStatistics;
 }
 
 class TestStatisticsState {
   static fromJson: FromJson<TestStatisticsState> = {
-    vals_current: json.array(TestActivityRecord.fromJson),
-    vals_last: json.array(TestActivityRecord.fromJson),
+    vals_current: json.array(TestValidatorStatistics.fromJson),
+    vals_last: json.array(TestValidatorStatistics.fromJson),
     cores: json.array(TestCoreStatistics.fromJson),
-    services: json.array(TestServiceStatistics.fromJson),
+    services: json.array(TestServicesStatistics.fromJson),
   };
 
-  vals_current!: ActivityRecord[];
-  vals_last!: ActivityRecord[];
-  cores!: CoreRecord[];
-  services!: TestServiceStatistics[];
+  vals_current!: ValidatorStatistics[];
+  vals_last!: ValidatorStatistics[];
+  cores!: CoreStatistics[];
+  services!: TestServicesStatistics[];
 }
 
 class TestState {
@@ -231,7 +231,7 @@ class TestState {
         services: new Map(
           state.statistics.services.map((service) => [
             tryAsServiceId(service.id),
-            ServiceRecord.fromCodec(service.record),
+            ServiceStatistics.fromCodec(service.record),
           ]),
         ),
       },
