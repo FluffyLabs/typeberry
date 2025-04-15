@@ -21,8 +21,6 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU8, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import {
-  StatisticsData,
-  ValidatorStatistics,
   AvailabilityAssignment,
   BlockState,
   DisputesRecords,
@@ -33,7 +31,9 @@ import {
   Service,
   ServiceAccountInfo,
   type State,
+  StatisticsData,
   ValidatorData,
+  ValidatorStatistics,
   hashComparator,
   tryAsPerCore,
 } from "@typeberry/state";

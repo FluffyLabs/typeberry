@@ -7,7 +7,6 @@ import { HashSet } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import {
-  StatisticsData,
   AvailabilityAssignment,
   BlockState,
   DisputesRecords,
@@ -16,6 +15,7 @@ import {
   PrivilegedServices,
   ServiceAccountInfo,
   type State,
+  StatisticsData,
   ValidatorData,
   codecPerCore,
 } from "@typeberry/state";

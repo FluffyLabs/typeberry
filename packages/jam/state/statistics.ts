@@ -24,7 +24,14 @@ export class ValidatorStatistics {
     assurances: codec.u32,
   });
 
-  static fromCodec({ blocks, tickets, preImages, preImagesSize, guarantees, assurances }: CodecRecord<ValidatorStatistics>) {
+  static fromCodec({
+    blocks,
+    tickets,
+    preImages,
+    preImagesSize,
+    guarantees,
+    assurances,
+  }: CodecRecord<ValidatorStatistics>) {
     return new ValidatorStatistics(blocks, tickets, preImages, preImagesSize, guarantees, assurances);
   }
 

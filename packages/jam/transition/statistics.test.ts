@@ -54,7 +54,12 @@ describe("Statistics", () => {
         currentSlot: 1,
       });
 
-      statistics.transition({slot: currentSlot, authorIndex: validatorIndex, extrinsic: emptyExtrinsic, availableReports: []});
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: emptyExtrinsic,
+        availableReports: [],
+      });
 
       assert.deepStrictEqual(statistics.state.statistics.current, currentStatistics);
       assert.deepStrictEqual(statistics.state.statistics.previous, lastStatistics);
@@ -68,7 +73,12 @@ describe("Statistics", () => {
         currentSlot: previousSlot + tinyChainSpec.epochLength,
       });
 
-      statistics.transition({ slot: currentSlot, authorIndex: validatorIndex, extrinsic: emptyExtrinsic, availableReports: [] });
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: emptyExtrinsic,
+        availableReports: [],
+      });
 
       assert.deepStrictEqual(statistics.state.statistics.previous, currentStatistics);
       assert.deepStrictEqual(statistics.state.statistics.previous, currentStatistics);
@@ -82,7 +92,12 @@ describe("Statistics", () => {
         currentSlot: previousSlot + tinyChainSpec.epochLength,
       });
 
-      statistics.transition({ slot: currentSlot, authorIndex: validatorIndex, extrinsic: emptyExtrinsic, availableReports: [] });
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: emptyExtrinsic,
+        availableReports: [],
+      });
 
       assert.deepStrictEqual(statistics.state.statistics.current.length, tinyChainSpec.validatorsCount);
     });
@@ -125,7 +140,12 @@ describe("Statistics", () => {
 
       assert.strictEqual(statistics.state.statistics.current[validatorIndex].blocks, 0);
 
-      statistics.transition({ slot: currentSlot, authorIndex: validatorIndex, extrinsic: emptyExtrinsic, availableReports: [] });
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: emptyExtrinsic,
+        availableReports: [],
+      });
 
       assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
     });
@@ -141,7 +161,12 @@ describe("Statistics", () => {
 
       assert.strictEqual(statistics.state.statistics.current[validatorIndex].tickets, 0);
 
-      statistics.transition({ slot: currentSlot, authorIndex: validatorIndex, extrinsic: extrinsic, availableReports: [] });
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: extrinsic,
+        availableReports: [],
+      });
 
       assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
     });
@@ -157,7 +182,12 @@ describe("Statistics", () => {
 
       assert.strictEqual(statistics.state.statistics.current[validatorIndex].preImages, 0);
 
-      statistics.transition({ slot: currentSlot, authorIndex: validatorIndex, extrinsic: extrinsic, availableReports: [] });
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: extrinsic,
+        availableReports: [],
+      });
 
       assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
     });
@@ -178,7 +208,12 @@ describe("Statistics", () => {
 
       assert.strictEqual(statistics.state.statistics.current[validatorIndex].preImagesSize, 0);
 
-      statistics.transition({ slot: currentSlot, authorIndex: validatorIndex, extrinsic: extrinsic, availableReports: [] });
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: extrinsic,
+        availableReports: [],
+      });
 
       assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
     });
@@ -197,7 +232,12 @@ describe("Statistics", () => {
 
       assert.strictEqual(statistics.state.statistics.current[validatorIndex].guarantees, 0);
 
-      statistics.transition({ slot: currentSlot, authorIndex: validatorIndex, extrinsic: extrinsic, availableReports: [] });
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: extrinsic,
+        availableReports: [],
+      });
 
       assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
     });
@@ -213,7 +253,12 @@ describe("Statistics", () => {
 
       assert.strictEqual(statistics.state.statistics.current[validatorIndex].assurances, 0);
 
-      statistics.transition({ slot: currentSlot, authorIndex: validatorIndex, extrinsic: extrinsic, availableReports: [] });
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: extrinsic,
+        availableReports: [],
+      });
 
       assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
     });

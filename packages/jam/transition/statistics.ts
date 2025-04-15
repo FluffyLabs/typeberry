@@ -99,17 +99,22 @@ export class Statistics {
      */
 
     for (const { credentials } of extrinsic.guarantees) {
-      if (credentials.find(({ validatorIndex }) => validatorIndex === authorIndex) !== undefined) {
-        current[authorIndex].guarantees = tryAsU32(current[authorIndex].guarantees + 1);
-        break;
+      for (const { validatorIndex } of credentials) {
+        if (validatorIndex === authorIndex) {
+          current[authorIndex].guarantees = tryAsU32(current[authorIndex].guarantees + 1);
+          break;
+        }
       }
     }
 
     /**
      * https://graypaper.fluffylabs.dev/#/579bd12/189902189902
      */
-    if (extrinsic.assurances.find(({ validatorIndex }) => validatorIndex === authorIndex) !== undefined) {
-      current[authorIndex].assurances = tryAsU32(current[authorIndex].assurances + 1);
+    for (const { validatorIndex } of extrinsic.assurances) {
+      if (validatorIndex === authorIndex) {
+        current[authorIndex].assurances = tryAsU32(current[authorIndex].assurances + 1);
+        break;
+      }
     }
 
     /** Update core statistics */

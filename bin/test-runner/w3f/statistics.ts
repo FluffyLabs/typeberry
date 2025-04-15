@@ -10,7 +10,13 @@ import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { U16, U32 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
-import { ValidatorStatistics, CoreStatistics, ServiceStatistics, type ValidatorData, tryAsPerCore } from "@typeberry/state";
+import {
+  CoreStatistics,
+  ServiceStatistics,
+  type ValidatorData,
+  ValidatorStatistics,
+  tryAsPerCore,
+} from "@typeberry/state";
 import { type Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics";
 import { logger } from "../common";
 import { getExtrinsicFromJson } from "./codec/extrinsic";
