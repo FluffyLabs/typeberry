@@ -19,7 +19,7 @@ export class Importer {
     const headerWithHash = this.hasher.header(b.header.view());
     await this.blocks.insertBlock(new WithHash(headerWithHash.hash, b));
     await this.blocks.setBestHeaderHash(headerWithHash.hash);
-    return headerWithHash;
+    return new WithHash(headerWithHash.hash, b.header.view());
   }
 
   bestBlockHash() {

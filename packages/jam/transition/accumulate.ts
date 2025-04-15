@@ -37,8 +37,8 @@ export type AccumulateOutput = {
 
 export class Accumulate {
   constructor(
+    public readonly chainSpec: ChainSpec,
     public readonly state: AccumulateState,
-    private readonly chainSpec: ChainSpec,
   ) {}
 
   async transition(_input: AccumulateInput): Promise<Result<AccumulateOutput, null>> {

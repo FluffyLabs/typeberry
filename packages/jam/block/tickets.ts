@@ -2,8 +2,8 @@ import type { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { U8 } from "@typeberry/numbers";
-import { type Opaque, WithDebug } from "@typeberry/utils";
+import { type U8, tryAsU8 } from "@typeberry/numbers";
+import { type Opaque, WithDebug, asOpaqueType } from "@typeberry/utils";
 import { codecKnownSizeArray } from "./codec";
 import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "./crypto";
 
@@ -14,10 +14,14 @@ import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "./crypto";
  * https://graypaper.fluffylabs.dev/#/579bd12/417200417400
  */
 export type TicketAttempt = Opaque<U8, "TicketAttempt[0|1|2]">;
+export function tryAsTicketAttempt(x: number): TicketAttempt {
+  return asOpaqueType(tryAsU8(x));
+}
 
-/* Bandernsatch-signed ticket contest entry. */
+/* Bandersnatch-signed ticket contest entry. */
 export class SignedTicket extends WithDebug {
   static Codec = codec.Class(SignedTicket, {
+    // TODO [ToDr] we should verify that attempt is either 0|1|2.
     attempt: codec.u8.asOpaque(),
     signature: codec.bytes(BANDERSNATCH_PROOF_BYTES).asOpaque(),
   });
@@ -39,6 +43,7 @@ export class SignedTicket extends WithDebug {
 /** Anonymous? entry into the ticket contest. */
 export class Ticket extends WithDebug {
   static Codec = codec.Class(Ticket, {
+    // TODO [ToDr] we should verify that attempt is either 0|1|2.
     id: codec.bytes(HASH_SIZE),
     attempt: codec.u8.asOpaque(),
   });

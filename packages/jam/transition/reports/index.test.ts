@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import { tryAsTimeSlot } from "@typeberry/block";
-import { asKnownSize } from "@typeberry/collections";
+import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
+import { HashDictionary, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { deepEqual } from "@typeberry/utils";
 import type { ReportsInput } from "./reports";
@@ -21,7 +22,7 @@ describe("Reports - top level", () => {
       isOk: true,
       isError: false,
       ok: {
-        reported: asKnownSize([]),
+        reported: HashDictionary.new<WorkPackageHash, WorkPackageInfo>(),
         reporters: asKnownSize([]),
       },
     });

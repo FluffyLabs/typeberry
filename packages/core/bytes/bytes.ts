@@ -32,8 +32,8 @@ export class BytesBlob {
   }
 
   /** Converts current type into some opaque extension. */
-  asOpaque() {
-    return asOpaqueType(this);
+  asOpaque<Token extends string>() {
+    return asOpaqueType<Token, BytesBlob>(this);
   }
 
   /** Compare the sequence to another one. */
@@ -209,6 +209,11 @@ export class Bytes<T extends number> extends BytesBlob {
   isEqualTo(other: Bytes<T>): boolean {
     check(this.length === other.length, "Comparing incorrectly typed bytes!");
     return u8ArraySameLengthEqual(this.raw, other.raw);
+  }
+
+  /** Converts current type into some opaque extension. */
+  asOpaque<Token extends string>() {
+    return asOpaqueType<Token, Bytes<T>>(this);
   }
 }
 

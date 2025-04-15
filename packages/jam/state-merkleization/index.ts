@@ -58,7 +58,7 @@ export function serializeState(state: State, spec: ChainSpec): SerializedState {
     map.set(key, Encoder.encodeObject(Codec, service.data.info));
 
     // preimages
-    for (const preimage of service.data.preimages) {
+    for (const preimage of service.data.preimages.values()) {
       const { key, Codec } = serialize.servicePreimages(serviceId, preimage.hash);
       map.set(key, Encoder.encodeObject(Codec, preimage.blob));
     }
@@ -70,9 +70,11 @@ export function serializeState(state: State, spec: ChainSpec): SerializedState {
     }
 
     // lookup history
-    for (const lookupHistory of service.data.lookupHistory) {
-      const { key, Codec } = serialize.serviceLookupHistory(serviceId, lookupHistory.hash, lookupHistory.length);
-      map.set(key, Encoder.encodeObject(Codec, lookupHistory.slots));
+    for (const lookupHistoryList of service.data.lookupHistory.values()) {
+      for (const lookupHistory of lookupHistoryList) {
+        const { key, Codec } = serialize.serviceLookupHistory(serviceId, lookupHistory.hash, lookupHistory.length);
+        map.set(key, Encoder.encodeObject(Codec, lookupHistory.slots));
+      }
     }
   }
 

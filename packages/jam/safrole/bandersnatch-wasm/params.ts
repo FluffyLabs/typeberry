@@ -3,7 +3,8 @@ import type { WithTransferList } from "@typeberry/concurrent/messages";
 
 export enum Method {
   RingCommitment = 0,
-  VerifyTickets = 1,
+  BatchVerifyTickets = 1,
+  VerifySeal = 2,
 }
 
 export class Response implements WithTransferList {
@@ -20,10 +21,18 @@ export type RawParams =
       keys: Uint8Array;
     }
   | {
-      method: Method.VerifyTickets;
+      method: Method.BatchVerifyTickets;
       keys: Uint8Array;
       ticketsData: Uint8Array;
       contextLength: number;
+    }
+  | {
+      method: Method.VerifySeal;
+      keys: Uint8Array;
+      authorIndex: number;
+      signature: Uint8Array;
+      payload: Uint8Array;
+      auxData: Uint8Array;
     };
 
 export class Params implements WithTransferList {
