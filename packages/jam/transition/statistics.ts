@@ -100,10 +100,7 @@ export class Statistics {
 
     for (const { credentials } of extrinsic.guarantees) {
       for (const { validatorIndex } of credentials) {
-        if (validatorIndex === authorIndex) {
-          current[authorIndex].guarantees = tryAsU32(current[authorIndex].guarantees + 1);
-          break;
-        }
+        current[validatorIndex].guarantees = tryAsU32(current[validatorIndex].guarantees + 1);
       }
     }
 
@@ -111,10 +108,7 @@ export class Statistics {
      * https://graypaper.fluffylabs.dev/#/579bd12/189902189902
      */
     for (const { validatorIndex } of extrinsic.assurances) {
-      if (validatorIndex === authorIndex) {
-        current[authorIndex].assurances = tryAsU32(current[authorIndex].assurances + 1);
-        break;
-      }
+      current[validatorIndex].assurances = tryAsU32(current[validatorIndex].assurances + 1);
     }
 
     /** Update core statistics */
