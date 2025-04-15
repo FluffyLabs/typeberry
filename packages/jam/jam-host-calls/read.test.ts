@@ -92,7 +92,7 @@ describe("HostCalls: Read", () => {
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), "hello world".length);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), "hello world".length);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x68656c6c6f20776f726c640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -112,7 +112,7 @@ describe("HostCalls: Read", () => {
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), "hello world".length);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), "hello world".length);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x68656c6c6f20776f726c640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -132,7 +132,7 @@ describe("HostCalls: Read", () => {
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), "hello world".length);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), "hello world".length);
     assert.deepStrictEqual(readResult().toString(), "0x68656c");
   });
 
@@ -149,7 +149,7 @@ describe("HostCalls: Read", () => {
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.NONE);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.NONE);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -169,7 +169,7 @@ describe("HostCalls: Read", () => {
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
   });
 
   it("should fail if there is no memory for result", async () => {
@@ -185,7 +185,7 @@ describe("HostCalls: Read", () => {
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
   });
 
   it("should fail if the destination is not fully writeable", async () => {
@@ -202,7 +202,7 @@ describe("HostCalls: Read", () => {
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
   });
 
   it("should fail gracefuly if the destination is beyond mem limit", async () => {
@@ -220,7 +220,7 @@ describe("HostCalls: Read", () => {
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
   });
 
   it("should handle 0-length destination", async () => {
@@ -236,6 +236,6 @@ describe("HostCalls: Read", () => {
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), "hello world".length);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), "hello world".length);
   });
 });

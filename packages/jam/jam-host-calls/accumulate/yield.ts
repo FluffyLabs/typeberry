@@ -24,7 +24,7 @@ export class Yield implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
     // `o`
-    const hashStart = tryAsMemoryIndex(regs.getU32(IN_OUT_REG));
+    const hashStart = tryAsMemoryIndex(regs.getLowerU32(IN_OUT_REG));
 
     const hash = Bytes.zero(HASH_SIZE);
     const pageFault = memory.loadInto(hash.raw, hashStart);

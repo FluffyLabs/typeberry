@@ -47,7 +47,7 @@ export class Info implements HostCallHandler {
     // t
     const serviceId = legacyGetServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // o
-    const outputStart = tryAsMemoryIndex(regs.getU32(8));
+    const outputStart = tryAsMemoryIndex(regs.getLowerU32(8));
 
     // t
     const accountInfo = await this.account.getInfo(serviceId);

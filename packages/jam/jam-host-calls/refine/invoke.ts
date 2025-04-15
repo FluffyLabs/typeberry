@@ -40,7 +40,7 @@ export class Invoke implements HostCallHandler {
     // `n`
     const machineIndex = tryAsMachineId(regs.getU64(IN_OUT_REG_1));
     // `o`
-    const destinationStart = tryAsMemoryIndex(regs.getU32(IN_OUT_REG_2));
+    const destinationStart = tryAsMemoryIndex(regs.getLowerU32(IN_OUT_REG_2));
 
     const destinationWriteable = memory.isWriteable(destinationStart, destinationStart + GAS_REGISTERS_SIZE);
     if (!destinationWriteable) {

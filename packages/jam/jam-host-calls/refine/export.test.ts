@@ -54,7 +54,7 @@ describe("HostCalls: Export", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), 15);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), 15);
   });
 
   it("should zero-pad when exported value is small", async () => {
@@ -72,7 +72,7 @@ describe("HostCalls: Export", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), 5);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), 5);
   });
 
   it("should panic if memory is not readable", async () => {
@@ -102,6 +102,6 @@ describe("HostCalls: Export", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.FULL);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.FULL);
   });
 });

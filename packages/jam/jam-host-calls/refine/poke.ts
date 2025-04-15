@@ -30,11 +30,11 @@ export class Poke implements HostCallHandler {
     // `n`: machine index
     const machineIndex = tryAsMachineId(regs.getU64(IN_OUT_REG));
     // `s`: source memory start (nested vm)
-    const sourceStart = tryAsMemoryIndex(regs.getU32(8));
+    const sourceStart = tryAsMemoryIndex(regs.getLowerU32(8));
     // `o`: destination memory start (local)
-    const destinationStart = tryAsMemoryIndex(regs.getU32(9));
+    const destinationStart = tryAsMemoryIndex(regs.getLowerU32(9));
     // `z`: memory length
-    const length = tryAsU32(regs.getU32(10));
+    const length = tryAsU32(regs.getLowerU32(10));
 
     const pokeResult = await this.refine.machinePokeInto(machineIndex, sourceStart, destinationStart, length, memory);
     if (pokeResult.isOk) {

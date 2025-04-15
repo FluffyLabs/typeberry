@@ -30,7 +30,7 @@ export class Designate implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // `o`
-    const validatorsStart = tryAsMemoryIndex(regs.getU32(IN_OUT_REG));
+    const validatorsStart = tryAsMemoryIndex(regs.getLowerU32(IN_OUT_REG));
 
     const res = new Uint8Array(VALIDATOR_DATA_BYTES * this.chainSpec.validatorsCount);
     const pageFault = memory.loadInto(res, validatorsStart);

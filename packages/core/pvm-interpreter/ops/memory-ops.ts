@@ -12,7 +12,7 @@ export class MemoryOps {
 
   sbrk(firstIndex: number, resultIndex: number) {
     try {
-      this.regs.setU32(resultIndex, this.memory.sbrk(this.regs.getU32(firstIndex)));
+      this.regs.setU32(resultIndex, this.memory.sbrk(this.regs.getLowerU32(firstIndex)));
     } catch {
       this.instructionResult.status = Result.FAULT;
     }

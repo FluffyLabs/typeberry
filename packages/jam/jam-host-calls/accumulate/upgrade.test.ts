@@ -62,7 +62,7 @@ describe("HostCalls: Upgrade", () => {
     await upgrade.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OK);
     assert.deepStrictEqual(accumulate.upgradeData, [[Bytes.fill(HASH_SIZE, 0x69), 2n ** 40n, 2n ** 50n]]);
   });
 
@@ -82,7 +82,7 @@ describe("HostCalls: Upgrade", () => {
     await upgrade.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accumulate.upgradeData, []);
   });
 });

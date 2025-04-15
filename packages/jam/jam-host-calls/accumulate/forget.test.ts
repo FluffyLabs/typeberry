@@ -52,7 +52,7 @@ describe("HostCalls: Solicit", () => {
     await forget.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OK);
     assert.deepStrictEqual(accumulate.forgetPreimageData, [[Bytes.fill(HASH_SIZE, 0x69), 4_096]]);
   });
 
@@ -68,7 +68,7 @@ describe("HostCalls: Solicit", () => {
     await forget.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accumulate.forgetPreimageData, []);
   });
 
@@ -84,7 +84,7 @@ describe("HostCalls: Solicit", () => {
     await forget.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.HUH);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.HUH);
     assert.deepStrictEqual(accumulate.forgetPreimageData, [[Bytes.fill(HASH_SIZE, 0x69), 4_096]]);
   });
 });

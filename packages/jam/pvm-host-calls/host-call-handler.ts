@@ -16,8 +16,8 @@ export enum PvmExecution {
 }
 
 export interface Registers {
-  getU32(registerIndex: number): number;
-  getI32(registerIndex: number): number;
+  getLowerU32(registerIndex: number): number;
+  getLowerI32(registerIndex: number): number;
   setU32(registerIndex: number, value: number): void;
   setI32(registerIndex: number, value: number): void;
   getU64(registerIndex: number): bigint;

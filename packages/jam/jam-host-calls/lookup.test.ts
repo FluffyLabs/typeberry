@@ -153,7 +153,7 @@ describe("HostCalls: Lookup", () => {
       const pageFault = memory.loadInto(resultBlob.raw, tryAsMemoryIndex(DESTINATION_MEM_ADDRESS));
       assert.deepStrictEqual(pageFault, null);
       assert.deepStrictEqual(resultBlob.asText(), "hello");
-      assert.deepStrictEqual(registers.getU32(RESULT_REG), "hello world".length);
+      assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), "hello world".length);
     });
 
     it("with offset", async () => {
@@ -176,7 +176,7 @@ describe("HostCalls: Lookup", () => {
       const pageFault = memory.loadInto(resultBlob.raw, tryAsMemoryIndex(DESTINATION_MEM_ADDRESS));
       assert.deepStrictEqual(pageFault, null);
       assert.deepStrictEqual(resultBlob.asText(), "world");
-      assert.deepStrictEqual(registers.getU32(RESULT_REG), "hello world".length);
+      assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), "hello world".length);
     });
   });
 });

@@ -58,7 +58,7 @@ describe("HostCalls: Yield", () => {
 
     // then
     assert.deepStrictEqual(result, PvmExecution.Panic);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), hashStart);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), hashStart);
     assert.deepStrictEqual(accumulate.yieldHash, null);
   });
 

@@ -88,7 +88,7 @@ describe("HostCalls: Invoke", () => {
 
     assert.strictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(registers.getU64(RESULT_REG_1), w7);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG_2), w8);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG_2), w8);
   });
 
   it("should return `who` if machine is not found (machine not initialized)", async () => {
@@ -113,7 +113,7 @@ describe("HostCalls: Invoke", () => {
 
     assert.strictEqual(result, undefined);
     assert.deepStrictEqual(registers.getU64(RESULT_REG_1), HostCallResult.WHO);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG_2), w8);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG_2), w8);
   });
 
   it("should return `who` if machine is not found (machine id is not valid)", async () => {
@@ -133,7 +133,7 @@ describe("HostCalls: Invoke", () => {
 
     assert.strictEqual(result, undefined);
     assert.deepStrictEqual(registers.getU64(RESULT_REG_1), HostCallResult.WHO);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG_2), w8);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG_2), w8);
   });
 
   it("should run the machine and finish with `host` status", async () => {
@@ -197,7 +197,7 @@ describe("HostCalls: Invoke", () => {
 
     assert.strictEqual(result, undefined);
     assert.deepStrictEqual(registers.getU64(RESULT_REG_1), tryAsU64(Status.OOG));
-    assert.deepStrictEqual(registers.getU32(RESULT_REG_2), w8);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG_2), w8);
   });
 
   it("should run the machine and finish with `panic` status", async () => {
@@ -217,7 +217,7 @@ describe("HostCalls: Invoke", () => {
 
     assert.strictEqual(result, undefined);
     assert.deepStrictEqual(registers.getU64(RESULT_REG_1), tryAsU64(Status.PANIC));
-    assert.deepStrictEqual(registers.getU32(RESULT_REG_2), w8);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG_2), w8);
   });
 
   it("should run the machine and finish with `halt` status", async () => {
@@ -237,6 +237,6 @@ describe("HostCalls: Invoke", () => {
 
     assert.strictEqual(result, undefined);
     assert.deepStrictEqual(registers.getU64(RESULT_REG_1), tryAsU64(Status.HALT));
-    assert.deepStrictEqual(registers.getU32(RESULT_REG_2), w8);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG_2), w8);
   });
 });

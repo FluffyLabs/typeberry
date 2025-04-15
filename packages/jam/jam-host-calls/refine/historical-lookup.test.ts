@@ -71,7 +71,7 @@ describe("HostCalls: Historical Lookup", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), data.length);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), data.length);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x68656c6c6f20776f726c640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -92,7 +92,7 @@ describe("HostCalls: Historical Lookup", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), data.length);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), data.length);
     assert.deepStrictEqual(readResult().toString(), "0x68656c");
   });
 
@@ -110,7 +110,7 @@ describe("HostCalls: Historical Lookup", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), data.length);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), data.length);
     assert.deepStrictEqual(readResult().toString(), "0x6f2077");
   });
 
@@ -146,7 +146,7 @@ describe("HostCalls: Historical Lookup", () => {
 
     // then
     assert.strictEqual(result, PvmExecution.Panic);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), serviceId);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), serviceId);
   });
 
   it("should panic if memory is not writable", async () => {
@@ -163,7 +163,7 @@ describe("HostCalls: Historical Lookup", () => {
 
     // then
     assert.strictEqual(result, PvmExecution.Panic);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), serviceId);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), serviceId);
   });
 
   it("should handle if the destination length is greater than data length", async () => {
@@ -181,7 +181,7 @@ describe("HostCalls: Historical Lookup", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), data.length);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), data.length);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x68656c6c6f20776f726c64000000000000000000000000000000000000000000",
@@ -204,7 +204,7 @@ describe("HostCalls: Historical Lookup", () => {
 
     // then
     assert.strictEqual(result, PvmExecution.Panic);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), serviceId);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), serviceId);
   });
 
   it("should handle 0-length destination", async () => {
@@ -221,6 +221,6 @@ describe("HostCalls: Historical Lookup", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), data.length);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), data.length);
   });
 });

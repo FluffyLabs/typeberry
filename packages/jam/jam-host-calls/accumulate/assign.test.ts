@@ -67,7 +67,7 @@ describe("HostCalls: Assign", () => {
     await assign.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OK);
     assert.deepStrictEqual(accumulate.authQueue[0][0], tryAsCoreIndex(0));
     const expected = new Array(AUTHORIZATION_QUEUE_SIZE);
     expected[0] = Bytes.fill(HASH_SIZE, 1);
@@ -92,7 +92,7 @@ describe("HostCalls: Assign", () => {
     await assign.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.CORE);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.CORE);
     assert.deepStrictEqual(accumulate.authQueue.length, 0);
   });
 
@@ -108,7 +108,7 @@ describe("HostCalls: Assign", () => {
     await assign.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.CORE);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.CORE);
     assert.deepStrictEqual(accumulate.authQueue.length, 0);
   });
 
@@ -123,7 +123,7 @@ describe("HostCalls: Assign", () => {
     await assign.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accumulate.authQueue.length, 0);
   });
 });

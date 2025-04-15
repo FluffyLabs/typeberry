@@ -38,9 +38,9 @@ export class HistoricalLookup implements HostCallHandler {
     }
 
     // h
-    const hashStart = tryAsMemoryIndex(regs.getU32(8));
+    const hashStart = tryAsMemoryIndex(regs.getLowerU32(8));
     // o
-    const destinationStart = tryAsMemoryIndex(regs.getU32(9));
+    const destinationStart = tryAsMemoryIndex(regs.getLowerU32(9));
 
     const hash = Bytes.zero(HASH_SIZE);
     const hashLoadingFault = memory.loadInto(hash.raw, hashStart);

@@ -77,7 +77,7 @@ describe("HostCalls: Info", () => {
     await info.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OK);
     assert.deepStrictEqual(readInfo(), {
       ...accounts.data.get(serviceId),
       thresholdBalance: 20_100n,
@@ -94,7 +94,7 @@ describe("HostCalls: Info", () => {
     await info.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.NONE);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.NONE);
   });
 
   it("should write OOB if not enough memory allocated", async () => {
@@ -121,6 +121,6 @@ describe("HostCalls: Info", () => {
     await info.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
   });
 });

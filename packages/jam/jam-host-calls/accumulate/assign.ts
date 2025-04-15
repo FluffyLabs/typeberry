@@ -35,9 +35,9 @@ export class Assign implements HostCallHandler {
   ) {}
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
-    const coreIndex = regs.getU32(IN_OUT_REG);
+    const coreIndex = regs.getLowerU32(IN_OUT_REG);
     // o
-    const authorizationQueueStart = tryAsMemoryIndex(regs.getU32(8));
+    const authorizationQueueStart = tryAsMemoryIndex(regs.getLowerU32(8));
 
     const res = new Uint8Array(HASH_SIZE * AUTHORIZATION_QUEUE_SIZE);
     const pageFault = memory.loadInto(res, authorizationQueueStart);

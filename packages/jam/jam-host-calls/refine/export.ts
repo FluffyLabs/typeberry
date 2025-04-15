@@ -28,9 +28,9 @@ export class Export implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
     // `p`: segment start address
-    const segmentStart = tryAsMemoryIndex(regs.getU32(IN_OUT_REG));
+    const segmentStart = tryAsMemoryIndex(regs.getLowerU32(IN_OUT_REG));
     // `z`: segment bounded length
-    const segmentLength = Math.min(regs.getU32(8), SEGMENT_BYTES);
+    const segmentLength = Math.min(regs.getLowerU32(8), SEGMENT_BYTES);
     // destination (padded with zeros).
     const segment: Segment = Bytes.zero(SEGMENT_BYTES);
 

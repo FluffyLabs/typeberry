@@ -41,13 +41,13 @@ export class Read implements HostCallHandler {
     // a
     const serviceId = legacyGetServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // k_0
-    const keyStartAddress = tryAsMemoryIndex(regs.getU32(8));
+    const keyStartAddress = tryAsMemoryIndex(regs.getLowerU32(8));
     // k_z
-    const keyLen = regs.getU32(9);
+    const keyLen = regs.getLowerU32(9);
     // b_0
-    const destinationStart = tryAsMemoryIndex(regs.getU32(10));
+    const destinationStart = tryAsMemoryIndex(regs.getLowerU32(10));
     // b_z
-    const destinationLen = regs.getU32(11);
+    const destinationLen = regs.getLowerU32(11);
 
     // allocate extra bytes for the serviceId
     const key = new Uint8Array(SERVICE_ID_BYTES + keyLen);

@@ -78,7 +78,7 @@ describe("HostCalls: New", () => {
     await n.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), tryAsServiceId(23_000));
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), tryAsServiceId(23_000));
     assert.deepStrictEqual(accumulate.newServiceCalled, [
       [10_042, Bytes.fill(HASH_SIZE, 0x69), 4_096, 2n ** 40n, 2n ** 50n],
     ]);
@@ -101,7 +101,7 @@ describe("HostCalls: New", () => {
     await n.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.CASH);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.CASH);
     assert.deepStrictEqual(accumulate.newServiceCalled.length, 1);
   });
 
@@ -123,7 +123,7 @@ describe("HostCalls: New", () => {
     await n.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accumulate.newServiceCalled, []);
   });
 });

@@ -26,13 +26,13 @@ export class New implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // `o`
-    const codeHashStart = tryAsMemoryIndex(regs.getU32(IN_OUT_REG));
+    const codeHashStart = tryAsMemoryIndex(regs.getLowerU32(IN_OUT_REG));
     // `l`
-    const codeLength = tryAsU32(regs.getU32(8));
-    const g_l = tryAsU32(regs.getU32(9));
-    const g_h = tryAsU32(regs.getU32(10));
-    const m_l = tryAsU32(regs.getU32(11));
-    const m_h = tryAsU32(regs.getU32(12));
+    const codeLength = tryAsU32(regs.getLowerU32(8));
+    const g_l = tryAsU32(regs.getLowerU32(9));
+    const g_h = tryAsU32(regs.getLowerU32(10));
+    const m_l = tryAsU32(regs.getLowerU32(11));
+    const m_h = tryAsU32(regs.getLowerU32(12));
 
     // `c`
     const codeHash = Bytes.zero(HASH_SIZE);

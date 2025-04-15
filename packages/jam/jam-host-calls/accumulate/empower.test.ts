@@ -76,7 +76,7 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OK);
     assert.deepStrictEqual(accumulate.privilegedServices, [
       [tryAsServiceId(5), tryAsServiceId(10), tryAsServiceId(15), expected],
     ]);
@@ -94,7 +94,7 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 
@@ -112,7 +112,7 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 
@@ -129,7 +129,7 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 });

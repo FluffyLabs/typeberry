@@ -67,13 +67,13 @@ export class Write implements HostCallHandler {
     }
 
     // k_0
-    const keyStartAddress = tryAsMemoryIndex(regs.getU32(7));
+    const keyStartAddress = tryAsMemoryIndex(regs.getLowerU32(7));
     // k_z
-    const keyLen = regs.getU32(8);
+    const keyLen = regs.getLowerU32(8);
     // v_0
-    const valueStart = tryAsMemoryIndex(regs.getU32(9));
+    const valueStart = tryAsMemoryIndex(regs.getLowerU32(9));
     // v_z
-    const valueLen = regs.getU32(10);
+    const valueLen = regs.getLowerU32(10);
 
     // allocate extra bytes for the serviceId
     const key = new Uint8Array(SERVICE_ID_BYTES + keyLen);

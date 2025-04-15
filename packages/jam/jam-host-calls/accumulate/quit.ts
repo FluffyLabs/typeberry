@@ -27,7 +27,7 @@ export class Quit implements HostCallHandler {
 
   async execute(gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // `d`: where to transfer remaining funds
-    const destination = tryAsServiceId(regs.getU32(IN_OUT_REG));
+    const destination = tryAsServiceId(regs.getLowerU32(IN_OUT_REG));
 
     const noTransfer = destination === this.currentServiceId || destination === CURRENT_SERVICE_ID;
 
@@ -42,7 +42,7 @@ export class Quit implements HostCallHandler {
     // some extra cases, because the transfer might fail.
 
     // `o`: memo start memory index
-    const memoStart = tryAsMemoryIndex(regs.getU32(8));
+    const memoStart = tryAsMemoryIndex(regs.getLowerU32(8));
     // `g`: onTransfer gas
     const remainingGas = gas.get();
     // `m`: transfer memo (message)

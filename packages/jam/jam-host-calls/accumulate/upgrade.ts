@@ -30,11 +30,11 @@ export class Upgrade implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // `o`
-    const codeHashStart = tryAsMemoryIndex(regs.getU32(IN_OUT_REG));
-    const g_h = tryAsU32(regs.getU32(8));
-    const g_l = tryAsU32(regs.getU32(9));
-    const m_h = tryAsU32(regs.getU32(10));
-    const m_l = tryAsU32(regs.getU32(11));
+    const codeHashStart = tryAsMemoryIndex(regs.getLowerU32(IN_OUT_REG));
+    const g_h = tryAsU32(regs.getLowerU32(8));
+    const g_l = tryAsU32(regs.getLowerU32(9));
+    const m_h = tryAsU32(regs.getLowerU32(10));
+    const m_l = tryAsU32(regs.getLowerU32(11));
 
     // `c`
     const codeHash = Bytes.zero(HASH_SIZE);

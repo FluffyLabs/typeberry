@@ -8,7 +8,7 @@ export const SERVICE_ID_BYTES = 4;
 export const CURRENT_SERVICE_ID = tryAsServiceId(2 ** 32 - 1);
 
 export function legacyGetServiceId(regNumber: number, regs: Registers, currentServiceId: ServiceId) {
-  const serviceId = regs.getU32(regNumber);
+  const serviceId = regs.getLowerU32(regNumber);
   return serviceId === CURRENT_SERVICE_ID ? currentServiceId : (serviceId as ServiceId);
 }
 

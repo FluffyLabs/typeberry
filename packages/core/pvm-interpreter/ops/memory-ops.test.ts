@@ -28,7 +28,7 @@ describe("MemoryOps", () => {
 
     memoryOps.sbrk(lengthIndex, resultIndex);
 
-    assert.deepEqual(regs.getU32(resultIndex), 0);
+    assert.deepEqual(regs.getLowerU32(resultIndex), 0);
     assert.deepStrictEqual(memory, expectedMemory);
   });
 
@@ -41,7 +41,7 @@ describe("MemoryOps", () => {
 
     memoryOps.sbrk(lengthIndex, resultIndex);
 
-    assert.deepEqual(regs.getU32(resultIndex), 0);
+    assert.deepEqual(regs.getLowerU32(resultIndex), 0);
     assert.deepStrictEqual(memory, expectedMemory);
   });
 
@@ -50,11 +50,11 @@ describe("MemoryOps", () => {
     const { memoryOps, regs, resultIndex, lengthIndex, memory, expectedMemory } = prepareData(pagesToAllocate);
 
     memoryOps.sbrk(lengthIndex, resultIndex);
-    assert.deepEqual(regs.getU32(resultIndex), 0);
+    assert.deepEqual(regs.getLowerU32(resultIndex), 0);
 
     memoryOps.sbrk(lengthIndex, resultIndex);
 
-    assert.deepEqual(regs.getU32(resultIndex), PAGE_SIZE);
+    assert.deepEqual(regs.getLowerU32(resultIndex), PAGE_SIZE);
     assert.deepStrictEqual(memory, expectedMemory);
   });
 });

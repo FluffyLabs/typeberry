@@ -65,7 +65,7 @@ describe("HostCalls: Designate", () => {
     await designate.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accumulate.validatorsData.length, 0);
   });
 
@@ -93,7 +93,7 @@ describe("HostCalls: Designate", () => {
     await designate.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OK);
     assert.deepStrictEqual(
       accumulate.validatorsData[0][0].toString(),
       `ValidatorData {

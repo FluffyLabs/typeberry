@@ -38,14 +38,14 @@ export class Empower implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
     // `m`: manager service (can change privileged services)
-    const m = tryAsServiceId(regs.getU32(IN_OUT_REG));
+    const m = tryAsServiceId(regs.getLowerU32(IN_OUT_REG));
     // `a`: manages authorization queue
-    const a = tryAsServiceId(regs.getU32(8));
+    const a = tryAsServiceId(regs.getLowerU32(8));
     // `v`: manages validator keys
-    const v = tryAsServiceId(regs.getU32(9));
-    const sourceStart = tryAsMemoryIndex(regs.getU32(10));
+    const v = tryAsServiceId(regs.getLowerU32(9));
+    const sourceStart = tryAsMemoryIndex(regs.getLowerU32(10));
     // `n`: number of items in the auto-accumulate dictionary
-    const numberOfItems = regs.getU32(11);
+    const numberOfItems = regs.getLowerU32(11);
 
     // `g`: dictionary of serviceId -> gas that auto-accumulate every block
     const g = new Map<ServiceId, Gas>();

@@ -44,9 +44,9 @@ export class Lookup implements HostCallHandler {
     }
 
     // h
-    const hashAddress = tryAsMemoryIndex(regs.getU32(8));
+    const hashAddress = tryAsMemoryIndex(regs.getLowerU32(8));
     // o
-    const destinationAddress = tryAsMemoryIndex(regs.getU32(9));
+    const destinationAddress = tryAsMemoryIndex(regs.getLowerU32(9));
 
     const preImageHash = Bytes.zero(HASH_SIZE);
     const pageFault = memory.loadInto(preImageHash.raw, hashAddress);

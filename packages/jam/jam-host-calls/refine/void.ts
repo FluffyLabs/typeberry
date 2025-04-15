@@ -25,9 +25,9 @@ export class Void implements HostCallHandler {
     // `n`: machine index
     const machineIndex = tryAsMachineId(regs.getU64(IN_OUT_REG));
     // `p`: start page
-    const pageStart = tryAsU32(regs.getU32(8));
+    const pageStart = tryAsU32(regs.getLowerU32(8));
     // `c`: page count
-    const pageCount = tryAsU32(regs.getU32(9));
+    const pageCount = tryAsU32(regs.getLowerU32(9));
 
     const endPage = sumU32(pageStart, pageCount);
     const isWithinBounds = pageStart >= RESERVED_NUMBER_OF_PAGES && endPage.value < MAX_NUMBER_OF_PAGES;

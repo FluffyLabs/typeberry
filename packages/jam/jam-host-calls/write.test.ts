@@ -103,7 +103,7 @@ describe("HostCalls: Write", () => {
     await write.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), "old data".length);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), "old data".length);
     assert.deepStrictEqual(accounts.data.get(serviceId, hash)?.asText(), "hello world!");
   });
 
@@ -121,7 +121,7 @@ describe("HostCalls: Write", () => {
     await write.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.NONE);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.NONE);
     assert.deepStrictEqual(accounts.data.get(serviceId, hash), undefined);
   });
 
@@ -139,7 +139,7 @@ describe("HostCalls: Write", () => {
     await write.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accounts.data.data.size, 0);
   });
 
@@ -157,7 +157,7 @@ describe("HostCalls: Write", () => {
     await write.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accounts.data.data.size, 0);
   });
 
@@ -174,7 +174,7 @@ describe("HostCalls: Write", () => {
     await write.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accounts.data.data.size, 0);
   });
 
@@ -191,7 +191,7 @@ describe("HostCalls: Write", () => {
     await write.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
     assert.deepStrictEqual(accounts.data.data.size, 0);
   });
 
@@ -209,7 +209,7 @@ describe("HostCalls: Write", () => {
     await write.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.FULL);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.FULL);
     assert.deepStrictEqual(accounts.data.data.size, 0);
   });
 });

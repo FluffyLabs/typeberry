@@ -27,9 +27,9 @@ export class Machine implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
     // `p_o`: memory index where there program code starts
-    const codeStart = tryAsMemoryIndex(regs.getU32(7));
+    const codeStart = tryAsMemoryIndex(regs.getLowerU32(7));
     // `p_z`: length of the program code
-    const codeLength = regs.getU32(8);
+    const codeLength = regs.getLowerU32(8);
     // `i`: starting program counter
     const entrypoint = tryAsProgramCounter(regs.getU64(9));
 

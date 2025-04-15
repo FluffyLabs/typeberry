@@ -66,8 +66,8 @@ describe("HostCalls: Query", () => {
 
     // then
     assert.deepStrictEqual(result, PvmExecution.Panic);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG_1), w7);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG_2), w8);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG_1), w7);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG_2), w8);
   });
 
   it("should return none if preimage is not found", async () => {
@@ -87,7 +87,7 @@ describe("HostCalls: Query", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG_1), LegacyHostCallResult.NONE);
+    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG_1), LegacyHostCallResult.NONE);
     assert.deepStrictEqual(registers.getU64(RESULT_REG_2), 0n);
     assert.deepStrictEqual(accumulate.checkPreimageStatusData, [[Bytes.fill(HASH_SIZE, 0xaa), w8]]);
   });

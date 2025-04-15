@@ -30,9 +30,9 @@ export class Forget implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
     // `o`
-    const hashStart = tryAsMemoryIndex(regs.getU32(IN_OUT_REG));
+    const hashStart = tryAsMemoryIndex(regs.getLowerU32(IN_OUT_REG));
     // `z`
-    const length = tryAsU32(regs.getU32(8));
+    const length = tryAsU32(regs.getLowerU32(8));
 
     const hash = Bytes.zero(HASH_SIZE);
     const pageFault = memory.loadInto(hash.raw, hashStart);
