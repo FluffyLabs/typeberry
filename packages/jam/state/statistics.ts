@@ -7,7 +7,7 @@ import {
   tryAsServiceId,
 } from "@typeberry/block";
 import { type CodecRecord, type Descriptor, codec } from "@typeberry/codec";
-import { type U16, type U32, tryAsU16, tryAsU32 } from "@typeberry/numbers";
+import { type U16, type U32, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { type PerCore, codecPerCore } from "./common";
 
 export const codecServiceId: Descriptor<ServiceId> = codec.u32.convert(
@@ -61,6 +61,16 @@ export class ValidatorStatistics {
   }
 }
 
+const codecVarU16 = codec.varU32.convert<U16>(
+  (i) => tryAsU32(i),
+  (o) => tryAsU16(o),
+);
+/** Encode/decode unsigned gas. */
+const codecVarGas: Descriptor<ServiceGas> = codec.varU64.convert(
+  (g) => tryAsU64(g),
+  (i) => tryAsServiceGas(i),
+);
+
 /**
  * Single core statistics.
  * Updated per block, based on incoming work reports (`w`).
@@ -70,14 +80,14 @@ export class ValidatorStatistics {
  */
 export class CoreStatistics {
   static Codec = codec.Class(CoreStatistics, {
-    dataAvailabilityLoad: codec.u32,
-    popularity: codec.u16,
-    imports: codec.u16,
-    extrinsicCount: codec.u16,
-    extrinsicSize: codec.u32,
-    exports: codec.u16,
-    bandleSize: codec.u32,
-    gasUsed: codec.varU64.asOpaque(),
+    dataAvailabilityLoad: codec.varU32,
+    popularity: codecVarU16,
+    imports: codecVarU16,
+    extrinsicCount: codecVarU16,
+    extrinsicSize: codec.varU32,
+    exports: codecVarU16,
+    bandleSize: codec.varU32,
+    gasUsed: codecVarGas,
   });
 
   static fromCodec(v: CodecRecord<CoreStatistics>) {
@@ -129,18 +139,18 @@ export class CoreStatistics {
  */
 export class ServiceStatistics {
   static Codec = codec.Class(ServiceStatistics, {
-    providedCount: codec.u16,
-    providedSize: codec.u32,
-    refinementCount: codec.u32,
-    refinementGasUsed: codec.varU64.asOpaque(),
-    imports: codec.u16,
-    extrinsicCount: codec.u16,
-    extrinsicSize: codec.u32,
-    exports: codec.u16,
-    accumulateCount: codec.u32,
-    accumulateGasUsed: codec.varU64.asOpaque(),
-    onTransfersCount: codec.u32,
-    onTransfersGasUsed: codec.varU64.asOpaque(),
+    providedCount: codecVarU16,
+    providedSize: codec.varU32,
+    refinementCount: codec.varU32,
+    refinementGasUsed: codecVarGas,
+    imports: codecVarU16,
+    extrinsicCount: codecVarU16,
+    extrinsicSize: codec.varU32,
+    exports: codecVarU16,
+    accumulateCount: codec.varU32,
+    accumulateGasUsed: codecVarGas,
+    onTransfersCount: codec.varU32,
+    onTransfersGasUsed: codecVarGas,
   });
 
   static fromCodec(v: CodecRecord<ServiceStatistics>) {
