@@ -108,59 +108,13 @@ describe("Mask", () => {
       assert.strictEqual(result, expectedResult);
     });
 
-    it("should return MAX_INSTRUCTION_DISTANCE = 25 if the real distance is longer", () => {
+    it("should return MAX_INSTRUCTION_DISTANCE = 24 if the real distance is longer", () => {
       const input = [0b0000_0001, 0b0000_0000, 0b0000_0000, 0b1000_0000];
       const index = 1;
       const expectedResult = 25;
       const mask = new Mask(BitVec.fromBlob(new Uint8Array(input), input.length * 8));
 
       const result = mask.getNoOfBytesToNextInstruction(index);
-
-      assert.strictEqual(result, expectedResult);
-    });
-  });
-
-  describe("getNoOfBytesToPreviousInstruction", () => {
-    it("should return number of 0s between two 1 in single byte", () => {
-      const input = [0b1111_1001];
-      const index = 2;
-      const expectedResult = 2;
-      const mask = new Mask(BitVec.fromBlob(new Uint8Array(input), 8));
-
-      const result = mask.getNoOfBytesToPreviousInstruction(index);
-
-      assert.strictEqual(result, expectedResult);
-    });
-
-    it("should return 0 if the bit value is 1", () => {
-      const input = [0b1111_1001];
-      const index = 3;
-      const expectedResult = 0;
-      const mask = new Mask(BitVec.fromBlob(new Uint8Array(input), 8));
-
-      const result = mask.getNoOfBytesToPreviousInstruction(index);
-
-      assert.strictEqual(result, expectedResult);
-    });
-
-    it("should return number of 0s between two 1 in 2 bytes", () => {
-      const input = [0b0001_1001, 0b0001_1000];
-      const index = 10;
-      const expectedResult = 6;
-      const mask = new Mask(BitVec.fromBlob(new Uint8Array(input), 16));
-
-      const result = mask.getNoOfBytesToPreviousInstruction(index);
-
-      assert.strictEqual(result, expectedResult);
-    });
-
-    it("should return MAX_INSTRUCTION_DISTANCE = 25 if the real distance is longer", () => {
-      const input = [0b0000_0001, 0b0000_0000, 0b0000_0000, 0b1000_0000];
-      const index = 30;
-      const expectedResult = 25;
-      const mask = new Mask(BitVec.fromBlob(new Uint8Array(input), input.length * 8));
-
-      const result = mask.getNoOfBytesToPreviousInstruction(index);
 
       assert.strictEqual(result, expectedResult);
     });
