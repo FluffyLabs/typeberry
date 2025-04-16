@@ -163,7 +163,7 @@ describe("Reports.verifyCredentials", () => {
     const res = reports.verifyCredentials(input, hashes);
 
     const message = BytesBlob.parseBlob(
-      "0x6a616d5f67756172616e74656523d9dc0dcb965edddacb4522b56b5f22bf7db53f462f194070254dde92ccfd43",
+      "0x6a616d5f67756172616e746565d8c507a9bc5f87033698b255f4fd8b44eda9407def5cf926b5cd36c8f3f4bd52",
     );
 
     const validators = initialValidators();
