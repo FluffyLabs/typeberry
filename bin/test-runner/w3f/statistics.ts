@@ -241,7 +241,7 @@ class TestState {
           ]),
         ),
       },
-      slot: state.slot,
+      timeslot: state.slot,
       currentValidatorData: tryAsPerValidator(state.curr_validators, spec),
     };
   }

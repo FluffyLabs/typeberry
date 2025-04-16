@@ -31,7 +31,7 @@ describe("Statistics", () => {
     const statisticsData = new StatisticsData(currentStatistics, lastStatistics, coreStatistics, serviceStatistics);
     const state: StatisticsState = {
       statistics: statisticsData,
-      slot: tryAsTimeSlot(previousSlot),
+      timeslot: tryAsTimeSlot(previousSlot),
       currentValidatorData: asOpaqueType([]),
     };
     const statistics = new Statistics(tinyChainSpec, state);
@@ -115,7 +115,7 @@ describe("Statistics", () => {
       const statisticsData = new StatisticsData(currentStatistics, lastStatistics, coreStatistics, serviceStatistics);
       const state: StatisticsState = {
         statistics: statisticsData,
-        slot: tryAsTimeSlot(previousSlot),
+        timeslot: tryAsTimeSlot(previousSlot),
         currentValidatorData: asOpaqueType([]),
       };
       const statistics = new Statistics(tinyChainSpec, state);
