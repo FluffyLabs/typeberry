@@ -1,4 +1,4 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 import { type Ed25519Key, type TimeSlot, type WorkReportHash, tryAsPerValidator } from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
 import type { ChainSpec } from "@typeberry/config";
@@ -111,11 +111,11 @@ export class DisputesTest {
 }
 
 const IGNORED = [
-  'progress_invalidates_avail_assignments-1',
-  'progress_with_invalid_keys-1',
-  'progress_with_invalid_keys-2'
+  "progress_invalidates_avail_assignments-1",
+  "progress_with_invalid_keys-1",
+  "progress_with_invalid_keys-2",
 ];
-const isIgnored = (path:string) => IGNORED.map(x => path.includes(x)).filter(x => x).length > 0;
+const isIgnored = (path: string) => IGNORED.map((x) => path.includes(x)).filter((x) => x).length > 0;
 
 export async function runDisputesTest(testContent: DisputesTest, path: string) {
   if (isIgnored(path)) {

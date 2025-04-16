@@ -110,8 +110,8 @@ export function newWorkReport({
               importedSegments: tryAsU32(0),
               exportedSegments: tryAsU32(0),
               extrinsicSize: tryAsU32(0),
-              extrinsicCount: tryAsU32(0)
-            })
+              extrinsicCount: tryAsU32(0),
+            }),
           ),
       ),
       report.results.fixedLength,

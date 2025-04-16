@@ -8,8 +8,8 @@ import {
 import type { WorkReport } from "@typeberry/block/work-report";
 import { json } from "@typeberry/json-parser";
 import type { JsonObject } from "../../json-format";
+import { TestWorkReport } from "../common-types";
 import { fromJson, runCodecTest } from "./common";
-import {TestWorkReport} from "../common-types";
 
 const validatorSignatureFromJson = json.object<JsonObject<Credential>, Credential>(
   {

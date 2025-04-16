@@ -2,9 +2,9 @@ import { Block } from "@typeberry/block/block";
 import { tinyChainSpec } from "@typeberry/config";
 import { json } from "@typeberry/json-parser";
 import { logger } from "../../common";
+import { runCodecTest } from "./common";
 import { getExtrinsicFromJson } from "./extrinsic";
 import { headerFromJson } from "./header";
-import {runCodecTest} from "./common";
 
 export const blockFromJson = json.object<Block>(
   {

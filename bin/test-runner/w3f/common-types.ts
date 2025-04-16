@@ -2,7 +2,6 @@ import { json } from "@typeberry/json-parser";
 
 import {
   BLS_KEY_BYTES,
-  tryAsServiceGas,
   type BlsKey,
   type CodeHash,
   type CoreIndex,
@@ -11,6 +10,7 @@ import {
   type ServiceId,
   type StateRootHash,
   type TimeSlot,
+  tryAsServiceGas,
 } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import { type BeefyHash, RefineContext } from "@typeberry/block/refine-context";
@@ -78,12 +78,12 @@ export class TestWorkRefineLoad {
     },
     ({ gas_used, imports, extrinsic_count, extrinsic_size, exports }) =>
       WorkRefineLoad.fromCodec({
-      gasUsed: tryAsServiceGas(gas_used),
-      importedSegments: tryAsU32(imports),
-      extrinsicCount: tryAsU32(extrinsic_count),
-      extrinsicSize: tryAsU32(extrinsic_size),
-      exportedSegments: tryAsU32(exports),
-    }),
+        gasUsed: tryAsServiceGas(gas_used),
+        importedSegments: tryAsU32(imports),
+        extrinsicCount: tryAsU32(extrinsic_count),
+        extrinsicSize: tryAsU32(extrinsic_size),
+        exportedSegments: tryAsU32(exports),
+      }),
   );
 
   // should be a bigint
@@ -224,7 +224,16 @@ export class TestWorkReport {
       results: json.array(TestWorkResult.fromJson),
       auth_gas_used: json.fromNumber((x) => asOpaqueType(tryAsU64(x))),
     },
-    ({ package_spec, context, core_index, authorizer_hash, auth_output, segment_root_lookup, results, auth_gas_used }) => {
+    ({
+      package_spec,
+      context,
+      core_index,
+      authorizer_hash,
+      auth_output,
+      segment_root_lookup,
+      results,
+      auth_gas_used,
+    }) => {
       const fixedSizeResults = FixedSizeArray.new(results, tryAsWorkItemsCount(results.length));
       return WorkReport.fromCodec({
         workPackageSpec: package_spec,

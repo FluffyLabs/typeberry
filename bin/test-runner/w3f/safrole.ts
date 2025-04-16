@@ -24,7 +24,7 @@ import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import { type Input, type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole";
 import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data";
-import { deepEqual, Result, resultToString } from "@typeberry/utils";
+import { Result, deepEqual, resultToString } from "@typeberry/utils";
 import { logger } from "../common";
 import { commonFromJson, getChainSpec } from "./common-types";
 namespace safroleFromJson {

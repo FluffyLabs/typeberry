@@ -16,6 +16,7 @@ import { runWorkItemTest, workItemFromJson } from "./w3f/codec/work-item";
 import { runWorkPackageTest, workPackageFromJson } from "./w3f/codec/work-package";
 import { runWorkReportTest } from "./w3f/codec/work-report";
 import { runWorkResultTest } from "./w3f/codec/work-result";
+import { TestWorkReport, TestWorkResult } from "./w3f/common-types";
 import { DisputesTest, runDisputesTest } from "./w3f/disputes";
 import {
   EcTest,
@@ -39,7 +40,6 @@ import { JsonSchema, ignoreSchemaFiles } from "./w3f/schema";
 import { runShufflingTests, shufflingTests } from "./w3f/shuffling";
 import { StatisticsTestFull, StatisticsTestTiny, runStatisticsTestFull, runStatisticsTestTiny } from "./w3f/statistics";
 import { runTrieTest, trieTestSuiteFromJson } from "./w3f/trie";
-import {TestWorkReport, TestWorkResult} from "./w3f/common-types";
 
 const runners = [
   runner("accumulate", AccumulateTest.fromJson, runAccumulateTest),
