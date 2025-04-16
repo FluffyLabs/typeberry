@@ -71,9 +71,12 @@ export class Statistics {
     availableReports: WorkReport[],
     availabilityAssurances: AvailabilityAssurance[],
   ) {
-    const { i, x, z, e, u, b } = this.calculateRefineScoreCore(workReports.filter((r) => r.coreIndex === c));
-    const d = this.calculateDictionaryScoreCore(availableReports.filter((r) => r.coreIndex === c));
+    const { i, x, z, e, u, b } = this.calculateRefineScoreCore(workReports.filter((r) => r !== undefined && r.coreIndex === c));
+    const d = this.calculateDictionaryScoreCore(availableReports.filter((r) => r !== undefined && r.coreIndex === c));
     const p = availabilityAssurances.reduce((sum, assurance) => {
+      if (assurance === undefined || assurance.bitfield === undefined) {
+        return sum;
+      }
       return sum + (assurance.bitfield.isSet(c) ? 1 : 0);
     }, 0);
 
