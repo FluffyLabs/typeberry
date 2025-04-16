@@ -9,13 +9,12 @@ import {
   type AccumulateRoot,
   type AccumulateState,
 } from "@typeberry/transition/accumulate";
-import { workReportFromJson } from "./codec/work-report";
-import { TestAccountItem, commonFromJson, getChainSpec } from "./common-types";
+import { TestAccountItem, TestWorkReport, commonFromJson, getChainSpec } from "./common-types";
 
 class Input {
   static fromJson: FromJson<Input> = {
     slot: "number",
-    reports: json.array(workReportFromJson),
+    reports: json.array(TestWorkReport.fromJson),
   };
 
   slot!: TimeSlot;
@@ -24,7 +23,7 @@ class Input {
 
 class ReadyRecordItem {
   static fromJson: FromJson<ReadyRecordItem> = {
-    report: workReportFromJson,
+    report: TestWorkReport.fromJson,
     dependencies: json.array(commonFromJson.bytes32()),
   };
   report!: WorkReport;

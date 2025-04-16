@@ -14,8 +14,7 @@ import {
 } from "@typeberry/transition/assurances";
 import { Result, deepEqual } from "@typeberry/utils";
 import { getAssurancesExtrinsicFromJson } from "./codec/assurances-extrinsic";
-import { workReportFromJson } from "./codec/work-report";
-import { TestAvailabilityAssignment, commonFromJson } from "./common-types";
+import { TestAvailabilityAssignment, TestWorkReport, commonFromJson } from "./common-types";
 
 class Input {
   assurances!: AssurancesExtrinsic;
@@ -69,7 +68,7 @@ enum AssurancesErrorCode {
 
 class OutputData {
   static fromJson: FromJson<OutputData> = {
-    reported: json.array(workReportFromJson),
+    reported: json.array(TestWorkReport.fromJson),
   };
 
   reported!: WorkReport[];

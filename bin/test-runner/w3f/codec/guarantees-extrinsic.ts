@@ -9,7 +9,7 @@ import type { WorkReport } from "@typeberry/block/work-report";
 import { json } from "@typeberry/json-parser";
 import type { JsonObject } from "../../json-format";
 import { fromJson, runCodecTest } from "./common";
-import { workReportFromJson } from "./work-report";
+import {TestWorkReport} from "../common-types";
 
 const validatorSignatureFromJson = json.object<JsonObject<Credential>, Credential>(
   {
@@ -21,7 +21,7 @@ const validatorSignatureFromJson = json.object<JsonObject<Credential>, Credentia
 
 const reportGuaranteeFromJson = json.object<JsonReportGuarantee, ReportGuarantee>(
   {
-    report: workReportFromJson,
+    report: TestWorkReport.fromJson,
     slot: "number",
     signatures: json.array(validatorSignatureFromJson),
   },
@@ -31,9 +31,6 @@ const reportGuaranteeFromJson = json.object<JsonReportGuarantee, ReportGuarantee
 type JsonReportGuarantee = {
   report: WorkReport;
   slot: TimeSlot;
-  // TODO [MaSo] Update to GP 0.6.4
-  // Error: Sequence<Credential>[?]: length is below minimal. 0 < 2
-  // eg. jamtestvectors/codec/data/extrinsic.json, jamtestvectors/codec/data/guarantees_extrinsic.json
   signatures: ReportGuarantee["credentials"];
 };
 

@@ -1,11 +1,12 @@
 import fs from "node:fs";
 import type { Ed25519Signature } from "@typeberry/block";
 import type { TicketAttempt } from "@typeberry/block/tickets";
-import { Bytes } from "@typeberry/bytes";
-import { type Codec, Encoder } from "@typeberry/codec";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { type Codec, Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { logger } from "../../common";
+import assert from 'node:assert';
 
 export namespace fromJson {
   export const bytes32 = <T extends Bytes<32>>() => json.fromString<T>((v) => Bytes.parseBytes(v, 32).asOpaque());
@@ -50,12 +51,9 @@ export namespace fromJson {
 
 export function runCodecTest<T>(codec: Codec<T>, test: T, file: string) {
   const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
-  // TODO [MaSo] Update to GP 0.6.4
   const myEncoded = Encoder.encodeObject(codec, test, tinyChainSpec);
-  logger.log(`CommonTest { ${encoded}, ${myEncoded} }`);
-  //assert.deepStrictEqual(myEncoded.toString(), BytesBlob.blobFrom(encoded).toString());
+  assert.deepStrictEqual(myEncoded.toString(), BytesBlob.blobFrom(encoded).toString());
 
-  // Error: Expecting end of input, yet there are still {x} bytes left.
-  //const decoded = Decoder.decodeObject(codec, encoded, tinyChainSpec);
-  //assert.deepStrictEqual(decoded, test);
+  const decoded = Decoder.decodeObject(codec, BytesBlob.blobFrom(encoded), tinyChainSpec);
+  assert.deepStrictEqual(decoded, test);
 }
