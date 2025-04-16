@@ -61,11 +61,6 @@ export class Lookup implements HostCallHandler {
     // l
     const blobLength = minU64(lengthToWrite, tryAsU64(preImageLength - start));
 
-    const isWriteable = memory.isWriteable(destinationAddress, Number(blobLength));
-    if (!isWriteable) {
-      return Promise.resolve(PvmExecution.Panic);
-    }
-
     if (preImage === null) {
       regs.setU64(IN_OUT_REG, HostCallResult.NONE);
       return;
@@ -73,7 +68,10 @@ export class Lookup implements HostCallHandler {
 
     // casting to `Number` is safe here, since we are bounded by `preImageLength` in both cases, which is `U32`
     const chunk = preImage.raw.subarray(Number(start), Number(start + blobLength));
-    memory.storeFrom(destinationAddress, chunk);
+    const writePageFault = memory.storeFrom(destinationAddress, chunk);
+    if (writePageFault !== null) {
+      return Promise.resolve(PvmExecution.Panic);
+    }
     regs.setU64(IN_OUT_REG, preImageLength);
   }
 }
