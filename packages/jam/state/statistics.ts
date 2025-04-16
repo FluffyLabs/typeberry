@@ -90,21 +90,21 @@ export class CoreStatistics {
 
   private constructor(
     /** `d` */
-    public readonly dataAvailabilityLoad: U32,
+    public dataAvailabilityLoad: U32,
     /** `p` */
-    public readonly popularity: U16,
+    public popularity: U16,
     /** `i` */
-    public readonly imports: U16,
+    public imports: U16,
     /** `e` */
-    public readonly extrinsicCount: U16,
+    public extrinsicCount: U16,
     /** `z` */
-    public readonly extrinsicSize: U32,
+    public extrinsicSize: U32,
     /** `x` */
-    public readonly exports: U16,
+    public exports: U16,
     /** `b` */
-    public readonly bandleSize: U32,
+    public bandleSize: U32,
     /** `u` */
-    public readonly gasUsed: Gas,
+    public gasUsed: Gas,
   ) {}
 
   static empty() {
@@ -157,29 +157,29 @@ export class ServiceStatistics {
 
   private constructor(
     /** `p.0` */
-    public readonly providedCount: U16,
+    public providedCount: U16,
     /** `p.1` */
-    public readonly providedSize: U32,
+    public providedSize: U32,
     /** `r.0` */
-    public readonly refinementCount: U32,
+    public refinementCount: U32,
     /** `r.1` */
-    public readonly refinementGasUsed: Gas,
+    public refinementGasUsed: Gas,
     /** `i` */
-    public readonly imports: U16,
+    public imports: U16,
     /** `e` */
-    public readonly extrinsicCount: U16,
+    public extrinsicCount: U16,
     /** `z` */
-    public readonly extrinsicSize: U32,
+    public extrinsicSize: U32,
     /** `x` */
-    public readonly exports: U16,
+    public exports: U16,
     /** `a.0` */
-    public readonly accumulateCount: U32,
+    public accumulateCount: U32,
     /** `a.1` */
-    public readonly accumulateGasUsed: Gas,
+    public accumulateGasUsed: Gas,
     /** `t.0` */
-    public readonly onTransfersCount: U32,
+    public onTransfersCount: U32,
     /** `t.1` */
-    public readonly onTransfersGasUsed: Gas,
+    public onTransfersGasUsed: Gas,
   ) {}
 
   static empty() {
