@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import assert from 'node:assert';
 
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
@@ -41,8 +42,7 @@ export async function runTrieTest(testContent: TrieTestSuite) {
       for (const [key, value] of testData.input.entries()) {
         trie.set(key, value);
       }
-      // TODO [MaSo] Update to GP 0.6.4
-      //assert.deepStrictEqual(testData.output, trie.getRootHash());
+      assert.deepStrictEqual(testData.output, trie.getRootHash());
     });
   }
 }
