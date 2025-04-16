@@ -4,7 +4,7 @@ import { terminationInstructions } from "./is-termination-instruction";
 export class BasicBlocks {
   private code: Uint8Array = new Uint8Array();
   private mask: Mask = Mask.empty();
-  private basicBlocks: Map<number, boolean> = new Map();
+  private basicBlocks: Set<number> = new Set();
 
   reset(code: Uint8Array, mask: Mask) {
     this.code = code;
@@ -14,13 +14,13 @@ export class BasicBlocks {
   }
 
   private calculateBasicBlocks() {
-    this.basicBlocks = new Map();
-    this.basicBlocks.set(0, true);
+    this.basicBlocks.clear();
+    this.basicBlocks.add(0);
     const codeLength = this.code.length;
 
     for (let i = 0; i < codeLength; i++) {
       if (this.mask.isInstruction(i) && this.isBasicBlockTermination(i)) {
-        this.basicBlocks.set(i + 1 + this.mask.getNoOfBytesToNextInstruction(i + 1), true);
+        this.basicBlocks.add(i + 1 + this.mask.getNoOfBytesToNextInstruction(i + 1));
       }
     }
   }
