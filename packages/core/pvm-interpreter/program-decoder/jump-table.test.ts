@@ -38,7 +38,7 @@ describe("JumpTable", () => {
     assert.strictEqual(result, expectedValue);
   });
 
-  it("should load table that has u64 item that is bigger than 2 ** 32 - 1", () => {
+  it("should load jump table that has u64 item that is bigger than 2 ** 32 - 1", () => {
     const jumpTableItemLength = 8;
     const expectedValue = 0xff_ff_ff_ff;
     const bytes = new Uint8Array([0xff, 0xff, 0xff, 0xff, 0x78, 0x56, 0x34, 0x12]);
@@ -50,10 +50,23 @@ describe("JumpTable", () => {
     assert.strictEqual(result, expectedValue);
   });
 
-  it("should load table that has u64 item that is lower than 2 ** 32 - 1", () => {
+  it("should load jump table that has u64 item that is lower than 2 ** 32 - 1", () => {
     const jumpTableItemLength = 8;
     const expectedValue = 0x00_00_00_00_12_34_56_78;
     const bytes = new Uint8Array([0x78, 0x56, 0x34, 0x12, 0, 0, 0, 0]);
+    const jumpTable = new JumpTable(jumpTableItemLength, bytes);
+    const indexToCheck = 0;
+
+    const result = jumpTable.getDestination(indexToCheck);
+
+    assert.strictEqual(result, expectedValue);
+  });
+
+  it("should load huge jump table", () => {
+    const jumpTableItemLength = 255;
+    const expectedValue = 2 ** 32 - 1;
+    const bytes = new Uint8Array(255);
+    bytes.fill(1);
     const jumpTable = new JumpTable(jumpTableItemLength, bytes);
     const indexToCheck = 0;
 
