@@ -2,7 +2,7 @@ import type { Descriptor, SequenceView } from "@typeberry/codec";
 import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
-import { type U16, type U32, type U64, tryAsU16, tryAsU32 } from "@typeberry/numbers";
+import { type U16, type U32, type U64, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { type Opaque, asOpaqueType, check } from "@typeberry/utils";
 import { codecKnownSizeArray, codecWithContext } from "./codec";
 
@@ -30,6 +30,7 @@ export const tryAsServiceId = (v: number): ServiceId => asOpaqueType(tryAsU32(v)
 // TODO [ToDr] Unify with `pvm/gas`.
 /** Service gas - a measure of execution time/complexity. */
 export type ServiceGas = Opaque<U64, "Gas[u64]">;
+export const tryAsServiceGas = (v: number | bigint): ServiceGas => asOpaqueType(tryAsU64(v));
 
 /** Index of the core on which the execution of the work package is done. */
 export type CoreIndex = Opaque<U16, "CoreIndex[u16]">;

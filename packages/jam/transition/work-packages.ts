@@ -1,7 +1,7 @@
-import { type CodeHash, type HeaderHash, type ServiceId, tryAsCoreIndex } from "@typeberry/block";
+import { type CodeHash, type HeaderHash, type ServiceId, tryAsCoreIndex, tryAsServiceGas } from "@typeberry/block";
 import { type WorkPackage, tryAsWorkItemsCount } from "@typeberry/block/work-package";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
-import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
+import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, blake2b } from "@typeberry/hash";
@@ -69,6 +69,13 @@ export class WorkPackageExecutor {
           blake2b.hashBytes(item.payload),
           gasRatio,
           new WorkExecResult(WorkExecResultKind.ok, ret),
+          WorkRefineLoad.fromCodec({
+            gasUsed: tryAsServiceGas(5),
+            importedSegments: tryAsU32(0),
+            exportedSegments: tryAsU32(0),
+            extrinsicSize: tryAsU32(0),
+            extrinsicCount: tryAsU32(0)
+          })
         ),
       );
     }
@@ -87,7 +94,16 @@ export class WorkPackageExecutor {
     const workResults = FixedSizeArray.new(results, tryAsWorkItemsCount(results.length));
 
     return Promise.resolve(
-      new WorkReport(workPackageSpec, pack.context, coreIndex, authorizerHash, pack.authorization, [], workResults),
+      WorkReport.fromCodec({
+        workPackageSpec,
+        context: pack.context,
+        coreIndex,
+        authorizerHash,
+        authorizationOutput: pack.authorization,
+        segmentRootLookup: [],
+        results: workResults,
+        authorizationGasUsed: tryAsServiceGas(0)
+      })
     );
   }
 

@@ -24,7 +24,7 @@ import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import { type Input, type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole";
 import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data";
-import { Result } from "@typeberry/utils";
+import { deepEqual, Result, resultToString } from "@typeberry/utils";
 import { logger } from "../common";
 import { commonFromJson, getChainSpec } from "./common-types";
 namespace safroleFromJson {
@@ -251,9 +251,13 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const safrole = new Safrole(chainSpec, preState, bwasm);
 
   const result = await safrole.transition(testContent.input);
-  logger.log(`SafroleTest { ${result} }`);
+  logger.log(`SafroleTest { ${resultToString(result)} }`);
 
-  // TODO [MaSo] Update to GP 0.6.4
-  // deepEqual(result, Output.toSafroleOutput(testContent.output, chainSpec));
-  // deepEqual(safrole.state, JsonState.toSafroleState(testContent.post_state, chainSpec));
+  if (path.length > 0) {
+    // TODO [MaSo] Address safrole tests.
+    logger.error(`Ignoring: ${path}`);
+    return;
+  }
+  deepEqual(result, Output.toSafroleOutput(testContent.output, chainSpec));
+  deepEqual(safrole.state, JsonState.toSafroleState(testContent.post_state, chainSpec));
 }

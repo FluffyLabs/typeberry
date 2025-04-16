@@ -13,4 +13,5 @@ export enum DisputesErrorCode {
   BadJudgementAge = "bad_judgement_age",
   BadValidatorIndex = "bad_validator_index",
   BadSignature = "bad_signature",
+  BadGuarantorKey = "bad_guarantor_key",
 }

@@ -14,8 +14,8 @@ import { refineContextFromJson, runRefineContextTest } from "./w3f/codec/refine-
 import { runTicketsExtrinsicTest, ticketsExtrinsicFromJson } from "./w3f/codec/tickets-extrinsic";
 import { runWorkItemTest, workItemFromJson } from "./w3f/codec/work-item";
 import { runWorkPackageTest, workPackageFromJson } from "./w3f/codec/work-package";
-import { runWorkReportTest, workReportFromJson } from "./w3f/codec/work-report";
-import { runWorkResultTest, workResultFromJson } from "./w3f/codec/work-result";
+import { runWorkReportTest } from "./w3f/codec/work-report";
+import { runWorkResultTest } from "./w3f/codec/work-result";
 import { DisputesTest, runDisputesTest } from "./w3f/disputes";
 import {
   EcTest,
@@ -39,6 +39,7 @@ import { JsonSchema, ignoreSchemaFiles } from "./w3f/schema";
 import { runShufflingTests, shufflingTests } from "./w3f/shuffling";
 import { StatisticsTestFull, StatisticsTestTiny, runStatisticsTestFull, runStatisticsTestTiny } from "./w3f/statistics";
 import { runTrieTest, trieTestSuiteFromJson } from "./w3f/trie";
+import {TestWorkReport, TestWorkResult} from "./w3f/common-types";
 
 const runners = [
   runner("accumulate", AccumulateTest.fromJson, runAccumulateTest),
@@ -56,8 +57,8 @@ const runners = [
   runner("codec/tickets_extrinsic", ticketsExtrinsicFromJson, runTicketsExtrinsicTest),
   runner("codec/work_item", workItemFromJson, runWorkItemTest),
   runner("codec/work_package", workPackageFromJson, runWorkPackageTest),
-  runner("codec/work_report", workReportFromJson, runWorkReportTest),
-  runner("codec/work_result", workResultFromJson, runWorkResultTest),
+  runner("codec/work_report", TestWorkReport.fromJson, runWorkReportTest),
+  runner("codec/work_result", TestWorkResult.fromJson, runWorkResultTest),
   runner("disputes", DisputesTest.fromJson, runDisputesTest),
   runner("erasure_coding", EcTest.fromJson, runEcTest),
   runner("erasure_coding/page_proof", PageProof.fromJson, runPageProofTest),
