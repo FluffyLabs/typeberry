@@ -83,11 +83,11 @@ export class WorkRefineLoad extends WithDebug {
   static fromCodec({
     gasUsed,
     importedSegments,
-    exportedSegments,
     extrinsicCount,
     extrinsicSize,
+    exportedSegments,
   }: CodecRecord<WorkRefineLoad>) {
-    return new WorkRefineLoad(gasUsed, importedSegments, exportedSegments, extrinsicCount, extrinsicSize);
+    return new WorkRefineLoad(gasUsed, importedSegments, extrinsicCount, extrinsicSize, exportedSegments);
   }
 
   private constructor(
