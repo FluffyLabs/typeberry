@@ -90,4 +90,51 @@ describe("BasicBlocks", () => {
 
     assert.strictEqual(result, false);
   });
+
+  it("should coś tam", () => {
+    const code = new Uint8Array([
+      Instruction.TRAP,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      Instruction.JUMP_IND,
+    ]);
+    const mask = new Mask(BitVec.fromBlob(new Uint8Array([0b0000_0001, 0b0000_0000, 0b0000_0000, 0b1000_0000]), 32));
+
+    const basicBlocks = new BasicBlocks();
+    basicBlocks.reset(code, mask);
+
+    const expectedStartingBasicBlockIndices = [0, 26];
+
+    for (let i = 0; i < 32; i++) {
+      assert.strictEqual(basicBlocks.isBeginningOfBasicBlock(i), expectedStartingBasicBlockIndices.includes(i));
+    }
+  });
 });
