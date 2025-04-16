@@ -113,8 +113,10 @@ export class Statistics {
     return sum;
   }
 
-  private calculateServiceStatistics(s: ServiceId, workReports: WorkReport[]) {
-  }
+  // TODO [MaSo] Implement Service statistics calculation
+  //private calculateServiceStatistics(s: ServiceId, workReports: WorkReport[]) {
+
+  //}
 
   /**
    * https://graypaper.fluffylabs.dev/#/579bd12/180802180802
@@ -172,7 +174,7 @@ export class Statistics {
 
     /** Update services statistics */
     for (const service of this.state.statistics.services) {
-      const serviceStat = this.calculateServiceStatistics(tryAsServiceId(service[0]), workReports);
+      //const serviceStat = this.calculateServiceStatistics(tryAsServiceId(service[0]), workReports);
     }
 
     /** Update state */
