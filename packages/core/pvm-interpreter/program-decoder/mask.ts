@@ -2,7 +2,7 @@ import { BitVec } from "@typeberry/bytes";
 import { check } from "@typeberry/utils";
 
 /**
- * Upper bound of skip function - max value of GP's skip function + 1
+ * Upper bound of instruction distance - it is equal to max value of GP's skip function + 1
  */
 const MAX_INSTRUCTION_DISTANCE = 25;
 
