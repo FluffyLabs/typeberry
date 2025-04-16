@@ -16,7 +16,7 @@ export type Input = {
 /**
  * https://graypaper.fluffylabs.dev/#/68eaa1f/18f60118f601?v=0.6.4
  */
-export type StatisticsState = Pick<State, 'timeslot'> & {
+export type StatisticsState = Pick<State, "timeslot"> & {
   statistics: State["statistics"];
   /**
    * `κ' kappa_prime`: Posterior active validators

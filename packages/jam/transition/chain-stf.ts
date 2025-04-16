@@ -162,7 +162,7 @@ export class OnChain {
       slot: timeSlot,
       authorIndex: header.bandersnatchBlockAuthorIndex,
       extrinsic: block.extrinsic.materialize(),
-      availableReports: assurancesResult.ok
+      availableReports: assurancesResult.ok,
     });
 
     // safrole

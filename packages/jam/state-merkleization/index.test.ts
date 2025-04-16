@@ -269,8 +269,7 @@ const testState = (): State => {
         ],
         spec,
       ),
-      cores: tryAsPerCore([
-      ], spec),
+      cores: tryAsPerCore([], spec),
       services: new Map(),
     }),
     accumulationQueue: tryAsPerEpochBlock(repeat(spec.epochLength, []), spec),
