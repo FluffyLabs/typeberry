@@ -1,5 +1,12 @@
-import { CoreIndex, type Extrinsic, ServiceId, type TimeSlot, type ValidatorIndex, tryAsCoreIndex, tryAsPerValidator, tryAsServiceId } from "@typeberry/block";
-import { AvailabilityAssurance } from "@typeberry/block/assurances";
+import {
+  type CoreIndex,
+  type Extrinsic,
+  type TimeSlot,
+  type ValidatorIndex,
+  tryAsCoreIndex,
+  tryAsPerValidator,
+} from "@typeberry/block";
+import type { AvailabilityAssurance } from "@typeberry/block/assurances";
 import { W_G } from "@typeberry/block/gp-constants";
 import type { WorkReport } from "@typeberry/block/work-report";
 import type { ChainSpec } from "@typeberry/config";
@@ -58,7 +65,12 @@ export class Statistics {
     };
   }
 
-  private calculateCoreStatistics(c: CoreIndex, workReports: WorkReport[], availableReports: WorkReport[], availabilityAssurances: AvailabilityAssurance[]) {
+  private calculateCoreStatistics(
+    c: CoreIndex,
+    workReports: WorkReport[],
+    availableReports: WorkReport[],
+    availabilityAssurances: AvailabilityAssurance[],
+  ) {
     const { i, x, z, e, u, b } = this.calculateRefineScoreCore(workReports.filter((r) => r.coreIndex === c));
     const d = this.calculateDictionaryScoreCore(availableReports.filter((r) => r.coreIndex === c));
     const p = availabilityAssurances.reduce((sum, assurance) => {
@@ -78,7 +90,7 @@ export class Statistics {
   }
 
   private calculateRefineScoreCore(workReports: WorkReport[]) {
-    let score = {
+    const score = {
       i: 0,
       x: 0,
       z: 0,
@@ -91,7 +103,7 @@ export class Statistics {
       for (const workResult of workReport.results.map((r) => r)) {
         score.i += workResult.load.importedSegments;
         score.x += workResult.load.extrinsicCount;
-        score.z += workResult.load.extrinsicSize
+        score.z += workResult.load.extrinsicSize;
         score.e += workResult.load.exportedSegments;
         score.u += workResult.load.gasUsed;
       }
@@ -106,7 +118,7 @@ export class Statistics {
 
     for (const r of availableWorkReports) {
       const workPackageLength = r.workPackageSpec.length;
-      const workPackageSegment = Math.ceil(r.workPackageSpec.exportsCount * 65/64);
+      const workPackageSegment = Math.ceil((r.workPackageSpec.exportsCount * 65) / 64);
       sum += workPackageLength + W_G * workPackageSegment;
     }
 
@@ -161,7 +173,12 @@ export class Statistics {
     const workReports = extrinsic.guarantees.map((r) => r.report);
     /** Update core statistics */
     for (let coreId = 0; coreId < this.state.statistics.cores.length; coreId++) {
-      const coreStat = this.calculateCoreStatistics(tryAsCoreIndex(coreId), workReports, availableReports, extrinsic.assurances);
+      const coreStat = this.calculateCoreStatistics(
+        tryAsCoreIndex(coreId),
+        workReports,
+        availableReports,
+        extrinsic.assurances,
+      );
       statistics.cores[coreId].imports = tryAsU16(coreStat.i);
       statistics.cores[coreId].exports = tryAsU16(coreStat.x);
       statistics.cores[coreId].extrinsicSize = tryAsU32(coreStat.z);
@@ -173,9 +190,9 @@ export class Statistics {
     }
 
     /** Update services statistics */
-    for (const service of this.state.statistics.services) {
-      //const serviceStat = this.calculateServiceStatistics(tryAsServiceId(service[0]), workReports);
-    }
+    // for (const service of this.state.statistics.services) {
+    //  const serviceStat = this.calculateServiceStatistics(tryAsServiceId(service[0]), workReports);
+    // }
 
     /** Update state */
     this.state.statistics = statistics;
