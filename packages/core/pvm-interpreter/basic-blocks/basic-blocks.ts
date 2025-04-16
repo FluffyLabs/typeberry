@@ -1,26 +1,25 @@
-import { Mask } from "../program-decoder/mask";
+import type { Mask } from "../program-decoder/mask";
 import { terminationInstructions } from "./is-termination-instruction";
 
 export class BasicBlocks {
-  private code: Uint8Array = new Uint8Array();
-  private mask: Mask = Mask.empty();
+  private basicBlocks: Set<number> = new Set();
 
   reset(code: Uint8Array, mask: Mask) {
-    this.code = code;
-    this.mask = mask;
+    this.basicBlocks.clear();
+    this.basicBlocks.add(0);
+    const codeLength = code.length;
+
+    const isBasicBlockTermination = (index: number) =>
+      mask.isInstruction(index) && terminationInstructions[code[index]];
+
+    for (let i = 0; i < codeLength; i++) {
+      if (mask.isInstruction(i) && isBasicBlockTermination(i)) {
+        this.basicBlocks.add(i + 1 + mask.getNoOfBytesToNextInstruction(i + 1));
+      }
+    }
   }
 
   isBeginningOfBasicBlock(index: number) {
-    if (index === 0) {
-      return true;
-    }
-    return (
-      this.mask.isInstruction(index) &&
-      this.isBasicBlockTermination(index - (this.mask.getNoOfBytesToPreviousInstruction(index - 1) + 1))
-    );
-  }
-
-  private isBasicBlockTermination(index: number) {
-    return this.mask.isInstruction(index) && terminationInstructions[this.code[index]];
+    return this.basicBlocks.has(index);
   }
 }
