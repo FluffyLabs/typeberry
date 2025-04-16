@@ -1,13 +1,13 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { tryAsCoreIndex, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
+import { tryAsCoreIndex, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import type { ServiceGas, ServiceId } from "@typeberry/block";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/block/crypto";
 import { Credential } from "@typeberry/block/guarantees";
 import { RefineContext } from "@typeberry/block/refine-context";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package";
 import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
-import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
+import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
@@ -31,22 +31,30 @@ const MOCK_CONTEXT = new RefineContext(
   Bytes.zero(HASH_SIZE).asOpaque(),
   tryAsTimeSlot(1),
 );
-const MOCK_WORK_RESULT = new WorkResult(
-  tryAsU32(1) as ServiceId,
-  Bytes.zero(HASH_SIZE).asOpaque(),
-  Bytes.zero(HASH_SIZE),
-  tryAsU64(1000n) as ServiceGas,
-  new WorkExecResult(WorkExecResultKind.ok, BytesBlob.blobFrom(new Uint8Array())),
-);
-const MOCK_WORK_REPORT = new WorkReport(
-  MOCK_WORK_PACKAGE_SPEC,
-  MOCK_CONTEXT,
-  tryAsCoreIndex(0),
-  Bytes.zero(HASH_SIZE).asOpaque(),
-  BytesBlob.blobFrom(new Uint8Array()),
-  [],
-  FixedSizeArray.new([MOCK_WORK_RESULT], tryAsWorkItemsCount(1)),
-);
+const MOCK_WORK_RESULT = WorkResult.fromCodec({
+  serviceId: tryAsServiceId(1),
+  codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
+  payloadHash: Bytes.zero(HASH_SIZE),
+  gas: tryAsServiceGas(1000n),
+  result: new WorkExecResult(WorkExecResultKind.ok, BytesBlob.blobFrom(new Uint8Array())),
+  load: WorkRefineLoad.fromCodec({
+    gasUsed: tryAsServiceGas(10_000n),
+    importedSegments: tryAsU32(0),
+    exportedSegments: tryAsU32(1),
+    extrinsicCount: tryAsU32(1),
+    extrinsicSize: tryAsU32(100),
+  }),
+});
+const MOCK_WORK_REPORT = WorkReport.fromCodec({
+  workPackageSpec: MOCK_WORK_PACKAGE_SPEC,
+  context: MOCK_CONTEXT,
+  coreIndex: tryAsCoreIndex(0),
+  authorizerHash: Bytes.zero(HASH_SIZE).asOpaque(),
+  authorizationOutput: BytesBlob.blobFrom(new Uint8Array()),
+  segmentRootLookup: [],
+  results: FixedSizeArray.new([MOCK_WORK_RESULT], tryAsWorkItemsCount(1)),
+  authorizationGasUsed: tryAsServiceGas(10_000n),
+});
 const MOCK_SIGNATURES = asKnownSize([
   new Credential(tryAsValidatorIndex(0), Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque() as Ed25519Signature),
   new Credential(tryAsValidatorIndex(1), Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque() as Ed25519Signature),

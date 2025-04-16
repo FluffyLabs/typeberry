@@ -16,9 +16,8 @@ export type Input = {
 /**
  * https://graypaper.fluffylabs.dev/#/68eaa1f/18f60118f601?v=0.6.4
  */
-export type StatisticsState = {
+export type StatisticsState = Pick<State, 'timeslot'> & {
   statistics: State["statistics"];
-  slot: State["timeslot"];
   /**
    * `κ' kappa_prime`: Posterior active validators
    *
@@ -35,7 +34,7 @@ export class Statistics {
 
   private getStatistics(slot: TimeSlot) {
     /** https://graypaper.fluffylabs.dev/#/579bd12/18b80118b801 */
-    const currentEpoch = Math.floor(this.state.slot / this.chainSpec.epochLength);
+    const currentEpoch = Math.floor(this.state.timeslot / this.chainSpec.epochLength);
     const nextEpoch = Math.floor(slot / this.chainSpec.epochLength);
 
     /** e === e' */

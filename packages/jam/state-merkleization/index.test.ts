@@ -246,7 +246,7 @@ const testState = (): State => {
         }),
       ],
     ]),
-    statisticsPerValidator: StatisticsData.fromCodec({
+    statistics: StatisticsData.fromCodec({
       current: tryAsPerValidator(
         [
           activityRecord(1, 3, 0, 0, 0, 0),
@@ -269,6 +269,9 @@ const testState = (): State => {
         ],
         spec,
       ),
+      cores: tryAsPerCore([
+      ], spec),
+      services: new Map(),
     }),
     accumulationQueue: tryAsPerEpochBlock(repeat(spec.epochLength, []), spec),
     recentlyAccumulated: tryAsPerEpochBlock(repeat(spec.epochLength, HashSet.new()), spec),
