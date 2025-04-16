@@ -71,21 +71,19 @@ export class Read implements HostCallHandler {
     // l
     const blobLength = minU64(lengthToWrite, tryAsU64(valueLength - offset));
 
-    const isWritable = memory.isWriteable(destinationAddress, Number(blobLength));
-    if (!isWritable) {
-      return Promise.resolve(PvmExecution.Panic);
-    }
-
     if (value === null) {
       regs.setU64(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
-    memory.storeFrom(
+    const writePageFault = memory.storeFrom(
       destinationAddress,
       // NOTE casting to `U32` is safe here, since we are bounded by `valueLength`.
       value.raw.subarray(Number(offset), Number(offset + blobLength)),
     );
+    if (writePageFault !== null) {
+      return Promise.resolve(PvmExecution.Panic);
+    }
     regs.setU64(IN_OUT_REG, valueLength);
   }
 }
