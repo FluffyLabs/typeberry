@@ -91,7 +91,7 @@ describe("BasicBlocks", () => {
     assert.strictEqual(result, false);
   });
 
-  it("should coś tam", () => {
+  it("should correctly detect basic blocks when distance between instructions is longer than 24", () => {
     const code = new Uint8Array([
       Instruction.TRAP,
       0,
