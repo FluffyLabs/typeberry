@@ -38,9 +38,9 @@ const MOCK_WORK_RESULT = WorkResult.fromCodec({
   result: new WorkExecResult(WorkExecResultKind.ok, BytesBlob.blobFrom(new Uint8Array())),
   load: WorkRefineLoad.fromCodec({
     gasUsed: tryAsServiceGas(10_000n),
-    importedSegments: tryAsU32(0),
+    importedSegments: tryAsU32(1),
     exportedSegments: tryAsU32(1),
-    extrinsicCount: tryAsU32(1),
+    extrinsicCount: tryAsU32(100),
     extrinsicSize: tryAsU32(100),
   }),
 });

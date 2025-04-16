@@ -75,9 +75,9 @@ export class WorkRefineLoad extends WithDebug {
   static Codec = codec.Class(WorkRefineLoad, {
     gasUsed: codec.varU64.asOpaque(),
     importedSegments: codec.varU32,
-    exportedSegments: codec.varU32,
     extrinsicCount: codec.varU32,
     extrinsicSize: codec.varU32,
+    exportedSegments: codec.varU32,
   });
 
   static fromCodec({
