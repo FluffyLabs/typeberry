@@ -1,5 +1,5 @@
+import assert from "node:assert";
 import { test } from "node:test";
-import assert from 'node:assert';
 
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";

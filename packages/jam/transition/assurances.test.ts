@@ -285,7 +285,15 @@ function intoValidatorData({ bandersnatch, ed25519 }: { bandersnatch: string; ed
 function newAvailabilityAssignment(core: number, timeout: number): AvailabilityAssignment {
   const source = BytesBlob.parseBlob(testWorkReport);
   const report = Decoder.decodeObject(WorkReport.Codec, source, tinyChainSpec);
-  const { workPackageSpec, context, authorizerHash, authorizationOutput, segmentRootLookup, results, authorizationGasUsed } = report;
+  const {
+    workPackageSpec,
+    context,
+    authorizerHash,
+    authorizationOutput,
+    segmentRootLookup,
+    results,
+    authorizationGasUsed,
+  } = report;
   const workReport = WorkReport.fromCodec({
     workPackageSpec,
     context,
@@ -294,7 +302,7 @@ function newAvailabilityAssignment(core: number, timeout: number): AvailabilityA
     authorizationOutput,
     segmentRootLookup,
     results,
-    authorizationGasUsed
+    authorizationGasUsed,
   });
   const encoded = Encoder.encodeObject(WorkReport.Codec, workReport, tinyChainSpec);
   const hash = blake2b.hashBytes(encoded).asOpaque();
