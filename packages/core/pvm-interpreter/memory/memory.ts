@@ -1,4 +1,4 @@
-import { Result } from "@typeberry/utils";
+import { OK, Result } from "@typeberry/utils";
 import { OutOfMemory, PageFault } from "./errors";
 import { MAX_MEMORY_INDEX, MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
 import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
@@ -45,11 +45,11 @@ export class Memory {
   }
 
   // TODO [ToDr] This should support writing to more than two pages.
-  storeFrom(address: MemoryIndex, bytes: Uint8Array) {
+  storeFrom(address: MemoryIndex, bytes: Uint8Array): Result<OK, PageFault> {
     const pageNumber = getPageNumber(address);
     const page = this.memory.get(pageNumber);
     if (page === undefined) {
-      return new PageFault(address);
+      return Result.error(new PageFault(address));
     }
 
     const firstPageIndex = tryAsPageIndex(address - page.start);
@@ -68,12 +68,12 @@ export class Memory {
     const secondPage = this.memory.get(secondPageNumber);
 
     if (secondPage === undefined) {
-      return new PageFault(pageEnd);
+      return Result.error(new PageFault(pageEnd));
     }
 
     const firstPageStoreResult = page.storeFrom(firstPageIndex, bytes.subarray(0, toStoreOnFirstPage));
 
-    if (firstPageStoreResult !== null) {
+    if (firstPageStoreResult.isError) {
       return firstPageStoreResult;
     }
     return secondPage.storeFrom(
@@ -161,22 +161,22 @@ export class Memory {
    *
    * Returns `null` if the data was read successfully or `PageFault` otherwise.
    */
-  loadInto(result: Uint8Array, startAddress: MemoryIndex): null | PageFault {
+  loadInto(result: Uint8Array, startAddress: MemoryIndex): Result<OK, PageFault> {
     if (result.length === 0) {
-      return null;
+      return Result.ok(OK);
     }
 
     const pagesResult = this.getPages(startAddress, result.length);
 
     if (pagesResult.isError) {
-      return pagesResult.error;
+      return Result.error(pagesResult.error);
     }
 
     const pages = pagesResult.ok;
     const noOfPages = pages.length;
 
     if (noOfPages === 0) {
-      return null;
+      return Result.ok(OK);
     }
 
     let currentPosition: number = startAddress;
@@ -193,7 +193,8 @@ export class Memory {
       currentPosition += bytesToRead;
       bytesLeft -= bytesToRead;
     }
-    return null;
+
+    return Result.ok(OK);
   }
 
   sbrk(length: number): SbrkIndex {

@@ -34,8 +34,8 @@ export class Machine implements HostCallHandler {
     const entrypoint = tryAsProgramCounter(regs.getU64(9));
 
     const code = new Uint8Array(codeLength);
-    const codePageFault = memory.loadInto(code, codeStart);
-    if (codePageFault !== null) {
+    const codeLoadResult = memory.loadInto(code, codeStart);
+    if (codeLoadResult.isError) {
       return PvmExecution.Panic;
     }
 

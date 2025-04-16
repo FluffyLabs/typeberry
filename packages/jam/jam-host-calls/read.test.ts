@@ -72,7 +72,7 @@ function prepareRegsAndMemory(
     memory,
     readResult: () => {
       const result = new Uint8Array(destinationLength);
-      assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)), null);
+      assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)).isOk, true);
       return BytesBlob.blobFrom(result);
     },
   };

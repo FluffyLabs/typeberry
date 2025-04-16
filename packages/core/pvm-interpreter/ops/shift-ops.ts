@@ -7,7 +7,10 @@ export class ShiftOps {
   constructor(private regs: Registers) {}
 
   shiftLogicalLeftU32(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.setU32(resultIndex, this.regs.getLowerU32(firstIndex) << (this.regs.getLowerU32(secondIndex) % MAX_SHIFT_U32));
+    this.regs.setU32(
+      resultIndex,
+      this.regs.getLowerU32(firstIndex) << (this.regs.getLowerU32(secondIndex) % MAX_SHIFT_U32),
+    );
   }
 
   shiftLogicalLeftU64(firstIndex: number, secondIndex: number, resultIndex: number) {
@@ -15,7 +18,10 @@ export class ShiftOps {
   }
 
   shiftLogicalRightU32(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.setU32(resultIndex, this.regs.getLowerU32(firstIndex) >>> (this.regs.getLowerU32(secondIndex) % MAX_SHIFT_U32));
+    this.regs.setU32(
+      resultIndex,
+      this.regs.getLowerU32(firstIndex) >>> (this.regs.getLowerU32(secondIndex) % MAX_SHIFT_U32),
+    );
   }
 
   shiftLogicalRightU64(firstIndex: number, secondIndex: number, resultIndex: number) {
@@ -26,7 +32,10 @@ export class ShiftOps {
   }
 
   shiftArithmeticRightU32(firstIndex: number, secondIndex: number, resultIndex: number) {
-    this.regs.setI32(resultIndex, this.regs.getLowerI32(firstIndex) >> (this.regs.getLowerU32(secondIndex) % MAX_SHIFT_U32));
+    this.regs.setI32(
+      resultIndex,
+      this.regs.getLowerI32(firstIndex) >> (this.regs.getLowerU32(secondIndex) % MAX_SHIFT_U32),
+    );
   }
 
   shiftArithmeticRightU64(firstIndex: number, secondIndex: number, resultIndex: number) {

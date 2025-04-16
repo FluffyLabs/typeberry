@@ -34,8 +34,8 @@ export class Export implements HostCallHandler {
     // destination (padded with zeros).
     const segment: Segment = Bytes.zero(SEGMENT_BYTES);
 
-    const segmentReadPageFault = memory.loadInto(segment.raw.subarray(0, segmentLength), segmentStart);
-    if (segmentReadPageFault !== null) {
+    const segmentReadResult = memory.loadInto(segment.raw.subarray(0, segmentLength), segmentStart);
+    if (segmentReadResult.isError) {
       return PvmExecution.Panic;
     }
 

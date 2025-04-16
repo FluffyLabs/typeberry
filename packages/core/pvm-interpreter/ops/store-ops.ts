@@ -104,13 +104,13 @@ export class StoreOps {
 
   private store(address: number, bytes: Uint8Array) {
     const storeResult = this.memory.storeFrom(tryAsMemoryIndex(address), bytes);
-    if (storeResult === null) {
+    if (storeResult.isOk) {
       return;
     }
 
-    if (storeResult.hasPage) {
+    if (storeResult.error.hasPage) {
       this.instructionResult.status = Result.FAULT;
-      this.instructionResult.exitParam = getStartPageIndex(storeResult.address);
+      this.instructionResult.exitParam = getStartPageIndex(storeResult.error.address);
     } else {
       this.instructionResult.status = Result.FAULT_ACCESS;
     }

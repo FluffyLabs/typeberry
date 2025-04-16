@@ -33,9 +33,9 @@ export class Designate implements HostCallHandler {
     const validatorsStart = tryAsMemoryIndex(regs.getLowerU32(IN_OUT_REG));
 
     const res = new Uint8Array(VALIDATOR_DATA_BYTES * this.chainSpec.validatorsCount);
-    const pageFault = memory.loadInto(res, validatorsStart);
+    const readResult = memory.loadInto(res, validatorsStart);
     // page fault while reading the memory.
-    if (pageFault !== null) {
+    if (readResult.isError) {
       regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }

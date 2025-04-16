@@ -11,6 +11,12 @@ export class PageFault {
   }
 }
 
+export class OutOfBounds extends Error {
+  constructor() {
+    super("Out of bounds");
+  }
+}
+
 export class ChunkOverlap extends Error {
   constructor() {
     super("Memory chunks cannot overlap each other!");

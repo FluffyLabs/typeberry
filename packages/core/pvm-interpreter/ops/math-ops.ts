@@ -106,7 +106,10 @@ export class MathOps {
     } else if (this.regs.getLowerI32(secondIndex) === -1 && this.regs.getLowerI32(firstIndex) === MIN_VALUE) {
       this.regs.setU64(resultIndex, signExtend32To64(this.regs.getLowerU32(firstIndex)));
     } else {
-      this.regs.setI64(resultIndex, signExtend32To64(~~(this.regs.getLowerI32(firstIndex) / this.regs.getLowerI32(secondIndex))));
+      this.regs.setI64(
+        resultIndex,
+        signExtend32To64(~~(this.regs.getLowerI32(firstIndex) / this.regs.getLowerI32(secondIndex))),
+      );
     }
   }
 
@@ -124,7 +127,10 @@ export class MathOps {
     if (this.regs.getLowerU32(secondIndex) === 0) {
       this.regs.setU64(resultIndex, 2n ** 64n - 1n);
     } else {
-      this.regs.setU64(resultIndex, signExtend32To64(~~(this.regs.getLowerU32(firstIndex) / this.regs.getLowerU32(secondIndex))));
+      this.regs.setU64(
+        resultIndex,
+        signExtend32To64(~~(this.regs.getLowerU32(firstIndex) / this.regs.getLowerU32(secondIndex))),
+      );
     }
   }
 
@@ -142,7 +148,10 @@ export class MathOps {
     } else if (this.regs.getLowerI32(secondIndex) === -1 && this.regs.getLowerI32(firstIndex) === MIN_VALUE) {
       this.regs.setU64(resultIndex, 0n);
     } else {
-      this.regs.setI64(resultIndex, signExtend32To64(this.regs.getLowerI32(firstIndex) % this.regs.getLowerI32(secondIndex)));
+      this.regs.setI64(
+        resultIndex,
+        signExtend32To64(this.regs.getLowerI32(firstIndex) % this.regs.getLowerI32(secondIndex)),
+      );
     }
   }
 
@@ -160,7 +169,10 @@ export class MathOps {
     if (this.regs.getLowerU32(secondIndex) === 0) {
       this.regs.setU64(resultIndex, signExtend32To64(this.regs.getLowerU32(firstIndex)));
     } else {
-      this.regs.setU64(resultIndex, signExtend32To64(this.regs.getLowerU32(firstIndex) % this.regs.getLowerU32(secondIndex)));
+      this.regs.setU64(
+        resultIndex,
+        signExtend32To64(this.regs.getLowerU32(firstIndex) % this.regs.getLowerU32(secondIndex)),
+      );
     }
   }
 

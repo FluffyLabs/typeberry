@@ -25,9 +25,9 @@ export class HostCalls {
 
       const result = new Uint8Array(maybeLength);
       const startAddress = tryAsMemoryIndex(maybeAddress);
-      const pageFault = memory.loadInto(result, startAddress);
+      const readResult = memory.loadInto(result, startAddress);
       // https://graypaper-reader.netlify.app/#/293bf5a/296c02296c02
-      return pageFault !== null ? new Uint8Array(0) : result;
+      return readResult.isError ? new Uint8Array(0) : result;
     }
 
     return Status.PANIC;

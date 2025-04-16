@@ -36,8 +36,8 @@ export class New implements HostCallHandler {
 
     // `c`
     const codeHash = Bytes.zero(HASH_SIZE);
-    const pageFault = memory.loadInto(codeHash.raw, codeHashStart);
-    if (pageFault !== null) {
+    const readResult = memory.loadInto(codeHash.raw, codeHashStart);
+    if (readResult.isError) {
       regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }

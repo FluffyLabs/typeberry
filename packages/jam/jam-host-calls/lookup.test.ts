@@ -150,8 +150,8 @@ describe("HostCalls: Lookup", () => {
       assert.deepStrictEqual(result, undefined);
 
       const resultBlob = Bytes.zero(preimageLength);
-      const pageFault = memory.loadInto(resultBlob.raw, tryAsMemoryIndex(DESTINATION_MEM_ADDRESS));
-      assert.deepStrictEqual(pageFault, null);
+      const readResult = memory.loadInto(resultBlob.raw, tryAsMemoryIndex(DESTINATION_MEM_ADDRESS));
+      assert.strictEqual(readResult.isOk, true);
       assert.deepStrictEqual(resultBlob.asText(), "hello");
       assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), "hello world".length);
     });
@@ -173,8 +173,8 @@ describe("HostCalls: Lookup", () => {
       assert.deepStrictEqual(result, undefined);
 
       const resultBlob = Bytes.zero(preimageLength);
-      const pageFault = memory.loadInto(resultBlob.raw, tryAsMemoryIndex(DESTINATION_MEM_ADDRESS));
-      assert.deepStrictEqual(pageFault, null);
+      const readResult = memory.loadInto(resultBlob.raw, tryAsMemoryIndex(DESTINATION_MEM_ADDRESS));
+      assert.strictEqual(readResult.isOk, true);
       assert.deepStrictEqual(resultBlob.asText(), "world");
       assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), "hello world".length);
     });

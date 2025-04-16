@@ -8,6 +8,7 @@ import { tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
 import { ReadablePage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, tryAsPageNumber } from "./pages/page-utils";
+import { Result } from "@typeberry/utils";
 
 describe("Memory", () => {
   describe("loadInto", () => {
@@ -19,7 +20,7 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.deepStrictEqual(loadResult, new PageFault(addressToLoad));
+      assert.deepStrictEqual(loadResult, Result.error(new PageFault(addressToLoad)));
     });
 
     it("should correctly load data from one page", () => {
@@ -38,7 +39,7 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.deepStrictEqual(loadResult, null);
+      assert.strictEqual(loadResult.isOk, true);
       assert.deepStrictEqual(result, expectedResult);
     });
 
@@ -64,7 +65,7 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.deepStrictEqual(loadResult, null);
+      assert.strictEqual(loadResult.isOk, true);
       assert.deepStrictEqual(result, expectedResult);
     });
 
@@ -83,7 +84,7 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.deepStrictEqual(loadResult, new PageFault(PAGE_SIZE));
+      assert.deepStrictEqual(loadResult, Result.error(new PageFault(PAGE_SIZE)));
     });
 
     it("should correctly load data from two pages - the last page and the first page", () => {
@@ -111,7 +112,7 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.deepStrictEqual(loadResult, null);
+      assert.strictEqual(loadResult.isOk, true);
       assert.deepStrictEqual(result, expectedResult);
     });
   });
@@ -123,7 +124,7 @@ describe("Memory", () => {
       const dataToStore = new Uint8Array([1, 2, 3, 4]);
       const storeResult = memory.storeFrom(addressToStore, dataToStore);
 
-      assert.deepStrictEqual(storeResult, new PageFault(addressToStore));
+      assert.deepStrictEqual(storeResult, Result.error(new PageFault(addressToStore)));
     });
 
     it("should return PageFault if the page does not exist and stored array length is 0", () => {
@@ -132,7 +133,7 @@ describe("Memory", () => {
 
       const storeResult = memory.storeFrom(addressToStore, new Uint8Array());
 
-      assert.deepStrictEqual(storeResult, new PageFault(addressToStore));
+      assert.deepStrictEqual(storeResult, Result.error(new PageFault(addressToStore)));
     });
 
     it("should correctly store data on one page", () => {
@@ -162,7 +163,7 @@ describe("Memory", () => {
 
       const storeResult = memory.storeFrom(addressToStore, dataToStore);
 
-      assert.deepStrictEqual(storeResult, null);
+      assert.strictEqual(storeResult.isOk, true);
       assert.deepEqual(memory, expectedMemory);
     });
 
@@ -197,7 +198,7 @@ describe("Memory", () => {
       };
       const storeResult = memory.storeFrom(addressToStore, dataToStore);
 
-      assert.deepStrictEqual(storeResult, null);
+      assert.strictEqual(storeResult.isOk, true);
       assert.deepEqual(memory, expectedMemory);
     });
 
@@ -214,7 +215,7 @@ describe("Memory", () => {
 
       const storeResult = memory.storeFrom(addressToStore, new Uint8Array(4));
 
-      assert.deepStrictEqual(storeResult, new PageFault(PAGE_SIZE));
+      assert.deepStrictEqual(storeResult, Result.error(new PageFault(PAGE_SIZE)));
     });
 
     it("should correctly store data on two pages - the last page and the first page", () => {
@@ -249,7 +250,7 @@ describe("Memory", () => {
 
       const storeResult = memory.storeFrom(addressToStore, dataToStore);
 
-      assert.deepStrictEqual(storeResult, null);
+      assert.strictEqual(storeResult.isOk, true);
       assert.deepEqual(memory, expectedMemory);
     });
   });

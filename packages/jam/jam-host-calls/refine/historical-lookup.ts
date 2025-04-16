@@ -43,9 +43,9 @@ export class HistoricalLookup implements HostCallHandler {
     const destinationStart = tryAsMemoryIndex(regs.getLowerU32(9));
 
     const hash = Bytes.zero(HASH_SIZE);
-    const hashLoadingFault = memory.loadInto(hash.raw, hashStart);
+    const hashLoadingResult = memory.loadInto(hash.raw, hashStart);
     // we return Panic in case the key can't be loaded.
-    if (hashLoadingFault !== null) {
+    if (hashLoadingResult.isError) {
       return PvmExecution.Panic;
     }
 
@@ -64,8 +64,8 @@ export class HistoricalLookup implements HostCallHandler {
 
     // NOTE: casting to u32 (number) is safe here because the length of the value is always less than 2^32 (for sure).
     const data = value.raw.subarray(Number(offset), Number(offset + destinationLen));
-    const segmentWritePageFault = memory.storeFrom(destinationStart, data);
-    if (segmentWritePageFault !== null) {
+    const segmentWriteResult = memory.storeFrom(destinationStart, data);
+    if (segmentWriteResult.isError) {
       return PvmExecution.Panic;
     }
 

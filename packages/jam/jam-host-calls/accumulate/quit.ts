@@ -47,8 +47,8 @@ export class Quit implements HostCallHandler {
     const remainingGas = gas.get();
     // `m`: transfer memo (message)
     const memo = Bytes.zero(TRANSFER_MEMO_BYTES);
-    const pageFault = memory.loadInto(memo.raw, memoStart);
-    if (pageFault !== null) {
+    const readResult = memory.loadInto(memo.raw, memoStart);
+    if (readResult.isError) {
       regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
       return;
     }

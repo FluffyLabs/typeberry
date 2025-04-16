@@ -133,3 +133,6 @@ dist
 
 # Webstorm/IntelliJ configuration
 .idea
+
+# MacOS
+.DS_Store

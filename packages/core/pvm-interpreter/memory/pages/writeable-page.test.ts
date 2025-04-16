@@ -20,7 +20,7 @@ describe("WriteablePage", () => {
 
     const loadResult = readablePage.loadInto(result, loadIndex, lengthToLoad);
 
-    assert.strictEqual(loadResult, null);
+    assert.strictEqual(loadResult.isOk, true);
     assert.deepStrictEqual(result, expectedResult);
   });
 
@@ -37,7 +37,7 @@ describe("WriteablePage", () => {
 
     const loadResult = readablePage.loadInto(result, loadIndex, lengthToLoad);
 
-    assert.strictEqual(loadResult, null);
+    assert.strictEqual(loadResult.isOk, true);
     assert.deepStrictEqual(result, expectedResult);
   });
 
@@ -58,7 +58,7 @@ describe("WriteablePage", () => {
 
     const storeResult = writeablePage.storeFrom(indexToStore, bytesToStore);
 
-    assert.strictEqual(storeResult, null);
+    assert.strictEqual(storeResult.isOk, true);
     assert.deepEqual(writeablePage, expectedObject);
   });
 
@@ -79,7 +79,7 @@ describe("WriteablePage", () => {
 
     const storeResult = writeablePage.storeFrom(indexToStore, bytesToStore);
 
-    assert.strictEqual(storeResult, null);
+    assert.strictEqual(storeResult.isOk, true);
     assert.deepEqual(writeablePage, expectedObject);
   });
 });

@@ -57,8 +57,8 @@ export class Empower implements HostCallHandler {
     for (let i = 0; i < numberOfItems; i += 1) {
       // load next item and reset the decoder
       decoder.resetTo(0);
-      const pageFault = memory.loadInto(result, memIndex);
-      if (pageFault !== null) {
+      const readResult = memory.loadInto(result, memIndex);
+      if (readResult.isError) {
         regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
         return;
       }

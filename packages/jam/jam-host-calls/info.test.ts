@@ -45,7 +45,7 @@ function prepareRegsAndMemory(
     memory,
     readInfo: () => {
       const result = new Uint8Array(accountInfoLength);
-      assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)), null);
+      assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)).isOk, true);
       const data = BytesBlob.blobFrom(result);
       return Decoder.decodeObject(codecServiceAccountInfoWithThresholdBalance, data);
     },
