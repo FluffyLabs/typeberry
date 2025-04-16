@@ -1,6 +1,6 @@
 import type { Ed25519Key, WorkReportHash } from "@typeberry/block";
 import type { DisputesExtrinsic } from "@typeberry/block/disputes";
-import { HashDictionary, SortedArray, SortedSet } from "@typeberry/collections";
+import { HashDictionary, HashSet, SortedArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { hashComparator } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
@@ -35,6 +35,7 @@ export class Disputes {
     disputes: DisputesExtrinsic,
     newItems: NewDisputesRecordsItems,
     verificationResult: VerificationOutput,
+    allValidatorKeys: HashSet<Ed25519Key>,
   ): Result<Ok, DisputesErrorCode> {
     // check if culprits are sorted by key
     // https://graypaper.fluffylabs.dev/#/579bd12/12c50112c601
@@ -50,6 +51,12 @@ export class Disputes {
       const isInPunishSet = this.state.disputesRecords.punishSet.findExact(key) !== undefined;
       if (isInPunishSet) {
         return Result.error(DisputesErrorCode.OffenderAlreadyReported);
+      }
+
+      // check if the guarantor key is correct
+      // https://graypaper.fluffylabs.dev/#/85129da/125501125501?v=0.6.3
+      if (!allValidatorKeys.has(key)) {
+        return Result.error(DisputesErrorCode.BadGuarantorKey);
       }
 
       // verify if the culprit will be in new bad set
@@ -74,6 +81,7 @@ export class Disputes {
     disputes: DisputesExtrinsic,
     newItems: NewDisputesRecordsItems,
     verificationResult: VerificationOutput,
+    allValidatorKeys: HashSet<Ed25519Key>,
   ): Result<Ok, DisputesErrorCode> {
     // check if faults are sorted by key
     // https://graypaper.fluffylabs.dev/#/579bd12/12c50112c601
@@ -90,6 +98,12 @@ export class Disputes {
 
       if (isInPunishSet) {
         return Result.error(DisputesErrorCode.OffenderAlreadyReported);
+      }
+
+      // check if the auditor key is correct
+      // https://graypaper.fluffylabs.dev/#/85129da/12a20112a201?v=0.6.3
+      if (!allValidatorKeys.has(key)) {
+        return Result.error(DisputesErrorCode.BadAuditorKey);
       }
 
       // verify if the fault will be included in new good/bad set
@@ -344,6 +358,17 @@ export class Disputes {
     return Result.ok(signaturesToVerification);
   }
 
+  private getValidatorKeys() {
+    const punishSetKeys = this.state.disputesRecords.punishSet;
+    const currentValidatorKeys = this.state.currentValidatorData.map((v) => v.ed25519);
+    const previousValidatorKeys = this.state.previousValidatorData.map((v) => v.ed25519);
+    const allValidatorKeys = currentValidatorKeys
+      .concat(previousValidatorKeys)
+      .filter((key) => !punishSetKeys.has(key));
+
+    return HashSet.from(allValidatorKeys);
+  }
+
   /**
    * Transition the disputes and return a list of offenders.
    */
@@ -359,11 +384,14 @@ export class Disputes {
     const newItems = this.getDisputesRecordsNewItems(v);
 
     const verificationResult = await verificationPromise;
+
+    const allValidatorKeys = this.getValidatorKeys();
+
     const inputError = [
       this.verifyVerdicts(disputes, verificationResult),
       this.verifyVotesForWorkReports(v, disputes),
-      this.verifyCulprits(disputes, newItems, verificationResult),
-      this.verifyFaults(disputes, newItems, verificationResult),
+      this.verifyCulprits(disputes, newItems, verificationResult, allValidatorKeys),
+      this.verifyFaults(disputes, newItems, verificationResult, allValidatorKeys),
       this.verifyIfAlreadyJudged(disputes),
     ].find((result) => result.isError);
 

@@ -110,19 +110,7 @@ export class DisputesTest {
   post_state!: TestState;
 }
 
-const IGNORED = [
-  "progress_invalidates_avail_assignments-1",
-  "progress_with_invalid_keys-1",
-  "progress_with_invalid_keys-2",
-];
-const isIgnored = (path: string) => IGNORED.map((x) => path.includes(x)).filter((x) => x).length > 0;
-
 export async function runDisputesTest(testContent: DisputesTest, path: string) {
-  if (isIgnored(path)) {
-    console.error(`Ignoring test: ${path}`);
-    return;
-  }
-
   const chainSpec = getChainSpec(path);
   const preState = testContent.pre_state;
 
@@ -132,14 +120,8 @@ export async function runDisputesTest(testContent: DisputesTest, path: string) {
   logger.log(`DisputesTest { ${JSON.stringify(result)} }`);
   const error = result.isError ? result.error : undefined;
   const ok = result.isOk ? result.ok.slice() : undefined;
-  /**
-   * bad_signatures-2 has more than one problem and the result depends on order of checks.
-   *
-   * https://github.com/w3f/jamtestvectors/pull/9#issuecomment-2509867864
-   */
-  if (!path.includes("bad_signatures-2")) {
-    assert.deepEqual(error, testContent.output.err);
-  }
+
+  assert.deepEqual(error, testContent.output.err);
   assert.deepEqual(ok, testContent.output.ok?.offenders_mark);
   assert.deepEqual(disputes.state, TestState.toDisputesState(testContent.post_state, chainSpec));
 }
