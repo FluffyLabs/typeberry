@@ -7,7 +7,9 @@ import {
   ED25519_KEY_BYTES,
   EpochMarker,
   Header,
+  ValidatorKeys,
   tryAsPerEpochBlock,
+  tryAsPerValidator,
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
@@ -26,13 +28,14 @@ const bandersnatch = BandernsatchWasm.new({ synchronous: true });
 
 describe("Safrole Seal verification", () => {
   it("should verify a valid fallback mode seal and entropySource", async () => {
+    // based on jamduna/data/fallback/blocks/1_000.json
     const header = Header.fromCodec({
       parentHeaderHash: Bytes.parseBytes(
-        "0x476243ad7cc4fc49cb6cb362c6568e931731d8650d917007a6037cceedd62244",
+        "0x03c6255f4eed3db451c775e33e2d7ef03a1ba7fb79cd525b5ddf650703ccdb92",
         HASH_SIZE,
       ).asOpaque(),
       priorStateRoot: Bytes.parseBytes(
-        "0x99f227c2137bc71b415c18e4eb74c6450e575af3708d52cb40ea15dee1ce574a",
+        "0xc07cdbce686c64d0a9b6539c70b0bb821b6a74d9de750a46a5da05b5640c290a",
         HASH_SIZE,
       ).asOpaque(),
       extrinsicHash: Bytes.parseBytes(
@@ -49,16 +52,7 @@ describe("Safrole Seal verification", () => {
           "0x835ac82bfa2ce8390bb50680d4b7a73dfa2a4cff6d8c30694b24a605f9574eaf",
           HASH_SIZE,
         ).asOpaque(),
-        validators: asKnownSize(
-          [
-            "0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d",
-            "0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0",
-            "0xaa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc",
-            "0x7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33",
-            "0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3",
-            "0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d",
-          ].map((x) => Bytes.parseBytes(x, BANDERSNATCH_KEY_BYTES).asOpaque()),
-        ),
+        validators: TEST_VALIDATOR_KEYS,
       }),
       ticketsMarker: null,
       offendersMarker: [],
@@ -68,7 +62,7 @@ describe("Safrole Seal verification", () => {
         BANDERSNATCH_VRF_SIGNATURE_BYTES,
       ).asOpaque(),
       seal: Bytes.parseBytes(
-        "0xa060e079fdeefc27d1278b9a3d1922874c87e8d0dc7885d08443a29a460af82701bf291885c3c1d84f439688abb435ab1c5cf29baaa1cff157d2731ee748a005032620b6bdc3282b7dd8c54d0e71ad8577cdda0736841cff87394c4ab52d610e",
+        "0xa060e079fdeefc27d1278b9a3d1922874c87e8d0dc7885d08443a29a460af827cd497cb2e9df412a1c80c7601f225ec96d05da90c23a4effc9219904b46f1f0404807dd2b0db02bc30212e91f32c2446134f45782acb1e093cd1c9f1b904120f",
         BANDERSNATCH_VRF_SIGNATURE_BYTES,
       ).asOpaque(),
     });
@@ -114,17 +108,18 @@ describe("Safrole Seal verification", () => {
   });
 
   it("should verify a valid ticket seal and entropySource", async () => {
+    // based on jamduna/data/safrole/blocks/2_000.json
     const header = Header.fromCodec({
       parentHeaderHash: Bytes.parseBytes(
-        "0xe51ca8464c60f7bfe27ffb70ec280e9b09a41fca2f7240128ae6b4ae12a661a7",
+        "0xd8427123fd8f6bc0f6dc42cfab14c25328667c87ceb9221a55bd85b3bc2d3e3e",
         HASH_SIZE,
       ).asOpaque(),
       priorStateRoot: Bytes.parseBytes(
-        "0x239dc138127703eaa840b43eefd5e5f689d1a405855d7aec0ef7239b7000d6d6",
+        "0x3f9434363d9661bb5990fb94356edcce546649a1a4b3015c1b93de9980d88bc0",
         HASH_SIZE,
       ).asOpaque(),
       extrinsicHash: Bytes.parseBytes(
-        "0xd59e4e1e6ab2f98219c0d8b2bf2fcc077e45cb11af4556f17976d18e43581091",
+        "0x85518b5771f4601dce81fdca1920ae2b8d11153f05cc7120ade02ae678ef1296",
         HASH_SIZE,
       ).asOpaque(),
       timeSlotIndex: tryAsTimeSlot(24),
@@ -137,16 +132,7 @@ describe("Safrole Seal verification", () => {
           "0x6f6ad2224d7d58aec6573c623ab110700eaca20a48dc2965d535e466d524af2a",
           HASH_SIZE,
         ).asOpaque(),
-        validators: asKnownSize(
-          [
-            "0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d",
-            "0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0",
-            "0xaa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc",
-            "0x7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33",
-            "0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3",
-            "0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d",
-          ].map((x) => Bytes.parseBytes(x, BANDERSNATCH_KEY_BYTES).asOpaque()),
-        ),
+        validators: TEST_VALIDATOR_KEYS,
       }),
       ticketsMarker: null,
       offendersMarker: [],
@@ -156,7 +142,7 @@ describe("Safrole Seal verification", () => {
         BANDERSNATCH_VRF_SIGNATURE_BYTES,
       ).asOpaque(),
       seal: Bytes.parseBytes(
-        "0x98853cdfca6cda5238fc065a678421737782fffbc986819b67dfe96786febdbaa992d625c1131c408bbf0e89c9740d8d762698894719fae7729ffdc7c814cc066892b77200a7ac5aaf401102b31a4a0c35177401ef499107ea4c3d65b006540c",
+        "0x98853cdfca6cda5238fc065a678421737782fffbc986819b67dfe96786febdbad5b3adf65fd37ac0a977a287a38c4394ff0a3dcd7523eead74d3885ad26e9e168a52bcb47ac41a53b97c009fcd14d7b9a0ca8f8654496cb9516d704d6d447115",
         BANDERSNATCH_VRF_SIGNATURE_BYTES,
       ).asOpaque(),
     });
@@ -203,19 +189,48 @@ describe("Safrole Seal verification", () => {
 });
 
 const emptyTicket = (): Ticket => new Ticket(Bytes.zero(HASH_SIZE), tryAsTicketAttempt(0));
-const TEST_VALIDATOR_DATA = asKnownSize(
+
+const TEST_VALIDATOR_KEYS = tryAsPerValidator<ValidatorKeys>(
   [
-    "0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d",
-    "0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0",
-    "0xaa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc",
-    "0x7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33",
-    "0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3",
-    "0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d",
-  ].map(
+    {
+      bandersnatch: "0x5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d",
+      ed25519: "0x3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29",
+    },
+    {
+      bandersnatch: "0x3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0",
+      ed25519: "0x22351e22105a19aabb42589162ad7f1ea0df1c25cebf0e4a9fcd261301274862",
+    },
+    {
+      bandersnatch: "0xaa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc",
+      ed25519: "0xe68e0cf7f26c59f963b5846202d2327cc8bc0c4eff8cb9abd4012f9a71decf00",
+    },
+    {
+      bandersnatch: "0x7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33",
+      ed25519: "0xb3e0e096b02e2ec98a3441410aeddd78c95e27a0da6f411a09c631c0f2bea6e9",
+    },
+    {
+      bandersnatch: "0x48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3",
+      ed25519: "0x5c7f34a4bd4f2d04076a8c6f9060a0c8d2c6bdd082ceb3eda7df381cb260faff",
+    },
+    {
+      bandersnatch: "0xf16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d",
+      ed25519: "0x837ce344bc9defceb0d7de7e9e9925096768b7adb4dad932e532eb6551e0ea02",
+    },
+  ].map((x) =>
+    ValidatorKeys.fromCodec({
+      bandersnatch: Bytes.parseBytes(x.bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque(),
+      ed25519: Bytes.parseBytes(x.ed25519, ED25519_KEY_BYTES).asOpaque(),
+    }),
+  ),
+  tinyChainSpec,
+);
+
+const TEST_VALIDATOR_DATA = asKnownSize(
+  TEST_VALIDATOR_KEYS.map(
     (x) =>
       new ValidatorData(
-        Bytes.parseBytes(x, BANDERSNATCH_KEY_BYTES).asOpaque(),
-        Bytes.zero(ED25519_KEY_BYTES).asOpaque(),
+        x.bandersnatch,
+        x.ed25519,
         Bytes.zero(BLS_KEY_BYTES).asOpaque(),
         Bytes.zero(VALIDATOR_META_BYTES).asOpaque(),
       ),
