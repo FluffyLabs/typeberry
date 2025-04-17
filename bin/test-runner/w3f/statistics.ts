@@ -118,7 +118,7 @@ class TestCoreStatistics {
         exports,
         extrinsicSize: extrinsic_size,
         extrinsicCount: extrinsic_count,
-        bandleSize: bundle_size,
+        bundleSize: bundle_size,
         gasUsed: tryAsServiceGas(gas_used),
       });
     },
