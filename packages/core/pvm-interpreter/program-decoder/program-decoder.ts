@@ -1,8 +1,10 @@
 import { Decoder } from "@typeberry/codec";
+import { Logger } from "@typeberry/logger";
 import { Result } from "@typeberry/utils";
-import { logger } from "../../../../bin/test-runner/common";
 import { JumpTable } from "./jump-table";
 import { Mask } from "./mask";
+
+const logger = Logger.new(__filename, "pvm-interpreter");
 
 export enum ProgramDecoderError {
   InvalidProgramError = 0,

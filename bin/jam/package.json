@@ -10,6 +10,7 @@
     "@typeberry/bytes": "0.0.1",
     "@typeberry/codec": "0.0.1",
     "@typeberry/config": "0.0.1",
+    "@typeberry/ext-ipc": "^0.0.1",
     "@typeberry/importer": "0.0.1",
     "@typeberry/json-parser": "0.0.1",
     "@typeberry/logger": "0.0.1"
