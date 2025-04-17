@@ -150,6 +150,8 @@ export class Statistics {
 
     // TODO [MaSo] Implement a & t calculation
     // https://graypaper.fluffylabs.dev/#/68eaa1f/192e02196b02?v=0.6.4
+    const a = { count: 0, gas: 0n };
+    const t = { count: 0, gas: 0n };
 
     const p = this.calculateProvidedScoreService(preimages.filter((p) => p !== undefined && p.requester === s));
 
@@ -161,6 +163,8 @@ export class Statistics {
       z,
       e,
       p,
+      a,
+      t,
     };
   }
 
@@ -304,11 +308,10 @@ export class Statistics {
         refinementGasUsed: tryAsServiceGas(newServiceStat.u),
         providedCount: tryAsU16(newServiceStat.p.count),
         providedSize: tryAsU32(newServiceStat.p.size),
-        // TODO [MaSo] Implement a & t calculation
-        accumulateCount: tryAsU32(0),
-        accumulateGasUsed: tryAsServiceGas(0),
-        onTransfersCount: tryAsU32(0),
-        onTransfersGasUsed: tryAsServiceGas(0),
+        accumulateCount: tryAsU32(newServiceStat.a.count),
+        accumulateGasUsed: tryAsServiceGas(newServiceStat.a.gas),
+        onTransfersCount: tryAsU32(newServiceStat.t.count),
+        onTransfersGasUsed: tryAsServiceGas(newServiceStat.t.gas),
       });
     }
 
