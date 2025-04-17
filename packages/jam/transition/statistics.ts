@@ -1,14 +1,18 @@
 import {
   type CoreIndex,
   type Extrinsic,
+  type ServiceId,
   type TimeSlot,
   type ValidatorIndex,
   tryAsCoreIndex,
   tryAsPerValidator,
+  tryAsServiceId,
 } from "@typeberry/block";
 import type { AvailabilityAssurance } from "@typeberry/block/assurances";
 import { W_G } from "@typeberry/block/gp-constants";
+import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { WorkReport } from "@typeberry/block/work-report";
+import type { WorkResult } from "@typeberry/block/work-result";
 import type { ChainSpec } from "@typeberry/config";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
@@ -131,9 +135,72 @@ export class Statistics {
   }
 
   // TODO [MaSo] Implement Service statistics calculation
-  //private calculateServiceStatistics(s: ServiceId, workReports: WorkReport[]) {
+  // https://graypaper.fluffylabs.dev/#/68eaa1f/17e90417e904?v=0.6.4
+  // https://graypaper.fluffylabs.dev/#/68eaa1f/17f70317f703?v=0.6.4
+  // https://graypaper.fluffylabs.dev/#/68eaa1f/064b00064b00?v=0.6.4
+  /**
+   * Calculate service statistics
+   *
+   * https://graypaper.fluffylabs.dev/#/68eaa1f/199002199002?v=0.6.4
+   */
+  private calculateServiceStatistics(s: ServiceId, workReports: WorkReport[], preimages: PreimagesExtrinsic) {
+    const filtered = workReports
+      .filter((r) => r !== undefined)
+      .map((r) => r.results[0])
+      .filter((r) => r !== undefined && r.serviceId === s);
+    const { n, u, i, x, z, e } = this.calculateRefineScoreService(filtered);
 
-  //}
+    // TODO [MaSo] Implement a & t calculation
+    // https://graypaper.fluffylabs.dev/#/68eaa1f/192e02196b02?v=0.6.4
+
+    const p = this.calculateProvidedScoreService(preimages.filter((p) => p !== undefined && p.requester === s));
+
+    return {
+      n,
+      u,
+      i,
+      x,
+      z,
+      e,
+      p,
+    };
+  }
+
+  private calculateRefineScoreService(workResults: WorkResult[]) {
+    const score = {
+      n: 0,
+      u: 0n,
+      i: 0,
+      x: 0,
+      z: 0,
+      e: 0,
+    };
+
+    for (const workResult of workResults) {
+      score.n += 1;
+      score.u += workResult.load.gasUsed;
+      score.i += workResult.load.importedSegments;
+      score.x += workResult.load.extrinsicCount;
+      score.z += workResult.load.extrinsicSize;
+      score.e += workResult.load.exportedSegments;
+    }
+
+    return score;
+  }
+
+  private calculateProvidedScoreService(preimages: PreimagesExtrinsic) {
+    const score = {
+      count: 0,
+      size: 0,
+    };
+
+    for (const preimage of preimages) {
+      score.count += 1;
+      score.size += preimage.blob.length;
+    }
+
+    return score;
+  }
 
   /**
    * https://graypaper.fluffylabs.dev/#/579bd12/180802180802
@@ -195,9 +262,21 @@ export class Statistics {
     }
 
     /** Update services statistics */
-    // for (const service of this.state.statistics.services) {
-    //  const serviceStat = this.calculateServiceStatistics(tryAsServiceId(service[0]), workReports);
-    // }
+    for (const service of this.state.statistics.services) {
+      const serviceStat = this.calculateServiceStatistics(tryAsServiceId(service[0]), workReports, extrinsic.preimages);
+      service[1].imports = tryAsU16(serviceStat.i);
+      service[1].exports = tryAsU16(serviceStat.x);
+      service[1].extrinsicSize = tryAsU32(serviceStat.z);
+      service[1].extrinsicCount = tryAsU16(serviceStat.e);
+      service[1].refinementCount = tryAsU32(serviceStat.n);
+      service[1].refinementGasUsed = tryAsGas(serviceStat.u);
+      service[1].providedCount = tryAsU16(serviceStat.p.count);
+      service[1].providedSize = tryAsU32(serviceStat.p.size);
+      // a.0
+      // a.1
+      // t.0
+      // t.1
+    }
 
     /** Update state */
     this.state.statistics = statistics;
