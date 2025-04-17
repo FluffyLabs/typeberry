@@ -29,6 +29,7 @@
     "packages/core/trie",
     "packages/core/utils",
     "packages/jam/block",
+    "packages/jam/block-json",
     "packages/jam/config",
     "packages/jam/database",
     "packages/jam/database-lmdb",

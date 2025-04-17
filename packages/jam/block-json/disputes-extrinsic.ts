@@ -1,7 +1,7 @@
 import type { Ed25519Key, Ed25519Signature, Epoch, ValidatorIndex, WorkReportHash } from "@typeberry/block";
 import { Culprit, DisputesExtrinsic, Fault, Judgement, Verdict } from "@typeberry/block/disputes";
 import { json } from "@typeberry/json-parser";
-import { fromJson, runCodecTest } from "./common";
+import { fromJson } from "./common";
 
 type JsonFault = {
   target: WorkReportHash;
@@ -70,7 +70,3 @@ export const disputesExtrinsicFromJson = json.object<DisputesExtrinsic>(
   },
   ({ verdicts, culprits, faults }) => new DisputesExtrinsic(verdicts, culprits, faults),
 );
-
-export async function runDisputesExtrinsicTest(test: DisputesExtrinsic, file: string) {
-  runCodecTest(DisputesExtrinsic.Codec, test, file);
-}

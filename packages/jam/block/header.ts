@@ -145,15 +145,15 @@ export type HeaderView = DescribedBy<typeof Header.Codec.View>;
  * The typescript type system really needs concrete objects to resolve the types:
  * `DescriptorRecord` or `CodecRecord` for some reason.
  */
-class HeaderWithHash extends WithHash<HeaderHash, Header> {
-  static Codec = codec.Class(HeaderWithHash, {
+class HeaderViewWithHash extends WithHash<HeaderHash, HeaderView> {
+  static Codec = codec.Class(HeaderViewWithHash, {
     hash: codec.bytes(HASH_SIZE).asOpaque(),
-    data: Header.Codec,
+    data: Header.Codec.View,
   });
 
-  static fromCodec({ hash, data }: CodecRecord<HeaderWithHash>) {
+  static fromCodec({ hash, data }: CodecRecord<HeaderViewWithHash>) {
     return new WithHash(hash, data);
   }
 }
 /** Encoding of header + hash. */
-export const headerWithHashCodec = HeaderWithHash.Codec;
+export const headerViewWithHashCodec = HeaderViewWithHash.Codec;

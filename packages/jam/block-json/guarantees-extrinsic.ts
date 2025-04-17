@@ -1,14 +1,9 @@
 import type { TimeSlot } from "@typeberry/block";
-import {
-  Credential,
-  type GuaranteesExtrinsic,
-  ReportGuarantee,
-  guaranteesExtrinsicCodec,
-} from "@typeberry/block/guarantees";
+import { Credential, ReportGuarantee } from "@typeberry/block/guarantees";
 import type { WorkReport } from "@typeberry/block/work-report";
 import { json } from "@typeberry/json-parser";
-import type { JsonObject } from "../../json-format";
-import { fromJson, runCodecTest } from "./common";
+import { fromJson } from "./common";
+import type { JsonObject } from "./json-format";
 import { workReportFromJson } from "./work-report";
 
 const validatorSignatureFromJson = json.object<JsonObject<Credential>, Credential>(
@@ -35,7 +30,3 @@ type JsonReportGuarantee = {
 };
 
 export const guaranteesExtrinsicFromJson = json.array(reportGuaranteeFromJson);
-
-export async function runGuaranteesExtrinsicTest(test: GuaranteesExtrinsic, file: string) {
-  runCodecTest(guaranteesExtrinsicCodec, test, file);
-}

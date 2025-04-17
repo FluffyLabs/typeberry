@@ -6,8 +6,8 @@ import type { WorkResult } from "@typeberry/block/work-result";
 import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
-import type { JsonObject } from "../../json-format";
-import { fromJson, runCodecTest } from "./common";
+import { fromJson } from "./common";
+import type { JsonObject } from "./json-format";
 import { refineContextFromJson } from "./refine-context";
 import { workResultFromJson } from "./work-result";
 
@@ -62,7 +62,3 @@ type JsonWorkReport = {
   segment_root_lookup: WorkPackageInfo[];
   results: WorkResult[];
 };
-
-export async function runWorkReportTest(test: WorkReport, file: string) {
-  runCodecTest(WorkReport.Codec, test, file);
-}

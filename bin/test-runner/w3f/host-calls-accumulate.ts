@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import type { CodeHash } from "@typeberry/block";
+import { fromJson } from "@typeberry/block-json";
 import { Bytes } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { ValidatorData } from "@typeberry/state";
-import { fromJson } from "./codec/common";
 import { commonFromJson } from "./common-types";
 import { Memory, ServiceAccount } from "./host-calls-general";
 
