@@ -21,7 +21,7 @@ import {
 } from "@typeberry/state";
 import { type Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics";
 import { logger } from "../common";
-import { commonFromJson } from "./common-types";
+import { validatorDataFromJson } from "./common-types";
 
 class TinyInput {
   static fromJson = json.object<TinyInput, Input>(
@@ -222,7 +222,7 @@ class TestState {
   static fromJson: FromJson<TestState> = {
     statistics: TestStatisticsState.fromJson,
     slot: "number",
-    curr_validators: json.array(commonFromJson.validatorData),
+    curr_validators: json.array(validatorDataFromJson),
   };
 
   statistics!: TestStatisticsState;

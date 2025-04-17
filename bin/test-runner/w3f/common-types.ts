@@ -29,22 +29,6 @@ import {
 } from "@typeberry/state";
 import { Bytes, BytesBlob } from "@typeberry/trie";
 
-export namespace commonFromJson {
-  export function bytes32<TInto extends Bytes<32>>() {
-    return json.fromString((v) => Bytes.parseBytes(v, 32) as TInto);
-  }
-
-  export const validatorData = json.object<ValidatorData>(
-    {
-      ed25519: bytes32(),
-      bandersnatch: bytes32(),
-      bls: json.fromString((v) => Bytes.parseBytes(v, BLS_KEY_BYTES) as BlsKey),
-      metadata: json.fromString((v) => Bytes.parseBytes(v, VALIDATOR_META_BYTES)),
-    },
-    ({ ed25519, bandersnatch, bls, metadata }) => new ValidatorData(bandersnatch, ed25519, bls, metadata),
-  );
-}
-
 export function getChainSpec(path: string) {
   if (path.includes("tiny")) {
     return tinyChainSpec;
@@ -53,18 +37,15 @@ export function getChainSpec(path: string) {
   return fullChainSpec;
 }
 
-export class TestSegmentRootLookupItem {
-  static fromJson = json.object<TestSegmentRootLookupItem, WorkPackageInfo>(
-    {
-      work_package_hash: fromJson.bytes32(),
-      segment_tree_root: fromJson.bytes32(),
-    },
-    ({ work_package_hash, segment_tree_root }) => new WorkPackageInfo(work_package_hash, segment_tree_root),
-  );
-
-  work_package_hash!: WorkPackageHash;
-  segment_tree_root!: ExportsRootHash;
-}
+export const validatorDataFromJson = json.object<ValidatorData>(
+  {
+    ed25519: fromJson.bytes32(),
+    bandersnatch: fromJson.bytes32(),
+    bls: json.fromString((v) => Bytes.parseBytes(v, BLS_KEY_BYTES) as BlsKey),
+    metadata: json.fromString((v) => Bytes.parseBytes(v, VALIDATOR_META_BYTES)),
+  },
+  ({ ed25519, bandersnatch, bls, metadata }) => new ValidatorData(bandersnatch, ed25519, bls, metadata),
+);
 
 export class TestAvailabilityAssignment {
   static fromJson = json.object<TestAvailabilityAssignment, AvailabilityAssignment>(
@@ -85,8 +66,8 @@ export class TestAvailabilityAssignment {
 export class TestWorkPackageInfo {
   static fromJson = json.object<TestWorkPackageInfo, WorkPackageInfo>(
     {
-      hash: commonFromJson.bytes32(),
-      exports_root: commonFromJson.bytes32(),
+      hash: fromJson.bytes32(),
+      exports_root: fromJson.bytes32(),
     },
     ({ hash, exports_root }) => {
       return new WorkPackageInfo(hash, exports_root);
@@ -100,11 +81,11 @@ export class TestWorkPackageInfo {
 export class TestBlockState {
   static fromJson = json.object<TestBlockState, BlockState>(
     {
-      header_hash: commonFromJson.bytes32(),
+      header_hash: fromJson.bytes32(),
       mmr: {
-        peaks: json.array(json.nullable(commonFromJson.bytes32())),
+        peaks: json.array(json.nullable(fromJson.bytes32())),
       },
-      state_root: commonFromJson.bytes32(),
+      state_root: fromJson.bytes32(),
       reported: json.array(TestWorkPackageInfo.fromJson),
     },
     ({ header_hash, mmr, state_root, reported }) => {
@@ -128,7 +109,7 @@ export class TestBlockState {
 class TestServiceInfo {
   static fromJson = json.object<TestServiceInfo, ServiceAccountInfo>(
     {
-      code_hash: commonFromJson.bytes32(),
+      code_hash: fromJson.bytes32(),
       balance: json.fromNumber((x) => tryAsU64(x)),
       min_item_gas: "number",
       min_memo_gas: "number",
@@ -158,7 +139,7 @@ class TestServiceInfo {
 class TestPreimageItem {
   static fromJson = json.object<TestPreimageItem, PreimageItem>(
     {
-      hash: commonFromJson.bytes32(),
+      hash: fromJson.bytes32(),
       blob: json.fromString(BytesBlob.parseBlob),
     },
     ({ hash, blob }) => new PreimageItem(hash, blob),

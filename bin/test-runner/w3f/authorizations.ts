@@ -1,15 +1,16 @@
 import type { CoreIndex, TimeSlot } from "@typeberry/block";
+import { fromJson } from "@typeberry/block-json";
 import type { AuthorizerHash } from "@typeberry/block/work-report";
 import { HashSet } from "@typeberry/collections/hash-set";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Authorization, type AuthorizationInput, type AuthorizationState } from "@typeberry/transition/authorization";
 import { deepEqual } from "@typeberry/utils";
-import { commonFromJson, getChainSpec } from "./common-types";
+import { getChainSpec } from "./common-types";
 
 class TestCoreAuthorizer {
   static fromJson: FromJson<TestCoreAuthorizer> = {
     core: "number",
-    auth_hash: commonFromJson.bytes32(),
+    auth_hash: fromJson.bytes32(),
   };
 
   core!: CoreIndex;
@@ -42,8 +43,8 @@ class Input {
 class TestState {
   static fromJson = json.object<TestState, AuthorizationState>(
     {
-      auth_pools: ["array", json.array(commonFromJson.bytes32())],
-      auth_queues: ["array", json.array(commonFromJson.bytes32())],
+      auth_pools: ["array", json.array(fromJson.bytes32())],
+      auth_queues: ["array", json.array(fromJson.bytes32())],
     },
     ({ auth_pools, auth_queues }) => {
       return {

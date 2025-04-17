@@ -8,7 +8,7 @@ import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code"
 import { type FromJson, json } from "@typeberry/json-parser";
 import { type AvailabilityAssignment, DisputesRecords, type ValidatorData, tryAsPerCore } from "@typeberry/state";
 import { logger } from "../common";
-import { TestAvailabilityAssignment, commonFromJson, getChainSpec } from "./common-types";
+import { TestAvailabilityAssignment, getChainSpec, validatorDataFromJson } from "./common-types";
 
 class DisputesOutputMarks {
   static fromJson: FromJson<DisputesOutputMarks> = {
@@ -45,8 +45,8 @@ class TestState {
     psi: TestDisputesRecords.fromJson,
     rho: json.array(json.nullable(TestAvailabilityAssignment.fromJson)),
     tau: "number",
-    kappa: json.array(commonFromJson.validatorData),
-    lambda: json.array(commonFromJson.validatorData),
+    kappa: json.array(validatorDataFromJson),
+    lambda: json.array(validatorDataFromJson),
   };
 
   /** Disputes records. */
