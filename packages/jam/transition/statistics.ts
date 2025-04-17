@@ -62,10 +62,9 @@ export class Statistics {
       .map(() => ValidatorStatistics.empty());
 
     return {
+      ...this.state.statistics,
       current: tryAsPerValidator(current, this.chainSpec),
       previous: this.state.statistics.current,
-      cores: this.state.statistics.cores,
-      services: this.state.statistics.services,
     };
   }
 
