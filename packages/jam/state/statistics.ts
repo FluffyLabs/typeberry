@@ -1,8 +1,13 @@
-import { type PerValidator, type ServiceId, codecPerValidator, tryAsServiceId } from "@typeberry/block";
+import {
+  type PerValidator,
+  type ServiceGas,
+  type ServiceId,
+  codecPerValidator,
+  tryAsServiceGas,
+  tryAsServiceId,
+} from "@typeberry/block";
 import { type CodecRecord, type Descriptor, codec } from "@typeberry/codec";
 import { type U16, type U32, tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { codecUnsignedGas, tryAsBigGas } from "@typeberry/pvm-interpreter/gas";
-import type { Gas } from "../../core/pvm-debugger-adapter";
 import { type PerCore, codecPerCore } from "./common";
 
 export const codecServiceId: Descriptor<ServiceId> = codec.u32.convert(
@@ -72,7 +77,7 @@ export class CoreStatistics {
     extrinsicSize: codec.u32,
     exports: codec.u16,
     bandleSize: codec.u32,
-    gasUsed: codecUnsignedGas,
+    gasUsed: codec.varU64.asOpaque(),
   });
 
   static fromCodec(v: CodecRecord<CoreStatistics>) {
@@ -104,13 +109,13 @@ export class CoreStatistics {
     /** `b` */
     public bandleSize: U32,
     /** `u` */
-    public gasUsed: Gas,
+    public gasUsed: ServiceGas,
   ) {}
 
   static empty() {
     const zero = tryAsU32(0);
     const zero16 = tryAsU16(0);
-    const zeroGas = tryAsBigGas(0);
+    const zeroGas = tryAsServiceGas(0);
     return new CoreStatistics(zero, zero16, zero16, zero16, zero, zero16, zero, zeroGas);
   }
 }
@@ -127,15 +132,15 @@ export class ServiceStatistics {
     providedCount: codec.u16,
     providedSize: codec.u32,
     refinementCount: codec.u32,
-    refinementGasUsed: codecUnsignedGas,
+    refinementGasUsed: codec.varU64.asOpaque(),
     imports: codec.u16,
     extrinsicCount: codec.u16,
     extrinsicSize: codec.u32,
     exports: codec.u16,
     accumulateCount: codec.u32,
-    accumulateGasUsed: codecUnsignedGas,
+    accumulateGasUsed: codec.varU64.asOpaque(),
     onTransfersCount: codec.u32,
-    onTransfersGasUsed: codecUnsignedGas,
+    onTransfersGasUsed: codec.varU64.asOpaque(),
   });
 
   static fromCodec(v: CodecRecord<ServiceStatistics>) {
@@ -163,7 +168,7 @@ export class ServiceStatistics {
     /** `r.0` */
     public refinementCount: U32,
     /** `r.1` */
-    public refinementGasUsed: Gas,
+    public refinementGasUsed: ServiceGas,
     /** `i` */
     public imports: U16,
     /** `e` */
@@ -175,17 +180,17 @@ export class ServiceStatistics {
     /** `a.0` */
     public accumulateCount: U32,
     /** `a.1` */
-    public accumulateGasUsed: Gas,
+    public accumulateGasUsed: ServiceGas,
     /** `t.0` */
     public onTransfersCount: U32,
     /** `t.1` */
-    public onTransfersGasUsed: Gas,
+    public onTransfersGasUsed: ServiceGas,
   ) {}
 
   static empty() {
     const zero = tryAsU32(0);
     const zero16 = tryAsU16(0);
-    const zeroGas = tryAsBigGas(0);
+    const zeroGas = tryAsServiceGas(0);
     return new ServiceStatistics(
       zero16,
       zero,

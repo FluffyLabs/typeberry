@@ -6,6 +6,7 @@ import {
   type ValidatorIndex,
   tryAsCoreIndex,
   tryAsPerValidator,
+  tryAsServiceGas,
   tryAsServiceId,
 } from "@typeberry/block";
 import type { AvailabilityAssurance } from "@typeberry/block/assurances";
@@ -15,7 +16,6 @@ import type { WorkReport } from "@typeberry/block/work-report";
 import type { WorkResult } from "@typeberry/block/work-result";
 import type { ChainSpec } from "@typeberry/config";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { tryAsGas } from "@typeberry/pvm-interpreter";
 import type { State } from "@typeberry/state";
 import { ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
@@ -69,16 +69,14 @@ export class Statistics {
     };
   }
 
-  private calculateCoreStatistics(
+  public calculateCoreStatistics(
     c: CoreIndex,
     workReports: WorkReport[],
     availableReports: WorkReport[],
     availabilityAssurances: AvailabilityAssurance[],
   ) {
-    const { i, x, z, e, u, b } = this.calculateRefineScoreCore(
-      workReports.filter((r) => r !== undefined && r.coreIndex === c),
-    );
-    const d = this.calculateDictionaryScoreCore(availableReports.filter((r) => r !== undefined && r.coreIndex === c));
+    const { i, x, z, e, u, b } = this.calculateRefineScoreCore(workReports);
+    const d = this.calculateDictionaryScoreCore(availableReports);
     const p = availabilityAssurances.reduce((sum, assurance) => {
       if (assurance === undefined || assurance.bitfield === undefined) {
         return sum;
@@ -143,7 +141,7 @@ export class Statistics {
    *
    * https://graypaper.fluffylabs.dev/#/68eaa1f/199002199002?v=0.6.4
    */
-  private calculateServiceStatistics(s: ServiceId, workReports: WorkReport[], preimages: PreimagesExtrinsic) {
+  public calculateServiceStatistics(s: ServiceId, workReports: WorkReport[], preimages: PreimagesExtrinsic) {
     const filtered = workReports
       .filter((r) => r !== undefined)
       .map((r) => r.results[0])
@@ -211,7 +209,7 @@ export class Statistics {
      * get the validators statistics for the current epoch
      */
     const statistics = this.getStatistics(slot);
-    const { current } = statistics;
+    const { current, cores } = statistics;
     check(current[authorIndex] !== undefined, "authorIndex is out of bounds");
 
     current[authorIndex].blocks = tryAsU32(current[authorIndex].blocks + 1);
@@ -243,22 +241,51 @@ export class Statistics {
     }
 
     const workReports = extrinsic.guarantees.map((r) => r.report);
+    const workReportByCore = new Map<CoreIndex, WorkReport[]>();
+    for (const workReport of workReports) {
+      if (workReport !== undefined) {
+        const coreIndex = workReport.coreIndex;
+        if (!workReportByCore.has(coreIndex)) {
+          workReportByCore.set(coreIndex, []);
+        }
+        workReportByCore.get(coreIndex)?.push(workReport);
+      }
+    }
+
+    const availableReportsByCore = new Map<CoreIndex, WorkReport[]>();
+    for (const availableReport of availableReports) {
+      if (availableReport !== undefined) {
+        const coreIndex = availableReport.coreIndex;
+        if (!availableReportsByCore.has(coreIndex)) {
+          availableReportsByCore.set(coreIndex, []);
+        }
+        availableReportsByCore.get(coreIndex)?.push(availableReport);
+      }
+    }
+
     /** Update core statistics */
-    for (let coreId = 0; coreId < this.state.statistics.cores.length; coreId++) {
-      const coreStat = this.calculateCoreStatistics(
+    for (let coreId = 0; coreId < this.chainSpec.coresCount; coreId++) {
+      const coreIndex = tryAsCoreIndex(coreId);
+      const coreReports = workReportByCore.get(coreIndex) ?? [];
+      const coreAvailableReports = availableReportsByCore.get(coreIndex) ?? [];
+
+      const newCoreStat = this.calculateCoreStatistics(
         tryAsCoreIndex(coreId),
-        workReports,
-        availableReports,
+        coreReports,
+        coreAvailableReports,
         extrinsic.assurances,
       );
-      statistics.cores[coreId].imports = tryAsU16(coreStat.i);
-      statistics.cores[coreId].exports = tryAsU16(coreStat.x);
-      statistics.cores[coreId].extrinsicSize = tryAsU32(coreStat.z);
-      statistics.cores[coreId].extrinsicCount = tryAsU16(coreStat.e);
-      statistics.cores[coreId].gasUsed = tryAsGas(coreStat.u);
-      statistics.cores[coreId].bandleSize = tryAsU32(coreStat.b);
-      statistics.cores[coreId].dataAvailabilityLoad = tryAsU32(coreStat.d);
-      statistics.cores[coreId].popularity = tryAsU16(coreStat.p);
+
+      cores[coreId] = {
+        imports: tryAsU16(newCoreStat.i),
+        exports: tryAsU16(newCoreStat.x),
+        extrinsicSize: tryAsU32(newCoreStat.z),
+        extrinsicCount: tryAsU16(newCoreStat.e),
+        gasUsed: tryAsServiceGas(newCoreStat.u),
+        bandleSize: tryAsU32(newCoreStat.b),
+        dataAvailabilityLoad: tryAsU32(newCoreStat.d),
+        popularity: tryAsU16(newCoreStat.p),
+      };
     }
 
     /** Update services statistics */
@@ -269,7 +296,7 @@ export class Statistics {
       service[1].extrinsicSize = tryAsU32(serviceStat.z);
       service[1].extrinsicCount = tryAsU16(serviceStat.e);
       service[1].refinementCount = tryAsU32(serviceStat.n);
-      service[1].refinementGasUsed = tryAsGas(serviceStat.u);
+      service[1].refinementGasUsed = tryAsServiceGas(serviceStat.u);
       service[1].providedCount = tryAsU16(serviceStat.p.count);
       service[1].providedSize = tryAsU32(serviceStat.p.size);
       // a.0

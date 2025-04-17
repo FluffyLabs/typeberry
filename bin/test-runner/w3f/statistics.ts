@@ -1,15 +1,16 @@
 import assert from "node:assert";
 import {
   type Extrinsic,
+  type ServiceGas,
   type TimeSlot,
   type ValidatorIndex,
   tryAsPerValidator,
+  tryAsServiceGas,
   tryAsServiceId,
 } from "@typeberry/block";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
-import type { U16, U32 } from "@typeberry/numbers";
-import type { Gas } from "@typeberry/pvm-interpreter/gas";
+import { type U16, type U32, tryAsU64 } from "@typeberry/numbers";
 import {
   CoreStatistics,
   ServiceStatistics,
@@ -18,6 +19,7 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { type Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics";
+import { asOpaqueType } from "@typeberry/utils";
 import { logger } from "../common";
 import { getExtrinsicFromJson } from "./codec/extrinsic";
 import { commonFromJson } from "./common-types";
@@ -106,7 +108,7 @@ class TestCoreStatistics {
       extrinsic_size: "number",
       extrinsic_count: "number",
       bundle_size: "number",
-      gas_used: "number",
+      gas_used: json.fromNumber((x) => asOpaqueType(tryAsU64(x))),
     },
     ({ da_load, popularity, imports, exports, extrinsic_size, extrinsic_count, bundle_size, gas_used }) => {
       return CoreStatistics.fromCodec({
@@ -117,7 +119,7 @@ class TestCoreStatistics {
         extrinsicSize: extrinsic_size,
         extrinsicCount: extrinsic_count,
         bandleSize: bundle_size,
-        gasUsed: gas_used,
+        gasUsed: tryAsServiceGas(gas_used),
       });
     },
   );
@@ -129,7 +131,7 @@ class TestCoreStatistics {
   extrinsic_size!: U32;
   extrinsic_count!: U16;
   bundle_size!: U32;
-  gas_used!: Gas;
+  gas_used!: ServiceGas;
 }
 
 class TestServiceStatistics {
@@ -138,15 +140,15 @@ class TestServiceStatistics {
       provided_count: "number",
       provided_size: "number",
       refinement_count: "number",
-      refinement_gas_used: "number",
+      refinement_gas_used: json.fromNumber((x) => asOpaqueType(tryAsU64(x))),
       imports: "number",
       exports: "number",
       extrinsic_size: "number",
       extrinsic_count: "number",
       accumulate_count: "number",
-      accumulate_gas_used: "number",
+      accumulate_gas_used: json.fromNumber((x) => asOpaqueType(tryAsU64(x))),
       on_transfers_count: "number",
-      on_transfers_gas_used: "number",
+      on_transfers_gas_used: json.fromNumber((x) => asOpaqueType(tryAsU64(x))),
     },
     ({
       provided_count,
@@ -166,15 +168,15 @@ class TestServiceStatistics {
         providedCount: provided_count,
         providedSize: provided_size,
         refinementCount: refinement_count,
-        refinementGasUsed: refinement_gas_used,
+        refinementGasUsed: tryAsServiceGas(refinement_gas_used),
         imports,
         exports,
         extrinsicSize: extrinsic_size,
         extrinsicCount: extrinsic_count,
         accumulateCount: accumulate_count,
-        accumulateGasUsed: accumulate_gas_used,
+        accumulateGasUsed: tryAsServiceGas(accumulate_gas_used),
         onTransfersCount: on_transfers_count,
-        onTransfersGasUsed: on_transfers_gas_used,
+        onTransfersGasUsed: tryAsServiceGas(on_transfers_gas_used),
       });
     },
   );
@@ -182,15 +184,15 @@ class TestServiceStatistics {
   provided_count!: U16;
   provided_size!: U32;
   refinement_count!: U32;
-  refinement_gas_used!: Gas;
+  refinement_gas_used!: ServiceGas;
   imports!: U16;
   exports!: U16;
   extrinsic_size!: U32;
   extrinsic_count!: U16;
   accumulate_count!: U32;
-  accumulate_gas_used!: Gas;
+  accumulate_gas_used!: ServiceGas;
   on_transfers_count!: U32;
-  on_transfers_gas_used!: Gas;
+  on_transfers_gas_used!: ServiceGas;
 }
 
 class TestServicesStatistics {
