@@ -83,9 +83,9 @@ export class CoreStatistics {
     dataAvailabilityLoad: codec.varU32,
     popularity: codecVarU16,
     imports: codecVarU16,
-    extrinsicCount: codecVarU16,
-    extrinsicSize: codec.varU32,
     exports: codecVarU16,
+    extrinsicSize: codec.varU32,
+    extrinsicCount: codecVarU16,
     bundleSize: codec.varU32,
     gasUsed: codecVarGas,
   });
@@ -95,9 +95,9 @@ export class CoreStatistics {
       v.dataAvailabilityLoad,
       v.popularity,
       v.imports,
-      v.extrinsicCount,
-      v.extrinsicSize,
       v.exports,
+      v.extrinsicSize,
+      v.extrinsicCount,
       v.bundleSize,
       v.gasUsed,
     );
@@ -111,11 +111,11 @@ export class CoreStatistics {
     /** `i` */
     public imports: U16,
     /** `e` */
-    public extrinsicCount: U16,
+    public exports: U16,
     /** `z` */
     public extrinsicSize: U32,
     /** `x` */
-    public exports: U16,
+    public extrinsicCount: U16,
     /** `b` */
     public bundleSize: U32,
     /** `u` */
@@ -144,9 +144,9 @@ export class ServiceStatistics {
     refinementCount: codec.varU32,
     refinementGasUsed: codecVarGas,
     imports: codecVarU16,
-    extrinsicCount: codecVarU16,
-    extrinsicSize: codec.varU32,
     exports: codecVarU16,
+    extrinsicSize: codec.varU32,
+    extrinsicCount: codecVarU16,
     accumulateCount: codec.varU32,
     accumulateGasUsed: codecVarGas,
     onTransfersCount: codec.varU32,
@@ -160,9 +160,9 @@ export class ServiceStatistics {
       v.refinementCount,
       v.refinementGasUsed,
       v.imports,
-      v.extrinsicCount,
-      v.extrinsicSize,
       v.exports,
+      v.extrinsicSize,
+      v.extrinsicCount,
       v.accumulateCount,
       v.accumulateGasUsed,
       v.onTransfersCount,
@@ -182,11 +182,11 @@ export class ServiceStatistics {
     /** `i` */
     public imports: U16,
     /** `e` */
-    public extrinsicCount: U16,
+    public exports: U16,
     /** `z` */
     public extrinsicSize: U32,
     /** `x` */
-    public exports: U16,
+    public extrinsicCount: U16,
     /** `a.0` */
     public accumulateCount: U32,
     /** `a.1` */
