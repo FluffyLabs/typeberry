@@ -303,9 +303,9 @@ export class Statistics {
       );
       service[1] = ServiceStatistics.fromCodec({
         imports: tryAsU16(newServiceStat.i),
-        exports: tryAsU16(newServiceStat.x),
+        exports: tryAsU16(newServiceStat.e),
         extrinsicSize: tryAsU32(newServiceStat.z),
-        extrinsicCount: tryAsU16(newServiceStat.e),
+        extrinsicCount: tryAsU16(newServiceStat.x),
         refinementCount: tryAsU32(newServiceStat.n),
         refinementGasUsed: tryAsServiceGas(newServiceStat.u),
         providedCount: tryAsU16(newServiceStat.p.count),
