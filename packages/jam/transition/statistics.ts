@@ -285,7 +285,7 @@ export class Statistics {
         extrinsicSize: tryAsU32(newCoreStat.z),
         extrinsicCount: tryAsU16(newCoreStat.e),
         gasUsed: tryAsServiceGas(newCoreStat.u),
-        bandleSize: tryAsU32(newCoreStat.b),
+        bundleSize: tryAsU32(newCoreStat.b),
         dataAvailabilityLoad: tryAsU32(newCoreStat.d),
         popularity: tryAsU16(newCoreStat.p),
       });

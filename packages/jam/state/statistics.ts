@@ -10,7 +10,7 @@ import { type CodecRecord, type Descriptor, codec } from "@typeberry/codec";
 import { type U16, type U32, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { type PerCore, codecPerCore } from "./common";
 
-export const codecServiceId: Descriptor<ServiceId> = codec.u32.convert(
+const codecVarServiceId: Descriptor<ServiceId> = codec.varU32.convert(
   (s) => tryAsU32(s),
   (i) => tryAsServiceId(i),
 );
@@ -86,7 +86,7 @@ export class CoreStatistics {
     extrinsicCount: codecVarU16,
     extrinsicSize: codec.varU32,
     exports: codecVarU16,
-    bandleSize: codec.varU32,
+    bundleSize: codec.varU32,
     gasUsed: codecVarGas,
   });
 
@@ -98,7 +98,7 @@ export class CoreStatistics {
       v.extrinsicCount,
       v.extrinsicSize,
       v.exports,
-      v.bandleSize,
+      v.bundleSize,
       v.gasUsed,
     );
   }
@@ -117,7 +117,7 @@ export class CoreStatistics {
     /** `x` */
     public exports: U16,
     /** `b` */
-    public bandleSize: U32,
+    public bundleSize: U32,
     /** `u` */
     public gasUsed: ServiceGas,
   ) {}
@@ -224,7 +224,7 @@ export class StatisticsData {
     current: codecPerValidator(ValidatorStatistics.Codec),
     previous: codecPerValidator(ValidatorStatistics.Codec),
     cores: codecPerCore(CoreStatistics.Codec),
-    services: codec.dictionary(codecServiceId, ServiceStatistics.Codec, {
+    services: codec.dictionary(codecVarServiceId, ServiceStatistics.Codec, {
       sortKeys: (a, b) => a - b,
     }),
   });
