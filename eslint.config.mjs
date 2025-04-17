@@ -27,6 +27,7 @@ export default tseslint.config(
           allowString: false,
         },
       ],
+      "import/no-relative-packages": "error",
     },
   },
 );

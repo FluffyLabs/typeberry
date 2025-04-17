@@ -4,13 +4,13 @@ import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
 import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
+import type { BlocksDb, StateDb } from "@typeberry/database";
 import { HASH_SIZE, blake2b } from "@typeberry/hash";
 import { type U16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
 import { type Gas, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { Program } from "@typeberry/pvm-program";
 import { Result, asOpaqueType } from "@typeberry/utils";
-import type { BlocksDb, StateDb } from "../database";
 import type { TransitionHasher } from "./hasher";
 
 enum ServiceExecutorError {
