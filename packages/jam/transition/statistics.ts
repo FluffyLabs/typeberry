@@ -293,6 +293,9 @@ export class Statistics {
 
     /** Update services statistics */
     for (const service of this.state.statistics.services) {
+      if (!service[0]) {
+        continue;
+      }
       const newServiceStat = this.calculateServiceStatistics(
         tryAsServiceId(service[0]),
         workReports,
