@@ -89,7 +89,6 @@ export class Memory {
    * Returns false otherwise.
    */
   isWriteable(destinationStart: MemoryIndex, length: number): boolean {
-    // TODO [ToDr] potential edge case - is `0`-length slice writeable whereever?
     if (length === 0) {
       return true;
     }
