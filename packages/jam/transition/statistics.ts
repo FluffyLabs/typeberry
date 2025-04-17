@@ -17,7 +17,7 @@ import type { WorkResult } from "@typeberry/block/work-result";
 import type { ChainSpec } from "@typeberry/config";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import type { State } from "@typeberry/state";
-import { ValidatorStatistics } from "@typeberry/state";
+import { CoreStatistics, ServiceStatistics, ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
 
 export type Input = {
@@ -276,7 +276,7 @@ export class Statistics {
         extrinsic.assurances,
       );
 
-      cores[coreId] = {
+      cores[coreId] = CoreStatistics.fromCodec({
         imports: tryAsU16(newCoreStat.i),
         exports: tryAsU16(newCoreStat.x),
         extrinsicSize: tryAsU32(newCoreStat.z),
@@ -285,24 +285,31 @@ export class Statistics {
         bandleSize: tryAsU32(newCoreStat.b),
         dataAvailabilityLoad: tryAsU32(newCoreStat.d),
         popularity: tryAsU16(newCoreStat.p),
-      };
+      });
     }
 
     /** Update services statistics */
     for (const service of this.state.statistics.services) {
-      const serviceStat = this.calculateServiceStatistics(tryAsServiceId(service[0]), workReports, extrinsic.preimages);
-      service[1].imports = tryAsU16(serviceStat.i);
-      service[1].exports = tryAsU16(serviceStat.x);
-      service[1].extrinsicSize = tryAsU32(serviceStat.z);
-      service[1].extrinsicCount = tryAsU16(serviceStat.e);
-      service[1].refinementCount = tryAsU32(serviceStat.n);
-      service[1].refinementGasUsed = tryAsServiceGas(serviceStat.u);
-      service[1].providedCount = tryAsU16(serviceStat.p.count);
-      service[1].providedSize = tryAsU32(serviceStat.p.size);
-      // a.0
-      // a.1
-      // t.0
-      // t.1
+      const newServiceStat = this.calculateServiceStatistics(
+        tryAsServiceId(service[0]),
+        workReports,
+        extrinsic.preimages,
+      );
+      service[1] = ServiceStatistics.fromCodec({
+        imports: tryAsU16(newServiceStat.i),
+        exports: tryAsU16(newServiceStat.x),
+        extrinsicSize: tryAsU32(newServiceStat.z),
+        extrinsicCount: tryAsU16(newServiceStat.e),
+        refinementCount: tryAsU32(newServiceStat.n),
+        refinementGasUsed: tryAsServiceGas(newServiceStat.u),
+        providedCount: tryAsU16(newServiceStat.p.count),
+        providedSize: tryAsU32(newServiceStat.p.size),
+        // TODO [MaSo] Implement a & t calculation
+        accumulateCount: tryAsU32(0),
+        accumulateGasUsed: tryAsServiceGas(0),
+        onTransfersCount: tryAsU32(0),
+        onTransfersGasUsed: tryAsServiceGas(0),
+      });
     }
 
     /** Update state */
