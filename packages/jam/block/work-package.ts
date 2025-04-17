@@ -24,7 +24,7 @@ export function tryAsWorkItemsCount(len: number): WorkItemsCount {
 
 /** Minimal number of work items in the work package or results in work report. */
 export const MIN_NUMBER_OF_WORK_ITEMS = 1;
-/** Maximal number of work items in the work package or results in work report. */
+/** `I`: Maximal number of work items in the work package or results in work report. */
 export const MAX_NUMBER_OF_WORK_ITEMS = 16;
 
 /**
