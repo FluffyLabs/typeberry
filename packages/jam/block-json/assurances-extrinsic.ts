@@ -1,9 +1,10 @@
-import { type AssurancesExtrinsic, AvailabilityAssurance, assurancesExtrinsicCodec } from "@typeberry/block/assurances";
 import { BitVec, Bytes } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
 import { json } from "@typeberry/json-parser";
-import type { JsonObject } from "../../json-format";
-import { fromJson, runCodecTest } from "./common";
+import { fromJson } from "./common";
+
+import { AvailabilityAssurance } from "@typeberry/block/assurances";
+import type { JsonObject } from "./json-format";
 
 const getAvailabilityAssuranceFromJson = (ctx: ChainSpec) =>
   json.object<JsonObject<AvailabilityAssurance>, AvailabilityAssurance>(
@@ -21,7 +22,3 @@ const getAvailabilityAssuranceFromJson = (ctx: ChainSpec) =>
   );
 
 export const getAssurancesExtrinsicFromJson = (ctx: ChainSpec) => json.array(getAvailabilityAssuranceFromJson(ctx));
-
-export async function runAssurancesExtrinsicTest(test: AssurancesExtrinsic, file: string) {
-  runCodecTest(assurancesExtrinsicCodec, test, file);
-}

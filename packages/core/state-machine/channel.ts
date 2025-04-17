@@ -65,7 +65,9 @@ export class MessageChannelStateMachine<
       try {
         this.dispatchSignal(name, data);
       } catch (e: unknown) {
-        logger.error(`[${this.constructor.name}] Unable to dispatch signal: ${e}. ${this.stateInfo(remoteState)}`);
+        logger.error(
+          `[${this.constructor.name}] Unable to dispatch signal (${name}): ${e}. ${this.stateInfo(remoteState)}`,
+        );
         throw e;
       }
     });
@@ -74,7 +76,9 @@ export class MessageChannelStateMachine<
       try {
         await this.dispatchRequest(name, data, msg);
       } catch (e: unknown) {
-        logger.error(`[${this.constructor.name}] Unable to dispatch request: ${e}. ${this.stateInfo(remoteState)}`);
+        logger.error(
+          `[${this.constructor.name}] Unable to dispatch request (${name}): ${e}. ${this.stateInfo(remoteState)}`,
+        );
         throw e;
       }
     });

@@ -6,6 +6,7 @@ import {
   tryAsPerEpochBlock,
   tryAsPerValidator,
 } from "@typeberry/block";
+import { fromJson, guaranteesExtrinsicFromJson } from "@typeberry/block-json";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import type { WorkPackageInfo } from "@typeberry/block/work-report";
 import { FixedSizeArray, HashDictionary, HashSet } from "@typeberry/collections";
@@ -31,8 +32,6 @@ import {
 import { guaranteesAsView } from "@typeberry/transition/reports/test.utils";
 import { Result, asOpaqueType, deepEqual, resultToString } from "@typeberry/utils";
 import { logger } from "../common";
-import { fromJson as codecFromJson } from "./codec/common";
-import { guaranteesExtrinsicFromJson } from "./codec/guarantees-extrinsic";
 import {
   TestAccountItem,
   TestAvailabilityAssignment,
@@ -45,7 +44,7 @@ class Input {
   static fromJson: FromJson<Input> = {
     guarantees: guaranteesExtrinsicFromJson,
     slot: "number",
-    known_packages: json.array(codecFromJson.bytes32()),
+    known_packages: json.array(fromJson.bytes32()),
   };
 
   guarantees!: GuaranteesExtrinsic;
@@ -129,9 +128,9 @@ class TestState {
     curr_validators: json.array(commonFromJson.validatorData),
     prev_validators: json.array(commonFromJson.validatorData),
     entropy: json.array(commonFromJson.bytes32()),
-    offenders: json.array(codecFromJson.bytes32<Ed25519Key>()),
+    offenders: json.array(fromJson.bytes32<Ed25519Key>()),
     recent_blocks: json.array(TestBlockState.fromJson),
-    auth_pools: ["array", json.array(codecFromJson.bytes32())],
+    auth_pools: ["array", json.array(fromJson.bytes32())],
     accounts: json.array(TestAccountItem.fromJson),
     cores_statistics: json.array(TestCoreStatistics.fromJson),
     services_statistics: json.array(TestServiceStatistics.fromJson),
@@ -205,7 +204,7 @@ class OutputData {
   static fromJson = json.object<OutputData, ReportsOutput>(
     {
       reported: json.array(TestSegmentRootLookupItem.fromJson),
-      reporters: json.array(codecFromJson.bytes32()),
+      reporters: json.array(fromJson.bytes32()),
     },
     ({ reported, reporters }) => ({
       reported: HashDictionary.fromEntries(reported.map((x) => [x.workPackageHash, x])),

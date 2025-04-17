@@ -128,6 +128,7 @@ describe("HostCalls: Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const { registers, memory: emptyMemory } = prepareRegsAndMemory(serviceId, HASH, {
       skipValue: true,
+      preimageLength: 1,
     });
 
     accounts.data.set(PREIMAGE_BLOB, serviceId, HASH);

@@ -45,12 +45,13 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
       new LmdbBlocks(config.chainSpec, config.blocksDbPath),
     );
 
+    // TODO [ToDr] back pressure?
     worker.onBlock.on(async (b) => {
-      logger.info(`Got block: ${b.header.view().timeSlotIndex.materialize()}`);
+      logger.log(`🧊 Got block: ${b.header.view().timeSlotIndex.materialize()}`);
       const bestHeader = await importer.importBlock(b);
 
       worker.announce(port, bestHeader);
-      logger.info(`Best block: ${importer.bestBlockHash()}`);
+      logger.info(`🧊 Best block: ${bestHeader.hash}`);
     });
   });
 

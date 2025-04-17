@@ -1,7 +1,6 @@
-import { Preimage, type PreimagesExtrinsic, preimagesExtrinsicCodec } from "@typeberry/block/preimage";
+import { Preimage } from "@typeberry/block/preimage";
 import { BytesBlob } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
-import { runCodecTest } from "./common";
 
 const preimageFromJson = json.object<Preimage>(
   {
@@ -12,7 +11,3 @@ const preimageFromJson = json.object<Preimage>(
 );
 
 export const preimagesExtrinsicFromJson = json.array(preimageFromJson);
-
-export async function runPreimagesExtrinsicTest(test: PreimagesExtrinsic, file: string) {
-  runCodecTest(preimagesExtrinsicCodec, test, file);
-}

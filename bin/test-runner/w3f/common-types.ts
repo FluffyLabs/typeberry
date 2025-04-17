@@ -4,31 +4,19 @@ import {
   BLS_KEY_BYTES,
   type BlsKey,
   type CodeHash,
-  type CoreIndex,
   type HeaderHash,
-  type ServiceGas,
   type ServiceId,
   type StateRootHash,
   type TimeSlot,
-  tryAsServiceGas,
 } from "@typeberry/block";
+import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import type { PreimageHash } from "@typeberry/block/preimage";
-import { type BeefyHash, RefineContext } from "@typeberry/block/refine-context";
-import { type WorkItemsCount, tryAsWorkItemsCount } from "@typeberry/block/work-package";
-import {
-  type AuthorizerHash,
-  type ExportsRootHash,
-  type WorkPackageHash,
-  WorkPackageInfo,
-  WorkPackageSpec,
-  WorkReport,
-} from "@typeberry/block/work-report";
-import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result";
+import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo, WorkReport } from "@typeberry/block/work-report";
 import { Encoder } from "@typeberry/codec";
-import { FixedSizeArray, HashDictionary } from "@typeberry/collections";
+import { HashDictionary } from "@typeberry/collections";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type OpaqueHash, WithHash, blake2b } from "@typeberry/hash";
-import { type U16, type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
 import type { SmallGas } from "@typeberry/pvm-interpreter";
 import {
   AvailabilityAssignment,
@@ -40,8 +28,6 @@ import {
   ValidatorData,
 } from "@typeberry/state";
 import { Bytes, BytesBlob } from "@typeberry/trie";
-import { asOpaqueType } from "@typeberry/utils";
-import { fromJson as codecFromJson } from "./codec/common";
 
 export namespace commonFromJson {
   export function bytes32<TInto extends Bytes<32>>() {
@@ -67,82 +53,11 @@ export function getChainSpec(path: string) {
   return fullChainSpec;
 }
 
-export class TestWorkRefineLoad {
-  static fromJson = json.object<TestWorkRefineLoad, WorkRefineLoad>(
-    {
-      gas_used: json.fromNumber((x) => asOpaqueType(tryAsU64(x))),
-      imports: "number",
-      extrinsic_count: "number",
-      extrinsic_size: "number",
-      exports: "number",
-    },
-    ({ gas_used, imports, extrinsic_count, extrinsic_size, exports }) =>
-      WorkRefineLoad.fromCodec({
-        gasUsed: tryAsServiceGas(gas_used),
-        importedSegments: tryAsU32(imports),
-        extrinsicCount: tryAsU32(extrinsic_count),
-        extrinsicSize: tryAsU32(extrinsic_size),
-        exportedSegments: tryAsU32(exports),
-      }),
-  );
-
-  // should be a bigint
-  gas_used!: ServiceGas;
-  imports!: U32;
-  extrinsic_count!: U32;
-  extrinsic_size!: U32;
-  exports!: U32;
-}
-
-class TestWorkPackageSpec {
-  static fromJson = json.object<TestWorkPackageSpec, WorkPackageSpec>(
-    {
-      hash: codecFromJson.bytes32(),
-      length: "number",
-      erasure_root: codecFromJson.bytes32(),
-      exports_root: codecFromJson.bytes32(),
-      exports_count: "number",
-    },
-    ({ hash, length, erasure_root, exports_root, exports_count }) => {
-      return new WorkPackageSpec(hash, length, erasure_root, exports_root, exports_count);
-    },
-  );
-
-  hash!: WorkPackageHash;
-  length!: U32;
-  erasure_root!: OpaqueHash;
-  exports_root!: ExportsRootHash;
-  exports_count!: U16;
-}
-
-class TestRefineContext {
-  static fromJson = json.object<TestRefineContext, RefineContext>(
-    {
-      anchor: codecFromJson.bytes32(),
-      state_root: codecFromJson.bytes32(),
-      beefy_root: codecFromJson.bytes32(),
-      lookup_anchor: codecFromJson.bytes32(),
-      lookup_anchor_slot: "number",
-      prerequisites: json.array(codecFromJson.bytes32()),
-    },
-    ({ anchor, state_root, beefy_root, lookup_anchor, lookup_anchor_slot, prerequisites }) => {
-      return new RefineContext(anchor, state_root, beefy_root, lookup_anchor, lookup_anchor_slot, prerequisites);
-    },
-  );
-
-  anchor!: HeaderHash;
-  state_root!: StateRootHash;
-  beefy_root!: BeefyHash;
-  lookup_anchor!: HeaderHash;
-  lookup_anchor_slot!: TimeSlot;
-  prerequisites!: WorkPackageHash[];
-}
-
 export class TestSegmentRootLookupItem {
   static fromJson = json.object<TestSegmentRootLookupItem, WorkPackageInfo>(
     {
-      work_package_hash: codecFromJson.bytes32(),
-      segment_tree_root: codecFromJson.bytes32(),
+      work_package_hash: fromJson.bytes32(),
+      segment_tree_root: fromJson.bytes32(),
     },
     ({ work_package_hash, segment_tree_root }) => new WorkPackageInfo(work_package_hash, segment_tree_root),
   );
@@ -151,117 +66,10 @@ export class TestSegmentRootLookupItem {
   segment_tree_root!: ExportsRootHash;
 }
 
-export class TestWorkExecResult {
-  // TODO [ToDr] Introduce fromJson.union?
-  static fromJson = json.object<TestWorkExecResult, WorkExecResult>(
-    {
-      ok: json.optional(json.fromString(BytesBlob.parseBlob)),
-      out_of_gas: json.optional(json.fromAny(() => null)),
-      panic: json.optional(json.fromAny(() => null)),
-      bad_code: json.optional(json.fromAny(() => null)),
-      code_oversize: json.optional(json.fromAny(() => null)),
-    },
-    (val) => {
-      const { ok, out_of_gas, panic, bad_code, code_oversize } = val;
-      if (ok !== undefined) {
-        return new WorkExecResult(tryAsU32(WorkExecResultKind.ok), ok);
-      }
-      if (out_of_gas === null) {
-        return new WorkExecResult(tryAsU32(WorkExecResultKind.outOfGas));
-      }
-      if (panic === null) {
-        return new WorkExecResult(tryAsU32(WorkExecResultKind.panic));
-      }
-      if (bad_code === null) {
-        return new WorkExecResult(tryAsU32(WorkExecResultKind.badCode));
-      }
-      if (code_oversize === null) {
-        return new WorkExecResult(tryAsU32(WorkExecResultKind.codeOversize));
-      }
-
-      throw new Error("Invalid WorkExecResult");
-    },
-  );
-  ok?: BytesBlob;
-  out_of_gas?: null;
-  panic?: null;
-  bad_code?: null;
-  code_oversize?: null;
-}
-
-export class TestWorkResult {
-  static fromJson = json.object<TestWorkResult, WorkResult>(
-    {
-      service_id: "number",
-      code_hash: codecFromJson.bytes32(),
-      payload_hash: codecFromJson.bytes32(),
-      accumulate_gas: json.fromNumber((x) => asOpaqueType(tryAsU64(x))),
-      result: TestWorkExecResult.fromJson,
-      refine_load: TestWorkRefineLoad.fromJson,
-    },
-    ({ service_id, code_hash, payload_hash, accumulate_gas, result, refine_load }) => {
-      return new WorkResult(service_id, code_hash, payload_hash, accumulate_gas, result, refine_load);
-    },
-  );
-
-  service_id!: ServiceId;
-  code_hash!: CodeHash;
-  payload_hash!: OpaqueHash;
-  accumulate_gas!: ServiceGas;
-  result!: WorkExecResult;
-  refine_load!: WorkRefineLoad;
-}
-
-export class TestWorkReport {
-  static fromJson = json.object<TestWorkReport, WorkReport>(
-    {
-      package_spec: TestWorkPackageSpec.fromJson,
-      context: TestRefineContext.fromJson,
-      core_index: "number",
-      authorizer_hash: codecFromJson.bytes32(),
-      auth_output: json.fromString(BytesBlob.parseBlob),
-      segment_root_lookup: json.array(TestSegmentRootLookupItem.fromJson),
-      results: json.array(TestWorkResult.fromJson),
-      auth_gas_used: json.fromNumber((x) => asOpaqueType(tryAsU64(x))),
-    },
-    ({
-      package_spec,
-      context,
-      core_index,
-      authorizer_hash,
-      auth_output,
-      segment_root_lookup,
-      results,
-      auth_gas_used,
-    }) => {
-      const fixedSizeResults = FixedSizeArray.new(results, tryAsWorkItemsCount(results.length));
-      return WorkReport.fromCodec({
-        workPackageSpec: package_spec,
-        context,
-        coreIndex: core_index,
-        authorizerHash: authorizer_hash,
-        authorizationOutput: auth_output,
-        segmentRootLookup: segment_root_lookup,
-        results: fixedSizeResults,
-        authorizationGasUsed: auth_gas_used,
-      });
-    },
-  );
-
-  package_spec!: WorkPackageSpec;
-  context!: RefineContext;
-  core_index!: CoreIndex;
-  authorizer_hash!: AuthorizerHash;
-  auth_output!: BytesBlob;
-  segment_root_lookup!: WorkPackageInfo[];
-  results!: FixedSizeArray<WorkResult, WorkItemsCount>;
-  auth_gas_used!: ServiceGas;
-}
-
 export class TestAvailabilityAssignment {
   static fromJson = json.object<TestAvailabilityAssignment, AvailabilityAssignment>(
     {
-      report: TestWorkReport.fromJson,
+      report: workReportFromJson,
       timeout: "number",
     },
     ({ report, timeout }) => {
@@ -317,7 +125,7 @@ export class TestBlockState {
   reported!: WorkPackageInfo[];
 }
 
-export class TestServiceInfo {
+class TestServiceInfo {
   static fromJson = json.object<TestServiceInfo, ServiceAccountInfo>(
     {
       code_hash: commonFromJson.bytes32(),
@@ -347,7 +155,7 @@ export class TestServiceInfo {
   items!: U32;
 }
 
-export class TestPreimageItem {
+class TestPreimageItem {
   static fromJson = json.object<TestPreimageItem, PreimageItem>(
     {
       hash: commonFromJson.bytes32(),
