@@ -281,9 +281,9 @@ export class Statistics {
 
       cores[coreId] = CoreStatistics.fromCodec({
         imports: tryAsU16(newCoreStat.i),
-        exports: tryAsU16(newCoreStat.x),
+        exports: tryAsU16(newCoreStat.e),
         extrinsicSize: tryAsU32(newCoreStat.z),
-        extrinsicCount: tryAsU16(newCoreStat.e),
+        extrinsicCount: tryAsU16(newCoreStat.x),
         gasUsed: tryAsServiceGas(newCoreStat.u),
         bundleSize: tryAsU32(newCoreStat.b),
         dataAvailabilityLoad: tryAsU32(newCoreStat.d),
