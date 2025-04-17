@@ -139,10 +139,10 @@ export type State = {
   readonly services: Map<ServiceId, Service>;
 
   /**
-   * `π pi`: Previous and current statistics of each validator.
-   *         Cores statistics and services statistics are also included.
+   * `π pi`: Previous and current statistics of each validator,
+   *         cores statistics and services statistics.
    *
-   * https://graypaper.fluffylabs.dev/#/579bd12/181a01181c01
+   * https://graypaper.fluffylabs.dev/#/68eaa1f/18f60118f601?v=0.6.4
    */
   readonly statistics: StatisticsData;
 
