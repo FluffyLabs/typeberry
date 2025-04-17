@@ -293,7 +293,7 @@ export class Statistics {
 
     /** Update services statistics */
     for (const service of this.state.statistics.services) {
-      if (!service[0]) {
+      if (service === undefined || service[0] === undefined) {
         continue;
       }
       const newServiceStat = this.calculateServiceStatistics(
