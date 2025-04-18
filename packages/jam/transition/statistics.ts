@@ -17,7 +17,6 @@ import type { WorkReport } from "@typeberry/block/work-report";
 import type { WorkResult } from "@typeberry/block/work-result";
 import type { ChainSpec } from "@typeberry/config";
 import { MAX_U16, MAX_U32, type U16, type U32, tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { MAX_SHIFT_U32 } from "@typeberry/pvm-interpreter/ops/math-consts";
 import type { State } from "@typeberry/state";
 import { CoreStatistics, ServiceStatistics, ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
@@ -306,9 +305,17 @@ export class Statistics {
     const { current, cores, services } = statistics;
     check(current[authorIndex] !== undefined, "authorIndex is out of bounds");
 
-    current[authorIndex].blocks = tryAsU32(current[authorIndex].blocks + 1);
-    current[authorIndex].tickets = tryAsU32(current[authorIndex].tickets + extrinsic.tickets.length);
-    current[authorIndex].preImages = tryAsU32(current[authorIndex].preImages + extrinsic.preimages.length);
+    const newBlocksCount = current[authorIndex].blocks + 1;
+    check(newBlocksCount < MAX_U32, "Blocks count overflows");
+    current[authorIndex].blocks = tryAsU32(newBlocksCount);
+
+    const newTicketsCount = current[authorIndex].tickets + extrinsic.tickets.length;
+    check(newTicketsCount < MAX_U32, "Tickets count overflows");
+    current[authorIndex].tickets = tryAsU32(newTicketsCount);
+
+    const newPreimagesCount = current[authorIndex].preImages + extrinsic.preimages.length;
+    check(newPreimagesCount < MAX_U32, "Preimages count overflows");
+    current[authorIndex].preImages = tryAsU32(newPreimagesCount);
 
     /**
      * This value is well bounded by number of blocks in the epoch
@@ -316,7 +323,9 @@ export class Statistics {
      * So it can't reach 2GB.
      */
     const preImagesSize = extrinsic.preimages.reduce((sum, preimage) => sum + preimage.blob.length, 0);
-    current[authorIndex].preImagesSize = tryAsU32(current[authorIndex].preImagesSize + preImagesSize);
+    const newPreImagesSize = current[authorIndex].preImagesSize + preImagesSize;
+    check(newPreImagesSize < MAX_U32, "Preimages size overflows");
+    current[authorIndex].preImagesSize = tryAsU32(newPreImagesSize);
 
     /**
      * Please note I don't use Kappa' here. If I understand correctly we don't need it.
@@ -326,12 +335,20 @@ export class Statistics {
      */
     for (const { credentials } of extrinsic.guarantees) {
       for (const { validatorIndex } of credentials) {
-        current[validatorIndex].guarantees = tryAsU32(current[validatorIndex].guarantees + 1);
+        check(current[validatorIndex] !== undefined, "Validator index is out of bounds");
+
+        const newGuaranteesCount = current[validatorIndex].guarantees + 1;
+        check(newGuaranteesCount < MAX_U32, "Guarantees count overflows");
+        current[validatorIndex].guarantees = tryAsU32(newGuaranteesCount);
       }
     }
 
     for (const { validatorIndex } of extrinsic.assurances) {
-      current[validatorIndex].assurances = tryAsU32(current[validatorIndex].assurances + 1);
+      check(current[validatorIndex] !== undefined, "Validator index is out of bounds");
+
+      const newAssurancesCount = current[validatorIndex].assurances + 1;
+      check(newAssurancesCount < MAX_U32, "Assurances count overflows");
+      current[validatorIndex].assurances = tryAsU32(newAssurancesCount);
     }
 
     const workReports = extrinsic.guarantees.map((r) => r.report).filter((r) => r !== undefined);
