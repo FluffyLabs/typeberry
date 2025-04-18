@@ -16,7 +16,8 @@ import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { WorkReport } from "@typeberry/block/work-report";
 import type { WorkResult } from "@typeberry/block/work-result";
 import type { ChainSpec } from "@typeberry/config";
-import { type U16, type U32, tryAsU16, tryAsU32 } from "@typeberry/numbers";
+import { MAX_U16, MAX_U32, type U16, type U32, tryAsU16, tryAsU32 } from "@typeberry/numbers";
+import { MAX_SHIFT_U32 } from "@typeberry/pvm-interpreter/ops/math-consts";
 import type { State } from "@typeberry/state";
 import { CoreStatistics, ServiceStatistics, ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
@@ -138,21 +139,11 @@ export class Statistics {
       score.bundleSize += workReport.workPackageSpec.length;
     }
 
-    if (score.imports > 2 ** 16) {
-      throw new Error("Imports count overflows");
-    }
-    if (score.extrinsicCount > 2 ** 16) {
-      throw new Error("Extrinsic count overflows");
-    }
-    if (score.extrinsicSize > 2 ** 32) {
-      throw new Error("Extrinsic size overflows");
-    }
-    if (score.exports > 2 ** 16) {
-      throw new Error("Exports count overflows");
-    }
-    if (score.bundleSize > 2 ** 32) {
-      throw new Error("Bundle size overflows");
-    }
+    check(score.imports < MAX_U16, "Imports count overflows");
+    check(score.extrinsicCount < MAX_U16, "Extrinsic count overflows");
+    check(score.extrinsicSize < MAX_U32, "Provided size overflows");
+    check(score.exports < MAX_U16, "Exports count overflows");
+    check(score.bundleSize < MAX_U32, "Refinement count overflows");
 
     return {
       imports: tryAsU16(score.imports),
@@ -174,10 +165,7 @@ export class Statistics {
       sum += workPackageLength + W_G * workPackageSegment;
     }
 
-    if (sum > 2 ** 32) {
-      throw new Error("Dictionary score overflows");
-    }
-
+    check(sum < MAX_U32, "Dictionary score overflows");
     return tryAsU32(sum);
   }
 
@@ -190,10 +178,7 @@ export class Statistics {
       sum += assurance.bitfield.isSet(coreIndex) ? 1 : 0;
     }
 
-    if (sum > 2 ** 16) {
-      throw new Error("Popularity score overflows");
-    }
-
+    check(sum < MAX_U16, "Popularity score overflows");
     return tryAsU16(sum);
   }
 
@@ -252,21 +237,11 @@ export class Statistics {
       score.exports += workResult.load.exportedSegments;
     }
 
-    if (score.refinementCount > 2 ** 32) {
-      throw new Error("Refinement count overflows");
-    }
-    if (score.imports > 2 ** 16) {
-      throw new Error("Imports count overflows");
-    }
-    if (score.extrinsicCount > 2 ** 16) {
-      throw new Error("Extrinsic count overflows");
-    }
-    if (score.extrinsicSize > 2 ** 32) {
-      throw new Error("Extrinsic size overflows");
-    }
-    if (score.exports > 2 ** 16) {
-      throw new Error("Exports count overflows");
-    }
+    check(score.refinementCount < MAX_U32, "Refinement count overflows");
+    check(score.imports < MAX_U16, "Imports count overflows");
+    check(score.extrinsicCount < MAX_U16, "Extrinsic count overflows");
+    check(score.extrinsicSize < MAX_U32, "Provided size overflows");
+    check(score.exports < MAX_U16, "Exports count overflows");
 
     return {
       refinementCount: tryAsU32(score.refinementCount),
@@ -308,12 +283,8 @@ export class Statistics {
       score.size += preimage.blob.length;
     }
 
-    if (score.count > 2 ** 16) {
-      throw new Error("Provided count overflows");
-    }
-    if (score.size > 2 ** 32) {
-      throw new Error("Provided size overflows");
-    }
+    check(score.count < MAX_U16, "Provided count overflows");
+    check(score.size < MAX_U32, "Provided size overflows");
 
     return {
       count: tryAsU16(score.count),
