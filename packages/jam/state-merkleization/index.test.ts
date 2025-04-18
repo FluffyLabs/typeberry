@@ -11,7 +11,7 @@ import {
   tryAsTimeSlot,
 } from "@typeberry/block";
 import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
-import { Ticket } from "@typeberry/block/tickets";
+import { Ticket, tryAsTicketAttempt } from "@typeberry/block/tickets";
 import { type AuthorizerHash, WorkPackageInfo } from "@typeberry/block/work-report";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
@@ -319,7 +319,7 @@ const testState = (): State => {
 };
 //*/
 
-const attempt = (x: number) => asOpaqueType(tryAsU8(x));
+const attempt = (x: number) => tryAsTicketAttempt(x);
 const b32 = (s: string) => Bytes.parseBytes(s, HASH_SIZE).asOpaque();
 const repeat = <T>(len: number, item: T) =>
   Array(len)

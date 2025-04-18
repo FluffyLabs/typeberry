@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Extrinsic, type PerValidator, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
+import { Extrinsic, type PerValidator, tryAsPerValidator, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import type { AssurancesExtrinsic } from "@typeberry/block/assurances";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
@@ -22,10 +22,19 @@ describe("Statistics", () => {
     });
   }
 
+  const emptyStatistics = () => tryAsPerValidator([
+    ActivityRecord.empty(),
+    ActivityRecord.empty(),
+    ActivityRecord.empty(),
+    ActivityRecord.empty(),
+    ActivityRecord.empty(),
+    ActivityRecord.empty()
+  ], tinyChainSpec);
+
   function prepareData({ previousSlot, currentSlot }: { previousSlot: number; currentSlot: number }) {
     const validatorIndex = tryAsValidatorIndex(0);
-    const currentStatistics = asOpaqueType([ActivityRecord.empty()]);
-    const lastStatistics = asOpaqueType([ActivityRecord.empty()]);
+    const currentStatistics = emptyStatistics();
+    const lastStatistics = emptyStatistics();
     const statisticsPerValidator = new ActivityData({ current: currentStatistics, previous: lastStatistics });
     const state: StatisticsState = {
       statisticsPerValidator,
@@ -92,8 +101,8 @@ describe("Statistics", () => {
 
     function prepareData({ previousSlot, currentSlot }: { previousSlot: number; currentSlot: number }) {
       const validatorIndex = tryAsValidatorIndex(0);
-      const currentStatistics: PerValidator<ActivityRecord> = asOpaqueType([ActivityRecord.empty()]);
-      const lastStatistics = asOpaqueType([ActivityRecord.empty()]);
+      const currentStatistics = emptyStatistics();
+      const lastStatistics = emptyStatistics();
       const statisticsPerValidator = new ActivityData({ current: currentStatistics, previous: lastStatistics });
       const state: StatisticsState = {
         statisticsPerValidator,

@@ -16,6 +16,9 @@
  * Copyright (c) 2018-2019 Chris Kaczor (github.com/krzkaczor)
  */
 
+// TODO [ToDr] this seems stricter!
+//type Uninstantiable = void & { __brand: "uninstantiable" };
+type Uninstantiable = void;
 type StringLiteral<Type> = Type extends string ? (string extends Type ? never : Type) : never;
 
 // TODO [MaSi]: it should be "unique symbol" but in debugger adapter we have opaque types from different packages and it is problematic.
@@ -25,8 +28,13 @@ export type WithOpaque<Token extends string> = {
   readonly [__OPAQUE_TYPE__]: Token;
 };
 
-export type Opaque<Type, Token extends string> = Token extends StringLiteral<Token> ? Type & WithOpaque<Token> : never;
+export type TokenOf<OpaqueType, Type> = OpaqueType extends Opaque<Type, infer Token> ? Token : never;
 
-export function asOpaqueType<Token extends string, T>(v: T): Opaque<T, Token> {
+export type Opaque<Type, Token extends string> = Token extends StringLiteral<Token> ? Type & WithOpaque<Token> : Uninstantiable;
+
+export function asOpaqueType<T, Token extends string>(v: T): Opaque<T, Token> {
   return v as Opaque<T, Token>;
+}
+export function seeThrough<T, Token extends string>(v: Opaque<T, Token>): T {
+  return v as T;
 }

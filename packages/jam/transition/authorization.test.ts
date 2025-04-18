@@ -6,14 +6,16 @@ import { Bytes } from "@typeberry/bytes";
 import { HashSet } from "@typeberry/collections/hash-set";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { asOpaqueType, deepEqual } from "@typeberry/utils";
+import { deepEqual } from "@typeberry/utils";
 import { Authorization, type AuthorizationInput, type AuthorizationState } from "./authorization";
+import {tryAsPerCore} from "@typeberry/state";
+import {asKnownSize} from "@typeberry/collections";
 
 const authQueues = (core1: AuthorizerHash[], core2: AuthorizerHash[]): AuthorizationState["authQueues"] => {
-  return asOpaqueType([asOpaqueType(core1), asOpaqueType(core2)]);
+  return tryAsPerCore([asKnownSize(core1), asKnownSize(core2)], tinyChainSpec);
 };
 const authPools = (core1: AuthorizerHash[], core2: AuthorizerHash[]): AuthorizationState["authPools"] => {
-  return asOpaqueType([asOpaqueType(core1), asOpaqueType(core2)]);
+  return tryAsPerCore([asKnownSize(core1), asKnownSize(core2)], tinyChainSpec);
 };
 
 const h = (n: number): AuthorizerHash => Bytes.fill(HASH_SIZE, n).asOpaque();

@@ -285,13 +285,11 @@ function isPreviousRotationPreviousEpoch(
  * Compose two collections of the same size into a single one
  * containing some amalgamation of both items.
  */
-function zip<A, B, R, F extends string>(
-  a: KnownSizeArray<A, F>,
-  b: KnownSizeArray<B, F>,
+function zip<A, B, R>(
+  a: PerValidator<A>,
+  b: PerValidator<B>,
   fn: (a: A, b: B) => R,
-): KnownSizeArray<R, F> {
-  check(a.length === b.length, "Zip can be only used for collections of matching size.");
-
+): PerValidator<R> {
   return asKnownSize(
     a.map((aValue, index) => {
       return fn(aValue, b[index]);

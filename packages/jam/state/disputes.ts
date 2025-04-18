@@ -2,13 +2,12 @@ import type { Ed25519Key, WorkReportHash } from "@typeberry/block";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { SortedSet } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { asOpaqueType } from "@typeberry/utils";
 
 const sortedSetCodec = <T extends OpaqueHash>() =>
   codec.sequenceVarLen(codec.bytes(HASH_SIZE)).convert<SortedSet<T>>(
     (input) => input.array,
     (output) => {
-      const typed: T[] = output.map(asOpaqueType);
+      const typed: T[] = output.map(x => x.asOpaque());
       return SortedSet.fromSortedArray(hashComparator, typed);
     },
   );

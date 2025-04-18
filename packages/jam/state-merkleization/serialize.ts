@@ -1,4 +1,4 @@
-import { type ServiceId, codecPerEpochBlock, codecPerValidator } from "@typeberry/block";
+import { EntropyHash, type ServiceId, TimeSlot, codecPerEpochBlock, codecPerValidator } from "@typeberry/block";
 import { codecFixedSizeArray, codecKnownSizeArray } from "@typeberry/block/codec";
 import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
 import type { PreimageHash } from "@typeberry/block/preimage";
@@ -23,6 +23,7 @@ import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
 import { SafroleData } from "@typeberry/state/safrole-data";
 import { StateEntry } from "./entries";
 import { type StateKey, keys } from "./keys";
+import {AuthorizerHash, WorkPackageHash} from "@typeberry/block/work-report";
 
 export type StateCodec<T> = {
   key: StateKey;
@@ -36,7 +37,7 @@ export namespace serialize {
   export const authPools: StateCodec<State["authPools"]> = {
     key: keys.index(StateEntry.Alpha),
     Codec: codecPerCore(
-      codecKnownSizeArray(codec.bytes(HASH_SIZE).asOpaque(), {
+      codecKnownSizeArray(codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(), {
         minLength: 0,
         maxLength: MAX_AUTH_POOL_SIZE,
         typicalLength: MAX_AUTH_POOL_SIZE,
@@ -48,7 +49,7 @@ export namespace serialize {
   /** C(2): https://graypaper.fluffylabs.dev/#/85129da/38be0138be01?v=0.6.3 */
   export const authQueues: StateCodec<State["authQueues"]> = {
     key: keys.index(StateEntry.Phi),
-    Codec: codecPerCore(codecFixedSizeArray(codec.bytes(HASH_SIZE).asOpaque(), AUTHORIZATION_QUEUE_SIZE)),
+    Codec: codecPerCore(codecFixedSizeArray(codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(), AUTHORIZATION_QUEUE_SIZE)),
     extract: (s) => s.authQueues,
   };
 
@@ -80,7 +81,7 @@ export namespace serialize {
   /** C(6): https://graypaper.fluffylabs.dev/#/85129da/387602387602?v=0.6.3 */
   export const entropy: StateCodec<State["entropy"]> = {
     key: keys.index(StateEntry.Eta),
-    Codec: codecFixedSizeArray(codec.bytes(HASH_SIZE).asOpaque(), ENTROPY_ENTRIES),
+    Codec: codecFixedSizeArray(codec.bytes(HASH_SIZE).asOpaque<EntropyHash>(), ENTROPY_ENTRIES),
     extract: (s) => s.entropy,
   };
 
@@ -115,7 +116,7 @@ export namespace serialize {
   /** C(11): https://graypaper.fluffylabs.dev/#/85129da/38c10238c102?v=0.6.3 */
   export const timeslot: StateCodec<State["timeslot"]> = {
     key: keys.index(StateEntry.Tau),
-    Codec: codec.u32.asOpaque(),
+    Codec: codec.u32.asOpaque<TimeSlot>(),
     extract: (s) => s.timeslot,
   };
 
@@ -144,7 +145,7 @@ export namespace serialize {
   export const recentlyAccumulated: StateCodec<State["recentlyAccumulated"]> = {
     key: keys.index(StateEntry.Xi),
     Codec: codecPerEpochBlock(
-      codec.sequenceVarLen(codec.bytes(HASH_SIZE).asOpaque<"WorkPackageHash">()).convert(
+      codec.sequenceVarLen(codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>()).convert(
         (x) => Array.from(x),
         (x) => HashSet.from(x),
       ),
