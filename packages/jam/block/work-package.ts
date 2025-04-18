@@ -18,7 +18,7 @@ export function tryAsWorkItemsCount(len: number): WorkItemsCount {
   return ensure<number, WorkItemsCount>(
     len,
     len >= MIN_NUMBER_OF_WORK_ITEMS && len <= MAX_NUMBER_OF_WORK_ITEMS,
-    `WorkItemsCount: Expected '< 16' got ${len}`,
+    `WorkItemsCount: Expected '< ${MAX_NUMBER_OF_WORK_ITEMS}' got ${len}`,
   );
 }
 
