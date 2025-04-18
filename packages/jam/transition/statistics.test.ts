@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Extrinsic, type PerValidator, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
+import { Extrinsic, type PerValidator, tryAsServiceId, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import type { AssurancesExtrinsic } from "@typeberry/block/assurances";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
@@ -27,7 +27,8 @@ describe("Statistics", () => {
     const currentStatistics = asOpaqueType([ValidatorStatistics.empty()]);
     const lastStatistics = asOpaqueType([ValidatorStatistics.empty()]);
     const coreStatistics = asOpaqueType([CoreStatistics.empty()]);
-    const serviceStatistics = asOpaqueType([ServiceStatistics.empty()]);
+    const serviceId = tryAsServiceId(0);
+    const serviceStatistics = asOpaqueType([serviceId, ServiceStatistics.empty()]);
     const statisticsData = new StatisticsData(currentStatistics, lastStatistics, coreStatistics, serviceStatistics);
     const state: StatisticsState = {
       statistics: statisticsData,
@@ -113,7 +114,8 @@ describe("Statistics", () => {
       const currentStatistics: PerValidator<ValidatorStatistics> = asOpaqueType([ValidatorStatistics.empty()]);
       const lastStatistics = asOpaqueType([ValidatorStatistics.empty()]);
       const coreStatistics = asOpaqueType([CoreStatistics.empty()]);
-      const serviceStatistics = asOpaqueType([ServiceStatistics.empty()]);
+      const serviceId = tryAsServiceId(0);
+      const serviceStatistics = asOpaqueType([serviceId, ServiceStatistics.empty()]);
       const statisticsData = new StatisticsData(currentStatistics, lastStatistics, coreStatistics, serviceStatistics);
       const state: StatisticsState = {
         statistics: statisticsData,

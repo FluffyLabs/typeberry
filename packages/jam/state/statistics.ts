@@ -76,7 +76,7 @@ const codecVarGas: Descriptor<ServiceGas> = codec.varU64.convert(
  * Updated per block, based on incoming work reports (`w`).
  *
  * https://graypaper.fluffylabs.dev/#/68eaa1f/18f10318f103?v=0.6.4
- * https://github.com/gavofyork/graypaper/blob/main/text/statistics.tex#L65
+ * https://github.com/gavofyork/graypaper/blob/9bffb08f3ea7b67832019176754df4fb36b9557d/text/statistics.tex#L65
  */
 export class CoreStatistics {
   static Codec = codec.Class(CoreStatistics, {
@@ -135,7 +135,7 @@ export class CoreStatistics {
  * Updated per block, based on available work reports (`W`).
  *
  * https://graypaper.fluffylabs.dev/#/68eaa1f/185104185104?v=0.6.4
- * https://github.com/gavofyork/graypaper/blob/main/text/statistics.tex#L77
+ * https://github.com/gavofyork/graypaper/blob/9bffb08f3ea7b67832019176754df4fb36b9557d/text/statistics.tex#L77
  */
 export class ServiceStatistics {
   static Codec = codec.Class(ServiceStatistics, {
@@ -234,9 +234,9 @@ export class StatisticsData {
   }
 
   constructor(
-    public current: PerValidator<ValidatorStatistics>,
-    public previous: PerValidator<ValidatorStatistics>,
-    public cores: PerCore<CoreStatistics>,
-    public services: Map<ServiceId, ServiceStatistics>,
+    public readonly current: PerValidator<ValidatorStatistics>,
+    public readonly previous: PerValidator<ValidatorStatistics>,
+    public readonly cores: PerCore<CoreStatistics>,
+    public readonly services: Map<ServiceId, ServiceStatistics>,
   ) {}
 }

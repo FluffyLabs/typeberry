@@ -27,9 +27,7 @@ export type Input = {
   availableReports: WorkReport[];
 };
 
-/**
- * https://graypaper.fluffylabs.dev/#/68eaa1f/18f60118f601?v=0.6.4
- */
+/** https://graypaper.fluffylabs.dev/#/68eaa1f/18f60118f601?v=0.6.4 */
 export type StatisticsState = Pick<State, "timeslot"> & {
   statistics: State["statistics"];
   /**
@@ -47,7 +45,7 @@ export class Statistics {
   ) {}
 
   private getStatistics(slot: TimeSlot) {
-    /** https://graypaper.fluffylabs.dev/#/579bd12/18b80118b801 */
+    /** https://graypaper.fluffylabs.dev/#/68eaa1f/186402186402?v=0.6.4 */
     const currentEpoch = Math.floor(this.state.timeslot / this.chainSpec.epochLength);
     const nextEpoch = Math.floor(slot / this.chainSpec.epochLength);
 
@@ -68,15 +66,20 @@ export class Statistics {
     };
   }
 
+  /**
+   * Calculate core statistics
+   *
+   * https://graypaper.fluffylabs.dev/#/68eaa1f/19fc0019fc00?v=0.6.4
+   */
   public calculateCoreStatistics(
     c: CoreIndex,
     workReports: WorkReport[],
     availableReports: WorkReport[],
     availabilityAssurances: AvailabilityAssurance[],
   ) {
-    const { i, x, z, e, u, b } = this.calculateRefineScoreCore(workReports);
-    const d = this.calculateDictionaryScoreCore(availableReports);
-    const p = availabilityAssurances.reduce((sum, assurance) => {
+    const { imports, extrinsicCount, extrinsicSize, exports, gasUsed, bundleSize } = this.calculateRefineScoreCore(workReports);
+    const dataAvailabilityLoad = this.calculateDictionaryScoreCore(availableReports);
+    const popularity = availabilityAssurances.reduce((sum, assurance) => {
       if (assurance === undefined || assurance.bitfield === undefined) {
         return sum;
       }
@@ -84,41 +87,43 @@ export class Statistics {
     }, 0);
 
     return {
-      i,
-      x,
-      z,
-      e,
-      u,
-      b,
-      d,
-      p,
+      imports,
+      extrinsicCount,
+      extrinsicSize,
+      exports,
+      gasUsed,
+      bundleSize,
+      dataAvailabilityLoad,
+      popularity,
     };
   }
 
+  /** https://graypaper.fluffylabs.dev/#/68eaa1f/192d01192d01?v=0.6.4 */
   private calculateRefineScoreCore(workReports: WorkReport[]) {
     const score = {
-      i: 0,
-      x: 0,
-      z: 0,
-      e: 0,
-      u: 0n,
-      b: 0,
+      imports: 0,
+      extrinsicCount: 0,
+      extrinsicSize: 0,
+      exports: 0,
+      gasUsed: 0n,
+      bundleSize: 0,
     };
 
     for (const workReport of workReports) {
       for (const workResult of workReport.results.map((r) => r)) {
-        score.i += workResult.load.importedSegments;
-        score.x += workResult.load.extrinsicCount;
-        score.z += workResult.load.extrinsicSize;
-        score.e += workResult.load.exportedSegments;
-        score.u += workResult.load.gasUsed;
+        score.imports += workResult.load.importedSegments;
+        score.extrinsicCount += workResult.load.extrinsicCount;
+        score.extrinsicSize += workResult.load.extrinsicSize;
+        score.exports += workResult.load.exportedSegments;
+        score.gasUsed += workResult.load.gasUsed;
       }
-      score.b += workReport.workPackageSpec.length;
+      score.bundleSize += workReport.workPackageSpec.length;
     }
 
     return score;
   }
 
+  /** https://graypaper.fluffylabs.dev/#/68eaa1f/195601195601?v=0.6.4 */
   private calculateDictionaryScoreCore(availableWorkReports: WorkReport[]) {
     let sum = 0;
 
@@ -131,10 +136,7 @@ export class Statistics {
     return sum;
   }
 
-  // TODO [MaSo] Implement Service statistics calculation
-  // https://graypaper.fluffylabs.dev/#/68eaa1f/17e90417e904?v=0.6.4
-  // https://graypaper.fluffylabs.dev/#/68eaa1f/17f70317f703?v=0.6.4
-  // https://graypaper.fluffylabs.dev/#/68eaa1f/064b00064b00?v=0.6.4
+
   /**
    * Calculate service statistics
    *
@@ -145,50 +147,52 @@ export class Statistics {
       .filter((r) => r !== undefined)
       .map((r) => r.results[0])
       .filter((r) => r !== undefined && r.serviceId === s);
-    const { n, u, i, x, z, e } = this.calculateRefineScoreService(filtered);
+    const { refinementCount, refinementGasUsed, imports, extrinsicCount, extrinsicSize, exports } = this.calculateRefineScoreService(filtered);
 
     // TODO [MaSo] Implement a & t calculation
     // https://graypaper.fluffylabs.dev/#/68eaa1f/192e02196b02?v=0.6.4
-    const a = { count: 0, gas: 0n };
-    const t = { count: 0, gas: 0n };
+    const accumulate = { count: 0, gas: 0n };
+    const onTransfers = { count: 0, gas: 0n };
 
-    const p = this.calculateProvidedScoreService(preimages.filter((p) => p !== undefined && p.requester === s));
+    const provided = this.calculateProvidedScoreService(preimages.filter((p) => p !== undefined && p.requester === s));
 
     return {
-      n,
-      u,
-      i,
-      x,
-      z,
-      e,
-      p,
-      a,
-      t,
+      refinementCount,
+      refinementGasUsed,
+      imports,
+      extrinsicCount,
+      extrinsicSize,
+      exports,
+      provided,
+      accumulate,
+      onTransfers,
     };
   }
 
+  /** https://graypaper.fluffylabs.dev/#/68eaa1f/191103191103?v=0.6.4 */
   private calculateRefineScoreService(workResults: WorkResult[]) {
     const score = {
-      n: 0,
-      u: 0n,
-      i: 0,
-      x: 0,
-      z: 0,
-      e: 0,
+      refinementCount: 0,
+      refinementGasUsed: 0n,
+      imports: 0,
+      extrinsicCount: 0,
+      extrinsicSize: 0,
+      exports: 0,
     };
 
     for (const workResult of workResults) {
-      score.n += 1;
-      score.u += workResult.load.gasUsed;
-      score.i += workResult.load.importedSegments;
-      score.x += workResult.load.extrinsicCount;
-      score.z += workResult.load.extrinsicSize;
-      score.e += workResult.load.exportedSegments;
+      score.refinementCount += 1;
+      score.refinementGasUsed += workResult.load.gasUsed;
+      score.imports += workResult.load.importedSegments;
+      score.extrinsicCount += workResult.load.extrinsicCount;
+      score.extrinsicSize += workResult.load.extrinsicSize;
+      score.exports += workResult.load.exportedSegments;
     }
 
     return score;
   }
 
+  /** https://graypaper.fluffylabs.dev/#/68eaa1f/191602191602?v=0.6.4 */
   private calculateProvidedScoreService(preimages: PreimagesExtrinsic) {
     const score = {
       count: 0,
@@ -204,7 +208,9 @@ export class Statistics {
   }
 
   /**
-   * https://graypaper.fluffylabs.dev/#/579bd12/180802180802
+   * https://graypaper.fluffylabs.dev/#/68eaa1f/188903188903?v=0.6.4
+   * https://graypaper.fluffylabs.dev/#/68eaa1f/19fc0019fc00?v=0.6.4
+   * https://graypaper.fluffylabs.dev/#/68eaa1f/199002199002?v=0.6.4
    */
   transition(input: Input) {
     const { slot, authorIndex, extrinsic, availableReports } = input;
@@ -212,7 +218,7 @@ export class Statistics {
      * get the validators statistics for the current epoch
      */
     const statistics = this.getStatistics(slot);
-    const { current, cores } = statistics;
+    const { current, cores, services } = statistics;
     check(current[authorIndex] !== undefined, "authorIndex is out of bounds");
 
     current[authorIndex].blocks = tryAsU32(current[authorIndex].blocks + 1);
@@ -243,27 +249,23 @@ export class Statistics {
       current[validatorIndex].assurances = tryAsU32(current[validatorIndex].assurances + 1);
     }
 
-    const workReports = extrinsic.guarantees.map((r) => r.report);
+    const workReports = extrinsic.guarantees.map((r) => r.report).filter((r) => r !== undefined);
     const workReportByCore = new Map<CoreIndex, WorkReport[]>();
     for (const workReport of workReports) {
-      if (workReport !== undefined) {
-        const coreIndex = workReport.coreIndex;
-        if (!workReportByCore.has(coreIndex)) {
-          workReportByCore.set(coreIndex, []);
-        }
-        workReportByCore.get(coreIndex)?.push(workReport);
+      const coreIndex = workReport.coreIndex;
+      if (!workReportByCore.has(coreIndex)) {
+        workReportByCore.set(coreIndex, []);
       }
+      workReportByCore.get(coreIndex)?.push(workReport);
     }
 
     const availableReportsByCore = new Map<CoreIndex, WorkReport[]>();
     for (const availableReport of availableReports) {
-      if (availableReport !== undefined) {
-        const coreIndex = availableReport.coreIndex;
-        if (!availableReportsByCore.has(coreIndex)) {
-          availableReportsByCore.set(coreIndex, []);
-        }
-        availableReportsByCore.get(coreIndex)?.push(availableReport);
+      const coreIndex = availableReport.coreIndex;
+      if (!availableReportsByCore.has(coreIndex)) {
+        availableReportsByCore.set(coreIndex, []);
       }
+      availableReportsByCore.get(coreIndex)?.push(availableReport);
     }
 
     /** Update core statistics */
@@ -280,40 +282,41 @@ export class Statistics {
       );
 
       cores[coreId] = CoreStatistics.fromCodec({
-        imports: tryAsU16(newCoreStat.i),
-        exports: tryAsU16(newCoreStat.e),
-        extrinsicSize: tryAsU32(newCoreStat.z),
-        extrinsicCount: tryAsU16(newCoreStat.x),
-        gasUsed: tryAsServiceGas(newCoreStat.u),
-        bundleSize: tryAsU32(newCoreStat.b),
-        dataAvailabilityLoad: tryAsU32(newCoreStat.d),
-        popularity: tryAsU16(newCoreStat.p),
+        imports: tryAsU16(newCoreStat.imports),
+        exports: tryAsU16(newCoreStat.exports),
+        extrinsicSize: tryAsU32(newCoreStat.extrinsicSize),
+        extrinsicCount: tryAsU16(newCoreStat.extrinsicCount),
+        gasUsed: tryAsServiceGas(newCoreStat.gasUsed),
+        bundleSize: tryAsU32(newCoreStat.bundleSize),
+        dataAvailabilityLoad: tryAsU32(newCoreStat.dataAvailabilityLoad),
+        popularity: tryAsU16(newCoreStat.popularity),
       });
     }
 
     /** Update services statistics */
-    for (const service of this.state.statistics.services) {
-      if (service === undefined || service[0] === undefined) {
-        continue;
-      }
+    for (const service of services) {
+      const serviceId = service[0];
+      let serviceStatistics = service[1];
+
       const newServiceStat = this.calculateServiceStatistics(
-        tryAsServiceId(service[0]),
+        tryAsServiceId(serviceId),
         workReports,
         extrinsic.preimages,
       );
-      service[1] = ServiceStatistics.fromCodec({
-        imports: tryAsU16(newServiceStat.i),
-        exports: tryAsU16(newServiceStat.e),
-        extrinsicSize: tryAsU32(newServiceStat.z),
-        extrinsicCount: tryAsU16(newServiceStat.x),
-        refinementCount: tryAsU32(newServiceStat.n),
-        refinementGasUsed: tryAsServiceGas(newServiceStat.u),
-        providedCount: tryAsU16(newServiceStat.p.count),
-        providedSize: tryAsU32(newServiceStat.p.size),
-        accumulateCount: tryAsU32(newServiceStat.a.count),
-        accumulateGasUsed: tryAsServiceGas(newServiceStat.a.gas),
-        onTransfersCount: tryAsU32(newServiceStat.t.count),
-        onTransfersGasUsed: tryAsServiceGas(newServiceStat.t.gas),
+
+      serviceStatistics = ServiceStatistics.fromCodec({
+        imports: tryAsU16(newServiceStat.imports),
+        exports: tryAsU16(newServiceStat.exports),
+        extrinsicCount: tryAsU16(newServiceStat.extrinsicCount),
+        extrinsicSize: tryAsU32(newServiceStat.extrinsicSize),
+        refinementCount: tryAsU32(newServiceStat.refinementCount),
+        refinementGasUsed: tryAsServiceGas(newServiceStat.refinementGasUsed),
+        providedCount: tryAsU16(newServiceStat.provided.count),
+        providedSize: tryAsU32(newServiceStat.provided.size),
+        accumulateCount: tryAsU32(newServiceStat.accumulate.count),
+        accumulateGasUsed: tryAsServiceGas(newServiceStat.accumulate.gas),
+        onTransfersCount: tryAsU32(newServiceStat.onTransfers.count),
+        onTransfersGasUsed: tryAsServiceGas(newServiceStat.onTransfers.gas),
       });
     }
 
