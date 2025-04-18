@@ -3,13 +3,13 @@ import { tryAsTimeSlot } from "@typeberry/block";
 import { MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
 import type { AuthorizerHash } from "@typeberry/block/work-report";
 import { Bytes } from "@typeberry/bytes";
+import { asKnownSize } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
+import { tryAsPerCore } from "@typeberry/state";
 import { deepEqual } from "@typeberry/utils";
 import { Authorization, type AuthorizationInput, type AuthorizationState } from "./authorization";
-import {tryAsPerCore} from "@typeberry/state";
-import {asKnownSize} from "@typeberry/collections";
 
 const authQueues = (core1: AuthorizerHash[], core2: AuthorizerHash[]): AuthorizationState["authQueues"] => {
   return tryAsPerCore([asKnownSize(core1), asKnownSize(core2)], tinyChainSpec);

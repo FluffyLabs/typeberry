@@ -9,9 +9,9 @@ import {
 import { fromJson, guaranteesExtrinsicFromJson } from "@typeberry/block-json";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import type { AuthorizerHash, WorkPackageInfo } from "@typeberry/block/work-report";
-import { asKnownSize, FixedSizeArray, HashDictionary, HashSet } from "@typeberry/collections";
+import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
+import { type KeccakHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
 import {
@@ -99,7 +99,10 @@ class TestState {
       currentValidatorData: tryAsPerValidator(pre.curr_validators, spec),
       previousValidatorData: tryAsPerValidator(pre.prev_validators, spec),
       entropy: FixedSizeArray.new(pre.entropy, ENTROPY_ENTRIES),
-      authPools: tryAsPerCore(pre.auth_pools.map(x => asKnownSize(x)), spec),
+      authPools: tryAsPerCore(
+        pre.auth_pools.map((x) => asKnownSize(x)),
+        spec,
+      ),
       recentBlocks: asOpaqueType(pre.recent_blocks),
       services: new Map(pre.accounts.map((x) => [x.id, x])),
     };

@@ -18,7 +18,7 @@ import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, HashDictionary, HashSet, SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU8, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import {
   ActivityData,
@@ -38,7 +38,6 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { SafroleSealingKeysData } from "@typeberry/state/safrole-data";
-import { asOpaqueType } from "@typeberry/utils";
 import { merkelizeState, serializeState } from ".";
 
 const spec = tinyChainSpec;

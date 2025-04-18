@@ -7,7 +7,7 @@ const sortedSetCodec = <T extends OpaqueHash>() =>
   codec.sequenceVarLen(codec.bytes(HASH_SIZE)).convert<SortedSet<T>>(
     (input) => input.array,
     (output) => {
-      const typed: T[] = output.map(x => x.asOpaque());
+      const typed: T[] = output.map((x) => x.asOpaque());
       return SortedSet.fromSortedArray(hashComparator, typed);
     },
   );

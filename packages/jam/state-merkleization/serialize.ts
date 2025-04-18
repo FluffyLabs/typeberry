@@ -1,7 +1,14 @@
-import { EntropyHash, type ServiceId, TimeSlot, codecPerEpochBlock, codecPerValidator } from "@typeberry/block";
+import {
+  type EntropyHash,
+  type ServiceId,
+  type TimeSlot,
+  codecPerEpochBlock,
+  codecPerValidator,
+} from "@typeberry/block";
 import { codecFixedSizeArray, codecKnownSizeArray } from "@typeberry/block/codec";
 import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
 import type { PreimageHash } from "@typeberry/block/preimage";
+import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
 import { type Descriptor, codec } from "@typeberry/codec";
 import { HashSet } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
@@ -23,7 +30,6 @@ import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
 import { SafroleData } from "@typeberry/state/safrole-data";
 import { StateEntry } from "./entries";
 import { type StateKey, keys } from "./keys";
-import {AuthorizerHash, WorkPackageHash} from "@typeberry/block/work-report";
 
 export type StateCodec<T> = {
   key: StateKey;
@@ -49,7 +55,9 @@ export namespace serialize {
   /** C(2): https://graypaper.fluffylabs.dev/#/85129da/38be0138be01?v=0.6.3 */
   export const authQueues: StateCodec<State["authQueues"]> = {
     key: keys.index(StateEntry.Phi),
-    Codec: codecPerCore(codecFixedSizeArray(codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(), AUTHORIZATION_QUEUE_SIZE)),
+    Codec: codecPerCore(
+      codecFixedSizeArray(codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(), AUTHORIZATION_QUEUE_SIZE),
+    ),
     extract: (s) => s.authQueues,
   };
 

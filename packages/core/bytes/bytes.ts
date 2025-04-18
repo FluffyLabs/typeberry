@@ -1,5 +1,5 @@
 import { type Comparator, Ordering } from "@typeberry/ordering";
-import { Opaque, TEST_COMPARE_VIA_STRING, TokenOf, asOpaqueType, check } from "@typeberry/utils";
+import { TEST_COMPARE_VIA_STRING, type TokenOf, asOpaqueType, check } from "@typeberry/utils";
 
 /**
  * A variable-length blob of bytes with a concise text representation.

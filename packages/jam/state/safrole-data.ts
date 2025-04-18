@@ -10,11 +10,11 @@ import {
 } from "@typeberry/block";
 import { codecWithContext } from "@typeberry/block/codec";
 import { Ticket } from "@typeberry/block/tickets";
-import { type CodecRecord, type Descriptor, codec } from "@typeberry/codec";
-import { asKnownSize, type KnownSizeArray } from "@typeberry/collections";
+import { type CodecRecord, codec } from "@typeberry/codec";
+import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
-import { seeThrough, WithDebug } from "@typeberry/utils";
+import { WithDebug, seeThrough } from "@typeberry/utils";
 import { ValidatorData } from "./validator-data";
 
 export enum SafroleSealingKeysKind {
@@ -102,10 +102,7 @@ export class SafroleData {
     nextValidatorData: codecPerValidator(ValidatorData.Codec),
     epochRoot: codec.bytes(BANDERSNATCH_RING_ROOT_BYTES).asOpaque<BandersnatchRingRoot>(),
     sealingKeySeries: SafroleSealingKeysData.Codec,
-    ticketsAccumulator: codec.sequenceVarLen(Ticket.Codec).convert(
-      seeThrough,
-      asKnownSize
-    ),
+    ticketsAccumulator: codec.sequenceVarLen(Ticket.Codec).convert(seeThrough, asKnownSize),
   });
 
   static fromCodec({ nextValidatorData, epochRoot, sealingKeySeries, ticketsAccumulator }: CodecRecord<SafroleData>) {
