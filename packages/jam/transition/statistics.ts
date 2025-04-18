@@ -1,6 +1,7 @@
 import {
   type CoreIndex,
   type Extrinsic,
+  type ServiceGas,
   type ServiceId,
   type TimeSlot,
   type ValidatorIndex,
@@ -15,7 +16,7 @@ import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { WorkReport } from "@typeberry/block/work-report";
 import type { WorkResult } from "@typeberry/block/work-result";
 import type { ChainSpec } from "@typeberry/config";
-import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
+import { type U16, type U32, tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import type { State } from "@typeberry/state";
 import { CoreStatistics, ServiceStatistics, ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
@@ -25,6 +26,27 @@ export type Input = {
   authorIndex: ValidatorIndex;
   extrinsic: Extrinsic;
   availableReports: WorkReport[];
+};
+
+export type ServiceStat = {
+  refinementCount: U32;
+  refinementGasUsed: ServiceGas;
+  imports: U16;
+  extrinsicCount: U16;
+  extrinsicSize: U32;
+  exports: U16;
+  provided: {
+    count: U16;
+    size: U32;
+  };
+  accumulate: {
+    count: U32;
+    gas: ServiceGas;
+  };
+  onTransfers: {
+    count: U32;
+    gas: ServiceGas;
+  };
 };
 
 /** https://graypaper.fluffylabs.dev/#/68eaa1f/18f60118f601?v=0.6.4 */
@@ -72,21 +94,17 @@ export class Statistics {
    * https://graypaper.fluffylabs.dev/#/68eaa1f/19fc0019fc00?v=0.6.4
    */
   public calculateCoreStatistics(
-    c: CoreIndex,
+    coreIndex: CoreIndex,
     workReports: WorkReport[],
     availableReports: WorkReport[],
     availabilityAssurances: AvailabilityAssurance[],
-  ) {
-    const { imports, extrinsicCount, extrinsicSize, exports, gasUsed, bundleSize } = this.calculateRefineScoreCore(workReports);
+  ): CoreStatistics {
+    const { imports, extrinsicCount, extrinsicSize, exports, gasUsed, bundleSize } =
+      this.calculateRefineScoreCore(workReports);
     const dataAvailabilityLoad = this.calculateDictionaryScoreCore(availableReports);
-    const popularity = availabilityAssurances.reduce((sum, assurance) => {
-      if (assurance === undefined || assurance.bitfield === undefined) {
-        return sum;
-      }
-      return sum + (assurance.bitfield.isSet(c) ? 1 : 0);
-    }, 0);
+    const popularity = this.calculatePopularityScoreCore(coreIndex, availabilityAssurances);
 
-    return {
+    return CoreStatistics.fromCodec({
       imports,
       extrinsicCount,
       extrinsicSize,
@@ -95,7 +113,7 @@ export class Statistics {
       bundleSize,
       dataAvailabilityLoad,
       popularity,
-    };
+    });
   }
 
   /** https://graypaper.fluffylabs.dev/#/68eaa1f/192d01192d01?v=0.6.4 */
@@ -120,7 +138,30 @@ export class Statistics {
       score.bundleSize += workReport.workPackageSpec.length;
     }
 
-    return score;
+    if (score.imports > 2 ** 16) {
+      throw new Error("Imports count overflows");
+    }
+    if (score.extrinsicCount > 2 ** 16) {
+      throw new Error("Extrinsic count overflows");
+    }
+    if (score.extrinsicSize > 2 ** 32) {
+      throw new Error("Extrinsic size overflows");
+    }
+    if (score.exports > 2 ** 16) {
+      throw new Error("Exports count overflows");
+    }
+    if (score.bundleSize > 2 ** 32) {
+      throw new Error("Bundle size overflows");
+    }
+
+    return {
+      imports: tryAsU16(score.imports),
+      extrinsicCount: tryAsU16(score.extrinsicCount),
+      extrinsicSize: tryAsU32(score.extrinsicSize),
+      exports: tryAsU16(score.exports),
+      gasUsed: tryAsServiceGas(score.gasUsed),
+      bundleSize: tryAsU32(score.bundleSize),
+    };
   }
 
   /** https://graypaper.fluffylabs.dev/#/68eaa1f/195601195601?v=0.6.4 */
@@ -133,40 +174,62 @@ export class Statistics {
       sum += workPackageLength + W_G * workPackageSegment;
     }
 
-    return sum;
+    if (sum > 2 ** 32) {
+      throw new Error("Dictionary score overflows");
+    }
+
+    return tryAsU32(sum);
   }
 
+  private calculatePopularityScoreCore(coreIndex: CoreIndex, availabilityAssurances: AvailabilityAssurance[]) {
+    let sum = 0;
+    for (const assurance of availabilityAssurances) {
+      if (assurance === undefined || assurance.bitfield === undefined) {
+        continue;
+      }
+      sum += assurance.bitfield.isSet(coreIndex) ? 1 : 0;
+    }
+
+    if (sum > 2 ** 16) {
+      throw new Error("Popularity score overflows");
+    }
+
+    return tryAsU16(sum);
+  }
 
   /**
    * Calculate service statistics
    *
    * https://graypaper.fluffylabs.dev/#/68eaa1f/199002199002?v=0.6.4
    */
-  public calculateServiceStatistics(s: ServiceId, workReports: WorkReport[], preimages: PreimagesExtrinsic) {
-    const filtered = workReports
-      .filter((r) => r !== undefined)
-      .map((r) => r.results[0])
-      .filter((r) => r !== undefined && r.serviceId === s);
-    const { refinementCount, refinementGasUsed, imports, extrinsicCount, extrinsicSize, exports } = this.calculateRefineScoreService(filtered);
+  public calculateServiceStatistics(
+    s: ServiceId,
+    workReports: WorkReport[],
+    preimages: PreimagesExtrinsic,
+  ): ServiceStatistics {
+    const filtered = workReports.flatMap((wr) => wr.results).filter((r) => r?.serviceId === s);
+    const { refinementCount, refinementGasUsed, imports, extrinsicCount, extrinsicSize, exports } =
+      this.calculateRefineScoreService(filtered);
 
-    // TODO [MaSo] Implement a & t calculation
-    // https://graypaper.fluffylabs.dev/#/68eaa1f/192e02196b02?v=0.6.4
-    const accumulate = { count: 0, gas: 0n };
-    const onTransfers = { count: 0, gas: 0n };
+    const accumulate = this.calculateAccumulateScoreService();
+    const onTransfers = this.calculateOnTransferScoreService();
 
     const provided = this.calculateProvidedScoreService(preimages.filter((p) => p !== undefined && p.requester === s));
 
-    return {
+    return ServiceStatistics.fromCodec({
       refinementCount,
       refinementGasUsed,
       imports,
       extrinsicCount,
       extrinsicSize,
       exports,
-      provided,
-      accumulate,
-      onTransfers,
-    };
+      providedCount: provided.count,
+      providedSize: provided.size,
+      accumulateCount: accumulate.count,
+      accumulateGasUsed: accumulate.gas,
+      onTransfersCount: onTransfers.count,
+      onTransfersGasUsed: onTransfers.gas,
+    });
   }
 
   /** https://graypaper.fluffylabs.dev/#/68eaa1f/191103191103?v=0.6.4 */
@@ -189,7 +252,48 @@ export class Statistics {
       score.exports += workResult.load.exportedSegments;
     }
 
-    return score;
+    if (score.refinementCount > 2 ** 32) {
+      throw new Error("Refinement count overflows");
+    }
+    if (score.imports > 2 ** 16) {
+      throw new Error("Imports count overflows");
+    }
+    if (score.extrinsicCount > 2 ** 16) {
+      throw new Error("Extrinsic count overflows");
+    }
+    if (score.extrinsicSize > 2 ** 32) {
+      throw new Error("Extrinsic size overflows");
+    }
+    if (score.exports > 2 ** 16) {
+      throw new Error("Exports count overflows");
+    }
+
+    return {
+      refinementCount: tryAsU32(score.refinementCount),
+      refinementGasUsed: tryAsServiceGas(score.refinementGasUsed),
+      imports: tryAsU16(score.imports),
+      extrinsicCount: tryAsU16(score.extrinsicCount),
+      extrinsicSize: tryAsU32(score.extrinsicSize),
+      exports: tryAsU16(score.exports),
+    };
+  }
+
+  private calculateAccumulateScoreService() {
+    // TODO [MaSo] Implement a & t calculation
+    // https://graypaper.fluffylabs.dev/#/68eaa1f/192e02196b02?v=0.6.4
+    return {
+      count: tryAsU32(0),
+      gas: tryAsServiceGas(0n),
+    };
+  }
+
+  private calculateOnTransferScoreService() {
+    // TODO [MaSo] Implement a & t calculation
+    // https://graypaper.fluffylabs.dev/#/68eaa1f/192e02196b02?v=0.6.4
+    return {
+      count: tryAsU32(0),
+      gas: tryAsServiceGas(0n),
+    };
   }
 
   /** https://graypaper.fluffylabs.dev/#/68eaa1f/191602191602?v=0.6.4 */
@@ -204,7 +308,17 @@ export class Statistics {
       score.size += preimage.blob.length;
     }
 
-    return score;
+    if (score.count > 2 ** 16) {
+      throw new Error("Provided count overflows");
+    }
+    if (score.size > 2 ** 32) {
+      throw new Error("Provided size overflows");
+    }
+
+    return {
+      count: tryAsU16(score.count),
+      size: tryAsU32(score.size),
+    };
   }
 
   /**
@@ -281,43 +395,18 @@ export class Statistics {
         extrinsic.assurances,
       );
 
-      cores[coreId] = CoreStatistics.fromCodec({
-        imports: tryAsU16(newCoreStat.imports),
-        exports: tryAsU16(newCoreStat.exports),
-        extrinsicSize: tryAsU32(newCoreStat.extrinsicSize),
-        extrinsicCount: tryAsU16(newCoreStat.extrinsicCount),
-        gasUsed: tryAsServiceGas(newCoreStat.gasUsed),
-        bundleSize: tryAsU32(newCoreStat.bundleSize),
-        dataAvailabilityLoad: tryAsU32(newCoreStat.dataAvailabilityLoad),
-        popularity: tryAsU16(newCoreStat.popularity),
-      });
+      cores[coreId] = newCoreStat;
     }
 
     /** Update services statistics */
-    for (const service of services) {
-      const serviceId = service[0];
-      let serviceStatistics = service[1];
-
+    for (let [serviceId, _serviceStatistics] of services.entries()) {
       const newServiceStat = this.calculateServiceStatistics(
         tryAsServiceId(serviceId),
         workReports,
         extrinsic.preimages,
       );
 
-      serviceStatistics = ServiceStatistics.fromCodec({
-        imports: tryAsU16(newServiceStat.imports),
-        exports: tryAsU16(newServiceStat.exports),
-        extrinsicCount: tryAsU16(newServiceStat.extrinsicCount),
-        extrinsicSize: tryAsU32(newServiceStat.extrinsicSize),
-        refinementCount: tryAsU32(newServiceStat.refinementCount),
-        refinementGasUsed: tryAsServiceGas(newServiceStat.refinementGasUsed),
-        providedCount: tryAsU16(newServiceStat.provided.count),
-        providedSize: tryAsU32(newServiceStat.provided.size),
-        accumulateCount: tryAsU32(newServiceStat.accumulate.count),
-        accumulateGasUsed: tryAsServiceGas(newServiceStat.accumulate.gas),
-        onTransfersCount: tryAsU32(newServiceStat.onTransfers.count),
-        onTransfersGasUsed: tryAsServiceGas(newServiceStat.onTransfers.gas),
-      });
+      _serviceStatistics = newServiceStat;
     }
 
     /** Update state */

@@ -5,9 +5,9 @@ import type { AssurancesExtrinsic } from "@typeberry/block/assurances";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { TicketsExtrinsic } from "@typeberry/block/tickets";
-import { asKnownSize } from "@typeberry/collections";
+import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { CoreStatistics, ServiceStatistics, StatisticsData, ValidatorStatistics } from "@typeberry/state";
+import { CoreStatistics, ServiceStatistics, StatisticsData, ValidatorStatistics, tryAsPerCore } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
 import { Statistics, type StatisticsState } from "./statistics";
 
@@ -26,9 +26,11 @@ describe("Statistics", () => {
     const validatorIndex = tryAsValidatorIndex(0);
     const currentStatistics = asOpaqueType([ValidatorStatistics.empty()]);
     const lastStatistics = asOpaqueType([ValidatorStatistics.empty()]);
-    const coreStatistics = asOpaqueType([CoreStatistics.empty()]);
-    const serviceId = tryAsServiceId(0);
-    const serviceStatistics = asOpaqueType([serviceId, ServiceStatistics.empty()]);
+    const coreStatistics = tryAsPerCore(
+      FixedSizeArray.fill(() => CoreStatistics.empty(), tinyChainSpec.coresCount),
+      tinyChainSpec,
+    );
+    const serviceStatistics = new Map([[tryAsServiceId(0), ServiceStatistics.empty()]]);
     const statisticsData = new StatisticsData(currentStatistics, lastStatistics, coreStatistics, serviceStatistics);
     const state: StatisticsState = {
       statistics: statisticsData,
@@ -113,9 +115,11 @@ describe("Statistics", () => {
       const validatorIndex = tryAsValidatorIndex(0);
       const currentStatistics: PerValidator<ValidatorStatistics> = asOpaqueType([ValidatorStatistics.empty()]);
       const lastStatistics = asOpaqueType([ValidatorStatistics.empty()]);
-      const coreStatistics = asOpaqueType([CoreStatistics.empty()]);
-      const serviceId = tryAsServiceId(0);
-      const serviceStatistics = asOpaqueType([serviceId, ServiceStatistics.empty()]);
+      const coreStatistics = tryAsPerCore(
+        FixedSizeArray.fill(() => CoreStatistics.empty(), tinyChainSpec.coresCount),
+        tinyChainSpec,
+      );
+      const serviceStatistics = new Map([[tryAsServiceId(0), ServiceStatistics.empty()]]);
       const statisticsData = new StatisticsData(currentStatistics, lastStatistics, coreStatistics, serviceStatistics);
       const state: StatisticsState = {
         statistics: statisticsData,
