@@ -8,9 +8,10 @@ import {
   tryAsServiceGas,
   tryAsServiceId,
 } from "@typeberry/block";
+import { getExtrinsicFromJson } from "@typeberry/block-json";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { type U16, type U32, tryAsU64 } from "@typeberry/numbers";
+import type { U16, U32 } from "@typeberry/numbers";
 import {
   CoreStatistics,
   ServiceStatistics,
@@ -19,10 +20,8 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { type Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics";
-import { asOpaqueType } from "@typeberry/utils";
 import { logger } from "../common";
-import { getExtrinsicFromJson } from "./codec/extrinsic";
-import { commonFromJson } from "./common-types";
+import { validatorDataFromJson } from "./common-types";
 
 class TinyInput {
   static fromJson = json.object<TinyInput, Input>(
@@ -108,7 +107,7 @@ class TestCoreStatistics {
       extrinsic_size: "number",
       extrinsic_count: "number",
       bundle_size: "number",
-      gas_used: json.fromNumber((x) => asOpaqueType(tryAsU64(x))),
+      gas_used: json.fromNumber(tryAsServiceGas),
     },
     ({ da_load, popularity, imports, exports, extrinsic_size, extrinsic_count, bundle_size, gas_used }) => {
       return CoreStatistics.fromCodec({
@@ -119,7 +118,7 @@ class TestCoreStatistics {
         extrinsicSize: extrinsic_size,
         extrinsicCount: extrinsic_count,
         bundleSize: bundle_size,
-        gasUsed: tryAsServiceGas(gas_used),
+        gasUsed: gas_used,
       });
     },
   );
@@ -140,15 +139,15 @@ class TestServiceStatistics {
       provided_count: "number",
       provided_size: "number",
       refinement_count: "number",
-      refinement_gas_used: json.fromNumber((x) => asOpaqueType(tryAsU64(x))),
+      refinement_gas_used: json.fromNumber(tryAsServiceGas),
       imports: "number",
       exports: "number",
       extrinsic_size: "number",
       extrinsic_count: "number",
       accumulate_count: "number",
-      accumulate_gas_used: json.fromNumber((x) => asOpaqueType(tryAsU64(x))),
+      accumulate_gas_used: json.fromNumber(tryAsServiceGas),
       on_transfers_count: "number",
-      on_transfers_gas_used: json.fromNumber((x) => asOpaqueType(tryAsU64(x))),
+      on_transfers_gas_used: json.fromNumber(tryAsServiceGas),
     },
     ({
       provided_count,
@@ -223,7 +222,7 @@ class TestState {
   static fromJson: FromJson<TestState> = {
     statistics: TestStatisticsState.fromJson,
     slot: "number",
-    curr_validators: json.array(commonFromJson.validatorData),
+    curr_validators: json.array(validatorDataFromJson),
   };
 
   statistics!: TestStatisticsState;

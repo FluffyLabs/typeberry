@@ -357,4 +357,15 @@ describe("Memory", () => {
       assert.deepEqual(memory, expectedMemory);
     });
   });
+
+  describe("isWriteable", () => {
+    it('should return true for length 0 "slices"', () => {
+      const memory = new Memory();
+      const addressToStore = tryAsMemoryIndex(1);
+      const length = 0;
+
+      const isWriteable = memory.isWriteable(addressToStore, length);
+      assert.strictEqual(isWriteable, true);
+    });
+  });
 });

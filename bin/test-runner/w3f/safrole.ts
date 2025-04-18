@@ -14,6 +14,7 @@ import {
   tryAsPerValidator,
   tryAsTimeSlot,
 } from "@typeberry/block";
+import { fromJson } from "@typeberry/block-json";
 import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
@@ -26,12 +27,12 @@ import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data";
 import { Result, deepEqual, resultToString } from "@typeberry/utils";
 import { logger } from "../common";
-import { commonFromJson, getChainSpec } from "./common-types";
+import { getChainSpec, validatorDataFromJson } from "./common-types";
 namespace safroleFromJson {
   export const bytesBlob = json.fromString(BytesBlob.parseBlob);
 
   export const ticketBody: FromJson<Ticket> = {
-    id: commonFromJson.bytes32(),
+    id: fromJson.bytes32(),
     attempt: "number",
   };
 
@@ -48,7 +49,7 @@ namespace safroleFromJson {
 
 export class TicketsOrKeys {
   static fromJson: FromJson<TicketsOrKeys> = {
-    keys: json.optional<BandersnatchKey[]>(json.array(commonFromJson.bytes32())),
+    keys: json.optional<BandersnatchKey[]>(json.array(fromJson.bytes32())),
     tickets: json.optional<Ticket[]>(json.array(safroleFromJson.ticketBody)),
   };
 
@@ -87,15 +88,15 @@ export enum TestErrorCode {
 class JsonState {
   static fromJson: FromJson<JsonState> = {
     tau: "number",
-    eta: json.array(commonFromJson.bytes32()),
-    lambda: json.array(commonFromJson.validatorData),
-    kappa: json.array(commonFromJson.validatorData),
-    gamma_k: json.array(commonFromJson.validatorData),
-    iota: json.array(commonFromJson.validatorData),
+    eta: json.array(fromJson.bytes32()),
+    lambda: json.array(validatorDataFromJson),
+    kappa: json.array(validatorDataFromJson),
+    gamma_k: json.array(validatorDataFromJson),
+    iota: json.array(validatorDataFromJson),
     gamma_a: json.array(safroleFromJson.ticketBody),
     gamma_s: TicketsOrKeys.fromJson,
     gamma_z: json.fromString((v) => Bytes.parseBytes(v, BANDERSNATCH_RING_ROOT_BYTES).asOpaque()),
-    post_offenders: json.array(commonFromJson.bytes32()),
+    post_offenders: json.array(fromJson.bytes32()),
   };
   // timeslot
   tau!: TimeSlot;
@@ -138,8 +139,8 @@ class JsonState {
 
 export class EpochMark {
   static fromJson: FromJson<EpochMark> = {
-    entropy: commonFromJson.bytes32(),
-    tickets_entropy: commonFromJson.bytes32(),
+    entropy: fromJson.bytes32(),
+    tickets_entropy: fromJson.bytes32(),
     validators: json.array(safroleFromJson.validatorKeys),
   };
 
@@ -214,7 +215,7 @@ class TestInput {
   static fromJson = json.object<TestInput, Input>(
     {
       slot: "number",
-      entropy: commonFromJson.bytes32(),
+      entropy: fromJson.bytes32(),
       extrinsic: json.array(safroleFromJson.ticketEnvelope),
     },
     ({ entropy, extrinsic, slot }) => ({

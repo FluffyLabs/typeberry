@@ -74,7 +74,7 @@ export enum PeekPokeError {
 export const NoMachineError = Symbol("Machine index not found.");
 export type NoMachineError = typeof NoMachineError;
 
-/** Error for `void` host call when there is already a non-accssible page in the range. */
+/** Error for `void` host call when there is already a non-accessible page in the range. */
 export const InvalidPageError = Symbol("Attempting to void non-accessible page.");
 export type InvalidPageError = typeof InvalidPageError;
 
@@ -82,7 +82,7 @@ export type InvalidPageError = typeof InvalidPageError;
 export const SegmentExportError = Symbol("Too many segments already exported.");
 export type SegmentExportError = typeof SegmentExportError;
 
-/** Host functions external invokations available during refine phase. */
+/** Host functions external invocations available during refine phase. */
 export interface RefineExternalities {
   /** Forget a previously started nested VM. */
   machineExpunge(machineIndex: MachineId): Promise<Result<ProgramCounter, NoMachineError>>;

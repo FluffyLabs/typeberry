@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { Block } from "@typeberry/block";
+import { blockFromJson } from "@typeberry/block-json";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
@@ -9,13 +10,12 @@ import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { OnChain } from "@typeberry/transition/chain-stf";
 import { BlockVerifier } from "../../../packages/jam/transition/block-verification";
-import { blockFromJson } from "../w3f/codec/block";
 import { TestState, loadState } from "./stateLoader";
 
 export class StateTransitionFuzzed {
   static fromJson: FromJson<StateTransitionFuzzed> = {
     pre_state: TestState.fromJson,
-    block: blockFromJson,
+    block: blockFromJson(tinyChainSpec),
   };
   pre_state!: TestState;
   block!: Block;

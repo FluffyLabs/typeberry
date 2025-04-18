@@ -4,10 +4,16 @@
   "description": "The main typeberry binary.",
   "main": "index.ts",
   "dependencies": {
+    "@typeberry/block": "0.0.1",
     "@typeberry/block-generator": "0.0.1",
+    "@typeberry/block-json": "0.0.1",
+    "@typeberry/bytes": "0.0.1",
+    "@typeberry/codec": "0.0.1",
     "@typeberry/config": "0.0.1",
-    "@typeberry/logger": "0.0.1",
-    "@typeberry/importer": "0.0.1"
+    "@typeberry/ext-ipc": "^0.0.1",
+    "@typeberry/importer": "0.0.1",
+    "@typeberry/json-parser": "0.0.1",
+    "@typeberry/logger": "0.0.1"
   },
   "scripts": {
     "start": "ts-node ./index.ts",

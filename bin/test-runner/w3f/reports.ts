@@ -6,8 +6,9 @@ import {
   tryAsPerEpochBlock,
   tryAsPerValidator,
 } from "@typeberry/block";
+import { fromJson, guaranteesExtrinsicFromJson } from "@typeberry/block-json";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
-import type { WorkPackageInfo } from "@typeberry/block/work-report";
+import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
 import { FixedSizeArray, HashDictionary, HashSet } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
@@ -31,21 +32,26 @@ import {
 import { guaranteesAsView } from "@typeberry/transition/reports/test.utils";
 import { Result, asOpaqueType, deepEqual, resultToString } from "@typeberry/utils";
 import { logger } from "../common";
-import { fromJson as codecFromJson } from "./codec/common";
-import { guaranteesExtrinsicFromJson } from "./codec/guarantees-extrinsic";
-import {
-  TestAccountItem,
-  TestAvailabilityAssignment,
-  TestBlockState,
-  TestSegmentRootLookupItem,
-  commonFromJson,
-} from "./common-types";
+import { TestAccountItem, TestAvailabilityAssignment, TestBlockState, validatorDataFromJson } from "./common-types";
+
+class TestSegmentRootLookupItem {
+  static fromJson = json.object<TestSegmentRootLookupItem, WorkPackageInfo>(
+    {
+      work_package_hash: fromJson.bytes32(),
+      segment_tree_root: fromJson.bytes32(),
+    },
+    ({ work_package_hash, segment_tree_root }) => new WorkPackageInfo(work_package_hash, segment_tree_root),
+  );
+
+  work_package_hash!: WorkPackageHash;
+  segment_tree_root!: ExportsRootHash;
+}
 
 class Input {
   static fromJson: FromJson<Input> = {
     guarantees: guaranteesExtrinsicFromJson,
     slot: "number",
-    known_packages: json.array(codecFromJson.bytes32()),
+    known_packages: json.array(fromJson.bytes32()),
   };
 
   guarantees!: GuaranteesExtrinsic;
@@ -126,12 +132,12 @@ class TestServiceStatistics {
 class TestState {
   static fromJson: FromJson<TestState> = {
     avail_assignments: json.array(json.nullable(TestAvailabilityAssignment.fromJson)),
-    curr_validators: json.array(commonFromJson.validatorData),
-    prev_validators: json.array(commonFromJson.validatorData),
-    entropy: json.array(commonFromJson.bytes32()),
-    offenders: json.array(codecFromJson.bytes32<Ed25519Key>()),
+    curr_validators: json.array(validatorDataFromJson),
+    prev_validators: json.array(validatorDataFromJson),
+    entropy: json.array(fromJson.bytes32()),
+    offenders: json.array(fromJson.bytes32<Ed25519Key>()),
     recent_blocks: json.array(TestBlockState.fromJson),
-    auth_pools: ["array", json.array(codecFromJson.bytes32())],
+    auth_pools: ["array", json.array(fromJson.bytes32())],
     accounts: json.array(TestAccountItem.fromJson),
     cores_statistics: json.array(TestCoreStatistics.fromJson),
     services_statistics: json.array(TestServiceStatistics.fromJson),
@@ -205,7 +211,7 @@ class OutputData {
   static fromJson = json.object<OutputData, ReportsOutput>(
     {
       reported: json.array(TestSegmentRootLookupItem.fromJson),
-      reporters: json.array(codecFromJson.bytes32()),
+      reporters: json.array(fromJson.bytes32()),
     },
     ({ reported, reporters }) => ({
       reported: HashDictionary.fromEntries(reported.map((x) => [x.workPackageHash, x])),

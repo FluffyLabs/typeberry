@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { type HeaderHash, type TimeSlot, tryAsPerValidator } from "@typeberry/block";
+import { fromJson, getAssurancesExtrinsicFromJson, workReportFromJson } from "@typeberry/block-json";
 import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "@typeberry/block/assurances";
 import type { WorkReport } from "@typeberry/block/work-report";
 import { Decoder, Encoder } from "@typeberry/codec";
@@ -13,8 +14,7 @@ import {
   type AssurancesState,
 } from "@typeberry/transition/assurances";
 import { Result, deepEqual } from "@typeberry/utils";
-import { getAssurancesExtrinsicFromJson } from "./codec/assurances-extrinsic";
-import { TestAvailabilityAssignment, TestWorkReport, commonFromJson } from "./common-types";
+import { TestAvailabilityAssignment, validatorDataFromJson } from "./common-types";
 
 class Input {
   assurances!: AssurancesExtrinsic;
@@ -36,13 +36,13 @@ class Input {
 const inputFromJson = (spec: ChainSpec): FromJson<Input> => ({
   assurances: getAssurancesExtrinsicFromJson(spec),
   slot: "number",
-  parent: commonFromJson.bytes32(),
+  parent: fromJson.bytes32(),
 });
 
 class TestState {
   static fromJson: FromJson<TestState> = {
     avail_assignments: json.array(json.nullable(TestAvailabilityAssignment.fromJson)),
-    curr_validators: json.array(commonFromJson.validatorData),
+    curr_validators: json.array(validatorDataFromJson),
   };
 
   avail_assignments!: Array<AvailabilityAssignment | null>;
@@ -68,7 +68,7 @@ enum AssurancesErrorCode {
 
 class OutputData {
   static fromJson: FromJson<OutputData> = {
-    reported: json.array(TestWorkReport.fromJson),
+    reported: json.array(workReportFromJson),
   };
 
   reported!: WorkReport[];
