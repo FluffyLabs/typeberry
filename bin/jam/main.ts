@@ -6,17 +6,12 @@ import type { Finished, MainInit } from "@typeberry/generic-worker";
 import * as blockImporter from "@typeberry/importer";
 import type { MainReady } from "@typeberry/importer/state-machine";
 import type { MessageChannelStateMachine } from "@typeberry/state-machine";
+import { type Arguments, Command, KnownChainSpec } from "./args";
 import { startBlockGenerator } from "./author";
 import { initializeExtensions } from "./extensions";
 import { startBlocksReader } from "./reader";
 
 const logger = Logger.new(__filename, "jam");
-
-/** Chain spec chooser. */
-export enum KnownChainSpec {
-  Tiny = "tiny",
-  Full = "full",
-}
 
 /** General options. */
 type Options = {
@@ -28,7 +23,7 @@ type Options = {
   chainSpec: KnownChainSpec;
 };
 
-export async function main(files?: string[]) {
+export async function main(args: Arguments) {
   if (!isMainThread) {
     logger.error("The main binary cannot be running as a Worker!");
     return;
@@ -36,7 +31,7 @@ export async function main(files?: string[]) {
 
   const options: Options = {
     isAuthoring: false,
-    blocksToImport: files,
+    blocksToImport: args.command === Command.Import ? args.args.files : undefined,
     chainSpec: KnownChainSpec.Tiny,
   };
 
