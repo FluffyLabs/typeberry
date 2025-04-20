@@ -4,7 +4,7 @@ import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
-import type { BlocksDb, StateDb } from "@typeberry/database";
+import type { BlocksDb, StatesDb } from "@typeberry/database";
 import { HASH_SIZE, blake2b } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
@@ -23,7 +23,7 @@ enum ServiceExecutorError {
 export class WorkPackageExecutor {
   constructor(
     private readonly blocks: BlocksDb,
-    private readonly state: StateDb,
+    private readonly state: StatesDb,
     private readonly hasher: TransitionHasher,
   ) {}
 
@@ -133,6 +133,7 @@ export class WorkPackageExecutor {
       return Result.error(ServiceExecutorError.ServiceCodeMismatch);
     }
 
+    // TODO [ToDr] This should rather be read from preimages db?
     const serviceCode = service?.data.preimages.get(serviceCodeHash.asOpaque())?.blob ?? null;
     if (serviceCode === null) {
       return Result.error(ServiceExecutorError.NoServiceCode);

@@ -13,6 +13,7 @@ describe("CLI", () => {
     deepEqual(args, {
       command: Command.Run,
       args: {
+        genesis: null,
         chainSpec: KnownChainSpec.Tiny,
       },
     });
@@ -24,7 +25,20 @@ describe("CLI", () => {
     deepEqual(args, {
       command: Command.Run,
       args: {
+        genesis: null,
         chainSpec: KnownChainSpec.Full,
+      },
+    });
+  });
+
+  it("should parse genesis option", () => {
+    const args = parse(["--genesis=./genesis.json"]);
+
+    deepEqual(args, {
+      command: Command.Run,
+      args: {
+        genesis: "./genesis.json",
+        chainSpec: KnownChainSpec.Tiny,
       },
     });
   });
@@ -35,6 +49,7 @@ describe("CLI", () => {
     deepEqual(args, {
       command: Command.Import,
       args: {
+        genesis: null,
         chainSpec: KnownChainSpec.Tiny,
         files: [".././file1.json", ".././file2.json"],
       },

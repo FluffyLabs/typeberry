@@ -71,7 +71,7 @@ export class ServiceAccountInfo extends WithDebug {
 export class PreimageItem extends WithDebug {
   static Codec = codec.Class(PreimageItem, {
     hash: codec.bytes(HASH_SIZE).asOpaque<PreimageHash>(),
-    blob: codec.dump,
+    blob: codec.blob,
   });
 
   static fromCodec({ hash, blob }: CodecRecord<PreimageItem>) {
@@ -89,7 +89,7 @@ export class PreimageItem extends WithDebug {
 export class StateItem extends WithDebug {
   static Codec = codec.Class(StateItem, {
     hash: codec.bytes(HASH_SIZE).asOpaque<StateKey>(),
-    blob: codec.dump,
+    blob: codec.blob,
   });
 
   static fromCodec({ hash, blob }: CodecRecord<StateItem>) {
@@ -128,7 +128,7 @@ export class LookupHistoryItem {
   ) {}
 
   static isRequested(item: LookupHistoryItem): boolean {
-    return item.length === 0;
+    return item.slots.length === 0;
   }
 }
 

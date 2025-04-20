@@ -1,6 +1,6 @@
 import type { BlockView, HeaderHash, HeaderView } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
-import type { BlocksDb, StateDb } from "@typeberry/database";
+import type { BlocksDb, StatesDb } from "@typeberry/database";
 import { WithHash } from "@typeberry/hash";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
@@ -13,7 +13,7 @@ export class Importer {
 
   constructor(
     private readonly blocks: BlocksDb,
-    private readonly states: StateDb,
+    private readonly states: StatesDb,
     private readonly spec: ChainSpec,
     hasher: TransitionHasher,
   ) {
@@ -39,7 +39,7 @@ export class Importer {
       throw new Error(`Block transition failure: ${res.error} - ${res.details}.`);
     }
     const stateRoot = merkelizeState(serializeState(this.stf.state, this.spec));
-    const writeState = this.states.setFullState(stateRoot, this.stf.state);
+    const writeState = this.states.insertFullState(stateRoot, this.stf.state);
     const writeBlocks = this.blocks.insertBlock(new WithHash(headerHash, block));
     await writeState;
     await writeBlocks;

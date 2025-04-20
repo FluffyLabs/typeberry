@@ -11,6 +11,7 @@ export enum KnownChainSpec {
 }
 
 type SharedOptions = {
+  genesis: string | null;
   chainSpec: KnownChainSpec;
 };
 
@@ -56,7 +57,8 @@ export function parseArgs(input: string[], relPath: string): Arguments {
 }
 
 function parseSharedOptions(args: minimist.ParsedArgs): SharedOptions {
-  const d = parseOption(
+  const genesis = parseOption(args, "genesis", (v) => v, null);
+  const chainSpec = parseOption(
     args,
     "chainSpec",
     (v) => {
@@ -73,7 +75,8 @@ function parseSharedOptions(args: minimist.ParsedArgs): SharedOptions {
   );
 
   return {
-    ...d,
+    ...genesis,
+    ...chainSpec,
   };
 }
 

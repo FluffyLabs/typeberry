@@ -9,7 +9,7 @@ const hash = (data: BytesBlob) => {
   return new WithHash(hash, data);
 };
 describe("InMemoryDatabase", () => {
-  it("should set and retrieve best header hash", () => {
+  it("should set and retrieve some preimages", () => {
     const db = new InMemoryPreimages();
 
     const data1 = hash(Bytes.fill(HASH_SIZE, 5));

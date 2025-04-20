@@ -14,7 +14,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import type { BlocksDb, StateDb } from "@typeberry/database";
+import type { BlocksDb, StatesDb } from "@typeberry/database";
 import { HASH_SIZE, SimpleAllocator } from "@typeberry/hash";
 import type { KeccakHasher } from "@typeberry/hash/keccak";
 import type { State } from "@typeberry/state";
@@ -23,22 +23,29 @@ import { TransitionHasher } from "@typeberry/transition";
 import { asOpaqueType } from "@typeberry/utils";
 
 export class Generator {
-  public readonly state: State | null;
+  public readonly state: State;
   private readonly hashAllocator = new SimpleAllocator();
   private lastHeaderHash: HeaderHash;
-  private lastHeader: Header | null;
+  private lastHeader: Header;
 
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly keccakHasher: KeccakHasher,
     blocks: BlocksDb,
-    state: StateDb,
+    state: StatesDb,
   ) {
     const data = blocks.getBestData();
     this.lastHeaderHash = data[0];
-    this.lastHeader = blocks.getHeader(this.lastHeaderHash)?.materialize() ?? null;
-    // TODO [ToDr] handle genesis?
-    this.state = state.getFullState(data[1]);
+    const lastHeader = blocks.getHeader(this.lastHeaderHash)?.materialize() ?? null;
+    const lastState = state.getFullState(data[1]);
+    if (lastHeader === null) {
+      throw new Error(`Missing best header: ${data[0]}! Make sure DB is initialized.`);
+    }
+    if (lastState === null) {
+      throw new Error(`Missing last state: ${data[1]}! Make sure DB is initialized.`);
+    }
+    this.lastHeader = lastHeader;
+    this.state = lastState;
   }
 
   async nextEncodedBlock() {
@@ -48,16 +55,13 @@ export class Generator {
   }
 
   async nextBlock() {
-    const lastTimeSlot = this.lastHeader?.timeSlotIndex;
-    const blockNumber = lastTimeSlot !== undefined ? lastTimeSlot + 1 : 1;
+    const lastTimeSlot = this.lastHeader.timeSlotIndex;
+    // NOTE [ToDr] this is incorrect, should be based on time instead.
+    const newTimeSlot = lastTimeSlot + 1;
 
     const hasher = new TransitionHasher(this.chainSpec, this.keccakHasher, this.hashAllocator);
-    // TODO [ToDr] write benchmark to calculate many hashes.
     const parentHeaderHash = this.lastHeaderHash;
-    const stateRoot =
-      this.state === null
-        ? Bytes.zero(HASH_SIZE).asOpaque()
-        : merkelizeState(serializeState(this.state, this.chainSpec));
+    const stateRoot = merkelizeState(serializeState(this.state, this.chainSpec));
 
     const extrinsic = new Extrinsic(
       asOpaqueType([]),
@@ -67,8 +71,8 @@ export class Generator {
       new DisputesExtrinsic(
         [
           new Verdict(
-            Bytes.fill(HASH_SIZE, blockNumber % 256).asOpaque(),
-            tryAsEpoch(blockNumber / this.chainSpec.epochLength),
+            Bytes.fill(HASH_SIZE, newTimeSlot % 256).asOpaque(),
+            tryAsEpoch(newTimeSlot / this.chainSpec.epochLength),
             asKnownSize([
               new Judgement(true, tryAsValidatorIndex(0), Bytes.fill(64, 0).asOpaque()),
               new Judgement(true, tryAsValidatorIndex(1), Bytes.fill(64, 1).asOpaque()),
@@ -88,13 +92,13 @@ export class Generator {
       parentHeaderHash,
       priorStateRoot: stateRoot,
       extrinsicHash,
-      timeSlotIndex: tryAsTimeSlot(blockNumber),
+      timeSlotIndex: tryAsTimeSlot(newTimeSlot),
       epochMarker: null,
       ticketsMarker: null,
       offendersMarker: [],
       bandersnatchBlockAuthorIndex: tryAsValidatorIndex(0),
-      entropySource: Bytes.fill(96, (blockNumber * 42) % 256).asOpaque(),
-      seal: Bytes.fill(96, (blockNumber * 69) % 256).asOpaque(),
+      entropySource: Bytes.fill(96, (newTimeSlot * 42) % 256).asOpaque(),
+      seal: Bytes.fill(96, (newTimeSlot * 69) % 256).asOpaque(),
     });
 
     const encoded = Encoder.encodeObject(Header.Codec, header, this.chainSpec);

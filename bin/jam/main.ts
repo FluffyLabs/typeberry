@@ -17,8 +17,10 @@ const logger = Logger.new(__filename, "jam");
 type Options = {
   /** Whether we should be authoring blocks. */
   isAuthoring: boolean;
-  /** FS paths to blocks to import (ordered). */
-  blocksToImport?: string[];
+  /** Paths to JSON or binary blocks to import (ordered). */
+  blocksToImport: string[] | null;
+  /** Path to JSON with genesis state. */
+  genesisPath: string | null;
   /** Chain spec (could also be filename?) */
   chainSpec: KnownChainSpec;
 };
@@ -31,7 +33,8 @@ export async function main(args: Arguments) {
 
   const options: Options = {
     isAuthoring: false,
-    blocksToImport: args.command === Command.Import ? args.args.files : undefined,
+    blocksToImport: args.command === Command.Import ? args.args.files : null,
+    genesisPath: args.args.genesis,
     chainSpec: KnownChainSpec.Tiny,
   };
 
@@ -100,8 +103,12 @@ const initAuthorship = async (isAuthoring: boolean, config: Config, importerRead
   return finish;
 };
 
-const initBlocksReader = async (importerReady: ImporterReady, chainSpec: ChainSpec, blocksToImport?: string[]) => {
-  if (blocksToImport === undefined) {
+const initBlocksReader = async (
+  importerReady: ImporterReady,
+  chainSpec: ChainSpec,
+  blocksToImport: string[] | null,
+) => {
+  if (blocksToImport === null) {
     return Promise.resolve();
   }
 

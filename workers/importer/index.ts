@@ -2,8 +2,8 @@ import { isMainThread, parentPort } from "node:worker_threads";
 
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
-import { InMemoryKvdb, StateDb } from "@typeberry/database";
-import { LmdbBlocks } from "@typeberry/database-lmdb";
+import { LmdbBlocks, LmdbStates } from "@typeberry/database-lmdb";
+import { LmdbRoot } from "@typeberry/database-lmdb";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { SimpleAllocator, keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
@@ -41,9 +41,12 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
   const finished = await ready.doUntil<Finished>("finished", async (worker, port) => {
     logger.info("Importer waiting for blocks.");
     const config = worker.getConfig();
+    const lmdb = new LmdbRoot(config.dbPath);
+    const blocks = new LmdbBlocks(config.chainSpec, lmdb);
+    const states = new LmdbStates(config.chainSpec, lmdb);
     const importer = new Importer(
-      new LmdbBlocks(config.chainSpec, config.blocksDbPath),
-      new StateDb(config.chainSpec, new InMemoryKvdb()),
+      blocks,
+      states,
       config.chainSpec,
       new TransitionHasher(config.chainSpec, await keccakHasher, new SimpleAllocator()),
     );

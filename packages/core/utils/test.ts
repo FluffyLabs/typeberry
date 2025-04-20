@@ -118,6 +118,8 @@ export function deepEqual<T>(
   if (typeof actual === "object" && typeof expected === "object") {
     const actualKeys = Object.keys(actual) as (keyof T)[];
     const expectedKeys = Object.keys(expected) as (keyof T)[];
+    actualKeys.sort();
+    expectedKeys.sort();
 
     const allKeys = getAllKeysSorted<T>(actualKeys, expectedKeys);
     for (const key of allKeys) {

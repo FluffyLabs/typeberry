@@ -1,11 +1,12 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
-import { Bytes } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Decoder, Encoder } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
 import type { StateKey } from "./keys";
-import { serialize } from "./serialize";
+import { dumpCodec, serialize } from "./serialize";
 
 type TestCase = [string, { key: StateKey }, string];
 
@@ -53,4 +54,16 @@ describe("Serialization keys", () => {
       assert.strictEqual(entry.key.toString(), expectedKey);
     });
   }
+});
+
+describe("Codec Descriptors / dump", () => {
+  it("should just dump the bytes as-is", () => {
+    const input = BytesBlob.blobFromNumbers([1, 2, 3, 4, 5]);
+
+    const encoded = Encoder.encodeObject(dumpCodec, input);
+    const decoded = Decoder.decodeObject(dumpCodec, encoded);
+
+    assert.deepStrictEqual(decoded, input);
+    assert.deepStrictEqual(encoded, input);
+  });
 });

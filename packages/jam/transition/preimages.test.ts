@@ -14,6 +14,7 @@ import {
   ServiceAccountInfo,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
+import { OK } from "@typeberry/utils";
 import { Preimages, PreimagesErrorCode, type PreimagesInput } from "./preimages";
 
 function createInput(preimages: { requester: ServiceId; blob: BytesBlob }[], slot: number): PreimagesInput {
@@ -68,8 +69,12 @@ describe("Preimages", () => {
 
     const result = preimages.integrate(input);
 
-    assert.strictEqual(result.isError, true);
-    assert.strictEqual(result.error, PreimagesErrorCode.PreimagesNotSortedUnique);
+    assert.deepStrictEqual(result, {
+      isError: true,
+      isOk: false,
+      error: PreimagesErrorCode.PreimagesNotSortedUnique,
+      details: "",
+    });
   });
 
   it("should reject preimages that are sorted by requester but not by blob", () => {
@@ -90,8 +95,12 @@ describe("Preimages", () => {
 
     const result = preimages.integrate(input);
 
-    assert.strictEqual(result.isError, true);
-    assert.strictEqual(result.error, PreimagesErrorCode.PreimagesNotSortedUnique);
+    assert.deepStrictEqual(result, {
+      isError: true,
+      isOk: false,
+      error: PreimagesErrorCode.PreimagesNotSortedUnique,
+      details: "",
+    });
   });
 
   it("should reject duplicates", () => {
@@ -111,8 +120,12 @@ describe("Preimages", () => {
 
     const result = preimages.integrate(input);
 
-    assert.strictEqual(result.isError, true);
-    assert.strictEqual(result.error, PreimagesErrorCode.PreimagesNotSortedUnique);
+    assert.deepStrictEqual(result, {
+      isError: true,
+      isOk: false,
+      error: PreimagesErrorCode.PreimagesNotSortedUnique,
+      details: "",
+    });
   });
 
   it("should reject preimages when account not found", () => {
@@ -126,8 +139,12 @@ describe("Preimages", () => {
 
     const result = preimages.integrate(input);
 
-    assert.strictEqual(result.isError, true);
-    assert.strictEqual(result.error, PreimagesErrorCode.AccountNotFound);
+    assert.deepStrictEqual(result, {
+      isError: true,
+      isOk: false,
+      error: PreimagesErrorCode.AccountNotFound,
+      details: "",
+    });
   });
 
   it("should reject unrequested preimages", () => {
@@ -141,8 +158,12 @@ describe("Preimages", () => {
 
     const result = preimages.integrate(input);
 
-    assert.strictEqual(result.isError, true);
-    assert.strictEqual(result.error, PreimagesErrorCode.PreimageUnneeded);
+    assert.deepStrictEqual(result, {
+      isError: true,
+      isOk: false,
+      error: PreimagesErrorCode.PreimageUnneeded,
+      details: "",
+    });
   });
 
   it("should reject already integrated preimages", () => {
@@ -163,8 +184,12 @@ describe("Preimages", () => {
 
     const result = preimagesService.integrate(input);
 
-    assert.strictEqual(result.isError, true);
-    assert.strictEqual(result.error, PreimagesErrorCode.PreimageUnneeded);
+    assert.deepStrictEqual(result, {
+      isError: true,
+      isOk: false,
+      error: PreimagesErrorCode.PreimageUnneeded,
+      details: "",
+    });
   });
 
   it("should successfully integrate preimages", () => {
@@ -195,8 +220,11 @@ describe("Preimages", () => {
     );
 
     const result = preimages.integrate(input);
-
-    assert.strictEqual(result.isOk, true);
+    assert.deepStrictEqual(result, {
+      isError: false,
+      isOk: true,
+      ok: OK,
+    });
 
     const account0 = state.services.get(tryAsServiceId(0));
     assert.ok(account0 !== undefined);
