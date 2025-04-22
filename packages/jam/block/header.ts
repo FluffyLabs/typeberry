@@ -31,8 +31,8 @@ import { Ticket } from "./tickets";
  */
 export class ValidatorKeys extends WithDebug {
   static Codec = codec.Class(ValidatorKeys, {
-    bandersnatch: codec.bytes(BANDERSNATCH_KEY_BYTES).asOpaque(),
-    ed25519: codec.bytes(ED25519_KEY_BYTES).asOpaque(),
+    bandersnatch: codec.bytes(BANDERSNATCH_KEY_BYTES).asOpaque<BandersnatchKey>(),
+    ed25519: codec.bytes(ED25519_KEY_BYTES).asOpaque<Ed25519Key>(),
   });
 
   static fromCodec({ bandersnatch, ed25519 }: CodecRecord<ValidatorKeys>) {

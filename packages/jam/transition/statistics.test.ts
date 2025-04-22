@@ -25,12 +25,12 @@ describe("Statistics", () => {
   const emptyStatistics = () =>
     tryAsPerValidator(
       [
-        ActivityRecord.empty(),
-        ActivityRecord.empty(),
-        ActivityRecord.empty(),
-        ActivityRecord.empty(),
-        ActivityRecord.empty(),
-        ActivityRecord.empty(),
+        ValidatorStatistics.empty(),
+        ValidatorStatistics.empty(),
+        ValidatorStatistics.empty(),
+        ValidatorStatistics.empty(),
+        ValidatorStatistics.empty(),
+        ValidatorStatistics.empty(),
       ],
       tinyChainSpec,
     );

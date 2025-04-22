@@ -8,10 +8,15 @@ import {
 } from "@typeberry/block";
 import { fromJson, guaranteesExtrinsicFromJson } from "@typeberry/block-json";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
-import type { AuthorizerHash, WorkPackageInfo } from "@typeberry/block/work-report";
+import {
+  type AuthorizerHash,
+  type ExportsRootHash,
+  type WorkPackageHash,
+  WorkPackageInfo,
+} from "@typeberry/block/work-report";
 import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import { type KeccakHash, keccak } from "@typeberry/hash";
+import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
 import {
@@ -150,7 +155,6 @@ class TestState {
   offenders!: Ed25519Key[];
   auth_pools!: AuthorizerHash[][];
   recent_blocks!: BlockState[];
-  auth_pools!: OpaqueHash[][];
   accounts!: Service[];
   cores_statistics!: TestCoreStatistics[];
   services_statistics!: TestServiceStatistics[];

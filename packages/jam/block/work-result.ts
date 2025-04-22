@@ -73,7 +73,7 @@ export class WorkExecResult extends WithDebug {
  */
 export class WorkRefineLoad extends WithDebug {
   static Codec = codec.Class(WorkRefineLoad, {
-    gasUsed: codec.varU64.asOpaque(),
+    gasUsed: codec.varU64.asOpaque<ServiceGas>(),
     importedSegments: codec.varU32,
     extrinsicCount: codec.varU32,
     extrinsicSize: codec.varU32,

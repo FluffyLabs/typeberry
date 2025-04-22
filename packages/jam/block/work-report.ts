@@ -93,7 +93,7 @@ export class WorkReport extends WithDebug {
       (x) => x,
       (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
     ),
-    authorizationGasUsed: codec.varU64.asOpaque(),
+    authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
   });
 
   static fromCodec({
