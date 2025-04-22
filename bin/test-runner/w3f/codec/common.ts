@@ -6,10 +6,9 @@ import { tinyChainSpec } from "@typeberry/config";
 
 export function runCodecTest<T>(codec: Codec<T>, test: T, file: string) {
   const encoded = new Uint8Array(fs.readFileSync(file.replace("json", "bin")));
-
   const myEncoded = Encoder.encodeObject(codec, test, tinyChainSpec);
   assert.deepStrictEqual(myEncoded.toString(), BytesBlob.blobFrom(encoded).toString());
 
-  const decoded = Decoder.decodeObject(codec, encoded, tinyChainSpec);
+  const decoded = Decoder.decodeObject(codec, BytesBlob.blobFrom(encoded), tinyChainSpec);
   assert.deepStrictEqual(decoded, test);
 }

@@ -2,6 +2,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
+import type { U8 } from "@typeberry/numbers";
 import { WithDebug, ensure } from "@typeberry/utils";
 import type { ServiceId } from "./common";
 import type { CodeHash } from "./hash";
@@ -9,21 +10,22 @@ import { RefineContext } from "./refine-context";
 import { WorkItem } from "./work-item";
 
 /** Possible number of work items in the package or results in the report. */
-export type WorkItemsCount = 1 | 2 | 3 | 4;
+/** Constrained by I=16 https://graypaper.fluffylabs.dev/#/68eaa1f/417a00417a00?v=0.6.4 */
+export type WorkItemsCount = U8;
 
 /** Verify the value is within the `WorkItemsCount` bounds. */
 export function tryAsWorkItemsCount(len: number): WorkItemsCount {
   return ensure<number, WorkItemsCount>(
     len,
     len >= MIN_NUMBER_OF_WORK_ITEMS && len <= MAX_NUMBER_OF_WORK_ITEMS,
-    `WorkItemsCount: Expected 1|2|3|4 got ${len}`,
+    `WorkItemsCount: Expected '< ${MAX_NUMBER_OF_WORK_ITEMS}' got ${len}`,
   );
 }
 
 /** Minimal number of work items in the work package or results in work report. */
 export const MIN_NUMBER_OF_WORK_ITEMS = 1;
-/** Maximal number of work items in the work package or results in work report. */
-export const MAX_NUMBER_OF_WORK_ITEMS = 4;
+/** `I`: Maximal number of work items in the work package or results in work report. */
+export const MAX_NUMBER_OF_WORK_ITEMS = 16;
 
 /**
  * A piece of work done within a core.

@@ -7,6 +7,7 @@ import {
   type PerEpochBlock,
   type PerValidator,
   type TimeSlot,
+  ValidatorKeys,
   tryAsPerEpochBlock,
 } from "@typeberry/block";
 import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets";
@@ -82,7 +83,7 @@ export enum SafroleErrorCode {
   DuplicateTicket = 7,
 }
 
-type ValidatorKeys = Pick<
+type EpochValidators = Pick<
   SafroleState,
   "nextValidatorData" | "currentValidatorData" | "previousValidatorData" | "epochRoot"
 >;
@@ -149,7 +150,7 @@ export class Safrole {
 
   private async getValidatorKeys(
     timeslot: TimeSlot,
-  ): Promise<Result<ValidatorKeys, typeof SafroleErrorCode.IncorrectData>> {
+  ): Promise<Result<EpochValidators, typeof SafroleErrorCode.IncorrectData>> {
     /**
      * Epoch is not changed so the previous state is returned
      */
@@ -296,7 +297,7 @@ export class Safrole {
     return new EpochMarker(
       entropy[0],
       entropy[1],
-      asKnownSize(nextValidators.map((validator) => validator.bandersnatch)),
+      asKnownSize(nextValidators.map((validator) => ValidatorKeys.fromCodec(validator))),
     );
   }
 

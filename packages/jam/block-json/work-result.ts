@@ -1,10 +1,10 @@
-import type { CodeHash } from "@typeberry/block";
+import { type CodeHash, tryAsServiceGas } from "@typeberry/block";
 import type { ServiceGas, ServiceId } from "@typeberry/block";
-import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
+import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result";
 import { BytesBlob } from "@typeberry/bytes";
 import type { OpaqueHash } from "@typeberry/hash";
 import { json } from "@typeberry/json-parser";
-import { tryAsU32 } from "@typeberry/numbers";
+import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { fromJson } from "./common";
 
 // TODO [ToDr] Introduce fromJson.union?
@@ -46,24 +46,50 @@ type JsonWorkExecResult = {
   code_oversize?: null;
 };
 
+const workRefineLoadFromJson = json.object<JsonWorkRefineLoad, WorkRefineLoad>(
+  {
+    gas_used: json.fromNumber((x) => tryAsServiceGas(x)),
+    imports: "number",
+    extrinsic_count: "number",
+    extrinsic_size: "number",
+    exports: "number",
+  },
+  ({ gas_used, imports, extrinsic_count, extrinsic_size, exports }) =>
+    WorkRefineLoad.fromCodec({
+      gasUsed: tryAsServiceGas(gas_used),
+      importedSegments: tryAsU32(imports),
+      extrinsicCount: tryAsU32(extrinsic_count),
+      extrinsicSize: tryAsU32(extrinsic_size),
+      exportedSegments: tryAsU32(exports),
+    }),
+);
+
+type JsonWorkRefineLoad = {
+  gas_used: ServiceGas;
+  imports: U32;
+  extrinsic_count: U32;
+  extrinsic_size: U32;
+  exports: U32;
+};
+
 export const workResultFromJson = json.object<JsonWorkResult, WorkResult>(
   {
     service_id: "number",
     code_hash: fromJson.bytes32(),
     payload_hash: fromJson.bytes32(),
-    accumulate_gas: "number",
+    accumulate_gas: json.fromNumber((x) => tryAsServiceGas(x)),
     result: workExecResultFromJson,
+    refine_load: workRefineLoadFromJson,
   },
-  ({ service_id, code_hash, payload_hash, accumulate_gas, result }) =>
-    new WorkResult(service_id, code_hash, payload_hash, BigInt(accumulate_gas) as ServiceGas, result),
+  ({ service_id, code_hash, payload_hash, accumulate_gas, result, refine_load }) =>
+    new WorkResult(service_id, code_hash, payload_hash, accumulate_gas, result, refine_load),
 );
 
 type JsonWorkResult = {
   service_id: ServiceId;
   code_hash: CodeHash;
   payload_hash: OpaqueHash;
-  // TODO [ToDr] We don't have enough precision here for full bigint so 🤞
-  // otherwise we will need to use a custom JSON parser.
-  accumulate_gas: number;
+  accumulate_gas: ServiceGas;
   result: WorkExecResult;
+  refine_load: WorkRefineLoad;
 };

@@ -1,13 +1,13 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Extrinsic, tryAsPerValidator, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
+import { Extrinsic, tryAsPerValidator, tryAsServiceId, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import type { AssurancesExtrinsic } from "@typeberry/block/assurances";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { TicketsExtrinsic } from "@typeberry/block/tickets";
-import { asKnownSize } from "@typeberry/collections";
+import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { ActivityData, ActivityRecord } from "@typeberry/state";
+import { CoreStatistics, ServiceStatistics, StatisticsData, ValidatorStatistics, tryAsPerCore } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
 import { Statistics, type StatisticsState } from "./statistics";
 
@@ -25,12 +25,12 @@ describe("Statistics", () => {
   const emptyStatistics = () =>
     tryAsPerValidator(
       [
-        ActivityRecord.empty(),
-        ActivityRecord.empty(),
-        ActivityRecord.empty(),
-        ActivityRecord.empty(),
-        ActivityRecord.empty(),
-        ActivityRecord.empty(),
+        ValidatorStatistics.empty(),
+        ValidatorStatistics.empty(),
+        ValidatorStatistics.empty(),
+        ValidatorStatistics.empty(),
+        ValidatorStatistics.empty(),
+        ValidatorStatistics.empty(),
       ],
       tinyChainSpec,
     );
@@ -39,9 +39,14 @@ describe("Statistics", () => {
     const validatorIndex = tryAsValidatorIndex(0);
     const currentStatistics = emptyStatistics();
     const lastStatistics = emptyStatistics();
-    const statisticsPerValidator = new ActivityData({ current: currentStatistics, previous: lastStatistics });
+    const coreStatistics = tryAsPerCore(
+      FixedSizeArray.fill(() => CoreStatistics.empty(), tinyChainSpec.coresCount),
+      tinyChainSpec,
+    );
+    const serviceStatistics = new Map([[tryAsServiceId(0), ServiceStatistics.empty()]]);
+    const statisticsData = new StatisticsData(currentStatistics, lastStatistics, coreStatistics, serviceStatistics);
     const state: StatisticsState = {
-      statisticsPerValidator,
+      statistics: statisticsData,
       timeslot: tryAsTimeSlot(previousSlot),
       currentValidatorData: asOpaqueType([]),
     };
@@ -51,6 +56,8 @@ describe("Statistics", () => {
       statistics,
       currentStatistics,
       lastStatistics,
+      coreStatistics,
+      serviceStatistics,
       state,
       validatorIndex,
       currentSlot: tryAsTimeSlot(currentSlot),
@@ -65,11 +72,15 @@ describe("Statistics", () => {
         currentSlot: 1,
       });
 
-      statistics.transition(currentSlot, validatorIndex, emptyExtrinsic);
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: emptyExtrinsic,
+        availableReports: [],
+      });
 
-      assert.strictEqual(statistics.state.statisticsPerValidator.current, currentStatistics);
-      assert.strictEqual(statistics.state.statisticsPerValidator.previous, lastStatistics);
-      assert.deepStrictEqual(statistics.state.statisticsPerValidator.previous, lastStatistics);
+      assert.deepStrictEqual(statistics.state.statistics.current, currentStatistics);
+      assert.deepStrictEqual(statistics.state.statistics.previous, lastStatistics);
     });
 
     it("should create a new 'current' statistics and previous current should be 'last' when the epoch is changed", () => {
@@ -80,10 +91,15 @@ describe("Statistics", () => {
         currentSlot: previousSlot + tinyChainSpec.epochLength,
       });
 
-      statistics.transition(currentSlot, validatorIndex, emptyExtrinsic);
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: emptyExtrinsic,
+        availableReports: [],
+      });
 
-      assert.strictEqual(statistics.state.statisticsPerValidator.previous, currentStatistics);
-      assert.deepStrictEqual(statistics.state.statisticsPerValidator.previous, currentStatistics);
+      assert.deepStrictEqual(statistics.state.statistics.previous, currentStatistics);
+      assert.deepStrictEqual(statistics.state.statistics.previous, currentStatistics);
     });
 
     it("should create a new current statistics object that have length equal to number of validators ", () => {
@@ -94,9 +110,14 @@ describe("Statistics", () => {
         currentSlot: previousSlot + tinyChainSpec.epochLength,
       });
 
-      statistics.transition(currentSlot, validatorIndex, emptyExtrinsic);
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: emptyExtrinsic,
+        availableReports: [],
+      });
 
-      assert.deepStrictEqual(statistics.state.statisticsPerValidator.current.length, tinyChainSpec.validatorsCount);
+      assert.deepStrictEqual(statistics.state.statistics.current.length, tinyChainSpec.validatorsCount);
     });
   });
 
@@ -107,9 +128,14 @@ describe("Statistics", () => {
       const validatorIndex = tryAsValidatorIndex(0);
       const currentStatistics = emptyStatistics();
       const lastStatistics = emptyStatistics();
-      const statisticsPerValidator = new ActivityData({ current: currentStatistics, previous: lastStatistics });
+      const coreStatistics = tryAsPerCore(
+        FixedSizeArray.fill(() => CoreStatistics.empty(), tinyChainSpec.coresCount),
+        tinyChainSpec,
+      );
+      const serviceStatistics = new Map([[tryAsServiceId(0), ServiceStatistics.empty()]]);
+      const statisticsData = new StatisticsData(currentStatistics, lastStatistics, coreStatistics, serviceStatistics);
       const state: StatisticsState = {
-        statisticsPerValidator,
+        statistics: statisticsData,
         timeslot: tryAsTimeSlot(previousSlot),
         currentValidatorData: asOpaqueType([]),
       };
@@ -119,6 +145,8 @@ describe("Statistics", () => {
         statistics,
         currentStatistics,
         lastStatistics,
+        coreStatistics,
+        serviceStatistics,
         state,
         validatorIndex,
         currentSlot: tryAsTimeSlot(currentSlot),
@@ -133,11 +161,16 @@ describe("Statistics", () => {
       });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1 };
 
-      assert.strictEqual(statistics.state.statisticsPerValidator.current[validatorIndex].blocks, 0);
+      assert.strictEqual(statistics.state.statistics.current[validatorIndex].blocks, 0);
 
-      statistics.transition(currentSlot, validatorIndex, emptyExtrinsic);
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: emptyExtrinsic,
+        availableReports: [],
+      });
 
-      assert.deepEqual(statistics.state.statisticsPerValidator.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
     });
 
     it("should add tickets length from extrinstic to tickets in statistics", () => {
@@ -149,11 +182,16 @@ describe("Statistics", () => {
       });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1, tickets: tickets.length };
 
-      assert.strictEqual(statistics.state.statisticsPerValidator.current[validatorIndex].tickets, 0);
+      assert.strictEqual(statistics.state.statistics.current[validatorIndex].tickets, 0);
 
-      statistics.transition(currentSlot, validatorIndex, extrinsic);
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: extrinsic,
+        availableReports: [],
+      });
 
-      assert.deepEqual(statistics.state.statisticsPerValidator.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
     });
 
     it("should add preimages length from extrinstic to preImages in statistics", () => {
@@ -165,11 +203,16 @@ describe("Statistics", () => {
       });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1, preImages: preimages.length };
 
-      assert.strictEqual(statistics.state.statisticsPerValidator.current[validatorIndex].preImages, 0);
+      assert.strictEqual(statistics.state.statistics.current[validatorIndex].preImages, 0);
 
-      statistics.transition(currentSlot, validatorIndex, extrinsic);
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: extrinsic,
+        availableReports: [],
+      });
 
-      assert.deepEqual(statistics.state.statisticsPerValidator.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
     });
 
     it("should add preimages size length from extrinstic to preImagesSize in statistics", () => {
@@ -186,11 +229,16 @@ describe("Statistics", () => {
         preImagesSize: 6,
       };
 
-      assert.strictEqual(statistics.state.statisticsPerValidator.current[validatorIndex].preImagesSize, 0);
+      assert.strictEqual(statistics.state.statistics.current[validatorIndex].preImagesSize, 0);
 
-      statistics.transition(currentSlot, validatorIndex, extrinsic);
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: extrinsic,
+        availableReports: [],
+      });
 
-      assert.deepEqual(statistics.state.statisticsPerValidator.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
     });
 
     it("should update guarantees for each validator based on guarantees from extrinstic", () => {
@@ -205,11 +253,16 @@ describe("Statistics", () => {
       const extrinsic = getExtrinsic({ guarantees });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1, guarantees: 1 };
 
-      assert.strictEqual(statistics.state.statisticsPerValidator.current[validatorIndex].guarantees, 0);
+      assert.strictEqual(statistics.state.statistics.current[validatorIndex].guarantees, 0);
 
-      statistics.transition(currentSlot, validatorIndex, extrinsic);
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: extrinsic,
+        availableReports: [],
+      });
 
-      assert.deepEqual(statistics.state.statisticsPerValidator.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
     });
 
     it("should update assurances for each validator based on assurances from extrinstic", () => {
@@ -221,11 +274,16 @@ describe("Statistics", () => {
       const extrinsic = getExtrinsic({ assurances });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1, assurances: 1 };
 
-      assert.strictEqual(statistics.state.statisticsPerValidator.current[validatorIndex].assurances, 0);
+      assert.strictEqual(statistics.state.statistics.current[validatorIndex].assurances, 0);
 
-      statistics.transition(currentSlot, validatorIndex, extrinsic);
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: extrinsic,
+        availableReports: [],
+      });
 
-      assert.deepEqual(statistics.state.statisticsPerValidator.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
     });
   });
 });

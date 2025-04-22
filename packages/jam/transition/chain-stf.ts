@@ -113,9 +113,6 @@ export class OnChain {
     const header = block.header.materialize();
     const timeSlot = header.timeSlotIndex;
 
-    // statistics
-    this.statistics.transition(timeSlot, header.bandersnatchBlockAuthorIndex, block.extrinsic.materialize());
-
     // safrole seal
     const sealState = this.safrole.getSafroleSealState(timeSlot);
     const sealResult = await this.safroleSeal.verifyHeaderSeal(block.header.view(), sealState);
@@ -139,6 +136,7 @@ export class OnChain {
     const reportsResult = await this.reports.transition({
       slot: timeSlot,
       guarantees: block.extrinsic.view().guarantees.view(),
+      knownPackages: [],
     });
     if (reportsResult.isError) {
       return Result.error({
@@ -159,6 +157,14 @@ export class OnChain {
         error: assurancesResult.error,
       });
     }
+
+    // statistics
+    this.statistics.transition({
+      slot: timeSlot,
+      authorIndex: header.bandersnatchBlockAuthorIndex,
+      extrinsic: block.extrinsic.materialize(),
+      availableReports: assurancesResult.ok,
+    });
 
     // safrole
     const safroleResult = await this.safrole.transition({

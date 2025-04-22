@@ -4,7 +4,7 @@ import { fromJson } from "@typeberry/block-json";
 import { Bytes } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { ValidatorData } from "@typeberry/state";
-import { commonFromJson } from "./common-types";
+import { validatorDataFromJson } from "./common-types";
 import { Memory, ServiceAccount } from "./host-calls-general";
 
 namespace localFromJson {
@@ -28,7 +28,7 @@ class PrivilegesState {
 class PartialState {
   static fromJson: FromJson<PartialState> = {
     D: json.record(ServiceAccount.fromJson),
-    I: json.array(commonFromJson.validatorData),
+    I: json.array(validatorDataFromJson),
     Q: json.array(json.array("string")),
     X: PrivilegesState.fromJson,
   };

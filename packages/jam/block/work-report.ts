@@ -4,7 +4,7 @@ import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import type { U16, U32 } from "@typeberry/numbers";
 import { type Opaque, WithDebug } from "@typeberry/utils";
-import type { CoreIndex } from "./common";
+import type { CoreIndex, ServiceGas } from "./common";
 import { RefineContext } from "./refine-context";
 import { type WorkItemsCount, tryAsWorkItemsCount } from "./work-package";
 import { WorkResult } from "./work-result";
@@ -93,6 +93,7 @@ export class WorkReport extends WithDebug {
       (x) => x,
       (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
     ),
+    authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
   });
 
   static fromCodec({
@@ -103,6 +104,7 @@ export class WorkReport extends WithDebug {
     authorizationOutput,
     segmentRootLookup,
     results,
+    authorizationGasUsed,
   }: CodecRecord<WorkReport>) {
     return new WorkReport(
       workPackageSpec,
@@ -112,10 +114,11 @@ export class WorkReport extends WithDebug {
       authorizationOutput,
       segmentRootLookup,
       results,
+      authorizationGasUsed,
     );
   }
 
-  constructor(
+  private constructor(
     /** `s`: Work package specification. */
     public readonly workPackageSpec: WorkPackageSpec,
     /** `x`: Refinement context. */
@@ -133,6 +136,8 @@ export class WorkReport extends WithDebug {
     public readonly segmentRootLookup: WorkPackageInfo[],
     /** `r`: The results of evaluation of each of the items in the work package. */
     public readonly results: FixedSizeArray<WorkResult, WorkItemsCount>,
+    /** `g`: Gas used during authorization. */
+    public readonly authorizationGasUsed: ServiceGas,
   ) {
     super();
   }
