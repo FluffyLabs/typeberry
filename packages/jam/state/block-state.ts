@@ -10,11 +10,11 @@ import { WithDebug } from "@typeberry/utils";
 /** Recent history of a single block. */
 export class BlockState extends WithDebug {
   static Codec = codec.Class(BlockState, {
-    headerHash: codec.bytes(HASH_SIZE).asOpaque(),
+    headerHash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
     mmr: codec.object({
       peaks: codec.sequenceVarLen(codec.optional(codec.bytes(HASH_SIZE))),
     }),
-    postStateRoot: codec.bytes(HASH_SIZE).asOpaque(),
+    postStateRoot: codec.bytes(HASH_SIZE).asOpaque<StateRootHash>(),
     reported: codecHashDictionary(WorkPackageInfo.Codec, (x) => x.workPackageHash),
   });
 

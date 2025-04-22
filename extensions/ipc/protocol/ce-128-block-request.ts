@@ -23,7 +23,7 @@ export enum Direction {
 
 export class BlockRequest extends WithDebug {
   static Codec = codec.Class(BlockRequest, {
-    headerHash: codec.bytes(HASH_SIZE).asOpaque(),
+    headerHash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
     direction: codec.u8.convert<Direction>(
       (i) => i as U8,
       (i) => {

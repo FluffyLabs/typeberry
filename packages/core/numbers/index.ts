@@ -1,4 +1,4 @@
-import { asOpaqueType, check, ensure } from "@typeberry/utils";
+import { check, ensure } from "@typeberry/utils";
 
 /**
  * TODO [ToDr] This should be `unique symbol`, but for some reason
@@ -9,6 +9,9 @@ declare const __REPRESENTATION_BYTES__: "REPRESENTATION_BYTES";
 type WithBytesRepresentation<Bytes extends number> = {
   readonly [__REPRESENTATION_BYTES__]: Bytes;
 };
+const asWithBytesRepresentation = <T, N extends number>(v: T): T & WithBytesRepresentation<N> =>
+  v as T & WithBytesRepresentation<N>;
+
 export type FixedSizeNumber<Bytes extends number> = number & WithBytesRepresentation<Bytes>;
 
 /** Unsigned integer that can be represented as one byte. */
@@ -51,7 +54,7 @@ export const isU64 = (v: bigint): v is U64 => (v & 0xffff_ffff_ffff_ffffn) === v
 /** Collate two U32 parts into one U64. */
 export const u64FromParts = ({ lower, upper }: { lower: U32; upper: U32 }): U64 => {
   const val = (BigInt(upper) << 32n) + BigInt(lower);
-  return asOpaqueType(val);
+  return asWithBytesRepresentation(val);
 };
 
 /** Split U64 into lower & upper parts. */
@@ -60,8 +63,8 @@ export const u64IntoParts = (v: U64): { lower: U32; upper: U32 } => {
   const upper = v >> 32n;
 
   return {
-    lower: asOpaqueType(Number(lower)),
-    upper: asOpaqueType(Number(upper)),
+    lower: asWithBytesRepresentation(Number(lower)),
+    upper: asWithBytesRepresentation(Number(upper)),
   };
 };
 
@@ -119,7 +122,9 @@ export function u32AsLeBytes(value: U32): Uint8Array {
  */
 export function leBytesAsU32(uint8Array: Uint8Array): U32 {
   check(uint8Array.length === 4, "Input must be a Uint8Array of length 4");
-  return asOpaqueType(uint8Array[0] | (uint8Array[1] << 8) | (uint8Array[2] << 16) | (uint8Array[3] << 24));
+  return asWithBytesRepresentation(
+    uint8Array[0] | (uint8Array[1] << 8) | (uint8Array[2] << 16) | (uint8Array[3] << 24),
+  );
 }
 
 /**

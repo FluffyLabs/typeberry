@@ -24,7 +24,7 @@ export const STREAM_KIND = 135 as StreamKind;
 export class GuaranteedWorkReport extends WithDebug {
   static Codec = codec.Class(GuaranteedWorkReport, {
     report: WorkReport.Codec,
-    slot: codec.u32.asOpaque(),
+    slot: codec.u32.asOpaque<TimeSlot>(),
     signatures: codecWithContext((context) => {
       return codecKnownSizeArray(Credential.Codec, {
         minLength: 0,

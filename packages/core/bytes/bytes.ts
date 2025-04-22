@@ -1,5 +1,5 @@
 import { type Comparator, Ordering } from "@typeberry/ordering";
-import { TEST_COMPARE_VIA_STRING, asOpaqueType, check } from "@typeberry/utils";
+import { TEST_COMPARE_VIA_STRING, type TokenOf, asOpaqueType, check } from "@typeberry/utils";
 
 /**
  * A variable-length blob of bytes with a concise text representation.
@@ -29,11 +29,6 @@ export class BytesBlob {
   asText() {
     const decoder = new TextDecoder();
     return decoder.decode(this.raw);
-  }
-
-  /** Converts current type into some opaque extension. */
-  asOpaque<Token extends string>() {
-    return asOpaqueType<Token, BytesBlob>(this);
   }
 
   /** Compare the sequence to another one. */
@@ -212,8 +207,8 @@ export class Bytes<T extends number> extends BytesBlob {
   }
 
   /** Converts current type into some opaque extension. */
-  asOpaque<Token extends string>() {
-    return asOpaqueType<Token, Bytes<T>>(this);
+  asOpaque<R>() {
+    return asOpaqueType<Bytes<T>, TokenOf<R, Bytes<T>>>(this);
   }
 }
 

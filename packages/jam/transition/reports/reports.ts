@@ -8,7 +8,7 @@ import { ed25519 } from "@typeberry/crypto";
 import { type KeccakHash, WithHash, blake2b } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
 import { AvailabilityAssignment, type State } from "@typeberry/state";
-import { OK, Result, asOpaqueType, check } from "@typeberry/utils";
+import { OK, Result, asOpaqueType } from "@typeberry/utils";
 import { ReportsError } from "./error";
 import { generateCoreAssignment, rotationIndex } from "./guarantor-assignment";
 import { verifyReportsBasic } from "./verify-basic";
@@ -285,13 +285,7 @@ function isPreviousRotationPreviousEpoch(
  * Compose two collections of the same size into a single one
  * containing some amalgamation of both items.
  */
-function zip<A, B, R, F extends string>(
-  a: KnownSizeArray<A, F>,
-  b: KnownSizeArray<B, F>,
-  fn: (a: A, b: B) => R,
-): KnownSizeArray<R, F> {
-  check(a.length === b.length, "Zip can be only used for collections of matching size.");
-
+function zip<A, B, R>(a: PerValidator<A>, b: PerValidator<B>, fn: (a: A, b: B) => R): PerValidator<R> {
   return asKnownSize(
     a.map((aValue, index) => {
       return fn(aValue, b[index]);

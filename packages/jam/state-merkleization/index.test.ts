@@ -11,14 +11,14 @@ import {
   tryAsTimeSlot,
 } from "@typeberry/block";
 import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
-import { Ticket } from "@typeberry/block/tickets";
+import { Ticket, tryAsTicketAttempt } from "@typeberry/block/tickets";
 import { type AuthorizerHash, WorkPackageInfo } from "@typeberry/block/work-report";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, HashDictionary, HashSet, SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU8, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import {
   ActivityData,
@@ -38,7 +38,6 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { SafroleSealingKeysData } from "@typeberry/state/safrole-data";
-import { asOpaqueType } from "@typeberry/utils";
 import { merkelizeState, serializeState } from ".";
 
 const spec = tinyChainSpec;
@@ -319,7 +318,7 @@ const testState = (): State => {
 };
 //*/
 
-const attempt = (x: number) => asOpaqueType(tryAsU8(x));
+const attempt = (x: number) => tryAsTicketAttempt(x);
 const b32 = (s: string) => Bytes.parseBytes(s, HASH_SIZE).asOpaque();
 const repeat = <T>(len: number, item: T) =>
   Array(len)

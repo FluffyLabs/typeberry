@@ -24,10 +24,10 @@ export type ExportsRootHash = Opaque<OpaqueHash, "ExportsRootHash">;
  */
 export class WorkPackageSpec extends WithDebug {
   static Codec = codec.Class(WorkPackageSpec, {
-    hash: codec.bytes(HASH_SIZE).asOpaque(),
+    hash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
     length: codec.u32,
     erasureRoot: codec.bytes(HASH_SIZE),
-    exportsRoot: codec.bytes(HASH_SIZE).asOpaque(),
+    exportsRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
     exportsCount: codec.u16,
   });
 
@@ -58,8 +58,8 @@ export class WorkPackageSpec extends WithDebug {
  */
 export class WorkPackageInfo extends WithDebug {
   static Codec = codec.Class(WorkPackageInfo, {
-    workPackageHash: codec.bytes(HASH_SIZE).asOpaque(),
-    segmentTreeRoot: codec.bytes(HASH_SIZE).asOpaque(),
+    workPackageHash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
+    segmentTreeRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
   });
 
   constructor(
@@ -85,8 +85,8 @@ export class WorkReport extends WithDebug {
   static Codec = codec.Class(WorkReport, {
     workPackageSpec: WorkPackageSpec.Codec,
     context: RefineContext.Codec,
-    coreIndex: codec.u16.asOpaque(),
-    authorizerHash: codec.bytes(HASH_SIZE).asOpaque(),
+    coreIndex: codec.u16.asOpaque<CoreIndex>(),
+    authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
     authorizationOutput: codec.blob,
     segmentRootLookup: codec.sequenceVarLen(WorkPackageInfo.Codec),
     results: codec.sequenceVarLen(WorkResult.Codec).convert(

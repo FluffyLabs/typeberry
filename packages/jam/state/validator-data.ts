@@ -25,9 +25,9 @@ export type VALIDATOR_META_BYTES = typeof VALIDATOR_META_BYTES;
  */
 export class ValidatorData extends WithDebug {
   static Codec = codec.Class(ValidatorData, {
-    bandersnatch: codec.bytes(BANDERSNATCH_KEY_BYTES).asOpaque(),
-    ed25519: codec.bytes(ED25519_KEY_BYTES).asOpaque(),
-    bls: codec.bytes(BLS_KEY_BYTES).asOpaque(),
+    bandersnatch: codec.bytes(BANDERSNATCH_KEY_BYTES).asOpaque<BandersnatchKey>(),
+    ed25519: codec.bytes(ED25519_KEY_BYTES).asOpaque<Ed25519Key>(),
+    bls: codec.bytes(BLS_KEY_BYTES).asOpaque<BlsKey>(),
     metadata: codec.bytes(VALIDATOR_META_BYTES),
   });
 

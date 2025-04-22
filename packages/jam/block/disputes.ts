@@ -1,7 +1,7 @@
-import { type CodecRecord, type Descriptor, codec } from "@typeberry/codec";
-import type { KnownSizeArray } from "@typeberry/collections";
+import { type CodecRecord, codec } from "@typeberry/codec";
+import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
-import { WithDebug } from "@typeberry/utils";
+import { WithDebug, seeThrough } from "@typeberry/utils";
 import { codecWithContext } from "./codec";
 import type { Epoch, ValidatorIndex } from "./common";
 import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Key, type Ed25519Signature } from "./crypto";
@@ -12,10 +12,10 @@ import type { WorkReportHash } from "./hash";
  */
 export class Fault extends WithDebug {
   static Codec = codec.Class(Fault, {
-    workReportHash: codec.bytes(HASH_SIZE).asOpaque(),
+    workReportHash: codec.bytes(HASH_SIZE).asOpaque<WorkReportHash>(),
     wasConsideredValid: codec.bool,
-    key: codec.bytes(ED25519_KEY_BYTES).asOpaque(),
-    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque(),
+    key: codec.bytes(ED25519_KEY_BYTES).asOpaque<Ed25519Key>(),
+    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque<Ed25519Signature>(),
   });
 
   static fromCodec({ workReportHash, wasConsideredValid, key, signature }: CodecRecord<Fault>) {
@@ -41,9 +41,9 @@ export class Fault extends WithDebug {
  */
 export class Culprit extends WithDebug {
   static Codec = codec.Class(Culprit, {
-    workReportHash: codec.bytes(HASH_SIZE).asOpaque(),
-    key: codec.bytes(ED25519_KEY_BYTES).asOpaque(),
-    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque(),
+    workReportHash: codec.bytes(HASH_SIZE).asOpaque<WorkReportHash>(),
+    key: codec.bytes(ED25519_KEY_BYTES).asOpaque<Ed25519Key>(),
+    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque<Ed25519Signature>(),
   });
 
   static fromCodec({ workReportHash, key, signature }: CodecRecord<Culprit>) {
@@ -68,8 +68,8 @@ export class Culprit extends WithDebug {
 export class Judgement extends WithDebug {
   static Codec = codec.Class(Judgement, {
     isWorkReportValid: codec.bool,
-    index: codec.u16.asOpaque(),
-    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque(),
+    index: codec.u16.asOpaque<ValidatorIndex>(),
+    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque<Ed25519Signature>(),
   });
 
   static fromCodec({ isWorkReportValid, index, signature }: CodecRecord<Judgement>) {
@@ -97,10 +97,12 @@ export class Judgement extends WithDebug {
  */
 export class Verdict extends WithDebug {
   static Codec = codec.Class(Verdict, {
-    workReportHash: codec.bytes(HASH_SIZE).asOpaque(),
-    votesEpoch: codec.u32.asOpaque(),
-    votes: codecWithContext((context): Descriptor<Verdict["votes"]> => {
-      return codec.sequenceFixLen(Judgement.Codec, context.validatorsSuperMajority).asOpaque();
+    workReportHash: codec.bytes(HASH_SIZE).asOpaque<WorkReportHash>(),
+    votesEpoch: codec.u32.asOpaque<Epoch>(),
+    votes: codecWithContext((context) => {
+      return codec
+        .sequenceFixLen(Judgement.Codec, context.validatorsSuperMajority)
+        .convert<Verdict["votes"]>(seeThrough, asKnownSize);
     }),
   });
 

@@ -21,7 +21,7 @@ type STREAM_KIND = typeof STREAM_KIND_GENERATOR_TO_PROXY | typeof STREAM_KIND_PR
 
 export class TicketDistributionRequest extends WithDebug {
   static Codec = codec.Class(TicketDistributionRequest, {
-    epochIndex: codec.u32.asOpaque(),
+    epochIndex: codec.u32.asOpaque<Epoch>(),
     ticket: SignedTicket.Codec,
   });
 

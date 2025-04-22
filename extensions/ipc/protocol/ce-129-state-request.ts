@@ -58,7 +58,7 @@ export class StateResponse extends WithDebug {
 
 export class StateRequest extends WithDebug {
   static Codec = codec.Class(StateRequest, {
-    headerHash: codec.bytes(HASH_SIZE).asOpaque(),
+    headerHash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
     startKey: codec.bytes(KEY_SIZE),
     endKey: codec.bytes(KEY_SIZE),
     maximumSize: codec.u32,
