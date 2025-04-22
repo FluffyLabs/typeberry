@@ -42,6 +42,7 @@ export type ReportsInput = {
   guarantees: GuaranteesExtrinsicView;
   /** Current time slot, excerpted from block header. */
   slot: TimeSlot;
+  knownPackages: WorkPackageHash[];
 };
 
 export type ReportsState = Pick<

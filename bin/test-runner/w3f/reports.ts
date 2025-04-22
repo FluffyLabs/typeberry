@@ -69,6 +69,7 @@ class Input {
     return {
       guarantees: view,
       slot: input.slot,
+      knownPackages: input.known_packages,
     };
   }
 }
