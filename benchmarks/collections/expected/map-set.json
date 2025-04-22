@@ -5,7 +5,7 @@
   "results": [
     {
       "name": "2 gets + conditional set",
-      "ops": 202674.96,
+      "ops": 103125.62,
       "margin": 0.13,
       "percentSlower": 0
     },

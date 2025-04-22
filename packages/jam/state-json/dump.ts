@@ -23,15 +23,13 @@ import {
   ValidatorData,
   tryAsPerCore,
 } from "@typeberry/state";
-import {
-  JsonStatisticsData,
-  blockStateFromJson,
-  disputesRecordsFromJson,
-  notYetAccumulatedFromJson,
-} from "@typeberry/state-json";
-import { availabilityAssignmentFromJson } from "@typeberry/state-json";
-import { TicketsOrKeys, ticketFromJson } from "@typeberry/state-json";
-import { JsonService } from "@typeberry/state-json/accounts";
+import { JsonService } from "./accounts";
+import { availabilityAssignmentFromJson } from "./availability-assignment";
+import { disputesRecordsFromJson } from "./disputes";
+import { notYetAccumulatedFromJson } from "./not-yet-accumulated";
+import { blockStateFromJson } from "./recent-history";
+import { TicketsOrKeys, ticketFromJson } from "./safrole";
+import { JsonStatisticsData } from "./statistics";
 
 const validatorDataFromJson: FromJson<ValidatorData> = json.object<ValidatorData>(
   {
