@@ -55,8 +55,8 @@ describe("LoadOps", () => {
     const instructionResult = new InstructionResult();
 
     const memory = new MemoryBuilder()
-      .setWriteablePages(getStartPageIndex(address), tryAsMemoryIndex(4096), data)
-      .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
+      .setWriteablePages(getStartPageIndex(address), tryAsMemoryIndex(getStartPageIndex(address) + PAGE_SIZE), data)
+      .finalize(tryAsSbrkIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
     const registers = new Registers();
     const loadOps = new LoadOps(registers, memory, instructionResult);
     const registerIndex = 0;
@@ -71,7 +71,7 @@ describe("LoadOps", () => {
 
   describe("load (U8, U16, U32 and U64)", () => {
     it("should load u8 from memory to register and extend the number to the register size", () => {
-      const address = tryAsMemoryIndex(1);
+      const address = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
       const data = new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0xcc]);
       const { loadOps, registers, registerIndex } = prepareLoadData(address, data);
       const expectedValue = 0xffn;
@@ -83,7 +83,7 @@ describe("LoadOps", () => {
     });
 
     it("should load u16 from memory to register and extend the number to the register size", () => {
-      const address = tryAsMemoryIndex(1);
+      const address = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
       const data = new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0xcc]);
       const { loadOps, registers, registerIndex } = prepareLoadData(address, data);
       const expectedValue = 61183n;
@@ -95,7 +95,7 @@ describe("LoadOps", () => {
     });
 
     it("should load u32 from memory to register and extend the number to the register size", () => {
-      const address = tryAsMemoryIndex(1);
+      const address = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
       const data = new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0x0c]);
       const { loadOps, registers, registerIndex } = prepareLoadData(address, data);
       const expectedValue = 215871231n;
@@ -107,7 +107,7 @@ describe("LoadOps", () => {
     });
 
     it("should load u64 from memory to register (negative number)", () => {
-      const address = tryAsMemoryIndex(1);
+      const address = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
       const data = new Uint8Array([0x11, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);
       const { loadOps, registers, registerIndex } = prepareLoadData(address, data);
       const expectedSignedValue = -1n;
@@ -120,7 +120,7 @@ describe("LoadOps", () => {
     });
 
     it("should load u64 from memory to register", () => {
-      const address = tryAsMemoryIndex(1);
+      const address = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
       const data = new Uint8Array([0x11, 0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x08]);
       const { loadOps, registers, registerIndex } = prepareLoadData(address, data);
       const expectedValue = 0x08_99_aa_bb_cc_dd_ee_ffn;
@@ -134,7 +134,7 @@ describe("LoadOps", () => {
 
   describe("load (I8, I16 and I32)", () => {
     it("should load i8 from memory to register and extend the number to the register size", () => {
-      const address = tryAsMemoryIndex(1);
+      const address = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
       const data = new Uint8Array([0x11, 0xcc, 0xff, 0xff, 0xff]);
       const { loadOps, registers, registerIndex } = prepareLoadData(address, data);
       const expectedSignedValue = -52n;
@@ -147,7 +147,7 @@ describe("LoadOps", () => {
     });
 
     it("should load i16 from memory to register and extend the number to the register size", () => {
-      const address = tryAsMemoryIndex(1);
+      const address = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
       const data = new Uint8Array([0x11, 0xcc, 0xdd, 0xff, 0xff]);
       const { loadOps, registers, registerIndex } = prepareLoadData(address, data);
       const expectedSignedValue = -8756n;
@@ -160,7 +160,7 @@ describe("LoadOps", () => {
     });
 
     it("should load i32 from memory to register and extend the number to the register size", () => {
-      const address = tryAsMemoryIndex(1);
+      const address = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
       const data = new Uint8Array([0x11, 0xcc, 0xdd, 0xff, 0xff]);
       const { loadOps, registers, registerIndex } = prepareLoadData(address, data);
       const expectedSignedValue = -8756n;
@@ -177,8 +177,8 @@ describe("LoadOps", () => {
     const instructionResult = new InstructionResult();
 
     const memory = new MemoryBuilder()
-      .setWriteablePages(getStartPageIndex(address), tryAsMemoryIndex(4096), data)
-      .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
+      .setWriteablePages(getStartPageIndex(address), tryAsMemoryIndex(getStartPageIndex(address) + PAGE_SIZE), data)
+      .finalize(tryAsSbrkIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
     const registers = new Registers();
     const loadOps = new LoadOps(registers, memory, instructionResult);
     const addressRegisterIndex = 1;
@@ -199,12 +199,12 @@ describe("LoadOps", () => {
 
   describe("loadInd (I8 I16 and I32)", () => {
     it("should load i8 from memory to register and extend the number to the register size", () => {
-      const address = tryAsMemoryIndex(1);
+      const address = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
       const data = new Uint8Array([0x11, 0x11, 0xcc, 0xff, 0xff, 0xff]);
       const { loadOps, registers, resultRegisterIndex, addressRegisterIndex, immediate } = prepareLoadIndData(
         address,
         data,
-        1n,
+        1n + 16n * BigInt(PAGE_SIZE),
         1n,
       );
       const expectedSignedValue = -52n;
@@ -217,12 +217,12 @@ describe("LoadOps", () => {
     });
 
     it("should load i16 from memory to register and extend the number to the register size", () => {
-      const address = tryAsMemoryIndex(1);
+      const address = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
       const data = new Uint8Array([0x11, 0x11, 0xcc, 0xdd, 0xff, 0xff]);
       const { loadOps, registers, resultRegisterIndex, addressRegisterIndex, immediate } = prepareLoadIndData(
         address,
         data,
-        1n,
+        1n + 16n * BigInt(PAGE_SIZE),
         1n,
       );
       const expectedSignedValue = -8756n;
@@ -237,12 +237,12 @@ describe("LoadOps", () => {
     });
 
     it("should load i32 from memory to register and extend the number to the register size", () => {
-      const address = tryAsMemoryIndex(1);
+      const address = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
       const data = new Uint8Array([0x11, 0x11, 0xcc, 0xdd, 0xff, 0xff]);
       const { loadOps, registers, resultRegisterIndex, addressRegisterIndex, immediate } = prepareLoadIndData(
         address,
         data,
-        1n,
+        1n + 16n * BigInt(PAGE_SIZE),
         1n,
       );
       const expectedSignedValue = -8756n;
@@ -257,12 +257,12 @@ describe("LoadOps", () => {
 
   describe("loadInd (U8, U16 and U32)", () => {
     it("should load u8 from memory to register and extend the number to the register size", () => {
-      const address = tryAsMemoryIndex(1);
+      const address = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
       const data = new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0xcc]);
       const { loadOps, registers, resultRegisterIndex, addressRegisterIndex, immediate } = prepareLoadIndData(
         address,
         data,
-        1n,
+        1n + 16n * BigInt(PAGE_SIZE),
         1n,
       );
       const expectedValue = 0xffn;
@@ -274,12 +274,12 @@ describe("LoadOps", () => {
     });
 
     it("should load u16 from memory to register and extend the number to the register size", () => {
-      const address = tryAsMemoryIndex(1);
+      const address = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
       const data = new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0xcc]);
       const { loadOps, registers, resultRegisterIndex, addressRegisterIndex, immediate } = prepareLoadIndData(
         address,
         data,
-        1n,
+        1n + 16n * BigInt(PAGE_SIZE),
         1n,
       );
       const expectedValue = 61183n;
@@ -291,12 +291,12 @@ describe("LoadOps", () => {
     });
 
     it("should load u32 from memory to register and extend the number to the register size", () => {
-      const address = tryAsMemoryIndex(1);
+      const address = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
       const data = new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0x0c]);
       const { loadOps, registers, resultRegisterIndex, addressRegisterIndex, immediate } = prepareLoadIndData(
         address,
         data,
-        1n,
+        1n + 16n * BigInt(PAGE_SIZE),
         1n,
       );
       const expectedValue = 215871231n;
@@ -308,12 +308,12 @@ describe("LoadOps", () => {
     });
 
     it("should load u64 from memory to register", () => {
-      const address = tryAsMemoryIndex(1);
+      const address = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
       const data = new Uint8Array([0x11, 0x11, 0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x08]);
       const { loadOps, registers, resultRegisterIndex, addressRegisterIndex, immediate } = prepareLoadIndData(
         address,
         data,
-        1n,
+        1n + 16n * BigInt(PAGE_SIZE),
         1n,
       );
       const expectedValue = 619714147312856831n;
@@ -325,12 +325,12 @@ describe("LoadOps", () => {
     });
 
     it("should load u64 from memory to register (negative number)", () => {
-      const address = tryAsMemoryIndex(1);
+      const address = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
       const data = new Uint8Array([0x11, 0x11, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);
       const { loadOps, registers, resultRegisterIndex, addressRegisterIndex, immediate } = prepareLoadIndData(
         address,
         data,
-        1n,
+        1n + 16n * BigInt(PAGE_SIZE),
         1n,
       );
       const expectedSignedValue = -1n;

@@ -45,11 +45,22 @@ export class Memory {
   }
 
   // TODO [ToDr] This should support writing to more than two pages.
-  storeFrom(address: MemoryIndex, bytes: Uint8Array) {
+  storeFrom(address: MemoryIndex, bytes: Uint8Array): null | PageFault {
+    if (bytes.length === 0) {
+      return null;
+    }
+
+    const verificationResult = this.verifyReservedPages(address, bytes.length);
+
+    if (verificationResult !== null) {
+      return verificationResult;
+    }
+
     const pageNumber = getPageNumber(address);
     const page = this.memory.get(pageNumber);
     if (page === undefined) {
-      return new PageFault(address);
+      const faultAddress = getStartPageIndexFromPageNumber(pageNumber);
+      return new PageFault(faultAddress);
     }
 
     const firstPageIndex = tryAsPageIndex(address - page.start);
@@ -68,7 +79,8 @@ export class Memory {
     const secondPage = this.memory.get(secondPageNumber);
 
     if (secondPage === undefined) {
-      return new PageFault(pageEnd);
+      const faultAddress = getStartPageIndexFromPageNumber(secondPageNumber);
+      return new PageFault(faultAddress);
     }
 
     const firstPageStoreResult = page.storeFrom(firstPageIndex, bytes.subarray(0, toStoreOnFirstPage));
@@ -141,8 +153,7 @@ export class Memory {
       const page = this.memory.get(currentPageNumber);
 
       if (page === undefined) {
-        const faultAddress =
-          currentPageNumber === firstPageNumber ? startAddress : getStartPageIndexFromPageNumber(currentPageNumber);
+        const faultAddress = getStartPageIndexFromPageNumber(currentPageNumber);
         const fault = new PageFault(faultAddress);
         return Result.error(fault);
       }
@@ -163,6 +174,12 @@ export class Memory {
   loadInto(result: Uint8Array, startAddress: MemoryIndex): null | PageFault {
     if (result.length === 0) {
       return null;
+    }
+
+    const verificationResult = this.verifyReservedPages(startAddress, result.length);
+
+    if (verificationResult !== null) {
+      return verificationResult;
     }
 
     const pagesResult = this.getPages(startAddress, result.length);
@@ -192,6 +209,42 @@ export class Memory {
       currentPosition += bytesToRead;
       bytesLeft -= bytesToRead;
     }
+    return null;
+  }
+
+  /**
+   * Verify if we do not try to touch reserved memory pages
+   *
+   * https://graypaper.fluffylabs.dev/#/68eaa1f/247300247600?v=0.6.4
+   */
+  verifyReservedPages(startAddress: MemoryIndex, length: number): null | PageFault {
+    const startPageNumber = getPageNumber(startAddress);
+    const endAddress = tryAsMemoryIndex((startAddress + length - 1) % MEMORY_SIZE);
+    const endPageNumber = getPageNumber(endAddress);
+
+    const START_RESERVED_PAGE = 0;
+    const END_RESERVED_PAGE = 16;
+
+    /**
+     * There are 4 posibilities:
+     * [ 0 ... start ... 16 ... end ... ]
+     * [ 0 ... start ... end ... 16 ... ]
+     * [ 0 ... end ... 16 ... start ... ]
+     * [ 0 ... 16 ... end ... start ... ]
+     */
+
+    if (startPageNumber >= START_RESERVED_PAGE && startPageNumber < END_RESERVED_PAGE) {
+      return new PageFault(startAddress, false);
+    }
+
+    if (endPageNumber >= START_RESERVED_PAGE && endPageNumber < END_RESERVED_PAGE) {
+      return new PageFault(0, false);
+    }
+
+    if (startPageNumber > endPageNumber) {
+      return new PageFault(0, false);
+    }
+
     return null;
   }
 

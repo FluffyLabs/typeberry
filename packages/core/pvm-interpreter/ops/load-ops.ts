@@ -27,9 +27,15 @@ export class LoadOps {
   private loadNumber(address: number, registerIndex: number, numberLength: 1 | 2 | 4 | 8) {
     const registerBytes = this.regs.getBytesAsLittleEndian(registerIndex, REG_SIZE_BYTES);
     const loadResult = this.memory.loadInto(registerBytes.subarray(0, numberLength), tryAsMemoryIndex(address));
+
     if (loadResult !== null) {
-      this.instructionResult.status = Result.FAULT;
-      this.instructionResult.exitParam = address;
+      if (loadResult.hasPage) {
+        this.instructionResult.status = Result.FAULT;
+        this.instructionResult.exitParam = address;
+      } else {
+        this.instructionResult.status = Result.FAULT_ACCESS;
+      }
+
       return;
     }
 
@@ -40,10 +46,14 @@ export class LoadOps {
     // load all bytes from register to correctly handle the sign.
     const registerBytes = this.regs.getBytesAsLittleEndian(registerIndex, REG_SIZE_BYTES);
     const loadResult = this.memory.loadInto(registerBytes.subarray(0, numberLength), tryAsMemoryIndex(address));
+
     if (loadResult !== null) {
-      this.instructionResult.status = Result.FAULT;
-      this.instructionResult.exitParam = address;
-      return;
+      if (loadResult.hasPage) {
+        this.instructionResult.status = Result.FAULT;
+        this.instructionResult.exitParam = address;
+      } else {
+        this.instructionResult.status = Result.FAULT_ACCESS;
+      }
     }
 
     const msb = registerBytes[numberLength - 1] & 0x80;

@@ -25,14 +25,18 @@ describe("StoreOps", () => {
   function prepareStoreData(valueToStore: bigint, noOfBytes: 1 | 2 | 4 | 8) {
     const instructionResult = new InstructionResult();
     const regs = new Registers();
-    const address = tryAsMemoryIndex(1);
+    const address = tryAsMemoryIndex(16 * PAGE_SIZE + 1);
     const registerIndex = 1;
     regs.setU64(registerIndex, valueToStore);
     const initialMemory = new Uint8Array(32);
     initialMemory.fill(0x1);
     const memory = new MemoryBuilder()
-      .setWriteablePages(getStartPageIndex(address), tryAsMemoryIndex(4096), initialMemory)
-      .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
+      .setWriteablePages(
+        getStartPageIndex(address),
+        tryAsMemoryIndex(getStartPageIndex(address) + PAGE_SIZE),
+        initialMemory,
+      )
+      .finalize(tryAsSbrkIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
     const storeOps = new StoreOps(regs, memory, instructionResult);
     const expectedPage = getExpectedPage(address, bigintToUint8ArrayLE(valueToStore, noOfBytes), 32);
 
@@ -141,8 +145,12 @@ describe("StoreOps", () => {
     const initialMemory = new Uint8Array(32);
     initialMemory.fill(0x1);
     const memory = new MemoryBuilder()
-      .setWriteablePages(getStartPageIndex(address), tryAsMemoryIndex(4096), initialMemory)
-      .finalize(tryAsSbrkIndex(PAGE_SIZE), tryAsSbrkIndex(5 * PAGE_SIZE));
+      .setWriteablePages(
+        getStartPageIndex(address),
+        tryAsMemoryIndex(getStartPageIndex(address) + PAGE_SIZE),
+        initialMemory,
+      )
+      .finalize(tryAsSbrkIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
     const storeOps = new StoreOps(regs, memory, instructionResult);
     const expectedPage = getExpectedPage(address, bigintToUint8ArrayLE(valueToStore, noOfBytes), 32);
 
@@ -167,7 +175,7 @@ describe("StoreOps", () => {
   describe("storeImmediateInd (U8, U16 U32 and U64)", () => {
     it("should store u8 number", () => {
       const valueToStore = 0xfe_dc_ba_98n;
-      const addressImmediateValue = 1n;
+      const addressImmediateValue = 1n + 16n * BigInt(PAGE_SIZE);
       const addressRegisterValue = 1n;
       const { storeOps, valueImmediate, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
         prepareStoreIndData(valueToStore, 1, addressRegisterValue, addressImmediateValue);
@@ -180,7 +188,7 @@ describe("StoreOps", () => {
 
     it("should store u16 number", () => {
       const valueToStore = 0xfe_dc_ba_98n;
-      const addressImmediateValue = 1n;
+      const addressImmediateValue = 1n + 16n * BigInt(PAGE_SIZE);
       const addressRegisterValue = 1n;
       const { storeOps, valueImmediate, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
         prepareStoreIndData(valueToStore, 2, addressRegisterValue, addressImmediateValue);
@@ -193,7 +201,7 @@ describe("StoreOps", () => {
 
     it("should store u32 number", () => {
       const valueToStore = 0xfe_dc_ba_98n;
-      const addressImmediateValue = 1n;
+      const addressImmediateValue = 1n + 16n * BigInt(PAGE_SIZE);
       const addressRegisterValue = 1n;
       const { storeOps, valueImmediate, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
         prepareStoreIndData(valueToStore, 4, addressRegisterValue, addressImmediateValue);
@@ -206,7 +214,7 @@ describe("StoreOps", () => {
 
     it("should store u64 number", () => {
       const valueToStore = -19088744n;
-      const addressImmediateValue = 1n;
+      const addressImmediateValue = 1n + 16n * BigInt(PAGE_SIZE);
       const addressRegisterValue = 1n;
       const { storeOps, valueImmediate, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
         prepareStoreIndData(valueToStore, 8, addressRegisterValue, addressImmediateValue);
@@ -221,7 +229,7 @@ describe("StoreOps", () => {
   describe("storeInd (U8, U16 U32 and U64)", () => {
     it("should store u8 number", () => {
       const valueToStore = 0xfe_dc_ba_98n;
-      const addressImmediateValue = 1n;
+      const addressImmediateValue = 1n + 16n * BigInt(PAGE_SIZE);
       const addressRegisterValue = 1n;
       const { storeOps, valueRegisterIndex, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
         prepareStoreIndData(valueToStore, 1, addressRegisterValue, addressImmediateValue);
@@ -234,7 +242,7 @@ describe("StoreOps", () => {
 
     it("should store u16 number", () => {
       const valueToStore = 0xfe_dc_ba_98n;
-      const addressImmediateValue = 1n;
+      const addressImmediateValue = 1n + 16n * BigInt(PAGE_SIZE);
       const addressRegisterValue = 1n;
       const { storeOps, valueRegisterIndex, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
         prepareStoreIndData(valueToStore, 2, addressRegisterValue, addressImmediateValue);
@@ -247,7 +255,7 @@ describe("StoreOps", () => {
 
     it("should store u32 number", () => {
       const valueToStore = 0xfe_dc_ba_98n;
-      const addressImmediateValue = 1n;
+      const addressImmediateValue = 1n + 16n * BigInt(PAGE_SIZE);
       const addressRegisterValue = 1n;
       const { storeOps, valueRegisterIndex, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
         prepareStoreIndData(valueToStore, 4, addressRegisterValue, addressImmediateValue);
@@ -260,7 +268,7 @@ describe("StoreOps", () => {
 
     it("should store u64 number", () => {
       const valueToStore = 0xfe_dc_ba_98n;
-      const addressImmediateValue = 1n;
+      const addressImmediateValue = 1n + 16n * BigInt(PAGE_SIZE);
       const addressRegisterValue = 1n;
       const { storeOps, valueRegisterIndex, addressImmediate, address, memory, expectedPage, addressRegisterIndex } =
         prepareStoreIndData(valueToStore, 8, addressRegisterValue, addressImmediateValue);
