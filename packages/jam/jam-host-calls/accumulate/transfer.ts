@@ -8,8 +8,8 @@ import {
   PvmExecution,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
-import { type BigGas, type Gas, type GasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
-import { asOpaqueType, assertNever } from "@typeberry/utils";
+import { type Gas, type GasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
+import { assertNever } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { type AccumulationPartialState, TRANSFER_MEMO_BYTES, TransferError } from "./partial-state";
@@ -45,7 +45,7 @@ export class Transfer implements HostCallHandler {
     // `a`: amount
     const amount = regs.get(AMOUNT_REG);
     // `l`: gas
-    const onTransferGas: BigGas = asOpaqueType(regs.get(ON_TRANSFER_GAS_REG));
+    const onTransferGas = tryAsGas(regs.get(ON_TRANSFER_GAS_REG));
     // `o`: transfer memo
     const memoStart = regs.get(MEMO_START_REG);
 

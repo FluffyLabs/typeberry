@@ -9,7 +9,7 @@ export class HostCallRegisters {
     return tryAsU64(this.registers.getU64(registerIndex));
   }
 
-  set(registerIndex: number, value: U64 | bigint) {
+  set(registerIndex: number, value: U64) {
     this.registers.setU64(registerIndex, value);
   }
 }

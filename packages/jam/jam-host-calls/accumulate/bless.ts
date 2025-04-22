@@ -4,7 +4,6 @@ import { tryAsU64, tryBigIntAsNumber } from "@typeberry/numbers";
 import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type BigGas, type Gas, type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { asOpaqueType } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
@@ -76,9 +75,7 @@ export class Bless implements HostCallHandler {
         return;
       }
       g.set(serviceId, gas);
-      // TODO [ToDr] we might need to wrap to the first page here!!!!
-      // we should have a test for this!
-      memIndex = tryAsU64((memIndex + tryAsU64(decoder.bytesRead())) % tryAsU64(MEMORY_SIZE));
+      memIndex = tryAsU64(memIndex + BigInt(decoder.bytesRead()));
       previousServiceId = serviceId;
     }
 

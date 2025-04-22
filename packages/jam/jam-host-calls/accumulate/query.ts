@@ -1,6 +1,6 @@
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU32, tryBigIntAsNumber } from "@typeberry/numbers";
+import { tryAsU32, tryAsU64, tryBigIntAsNumber } from "@typeberry/numbers";
 import {
   type HostCallHandler,
   type HostCallMemory,
@@ -43,28 +43,30 @@ export class Query implements HostCallHandler {
     }
 
     const result = this.partialState.checkPreimageStatus(hash, length);
+    const zero = tryAsU64(0n);
+
     if (result === null) {
       regs.set(IN_OUT_REG_1, HostCallResult.NONE);
-      regs.set(IN_OUT_REG_2, 0n);
+      regs.set(IN_OUT_REG_2, zero);
       return;
     }
 
     switch (result.status) {
       case PreimageStatus.Requested:
-        regs.set(IN_OUT_REG_1, 0n);
-        regs.set(IN_OUT_REG_2, 0n);
+        regs.set(IN_OUT_REG_1, zero);
+        regs.set(IN_OUT_REG_2, zero);
         return;
       case PreimageStatus.Available:
-        regs.set(IN_OUT_REG_1, (BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 1n);
-        regs.set(IN_OUT_REG_2, 0n);
+        regs.set(IN_OUT_REG_1, tryAsU64((BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 1n));
+        regs.set(IN_OUT_REG_2, zero);
         return;
       case PreimageStatus.Unavailable:
-        regs.set(IN_OUT_REG_1, (BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 2n);
-        regs.set(IN_OUT_REG_2, BigInt(result.data[1]));
+        regs.set(IN_OUT_REG_1, tryAsU64((BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 2n));
+        regs.set(IN_OUT_REG_2, tryAsU64(result.data[1]));
         return;
       case PreimageStatus.Reavailable:
-        regs.set(IN_OUT_REG_1, (BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 3n);
-        regs.set(IN_OUT_REG_2, (BigInt(result.data[2]) << UPPER_BITS_SHIFT) + BigInt(result.data[1]));
+        regs.set(IN_OUT_REG_1, tryAsU64((BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 3n));
+        regs.set(IN_OUT_REG_2, tryAsU64((BigInt(result.data[2]) << UPPER_BITS_SHIFT) + BigInt(result.data[1])));
         return;
     }
   }
