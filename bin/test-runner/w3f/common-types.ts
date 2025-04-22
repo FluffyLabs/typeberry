@@ -8,6 +8,7 @@ import {
   type ServiceId,
   type StateRootHash,
   type TimeSlot,
+  tryAsServiceGas,
 } from "@typeberry/block";
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import type { PreimageHash } from "@typeberry/block/preimage";
@@ -17,7 +18,6 @@ import { HashDictionary } from "@typeberry/collections";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type OpaqueHash, WithHash, blake2b } from "@typeberry/hash";
 import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
-import type { SmallGas } from "@typeberry/pvm-interpreter";
 import {
   AvailabilityAssignment,
   type BlockState,
@@ -111,8 +111,8 @@ class TestServiceInfo {
     {
       code_hash: fromJson.bytes32(),
       balance: json.fromNumber((x) => tryAsU64(x)),
-      min_item_gas: "number",
-      min_memo_gas: "number",
+      min_item_gas: json.fromNumber((x) => tryAsServiceGas(x)),
+      min_memo_gas: json.fromNumber((x) => tryAsServiceGas(x)),
       bytes: json.fromNumber((x) => tryAsU64(x)),
       items: "number",
     },
@@ -130,8 +130,8 @@ class TestServiceInfo {
 
   code_hash!: CodeHash;
   balance!: U64;
-  min_item_gas!: SmallGas;
-  min_memo_gas!: SmallGas;
+  min_item_gas!: ServiceGas;
+  min_memo_gas!: ServiceGas;
   bytes!: U64;
   items!: U32;
 }

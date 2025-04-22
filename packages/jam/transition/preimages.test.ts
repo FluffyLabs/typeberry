@@ -1,13 +1,12 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
+import { tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import type { ServiceId, TimeSlot } from "@typeberry/block";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, blake2b } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { tryAsGas } from "@typeberry/pvm-interpreter";
 import {
   LookupHistoryItem,
   PreimageItem,
@@ -36,8 +35,8 @@ function createAccount(
     info: ServiceAccountInfo.fromCodec({
       codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
       balance: tryAsU64(0),
-      accumulateMinGas: tryAsGas(0),
-      onTransferMinGas: tryAsGas(0),
+      accumulateMinGas: tryAsServiceGas(0),
+      onTransferMinGas: tryAsServiceGas(0),
       storageUtilisationBytes: tryAsU64(0),
       storageUtilisationCount: tryAsU32(0),
     }),

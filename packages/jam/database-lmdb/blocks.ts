@@ -5,6 +5,7 @@ import {
   Header,
   type HeaderHash,
   type HeaderView,
+  type StateRootHash,
 } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
@@ -14,6 +15,7 @@ import { HASH_SIZE, type WithHash } from "@typeberry/hash";
 import lmdb from "lmdb";
 
 const BEST_BLOCK_KEY = "best block";
+const BEST_POST_STATE_ROOT_KEY = "best posterior root";
 
 // TODO [ToDr] consider having a changeset for transactions,
 // where we store all `insert ++ key ++ value` and `remove ++ key`
@@ -46,13 +48,21 @@ export class LmdbBlocks implements BlocksDb {
     await Promise.all([a, b]);
   }
 
-  async setBestHeaderHash(hash: HeaderHash): Promise<void> {
-    await this.root.put(BEST_BLOCK_KEY, hash.raw);
+  async setBestData(hash: HeaderHash, postState: StateRootHash): Promise<void> {
+    const a = this.root.put(BEST_POST_STATE_ROOT_KEY, postState.raw);
+    const b = this.root.put(BEST_BLOCK_KEY, hash.raw);
+
+    await a;
+    await b;
   }
 
-  getBestHeaderHash(): HeaderHash {
-    const data = this.root.get(BEST_BLOCK_KEY);
-    return (data !== undefined ? Bytes.fromBlob(data, HASH_SIZE) : Bytes.zero(HASH_SIZE)).asOpaque();
+  getBestData(): [HeaderHash, StateRootHash] {
+    const headerHash = this.root.get(BEST_BLOCK_KEY);
+    const postStateRootHash = this.root.get(BEST_POST_STATE_ROOT_KEY);
+
+    const orZero = (x: Uint8Array | undefined) =>
+      x === undefined ? Bytes.zero(HASH_SIZE).asOpaque() : Bytes.fromBlob(x, HASH_SIZE).asOpaque();
+    return [orZero(headerHash), orZero(postStateRootHash)];
   }
 
   getHeader(hash: HeaderHash): HeaderView | null {

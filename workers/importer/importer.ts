@@ -1,28 +1,53 @@
 import type { BlockView, HeaderHash, HeaderView } from "@typeberry/block";
-import { type BlocksDb, InMemoryKvdb } from "@typeberry/database";
+import type { ChainSpec } from "@typeberry/config";
+import type { BlocksDb, StateDb } from "@typeberry/database";
 import { WithHash } from "@typeberry/hash";
+import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
+import { BlockVerifier } from "@typeberry/transition/block-verification";
+import { OnChain } from "@typeberry/transition/chain-stf";
 
 export class Importer {
-  private readonly state: InMemoryKvdb;
+  private readonly verifier: BlockVerifier;
+  private readonly stf: OnChain;
 
   constructor(
-    private readonly hasher: TransitionHasher,
     private readonly blocks: BlocksDb,
+    private readonly states: StateDb,
+    private readonly spec: ChainSpec,
+    hasher: TransitionHasher,
   ) {
-    this.state = new InMemoryKvdb();
+    const currentStateRootHash = this.blocks.getBestData()[1];
+    const state = states.getFullState(currentStateRootHash);
+    if (state === null) {
+      throw new Error(`Unable to load best state from hash: ${currentStateRootHash}.`);
+    }
+
+    this.verifier = new BlockVerifier(hasher);
+    this.stf = new OnChain(spec, state, blocks, hasher);
   }
 
-  async importBlock(b: BlockView): Promise<WithHash<HeaderHash, HeaderView>> {
-    // TODO [ToDr] verify block?
-    // TODO [ToDr] execute block and populate the state.
-    const headerWithHash = this.hasher.header(b.header.view());
-    await this.blocks.insertBlock(new WithHash(headerWithHash.hash, b));
-    await this.blocks.setBestHeaderHash(headerWithHash.hash);
-    return new WithHash(headerWithHash.hash, b.header.view());
+  async importBlock(block: BlockView): Promise<WithHash<HeaderHash, HeaderView>> {
+    const hash = await this.verifier.verifyBlock(block);
+    if (hash.isError) {
+      // TODO [ToDr] this should be a `Result.error`?
+      throw new Error(`Block verification failure: ${hash.error} - ${hash.details}.`);
+    }
+    const headerHash = hash.ok;
+    const res = await this.stf.transition(block, headerHash);
+    if (res.isError) {
+      throw new Error(`Block transition failure: ${res.error} - ${res.details}.`);
+    }
+    const stateRoot = merkelizeState(serializeState(this.stf.state, this.spec));
+    const writeState = this.states.setFullState(stateRoot, this.stf.state);
+    const writeBlocks = this.blocks.insertBlock(new WithHash(headerHash, block));
+    await writeState;
+    await writeBlocks;
+    await this.blocks.setBestData(headerHash, stateRoot);
+    return new WithHash(headerHash, block.header.view());
   }
 
   bestBlockHash() {
-    return this.blocks.getBestHeaderHash();
+    return this.blocks.getBestData()[0];
   }
 }

@@ -1,122 +1,127 @@
-import type { CodeHash, ServiceId, StateRootHash } from "@typeberry/block";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { StateRootHash } from "@typeberry/block";
+import type { BytesBlob } from "@typeberry/bytes";
+import { Decoder, Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
-import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
-import { InMemoryTrie, type StateKey, type TrieHash } from "@typeberry/trie";
-import { blake2bTrieHasher } from "@typeberry/trie/hasher";
-import { WriteableNodesDb } from "@typeberry/trie/nodesDb";
+import type { ChainSpec } from "@typeberry/config";
+import type { OpaqueHash } from "@typeberry/hash";
+import type { State } from "@typeberry/state";
+import { stateDumpCodec } from "@typeberry/state-merkleization/dump";
+import type { Opaque } from "@typeberry/utils";
 
+/**
+ * Temporary and simple state database.
+ *
+ * We store the entire state with full keys under it's state root hash.
+ *
+ * Note that this is sub-optimal for some reasons:
+ * 1. Answering CE-129 queries requires us storing all trie nodes.
+ * 2. We can't load `SerializedState` (since we don't have full keys).
+ * 3. We store a lot of duplicated data.
+ *
+ * but also nice (we have full key data - fast retrieval) and simple (easy access
+ * to the state fields, loading state, etc), but might not be sustainable.
+ *
+ * A slightly better option would be to store only changes to the state instead of full
+ * one.
+ *
+ * Some other options that we have:
+ * 1. Store `SerializedState` and compute the merkle trie on-demand.
+ *    1. If our storage is somehow based on the merkle trie keys we could answer
+ *       ce-129 given the key. (nomt approach)
+ *    2. If our storage is more naive we will not know what exact state neededs
+ *       to be merkelized when a random trie node is requested.
+ * 2. Store all trie nodes and do some pruning of old ones - basically an archive node.
+ *
+ * In case of any of these options, when accessing state we will need to compute
+ * the keys before retrieving the data (which is slower).
+ *
+ */
 export class StateDb {
-  constructor(private readonly db: InMemoryKvdb) {}
-
-  stateAt(root: StateRootHash): State | null {
-    const hasRootNode = this.db.has(root.asOpaque());
-    // we don't know about that trie.
-    if (!hasRootNode) {
-      return null;
-    }
-    return new State(this.db, root);
-  }
-}
-
-export class State {
   constructor(
-    private readonly db: InMemoryKvdb,
-    public readonly root: StateRootHash,
+    private readonly spec: ChainSpec,
+    private readonly db: KeyValueDatabase,
   ) {}
 
-  getServiceCode(serviceId: ServiceId): WithHash<CodeHash, BytesBlob> | null {
-    const key = blake2b.hashString(`serviceCodeHash:${serviceId}`);
-    // TODO [ToDr] here we need to make sure that the key is part of the root!
-    const blob = this.db.get(key.asOpaque());
-    if (blob === null) {
+  async setFullState(root: StateRootHash, state: State) {
+    const encoded = Encoder.encodeObject(stateDumpCodec, state, this.spec);
+    const tx = this.db.newTransaction();
+    tx.insert(root.asOpaque(), encoded);
+    await this.db.commit(tx);
+  }
+
+  getFullState(root: StateRootHash): State | null {
+    const encodedState = this.db.get(root.asOpaque());
+    if (encodedState === null) {
       return null;
     }
-    const hash = blob.raw.subarray(0, HASH_SIZE);
-    const code = blob.raw.subarray(HASH_SIZE);
 
-    return new WithHash(Bytes.fromBlob(hash, HASH_SIZE).asOpaque(), BytesBlob.blobFrom(code));
+    return Decoder.decodeObject(stateDumpCodec, encodedState, this.spec);
   }
 }
 
+export type DbKey = Opaque<OpaqueHash, "db key">;
+
 /** Basic abstraction over key-value database. */
-export interface KeyValueDatabase<Tx extends Transaction> {
+export interface KeyValueDatabase<Tx extends Transaction = Transaction> {
   /** Retrieve a key from the database. */
-  get(key: StateKey): BytesBlob | null;
+  get(key: DbKey): BytesBlob | null;
 
   /** Check if the key is present in the database. */
-  has(key: StateKey): boolean;
-
-  /** Get database commitment (merkle root hash). */
-  getRoot(): StateRootHash;
+  has(key: DbKey): boolean;
 
   /** Create new transaction to alter the database. */
   newTransaction(): Tx;
 
-  /** Commit the changes from a transaction back to the database and get the root. */
-  commit(tx: Tx): Promise<StateRootHash>;
+  /** Commit the changes from a transaction back to the database. */
+  commit(tx: Tx): Promise<void>;
 }
 
 /** Database-altering transaction. */
 export interface Transaction {
   /** Insert/Overwrite key in the database. */
-  insert(key: StateKey, value: WithHash<TrieHash, BytesBlob>): void;
+  insert(key: DbKey, value: BytesBlob): void;
 
   /** Remove a key from the database. */
-  remove(key: StateKey): void;
+  remove(key: DbKey): void;
 }
 
 export class InMemoryKvdb implements KeyValueDatabase<InMemoryTransaction> {
-  private readonly db: WriteableNodesDb;
-  private readonly flat: HashDictionary<StateKey, WithHash<TrieHash, BytesBlob>>;
-  private readonly trie: InMemoryTrie;
+  private readonly db: HashDictionary<DbKey, BytesBlob> = HashDictionary.new();
 
-  constructor() {
-    this.db = new WriteableNodesDb(blake2bTrieHasher);
-    this.flat = HashDictionary.new();
-    this.trie = new InMemoryTrie(this.db);
+  get(key: DbKey): BytesBlob | null {
+    const value = this.db.get(key);
+    return value ?? null;
   }
 
-  get(key: StateKey): BytesBlob | null {
-    const value = this.flat.get(key);
-    return value?.data ?? null;
-  }
-
-  has(key: StateKey): boolean {
+  has(key: DbKey): boolean {
     const x = this.get(key);
     return x !== null;
-  }
-
-  getRoot(): StateRootHash {
-    return this.trie.getRootHash().asOpaque();
   }
 
   newTransaction(): InMemoryTransaction {
     return new InMemoryTransaction();
   }
 
-  commit(tx: InMemoryTransaction): Promise<StateRootHash> {
+  commit(tx: InMemoryTransaction): Promise<void> {
     for (const [key, value] of tx.writes) {
       if (value !== null) {
-        this.trie.set(key, value.data, value.hash);
-        this.flat.set(key, value);
+        this.db.set(key, value);
       } else {
-        this.trie.remove(key);
-        this.flat.delete(key);
+        this.db.delete(key);
       }
     }
-    return Promise.resolve(this.getRoot());
+    return Promise.resolve();
   }
 }
 
 export class InMemoryTransaction implements Transaction {
-  readonly writes: [StateKey, WithHash<TrieHash, BytesBlob> | null][] = [];
+  readonly writes: [DbKey, BytesBlob | null][] = [];
 
-  insert(key: StateKey, value: WithHash<TrieHash, BytesBlob>): void {
+  insert(key: DbKey, value: BytesBlob): void {
     this.writes.push([key, value]);
   }
 
-  remove(key: StateKey): void {
+  remove(key: DbKey): void {
     this.writes.push([key, null]);
   }
 }

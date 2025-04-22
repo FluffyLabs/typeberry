@@ -2,6 +2,7 @@ import { isMainThread, parentPort } from "node:worker_threads";
 
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
+import { InMemoryKvdb, StateDb } from "@typeberry/database";
 import { LmdbBlocks } from "@typeberry/database-lmdb";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { SimpleAllocator, keccak } from "@typeberry/hash";
@@ -41,8 +42,10 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
     logger.info("Importer waiting for blocks.");
     const config = worker.getConfig();
     const importer = new Importer(
-      new TransitionHasher(config.chainSpec, await keccakHasher, new SimpleAllocator()),
       new LmdbBlocks(config.chainSpec, config.blocksDbPath),
+      new StateDb(config.chainSpec, new InMemoryKvdb()),
+      config.chainSpec,
+      new TransitionHasher(config.chainSpec, await keccakHasher, new SimpleAllocator()),
     );
 
     // TODO [ToDr] back pressure?

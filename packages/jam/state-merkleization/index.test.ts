@@ -20,7 +20,6 @@ import { FixedSizeArray, HashDictionary, HashSet, SortedSet, asKnownSize } from 
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { tryAsGas } from "@typeberry/pvm-interpreter";
 import {
   AvailabilityAssignment,
   BlockState,
@@ -49,7 +48,7 @@ describe("State Serialization", () => {
   it("should load and serialize the test state", () => {
     const state = testState();
     const serialized = serializeState(state, spec);
-    for (const [actualKey, actualValue] of serialized) {
+    for (const { key: actualKey, value: actualValue } of serialized) {
       let foundKey = false;
       for (const [expectedKey, expectedValue, details] of TEST_STATE) {
         if (actualKey.isEqualTo(Bytes.parseBytes(expectedKey, HASH_SIZE))) {
@@ -215,8 +214,8 @@ const testState = (): State => {
           info: ServiceAccountInfo.fromCodec({
             codeHash: b32("0x15f8485e3a88e86182e63280720d5ec9892578f0e577fb1bcdda5cf497950815"),
             balance: tryAsU64(10000000000),
-            accumulateMinGas: tryAsGas(100),
-            onTransferMinGas: tryAsGas(100),
+            accumulateMinGas: tryAsServiceGas(100),
+            onTransferMinGas: tryAsServiceGas(100),
             storageUtilisationBytes: tryAsU64(1296),
             storageUtilisationCount: tryAsU32(4),
           }),

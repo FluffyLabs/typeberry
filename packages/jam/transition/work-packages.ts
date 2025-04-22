@@ -118,21 +118,27 @@ export class WorkPackageExecutor {
     }
 
     // TODO [ToDr] we should probably store posteriorStateRoots in the blocks db.
-    const state = this.state.stateAt(header.priorStateRoot.materialize());
+    const state = this.state.getFullState(header.priorStateRoot.materialize());
     if (state === null) {
       return Result.error(ServiceExecutorError.NoState);
     }
 
-    const serviceCode = state.getServiceCode(serviceId);
+    const service = state.services.get(serviceId) ?? null;
+    const serviceCodeHash = service?.data.info.codeHash ?? null;
+    if (serviceCodeHash === null) {
+      return Result.error(ServiceExecutorError.NoServiceCode);
+    }
+
+    if (!serviceCodeHash.isEqualTo(expectedCodeHash)) {
+      return Result.error(ServiceExecutorError.ServiceCodeMismatch);
+    }
+
+    const serviceCode = service?.data.preimages.get(serviceCodeHash.asOpaque())?.blob ?? null;
     if (serviceCode === null) {
       return Result.error(ServiceExecutorError.NoServiceCode);
     }
 
-    if (!serviceCode.hash.isEqualTo(expectedCodeHash)) {
-      return Result.error(ServiceExecutorError.ServiceCodeMismatch);
-    }
-
-    return Result.ok(new PvmExecutor(serviceCode.data));
+    return Result.ok(new PvmExecutor(serviceCode));
   }
 }
 

@@ -1,4 +1,4 @@
-import type { BlockView, ExtrinsicView, HeaderHash, HeaderView } from "@typeberry/block";
+import type { BlockView, ExtrinsicView, HeaderHash, HeaderView, StateRootHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type WithHash } from "@typeberry/hash";
@@ -9,10 +9,10 @@ import { HASH_SIZE, type WithHash } from "@typeberry/hash";
 export interface BlocksDb {
   /** Insert and flush a new block into the database. */
   insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void>;
-  /** Mark given header hash as the best block. */
-  setBestHeaderHash(hash: HeaderHash): Promise<void>;
-  /** Retrieve current best block. */
-  getBestHeaderHash(): HeaderHash;
+  /** Mark given header hash as the best block along with it's posterior state root. */
+  setBestData(hash: HeaderHash, posteriorStateRoot: StateRootHash): Promise<void>;
+  /** Retrieve current best header hash and posterior state root. */
+  getBestData(): [HeaderHash, StateRootHash];
   /** Retrieve header by hash. */
   getHeader(hash: HeaderHash): HeaderView | null;
   /**
@@ -28,6 +28,7 @@ export class InMemoryBlocks implements BlocksDb {
   private readonly headersByHash: HashDictionary<HeaderHash, HeaderView> = HashDictionary.new();
   private readonly extrinsicsByHeaderHash: HashDictionary<HeaderHash, ExtrinsicView> = HashDictionary.new();
   private bestHeaderHash: HeaderHash = Bytes.zero(HASH_SIZE).asOpaque();
+  private bestPostStateRoot: StateRootHash = Bytes.zero(HASH_SIZE).asOpaque();
 
   insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void> {
     this.headersByHash.set(block.hash, block.data.header.view());
@@ -36,14 +37,15 @@ export class InMemoryBlocks implements BlocksDb {
     return Promise.resolve();
   }
 
-  setBestHeaderHash(hash: HeaderHash): Promise<void> {
+  setBestData(hash: HeaderHash, postStateRoot: StateRootHash): Promise<void> {
     this.bestHeaderHash = hash;
+    this.bestPostStateRoot = postStateRoot;
 
     return Promise.resolve();
   }
 
-  getBestHeaderHash(): HeaderHash {
-    return this.bestHeaderHash;
+  getBestData(): [HeaderHash, StateRootHash] {
+    return [this.bestHeaderHash, this.bestPostStateRoot];
   }
 
   getHeader(hash: HeaderHash): HeaderView | null {

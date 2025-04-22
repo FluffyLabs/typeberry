@@ -14,14 +14,16 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { type BlocksDb, InMemoryKvdb } from "@typeberry/database";
+import type { BlocksDb, StateDb } from "@typeberry/database";
 import { HASH_SIZE, SimpleAllocator } from "@typeberry/hash";
 import type { KeccakHasher } from "@typeberry/hash/keccak";
+import type { State } from "@typeberry/state";
+import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { asOpaqueType } from "@typeberry/utils";
 
 export class Generator {
-  public readonly database = new InMemoryKvdb();
+  public readonly state: State | null;
   private readonly hashAllocator = new SimpleAllocator();
   private lastHeaderHash: HeaderHash;
   private lastHeader: Header | null;
@@ -30,9 +32,13 @@ export class Generator {
     public readonly chainSpec: ChainSpec,
     public readonly keccakHasher: KeccakHasher,
     blocks: BlocksDb,
+    state: StateDb,
   ) {
-    this.lastHeaderHash = blocks.getBestHeaderHash();
+    const data = blocks.getBestData();
+    this.lastHeaderHash = data[0];
     this.lastHeader = blocks.getHeader(this.lastHeaderHash)?.materialize() ?? null;
+    // TODO [ToDr] handle genesis?
+    this.state = state.getFullState(data[1]);
   }
 
   async nextEncodedBlock() {
@@ -48,7 +54,10 @@ export class Generator {
     const hasher = new TransitionHasher(this.chainSpec, this.keccakHasher, this.hashAllocator);
     // TODO [ToDr] write benchmark to calculate many hashes.
     const parentHeaderHash = this.lastHeaderHash;
-    const stateRoot = await this.database.getRoot();
+    const stateRoot =
+      this.state === null
+        ? Bytes.zero(HASH_SIZE).asOpaque()
+        : merkelizeState(serializeState(this.state, this.chainSpec));
 
     const extrinsic = new Extrinsic(
       asOpaqueType([]),
