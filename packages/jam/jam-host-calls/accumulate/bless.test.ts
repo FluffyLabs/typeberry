@@ -8,7 +8,7 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { LegacyHostCallResult } from "../results";
-import { Empower } from "./empower";
+import { Bless } from "./bless";
 import { TestAccumulate } from "./partial-state.test";
 
 const gas = gasCounter(tryAsGas(0));
@@ -63,10 +63,10 @@ function prepareRegsAndMemory(
   };
 }
 
-describe("HostCalls: Empower", () => {
+describe("HostCalls: Bless", () => {
   it("should set new privileged services and auto-accumualte services", async () => {
     const accumulate = new TestAccumulate();
-    const empower = new Empower(accumulate);
+    const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
     const { flat, expected } = prepareDictionary();
@@ -84,7 +84,7 @@ describe("HostCalls: Empower", () => {
 
   it("should fail when dictionary is not readable", async () => {
     const accumulate = new TestAccumulate();
-    const empower = new Empower(accumulate);
+    const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
     const { flat } = prepareDictionary();
@@ -100,7 +100,7 @@ describe("HostCalls: Empower", () => {
 
   it("should fail when dictionary is out of order", async () => {
     const accumulate = new TestAccumulate();
-    const empower = new Empower(accumulate);
+    const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
     const { flat } = prepareDictionary((d) => {
@@ -118,7 +118,7 @@ describe("HostCalls: Empower", () => {
 
   it("should fail when dictionary contains duplicates", async () => {
     const accumulate = new TestAccumulate();
-    const empower = new Empower(accumulate);
+    const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
     const { flat } = prepareDictionary();

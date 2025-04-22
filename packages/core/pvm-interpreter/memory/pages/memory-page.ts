@@ -1,4 +1,4 @@
-import { OK, Result } from "@typeberry/utils";
+import type { OK, Result } from "@typeberry/utils";
 import type { PageFault } from "../errors";
 import type { MemoryIndex } from "../memory-index";
 import { getStartPageIndexFromPageNumber } from "../memory-utils";

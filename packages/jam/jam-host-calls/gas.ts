@@ -1,5 +1,6 @@
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import { type PvmExecution, type Registers, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import type { HostCallRegisters } from "@typeberry/pvm-host-calls/host-call-registers";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { CURRENT_SERVICE_ID } from "./utils";
 
@@ -15,10 +16,10 @@ export class Gas implements HostCallHandler {
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
-  execute(gas: GasCounter, regs: Registers): Promise<undefined | PvmExecution> {
+  execute(gas: GasCounter, regs: HostCallRegisters): Promise<undefined | PvmExecution> {
     const bigGas = BigInt(gas.get());
 
-    regs.setU64(7, bigGas);
+    regs.set(7, bigGas);
 
     return Promise.resolve(undefined);
   }

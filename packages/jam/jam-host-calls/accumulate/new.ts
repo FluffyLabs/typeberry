@@ -1,12 +1,11 @@
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import { type PvmExecution, type Registers, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import { tryAsU32, tryAsU64, tryBigIntAsNumber } from "@typeberry/numbers";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
+import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
-import { LegacyHostCallResult } from "../results";
+import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
 
@@ -24,42 +23,35 @@ export class New implements HostCallHandler {
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
+  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `o`
-    const codeHashStart = tryAsMemoryIndex(regs.getLowerU32(IN_OUT_REG));
+    const codeHashStart = regs.get(IN_OUT_REG);
     // `l`
-    const codeLength = tryAsU32(regs.getLowerU32(8));
-    const g_l = tryAsU32(regs.getLowerU32(9));
-    const g_h = tryAsU32(regs.getLowerU32(10));
-    const m_l = tryAsU32(regs.getLowerU32(11));
-    const m_h = tryAsU32(regs.getLowerU32(12));
+    const codeLength = tryAsU32(tryBigIntAsNumber(regs.get(8)));
+    // `g`
+    const gas = regs.get(9);
+    // `m`
+    const allowance = regs.get(10);
 
     // `c`
     const codeHash = Bytes.zero(HASH_SIZE);
-    const readResult = memory.loadInto(codeHash.raw, codeHashStart);
-    if (readResult.isError) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
-      return;
+    const memoryReadResult = memory.loadInto(codeHash.raw, codeHashStart);
+    // error while reading the memory.
+    if (memoryReadResult.isError) {
+      return PvmExecution.Panic;
     }
-
-    const gas = asU64(g_l, g_h);
-    const allowance = asU64(m_l, m_h);
 
     const newServiceId = bump(this.currentServiceId);
 
     const assignedId = this.partialState.newService(newServiceId, codeHash.asOpaque(), codeLength, gas, allowance);
 
     if (assignedId.isOk) {
-      regs.setU32(IN_OUT_REG, assignedId.ok);
+      regs.set(IN_OUT_REG, tryAsU64(assignedId.ok));
     } else {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.CASH);
+      regs.set(IN_OUT_REG, HostCallResult.CASH);
     }
     return;
   }
-}
-
-function asU64(lower: U32, higher: U32) {
-  return tryAsU64((BigInt(higher) << 32n) + BigInt(lower));
 }
 
 function bump(serviceId: ServiceId) {

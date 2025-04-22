@@ -11,9 +11,9 @@ import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
 import { LegacyHostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
+import { Eject } from "./eject";
 import { QuitError, TRANSFER_MEMO_BYTES } from "./partial-state";
 import { TestAccumulate } from "./partial-state.test";
-import { Quit } from "./quit";
 
 const RESULT_REG = 7;
 const DESTINATION_REG = 7;
@@ -43,10 +43,10 @@ function prepareRegsAndMemory(
 
 const gas = gasCounter(tryAsGas(10_000));
 
-describe("HostCalls: Quit", () => {
+describe("HostCalls: Eject", () => {
   it("should quit the account and burn the funds", async () => {
     const accumulate = new TestAccumulate();
-    const quit = new Quit(accumulate);
+    const quit = new Eject(accumulate);
     quit.currentServiceId = tryAsServiceId(10_000);
 
     const { registers, memory } = prepareRegsAndMemory(
@@ -66,7 +66,7 @@ describe("HostCalls: Quit", () => {
 
   it("should quit the account and burn the funds", async () => {
     const accumulate = new TestAccumulate();
-    const quit = new Quit(accumulate);
+    const quit = new Eject(accumulate);
     quit.currentServiceId = tryAsServiceId(10_000);
 
     const { registers, memory } = prepareRegsAndMemory(
@@ -86,7 +86,7 @@ describe("HostCalls: Quit", () => {
 
   it("should quit and do a transfer to different account", async () => {
     const accumulate = new TestAccumulate();
-    const quit = new Quit(accumulate);
+    const quit = new Eject(accumulate);
     quit.currentServiceId = tryAsServiceId(10_000);
 
     const { registers, memory } = prepareRegsAndMemory(tryAsServiceId(15_000), Bytes.fill(TRANSFER_MEMO_BYTES, 33));
@@ -102,7 +102,7 @@ describe("HostCalls: Quit", () => {
 
   it("should fail if there is no memory for memo", async () => {
     const accumulate = new TestAccumulate();
-    const quit = new Quit(accumulate);
+    const quit = new Eject(accumulate);
     quit.currentServiceId = tryAsServiceId(10_000);
 
     const { registers, memory } = prepareRegsAndMemory(tryAsServiceId(15_000), Bytes.fill(TRANSFER_MEMO_BYTES, 33), {
@@ -120,7 +120,7 @@ describe("HostCalls: Quit", () => {
 
   it("should fail if gas is too low", async () => {
     const accumulate = new TestAccumulate();
-    const quit = new Quit(accumulate);
+    const quit = new Eject(accumulate);
     quit.currentServiceId = tryAsServiceId(10_000);
 
     const { registers, memory } = prepareRegsAndMemory(tryAsServiceId(15_000), Bytes.fill(TRANSFER_MEMO_BYTES, 33));
@@ -137,7 +137,7 @@ describe("HostCalls: Quit", () => {
 
   it("should fail if destination does not exist", async () => {
     const accumulate = new TestAccumulate();
-    const quit = new Quit(accumulate);
+    const quit = new Eject(accumulate);
     quit.currentServiceId = tryAsServiceId(10_000);
 
     const { registers, memory } = prepareRegsAndMemory(tryAsServiceId(15_000), Bytes.fill(TRANSFER_MEMO_BYTES, 33));

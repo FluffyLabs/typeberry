@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
+import { Result } from "@typeberry/utils";
 import { PageFault } from "./errors";
 import { Memory } from "./memory";
 import { MAX_MEMORY_INDEX, MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "./memory-consts";
@@ -8,7 +9,6 @@ import { tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
 import { ReadablePage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, tryAsPageNumber } from "./pages/page-utils";
-import { Result } from "@typeberry/utils";
 
 describe("Memory", () => {
   describe("loadInto", () => {

@@ -44,7 +44,7 @@ export class WriteablePage extends MemoryPage {
     // we zero the bytes, since the view might not yet be initialized at `endIndex`.
     result.fill(0, bytes.length, length);
     result.set(bytes);
-    
+
     return Result.ok(OK);
   }
 

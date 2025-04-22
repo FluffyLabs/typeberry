@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { Result } from "@typeberry/utils";
 import { PageFault } from "../errors";
 import { tryAsMemoryIndex } from "../memory-index";
 import { tryAsPageIndex, tryAsPageNumber } from "./page-utils";
 import { ReadablePage } from "./readable-page";
-import { Result } from "@typeberry/utils";
 
 describe("ReadablePage", () => {
   it("should load 4 byts from memory", () => {
@@ -36,7 +36,7 @@ describe("ReadablePage", () => {
     const loadIndex = tryAsPageIndex(startIndex + 3);
 
     const loadResult = readablePage.loadInto(result, loadIndex, lengthToLoad);
-    
+
     assert.strictEqual(loadResult.isOk, true);
     assert.deepStrictEqual(result, expectedResult);
   });

@@ -3,7 +3,7 @@ export * as info from "./info";
 export * as lookup from "./lookup";
 export * as read from "./read";
 export * as write from "./write";
-export * as empower from "./accumulate/empower";
+export * as bless from "./accumulate/bless";
 export * as assign from "./accumulate/assign";
 
 export * from "./results";
@@ -13,4 +13,4 @@ export * from "./utils";
 export * as bytes from "@typeberry/bytes";
 export * as hash from "@typeberry/hash";
 export * as block from "@typeberry/block";
-export { Registers, Memory } from "@typeberry/pvm-host-calls";
+export { HostCallRegisters, HostCallMemory } from "@typeberry/pvm-host-calls";

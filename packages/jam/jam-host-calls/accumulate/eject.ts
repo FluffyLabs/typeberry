@@ -1,11 +1,16 @@
 import { tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
+import { tryBigIntAsNumber } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import { PvmExecution, type Registers, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import {
+  type HostCallMemory,
+  type HostCallRegisters,
+  PvmExecution,
+  tryAsHostCallIndex,
+} from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { assertNever } from "@typeberry/utils";
-import { LegacyHostCallResult } from "../results";
+import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { type AccumulationPartialState, QuitError, TRANSFER_MEMO_BYTES } from "./partial-state";
 
@@ -18,39 +23,38 @@ const IN_OUT_REG = 7;
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/32c10232c102
  */
-export class Quit implements HostCallHandler {
+export class Eject implements HostCallHandler {
   index = tryAsHostCallIndex(12);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 
-  async execute(gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
+  async execute(gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `d`: where to transfer remaining funds
-    const destination = tryAsServiceId(regs.getLowerU32(IN_OUT_REG));
+    const destination = tryAsServiceId(tryBigIntAsNumber(regs.get(IN_OUT_REG)));
 
     const noTransfer = destination === this.currentServiceId || destination === CURRENT_SERVICE_ID;
 
     // we burn the remaining funds, no transfer added.
     if (noTransfer) {
       this.partialState.quitAndBurn();
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
-      return Promise.resolve(PvmExecution.Halt);
+      regs.set(IN_OUT_REG, HostCallResult.OK);
+      return PvmExecution.Halt;
     }
 
     // when we transfer it's more complicated, we need to handle
     // some extra cases, because the transfer might fail.
 
     // `o`: memo start memory index
-    const memoStart = tryAsMemoryIndex(regs.getLowerU32(8));
+    const memoStart = regs.get(8);
     // `g`: onTransfer gas
     const remainingGas = gas.get();
     // `m`: transfer memo (message)
     const memo = Bytes.zero(TRANSFER_MEMO_BYTES);
-    const readResult = memory.loadInto(memo.raw, memoStart);
-    if (readResult.isError) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
-      return;
+    const memoryReadResult = memory.loadInto(memo.raw, memoStart);
+    if (memoryReadResult.isError) {
+      return PvmExecution.Panic;
     }
 
     // `a`: balance - threshold + B_S: basic minimum balance
@@ -58,19 +62,19 @@ export class Quit implements HostCallHandler {
 
     // All good!
     if (transferResult.isOk) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
-      return Promise.resolve(PvmExecution.Halt);
+      regs.set(IN_OUT_REG, HostCallResult.OK);
+      return PvmExecution.Halt;
     }
 
     const e = transferResult.error;
 
     if (e === QuitError.DestinationNotFound) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.WHO);
+      regs.set(IN_OUT_REG, HostCallResult.WHO);
       return;
     }
 
     if (e === QuitError.GasTooLow) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.LOW);
+      regs.set(IN_OUT_REG, HostCallResult.LOW);
       return;
     }
 

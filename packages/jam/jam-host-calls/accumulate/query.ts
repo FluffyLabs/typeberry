@@ -1,10 +1,15 @@
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU32 } from "@typeberry/numbers";
-import { type HostCallHandler, type Memory, PvmExecution, type Registers } from "@typeberry/pvm-host-calls";
+import { tryAsU32, tryBigIntAsNumber } from "@typeberry/numbers";
+import {
+  type HostCallHandler,
+  type HostCallMemory,
+  type HostCallRegisters,
+  PvmExecution,
+} from "@typeberry/pvm-host-calls";
 import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
-import { type GasCounter, tryAsMemoryIndex, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { LegacyHostCallResult } from "../results";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { type AccumulationPartialState, PreimageStatus } from "./partial-state";
 
@@ -24,41 +29,42 @@ export class Query implements HostCallHandler {
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
+  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
     // `o`
-    const hashStart = tryAsMemoryIndex(regs.getLowerU32(IN_OUT_REG_1));
+    const hashStart = regs.get(IN_OUT_REG_1);
     // `z`
-    const length = tryAsU32(regs.getLowerU32(IN_OUT_REG_2));
+    const length = tryAsU32(tryBigIntAsNumber(regs.get(IN_OUT_REG_2)));
 
     const hash = Bytes.zero(HASH_SIZE);
-    const pageFault = memory.loadInto(hash.raw, hashStart);
-    if (pageFault !== null) {
+    const memoryReadResult = memory.loadInto(hash.raw, hashStart);
+    // error while reading the memory.
+    if (memoryReadResult.isError) {
       return PvmExecution.Panic;
     }
 
     const result = this.partialState.checkPreimageStatus(hash, length);
     if (result === null) {
-      regs.setU32(IN_OUT_REG_1, LegacyHostCallResult.NONE);
-      regs.setU64(IN_OUT_REG_2, 0n);
+      regs.set(IN_OUT_REG_1, HostCallResult.NONE);
+      regs.set(IN_OUT_REG_2, 0n);
       return;
     }
 
     switch (result.status) {
       case PreimageStatus.Requested:
-        regs.setU64(IN_OUT_REG_1, 0n);
-        regs.setU64(IN_OUT_REG_2, 0n);
+        regs.set(IN_OUT_REG_1, 0n);
+        regs.set(IN_OUT_REG_2, 0n);
         return;
       case PreimageStatus.Available:
-        regs.setU64(IN_OUT_REG_1, (BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 1n);
-        regs.setU64(IN_OUT_REG_2, 0n);
+        regs.set(IN_OUT_REG_1, (BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 1n);
+        regs.set(IN_OUT_REG_2, 0n);
         return;
       case PreimageStatus.Unavailable:
-        regs.setU64(IN_OUT_REG_1, (BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 2n);
-        regs.setU64(IN_OUT_REG_2, BigInt(result.data[1]));
+        regs.set(IN_OUT_REG_1, (BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 2n);
+        regs.set(IN_OUT_REG_2, BigInt(result.data[1]));
         return;
       case PreimageStatus.Reavailable:
-        regs.setU64(IN_OUT_REG_1, (BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 3n);
-        regs.setU64(IN_OUT_REG_2, (BigInt(result.data[2]) << UPPER_BITS_SHIFT) + BigInt(result.data[1]));
+        regs.set(IN_OUT_REG_1, (BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 3n);
+        regs.set(IN_OUT_REG_2, (BigInt(result.data[2]) << UPPER_BITS_SHIFT) + BigInt(result.data[1]));
         return;
     }
   }

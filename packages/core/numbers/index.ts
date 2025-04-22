@@ -21,6 +21,17 @@ export type U32 = FixedSizeNumber<4>;
 export type U64 = bigint & WithBytesRepresentation<8>;
 export const MAX_U64 = 0xffff_ffff_ffff_ffffn;
 
+const MAX_SAFE_INTEGER_AS_BIGINT = BigInt(Number.MAX_SAFE_INTEGER);
+const MIN_SAFE_INTEGER_AS_BIGINT = BigInt(Number.MIN_SAFE_INTEGER);
+
+export const tryBigIntAsNumber = (v: bigint): number => {
+  if (v <= MAX_SAFE_INTEGER_AS_BIGINT && v >= MIN_SAFE_INTEGER_AS_BIGINT) {
+    return Number(v);
+  }
+
+  throw new Error(`input must be within the safe integer range, got ${v}`);
+};
+
 /** Attempt to cast an input number into U8. */
 export const tryAsU8 = (v: number): U8 =>
   ensure<number, U8>(v, isU8(v), `input must have one-byte representation, got ${v}`);
