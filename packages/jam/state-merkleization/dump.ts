@@ -1,9 +1,15 @@
-import { BANDERSNATCH_RING_ROOT_BYTES, BandersnatchRingRoot, type ServiceId, TimeSlot, codecPerValidator, tryAsPerEpochBlock } from "@typeberry/block";
+import {
+  BANDERSNATCH_RING_ROOT_BYTES,
+  type BandersnatchRingRoot,
+  type ServiceId,
+  type TimeSlot,
+  codecPerValidator,
+} from "@typeberry/block";
 import { codecHashDictionary } from "@typeberry/block/codec";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import { Ticket } from "@typeberry/block/tickets";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { asKnownSize, HashDictionary } from "@typeberry/collections";
+import { HashDictionary, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import {
   LookupHistoryItem,
@@ -12,12 +18,12 @@ import {
   ServiceAccountInfo,
   type State,
   StateItem,
-  tryAsLookupHistorySlots,
   ValidatorData,
+  tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { SafroleSealingKeysData } from "@typeberry/state/safrole-data";
+import { seeThrough } from "@typeberry/utils";
 import { serialize } from "./serialize";
-import {seeThrough} from "@typeberry/utils";
 
 type LookupHistoryEntry = {
   key: PreimageHash;
@@ -29,8 +35,8 @@ const lookupHistoryItemCodec = codec.object<LookupHistoryItem>(
     hash: codec.bytes(HASH_SIZE).asOpaque<PreimageHash>(),
     length: codec.u32,
     slots: codec.sequenceVarLen(codec.u32.asOpaque<TimeSlot>()).convert(
-      i => seeThrough(i),
-      o => tryAsLookupHistorySlots(o),
+      (i) => seeThrough(i),
+      (o) => tryAsLookupHistorySlots(o),
     ),
   },
   "LookupHistoryItem",
@@ -89,10 +95,7 @@ export const stateDumpCodec = codec.object<State>(
     // gamma_s
     sealingKeySeries: SafroleSealingKeysData.Codec,
     // gamma_a
-    ticketsAccumulator: codec.sequenceVarLen(Ticket.Codec).convert(
-      seeThrough,
-      asKnownSize,
-    ),
+    ticketsAccumulator: codec.sequenceVarLen(Ticket.Codec).convert(seeThrough, asKnownSize),
     // psi
     disputesRecords: serialize.disputesRecords.Codec,
     // eta

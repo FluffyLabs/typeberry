@@ -15,7 +15,7 @@ import {
 } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
 import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets";
-import { Bytes} from "@typeberry/bytes";
+import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
@@ -23,10 +23,10 @@ import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import { type Input, type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole";
 import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
-import { ticketFromJson, TicketsOrKeys } from "@typeberry/state-json";
-import {validatorDataFromJson} from "@typeberry/state-json";
+import { TicketsOrKeys, ticketFromJson } from "@typeberry/state-json";
+import { validatorDataFromJson } from "@typeberry/state-json";
 import { Result, deepEqual } from "@typeberry/utils";
-import {getChainSpec} from "./spec";
+import { getChainSpec } from "./spec";
 namespace safroleFromJson {
   export const ticketEnvelope: FromJson<SignedTicket> = {
     attempt: "number",

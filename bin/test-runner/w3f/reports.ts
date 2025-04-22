@@ -8,11 +8,7 @@ import {
 } from "@typeberry/block";
 import { fromJson, guaranteesExtrinsicFromJson } from "@typeberry/block-json";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
-import {
-  type AuthorizerHash,
-  type WorkPackageHash,
-  WorkPackageInfo,
-} from "@typeberry/block/work-report";
+import type { AuthorizerHash, WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
 import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type KeccakHash, keccak } from "@typeberry/hash";
@@ -21,13 +17,22 @@ import type { MmrHasher } from "@typeberry/mmr";
 import {
   type AvailabilityAssignment,
   type BlockState,
-  CoreStatistics,
+  type CoreStatistics,
   ENTROPY_ENTRIES,
   type Service,
   type ValidatorData,
   tryAsPerCore,
 } from "@typeberry/state";
-import {availabilityAssignmentFromJson, blockStateFromJson, JsonCoreStatistics, JsonService, serviceStatisticsEntryFromJson, ServiceStatiticsEntry, validatorDataFromJson, workPackageInfofromJson} from "@typeberry/state-json";
+import {
+  JsonCoreStatistics,
+  JsonService,
+  type ServiceStatiticsEntry,
+  availabilityAssignmentFromJson,
+  blockStateFromJson,
+  serviceStatisticsEntryFromJson,
+  validatorDataFromJson,
+  workPackageInfofromJson,
+} from "@typeberry/state-json";
 import {
   Reports,
   ReportsError,

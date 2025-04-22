@@ -17,7 +17,7 @@ import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, HashDictionary, HashSet, SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU32, tryAsU64, tryAsU16 } from "@typeberry/numbers";
+import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   AvailabilityAssignment,
   BlockState,
@@ -357,7 +357,8 @@ const activityRecord = (
   });
 };
 
-const testValidatorData = () => Decoder.decodeObject(codecPerValidator(ValidatorData.Codec), BytesBlob.parseBlob(TEST_VALIDATOR_DATA), spec);
+const testValidatorData = () =>
+  Decoder.decodeObject(codecPerValidator(ValidatorData.Codec), BytesBlob.parseBlob(TEST_VALIDATOR_DATA), spec);
 
 const TEST_AVAILABILITY_ASSIGNMENT =
   "0xac9928d4eb0c942a07c40157fa4498b2efbbc65136819517dc94d50ff2ca9f490e010000ebb6b040a0ea039a8f9593e3a4b29005b1ebea1c5465c2753db1031a3ef30c85000000000000000000000000000000000000000000000000000000000000000000001a7d753af2e2be12f88dfcb7ca5c704641534094b061c8c3aa258d4b0acbf5c85e8f73cf5d9f94cb3a8313361a3b48e97968a9ac52ab9c29b4e88f4159c21560ad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb53a31fd60656cb3de2c6ba9fafb8dee8d4c45d4bc87ca248cdda7625a68b987fb0e0000000000000b27478648cd19b4f812f897a26976ecf312eac28508b4368d0c63ea949c7cb00000010000000015f8485e3a88e86182e63280720d5ec9892578f0e577fb1bcdda5cf49795081584796f4f11ace690fc5a5bdb847db1e63cb36c97ef8f90f067a0846b654bf1c294260000000000000024ccbea4bf12716bc7f7583dd834aac2ca1b05af8dc5be285336156d0de73d9b9e2062000000000000000010000000";

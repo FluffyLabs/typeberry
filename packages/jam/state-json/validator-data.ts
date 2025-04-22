@@ -1,8 +1,8 @@
-import {BLS_KEY_BYTES, BlsKey} from "@typeberry/block";
-import {fromJson} from "@typeberry/block-json";
-import {Bytes} from "@typeberry/bytes";
-import {json} from "@typeberry/json-parser";
-import {VALIDATOR_META_BYTES, ValidatorData} from "@typeberry/state";
+import { BLS_KEY_BYTES, type BlsKey } from "@typeberry/block";
+import { fromJson } from "@typeberry/block-json";
+import { Bytes } from "@typeberry/bytes";
+import { json } from "@typeberry/json-parser";
+import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 
 export const validatorDataFromJson = json.object<ValidatorData>(
   {

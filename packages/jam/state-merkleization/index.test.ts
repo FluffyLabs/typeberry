@@ -13,7 +13,7 @@ describe("State Serialization", () => {
     const state = testState();
     const serialized = serializeState(state, spec);
     for (const { key: actualKey, value: actualValue } of serialized) {
-     let foundKey = false;
+      let foundKey = false;
       for (const [expectedKey, expectedValue, details] of TEST_STATE) {
         if (actualKey.isEqualTo(Bytes.parseBytes(expectedKey, HASH_SIZE))) {
           deepEqual(actualValue.toString(), expectedValue, `Error while in test state at ${actualKey}: ${details}`);

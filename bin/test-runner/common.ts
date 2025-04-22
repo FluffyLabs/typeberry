@@ -120,7 +120,7 @@ function prepareTest(runners: Runner<unknown>[], testContent: unknown, file: str
         test: () => {
           logger.info(`[${name}] running test from ${file}`);
           logger.log(` ${parsedTest}`);
-          return run(parsedTest, path)
+          return run(parsedTest, path);
         },
       };
     } catch (e) {

@@ -1,4 +1,4 @@
-import {fullChainSpec, tinyChainSpec} from "@typeberry/config";
+import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 
 export function getChainSpec(path: string) {
   if (path.includes("tiny")) {

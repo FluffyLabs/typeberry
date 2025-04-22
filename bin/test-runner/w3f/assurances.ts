@@ -7,6 +7,7 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { type AvailabilityAssignment, type ValidatorData, tryAsPerCore } from "@typeberry/state";
+import { availabilityAssignmentFromJson, validatorDataFromJson } from "@typeberry/state-json";
 import {
   Assurances,
   AssurancesError,
@@ -14,7 +15,6 @@ import {
   type AssurancesState,
 } from "@typeberry/transition/assurances";
 import { Result, deepEqual } from "@typeberry/utils";
-import {availabilityAssignmentFromJson, validatorDataFromJson} from "@typeberry/state-json";
 
 class Input {
   assurances!: AssurancesExtrinsic;

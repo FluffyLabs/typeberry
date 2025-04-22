@@ -1,17 +1,12 @@
 import assert from "node:assert";
-import {
-  type Extrinsic,
-  type TimeSlot,
-  type ValidatorIndex,
-  tryAsPerValidator,
-} from "@typeberry/block";
+import { type Extrinsic, type TimeSlot, type ValidatorIndex, tryAsPerValidator } from "@typeberry/block";
 import { getExtrinsicFromJson } from "@typeberry/block-json";
-import { ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics";
-import {validatorDataFromJson} from "@typeberry/state-json/validator-data";
-import {JsonStatisticsData } from "@typeberry/state-json";
-import {ValidatorData} from "@typeberry/state";
+import type { ValidatorData } from "@typeberry/state";
+import { JsonStatisticsData } from "@typeberry/state-json";
+import { validatorDataFromJson } from "@typeberry/state-json/validator-data";
+import { type Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics";
 
 class TinyInput {
   static fromJson = json.object<TinyInput, Input>(
@@ -118,4 +113,3 @@ export async function runStatisticsTestFull({ input, pre_state, post_state }: St
   statistics.transition(input);
   assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, post_state));
 }
-

@@ -6,9 +6,9 @@ import type { ChainSpec } from "@typeberry/config";
 import { Disputes, type DisputesState } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
 import { type FromJson, json } from "@typeberry/json-parser";
-import {availabilityAssignmentFromJson, disputesRecordsFromJson, validatorDataFromJson} from "@typeberry/state-json";
-import {AvailabilityAssignment, DisputesRecords, tryAsPerCore, ValidatorData} from "@typeberry/state";
-import {getChainSpec} from "./spec";
+import { type AvailabilityAssignment, type DisputesRecords, type ValidatorData, tryAsPerCore } from "@typeberry/state";
+import { availabilityAssignmentFromJson, disputesRecordsFromJson, validatorDataFromJson } from "@typeberry/state-json";
+import { getChainSpec } from "./spec";
 
 class DisputesOutputMarks {
   static fromJson: FromJson<DisputesOutputMarks> = {

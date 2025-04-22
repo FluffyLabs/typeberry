@@ -24,9 +24,9 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import {
+  JsonStatisticsData,
   blockStateFromJson,
   disputesRecordsFromJson,
-  JsonStatisticsData,
   notYetAccumulatedFromJson,
 } from "@typeberry/state-json";
 import { availabilityAssignmentFromJson } from "@typeberry/state-json";

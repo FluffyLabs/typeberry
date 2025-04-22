@@ -1,8 +1,8 @@
+import { type ServiceGas, type ServiceId, tryAsPerValidator, tryAsServiceGas } from "@typeberry/block";
+import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { U16, U32 } from "@typeberry/numbers";
-import {CoreStatistics, ServiceStatistics, StatisticsData, tryAsPerCore, ValidatorStatistics} from "@typeberry/state";
-import {ServiceGas, ServiceId, tryAsPerValidator, tryAsServiceGas} from "@typeberry/block";
-import {ChainSpec} from "@typeberry/config";
+import { CoreStatistics, ServiceStatistics, StatisticsData, ValidatorStatistics, tryAsPerCore } from "@typeberry/state";
 
 export class JsonValidatorStatistics {
   static fromJson = json.object<JsonValidatorStatistics, ValidatorStatistics>(
@@ -132,8 +132,8 @@ class JsonServiceStatistics {
 }
 
 export type ServiceStatiticsEntry = {
-  id: ServiceId,
-  record: ServiceStatistics,
+  id: ServiceId;
+  record: ServiceStatistics;
 };
 
 export const serviceStatisticsEntryFromJson: FromJson<ServiceStatiticsEntry> = {
@@ -159,7 +159,7 @@ export class JsonStatisticsData {
       current: tryAsPerValidator(statistics.vals_current, spec),
       previous: tryAsPerValidator(statistics.vals_last, spec),
       cores: tryAsPerCore(statistics.cores, spec),
-      services: new Map(statistics.services.map(x => [x.id, x.record])),
-    })
+      services: new Map(statistics.services.map((x) => [x.id, x.record])),
+    });
   }
-};
+}

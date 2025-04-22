@@ -9,8 +9,8 @@ import { codecFixedSizeArray, codecKnownSizeArray } from "@typeberry/block/codec
 import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
-import { Descriptor, codec } from "@typeberry/codec";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Descriptor, codec } from "@typeberry/codec";
 import { HashSet } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
