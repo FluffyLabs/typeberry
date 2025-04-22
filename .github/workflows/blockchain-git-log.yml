@@ -9,6 +9,10 @@ on:
 env:
   LOG_FILENAME: blockchain-git-log.json
 
+permissions:
+  actions: read
+  contents: read
+
 jobs:
   blockchain-git-log:
     runs-on: ubuntu-latest
