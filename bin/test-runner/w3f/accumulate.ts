@@ -3,6 +3,7 @@ import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { Service } from "@typeberry/state";
+import { JsonService } from "@typeberry/state-json/accounts";
 import {
   Accumulate,
   type AccumulateInput,
@@ -12,7 +13,7 @@ import {
 } from "@typeberry/transition/accumulate";
 import { deepEqual } from "@typeberry/utils";
 import { logger } from "../common";
-import { TestAccountItem, getChainSpec } from "./common-types";
+import { getChainSpec } from "./spec";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -49,7 +50,7 @@ class TestState {
           gas: "number",
         }),
       },
-      accounts: json.array(TestAccountItem.fromJson),
+      accounts: json.array(JsonService.fromJson),
     },
     ({ accounts, accumulated, entropy, privileges, ready_queue, slot }) => ({
       slot,

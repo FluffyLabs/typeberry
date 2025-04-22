@@ -10,9 +10,10 @@ export enum KnownChainSpec {
   Full = "full",
 }
 
-type SharedOptions = {
+export type SharedOptions = {
   genesis: string | null;
   chainSpec: KnownChainSpec;
+  dbPath: string;
 };
 
 export type Arguments =
@@ -30,13 +31,13 @@ export function parseArgs(input: string[], relPath: string): Arguments {
 
   switch (command) {
     case Command.Run: {
-      const data = parseSharedOptions(args);
+      const data = parseSharedOptions(args, relPath);
       assertNoMoreArgs(args);
       return { command: Command.Run, args: data };
     }
     case Command.Import: {
-      const data = parseSharedOptions(args);
-      const files = args._.map((f) => `${relPath}/${f}`);
+      const data = parseSharedOptions(args, relPath);
+      const files = args._.map((f) => withRelPath(relPath, f));
       args._ = [];
       assertNoMoreArgs(args);
       return {
@@ -56,8 +57,11 @@ export function parseArgs(input: string[], relPath: string): Arguments {
   throw new Error(`Invalid arguments: ${JSON.stringify(args)}`);
 }
 
-function parseSharedOptions(args: minimist.ParsedArgs): SharedOptions {
-  const genesis = parseOption(args, "genesis", (v) => v, null);
+const withRelPath = (relPath: string, p: string) => `${relPath}/${p}`;
+
+function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedOptions {
+  const dbPath = parseOption(args, "dbPath", (v) => withRelPath(relPath, v), withRelPath(relPath, "database"));
+  const genesis = parseOption(args, "genesis", (v) => withRelPath(relPath, v), null);
   const chainSpec = parseOption(
     args,
     "chainSpec",
@@ -75,6 +79,7 @@ function parseSharedOptions(args: minimist.ParsedArgs): SharedOptions {
   );
 
   return {
+    ...dbPath,
     ...genesis,
     ...chainSpec,
   };
@@ -133,6 +138,8 @@ Usage:
 
 Options:
   --chain-spec          Chain Spec to use. Either 'tiny' or 'full'.
+  --genesis             Path to a JSON file containing genesis state dump.
+  --dbPath              Directory where database is going to be stored.
 `;
 
 type CommandArgs<T extends Command, Args> = {

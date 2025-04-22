@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { type TimeSlot, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
+import { type TimeSlot, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { fromJson, preimagesExtrinsicFromJson } from "@typeberry/block-json";
 import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage";
 import { Bytes, BytesBlob } from "@typeberry/bytes";

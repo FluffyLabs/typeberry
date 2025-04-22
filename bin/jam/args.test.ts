@@ -2,20 +2,22 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { deepEqual } from "@typeberry/utils";
-import { Command, KnownChainSpec, parseArgs } from "./args";
+import { Command, KnownChainSpec, type SharedOptions, parseArgs } from "./args";
 
 describe("CLI", () => {
   const parse = (args: string[]) => parseArgs(args, "..");
+  const defaultOptions: SharedOptions = {
+    genesis: null,
+    dbPath: "../database",
+    chainSpec: KnownChainSpec.Tiny,
+  };
 
   it("should start with default arguments", () => {
     const args = parse([]);
 
     deepEqual(args, {
       command: Command.Run,
-      args: {
-        genesis: null,
-        chainSpec: KnownChainSpec.Tiny,
-      },
+      args: defaultOptions,
     });
   });
 
@@ -25,7 +27,7 @@ describe("CLI", () => {
     deepEqual(args, {
       command: Command.Run,
       args: {
-        genesis: null,
+        ...defaultOptions,
         chainSpec: KnownChainSpec.Full,
       },
     });
@@ -37,8 +39,20 @@ describe("CLI", () => {
     deepEqual(args, {
       command: Command.Run,
       args: {
-        genesis: "./genesis.json",
-        chainSpec: KnownChainSpec.Tiny,
+        ...defaultOptions,
+        genesis: ".././genesis.json",
+      },
+    });
+  });
+
+  it("should parse dbPath option", () => {
+    const args = parse(["--dbPath=mydb"]);
+
+    deepEqual(args, {
+      command: Command.Run,
+      args: {
+        ...defaultOptions,
+        dbPath: "../mydb",
       },
     });
   });
@@ -49,8 +63,7 @@ describe("CLI", () => {
     deepEqual(args, {
       command: Command.Import,
       args: {
-        genesis: null,
-        chainSpec: KnownChainSpec.Tiny,
+        ...defaultOptions,
         files: [".././file1.json", ".././file2.json"],
       },
     });

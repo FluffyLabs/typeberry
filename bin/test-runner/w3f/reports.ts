@@ -10,7 +10,6 @@ import { fromJson, guaranteesExtrinsicFromJson } from "@typeberry/block-json";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import {
   type AuthorizerHash,
-  type ExportsRootHash,
   type WorkPackageHash,
   WorkPackageInfo,
 } from "@typeberry/block/work-report";
@@ -22,11 +21,13 @@ import type { MmrHasher } from "@typeberry/mmr";
 import {
   type AvailabilityAssignment,
   type BlockState,
+  CoreStatistics,
   ENTROPY_ENTRIES,
   type Service,
   type ValidatorData,
   tryAsPerCore,
 } from "@typeberry/state";
+import {availabilityAssignmentFromJson, blockStateFromJson, JsonCoreStatistics, JsonService, serviceStatisticsEntryFromJson, ServiceStatiticsEntry, validatorDataFromJson, workPackageInfofromJson} from "@typeberry/state-json";
 import {
   Reports,
   ReportsError,
@@ -35,22 +36,7 @@ import {
   type ReportsState,
 } from "@typeberry/transition/reports";
 import { guaranteesAsView } from "@typeberry/transition/reports/test.utils";
-import { Result, asOpaqueType, deepEqual, resultToString } from "@typeberry/utils";
-import { logger } from "../common";
-import { TestAccountItem, TestAvailabilityAssignment, TestBlockState, validatorDataFromJson } from "./common-types";
-
-class TestSegmentRootLookupItem {
-  static fromJson = json.object<TestSegmentRootLookupItem, WorkPackageInfo>(
-    {
-      work_package_hash: fromJson.bytes32(),
-      segment_tree_root: fromJson.bytes32(),
-    },
-    ({ work_package_hash, segment_tree_root }) => new WorkPackageInfo(work_package_hash, segment_tree_root),
-  );
-
-  work_package_hash!: WorkPackageHash;
-  segment_tree_root!: ExportsRootHash;
-}
+import { Result, asOpaqueType, deepEqual } from "@typeberry/utils";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -74,79 +60,18 @@ class Input {
   }
 }
 
-class TestCoreStatistics {
-  static fromJson: FromJson<TestCoreStatistics> = {
-    da_load: "number",
-    popularity: "number",
-    imports: "number",
-    exports: "number",
-    extrinsic_size: "number",
-    extrinsic_count: "number",
-    bundle_size: "number",
-    gas_used: "number",
-  };
-
-  da_load!: number;
-  popularity!: number;
-  imports!: number;
-  exports!: number;
-  extrinsic_size!: number;
-  extrinsic_count!: number;
-  bundle_size!: number;
-  gas_used!: number;
-}
-
-class TestServiceRecord {
-  static fromJson: FromJson<TestServiceRecord> = {
-    provided_count: "number",
-    provided_size: "number",
-    refinement_count: "number",
-    refinement_gas_used: "number",
-    imports: "number",
-    exports: "number",
-    extrinsic_size: "number",
-    extrinsic_count: "number",
-    accumulate_count: "number",
-    accumulate_gas_used: "number",
-    on_transfers_count: "number",
-    on_transfers_gas_used: "number",
-  };
-  provided_count!: number;
-  provided_size!: number;
-  refinement_count!: number;
-  refinement_gas_used!: number;
-  imports!: number;
-  exports!: number;
-  extrinsic_size!: number;
-  extrinsic_count!: number;
-  accumulate_count!: number;
-  accumulate_gas_used!: number;
-  on_transfers_count!: number;
-  on_transfers_gas_used!: number;
-}
-
-class TestServiceStatistics {
-  static fromJson: FromJson<TestServiceStatistics> = {
-    id: "number",
-    record: TestServiceRecord.fromJson,
-  };
-
-  id!: number;
-  record!: TestServiceRecord;
-}
-
 class TestState {
   static fromJson: FromJson<TestState> = {
-    avail_assignments: json.array(json.nullable(TestAvailabilityAssignment.fromJson)),
+    avail_assignments: json.array(json.nullable(availabilityAssignmentFromJson)),
     curr_validators: json.array(validatorDataFromJson),
     prev_validators: json.array(validatorDataFromJson),
     entropy: json.array(fromJson.bytes32()),
     offenders: json.array(fromJson.bytes32<Ed25519Key>()),
-    recent_blocks: json.array(TestBlockState.fromJson),
+    recent_blocks: json.array(blockStateFromJson),
     auth_pools: ["array", json.array(fromJson.bytes32())],
-    accounts: json.array(TestAccountItem.fromJson),
-    cores_statistics: json.array(TestCoreStatistics.fromJson),
-    services_statistics: json.array(TestServiceStatistics.fromJson),
+    accounts: json.array(JsonService.fromJson),
+    cores_statistics: json.array(JsonCoreStatistics.fromJson),
+    services_statistics: json.array(serviceStatisticsEntryFromJson),
   };
 
   avail_assignments!: Array<AvailabilityAssignment | null>;
@@ -157,8 +82,8 @@ class TestState {
   auth_pools!: AuthorizerHash[][];
   recent_blocks!: BlockState[];
   accounts!: Service[];
-  cores_statistics!: TestCoreStatistics[];
-  services_statistics!: TestServiceStatistics[];
+  cores_statistics!: CoreStatistics[];
+  services_statistics!: ServiceStatiticsEntry[];
 
   static toReportsState(pre: TestState, spec: ChainSpec): ReportsState {
     if (pre.offenders.length > 0) {
@@ -219,7 +144,7 @@ enum ReportsErrorCode {
 class OutputData {
   static fromJson = json.object<OutputData, ReportsOutput>(
     {
-      reported: json.array(TestSegmentRootLookupItem.fromJson),
+      reported: json.array(workPackageInfofromJson),
       reporters: json.array(fromJson.bytes32()),
     },
     ({ reported, reporters }) => ({
@@ -329,7 +254,6 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   const reports = new Reports(spec, preState, hasher, headerChain);
 
   const output = await reports.transition(input);
-  logger.log(`ReportsTest { ${resultToString(output)} }`);
 
   deepEqual(output, expectedOutput, { context: "output", ignore: ["output.details"] });
   deepEqual(reports.state, postState, { context: "postState" });

@@ -15,6 +15,6 @@ try {
 }
 
 main(args).catch((e) => {
-  console.error(e);
+  console.error(`${e}`);
   process.exit(-1);
 });

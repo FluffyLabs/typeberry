@@ -117,7 +117,11 @@ function prepareTest(runners: Runner<unknown>[], testContent: unknown, file: str
       return {
         runner: name,
         file,
-        test: () => run(parsedTest, path),
+        test: () => {
+          logger.info(`[${name}] running test from ${file}`);
+          logger.log(` ${parsedTest}`);
+          return run(parsedTest, path)
+        },
       };
     } catch (e) {
       handleError(name, e);

@@ -1,9 +1,9 @@
-import { BANDERSNATCH_RING_ROOT_BYTES, type ServiceId, codecPerValidator } from "@typeberry/block";
+import { BANDERSNATCH_RING_ROOT_BYTES, BandersnatchRingRoot, type ServiceId, TimeSlot, codecPerValidator, tryAsPerEpochBlock } from "@typeberry/block";
 import { codecHashDictionary } from "@typeberry/block/codec";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import { Ticket } from "@typeberry/block/tickets";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { HashDictionary } from "@typeberry/collections";
+import { asKnownSize, HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import {
   LookupHistoryItem,
@@ -12,10 +12,12 @@ import {
   ServiceAccountInfo,
   type State,
   StateItem,
+  tryAsLookupHistorySlots,
   ValidatorData,
 } from "@typeberry/state";
 import { SafroleSealingKeysData } from "@typeberry/state/safrole-data";
 import { serialize } from "./serialize";
+import {seeThrough} from "@typeberry/utils";
 
 type LookupHistoryEntry = {
   key: PreimageHash;
@@ -24,16 +26,19 @@ type LookupHistoryEntry = {
 
 const lookupHistoryItemCodec = codec.object<LookupHistoryItem>(
   {
-    hash: codec.bytes(HASH_SIZE).asOpaque(),
+    hash: codec.bytes(HASH_SIZE).asOpaque<PreimageHash>(),
     length: codec.u32,
-    slots: codec.sequenceVarLen(codec.u32.asOpaque<"TimeSlot[u32]">()).asOpaque(),
+    slots: codec.sequenceVarLen(codec.u32.asOpaque<TimeSlot>()).convert(
+      i => seeThrough(i),
+      o => tryAsLookupHistorySlots(o),
+    ),
   },
   "LookupHistoryItem",
   ({ hash, length, slots }) => new LookupHistoryItem(hash, length, slots),
 );
 
 const lookupHistoryEntryCodec = codec.object<LookupHistoryEntry>({
-  key: codec.bytes(HASH_SIZE).asOpaque(),
+  key: codec.bytes(HASH_SIZE).asOpaque<PreimageHash>(),
   data: codec.sequenceVarLen(lookupHistoryItemCodec),
 });
 
@@ -56,7 +61,7 @@ const lookupHistoryCodec = codec
 
 class ServiceWithCodec extends Service {
   static Codec = codec.Class(ServiceWithCodec, {
-    id: codec.u32.asOpaque(),
+    id: codec.u32.asOpaque<ServiceId>(),
     data: codec.object({
       info: ServiceAccountInfo.Codec,
       preimages: codecHashDictionary(PreimageItem.Codec, (x) => x.hash),
@@ -80,11 +85,14 @@ export const stateDumpCodec = codec.object<State>(
     // gamma_k
     nextValidatorData: codecPerValidator(ValidatorData.Codec),
     // gamma_z
-    epochRoot: codec.bytes(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
+    epochRoot: codec.bytes(BANDERSNATCH_RING_ROOT_BYTES).asOpaque<BandersnatchRingRoot>(),
     // gamma_s
     sealingKeySeries: SafroleSealingKeysData.Codec,
     // gamma_a
-    ticketsAccumulator: codec.sequenceVarLen(Ticket.Codec).asOpaque(),
+    ticketsAccumulator: codec.sequenceVarLen(Ticket.Codec).convert(
+      seeThrough,
+      asKnownSize,
+    ),
     // psi
     disputesRecords: serialize.disputesRecords.Codec,
     // eta
@@ -102,14 +110,14 @@ export const stateDumpCodec = codec.object<State>(
     // chi
     privilegedServices: serialize.privilegedServices.Codec,
     // pi
-    statisticsPerValidator: serialize.statistics.Codec,
+    statistics: serialize.statistics.Codec,
     // theta
     accumulationQueue: serialize.accumulationQueue.Codec,
     // xi
     recentlyAccumulated: serialize.recentlyAccumulated.Codec,
     // delta
-    services: codec.dictionary(codec.u32.asOpaque(), ServiceWithCodec.Codec, {
-      sortKeys: (a: ServiceId, b: ServiceId) => a - b,
+    services: codec.dictionary(codec.u32.asOpaque<ServiceId>(), ServiceWithCodec.Codec, {
+      sortKeys: (a, b) => a - b,
     }),
   },
   "State",

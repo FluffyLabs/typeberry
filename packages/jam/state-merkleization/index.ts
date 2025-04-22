@@ -18,7 +18,7 @@ import { type StateCodec, serialize } from "./serialize";
 
 export class StateEntry extends WithDebug {
   static Codec = codec.Class(StateEntry, {
-    key: codec.bytes(HASH_SIZE).asOpaque(),
+    key: codec.bytes(HASH_SIZE).asOpaque<StateKey>(),
     value: codec.blob,
   });
 
