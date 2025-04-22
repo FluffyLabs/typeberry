@@ -59,9 +59,8 @@ export class Statistics {
    */
   transition(input: Input) {
     const { slot, authorIndex, extrinsic } = input;
-    /**
-     * get the validators statistics for the current epoch
-     */
+
+    /** get statistics for the current epoch */
     const statistics = this.getStatistics(slot);
     const { current } = statistics;
     check(current[authorIndex] !== undefined, "authorIndex is out of bounds");
@@ -85,7 +84,7 @@ export class Statistics {
     current[authorIndex].preImagesSize = tryAsU32(newPreImagesSize);
 
     /**
-     * Please note I don't use Kappa' here. If I understand correctly we don't need it.
+     * NOTE [MaSi] Please note I don't use Kappa' here. If I understand correctly we don't need it.
      * Kappa' is not needed because we can use validator indexes directly from guarantees extrinsic.
      * I asked a question to ensure it is true but I didn't get any response yet:
      * https://github.com/w3f/jamtestvectors/pull/28#discussion_r1907237004

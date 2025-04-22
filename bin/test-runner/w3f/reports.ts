@@ -61,7 +61,7 @@ class Input {
 
   guarantees!: GuaranteesExtrinsic;
   slot!: TimeSlot;
-  known_packages!: OpaqueHash[];
+  known_packages!: WorkPackageHash[];
 
   static toReportsInput(input: Input, spec: ChainSpec): ReportsInput {
     const view = guaranteesAsView(spec, input.guarantees, { disableCredentialsRangeCheck: true });

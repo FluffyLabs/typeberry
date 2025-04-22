@@ -14,6 +14,7 @@ const codecVarServiceId: Descriptor<ServiceId> = codec.varU32.convert(
   (s) => tryAsU32(s),
   (i) => tryAsServiceId(i),
 );
+
 /**
  * Activity Record of a single validator.
  *
@@ -65,6 +66,7 @@ const codecVarU16 = codec.varU32.convert<U16>(
   (i) => tryAsU32(i),
   (o) => tryAsU16(o),
 );
+
 /** Encode/decode unsigned gas. */
 const codecVarGas: Descriptor<ServiceGas> = codec.varU64.convert(
   (g) => tryAsU64(g),
