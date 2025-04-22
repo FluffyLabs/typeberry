@@ -29,11 +29,11 @@ export class LoadOps {
     const loadResult = this.memory.loadInto(registerBytes.subarray(0, numberLength), tryAsMemoryIndex(address));
 
     if (loadResult !== null) {
-      if (loadResult.hasPage) {
+      if (loadResult.isAccessFault) {
+        this.instructionResult.status = Result.FAULT_ACCESS;
+      } else {
         this.instructionResult.status = Result.FAULT;
         this.instructionResult.exitParam = address;
-      } else {
-        this.instructionResult.status = Result.FAULT_ACCESS;
       }
 
       return;
@@ -48,13 +48,13 @@ export class LoadOps {
     const loadResult = this.memory.loadInto(registerBytes.subarray(0, numberLength), tryAsMemoryIndex(address));
 
     if (loadResult !== null) {
-      if (loadResult.hasPage) {
+      if (loadResult.isAccessFault) {
+        this.instructionResult.status = Result.FAULT_ACCESS;
+      } else {
         this.instructionResult.status = Result.FAULT;
         this.instructionResult.exitParam = address;
-      } else {
-        this.instructionResult.status = Result.FAULT_ACCESS;
       }
-      
+
       return;
     }
 

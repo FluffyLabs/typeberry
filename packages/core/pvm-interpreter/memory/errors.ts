@@ -1,13 +1,24 @@
 import { MEMORY_SIZE } from "./memory-consts";
 import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
+import { getStartPageIndex, getStartPageIndexFromPageNumber } from "./memory-utils";
+import { tryAsPageNumber } from "./pages/page-utils";
 
 export class PageFault {
-  public address: MemoryIndex;
-  constructor(
-    address: number,
-    public hasPage = true,
-  ) {
-    this.address = tryAsMemoryIndex(address % MEMORY_SIZE);
+  private constructor(
+    public address: MemoryIndex,
+    public isAccessFault = true,
+  ) {}
+
+  static fromPageNumber(maybePageNumber: number, isAccessFault = false) {
+    const pageNumber = tryAsPageNumber(maybePageNumber);
+    const startPageIndex = getStartPageIndexFromPageNumber(pageNumber);
+    return new PageFault(startPageIndex, isAccessFault);
+  }
+
+  static fromMemoryIndex(maybeMemoryIndex: number, isAccessFault = false) {
+    const memoryIndex = tryAsMemoryIndex(maybeMemoryIndex % MEMORY_SIZE);
+    const startPageIndex = getStartPageIndex(memoryIndex);
+    return new PageFault(startPageIndex, isAccessFault);
   }
 }
 

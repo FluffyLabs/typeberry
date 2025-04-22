@@ -4,7 +4,7 @@ import { describe, it } from "node:test";
 import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
 import { InstructionResult } from "../instruction-result";
 import { MemoryBuilder } from "../memory";
-import { PAGE_SIZE } from "../memory/memory-consts";
+import { PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "../memory/memory-consts";
 import { type MemoryIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "../memory/memory-index";
 import { getPageNumber, getStartPageIndex } from "../memory/memory-utils";
 import { Registers } from "../registers";
@@ -25,7 +25,7 @@ describe("StoreOps", () => {
   function prepareStoreData(valueToStore: bigint, noOfBytes: 1 | 2 | 4 | 8) {
     const instructionResult = new InstructionResult();
     const regs = new Registers();
-    const address = tryAsMemoryIndex(16 * PAGE_SIZE + 1);
+    const address = tryAsMemoryIndex(RESERVED_NUMBER_OF_PAGES * PAGE_SIZE + 1);
     const registerIndex = 1;
     regs.setU64(registerIndex, valueToStore);
     const initialMemory = new Uint8Array(32);

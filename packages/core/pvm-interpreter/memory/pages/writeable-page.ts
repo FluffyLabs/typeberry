@@ -36,7 +36,7 @@ export class WriteablePage extends MemoryPage {
   loadInto(result: Uint8Array, startIndex: PageIndex, length: number) {
     const endIndex = startIndex + length;
     if (endIndex > PAGE_SIZE) {
-      return new PageFault(this.start + PAGE_SIZE);
+      return PageFault.fromMemoryIndex(this.start + PAGE_SIZE);
     }
 
     const bytes = this.view.subarray(startIndex, endIndex);

@@ -3,9 +3,8 @@ import { describe, it } from "node:test";
 
 import { PageFault } from "./errors";
 import { Memory } from "./memory";
-import { MAX_MEMORY_INDEX, MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "./memory-consts";
+import { MAX_MEMORY_INDEX, MIN_ALLOCATION_LENGTH, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
-import { getStartPageIndex } from "./memory-utils";
 import { ReadablePage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, tryAsPageNumber } from "./pages/page-utils";
@@ -16,11 +15,11 @@ describe("Memory", () => {
       const memory = new Memory();
       const lengthToLoad = 4;
       const result = new Uint8Array(lengthToLoad);
-      const addressToLoad = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
+      const addressToLoad = tryAsMemoryIndex(1 + RESERVED_NUMBER_OF_PAGES * PAGE_SIZE);
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.deepStrictEqual(loadResult, new PageFault(getStartPageIndex(addressToLoad)));
+      assert.deepStrictEqual(loadResult, PageFault.fromMemoryIndex(addressToLoad));
     });
 
     it("should correctly load data from one page", () => {
@@ -34,7 +33,7 @@ describe("Memory", () => {
       const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const lengthToLoad = 4;
       const result = new Uint8Array(lengthToLoad);
-      const addressToLoad = tryAsMemoryIndex(1 + 16 * PAGE_SIZE);
+      const addressToLoad = tryAsMemoryIndex(1 + RESERVED_NUMBER_OF_PAGES * PAGE_SIZE);
       const expectedResult = bytes.subarray(addressToLoad % PAGE_SIZE, (addressToLoad % PAGE_SIZE) + lengthToLoad);
 
       const loadResult = memory.loadInto(result, addressToLoad);
@@ -84,7 +83,7 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.deepStrictEqual(loadResult, new PageFault(17 * PAGE_SIZE));
+      assert.deepStrictEqual(loadResult, PageFault.fromPageNumber(17));
     });
 
     it("should return fault when load data from the last page and the first page", () => {
@@ -112,7 +111,7 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.deepStrictEqual(loadResult, new PageFault(0, false));
+      assert.deepStrictEqual(loadResult, PageFault.fromPageNumber(0, true));
       assert.deepStrictEqual(result, expectedResult);
     });
   });
@@ -120,16 +119,16 @@ describe("Memory", () => {
   describe("storeFrom", () => {
     it("should return PageFault if the page does not exist", () => {
       const memory = new Memory();
-      const addressToStore = tryAsMemoryIndex(16 * PAGE_SIZE + 1);
+      const addressToStore = tryAsMemoryIndex(RESERVED_NUMBER_OF_PAGES * PAGE_SIZE + 1);
       const dataToStore = new Uint8Array([1, 2, 3, 4]);
       const storeResult = memory.storeFrom(addressToStore, dataToStore);
 
-      assert.deepStrictEqual(storeResult, new PageFault(getStartPageIndex(addressToStore)));
+      assert.deepStrictEqual(storeResult, PageFault.fromMemoryIndex(addressToStore));
     });
 
     it("should not return PageFault if the page does not exist and stored array length is 0 (standard page)", () => {
       const memory = new Memory();
-      const addressToStore = tryAsMemoryIndex(16 * PAGE_SIZE + 1);
+      const addressToStore = tryAsMemoryIndex(RESERVED_NUMBER_OF_PAGES * PAGE_SIZE + 1);
 
       const storeResult = memory.storeFrom(addressToStore, new Uint8Array());
 
@@ -154,7 +153,7 @@ describe("Memory", () => {
       memoryMap.set(pageNumber, page);
       const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const dataToStore = new Uint8Array([1, 2, 3, 4]);
-      const addressToStore = tryAsMemoryIndex(16 * PAGE_SIZE + 1);
+      const addressToStore = tryAsMemoryIndex(RESERVED_NUMBER_OF_PAGES * PAGE_SIZE + 1);
       const expectedMemoryMap = new Map();
       expectedMemoryMap.set(
         pageNumber,
@@ -217,14 +216,14 @@ describe("Memory", () => {
       const page = new ReadablePage(pageNumber, bytes);
       const memoryMap = new Map<PageNumber, MemoryPage>();
       memoryMap.set(pageNumber, page);
-      const sbrkIndex = tryAsSbrkIndex(16 * PAGE_SIZE);
+      const sbrkIndex = tryAsSbrkIndex(RESERVED_NUMBER_OF_PAGES * PAGE_SIZE);
       const endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX);
       const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
       const addressToStore = tryAsMemoryIndex(17 * PAGE_SIZE - 2);
 
       const storeResult = memory.storeFrom(addressToStore, new Uint8Array(4));
 
-      assert.deepStrictEqual(storeResult, new PageFault(17 * PAGE_SIZE));
+      assert.deepStrictEqual(storeResult, PageFault.fromPageNumber(17));
     });
 
     it("should return fault when store data on two pages - the last page and the first page", () => {
@@ -253,7 +252,7 @@ describe("Memory", () => {
 
       const storeResult = memory.storeFrom(addressToStore, dataToStore);
 
-      assert.deepStrictEqual(storeResult, new PageFault(0, false));
+      assert.deepStrictEqual(storeResult, PageFault.fromPageNumber(0, true));
       assert.deepEqual(memory, expectedMemory);
     });
   });

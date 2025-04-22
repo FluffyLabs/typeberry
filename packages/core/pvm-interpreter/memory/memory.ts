@@ -2,7 +2,7 @@ import { Result } from "@typeberry/utils";
 import { OutOfMemory, PageFault } from "./errors";
 import { MAX_MEMORY_INDEX, MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
 import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
-import { alignToPageSize, getPageNumber, getStartPageIndex, getStartPageIndexFromPageNumber } from "./memory-utils";
+import { alignToPageSize, getPageNumber, getStartPageIndexFromPageNumber } from "./memory-utils";
 import { WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, getNextPageNumber, tryAsPageIndex } from "./pages/page-utils";
@@ -59,8 +59,7 @@ export class Memory {
     const pageNumber = getPageNumber(address);
     const page = this.memory.get(pageNumber);
     if (page === undefined) {
-      const faultAddress = getStartPageIndexFromPageNumber(pageNumber);
-      return new PageFault(faultAddress);
+      return PageFault.fromPageNumber(pageNumber);
     }
 
     const firstPageIndex = tryAsPageIndex(address - page.start);
@@ -79,8 +78,7 @@ export class Memory {
     const secondPage = this.memory.get(secondPageNumber);
 
     if (secondPage === undefined) {
-      const faultAddress = getStartPageIndexFromPageNumber(secondPageNumber);
-      return new PageFault(faultAddress);
+      return PageFault.fromPageNumber(secondPageNumber);
     }
 
     const firstPageStoreResult = page.storeFrom(firstPageIndex, bytes.subarray(0, toStoreOnFirstPage));
@@ -153,9 +151,7 @@ export class Memory {
       const page = this.memory.get(currentPageNumber);
 
       if (page === undefined) {
-        const faultAddress = getStartPageIndexFromPageNumber(currentPageNumber);
-        const fault = new PageFault(faultAddress);
-        return Result.error(fault);
+        return Result.error(PageFault.fromPageNumber(currentPageNumber));
       }
 
       pages.push(page);
@@ -234,16 +230,15 @@ export class Memory {
      */
 
     if (startPageNumber >= START_RESERVED_PAGE && startPageNumber < END_RESERVED_PAGE) {
-      const pageStartIndex = getStartPageIndex(startAddress);
-      return new PageFault(pageStartIndex, false);
+      return PageFault.fromMemoryIndex(startAddress, true);
     }
 
     if (endPageNumber >= START_RESERVED_PAGE && endPageNumber < END_RESERVED_PAGE) {
-      return new PageFault(0, false);
+      return PageFault.fromPageNumber(0, true);
     }
 
     if (startPageNumber > endPageNumber) {
-      return new PageFault(0, false);
+      return PageFault.fromPageNumber(0, true);
     }
 
     return null;
