@@ -167,15 +167,15 @@ class TestServiceStatistics {
         providedCount: provided_count,
         providedSize: provided_size,
         refinementCount: refinement_count,
-        refinementGasUsed: tryAsServiceGas(refinement_gas_used),
+        refinementGasUsed: refinement_gas_used,
         imports,
         exports,
         extrinsicSize: extrinsic_size,
         extrinsicCount: extrinsic_count,
         accumulateCount: accumulate_count,
-        accumulateGasUsed: tryAsServiceGas(accumulate_gas_used),
+        accumulateGasUsed: accumulate_gas_used,
         onTransfersCount: on_transfers_count,
-        onTransfersGasUsed: tryAsServiceGas(on_transfers_gas_used),
+        onTransfersGasUsed: on_transfers_gas_used,
       });
     },
   );
@@ -235,12 +235,7 @@ class TestState {
         current: tryAsPerValidator(state.statistics.vals_current, spec),
         previous: tryAsPerValidator(state.statistics.vals_last, spec),
         cores: tryAsPerCore(state.statistics.cores, spec),
-        services: new Map(
-          state.statistics.services.map((service) => [
-            tryAsServiceId(service.id),
-            ServiceStatistics.fromCodec(service.record),
-          ]),
-        ),
+        services: new Map(state.statistics.services.map((service) => [tryAsServiceId(service.id), service.record])),
       },
       timeslot: state.slot,
       currentValidatorData: tryAsPerValidator(state.curr_validators, spec),
