@@ -10,6 +10,7 @@ import {
   tryAsCoreIndex,
   tryAsPerEpochBlock,
   tryAsPerValidator,
+  tryAsServiceGas,
   tryAsServiceId,
   tryAsTimeSlot,
   tryAsValidatorIndex,
@@ -25,7 +26,7 @@ import {
 import { RefineContext } from "@typeberry/block/refine-context";
 import testWorkReport from "@typeberry/block/test-work-report";
 import { type WorkPackageHash, type WorkPackageInfo, WorkReport } from "@typeberry/block/work-report";
-import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
+import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder, codec } from "@typeberry/codec";
 import { FixedSizeArray, HashDictionary, asKnownSize } from "@typeberry/collections";
@@ -67,6 +68,22 @@ type WorkReportOptions = {
   resultSize?: number;
 };
 
+/**
+ * Creates a new `WorkReport` instance with customizable context and result payloads.
+ *
+ * Constructs a `WorkReport` using a template decoded from a test blob, allowing overrides for core index, authorizer hash, anchor block, state roots, lookup anchors, prerequisites, and result payload size. Each result includes a fixed `WorkRefineLoad` and authorization gas usage.
+ *
+ * @param core - The core index to assign to the report.
+ * @param authorizer - Optional authorizer hash to override the default.
+ * @param anchorBlock - Optional anchor block to set in the context.
+ * @param stateRoot - Optional state root to set in the context.
+ * @param beefyRoot - Optional beefy root to set in the context.
+ * @param lookupAnchorSlot - Optional slot for the lookup anchor.
+ * @param lookupAnchor - Optional lookup anchor to set in the context.
+ * @param prerequisites - Optional list of prerequisite anchors.
+ * @param resultSize - If provided, replaces each result payload with zero-filled bytes of this size.
+ * @returns A new `WorkReport` instance with the specified configuration.
+ */
 export function newWorkReport({
   core,
   authorizer,
@@ -88,14 +105,14 @@ export function newWorkReport({
     lookupAnchorSlot: lookupAnchorSlot ?? report.context.lookupAnchorSlot,
     prerequisites: prerequisites !== undefined ? prerequisites.map((x) => x.asOpaque()) : report.context.prerequisites,
   });
-  return new WorkReport(
-    report.workPackageSpec,
+  return WorkReport.fromCodec({
+    workPackageSpec: report.workPackageSpec,
     context,
-    tryAsCoreIndex(core),
-    authorizer !== undefined ? authorizer.asOpaque() : report.authorizerHash,
-    report.authorizationOutput,
-    report.segmentRootLookup,
-    FixedSizeArray.new(
+    coreIndex: tryAsCoreIndex(core),
+    authorizerHash: authorizer !== undefined ? authorizer.asOpaque() : report.authorizerHash,
+    authorizationOutput: report.authorizationOutput,
+    segmentRootLookup: report.segmentRootLookup,
+    results: FixedSizeArray.new(
       report.results.map(
         (x) =>
           new WorkResult(
@@ -104,13 +121,30 @@ export function newWorkReport({
             x.payloadHash,
             x.gas,
             resultSize !== undefined ? new WorkExecResult(WorkExecResultKind.ok, Bytes.fill(resultSize, 0)) : x.result,
+            WorkRefineLoad.fromCodec({
+              gasUsed: tryAsServiceGas(5),
+              importedSegments: tryAsU32(0),
+              exportedSegments: tryAsU32(0),
+              extrinsicSize: tryAsU32(0),
+              extrinsicCount: tryAsU32(0),
+            }),
           ),
       ),
       report.results.fixedLength,
     ),
-  );
+    authorizationGasUsed: tryAsServiceGas(1),
+  });
 }
 
+/**
+ * Converts an array of {@link ReportGuarantee} objects into a {@link GuaranteesExtrinsicView}.
+ *
+ * If {@link disableCredentialsRangeCheck} is true, relaxes the credential array size constraints during encoding and decoding.
+ *
+ * @param guarantees - The array of report guarantees to convert.
+ * @param disableCredentialsRangeCheck - If true, disables range checks on credential array sizes.
+ * @returns The guarantees represented as a {@link GuaranteesExtrinsicView}.
+ */
 export function guaranteesAsView(
   spec: ChainSpec,
   guarantees: ReportGuarantee[],

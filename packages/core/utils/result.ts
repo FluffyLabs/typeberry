@@ -23,6 +23,22 @@ export type Result<Ok, Error> =
 export const OK = Symbol("ok");
 export type OK = typeof OK;
 
+/**
+ * Returns a string representation of a {@link Result}, indicating success or error details.
+ *
+ * If the result is successful, the string starts with "OK: " followed by the success value.
+ * If the result is an error, the string starts with "Error: " followed by the error details and the error value.
+ *
+ * @param res - The {@link Result} instance to convert to a string.
+ * @returns A string summarizing the state and contents of {@link res}.
+ */
+export function resultToString<Ok, Error>(res: Result<Ok, Error>) {
+  if (res.isOk) {
+    return `OK: ${res.ok}`;
+  }
+  return `Error: ${res.details}\n${res.error}`;
+}
+
 /** An indication of two possible outcomes returned from a function. */
 export const Result = {
   /** Create new [`Result`] with `Ok` status. */

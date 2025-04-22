@@ -1,5 +1,5 @@
 import type { EntropyHash, TimeSlot } from "@typeberry/block";
-import { workReportFromJson } from "@typeberry/block-json";
+import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { Service } from "@typeberry/state";
@@ -10,7 +10,9 @@ import {
   type AccumulateRoot,
   type AccumulateState,
 } from "@typeberry/transition/accumulate";
-import { TestAccountItem, commonFromJson, getChainSpec } from "./common-types";
+import { deepEqual } from "@typeberry/utils";
+import { logger } from "../common";
+import { TestAccountItem, getChainSpec } from "./common-types";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -25,7 +27,7 @@ class Input {
 class ReadyRecordItem {
   static fromJson: FromJson<ReadyRecordItem> = {
     report: workReportFromJson,
-    dependencies: json.array(commonFromJson.bytes32()),
+    dependencies: json.array(fromJson.bytes32()),
   };
   report!: WorkReport;
   dependencies!: WorkPackageHash[];
@@ -35,9 +37,9 @@ class TestState {
   static fromJson = json.object<TestState, AccumulateState>(
     {
       slot: "number",
-      entropy: commonFromJson.bytes32(),
+      entropy: fromJson.bytes32(),
       ready_queue: ["array", json.array(ReadyRecordItem.fromJson)],
-      accumulated: ["array", json.array(commonFromJson.bytes32())],
+      accumulated: ["array", json.array(fromJson.bytes32())],
       privileges: {
         bless: "number",
         assign: "number",
@@ -79,7 +81,7 @@ class TestState {
 
 class Output {
   static fromJson: FromJson<Output> = {
-    ok: commonFromJson.bytes32(),
+    ok: fromJson.bytes32(),
   };
 
   ok!: AccumulateRoot;
@@ -99,11 +101,23 @@ export class AccumulateTest {
   post_state!: AccumulateState;
 }
 
+/**
+ * Executes an accumulate transition test and validates the resulting state.
+ *
+ * If a path is provided, the test is ignored and an error is logged. Otherwise, the function performs the accumulate transition and asserts that the resulting state matches the expected post-state.
+ *
+ * @param test - The accumulate test case to run.
+ * @param path - The path to the test case; if non-empty, the test is skipped.
+ */
 export async function runAccumulateTest(test: AccumulateTest, path: string) {
   const chainSpec = getChainSpec(path);
 
   const accumulate = new Accumulate(chainSpec, test.pre_state);
   await accumulate.transition(test.input);
 
-  // deepEqual(test.post_state, authorization.state);
+  if (path.length > 0) {
+    logger.error(`Ignoring accumulate test: ${path}`);
+  } else {
+    deepEqual(test.post_state, accumulate.state);
+  }
 }

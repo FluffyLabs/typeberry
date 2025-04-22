@@ -7,7 +7,8 @@ import { Disputes, type DisputesState } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { type AvailabilityAssignment, DisputesRecords, type ValidatorData, tryAsPerCore } from "@typeberry/state";
-import { TestAvailabilityAssignment, commonFromJson, getChainSpec } from "./common-types";
+import { logger } from "../common";
+import { TestAvailabilityAssignment, getChainSpec, validatorDataFromJson } from "./common-types";
 
 class DisputesOutputMarks {
   static fromJson: FromJson<DisputesOutputMarks> = {
@@ -44,8 +45,8 @@ class TestState {
     psi: TestDisputesRecords.fromJson,
     rho: json.array(json.nullable(TestAvailabilityAssignment.fromJson)),
     tau: "number",
-    kappa: json.array(commonFromJson.validatorData),
-    lambda: json.array(commonFromJson.validatorData),
+    kappa: json.array(validatorDataFromJson),
+    lambda: json.array(validatorDataFromJson),
   };
 
   /** Disputes records. */
@@ -108,6 +109,16 @@ export class DisputesTest {
   post_state!: TestState;
 }
 
+/**
+ * Executes a disputes test case and verifies the results against expected output and state.
+ *
+ * Loads the chain specification, initializes the disputes module with the pre-test state, applies the test input, and asserts that the resulting error, output, and post-state match the expected values in the test case.
+ *
+ * @param testContent - The disputes test case to execute.
+ * @param path - Path to the chain specification file.
+ *
+ * @throws {AssertionError} If the actual error, output, or post-state does not match the expected values.
+ */
 export async function runDisputesTest(testContent: DisputesTest, path: string) {
   const chainSpec = getChainSpec(path);
   const preState = testContent.pre_state;
@@ -115,16 +126,11 @@ export async function runDisputesTest(testContent: DisputesTest, path: string) {
   const disputes = new Disputes(chainSpec, TestState.toDisputesState(preState, chainSpec));
 
   const result = await disputes.transition(testContent.input.disputes);
+  logger.log(`DisputesTest { ${JSON.stringify(result)} }`);
   const error = result.isError ? result.error : undefined;
   const ok = result.isOk ? result.ok.slice() : undefined;
-  /**
-   * bad_signatures-2 has more than one problem and the result depends on order of checks.
-   *
-   * https://github.com/w3f/jamtestvectors/pull/9#issuecomment-2509867864
-   */
-  if (!path.includes("bad_signatures-2")) {
-    assert.deepEqual(error, testContent.output.err);
-  }
+
+  assert.deepEqual(error, testContent.output.err);
   assert.deepEqual(ok, testContent.output.ok?.offenders_mark);
   assert.deepEqual(disputes.state, TestState.toDisputesState(testContent.post_state, chainSpec));
 }

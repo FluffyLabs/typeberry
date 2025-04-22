@@ -34,6 +34,11 @@ export class TrieTest {
 export type TrieTestSuite = [TrieTest];
 export const trieTestSuiteFromJson: FromJson<TrieTestSuite> = ["array", TrieTest.fromJson];
 
+/**
+ * Executes a suite of trie tests, verifying that inserting specified key-value pairs produces the expected root hash.
+ *
+ * @param testContent - An array of trie test cases to run.
+ */
 export async function runTrieTest(testContent: TrieTestSuite) {
   for (const [id, testData] of testContent.entries()) {
     await test(`Trie test ${id}`, () => {
@@ -42,7 +47,6 @@ export async function runTrieTest(testContent: TrieTestSuite) {
       for (const [key, value] of testData.input.entries()) {
         trie.set(key, value);
       }
-
       assert.deepStrictEqual(testData.output, trie.getRootHash());
     });
   }
