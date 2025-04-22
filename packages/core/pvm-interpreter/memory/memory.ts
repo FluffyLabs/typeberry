@@ -1,9 +1,8 @@
 import { Result } from "@typeberry/utils";
-import { getStartPageIndex } from "../../../../dist/pvm/packages/pvm/interpreter/memory/memory-utils";
 import { OutOfMemory, PageFault } from "./errors";
 import { MAX_MEMORY_INDEX, MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
 import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
-import { alignToPageSize, getPageNumber, getStartPageIndexFromPageNumber } from "./memory-utils";
+import { alignToPageSize, getPageNumber, getStartPageIndex, getStartPageIndexFromPageNumber } from "./memory-utils";
 import { WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, getNextPageNumber, tryAsPageIndex } from "./pages/page-utils";
