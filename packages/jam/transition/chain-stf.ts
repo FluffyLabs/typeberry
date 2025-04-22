@@ -136,6 +136,7 @@ export class OnChain {
     const reportsResult = await this.reports.transition({
       slot: timeSlot,
       guarantees: block.extrinsic.view().guarantees.view(),
+      knownPackages: [],
     });
     if (reportsResult.isError) {
       return Result.error({

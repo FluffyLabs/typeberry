@@ -22,7 +22,7 @@ describe("Reports.verifyCredentials", () => {
       { disableCredentialsRangeCheck: true },
     );
 
-    const input = { guarantees, slot: tryAsTimeSlot(1) };
+    const input = { guarantees, slot: tryAsTimeSlot(1), knownPackages: [] };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -48,7 +48,7 @@ describe("Reports.verifyCredentials", () => {
       { disableCredentialsRangeCheck: true },
     );
 
-    const input = { guarantees, slot: tryAsTimeSlot(1) };
+    const input = { guarantees, slot: tryAsTimeSlot(1), knownPackages: [] };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -70,7 +70,7 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(6) };
+    const input = { guarantees, slot: tryAsTimeSlot(6), knownPackages: [] };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -92,7 +92,7 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(6) };
+    const input = { guarantees, slot: tryAsTimeSlot(6), knownPackages: [] };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -114,7 +114,7 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(4) };
+    const input = { guarantees, slot: tryAsTimeSlot(4), knownPackages: [] };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -136,7 +136,7 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(25) };
+    const input = { guarantees, slot: tryAsTimeSlot(25), knownPackages: [] };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
@@ -158,7 +158,7 @@ describe("Reports.verifyCredentials", () => {
       }),
     ]);
 
-    const input = { guarantees, slot: tryAsTimeSlot(25) };
+    const input = { guarantees, slot: tryAsTimeSlot(25), knownPackages: [] };
     const hashes = reports.workReportHashes(guarantees);
     const res = reports.verifyCredentials(input, hashes);
 
