@@ -72,7 +72,7 @@ export class EpochMarker extends WithDebug {
     public readonly entropy: EntropyHash,
     /** `eta_2'`: Randomness for the CURRENT epoch. */
     public readonly ticketsEntropy: EntropyHash,
-    /** `kappa_b`: Bandernsatch validator keys for the NEXT epoch. */
+    /** `kappa_b`: Bandersnatch validator keys for the NEXT epoch. */
     public readonly validators: PerValidator<ValidatorKeys>,
   ) {
     super();
