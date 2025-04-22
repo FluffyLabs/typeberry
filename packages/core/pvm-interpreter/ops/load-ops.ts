@@ -54,6 +54,8 @@ export class LoadOps {
       } else {
         this.instructionResult.status = Result.FAULT_ACCESS;
       }
+      
+      return;
     }
 
     const msb = registerBytes[numberLength - 1] & 0x80;
