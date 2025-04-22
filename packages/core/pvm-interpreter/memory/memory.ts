@@ -1,4 +1,5 @@
 import { Result } from "@typeberry/utils";
+import { getStartPageIndex } from "../../../../dist/pvm/packages/pvm/interpreter/memory/memory-utils";
 import { OutOfMemory, PageFault } from "./errors";
 import { MAX_MEMORY_INDEX, MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
 import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
@@ -213,7 +214,7 @@ export class Memory {
   }
 
   /**
-   * Verify if we do not try to touch reserved memory pages
+   * Verify if we try to touch reserved memory pages [0; 16)
    *
    * https://graypaper.fluffylabs.dev/#/68eaa1f/247300247600?v=0.6.4
    */
@@ -234,7 +235,8 @@ export class Memory {
      */
 
     if (startPageNumber >= START_RESERVED_PAGE && startPageNumber < END_RESERVED_PAGE) {
-      return new PageFault(startAddress, false);
+      const pageStartIndex = getStartPageIndex(startAddress);
+      return new PageFault(pageStartIndex, false);
     }
 
     if (endPageNumber >= START_RESERVED_PAGE && endPageNumber < END_RESERVED_PAGE) {
