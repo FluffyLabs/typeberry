@@ -16,7 +16,7 @@ import {
 } from "@typeberry/block/work-report";
 import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
+import { type KeccakHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
 import {
