@@ -27,7 +27,6 @@ export type ServiceId = Opaque<U32, "ServiceId[u32]">;
 /** Attempt to convert a number into `ServiceId`. */
 export const tryAsServiceId = (v: number): ServiceId => asOpaqueType(tryAsU32(v));
 
-// TODO [ToDr] Unify with `pvm/gas`.
 /** Service gas - a measure of execution time/complexity. */
 export type ServiceGas = Opaque<U64, "Gas[u64]">;
 export const tryAsServiceGas = (v: number | bigint): ServiceGas => asOpaqueType(tryAsU64(v));

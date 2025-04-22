@@ -6,11 +6,11 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { BlocksDb, StateDb } from "@typeberry/database";
 import { HASH_SIZE, blake2b } from "@typeberry/hash";
-import { type U16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
 import { type Gas, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { Program } from "@typeberry/pvm-program";
-import { Result, asOpaqueType } from "@typeberry/utils";
+import { Result } from "@typeberry/utils";
 import type { TransitionHasher } from "./hasher";
 
 enum ServiceExecutorError {
@@ -60,7 +60,7 @@ export class WorkPackageExecutor {
       }
       const pvm = exec.ok;
 
-      const gasRatio = asOpaqueType(tryAsU64(3_000n));
+      const gasRatio = tryAsServiceGas(3_000n);
       const ret = await pvm.run(item.payload, tryAsGas(item.refineGasLimit)); // or accumulateGasLimit?
       results.push(
         new WorkResult(
@@ -86,7 +86,7 @@ export class WorkPackageExecutor {
       tryAsU32(workPackage.encoded.length),
       Bytes.zero(HASH_SIZE),
       Bytes.zero(HASH_SIZE).asOpaque(),
-      0 as U16,
+      tryAsU16(0),
     );
     const coreIndex = tryAsCoreIndex(0);
     const authorizerHash = Bytes.fill(HASH_SIZE, 5).asOpaque();

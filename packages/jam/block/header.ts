@@ -58,8 +58,8 @@ export class ValidatorKeys extends WithDebug {
  */
 export class EpochMarker extends WithDebug {
   static Codec = codec.Class(EpochMarker, {
-    entropy: codec.bytes(HASH_SIZE).asOpaque(),
-    ticketsEntropy: codec.bytes(HASH_SIZE).asOpaque(),
+    entropy: codec.bytes(HASH_SIZE).asOpaque<EntropyHash>(),
+    ticketsEntropy: codec.bytes(HASH_SIZE).asOpaque<EntropyHash>(),
     validators: codecPerValidator(ValidatorKeys.Codec),
   });
 
@@ -98,16 +98,16 @@ export const encodeUnsealedHeader = (view: HeaderView): BytesBlob => {
  */
 export class Header extends WithDebug {
   static Codec = codec.Class(Header, {
-    parentHeaderHash: codec.bytes(HASH_SIZE).asOpaque(),
-    priorStateRoot: codec.bytes(HASH_SIZE).asOpaque(),
-    extrinsicHash: codec.bytes(HASH_SIZE).asOpaque(),
-    timeSlotIndex: codec.u32.asOpaque(),
+    parentHeaderHash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
+    priorStateRoot: codec.bytes(HASH_SIZE).asOpaque<StateRootHash>(),
+    extrinsicHash: codec.bytes(HASH_SIZE).asOpaque<ExtrinsicHash>(),
+    timeSlotIndex: codec.u32.asOpaque<TimeSlot>(),
     epochMarker: codec.optional(EpochMarker.Codec),
     ticketsMarker: codec.optional(codecPerEpochBlock(Ticket.Codec)),
-    offendersMarker: codec.sequenceVarLen(codec.bytes(ED25519_KEY_BYTES).asOpaque()),
-    bandersnatchBlockAuthorIndex: codec.u16.asOpaque(),
-    entropySource: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque(),
-    seal: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque(),
+    offendersMarker: codec.sequenceVarLen(codec.bytes(ED25519_KEY_BYTES).asOpaque<Ed25519Key>()),
+    bandersnatchBlockAuthorIndex: codec.u16.asOpaque<ValidatorIndex>(),
+    entropySource: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque<BandersnatchVrfSignature>(),
+    seal: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque<BandersnatchVrfSignature>(),
   });
 
   static fromCodec(h: CodecRecord<Header>) {
@@ -171,7 +171,7 @@ export type HeaderView = DescribedBy<typeof Header.Codec.View>;
  */
 class HeaderViewWithHash extends WithHash<HeaderHash, HeaderView> {
   static Codec = codec.Class(HeaderViewWithHash, {
-    hash: codec.bytes(HASH_SIZE).asOpaque(),
+    hash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
     data: Header.Codec.View,
   });
 

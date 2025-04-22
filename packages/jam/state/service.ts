@@ -16,7 +16,7 @@ import type { StateKey } from "../state-merkleization/keys";
  */
 export class ServiceAccountInfo extends WithDebug {
   static Codec = codec.Class(ServiceAccountInfo, {
-    codeHash: codec.bytes(HASH_SIZE).asOpaque(),
+    codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
     balance: codec.u64,
     accumulateMinGas: codecUnsignedGas,
     onTransferMinGas: codecUnsignedGas,
@@ -71,7 +71,7 @@ export class ServiceAccountInfo extends WithDebug {
 
 export class PreimageItem extends WithDebug {
   static Codec = codec.Class(PreimageItem, {
-    hash: codec.bytes(HASH_SIZE).asOpaque(),
+    hash: codec.bytes(HASH_SIZE).asOpaque<PreimageHash>(),
     blob: codec.dump,
   });
 
@@ -89,7 +89,7 @@ export class PreimageItem extends WithDebug {
 
 export class StateItem extends WithDebug {
   static Codec = codec.Class(StateItem, {
-    hash: codec.bytes(HASH_SIZE).asOpaque(),
+    hash: codec.bytes(HASH_SIZE).asOpaque<StateKey>(),
     blob: codec.dump,
   });
 

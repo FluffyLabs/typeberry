@@ -22,8 +22,8 @@ export function tryAsTicketAttempt(x: number): TicketAttempt {
 export class SignedTicket extends WithDebug {
   static Codec = codec.Class(SignedTicket, {
     // TODO [ToDr] we should verify that attempt is either 0|1|2.
-    attempt: codec.u8.asOpaque(),
-    signature: codec.bytes(BANDERSNATCH_PROOF_BYTES).asOpaque(),
+    attempt: codec.u8.asOpaque<TicketAttempt>(),
+    signature: codec.bytes(BANDERSNATCH_PROOF_BYTES).asOpaque<BandersnatchProof>(),
   });
 
   static fromCodec({ attempt, signature }: CodecRecord<SignedTicket>) {
@@ -45,7 +45,7 @@ export class Ticket extends WithDebug {
   static Codec = codec.Class(Ticket, {
     // TODO [ToDr] we should verify that attempt is either 0|1|2.
     id: codec.bytes(HASH_SIZE),
-    attempt: codec.u8.asOpaque(),
+    attempt: codec.u8.asOpaque<TicketAttempt>(),
   });
 
   static fromCodec({ id, attempt }: CodecRecord<Ticket>) {

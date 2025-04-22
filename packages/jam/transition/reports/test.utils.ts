@@ -130,7 +130,7 @@ export function guaranteesAsView(
       codecKnownSizeArray(
         codec.Class(ReportGuarantee, {
           report: WorkReport.Codec,
-          slot: codec.u32.asOpaque(),
+          slot: codec.u32.asOpaque<TimeSlot>(),
           credentials: codecKnownSizeArray(Credential.Codec, {
             minLength: 0,
             maxLength: 5,

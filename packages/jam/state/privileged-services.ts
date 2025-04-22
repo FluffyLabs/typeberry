@@ -4,8 +4,8 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 /** Dictionary entry of services that auto-accumulate every block. */
 export class AutoAccumulate {
   static Codec = codec.Class(AutoAccumulate, {
-    service: codec.u32.asOpaque(),
-    gasLimit: codec.u64.asOpaque(),
+    service: codec.u32.asOpaque<ServiceId>(),
+    gasLimit: codec.u64.asOpaque<ServiceGas>(),
   });
 
   static fromCodec({ service, gasLimit }: CodecRecord<AutoAccumulate>) {
@@ -25,9 +25,9 @@ export class AutoAccumulate {
  */
 export class PrivilegedServices {
   static Codec = codec.Class(PrivilegedServices, {
-    manager: codec.u32.asOpaque(),
-    authManager: codec.u32.asOpaque(),
-    validatorsManager: codec.u32.asOpaque(),
+    manager: codec.u32.asOpaque<ServiceId>(),
+    authManager: codec.u32.asOpaque<ServiceId>(),
+    validatorsManager: codec.u32.asOpaque<ServiceId>(),
     autoAccumulateServices: codec.sequenceVarLen(AutoAccumulate.Codec),
   });
 

@@ -26,7 +26,7 @@ export const STREAM_KIND = 134 as StreamKind;
 
 export class WorkPackageSharingRequest extends WithDebug {
   static Codec = codec.Class(WorkPackageSharingRequest, {
-    coreIndex: codec.u16.asOpaque(),
+    coreIndex: codec.u16.asOpaque<CoreIndex>(),
     segmentsRootMappings: codec.sequenceVarLen(WorkPackageInfo.Codec),
   });
 
@@ -44,8 +44,8 @@ export class WorkPackageSharingRequest extends WithDebug {
 
 export class WorkPackageSharingResponse extends WithDebug {
   static Codec = codec.Class(WorkPackageSharingResponse, {
-    workReportHash: codec.bytes(HASH_SIZE).asOpaque(),
-    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque(),
+    workReportHash: codec.bytes(HASH_SIZE).asOpaque<WorkReportHash>(),
+    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque<Ed25519Signature>(),
   });
 
   static fromCodec({ workReportHash, signature }: CodecRecord<WorkPackageSharingResponse>) {

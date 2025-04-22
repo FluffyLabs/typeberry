@@ -37,8 +37,8 @@ export const MAX_NUMBER_OF_WORK_ITEMS = 16;
 export class WorkPackage extends WithDebug {
   static Codec = codec.Class(WorkPackage, {
     authorization: codec.blob,
-    authCodeHost: codec.u32.asOpaque(),
-    authCodeHash: codec.bytes(HASH_SIZE).asOpaque(),
+    authCodeHost: codec.u32.asOpaque<ServiceId>(),
+    authCodeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
     parametrization: codec.blob,
     context: RefineContext.Codec,
     items: codec.sequenceVarLen(WorkItem.Codec).convert(

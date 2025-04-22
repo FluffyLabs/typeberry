@@ -13,7 +13,7 @@ export type PreimageHash = Opaque<Blake2bHash, "PreimageHash">;
  */
 export class Preimage extends WithDebug {
   static Codec = codec.Class(Preimage, {
-    requester: codec.u32.asOpaque(),
+    requester: codec.u32.asOpaque<ServiceId>(),
     blob: codec.blob,
   });
   static fromCodec({ requester, blob }: CodecRecord<Preimage>) {

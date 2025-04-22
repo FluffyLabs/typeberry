@@ -113,10 +113,10 @@ export class WorkRefineLoad extends WithDebug {
  */
 export class WorkResult {
   static Codec = codec.Class(WorkResult, {
-    serviceId: codec.u32.asOpaque(),
-    codeHash: codec.bytes(HASH_SIZE).asOpaque(),
+    serviceId: codec.u32.asOpaque<ServiceId>(),
+    codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
     payloadHash: codec.bytes(HASH_SIZE),
-    gas: codec.u64.asOpaque(),
+    gas: codec.u64.asOpaque<ServiceGas>(),
     result: WorkExecResult.Codec,
     load: WorkRefineLoad.Codec,
   });

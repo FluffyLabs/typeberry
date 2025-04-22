@@ -22,8 +22,8 @@ export const REQUIRED_CREDENTIALS_RANGE = [2, 3];
 /** Unique validator index & signature. */
 export class Credential extends WithDebug {
   static Codec = codec.Class(Credential, {
-    validatorIndex: codec.u16.asOpaque(),
-    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque(),
+    validatorIndex: codec.u16.asOpaque<ValidatorIndex>(),
+    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque<Ed25519Signature>(),
   });
 
   static fromCodec({ validatorIndex, signature }: CodecRecord<Credential>) {
@@ -48,7 +48,7 @@ export class Credential extends WithDebug {
 export class ReportGuarantee extends WithDebug {
   static Codec = codec.Class(ReportGuarantee, {
     report: WorkReport.Codec,
-    slot: codec.u32.asOpaque(),
+    slot: codec.u32.asOpaque<TimeSlot>(),
     credentials: codecKnownSizeArray(Credential.Codec, {
       minLength: REQUIRED_CREDENTIALS_RANGE[0],
       maxLength: REQUIRED_CREDENTIALS_RANGE[1],
