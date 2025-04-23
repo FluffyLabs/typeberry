@@ -1,13 +1,22 @@
-import { CoreIndex, type Extrinsic, ServiceId, type TimeSlot, type ValidatorIndex, tryAsCoreIndex, tryAsPerValidator, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
-import { AvailabilityAssurance } from "@typeberry/block/assurances";
+import {
+  type CoreIndex,
+  type Extrinsic,
+  type ServiceId,
+  type TimeSlot,
+  type ValidatorIndex,
+  tryAsCoreIndex,
+  tryAsPerValidator,
+  tryAsServiceGas,
+  tryAsServiceId,
+} from "@typeberry/block";
 import { W_G } from "@typeberry/block/gp-constants";
-import { PreimagesExtrinsic } from "@typeberry/block/preimage";
+import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { WorkReport } from "@typeberry/block/work-report";
-import { WorkResult } from "@typeberry/block/work-result";
+import type { WorkResult } from "@typeberry/block/work-result";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { CoreStatistics, ServiceStatistics, State, tryAsPerCore } from "@typeberry/state";
+import { CoreStatistics, ServiceStatistics, type State, tryAsPerCore } from "@typeberry/state";
 import { ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
 
@@ -131,7 +140,7 @@ export class Statistics {
     /**
      * TODO [MaSo] Can it overflow?
      * hint?: https://graypaper.fluffylabs.dev/#/68eaa1f/142600142900?v=0.6.4
-    */
+     */
     return tryAsU32(sum);
   }
 
