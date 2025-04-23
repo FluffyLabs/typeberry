@@ -9,7 +9,7 @@ import {
   tryAsServiceGas,
   tryAsServiceId,
 } from "@typeberry/block";
-import { W_G } from "@typeberry/block/gp-constants";
+import { I, T, V, W_G, W_M, W_R } from "@typeberry/block/gp-constants";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { WorkReport } from "@typeberry/block/work-report";
 import type { WorkResult } from "@typeberry/block/work-result";
@@ -55,9 +55,10 @@ export class Statistics {
     }
 
     /** e !== e' */
-    const current = Array(this.chainSpec.validatorsCount)
-      .fill(0)
-      .map(() => ValidatorStatistics.empty());
+    const current = FixedSizeArray.fill(
+      () => ValidatorStatistics.empty(),
+      this.chainSpec.validatorsCount,
+    );
 
     return {
       ...this.state.statistics,
@@ -81,7 +82,7 @@ export class Statistics {
     const dataAvailabilityLoad = this.calculateDictionaryScoreCore(availableReports);
 
     /** Cannot be more assuarances than there is Validators */
-    check(availableAssurances <= 1023, "Number of assurances exceeds maximum number of Validators (1023)");
+    check(availableAssurances <= V, `Number of assurances exceeds maximum number of Validators (${V})`);
     const popularity = tryAsU16(availableAssurances);
 
     return CoreStatistics.fromCodec({
@@ -107,6 +108,7 @@ export class Statistics {
       bundleSize: 0,
     };
 
+    /** Max work-reports length is I=16 */
     for (const workReport of workReports) {
       for (const workResult of workReport.results.map((r) => r)) {
         score.imports += workResult.load.importedSegments;
@@ -117,6 +119,12 @@ export class Statistics {
       }
       score.bundleSize += workReport.workPackageSpec.length;
     }
+
+    check(score.imports <= I * W_M, `Imports exceed maximum value I * W_M (${I} * ${W_M})`);
+    check(score.exports <= I * W_M, `Exports exceed maximum value I * W_M (${I} * ${W_M})`);
+    check(score.extrinsicCount <= I * T, `Extrinsic count exceed maximum value I * T (${I} * ${T})`);
+    check(score.extrinsicSize <= I * W_R, `Extrinsic size exceed maximum value I * W_R (${I} * ${W_R})`);
+    check(score.bundleSize <= I * W_R, `Bundle size exceed maximum value I * W_G (${I} * ${W_G})`);
 
     return {
       imports: tryAsU16(score.imports),
@@ -138,10 +146,9 @@ export class Statistics {
       sum += workPackageLength + W_G * workPackageSegment;
     }
 
-    /**
-     * TODO [MaSo] Can it overflow?
-     * hint?: https://graypaper.fluffylabs.dev/#/68eaa1f/142600142900?v=0.6.4
-     */
+    // Max value is 0x00C4_2180
+    check(sum <= W_R + W_G * ((W_M * 65) / 64), "Sum exceeds maximum value W_R + W_G * ((W_M * 65) / 64)");
+
     return tryAsU32(sum);
   }
 
@@ -258,6 +265,7 @@ export class Statistics {
     const { current, cores, services } = statistics;
     check(current[authorIndex] !== undefined, "authorIndex is out of bounds");
 
+    /** One validator can produce maximal one block per timeslot */
     const newBlocksCount = current[authorIndex].blocks + 1;
     current[authorIndex].blocks = tryAsU32(newBlocksCount);
 

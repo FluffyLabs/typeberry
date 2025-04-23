@@ -24,14 +24,10 @@ describe("Statistics", () => {
 
   const emptyStatistics = () =>
     tryAsPerValidator(
-      [
-        ValidatorStatistics.empty(),
-        ValidatorStatistics.empty(),
-        ValidatorStatistics.empty(),
-        ValidatorStatistics.empty(),
-        ValidatorStatistics.empty(),
-        ValidatorStatistics.empty(),
-      ],
+      FixedSizeArray.fill(
+        () => ValidatorStatistics.empty(),
+        tinyChainSpec.validatorsCount,
+      ),
       tinyChainSpec,
     );
 
@@ -98,7 +94,7 @@ describe("Statistics", () => {
         availableReports: [],
       });
 
-      assert.deepStrictEqual(statistics.state.statistics.previous, currentStatistics);
+      assert.deepStrictEqual(statistics.state.statistics.current, emptyStatistics());
       assert.deepStrictEqual(statistics.state.statistics.previous, currentStatistics);
     });
 
