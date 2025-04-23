@@ -84,6 +84,8 @@ describe("Statistics", () => {
         currentSlot: previousSlot + tinyChainSpec.epochLength,
       });
 
+      assert.deepStrictEqual(statistics.state.statistics.current, currentStatistics);
+
       statistics.transition({
         slot: currentSlot,
         authorIndex: validatorIndex,
@@ -91,7 +93,6 @@ describe("Statistics", () => {
         availableReports: [],
       });
 
-      assert.deepStrictEqual(statistics.state.statistics.current, emptyStatistics());
       assert.deepStrictEqual(statistics.state.statistics.previous, currentStatistics);
     });
 

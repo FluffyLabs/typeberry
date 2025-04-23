@@ -70,12 +70,12 @@ export class Statistics {
    * https://graypaper.fluffylabs.dev/#/68eaa1f/19fc0019fc00?v=0.6.4
    */
   private calculateCoreStatistics(
-    workReports: WorkReport[],
+    workReport: WorkReport | undefined,
     availableReports: WorkReport[],
     availableAssurances: number,
   ): CoreStatistics {
     const { imports, extrinsicCount, extrinsicSize, exports, gasUsed, bundleSize } =
-      this.calculateRefineScoreCore(workReports);
+      this.calculateRefineScoreCore(workReport);
     const dataAvailabilityLoad = this.calculateDAScoreCore(availableReports);
 
     /** Cannot be more assuarances than there is Validators */
@@ -95,7 +95,18 @@ export class Statistics {
   }
 
   /** https://graypaper.fluffylabs.dev/#/68eaa1f/192d01192d01?v=0.6.4 */
-  private calculateRefineScoreCore(workReports: WorkReport[]) {
+  private calculateRefineScoreCore(workReport: WorkReport | undefined) {
+    if (workReport === undefined) {
+      return {
+        imports: tryAsU16(0),
+        extrinsicCount: tryAsU16(0),
+        extrinsicSize: tryAsU32(0),
+        exports: tryAsU16(0),
+        gasUsed: tryAsServiceGas(0n),
+        bundleSize: tryAsU32(0),
+      };
+    }
+
     const score = {
       imports: 0,
       extrinsicCount: 0,
@@ -105,17 +116,14 @@ export class Statistics {
       bundleSize: 0,
     };
 
-    /** Max work-reports length is I=16 */
-    for (const workReport of workReports) {
-      for (const workResult of workReport.results.map((r) => r)) {
-        score.imports += workResult.load.importedSegments;
-        score.extrinsicCount += workResult.load.extrinsicCount;
-        score.extrinsicSize += workResult.load.extrinsicSize;
-        score.exports += workResult.load.exportedSegments;
-        score.gasUsed += workResult.load.gasUsed;
-      }
-      score.bundleSize += workReport.workPackageSpec.length;
+    for (const workResult of workReport.results.map((r) => r)) {
+      score.imports += workResult.load.importedSegments;
+      score.extrinsicCount += workResult.load.extrinsicCount;
+      score.extrinsicSize += workResult.load.extrinsicSize;
+      score.exports += workResult.load.exportedSegments;
+      score.gasUsed += workResult.load.gasUsed;
     }
+    score.bundleSize += workReport.workPackageSpec.length;
 
     check(score.imports <= I * W_M, `Imports exceed maximum value I * W_M (${I} * ${W_M})`);
     check(score.exports <= I * W_M, `Exports exceed maximum value I * W_M (${I} * ${W_M})`);
@@ -302,12 +310,10 @@ export class Statistics {
 
     /** Agregated work reports per core */
     const workReports = extrinsic.guarantees.map((r) => r.report).filter((r) => r !== undefined);
-    const workReportPerCore = new Map<CoreIndex, WorkReport[]>();
+    const workReportPerCore = new Map<CoreIndex, WorkReport>();
     for (const workReport of workReports) {
       const coreIndex = workReport.coreIndex;
-      const coreWorkReports = workReportPerCore.get(coreIndex) ?? [];
-      coreWorkReports.push(workReport);
-      workReportPerCore.set(coreIndex, coreWorkReports);
+      workReportPerCore.set(coreIndex, workReport);
     }
 
     /** Agregated available reports per core */
@@ -335,7 +341,7 @@ export class Statistics {
       const coreIndex = tryAsCoreIndex(coreId);
 
       cores[coreIndex] = this.calculateCoreStatistics(
-        workReportPerCore.get(coreIndex) ?? [],
+        workReportPerCore.get(coreIndex),
         availableReportsPerCore.get(coreIndex) ?? [],
         assurancesPerCore[coreIndex],
       );
