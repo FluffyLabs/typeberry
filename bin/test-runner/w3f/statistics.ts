@@ -269,8 +269,9 @@ export class StatisticsTestFull {
   post_state!: TestState;
 }
 
-export async function runStatisticsTestTiny({ input, pre_state, post_state }: StatisticsTestTiny) {
-  logger.log(`StatisticsTestFull { ${input}, ${pre_state}, ${post_state} }`);
+export async function runStatisticsTestTiny(test: StatisticsTestTiny) {
+  logger.log(`StatisticsTestTiny ${JSON.stringify(test)}`);
+  const { input, pre_state, post_state } = test;
   const spec = tinyChainSpec;
   const statistics = new Statistics(spec, TestState.toStatisticsState(spec, pre_state));
   assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, pre_state));
@@ -278,8 +279,9 @@ export async function runStatisticsTestTiny({ input, pre_state, post_state }: St
   assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, post_state));
 }
 
-export async function runStatisticsTestFull({ input, pre_state, post_state }: StatisticsTestFull) {
-  logger.log(`StatisticsTestFull { ${input}, ${pre_state}, ${post_state} }`);
+export async function runStatisticsTestFull(test: StatisticsTestFull) {
+  logger.log(`StatisticsTestFull ${JSON.stringify(test)}`);
+  const { input, pre_state, post_state } = test;
   const spec = fullChainSpec;
   const statistics = new Statistics(spec, TestState.toStatisticsState(spec, pre_state));
   assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, pre_state));
