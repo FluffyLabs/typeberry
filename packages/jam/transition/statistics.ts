@@ -4,9 +4,10 @@ import { W_G } from "@typeberry/block/gp-constants";
 import { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { WorkReport } from "@typeberry/block/work-report";
 import { WorkResult } from "@typeberry/block/work-result";
+import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { CoreStatistics, ServiceStatistics, State } from "@typeberry/state";
+import { CoreStatistics, ServiceStatistics, State, tryAsPerCore } from "@typeberry/state";
 import { ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
 
@@ -62,15 +63,16 @@ export class Statistics {
    * https://graypaper.fluffylabs.dev/#/68eaa1f/19fc0019fc00?v=0.6.4
    */
   private calculateCoreStatistics(
-    coreIndex: CoreIndex,
     workReports: WorkReport[],
     availableReports: WorkReport[],
-    availabilityAssurances: AvailabilityAssurance[],
+    availableAssurances: number,
   ): CoreStatistics {
     const { imports, extrinsicCount, extrinsicSize, exports, gasUsed, bundleSize } =
       this.calculateRefineScoreCore(workReports);
     const dataAvailabilityLoad = this.calculateDictionaryScoreCore(availableReports);
-    const popularity = this.calculatePopularityScoreCore(coreIndex, availabilityAssurances);
+
+    check(availableAssurances <= 1023, "Number of assurances exceeds maximum number of Validators (1023)");
+    const popularity = tryAsU16(availableAssurances);
 
     return CoreStatistics.fromCodec({
       imports,
@@ -126,19 +128,11 @@ export class Statistics {
       sum += workPackageLength + W_G * workPackageSegment;
     }
 
+    /**
+     * TODO [MaSo] Can it overflow?
+     * hint?: https://graypaper.fluffylabs.dev/#/68eaa1f/142600142900?v=0.6.4
+    */
     return tryAsU32(sum);
-  }
-
-  private calculatePopularityScoreCore(coreIndex: CoreIndex, availabilityAssurances: AvailabilityAssurance[]) {
-    let sum = 0;
-    for (const assurance of availabilityAssurances) {
-      if (assurance === undefined || assurance.bitfield === undefined) {
-        continue;
-      }
-      sum += assurance.bitfield.isSet(coreIndex) ? 1 : 0;
-    }
-
-    return tryAsU16(sum);
   }
 
   /**
@@ -157,8 +151,7 @@ export class Statistics {
 
     const accumulate = this.calculateAccumulateScoreService();
     const onTransfers = this.calculateOnTransferScoreService();
-
-    const provided = this.calculateProvidedScoreService(preimages.filter((p) => p !== undefined && p.requester === s));
+    const provided = this.calculateProvidedScoreService(preimages.filter((p) => p?.requester === s));
 
     return ServiceStatistics.fromCodec({
       refinementCount,
@@ -291,40 +284,45 @@ export class Statistics {
       current[validatorIndex].assurances = tryAsU32(newAssurancesCount);
     }
 
-
+    /** Agregated work reports per core */
     const workReports = extrinsic.guarantees.map((r) => r.report).filter((r) => r !== undefined);
-    const workReportByCore = new Map<CoreIndex, WorkReport[]>();
+    const workReportPerCore = new Map<CoreIndex, WorkReport[]>();
     for (const workReport of workReports) {
       const coreIndex = workReport.coreIndex;
-      if (!workReportByCore.has(coreIndex)) {
-        workReportByCore.set(coreIndex, []);
-      }
-      workReportByCore.get(coreIndex)?.push(workReport);
+      const coreWorkReports = workReportPerCore.get(coreIndex) ?? [];
+      coreWorkReports.push(workReport);
+      workReportPerCore.set(coreIndex, coreWorkReports);
     }
 
-    const availableReportsByCore = new Map<CoreIndex, WorkReport[]>();
+    /** Agregated available reports per core */
+    const availableReportsPerCore = new Map<CoreIndex, WorkReport[]>();
     for (const availableReport of availableReports) {
       const coreIndex = availableReport.coreIndex;
-      if (!availableReportsByCore.has(coreIndex)) {
-        availableReportsByCore.set(coreIndex, []);
+      const coreAvailableReports = availableReportsPerCore.get(coreIndex) ?? [];
+      coreAvailableReports.push(availableReport);
+      availableReportsPerCore.set(coreIndex, coreAvailableReports);
+    }
+
+    /** Agregated assurances per core */
+    const assurancesPerCore = tryAsPerCore(
+      FixedSizeArray.fill(() => 0, this.chainSpec.coresCount),
+      this.chainSpec,
+    );
+    for (const assurance of extrinsic.assurances) {
+      for (const coreIndex of assurance.bitfield.indicesOfSetBits()) {
+        assurancesPerCore[coreIndex] += 1;
       }
-      availableReportsByCore.get(coreIndex)?.push(availableReport);
     }
 
     /** Update core statistics */
     for (let coreId = 0; coreId < this.chainSpec.coresCount; coreId++) {
       const coreIndex = tryAsCoreIndex(coreId);
-      const coreReports = workReportByCore.get(coreIndex) ?? [];
-      const coreAvailableReports = availableReportsByCore.get(coreIndex) ?? [];
 
-      const newCoreStat = this.calculateCoreStatistics(
-        coreIndex,
-        coreReports,
-        coreAvailableReports,
-        extrinsic.assurances,
+      cores[coreIndex] = this.calculateCoreStatistics(
+        workReportPerCore.get(coreIndex) ?? [],
+        availableReportsPerCore.get(coreIndex) ?? [],
+        assurancesPerCore[coreIndex],
       );
-
-      cores[coreId] = newCoreStat;
     }
 
     /** Update services statistics */
