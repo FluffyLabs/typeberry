@@ -7,7 +7,7 @@ on:
     branches: ["main"]
 
 env:
-  LOG_FILENAME: blockchain-git-log.json
+  LOG_FILENAME: ${{ github.workspace }}/blockchain-git-log.json
 
 permissions:
   actions: read
@@ -39,7 +39,6 @@ jobs:
         continue-on-error: true
       - run: npm start -w @typeberry/commit-hash-to-blockchain
         env:
-          LOG_FILENAME: ../../${{ env.LOG_FILENAME }}
           COMMIT_KEY_SECRET: ${{ secrets.COMMIT_KEY_SECRET }}
       - name: Upload new transaction log
         uses: actions/upload-artifact@v4
