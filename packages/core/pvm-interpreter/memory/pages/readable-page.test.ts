@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Result, OK } from "@typeberry/utils";
+import { OK, Result } from "@typeberry/utils";
 import { PageFault } from "../errors";
 import { tryAsMemoryIndex } from "../memory-index";
 import { tryAsPageIndex, tryAsPageNumber } from "./page-utils";

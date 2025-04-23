@@ -1,6 +1,5 @@
-import type { U64 } from "@typeberry/numbers";
+import { type U64, tryAsU64 } from "@typeberry/numbers";
 import type { Registers } from "@typeberry/pvm-interpreter";
-import { tryAsU64 } from "../../../dist/pvm/packages/core/numbers";
 
 export class HostCallRegisters {
   constructor(private readonly registers: Registers) {}

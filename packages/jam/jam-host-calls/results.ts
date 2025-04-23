@@ -51,7 +51,7 @@ export const HostCallResult = {
   /** Insufficient funds. */
   CASH: tryAsU64(0xffff_ffff_ffff_fff9n), // 2**64 - 7
   /** Gas limit too low. */
-  LOW: tryAsU64(0xffff_ffff_ffff_fffd8n), // 2**64 - 8
+  LOW: tryAsU64(0xffff_ffff_ffff_fff8n), // 2**64 - 8
   /** The item is already solicited or cannot be forgotten. */
   HUH: tryAsU64(0xffff_ffff_ffff_fff7n), // 2**64 - 9
   /** The return value indicating general success. */

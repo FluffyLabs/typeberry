@@ -1,16 +1,11 @@
 import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
-import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import {
-  type Memory,
-  type PvmExecution,
-  type Registers,
-  tryAsHostCallIndex,
-} from "@typeberry/pvm-host-calls/host-call-handler";
+import { tryAsU64, tryBigIntAsNumber } from "@typeberry/numbers";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
+import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import { LegacyHostCallResult } from "./results";
+import { HostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, legacyGetServiceId, writeServiceIdAsLeBytes } from "./utils";
 
 /** Account data interface for Read host call. */
@@ -37,17 +32,17 @@ export class Read implements HostCallHandler {
 
   constructor(private readonly account: Accounts) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
+  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // a
     const serviceId = legacyGetServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // k_0
-    const keyStartAddress = tryAsMemoryIndex(regs.getLowerU32(8));
+    const keyStartAddress = regs.get(8);
     // k_z
-    const keyLen = regs.getLowerU32(9);
+    const keyLen = tryBigIntAsNumber(regs.get(9));
     // b_0
-    const destinationStart = tryAsMemoryIndex(regs.getLowerU32(10));
+    const destinationStart = regs.get(10);
     // b_z
-    const destinationLen = regs.getLowerU32(11);
+    const destinationLen = tryBigIntAsNumber(regs.get(11));
 
     // allocate extra bytes for the serviceId
     const key = new Uint8Array(SERVICE_ID_BYTES + keyLen);
@@ -57,7 +52,7 @@ export class Read implements HostCallHandler {
 
     // we return OOB in case the destination is not writeable or the key can't be loaded.
     if (keyLoadingFault !== null || !destinationWriteable) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
+      regs.set(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 
@@ -65,12 +60,12 @@ export class Read implements HostCallHandler {
     const value = await this.account.read(serviceId, keyHash);
 
     if (value === null) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.NONE);
+      regs.set(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
     // copy value to the memory and set the length to register 7
     memory.storeFrom(destinationStart, value.raw.subarray(0, destinationLen));
-    regs.setU32(IN_OUT_REG, value.raw.length);
+    regs.set(IN_OUT_REG, tryAsU64(value.raw.length));
   }
 }
