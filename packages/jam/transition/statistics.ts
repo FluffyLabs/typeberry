@@ -55,10 +55,7 @@ export class Statistics {
     }
 
     /** e !== e' */
-    const current = FixedSizeArray.fill(
-      () => ValidatorStatistics.empty(),
-      this.chainSpec.validatorsCount,
-    );
+    const current = FixedSizeArray.fill(() => ValidatorStatistics.empty(), this.chainSpec.validatorsCount);
 
     return {
       ...this.state.statistics,
