@@ -30,8 +30,8 @@ export class MemoryRange {
     return this.start > this.end;
   }
 
-  /** Checks if the given point is within the range */
-  isInRange(point: MemoryIndex) {
+  /** Checks if given memory address is within the range */
+  isInRange(address: MemoryIndex) {
     if (this.isWrapped()) {
       return point >= this.start || point < this.end;
     }
