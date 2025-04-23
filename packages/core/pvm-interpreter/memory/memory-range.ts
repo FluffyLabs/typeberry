@@ -1,6 +1,7 @@
+import { MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
 import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
-import { getStartPageIndexFromPageNumber } from "./memory-utils";
-import type { PageNumber } from "./pages/page-utils";
+import { getPageNumber } from "./memory-utils";
+import { getNextPageNumber } from "./pages/page-utils";
 
 export class MemoryRange {
   private constructor(
@@ -13,11 +14,10 @@ export class MemoryRange {
     return new MemoryRange(start, end);
   }
 
-  /** Creates a memory range from memory pages */
-  static fromPageNumbers(start: PageNumber, end: PageNumber) {
-    const startIndex = getStartPageIndexFromPageNumber(start);
-    const endIndex = getStartPageIndexFromPageNumber(end);
-    return new MemoryRange(startIndex, endIndex);
+  /** Creates a memory range from given starting point and length */
+  static fromStartAndLength(start: MemoryIndex, length: number) {
+    const end = tryAsMemoryIndex((start + length) % MEMORY_SIZE);
+    return new MemoryRange(start, end);
   }
 
   /** Checks if a range is empty (`start` === `end`) */
@@ -51,5 +51,20 @@ export class MemoryRange {
       other.isInRange(this.start) ||
       other.isInRange(tryAsMemoryIndex(this.end - 1))
     );
+  }
+
+  *getPageNumbers() {
+    if (this.isEmpty()) {
+      return;
+    }
+
+    let currentPageNumber = getPageNumber(this.start);
+    const endPageNumber =
+      this.end % PAGE_SIZE === 0 ? getPageNumber(this.end) : getNextPageNumber(getPageNumber(this.end));
+
+    while (currentPageNumber !== endPageNumber) {
+      yield currentPageNumber;
+      currentPageNumber = getNextPageNumber(currentPageNumber);
+    }
   }
 }

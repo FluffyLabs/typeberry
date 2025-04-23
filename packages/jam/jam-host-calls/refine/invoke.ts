@@ -42,7 +42,7 @@ export class Invoke implements HostCallHandler {
     // `o`
     const destinationStart = tryAsMemoryIndex(regs.getU32(IN_OUT_REG_2));
 
-    const destinationWriteable = memory.isWriteable(destinationStart, destinationStart + GAS_REGISTERS_SIZE);
+    const destinationWriteable = memory.isWriteable(destinationStart, GAS_REGISTERS_SIZE);
     if (!destinationWriteable) {
       return PvmExecution.Panic;
     }

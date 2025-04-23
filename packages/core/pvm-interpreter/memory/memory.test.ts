@@ -213,7 +213,7 @@ describe("Memory", () => {
     it("should return PageFault if case of storing data on 2 pages but one of them does not exist", () => {
       const pageNumber = tryAsPageNumber(16);
       const bytes = new Uint8Array();
-      const page = new ReadablePage(pageNumber, bytes);
+      const page = new WriteablePage(pageNumber, bytes);
       const memoryMap = new Map<PageNumber, MemoryPage>();
       memoryMap.set(pageNumber, page);
       const sbrkIndex = tryAsSbrkIndex(RESERVED_NUMBER_OF_PAGES * PAGE_SIZE);
