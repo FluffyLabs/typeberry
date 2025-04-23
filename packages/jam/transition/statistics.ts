@@ -80,6 +80,7 @@ export class Statistics {
       this.calculateRefineScoreCore(workReports);
     const dataAvailabilityLoad = this.calculateDictionaryScoreCore(availableReports);
 
+    /** Cannot be more assuarances than there is Validators */
     check(availableAssurances <= 1023, "Number of assurances exceeds maximum number of Validators (1023)");
     const popularity = tryAsU16(availableAssurances);
 
@@ -318,7 +319,7 @@ export class Statistics {
       this.chainSpec,
     );
     for (const assurance of extrinsic.assurances) {
-      for (const coreIndex of assurance.bitfield.indicesOfSetBits()) {
+      for (const coreIndex of assurance.bitfield?.indicesOfSetBits() ?? []) {
         assurancesPerCore[coreIndex] += 1;
       }
     }
