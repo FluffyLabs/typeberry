@@ -76,7 +76,7 @@ export class Statistics {
   ): CoreStatistics {
     const { imports, extrinsicCount, extrinsicSize, exports, gasUsed, bundleSize } =
       this.calculateRefineScoreCore(workReports);
-    const dataAvailabilityLoad = this.calculateDictionaryScoreCore(availableReports);
+    const dataAvailabilityLoad = this.calculateDAScoreCore(availableReports);
 
     /** Cannot be more assuarances than there is Validators */
     check(availableAssurances <= V, `Number of assurances exceeds maximum number of Validators (${V})`);
@@ -134,7 +134,7 @@ export class Statistics {
   }
 
   /** https://graypaper.fluffylabs.dev/#/68eaa1f/195601195601?v=0.6.4 */
-  private calculateDictionaryScoreCore(availableWorkReports: WorkReport[]) {
+  private calculateDAScoreCore(availableWorkReports: WorkReport[]) {
     let sum = 0;
 
     for (const r of availableWorkReports) {
@@ -194,6 +194,7 @@ export class Statistics {
       exports: 0,
     };
 
+    /** Max work-results length is I=16 */
     for (const workResult of workResults) {
       score.refinementCount += 1;
       score.refinementGasUsed += workResult.load.gasUsed;
