@@ -119,7 +119,7 @@ describe("MemoryRange", () => {
       assert.strictEqual(memoryRange.isInRange(point), false);
     });
 
-    it("should return true for a point that is equal to start", () => {
+    it("should return true for a point that is equal to `start`", () => {
       const start = tryAsPageNumber(1);
       const end = tryAsPageNumber(2);
       const point = tryAsMemoryIndex(1 * PAGE_SIZE);
@@ -129,7 +129,7 @@ describe("MemoryRange", () => {
       assert.strictEqual(memoryRange.isInRange(point), true);
     });
 
-    it("should return false for a point that is equal to end", () => {
+    it("should return false for a point that is equal to `end`", () => {
       const start = tryAsPageNumber(1);
       const end = tryAsPageNumber(2);
       const point = tryAsMemoryIndex(2 * PAGE_SIZE);
@@ -137,6 +137,16 @@ describe("MemoryRange", () => {
       const memoryRange = MemoryRange.fromPageNumbers(start, end);
 
       assert.strictEqual(memoryRange.isInRange(point), false);
+    });
+
+    it("should return true for a point that is equal to `end - 1`", () => {
+      const start = tryAsPageNumber(1);
+      const end = tryAsPageNumber(2);
+      const point = tryAsMemoryIndex(2 * PAGE_SIZE - 1);
+
+      const memoryRange = MemoryRange.fromPageNumbers(start, end);
+
+      assert.strictEqual(memoryRange.isInRange(point), true);
     });
   });
 
@@ -146,6 +156,7 @@ describe("MemoryRange", () => {
       const range2 = MemoryRange.fromPageNumbers(tryAsPageNumber(2), tryAsPageNumber(4));
 
       assert.strictEqual(range1.overlapsWith(range2), true);
+      assert.strictEqual(range2.overlapsWith(range1), true);
     });
 
     it("should return true for equal but not empty ranges", () => {
@@ -153,6 +164,7 @@ describe("MemoryRange", () => {
       const range2 = MemoryRange.fromPageNumbers(tryAsPageNumber(1), tryAsPageNumber(2));
 
       assert.strictEqual(range1.overlapsWith(range2), true);
+      assert.strictEqual(range2.overlapsWith(range1), true);
     });
 
     it("should return true for equal but not empty ranges (wrapped)", () => {
@@ -160,6 +172,7 @@ describe("MemoryRange", () => {
       const range2 = MemoryRange.fromPageNumbers(tryAsPageNumber(3), tryAsPageNumber(2));
 
       assert.strictEqual(range1.overlapsWith(range2), true);
+      assert.strictEqual(range2.overlapsWith(range1), true);
     });
 
     it("should return false for non-overlapping ranges", () => {
@@ -167,6 +180,7 @@ describe("MemoryRange", () => {
       const range2 = MemoryRange.fromPageNumbers(tryAsPageNumber(3), tryAsPageNumber(4));
 
       assert.strictEqual(range1.overlapsWith(range2), false);
+      assert.strictEqual(range2.overlapsWith(range1), false);
     });
 
     it("should return false for empty range", () => {
@@ -174,13 +188,15 @@ describe("MemoryRange", () => {
       const range2 = MemoryRange.fromPageNumbers(tryAsPageNumber(1), tryAsPageNumber(4));
 
       assert.strictEqual(range1.overlapsWith(range2), false);
+      assert.strictEqual(range2.overlapsWith(range1), false);
     });
 
-    it("should return false when end of the first range is equal to start of the second range", () => {
+    it("should return false when `end` of the first range is equal to `start` of the second range", () => {
       const range1 = MemoryRange.fromPageNumbers(tryAsPageNumber(1), tryAsPageNumber(2));
       const range2 = MemoryRange.fromPageNumbers(tryAsPageNumber(2), tryAsPageNumber(4));
 
       assert.strictEqual(range1.overlapsWith(range2), false);
+      assert.strictEqual(range2.overlapsWith(range1), false);
     });
 
     it("should return false for non-overlapping ranges (wrapped)", () => {
@@ -188,6 +204,23 @@ describe("MemoryRange", () => {
       const range2 = MemoryRange.fromPageNumbers(tryAsPageNumber(4), tryAsPageNumber(2));
 
       assert.strictEqual(range1.overlapsWith(range2), false);
+      assert.strictEqual(range2.overlapsWith(range1), false);
+    });
+
+    it("should return true when one range completely contains another", () => {
+      const outerRange = MemoryRange.fromPageNumbers(tryAsPageNumber(1), tryAsPageNumber(5));
+      const innerRange = MemoryRange.fromPageNumbers(tryAsPageNumber(2), tryAsPageNumber(4));
+
+      assert.strictEqual(outerRange.overlapsWith(innerRange), true);
+      assert.strictEqual(innerRange.overlapsWith(outerRange), true);
+    });
+
+    it("should return true for complex overlapping wrapped ranges", () => {
+      const range1 = MemoryRange.fromPageNumbers(tryAsPageNumber(3), tryAsPageNumber(1));
+      const range2 = MemoryRange.fromPageNumbers(tryAsPageNumber(4), tryAsPageNumber(2));
+
+      assert.strictEqual(range1.overlapsWith(range2), true);
+      assert.strictEqual(range2.overlapsWith(range1), true);
     });
   });
 });
