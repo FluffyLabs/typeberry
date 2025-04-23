@@ -1,4 +1,4 @@
-import type { MemoryIndex } from "./memory-index";
+import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
 import { getStartPageIndexFromPageNumber } from "./memory-utils";
 import type { PageNumber } from "./pages/page-utils";
 
@@ -31,7 +31,7 @@ export class MemoryRange {
   }
 
   /** Checks if the given point is within the range */
-  isInRange(point: number) {
+  isInRange(point: MemoryIndex) {
     if (this.isWrapped()) {
       return point >= this.start || point < this.end;
     }
@@ -47,9 +47,9 @@ export class MemoryRange {
 
     return (
       this.isInRange(other.start) ||
-      this.isInRange(other.end - 1) ||
+      this.isInRange(tryAsMemoryIndex(other.end - 1)) ||
       other.isInRange(this.start) ||
-      other.isInRange(this.end - 1)
+      other.isInRange(tryAsMemoryIndex(this.end - 1))
     );
   }
 }
