@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { Result } from "@typeberry/utils";
+import { Result, OK } from "@typeberry/utils";
 import { PageFault } from "./errors";
 import { Memory } from "./memory";
 import { MAX_MEMORY_INDEX, MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "./memory-consts";
@@ -39,7 +39,7 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.strictEqual(loadResult.isOk, true);
+      assert.deepStrictEqual(loadResult, Result.ok(OK));
       assert.deepStrictEqual(result, expectedResult);
     });
 
@@ -65,7 +65,7 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.strictEqual(loadResult.isOk, true);
+      assert.deepStrictEqual(loadResult, Result.ok(OK));
       assert.deepStrictEqual(result, expectedResult);
     });
 
@@ -112,7 +112,7 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.strictEqual(loadResult.isOk, true);
+      assert.deepStrictEqual(loadResult, Result.ok(OK));
       assert.deepStrictEqual(result, expectedResult);
     });
   });
@@ -163,7 +163,7 @@ describe("Memory", () => {
 
       const storeResult = memory.storeFrom(addressToStore, dataToStore);
 
-      assert.strictEqual(storeResult.isOk, true);
+      assert.deepStrictEqual(storeResult, Result.ok(OK));
       assert.deepEqual(memory, expectedMemory);
     });
 
@@ -198,7 +198,7 @@ describe("Memory", () => {
       };
       const storeResult = memory.storeFrom(addressToStore, dataToStore);
 
-      assert.strictEqual(storeResult.isOk, true);
+      assert.deepStrictEqual(storeResult, Result.ok(OK));
       assert.deepEqual(memory, expectedMemory);
     });
 
@@ -250,7 +250,7 @@ describe("Memory", () => {
 
       const storeResult = memory.storeFrom(addressToStore, dataToStore);
 
-      assert.strictEqual(storeResult.isOk, true);
+      assert.deepStrictEqual(storeResult, Result.ok(OK));
       assert.deepEqual(memory, expectedMemory);
     });
   });

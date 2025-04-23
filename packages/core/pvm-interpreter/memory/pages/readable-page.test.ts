@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Result } from "@typeberry/utils";
+import { Result, OK } from "@typeberry/utils";
 import { PageFault } from "../errors";
 import { tryAsMemoryIndex } from "../memory-index";
 import { tryAsPageIndex, tryAsPageNumber } from "./page-utils";
@@ -20,7 +20,7 @@ describe("ReadablePage", () => {
 
     const loadResult = readablePage.loadInto(result, loadIndex, lengthToLoad);
 
-    assert.strictEqual(loadResult.isOk, true);
+    assert.deepStrictEqual(loadResult, Result.ok(OK));
     assert.deepStrictEqual(result, expectedResult);
   });
 
@@ -37,7 +37,7 @@ describe("ReadablePage", () => {
 
     const loadResult = readablePage.loadInto(result, loadIndex, lengthToLoad);
 
-    assert.strictEqual(loadResult.isOk, true);
+    assert.deepStrictEqual(loadResult, Result.ok(OK));
     assert.deepStrictEqual(result, expectedResult);
   });
 
