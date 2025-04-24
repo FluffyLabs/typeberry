@@ -26,7 +26,7 @@ import {
 import {
   JsonCoreStatistics,
   JsonService,
-  type ServiceStatiticsEntry,
+  type ServiceStatisticsEntry,
   availabilityAssignmentFromJson,
   blockStateFromJson,
   serviceStatisticsEntryFromJson,
@@ -87,7 +87,7 @@ class TestState {
   recent_blocks!: BlockState[];
   accounts!: Service[];
   cores_statistics!: CoreStatistics[];
-  services_statistics!: ServiceStatiticsEntry[];
+  services_statistics!: ServiceStatisticsEntry[];
 
   static toReportsState(pre: TestState, spec: ChainSpec): ReportsState {
     if (pre.offenders.length > 0) {

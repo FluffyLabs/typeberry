@@ -23,29 +23,45 @@ import { TransitionHasher } from "@typeberry/transition";
 import { asOpaqueType } from "@typeberry/utils";
 
 export class Generator {
-  public readonly state: State;
   private readonly hashAllocator = new SimpleAllocator();
   private lastHeaderHash: HeaderHash;
   private lastHeader: Header;
+  private lastState: State;
 
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly keccakHasher: KeccakHasher,
-    blocks: BlocksDb,
-    state: StatesDb,
+    private readonly blocks: BlocksDb,
+    private readonly states: StatesDb,
   ) {
-    const data = blocks.getBestData();
-    this.lastHeaderHash = data[0];
-    const lastHeader = blocks.getHeader(this.lastHeaderHash)?.materialize() ?? null;
-    const lastState = state.getFullState(data[1]);
+    const { lastHeaderHash, lastHeader, lastState } = Generator.getLastHeaderAndState(blocks, states);
+    this.lastHeaderHash = lastHeaderHash;
+    this.lastHeader = lastHeader;
+    this.lastState = lastState;
+  }
+
+  private refreshLastHeaderAndState() {
+    const { lastHeaderHash, lastHeader, lastState } = Generator.getLastHeaderAndState(this.blocks, this.states);
+    this.lastHeaderHash = lastHeaderHash;
+    this.lastHeader = lastHeader;
+    this.lastState = lastState;
+  }
+
+  private static getLastHeaderAndState(blocks: BlocksDb, states: StatesDb) {
+    const [headerHash, stateRoot] = blocks.getBestData();
+    const lastHeader = blocks.getHeader(headerHash)?.materialize() ?? null;
+    const lastState = states.getFullState(stateRoot);
     if (lastHeader === null) {
-      throw new Error(`Missing best header: ${data[0]}! Make sure DB is initialized.`);
+      throw new Error(`Missing best header: ${headerHash}! Make sure DB is initialized.`);
     }
     if (lastState === null) {
-      throw new Error(`Missing last state: ${data[1]}! Make sure DB is initialized.`);
+      throw new Error(`Missing last state: ${stateRoot}! Make sure DB is initialized.`);
     }
-    this.lastHeader = lastHeader;
-    this.state = lastState;
+    return {
+      lastHeaderHash: headerHash,
+      lastHeader,
+      lastState,
+    };
   }
 
   async nextEncodedBlock() {
@@ -54,14 +70,17 @@ export class Generator {
     return encoded;
   }
 
+  // NOTE [ToDr] this whole function is incorrect, it's just a placeholder for proper generator.
   async nextBlock() {
+    // fetch latest data from the db.
+    this.refreshLastHeaderAndState();
+
     const lastTimeSlot = this.lastHeader.timeSlotIndex;
-    // NOTE [ToDr] this is incorrect, should be based on time instead.
     const newTimeSlot = lastTimeSlot + 1;
 
     const hasher = new TransitionHasher(this.chainSpec, this.keccakHasher, this.hashAllocator);
     const parentHeaderHash = this.lastHeaderHash;
-    const stateRoot = merkelizeState(serializeState(this.state, this.chainSpec));
+    const stateRoot = merkelizeState(serializeState(this.lastState, this.chainSpec));
 
     const extrinsic = new Extrinsic(
       asOpaqueType([]),

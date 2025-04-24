@@ -146,6 +146,9 @@ function parseOption<S extends string, T>(
 
   const val = args[option];
   delete args[option];
+  if (typeof val !== "string") {
+    throw new Error(`Option '--${option}' requires an argument.`);
+  }
   try {
     const parsed = parser(val);
     return {

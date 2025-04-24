@@ -131,12 +131,12 @@ class JsonServiceStatistics {
   on_transfers_gas_used!: ServiceGas;
 }
 
-export type ServiceStatiticsEntry = {
+export type ServiceStatisticsEntry = {
   id: ServiceId;
   record: ServiceStatistics;
 };
 
-export const serviceStatisticsEntryFromJson: FromJson<ServiceStatiticsEntry> = {
+export const serviceStatisticsEntryFromJson: FromJson<ServiceStatisticsEntry> = {
   id: "number",
   record: JsonServiceStatistics.fromJson,
 };
@@ -145,7 +145,7 @@ export class JsonStatisticsData {
   vals_current!: ValidatorStatistics[];
   vals_last!: ValidatorStatistics[];
   cores!: CoreStatistics[] | null;
-  services!: ServiceStatiticsEntry[] | null;
+  services!: ServiceStatisticsEntry[] | null;
 
   static fromJson: FromJson<JsonStatisticsData> = {
     vals_current: json.array(JsonValidatorStatistics.fromJson),

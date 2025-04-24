@@ -108,8 +108,8 @@ export const testState = (): State => {
     // varphi
     authQueues: tryAsPerCore(
       [
-        asKnownSize(repeat<AuthorizerHash>(AUTHORIZATION_QUEUE_SIZE, testAuth())),
-        asKnownSize(repeat<AuthorizerHash>(AUTHORIZATION_QUEUE_SIZE, testAuth())),
+        asKnownSize(repeat<AuthorizerHash>(AUTHORIZATION_QUEUE_SIZE, testAuth)),
+        asKnownSize(repeat<AuthorizerHash>(AUTHORIZATION_QUEUE_SIZE, testAuth)),
       ],
       spec,
     ),
@@ -276,9 +276,15 @@ export const testState = (): State => {
       ]),
     }),
     // theta
-    accumulationQueue: tryAsPerEpochBlock(repeat(spec.epochLength, []), spec),
+    accumulationQueue: tryAsPerEpochBlock(
+      repeat(spec.epochLength, () => []),
+      spec,
+    ),
     // xi
-    recentlyAccumulated: tryAsPerEpochBlock(repeat(spec.epochLength, HashSet.new()), spec),
+    recentlyAccumulated: tryAsPerEpochBlock(
+      repeat(spec.epochLength, () => HashSet.new()),
+      spec,
+    ),
     // gamma_a
     ticketsAccumulator: asKnownSize([
       new Ticket(b32("0x0b7537993b0a700def26bb16e99ed0bfb530f616e4c13cf63ecb60bcbe83387d"), attempt(2)),
@@ -333,11 +339,7 @@ const testAuth = () => b32("0x0b27478648cd19b4f812f897a26976ecf312eac28508b4368d
 
 const attempt = (x: number) => tryAsTicketAttempt(x);
 const b32 = (s: string) => Bytes.parseBytes(s, HASH_SIZE).asOpaque();
-const repeat = <T>(len: number, item: T) =>
-  Array(len)
-    .join(",")
-    .split(",")
-    .map((_) => item);
+const repeat = <T>(len: number, factory: () => T) => Array.from({ length: len }, factory);
 
 const activityRecord = (
   blocks: number,
