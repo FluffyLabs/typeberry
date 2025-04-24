@@ -55,11 +55,16 @@ export class Statistics {
     }
 
     /** e !== e' */
-    const current = FixedSizeArray.fill(() => ValidatorStatistics.empty(), this.chainSpec.validatorsCount);
+    const emptyValidators = tryAsPerValidator(
+      Array.from({ length: this.chainSpec.validatorsCount }, () => {
+        return ValidatorStatistics.empty();
+      }),
+      this.chainSpec,
+    );
 
     return {
       ...this.state.statistics,
-      current: tryAsPerValidator(current, this.chainSpec),
+      current: emptyValidators,
       previous: this.state.statistics.current,
     };
   }
