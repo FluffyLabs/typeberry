@@ -1,17 +1,57 @@
+import type { StateRootHash } from "@typeberry/block";
+import { Bytes } from "@typeberry/bytes";
+import { HASH_SIZE } from "@typeberry/hash";
 import minimist from "minimist";
 
-export enum Command {
-  Run = "run",
-  Import = "import",
-}
 /** Chain spec chooser. */
 export enum KnownChainSpec {
+  /** Tiny chain spec. */
   Tiny = "tiny",
+  /** Full chain spec. */
   Full = "full",
+}
+
+const DEFAULTS = {
+  chainSpec: KnownChainSpec.Tiny,
+  genesisRoot: Bytes.parseBytes(
+    "0xc07cdbce686c64d0a9b6539c70b0bb821b6a74d9de750a46a5da05b5640c290a",
+    HASH_SIZE,
+  ).asOpaque<StateRootHash>(),
+  dbPath: "database",
+};
+
+// NOTE [ToDr] Instead of adding more options here we should probably
+// consider just using JSON config files and only leave the stuff
+// that is actually meant to be easily overriden from CLI.
+export const HELP = `
+typeberry ${require("./package.json").version} by Fluffy Labs.
+
+Usage:
+  typeberry [options]
+  typeberry [options] import <bin-or-json-blocks>
+
+Options:
+  --chain-spec          Chain Spec to use. Either 'tiny' or 'full'.
+                        [default: ${DEFAULTS.chainSpec}]
+  --db-path             Directory where database is going to be stored.
+                        [default: ${DEFAULTS.dbPath}]
+  --genesis-root        Assume a particular genesis root hash to open the DB.
+                        [default: ${DEFAULTS.genesisRoot.toString().replace("0x", "")}]
+  --genesis             Path to a JSON file containing genesis state dump.
+                        Takes precedence over --genesis-root.
+`;
+
+/** Command to execute. */
+export enum Command {
+  /** Regular node operation. */
+  Run = "run",
+  /** Import the blocks from CLI and finish. */
+  Import = "import",
 }
 
 export type SharedOptions = {
   genesis: string | null;
+  genesisRoot: StateRootHash;
   chainSpec: KnownChainSpec;
   dbPath: string;
 };
@@ -24,6 +64,41 @@ export type Arguments =
         files: string[];
       }
     >;
+
+const withRelPath = (relPath: string, p: string) => `${relPath}/${p}`;
+
+function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedOptions {
+  const dbPath = parseOption(args, "db-path", (v) => withRelPath(relPath, v), withRelPath(relPath, DEFAULTS.dbPath));
+  const genesisRootHash = parseOption(
+    args,
+    "genesis-root",
+    (v) => Bytes.parseBytesNoPrefix(v, HASH_SIZE).asOpaque(),
+    DEFAULTS.genesisRoot,
+  );
+  const genesis = parseOption(args, "genesis", (v) => withRelPath(relPath, v), null);
+  const chainSpec = parseOption(
+    args,
+    "chain-spec",
+    (v) => {
+      switch (v) {
+        case KnownChainSpec.Tiny:
+          return KnownChainSpec.Tiny;
+        case KnownChainSpec.Full:
+          return KnownChainSpec.Full;
+        default:
+          throw Error("unknown chainspec");
+      }
+    },
+    DEFAULTS.chainSpec,
+  );
+
+  return {
+    dbPath: dbPath["db-path"],
+    genesisRoot: genesisRootHash["genesis-root"],
+    genesis: genesis.genesis,
+    chainSpec: chainSpec["chain-spec"],
+  };
+}
 
 export function parseArgs(input: string[], relPath: string): Arguments {
   const args = minimist(input);
@@ -55,34 +130,6 @@ export function parseArgs(input: string[], relPath: string): Arguments {
   }
 
   throw new Error(`Invalid arguments: ${JSON.stringify(args)}`);
-}
-
-const withRelPath = (relPath: string, p: string) => `${relPath}/${p}`;
-
-function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedOptions {
-  const dbPath = parseOption(args, "dbPath", (v) => withRelPath(relPath, v), withRelPath(relPath, "database"));
-  const genesis = parseOption(args, "genesis", (v) => withRelPath(relPath, v), null);
-  const chainSpec = parseOption(
-    args,
-    "chainSpec",
-    (v) => {
-      switch (v) {
-        case KnownChainSpec.Tiny:
-          return KnownChainSpec.Tiny;
-        case KnownChainSpec.Full:
-          return KnownChainSpec.Full;
-        default:
-          throw Error("unknown chainspec");
-      }
-    },
-    KnownChainSpec.Tiny,
-  );
-
-  return {
-    ...dbPath,
-    ...genesis,
-    ...chainSpec,
-  };
 }
 
 function parseOption<S extends string, T>(
@@ -125,22 +172,6 @@ function assertNoMoreArgs(args: minimist.ParsedArgs) {
     throw new Error(`Unrecognized options: '${keysLeft}'`);
   }
 }
-
-// NOTE [ToDr] Instead of adding more options here we should probably
-// consider just using JSON config files and only leave the stuff
-// that is actually meant to be easily overriden from CLI.
-export const HELP = `
-typeberry ${require("./package.json").version} by Fluffy Labs.
-
-Usage:
-  typeberry [options]
-  typeberry [options] import <bin-or-json-blocks>
-
-Options:
-  --chain-spec          Chain Spec to use. Either 'tiny' or 'full'.
-  --genesis             Path to a JSON file containing genesis state dump.
-  --dbPath              Directory where database is going to be stored.
-`;
 
 type CommandArgs<T extends Command, Args> = {
   command: T;

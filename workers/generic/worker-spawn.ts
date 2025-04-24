@@ -17,6 +17,6 @@ export async function spawnWorkerGeneric<TReady extends State<StateNames<TReady>
 
   const machine = stateMachineMain(`main->${mainReadyName}`, mainReadyName, mainReadyState);
   const channel = await MessageChannelStateMachine.createAndTransferChannel(machine, worker);
-  logger.trace(`Worker spawned ${channel.currentState()}`);
+  logger.trace(`[${machine.name}] Worker spawned ${channel.currentState()}`);
   return channel;
 }

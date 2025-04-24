@@ -55,19 +55,21 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
 
     // TODO [ToDr] back pressure?
     worker.onBlock.on(async (b) => {
-      logger.log(`🧊 Got block: ${b.header.view().timeSlotIndex.materialize()}`);
+      // NOTE [ToDr] this is incorrect, since it may fail to decode.
+      const timeSlot = b.header.view().timeSlotIndex.materialize();
+      logger.log(`🧊 Got block: #${timeSlot}`);
       const maybeBestHeader = await importer.importBlock(b);
       if (maybeBestHeader.isOk) {
         const bestHeader = maybeBestHeader.ok;
         worker.announce(port, bestHeader);
-        logger.info(`🧊 Best block: ${bestHeader.hash}`);
+        logger.info(`🧊 Best block: #${bestHeader.data.timeSlotIndex.materialize()} (${bestHeader.hash})`);
       } else {
-        logger.error(`❌ Rejected block. ${resultToString(maybeBestHeader)}`);
+        logger.error(`❌ Rejected block #${timeSlot}: ${resultToString(maybeBestHeader)}`);
       }
     });
   });
 
-  logger.info("Importer finished. Closing channel.");
+  logger.info("📥 Importer finished. Closing channel.");
 
   // Close the comms to gracefuly close the app.
   finished.currentState().close(channel);

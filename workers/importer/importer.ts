@@ -38,7 +38,7 @@ export class Importer {
     this.verifier = new BlockVerifier(hasher);
     this.stf = new OnChain(spec, state, blocks, hasher);
 
-    logger.info(`📥 Imported started. Best time slot: ${state.timeslot} (state root: ${currentStateRootHash})`);
+    logger.info(`😎 Best time slot: ${state.timeslot} (state root: ${currentStateRootHash})`);
   }
 
   async importBlock(block: BlockView): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {

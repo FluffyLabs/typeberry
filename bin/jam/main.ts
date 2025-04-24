@@ -1,7 +1,7 @@
 import { isMainThread } from "node:worker_threads";
 import { Logger } from "@typeberry/logger";
 
-import { Block, type BlockView, Extrinsic, Header, type HeaderHash } from "@typeberry/block";
+import { Block, type BlockView, Extrinsic, Header, type HeaderHash, type StateRootHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
@@ -29,6 +29,8 @@ type Options = {
   blocksToImport: string[] | null;
   /** Path to JSON with genesis state. */
   genesisPath: string | null;
+  /** Genesis root hash. */
+  genesisRoot: StateRootHash;
   /** Path to database to open. */
   databasePath: string;
   /** Chain spec (could also be filename?) */
@@ -45,13 +47,14 @@ export async function main(args: Arguments) {
     isAuthoring: false,
     blocksToImport: args.command === Command.Import ? args.args.files : null,
     genesisPath: args.args.genesis,
+    genesisRoot: args.args.genesisRoot,
     databasePath: args.args.dbPath,
     chainSpec: KnownChainSpec.Tiny,
   };
 
   const chainSpec = getChainSpec(options.chainSpec);
   // Initialize the database with genesis state and block if there isn't one.
-  const dbPath = await initializeDatabase(chainSpec, options.genesisPath, options.databasePath);
+  const dbPath = await initializeDatabase(chainSpec, options.databasePath, options.genesisRoot, options.genesisPath);
 
   // Start extensions
   const importerInit = await blockImporter.spawnWorker();
@@ -65,7 +68,7 @@ export async function main(args: Arguments) {
   });
 
   // Initialize block reader and wait for it to finish
-  await initBlocksReader(importerReady, chainSpec, options.blocksToImport);
+  const blocksReader = initBlocksReader(importerReady, chainSpec, options.blocksToImport);
 
   // Authorship initialization.
   // 1. load validator keys (bandersnatch, ed25519, bls)
@@ -73,16 +76,14 @@ export async function main(args: Arguments) {
   // 3. if we have validator keys, we should start the authorship module.
   const closeAuthorship = await initAuthorship(options.isAuthoring, config, importerReady);
 
-  // start regular operation
-  const whenImporterDone = importerReady.doUntil<Finished>("finished", async () => {});
-
+  logger.info("[main]⌛ waiting for importer to finish");
+  const importerDone = await blocksReader;
+  logger.log("[main] ☠️  Closing the extensions");
+  closeExtensions();
   logger.log("[main]⌛ waiting for tasks to finish");
-  const importerDone = await whenImporterDone;
   await importerDone.currentState().waitForWorkerToFinish();
   logger.log("[main] ☠️  Closing the authorship module");
   closeAuthorship();
-  logger.log("[main] ☠️  Closing the extensions");
-  closeExtensions();
   logger.info("[main] ✅ Done.");
 }
 
@@ -112,26 +113,22 @@ const initBlocksReader = async (
   blocksToImport: string[] | null,
 ) => {
   if (blocksToImport === null) {
-    return Promise.resolve();
+    return importerReady.waitForState<Finished>("finished");
   }
 
   logger.info(`📖 Reading ${blocksToImport.length} blocks`);
-  return new Promise((resolve, reject) => {
-    importerReady.doUntil<Finished>("finished", async (importer, port) => {
-      try {
-        const reader = startBlocksReader({
-          files: blocksToImport,
-          chainSpec,
-        });
-        for (const block of reader) {
-          logger.log(`📖 Importing block: #${block.header.view().timeSlotIndex.materialize()}`);
-          importer.sendBlock(port, block.encoded().raw);
-        }
-        return resolve(null);
-      } catch (e) {
-        return reject(e);
-      }
+  return importerReady.transition<Finished>((importer, port) => {
+    const reader = startBlocksReader({
+      files: blocksToImport,
+      chainSpec,
     });
+    for (const block of reader) {
+      logger.log(`📖 Importing block: #${block.header.view().timeSlotIndex.materialize()}`);
+      importer.sendBlock(port, block.encoded().raw);
+    }
+    // close the importer.
+    logger.info("All blocks scheduled to be imported.");
+    return importer.finish(port);
   });
 };
 
@@ -147,16 +144,19 @@ const getChainSpec = (name: KnownChainSpec) => {
   throw new Error(`Unknown chain spec: ${name}`);
 };
 
-async function initializeDatabase(spec: ChainSpec, genesisPath: string | null, databasePath: string): Promise<string> {
-  if (genesisPath === null) {
-    throw new Error("Genesis path is temporarily required. Provide a path to the genesis state.");
-  }
-  logger.log(`🧬 Loading genesis state from ${genesisPath}`);
-  const genesisState = loadGenesis(spec, genesisPath);
-  const genesisStateHash = merkelizeState(serializeState(genesisState, spec));
-  logger.info(`🧬 Genesis state root: ${genesisStateHash}`);
-
-  const dbPath = `${databasePath}/${genesisStateHash}`;
+/**
+ * Initialize the database unless it's already initialized.
+ *
+ * The function checks the genesis header
+ */
+async function initializeDatabase(
+  spec: ChainSpec,
+  databasePath: string,
+  genesisRootHash: StateRootHash,
+  genesisPath: string | null,
+): Promise<string> {
+  const maybeGenesis = loadAndCheckGenesisIfProvided(spec, genesisRootHash, genesisPath);
+  const dbPath = `${databasePath}/${genesisRootHash}`;
   logger.log(`🛢️ Opening database at ${dbPath}`);
   const rootDb = new LmdbRoot(dbPath);
   const blocks = new LmdbBlocks(spec, rootDb);
@@ -165,11 +165,21 @@ async function initializeDatabase(spec: ChainSpec, genesisPath: string | null, d
   const [header, state] = blocks.getBestData();
   logger.log(`🛢️ Best header hash: ${header}`);
   logger.log(`🛢️ Best state root: ${state}`);
+
   // DB seems already initialized, just go with what we have.
   if (!state.isEqualTo(Bytes.zero(HASH_SIZE)) && !header.isEqualTo(Bytes.zero(HASH_SIZE))) {
     await rootDb.db.close();
     return dbPath;
   }
+
+  // we need genesis, since the DB is empty. Let's error out if it's not provided.
+  if (maybeGenesis === null) {
+    throw new Error(
+      `Database is not initialized. Provide path to genesis state yielding root hash: ${genesisRootHash}`,
+    );
+  }
+
+  const { genesisState, genesisStateRootHash } = maybeGenesis;
 
   logger.log("🛢️ Database looks fresh. Initializing.");
   // looks like a fresh db, initialize the state.
@@ -193,11 +203,34 @@ async function initializeDatabase(spec: ChainSpec, genesisPath: string | null, d
 
   // write to db
   await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(genesisHeaderHash, blockView));
-  await states.insertFullState(genesisStateHash, genesisState);
-  await blocks.setBestData(genesisHeaderHash, genesisStateHash);
+  await states.insertFullState(genesisStateRootHash, genesisState);
+  await blocks.setBestData(genesisHeaderHash, genesisStateRootHash);
 
   // close the DB
   await rootDb.db.close();
 
   return dbPath;
+}
+
+function loadAndCheckGenesisIfProvided(spec: ChainSpec, expectedRootHash: StateRootHash, genesisPath: string | null) {
+  if (genesisPath === null) {
+    return null;
+  }
+
+  logger.log(`🧬 Loading genesis state from ${genesisPath}`);
+  const genesisState = loadGenesis(spec, genesisPath);
+  const genesisStateRootHash = merkelizeState(serializeState(genesisState, spec));
+  logger.info(`🧬 Genesis state root: ${genesisStateRootHash}`);
+
+  // mismatch between expected state root and the one loaded.
+  if (!genesisStateRootHash.isEqualTo(expectedRootHash)) {
+    throw new Error(
+      `Incorrect genesis loaded. State root mismatch. Expected: ${expectedRootHash}, got: ${genesisStateRootHash}`,
+    );
+  }
+
+  return {
+    genesisState,
+    genesisStateRootHash,
+  };
 }
