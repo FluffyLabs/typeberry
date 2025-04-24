@@ -405,13 +405,15 @@ export class Statistics {
     const preimagesPerService = this.agregatePreimagesPerService(extrinsic.preimages);
 
     /** Update services statistics */
-    for (let [serviceId, _serviceStatistics] of services.entries()) {
+    for (let [serviceId, serviceStatistics] of services.entries()) {
       const serviceIndex = tryAsServiceId(serviceId);
 
-      _serviceStatistics = this.calculateServiceStatistics(
+      serviceStatistics = this.calculateServiceStatistics(
         workResultsPerService.get(serviceIndex) ?? [],
         preimagesPerService.get(serviceIndex) ?? [],
       );
+
+      services.set(serviceId, serviceStatistics);
     }
 
     /** Update state */

@@ -1,10 +1,22 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Extrinsic, tryAsPerValidator, tryAsServiceId, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
+import {
+  type CoreIndex,
+  Extrinsic,
+  tryAsCoreIndex,
+  tryAsPerValidator,
+  tryAsServiceId,
+  tryAsTimeSlot,
+  tryAsValidatorIndex,
+} from "@typeberry/block";
 import type { AssurancesExtrinsic } from "@typeberry/block/assurances";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
+import testWorkReport from "@typeberry/block/test-work-report";
 import type { TicketsExtrinsic } from "@typeberry/block/tickets";
+import { WorkReport } from "@typeberry/block/work-report";
+import { BytesBlob } from "@typeberry/bytes";
+import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { CoreStatistics, ServiceStatistics, StatisticsData, ValidatorStatistics, tryAsPerCore } from "@typeberry/state";
@@ -118,17 +130,30 @@ describe("Statistics", () => {
   });
 
   describe("stats update", () => {
-    const createPreimage = (blobLength: number) => ({ blob: { length: blobLength } });
+    const createPreimage = (blobLength: number, requester?: number) => ({
+      requester: requester,
+      blob: { length: blobLength },
+    });
+
+    function createWorkReport(coreIndex: CoreIndex): WorkReport {
+      const source = BytesBlob.parseBlob(testWorkReport);
+      const report = Decoder.decodeObject(WorkReport.Codec, source, tinyChainSpec);
+      return WorkReport.fromCodec({
+        ...report,
+        coreIndex: coreIndex,
+      });
+    }
 
     function prepareData({ previousSlot, currentSlot }: { previousSlot: number; currentSlot: number }) {
       const validatorIndex = tryAsValidatorIndex(0);
+      const serviceIndex = tryAsServiceId(0);
       const currentStatistics = emptyStatistics();
       const lastStatistics = emptyStatistics();
       const coreStatistics = tryAsPerCore(
         FixedSizeArray.fill(() => CoreStatistics.empty(), tinyChainSpec.coresCount),
         tinyChainSpec,
       );
-      const serviceStatistics = new Map([[tryAsServiceId(0), ServiceStatistics.empty()]]);
+      const serviceStatistics = new Map([[serviceIndex, ServiceStatistics.empty()]]);
       const statisticsData = new StatisticsData(currentStatistics, lastStatistics, coreStatistics, serviceStatistics);
       const state: StatisticsState = {
         statistics: statisticsData,
@@ -145,6 +170,7 @@ describe("Statistics", () => {
         serviceStatistics,
         state,
         validatorIndex,
+        serviceIndex,
         currentSlot: tryAsTimeSlot(currentSlot),
       };
     }
@@ -280,6 +306,62 @@ describe("Statistics", () => {
       });
 
       assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
+    });
+
+    it("should update core statistics based on extrinstic", () => {
+      const { statistics, currentSlot, validatorIndex, coreStatistics } = prepareData({
+        previousSlot: 0,
+        currentSlot: 1,
+      });
+      const coreIndex = tryAsCoreIndex(0);
+      const guarantees = [
+        { report: createWorkReport(coreIndex), credentials: [{ validatorIndex }] },
+      ] as unknown as GuaranteesExtrinsic;
+      const extrinsic = getExtrinsic({ guarantees });
+      const expectedStatistics = { ...coreStatistics[coreIndex], bundleSize: 2253240945 };
+
+      assert.deepEqual(statistics.state.statistics.cores[coreIndex], coreStatistics[coreIndex]);
+
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: extrinsic,
+        availableReports: [],
+      });
+
+      assert.deepEqual(statistics.state.statistics.cores[coreIndex], expectedStatistics);
+    });
+
+    it("should update service statistics based on extrinstic", () => {
+      const preimages: PreimagesExtrinsic = asKnownSize([
+        createPreimage(1, 0),
+        createPreimage(2, 0),
+        createPreimage(3, 0),
+      ]);
+      const { statistics, currentSlot, validatorIndex, serviceIndex, serviceStatistics } = prepareData({
+        previousSlot: 0,
+        currentSlot: 1,
+      });
+      const guarantees = [
+        { report: createWorkReport(tryAsCoreIndex(0)), credentials: [{ validatorIndex }] },
+      ] as unknown as GuaranteesExtrinsic;
+      const extrinsic = getExtrinsic({ guarantees, preimages });
+      const expectedStatistics = {
+        ...serviceStatistics.get(serviceIndex),
+        providedCount: 3,
+        providedSize: 6, // 1 + 2 + 3
+      };
+
+      assert.deepEqual(statistics.state.statistics.services.get(serviceIndex), serviceStatistics.get(serviceIndex));
+
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: extrinsic,
+        availableReports: [],
+      });
+
+      assert.deepEqual(statistics.state.statistics.services.get(serviceIndex), expectedStatistics);
     });
   });
 });
