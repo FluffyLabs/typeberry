@@ -309,7 +309,7 @@ export class Statistics {
   }
 
   private agregateWorkResultsPerService(guarantees: GuaranteesExtrinsic) {
-    const workReports = guarantees.map((r) => r.report);
+    const workReports = guarantees.map((r) => r.report).filter((r) => r !== undefined);
     const workResults = workReports.flatMap((wr) => wr.results);
 
     const workResultsPerService = new Map<ServiceId, WorkResult[]>();
