@@ -9,7 +9,9 @@ import {
   tryAsServiceGas,
   tryAsServiceId,
 } from "@typeberry/block";
-import { I, T, V, W_G, W_M, W_R } from "@typeberry/block/gp-constants";
+import type { AssurancesExtrinsic } from "@typeberry/block/assurances";
+import { I, O, Q, T, V, W_G, W_M, W_R } from "@typeberry/block/gp-constants";
+import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { WorkReport } from "@typeberry/block/work-report";
 import type { WorkResult } from "@typeberry/block/work-result";
@@ -121,6 +123,7 @@ export class Statistics {
       bundleSize: 0,
     };
 
+    /** Maximal number of work-results is I=16 */
     for (const workResult of workReport.results.map((r) => r)) {
       score.imports += workResult.load.importedSegments;
       score.extrinsicCount += workResult.load.extrinsicCount;
@@ -130,11 +133,10 @@ export class Statistics {
     }
     score.bundleSize += workReport.workPackageSpec.length;
 
-    check(score.imports <= I * W_M, `Imports exceed maximum value I * W_M (${I} * ${W_M})`);
-    check(score.exports <= I * W_M, `Exports exceed maximum value I * W_M (${I} * ${W_M})`);
-    check(score.extrinsicCount <= I * T, `Extrinsic count exceed maximum value I * T (${I} * ${T})`);
-    check(score.extrinsicSize <= I * W_R, `Extrinsic size exceed maximum value I * W_R (${I} * ${W_R})`);
-    check(score.bundleSize <= I * W_R, `Bundle size exceed maximum value I * W_G (${I} * ${W_G})`);
+    check(score.imports <= I * W_M, `Imports exceed maximum value I * W_M (${I * W_M})`);
+    check(score.exports <= I * W_M, `Exports exceed maximum value I * W_M (${I * W_M})`);
+    check(score.extrinsicCount <= I * T, `Extrinsic count exceed maximum value I * T (${I * T})`);
+    check(score.extrinsicSize <= I * W_R, `Extrinsic size exceed maximum value I * W_R (${I * W_R})`);
 
     return {
       imports: tryAsU16(score.imports),
@@ -150,14 +152,19 @@ export class Statistics {
   private calculateDAScoreCore(availableWorkReports: WorkReport[]) {
     let sum = 0;
 
+    /** Maximal number of available work reports is O=8 */
     for (const r of availableWorkReports) {
       const workPackageLength = r.workPackageSpec.length;
       const workPackageSegment = Math.ceil((r.workPackageSpec.exportsCount * 65) / 64);
       sum += workPackageLength + W_G * workPackageSegment;
     }
 
-    // Max value is 0x00C4_2180
-    check(sum <= W_R + W_G * ((W_M * 65) / 64), "Sum exceeds maximum value W_R + W_G * ((W_M * 65) / 64)");
+    /**
+     * NOTE [MaSo] Use calculated max value 0x0621_0C00
+     * instead of O * (W_R + W_G * ((W_M * 65) / 64))
+     * when GP is updated to 1.0.0
+    */
+    check(sum <= O * (W_R + W_G * ((W_M * 65) / 64)), `DAScore exceeds maximum value of O * (W_R + W_G * ((W_M * 65) / 64)) (${O * (W_R + W_G * ((W_M * 65) / 64))})`);
 
     return tryAsU32(sum);
   }
@@ -168,17 +175,15 @@ export class Statistics {
    * https://graypaper.fluffylabs.dev/#/68eaa1f/199002199002?v=0.6.4
    */
   private calculateServiceStatistics(
-    s: ServiceId,
-    workReports: WorkReport[],
+    workResults: WorkResult[],
     preimages: PreimagesExtrinsic,
   ): ServiceStatistics {
-    const filtered = workReports.flatMap((wr) => wr.results).filter((r) => r?.serviceId === s);
     const { refinementCount, refinementGasUsed, imports, extrinsicCount, extrinsicSize, exports } =
-      this.calculateRefineScoreService(filtered);
+      this.calculateRefineScoreService(workResults);
 
     const accumulate = this.calculateAccumulateScoreService();
     const onTransfers = this.calculateOnTransferScoreService();
-    const provided = this.calculateProvidedScoreService(preimages.filter((p) => p?.requester === s));
+    const provided = this.calculateProvidedScoreService(preimages);
 
     return ServiceStatistics.fromCodec({
       refinementCount,
@@ -216,6 +221,12 @@ export class Statistics {
       score.extrinsicSize += workResult.load.extrinsicSize;
       score.exports += workResult.load.exportedSegments;
     }
+
+    check(score.refinementCount <= I, `Refinement count exceeds maximum value I (${I})`);
+    check(score.imports <= I * W_M, `Imports exceed maximum value I * W_M (${I * W_M})`);
+    check(score.exports <= I * W_M, `Exports exceed maximum value I * W_M (${I * W_M})`);
+    check(score.extrinsicCount <= I * T, `Extrinsic count exceed maximum value I * T (${I * T})`);
+    check(score.extrinsicSize <= I * W_R, `Extrinsic size exceed maximum value I * W_R (${I * W_R})`);
 
     return {
       refinementCount: tryAsU32(score.refinementCount),
@@ -261,6 +272,66 @@ export class Statistics {
       count: tryAsU16(score.count),
       size: tryAsU32(score.size),
     };
+  }
+
+  private agregateWorkReportPerCore(guarantees: GuaranteesExtrinsic) {
+    const workReports = guarantees.map((r) => r.report).filter((r) => r !== undefined);
+    const workReportPerCore = new Map<CoreIndex, WorkReport>();
+    for (const workReport of workReports) {
+      const coreIndex = workReport.coreIndex;
+      workReportPerCore.set(coreIndex, workReport);
+    }
+    return workReportPerCore;
+  }
+
+  private agregateAvailableReportsPerCore(availableReports: WorkReport[]) {
+    const availableReportsPerCore = new Map<CoreIndex, WorkReport[]>();
+    for (const availableReport of availableReports) {
+      const coreIndex = availableReport.coreIndex;
+      const coreAvailableReports = availableReportsPerCore.get(coreIndex) ?? [];
+      coreAvailableReports.push(availableReport);
+      availableReportsPerCore.set(coreIndex, coreAvailableReports);
+    }
+    return availableReportsPerCore;
+  }
+
+  private agregateAssurancesPerCore(assurances: AssurancesExtrinsic) {
+    const assurancesPerCore = tryAsPerCore(
+      FixedSizeArray.fill(() => 0, this.chainSpec.coresCount),
+      this.chainSpec,
+    );
+    for (const assurance of assurances) {
+      for (const coreIndex of assurance.bitfield?.indicesOfSetBits() ?? []) {
+        assurancesPerCore[coreIndex] += 1;
+      }
+    }
+    return assurancesPerCore;
+  }
+
+  private agregateWorkResultsPerService(guarantees: GuaranteesExtrinsic) {
+    const workReports = guarantees.map((r) => r.report);
+    const workResults = workReports.flatMap((wr) => wr.results);
+
+    const workResultsPerService = new Map<ServiceId, WorkResult[]>();
+    for (const workResult of workResults) {
+      const serviceId = workResult.serviceId;
+      const serviceWorkResults = workResultsPerService.get(serviceId) ?? [];
+      serviceWorkResults.push(workResult);
+      workResultsPerService.set(serviceId, serviceWorkResults);
+    }
+
+    return workResultsPerService;
+  }
+
+  private agregatePreimagesPerService(preimages: PreimagesExtrinsic) {
+    const preimagesPerService = new Map<ServiceId, PreimagesExtrinsic>();
+    for (const preimage of preimages) {
+      const serviceId = preimage.requester;
+      const servicePreimages = preimagesPerService.get(serviceId) ?? [];
+      servicePreimages.push(preimage);
+      preimagesPerService.set(serviceId, servicePreimages);
+    }
+    return preimagesPerService;
   }
 
   /**
@@ -313,33 +384,9 @@ export class Statistics {
       current[validatorIndex].assurances = tryAsU32(newAssurancesCount);
     }
 
-    /** Agregated work reports per core */
-    const workReports = extrinsic.guarantees.map((r) => r.report).filter((r) => r !== undefined);
-    const workReportPerCore = new Map<CoreIndex, WorkReport>();
-    for (const workReport of workReports) {
-      const coreIndex = workReport.coreIndex;
-      workReportPerCore.set(coreIndex, workReport);
-    }
-
-    /** Agregated available reports per core */
-    const availableReportsPerCore = new Map<CoreIndex, WorkReport[]>();
-    for (const availableReport of availableReports) {
-      const coreIndex = availableReport.coreIndex;
-      const coreAvailableReports = availableReportsPerCore.get(coreIndex) ?? [];
-      coreAvailableReports.push(availableReport);
-      availableReportsPerCore.set(coreIndex, coreAvailableReports);
-    }
-
-    /** Agregated assurances per core */
-    const assurancesPerCore = tryAsPerCore(
-      FixedSizeArray.fill(() => 0, this.chainSpec.coresCount),
-      this.chainSpec,
-    );
-    for (const assurance of extrinsic.assurances) {
-      for (const coreIndex of assurance.bitfield?.indicesOfSetBits() ?? []) {
-        assurancesPerCore[coreIndex] += 1;
-      }
-    }
+    const workReportPerCore = this.agregateWorkReportPerCore(extrinsic.guarantees);
+    const availableReportsPerCore = this.agregateAvailableReportsPerCore(availableReports);
+    const assurancesPerCore = this.agregateAssurancesPerCore(extrinsic.assurances);
 
     /** Update core statistics */
     for (let coreId = 0; coreId < this.chainSpec.coresCount; coreId++) {
@@ -352,15 +399,17 @@ export class Statistics {
       );
     }
 
+    const workResultsPerService = this.agregateWorkResultsPerService(extrinsic.guarantees);
+    const preimagesPerService = this.agregatePreimagesPerService(extrinsic.preimages);
+
     /** Update services statistics */
     for (let [serviceId, _serviceStatistics] of services.entries()) {
-      const newServiceStat = this.calculateServiceStatistics(
-        tryAsServiceId(serviceId),
-        workReports,
-        extrinsic.preimages,
-      );
+      const serviceIndex = tryAsServiceId(serviceId);
 
-      _serviceStatistics = newServiceStat;
+      _serviceStatistics = this.calculateServiceStatistics(
+        workResultsPerService.get(serviceIndex) ?? [],
+        preimagesPerService.get(serviceIndex) ?? [],
+      );
     }
 
     /** Update state */
