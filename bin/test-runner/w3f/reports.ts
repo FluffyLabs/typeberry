@@ -6,7 +6,7 @@ import {
   tryAsPerEpochBlock,
   tryAsPerValidator,
 } from "@typeberry/block";
-import { fromJson, guaranteesExtrinsicFromJson } from "@typeberry/block-json";
+import { fromJson, guaranteesExtrinsicFromJson, segmentRootLookupItemFromJson } from "@typeberry/block-json";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import type { AuthorizerHash, WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
 import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
@@ -31,7 +31,6 @@ import {
   blockStateFromJson,
   serviceStatisticsEntryFromJson,
   validatorDataFromJson,
-  workPackageInfofromJson,
 } from "@typeberry/state-json";
 import {
   Reports,
@@ -149,7 +148,7 @@ enum ReportsErrorCode {
 class OutputData {
   static fromJson = json.object<OutputData, ReportsOutput>(
     {
-      reported: json.array(workPackageInfofromJson),
+      reported: json.array(segmentRootLookupItemFromJson),
       reporters: json.array(fromJson.bytes32()),
     },
     ({ reported, reporters }) => ({

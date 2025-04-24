@@ -3,7 +3,7 @@ import type { WorkReport } from "@typeberry/block/work-report";
 import type { ChainSpec } from "@typeberry/config";
 import { tryAsU32 } from "@typeberry/numbers";
 import type { State } from "@typeberry/state";
-import { ValidatorStatistics } from "@typeberry/state";
+import { StatisticsData, ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
 
 export type Input = {
@@ -30,7 +30,7 @@ export class Statistics {
     public readonly state: StatisticsState,
   ) {}
 
-  private getStatistics(slot: TimeSlot) {
+  private getStatistics(slot: TimeSlot): StatisticsData {
     /** https://graypaper.fluffylabs.dev/#/68eaa1f/186402186402?v=0.6.4 */
     const currentEpoch = Math.floor(this.state.timeslot / this.chainSpec.epochLength);
     const nextEpoch = Math.floor(slot / this.chainSpec.epochLength);
@@ -45,11 +45,11 @@ export class Statistics {
       .fill(0)
       .map(() => ValidatorStatistics.empty());
 
-    return {
+    return StatisticsData.fromCodec({
       ...this.state.statistics,
       current: tryAsPerValidator(current, this.chainSpec),
       previous: this.state.statistics.current,
-    };
+    });
   }
 
   /**

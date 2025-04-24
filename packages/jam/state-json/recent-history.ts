@@ -6,7 +6,7 @@ import type { KeccakHash } from "@typeberry/hash";
 import { json } from "@typeberry/json-parser";
 import type { BlockState } from "@typeberry/state";
 
-export const workPackageInfofromJson = json.object<JsonWorkPackageInfo, WorkPackageInfo>(
+export const reportedWorkPackageFromJson = json.object<JsonReportedWorkPackageInfo, WorkPackageInfo>(
   {
     hash: fromJson.bytes32(),
     exports_root: fromJson.bytes32(),
@@ -16,7 +16,7 @@ export const workPackageInfofromJson = json.object<JsonWorkPackageInfo, WorkPack
   },
 );
 
-type JsonWorkPackageInfo = {
+type JsonReportedWorkPackageInfo = {
   hash: WorkPackageHash;
   exports_root: ExportsRootHash;
 };
@@ -28,7 +28,7 @@ export const blockStateFromJson = json.object<JsonBlockState, BlockState>(
       peaks: json.array(json.nullable(fromJson.bytes32())),
     },
     state_root: fromJson.bytes32(),
-    reported: json.array(workPackageInfofromJson),
+    reported: json.array(reportedWorkPackageFromJson),
   },
   ({ header_hash, mmr, state_root, reported }) => {
     return {

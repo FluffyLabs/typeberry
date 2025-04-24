@@ -1,4 +1,4 @@
-import assert from "node:assert";
+import { deepEqual } from "node:assert";
 import { type Extrinsic, type TimeSlot, type ValidatorIndex, tryAsPerValidator } from "@typeberry/block";
 import { getExtrinsicFromJson } from "@typeberry/block-json";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
@@ -101,15 +101,23 @@ export class StatisticsTestFull {
 export async function runStatisticsTestTiny({ input, pre_state, post_state }: StatisticsTestTiny) {
   const spec = tinyChainSpec;
   const statistics = new Statistics(spec, TestState.toStatisticsState(spec, pre_state));
-  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, pre_state));
+  deepEqual(statistics.state, TestState.toStatisticsState(spec, pre_state));
+
+  // when
   statistics.transition(input);
-  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, post_state));
+
+  // then
+  deepEqual(statistics.state, TestState.toStatisticsState(spec, post_state));
 }
 
 export async function runStatisticsTestFull({ input, pre_state, post_state }: StatisticsTestFull) {
   const spec = fullChainSpec;
   const statistics = new Statistics(spec, TestState.toStatisticsState(spec, pre_state));
-  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, pre_state));
+  deepEqual(statistics.state, TestState.toStatisticsState(spec, pre_state));
+
+  // when
   statistics.transition(input);
-  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, post_state));
+
+  // then
+  deepEqual(statistics.state, TestState.toStatisticsState(spec, post_state));
 }

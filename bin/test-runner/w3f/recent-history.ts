@@ -6,7 +6,7 @@ import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
 import type { BlockState } from "@typeberry/state";
-import { blockStateFromJson, workPackageInfofromJson } from "@typeberry/state-json";
+import { blockStateFromJson, reportedWorkPackageFromJson } from "@typeberry/state-json";
 import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "@typeberry/transition/recent-history";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 
@@ -16,7 +16,7 @@ class Input {
       header_hash: fromJson.bytes32(),
       parent_state_root: fromJson.bytes32(),
       accumulate_root: fromJson.bytes32(),
-      work_packages: json.array(workPackageInfofromJson),
+      work_packages: json.array(reportedWorkPackageFromJson),
     },
     ({ header_hash, parent_state_root, accumulate_root, work_packages }) => {
       return {

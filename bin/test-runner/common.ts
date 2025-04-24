@@ -4,6 +4,7 @@ import { fail } from "node:assert";
 import * as fs from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import util from "node:util";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
 
@@ -118,8 +119,8 @@ function prepareTest(runners: Runner<unknown>[], testContent: unknown, file: str
         runner: name,
         file,
         test: () => {
-          logger.info(`[${name}] running test from ${file}`);
-          logger.log(` ${parsedTest}`);
+          logger.log(`[${name}] running test from ${file}`);
+          logger.trace(` ${util.inspect(parsedTest)}`);
           return run(parsedTest, path);
         },
       };
