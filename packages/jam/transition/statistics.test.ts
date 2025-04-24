@@ -24,7 +24,9 @@ describe("Statistics", () => {
 
   const emptyStatistics = () =>
     tryAsPerValidator(
-      FixedSizeArray.fill(() => ValidatorStatistics.empty(), tinyChainSpec.validatorsCount),
+      Array.from({ length: tinyChainSpec.validatorsCount }, () => {
+        return ValidatorStatistics.empty();
+      }),
       tinyChainSpec,
     );
 
