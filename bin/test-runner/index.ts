@@ -10,8 +10,19 @@ try {
   // ignore
 }
 
+const suites: { [key: string]: string } = {
+  w3f: "jamtestvectors",
+  jamduna: "jamdunavectors",
+};
+
+const suiteToRun = process.argv[2] ?? "w3f";
+const suite = suites[suiteToRun];
+if (suite === undefined) {
+  throw new Error(`Invalid suite ${suiteToRun}. Available suites: ${Object.keys(suites)}`);
+}
+
 const stream = run({
-  files: [`${__dirname}/cases.ts`],
+  files: [`${__dirname}/${suiteToRun}.ts`],
   timeout: 120 * 1000,
   concurrency: true,
 }).on("test:fail", () => {
@@ -21,7 +32,7 @@ const stream = run({
 stream.compose(new spec()).pipe(process.stdout);
 
 const reporter = new Reporter();
-const fileStream = fs.createWriteStream(`${distDir}/jamtestvectors.txt`);
+const fileStream = fs.createWriteStream(`${distDir}/${suite}.txt`);
 stream
   .compose(reporter)
   .on("end", () => {

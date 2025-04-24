@@ -13,3 +13,8 @@ const MIN_ALLOCATION_SHIFT = (() => {
 
 export const MIN_ALLOCATION_LENGTH = PAGE_SIZE >> MIN_ALLOCATION_SHIFT;
 export const LAST_PAGE_NUMBER = (MEMORY_SIZE - PAGE_SIZE) / PAGE_SIZE;
+
+/** https://graypaper.fluffylabs.dev/#/68eaa1f/35a60235a602?v=0.6.4 */
+export const RESERVED_NUMBER_OF_PAGES = 16;
+/** https://graypaper.fluffylabs.dev/#/68eaa1f/35a60235a602?v=0.6.4 */
+export const MAX_NUMBER_OF_PAGES = MEMORY_SIZE / PAGE_SIZE;

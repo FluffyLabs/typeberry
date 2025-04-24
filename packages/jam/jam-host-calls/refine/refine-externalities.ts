@@ -4,6 +4,7 @@ import type { Blake2bHash } from "@typeberry/hash";
 import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
 import type { BigGas, Memory, Registers } from "@typeberry/pvm-interpreter";
 import type { MemoryIndex } from "@typeberry/pvm-interpreter/memory";
+import type { ProgramDecoderError } from "@typeberry/pvm-interpreter/program-decoder/program-decoder";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/utils";
 
@@ -17,6 +18,12 @@ import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/util
  * however a `bigint` might be a safer choice here for 64-bit
  * PVM?
  */
+
+/** https://graypaper.fluffylabs.dev/#/68eaa1f/3e30003e3000?v=0.6.4 */
+export type ProgramCounter = Opaque<U64, "ProgramCounter[u64]">;
+/** Convert a number into ProgramCounter. */
+export const tryAsProgramCounter = (v: number | bigint): ProgramCounter => asOpaqueType(tryAsU64(v));
+
 export type MachineId = Opaque<U64, "MachineId[u64]">;
 /** Convert a number into PVM instance identifier. */
 export const tryAsMachineId = (v: number | bigint): MachineId => asOpaqueType(tryAsU64(v));
@@ -55,17 +62,19 @@ export type MachineResult = {
 
 /** An error that may occur during `peek` or `poke` host call. */
 export enum PeekPokeError {
-  /** Source or destination page fault. */
-  PageFault = 0,
+  /** Source page fault. */
+  SourcePageFault = 0,
+  /** Destination page fault. */
+  DestinationPageFault = 1,
   /** No machine under given machine index. */
-  NoMachine = 1,
+  NoMachine = 2,
 }
 
 /** Error for `zero` and `void` host calls when machine is not found. */
 export const NoMachineError = Symbol("Machine index not found.");
 export type NoMachineError = typeof NoMachineError;
 
-/** Error for `void` host call when there is already a non-accssible page in the range. */
+/** Error for `void` host call when there is already a non-accessible page in the range. */
 export const InvalidPageError = Symbol("Attempting to void non-accessible page.");
 export type InvalidPageError = typeof InvalidPageError;
 
@@ -73,10 +82,10 @@ export type InvalidPageError = typeof InvalidPageError;
 export const SegmentExportError = Symbol("Too many segments already exported.");
 export type SegmentExportError = typeof SegmentExportError;
 
-/** Host functions external invokations available during refine phase. */
+/** Host functions external invocations available during refine phase. */
 export interface RefineExternalities {
   /** Forget a previously started nested VM. */
-  machineExpunge(machineIndex: MachineId): Promise<Result<OK, NoMachineError>>;
+  machineExpunge(machineIndex: MachineId): Promise<Result<ProgramCounter, NoMachineError>>;
 
   /** Set given range of pages as non-accessible and re-initialize them with zeros. */
   machineVoidPages(
@@ -107,7 +116,7 @@ export interface RefineExternalities {
   ): Promise<Result<OK, PeekPokeError>>;
 
   /** Start an inner PVM instance with given entry point and starting code. */
-  machineStart(code: BytesBlob, programCounter: U32): Promise<MachineId>;
+  machineInit(code: BytesBlob, programCounter: ProgramCounter): Promise<Result<MachineId, ProgramDecoderError>>;
 
   /** Run a previously initialized PVM instance with given gas and registers. */
   machineInvoke(
@@ -122,9 +131,6 @@ export interface RefineExternalities {
    * Returns the index assigned to that segment or an error if there is too many already exported.
    */
   exportSegment(segment: Segment): Result<SegmentIndex, SegmentExportError>;
-
-  /** Retrieve a segment exported by some earlier refine invokation. */
-  importSegment(segmentIndex: SegmentIndex): Promise<Segment | null>;
 
   /** Lookup a historical preimage. */
   historicalLookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null>;

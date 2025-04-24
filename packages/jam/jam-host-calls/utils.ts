@@ -1,6 +1,5 @@
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
-import { u32AsLeBytes } from "@typeberry/numbers";
-import { MAX_U64, tryAsU64, u64IntoParts } from "@typeberry/numbers";
+import { MAX_U64, tryAsU64, u32AsLeBytes, u64IntoParts } from "@typeberry/numbers";
 import type { Registers } from "@typeberry/pvm-host-calls/host-call-handler";
 import { check } from "@typeberry/utils";
 

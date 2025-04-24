@@ -8,13 +8,14 @@
     "@typeberry/bytes": "0.0.1",
     "@typeberry/codec": "0.0.1",
     "@typeberry/collections": "0.0.1",
+    "@typeberry/concurrent": "0.0.1",
     "@typeberry/config": "0.0.1",
     "@typeberry/hash": "0.0.1",
     "@typeberry/numbers": "0.0.1",
     "@typeberry/ordering": "0.0.1",
     "@typeberry/state": "0.0.1",
     "@typeberry/utils": "0.0.1",
-    "bandersnatch-wasm": "github:fluffylabs/bandersnatch#abddd3494fb493a0688f4a8e6483871c575f2c7a"
+    "bandersnatch-wasm": "github:fluffylabs/bandersnatch#8ce8843"
   },
   "scripts": {
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

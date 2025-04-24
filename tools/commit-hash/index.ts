@@ -1,5 +1,4 @@
 import * as fs from "node:fs/promises";
-import * as path from "node:path";
 import type { PushEvent } from "@octokit/webhooks-types";
 // @ts-ignore ECMAScript module being incompatible with CommonJS.
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
@@ -52,6 +51,19 @@ async function writeLog(log: LogEntry[]) {
   }
 }
 
+async function readLog(): Promise<LogEntry[]> {
+  try {
+    const file = await fs.readFile(LOG_FILENAME, "utf8");
+    const jsonFile = JSON.parse(file);
+    if (Array.isArray(jsonFile)) {
+      return jsonFile;
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
 async function handleError(log: LogEntry[], transactionPayload: TransactionPayload, error: string) {
   log.push({
     payload: transactionPayload,
@@ -80,13 +92,12 @@ async function readEventPayload() {
 }
 
 async function main() {
-  const log: LogEntry[] = [];
+  const log: LogEntry[] = await readLog();
 
-  try {
-    log.push(...require(path.relative(__dirname, LOG_FILENAME)));
-    logger.log("Previous log found. Appending.");
-  } catch {
-    logger.log("Previous log not found. Starting a new one.");
+  if (log.length > 0) {
+    logger.info("Found previous log. Appending.");
+  } else {
+    logger.error("Previous log not found or invalid. Starting a new one.");
   }
 
   const eventPayload = await readEventPayload();

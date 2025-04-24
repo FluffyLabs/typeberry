@@ -18,7 +18,7 @@ type WorkItemExtrinsicHash = Opaque<OpaqueHash, "ExtrinsicHash">;
 export class ImportSpec extends WithDebug {
   static Codec = codec.Class(ImportSpec, {
     treeRoot: codec.bytes(HASH_SIZE),
-    index: codec.u16.asOpaque(),
+    index: codec.u16.asOpaque<SegmentIndex>(),
   });
 
   static fromCodec({ treeRoot, index }: CodecRecord<ImportSpec>) {
@@ -41,7 +41,7 @@ export class ImportSpec extends WithDebug {
 /** Introduced blob hashes and their lengths. */
 export class WorkItemExtrinsicSpec extends WithDebug {
   static Codec = codec.Class(WorkItemExtrinsicSpec, {
-    hash: codec.bytes(HASH_SIZE).asOpaque(),
+    hash: codec.bytes(HASH_SIZE).asOpaque<WorkItemExtrinsicHash>(),
     len: codec.u32,
   });
 
@@ -111,11 +111,11 @@ export function workItemExtrinsicsCodec(workItems: WorkItem[]) {
  */
 export class WorkItem extends WithDebug {
   static Codec = codec.Class(WorkItem, {
-    service: codec.u32.asOpaque(),
-    codeHash: codec.bytes(HASH_SIZE).asOpaque(),
+    service: codec.u32.asOpaque<ServiceId>(),
+    codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
     payload: codec.blob,
-    refineGasLimit: codec.u64.asOpaque(),
-    accumulateGasLimit: codec.u64.asOpaque(),
+    refineGasLimit: codec.u64.asOpaque<ServiceGas>(),
+    accumulateGasLimit: codec.u64.asOpaque<ServiceGas>(),
     importSegments: codecKnownSizeArray(ImportSpec.Codec, {
       minLength: 0,
       maxLength: MAX_NUMBER_OF_SEGMENTS,

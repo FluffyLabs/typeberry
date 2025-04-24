@@ -1,14 +1,14 @@
 import type { Ed25519Key, PerValidator, TimeSlot, WorkReportHash } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
-import type { WorkPackageInfo } from "@typeberry/block/work-report";
+import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
 import { type BytesBlob, bytesBlobComparator } from "@typeberry/bytes";
-import { type KnownSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
+import { type HashDictionary, type KnownSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
 import { type KeccakHash, WithHash, blake2b } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
 import { AvailabilityAssignment, type State } from "@typeberry/state";
-import { OK, Result, asOpaqueType, check } from "@typeberry/utils";
+import { OK, Result, asOpaqueType } from "@typeberry/utils";
 import { ReportsError } from "./error";
 import { generateCoreAssignment, rotationIndex } from "./guarantor-assignment";
 import { verifyReportsBasic } from "./verify-basic";
@@ -42,6 +42,7 @@ export type ReportsInput = {
   guarantees: GuaranteesExtrinsicView;
   /** Current time slot, excerpted from block header. */
   slot: TimeSlot;
+  knownPackages: WorkPackageHash[];
 };
 
 export type ReportsState = Pick<
@@ -55,16 +56,22 @@ export type ReportsState = Pick<
   | "services"
   | "accumulationQueue"
   | "recentlyAccumulated"
-> & {
-  // NOTE: this is most likely not strictly part of the state!
+>;
+/**
+  // NOTE: this is most likely part of the `disputesState`, but I'm not sure what
+  // to do with that exactly. It's being passed in the JAM test vectors, but isn't used?
   // TODO [ToDr] Seems that section 11 does not specify when this should be updated.
   // I guess we need to check that later with the GP.
   readonly offenders: KnownSizeArray<Ed25519Key, "0..ValidatorsCount">;
-};
+*/
 
 export type ReportsOutput = {
-  /** All work Packages and their segment roots reported in the extrinsic. */
-  reported: KnownSizeArray<WorkPackageInfo, "Guarantees">;
+  /**
+   * All work Packages and their segment roots reported in the extrinsic.
+   *
+   * This dictionary has the same number of items as in the input guarantees extrinsic.
+   */
+  reported: HashDictionary<WorkPackageHash, WorkPackageInfo>;
   /** A set `R` of work package reporters. */
   reporters: KnownSizeArray<Ed25519Key, "Guarantees * Credentials (at most `cores*3`)">;
 };
@@ -139,7 +146,7 @@ export class Reports {
     }
 
     return Result.ok({
-      reported: asKnownSize(contextualValidity.ok),
+      reported: contextualValidity.ok,
       reporters: asKnownSize(
         SortedSet.fromArray(
           bytesBlobComparator,
@@ -279,13 +286,7 @@ function isPreviousRotationPreviousEpoch(
  * Compose two collections of the same size into a single one
  * containing some amalgamation of both items.
  */
-function zip<A, B, R, F extends string>(
-  a: KnownSizeArray<A, F>,
-  b: KnownSizeArray<B, F>,
-  fn: (a: A, b: B) => R,
-): KnownSizeArray<R, F> {
-  check(a.length === b.length, "Zip can be only used for collections of matching size.");
-
+function zip<A, B, R>(a: PerValidator<A>, b: PerValidator<B>, fn: (a: A, b: B) => R): PerValidator<R> {
   return asKnownSize(
     a.map((aValue, index) => {
       return fn(aValue, b[index]);

@@ -1,23 +1,17 @@
-import type { ServiceId, TimeSlot } from "@typeberry/block";
+import type { TimeSlot } from "@typeberry/block";
 import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { BytesBlob } from "@typeberry/bytes";
-import type { HashDictionary } from "@typeberry/collections";
 import { blake2b } from "@typeberry/hash";
-import { type LookupHistoryItem, tryAsLookupHistorySlots } from "@typeberry/state";
-import { Result } from "@typeberry/utils";
+import {
+  type LookupHistoryItem,
+  PreimageItem,
+  type Service,
+  type State,
+  tryAsLookupHistorySlots,
+} from "@typeberry/state";
+import { OK, Result } from "@typeberry/utils";
 
-export type Account = {
-  id: ServiceId;
-  data: {
-    preimages: HashDictionary<PreimageHash, BytesBlob>;
-    /** https://graypaper.fluffylabs.dev/#/5f542d7/115400115800 */
-    lookupHistory: HashDictionary<PreimageHash, LookupHistoryItem[]>;
-  };
-};
-
-type AccountsState = {
-  accounts: Map<ServiceId, Account>;
-};
+type PreimagesState = Pick<State, "services">;
 
 export type PreimagesInput = {
   preimages: PreimagesExtrinsic;
@@ -32,9 +26,9 @@ export enum PreimagesErrorCode {
 
 // TODO [SeKo] consider whether this module is the right place to remove expired preimages
 export class Preimages {
-  constructor(public readonly state: AccountsState) {}
+  constructor(public readonly state: PreimagesState) {}
 
-  integrate(input: PreimagesInput) {
+  integrate(input: PreimagesInput): Result<OK, PreimagesErrorCode> {
     // make sure lookup extrinsics are sorted and unique
     // "The lookup extrinsic is a sequence of pairs of service indices and data.
     // These pairs must be ordered and without duplicates."
@@ -57,7 +51,7 @@ export class Preimages {
 
     const { preimages, slot } = input;
     const pendingChanges: {
-      account: Account;
+      account: Service;
       hash: PreimageHash;
       blob: BytesBlob;
       lookupHistoryItem: LookupHistoryItem;
@@ -67,7 +61,7 @@ export class Preimages {
     for (const preimage of preimages) {
       const { requester, blob } = preimage;
       const hash = blake2b.hashBytes(blob).asOpaque();
-      const account = this.state.accounts.get(requester);
+      const account = this.state.services.get(requester);
 
       if (account === undefined) {
         return Result.error(PreimagesErrorCode.AccountNotFound);
@@ -93,11 +87,11 @@ export class Preimages {
     // https://graypaper.fluffylabs.dev/#/5f542d7/18c00018f300
     for (const change of pendingChanges) {
       const { account, hash, blob, lookupHistoryItem } = change;
-      account.data.preimages.set(hash, blob);
+      account.data.preimages.set(hash, new PreimageItem(hash, blob));
       lookupHistoryItem.slots = tryAsLookupHistorySlots([slot]);
     }
 
-    return Result.ok(null);
+    return Result.ok(OK);
   }
 }
 

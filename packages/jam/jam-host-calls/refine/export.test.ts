@@ -2,6 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { SEGMENT_BYTES, type Segment, tryAsSegmentIndex, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
+import { PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
@@ -49,9 +50,10 @@ describe("HostCalls: Export", () => {
     refine.exportSegmentData.set(Result.ok(tryAsSegmentIndex(15)), segment);
 
     // when
-    await exp.execute(gas, registers, memory);
+    const result = await exp.execute(gas, registers, memory);
 
     // then
+    assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.getU32(RESULT_REG), 15);
   });
 
@@ -66,13 +68,14 @@ describe("HostCalls: Export", () => {
     expectedSegment.raw[1] = 15;
     refine.exportSegmentData.set(Result.ok(tryAsSegmentIndex(5)), expectedSegment);
     // when
-    await exp.execute(gas, registers, memory);
+    const result = await exp.execute(gas, registers, memory);
 
     // then
+    assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.getU32(RESULT_REG), 5);
   });
 
-  it("should fail if memory is not readable", async () => {
+  it("should panic if memory is not readable", async () => {
     const refine = new TestRefineExt();
     const exp = new Export(refine);
     exp.currentServiceId = tryAsServiceId(10_000);
@@ -80,10 +83,10 @@ describe("HostCalls: Export", () => {
     const { registers, memory } = prepareRegsAndMemory(segment, segment.length, { skipSegment: true });
 
     // when
-    await exp.execute(gas, registers, memory);
+    const result = await exp.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(result, PvmExecution.Panic);
   });
 
   it("should fail with FULL if export limit is reached", async () => {
@@ -95,9 +98,10 @@ describe("HostCalls: Export", () => {
     refine.exportSegmentData.set(Result.error(SegmentExportError), segment);
 
     // when
-    await exp.execute(gas, registers, memory);
+    const result = await exp.execute(gas, registers, memory);
 
     // then
+    assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.FULL);
   });
 });

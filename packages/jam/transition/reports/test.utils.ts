@@ -10,6 +10,7 @@ import {
   tryAsCoreIndex,
   tryAsPerEpochBlock,
   tryAsPerValidator,
+  tryAsServiceGas,
   tryAsServiceId,
   tryAsTimeSlot,
   tryAsValidatorIndex,
@@ -25,7 +26,7 @@ import {
 import { RefineContext } from "@typeberry/block/refine-context";
 import testWorkReport from "@typeberry/block/test-work-report";
 import { type WorkPackageHash, type WorkPackageInfo, WorkReport } from "@typeberry/block/work-report";
-import { WorkExecResult, WorkExecResultKind, WorkResult } from "@typeberry/block/work-result";
+import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder, codec } from "@typeberry/codec";
 import { FixedSizeArray, HashDictionary, asKnownSize } from "@typeberry/collections";
@@ -88,14 +89,14 @@ export function newWorkReport({
     lookupAnchorSlot: lookupAnchorSlot ?? report.context.lookupAnchorSlot,
     prerequisites: prerequisites !== undefined ? prerequisites.map((x) => x.asOpaque()) : report.context.prerequisites,
   });
-  return new WorkReport(
-    report.workPackageSpec,
+  return WorkReport.fromCodec({
+    workPackageSpec: report.workPackageSpec,
     context,
-    tryAsCoreIndex(core),
-    authorizer !== undefined ? authorizer.asOpaque() : report.authorizerHash,
-    report.authorizationOutput,
-    report.segmentRootLookup,
-    FixedSizeArray.new(
+    coreIndex: tryAsCoreIndex(core),
+    authorizerHash: authorizer !== undefined ? authorizer.asOpaque() : report.authorizerHash,
+    authorizationOutput: report.authorizationOutput,
+    segmentRootLookup: report.segmentRootLookup,
+    results: FixedSizeArray.new(
       report.results.map(
         (x) =>
           new WorkResult(
@@ -104,11 +105,19 @@ export function newWorkReport({
             x.payloadHash,
             x.gas,
             resultSize !== undefined ? new WorkExecResult(WorkExecResultKind.ok, Bytes.fill(resultSize, 0)) : x.result,
+            WorkRefineLoad.fromCodec({
+              gasUsed: tryAsServiceGas(5),
+              importedSegments: tryAsU32(0),
+              exportedSegments: tryAsU32(0),
+              extrinsicSize: tryAsU32(0),
+              extrinsicCount: tryAsU32(0),
+            }),
           ),
       ),
       report.results.fixedLength,
     ),
-  );
+    authorizationGasUsed: tryAsServiceGas(1),
+  });
 }
 
 export function guaranteesAsView(
@@ -121,7 +130,7 @@ export function guaranteesAsView(
       codecKnownSizeArray(
         codec.Class(ReportGuarantee, {
           report: WorkReport.Codec,
-          slot: codec.u32.asOpaque(),
+          slot: codec.u32.asOpaque<TimeSlot>(),
           credentials: codecKnownSizeArray(Credential.Codec, {
             minLength: 0,
             maxLength: 5,
@@ -228,7 +237,6 @@ function newReportsState({
       },
     ]),
     services,
-    offenders: asKnownSize([]),
   };
 }
 
@@ -311,9 +319,9 @@ export const initialServices = ({ withDummyCodeHash = false } = {}): Map<Service
   m.set(
     id,
     new Service(tryAsServiceId(129), {
-      preimages: [],
+      preimages: HashDictionary.new(),
       storage: [],
-      lookupHistory: [],
+      lookupHistory: HashDictionary.new(),
       info: ServiceAccountInfo.fromCodec({
         codeHash: withDummyCodeHash
           ? Bytes.fill(HASH_SIZE, 1).asOpaque()

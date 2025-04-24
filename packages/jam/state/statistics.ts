@@ -1,14 +1,27 @@
-import { type PerValidator, codecPerValidator } from "@typeberry/block";
-import { type CodecRecord, codec } from "@typeberry/codec";
-import { type U32, tryAsU32 } from "@typeberry/numbers";
+import {
+  type PerValidator,
+  type ServiceGas,
+  type ServiceId,
+  codecPerValidator,
+  tryAsServiceGas,
+  tryAsServiceId,
+} from "@typeberry/block";
+import { type CodecRecord, type Descriptor, codec } from "@typeberry/codec";
+import { type U16, type U32, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { type PerCore, codecPerCore } from "./common";
+
+const codecVarServiceId: Descriptor<ServiceId> = codec.varU32.convert(
+  (s) => tryAsU32(s),
+  (i) => tryAsServiceId(i),
+);
 
 /**
  * Activity Record of a single validator.
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/183701183701
  */
-export class ActivityRecord {
-  static Codec = codec.Class(ActivityRecord, {
+export class ValidatorStatistics {
+  static Codec = codec.Class(ValidatorStatistics, {
     blocks: codec.u32,
     tickets: codec.u32,
     preImages: codec.u32,
@@ -17,8 +30,15 @@ export class ActivityRecord {
     assurances: codec.u32,
   });
 
-  static fromCodec({ blocks, tickets, preImages, preImagesSize, guarantees, assurances }: CodecRecord<ActivityRecord>) {
-    return new ActivityRecord(blocks, tickets, preImages, preImagesSize, guarantees, assurances);
+  static fromCodec({
+    blocks,
+    tickets,
+    preImages,
+    preImagesSize,
+    guarantees,
+    assurances,
+  }: CodecRecord<ValidatorStatistics>) {
+    return new ValidatorStatistics(blocks, tickets, preImages, preImagesSize, guarantees, assurances);
   }
 
   private constructor(
@@ -38,26 +58,187 @@ export class ActivityRecord {
 
   static empty() {
     const zero = tryAsU32(0);
-    return new ActivityRecord(zero, zero, zero, zero, zero, zero);
+    return new ValidatorStatistics(zero, zero, zero, zero, zero, zero);
   }
 }
 
-/** `pi`: Previous and current statistics of each validator. */
-export class ActivityData {
-  static Codec = codec.Class(ActivityData, {
-    current: codecPerValidator(ActivityRecord.Codec),
-    previous: codecPerValidator(ActivityRecord.Codec),
+const codecVarU16 = codec.varU32.convert<U16>(
+  (i) => tryAsU32(i),
+  (o) => tryAsU16(o),
+);
+
+/** Encode/decode unsigned gas. */
+const codecVarGas: Descriptor<ServiceGas> = codec.varU64.convert(
+  (g) => tryAsU64(g),
+  (i) => tryAsServiceGas(i),
+);
+
+/**
+ * Single core statistics.
+ * Updated per block, based on incoming work reports (`w`).
+ *
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/18f10318f103?v=0.6.4
+ * https://github.com/gavofyork/graypaper/blob/9bffb08f3ea7b67832019176754df4fb36b9557d/text/statistics.tex#L65
+ */
+export class CoreStatistics {
+  static Codec = codec.Class(CoreStatistics, {
+    dataAvailabilityLoad: codec.varU32,
+    popularity: codecVarU16,
+    imports: codecVarU16,
+    exports: codecVarU16,
+    extrinsicSize: codec.varU32,
+    extrinsicCount: codecVarU16,
+    bundleSize: codec.varU32,
+    gasUsed: codecVarGas,
   });
 
-  static fromCodec(v: CodecRecord<ActivityData>) {
-    return new ActivityData(v);
+  static fromCodec(v: CodecRecord<CoreStatistics>) {
+    return new CoreStatistics(
+      v.dataAvailabilityLoad,
+      v.popularity,
+      v.imports,
+      v.exports,
+      v.extrinsicSize,
+      v.extrinsicCount,
+      v.bundleSize,
+      v.gasUsed,
+    );
   }
 
-  public current: PerValidator<ActivityRecord>;
-  public previous: PerValidator<ActivityRecord>;
+  private constructor(
+    /** `d` */
+    public dataAvailabilityLoad: U32,
+    /** `p` */
+    public popularity: U16,
+    /** `i` */
+    public imports: U16,
+    /** `e` */
+    public exports: U16,
+    /** `z` */
+    public extrinsicSize: U32,
+    /** `x` */
+    public extrinsicCount: U16,
+    /** `b` */
+    public bundleSize: U32,
+    /** `u` */
+    public gasUsed: ServiceGas,
+  ) {}
 
-  constructor({ current, previous }: CodecRecord<ActivityData>) {
-    this.current = current;
-    this.previous = previous;
+  static empty() {
+    const zero = tryAsU32(0);
+    const zero16 = tryAsU16(0);
+    const zeroGas = tryAsServiceGas(0);
+    return new CoreStatistics(zero, zero16, zero16, zero16, zero, zero16, zero, zeroGas);
   }
+}
+
+/**
+ * Service statistics.
+ * Updated per block, based on available work reports (`W`).
+ *
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/185104185104?v=0.6.4
+ * https://github.com/gavofyork/graypaper/blob/9bffb08f3ea7b67832019176754df4fb36b9557d/text/statistics.tex#L77
+ */
+export class ServiceStatistics {
+  static Codec = codec.Class(ServiceStatistics, {
+    providedCount: codecVarU16,
+    providedSize: codec.varU32,
+    refinementCount: codec.varU32,
+    refinementGasUsed: codecVarGas,
+    imports: codecVarU16,
+    exports: codecVarU16,
+    extrinsicSize: codec.varU32,
+    extrinsicCount: codecVarU16,
+    accumulateCount: codec.varU32,
+    accumulateGasUsed: codecVarGas,
+    onTransfersCount: codec.varU32,
+    onTransfersGasUsed: codecVarGas,
+  });
+
+  static fromCodec(v: CodecRecord<ServiceStatistics>) {
+    return new ServiceStatistics(
+      v.providedCount,
+      v.providedSize,
+      v.refinementCount,
+      v.refinementGasUsed,
+      v.imports,
+      v.exports,
+      v.extrinsicSize,
+      v.extrinsicCount,
+      v.accumulateCount,
+      v.accumulateGasUsed,
+      v.onTransfersCount,
+      v.onTransfersGasUsed,
+    );
+  }
+
+  private constructor(
+    /** `p.0` */
+    public providedCount: U16,
+    /** `p.1` */
+    public providedSize: U32,
+    /** `r.0` */
+    public refinementCount: U32,
+    /** `r.1` */
+    public refinementGasUsed: ServiceGas,
+    /** `i` */
+    public imports: U16,
+    /** `e` */
+    public exports: U16,
+    /** `z` */
+    public extrinsicSize: U32,
+    /** `x` */
+    public extrinsicCount: U16,
+    /** `a.0` */
+    public accumulateCount: U32,
+    /** `a.1` */
+    public accumulateGasUsed: ServiceGas,
+    /** `t.0` */
+    public onTransfersCount: U32,
+    /** `t.1` */
+    public onTransfersGasUsed: ServiceGas,
+  ) {}
+
+  static empty() {
+    const zero = tryAsU32(0);
+    const zero16 = tryAsU16(0);
+    const zeroGas = tryAsServiceGas(0);
+    return new ServiceStatistics(
+      zero16,
+      zero,
+      zero,
+      zeroGas,
+      zero16,
+      zero16,
+      zero,
+      zero16,
+      zero,
+      zeroGas,
+      zero,
+      zeroGas,
+    );
+  }
+}
+
+/** `pi`: Statistics of each validator, cores statistics and services statistics. */
+export class StatisticsData {
+  static Codec = codec.Class(StatisticsData, {
+    current: codecPerValidator(ValidatorStatistics.Codec),
+    previous: codecPerValidator(ValidatorStatistics.Codec),
+    cores: codecPerCore(CoreStatistics.Codec),
+    services: codec.dictionary(codecVarServiceId, ServiceStatistics.Codec, {
+      sortKeys: (a, b) => a - b,
+    }),
+  });
+
+  static fromCodec(v: CodecRecord<StatisticsData>) {
+    return new StatisticsData(v.current, v.previous, v.cores, v.services);
+  }
+
+  constructor(
+    public readonly current: PerValidator<ValidatorStatistics>,
+    public readonly previous: PerValidator<ValidatorStatistics>,
+    public readonly cores: PerCore<CoreStatistics>,
+    public readonly services: Map<ServiceId, ServiceStatistics>,
+  ) {}
 }

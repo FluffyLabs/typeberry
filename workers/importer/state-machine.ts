@@ -1,4 +1,4 @@
-import { Block, type BlockView, type Header, type HeaderHash, headerWithHashCodec } from "@typeberry/block";
+import { Block, type BlockView, type HeaderHash, type HeaderView, headerViewWithHashCodec } from "@typeberry/block";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { Config } from "@typeberry/config";
 import { Finished, WorkerInit } from "@typeberry/generic-worker";
@@ -27,7 +27,7 @@ export function importerStateMachine() {
 const logger = Logger.new(__filename, "importer");
 
 export class MainReady extends State<"ready(main)", Finished, Config> {
-  public readonly onBestBlock = new Listener<WithHash<HeaderHash, Header>>();
+  public readonly onBestBlock = new Listener<WithHash<HeaderHash, HeaderView>>();
 
   constructor() {
     super({
@@ -39,9 +39,18 @@ export class MainReady extends State<"ready(main)", Finished, Config> {
     });
   }
 
+  getConfig(): Config {
+    if (this.data === null) {
+      throw new Error("Did not receive chain spec config!");
+    }
+
+    return this.data;
+  }
+
   triggerBestBlock(block: unknown) {
     if (block instanceof Uint8Array) {
-      const headerWithHash = Decoder.decodeObject(headerWithHashCodec, block);
+      const config = this.getConfig();
+      const headerWithHash = Decoder.decodeObject(headerViewWithHashCodec, block, config.chainSpec);
       this.onBestBlock.emit(headerWithHash);
     }
   }
@@ -83,9 +92,9 @@ export class ImporterReady extends State<"ready(importer)", Finished, Config> {
     return this.data;
   }
 
-  announce(sender: TypedChannel, headerWithHash: WithHash<HeaderHash, Header>) {
+  announce(sender: TypedChannel, headerWithHash: WithHash<HeaderHash, HeaderView>) {
     const config = this.getConfig();
-    const encoded = Encoder.encodeObject(headerWithHashCodec, headerWithHash, config.chainSpec).raw;
+    const encoded = Encoder.encodeObject(headerViewWithHashCodec, headerWithHash, config.chainSpec).raw;
     sender.sendSignal("bestBlock", encoded, [encoded.buffer as ArrayBuffer]);
   }
 

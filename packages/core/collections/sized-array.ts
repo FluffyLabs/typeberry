@@ -1,4 +1,4 @@
-import { type Opaque, asOpaqueType, check, inspect } from "@typeberry/utils";
+import { type Opaque, type TokenOf, asOpaqueType, check, inspect } from "@typeberry/utils";
 
 /** A collection that has a known, but not necessarily verified size. */
 export type KnownSize<T, F extends string> = Opaque<T, F>;
@@ -10,7 +10,7 @@ export type KnownSizeId<X> = X extends KnownSizeArray<infer _T, infer F> ? F : n
 export type KnownSizeArray<T, F extends string> = KnownSize<T[], F>;
 
 /** Converts a regular collection into a `KnownSize`. */
-export function asKnownSize<T, F extends string>(data: T): KnownSize<T, F> {
+export function asKnownSize<R, T>(data: T): KnownSize<T, TokenOf<R, T>> {
   return asOpaqueType(data);
 }
 

@@ -159,7 +159,7 @@ describe("HostCalls: Invoke", () => {
   });
 
   it("should run the machine and finish with `fault` status", async () => {
-    const address = tryAsU64(2 ** 12);
+    const address = tryAsU64(2 ** 20);
     const [refine, machineId] = await prepareMachine({
       status: Status.FAULT,
       address,

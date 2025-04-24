@@ -23,12 +23,12 @@ export type ProgramCounter = Opaque<OpaqueHash, "ProgramCounter[u64]">;
  */
 export class RefineContext extends WithDebug {
   static Codec = codec.Class(RefineContext, {
-    anchor: codec.bytes(HASH_SIZE).asOpaque(),
-    stateRoot: codec.bytes(HASH_SIZE).asOpaque(),
-    beefyRoot: codec.bytes(HASH_SIZE).asOpaque(),
-    lookupAnchor: codec.bytes(HASH_SIZE).asOpaque(),
-    lookupAnchorSlot: codec.u32.asOpaque(),
-    prerequisites: codec.sequenceVarLen(codec.bytes(HASH_SIZE).asOpaque()),
+    anchor: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
+    stateRoot: codec.bytes(HASH_SIZE).asOpaque<StateRootHash>(),
+    beefyRoot: codec.bytes(HASH_SIZE).asOpaque<BeefyHash>(),
+    lookupAnchor: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
+    lookupAnchorSlot: codec.u32.asOpaque<TimeSlot>(),
+    prerequisites: codec.sequenceVarLen(codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>()),
   });
 
   static fromCodec({
