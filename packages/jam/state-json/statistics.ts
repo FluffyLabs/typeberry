@@ -144,22 +144,24 @@ export const serviceStatisticsEntryFromJson: FromJson<ServiceStatiticsEntry> = {
 export class JsonStatisticsData {
   vals_current!: ValidatorStatistics[];
   vals_last!: ValidatorStatistics[];
-  cores!: CoreStatistics[];
-  services!: ServiceStatiticsEntry[];
+  cores!: CoreStatistics[] | null;
+  services!: ServiceStatiticsEntry[] | null;
 
   static fromJson: FromJson<JsonStatisticsData> = {
     vals_current: json.array(JsonValidatorStatistics.fromJson),
     vals_last: json.array(JsonValidatorStatistics.fromJson),
-    cores: json.array(JsonCoreStatistics.fromJson),
-    services: json.array(serviceStatisticsEntryFromJson),
+    cores: json.nullable(json.array(JsonCoreStatistics.fromJson)),
+    services: json.nullable(json.array(serviceStatisticsEntryFromJson)),
   };
 
   static toStatisticsData(spec: ChainSpec, statistics: JsonStatisticsData) {
     return StatisticsData.fromCodec({
       current: tryAsPerValidator(statistics.vals_current, spec),
       previous: tryAsPerValidator(statistics.vals_last, spec),
-      cores: tryAsPerCore(statistics.cores, spec),
-      services: new Map(statistics.services.map((x) => [x.id, x.record])),
+      cores: statistics.cores === null
+        ? tryAsPerCore(Array.from({ length: spec.coresCount }, () => CoreStatistics.empty()), spec)
+        : tryAsPerCore(statistics.cores, spec),
+      services: statistics.services === null ? new Map() : new Map(statistics.services.map((x) => [x.id, x.record])),
     });
   }
 }

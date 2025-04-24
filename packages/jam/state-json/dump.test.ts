@@ -15,7 +15,6 @@ describe("JSON state dump", () => {
     const parsedState = parseFromJson(testState, fromJson);
     const rootHash = merkelizeState(serializeState(parsedState, spec));
 
-    // TODO [ToDr] This needs an update after 0.6.4 merge due to statisitcs.
-    strictEqual(rootHash.toString(), "0xd1490d9b667a5907737546ba36e0b9fe6ae000269b87683dba2017205fcda01a");
+    strictEqual(rootHash.toString(), "0xc07cdbce686c64d0a9b6539c70b0bb821b6a74d9de750a46a5da05b5640c290a");
   });
 });
