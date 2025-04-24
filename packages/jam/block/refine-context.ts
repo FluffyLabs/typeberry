@@ -12,9 +12,6 @@ import type { WorkPackageHash } from "./work-report";
  */
 export type BeefyHash = Opaque<OpaqueHash, "BeefyHash">;
 
-/** Program Counter */
-export type ProgramCounter = Opaque<OpaqueHash, "ProgramCounter[u64]">;
-
 /**
  * `X`: Refinement Context - state of the chain at the point
  * that the report's corresponding work-package was evaluated.

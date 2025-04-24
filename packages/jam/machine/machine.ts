@@ -1,13 +1,13 @@
-import { ProgramCounter } from "@typeberry/block/refine-context";
 import { BytesBlob } from "@typeberry/bytes";
+import { ProgramCounter } from "@typeberry/jam-host-calls/refine/refine-externalities";
 import { type U64, tryAsU64 } from "@typeberry/numbers";
-import type { BigGas, Registers, Memory } from "@typeberry/pvm-interpreter";
+import { type BigGas, type Registers, type Memory, Interpreter } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { type Opaque, asOpaqueType } from "@typeberry/utils";
 
 /**
  * Machine - integrated PVM type
- * https://graypaper.fluffylabs.dev/#/85129da/2d1e002d1f00?v=0.6.3
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/2d58002d5800?v=0.6.4
  */
 
 /** Running PVM instance identifier. */
@@ -16,7 +16,7 @@ export type MachineId = Opaque<U64, "MachineId[u64]">;
 export const tryAsMachineId = (v: number | bigint): MachineId => asOpaqueType(tryAsU64(v));
 
 /** Machines id -> machine instance */
-export type Machines = Map<MachineId, MachineInterface>;
+export type Machines = Map<MachineId, MachineInstance>;
 
 export const MACHINES: Machines = new Map();
 
@@ -45,7 +45,7 @@ export type MachineStatus =
 
 /** `M`: Machine instance */
 export interface MachineInterface {
-  /** `p` : Code - Generic PVM program */
+  /** `p` : Program code */
   code: BytesBlob;
   /** `u`: Memory - RAM */
   memory: Memory | null;
@@ -81,7 +81,10 @@ export class MachineInstance implements MachineInterface {
     if (this.memory === null) {
       throw new Error("Memory is not initialized");
     }
-    
+
+    const interpreter = new Interpreter();
+    interpreter.reset(this.code.raw, this.entrypoint, gas);
+
     return {
       result: {
         status: Status.OK,
