@@ -10,7 +10,7 @@ import {
   tryAsServiceId,
 } from "@typeberry/block";
 import type { AssurancesExtrinsic } from "@typeberry/block/assurances";
-import { I, O, Q, T, V, W_G, W_M, W_R } from "@typeberry/block/gp-constants";
+import { I, O, T, V, W_G, W_M, W_R } from "@typeberry/block/gp-constants";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { WorkReport } from "@typeberry/block/work-report";
@@ -163,8 +163,11 @@ export class Statistics {
      * NOTE [MaSo] Use calculated max value 0x0621_0C00
      * instead of O * (W_R + W_G * ((W_M * 65) / 64))
      * when GP is updated to 1.0.0
-    */
-    check(sum <= O * (W_R + W_G * ((W_M * 65) / 64)), `DAScore exceeds maximum value of O * (W_R + W_G * ((W_M * 65) / 64)) (${O * (W_R + W_G * ((W_M * 65) / 64))})`);
+     */
+    check(
+      sum <= O * (W_R + W_G * ((W_M * 65) / 64)),
+      `DAScore exceeds maximum value of O * (W_R + W_G * ((W_M * 65) / 64)) (${O * (W_R + W_G * ((W_M * 65) / 64))})`,
+    );
 
     return tryAsU32(sum);
   }
@@ -174,10 +177,7 @@ export class Statistics {
    *
    * https://graypaper.fluffylabs.dev/#/68eaa1f/199002199002?v=0.6.4
    */
-  private calculateServiceStatistics(
-    workResults: WorkResult[],
-    preimages: PreimagesExtrinsic,
-  ): ServiceStatistics {
+  private calculateServiceStatistics(workResults: WorkResult[], preimages: PreimagesExtrinsic): ServiceStatistics {
     const { refinementCount, refinementGasUsed, imports, extrinsicCount, extrinsicSize, exports } =
       this.calculateRefineScoreService(workResults);
 
