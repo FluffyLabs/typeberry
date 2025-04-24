@@ -4,13 +4,15 @@ import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, tryAsServiceI
 import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
-import { Registers } from "@typeberry/pvm-interpreter";
+import { tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
-import { LegacyHostCallResult } from "../results";
+import { HostCallResult } from "../results";
 import { Designate } from "./designate";
 import { TestAccumulate } from "./partial-state.test";
 
@@ -23,8 +25,8 @@ function prepareRegsAndMemory(
   { skipValidators = false }: { skipValidators?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new Registers();
-  registers.setU32(VALIDATORS_DATA_START_REG, memStart);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(VALIDATORS_DATA_START_REG, tryAsU64(memStart));
 
   const builder = new MemoryBuilder();
 
@@ -48,8 +50,8 @@ function prepareRegsAndMemory(
   }
   const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
   return {
-    registers,
-    memory,
+    registers: registers,
+    memory: new HostCallMemory(memory),
   };
 }
 
@@ -62,10 +64,10 @@ describe("HostCalls: Designate", () => {
     const { registers, memory } = prepareRegsAndMemory([], { skipValidators: true });
 
     // when
-    await designate.execute(gas, registers, memory);
+    const result = await designate.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(accumulate.validatorsData.length, 0);
   });
 
@@ -93,7 +95,7 @@ describe("HostCalls: Designate", () => {
     await designate.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(
       accumulate.validatorsData[0][0].toString(),
       `ValidatorData {

@@ -3,14 +3,15 @@ import { describe, it } from "node:test";
 import { type CodeHash, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U32, tryAsU32 } from "@typeberry/numbers";
+import { type U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
-import { LegacyHostCallResult } from "../results";
+import { HostCallResult } from "../results";
 import { Forget } from "./forget";
 import { TestAccumulate } from "./partial-state.test";
 
@@ -25,9 +26,9 @@ function prepareRegsAndMemory(
   { skipPreimageHash = false }: { skipPreimageHash?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new Registers();
-  registers.setU32(HASH_START_REG, memStart);
-  registers.setU32(LENGTH_REG, preimageLength);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(HASH_START_REG, tryAsU64(memStart));
+  registers.set(LENGTH_REG, tryAsU64(preimageLength));
 
   const builder = new MemoryBuilder();
 
@@ -37,7 +38,7 @@ function prepareRegsAndMemory(
   const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
   };
 }
 
@@ -52,7 +53,7 @@ describe("HostCalls: Solicit", () => {
     await forget.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.forgetPreimageData, [[Bytes.fill(HASH_SIZE, 0x69), 4_096]]);
   });
 
@@ -65,10 +66,10 @@ describe("HostCalls: Solicit", () => {
     });
 
     // when
-    await forget.execute(gas, registers, memory);
+    const result = await forget.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(accumulate.forgetPreimageData, []);
   });
 
@@ -84,7 +85,7 @@ describe("HostCalls: Solicit", () => {
     await forget.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.HUH);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
     assert.deepStrictEqual(accumulate.forgetPreimageData, [[Bytes.fill(HASH_SIZE, 0x69), 4_096]]);
   });
 });

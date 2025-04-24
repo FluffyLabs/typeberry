@@ -7,12 +7,14 @@ import { Encoder, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { type Blake2bHash, HASH_SIZE } from "@typeberry/hash";
+import { tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { LegacyHostCallResult } from "../results";
+import { HostCallResult } from "../results";
 import { Assign } from "./assign";
 import { TestAccumulate } from "./partial-state.test";
 
@@ -27,9 +29,9 @@ function prepareRegsAndMemory(
   { skipAuthQueue = false }: { skipAuthQueue?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new Registers();
-  registers.setU32(CORE_INDEX_REG, coreIndex);
-  registers.setU32(AUTH_QUEUE_START_REG, memStart);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(CORE_INDEX_REG, tryAsU64(coreIndex));
+  registers.set(AUTH_QUEUE_START_REG, tryAsU64(memStart));
 
   const builder = new MemoryBuilder();
 
@@ -47,7 +49,7 @@ function prepareRegsAndMemory(
   const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
   };
 }
 
@@ -67,7 +69,7 @@ describe("HostCalls: Assign", () => {
     await assign.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.authQueue[0][0], tryAsCoreIndex(0));
     const expected = new Array(AUTHORIZATION_QUEUE_SIZE);
     expected[0] = Bytes.fill(HASH_SIZE, 1);
@@ -92,7 +94,7 @@ describe("HostCalls: Assign", () => {
     await assign.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.CORE);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.CORE);
     assert.deepStrictEqual(accumulate.authQueue.length, 0);
   });
 
@@ -102,17 +104,17 @@ describe("HostCalls: Assign", () => {
     const serviceId = tryAsServiceId(10_000);
     assign.currentServiceId = serviceId;
     const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(3), []);
-    registers.setU32(CORE_INDEX_REG, 2 ** 16 + 3);
+    registers.set(CORE_INDEX_REG, tryAsU64(2 ** 16 + 3));
 
     // when
     await assign.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.CORE);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.CORE);
     assert.deepStrictEqual(accumulate.authQueue.length, 0);
   });
 
-  it("should return an error if data not readable", async () => {
+  it("should return panic if data not readable", async () => {
     const accumulate = new TestAccumulate();
     const assign = new Assign(accumulate, tinyChainSpec);
     const serviceId = tryAsServiceId(10_000);
@@ -120,10 +122,10 @@ describe("HostCalls: Assign", () => {
     const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(3), [], { skipAuthQueue: true });
 
     // when
-    await assign.execute(gas, registers, memory);
+    const result = await assign.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(accumulate.authQueue.length, 0);
   });
 });

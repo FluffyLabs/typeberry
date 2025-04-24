@@ -1,6 +1,6 @@
 import { tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { tryAsU64, tryBigIntAsNumber } from "@typeberry/numbers";
+import { tryBigIntAsNumber } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import {
   type HostCallMemory,
@@ -32,7 +32,7 @@ export class Transfer implements HostCallHandler {
    * https://graypaper.fluffylabs.dev/#/68eaa1f/32d20132d501?v=0.6.4
    */
   gasCost = (regs: HostCallRegisters): Gas => {
-    const gas = tryAsU64(10) + regs.get(ON_TRANSFER_GAS_REG);
+    const gas = 10n + regs.get(ON_TRANSFER_GAS_REG);
     return tryAsGas(gas);
   };
   currentServiceId = CURRENT_SERVICE_ID;

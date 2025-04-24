@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U32, tryAsU32 } from "@typeberry/numbers";
+import { type U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
 import {
   MemoryBuilder,
@@ -17,6 +17,7 @@ import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { HostCallResult } from "../results";
 import { TestAccumulate } from "./partial-state.test";
 import { Yield } from "./yield";
+import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 
 const gas = gasCounter(tryAsGas(0));
 const HASH_START_REG = 7;
@@ -27,8 +28,8 @@ function prepareRegsAndMemory(
   data: BytesBlob,
   { registerMemory = true }: { registerMemory?: boolean } = {},
 ) {
-  const registers = new Registers();
-  registers.setU32(HASH_START_REG, hashStart);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(HASH_START_REG, tryAsU64(hashStart));
 
   const builder = new MemoryBuilder();
   if (registerMemory) {
@@ -38,7 +39,7 @@ function prepareRegsAndMemory(
   const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
   };
 }
 
@@ -58,7 +59,7 @@ describe("HostCalls: Yield", () => {
 
     // then
     assert.deepStrictEqual(result, PvmExecution.Panic);
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), hashStart);
+    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(hashStart));
     assert.deepStrictEqual(accumulate.yieldHash, null);
   });
 
@@ -77,7 +78,7 @@ describe("HostCalls: Yield", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.yieldHash, data);
   });
 });
