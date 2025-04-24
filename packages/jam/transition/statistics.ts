@@ -268,6 +268,8 @@ export class Statistics {
       score.size += preimage.blob.length;
     }
 
+    // TODO [MaSo] What is the maximum provided.count & provided.size?
+
     return {
       count: tryAsU16(score.count),
       size: tryAsU32(score.size),
