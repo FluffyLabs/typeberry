@@ -158,9 +158,13 @@ export class JsonStatisticsData {
     return StatisticsData.fromCodec({
       current: tryAsPerValidator(statistics.vals_current, spec),
       previous: tryAsPerValidator(statistics.vals_last, spec),
-      cores: statistics.cores === null
-        ? tryAsPerCore(Array.from({ length: spec.coresCount }, () => CoreStatistics.empty()), spec)
-        : tryAsPerCore(statistics.cores, spec),
+      cores:
+        statistics.cores === null
+          ? tryAsPerCore(
+              Array.from({ length: spec.coresCount }, () => CoreStatistics.empty()),
+              spec,
+            )
+          : tryAsPerCore(statistics.cores, spec),
       services: statistics.services === null ? new Map() : new Map(statistics.services.map((x) => [x.id, x.record])),
     });
   }
