@@ -20,7 +20,6 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { type Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics";
-import { logger } from "../common";
 import { validatorDataFromJson } from "./common-types";
 
 class TinyInput {
