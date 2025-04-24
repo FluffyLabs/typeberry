@@ -58,9 +58,9 @@ export class Info implements HostCallHandler {
         accountInfo.storageUtilisationBytes,
       ),
     });
-    const writeOk = memory.storeFrom(outputStart, encodedInfo.raw);
+    const writeResult = memory.storeFrom(outputStart, encodedInfo.raw);
 
-    regs.set(IN_OUT_REG, writeOk !== null ? HostCallResult.OOB : HostCallResult.OK);
+    regs.set(IN_OUT_REG, writeResult.isError ? HostCallResult.OOB : HostCallResult.OK);
     return;
   }
 }

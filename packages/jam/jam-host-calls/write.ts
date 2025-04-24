@@ -73,16 +73,16 @@ export class Write implements HostCallHandler {
     // allocate extra bytes for the serviceId
     const key = new Uint8Array(SERVICE_ID_BYTES + keyLen);
     writeServiceIdAsLeBytes(this.currentServiceId, key);
-    const keyLoadingFault = memory.loadInto(key.subarray(SERVICE_ID_BYTES), keyStartAddress);
+    const keyLoadingResult = memory.loadInto(key.subarray(SERVICE_ID_BYTES), keyStartAddress);
 
     const value = new Uint8Array(valueLen);
-    const valueLoadingFault = memory.loadInto(value, valueStart);
+    const valueLoadingResult = memory.loadInto(value, valueStart);
 
     const keyHash = blake2b.hashBytes(key);
     const maybeValue = valueLen === 0 ? null : BytesBlob.blobFrom(value);
 
     // we return OOB in case the value cannot be read or the key can't be loaded.
-    if (keyLoadingFault !== null || valueLoadingFault !== null) {
+    if (keyLoadingResult.isError || valueLoadingResult.isError) {
       regs.set(IN_OUT_REG, HostCallResult.OOB);
       return;
     }

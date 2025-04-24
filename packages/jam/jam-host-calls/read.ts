@@ -47,11 +47,11 @@ export class Read implements HostCallHandler {
     // allocate extra bytes for the serviceId
     const key = new Uint8Array(SERVICE_ID_BYTES + keyLen);
     writeServiceIdAsLeBytes(this.currentServiceId, key);
-    const keyLoadingFault = memory.loadInto(key.subarray(SERVICE_ID_BYTES), keyStartAddress);
+    const keyLoadingResult = memory.loadInto(key.subarray(SERVICE_ID_BYTES), keyStartAddress);
     const destinationWriteable = memory.isWriteable(destinationStart, destinationLen);
 
     // we return OOB in case the destination is not writeable or the key can't be loaded.
-    if (keyLoadingFault !== null || !destinationWriteable) {
+    if (keyLoadingResult.isError || !destinationWriteable) {
       regs.set(IN_OUT_REG, HostCallResult.OOB);
       return;
     }

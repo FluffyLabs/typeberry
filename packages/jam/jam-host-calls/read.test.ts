@@ -10,8 +10,10 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { type Accounts, Read } from "./read";
-import { LegacyHostCallResult } from "./results";
+import { HostCallResult } from "./results";
 import { SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
+import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
+import { tryAsU64 } from "@typeberry/numbers";
 
 class TestAccounts implements Accounts {
   public readonly data: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
@@ -52,12 +54,12 @@ function prepareRegsAndMemory(
 ) {
   const keyAddress = 2 ** 20;
   const memStart = 2 ** 16;
-  const registers = new Registers();
-  registers.setU32(SERVICE_ID_REG, readServiceId);
-  registers.setU32(KEY_START_REG, keyAddress);
-  registers.setU32(KEY_LEN_REG, key.length);
-  registers.setU32(DEST_START_REG, memStart);
-  registers.setU32(DEST_LEN_REG, destinationLength);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(SERVICE_ID_REG, tryAsU64(readServiceId));
+  registers.set(KEY_START_REG, tryAsU64(keyAddress));
+  registers.set(KEY_LEN_REG, tryAsU64(key.length));
+  registers.set(DEST_START_REG, tryAsU64(memStart));
+  registers.set(DEST_LEN_REG, tryAsU64(destinationLength));
 
   const builder = new MemoryBuilder();
   if (!skipKey) {
@@ -69,7 +71,7 @@ function prepareRegsAndMemory(
   const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
     readResult: () => {
       const result = new Uint8Array(destinationLength);
       assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)).isOk, true);
@@ -92,7 +94,7 @@ describe("HostCalls: Read", () => {
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), "hello world".length);
+    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64("hello world".length));
     assert.deepStrictEqual(
       readResult().toString(),
       "0x68656c6c6f20776f726c640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -112,7 +114,7 @@ describe("HostCalls: Read", () => {
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), "hello world".length);
+    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64("hello world".length));
     assert.deepStrictEqual(
       readResult().toString(),
       "0x68656c6c6f20776f726c640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -132,7 +134,7 @@ describe("HostCalls: Read", () => {
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), "hello world".length);
+    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64("hello world".length));
     assert.deepStrictEqual(readResult().toString(), "0x68656c");
   });
 
@@ -149,7 +151,7 @@ describe("HostCalls: Read", () => {
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.NONE);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.NONE);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -169,7 +171,7 @@ describe("HostCalls: Read", () => {
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
   });
 
   it("should fail if there is no memory for result", async () => {
@@ -185,7 +187,7 @@ describe("HostCalls: Read", () => {
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
   });
 
   it("should fail if the destination is not fully writeable", async () => {
@@ -196,13 +198,13 @@ describe("HostCalls: Read", () => {
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
     accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
-    registers.setU32(DEST_LEN_REG, PAGE_SIZE + 1);
+    registers.set(DEST_LEN_REG, tryAsU64(PAGE_SIZE + 1));
 
     // when
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
   });
 
   it("should fail gracefuly if the destination is beyond mem limit", async () => {
@@ -213,14 +215,14 @@ describe("HostCalls: Read", () => {
     const { key, hash } = prepareKey(read.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
     accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
-    registers.setU32(DEST_START_REG, 2 ** 32 - 1);
-    registers.setU32(DEST_LEN_REG, 2 ** 10);
+    registers.set(DEST_START_REG, tryAsU64(2 ** 32 - 1));
+    registers.set(DEST_LEN_REG, tryAsU64(2 ** 10));
 
     // when
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
   });
 
   it("should handle 0-length destination", async () => {
@@ -236,6 +238,6 @@ describe("HostCalls: Read", () => {
     await read.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG), "hello world".length);
+    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64("hello world".length));
   });
 });
