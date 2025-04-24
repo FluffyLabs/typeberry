@@ -2,10 +2,21 @@ import type { BlockView, HeaderHash, HeaderView } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
 import { WithHash } from "@typeberry/hash";
+import type { Logger } from "@typeberry/logger";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
-import { BlockVerifier } from "@typeberry/transition/block-verification";
-import { OnChain } from "@typeberry/transition/chain-stf";
+import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verification";
+import { OnChain, type StfError } from "@typeberry/transition/chain-stf";
+import { Result, type TaggedError } from "@typeberry/utils";
+
+export enum ImporterErrorKind {
+  Verifier = 0,
+  Stf = 1,
+}
+
+export type ImporterError =
+  | TaggedError<ImporterErrorKind.Verifier, BlockVerifierError>
+  | TaggedError<ImporterErrorKind.Stf, StfError>;
 
 export class Importer {
   private readonly verifier: BlockVerifier;
@@ -16,6 +27,7 @@ export class Importer {
     private readonly states: StatesDb,
     private readonly spec: ChainSpec,
     hasher: TransitionHasher,
+    private readonly logger: Logger,
   ) {
     const currentStateRootHash = this.blocks.getBestData()[1];
     const state = states.getFullState(currentStateRootHash);
@@ -25,26 +37,35 @@ export class Importer {
 
     this.verifier = new BlockVerifier(hasher);
     this.stf = new OnChain(spec, state, blocks, hasher);
+
+    logger.info(`📥 Imported started. Best time slot: ${state.timeslot} (state root: ${currentStateRootHash})`);
   }
 
-  async importBlock(block: BlockView): Promise<WithHash<HeaderHash, HeaderView>> {
+  async importBlock(block: BlockView): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
+    this.logger.log("🧱 Attempting to import a new block.");
+
     const hash = await this.verifier.verifyBlock(block);
     if (hash.isError) {
-      // TODO [ToDr] this should be a `Result.error`?
-      throw new Error(`Block verification failure: ${hash.error} - ${hash.details}.`);
+      return Result.taggedError(ImporterErrorKind, ImporterErrorKind.Verifier, hash.error, hash.details);
     }
+
+    const timeSlot = block.header.view().timeSlotIndex.materialize();
+    this.logger.log(`🧱 Got hash ${hash.ok} for block at slot ${timeSlot}.`);
     const headerHash = hash.ok;
     const res = await this.stf.transition(block, headerHash);
     if (res.isError) {
-      throw new Error(`Block transition failure: ${res.error} - ${res.details}.`);
+      // TODO [ToDr] Revert the state?
+      return Result.taggedError(ImporterErrorKind, ImporterErrorKind.Stf, res.error, res.details);
     }
+
     const stateRoot = merkelizeState(serializeState(this.stf.state, this.spec));
     const writeState = this.states.insertFullState(stateRoot, this.stf.state);
     const writeBlocks = this.blocks.insertBlock(new WithHash(headerHash, block));
     await writeState;
     await writeBlocks;
     await this.blocks.setBestData(headerHash, stateRoot);
-    return new WithHash(headerHash, block.header.view());
+
+    return Result.ok(new WithHash(headerHash, block.header.view()));
   }
 
   bestBlockHash() {

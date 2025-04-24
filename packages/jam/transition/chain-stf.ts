@@ -13,7 +13,7 @@ import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import type { SafroleErrorCode } from "@typeberry/safrole/safrole";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal";
 import type { State } from "@typeberry/state";
-import { OK, Result } from "@typeberry/utils";
+import { OK, Result, type TaggedError } from "@typeberry/utils";
 import { Assurances, type AssurancesError } from "./assurances";
 import { Authorization } from "./authorization";
 import type { TransitionHasher } from "./hasher";
@@ -31,7 +31,7 @@ class DbHeaderChain implements HeaderChain {
   }
 }
 
-export enum ErrorKind {
+export enum StfErrorKind {
   Assurances = 0,
   Disputes = 1,
   Safrole = 2,
@@ -40,31 +40,13 @@ export enum ErrorKind {
   SafroleSeal = 5,
 }
 
-export type Error =
-  | {
-      kind: ErrorKind.Assurances;
-      error: AssurancesError;
-    }
-  | {
-      kind: ErrorKind.Reports;
-      error: ReportsError;
-    }
-  | {
-      kind: ErrorKind.Disputes;
-      error: DisputesErrorCode;
-    }
-  | {
-      kind: ErrorKind.Safrole;
-      error: SafroleErrorCode;
-    }
-  | {
-      kind: ErrorKind.Preimages;
-      error: PreimagesErrorCode;
-    }
-  | {
-      kind: ErrorKind.SafroleSeal;
-      error: SafroleSealError;
-    };
+export type StfError =
+  | TaggedError<StfErrorKind.Assurances, AssurancesError>
+  | TaggedError<StfErrorKind.Reports, ReportsError>
+  | TaggedError<StfErrorKind.Disputes, DisputesErrorCode>
+  | TaggedError<StfErrorKind.Safrole, SafroleErrorCode>
+  | TaggedError<StfErrorKind.Preimages, PreimagesErrorCode>
+  | TaggedError<StfErrorKind.SafroleSeal, SafroleSealError>;
 
 export class OnChain {
   // chapter 13: https://graypaper.fluffylabs.dev/#/68eaa1f/18b60118b601?v=0.6.4
@@ -109,7 +91,7 @@ export class OnChain {
     this.authorization = new Authorization(chainSpec, state);
   }
 
-  async transition(block: BlockView, headerHash: HeaderHash): Promise<Result<OK, Error>> {
+  async transition(block: BlockView, headerHash: HeaderHash): Promise<Result<OK, StfError>> {
     const header = block.header.materialize();
     const timeSlot = header.timeSlotIndex;
 
@@ -117,19 +99,13 @@ export class OnChain {
     const sealState = this.safrole.getSafroleSealState(timeSlot);
     const sealResult = await this.safroleSeal.verifyHeaderSeal(block.header.view(), sealState);
     if (sealResult.isError) {
-      return Result.error({
-        kind: ErrorKind.SafroleSeal,
-        error: sealResult.error,
-      });
+      return Result.taggedError(StfErrorKind, StfErrorKind.SafroleSeal, sealResult.error, sealResult.details);
     }
 
     // disputes
     const disputesResult = await this.disputes.transition(block.extrinsic.view().disputes.materialize());
     if (disputesResult.isError) {
-      return Result.error({
-        kind: ErrorKind.Disputes,
-        error: disputesResult.error,
-      });
+      return Result.taggedError(StfErrorKind, StfErrorKind.Disputes, disputesResult.error, disputesResult.details);
     }
 
     // reports
@@ -139,10 +115,7 @@ export class OnChain {
       knownPackages: [],
     });
     if (reportsResult.isError) {
-      return Result.error({
-        kind: ErrorKind.Reports,
-        error: reportsResult.error,
-      });
+      return Result.taggedError(StfErrorKind, StfErrorKind.Reports, reportsResult.error, reportsResult.details);
     }
 
     // assurances
@@ -152,10 +125,12 @@ export class OnChain {
       parentHash: header.parentHeaderHash,
     });
     if (assurancesResult.isError) {
-      return Result.error({
-        kind: ErrorKind.Assurances,
-        error: assurancesResult.error,
-      });
+      return Result.taggedError(
+        StfErrorKind,
+        StfErrorKind.Assurances,
+        assurancesResult.error,
+        assurancesResult.details,
+      );
     }
 
     // statistics
@@ -172,13 +147,10 @@ export class OnChain {
       entropy: sealResult.ok,
       extrinsic: block.extrinsic.view().tickets.materialize(),
     });
-    // TODO [ToDr] shall we verify the ticket mark & epoch mark as well?
 
+    // TODO [ToDr] shall we verify the ticket mark & epoch mark as well?
     if (safroleResult.isError) {
-      return Result.error({
-        kind: ErrorKind.Safrole,
-        error: safroleResult.error,
-      });
+      return Result.taggedError(StfErrorKind, StfErrorKind.Safrole, safroleResult.error, safroleResult.details);
     }
 
     // preimages
@@ -187,10 +159,7 @@ export class OnChain {
       preimages: block.extrinsic.view().preimages.materialize(),
     });
     if (preimagesResult.isError) {
-      return Result.error({
-        kind: ErrorKind.Preimages,
-        error: preimagesResult.error,
-      });
+      return Result.taggedError(StfErrorKind, StfErrorKind.Preimages, preimagesResult.error, preimagesResult.details);
     }
 
     // TODO [ToDr] output from accumulate

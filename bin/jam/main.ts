@@ -151,19 +151,27 @@ async function initializeDatabase(spec: ChainSpec, genesisPath: string | null, d
   if (genesisPath === null) {
     throw new Error("Genesis path is temporarily required. Provide a path to the genesis state.");
   }
+  logger.log(`🧬 Loading genesis state from ${genesisPath}`);
   const genesisState = loadGenesis(spec, genesisPath);
   const genesisStateHash = merkelizeState(serializeState(genesisState, spec));
+  logger.info(`🧬 Genesis state root: ${genesisStateHash}`);
 
   const dbPath = `${databasePath}/${genesisStateHash}`;
+  logger.log(`🛢️ Opening database at ${dbPath}`);
   const rootDb = new LmdbRoot(dbPath);
   const blocks = new LmdbBlocks(spec, rootDb);
   const states = new LmdbStates(spec, rootDb);
 
   const [header, state] = blocks.getBestData();
+  logger.log(`🛢️ Best header hash: ${header}`);
+  logger.log(`🛢️ Best state root: ${state}`);
   // DB seems already initialized, just go with what we have.
   if (!state.isEqualTo(Bytes.zero(HASH_SIZE)) && !header.isEqualTo(Bytes.zero(HASH_SIZE))) {
+    await rootDb.db.close();
     return dbPath;
   }
+
+  logger.log("🛢️ Database looks fresh. Initializing.");
   // looks like a fresh db, initialize the state.
   const genesisHeader = Header.empty();
   const genesisHeaderHash = blake2b.hashBytes(Encoder.encodeObject(Header.Codec, genesisHeader, spec)).asOpaque();

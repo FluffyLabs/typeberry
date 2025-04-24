@@ -117,7 +117,6 @@ export function tryAsLookupHistorySlots(items: TimeSlot[]): LookupHistorySlots {
 /** https://graypaper.fluffylabs.dev/#/5f542d7/115400115800 */
 export class LookupHistoryItem {
   constructor(
-    // TODO [ToDr] remove the hash?
     public readonly hash: PreimageHash,
     public readonly length: U32,
     /**
