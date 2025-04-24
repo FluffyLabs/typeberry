@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
+import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Result } from "@typeberry/utils";
@@ -19,15 +20,15 @@ const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
 
 function prepareRegsAndMemory(machineId: MachineId) {
-  const registers = new Registers();
-  registers.setU64(7, machineId);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(7, machineId);
 
   const builder = new MemoryBuilder();
   const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
 
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
   };
 }
 
@@ -56,7 +57,7 @@ describe("HostCalls: Expunge", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), programCounter);
+    assert.deepStrictEqual(registers.get(RESULT_REG), programCounter);
   });
 
   it("should return WHO if machine unknown", async () => {
@@ -67,6 +68,6 @@ describe("HostCalls: Expunge", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.WHO);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
   });
 });

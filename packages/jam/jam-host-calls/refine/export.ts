@@ -1,13 +1,14 @@
 import { SEGMENT_BYTES, type Segment } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { type HostCallHandler, PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
+import { tryAsU64, tryBigIntAsNumber } from "@typeberry/numbers";
 import {
-  type GasCounter,
-  type Memory,
-  type Registers,
-  tryAsMemoryIndex,
-  tryAsSmallGas,
-} from "@typeberry/pvm-interpreter";
+  type HostCallHandler,
+  type HostCallMemory,
+  type HostCallRegisters,
+  PvmExecution,
+  tryAsHostCallIndex,
+} from "@typeberry/pvm-host-calls";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { RefineExternalities } from "./refine-externalities";
@@ -26,11 +27,11 @@ export class Export implements HostCallHandler {
 
   constructor(private readonly refine: RefineExternalities) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
+  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
     // `p`: segment start address
-    const segmentStart = tryAsMemoryIndex(regs.getLowerU32(IN_OUT_REG));
+    const segmentStart = regs.get(IN_OUT_REG);
     // `z`: segment bounded length
-    const segmentLength = Math.min(regs.getLowerU32(8), SEGMENT_BYTES);
+    const segmentLength = Math.min(tryBigIntAsNumber(regs.get(8)), SEGMENT_BYTES);
     // destination (padded with zeros).
     const segment: Segment = Bytes.zero(SEGMENT_BYTES);
 
@@ -42,9 +43,9 @@ export class Export implements HostCallHandler {
     // attempt to export a segment and fail if it's above the maximum.
     const segmentExported = this.refine.exportSegment(segment);
     if (segmentExported.isOk) {
-      regs.setU32(IN_OUT_REG, segmentExported.ok);
+      regs.set(IN_OUT_REG, tryAsU64(segmentExported.ok));
     } else {
-      regs.setU64(IN_OUT_REG, HostCallResult.FULL);
+      regs.set(IN_OUT_REG, HostCallResult.FULL);
     }
   }
 }

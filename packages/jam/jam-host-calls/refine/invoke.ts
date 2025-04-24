@@ -1,15 +1,14 @@
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder, codec, tryAsExactBytes } from "@typeberry/codec";
-import { tryAsU64 } from "@typeberry/numbers";
-import { type HostCallHandler, PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
+import { tryAsU64, tryBigIntAsNumber } from "@typeberry/numbers";
 import {
-  type GasCounter,
-  type Memory,
-  Registers,
-  tryAsBigGas,
-  tryAsMemoryIndex,
-  tryAsSmallGas,
-} from "@typeberry/pvm-interpreter";
+  type HostCallHandler,
+  type HostCallMemory,
+  type HostCallRegisters,
+  PvmExecution,
+  tryAsHostCallIndex,
+} from "@typeberry/pvm-host-calls";
+import { type GasCounter, Registers, tryAsBigGas, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { HostCallResult } from "../results";
@@ -36,13 +35,16 @@ export class Invoke implements HostCallHandler {
 
   constructor(private readonly refine: RefineExternalities) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
+  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
     // `n`
-    const machineIndex = tryAsMachineId(regs.getU64(IN_OUT_REG_1));
+    const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG_1));
     // `o`
-    const destinationStart = tryAsMemoryIndex(regs.getLowerU32(IN_OUT_REG_2));
+    const destinationStart = regs.get(IN_OUT_REG_2);
 
-    const destinationWriteable = memory.isWriteable(destinationStart, destinationStart + GAS_REGISTERS_SIZE);
+    const destinationWriteable = memory.isWriteable(
+      destinationStart,
+      tryBigIntAsNumber(destinationStart) + GAS_REGISTERS_SIZE,
+    );
     if (!destinationWriteable) {
       return PvmExecution.Panic;
     }
@@ -62,7 +64,7 @@ export class Invoke implements HostCallHandler {
 
     // machine not found
     if (state.isError) {
-      regs.setU64(IN_OUT_REG_1, HostCallResult.WHO);
+      regs.set(IN_OUT_REG_1, HostCallResult.WHO);
       return;
     }
 
@@ -77,17 +79,17 @@ export class Invoke implements HostCallHandler {
 
     switch (machineState.result.status) {
       case Status.HOST:
-        regs.setU64(IN_OUT_REG_1, tryAsU64(machineState.result.status));
-        regs.setU64(IN_OUT_REG_2, machineState.result.hostCallIndex);
+        regs.set(IN_OUT_REG_1, tryAsU64(machineState.result.status));
+        regs.set(IN_OUT_REG_2, machineState.result.hostCallIndex);
         return;
       case Status.FAULT:
-        regs.setU64(IN_OUT_REG_1, tryAsU64(machineState.result.status));
-        regs.setU64(IN_OUT_REG_2, machineState.result.address);
+        regs.set(IN_OUT_REG_1, tryAsU64(machineState.result.status));
+        regs.set(IN_OUT_REG_2, machineState.result.address);
         return;
       case Status.PANIC:
       case Status.HALT:
       case Status.OOG:
-        regs.setU64(IN_OUT_REG_1, tryAsU64(machineState.result.status));
+        regs.set(IN_OUT_REG_1, tryAsU64(machineState.result.status));
         return;
     }
     throw new Error(`Unexpected inner PVM result: ${machineState.result.status}`);

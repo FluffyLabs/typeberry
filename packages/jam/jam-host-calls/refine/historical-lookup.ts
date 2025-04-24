@@ -1,15 +1,14 @@
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { minU64, tryAsU64 } from "@typeberry/numbers";
-import { type HostCallHandler, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
 import {
-  type GasCounter,
-  type Memory,
-  type Registers,
-  tryAsMemoryIndex,
-  tryAsSmallGas,
-} from "@typeberry/pvm-interpreter";
+  type HostCallHandler,
+  type HostCallMemory,
+  type HostCallRegisters,
+  tryAsHostCallIndex,
+} from "@typeberry/pvm-host-calls";
+import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID, getServiceId } from "../utils";
 import type { RefineExternalities } from "./refine-externalities";
@@ -28,19 +27,19 @@ export class HistoricalLookup implements HostCallHandler {
 
   constructor(private readonly refine: RefineExternalities) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
+  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
     // a
     const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // we return NONE in case the serviceId is not valid.
     if (serviceId === null) {
-      regs.setU64(IN_OUT_REG, HostCallResult.NONE);
+      regs.set(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
     // h
-    const hashStart = tryAsMemoryIndex(regs.getLowerU32(8));
+    const hashStart = regs.get(8);
     // o
-    const destinationStart = tryAsMemoryIndex(regs.getLowerU32(9));
+    const destinationStart = regs.get(9);
 
     const hash = Bytes.zero(HASH_SIZE);
     const hashLoadingResult = memory.loadInto(hash.raw, hashStart);
@@ -52,15 +51,15 @@ export class HistoricalLookup implements HostCallHandler {
     const value = await this.refine.historicalLookup(serviceId, hash);
     // we return NONE in case the value is not found.
     if (value === null) {
-      regs.setU64(IN_OUT_REG, HostCallResult.NONE);
+      regs.set(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
     const length = tryAsU64(value.raw.length);
     // f
-    const offset = minU64(tryAsU64(regs.getU64(10)), length);
+    const offset = minU64(regs.get(10), length);
     // l
-    const destinationLen = minU64(tryAsU64(regs.getU64(11)), tryAsU64(length - offset));
+    const destinationLen = minU64(regs.get(11), tryAsU64(length - offset));
 
     // NOTE: casting to u32 (number) is safe here because the length of the value is always less than 2^32 (for sure).
     const data = value.raw.subarray(Number(offset), Number(offset + destinationLen));
@@ -70,6 +69,6 @@ export class HistoricalLookup implements HostCallHandler {
     }
 
     // copy value to the memory and set the length to register 7
-    regs.setU64(IN_OUT_REG, length);
+    regs.set(IN_OUT_REG, length);
   }
 }

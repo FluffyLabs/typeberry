@@ -30,4 +30,8 @@ export class HostCallMemory {
 
     return this.memory.isWriteable(tryAsMemoryIndex(Number(startAddress)), length);
   }
+
+  getMemory(): Memory {
+    return this.memory;
+  }
 }

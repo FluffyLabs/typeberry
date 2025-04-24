@@ -1,12 +1,13 @@
 import { BytesBlob } from "@typeberry/bytes";
-import { type HostCallHandler, PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
+import { tryBigIntAsNumber } from "@typeberry/numbers";
 import {
-  type GasCounter,
-  type Memory,
-  type Registers,
-  tryAsMemoryIndex,
-  tryAsSmallGas,
-} from "@typeberry/pvm-interpreter";
+  type HostCallHandler,
+  type HostCallMemory,
+  type HostCallRegisters,
+  PvmExecution,
+  tryAsHostCallIndex,
+} from "@typeberry/pvm-host-calls";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { type RefineExternalities, tryAsProgramCounter } from "./refine-externalities";
@@ -25,13 +26,13 @@ export class Machine implements HostCallHandler {
 
   constructor(private readonly refine: RefineExternalities) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
+  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
     // `p_o`: memory index where there program code starts
-    const codeStart = tryAsMemoryIndex(regs.getLowerU32(7));
+    const codeStart = regs.get(7);
     // `p_z`: length of the program code
-    const codeLength = regs.getLowerU32(8);
+    const codeLength = tryBigIntAsNumber(regs.get(8));
     // `i`: starting program counter
-    const entrypoint = tryAsProgramCounter(regs.getU64(9));
+    const entrypoint = tryAsProgramCounter(regs.get(9));
 
     const code = new Uint8Array(codeLength);
     const codeLoadResult = memory.loadInto(code, codeStart);
@@ -42,9 +43,9 @@ export class Machine implements HostCallHandler {
     // NOTE: Highly unlikely, but machineId could potentially collide with HOST_CALL_RESULT.
     const machinInitResult = await this.refine.machineInit(BytesBlob.blobFrom(code), entrypoint);
     if (machinInitResult.isError) {
-      regs.setU64(IN_OUT_REG, HostCallResult.HUH);
+      regs.set(IN_OUT_REG, HostCallResult.HUH);
     } else {
-      regs.setU64(IN_OUT_REG, machinInitResult.ok);
+      regs.set(IN_OUT_REG, machinInitResult.ok);
     }
   }
 }

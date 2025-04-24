@@ -4,6 +4,7 @@ import { tryAsServiceId } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
 import {
   MemoryBuilder,
@@ -17,7 +18,6 @@ import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { HostCallResult } from "../results";
 import { TestAccumulate } from "./partial-state.test";
 import { Yield } from "./yield";
-import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 
 const gas = gasCounter(tryAsGas(0));
 const HASH_START_REG = 7;

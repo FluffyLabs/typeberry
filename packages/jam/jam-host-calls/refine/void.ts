@@ -1,6 +1,11 @@
-import { sumU32, tryAsU32 } from "@typeberry/numbers";
-import { type HostCallHandler, type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import { type GasCounter, type Registers, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { sumU32, tryAsU32, tryBigIntAsNumber } from "@typeberry/numbers";
+import {
+  type HostCallHandler,
+  type HostCallRegisters,
+  type PvmExecution,
+  tryAsHostCallIndex,
+} from "@typeberry/pvm-host-calls";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { MAX_NUMBER_OF_PAGES, RESERVED_NUMBER_OF_PAGES } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { assertNever } from "@typeberry/utils";
 import { HostCallResult } from "../results";
@@ -21,29 +26,29 @@ export class Void implements HostCallHandler {
 
   constructor(private readonly refine: RefineExternalities) {}
 
-  async execute(_gas: GasCounter, regs: Registers): Promise<PvmExecution | undefined> {
+  async execute(_gas: GasCounter, regs: HostCallRegisters): Promise<PvmExecution | undefined> {
     // `n`: machine index
-    const machineIndex = tryAsMachineId(regs.getU64(IN_OUT_REG));
+    const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG));
     // `p`: start page
-    const pageStart = tryAsU32(regs.getLowerU32(8));
+    const pageStart = tryAsU32(tryBigIntAsNumber(regs.get(8)));
     // `c`: page count
-    const pageCount = tryAsU32(regs.getLowerU32(9));
+    const pageCount = tryAsU32(tryBigIntAsNumber(regs.get(9)));
 
     const endPage = sumU32(pageStart, pageCount);
     const isWithinBounds = pageStart >= RESERVED_NUMBER_OF_PAGES && endPage.value < MAX_NUMBER_OF_PAGES;
     if (endPage.overflow || !isWithinBounds) {
-      regs.setU64(IN_OUT_REG, HostCallResult.HUH);
+      regs.set(IN_OUT_REG, HostCallResult.HUH);
       return;
     }
 
     const voidResult = await this.refine.machineVoidPages(machineIndex, pageStart, pageCount);
 
     if (voidResult.isOk) {
-      regs.setU64(IN_OUT_REG, HostCallResult.OK);
+      regs.set(IN_OUT_REG, HostCallResult.OK);
     } else if (voidResult.error === NoMachineError) {
-      regs.setU64(IN_OUT_REG, HostCallResult.WHO);
+      regs.set(IN_OUT_REG, HostCallResult.WHO);
     } else if (voidResult.error === InvalidPageError) {
-      regs.setU64(IN_OUT_REG, HostCallResult.HUH);
+      regs.set(IN_OUT_REG, HostCallResult.HUH);
     } else {
       assertNever(voidResult.error);
     }

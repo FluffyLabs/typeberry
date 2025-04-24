@@ -2,8 +2,8 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
-import { type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { PvmExecution } from "@typeberry/pvm-host-calls";
+import { type U64, tryAsU64, tryBigIntAsNumber } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Status } from "@typeberry/pvm-interpreter/status";
@@ -23,31 +23,32 @@ const MEM_START = 0;
 
 function prepareRegsAndMemory(
   machineIndex: U64,
-  destinationStart: U32,
+  destinationStart: U64,
   data: BytesBlob,
   { registerMemory = true }: { registerMemory?: boolean } = {},
 ) {
-  const registers = new Registers();
-  registers.setU64(MACHINE_INDEX_REG, machineIndex);
-  registers.setU32(DEST_REG, destinationStart);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(MACHINE_INDEX_REG, machineIndex);
+  registers.set(DEST_REG, tryAsU64(destinationStart));
 
   const memory = prepareMemory(data, destinationStart, PAGE_SIZE, { registerMemory });
 
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
   };
 }
 
 function prepareMemory(
   data: BytesBlob,
-  address: number,
+  address: U64,
   size: number,
   { registerMemory = true }: { registerMemory?: boolean } = {},
 ) {
   const builder = new MemoryBuilder();
+  const addressAsNumber = tryBigIntAsNumber(address);
   if (registerMemory) {
-    builder.setWriteablePages(tryAsMemoryIndex(address), tryAsMemoryIndex(address + size), data.raw);
+    builder.setWriteablePages(tryAsMemoryIndex(addressAsNumber), tryAsMemoryIndex(addressAsNumber + size), data.raw);
   }
   return builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
 }
@@ -80,15 +81,15 @@ describe("HostCalls: Invoke", () => {
     invoke.currentServiceId = tryAsServiceId(10_000);
 
     const w7 = tryAsU64(machineId);
-    const w8 = tryAsU32(MEM_START);
+    const w8 = tryAsU64(MEM_START);
     const code = Bytes.zero(GAS_REG_SIZE);
     const { registers, memory } = prepareRegsAndMemory(w7, w8, code, { registerMemory: false });
 
     const result = await invoke.execute(gas, registers, memory);
 
     assert.strictEqual(result, PvmExecution.Panic);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG_1), w7);
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG_2), w8);
+    assert.deepStrictEqual(registers.get(RESULT_REG_1), w7);
+    assert.deepStrictEqual(registers.get(RESULT_REG_2), w8);
   });
 
   it("should return `who` if machine is not found (machine not initialized)", async () => {
@@ -105,15 +106,15 @@ describe("HostCalls: Invoke", () => {
     invoke.currentServiceId = tryAsServiceId(10_000);
 
     const w7 = tryAsU64(machineId);
-    const w8 = tryAsU32(MEM_START);
+    const w8 = tryAsU64(MEM_START);
     const code = Bytes.zero(GAS_REG_SIZE);
     const { registers, memory } = prepareRegsAndMemory(w7, w8, code);
 
     const result = await invoke.execute(gas, registers, memory);
 
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG_1), HostCallResult.WHO);
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG_2), w8);
+    assert.deepStrictEqual(registers.get(RESULT_REG_1), HostCallResult.WHO);
+    assert.deepStrictEqual(registers.get(RESULT_REG_2), w8);
   });
 
   it("should return `who` if machine is not found (machine id is not valid)", async () => {
@@ -125,15 +126,15 @@ describe("HostCalls: Invoke", () => {
     invoke.currentServiceId = tryAsServiceId(10_000);
 
     const w7 = tryAsU64(machineId + 1n);
-    const w8 = tryAsU32(MEM_START);
+    const w8 = tryAsU64(MEM_START);
     const code = Bytes.zero(GAS_REG_SIZE);
     const { registers, memory } = prepareRegsAndMemory(w7, w8, code);
 
     const result = await invoke.execute(gas, registers, memory);
 
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG_1), HostCallResult.WHO);
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG_2), w8);
+    assert.deepStrictEqual(registers.get(RESULT_REG_1), HostCallResult.WHO);
+    assert.deepStrictEqual(registers.get(RESULT_REG_2), w8);
   });
 
   it("should run the machine and finish with `host` status", async () => {
@@ -147,15 +148,15 @@ describe("HostCalls: Invoke", () => {
     invoke.currentServiceId = tryAsServiceId(10_000);
 
     const w7 = tryAsU64(machineId);
-    const w8 = tryAsU32(MEM_START);
+    const w8 = tryAsU64(MEM_START);
     const code = Bytes.zero(GAS_REG_SIZE);
     const { registers, memory } = prepareRegsAndMemory(w7, w8, code);
 
     const result = await invoke.execute(gas, registers, memory);
 
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG_1), tryAsU64(Status.HOST));
-    assert.deepStrictEqual(registers.getU64(RESULT_REG_2), hostCallIndex);
+    assert.deepStrictEqual(registers.get(RESULT_REG_1), tryAsU64(Status.HOST));
+    assert.deepStrictEqual(registers.get(RESULT_REG_2), hostCallIndex);
   });
 
   it("should run the machine and finish with `fault` status", async () => {
@@ -169,15 +170,15 @@ describe("HostCalls: Invoke", () => {
     invoke.currentServiceId = tryAsServiceId(10_000);
 
     const w7 = tryAsU64(machineId);
-    const w8 = tryAsU32(MEM_START);
+    const w8 = tryAsU64(MEM_START);
     const code = Bytes.zero(GAS_REG_SIZE);
     const { registers, memory } = prepareRegsAndMemory(w7, w8, code);
 
     const result = await invoke.execute(gas, registers, memory);
 
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG_1), tryAsU64(Status.FAULT));
-    assert.deepStrictEqual(registers.getU64(RESULT_REG_2), address);
+    assert.deepStrictEqual(registers.get(RESULT_REG_1), tryAsU64(Status.FAULT));
+    assert.deepStrictEqual(registers.get(RESULT_REG_2), address);
   });
 
   it("should run the machine and finish with `oog` status", async () => {
@@ -189,15 +190,15 @@ describe("HostCalls: Invoke", () => {
     invoke.currentServiceId = tryAsServiceId(10_000);
 
     const w7 = tryAsU64(machineId);
-    const w8 = tryAsU32(MEM_START);
+    const w8 = tryAsU64(MEM_START);
     const code = Bytes.zero(GAS_REG_SIZE);
     const { registers, memory } = prepareRegsAndMemory(w7, w8, code);
 
     const result = await invoke.execute(gas, registers, memory);
 
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG_1), tryAsU64(Status.OOG));
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG_2), w8);
+    assert.deepStrictEqual(registers.get(RESULT_REG_1), tryAsU64(Status.OOG));
+    assert.deepStrictEqual(registers.get(RESULT_REG_2), w8);
   });
 
   it("should run the machine and finish with `panic` status", async () => {
@@ -209,15 +210,15 @@ describe("HostCalls: Invoke", () => {
     invoke.currentServiceId = tryAsServiceId(10_000);
 
     const w7 = tryAsU64(machineId);
-    const w8 = tryAsU32(MEM_START);
+    const w8 = tryAsU64(MEM_START);
     const code = Bytes.zero(GAS_REG_SIZE);
     const { registers, memory } = prepareRegsAndMemory(w7, w8, code);
 
     const result = await invoke.execute(gas, registers, memory);
 
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG_1), tryAsU64(Status.PANIC));
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG_2), w8);
+    assert.deepStrictEqual(registers.get(RESULT_REG_1), tryAsU64(Status.PANIC));
+    assert.deepStrictEqual(registers.get(RESULT_REG_2), w8);
   });
 
   it("should run the machine and finish with `halt` status", async () => {
@@ -229,14 +230,14 @@ describe("HostCalls: Invoke", () => {
     invoke.currentServiceId = tryAsServiceId(10_000);
 
     const w7 = tryAsU64(machineId);
-    const w8 = tryAsU32(MEM_START);
+    const w8 = tryAsU64(MEM_START);
     const code = Bytes.zero(GAS_REG_SIZE);
     const { registers, memory } = prepareRegsAndMemory(w7, w8, code);
 
     const result = await invoke.execute(gas, registers, memory);
 
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG_1), tryAsU64(Status.HALT));
-    assert.deepStrictEqual(registers.getLowerU32(RESULT_REG_2), w8);
+    assert.deepStrictEqual(registers.get(RESULT_REG_1), tryAsU64(Status.HALT));
+    assert.deepStrictEqual(registers.get(RESULT_REG_2), w8);
   });
 });
