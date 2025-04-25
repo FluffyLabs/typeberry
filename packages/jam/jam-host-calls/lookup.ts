@@ -32,11 +32,6 @@ export class Lookup implements HostCallHandler {
     // a
     const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
 
-    if (serviceId === null) {
-      regs.set(IN_OUT_REG, HostCallResult.NONE);
-      return;
-    }
-
     // h
     const hashAddress = regs.get(8);
     // o
@@ -49,13 +44,9 @@ export class Lookup implements HostCallHandler {
     }
 
     // v
-    const preImage = await this.account.lookup(serviceId, preImageHash);
-    if (preImage === null) {
-      regs.set(IN_OUT_REG, HostCallResult.NONE);
-      return;
-    }
+    const preImage = serviceId !== null ? await this.account.lookup(serviceId, preImageHash) : null;
 
-    const preImageLength = tryAsU64(preImage.raw.length);
+    const preImageLength = preImage === null ? tryAsU64(0) : tryAsU64(preImage.raw.length);
     const preimageBlobOffset = tryAsU64(regs.get(10));
     const lengthToWrite = tryAsU64(regs.get(11));
 
@@ -63,6 +54,11 @@ export class Lookup implements HostCallHandler {
     const start = minU64(preimageBlobOffset, preImageLength);
     // l
     const blobLength = minU64(lengthToWrite, tryAsU64(preImageLength - start));
+
+    if (preImage === null) {
+      regs.setU64(IN_OUT_REG, HostCallResult.NONE);
+      return;
+    }
 
     // casting to `Number` is safe here, since we are bounded by `preImageLength` in both cases, which is `U32`
     const chunk = preImage.raw.subarray(Number(start), Number(start + blobLength));

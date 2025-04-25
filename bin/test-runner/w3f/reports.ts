@@ -6,11 +6,17 @@ import {
   tryAsPerEpochBlock,
   tryAsPerValidator,
 } from "@typeberry/block";
+import { fromJson, guaranteesExtrinsicFromJson } from "@typeberry/block-json";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
-import type { WorkPackageInfo } from "@typeberry/block/work-report";
-import { FixedSizeArray, HashDictionary, HashSet } from "@typeberry/collections";
+import {
+  type AuthorizerHash,
+  type ExportsRootHash,
+  type WorkPackageHash,
+  WorkPackageInfo,
+} from "@typeberry/block/work-report";
+import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
+import { type KeccakHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
 import {
@@ -29,25 +35,33 @@ import {
   type ReportsState,
 } from "@typeberry/transition/reports";
 import { guaranteesAsView } from "@typeberry/transition/reports/test.utils";
-import { Result, asOpaqueType, deepEqual } from "@typeberry/utils";
-import { fromJson as codecFromJson } from "./codec/common";
-import { guaranteesExtrinsicFromJson } from "./codec/guarantees-extrinsic";
-import {
-  TestAccountItem,
-  TestAvailabilityAssignment,
-  TestBlockState,
-  TestSegmentRootLookupItem,
-  commonFromJson,
-} from "./common-types";
+import { Result, asOpaqueType, deepEqual, resultToString } from "@typeberry/utils";
+import { logger } from "../common";
+import { TestAccountItem, TestAvailabilityAssignment, TestBlockState, validatorDataFromJson } from "./common-types";
+
+class TestSegmentRootLookupItem {
+  static fromJson = json.object<TestSegmentRootLookupItem, WorkPackageInfo>(
+    {
+      work_package_hash: fromJson.bytes32(),
+      segment_tree_root: fromJson.bytes32(),
+    },
+    ({ work_package_hash, segment_tree_root }) => new WorkPackageInfo(work_package_hash, segment_tree_root),
+  );
+
+  work_package_hash!: WorkPackageHash;
+  segment_tree_root!: ExportsRootHash;
+}
 
 class Input {
   static fromJson: FromJson<Input> = {
     guarantees: guaranteesExtrinsicFromJson,
     slot: "number",
+    known_packages: json.array(fromJson.bytes32()),
   };
 
   guarantees!: GuaranteesExtrinsic;
   slot!: TimeSlot;
+  known_packages!: WorkPackageHash[];
 
   static toReportsInput(input: Input, spec: ChainSpec): ReportsInput {
     const view = guaranteesAsView(spec, input.guarantees, { disableCredentialsRangeCheck: true });
@@ -55,20 +69,84 @@ class Input {
     return {
       guarantees: view,
       slot: input.slot,
+      knownPackages: input.known_packages,
     };
   }
+}
+
+class TestCoreStatistics {
+  static fromJson: FromJson<TestCoreStatistics> = {
+    da_load: "number",
+    popularity: "number",
+    imports: "number",
+    exports: "number",
+    extrinsic_size: "number",
+    extrinsic_count: "number",
+    bundle_size: "number",
+    gas_used: "number",
+  };
+
+  da_load!: number;
+  popularity!: number;
+  imports!: number;
+  exports!: number;
+  extrinsic_size!: number;
+  extrinsic_count!: number;
+  bundle_size!: number;
+  gas_used!: number;
+}
+
+class TestServiceRecord {
+  static fromJson: FromJson<TestServiceRecord> = {
+    provided_count: "number",
+    provided_size: "number",
+    refinement_count: "number",
+    refinement_gas_used: "number",
+    imports: "number",
+    exports: "number",
+    extrinsic_size: "number",
+    extrinsic_count: "number",
+    accumulate_count: "number",
+    accumulate_gas_used: "number",
+    on_transfers_count: "number",
+    on_transfers_gas_used: "number",
+  };
+  provided_count!: number;
+  provided_size!: number;
+  refinement_count!: number;
+  refinement_gas_used!: number;
+  imports!: number;
+  exports!: number;
+  extrinsic_size!: number;
+  extrinsic_count!: number;
+  accumulate_count!: number;
+  accumulate_gas_used!: number;
+  on_transfers_count!: number;
+  on_transfers_gas_used!: number;
+}
+
+class TestServiceStatistics {
+  static fromJson: FromJson<TestServiceStatistics> = {
+    id: "number",
+    record: TestServiceRecord.fromJson,
+  };
+
+  id!: number;
+  record!: TestServiceRecord;
 }
 
 class TestState {
   static fromJson: FromJson<TestState> = {
     avail_assignments: json.array(json.nullable(TestAvailabilityAssignment.fromJson)),
-    curr_validators: json.array(commonFromJson.validatorData),
-    prev_validators: json.array(commonFromJson.validatorData),
-    entropy: json.array(commonFromJson.bytes32()),
-    offenders: json.array(codecFromJson.bytes32<Ed25519Key>()),
-    auth_pools: ["array", json.array(codecFromJson.bytes32())],
+    curr_validators: json.array(validatorDataFromJson),
+    prev_validators: json.array(validatorDataFromJson),
+    entropy: json.array(fromJson.bytes32()),
+    offenders: json.array(fromJson.bytes32<Ed25519Key>()),
     recent_blocks: json.array(TestBlockState.fromJson),
+    auth_pools: ["array", json.array(fromJson.bytes32())],
     accounts: json.array(TestAccountItem.fromJson),
+    cores_statistics: json.array(TestCoreStatistics.fromJson),
+    services_statistics: json.array(TestServiceStatistics.fromJson),
   };
 
   avail_assignments!: Array<AvailabilityAssignment | null>;
@@ -76,9 +154,11 @@ class TestState {
   prev_validators!: ValidatorData[];
   entropy!: EntropyHash[];
   offenders!: Ed25519Key[];
-  auth_pools!: OpaqueHash[][];
+  auth_pools!: AuthorizerHash[][];
   recent_blocks!: BlockState[];
   accounts!: Service[];
+  cores_statistics!: TestCoreStatistics[];
+  services_statistics!: TestServiceStatistics[];
 
   static toReportsState(pre: TestState, spec: ChainSpec): ReportsState {
     if (pre.offenders.length > 0) {
@@ -100,7 +180,10 @@ class TestState {
       currentValidatorData: tryAsPerValidator(pre.curr_validators, spec),
       previousValidatorData: tryAsPerValidator(pre.prev_validators, spec),
       entropy: FixedSizeArray.new(pre.entropy, ENTROPY_ENTRIES),
-      authPools: tryAsPerCore(pre.auth_pools.map(asOpaqueType), spec),
+      authPools: tryAsPerCore(
+        pre.auth_pools.map((x) => asKnownSize(x)),
+        spec,
+      ),
       recentBlocks: asOpaqueType(pre.recent_blocks),
       services: new Map(pre.accounts.map((x) => [x.id, x])),
     };
@@ -137,7 +220,7 @@ class OutputData {
   static fromJson = json.object<OutputData, ReportsOutput>(
     {
       reported: json.array(TestSegmentRootLookupItem.fromJson),
-      reporters: json.array(codecFromJson.bytes32()),
+      reporters: json.array(fromJson.bytes32()),
     },
     ({ reported, reporters }) => ({
       reported: HashDictionary.fromEntries(reported.map((x) => [x.workPackageHash, x])),
@@ -246,6 +329,7 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   const reports = new Reports(spec, preState, hasher, headerChain);
 
   const output = await reports.transition(input);
+  logger.log(`ReportsTest { ${resultToString(output)} }`);
 
   deepEqual(output, expectedOutput, { context: "output", ignore: ["output.details"] });
   deepEqual(reports.state, postState, { context: "postState" });

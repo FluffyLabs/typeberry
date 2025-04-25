@@ -1,8 +1,8 @@
-import { Extrinsic } from "@typeberry/block/block";
+import { Extrinsic } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import { json } from "@typeberry/json-parser";
+
 import { getAssurancesExtrinsicFromJson } from "./assurances-extrinsic";
-import { runCodecTest } from "./common";
 import { disputesExtrinsicFromJson } from "./disputes-extrinsic";
 import { guaranteesExtrinsicFromJson } from "./guarantees-extrinsic";
 import { preimagesExtrinsicFromJson } from "./preimages-extrinsic";
@@ -20,7 +20,3 @@ export const getExtrinsicFromJson = (ctx: ChainSpec) =>
     ({ tickets, preimages, guarantees, assurances, disputes }) =>
       new Extrinsic(tickets, preimages, guarantees, assurances, disputes),
   );
-
-export async function runExtrinsicTest(test: Extrinsic, file: string) {
-  runCodecTest(Extrinsic.Codec, test, file);
-}

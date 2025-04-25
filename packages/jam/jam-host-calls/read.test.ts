@@ -4,6 +4,8 @@ import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
+import { MAX_U64 } from "@typeberry/numbers";
+import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
@@ -14,6 +16,7 @@ import { HostCallResult } from "./results";
 import { SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
 import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { tryAsU64 } from "@typeberry/numbers";
+import { OK, Result } from "@typeberry/utils";
 
 class TestAccounts implements Accounts {
   public readonly data: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
@@ -36,7 +39,8 @@ const RESULT_REG = SERVICE_ID_REG;
 const KEY_START_REG = 8;
 const KEY_LEN_REG = 9;
 const DEST_START_REG = 10;
-const DEST_LEN_REG = 11;
+const VALUE_OFFSET_REG = 11;
+const VALUE_LENGTH_TO_WRITE_REG = 12;
 
 function prepareKey(serviceId: ServiceId, key: string) {
   const keyBytes = BytesBlob.blobFromString(key);
@@ -47,19 +51,35 @@ function prepareKey(serviceId: ServiceId, key: string) {
 }
 
 function prepareRegsAndMemory(
-  readServiceId: ServiceId,
   key: BytesBlob,
-  destinationLength: number,
-  { skipKey = false, skipValue = false }: { skipKey?: boolean; skipValue?: boolean } = {},
+  valueLength: number,
+  {
+    skipKey = false,
+    skipValue = false,
+    valueOffset = 0,
+    valueLengthToWrite = valueLength,
+    serviceId,
+  }: {
+    skipKey?: boolean;
+    skipValue?: boolean;
+    valueOffset?: number;
+    valueLengthToWrite?: number;
+    serviceId?: ServiceId;
+  } = {},
 ) {
   const keyAddress = 2 ** 20;
   const memStart = 2 ** 16;
   const registers = new HostCallRegisters(new Registers());
-  registers.set(SERVICE_ID_REG, tryAsU64(readServiceId));
+  if (serviceId !== undefined) {
+    registers.set(SERVICE_ID_REG, tryAsU64(serviceId));
+  } else {
+    registers.set(SERVICE_ID_REG, tryAsU64(MAX_U64));
+  }
   registers.set(KEY_START_REG, tryAsU64(keyAddress));
   registers.set(KEY_LEN_REG, tryAsU64(key.length));
   registers.set(DEST_START_REG, tryAsU64(memStart));
-  registers.set(DEST_LEN_REG, tryAsU64(destinationLength));
+  registers.set(VALUE_OFFSET_REG, tryAsU64(valueOffset));
+  registers.set(VALUE_LENGTH_TO_WRITE_REG, tryAsU64(valueLengthToWrite));
 
   const builder = new MemoryBuilder();
   if (!skipKey) {
@@ -73,69 +93,122 @@ function prepareRegsAndMemory(
     registers,
     memory: new HostCallMemory(memory),
     readResult: () => {
-      const result = new Uint8Array(destinationLength);
-      assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)).isOk, true);
+      const result = new Uint8Array(valueLength - valueOffset);
+      assert.deepStrictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)), Result.ok(OK));
       return BytesBlob.blobFrom(result);
     },
   };
 }
 
 describe("HostCalls: Read", () => {
-  it("should read key from an account state", async () => {
-    const accounts = new TestAccounts();
-    const read = new Read(accounts);
-    const serviceId = tryAsServiceId(10_000);
-    read.currentServiceId = serviceId;
-    const { key, hash } = prepareKey(read.currentServiceId, "hello world");
-    const { registers, memory, readResult } = prepareRegsAndMemory(tryAsServiceId(2 ** 32 - 1), key, 64);
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
+  describe("should read key from an account state", () => {
+    it("for current account", async () => {
+      const accounts = new TestAccounts();
+      const read = new Read(accounts);
+      const serviceId = tryAsServiceId(10_000);
+      read.currentServiceId = serviceId;
+      const { key, hash } = prepareKey(read.currentServiceId, "key");
+      const value = "hello world";
+      const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length);
+      accounts.data.set(BytesBlob.blobFromString(value), serviceId, hash);
 
-    // when
-    await read.execute(gas, registers, memory);
+      const result = await read.execute(gas, registers, memory);
 
-    // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64("hello world".length));
-    assert.deepStrictEqual(
-      readResult().toString(),
-      "0x68656c6c6f20776f726c640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-    );
+      assert.deepStrictEqual(result, undefined);
+      assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(value.length));
+      assert.deepStrictEqual(readResult().asText(), value);
+    });
+
+    it("for different service Id", async () => {
+      const accounts = new TestAccounts();
+      const read = new Read(accounts);
+      read.currentServiceId = tryAsServiceId(10_000);
+      const serviceId = tryAsServiceId(11_000);
+      const { key, hash } = prepareKey(read.currentServiceId, "key");
+      const value = "hello world";
+      const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length, {
+        serviceId,
+      });
+      accounts.data.set(BytesBlob.blobFromString(value), serviceId, hash);
+
+      const result = await read.execute(gas, registers, memory);
+
+      assert.deepStrictEqual(result, undefined);
+      assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(value.length));
+      assert.deepStrictEqual(readResult().asText(), value);
+    });
+
+    it("with offset", async () => {
+      const accounts = new TestAccounts();
+      const read = new Read(accounts);
+      const serviceId = tryAsServiceId(10_000);
+      read.currentServiceId = serviceId;
+      const { key, hash } = prepareKey(read.currentServiceId, "key");
+      const value = "hello world";
+      const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length, {
+        valueOffset: 6,
+      });
+      accounts.data.set(BytesBlob.blobFromString(value), serviceId, hash);
+
+      const result = await read.execute(gas, registers, memory);
+
+      assert.deepStrictEqual(result, undefined);
+      assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(value.length));
+      assert.deepStrictEqual(readResult().toString(), "0x776f726c64");
+    });
+
+    it("with offset and length", async () => {
+      const accounts = new TestAccounts();
+      const read = new Read(accounts);
+      const serviceId = tryAsServiceId(10_000);
+      read.currentServiceId = serviceId;
+      const { key, hash } = prepareKey(read.currentServiceId, "key");
+      const value = "hello world";
+      const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length, {
+        valueOffset: 6,
+        valueLengthToWrite: 1,
+      });
+      accounts.data.set(BytesBlob.blobFromString(value), serviceId, hash);
+
+      const result = await read.execute(gas, registers, memory);
+
+      assert.deepStrictEqual(result, undefined);
+      assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(value.length));
+      assert.deepStrictEqual(readResult().toString(), "0x7700000000");
+    });
+
+    it("with 0-length destination target", async () => {
+      const accounts = new TestAccounts();
+      const read = new Read(accounts);
+      const serviceId = tryAsServiceId(10_000);
+      read.currentServiceId = serviceId;
+      const { key, hash } = prepareKey(read.currentServiceId, "xyz");
+      const value = "hello world";
+      const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length, { valueLengthToWrite: 0 });
+      accounts.data.set(BytesBlob.blobFromString(value), serviceId, hash);
+      const result = await read.execute(gas, registers, memory);
+
+      assert.deepStrictEqual(result, undefined);
+      assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(value.length));
+      assert.deepStrictEqual(readResult().toString(), "0x0000000000000000000000");
+    });
   });
 
-  it("should read key from different service Id", async () => {
+  it("should handle missing account", async () => {
     const accounts = new TestAccounts();
     const read = new Read(accounts);
     read.currentServiceId = tryAsServiceId(10_000);
-    const serviceId = tryAsServiceId(11_000);
-    const { key, hash } = prepareKey(read.currentServiceId, "hello world");
-    const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 64);
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
+    const value = "xyz";
+    const { key } = prepareKey(read.currentServiceId, value);
+    const { registers, memory } = prepareRegsAndMemory(key, value.length);
 
-    // when
-    await read.execute(gas, registers, memory);
+    // serviceId out of range
+    registers.set(SERVICE_ID_REG, tryAsU64(2n ** 32n));
 
-    // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64("hello world".length));
-    assert.deepStrictEqual(
-      readResult().toString(),
-      "0x68656c6c6f20776f726c640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-    );
-  });
+    const result = await read.execute(gas, registers, memory);
 
-  it("should read key longer than destination", async () => {
-    const accounts = new TestAccounts();
-    const read = new Read(accounts);
-    const serviceId = tryAsServiceId(10_000);
-    read.currentServiceId = serviceId;
-    const { key, hash } = prepareKey(read.currentServiceId, "xyz");
-    const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 3);
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
-
-    // when
-    await read.execute(gas, registers, memory);
-
-    // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64("hello world".length));
-    assert.deepStrictEqual(readResult().toString(), "0x68656c");
+    assert.deepStrictEqual(result, undefined);
+    assert.deepStrictEqual(registers.get(SERVICE_ID_REG), HostCallResult.NONE);
   });
 
   it("should handle missing value", async () => {
@@ -143,19 +216,16 @@ describe("HostCalls: Read", () => {
     const read = new Read(accounts);
     const serviceId = tryAsServiceId(10_000);
     read.currentServiceId = serviceId;
-    const { key, hash } = prepareKey(read.currentServiceId, "xyz");
-    const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, key, 32);
+    const value = "xyz";
+    const { key, hash } = prepareKey(read.currentServiceId, value);
+    const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length);
     accounts.data.set(null, serviceId, hash);
 
-    // when
-    await read.execute(gas, registers, memory);
+    const result = await read.execute(gas, registers, memory);
 
-    // then
+    assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.NONE);
-    assert.deepStrictEqual(
-      readResult().toString(),
-      "0x0000000000000000000000000000000000000000000000000000000000000000",
-    );
+    assert.deepStrictEqual(readResult().toString(), "0x000000");
   });
 
   it("should fail if there is no memory for key", async () => {
@@ -163,15 +233,13 @@ describe("HostCalls: Read", () => {
     const read = new Read(accounts);
     const serviceId = tryAsServiceId(10_000);
     read.currentServiceId = serviceId;
-    const { key, hash } = prepareKey(read.currentServiceId, "xyz");
-    const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32, { skipKey: true });
+    const value = "xyz";
+    const { key, hash } = prepareKey(read.currentServiceId, value);
+    const { registers, memory } = prepareRegsAndMemory(key, value.length, { skipKey: true });
     accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
 
-    // when
-    await read.execute(gas, registers, memory);
-
-    // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    const result = await read.execute(gas, registers, memory);
+    assert.deepStrictEqual(result, PvmExecution.Panic);
   });
 
   it("should fail if there is no memory for result", async () => {
@@ -179,65 +247,12 @@ describe("HostCalls: Read", () => {
     const read = new Read(accounts);
     const serviceId = tryAsServiceId(10_000);
     read.currentServiceId = serviceId;
-    const { key, hash } = prepareKey(read.currentServiceId, "xyz");
-    const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32, { skipValue: true });
+    const value = "xyz";
+    const { key, hash } = prepareKey(read.currentServiceId, value);
+    const { registers, memory } = prepareRegsAndMemory(key, value.length, { skipValue: true });
     accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
 
-    // when
-    await read.execute(gas, registers, memory);
-
-    // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
-  });
-
-  it("should fail if the destination is not fully writeable", async () => {
-    const accounts = new TestAccounts();
-    const read = new Read(accounts);
-    const serviceId = tryAsServiceId(10_000);
-    read.currentServiceId = serviceId;
-    const { key, hash } = prepareKey(read.currentServiceId, "xyz");
-    const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
-    registers.set(DEST_LEN_REG, tryAsU64(PAGE_SIZE + 1));
-
-    // when
-    await read.execute(gas, registers, memory);
-
-    // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
-  });
-
-  it("should fail gracefuly if the destination is beyond mem limit", async () => {
-    const accounts = new TestAccounts();
-    const read = new Read(accounts);
-    const serviceId = tryAsServiceId(10_000);
-    read.currentServiceId = serviceId;
-    const { key, hash } = prepareKey(read.currentServiceId, "xyz");
-    const { registers, memory } = prepareRegsAndMemory(serviceId, key, 32);
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
-    registers.set(DEST_START_REG, tryAsU64(2 ** 32 - 1));
-    registers.set(DEST_LEN_REG, tryAsU64(2 ** 10));
-
-    // when
-    await read.execute(gas, registers, memory);
-
-    // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
-  });
-
-  it("should handle 0-length destination", async () => {
-    const accounts = new TestAccounts();
-    const read = new Read(accounts);
-    const serviceId = tryAsServiceId(10_000);
-    read.currentServiceId = serviceId;
-    const { key, hash } = prepareKey(read.currentServiceId, "xyz");
-    const { registers, memory } = prepareRegsAndMemory(serviceId, key, 0, { skipValue: true });
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
-
-    // when
-    await read.execute(gas, registers, memory);
-
-    // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64("hello world".length));
+    const result = await read.execute(gas, registers, memory);
+    assert.deepStrictEqual(result, PvmExecution.Panic);
   });
 });

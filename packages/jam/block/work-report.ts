@@ -4,7 +4,7 @@ import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import type { U16, U32 } from "@typeberry/numbers";
 import { type Opaque, WithDebug } from "@typeberry/utils";
-import type { CoreIndex } from "./common";
+import type { CoreIndex, ServiceGas } from "./common";
 import { RefineContext } from "./refine-context";
 import { type WorkItemsCount, tryAsWorkItemsCount } from "./work-package";
 import { WorkResult } from "./work-result";
@@ -24,10 +24,10 @@ export type ExportsRootHash = Opaque<OpaqueHash, "ExportsRootHash">;
  */
 export class WorkPackageSpec extends WithDebug {
   static Codec = codec.Class(WorkPackageSpec, {
-    hash: codec.bytes(HASH_SIZE).asOpaque(),
+    hash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
     length: codec.u32,
     erasureRoot: codec.bytes(HASH_SIZE),
-    exportsRoot: codec.bytes(HASH_SIZE).asOpaque(),
+    exportsRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
     exportsCount: codec.u16,
   });
 
@@ -58,8 +58,8 @@ export class WorkPackageSpec extends WithDebug {
  */
 export class WorkPackageInfo extends WithDebug {
   static Codec = codec.Class(WorkPackageInfo, {
-    workPackageHash: codec.bytes(HASH_SIZE).asOpaque(),
-    segmentTreeRoot: codec.bytes(HASH_SIZE).asOpaque(),
+    workPackageHash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
+    segmentTreeRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
   });
 
   constructor(
@@ -85,14 +85,15 @@ export class WorkReport extends WithDebug {
   static Codec = codec.Class(WorkReport, {
     workPackageSpec: WorkPackageSpec.Codec,
     context: RefineContext.Codec,
-    coreIndex: codec.u16.asOpaque(),
-    authorizerHash: codec.bytes(HASH_SIZE).asOpaque(),
+    coreIndex: codec.u16.asOpaque<CoreIndex>(),
+    authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
     authorizationOutput: codec.blob,
     segmentRootLookup: codec.sequenceVarLen(WorkPackageInfo.Codec),
     results: codec.sequenceVarLen(WorkResult.Codec).convert(
       (x) => x,
       (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
     ),
+    authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
   });
 
   static fromCodec({
@@ -103,6 +104,7 @@ export class WorkReport extends WithDebug {
     authorizationOutput,
     segmentRootLookup,
     results,
+    authorizationGasUsed,
   }: CodecRecord<WorkReport>) {
     return new WorkReport(
       workPackageSpec,
@@ -112,10 +114,11 @@ export class WorkReport extends WithDebug {
       authorizationOutput,
       segmentRootLookup,
       results,
+      authorizationGasUsed,
     );
   }
 
-  constructor(
+  private constructor(
     /** `s`: Work package specification. */
     public readonly workPackageSpec: WorkPackageSpec,
     /** `x`: Refinement context. */
@@ -133,6 +136,8 @@ export class WorkReport extends WithDebug {
     public readonly segmentRootLookup: WorkPackageInfo[],
     /** `r`: The results of evaluation of each of the items in the work package. */
     public readonly results: FixedSizeArray<WorkResult, WorkItemsCount>,
+    /** `g`: Gas used during authorization. */
+    public readonly authorizationGasUsed: ServiceGas,
   ) {
     super();
   }

@@ -30,7 +30,7 @@ const codecWithHash = <T, V, H extends OpaqueHash>(val: Descriptor<T, V>): Descr
 export class AvailabilityAssignment extends WithDebug {
   static Codec = codec.Class(AvailabilityAssignment, {
     workReport: codecWithHash(WorkReport.Codec),
-    timeout: codec.u32.asOpaque(),
+    timeout: codec.u32.asOpaque<TimeSlot>(),
   });
 
   static fromCodec({ workReport, timeout }: CodecRecord<AvailabilityAssignment>) {

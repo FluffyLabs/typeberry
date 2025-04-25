@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { type TimeSlot, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
+import { fromJson, preimagesExtrinsicFromJson } from "@typeberry/block-json";
 import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
@@ -16,8 +17,6 @@ import {
 } from "@typeberry/state";
 import { Preimages, type PreimagesErrorCode } from "@typeberry/transition";
 import { OK, Result } from "@typeberry/utils";
-import { preimagesExtrinsicFromJson } from "./codec/preimages-extrinsic";
-import { commonFromJson } from "./common-types";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -31,7 +30,7 @@ class Input {
 
 class TestPreimagesItem {
   static fromJson: FromJson<TestPreimagesItem> = {
-    hash: commonFromJson.bytes32(),
+    hash: fromJson.bytes32(),
     blob: json.fromString(BytesBlob.parseBlob),
   };
 
@@ -42,7 +41,7 @@ class TestPreimagesItem {
 class TestHistoryItem {
   static fromJson: FromJson<TestHistoryItem> = {
     key: {
-      hash: commonFromJson.bytes32(),
+      hash: fromJson.bytes32(),
       length: "number",
     },
     value: ["array", "number"],

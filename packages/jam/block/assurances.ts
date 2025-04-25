@@ -17,12 +17,12 @@ import type { HeaderHash } from "./hash";
  */
 export class AvailabilityAssurance extends WithDebug {
   static Codec = codec.Class(AvailabilityAssurance, {
-    anchor: codec.bytes(HASH_SIZE).asOpaque(),
+    anchor: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
     bitfield: codecWithContext((context) => {
       return codec.bitVecFixLen(context.coresCount);
     }),
-    validatorIndex: codec.u16.asOpaque(),
-    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque(),
+    validatorIndex: codec.u16.asOpaque<ValidatorIndex>(),
+    signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque<Ed25519Signature>(),
   });
 
   static fromCodec({ anchor, bitfield, validatorIndex, signature }: CodecRecord<AvailabilityAssurance>) {

@@ -29,6 +29,15 @@ export const Q = 80;
 /** `W_C`: The maximum size of service code in octets. */
 export const W_C = 4_000_000;
 
+/** `W_E`: The basic size of erasure-coded pieces in octets. */
+export const W_E = 684;
+
+/** `W_P`: The number of erasure-coded pieces in a segment. */
+export const W_P = 6;
+
+/** `W_G`: W_P * W_E = 4104 The size of a segment in octets. */
+export const W_G = W_P * W_E;
+
 /** `W_T`: The size of a transfer memo in octets. */
 export const W_T = 128;
 

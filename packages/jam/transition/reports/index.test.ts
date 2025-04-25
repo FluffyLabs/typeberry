@@ -14,6 +14,7 @@ describe("Reports - top level", () => {
     const input: ReportsInput = {
       guarantees: guaranteesAsView(tinyChainSpec, []),
       slot: tryAsTimeSlot(12),
+      knownPackages: [],
     };
 
     const res = await reports.transition(input);

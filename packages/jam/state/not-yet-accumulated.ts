@@ -14,7 +14,7 @@ import { WithDebug } from "@typeberry/utils";
 export class NotYetAccumulatedReport extends WithDebug {
   static Codec = codec.Class(NotYetAccumulatedReport, {
     report: WorkReport.Codec,
-    unlocks: codecKnownSizeArray(codec.bytes(HASH_SIZE).asOpaque(), {
+    unlocks: codecKnownSizeArray(codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(), {
       typicalLength: MAX_REPORT_DEPENDENCIES / 2,
       maxLength: MAX_REPORT_DEPENDENCIES,
       minLength: 0,

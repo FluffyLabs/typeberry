@@ -49,6 +49,6 @@ describe("ReadablePage", () => {
 
     const storeResult = readablePage.storeFrom(storeIndex, new Uint8Array());
 
-    assert.deepStrictEqual(storeResult, Result.error(new PageFault(0, false)));
+    assert.deepStrictEqual(storeResult, Result.error(PageFault.fromPageNumber(0, true)));
   });
 });

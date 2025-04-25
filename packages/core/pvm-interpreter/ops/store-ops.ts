@@ -108,11 +108,11 @@ export class StoreOps {
       return;
     }
 
-    if (storeResult.error.hasPage) {
-      this.instructionResult.status = Result.FAULT;
-      this.instructionResult.exitParam = getStartPageIndex(storeResult.error.address);
-    } else {
+    if (storeResult.error.isAccessFault) {
       this.instructionResult.status = Result.FAULT_ACCESS;
+    } else {
+      this.instructionResult.status = Result.FAULT;
+      this.instructionResult.exitParam = getStartPageIndex(storeResult.address);
     }
   }
 }

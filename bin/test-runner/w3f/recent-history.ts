@@ -1,4 +1,5 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
+import { fromJson } from "@typeberry/block-json";
 import type { WorkPackageInfo } from "@typeberry/block/work-report";
 import { HashDictionary } from "@typeberry/collections";
 import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
@@ -7,14 +8,14 @@ import type { MmrHasher } from "@typeberry/mmr";
 import type { BlockState } from "@typeberry/state";
 import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "@typeberry/transition/recent-history";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
-import { TestBlockState, TestWorkPackageInfo, commonFromJson } from "./common-types";
+import { TestBlockState, TestWorkPackageInfo } from "./common-types";
 
 class Input {
   static fromJson = json.object<Input, RecentHistoryInput>(
     {
-      header_hash: commonFromJson.bytes32(),
-      parent_state_root: commonFromJson.bytes32(),
-      accumulate_root: commonFromJson.bytes32(),
+      header_hash: fromJson.bytes32(),
+      parent_state_root: fromJson.bytes32(),
+      accumulate_root: fromJson.bytes32(),
       work_packages: json.array(TestWorkPackageInfo.fromJson),
     },
     ({ header_hash, parent_state_root, accumulate_root, work_packages }) => {

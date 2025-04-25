@@ -11,7 +11,7 @@ import type { NotYetAccumulatedReport } from "./not-yet-accumulated";
 import type { PrivilegedServices } from "./privileged-services";
 import type { SafroleData } from "./safrole-data";
 import type { Service } from "./service";
-import type { ActivityData } from "./statistics";
+import type { StatisticsData } from "./statistics";
 import type { ValidatorData } from "./validator-data";
 
 /**
@@ -139,11 +139,12 @@ export type State = {
   readonly services: Map<ServiceId, Service>;
 
   /**
-   * `π pi`: Previous and current statistics of each validator.
+   * `π pi`: Previous and current statistics of each validator,
+   *         cores statistics and services statistics.
    *
-   * https://graypaper.fluffylabs.dev/#/579bd12/181a01181c01
+   * https://graypaper.fluffylabs.dev/#/68eaa1f/18f60118f601?v=0.6.4
    */
-  readonly statisticsPerValidator: ActivityData;
+  readonly statistics: StatisticsData;
 
   /**
    * `ϑ theta`: We also maintain knowledge of ready (i.e. available

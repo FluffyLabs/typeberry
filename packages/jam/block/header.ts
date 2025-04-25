@@ -26,17 +26,41 @@ import type { ExtrinsicHash, HeaderHash } from "./hash";
 import { Ticket } from "./tickets";
 
 /**
+ * Encoded validator keys.
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/0e34030e3603?v=0.6.4
+ */
+export class ValidatorKeys extends WithDebug {
+  static Codec = codec.Class(ValidatorKeys, {
+    bandersnatch: codec.bytes(BANDERSNATCH_KEY_BYTES).asOpaque<BandersnatchKey>(),
+    ed25519: codec.bytes(ED25519_KEY_BYTES).asOpaque<Ed25519Key>(),
+  });
+
+  static fromCodec({ bandersnatch, ed25519 }: CodecRecord<ValidatorKeys>) {
+    return new ValidatorKeys(bandersnatch, ed25519);
+  }
+
+  public constructor(
+    /** `kappa_b`: Bandersnatch validator keys for the NEXT epoch. */
+    public readonly bandersnatch: BandersnatchKey,
+    /** `kappa_e`: Ed25519 validator keys for the NEXT epoch. */
+    public readonly ed25519: Ed25519Key,
+  ) {
+    super();
+  }
+}
+
+/**
  * For the first block in a new epoch, the epoch marker is set
- * and contains the epoch randomness and Bandersnatch keys
- * of validators for the NEXT epoch.
+ * and contains the epoch randomness and validator keys
+ * for the NEXT epoch.
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/0e30030e6603
  */
 export class EpochMarker extends WithDebug {
   static Codec = codec.Class(EpochMarker, {
-    entropy: codec.bytes(HASH_SIZE).asOpaque(),
-    ticketsEntropy: codec.bytes(HASH_SIZE).asOpaque(),
-    validators: codecPerValidator(codec.bytes(BANDERSNATCH_KEY_BYTES).asOpaque()),
+    entropy: codec.bytes(HASH_SIZE).asOpaque<EntropyHash>(),
+    ticketsEntropy: codec.bytes(HASH_SIZE).asOpaque<EntropyHash>(),
+    validators: codecPerValidator(ValidatorKeys.Codec),
   });
 
   static fromCodec({ entropy, ticketsEntropy, validators }: CodecRecord<EpochMarker>) {
@@ -49,7 +73,7 @@ export class EpochMarker extends WithDebug {
     /** `eta_2'`: Randomness for the CURRENT epoch. */
     public readonly ticketsEntropy: EntropyHash,
     /** `kappa_b`: Bandersnatch validator keys for the NEXT epoch. */
-    public readonly validators: PerValidator<BandersnatchKey>,
+    public readonly validators: PerValidator<ValidatorKeys>,
   ) {
     super();
   }
@@ -74,16 +98,16 @@ export const encodeUnsealedHeader = (view: HeaderView): BytesBlob => {
  */
 export class Header extends WithDebug {
   static Codec = codec.Class(Header, {
-    parentHeaderHash: codec.bytes(HASH_SIZE).asOpaque(),
-    priorStateRoot: codec.bytes(HASH_SIZE).asOpaque(),
-    extrinsicHash: codec.bytes(HASH_SIZE).asOpaque(),
-    timeSlotIndex: codec.u32.asOpaque(),
+    parentHeaderHash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
+    priorStateRoot: codec.bytes(HASH_SIZE).asOpaque<StateRootHash>(),
+    extrinsicHash: codec.bytes(HASH_SIZE).asOpaque<ExtrinsicHash>(),
+    timeSlotIndex: codec.u32.asOpaque<TimeSlot>(),
     epochMarker: codec.optional(EpochMarker.Codec),
     ticketsMarker: codec.optional(codecPerEpochBlock(Ticket.Codec)),
-    offendersMarker: codec.sequenceVarLen(codec.bytes(ED25519_KEY_BYTES).asOpaque()),
-    bandersnatchBlockAuthorIndex: codec.u16.asOpaque(),
-    entropySource: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque(),
-    seal: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque(),
+    offendersMarker: codec.sequenceVarLen(codec.bytes(ED25519_KEY_BYTES).asOpaque<Ed25519Key>()),
+    bandersnatchBlockAuthorIndex: codec.u16.asOpaque<ValidatorIndex>(),
+    entropySource: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque<BandersnatchVrfSignature>(),
+    seal: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque<BandersnatchVrfSignature>(),
   });
 
   static fromCodec(h: CodecRecord<Header>) {
@@ -145,15 +169,15 @@ export type HeaderView = DescribedBy<typeof Header.Codec.View>;
  * The typescript type system really needs concrete objects to resolve the types:
  * `DescriptorRecord` or `CodecRecord` for some reason.
  */
-class HeaderWithHash extends WithHash<HeaderHash, Header> {
-  static Codec = codec.Class(HeaderWithHash, {
-    hash: codec.bytes(HASH_SIZE).asOpaque(),
-    data: Header.Codec,
+class HeaderViewWithHash extends WithHash<HeaderHash, HeaderView> {
+  static Codec = codec.Class(HeaderViewWithHash, {
+    hash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
+    data: Header.Codec.View,
   });
 
-  static fromCodec({ hash, data }: CodecRecord<HeaderWithHash>) {
+  static fromCodec({ hash, data }: CodecRecord<HeaderViewWithHash>) {
     return new WithHash(hash, data);
   }
 }
 /** Encoding of header + hash. */
-export const headerWithHashCodec = HeaderWithHash.Codec;
+export const headerViewWithHashCodec = HeaderViewWithHash.Codec;

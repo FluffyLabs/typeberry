@@ -1,4 +1,5 @@
 import { type ServiceId, type StateRootHash, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
+import { fromJson } from "@typeberry/block-json";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, type Descriptor, codec } from "@typeberry/codec";
 import { HashDictionary, asKnownSize } from "@typeberry/collections";
@@ -17,7 +18,6 @@ import {
   StateItem,
 } from "@typeberry/state";
 import { serialize } from "@typeberry/state-merkleization/serialize";
-import { fromJson } from "../w3f/codec/common";
 
 export class TestState {
   static fromJson: FromJson<TestState> = {
@@ -153,7 +153,7 @@ const kindMapping: { [k: string]: Appender } = {
     s.privilegedServices = decode(serialize.privilegedServices.Codec, value);
   },
   c13: (s, value) => {
-    s.statisticsPerValidator = decode(serialize.statistics.Codec, value);
+    s.statistics = decode(serialize.statistics.Codec, value);
   },
   c14: (s, value) => {
     s.accumulationQueue = decode(serialize.accumulationQueue.Codec, value);

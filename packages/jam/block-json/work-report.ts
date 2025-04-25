@@ -1,4 +1,4 @@
-import type { CoreIndex } from "@typeberry/block";
+import { type CoreIndex, type ServiceGas, tryAsServiceGas } from "@typeberry/block";
 import type { RefineContext } from "@typeberry/block/refine-context";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package";
 import { type AuthorizerHash, WorkPackageInfo, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
@@ -6,8 +6,8 @@ import type { WorkResult } from "@typeberry/block/work-result";
 import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
-import type { JsonObject } from "../../json-format";
-import { fromJson, runCodecTest } from "./common";
+import { fromJson } from "./common";
+import type { JsonObject } from "./json-format";
 import { refineContextFromJson } from "./refine-context";
 import { workResultFromJson } from "./work-result";
 
@@ -40,17 +40,30 @@ export const workReportFromJson = json.object<JsonWorkReport, WorkReport>(
     auth_output: json.fromString(BytesBlob.parseBlob),
     segment_root_lookup: json.array(segmentRootLookupItemFromJson),
     results: json.array(workResultFromJson),
+    auth_gas_used: json.fromNumber((x) => tryAsServiceGas(x)),
   },
-  ({ package_spec, context, core_index, authorizer_hash, auth_output, results, segment_root_lookup }) =>
-    new WorkReport(
-      package_spec,
+  ({
+    package_spec,
+    context,
+    core_index,
+    authorizer_hash,
+    auth_output,
+    results,
+    segment_root_lookup,
+    auth_gas_used,
+  }) => {
+    const fixedSizeResults = FixedSizeArray.new(results, tryAsWorkItemsCount(results.length));
+    return WorkReport.fromCodec({
+      workPackageSpec: package_spec,
       context,
-      core_index,
-      authorizer_hash,
-      auth_output,
-      segment_root_lookup,
-      FixedSizeArray.new(results, tryAsWorkItemsCount(results.length)),
-    ),
+      coreIndex: core_index,
+      authorizerHash: authorizer_hash,
+      authorizationOutput: auth_output,
+      segmentRootLookup: segment_root_lookup,
+      results: fixedSizeResults,
+      authorizationGasUsed: auth_gas_used,
+    });
+  },
 );
 
 type JsonWorkReport = {
@@ -61,8 +74,5 @@ type JsonWorkReport = {
   auth_output: BytesBlob;
   segment_root_lookup: WorkPackageInfo[];
   results: WorkResult[];
+  auth_gas_used: ServiceGas;
 };
-
-export async function runWorkReportTest(test: WorkReport, file: string) {
-  runCodecTest(WorkReport.Codec, test, file);
-}

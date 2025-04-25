@@ -1,7 +1,7 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { tryAsU32 } from "@typeberry/numbers";
+import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
 import type { ServiceGas, ServiceId } from "./common";
 import type { CodeHash } from "./hash";
@@ -65,21 +65,64 @@ export class WorkExecResult extends WithDebug {
 }
 
 /**
+ * Five fields describing the level of activity which this workload
+ * imposed on the core in bringing the output datum to bear.
+ *
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/141300141b00?v=0.6.4
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/1a50001a5000?v=0.6.4
+ */
+export class WorkRefineLoad extends WithDebug {
+  static Codec = codec.Class(WorkRefineLoad, {
+    gasUsed: codec.varU64.asOpaque<ServiceGas>(),
+    importedSegments: codec.varU32,
+    extrinsicCount: codec.varU32,
+    extrinsicSize: codec.varU32,
+    exportedSegments: codec.varU32,
+  });
+
+  static fromCodec({
+    gasUsed,
+    importedSegments,
+    extrinsicCount,
+    extrinsicSize,
+    exportedSegments,
+  }: CodecRecord<WorkRefineLoad>) {
+    return new WorkRefineLoad(gasUsed, importedSegments, extrinsicCount, extrinsicSize, exportedSegments);
+  }
+
+  private constructor(
+    /** `u`:  actual amount of gas used during refinement */
+    public readonly gasUsed: ServiceGas,
+    /** `i`: number of segments imported from */
+    public readonly importedSegments: U32,
+    /** `x`: number of extrinsics used in computing the workload */
+    public readonly extrinsicCount: U32,
+    /** `z`: size of extrinsics used in computing the workload */
+    public readonly extrinsicSize: U32,
+    /** `e`: number of segments exported into */
+    public readonly exportedSegments: U32,
+  ) {
+    super();
+  }
+}
+
+/**
  * A result of execution of some work package.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/133f01134401
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/139501139501?v=0.6.4
  */
 export class WorkResult {
   static Codec = codec.Class(WorkResult, {
-    serviceId: codec.u32.asOpaque(),
-    codeHash: codec.bytes(HASH_SIZE).asOpaque(),
+    serviceId: codec.u32.asOpaque<ServiceId>(),
+    codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
     payloadHash: codec.bytes(HASH_SIZE),
-    gas: codec.u64.asOpaque(),
+    gas: codec.u64.asOpaque<ServiceGas>(),
     result: WorkExecResult.Codec,
+    load: WorkRefineLoad.Codec,
   });
 
-  static fromCodec({ serviceId, codeHash, payloadHash, gas, result }: CodecRecord<WorkResult>) {
-    return new WorkResult(serviceId, codeHash, payloadHash, gas, result);
+  static fromCodec({ serviceId, codeHash, payloadHash, gas, result, load }: CodecRecord<WorkResult>) {
+    return new WorkResult(serviceId, codeHash, payloadHash, gas, result, load);
   }
 
   constructor(
@@ -88,7 +131,7 @@ export class WorkResult {
     /** `c`: Hash of the code of the service at the time of being reported. */
     public readonly codeHash: CodeHash,
     /**
-     * `l`: Hash of the payload within the work item which was executed in the refine stage to give this result.
+     * `y`: Hash of the payload within the work item which was executed in the refine stage to give this result.
      *
      * It has no immediate relevance, but is something provided to the accumulation logic of the service.
      *
@@ -104,5 +147,13 @@ export class WorkResult {
     public readonly gas: ServiceGas,
     /** `o`: The output or error of the execution of the code. */
     public readonly result: WorkExecResult,
+    /**
+     * `u, i, x, z, e`: fields describing the level of activity
+     *                  which this workload imposed on the core in
+     *                  bringing the output datum to bear.
+     *
+     * https://graypaper.fluffylabs.dev/#/68eaa1f/141300141500?v=0.6.4
+     */
+    public readonly load: WorkRefineLoad,
   ) {}
 }

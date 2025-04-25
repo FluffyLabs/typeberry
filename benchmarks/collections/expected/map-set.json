@@ -1,0 +1,27 @@
+{
+  "name": "Map: 2 gets and conditional set vs 1 get and 1 set ",
+  "date": "2025-04-22T09:55:49.800Z",
+  "version": null,
+  "results": [
+    {
+      "name": "2 gets + conditional set",
+      "ops": 102951.81,
+      "margin": 0.3,
+      "percentSlower": 0
+    },
+    {
+      "name": "1 get 1 set",
+      "ops": 62595.29,
+      "margin": 0.2,
+      "percentSlower": 39.2
+    }
+  ],
+  "fastest": {
+    "name": "2 gets + conditional set",
+    "index": 0
+  },
+  "slowest": {
+    "name": "1 get 1 set",
+    "index": 1
+  }
+}

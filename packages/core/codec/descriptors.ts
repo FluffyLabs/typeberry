@@ -1,6 +1,6 @@
 import { type BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { type U8, type U16, type U32, type U64, tryAsU32 } from "@typeberry/numbers";
-import { type Opaque, asOpaqueType } from "@typeberry/utils";
+import { type Opaque, type TokenOf, asOpaqueType, seeThrough } from "@typeberry/utils";
 import type { Decode, Decoder } from "./decoder";
 import { type Encode, type Encoder, type SizeHint, addSizeHints } from "./encoder";
 import { type Skip, Skipper } from "./skip";
@@ -102,10 +102,10 @@ export class Descriptor<T, V = T> implements Codec<T>, Skip {
   }
 
   /** Safely cast the descriptor value to a opaque type. */
-  public asOpaque<Token extends string>() {
-    return this.convert<Opaque<T, Token>>(
-      (i) => i,
-      (o) => asOpaqueType(o),
+  public asOpaque<R>(): Descriptor<Opaque<T, TokenOf<R, T>>, V> {
+    return this.convert(
+      (i) => seeThrough(i),
+      (o) => asOpaqueType<T, TokenOf<R, T>>(o),
     );
   }
 }
