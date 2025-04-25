@@ -4,6 +4,7 @@ import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
@@ -12,7 +13,6 @@ import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { type Accounts, Info, codecServiceAccountInfoWithThresholdBalance } from "./info";
 import { HostCallResult } from "./results";
-import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 
 class TestAccounts implements Accounts {
   public readonly data = new Map<ServiceId, ServiceAccountInfo>();

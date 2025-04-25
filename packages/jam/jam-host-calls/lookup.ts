@@ -56,7 +56,7 @@ export class Lookup implements HostCallHandler {
     const blobLength = minU64(lengthToWrite, tryAsU64(preImageLength - start));
 
     if (preImage === null) {
-      regs.setU64(IN_OUT_REG, HostCallResult.NONE);
+      regs.set(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 

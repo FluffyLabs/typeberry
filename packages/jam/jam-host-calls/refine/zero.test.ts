@@ -2,6 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { OK, Result } from "@typeberry/utils";
@@ -9,7 +10,6 @@ import { HostCallResult } from "../results";
 import { type MachineId, NoMachineError, tryAsMachineId } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
 import { Zero } from "./zero";
-import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;

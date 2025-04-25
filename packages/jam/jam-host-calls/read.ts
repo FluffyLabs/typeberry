@@ -1,7 +1,7 @@
 import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
-import { minU64, tryAsU64 } from "@typeberry/numbers";
+import { minU64 } from "@typeberry/numbers";
 import { tryAsU64, tryBigIntAsNumber } from "@typeberry/numbers";
 import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";

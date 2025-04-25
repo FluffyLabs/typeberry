@@ -47,12 +47,12 @@ export class Memory {
   // TODO [ToDr] This should support writing to more than two pages.
   storeFrom(address: MemoryIndex, bytes: Uint8Array): Result<OK, PageFault> {
     if (bytes.length === 0) {
-      return null;
+      return Result.ok(OK);
     }
 
     const verificationResult = this.verifyReservedPages(address, bytes.length);
 
-    if (verificationResult !== null) {
+    if (verificationResult.isError) {
       return verificationResult;
     }
 
