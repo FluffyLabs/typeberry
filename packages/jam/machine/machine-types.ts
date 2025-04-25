@@ -1,7 +1,7 @@
-import { U32, type U64, tryAsU64 } from "@typeberry/numbers";
+import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
+import type { BigGas, Registers } from "@typeberry/pvm-interpreter";
+import type { Status } from "@typeberry/pvm-interpreter/status";
 import { type Opaque, asOpaqueType } from "@typeberry/utils";
-import { Status } from "@typeberry/pvm-interpreter/status";
-import { BigGas, Registers } from "@typeberry/pvm-interpreter";
 
 /** Machine ID type */
 export type MachineId = Opaque<U64, "MachineId[u64]">;

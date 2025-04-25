@@ -1,8 +1,8 @@
-import { BytesBlob } from "@typeberry/bytes";
-import { MachineResult } from "./machine-types";
-import { BigGas, Interpreter, Memory, Registers } from "@typeberry/pvm-interpreter";
+import type { BytesBlob } from "@typeberry/bytes";
+import type { ProgramCounter } from "@typeberry/jam-host-calls/refine/refine-externalities";
+import { type BigGas, Interpreter, type Memory, type Registers } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status";
-import { ProgramCounter } from "@typeberry/jam-host-calls/refine/refine-externalities";
+import type { MachineResult } from "./machine-types";
 
 /**
  * Machine - integrated PVM type
@@ -17,20 +17,13 @@ export class MachineInstance {
   /** Program counter - entry point */
   entrypoint: ProgramCounter;
 
-  private constructor(
-    code: BytesBlob,
-    memory: Memory | null,
-    entrypoint: ProgramCounter,
-  ) {
+  private constructor(code: BytesBlob, memory: Memory | null, entrypoint: ProgramCounter) {
     this.code = code;
     this.memory = memory;
     this.entrypoint = entrypoint;
   }
 
-  static withCodeAndProgramCounter(
-    code: BytesBlob,
-    entrypoint: ProgramCounter,
-  ): MachineInstance {
+  static withCodeAndProgramCounter(code: BytesBlob, entrypoint: ProgramCounter): MachineInstance {
     return new MachineInstance(code, null, entrypoint);
   }
 
@@ -44,7 +37,6 @@ export class MachineInstance {
     /** TODO [MaSo] Can it be over 2^32? */
     interpreter.reset(this.code.raw, Number(this.entrypoint), gas, registers, this.memory);
     interpreter.runProgram();
-
 
     return {
       result: {

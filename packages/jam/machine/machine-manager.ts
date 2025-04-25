@@ -1,5 +1,5 @@
-import { MachineInstance } from "./machine-instance";
-import { MachineId } from "./machine-types";
+import type { MachineInstance } from "./machine-instance";
+import type { MachineId } from "./machine-types";
 
 export class MachineManager {
   private machines: Map<MachineId, MachineInstance>;
