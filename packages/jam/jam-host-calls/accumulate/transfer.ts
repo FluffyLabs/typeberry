@@ -1,6 +1,4 @@
-import { tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { tryBigIntAsNumber } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import {
   type HostCallMemory,
@@ -11,7 +9,7 @@ import {
 import { type Gas, type GasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { assertNever } from "@typeberry/utils";
 import { HostCallResult } from "../results";
-import { CURRENT_SERVICE_ID } from "../utils";
+import { CURRENT_SERVICE_ID, getServiceId } from "../utils";
 import { type AccumulationPartialState, TRANSFER_MEMO_BYTES, TransferError } from "./partial-state";
 
 const IN_OUT_REG = 7; // `d`
@@ -41,7 +39,12 @@ export class Transfer implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `d`: destination
-    const destination = tryAsServiceId(tryBigIntAsNumber(regs.get(IN_OUT_REG)));
+    const destination = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
+
+    if (destination === null) {
+      return PvmExecution.Panic;
+    }
+
     // `a`: amount
     const amount = regs.get(AMOUNT_REG);
     // `l`: gas

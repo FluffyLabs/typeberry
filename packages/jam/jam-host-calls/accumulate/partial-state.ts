@@ -107,7 +107,7 @@ export interface AccumulationPartialState {
    * States:
    * https://graypaper.fluffylabs.dev/#/579bd12/116f00116f00
    */
-  checkPreimageStatus(hash: Blake2bHash, length: U32): PreimageStatusResult | null;
+  checkPreimageStatus(hash: Blake2bHash, length: U64): PreimageStatusResult | null;
 
   /**
    * Request (solicit) a preimage to be (re-)available.
@@ -115,14 +115,14 @@ export interface AccumulationPartialState {
    * States:
    * https://graypaper.fluffylabs.dev/#/579bd12/116f00116f00
    */
-  requestPreimage(hash: Blake2bHash, length: U32): Result<null, RequestPreimageError>;
+  requestPreimage(hash: Blake2bHash, length: U64): Result<null, RequestPreimageError>;
 
   /**
    * Mark a preimage hash as unavailable (forget it).
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/335602335602
    */
-  forgetPreimage(hash: Blake2bHash, length: U32): Result<null, null>;
+  forgetPreimage(hash: Blake2bHash, length: U64): Result<null, null>;
 
   /**
    * Remove current service account and transfer all remaining

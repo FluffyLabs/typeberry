@@ -1,6 +1,5 @@
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU32, tryBigIntAsNumber } from "@typeberry/numbers";
 import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
@@ -26,7 +25,7 @@ export class Forget implements HostCallHandler {
     // `o`
     const hashStart = regs.get(IN_OUT_REG);
     // `z`
-    const length = tryAsU32(tryBigIntAsNumber(regs.get(8)));
+    const length = regs.get(8);
 
     const hash = Bytes.zero(HASH_SIZE);
     const memoryReadResult = memory.loadInto(hash.raw, hashStart);

@@ -1,6 +1,6 @@
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU32, tryAsU64, tryBigIntAsNumber } from "@typeberry/numbers";
+import { tryAsU64 } from "@typeberry/numbers";
 import {
   type HostCallHandler,
   type HostCallMemory,
@@ -33,7 +33,7 @@ export class Query implements HostCallHandler {
     // `o`
     const hashStart = regs.get(IN_OUT_REG_1);
     // `z`
-    const length = tryAsU32(tryBigIntAsNumber(regs.get(IN_OUT_REG_2)));
+    const length = regs.get(IN_OUT_REG_2);
 
     const hash = Bytes.zero(HASH_SIZE);
     const memoryReadResult = memory.loadInto(hash.raw, hashStart);

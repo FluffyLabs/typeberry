@@ -75,6 +75,7 @@ export class Bless implements HostCallHandler {
         return;
       }
       g.set(serviceId, gas);
+      // we allow the index to go beyond `MEMORY_SIZE` (i.e. 2**32) and have the next `loadInto` fail with page fault.
       memIndex = tryAsU64(memIndex + BigInt(decoder.bytesRead()));
       previousServiceId = serviceId;
     }

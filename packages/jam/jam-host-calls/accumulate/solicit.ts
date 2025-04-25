@@ -1,6 +1,5 @@
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU32, tryBigIntAsNumber } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import {
   type HostCallMemory,
@@ -32,7 +31,7 @@ export class Solicit implements HostCallHandler {
     // `o`
     const hashStart = regs.get(IN_OUT_REG);
     // `z`
-    const length = tryAsU32(tryBigIntAsNumber(regs.get(8)));
+    const length = regs.get(8);
 
     const hash = Bytes.zero(HASH_SIZE);
     const memoryReadResult = memory.loadInto(hash.raw, hashStart);

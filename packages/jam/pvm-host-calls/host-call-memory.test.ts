@@ -37,6 +37,13 @@ describe("HostCallMemory", () => {
         assert(result.error instanceof OutOfBounds);
       }
     });
+
+    it("should throw when address exceeds MAX_MEMORY_INDEX", () => {
+      const address = tryAsU64(MEMORY_SIZE);
+      const bytes = new Uint8Array();
+
+      assert.throws(() => hostCallMemory.storeFrom(address, bytes));
+    });
   });
 
   describe("loadInto", () => {
@@ -61,6 +68,13 @@ describe("HostCallMemory", () => {
         assert(loadResult.error instanceof OutOfBounds);
       }
     });
+
+    it("should throw when address exceeds MAX_MEMORY_INDEX", () => {
+      const address = tryAsU64(MEMORY_SIZE);
+      const result = new Uint8Array();
+
+      assert.throws(() => hostCallMemory.loadInto(result, address));
+    });
   });
 
   describe("isWriteable", () => {
@@ -71,6 +85,13 @@ describe("HostCallMemory", () => {
       const result = hostCallMemory.isWriteable(address, length);
 
       assert.strictEqual(result, false);
+    });
+
+    it("should throw when address exceeds MAX_MEMORY_INDEX", () => {
+      const address = tryAsU64(MEMORY_SIZE);
+      const length = 0;
+
+      assert.throws(() => hostCallMemory.isWriteable(address, length));
     });
   });
 

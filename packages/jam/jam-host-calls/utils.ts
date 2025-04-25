@@ -1,5 +1,5 @@
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
-import { tryBigIntAsNumber, u32AsLeBytes } from "@typeberry/numbers";
+import { u32AsLeBytes } from "@typeberry/numbers";
 import { MAX_U64, u64IntoParts } from "@typeberry/numbers";
 import type { HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { check } from "@typeberry/utils";
@@ -8,7 +8,7 @@ export const SERVICE_ID_BYTES = 4;
 export const CURRENT_SERVICE_ID = tryAsServiceId(2 ** 32 - 1);
 
 export function legacyGetServiceId(regNumber: number, regs: HostCallRegisters, currentServiceId: ServiceId) {
-  const serviceId = tryBigIntAsNumber(regs.get(regNumber));
+  const serviceId = Number(regs.get(regNumber));
   return serviceId === CURRENT_SERVICE_ID ? currentServiceId : (serviceId as ServiceId);
 }
 

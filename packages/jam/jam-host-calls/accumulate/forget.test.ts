@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { type CodeHash, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { type U64, tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
@@ -22,13 +22,13 @@ const LENGTH_REG = 8;
 
 function prepareRegsAndMemory(
   preimageHash: CodeHash,
-  preimageLength: U32,
+  preimageLength: U64,
   { skipPreimageHash = false }: { skipPreimageHash?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
   const registers = new HostCallRegisters(new Registers());
   registers.set(HASH_START_REG, tryAsU64(memStart));
-  registers.set(LENGTH_REG, tryAsU64(preimageLength));
+  registers.set(LENGTH_REG, preimageLength);
 
   const builder = new MemoryBuilder();
 
@@ -47,21 +47,21 @@ describe("HostCalls: Solicit", () => {
     const accumulate = new TestAccumulate();
     const forget = new Forget(accumulate);
     forget.currentServiceId = tryAsServiceId(10_000);
-    const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU32(4_096));
+    const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU64(4_096));
 
     // when
     await forget.execute(gas, registers, memory);
 
     // then
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
-    assert.deepStrictEqual(accumulate.forgetPreimageData, [[Bytes.fill(HASH_SIZE, 0x69), 4_096]]);
+    assert.deepStrictEqual(accumulate.forgetPreimageData, [[Bytes.fill(HASH_SIZE, 0x69), 4_096n]]);
   });
 
   it("should fail if hash not available", async () => {
     const accumulate = new TestAccumulate();
     const forget = new Forget(accumulate);
     forget.currentServiceId = tryAsServiceId(10_000);
-    const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU32(4_096), {
+    const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU64(4_096), {
       skipPreimageHash: true,
     });
 
@@ -79,13 +79,13 @@ describe("HostCalls: Solicit", () => {
     forget.currentServiceId = tryAsServiceId(10_000);
 
     accumulate.forgetPreimageResponse = Result.error(null);
-    const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU32(4_096));
+    const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU64(4_096));
 
     // when
     await forget.execute(gas, registers, memory);
 
     // then
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
-    assert.deepStrictEqual(accumulate.forgetPreimageData, [[Bytes.fill(HASH_SIZE, 0x69), 4_096]]);
+    assert.deepStrictEqual(accumulate.forgetPreimageData, [[Bytes.fill(HASH_SIZE, 0x69), 4_096n]]);
   });
 });

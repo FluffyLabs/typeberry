@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U32, tryAsU32, tryAsU64, tryBigIntAsNumber } from "@typeberry/numbers";
+import { type U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
 import {
@@ -54,34 +54,36 @@ describe("HostCalls: Query", () => {
     const accumulate = new TestAccumulate();
     const query = new Query(accumulate);
 
-    const w7 = tryAsU32(2 ** 16);
-    const w8 = tryAsU32(0);
+    const w7 = tryAsU64(2 ** 16);
+    const w8 = tryAsU64(0);
     const data = Bytes.fill(HASH_SIZE, 0xaa).asOpaque();
     accumulate.checkPreimageStatusResponse = null;
 
     query.currentServiceId = tryAsServiceId(10_000);
-    const { registers, memory } = prepareRegsAndMemory(w7, w8, data, { registerMemory: false });
+    const { registers, memory } = prepareRegsAndMemory(tryAsU32(Number(w7)), tryAsU32(Number(w8)), data, {
+      registerMemory: false,
+    });
 
     // when
     const result = await query.execute(gas, registers, memory);
 
     // then
     assert.deepStrictEqual(result, PvmExecution.Panic);
-    assert.deepStrictEqual(tryAsU32(tryBigIntAsNumber(registers.get(RESULT_REG_1))), w7);
-    assert.deepStrictEqual(tryAsU32(tryBigIntAsNumber(registers.get(RESULT_REG_2))), w8);
+    assert.deepStrictEqual(registers.get(RESULT_REG_1), w7);
+    assert.deepStrictEqual(registers.get(RESULT_REG_2), w8);
   });
 
   it("should return none if preimage is not found", async () => {
     const accumulate = new TestAccumulate();
     const query = new Query(accumulate);
 
-    const w7 = tryAsU32(2 ** 16);
-    const w8 = tryAsU32(32);
+    const w7 = tryAsU64(2 ** 16);
+    const w8 = tryAsU64(32);
     const data = Bytes.fill(HASH_SIZE, 0xaa).asOpaque();
     accumulate.checkPreimageStatusResponse = null;
 
     query.currentServiceId = tryAsServiceId(10_000);
-    const { registers, memory } = prepareRegsAndMemory(w7, w8, data);
+    const { registers, memory } = prepareRegsAndMemory(tryAsU32(Number(w7)), tryAsU32(Number(w8)), data);
 
     // when
     const result = await query.execute(gas, registers, memory);
@@ -97,8 +99,8 @@ describe("HostCalls: Query", () => {
     const accumulate = new TestAccumulate();
     const query = new Query(accumulate);
 
-    const w7 = tryAsU32(2 ** 16);
-    const w8 = tryAsU32(32);
+    const w7 = tryAsU64(2 ** 16);
+    const w8 = tryAsU64(32);
     const data = Bytes.fill(HASH_SIZE, 0xaa).asOpaque();
     const status: PreimageStatusResult = {
       status: PreimageStatus.Requested,
@@ -106,7 +108,7 @@ describe("HostCalls: Query", () => {
     accumulate.checkPreimageStatusResponse = status;
 
     query.currentServiceId = tryAsServiceId(10_000);
-    const { registers, memory } = prepareRegsAndMemory(w7, w8, data);
+    const { registers, memory } = prepareRegsAndMemory(tryAsU32(Number(w7)), tryAsU32(Number(w8)), data);
 
     // when
     const result = await query.execute(gas, registers, memory);
@@ -122,8 +124,8 @@ describe("HostCalls: Query", () => {
     const accumulate = new TestAccumulate();
     const query = new Query(accumulate);
 
-    const w7 = tryAsU32(2 ** 16);
-    const w8 = tryAsU32(32);
+    const w7 = tryAsU64(2 ** 16);
+    const w8 = tryAsU64(32);
     const data = Bytes.fill(HASH_SIZE, 0xaa).asOpaque();
     const timeslot1 = tryAsTimeSlot(0x1234);
 
@@ -134,7 +136,7 @@ describe("HostCalls: Query", () => {
     accumulate.checkPreimageStatusResponse = status;
 
     query.currentServiceId = tryAsServiceId(10_000);
-    const { registers, memory } = prepareRegsAndMemory(w7, w8, data);
+    const { registers, memory } = prepareRegsAndMemory(tryAsU32(Number(w7)), tryAsU32(Number(w8)), data);
 
     // when
     const result = await query.execute(gas, registers, memory);
@@ -150,8 +152,8 @@ describe("HostCalls: Query", () => {
     const accumulate = new TestAccumulate();
     const query = new Query(accumulate);
 
-    const w7 = tryAsU32(2 ** 16);
-    const w8 = tryAsU32(32);
+    const w7 = tryAsU64(2 ** 16);
+    const w8 = tryAsU64(32);
     const data = Bytes.fill(HASH_SIZE, 0xaa).asOpaque();
     const timeslot1 = tryAsTimeSlot(0x1234);
     const timeslot2 = tryAsTimeSlot(0x5678);
@@ -163,7 +165,7 @@ describe("HostCalls: Query", () => {
     accumulate.checkPreimageStatusResponse = status;
 
     query.currentServiceId = tryAsServiceId(10_000);
-    const { registers, memory } = prepareRegsAndMemory(w7, w8, data);
+    const { registers, memory } = prepareRegsAndMemory(tryAsU32(Number(w7)), tryAsU32(Number(w8)), data);
 
     // when
     const result = await query.execute(gas, registers, memory);
@@ -179,8 +181,8 @@ describe("HostCalls: Query", () => {
     const accumulate = new TestAccumulate();
     const query = new Query(accumulate);
 
-    const w7 = tryAsU32(2 ** 16);
-    const w8 = tryAsU32(32);
+    const w7 = tryAsU64(2 ** 16);
+    const w8 = tryAsU64(32);
     const data = Bytes.fill(HASH_SIZE, 0xaa).asOpaque();
     const timeslot1 = tryAsTimeSlot(0x1234);
     const timeslot2 = tryAsTimeSlot(0x5678);
@@ -193,7 +195,7 @@ describe("HostCalls: Query", () => {
     accumulate.checkPreimageStatusResponse = status;
 
     query.currentServiceId = tryAsServiceId(10_000);
-    const { registers, memory } = prepareRegsAndMemory(w7, w8, data);
+    const { registers, memory } = prepareRegsAndMemory(tryAsU32(Number(w7)), tryAsU32(Number(w8)), data);
 
     // when
     const result = await query.execute(gas, registers, memory);
