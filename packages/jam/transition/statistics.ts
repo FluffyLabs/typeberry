@@ -394,6 +394,10 @@ export class Statistics {
     for (let coreId = 0; coreId < this.chainSpec.coresCount; coreId++) {
       const coreIndex = tryAsCoreIndex(coreId);
 
+      /**
+        * Core statistics are tracked only per-block basis, so we override previous values.
+        * https://graypaper.fluffylabs.dev/#/cc517d7/190301190401?v=0.6.5
+        */
       cores[coreIndex] = this.calculateCoreStatistics(
         workReportPerCore.get(coreIndex),
         availableReportsPerCore.get(coreIndex) ?? [],
