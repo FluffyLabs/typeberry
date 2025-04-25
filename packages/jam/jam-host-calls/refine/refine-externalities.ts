@@ -19,7 +19,11 @@ import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/util
  * PVM?
  */
 
-/** https://graypaper.fluffylabs.dev/#/68eaa1f/3e30003e3000?v=0.6.4 */
+/**
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/2d61002d6100?v=0.6.4
+ *
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/3e30003e3000?v=0.6.4
+ */
 export type ProgramCounter = Opaque<U64, "ProgramCounter[u64]">;
 /** Convert a number into ProgramCounter. */
 export const tryAsProgramCounter = (v: number | bigint): ProgramCounter => asOpaqueType(tryAsU64(v));
