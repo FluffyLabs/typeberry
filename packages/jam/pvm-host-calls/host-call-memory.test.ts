@@ -1,0 +1,84 @@
+import assert from "node:assert";
+import { beforeEach, describe, it } from "node:test";
+import { tryAsU64 } from "@typeberry/numbers";
+import { Memory } from "@typeberry/pvm-interpreter";
+import { OutOfBounds, PageFault } from "@typeberry/pvm-interpreter/memory/errors";
+import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
+import { HostCallMemory } from "./host-call-memory";
+
+describe("HostCallMemory", () => {
+  let memory: Memory;
+  let hostCallMemory: HostCallMemory;
+
+  beforeEach(() => {
+    memory = new Memory();
+    hostCallMemory = new HostCallMemory(memory);
+  });
+
+  describe("storeFrom", () => {
+    it("should pass through the result of the underlying memory's storeFrom method", () => {
+      const bytes = new Uint8Array([1, 2, 3, 4]);
+      const address = tryAsU64(0);
+
+      const result = hostCallMemory.storeFrom(address, bytes);
+
+      assert.strictEqual(result.isError, true);
+      assert(result.error instanceof PageFault);
+    });
+
+    it("should return OutOfBounds error when address + length exceeds MEMORY_SIZE", () => {
+      const address = tryAsU64(MEMORY_SIZE - 2);
+      const bytes = new Uint8Array([1, 2, 3]);
+
+      const result = hostCallMemory.storeFrom(address, bytes);
+
+      assert.strictEqual(result.isError, true);
+      if (result.isError) {
+        assert(result.error instanceof OutOfBounds);
+      }
+    });
+  });
+
+  describe("loadInto", () => {
+    it("should pass through the result of the underlying memory's loadInto method", () => {
+      const bytes = new Uint8Array([1, 2, 3, 4]);
+      const address = tryAsU64(0);
+
+      const result = hostCallMemory.loadInto(bytes, address);
+
+      assert.strictEqual(result.isError, true);
+      assert(result.error instanceof PageFault);
+    });
+
+    it("should return OutOfBounds error when address + length exceeds MEMORY_SIZE", () => {
+      const address = tryAsU64(MEMORY_SIZE - 2);
+      const result = new Uint8Array(3);
+
+      const loadResult = hostCallMemory.loadInto(result, address);
+
+      assert.strictEqual(loadResult.isError, true);
+      if (loadResult.isError) {
+        assert(loadResult.error instanceof OutOfBounds);
+      }
+    });
+  });
+
+  describe("isWriteable", () => {
+    it("should return false when address + length exceeds MEMORY_SIZE", () => {
+      const address = tryAsU64(MEMORY_SIZE - 2);
+      const length = 3;
+
+      const result = hostCallMemory.isWriteable(address, length);
+
+      assert.strictEqual(result, false);
+    });
+  });
+
+  describe("getMemory", () => {
+    it("should return the underlying memory instance", () => {
+      const result = hostCallMemory.getMemory();
+
+      assert.strictEqual(result, memory);
+    });
+  });
+});
