@@ -1,9 +1,10 @@
 import { Result } from "@typeberry/utils";
 import { OutOfMemory, PageFault } from "./errors";
 import { MAX_MEMORY_INDEX, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts";
-import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
+import { type MemoryIndex, type SbrkIndex, tryAsSbrkIndex } from "./memory-index";
 import { MemoryRange } from "./memory-range";
 import { alignToPageSize, getPageNumber } from "./memory-utils";
+import { PageRange } from "./page-range";
 import { WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, tryAsPageIndex } from "./pages/page-utils";
@@ -99,11 +100,12 @@ export class Memory {
       return Result.ok([]);
     }
 
-    const range = MemoryRange.fromStartAndLength(startAddress, length);
+    const memoryRange = MemoryRange.fromStartAndLength(startAddress, length);
+    const pageRange = PageRange.fromMemoryRange(memoryRange);
 
     const pages: MemoryPage[] = [];
 
-    for (const pageNumber of range.getPageNumbers()) {
+    for (const pageNumber of pageRange) {
       if (pageNumber < RESERVED_NUMBER_OF_PAGES) {
         return Result.error(PageFault.fromPageNumber(pageNumber, true));
       }
@@ -177,11 +179,11 @@ export class Memory {
 
     // standard allocation using "Writeable" pages
     const newSbrkIndex = tryAsSbrkIndex(alignToPageSize(newVirtualSbrkIndex));
+    const firstPageNumber = getPageNumber(currentSbrkIndex);
     const pagesToAllocate = (newSbrkIndex - currentSbrkIndex) / PAGE_SIZE;
+    const rangeToAllocate = PageRange.fromStartAndLength(firstPageNumber, pagesToAllocate);
 
-    for (let i = 0; i < pagesToAllocate; i++) {
-      const startMemoryIndex = tryAsMemoryIndex(currentSbrkIndex + i * PAGE_SIZE);
-      const pageNumber = getPageNumber(startMemoryIndex);
+    for (const pageNumber of rangeToAllocate) {
       const page = new WriteablePage(pageNumber);
       this.memory.set(pageNumber, page);
     }

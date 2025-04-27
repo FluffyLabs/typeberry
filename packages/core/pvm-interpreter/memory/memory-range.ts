@@ -1,33 +1,33 @@
-import { MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
+import { check } from "@typeberry/utils";
+import { MEMORY_SIZE } from "./memory-consts";
 import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
-import { getPageNumber } from "./memory-utils";
-import { getNextPageNumber } from "./pages/page-utils";
 
 export class MemoryRange {
   private constructor(
     public readonly start: MemoryIndex,
-    public readonly end: MemoryIndex,
+    public readonly length: number,
   ) {}
 
-  /** Creates a memory range from memory indexes */
-  static fromAddresses(start: MemoryIndex, end: MemoryIndex) {
-    return new MemoryRange(start, end);
+  get end() {
+    return tryAsMemoryIndex((this.start + this.length) % MEMORY_SIZE);
   }
 
   /** Creates a memory range from given starting point and length */
   static fromStartAndLength(start: MemoryIndex, length: number) {
-    const end = tryAsMemoryIndex((start + length) % MEMORY_SIZE);
-    return new MemoryRange(start, end);
+    check(length >= 0, "length must be non-negative");
+    check(length <= MEMORY_SIZE, "length cannot be bigger than 2 ** 32");
+
+    return new MemoryRange(start, length);
   }
 
   /** Checks if a range is empty (`start` === `end`) */
   isEmpty() {
-    return this.start === this.end;
+    return this.length === 0;
   }
 
-  /** Returns true if the range is wrapped (`start` > `end`) */
+  /** Returns true if the range is wrapped (`start` >= `end`) and is not empty */
   isWrapped() {
-    return this.start > this.end;
+    return this.start >= this.end && !this.isEmpty();
   }
 
   /** Checks if given memory address is within the range */
@@ -47,24 +47,9 @@ export class MemoryRange {
 
     return (
       this.isInRange(other.start) ||
-      this.isInRange(tryAsMemoryIndex(other.end - 1)) ||
+      this.isInRange(tryAsMemoryIndex((other.end - 1 + MEMORY_SIZE) % MEMORY_SIZE)) ||
       other.isInRange(this.start) ||
-      other.isInRange(tryAsMemoryIndex(this.end - 1))
+      other.isInRange(tryAsMemoryIndex((this.end - 1 + MEMORY_SIZE) % MEMORY_SIZE))
     );
-  }
-
-  *getPageNumbers() {
-    if (this.isEmpty()) {
-      return;
-    }
-
-    let currentPageNumber = getPageNumber(this.start);
-    const endPageNumber =
-      this.end % PAGE_SIZE === 0 ? getPageNumber(this.end) : getNextPageNumber(getPageNumber(this.end));
-
-    while (currentPageNumber !== endPageNumber) {
-      yield currentPageNumber;
-      currentPageNumber = getNextPageNumber(currentPageNumber);
-    }
   }
 }
