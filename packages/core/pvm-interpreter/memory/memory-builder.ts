@@ -5,6 +5,7 @@ import { PAGE_SIZE } from "./memory-consts";
 import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex } from "./memory-index";
 import { MemoryRange } from "./memory-range";
 import { getPageNumber } from "./memory-utils";
+import { PageRange } from "./page-range";
 import { ReadablePage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, tryAsPageIndex } from "./pages/page-utils";
@@ -18,6 +19,12 @@ export class MemoryBuilder {
   private ensureNotFinalized() {
     if (this.isFinalized) {
       throw new FinalizedBuilderModification();
+    }
+  }
+
+  private ensureNoReservedMemoryUsage(range: MemoryRange) {
+    if (range.overlapsWith(RESERVED_MEMORY_RANGE)) {
+      throw new ReservedMemoryFault();
     }
   }
 
@@ -40,15 +47,13 @@ export class MemoryBuilder {
     const length = end - start;
     const range = MemoryRange.fromStartAndLength(start, length);
 
-    if (range.overlapsWith(RESERVED_MEMORY_RANGE)) {
-      throw new ReservedMemoryFault();
-    }
+    this.ensureNoReservedMemoryUsage(range);
 
-    const noOfPages = (end - start) / PAGE_SIZE;
+    const pages = Array.from(PageRange.fromMemoryRange(range));
+    const noOfPages = pages.length;
 
     for (let i = 0; i < noOfPages; i++) {
-      const startIndex = tryAsMemoryIndex(i * PAGE_SIZE + start);
-      const pageNumber = getPageNumber(startIndex);
+      const pageNumber = pages[i];
       const dataChunk = data.subarray(i * PAGE_SIZE, (i + 1) * PAGE_SIZE);
       const page = new ReadablePage(pageNumber, dataChunk);
       this.initialMemory.set(pageNumber, page);
@@ -76,15 +81,13 @@ export class MemoryBuilder {
     const length = end - start;
     const range = MemoryRange.fromStartAndLength(start, length);
 
-    if (range.overlapsWith(RESERVED_MEMORY_RANGE)) {
-      throw new ReservedMemoryFault();
-    }
+    this.ensureNoReservedMemoryUsage(range);
 
-    const noOfPages = (end - start) / PAGE_SIZE;
+    const pages = Array.from(PageRange.fromMemoryRange(range));
+    const noOfPages = pages.length;
 
     for (let i = 0; i < noOfPages; i++) {
-      const startIndex = tryAsMemoryIndex(i * PAGE_SIZE + start);
-      const pageNumber = getPageNumber(startIndex);
+      const pageNumber = pages[i];
       const dataChunk = data.subarray(i * PAGE_SIZE, (i + 1) * PAGE_SIZE);
       const page = new WriteablePage(pageNumber, dataChunk);
       this.initialMemory.set(pageNumber, page);
@@ -106,9 +109,7 @@ export class MemoryBuilder {
     const length = data.length;
     const range = MemoryRange.fromStartAndLength(start, length);
 
-    if (range.overlapsWith(RESERVED_MEMORY_RANGE)) {
-      throw new ReservedMemoryFault();
-    }
+    this.ensureNoReservedMemoryUsage(range);
 
     const pageNumber = getPageNumber(start);
     const page = this.initialMemory.get(pageNumber);
@@ -128,8 +129,10 @@ export class MemoryBuilder {
     const firstPage = getPageNumber(sbrkIndex);
     const lastPage = getPageNumber(endHeapIndex);
 
-    for (let i = firstPage; i < lastPage; i++) {
-      if (this.initialMemory.has(i)) {
+    const pageRange = PageRange.fromPageNumbers(firstPage, lastPage);
+
+    for (const pageNumber of pageRange) {
+      if (this.initialMemory.has(pageNumber)) {
         throw new IncorrectSbrkIndex();
       }
     }
