@@ -1,12 +1,15 @@
 import { check } from "@typeberry/utils";
-import { FinalizedBuilderModification, IncorrectSbrkIndex, PageNotExist } from "./errors";
+import { FinalizedBuilderModification, IncorrectSbrkIndex, PageNotExist, ReservedMemoryFault } from "./errors";
 import { Memory } from "./memory";
 import { PAGE_SIZE } from "./memory-consts";
 import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex } from "./memory-index";
+import { MemoryRange } from "./memory-range";
 import { getPageNumber } from "./memory-utils";
 import { ReadablePage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, tryAsPageIndex } from "./pages/page-utils";
+
+const RESERVED_MEMORY_RANGE = MemoryRange.fromStartAndLength(tryAsMemoryIndex(0), 16 * PAGE_SIZE);
 
 export class MemoryBuilder {
   private readonly initialMemory: Map<PageNumber, MemoryPage> = new Map();
@@ -33,6 +36,13 @@ export class MemoryBuilder {
     check(start % PAGE_SIZE === 0, `start needs to be a multiple of page size (${PAGE_SIZE})`);
     check(end % PAGE_SIZE === 0, `end needs to be a multiple of page size (${PAGE_SIZE})`);
     check(data.length <= end - start, "the initial data is longer than address range");
+
+    const length = end - start;
+    const range = MemoryRange.fromStartAndLength(start, length);
+
+    if (range.overlapsWith(RESERVED_MEMORY_RANGE)) {
+      throw new ReservedMemoryFault();
+    }
 
     const noOfPages = (end - start) / PAGE_SIZE;
 
@@ -63,6 +73,13 @@ export class MemoryBuilder {
     check(end % PAGE_SIZE === 0, `end needs to be a multiple of page size (${PAGE_SIZE})`);
     check(data.length <= end - start, "the initial data is longer than address range");
 
+    const length = end - start;
+    const range = MemoryRange.fromStartAndLength(start, length);
+
+    if (range.overlapsWith(RESERVED_MEMORY_RANGE)) {
+      throw new ReservedMemoryFault();
+    }
+
     const noOfPages = (end - start) / PAGE_SIZE;
 
     for (let i = 0; i < noOfPages; i++) {
@@ -85,6 +102,14 @@ export class MemoryBuilder {
     const pageOffset = start % PAGE_SIZE;
     const remainingSpaceOnPage = PAGE_SIZE - pageOffset;
     check(data.length <= remainingSpaceOnPage, "The data has to fit into a single page.");
+
+    const length = data.length;
+    const range = MemoryRange.fromStartAndLength(start, length);
+
+    if (range.overlapsWith(RESERVED_MEMORY_RANGE)) {
+      throw new ReservedMemoryFault();
+    }
+
     const pageNumber = getPageNumber(start);
     const page = this.initialMemory.get(pageNumber);
 

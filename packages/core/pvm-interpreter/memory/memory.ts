@@ -30,15 +30,15 @@ export class Memory {
   }
 
   constructor(
-    private sbrkIndex = tryAsSbrkIndex(0),
-    private virtualSbrkIndex = tryAsSbrkIndex(0),
+    private sbrkIndex = tryAsSbrkIndex(16 * PAGE_SIZE),
+    private virtualSbrkIndex = tryAsSbrkIndex(16 * PAGE_SIZE),
     private endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX),
     private memory = new Map<PageNumber, MemoryPage>(),
   ) {}
 
   reset() {
-    this.sbrkIndex = tryAsSbrkIndex(0);
-    this.virtualSbrkIndex = tryAsSbrkIndex(0);
+    this.sbrkIndex = tryAsSbrkIndex(16 * PAGE_SIZE);
+    this.virtualSbrkIndex = tryAsSbrkIndex(16 * PAGE_SIZE);
     this.endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX);
     this.memory = new Map<PageNumber, MemoryPage>(); // TODO [MaSi]: We should keep allocated pages somewhere and reuse it when it is possible
   }
