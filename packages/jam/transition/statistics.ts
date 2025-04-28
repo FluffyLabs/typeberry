@@ -169,14 +169,6 @@ export class Statistics {
     };
   }
 
-  private agregateWorkReportPerCore(incomingReports: WorkReport[]) {
-    return new Map(incomingReports.map((wr) => [wr.coreIndex, wr]));
-  }
-
-  private agregateAvailableReportsPerCore(availableReports: WorkReport[]) {
-    return new Map(availableReports.map((wr) => [wr.coreIndex, wr]));
-  }
-
   private agregateAssurancesPerCore(assurances: AssurancesExtrinsic) {
     const assurancesPerCore = tryAsPerCore(
       FixedSizeArray.fill(() => 0, this.chainSpec.coresCount),
@@ -269,8 +261,8 @@ export class Statistics {
      * NOTE [MaSi] Fields for core and service statistics are `variable size length`
      * and they are not strictly bounded by any specific bit size.
      */
-    const workReportPerCore = this.agregateWorkReportPerCore(incomingReports);
-    const availableReportsPerCore = this.agregateAvailableReportsPerCore(availableReports);
+    const workReportPerCore = new Map(incomingReports.map((wr) => [wr.coreIndex, wr]));
+    const availableReportsPerCore = new Map(availableReports.map((wr) => [wr.coreIndex, wr]));
     const assurancesPerCore = this.agregateAssurancesPerCore(extrinsic.assurances);
 
     /** Update core statistics */
