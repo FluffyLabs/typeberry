@@ -136,8 +136,6 @@ export class Statistics {
     }
 
     return {
-      /** Number of work results can never exceed 2**32 */
-      refinementCount: tryAsU32(workResults.length),
       /** Total gas used will never exceed `2**64` */
       gasUsed: tryAsServiceGas(score.gasUsed),
       /** Each result can import, export up to `W_M, W_X = 3072` segments so we are slightly below `2**16` */
@@ -307,7 +305,7 @@ export class Statistics {
       const serviceIndex = tryAsServiceId(serviceId);
       const serviceStatistics = ServiceStatistics.empty();
 
-      const { refinementCount, gasUsed, imported, extrinsicCount, extrinsicSize, exported } =
+      const { gasUsed, imported, extrinsicCount, extrinsicSize, exported } =
         this.calculateRefineScore(workResults);
       const { count: providedCount, size: providedSize } = this.calculateProvidedScoreService(
         preimagesPerService.get(serviceId) ?? [],
@@ -325,7 +323,7 @@ export class Statistics {
        * Service statistics are tracked only per-block basis, so we override previous values.
        * https://graypaper.fluffylabs.dev/#/cc517d7/190201190501?v=0.6.5
        */
-      serviceStatistics.refinementCount = refinementCount;
+      serviceStatistics.refinementCount = tryAsU32(workResults.length);
       serviceStatistics.refinementGasUsed = gasUsed;
       serviceStatistics.imports = imported;
       serviceStatistics.extrinsicCount = extrinsicCount;
