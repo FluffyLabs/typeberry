@@ -71,52 +71,6 @@ export class Statistics {
     };
   }
 
-  /** https://graypaper.fluffylabs.dev/#/cc517d7/19e70219e702?v=0.6.5 */
-  private calculateRefineScoreCore(workReport: WorkReport | undefined) {
-    if (workReport === undefined) {
-      return {
-        imported: tryAsU16(0),
-        extrinsicCount: tryAsU16(0),
-        extrinsicSize: tryAsU32(0),
-        exported: tryAsU16(0),
-        gasUsed: tryAsServiceGas(0n),
-        bundleSize: tryAsU32(0),
-      };
-    }
-
-    const score = {
-      imported: 0,
-      extrinsicCount: 0,
-      extrinsicSize: 0,
-      exported: 0,
-      gasUsed: 0n,
-      bundleSize: 0,
-    };
-
-    for (const workResult of workReport.results.map((r) => r)) {
-      score.imported += workResult.load.importedSegments;
-      score.extrinsicCount += workResult.load.extrinsicCount;
-      score.extrinsicSize += workResult.load.extrinsicSize;
-      score.exported += workResult.load.exportedSegments;
-      score.gasUsed += workResult.load.gasUsed;
-    }
-    score.bundleSize += workReport.workPackageSpec.length;
-
-    return {
-      /** For each work report we can have up to `W_M = 3072` imports and exports which is less than 2**16 */
-      imported: tryAsU16(score.imported),
-      exported: tryAsU16(score.exported),
-      /** Each work report can have up to `T = 128` extrinsics so we are below `2**16` */
-      extrinsicCount: tryAsU16(score.extrinsicCount),
-      /** Each work report can have up to `W_R = 49152` which cannot be over `2**32` */
-      extrinsicSize: tryAsU32(score.extrinsicSize),
-      /** Total gas used during refinement will never exceed `2**64` */
-      gasUsed: tryAsServiceGas(score.gasUsed),
-      /** Bundle is less than `W_B = 12*2**20` so we are below `2**32` */
-      bundleSize: tryAsU32(score.bundleSize),
-    };
-  }
-
   /** https://graypaper.fluffylabs.dev/#/68eaa1f/195601195601?v=0.6.4 */
   private calculateDAScoreCore(availableWorkReports: WorkReport | undefined) {
     if (availableWorkReports === undefined) {
@@ -134,9 +88,9 @@ export class Statistics {
   }
 
   /** https://graypaper.fluffylabs.dev/#/68eaa1f/191103191103?v=0.6.4 */
-  private calculateRefineScoreService(workResults: WorkResult[]) {
+  private calculateRefineScore(workResults: WorkResult[]) {
     const score = {
-      refinementGasUsed: 0n,
+      gasUsed: 0n,
       imported: 0,
       extrinsicCount: 0,
       extrinsicSize: 0,
@@ -145,7 +99,7 @@ export class Statistics {
 
     /** Maximal number of work results is I=16 */
     for (const workResult of workResults) {
-      score.refinementGasUsed += workResult.load.gasUsed;
+      score.gasUsed += workResult.load.gasUsed;
       score.imported += workResult.load.importedSegments;
       score.extrinsicCount += workResult.load.extrinsicCount;
       score.extrinsicSize += workResult.load.extrinsicSize;
@@ -155,8 +109,8 @@ export class Statistics {
     return {
       /** Number of work results can never exceed 2**32 */
       refinementCount: tryAsU32(workResults.length),
-      /** Total gas used during refinement will never exceed `2**64` */
-      refinementGasUsed: tryAsServiceGas(score.refinementGasUsed),
+      /** Total gas used will never exceed `2**64` */
+      gasUsed: tryAsServiceGas(score.gasUsed),
       /** Each result can import, export up to `W_M, W_X = 3072` segments so we are slightly below `2**16` */
       exported: tryAsU16(score.exported),
       imported: tryAsU16(score.imported),
@@ -296,6 +250,10 @@ export class Statistics {
       current[validatorIndex].assurances = tryAsU32(newAssurancesCount);
     }
 
+    /**
+     * NOTE [MaSi] Fields for core and service statistics are `variable size length`
+     * and they are not strictly bounded by any specific bit size.
+     */
     const workReportPerCore = this.agregateWorkReportPerCore(extrinsic.guarantees);
     const availableReportsPerCore = this.agregateAvailableReportsPerCore(availableReports);
     const assurancesPerCore = this.agregateAssurancesPerCore(extrinsic.assurances);
@@ -305,8 +263,16 @@ export class Statistics {
       const coreIndex = tryAsCoreIndex(coreId);
 
       const workReport = workReportPerCore.get(coreIndex);
-      const { imported, extrinsicCount, extrinsicSize, exported, gasUsed, bundleSize } =
-        this.calculateRefineScoreCore(workReport);
+      const { imported, extrinsicCount, extrinsicSize, exported, gasUsed } =
+        workReport !== undefined
+          ? this.calculateRefineScore(workReport.results.map((r) => r))
+          : {
+              imported: tryAsU16(0),
+              extrinsicCount: tryAsU16(0),
+              extrinsicSize: tryAsU32(0),
+              exported: tryAsU16(0),
+              gasUsed: tryAsServiceGas(0n),
+            };
 
       /**
        * Core statistics are tracked only per-block basis, so we override previous values.
@@ -317,7 +283,7 @@ export class Statistics {
       cores[coreIndex].extrinsicSize = extrinsicSize;
       cores[coreIndex].exports = exported;
       cores[coreIndex].gasUsed = gasUsed;
-      cores[coreIndex].bundleSize = bundleSize;
+      cores[coreIndex].bundleSize = tryAsU32(workReport?.workPackageSpec.length ?? 0);
       cores[coreIndex].dataAvailabilityLoad = this.calculateDAScoreCore(availableReportsPerCore.get(coreIndex));
       cores[coreIndex].popularity = tryAsU16(assurancesPerCore[coreIndex]);
     }
@@ -335,8 +301,8 @@ export class Statistics {
         continue;
       }
 
-      const { refinementCount, refinementGasUsed, imported, extrinsicCount, extrinsicSize, exported } =
-        this.calculateRefineScoreService(workResults);
+      const { refinementCount, gasUsed, imported, extrinsicCount, extrinsicSize, exported } =
+        this.calculateRefineScore(workResults);
       const { count: providedCount, size: providedSize } = this.calculateProvidedScoreService(
         preimagesPerService.get(serviceId) ?? [],
       );
@@ -346,7 +312,7 @@ export class Statistics {
        * https://graypaper.fluffylabs.dev/#/cc517d7/190201190501?v=0.6.5
        */
       serviceStatistics.refinementCount = refinementCount;
-      serviceStatistics.refinementGasUsed = refinementGasUsed;
+      serviceStatistics.refinementGasUsed = gasUsed;
       serviceStatistics.imports = imported;
       serviceStatistics.extrinsicCount = extrinsicCount;
       serviceStatistics.extrinsicSize = extrinsicSize;
