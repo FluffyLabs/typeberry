@@ -107,7 +107,10 @@ describe("Statistics", () => {
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: emptyExtrinsic,
+        incomingReports: [],
         availableReports: [],
+        accumulationStatistics: new Map(),
+        transferStatistics: new Map(),
       });
 
       assert.deepStrictEqual(statistics.state.statistics.current, currentStatistics);
@@ -128,7 +131,10 @@ describe("Statistics", () => {
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: emptyExtrinsic,
+        incomingReports: [],
         availableReports: [],
+        accumulationStatistics: new Map(),
+        transferStatistics: new Map(),
       });
 
       assert.deepStrictEqual(statistics.state.statistics.previous, currentStatistics);
@@ -146,7 +152,10 @@ describe("Statistics", () => {
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: emptyExtrinsic,
+        incomingReports: [],
         availableReports: [],
+        accumulationStatistics: new Map(),
+        transferStatistics: new Map(),
       });
 
       assert.deepStrictEqual(statistics.state.statistics.current.length, tinyChainSpec.validatorsCount);
@@ -213,7 +222,10 @@ describe("Statistics", () => {
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: emptyExtrinsic,
+        incomingReports: [],
         availableReports: [],
+        accumulationStatistics: new Map(),
+        transferStatistics: new Map(),
       });
 
       assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
@@ -234,7 +246,10 @@ describe("Statistics", () => {
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: extrinsic,
+        incomingReports: [],
         availableReports: [],
+        accumulationStatistics: new Map(),
+        transferStatistics: new Map(),
       });
 
       assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
@@ -255,7 +270,10 @@ describe("Statistics", () => {
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: extrinsic,
+        incomingReports: [],
         availableReports: [],
+        accumulationStatistics: new Map(),
+        transferStatistics: new Map(),
       });
 
       assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
@@ -281,7 +299,10 @@ describe("Statistics", () => {
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: extrinsic,
+        incomingReports: [],
         availableReports: [],
+        accumulationStatistics: new Map(),
+        transferStatistics: new Map(),
       });
 
       assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
@@ -307,7 +328,10 @@ describe("Statistics", () => {
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: extrinsic,
+        incomingReports: [],
         availableReports: [],
+        accumulationStatistics: new Map(),
+        transferStatistics: new Map(),
       });
 
       assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
@@ -328,22 +352,24 @@ describe("Statistics", () => {
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: extrinsic,
+        incomingReports: [],
         availableReports: [],
+        accumulationStatistics: new Map(),
+        transferStatistics: new Map(),
       });
 
       assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
     });
 
-    it("should update core statistics based on extrinstic", () => {
+    it("should update refine score of core statistics based on incoming work-reports", () => {
       const { statistics, currentSlot, validatorIndex, coreStatistics } = prepareData({
         previousSlot: 0,
         currentSlot: 1,
       });
       const coreIndex = tryAsCoreIndex(0);
-      const guarantees = [
-        { report: createWorkReport(coreIndex), credentials: [{ validatorIndex }] },
-      ] as unknown as GuaranteesExtrinsic;
+      const guarantees = [{ credentials: [{ validatorIndex }] }] as unknown as GuaranteesExtrinsic;
       const extrinsic = getExtrinsic({ guarantees });
+      const incomingReports = asKnownSize([createWorkReport(coreIndex)]);
       const expectedStatistics = { ...coreStatistics[coreIndex], bundleSize: 2253240945 };
 
       assert.deepEqual(statistics.state.statistics.cores[coreIndex], coreStatistics[coreIndex]);
@@ -352,13 +378,42 @@ describe("Statistics", () => {
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: extrinsic,
+        incomingReports,
         availableReports: [],
+        accumulationStatistics: new Map(),
+        transferStatistics: new Map(),
       });
 
       assert.deepEqual(statistics.state.statistics.cores[coreIndex], expectedStatistics);
     });
 
-    it("should update service statistics based on extrinstic", () => {
+    it("should update data availability score of core statistics based on available work-reports", () => {
+      const { statistics, currentSlot, validatorIndex, coreStatistics } = prepareData({
+        previousSlot: 0,
+        currentSlot: 1,
+      });
+      const coreIndex = tryAsCoreIndex(0);
+      const guarantees = [{ credentials: [{ validatorIndex }] }] as unknown as GuaranteesExtrinsic;
+      const extrinsic = getExtrinsic({ guarantees });
+      const availableReports = asKnownSize([createWorkReport(coreIndex)]);
+      const expectedStatistics = { ...coreStatistics[coreIndex], dataAvailabilityLoad: 2253257361 };
+
+      assert.deepEqual(statistics.state.statistics.cores[coreIndex], coreStatistics[coreIndex]);
+
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: extrinsic,
+        incomingReports: asKnownSize([]),
+        availableReports,
+        accumulationStatistics: new Map(),
+        transferStatistics: new Map(),
+      });
+
+      assert.deepEqual(statistics.state.statistics.cores[coreIndex], expectedStatistics);
+    });
+
+    it("should update provided score of service statistics based on extrinstic preimages", () => {
       const preimages: PreimagesExtrinsic = asKnownSize([createPreimage(1), createPreimage(2), createPreimage(3)]);
       const { statistics, currentSlot, validatorIndex, serviceIndex, serviceStatistics } = prepareData({
         previousSlot: 0,
@@ -380,7 +435,10 @@ describe("Statistics", () => {
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: extrinsic,
+        incomingReports: [],
         availableReports: [],
+        accumulationStatistics: new Map(),
+        transferStatistics: new Map(),
       });
 
       assert.deepEqual(statistics.state.statistics.services.get(serviceIndex), expectedStatistics);

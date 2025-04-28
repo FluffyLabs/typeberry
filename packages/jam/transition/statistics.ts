@@ -1,6 +1,7 @@
 import {
   type CoreIndex,
   type Extrinsic,
+  type ServiceGas,
   type ServiceId,
   type TimeSlot,
   type ValidatorIndex,
@@ -11,13 +12,12 @@ import {
 } from "@typeberry/block";
 import type { AssurancesExtrinsic } from "@typeberry/block/assurances";
 import { W_G } from "@typeberry/block/gp-constants";
-import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { WorkReport } from "@typeberry/block/work-report";
 import type { WorkResult } from "@typeberry/block/work-result";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
+import { type U32, tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { type State, tryAsPerCore } from "@typeberry/state";
 import { ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
@@ -26,7 +26,35 @@ export type Input = {
   slot: TimeSlot;
   authorIndex: ValidatorIndex;
   extrinsic: Extrinsic;
+  /**
+   * `w`: Set of work reports in present extrinsic
+   *
+   * https://graypaper.fluffylabs.dev/#/cc517d7/156c01156c01?v=0.6.5
+   */
+  incomingReports: WorkReport[];
+  /**
+   * `W`: Sequence of newly available work-reports
+   *
+   * https://graypaper.fluffylabs.dev/#/cc517d7/145d01145d01?v=0.6.5
+   */
   availableReports: WorkReport[];
+  /**
+   * `I`: Accumulation statistics
+   *
+   * https://graypaper.fluffylabs.dev/#/cc517d7/171f05171f05?v=0.6.5
+   */
+  accumulationStatistics: Map<ServiceId, CountAndGasUsed>;
+  /**
+   * `X`: Deffered transfer statistics
+   *
+   * https://graypaper.fluffylabs.dev/#/cc517d7/18dd0018dd00?v=0.6.5
+   */
+  transferStatistics: Map<ServiceId, CountAndGasUsed>;
+};
+
+export type CountAndGasUsed = {
+  count: U32;
+  gasUsed: ServiceGas;
 };
 
 /** https://graypaper.fluffylabs.dev/#/68eaa1f/18f60118f601?v=0.6.4 */
@@ -142,10 +170,9 @@ export class Statistics {
     };
   }
 
-  private agregateWorkReportPerCore(guarantees: GuaranteesExtrinsic) {
-    const workReports = guarantees.map((r) => r.report).filter((r) => r !== undefined);
+  private agregateWorkReportPerCore(incomingReports: WorkReport[]) {
     const workReportPerCore = new Map<CoreIndex, WorkReport>();
-    for (const workReport of workReports) {
+    for (const workReport of incomingReports) {
       const coreIndex = workReport.coreIndex;
       workReportPerCore.set(coreIndex, workReport);
     }
@@ -174,9 +201,8 @@ export class Statistics {
     return assurancesPerCore;
   }
 
-  private agregateWorkResultsPerService(guarantees: GuaranteesExtrinsic) {
-    const workReports = guarantees.map((r) => r.report);
-    const workResults = workReports.flatMap((wr) => wr?.results);
+  private agregateWorkResultsPerService(incomingReports: WorkReport[]) {
+    const workResults = incomingReports.flatMap((wr) => wr?.results);
 
     const workResultsPerService = new Map<ServiceId, WorkResult[]>();
     for (const workResult of workResults) {
@@ -206,7 +232,7 @@ export class Statistics {
    * https://graypaper.fluffylabs.dev/#/68eaa1f/199002199002?v=0.6.4
    */
   transition(input: Input) {
-    const { slot, authorIndex, extrinsic, availableReports } = input;
+    const { slot, authorIndex, extrinsic, incomingReports, availableReports } = input;
 
     /** get statistics for the current epoch */
     const statistics = this.getStatistics(slot);
@@ -254,7 +280,7 @@ export class Statistics {
      * NOTE [MaSi] Fields for core and service statistics are `variable size length`
      * and they are not strictly bounded by any specific bit size.
      */
-    const workReportPerCore = this.agregateWorkReportPerCore(extrinsic.guarantees);
+    const workReportPerCore = this.agregateWorkReportPerCore(incomingReports);
     const availableReportsPerCore = this.agregateAvailableReportsPerCore(availableReports);
     const assurancesPerCore = this.agregateAssurancesPerCore(extrinsic.assurances);
 
@@ -288,14 +314,14 @@ export class Statistics {
       cores[coreIndex].popularity = tryAsU16(assurancesPerCore[coreIndex]);
     }
 
-    const workResultsPerService = this.agregateWorkResultsPerService(extrinsic.guarantees);
+    const workResultsPerService = this.agregateWorkResultsPerService(incomingReports);
     const preimagesPerService = this.agregatePreimagesPerService(extrinsic.preimages);
 
     /** Update services statistics */
     for (const [serviceId, workResults] of workResultsPerService) {
       const serviceIndex = tryAsServiceId(serviceId);
       const serviceStatistics = services.get(serviceIndex);
-      // TODO [MaSo] Should we add ServiceStatistics if it is not present?
+      // TODO [MaSo] Should we add ServiceStatistics if they are not present?
       // ?? ServiceStatistics.empty();
       if (serviceStatistics === undefined) {
         continue;
@@ -306,6 +332,14 @@ export class Statistics {
       const { count: providedCount, size: providedSize } = this.calculateProvidedScoreService(
         preimagesPerService.get(serviceId) ?? [],
       );
+      const { count: accumulateCount, gasUsed: accumulateGasUsed } = input.accumulationStatistics.get(serviceId) ?? {
+        count: tryAsU32(0),
+        gasUsed: tryAsServiceGas(0n),
+      };
+      const { count: transferCount, gasUsed: transferGasUsed } = input.transferStatistics.get(serviceId) ?? {
+        count: tryAsU32(0),
+        gasUsed: tryAsServiceGas(0n),
+      };
 
       /**
        * Service statistics are tracked only per-block basis, so we override previous values.
@@ -319,7 +353,10 @@ export class Statistics {
       serviceStatistics.exports = exported;
       serviceStatistics.providedCount = providedCount;
       serviceStatistics.providedSize = providedSize;
-      // TODO [MaSo] After Accumulation PR add count statistics A & T
+      serviceStatistics.accumulateCount = accumulateCount;
+      serviceStatistics.accumulateGasUsed = accumulateGasUsed;
+      serviceStatistics.onTransfersCount = transferCount;
+      serviceStatistics.onTransfersGasUsed = transferGasUsed;
 
       services.set(serviceIndex, serviceStatistics);
     }
@@ -327,7 +364,7 @@ export class Statistics {
     for (const [serviceId, preimages] of preimagesPerService) {
       const serviceIndex = tryAsServiceId(serviceId);
       const serviceStatistics = services.get(serviceIndex);
-      // TODO [MaSo] Should we add ServiceStatistics if it is not present?
+      // TODO [MaSo] Should we add ServiceStatistics if they are not present?
       // ?? ServiceStatistics.empty();
       if (serviceStatistics === undefined) {
         continue;
@@ -339,8 +376,6 @@ export class Statistics {
 
       services.set(serviceIndex, serviceStatistics);
     }
-
-    /** TODO [MaSo] After Accumulation PR add count statistics A & T */
 
     /** Update state */
     this.state.statistics = statistics;

@@ -34,7 +34,10 @@ class TinyInput {
         slot,
         authorIndex: author_index,
         extrinsic,
+        incomingReports: [],
         availableReports: [],
+        accumulationStatistics: new Map(),
+        transferStatistics: new Map(),
       };
     },
   );
@@ -56,7 +59,10 @@ class FullInput {
         slot,
         authorIndex: author_index,
         extrinsic,
+        incomingReports: [],
         availableReports: [],
+        accumulationStatistics: new Map(),
+        transferStatistics: new Map(),
       };
     },
   );
