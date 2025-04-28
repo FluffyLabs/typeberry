@@ -276,16 +276,34 @@ export class StatisticsTestFull {
 
 export async function runStatisticsTestTiny({ input, pre_state, post_state }: StatisticsTestTiny) {
   const spec = tinyChainSpec;
-  const statistics = new Statistics(spec, TestState.toStatisticsState(spec, pre_state));
-  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, pre_state));
+  const preState = TestState.toStatisticsState(spec, pre_state);
+  const postState = TestState.toStatisticsState(spec, post_state);
+  const statistics = new Statistics(spec, preState);
+  assert.deepStrictEqual(statistics.state, preState);
   statistics.transition(input);
-  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, post_state));
+
+  // NOTE [MaSo] This is a workaround for the fact that the test data does not contain any posterior service statistics.
+  assert.deepStrictEqual(postState.statistics.services.size, 0);
+  if (statistics.state.statistics.services.size > 0) {
+    const serviceStatistics = statistics.state.statistics.services.get(tryAsServiceId(0)) ?? ServiceStatistics.empty();
+    postState.statistics.services.set(tryAsServiceId(0), serviceStatistics);
+  }
+  assert.deepStrictEqual(statistics.state, postState);
 }
 
 export async function runStatisticsTestFull({ input, pre_state, post_state }: StatisticsTestFull) {
   const spec = fullChainSpec;
-  const statistics = new Statistics(spec, TestState.toStatisticsState(spec, pre_state));
-  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, pre_state));
+  const preState = TestState.toStatisticsState(spec, pre_state);
+  const postState = TestState.toStatisticsState(spec, post_state);
+  const statistics = new Statistics(spec, preState);
+  assert.deepStrictEqual(statistics.state, preState);
   statistics.transition(input);
-  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, post_state));
+
+  // NOTE [MaSo] This is a workaround for the fact that the test data does not contain any posterior service statistics.
+  assert.deepStrictEqual(postState.statistics.services.size, 0);
+  if (statistics.state.statistics.services.size > 0) {
+    const serviceStatistics = statistics.state.statistics.services.get(tryAsServiceId(0)) ?? ServiceStatistics.empty();
+    postState.statistics.services.set(tryAsServiceId(0), serviceStatistics);
+  }
+  assert.deepStrictEqual(statistics.state, postState);
 }
