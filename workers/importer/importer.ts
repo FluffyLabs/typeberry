@@ -61,8 +61,7 @@ export class Importer {
     const stateRoot = merkelizeState(serializeState(this.stf.state, this.spec));
     const writeState = this.states.insertFullState(stateRoot, this.stf.state);
     const writeBlocks = this.blocks.insertBlock(new WithHash(headerHash, block));
-    await writeState;
-    await writeBlocks;
+    await Promise.all([writeState, writeBlocks]);
     await this.blocks.setBestData(headerHash, stateRoot);
 
     return Result.ok(new WithHash(headerHash, block.header.view()));

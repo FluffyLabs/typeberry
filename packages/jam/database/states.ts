@@ -26,7 +26,7 @@ import { stateDumpCodec } from "@typeberry/state-merkleization/dump";
  * 1. Store `SerializedState` and compute the merkle trie on-demand.
  *    1. If our storage is somehow based on the merkle trie keys we could answer
  *       ce-129 given the key. (nomt approach)
- *    2. If our storage is more naive we will not know what exact state neededs
+ *    2. If our storage is more naive we will not know what exact state needs
  *       to be merkelized when a random trie node is requested.
  * 2. Store all trie nodes and do some pruning of old ones - basically an archive node.
  *
