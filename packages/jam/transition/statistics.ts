@@ -1,5 +1,4 @@
 import {
-  type CoreIndex,
   type Extrinsic,
   type ServiceGas,
   type ServiceId,
@@ -171,21 +170,11 @@ export class Statistics {
   }
 
   private agregateWorkReportPerCore(incomingReports: WorkReport[]) {
-    const workReportPerCore = new Map<CoreIndex, WorkReport>();
-    for (const workReport of incomingReports) {
-      const coreIndex = workReport.coreIndex;
-      workReportPerCore.set(coreIndex, workReport);
-    }
-    return workReportPerCore;
+    return new Map(incomingReports.map((wr) => [wr.coreIndex, wr]));
   }
 
   private agregateAvailableReportsPerCore(availableReports: WorkReport[]) {
-    const availableReportsPerCore = new Map<CoreIndex, WorkReport>();
-    for (const availableReport of availableReports) {
-      const coreIndex = availableReport.coreIndex;
-      availableReportsPerCore.set(coreIndex, availableReport);
-    }
-    return availableReportsPerCore;
+    return new Map(availableReports.map((wr) => [wr.coreIndex, wr]));
   }
 
   private agregateAssurancesPerCore(assurances: AssurancesExtrinsic) {
