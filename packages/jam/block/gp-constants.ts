@@ -29,16 +29,13 @@ export const Q = 80;
 /** `T`: The maximum number of extrinsics in a work-package. */
 export const T = 128;
 
-/** `V`: The total number of validators. */
-export const V = 1_023;
-
 /** `W_C`: The maximum size of service code in octets. */
 export const W_C = 4_000_000;
 
 /** `W_E`: The basic size of erasure-coded pieces in octets. */
 export const W_E = 684;
 
-/** `W_M`: The maximum number of imports and exports in a work-package. */
+/** `W_M`: The maximum number of imports in a work-package. */
 export const W_M = 3_072;
 
 /** `W_P`: The number of erasure-coded pieces in a segment. */
@@ -52,6 +49,9 @@ export const W_G = W_P * W_E;
 
 /** `W_T`: The size of a transfer memo in octets. */
 export const W_T = 128;
+
+/** `W_M`: The maximum number of exports in a work-package. */
+export const W_X = 3_072;
 
 /** `Y`: The number of slots into an epoch at which ticket-submission ends. */
 export const Y = 500;
