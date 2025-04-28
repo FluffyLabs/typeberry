@@ -1,8 +1,8 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { MAX_MEMORY_INDEX, PAGE_SIZE } from "./memory-consts";
-import { tryAsMemoryIndex } from "./memory-index";
+import { MAX_MEMORY_INDEX, MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
+import { tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
 import { alignToPageSize, getPageNumber, getStartPageIndex, getStartPageIndexFromPageNumber } from "./memory-utils";
 import { tryAsPageNumber } from "./pages/page-utils";
 
@@ -22,6 +22,14 @@ describe("memory-utils", () => {
       const pageNumber = getPageNumber(address);
 
       assert.strictEqual(pageNumber, tryAsPageNumber(1));
+    });
+
+    it("should return first page for max sbrk index", () => {
+      const address = tryAsSbrkIndex(MEMORY_SIZE);
+
+      const pageNumber = getPageNumber(address);
+
+      assert.strictEqual(pageNumber, 0);
     });
   });
 
