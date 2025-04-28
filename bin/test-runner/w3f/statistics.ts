@@ -275,6 +275,8 @@ export class StatisticsTestFull {
 }
 
 export async function runStatisticsTestTiny({ input, pre_state, post_state }: StatisticsTestTiny) {
+  input.incomingReports = input.extrinsic.guarantees.map((g) => g.report);
+
   const spec = tinyChainSpec;
   const preState = TestState.toStatisticsState(spec, pre_state);
   const postState = TestState.toStatisticsState(spec, post_state);
@@ -292,6 +294,8 @@ export async function runStatisticsTestTiny({ input, pre_state, post_state }: St
 }
 
 export async function runStatisticsTestFull({ input, pre_state, post_state }: StatisticsTestFull) {
+  input.incomingReports = input.extrinsic.guarantees.map((g) => g.report);
+
   const spec = fullChainSpec;
   const preState = TestState.toStatisticsState(spec, pre_state);
   const postState = TestState.toStatisticsState(spec, post_state);
