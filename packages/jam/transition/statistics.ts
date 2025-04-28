@@ -305,8 +305,7 @@ export class Statistics {
       const serviceIndex = tryAsServiceId(serviceId);
       const serviceStatistics = ServiceStatistics.empty();
 
-      const { gasUsed, imported, extrinsicCount, extrinsicSize, exported } =
-        this.calculateRefineScore(workResults);
+      const { gasUsed, imported, extrinsicCount, extrinsicSize, exported } = this.calculateRefineScore(workResults);
       const { count: providedCount, size: providedSize } = this.calculateProvidedScoreService(
         preimagesPerService.get(serviceId) ?? [],
       );
