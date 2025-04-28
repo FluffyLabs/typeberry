@@ -10,6 +10,7 @@ import {
   tryAsValidatorIndex,
 } from "@typeberry/block";
 import type { AssurancesExtrinsic } from "@typeberry/block/assurances";
+import { I, T, W_G, W_M, W_R, W_X } from "@typeberry/block/gp-constants";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import testWorkReport from "@typeberry/block/test-work-report";
@@ -19,11 +20,34 @@ import { BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
+import { isU16, isU32 } from "@typeberry/numbers";
 import { CoreStatistics, ServiceStatistics, StatisticsData, ValidatorStatistics, tryAsPerCore } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
 import { Statistics, type StatisticsState } from "./statistics";
 
 describe("Statistics", () => {
+  describe("formulas", () => {
+    it("max import score formula should fit into U16", () => {
+      assert.strictEqual(isU16(W_M * I), true);
+    });
+
+    it("max export score formula should fit into U16", () => {
+      assert.strictEqual(isU16(W_X * I), true);
+    });
+
+    it("max extrinsic count score formula should fit into U16", () => {
+      assert.strictEqual(isU16(T * I), true);
+    });
+
+    it("max extrinsic size score formula should fit into U32", () => {
+      assert.strictEqual(isU32(W_R * I), true);
+    });
+
+    it("max data availability score formula should fit into U32", () => {
+      assert.strictEqual(isU32(W_R + W_G * ((W_M * 65) / 64)), true);
+    });
+  });
+
   function getExtrinsic(overrides: Partial<Extrinsic> = {}): Extrinsic {
     return Extrinsic.fromCodec({
       assurances: overrides.assurances ?? asKnownSize([]),
@@ -34,7 +58,7 @@ describe("Statistics", () => {
     });
   }
 
-  const emptyStatistics = () =>
+  const emptyValidatorStatistics = () =>
     tryAsPerValidator(
       Array.from({ length: tinyChainSpec.validatorsCount }, () => {
         return ValidatorStatistics.empty();
@@ -44,8 +68,8 @@ describe("Statistics", () => {
 
   function prepareData({ previousSlot, currentSlot }: { previousSlot: number; currentSlot: number }) {
     const validatorIndex = tryAsValidatorIndex(0);
-    const currentStatistics = emptyStatistics();
-    const lastStatistics = emptyStatistics();
+    const currentStatistics = emptyValidatorStatistics();
+    const lastStatistics = emptyValidatorStatistics();
     const coreStatistics = tryAsPerCore(
       FixedSizeArray.fill(() => CoreStatistics.empty(), tinyChainSpec.coresCount),
       tinyChainSpec,
@@ -130,8 +154,8 @@ describe("Statistics", () => {
   });
 
   describe("stats update", () => {
-    const createPreimage = (blobLength: number, requester?: number) => ({
-      requester: requester,
+    const createPreimage = (blobLength: number) => ({
+      requester: 0,
       blob: { length: blobLength },
     });
 
@@ -147,8 +171,8 @@ describe("Statistics", () => {
     function prepareData({ previousSlot, currentSlot }: { previousSlot: number; currentSlot: number }) {
       const validatorIndex = tryAsValidatorIndex(0);
       const serviceIndex = tryAsServiceId(0);
-      const currentStatistics = emptyStatistics();
-      const lastStatistics = emptyStatistics();
+      const currentStatistics = emptyValidatorStatistics();
+      const lastStatistics = emptyValidatorStatistics();
       const coreStatistics = tryAsPerCore(
         FixedSizeArray.fill(() => CoreStatistics.empty(), tinyChainSpec.coresCount),
         tinyChainSpec,
@@ -271,7 +295,9 @@ describe("Statistics", () => {
         previousSlot: 0,
         currentSlot: 1,
       });
-      const guarantees = [{ credentials: [{ validatorIndex }] }] as unknown as GuaranteesExtrinsic;
+      const guarantees = [
+        { report: createWorkReport(tryAsCoreIndex(0)), credentials: [{ validatorIndex }] },
+      ] as unknown as GuaranteesExtrinsic;
       const extrinsic = getExtrinsic({ guarantees });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1, guarantees: 1 };
 
@@ -333,11 +359,7 @@ describe("Statistics", () => {
     });
 
     it("should update service statistics based on extrinstic", () => {
-      const preimages: PreimagesExtrinsic = asKnownSize([
-        createPreimage(1, 0),
-        createPreimage(2, 0),
-        createPreimage(3, 0),
-      ]);
+      const preimages: PreimagesExtrinsic = asKnownSize([createPreimage(1), createPreimage(2), createPreimage(3)]);
       const { statistics, currentSlot, validatorIndex, serviceIndex, serviceStatistics } = prepareData({
         previousSlot: 0,
         currentSlot: 1,

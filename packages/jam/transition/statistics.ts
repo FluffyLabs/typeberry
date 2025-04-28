@@ -10,7 +10,7 @@ import {
   tryAsServiceId,
 } from "@typeberry/block";
 import type { AssurancesExtrinsic } from "@typeberry/block/assurances";
-import { I, O, T, V, W_G, W_M, W_R } from "@typeberry/block/gp-constants";
+import { W_G } from "@typeberry/block/gp-constants";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { WorkReport } from "@typeberry/block/work-report";
@@ -18,7 +18,7 @@ import type { WorkResult } from "@typeberry/block/work-result";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { CoreStatistics, ServiceStatistics, type State, tryAsPerCore } from "@typeberry/state";
+import { ServiceStatistics, type State, tryAsPerCore } from "@typeberry/state";
 import { ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
 
@@ -71,188 +71,99 @@ export class Statistics {
     };
   }
 
-  /**
-   * Calculate core statistics
-   *
-   * https://graypaper.fluffylabs.dev/#/68eaa1f/19fc0019fc00?v=0.6.4
-   */
-  private calculateCoreStatistics(
-    workReport: WorkReport | undefined,
-    availableReports: WorkReport[],
-    availableAssurances: number,
-  ): CoreStatistics {
-    const { imports, extrinsicCount, extrinsicSize, exports, gasUsed, bundleSize } =
-      this.calculateRefineScoreCore(workReport);
-    const dataAvailabilityLoad = this.calculateDAScoreCore(availableReports);
-
-    /** Cannot be more assuarances than there is Validators */
-    check(availableAssurances <= V, `Number of assurances exceeds maximum number of Validators (${V})`);
-    const popularity = tryAsU16(availableAssurances);
-
-    return CoreStatistics.fromCodec({
-      imports,
-      extrinsicCount,
-      extrinsicSize,
-      exports,
-      gasUsed,
-      bundleSize,
-      dataAvailabilityLoad,
-      popularity,
-    });
-  }
-
-  /** https://graypaper.fluffylabs.dev/#/68eaa1f/192d01192d01?v=0.6.4 */
+  /** https://graypaper.fluffylabs.dev/#/cc517d7/19e70219e702?v=0.6.5 */
   private calculateRefineScoreCore(workReport: WorkReport | undefined) {
     if (workReport === undefined) {
       return {
-        imports: tryAsU16(0),
+        imported: tryAsU16(0),
         extrinsicCount: tryAsU16(0),
         extrinsicSize: tryAsU32(0),
-        exports: tryAsU16(0),
+        exported: tryAsU16(0),
         gasUsed: tryAsServiceGas(0n),
         bundleSize: tryAsU32(0),
       };
     }
 
     const score = {
-      imports: 0,
+      imported: 0,
       extrinsicCount: 0,
       extrinsicSize: 0,
-      exports: 0,
+      exported: 0,
       gasUsed: 0n,
       bundleSize: 0,
     };
 
-    /** Maximal number of work-results is I=16 */
     for (const workResult of workReport.results.map((r) => r)) {
-      score.imports += workResult.load.importedSegments;
+      score.imported += workResult.load.importedSegments;
       score.extrinsicCount += workResult.load.extrinsicCount;
       score.extrinsicSize += workResult.load.extrinsicSize;
-      score.exports += workResult.load.exportedSegments;
+      score.exported += workResult.load.exportedSegments;
       score.gasUsed += workResult.load.gasUsed;
     }
     score.bundleSize += workReport.workPackageSpec.length;
 
-    check(score.imports <= I * W_M, `Imports exceed maximum value I * W_M (${I * W_M})`);
-    check(score.exports <= I * W_M, `Exports exceed maximum value I * W_M (${I * W_M})`);
-    check(score.extrinsicCount <= I * T, `Extrinsic count exceed maximum value I * T (${I * T})`);
-    check(score.extrinsicSize <= I * W_R, `Extrinsic size exceed maximum value I * W_R (${I * W_R})`);
-
     return {
-      imports: tryAsU16(score.imports),
+      /** For each work report we can have up to `W_M = 3072` imports and exports which is less than 2**16 */
+      imported: tryAsU16(score.imported),
+      exported: tryAsU16(score.exported),
+      /** Each work report can have up to `T = 128` extrinsics so we are below `2**16` */
       extrinsicCount: tryAsU16(score.extrinsicCount),
+      /** Each work report can have up to `W_R = 49152` which cannot be over `2**32` */
       extrinsicSize: tryAsU32(score.extrinsicSize),
-      exports: tryAsU16(score.exports),
+      /** Total gas used during refinement will never exceed `2**64` */
       gasUsed: tryAsServiceGas(score.gasUsed),
+      /** Bundle is less than `W_B = 12*2**20` so we are below `2**32` */
       bundleSize: tryAsU32(score.bundleSize),
     };
   }
 
   /** https://graypaper.fluffylabs.dev/#/68eaa1f/195601195601?v=0.6.4 */
-  private calculateDAScoreCore(availableWorkReports: WorkReport[]) {
-    let sum = 0;
-
-    /** Maximal number of available work reports is O=8 */
-    for (const r of availableWorkReports) {
-      const workPackageLength = r.workPackageSpec.length;
-      const workPackageSegment = Math.ceil((r.workPackageSpec.exportsCount * 65) / 64);
-      sum += workPackageLength + W_G * workPackageSegment;
+  private calculateDAScoreCore(availableWorkReports: WorkReport | undefined) {
+    if (availableWorkReports === undefined) {
+      return tryAsU32(0);
     }
 
-    /**
-     * NOTE [MaSo] Use calculated max value 0x0621_0C00
-     * instead of O * (W_R + W_G * ((W_M * 65) / 64))
-     * when GP is updated to 1.0.0
-     */
-    check(
-      sum <= O * (W_R + W_G * ((W_M * 65) / 64)),
-      `DAScore exceeds maximum value of O * (W_R + W_G * ((W_M * 65) / 64)) (${O * (W_R + W_G * ((W_M * 65) / 64))})`,
-    );
+    let sum = 0;
 
+    const workPackageLength = availableWorkReports.workPackageSpec.length;
+    const workPackageSegment = Math.ceil((availableWorkReports.workPackageSpec.exportsCount * 65) / 64);
+    sum += workPackageLength + W_G * workPackageSegment;
+
+    /** Available work report score can be up to `W_R + W_G * ((W_M * 65) / 64) = 0x00C4_2180` */
     return tryAsU32(sum);
-  }
-
-  /**
-   * Calculate service statistics
-   *
-   * https://graypaper.fluffylabs.dev/#/68eaa1f/199002199002?v=0.6.4
-   */
-  private calculateServiceStatistics(workResults: WorkResult[], preimages: PreimagesExtrinsic): ServiceStatistics {
-    const { refinementCount, refinementGasUsed, imports, extrinsicCount, extrinsicSize, exports } =
-      this.calculateRefineScoreService(workResults);
-
-    const accumulate = this.calculateAccumulateScoreService();
-    const onTransfers = this.calculateOnTransferScoreService();
-    const provided = this.calculateProvidedScoreService(preimages);
-
-    return ServiceStatistics.fromCodec({
-      refinementCount,
-      refinementGasUsed,
-      imports,
-      extrinsicCount,
-      extrinsicSize,
-      exports,
-      providedCount: provided.count,
-      providedSize: provided.size,
-      accumulateCount: accumulate.count,
-      accumulateGasUsed: accumulate.gas,
-      onTransfersCount: onTransfers.count,
-      onTransfersGasUsed: onTransfers.gas,
-    });
   }
 
   /** https://graypaper.fluffylabs.dev/#/68eaa1f/191103191103?v=0.6.4 */
   private calculateRefineScoreService(workResults: WorkResult[]) {
     const score = {
-      refinementCount: 0,
       refinementGasUsed: 0n,
-      imports: 0,
+      imported: 0,
       extrinsicCount: 0,
       extrinsicSize: 0,
-      exports: 0,
+      exported: 0,
     };
 
-    /** Max work-results length is I=16 */
+    /** Maximal number of work results is I=16 */
     for (const workResult of workResults) {
-      score.refinementCount += 1;
       score.refinementGasUsed += workResult.load.gasUsed;
-      score.imports += workResult.load.importedSegments;
+      score.imported += workResult.load.importedSegments;
       score.extrinsicCount += workResult.load.extrinsicCount;
       score.extrinsicSize += workResult.load.extrinsicSize;
-      score.exports += workResult.load.exportedSegments;
+      score.exported += workResult.load.exportedSegments;
     }
 
-    check(score.refinementCount <= I, `Refinement count exceeds maximum value I (${I})`);
-    check(score.imports <= I * W_M, `Imports exceed maximum value I * W_M (${I * W_M})`);
-    check(score.exports <= I * W_M, `Exports exceed maximum value I * W_M (${I * W_M})`);
-    check(score.extrinsicCount <= I * T, `Extrinsic count exceed maximum value I * T (${I * T})`);
-    check(score.extrinsicSize <= I * W_R, `Extrinsic size exceed maximum value I * W_R (${I * W_R})`);
-
     return {
-      refinementCount: tryAsU32(score.refinementCount),
+      /** Number of work results can never exceed 2**32 */
+      refinementCount: tryAsU32(workResults.length),
+      /** Total gas used during refinement will never exceed `2**64` */
       refinementGasUsed: tryAsServiceGas(score.refinementGasUsed),
-      imports: tryAsU16(score.imports),
+      /** Each result can import, export up to `W_M, W_X = 3072` segments so we are slightly below `2**16` */
+      exported: tryAsU16(score.exported),
+      imported: tryAsU16(score.imported),
+      /** Each result can have up to `T = 128` extrinsics so we are below `2**16` */
       extrinsicCount: tryAsU16(score.extrinsicCount),
+      /** Each result can have up to `W_R = 49152` which cannot be over `2**32` */
       extrinsicSize: tryAsU32(score.extrinsicSize),
-      exports: tryAsU16(score.exports),
-    };
-  }
-
-  private calculateAccumulateScoreService() {
-    // TODO [MaSo] Implement a & t calculation
-    // https://graypaper.fluffylabs.dev/#/68eaa1f/192e02196b02?v=0.6.4
-    return {
-      count: tryAsU32(0),
-      gas: tryAsServiceGas(0n),
-    };
-  }
-
-  private calculateOnTransferScoreService() {
-    // TODO [MaSo] Implement a & t calculation
-    // https://graypaper.fluffylabs.dev/#/68eaa1f/192e02196b02?v=0.6.4
-    return {
-      count: tryAsU32(0),
-      gas: tryAsServiceGas(0n),
     };
   }
 
@@ -268,10 +179,11 @@ export class Statistics {
       score.size += preimage.blob.length;
     }
 
-    // TODO [MaSo] What is the maximum provided.count & provided.size?
-
     return {
+      /** Number of preimages can never exceed 2**16 */
       count: tryAsU16(score.count),
+      /** Each preimage.blob.length can be up to `W_C = 4_000_000`
+       * with maximal size of EACH preimage, number of preimages in block for one service must be `<= 1073` */
       size: tryAsU32(score.size),
     };
   }
@@ -287,12 +199,10 @@ export class Statistics {
   }
 
   private agregateAvailableReportsPerCore(availableReports: WorkReport[]) {
-    const availableReportsPerCore = new Map<CoreIndex, WorkReport[]>();
+    const availableReportsPerCore = new Map<CoreIndex, WorkReport>();
     for (const availableReport of availableReports) {
       const coreIndex = availableReport.coreIndex;
-      const coreAvailableReports = availableReportsPerCore.get(coreIndex) ?? [];
-      coreAvailableReports.push(availableReport);
-      availableReportsPerCore.set(coreIndex, coreAvailableReports);
+      availableReportsPerCore.set(coreIndex, availableReport);
     }
     return availableReportsPerCore;
   }
@@ -311,8 +221,8 @@ export class Statistics {
   }
 
   private agregateWorkResultsPerService(guarantees: GuaranteesExtrinsic) {
-    const workReports = guarantees.map((r) => r.report).filter((r) => r !== undefined);
-    const workResults = workReports.flatMap((wr) => wr.results);
+    const workReports = guarantees.map((r) => r.report);
+    const workResults = workReports.flatMap((wr) => wr?.results);
 
     const workResultsPerService = new Map<ServiceId, WorkResult[]>();
     for (const workResult of workResults) {
@@ -394,31 +304,67 @@ export class Statistics {
     for (let coreId = 0; coreId < this.chainSpec.coresCount; coreId++) {
       const coreIndex = tryAsCoreIndex(coreId);
 
+      const workReport = workReportPerCore.get(coreIndex);
+      const { imported, extrinsicCount, extrinsicSize, exported, gasUsed, bundleSize } =
+        this.calculateRefineScoreCore(workReport);
+
       /**
-        * Core statistics are tracked only per-block basis, so we override previous values.
-        * https://graypaper.fluffylabs.dev/#/cc517d7/190301190401?v=0.6.5
-        */
-      cores[coreIndex] = this.calculateCoreStatistics(
-        workReportPerCore.get(coreIndex),
-        availableReportsPerCore.get(coreIndex) ?? [],
-        assurancesPerCore[coreIndex],
-      );
+       * Core statistics are tracked only per-block basis, so we override previous values.
+       * https://graypaper.fluffylabs.dev/#/cc517d7/190201190501?v=0.6.5
+       */
+      cores[coreIndex].imports = imported;
+      cores[coreIndex].extrinsicCount = extrinsicCount;
+      cores[coreIndex].extrinsicSize = extrinsicSize;
+      cores[coreIndex].exports = exported;
+      cores[coreIndex].gasUsed = gasUsed;
+      cores[coreIndex].bundleSize = bundleSize;
+      cores[coreIndex].dataAvailabilityLoad = this.calculateDAScoreCore(availableReportsPerCore.get(coreIndex));
+      cores[coreIndex].popularity = tryAsU16(assurancesPerCore[coreIndex]);
     }
 
     const workResultsPerService = this.agregateWorkResultsPerService(extrinsic.guarantees);
     const preimagesPerService = this.agregatePreimagesPerService(extrinsic.preimages);
 
     /** Update services statistics */
-    for (let [serviceId, serviceStatistics] of services.entries()) {
+    services.clear();
+    for (const [serviceId, workResults] of workResultsPerService) {
       const serviceIndex = tryAsServiceId(serviceId);
-
-      serviceStatistics = this.calculateServiceStatistics(
-        workResultsPerService.get(serviceIndex) ?? [],
-        preimagesPerService.get(serviceIndex) ?? [],
+      const serviceStatistics = ServiceStatistics.empty();
+      const { refinementCount, refinementGasUsed, imported, extrinsicCount, extrinsicSize, exported } =
+        this.calculateRefineScoreService(workResults);
+      const { count: providedCount, size: providedSize } = this.calculateProvidedScoreService(
+        preimagesPerService.get(serviceId) ?? [],
       );
 
-      services.set(serviceId, serviceStatistics);
+      /**
+       * Service statistics are tracked only per-block basis, so we override previous values.
+       * https://graypaper.fluffylabs.dev/#/cc517d7/190201190501?v=0.6.5
+       */
+      serviceStatistics.refinementCount = refinementCount;
+      serviceStatistics.refinementGasUsed = refinementGasUsed;
+      serviceStatistics.imports = imported;
+      serviceStatistics.extrinsicCount = extrinsicCount;
+      serviceStatistics.extrinsicSize = extrinsicSize;
+      serviceStatistics.exports = exported;
+      serviceStatistics.providedCount = providedCount;
+      serviceStatistics.providedSize = providedSize;
+      // TODO [MaSo] After Accumulation PR add count statistics A & T
+
+      services.set(serviceIndex, serviceStatistics);
     }
+
+    for (const [serviceId, preimages] of preimagesPerService) {
+      const serviceIndex = tryAsServiceId(serviceId);
+      const serviceStatistics = services.get(serviceIndex) ?? ServiceStatistics.empty();
+      const { count: providedCount, size: providedSize } = this.calculateProvidedScoreService(preimages);
+
+      serviceStatistics.providedCount = providedCount;
+      serviceStatistics.providedSize = providedSize;
+
+      services.set(serviceIndex, serviceStatistics);
+    }
+
+    /** TODO [MaSo] After Accumulation PR add count statistics A & T */
 
     /** Update state */
     this.state.statistics = statistics;
