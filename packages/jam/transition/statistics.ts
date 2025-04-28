@@ -17,7 +17,7 @@ import type { WorkResult } from "@typeberry/block/work-result";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type U32, tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { type State, tryAsPerCore } from "@typeberry/state";
+import { ServiceStatistics, type State, tryAsPerCore } from "@typeberry/state";
 import { ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
 
@@ -39,12 +39,14 @@ export type Input = {
   availableReports: WorkReport[];
   /**
    * `I`: Accumulation statistics
+   * TODO [MaSo] Use fields from accumulation.
    *
    * https://graypaper.fluffylabs.dev/#/cc517d7/171f05171f05?v=0.6.5
    */
   accumulationStatistics: Map<ServiceId, CountAndGasUsed>;
   /**
    * `X`: Deffered transfer statistics
+   * TODO [MaSo] Use fields from accumulation.
    *
    * https://graypaper.fluffylabs.dev/#/cc517d7/18dd0018dd00?v=0.6.5
    */
@@ -299,14 +301,11 @@ export class Statistics {
     const preimagesPerService = this.agregatePreimagesPerService(extrinsic.preimages);
 
     /** Update services statistics */
+    services.clear();
+
     for (const [serviceId, workResults] of workResultsPerService) {
       const serviceIndex = tryAsServiceId(serviceId);
-      const serviceStatistics = services.get(serviceIndex);
-      // TODO [MaSo] Should we add ServiceStatistics if they are not present?
-      // ?? ServiceStatistics.empty();
-      if (serviceStatistics === undefined) {
-        continue;
-      }
+      const serviceStatistics = ServiceStatistics.empty();
 
       const { refinementCount, gasUsed, imported, extrinsicCount, extrinsicSize, exported } =
         this.calculateRefineScore(workResults);
@@ -344,12 +343,8 @@ export class Statistics {
 
     for (const [serviceId, preimages] of preimagesPerService) {
       const serviceIndex = tryAsServiceId(serviceId);
-      const serviceStatistics = services.get(serviceIndex);
-      // TODO [MaSo] Should we add ServiceStatistics if they are not present?
-      // ?? ServiceStatistics.empty();
-      if (serviceStatistics === undefined) {
-        continue;
-      }
+      const serviceStatistics = services.get(serviceIndex) ?? ServiceStatistics.empty();
+
       const { count: providedCount, size: providedSize } = this.calculateProvidedScoreService(preimages);
 
       serviceStatistics.providedCount = providedCount;
