@@ -9,7 +9,7 @@ import {
   tryAsServiceId,
 } from "@typeberry/block";
 import { getExtrinsicFromJson } from "@typeberry/block-json";
-import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { U16, U32 } from "@typeberry/numbers";
 import {
@@ -274,10 +274,12 @@ export class StatisticsTestFull {
   post_state!: TestState;
 }
 
-export async function runStatisticsTestTiny({ input, pre_state, post_state }: StatisticsTestTiny) {
+export async function runStatisticsTest(
+  { input, pre_state, post_state }: StatisticsTestTiny | StatisticsTestFull,
+  spec: ChainSpec,
+) {
   input.incomingReports = input.extrinsic.guarantees.map((g) => g.report);
 
-  const spec = tinyChainSpec;
   const preState = TestState.toStatisticsState(spec, pre_state);
   const postState = TestState.toStatisticsState(spec, post_state);
   const statistics = new Statistics(spec, preState);
@@ -293,21 +295,10 @@ export async function runStatisticsTestTiny({ input, pre_state, post_state }: St
   assert.deepStrictEqual(statistics.state, postState);
 }
 
-export async function runStatisticsTestFull({ input, pre_state, post_state }: StatisticsTestFull) {
-  input.incomingReports = input.extrinsic.guarantees.map((g) => g.report);
+export async function runStatisticsTestTiny(test: StatisticsTestTiny) {
+  runStatisticsTest(test, tinyChainSpec);
+}
 
-  const spec = fullChainSpec;
-  const preState = TestState.toStatisticsState(spec, pre_state);
-  const postState = TestState.toStatisticsState(spec, post_state);
-  const statistics = new Statistics(spec, preState);
-  assert.deepStrictEqual(statistics.state, preState);
-  statistics.transition(input);
-
-  // NOTE [MaSo] This is a workaround for the fact that the test data does not contain any posterior service statistics.
-  assert.deepStrictEqual(postState.statistics.services.size, 0);
-  if (statistics.state.statistics.services.size > 0) {
-    const serviceStatistics = statistics.state.statistics.services.get(tryAsServiceId(0)) ?? ServiceStatistics.empty();
-    postState.statistics.services.set(tryAsServiceId(0), serviceStatistics);
-  }
-  assert.deepStrictEqual(statistics.state, postState);
+export async function runStatisticsTestFull(test: StatisticsTestFull) {
+  runStatisticsTest(test, fullChainSpec);
 }
