@@ -32,6 +32,7 @@ export type TaggedError<Kind, Nested> = {
 };
 
 type EnumMapping = Record<string, string | number>;
+
 class RichTaggedError<Kind extends string | number, Nested> implements TaggedError<Kind, Nested> {
   constructor(
     public readonly kind: Kind,
