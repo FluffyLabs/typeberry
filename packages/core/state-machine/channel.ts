@@ -132,8 +132,7 @@ export class MessageChannelStateMachine<
     const done = this.waitForState(state).then(() => {
       isDone.isDone = true;
     });
-    const workPromise = work(this.currentState(), this, () => isDone.isDone);
-    await workPromise;
+    await work(this.currentState(), this, () => isDone.isDone);
     await done;
     return this.transitionTo<TNewState>();
   }
