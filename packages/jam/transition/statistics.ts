@@ -18,7 +18,7 @@ import type { WorkResult } from "@typeberry/block/work-result";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { ServiceStatistics, type State, tryAsPerCore } from "@typeberry/state";
+import { type State, tryAsPerCore } from "@typeberry/state";
 import { ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
 
@@ -326,10 +326,15 @@ export class Statistics {
     const preimagesPerService = this.agregatePreimagesPerService(extrinsic.preimages);
 
     /** Update services statistics */
-    services.clear();
     for (const [serviceId, workResults] of workResultsPerService) {
       const serviceIndex = tryAsServiceId(serviceId);
-      const serviceStatistics = ServiceStatistics.empty();
+      const serviceStatistics = services.get(serviceIndex);
+      // TODO [MaSo] Should we add ServiceStatistics if it is not present?
+      // ?? ServiceStatistics.empty();
+      if (serviceStatistics === undefined) {
+        continue;
+      }
+
       const { refinementCount, refinementGasUsed, imported, extrinsicCount, extrinsicSize, exported } =
         this.calculateRefineScoreService(workResults);
       const { count: providedCount, size: providedSize } = this.calculateProvidedScoreService(
@@ -355,7 +360,12 @@ export class Statistics {
 
     for (const [serviceId, preimages] of preimagesPerService) {
       const serviceIndex = tryAsServiceId(serviceId);
-      const serviceStatistics = services.get(serviceIndex) ?? ServiceStatistics.empty();
+      const serviceStatistics = services.get(serviceIndex);
+      // TODO [MaSo] Should we add ServiceStatistics if it is not present?
+      // ?? ServiceStatistics.empty();
+      if (serviceStatistics === undefined) {
+        continue;
+      }
       const { count: providedCount, size: providedSize } = this.calculateProvidedScoreService(preimages);
 
       serviceStatistics.providedCount = providedCount;
