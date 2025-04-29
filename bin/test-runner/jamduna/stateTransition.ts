@@ -8,9 +8,9 @@ import { SimpleAllocator, keccak } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
+import { BlockVerifier } from "@typeberry/transition/block-verification";
 import { OnChain } from "@typeberry/transition/chain-stf";
 import { deepEqual } from "@typeberry/utils";
-import { BlockVerifier } from "../../../packages/jam/transition/block-verification";
 import { TestState, loadState } from "./stateLoader";
 
 export class StateTransition {
@@ -39,11 +39,12 @@ export async function runStateTransition(testContent: StateTransition, _path: st
 
   const encodedBlock = Encoder.encodeObject(Block.Codec, testContent.block, spec);
   const blockView = Decoder.decodeObject(Block.Codec.View, encodedBlock, spec);
+  const blocksDb = new InMemoryBlocks();
 
   const stf = new OnChain(
     spec,
     preState,
-    new InMemoryBlocks(),
+    blocksDb,
     new TransitionHasher(spec, await keccakHasher, new SimpleAllocator()),
   );
 
@@ -51,8 +52,8 @@ export async function runStateTransition(testContent: StateTransition, _path: st
   assert.deepStrictEqual(testContent.pre_state.state_root.toString(), preStateRoot.toString());
   assert.deepStrictEqual(testContent.post_state.state_root.toString(), postStateRoot.toString());
 
-  const verifier = new BlockVerifier(stf.hasher);
-  const verificationResult = await verifier.verifyBlock(blockView);
+  const verifier = new BlockVerifier(stf.hasher, blocksDb);
+  const verificationResult = await verifier.verifyBlock(blockView, stf.state.timeslot);
   if (verificationResult.isError) {
     assert.fail(`Block verification failed, got: ${JSON.stringify(verificationResult.error)}`);
   }
