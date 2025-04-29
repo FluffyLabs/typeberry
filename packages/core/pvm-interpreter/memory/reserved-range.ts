@@ -1,4 +1,3 @@
-import { tryAsU32 } from "@typeberry/numbers";
 import { PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts";
 import { tryAsMemoryIndex } from "./memory-index";
 import { MemoryRange } from "./memory-range";
@@ -12,5 +11,5 @@ import { MemoryRange } from "./memory-range";
  */
 export const RESERVED_MEMORY_RANGE = MemoryRange.fromStartAndLength(
   tryAsMemoryIndex(0),
-  tryAsU32(RESERVED_NUMBER_OF_PAGES * PAGE_SIZE),
+  RESERVED_NUMBER_OF_PAGES * PAGE_SIZE,
 );
