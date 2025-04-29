@@ -10,7 +10,7 @@ export const CURRENT_SERVICE_ID = tryAsServiceId(2 ** 32 - 1);
  *
  * https://graypaper.fluffylabs.dev/#/cc517d7/305d00306100?v=0.6.5
  */
-export const PLACEHOLDER_SERVICE_ID = 2n**64n - 1n;
+export const PLACEHOLDER_SERVICE_ID = 2n ** 64n - 1n;
 
 export function legacyGetServiceId(regNumber: number, regs: Registers, currentServiceId: ServiceId) {
   const serviceId = regs.getU32(regNumber);
