@@ -1,26 +1,31 @@
-import { check } from "@typeberry/utils";
 import { MEMORY_SIZE } from "./memory-consts";
 import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
 
 export class MemoryRange {
   public readonly end: MemoryIndex;
+  public readonly lastIndex: MemoryIndex | null = null;
 
   private constructor(
     public readonly start: MemoryIndex,
     public readonly length: number,
   ) {
     this.end = tryAsMemoryIndex((this.start + this.length) % MEMORY_SIZE);
+
+    if (length > 0) {
+      this.lastIndex = tryAsMemoryIndex((this.end - 1 + MEMORY_SIZE) % MEMORY_SIZE);
+    }
   }
 
   /** Creates a memory range from given starting point and length */
   static fromStartAndLength(start: MemoryIndex, length: number) {
-    check(length >= 0, "length must be non-negative");
-    check(length <= MEMORY_SIZE, "length cannot be bigger than 2 ** 32");
+    if (!Number.isInteger(length) || length < 0 || length > MEMORY_SIZE) {
+      throw new TypeError(`length must be a non-negative integer and less than ${MEMORY_SIZE}, got ${length}`);
+    }
 
     return new MemoryRange(start, length);
   }
 
-  /** Checks if a range is empty (`start` === `end`) */
+  /** Checks if a range is empty (`length === 0`) */
   isEmpty() {
     return this.length === 0;
   }

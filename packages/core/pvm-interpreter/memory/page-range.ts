@@ -1,4 +1,3 @@
-import { check } from "@typeberry/utils";
 import { MAX_NUMBER_OF_PAGES, PAGE_SIZE } from "./memory-consts";
 import type { MemoryRange } from "./memory-range";
 import { getPageNumber } from "./memory-utils";
@@ -14,6 +13,7 @@ export class PageRange {
     this.end = tryAsPageNumber((this.start + this.length) % MAX_NUMBER_OF_PAGES);
   }
 
+  /** Creates range of pages that are part of given memory range */
   static fromMemoryRange(range: MemoryRange) {
     const startPage = getPageNumber(range.start);
 
@@ -21,8 +21,9 @@ export class PageRange {
       return new PageRange(startPage, 0);
     }
 
-    const pageWithLastIndex = getPageNumber(range.end);
-    const endPage = range.end % PAGE_SIZE !== 0 ? getNextPageNumber(pageWithLastIndex) : pageWithLastIndex;
+    // lastIndex is not null because we just ensured that the range is not empty
+    const pageWithLastIndex = getPageNumber(range.lastIndex ?? range.end);
+    const endPage = getNextPageNumber(pageWithLastIndex);
 
     if ((startPage === endPage || startPage === pageWithLastIndex) && range.length > PAGE_SIZE) {
       // full range
@@ -33,12 +34,15 @@ export class PageRange {
     return PageRange.fromStartAndLength(startPage, length);
   }
 
+  /** Creates a page range from given starting point and length */
   static fromStartAndLength(start: PageNumber, length: number) {
-    check(length >= 0, "length must be non-negative");
-    check(length < MAX_NUMBER_OF_PAGES, `length cannot be bigger than ${MAX_NUMBER_OF_PAGES}`);
+    if (!Number.isInteger(length) || length < 0 || length > MAX_NUMBER_OF_PAGES) {
+      throw new TypeError(`length must be a non-negative integer and less than ${MAX_NUMBER_OF_PAGES}, got ${length}`);
+    }
     return new PageRange(start, length);
   }
 
+  /** Checks if a range is empty (`length === 0`) */
   isEmpty() {
     return this.length === 0;
   }
