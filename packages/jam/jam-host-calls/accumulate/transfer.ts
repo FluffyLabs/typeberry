@@ -41,6 +41,8 @@ export class Transfer implements HostCallHandler {
     // `d`: destination
     const destination = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
 
+    // TODO [ToDr] This is wrong. We should not panic if destination
+    // is not a valid service id, but rather return WHO.
     if (destination === null) {
       return PvmExecution.Panic;
     }

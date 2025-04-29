@@ -145,7 +145,7 @@ export interface AccumulationPartialState {
    * TODO [ToDr] is it possible to transfer to self?
    */
   transfer(
-    destination: ServiceId,
+    destination: ServiceId | null,
     amount: U64,
     suppliedGas: Gas,
     memo: Bytes<TRANSFER_MEMO_BYTES>,
