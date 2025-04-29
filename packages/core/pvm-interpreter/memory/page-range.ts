@@ -56,7 +56,6 @@ export class PageRange {
     let i = this.start;
 
     do {
-      // console.log(i, end)
       yield i;
       i = getNextPageNumber(i);
     } while (i !== end);

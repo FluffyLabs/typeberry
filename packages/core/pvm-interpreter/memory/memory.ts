@@ -2,13 +2,12 @@ import { Result } from "@typeberry/utils";
 import { OutOfMemory, PageFault } from "./errors";
 import { MAX_MEMORY_INDEX, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts";
 import { type MemoryIndex, type SbrkIndex, tryAsSbrkIndex } from "./memory-index";
-import { MemoryRange } from "./memory-range";
+import { MemoryRange, RESERVED_MEMORY_RANGE } from "./memory-range";
 import { alignToPageSize, getPageNumber } from "./memory-utils";
 import { PageRange } from "./page-range";
 import { WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, tryAsPageIndex } from "./pages/page-utils";
-import { RESERVED_MEMORY_RANGE } from "./reserved-range";
 
 type InitialMemoryState = {
   memory: Map<PageNumber, MemoryPage>;

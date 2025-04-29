@@ -1,4 +1,4 @@
-import { MEMORY_SIZE } from "./memory-consts";
+import { MEMORY_SIZE, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts";
 import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
 
 export class MemoryRange {
@@ -58,3 +58,15 @@ export class MemoryRange {
     );
   }
 }
+
+/**
+ * The first 16 pages of memory are reserved.
+ *
+ * https://graypaper.fluffylabs.dev/#/cc517d7/24d00024d000?v=0.6.5
+ *
+ * it should be in memory-consts but it cannot be there becasue of circular dependency
+ */
+export const RESERVED_MEMORY_RANGE = MemoryRange.fromStartAndLength(
+  tryAsMemoryIndex(0),
+  RESERVED_NUMBER_OF_PAGES * PAGE_SIZE,
+);

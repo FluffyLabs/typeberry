@@ -3,13 +3,12 @@ import { FinalizedBuilderModification, IncorrectSbrkIndex, PageNotExist, Reserve
 import { Memory } from "./memory";
 import { PAGE_SIZE } from "./memory-consts";
 import { type MemoryIndex, type SbrkIndex, tryAsSbrkIndex } from "./memory-index";
-import { MemoryRange } from "./memory-range";
+import { MemoryRange, RESERVED_MEMORY_RANGE } from "./memory-range";
 import { getPageNumber } from "./memory-utils";
 import { PageRange } from "./page-range";
 import { ReadablePage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, tryAsPageIndex } from "./pages/page-utils";
-import { RESERVED_MEMORY_RANGE } from "./reserved-range";
 
 export class MemoryBuilder {
   private readonly initialMemory: Map<PageNumber, MemoryPage> = new Map();
@@ -124,6 +123,10 @@ export class MemoryBuilder {
   }
 
   finalize(startHeapIndex: MemoryIndex, endHeapIndex: SbrkIndex): Memory {
+    check(
+      startHeapIndex <= endHeapIndex,
+      `startHeapIndex (${startHeapIndex}) has to be less than or equal to endHeapIndex (${endHeapIndex})`,
+    );
     this.ensureNotFinalized();
 
     const range = MemoryRange.fromStartAndLength(startHeapIndex, endHeapIndex - startHeapIndex);
