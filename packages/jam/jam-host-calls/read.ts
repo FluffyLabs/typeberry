@@ -45,7 +45,7 @@ export class Read implements HostCallHandler {
     const destinationAddress = regs.get(10);
 
     // allocate extra bytes for the serviceId
-    const keyLenClamped = keyLen >= 2 ** 32 ? 2 ** 32 : Number(keyLen);
+    const keyLenClamped = keyLen >= 2n ** 32n ? 2 ** 32 : Number(keyLen);
     const key = new Uint8Array(SERVICE_ID_BYTES + keyLenClamped);
     writeServiceIdAsLeBytes(this.currentServiceId, key);
     const memoryReadResult = memory.loadInto(key.subarray(SERVICE_ID_BYTES), keyStartAddress);
