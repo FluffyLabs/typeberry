@@ -1,6 +1,1 @@
-import { MachineManager } from "./machine-manager";
-
-// Initialize the machine manager
-const machineManager = new MachineManager();
-
-export { machineManager };
+export * from './machine-manager'

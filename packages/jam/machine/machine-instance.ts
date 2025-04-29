@@ -1,15 +1,16 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import type { ProgramCounter } from "@typeberry/jam-host-calls/refine/refine-externalities";
-import { type BigGas, Interpreter, type Memory, type Registers } from "@typeberry/pvm-interpreter";
+import { type BigGas, Interpreter, type Memory, MemoryIndex, type Registers } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import type { MachineResult } from "./machine-types";
+import { U32 } from "@typeberry/numbers";
 
 /**
  * Machine - integrated PVM type
  *
  * https://graypaper.fluffylabs.dev/#/68eaa1f/2d58002d5800?v=0.6.4
  */
-export class MachineInstance {
+export interface MachineInstance {
   /** Program code */
   code: BytesBlob;
   /** Memory - RAM */
@@ -17,17 +18,48 @@ export class MachineInstance {
   /** Program counter - entry point */
   entrypoint: ProgramCounter;
 
-  private constructor(code: BytesBlob, memory: Memory | null, entrypoint: ProgramCounter) {
-    this.code = code;
-    this.memory = memory;
-    this.entrypoint = entrypoint;
-  }
+  /** Getters and setters for memory. */
+  peek(address: MemoryIndex, length: U32): Promise<BytesBlob>;
+  poke(address: MemoryIndex, length: U32): Promise<boolean>;
 
-  static withCodeAndProgramCounter(code: BytesBlob, entrypoint: ProgramCounter): MachineInstance {
-    return new MachineInstance(code, null, entrypoint);
-  }
+  /** Initial memory - set all bytes to zero */
+  initialMemory(): Promise<boolean>;
+
+  /** Mark pages as unavailable and zero their content. */
+  voidMemory(): Promise<boolean>;
 
   /** Execute the machine with given gas and registers. */
+  run(gas: BigGas, registers: Registers): Promise<MachineResult>;
+}
+
+export class MachineInterpreter implements MachineInstance {
+  readonly code: BytesBlob;
+  readonly memory: Memory | null;
+  readonly entrypoint: ProgramCounter;
+
+  private constructor(code: BytesBlob, entrypoint: ProgramCounter, memory: Memory | null) {
+    this.code = code;
+    this.entrypoint = entrypoint;
+    this.memory = memory;
+  }
+
+  static new(code: BytesBlob, entrypoint: ProgramCounter): MachineInterpreter {
+    return new MachineInterpreter(code, entrypoint, null);
+  }
+
+  getMemory(): Memory {
+    throw new Error("Method not implemented.");
+  }
+  setMemory(): void {
+    throw new Error("Method not implemented.");
+  }
+  zeroMemory(): void {
+    throw new Error("Method not implemented.");
+  }
+  voidMemory(): void {
+    throw new Error("Method not implemented.");
+  }
+
   async run(gas: BigGas, registers: Registers): Promise<MachineResult> {
     if (this.memory === null) {
       throw new Error("Memory is not initialized");
