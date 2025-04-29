@@ -1,18 +1,20 @@
 import { check } from "./debug";
 
 /** An indication of two possible outcomes returned from a function. */
-export type Result<Ok, Error> =
-  | {
-      isOk: true;
-      isError: false;
-      ok: Ok;
-    }
-  | {
-      isOk: false;
-      isError: true;
-      error: Error;
-      details: string;
-    };
+export type Result<Ok, Error> = OkResult<Ok> | ErrorResult<Error>;
+
+export type OkResult<Ok> = {
+  isOk: true;
+  isError: false;
+  ok: Ok;
+};
+
+export type ErrorResult<Error> = {
+  isOk: false;
+  isError: true;
+  error: Error;
+  details: string;
+};
 
 /**
  * A generic `OK` response to be used instead of some empty/null value.
@@ -99,9 +101,8 @@ export const Result = {
   taggedError: <Ok, Kind extends string | number, Nested>(
     enumMapping: EnumMapping,
     kind: Kind,
-    nested: Nested,
-    details = "",
+    nested: ErrorResult<Nested>,
   ): Result<Ok, RichTaggedError<Kind, Nested>> => {
-    return Result.error(new RichTaggedError(kind, nested, enumMapping), details);
+    return Result.error(new RichTaggedError(kind, nested.error, enumMapping), nested.details);
   },
 };

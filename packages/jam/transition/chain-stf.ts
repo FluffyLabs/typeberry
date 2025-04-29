@@ -13,7 +13,7 @@ import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import type { SafroleErrorCode } from "@typeberry/safrole/safrole";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal";
 import type { State } from "@typeberry/state";
-import { OK, Result, type TaggedError } from "@typeberry/utils";
+import { type ErrorResult, OK, Result, type TaggedError } from "@typeberry/utils";
 import { Assurances, type AssurancesError } from "./assurances";
 import { Authorization } from "./authorization";
 import type { TransitionHasher } from "./hasher";
@@ -47,6 +47,10 @@ export type StfError =
   | TaggedError<StfErrorKind.Safrole, SafroleErrorCode>
   | TaggedError<StfErrorKind.Preimages, PreimagesErrorCode>
   | TaggedError<StfErrorKind.SafroleSeal, SafroleSealError>;
+
+const stfError = <Kind extends StfErrorKind, Err extends StfError["error"]>(kind: Kind, nested: ErrorResult<Err>) => {
+  return Result.taggedError<OK, Kind, Err>(StfErrorKind, kind, nested);
+};
 
 export class OnChain {
   // chapter 13: https://graypaper.fluffylabs.dev/#/68eaa1f/18b60118b601?v=0.6.4
@@ -99,13 +103,13 @@ export class OnChain {
     const sealState = this.safrole.getSafroleSealState(timeSlot);
     const sealResult = await this.safroleSeal.verifyHeaderSeal(block.header.view(), sealState);
     if (sealResult.isError) {
-      return Result.taggedError(StfErrorKind, StfErrorKind.SafroleSeal, sealResult.error, sealResult.details);
+      return stfError(StfErrorKind.SafroleSeal, sealResult);
     }
 
     // disputes
     const disputesResult = await this.disputes.transition(block.extrinsic.view().disputes.materialize());
     if (disputesResult.isError) {
-      return Result.taggedError(StfErrorKind, StfErrorKind.Disputes, disputesResult.error, disputesResult.details);
+      return stfError(StfErrorKind.Disputes, disputesResult);
     }
 
     // reports
@@ -115,7 +119,7 @@ export class OnChain {
       knownPackages: [],
     });
     if (reportsResult.isError) {
-      return Result.taggedError(StfErrorKind, StfErrorKind.Reports, reportsResult.error, reportsResult.details);
+      return stfError(StfErrorKind.Reports, reportsResult);
     }
 
     // assurances
@@ -125,12 +129,7 @@ export class OnChain {
       parentHash: header.parentHeaderHash,
     });
     if (assurancesResult.isError) {
-      return Result.taggedError(
-        StfErrorKind,
-        StfErrorKind.Assurances,
-        assurancesResult.error,
-        assurancesResult.details,
-      );
+      return stfError(StfErrorKind.Assurances, assurancesResult);
     }
 
     // statistics
@@ -150,7 +149,7 @@ export class OnChain {
 
     // TODO [ToDr] shall we verify the ticket mark & epoch mark as well?
     if (safroleResult.isError) {
-      return Result.taggedError(StfErrorKind, StfErrorKind.Safrole, safroleResult.error, safroleResult.details);
+      return stfError(StfErrorKind.Safrole, safroleResult);
     }
 
     // preimages
@@ -159,7 +158,7 @@ export class OnChain {
       preimages: block.extrinsic.view().preimages.materialize(),
     });
     if (preimagesResult.isError) {
-      return Result.taggedError(StfErrorKind, StfErrorKind.Preimages, preimagesResult.error, preimagesResult.details);
+      return stfError(StfErrorKind.Preimages, preimagesResult);
     }
 
     // TODO [ToDr] output from accumulate

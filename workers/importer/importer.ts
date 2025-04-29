@@ -46,7 +46,7 @@ export class Importer {
 
     const hash = await this.verifier.verifyBlock(block);
     if (hash.isError) {
-      return Result.taggedError(ImporterErrorKind, ImporterErrorKind.Verifier, hash.error, hash.details);
+      return Result.taggedError(ImporterErrorKind, ImporterErrorKind.Verifier, hash);
     }
 
     const timeSlot = block.header.view().timeSlotIndex.materialize();
@@ -55,7 +55,7 @@ export class Importer {
     const res = await this.stf.transition(block, headerHash);
     if (res.isError) {
       // TODO [ToDr] Revert the state?
-      return Result.taggedError(ImporterErrorKind, ImporterErrorKind.Stf, res.error, res.details);
+      return Result.taggedError(ImporterErrorKind, ImporterErrorKind.Stf, res);
     }
 
     const stateRoot = merkelizeState(serializeState(this.stf.state, this.spec));
