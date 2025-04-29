@@ -2,15 +2,14 @@ import { check } from "@typeberry/utils";
 import { FinalizedBuilderModification, IncorrectSbrkIndex, PageNotExist, ReservedMemoryFault } from "./errors";
 import { Memory } from "./memory";
 import { PAGE_SIZE } from "./memory-consts";
-import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex } from "./memory-index";
+import { type MemoryIndex, type SbrkIndex, tryAsSbrkIndex } from "./memory-index";
 import { MemoryRange } from "./memory-range";
 import { getPageNumber } from "./memory-utils";
 import { PageRange } from "./page-range";
 import { ReadablePage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, tryAsPageIndex } from "./pages/page-utils";
-
-const RESERVED_MEMORY_RANGE = MemoryRange.fromStartAndLength(tryAsMemoryIndex(0), 16 * PAGE_SIZE);
+import { RESERVED_MEMORY_RANGE } from "./reserved-range";
 
 export class MemoryBuilder {
   private readonly initialMemory: Map<PageNumber, MemoryPage> = new Map();
@@ -124,14 +123,13 @@ export class MemoryBuilder {
     return this;
   }
 
-  finalize(sbrkIndex: SbrkIndex, endHeapIndex: SbrkIndex): Memory {
+  finalize(startHeapIndex: MemoryIndex, endHeapIndex: SbrkIndex): Memory {
     this.ensureNotFinalized();
-    const firstPage = getPageNumber(sbrkIndex);
-    const lastPage = getPageNumber(endHeapIndex);
 
-    const pageRange = PageRange.fromPageNumbers(firstPage, lastPage);
+    const range = MemoryRange.fromStartAndLength(startHeapIndex, endHeapIndex - startHeapIndex);
+    const pages = PageRange.fromMemoryRange(range);
 
-    for (const pageNumber of pageRange) {
+    for (const pageNumber of pages) {
       if (this.initialMemory.has(pageNumber)) {
         throw new IncorrectSbrkIndex();
       }
@@ -139,7 +137,7 @@ export class MemoryBuilder {
 
     const memory = Memory.fromInitialMemory({
       memory: this.initialMemory,
-      sbrkIndex,
+      sbrkIndex: tryAsSbrkIndex(startHeapIndex),
       endHeapIndex,
     });
 

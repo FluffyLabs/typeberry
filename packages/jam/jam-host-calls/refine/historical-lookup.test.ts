@@ -44,7 +44,7 @@ function prepareRegsAndMemory(
   if (writableMemory) {
     builder.setWriteablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE));
   }
-  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
+  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
     memory,

@@ -5,18 +5,13 @@ import { getPageNumber } from "./memory-utils";
 import { type PageNumber, getNextPageNumber, tryAsPageNumber } from "./pages/page-utils";
 
 export class PageRange {
+  public readonly end: PageNumber;
+
   private constructor(
     public readonly start: PageNumber,
     public readonly length: number,
-  ) {}
-
-  get end() {
-    return tryAsPageNumber((this.start + this.length) % MAX_NUMBER_OF_PAGES);
-  }
-
-  static fromPageNumbers(start: PageNumber, end: PageNumber) {
-    const length = (end - start + MAX_NUMBER_OF_PAGES) % MAX_NUMBER_OF_PAGES;
-    return new PageRange(start, length);
+  ) {
+    this.end = tryAsPageNumber((this.start + this.length) % MAX_NUMBER_OF_PAGES);
   }
 
   static fromMemoryRange(range: MemoryRange) {
@@ -34,7 +29,8 @@ export class PageRange {
       return new PageRange(startPage, MAX_NUMBER_OF_PAGES);
     }
 
-    return PageRange.fromPageNumbers(startPage, endPage);
+    const length = startPage < endPage ? endPage - startPage : MAX_NUMBER_OF_PAGES - startPage + endPage;
+    return PageRange.fromStartAndLength(startPage, length);
   }
 
   static fromStartAndLength(start: PageNumber, length: number) {
@@ -56,6 +52,7 @@ export class PageRange {
     let i = this.start;
 
     do {
+      // console.log(i, end)
       yield i;
       i = getNextPageNumber(i);
     } while (i !== end);

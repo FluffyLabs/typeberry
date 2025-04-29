@@ -3,13 +3,13 @@ import { MEMORY_SIZE } from "./memory-consts";
 import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
 
 export class MemoryRange {
+  public readonly end: MemoryIndex;
+
   private constructor(
     public readonly start: MemoryIndex,
     public readonly length: number,
-  ) {}
-
-  get end() {
-    return tryAsMemoryIndex((this.start + this.length) % MEMORY_SIZE);
+  ) {
+    this.end = tryAsMemoryIndex((this.start + this.length) % MEMORY_SIZE);
   }
 
   /** Creates a memory range from given starting point and length */

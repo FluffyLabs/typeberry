@@ -8,6 +8,7 @@ import { PageRange } from "./page-range";
 import { WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, tryAsPageIndex } from "./pages/page-utils";
+import { RESERVED_MEMORY_RANGE } from "./reserved-range";
 
 type InitialMemoryState = {
   memory: Map<PageNumber, MemoryPage>;
@@ -37,8 +38,8 @@ export class Memory {
   ) {}
 
   reset() {
-    this.sbrkIndex = tryAsSbrkIndex(16 * PAGE_SIZE);
-    this.virtualSbrkIndex = tryAsSbrkIndex(16 * PAGE_SIZE);
+    this.sbrkIndex = tryAsSbrkIndex(RESERVED_MEMORY_RANGE.end);
+    this.virtualSbrkIndex = tryAsSbrkIndex(RESERVED_MEMORY_RANGE.end);
     this.endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX);
     this.memory = new Map<PageNumber, MemoryPage>(); // TODO [MaSi]: We should keep allocated pages somewhere and reuse it when it is possible
   }

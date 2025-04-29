@@ -7,16 +7,6 @@ import { PageRange } from "./page-range";
 import { tryAsPageNumber } from "./pages/page-utils";
 
 describe("PageRange", () => {
-  describe("create from numbers", () => {
-    const start = tryAsPageNumber(1);
-    const end = tryAsPageNumber(2);
-
-    const pageRange = PageRange.fromPageNumbers(start, end);
-
-    assert.strictEqual(pageRange.start, start);
-    assert.strictEqual(pageRange.end, end);
-  });
-
   describe("create from memory range", () => {
     const createMemoryRange = (start: number, length: number) =>
       MemoryRange.fromStartAndLength(tryAsMemoryIndex(start), length);
@@ -97,9 +87,9 @@ describe("PageRange", () => {
   describe("iterator", () => {
     it("should return page numbers for an empty range", () => {
       const start = tryAsPageNumber(1);
-      const end = tryAsPageNumber(1);
+      const length = 0;
 
-      const pageRange = PageRange.fromPageNumbers(start, end);
+      const pageRange = PageRange.fromStartAndLength(start, length);
 
       const pageNumbers = Array.from(pageRange);
 
@@ -108,9 +98,9 @@ describe("PageRange", () => {
 
     it("should return page numbers for a non-empty range", () => {
       const start = tryAsPageNumber(1);
-      const end = tryAsPageNumber(3);
+      const length = tryAsPageNumber(2);
 
-      const pageRange = PageRange.fromPageNumbers(start, end);
+      const pageRange = PageRange.fromStartAndLength(start, length);
 
       const pageNumbers = Array.from(pageRange);
 
@@ -119,9 +109,9 @@ describe("PageRange", () => {
 
     it("should return page numbers for a non-empty wrapped range", () => {
       const start = tryAsPageNumber(MAX_NUMBER_OF_PAGES - 2);
-      const end = tryAsPageNumber(2);
+      const length = 4;
 
-      const pageRange = PageRange.fromPageNumbers(start, end);
+      const pageRange = PageRange.fromStartAndLength(start, length);
 
       const pageNumbers = Array.from(pageRange);
 

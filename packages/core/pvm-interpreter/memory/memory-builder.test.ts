@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { IncorrectSbrkIndex } from "./errors";
 import { MemoryBuilder } from "./memory-builder";
-import { PAGE_SIZE } from "./memory-consts";
+import { PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
 import { ReadablePage, WriteablePage } from "./pages";
 import { tryAsPageNumber } from "./pages/page-utils";
@@ -12,19 +12,36 @@ describe("MemoryBuilder", () => {
     it("should work correctly (happy path)", () => {
       const builder = new MemoryBuilder();
       const pageMap = new Map();
-      pageMap.set(16, new ReadablePage(tryAsPageNumber(16), new Uint8Array()));
-      pageMap.set(17, new WriteablePage(tryAsPageNumber(17), new Uint8Array()));
+      pageMap.set(
+        RESERVED_NUMBER_OF_PAGES,
+        new ReadablePage(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES), new Uint8Array()),
+      );
+      pageMap.set(
+        RESERVED_NUMBER_OF_PAGES + 1,
+        new WriteablePage(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES + 1), new Uint8Array()),
+      );
       const expectedMemory = {
-        endHeapIndex: 20 * PAGE_SIZE,
-        sbrkIndex: 18 * PAGE_SIZE,
-        virtualSbrkIndex: 18 * PAGE_SIZE,
+        endHeapIndex: (RESERVED_NUMBER_OF_PAGES + 4) * PAGE_SIZE,
+        sbrkIndex: (RESERVED_NUMBER_OF_PAGES + 2) * PAGE_SIZE,
+        virtualSbrkIndex: (RESERVED_NUMBER_OF_PAGES + 2) * PAGE_SIZE,
         memory: pageMap,
       };
 
       const memory = builder
-        .setReadablePages(tryAsMemoryIndex(16 * PAGE_SIZE), tryAsMemoryIndex(17 * PAGE_SIZE), new Uint8Array())
-        .setWriteablePages(tryAsMemoryIndex(17 * PAGE_SIZE), tryAsMemoryIndex(18 * PAGE_SIZE), new Uint8Array())
-        .finalize(tryAsSbrkIndex(18 * PAGE_SIZE), tryAsSbrkIndex(20 * PAGE_SIZE));
+        .setReadablePages(
+          tryAsMemoryIndex(RESERVED_NUMBER_OF_PAGES * PAGE_SIZE),
+          tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 1) * PAGE_SIZE),
+          new Uint8Array(),
+        )
+        .setWriteablePages(
+          tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 1) * PAGE_SIZE),
+          tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 2) * PAGE_SIZE),
+          new Uint8Array(),
+        )
+        .finalize(
+          tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 2) * PAGE_SIZE),
+          tryAsSbrkIndex((RESERVED_NUMBER_OF_PAGES + 4) * PAGE_SIZE),
+        );
 
       assert.deepEqual(memory, expectedMemory);
     });
@@ -34,9 +51,20 @@ describe("MemoryBuilder", () => {
 
       const tryToBuildMemory = () =>
         builder
-          .setReadablePages(tryAsMemoryIndex(16 * PAGE_SIZE), tryAsMemoryIndex(17 * PAGE_SIZE), new Uint8Array())
-          .setWriteablePages(tryAsMemoryIndex(17 * PAGE_SIZE), tryAsMemoryIndex(18 * PAGE_SIZE), new Uint8Array())
-          .finalize(tryAsSbrkIndex(16 * PAGE_SIZE), tryAsSbrkIndex(20 * PAGE_SIZE));
+          .setReadablePages(
+            tryAsMemoryIndex(RESERVED_NUMBER_OF_PAGES * PAGE_SIZE),
+            tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 1) * PAGE_SIZE),
+            new Uint8Array(),
+          )
+          .setWriteablePages(
+            tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 1) * PAGE_SIZE),
+            tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 2) * PAGE_SIZE),
+            new Uint8Array(),
+          )
+          .finalize(
+            tryAsMemoryIndex(RESERVED_NUMBER_OF_PAGES * PAGE_SIZE),
+            tryAsSbrkIndex((RESERVED_NUMBER_OF_PAGES + 4) * PAGE_SIZE),
+          );
 
       assert.throws(tryToBuildMemory, new IncorrectSbrkIndex());
     });
@@ -46,17 +74,27 @@ describe("MemoryBuilder", () => {
     it("should add readable page", () => {
       const builder = new MemoryBuilder();
       const pageMap = new Map();
-      pageMap.set(16, new ReadablePage(tryAsPageNumber(16), new Uint8Array()));
+      pageMap.set(
+        RESERVED_NUMBER_OF_PAGES,
+        new ReadablePage(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES), new Uint8Array()),
+      );
       const expectedMemory = {
-        endHeapIndex: 19 * PAGE_SIZE,
-        sbrkIndex: 18 * PAGE_SIZE,
-        virtualSbrkIndex: 18 * PAGE_SIZE,
+        endHeapIndex: (RESERVED_NUMBER_OF_PAGES + 3) * PAGE_SIZE,
+        sbrkIndex: (RESERVED_NUMBER_OF_PAGES + 2) * PAGE_SIZE,
+        virtualSbrkIndex: (RESERVED_NUMBER_OF_PAGES + 2) * PAGE_SIZE,
         memory: pageMap,
       };
 
       const memory = builder
-        .setReadablePages(tryAsMemoryIndex(16 * PAGE_SIZE), tryAsMemoryIndex(17 * PAGE_SIZE), new Uint8Array())
-        .finalize(tryAsSbrkIndex(18 * PAGE_SIZE), tryAsSbrkIndex(19 * PAGE_SIZE));
+        .setReadablePages(
+          tryAsMemoryIndex(RESERVED_NUMBER_OF_PAGES * PAGE_SIZE),
+          tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 1) * PAGE_SIZE),
+          new Uint8Array(),
+        )
+        .finalize(
+          tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 2) * PAGE_SIZE),
+          tryAsSbrkIndex((RESERVED_NUMBER_OF_PAGES + 3) * PAGE_SIZE),
+        );
 
       assert.deepEqual(memory, expectedMemory);
     });
@@ -64,17 +102,27 @@ describe("MemoryBuilder", () => {
     it("should add writeable page", () => {
       const builder = new MemoryBuilder();
       const pageMap = new Map();
-      pageMap.set(18, new WriteablePage(tryAsPageNumber(18), new Uint8Array()));
+      pageMap.set(
+        RESERVED_NUMBER_OF_PAGES + 2,
+        new WriteablePage(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES + 2), new Uint8Array()),
+      );
       const expectedMemory = {
-        endHeapIndex: 20 * PAGE_SIZE,
-        sbrkIndex: 19 * PAGE_SIZE,
-        virtualSbrkIndex: 19 * PAGE_SIZE,
+        endHeapIndex: (RESERVED_NUMBER_OF_PAGES + 4) * PAGE_SIZE,
+        sbrkIndex: (RESERVED_NUMBER_OF_PAGES + 3) * PAGE_SIZE,
+        virtualSbrkIndex: (RESERVED_NUMBER_OF_PAGES + 3) * PAGE_SIZE,
         memory: pageMap,
       };
 
       const memory = builder
-        .setWriteablePages(tryAsMemoryIndex(18 * PAGE_SIZE), tryAsMemoryIndex(19 * PAGE_SIZE), new Uint8Array())
-        .finalize(tryAsSbrkIndex(19 * PAGE_SIZE), tryAsSbrkIndex(20 * PAGE_SIZE));
+        .setWriteablePages(
+          tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 2) * PAGE_SIZE),
+          tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 3) * PAGE_SIZE),
+          new Uint8Array(),
+        )
+        .finalize(
+          tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 3) * PAGE_SIZE),
+          tryAsSbrkIndex((RESERVED_NUMBER_OF_PAGES + 4) * PAGE_SIZE),
+        );
 
       assert.deepEqual(memory, expectedMemory);
     });
@@ -82,19 +130,36 @@ describe("MemoryBuilder", () => {
     it("should add two pages", () => {
       const builder = new MemoryBuilder();
       const pageMap = new Map();
-      pageMap.set(16, new ReadablePage(tryAsPageNumber(16), new Uint8Array()));
-      pageMap.set(17, new WriteablePage(tryAsPageNumber(17), new Uint8Array()));
+      pageMap.set(
+        RESERVED_NUMBER_OF_PAGES,
+        new ReadablePage(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES), new Uint8Array()),
+      );
+      pageMap.set(
+        RESERVED_NUMBER_OF_PAGES + 1,
+        new WriteablePage(tryAsPageNumber(RESERVED_NUMBER_OF_PAGES + 1), new Uint8Array()),
+      );
       const expectedMemory = {
-        endHeapIndex: 20 * PAGE_SIZE,
-        sbrkIndex: 18 * PAGE_SIZE,
-        virtualSbrkIndex: 18 * PAGE_SIZE,
+        endHeapIndex: (RESERVED_NUMBER_OF_PAGES + 4) * PAGE_SIZE,
+        sbrkIndex: (RESERVED_NUMBER_OF_PAGES + 2) * PAGE_SIZE,
+        virtualSbrkIndex: (RESERVED_NUMBER_OF_PAGES + 2) * PAGE_SIZE,
         memory: pageMap,
       };
 
       const memory = builder
-        .setReadablePages(tryAsMemoryIndex(16 * PAGE_SIZE), tryAsMemoryIndex(17 * PAGE_SIZE), new Uint8Array())
-        .setWriteablePages(tryAsMemoryIndex(17 * PAGE_SIZE), tryAsMemoryIndex(18 * PAGE_SIZE), new Uint8Array())
-        .finalize(tryAsSbrkIndex(18 * PAGE_SIZE), tryAsSbrkIndex(20 * PAGE_SIZE));
+        .setReadablePages(
+          tryAsMemoryIndex(RESERVED_NUMBER_OF_PAGES * PAGE_SIZE),
+          tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 1) * PAGE_SIZE),
+          new Uint8Array(),
+        )
+        .setWriteablePages(
+          tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 1) * PAGE_SIZE),
+          tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 2) * PAGE_SIZE),
+          new Uint8Array(),
+        )
+        .finalize(
+          tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 2) * PAGE_SIZE),
+          tryAsSbrkIndex((RESERVED_NUMBER_OF_PAGES + 4) * PAGE_SIZE),
+        );
 
       assert.deepEqual(memory, expectedMemory);
     });
@@ -105,20 +170,26 @@ describe("MemoryBuilder", () => {
       const builder = new MemoryBuilder();
       const pageMap = new Map();
       const data = new Uint8Array(PAGE_SIZE).fill(1);
-      const pageNumber = tryAsPageNumber(16);
+      const pageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
       const address = tryAsMemoryIndex(pageNumber * PAGE_SIZE);
       pageMap.set(pageNumber, new WriteablePage(pageNumber, data));
       const expectedMemory = {
-        endHeapIndex: 20 * PAGE_SIZE,
-        sbrkIndex: 18 * PAGE_SIZE,
-        virtualSbrkIndex: 18 * PAGE_SIZE,
+        endHeapIndex: (RESERVED_NUMBER_OF_PAGES + 4) * PAGE_SIZE,
+        sbrkIndex: (RESERVED_NUMBER_OF_PAGES + 2) * PAGE_SIZE,
+        virtualSbrkIndex: (RESERVED_NUMBER_OF_PAGES + 2) * PAGE_SIZE,
         memory: pageMap,
       };
 
       const memory = builder
-        .setWriteablePages(tryAsMemoryIndex(16 * PAGE_SIZE), tryAsMemoryIndex(17 * PAGE_SIZE))
+        .setWriteablePages(
+          tryAsMemoryIndex(RESERVED_NUMBER_OF_PAGES * PAGE_SIZE),
+          tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 1) * PAGE_SIZE),
+        )
         .setData(address, data)
-        .finalize(tryAsSbrkIndex(18 * PAGE_SIZE), tryAsSbrkIndex(20 * PAGE_SIZE));
+        .finalize(
+          tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + 2) * PAGE_SIZE),
+          tryAsSbrkIndex((RESERVED_NUMBER_OF_PAGES + 4) * PAGE_SIZE),
+        );
 
       assert.deepEqual(memory, expectedMemory);
     });

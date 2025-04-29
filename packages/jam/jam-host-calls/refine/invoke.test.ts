@@ -50,7 +50,7 @@ function prepareMemory(
   if (registerMemory) {
     builder.setWriteablePages(tryAsMemoryIndex(address), tryAsMemoryIndex(address + size), data.raw);
   }
-  return builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
+  return builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
 }
 
 async function prepareMachine(

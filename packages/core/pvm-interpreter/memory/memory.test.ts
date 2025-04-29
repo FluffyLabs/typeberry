@@ -23,7 +23,7 @@ describe("Memory", () => {
     });
 
     it("should correctly load data from one page", () => {
-      const pageNumber = tryAsPageNumber(16);
+      const pageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
       const bytes = new Uint8Array([1, 2, 3, 4, 5]);
       const page = new ReadablePage(pageNumber, bytes);
       const memoryMap = new Map<PageNumber, MemoryPage>();
@@ -43,8 +43,8 @@ describe("Memory", () => {
     });
 
     it("should correctly load data from two pages", () => {
-      const firstPageNumber = tryAsPageNumber(16);
-      const secondPageNumber = tryAsPageNumber(17);
+      const firstPageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
+      const secondPageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES + 1);
       const bytes = new Uint8Array([1, 2, 3, 4, 5]);
       const firstPage = new ReadablePage(
         firstPageNumber,
@@ -69,7 +69,7 @@ describe("Memory", () => {
     });
 
     it("should return PageFault if case of loading data from 2 pages but one of them does not exist", () => {
-      const pageNumber = tryAsPageNumber(16);
+      const pageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
       const bytes = new Uint8Array();
       const page = new ReadablePage(pageNumber, bytes);
       const memoryMap = new Map<PageNumber, MemoryPage>();
@@ -145,10 +145,10 @@ describe("Memory", () => {
     });
 
     it("should correctly store data on one page", () => {
-      const pageNumber = tryAsPageNumber(16);
+      const pageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
       const page = new WriteablePage(pageNumber, new Uint8Array());
       const memoryMap = new Map<PageNumber, MemoryPage>();
-      const sbrkIndex = tryAsSbrkIndex(20 * PAGE_SIZE);
+      const sbrkIndex = tryAsSbrkIndex((RESERVED_NUMBER_OF_PAGES + 4) * PAGE_SIZE);
       const endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX);
       memoryMap.set(pageNumber, page);
       const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
@@ -176,8 +176,8 @@ describe("Memory", () => {
     });
 
     it("should correctly store data on two pages", () => {
-      const firstPageNumber = tryAsPageNumber(16);
-      const secondPageNumber = tryAsPageNumber(17);
+      const firstPageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
+      const secondPageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES + 1);
       const firstPage = new WriteablePage(firstPageNumber, new Uint8Array(PAGE_SIZE));
       const secondPage = new WriteablePage(secondPageNumber, new Uint8Array());
       const memoryMap = new Map<PageNumber, MemoryPage>();
@@ -211,7 +211,7 @@ describe("Memory", () => {
     });
 
     it("should return PageFault if case of storing data on 2 pages but one of them does not exist", () => {
-      const pageNumber = tryAsPageNumber(16);
+      const pageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
       const bytes = new Uint8Array();
       const page = new WriteablePage(pageNumber, bytes);
       const memoryMap = new Map<PageNumber, MemoryPage>();
@@ -262,7 +262,7 @@ describe("Memory", () => {
       const memory = new Memory();
       const lengthToAllocate = 5;
       const expectedMemoryMap = new Map();
-      const pageNumber = tryAsPageNumber(16);
+      const pageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
 
       expectedMemoryMap.set(pageNumber, new WriteablePage(pageNumber, new Uint8Array(MIN_ALLOCATION_LENGTH)));
 
@@ -282,8 +282,8 @@ describe("Memory", () => {
       const memory = new Memory();
       const lengthToAllocate = PAGE_SIZE + 5;
       const expectedMemoryMap = new Map();
-      const firstPageNumber = tryAsPageNumber(16);
-      const secondPageNumber = tryAsPageNumber(17);
+      const firstPageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
+      const secondPageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES + 1);
 
       expectedMemoryMap.set(firstPageNumber, new WriteablePage(firstPageNumber, new Uint8Array(MIN_ALLOCATION_LENGTH)));
       expectedMemoryMap.set(
@@ -307,7 +307,7 @@ describe("Memory", () => {
       const memory = new Memory();
       const lengthToAllocate = 5;
       const expectedMemoryMap = new Map();
-      const pageNumber = tryAsPageNumber(16);
+      const pageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
 
       expectedMemoryMap.set(pageNumber, new WriteablePage(pageNumber, new Uint8Array(MIN_ALLOCATION_LENGTH)));
 
@@ -338,8 +338,8 @@ describe("Memory", () => {
       const memory = new Memory();
       const lengthToAllocate = PAGE_SIZE;
       const expectedMemoryMap = new Map();
-      const firstPageNumber = tryAsPageNumber(16);
-      const secondPageNumber = tryAsPageNumber(17);
+      const firstPageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
+      const secondPageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES + 1);
 
       expectedMemoryMap.set(firstPageNumber, new WriteablePage(firstPageNumber, new Uint8Array(MIN_ALLOCATION_LENGTH)));
       expectedMemoryMap.set(

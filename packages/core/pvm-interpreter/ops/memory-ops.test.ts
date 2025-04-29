@@ -22,7 +22,7 @@ describe("MemoryOps", () => {
         tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + pagesToAllocate) * PAGE_SIZE),
       )
       .finalize(
-        tryAsSbrkIndex((RESERVED_NUMBER_OF_PAGES + pagesToAllocate) * PAGE_SIZE),
+        tryAsMemoryIndex((RESERVED_NUMBER_OF_PAGES + pagesToAllocate) * PAGE_SIZE),
         tryAsSbrkIndex(MAX_MEMORY_INDEX),
       );
     return { regs, memory, expectedMemory, instructionResult, memoryOps, resultIndex, lengthIndex };
