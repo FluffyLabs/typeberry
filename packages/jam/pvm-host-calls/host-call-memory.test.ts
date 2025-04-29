@@ -90,7 +90,7 @@ describe("HostCallMemory", () => {
 
     it("should throw when address exceeds MAX_MEMORY_INDEX", () => {
       const address = tryAsU64(MEMORY_SIZE);
-      const result = new Uint8Array();
+      const result = new Uint8Array([1, 2, 3]);
 
       assert.deepEqual(hostCallMemory.loadInto(result, address), Result.error(new OutOfBounds()));
     });
