@@ -101,6 +101,7 @@ export class MemoryBuilder {
   finalize(sbrkIndex: SbrkIndex, endHeapIndex: SbrkIndex): Memory {
     this.ensureNotFinalized();
     const firstPage = getPageNumber(sbrkIndex);
+    // TODO [ToDr] incorrect behavior when `endHeapIndex === MEMORY_SIZE`
     const lastPage = getPageNumber(endHeapIndex);
 
     for (let i = firstPage; i < lastPage; i++) {
