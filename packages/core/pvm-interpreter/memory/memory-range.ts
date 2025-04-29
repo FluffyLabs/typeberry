@@ -1,8 +1,24 @@
 import { MEMORY_SIZE } from "./memory-consts";
 import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
 
+/**
+  * A representation of open-ended range of consecutive indices in memory,
+  * possibly empty or wrapping around.
+  * 
+  * `[start, start + length)`
+  */
 export class MemoryRange {
+  /**
+   * Exclusive end index of the range.
+   * 
+   * NOTE: The index may be wrapped around and smaller than `start`!
+   */
   public readonly end: MemoryIndex;
+  /**
+   * Inclusive last index of the range (present unless the range is empty).
+   * 
+   * NOTE: the index may be wrapped around and smaller than `start`!
+   */
   public readonly lastIndex: MemoryIndex | null = null;
 
   private constructor(
@@ -46,15 +62,15 @@ export class MemoryRange {
 
   /** Checks if this range overlaps with another range */
   overlapsWith(other: MemoryRange) {
-    if (this.isEmpty() || other.isEmpty()) {
+    if (this.lastIndex === null || other.lastIndex === null) {
       return false;
     }
 
     return (
       this.isInRange(other.start) ||
-      this.isInRange(tryAsMemoryIndex((other.end - 1 + MEMORY_SIZE) % MEMORY_SIZE)) ||
+      this.isInRange(other.lastIndex) ||
       other.isInRange(this.start) ||
-      other.isInRange(tryAsMemoryIndex((this.end - 1 + MEMORY_SIZE) % MEMORY_SIZE))
+      other.isInRange(this.lastIndex)
     );
   }
 }
