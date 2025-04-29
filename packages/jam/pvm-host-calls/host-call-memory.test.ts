@@ -4,7 +4,7 @@ import { tryAsU64 } from "@typeberry/numbers";
 import { Memory } from "@typeberry/pvm-interpreter";
 import { OutOfBounds, PageFault } from "@typeberry/pvm-interpreter/memory/errors";
 import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
-import { OK, Result } from "@typeberry/utils";
+import { OK, Result, deepEqual } from "@typeberry/utils";
 import { HostCallMemory } from "./host-call-memory";
 
 describe("HostCallMemory", () => {
@@ -23,7 +23,7 @@ describe("HostCallMemory", () => {
 
       const result = hostCallMemory.storeFrom(address, bytes);
 
-      assert.strictEqual(result, Result.ok(OK));
+      deepEqual(result, Result.ok(OK));
     });
 
     it("should pass through the result of the underlying memory's storeFrom method", () => {
@@ -50,9 +50,9 @@ describe("HostCallMemory", () => {
 
     it("should throw when address exceeds MAX_MEMORY_INDEX", () => {
       const address = tryAsU64(MEMORY_SIZE);
-      const bytes = new Uint8Array();
+      const bytes = new Uint8Array([1, 2, 3]);
 
-      assert.throws(() => hostCallMemory.storeFrom(address, bytes));
+      assert.deepEqual(hostCallMemory.storeFrom(address, bytes), Result.error(new OutOfBounds()));
     });
   });
 
@@ -63,7 +63,7 @@ describe("HostCallMemory", () => {
 
       const result = hostCallMemory.loadInto(bytes, address);
 
-      assert.strictEqual(result, Result.ok(OK));
+      deepEqual(result, Result.ok(OK));
     });
 
     it("should pass through the result of the underlying memory's loadInto method", () => {
@@ -92,7 +92,7 @@ describe("HostCallMemory", () => {
       const address = tryAsU64(MEMORY_SIZE);
       const result = new Uint8Array();
 
-      assert.throws(() => hostCallMemory.loadInto(result, address));
+      assert.deepEqual(hostCallMemory.loadInto(result, address), Result.error(new OutOfBounds()));
     });
   });
 
@@ -108,9 +108,9 @@ describe("HostCallMemory", () => {
 
     it("should throw when address exceeds MAX_MEMORY_INDEX", () => {
       const address = tryAsU64(MEMORY_SIZE);
-      const length = 0;
+      const length = 1;
 
-      assert.throws(() => hostCallMemory.isWriteable(address, length));
+      assert.strictEqual(hostCallMemory.isWriteable(address, length), false);
     });
   });
 
