@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
-import { type U64, tryAsU64, tryBigIntAsNumber } from "@typeberry/numbers";
+import { type U64, tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
@@ -46,7 +46,7 @@ function prepareMemory(
   { registerMemory = true }: { registerMemory?: boolean } = {},
 ) {
   const builder = new MemoryBuilder();
-  const addressAsNumber = tryBigIntAsNumber(address);
+  const addressAsNumber = Number(address);
   if (registerMemory) {
     builder.setWriteablePages(tryAsMemoryIndex(addressAsNumber), tryAsMemoryIndex(addressAsNumber + size), data.raw);
   }

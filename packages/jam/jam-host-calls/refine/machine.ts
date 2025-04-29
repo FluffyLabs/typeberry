@@ -1,5 +1,4 @@
 import { BytesBlob } from "@typeberry/bytes";
-import { tryBigIntAsNumber } from "@typeberry/numbers";
 import {
   type HostCallHandler,
   type HostCallMemory,
@@ -30,11 +29,12 @@ export class Machine implements HostCallHandler {
     // `p_o`: memory index where there program code starts
     const codeStart = regs.get(7);
     // `p_z`: length of the program code
-    const codeLength = tryBigIntAsNumber(regs.get(8));
+    const codeLength = regs.get(8);
     // `i`: starting program counter
     const entrypoint = tryAsProgramCounter(regs.get(9));
 
-    const code = new Uint8Array(codeLength);
+    const codeLengthClamped = codeLength > 2n ** 32n ? 2 ** 32 : Number(codeLength);
+    const code = new Uint8Array(codeLengthClamped);
     const codeLoadResult = memory.loadInto(code, codeStart);
     if (codeLoadResult.isError) {
       return PvmExecution.Panic;

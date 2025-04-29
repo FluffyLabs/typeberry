@@ -1,6 +1,5 @@
 import { tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { tryBigIntAsNumber } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import {
   type HostCallMemory,
@@ -19,7 +18,7 @@ const IN_OUT_REG = 7;
 /**
  * Remove the current service id and transfer or burn the remaining account balance to some other account.
  *
- * TODO [ToDr] Rename to eject
+ * TODO [ToDr] Update to latest GP
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/32c10232c102
  */
@@ -32,7 +31,7 @@ export class Eject implements HostCallHandler {
 
   async execute(gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `d`: where to transfer remaining funds
-    const destination = tryAsServiceId(tryBigIntAsNumber(regs.get(IN_OUT_REG)));
+    const destination = tryAsServiceId(Number(regs.get(IN_OUT_REG)));
 
     const noTransfer = destination === this.currentServiceId || destination === CURRENT_SERVICE_ID;
 

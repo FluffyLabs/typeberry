@@ -1,4 +1,4 @@
-import { tryAsU32, tryBigIntAsNumber } from "@typeberry/numbers";
+import { tryAsU64 } from "@typeberry/numbers";
 import {
   type HostCallHandler,
   type HostCallMemory,
@@ -6,7 +6,7 @@ import {
   PvmExecution,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
-import { type GasCounter, tryAsMemoryIndex, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { assertNever } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
@@ -30,11 +30,11 @@ export class Poke implements HostCallHandler {
     // `n`: machine index
     const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG));
     // `s`: source memory start (nested vm)
-    const sourceStart = tryAsMemoryIndex(tryBigIntAsNumber(regs.get(8)));
+    const sourceStart = tryAsU64(regs.get(8));
     // `o`: destination memory start (local)
-    const destinationStart = tryAsMemoryIndex(tryBigIntAsNumber(regs.get(9)));
+    const destinationStart = tryAsU64(regs.get(9));
     // `z`: memory length
-    const length = tryAsU32(tryBigIntAsNumber(regs.get(10)));
+    const length = tryAsU64(regs.get(10));
 
     const pokeResult = await this.refine.machinePokeInto(
       machineIndex,

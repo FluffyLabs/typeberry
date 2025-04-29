@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
-import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
@@ -35,7 +35,7 @@ function prepareTest(result: Result<OK, NoMachineError | InvalidPageError>, page
   _void.currentServiceId = tryAsServiceId(10_000);
   const machineId = tryAsMachineId(10_000);
   const { registers, memory } = prepareRegsAndMemory(machineId, pageStart, pageCount);
-  refine.machineVoidPagesData.set(result, machineId, tryAsU32(pageStart), tryAsU32(pageCount));
+  refine.machineVoidPagesData.set(result, machineId, tryAsU64(pageStart), tryAsU64(pageCount));
 
   return {
     _void,

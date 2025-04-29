@@ -1,6 +1,6 @@
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Decoder, codec, tryAsExactBytes } from "@typeberry/codec";
-import { tryAsU64, tryBigIntAsNumber } from "@typeberry/numbers";
+import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type BigGas, type Gas, type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
@@ -25,6 +25,8 @@ const serviceIdAndGasCodec = codec.object({
 /**
  * Modify privileged services and services that auto-accumulate every block.
  *
+ * TODO [ToDr] Update to newer GP.
+ *
  * https://graypaper.fluffylabs.dev/#/579bd12/317d01317d01
  */
 export class Bless implements HostCallHandler {
@@ -36,15 +38,15 @@ export class Bless implements HostCallHandler {
 
   async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `m`: manager service (can change privileged services)
-    const m = tryAsServiceId(tryBigIntAsNumber(regs.get(IN_OUT_REG)));
+    const m = tryAsServiceId(Number(regs.get(IN_OUT_REG)));
     // `a`: manages authorization queue
-    const a = tryAsServiceId(tryBigIntAsNumber(regs.get(8)));
+    const a = tryAsServiceId(Number(regs.get(8)));
     // `v`: manages validator keys
-    const v = tryAsServiceId(tryBigIntAsNumber(regs.get(9)));
+    const v = tryAsServiceId(Number(regs.get(9)));
     // `o`: memory offset
     const sourceStart = regs.get(10);
     // `n`: number of items in the auto-accumulate dictionary
-    const numberOfItems = tryBigIntAsNumber(regs.get(11));
+    const numberOfItems = regs.get(11);
 
     // `g`: dictionary of serviceId -> gas that auto-accumulate every block
     const g = new Map<ServiceId, Gas>();
@@ -53,7 +55,7 @@ export class Bless implements HostCallHandler {
     const decoder = Decoder.fromBlob(result);
     let memIndex = sourceStart;
     let previousServiceId = 0;
-    for (let i = 0; i < numberOfItems; i += 1) {
+    for (let i = 0n; i < numberOfItems; i += 1n) {
       // load next item and reset the decoder
       decoder.resetTo(0);
       const memoryReadResult = memory.loadInto(result, memIndex);

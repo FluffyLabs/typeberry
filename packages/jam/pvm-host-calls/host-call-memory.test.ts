@@ -4,6 +4,7 @@ import { tryAsU64 } from "@typeberry/numbers";
 import { Memory } from "@typeberry/pvm-interpreter";
 import { OutOfBounds, PageFault } from "@typeberry/pvm-interpreter/memory/errors";
 import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
+import { OK, Result } from "@typeberry/utils";
 import { HostCallMemory } from "./host-call-memory";
 
 describe("HostCallMemory", () => {
@@ -16,6 +17,15 @@ describe("HostCallMemory", () => {
   });
 
   describe("storeFrom", () => {
+    it("should always allow 0-length bytes", () => {
+      const bytes = new Uint8Array([]);
+      const address = tryAsU64(2 ** 40);
+
+      const result = hostCallMemory.storeFrom(address, bytes);
+
+      assert.strictEqual(result, Result.ok(OK));
+    });
+
     it("should pass through the result of the underlying memory's storeFrom method", () => {
       const bytes = new Uint8Array([1, 2, 3, 4]);
       const address = tryAsU64(0);
@@ -47,6 +57,15 @@ describe("HostCallMemory", () => {
   });
 
   describe("loadInto", () => {
+    it("should always allow 0-length bytes", () => {
+      const bytes = new Uint8Array([]);
+      const address = tryAsU64(2 ** 40);
+
+      const result = hostCallMemory.loadInto(bytes, address);
+
+      assert.strictEqual(result, Result.ok(OK));
+    });
+
     it("should pass through the result of the underlying memory's loadInto method", () => {
       const bytes = new Uint8Array([1, 2, 3, 4]);
       const address = tryAsU64(0);

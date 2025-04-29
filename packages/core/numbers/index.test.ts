@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { minU64, sumU32, sumU64, tryAsU32, tryAsU64, tryBigIntAsNumber, u32AsLeBytes } from "./index";
+import { minU64, sumU32, sumU64, tryAsU32, tryAsU64, u32AsLeBytes } from "./index";
 
 describe("sumU32", () => {
   it("should sum and handle overflow", () => {
@@ -66,29 +66,5 @@ describe("minU64", () => {
     const a = tryAsU64(3n);
     const minimal = tryAsU64(1n);
     assert.deepStrictEqual(minU64(a, tryAsU64(2n ** 64n - 1n), minimal), minimal);
-  });
-});
-
-describe("tryBigIntAsNumber", () => {
-  it("should convert bigint to number when within safe integer range", () => {
-    assert.deepStrictEqual(tryBigIntAsNumber(123n), 123);
-    assert.deepStrictEqual(tryBigIntAsNumber(-456n), -456);
-    assert.deepStrictEqual(tryBigIntAsNumber(BigInt(Number.MAX_SAFE_INTEGER)), Number.MAX_SAFE_INTEGER);
-    assert.deepStrictEqual(tryBigIntAsNumber(BigInt(Number.MIN_SAFE_INTEGER)), Number.MIN_SAFE_INTEGER);
-  });
-
-  it("should throw error when bigint is outside safe integer range", () => {
-    assert.throws(
-      () => tryBigIntAsNumber(BigInt(Number.MAX_SAFE_INTEGER) + 1n),
-      new Error(`input must be within the safe integer range, got ${BigInt(Number.MAX_SAFE_INTEGER) + 1n}`),
-    );
-    assert.throws(
-      () => tryBigIntAsNumber(BigInt(Number.MIN_SAFE_INTEGER) - 1n),
-      new Error(`input must be within the safe integer range, got ${BigInt(Number.MIN_SAFE_INTEGER) - 1n}`),
-    );
-    assert.throws(
-      () => tryBigIntAsNumber(2n ** 64n),
-      new Error(`input must be within the safe integer range, got ${2n ** 64n}`),
-    );
   });
 });

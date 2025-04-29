@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { type CodeHash, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U32, type U64, tryAsU32, tryAsU64, tryBigIntAsNumber } from "@typeberry/numbers";
+import { type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
@@ -65,7 +65,7 @@ describe("HostCalls: New", () => {
     await n.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(tryAsServiceId(tryBigIntAsNumber(registers.get(RESULT_REG))), tryAsServiceId(23_000));
+    assert.deepStrictEqual(tryAsServiceId(Number(registers.get(RESULT_REG))), tryAsServiceId(23_000));
     assert.deepStrictEqual(accumulate.newServiceCalled, [
       [10_042, Bytes.fill(HASH_SIZE, 0x69), 4_096, 2n ** 40n, 2n ** 50n],
     ]);

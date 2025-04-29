@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
-import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
-import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
+import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { OK, Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
@@ -42,9 +42,9 @@ function prepareTest(result: Result<OK, PeekPokeError>) {
   refine.machinePokeData.set(
     result,
     machineId,
-    tryAsMemoryIndex(memoryStart),
-    tryAsMemoryIndex(destinationStart),
-    tryAsU32(dataLength),
+    tryAsU64(memoryStart),
+    tryAsU64(destinationStart),
+    tryAsU64(dataLength),
     memory.getMemory(),
   );
 

@@ -2,11 +2,10 @@ import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
 import { minU64 } from "@typeberry/numbers";
-import { tryAsU64, tryBigIntAsNumber } from "@typeberry/numbers";
+import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { HostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, getServiceId, writeServiceIdAsLeBytes } from "./utils";
 
@@ -41,12 +40,13 @@ export class Read implements HostCallHandler {
     // k_o
     const keyStartAddress = regs.get(8);
     // k_z
-    const keyLen = tryAsMemoryIndex(tryBigIntAsNumber(regs.get(9)));
+    const keyLen = regs.get(9);
     // o
     const destinationAddress = regs.get(10);
 
     // allocate extra bytes for the serviceId
-    const key = new Uint8Array(SERVICE_ID_BYTES + keyLen);
+    const keyLenClamped = keyLen >= 2 ** 32 ? 2 ** 32 : Number(keyLen);
+    const key = new Uint8Array(SERVICE_ID_BYTES + keyLenClamped);
     writeServiceIdAsLeBytes(this.currentServiceId, key);
     const memoryReadResult = memory.loadInto(key.subarray(SERVICE_ID_BYTES), keyStartAddress);
     if (memoryReadResult.isError) {

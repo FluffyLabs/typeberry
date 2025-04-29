@@ -1,6 +1,6 @@
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder, codec, tryAsExactBytes } from "@typeberry/codec";
-import { tryAsU64, tryBigIntAsNumber } from "@typeberry/numbers";
+import { tryAsU64 } from "@typeberry/numbers";
 import {
   type HostCallHandler,
   type HostCallMemory,
@@ -41,10 +41,7 @@ export class Invoke implements HostCallHandler {
     // `o`
     const destinationStart = regs.get(IN_OUT_REG_2);
 
-    const destinationWriteable = memory.isWriteable(
-      destinationStart,
-      tryBigIntAsNumber(destinationStart) + GAS_REGISTERS_SIZE,
-    );
+    const destinationWriteable = memory.isWriteable(destinationStart, destinationStart + BigInt(GAS_REGISTERS_SIZE));
     if (!destinationWriteable) {
       return PvmExecution.Panic;
     }

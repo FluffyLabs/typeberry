@@ -1,6 +1,6 @@
 import { SEGMENT_BYTES, type Segment } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { tryAsU64, tryBigIntAsNumber } from "@typeberry/numbers";
+import { tryAsU64 } from "@typeberry/numbers";
 import {
   type HostCallHandler,
   type HostCallMemory,
@@ -31,7 +31,8 @@ export class Export implements HostCallHandler {
     // `p`: segment start address
     const segmentStart = regs.get(IN_OUT_REG);
     // `z`: segment bounded length
-    const segmentLength = Math.min(tryBigIntAsNumber(regs.get(8)), SEGMENT_BYTES);
+    const segmentLengthBig = regs.get(8);
+    const segmentLength = segmentLengthBig > BigInt(SEGMENT_BYTES) ? SEGMENT_BYTES : Number(segmentLengthBig);
     // destination (padded with zeros).
     const segment: Segment = Bytes.zero(SEGMENT_BYTES);
 
