@@ -10,7 +10,7 @@ import { type PageNumber, getNextPageNumber, tryAsPageNumber } from "./pages/pag
 export class PageRange {
   /**
    * Exclusive end of the page range.
-   * 
+   *
    * NOTE: it may be smaller than `start` in case the range is wrapped.
    */
   public readonly end: PageNumber;
@@ -24,9 +24,9 @@ export class PageRange {
 
   /**
    * Creates range of pages that includes all indices in a given memory range.
-   * 
+   *
    * Example: For memory range `[PAGE_SIZE, MEMORY_SIZE - PAGE_SIZE)`
-   *                  we will get `[1, MAX_NUMBER_OF_PAGES - 1)` page range. 
+   *                  we will get `[1, MAX_NUMBER_OF_PAGES - 1)` page range.
    */
   static fromMemoryRange(range: MemoryRange) {
     const startPage = getPageNumber(range.start);

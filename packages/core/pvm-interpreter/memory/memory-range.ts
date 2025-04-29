@@ -2,21 +2,21 @@ import { MEMORY_SIZE, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-const
 import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
 
 /**
-  * A representation of open-ended range of consecutive indices in memory,
-  * possibly empty or wrapping around.
-  * 
-  * `[start, start + length)`
-  */
+ * A representation of open-ended range of consecutive indices in memory,
+ * possibly empty or wrapping around.
+ *
+ * `[start, start + length)`
+ */
 export class MemoryRange {
   /**
    * Exclusive end index of the range.
-   * 
+   *
    * NOTE: The index may be wrapped around and smaller than `start`!
    */
   public readonly end: MemoryIndex;
   /**
    * Inclusive last index of the range (present unless the range is empty).
-   * 
+   *
    * NOTE: the index may be wrapped around and smaller than `start`!
    */
   public readonly lastIndex: MemoryIndex | null = null;
@@ -80,7 +80,7 @@ export class MemoryRange {
  *
  * https://graypaper.fluffylabs.dev/#/cc517d7/24d00024d000?v=0.6.5
  *
- * it should be in memory-consts but it cannot be there becasue of circular dependency
+ * it should be in `memory-consts` but it cannot be there because of circular dependency
  */
 export const RESERVED_MEMORY_RANGE = MemoryRange.fromStartAndLength(
   tryAsMemoryIndex(0),
