@@ -30,8 +30,8 @@ export class Memory {
   }
 
   constructor(
-    private sbrkIndex = tryAsSbrkIndex(16 * PAGE_SIZE),
-    private virtualSbrkIndex = tryAsSbrkIndex(16 * PAGE_SIZE),
+    private sbrkIndex = tryAsSbrkIndex(RESERVED_MEMORY_RANGE.end),
+    private virtualSbrkIndex = tryAsSbrkIndex(RESERVED_MEMORY_RANGE.end),
     private endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX),
     private memory = new Map<PageNumber, MemoryPage>(),
   ) {}
