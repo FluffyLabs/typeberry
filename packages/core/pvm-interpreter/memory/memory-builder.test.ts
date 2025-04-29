@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { IncorrectSbrkIndex } from "./errors";
 import { MemoryBuilder } from "./memory-builder";
-import { PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts";
+import { MEMORY_SIZE, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
 import { ReadablePage, WriteablePage } from "./pages";
 import { tryAsPageNumber } from "./pages/page-utils";
@@ -67,6 +67,23 @@ describe("MemoryBuilder", () => {
           );
 
       assert.throws(tryToBuildMemory, new IncorrectSbrkIndex());
+    });
+
+    it("should correctly finalize empty memory with full range heap", () => {
+      const builder = new MemoryBuilder();
+      const pageMap = new Map();
+      const heapStart = RESERVED_NUMBER_OF_PAGES * PAGE_SIZE;
+      const heapEnd = MEMORY_SIZE;
+      const expectedMemory = {
+        endHeapIndex: heapEnd,
+        sbrkIndex: heapStart,
+        virtualSbrkIndex: heapStart,
+        memory: pageMap,
+      };
+
+      const memory = builder.finalize(tryAsMemoryIndex(heapStart), tryAsSbrkIndex(heapEnd));
+
+      assert.deepEqual(memory, expectedMemory);
     });
   });
 

@@ -180,6 +180,7 @@ export class Memory {
 
     // standard allocation using "Writeable" pages
     const newSbrkIndex = tryAsSbrkIndex(alignToPageSize(newVirtualSbrkIndex));
+    // TODO [MaSi]: `getPageNumber` works incorrectly for SbrkIndex. Sbrk index should be changed to MemoryIndex
     const firstPageNumber = getPageNumber(currentSbrkIndex);
     const pagesToAllocate = (newSbrkIndex - currentSbrkIndex) / PAGE_SIZE;
     const rangeToAllocate = PageRange.fromStartAndLength(firstPageNumber, pagesToAllocate);
