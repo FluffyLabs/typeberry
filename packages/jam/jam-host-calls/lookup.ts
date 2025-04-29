@@ -47,8 +47,8 @@ export class Lookup implements HostCallHandler {
     const preImage = serviceId !== null ? await this.account.lookup(serviceId, preImageHash) : null;
 
     const preImageLength = preImage === null ? tryAsU64(0) : tryAsU64(preImage.raw.length);
-    const preimageBlobOffset = tryAsU64(regs.get(10));
-    const lengthToWrite = tryAsU64(regs.get(11));
+    const preimageBlobOffset = regs.get(10);
+    const lengthToWrite = regs.get(11);
 
     // f
     const start = minU64(preimageBlobOffset, preImageLength);

@@ -96,24 +96,6 @@ describe("HostCallMemory", () => {
     });
   });
 
-  describe("isWriteable", () => {
-    it("should return false when address + length exceeds MEMORY_SIZE", () => {
-      const address = tryAsU64(MEMORY_SIZE - 2);
-      const length = 3;
-
-      const result = hostCallMemory.isWriteable(address, length);
-
-      assert.strictEqual(result, false);
-    });
-
-    it("should throw when address exceeds MAX_MEMORY_INDEX", () => {
-      const address = tryAsU64(MEMORY_SIZE);
-      const length = 1;
-
-      assert.strictEqual(hostCallMemory.isWriteable(address, length), false);
-    });
-  });
-
   describe("getMemory", () => {
     it("should return the underlying memory instance", () => {
       const result = hostCallMemory.getMemory();

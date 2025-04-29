@@ -41,14 +41,19 @@ export class Invoke implements HostCallHandler {
     // `o`
     const destinationStart = regs.get(IN_OUT_REG_2);
 
-    const destinationWriteable = memory.isWriteable(destinationStart, destinationStart + BigInt(GAS_REGISTERS_SIZE));
-    if (!destinationWriteable) {
-      return PvmExecution.Panic;
-    }
-
     // extracting gas and registers from memory
     const initialData = Bytes.zero(GAS_REGISTERS_SIZE);
-    memory.loadInto(initialData.raw, destinationStart);
+    const readFault = memory.loadInto(initialData.raw, destinationStart);
+    if (readFault.isError) {
+      return PvmExecution.Panic;
+    }
+    // we also need to make sure that the memory is writeable, so we attempt to
+    // write the data back. This is a bit redundant, but saves us from creating
+    // the weird `isWriteable` method.
+    const writeFault = memory.storeFrom(destinationStart, initialData.raw);
+    if (writeFault.isError) {
+      return PvmExecution.Panic;
+    }
 
     const gasRegisters = Decoder.decodeObject(gasAndRegistersCodec, initialData);
     // `g`
@@ -72,7 +77,9 @@ export class Invoke implements HostCallHandler {
       registers: Bytes.fromBlob(machineState.registers.getAllBytesAsLittleEndian(), NO_OF_REGISTERS * 8),
     });
 
-    memory.storeFrom(destinationStart, resultData.raw);
+    // this fault does not need to be handled, because we've ensured it's
+    // already writeable earlier.
+    const _fault = memory.storeFrom(destinationStart, resultData.raw);
 
     switch (machineState.result.status) {
       case Status.HOST:

@@ -19,7 +19,7 @@ const RESULT_REG_1 = MACHINE_INDEX_REG;
 const DEST_REG = 8;
 const RESULT_REG_2 = DEST_REG;
 const GAS_REG_SIZE = 112;
-const MEM_START = 0;
+const MEM_START = 65_536;
 
 function prepareRegsAndMemory(
   machineIndex: U64,

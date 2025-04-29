@@ -1,4 +1,4 @@
-import { sumU64, tryAsU64 } from "@typeberry/numbers";
+import { sumU64 } from "@typeberry/numbers";
 import {
   type HostCallHandler,
   type HostCallRegisters,
@@ -29,9 +29,9 @@ export class Zero implements HostCallHandler {
     // `n`: machine index
     const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG));
     // `p`: start page
-    const pageStart = tryAsU64(regs.get(8));
+    const pageStart = regs.get(8);
     // `c`: page count
-    const pageCount = tryAsU64(regs.get(9));
+    const pageCount = regs.get(9);
 
     const endPage = sumU64(pageStart, pageCount);
     const isWithinBounds = pageStart >= RESERVED_NUMBER_OF_PAGES && endPage.value < MAX_NUMBER_OF_PAGES;

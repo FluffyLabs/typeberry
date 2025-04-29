@@ -31,14 +31,6 @@ export class HostCallMemory {
     return this.memory.loadInto(result, tryAsMemoryIndex(Number(startAddress)));
   }
 
-  isWriteable(startAddress: U64, length: number | bigint): boolean {
-    if (startAddress + BigInt(length) > BigInt(MEMORY_SIZE)) {
-      return false;
-    }
-
-    return this.memory.isWriteable(tryAsMemoryIndex(Number(startAddress)), Number(length));
-  }
-
   getMemory(): Memory {
     return this.memory;
   }

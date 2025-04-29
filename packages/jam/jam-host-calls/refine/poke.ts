@@ -1,4 +1,3 @@
-import { tryAsU64 } from "@typeberry/numbers";
 import {
   type HostCallHandler,
   type HostCallMemory,
@@ -30,11 +29,11 @@ export class Poke implements HostCallHandler {
     // `n`: machine index
     const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG));
     // `s`: source memory start (nested vm)
-    const sourceStart = tryAsU64(regs.get(8));
+    const sourceStart = regs.get(8);
     // `o`: destination memory start (local)
-    const destinationStart = tryAsU64(regs.get(9));
+    const destinationStart = regs.get(9);
     // `z`: memory length
-    const length = tryAsU64(regs.get(10));
+    const length = regs.get(10);
 
     const pokeResult = await this.refine.machinePokeInto(
       machineIndex,
