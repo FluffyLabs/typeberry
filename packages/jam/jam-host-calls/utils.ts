@@ -9,7 +9,7 @@ export const CURRENT_SERVICE_ID = tryAsServiceId(2 ** 32 - 1);
 
 export function legacyGetServiceId(regNumber: number, regs: HostCallRegisters, currentServiceId: ServiceId) {
   const serviceId = Number(regs.get(regNumber));
-  return serviceId === CURRENT_SERVICE_ID ? currentServiceId : (serviceId as ServiceId);
+  return serviceId === CURRENT_SERVICE_ID ? currentServiceId : tryAsServiceId(serviceId);
 }
 
 export function getServiceId(
