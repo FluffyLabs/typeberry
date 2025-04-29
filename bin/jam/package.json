@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "The main typeberry binary.",
   "main": "index.ts",
+  "bin": "./index.ts",
   "dependencies": {
     "@typeberry/block": "0.0.1",
     "@typeberry/block-generator": "0.0.1",
