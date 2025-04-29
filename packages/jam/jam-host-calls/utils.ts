@@ -1,10 +1,16 @@
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
-import { MAX_U64, tryAsU64, u32AsLeBytes, u64IntoParts } from "@typeberry/numbers";
+import { tryAsU64, u32AsLeBytes, u64IntoParts } from "@typeberry/numbers";
 import type { Registers } from "@typeberry/pvm-host-calls/host-call-handler";
 import { check } from "@typeberry/utils";
 
 export const SERVICE_ID_BYTES = 4;
 export const CURRENT_SERVICE_ID = tryAsServiceId(2 ** 32 - 1);
+/**
+ * Magic number to indicate that the serviceId is currentServiceId.
+ *
+ * https://graypaper.fluffylabs.dev/#/cc517d7/305d00306100?v=0.6.5
+ */
+export const PLACEHOLDER_SERVICE_ID = 2n**64n - 1n;
 
 export function legacyGetServiceId(regNumber: number, regs: Registers, currentServiceId: ServiceId) {
   const serviceId = regs.getU32(regNumber);
@@ -13,7 +19,7 @@ export function legacyGetServiceId(regNumber: number, regs: Registers, currentSe
 
 export function getServiceId(regNumber: number, regs: Registers, currentServiceId: ServiceId): ServiceId | null {
   const regValue = regs.getU64(regNumber);
-  if (regValue === MAX_U64) {
+  if (regValue === PLACEHOLDER_SERVICE_ID) {
     return currentServiceId;
   }
 

@@ -17,7 +17,7 @@ import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
 /** Account data interface for Lookup host call. */
 export interface Accounts {
   /** Lookup a preimage. */
-  lookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null>;
+  lookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null>;
 }
 
 const IN_OUT_REG = 7;
@@ -50,7 +50,7 @@ export class Lookup implements HostCallHandler {
     }
 
     // v
-    const preImage = serviceId !== null ? await this.account.lookup(serviceId, preImageHash) : null;
+    const preImage = await this.account.lookup(serviceId, preImageHash);
 
     const preImageLength = preImage === null ? tryAsU64(0) : tryAsU64(preImage.raw.length);
     const preimageBlobOffset = tryAsU64(regs.getU64(10));

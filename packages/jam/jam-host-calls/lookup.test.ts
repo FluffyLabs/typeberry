@@ -19,7 +19,11 @@ class TestAccounts implements Accounts {
     (hash) => hash.toString(),
   ]);
 
-  lookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null> {
+  lookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null> {
+    if (serviceId === null) {
+      return Promise.resolve(null);
+    }
+
     const val = this.data.get(serviceId, hash);
     if (val === undefined) {
       throw new Error(`Unexpected lookup call with ${serviceId}, ${hash}`);

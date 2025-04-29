@@ -4,7 +4,6 @@ import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
-import { MAX_U64 } from "@typeberry/numbers";
 import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
@@ -13,7 +12,7 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { type Accounts, Read } from "./read";
 import { HostCallResult } from "./results";
-import { SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
+import { PLACEHOLDER_SERVICE_ID, SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
 
 class TestAccounts implements Accounts {
   public readonly data: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
@@ -21,7 +20,11 @@ class TestAccounts implements Accounts {
     (hash) => hash.toString(),
   ]);
 
-  read(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null> {
+  read(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null> {
+    if (serviceId === null) {
+      return Promise.resolve(null);
+    }
+
     const d = this.data.get(serviceId, hash);
     if (d === undefined) {
       throw new Error(`Unexpected call to read with ${serviceId}, ${hash}`);
@@ -71,7 +74,7 @@ function prepareRegsAndMemory(
   if (serviceId !== undefined) {
     registers.setU64(SERVICE_ID_REG, BigInt(serviceId));
   } else {
-    registers.setU64(SERVICE_ID_REG, MAX_U64);
+    registers.setU64(SERVICE_ID_REG, PLACEHOLDER_SERVICE_ID);
   }
   registers.setU32(KEY_START_REG, keyAddress);
   registers.setU32(KEY_LEN_REG, key.length);

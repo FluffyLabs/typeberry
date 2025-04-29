@@ -21,7 +21,7 @@ export interface Accounts {
    *
    * If `serviceId === currentServiceId` we should read from snapshot state.
    */
-  read(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null>;
+  read(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null>;
 }
 
 const IN_OUT_REG = 7;
@@ -60,7 +60,7 @@ export class Read implements HostCallHandler {
     const keyHash = blake2b.hashBytes(key);
 
     // v
-    const value = serviceId !== null ? await this.account.read(serviceId, keyHash) : null;
+    const value = await this.account.read(serviceId, keyHash);
 
     const valueLength = value === null ? tryAsU64(0) : tryAsU64(value.raw.length);
     const valueBlobOffset = tryAsU64(regs.getU64(11));
