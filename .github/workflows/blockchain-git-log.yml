@@ -7,7 +7,7 @@ on:
     branches: ["main"]
 
 env:
-  LOG_FILENAME: blockchain-git-log.json
+  LOG_FILENAME: ${{ github.workspace }}/blockchain-git-log.json
 
 permissions:
   actions: read

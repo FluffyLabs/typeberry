@@ -223,11 +223,6 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
 
   const result = await safrole.transition(testContent.input);
 
-  if (path.length > 0) {
-    // TODO [MaSo] Address safrole tests.
-    console.error(`Ignoring: ${path}`);
-    return;
-  }
   deepEqual(result, Output.toSafroleOutput(testContent.output, chainSpec));
   deepEqual(safrole.state, JsonState.toSafroleState(testContent.post_state, chainSpec));
 }
