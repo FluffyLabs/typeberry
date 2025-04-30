@@ -8,6 +8,7 @@ import {
   type HeaderHash,
   tryAsCoreIndex,
   tryAsPerValidator,
+  tryAsServiceGas,
   tryAsServiceId,
   tryAsTimeSlot,
   tryAsValidatorIndex,
@@ -24,7 +25,7 @@ import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { isU16, isU32 } from "@typeberry/numbers";
+import { isU16, isU32, tryAsU32 } from "@typeberry/numbers";
 import { CoreStatistics, ServiceStatistics, StatisticsData, ValidatorStatistics, tryAsPerCore } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
 import { Statistics, type StatisticsState } from "./statistics";
@@ -179,6 +180,11 @@ describe("Statistics", () => {
         validatorIndex: tryAsValidatorIndex(validatorIndex),
         signature: Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque<Ed25519Signature>(),
       });
+
+    const countGasUsed = (count: number, gasUsed: bigint) => ({
+      count: tryAsU32(count),
+      gasUsed: tryAsServiceGas(gasUsed),
+    });
 
     function createWorkReport(coreIndex: CoreIndex): WorkReport {
       const source = BytesBlob.parseBlob(testWorkReport);
@@ -478,6 +484,64 @@ describe("Statistics", () => {
         availableReports: [],
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
+      });
+
+      assert.deepEqual(statistics.state.statistics.services.get(serviceIndex), expectedStatistics);
+    });
+
+    it("should update accumulation score of service statistics based on accumulation statistics", () => {
+      const { statistics, currentSlot, validatorIndex, serviceIndex, serviceStatistics } = prepareData({
+        previousSlot: 0,
+        currentSlot: 1,
+      });
+
+      const accumulationStatistics = new Map([[tryAsServiceId(0), countGasUsed(1, 3n)]]);
+
+      const expectedStatistics = {
+        ...serviceStatistics.get(serviceIndex),
+        accumulateCount: 1,
+        accumulateGasUsed: 3n,
+      };
+
+      assert.deepEqual(statistics.state.statistics.services.get(serviceIndex), serviceStatistics.get(serviceIndex));
+
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: getExtrinsic(),
+        incomingReports: [],
+        availableReports: [],
+        accumulationStatistics,
+        transferStatistics: new Map(),
+      });
+
+      assert.deepEqual(statistics.state.statistics.services.get(serviceIndex), expectedStatistics);
+    });
+
+    it("should update on transfer score of service statistics based on on transfer statistics", () => {
+      const { statistics, currentSlot, validatorIndex, serviceIndex, serviceStatistics } = prepareData({
+        previousSlot: 0,
+        currentSlot: 1,
+      });
+
+      const transferStatistics = new Map([[tryAsServiceId(0), countGasUsed(3, 7n)]]);
+
+      const expectedStatistics = {
+        ...serviceStatistics.get(serviceIndex),
+        onTransfersCount: 3,
+        onTransfersGasUsed: 7n,
+      };
+
+      assert.deepEqual(statistics.state.statistics.services.get(serviceIndex), serviceStatistics.get(serviceIndex));
+
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: getExtrinsic(),
+        incomingReports: [],
+        availableReports: [],
+        accumulationStatistics: new Map(),
+        transferStatistics,
       });
 
       assert.deepEqual(statistics.state.statistics.services.get(serviceIndex), expectedStatistics);
