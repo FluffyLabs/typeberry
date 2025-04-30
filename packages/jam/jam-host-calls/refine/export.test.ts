@@ -2,14 +2,15 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { SEGMENT_BYTES, type Segment, tryAsSegmentIndex, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { PvmExecution } from "@typeberry/pvm-host-calls";
+import { tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
-import { LegacyHostCallResult } from "../results";
+import { HostCallResult } from "../results";
 import { Export } from "./export";
 import { SegmentExportError } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
@@ -25,9 +26,9 @@ function prepareRegsAndMemory(
   { skipSegment = false }: { skipSegment?: boolean } = {},
 ) {
   const memStart = 2 ** 23;
-  const registers = new Registers();
-  registers.setU32(SEGMENT_START_REG, memStart);
-  registers.setU32(SEGMENT_LENGTH_REG, segmentLength);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(SEGMENT_START_REG, tryAsU64(memStart));
+  registers.set(SEGMENT_LENGTH_REG, tryAsU64(segmentLength));
 
   const builder = new MemoryBuilder();
   if (!skipSegment) {
@@ -36,7 +37,7 @@ function prepareRegsAndMemory(
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
   };
 }
 
@@ -54,7 +55,7 @@ describe("HostCalls: Export", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), 15);
+    assert.deepStrictEqual(registers.get(RESULT_REG), 15n);
   });
 
   it("should zero-pad when exported value is small", async () => {
@@ -72,7 +73,7 @@ describe("HostCalls: Export", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), 5);
+    assert.deepStrictEqual(registers.get(RESULT_REG), 5n);
   });
 
   it("should panic if memory is not readable", async () => {
@@ -102,6 +103,6 @@ describe("HostCalls: Export", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.FULL);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.FULL);
   });
 });

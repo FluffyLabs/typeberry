@@ -1,3 +1,5 @@
+import { tryAsU64 } from "@typeberry/numbers";
+
 /**
  * Host call result constants.
  *
@@ -35,23 +37,23 @@ export enum LegacyHostCallResult {
  */
 export const HostCallResult = {
   /** The return value indicating an item does not exist. */
-  NONE: 0xffff_ffff_ffff_ffffn, // 2**64 - 1
+  NONE: tryAsU64(0xffff_ffff_ffff_ffffn), // 2**64 - 1
   /** Name unknown. */
-  WHAT: 0xffff_ffff_ffff_fffen, // 2**64 - 2
+  WHAT: tryAsU64(0xffff_ffff_ffff_fffen), // 2**64 - 2
   /** The inner PVM memory index provided for reading/writing is not accessible. */
-  OOB: 0xffff_ffff_ffff_fffdn, // 2**64 - 3
+  OOB: tryAsU64(0xffff_ffff_ffff_fffdn), // 2**64 - 3
   /** Index unknown. */
-  WHO: 0xffff_ffff_ffff_fffcn, // 2**64 - 4
+  WHO: tryAsU64(0xffff_ffff_ffff_fffcn), // 2**64 - 4
   /** Storage full. */
-  FULL: 0xffff_ffff_ffff_fffbn, // 2**64 - 5
+  FULL: tryAsU64(0xffff_ffff_ffff_fffbn), // 2**64 - 5
   /** Core index unknown. */
-  CORE: 0xffff_ffff_ffff_fffan, // 2**64 - 6
+  CORE: tryAsU64(0xffff_ffff_ffff_fffan), // 2**64 - 6
   /** Insufficient funds. */
-  CASH: 0xffff_ffff_ffff_fff9n, // 2**64 - 7
+  CASH: tryAsU64(0xffff_ffff_ffff_fff9n), // 2**64 - 7
   /** Gas limit too low. */
-  LOW: 0xffff_ffff_ffff_fffd8n, // 2**64 - 8
+  LOW: tryAsU64(0xffff_ffff_ffff_fff8n), // 2**64 - 8
   /** The item is already solicited or cannot be forgotten. */
-  HUH: 0xffff_ffff_ffff_fff7n, // 2**64 - 9
+  HUH: tryAsU64(0xffff_ffff_ffff_fff7n), // 2**64 - 9
   /** The return value indicating general success. */
-  OK: 0n,
+  OK: tryAsU64(0n),
 } as const;

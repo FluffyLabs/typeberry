@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
-import { tryAsU32 } from "@typeberry/numbers";
-import { PvmExecution } from "@typeberry/pvm-host-calls";
-import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
-import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
+import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
+import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter";
 import { OK, Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { Peek } from "./peek";
@@ -15,11 +15,11 @@ const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
 
 function prepareRegsAndMemory(machineId: MachineId, destinationStart: number, sourceStart: number, length: number) {
-  const registers = new Registers();
-  registers.setU64(7, machineId);
-  registers.setU32(8, destinationStart);
-  registers.setU32(9, sourceStart);
-  registers.setU32(10, length);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(7, machineId);
+  registers.set(8, tryAsU64(destinationStart));
+  registers.set(9, tryAsU64(sourceStart));
+  registers.set(10, tryAsU64(length));
 
   const builder = new MemoryBuilder();
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
@@ -42,16 +42,16 @@ function prepareTest(result: Result<OK, PeekPokeError>) {
   refine.machinePeekData.set(
     result,
     machineId,
-    tryAsMemoryIndex(destinationStart),
-    tryAsMemoryIndex(memoryStart),
-    tryAsU32(dataLength),
+    tryAsU64(destinationStart),
+    tryAsU64(memoryStart),
+    tryAsU64(dataLength),
     memory,
   );
 
   return {
     peek,
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
   };
 }
 
@@ -64,7 +64,7 @@ describe("HostCalls: Peek", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
   });
 
   it("should return WHO if there is no machine", async () => {
@@ -75,7 +75,7 @@ describe("HostCalls: Peek", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.WHO);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
   });
 
   it("should return OOB if there is a page fault on machine side", async () => {
@@ -86,7 +86,7 @@ describe("HostCalls: Peek", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
   });
 
   it("should panic if there is a page fault on source side", async () => {

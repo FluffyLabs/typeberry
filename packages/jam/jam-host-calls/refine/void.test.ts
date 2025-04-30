@@ -1,7 +1,8 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
-import { tryAsU32 } from "@typeberry/numbers";
+import { tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { OK, Result } from "@typeberry/utils";
@@ -14,17 +15,17 @@ const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
 
 function prepareRegsAndMemory(machineId: MachineId, pageStart: number, pageCount: number) {
-  const registers = new Registers();
-  registers.setU64(7, machineId);
-  registers.setU32(8, pageStart);
-  registers.setU32(9, pageCount);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(7, machineId);
+  registers.set(8, tryAsU64(pageStart));
+  registers.set(9, tryAsU64(pageCount));
 
   const builder = new MemoryBuilder();
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
 
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
   };
 }
 
@@ -34,7 +35,7 @@ function prepareTest(result: Result<OK, NoMachineError | InvalidPageError>, page
   _void.currentServiceId = tryAsServiceId(10_000);
   const machineId = tryAsMachineId(10_000);
   const { registers, memory } = prepareRegsAndMemory(machineId, pageStart, pageCount);
-  refine.machineVoidPagesData.set(result, machineId, tryAsU32(pageStart), tryAsU32(pageCount));
+  refine.machineVoidPagesData.set(result, machineId, tryAsU64(pageStart), tryAsU64(pageCount));
 
   return {
     _void,
@@ -52,7 +53,7 @@ describe("HostCalls: Void", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
   });
 
   it("should return HUH if invalid page is given", async () => {
@@ -63,7 +64,7 @@ describe("HostCalls: Void", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.HUH);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
   });
 
   it("should return HUH when page is too low", async () => {
@@ -74,7 +75,7 @@ describe("HostCalls: Void", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.HUH);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
   });
 
   it("should return HUH when page is too large", async () => {
@@ -85,7 +86,7 @@ describe("HostCalls: Void", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.HUH);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
   });
 
   it("should return HUH when page is too large 2", async () => {
@@ -96,7 +97,7 @@ describe("HostCalls: Void", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.HUH);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
   });
 
   it("should fail if machine is not known", async () => {
@@ -107,6 +108,6 @@ describe("HostCalls: Void", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.WHO);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
   });
 });

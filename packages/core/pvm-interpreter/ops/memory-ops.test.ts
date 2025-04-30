@@ -34,7 +34,7 @@ describe("MemoryOps", () => {
 
     memoryOps.sbrk(lengthIndex, resultIndex);
 
-    assert.deepEqual(regs.getU32(resultIndex), RESERVED_NUMBER_OF_PAGES * PAGE_SIZE);
+    assert.deepEqual(regs.getLowerU32(resultIndex), RESERVED_NUMBER_OF_PAGES * PAGE_SIZE);
     assert.deepStrictEqual(memory, expectedMemory);
   });
 
@@ -47,7 +47,7 @@ describe("MemoryOps", () => {
 
     memoryOps.sbrk(lengthIndex, resultIndex);
 
-    assert.deepEqual(regs.getU32(resultIndex), RESERVED_NUMBER_OF_PAGES * PAGE_SIZE);
+    assert.deepEqual(regs.getLowerU32(resultIndex), RESERVED_NUMBER_OF_PAGES * PAGE_SIZE);
     assert.deepStrictEqual(memory, expectedMemory);
   });
 
@@ -56,11 +56,11 @@ describe("MemoryOps", () => {
     const { memoryOps, regs, resultIndex, lengthIndex, memory, expectedMemory } = prepareData(pagesToAllocate);
 
     memoryOps.sbrk(lengthIndex, resultIndex);
-    assert.deepEqual(regs.getU32(resultIndex), RESERVED_NUMBER_OF_PAGES * PAGE_SIZE);
+    assert.deepEqual(regs.getLowerU32(resultIndex), RESERVED_NUMBER_OF_PAGES * PAGE_SIZE);
 
     memoryOps.sbrk(lengthIndex, resultIndex);
 
-    assert.deepEqual(regs.getU32(resultIndex), RESERVED_NUMBER_OF_PAGES * PAGE_SIZE + PAGE_SIZE);
+    assert.deepEqual(regs.getLowerU32(resultIndex), RESERVED_NUMBER_OF_PAGES * PAGE_SIZE + PAGE_SIZE);
     assert.deepStrictEqual(memory, expectedMemory);
   });
 });

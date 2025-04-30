@@ -46,7 +46,7 @@ export class BitOps {
   }
 
   countSetBits32(valueIndex: number, resultIndex: number) {
-    this.regs.setU32(resultIndex, countBits32(this.regs.getU32(valueIndex)));
+    this.regs.setU32(resultIndex, countBits32(this.regs.getLowerU32(valueIndex)));
   }
 
   leadingZeroBits64(valueIndex: number, resultIndex: number) {
@@ -54,7 +54,7 @@ export class BitOps {
   }
 
   leadingZeroBits32(valueIndex: number, resultIndex: number) {
-    this.regs.setU32(resultIndex, Math.clz32(this.regs.getU32(valueIndex)));
+    this.regs.setU32(resultIndex, Math.clz32(this.regs.getLowerU32(valueIndex)));
   }
 
   trailingZeroBits64(valueIndex: number, resultIndex: number) {
@@ -62,7 +62,7 @@ export class BitOps {
   }
 
   trailingZeroBits32(valueIndex: number, resultIndex: number) {
-    this.regs.setU32(resultIndex, ctz32(this.regs.getU32(valueIndex)));
+    this.regs.setU32(resultIndex, ctz32(this.regs.getLowerU32(valueIndex)));
   }
 
   private signExtend(value: number, length: 8 | 16) {
@@ -78,12 +78,12 @@ export class BitOps {
   }
 
   signExtend8(valueIndex: number, resultIndex: number) {
-    const extendedValue = this.signExtend(this.regs.getU32(valueIndex), 8);
+    const extendedValue = this.signExtend(this.regs.getLowerU32(valueIndex), 8);
     this.regs.setU64(resultIndex, extendedValue);
   }
 
   signExtend16(valueIndex: number, resultIndex: number) {
-    const extendedValue = this.signExtend(this.regs.getU32(valueIndex), 16);
+    const extendedValue = this.signExtend(this.regs.getLowerU32(valueIndex), 16);
     this.regs.setU64(resultIndex, extendedValue);
   }
 

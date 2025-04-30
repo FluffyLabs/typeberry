@@ -4,12 +4,13 @@ import { type CodeHash, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { LegacyHostCallResult } from "../results";
+import { HostCallResult } from "../results";
 import { New } from "./new";
 import { TestAccumulate } from "./partial-state.test";
 
@@ -17,20 +18,8 @@ const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
 const CODE_HASH_START_REG = 7;
 const CODE_LENGTH_REG = 8;
-const GAS_LOW_REG = 9;
-const GAS_HIG_REG = 10;
-const BALANCE_LOW_REG = 11;
-const BALANCE_HIG_REG = 12;
-
-const u64AsParts = (v: U64) => {
-  const lower = v & (2n ** 32n - 1n);
-  const upper = v >> 32n;
-
-  return {
-    lower: tryAsU32(Number(lower)),
-    upper: tryAsU32(Number(upper)),
-  };
-};
+const GAS_REG = 9;
+const BALANCE_REG = 10;
 
 function prepareRegsAndMemory(
   codeHash: CodeHash,
@@ -40,13 +29,11 @@ function prepareRegsAndMemory(
   { skipCodeHash = false }: { skipCodeHash?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new Registers();
-  registers.setU32(CODE_HASH_START_REG, memStart);
-  registers.setU32(CODE_LENGTH_REG, codeLength);
-  registers.setU32(GAS_LOW_REG, u64AsParts(gas).lower);
-  registers.setU32(GAS_HIG_REG, u64AsParts(gas).upper);
-  registers.setU32(BALANCE_LOW_REG, u64AsParts(balance).lower);
-  registers.setU32(BALANCE_HIG_REG, u64AsParts(balance).upper);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(CODE_HASH_START_REG, tryAsU64(memStart));
+  registers.set(CODE_LENGTH_REG, tryAsU64(codeLength));
+  registers.set(GAS_REG, gas);
+  registers.set(BALANCE_REG, balance);
 
   const builder = new MemoryBuilder();
 
@@ -56,7 +43,7 @@ function prepareRegsAndMemory(
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
   };
 }
 
@@ -78,7 +65,7 @@ describe("HostCalls: New", () => {
     await n.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), tryAsServiceId(23_000));
+    assert.deepStrictEqual(tryAsServiceId(Number(registers.get(RESULT_REG))), tryAsServiceId(23_000));
     assert.deepStrictEqual(accumulate.newServiceCalled, [
       [10_042, Bytes.fill(HASH_SIZE, 0x69), 4_096, 2n ** 40n, 2n ** 50n],
     ]);
@@ -101,7 +88,7 @@ describe("HostCalls: New", () => {
     await n.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.CASH);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.CASH);
     assert.deepStrictEqual(accumulate.newServiceCalled.length, 1);
   });
 
@@ -120,10 +107,10 @@ describe("HostCalls: New", () => {
     );
 
     // when
-    await n.execute(gas, registers, memory);
+    const result = await n.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(accumulate.newServiceCalled, []);
   });
 });

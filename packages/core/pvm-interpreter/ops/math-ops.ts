@@ -21,7 +21,7 @@ export class MathOps {
   addU32(firstIndex: number, secondIndex: number, resultIndex: number) {
     this.regs.setU64(
       resultIndex,
-      signExtend32To64(addWithOverflowU32(this.regs.getU32(firstIndex), this.regs.getU32(secondIndex))),
+      signExtend32To64(addWithOverflowU32(this.regs.getLowerU32(firstIndex), this.regs.getLowerU32(secondIndex))),
     );
   }
 
@@ -32,7 +32,7 @@ export class MathOps {
   addImmediateU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
     this.regs.setU64(
       resultIndex,
-      signExtend32To64(addWithOverflowU32(this.regs.getU32(firstIndex), immediate.getU32())),
+      signExtend32To64(addWithOverflowU32(this.regs.getLowerU32(firstIndex), immediate.getU32())),
     );
   }
 
@@ -43,7 +43,7 @@ export class MathOps {
   mulU32(firstIndex: number, secondIndex: number, resultIndex: number) {
     this.regs.setU64(
       resultIndex,
-      signExtend32To64(mulLowerUnsignedU32(this.regs.getU32(firstIndex), this.regs.getU32(secondIndex))),
+      signExtend32To64(mulLowerUnsignedU32(this.regs.getLowerU32(firstIndex), this.regs.getLowerU32(secondIndex))),
     );
   }
 
@@ -66,7 +66,7 @@ export class MathOps {
   mulImmediateU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
     this.regs.setU64(
       resultIndex,
-      signExtend32To64(mulLowerUnsignedU32(this.regs.getU32(firstIndex), immediate.getU32())),
+      signExtend32To64(mulLowerUnsignedU32(this.regs.getLowerU32(firstIndex), immediate.getU32())),
     );
   }
 
@@ -85,7 +85,7 @@ export class MathOps {
   subU32(firstIndex: number, secondIndex: number, resultIndex: number) {
     this.regs.setU64(
       resultIndex,
-      signExtend32To64(subU32(this.regs.getU32(firstIndex), this.regs.getU32(secondIndex))),
+      signExtend32To64(subU32(this.regs.getLowerU32(firstIndex), this.regs.getLowerU32(secondIndex))),
     );
   }
   subU64(firstIndex: number, secondIndex: number, resultIndex: number) {
@@ -93,7 +93,7 @@ export class MathOps {
   }
 
   negAddImmediateU32(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
-    this.regs.setU64(resultIndex, signExtend32To64(subU32(immediate.getU32(), this.regs.getU32(firstIndex))));
+    this.regs.setU64(resultIndex, signExtend32To64(subU32(immediate.getU32(), this.regs.getLowerU32(firstIndex))));
   }
 
   negAddImmediateU64(firstIndex: number, immediate: ImmediateDecoder, resultIndex: number) {
@@ -101,12 +101,15 @@ export class MathOps {
   }
 
   divSignedU32(firstIndex: number, secondIndex: number, resultIndex: number) {
-    if (this.regs.getU32(secondIndex) === 0) {
+    if (this.regs.getLowerU32(secondIndex) === 0) {
       this.regs.setU64(resultIndex, 2n ** 64n - 1n);
-    } else if (this.regs.getI32(secondIndex) === -1 && this.regs.getI32(firstIndex) === MIN_VALUE) {
-      this.regs.setU64(resultIndex, signExtend32To64(this.regs.getU32(firstIndex)));
+    } else if (this.regs.getLowerI32(secondIndex) === -1 && this.regs.getLowerI32(firstIndex) === MIN_VALUE) {
+      this.regs.setU64(resultIndex, signExtend32To64(this.regs.getLowerU32(firstIndex)));
     } else {
-      this.regs.setI64(resultIndex, signExtend32To64(~~(this.regs.getI32(firstIndex) / this.regs.getI32(secondIndex))));
+      this.regs.setI64(
+        resultIndex,
+        signExtend32To64(~~(this.regs.getLowerI32(firstIndex) / this.regs.getLowerI32(secondIndex))),
+      );
     }
   }
 
@@ -121,10 +124,13 @@ export class MathOps {
   }
 
   divUnsignedU32(firstIndex: number, secondIndex: number, resultIndex: number) {
-    if (this.regs.getU32(secondIndex) === 0) {
+    if (this.regs.getLowerU32(secondIndex) === 0) {
       this.regs.setU64(resultIndex, 2n ** 64n - 1n);
     } else {
-      this.regs.setU64(resultIndex, signExtend32To64(~~(this.regs.getU32(firstIndex) / this.regs.getU32(secondIndex))));
+      this.regs.setU64(
+        resultIndex,
+        signExtend32To64(~~(this.regs.getLowerU32(firstIndex) / this.regs.getLowerU32(secondIndex))),
+      );
     }
   }
 
@@ -137,12 +143,15 @@ export class MathOps {
   }
 
   remSignedU32(firstIndex: number, secondIndex: number, resultIndex: number) {
-    if (this.regs.getU32(secondIndex) === 0) {
-      this.regs.setU64(resultIndex, BigInt(this.regs.getI32(firstIndex)));
-    } else if (this.regs.getI32(secondIndex) === -1 && this.regs.getI32(firstIndex) === MIN_VALUE) {
+    if (this.regs.getLowerU32(secondIndex) === 0) {
+      this.regs.setU64(resultIndex, BigInt(this.regs.getLowerI32(firstIndex)));
+    } else if (this.regs.getLowerI32(secondIndex) === -1 && this.regs.getLowerI32(firstIndex) === MIN_VALUE) {
       this.regs.setU64(resultIndex, 0n);
     } else {
-      this.regs.setI64(resultIndex, signExtend32To64(this.regs.getI32(firstIndex) % this.regs.getI32(secondIndex)));
+      this.regs.setI64(
+        resultIndex,
+        signExtend32To64(this.regs.getLowerI32(firstIndex) % this.regs.getLowerI32(secondIndex)),
+      );
     }
   }
 
@@ -157,10 +166,13 @@ export class MathOps {
   }
 
   remUnsignedU32(firstIndex: number, secondIndex: number, resultIndex: number) {
-    if (this.regs.getU32(secondIndex) === 0) {
-      this.regs.setU64(resultIndex, signExtend32To64(this.regs.getU32(firstIndex)));
+    if (this.regs.getLowerU32(secondIndex) === 0) {
+      this.regs.setU64(resultIndex, signExtend32To64(this.regs.getLowerU32(firstIndex)));
     } else {
-      this.regs.setU64(resultIndex, signExtend32To64(this.regs.getU32(firstIndex) % this.regs.getU32(secondIndex)));
+      this.regs.setU64(
+        resultIndex,
+        signExtend32To64(this.regs.getLowerU32(firstIndex) % this.regs.getLowerU32(secondIndex)),
+      );
     }
   }
 

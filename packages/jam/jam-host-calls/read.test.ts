@@ -5,12 +5,15 @@ import { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
 import { MAX_U64 } from "@typeberry/numbers";
+import { tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
+import { OK, Result } from "@typeberry/utils";
 import { type Accounts, Read } from "./read";
 import { HostCallResult } from "./results";
 import { SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
@@ -66,18 +69,17 @@ function prepareRegsAndMemory(
 ) {
   const keyAddress = 2 ** 20;
   const memStart = 2 ** 16;
-  const registers = new Registers();
-
+  const registers = new HostCallRegisters(new Registers());
   if (serviceId !== undefined) {
-    registers.setU64(SERVICE_ID_REG, BigInt(serviceId));
+    registers.set(SERVICE_ID_REG, tryAsU64(serviceId));
   } else {
-    registers.setU64(SERVICE_ID_REG, MAX_U64);
+    registers.set(SERVICE_ID_REG, tryAsU64(MAX_U64));
   }
-  registers.setU32(KEY_START_REG, keyAddress);
-  registers.setU32(KEY_LEN_REG, key.length);
-  registers.setU32(DEST_START_REG, memStart);
-  registers.setU32(VALUE_OFFSET_REG, valueOffset);
-  registers.setU32(VALUE_LENGTH_TO_WRITE_REG, valueLengthToWrite);
+  registers.set(KEY_START_REG, tryAsU64(keyAddress));
+  registers.set(KEY_LEN_REG, tryAsU64(key.length));
+  registers.set(DEST_START_REG, tryAsU64(memStart));
+  registers.set(VALUE_OFFSET_REG, tryAsU64(valueOffset));
+  registers.set(VALUE_LENGTH_TO_WRITE_REG, tryAsU64(valueLengthToWrite));
 
   const builder = new MemoryBuilder();
   if (!skipKey) {
@@ -89,10 +91,10 @@ function prepareRegsAndMemory(
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
     readResult: () => {
       const result = new Uint8Array(valueLength - valueOffset);
-      assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)), null);
+      assert.deepStrictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)), Result.ok(OK));
       return BytesBlob.blobFrom(result);
     },
   };
@@ -113,7 +115,7 @@ describe("HostCalls: Read", () => {
       const result = await read.execute(gas, registers, memory);
 
       assert.deepStrictEqual(result, undefined);
-      assert.deepStrictEqual(registers.getU32(RESULT_REG), value.length);
+      assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(value.length));
       assert.deepStrictEqual(readResult().asText(), value);
     });
 
@@ -132,7 +134,7 @@ describe("HostCalls: Read", () => {
       const result = await read.execute(gas, registers, memory);
 
       assert.deepStrictEqual(result, undefined);
-      assert.deepStrictEqual(registers.getU32(RESULT_REG), value.length);
+      assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(value.length));
       assert.deepStrictEqual(readResult().asText(), value);
     });
 
@@ -151,7 +153,7 @@ describe("HostCalls: Read", () => {
       const result = await read.execute(gas, registers, memory);
 
       assert.deepStrictEqual(result, undefined);
-      assert.deepStrictEqual(registers.getU32(RESULT_REG), value.length);
+      assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(value.length));
       assert.deepStrictEqual(readResult().toString(), "0x776f726c64");
     });
 
@@ -171,7 +173,7 @@ describe("HostCalls: Read", () => {
       const result = await read.execute(gas, registers, memory);
 
       assert.deepStrictEqual(result, undefined);
-      assert.deepStrictEqual(registers.getU32(RESULT_REG), value.length);
+      assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(value.length));
       assert.deepStrictEqual(readResult().toString(), "0x7700000000");
     });
 
@@ -187,7 +189,7 @@ describe("HostCalls: Read", () => {
       const result = await read.execute(gas, registers, memory);
 
       assert.deepStrictEqual(result, undefined);
-      assert.deepStrictEqual(registers.getU32(RESULT_REG), value.length);
+      assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(value.length));
       assert.deepStrictEqual(readResult().toString(), "0x0000000000000000000000");
     });
   });
@@ -201,12 +203,12 @@ describe("HostCalls: Read", () => {
     const { registers, memory } = prepareRegsAndMemory(key, value.length);
 
     // serviceId out of range
-    registers.setU64(SERVICE_ID_REG, BigInt(2n ** 32n));
+    registers.set(SERVICE_ID_REG, tryAsU64(2n ** 32n));
 
     const result = await read.execute(gas, registers, memory);
 
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(SERVICE_ID_REG), HostCallResult.NONE);
+    assert.deepStrictEqual(registers.get(SERVICE_ID_REG), HostCallResult.NONE);
   });
 
   it("should handle missing value", async () => {
@@ -222,7 +224,7 @@ describe("HostCalls: Read", () => {
     const result = await read.execute(gas, registers, memory);
 
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.NONE);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.NONE);
     assert.deepStrictEqual(readResult().toString(), "0x000000");
   });
 

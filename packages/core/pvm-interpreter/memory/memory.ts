@@ -1,4 +1,4 @@
-import { Result } from "@typeberry/utils";
+import { OK, Result } from "@typeberry/utils";
 import { OutOfMemory, PageFault } from "./errors";
 import { MAX_MEMORY_INDEX, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts";
 import { type MemoryIndex, type SbrkIndex, tryAsSbrkIndex } from "./memory-index";
@@ -50,15 +50,15 @@ export class Memory {
     this.memory = memory.memory;
   }
 
-  storeFrom(address: MemoryIndex, bytes: Uint8Array): null | PageFault {
+  storeFrom(address: MemoryIndex, bytes: Uint8Array): Result<OK, PageFault> {
     if (bytes.length === 0) {
-      return null;
+      return Result.ok(OK);
     }
 
     const pagesResult = this.getPages(address, bytes.length, AccessType.WRITE);
 
     if (pagesResult.isError) {
-      return pagesResult.error;
+      return Result.error(pagesResult.error);
     }
 
     const pages = pagesResult.ok;
@@ -76,23 +76,7 @@ export class Memory {
       currentPosition += bytesToWrite;
       bytesLeft -= bytesToWrite;
     }
-    return null;
-  }
-
-  /**
-   * Check if given memory slice `[destinationStart, destinationEnd)` is valid
-   * and writeable.
-   *
-   * Returns false otherwise.
-   */
-  isWriteable(destinationStart: MemoryIndex, length: number): boolean {
-    if (length === 0) {
-      return true;
-    }
-
-    const pagesResult = this.getPages(destinationStart, length, AccessType.WRITE);
-
-    return pagesResult.isOk;
+    return Result.ok(OK);
   }
 
   private getPages(startAddress: MemoryIndex, length: number, accessType: AccessType): Result<MemoryPage[], PageFault> {
@@ -131,18 +115,19 @@ export class Memory {
    *
    * Returns `null` if the data was read successfully or `PageFault` otherwise.
    */
-  loadInto(result: Uint8Array, startAddress: MemoryIndex): null | PageFault {
+  loadInto(result: Uint8Array, startAddress: MemoryIndex): Result<OK, PageFault> {
     if (result.length === 0) {
-      return null;
+      return Result.ok(OK);
     }
 
     const pagesResult = this.getPages(startAddress, result.length, AccessType.READ);
 
     if (pagesResult.isError) {
-      return pagesResult.error;
+      return Result.error(pagesResult.error);
     }
 
     const pages = pagesResult.ok;
+
     let currentPosition: number = startAddress;
     let bytesLeft = result.length;
 
@@ -157,7 +142,8 @@ export class Memory {
       currentPosition += bytesToRead;
       bytesLeft -= bytesToRead;
     }
-    return null;
+
+    return Result.ok(OK);
   }
 
   sbrk(length: number): SbrkIndex {

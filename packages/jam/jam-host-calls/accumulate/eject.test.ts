@@ -2,6 +2,9 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
+import { tryAsU64 } from "@typeberry/numbers";
+import { HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
+import { HostCallMemory } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
@@ -9,11 +12,11 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
-import { LegacyHostCallResult } from "../results";
+import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
+import { Eject } from "./eject";
 import { QuitError, TRANSFER_MEMO_BYTES } from "./partial-state";
 import { TestAccumulate } from "./partial-state.test";
-import { Quit } from "./quit";
 
 const RESULT_REG = 7;
 const DESTINATION_REG = 7;
@@ -25,9 +28,9 @@ function prepareRegsAndMemory(
   { skipMemo = false }: { skipMemo?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new Registers();
-  registers.setU32(DESTINATION_REG, destination);
-  registers.setU32(MEMO_START_REG, memStart);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(DESTINATION_REG, tryAsU64(destination));
+  registers.set(MEMO_START_REG, tryAsU64(memStart));
 
   const builder = new MemoryBuilder();
   if (!skipMemo) {
@@ -37,17 +40,17 @@ function prepareRegsAndMemory(
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
   };
 }
 
 const gas = gasCounter(tryAsGas(10_000));
 
-describe("HostCalls: Quit", () => {
+describe("HostCalls: Eject", () => {
   it("should quit the account and burn the funds", async () => {
     const accumulate = new TestAccumulate();
-    const quit = new Quit(accumulate);
-    quit.currentServiceId = tryAsServiceId(10_000);
+    const eject = new Eject(accumulate);
+    eject.currentServiceId = tryAsServiceId(10_000);
 
     const { registers, memory } = prepareRegsAndMemory(
       CURRENT_SERVICE_ID,
@@ -56,17 +59,17 @@ describe("HostCalls: Quit", () => {
     );
 
     // when
-    await quit.execute(gas, registers, memory);
+    await eject.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.quitAndTransferData, []);
     assert.deepStrictEqual(accumulate.quitAndBurnCalled, 1);
   });
 
   it("should quit the account and burn the funds", async () => {
     const accumulate = new TestAccumulate();
-    const quit = new Quit(accumulate);
+    const quit = new Eject(accumulate);
     quit.currentServiceId = tryAsServiceId(10_000);
 
     const { registers, memory } = prepareRegsAndMemory(
@@ -79,14 +82,14 @@ describe("HostCalls: Quit", () => {
     await quit.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.quitAndTransferData, []);
     assert.deepStrictEqual(accumulate.quitAndBurnCalled, 1);
   });
 
   it("should quit and do a transfer to different account", async () => {
     const accumulate = new TestAccumulate();
-    const quit = new Quit(accumulate);
+    const quit = new Eject(accumulate);
     quit.currentServiceId = tryAsServiceId(10_000);
 
     const { registers, memory } = prepareRegsAndMemory(tryAsServiceId(15_000), Bytes.fill(TRANSFER_MEMO_BYTES, 33));
@@ -95,14 +98,14 @@ describe("HostCalls: Quit", () => {
     await quit.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.quitAndTransferData, [[15_000, 10_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
     assert.deepStrictEqual(accumulate.quitAndBurnCalled, 0);
   });
 
   it("should fail if there is no memory for memo", async () => {
     const accumulate = new TestAccumulate();
-    const quit = new Quit(accumulate);
+    const quit = new Eject(accumulate);
     quit.currentServiceId = tryAsServiceId(10_000);
 
     const { registers, memory } = prepareRegsAndMemory(tryAsServiceId(15_000), Bytes.fill(TRANSFER_MEMO_BYTES, 33), {
@@ -110,17 +113,17 @@ describe("HostCalls: Quit", () => {
     });
 
     // when
-    await quit.execute(gas, registers, memory);
+    const result = await quit.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(accumulate.quitAndTransferData, []);
     assert.deepStrictEqual(accumulate.quitAndBurnCalled, 0);
   });
 
   it("should fail if gas is too low", async () => {
     const accumulate = new TestAccumulate();
-    const quit = new Quit(accumulate);
+    const quit = new Eject(accumulate);
     quit.currentServiceId = tryAsServiceId(10_000);
 
     const { registers, memory } = prepareRegsAndMemory(tryAsServiceId(15_000), Bytes.fill(TRANSFER_MEMO_BYTES, 33));
@@ -130,14 +133,14 @@ describe("HostCalls: Quit", () => {
     await quit.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.LOW);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.LOW);
     assert.deepStrictEqual(accumulate.quitAndTransferData, [[15_000, 10_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
     assert.deepStrictEqual(accumulate.quitAndBurnCalled, 0);
   });
 
   it("should fail if destination does not exist", async () => {
     const accumulate = new TestAccumulate();
-    const quit = new Quit(accumulate);
+    const quit = new Eject(accumulate);
     quit.currentServiceId = tryAsServiceId(10_000);
 
     const { registers, memory } = prepareRegsAndMemory(tryAsServiceId(15_000), Bytes.fill(TRANSFER_MEMO_BYTES, 33));
@@ -147,7 +150,7 @@ describe("HostCalls: Quit", () => {
     await quit.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.WHO);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
     assert.deepStrictEqual(accumulate.quitAndTransferData, [[15_000, 10_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
     assert.deepStrictEqual(accumulate.quitAndBurnCalled, 0);
   });

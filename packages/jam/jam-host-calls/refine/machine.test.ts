@@ -2,7 +2,8 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
-import { PvmExecution } from "@typeberry/pvm-host-calls";
+import { tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
@@ -19,10 +20,10 @@ const PC_REG = 9;
 
 function prepareRegsAndMemory(code: BytesBlob, pc: ProgramCounter, { skipCode = false }: { skipCode?: boolean } = {}) {
   const memStart = 2 ** 20;
-  const registers = new Registers();
-  registers.setU32(CODE_START_REG, memStart);
-  registers.setU32(CODE_LEN_REG, code.length);
-  registers.setU64(PC_REG, pc);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(CODE_START_REG, tryAsU64(memStart));
+  registers.set(CODE_LEN_REG, tryAsU64(code.length));
+  registers.set(PC_REG, pc);
 
   const builder = new MemoryBuilder();
   if (!skipCode) {
@@ -31,7 +32,7 @@ function prepareRegsAndMemory(code: BytesBlob, pc: ProgramCounter, { skipCode = 
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
   };
 }
 
@@ -51,7 +52,7 @@ describe("HostCalls: Machine", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), machineId);
+    assert.deepStrictEqual(registers.get(RESULT_REG), machineId);
   });
 
   it("should start a new nested machine with fibbonacci code", async () => {
@@ -72,7 +73,7 @@ describe("HostCalls: Machine", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), machineId);
+    assert.deepStrictEqual(registers.get(RESULT_REG), machineId);
   });
 
   it("should panic when code is unavailable", async () => {
@@ -103,6 +104,6 @@ describe("HostCalls: Machine", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.HUH);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
   });
 });

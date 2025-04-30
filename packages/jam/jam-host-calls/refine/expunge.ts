@@ -1,5 +1,10 @@
-import { type HostCallHandler, type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import { type GasCounter, type Registers, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import {
+  type HostCallHandler,
+  type HostCallRegisters,
+  type PvmExecution,
+  tryAsHostCallIndex,
+} from "@typeberry/pvm-host-calls";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { type RefineExternalities, tryAsMachineId } from "./refine-externalities";
@@ -18,16 +23,16 @@ export class Expunge implements HostCallHandler {
 
   constructor(private readonly refine: RefineExternalities) {}
 
-  async execute(_gas: GasCounter, regs: Registers): Promise<PvmExecution | undefined> {
+  async execute(_gas: GasCounter, regs: HostCallRegisters): Promise<PvmExecution | undefined> {
     // `n`: machine index
-    const machineIndex = tryAsMachineId(regs.getU64(IN_OUT_REG));
+    const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG));
 
     const expungeResult = await this.refine.machineExpunge(machineIndex);
 
     if (expungeResult.isOk) {
-      regs.setU64(IN_OUT_REG, expungeResult.ok);
+      regs.set(IN_OUT_REG, expungeResult.ok);
     } else {
-      regs.setU64(IN_OUT_REG, HostCallResult.WHO);
+      regs.set(IN_OUT_REG, HostCallResult.WHO);
     }
 
     return;

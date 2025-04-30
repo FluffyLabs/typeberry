@@ -31,22 +31,22 @@ export class StoreOps {
   }
 
   storeIndU8(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflowU32(this.regs.getU32(secondRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getLowerU32(secondRegisterIndex), immediateDecoder.getUnsigned());
     this.store(address, this.regs.getBytesAsLittleEndian(firstRegisterIndex, 1));
   }
 
   storeIndU16(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflowU32(this.regs.getU32(secondRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getLowerU32(secondRegisterIndex), immediateDecoder.getUnsigned());
     this.store(address, this.regs.getBytesAsLittleEndian(firstRegisterIndex, 2));
   }
 
   storeIndU32(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflowU32(this.regs.getU32(secondRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getLowerU32(secondRegisterIndex), immediateDecoder.getUnsigned());
     this.store(address, this.regs.getBytesAsLittleEndian(firstRegisterIndex, 4));
   }
 
   storeIndU64(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflowU32(this.regs.getU32(secondRegisterIndex), immediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getLowerU32(secondRegisterIndex), immediateDecoder.getUnsigned());
     this.store(address, this.regs.getBytesAsLittleEndian(firstRegisterIndex, 8));
   }
 
@@ -71,7 +71,7 @@ export class StoreOps {
     firstImmediateDecoder: ImmediateDecoder,
     secondImmediateDecoder: ImmediateDecoder,
   ) {
-    const address = addWithOverflowU32(this.regs.getU32(registerIndex), firstImmediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getLowerU32(registerIndex), firstImmediateDecoder.getUnsigned());
     this.store(address, secondImmediateDecoder.getBytesAsLittleEndian().subarray(0, 1));
   }
 
@@ -80,7 +80,7 @@ export class StoreOps {
     firstImmediateDecoder: ImmediateDecoder,
     secondImmediateDecoder: ImmediateDecoder,
   ) {
-    const address = addWithOverflowU32(this.regs.getU32(registerIndex), firstImmediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getLowerU32(registerIndex), firstImmediateDecoder.getUnsigned());
     this.store(address, secondImmediateDecoder.getBytesAsLittleEndian().subarray(0, 2));
   }
 
@@ -89,7 +89,7 @@ export class StoreOps {
     firstImmediateDecoder: ImmediateDecoder,
     secondImmediateDecoder: ImmediateDecoder,
   ) {
-    const address = addWithOverflowU32(this.regs.getU32(registerIndex), firstImmediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getLowerU32(registerIndex), firstImmediateDecoder.getUnsigned());
     this.store(address, secondImmediateDecoder.getBytesAsLittleEndian().subarray(0, 4));
   }
 
@@ -98,21 +98,21 @@ export class StoreOps {
     firstImmediateDecoder: ImmediateDecoder,
     secondImmediateDecoder: ImmediateDecoder,
   ) {
-    const address = addWithOverflowU32(this.regs.getU32(registerIndex), firstImmediateDecoder.getUnsigned());
+    const address = addWithOverflowU32(this.regs.getLowerU32(registerIndex), firstImmediateDecoder.getUnsigned());
     this.store(address, secondImmediateDecoder.getExtendedBytesAsLittleEndian());
   }
 
   private store(address: number, bytes: Uint8Array) {
     const storeResult = this.memory.storeFrom(tryAsMemoryIndex(address), bytes);
-    if (storeResult === null) {
+    if (storeResult.isOk) {
       return;
     }
 
-    if (storeResult.isAccessFault) {
+    if (storeResult.error.isAccessFault) {
       this.instructionResult.status = Result.FAULT_ACCESS;
     } else {
       this.instructionResult.status = Result.FAULT;
-      this.instructionResult.exitParam = getStartPageIndex(storeResult.address);
+      this.instructionResult.exitParam = getStartPageIndex(storeResult.error.address);
     }
   }
 }

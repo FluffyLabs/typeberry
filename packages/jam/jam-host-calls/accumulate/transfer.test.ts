@@ -2,7 +2,8 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { type U64, tryAsU64, u64IntoParts } from "@typeberry/numbers";
+import { type U64, tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
@@ -10,18 +11,16 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
-import { LegacyHostCallResult } from "../results";
+import { HostCallResult } from "../results";
 import { TRANSFER_MEMO_BYTES, TransferError } from "./partial-state";
 import { TestAccumulate } from "./partial-state.test";
 import { Transfer } from "./transfer";
 
 const RESULT_REG = 7;
 const DESTINATION_REG = 7;
-const AMOUNT_LOW_REG = 8;
-const AMOUNT_HIG_REG = 9;
-const GAS_LOW_REG = 10;
-const GAS_HIG_REG = 11;
-const MEMO_START_REG = 12;
+const AMOUNT_REG = 8; // `a`
+const ON_TRANSFER_GAS_REG = 9; // `l`
+const MEMO_START_REG = 10; // `o`
 
 function prepareRegsAndMemory(
   destination: ServiceId,
@@ -31,13 +30,11 @@ function prepareRegsAndMemory(
   { skipMemo = false }: { skipMemo?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new Registers();
-  registers.setU32(DESTINATION_REG, destination);
-  registers.setU32(AMOUNT_LOW_REG, u64IntoParts(amount).lower);
-  registers.setU32(AMOUNT_HIG_REG, u64IntoParts(amount).upper);
-  registers.setU32(GAS_LOW_REG, u64IntoParts(gas).lower);
-  registers.setU32(GAS_HIG_REG, u64IntoParts(gas).upper);
-  registers.setU32(MEMO_START_REG, memStart);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(DESTINATION_REG, tryAsU64(destination));
+  registers.set(AMOUNT_REG, amount);
+  registers.set(ON_TRANSFER_GAS_REG, gas);
+  registers.set(MEMO_START_REG, tryAsU64(memStart));
 
   const builder = new MemoryBuilder();
   if (!skipMemo) {
@@ -47,7 +44,7 @@ function prepareRegsAndMemory(
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
   };
 }
 
@@ -70,7 +67,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.transferData, [
       [transfer.currentServiceId, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)],
     ]);
@@ -92,7 +89,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
   });
 
@@ -112,7 +109,7 @@ describe("HostCalls: Transfer", () => {
     const cost = transfer.gasCost(registers);
 
     // then
-    assert.deepStrictEqual(cost, 2n ** 45n + 10n);
+    assert.deepStrictEqual(cost, 10n + 1_000n);
   });
 
   it("should fail if there is no memory for memo", async () => {
@@ -129,30 +126,10 @@ describe("HostCalls: Transfer", () => {
     );
 
     // when
-    await transfer.execute(gas, registers, memory);
+    const result = await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
-    assert.deepStrictEqual(accumulate.transferData, []);
-  });
-
-  it("should fail if gas is too high", async () => {
-    const accumulate = new TestAccumulate();
-    const transfer = new Transfer(accumulate);
-    transfer.currentServiceId = tryAsServiceId(10_000);
-
-    const { registers, memory } = prepareRegsAndMemory(
-      tryAsServiceId(15_000),
-      tryAsU64(2n ** 45n),
-      tryAsU64(2n ** 32n),
-      Bytes.fill(TRANSFER_MEMO_BYTES, 33),
-    );
-
-    // when
-    await transfer.execute(gas, registers, memory);
-
-    // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.HIGH);
+    assert.deepStrictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(accumulate.transferData, []);
   });
 
@@ -173,7 +150,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.LOW);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.LOW);
     assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
   });
 
@@ -194,7 +171,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.CASH);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.CASH);
     assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
   });
 
@@ -215,7 +192,7 @@ describe("HostCalls: Transfer", () => {
     await transfer.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.WHO);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
     assert.deepStrictEqual(accumulate.transferData, [[15_000, 2n ** 45n, 1_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
   });
 });
