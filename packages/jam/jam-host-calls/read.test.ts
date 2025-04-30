@@ -4,7 +4,6 @@ import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
-import { MAX_VALUE_U64 } from "@typeberry/numbers";
 import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
@@ -71,7 +70,7 @@ function prepareRegsAndMemory(
   if (serviceId !== undefined) {
     registers.setU64(SERVICE_ID_REG, BigInt(serviceId));
   } else {
-    registers.setU64(SERVICE_ID_REG, MAX_VALUE_U64);
+    registers.setU64(SERVICE_ID_REG, 2n ** 32n - 1n);
   }
   registers.setU32(KEY_START_REG, keyAddress);
   registers.setU32(KEY_LEN_REG, key.length);
