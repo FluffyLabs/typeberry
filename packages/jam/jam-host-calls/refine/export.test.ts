@@ -34,7 +34,7 @@ function prepareRegsAndMemory(
   if (!skipSegment) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + 2 * PAGE_SIZE), segment.raw);
   }
-  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
+  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
     memory: new HostCallMemory(memory),

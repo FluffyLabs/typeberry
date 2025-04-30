@@ -4,7 +4,7 @@ import { tryAsServiceId } from "@typeberry/block";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
-import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { OK, Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { InvalidPageError, type MachineId, NoMachineError, tryAsMachineId } from "./refine-externalities";
@@ -21,7 +21,7 @@ function prepareRegsAndMemory(machineId: MachineId, pageStart: number, pageCount
   registers.set(9, tryAsU64(pageCount));
 
   const builder = new MemoryBuilder();
-  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
+  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
 
   return {
     registers,

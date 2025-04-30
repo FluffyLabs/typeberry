@@ -56,7 +56,7 @@ describe("LoadOps", () => {
 
     const memory = new MemoryBuilder()
       .setWriteablePages(getStartPageIndex(address), tryAsMemoryIndex(getStartPageIndex(address) + PAGE_SIZE), data)
-      .finalize(tryAsSbrkIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
+      .finalize(tryAsMemoryIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
     const registers = new Registers();
     const loadOps = new LoadOps(registers, memory, instructionResult);
     const registerIndex = 0;
@@ -178,7 +178,7 @@ describe("LoadOps", () => {
 
     const memory = new MemoryBuilder()
       .setWriteablePages(getStartPageIndex(address), tryAsMemoryIndex(getStartPageIndex(address) + PAGE_SIZE), data)
-      .finalize(tryAsSbrkIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
+      .finalize(tryAsMemoryIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
     const registers = new Registers();
     const loadOps = new LoadOps(registers, memory, instructionResult);
     const addressRegisterIndex = 1;

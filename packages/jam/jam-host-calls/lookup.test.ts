@@ -76,7 +76,7 @@ function prepareRegsAndMemory(
       tryAsMemoryIndex(DESTINATION_MEM_ADDRESS + PAGE_SIZE),
     );
   }
-  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
+  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
     memory: new HostCallMemory(memory),

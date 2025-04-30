@@ -40,7 +40,7 @@ function prepareRegsAndMemory(
   if (!skipCodeHash) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), codeHash.raw);
   }
-  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
+  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
     memory: new HostCallMemory(memory),
