@@ -1,3 +1,4 @@
+import type { OK, Result } from "@typeberry/utils";
 import type { PageFault } from "../errors";
 import type { MemoryIndex } from "../memory-index";
 import { getStartPageIndexFromPageNumber } from "../memory-utils";
@@ -10,8 +11,8 @@ export abstract class MemoryPage {
     this.start = getStartPageIndexFromPageNumber(pageNumber);
   }
 
-  /** Returns `true` if given `[pageIndex, pageStart + length)` range is writeable. */
-  abstract isWriteable(pageIndex: PageIndex, length: number): boolean;
+  /** Returns `true` if the page is writeable. */
+  abstract isWriteable(): boolean;
 
   /**
    * Load exactly `length` bytes from memory page, starting at index `address`
@@ -22,14 +23,14 @@ export abstract class MemoryPage {
    * Returns `null` if copying was successful and [`PageFault`] otherwise.
    * NOTE That the `result` might be partially modified in case `PageFault` occurs!
    */
-  abstract loadInto(res: Uint8Array, address: PageIndex, length: number): null | PageFault;
+  abstract loadInto(res: Uint8Array, address: PageIndex, length: number): Result<OK, PageFault>;
 
   /**
    * Copy all bytes from the `data` into the page at index `address`.
    *
    * Returns `null` if copying was successful and [`PageFault`] otherwise.
    */
-  abstract storeFrom(address: PageIndex, data: Uint8Array): null | PageFault;
+  abstract storeFrom(address: PageIndex, data: Uint8Array): Result<OK, PageFault>;
   /**
    * Get dump of the entire page. Should only be used for the debugger-adapter because it
    * might be inefficient.

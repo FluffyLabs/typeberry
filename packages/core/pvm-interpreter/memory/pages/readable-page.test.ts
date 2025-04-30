@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { OK, Result } from "@typeberry/utils";
 import { PageFault } from "../errors";
 import { tryAsMemoryIndex } from "../memory-index";
 import { tryAsPageIndex, tryAsPageNumber } from "./page-utils";
@@ -19,7 +20,7 @@ describe("ReadablePage", () => {
 
     const loadResult = readablePage.loadInto(result, loadIndex, lengthToLoad);
 
-    assert.strictEqual(loadResult, null);
+    assert.deepStrictEqual(loadResult, Result.ok(OK));
     assert.deepStrictEqual(result, expectedResult);
   });
 
@@ -36,7 +37,7 @@ describe("ReadablePage", () => {
 
     const loadResult = readablePage.loadInto(result, loadIndex, lengthToLoad);
 
-    assert.strictEqual(loadResult, null);
+    assert.deepStrictEqual(loadResult, Result.ok(OK));
     assert.deepStrictEqual(result, expectedResult);
   });
 
@@ -48,6 +49,6 @@ describe("ReadablePage", () => {
 
     const storeResult = readablePage.storeFrom(storeIndex, new Uint8Array());
 
-    assert.deepStrictEqual(storeResult, PageFault.fromPageNumber(0, true));
+    assert.deepStrictEqual(storeResult, Result.error(PageFault.fromPageNumber(0, true)));
   });
 });

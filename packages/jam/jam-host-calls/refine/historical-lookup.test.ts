@@ -3,7 +3,8 @@ import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { Blake2bHash } from "@typeberry/hash";
-import { PvmExecution } from "@typeberry/pvm-host-calls";
+import { tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
@@ -30,12 +31,12 @@ function prepareRegsAndMemory(
 ) {
   const hashAddress = 2 ** 16;
   const memStart = 2 ** 20;
-  const registers = new Registers();
-  registers.setU32(SERVICE_ID_REG, serviceId);
-  registers.setU32(HASH_START_REG, hashAddress);
-  registers.setU32(DEST_START_REG, memStart);
-  registers.setU32(DEST_OFFSET_REG, offset);
-  registers.setU32(DEST_LEN_REG, destinationLength);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(SERVICE_ID_REG, tryAsU64(serviceId));
+  registers.set(HASH_START_REG, tryAsU64(hashAddress));
+  registers.set(DEST_START_REG, tryAsU64(memStart));
+  registers.set(DEST_OFFSET_REG, tryAsU64(offset));
+  registers.set(DEST_LEN_REG, tryAsU64(destinationLength));
 
   const builder = new MemoryBuilder();
   if (!skipHash) {
@@ -44,13 +45,13 @@ function prepareRegsAndMemory(
   if (writableMemory) {
     builder.setWriteablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE));
   }
-  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
+  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
     readResult: () => {
       const result = new Uint8Array(destinationLength);
-      assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)), null);
+      assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)).isOk, true);
       return BytesBlob.blobFrom(result);
     },
   };
@@ -71,7 +72,7 @@ describe("HostCalls: Historical Lookup", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), data.length);
+    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(data.length));
     assert.deepStrictEqual(
       readResult().toString(),
       "0x68656c6c6f20776f726c640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -92,7 +93,7 @@ describe("HostCalls: Historical Lookup", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), data.length);
+    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(data.length));
     assert.deepStrictEqual(readResult().toString(), "0x68656c");
   });
 
@@ -110,7 +111,7 @@ describe("HostCalls: Historical Lookup", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), data.length);
+    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(data.length));
     assert.deepStrictEqual(readResult().toString(), "0x6f2077");
   });
 
@@ -127,7 +128,7 @@ describe("HostCalls: Historical Lookup", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.NONE);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.NONE);
     assert.deepStrictEqual(
       readResult().toString(),
       "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -146,7 +147,7 @@ describe("HostCalls: Historical Lookup", () => {
 
     // then
     assert.strictEqual(result, PvmExecution.Panic);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), serviceId);
+    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(serviceId));
   });
 
   it("should panic if memory is not writable", async () => {
@@ -163,7 +164,7 @@ describe("HostCalls: Historical Lookup", () => {
 
     // then
     assert.strictEqual(result, PvmExecution.Panic);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), serviceId);
+    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(serviceId));
   });
 
   it("should handle if the destination length is greater than data length", async () => {
@@ -174,14 +175,14 @@ describe("HostCalls: Historical Lookup", () => {
     const data = "hello world";
     const { registers, memory, readResult } = prepareRegsAndMemory(serviceId, hash, 0, 32);
     refine.historicalLookupData.set(BytesBlob.blobFromString(data), serviceId, hash);
-    registers.setU32(DEST_LEN_REG, PAGE_SIZE + 1);
+    registers.set(DEST_LEN_REG, tryAsU64(PAGE_SIZE + 1));
 
     // when
     const result = await lookup.execute(gas, registers, memory);
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), data.length);
+    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(data.length));
     assert.deepStrictEqual(
       readResult().toString(),
       "0x68656c6c6f20776f726c64000000000000000000000000000000000000000000",
@@ -196,15 +197,15 @@ describe("HostCalls: Historical Lookup", () => {
     const data = "hello world";
     const { registers, memory } = prepareRegsAndMemory(serviceId, hash, 0, 32);
     refine.historicalLookupData.set(BytesBlob.blobFromString(data), serviceId, hash);
-    registers.setU32(DEST_START_REG, 2 ** 32 - 1);
-    registers.setU32(DEST_LEN_REG, 2 ** 10);
+    registers.set(DEST_START_REG, tryAsU64(2 ** 32 - 1));
+    registers.set(DEST_LEN_REG, tryAsU64(2 ** 10));
 
     // when
     const result = await lookup.execute(gas, registers, memory);
 
     // then
     assert.strictEqual(result, PvmExecution.Panic);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), serviceId);
+    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(serviceId));
   });
 
   it("should handle 0-length destination", async () => {
@@ -221,6 +222,6 @@ describe("HostCalls: Historical Lookup", () => {
 
     // then
     assert.strictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), data.length);
+    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(data.length));
   });
 });

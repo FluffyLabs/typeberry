@@ -4,6 +4,7 @@ import { type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/bloc
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
@@ -11,7 +12,7 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { type Accounts, Info, codecServiceAccountInfoWithThresholdBalance } from "./info";
-import { LegacyHostCallResult } from "./results";
+import { HostCallResult } from "./results";
 
 class TestAccounts implements Accounts {
   public readonly data = new Map<ServiceId, ServiceAccountInfo>();
@@ -33,19 +34,19 @@ function prepareRegsAndMemory(
 ) {
   const pageStart = 2 ** 16;
   const memStart = pageStart + PAGE_SIZE - accountInfoLength - 1;
-  const registers = new Registers();
-  registers.setU32(SERVICE_ID_REG, serviceId);
-  registers.setU32(DEST_START_REG, memStart);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(SERVICE_ID_REG, tryAsU64(serviceId));
+  registers.set(DEST_START_REG, tryAsU64(memStart));
 
   const builder = new MemoryBuilder();
   builder.setWriteablePages(tryAsMemoryIndex(pageStart), tryAsMemoryIndex(pageStart + PAGE_SIZE));
-  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
+  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
     readInfo: () => {
       const result = new Uint8Array(accountInfoLength);
-      assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)), null);
+      assert.strictEqual(memory.loadInto(result, tryAsMemoryIndex(memStart)).isOk, true);
       const data = BytesBlob.blobFrom(result);
       return Decoder.decodeObject(codecServiceAccountInfoWithThresholdBalance, data);
     },
@@ -77,7 +78,7 @@ describe("HostCalls: Info", () => {
     await info.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(readInfo(), {
       ...accounts.data.get(serviceId),
       thresholdBalance: 20_100n,
@@ -94,7 +95,7 @@ describe("HostCalls: Info", () => {
     await info.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.NONE);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.NONE);
   });
 
   it("should write OOB if not enough memory allocated", async () => {
@@ -121,6 +122,6 @@ describe("HostCalls: Info", () => {
     await info.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
   });
 });

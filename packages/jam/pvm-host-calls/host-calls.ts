@@ -5,6 +5,8 @@ import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { check } from "@typeberry/utils";
 import { type HostCallIndex, PvmExecution } from "./host-call-handler";
+import { HostCallMemory } from "./host-call-memory";
+import { HostCallRegisters } from "./host-call-registers";
 import type { HostCallsManager } from "./host-calls-manager";
 import type { InterpreterInstanceManager } from "./interpreter-instance-manager";
 
@@ -20,14 +22,14 @@ export class HostCalls {
     }
 
     if (status === Status.HALT) {
-      const maybeAddress = regs.getU32(10);
-      const maybeLength = regs.getU32(11);
+      const maybeAddress = regs.getLowerU32(10);
+      const maybeLength = regs.getLowerU32(11);
 
       const result = new Uint8Array(maybeLength);
       const startAddress = tryAsMemoryIndex(maybeAddress);
-      const pageFault = memory.loadInto(result, startAddress);
+      const readResult = memory.loadInto(result, startAddress);
       // https://graypaper-reader.netlify.app/#/293bf5a/296c02296c02
-      return pageFault !== null ? new Uint8Array(0) : result;
+      return readResult.isError ? new Uint8Array(0) : result;
     }
 
     return Status.PANIC;
@@ -46,8 +48,8 @@ export class HostCalls {
       );
       const hostCallIndex = pvmInstance.getExitParam() ?? -1;
       const gas = pvmInstance.getGasCounter();
-      const regs = pvmInstance.getRegisters();
-      const memory = pvmInstance.getMemory();
+      const regs = new HostCallRegisters(pvmInstance.getRegisters());
+      const memory = new HostCallMemory(pvmInstance.getMemory());
       const hostCall = this.hostCalls.get(hostCallIndex as HostCallIndex);
       const gasCost = typeof hostCall.gasCost === "number" ? hostCall.gasCost : hostCall.gasCost(regs);
       const underflow = gas.sub(gasCost);

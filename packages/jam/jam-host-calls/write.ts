@@ -1,16 +1,11 @@
 import type { ServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
-import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import {
-  type Memory,
-  type PvmExecution,
-  type Registers,
-  tryAsHostCallIndex,
-} from "@typeberry/pvm-host-calls/host-call-handler";
+import { tryAsU64 } from "@typeberry/numbers";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
+import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import { LegacyHostCallResult } from "./results";
+import { HostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
 
 /** Account data interface for Write host call. */
@@ -46,6 +41,8 @@ const IN_OUT_REG = 7;
 /**
  * Write account storage.
  *
+ * TODO [ToDr] Convert to latest GP.
+ *
  * https://graypaper.fluffylabs.dev/#/579bd12/305502305502
  */
 export class Write implements HostCallHandler {
@@ -55,40 +52,40 @@ export class Write implements HostCallHandler {
 
   constructor(private readonly account: Accounts) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
+  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // Storage is full (i.e. `a_t > a_b` - threshold balance is greater than current balance).
     // NOTE that we first need to know if the storage is full, since the result
     // does not depend on the success of reading the key or value:
     // https://graypaper.fluffylabs.dev/#/579bd12/303103303103
     const isStorageFull = await this.account.isStorageFull(this.currentServiceId);
     if (isStorageFull) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.FULL);
+      regs.set(IN_OUT_REG, HostCallResult.FULL);
       return;
     }
 
     // k_0
-    const keyStartAddress = tryAsMemoryIndex(regs.getU32(7));
+    const keyStartAddress = regs.get(7);
     // k_z
-    const keyLen = regs.getU32(8);
+    const keyLen = Number(regs.get(8));
     // v_0
-    const valueStart = tryAsMemoryIndex(regs.getU32(9));
+    const valueStart = regs.get(9);
     // v_z
-    const valueLen = regs.getU32(10);
+    const valueLen = Number(regs.get(10));
 
     // allocate extra bytes for the serviceId
     const key = new Uint8Array(SERVICE_ID_BYTES + keyLen);
     writeServiceIdAsLeBytes(this.currentServiceId, key);
-    const keyLoadingFault = memory.loadInto(key.subarray(SERVICE_ID_BYTES), keyStartAddress);
+    const keyLoadingResult = memory.loadInto(key.subarray(SERVICE_ID_BYTES), keyStartAddress);
 
     const value = new Uint8Array(valueLen);
-    const valueLoadingFault = memory.loadInto(value, valueStart);
+    const valueLoadingResult = memory.loadInto(value, valueStart);
 
     const keyHash = blake2b.hashBytes(key);
     const maybeValue = valueLen === 0 ? null : BytesBlob.blobFrom(value);
 
     // we return OOB in case the value cannot be read or the key can't be loaded.
-    if (keyLoadingFault !== null || valueLoadingFault !== null) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
+    if (keyLoadingResult.isError || valueLoadingResult.isError) {
+      regs.set(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 
@@ -97,6 +94,6 @@ export class Write implements HostCallHandler {
 
     // Successful write or removal. We store previous value length in omega_7
     const prevLen = await prevLenPromise;
-    regs.setU32(IN_OUT_REG, prevLen ?? LegacyHostCallResult.NONE);
+    regs.set(IN_OUT_REG, prevLen === null ? HostCallResult.NONE : tryAsU64(prevLen));
   }
 }
