@@ -22,7 +22,7 @@ export class Program {
       memoryBuilder.setWriteablePages(startIndex, endIndex, data ?? new Uint8Array());
     }
 
-    const heapStart = tryAsSbrkIndex(rawMemory.sbrkIndex);
+    const heapStart = tryAsMemoryIndex(rawMemory.sbrkIndex);
     const heapEnd = tryAsSbrkIndex(rawMemory.heapEnd);
     const memory = memoryBuilder.finalize(heapStart, heapEnd);
 

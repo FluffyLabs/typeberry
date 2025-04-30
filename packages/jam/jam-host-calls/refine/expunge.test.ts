@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
-import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { Expunge } from "./expunge";
@@ -23,7 +23,7 @@ function prepareRegsAndMemory(machineId: MachineId) {
   registers.setU64(7, machineId);
 
   const builder = new MemoryBuilder();
-  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
+  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
 
   return {
     registers,

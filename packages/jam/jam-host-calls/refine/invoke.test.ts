@@ -5,6 +5,7 @@ import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { PvmExecution } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
+import { RESERVED_NUMBER_OF_PAGES } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
@@ -19,7 +20,7 @@ const RESULT_REG_1 = MACHINE_INDEX_REG;
 const DEST_REG = 8;
 const RESULT_REG_2 = DEST_REG;
 const GAS_REG_SIZE = 112;
-const MEM_START = 0;
+const MEM_START = RESERVED_NUMBER_OF_PAGES * PAGE_SIZE;
 
 function prepareRegsAndMemory(
   machineIndex: U64,
@@ -49,7 +50,7 @@ function prepareMemory(
   if (registerMemory) {
     builder.setWriteablePages(tryAsMemoryIndex(address), tryAsMemoryIndex(address + size), data.raw);
   }
-  return builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
+  return builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
 }
 
 async function prepareMachine(

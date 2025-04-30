@@ -46,6 +46,12 @@ export class FinalizedBuilderModification extends Error {
   }
 }
 
+export class ReservedMemoryFault extends Error {
+  constructor() {
+    super("You are trying to access reserved memory!");
+  }
+}
+
 export class PageNotExist extends Error {
   constructor() {
     super("You try to fill data on memory page that does not exist!");
