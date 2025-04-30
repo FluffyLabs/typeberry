@@ -172,10 +172,10 @@ describe("Statistics", () => {
       blob: { length: blobLength },
     });
 
-    const createAssurance = (validatorIndex: number) =>
+    const createAssurance = (validatorIndex: number, bitvec?: BitVec) =>
       AvailabilityAssurance.fromCodec({
         anchor: Bytes.zero(HASH_SIZE).asOpaque<HeaderHash>(),
-        bitfield: BitVec.fromBlob(Bytes.zero(HASH_SIZE).raw, tinyChainSpec.coresCount),
+        bitfield: bitvec ?? BitVec.fromBlob(Bytes.zero(HASH_SIZE).raw, tinyChainSpec.coresCount),
         validatorIndex: tryAsValidatorIndex(validatorIndex),
         signature: Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque<Ed25519Signature>(),
       });
@@ -392,6 +392,32 @@ describe("Statistics", () => {
         authorIndex: validatorIndex,
         extrinsic: extrinsic,
         incomingReports,
+        availableReports: [],
+        accumulationStatistics: new Map(),
+        transferStatistics: new Map(),
+      });
+
+      assert.deepEqual(statistics.state.statistics.cores[coreIndex], expectedStatistics);
+    });
+
+    it("should update popularity score of core statistics based on assurances", () => {
+      const { statistics, currentSlot, validatorIndex, coreStatistics } = prepareData({
+        previousSlot: 0,
+        currentSlot: 1,
+      });
+      const coreIndex = tryAsCoreIndex(0);
+      const bitvec = BitVec.fromBlob(BytesBlob.parseBlob("0xff").raw, tinyChainSpec.coresCount);
+      const assurances = asKnownSize([createAssurance(validatorIndex, bitvec)]) as unknown as AssurancesExtrinsic;
+      const extrinsic = getExtrinsic({ assurances });
+      const expectedStatistics = { ...coreStatistics[coreIndex], popularity: 1 };
+
+      assert.deepEqual(statistics.state.statistics.cores[coreIndex], coreStatistics[coreIndex]);
+
+      statistics.transition({
+        slot: currentSlot,
+        authorIndex: validatorIndex,
+        extrinsic: extrinsic,
+        incomingReports: [],
         availableReports: [],
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
