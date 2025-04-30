@@ -7,17 +7,14 @@ import {
   tryAsCoreIndex,
   tryAsPerValidator,
   tryAsServiceGas,
-  tryAsServiceId,
 } from "@typeberry/block";
-import type { AssurancesExtrinsic } from "@typeberry/block/assurances";
 import { W_G } from "@typeberry/block/gp-constants";
-import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
+import type { Preimage, PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { WorkReport } from "@typeberry/block/work-report";
 import type { WorkResult } from "@typeberry/block/work-result";
-import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type U32, tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { ServiceStatistics, type State, tryAsPerCore } from "@typeberry/state";
+import { ServiceStatistics, type State } from "@typeberry/state";
 import { ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
 
@@ -149,7 +146,7 @@ export class Statistics {
   }
 
   /** https://graypaper.fluffylabs.dev/#/68eaa1f/191602191602?v=0.6.4 */
-  private calculateProvidedScoreService(preimages: PreimagesExtrinsic) {
+  private calculateProvidedScoreService(preimages: Preimage[]) {
     const score = {
       count: 0,
       size: 0,
@@ -169,42 +166,37 @@ export class Statistics {
     };
   }
 
-  private agregateAssurancesPerCore(assurances: AssurancesExtrinsic) {
-    const assurancesPerCore = tryAsPerCore(
-      FixedSizeArray.fill(() => 0, this.chainSpec.coresCount),
-      this.chainSpec,
-    );
-    for (const assurance of assurances) {
-      for (const coreIndex of assurance.bitfield.indicesOfSetBits()) {
-        assurancesPerCore[coreIndex] += 1;
-      }
-    }
-    return assurancesPerCore;
-  }
+  /**
+   * Collects all service ids from the following sources:
+   * - preimages
+   * - work results
+   * - accumulation keys
+   * - transfer keys
+   *
+   * https://graypaper.fluffylabs.dev/#/cc517d7/195f04195f04?v=0.6.5
+   */
+  private collectServiceIds(
+    preimages: PreimagesExtrinsic,
+    workResults: WorkResult[],
+    accumulationKeys: MapIterator<ServiceId>,
+    transferKeys: MapIterator<ServiceId>,
+  ) {
+    const serviceIds = new Set<ServiceId>();
 
-  private agregateWorkResultsPerService(incomingReports: WorkReport[]) {
-    const workResults = incomingReports.flatMap((wr) => wr?.results);
-
-    const workResultsPerService = new Map<ServiceId, WorkResult[]>();
-    for (const workResult of workResults) {
-      const serviceId = workResult.serviceId;
-      const serviceWorkResults = workResultsPerService.get(serviceId) ?? [];
-      serviceWorkResults.push(workResult);
-      workResultsPerService.set(serviceId, serviceWorkResults);
-    }
-
-    return workResultsPerService;
-  }
-
-  private agregatePreimagesPerService(preimages: PreimagesExtrinsic) {
-    const preimagesPerService = new Map<ServiceId, PreimagesExtrinsic>();
     for (const preimage of preimages) {
-      const serviceId = preimage.requester;
-      const servicePreimages = preimagesPerService.get(serviceId) ?? [];
-      servicePreimages.push(preimage);
-      preimagesPerService.set(serviceId, servicePreimages);
+      serviceIds.add(preimage.requester);
     }
-    return preimagesPerService;
+    for (const workResult of workResults) {
+      serviceIds.add(workResult.serviceId);
+    }
+    for (const serviceId of accumulationKeys) {
+      serviceIds.add(serviceId);
+    }
+    for (const serviceId of transferKeys) {
+      serviceIds.add(serviceId);
+    }
+
+    return serviceIds;
   }
 
   /**
@@ -257,19 +249,11 @@ export class Statistics {
       current[validatorIndex].assurances = tryAsU32(newAssurancesCount);
     }
 
-    /**
-     * NOTE [MaSi] Fields for core and service statistics are `variable size length`
-     * and they are not strictly bounded by any specific bit size.
-     */
-    const workReportPerCore = new Map(incomingReports.map((wr) => [wr.coreIndex, wr]));
-    const availableReportsPerCore = new Map(availableReports.map((wr) => [wr.coreIndex, wr]));
-    const assurancesPerCore = this.agregateAssurancesPerCore(extrinsic.assurances);
-
     /** Update core statistics */
     for (let coreId = 0; coreId < this.chainSpec.coresCount; coreId++) {
       const coreIndex = tryAsCoreIndex(coreId);
 
-      const workReport = workReportPerCore.get(coreIndex);
+      const workReport = incomingReports.find((wr) => wr.coreIndex === coreIndex);
       const { imported, extrinsicCount, extrinsicSize, exported, gasUsed } =
         workReport !== undefined
           ? this.calculateRefineScore(workReport.results.map((r) => r))
@@ -281,6 +265,9 @@ export class Statistics {
               gasUsed: tryAsServiceGas(0n),
             };
 
+      const availableWorkReport = availableReports.find((wr) => wr.coreIndex === coreIndex);
+      const popularity = extrinsic.assurances.reduce((sum, { bitfield }) => sum + (bitfield.isSet(coreId) ? 1 : 0), 0);
+
       /**
        * Core statistics are tracked only per-block basis, so we override previous values.
        * https://graypaper.fluffylabs.dev/#/cc517d7/190201190501?v=0.6.5
@@ -291,29 +278,34 @@ export class Statistics {
       cores[coreIndex].exports = exported;
       cores[coreIndex].gasUsed = gasUsed;
       cores[coreIndex].bundleSize = tryAsU32(workReport?.workPackageSpec.length ?? 0);
-      cores[coreIndex].dataAvailabilityLoad = this.calculateDAScoreCore(availableReportsPerCore.get(coreIndex));
-      cores[coreIndex].popularity = tryAsU16(assurancesPerCore[coreIndex]);
+      cores[coreIndex].dataAvailabilityLoad = this.calculateDAScoreCore(availableWorkReport);
+      cores[coreIndex].popularity = tryAsU16(popularity);
     }
-
-    const workResultsPerService = this.agregateWorkResultsPerService(incomingReports);
-    const preimagesPerService = this.agregatePreimagesPerService(extrinsic.preimages);
 
     /** Update services statistics */
     services.clear();
+    const serviceIds = this.collectServiceIds(
+      extrinsic.preimages,
+      incomingReports.flatMap((wr) => wr.results),
+      input.accumulationStatistics.keys(),
+      input.transferStatistics.keys(),
+    );
 
-    for (const [serviceId, workResults] of workResultsPerService) {
-      const serviceIndex = tryAsServiceId(serviceId);
+    for (const serviceId of serviceIds) {
       const serviceStatistics = ServiceStatistics.empty();
 
+      const workResults = incomingReports.flatMap((wr) => wr.results.filter((r) => r.serviceId === serviceId));
       const { gasUsed, imported, extrinsicCount, extrinsicSize, exported } = this.calculateRefineScore(workResults);
-      const { count: providedCount, size: providedSize } = this.calculateProvidedScoreService(
-        preimagesPerService.get(serviceId) ?? [],
-      );
-      const { count: accumulateCount, gasUsed: accumulateGasUsed } = input.accumulationStatistics.get(serviceId) ?? {
+
+      const preimages = extrinsic.preimages.filter((preimage) => preimage.requester === serviceId);
+      const { count: providedCount, size: providedSize } = this.calculateProvidedScoreService(preimages);
+
+      const { count: accumulatedCount, gasUsed: accumulatedGasUsed } = input.accumulationStatistics.get(serviceId) ?? {
         count: tryAsU32(0),
         gasUsed: tryAsServiceGas(0n),
       };
-      const { count: transferCount, gasUsed: transferGasUsed } = input.transferStatistics.get(serviceId) ?? {
+
+      const { count: transfersCount, gasUsed: transfersGasUsed } = input.transferStatistics.get(serviceId) ?? {
         count: tryAsU32(0),
         gasUsed: tryAsServiceGas(0n),
       };
@@ -330,24 +322,14 @@ export class Statistics {
       serviceStatistics.exports = exported;
       serviceStatistics.providedCount = providedCount;
       serviceStatistics.providedSize = providedSize;
-      serviceStatistics.accumulateCount = accumulateCount;
-      serviceStatistics.accumulateGasUsed = accumulateGasUsed;
-      serviceStatistics.onTransfersCount = transferCount;
-      serviceStatistics.onTransfersGasUsed = transferGasUsed;
-
-      services.set(serviceIndex, serviceStatistics);
-    }
-
-    for (const [serviceId, preimages] of preimagesPerService) {
-      const serviceIndex = tryAsServiceId(serviceId);
-      const serviceStatistics = services.get(serviceIndex) ?? ServiceStatistics.empty();
-
-      const { count: providedCount, size: providedSize } = this.calculateProvidedScoreService(preimages);
-
       serviceStatistics.providedCount = providedCount;
       serviceStatistics.providedSize = providedSize;
+      serviceStatistics.accumulateCount = accumulatedCount;
+      serviceStatistics.accumulateGasUsed = accumulatedGasUsed;
+      serviceStatistics.onTransfersCount = transfersCount;
+      serviceStatistics.onTransfersGasUsed = transfersGasUsed;
 
-      services.set(serviceIndex, serviceStatistics);
+      services.set(serviceId, serviceStatistics);
     }
 
     /** Update state */
