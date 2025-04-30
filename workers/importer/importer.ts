@@ -7,7 +7,7 @@ import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verification";
 import { OnChain, type StfError } from "@typeberry/transition/chain-stf";
-import { Result, type TaggedError } from "@typeberry/utils";
+import { type ErrorResult, Result, type TaggedError } from "@typeberry/utils";
 
 export enum ImporterErrorKind {
   Verifier = 0,
@@ -17,6 +17,11 @@ export enum ImporterErrorKind {
 export type ImporterError =
   | TaggedError<ImporterErrorKind.Verifier, BlockVerifierError>
   | TaggedError<ImporterErrorKind.Stf, StfError>;
+
+const importerError = <Kind extends ImporterErrorKind, Err extends ImporterError["error"]>(
+  kind: Kind,
+  nested: ErrorResult<Err>,
+) => Result.taggedError<WithHash<HeaderHash, HeaderView>, Kind, Err>(ImporterErrorKind, kind, nested);
 
 export class Importer {
   private readonly verifier: BlockVerifier;
@@ -46,7 +51,7 @@ export class Importer {
 
     const hash = await this.verifier.verifyBlock(block);
     if (hash.isError) {
-      return Result.taggedError(ImporterErrorKind, ImporterErrorKind.Verifier, hash);
+      return importerError(ImporterErrorKind.Verifier, hash);
     }
 
     const timeSlot = block.header.view().timeSlotIndex.materialize();
@@ -55,7 +60,7 @@ export class Importer {
     const res = await this.stf.transition(block, headerHash);
     if (res.isError) {
       // TODO [ToDr] Revert the state?
-      return Result.taggedError(ImporterErrorKind, ImporterErrorKind.Stf, res);
+      return importerError(ImporterErrorKind.Stf, res);
     }
 
     const stateRoot = merkelizeState(serializeState(this.stf.state, this.spec));
