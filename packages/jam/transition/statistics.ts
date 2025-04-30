@@ -175,7 +175,7 @@ export class Statistics {
       this.chainSpec,
     );
     for (const assurance of assurances) {
-      for (const coreIndex of assurance.bitfield?.indicesOfSetBits() ?? []) {
+      for (const coreIndex of assurance.bitfield.indicesOfSetBits() ?? []) {
         assurancesPerCore[coreIndex] += 1;
       }
     }

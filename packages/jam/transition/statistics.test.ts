@@ -2,24 +2,28 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import {
   type CoreIndex,
+  ED25519_SIGNATURE_BYTES,
+  type Ed25519Signature,
   Extrinsic,
+  type HeaderHash,
   tryAsCoreIndex,
   tryAsPerValidator,
   tryAsServiceId,
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
-import type { AssurancesExtrinsic } from "@typeberry/block/assurances";
+import { type AssurancesExtrinsic, AvailabilityAssurance } from "@typeberry/block/assurances";
 import { I, T, W_G, W_M, W_R, W_X } from "@typeberry/block/gp-constants";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import testWorkReport from "@typeberry/block/test-work-report";
 import type { TicketsExtrinsic } from "@typeberry/block/tickets";
 import { WorkReport } from "@typeberry/block/work-report";
-import { BytesBlob } from "@typeberry/bytes";
+import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
+import { HASH_SIZE } from "@typeberry/hash";
 import { isU16, isU32 } from "@typeberry/numbers";
 import { CoreStatistics, ServiceStatistics, StatisticsData, ValidatorStatistics, tryAsPerCore } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
@@ -168,6 +172,14 @@ describe("Statistics", () => {
       blob: { length: blobLength },
     });
 
+    const createAssurance = (validatorIndex: number) =>
+      AvailabilityAssurance.fromCodec({
+        anchor: Bytes.zero(HASH_SIZE).asOpaque<HeaderHash>(),
+        bitfield: BitVec.fromBlob(Bytes.zero(HASH_SIZE).raw, tinyChainSpec.coresCount),
+        validatorIndex: tryAsValidatorIndex(validatorIndex),
+        signature: Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque<Ed25519Signature>(),
+      });
+
     function createWorkReport(coreIndex: CoreIndex): WorkReport {
       const source = BytesBlob.parseBlob(testWorkReport);
       const report = Decoder.decodeObject(WorkReport.Codec, source, tinyChainSpec);
@@ -256,12 +268,13 @@ describe("Statistics", () => {
     });
 
     it("should add preimages length from extrinstic to preImages in statistics", () => {
-      const preimages: PreimagesExtrinsic = asKnownSize([createPreimage(0), createPreimage(0), createPreimage(0)]);
-      const extrinsic = getExtrinsic({ preimages });
       const { statistics, currentSlot, validatorIndex, currentStatistics } = prepareData({
         previousSlot: 0,
         currentSlot: 1,
       });
+      const preimages: PreimagesExtrinsic = asKnownSize([createPreimage(0), createPreimage(0), createPreimage(0)]);
+      const assurances = asKnownSize([createAssurance(validatorIndex + 1)]) as unknown as AssurancesExtrinsic;
+      const extrinsic = getExtrinsic({ preimages, assurances });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1, preImages: preimages.length };
 
       assert.strictEqual(statistics.state.statistics.current[validatorIndex].preImages, 0);
@@ -342,7 +355,7 @@ describe("Statistics", () => {
         previousSlot: 0,
         currentSlot: 1,
       });
-      const assurances = [{ validatorIndex }] as unknown as AssurancesExtrinsic;
+      const assurances = asKnownSize([createAssurance(validatorIndex)]) as unknown as AssurancesExtrinsic;
       const extrinsic = getExtrinsic({ assurances });
       const expectedStatistics = { ...currentStatistics[validatorIndex], blocks: 1, assurances: 1 };
 
