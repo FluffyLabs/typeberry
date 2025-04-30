@@ -253,6 +253,8 @@ export class Statistics {
     for (let coreId = 0; coreId < this.chainSpec.coresCount; coreId++) {
       const coreIndex = tryAsCoreIndex(coreId);
 
+      // NOTE [MaSo] At most one work report per core in the block.
+      // https://graypaper.fluffylabs.dev/#/cc517d7/156700156700?v=0.6.5
       const workReport = incomingReports.find((wr) => wr.coreIndex === coreIndex);
       const { imported, extrinsicCount, extrinsicSize, exported, gasUsed } =
         workReport !== undefined
@@ -265,6 +267,8 @@ export class Statistics {
               gasUsed: tryAsServiceGas(0n),
             };
 
+      // NOTE [MaSo] At most one work report per core in the block.
+      // https://graypaper.fluffylabs.dev/#/cc517d7/145d01145d01?v=0.6.5
       const availableWorkReport = availableReports.find((wr) => wr.coreIndex === coreIndex);
       const popularity = extrinsic.assurances.reduce((sum, { bitfield }) => sum + (bitfield.isSet(coreId) ? 1 : 0), 0);
 
