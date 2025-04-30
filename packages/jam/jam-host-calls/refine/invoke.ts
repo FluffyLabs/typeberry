@@ -11,6 +11,7 @@ import {
 import { type GasCounter, Registers, tryAsBigGas, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers";
 import { Status } from "@typeberry/pvm-interpreter/status";
+import { check } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { type RefineExternalities, tryAsMachineId } from "./refine-externalities";
@@ -43,15 +44,15 @@ export class Invoke implements HostCallHandler {
 
     // extracting gas and registers from memory
     const initialData = Bytes.zero(GAS_REGISTERS_SIZE);
-    const readFault = memory.loadInto(initialData.raw, destinationStart);
-    if (readFault.isError) {
+    const readResult = memory.loadInto(initialData.raw, destinationStart);
+    if (readResult.isError) {
       return PvmExecution.Panic;
     }
     // we also need to make sure that the memory is writeable, so we attempt to
     // write the data back. This is a bit redundant, but saves us from creating
     // the weird `isWriteable` method.
-    const writeFault = memory.storeFrom(destinationStart, initialData.raw);
-    if (writeFault.isError) {
+    const writeResult = memory.storeFrom(destinationStart, initialData.raw);
+    if (writeResult.isError) {
       return PvmExecution.Panic;
     }
 
@@ -79,7 +80,8 @@ export class Invoke implements HostCallHandler {
 
     // this fault does not need to be handled, because we've ensured it's
     // already writeable earlier.
-    const _fault = memory.storeFrom(destinationStart, resultData.raw);
+    const storeResult = memory.storeFrom(destinationStart, resultData.raw);
+    check(storeResult.isOk, "Memory writeability has been checked already.");
 
     switch (machineState.result.status) {
       case Status.HOST:
