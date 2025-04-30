@@ -70,7 +70,7 @@ function prepareRegsAndMemory(
   if (serviceId !== undefined) {
     registers.setU64(SERVICE_ID_REG, BigInt(serviceId));
   } else {
-    registers.setU64(SERVICE_ID_REG, 2n ** 32n - 1n);
+    registers.setU64(SERVICE_ID_REG, 2n ** 64n - 1n);
   }
   registers.setU32(KEY_START_REG, keyAddress);
   registers.setU32(KEY_LEN_REG, key.length);
