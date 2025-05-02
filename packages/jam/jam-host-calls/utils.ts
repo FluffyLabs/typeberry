@@ -1,6 +1,6 @@
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
+import { u64IntoParts } from "@typeberry/numbers";
 import { u32AsLeBytes } from "@typeberry/numbers";
-import { MAX_U64, u64IntoParts } from "@typeberry/numbers";
 import type { HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { check } from "@typeberry/utils";
 
@@ -18,7 +18,7 @@ export function getServiceId(
   currentServiceId: ServiceId,
 ): ServiceId | null {
   const regValue = regs.get(regNumber);
-  if (regValue === MAX_U64) {
+  if (regValue === 2n ** 64n - 1n) {
     return currentServiceId;
   }
 
