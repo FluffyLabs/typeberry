@@ -36,7 +36,7 @@ describe("StoreOps", () => {
         tryAsMemoryIndex(getStartPageIndex(address) + PAGE_SIZE),
         initialMemory,
       )
-      .finalize(tryAsSbrkIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
+      .finalize(tryAsMemoryIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
     const storeOps = new StoreOps(regs, memory, instructionResult);
     const expectedPage = getExpectedPage(address, bigintToUint8ArrayLE(valueToStore, noOfBytes), 32);
 
@@ -150,7 +150,7 @@ describe("StoreOps", () => {
         tryAsMemoryIndex(getStartPageIndex(address) + PAGE_SIZE),
         initialMemory,
       )
-      .finalize(tryAsSbrkIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
+      .finalize(tryAsMemoryIndex(20 * PAGE_SIZE), tryAsSbrkIndex(30 * PAGE_SIZE));
     const storeOps = new StoreOps(regs, memory, instructionResult);
     const expectedPage = getExpectedPage(address, bigintToUint8ArrayLE(valueToStore, noOfBytes), 32);
 

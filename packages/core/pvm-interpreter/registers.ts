@@ -43,12 +43,12 @@ export class Registers {
     }
   }
 
-  getU32(registerIndex: number) {
+  getLowerU32(registerIndex: number) {
     return Number(this.asUnsigned[registerIndex] & 0xff_ff_ff_ffn);
   }
 
-  getI32(registerIndex: number) {
-    return Number(this.getU32(registerIndex)) >> 0;
+  getLowerI32(registerIndex: number) {
+    return Number(this.getLowerU32(registerIndex)) >> 0;
   }
 
   setU32(registerIndex: number, value: number) {

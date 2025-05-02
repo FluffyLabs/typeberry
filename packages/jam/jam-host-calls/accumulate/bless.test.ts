@@ -2,13 +2,15 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Encoder } from "@typeberry/codec";
+import { tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { type Gas, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import { LegacyHostCallResult } from "../results";
-import { Empower } from "./empower";
+import { HostCallResult } from "../results";
+import { Bless } from "./bless";
 import { TestAccumulate } from "./partial-state.test";
 
 const gas = gasCounter(tryAsGas(0));
@@ -37,12 +39,12 @@ function prepareRegsAndMemory(
   { skipDictionary = false }: { skipDictionary?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
-  const registers = new Registers();
-  registers.setU32(SERVICE_M, tryAsServiceId(5));
-  registers.setU32(SERVICE_A, tryAsServiceId(10));
-  registers.setU32(SERVICE_V, tryAsServiceId(15));
-  registers.setU32(DICTIONARY_START, memStart);
-  registers.setU32(DICTIONARY_COUNT, dictionary.length);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(SERVICE_M, tryAsU64(5));
+  registers.set(SERVICE_A, tryAsU64(10));
+  registers.set(SERVICE_V, tryAsU64(15));
+  registers.set(DICTIONARY_START, tryAsU64(memStart));
+  registers.set(DICTIONARY_COUNT, tryAsU64(dictionary.length));
 
   const builder = new MemoryBuilder();
 
@@ -56,51 +58,51 @@ function prepareRegsAndMemory(
   if (!skipDictionary) {
     builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), data.raw);
   }
-  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
+  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
   };
 }
 
-describe("HostCalls: Empower", () => {
+describe("HostCalls: Bless", () => {
   it("should set new privileged services and auto-accumualte services", async () => {
     const accumulate = new TestAccumulate();
-    const empower = new Empower(accumulate);
+    const bless = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
-    empower.currentServiceId = serviceId;
+    bless.currentServiceId = serviceId;
     const { flat, expected } = prepareDictionary();
     const { registers, memory } = prepareRegsAndMemory(flat);
 
     // when
-    await empower.execute(gas, registers, memory);
+    await bless.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.privilegedServices, [
       [tryAsServiceId(5), tryAsServiceId(10), tryAsServiceId(15), expected],
     ]);
   });
 
-  it("should fail when dictionary is not readable", async () => {
+  it("should return panic when dictionary is not readable", async () => {
     const accumulate = new TestAccumulate();
-    const empower = new Empower(accumulate);
+    const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
     const { flat } = prepareDictionary();
     const { registers, memory } = prepareRegsAndMemory(flat, { skipDictionary: true });
 
     // when
-    await empower.execute(gas, registers, memory);
+    const result = await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 
   it("should fail when dictionary is out of order", async () => {
     const accumulate = new TestAccumulate();
-    const empower = new Empower(accumulate);
+    const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
     const { flat } = prepareDictionary((d) => {
@@ -112,13 +114,13 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 
   it("should fail when dictionary contains duplicates", async () => {
     const accumulate = new TestAccumulate();
-    const empower = new Empower(accumulate);
+    const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
     const { flat } = prepareDictionary();
@@ -129,7 +131,7 @@ describe("HostCalls: Empower", () => {
     await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), LegacyHostCallResult.OOB);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 });

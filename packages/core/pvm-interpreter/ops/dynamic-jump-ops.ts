@@ -46,7 +46,7 @@ export class DynamicJumpOps {
   }
 
   caluclateJumpAddress(immediate: ImmediateDecoder, registerIndex: number) {
-    const registerValue = this.regs.getU32(registerIndex);
+    const registerValue = this.regs.getLowerU32(registerIndex);
     return addWithOverflowU32(registerValue, immediate.getU32());
   }
 

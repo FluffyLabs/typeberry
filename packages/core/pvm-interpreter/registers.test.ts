@@ -13,8 +13,8 @@ describe("Registers", () => {
 
       registers.setU32(0, 0xff_ff_ff_ff);
 
-      assert.strictEqual(registers.getI32(0), expectedSignedNumber);
-      assert.strictEqual(registers.getU32(0), expectedUnsignedNumber);
+      assert.strictEqual(registers.getLowerI32(0), expectedSignedNumber);
+      assert.strictEqual(registers.getLowerU32(0), expectedUnsignedNumber);
     });
 
     it("should return 0x00_00_00_01 correctly loaded into register", () => {
@@ -24,8 +24,8 @@ describe("Registers", () => {
 
       registers.setU32(0, 0x00_00_00_01);
 
-      assert.strictEqual(registers.getI32(0), expectedSignedNumber);
-      assert.strictEqual(registers.getU32(0), expectedUnsignedNumber);
+      assert.strictEqual(registers.getLowerI32(0), expectedSignedNumber);
+      assert.strictEqual(registers.getLowerU32(0), expectedUnsignedNumber);
     });
 
     it("should return 0x80_00_00_00 correctly loaded into register", () => {
@@ -35,8 +35,8 @@ describe("Registers", () => {
 
       registers.setU32(0, 0x80_00_00_00);
 
-      assert.strictEqual(registers.getI32(0), expectedSignedNumber);
-      assert.strictEqual(registers.getU32(0), expectedUnsignedNumber);
+      assert.strictEqual(registers.getLowerI32(0), expectedSignedNumber);
+      assert.strictEqual(registers.getLowerU32(0), expectedUnsignedNumber);
     });
   });
 

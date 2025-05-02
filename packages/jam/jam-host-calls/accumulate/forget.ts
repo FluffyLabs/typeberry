@@ -1,16 +1,9 @@
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU32 } from "@typeberry/numbers";
-import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import {
-  type Memory,
-  type PvmExecution,
-  type Registers,
-  tryAsHostCallIndex,
-} from "@typeberry/pvm-host-calls/host-call-handler";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
+import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
-import { LegacyHostCallResult } from "../results";
+import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
 
@@ -28,25 +21,25 @@ export class Forget implements HostCallHandler {
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
+  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
     // `o`
-    const hashStart = tryAsMemoryIndex(regs.getU32(IN_OUT_REG));
+    const hashStart = regs.get(IN_OUT_REG);
     // `z`
-    const length = tryAsU32(regs.getU32(8));
+    const length = regs.get(8);
 
     const hash = Bytes.zero(HASH_SIZE);
-    const pageFault = memory.loadInto(hash.raw, hashStart);
-    if (pageFault !== null) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
-      return;
+    const memoryReadResult = memory.loadInto(hash.raw, hashStart);
+    // error while reading the memory.
+    if (memoryReadResult.isError) {
+      return PvmExecution.Panic;
     }
 
     const result = this.partialState.forgetPreimage(hash, length);
 
     if (result.isOk) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
+      regs.set(IN_OUT_REG, HostCallResult.OK);
     } else {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.HUH);
+      regs.set(IN_OUT_REG, HostCallResult.HUH);
     }
   }
 }

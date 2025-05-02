@@ -1,3 +1,4 @@
+import { OK, Result } from "@typeberry/utils";
 import { PageFault } from "../errors";
 import { MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "../memory-consts";
 import { MemoryPage } from "./memory-page";
@@ -33,27 +34,28 @@ export class WriteablePage extends MemoryPage {
     }
   }
 
-  loadInto(result: Uint8Array, startIndex: PageIndex, length: number) {
+  loadInto(result: Uint8Array, startIndex: PageIndex, length: number): Result<OK, PageFault> {
     const endIndex = startIndex + length;
     if (endIndex > PAGE_SIZE) {
-      return PageFault.fromMemoryIndex(this.start + PAGE_SIZE);
+      return Result.error(PageFault.fromMemoryIndex(this.start + PAGE_SIZE));
     }
 
     const bytes = this.view.subarray(startIndex, endIndex);
     // we zero the bytes, since the view might not yet be initialized at `endIndex`.
     result.fill(0, bytes.length, length);
     result.set(bytes);
-    return null;
+
+    return Result.ok(OK);
   }
 
-  storeFrom(startIndex: PageIndex, bytes: Uint8Array) {
+  storeFrom(startIndex: PageIndex, bytes: Uint8Array): Result<OK, PageFault> {
     if (this.buffer.byteLength < startIndex + bytes.length && this.buffer.byteLength < PAGE_SIZE) {
       const newLength = Math.min(PAGE_SIZE, Math.max(MIN_ALLOCATION_LENGTH, startIndex + bytes.length));
       this.buffer.resize(newLength);
     }
 
     this.view.set(bytes, startIndex);
-    return null;
+    return Result.ok(OK);
   }
 
   setData(pageIndex: PageIndex, data: Uint8Array) {

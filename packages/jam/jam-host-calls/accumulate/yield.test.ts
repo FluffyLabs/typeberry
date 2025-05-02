@@ -3,7 +3,8 @@ import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U32, tryAsU32 } from "@typeberry/numbers";
+import { type U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
 import {
   MemoryBuilder,
@@ -27,18 +28,18 @@ function prepareRegsAndMemory(
   data: BytesBlob,
   { registerMemory = true }: { registerMemory?: boolean } = {},
 ) {
-  const registers = new Registers();
-  registers.setU32(HASH_START_REG, hashStart);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(HASH_START_REG, tryAsU64(hashStart));
 
   const builder = new MemoryBuilder();
   if (registerMemory) {
     builder.setReadablePages(tryAsMemoryIndex(hashStart), tryAsMemoryIndex(hashStart + PAGE_SIZE), data.raw);
   }
 
-  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
+  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
   };
 }
 
@@ -58,7 +59,7 @@ describe("HostCalls: Yield", () => {
 
     // then
     assert.deepStrictEqual(result, PvmExecution.Panic);
-    assert.deepStrictEqual(registers.getU32(RESULT_REG), hashStart);
+    assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(hashStart));
     assert.deepStrictEqual(accumulate.yieldHash, null);
   });
 
@@ -77,7 +78,7 @@ describe("HostCalls: Yield", () => {
 
     // then
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(RESULT_REG), HostCallResult.OK);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.yieldHash, data);
   });
 });

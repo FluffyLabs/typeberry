@@ -2,8 +2,8 @@ import type { Segment, SegmentIndex, ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
-import type { U32 } from "@typeberry/numbers";
-import type { BigGas, Memory, MemoryIndex, Registers } from "@typeberry/pvm-interpreter";
+import type { U64 } from "@typeberry/numbers";
+import type { BigGas, Memory, Registers } from "@typeberry/pvm-interpreter";
 import { ProgramDecoder, type ProgramDecoderError } from "@typeberry/pvm-interpreter/program-decoder/program-decoder";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { type OK, Result } from "@typeberry/utils";
@@ -63,8 +63,8 @@ export class TestRefineExt implements RefineExternalities {
 
   machineVoidPages(
     machineIndex: MachineId,
-    pageStart: U32,
-    pageCount: U32,
+    pageStart: U64,
+    pageCount: U64,
   ): Promise<Result<OK, NoMachineError | InvalidPageError>> {
     const val = this.machineVoidPagesData.get(machineIndex, pageStart, pageCount);
     if (val === undefined) {
@@ -73,7 +73,7 @@ export class TestRefineExt implements RefineExternalities {
     return Promise.resolve(val);
   }
 
-  machineZeroPages(machineIndex: MachineId, pageStart: U32, pageCount: U32): Promise<Result<OK, NoMachineError>> {
+  machineZeroPages(machineIndex: MachineId, pageStart: U64, pageCount: U64): Promise<Result<OK, NoMachineError>> {
     const val = this.machineZeroPagesData.get(machineIndex, pageStart, pageCount);
     if (val === undefined) {
       throw new Error(`Unexpected call to machineZeroPages with: ${machineIndex}, ${pageStart}, ${pageCount}`);
@@ -97,9 +97,9 @@ export class TestRefineExt implements RefineExternalities {
 
   machinePeekFrom(
     machineIndex: MachineId,
-    destinationStart: MemoryIndex,
-    sourceStart: MemoryIndex,
-    length: U32,
+    destinationStart: U64,
+    sourceStart: U64,
+    length: U64,
     destination: Memory,
   ): Promise<Result<OK, PeekPokeError>> {
     const val = this.machinePeekData.get(machineIndex, destinationStart, sourceStart, length, destination);
@@ -113,9 +113,9 @@ export class TestRefineExt implements RefineExternalities {
 
   machinePokeInto(
     machineIndex: MachineId,
-    sourceStart: MemoryIndex,
-    destinationStart: MemoryIndex,
-    length: U32,
+    sourceStart: U64,
+    destinationStart: U64,
+    length: U64,
     source: Memory,
   ): Promise<Result<OK, PeekPokeError>> {
     const val = this.machinePokeData.get(machineIndex, sourceStart, destinationStart, length, source);

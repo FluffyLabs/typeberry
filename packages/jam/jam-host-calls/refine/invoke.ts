@@ -1,17 +1,17 @@
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder, codec, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU64 } from "@typeberry/numbers";
-import { type HostCallHandler, PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import {
-  type GasCounter,
-  type Memory,
-  Registers,
-  tryAsBigGas,
-  tryAsMemoryIndex,
-  tryAsSmallGas,
-} from "@typeberry/pvm-interpreter";
+  type HostCallHandler,
+  type HostCallMemory,
+  type HostCallRegisters,
+  PvmExecution,
+  tryAsHostCallIndex,
+} from "@typeberry/pvm-host-calls";
+import { type GasCounter, Registers, tryAsBigGas, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers";
 import { Status } from "@typeberry/pvm-interpreter/status";
+import { check } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { type RefineExternalities, tryAsMachineId } from "./refine-externalities";
@@ -36,20 +36,25 @@ export class Invoke implements HostCallHandler {
 
   constructor(private readonly refine: RefineExternalities) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
+  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
     // `n`
-    const machineIndex = tryAsMachineId(regs.getU64(IN_OUT_REG_1));
+    const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG_1));
     // `o`
-    const destinationStart = tryAsMemoryIndex(regs.getU32(IN_OUT_REG_2));
-
-    const destinationWriteable = memory.isWriteable(destinationStart, destinationStart + GAS_REGISTERS_SIZE);
-    if (!destinationWriteable) {
-      return PvmExecution.Panic;
-    }
+    const destinationStart = regs.get(IN_OUT_REG_2);
 
     // extracting gas and registers from memory
     const initialData = Bytes.zero(GAS_REGISTERS_SIZE);
-    memory.loadInto(initialData.raw, destinationStart);
+    const readResult = memory.loadInto(initialData.raw, destinationStart);
+    if (readResult.isError) {
+      return PvmExecution.Panic;
+    }
+    // we also need to make sure that the memory is writeable, so we attempt to
+    // write the data back. This is a bit redundant, but saves us from creating
+    // the weird `isWriteable` method.
+    const writeResult = memory.storeFrom(destinationStart, initialData.raw);
+    if (writeResult.isError) {
+      return PvmExecution.Panic;
+    }
 
     const gasRegisters = Decoder.decodeObject(gasAndRegistersCodec, initialData);
     // `g`
@@ -62,7 +67,7 @@ export class Invoke implements HostCallHandler {
 
     // machine not found
     if (state.isError) {
-      regs.setU64(IN_OUT_REG_1, HostCallResult.WHO);
+      regs.set(IN_OUT_REG_1, HostCallResult.WHO);
       return;
     }
 
@@ -73,21 +78,24 @@ export class Invoke implements HostCallHandler {
       registers: Bytes.fromBlob(machineState.registers.getAllBytesAsLittleEndian(), NO_OF_REGISTERS * 8),
     });
 
-    memory.storeFrom(destinationStart, resultData.raw);
+    // this fault does not need to be handled, because we've ensured it's
+    // already writeable earlier.
+    const storeResult = memory.storeFrom(destinationStart, resultData.raw);
+    check(storeResult.isOk, "Memory writeability has been checked already.");
 
     switch (machineState.result.status) {
       case Status.HOST:
-        regs.setU64(IN_OUT_REG_1, tryAsU64(machineState.result.status));
-        regs.setU64(IN_OUT_REG_2, machineState.result.hostCallIndex);
+        regs.set(IN_OUT_REG_1, tryAsU64(machineState.result.status));
+        regs.set(IN_OUT_REG_2, machineState.result.hostCallIndex);
         return;
       case Status.FAULT:
-        regs.setU64(IN_OUT_REG_1, tryAsU64(machineState.result.status));
-        regs.setU64(IN_OUT_REG_2, machineState.result.address);
+        regs.set(IN_OUT_REG_1, tryAsU64(machineState.result.status));
+        regs.set(IN_OUT_REG_2, machineState.result.address);
         return;
       case Status.PANIC:
       case Status.HALT:
       case Status.OOG:
-        regs.setU64(IN_OUT_REG_1, tryAsU64(machineState.result.status));
+        regs.set(IN_OUT_REG_1, tryAsU64(machineState.result.status));
         return;
     }
     throw new Error(`Unexpected inner PVM result: ${machineState.result.status}`);

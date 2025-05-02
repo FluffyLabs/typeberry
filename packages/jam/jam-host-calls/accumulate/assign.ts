@@ -4,16 +4,10 @@ import { Decoder, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import {
-  type Memory,
-  type PvmExecution,
-  type Registers,
-  tryAsHostCallIndex,
-} from "@typeberry/pvm-host-calls/host-call-handler";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
+import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
-import { LegacyHostCallResult } from "../results";
+import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
 
@@ -34,22 +28,21 @@ export class Assign implements HostCallHandler {
     private readonly chainSpec: ChainSpec,
   ) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
-    const coreIndex = regs.getU32(IN_OUT_REG);
+  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
+    const coreIndex = regs.get(IN_OUT_REG);
     // o
-    const authorizationQueueStart = tryAsMemoryIndex(regs.getU32(8));
+    const authorizationQueueStart = regs.get(8);
 
     const res = new Uint8Array(HASH_SIZE * AUTHORIZATION_QUEUE_SIZE);
-    const pageFault = memory.loadInto(res, authorizationQueueStart);
-    // page fault while reading the memory.
-    if (pageFault !== null) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
-      return;
+    const memoryReadResult = memory.loadInto(res, authorizationQueueStart);
+    // error while reading the memory.
+    if (memoryReadResult.isError) {
+      return PvmExecution.Panic;
     }
 
     // the core is unknown
     if (coreIndex >= this.chainSpec.coresCount) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.CORE);
+      regs.set(IN_OUT_REG, HostCallResult.CORE);
       return;
     }
 
@@ -57,8 +50,8 @@ export class Assign implements HostCallHandler {
     const authQueue = d.sequenceFixLen(codec.bytes(HASH_SIZE), AUTHORIZATION_QUEUE_SIZE);
     const fixedSizeAuthQueue = FixedSizeArray.new(authQueue, AUTHORIZATION_QUEUE_SIZE);
 
-    regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
-    this.partialState.updateAuthorizationQueue(tryAsCoreIndex(coreIndex), fixedSizeAuthQueue);
+    regs.set(IN_OUT_REG, HostCallResult.OK);
+    this.partialState.updateAuthorizationQueue(tryAsCoreIndex(Number(coreIndex)), fixedSizeAuthQueue);
     return;
   }
 }
