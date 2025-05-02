@@ -72,7 +72,7 @@ export class WorkPackage extends WithDebug {
     /**
      * `w`: sequence of work items.
      *
-     * Constrained by `I=4`:
+     * Constrained by `I=16`:
      * https://graypaper.fluffylabs.dev/#/579bd12/416600416800
      */
     public readonly items: FixedSizeArray<WorkItem, WorkItemsCount>,

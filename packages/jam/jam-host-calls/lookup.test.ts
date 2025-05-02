@@ -4,6 +4,8 @@ import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
+import { tryAsU64 } from "@typeberry/numbers";
+import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
@@ -57,12 +59,12 @@ function prepareRegsAndMemory(
     preimageLength = 0,
   }: { skipKey?: boolean; skipValue?: boolean; preimageOffset?: number; preimageLength?: number } = {},
 ) {
-  const registers = new Registers();
-  registers.setU32(SERVICE_ID_REG, serviceId);
-  registers.setU32(HASH_ADDRESS_REG, PREIMAGE_HASH_ADDRESS);
-  registers.setU32(DEST_ADDRESS_REG, DESTINATION_MEM_ADDRESS);
-  registers.setU32(PREIMAGE_OFFSET_REG, preimageOffset);
-  registers.setU32(PREIMAGE_LENGTH_TO_WRITE_REG, preimageLength);
+  const registers = new HostCallRegisters(new Registers());
+  registers.set(SERVICE_ID_REG, tryAsU64(serviceId));
+  registers.set(HASH_ADDRESS_REG, tryAsU64(PREIMAGE_HASH_ADDRESS));
+  registers.set(DEST_ADDRESS_REG, tryAsU64(DESTINATION_MEM_ADDRESS));
+  registers.set(PREIMAGE_OFFSET_REG, tryAsU64(preimageOffset));
+  registers.set(PREIMAGE_LENGTH_TO_WRITE_REG, tryAsU64(preimageLength));
 
   const builder = new MemoryBuilder();
   if (!skipKey) {
@@ -78,10 +80,10 @@ function prepareRegsAndMemory(
       tryAsMemoryIndex(DESTINATION_MEM_ADDRESS + PAGE_SIZE),
     );
   }
-  const memory = builder.finalize(tryAsSbrkIndex(0), tryAsSbrkIndex(0));
+  const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
   return {
     registers,
-    memory,
+    memory: new HostCallMemory(memory),
   };
 }
 
@@ -93,11 +95,11 @@ describe("HostCalls: Lookup", () => {
     const { registers, memory } = prepareRegsAndMemory(serviceId, HASH);
 
     // serviceId out of range
-    registers.setU64(SERVICE_ID_REG, BigInt(2n ** 32n));
+    registers.set(SERVICE_ID_REG, tryAsU64(2n ** 32n));
     const result = await lookup.execute(gas, registers, memory);
 
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(SERVICE_ID_REG), HostCallResult.NONE);
+    assert.deepStrictEqual(registers.get(SERVICE_ID_REG), HostCallResult.NONE);
   });
 
   it("should fail gracefully if preimage doesn't exist", async () => {
@@ -110,7 +112,7 @@ describe("HostCalls: Lookup", () => {
     const result = await lookup.execute(gas, registers, memory);
 
     assert.deepStrictEqual(result, undefined);
-    assert.deepStrictEqual(registers.getU64(SERVICE_ID_REG), HostCallResult.NONE);
+    assert.deepStrictEqual(registers.get(SERVICE_ID_REG), HostCallResult.NONE);
   });
 
   it("should fail on page fault if memory isn't readable", async () => {
@@ -155,10 +157,10 @@ describe("HostCalls: Lookup", () => {
       assert.deepStrictEqual(result, undefined);
 
       const resultBlob = Bytes.zero(preimageLength);
-      const pageFault = memory.loadInto(resultBlob.raw, tryAsMemoryIndex(DESTINATION_MEM_ADDRESS));
-      assert.deepStrictEqual(pageFault, null);
+      const readResult = memory.loadInto(resultBlob.raw, tryAsU64(DESTINATION_MEM_ADDRESS));
+      assert.strictEqual(readResult.isOk, true);
       assert.deepStrictEqual(resultBlob.asText(), "hello");
-      assert.deepStrictEqual(registers.getU32(RESULT_REG), "hello world".length);
+      assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64("hello world".length));
     });
 
     it("with offset", async () => {
@@ -178,10 +180,10 @@ describe("HostCalls: Lookup", () => {
       assert.deepStrictEqual(result, undefined);
 
       const resultBlob = Bytes.zero(preimageLength);
-      const pageFault = memory.loadInto(resultBlob.raw, tryAsMemoryIndex(DESTINATION_MEM_ADDRESS));
-      assert.deepStrictEqual(pageFault, null);
+      const readResult = memory.loadInto(resultBlob.raw, tryAsU64(DESTINATION_MEM_ADDRESS));
+      assert.strictEqual(readResult.isOk, true);
       assert.deepStrictEqual(resultBlob.asText(), "world");
-      assert.deepStrictEqual(registers.getU32(RESULT_REG), "hello world".length);
+      assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64("hello world".length));
     });
   });
 });

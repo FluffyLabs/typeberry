@@ -1,12 +1,11 @@
-import { tryAsU32 } from "@typeberry/numbers";
-import { type HostCallHandler, PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import {
-  type GasCounter,
-  type Memory,
-  type Registers,
-  tryAsMemoryIndex,
-  tryAsSmallGas,
-} from "@typeberry/pvm-interpreter";
+  type HostCallHandler,
+  type HostCallMemory,
+  type HostCallRegisters,
+  PvmExecution,
+  tryAsHostCallIndex,
+} from "@typeberry/pvm-host-calls";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { assertNever } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
@@ -26,26 +25,32 @@ export class Poke implements HostCallHandler {
 
   constructor(private readonly refine: RefineExternalities) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<PvmExecution | undefined> {
+  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
     // `n`: machine index
-    const machineIndex = tryAsMachineId(regs.getU64(IN_OUT_REG));
+    const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG));
     // `s`: source memory start (nested vm)
-    const sourceStart = tryAsMemoryIndex(regs.getU32(8));
+    const sourceStart = regs.get(8);
     // `o`: destination memory start (local)
-    const destinationStart = tryAsMemoryIndex(regs.getU32(9));
+    const destinationStart = regs.get(9);
     // `z`: memory length
-    const length = tryAsU32(regs.getU32(10));
+    const length = regs.get(10);
 
-    const pokeResult = await this.refine.machinePokeInto(machineIndex, sourceStart, destinationStart, length, memory);
+    const pokeResult = await this.refine.machinePokeInto(
+      machineIndex,
+      sourceStart,
+      destinationStart,
+      length,
+      memory.getMemory(),
+    );
     if (pokeResult.isOk) {
-      regs.setU64(IN_OUT_REG, HostCallResult.OK);
+      regs.set(IN_OUT_REG, HostCallResult.OK);
       return;
     }
 
     const e = pokeResult.error;
 
     if (e === PeekPokeError.NoMachine) {
-      regs.setU64(IN_OUT_REG, HostCallResult.WHO);
+      regs.set(IN_OUT_REG, HostCallResult.WHO);
       return;
     }
 
@@ -54,7 +59,7 @@ export class Poke implements HostCallHandler {
     }
 
     if (e === PeekPokeError.DestinationPageFault) {
-      regs.setU64(IN_OUT_REG, HostCallResult.OOB);
+      regs.set(IN_OUT_REG, HostCallResult.OOB);
       return;
     }
 

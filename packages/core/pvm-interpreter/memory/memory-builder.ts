@@ -1,9 +1,11 @@
 import { check } from "@typeberry/utils";
-import { FinalizedBuilderModification, IncorrectSbrkIndex, PageNotExist } from "./errors";
+import { FinalizedBuilderModification, IncorrectSbrkIndex, PageNotExist, ReservedMemoryFault } from "./errors";
 import { Memory } from "./memory";
 import { PAGE_SIZE } from "./memory-consts";
-import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex } from "./memory-index";
+import { type MemoryIndex, type SbrkIndex, tryAsSbrkIndex } from "./memory-index";
+import { MemoryRange, RESERVED_MEMORY_RANGE } from "./memory-range";
 import { getPageNumber } from "./memory-utils";
+import { PageRange } from "./page-range";
 import { ReadablePage, WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
 import { type PageNumber, tryAsPageIndex } from "./pages/page-utils";
@@ -15,6 +17,12 @@ export class MemoryBuilder {
   private ensureNotFinalized() {
     if (this.isFinalized) {
       throw new FinalizedBuilderModification();
+    }
+  }
+
+  private ensureNoReservedMemoryUsage(range: MemoryRange) {
+    if (range.overlapsWith(RESERVED_MEMORY_RANGE)) {
+      throw new ReservedMemoryFault();
     }
   }
 
@@ -34,11 +42,16 @@ export class MemoryBuilder {
     check(end % PAGE_SIZE === 0, `end needs to be a multiple of page size (${PAGE_SIZE})`);
     check(data.length <= end - start, "the initial data is longer than address range");
 
-    const noOfPages = (end - start) / PAGE_SIZE;
+    const length = end - start;
+    const range = MemoryRange.fromStartAndLength(start, length);
+
+    this.ensureNoReservedMemoryUsage(range);
+
+    const pages = Array.from(PageRange.fromMemoryRange(range));
+    const noOfPages = pages.length;
 
     for (let i = 0; i < noOfPages; i++) {
-      const startIndex = tryAsMemoryIndex(i * PAGE_SIZE + start);
-      const pageNumber = getPageNumber(startIndex);
+      const pageNumber = pages[i];
       const dataChunk = data.subarray(i * PAGE_SIZE, (i + 1) * PAGE_SIZE);
       const page = new ReadablePage(pageNumber, dataChunk);
       this.initialMemory.set(pageNumber, page);
@@ -63,11 +76,16 @@ export class MemoryBuilder {
     check(end % PAGE_SIZE === 0, `end needs to be a multiple of page size (${PAGE_SIZE})`);
     check(data.length <= end - start, "the initial data is longer than address range");
 
-    const noOfPages = (end - start) / PAGE_SIZE;
+    const length = end - start;
+    const range = MemoryRange.fromStartAndLength(start, length);
+
+    this.ensureNoReservedMemoryUsage(range);
+
+    const pages = Array.from(PageRange.fromMemoryRange(range));
+    const noOfPages = pages.length;
 
     for (let i = 0; i < noOfPages; i++) {
-      const startIndex = tryAsMemoryIndex(i * PAGE_SIZE + start);
-      const pageNumber = getPageNumber(startIndex);
+      const pageNumber = pages[i];
       const dataChunk = data.subarray(i * PAGE_SIZE, (i + 1) * PAGE_SIZE);
       const page = new WriteablePage(pageNumber, dataChunk);
       this.initialMemory.set(pageNumber, page);
@@ -85,6 +103,12 @@ export class MemoryBuilder {
     const pageOffset = start % PAGE_SIZE;
     const remainingSpaceOnPage = PAGE_SIZE - pageOffset;
     check(data.length <= remainingSpaceOnPage, "The data has to fit into a single page.");
+
+    const length = data.length;
+    const range = MemoryRange.fromStartAndLength(start, length);
+
+    this.ensureNoReservedMemoryUsage(range);
+
     const pageNumber = getPageNumber(start);
     const page = this.initialMemory.get(pageNumber);
 
@@ -98,21 +122,25 @@ export class MemoryBuilder {
     return this;
   }
 
-  finalize(sbrkIndex: SbrkIndex, endHeapIndex: SbrkIndex): Memory {
+  finalize(startHeapIndex: MemoryIndex, endHeapIndex: SbrkIndex): Memory {
+    check(
+      startHeapIndex <= endHeapIndex,
+      `startHeapIndex (${startHeapIndex}) has to be less than or equal to endHeapIndex (${endHeapIndex})`,
+    );
     this.ensureNotFinalized();
-    const firstPage = getPageNumber(sbrkIndex);
-    // TODO [ToDr] incorrect behavior when `endHeapIndex === MEMORY_SIZE`
-    const lastPage = getPageNumber(endHeapIndex);
 
-    for (let i = firstPage; i < lastPage; i++) {
-      if (this.initialMemory.has(i)) {
+    const range = MemoryRange.fromStartAndLength(startHeapIndex, endHeapIndex - startHeapIndex);
+    const pages = PageRange.fromMemoryRange(range);
+
+    for (const pageNumber of pages) {
+      if (this.initialMemory.has(pageNumber)) {
         throw new IncorrectSbrkIndex();
       }
     }
 
     const memory = Memory.fromInitialMemory({
       memory: this.initialMemory,
-      sbrkIndex,
+      sbrkIndex: tryAsSbrkIndex(startHeapIndex),
       endHeapIndex,
     });
 

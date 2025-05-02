@@ -22,6 +22,12 @@ export class PageFault {
   }
 }
 
+export class OutOfBounds extends Error {
+  constructor() {
+    super("Out of bounds");
+  }
+}
+
 export class ChunkOverlap extends Error {
   constructor() {
     super("Memory chunks cannot overlap each other!");
@@ -43,6 +49,12 @@ export class IncorrectSbrkIndex extends Error {
 export class FinalizedBuilderModification extends Error {
   constructor() {
     super("MemoryBuilder was finalized and cannot be changed!");
+  }
+}
+
+export class ReservedMemoryFault extends Error {
+  constructor() {
+    super("You are trying to access reserved memory!");
   }
 }
 

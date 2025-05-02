@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { Gas as GasHostCall } from "./gas";
@@ -11,29 +12,29 @@ describe("HostCalls: Gas", () => {
     const gas = new GasHostCall();
 
     const counter = gasCounter(tryAsGas(10_000));
-    const regs = new Registers();
+    const regs = new HostCallRegisters(new Registers());
 
-    assert.deepStrictEqual(regs.getU64(REGISTER), 0n);
+    assert.deepStrictEqual(regs.get(REGISTER), 0n);
 
     // when
     gas.execute(counter, regs);
 
     // then
-    assert.deepStrictEqual(regs.getU64(REGISTER), 10_000n);
+    assert.deepStrictEqual(regs.get(REGISTER), 10_000n);
   });
 
   it("should write U64 gas to register", () => {
     const gas = new GasHostCall();
 
     const counter = gasCounter(tryAsGas(2n ** 64n - 1n));
-    const regs = new Registers();
+    const regs = new HostCallRegisters(new Registers());
 
-    assert.deepStrictEqual(regs.getU64(REGISTER), 0n);
+    assert.deepStrictEqual(regs.get(REGISTER), 0n);
 
     // when
     gas.execute(counter, regs);
 
     // then
-    assert.deepStrictEqual(regs.getU64(REGISTER), 2n ** 64n - 1n);
+    assert.deepStrictEqual(regs.get(REGISTER), 2n ** 64n - 1n);
   });
 });

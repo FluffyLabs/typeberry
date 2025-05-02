@@ -1,11 +1,13 @@
-import { Result } from "@typeberry/utils";
+import { OK, Result } from "@typeberry/utils";
 import { OutOfMemory, PageFault } from "./errors";
-import { MAX_MEMORY_INDEX, MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
-import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
-import { alignToPageSize, getPageNumber, getStartPageIndexFromPageNumber } from "./memory-utils";
+import { MAX_MEMORY_INDEX, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts";
+import { type MemoryIndex, type SbrkIndex, tryAsSbrkIndex } from "./memory-index";
+import { MemoryRange, RESERVED_MEMORY_RANGE } from "./memory-range";
+import { alignToPageSize, getPageNumber } from "./memory-utils";
+import { PageRange } from "./page-range";
 import { WriteablePage } from "./pages";
 import type { MemoryPage } from "./pages/memory-page";
-import { type PageNumber, getNextPageNumber, tryAsPageIndex } from "./pages/page-utils";
+import { type PageNumber, tryAsPageIndex } from "./pages/page-utils";
 
 type InitialMemoryState = {
   memory: Map<PageNumber, MemoryPage>;
@@ -13,6 +15,10 @@ type InitialMemoryState = {
   endHeapIndex: SbrkIndex;
 };
 
+enum AccessType {
+  READ = 0,
+  WRITE = 1,
+}
 export class Memory {
   static fromInitialMemory(initialMemoryState: InitialMemoryState) {
     return new Memory(
@@ -24,15 +30,15 @@ export class Memory {
   }
 
   constructor(
-    private sbrkIndex = tryAsSbrkIndex(0),
-    private virtualSbrkIndex = tryAsSbrkIndex(0),
+    private sbrkIndex = tryAsSbrkIndex(RESERVED_MEMORY_RANGE.end),
+    private virtualSbrkIndex = tryAsSbrkIndex(RESERVED_MEMORY_RANGE.end),
     private endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX),
     private memory = new Map<PageNumber, MemoryPage>(),
   ) {}
 
   reset() {
-    this.sbrkIndex = tryAsSbrkIndex(0);
-    this.virtualSbrkIndex = tryAsSbrkIndex(0);
+    this.sbrkIndex = tryAsSbrkIndex(RESERVED_MEMORY_RANGE.end);
+    this.virtualSbrkIndex = tryAsSbrkIndex(RESERVED_MEMORY_RANGE.end);
     this.endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX);
     this.memory = new Map<PageNumber, MemoryPage>(); // TODO [MaSi]: We should keep allocated pages somewhere and reuse it when it is possible
   }
@@ -44,119 +50,61 @@ export class Memory {
     this.memory = memory.memory;
   }
 
-  // TODO [ToDr] This should support writing to more than two pages.
-  storeFrom(address: MemoryIndex, bytes: Uint8Array): null | PageFault {
+  storeFrom(address: MemoryIndex, bytes: Uint8Array): Result<OK, PageFault> {
     if (bytes.length === 0) {
-      return null;
+      return Result.ok(OK);
     }
 
-    const verificationResult = this.verifyReservedPages(address, bytes.length);
+    const pagesResult = this.getPages(address, bytes.length, AccessType.WRITE);
 
-    if (verificationResult !== null) {
-      return verificationResult;
+    if (pagesResult.isError) {
+      return Result.error(pagesResult.error);
     }
 
-    const pageNumber = getPageNumber(address);
-    const page = this.memory.get(pageNumber);
-    if (page === undefined) {
-      return PageFault.fromPageNumber(pageNumber);
+    const pages = pagesResult.ok;
+    let currentPosition: number = address;
+    let bytesLeft = bytes.length;
+
+    for (const page of pages) {
+      const pageStartIndex = tryAsPageIndex(currentPosition % PAGE_SIZE);
+      const bytesToWrite = Math.min(PAGE_SIZE - pageStartIndex, bytesLeft);
+      const sourceStartIndex = currentPosition - address;
+      const source = bytes.subarray(sourceStartIndex, sourceStartIndex + bytesToWrite);
+
+      page.storeFrom(pageStartIndex, source);
+
+      currentPosition += bytesToWrite;
+      bytesLeft -= bytesToWrite;
     }
-
-    const firstPageIndex = tryAsPageIndex(address - page.start);
-    const pageEnd = page.start + PAGE_SIZE;
-
-    if (address + bytes.length <= pageEnd) {
-      return page.storeFrom(firstPageIndex, bytes);
-    }
-
-    // bytes span two pages, so we need to split it and store separately.
-    const toStoreOnSecondPage = address + bytes.length - pageEnd;
-    const toStoreOnFirstPage = bytes.length - toStoreOnSecondPage;
-
-    // secondPageNumber will be 0 if pageNumber is the last page
-    const secondPageNumber = getNextPageNumber(pageNumber);
-    const secondPage = this.memory.get(secondPageNumber);
-
-    if (secondPage === undefined) {
-      return PageFault.fromPageNumber(secondPageNumber);
-    }
-
-    const firstPageStoreResult = page.storeFrom(firstPageIndex, bytes.subarray(0, toStoreOnFirstPage));
-
-    if (firstPageStoreResult !== null) {
-      return firstPageStoreResult;
-    }
-    return secondPage.storeFrom(
-      tryAsPageIndex(0),
-      bytes.subarray(toStoreOnFirstPage, toStoreOnFirstPage + toStoreOnSecondPage),
-    );
+    return Result.ok(OK);
   }
 
-  /**
-   * Check if given memory slice `[destinationStart, destinationEnd)` is valid
-   * and writeable.
-   *
-   * Returns false otherwise.
-   */
-  isWriteable(destinationStart: MemoryIndex, length: number): boolean {
-    if (length === 0) {
-      return true;
-    }
-
-    if (destinationStart + length > MEMORY_SIZE) {
-      return false;
-    }
-
-    const destinationEnd = tryAsMemoryIndex(destinationStart + length - 1);
-    const pageOffsetZero = tryAsPageIndex(0);
-
-    const startPage = getPageNumber(destinationStart);
-    const lastPage = getPageNumber(destinationEnd);
-    let pageOffset = tryAsPageIndex(destinationStart - getStartPageIndexFromPageNumber(startPage));
-    for (let i = startPage; i <= lastPage; i++) {
-      const page = this.memory.get(i);
-      if (page === undefined) {
-        return false;
-      }
-
-      const pageOffsetEnd =
-        i === lastPage ? tryAsPageIndex(1 + destinationEnd - getStartPageIndexFromPageNumber(lastPage)) : PAGE_SIZE;
-      const len = pageOffsetEnd - pageOffset;
-      if (!page.isWriteable(pageOffset, len)) {
-        return false;
-      }
-      // reset page offset.
-      pageOffset = pageOffsetZero;
-    }
-
-    return true;
-  }
-
-  private getPages(startAddress: MemoryIndex, length: number): Result<MemoryPage[], PageFault> {
+  private getPages(startAddress: MemoryIndex, length: number, accessType: AccessType): Result<MemoryPage[], PageFault> {
     if (length === 0) {
       return Result.ok([]);
     }
 
-    const firstPageNumber = getPageNumber(startAddress);
-    const wrappedEndAddress = (startAddress + length) % MEMORY_SIZE;
-    const lastPageNumber = getPageNumber(
-      tryAsMemoryIndex((wrappedEndAddress === 0 ? MEMORY_SIZE : wrappedEndAddress) - 1),
-    ); // - 1 here is okay as length > 0
-    const pageAfterLast = getNextPageNumber(lastPageNumber);
+    const memoryRange = MemoryRange.fromStartAndLength(startAddress, length);
+    const pageRange = PageRange.fromMemoryRange(memoryRange);
+
     const pages: MemoryPage[] = [];
 
-    let currentPageNumber = firstPageNumber;
+    for (const pageNumber of pageRange) {
+      if (pageNumber < RESERVED_NUMBER_OF_PAGES) {
+        return Result.error(PageFault.fromPageNumber(pageNumber, true));
+      }
 
-    while (currentPageNumber !== pageAfterLast) {
-      const page = this.memory.get(currentPageNumber);
+      const page = this.memory.get(pageNumber);
 
       if (page === undefined) {
-        return Result.error(PageFault.fromPageNumber(currentPageNumber));
+        return Result.error(PageFault.fromPageNumber(pageNumber));
+      }
+
+      if (accessType === AccessType.WRITE && !page.isWriteable()) {
+        return Result.error(PageFault.fromPageNumber(pageNumber, true));
       }
 
       pages.push(page);
-
-      currentPageNumber = getNextPageNumber(currentPageNumber);
     }
 
     return Result.ok(pages);
@@ -167,29 +115,18 @@ export class Memory {
    *
    * Returns `null` if the data was read successfully or `PageFault` otherwise.
    */
-  loadInto(result: Uint8Array, startAddress: MemoryIndex): null | PageFault {
+  loadInto(result: Uint8Array, startAddress: MemoryIndex): Result<OK, PageFault> {
     if (result.length === 0) {
-      return null;
+      return Result.ok(OK);
     }
 
-    const verificationResult = this.verifyReservedPages(startAddress, result.length);
-
-    if (verificationResult !== null) {
-      return verificationResult;
-    }
-
-    const pagesResult = this.getPages(startAddress, result.length);
+    const pagesResult = this.getPages(startAddress, result.length, AccessType.READ);
 
     if (pagesResult.isError) {
-      return pagesResult.error;
+      return Result.error(pagesResult.error);
     }
 
     const pages = pagesResult.ok;
-    const noOfPages = pages.length;
-
-    if (noOfPages === 0) {
-      return null;
-    }
 
     let currentPosition: number = startAddress;
     let bytesLeft = result.length;
@@ -205,43 +142,8 @@ export class Memory {
       currentPosition += bytesToRead;
       bytesLeft -= bytesToRead;
     }
-    return null;
-  }
 
-  /**
-   * Verify if we try to touch reserved memory pages [0; 16)
-   *
-   * https://graypaper.fluffylabs.dev/#/68eaa1f/247300247600?v=0.6.4
-   */
-  verifyReservedPages(startAddress: MemoryIndex, length: number): null | PageFault {
-    const startPageNumber = getPageNumber(startAddress);
-    const endAddress = tryAsMemoryIndex((startAddress + length - 1) % MEMORY_SIZE);
-    const endPageNumber = getPageNumber(endAddress);
-
-    const START_RESERVED_PAGE = 0;
-    const END_RESERVED_PAGE = 16;
-
-    /**
-     * There are 4 posibilities:
-     * [ 0 ... start ... 16 ... end ... ]
-     * [ 0 ... start ... end ... 16 ... ]
-     * [ 0 ... end ... 16 ... start ... ]
-     * [ 0 ... 16 ... end ... start ... ]
-     */
-
-    if (startPageNumber >= START_RESERVED_PAGE && startPageNumber < END_RESERVED_PAGE) {
-      return PageFault.fromMemoryIndex(startAddress, true);
-    }
-
-    if (endPageNumber >= START_RESERVED_PAGE && endPageNumber < END_RESERVED_PAGE) {
-      return PageFault.fromPageNumber(0, true);
-    }
-
-    if (startPageNumber > endPageNumber) {
-      return PageFault.fromPageNumber(0, true);
-    }
-
-    return null;
+    return Result.ok(OK);
   }
 
   sbrk(length: number): SbrkIndex {
@@ -263,11 +165,12 @@ export class Memory {
 
     // standard allocation using "Writeable" pages
     const newSbrkIndex = tryAsSbrkIndex(alignToPageSize(newVirtualSbrkIndex));
+    // TODO [MaSi]: `getPageNumber` works incorrectly for SbrkIndex. Sbrk index should be changed to MemoryIndex
+    const firstPageNumber = getPageNumber(currentSbrkIndex);
     const pagesToAllocate = (newSbrkIndex - currentSbrkIndex) / PAGE_SIZE;
+    const rangeToAllocate = PageRange.fromStartAndLength(firstPageNumber, pagesToAllocate);
 
-    for (let i = 0; i < pagesToAllocate; i++) {
-      const startMemoryIndex = tryAsMemoryIndex(currentSbrkIndex + i * PAGE_SIZE);
-      const pageNumber = getPageNumber(startMemoryIndex);
+    for (const pageNumber of rangeToAllocate) {
       const page = new WriteablePage(pageNumber);
       this.memory.set(pageNumber, page);
     }
