@@ -1,100 +1,89 @@
-import { tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { tryAsU32, u64FromParts } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import {
-  type Memory,
-  type PvmExecution,
-  type Registers,
+  type HostCallMemory,
+  type HostCallRegisters,
+  PvmExecution,
   tryAsHostCallIndex,
-} from "@typeberry/pvm-host-calls/host-call-handler";
-import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
-import { type BigGas, type Gas, type GasCounter, tryAsGas, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import { asOpaqueType, assertNever } from "@typeberry/utils";
-import { LegacyHostCallResult } from "../results";
-import { CURRENT_SERVICE_ID } from "../utils";
+} from "@typeberry/pvm-host-calls";
+import { type Gas, type GasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
+import { assertNever } from "@typeberry/utils";
+import { HostCallResult } from "../results";
+import { CURRENT_SERVICE_ID, getServiceId } from "../utils";
 import { type AccumulationPartialState, TRANSFER_MEMO_BYTES, TransferError } from "./partial-state";
 
-const IN_OUT_REG = 7;
-const AMOUNT_LOW_REG = 8;
-const AMOUNT_HIG_REG = 9;
+const IN_OUT_REG = 7; // `d`
+const AMOUNT_REG = 8; // `a`
+const ON_TRANSFER_GAS_REG = 9; // `l`
+const MEMO_START_REG = 10; // `o`
 
 /**
  * Transfer balance from one service account to another.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/32c20132c201
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/32d10132d101?v=0.6.4
  */
 export class Transfer implements HostCallHandler {
   index = tryAsHostCallIndex(11);
   /**
-   * `g = 10 + ω8 + 2**32 * ω9`
+   * `g = 10 + ω9`
    *
-   * https://graypaper.fluffylabs.dev/#/579bd12/32c30132c601
+   * https://graypaper.fluffylabs.dev/#/68eaa1f/32d20132d501?v=0.6.4
    */
-  gasCost = (regs: Registers): Gas => {
-    const smallGas = 10 + regs.getU32(AMOUNT_LOW_REG);
-    const big = regs.getU32(AMOUNT_HIG_REG);
-    if (big === 0 && smallGas < 2 ** 32) {
-      return tryAsSmallGas(smallGas);
-    }
-
-    return tryAsGas(BigInt(big) * 2n ** 32n + BigInt(smallGas));
+  gasCost = (regs: HostCallRegisters): Gas => {
+    const gas = 10n + regs.get(ON_TRANSFER_GAS_REG);
+    return tryAsGas(gas);
   };
   currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 
-  async execute(gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
+  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `d`: destination
-    const destination = tryAsServiceId(regs.getU32(IN_OUT_REG));
-    // amount
-    const a_l = tryAsU32(regs.getU32(AMOUNT_LOW_REG));
-    const a_h = tryAsU32(regs.getU32(AMOUNT_HIG_REG));
-    // gas
-    const g_l = tryAsU32(regs.getU32(10));
-    const g_h = tryAsU32(regs.getU32(11));
-    // `o`: transfer memo
-    const memoStart = tryAsMemoryIndex(regs.getU32(12));
+    const destination = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
 
-    const memo = Bytes.zero(TRANSFER_MEMO_BYTES);
-    const pageFault = memory.loadInto(memo.raw, memoStart);
-    // page fault while reading the memory.
-    if (pageFault !== null) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
-      return;
+    // TODO [ToDr] This is wrong. We should not panic if destination
+    // is not a valid service id, but rather return WHO.
+    if (destination === null) {
+      return PvmExecution.Panic;
     }
 
-    const amount = u64FromParts({ lower: a_l, upper: a_h });
-    const onTransferGas: BigGas = asOpaqueType(u64FromParts({ lower: g_l, upper: g_h }));
+    // `a`: amount
+    const amount = regs.get(AMOUNT_REG);
+    // `l`: gas
+    const onTransferGas = tryAsGas(regs.get(ON_TRANSFER_GAS_REG));
+    // `o`: transfer memo
+    const memoStart = regs.get(MEMO_START_REG);
 
-    // We don't have enough gas left
-    if (gas.get() < onTransferGas) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.HIGH);
-      return;
+    const memo = Bytes.zero(TRANSFER_MEMO_BYTES);
+    const memoryReadResult = memory.loadInto(memo.raw, memoStart);
+
+    // page fault while reading the memory.
+    if (memoryReadResult.isError) {
+      return PvmExecution.Panic;
     }
 
     const transferResult = this.partialState.transfer(destination, amount, onTransferGas, memo);
 
     // All good!
     if (transferResult.isOk) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
+      regs.set(IN_OUT_REG, HostCallResult.OK);
       return;
     }
 
     const e = transferResult.error;
 
     if (e === TransferError.DestinationNotFound) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.WHO);
+      regs.set(IN_OUT_REG, HostCallResult.WHO);
       return;
     }
 
     if (e === TransferError.GasTooLow) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.LOW);
+      regs.set(IN_OUT_REG, HostCallResult.LOW);
       return;
     }
 
     if (e === TransferError.BalanceBelowThreshold) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.CASH);
+      regs.set(IN_OUT_REG, HostCallResult.CASH);
       return;
     }
 

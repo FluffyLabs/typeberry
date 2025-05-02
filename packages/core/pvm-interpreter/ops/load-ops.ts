@@ -28,8 +28,8 @@ export class LoadOps {
     const registerBytes = this.regs.getBytesAsLittleEndian(registerIndex, REG_SIZE_BYTES);
     const loadResult = this.memory.loadInto(registerBytes.subarray(0, numberLength), tryAsMemoryIndex(address));
 
-    if (loadResult !== null) {
-      if (loadResult.isAccessFault) {
+    if (loadResult.isError) {
+      if (loadResult.error.isAccessFault) {
         this.instructionResult.status = Result.FAULT_ACCESS;
       } else {
         this.instructionResult.status = Result.FAULT;
@@ -47,8 +47,8 @@ export class LoadOps {
     const registerBytes = this.regs.getBytesAsLittleEndian(registerIndex, REG_SIZE_BYTES);
     const loadResult = this.memory.loadInto(registerBytes.subarray(0, numberLength), tryAsMemoryIndex(address));
 
-    if (loadResult !== null) {
-      if (loadResult.isAccessFault) {
+    if (loadResult.isError) {
+      if (loadResult.error.isAccessFault) {
         this.instructionResult.status = Result.FAULT_ACCESS;
       } else {
         this.instructionResult.status = Result.FAULT;
@@ -95,37 +95,37 @@ export class LoadOps {
   }
 
   loadIndU8(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflowU32(this.regs.getU32(secondRegisterIndex), immediateDecoder.getU32());
+    const address = addWithOverflowU32(this.regs.getLowerU32(secondRegisterIndex), immediateDecoder.getU32());
     this.loadNumber(address, firstRegisterIndex, 1);
   }
 
   loadIndU16(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflowU32(this.regs.getU32(secondRegisterIndex), immediateDecoder.getU32());
+    const address = addWithOverflowU32(this.regs.getLowerU32(secondRegisterIndex), immediateDecoder.getU32());
     this.loadNumber(address, firstRegisterIndex, 2);
   }
 
   loadIndU32(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflowU32(this.regs.getU32(secondRegisterIndex), immediateDecoder.getU32());
+    const address = addWithOverflowU32(this.regs.getLowerU32(secondRegisterIndex), immediateDecoder.getU32());
     this.loadNumber(address, firstRegisterIndex, 4);
   }
 
   loadIndU64(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflowU32(this.regs.getU32(secondRegisterIndex), immediateDecoder.getU32());
+    const address = addWithOverflowU32(this.regs.getLowerU32(secondRegisterIndex), immediateDecoder.getU32());
     this.loadNumber(address, firstRegisterIndex, 8);
   }
 
   loadIndI8(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflowU32(this.regs.getU32(secondRegisterIndex), immediateDecoder.getU32());
+    const address = addWithOverflowU32(this.regs.getLowerU32(secondRegisterIndex), immediateDecoder.getU32());
     this.loadSignedNumber(address, firstRegisterIndex, 1);
   }
 
   loadIndI16(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflowU32(this.regs.getU32(secondRegisterIndex), immediateDecoder.getU32());
+    const address = addWithOverflowU32(this.regs.getLowerU32(secondRegisterIndex), immediateDecoder.getU32());
     this.loadSignedNumber(address, firstRegisterIndex, 2);
   }
 
   loadIndI32(firstRegisterIndex: number, secondRegisterIndex: number, immediateDecoder: ImmediateDecoder) {
-    const address = addWithOverflowU32(this.regs.getU32(secondRegisterIndex), immediateDecoder.getU32());
+    const address = addWithOverflowU32(this.regs.getLowerU32(secondRegisterIndex), immediateDecoder.getU32());
     this.loadSignedNumber(address, firstRegisterIndex, 4);
   }
 }

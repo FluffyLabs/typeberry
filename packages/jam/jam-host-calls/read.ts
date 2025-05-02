@@ -1,16 +1,11 @@
 import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
-import { minU64, tryAsU64 } from "@typeberry/numbers";
-import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import {
-  type Memory,
-  PvmExecution,
-  type Registers,
-  tryAsHostCallIndex,
-} from "@typeberry/pvm-host-calls/host-call-handler";
+import { minU64 } from "@typeberry/numbers";
+import { tryAsU64 } from "@typeberry/numbers";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
+import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { HostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, getServiceId, writeServiceIdAsLeBytes } from "./utils";
 
@@ -38,22 +33,23 @@ export class Read implements HostCallHandler {
 
   constructor(private readonly account: Accounts) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
+  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // a
     const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
 
     // k_o
-    const keyStartAddress = tryAsMemoryIndex(regs.getU32(8));
+    const keyStartAddress = regs.get(8);
     // k_z
-    const keyLen = tryAsMemoryIndex(regs.getU32(9));
+    const keyLen = regs.get(9);
     // o
-    const destinationAddress = tryAsMemoryIndex(regs.getU32(10));
+    const destinationAddress = regs.get(10);
 
     // allocate extra bytes for the serviceId
-    const key = new Uint8Array(SERVICE_ID_BYTES + keyLen);
+    const keyLenClamped = keyLen >= 2n ** 32n ? 2 ** 32 : Number(keyLen);
+    const key = new Uint8Array(SERVICE_ID_BYTES + keyLenClamped);
     writeServiceIdAsLeBytes(this.currentServiceId, key);
-    const pageFault = memory.loadInto(key.subarray(SERVICE_ID_BYTES), keyStartAddress);
-    if (pageFault !== null) {
+    const memoryReadResult = memory.loadInto(key.subarray(SERVICE_ID_BYTES), keyStartAddress);
+    if (memoryReadResult.isError) {
       return Promise.resolve(PvmExecution.Panic);
     }
 
@@ -63,8 +59,8 @@ export class Read implements HostCallHandler {
     const value = serviceId !== null ? await this.account.read(serviceId, keyHash) : null;
 
     const valueLength = value === null ? tryAsU64(0) : tryAsU64(value.raw.length);
-    const valueBlobOffset = tryAsU64(regs.getU64(11));
-    const lengthToWrite = tryAsU64(regs.getU64(12));
+    const valueBlobOffset = regs.get(11);
+    const lengthToWrite = regs.get(12);
 
     // f
     const offset = minU64(valueBlobOffset, valueLength);
@@ -72,18 +68,18 @@ export class Read implements HostCallHandler {
     const blobLength = minU64(lengthToWrite, tryAsU64(valueLength - offset));
 
     if (value === null) {
-      regs.setU64(IN_OUT_REG, HostCallResult.NONE);
+      regs.set(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
-    const writePageFault = memory.storeFrom(
+    const writeResult = memory.storeFrom(
       destinationAddress,
       // NOTE casting to `U32` is safe here, since we are bounded by `valueLength`.
       value.raw.subarray(Number(offset), Number(offset + blobLength)),
     );
-    if (writePageFault !== null) {
+    if (writeResult.isError) {
       return Promise.resolve(PvmExecution.Panic);
     }
-    regs.setU64(IN_OUT_REG, valueLength);
+    regs.set(IN_OUT_REG, valueLength);
   }
 }

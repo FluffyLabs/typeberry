@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
+import { OK, Result } from "@typeberry/utils";
 import { PageFault } from "./errors";
 import { Memory } from "./memory";
 import { MAX_MEMORY_INDEX, MIN_ALLOCATION_LENGTH, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts";
@@ -19,11 +20,11 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.deepStrictEqual(loadResult, PageFault.fromMemoryIndex(addressToLoad));
+      assert.deepStrictEqual(loadResult, Result.error(PageFault.fromMemoryIndex(addressToLoad)));
     });
 
     it("should correctly load data from one page", () => {
-      const pageNumber = tryAsPageNumber(16);
+      const pageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
       const bytes = new Uint8Array([1, 2, 3, 4, 5]);
       const page = new ReadablePage(pageNumber, bytes);
       const memoryMap = new Map<PageNumber, MemoryPage>();
@@ -38,13 +39,13 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.deepStrictEqual(loadResult, null);
+      assert.deepStrictEqual(loadResult, Result.ok(OK));
       assert.deepStrictEqual(result, expectedResult);
     });
 
     it("should correctly load data from two pages", () => {
-      const firstPageNumber = tryAsPageNumber(16);
-      const secondPageNumber = tryAsPageNumber(17);
+      const firstPageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
+      const secondPageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES + 1);
       const bytes = new Uint8Array([1, 2, 3, 4, 5]);
       const firstPage = new ReadablePage(
         firstPageNumber,
@@ -64,12 +65,12 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.deepStrictEqual(loadResult, null);
+      assert.deepStrictEqual(loadResult, Result.ok(OK));
       assert.deepStrictEqual(result, expectedResult);
     });
 
     it("should return PageFault if case of loading data from 2 pages but one of them does not exist", () => {
-      const pageNumber = tryAsPageNumber(16);
+      const pageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
       const bytes = new Uint8Array();
       const page = new ReadablePage(pageNumber, bytes);
       const memoryMap = new Map<PageNumber, MemoryPage>();
@@ -83,7 +84,7 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.deepStrictEqual(loadResult, PageFault.fromPageNumber(17));
+      assert.deepStrictEqual(loadResult, Result.error(PageFault.fromPageNumber(17)));
     });
 
     it("should return fault when load data from the last page and the first page", () => {
@@ -111,7 +112,7 @@ describe("Memory", () => {
 
       const loadResult = memory.loadInto(result, addressToLoad);
 
-      assert.deepStrictEqual(loadResult, PageFault.fromPageNumber(0, true));
+      assert.deepStrictEqual(loadResult, Result.error(PageFault.fromPageNumber(0, true)));
       assert.deepStrictEqual(result, expectedResult);
     });
   });
@@ -123,7 +124,7 @@ describe("Memory", () => {
       const dataToStore = new Uint8Array([1, 2, 3, 4]);
       const storeResult = memory.storeFrom(addressToStore, dataToStore);
 
-      assert.deepStrictEqual(storeResult, PageFault.fromMemoryIndex(addressToStore));
+      assert.deepStrictEqual(storeResult, Result.error(PageFault.fromMemoryIndex(addressToStore)));
     });
 
     it("should not return PageFault if the page does not exist and stored array length is 0 (standard page)", () => {
@@ -132,7 +133,7 @@ describe("Memory", () => {
 
       const storeResult = memory.storeFrom(addressToStore, new Uint8Array());
 
-      assert.deepStrictEqual(storeResult, null);
+      assert.deepStrictEqual(storeResult, Result.ok(OK));
     });
 
     it("should not return PageFault if the page does not exist and stored array length is 0 - even it is a reserved page", () => {
@@ -141,14 +142,14 @@ describe("Memory", () => {
 
       const storeResult = memory.storeFrom(addressToStore, new Uint8Array());
 
-      assert.deepStrictEqual(storeResult, null);
+      assert.deepStrictEqual(storeResult, Result.ok(OK));
     });
 
     it("should correctly store data on one page", () => {
-      const pageNumber = tryAsPageNumber(16);
+      const pageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
       const page = new WriteablePage(pageNumber, new Uint8Array());
       const memoryMap = new Map<PageNumber, MemoryPage>();
-      const sbrkIndex = tryAsSbrkIndex(20 * PAGE_SIZE);
+      const sbrkIndex = tryAsSbrkIndex((RESERVED_NUMBER_OF_PAGES + 4) * PAGE_SIZE);
       const endHeapIndex = tryAsSbrkIndex(MAX_MEMORY_INDEX);
       memoryMap.set(pageNumber, page);
       const memory = Memory.fromInitialMemory({ memory: memoryMap, sbrkIndex, endHeapIndex });
@@ -171,13 +172,13 @@ describe("Memory", () => {
 
       const storeResult = memory.storeFrom(addressToStore, dataToStore);
 
-      assert.deepStrictEqual(storeResult, null);
+      assert.deepStrictEqual(storeResult, Result.ok(OK));
       assert.deepEqual(memory, expectedMemory);
     });
 
     it("should correctly store data on two pages", () => {
-      const firstPageNumber = tryAsPageNumber(16);
-      const secondPageNumber = tryAsPageNumber(17);
+      const firstPageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
+      const secondPageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES + 1);
       const firstPage = new WriteablePage(firstPageNumber, new Uint8Array(PAGE_SIZE));
       const secondPage = new WriteablePage(secondPageNumber, new Uint8Array());
       const memoryMap = new Map<PageNumber, MemoryPage>();
@@ -206,14 +207,14 @@ describe("Memory", () => {
       };
       const storeResult = memory.storeFrom(addressToStore, dataToStore);
 
-      assert.deepStrictEqual(storeResult, null);
+      assert.deepStrictEqual(storeResult, Result.ok(OK));
       assert.deepEqual(memory, expectedMemory);
     });
 
     it("should return PageFault if case of storing data on 2 pages but one of them does not exist", () => {
-      const pageNumber = tryAsPageNumber(16);
+      const pageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
       const bytes = new Uint8Array();
-      const page = new ReadablePage(pageNumber, bytes);
+      const page = new WriteablePage(pageNumber, bytes);
       const memoryMap = new Map<PageNumber, MemoryPage>();
       memoryMap.set(pageNumber, page);
       const sbrkIndex = tryAsSbrkIndex(RESERVED_NUMBER_OF_PAGES * PAGE_SIZE);
@@ -223,7 +224,7 @@ describe("Memory", () => {
 
       const storeResult = memory.storeFrom(addressToStore, new Uint8Array(4));
 
-      assert.deepStrictEqual(storeResult, PageFault.fromPageNumber(17));
+      assert.deepStrictEqual(storeResult, Result.error(PageFault.fromPageNumber(17)));
     });
 
     it("should return fault when store data on two pages - the last page and the first page", () => {
@@ -252,7 +253,7 @@ describe("Memory", () => {
 
       const storeResult = memory.storeFrom(addressToStore, dataToStore);
 
-      assert.deepStrictEqual(storeResult, PageFault.fromPageNumber(0, true));
+      assert.deepStrictEqual(storeResult, Result.error(PageFault.fromPageNumber(0, true)));
       assert.deepEqual(memory, expectedMemory);
     });
   });
@@ -262,13 +263,13 @@ describe("Memory", () => {
       const memory = new Memory();
       const lengthToAllocate = 5;
       const expectedMemoryMap = new Map();
-      const pageNumber = tryAsPageNumber(0);
+      const pageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
 
       expectedMemoryMap.set(pageNumber, new WriteablePage(pageNumber, new Uint8Array(MIN_ALLOCATION_LENGTH)));
 
       const expectedMemory = {
-        sbrkIndex: PAGE_SIZE,
-        virtualSbrkIndex: lengthToAllocate,
+        sbrkIndex: RESERVED_NUMBER_OF_PAGES * PAGE_SIZE + PAGE_SIZE,
+        virtualSbrkIndex: RESERVED_NUMBER_OF_PAGES * PAGE_SIZE + lengthToAllocate,
         endHeapIndex: MAX_MEMORY_INDEX,
         memory: expectedMemoryMap,
       };
@@ -282,8 +283,8 @@ describe("Memory", () => {
       const memory = new Memory();
       const lengthToAllocate = PAGE_SIZE + 5;
       const expectedMemoryMap = new Map();
-      const firstPageNumber = tryAsPageNumber(0);
-      const secondPageNumber = tryAsPageNumber(1);
+      const firstPageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
+      const secondPageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES + 1);
 
       expectedMemoryMap.set(firstPageNumber, new WriteablePage(firstPageNumber, new Uint8Array(MIN_ALLOCATION_LENGTH)));
       expectedMemoryMap.set(
@@ -292,8 +293,8 @@ describe("Memory", () => {
       );
 
       const expectedMemory = {
-        sbrkIndex: 2 * PAGE_SIZE,
-        virtualSbrkIndex: lengthToAllocate,
+        sbrkIndex: RESERVED_NUMBER_OF_PAGES * PAGE_SIZE + 2 * PAGE_SIZE,
+        virtualSbrkIndex: RESERVED_NUMBER_OF_PAGES * PAGE_SIZE + lengthToAllocate,
         endHeapIndex: MAX_MEMORY_INDEX,
         memory: expectedMemoryMap,
       };
@@ -307,13 +308,13 @@ describe("Memory", () => {
       const memory = new Memory();
       const lengthToAllocate = 5;
       const expectedMemoryMap = new Map();
-      const pageNumber = tryAsPageNumber(0);
+      const pageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
 
       expectedMemoryMap.set(pageNumber, new WriteablePage(pageNumber, new Uint8Array(MIN_ALLOCATION_LENGTH)));
 
       const expectedMemoryAfterFirstAllocation = {
-        sbrkIndex: PAGE_SIZE,
-        virtualSbrkIndex: lengthToAllocate,
+        sbrkIndex: RESERVED_NUMBER_OF_PAGES * PAGE_SIZE + PAGE_SIZE,
+        virtualSbrkIndex: RESERVED_NUMBER_OF_PAGES * PAGE_SIZE + lengthToAllocate,
         endHeapIndex: MAX_MEMORY_INDEX,
         memory: expectedMemoryMap,
       };
@@ -323,8 +324,8 @@ describe("Memory", () => {
       assert.deepEqual(memory, expectedMemoryAfterFirstAllocation);
 
       const expectedMemoryAfterSecondAllocation = {
-        sbrkIndex: PAGE_SIZE,
-        virtualSbrkIndex: 2 * lengthToAllocate,
+        sbrkIndex: RESERVED_NUMBER_OF_PAGES * PAGE_SIZE + PAGE_SIZE,
+        virtualSbrkIndex: RESERVED_NUMBER_OF_PAGES * PAGE_SIZE + 2 * lengthToAllocate,
         endHeapIndex: MAX_MEMORY_INDEX,
         memory: expectedMemoryMap,
       };
@@ -338,8 +339,8 @@ describe("Memory", () => {
       const memory = new Memory();
       const lengthToAllocate = PAGE_SIZE;
       const expectedMemoryMap = new Map();
-      const firstPageNumber = tryAsPageNumber(0);
-      const secondPageNumber = tryAsPageNumber(1);
+      const firstPageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES);
+      const secondPageNumber = tryAsPageNumber(RESERVED_NUMBER_OF_PAGES + 1);
 
       expectedMemoryMap.set(firstPageNumber, new WriteablePage(firstPageNumber, new Uint8Array(MIN_ALLOCATION_LENGTH)));
       expectedMemoryMap.set(
@@ -348,8 +349,8 @@ describe("Memory", () => {
       );
 
       const expectedMemory = {
-        sbrkIndex: 2 * PAGE_SIZE,
-        virtualSbrkIndex: 2 * PAGE_SIZE,
+        sbrkIndex: RESERVED_NUMBER_OF_PAGES * PAGE_SIZE + 2 * PAGE_SIZE,
+        virtualSbrkIndex: RESERVED_NUMBER_OF_PAGES * PAGE_SIZE + 2 * PAGE_SIZE,
         endHeapIndex: MAX_MEMORY_INDEX,
         memory: expectedMemoryMap,
       };
@@ -358,17 +359,6 @@ describe("Memory", () => {
       memory.sbrk(lengthToAllocate);
 
       assert.deepEqual(memory, expectedMemory);
-    });
-  });
-
-  describe("isWriteable", () => {
-    it('should return true for length 0 "slices"', () => {
-      const memory = new Memory();
-      const addressToStore = tryAsMemoryIndex(1);
-      const length = 0;
-
-      const isWriteable = memory.isWriteable(addressToStore, length);
-      assert.strictEqual(isWriteable, true);
     });
   });
 });

@@ -47,17 +47,17 @@ export class TestAccumulate implements AccumulationPartialState {
     this.quitAndBurnCalled += 1;
   }
 
-  checkPreimageStatus(hash: Blake2bHash, length: U32): PreimageStatusResult | null {
+  checkPreimageStatus(hash: Blake2bHash, length: U64): PreimageStatusResult | null {
     this.checkPreimageStatusData.push([hash, length]);
     return this.checkPreimageStatusResponse;
   }
 
-  requestPreimage(hash: Blake2bHash, length: U32): Result<null, RequestPreimageError> {
+  requestPreimage(hash: Blake2bHash, length: U64): Result<null, RequestPreimageError> {
     this.requestPreimageData.push([hash, length]);
     return this.requestPreimageResponse;
   }
 
-  forgetPreimage(hash: Blake2bHash, length: U32): Result<null, null> {
+  forgetPreimage(hash: Blake2bHash, length: U64): Result<null, null> {
     this.forgetPreimageData.push([hash, length]);
     return this.forgetPreimageResponse;
   }

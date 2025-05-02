@@ -1,20 +1,20 @@
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU32, u64FromParts } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import {
-  type Memory,
-  type PvmExecution,
-  type Registers,
+  type HostCallMemory,
+  type HostCallRegisters,
+  PvmExecution,
   tryAsHostCallIndex,
-} from "@typeberry/pvm-host-calls/host-call-handler";
+} from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
-import { LegacyHostCallResult } from "../results";
+import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
 
-const IN_OUT_REG = 7;
+const IN_OUT_REG = 7; // `o`
+const GAS_REG = 8; // `g`
+const ALLOWANCE_REG = 9; // `m`
 
 /**
  * Upgrade the code of the service.
@@ -28,28 +28,24 @@ export class Upgrade implements HostCallHandler {
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
+  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `o`
-    const codeHashStart = tryAsMemoryIndex(regs.getU32(IN_OUT_REG));
-    const g_h = tryAsU32(regs.getU32(8));
-    const g_l = tryAsU32(regs.getU32(9));
-    const m_h = tryAsU32(regs.getU32(10));
-    const m_l = tryAsU32(regs.getU32(11));
+    const codeHashStart = regs.get(IN_OUT_REG);
+    // `g`
+    const gas = regs.get(GAS_REG);
+    // `m`
+    const allowance = regs.get(ALLOWANCE_REG);
 
     // `c`
     const codeHash = Bytes.zero(HASH_SIZE);
-    const pageFault = memory.loadInto(codeHash.raw, codeHashStart);
-    if (pageFault !== null) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.OOB);
-      return;
+    const memoryReadResult = memory.loadInto(codeHash.raw, codeHashStart);
+    if (memoryReadResult.isError) {
+      return PvmExecution.Panic;
     }
-
-    const gas = u64FromParts({ lower: g_l, upper: g_h });
-    const allowance = u64FromParts({ lower: m_l, upper: m_h });
 
     this.partialState.upgradeService(codeHash.asOpaque(), gas, allowance);
 
-    regs.setU32(IN_OUT_REG, LegacyHostCallResult.OK);
+    regs.set(IN_OUT_REG, HostCallResult.OK);
     return;
   }
 }

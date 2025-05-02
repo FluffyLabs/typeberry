@@ -9,7 +9,7 @@ import {
   tryAsServiceId,
 } from "@typeberry/block";
 import { getExtrinsicFromJson } from "@typeberry/block-json";
-import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { U16, U32 } from "@typeberry/numbers";
 import {
@@ -20,7 +20,6 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { type Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics";
-import { logger } from "../common";
 import { validatorDataFromJson } from "./common-types";
 
 class TinyInput {
@@ -35,7 +34,10 @@ class TinyInput {
         slot,
         authorIndex: author_index,
         extrinsic,
+        incomingReports: [],
         availableReports: [],
+        accumulationStatistics: new Map(),
+        transferStatistics: new Map(),
       };
     },
   );
@@ -57,7 +59,10 @@ class FullInput {
         slot,
         authorIndex: author_index,
         extrinsic,
+        incomingReports: [],
         availableReports: [],
+        accumulationStatistics: new Map(),
+        transferStatistics: new Map(),
       };
     },
   );
@@ -269,20 +274,31 @@ export class StatisticsTestFull {
   post_state!: TestState;
 }
 
-export async function runStatisticsTestTiny({ input, pre_state, post_state }: StatisticsTestTiny) {
-  logger.log(`StatisticsTestFull { ${input}, ${pre_state}, ${post_state} }`);
-  const spec = tinyChainSpec;
-  const statistics = new Statistics(spec, TestState.toStatisticsState(spec, pre_state));
-  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, pre_state));
+export async function runStatisticsTest(
+  { input, pre_state, post_state }: StatisticsTestTiny | StatisticsTestFull,
+  spec: ChainSpec,
+) {
+  input.incomingReports = input.extrinsic.guarantees.map((g) => g.report);
+
+  const preState = TestState.toStatisticsState(spec, pre_state);
+  const postState = TestState.toStatisticsState(spec, post_state);
+  const statistics = new Statistics(spec, preState);
+  assert.deepStrictEqual(statistics.state, preState);
   statistics.transition(input);
-  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, post_state));
+
+  // NOTE [MaSo] This is a workaround for the fact that the test data does not contain any posterior service statistics.
+  assert.deepStrictEqual(postState.statistics.services.size, 0);
+  if (statistics.state.statistics.services.size > 0) {
+    const serviceStatistics = statistics.state.statistics.services.get(tryAsServiceId(0)) ?? ServiceStatistics.empty();
+    postState.statistics.services.set(tryAsServiceId(0), serviceStatistics);
+  }
+  assert.deepStrictEqual(statistics.state, postState);
 }
 
-export async function runStatisticsTestFull({ input, pre_state, post_state }: StatisticsTestFull) {
-  logger.log(`StatisticsTestFull { ${input}, ${pre_state}, ${post_state} }`);
-  const spec = fullChainSpec;
-  const statistics = new Statistics(spec, TestState.toStatisticsState(spec, pre_state));
-  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, pre_state));
-  statistics.transition(input);
-  assert.deepStrictEqual(statistics.state, TestState.toStatisticsState(spec, post_state));
+export async function runStatisticsTestTiny(test: StatisticsTestTiny) {
+  runStatisticsTest(test, tinyChainSpec);
+}
+
+export async function runStatisticsTestFull(test: StatisticsTestFull) {
+  runStatisticsTest(test, fullChainSpec);
 }

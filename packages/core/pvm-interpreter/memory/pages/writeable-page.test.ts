@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
+import { OK, Result } from "@typeberry/utils";
 import { MIN_ALLOCATION_LENGTH } from "../memory-consts";
 import { tryAsMemoryIndex } from "../memory-index";
 import { tryAsPageIndex, tryAsPageNumber } from "./page-utils";
@@ -20,7 +21,7 @@ describe("WriteablePage", () => {
 
     const loadResult = readablePage.loadInto(result, loadIndex, lengthToLoad);
 
-    assert.strictEqual(loadResult, null);
+    assert.deepStrictEqual(loadResult, Result.ok(OK));
     assert.deepStrictEqual(result, expectedResult);
   });
 
@@ -37,7 +38,7 @@ describe("WriteablePage", () => {
 
     const loadResult = readablePage.loadInto(result, loadIndex, lengthToLoad);
 
-    assert.strictEqual(loadResult, null);
+    assert.deepStrictEqual(loadResult, Result.ok(OK));
     assert.deepStrictEqual(result, expectedResult);
   });
 
@@ -58,7 +59,7 @@ describe("WriteablePage", () => {
 
     const storeResult = writeablePage.storeFrom(indexToStore, bytesToStore);
 
-    assert.strictEqual(storeResult, null);
+    assert.deepStrictEqual(storeResult, Result.ok(OK));
     assert.deepEqual(writeablePage, expectedObject);
   });
 
@@ -79,7 +80,7 @@ describe("WriteablePage", () => {
 
     const storeResult = writeablePage.storeFrom(indexToStore, bytesToStore);
 
-    assert.strictEqual(storeResult, null);
+    assert.deepStrictEqual(storeResult, Result.ok(OK));
     assert.deepEqual(writeablePage, expectedObject);
   });
 });

@@ -200,7 +200,7 @@ export class Interpreter {
           if (this.useSbrkGas && currentInstruction === Instruction.SBRK) {
             const calculateSbrkCost = (length: number) => (alignToPageSize(length) / PAGE_SIZE) * 16;
             const underflow = this.gas.sub(
-              calculateSbrkCost(this.registers.getU32(argsResult.firstRegisterIndex)) as Gas,
+              calculateSbrkCost(this.registers.getLowerU32(argsResult.firstRegisterIndex)) as Gas,
             );
             if (underflow) {
               this.status = Status.OOG;

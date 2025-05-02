@@ -1,17 +1,11 @@
 import type { ServiceId } from "@typeberry/block";
 import { Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import {
-  type Memory,
-  type PvmExecution,
-  type Registers,
-  tryAsHostCallIndex,
-} from "@typeberry/pvm-host-calls/host-call-handler";
+import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
+import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, codecUnsignedGas, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { ServiceAccountInfo } from "@typeberry/state";
-import { LegacyHostCallResult } from "./results";
+import { HostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, legacyGetServiceId } from "./utils";
 
 /** Account data interface for Info host call. */
@@ -43,17 +37,17 @@ export class Info implements HostCallHandler {
 
   constructor(private readonly account: Accounts) {}
 
-  async execute(_gas: GasCounter, regs: Registers, memory: Memory): Promise<undefined | PvmExecution> {
+  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // t
     const serviceId = legacyGetServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // o
-    const outputStart = tryAsMemoryIndex(regs.getU32(8));
+    const outputStart = regs.get(8);
 
     // t
     const accountInfo = await this.account.getInfo(serviceId);
 
     if (accountInfo === null) {
-      regs.setU32(IN_OUT_REG, LegacyHostCallResult.NONE);
+      regs.set(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
@@ -64,9 +58,9 @@ export class Info implements HostCallHandler {
         accountInfo.storageUtilisationBytes,
       ),
     });
-    const writeOk = memory.storeFrom(outputStart, encodedInfo.raw);
+    const writeResult = memory.storeFrom(outputStart, encodedInfo.raw);
 
-    regs.setU32(IN_OUT_REG, writeOk !== null ? LegacyHostCallResult.OOB : LegacyHostCallResult.OK);
+    regs.set(IN_OUT_REG, writeResult.isError ? HostCallResult.OOB : HostCallResult.OK);
     return;
   }
 }
