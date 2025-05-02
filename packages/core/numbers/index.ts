@@ -16,35 +16,35 @@ export type FixedSizeNumber<Bytes extends number> = number & WithBytesRepresenta
 
 /** Unsigned integer that can be represented as one byte. */
 export type U8 = FixedSizeNumber<1>;
-export const MAX_U8 = 0xff;
+const MAX_VALUE_U8 = 0xff;
 /** Unsigned integer that can be represented as two bytes. */
 export type U16 = FixedSizeNumber<2>;
-export const MAX_U16 = 0xffff;
+const MAX_VALUE_U16 = 0xffff;
 /** Unsigned integer that can be represented as 4 bytes. */
 export type U32 = FixedSizeNumber<4>;
-export const MAX_U32 = 0xffff_ffff;
+const MAX_VALUE_U32 = 0xffff_ffff;
 /** Unsigned integer that can be represented as 8 bytes. */
 export type U64 = bigint & WithBytesRepresentation<8>;
-export const MAX_U64 = 0xffff_ffff_ffff_ffffn;
+const MAX_VALUE_U64 = 0xffff_ffff_ffff_ffffn;
 
 /** Attempt to cast an input number into U8. */
 export const tryAsU8 = (v: number): U8 =>
   ensure<number, U8>(v, isU8(v), `input must have one-byte representation, got ${v}`);
 /** Check if given number is a valid U8 number. */
-export const isU8 = (v: number): v is U8 => (v & 0xff) === v;
+export const isU8 = (v: number): v is U8 => (v & MAX_VALUE_U8) === v;
 
 /** Attempt to cast an input number into U16. */
 export const tryAsU16 = (v: number): U16 =>
   ensure<number, U16>(v, isU16(v), `input must have two-byte representation, got ${v}`);
 /** Check if given number is a valid U16 number. */
-export const isU16 = (v: number): v is U16 => (v & 0xffff) === v;
+export const isU16 = (v: number): v is U16 => (v & MAX_VALUE_U16) === v;
 
 /** Attempt to cast an input number into U32. */
 export const tryAsU32 = (v: number): U32 =>
   ensure<number, U32>(v, isU32(v), `input must have four-byte representation, got ${v}`);
 
 /** Check if given number is a valid U32 number. */
-export const isU32 = (v: number): v is U32 => (v & 0xffff_ffff) >>> 0 === v;
+export const isU32 = (v: number): v is U32 => (v & MAX_VALUE_U32) >>> 0 === v;
 
 /** Attempt to cast an input number into U64. */
 export const tryAsU64 = (x: number | bigint): U64 => {
@@ -52,7 +52,7 @@ export const tryAsU64 = (x: number | bigint): U64 => {
   return ensure<bigint, U64>(v, isU64(v), `input must have eight-byte representation, got ${x}`);
 };
 /** Check if given number is a valid U64 number. */
-export const isU64 = (v: bigint): v is U64 => (v & 0xffff_ffff_ffff_ffffn) === v;
+export const isU64 = (v: bigint): v is U64 => (v & MAX_VALUE_U64) === v;
 
 /** Collate two U32 parts into one U64. */
 export const u64FromParts = ({ lower, upper }: { lower: U32; upper: U32 }): U64 => {
