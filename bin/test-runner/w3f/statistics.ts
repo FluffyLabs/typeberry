@@ -1,14 +1,17 @@
-import { deepEqual } from "node:assert";
-import { type Extrinsic, type TimeSlot, type ValidatorIndex, tryAsPerValidator } from "@typeberry/block";
+import assert from "node:assert";
+import {
+  type Extrinsic,
+  type TimeSlot,
+  type ValidatorIndex,
+  tryAsPerValidator,
+  tryAsServiceId,
+} from "@typeberry/block";
 import { getExtrinsicFromJson } from "@typeberry/block-json";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
-import type { ValidatorData } from "@typeberry/state";
-import { JsonStatisticsData } from "@typeberry/state-json";
-import { validatorDataFromJson } from "@typeberry/state-json/validator-data";
+import { ServiceStatistics, type ValidatorData } from "@typeberry/state";
+import { JsonStatisticsData, validatorDataFromJson } from "@typeberry/state-json";
 import { type Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics";
-import { validatorDataFromJson } from "./common-types";
-
 
 class TinyInput {
   static fromJson = json.object<TinyInput, Input>(
@@ -116,7 +119,7 @@ export async function runStatisticsTest(
   const postState = TestState.toStatisticsState(spec, post_state);
   const statistics = new Statistics(spec, preState);
   assert.deepStrictEqual(statistics.state, preState);
-    
+
   // when
   statistics.transition(input);
 
@@ -126,7 +129,7 @@ export async function runStatisticsTest(
     const serviceStatistics = statistics.state.statistics.services.get(tryAsServiceId(0)) ?? ServiceStatistics.empty();
     postState.statistics.services.set(tryAsServiceId(0), serviceStatistics);
   }
-   
+
   // then
   assert.deepStrictEqual(statistics.state, postState);
 }

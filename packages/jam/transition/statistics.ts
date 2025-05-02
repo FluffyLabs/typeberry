@@ -14,7 +14,7 @@ import type { WorkReport } from "@typeberry/block/work-report";
 import type { WorkResult } from "@typeberry/block/work-result";
 import type { ChainSpec } from "@typeberry/config";
 import { type U32, tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { ServiceStatistics, type State } from "@typeberry/state";
+import { ServiceStatistics, type State, StatisticsData } from "@typeberry/state";
 import { ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
 
