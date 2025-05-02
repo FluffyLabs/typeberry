@@ -11,9 +11,9 @@ import {
 } from "@typeberry/block";
 import { Culprit, DisputesExtrinsic, Fault, Judgement, Verdict } from "@typeberry/block/disputes";
 import { Bytes } from "@typeberry/bytes";
-import { SortedSet } from "@typeberry/collections";
+import { SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
+import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { DisputesRecords, VALIDATOR_META_BYTES, ValidatorData, hashComparator, tryAsPerCore } from "@typeberry/state";
 import { Disputes } from "./disputes";
@@ -34,11 +34,7 @@ const createVerdict = ({
   age,
   votes,
 }: { target: string; age: number; votes: { vote: boolean; index: number; signature: string }[] }) =>
-  new Verdict(
-    Bytes.parseBytes(target, HASH_SIZE).asOpaque(),
-    age as Epoch,
-    votes.map(createVote) as (typeof Verdict)["prototype"]["votes"],
-  );
+  new Verdict(Bytes.parseBytes(target, HASH_SIZE).asOpaque(), age as Epoch, asKnownSize(votes.map(createVote)));
 const createCulprit = ({ target, key, signature }: { target: string; key: string; signature: string }) =>
   new Culprit(
     Bytes.parseBytes(target, HASH_SIZE).asOpaque(),
@@ -57,7 +53,7 @@ const createFault = ({
     Bytes.parseBytes(key, ED25519_KEY_BYTES).asOpaque(),
     Bytes.parseBytes(signature, ED25519_SIGNATURE_BYTES).asOpaque(),
   );
-const createOffender = (blob: string) => Bytes.parseBlob(blob);
+const createOffender = (blob: string): Ed25519Key => Bytes.parseBytes(blob, ED25519_KEY_BYTES).asOpaque();
 
 describe("Disputes", () => {
   const currentValidatorData = tryAsPerValidator(
@@ -202,7 +198,7 @@ describe("Disputes", () => {
       votes: [
         {
           vote: true,
-          index: 99999,
+          index: 65000,
           signature:
             "0x0b1e29dbda5e3bba5dde21c81a8178b115ebf0cf5920fe1a38e897ecadd91718e34bf01c9fc7fdd0df31d83020231b6e8338c8dc204b618cbde16a03cb269d05",
         },

@@ -76,7 +76,7 @@ export async function verify<T extends BytesBlob>(input: Input<T>[]): Promise<bo
  * This function is faster than `verify` but it is not safe.
  * See "Batch verification" at the bottom here: https://crates.io/crates/ed25519-dalek
  */
-export function verifyBatch<T extends BytesBlob>(input: Input<T>[]): boolean {
+export async function verifyBatch<T extends BytesBlob>(input: Input<T>[]): Promise<boolean> {
   if (input.length === 0) {
     return true;
   }
@@ -88,5 +88,5 @@ export function verifyBatch<T extends BytesBlob>(input: Input<T>[]): boolean {
 
   const data = BytesBlob.blobFromParts(first, ...rest).raw;
 
-  return verify_ed25519_batch(data);
+  return Promise.resolve(verify_ed25519_batch(data));
 }
