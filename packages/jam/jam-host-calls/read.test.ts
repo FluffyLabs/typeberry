@@ -76,7 +76,7 @@ function prepareRegsAndMemory(
   if (serviceId !== undefined) {
     registers.set(SERVICE_ID_REG, tryAsU64(serviceId));
   } else {
-    registers.setU64(SERVICE_ID_REG, PLACEHOLDER_SERVICE_ID);
+    registers.set(SERVICE_ID_REG, tryAsU64(PLACEHOLDER_SERVICE_ID));
   }
   registers.set(KEY_START_REG, tryAsU64(keyAddress));
   registers.set(KEY_LEN_REG, tryAsU64(key.length));
