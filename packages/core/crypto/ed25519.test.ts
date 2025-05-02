@@ -1,13 +1,13 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asOpaqueType } from "@typeberry/utils";
 import { ed25519 } from ".";
+import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES } from "./ed25519";
 
 describe("crypto.ed25519", () => {
   it("should verify a bunch of signatures using verify", async () => {
-    const results = await ed25519.verify(
+    const results = ed25519.verify(
       VALID_EXAMPLES.concat({
         ...VALID_EXAMPLES[0],
         message: BytesBlob.blobFromString("hello world"),
@@ -18,13 +18,13 @@ describe("crypto.ed25519", () => {
   });
 
   it("should verify a bunch of signatures using verifyBatch and return true", async () => {
-    const results = await ed25519.verifyBatch(VALID_EXAMPLES);
+    const results = ed25519.verifyBatch(VALID_EXAMPLES);
 
     assert.strictEqual(results, true);
   });
 
   it("should verify a bunch of signatures using verifyBatch and return false", async () => {
-    const results = await ed25519.verifyBatch(
+    const results = ed25519.verifyBatch(
       VALID_EXAMPLES.concat({
         ...VALID_EXAMPLES[0],
         message: BytesBlob.blobFromString("hello world"),

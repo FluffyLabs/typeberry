@@ -2,7 +2,6 @@ import assert, { deepEqual } from "node:assert";
 import { describe, it } from "node:test";
 import {
   BANDERSNATCH_RING_ROOT_BYTES,
-  type Ed25519Key,
   type WorkReportHash,
   codecPerValidator,
   tryAsPerEpochBlock,
@@ -18,6 +17,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, HashDictionary, HashSet, SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
+import type { Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
