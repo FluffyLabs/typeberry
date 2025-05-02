@@ -5,7 +5,7 @@ enable_free_tier: true
 reviews:
   profile: chill
   request_changes_workflow: false
-  high_level_summary: false
+  high_level_summary: true
   high_level_summary_placeholder: '@coderabbitai summary'
   high_level_summary_in_walkthrough: true
   auto_title_placeholder: '@coderabbitai'
@@ -23,14 +23,14 @@ reviews:
   auto_apply_labels: false
   suggested_reviewers: true
   auto_assign_reviewers: true
-  poem: false
+  poem: true
   labeling_instructions: []
   path_filters: []
   path_instructions:
-    - path: './packages/core/**/*.ts'
+    - path: 'packages/core/**/*.ts'
       instructions: |
-        Core packages must not import any packages any JAM-related packages
-        (i.e. defined in `./packages/jam/**`)
+        Core packages must not import any JAM-related packages
+        (i.e. packages defined under `packages/jam/**`)
     - path: '**/*.ts'
       instructions: |
         `as` conversions must not be used. Suggest using `tryAs` conversion methods.
