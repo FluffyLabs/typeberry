@@ -34,7 +34,7 @@ const createVerdict = ({
   age,
   votes,
 }: { target: string; age: number; votes: { vote: boolean; index: number; signature: string }[] }) =>
-  new Verdict(Bytes.parseBytes(target, HASH_SIZE).asOpaque(), age as Epoch, asKnownSize(votes.map(createVote)));
+  new Verdict(Bytes.parseBytes(target, HASH_SIZE).asOpaque(), tryAsEpoch(age), asKnownSize(votes.map(createVote)));
 const createCulprit = ({ target, key, signature }: { target: string; key: string; signature: string }) =>
   new Culprit(
     Bytes.parseBytes(target, HASH_SIZE).asOpaque(),

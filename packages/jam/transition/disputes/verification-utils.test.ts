@@ -24,7 +24,7 @@ describe("verification-utils", () => {
       ).asOpaque();
       const isWorkReportValid = true;
       const item = prepareJudgementSignature(
-        { index: 0 as ValidatorIndex, isWorkReportValid, signature },
+        { index: tryAsValidatorIndex(0), isWorkReportValid, signature },
         workReportHash,
         key,
       );
@@ -99,7 +99,7 @@ describe("verification-utils", () => {
       ).asOpaque();
       const isWorkReportValid = true;
       const item = prepareJudgementSignature(
-        { index: 0 as ValidatorIndex, isWorkReportValid, signature },
+        { index: tryAsValidatorIndex(0), isWorkReportValid, signature },
         workReportHash,
         key,
       );
