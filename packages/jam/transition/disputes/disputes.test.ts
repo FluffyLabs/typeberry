@@ -4,7 +4,7 @@ import { describe, it } from "node:test";
 import {
   BANDERSNATCH_KEY_BYTES,
   BLS_KEY_BYTES,
-  type Epoch,
+  tryAsEpoch,
   tryAsPerValidator,
   tryAsTimeSlot,
   tryAsValidatorIndex,
