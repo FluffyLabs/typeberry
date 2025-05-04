@@ -9,7 +9,8 @@ import { codecFixedSizeArray, codecKnownSizeArray } from "@typeberry/block/codec
 import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
-import { type Descriptor, codec } from "@typeberry/codec";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Descriptor, codec } from "@typeberry/codec";
 import { HashSet } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
@@ -170,13 +171,13 @@ export namespace serialize {
   /** https://graypaper.fluffylabs.dev/#/85129da/384803384803?v=0.6.3 */
   export const serviceStorage = (serviceId: ServiceId, key: StateKey) => ({
     key: keys.serviceStorage(serviceId, key),
-    Codec: codec.dump,
+    Codec: dumpCodec,
   });
 
   /** https://graypaper.fluffylabs.dev/#/85129da/385b03385b03?v=0.6.3 */
   export const servicePreimages = (serviceId: ServiceId, hash: PreimageHash) => ({
     key: keys.servicePreimage(serviceId, hash),
-    Codec: codec.dump,
+    Codec: dumpCodec,
   });
 
   /** https://graypaper.fluffylabs.dev/#/85129da/387603387603?v=0.6.3 */
@@ -185,3 +186,18 @@ export namespace serialize {
     Codec: codec.sequenceVarLen(codec.u32),
   });
 }
+
+/**
+ * Just dump the entire terminal blob as-is.
+ *
+ * NOTE this is most likely NOT what you need! `dump` cannot
+ * determine the boundary of the bytes, so it can only be used
+ * as the last element of the codec and can't be used in sequences!
+ */
+export const dumpCodec = Descriptor.new<BytesBlob>(
+  "Dump",
+  { bytes: 64, isExact: false },
+  (e, v) => e.bytes(Bytes.fromBlob(v.raw, v.raw.length)),
+  (d) => BytesBlob.blobFrom(d.bytes(d.source.length - d.bytesRead()).raw),
+  (s) => s.bytes(s.decoder.source.length - s.decoder.bytesRead()),
+);

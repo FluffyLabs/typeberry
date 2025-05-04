@@ -3,6 +3,7 @@ export * from "./block-state";
 export * from "./common";
 export * from "./disputes";
 export * from "./privileged-services";
+export * from "./safrole-data";
 export * from "./service";
 export * from "./state";
 export * from "./statistics";

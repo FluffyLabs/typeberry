@@ -1,11 +1,10 @@
-import type { CodeHash, ServiceId, TimeSlot } from "@typeberry/block";
+import { type CodeHash, type ServiceGas, type ServiceId, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { type HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
-import { type Gas, codecUnsignedGas } from "@typeberry/pvm-interpreter/gas";
 import { WithDebug } from "@typeberry/utils";
 import type { StateKey } from "../state-merkleization/keys";
 
@@ -18,8 +17,8 @@ export class ServiceAccountInfo extends WithDebug {
   static Codec = codec.Class(ServiceAccountInfo, {
     codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
     balance: codec.u64,
-    accumulateMinGas: codecUnsignedGas,
-    onTransferMinGas: codecUnsignedGas,
+    accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
+    onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
     storageUtilisationBytes: codec.u64,
     storageUtilisationCount: codec.u32,
   });
@@ -57,9 +56,9 @@ export class ServiceAccountInfo extends WithDebug {
     /** `a_b`: Current account balance. */
     public readonly balance: U64,
     /** `a_g`: Minimal gas required to execute Accumulate entrypoint. */
-    public readonly accumulateMinGas: Gas,
+    public readonly accumulateMinGas: ServiceGas,
     /** `a_m`: Minimal gas required to execute On Transfer entrypoint. */
-    public readonly onTransferMinGas: Gas,
+    public readonly onTransferMinGas: ServiceGas,
     /** `a_o`: Total number of octets in storage. */
     public readonly storageUtilisationBytes: U64,
     /** `a_i`: Number of items in storage. */
@@ -72,7 +71,7 @@ export class ServiceAccountInfo extends WithDebug {
 export class PreimageItem extends WithDebug {
   static Codec = codec.Class(PreimageItem, {
     hash: codec.bytes(HASH_SIZE).asOpaque<PreimageHash>(),
-    blob: codec.dump,
+    blob: codec.blob,
   });
 
   static fromCodec({ hash, blob }: CodecRecord<PreimageItem>) {
@@ -90,7 +89,7 @@ export class PreimageItem extends WithDebug {
 export class StateItem extends WithDebug {
   static Codec = codec.Class(StateItem, {
     hash: codec.bytes(HASH_SIZE).asOpaque<StateKey>(),
-    blob: codec.dump,
+    blob: codec.blob,
   });
 
   static fromCodec({ hash, blob }: CodecRecord<StateItem>) {
@@ -127,8 +126,8 @@ export class LookupHistoryItem {
     public slots: LookupHistorySlots,
   ) {}
 
-  public isRequested(): boolean {
-    return this.slots.length === 0;
+  static isRequested(item: LookupHistoryItem): boolean {
+    return item.slots.length === 0;
   }
 }
 

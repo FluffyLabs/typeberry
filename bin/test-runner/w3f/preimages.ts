@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { type TimeSlot, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
+import { type TimeSlot, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { fromJson, preimagesExtrinsicFromJson } from "@typeberry/block-json";
 import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
@@ -7,7 +7,6 @@ import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { type U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { tryAsGas } from "@typeberry/pvm-interpreter";
 import {
   LookupHistoryItem,
   PreimageItem,
@@ -144,8 +143,8 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Service {
     info: ServiceAccountInfo.fromCodec({
       codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
       balance: tryAsU64(0),
-      accumulateMinGas: tryAsGas(0),
-      onTransferMinGas: tryAsGas(0),
+      accumulateMinGas: tryAsServiceGas(0),
+      onTransferMinGas: tryAsServiceGas(0),
       storageUtilisationBytes: tryAsU64(0),
       storageUtilisationCount: tryAsU32(0),
     }),

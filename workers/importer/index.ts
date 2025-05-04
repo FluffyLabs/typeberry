@@ -2,11 +2,13 @@ import { isMainThread, parentPort } from "node:worker_threads";
 
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
-import { LmdbBlocks } from "@typeberry/database-lmdb";
+import { LmdbBlocks, LmdbStates } from "@typeberry/database-lmdb";
+import { LmdbRoot } from "@typeberry/database-lmdb";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { SimpleAllocator, keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { TransitionHasher } from "@typeberry/transition";
+import { resultToString } from "@typeberry/utils";
 import { Importer } from "./importer";
 import {
   type ImporterInit,
@@ -33,29 +35,41 @@ const keccakHasher = keccak.KeccakHasher.create();
  * These blocks should be decoded, verified and later imported.
  */
 export async function main(channel: MessageChannelStateMachine<ImporterInit, ImporterStates>) {
-  logger.info(`Importer running ${channel.currentState()}`);
+  logger.info(`📥 Importer starting ${channel.currentState()}`);
   // Await the configuration object
   const ready = await channel.waitForState<ImporterReady>("ready(importer)");
 
   const finished = await ready.doUntil<Finished>("finished", async (worker, port) => {
-    logger.info("Importer waiting for blocks.");
+    logger.info("📥 Importer waiting for blocks.");
     const config = worker.getConfig();
+    const lmdb = new LmdbRoot(config.dbPath);
+    const blocks = new LmdbBlocks(config.chainSpec, lmdb);
+    const states = new LmdbStates(config.chainSpec, lmdb);
     const importer = new Importer(
+      blocks,
+      states,
+      config.chainSpec,
       new TransitionHasher(config.chainSpec, await keccakHasher, new SimpleAllocator()),
-      new LmdbBlocks(config.chainSpec, config.blocksDbPath),
+      logger,
     );
 
     // TODO [ToDr] back pressure?
     worker.onBlock.on(async (b) => {
-      logger.log(`🧊 Got block: ${b.header.view().timeSlotIndex.materialize()}`);
-      const bestHeader = await importer.importBlock(b);
-
-      worker.announce(port, bestHeader);
-      logger.info(`🧊 Best block: ${bestHeader.hash}`);
+      // NOTE [ToDr] this is incorrect, since it may fail to decode.
+      const timeSlot = b.header.view().timeSlotIndex.materialize();
+      logger.log(`🧊 Got block: #${timeSlot}`);
+      const maybeBestHeader = await importer.importBlock(b);
+      if (maybeBestHeader.isOk) {
+        const bestHeader = maybeBestHeader.ok;
+        worker.announce(port, bestHeader);
+        logger.info(`🧊 Best block: #${bestHeader.data.timeSlotIndex.materialize()} (${bestHeader.hash})`);
+      } else {
+        logger.error(`❌ Rejected block #${timeSlot}: ${resultToString(maybeBestHeader)}`);
+      }
     });
   });
 
-  logger.info("Importer finished. Closing channel.");
+  logger.info("📥 Importer finished. Closing channel.");
 
   // Close the comms to gracefuly close the app.
   finished.currentState().close(channel);

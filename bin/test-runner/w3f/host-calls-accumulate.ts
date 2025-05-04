@@ -4,7 +4,7 @@ import { fromJson } from "@typeberry/block-json";
 import { Bytes } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { ValidatorData } from "@typeberry/state";
-import { validatorDataFromJson } from "./common-types";
+import { validatorDataFromJson } from "@typeberry/state-json";
 import { Memory, ServiceAccount } from "./host-calls-general";
 
 namespace localFromJson {

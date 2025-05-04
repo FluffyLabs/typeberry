@@ -14,7 +14,7 @@ import type { WorkReport } from "@typeberry/block/work-report";
 import type { WorkResult } from "@typeberry/block/work-result";
 import type { ChainSpec } from "@typeberry/config";
 import { type U32, tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { ServiceStatistics, type State } from "@typeberry/state";
+import { ServiceStatistics, type State, StatisticsData } from "@typeberry/state";
 import { ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
 
@@ -72,7 +72,7 @@ export class Statistics {
     public readonly state: StatisticsState,
   ) {}
 
-  private getStatistics(slot: TimeSlot) {
+  private getStatistics(slot: TimeSlot): StatisticsData {
     /** https://graypaper.fluffylabs.dev/#/68eaa1f/186402186402?v=0.6.4 */
     const currentEpoch = Math.floor(this.state.timeslot / this.chainSpec.epochLength);
     const nextEpoch = Math.floor(slot / this.chainSpec.epochLength);
@@ -90,11 +90,11 @@ export class Statistics {
       this.chainSpec,
     );
 
-    return {
+    return StatisticsData.fromCodec({
       ...this.state.statistics,
       current: emptyValidators,
       previous: this.state.statistics.current,
-    };
+    });
   }
 
   /** https://graypaper.fluffylabs.dev/#/68eaa1f/195601195601?v=0.6.4 */

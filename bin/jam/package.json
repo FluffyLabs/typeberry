@@ -3,22 +3,33 @@
   "version": "0.0.1",
   "description": "The main typeberry binary.",
   "main": "index.ts",
+  "bin": "./index.ts",
   "dependencies": {
     "@typeberry/block": "0.0.1",
     "@typeberry/block-generator": "0.0.1",
     "@typeberry/block-json": "0.0.1",
     "@typeberry/bytes": "0.0.1",
     "@typeberry/codec": "0.0.1",
+    "@typeberry/collections": "0.0.1",
     "@typeberry/config": "0.0.1",
+    "@typeberry/database-lmdb": "0.0.1",
     "@typeberry/ext-ipc": "^0.0.1",
+    "@typeberry/hash": "0.0.1",
     "@typeberry/importer": "0.0.1",
     "@typeberry/json-parser": "0.0.1",
-    "@typeberry/logger": "0.0.1"
+    "@typeberry/logger": "0.0.1",
+    "@typeberry/state-json": "0.0.1",
+    "@typeberry/state-merkleization": "0.0.1",
+    "@typeberry/utils": "0.0.1",
+    "minimist": "^1.2.8"
   },
   "scripts": {
     "start": "ts-node ./index.ts",
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",
-  "license": "MPL-2.0"
+  "license": "MPL-2.0",
+  "devDependencies": {
+    "@types/minimist": "^1.2.5"
+  }
 }
