@@ -1,11 +1,18 @@
-import { Extrinsic, ExtrinsicView, guarantees, TimeSlot, WorkReportHash, type ExtrinsicHash, type HeaderHash, type HeaderView } from "@typeberry/block";
+import {
+  Extrinsic,
+  type ExtrinsicHash,
+  type ExtrinsicView,
+  type HeaderHash,
+  type HeaderView,
+  type TimeSlot,
+  type WorkReportHash,
+} from "@typeberry/block";
 import { WorkPackage } from "@typeberry/block/work-package";
 import type { WorkPackageHash } from "@typeberry/block/work-report";
-import { BytesBlob } from "@typeberry/bytes";
-import { codec, type Codec, Encoder } from "@typeberry/codec";
+import type { BytesBlob } from "@typeberry/bytes";
+import { type Codec, Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import {
-  Blake2bHash,
   HASH_SIZE,
   type HashAllocator,
   type KeccakHash,
@@ -50,7 +57,7 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
       workReportHash: codec.bytes(HASH_SIZE).asOpaque<WorkReportHash>(),
       timeSlot: codec.u32.asOpaque<TimeSlot>(),
       credentials: codec.blob,
-    })
+    });
 
     const guarantees: BytesBlob[] = [];
 
@@ -62,15 +69,11 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
         workReportHash: reportHash,
         timeSlot: guarantee.slot.materialize(),
         credentials: guarantee.credentials.encoded(),
-      })
+      });
       guarantees.push(guaranteeEncoded);
     }
 
-    const guaranteeBlob = Encoder.encodeObject(
-      codec.sequenceVarLen(codec.blob),
-      guarantees,
-      this.context,
-    );
+    const guaranteeBlob = Encoder.encodeObject(codec.sequenceVarLen(codec.blob), guarantees, this.context);
 
     const et = blake2b.hashBytes(extrinsicView.tickets.encoded()).asOpaque<ExtrinsicHash>();
     const ep = blake2b.hashBytes(extrinsicView.preimages.encoded()).asOpaque<ExtrinsicHash>();
@@ -94,7 +97,7 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
         disputes: ed,
       },
       this.context,
-    )
+    );
 
     return new WithHashAndBytes(blake2b.hashBytes(encoded, this.allocator).asOpaque(), extrinsicView, encoded);
   }

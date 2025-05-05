@@ -42,12 +42,15 @@ export class BlockVerifier {
       );
     }
 
-    // TODO [MaSo] Check if extrinsic is valid.
+    // Check if extrinsic is valid.
     // https://graypaper.fluffylabs.dev/#/cc517d7/0cba000cba00?v=0.6.5
     const extrinsicHash = headerView.extrinsicHash.materialize();
     const extrinsicMerkleCommitment = this.hasher.extrinsicHash(block.extrinsic.view());
     if (extrinsicHash !== extrinsicMerkleCommitment.hash) {
-      return Result.error(BlockVerifierError.InvalidExtrinsic, `Invalid extrinsic hash: ${extrinsicHash}, expected ${extrinsicMerkleCommitment.hash}`);
+      return Result.error(
+        BlockVerifierError.InvalidExtrinsic,
+        `Invalid extrinsic hash: ${extrinsicHash}, expected ${extrinsicMerkleCommitment.hash}`,
+      );
     }
 
     // Check if the state root is valid.
