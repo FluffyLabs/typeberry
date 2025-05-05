@@ -62,7 +62,7 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
     const guarantees: BytesBlob[] = [];
 
     // https://graypaper.fluffylabs.dev/#/cc517d7/0cfb000cfb00?v=0.6.5
-    for (const guarantee of extrinsicView.guarantees.view().map(g => g.view())) {
+    for (const guarantee of extrinsicView.guarantees.view().map((g) => g.view())) {
       const reportHash = blake2b.hashBytes(guarantee.report.encoded(), this.allocator).asOpaque<WorkReportHash>();
       const guaranteeEncoded = Encoder.encodeObject(guaranteeCodec, {
         workReportHash: reportHash,
