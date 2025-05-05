@@ -40,7 +40,7 @@ export class Importer {
       throw new Error(`Unable to load best state from hash: ${currentStateRootHash}.`);
     }
 
-    this.verifier = new BlockVerifier(hasher);
+    this.verifier = new BlockVerifier(hasher, blocks);
     this.stf = new OnChain(spec, state, blocks, hasher);
 
     logger.info(`😎 Best time slot: ${state.timeslot} (state root: ${currentStateRootHash})`);
@@ -48,13 +48,13 @@ export class Importer {
 
   async importBlock(block: BlockView): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
     this.logger.log("🧱 Attempting to import a new block.");
+    const timeSlot = block.header.view().timeSlotIndex.materialize();
 
-    const hash = await this.verifier.verifyBlock(block);
+    const hash = await this.verifier.verifyBlock(block, timeSlot);
     if (hash.isError) {
       return importerError(ImporterErrorKind.Verifier, hash);
     }
 
-    const timeSlot = block.header.view().timeSlotIndex.materialize();
     this.logger.log(`🧱 Got hash ${hash.ok} for block at slot ${timeSlot}.`);
     const headerHash = hash.ok;
     const res = await this.stf.transition(block, headerHash);
