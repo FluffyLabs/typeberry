@@ -3,9 +3,6 @@ import type { BlocksDb } from "@typeberry/database";
 import { Result } from "@typeberry/utils";
 import type { TransitionHasher } from "./hasher";
 
-// Slot periods in seconds
-const VALID_SLOT_PERIOD = 6;
-
 export enum BlockVerifierError {
   ParentNotFound = 0,
   InvalidTimeSlot = 1,
@@ -31,14 +28,14 @@ export class BlockVerifier {
       return Result.error(BlockVerifierError.ParentNotFound, `Parent ${parentHash} not found`);
     }
 
-    // Check if the time slot index is consecutive.
+    // Check if the time slot index is consecutive and not from future.
     // https://graypaper.fluffylabs.dev/#/cc517d7/0c02010c0201?v=0.6.5
     const timeslot = headerView.timeSlotIndex.materialize();
     const parentTimeslot = parentBlock.timeSlotIndex.materialize();
-    if (timeslot <= parentTimeslot || timeslot > currentTimeSlot * VALID_SLOT_PERIOD) {
+    if (timeslot <= parentTimeslot || timeslot > currentTimeSlot) {
       return Result.error(
         BlockVerifierError.InvalidTimeSlot,
-        `Invalid time slot index: ${timeslot}, expected > ${parentTimeslot} and < ${currentTimeSlot * VALID_SLOT_PERIOD}`,
+        `Invalid time slot index: ${timeslot}, expected > ${parentTimeslot} and <= ${currentTimeSlot}`,
       );
     }
 
@@ -46,7 +43,7 @@ export class BlockVerifier {
     // https://graypaper.fluffylabs.dev/#/cc517d7/0cba000cba00?v=0.6.5
     const extrinsicHash = headerView.extrinsicHash.materialize();
     const extrinsicMerkleCommitment = this.hasher.extrinsicHash(block.extrinsic.view());
-    if (extrinsicHash !== extrinsicMerkleCommitment.hash) {
+    if (!extrinsicHash.isEqualTo(extrinsicMerkleCommitment.hash)) {
       return Result.error(
         BlockVerifierError.InvalidExtrinsic,
         `Invalid extrinsic hash: ${extrinsicHash}, expected ${extrinsicMerkleCommitment.hash}`,
