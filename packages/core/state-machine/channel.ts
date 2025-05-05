@@ -128,13 +128,12 @@ export class MessageChannelStateMachine<
     state: StateNames<TNewState>,
     work: (state: CurrentState, port: TypedChannel, isDone: () => boolean) => Promise<void>,
   ): Promise<MessageChannelStateMachine<TNewState, TStates>> {
+    const isDone = { isDone: false };
     const done = this.waitForState(state).then(() => {
       isDone.isDone = true;
     });
-    const isDone = { isDone: false };
-
-    await Promise.all([work(this.currentState(), this, () => isDone.isDone), done]);
-
+    await work(this.currentState(), this, () => isDone.isDone);
+    await done;
     return this.transitionTo<TNewState>();
   }
 

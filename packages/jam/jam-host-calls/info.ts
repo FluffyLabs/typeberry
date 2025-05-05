@@ -1,9 +1,9 @@
-import type { ServiceId } from "@typeberry/block";
+import { type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import { Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
-import { type GasCounter, codecUnsignedGas, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { HostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, legacyGetServiceId } from "./utils";
@@ -77,8 +77,8 @@ export const codecServiceAccountInfoWithThresholdBalance = codec.object(
     codeHash: codec.bytes(HASH_SIZE),
     balance: codec.u64,
     thresholdBalance: codec.u64,
-    accumulateMinGas: codecUnsignedGas,
-    onTransferMinGas: codecUnsignedGas,
+    accumulateMinGas: codec.u64.convert((i) => i, tryAsServiceGas),
+    onTransferMinGas: codec.u64.convert((i) => i, tryAsServiceGas),
     storageUtilisationBytes: codec.u64,
     storageUtilisationCount: codec.u32,
   },

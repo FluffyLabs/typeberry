@@ -5,7 +5,7 @@ import { HashSet } from "@typeberry/collections/hash-set";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Authorization, type AuthorizationInput, type AuthorizationState } from "@typeberry/transition/authorization";
 import { deepEqual } from "@typeberry/utils";
-import { getChainSpec } from "./common-types";
+import { getChainSpec } from "./spec";
 
 class TestCoreAuthorizer {
   static fromJson: FromJson<TestCoreAuthorizer> = {

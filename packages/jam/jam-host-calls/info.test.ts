@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { type ServiceId, tryAsServiceId } from "@typeberry/block";
+import { type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
@@ -67,8 +67,8 @@ describe("HostCalls: Info", () => {
       ServiceAccountInfo.fromCodec({
         codeHash: Bytes.fill(32, 5).asOpaque(),
         balance: tryAsU64(150_000),
-        accumulateMinGas: tryAsGas(0n),
-        onTransferMinGas: tryAsGas(0n),
+        accumulateMinGas: tryAsServiceGas(0n),
+        onTransferMinGas: tryAsServiceGas(0n),
         storageUtilisationBytes,
         storageUtilisationCount,
       }),
@@ -111,8 +111,8 @@ describe("HostCalls: Info", () => {
       ServiceAccountInfo.fromCodec({
         codeHash: Bytes.fill(32, 5).asOpaque(),
         balance: tryAsU64(150_000),
-        accumulateMinGas: tryAsGas(0n),
-        onTransferMinGas: tryAsGas(0n),
+        accumulateMinGas: tryAsServiceGas(0n),
+        onTransferMinGas: tryAsServiceGas(0n),
         storageUtilisationBytes,
         storageUtilisationCount,
       }),

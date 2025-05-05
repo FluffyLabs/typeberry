@@ -43,8 +43,8 @@ export class SignedTicket extends WithDebug {
 /** Anonymous? entry into the ticket contest. */
 export class Ticket extends WithDebug {
   static Codec = codec.Class(Ticket, {
-    // TODO [ToDr] we should verify that attempt is either 0|1|2.
     id: codec.bytes(HASH_SIZE),
+    // TODO [ToDr] we should verify that attempt is either 0|1|2.
     attempt: codec.u8.asOpaque<TicketAttempt>(),
   });
 

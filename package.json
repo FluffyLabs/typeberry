@@ -46,7 +46,8 @@
     "tools/ipc2rpc",
     "workers/block-generator",
     "workers/generic",
-    "workers/importer"
+    "workers/importer",
+    "packages/jam/state-json"
   ],
   "engines": {
     "node": ">=22",
