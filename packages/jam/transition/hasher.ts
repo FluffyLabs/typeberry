@@ -64,7 +64,7 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
     // https://graypaper.fluffylabs.dev/#/cc517d7/0cfb000cfb00?v=0.6.5
     for (const guaranteeView of extrinsicView.guarantees.view()) {
       const guarantee = guaranteeView.view();
-      const reportHash = blake2b.hashBytes(guarantee.report.encoded()).asOpaque<WorkReportHash>();
+      const reportHash = blake2b.hashBytes(guarantee.report.encoded(), this.allocator).asOpaque<WorkReportHash>();
       const guaranteeEncoded = Encoder.encodeObject(guaranteeCodec, {
         workReportHash: reportHash,
         timeSlot: guarantee.slot.materialize(),
@@ -75,11 +75,11 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
 
     const guaranteeBlob = Encoder.encodeObject(codec.sequenceVarLen(codec.blob), guarantees, this.context);
 
-    const et = blake2b.hashBytes(extrinsicView.tickets.encoded()).asOpaque<ExtrinsicHash>();
-    const ep = blake2b.hashBytes(extrinsicView.preimages.encoded()).asOpaque<ExtrinsicHash>();
+    const et = blake2b.hashBytes(extrinsicView.tickets.encoded(), this.allocator).asOpaque<ExtrinsicHash>();
+    const ep = blake2b.hashBytes(extrinsicView.preimages.encoded(), this.allocator).asOpaque<ExtrinsicHash>();
     const eg = blake2b.hashBytes(guaranteeBlob).asOpaque<ExtrinsicHash>();
-    const ea = blake2b.hashBytes(extrinsicView.assurances.encoded()).asOpaque<ExtrinsicHash>();
-    const ed = blake2b.hashBytes(extrinsicView.disputes.encoded()).asOpaque<ExtrinsicHash>();
+    const ea = blake2b.hashBytes(extrinsicView.assurances.encoded(), this.allocator).asOpaque<ExtrinsicHash>();
+    const ed = blake2b.hashBytes(extrinsicView.disputes.encoded(), this.allocator).asOpaque<ExtrinsicHash>();
 
     const encoded = Encoder.encodeObject(
       codec.object({
