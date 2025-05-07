@@ -63,7 +63,7 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
 
     const et = blake2b.hashBytes(extrinsicView.tickets.encoded(), this.allocator).asOpaque<ExtrinsicHash>();
     const ep = blake2b.hashBytes(extrinsicView.preimages.encoded(), this.allocator).asOpaque<ExtrinsicHash>();
-    const eg = blake2b.hashBytes(guaranteeBlob).asOpaque<ExtrinsicHash>();
+    const eg = blake2b.hashBytes(guaranteeBlob, this.allocator).asOpaque<ExtrinsicHash>();
     const ea = blake2b.hashBytes(extrinsicView.assurances.encoded(), this.allocator).asOpaque<ExtrinsicHash>();
     const ed = blake2b.hashBytes(extrinsicView.disputes.encoded(), this.allocator).asOpaque<ExtrinsicHash>();
 
