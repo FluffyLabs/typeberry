@@ -23,6 +23,7 @@ const BEST_DATA = "best hash and posterior state root";
 export class LmdbBlocks implements BlocksDb {
   readonly extrinsics: SubDb;
   readonly headers: SubDb;
+  readonly postStateRoots: SubDb;
 
   constructor(
     private readonly chainSpec: ChainSpec,
@@ -31,10 +32,24 @@ export class LmdbBlocks implements BlocksDb {
     // NOTE [ToDr] Extrinsics are stored under header hash, not their hash. Revise if it's an issue.
     this.extrinsics = this.root.subDb("extrinsics");
     this.headers = this.root.subDb("headers");
-    // NOTE [ToDr] Do we need a mapping from header hash to it's posterior root?
-    // It's not really trivial to figure out what the next block is.
-    // I suspect we will only need this to resolve forks, but in that case we can
-    // backtrack using parent header hashes.
+    // NOTE [ToDr] We currently store all posterior state roots, however it's
+    // most likely very redundant. We probably only need to store the posterior
+    // state roots of recent blocks to be able to quickly resolve forks
+    // OR we need a way to be able to traverse the blocks history forward
+    // (i.e. know what next block(s) is).
+    this.postStateRoots = this.root.subDb("postStateRoots");
+  }
+
+  async setPostStateRoot(hash: HeaderHash, postStateRoot: StateRootHash): Promise<void> {
+    await this.postStateRoots.put(hash.raw, postStateRoot.raw);
+  }
+
+  getPostStateRoot(hash: HeaderHash): StateRootHash | null {
+    const postStateRoot = this.postStateRoots.get(hash.raw);
+    if (postStateRoot === undefined) {
+      return null;
+    }
+    return Bytes.fromBlob(postStateRoot, HASH_SIZE).asOpaque();
   }
 
   async insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void> {
@@ -47,7 +62,7 @@ export class LmdbBlocks implements BlocksDb {
   }
 
   async setBestData(hash: HeaderHash, postState: StateRootHash): Promise<void> {
-    this.root.db.put(BEST_DATA, BytesBlob.blobFromParts(hash.raw, postState.raw).raw);
+    await this.root.db.put(BEST_DATA, BytesBlob.blobFromParts(hash.raw, postState.raw).raw);
   }
 
   getBestData(): [HeaderHash, StateRootHash] {

@@ -1,9 +1,6 @@
 import {
   BANDERSNATCH_KEY_BYTES,
   BLS_KEY_BYTES,
-  ED25519_KEY_BYTES,
-  ED25519_SIGNATURE_BYTES,
-  type Ed25519Signature,
   type HeaderHash,
   type ServiceId,
   type TimeSlot,
@@ -32,6 +29,7 @@ import { Decoder, Encoder, codec } from "@typeberry/codec";
 import { FixedSizeArray, HashDictionary, asKnownSize } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
+import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/crypto";
 import { HASH_SIZE, type KeccakHash, type OpaqueHash, WithHash, blake2b, keccak } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";

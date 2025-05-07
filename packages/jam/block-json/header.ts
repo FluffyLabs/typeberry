@@ -1,7 +1,6 @@
 import {
   type BandersnatchKey,
   type BandersnatchVrfSignature,
-  type Ed25519Key,
   type EntropyHash,
   EpochMarker,
   type ExtrinsicHash,
@@ -16,6 +15,7 @@ import {
 import { Ticket } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
 import type { KnownSizeArray } from "@typeberry/collections";
+import type { Ed25519Key } from "@typeberry/crypto";
 import { json } from "@typeberry/json-parser";
 import { fromJson } from "./common";
 

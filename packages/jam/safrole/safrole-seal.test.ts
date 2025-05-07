@@ -4,7 +4,6 @@ import {
   BANDERSNATCH_KEY_BYTES,
   BANDERSNATCH_VRF_SIGNATURE_BYTES,
   BLS_KEY_BYTES,
-  ED25519_KEY_BYTES,
   EpochMarker,
   Header,
   ValidatorKeys,
@@ -18,6 +17,7 @@ import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
+import { ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { SafroleSealingKeysData } from "@typeberry/state/safrole-data";
