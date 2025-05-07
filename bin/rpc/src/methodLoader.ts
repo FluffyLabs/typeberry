@@ -1,6 +1,6 @@
 import type { MethodRegistry } from "./methodRegistry";
-import { echo } from "./methods/echo";
+import { bestBlock } from "./methods/bestBlock";
 
 export function loadMethods(registry: MethodRegistry): void {
-  registry.register("echo", echo);
+  registry.register("bestBlock", bestBlock);
 }

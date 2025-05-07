@@ -75,9 +75,9 @@ async function main() {
   try {
     await client.waitForConnection();
 
-    console.info("Testing echo method...");
-    const echoResult = await client.call("echo", { message: "Hello, server!" });
-    console.info("Echo result:", echoResult);
+    console.info("Testing bestBlock method...");
+    const bestBlockResult = await client.call("bestBlock");
+    console.info("bestBlock result:", bestBlockResult);
 
     console.info("\nTesting non-existent method...");
     try {

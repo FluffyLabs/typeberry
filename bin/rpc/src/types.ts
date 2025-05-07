@@ -1,3 +1,5 @@
+import type { LmdbBlocks, LmdbStates } from "@typeberry/database-lmdb";
+
 export type JsonRpcId = string | number | null;
 
 export interface JsonRpcRequest {
@@ -25,4 +27,9 @@ export interface JsonRpcErrorResponse {
 
 export type JsonRpcResponse = JsonRpcSuccessResponse | JsonRpcErrorResponse;
 
-export type RpcMethod = (params: unknown) => Promise<unknown>;
+export interface DatabaseContext {
+  blocks: LmdbBlocks;
+  states: LmdbStates;
+}
+
+export type RpcMethod = (params: unknown, db: DatabaseContext) => Promise<unknown>;

@@ -1,18 +1,36 @@
+import { existsSync } from "node:fs";
+import type { ChainSpec } from "@typeberry/config";
+import { tinyChainSpec } from "@typeberry/config";
+import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import { WebSocketServer } from "ws";
 import type { WebSocket } from "ws";
 import { loadMethods } from "./methodLoader";
 import { MethodRegistry } from "./methodRegistry";
-import type { JsonRpcRequest, JsonRpcResponse } from "./types";
+import type { DatabaseContext, JsonRpcRequest, JsonRpcResponse } from "./types";
 
 export class RpcServer {
   private wss: WebSocketServer;
   private methodRegistry: MethodRegistry;
+  private rootDb: LmdbRoot;
+  private blocks: LmdbBlocks;
+  private states: LmdbStates;
 
-  constructor(port: number) {
+  constructor(port: number, dbPath: string, genesisRoot: string, chainSpec: ChainSpec = tinyChainSpec) {
     this.wss = new WebSocketServer({ port });
+
+    const fullDbPath = `${dbPath}/${genesisRoot}`;
+    if (!existsSync(fullDbPath)) {
+      throw new Error(`Database not found at ${fullDbPath}`);
+    }
+    this.rootDb = new LmdbRoot(fullDbPath);
+    this.blocks = new LmdbBlocks(chainSpec, this.rootDb);
+    this.states = new LmdbStates(chainSpec, this.rootDb);
+
     this.methodRegistry = new MethodRegistry();
     loadMethods(this.methodRegistry);
+
     this.setupWebSocket();
+    console.info(`Server listening on port ${port}...`);
   }
 
   private setupWebSocket(): void {
@@ -58,7 +76,11 @@ export class RpcServer {
     }
 
     try {
-      const result = await handler(params);
+      const db: DatabaseContext = {
+        blocks: this.blocks,
+        states: this.states,
+      };
+      const result = await handler(params, db);
 
       return {
         jsonrpc: "2.0",
@@ -75,5 +97,14 @@ export class RpcServer {
         id: id ?? null,
       };
     }
+  }
+
+  async close(): Promise<void> {
+    console.info("Closing websocket and db connections...");
+    await new Promise<void>((resolve) => {
+      this.wss.close(() => resolve());
+    });
+    await this.rootDb.db.close();
+    console.info("Connections closed");
   }
 }

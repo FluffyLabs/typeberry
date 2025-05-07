@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@types/ws": "^8.18.1",
+    "minimist": "^1.2.8",
     "ws": "^8.18.2"
   }
 }
