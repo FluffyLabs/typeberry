@@ -2,9 +2,11 @@ import { Memory, MemoryBuilder } from "@typeberry/pvm-interpreter/memory";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
+import { decodeMetadata } from "./decode-metadata";
 
 export class Program {
-  static fromSpi(rawProgram: Uint8Array, args: Uint8Array) {
+  static fromSpi(blob: Uint8Array, args: Uint8Array, hasMetadata: boolean) {
+    const { blob: rawProgram } = hasMetadata ? decodeMetadata(blob) : { blob };
     const { code, memory: rawMemory, registers } = decodeStandardProgram(rawProgram, args);
     const regs = new Registers();
     regs.copyFrom(registers);
@@ -29,7 +31,8 @@ export class Program {
     return new Program(code, regs, memory);
   }
 
-  static fromGeneric(rawProgram: Uint8Array) {
+  static fromGeneric(blob: Uint8Array, hasMetadata: boolean) {
+    const { blob: rawProgram } = hasMetadata ? decodeMetadata(blob) : { blob };
     const regs = new Registers();
     const memory = new Memory();
     return new Program(rawProgram, regs, memory);
