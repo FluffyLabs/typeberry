@@ -2,15 +2,15 @@ import { describe, it } from "node:test";
 import { BytesBlob } from "@typeberry/bytes";
 
 import { deepEqual } from "@typeberry/utils/test";
-import { decodeMetadata } from "./decode-metadata";
+import { extractCodeAndMetadata } from "./program";
 
-describe("decodeMetadata", () => {
+describe("extractCodeAndMetadata", () => {
   it("should correctly decode code with metadata", () => {
     const blobWithMetadata = TEST_BLOB;
 
-    const { blob, metadata } = decodeMetadata(blobWithMetadata);
+    const { code, metadata } = extractCodeAndMetadata(blobWithMetadata);
 
-    deepEqual(BytesBlob.blobFrom(blob), CODE);
+    deepEqual(BytesBlob.blobFrom(code), CODE);
     deepEqual(BytesBlob.blobFrom(metadata), METADATA);
   });
 });
