@@ -53,6 +53,6 @@ export class Program {
 export function extractCodeAndMetadata(blobWithMetadata: Uint8Array) {
   const decoder = Decoder.fromBlob(blobWithMetadata);
   const metadata = decoder.bytesBlob().raw;
-  const code = blobWithMetadata.subarray(decoder.bytesRead());
+  const code = decoder.getRemainingBytes().raw;
   return { metadata, code };
 }
