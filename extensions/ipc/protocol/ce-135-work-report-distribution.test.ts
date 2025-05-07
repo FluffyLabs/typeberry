@@ -1,7 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsCoreIndex, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
-import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/block/crypto";
 import { Credential } from "@typeberry/block/guarantees";
 import { RefineContext } from "@typeberry/block/refine-context";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package";
@@ -10,6 +9,7 @@ import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
+import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { MessageHandler, type MessageSender } from "../handler";

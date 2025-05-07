@@ -1,8 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import type { Ed25519Signature, ValidatorIndex } from "@typeberry/block";
+import { tryAsValidatorIndex } from "@typeberry/block";
 import { Judgement } from "@typeberry/block/disputes";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
 
 describe("sort-utils", () => {
@@ -56,7 +57,9 @@ describe("sort-utils", () => {
 
   describe("isUniqueSortedByIndex", () => {
     const buildTestData = (indices: number[]) =>
-      indices.map((index) => new Judgement(true, index as ValidatorIndex, Bytes.zero(64) as Ed25519Signature));
+      indices.map(
+        (index) => new Judgement(true, tryAsValidatorIndex(index), Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque()),
+      );
 
     it("should return true for an empty array", () => {
       const judgements = buildTestData([]);

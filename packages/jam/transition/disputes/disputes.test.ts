@@ -4,21 +4,17 @@ import { describe, it } from "node:test";
 import {
   BANDERSNATCH_KEY_BYTES,
   BLS_KEY_BYTES,
-  type BandersnatchKey,
-  type BlsKey,
-  ED25519_KEY_BYTES,
-  type Ed25519Key,
-  type Ed25519Signature,
-  type Epoch,
-  type ValidatorIndex,
-  type WorkReportHash,
+  tryAsEpoch,
   tryAsPerValidator,
   tryAsTimeSlot,
+  tryAsValidatorIndex,
 } from "@typeberry/block";
 import { Culprit, DisputesExtrinsic, Fault, Judgement, Verdict } from "@typeberry/block/disputes";
 import { Bytes } from "@typeberry/bytes";
-import { SortedSet } from "@typeberry/collections";
+import { SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
+import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Key } from "@typeberry/crypto";
+import { HASH_SIZE } from "@typeberry/hash";
 import { DisputesRecords, VALIDATOR_META_BYTES, ValidatorData, hashComparator, tryAsPerCore } from "@typeberry/state";
 import { Disputes } from "./disputes";
 import { DisputesErrorCode } from "./disputes-error-code";
@@ -26,28 +22,24 @@ import type { DisputesState } from "./disputes-state";
 
 const createValidatorData = ({ bandersnatch, ed25519 }: { bandersnatch: string; ed25519: string }) =>
   new ValidatorData(
-    Bytes.parseBytes(bandersnatch, BANDERSNATCH_KEY_BYTES) as BandersnatchKey,
-    Bytes.parseBytes(ed25519, ED25519_KEY_BYTES) as Ed25519Key,
-    Bytes.zero(BLS_KEY_BYTES) as BlsKey,
+    Bytes.parseBytes(bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque(),
+    Bytes.parseBytes(ed25519, ED25519_KEY_BYTES).asOpaque(),
+    Bytes.zero(BLS_KEY_BYTES).asOpaque(),
     Bytes.zero(VALIDATOR_META_BYTES),
   );
 const createVote = ({ vote, index, signature }: { vote: boolean; index: number; signature: string }) =>
-  new Judgement(vote, index as ValidatorIndex, Bytes.parseBlob(signature) as Ed25519Signature);
+  new Judgement(vote, tryAsValidatorIndex(index), Bytes.parseBytes(signature, ED25519_SIGNATURE_BYTES).asOpaque());
 const createVerdict = ({
   target,
   age,
   votes,
 }: { target: string; age: number; votes: { vote: boolean; index: number; signature: string }[] }) =>
-  new Verdict(
-    Bytes.parseBlob(target) as WorkReportHash,
-    age as Epoch,
-    votes.map(createVote) as (typeof Verdict)["prototype"]["votes"],
-  );
+  new Verdict(Bytes.parseBytes(target, HASH_SIZE).asOpaque(), tryAsEpoch(age), asKnownSize(votes.map(createVote)));
 const createCulprit = ({ target, key, signature }: { target: string; key: string; signature: string }) =>
   new Culprit(
-    Bytes.parseBlob(target) as WorkReportHash,
-    Bytes.parseBlob(key) as Ed25519Key,
-    Bytes.parseBlob(signature) as Ed25519Signature,
+    Bytes.parseBytes(target, HASH_SIZE).asOpaque(),
+    Bytes.parseBytes(key, ED25519_KEY_BYTES).asOpaque(),
+    Bytes.parseBytes(signature, ED25519_SIGNATURE_BYTES).asOpaque(),
   );
 const createFault = ({
   target,
@@ -56,12 +48,12 @@ const createFault = ({
   signature,
 }: { target: string; vote: boolean; key: string; signature: string }) =>
   new Fault(
-    Bytes.parseBlob(target) as WorkReportHash,
+    Bytes.parseBytes(target, HASH_SIZE).asOpaque(),
     vote,
-    Bytes.parseBlob(key) as Ed25519Key,
-    Bytes.parseBlob(signature) as Ed25519Signature,
+    Bytes.parseBytes(key, ED25519_KEY_BYTES).asOpaque(),
+    Bytes.parseBytes(signature, ED25519_SIGNATURE_BYTES).asOpaque(),
   );
-const createOffender = (blob: string) => Bytes.parseBlob(blob);
+const createOffender = (blob: string): Ed25519Key => Bytes.parseBytes(blob, ED25519_KEY_BYTES).asOpaque();
 
 describe("Disputes", () => {
   const currentValidatorData = tryAsPerValidator(
@@ -206,7 +198,7 @@ describe("Disputes", () => {
       votes: [
         {
           vote: true,
-          index: 99999,
+          index: 65000,
           signature:
             "0x0b1e29dbda5e3bba5dde21c81a8178b115ebf0cf5920fe1a38e897ecadd91718e34bf01c9fc7fdd0df31d83020231b6e8338c8dc204b618cbde16a03cb269d05",
         },

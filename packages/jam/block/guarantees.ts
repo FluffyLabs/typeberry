@@ -1,9 +1,9 @@
 import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
+import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/crypto";
 import { WithDebug } from "@typeberry/utils";
 import { codecKnownSizeArray, codecWithContext } from "./codec";
 import type { TimeSlot, ValidatorIndex } from "./common";
-import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "./crypto";
 import { WorkReport } from "./work-report";
 
 /**
