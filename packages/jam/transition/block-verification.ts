@@ -52,11 +52,17 @@ export class BlockVerifier {
 
     // Check if the state root is valid.
     // https://graypaper.fluffylabs.dev/#/cc517d7/0c18010c1801?v=0.6.5
-    // const stateRoot = headerView.priorStateRoot.materialize();
-    // const posteriorStateRoot = this.blocks.getPosteriorStateRoot(parentHash);
-    // if (stateRoot !== posteriorStateRoot) {
-    //   return Result.error(BlockVerifierError.InvalidStateRoot, `Invalid state root: ${stateRoot}, expected ${posteriorStateRoot}`);
-    // }
+    const stateRoot = headerView.priorStateRoot.materialize();
+    const posteriorStateRoot = this.blocks.getPostStateRoot(parentHash);
+    if (posteriorStateRoot === null) {
+      return Result.error(BlockVerifierError.ParentNotFound, `Posterior state root ${parentHash.toString()} not found`);
+    }
+    if (stateRoot !== posteriorStateRoot) {
+      return Result.error(
+        BlockVerifierError.InvalidStateRoot,
+        `Invalid state root: ${stateRoot.toString()}, expected ${posteriorStateRoot.toString()}`,
+      );
+    }
 
     const headerHash = this.hasher.header(headerView);
 
