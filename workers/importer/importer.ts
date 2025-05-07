@@ -66,7 +66,13 @@ export class Importer {
     const stateRoot = merkelizeState(serializeState(this.stf.state, this.spec));
     const writeState = this.states.insertFullState(stateRoot, this.stf.state);
     const writeBlocks = this.blocks.insertBlock(new WithHash(headerHash, block));
-    await Promise.all([writeState, writeBlocks]);
+    // we update the posterior state root of the previous block.
+    // in case of forks we might do that mutliple times, but
+    // it's fine, since it MUST be the same if the block is valid.
+    const previousHash = block.header.view().parentHeaderHash.materialize();
+    const writePostState = this.blocks.setPostStateRoot(previousHash, stateRoot);
+
+    await Promise.all([writeState, writeBlocks, writePostState]);
     await this.blocks.setBestData(headerHash, stateRoot);
 
     return Result.ok(new WithHash(headerHash, block.header.view()));
