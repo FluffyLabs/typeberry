@@ -48,13 +48,13 @@ export class Importer {
 
   async importBlock(block: BlockView): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
     this.logger.log("🧱 Attempting to import a new block.");
-    const timeSlot = block.header.view().timeSlotIndex.materialize();
 
-    const hash = await this.verifier.verifyBlock(block, timeSlot);
+    const hash = await this.verifier.verifyBlock(block);
     if (hash.isError) {
       return importerError(ImporterErrorKind.Verifier, hash);
     }
 
+    const timeSlot = block.header.view().timeSlotIndex.materialize();
     this.logger.log(`🧱 Got hash ${hash.ok} for block at slot ${timeSlot}.`);
     const headerHash = hash.ok;
     const res = await this.stf.transition(block, headerHash);

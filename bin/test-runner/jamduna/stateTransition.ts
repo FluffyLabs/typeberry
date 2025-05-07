@@ -53,7 +53,7 @@ export async function runStateTransition(testContent: StateTransition, _path: st
   assert.deepStrictEqual(testContent.post_state.state_root.toString(), postStateRoot.toString());
 
   const verifier = new BlockVerifier(stf.hasher, blocksDb);
-  const verificationResult = await verifier.verifyBlock(blockView, stf.state.timeslot);
+  const verificationResult = await verifier.verifyBlock(blockView);
   if (verificationResult.isError) {
     assert.fail(`Block verification failed, got: ${JSON.stringify(verificationResult.error)}`);
   }

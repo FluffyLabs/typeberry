@@ -1,15 +1,7 @@
-import {
-  Extrinsic,
-  type ExtrinsicHash,
-  type ExtrinsicView,
-  type HeaderHash,
-  type HeaderView,
-  type TimeSlot,
-  type WorkReportHash,
-} from "@typeberry/block";
+import type { ExtrinsicHash, ExtrinsicView, HeaderHash, HeaderView, TimeSlot, WorkReportHash } from "@typeberry/block";
 import { WorkPackage } from "@typeberry/block/work-package";
 import type { WorkPackageHash } from "@typeberry/block/work-report";
-import type { BytesBlob } from "@typeberry/bytes";
+import { BytesBlob } from "@typeberry/bytes";
 import { type Codec, Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import {
@@ -23,6 +15,12 @@ import {
   keccak,
 } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
+
+const GUARENTEE_CODEC = codec.object({
+  workReportHash: codec.bytes(HASH_SIZE).asOpaque<WorkReportHash>(),
+  timeSlot: codec.u32.asOpaque<TimeSlot>(),
+  credentials: codec.blob,
+});
 
 export class TransitionHasher implements MmrHasher<KeccakHash> {
   constructor(
@@ -42,29 +40,18 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
     return new WithHash(blake2b.hashBytes(header.encoded(), this.allocator).asOpaque(), header);
   }
 
-  extrinsic(extrinsic: Extrinsic): WithHashAndBytes<ExtrinsicHash, Extrinsic> {
-    // TODO [ToDr] This is incorrect, since extrinc hash should be a merkle root.
-    return this.encode(Extrinsic.Codec, extrinsic);
-  }
-
   /**
    * Merkle commitment of the extrinsic data
    *
    * https://graypaper.fluffylabs.dev/#/cc517d7/0ca1000ca200?v=0.6.5
    */
-  extrinsicHash(extrinsicView: ExtrinsicView): WithHashAndBytes<ExtrinsicHash, ExtrinsicView> {
-    const guaranteeCodec = codec.object({
-      workReportHash: codec.bytes(HASH_SIZE).asOpaque<WorkReportHash>(),
-      timeSlot: codec.u32.asOpaque<TimeSlot>(),
-      credentials: codec.blob,
-    });
-
+  extrinsic(extrinsicView: ExtrinsicView): WithHashAndBytes<ExtrinsicHash, ExtrinsicView> {
     const guarantees: BytesBlob[] = [];
 
     // https://graypaper.fluffylabs.dev/#/cc517d7/0cfb000cfb00?v=0.6.5
     for (const guarantee of extrinsicView.guarantees.view().map((g) => g.view())) {
       const reportHash = blake2b.hashBytes(guarantee.report.encoded(), this.allocator).asOpaque<WorkReportHash>();
-      const guaranteeEncoded = Encoder.encodeObject(guaranteeCodec, {
+      const guaranteeEncoded = Encoder.encodeObject(GUARENTEE_CODEC, {
         workReportHash: reportHash,
         timeSlot: guarantee.slot.materialize(),
         credentials: guarantee.credentials.encoded(),
@@ -80,23 +67,7 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
     const ea = blake2b.hashBytes(extrinsicView.assurances.encoded(), this.allocator).asOpaque<ExtrinsicHash>();
     const ed = blake2b.hashBytes(extrinsicView.disputes.encoded(), this.allocator).asOpaque<ExtrinsicHash>();
 
-    const encoded = Encoder.encodeObject(
-      codec.object({
-        tickets: codec.bytes(HASH_SIZE).asOpaque<ExtrinsicHash>(),
-        preimages: codec.bytes(HASH_SIZE).asOpaque<ExtrinsicHash>(),
-        guarantees: codec.bytes(HASH_SIZE).asOpaque<ExtrinsicHash>(),
-        assurances: codec.bytes(HASH_SIZE).asOpaque<ExtrinsicHash>(),
-        disputes: codec.bytes(HASH_SIZE).asOpaque<ExtrinsicHash>(),
-      }),
-      {
-        tickets: et,
-        preimages: ep,
-        guarantees: eg,
-        assurances: ea,
-        disputes: ed,
-      },
-      this.context,
-    );
+    const encoded = BytesBlob.blobFromParts([et.raw, ep.raw, eg.raw, ea.raw, ed.raw]);
 
     return new WithHashAndBytes(blake2b.hashBytes(encoded, this.allocator).asOpaque(), extrinsicView, encoded);
   }

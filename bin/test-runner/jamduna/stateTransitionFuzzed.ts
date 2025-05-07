@@ -45,7 +45,7 @@ export async function runStateTransitionFuzzed(testContent: StateTransitionFuzze
   assert.deepStrictEqual(testContent.pre_state.state_root.toString(), preStateRoot.toString());
 
   const verifier = new BlockVerifier(stf.hasher, blocksDb);
-  const verificationResult = await verifier.verifyBlock(blockView, stf.state.timeslot);
+  const verificationResult = await verifier.verifyBlock(blockView);
   if (verificationResult.isError) {
     assert.fail(`Block verification failed, got: ${JSON.stringify(verificationResult.error)}`);
   }
