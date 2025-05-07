@@ -306,15 +306,6 @@ export namespace codec {
     (s) => s.bool(),
   );
 
-  /** Just dump the entire blob as-is. */
-  export const dump = Descriptor.new<BytesBlob>(
-    "Dump",
-    { bytes: TYPICAL_SEQUENCE_LENGTH, isExact: false },
-    (e, v) => e.bytes(Bytes.fromBlob(v.raw, v.raw.length)),
-    (d) => BytesBlob.blobFrom(d.bytes(d.source.length - d.bytesRead()).raw),
-    (s) => s.bytes(s.decoder.source.length - s.decoder.bytesRead()),
-  );
-
   /** Variable-length bytes blob. */
   export const blob = Descriptor.new<BytesBlob>(
     "BytesBlob",

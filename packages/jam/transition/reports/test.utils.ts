@@ -33,7 +33,6 @@ import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Signature } fro
 import { HASH_SIZE, type KeccakHash, type OpaqueHash, WithHash, blake2b, keccak } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { tryAsGas } from "@typeberry/pvm-interpreter";
 import {
   AvailabilityAssignment,
   ENTROPY_ENTRIES,
@@ -328,8 +327,8 @@ export const initialServices = ({ withDummyCodeHash = false } = {}): Map<Service
               HASH_SIZE,
             ).asOpaque(),
         balance: tryAsU64(0),
-        accumulateMinGas: tryAsGas(10_000),
-        onTransferMinGas: tryAsGas(0),
+        accumulateMinGas: tryAsServiceGas(10_000),
+        onTransferMinGas: tryAsServiceGas(0),
         storageUtilisationBytes: tryAsU64(1),
         storageUtilisationCount: tryAsU32(1),
       }),

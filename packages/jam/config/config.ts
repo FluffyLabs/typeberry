@@ -9,12 +9,12 @@ export class Config {
    * this function is re-initializing proper types.
    */
   static reInit(config: unknown) {
-    const { chainSpec, blocksDbPath } = config as Config;
-    return new Config(new ChainSpec(chainSpec), blocksDbPath);
+    const { chainSpec, dbPath } = config as Config;
+    return new Config(new ChainSpec(chainSpec), dbPath);
   }
 
   constructor(
     public readonly chainSpec: ChainSpec,
-    public readonly blocksDbPath: string,
+    public readonly dbPath: string,
   ) {}
 }

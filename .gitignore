@@ -1,5 +1,6 @@
 jamtestvectors
-bin/jam/blocks-db
+database
+bin/jam/database
 
 # Logs
 logs

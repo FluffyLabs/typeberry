@@ -1,31 +1,27 @@
 import { BytesBlob } from "@typeberry/bytes";
 import type { PreimageDb } from "@typeberry/database";
 import { type OpaqueHash, WithHash } from "@typeberry/hash";
-import lmdb from "lmdb";
+import type { LmdbRoot, SubDb } from "./root";
 
 // TODO [ToDr] Preimages should probably have an availability information.
 // i.e. we might have something in the DB, but it should not be available
 // in some block yet.
 export class LmdbPreimages implements PreimageDb {
-  readonly root: lmdb.RootDatabase<Uint8Array, lmdb.Key>;
+  preimages: SubDb;
 
-  constructor(dbPath: string) {
-    this.root = lmdb.open(dbPath, {
-      compression: true,
-      keyEncoding: "binary",
-      encoding: "binary",
-    });
+  constructor(private readonly root: LmdbRoot) {
+    this.preimages = this.root.subDb("preimages");
   }
 
   get<T extends OpaqueHash>(hash: T): WithHash<T, BytesBlob> | null {
-    const preimage = this.root.get(hash.raw);
+    const preimage = this.preimages.get(hash.raw);
     return preimage !== undefined ? new WithHash(hash, BytesBlob.blobFrom(preimage)) : null;
   }
 
   set<T extends OpaqueHash>(...data: WithHash<T, BytesBlob>[]): Promise<void> {
-    return this.root.transaction(() => {
+    return this.preimages.transaction(() => {
       for (const d of data) {
-        this.root.put(d.hash.raw, d.data.raw);
+        this.preimages.put(d.hash.raw, d.data.raw);
       }
     });
   }

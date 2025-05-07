@@ -1,4 +1,4 @@
-import { type ServiceId, type StateRootHash, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
+import { type ServiceId, type StateRootHash, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, type Descriptor, codec } from "@typeberry/codec";
@@ -7,7 +7,6 @@ import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { tryAsGas } from "@typeberry/pvm-interpreter";
 import {
   LookupHistoryItem,
   type PartialState,
@@ -179,8 +178,8 @@ function findOrAddService(s: PartialState, serviceId: ServiceId) {
     info: ServiceAccountInfo.fromCodec({
       codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
       balance: tryAsU64(0),
-      accumulateMinGas: tryAsGas(10_000),
-      onTransferMinGas: tryAsGas(1_000),
+      accumulateMinGas: tryAsServiceGas(10_000),
+      onTransferMinGas: tryAsServiceGas(1_000),
       storageUtilisationBytes: tryAsU64(0),
       storageUtilisationCount: tryAsU32(0),
     }),

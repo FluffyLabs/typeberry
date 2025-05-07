@@ -3,7 +3,8 @@ import { isMainThread, parentPort } from "node:worker_threads";
 import { setTimeout } from "node:timers/promises";
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
-import { LmdbBlocks } from "@typeberry/database-lmdb";
+import { LmdbBlocks, LmdbStates } from "@typeberry/database-lmdb";
+import { LmdbRoot } from "@typeberry/database-lmdb/root";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
@@ -43,12 +44,14 @@ export async function main(channel: MessageChannelStateMachine<GeneratorInit, Ge
   // Await the configuration object
   const ready = await channel.waitForState<GeneratorReady>("ready(generator)");
   const config = ready.currentState().getConfig();
-  const blocks = new LmdbBlocks(config.chainSpec, config.blocksDbPath);
+  const lmdb = new LmdbRoot(config.dbPath);
+  const blocks = new LmdbBlocks(config.chainSpec, lmdb);
+  const states = new LmdbStates(config.chainSpec, lmdb);
 
   // Generate blocks until the close signal is received.
   const finished = await ready.doUntil<Finished>("finished", async (worker, port, isFinished) => {
     let counter = 0;
-    const generator = new Generator(config.chainSpec, await keccak.KeccakHasher.create(), blocks);
+    const generator = new Generator(config.chainSpec, await keccak.KeccakHasher.create(), blocks, states);
     while (!isFinished()) {
       counter += 1;
       const newBlock = await generator.nextEncodedBlock();

@@ -42,12 +42,17 @@ export class DisputesRecords {
     public punishSet: SortedSet<Ed25519Key>,
   ) {}
 
-  static fromSortedArrays(
-    goodSet: WorkReportHash[],
-    badSet: WorkReportHash[],
-    wonkySet: WorkReportHash[],
-    punishSet: Ed25519Key[],
-  ) {
+  static fromSortedArrays({
+    goodSet,
+    badSet,
+    wonkySet,
+    punishSet,
+  }: {
+    goodSet: WorkReportHash[];
+    badSet: WorkReportHash[];
+    wonkySet: WorkReportHash[];
+    punishSet: Ed25519Key[];
+  }) {
     return new DisputesRecords(
       SortedSet.fromSortedArray(hashComparator, goodSet),
       SortedSet.fromSortedArray(hashComparator, badSet),
