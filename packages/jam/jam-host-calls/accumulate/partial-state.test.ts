@@ -7,12 +7,12 @@ import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { ValidatorData } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
-import type {
-  AccumulationPartialState,
-  PreimageStatusResult,
-  QuitError,
-  RequestPreimageError,
-  TRANSFER_MEMO_BYTES,
+import {
+  type AccumulationPartialState,
+  type PreimageStatusResult,
+  type QuitError,
+  type RequestPreimageError,
+  type TRANSFER_MEMO_BYTES,
   TransferError,
 } from "./partial-state";
 
@@ -63,11 +63,14 @@ export class TestAccumulate implements AccumulationPartialState {
   }
 
   transfer(
-    destination: ServiceId,
+    destination: ServiceId | null,
     amount: U64,
     suppliedGas: Gas,
     memo: Bytes<TRANSFER_MEMO_BYTES>,
   ): Result<OK, TransferError> {
+    if (destination === null) {
+      return Result.error(TransferError.DestinationNotFound);
+    }
     this.transferData.push([destination, amount, suppliedGas, memo]);
     return this.transferReturnValue;
   }

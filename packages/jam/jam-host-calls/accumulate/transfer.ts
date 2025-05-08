@@ -40,13 +40,6 @@ export class Transfer implements HostCallHandler {
   async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `d`: destination
     const destination = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
-
-    // TODO [ToDr] This is wrong. We should not panic if destination
-    // is not a valid service id, but rather return WHO.
-    if (destination === null) {
-      return PvmExecution.Panic;
-    }
-
     // `a`: amount
     const amount = regs.get(AMOUNT_REG);
     // `l`: gas
