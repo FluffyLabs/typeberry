@@ -102,7 +102,7 @@ export class Decoder {
   /**
    * Return all remaining bytes as BytesBlob and move offset to the end.
    */
-  getRemainingBytes(): BytesBlob {
+  remainingBytes(): BytesBlob {
     const bytes = this.source.subarray(this.offset);
     const length = bytes.length;
     this.offset += length;
