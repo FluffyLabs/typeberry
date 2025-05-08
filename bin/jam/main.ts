@@ -204,6 +204,7 @@ async function initializeDatabase(
   // write to db
   await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(genesisHeaderHash, blockView));
   await states.insertFullState(genesisStateRootHash, genesisState);
+  await blocks.setPostStateRoot(genesisHeaderHash, genesisStateRootHash);
   await blocks.setBestData(genesisHeaderHash, genesisStateRootHash);
 
   // close the DB
