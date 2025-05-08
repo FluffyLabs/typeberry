@@ -5,18 +5,18 @@ import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import { WebSocketServer } from "ws";
 import type { WebSocket } from "ws";
 import { loadMethods } from "./methodLoader";
-import { MethodRegistry } from "./methodRegistry";
-import type { DatabaseContext, JsonRpcRequest, JsonRpcResponse } from "./types";
+import type { DatabaseContext, JsonRpcRequest, JsonRpcResponse, RpcMethod } from "./types";
 
 export class RpcServer {
   private wss: WebSocketServer;
-  private methodRegistry: MethodRegistry;
+  private methods: Map<string, RpcMethod>;
   private rootDb: LmdbRoot;
   private blocks: LmdbBlocks;
   private states: LmdbStates;
 
   constructor(port: number, dbPath: string, genesisRoot: string, chainSpec: ChainSpec = tinyChainSpec) {
     this.wss = new WebSocketServer({ port });
+    this.methods = new Map();
 
     const fullDbPath = `${dbPath}/${genesisRoot}`;
     if (!existsSync(fullDbPath)) {
@@ -26,9 +26,7 @@ export class RpcServer {
     this.blocks = new LmdbBlocks(chainSpec, this.rootDb);
     this.states = new LmdbStates(chainSpec, this.rootDb);
 
-    this.methodRegistry = new MethodRegistry();
-    loadMethods(this.methodRegistry);
-
+    loadMethods(this.methods);
     this.setupWebSocket();
     console.info(`Server listening on port ${port}...`);
   }
@@ -63,7 +61,7 @@ export class RpcServer {
   private async handleRequest(request: JsonRpcRequest): Promise<JsonRpcResponse> {
     const { method, params, id } = request;
 
-    const handler = this.methodRegistry.get(method);
+    const handler = this.methods.get(method);
     if (!handler) {
       return {
         jsonrpc: "2.0",
@@ -105,6 +103,5 @@ export class RpcServer {
       this.wss.close(() => resolve());
     });
     await this.rootDb.db.close();
-    console.info("Connections closed");
   }
 }

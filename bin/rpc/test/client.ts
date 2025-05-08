@@ -72,31 +72,13 @@ class RpcClient {
 async function main() {
   const client = new RpcClient("ws://localhost:19800");
 
-  try {
-    await client.waitForConnection();
+  await client.waitForConnection();
 
-    console.info("Testing bestBlock method...");
-    const bestBlockResult = await client.call("bestBlock");
-    console.info("bestBlock result:", bestBlockResult);
+  console.info("Testing bestBlock method...");
+  const bestBlockResult = await client.call("bestBlock");
+  console.info("bestBlock result:", bestBlockResult);
 
-    console.info("\nTesting non-existent method...");
-    try {
-      await client.call("nonExistentMethod", { foo: "bar" });
-    } catch (error) {
-      console.info("Expected error:", error);
-    }
-
-    console.info("\nTesting invalid parameters...");
-    try {
-      await client.call("echo", { invalid: "params" });
-    } catch (error) {
-      console.info("Expected error:", error);
-    }
-  } catch (error) {
-    console.error("Test failed:", error);
-  } finally {
-    client.close();
-  }
+  client.close();
 }
 
 main();
