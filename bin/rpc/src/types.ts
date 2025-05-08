@@ -1,5 +1,6 @@
+import type { ChainSpec } from "@typeberry/config";
 import type { LmdbBlocks, LmdbStates } from "@typeberry/database-lmdb";
-import { U32 } from "@typeberry/numbers";
+import type { U32 } from "@typeberry/numbers";
 
 export type JsonRpcId = string | number | null;
 
@@ -33,7 +34,7 @@ export interface DatabaseContext {
   states: LmdbStates;
 }
 
-export type RpcMethod = (params: unknown, db: DatabaseContext) => Promise<unknown>;
+export type RpcMethod = (params: unknown, db: DatabaseContext, chainSpec: ChainSpec) => Promise<unknown>;
 
 export type Hash = number[];
 export type Slot = U32;

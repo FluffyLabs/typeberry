@@ -78,6 +78,10 @@ async function main() {
   const bestBlockResult = await client.call("bestBlock");
   console.info("bestBlock result:", bestBlockResult);
 
+  console.info("Testing parameters method...");
+  const parametersResult = await client.call("parameters");
+  console.info("parameters result:", parametersResult);
+
   client.close();
 }
 
