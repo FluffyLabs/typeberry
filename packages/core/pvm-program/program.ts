@@ -6,7 +6,7 @@ import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
 
 export class Program {
   static fromSpi(blob: Uint8Array, args: Uint8Array, hasMetadata: boolean) {
-    const { code: spiCode } = hasMetadata ? extractCodeAndMetadata(blob) : { code: blob };
+    const { code: spiCode, metadata } = hasMetadata ? extractCodeAndMetadata(blob) : { code: blob };
     const { code, memory: rawMemory, registers } = decodeStandardProgram(spiCode, args);
     const regs = new Registers();
     regs.copyFrom(registers);
@@ -28,20 +28,21 @@ export class Program {
     const heapEnd = tryAsSbrkIndex(rawMemory.heapEnd);
     const memory = memoryBuilder.finalize(heapStart, heapEnd);
 
-    return new Program(code, regs, memory);
+    return new Program(code, regs, memory, metadata);
   }
 
   static fromGeneric(blob: Uint8Array, hasMetadata: boolean) {
-    const { code } = hasMetadata ? extractCodeAndMetadata(blob) : { code: blob };
+    const { code, metadata } = hasMetadata ? extractCodeAndMetadata(blob) : { code: blob };
     const regs = new Registers();
     const memory = new Memory();
-    return new Program(code, regs, memory);
+    return new Program(code, regs, memory, metadata);
   }
 
   private constructor(
     public readonly code: Uint8Array,
     public readonly registers: Registers,
     public readonly memory: Memory,
+    public metadata: Uint8Array = new Uint8Array(),
   ) {}
 }
 
