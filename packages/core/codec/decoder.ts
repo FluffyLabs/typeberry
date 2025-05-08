@@ -99,6 +99,16 @@ export class Decoder {
     return this.offset;
   }
 
+  /**
+   * Return all remaining bytes as BytesBlob and move offset to the end.
+   */
+  remainingBytes(): BytesBlob {
+    const bytes = this.source.subarray(this.offset);
+    const length = bytes.length;
+    this.offset += length;
+    return Bytes.fromBlob(bytes, length);
+  }
+
   /** Decode single byte as a signed number. */
   i8(): number {
     return this.getNum(1, () => this.dataView.getInt8(this.offset));
