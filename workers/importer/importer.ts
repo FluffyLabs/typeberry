@@ -5,7 +5,7 @@ import { WithHash } from "@typeberry/hash";
 import type { Logger } from "@typeberry/logger";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
-import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verification";
+import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verifier";
 import { OnChain, type StfError } from "@typeberry/transition/chain-stf";
 import { type ErrorResult, Result, type TaggedError } from "@typeberry/utils";
 

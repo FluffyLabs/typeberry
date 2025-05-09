@@ -8,7 +8,7 @@ import { SimpleAllocator, keccak } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
-import { BlockVerifier } from "@typeberry/transition/block-verification";
+import { BlockVerifier } from "@typeberry/transition/block-verifier";
 import { OnChain } from "@typeberry/transition/chain-stf";
 import { TestState, loadState } from "./stateLoader";
 
