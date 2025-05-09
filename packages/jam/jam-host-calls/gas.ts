@@ -18,10 +18,7 @@ export class Gas implements HostCallHandler {
   currentServiceId = CURRENT_SERVICE_ID;
 
   execute(gas: GasCounter, regs: HostCallRegisters): Promise<undefined | PvmExecution> {
-    const bigGas = tryAsU64(gas.get());
-
-    regs.set(7, bigGas);
-
+    regs.set(7, tryAsU64(gas.get()));
     return Promise.resolve(undefined);
   }
 }
