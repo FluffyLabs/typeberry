@@ -1,10 +1,10 @@
-import type { Ed25519Key, PerValidator, TimeSlot, WorkReportHash } from "@typeberry/block";
+import type { PerValidator, TimeSlot, WorkReportHash } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
 import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
 import { type BytesBlob, bytesBlobComparator } from "@typeberry/bytes";
 import { type HashDictionary, type KnownSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { ed25519 } from "@typeberry/crypto";
+import { type Ed25519Key, ed25519 } from "@typeberry/crypto";
 import { type KeccakHash, WithHash, blake2b } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
 import { AvailabilityAssignment, type State } from "@typeberry/state";

@@ -1,8 +1,8 @@
-import type { CoreIndex, Ed25519Key, PerValidator, TimeSlot, WorkReportHash } from "@typeberry/block";
+import type { CoreIndex, PerValidator, TimeSlot, WorkReportHash } from "@typeberry/block";
 import { type GuaranteesExtrinsicView, REQUIRED_CREDENTIALS_RANGE } from "@typeberry/block/guarantees";
 import { BytesBlob } from "@typeberry/bytes";
 import type { KnownSizeArray } from "@typeberry/collections";
-import type { ed25519 } from "@typeberry/crypto";
+import type { Ed25519Key, ed25519 } from "@typeberry/crypto";
 import { Result } from "@typeberry/utils";
 import { ReportsError } from "./error";
 

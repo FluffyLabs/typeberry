@@ -21,6 +21,18 @@ describe("InMemoryDatabase", () => {
     );
   });
 
+  it("should set and retrieve post state root", () => {
+    const db = new InMemoryBlocks();
+
+    db.setPostStateRoot(Bytes.fill(HASH_SIZE, 5).asOpaque(), Bytes.fill(HASH_SIZE, 10).asOpaque());
+
+    assert.strictEqual(db.getPostStateRoot(Bytes.fill(HASH_SIZE, 1).asOpaque())?.toString(), undefined);
+    assert.strictEqual(
+      db.getPostStateRoot(Bytes.fill(HASH_SIZE, 5).asOpaque())?.toString(),
+      "0x0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+    );
+  });
+
   it("should store and retrieve a block", () => {
     const db = new InMemoryBlocks();
     const block = testBlockView();

@@ -1,6 +1,7 @@
-import type { Ed25519Key, WorkReportHash } from "@typeberry/block";
+import type { WorkReportHash } from "@typeberry/block";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { SortedSet } from "@typeberry/collections";
+import type { Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 
 const sortedSetCodec = <T extends OpaqueHash>() =>

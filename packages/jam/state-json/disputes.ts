@@ -1,5 +1,6 @@
-import type { Ed25519Key, WorkReportHash } from "@typeberry/block";
+import type { WorkReportHash } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
+import type { Ed25519Key } from "@typeberry/crypto";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { DisputesRecords } from "@typeberry/state";
 

@@ -153,7 +153,7 @@ class PvmExecutor {
   }
 
   async run(args: BytesBlob, gas: Gas): Promise<BytesBlob> {
-    const program = Program.fromSpi(this.serviceCode.raw, args.raw);
+    const program = Program.fromSpi(this.serviceCode.raw, args.raw, true);
 
     const result = await this.pvm.runProgram(program.code, 5, gas, program.registers, program.memory);
     if (!(result instanceof Uint8Array)) {

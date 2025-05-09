@@ -1,7 +1,7 @@
-import type { Ed25519Key, Ed25519Signature, WorkReportHash } from "@typeberry/block";
+import type { WorkReportHash } from "@typeberry/block";
 import type { Culprit, Fault, Judgement } from "@typeberry/block/disputes";
 import { BytesBlob } from "@typeberry/bytes";
-import { ed25519 } from "@typeberry/crypto";
+import { type Ed25519Key, type Ed25519Signature, ed25519 } from "@typeberry/crypto";
 
 type InputItem = ed25519.Input<BytesBlob>;
 
