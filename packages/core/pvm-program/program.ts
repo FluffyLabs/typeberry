@@ -1,11 +1,13 @@
+import { Decoder } from "@typeberry/codec";
 import { Memory, MemoryBuilder } from "@typeberry/pvm-interpreter/memory";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
 
 export class Program {
-  static fromSpi(rawProgram: Uint8Array, args: Uint8Array) {
-    const { code, memory: rawMemory, registers } = decodeStandardProgram(rawProgram, args);
+  static fromSpi(blob: Uint8Array, args: Uint8Array, hasMetadata: boolean) {
+    const { code: spiCode, metadata } = hasMetadata ? extractCodeAndMetadata(blob) : { code: blob };
+    const { code, memory: rawMemory, registers } = decodeStandardProgram(spiCode, args);
     const regs = new Registers();
     regs.copyFrom(registers);
     const memoryBuilder = new MemoryBuilder();
@@ -26,18 +28,32 @@ export class Program {
     const heapEnd = tryAsSbrkIndex(rawMemory.heapEnd);
     const memory = memoryBuilder.finalize(heapStart, heapEnd);
 
-    return new Program(code, regs, memory);
+    return new Program(code, regs, memory, metadata);
   }
 
-  static fromGeneric(rawProgram: Uint8Array) {
+  static fromGeneric(blob: Uint8Array, hasMetadata: boolean) {
+    const { code, metadata } = hasMetadata ? extractCodeAndMetadata(blob) : { code: blob };
     const regs = new Registers();
     const memory = new Memory();
-    return new Program(rawProgram, regs, memory);
+    return new Program(code, regs, memory, metadata);
   }
 
   private constructor(
     public readonly code: Uint8Array,
     public readonly registers: Registers,
     public readonly memory: Memory,
+    public metadata: Uint8Array = new Uint8Array(),
   ) {}
+}
+
+/**
+ * A function that splits preimage into metadata and code.
+ *
+ * https://graypaper.fluffylabs.dev/#/cc517d7/109a01109a01?v=0.6.5
+ */
+export function extractCodeAndMetadata(blobWithMetadata: Uint8Array) {
+  const decoder = Decoder.fromBlob(blobWithMetadata);
+  const metadata = decoder.bytesBlob().raw;
+  const code = decoder.remainingBytes().raw;
+  return { metadata, code };
 }
