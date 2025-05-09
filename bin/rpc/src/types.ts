@@ -7,13 +7,13 @@ export type JsonRpcId = string | number | null;
 export interface JsonRpcRequest {
   jsonrpc: "2.0";
   method: string;
-  params?: unknown;
+  params?: unknown[];
   id?: JsonRpcId;
 }
 
 export interface JsonRpcSuccessResponse {
   jsonrpc: "2.0";
-  result: unknown;
+  result: unknown[] | null;
   id: JsonRpcId;
 }
 
@@ -34,7 +34,12 @@ export interface DatabaseContext {
   states: LmdbStates;
 }
 
-export type RpcMethod = (params: unknown, db: DatabaseContext, chainSpec: ChainSpec) => Promise<unknown>;
+export type RpcMethod<T extends unknown[], R extends unknown[]> = (
+  params: T,
+  db: DatabaseContext,
+  chainSpec: ChainSpec,
+) => Promise<R>;
 
 export type Hash = number[];
 export type Slot = U32;
+export type Parameters = ChainSpec;

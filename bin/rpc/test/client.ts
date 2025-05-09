@@ -42,7 +42,7 @@ class RpcClient {
     return this.connectionPromise;
   }
 
-  async call(method: string, params?: unknown): Promise<unknown> {
+  async call(method: string, params?: unknown[]): Promise<unknown[] | null> {
     return new Promise((resolve, reject) => {
       const id = this.nextId++;
       const request: JsonRpcRequest = {
@@ -81,6 +81,12 @@ async function main() {
   console.info("Testing parameters method...");
   const parametersResult = await client.call("parameters");
   console.info("parameters result:", parametersResult);
+
+  if (bestBlockResult) {
+    console.info("Testing parent method...");
+    const parentResult = await client.call("parent", [bestBlockResult[0]]);
+    console.info("parent result:", parentResult);
+  }
 
   client.close();
 }

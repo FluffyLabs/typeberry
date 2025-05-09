@@ -1,6 +1,5 @@
-import type { ChainSpec } from "@typeberry/config";
-import type { RpcMethod } from "../types";
+import type { Parameters, RpcMethod } from "../types";
 
-export const parameters: RpcMethod = async (_params, _db, chainSpec): Promise<[ChainSpec]> => {
+export const parameters: RpcMethod<[], [Parameters]> = async (_params, _db, chainSpec) => {
   return [chainSpec];
 };

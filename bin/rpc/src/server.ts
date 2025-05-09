@@ -1,6 +1,5 @@
 import { existsSync } from "node:fs";
 import type { ChainSpec } from "@typeberry/config";
-import { tinyChainSpec } from "@typeberry/config";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import { WebSocketServer } from "ws";
 import type { WebSocket } from "ws";
@@ -9,7 +8,8 @@ import type { DatabaseContext, JsonRpcRequest, JsonRpcResponse, RpcMethod } from
 
 export class RpcServer {
   private wss: WebSocketServer;
-  private methods: Map<string, RpcMethod>;
+  // biome-ignore lint/suspicious/noExplicitAny: the map must be able to store methods with any parameters and return values
+  private methods: Map<string, RpcMethod<any, any>>;
   private rootDb: LmdbRoot;
   private blocks: LmdbBlocks;
   private states: LmdbStates;
@@ -80,7 +80,7 @@ export class RpcServer {
         blocks: this.blocks,
         states: this.states,
       };
-      const result = await handler(params, db, this.chainSpec);
+      const result = await handler(params ?? [], db, this.chainSpec);
 
       return {
         jsonrpc: "2.0",
