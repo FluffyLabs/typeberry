@@ -10,7 +10,7 @@ import { CURRENT_SERVICE_ID } from "./utils";
  *
  * NOTE it should be the gas left is AFTER this function is invoked.
  *
- * https://graypaper.fluffylabs.dev/#/4bb8fd2/2f84012f8401
+ * https://graypaper.fluffylabs.dev/#/9a08063/311301311301?v=0.6.6
  */
 export class Gas implements HostCallHandler {
   index = tryAsHostCallIndex(0);
