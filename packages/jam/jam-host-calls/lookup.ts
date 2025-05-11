@@ -19,7 +19,7 @@ const IN_OUT_REG = 7;
 /**
  * Lookup a preimage.
  *
- * https://graypaper.fluffylabs.dev/#/85129da/2fa7012fa701?v=0.6.3
+ * https://graypaper.fluffylabs.dev/#/9a08063/329802329802?v=0.6.6
  */
 export class Lookup implements HostCallHandler {
   index = tryAsHostCallIndex(1);
