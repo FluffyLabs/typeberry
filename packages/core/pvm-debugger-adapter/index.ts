@@ -14,3 +14,4 @@ export { Program } from "@typeberry/pvm-program";
 export { BasicBlocks } from "@typeberry/pvm-interpreter/basic-blocks";
 export { DebuggerAdapter as Pvm } from "./debugger-adapter";
 export * from "@typeberry/jam-host-calls";
+export * from "@typeberry/numbers";
