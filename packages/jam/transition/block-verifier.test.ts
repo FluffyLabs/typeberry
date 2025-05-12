@@ -15,6 +15,7 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { HASH_SIZE, SimpleAllocator, WithHash, keccak } from "@typeberry/hash";
+import { Result } from "@typeberry/utils";
 import { BlockVerifier, BlockVerifierError } from "./block-verifier";
 import { TransitionHasher } from "./hasher";
 
@@ -101,8 +102,13 @@ describe("Block Verifier", async () => {
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
 
-    assert.strictEqual(result.isError, true);
-    assert.strictEqual(result.error, BlockVerifierError.ParentNotFound);
+    assert.deepStrictEqual(
+      result,
+      Result.error(
+        BlockVerifierError.ParentNotFound,
+        "Parent 0x0808080808080808080808080808080808080808080808080808080808080808 not found",
+      ),
+    );
   });
 
   it("should return InvalidTimeSlot error if current block is older than parent block", async () => {
@@ -114,11 +120,10 @@ describe("Block Verifier", async () => {
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
 
-    const parentHeader = blocksDb.getHeader(block.header.parentHeaderHash);
-    assert(parentHeader !== null);
-    assert(block.header.timeSlotIndex < parentHeader.timeSlotIndex.materialize());
-    assert.strictEqual(result.isError, true);
-    assert.strictEqual(result.error, BlockVerifierError.InvalidTimeSlot);
+    assert.deepStrictEqual(
+      result,
+      Result.error(BlockVerifierError.InvalidTimeSlot, "Invalid time slot index: 40, expected > 42"),
+    );
   });
 
   it("should return InvalidExtrinsic error if current block extrinsic hash is incorrect", async () => {
@@ -129,8 +134,13 @@ describe("Block Verifier", async () => {
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
 
-    assert.strictEqual(result.isError, true);
-    assert.strictEqual(result.error, BlockVerifierError.InvalidExtrinsic);
+    assert.deepStrictEqual(
+      result,
+      Result.error(
+        BlockVerifierError.InvalidExtrinsic,
+        "Invalid extrinsic hash: 0x0202020202020202020202020202020202020202020202020202020202020202, expected 0xac30392ab14ba0e1806ebfe027f9f84f0d1e7384e1b272db5b94890331b11045",
+      ),
+    );
   });
 
   it("should return StateRootNotFound error if posterior state root of parent hash is not set", async () => {
@@ -148,8 +158,13 @@ describe("Block Verifier", async () => {
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
 
-    assert.strictEqual(result.isError, true);
-    assert.strictEqual(result.error, BlockVerifierError.StateRootNotFound);
+    assert.deepStrictEqual(
+      result,
+      Result.error(
+        BlockVerifierError.StateRootNotFound,
+        "Posterior state root 0x0101010101010101010101010101010101010101010101010101010101010101 not found",
+      ),
+    );
   });
 
   it("should return InvalidStateRoot error if current block priorStateRoot hash is not the same as posterior state root", async () => {
@@ -167,8 +182,13 @@ describe("Block Verifier", async () => {
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
 
-    assert.strictEqual(result.isError, true);
-    assert.strictEqual(result.error, BlockVerifierError.InvalidStateRoot);
+    assert.deepStrictEqual(
+      result,
+      Result.error(
+        BlockVerifierError.InvalidStateRoot,
+        "Invalid state root: 0x0707070707070707070707070707070707070707070707070707070707070707, expected 0x0606060606060606060606060606060606060606060606060606060606060606",
+      ),
+    );
   });
 
   it("should return valid header hash if all checks pass", async () => {
@@ -182,6 +202,14 @@ describe("Block Verifier", async () => {
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
 
-    assert.strictEqual(result.isOk, true);
+    assert.deepStrictEqual(
+      result,
+      Result.ok(
+        Bytes.parseBytes(
+          "0x8c87f0595257eaa1a9fd6d1df9c078a622552dba4a02b8232cf1821c5bb67984",
+          HASH_SIZE,
+        ).asOpaque<HeaderHash>(),
+      ),
+    );
   });
 });

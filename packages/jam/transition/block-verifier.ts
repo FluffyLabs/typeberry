@@ -36,7 +36,7 @@ export class BlockVerifier {
     if (timeslot <= parentTimeslot) {
       return Result.error(
         BlockVerifierError.InvalidTimeSlot,
-        `Invalid time slot index: ${timeslot}, expected > ${parentTimeslot}}`,
+        `Invalid time slot index: ${timeslot}, expected > ${parentTimeslot}`,
       );
     }
 
