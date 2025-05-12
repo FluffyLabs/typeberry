@@ -105,7 +105,10 @@ export class Generator {
         [],
       ),
     );
-    const extrinsicHash = hasher.extrinsic(extrinsic).hash;
+
+    const encodedExtrinsic = Encoder.encodeObject(Extrinsic.Codec, extrinsic, this.chainSpec);
+    const extrinsicView = Decoder.decodeObject(Extrinsic.Codec.View, encodedExtrinsic, this.chainSpec);
+    const extrinsicHash = hasher.extrinsic(extrinsicView).hash;
 
     const header = Header.fromCodec({
       parentHeaderHash,
