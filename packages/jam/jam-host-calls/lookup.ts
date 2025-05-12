@@ -11,7 +11,7 @@ import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
 /** Account data interface for Lookup host call. */
 export interface Accounts {
   /** Lookup a preimage. */
-  lookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null>;
+  lookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null>;
 }
 
 const IN_OUT_REG = 7;
@@ -44,28 +44,34 @@ export class Lookup implements HostCallHandler {
     }
 
     // v
-    const preImage = serviceId !== null ? await this.account.lookup(serviceId, preImageHash) : null;
+    const preImage = await this.account.lookup(serviceId, preImageHash);
 
     const preImageLength = preImage === null ? tryAsU64(0) : tryAsU64(preImage.raw.length);
     const preimageBlobOffset = regs.get(10);
     const lengthToWrite = regs.get(11);
 
     // f
-    const start = minU64(preimageBlobOffset, preImageLength);
+    const offset = minU64(preimageBlobOffset, preImageLength);
     // l
-    const blobLength = minU64(lengthToWrite, tryAsU64(preImageLength - start));
+    const length = minU64(lengthToWrite, tryAsU64(preImageLength - offset));
+
+    // NOTE [MaSo] we are checking if the address is writeable to preserve the correct order of error returns
+    // casting to `Number` is safe here, since we are bounded by `preImageLength`,
+    // and `preImageLength` is around `WC` (4,000,000) + metadata which is less than `U32`
+    const isWriteable = memory.isWriteable(destinationAddress, Number(length));
+    if (!isWriteable) {
+      return Promise.resolve(PvmExecution.Panic);
+    }
 
     if (preImage === null) {
       regs.set(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
-    // casting to `Number` is safe here, since we are bounded by `preImageLength` in both cases, which is `U32`
-    const chunk = preImage.raw.subarray(Number(start), Number(start + blobLength));
-    const writePageResult = memory.storeFrom(destinationAddress, chunk);
-    if (writePageResult.isError) {
-      return Promise.resolve(PvmExecution.Panic);
-    }
+    const chunk = preImage.raw.subarray(Number(offset), Number(offset + length));
+    // NOTE [MaSo] we ignore this result because we've already verified that the memory is writable.
+    memory.storeFrom(destinationAddress, chunk);
+
     regs.set(IN_OUT_REG, preImageLength);
   }
 }
