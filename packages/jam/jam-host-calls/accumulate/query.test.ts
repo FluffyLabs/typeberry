@@ -15,9 +15,9 @@ import {
   tryAsSbrkIndex,
 } from "@typeberry/pvm-interpreter";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
+import { PreimageStatus, type PreimageStatusResult } from "../externalities/partial-state";
+import { TestAccumulate } from "../externalities/partial-state.test";
 import { HostCallResult } from "../results";
-import { PreimageStatus, type PreimageStatusResult } from "./partial-state";
-import { TestAccumulate } from "./partial-state.test";
 import { Query } from "./query";
 
 const gas = gasCounter(tryAsGas(0));

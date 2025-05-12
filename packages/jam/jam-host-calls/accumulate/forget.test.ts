@@ -11,9 +11,9 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
+import { TestAccumulate } from "../externalities/partial-state.test";
 import { HostCallResult } from "../results";
 import { Forget } from "./forget";
-import { TestAccumulate } from "./partial-state.test";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;

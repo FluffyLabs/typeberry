@@ -9,9 +9,9 @@ import {
 } from "@typeberry/pvm-host-calls";
 import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { type AccumulationPartialState, PreimageStatus } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import { type AccumulationPartialState, PreimageStatus } from "./partial-state";
 
 const IN_OUT_REG_1 = 7;
 const IN_OUT_REG_2 = 8;

@@ -9,9 +9,9 @@ import {
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { assertNever } from "@typeberry/utils";
+import { type AccumulationPartialState, QuitError, TRANSFER_MEMO_BYTES } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import { type AccumulationPartialState, QuitError, TRANSFER_MEMO_BYTES } from "./partial-state";
 
 const IN_OUT_REG = 7;
 

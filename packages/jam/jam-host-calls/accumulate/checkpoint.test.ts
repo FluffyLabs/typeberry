@@ -3,8 +3,8 @@ import { describe, it } from "node:test";
 import { HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
+import { TestAccumulate } from "../externalities/partial-state.test";
 import { Checkpoint } from "./checkpoint";
-import { TestAccumulate } from "./partial-state.test";
 
 const REGISTER = 7;
 

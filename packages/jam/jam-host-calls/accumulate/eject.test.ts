@@ -12,11 +12,11 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
+import { QuitError, TRANSFER_MEMO_BYTES } from "../externalities/partial-state";
+import { TestAccumulate } from "../externalities/partial-state.test";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { Eject } from "./eject";
-import { QuitError, TRANSFER_MEMO_BYTES } from "./partial-state";
-import { TestAccumulate } from "./partial-state.test";
 
 const RESULT_REG = 7;
 const DESTINATION_REG = 7;

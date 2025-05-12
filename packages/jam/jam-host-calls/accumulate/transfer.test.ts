@@ -11,9 +11,9 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
+import { TRANSFER_MEMO_BYTES, TransferError } from "../externalities/partial-state";
+import { TestAccumulate } from "../externalities/partial-state.test";
 import { HostCallResult } from "../results";
-import { TRANSFER_MEMO_BYTES, TransferError } from "./partial-state";
-import { TestAccumulate } from "./partial-state.test";
 import { Transfer } from "./transfer";
 
 const RESULT_REG = 7;
