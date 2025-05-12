@@ -10,10 +10,6 @@ import type { Blake2bHash } from "@typeberry/hash";
 export interface Accounts {
   /** Lookup a preimage. */
   lookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null>;
-  /**
-   * Read service storage.
-   *
-   * If `serviceId === currentServiceId` we should read from snapshot state.
-   */
+  /** Read service storage. */
   read(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null>;
 }
