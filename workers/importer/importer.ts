@@ -5,7 +5,7 @@ import { WithHash } from "@typeberry/hash";
 import type { Logger } from "@typeberry/logger";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
-import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verification";
+import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verifier";
 import { OnChain, type StfError } from "@typeberry/transition/chain-stf";
 import { type ErrorResult, Result, type TaggedError } from "@typeberry/utils";
 
@@ -40,7 +40,7 @@ export class Importer {
       throw new Error(`Unable to load best state from hash: ${currentStateRootHash}.`);
     }
 
-    this.verifier = new BlockVerifier(hasher);
+    this.verifier = new BlockVerifier(hasher, blocks);
     this.stf = new OnChain(spec, state, blocks, hasher);
 
     logger.info(`😎 Best time slot: ${state.timeslot} (state root: ${currentStateRootHash})`);
