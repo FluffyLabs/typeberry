@@ -3,8 +3,8 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
 import {
   type HostCallHandler,
-  type HostCallMemory,
-  type HostCallRegisters,
+  type IHostCallMemory,
+  type IHostCallRegisters,
   PvmExecution,
 } from "@typeberry/pvm-host-calls";
 import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
@@ -29,7 +29,11 @@ export class Query implements HostCallHandler {
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 
-  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
+  async execute(
+    _gas: GasCounter,
+    regs: IHostCallRegisters,
+    memory: IHostCallMemory,
+  ): Promise<PvmExecution | undefined> {
     // `o`
     const hashStart = regs.get(IN_OUT_REG_1);
     // `z`
