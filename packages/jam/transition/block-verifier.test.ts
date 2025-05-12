@@ -39,7 +39,7 @@ describe("Block Verifier", async () => {
       headerHash,
       timeSlot,
       stateRootHash,
-      prepareStateRoot,
+      prepareStateRoot = false,
     }: {
       headerHash?: HeaderHash;
       timeSlot?: TimeSlot;
@@ -49,7 +49,6 @@ describe("Block Verifier", async () => {
       headerHash: undefined,
       timeSlot: undefined,
       stateRootHash: undefined,
-      prepareStateRoot: false,
     },
   ) => {
     const block = testBlockView().materialize();
@@ -69,7 +68,7 @@ describe("Block Verifier", async () => {
       parentHash,
       timeSlot,
       priorStateRootHash,
-      correctExtrinsic,
+      correctExtrinsic = true,
     }: {
       parentHash?: HeaderHash;
       timeSlot?: TimeSlot;
@@ -79,7 +78,6 @@ describe("Block Verifier", async () => {
       parentHash: undefined,
       timeSlot: undefined,
       priorStateRootHash: undefined,
-      correctExtrinsic: true,
     },
   ) => {
     const block = testBlockView().materialize();
