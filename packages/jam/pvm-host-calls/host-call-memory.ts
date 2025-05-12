@@ -35,6 +35,7 @@ export class HostCallMemory {
     if (length === 0) {
       return true;
     }
+
     if (address + tryAsU64(length) > MEMORY_SIZE) {
       return false;
     }
