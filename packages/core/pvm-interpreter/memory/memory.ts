@@ -146,6 +146,28 @@ export class Memory {
     return Result.ok(OK);
   }
 
+  isWriteable(address: MemoryIndex, length: number): boolean {
+    if (length === 0) {
+      return true;
+    }
+
+    const pagesResult = this.getPages(address, length, AccessType.WRITE);
+
+    if (pagesResult.isError) {
+      return false;
+    }
+
+    const pages = pagesResult.ok;
+
+    for (const page of pages) {
+      if (!page.isWriteable()) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   sbrk(length: number): SbrkIndex {
     const currentSbrkIndex = this.sbrkIndex;
     const currentVirtualSbrkIndex = this.virtualSbrkIndex;
