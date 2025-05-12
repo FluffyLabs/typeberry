@@ -9,9 +9,9 @@ import {
 } from "@typeberry/pvm-host-calls";
 import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import type { RefineExternalities } from "../externalities/refine-externalities";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID, getServiceId } from "../utils";
-import type { RefineExternalities } from "./refine-externalities";
 
 const IN_OUT_REG = 7;
 

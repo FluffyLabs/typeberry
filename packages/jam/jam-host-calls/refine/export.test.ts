@@ -10,10 +10,10 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
+import { SegmentExportError } from "../externalities/refine-externalities";
+import { TestRefineExt } from "../externalities/refine-externalities.test";
 import { HostCallResult } from "../results";
 import { Export } from "./export";
-import { SegmentExportError } from "./refine-externalities";
-import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));
 const SEGMENT_START_REG = 7;

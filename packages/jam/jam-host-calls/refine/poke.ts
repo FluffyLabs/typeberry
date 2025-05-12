@@ -7,9 +7,9 @@ import {
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { assertNever } from "@typeberry/utils";
+import { PeekPokeError, type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import { PeekPokeError, type RefineExternalities, tryAsMachineId } from "./refine-externalities";
 
 const IN_OUT_REG = 7;
 
