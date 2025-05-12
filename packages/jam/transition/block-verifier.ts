@@ -7,7 +7,8 @@ export enum BlockVerifierError {
   ParentNotFound = 0,
   InvalidTimeSlot = 1,
   InvalidExtrinsic = 2,
-  InvalidStateRoot = 3,
+  StateRootNotFound = 3,
+  InvalidStateRoot = 4,
 }
 
 export class BlockVerifier {
@@ -55,9 +56,12 @@ export class BlockVerifier {
     const stateRoot = headerView.priorStateRoot.materialize();
     const posteriorStateRoot = this.blocks.getPostStateRoot(parentHash);
     if (posteriorStateRoot === null) {
-      return Result.error(BlockVerifierError.ParentNotFound, `Posterior state root ${parentHash.toString()} not found`);
+      return Result.error(
+        BlockVerifierError.StateRootNotFound,
+        `Posterior state root ${parentHash.toString()} not found`,
+      );
     }
-    if (stateRoot !== posteriorStateRoot) {
+    if (!stateRoot.isEqualTo(posteriorStateRoot)) {
       return Result.error(
         BlockVerifierError.InvalidStateRoot,
         `Invalid state root: ${stateRoot.toString()}, expected ${posteriorStateRoot.toString()}`,
