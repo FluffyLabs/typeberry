@@ -46,11 +46,7 @@ describe("Block Verifier", async () => {
       timeSlot?: TimeSlot;
       stateRootHash?: StateRootHash;
       prepareStateRoot?: boolean;
-    } = {
-      headerHash: undefined,
-      timeSlot: undefined,
-      stateRootHash: undefined,
-    },
+    } = {},
   ) => {
     const block = testBlockView().materialize();
     block.header.timeSlotIndex = timeSlot ?? DEFAULT_TIME_SLOT;
@@ -64,23 +60,17 @@ describe("Block Verifier", async () => {
     db.setBestData(header, stateRoot);
   };
 
-  const prepareBlock = (
-    {
-      parentHash,
-      timeSlot,
-      priorStateRootHash,
-      correctExtrinsic = true,
-    }: {
-      parentHash?: HeaderHash;
-      timeSlot?: TimeSlot;
-      priorStateRootHash?: StateRootHash;
-      correctExtrinsic?: boolean;
-    } = {
-      parentHash: undefined,
-      timeSlot: undefined,
-      priorStateRootHash: undefined,
-    },
-  ) => {
+  const prepareBlock = ({
+    parentHash,
+    timeSlot,
+    priorStateRootHash,
+    correctExtrinsic = true,
+  }: {
+    parentHash?: HeaderHash;
+    timeSlot?: TimeSlot;
+    priorStateRootHash?: StateRootHash;
+    correctExtrinsic?: boolean;
+  } = {}) => {
     const block = testBlockView().materialize();
     block.header.timeSlotIndex = timeSlot ?? tryAsTimeSlot(DEFAULT_TIME_SLOT + 1);
     block.header.parentHeaderHash = parentHash ?? DEFAULT_HEADER_HASH;
