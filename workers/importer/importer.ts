@@ -5,7 +5,7 @@ import { WithHash } from "@typeberry/hash";
 import type { Logger } from "@typeberry/logger";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
-import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verification";
+import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verifier";
 import { OnChain, type StfError } from "@typeberry/transition/chain-stf";
 import { type ErrorResult, Result, type TaggedError } from "@typeberry/utils";
 
@@ -40,7 +40,7 @@ export class Importer {
       throw new Error(`Unable to load best state from hash: ${currentStateRootHash}.`);
     }
 
-    this.verifier = new BlockVerifier(hasher);
+    this.verifier = new BlockVerifier(hasher, blocks);
     this.stf = new OnChain(spec, state, blocks, hasher);
 
     logger.info(`😎 Best time slot: ${state.timeslot} (state root: ${currentStateRootHash})`);
@@ -64,9 +64,13 @@ export class Importer {
     }
 
     const stateRoot = merkelizeState(serializeState(this.stf.state, this.spec));
+    // insert new state and the block to DB.
     const writeState = this.states.insertFullState(stateRoot, this.stf.state);
     const writeBlocks = this.blocks.insertBlock(new WithHash(headerHash, block));
-    await Promise.all([writeState, writeBlocks]);
+    // insert posterior state root, since we know it now.
+    const writePostState = this.blocks.setPostStateRoot(headerHash, stateRoot);
+
+    await Promise.all([writeState, writeBlocks, writePostState]);
     await this.blocks.setBestData(headerHash, stateRoot);
 
     return Result.ok(new WithHash(headerHash, block.header.view()));

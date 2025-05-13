@@ -8,8 +8,8 @@ import { SimpleAllocator, keccak } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
+import { BlockVerifier } from "@typeberry/transition/block-verifier";
 import { OnChain } from "@typeberry/transition/chain-stf";
-import { BlockVerifier } from "../../../packages/jam/transition/block-verification";
 import { TestState, loadState } from "./stateLoader";
 
 export class StateTransitionFuzzed {
@@ -32,18 +32,19 @@ export async function runStateTransitionFuzzed(testContent: StateTransitionFuzze
 
   const encodedBlock = Encoder.encodeObject(Block.Codec, testContent.block, spec);
   const blockView = Decoder.decodeObject(Block.Codec.View, encodedBlock, spec);
+  const blocksDb = new InMemoryBlocks();
 
   const stf = new OnChain(
     spec,
     preState,
-    new InMemoryBlocks(),
+    blocksDb,
     new TransitionHasher(spec, await keccakHasher, new SimpleAllocator()),
   );
 
   // verify that we compute the state root exactly the same.
   assert.deepStrictEqual(testContent.pre_state.state_root.toString(), preStateRoot.toString());
 
-  const verifier = new BlockVerifier(stf.hasher);
+  const verifier = new BlockVerifier(stf.hasher, blocksDb);
   const verificationResult = await verifier.verifyBlock(blockView);
   if (verificationResult.isError) {
     assert.fail(`Block verification failed, got: ${JSON.stringify(verificationResult.error)}`);

@@ -10,6 +10,7 @@
     "@typeberry/collections": "0.0.1",
     "@typeberry/config": "0.0.1",
     "@typeberry/crypto": "0.0.1",
+    "@typeberry/database": "^0.0.1",
     "@typeberry/disputes": "0.0.1",
     "@typeberry/hash": "0.0.1",
     "@typeberry/mmr": "0.0.1",

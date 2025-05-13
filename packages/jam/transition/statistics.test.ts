@@ -2,8 +2,6 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import {
   type CoreIndex,
-  ED25519_SIGNATURE_BYTES,
-  type Ed25519Signature,
   Extrinsic,
   type HeaderHash,
   tryAsCoreIndex,
@@ -24,6 +22,7 @@ import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
+import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { isU16, isU32, tryAsU32 } from "@typeberry/numbers";
 import { CoreStatistics, ServiceStatistics, StatisticsData, ValidatorStatistics, tryAsPerCore } from "@typeberry/state";

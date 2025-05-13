@@ -24,7 +24,7 @@ const program = new Uint8Array([
   0xa9, 0x24, 0x29, 0x49, 0x4a, 0x52, 0x2a, 0xa9, 0x0,
 ]);
 const args = new Uint8Array();
-const { code, memory, registers } = Program.fromSpi(program, args);
+const { code, memory, registers } = Program.fromSpi(program, args, false);
 
 (async () => {
   await pvmHostCallExtension.runProgram(code, 5, tryAsGas(1000), registers, memory);

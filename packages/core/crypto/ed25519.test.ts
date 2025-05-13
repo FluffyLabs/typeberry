@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asOpaqueType } from "@typeberry/utils";
 import { ed25519 } from ".";
+import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES } from "./ed25519";
 
 describe("crypto.ed25519", () => {
   it("should verify a bunch of signatures using verify", async () => {

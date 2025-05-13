@@ -1,6 +1,6 @@
-import type { Ed25519Signature } from "@typeberry/block";
 import type { TicketAttempt } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { Ed25519Signature } from "@typeberry/crypto";
 import { type FromJson, json } from "@typeberry/json-parser";
 
 export namespace fromJson {
