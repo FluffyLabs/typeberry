@@ -1,8 +1,9 @@
 import type { ServiceId } from "@typeberry/block";
-import { CURRENT_SERVICE_ID, HostCallResult, type IHostCallMemory } from "@typeberry/jam-host-calls";
+import { CURRENT_SERVICE_ID, HostCallResult } from "@typeberry/jam-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { check } from "@typeberry/utils";
 import { type HostCallHandler, type HostCallIndex, type PvmExecution, tryAsHostCallIndex } from "./host-call-handler";
+import type { IHostCallMemory } from "./host-call-memory";
 import type { IHostCallRegisters } from "./host-call-registers";
 
 // TODO [ToDr] Rename to just `HostCalls`
