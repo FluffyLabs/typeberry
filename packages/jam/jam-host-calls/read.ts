@@ -7,13 +7,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { HostCallResult } from "./results";
-import {
-  CURRENT_SERVICE_ID,
-  SERVICE_ID_BYTES,
-  clampBigIntToNumber,
-  getServiceId,
-  writeServiceIdAsLeBytes,
-} from "./utils";
+import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, clampU64ToU32, getServiceId, writeServiceIdAsLeBytes } from "./utils";
 
 /** Account data interface for read host calls. */
 export interface AccountsRead {
@@ -50,7 +44,7 @@ export class Read implements HostCallHandler {
     // o
     const destinationAddress = regs.get(10);
 
-    const storageKeyLengthClamped = clampBigIntToNumber(storageKeyLength);
+    const storageKeyLengthClamped = clampU64ToU32(storageKeyLength);
 
     // allocate extra bytes for the serviceId
     const serviceIdStorageKey = new Uint8Array(SERVICE_ID_BYTES + storageKeyLengthClamped);

@@ -6,7 +6,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { HostCallResult } from "./results";
-import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, clampBigIntToNumber, writeServiceIdAsLeBytes } from "./utils";
+import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, clampU64ToU32, writeServiceIdAsLeBytes } from "./utils";
 
 /** Account data interface for write host calls. */
 export interface AccountsWrite {
@@ -57,7 +57,7 @@ export class Write implements HostCallHandler {
     // v_z
     const valueLength = regs.get(10);
 
-    const storageKeyLengthClamped = clampBigIntToNumber(storageKeyLength);
+    const storageKeyLengthClamped = clampU64ToU32(storageKeyLength);
 
     // allocate extra bytes for the serviceId
     const serviceIdStorageKey = new Uint8Array(SERVICE_ID_BYTES + storageKeyLengthClamped);
@@ -70,7 +70,7 @@ export class Write implements HostCallHandler {
     // k
     const storageKey = blake2b.hashBytes(serviceIdStorageKey);
 
-    const valueLengthClamped = clampBigIntToNumber(valueLength);
+    const valueLengthClamped = clampU64ToU32(valueLength);
     const value = new Uint8Array(valueLengthClamped);
     const valueLoadingResult = memory.loadInto(value, valueStart);
     // Note [MaSo] this is ok to return bcs if valueLength is 0, then this panic won't happen
