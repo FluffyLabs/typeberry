@@ -1,4 +1,5 @@
 import { type ServiceId, tryAsServiceGas } from "@typeberry/block";
+import { BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
@@ -50,24 +51,25 @@ export class Info implements HostCallHandler {
     // t
     const accountInfo = await this.account.getInfo(serviceId);
 
-    // NOTE [MaSo] here is ok to return early, because if accountInfo is null,
-    // the length of the encoded object is 0, so it will write to memory with success
-    if (accountInfo === null) {
-      regs.set(IN_OUT_REG, HostCallResult.NONE);
-      return;
-    }
-
-    const encodedInfo = Encoder.encodeObject(codecServiceAccountInfoWithThresholdBalance, {
-      ...accountInfo,
-      thresholdBalance: ServiceAccountInfo.calculateThresholdBalance(
-        accountInfo.storageUtilisationCount,
-        accountInfo.storageUtilisationBytes,
-      ),
-    });
+    const encodedInfo =
+      accountInfo === null
+        ? BytesBlob.empty()
+        : Encoder.encodeObject(codecServiceAccountInfoWithThresholdBalance, {
+            ...accountInfo,
+            thresholdBalance: ServiceAccountInfo.calculateThresholdBalance(
+              accountInfo.storageUtilisationCount,
+              accountInfo.storageUtilisationBytes,
+            ),
+          });
 
     const writeResult = memory.storeFrom(outputStart, encodedInfo.raw);
     if (writeResult.isError) {
       return PvmExecution.Panic;
+    }
+
+    if (accountInfo === null) {
+      regs.set(IN_OUT_REG, HostCallResult.NONE);
+      return;
     }
 
     regs.set(IN_OUT_REG, HostCallResult.OK);

@@ -59,20 +59,19 @@ export class Lookup implements HostCallHandler {
     // l
     const length = minU64(lengthToWrite, tryAsU64(preImageLength - offset));
 
-    // NOTE [MaSo] this is ok to return bcs if value is null, the preImageLength will be 0
-    // and memory won't panic any way
-    if (preImage === null) {
-      regs.set(IN_OUT_REG, HostCallResult.NONE);
-      return;
-    }
-
     // NOTE [MaSo] this is ok to cast to number, because we are bounded by the
     // valueLength in both cases and valueLength is WC (4,000,000,000) + metadata
     // which is less than 2^32
-    const chunk = preImage.raw.subarray(Number(offset), Number(offset + length));
+    const chunk =
+      preImage === null ? new Uint8Array(0) : preImage.raw.subarray(Number(offset), Number(offset + length));
     const memoryWriteResult = memory.storeFrom(destinationAddress, chunk);
     if (memoryWriteResult.isError) {
       return PvmExecution.Panic;
+    }
+
+    if (preImage === null) {
+      regs.set(IN_OUT_REG, HostCallResult.NONE);
+      return;
     }
 
     regs.set(IN_OUT_REG, preImageLength);

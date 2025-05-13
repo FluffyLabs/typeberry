@@ -78,20 +78,18 @@ export class Read implements HostCallHandler {
     // l
     const blobLength = minU64(lengthToWrite, tryAsU64(valueLength - offset));
 
-    // NOTE [MaSo] this is ok to return bcs if value is null, the blobLength will be 0
-    // and memory won't panic any way
-    if (value === null) {
-      regs.set(IN_OUT_REG, HostCallResult.NONE);
-      return;
-    }
-
     // NOTE [MaSo] this is ok to cast to number, because we are bounded by the
     // valueLength in both cases and valueLength is WC (4,000,000,000) + metadata
     // which is less than 2^32
-    const chunk = value.raw.subarray(Number(offset), Number(offset + blobLength));
+    const chunk = value === null ? new Uint8Array(0) : value.raw.subarray(Number(offset), Number(offset + blobLength));
     const memoryWriteResult = memory.storeFrom(destinationAddress, chunk);
     if (memoryWriteResult.isError) {
       return PvmExecution.Panic;
+    }
+
+    if (value === null) {
+      regs.set(IN_OUT_REG, HostCallResult.NONE);
+      return;
     }
 
     regs.set(IN_OUT_REG, valueLength);
