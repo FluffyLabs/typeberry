@@ -4,6 +4,8 @@ import { u32AsLeBytes } from "@typeberry/numbers";
 import type { IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { check } from "@typeberry/utils";
 
+const MAX_U32 = 2 ** 32 - 1;
+const MAX_U32_BIG_INT = BigInt(MAX_U32);
 export const SERVICE_ID_BYTES = 4;
 export const CURRENT_SERVICE_ID = tryAsServiceId(2 ** 32 - 1);
 
@@ -34,4 +36,9 @@ export function getServiceId(
 export function writeServiceIdAsLeBytes(serviceId: ServiceId, destination: Uint8Array) {
   check(destination.length >= SERVICE_ID_BYTES, "Not enough space in the destination.");
   destination.set(u32AsLeBytes(serviceId));
+}
+
+/** Clamp a number to the maximum value of a 32-bit unsigned integer. */
+export function clampBigIntToNumber(value: bigint): number {
+  return value > MAX_U32_BIG_INT ? MAX_U32 : Number(value);
 }

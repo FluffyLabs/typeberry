@@ -7,7 +7,13 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { HostCallResult } from "./results";
-import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, getServiceId, writeServiceIdAsLeBytes } from "./utils";
+import {
+  CURRENT_SERVICE_ID,
+  SERVICE_ID_BYTES,
+  clampBigIntToNumber,
+  getServiceId,
+  writeServiceIdAsLeBytes,
+} from "./utils";
 
 /** Account data interface for read host calls. */
 export interface AccountsRead {
@@ -15,8 +21,6 @@ export interface AccountsRead {
   read(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null>;
 }
 
-const MAX_U32 = 2 ** 32 - 1;
-const MAX_U32_BIG_INT = BigInt(MAX_U32);
 const IN_OUT_REG = 7;
 
 /**
@@ -51,7 +55,7 @@ export class Read implements HostCallHandler {
     // o
     const destinationAddress = regs.get(10);
 
-    const storageKeyLengthClamped = storageKeyLength > MAX_U32_BIG_INT ? MAX_U32 : Number(storageKeyLength);
+    const storageKeyLengthClamped = clampBigIntToNumber(storageKeyLength);
 
     // allocate extra bytes for the serviceId
     const serviceIdStorageKey = new Uint8Array(SERVICE_ID_BYTES + storageKeyLengthClamped);

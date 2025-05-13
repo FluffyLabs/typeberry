@@ -6,7 +6,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { HostCallResult } from "./results";
-import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
+import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, clampBigIntToNumber, writeServiceIdAsLeBytes } from "./utils";
 
 /** Account data interface for write host calls. */
 export interface AccountsWrite {
@@ -29,8 +29,6 @@ export interface AccountsWrite {
   isStorageFull(serviceId: ServiceId): Promise<boolean>;
 }
 
-const MAX_U32 = 2 ** 32 - 1;
-const MAX_U32_BIG_INT = BigInt(MAX_U32);
 const IN_OUT_REG = 7;
 
 /**
@@ -59,7 +57,7 @@ export class Write implements HostCallHandler {
     // v_z
     const valueLength = regs.get(10);
 
-    const storageKeyLengthClamped = storageKeyLength > MAX_U32_BIG_INT ? MAX_U32 : Number(storageKeyLength);
+    const storageKeyLengthClamped = clampBigIntToNumber(storageKeyLength);
 
     // allocate extra bytes for the serviceId
     const serviceIdStorageKey = new Uint8Array(SERVICE_ID_BYTES + storageKeyLengthClamped);
@@ -72,7 +70,7 @@ export class Write implements HostCallHandler {
     // k
     const storageKey = blake2b.hashBytes(serviceIdStorageKey);
 
-    const valueLengthClamped = valueLength > MAX_U32_BIG_INT ? MAX_U32 : Number(valueLength);
+    const valueLengthClamped = clampBigIntToNumber(valueLength);
     const value = new Uint8Array(valueLengthClamped);
     const valueLoadingResult = memory.loadInto(value, valueStart);
     // Note [MaSo] this is ok to return bcs if valueLength is 0, then this panic won't happen
