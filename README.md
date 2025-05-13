@@ -37,6 +37,12 @@ $ npm ci
 $ npm start
 ```
 
+### Running the JSON RPC
+
+```bash
+$ npm start -w @typeberry/rpc -- --genesis-root [genesis state root]
+```
+
 ### Formatting & linting
 
 ```bash

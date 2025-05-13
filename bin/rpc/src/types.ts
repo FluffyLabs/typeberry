@@ -42,4 +42,3 @@ export type RpcMethod<T extends unknown[], R extends unknown[] | null> = (
 
 export type Hash = number[];
 export type Slot = U32;
-export type Parameters = ChainSpec;

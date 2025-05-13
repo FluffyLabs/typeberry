@@ -7,7 +7,7 @@ function main() {
     string: ["db-path", "genesis-root", "port", "chain-spec"],
     default: {
       port: "19800",
-      "db-path": "database",
+      "db-path": "../../database",
       "genesis-root": "0000000000000000000000000000000000000000000000000000000000000000",
       "chain-spec": "tiny",
     },

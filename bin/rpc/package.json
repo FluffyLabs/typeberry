@@ -1,11 +1,17 @@
 {
-  "name": "@typeberry/ext-rpc",
+  "name": "@typeberry/rpc",
   "version": "0.0.1",
   "description": "A JSON RPC server for Typeberry. Spec: https://hackmd.io/@polkadot/jip2",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",
+  "type": "commonjs",
   "main": "index.ts",
-  "bin": "./index.ts",
+  "bin": {
+    "rpc": "index.ts"
+  },
+  "directories": {
+    "test": "test"
+  },
   "scripts": {
     "start": "ts-node ./index.ts",
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
@@ -15,5 +21,6 @@
     "@types/ws": "^8.18.1",
     "minimist": "^1.2.8",
     "ws": "^8.18.2"
-  }
+  },
+  "devDependencies": {}
 }

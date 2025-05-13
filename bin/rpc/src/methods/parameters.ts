@@ -1,5 +1,6 @@
-import type { Parameters, RpcMethod } from "../types";
+import type { RpcMethod } from "../types";
 
-export const parameters: RpcMethod<[], [Parameters]> = async (_params, _db, chainSpec) => {
-  return [chainSpec];
+export const parameters: RpcMethod<[], []> = async () => {
+  // todo [seko] implement
+  return [];
 };
