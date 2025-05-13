@@ -1,7 +1,7 @@
-import { type ServiceId, tryAsServiceId } from "@typeberry/block";
+import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
-import { minU64, u64IntoParts } from "@typeberry/numbers";
+import { minU64 } from "@typeberry/numbers";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
@@ -40,11 +40,6 @@ export class Read implements HostCallHandler {
     regs: IHostCallRegisters,
     memory: IHostCallMemory,
   ): Promise<undefined | PvmExecution> {
-    // E_4(s*)
-    const serviceIdClamped =
-      regs.get(IN_OUT_REG) === 2n ** 64n - 1n
-        ? this.currentServiceId
-        : tryAsServiceId(u64IntoParts(regs.get(IN_OUT_REG)).lower);
     // a
     const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
 
@@ -59,12 +54,16 @@ export class Read implements HostCallHandler {
 
     // allocate extra bytes for the serviceId
     const serviceIdStorageKey = new Uint8Array(SERVICE_ID_BYTES + storageKeyLengthClamped);
-    writeServiceIdAsLeBytes(serviceIdClamped, serviceIdStorageKey);
+    // if the serviceId is null, we will leave 0 to the first 4 bytes
+    if (serviceId !== null) {
+      writeServiceIdAsLeBytes(serviceId, serviceIdStorageKey);
+    }
     const memoryReadResult = memory.loadInto(serviceIdStorageKey.subarray(SERVICE_ID_BYTES), storageKeyStartAddress);
     if (memoryReadResult.isError) {
       return PvmExecution.Panic;
     }
 
+    // k
     const storageKey = blake2b.hashBytes(serviceIdStorageKey);
 
     // v
