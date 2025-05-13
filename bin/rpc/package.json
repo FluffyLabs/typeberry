@@ -9,9 +9,6 @@
   "bin": {
     "rpc": "index.ts"
   },
-  "directories": {
-    "test": "test"
-  },
   "scripts": {
     "start": "ts-node ./index.ts",
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
