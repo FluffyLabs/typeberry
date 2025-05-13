@@ -11,9 +11,9 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { TestAccounts } from "./accounts.test";
 import { Lookup } from "./lookup";
 import { HostCallResult } from "./results";
+import { TestAccounts } from "./test-accounts";
 
 const gas = gasCounter(tryAsGas(0));
 

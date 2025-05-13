@@ -1,12 +1,33 @@
+import type { ServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
-import { blake2b } from "@typeberry/hash";
+import { type Blake2bHash, blake2b } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import type { Accounts } from "./accounts";
 import { HostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
+
+/** Account data interface for write host calls. */
+export interface AccountsWrite {
+  /**
+   * Alter the account storage. Put `data` under given key hash.
+   * `null` indicates the storage entry should be removed.
+   */
+  write(serviceId: ServiceId, hash: Blake2bHash, data: BytesBlob | null): Promise<void>;
+  /**
+   * Read the length of some value from account snapshot state.
+   * Returns `null` if the storage entry was empty.
+   */
+  readSnapshotLength(serviceId: ServiceId, hash: Blake2bHash): Promise<number | null>;
+  /**
+   * Returns true if the storage is already full.
+   * - aka Not enough balance to pay for the storage.
+   *
+   * https://graypaper.fluffylabs.dev/#/9a08063/331002331402?v=0.6.6
+   */
+  isStorageFull(serviceId: ServiceId): Promise<boolean>;
+}
 
 const MAX_U32 = 2 ** 32 - 1;
 const MAX_U32_BIG_INT = BigInt(MAX_U32);
@@ -22,7 +43,7 @@ export class Write implements HostCallHandler {
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly account: Accounts) {}
+  constructor(private readonly account: AccountsWrite) {}
 
   async execute(
     _gas: GasCounter,

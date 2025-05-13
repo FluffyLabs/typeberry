@@ -1,12 +1,18 @@
-import { Bytes } from "@typeberry/bytes";
-import { HASH_SIZE } from "@typeberry/hash";
+import type { ServiceId } from "@typeberry/block";
+import { Bytes, type BytesBlob } from "@typeberry/bytes";
+import { type Blake2bHash, HASH_SIZE } from "@typeberry/hash";
 import { minU64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import type { Accounts } from "./accounts";
 import { HostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
+
+/** Account data interface for lookup host calls. */
+export interface AccountsLookup {
+  /** Lookup a preimage. */
+  lookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null>;
+}
 
 const IN_OUT_REG = 7;
 
@@ -20,7 +26,7 @@ export class Lookup implements HostCallHandler {
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly account: Accounts) {}
+  constructor(private readonly account: AccountsLookup) {}
 
   async execute(
     _gas: GasCounter,

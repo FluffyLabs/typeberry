@@ -11,9 +11,9 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { ServiceAccountInfo } from "@typeberry/state";
-import { TestAccounts } from "./accounts.test";
 import { Info, codecServiceAccountInfoWithThresholdBalance } from "./info";
 import { HostCallResult } from "./results";
+import { TestAccounts } from "./test-accounts";
 
 const SERVICE_ID_REG = 7;
 const RESULT_REG = SERVICE_ID_REG;

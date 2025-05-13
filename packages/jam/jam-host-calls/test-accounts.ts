@@ -3,9 +3,12 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { ServiceAccountInfo } from "@typeberry/state";
-import type { Accounts } from "./accounts";
+import type { AccountsInfo } from "./info";
+import type { AccountsLookup } from "./lookup";
+import type { AccountsRead } from "./read";
+import type { AccountsWrite } from "./write";
 
-export class TestAccounts implements Accounts {
+export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite, AccountsInfo {
   public readonly preimages: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
     null,
     (hash) => hash.toString(),

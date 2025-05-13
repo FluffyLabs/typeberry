@@ -1,13 +1,19 @@
-import { tryAsServiceId } from "@typeberry/block";
-import { blake2b } from "@typeberry/hash";
+import { type ServiceId, tryAsServiceId } from "@typeberry/block";
+import type { BytesBlob } from "@typeberry/bytes";
+import { type Blake2bHash, blake2b } from "@typeberry/hash";
 import { minU64, u64IntoParts } from "@typeberry/numbers";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import type { Accounts } from "./accounts";
 import { HostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, getServiceId, writeServiceIdAsLeBytes } from "./utils";
+
+/** Account data interface for read host calls. */
+export interface AccountsRead {
+  /** Read service storage. */
+  read(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null>;
+}
 
 const MAX_U32 = 2 ** 32 - 1;
 const MAX_U32_BIG_INT = BigInt(MAX_U32);
@@ -23,7 +29,7 @@ export class Read implements HostCallHandler {
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly account: Accounts) {}
+  constructor(private readonly account: AccountsRead) {}
 
   async execute(
     _gas: GasCounter,

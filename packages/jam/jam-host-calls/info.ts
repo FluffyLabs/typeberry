@@ -1,12 +1,18 @@
-import { tryAsServiceGas } from "@typeberry/block";
+import { type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import { Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import type { Accounts } from "./accounts";
+import type { ServiceAccountInfo } from "@typeberry/state";
 import { HostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
+
+/** Account data interface for info host calls. */
+export interface AccountsInfo {
+  /** Get account info. */
+  getInfo(serviceId: ServiceId | null): Promise<ServiceAccountInfo | null>;
+}
 
 const IN_OUT_REG = 7;
 
@@ -29,7 +35,7 @@ export class Info implements HostCallHandler {
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly account: Accounts) {}
+  constructor(private readonly account: AccountsInfo) {}
 
   async execute(
     _gas: GasCounter,
