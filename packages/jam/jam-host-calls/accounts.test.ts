@@ -55,7 +55,7 @@ export class TestAccounts implements Accounts {
   readSnapshotLength(serviceId: ServiceId, hash: Blake2bHash): Promise<number | null> {
     const data = this.snapshotData.get(serviceId, hash);
     if (data === undefined) {
-      throw new Error(`Unexpected readSnapshotLen call with ${serviceId} ${hash}`);
+      return Promise.resolve(null);
     }
     return Promise.resolve(data?.length ?? null);
   }
