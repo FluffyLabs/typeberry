@@ -24,7 +24,7 @@ export class RpcServer {
     if (!existsSync(fullDbPath)) {
       throw new Error(`Database not found at ${fullDbPath}`);
     }
-    this.rootDb = new LmdbRoot(fullDbPath);
+    this.rootDb = new LmdbRoot(fullDbPath, true);
     this.blocks = new LmdbBlocks(chainSpec, this.rootDb);
     this.states = new LmdbStates(chainSpec, this.rootDb);
 
