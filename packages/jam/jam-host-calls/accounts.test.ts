@@ -14,7 +14,10 @@ export class TestAccounts implements Accounts {
     (hash) => hash.toString(),
   ]);
 
-  lookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null> {
+  lookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null> {
+    if (serviceId === null) {
+      return Promise.resolve(null);
+    }
     const preImage = this.preimages.get(serviceId, hash);
     if (preImage === undefined) {
       return Promise.resolve(null);
@@ -22,7 +25,10 @@ export class TestAccounts implements Accounts {
     return Promise.resolve(preImage);
   }
 
-  read(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null> {
+  read(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null> {
+    if (serviceId === null) {
+      return Promise.resolve(null);
+    }
     const d = this.storage.get(serviceId, hash);
     if (d === undefined) {
       return Promise.resolve(null);

@@ -9,7 +9,7 @@ import type { Blake2bHash } from "@typeberry/hash";
  */
 export interface Accounts {
   /** Lookup a preimage. */
-  lookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null>;
+  lookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null>;
   /** Read service storage. */
-  read(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null>;
+  read(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null>;
 }

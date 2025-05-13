@@ -12,15 +12,23 @@ export function legacyGetServiceId(regNumber: number, regs: IHostCallRegisters, 
   return serviceId === CURRENT_SERVICE_ID ? currentServiceId : tryAsServiceId(serviceId);
 }
 
-export function getServiceId(regNumber: number, regs: IHostCallRegisters, currentServiceId: ServiceId): ServiceId {
+export function getServiceId(
+  regNumber: number,
+  regs: IHostCallRegisters,
+  currentServiceId: ServiceId,
+): ServiceId | null {
   const regValue = regs.get(regNumber);
   if (regValue === 2n ** 64n - 1n) {
     return currentServiceId;
   }
 
-  const { lower } = u64IntoParts(regValue);
+  const { lower, upper } = u64IntoParts(regValue);
 
-  return tryAsServiceId(lower);
+  if (upper === 0) {
+    return tryAsServiceId(lower);
+  }
+
+  return null;
 }
 
 export function writeServiceIdAsLeBytes(serviceId: ServiceId, destination: Uint8Array) {
