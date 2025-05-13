@@ -38,14 +38,14 @@ export class ServiceAccountInfo extends WithDebug {
    * `a_t = BS + BI * a_i + BL * a_o`
    * https://graypaper.fluffylabs.dev/#/9a08063/117201117201?v=0.6.6
    */
-  public thresholdBalance(): U64 {
+  static calculateThresholdBalance(items: U32, bytes: U64): U64 {
     /** https://graypaper.fluffylabs.dev/#/9a08063/445100445100?v=0.6.6 */
     const B_S = 100n;
     /** https://graypaper.fluffylabs.dev/#/9a08063/444900444900?v=0.6.6 */
     const B_I = 10n;
     /** https://graypaper.fluffylabs.dev/#/9a08063/444d00444d00?v=0.6.6 */
     const B_L = 1n;
-    return tryAsU64(B_S + B_I * BigInt(this.storageUtilisationCount) + B_L * this.storageUtilisationBytes);
+    return tryAsU64(B_S + B_I * BigInt(items) + B_L * bytes);
   }
 
   private constructor(

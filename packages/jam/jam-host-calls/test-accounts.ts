@@ -2,7 +2,7 @@ import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
-import type { ServiceAccountInfo } from "@typeberry/state";
+import { ServiceAccountInfo } from "@typeberry/state";
 import type { AccountsInfo } from "./info";
 import type { AccountsLookup } from "./lookup";
 import type { AccountsRead } from "./read";
@@ -68,7 +68,12 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
     if (accountInfo === undefined) {
       return Promise.resolve(false);
     }
-    return Promise.resolve(accountInfo.thresholdBalance() > accountInfo.balance);
+    return Promise.resolve(
+      ServiceAccountInfo.calculateThresholdBalance(
+        accountInfo.storageUtilisationCount,
+        accountInfo.storageUtilisationBytes,
+      ) > accountInfo.balance,
+    );
   }
 
   getInfo(serviceId: ServiceId | null): Promise<ServiceAccountInfo | null> {

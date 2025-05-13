@@ -4,7 +4,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import type { ServiceAccountInfo } from "@typeberry/state";
+import { ServiceAccountInfo } from "@typeberry/state";
 import { HostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
 
@@ -59,7 +59,10 @@ export class Info implements HostCallHandler {
 
     const encodedInfo = Encoder.encodeObject(codecServiceAccountInfoWithThresholdBalance, {
       ...accountInfo,
-      thresholdBalance: accountInfo.thresholdBalance(),
+      thresholdBalance: ServiceAccountInfo.calculateThresholdBalance(
+        accountInfo.storageUtilisationCount,
+        accountInfo.storageUtilisationBytes,
+      ),
     });
 
     const writeResult = memory.storeFrom(outputStart, encodedInfo.raw);
