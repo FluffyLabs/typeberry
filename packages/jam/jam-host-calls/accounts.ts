@@ -1,6 +1,7 @@
 import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { Blake2bHash } from "@typeberry/hash";
+import type { ServiceAccountInfo } from "@typeberry/state";
 
 /**
  * Account data interface for host calls.
@@ -31,4 +32,6 @@ export interface Accounts {
    * https://graypaper.fluffylabs.dev/#/9a08063/331002331402?v=0.6.6
    */
   isStorageFull(serviceId: ServiceId): Promise<boolean>;
+  /** Get account info. */
+  getInfo(serviceId: ServiceId | null): Promise<ServiceAccountInfo | null>;
 }

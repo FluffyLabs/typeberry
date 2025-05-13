@@ -4,23 +4,16 @@ import { type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/bloc
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
+import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { ServiceAccountInfo } from "@typeberry/state";
-import { type Accounts, Info, codecServiceAccountInfoWithThresholdBalance } from "./info";
+import { TestAccounts } from "./accounts.test";
+import { Info, codecServiceAccountInfoWithThresholdBalance } from "./info";
 import { HostCallResult } from "./results";
-
-class TestAccounts implements Accounts {
-  public readonly data = new Map<ServiceId, ServiceAccountInfo>();
-
-  getInfo(serviceId: ServiceId): Promise<ServiceAccountInfo | null> {
-    return Promise.resolve(this.data.get(serviceId) ?? null);
-  }
-}
 
 const SERVICE_ID_REG = 7;
 const RESULT_REG = SERVICE_ID_REG;
@@ -62,7 +55,7 @@ describe("HostCalls: Info", () => {
     const { registers, memory, readInfo } = prepareRegsAndMemory(serviceId);
     const storageUtilisationBytes = tryAsU64(10_000);
     const storageUtilisationCount = tryAsU32(1_000);
-    accounts.data.set(
+    accounts.details.set(
       serviceId,
       ServiceAccountInfo.fromCodec({
         codeHash: Bytes.fill(32, 5).asOpaque(),
@@ -75,12 +68,13 @@ describe("HostCalls: Info", () => {
     );
 
     // when
-    await info.execute(gas, registers, memory);
+    const result = await info.execute(gas, registers, memory);
 
     // then
+    assert.strictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(readInfo(), {
-      ...accounts.data.get(serviceId),
+      ...accounts.details.get(serviceId),
       thresholdBalance: 20_100n,
     });
   });
@@ -92,13 +86,14 @@ describe("HostCalls: Info", () => {
     const { registers, memory } = prepareRegsAndMemory(serviceId);
 
     // when
-    await info.execute(gas, registers, memory);
+    const result = await info.execute(gas, registers, memory);
 
     // then
+    assert.strictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.NONE);
   });
 
-  it("should write OOB if not enough memory allocated", async () => {
+  it("should panic if not enough memory allocated", async () => {
     const accounts = new TestAccounts();
     const info = new Info(accounts);
     const serviceId = tryAsServiceId(10_000);
@@ -106,7 +101,7 @@ describe("HostCalls: Info", () => {
     const { registers, memory } = prepareRegsAndMemory(serviceId, 10);
     const storageUtilisationBytes = tryAsU64(10_000);
     const storageUtilisationCount = tryAsU32(1_000);
-    accounts.data.set(
+    accounts.details.set(
       serviceId,
       ServiceAccountInfo.fromCodec({
         codeHash: Bytes.fill(32, 5).asOpaque(),
@@ -119,9 +114,9 @@ describe("HostCalls: Info", () => {
     );
 
     // when
-    await info.execute(gas, registers, memory);
+    const result = await info.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.strictEqual(result, PvmExecution.Panic);
   });
 });

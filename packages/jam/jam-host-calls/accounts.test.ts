@@ -2,6 +2,7 @@ import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
+import type { ServiceAccountInfo } from "@typeberry/state";
 import type { Accounts } from "./accounts";
 
 export class TestAccounts implements Accounts {
@@ -17,6 +18,8 @@ export class TestAccounts implements Accounts {
     null,
     (hash) => hash.toString(),
   ]);
+  public readonly details = new Map<ServiceId, ServiceAccountInfo>();
+
   public isFull = false;
 
   lookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null> {
@@ -61,5 +64,12 @@ export class TestAccounts implements Accounts {
 
   isStorageFull(_serviceId: ServiceId): Promise<boolean> {
     return Promise.resolve(this.isFull);
+  }
+
+  getInfo(serviceId: ServiceId | null): Promise<ServiceAccountInfo | null> {
+    if (serviceId === null) {
+      return Promise.resolve(null);
+    }
+    return Promise.resolve(this.details.get(serviceId) ?? null);
   }
 }

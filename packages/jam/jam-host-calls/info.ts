@@ -1,34 +1,29 @@
-import { type ServiceId, tryAsServiceGas } from "@typeberry/block";
+import { tryAsServiceGas } from "@typeberry/block";
 import { Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
-import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { ServiceAccountInfo } from "@typeberry/state";
+import type { Accounts } from "./accounts";
 import { HostCallResult } from "./results";
-import { CURRENT_SERVICE_ID, legacyGetServiceId } from "./utils";
-
-/** Account data interface for Info host call. */
-export interface Accounts {
-  /** Get account info. */
-  getInfo(serviceId: ServiceId): Promise<ServiceAccountInfo | null>;
-}
+import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
 
 const IN_OUT_REG = 7;
 
 /**
  * Return info about some account.
  *
- * `E(t_c, t_b, t_t, t_g , t_m, t_l, t_i)`
+ * `E(t_c, t_b, t_t, t_g , t_m, t_o, t_i)`
  * c = code hash
  * b = balance
  * t = threshold balance
  * g = minimum gas for accumulate
  * m = minimum gas for on transfer
  * i = number of items in the storage
- * l = total number of octets stored.
+ * o = total number of octets stored.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/313b00313b00
+ * https://graypaper.fluffylabs.dev/#/9a08063/332a02332a02?v=0.6.6
  */
 export class Info implements HostCallHandler {
   index = tryAsHostCallIndex(4);
@@ -43,13 +38,15 @@ export class Info implements HostCallHandler {
     memory: IHostCallMemory,
   ): Promise<undefined | PvmExecution> {
     // t
-    const serviceId = legacyGetServiceId(IN_OUT_REG, regs, this.currentServiceId);
+    const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // o
     const outputStart = regs.get(8);
 
     // t
     const accountInfo = await this.account.getInfo(serviceId);
 
+    // NOTE [MaSo] here is ok to return early, because if accountInfo is null,
+    // the length of the encoded object is 0, so it will write to memory with success
     if (accountInfo === null) {
       regs.set(IN_OUT_REG, HostCallResult.NONE);
       return;
@@ -63,9 +60,11 @@ export class Info implements HostCallHandler {
       ),
     });
     const writeResult = memory.storeFrom(outputStart, encodedInfo.raw);
+    if (writeResult.isError) {
+      return PvmExecution.Panic;
+    }
 
-    regs.set(IN_OUT_REG, writeResult.isError ? HostCallResult.OOB : HostCallResult.OK);
-    return;
+    regs.set(IN_OUT_REG, HostCallResult.OK);
   }
 }
 
