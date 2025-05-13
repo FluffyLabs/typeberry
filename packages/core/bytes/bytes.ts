@@ -70,6 +70,11 @@ export class BytesBlob {
     return Ordering.Equal;
   }
 
+  /** Create a new [`BytesBlob`] with no data. */
+  static empty(): BytesBlob {
+    return new BytesBlob(new Uint8Array());
+  }
+
   /** Create a new [`BytesBlob'] by converting given UTF-u encoded string into bytes. */
   static blobFromString(v: string): BytesBlob {
     const encoder = new TextEncoder();

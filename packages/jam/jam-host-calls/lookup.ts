@@ -8,10 +8,10 @@ import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { HostCallResult } from "./results";
 import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
 
-/** Account data interface for Lookup host call. */
-export interface Accounts {
+/** Account data interface for lookup host calls. */
+export interface AccountsLookup {
   /** Lookup a preimage. */
-  lookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null>;
+  lookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null>;
 }
 
 const IN_OUT_REG = 7;
@@ -19,14 +19,14 @@ const IN_OUT_REG = 7;
 /**
  * Lookup a preimage.
  *
- * https://graypaper.fluffylabs.dev/#/85129da/2fa7012fa701?v=0.6.3
+ * https://graypaper.fluffylabs.dev/#/9a08063/329802329802?v=0.6.6
  */
 export class Lookup implements HostCallHandler {
   index = tryAsHostCallIndex(1);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly account: Accounts) {}
+  constructor(private readonly account: AccountsLookup) {}
 
   async execute(
     _gas: GasCounter,
@@ -44,32 +44,36 @@ export class Lookup implements HostCallHandler {
     const preImageHash = Bytes.zero(HASH_SIZE);
     const memoryReadResult = memory.loadInto(preImageHash.raw, hashAddress);
     if (memoryReadResult.isError) {
-      return Promise.resolve(PvmExecution.Panic);
+      return PvmExecution.Panic;
     }
 
     // v
-    const preImage = serviceId !== null ? await this.account.lookup(serviceId, preImageHash) : null;
+    const preImage = await this.account.lookup(serviceId, preImageHash);
 
     const preImageLength = preImage === null ? tryAsU64(0) : tryAsU64(preImage.raw.length);
     const preimageBlobOffset = regs.get(10);
     const lengthToWrite = regs.get(11);
 
     // f
-    const start = minU64(preimageBlobOffset, preImageLength);
+    const offset = minU64(preimageBlobOffset, preImageLength);
     // l
-    const blobLength = minU64(lengthToWrite, tryAsU64(preImageLength - start));
+    const length = minU64(lengthToWrite, tryAsU64(preImageLength - offset));
+
+    // NOTE [MaSo] this is ok to cast to number, because we are bounded by the
+    // valueLength in both cases and valueLength is WC (4,000,000,000) + metadata
+    // which is less than 2^32
+    const chunk =
+      preImage === null ? new Uint8Array(0) : preImage.raw.subarray(Number(offset), Number(offset + length));
+    const memoryWriteResult = memory.storeFrom(destinationAddress, chunk);
+    if (memoryWriteResult.isError) {
+      return PvmExecution.Panic;
+    }
 
     if (preImage === null) {
       regs.set(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
-    // casting to `Number` is safe here, since we are bounded by `preImageLength` in both cases, which is `U32`
-    const chunk = preImage.raw.subarray(Number(start), Number(start + blobLength));
-    const writePageResult = memory.storeFrom(destinationAddress, chunk);
-    if (writePageResult.isError) {
-      return Promise.resolve(PvmExecution.Panic);
-    }
     regs.set(IN_OUT_REG, preImageLength);
   }
 }

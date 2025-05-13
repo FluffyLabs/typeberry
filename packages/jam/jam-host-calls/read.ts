@@ -7,16 +7,12 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { HostCallResult } from "./results";
-import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, getServiceId, writeServiceIdAsLeBytes } from "./utils";
+import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, clampU64ToU32, getServiceId, writeServiceIdAsLeBytes } from "./utils";
 
-/** Account data interface for Read host call. */
-export interface Accounts {
-  /**
-   * Read service storage.
-   *
-   * If `serviceId === currentServiceId` we should read from snapshot state.
-   */
-  read(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null>;
+/** Account data interface for read host calls. */
+export interface AccountsRead {
+  /** Read service storage. */
+  read(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null>;
 }
 
 const IN_OUT_REG = 7;
@@ -24,14 +20,14 @@ const IN_OUT_REG = 7;
 /**
  * Read account storage.
  *
- * https://graypaper.fluffylabs.dev/#/68eaa1f/302701302701?v=0.6.4
+ * https://graypaper.fluffylabs.dev/#/9a08063/333b00333b00?v=0.6.6
  */
 export class Read implements HostCallHandler {
   index = tryAsHostCallIndex(2);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly account: Accounts) {}
+  constructor(private readonly account: AccountsRead) {}
 
   async execute(
     _gas: GasCounter,
@@ -42,25 +38,30 @@ export class Read implements HostCallHandler {
     const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
 
     // k_o
-    const keyStartAddress = regs.get(8);
+    const storageKeyStartAddress = regs.get(8);
     // k_z
-    const keyLen = regs.get(9);
+    const storageKeyLength = regs.get(9);
     // o
     const destinationAddress = regs.get(10);
 
+    const storageKeyLengthClamped = clampU64ToU32(storageKeyLength);
+
     // allocate extra bytes for the serviceId
-    const keyLenClamped = keyLen >= 2n ** 32n ? 2 ** 32 : Number(keyLen);
-    const key = new Uint8Array(SERVICE_ID_BYTES + keyLenClamped);
-    writeServiceIdAsLeBytes(this.currentServiceId, key);
-    const memoryReadResult = memory.loadInto(key.subarray(SERVICE_ID_BYTES), keyStartAddress);
+    const serviceIdStorageKey = new Uint8Array(SERVICE_ID_BYTES + storageKeyLengthClamped);
+    // if the serviceId is null, we will leave 0 to the first 4 bytes
+    if (serviceId !== null) {
+      writeServiceIdAsLeBytes(serviceId, serviceIdStorageKey);
+    }
+    const memoryReadResult = memory.loadInto(serviceIdStorageKey.subarray(SERVICE_ID_BYTES), storageKeyStartAddress);
     if (memoryReadResult.isError) {
-      return Promise.resolve(PvmExecution.Panic);
+      return PvmExecution.Panic;
     }
 
-    const keyHash = blake2b.hashBytes(key);
+    // k
+    const storageKey = blake2b.hashBytes(serviceIdStorageKey);
 
     // v
-    const value = serviceId !== null ? await this.account.read(serviceId, keyHash) : null;
+    const value = await this.account.read(serviceId, storageKey);
 
     const valueLength = value === null ? tryAsU64(0) : tryAsU64(value.raw.length);
     const valueBlobOffset = regs.get(11);
@@ -71,19 +72,20 @@ export class Read implements HostCallHandler {
     // l
     const blobLength = minU64(lengthToWrite, tryAsU64(valueLength - offset));
 
+    // NOTE [MaSo] this is ok to cast to number, because we are bounded by the
+    // valueLength in both cases and valueLength is WC (4,000,000,000) + metadata
+    // which is less than 2^32
+    const chunk = value === null ? new Uint8Array(0) : value.raw.subarray(Number(offset), Number(offset + blobLength));
+    const memoryWriteResult = memory.storeFrom(destinationAddress, chunk);
+    if (memoryWriteResult.isError) {
+      return PvmExecution.Panic;
+    }
+
     if (value === null) {
       regs.set(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
-    const writeResult = memory.storeFrom(
-      destinationAddress,
-      // NOTE casting to `U32` is safe here, since we are bounded by `valueLength`.
-      value.raw.subarray(Number(offset), Number(offset + blobLength)),
-    );
-    if (writeResult.isError) {
-      return Promise.resolve(PvmExecution.Panic);
-    }
     regs.set(IN_OUT_REG, valueLength);
   }
 }
