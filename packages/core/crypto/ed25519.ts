@@ -1,13 +1,44 @@
 import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Key, type Ed25519Signature } from "@typeberry/block";
-import { BytesBlob } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { check } from "@typeberry/utils";
 import { verify_ed25519, verify_ed25519_batch } from "ed25519-wasm/pkg";
+import * as ed from 'noble-ed25519';
+
+/** ED25519 private key size. */
+export const ED25519_PRIV_KEY_BYTES = 32;
+type ED25519_PRIV_KEY_BYTES = typeof ED25519_PRIV_KEY_BYTES;
 
 /**
- * Ed25519 signatures verification.
+ * Ed25519 pub+priv key pair.
  *
- * https://graypaper.fluffylabs.dev/#/5f542d7/081300081b00
+ * Can be passed to `sign` method to produce signatures.
  */
+export class Ed25519Pair {
+  constructor(
+    /** Public key */
+    public readonly pubKey: Ed25519Key,
+    /** Private key. NOTE: Avoid using directly. */
+    public readonly privKey: Bytes<ED25519_PRIV_KEY_BYTES>,
+  ) {}
+}
+
+/** Create a private key from given raw bytes. */
+export async function privateKey(privKey: Bytes<ED25519_PRIV_KEY_BYTES>): Promise<Ed25519Pair> {
+  const pubKey = await ed.getPublicKey(privKey.raw);
+  return new Ed25519Pair(
+    Bytes.fromBlob(pubKey, ED25519_KEY_BYTES).asOpaque(),
+    privKey.asOpaque(),
+  );
+}
+
+/** Sign given piece of data using provided key pair. */
+export async function sign<T extends BytesBlob>(
+  key: Ed25519Pair,
+  message: T
+): Promise<Ed25519Signature> {
+  const signature = await ed.sign(message.raw, key.privKey.raw)
+  return Bytes.fromBlob(signature, ED25519_SIGNATURE_BYTES).asOpaque();
+}
 
 /** Signature verification input. */
 export type Input<T extends BytesBlob = BytesBlob> = {
@@ -21,6 +52,8 @@ export type Input<T extends BytesBlob = BytesBlob> = {
 
 /**
  * Verify the entire batch of `ed25519` signatures and return the results.
+ *
+ * https://graypaper.fluffylabs.dev/#/5f542d7/081300081b00
  */
 export async function verify<T extends BytesBlob>(input: Input<T>[]): Promise<boolean[]> {
   if (input.length === 0) {
@@ -57,7 +90,7 @@ export async function verify<T extends BytesBlob>(input: Input<T>[]): Promise<bo
  * This function is faster than `verify` but it is not safe.
  * See "Batch verification" at the bottom here: https://crates.io/crates/ed25519-dalek
  */
-export function verifyBatch<T extends BytesBlob>(input: Input<T>[]): boolean {
+export async function verifyBatch<T extends BytesBlob>(input: Input<T>[]): Promise<boolean> {
   if (input.length === 0) {
     return true;
   }

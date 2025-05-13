@@ -1,0 +1,19 @@
+{
+  "name": "@typeberry/networking",
+  "version": "0.0.1",
+  "description": "QUIC-based p2p networking.",
+  "license": "MPL-2.0",
+  "author": "Fluffy Labs",
+  "bin": "./bin/test.ts",
+  "main": "index.ts",
+  "scripts": {
+    "start": "ts-node ./bin/test.ts",
+    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "dependencies": {
+    "@matrixai/quic": "^2.0.9",
+    "@peculiar/webcrypto": "^1.5.0",
+    "@peculiar/x509": "^1.12.3",
+    "hi-base32": "^0.5.1"
+  }
+}

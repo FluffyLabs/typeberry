@@ -18,6 +18,7 @@
     "packages/core/json-parser",
     "packages/core/logger",
     "packages/core/mmr",
+    "packages/core/networking",
     "packages/core/numbers",
     "packages/core/ordering",
     "packages/core/pvm-debugger-adapter",
