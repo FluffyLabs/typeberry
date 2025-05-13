@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
-import { Gas as GasHostCall } from "./gas";
+import { GasHostCall } from "./gas";
 
 const REGISTER = 7;
 

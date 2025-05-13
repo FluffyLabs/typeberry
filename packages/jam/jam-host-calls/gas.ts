@@ -12,7 +12,7 @@ import { CURRENT_SERVICE_ID } from "./utils";
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/311301311301?v=0.6.6
  */
-export class Gas implements HostCallHandler {
+export class GasHostCall implements HostCallHandler {
   index = tryAsHostCallIndex(0);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
