@@ -23,21 +23,19 @@ const KEY_LEN_REG = 8;
 const DEST_START_REG = 9;
 const DEST_LEN_REG = 10;
 
-function prepareAccounts({ serviceId, balance }: { serviceId?: ServiceId; balance?: bigint } = {}) {
+function prepareAccounts(serviceId: ServiceId, { balance }: { balance?: bigint } = {}) {
   const accounts = new TestAccounts();
-  if (serviceId) {
-    accounts.details.set(
-      serviceId,
-      ServiceAccountInfo.fromCodec({
-        codeHash: Bytes.fill(32, 5).asOpaque(),
-        balance: tryAsU64(balance ?? 150_000),
-        accumulateMinGas: tryAsServiceGas(0n),
-        onTransferMinGas: tryAsServiceGas(0n),
-        storageUtilisationBytes: tryAsU64(10_000),
-        storageUtilisationCount: tryAsU32(1_000),
-      }),
-    );
-  }
+  accounts.details.set(
+    serviceId,
+    ServiceAccountInfo.fromCodec({
+      codeHash: Bytes.fill(32, 5).asOpaque(),
+      balance: tryAsU64(balance ?? 150_000),
+      accumulateMinGas: tryAsServiceGas(0n),
+      onTransferMinGas: tryAsServiceGas(0n),
+      storageUtilisationBytes: tryAsU64(10_000),
+      storageUtilisationCount: tryAsU32(1_000),
+    }),
+  );
   return accounts;
 }
 
@@ -79,7 +77,7 @@ function prepareRegsAndMemory(
 describe("HostCalls: Write", () => {
   it("should write data to account state", async () => {
     const serviceId = tryAsServiceId(10_000);
-    const accounts = prepareAccounts({ serviceId });
+    const accounts = prepareAccounts(serviceId);
     const write = new Write(accounts);
     write.currentServiceId = serviceId;
     const { key, hash } = prepareKey(write.currentServiceId, "imma key");
@@ -98,7 +96,7 @@ describe("HostCalls: Write", () => {
 
   it("should remove data from account state", async () => {
     const serviceId = tryAsServiceId(10_000);
-    const accounts = prepareAccounts({ serviceId });
+    const accounts = prepareAccounts(serviceId);
     const write = new Write(accounts);
     write.currentServiceId = serviceId;
     const { key, hash } = prepareKey(write.currentServiceId, "xyz");
@@ -117,7 +115,7 @@ describe("HostCalls: Write", () => {
 
   it("should fail if there is no memory for key", async () => {
     const serviceId = tryAsServiceId(10_000);
-    const accounts = prepareAccounts({ serviceId });
+    const accounts = prepareAccounts(serviceId);
     const write = new Write(accounts);
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
@@ -135,7 +133,7 @@ describe("HostCalls: Write", () => {
 
   it("should fail if there is no memory for result", async () => {
     const serviceId = tryAsServiceId(10_000);
-    const accounts = prepareAccounts({ serviceId });
+    const accounts = prepareAccounts(serviceId);
     const write = new Write(accounts);
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
@@ -153,7 +151,7 @@ describe("HostCalls: Write", () => {
 
   it("should fail if the key is not fully readable", async () => {
     const serviceId = tryAsServiceId(10_000);
-    const accounts = prepareAccounts({ serviceId });
+    const accounts = prepareAccounts(serviceId);
     const write = new Write(accounts);
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
@@ -170,7 +168,7 @@ describe("HostCalls: Write", () => {
 
   it("should fail if the value is not fully readable", async () => {
     const serviceId = tryAsServiceId(10_000);
-    const accounts = prepareAccounts({ serviceId });
+    const accounts = prepareAccounts(serviceId);
     const write = new Write(accounts);
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
@@ -187,7 +185,7 @@ describe("HostCalls: Write", () => {
 
   it("should handle storage full when low balance in the account", async () => {
     const serviceId = tryAsServiceId(10_000);
-    const accounts = prepareAccounts({ serviceId, balance: 100n });
+    const accounts = prepareAccounts(serviceId, { balance: 100n });
     const write = new Write(accounts);
     write.currentServiceId = serviceId;
     const { key, hash } = prepareKey(write.currentServiceId, "imma key");
