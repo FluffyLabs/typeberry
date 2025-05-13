@@ -1,11 +1,12 @@
 import type { CodeHash, CoreIndex, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
 import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants";
+import {PreimageHash} from "@typeberry/block/preimage";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
-import type { ValidatorData } from "@typeberry/state";
+import type { LookupHistorySlots, ValidatorData } from "@typeberry/state";
 import type { OK, Result } from "@typeberry/utils";
 
 /** Size of the transfer memo. */
@@ -13,7 +14,7 @@ export const TRANSFER_MEMO_BYTES = W_T;
 export type TRANSFER_MEMO_BYTES = typeof TRANSFER_MEMO_BYTES;
 
 /** Possible states when checking preimage status. */
-export enum PreimageStatus {
+export enum PreimageStatusKind {
   /** The preimage is requested. */
   Requested = 0,
   /** The preimage is available */
@@ -30,23 +31,53 @@ export enum PreimageStatus {
  *
  * https://graypaper.fluffylabs.dev/#/5f542d7/117000117700
  */
-
-export type PreimageStatusResult =
+export type PreimageStatus =
   | {
-      status: typeof PreimageStatus.Requested;
+      status: typeof PreimageStatusKind.Requested;
     }
   | {
-      status: typeof PreimageStatus.Available;
+      status: typeof PreimageStatusKind.Available;
       data: [TimeSlot];
     }
   | {
-      status: typeof PreimageStatus.Unavailable;
+      status: typeof PreimageStatusKind.Unavailable;
       data: [TimeSlot, TimeSlot];
     }
   | {
-      status: typeof PreimageStatus.Reavailable;
+      status: typeof PreimageStatusKind.Reavailable;
       data: [TimeSlot, TimeSlot, TimeSlot];
     };
+
+/** Convert model representation of lookup history into `PreimageStatus`. */
+export function slotsToPreimageStatus(slots: LookupHistorySlots): PreimageStatus {
+  if (slots.length === 0) {
+    return {
+      status: PreimageStatusKind.Requested,
+    };
+  }
+
+  if (slots.length === 1) {
+    return {
+      status: PreimageStatusKind.Available,
+      data: [slots[0]],
+    };
+  }
+
+  if (slots.length === 2) {
+    return {
+      status: PreimageStatusKind.Unavailable,
+      data: [slots[0], slots[1]],
+    };
+  }
+
+  if (slots.length === 3) {
+    return {
+      status: PreimageStatusKind.Reavailable,
+      data: [slots[0], slots[1], slots[2]],
+    };
+  }
+  throw new Error(`Invalid slots length: ${slots.length}`)
+}
 
 /** Possible error when requesting a preimage. */
 export enum RequestPreimageError {
@@ -100,14 +131,14 @@ export enum QuitError {
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/163602163602
  */
-export interface AccumulationPartialState {
+export interface PartialState {
   /**
    * Request (query) preimage status.
    *
    * States:
    * https://graypaper.fluffylabs.dev/#/579bd12/116f00116f00
    */
-  checkPreimageStatus(hash: Blake2bHash, length: U64): PreimageStatusResult | null;
+  checkPreimageStatus(hash: PreimageHash, length: U64): PreimageStatus | null;
 
   /**
    * Request (solicit) a preimage to be (re-)available.
@@ -115,14 +146,14 @@ export interface AccumulationPartialState {
    * States:
    * https://graypaper.fluffylabs.dev/#/579bd12/116f00116f00
    */
-  requestPreimage(hash: Blake2bHash, length: U64): Result<null, RequestPreimageError>;
+  requestPreimage(hash: PreimageHash, length: U64): Result<null, RequestPreimageError>;
 
   /**
    * Mark a preimage hash as unavailable (forget it).
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/335602335602
    */
-  forgetPreimage(hash: Blake2bHash, length: U64): Result<null, null>;
+  forgetPreimage(hash: PreimageHash, length: U64): Result<null, null>;
 
   /**
    * Remove current service account and transfer all remaining

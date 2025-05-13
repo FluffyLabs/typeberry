@@ -10,7 +10,7 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { TestAccumulate } from "../externalities/partial-state.test";
+import { PartialStateMock } from "../externalities/partial-state-mock";
 import { HostCallResult } from "../results";
 import { New } from "./new";
 
@@ -49,7 +49,7 @@ function prepareRegsAndMemory(
 
 describe("HostCalls: New", () => {
   it("should create a new service", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const n = new New(accumulate);
     const serviceId = tryAsServiceId(10_000);
     n.currentServiceId = serviceId;
@@ -72,7 +72,7 @@ describe("HostCalls: New", () => {
   });
 
   it("should fail when balance is not enough", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const n = new New(accumulate);
     const serviceId = tryAsServiceId(10_000);
     n.currentServiceId = serviceId;
@@ -93,7 +93,7 @@ describe("HostCalls: New", () => {
   });
 
   it("should fail when code not readable", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const n = new New(accumulate);
     const serviceId = tryAsServiceId(10_000);
     n.currentServiceId = serviceId;

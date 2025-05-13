@@ -13,7 +13,7 @@ import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
-import { TestAccumulate } from "../externalities/partial-state.test";
+import { PartialStateMock } from "../externalities/partial-state-mock";
 import { HostCallResult } from "../results";
 import { Designate } from "./designate";
 
@@ -58,7 +58,7 @@ function prepareRegsAndMemory(
 
 describe("HostCalls: Designate", () => {
   it("should fail when no data in memory", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const designate = new Designate(accumulate, tinyChainSpec);
     const serviceId = tryAsServiceId(10_000);
     designate.currentServiceId = serviceId;
@@ -73,7 +73,7 @@ describe("HostCalls: Designate", () => {
   });
 
   it("should designate new validator set", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const designate = new Designate(accumulate, tinyChainSpec);
     const serviceId = tryAsServiceId(10_000);
     designate.currentServiceId = serviceId;

@@ -8,7 +8,7 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import type { AccumulationPartialState } from "../externalities/partial-state";
+import type { PartialState } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 
@@ -26,7 +26,7 @@ export class Upgrade implements HostCallHandler {
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly partialState: AccumulationPartialState) {}
+  constructor(private readonly partialState: PartialState) {}
 
   async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `o`

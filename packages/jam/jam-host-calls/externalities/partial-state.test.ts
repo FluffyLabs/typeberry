@@ -1,116 +1,50 @@
-import type { CodeHash, CoreIndex, PerValidator, ServiceId } from "@typeberry/block";
-import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
-import type { Bytes } from "@typeberry/bytes";
-import type { FixedSizeArray } from "@typeberry/collections";
-import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
-import type { U32, U64 } from "@typeberry/numbers";
-import type { Gas } from "@typeberry/pvm-interpreter/gas";
-import type { ValidatorData } from "@typeberry/state";
-import { OK, Result } from "@typeberry/utils";
-import type {
-  AccumulationPartialState,
-  PreimageStatusResult,
-  QuitError,
-  RequestPreimageError,
-  TRANSFER_MEMO_BYTES,
-  TransferError,
-} from "./partial-state";
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import { PreimageStatusKind, slotsToPreimageStatus } from './partial-state';
+import {LookupHistorySlots} from '@typeberry/state';
+import {asKnownSize} from '@typeberry/collections';
+import {tryAsTimeSlot} from '@typeberry/block';
 
-export class TestAccumulate implements AccumulationPartialState {
-  public readonly authQueue: Parameters<TestAccumulate["updateAuthorizationQueue"]>[] = [];
-  public readonly forgetPreimageData: Parameters<TestAccumulate["forgetPreimage"]>[] = [];
-  public readonly newServiceCalled: Parameters<TestAccumulate["newService"]>[] = [];
-  public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
-  public readonly quitAndTransferData: Parameters<TestAccumulate["quitAndTransfer"]>[] = [];
-  public readonly requestPreimageData: Parameters<TestAccumulate["requestPreimage"]>[] = [];
-  public readonly checkPreimageStatusData: Parameters<TestAccumulate["checkPreimageStatus"]>[] = [];
-  public readonly transferData: Parameters<TestAccumulate["transfer"]>[] = [];
-  public readonly upgradeData: Parameters<TestAccumulate["upgradeService"]>[] = [];
-  public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
+describe('slotsToPreimageStatus', () => {
+  it('returns Requested when no slots are given', () => {
+    const slots: LookupHistorySlots = asKnownSize([]);
+    const result = slotsToPreimageStatus(slots);
+    assert.deepEqual(result, {
+      status: PreimageStatusKind.Requested,
+    });
+  });
 
-  public checkpointCalled = 0;
-  public yieldHash: OpaqueHash | null = null;
-  public forgetPreimageResponse: Result<null, null> = Result.ok(null);
-  public newServiceResponse: ServiceId | null = null;
-  public quitAndBurnCalled = 0;
-  public quitReturnValue: Result<null, QuitError> = Result.ok(null);
-  public requestPreimageResponse: Result<null, RequestPreimageError> = Result.ok(null);
-  public checkPreimageStatusResponse: PreimageStatusResult | null = null;
-  public transferReturnValue: Result<OK, TransferError> = Result.ok(OK);
+  it('returns Available when one slot is given', () => {
+    const slots: LookupHistorySlots = asKnownSize([tryAsTimeSlot(42)]);
+    const result = slotsToPreimageStatus(slots);
+    assert.deepEqual(result, {
+      status: PreimageStatusKind.Available,
+      data: slots,
+    });
+  });
 
-  quitAndTransfer(destination: ServiceId, suppliedGas: Gas, memo: Bytes<TRANSFER_MEMO_BYTES>): Result<null, QuitError> {
-    this.quitAndTransferData.push([destination, suppliedGas, memo]);
-    return this.quitReturnValue;
-  }
+  it('returns Unavailable when two slots are given', () => {
+const slots: LookupHistorySlots = asKnownSize([1, 2].map(x => tryAsTimeSlot(x)));
+    const result = slotsToPreimageStatus(slots);
+    assert.deepEqual(result, {
+      status: PreimageStatusKind.Unavailable,
+      data: slots,
+    });
+  });
 
-  quitAndBurn(): void {
-    this.quitAndBurnCalled += 1;
-  }
+  it('returns Reavailable when three slots are given', () => {
+const slots: LookupHistorySlots = asKnownSize([10, 20, 30].map(x => tryAsTimeSlot(x)));
+    const result = slotsToPreimageStatus(slots);
+    assert.deepEqual(result, {
+      status: PreimageStatusKind.Reavailable,
+      data: slots,
+    });
+  });
 
-  checkPreimageStatus(hash: Blake2bHash, length: U64): PreimageStatusResult | null {
-    this.checkPreimageStatusData.push([hash, length]);
-    return this.checkPreimageStatusResponse;
-  }
-
-  requestPreimage(hash: Blake2bHash, length: U64): Result<null, RequestPreimageError> {
-    this.requestPreimageData.push([hash, length]);
-    return this.requestPreimageResponse;
-  }
-
-  forgetPreimage(hash: Blake2bHash, length: U64): Result<null, null> {
-    this.forgetPreimageData.push([hash, length]);
-    return this.forgetPreimageResponse;
-  }
-
-  transfer(
-    destination: ServiceId,
-    amount: U64,
-    suppliedGas: Gas,
-    memo: Bytes<TRANSFER_MEMO_BYTES>,
-  ): Result<OK, TransferError> {
-    this.transferData.push([destination, amount, suppliedGas, memo]);
-    return this.transferReturnValue;
-  }
-
-  newService(
-    requestedServiceId: ServiceId,
-    codeHash: CodeHash,
-    codeLength: U32,
-    gas: U64,
-    balance: U64,
-  ): Result<ServiceId, "insufficient funds"> {
-    this.newServiceCalled.push([requestedServiceId, codeHash, codeLength, gas, balance]);
-    if (this.newServiceResponse !== null) {
-      return Result.ok(this.newServiceResponse);
-    }
-
-    return Result.error("insufficient funds");
-  }
-
-  upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void {
-    this.upgradeData.push([codeHash, gas, allowance]);
-  }
-
-  checkpoint(): void {
-    this.checkpointCalled += 1;
-  }
-
-  updateValidatorsData(validatorsData: PerValidator<ValidatorData>): void {
-    this.validatorsData.push(validatorsData);
-  }
-
-  updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: Map<ServiceId, Gas>): void {
-    this.privilegedServices.push([m, a, v, g]);
-  }
-
-  updateAuthorizationQueue(
-    coreIndex: CoreIndex,
-    authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
-  ): void {
-    this.authQueue.push([coreIndex, authQueue]);
-  }
-
-  yield(hash: OpaqueHash): void {
-    this.yieldHash = hash;
-  }
-}
+  it('throws an error when more than three slots are given', () => {
+    const slots: LookupHistorySlots = asKnownSize([10, 20, 30, 40].map(x => tryAsTimeSlot(x)));
+    assert.throws(() => slotsToPreimageStatus(slots), {
+      message: 'Invalid slots length: 4',
+    });
+  });
+});

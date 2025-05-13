@@ -9,7 +9,7 @@ import {
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { assertNever } from "@typeberry/utils";
-import { type AccumulationPartialState, QuitError, TRANSFER_MEMO_BYTES } from "../externalities/partial-state";
+import { type PartialState, QuitError, TRANSFER_MEMO_BYTES } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 
@@ -27,7 +27,7 @@ export class Eject implements HostCallHandler {
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly partialState: AccumulationPartialState) {}
+  constructor(private readonly partialState: PartialState) {}
 
   async execute(gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `d`: where to transfer remaining funds

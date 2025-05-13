@@ -5,7 +5,7 @@ import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typebe
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { ValidatorData } from "@typeberry/state";
-import type { AccumulationPartialState } from "../externalities/partial-state";
+import type { PartialState } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 
@@ -23,7 +23,7 @@ export class Designate implements HostCallHandler {
   currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(
-    private readonly partialState: AccumulationPartialState,
+    private readonly partialState: PartialState,
     private readonly chainSpec: ChainSpec,
   ) {}
 

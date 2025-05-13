@@ -8,7 +8,7 @@ import {
 } from "@typeberry/pvm-host-calls";
 import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import type { AccumulationPartialState } from "../externalities/partial-state";
+import type { PartialState } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 
@@ -25,7 +25,7 @@ export class Yield implements HostCallHandler {
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly partialState: AccumulationPartialState) {}
+  constructor(private readonly partialState: PartialState) {}
 
   async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
     // `o`

@@ -9,7 +9,7 @@ import { type Gas, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import { TestAccumulate } from "../externalities/partial-state.test";
+import { PartialStateMock } from "../externalities/partial-state-mock";
 import { HostCallResult } from "../results";
 import { Bless } from "./bless";
 
@@ -67,7 +67,7 @@ function prepareRegsAndMemory(
 
 describe("HostCalls: Bless", () => {
   it("should set new privileged services and auto-accumualte services", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const bless = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     bless.currentServiceId = serviceId;
@@ -85,7 +85,7 @@ describe("HostCalls: Bless", () => {
   });
 
   it("should return panic when dictionary is not readable", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
@@ -101,7 +101,7 @@ describe("HostCalls: Bless", () => {
   });
 
   it("should fail when dictionary is out of order", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
@@ -119,7 +119,7 @@ describe("HostCalls: Bless", () => {
   });
 
   it("should fail when dictionary contains duplicates", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;

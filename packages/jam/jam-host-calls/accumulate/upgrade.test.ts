@@ -10,7 +10,7 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { TestAccumulate } from "../externalities/partial-state.test";
+import { PartialStateMock } from "../externalities/partial-state-mock";
 import { HostCallResult } from "../results";
 import { Upgrade } from "./upgrade";
 
@@ -46,7 +46,7 @@ function prepareRegsAndMemory(
 
 describe("HostCalls: Upgrade", () => {
   it("should upgrade a service", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const upgrade = new Upgrade(accumulate);
     upgrade.currentServiceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(
@@ -64,7 +64,7 @@ describe("HostCalls: Upgrade", () => {
   });
 
   it("should fail when code not readable", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const upgrade = new Upgrade(accumulate);
     upgrade.currentServiceId = tryAsServiceId(10_000);
 

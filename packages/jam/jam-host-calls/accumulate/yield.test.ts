@@ -15,7 +15,7 @@ import {
   tryAsSbrkIndex,
 } from "@typeberry/pvm-interpreter";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { TestAccumulate } from "../externalities/partial-state.test";
+import { PartialStateMock } from "../externalities/partial-state-mock";
 import { HostCallResult } from "../results";
 import { Yield } from "./yield";
 
@@ -45,7 +45,7 @@ function prepareRegsAndMemory(
 
 describe("HostCalls: Yield", () => {
   it("should return panic if memory is unreadable", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const yieldHostCall = new Yield(accumulate); // yield is a reserved keyword
 
     const hashStart = tryAsU32(2 ** 16);
@@ -64,7 +64,7 @@ describe("HostCalls: Yield", () => {
   });
 
   it("should return status OK and yield hash", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const yieldHostCall = new Yield(accumulate);
 
     const hashStart = tryAsU32(2 ** 16);

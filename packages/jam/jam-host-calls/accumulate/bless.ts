@@ -5,7 +5,7 @@ import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typebe
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type BigGas, type Gas, type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { asOpaqueType } from "@typeberry/utils";
-import type { AccumulationPartialState } from "../externalities/partial-state";
+import type { PartialState } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 
@@ -34,7 +34,7 @@ export class Bless implements HostCallHandler {
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly partialState: AccumulationPartialState) {}
+  constructor(private readonly partialState: PartialState) {}
 
   async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `m`: manager service (can change privileged services)

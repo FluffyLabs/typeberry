@@ -12,7 +12,7 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
 import { RequestPreimageError } from "../externalities/partial-state";
-import { TestAccumulate } from "../externalities/partial-state.test";
+import { PartialStateMock } from "../externalities/partial-state-mock";
 import { HostCallResult } from "../results";
 import { Solicit } from "./solicit";
 
@@ -45,7 +45,7 @@ function prepareRegsAndMemory(
 
 describe("HostCalls: Solicit", () => {
   it("should request a preimage hash", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const solicit = new Solicit(accumulate);
     solicit.currentServiceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU64(4_096));
@@ -59,7 +59,7 @@ describe("HostCalls: Solicit", () => {
   });
 
   it("should fail if hash not available", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const solicit = new Solicit(accumulate);
     solicit.currentServiceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU64(4_096), {
@@ -75,7 +75,7 @@ describe("HostCalls: Solicit", () => {
   });
 
   it("should fail if already requested", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const solicit = new Solicit(accumulate);
     solicit.currentServiceId = tryAsServiceId(10_000);
 
@@ -91,7 +91,7 @@ describe("HostCalls: Solicit", () => {
   });
 
   it("should fail if already available", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const solicit = new Solicit(accumulate);
     solicit.currentServiceId = tryAsServiceId(10_000);
 
@@ -107,7 +107,7 @@ describe("HostCalls: Solicit", () => {
   });
 
   it("should fail if balance too low", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const solicit = new Solicit(accumulate);
     solicit.currentServiceId = tryAsServiceId(10_000);
 

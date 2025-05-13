@@ -8,7 +8,7 @@ import {
 } from "@typeberry/pvm-host-calls";
 import { type Gas, type GasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { assertNever } from "@typeberry/utils";
-import { type AccumulationPartialState, TRANSFER_MEMO_BYTES, TransferError } from "../externalities/partial-state";
+import { type PartialState, TRANSFER_MEMO_BYTES, TransferError } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID, getServiceId } from "../utils";
 
@@ -35,7 +35,7 @@ export class Transfer implements HostCallHandler {
   };
   currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly partialState: AccumulationPartialState) {}
+  constructor(private readonly partialState: PartialState) {}
 
   async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
     // `d`: destination

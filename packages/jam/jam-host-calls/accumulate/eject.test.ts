@@ -13,7 +13,7 @@ import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { Result } from "@typeberry/utils";
 import { QuitError, TRANSFER_MEMO_BYTES } from "../externalities/partial-state";
-import { TestAccumulate } from "../externalities/partial-state.test";
+import { PartialStateMock } from "../externalities/partial-state-mock";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
 import { Eject } from "./eject";
@@ -48,7 +48,7 @@ const gas = gasCounter(tryAsGas(10_000));
 
 describe("HostCalls: Eject", () => {
   it("should quit the account and burn the funds", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const eject = new Eject(accumulate);
     eject.currentServiceId = tryAsServiceId(10_000);
 
@@ -68,7 +68,7 @@ describe("HostCalls: Eject", () => {
   });
 
   it("should quit the account and burn the funds", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const quit = new Eject(accumulate);
     quit.currentServiceId = tryAsServiceId(10_000);
 
@@ -88,7 +88,7 @@ describe("HostCalls: Eject", () => {
   });
 
   it("should quit and do a transfer to different account", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const quit = new Eject(accumulate);
     quit.currentServiceId = tryAsServiceId(10_000);
 
@@ -104,7 +104,7 @@ describe("HostCalls: Eject", () => {
   });
 
   it("should fail if there is no memory for memo", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const quit = new Eject(accumulate);
     quit.currentServiceId = tryAsServiceId(10_000);
 
@@ -122,7 +122,7 @@ describe("HostCalls: Eject", () => {
   });
 
   it("should fail if gas is too low", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const quit = new Eject(accumulate);
     quit.currentServiceId = tryAsServiceId(10_000);
 
@@ -139,7 +139,7 @@ describe("HostCalls: Eject", () => {
   });
 
   it("should fail if destination does not exist", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const quit = new Eject(accumulate);
     quit.currentServiceId = tryAsServiceId(10_000);
 
