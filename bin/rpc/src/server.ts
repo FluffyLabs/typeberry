@@ -13,12 +13,10 @@ export class RpcServer {
   private rootDb: LmdbRoot;
   private blocks: LmdbBlocks;
   private states: LmdbStates;
-  private chainSpec: ChainSpec;
 
   constructor(port: number, dbPath: string, genesisRoot: string, chainSpec: ChainSpec) {
     this.wss = new WebSocketServer({ port });
     this.methods = new Map();
-    this.chainSpec = chainSpec;
 
     const fullDbPath = `${dbPath}/${genesisRoot}`;
     if (!existsSync(fullDbPath)) {
@@ -80,7 +78,7 @@ export class RpcServer {
         blocks: this.blocks,
         states: this.states,
       };
-      const result = await handler(params ?? [], db, this.chainSpec);
+      const result = await handler(params ?? [], db);
 
       return {
         jsonrpc: "2.0",

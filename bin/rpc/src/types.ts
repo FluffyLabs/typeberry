@@ -1,4 +1,3 @@
-import type { ChainSpec } from "@typeberry/config";
 import type { LmdbBlocks, LmdbStates } from "@typeberry/database-lmdb";
 import type { U32 } from "@typeberry/numbers";
 
@@ -34,11 +33,7 @@ export interface DatabaseContext {
   states: LmdbStates;
 }
 
-export type RpcMethod<T extends unknown[], R extends unknown[] | null> = (
-  params: T,
-  db: DatabaseContext,
-  chainSpec: ChainSpec,
-) => Promise<R>;
+export type RpcMethod<T extends unknown[], R extends unknown[] | null> = (params: T, db: DatabaseContext) => Promise<R>;
 
 export type Hash = number[];
 export type Slot = U32;
