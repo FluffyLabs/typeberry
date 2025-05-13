@@ -23,7 +23,7 @@ class RpcClient {
       const response: JsonRpcResponse = JSON.parse(data.toString());
       const callback = this.messageQueue.get(response.id as number);
 
-      if (callback) {
+      if (callback !== undefined) {
         callback(response);
         this.messageQueue.delete(response.id as number);
       }
@@ -82,7 +82,7 @@ async function main() {
   const parametersResult = await client.call("parameters");
   console.info("parameters result:", parametersResult);
 
-  if (bestBlockResult) {
+  if (bestBlockResult !== null) {
     console.info("Testing parent method...");
     const parentResult = await client.call("parent", [bestBlockResult[0]]);
     console.info("parent result:", parentResult);

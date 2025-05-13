@@ -62,7 +62,7 @@ export class RpcServer {
     const { method, params, id } = request;
 
     const handler = this.methods.get(method);
-    if (!handler) {
+    if (handler === undefined) {
       return {
         jsonrpc: "2.0",
         error: {

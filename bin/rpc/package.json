@@ -15,9 +15,13 @@
     "test:client": "ts-node ./test/client.ts"
   },
   "dependencies": {
+    "@typeberry/bytes": "^0.0.1",
+    "@typeberry/config": "^0.0.1",
+    "@typeberry/database-lmdb": "^0.0.1",
+    "@typeberry/hash": "^0.0.1",
+    "@typeberry/numbers": "^0.0.1",
     "@types/ws": "^8.18.1",
     "minimist": "^1.2.8",
     "ws": "^8.18.2"
-  },
-  "devDependencies": {}
+  }
 }

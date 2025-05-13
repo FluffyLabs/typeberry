@@ -7,7 +7,7 @@ import type { Hash, RpcMethod, Slot } from "../types";
 export const parent: RpcMethod<[Hash], [Hash, Slot]> = async ([headerHash], db) => {
   const hash: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
   const header = db.blocks.getHeader(hash);
-  if (!header) {
+  if (header === null) {
     throw new Error(`${hash} not found.`);
   }
 
@@ -18,7 +18,7 @@ export const parent: RpcMethod<[Hash], [Hash, Slot]> = async ([headerHash], db) 
   }
 
   const parentHeader = db.blocks.getHeader(parentHash);
-  if (!parentHeader) {
+  if (parentHeader === null) {
     throw new Error(`Parent (${parentHash}) not found.`);
   }
 
