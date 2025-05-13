@@ -1,6 +1,6 @@
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { HostCallResult } from "../results";
@@ -21,7 +21,11 @@ export class Forget implements HostCallHandler {
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 
-  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
+  async execute(
+    _gas: GasCounter,
+    regs: IHostCallRegisters,
+    memory: IHostCallMemory,
+  ): Promise<PvmExecution | undefined> {
     // `o`
     const hashStart = regs.get(IN_OUT_REG);
     // `z`

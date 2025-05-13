@@ -1,7 +1,7 @@
 import { sumU64 } from "@typeberry/numbers";
 import {
   type HostCallHandler,
-  type HostCallRegisters,
+  type IHostCallRegisters,
   type PvmExecution,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
@@ -25,7 +25,7 @@ export class Zero implements HostCallHandler {
 
   constructor(private readonly refine: RefineExternalities) {}
 
-  async execute(_gas: GasCounter, regs: HostCallRegisters): Promise<PvmExecution | undefined> {
+  async execute(_gas: GasCounter, regs: IHostCallRegisters): Promise<PvmExecution | undefined> {
     // `n`: machine index
     const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG));
     // `p`: start page

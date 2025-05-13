@@ -1,7 +1,7 @@
 import { blake2b } from "@typeberry/hash";
 import { minU64 } from "@typeberry/numbers";
 import { tryAsU64 } from "@typeberry/numbers";
-import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import type { Accounts } from "./accounts";
@@ -24,8 +24,12 @@ export class Read implements HostCallHandler {
 
   constructor(private readonly account: Accounts) {}
 
-  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
-    // s*
+  async execute(
+    _gas: GasCounter,
+    regs: IHostCallRegisters,
+    memory: IHostCallMemory,
+  ): Promise<undefined | PvmExecution> {
+    // a
     const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
 
     // k_o

@@ -4,7 +4,13 @@ import { OutOfBounds, type PageFault } from "@typeberry/pvm-interpreter/memory/e
 import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { OK, Result } from "@typeberry/utils";
 
-export class HostCallMemory {
+export interface IHostCallMemory {
+  storeFrom(address: U64, bytes: Uint8Array): Result<OK, PageFault | OutOfBounds>;
+  loadInto(result: Uint8Array, startAddress: U64): Result<OK, PageFault | OutOfBounds>;
+  getMemory(): Memory;
+}
+
+export class HostCallMemory implements IHostCallMemory {
   constructor(private readonly memory: Memory) {}
 
   storeFrom(address: U64, bytes: Uint8Array): Result<OK, PageFault | OutOfBounds> {

@@ -1,7 +1,7 @@
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Decoder, codec, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU64 } from "@typeberry/numbers";
-import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type BigGas, type Gas, type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { asOpaqueType } from "@typeberry/utils";
@@ -36,7 +36,11 @@ export class Bless implements HostCallHandler {
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 
-  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
+  async execute(
+    _gas: GasCounter,
+    regs: IHostCallRegisters,
+    memory: IHostCallMemory,
+  ): Promise<undefined | PvmExecution> {
     // `m`: manager service (can change privileged services)
     const m = tryAsServiceId(Number(regs.get(IN_OUT_REG)));
     // `a`: manages authorization queue
