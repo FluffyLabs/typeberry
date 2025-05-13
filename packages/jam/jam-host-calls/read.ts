@@ -52,13 +52,13 @@ export class Read implements HostCallHandler {
     writeServiceIdAsLeBytes(serviceIdClamped, serviceIdStorageKey);
     const memoryReadResult = memory.loadInto(serviceIdStorageKey.subarray(SERVICE_ID_BYTES), storageKeyStartAddress);
     if (memoryReadResult.isError) {
-      return Promise.resolve(PvmExecution.Panic);
+      return PvmExecution.Panic;
     }
 
-    const keyHash = blake2b.hashBytes(serviceIdStorageKey);
+    const storageKey = blake2b.hashBytes(serviceIdStorageKey);
 
     // v
-    const value = await this.account.read(serviceId, keyHash);
+    const value = await this.account.read(serviceId, storageKey);
 
     const valueLength = value === null ? tryAsU64(0) : tryAsU64(value.raw.length);
     const valueBlobOffset = regs.get(11);
@@ -82,7 +82,7 @@ export class Read implements HostCallHandler {
     const chunk = value.raw.subarray(Number(offset), Number(offset + blobLength));
     const memoryWriteResult = memory.storeFrom(destinationAddress, chunk);
     if (memoryWriteResult.isError) {
-      return Promise.resolve(PvmExecution.Panic);
+      return PvmExecution.Panic;
     }
 
     regs.set(IN_OUT_REG, valueLength);

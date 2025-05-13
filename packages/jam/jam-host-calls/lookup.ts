@@ -38,7 +38,7 @@ export class Lookup implements HostCallHandler {
     const preImageHash = Bytes.zero(HASH_SIZE);
     const memoryReadResult = memory.loadInto(preImageHash.raw, hashAddress);
     if (memoryReadResult.isError) {
-      return Promise.resolve(PvmExecution.Panic);
+      return PvmExecution.Panic;
     }
 
     // v
@@ -53,7 +53,7 @@ export class Lookup implements HostCallHandler {
     // l
     const length = minU64(lengthToWrite, tryAsU64(preImageLength - offset));
 
-    // NOTE [MaSo] this is ok to return bcs if value is null, the blobLength will be 0
+    // NOTE [MaSo] this is ok to return bcs if value is null, the preImageLength will be 0
     // and memory won't panic any way
     if (preImage === null) {
       regs.set(IN_OUT_REG, HostCallResult.NONE);
@@ -66,7 +66,7 @@ export class Lookup implements HostCallHandler {
     const chunk = preImage.raw.subarray(Number(offset), Number(offset + length));
     const memoryWriteResult = memory.storeFrom(destinationAddress, chunk);
     if (memoryWriteResult.isError) {
-      return Promise.resolve(PvmExecution.Panic);
+      return PvmExecution.Panic;
     }
 
     regs.set(IN_OUT_REG, preImageLength);

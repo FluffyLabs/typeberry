@@ -13,6 +13,11 @@ export class TestAccounts implements Accounts {
     null,
     (hash) => hash.toString(),
   ]);
+  public readonly snapshotData: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
+    null,
+    (hash) => hash.toString(),
+  ]);
+  public isFull = false;
 
   lookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null> {
     if (serviceId === null) {
@@ -34,5 +39,27 @@ export class TestAccounts implements Accounts {
       return Promise.resolve(null);
     }
     return Promise.resolve(d);
+  }
+
+  write(serviceId: ServiceId, hash: Blake2bHash, data: BytesBlob | null): Promise<void> {
+    if (data === null) {
+      this.storage.delete(serviceId, hash);
+    } else {
+      this.storage.set(data, serviceId, hash);
+    }
+
+    return Promise.resolve();
+  }
+
+  readSnapshotLength(serviceId: ServiceId, hash: Blake2bHash): Promise<number | null> {
+    const data = this.snapshotData.get(serviceId, hash);
+    if (data === undefined) {
+      throw new Error(`Unexpected readSnapshotLen call with ${serviceId} ${hash}`);
+    }
+    return Promise.resolve(data?.length ?? null);
+  }
+
+  isStorageFull(_serviceId: ServiceId): Promise<boolean> {
+    return Promise.resolve(this.isFull);
   }
 }
