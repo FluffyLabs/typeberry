@@ -53,22 +53,21 @@ export class Lookup implements HostCallHandler {
     // l
     const length = minU64(lengthToWrite, tryAsU64(preImageLength - offset));
 
-    // NOTE [MaSo] we are checking if the address is writeable to preserve the correct order of error returns
-    // casting to `Number` is safe here, since we are bounded by `preImageLength`,
-    // and `preImageLength` is around `WC` (4,000,000) + metadata which is less than `U32`
-    const isWriteable = memory.isWriteable(destinationAddress, Number(length));
-    if (!isWriteable) {
-      return Promise.resolve(PvmExecution.Panic);
-    }
-
+    // NOTE [MaSo] this is ok to return bcs if value is null, the blobLength will be 0
+    // and memory won't panic any way
     if (preImage === null) {
       regs.set(IN_OUT_REG, HostCallResult.NONE);
       return;
     }
 
+    // NOTE [MaSo] this is ok to cast to number, because we are bounded by the
+    // valueLength in both cases and valueLength is WC (4,000,000,000) + metadata
+    // which is less than 2^32
     const chunk = preImage.raw.subarray(Number(offset), Number(offset + length));
-    // NOTE [MaSo] we ignore this result because we've already verified that the memory is writable.
-    memory.storeFrom(destinationAddress, chunk);
+    const memoryWriteResult = memory.storeFrom(destinationAddress, chunk);
+    if (memoryWriteResult.isError) {
+      return Promise.resolve(PvmExecution.Panic);
+    }
 
     regs.set(IN_OUT_REG, preImageLength);
   }
