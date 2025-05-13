@@ -1,4 +1,4 @@
-import type { BlockView, ExtrinsicView, HeaderHash, HeaderView } from "@typeberry/block";
+import type { BlockView, ExtrinsicView, HeaderHash, HeaderView, StateRootHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type WithHash } from "@typeberry/hash";
@@ -7,12 +7,16 @@ import { HASH_SIZE, type WithHash } from "@typeberry/hash";
  * Blockchain database interface.
  */
 export interface BlocksDb {
+  /** Mark given header hash as the best block along with it's posterior state root. */
+  setBestData(hash: HeaderHash, posteriorStateRoot: StateRootHash): Promise<void>;
+  /** Retrieve current best header hash and posterior state root. */
+  getBestData(): [HeaderHash, StateRootHash];
+  /** Set the posterior state root hash of given block. */
+  setPostStateRoot(hash: HeaderHash, postStateRoot: StateRootHash): Promise<void>;
+  /** Get posterior state root of given block hash. */
+  getPostStateRoot(hash: HeaderHash): StateRootHash | null;
   /** Insert and flush a new block into the database. */
   insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void>;
-  /** Mark given header hash as the best block. */
-  setBestHeaderHash(hash: HeaderHash): Promise<void>;
-  /** Retrieve current best block. */
-  getBestHeaderHash(): HeaderHash;
   /** Retrieve header by hash. */
   getHeader(hash: HeaderHash): HeaderView | null;
   /**
@@ -27,23 +31,35 @@ export interface BlocksDb {
 export class InMemoryBlocks implements BlocksDb {
   private readonly headersByHash: HashDictionary<HeaderHash, HeaderView> = HashDictionary.new();
   private readonly extrinsicsByHeaderHash: HashDictionary<HeaderHash, ExtrinsicView> = HashDictionary.new();
+  private readonly postStateRootByHeaderHash: HashDictionary<HeaderHash, StateRootHash> = HashDictionary.new();
   private bestHeaderHash: HeaderHash = Bytes.zero(HASH_SIZE).asOpaque();
+  private bestPostStateRoot: StateRootHash = Bytes.zero(HASH_SIZE).asOpaque();
+
+  setBestData(hash: HeaderHash, postStateRoot: StateRootHash): Promise<void> {
+    this.bestHeaderHash = hash;
+    this.bestPostStateRoot = postStateRoot;
+
+    return Promise.resolve();
+  }
+
+  getBestData(): [HeaderHash, StateRootHash] {
+    return [this.bestHeaderHash, this.bestPostStateRoot];
+  }
+
+  setPostStateRoot(hash: HeaderHash, postStateRoot: StateRootHash): Promise<void> {
+    this.postStateRootByHeaderHash.set(hash, postStateRoot);
+    return Promise.resolve();
+  }
+
+  getPostStateRoot(hash: HeaderHash): StateRootHash | null {
+    return this.postStateRootByHeaderHash.get(hash) ?? null;
+  }
 
   insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void> {
     this.headersByHash.set(block.hash, block.data.header.view());
     this.extrinsicsByHeaderHash.set(block.hash, block.data.extrinsic.view());
 
     return Promise.resolve();
-  }
-
-  setBestHeaderHash(hash: HeaderHash): Promise<void> {
-    this.bestHeaderHash = hash;
-
-    return Promise.resolve();
-  }
-
-  getBestHeaderHash(): HeaderHash {
-    return this.bestHeaderHash;
   }
 
   getHeader(hash: HeaderHash): HeaderView | null {

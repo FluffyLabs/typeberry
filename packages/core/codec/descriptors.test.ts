@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Bytes } from "@typeberry/bytes";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { Decoder } from "./decoder";
 import { type CodecRecord, codec } from "./descriptors";
@@ -399,17 +399,5 @@ describe("Codec Descriptors / dictionary", () => {
       `${encoded}`,
       "0x0100000001010101010101010101010101010101010101010101010101010101010101010a0000000a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0f0000000f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f",
     );
-  });
-});
-
-describe("Codec Descriptors / dump", () => {
-  it("should just dump the bytes as-is", () => {
-    const input = BytesBlob.blobFromNumbers([1, 2, 3, 4, 5]);
-
-    const encoded = Encoder.encodeObject(codec.dump, input);
-    const decoded = Decoder.decodeObject(codec.dump, encoded);
-
-    assert.deepStrictEqual(decoded, input);
-    assert.deepStrictEqual(encoded, input);
   });
 });

@@ -1,8 +1,9 @@
 import { describe, it } from "node:test";
-import { ED25519_SIGNATURE_BYTES, tryAsTimeSlot } from "@typeberry/block";
+import { tryAsTimeSlot } from "@typeberry/block";
 import { ReportGuarantee } from "@typeberry/block/guarantees";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { tinyChainSpec } from "@typeberry/config";
+import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { ReportsError } from "./error";
 import { guaranteesAsView, initialValidators, newCredential, newReports, newWorkReport } from "./test.utils";

@@ -42,16 +42,16 @@ export class PrivilegedServices {
 
   private constructor(
     /**
-     * The first, χm, is the index of the manager service which is
+     * `chi_m`: The first, χm, is the index of the manager service which is
      * the service able to effect an alteration of χ from block to block.
      * https://graypaper.fluffylabs.dev/#/85129da/117201117501?v=0.6.3
      */
     readonly manager: ServiceId,
-    /** Manages authorization queue. */
+    /** `chi_a`: Manages authorization queue. */
     readonly authManager: ServiceId,
-    /** Managers validator keys. */
+    /** `chi_v`: Managers validator keys. */
     readonly validatorsManager: ServiceId,
-    /** Dictionary of services that auto-accumulate every block with their gas limit. */
+    /** `chi_g`: Dictionary of services that auto-accumulate every block with their gas limit. */
     readonly autoAccumulateServices: AutoAccumulate[],
   ) {}
 }

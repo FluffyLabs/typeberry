@@ -7,6 +7,7 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { type AvailabilityAssignment, type ValidatorData, tryAsPerCore } from "@typeberry/state";
+import { availabilityAssignmentFromJson, validatorDataFromJson } from "@typeberry/state-json";
 import {
   Assurances,
   AssurancesError,
@@ -14,7 +15,6 @@ import {
   type AssurancesState,
 } from "@typeberry/transition/assurances";
 import { Result, deepEqual } from "@typeberry/utils";
-import { TestAvailabilityAssignment, validatorDataFromJson } from "./common-types";
 
 class Input {
   assurances!: AssurancesExtrinsic;
@@ -41,7 +41,7 @@ const inputFromJson = (spec: ChainSpec): FromJson<Input> => ({
 
 class TestState {
   static fromJson: FromJson<TestState> = {
-    avail_assignments: json.array(json.nullable(TestAvailabilityAssignment.fromJson)),
+    avail_assignments: json.array(json.nullable(availabilityAssignmentFromJson)),
     curr_validators: json.array(validatorDataFromJson),
   };
 

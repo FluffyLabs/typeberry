@@ -1,2 +1,4 @@
 export * from "./blocks";
-export * from "./preimage";
+export * from "./preimages";
+export * from "./root";
+export * from "./states";

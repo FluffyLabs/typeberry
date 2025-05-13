@@ -1,11 +1,11 @@
 import type { BitVec } from "@typeberry/bytes";
 import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
+import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { WithDebug } from "@typeberry/utils";
 import { codecKnownSizeArray, codecWithContext } from "./codec";
 import type { ValidatorIndex } from "./common";
-import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "./crypto";
 import type { HeaderHash } from "./hash";
 
 /**

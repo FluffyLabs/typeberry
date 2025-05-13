@@ -1,7 +1,7 @@
+import { setTimeout } from 'node:timers/promises';
+import {Bytes} from '@typeberry/bytes';
 import {ed25519} from '@typeberry/crypto';
 import { socket } from '../';
-import {Bytes} from '@typeberry/bytes';
-import { setTimeout } from 'node:timers/promises';
 
 async function main(
   connectTo: number,
@@ -42,7 +42,7 @@ async function main(
       // open a bunch of streams
       for (let i = 0; i < 10; i++) {
         const { writable } = peer.openStream();
-        writable.
+        // writable.
       }
       break;
     } catch (e) {
@@ -58,7 +58,7 @@ const parsePort = (v: string | undefined) => {
     return 0;
   }
 
-  const p = parseInt(v);
+  const p = Number.parseInt(v);
   if (Number.isNaN(p)) {
     throw new Error(`Not a number: ${v}`);
   }

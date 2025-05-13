@@ -6,22 +6,39 @@
 
 import type { StateRootHash } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
-import { Encoder } from "@typeberry/codec";
-import { HashDictionary } from "@typeberry/collections";
+import { type CodecRecord, Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
+import { HASH_SIZE } from "@typeberry/hash";
 import type { State } from "@typeberry/state";
 import { InMemoryTrie, WriteableNodesDb } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher";
-import { asOpaqueType } from "@typeberry/utils";
+import { WithDebug, asOpaqueType } from "@typeberry/utils";
 import type { StateKey } from "./keys";
 import { type StateCodec, serialize } from "./serialize";
 
-export type SerializedState = HashDictionary<StateKey, BytesBlob>;
+export class StateEntry extends WithDebug {
+  static Codec = codec.Class(StateEntry, {
+    key: codec.bytes(HASH_SIZE).asOpaque<StateKey>(),
+    value: codec.blob,
+  });
+
+  static fromCodec({ key, value }: CodecRecord<StateEntry>) {
+    return new StateEntry(key, value);
+  }
+
+  constructor(
+    public readonly key: StateKey,
+    public readonly value: BytesBlob,
+  ) {
+    super();
+  }
+}
+export type SerializedState = StateEntry[];
 
 /** https://graypaper.fluffylabs.dev/#/68eaa1f/391600391600?v=0.6.4 */
 export function merkelizeState(state: SerializedState): StateRootHash {
   const trie = new InMemoryTrie(new WriteableNodesDb(blake2bTrieHasher));
-  for (const [key, value] of state) {
+  for (const { key, value } of state) {
     trie.set(key, value);
   }
   return asOpaqueType(trie.getRootHash());
@@ -29,9 +46,9 @@ export function merkelizeState(state: SerializedState): StateRootHash {
 
 /** https://graypaper.fluffylabs.dev/#/68eaa1f/38a50038a500?v=0.6.4 */
 export function serializeState(state: State, spec: ChainSpec): SerializedState {
-  const map = HashDictionary.new<StateKey, BytesBlob>();
+  const raw: StateEntry[] = [];
   function doSerialize<T>(codec: StateCodec<T>) {
-    map.set(codec.key, Encoder.encodeObject(codec.Codec, codec.extract(state), spec));
+    raw.push(new StateEntry(codec.key, Encoder.encodeObject(codec.Codec, codec.extract(state), spec)));
   }
 
   doSerialize(serialize.authPools); // C(1)
@@ -55,28 +72,28 @@ export function serializeState(state: State, spec: ChainSpec): SerializedState {
     const serviceId = service.id;
     // data
     const { key, Codec } = serialize.serviceData(serviceId);
-    map.set(key, Encoder.encodeObject(Codec, service.data.info));
+    raw.push(new StateEntry(key, Encoder.encodeObject(Codec, service.data.info)));
 
     // preimages
     for (const preimage of service.data.preimages.values()) {
       const { key, Codec } = serialize.servicePreimages(serviceId, preimage.hash);
-      map.set(key, Encoder.encodeObject(Codec, preimage.blob));
+      raw.push(new StateEntry(key, Encoder.encodeObject(Codec, preimage.blob)));
     }
 
     // storage
     for (const storage of service.data.storage) {
       const { key, Codec } = serialize.serviceStorage(serviceId, storage.hash);
-      map.set(key, Encoder.encodeObject(Codec, storage.blob));
+      raw.push(new StateEntry(key, Encoder.encodeObject(Codec, storage.blob)));
     }
 
     // lookup history
     for (const lookupHistoryList of service.data.lookupHistory.values()) {
       for (const lookupHistory of lookupHistoryList) {
         const { key, Codec } = serialize.serviceLookupHistory(serviceId, lookupHistory.hash, lookupHistory.length);
-        map.set(key, Encoder.encodeObject(Codec, lookupHistory.slots));
+        raw.push(new StateEntry(key, Encoder.encodeObject(Codec, lookupHistory.slots)));
       }
     }
   }
 
-  return map;
+  return raw;
 }

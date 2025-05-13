@@ -5,54 +5,76 @@ import {
   Header,
   type HeaderHash,
   type HeaderView,
+  type StateRootHash,
 } from "@typeberry/block";
-import { Bytes } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database/blocks";
 import { HASH_SIZE, type WithHash } from "@typeberry/hash";
-import lmdb from "lmdb";
+import type { LmdbRoot, SubDb } from "./root";
 
-const BEST_BLOCK_KEY = "best block";
+const BEST_DATA = "best hash and posterior state root";
 
 // TODO [ToDr] consider having a changeset for transactions,
 // where we store all `insert ++ key ++ value` and `remove ++ key`
 // in a single `Uint8Array` JAM-encoded. That could then
 // be efficiently transferred between threads.
 export class LmdbBlocks implements BlocksDb {
-  readonly root: lmdb.RootDatabase<Uint8Array, lmdb.Key>;
-  readonly extrinsics: lmdb.Database<Uint8Array, lmdb.Key>;
-  readonly headers: lmdb.Database<Uint8Array, lmdb.Key>;
+  readonly extrinsics: SubDb;
+  readonly headers: SubDb;
+  readonly postStateRoots: SubDb;
 
   constructor(
     private readonly chainSpec: ChainSpec,
-    dbPath: string,
+    private readonly root: LmdbRoot,
   ) {
-    this.root = lmdb.open(dbPath, {
-      compression: true,
-      keyEncoding: "binary",
-      encoding: "binary",
-    });
-    // TODO [ToDr] Extrinsics are stored under header hash, not their hash. Revise if it's an issue.
-    this.extrinsics = this.root.openDB({ name: "extrinsics" });
-    this.headers = this.root.openDB({ name: "headers" });
+    // NOTE [ToDr] Extrinsics are stored under header hash, not their hash. Revise if it's an issue.
+    this.extrinsics = this.root.subDb("extrinsics");
+    this.headers = this.root.subDb("headers");
+    // NOTE [ToDr] We currently store all posterior state roots, however it's
+    // most likely very redundant. We probably only need to store the posterior
+    // state roots of recent blocks to be able to quickly resolve forks
+    // OR we need a way to be able to traverse the blocks history forward
+    // (i.e. know what next block(s) is).
+    this.postStateRoots = this.root.subDb("postStateRoots");
+  }
+
+  async setPostStateRoot(hash: HeaderHash, postStateRoot: StateRootHash): Promise<void> {
+    await this.postStateRoots.put(hash.raw, postStateRoot.raw);
+  }
+
+  getPostStateRoot(hash: HeaderHash): StateRootHash | null {
+    const postStateRoot = this.postStateRoots.get(hash.raw);
+    if (postStateRoot === undefined) {
+      return null;
+    }
+    return Bytes.fromBlob(postStateRoot, HASH_SIZE).asOpaque();
   }
 
   async insertBlock(block: WithHash<HeaderHash, BlockView>): Promise<void> {
     const header = block.data.header.view().encoded();
     const extrinsic = block.data.extrinsic.view().encoded();
-    const a = this.headers.put(block.hash.raw, header.raw);
-    const b = this.extrinsics.put(block.hash.raw, extrinsic.raw);
-    await Promise.all([a, b]);
+    await this.root.db.transaction(() => {
+      this.headers.put(block.hash.raw, header.raw);
+      this.extrinsics.put(block.hash.raw, extrinsic.raw);
+    });
   }
 
-  async setBestHeaderHash(hash: HeaderHash): Promise<void> {
-    await this.root.put(BEST_BLOCK_KEY, hash.raw);
+  async setBestData(hash: HeaderHash, postState: StateRootHash): Promise<void> {
+    await this.root.db.put(BEST_DATA, BytesBlob.blobFromParts(hash.raw, postState.raw).raw);
   }
 
-  getBestHeaderHash(): HeaderHash {
-    const data = this.root.get(BEST_BLOCK_KEY);
-    return (data !== undefined ? Bytes.fromBlob(data, HASH_SIZE) : Bytes.zero(HASH_SIZE)).asOpaque();
+  getBestData(): [HeaderHash, StateRootHash] {
+    const bestData = this.root.db.get(BEST_DATA);
+    if (bestData === undefined) {
+      return [Bytes.zero(HASH_SIZE).asOpaque(), Bytes.zero(HASH_SIZE).asOpaque()];
+    }
+
+    return [
+      Bytes.fromBlob(bestData.subarray(0, HASH_SIZE), HASH_SIZE).asOpaque(),
+      Bytes.fromBlob(bestData.subarray(HASH_SIZE), HASH_SIZE).asOpaque(),
+    ];
   }
 
   getHeader(hash: HeaderHash): HeaderView | null {

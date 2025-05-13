@@ -12,7 +12,7 @@
     "@typeberry/block": "0.0.1",
     "@typeberry/bytes": "0.0.1",
     "@typeberry/collections": "0.0.1",
-    "@typeberry/numbers": "0.0.1",
-    "@typeberry/json-parser": "0.0.1"
+    "@typeberry/json-parser": "0.0.1",
+    "@typeberry/numbers": "0.0.1"
   }
 }

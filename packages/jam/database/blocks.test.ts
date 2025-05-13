@@ -9,11 +9,27 @@ describe("InMemoryDatabase", () => {
   it("should set and retrieve best header hash", () => {
     const db = new InMemoryBlocks();
 
-    db.setBestHeaderHash(Bytes.fill(HASH_SIZE, 5).asOpaque());
+    db.setBestData(Bytes.fill(HASH_SIZE, 5).asOpaque(), Bytes.fill(HASH_SIZE, 10).asOpaque());
 
     assert.strictEqual(
-      db.getBestHeaderHash().toString(),
+      db.getBestData()[0].toString(),
       "0x0505050505050505050505050505050505050505050505050505050505050505",
+    );
+    assert.strictEqual(
+      db.getBestData()[1].toString(),
+      "0x0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
+    );
+  });
+
+  it("should set and retrieve post state root", () => {
+    const db = new InMemoryBlocks();
+
+    db.setPostStateRoot(Bytes.fill(HASH_SIZE, 5).asOpaque(), Bytes.fill(HASH_SIZE, 10).asOpaque());
+
+    assert.strictEqual(db.getPostStateRoot(Bytes.fill(HASH_SIZE, 1).asOpaque())?.toString(), undefined);
+    assert.strictEqual(
+      db.getPostStateRoot(Bytes.fill(HASH_SIZE, 5).asOpaque())?.toString(),
+      "0x0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
     );
   });
 

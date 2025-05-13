@@ -2,10 +2,7 @@ import {
   BANDERSNATCH_KEY_BYTES,
   BANDERSNATCH_PROOF_BYTES,
   BANDERSNATCH_RING_ROOT_BYTES,
-  type BandersnatchKey,
   type BandersnatchRingRoot,
-  ED25519_KEY_BYTES,
-  type Ed25519Key,
   type EntropyHash,
   EpochMarker,
   type TimeSlot,
@@ -16,26 +13,20 @@ import {
 } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
 import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
+import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import { type Input, type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole";
 import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
-import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data";
-import { Result, deepEqual, resultToString } from "@typeberry/utils";
-import { logger } from "../common";
-import { getChainSpec, validatorDataFromJson } from "./common-types";
+import { TicketsOrKeys, ticketFromJson } from "@typeberry/state-json";
+import { validatorDataFromJson } from "@typeberry/state-json";
+import { Result, deepEqual } from "@typeberry/utils";
+import { getChainSpec } from "./spec";
 namespace safroleFromJson {
-  export const bytesBlob = json.fromString(BytesBlob.parseBlob);
-
-  export const ticketBody: FromJson<Ticket> = {
-    id: fromJson.bytes32(),
-    attempt: "number",
-  };
-
   export const ticketEnvelope: FromJson<SignedTicket> = {
     attempt: "number",
     signature: json.fromString((v) => Bytes.parseBytes(v, BANDERSNATCH_PROOF_BYTES).asOpaque()),
@@ -45,28 +36,6 @@ namespace safroleFromJson {
     bandersnatch: json.fromString((v) => Bytes.parseBytes(v, BANDERSNATCH_KEY_BYTES).asOpaque()),
     ed25519: json.fromString((v) => Bytes.parseBytes(v, ED25519_KEY_BYTES).asOpaque()),
   };
-}
-
-export class TicketsOrKeys {
-  static fromJson: FromJson<TicketsOrKeys> = {
-    keys: json.optional<BandersnatchKey[]>(json.array(fromJson.bytes32())),
-    tickets: json.optional<Ticket[]>(json.array(safroleFromJson.ticketBody)),
-  };
-
-  keys?: BandersnatchKey[];
-  tickets?: Ticket[];
-
-  static toSafroleSealingKeys(data: TicketsOrKeys, chainSpec: ChainSpec): SafroleSealingKeys {
-    if (data.keys !== undefined) {
-      return SafroleSealingKeysData.keys(tryAsPerEpochBlock(data.keys, chainSpec));
-    }
-
-    if (data.tickets !== undefined) {
-      return SafroleSealingKeysData.tickets(tryAsPerEpochBlock(data.tickets, chainSpec));
-    }
-
-    throw new Error("Neither tickets nor keys are defined!");
-  }
 }
 
 export enum TestErrorCode {
@@ -93,7 +62,7 @@ class JsonState {
     kappa: json.array(validatorDataFromJson),
     gamma_k: json.array(validatorDataFromJson),
     iota: json.array(validatorDataFromJson),
-    gamma_a: json.array(safroleFromJson.ticketBody),
+    gamma_a: json.array(ticketFromJson),
     gamma_s: TicketsOrKeys.fromJson,
     gamma_z: json.fromString((v) => Bytes.parseBytes(v, BANDERSNATCH_RING_ROOT_BYTES).asOpaque()),
     post_offenders: json.array(fromJson.bytes32()),
@@ -152,7 +121,7 @@ export class EpochMark {
 export class OkOutput {
   static fromJson: FromJson<OkOutput> = {
     epoch_mark: json.optional(EpochMark.fromJson),
-    tickets_mark: json.optional<Ticket[]>(json.array(safroleFromJson.ticketBody)),
+    tickets_mark: json.optional<Ticket[]>(json.array(ticketFromJson)),
   };
   epoch_mark?: EpochMark | null;
   tickets_mark?: Ticket[] | null;
@@ -252,7 +221,6 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
   const safrole = new Safrole(chainSpec, preState, bwasm);
 
   const result = await safrole.transition(testContent.input);
-  logger.log(`SafroleTest { ${resultToString(result)} }`);
 
   deepEqual(result, Output.toSafroleOutput(testContent.output, chainSpec));
   deepEqual(safrole.state, JsonState.toSafroleState(testContent.post_state, chainSpec));

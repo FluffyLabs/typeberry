@@ -2,13 +2,7 @@ import type { TimeSlot } from "@typeberry/block";
 import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage";
 import type { BytesBlob } from "@typeberry/bytes";
 import { blake2b } from "@typeberry/hash";
-import {
-  type LookupHistoryItem,
-  PreimageItem,
-  type Service,
-  type State,
-  tryAsLookupHistorySlots,
-} from "@typeberry/state";
+import { LookupHistoryItem, PreimageItem, type Service, type State, tryAsLookupHistorySlots } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
 
 type PreimagesState = Pick<State, "services">;
@@ -72,7 +66,11 @@ export class Preimages {
 
       // https://graypaper.fluffylabs.dev/#/5f542d7/181800181900
       // https://graypaper.fluffylabs.dev/#/5f542d7/116f0011a500
-      if (account.data.preimages.has(hash) || lookupHistoryItem === undefined || !lookupHistoryItem?.isRequested()) {
+      if (
+        account.data.preimages.has(hash) ||
+        lookupHistoryItem === undefined ||
+        !LookupHistoryItem.isRequested(lookupHistoryItem)
+      ) {
         return Result.error(PreimagesErrorCode.PreimageUnneeded);
       }
 

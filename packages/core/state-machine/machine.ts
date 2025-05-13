@@ -45,6 +45,10 @@ export class StateMachine<CurrentState extends TStates, TStates extends State<St
 
   /** Return a promise, which resolves when given `state` (name) becomes active. */
   waitForState<TNewState extends TStates>(state: StateNames<TNewState>): Promise<StateMachine<TNewState, TStates>> {
+    if (this.state.stateName === state) {
+      throw new Error(`Attempting to await a state that is already active: ${state}`);
+    }
+
     return new Promise((resolve) => {
       // TODO [ToDr] reject when finished/error?
       this.stateListeners.once(state, resolve);

@@ -1,8 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { ED25519_SIGNATURE_BYTES, tryAsCoreIndex } from "@typeberry/block";
+import { tryAsCoreIndex } from "@typeberry/block";
 import { WorkPackageInfo } from "@typeberry/block/work-report";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { MessageHandler, type MessageSender } from "../handler";
 import { ClientHandler, STREAM_KIND, ServerHandler } from "./ce-134-work-package-sharing";

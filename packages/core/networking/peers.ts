@@ -1,6 +1,6 @@
-import {Ed25519Key} from "@typeberry/block";
-import {Logger} from "@typeberry/logger";
-import {ReadableWritablePair} from "node:stream/web";
+import type { ReadableWritablePair } from "node:stream/web";
+import { Logger } from "@typeberry/logger";
+import {Ed25519Key} from "@typeberry/crypto";
 
 /** Peer connection details. */
 export type PeerAddress = {
@@ -16,9 +16,9 @@ export interface Stream extends ReadableWritablePair<Uint8Array, Uint8Array> {}
 /** Peer interface. */
 export interface Peer {
   /** ID unique per connection. */
-  connectionId: string,
+  connectionId: string;
   /** Connection address. */
-  address: PeerAddress,
+  address: PeerAddress;
   /** Peer id (alpn of the cert). */
   id: string;
   /** Peer's public key. */
@@ -36,8 +36,7 @@ type StreamCallback = (onPeer: Stream) => void;
 
 const logger = Logger.new(__filename, "net:peers");
 
-export class Peer {
-}
+export class Peer {}
 
 /** Peer management. */
 export class Peers {
@@ -51,16 +50,16 @@ export class Peers {
     const oldPeerData = this.peers.get(peer.connectionId);
     if (oldPeerData !== undefined) {
       // TODO [ToDr] replacing old connection?
-      logger.warn('Replacing older connection.');
+      logger.warn("Replacing older connection.");
     }
     this.peers.set(peer.connectionId, peer);
-    this.onPeerConnected.forEach(x => x(peer));
+    this.onPeerConnected.forEach((x) => x(peer));
   }
 
   public peerDisconnected(peer: Peer) {
     logger.info(`⚡︎Peer ${peer.id} disconnected.`);
     this.peers.delete(peer.connectionId);
-    this.onPeerDisconnected.forEach(x => x(peer));
+    this.onPeerDisconnected.forEach((x) => x(peer));
   }
 
   public addOnPeerConnected(cb: PeerCallback) {

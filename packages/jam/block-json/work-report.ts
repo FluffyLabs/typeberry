@@ -23,7 +23,7 @@ const workPackageSpecFromJson = json.object<JsonObject<WorkPackageSpec>, WorkPac
     new WorkPackageSpec(hash, length, erasure_root, exports_root, exports_count),
 );
 
-const segmentRootLookupItemFromJson = json.object<JsonObject<WorkPackageInfo>, WorkPackageInfo>(
+export const segmentRootLookupItemFromJson = json.object<JsonObject<WorkPackageInfo>, WorkPackageInfo>(
   {
     work_package_hash: fromJson.bytes32(),
     segment_tree_root: fromJson.bytes32(),

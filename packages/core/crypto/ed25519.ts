@@ -1,12 +1,31 @@
-import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Key, type Ed25519Signature } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { check } from "@typeberry/utils";
+import { type Opaque, check } from "@typeberry/utils";
 import { verify_ed25519, verify_ed25519_batch } from "ed25519-wasm/pkg";
-import * as ed from 'noble-ed25519';
+import * as ed from "noble-ed25519";
 
 /** ED25519 private key size. */
 export const ED25519_PRIV_KEY_BYTES = 32;
 type ED25519_PRIV_KEY_BYTES = typeof ED25519_PRIV_KEY_BYTES;
+
+export const ED25519_KEY_BYTES = 32;
+export const ED25519_SIGNATURE_BYTES = 64;
+
+export type ED25519_KEY_BYTES = typeof ED25519_KEY_BYTES;
+export type ED25519_SIGNATURE_BYTES = typeof ED25519_SIGNATURE_BYTES;
+
+/**
+ * Potentially valid Ed25519 public key.
+ *
+ * https://graypaper.fluffylabs.dev/#/579bd12/081300081a00
+ */
+export type Ed25519Key = Opaque<Bytes<ED25519_KEY_BYTES>, "Ed25519Key">;
+
+/**
+ * Potentially valid Ed25519 signature.
+ *
+ * https://graypaper.fluffylabs.dev/#/579bd12/081300081a00
+ */
+export type Ed25519Signature = Opaque<Bytes<ED25519_SIGNATURE_BYTES>, "Ed25519Signature">;
 
 /**
  * Ed25519 pub+priv key pair.
@@ -25,18 +44,12 @@ export class Ed25519Pair {
 /** Create a private key from given raw bytes. */
 export async function privateKey(privKey: Bytes<ED25519_PRIV_KEY_BYTES>): Promise<Ed25519Pair> {
   const pubKey = await ed.getPublicKey(privKey.raw);
-  return new Ed25519Pair(
-    Bytes.fromBlob(pubKey, ED25519_KEY_BYTES).asOpaque(),
-    privKey.asOpaque(),
-  );
+  return new Ed25519Pair(Bytes.fromBlob(pubKey, ED25519_KEY_BYTES).asOpaque(), privKey.asOpaque());
 }
 
 /** Sign given piece of data using provided key pair. */
-export async function sign<T extends BytesBlob>(
-  key: Ed25519Pair,
-  message: T
-): Promise<Ed25519Signature> {
-  const signature = await ed.sign(message.raw, key.privKey.raw)
+export async function sign<T extends BytesBlob>(key: Ed25519Pair, message: T): Promise<Ed25519Signature> {
+  const signature = await ed.sign(message.raw, key.privKey.raw);
   return Bytes.fromBlob(signature, ED25519_SIGNATURE_BYTES).asOpaque();
 }
 
@@ -102,5 +115,5 @@ export async function verifyBatch<T extends BytesBlob>(input: Input<T>[]): Promi
 
   const data = BytesBlob.blobFromParts(first, ...rest).raw;
 
-  return verify_ed25519_batch(data);
+  return Promise.resolve(verify_ed25519_batch(data));
 }

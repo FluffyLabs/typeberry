@@ -9,6 +9,7 @@
     "@typeberry/codec": "0.0.1",
     "@typeberry/collections": "^0.0.1",
     "@typeberry/config": "0.0.1",
+    "@typeberry/crypto": "0.0.1",
     "@typeberry/hash": "0.0.1",
     "@typeberry/logger": "0.0.1",
     "@typeberry/numbers": "0.0.1",
