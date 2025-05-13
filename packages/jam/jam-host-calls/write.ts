@@ -2,7 +2,7 @@ import type { ServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
-import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { HostCallResult } from "./results";
@@ -52,7 +52,11 @@ export class Write implements HostCallHandler {
 
   constructor(private readonly account: Accounts) {}
 
-  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
+  async execute(
+    _gas: GasCounter,
+    regs: IHostCallRegisters,
+    memory: IHostCallMemory,
+  ): Promise<undefined | PvmExecution> {
     // Storage is full (i.e. `a_t > a_b` - threshold balance is greater than current balance).
     // NOTE that we first need to know if the storage is full, since the result
     // does not depend on the success of reading the key or value:

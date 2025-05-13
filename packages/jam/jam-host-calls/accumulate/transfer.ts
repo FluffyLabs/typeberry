@@ -1,11 +1,6 @@
 import { Bytes } from "@typeberry/bytes";
-import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import {
-  type HostCallMemory,
-  type HostCallRegisters,
-  PvmExecution,
-  tryAsHostCallIndex,
-} from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type Gas, type GasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { assertNever } from "@typeberry/utils";
 import { HostCallResult } from "../results";
@@ -29,7 +24,7 @@ export class Transfer implements HostCallHandler {
    *
    * https://graypaper.fluffylabs.dev/#/68eaa1f/32d20132d501?v=0.6.4
    */
-  gasCost = (regs: HostCallRegisters): Gas => {
+  gasCost = (regs: IHostCallRegisters): Gas => {
     const gas = 10n + regs.get(ON_TRANSFER_GAS_REG);
     return tryAsGas(gas);
   };
@@ -37,7 +32,11 @@ export class Transfer implements HostCallHandler {
 
   constructor(private readonly partialState: AccumulationPartialState) {}
 
-  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
+  async execute(
+    _gas: GasCounter,
+    regs: IHostCallRegisters,
+    memory: IHostCallMemory,
+  ): Promise<undefined | PvmExecution> {
     // `d`: destination
     const destination = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
     // `a`: amount
