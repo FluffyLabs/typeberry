@@ -34,7 +34,7 @@ export interface DatabaseContext {
   states: LmdbStates;
 }
 
-export type RpcMethod<T extends unknown[], R extends unknown[]> = (
+export type RpcMethod<T extends unknown[], R extends unknown[] | null> = (
   params: T,
   db: DatabaseContext,
   chainSpec: ChainSpec,
