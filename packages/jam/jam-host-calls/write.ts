@@ -66,6 +66,7 @@ export class Write implements HostCallHandler {
       return;
     }
 
+    /** https://graypaper.fluffylabs.dev/#/9a08063/33af0133b201?v=0.6.6 */
     const maybeValue = valueLength === 0n ? null : BytesBlob.blobFrom(value);
 
     // a
