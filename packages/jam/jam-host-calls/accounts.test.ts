@@ -20,8 +20,6 @@ export class TestAccounts implements Accounts {
   ]);
   public readonly details = new Map<ServiceId, ServiceAccountInfo>();
 
-  public isFull = false;
-
   lookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null> {
     if (serviceId === null) {
       return Promise.resolve(null);
@@ -62,8 +60,12 @@ export class TestAccounts implements Accounts {
     return Promise.resolve(data?.length ?? null);
   }
 
-  isStorageFull(_serviceId: ServiceId): Promise<boolean> {
-    return Promise.resolve(this.isFull);
+  isStorageFull(serviceId: ServiceId): Promise<boolean> {
+    const accountInfo = this.details.get(serviceId);
+    if (accountInfo === undefined) {
+      return Promise.resolve(false);
+    }
+    return Promise.resolve(accountInfo.thresholdBalance() > accountInfo.balance);
   }
 
   getInfo(serviceId: ServiceId | null): Promise<ServiceAccountInfo | null> {

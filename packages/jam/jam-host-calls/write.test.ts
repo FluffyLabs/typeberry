@@ -1,15 +1,16 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { type ServiceId, tryAsServiceId } from "@typeberry/block";
-import { BytesBlob } from "@typeberry/bytes";
+import { type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { blake2b } from "@typeberry/hash";
-import { tryAsU64 } from "@typeberry/numbers";
+import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
+import { ServiceAccountInfo } from "@typeberry/state";
 import { TestAccounts } from "./accounts.test";
 import { HostCallResult } from "./results";
 import { SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
@@ -21,6 +22,24 @@ const KEY_START_REG = 7;
 const KEY_LEN_REG = 8;
 const DEST_START_REG = 9;
 const DEST_LEN_REG = 10;
+
+function prepareAccounts({ serviceId, balance }: { serviceId?: ServiceId; balance?: bigint } = {}) {
+  const accounts = new TestAccounts();
+  if (serviceId) {
+    accounts.details.set(
+      serviceId,
+      ServiceAccountInfo.fromCodec({
+        codeHash: Bytes.fill(32, 5).asOpaque(),
+        balance: tryAsU64(balance ?? 150_000),
+        accumulateMinGas: tryAsServiceGas(0n),
+        onTransferMinGas: tryAsServiceGas(0n),
+        storageUtilisationBytes: tryAsU64(10_000),
+        storageUtilisationCount: tryAsU32(1_000),
+      }),
+    );
+  }
+  return accounts;
+}
 
 function prepareKey(serviceId: ServiceId, key: string) {
   const keyBytes = BytesBlob.blobFromString(key);
@@ -59,9 +78,9 @@ function prepareRegsAndMemory(
 
 describe("HostCalls: Write", () => {
   it("should write data to account state", async () => {
-    const accounts = new TestAccounts();
-    const write = new Write(accounts);
     const serviceId = tryAsServiceId(10_000);
+    const accounts = prepareAccounts({ serviceId });
+    const write = new Write(accounts);
     write.currentServiceId = serviceId;
     const { key, hash } = prepareKey(write.currentServiceId, "imma key");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
@@ -78,9 +97,9 @@ describe("HostCalls: Write", () => {
   });
 
   it("should remove data from account state", async () => {
-    const accounts = new TestAccounts();
-    const write = new Write(accounts);
     const serviceId = tryAsServiceId(10_000);
+    const accounts = prepareAccounts({ serviceId });
+    const write = new Write(accounts);
     write.currentServiceId = serviceId;
     const { key, hash } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromNumbers([]));
@@ -97,9 +116,9 @@ describe("HostCalls: Write", () => {
   });
 
   it("should fail if there is no memory for key", async () => {
-    const accounts = new TestAccounts();
-    const write = new Write(accounts);
     const serviceId = tryAsServiceId(10_000);
+    const accounts = prepareAccounts({ serviceId });
+    const write = new Write(accounts);
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"), {
@@ -115,9 +134,9 @@ describe("HostCalls: Write", () => {
   });
 
   it("should fail if there is no memory for result", async () => {
-    const accounts = new TestAccounts();
-    const write = new Write(accounts);
     const serviceId = tryAsServiceId(10_000);
+    const accounts = prepareAccounts({ serviceId });
+    const write = new Write(accounts);
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"), {
@@ -133,9 +152,9 @@ describe("HostCalls: Write", () => {
   });
 
   it("should fail if the key is not fully readable", async () => {
-    const accounts = new TestAccounts();
-    const write = new Write(accounts);
     const serviceId = tryAsServiceId(10_000);
+    const accounts = prepareAccounts({ serviceId });
+    const write = new Write(accounts);
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
@@ -150,9 +169,9 @@ describe("HostCalls: Write", () => {
   });
 
   it("should fail if the value is not fully readable", async () => {
-    const accounts = new TestAccounts();
-    const write = new Write(accounts);
     const serviceId = tryAsServiceId(10_000);
+    const accounts = prepareAccounts({ serviceId });
+    const write = new Write(accounts);
     write.currentServiceId = serviceId;
     const { key } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
@@ -166,15 +185,14 @@ describe("HostCalls: Write", () => {
     assert.deepStrictEqual(accounts.storage.data.size, 0);
   });
 
-  it("should handle storage full", async () => {
-    const accounts = new TestAccounts();
-    const write = new Write(accounts);
+  it("should handle storage full when low balance in the account", async () => {
     const serviceId = tryAsServiceId(10_000);
+    const accounts = prepareAccounts({ serviceId, balance: 100n });
+    const write = new Write(accounts);
     write.currentServiceId = serviceId;
     const { key, hash } = prepareKey(write.currentServiceId, "imma key");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
     accounts.snapshotData.set(BytesBlob.blobFromString("old data"), serviceId, hash);
-    accounts.isFull = true;
 
     // when
     const result = await write.execute(gas, registers, memory);

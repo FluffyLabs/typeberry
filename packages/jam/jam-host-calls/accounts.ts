@@ -25,9 +25,7 @@ export interface Accounts {
   readSnapshotLength(serviceId: ServiceId, hash: Blake2bHash): Promise<number | null>;
   /**
    * Returns true if the storage is already full.
-   *
-   * It means that the threshold balance `a_t` is greater than current account balance `a_b`.
-   * TODO [ToDr] Can be computed from `AccountInfo` - might need to be merged later.
+   * - aka Not enough balance to pay for the storage.
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/331002331402?v=0.6.6
    */
