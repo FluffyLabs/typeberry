@@ -14,7 +14,7 @@ const ALLOWANCE_REG = 9; // `m`
 /**
  * Upgrade the code of the service.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/324401324401
+ * https://graypaper.fluffylabs.dev/#/9a08063/365803365803?v=0.6.6
  */
 export class Upgrade implements HostCallHandler {
   index = tryAsHostCallIndex(10);
@@ -45,6 +45,5 @@ export class Upgrade implements HostCallHandler {
     this.partialState.upgradeService(codeHash.asOpaque(), gas, allowance);
 
     regs.set(IN_OUT_REG, HostCallResult.OK);
-    return;
   }
 }
