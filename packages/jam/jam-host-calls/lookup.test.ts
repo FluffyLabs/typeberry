@@ -2,7 +2,6 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { MultiMap } from "@typeberry/collections";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
@@ -12,24 +11,9 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { type Accounts, Lookup } from "./lookup";
+import { Lookup } from "./lookup";
 import { HostCallResult } from "./results";
-
-class TestAccounts implements Accounts {
-  public readonly data: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
-    null,
-    (hash) => hash.toString(),
-  ]);
-
-  lookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null> {
-    const val = this.data.get(serviceId, hash);
-    if (val === undefined) {
-      throw new Error(`Unexpected lookup call with ${serviceId}, ${hash}`);
-    }
-
-    return Promise.resolve(val);
-  }
-}
+import { TestAccounts } from "./test-accounts";
 
 const gas = gasCounter(tryAsGas(0));
 
@@ -104,7 +88,7 @@ describe("HostCalls: Lookup", () => {
     const serviceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(serviceId, HASH);
 
-    accounts.data.set(null, serviceId, HASH);
+    accounts.preimages.set(null, serviceId, HASH);
     const result = await lookup.execute(gas, registers, memory);
 
     assert.deepStrictEqual(result, undefined);
@@ -133,7 +117,7 @@ describe("HostCalls: Lookup", () => {
       preimageLength: 1,
     });
 
-    accounts.data.set(PREIMAGE_BLOB, serviceId, HASH);
+    accounts.preimages.set(PREIMAGE_BLOB, serviceId, HASH);
     const result = await lookup.execute(gas, registers, emptyMemory);
 
     assert.deepStrictEqual(result, PvmExecution.Panic);
@@ -147,7 +131,7 @@ describe("HostCalls: Lookup", () => {
       const preimageLength = 5;
       const { registers, memory } = prepareRegsAndMemory(serviceId, HASH, { preimageLength });
 
-      accounts.data.set(PREIMAGE_BLOB, serviceId, HASH);
+      accounts.preimages.set(PREIMAGE_BLOB, serviceId, HASH);
 
       const result = await lookup.execute(gas, registers, memory);
       assert.deepStrictEqual(result, undefined);
@@ -170,7 +154,7 @@ describe("HostCalls: Lookup", () => {
         preimageOffset,
       });
 
-      accounts.data.set(PREIMAGE_BLOB, serviceId, HASH);
+      accounts.preimages.set(PREIMAGE_BLOB, serviceId, HASH);
 
       const result = await lookup.execute(gas, registers, memory);
       assert.deepStrictEqual(result, undefined);
