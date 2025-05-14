@@ -17,7 +17,7 @@ const IN_OUT_REG = 7;
 /**
  * Assign new fixed-length authorization queue to some core.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/311702311702
+ * https://graypaper.fluffylabs.dev/#/9a08063/360501360501?v=0.6.6
  */
 export class Assign implements HostCallHandler {
   index = tryAsHostCallIndex(6);
@@ -51,11 +51,12 @@ export class Assign implements HostCallHandler {
       return;
     }
 
-    const d = Decoder.fromBlob(res);
-    const authQueue = d.sequenceFixLen(codec.bytes(HASH_SIZE), AUTHORIZATION_QUEUE_SIZE);
+    const decoder = Decoder.fromBlob(res);
+    const authQueue = decoder.sequenceFixLen(codec.bytes(HASH_SIZE), AUTHORIZATION_QUEUE_SIZE);
     const fixedSizeAuthQueue = FixedSizeArray.new(authQueue, AUTHORIZATION_QUEUE_SIZE);
 
     regs.set(IN_OUT_REG, HostCallResult.OK);
+    // NOTE [MaSo] its safe to cast to Number because we know that the coreIndex is less than coresCount
     this.partialState.updateAuthorizationQueue(tryAsCoreIndex(Number(coreIndex)), fixedSizeAuthQueue);
     return;
   }
