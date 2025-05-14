@@ -35,7 +35,6 @@ export class Designate implements HostCallHandler {
     // `o`
     const validatorsStart = regs.get(IN_OUT_REG);
 
-    // TODO [MaSo] this should be a constant
     const res = new Uint8Array(VALIDATOR_DATA_BYTES * this.chainSpec.validatorsCount);
     const memoryReadResult = memory.loadInto(res, validatorsStart);
     // error while reading the memory.
