@@ -5,7 +5,7 @@ import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
-import type { ValidatorData } from "@typeberry/state";
+import type { ServiceAccountInfo, ValidatorData } from "@typeberry/state";
 import type { OK, Result } from "@typeberry/utils";
 
 /** Size of the transfer memo. */
@@ -84,11 +84,15 @@ export enum TransferError {
  * for `BalanceBelowThreshold`, since it doesn't matter,
  * because the account is removed anyway.
  */
-export enum QuitError {
+export enum EjectError {
   /** The destination service does not exist. */
   DestinationNotFound = 0,
-  /** The supplied gas is too low to execute `OnTransfer` entry point. */
-  GasTooLow = 1,
+  /** Preimage is not available. */
+  PreimageUnavailable = 1,
+  /** Preimage is too old. */
+  PreimageTooOld = 2,
+  /** The source and destination service are the same. */
+  SameSourceAndDestination = 3,
 }
 
 /**
@@ -125,17 +129,21 @@ export interface AccumulationPartialState {
   forgetPreimage(hash: Blake2bHash, length: U64): Result<null, null>;
 
   /**
-   * Remove current service account and transfer all remaining
-   * funds to the destination account (i.e. invoke transfer).
-   *
-   * `a`: amount to transfer = balance - threshold + B_S: basic minimum balance
+   * Get the service account info for the given service id if it exists.
    */
-  quitAndTransfer(destination: ServiceId, suppliedGas: Gas, memo: Bytes<TRANSFER_MEMO_BYTES>): Result<null, QuitError>;
+  getService(serviceId: ServiceId | null): Promise<ServiceAccountInfo | null>;
 
   /**
-   * Remove current service account and burn the remaining funds.
+   * Remove the provided source account and transfer the remaining account balance to current service.
+   *
+   * https://graypaper.fluffylabs.dev/#/9a08063/37b60137b601?v=0.6.6
    */
-  quitAndBurn(): void;
+  eject(
+    source: ServiceId | null,
+    destination: ServiceId | null,
+    hash: Blake2bHash,
+    length: U64,
+  ): Promise<Result<null, EjectError>>;
 
   /**
    * Transfer given `amount` of funds to the `destination`,

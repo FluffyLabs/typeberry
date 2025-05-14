@@ -3,14 +3,14 @@ import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
-import type { U64 } from "@typeberry/numbers";
+import { type U64, tryAsU64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
-import type { ValidatorData } from "@typeberry/state";
+import { ServiceAccountInfo, type ValidatorData } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
 import {
   type AccumulationPartialState,
+  EjectError,
   type PreimageStatusResult,
-  type QuitError,
   type RequestPreimageError,
   type TRANSFER_MEMO_BYTES,
   TransferError,
@@ -21,30 +21,59 @@ export class TestAccumulate implements AccumulationPartialState {
   public readonly forgetPreimageData: Parameters<TestAccumulate["forgetPreimage"]>[] = [];
   public readonly newServiceCalled: Parameters<TestAccumulate["newService"]>[] = [];
   public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
-  public readonly quitAndTransferData: Parameters<TestAccumulate["quitAndTransfer"]>[] = [];
   public readonly requestPreimageData: Parameters<TestAccumulate["requestPreimage"]>[] = [];
   public readonly checkPreimageStatusData: Parameters<TestAccumulate["checkPreimageStatus"]>[] = [];
   public readonly transferData: Parameters<TestAccumulate["transfer"]>[] = [];
   public readonly upgradeData: Parameters<TestAccumulate["upgradeService"]>[] = [];
   public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
 
+  public readonly services = new Map<ServiceId, ServiceAccountInfo>();
+
   public checkpointCalled = 0;
   public yieldHash: OpaqueHash | null = null;
   public forgetPreimageResponse: Result<null, null> = Result.ok(null);
   public newServiceResponse: ServiceId | null = null;
-  public quitAndBurnCalled = 0;
-  public quitReturnValue: Result<null, QuitError> = Result.ok(null);
+  public ejectReturnValue: Result<null, EjectError> = Result.ok(null);
   public requestPreimageResponse: Result<null, RequestPreimageError> = Result.ok(null);
   public checkPreimageStatusResponse: PreimageStatusResult | null = null;
   public transferReturnValue: Result<OK, TransferError> = Result.ok(OK);
 
-  quitAndTransfer(destination: ServiceId, suppliedGas: Gas, memo: Bytes<TRANSFER_MEMO_BYTES>): Result<null, QuitError> {
-    this.quitAndTransferData.push([destination, suppliedGas, memo]);
-    return this.quitReturnValue;
+  getService(serviceId: ServiceId | null): Promise<ServiceAccountInfo | null> {
+    if (serviceId === null) {
+      return Promise.resolve(null);
+    }
+    return Promise.resolve(this.services.get(serviceId) ?? null);
   }
 
-  quitAndBurn(): void {
-    this.quitAndBurnCalled += 1;
+  async eject(
+    source: ServiceId | null,
+    destination: ServiceId | null,
+    _hash: Blake2bHash, // used for checking preimage availability
+    _length: U64, // used for checking preimage availability
+  ): Promise<Result<null, EjectError>> {
+    const sourceService = await this.getService(source);
+    const destinationService = await this.getService(destination);
+    if (source === null || sourceService === null || destination === null || destinationService === null) {
+      this.ejectReturnValue = Result.error(EjectError.DestinationNotFound);
+      return Promise.resolve(this.ejectReturnValue);
+    }
+    if (source === destination) {
+      this.ejectReturnValue = Result.error(EjectError.SameSourceAndDestination);
+      return Promise.resolve(this.ejectReturnValue);
+    }
+
+    // update the destination service with the source service balance
+    this.services.set(
+      destination,
+      ServiceAccountInfo.fromCodec({
+        ...destinationService,
+        balance: tryAsU64(destinationService.balance + sourceService.balance),
+      }),
+    );
+
+    // remove the source service
+    this.services.delete(source);
+    return Promise.resolve(this.ejectReturnValue);
   }
 
   checkPreimageStatus(hash: Blake2bHash, length: U64): PreimageStatusResult | null {
