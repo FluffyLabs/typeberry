@@ -15,7 +15,7 @@ import {
   tryAsSbrkIndex,
 } from "@typeberry/pvm-interpreter";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { PreimageStatusKind, type PreimageStatus } from "../externalities/partial-state";
+import { type PreimageStatus, PreimageStatusKind } from "../externalities/partial-state";
 import { PartialStateMock } from "../externalities/partial-state-mock";
 import { HostCallResult } from "../results";
 import { Query } from "./query";

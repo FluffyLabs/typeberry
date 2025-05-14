@@ -1,6 +1,6 @@
 import type { CodeHash, CoreIndex, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
 import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants";
-import {PreimageHash} from "@typeberry/block/preimage";
+import type { PreimageHash } from "@typeberry/block/preimage";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
@@ -13,7 +13,12 @@ import type { OK, Result } from "@typeberry/utils";
 export const TRANSFER_MEMO_BYTES = W_T;
 export type TRANSFER_MEMO_BYTES = typeof TRANSFER_MEMO_BYTES;
 
-/** Possible states when checking preimage status. */
+/**
+ * Possible states when checking preimage status.
+ *
+ * NOTE: the status number also describes how many items there is going to be
+ * in the `slots/data` array.
+ */
 export enum PreimageStatusKind {
   /** The preimage is requested. */
   Requested = 0,
@@ -50,33 +55,33 @@ export type PreimageStatus =
 
 /** Convert model representation of lookup history into `PreimageStatus`. */
 export function slotsToPreimageStatus(slots: LookupHistorySlots): PreimageStatus {
-  if (slots.length === 0) {
+  if (slots.length === PreimageStatusKind.Requested) {
     return {
       status: PreimageStatusKind.Requested,
     };
   }
 
-  if (slots.length === 1) {
+  if (slots.length === PreimageStatusKind.Available) {
     return {
       status: PreimageStatusKind.Available,
       data: [slots[0]],
     };
   }
 
-  if (slots.length === 2) {
+  if (slots.length === PreimageStatusKind.Unavailable) {
     return {
       status: PreimageStatusKind.Unavailable,
       data: [slots[0], slots[1]],
     };
   }
 
-  if (slots.length === 3) {
+  if (slots.length === PreimageStatusKind.Reavailable) {
     return {
       status: PreimageStatusKind.Reavailable,
       data: [slots[0], slots[1], slots[2]],
     };
   }
-  throw new Error(`Invalid slots length: ${slots.length}`)
+  throw new Error(`Invalid slots length: ${slots.length}`);
 }
 
 /** Possible error when requesting a preimage. */
