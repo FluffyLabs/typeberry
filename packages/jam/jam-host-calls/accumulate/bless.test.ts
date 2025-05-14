@@ -75,16 +75,17 @@ describe("HostCalls: Bless", () => {
     const { registers, memory } = prepareRegsAndMemory(flat);
 
     // when
-    await bless.execute(gas, registers, memory);
+    const result = await bless.execute(gas, registers, memory);
 
     // then
+    assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.privilegedServices, [
       [tryAsServiceId(5), tryAsServiceId(10), tryAsServiceId(15), expected],
     ]);
   });
 
-  it("should return panic when dictionary is not readable", async () => {
+  it("should panic when dictionary is not readable", async () => {
     const accumulate = new TestAccumulate();
     const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
@@ -100,7 +101,7 @@ describe("HostCalls: Bless", () => {
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 
-  it("should fail when dictionary is out of order", async () => {
+  it("should panic when dictionary is out of order", async () => {
     const accumulate = new TestAccumulate();
     const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
@@ -111,14 +112,14 @@ describe("HostCalls: Bless", () => {
     const { registers, memory } = prepareRegsAndMemory(flat);
 
     // when
-    await empower.execute(gas, registers, memory);
+    const result = await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 
-  it("should fail when dictionary contains duplicates", async () => {
+  it("should panic when dictionary contains duplicates", async () => {
     const accumulate = new TestAccumulate();
     const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
@@ -128,10 +129,10 @@ describe("HostCalls: Bless", () => {
     const { registers, memory } = prepareRegsAndMemory(flat);
 
     // when
-    await empower.execute(gas, registers, memory);
+    const result = await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
+    assert.deepStrictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 });
