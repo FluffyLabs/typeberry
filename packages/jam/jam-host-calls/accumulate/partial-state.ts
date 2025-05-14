@@ -3,7 +3,7 @@ import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constant
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
-import type { U32, U64 } from "@typeberry/numbers";
+import type { U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { ValidatorData } from "@typeberry/state";
 import type { OK, Result } from "@typeberry/utils";
@@ -156,7 +156,7 @@ export interface AccumulationPartialState {
    *
    * Note the assigned id might be different than requested
    * in case of a conflict.
-   * https://graypaper.fluffylabs.dev/#/579bd12/2e14012e1401
+   * https://graypaper.fluffylabs.dev/#/9a08063/2f59022f5902?v=0.6.6
    *
    * An error can be returned in case the account does not
    * have the required balance.
@@ -164,7 +164,7 @@ export interface AccumulationPartialState {
   newService(
     requestedServiceId: ServiceId,
     codeHash: CodeHash,
-    codeLength: U32,
+    codeLength: U64,
     gas: U64,
     balance: U64,
   ): Result<ServiceId, "insufficient funds">;

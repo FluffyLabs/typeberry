@@ -3,7 +3,7 @@ import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
-import type { U32, U64 } from "@typeberry/numbers";
+import type { U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { ValidatorData } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
@@ -78,7 +78,7 @@ export class TestAccumulate implements AccumulationPartialState {
   newService(
     requestedServiceId: ServiceId,
     codeHash: CodeHash,
-    codeLength: U32,
+    codeLength: U64,
     gas: U64,
     balance: U64,
   ): Result<ServiceId, "insufficient funds"> {
