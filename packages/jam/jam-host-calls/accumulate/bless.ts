@@ -6,7 +6,7 @@ import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host
 import { type BigGas, type Gas, type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { asOpaqueType } from "@typeberry/utils";
 import { HostCallResult } from "../results";
-import { CURRENT_SERVICE_ID, clampU64ToU32, getServiceId } from "../utils";
+import { CURRENT_SERVICE_ID, clampU64ToU32, getServiceIdFromU64 } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
 
 const IN_OUT_REG = 7;
@@ -40,11 +40,11 @@ export class Bless implements HostCallHandler {
     memory: IHostCallMemory,
   ): Promise<undefined | PvmExecution> {
     // `m`: manager service (can change privileged services)
-    const manager = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
+    const manager = getServiceIdFromU64(regs.get(IN_OUT_REG));
     // `a`: manages authorization queue
-    const authorization = getServiceId(8, regs, this.currentServiceId);
+    const authorization = getServiceIdFromU64(regs.get(8));
     // `v`: manages validator keys
-    const validator = getServiceId(9, regs, this.currentServiceId);
+    const validator = getServiceIdFromU64(regs.get(9));
     // `o`: memory offset
     const sourceStart = regs.get(10);
     // `n`: number of items in the auto-accumulate dictionary

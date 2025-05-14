@@ -24,7 +24,11 @@ export function getServiceId(
     return currentServiceId;
   }
 
-  const { lower, upper } = u64IntoParts(regValue);
+  return getServiceIdFromU64(regValue);
+}
+
+export function getServiceIdFromU64(serviceId: U64): ServiceId | null {
+  const { lower, upper } = u64IntoParts(serviceId);
 
   if (upper === 0) {
     return tryAsServiceId(lower);
