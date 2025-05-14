@@ -15,7 +15,7 @@ export const VALIDATOR_DATA_BYTES = tryAsExactBytes(ValidatorData.Codec.sizeHint
 /**
  * Designate a new set of validator keys.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/31a60231a602
+ * https://graypaper.fluffylabs.dev/#/9a08063/369501369501?v=0.6.6
  */
 export class Designate implements HostCallHandler {
   index = tryAsHostCallIndex(7);
@@ -35,6 +35,7 @@ export class Designate implements HostCallHandler {
     // `o`
     const validatorsStart = regs.get(IN_OUT_REG);
 
+    // TODO [MaSo] this should be a constant
     const res = new Uint8Array(VALIDATOR_DATA_BYTES * this.chainSpec.validatorsCount);
     const memoryReadResult = memory.loadInto(res, validatorsStart);
     // error while reading the memory.
@@ -42,11 +43,10 @@ export class Designate implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    const d = Decoder.fromBlob(res);
-    const validatorsData = d.sequenceFixLen(ValidatorData.Codec, this.chainSpec.validatorsCount);
+    const decoder = Decoder.fromBlob(res);
+    const validatorsData = decoder.sequenceFixLen(ValidatorData.Codec, this.chainSpec.validatorsCount);
 
     regs.set(IN_OUT_REG, HostCallResult.OK);
     this.partialState.updateValidatorsData(tryAsPerValidator(validatorsData, this.chainSpec));
-    return;
   }
 }

@@ -58,6 +58,5 @@ export class Assign implements HostCallHandler {
     regs.set(IN_OUT_REG, HostCallResult.OK);
     // NOTE [MaSo] its safe to cast to Number because we know that the coreIndex is less than coresCount
     this.partialState.updateAuthorizationQueue(tryAsCoreIndex(Number(coreIndex)), fixedSizeAuthQueue);
-    return;
   }
 }
