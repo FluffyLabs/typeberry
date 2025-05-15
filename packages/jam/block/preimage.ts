@@ -16,11 +16,11 @@ export class Preimage extends WithDebug {
     requester: codec.u32.asOpaque<ServiceId>(),
     blob: codec.blob,
   });
-  static fromCodec({ requester, blob }: CodecRecord<Preimage>) {
+  static create({ requester, blob }: CodecRecord<Preimage>) {
     return new Preimage(requester, blob);
   }
 
-  constructor(
+  private constructor(
     /** The service which requested the preimage. */
     public readonly requester: ServiceId,
     /** The preimage data blob. */

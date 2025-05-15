@@ -63,38 +63,38 @@ export class WorkPackageExecutor {
       const gasRatio = tryAsServiceGas(3_000n);
       const ret = await pvm.run(item.payload, tryAsGas(item.refineGasLimit)); // or accumulateGasLimit?
       results.push(
-        new WorkResult(
-          item.service,
-          item.codeHash,
-          blake2b.hashBytes(item.payload),
-          gasRatio,
-          new WorkExecResult(WorkExecResultKind.ok, ret),
-          WorkRefineLoad.fromCodec({
+        WorkResult.create({
+          serviceId: item.service,
+          codeHash: item.codeHash,
+          payloadHash: blake2b.hashBytes(item.payload),
+          gas: gasRatio,
+          result: new WorkExecResult(WorkExecResultKind.ok, ret),
+          load: WorkRefineLoad.create({
             gasUsed: tryAsServiceGas(5),
             importedSegments: tryAsU32(0),
             exportedSegments: tryAsU32(0),
             extrinsicSize: tryAsU32(0),
             extrinsicCount: tryAsU32(0),
           }),
-        ),
+        }),
       );
     }
 
     const workPackage = this.hasher.workPackage(pack);
-    const workPackageSpec = new WorkPackageSpec(
-      workPackage.hash,
-      tryAsU32(workPackage.encoded.length),
-      Bytes.zero(HASH_SIZE),
-      Bytes.zero(HASH_SIZE).asOpaque(),
-      tryAsU16(0),
-    );
+    const workPackageSpec = WorkPackageSpec.create({
+      hash: workPackage.hash,
+      length: tryAsU32(workPackage.encoded.length),
+      erasureRoot: Bytes.zero(HASH_SIZE),
+      exportsRoot: Bytes.zero(HASH_SIZE).asOpaque(),
+      exportsCount: tryAsU16(0),
+    });
     const coreIndex = tryAsCoreIndex(0);
     const authorizerHash = Bytes.fill(HASH_SIZE, 5).asOpaque();
 
     const workResults = FixedSizeArray.new(results, tryAsWorkItemsCount(results.length));
 
     return Promise.resolve(
-      WorkReport.fromCodec({
+      WorkReport.create({
         workPackageSpec,
         context: pack.context,
         coreIndex,

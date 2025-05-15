@@ -1,4 +1,4 @@
-import type { SmallGas } from "./gas";
+import { type SmallGas, tryAsSmallGas } from "./gas";
 import { Instruction } from "./instruction";
 import type { Mask } from "./program-decoder/mask";
 
@@ -196,7 +196,7 @@ type OpCode = {
   gas: SmallGas;
 };
 
-const createOpCodeEntry = ([byte, gas]: InstructionTuple): [Byte, OpCode] => [byte, { gas: gas as SmallGas }];
+const createOpCodeEntry = ([byte, gas]: InstructionTuple): [Byte, OpCode] => [byte, { gas: tryAsSmallGas(gas) }];
 
 type ByteToOpCodeMap = { [key: Byte]: OpCode };
 

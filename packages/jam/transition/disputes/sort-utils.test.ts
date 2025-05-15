@@ -57,8 +57,12 @@ describe("sort-utils", () => {
 
   describe("isUniqueSortedByIndex", () => {
     const buildTestData = (indices: number[]) =>
-      indices.map(
-        (index) => new Judgement(true, tryAsValidatorIndex(index), Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque()),
+      indices.map((index) =>
+        Judgement.create({
+          isWorkReportValid: true,
+          index: tryAsValidatorIndex(index),
+          signature: Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque(),
+        }),
       );
 
     it("should return true for an empty array", () => {
