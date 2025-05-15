@@ -8,12 +8,13 @@ import { type U32, type U64, sumU32, sumU64, tryAsU32 } from "@typeberry/numbers
 import type { Gas } from "@typeberry/pvm-interpreter";
 import {
   LookupHistoryItem,
+  type Service,
   ServiceAccountInfo,
   type State,
   type ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { OK, Result, assertNever, check } from "@typeberry/utils";
+import { OK, Result, assertNever, check, ensure } from "@typeberry/utils";
 import {
   type PartialState,
   type PreimageStatus,
@@ -35,20 +36,25 @@ export class PartialStateDb implements PartialState {
 
   constructor(
     private readonly state: State,
-    // TODO [ToDr] current service id should be an argument to functions instead.
     private readonly currentServiceId: ServiceId,
-  ) {}
+  ) {
+    const service = this.state.services.get(this.currentServiceId);
+    if (service === undefined) {
+      throw new Error(`Invalid state initialization. Service info missing for ${this.currentServiceId}.`);
+    }
+  }
 
   private getServiceInfo(): ServiceAccountInfo {
     if (this.updatedState.updatedServiceInfo !== null) {
       return this.updatedState.updatedServiceInfo;
     }
 
-    const service = this.state.services.get(this.currentServiceId);
-    if (service === undefined) {
-      throw new Error(`Invalid state initialization. Service info missing for ${this.currentServiceId}.`);
-    }
-
+    const maybeService = this.state.services.get(this.currentServiceId);
+    const service = ensure<Service | undefined, Service>(
+      maybeService,
+      maybeService !== undefined,
+      "Service existence in state validated in constructor.",
+    );
     return service.data.info;
   }
 
@@ -208,11 +214,11 @@ export class PartialStateDb implements PartialState {
     _suppliedGas: Gas,
     _memo: Bytes<TRANSFER_MEMO_BYTES>,
   ): Result<OK, QuitError> {
-    throw new Error("Method not implemented.");
+    throw new Error("Method not implemented (waiting for eject)");
   }
 
   quitAndBurn(): void {
-    throw new Error("Method not implemented.");
+    throw new Error("Method not implemented (waiting for eject)");
   }
 
   transfer(
@@ -235,6 +241,7 @@ export class PartialStateDb implements PartialState {
   }
 
   upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void {
+    /** https://graypaper.fluffylabs.dev/#/9a08063/36c80336c803?v=0.6.6 */
     const serviceInfo = this.getServiceInfo();
     this.updatedState.updatedServiceInfo = ServiceAccountInfo.fromCodec({
       ...serviceInfo,
@@ -258,6 +265,8 @@ export class PartialStateDb implements PartialState {
     coreIndex: CoreIndex,
     authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
   ): void {
+    /** https://graypaper.fluffylabs.dev/#/9a08063/368401368401?v=0.6.6 */
+    // NOTE `coreIndex` is already verified in the HC, so this is infallible.
     this.updatedState.authorizationQueues.set(coreIndex, authQueue);
   }
 
@@ -267,6 +276,8 @@ export class PartialStateDb implements PartialState {
     validators: ServiceId,
     autoAccumulate: Map<ServiceId, Gas>,
   ): void {
+    // TODO [ToDr] Not sure if we should fail this if the services don't exist?
+    /** https://graypaper.fluffylabs.dev/#/9a08063/36f40036f400?v=0.6.6 */
     this.updatedState.priviledgedServices = {
       manager,
       authorizer,
@@ -276,6 +287,7 @@ export class PartialStateDb implements PartialState {
   }
 
   yield(hash: OpaqueHash): void {
+    /** https://graypaper.fluffylabs.dev/#/9a08063/387d02387d02?v=0.6.6 */
     this.updatedState.yieldedRoot = hash;
   }
 }
