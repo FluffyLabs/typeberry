@@ -102,11 +102,7 @@ export class Invoke implements HostCallHandler {
       return;
     }
 
-    if (
-      returnState.status === Status.PANIC ||
-      returnState.status === Status.HALT ||
-      returnState.status === Status.OOG
-    ) {
+    if ([Status.PANIC, Status.HALT, Status.OOG].includes(returnState.status)) {
       regs.set(IN_OUT_REG_1, tryAsU64(returnState.status));
       return;
     }
