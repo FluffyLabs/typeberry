@@ -27,7 +27,7 @@ const GAS_REGISTERS_SIZE = tryAsExactBytes(gasAndRegistersCodec.sizeHint);
 /**
  * Kick off (run) a PVM instance given the machine index and the destination memory (which contains gas and registers values).
  *
- * https://graypaper.fluffylabs.dev/#/85129da/363b00363b00?v=0.6.3
+ * https://graypaper.fluffylabs.dev/#/9a08063/35a50135a501?v=0.6.6
  */
 export class Invoke implements HostCallHandler {
   index = tryAsHostCallIndex(25);
@@ -41,9 +41,9 @@ export class Invoke implements HostCallHandler {
     regs: IHostCallRegisters,
     memory: IHostCallMemory,
   ): Promise<PvmExecution | undefined> {
-    // `n`
+    // `n`: machine index
     const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG_1));
-    // `o`
+    // `o`: destination memory start (local)
     const destinationStart = regs.get(IN_OUT_REG_2);
 
     // extracting gas and registers from memory
@@ -52,6 +52,7 @@ export class Invoke implements HostCallHandler {
     if (readResult.isError) {
       return PvmExecution.Panic;
     }
+
     // we also need to make sure that the memory is writeable, so we attempt to
     // write the data back. This is a bit redundant, but saves us from creating
     // the weird `isWriteable` method.
@@ -87,21 +88,29 @@ export class Invoke implements HostCallHandler {
     const storeResult = memory.storeFrom(destinationStart, resultData.raw);
     check(storeResult.isOk, "Memory writeability has been checked already.");
 
-    switch (machineState.result.status) {
-      case Status.HOST:
-        regs.set(IN_OUT_REG_1, tryAsU64(machineState.result.status));
-        regs.set(IN_OUT_REG_2, machineState.result.hostCallIndex);
-        return;
-      case Status.FAULT:
-        regs.set(IN_OUT_REG_1, tryAsU64(machineState.result.status));
-        regs.set(IN_OUT_REG_2, machineState.result.address);
-        return;
-      case Status.PANIC:
-      case Status.HALT:
-      case Status.OOG:
-        regs.set(IN_OUT_REG_1, tryAsU64(machineState.result.status));
-        return;
+    const returnState = machineState.result;
+
+    if (returnState.status === Status.HOST) {
+      regs.set(IN_OUT_REG_1, tryAsU64(returnState.status));
+      regs.set(IN_OUT_REG_2, returnState.hostCallIndex);
+      return;
     }
-    throw new Error(`Unexpected inner PVM result: ${machineState.result.status}`);
+
+    if (returnState.status === Status.FAULT) {
+      regs.set(IN_OUT_REG_1, tryAsU64(returnState.status));
+      regs.set(IN_OUT_REG_2, returnState.address);
+      return;
+    }
+
+    if (
+      returnState.status === Status.PANIC ||
+      returnState.status === Status.HALT ||
+      returnState.status === Status.OOG
+    ) {
+      regs.set(IN_OUT_REG_1, tryAsU64(returnState.status));
+      return;
+    }
+
+    throw new Error(`Unexpected inner PVM result: ${returnState.status}`);
   }
 }
