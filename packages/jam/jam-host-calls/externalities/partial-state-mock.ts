@@ -30,15 +30,15 @@ export class PartialStateMock implements PartialState {
 
   public checkpointCalled = 0;
   public yieldHash: OpaqueHash | null = null;
-  public forgetPreimageResponse: Result<null, null> = Result.ok(null);
+  public forgetPreimageResponse: Result<OK, null> = Result.ok(OK);
   public newServiceResponse: ServiceId | null = null;
   public quitAndBurnCalled = 0;
-  public quitReturnValue: Result<null, QuitError> = Result.ok(null);
-  public requestPreimageResponse: Result<null, RequestPreimageError> = Result.ok(null);
+  public quitReturnValue: Result<OK, QuitError> = Result.ok(OK);
+  public requestPreimageResponse: Result<OK, RequestPreimageError> = Result.ok(OK);
   public checkPreimageStatusResponse: PreimageStatus | null = null;
   public transferReturnValue: Result<OK, TransferError> = Result.ok(OK);
 
-  quitAndTransfer(destination: ServiceId, suppliedGas: Gas, memo: Bytes<TRANSFER_MEMO_BYTES>): Result<null, QuitError> {
+  quitAndTransfer(destination: ServiceId, suppliedGas: Gas, memo: Bytes<TRANSFER_MEMO_BYTES>): Result<OK, QuitError> {
     this.quitAndTransferData.push([destination, suppliedGas, memo]);
     return this.quitReturnValue;
   }
@@ -52,12 +52,12 @@ export class PartialStateMock implements PartialState {
     return this.checkPreimageStatusResponse;
   }
 
-  requestPreimage(hash: Blake2bHash, length: U64): Result<null, RequestPreimageError> {
+  requestPreimage(hash: Blake2bHash, length: U64): Result<OK, RequestPreimageError> {
     this.requestPreimageData.push([hash, length]);
     return this.requestPreimageResponse;
   }
 
-  forgetPreimage(hash: Blake2bHash, length: U64): Result<null, null> {
+  forgetPreimage(hash: Blake2bHash, length: U64): Result<OK, null> {
     this.forgetPreimageData.push([hash, length]);
     return this.forgetPreimageResponse;
   }

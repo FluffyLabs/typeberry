@@ -151,14 +151,14 @@ export interface PartialState {
    * States:
    * https://graypaper.fluffylabs.dev/#/579bd12/116f00116f00
    */
-  requestPreimage(hash: PreimageHash, length: U64): Result<null, RequestPreimageError>;
+  requestPreimage(hash: PreimageHash, length: U64): Result<OK, RequestPreimageError>;
 
   /**
    * Mark a preimage hash as unavailable (forget it).
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/335602335602
    */
-  forgetPreimage(hash: PreimageHash, length: U64): Result<null, null>;
+  forgetPreimage(hash: PreimageHash, length: U64): Result<OK, null>;
 
   /**
    * Remove current service account and transfer all remaining
@@ -166,7 +166,7 @@ export interface PartialState {
    *
    * `a`: amount to transfer = balance - threshold + B_S: basic minimum balance
    */
-  quitAndTransfer(destination: ServiceId, suppliedGas: Gas, memo: Bytes<TRANSFER_MEMO_BYTES>): Result<null, QuitError>;
+  quitAndTransfer(destination: ServiceId, suppliedGas: Gas, memo: Bytes<TRANSFER_MEMO_BYTES>): Result<OK, QuitError>;
 
   /**
    * Remove current service account and burn the remaining funds.

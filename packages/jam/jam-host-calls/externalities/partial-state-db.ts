@@ -2,7 +2,7 @@ import type { CodeHash, CoreIndex, PerValidator, ServiceId } from "@typeberry/bl
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { Bytes } from "@typeberry/bytes";
-import type { FixedSizeArray } from "@typeberry/collections";
+import { type FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import { type U32, type U64, sumU32, sumU64, tryAsU32 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter";
@@ -13,7 +13,7 @@ import {
   type ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { type OK, Result, check } from "@typeberry/utils";
+import { OK, Result, assertNever, check } from "@typeberry/utils";
 import {
   type PartialState,
   type PreimageStatus,
@@ -25,18 +25,8 @@ import {
   slotsToPreimageStatus,
 } from "./partial-state";
 
-class StateUpdate {
-  static copyFrom(from: StateUpdate): StateUpdate {
-    const update = new StateUpdate();
-    update.lookupHistory.push(...from.lookupHistory);
-    update.updatedServiceInfo =
-      from.updatedServiceInfo === null ? null : ServiceAccountInfo.fromCodec(from.updatedServiceInfo);
-    return update;
-  }
-
-  public readonly lookupHistory: LookupHistoryItem[] = [];
-  public updatedServiceInfo: ServiceAccountInfo | null = null;
-}
+/** `D`: https://graypaper.fluffylabs.dev/#/9a08063/445800445800?v=0.6.6 */
+export const PREIMAGE_EXPUNGE_PERIOD = 19200;
 
 export class PartialStateDb implements PartialState {
   // TODO [ToDr] consider getters?
@@ -62,8 +52,8 @@ export class PartialStateDb implements PartialState {
     return service.data.info;
   }
 
-  private getPreimageStatus(hash: PreimageHash, length: U64): LookupHistoryItem | undefined {
-    const updatedPreimage = this.updatedState.lookupHistory.find(
+  private getPreimageStatus(hash: PreimageHash, length: U64): PreimageUpdate | undefined {
+    const updatedPreimage = this.updatedState.preimages.find(
       (x) => x.hash.isEqualTo(hash) && BigInt(x.length) === length,
     );
     if (updatedPreimage !== undefined) {
@@ -73,23 +63,31 @@ export class PartialStateDb implements PartialState {
     const service = this.state.services.get(this.currentServiceId);
     const lookup = service?.data.lookupHistory.get(hash);
     const status = lookup?.find((x) => BigInt(x.length) === length);
-    return status;
+    return status === undefined ? undefined : PreimageUpdate.update(status);
+  }
+
+  private updateOrAddPreimageUpdate(existingPreimage: PreimageUpdate, newUpdate: PreimageUpdate) {
+    const index = this.updatedState.preimages.indexOf(existingPreimage);
+    const removeCount = index === -1 ? 0 : 1;
+    this.updatedState.preimages.splice(index, removeCount, newUpdate);
   }
 
   checkPreimageStatus(hash: PreimageHash, length: U64): PreimageStatus | null {
+    // https://graypaper.fluffylabs.dev/#/9a08063/378102378102?v=0.6.6
     const status = this.getPreimageStatus(hash, length);
-    if (status === undefined) {
+    if (status === undefined || status.forgotten) {
       return null;
     }
 
     return slotsToPreimageStatus(status.slots);
   }
 
-  requestPreimage(hash: PreimageHash, length: U64): Result<null, RequestPreimageError> {
+  requestPreimage(hash: PreimageHash, length: U64): Result<OK, RequestPreimageError> {
     const existingPreimage = this.getPreimageStatus(hash, length);
 
-    if (existingPreimage !== undefined) {
+    if (existingPreimage !== undefined && !existingPreimage.forgotten) {
       const len = existingPreimage.slots.length;
+      // https://graypaper.fluffylabs.dev/#/9a08063/380901380901?v=0.6.6
       if (len === PreimageStatusKind.Requested) {
         return Result.error(RequestPreimageError.AlreadyRequested);
       }
@@ -103,6 +101,7 @@ export class PartialStateDb implements PartialState {
     }
 
     // make sure we have enough balance for this update
+    // https://graypaper.fluffylabs.dev/#/9a08063/381201381601?v=0.6.6
     const serviceInfo = this.getServiceInfo();
     const items = sumU32(serviceInfo.storageUtilisationCount, tryAsU32(1));
     const bytes = sumU64(serviceInfo.storageUtilisationBytes, length);
@@ -130,30 +129,85 @@ export class PartialStateDb implements PartialState {
     // hash with two different lengths over `2**32`? We will end up with the same entry.
     // hopefuly this will be prohibitevely expensive?
     const len = length >= 2n ** 32n ? tryAsU32(2 ** 32 - 1) : tryAsU32(Number(length));
-    if (existingPreimage === undefined) {
-      this.updatedState.lookupHistory.push(new LookupHistoryItem(hash, len, tryAsLookupHistorySlots([])));
+    if (existingPreimage === undefined || existingPreimage.forgotten) {
+      // https://graypaper.fluffylabs.dev/#/9a08063/38a60038a600?v=0.6.6
+      this.updatedState.preimages.push(
+        PreimageUpdate.update(new LookupHistoryItem(hash, len, tryAsLookupHistorySlots([]))),
+      );
     } else {
-      const index = this.updatedState.lookupHistory.indexOf(existingPreimage);
-      const removeCount = index === -1 ? 0 : 1;
-      this.updatedState.lookupHistory.splice(
-        index,
-        removeCount,
-        new LookupHistoryItem(hash, len, tryAsLookupHistorySlots([...existingPreimage.slots, this.state.timeslot])),
+      /** https://graypaper.fluffylabs.dev/#/9a08063/38ca0038ca00?v=0.6.6 */
+      this.updateOrAddPreimageUpdate(
+        existingPreimage,
+        PreimageUpdate.update(
+          new LookupHistoryItem(hash, len, tryAsLookupHistorySlots([...existingPreimage.slots, this.state.timeslot])),
+        ),
       );
     }
 
-    return Result.ok(null);
+    return Result.ok(OK);
   }
 
-  forgetPreimage(_hash: PreimageHash, _length: U64): Result<null, null> {
-    throw new Error("Method not implemented.");
+  forgetPreimage(hash: PreimageHash, length: U64): Result<OK, null> {
+    const status = this.getPreimageStatus(hash, length);
+    if (status === undefined || status.forgotten) {
+      return Result.error(null);
+    }
+
+    const s = slotsToPreimageStatus(status.slots);
+    // https://graypaper.fluffylabs.dev/#/9a08063/378102378102?v=0.6.6
+    if (s.status === PreimageStatusKind.Requested) {
+      this.updateOrAddPreimageUpdate(status, PreimageUpdate.forget(status));
+      return Result.ok(OK);
+    }
+
+    const t = this.state.timeslot;
+    // https://graypaper.fluffylabs.dev/#/9a08063/378102378102?v=0.6.6
+    if (s.status === PreimageStatusKind.Unavailable) {
+      const y = s.data[1];
+      if (y < t - PREIMAGE_EXPUNGE_PERIOD) {
+        this.updateOrAddPreimageUpdate(status, PreimageUpdate.forget(status));
+        return Result.ok(OK);
+      }
+
+      return Result.error(null);
+    }
+
+    // https://graypaper.fluffylabs.dev/#/9a08063/38c80138c801?v=0.6.6
+    if (s.status === PreimageStatusKind.Available) {
+      this.updateOrAddPreimageUpdate(
+        status,
+        PreimageUpdate.update(
+          new LookupHistoryItem(status.hash, status.length, tryAsLookupHistorySlots([s.data[0], t])),
+        ),
+      );
+      return Result.ok(OK);
+    }
+
+    // https://graypaper.fluffylabs.dev/#/9a08063/38d00138d001?v=0.6.6
+    if (s.status === PreimageStatusKind.Reavailable) {
+      const y = s.data[1];
+      if (y < t - PREIMAGE_EXPUNGE_PERIOD) {
+        this.updateOrAddPreimageUpdate(
+          status,
+          PreimageUpdate.update(
+            new LookupHistoryItem(status.hash, status.length, tryAsLookupHistorySlots([s.data[2], t])),
+          ),
+        );
+
+        return Result.ok(OK);
+      }
+
+      return Result.error(null);
+    }
+
+    assertNever(s);
   }
 
   quitAndTransfer(
     _destination: ServiceId,
     _suppliedGas: Gas,
     _memo: Bytes<TRANSFER_MEMO_BYTES>,
-  ): Result<null, QuitError> {
+  ): Result<OK, QuitError> {
     throw new Error("Method not implemented.");
   }
 
@@ -184,11 +238,13 @@ export class PartialStateDb implements PartialState {
     throw new Error("Method not implemented.");
   }
 
-  updateValidatorsData(_validatorsData: PerValidator<ValidatorData>): void {
-    throw new Error("Method not implemented.");
+  updateValidatorsData(validatorsData: PerValidator<ValidatorData>): void {
+    /** https://graypaper.fluffylabs.dev/#/9a08063/36e10136e901?v=0.6.6 */
+    this.updatedState.validatorsData = validatorsData;
   }
 
   checkpoint(): void {
+    /** https://graypaper.fluffylabs.dev/#/9a08063/362202362202?v=0.6.6 */
     this.checkpointedState = StateUpdate.copyFrom(this.updatedState);
   }
 
@@ -206,4 +262,37 @@ export class PartialStateDb implements PartialState {
   yield(_hash: OpaqueHash): void {
     throw new Error("Method not implemented.");
   }
+}
+
+export class PreimageUpdate extends LookupHistoryItem {
+  private constructor(
+    item: LookupHistoryItem,
+    /** NOTE: Forgotten preimages should be removed along their lookup history. */
+    public forgotten: boolean,
+  ) {
+    super(item.hash, item.length, item.slots);
+  }
+
+  static forget(item: LookupHistoryItem) {
+    return new PreimageUpdate(item, true);
+  }
+
+  static update(item: LookupHistoryItem) {
+    return new PreimageUpdate(item, false);
+  }
+}
+
+class StateUpdate {
+  static copyFrom(from: StateUpdate): StateUpdate {
+    const update = new StateUpdate();
+    update.preimages.push(...from.preimages);
+    update.updatedServiceInfo =
+      from.updatedServiceInfo === null ? null : ServiceAccountInfo.fromCodec(from.updatedServiceInfo);
+    update.validatorsData = from.validatorsData === null ? null : asKnownSize([...from.validatorsData]);
+    return update;
+  }
+
+  public readonly preimages: PreimageUpdate[] = [];
+  public updatedServiceInfo: ServiceAccountInfo | null = null;
+  public validatorsData: PerValidator<ValidatorData> | null = null;
 }
