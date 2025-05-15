@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
+import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, type ServiceId, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { asKnownSize } from "@typeberry/collections";
 import { ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { type Gas, tryAsGas } from "@typeberry/pvm-interpreter";
 import {
   LookupHistoryItem,
   ServiceAccountInfo,
@@ -346,5 +347,44 @@ describe("PartialState.checkpoint", () => {
 
     // then
     assert.deepStrictEqual(partialState.checkpointedState, partialState.updatedState);
+  });
+});
+
+describe("PartialState.updatePrivilegedServices", () => {
+  it("should update privileged services", () => {
+    const mockState = testState();
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+
+    const manager = tryAsServiceId(1);
+    const authorizer = tryAsServiceId(2);
+    const validators = tryAsServiceId(3);
+    const autoAccumulate = new Map<ServiceId, Gas>([
+      [tryAsServiceId(4), tryAsGas(10n)],
+      [tryAsServiceId(5), tryAsGas(20n)],
+    ]);
+
+    // when
+    partialState.updatePrivilegedServices(manager, authorizer, validators, autoAccumulate);
+
+    // then
+    assert.deepStrictEqual(partialState.updatedState.priviledgedServices, {
+      manager,
+      authorizer,
+      validators,
+      autoAccumulate,
+    });
+  });
+});
+
+describe("PartialState.yield", () => {
+  it("should yield root", () => {
+    const mockState = testState();
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+
+    // when
+    partialState.yield(Bytes.fill(HASH_SIZE, 0xef));
+
+    // then
+    assert.deepStrictEqual(partialState.updatedState.yieldedRoot, Bytes.fill(HASH_SIZE, 0xef));
   });
 });

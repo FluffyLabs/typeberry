@@ -255,12 +255,22 @@ export class PartialStateDb implements PartialState {
     throw new Error("Method not implemented.");
   }
 
-  updatePrivilegedServices(_m: ServiceId, _a: ServiceId, _v: ServiceId, _g: Map<ServiceId, Gas>): void {
-    throw new Error("Method not implemented.");
+  updatePrivilegedServices(
+    manager: ServiceId,
+    authorizer: ServiceId,
+    validators: ServiceId,
+    autoAccumulate: Map<ServiceId, Gas>,
+  ): void {
+    this.updatedState.priviledgedServices = {
+      manager,
+      authorizer,
+      validators,
+      autoAccumulate,
+    };
   }
 
-  yield(_hash: OpaqueHash): void {
-    throw new Error("Method not implemented.");
+  yield(hash: OpaqueHash): void {
+    this.updatedState.yieldedRoot = hash;
   }
 }
 
@@ -289,10 +299,24 @@ class StateUpdate {
     update.updatedServiceInfo =
       from.updatedServiceInfo === null ? null : ServiceAccountInfo.fromCodec(from.updatedServiceInfo);
     update.validatorsData = from.validatorsData === null ? null : asKnownSize([...from.validatorsData]);
+    update.yieldedRoot = from.yieldedRoot;
+    update.priviledgedServices =
+      from.priviledgedServices === null
+        ? null
+        : {
+            ...from.priviledgedServices,
+          };
     return update;
   }
 
   public readonly preimages: PreimageUpdate[] = [];
   public updatedServiceInfo: ServiceAccountInfo | null = null;
   public validatorsData: PerValidator<ValidatorData> | null = null;
+  public yieldedRoot: OpaqueHash | null = null;
+  public priviledgedServices: {
+    manager: ServiceId;
+    authorizer: ServiceId;
+    validators: ServiceId;
+    autoAccumulate: Map<ServiceId, Gas>;
+  } | null = null;
 }
