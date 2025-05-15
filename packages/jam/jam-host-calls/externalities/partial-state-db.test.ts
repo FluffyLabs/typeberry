@@ -5,6 +5,7 @@ import {
   BLS_KEY_BYTES,
   type ServiceId,
   tryAsCoreIndex,
+  tryAsServiceGas,
   tryAsServiceId,
   tryAsTimeSlot,
 } from "@typeberry/block";
@@ -355,6 +356,36 @@ describe("PartialState.checkpoint", () => {
 
     // then
     assert.deepStrictEqual(partialState.checkpointedState, partialState.updatedState);
+  });
+});
+
+describe("PartialState.upgradeService", () => {
+  it("should update the service with new code hash and gas limits", () => {
+    const mockState = testState();
+    const service = mockState.services.get(tryAsServiceId(0));
+    if (service === undefined) {
+      throw new Error("No required service!");
+    }
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+
+    const codeHash = Bytes.fill(HASH_SIZE, 0xcd).asOpaque();
+    const gas = tryAsU64(1_000n);
+    const allowance = tryAsU64(2_000n);
+
+    // when
+    partialState.upgradeService(codeHash, gas, allowance);
+
+    // then
+    assert.deepStrictEqual(
+      partialState.updatedState.updatedServiceInfo,
+      ServiceAccountInfo.fromCodec({
+        ...service.data.info,
+        codeHash,
+        accumulateMinGas: tryAsServiceGas(gas),
+        onTransferMinGas: tryAsServiceGas(allowance),
+      }),
+    );
   });
 });
 

@@ -1,4 +1,4 @@
-import type { CodeHash, CoreIndex, PerValidator, ServiceId } from "@typeberry/block";
+import { type CodeHash, type CoreIndex, type PerValidator, type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { Bytes } from "@typeberry/bytes";
@@ -234,8 +234,14 @@ export class PartialStateDb implements PartialState {
     throw new Error("Method not implemented.");
   }
 
-  upgradeService(_codeHash: CodeHash, _gas: U64, _allowance: U64): void {
-    throw new Error("Method not implemented.");
+  upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void {
+    const serviceInfo = this.getServiceInfo();
+    this.updatedState.updatedServiceInfo = ServiceAccountInfo.fromCodec({
+      ...serviceInfo,
+      codeHash,
+      accumulateMinGas: tryAsServiceGas(gas),
+      onTransferMinGas: tryAsServiceGas(allowance),
+    });
   }
 
   updateValidatorsData(validatorsData: PerValidator<ValidatorData>): void {
