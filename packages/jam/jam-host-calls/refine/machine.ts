@@ -8,7 +8,7 @@ import {
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { HostCallResult } from "../results";
-import { CURRENT_SERVICE_ID } from "../utils";
+import { CURRENT_SERVICE_ID, clampU64ToU32 } from "../utils";
 import { type RefineExternalities, tryAsProgramCounter } from "./refine-externalities";
 
 const IN_OUT_REG = 7;
@@ -16,7 +16,7 @@ const IN_OUT_REG = 7;
 /**
  * Initiate a PVM instance with given program code and entrypoint (program counter).
  *
- * https://graypaper.fluffylabs.dev/#/68eaa1f/353b00353b00?v=0.6.4
+ * https://graypaper.fluffylabs.dev/#/9a08063/34aa0134aa01?v=0.6.6
  */
 export class Machine implements HostCallHandler {
   index = tryAsHostCallIndex(20);
@@ -37,7 +37,7 @@ export class Machine implements HostCallHandler {
     // `i`: starting program counter
     const entrypoint = tryAsProgramCounter(regs.get(9));
 
-    const codeLengthClamped = codeLength > 2n ** 32n ? 2 ** 32 : Number(codeLength);
+    const codeLengthClamped = clampU64ToU32(codeLength);
     const code = new Uint8Array(codeLengthClamped);
     const codeLoadResult = memory.loadInto(code, codeStart);
     if (codeLoadResult.isError) {
