@@ -11,7 +11,7 @@ const W_S = 6;
 /** `W_M`: The maximum number of entries in a work-package manifest. */
 export const MAX_NUMBER_OF_SEGMENTS = 2048; // 2**11
 
-/** Exported segment size in bytes. */
+/** `W_E * W_S`: Exported segment size in bytes. */
 export const SEGMENT_BYTES = W_E * W_S;
 export type SEGMENT_BYTES = typeof SEGMENT_BYTES;
 

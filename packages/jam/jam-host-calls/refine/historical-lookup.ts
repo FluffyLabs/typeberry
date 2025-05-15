@@ -53,8 +53,9 @@ export class HistoricalLookup implements HostCallHandler {
     // l
     const destinationLength = minU64(regs.get(11), tryAsU64(length - offset));
 
-    // NOTE: casting to u32 (number) is safe here because the length of the value is always less than 2^32 (for sure).
-    const data = value === null ? new Uint8Array() : value.raw.subarray(Number(offset), Number(offset + destinationLength));
+    // NOTE: casting to u32 (number) is safe here because we are bounded by length which is less than 2^32.
+    const data =
+      value === null ? new Uint8Array() : value.raw.subarray(Number(offset), Number(offset + destinationLength));
     const segmentWriteResult = memory.storeFrom(destinationStart, data);
     if (segmentWriteResult.isError) {
       return PvmExecution.Panic;
