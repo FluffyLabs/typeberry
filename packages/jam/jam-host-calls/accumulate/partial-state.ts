@@ -133,7 +133,7 @@ export interface AccumulationPartialState {
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/37b60137b601?v=0.6.6
    */
-  eject(source: ServiceId | null, destination: ServiceId | null, hash: OpaqueHash): Promise<Result<null, EjectError>>;
+  eject(source: ServiceId | null, destination: ServiceId | null, hash: OpaqueHash): Promise<Result<OK, EjectError>>;
 
   /**
    * Transfer given `amount` of funds to the `destination`,

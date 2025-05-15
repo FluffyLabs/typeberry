@@ -12,7 +12,7 @@ import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { Result } from "@typeberry/utils";
+import { OK, Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { Eject } from "./eject";
 import { EjectError } from "./partial-state";
@@ -53,7 +53,6 @@ describe("HostCalls: Eject", () => {
     const sourceServiceId = tryAsServiceId(15_000);
     eject.currentServiceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(HASH_SIZE, 5);
-    accumulate.ejectReturnValue = Result.ok(null);
 
     const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
 
@@ -64,7 +63,7 @@ describe("HostCalls: Eject", () => {
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, eject.currentServiceId, hash]]);
-    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.ok(null));
+    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.ok(OK));
   });
 
   it("should fail if there is no memory for hash", async () => {
