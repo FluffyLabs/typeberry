@@ -2,7 +2,7 @@ import type { CodeHash, CoreIndex, PerValidator, ServiceId, TimeSlot } from "@ty
 import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
-import type { Blake2bHash, HASH_SIZE, OpaqueHash } from "@typeberry/hash";
+import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { ValidatorData } from "@typeberry/state";
@@ -133,11 +133,7 @@ export interface AccumulationPartialState {
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/37b60137b601?v=0.6.6
    */
-  eject(
-    source: ServiceId | null,
-    destination: ServiceId | null,
-    hash: Bytes<HASH_SIZE>,
-  ): Promise<Result<null, EjectError>>;
+  eject(source: ServiceId | null, destination: ServiceId | null, hash: OpaqueHash): Promise<Result<null, EjectError>>;
 
   /**
    * Transfer given `amount` of funds to the `destination`,
