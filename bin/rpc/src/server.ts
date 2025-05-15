@@ -4,7 +4,26 @@ import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import { WebSocketServer } from "ws";
 import type { WebSocket } from "ws";
 import { loadMethods } from "./methodLoader";
-import type { DatabaseContext, JsonRpcRequest, JsonRpcResponse, RpcMethod } from "./types";
+import type {
+  DatabaseContext,
+  JsonRpcErrorResponse,
+  JsonRpcId,
+  JsonRpcRequest,
+  JsonRpcResponse,
+  RpcMethod,
+} from "./types";
+import { RpcError } from "./types";
+
+function createErrorResponse(error: RpcError, id: JsonRpcId): JsonRpcErrorResponse {
+  return {
+    jsonrpc: "2.0",
+    error: {
+      code: error.code,
+      message: error.message,
+    },
+    id,
+  };
+}
 
 export class RpcServer {
   private wss: WebSocketServer;
@@ -13,6 +32,7 @@ export class RpcServer {
   private rootDb: LmdbRoot;
   private blocks: LmdbBlocks;
   private states: LmdbStates;
+  private chainSpec: ChainSpec;
 
   constructor(port: number, dbPath: string, genesisRoot: string, chainSpec: ChainSpec) {
     this.wss = new WebSocketServer({ port });
@@ -25,6 +45,7 @@ export class RpcServer {
     this.rootDb = new LmdbRoot(fullDbPath, true);
     this.blocks = new LmdbBlocks(chainSpec, this.rootDb);
     this.states = new LmdbStates(chainSpec, this.rootDb);
+    this.chainSpec = chainSpec;
 
     loadMethods(this.methods);
     this.setupWebSocket();
@@ -34,67 +55,62 @@ export class RpcServer {
   private setupWebSocket(): void {
     this.wss.on("connection", (ws: WebSocket) => {
       ws.on("message", async (data: Buffer) => {
+        let request: JsonRpcRequest;
         try {
-          const request: JsonRpcRequest = JSON.parse(data.toString());
+          request = JSON.parse(data.toString());
+        } catch {
+          ws.send(JSON.stringify(createErrorResponse(new RpcError(-32700, "Parse error"), null)));
+          return;
+        }
 
-          if (request.jsonrpc !== "2.0") {
-            throw new Error("Invalid JSON-RPC version");
+        if (request.jsonrpc !== "2.0") {
+          ws.send(
+            JSON.stringify(createErrorResponse(new RpcError(-32600, "Invalid JSON-RPC version"), request.id ?? null)),
+          );
+          return;
+        }
+
+        try {
+          const result = await this.handleRequest(request);
+          if (request.id !== undefined) {
+            const response: JsonRpcResponse = {
+              jsonrpc: "2.0",
+              result,
+              id: request.id,
+            };
+            ws.send(JSON.stringify(response));
           }
-
-          const response = await this.handleRequest(request);
-          ws.send(JSON.stringify(response));
         } catch (error) {
-          const errorResponse: JsonRpcResponse = {
-            jsonrpc: "2.0",
-            error: {
-              code: -32603,
-              message: error instanceof Error ? error.message : "Internal error",
-            },
-            id: null,
-          };
-          ws.send(JSON.stringify(errorResponse));
+          if (request.id !== undefined) {
+            const rpcError =
+              error instanceof RpcError
+                ? error
+                : new RpcError(-32603, error instanceof Error ? error.message : "Internal error");
+            ws.send(JSON.stringify(createErrorResponse(rpcError, request.id)));
+          }
         }
       });
     });
   }
 
-  private async handleRequest(request: JsonRpcRequest): Promise<JsonRpcResponse> {
-    const { method, params, id } = request;
+  private async handleRequest(request: JsonRpcRequest): Promise<unknown[] | null> {
+    const { method, params } = request;
 
     const handler = this.methods.get(method);
     if (handler === undefined) {
-      return {
-        jsonrpc: "2.0",
-        error: {
-          code: -32601,
-          message: "Method not found",
-        },
-        id: id ?? null,
-      };
+      throw new RpcError(-32601, "Method not found");
     }
 
-    try {
-      const db: DatabaseContext = {
-        blocks: this.blocks,
-        states: this.states,
-      };
-      const result = await handler(params ?? [], db);
-
-      return {
-        jsonrpc: "2.0",
-        result,
-        id: id ?? null,
-      };
-    } catch (error) {
-      return {
-        jsonrpc: "2.0",
-        error: {
-          code: -32603,
-          message: error instanceof Error ? error.message : "Internal error",
-        },
-        id: id ?? null,
-      };
+    if (params !== undefined && !Array.isArray(params)) {
+      throw new RpcError(-32602, "Invalid params");
     }
+
+    const db: DatabaseContext = {
+      blocks: this.blocks,
+      states: this.states,
+    };
+
+    return handler(params, db, this.chainSpec);
   }
 
   async close(): Promise<void> {
