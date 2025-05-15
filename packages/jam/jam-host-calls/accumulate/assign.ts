@@ -56,7 +56,7 @@ export class Assign implements HostCallHandler {
     const fixedSizeAuthQueue = FixedSizeArray.new(authQueue, AUTHORIZATION_QUEUE_SIZE);
 
     regs.set(IN_OUT_REG, HostCallResult.OK);
-    // NOTE [MaSo] its safe to cast to Number because we know that the coreIndex is less than coresCount
+    // NOTE [MaSo] its safe to cast to Number because we know that the coreIndex is less than cores count = 341
     this.partialState.updateAuthorizationQueue(tryAsCoreIndex(Number(coreIndex)), fixedSizeAuthQueue);
   }
 }
