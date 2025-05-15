@@ -6,7 +6,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { type U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   LookupHistoryItem,
   PreimageItem,
@@ -135,7 +135,7 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Service {
     const slots = tryAsLookupHistorySlots(item.value.map((slot) => tryAsTimeSlot(slot)));
 
     const arr = lookupHistory.get(item.key.hash) ?? [];
-    arr.push(new LookupHistoryItem(item.key.hash, item.key.length as U32, slots));
+    arr.push(new LookupHistoryItem(item.key.hash, tryAsU32(item.key.length), slots));
     lookupHistory.set(item.key.hash, arr);
   }
 

@@ -19,7 +19,7 @@ import type { Ed25519Key } from "@typeberry/crypto";
 import { json } from "@typeberry/json-parser";
 import { fromJson } from "./common";
 
-const bandersnatchVrfSignature = json.fromString((v) => Bytes.parseBytes(v, 96) as BandersnatchVrfSignature);
+const bandersnatchVrfSignature = json.fromString((v) => Bytes.parseBytes(v, 96).asOpaque<BandersnatchVrfSignature>());
 
 const validatorKeysFromJson = json.object<ValidatorKeys, ValidatorKeys>(
   {

@@ -4,7 +4,7 @@ import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
-import type { U8, U32 } from "@typeberry/numbers";
+import { type U32, tryAsU8 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
 import type { StreamHandler, StreamSender } from "../handler";
 import type { StreamId, StreamKind } from "./stream";
@@ -25,7 +25,7 @@ export class BlockRequest extends WithDebug {
   static Codec = codec.Class(BlockRequest, {
     headerHash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
     direction: codec.u8.convert<Direction>(
-      (i) => i as U8,
+      (i) => tryAsU8(i),
       (i) => {
         switch (i) {
           case Direction.AscExcl:

@@ -1,4 +1,4 @@
-import type { CodeHash, ServiceGas, ServiceId } from "@typeberry/block";
+import { type CodeHash, type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import { type JsonObject, fromJson } from "@typeberry/block-json";
 import { ImportSpec, WorkItem, WorkItemExtrinsicSpec } from "@typeberry/block/work-item";
 import { BytesBlob } from "@typeberry/bytes";
@@ -38,8 +38,8 @@ export const workItemFromJson = json.object<JsonWorkItem, WorkItem>(
       service,
       codeHash: code_hash,
       payload,
-      refineGasLimit: BigInt(refine_gas_limit) as ServiceGas,
-      accumulateGasLimit: BigInt(accumulate_gas_limit) as ServiceGas,
+      refineGasLimit: tryAsServiceGas(refine_gas_limit),
+      accumulateGasLimit: tryAsServiceGas(accumulate_gas_limit),
       importSegments: import_segments,
       extrinsic,
       exportCount: export_count,
