@@ -85,7 +85,7 @@ describe("PartialState.requestPreimage", () => {
     ]);
     assert.deepStrictEqual(
       partialState.updatedState.updatedServiceInfo,
-      ServiceAccountInfo.fromCodec({
+      ServiceAccountInfo.create({
         ...service.data.info,
         storageUtilisationBytes: tryAsU64(service.data.info.storageUtilisationBytes + 5n),
         storageUtilisationCount: tryAsU32(service.data.info.storageUtilisationCount + 1),
@@ -109,7 +109,7 @@ describe("PartialState.requestPreimage", () => {
     ]);
     assert.deepStrictEqual(
       partialState.updatedState.updatedServiceInfo,
-      ServiceAccountInfo.fromCodec({
+      ServiceAccountInfo.create({
         ...service.data.info,
         storageUtilisationBytes: tryAsU64(service.data.info.storageUtilisationBytes + 5n),
         storageUtilisationCount: tryAsU32(service.data.info.storageUtilisationCount + 1),
@@ -350,7 +350,7 @@ describe("PartialState.newService", () => {
     // Verify new service entry
     assert.deepStrictEqual(partialState.updatedState.newServices, [
       new Service(expectedServiceId, {
-        info: ServiceAccountInfo.fromCodec({
+        info: ServiceAccountInfo.create({
           codeHash,
           balance: thresholdForNew,
           accumulateMinGas,
@@ -371,7 +371,7 @@ describe("PartialState.newService", () => {
     // Verify source balance is reduced
     assert.deepStrictEqual(
       partialState.updatedState.updatedServiceInfo,
-      ServiceAccountInfo.fromCodec({
+      ServiceAccountInfo.create({
         ...service.data.info,
         balance: expectedBalance,
       }),
@@ -388,7 +388,7 @@ describe("PartialState.newService", () => {
 
     const updatedService = new Service(service.id, {
       ...service.data,
-      info: ServiceAccountInfo.fromCodec({
+      info: ServiceAccountInfo.create({
         ...service.data.info,
         // lower the balance a bit
         balance: tryAsU64(2 ** 32),
@@ -424,7 +424,7 @@ describe("PartialState.updateValidatorsData", () => {
     // when
     partialState.updateValidatorsData(
       asKnownSize([
-        ValidatorData.fromCodec({
+        ValidatorData.create({
           bandersnatch: Bytes.fill(BANDERSNATCH_KEY_BYTES, 0x1).asOpaque(),
           ed25519: Bytes.fill(ED25519_KEY_BYTES, 0x2).asOpaque(),
           bls: Bytes.fill(BLS_KEY_BYTES, 0x3).asOpaque(),
@@ -473,7 +473,7 @@ describe("PartialState.upgradeService", () => {
     // then
     assert.deepStrictEqual(
       partialState.updatedState.updatedServiceInfo,
-      ServiceAccountInfo.fromCodec({
+      ServiceAccountInfo.create({
         ...service.data.info,
         codeHash,
         accumulateMinGas: tryAsServiceGas(gas),
@@ -536,7 +536,7 @@ describe("PartialState.transfer", () => {
     mockState.services.set(
       tryAsServiceId(1),
       new Service(tryAsServiceId(1), {
-        info: ServiceAccountInfo.fromCodec({
+        info: ServiceAccountInfo.create({
           ...service.data.info,
           onTransferMinGas: tryAsServiceGas(1000),
         }),
@@ -577,7 +577,7 @@ describe("PartialState.transfer", () => {
     ]);
     assert.deepStrictEqual(
       partialState.updatedState.updatedServiceInfo,
-      ServiceAccountInfo.fromCodec({
+      ServiceAccountInfo.create({
         ...service.data.info,
         balance: tryAsU64(newBalance),
       }),

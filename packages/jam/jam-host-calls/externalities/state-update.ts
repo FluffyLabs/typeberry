@@ -23,7 +23,7 @@ export class StateUpdate {
     }
 
     update.updatedServiceInfo =
-      from.updatedServiceInfo === null ? null : ServiceAccountInfo.fromCodec(from.updatedServiceInfo);
+      from.updatedServiceInfo === null ? null : ServiceAccountInfo.create(from.updatedServiceInfo);
     update.validatorsData = from.validatorsData === null ? null : asKnownSize([...from.validatorsData]);
     update.yieldedRoot = from.yieldedRoot;
     update.priviledgedServices =

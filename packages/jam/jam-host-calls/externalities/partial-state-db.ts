@@ -203,7 +203,7 @@ export class PartialStateDb implements PartialState {
     }
 
     // Update service info with new details.
-    this.updatedState.updatedServiceInfo = ServiceAccountInfo.fromCodec({
+    this.updatedState.updatedServiceInfo = ServiceAccountInfo.create({
       ...serviceInfo,
       storageUtilisationBytes: bytes.value,
       storageUtilisationCount: items.value,
@@ -341,7 +341,7 @@ export class PartialStateDb implements PartialState {
     );
 
     // reduced balance
-    this.updatedState.updatedServiceInfo = ServiceAccountInfo.fromCodec({
+    this.updatedState.updatedServiceInfo = ServiceAccountInfo.create({
       ...source,
       balance: tryAsU64(newBalance),
     });
@@ -375,7 +375,7 @@ export class PartialStateDb implements PartialState {
 
     // proceed with service creation
     const newService = new Service(newServiceId, {
-      info: ServiceAccountInfo.fromCodec({
+      info: ServiceAccountInfo.create({
         codeHash,
         balance: thresholdForNew,
         accumulateMinGas,
@@ -397,7 +397,7 @@ export class PartialStateDb implements PartialState {
 
     // update the balance
     // https://graypaper.fluffylabs.dev/#/9a08063/36f10236f102?v=0.6.6
-    this.updatedState.updatedServiceInfo = ServiceAccountInfo.fromCodec({
+    this.updatedState.updatedServiceInfo = ServiceAccountInfo.create({
       ...currentService,
       balance: tryAsU64(balanceLeftForCurrent),
     });
@@ -412,7 +412,7 @@ export class PartialStateDb implements PartialState {
   upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void {
     /** https://graypaper.fluffylabs.dev/#/9a08063/36c80336c803?v=0.6.6 */
     const serviceInfo = this.getCurrentServiceInfo();
-    this.updatedState.updatedServiceInfo = ServiceAccountInfo.fromCodec({
+    this.updatedState.updatedServiceInfo = ServiceAccountInfo.create({
       ...serviceInfo,
       codeHash,
       accumulateMinGas: tryAsServiceGas(gas),
