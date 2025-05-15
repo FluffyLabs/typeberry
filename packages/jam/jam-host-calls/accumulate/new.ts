@@ -1,4 +1,4 @@
-import { type ServiceId, tryAsServiceId } from "@typeberry/block";
+import { tryAsServiceGas } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
@@ -31,9 +31,9 @@ export class New implements HostCallHandler {
     // `l`
     const codeLength = tryAsU32(Number(regs.get(8)));
     // `g`
-    const gas = regs.get(9);
+    const gas = tryAsServiceGas(regs.get(9));
     // `m`
-    const allowance = regs.get(10);
+    const allowance = tryAsServiceGas(regs.get(10));
 
     // `c`
     const codeHash = Bytes.zero(HASH_SIZE);
@@ -43,9 +43,7 @@ export class New implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    const newServiceId = bump(this.currentServiceId);
-
-    const assignedId = this.partialState.newService(newServiceId, codeHash.asOpaque(), codeLength, gas, allowance);
+    const assignedId = this.partialState.newService(codeHash.asOpaque(), codeLength, gas, allowance);
 
     if (assignedId.isOk) {
       regs.set(IN_OUT_REG, tryAsU64(assignedId.ok));
@@ -54,9 +52,4 @@ export class New implements HostCallHandler {
     }
     return;
   }
-}
-
-function bump(serviceId: ServiceId) {
-  const mod = 2 ** 32 - 2 ** 9;
-  return tryAsServiceId(2 ** 8 + ((serviceId - 2 ** 8 + 42 + mod) % mod));
 }

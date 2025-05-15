@@ -1,4 +1,4 @@
-import { tryAsServiceId } from "@typeberry/block";
+import { tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import {
@@ -57,7 +57,7 @@ export class Eject implements HostCallHandler {
     }
 
     // `a`: balance - threshold + B_S: basic minimum balance
-    const transferResult = this.partialState.quitAndTransfer(destination, remainingGas, memo);
+    const transferResult = this.partialState.quitAndTransfer(destination, tryAsServiceGas(remainingGas), memo);
 
     // All good!
     if (transferResult.isOk) {

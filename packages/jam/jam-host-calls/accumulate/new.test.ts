@@ -66,9 +66,7 @@ describe("HostCalls: New", () => {
 
     // then
     assert.deepStrictEqual(tryAsServiceId(Number(registers.get(RESULT_REG))), tryAsServiceId(23_000));
-    assert.deepStrictEqual(accumulate.newServiceCalled, [
-      [10_042, Bytes.fill(HASH_SIZE, 0x69), 4_096, 2n ** 40n, 2n ** 50n],
-    ]);
+    assert.deepStrictEqual(accumulate.newServiceCalled, [[Bytes.fill(HASH_SIZE, 0x69), 4_096, 2n ** 40n, 2n ** 50n]]);
   });
 
   it("should fail when balance is not enough", async () => {

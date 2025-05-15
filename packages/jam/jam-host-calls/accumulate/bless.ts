@@ -1,9 +1,9 @@
-import { type ServiceId, tryAsServiceId } from "@typeberry/block";
+import { type ServiceGas, type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { Decoder, codec, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
-import { type BigGas, type Gas, type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { asOpaqueType } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
@@ -16,9 +16,9 @@ const serviceIdAndGasCodec = codec.object({
     (i) => i,
     (o) => asOpaqueType(o),
   ),
-  gas: codec.u64.convert<Gas>(
+  gas: codec.u64.convert<ServiceGas>(
     (i) => tryAsU64(i),
-    (o): BigGas => asOpaqueType(o),
+    (o) => tryAsServiceGas(o),
   ),
 });
 
@@ -49,7 +49,7 @@ export class Bless implements HostCallHandler {
     const numberOfItems = regs.get(11);
 
     // `g`: dictionary of serviceId -> gas that auto-accumulate every block
-    const g = new Map<ServiceId, Gas>();
+    const g = new Map<ServiceId, ServiceGas>();
     // TODO [ToDr] Is it better to read everything in one go instead?
     const result = new Uint8Array(tryAsExactBytes(serviceIdAndGasCodec.sizeHint));
     const decoder = Decoder.fromBlob(result);

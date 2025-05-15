@@ -1,14 +1,22 @@
-import { type CodeHash, type CoreIndex, type PerValidator, type ServiceId, tryAsServiceGas } from "@typeberry/block";
+import {
+  type CodeHash,
+  type CoreIndex,
+  type PerValidator,
+  type ServiceGas,
+  type ServiceId,
+  tryAsServiceGas,
+  tryAsServiceId,
+} from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { Bytes } from "@typeberry/bytes";
-import { type FixedSizeArray, asKnownSize } from "@typeberry/collections";
+import type { CodecRecord } from "@typeberry/codec";
+import { type FixedSizeArray, HashDictionary, asKnownSize } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
-import { type U32, type U64, sumU32, sumU64, tryAsU32 } from "@typeberry/numbers";
-import type { Gas } from "@typeberry/pvm-interpreter";
+import { type U32, type U64, sumU32, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   LookupHistoryItem,
-  type Service,
+  Service,
   ServiceAccountInfo,
   type State,
   type ValidatorData,
@@ -22,7 +30,7 @@ import {
   type QuitError,
   RequestPreimageError,
   type TRANSFER_MEMO_BYTES,
-  type TransferError,
+  TransferError,
   slotsToPreimageStatus,
 } from "./partial-state";
 
@@ -36,7 +44,10 @@ export class PartialStateDb implements PartialState {
 
   constructor(
     private readonly state: State,
+    /** `x_s` */
     private readonly currentServiceId: ServiceId,
+    /** `x_i`: next service id we are going to create. */
+    private nextNewServiceId: ServiceId,
   ) {
     const service = this.state.services.get(this.currentServiceId);
     if (service === undefined) {
@@ -44,7 +55,11 @@ export class PartialStateDb implements PartialState {
     }
   }
 
-  private getServiceInfo(): ServiceAccountInfo {
+  public getNextNewServiceId() {
+    return this.nextNewServiceId;
+  }
+
+  private getCurrentServiceInfo(): ServiceAccountInfo {
     if (this.updatedState.updatedServiceInfo !== null) {
       return this.updatedState.updatedServiceInfo;
     }
@@ -56,6 +71,32 @@ export class PartialStateDb implements PartialState {
       "Service existence in state validated in constructor.",
     );
     return service.data.info;
+  }
+
+  private getServiceInfo(destination: ServiceId | null): ServiceAccountInfo | null {
+    if (destination === null) {
+      return null;
+    }
+
+    if (destination === this.currentServiceId) {
+      return this.getCurrentServiceInfo();
+    }
+
+    const isEjected = false; // TODO [ToDr] eject
+    if (isEjected) {
+      return null;
+    }
+
+    const maybeNewService = this.updatedState.newServices.find((x) => x.id === destination);
+    if (maybeNewService !== undefined) {
+      return maybeNewService.data.info;
+    }
+
+    const maybeService = this.state.services.get(destination);
+    if (maybeService === undefined) {
+      return null;
+    }
+    return maybeService.data.info;
   }
 
   private getPreimageStatus(hash: PreimageHash, length: U64): PreimageUpdate | undefined {
@@ -76,6 +117,21 @@ export class PartialStateDb implements PartialState {
     const index = this.updatedState.preimages.indexOf(existingPreimage);
     const removeCount = index === -1 ? 0 : 1;
     this.updatedState.preimages.splice(index, removeCount, newUpdate);
+  }
+
+  /** `check`: https://graypaper.fluffylabs.dev/#/9a08063/303f02303f02?v=0.6.6 */
+  private getNextAvailableServiceId(serviceId: ServiceId): ServiceId {
+    let currentServiceId = serviceId;
+    const mod = 2 ** 32 - 2 ** 9;
+    for (;;) {
+      const service = this.getServiceInfo(currentServiceId);
+      // we found an empty id
+      if (service === null) {
+        return currentServiceId;
+      }
+      // keep trying
+      currentServiceId = tryAsServiceId(((currentServiceId - 2 ** 8 + 1 + mod) % mod) + 2 ** 8);
+    }
   }
 
   checkPreimageStatus(hash: PreimageHash, length: U64): PreimageStatus | null {
@@ -108,7 +164,7 @@ export class PartialStateDb implements PartialState {
 
     // make sure we have enough balance for this update
     // https://graypaper.fluffylabs.dev/#/9a08063/381201381601?v=0.6.6
-    const serviceInfo = this.getServiceInfo();
+    const serviceInfo = this.getCurrentServiceInfo();
     const items = sumU32(serviceInfo.storageUtilisationCount, tryAsU32(1));
     const bytes = sumU64(serviceInfo.storageUtilisationBytes, length);
 
@@ -211,7 +267,7 @@ export class PartialStateDb implements PartialState {
 
   quitAndTransfer(
     _destination: ServiceId,
-    _suppliedGas: Gas,
+    _suppliedGas: ServiceGas,
     _memo: Bytes<TRANSFER_MEMO_BYTES>,
   ): Result<OK, QuitError> {
     throw new Error("Method not implemented (waiting for eject)");
@@ -222,27 +278,116 @@ export class PartialStateDb implements PartialState {
   }
 
   transfer(
-    _destination: ServiceId | null,
-    _amount: U64,
-    _suppliedGas: Gas,
-    _memo: Bytes<TRANSFER_MEMO_BYTES>,
+    destinationId: ServiceId | null,
+    amount: U64,
+    gas: ServiceGas,
+    memo: Bytes<TRANSFER_MEMO_BYTES>,
   ): Result<OK, TransferError> {
-    throw new Error("Method not implemented.");
+    const source = this.getCurrentServiceInfo();
+    const destination = this.getServiceInfo(destinationId);
+    /** https://graypaper.fluffylabs.dev/#/9a08063/370401370401?v=0.6.6 */
+    if (destination === null || destinationId === null) {
+      return Result.error(TransferError.DestinationNotFound);
+    }
+
+    /** https://graypaper.fluffylabs.dev/#/9a08063/371301371301?v=0.6.6 */
+    if (gas < destination.onTransferMinGas) {
+      return Result.error(TransferError.GasTooLow);
+    }
+
+    /** https://graypaper.fluffylabs.dev/#/9a08063/371b01371b01?v=0.6.6 */
+    const newBalance = source.balance - amount;
+    const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(
+      source.storageUtilisationCount,
+      source.storageUtilisationBytes,
+    );
+    if (newBalance < thresholdBalance) {
+      return Result.error(TransferError.BalanceBelowThreshold);
+    }
+
+    // outgoing transfer
+    this.updatedState.transfers.push(
+      PendingTransfer.create({
+        source: this.currentServiceId,
+        destination: destinationId,
+        amount,
+        memo,
+        gas,
+      }),
+    );
+
+    // reduced balance
+    this.updatedState.updatedServiceInfo = ServiceAccountInfo.fromCodec({
+      ...source,
+      balance: tryAsU64(newBalance),
+    });
+    return Result.ok(OK);
   }
 
   newService(
-    _requestedServiceId: ServiceId,
-    _codeHash: CodeHash,
-    _codeLength: U32,
-    _gas: U64,
-    _balance: U64,
+    codeHash: CodeHash,
+    codeLength: U32,
+    accumulateMinGas: ServiceGas,
+    onTransferMinGas: ServiceGas,
   ): Result<ServiceId, "insufficient funds"> {
-    throw new Error("Method not implemented.");
+    const newServiceId = this.nextNewServiceId;
+    // calculate the threshold. Storage is empty, one preimage requested.
+    // https://graypaper.fluffylabs.dev/#/9a08063/114501114501?v=0.6.6
+    const items = tryAsU32(2 * 1 + 0);
+    const bytes = tryAsU64(81 + codeLength);
+
+    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes);
+    const currentService = this.getCurrentServiceInfo();
+    const thresholdForCurrent = ServiceAccountInfo.calculateThresholdBalance(
+      currentService.storageUtilisationCount,
+      currentService.storageUtilisationBytes,
+    );
+
+    // check if we have enough balance
+    const balanceLeftForCurrent = currentService.balance - thresholdForNew;
+    if (balanceLeftForCurrent < thresholdForCurrent) {
+      return Result.error("insufficient funds");
+    }
+
+    // proceed with service creation
+    const newService = new Service(newServiceId, {
+      info: ServiceAccountInfo.fromCodec({
+        codeHash,
+        balance: thresholdForNew,
+        accumulateMinGas,
+        onTransferMinGas,
+        storageUtilisationBytes: bytes,
+        storageUtilisationCount: items,
+      }),
+      preimages: HashDictionary.new(),
+      lookupHistory: HashDictionary.new(),
+      storage: [],
+    });
+    // add the preimage request
+    newService.data.lookupHistory.set(codeHash.asOpaque(), [
+      new LookupHistoryItem(codeHash.asOpaque(), codeLength, tryAsLookupHistorySlots([])),
+    ]);
+
+    // add the new service
+    this.updatedState.newServices.push(newService);
+
+    // update the balance
+    // https://graypaper.fluffylabs.dev/#/9a08063/36f10236f102?v=0.6.6
+    this.updatedState.updatedServiceInfo = ServiceAccountInfo.fromCodec({
+      ...currentService,
+      balance: tryAsU64(balanceLeftForCurrent),
+    });
+
+    // update the next service id we are going to create next
+    // https://graypaper.fluffylabs.dev/#/9a08063/363603363603?v=0.6.6
+    this.nextNewServiceId = this.getNextAvailableServiceId(bumpServiceId(newServiceId));
+
+    return Result.ok(newServiceId);
   }
 
   upgradeService(codeHash: CodeHash, gas: U64, allowance: U64): void {
     /** https://graypaper.fluffylabs.dev/#/9a08063/36c80336c803?v=0.6.6 */
-    const serviceInfo = this.getServiceInfo();
+    const serviceInfo = this.getCurrentServiceInfo();
     this.updatedState.updatedServiceInfo = ServiceAccountInfo.fromCodec({
       ...serviceInfo,
       codeHash,
@@ -274,7 +419,7 @@ export class PartialStateDb implements PartialState {
     manager: ServiceId,
     authorizer: ServiceId,
     validators: ServiceId,
-    autoAccumulate: Map<ServiceId, Gas>,
+    autoAccumulate: Map<ServiceId, ServiceGas>,
   ): void {
     // TODO [ToDr] Not sure if we should fail this if the services don't exist?
     /** https://graypaper.fluffylabs.dev/#/9a08063/36f40036f400?v=0.6.6 */
@@ -310,9 +455,25 @@ export class PreimageUpdate extends LookupHistoryItem {
   }
 }
 
-class StateUpdate {
+export class PendingTransfer {
+  private constructor(
+    public readonly source: ServiceId,
+    public readonly destination: ServiceId,
+    public readonly amount: U64,
+    public readonly memo: Bytes<TRANSFER_MEMO_BYTES>,
+    public readonly gas: ServiceGas,
+  ) {}
+
+  static create(x: CodecRecord<PendingTransfer>) {
+    return new PendingTransfer(x.source, x.destination, x.amount, x.memo, x.gas);
+  }
+}
+
+export class StateUpdate {
   static copyFrom(from: StateUpdate): StateUpdate {
     const update = new StateUpdate();
+    update.newServices.push(...from.newServices);
+    update.transfers.push(...from.transfers);
     update.preimages.push(...from.preimages);
     for (const [k, v] of from.authorizationQueues) {
       update.authorizationQueues.set(k, v);
@@ -332,6 +493,8 @@ class StateUpdate {
     return update;
   }
 
+  public readonly newServices: Service[] = [];
+  public readonly transfers: PendingTransfer[] = [];
   public readonly preimages: PreimageUpdate[] = [];
   public readonly authorizationQueues: Map<CoreIndex, FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>> =
     new Map();
@@ -343,6 +506,11 @@ class StateUpdate {
     manager: ServiceId;
     authorizer: ServiceId;
     validators: ServiceId;
-    autoAccumulate: Map<ServiceId, Gas>;
+    autoAccumulate: Map<ServiceId, ServiceGas>;
   } | null = null;
+}
+
+function bumpServiceId(serviceId: ServiceId) {
+  const mod = 2 ** 32 - 2 ** 9;
+  return tryAsServiceId(2 ** 8 + ((serviceId - 2 ** 8 + 42 + mod) % mod));
 }

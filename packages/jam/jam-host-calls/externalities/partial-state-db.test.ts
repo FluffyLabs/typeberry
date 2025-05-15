@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   BANDERSNATCH_KEY_BYTES,
   BLS_KEY_BYTES,
+  type ServiceGas,
   type ServiceId,
   tryAsCoreIndex,
   tryAsServiceGas,
@@ -10,28 +11,29 @@ import {
   tryAsTimeSlot,
 } from "@typeberry/block";
 import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
+import type { PreimageHash } from "@typeberry/block/preimage";
 import { Bytes } from "@typeberry/bytes";
-import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
+import { FixedSizeArray, HashDictionary, asKnownSize } from "@typeberry/collections";
 import { ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { type Gas, tryAsGas } from "@typeberry/pvm-interpreter";
 import {
   LookupHistoryItem,
+  Service,
   ServiceAccountInfo,
   VALIDATOR_META_BYTES,
   ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { testState } from "@typeberry/state/test.utils";
-import { OK, Result } from "@typeberry/utils";
-import { PreimageStatusKind, RequestPreimageError } from "./partial-state";
-import { PartialStateDb, PreimageUpdate } from "./partial-state-db";
+import { OK, Result, ensure } from "@typeberry/utils";
+import { PreimageStatusKind, RequestPreimageError, TRANSFER_MEMO_BYTES, TransferError } from "./partial-state";
+import { PartialStateDb, PendingTransfer, PreimageUpdate } from "./partial-state-db";
 
 describe("PartialState.checkPreimageStatus", () => {
   it("should check preimage status from state", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
     const preimageHash = Bytes.parseBytes(
       "0xc16326432b5b3213dfd1609495e13c6b276cb474d679645337e5c2c09f19b53c",
       HASH_SIZE,
@@ -46,7 +48,7 @@ describe("PartialState.checkPreimageStatus", () => {
 
   it("should return preimage status when its in updated state", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
 
     const preimageHash = Bytes.parseBytes(
       "0xc16326432b5b3213dfd1609495e13c6b276cb474d679645337e5c2c09f19b53c",
@@ -68,11 +70,10 @@ describe("PartialState.checkPreimageStatus", () => {
 describe("PartialState.requestPreimage", () => {
   it("should request a preimage and update service info", () => {
     const mockState = testState();
-    const service = mockState.services.get(tryAsServiceId(0));
-    if (service === undefined) {
-      throw new Error("No required service!");
-    }
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const maybeService = mockState.services.get(tryAsServiceId(0));
+    const service = ensure<Service | undefined, Service>(maybeService, maybeService !== undefined);
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
     const preimageHash = Bytes.fill(HASH_SIZE, 0xa).asOpaque();
 
     const status = partialState.requestPreimage(preimageHash, tryAsU64(5));
@@ -93,11 +94,10 @@ describe("PartialState.requestPreimage", () => {
 
   it("should request a preimage and update service info", () => {
     const mockState = testState();
-    const service = mockState.services.get(tryAsServiceId(0));
-    if (service === undefined) {
-      throw new Error("No required service!");
-    }
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const maybeService = mockState.services.get(tryAsServiceId(0));
+    const service = ensure<Service | undefined, Service>(maybeService, maybeService !== undefined);
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
     const preimageHash = Bytes.fill(HASH_SIZE, 0xa).asOpaque();
 
     const status = partialState.requestPreimage(preimageHash, tryAsU64(5));
@@ -118,7 +118,7 @@ describe("PartialState.requestPreimage", () => {
 
   it("should fail if preimage is already requested", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
     const preimageHash = Bytes.fill(HASH_SIZE, 0xa).asOpaque();
 
     const status = partialState.requestPreimage(preimageHash, tryAsU64(5));
@@ -130,7 +130,7 @@ describe("PartialState.requestPreimage", () => {
 
   it("should fail if preimage is already available", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
     const preimageHash = Bytes.parseBytes(
       "0xc16326432b5b3213dfd1609495e13c6b276cb474d679645337e5c2c09f19b53c",
       HASH_SIZE,
@@ -142,7 +142,7 @@ describe("PartialState.requestPreimage", () => {
 
   it("should fail if balance is insufficient", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
     const preimageHash = Bytes.fill(HASH_SIZE, 0xa).asOpaque();
 
     const status = partialState.requestPreimage(preimageHash, tryAsU64(2n ** 64n - 1n));
@@ -153,7 +153,7 @@ describe("PartialState.requestPreimage", () => {
 describe("PartialState.forgetPreimage", () => {
   it("should error if preimage does not exist", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
     const hash = Bytes.fill(HASH_SIZE, 0x01).asOpaque();
 
     const result = partialState.forgetPreimage(hash, tryAsU64(42));
@@ -165,7 +165,7 @@ describe("PartialState.forgetPreimage", () => {
     const hash = Bytes.fill(HASH_SIZE, 0x02).asOpaque();
     const length = tryAsU64(42);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
     partialState.updatedState.preimages.push(
       PreimageUpdate.forget(new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([]))),
     );
@@ -179,7 +179,7 @@ describe("PartialState.forgetPreimage", () => {
     const hash = Bytes.fill(HASH_SIZE, 0x03).asOpaque();
     const length = tryAsU64(42);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
     partialState.requestPreimage(hash, length);
 
     const result = partialState.forgetPreimage(hash, length);
@@ -200,7 +200,7 @@ describe("PartialState.forgetPreimage", () => {
     const length = tryAsU64(42);
     const oldSlot = tryAsTimeSlot(0); // very old
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
     partialState.updatedState.preimages.push(
       PreimageUpdate.update(
         new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([oldSlot, oldSlot])),
@@ -227,7 +227,7 @@ describe("PartialState.forgetPreimage", () => {
     const length = tryAsU64(42);
     const recentSlot = tryAsTimeSlot(90); // within expunge period
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
     partialState.updatedState.preimages.push(
       PreimageUpdate.update(
         new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([recentSlot])),
@@ -248,7 +248,7 @@ describe("PartialState.forgetPreimage", () => {
     const length = tryAsU64(42);
     const availableSlot = tryAsTimeSlot(80);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
     partialState.updatedState.preimages.push(
       PreimageUpdate.update(
         new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([availableSlot])),
@@ -280,7 +280,7 @@ describe("PartialState.forgetPreimage", () => {
     const y = tryAsTimeSlot(0);
     const z = tryAsTimeSlot(70);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
     partialState.updatedState.preimages.push(
       PreimageUpdate.update(
         new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([tryAsTimeSlot(0), y, z])),
@@ -308,7 +308,7 @@ describe("PartialState.forgetPreimage", () => {
     const y = tryAsTimeSlot(95); // too recent
     const z = tryAsTimeSlot(70);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
     partialState.updatedState.preimages.push(
       PreimageUpdate.update(
         new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([tryAsTimeSlot(0), y, z])),
@@ -320,10 +320,105 @@ describe("PartialState.forgetPreimage", () => {
   });
 });
 
+describe("PartialState.newService", () => {
+  it("should create a new service and update balance + next service ID", () => {
+    const mockState = testState();
+    const maybeService = mockState.services.get(tryAsServiceId(0));
+    const service = ensure<Service | undefined, Service>(maybeService, maybeService !== undefined);
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    const codeHash = Bytes.fill(HASH_SIZE, 0x11).asOpaque();
+    const codeLength = tryAsU32(100);
+    const accumulateMinGas = tryAsServiceGas(10n);
+    const onTransferMinGas = tryAsServiceGas(20n);
+
+    const items = tryAsU32(2); // 2 * 1 + 0
+    const bytes = tryAsU64(81 + codeLength);
+    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes);
+    const expectedBalance = tryAsU64(service.data.info.balance - thresholdForNew);
+
+    // when
+    const result = partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas);
+
+    // then
+    const expectedServiceId = tryAsServiceId(10);
+
+    assert.deepStrictEqual(result, Result.ok(expectedServiceId));
+
+    // Verify new service entry
+    assert.deepStrictEqual(partialState.updatedState.newServices, [
+      new Service(expectedServiceId, {
+        info: ServiceAccountInfo.fromCodec({
+          codeHash,
+          balance: thresholdForNew,
+          accumulateMinGas,
+          onTransferMinGas,
+          storageUtilisationBytes: bytes,
+          storageUtilisationCount: items,
+        }),
+        preimages: HashDictionary.new(),
+        lookupHistory: (() => {
+          const map = HashDictionary.new<PreimageHash, LookupHistoryItem[]>();
+          map.set(codeHash, [new LookupHistoryItem(codeHash, codeLength, tryAsLookupHistorySlots([]))]);
+          return map;
+        })(),
+        storage: [],
+      }),
+    ]);
+
+    // Verify source balance is reduced
+    assert.deepStrictEqual(
+      partialState.updatedState.updatedServiceInfo,
+      ServiceAccountInfo.fromCodec({
+        ...service.data.info,
+        balance: expectedBalance,
+      }),
+    );
+
+    // Verify next service ID bumped
+    assert.deepStrictEqual(partialState.getNextNewServiceId(), tryAsServiceId(4294966836));
+  });
+
+  it("should return an error if there are insufficient funds", () => {
+    const mockState = testState();
+    const maybeService = mockState.services.get(tryAsServiceId(0));
+    const service = ensure<Service | undefined, Service>(maybeService, maybeService !== undefined);
+
+    const updatedService = new Service(service.id, {
+      ...service.data,
+      info: ServiceAccountInfo.fromCodec({
+        ...service.data.info,
+        // lower the balance a bit
+        balance: tryAsU64(2 ** 32),
+      }),
+    });
+    mockState.services.set(tryAsServiceId(0), updatedService);
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    const codeHash = Bytes.fill(HASH_SIZE, 0x12).asOpaque();
+    // artificially large to exceed balance
+    const codeLength = tryAsU32(2 ** 32 - 1);
+    const accumulateMinGas = tryAsServiceGas(10n);
+    const onTransferMinGas = tryAsServiceGas(20n);
+
+    // when
+    const result = partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas);
+
+    // then
+    assert.deepStrictEqual(result, Result.error("insufficient funds"));
+
+    // Verify no side effects
+    assert.deepStrictEqual(partialState.updatedState.newServices, []);
+    assert.strictEqual(partialState.updatedState.updatedServiceInfo, null);
+  });
+});
+
 describe("PartialState.updateValidatorsData", () => {
   it("should update validators data", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
 
     // when
     partialState.updateValidatorsData(
@@ -345,7 +440,7 @@ describe("PartialState.updateValidatorsData", () => {
 describe("PartialState.checkpoint", () => {
   it("should checkpoint the updates", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
     const preimageHash = Bytes.fill(HASH_SIZE, 0xa).asOpaque();
     // put something into updated state
     const status = partialState.requestPreimage(preimageHash, tryAsU64(5));
@@ -362,12 +457,10 @@ describe("PartialState.checkpoint", () => {
 describe("PartialState.upgradeService", () => {
   it("should update the service with new code hash and gas limits", () => {
     const mockState = testState();
-    const service = mockState.services.get(tryAsServiceId(0));
-    if (service === undefined) {
-      throw new Error("No required service!");
-    }
+    const maybeService = mockState.services.get(tryAsServiceId(0));
+    const service = ensure<Service | undefined, Service>(maybeService, maybeService !== undefined);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
 
     const codeHash = Bytes.fill(HASH_SIZE, 0xcd).asOpaque();
     const gas = tryAsU64(1_000n);
@@ -392,7 +485,7 @@ describe("PartialState.upgradeService", () => {
 describe("PartialState.updateAuthorizationQueue", () => {
   it("should update the authorization queue for a given core index", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
 
     const coreIndex = tryAsCoreIndex(0);
     const queue = FixedSizeArray.new(
@@ -411,14 +504,14 @@ describe("PartialState.updateAuthorizationQueue", () => {
 describe("PartialState.updatePrivilegedServices", () => {
   it("should update privileged services", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
 
     const manager = tryAsServiceId(1);
     const authorizer = tryAsServiceId(2);
     const validators = tryAsServiceId(3);
-    const autoAccumulate = new Map<ServiceId, Gas>([
-      [tryAsServiceId(4), tryAsGas(10n)],
-      [tryAsServiceId(5), tryAsGas(20n)],
+    const autoAccumulate = new Map<ServiceId, ServiceGas>([
+      [tryAsServiceId(4), tryAsServiceGas(10n)],
+      [tryAsServiceId(5), tryAsServiceGas(20n)],
     ]);
 
     // when
@@ -434,10 +527,114 @@ describe("PartialState.updatePrivilegedServices", () => {
   });
 });
 
+describe("PartialState.transfer", () => {
+  const testStateWithSecondService = () => {
+    const mockState = testState();
+    const maybeService = mockState.services.get(tryAsServiceId(0));
+    const service = ensure<Service | undefined, Service>(maybeService, maybeService !== undefined);
+    mockState.services.set(
+      tryAsServiceId(1),
+      new Service(tryAsServiceId(1), {
+        info: ServiceAccountInfo.fromCodec({
+          ...service.data.info,
+          onTransferMinGas: tryAsServiceGas(1000),
+        }),
+        preimages: HashDictionary.new(),
+        lookupHistory: HashDictionary.new(),
+        storage: [],
+      }),
+    );
+    return {
+      mockState,
+      service,
+    };
+  };
+  it("should perform a successful transfer", () => {
+    const { mockState, service } = testStateWithSecondService();
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    const destinationId = tryAsServiceId(1);
+    const amount = tryAsU64(500n);
+    const gas = tryAsServiceGas(1_000n);
+    const memo = Bytes.fill(TRANSFER_MEMO_BYTES, 0xaa);
+
+    const newBalance = service.data.info.balance - amount;
+
+    // when
+    const result = partialState.transfer(destinationId, amount, gas, memo);
+
+    // then
+    assert.deepStrictEqual(result, Result.ok(OK));
+    assert.deepStrictEqual(partialState.updatedState.transfers, [
+      PendingTransfer.create({
+        source: tryAsServiceId(0),
+        destination: destinationId,
+        amount,
+        memo,
+        gas,
+      }),
+    ]);
+    assert.deepStrictEqual(
+      partialState.updatedState.updatedServiceInfo,
+      ServiceAccountInfo.fromCodec({
+        ...service.data.info,
+        balance: tryAsU64(newBalance),
+      }),
+    );
+  });
+
+  it("should return DestinationNotFound error if destination doesnt exist", () => {
+    const { mockState } = testStateWithSecondService();
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    const amount = tryAsU64(100n);
+    const gas = tryAsServiceGas(1_000n);
+    const memo = Bytes.fill(TRANSFER_MEMO_BYTES, 0xbb);
+
+    // when
+    const result = partialState.transfer(tryAsServiceId(4), amount, gas, memo);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(TransferError.DestinationNotFound));
+  });
+
+  it("should return GasTooLow error if gas is below destination's minimum", () => {
+    const { mockState } = testStateWithSecondService();
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    const destinationId = tryAsServiceId(1);
+    const amount = tryAsU64(100n);
+    const gas = tryAsServiceGas(999n); // too low
+    const memo = Bytes.fill(TRANSFER_MEMO_BYTES, 0xcc);
+
+    // when
+    const result = partialState.transfer(destinationId, amount, gas, memo);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(TransferError.GasTooLow));
+  });
+
+  it("should return BalanceBelowThreshold error if balance would fall too low", () => {
+    const { mockState } = testStateWithSecondService();
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    const destinationId = tryAsServiceId(1);
+    const amount = tryAsU64(9_999_999_999n); // dangerously high
+    const gas = tryAsServiceGas(1_000n);
+    const memo = Bytes.fill(TRANSFER_MEMO_BYTES, 0xdd);
+
+    // when
+    const result = partialState.transfer(destinationId, amount, gas, memo);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(TransferError.BalanceBelowThreshold));
+  });
+});
+
 describe("PartialState.yield", () => {
   it("should yield root", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
 
     // when
     partialState.yield(Bytes.fill(HASH_SIZE, 0xef));

@@ -1,3 +1,4 @@
+import { tryAsServiceGas } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
 import {
@@ -50,7 +51,7 @@ export class Transfer implements HostCallHandler {
     // `a`: amount
     const amount = regs.get(AMOUNT_REG);
     // `l`: gas
-    const onTransferGas = tryAsGas(regs.get(ON_TRANSFER_GAS_REG));
+    const onTransferGas = tryAsServiceGas(regs.get(ON_TRANSFER_GAS_REG));
     // `o`: transfer memo
     const memoStart = regs.get(MEMO_START_REG);
 

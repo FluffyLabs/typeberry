@@ -1,10 +1,9 @@
-import type { CodeHash, CoreIndex, PerValidator, ServiceId } from "@typeberry/block";
+import type { CodeHash, CoreIndex, PerValidator, ServiceGas, ServiceId } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
-import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { ValidatorData } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
 import type {
@@ -38,7 +37,11 @@ export class PartialStateMock implements PartialState {
   public checkPreimageStatusResponse: PreimageStatus | null = null;
   public transferReturnValue: Result<OK, TransferError> = Result.ok(OK);
 
-  quitAndTransfer(destination: ServiceId, suppliedGas: Gas, memo: Bytes<TRANSFER_MEMO_BYTES>): Result<OK, QuitError> {
+  quitAndTransfer(
+    destination: ServiceId,
+    suppliedGas: ServiceGas,
+    memo: Bytes<TRANSFER_MEMO_BYTES>,
+  ): Result<OK, QuitError> {
     this.quitAndTransferData.push([destination, suppliedGas, memo]);
     return this.quitReturnValue;
   }
@@ -65,7 +68,7 @@ export class PartialStateMock implements PartialState {
   transfer(
     destination: ServiceId,
     amount: U64,
-    suppliedGas: Gas,
+    suppliedGas: ServiceGas,
     memo: Bytes<TRANSFER_MEMO_BYTES>,
   ): Result<OK, TransferError> {
     this.transferData.push([destination, amount, suppliedGas, memo]);
@@ -73,13 +76,12 @@ export class PartialStateMock implements PartialState {
   }
 
   newService(
-    requestedServiceId: ServiceId,
     codeHash: CodeHash,
     codeLength: U32,
-    gas: U64,
-    balance: U64,
+    gas: ServiceGas,
+    balance: ServiceGas,
   ): Result<ServiceId, "insufficient funds"> {
-    this.newServiceCalled.push([requestedServiceId, codeHash, codeLength, gas, balance]);
+    this.newServiceCalled.push([codeHash, codeLength, gas, balance]);
     if (this.newServiceResponse !== null) {
       return Result.ok(this.newServiceResponse);
     }
@@ -99,7 +101,7 @@ export class PartialStateMock implements PartialState {
     this.validatorsData.push(validatorsData);
   }
 
-  updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: Map<ServiceId, Gas>): void {
+  updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: Map<ServiceId, ServiceGas>): void {
     this.privilegedServices.push([m, a, v, g]);
   }
 

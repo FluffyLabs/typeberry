@@ -1,11 +1,10 @@
-import type { CodeHash, CoreIndex, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
+import type { CodeHash, CoreIndex, PerValidator, ServiceGas, ServiceId, TimeSlot } from "@typeberry/block";
 import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
-import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { LookupHistorySlots, ValidatorData } from "@typeberry/state";
 import type { OK, Result } from "@typeberry/utils";
 
@@ -166,7 +165,11 @@ export interface PartialState {
    *
    * `a`: amount to transfer = balance - threshold + B_S: basic minimum balance
    */
-  quitAndTransfer(destination: ServiceId, suppliedGas: Gas, memo: Bytes<TRANSFER_MEMO_BYTES>): Result<OK, QuitError>;
+  quitAndTransfer(
+    destination: ServiceId,
+    suppliedGas: ServiceGas,
+    memo: Bytes<TRANSFER_MEMO_BYTES>,
+  ): Result<OK, QuitError>;
 
   /**
    * Remove current service account and burn the remaining funds.
@@ -177,32 +180,28 @@ export interface PartialState {
    * Transfer given `amount` of funds to the `destination`,
    * passing `suppliedGas` to invoke `OnTransfer` entry point
    * and given `memo`.
-   *
-   * TODO [ToDr] is it possible to transfer to self?
    */
   transfer(
     destination: ServiceId | null,
     amount: U64,
-    suppliedGas: Gas,
+    suppliedGas: ServiceGas,
     memo: Bytes<TRANSFER_MEMO_BYTES>,
   ): Result<OK, TransferError>;
 
   /**
-   * Create a new service with requested id, codeHash, gas and balance.
+   * Create a new service with given codeHash, length, gas and allowance.
    *
-   * Note the assigned id might be different than requested
-   * in case of a conflict.
+   * Returns a newly assigned id of that service.
    * https://graypaper.fluffylabs.dev/#/579bd12/2e14012e1401
    *
    * An error can be returned in case the account does not
    * have the required balance.
    */
   newService(
-    requestedServiceId: ServiceId,
     codeHash: CodeHash,
     codeLength: U32,
-    gas: U64,
-    balance: U64,
+    gas: ServiceGas,
+    allowance: ServiceGas,
   ): Result<ServiceId, "insufficient funds">;
 
   /** Upgrade code of currently running service. */
@@ -235,7 +234,7 @@ export interface PartialState {
    * `g`: dictionary of serviceId -> gas that auto-accumulate every block
    *
    */
-  updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: Map<ServiceId, Gas>): void;
+  updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: Map<ServiceId, ServiceGas>): void;
 
   /**
    * Yield accumulation trie result hash.
