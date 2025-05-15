@@ -64,13 +64,16 @@ export enum PeekPokeError {
   NoMachine = 2,
 }
 
-/** Error for `zero` and `void` host calls when machine is not found. */
+export enum ZeroVoidError {
+  /** No machine under given machine index. */
+  NoMachine = 0,
+  /** Attempting to void non-accessible page. */
+  InvalidPage = 1,
+}
+
+/** Error machine is not found. */
 export const NoMachineError = Symbol("Machine index not found.");
 export type NoMachineError = typeof NoMachineError;
-
-/** Error for `void` host call when there is already a non-accessible page in the range. */
-export const InvalidPageError = Symbol("Attempting to void non-accessible page.");
-export type InvalidPageError = typeof InvalidPageError;
 
 /** Too many segments already exported. */
 export const SegmentExportError = Symbol("Too many segments already exported.");
@@ -82,14 +85,10 @@ export interface RefineExternalities {
   machineExpunge(machineIndex: MachineId): Promise<Result<ProgramCounter, NoMachineError>>;
 
   /** Set given range of pages as non-accessible and re-initialize them with zeros. */
-  machineVoidPages(
-    machineIndex: MachineId,
-    pageStart: U64,
-    pageCount: U64,
-  ): Promise<Result<OK, NoMachineError | InvalidPageError>>;
+  machineVoidPages(machineIndex: MachineId, pageStart: U64, pageCount: U64): Promise<Result<OK, ZeroVoidError>>;
 
   /** Set given range of pages as writeable and initialize them with zeros. */
-  machineZeroPages(machineIndex: MachineId, pageStart: U64, pageCount: U64): Promise<Result<OK, NoMachineError>>;
+  machineZeroPages(machineIndex: MachineId, pageStart: U64, pageCount: U64): Promise<Result<OK, ZeroVoidError>>;
 
   /** Copy a fragment of memory from `machineIndex` into given destination memory. */
   machinePeekFrom(

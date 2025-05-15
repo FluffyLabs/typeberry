@@ -8,7 +8,6 @@ import { ProgramDecoder, type ProgramDecoderError } from "@typeberry/pvm-interpr
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { type OK, Result } from "@typeberry/utils";
 import {
-  type InvalidPageError,
   type MachineId,
   type MachineInstance,
   type MachineResult,
@@ -18,6 +17,7 @@ import {
   type ProgramCounter,
   type RefineExternalities,
   type SegmentExportError,
+  type ZeroVoidError,
 } from "./refine-externalities";
 
 export class TestRefineExt implements RefineExternalities {
@@ -44,11 +44,11 @@ export class TestRefineExt implements RefineExternalities {
     new MultiMap(5);
   public readonly machineVoidPagesData: MultiMap<
     Parameters<TestRefineExt["machineVoidPages"]>,
-    Result<OK, NoMachineError | InvalidPageError>
+    Result<OK, ZeroVoidError>
   > = new MultiMap(3);
   public readonly machineZeroPagesData: MultiMap<
     Parameters<TestRefineExt["machineZeroPages"]>,
-    Result<OK, NoMachineError>
+    Result<OK, ZeroVoidError>
   > = new MultiMap(3);
 
   public machineInvokeStatus: MachineStatus = { status: Status.OK };
@@ -61,11 +61,7 @@ export class TestRefineExt implements RefineExternalities {
     return Promise.resolve(val);
   }
 
-  machineVoidPages(
-    machineIndex: MachineId,
-    pageStart: U64,
-    pageCount: U64,
-  ): Promise<Result<OK, NoMachineError | InvalidPageError>> {
+  machineVoidPages(machineIndex: MachineId, pageStart: U64, pageCount: U64): Promise<Result<OK, ZeroVoidError>> {
     const val = this.machineVoidPagesData.get(machineIndex, pageStart, pageCount);
     if (val === undefined) {
       throw new Error(`Unexpected call to machineVoidPages with: ${machineIndex}, ${pageStart}, ${pageCount}`);
@@ -73,7 +69,7 @@ export class TestRefineExt implements RefineExternalities {
     return Promise.resolve(val);
   }
 
-  machineZeroPages(machineIndex: MachineId, pageStart: U64, pageCount: U64): Promise<Result<OK, NoMachineError>> {
+  machineZeroPages(machineIndex: MachineId, pageStart: U64, pageCount: U64): Promise<Result<OK, ZeroVoidError>> {
     const val = this.machineZeroPagesData.get(machineIndex, pageStart, pageCount);
     if (val === undefined) {
       throw new Error(`Unexpected call to machineZeroPages with: ${machineIndex}, ${pageStart}, ${pageCount}`);

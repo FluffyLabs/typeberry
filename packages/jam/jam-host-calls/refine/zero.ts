@@ -1,4 +1,3 @@
-import { sumU64 } from "@typeberry/numbers";
 import {
   type HostCallHandler,
   type IHostCallRegisters,
@@ -6,10 +5,10 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { MAX_NUMBER_OF_PAGES, RESERVED_NUMBER_OF_PAGES } from "@typeberry/pvm-interpreter/memory/memory-consts";
+import { assertNever } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import { type RefineExternalities, tryAsMachineId } from "./refine-externalities";
+import { type RefineExternalities, ZeroVoidError, tryAsMachineId } from "./refine-externalities";
 
 const IN_OUT_REG = 7;
 
@@ -33,19 +32,25 @@ export class Zero implements HostCallHandler {
     // `c`: page count
     const pageCount = regs.get(9);
 
-    const endPage = sumU64(pageStart, pageCount);
-    const isWithinBounds = pageStart >= RESERVED_NUMBER_OF_PAGES && endPage.value < MAX_NUMBER_OF_PAGES;
-    if (endPage.overflow || !isWithinBounds) {
-      regs.set(IN_OUT_REG, HostCallResult.HUH);
-      return;
-    }
-
     const zeroResult = await this.refine.machineZeroPages(machineIndex, pageStart, pageCount);
 
     if (zeroResult.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);
-    } else {
-      regs.set(IN_OUT_REG, HostCallResult.WHO);
+      return;
     }
+
+    const e = zeroResult.error;
+
+    if (e === ZeroVoidError.NoMachine) {
+      regs.set(IN_OUT_REG, HostCallResult.WHO);
+      return;
+    }
+
+    if (e === ZeroVoidError.InvalidPage) {
+      regs.set(IN_OUT_REG, HostCallResult.HUH);
+      return;
+    }
+
+    assertNever(e);
   }
 }
