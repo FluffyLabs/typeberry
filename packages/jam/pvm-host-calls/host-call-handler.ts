@@ -2,8 +2,8 @@ import type { ServiceId } from "@typeberry/block";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
 import { type Opaque, asOpaqueType } from "@typeberry/utils";
-import type { HostCallMemory } from "./host-call-memory";
-import type { HostCallRegisters } from "./host-call-registers";
+import type { IHostCallMemory } from "./host-call-memory";
+import type { IHostCallRegisters } from "./host-call-registers";
 
 /** Strictly-typed host call index. */
 export type HostCallIndex = Opaque<U32, "HostCallIndex[U32]">;
@@ -21,7 +21,7 @@ export interface HostCallHandler {
   readonly index: HostCallIndex;
 
   /** The gas cost of invocation of that host call. */
-  readonly gasCost: SmallGas | ((reg: HostCallRegisters) => Gas);
+  readonly gasCost: SmallGas | ((reg: IHostCallRegisters) => Gas);
 
   /** Currently executing service id. */
   currentServiceId: ServiceId;
@@ -31,5 +31,5 @@ export interface HostCallHandler {
    *
    * NOTE the call is ALLOWED and expected to modify registers and memory.
    */
-  execute(gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution>;
+  execute(gas: GasCounter, regs: IHostCallRegisters, memory: IHostCallMemory): Promise<undefined | PvmExecution>;
 }

@@ -78,7 +78,7 @@ export function newWorkReport({
 }: WorkReportOptions): WorkReport {
   const source = BytesBlob.parseBlob(testWorkReport);
   const report = Decoder.decodeObject(WorkReport.Codec, source, tinyChainSpec);
-  const context = RefineContext.fromCodec({
+  const context = RefineContext.create({
     anchor: anchorBlock !== undefined ? anchorBlock.asOpaque() : report.context.anchor,
     stateRoot: stateRoot !== undefined ? stateRoot.asOpaque() : report.context.stateRoot,
     beefyRoot: beefyRoot !== undefined ? beefyRoot.asOpaque() : report.context.beefyRoot,
@@ -86,7 +86,7 @@ export function newWorkReport({
     lookupAnchorSlot: lookupAnchorSlot ?? report.context.lookupAnchorSlot,
     prerequisites: prerequisites !== undefined ? prerequisites.map((x) => x.asOpaque()) : report.context.prerequisites,
   });
-  return WorkReport.fromCodec({
+  return WorkReport.create({
     workPackageSpec: report.workPackageSpec,
     context,
     coreIndex: tryAsCoreIndex(core),
@@ -94,22 +94,22 @@ export function newWorkReport({
     authorizationOutput: report.authorizationOutput,
     segmentRootLookup: report.segmentRootLookup,
     results: FixedSizeArray.new(
-      report.results.map(
-        (x) =>
-          new WorkResult(
-            x.serviceId,
-            x.codeHash,
-            x.payloadHash,
-            x.gas,
+      report.results.map((x) =>
+        WorkResult.create({
+          serviceId: x.serviceId,
+          codeHash: x.codeHash,
+          payloadHash: x.payloadHash,
+          gas: x.gas,
+          result:
             resultSize !== undefined ? new WorkExecResult(WorkExecResultKind.ok, Bytes.fill(resultSize, 0)) : x.result,
-            WorkRefineLoad.fromCodec({
-              gasUsed: tryAsServiceGas(5),
-              importedSegments: tryAsU32(0),
-              exportedSegments: tryAsU32(0),
-              extrinsicSize: tryAsU32(0),
-              extrinsicCount: tryAsU32(0),
-            }),
-          ),
+          load: WorkRefineLoad.create({
+            gasUsed: tryAsServiceGas(5),
+            importedSegments: tryAsU32(0),
+            exportedSegments: tryAsU32(0),
+            extrinsicSize: tryAsU32(0),
+            extrinsicCount: tryAsU32(0),
+          }),
+        }),
       ),
       report.results.fixedLength,
     ),
@@ -161,7 +161,7 @@ export async function newReports(options: Parameters<typeof newReportsState>[0] 
 }
 
 export function newCredential(index: number, signature?: Ed25519Signature) {
-  return Credential.fromCodec({
+  return Credential.create({
     validatorIndex: tryAsValidatorIndex(index),
     signature: signature ?? Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque(),
   });
@@ -265,11 +265,11 @@ function newAvailabilityAssignment({ core, timeout }: { core: number; timeout: n
   const hash = blake2b.hashBytes(encoded).asOpaque();
   const workReportWithHash = new WithHash(hash, workReport);
 
-  return new AvailabilityAssignment(workReportWithHash, tryAsTimeSlot(timeout));
+  return AvailabilityAssignment.create({ workReport: workReportWithHash, timeout: tryAsTimeSlot(timeout) });
 }
 
 function intoValidatorData({ bandersnatch, ed25519 }: { bandersnatch: string; ed25519: string }): ValidatorData {
-  return ValidatorData.fromCodec({
+  return ValidatorData.create({
     ed25519: Bytes.parseBytes(ed25519, ED25519_KEY_BYTES).asOpaque(),
     bandersnatch: Bytes.parseBytes(bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque(),
     bls: Bytes.zero(BLS_KEY_BYTES).asOpaque(),
@@ -319,7 +319,7 @@ export const initialServices = ({ withDummyCodeHash = false } = {}): Map<Service
       preimages: HashDictionary.new(),
       storage: [],
       lookupHistory: HashDictionary.new(),
-      info: ServiceAccountInfo.fromCodec({
+      info: ServiceAccountInfo.create({
         codeHash: withDummyCodeHash
           ? Bytes.fill(HASH_SIZE, 1).asOpaque()
           : Bytes.parseBytes(

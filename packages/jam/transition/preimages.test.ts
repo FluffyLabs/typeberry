@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
-import type { ServiceId, TimeSlot } from "@typeberry/block";
+import type { ServiceId } from "@typeberry/block";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
@@ -20,7 +20,7 @@ import { Preimages, PreimagesErrorCode, type PreimagesInput } from "./preimages"
 function createInput(preimages: { requester: ServiceId; blob: BytesBlob }[], slot: number): PreimagesInput {
   return {
     preimages: preimages as PreimagesExtrinsic,
-    slot: slot as TimeSlot,
+    slot: tryAsTimeSlot(slot),
   };
 }
 
@@ -33,7 +33,7 @@ function createAccount(
   const lookupHistory = HashDictionary.fromEntries(lookupHistoryEntries.map((x) => [x.hash, [x]]));
 
   return new Service(id, {
-    info: ServiceAccountInfo.fromCodec({
+    info: ServiceAccountInfo.create({
       codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
       balance: tryAsU64(0),
       accumulateMinGas: tryAsServiceGas(0),
@@ -170,7 +170,7 @@ describe("Preimages", () => {
     const blob = BytesBlob.parseBlob("0xcafebabe11223344556677889900aabbccddeeff0123456789abcdef01234567");
     const hash = blake2b.hashBytes(blob).asOpaque();
 
-    const preimages = [new PreimageItem(hash, blob)];
+    const preimages = [PreimageItem.create({ hash, blob })];
     const lookupHistory = [
       new LookupHistoryItem(hash, tryAsU32(blob.length), tryAsLookupHistorySlots([tryAsTimeSlot(5)])),
     ];

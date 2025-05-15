@@ -33,7 +33,7 @@ function prepareRegsAndMemory(
 
   while (validators.length < tinyChainSpec.validatorsCount) {
     validators.push(
-      ValidatorData.fromCodec({
+      ValidatorData.create({
         ed25519: Bytes.fill(ED25519_KEY_BYTES, 0).asOpaque(),
         bandersnatch: Bytes.fill(BANDERSNATCH_KEY_BYTES, 0).asOpaque(),
         bls: Bytes.fill(BLS_KEY_BYTES, 0).asOpaque(),
@@ -78,13 +78,13 @@ describe("HostCalls: Designate", () => {
     const serviceId = tryAsServiceId(10_000);
     designate.currentServiceId = serviceId;
     const { registers, memory } = prepareRegsAndMemory([
-      ValidatorData.fromCodec({
+      ValidatorData.create({
         ed25519: Bytes.fill(ED25519_KEY_BYTES, 1).asOpaque(),
         bandersnatch: Bytes.fill(BANDERSNATCH_KEY_BYTES, 1).asOpaque(),
         bls: Bytes.fill(BLS_KEY_BYTES, 1).asOpaque(),
         metadata: Bytes.fill(VALIDATOR_META_BYTES, 1),
       }),
-      ValidatorData.fromCodec({
+      ValidatorData.create({
         ed25519: Bytes.fill(ED25519_KEY_BYTES, 2).asOpaque(),
         bandersnatch: Bytes.fill(BANDERSNATCH_KEY_BYTES, 2).asOpaque(),
         bls: Bytes.fill(BLS_KEY_BYTES, 2).asOpaque(),

@@ -24,6 +24,9 @@ export default [
         },
       }),
     ],
+    treeshake: {
+      moduleSideEffects: false,
+    },
   },
   {
     input: setup.typesInput,

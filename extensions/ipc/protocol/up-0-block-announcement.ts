@@ -23,11 +23,11 @@ export class HashAndSlot extends WithDebug {
     slot: codec.u32.asOpaque<TimeSlot>(),
   });
 
-  static fromCodec({ hash, slot }: CodecRecord<HashAndSlot>) {
+  static create({ hash, slot }: CodecRecord<HashAndSlot>) {
     return new HashAndSlot(hash, slot);
   }
 
-  constructor(
+  private constructor(
     public readonly hash: HeaderHash,
     public readonly slot: TimeSlot,
   ) {
@@ -41,11 +41,11 @@ export class Handshake {
     leafs: codec.sequenceVarLen(HashAndSlot.Codec),
   });
 
-  static fromCodec({ final, leafs }: CodecRecord<Handshake>) {
+  static create({ final, leafs }: CodecRecord<Handshake>) {
     return new Handshake(final, leafs);
   }
 
-  constructor(
+  private constructor(
     public readonly final: HashAndSlot,
     public readonly leafs: HashAndSlot[],
   ) {}
@@ -57,11 +57,11 @@ export class Announcement extends WithDebug {
     final: HashAndSlot.Codec,
   });
 
-  static fromCodec({ header, final }: CodecRecord<Announcement>) {
+  static create({ header, final }: CodecRecord<Announcement>) {
     return new Announcement(header, final);
   }
 
-  constructor(
+  private constructor(
     public readonly header: Header,
     public readonly final: HashAndSlot,
   ) {

@@ -12,7 +12,7 @@ import { MAX_WORK_REPORT_SIZE_BYTES, verifyReportsBasic } from "./verify-basic";
 describe("Reports.verifyReportsBasic", () => {
   it("should reject if report has too many dependencies", () => {
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({
           core: 0,
@@ -34,7 +34,7 @@ describe("Reports.verifyReportsBasic", () => {
 
   it("should reject if total size is too big", () => {
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({ core: 0, resultSize: MAX_WORK_REPORT_SIZE_BYTES + 1 }),
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
@@ -53,7 +53,7 @@ describe("Reports.verifyReportsBasic", () => {
 
   it("should verify correctly", () => {
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({ core: 0 }),
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),

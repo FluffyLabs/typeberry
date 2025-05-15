@@ -23,8 +23,8 @@ const DICTIONARY_COUNT = 11;
 
 function prepareDictionary(cb?: (d: Map<ServiceId, Gas>) => void) {
   const dictionary = new Map();
-  dictionary.set(tryAsServiceId(10_000), 15_000 as Gas);
-  dictionary.set(tryAsServiceId(20_000), 15_000 as Gas);
+  dictionary.set(tryAsServiceId(10_000), tryAsGas(15_000));
+  dictionary.set(tryAsServiceId(20_000), tryAsGas(15_000));
   if (cb !== undefined) {
     cb(dictionary);
   }
@@ -106,7 +106,7 @@ describe("HostCalls: Bless", () => {
     const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
     const { flat } = prepareDictionary((d) => {
-      d.set(tryAsServiceId(5), 10_000 as Gas);
+      d.set(tryAsServiceId(5), tryAsGas(10_000));
     });
     const { registers, memory } = prepareRegsAndMemory(flat);
 

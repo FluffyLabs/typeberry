@@ -12,7 +12,7 @@ class TestHeader {
     extrinsicHash: codec.bytes(32),
   });
 
-  static fromCodec(o: CodecRecord<TestHeader>) {
+  static create(o: CodecRecord<TestHeader>) {
     return new TestHeader(o);
   }
 
@@ -21,7 +21,7 @@ class TestHeader {
   public readonly priorStateRoot: Bytes<32>;
   public readonly extrinsicHash: Bytes<32>;
 
-  constructor(o: CodecRecord<TestHeader>) {
+  private constructor(o: CodecRecord<TestHeader>) {
     this.blockNumber = o.blockNumber;
     this.parentHeaderHash = o.parentHeaderHash;
     this.priorStateRoot = o.priorStateRoot;
@@ -36,7 +36,7 @@ class TestBlock {
     header2: TestHeader.Codec,
   });
 
-  static fromCodec(o: CodecRecord<TestBlock>) {
+  static create(o: CodecRecord<TestBlock>) {
     return new TestBlock(o);
   }
 
@@ -44,7 +44,7 @@ class TestBlock {
   public readonly header1: TestHeader;
   public readonly header2: TestHeader;
 
-  constructor(o: CodecRecord<TestBlock>) {
+  private constructor(o: CodecRecord<TestBlock>) {
     this.extrinsic = o.extrinsic;
     this.header1 = o.header1;
     this.header2 = o.header2;
@@ -55,7 +55,7 @@ const encoder = Encoder.create();
 const parentHeaderHash = Bytes.fill(32, 1);
 const priorStateRoot = Bytes.fill(32, 5);
 const extrinsicHash = Bytes.fill(32, 0x42);
-const testHeader = new TestHeader({
+const testHeader = TestHeader.create({
   blockNumber: tryAsU64(10_000_000n),
   parentHeaderHash,
   priorStateRoot,
@@ -65,7 +65,7 @@ const testExtrinsic = Array(10).fill(Bytes.fill(128, 0x69));
 
 TestBlock.Codec.encode(
   encoder,
-  new TestBlock({
+  TestBlock.create({
     header1: testHeader,
     header2: testHeader,
     extrinsic: testExtrinsic,

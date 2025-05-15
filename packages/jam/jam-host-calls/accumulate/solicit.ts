@@ -1,12 +1,7 @@
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import {
-  type HostCallMemory,
-  type HostCallRegisters,
-  PvmExecution,
-  tryAsHostCallIndex,
-} from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { assertNever } from "@typeberry/utils";
 import { type PartialState, RequestPreimageError } from "../externalities/partial-state";
@@ -27,7 +22,11 @@ export class Solicit implements HostCallHandler {
 
   constructor(private readonly partialState: PartialState) {}
 
-  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
+  async execute(
+    _gas: GasCounter,
+    regs: IHostCallRegisters,
+    memory: IHostCallMemory,
+  ): Promise<PvmExecution | undefined> {
     // `o`
     const hashStart = regs.get(IN_OUT_REG);
     // `z`

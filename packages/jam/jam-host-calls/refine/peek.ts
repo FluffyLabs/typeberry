@@ -1,7 +1,7 @@
 import {
   type HostCallHandler,
-  type HostCallMemory,
-  type HostCallRegisters,
+  type IHostCallMemory,
+  type IHostCallRegisters,
   PvmExecution,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
@@ -25,7 +25,11 @@ export class Peek implements HostCallHandler {
 
   constructor(private readonly refine: RefineExternalities) {}
 
-  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
+  async execute(
+    _gas: GasCounter,
+    regs: IHostCallRegisters,
+    memory: IHostCallMemory,
+  ): Promise<PvmExecution | undefined> {
     // `n`: machine index
     const machineIndex = tryAsMachineId(regs.get(IN_OUT_REG));
     // `o`: destination memory start (local)

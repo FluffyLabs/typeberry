@@ -1,12 +1,7 @@
 import { tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import {
-  type HostCallMemory,
-  type HostCallRegisters,
-  PvmExecution,
-  tryAsHostCallIndex,
-} from "@typeberry/pvm-host-calls";
+import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
+import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { assertNever } from "@typeberry/utils";
 import { type PartialState, QuitError, TRANSFER_MEMO_BYTES } from "../externalities/partial-state";
@@ -29,7 +24,7 @@ export class Eject implements HostCallHandler {
 
   constructor(private readonly partialState: PartialState) {}
 
-  async execute(gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<undefined | PvmExecution> {
+  async execute(gas: GasCounter, regs: IHostCallRegisters, memory: IHostCallMemory): Promise<undefined | PvmExecution> {
     // `d`: where to transfer remaining funds
     const destination = tryAsServiceId(Number(regs.get(IN_OUT_REG)));
 

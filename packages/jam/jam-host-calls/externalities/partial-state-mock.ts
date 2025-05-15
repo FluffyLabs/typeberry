@@ -6,12 +6,12 @@ import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U32, U64 } from "@typeberry/numbers";
 import type { ValidatorData } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
-import type {
-  PartialState,
-  PreimageStatus,
-  QuitError,
-  RequestPreimageError,
-  TRANSFER_MEMO_BYTES,
+import {
+  type PartialState,
+  type PreimageStatus,
+  type QuitError,
+  type RequestPreimageError,
+  type TRANSFER_MEMO_BYTES,
   TransferError,
 } from "./partial-state";
 
@@ -66,11 +66,14 @@ export class PartialStateMock implements PartialState {
   }
 
   transfer(
-    destination: ServiceId,
+    destination: ServiceId | null,
     amount: U64,
     suppliedGas: ServiceGas,
     memo: Bytes<TRANSFER_MEMO_BYTES>,
   ): Result<OK, TransferError> {
+    if (destination === null) {
+      return Result.error(TransferError.DestinationNotFound);
+    }
     this.transferData.push([destination, amount, suppliedGas, memo]);
     return this.transferReturnValue;
   }

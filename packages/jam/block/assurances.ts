@@ -25,11 +25,11 @@ export class AvailabilityAssurance extends WithDebug {
     signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque<Ed25519Signature>(),
   });
 
-  static fromCodec({ anchor, bitfield, validatorIndex, signature }: CodecRecord<AvailabilityAssurance>) {
+  static create({ anchor, bitfield, validatorIndex, signature }: CodecRecord<AvailabilityAssurance>) {
     return new AvailabilityAssurance(anchor, bitfield, validatorIndex, signature);
   }
 
-  constructor(
+  private constructor(
     /**
      * The assurances must all be anchored on the parent.
      * https://graypaper.fluffylabs.dev/#/579bd12/145800145c00

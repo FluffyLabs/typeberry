@@ -82,32 +82,55 @@ export class Generator {
     const parentHeaderHash = this.lastHeaderHash;
     const stateRoot = merkelizeState(serializeState(this.lastState, this.chainSpec));
 
-    const extrinsic = new Extrinsic(
-      asOpaqueType([]),
-      [new Preimage(tryAsServiceId(1), BytesBlob.parseBlob("0x1234"))],
-      asOpaqueType([]),
-      asOpaqueType([]),
-      new DisputesExtrinsic(
-        [
-          new Verdict(
-            Bytes.fill(HASH_SIZE, newTimeSlot % 256).asOpaque(),
-            tryAsEpoch(newTimeSlot / this.chainSpec.epochLength),
-            asKnownSize([
-              new Judgement(true, tryAsValidatorIndex(0), Bytes.fill(64, 0).asOpaque()),
-              new Judgement(true, tryAsValidatorIndex(1), Bytes.fill(64, 1).asOpaque()),
-              new Judgement(true, tryAsValidatorIndex(2), Bytes.fill(64, 2).asOpaque()),
-              new Judgement(true, tryAsValidatorIndex(3), Bytes.fill(64, 3).asOpaque()),
-              new Judgement(true, tryAsValidatorIndex(4), Bytes.fill(64, 4).asOpaque()),
+    const extrinsic = Extrinsic.create({
+      tickets: asOpaqueType([]),
+      preimages: [Preimage.create({ requester: tryAsServiceId(1), blob: BytesBlob.parseBlob("0x1234") })],
+      guarantees: asOpaqueType([]),
+      assurances: asOpaqueType([]),
+      disputes: DisputesExtrinsic.create({
+        verdicts: [
+          Verdict.create({
+            workReportHash: Bytes.fill(HASH_SIZE, newTimeSlot % 256).asOpaque(),
+            votesEpoch: tryAsEpoch(newTimeSlot / this.chainSpec.epochLength),
+            votes: asKnownSize([
+              Judgement.create({
+                isWorkReportValid: true,
+                index: tryAsValidatorIndex(0),
+                signature: Bytes.fill(64, 0).asOpaque(),
+              }),
+              Judgement.create({
+                isWorkReportValid: true,
+                index: tryAsValidatorIndex(1),
+                signature: Bytes.fill(64, 1).asOpaque(),
+              }),
+              Judgement.create({
+                isWorkReportValid: true,
+                index: tryAsValidatorIndex(2),
+                signature: Bytes.fill(64, 2).asOpaque(),
+              }),
+              Judgement.create({
+                isWorkReportValid: true,
+                index: tryAsValidatorIndex(3),
+                signature: Bytes.fill(64, 3).asOpaque(),
+              }),
+              Judgement.create({
+                isWorkReportValid: true,
+                index: tryAsValidatorIndex(4),
+                signature: Bytes.fill(64, 4).asOpaque(),
+              }),
             ]),
-          ),
+          }),
         ],
-        [],
-        [],
-      ),
-    );
-    const extrinsicHash = hasher.extrinsic(extrinsic).hash;
+        culprits: [],
+        faults: [],
+      }),
+    });
 
-    const header = Header.fromCodec({
+    const encodedExtrinsic = Encoder.encodeObject(Extrinsic.Codec, extrinsic, this.chainSpec);
+    const extrinsicView = Decoder.decodeObject(Extrinsic.Codec.View, encodedExtrinsic, this.chainSpec);
+    const extrinsicHash = hasher.extrinsic(extrinsicView).hash;
+
+    const header = Header.create({
       parentHeaderHash,
       priorStateRoot: stateRoot,
       extrinsicHash,
@@ -124,6 +147,6 @@ export class Generator {
     const headerView = Decoder.decodeObject(Header.Codec.View, encoded, this.chainSpec);
     this.lastHeaderHash = hasher.header(headerView).hash;
     this.lastHeader = header;
-    return new Block(header, extrinsic);
+    return Block.create({ header, extrinsic });
   }
 }

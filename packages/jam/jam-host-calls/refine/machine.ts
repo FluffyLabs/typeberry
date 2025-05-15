@@ -1,8 +1,8 @@
 import { BytesBlob } from "@typeberry/bytes";
 import {
   type HostCallHandler,
-  type HostCallMemory,
-  type HostCallRegisters,
+  type IHostCallMemory,
+  type IHostCallRegisters,
   PvmExecution,
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
@@ -25,7 +25,11 @@ export class Machine implements HostCallHandler {
 
   constructor(private readonly refine: RefineExternalities) {}
 
-  async execute(_gas: GasCounter, regs: HostCallRegisters, memory: HostCallMemory): Promise<PvmExecution | undefined> {
+  async execute(
+    _gas: GasCounter,
+    regs: IHostCallRegisters,
+    memory: IHostCallMemory,
+  ): Promise<PvmExecution | undefined> {
     // `p_o`: memory index where there program code starts
     const codeStart = regs.get(7);
     // `p_z`: length of the program code

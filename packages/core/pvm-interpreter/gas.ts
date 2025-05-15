@@ -46,12 +46,12 @@ class GasCounterU64 implements GasCounter {
   }
 
   get() {
-    return this.gas as Gas;
+    return tryAsGas(this.gas);
   }
 
   sub(g: Gas) {
     // TODO [ToDr] This should rather be I64?
-    this.gas = (this.gas - tryAsU64(g)) as U64;
+    this.gas = tryAsU64(this.gas - tryAsU64(g));
     return this.gas < 0n;
   }
 }

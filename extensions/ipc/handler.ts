@@ -37,13 +37,19 @@ export class StreamSender implements MessageSender {
   open(newStream: NewStream) {
     const msg = Encoder.encodeObject(NewStream.Codec, newStream);
     this.sender.send(
-      Encoder.encodeObject(StreamEnvelope.Codec, new StreamEnvelope(this.streamId, StreamEnvelopeType.Open, msg)),
+      Encoder.encodeObject(
+        StreamEnvelope.Codec,
+        StreamEnvelope.create({ streamId: this.streamId, type: StreamEnvelopeType.Open, data: msg }),
+      ),
     );
   }
 
   send(msg: BytesBlob): void {
     this.sender.send(
-      Encoder.encodeObject(StreamEnvelope.Codec, new StreamEnvelope(this.streamId, StreamEnvelopeType.Msg, msg)),
+      Encoder.encodeObject(
+        StreamEnvelope.Codec,
+        StreamEnvelope.create({ streamId: this.streamId, type: StreamEnvelopeType.Msg, data: msg }),
+      ),
     );
   }
 
@@ -51,7 +57,11 @@ export class StreamSender implements MessageSender {
     this.sender.send(
       Encoder.encodeObject(
         StreamEnvelope.Codec,
-        new StreamEnvelope(this.streamId, StreamEnvelopeType.Close, BytesBlob.blobFromNumbers([])),
+        StreamEnvelope.create({
+          streamId: this.streamId,
+          type: StreamEnvelopeType.Close,
+          data: BytesBlob.blobFromNumbers([]),
+        }),
       ),
     );
   }
@@ -142,7 +152,7 @@ export class MessageHandler {
     this.pendingStreams.set(streamId, true);
 
     const sender = new StreamSender(streamId, this.sender);
-    sender.open(new NewStream(kind));
+    sender.open(NewStream.create({ streamByte: kind }));
 
     work(handler as THandler, sender);
   }

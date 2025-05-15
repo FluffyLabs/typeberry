@@ -144,7 +144,7 @@ export class Output {
     const epochMark =
       output.ok?.epoch_mark === undefined || output.ok.epoch_mark === null
         ? null
-        : EpochMarker.fromCodec({
+        : EpochMarker.create({
             entropy: output.ok.epoch_mark.entropy,
             ticketsEntropy: output.ok.epoch_mark.tickets_entropy,
             validators: tryAsPerValidator(output.ok.epoch_mark.validators, spec),
