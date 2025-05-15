@@ -1,0 +1,63 @@
+import type { CoreIndex, PerValidator, ServiceGas, ServiceId } from "@typeberry/block";
+import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
+import { type FixedSizeArray, asKnownSize } from "@typeberry/collections";
+import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
+import { type Service, ServiceAccountInfo, type ValidatorData } from "@typeberry/state";
+import type { PreimageUpdate } from "./partial-state-db";
+import type { PendingTransfer } from "./pending-transfer";
+
+/**
+ * State updates that currently accumulating service produced.
+ *
+ * `x_u`: https://graypaper.fluffylabs.dev/#/9a08063/2f31012f3101?v=0.6.6
+ */
+export class StateUpdate {
+  /** Create a copy of another `StateUpdate`. Used by checkpoints. */
+  static copyFrom(from: StateUpdate): StateUpdate {
+    const update = new StateUpdate();
+    update.newServices.push(...from.newServices);
+    update.transfers.push(...from.transfers);
+    update.preimages.push(...from.preimages);
+    for (const [k, v] of from.authorizationQueues) {
+      update.authorizationQueues.set(k, v);
+    }
+
+    update.updatedServiceInfo =
+      from.updatedServiceInfo === null ? null : ServiceAccountInfo.fromCodec(from.updatedServiceInfo);
+    update.validatorsData = from.validatorsData === null ? null : asKnownSize([...from.validatorsData]);
+    update.yieldedRoot = from.yieldedRoot;
+    update.priviledgedServices =
+      from.priviledgedServices === null
+        ? null
+        : {
+            ...from.priviledgedServices,
+          };
+
+    return update;
+  }
+
+  /** Newly created services. */
+  public readonly newServices: Service[] = [];
+  /** Pending transfers. */
+  public readonly transfers: PendingTransfer[] = [];
+  /** Preimages updates. */
+  public readonly preimages: PreimageUpdate[] = [];
+  /** Updated authorization queues for cores. */
+  public readonly authorizationQueues: Map<CoreIndex, FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>> =
+    new Map();
+
+  /** Current service updated info. */
+  public updatedServiceInfo: ServiceAccountInfo | null = null;
+
+  /** Yielded accumulation root. */
+  public yieldedRoot: OpaqueHash | null = null;
+  /** New validators data. */
+  public validatorsData: PerValidator<ValidatorData> | null = null;
+  /** Updated priviliged services. */
+  public priviledgedServices: {
+    manager: ServiceId;
+    authorizer: ServiceId;
+    validators: ServiceId;
+    autoAccumulate: Map<ServiceId, ServiceGas>;
+  } | null = null;
+}

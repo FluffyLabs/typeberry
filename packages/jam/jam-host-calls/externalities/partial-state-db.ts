@@ -10,8 +10,7 @@ import {
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { Bytes } from "@typeberry/bytes";
-import type { CodecRecord } from "@typeberry/codec";
-import { type FixedSizeArray, HashDictionary, asKnownSize } from "@typeberry/collections";
+import { type FixedSizeArray, HashDictionary } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import { type U32, type U64, sumU32, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
@@ -33,14 +32,15 @@ import {
   TransferError,
   slotsToPreimageStatus,
 } from "./partial-state";
+import { PendingTransfer } from "./pending-transfer";
+import { StateUpdate } from "./state-update";
 
 /** `D`: https://graypaper.fluffylabs.dev/#/9a08063/445800445800?v=0.6.6 */
 export const PREIMAGE_EXPUNGE_PERIOD = 19200;
 
 export class PartialStateDb implements PartialState {
-  // TODO [ToDr] consider getters?
   public readonly updatedState: StateUpdate = new StateUpdate();
-  public checkpointedState: StateUpdate | null = null;
+  private checkpointedState: StateUpdate | null = null;
 
   constructor(
     private readonly state: State,
@@ -55,10 +55,21 @@ export class PartialStateDb implements PartialState {
     }
   }
 
+  /** Return the underlying state update and checkpointed state (if any). */
+  public getStateUpdates(): [StateUpdate, StateUpdate | null] {
+    return [this.updatedState, this.checkpointedState];
+  }
+
+  /** Return current `x_i` value of next new service id. */
   public getNextNewServiceId() {
     return this.nextNewServiceId;
   }
 
+  /**
+   * Retrieve service info of currently accumulating service.
+   *
+   * Takes into account updates over the state.
+   */
   private getCurrentServiceInfo(): ServiceAccountInfo {
     if (this.updatedState.updatedServiceInfo !== null) {
       return this.updatedState.updatedServiceInfo;
@@ -73,6 +84,13 @@ export class PartialStateDb implements PartialState {
     return service.data.info;
   }
 
+  /**
+   * Retrieve info of service with given id.
+   *
+   * NOTE the info may be updated compared to what is in the state.
+   *
+   * Takes into account newly created services as well.
+   */
   private getServiceInfo(destination: ServiceId | null): ServiceAccountInfo | null {
     if (destination === null) {
       return null;
@@ -99,6 +117,7 @@ export class PartialStateDb implements PartialState {
     return maybeService.data.info;
   }
 
+  /** Get status of a preimage of current service taking into account any updates. */
   private getPreimageStatus(hash: PreimageHash, length: U64): PreimageUpdate | undefined {
     const updatedPreimage = this.updatedState.preimages.find(
       (x) => x.hash.isEqualTo(hash) && BigInt(x.length) === length,
@@ -113,6 +132,11 @@ export class PartialStateDb implements PartialState {
     return status === undefined ? undefined : PreimageUpdate.update(status);
   }
 
+  /**
+   * Update a preimage.
+   *
+   * May replace an existing entry in the pending state update.
+   */
   private updateOrAddPreimageUpdate(existingPreimage: PreimageUpdate, newUpdate: PreimageUpdate) {
     const index = this.updatedState.preimages.indexOf(existingPreimage);
     const removeCount = index === -1 ? 0 : 1;
@@ -410,8 +434,8 @@ export class PartialStateDb implements PartialState {
     coreIndex: CoreIndex,
     authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
   ): void {
-    /** https://graypaper.fluffylabs.dev/#/9a08063/368401368401?v=0.6.6 */
     // NOTE `coreIndex` is already verified in the HC, so this is infallible.
+    /** https://graypaper.fluffylabs.dev/#/9a08063/368401368401?v=0.6.6 */
     this.updatedState.authorizationQueues.set(coreIndex, authQueue);
   }
 
@@ -421,7 +445,7 @@ export class PartialStateDb implements PartialState {
     validators: ServiceId,
     autoAccumulate: Map<ServiceId, ServiceGas>,
   ): void {
-    // TODO [ToDr] Not sure if we should fail this if the services don't exist?
+    // NOTE [ToDr] I guess we should not fail if the services don't exist. */
     /** https://graypaper.fluffylabs.dev/#/9a08063/36f40036f400?v=0.6.6 */
     this.updatedState.priviledgedServices = {
       manager,
@@ -453,61 +477,6 @@ export class PreimageUpdate extends LookupHistoryItem {
   static update(item: LookupHistoryItem) {
     return new PreimageUpdate(item, false);
   }
-}
-
-export class PendingTransfer {
-  private constructor(
-    public readonly source: ServiceId,
-    public readonly destination: ServiceId,
-    public readonly amount: U64,
-    public readonly memo: Bytes<TRANSFER_MEMO_BYTES>,
-    public readonly gas: ServiceGas,
-  ) {}
-
-  static create(x: CodecRecord<PendingTransfer>) {
-    return new PendingTransfer(x.source, x.destination, x.amount, x.memo, x.gas);
-  }
-}
-
-export class StateUpdate {
-  static copyFrom(from: StateUpdate): StateUpdate {
-    const update = new StateUpdate();
-    update.newServices.push(...from.newServices);
-    update.transfers.push(...from.transfers);
-    update.preimages.push(...from.preimages);
-    for (const [k, v] of from.authorizationQueues) {
-      update.authorizationQueues.set(k, v);
-    }
-
-    update.updatedServiceInfo =
-      from.updatedServiceInfo === null ? null : ServiceAccountInfo.fromCodec(from.updatedServiceInfo);
-    update.validatorsData = from.validatorsData === null ? null : asKnownSize([...from.validatorsData]);
-    update.yieldedRoot = from.yieldedRoot;
-    update.priviledgedServices =
-      from.priviledgedServices === null
-        ? null
-        : {
-            ...from.priviledgedServices,
-          };
-
-    return update;
-  }
-
-  public readonly newServices: Service[] = [];
-  public readonly transfers: PendingTransfer[] = [];
-  public readonly preimages: PreimageUpdate[] = [];
-  public readonly authorizationQueues: Map<CoreIndex, FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>> =
-    new Map();
-
-  public updatedServiceInfo: ServiceAccountInfo | null = null;
-  public validatorsData: PerValidator<ValidatorData> | null = null;
-  public yieldedRoot: OpaqueHash | null = null;
-  public priviledgedServices: {
-    manager: ServiceId;
-    authorizer: ServiceId;
-    validators: ServiceId;
-    autoAccumulate: Map<ServiceId, ServiceGas>;
-  } | null = null;
 }
 
 function bumpServiceId(serviceId: ServiceId) {

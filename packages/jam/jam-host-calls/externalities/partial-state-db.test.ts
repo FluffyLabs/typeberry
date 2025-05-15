@@ -28,7 +28,8 @@ import {
 import { testState } from "@typeberry/state/test.utils";
 import { OK, Result, ensure } from "@typeberry/utils";
 import { PreimageStatusKind, RequestPreimageError, TRANSFER_MEMO_BYTES, TransferError } from "./partial-state";
-import { PartialStateDb, PendingTransfer, PreimageUpdate } from "./partial-state-db";
+import { PartialStateDb, PreimageUpdate } from "./partial-state-db";
+import { PendingTransfer } from "./pending-transfer";
 
 describe("PartialState.checkPreimageStatus", () => {
   it("should check preimage status from state", () => {
@@ -450,7 +451,7 @@ describe("PartialState.checkpoint", () => {
     partialState.checkpoint();
 
     // then
-    assert.deepStrictEqual(partialState.checkpointedState, partialState.updatedState);
+    assert.deepStrictEqual(partialState.getStateUpdates()[1], partialState.updatedState);
   });
 });
 
