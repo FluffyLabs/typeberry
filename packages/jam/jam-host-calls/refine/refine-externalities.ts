@@ -7,18 +7,13 @@ import type { ProgramDecoderError } from "@typeberry/pvm-interpreter/program-dec
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/utils";
 
-/**
- * Running PVM instance identifier.
- *
- * TODO [ToDr] [crit] GP does not specify a limit for this,
- * but we do store that in the registers.
- * Most likely it's impossible to have enough gas to keep
- * creating inner PVM instances until this overflows,
- * however a `bigint` might be a safer choice here for 64-bit
- * PVM?
- */
+/** Running PVM instance identifier. */
 
-/** https://graypaper.fluffylabs.dev/#/68eaa1f/3e30003e3000?v=0.6.4 */
+/**
+ * Program counter is a 64-bit unsigned integer that points to the next instruction
+ *
+ * https://graypaper.fluffylabs.dev/#/68eaa1f/3e30003e3000?v=0.6.4
+ */
 export type ProgramCounter = Opaque<U64, "ProgramCounter[u64]">;
 /** Convert a number into ProgramCounter. */
 export const tryAsProgramCounter = (v: number | bigint): ProgramCounter => asOpaqueType(tryAsU64(v));
