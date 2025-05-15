@@ -107,6 +107,7 @@ export class Invoke implements HostCallHandler {
       return;
     }
 
-    throw new Error(`Unexpected inner PVM result: ${returnState.status} (${Status[returnState.status] || "Unknown"})`);
+    const statusString = Status[returnState.status] !== undefined ? Status[returnState.status] : "Unknown";
+    throw new Error(`Unexpected inner PVM result: ${returnState.status} (${statusString})`);
   }
 }
