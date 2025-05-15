@@ -1,8 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, type ServiceId, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
+import {
+  BANDERSNATCH_KEY_BYTES,
+  BLS_KEY_BYTES,
+  type ServiceId,
+  tryAsCoreIndex,
+  tryAsServiceId,
+  tryAsTimeSlot,
+} from "@typeberry/block";
+import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import { Bytes } from "@typeberry/bytes";
-import { asKnownSize } from "@typeberry/collections";
+import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
@@ -347,6 +355,25 @@ describe("PartialState.checkpoint", () => {
 
     // then
     assert.deepStrictEqual(partialState.checkpointedState, partialState.updatedState);
+  });
+});
+
+describe("PartialState.updateAuthorizationQueue", () => {
+  it("should update the authorization queue for a given core index", () => {
+    const mockState = testState();
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0));
+
+    const coreIndex = tryAsCoreIndex(0);
+    const queue = FixedSizeArray.new(
+      Array.from({ length: AUTHORIZATION_QUEUE_SIZE }, () => Bytes.fill(HASH_SIZE, 0xee)),
+      AUTHORIZATION_QUEUE_SIZE,
+    );
+
+    // when
+    partialState.updateAuthorizationQueue(coreIndex, queue);
+
+    // then
+    assert.deepStrictEqual(partialState.updatedState.authorizationQueues.get(coreIndex), queue);
   });
 });
 

@@ -249,10 +249,10 @@ export class PartialStateDb implements PartialState {
   }
 
   updateAuthorizationQueue(
-    _coreIndex: CoreIndex,
-    _authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
+    coreIndex: CoreIndex,
+    authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
   ): void {
-    throw new Error("Method not implemented.");
+    this.updatedState.authorizationQueues.set(coreIndex, authQueue);
   }
 
   updatePrivilegedServices(
@@ -296,6 +296,10 @@ class StateUpdate {
   static copyFrom(from: StateUpdate): StateUpdate {
     const update = new StateUpdate();
     update.preimages.push(...from.preimages);
+    for (const [k, v] of from.authorizationQueues) {
+      update.authorizationQueues.set(k, v);
+    }
+
     update.updatedServiceInfo =
       from.updatedServiceInfo === null ? null : ServiceAccountInfo.fromCodec(from.updatedServiceInfo);
     update.validatorsData = from.validatorsData === null ? null : asKnownSize([...from.validatorsData]);
@@ -306,10 +310,14 @@ class StateUpdate {
         : {
             ...from.priviledgedServices,
           };
+
     return update;
   }
 
   public readonly preimages: PreimageUpdate[] = [];
+  public readonly authorizationQueues: Map<CoreIndex, FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>> =
+    new Map();
+
   public updatedServiceInfo: ServiceAccountInfo | null = null;
   public validatorsData: PerValidator<ValidatorData> | null = null;
   public yieldedRoot: OpaqueHash | null = null;
