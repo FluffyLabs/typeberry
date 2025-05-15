@@ -138,10 +138,10 @@ export class Reports {
     for (const guarantee of input.guarantees) {
       const report = guarantee.view().report.materialize();
       const workPackageHash = workReportHashes[index];
-      this.state.availabilityAssignment[report.coreIndex] = new AvailabilityAssignment(
-        new WithHash(workPackageHash, report),
-        input.slot,
-      );
+      this.state.availabilityAssignment[report.coreIndex] = AvailabilityAssignment.create({
+        workReport: new WithHash(workPackageHash, report),
+        timeout: input.slot,
+      });
       index += 1;
     }
 

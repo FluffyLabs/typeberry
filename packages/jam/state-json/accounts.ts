@@ -25,7 +25,7 @@ class JsonServiceInfo {
       items: "number",
     },
     ({ code_hash, balance, min_item_gas, min_memo_gas, bytes, items }) => {
-      return ServiceAccountInfo.fromCodec({
+      return ServiceAccountInfo.create({
         codeHash: code_hash,
         balance,
         accumulateMinGas: min_item_gas,
@@ -50,7 +50,7 @@ class JsonPreimageItem {
       hash: fromJson.bytes32(),
       blob: json.fromString(BytesBlob.parseBlob),
     },
-    ({ hash, blob }) => new PreimageItem(hash, blob),
+    ({ hash, blob }) => PreimageItem.create({ hash, blob }),
   );
 
   hash!: PreimageHash;
@@ -62,7 +62,7 @@ const stateItemFromJson = json.object<StateItem>(
     hash: fromJson.bytes32(),
     blob: json.fromString(BytesBlob.parseBlob),
   },
-  StateItem.fromCodec,
+  StateItem.create,
 );
 
 const lookupMetaFromJson = json.object<JsonLookupMeta, LookupHistoryItem>(

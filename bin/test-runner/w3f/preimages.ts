@@ -125,7 +125,7 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Service {
   const preimages = HashDictionary.fromEntries(
     entry.data.preimages
       .map((x) => {
-        return new PreimageItem(blake2b.hashBytes(x.blob).asOpaque(), x.blob);
+        return PreimageItem.create({ hash: blake2b.hashBytes(x.blob).asOpaque(), blob: x.blob });
       })
       .map((x) => [x.hash, x]),
   );
@@ -140,7 +140,7 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Service {
   }
 
   return new Service(tryAsServiceId(entry.id), {
-    info: ServiceAccountInfo.fromCodec({
+    info: ServiceAccountInfo.create({
       codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
       balance: tryAsU64(0),
       accumulateMinGas: tryAsServiceGas(0),

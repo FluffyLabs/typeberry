@@ -10,12 +10,12 @@ import { verifyReportsOrder } from "./verify-order";
 describe("Reports.verifyReportsOrder", () => {
   it("should reject out-of-order guarantees", async () => {
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(5),
         report: newWorkReport({ core: 1 }),
         credentials: asOpaqueType([1, 2].map((x) => newCredential(x))),
       }),
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(5),
         report: newWorkReport({ core: 0 }),
         credentials: asOpaqueType([1, 2].map((x) => newCredential(x))),
@@ -34,7 +34,7 @@ describe("Reports.verifyReportsOrder", () => {
 
   it("should reject invalid core index", async () => {
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(5),
         report: newWorkReport({ core: 3 }),
         credentials: asOpaqueType([1, 2].map((x) => newCredential(x))),

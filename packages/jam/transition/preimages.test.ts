@@ -33,7 +33,7 @@ function createAccount(
   const lookupHistory = HashDictionary.fromEntries(lookupHistoryEntries.map((x) => [x.hash, [x]]));
 
   return new Service(id, {
-    info: ServiceAccountInfo.fromCodec({
+    info: ServiceAccountInfo.create({
       codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
       balance: tryAsU64(0),
       accumulateMinGas: tryAsServiceGas(0),
@@ -170,7 +170,7 @@ describe("Preimages", () => {
     const blob = BytesBlob.parseBlob("0xcafebabe11223344556677889900aabbccddeeff0123456789abcdef01234567");
     const hash = blake2b.hashBytes(blob).asOpaque();
 
-    const preimages = [new PreimageItem(hash, blob)];
+    const preimages = [PreimageItem.create({ hash, blob })];
     const lookupHistory = [
       new LookupHistoryItem(hash, tryAsU32(blob.length), tryAsLookupHistorySlots([tryAsTimeSlot(5)])),
     ];

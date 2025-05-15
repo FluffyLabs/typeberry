@@ -9,7 +9,7 @@ const ticketEnvelopeFromJson = json.object<SignedTicket>(
     attempt: fromJson.ticketAttempt,
     signature: json.fromString((v) => Bytes.parseBytes(v, BANDERSNATCH_PROOF_BYTES) as BandersnatchProof),
   },
-  (x) => new SignedTicket(x.attempt, x.signature),
+  (x) => SignedTicket.create({ attempt: x.attempt, signature: x.signature }),
 );
 
 export const ticketsExtrinsicFromJson = json.array(ticketEnvelopeFromJson);

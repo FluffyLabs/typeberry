@@ -23,11 +23,11 @@ export class Extrinsic extends WithDebug {
     disputes: DisputesExtrinsic.Codec,
   });
 
-  static fromCodec({ tickets, preimages, assurances, disputes, guarantees }: CodecRecord<Extrinsic>) {
+  static create({ tickets, preimages, assurances, disputes, guarantees }: CodecRecord<Extrinsic>) {
     return new Extrinsic(tickets, preimages, guarantees, assurances, disputes);
   }
 
-  constructor(
+  private constructor(
     /**
      * `E_T`: Tickets, used for the mechanism which manages the selection of
      *        validators for the permissioning of block authoring.
@@ -73,11 +73,11 @@ export class Block extends WithDebug {
     extrinsic: Extrinsic.Codec,
   });
 
-  static fromCodec({ header, extrinsic }: CodecRecord<Block>) {
+  static create({ header, extrinsic }: CodecRecord<Block>) {
     return new Block(header, extrinsic);
   }
 
-  constructor(
+  private constructor(
     /** `H`: Block header. */
     public readonly header: Header,
     /** `E`: Extrinsic data. */

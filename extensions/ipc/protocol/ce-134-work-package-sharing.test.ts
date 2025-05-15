@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsCoreIndex } from "@typeberry/block";
-import { WorkPackageInfo } from "@typeberry/block/work-report";
+import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
@@ -10,7 +10,10 @@ import { ClientHandler, STREAM_KIND, ServerHandler } from "./ce-134-work-package
 
 const MOCK_CORE_INDEX = tryAsCoreIndex(1);
 const MOCK_SEGMENTS_ROOT_MAPPINGS = [
-  new WorkPackageInfo(Bytes.zero(HASH_SIZE).asOpaque(), Bytes.zero(HASH_SIZE).asOpaque()),
+  WorkPackageInfo.create({
+    workPackageHash: Bytes.zero(HASH_SIZE).asOpaque<WorkPackageHash>(),
+    segmentTreeRoot: Bytes.zero(HASH_SIZE).asOpaque<ExportsRootHash>(),
+  }),
 ];
 const MOCK_WORK_PACKAGE_BUNDLE = BytesBlob.blobFromString("hello");
 const MOCK_WORK_REPORT_HASH = Bytes.zero(HASH_SIZE).asOpaque();

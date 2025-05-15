@@ -38,7 +38,7 @@ const validatorDataFromJson: FromJson<ValidatorData> = json.object<ValidatorData
     bls: json.fromString((v) => Bytes.parseBytes(v, BLS_KEY_BYTES).asOpaque()),
     metadata: json.fromString((v) => Bytes.parseBytes(v, VALIDATOR_META_BYTES).asOpaque()),
   },
-  ValidatorData.fromCodec,
+  ValidatorData.create,
 );
 
 type JsonStateDump = {
@@ -137,7 +137,7 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
         previousValidatorData: lambda,
         availabilityAssignment: rho,
         timeslot: tau,
-        privilegedServices: PrivilegedServices.fromCodec({
+        privilegedServices: PrivilegedServices.create({
           manager: chi.chi_m,
           authManager: chi.chi_a,
           validatorsManager: chi.chi_v,

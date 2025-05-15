@@ -11,7 +11,7 @@ const importSpecFromJson = json.object<JsonObject<ImportSpec>, ImportSpec>(
     tree_root: fromJson.bytes32(),
     index: "number",
   },
-  ({ tree_root, index }) => new ImportSpec(tree_root, index),
+  ({ tree_root, index }) => ImportSpec.create({ treeRoot: tree_root, index }),
 );
 
 const workItemExtrinsicSpecFromJson = json.object<WorkItemExtrinsicSpec>(
@@ -19,7 +19,7 @@ const workItemExtrinsicSpecFromJson = json.object<WorkItemExtrinsicSpec>(
     hash: fromJson.bytes32(),
     len: "number",
   },
-  ({ hash, len }) => new WorkItemExtrinsicSpec(hash, len),
+  ({ hash, len }) => WorkItemExtrinsicSpec.create({ hash, len }),
 );
 
 export const workItemFromJson = json.object<JsonWorkItem, WorkItem>(
@@ -34,16 +34,16 @@ export const workItemFromJson = json.object<JsonWorkItem, WorkItem>(
     export_count: "number",
   },
   ({ service, code_hash, payload, refine_gas_limit, accumulate_gas_limit, import_segments, extrinsic, export_count }) =>
-    new WorkItem(
+    WorkItem.create({
       service,
-      code_hash,
+      codeHash: code_hash,
       payload,
-      BigInt(refine_gas_limit) as ServiceGas,
-      BigInt(accumulate_gas_limit) as ServiceGas,
-      import_segments,
+      refineGasLimit: BigInt(refine_gas_limit) as ServiceGas,
+      accumulateGasLimit: BigInt(accumulate_gas_limit) as ServiceGas,
+      importSegments: import_segments,
       extrinsic,
-      export_count,
-    ),
+      exportCount: export_count,
+    }),
 );
 
 type JsonWorkItem = {

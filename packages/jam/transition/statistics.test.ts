@@ -53,7 +53,7 @@ describe("Statistics", () => {
   });
 
   function getExtrinsic(overrides: Partial<Extrinsic> = {}): Extrinsic {
-    return Extrinsic.fromCodec({
+    return Extrinsic.create({
       assurances: overrides.assurances ?? asKnownSize([]),
       guarantees: overrides.guarantees ?? asKnownSize([]),
       disputes: overrides.disputes ?? asKnownSize([]),
@@ -79,7 +79,12 @@ describe("Statistics", () => {
       tinyChainSpec,
     );
     const serviceStatistics = new Map([[tryAsServiceId(0), ServiceStatistics.empty()]]);
-    const statisticsData = new StatisticsData(currentStatistics, lastStatistics, coreStatistics, serviceStatistics);
+    const statisticsData = StatisticsData.create({
+      current: currentStatistics,
+      previous: lastStatistics,
+      cores: coreStatistics,
+      services: serviceStatistics,
+    });
     const state: StatisticsState = {
       statistics: statisticsData,
       timeslot: tryAsTimeSlot(previousSlot),
@@ -173,7 +178,7 @@ describe("Statistics", () => {
     });
 
     const createAssurance = (validatorIndex: number, bitvec?: BitVec) =>
-      AvailabilityAssurance.fromCodec({
+      AvailabilityAssurance.create({
         anchor: Bytes.zero(HASH_SIZE).asOpaque<HeaderHash>(),
         bitfield: bitvec ?? BitVec.fromBlob(Bytes.zero(HASH_SIZE).raw, tinyChainSpec.coresCount),
         validatorIndex: tryAsValidatorIndex(validatorIndex),
@@ -188,7 +193,7 @@ describe("Statistics", () => {
     function createWorkReport(coreIndex: CoreIndex): WorkReport {
       const source = BytesBlob.parseBlob(testWorkReport);
       const report = Decoder.decodeObject(WorkReport.Codec, source, tinyChainSpec);
-      return WorkReport.fromCodec({
+      return WorkReport.create({
         ...report,
         coreIndex: coreIndex,
       });
@@ -204,7 +209,12 @@ describe("Statistics", () => {
         tinyChainSpec,
       );
       const serviceStatistics = new Map([[serviceIndex, ServiceStatistics.empty()]]);
-      const statisticsData = new StatisticsData(currentStatistics, lastStatistics, coreStatistics, serviceStatistics);
+      const statisticsData = StatisticsData.create({
+        current: currentStatistics,
+        previous: lastStatistics,
+        cores: coreStatistics,
+        services: serviceStatistics,
+      });
       const state: StatisticsState = {
         statistics: statisticsData,
         timeslot: tryAsTimeSlot(previousSlot),

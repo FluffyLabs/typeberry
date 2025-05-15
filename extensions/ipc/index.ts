@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import type { HeaderHash, HeaderView, TimeSlot } from "@typeberry/block";
+import { type HeaderHash, type HeaderView, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE, type WithHash, blake2b } from "@typeberry/hash";
 import type { Listener } from "@typeberry/state-machine";
@@ -18,15 +18,16 @@ export function startExtension(api: ExtensionApi) {
   api.bestHeader.on((headerWithHash) => {
     const header = headerWithHash.data.materialize();
     const hash = headerWithHash.hash;
-    const final = new HashAndSlot(hash, header.timeSlotIndex);
+    const final = HashAndSlot.create({ hash, slot: header.timeSlotIndex });
     bestBlock = final;
-    announcements.emit("announcement", new Announcement(header, final));
+    announcements.emit("announcement", Announcement.create({ header, final }));
   });
 
   // TODO [ToDr] `Handshake` should not leak that far.
   const getHandshake = () => {
-    const final = bestBlock ?? new HashAndSlot(Bytes.zero(HASH_SIZE) as HeaderHash, 0 as TimeSlot);
-    return new Handshake(final, []);
+    const final =
+      bestBlock ?? HashAndSlot.create({ hash: Bytes.zero(HASH_SIZE).asOpaque<HeaderHash>(), slot: tryAsTimeSlot(0) });
+    return Handshake.create({ final, leafs: [] });
   };
 
   const getBoundaryNodes = () => {

@@ -69,7 +69,7 @@ const validators: PerValidator<ValidatorData> = asKnownSize(
         "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
     },
   ].map(({ bandersnatch, bls, ed25519, metadata }) =>
-    ValidatorData.fromCodec({
+    ValidatorData.create({
       bandersnatch: Bytes.parseBytes(bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque(),
       bls: Bytes.parseBytes(bls, BLS_KEY_BYTES).asOpaque(),
       ed25519: Bytes.parseBytes(ed25519, ED25519_KEY_BYTES).asOpaque(),

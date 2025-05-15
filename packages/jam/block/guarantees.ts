@@ -26,11 +26,11 @@ export class Credential extends WithDebug {
     signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque<Ed25519Signature>(),
   });
 
-  static fromCodec({ validatorIndex, signature }: CodecRecord<Credential>) {
+  static create({ validatorIndex, signature }: CodecRecord<Credential>) {
     return new Credential(validatorIndex, signature);
   }
 
-  constructor(
+  private constructor(
     /** Validator index signing the guarantee. */
     public readonly validatorIndex: ValidatorIndex,
     /** Signature over hash of the work-report. */
@@ -56,11 +56,11 @@ export class ReportGuarantee extends WithDebug {
     }),
   });
 
-  static fromCodec({ report, slot, credentials }: CodecRecord<ReportGuarantee>) {
+  static create({ report, slot, credentials }: CodecRecord<ReportGuarantee>) {
     return new ReportGuarantee(report, slot, credentials);
   }
 
-  constructor(
+  private constructor(
     /** The work-report being guaranteed. */
     public readonly report: WorkReport,
     /** Timeslot of the report. */

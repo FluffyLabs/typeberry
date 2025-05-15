@@ -15,7 +15,7 @@ describe("Reports.verifyPostSignatureChecks", () => {
   it("should reject report on core with pending availability", async () => {
     const reports = await newReports({ withCoreAssignment: true });
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({ core: 0 }),
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
@@ -35,7 +35,7 @@ describe("Reports.verifyPostSignatureChecks", () => {
   it("should reject report without authorization", async () => {
     const reports = await newReports();
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({ core: 0 }),
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
@@ -56,7 +56,7 @@ describe("Reports.verifyPostSignatureChecks", () => {
   it("should reject report with incorrect service id", async () => {
     const reports = await newReports();
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({ core: 0, authorizer: Bytes.fill(HASH_SIZE, 1) }),
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
@@ -78,7 +78,7 @@ describe("Reports.verifyPostSignatureChecks", () => {
       services: initialServices(),
     });
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({ core: 0, authorizer: Bytes.fill(HASH_SIZE, 1) }),
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
@@ -101,12 +101,12 @@ describe("Reports.verifyPostSignatureChecks", () => {
     });
     const workReport = newWorkReport({ core: 0, authorizer: Bytes.fill(HASH_SIZE, 1) });
     // override gas to make it too high.
-    workReport.results[0] = WorkResult.fromCodec({
+    workReport.results[0] = WorkResult.create({
       ...workReport.results[0],
       gas: asOpaqueType(tryAsU64(G_A + 1)),
     });
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: workReport,
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),

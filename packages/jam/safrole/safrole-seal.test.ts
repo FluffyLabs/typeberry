@@ -4,6 +4,7 @@ import {
   BANDERSNATCH_KEY_BYTES,
   BANDERSNATCH_VRF_SIGNATURE_BYTES,
   BLS_KEY_BYTES,
+  type BlsKey,
   EpochMarker,
   Header,
   ValidatorKeys,
@@ -29,7 +30,7 @@ const bandersnatch = BandernsatchWasm.new({ synchronous: true });
 describe("Safrole Seal verification", () => {
   it("should verify a valid fallback mode seal and entropySource", async () => {
     // based on jamduna/data/fallback/blocks/1_000.json
-    const header = Header.fromCodec({
+    const header = Header.create({
       parentHeaderHash: Bytes.parseBytes(
         "0x03c6255f4eed3db451c775e33e2d7ef03a1ba7fb79cd525b5ddf650703ccdb92",
         HASH_SIZE,
@@ -43,7 +44,7 @@ describe("Safrole Seal verification", () => {
         HASH_SIZE,
       ).asOpaque(),
       timeSlotIndex: tryAsTimeSlot(12),
-      epochMarker: EpochMarker.fromCodec({
+      epochMarker: EpochMarker.create({
         entropy: Bytes.parseBytes(
           "0x6f6ad2224d7d58aec6573c623ab110700eaca20a48dc2965d535e466d524af2a",
           HASH_SIZE,
@@ -109,7 +110,7 @@ describe("Safrole Seal verification", () => {
 
   it("should verify a valid ticket seal and entropySource", async () => {
     // based on jamduna/data/safrole/blocks/2_000.json
-    const header = Header.fromCodec({
+    const header = Header.create({
       parentHeaderHash: Bytes.parseBytes(
         "0xd8427123fd8f6bc0f6dc42cfab14c25328667c87ceb9221a55bd85b3bc2d3e3e",
         HASH_SIZE,
@@ -123,7 +124,7 @@ describe("Safrole Seal verification", () => {
         HASH_SIZE,
       ).asOpaque(),
       timeSlotIndex: tryAsTimeSlot(24),
-      epochMarker: EpochMarker.fromCodec({
+      epochMarker: EpochMarker.create({
         entropy: Bytes.parseBytes(
           "0x767ac90c16dcbf976628e835c103b2d7906080546c7176062b110955b19923ae",
           HASH_SIZE,
@@ -155,10 +156,10 @@ describe("Safrole Seal verification", () => {
       sealingKeySeries: SafroleSealingKeysData.tickets(
         tryAsPerEpochBlock(
           [
-            new Ticket(
-              Bytes.parseBytes("0x0b7537993b0a700def26bb16e99ed0bfb530f616e4c13cf63ecb60bcbe83387d", HASH_SIZE),
-              tryAsTicketAttempt(2),
-            ),
+            Ticket.create({
+              id: Bytes.parseBytes("0x0b7537993b0a700def26bb16e99ed0bfb530f616e4c13cf63ecb60bcbe83387d", HASH_SIZE),
+              attempt: tryAsTicketAttempt(2),
+            }),
             emptyTicket(),
             emptyTicket(),
             emptyTicket(),
@@ -188,7 +189,7 @@ describe("Safrole Seal verification", () => {
   });
 });
 
-const emptyTicket = (): Ticket => new Ticket(Bytes.zero(HASH_SIZE), tryAsTicketAttempt(0));
+const emptyTicket = (): Ticket => Ticket.create({ id: Bytes.zero(HASH_SIZE), attempt: tryAsTicketAttempt(0) });
 
 const TEST_VALIDATOR_KEYS = tryAsPerValidator<ValidatorKeys>(
   [
@@ -217,7 +218,7 @@ const TEST_VALIDATOR_KEYS = tryAsPerValidator<ValidatorKeys>(
       ed25519: "0x837ce344bc9defceb0d7de7e9e9925096768b7adb4dad932e532eb6551e0ea02",
     },
   ].map((x) =>
-    ValidatorKeys.fromCodec({
+    ValidatorKeys.create({
       bandersnatch: Bytes.parseBytes(x.bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque(),
       ed25519: Bytes.parseBytes(x.ed25519, ED25519_KEY_BYTES).asOpaque(),
     }),
@@ -226,13 +227,12 @@ const TEST_VALIDATOR_KEYS = tryAsPerValidator<ValidatorKeys>(
 );
 
 const TEST_VALIDATOR_DATA = asKnownSize(
-  TEST_VALIDATOR_KEYS.map(
-    (x) =>
-      new ValidatorData(
-        x.bandersnatch,
-        x.ed25519,
-        Bytes.zero(BLS_KEY_BYTES).asOpaque(),
-        Bytes.zero(VALIDATOR_META_BYTES).asOpaque(),
-      ),
+  TEST_VALIDATOR_KEYS.map((x) =>
+    ValidatorData.create({
+      bandersnatch: x.bandersnatch,
+      ed25519: x.ed25519,
+      bls: Bytes.zero(BLS_KEY_BYTES).asOpaque<BlsKey>(),
+      metadata: Bytes.zero(VALIDATOR_META_BYTES).asOpaque(),
+    }),
   ),
 );

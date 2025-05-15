@@ -21,11 +21,11 @@ export class NotYetAccumulatedReport extends WithDebug {
     }),
   });
 
-  static fromCodec({ report, unlocks }: CodecRecord<NotYetAccumulatedReport>) {
+  static create({ report, unlocks }: CodecRecord<NotYetAccumulatedReport>) {
     return new NotYetAccumulatedReport(report, unlocks);
   }
 
-  constructor(
+  private constructor(
     /**
      * Each of these were made available at most one epoch ago
      * but have or had unfulfilled dependencies.

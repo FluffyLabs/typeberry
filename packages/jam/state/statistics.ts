@@ -30,7 +30,7 @@ export class ValidatorStatistics {
     assurances: codec.u32,
   });
 
-  static fromCodec({
+  static create({
     blocks,
     tickets,
     preImages,
@@ -92,7 +92,7 @@ export class CoreStatistics {
     gasUsed: codecVarGas,
   });
 
-  static fromCodec(v: CodecRecord<CoreStatistics>) {
+  static create(v: CodecRecord<CoreStatistics>) {
     return new CoreStatistics(
       v.dataAvailabilityLoad,
       v.popularity,
@@ -155,7 +155,7 @@ export class ServiceStatistics {
     onTransfersGasUsed: codecVarGas,
   });
 
-  static fromCodec(v: CodecRecord<ServiceStatistics>) {
+  static create(v: CodecRecord<ServiceStatistics>) {
     return new ServiceStatistics(
       v.providedCount,
       v.providedSize,
@@ -231,11 +231,11 @@ export class StatisticsData {
     }),
   });
 
-  static fromCodec(v: CodecRecord<StatisticsData>) {
+  static create(v: CodecRecord<StatisticsData>) {
     return new StatisticsData(v.current, v.previous, v.cores, v.services);
   }
 
-  constructor(
+  private constructor(
     public readonly current: PerValidator<ValidatorStatistics>,
     public readonly previous: PerValidator<ValidatorStatistics>,
     public readonly cores: PerCore<CoreStatistics>,

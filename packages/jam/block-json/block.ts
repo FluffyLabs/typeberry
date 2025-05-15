@@ -11,5 +11,5 @@ export const blockFromJson = (spec: ChainSpec) =>
       header: headerFromJson,
       extrinsic: getExtrinsicFromJson(spec),
     },
-    ({ header, extrinsic }) => new Block(header, extrinsic),
+    ({ header, extrinsic }) => Block.create({ header, extrinsic }),
   );

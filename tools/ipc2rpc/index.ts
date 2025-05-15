@@ -1,6 +1,6 @@
 import * as os from "node:os";
 import * as path from "node:path";
-import type { HeaderHash, TimeSlot } from "@typeberry/block";
+import { type HeaderHash, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import * as up0 from "@typeberry/ext-ipc/protocol/up-0-block-announcement";
 import { HASH_SIZE } from "@typeberry/hash";
@@ -26,8 +26,11 @@ async function main() {
   };
 
   const getHandshake = () => {
-    const final = new up0.HashAndSlot(Bytes.zero(HASH_SIZE) as HeaderHash, 0 as TimeSlot);
-    return new up0.Handshake(final, []);
+    const final = up0.HashAndSlot.create({
+      hash: Bytes.zero(HASH_SIZE).asOpaque<HeaderHash>(),
+      slot: tryAsTimeSlot(0),
+    });
+    return up0.Handshake.create({ final, leafs: [] });
   };
 
   const client = await startClient(socketPath, getHandshake, (ann: up0.Announcement) => {

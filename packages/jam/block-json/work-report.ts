@@ -20,7 +20,13 @@ const workPackageSpecFromJson = json.object<JsonObject<WorkPackageSpec>, WorkPac
     exports_count: "number",
   },
   ({ hash, length, erasure_root, exports_root, exports_count }) =>
-    new WorkPackageSpec(hash, length, erasure_root, exports_root, exports_count),
+    WorkPackageSpec.create({
+      hash,
+      length,
+      erasureRoot: erasure_root,
+      exportsRoot: exports_root,
+      exportsCount: exports_count,
+    }),
 );
 
 export const segmentRootLookupItemFromJson = json.object<JsonObject<WorkPackageInfo>, WorkPackageInfo>(
@@ -28,7 +34,8 @@ export const segmentRootLookupItemFromJson = json.object<JsonObject<WorkPackageI
     work_package_hash: fromJson.bytes32(),
     segment_tree_root: fromJson.bytes32(),
   },
-  ({ work_package_hash, segment_tree_root }) => new WorkPackageInfo(work_package_hash, segment_tree_root),
+  ({ work_package_hash, segment_tree_root }) =>
+    WorkPackageInfo.create({ workPackageHash: work_package_hash, segmentTreeRoot: segment_tree_root }),
 );
 
 export const workReportFromJson = json.object<JsonWorkReport, WorkReport>(
@@ -53,7 +60,7 @@ export const workReportFromJson = json.object<JsonWorkReport, WorkReport>(
     auth_gas_used,
   }) => {
     const fixedSizeResults = FixedSizeArray.new(results, tryAsWorkItemsCount(results.length));
-    return WorkReport.fromCodec({
+    return WorkReport.create({
       workPackageSpec: package_spec,
       context,
       coreIndex: core_index,

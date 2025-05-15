@@ -13,7 +13,7 @@ export const availabilityAssignmentFromJson = json.object<JsonAvailabilityAssign
   },
   ({ report, timeout }) => {
     const workReportHash = blake2b.hashBytes(Encoder.encodeObject(WorkReport.Codec, report)).asOpaque();
-    return new AvailabilityAssignment(new WithHash(workReportHash, report), timeout);
+    return AvailabilityAssignment.create({ workReport: new WithHash(workReportHash, report), timeout });
   },
 );
 

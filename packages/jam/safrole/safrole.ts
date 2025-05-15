@@ -14,7 +14,7 @@ import { Bytes, bytesBlobComparator } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { ED25519_KEY_BYTES } from "@typeberry/crypto";
+import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { blake2b } from "@typeberry/hash";
 import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";
@@ -173,12 +173,12 @@ export class Safrole {
          * https://graypaper.fluffylabs.dev/#/5f542d7/0ea2000ea200
          */
         if (isOffender) {
-          return new ValidatorData(
-            Bytes.zero(BANDERSNATCH_KEY_BYTES).asOpaque(),
-            Bytes.zero(ED25519_KEY_BYTES).asOpaque(),
-            validator.bls,
-            validator.metadata,
-          );
+          return ValidatorData.create({
+            bandersnatch: Bytes.zero(BANDERSNATCH_KEY_BYTES).asOpaque<BandersnatchKey>(),
+            ed25519: Bytes.zero(ED25519_KEY_BYTES).asOpaque<Ed25519Key>(),
+            bls: validator.bls,
+            metadata: validator.metadata,
+          });
         }
 
         return validator;
@@ -294,11 +294,11 @@ export class Safrole {
     }
 
     const entropy = this.state.entropy;
-    return new EpochMarker(
-      entropy[0],
-      entropy[1],
-      asKnownSize(nextValidators.map((validator) => ValidatorKeys.fromCodec(validator))),
-    );
+    return EpochMarker.create({
+      entropy: entropy[0],
+      ticketsEntropy: entropy[1],
+      validators: asKnownSize(nextValidators.map((validator) => ValidatorKeys.create(validator))),
+    });
   }
 
   /**

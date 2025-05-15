@@ -11,5 +11,5 @@ export const validatorDataFromJson = json.object<ValidatorData>(
     bls: json.fromString((v) => Bytes.parseBytes(v, BLS_KEY_BYTES) as BlsKey),
     metadata: json.fromString((v) => Bytes.parseBytes(v, VALIDATOR_META_BYTES)),
   },
-  ({ ed25519, bandersnatch, bls, metadata }) => new ValidatorData(bandersnatch, ed25519, bls, metadata),
+  ({ ed25519, bandersnatch, bls, metadata }) => ValidatorData.create({ bandersnatch, ed25519, bls, metadata }),
 );

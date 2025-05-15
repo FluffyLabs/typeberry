@@ -26,11 +26,11 @@ export class SignedTicket extends WithDebug {
     signature: codec.bytes(BANDERSNATCH_PROOF_BYTES).asOpaque<BandersnatchProof>(),
   });
 
-  static fromCodec({ attempt, signature }: CodecRecord<SignedTicket>) {
+  static create({ attempt, signature }: CodecRecord<SignedTicket>) {
     return new SignedTicket(attempt, signature);
   }
 
-  constructor(
+  private constructor(
     /** Which attempt was it? */
     public readonly attempt: TicketAttempt,
     /** The bandersnatch membership proof of knowledge. */
@@ -48,11 +48,11 @@ export class Ticket extends WithDebug {
     attempt: codec.u8.asOpaque<TicketAttempt>(),
   });
 
-  static fromCodec({ id, attempt }: CodecRecord<Ticket>) {
+  static create({ id, attempt }: CodecRecord<Ticket>) {
     return new Ticket(id, attempt);
   }
 
-  constructor(
+  private constructor(
     /**
      * Ticket identifier - a high-entropy unbiasable 32-octet sequence.
      *

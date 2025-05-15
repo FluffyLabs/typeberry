@@ -11,7 +11,7 @@ const validatorSignatureFromJson = json.object<JsonObject<Credential>, Credentia
     validator_index: "number",
     signature: fromJson.ed25519Signature,
   },
-  ({ validator_index, signature }) => new Credential(validator_index, signature),
+  ({ validator_index, signature }) => Credential.create({ validatorIndex: validator_index, signature }),
 );
 
 const reportGuaranteeFromJson = json.object<JsonReportGuarantee, ReportGuarantee>(
@@ -20,7 +20,7 @@ const reportGuaranteeFromJson = json.object<JsonReportGuarantee, ReportGuarantee
     slot: "number",
     signatures: json.array(validatorSignatureFromJson),
   },
-  ({ report, slot, signatures }) => new ReportGuarantee(report, slot, signatures),
+  ({ report, slot, signatures }) => ReportGuarantee.create({ report, slot, credentials: signatures }),
 );
 
 type JsonReportGuarantee = {

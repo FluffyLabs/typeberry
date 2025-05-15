@@ -40,11 +40,11 @@ export class BlockRequest extends WithDebug {
     maxBlocks: codec.u32,
   });
 
-  static fromCodec({ headerHash, direction, maxBlocks }: CodecRecord<BlockRequest>) {
+  static create({ headerHash, direction, maxBlocks }: CodecRecord<BlockRequest>) {
     return new BlockRequest(headerHash, direction, maxBlocks);
   }
 
-  constructor(
+  private constructor(
     public readonly headerHash: HeaderHash,
     public readonly direction: Direction,
     public readonly maxBlocks: U32,
@@ -103,7 +103,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
 
   async getBlockSequence(
     sender: StreamSender,
-    hash: HeaderHash,
+    headerHash: HeaderHash,
     direction: Direction,
     maxBlocks: U32,
   ): Promise<Block[]> {
@@ -115,7 +115,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
       this.promiseResolvers.set(sender.streamId, resolve);
       this.promiseRejectors.set(sender.streamId, reject);
 
-      sender.send(Encoder.encodeObject(BlockRequest.Codec, new BlockRequest(hash, direction, maxBlocks)));
+      sender.send(Encoder.encodeObject(BlockRequest.Codec, BlockRequest.create({ headerHash, direction, maxBlocks })));
       sender.close();
     });
   }
