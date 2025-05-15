@@ -34,6 +34,13 @@ reviews:
     - path: '**/*.ts'
       instructions: |
         `as` conversions must not be used. Suggest using `tryAs` conversion methods.
+    - path: '**/*.ts'
+      instructions: |
+        Classes with `static Codec` field must have private constructor and static `create` method.
+    - path: '**/*.ts'
+      instructions: |
+        Casting a `bigint` (or `U64`) using `Number(x)` must have an explanation comment why
+        it is safe.
   abort_on_close: true
   disable_cache: false
   auto_review:
