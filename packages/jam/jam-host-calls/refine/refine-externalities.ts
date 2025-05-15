@@ -127,5 +127,5 @@ export interface RefineExternalities {
   exportSegment(segment: Segment): Result<SegmentIndex, SegmentExportError>;
 
   /** Lookup a historical preimage. */
-  historicalLookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null>;
+  historicalLookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null>;
 }

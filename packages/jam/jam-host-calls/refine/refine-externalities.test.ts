@@ -151,7 +151,10 @@ export class TestRefineExt implements RefineExternalities {
     return result;
   }
 
-  historicalLookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null> {
+  historicalLookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null> {
+    if (serviceId === null) {
+      return Promise.resolve(null);
+    }
     const val = this.historicalLookupData.get(serviceId, hash);
     if (val === undefined) {
       throw new Error(`Unexpected call to historicalLookup with: ${serviceId}, ${hash}`);
