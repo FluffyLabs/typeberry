@@ -1,6 +1,5 @@
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { maxU64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
@@ -39,17 +38,7 @@ export class Eject implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    // NOTE not current service, but selected service, accuall `d`
-    const service = await this.partialState.getService(serviceId);
-    if (serviceId === this.currentServiceId || serviceId === CURRENT_SERVICE_ID || service === null) {
-      regs.set(IN_OUT_REG, HostCallResult.WHO);
-      return;
-    }
-
-    // `l`: bundle length
-    const bundleLength = tryAsU64(maxU64(tryAsU64(81n), service.storageUtilisationBytes) - 81n);
-
-    const result = await this.partialState.eject(serviceId, this.currentServiceId, preimageHash, bundleLength);
+    const result = await this.partialState.eject(serviceId, this.currentServiceId, preimageHash);
 
     // All good!
     if (result.isOk) {
@@ -57,7 +46,7 @@ export class Eject implements HostCallHandler {
       return;
     }
 
-    if (result.error === EjectError.DestinationNotFound) {
+    if (result.error === EjectError.DestinationNotFound || result.error === EjectError.SameSourceAndDestination) {
       regs.set(IN_OUT_REG, HostCallResult.WHO);
       return;
     }

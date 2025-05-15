@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
+import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { HostCallMemory } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder } from "@typeberry/pvm-interpreter";
@@ -12,7 +12,6 @@ import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { ServiceAccountInfo } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { Eject } from "./eject";
@@ -22,21 +21,6 @@ import { TestAccumulate } from "./partial-state.test";
 const RESULT_REG = 7;
 const SOURCE_REG = 7;
 const HASH_START_REG = 8;
-
-function perpareAccount({
-  balance = tryAsU64(0),
-}: {
-  balance?: U64;
-}): ServiceAccountInfo {
-  return ServiceAccountInfo.fromCodec({
-    codeHash: Bytes.fill(32, 5).asOpaque(),
-    balance,
-    accumulateMinGas: tryAsServiceGas(0n),
-    onTransferMinGas: tryAsServiceGas(0n),
-    storageUtilisationBytes: tryAsU64(10_000),
-    storageUtilisationCount: tryAsU32(1_000),
-  });
-}
 
 function prepareRegsAndMemory(
   source: ServiceId,
@@ -69,18 +53,7 @@ describe("HostCalls: Eject", () => {
     const sourceServiceId = tryAsServiceId(15_000);
     eject.currentServiceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(HASH_SIZE, 5);
-    accumulate.services.set(
-      eject.currentServiceId,
-      perpareAccount({
-        balance: tryAsU64(15_000),
-      }),
-    );
-    accumulate.services.set(
-      sourceServiceId,
-      perpareAccount({
-        balance: tryAsU64(10_000),
-      }),
-    );
+    accumulate.ejectReturnValue = Result.ok(null);
 
     const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
 
@@ -90,8 +63,8 @@ describe("HostCalls: Eject", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
-    assert.deepStrictEqual(accumulate.services.get(eject.currentServiceId)?.balance, tryAsU64(25_000));
-    assert.deepStrictEqual(accumulate.services.get(sourceServiceId), undefined);
+    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, eject.currentServiceId, hash]]);
+    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.ok(null));
   });
 
   it("should fail if there is no memory for hash", async () => {
@@ -100,18 +73,6 @@ describe("HostCalls: Eject", () => {
     const sourceServiceId = tryAsServiceId(15_000);
     eject.currentServiceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(HASH_SIZE, 5);
-    accumulate.services.set(
-      eject.currentServiceId,
-      perpareAccount({
-        balance: tryAsU64(15_000),
-      }),
-    );
-    accumulate.services.set(
-      sourceServiceId,
-      perpareAccount({
-        balance: tryAsU64(10_000),
-      }),
-    );
 
     const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash, { skipHash: true });
 
@@ -120,8 +81,7 @@ describe("HostCalls: Eject", () => {
 
     // then
     assert.deepStrictEqual(result, PvmExecution.Panic);
-    assert.deepStrictEqual(accumulate.services.get(sourceServiceId)?.balance, tryAsU64(10_000));
-    assert.deepStrictEqual(accumulate.services.get(eject.currentServiceId)?.balance, tryAsU64(15_000));
+    assert.deepStrictEqual(accumulate.ejectData, []);
   });
 
   it("should fail if destination does not exist", async () => {
@@ -131,12 +91,7 @@ describe("HostCalls: Eject", () => {
     const sourceServiceId = tryAsServiceId(15_000);
     eject.currentServiceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(HASH_SIZE, 5);
-    accumulate.services.set(
-      eject.currentServiceId,
-      perpareAccount({
-        balance: tryAsU64(15_000),
-      }),
-    );
+    accumulate.ejectReturnValue = Result.error(EjectError.DestinationNotFound);
 
     const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
 
@@ -146,6 +101,8 @@ describe("HostCalls: Eject", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
+    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, eject.currentServiceId, hash]]);
+    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.error(EjectError.DestinationNotFound));
   });
 
   it("should fail if destination and source are the same", async () => {
@@ -154,12 +111,7 @@ describe("HostCalls: Eject", () => {
     const sourceServiceId = tryAsServiceId(15_000);
     eject.currentServiceId = sourceServiceId;
     const hash = Bytes.fill(HASH_SIZE, 5);
-    accumulate.services.set(
-      eject.currentServiceId,
-      perpareAccount({
-        balance: tryAsU64(15_000),
-      }),
-    );
+    accumulate.ejectReturnValue = Result.error(EjectError.SameSourceAndDestination);
 
     const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
 
@@ -169,6 +121,8 @@ describe("HostCalls: Eject", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
+    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, eject.currentServiceId, hash]]);
+    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.error(EjectError.SameSourceAndDestination));
   });
 
   it("should fail if destination has no available preimage", async () => {
@@ -178,18 +132,7 @@ describe("HostCalls: Eject", () => {
     const sourceServiceId = tryAsServiceId(15_000);
     eject.currentServiceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(HASH_SIZE, 5);
-    accumulate.services.set(
-      eject.currentServiceId,
-      perpareAccount({
-        balance: tryAsU64(15_000),
-      }),
-    );
-    accumulate.services.set(
-      sourceServiceId,
-      perpareAccount({
-        balance: tryAsU64(10_000),
-      }),
-    );
+    accumulate.ejectReturnValue = Result.error(EjectError.PreimageUnavailable);
 
     const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
 
@@ -199,5 +142,28 @@ describe("HostCalls: Eject", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
+    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, eject.currentServiceId, hash]]);
+    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.error(EjectError.PreimageUnavailable));
+  });
+
+  it("should fail if preimage is too old", async () => {
+    const accumulate = new TestAccumulate();
+    accumulate.ejectReturnValue = Result.error(EjectError.PreimageUnavailable);
+    const eject = new Eject(accumulate);
+    const sourceServiceId = tryAsServiceId(15_000);
+    eject.currentServiceId = tryAsServiceId(10_000);
+    const hash = Bytes.fill(HASH_SIZE, 5);
+    accumulate.ejectReturnValue = Result.error(EjectError.PreimageTooOld);
+
+    const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
+
+    // when
+    const result = await eject.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(result, undefined);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
+    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, eject.currentServiceId, hash]]);
+    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.error(EjectError.PreimageTooOld));
   });
 });
