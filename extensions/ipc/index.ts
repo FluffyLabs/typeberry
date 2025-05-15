@@ -25,8 +25,7 @@ export function startExtension(api: ExtensionApi) {
 
   // TODO [ToDr] `Handshake` should not leak that far.
   const getHandshake = () => {
-    const final =
-      bestBlock ?? HashAndSlot.create({ hash: Bytes.zero(HASH_SIZE).asOpaque<HeaderHash>(), slot: tryAsTimeSlot(0) });
+    const final = bestBlock ?? HashAndSlot.create({ hash: Bytes.zero(HASH_SIZE).asOpaque(), slot: tryAsTimeSlot(0) });
     return Handshake.create({ final, leafs: [] });
   };
 

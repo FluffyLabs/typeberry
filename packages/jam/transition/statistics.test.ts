@@ -3,7 +3,6 @@ import { describe, it } from "node:test";
 import {
   type CoreIndex,
   Extrinsic,
-  type HeaderHash,
   tryAsCoreIndex,
   tryAsPerValidator,
   tryAsServiceGas,
@@ -22,7 +21,7 @@ import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/crypto";
+import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { isU16, isU32, tryAsU32 } from "@typeberry/numbers";
 import { CoreStatistics, ServiceStatistics, StatisticsData, ValidatorStatistics, tryAsPerCore } from "@typeberry/state";
@@ -179,10 +178,10 @@ describe("Statistics", () => {
 
     const createAssurance = (validatorIndex: number, bitvec?: BitVec) =>
       AvailabilityAssurance.create({
-        anchor: Bytes.zero(HASH_SIZE).asOpaque<HeaderHash>(),
+        anchor: Bytes.zero(HASH_SIZE).asOpaque(),
         bitfield: bitvec ?? BitVec.fromBlob(Bytes.zero(HASH_SIZE).raw, tinyChainSpec.coresCount),
         validatorIndex: tryAsValidatorIndex(validatorIndex),
-        signature: Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque<Ed25519Signature>(),
+        signature: Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque(),
       });
 
     const countGasUsed = (count: number, gasUsed: bigint) => ({

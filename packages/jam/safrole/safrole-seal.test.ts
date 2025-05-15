@@ -4,7 +4,6 @@ import {
   BANDERSNATCH_KEY_BYTES,
   BANDERSNATCH_VRF_SIGNATURE_BYTES,
   BLS_KEY_BYTES,
-  type BlsKey,
   EpochMarker,
   Header,
   ValidatorKeys,
@@ -231,7 +230,7 @@ const TEST_VALIDATOR_DATA = asKnownSize(
     ValidatorData.create({
       bandersnatch: x.bandersnatch,
       ed25519: x.ed25519,
-      bls: Bytes.zero(BLS_KEY_BYTES).asOpaque<BlsKey>(),
+      bls: Bytes.zero(BLS_KEY_BYTES).asOpaque(),
       metadata: Bytes.zero(VALIDATOR_META_BYTES).asOpaque(),
     }),
   ),

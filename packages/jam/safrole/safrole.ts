@@ -14,7 +14,7 @@ import { Bytes, bytesBlobComparator } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
+import { ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { blake2b } from "@typeberry/hash";
 import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";
@@ -174,8 +174,8 @@ export class Safrole {
          */
         if (isOffender) {
           return ValidatorData.create({
-            bandersnatch: Bytes.zero(BANDERSNATCH_KEY_BYTES).asOpaque<BandersnatchKey>(),
-            ed25519: Bytes.zero(ED25519_KEY_BYTES).asOpaque<Ed25519Key>(),
+            bandersnatch: Bytes.zero(BANDERSNATCH_KEY_BYTES).asOpaque(),
+            ed25519: Bytes.zero(ED25519_KEY_BYTES).asOpaque(),
             bls: validator.bls,
             metadata: validator.metadata,
           });
