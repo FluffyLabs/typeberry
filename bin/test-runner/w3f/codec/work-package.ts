@@ -28,14 +28,14 @@ export const workPackageFromJson = json.object<JsonWorkPackage, WorkPackage>(
     items: json.array(workItemFromJson),
   },
   ({ authorization, auth_code_host, authorizer, context, items }) =>
-    new WorkPackage(
+    WorkPackage.create({
       authorization,
-      auth_code_host,
-      authorizer.code_hash,
-      authorizer.params,
+      authCodeHost: auth_code_host,
+      authCodeHash: authorizer.code_hash,
+      parametrization: authorizer.params,
       context,
-      FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
-    ),
+      items: FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
+    }),
 );
 
 type JsonWorkPackage = {

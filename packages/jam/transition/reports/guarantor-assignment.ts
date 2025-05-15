@@ -9,7 +9,14 @@
  * https://graypaper.fluffylabs.dev/#/5f542d7/147601147e01
  */
 
-import type { CoreIndex, EntropyHash, PerValidator, TimeSlot } from "@typeberry/block";
+import {
+  type CoreIndex,
+  type EntropyHash,
+  type PerValidator,
+  type TimeSlot,
+  tryAsCoreIndex,
+  tryAsTimeSlot,
+} from "@typeberry/block";
 import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { fisherYatesShuffle } from "@typeberry/shuffling";
@@ -44,13 +51,13 @@ function permute(
   slot: TimeSlot,
   spec: Pick<ChainSpec, "epochLength" | "rotationPeriod" | "coresCount" | "validatorsCount">,
 ): PerValidator<CoreIndex> {
-  const shift = rotationIndex((slot % spec.epochLength) as TimeSlot, spec.rotationPeriod);
+  const shift = rotationIndex(tryAsTimeSlot(slot % spec.epochLength), spec.rotationPeriod);
   const initialAssignment = Array(spec.validatorsCount)
     .fill(0)
     .map((_v, i) => {
       // we are moving within `[0..1)` in `i/noOfValidators` component, hence we will
       // get a valid `coreIndex` after multiplying by `noOfCores`.
-      return Math.floor((i * spec.coresCount) / spec.validatorsCount) as CoreIndex;
+      return tryAsCoreIndex(Math.floor((i * spec.coresCount) / spec.validatorsCount));
     });
   const shuffledAssignment = fisherYatesShuffle(initialAssignment, entropy);
   const coreAssignment = rotate(shuffledAssignment, shift, spec.coresCount);

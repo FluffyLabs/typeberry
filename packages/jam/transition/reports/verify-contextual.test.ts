@@ -18,7 +18,7 @@ describe("Reports.verifyContextualValidity", () => {
       services: initialServices({ withDummyCodeHash: true }),
     });
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({ core: 0 }),
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
@@ -41,12 +41,12 @@ describe("Reports.verifyContextualValidity", () => {
       services: initialServices(),
     });
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({ core: 0 }),
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
       }),
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({ core: 0 }),
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
@@ -68,7 +68,7 @@ describe("Reports.verifyContextualValidity", () => {
       services: initialServices(),
     });
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({
           core: 0,
@@ -94,7 +94,7 @@ describe("Reports.verifyContextualValidity", () => {
       services: initialServices(),
     });
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({
           core: 0,
@@ -120,7 +120,7 @@ describe("Reports.verifyContextualValidity", () => {
       services: initialServices(),
     });
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({
           core: 0,
@@ -145,7 +145,7 @@ describe("Reports.verifyContextualValidity", () => {
       services: initialServices(),
     });
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({
           core: 0,
@@ -171,7 +171,7 @@ describe("Reports.verifyContextualValidity", () => {
       services: initialServices(),
     });
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({
           core: 0,
@@ -202,7 +202,7 @@ describe("Reports.verifyContextualValidity", () => {
     reports.state.availabilityAssignment[0] = null;
 
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({
           core: 0,
@@ -226,12 +226,14 @@ describe("Reports.verifyContextualValidity", () => {
   it("should reject duplicate work package from accumulation queue", async () => {
     const reports = await newReports({
       services: initialServices(),
-      accumulationQueue: [new NotYetAccumulatedReport(newWorkReport({ core: 1 }), asKnownSize([]))],
+      accumulationQueue: [
+        NotYetAccumulatedReport.create({ report: newWorkReport({ core: 1 }), unlocks: asKnownSize([]) }),
+      ],
     });
     reports.state.availabilityAssignment[0] = null;
 
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({
           core: 0,
@@ -256,15 +258,18 @@ describe("Reports.verifyContextualValidity", () => {
     const reports = await newReports({
       services: initialServices(),
       reportedInRecentBlocks: HashDictionary.fromEntries(
-        [new WorkPackageInfo(newWorkReport({ core: 0 }).workPackageSpec.hash, Bytes.zero(HASH_SIZE).asOpaque())].map(
-          (x) => [x.workPackageHash, x],
-        ),
+        [
+          WorkPackageInfo.create({
+            workPackageHash: newWorkReport({ core: 0 }).workPackageSpec.hash,
+            segmentTreeRoot: Bytes.zero(HASH_SIZE).asOpaque(),
+          }),
+        ].map((x) => [x.workPackageHash, x]),
       ),
     });
     reports.state.availabilityAssignment[0] = null;
 
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({
           core: 0,
@@ -293,7 +298,7 @@ describe("Reports.verifyContextualValidity", () => {
     reports.state.availabilityAssignment[0] = null;
 
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(10),
         report: newWorkReport({
           core: 0,

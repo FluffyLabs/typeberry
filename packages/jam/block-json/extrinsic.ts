@@ -18,5 +18,5 @@ export const getExtrinsicFromJson = (ctx: ChainSpec) =>
       disputes: disputesExtrinsicFromJson,
     },
     ({ tickets, preimages, guarantees, assurances, disputes }) =>
-      new Extrinsic(tickets, preimages, guarantees, assurances, disputes),
+      Extrinsic.create({ tickets, preimages, guarantees, assurances, disputes }),
   );

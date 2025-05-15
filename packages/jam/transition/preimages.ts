@@ -85,7 +85,7 @@ export class Preimages {
     // https://graypaper.fluffylabs.dev/#/5f542d7/18c00018f300
     for (const change of pendingChanges) {
       const { account, hash, blob, lookupHistoryItem } = change;
-      account.data.preimages.set(hash, new PreimageItem(hash, blob));
+      account.data.preimages.set(hash, PreimageItem.create({ hash, blob }));
       lookupHistoryItem.slots = tryAsLookupHistorySlots([slot]);
     }
 

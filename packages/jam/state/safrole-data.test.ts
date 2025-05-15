@@ -30,7 +30,15 @@ describe("Safrole Data", () => {
     );
     const safroleData = Decoder.decodeObject(SafroleData.Codec, BytesBlob.parseBlob(TEST_DATA), spec);
 
-    deepEqual(safroleData, new SafroleData(validators, epochRoot, sealingKeys, asKnownSize(ticketsAccumulator)));
+    deepEqual(
+      safroleData,
+      SafroleData.create({
+        nextValidatorData: validators,
+        epochRoot,
+        sealingKeySeries: sealingKeys,
+        ticketsAccumulator: asKnownSize(ticketsAccumulator),
+      }),
+    );
   });
 });
 

@@ -55,7 +55,7 @@ const workRefineLoadFromJson = json.object<JsonWorkRefineLoad, WorkRefineLoad>(
     exports: "number",
   },
   ({ gas_used, imports, extrinsic_count, extrinsic_size, exports }) =>
-    WorkRefineLoad.fromCodec({
+    WorkRefineLoad.create({
       gasUsed: tryAsServiceGas(gas_used),
       importedSegments: tryAsU32(imports),
       extrinsicCount: tryAsU32(extrinsic_count),
@@ -82,7 +82,14 @@ export const workResultFromJson = json.object<JsonWorkResult, WorkResult>(
     refine_load: workRefineLoadFromJson,
   },
   ({ service_id, code_hash, payload_hash, accumulate_gas, result, refine_load }) =>
-    new WorkResult(service_id, code_hash, payload_hash, accumulate_gas, result, refine_load),
+    WorkResult.create({
+      serviceId: service_id,
+      codeHash: code_hash,
+      payloadHash: payload_hash,
+      gas: accumulate_gas,
+      result,
+      load: refine_load,
+    }),
 );
 
 type JsonWorkResult = {

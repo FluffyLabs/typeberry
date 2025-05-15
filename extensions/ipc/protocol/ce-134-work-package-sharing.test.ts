@@ -10,7 +10,10 @@ import { ClientHandler, STREAM_KIND, ServerHandler } from "./ce-134-work-package
 
 const MOCK_CORE_INDEX = tryAsCoreIndex(1);
 const MOCK_SEGMENTS_ROOT_MAPPINGS = [
-  new WorkPackageInfo(Bytes.zero(HASH_SIZE).asOpaque(), Bytes.zero(HASH_SIZE).asOpaque()),
+  WorkPackageInfo.create({
+    workPackageHash: Bytes.zero(HASH_SIZE).asOpaque(),
+    segmentTreeRoot: Bytes.zero(HASH_SIZE).asOpaque(),
+  }),
 ];
 const MOCK_WORK_PACKAGE_BUNDLE = BytesBlob.blobFromString("hello");
 const MOCK_WORK_REPORT_HASH = Bytes.zero(HASH_SIZE).asOpaque();

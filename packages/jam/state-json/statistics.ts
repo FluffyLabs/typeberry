@@ -15,7 +15,7 @@ export class JsonValidatorStatistics {
       assurances: "number",
     },
     ({ blocks, tickets, pre_images, pre_images_size, guarantees, assurances }) => {
-      return ValidatorStatistics.fromCodec({
+      return ValidatorStatistics.create({
         blocks,
         tickets,
         preImages: pre_images,
@@ -47,7 +47,7 @@ export class JsonCoreStatistics {
       gas_used: json.fromNumber(tryAsServiceGas),
     },
     ({ da_load, popularity, imports, exports, extrinsic_size, extrinsic_count, bundle_size, gas_used }) => {
-      return CoreStatistics.fromCodec({
+      return CoreStatistics.create({
         dataAvailabilityLoad: da_load,
         popularity,
         imports,
@@ -100,7 +100,7 @@ class JsonServiceStatistics {
       on_transfers_count,
       on_transfers_gas_used,
     }) => {
-      return ServiceStatistics.fromCodec({
+      return ServiceStatistics.create({
         providedCount: provided_count,
         providedSize: provided_size,
         refinementCount: refinement_count,
@@ -155,7 +155,7 @@ export class JsonStatisticsData {
   };
 
   static toStatisticsData(spec: ChainSpec, statistics: JsonStatisticsData) {
-    return StatisticsData.fromCodec({
+    return StatisticsData.create({
       current: tryAsPerValidator(statistics.vals_current, spec),
       previous: tryAsPerValidator(statistics.vals_last, spec),
       cores:

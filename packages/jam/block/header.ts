@@ -34,11 +34,11 @@ export class ValidatorKeys extends WithDebug {
     ed25519: codec.bytes(ED25519_KEY_BYTES).asOpaque<Ed25519Key>(),
   });
 
-  static fromCodec({ bandersnatch, ed25519 }: CodecRecord<ValidatorKeys>) {
+  static create({ bandersnatch, ed25519 }: CodecRecord<ValidatorKeys>) {
     return new ValidatorKeys(bandersnatch, ed25519);
   }
 
-  public constructor(
+  private constructor(
     /** `kappa_b`: Bandersnatch validator keys for the NEXT epoch. */
     public readonly bandersnatch: BandersnatchKey,
     /** `kappa_e`: Ed25519 validator keys for the NEXT epoch. */
@@ -62,11 +62,11 @@ export class EpochMarker extends WithDebug {
     validators: codecPerValidator(ValidatorKeys.Codec),
   });
 
-  static fromCodec({ entropy, ticketsEntropy, validators }: CodecRecord<EpochMarker>) {
+  static create({ entropy, ticketsEntropy, validators }: CodecRecord<EpochMarker>) {
     return new EpochMarker(entropy, ticketsEntropy, validators);
   }
 
-  public constructor(
+  private constructor(
     /** `eta_1'`: Randomness for the NEXT epoch. */
     public readonly entropy: EntropyHash,
     /** `eta_2'`: Randomness for the CURRENT epoch. */
@@ -109,7 +109,7 @@ export class Header extends WithDebug {
     seal: codec.bytes(BANDERSNATCH_VRF_SIGNATURE_BYTES).asOpaque<BandersnatchVrfSignature>(),
   });
 
-  static fromCodec(h: CodecRecord<Header>) {
+  static create(h: CodecRecord<Header>) {
     return Object.assign(Header.empty(), h);
   }
 
@@ -174,7 +174,7 @@ class HeaderViewWithHash extends WithHash<HeaderHash, HeaderView> {
     data: Header.Codec.View,
   });
 
-  static fromCodec({ hash, data }: CodecRecord<HeaderViewWithHash>) {
+  static create({ hash, data }: CodecRecord<HeaderViewWithHash>) {
     return new WithHash(hash, data);
   }
 }

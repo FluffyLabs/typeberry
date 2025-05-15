@@ -99,17 +99,17 @@ const kindMapping: { [k: string]: Appender } = {
       ),
     );
   },
-  account_storage: (s, value, description) => {
-    const { serviceId, key } = Parser.storage(description);
-    findOrAddService(s, serviceId).data.storage.push(new StateItem(key, value));
+  account_storage: (s, blob, description) => {
+    const { serviceId, hash } = Parser.storage(description);
+    findOrAddService(s, serviceId).data.storage.push(StateItem.create({ hash, blob }));
   },
-  account_preimage: (s, value, description) => {
+  account_preimage: (s, blob, description) => {
     const { serviceId, hash } = Parser.preimage(description);
-    findOrAddService(s, serviceId).data.preimages.set(hash, new PreimageItem(hash, value));
+    findOrAddService(s, serviceId).data.preimages.set(hash, PreimageItem.create({ hash, blob }));
   },
-  service_account: (s, value, description) => {
+  service_account: (s, blob, description) => {
     const { serviceId } = Parser.info(description);
-    findOrAddService(s, serviceId).data.info = decode(ServiceAccountInfo.Codec, value);
+    findOrAddService(s, serviceId).data.info = decode(ServiceAccountInfo.Codec, blob);
   },
   c1: (s, value) => {
     s.authPools = decode(serialize.authPools.Codec, value);
@@ -175,7 +175,7 @@ function findOrAddService(s: PartialState, serviceId: ServiceId) {
   }
 
   const service = new Service(serviceId, {
-    info: ServiceAccountInfo.fromCodec({
+    info: ServiceAccountInfo.create({
       codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
       balance: tryAsU64(0),
       accumulateMinGas: tryAsServiceGas(10_000),

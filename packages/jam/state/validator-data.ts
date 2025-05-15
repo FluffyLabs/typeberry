@@ -25,11 +25,11 @@ export class ValidatorData extends WithDebug {
     metadata: codec.bytes(VALIDATOR_META_BYTES),
   });
 
-  static fromCodec({ ed25519, bandersnatch, bls, metadata }: CodecRecord<ValidatorData>) {
+  static create({ ed25519, bandersnatch, bls, metadata }: CodecRecord<ValidatorData>) {
     return new ValidatorData(bandersnatch, ed25519, bls, metadata);
   }
 
-  constructor(
+  private constructor(
     /** Bandersnatch public key. */
     public readonly bandersnatch: BandersnatchKey,
     /** ED25519 key data. */

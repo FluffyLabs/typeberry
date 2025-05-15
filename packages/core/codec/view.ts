@@ -75,7 +75,7 @@ export abstract class ObjectView<T> {
   materialize(): T {
     const fields = this.descriptorsKeys;
     const constructorParams = Object.fromEntries(fields.map((key) => [key, this.get(key).materialize()]));
-    return this.materializedConstructor.fromCodec(constructorParams as CodecRecord<T>);
+    return this.materializedConstructor.create(constructorParams as CodecRecord<T>);
   }
 
   /** Return an encoded value of that object. */

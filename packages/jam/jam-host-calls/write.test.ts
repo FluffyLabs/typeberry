@@ -27,7 +27,7 @@ function prepareAccounts(serviceId: ServiceId, { balance }: { balance?: bigint }
   const accounts = new TestAccounts();
   accounts.details.set(
     serviceId,
-    ServiceAccountInfo.fromCodec({
+    ServiceAccountInfo.create({
       codeHash: Bytes.fill(32, 5).asOpaque(),
       balance: tryAsU64(balance ?? 150_000),
       accumulateMinGas: tryAsServiceGas(0n),
