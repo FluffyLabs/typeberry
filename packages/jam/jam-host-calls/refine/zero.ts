@@ -16,7 +16,7 @@ const IN_OUT_REG = 7;
 /**
  * Initialize some pages of memory for writing for a nested PVM.
  *
- * https://graypaper.fluffylabs.dev/#/68eaa1f/352602352602?v=0.6.4
+ * https://graypaper.fluffylabs.dev/#/9a08063/353b00353b00?v=0.6.6
  */
 export class Zero implements HostCallHandler {
   index = tryAsHostCallIndex(23);
