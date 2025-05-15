@@ -10,7 +10,7 @@ import { type AccumulationPartialState, EjectError } from "./partial-state";
 const IN_OUT_REG = 7;
 
 /**
- * Remove the current service id and transfer or burn the remaining account balance to some other account.
+ * Remove the provided service account and transfer the remaining balance to current account.
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/373b01373b01?v=0.6.6
  */
