@@ -13,10 +13,10 @@ const IN_OUT_REG = 7;
 /**
  * Request a preimage to be available.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/33fd0033fd00
+ * https://graypaper.fluffylabs.dev/#/9a08063/383b00383b00?v=0.6.6
  */
 export class Solicit implements HostCallHandler {
-  index = tryAsHostCallIndex(13);
+  index = tryAsHostCallIndex(14);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
@@ -45,6 +45,8 @@ export class Solicit implements HostCallHandler {
     }
 
     const e = result.error;
+    // TODO [MaSo] Shouldn't this set the preimage if `AlreadyRequested`
+    // instead of returning an error?
     if (e === RequestPreimageError.AlreadyAvailable || e === RequestPreimageError.AlreadyRequested) {
       regs.set(IN_OUT_REG, HostCallResult.HUH);
       return;
