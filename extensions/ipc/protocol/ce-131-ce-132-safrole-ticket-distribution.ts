@@ -25,11 +25,11 @@ export class TicketDistributionRequest extends WithDebug {
     ticket: SignedTicket.Codec,
   });
 
-  static fromCodec({ epochIndex, ticket }: CodecRecord<TicketDistributionRequest>) {
+  static create({ epochIndex, ticket }: CodecRecord<TicketDistributionRequest>) {
     return new TicketDistributionRequest(epochIndex, ticket);
   }
 
-  constructor(
+  private constructor(
     public readonly epochIndex: Epoch,
     public readonly ticket: SignedTicket,
   ) {
@@ -66,7 +66,7 @@ export class ClientHandler<T extends STREAM_KIND> implements StreamHandler<T> {
   onClose() {}
 
   sendTicket(sender: StreamSender, epochIndex: Epoch, ticket: SignedTicket) {
-    const request = new TicketDistributionRequest(epochIndex, ticket);
+    const request = TicketDistributionRequest.create({ epochIndex, ticket });
     sender.send(Encoder.encodeObject(TicketDistributionRequest.Codec, request));
     sender.close();
   }

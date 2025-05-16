@@ -77,7 +77,13 @@ export namespace serialize {
   export const safrole: StateCodec<SafroleData> = {
     key: keys.index(StateEntry.Gamma),
     Codec: SafroleData.Codec,
-    extract: (s) => new SafroleData(s.nextValidatorData, s.epochRoot, s.sealingKeySeries, s.ticketsAccumulator),
+    extract: (s) =>
+      SafroleData.create({
+        nextValidatorData: s.nextValidatorData,
+        epochRoot: s.epochRoot,
+        sealingKeySeries: s.sealingKeySeries,
+        ticketsAccumulator: s.ticketsAccumulator,
+      }),
   };
 
   /** C(5): https://graypaper.fluffylabs.dev/#/85129da/383d02383d02?v=0.6.3 */

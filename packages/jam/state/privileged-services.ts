@@ -8,11 +8,11 @@ export class AutoAccumulate {
     gasLimit: codec.u64.asOpaque<ServiceGas>(),
   });
 
-  static fromCodec({ service, gasLimit }: CodecRecord<AutoAccumulate>) {
+  static create({ service, gasLimit }: CodecRecord<AutoAccumulate>) {
     return new AutoAccumulate(service, gasLimit);
   }
 
-  constructor(
+  private constructor(
     /** Service id that auto-accumulates. */
     readonly service: ServiceId,
     /** Gas limit for auto-accumulation. */
@@ -31,12 +31,7 @@ export class PrivilegedServices {
     autoAccumulateServices: codec.sequenceVarLen(AutoAccumulate.Codec),
   });
 
-  static fromCodec({
-    manager,
-    authManager,
-    validatorsManager,
-    autoAccumulateServices,
-  }: CodecRecord<PrivilegedServices>) {
+  static create({ manager, authManager, validatorsManager, autoAccumulateServices }: CodecRecord<PrivilegedServices>) {
     return new PrivilegedServices(manager, authManager, validatorsManager, autoAccumulateServices);
   }
 

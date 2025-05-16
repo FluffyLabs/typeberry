@@ -12,7 +12,7 @@ export const reportedWorkPackageFromJson = json.object<JsonReportedWorkPackageIn
     exports_root: fromJson.bytes32(),
   },
   ({ hash, exports_root }) => {
-    return new WorkPackageInfo(hash, exports_root);
+    return WorkPackageInfo.create({ workPackageHash: hash, segmentTreeRoot: exports_root });
   },
 );
 

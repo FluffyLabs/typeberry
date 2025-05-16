@@ -90,7 +90,7 @@ export class Statistics {
       this.chainSpec,
     );
 
-    return StatisticsData.fromCodec({
+    return StatisticsData.create({
       ...this.state.statistics,
       current: emptyValidators,
       previous: this.state.statistics.current,

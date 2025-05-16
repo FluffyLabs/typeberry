@@ -18,11 +18,11 @@ export class BlockState extends WithDebug {
     reported: codecHashDictionary(WorkPackageInfo.Codec, (x) => x.workPackageHash),
   });
 
-  static fromCodec({ headerHash, mmr, postStateRoot, reported }: CodecRecord<BlockState>) {
+  static create({ headerHash, mmr, postStateRoot, reported }: CodecRecord<BlockState>) {
     return new BlockState(headerHash, mmr, postStateRoot, reported);
   }
 
-  constructor(
+  private constructor(
     /** Header hash. */
     public readonly headerHash: HeaderHash,
     /** Merkle mountain range peaks. */

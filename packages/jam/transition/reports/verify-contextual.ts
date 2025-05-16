@@ -37,10 +37,10 @@ export function verifyContextualValidity(
   for (const guaranteeView of input.guarantees) {
     const guarantee = guaranteeView.materialize();
     contexts.push(guarantee.report.context);
-    const info = new WorkPackageInfo(
-      guarantee.report.workPackageSpec.hash,
-      guarantee.report.workPackageSpec.exportsRoot,
-    );
+    const info = WorkPackageInfo.create({
+      workPackageHash: guarantee.report.workPackageSpec.hash,
+      segmentTreeRoot: guarantee.report.workPackageSpec.exportsRoot,
+    });
     currentWorkPackages.set(info.workPackageHash, info);
     prerequisiteHashes.insertAll(guarantee.report.context.prerequisites);
     segmentRootLookupHashes.insertAll(guarantee.report.segmentRootLookup.map((x) => x.workPackageHash));
@@ -113,7 +113,10 @@ export function verifyContextualValidity(
       let root = currentWorkPackages.get(lookup.workPackageHash);
       if (root === undefined) {
         const exportsRoot = recentlyReported.get(lookup.workPackageHash);
-        root = exportsRoot !== undefined ? new WorkPackageInfo(lookup.workPackageHash, exportsRoot) : undefined;
+        root =
+          exportsRoot !== undefined
+            ? WorkPackageInfo.create({ workPackageHash: lookup.workPackageHash, segmentTreeRoot: exportsRoot })
+            : undefined;
       }
       if (root === undefined || !root.segmentTreeRoot.isEqualTo(lookup.segmentTreeRoot)) {
         return Result.error(

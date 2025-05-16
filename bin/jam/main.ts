@@ -185,9 +185,9 @@ async function initializeDatabase(
   // looks like a fresh db, initialize the state.
   const genesisHeader = Header.empty();
   const genesisHeaderHash = blake2b.hashBytes(Encoder.encodeObject(Header.Codec, genesisHeader, spec)).asOpaque();
-  const genesisBlock = new Block(
-    genesisHeader,
-    Extrinsic.fromCodec({
+  const genesisBlock = Block.create({
+    header: genesisHeader,
+    extrinsic: Extrinsic.create({
       tickets: asKnownSize([]),
       preimages: [],
       assurances: asKnownSize([]),
@@ -198,7 +198,7 @@ async function initializeDatabase(
         faults: [],
       },
     }),
-  );
+  });
   const blockView = Decoder.decodeObject(Block.Codec.View, Encoder.encodeObject(Block.Codec, genesisBlock, spec), spec);
 
   // write to db

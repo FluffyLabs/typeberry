@@ -1,10 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsEpoch } from "@typeberry/block";
-import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "@typeberry/block/crypto";
-import { SignedTicket, type TicketAttempt } from "@typeberry/block/tickets";
+import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/block/crypto";
+import { SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
-import type { U32 } from "@typeberry/numbers";
 import { MessageHandler, type MessageSender } from "../handler";
 import {
   ClientHandler,
@@ -12,8 +11,11 @@ import {
   ServerHandler,
 } from "./ce-131-ce-132-safrole-ticket-distribution";
 
-const TEST_EPOCH = tryAsEpoch(1 as U32);
-const TEST_TICKET = new SignedTicket(0 as TicketAttempt, Bytes.zero(BANDERSNATCH_PROOF_BYTES) as BandersnatchProof);
+const TEST_EPOCH = tryAsEpoch(1);
+const TEST_TICKET = SignedTicket.create({
+  attempt: tryAsTicketAttempt(0),
+  signature: Bytes.zero(BANDERSNATCH_PROOF_BYTES).asOpaque(),
+});
 
 class FakeMessageSender implements MessageSender {
   constructor(

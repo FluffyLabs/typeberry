@@ -3,7 +3,6 @@ import { describe, it } from "node:test";
 import {
   type CoreIndex,
   Extrinsic,
-  type HeaderHash,
   tryAsCoreIndex,
   tryAsPerValidator,
   tryAsServiceGas,
@@ -22,7 +21,7 @@ import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/crypto";
+import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { isU16, isU32, tryAsU32 } from "@typeberry/numbers";
 import { CoreStatistics, ServiceStatistics, StatisticsData, ValidatorStatistics, tryAsPerCore } from "@typeberry/state";
@@ -53,7 +52,7 @@ describe("Statistics", () => {
   });
 
   function getExtrinsic(overrides: Partial<Extrinsic> = {}): Extrinsic {
-    return Extrinsic.fromCodec({
+    return Extrinsic.create({
       assurances: overrides.assurances ?? asKnownSize([]),
       guarantees: overrides.guarantees ?? asKnownSize([]),
       disputes: overrides.disputes ?? asKnownSize([]),
@@ -79,7 +78,12 @@ describe("Statistics", () => {
       tinyChainSpec,
     );
     const serviceStatistics = new Map([[tryAsServiceId(0), ServiceStatistics.empty()]]);
-    const statisticsData = new StatisticsData(currentStatistics, lastStatistics, coreStatistics, serviceStatistics);
+    const statisticsData = StatisticsData.create({
+      current: currentStatistics,
+      previous: lastStatistics,
+      cores: coreStatistics,
+      services: serviceStatistics,
+    });
     const state: StatisticsState = {
       statistics: statisticsData,
       timeslot: tryAsTimeSlot(previousSlot),
@@ -173,11 +177,11 @@ describe("Statistics", () => {
     });
 
     const createAssurance = (validatorIndex: number, bitvec?: BitVec) =>
-      AvailabilityAssurance.fromCodec({
-        anchor: Bytes.zero(HASH_SIZE).asOpaque<HeaderHash>(),
+      AvailabilityAssurance.create({
+        anchor: Bytes.zero(HASH_SIZE).asOpaque(),
         bitfield: bitvec ?? BitVec.fromBlob(Bytes.zero(HASH_SIZE).raw, tinyChainSpec.coresCount),
         validatorIndex: tryAsValidatorIndex(validatorIndex),
-        signature: Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque<Ed25519Signature>(),
+        signature: Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque(),
       });
 
     const countGasUsed = (count: number, gasUsed: bigint) => ({
@@ -188,7 +192,7 @@ describe("Statistics", () => {
     function createWorkReport(coreIndex: CoreIndex): WorkReport {
       const source = BytesBlob.parseBlob(testWorkReport);
       const report = Decoder.decodeObject(WorkReport.Codec, source, tinyChainSpec);
-      return WorkReport.fromCodec({
+      return WorkReport.create({
         ...report,
         coreIndex: coreIndex,
       });
@@ -204,7 +208,12 @@ describe("Statistics", () => {
         tinyChainSpec,
       );
       const serviceStatistics = new Map([[serviceIndex, ServiceStatistics.empty()]]);
-      const statisticsData = new StatisticsData(currentStatistics, lastStatistics, coreStatistics, serviceStatistics);
+      const statisticsData = StatisticsData.create({
+        current: currentStatistics,
+        previous: lastStatistics,
+        cores: coreStatistics,
+        services: serviceStatistics,
+      });
       const state: StatisticsState = {
         statistics: statisticsData,
         timeslot: tryAsTimeSlot(previousSlot),

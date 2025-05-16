@@ -33,11 +33,11 @@ export class AvailabilityAssignment extends WithDebug {
     timeout: codec.u32.asOpaque<TimeSlot>(),
   });
 
-  static fromCodec({ workReport, timeout }: CodecRecord<AvailabilityAssignment>) {
+  static create({ workReport, timeout }: CodecRecord<AvailabilityAssignment>) {
     return new AvailabilityAssignment(workReport, timeout);
   }
 
-  constructor(
+  private constructor(
     /** Work report assigned to a core. */
     public readonly workReport: WithHash<WorkReportHash, WorkReport>,
     /** Time slot at which the report becomes obsolete. */
