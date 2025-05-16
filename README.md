@@ -39,6 +39,10 @@ $ npm start
 
 ### Running the JSON RPC
 
+JSON-RPC does not require `typeberry` to be running, so we just need to point the binary to the correct database.
+
+Note the DB needs to be already initialized.
+
 ```bash
 $ npm start -w @typeberry/rpc -- --genesis-root [genesis state root]
 ```
