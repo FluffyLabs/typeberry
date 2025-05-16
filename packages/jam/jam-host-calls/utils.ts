@@ -14,7 +14,7 @@ export function legacyGetServiceId(regNumber: number, regs: IHostCallRegisters, 
   return serviceId === CURRENT_SERVICE_ID ? currentServiceId : tryAsServiceId(serviceId);
 }
 
-export function getServiceId(
+export function getServiceIdOrCurrent(
   regNumber: number,
   regs: IHostCallRegisters,
   currentServiceId: ServiceId,
@@ -24,10 +24,10 @@ export function getServiceId(
     return currentServiceId;
   }
 
-  return getServiceIdFromU64(regValue);
+  return getServiceId(regValue);
 }
 
-export function getServiceIdFromU64(serviceId: U64): ServiceId | null {
+export function getServiceId(serviceId: U64): ServiceId | null {
   const { lower, upper } = u64IntoParts(serviceId);
 
   if (upper === 0) {

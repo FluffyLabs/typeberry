@@ -7,7 +7,7 @@ import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { HostCallResult } from "./results";
-import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
+import { CURRENT_SERVICE_ID, getServiceIdOrCurrent } from "./utils";
 
 /** Account data interface for info host calls. */
 export interface AccountsInfo {
@@ -44,7 +44,7 @@ export class Info implements HostCallHandler {
     memory: IHostCallMemory,
   ): Promise<undefined | PvmExecution> {
     // t
-    const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
+    const serviceId = getServiceIdOrCurrent(IN_OUT_REG, regs, this.currentServiceId);
     // o
     const outputStart = regs.get(8);
 
