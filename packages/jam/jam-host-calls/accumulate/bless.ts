@@ -53,33 +53,27 @@ export class Bless implements HostCallHandler {
     const numberOfItemsClamped = clampU64ToU32(numberOfItems);
 
     // `g`: dictionary of serviceId -> gas that auto-accumulate every block
-    const g = new Map<ServiceId, Gas>();
+    const g = new Array<[ServiceId, Gas]>();
 
-    const result = new Uint8Array(tryAsExactBytes(serviceIdAndGasCodec.sizeHint) * numberOfItemsClamped);
-    const memoryReadResult = memory.loadInto(result, sourceStart);
-    if (memoryReadResult.isError) {
-      return PvmExecution.Panic;
-    }
-
-    // Decode the items.
-    // The decoder will panic if the data is not valid.
+    // TODO [ToDr] Is it better to read everything in one go instead?
+    const result = new Uint8Array(tryAsExactBytes(serviceIdAndGasCodec.sizeHint));
     const decoder = Decoder.fromBlob(result);
-    let previousServiceId = 0;
+    let memIndex = sourceStart;
     for (let i = 0n; i < numberOfItems; i += 1n) {
+      // load next item and reset the decoder
+      decoder.resetTo(0);
+      const memoryReadResult = memory.loadInto(result, memIndex);
+      if (memoryReadResult.isError) {
+        return PvmExecution.Panic;
+      }
+
       const { serviceId, gas } = decoder.object(serviceIdAndGasCodec);
-      // Since the GP does not allow non-canonical representation of encodings,
-      // a set with duplicates should not be decoded correctly.
-      if (g.has(serviceId)) {
-        return PvmExecution.Panic;
-      }
-      // Verify if the items are properly sorted.
-      if (previousServiceId > serviceId) {
-        return PvmExecution.Panic;
-      }
-      g.set(serviceId, gas);
-      previousServiceId = serviceId;
+
+      g.push([serviceId, gas]);
+
+      // we allow the index to go beyond `MEMORY_SIZE` (i.e. 2**32) and have the next `loadInto` fail with page fault.
+      memIndex = tryAsU64(memIndex + tryAsU64(decoder.bytesRead()));
     }
-    decoder.finish();
 
     if (manager === null || authorization === null || validator === null) {
       regs.set(IN_OUT_REG, HostCallResult.WHO);

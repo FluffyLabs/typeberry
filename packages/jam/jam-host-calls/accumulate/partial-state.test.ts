@@ -101,7 +101,7 @@ export class TestAccumulate implements AccumulationPartialState {
     this.validatorsData.push(validatorsData);
   }
 
-  updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: Map<ServiceId, Gas>): void {
+  updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: Array<[ServiceId, Gas]>): void {
     this.privilegedServices.push([m, a, v, g]);
   }
 

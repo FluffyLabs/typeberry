@@ -197,7 +197,7 @@ export interface AccumulationPartialState {
    * `g`: dictionary of serviceId -> gas that auto-accumulate every block
    *
    */
-  updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: Map<ServiceId, Gas>): void;
+  updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: Array<[ServiceId, Gas]>): void;
 
   /**
    * Yield accumulation trie result hash.
