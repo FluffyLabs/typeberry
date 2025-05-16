@@ -35,7 +35,11 @@ import {
 import { PendingTransfer } from "./pending-transfer";
 import { StateUpdate } from "./state-update";
 
-/** `D`: https://graypaper.fluffylabs.dev/#/9a08063/445800445800?v=0.6.6 */
+/**
+ * `D`: Period in timeslots after which an unreferenced preimage may be expunged.
+ *
+ * https://graypaper.fluffylabs.dev/#/9a08063/445800445800?v=0.6.6
+ */
 export const PREIMAGE_EXPUNGE_PERIOD = 19200;
 
 export class PartialStateDb implements PartialState {
