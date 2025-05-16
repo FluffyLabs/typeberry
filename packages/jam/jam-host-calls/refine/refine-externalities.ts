@@ -8,21 +8,15 @@ import { Status } from "@typeberry/pvm-interpreter/status";
 import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/utils";
 
 /**
- * Running PVM instance identifier.
+ * Program counter is a 64-bit unsigned integer that points to the next instruction
  *
- * TODO [ToDr] [crit] GP does not specify a limit for this,
- * but we do store that in the registers.
- * Most likely it's impossible to have enough gas to keep
- * creating inner PVM instances until this overflows,
- * however a `bigint` might be a safer choice here for 64-bit
- * PVM?
+ * https://graypaper.fluffylabs.dev/#/9a08063/2e09012e0901?v=0.6.6
  */
-
-/** https://graypaper.fluffylabs.dev/#/68eaa1f/3e30003e3000?v=0.6.4 */
 export type ProgramCounter = Opaque<U64, "ProgramCounter[u64]">;
 /** Convert a number into ProgramCounter. */
 export const tryAsProgramCounter = (v: number | bigint): ProgramCounter => asOpaqueType(tryAsU64(v));
 
+/** Running PVM instance identifier. */
 export type MachineId = Opaque<U64, "MachineId[u64]">;
 /** Convert a number into PVM instance identifier. */
 export const tryAsMachineId = (v: number | bigint): MachineId => asOpaqueType(tryAsU64(v));
@@ -69,13 +63,16 @@ export enum PeekPokeError {
   NoMachine = 2,
 }
 
-/** Error for `zero` and `void` host calls when machine is not found. */
+export enum ZeroVoidError {
+  /** No machine under given machine index. */
+  NoMachine = 0,
+  /** Attempting to void or zero non-accessible page. */
+  InvalidPage = 1,
+}
+
+/** Error machine is not found. */
 export const NoMachineError = Symbol("Machine index not found.");
 export type NoMachineError = typeof NoMachineError;
-
-/** Error for `void` host call when there is already a non-accessible page in the range. */
-export const InvalidPageError = Symbol("Attempting to void non-accessible page.");
-export type InvalidPageError = typeof InvalidPageError;
 
 /** Too many segments already exported. */
 export const SegmentExportError = Symbol("Too many segments already exported.");
@@ -87,14 +84,10 @@ export interface RefineExternalities {
   machineExpunge(machineIndex: MachineId): Promise<Result<ProgramCounter, NoMachineError>>;
 
   /** Set given range of pages as non-accessible and re-initialize them with zeros. */
-  machineVoidPages(
-    machineIndex: MachineId,
-    pageStart: U64,
-    pageCount: U64,
-  ): Promise<Result<OK, NoMachineError | InvalidPageError>>;
+  machineVoidPages(machineIndex: MachineId, pageStart: U64, pageCount: U64): Promise<Result<OK, ZeroVoidError>>;
 
   /** Set given range of pages as writeable and initialize them with zeros. */
-  machineZeroPages(machineIndex: MachineId, pageStart: U64, pageCount: U64): Promise<Result<OK, NoMachineError>>;
+  machineZeroPages(machineIndex: MachineId, pageStart: U64, pageCount: U64): Promise<Result<OK, ZeroVoidError>>;
 
   /** Copy a fragment of memory from `machineIndex` into given destination memory. */
   machinePeekFrom(
@@ -132,5 +125,5 @@ export interface RefineExternalities {
   exportSegment(segment: Segment): Result<SegmentIndex, SegmentExportError>;
 
   /** Lookup a historical preimage. */
-  historicalLookup(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null>;
+  historicalLookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null>;
 }
