@@ -7,7 +7,7 @@ import { WithDebug } from "@typeberry/utils";
  * https://graypaper.fluffylabs.dev/#/579bd12/073101073c01
  *
  */
-export const HASH_SIZE = 32 as const;
+export const HASH_SIZE = 32;
 export type HASH_SIZE = typeof HASH_SIZE;
 
 /** Opaque, unknown hash. */
