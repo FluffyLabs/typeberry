@@ -7,7 +7,7 @@ import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-i
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { OK, Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
-import { type MachineId, NoMachineError, tryAsMachineId } from "./refine-externalities";
+import { type MachineId, ZeroVoidError, tryAsMachineId } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
 import { Zero } from "./zero";
 
@@ -29,7 +29,7 @@ function prepareRegsAndMemory(machineId: MachineId, pageStart: number, pageCount
   };
 }
 
-function prepareTest(result: Result<OK, NoMachineError>, pageStart: number, pageCount: number) {
+function prepareTest(result: Result<OK, ZeroVoidError>, pageStart: number, pageCount: number) {
   const refine = new TestRefineExt();
   const zero = new Zero(refine);
   zero.currentServiceId = tryAsServiceId(10_000);
@@ -57,7 +57,7 @@ describe("HostCalls: Zero", () => {
   });
 
   it("should return HUH when page is too low", async () => {
-    const { zero, registers } = prepareTest(Result.ok(OK), 12, 5);
+    const { zero, registers } = prepareTest(Result.error(ZeroVoidError.InvalidPage), 12, 5);
 
     // when
     const result = await zero.execute(gas, registers);
@@ -68,7 +68,7 @@ describe("HostCalls: Zero", () => {
   });
 
   it("should return HUH when page is too large", async () => {
-    const { zero, registers } = prepareTest(Result.ok(OK), 2 ** 32 - 1, 12_000);
+    const { zero, registers } = prepareTest(Result.error(ZeroVoidError.InvalidPage), 2 ** 32 - 1, 12_000);
 
     // when
     const result = await zero.execute(gas, registers);
@@ -79,7 +79,7 @@ describe("HostCalls: Zero", () => {
   });
 
   it("should return HUH when page is too large 2", async () => {
-    const { zero, registers } = prepareTest(Result.ok(OK), 2 ** 20 - 5, 5);
+    const { zero, registers } = prepareTest(Result.error(ZeroVoidError.InvalidPage), 2 ** 20 - 5, 5);
 
     // when
     const result = await zero.execute(gas, registers);
@@ -90,7 +90,7 @@ describe("HostCalls: Zero", () => {
   });
 
   it("should return WHO if machine is not known", async () => {
-    const { zero, registers } = prepareTest(Result.error(NoMachineError), 10_000, 5);
+    const { zero, registers } = prepareTest(Result.error(ZeroVoidError.NoMachine), 10_000, 5);
 
     // when
     const result = await zero.execute(gas, registers);
