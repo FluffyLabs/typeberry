@@ -53,7 +53,6 @@ export class Bless implements HostCallHandler {
     // `g`: array of key-value pairs serviceId -> gas that auto-accumulate every block
     const autoAccumulateEntries = new Array<[ServiceId, ServiceGas]>();
 
-    // TODO [ToDr] Is it better to read everything in one go instead?
     const result = new Uint8Array(tryAsExactBytes(serviceIdAndGasCodec.sizeHint));
     const decoder = Decoder.fromBlob(result);
     let memIndex = sourceStart;
