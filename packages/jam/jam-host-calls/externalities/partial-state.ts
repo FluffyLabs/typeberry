@@ -4,8 +4,9 @@ import type { PreimageHash } from "@typeberry/block/preimage";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
-import type { U32, U64 } from "@typeberry/numbers";
-import type { LookupHistorySlots, ValidatorData } from "@typeberry/state";
+import type { U64 } from "@typeberry/numbers";
+import type { LookupHistorySlots } from "@typeberry/state";
+import type { ValidatorData } from "@typeberry/state";
 import type { OK, Result } from "@typeberry/utils";
 
 /** Size of the transfer memo. */
@@ -120,11 +121,11 @@ export enum TransferError {
  * for `BalanceBelowThreshold`, since it doesn't matter,
  * because the account is removed anyway.
  */
-export enum QuitError {
-  /** The destination service does not exist. */
-  DestinationNotFound = 0,
-  /** The supplied gas is too low to execute `OnTransfer` entry point. */
-  GasTooLow = 1,
+export enum EjectError {
+  /** The service does not exist or invalid. */
+  InvalidService = 0,
+  /** Preimage is not available or too old. */
+  InvalidPreimage = 1,
 }
 
 /**
@@ -161,21 +162,11 @@ export interface PartialState {
   forgetPreimage(hash: PreimageHash, length: U64): Result<OK, null>;
 
   /**
-   * Remove current service account and transfer all remaining
-   * funds to the destination account (i.e. invoke transfer).
+   * Remove the provided source account and transfer the remaining account balance to current service.
    *
-   * `a`: amount to transfer = balance - threshold + B_S: basic minimum balance
+   * https://graypaper.fluffylabs.dev/#/9a08063/37b60137b601?v=0.6.6
    */
-  quitAndTransfer(
-    destination: ServiceId,
-    suppliedGas: ServiceGas,
-    memo: Bytes<TRANSFER_MEMO_BYTES>,
-  ): Result<OK, QuitError>;
-
-  /**
-   * Remove current service account and burn the remaining funds.
-   */
-  quitAndBurn(): void;
+  eject(from: ServiceId | null, hash: OpaqueHash): Promise<Result<OK, EjectError>>;
 
   /**
    * Transfer given `amount` of funds to the `destination`,
@@ -193,14 +184,14 @@ export interface PartialState {
    * Create a new service with given codeHash, length, gas and allowance.
    *
    * Returns a newly assigned id of that service.
-   * https://graypaper.fluffylabs.dev/#/579bd12/2e14012e1401
+   * https://graypaper.fluffylabs.dev/#/9a08063/2f59022f5902?v=0.6.6
    *
    * An error can be returned in case the account does not
    * have the required balance.
    */
   newService(
     codeHash: CodeHash,
-    codeLength: U32,
+    codeLength: U64,
     gas: ServiceGas,
     allowance: ServiceGas,
   ): Result<ServiceId, "insufficient funds">;
@@ -232,10 +223,10 @@ export interface PartialState {
    * `m`: manager service (can change priviledged services)
    * `a`: manages authorization queue
    * `v`: manages validator keys
-   * `g`: dictionary of serviceId -> gas that auto-accumulate every block
+   * `g`: collection of serviceId -> gas that auto-accumulate every block
    *
    */
-  updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: Map<ServiceId, ServiceGas>): void;
+  updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: [ServiceId, ServiceGas][]): void;
 
   /**
    * Yield accumulation trie result hash.

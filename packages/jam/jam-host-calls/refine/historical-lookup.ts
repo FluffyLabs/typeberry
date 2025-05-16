@@ -11,7 +11,7 @@ import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import type { RefineExternalities } from "../externalities/refine-externalities";
 import { HostCallResult } from "../results";
-import { CURRENT_SERVICE_ID, getServiceId } from "../utils";
+import { CURRENT_SERVICE_ID, getServiceIdOrCurrent } from "../utils";
 
 const IN_OUT_REG = 7;
 
@@ -33,7 +33,7 @@ export class HistoricalLookup implements HostCallHandler {
     memory: IHostCallMemory,
   ): Promise<PvmExecution | undefined> {
     // a
-    const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
+    const serviceId = getServiceIdOrCurrent(IN_OUT_REG, regs, this.currentServiceId);
     // h
     const hashStart = regs.get(8);
     // o

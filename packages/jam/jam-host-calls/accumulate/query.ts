@@ -20,7 +20,7 @@ const UPPER_BITS_SHIFT = 32n;
 /**
  * Query the state of the accumulator.
  *
- * https://graypaper.fluffylabs.dev/#/5f542d7/323002323002
+ * https://graypaper.fluffylabs.dev/#/9a08063/373002373002?v=0.6.6
  */
 export class Query implements HostCallHandler {
   index = tryAsHostCallIndex(13);
