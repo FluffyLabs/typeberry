@@ -1,6 +1,6 @@
 import { SEGMENT_BYTES, type Segment } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import { tryAsU64 } from "@typeberry/numbers";
+import { minU64, tryAsU64 } from "@typeberry/numbers";
 import {
   type HostCallHandler,
   type IHostCallMemory,
@@ -18,7 +18,7 @@ const IN_OUT_REG = 7;
 /**
  * Export a segment to be imported by some future `refine` invokation.
  *
- * https://graypaper.fluffylabs.dev/#/68eaa1f/346902346902?v=0.6.4
+ * https://graypaper.fluffylabs.dev/#/9a08063/341d01341d01?v=0.6.6
  */
 export class Export implements HostCallHandler {
   index = tryAsHostCallIndex(19);
@@ -35,11 +35,11 @@ export class Export implements HostCallHandler {
     // `p`: segment start address
     const segmentStart = regs.get(IN_OUT_REG);
     // `z`: segment bounded length
-    const segmentLengthBig = regs.get(8);
-    const segmentLength = segmentLengthBig > BigInt(SEGMENT_BYTES) ? SEGMENT_BYTES : Number(segmentLengthBig);
-    // destination (padded with zeros).
-    const segment: Segment = Bytes.zero(SEGMENT_BYTES);
+    // NOTE [MaSo] it's always safe to cast to u32 (number) because the length is bounded by SEGMENT_BYTES.
+    const segmentLength = Number(minU64(regs.get(8), tryAsU64(SEGMENT_BYTES)));
 
+    // `x`: destination (padded with zeros).
+    const segment: Segment = Bytes.zero(SEGMENT_BYTES);
     const segmentReadResult = memory.loadInto(segment.raw.subarray(0, segmentLength), segmentStart);
     if (segmentReadResult.isError) {
       return PvmExecution.Panic;

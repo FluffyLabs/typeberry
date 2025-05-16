@@ -1,4 +1,3 @@
-import { sumU64 } from "@typeberry/numbers";
 import {
   type HostCallHandler,
   type IHostCallRegisters,
@@ -6,13 +5,11 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { MAX_NUMBER_OF_PAGES, RESERVED_NUMBER_OF_PAGES } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { assertNever } from "@typeberry/utils";
 import {
-  InvalidPageError,
-  NoMachineError,
   type RefineExternalities,
   tryAsMachineId,
+  ZeroVoidError,
 } from "../externalities/refine-externalities";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
@@ -22,7 +19,7 @@ const IN_OUT_REG = 7;
 /**
  * Mark some pages as unavailable and zero their content.
  *
- * https://graypaper.fluffylabs.dev/#/68eaa1f/35d50235d502?v=0.6.4
+ * https://graypaper.fluffylabs.dev/#/9a08063/35ea0035ea00?v=0.6.6
  */
 export class Void implements HostCallHandler {
   index = tryAsHostCallIndex(24);
@@ -39,23 +36,25 @@ export class Void implements HostCallHandler {
     // `c`: page count
     const pageCount = regs.get(9);
 
-    const endPage = sumU64(pageStart, pageCount);
-    const isWithinBounds = pageStart >= RESERVED_NUMBER_OF_PAGES && endPage.value < MAX_NUMBER_OF_PAGES;
-    if (endPage.overflow || !isWithinBounds) {
-      regs.set(IN_OUT_REG, HostCallResult.HUH);
-      return;
-    }
-
     const voidResult = await this.refine.machineVoidPages(machineIndex, pageStart, pageCount);
 
     if (voidResult.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);
-    } else if (voidResult.error === NoMachineError) {
-      regs.set(IN_OUT_REG, HostCallResult.WHO);
-    } else if (voidResult.error === InvalidPageError) {
-      regs.set(IN_OUT_REG, HostCallResult.HUH);
-    } else {
-      assertNever(voidResult.error);
+      return;
     }
+
+    const e = voidResult.error;
+
+    if (e === ZeroVoidError.NoMachine) {
+      regs.set(IN_OUT_REG, HostCallResult.WHO);
+      return;
+    }
+
+    if (e === ZeroVoidError.InvalidPage) {
+      regs.set(IN_OUT_REG, HostCallResult.HUH);
+      return;
+    }
+
+    assertNever(e);
   }
 }
