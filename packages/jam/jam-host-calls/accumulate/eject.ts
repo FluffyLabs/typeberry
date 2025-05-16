@@ -3,6 +3,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
+import { assertNever } from "@typeberry/utils";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID, getServiceId } from "../utils";
 import { type AccumulationPartialState, EjectError } from "./partial-state";
@@ -56,8 +57,10 @@ export class Eject implements HostCallHandler {
 
     if (e === EjectError.InvalidService) {
       regs.set(IN_OUT_REG, HostCallResult.WHO);
-    } else {
+    } else if (e === EjectError.InvalidPreimage) {
       regs.set(IN_OUT_REG, HostCallResult.HUH);
+    } else {
+      assertNever(e);
     }
   }
 }
