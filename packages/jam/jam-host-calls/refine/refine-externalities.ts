@@ -7,17 +7,16 @@ import type { ProgramDecoderError } from "@typeberry/pvm-interpreter/program-dec
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/utils";
 
-/** Running PVM instance identifier. */
-
 /**
  * Program counter is a 64-bit unsigned integer that points to the next instruction
  *
- * https://graypaper.fluffylabs.dev/#/68eaa1f/3e30003e3000?v=0.6.4
+ * https://graypaper.fluffylabs.dev/#/9a08063/2e09012e0901?v=0.6.6
  */
 export type ProgramCounter = Opaque<U64, "ProgramCounter[u64]">;
 /** Convert a number into ProgramCounter. */
 export const tryAsProgramCounter = (v: number | bigint): ProgramCounter => asOpaqueType(tryAsU64(v));
 
+/** Running PVM instance identifier. */
 export type MachineId = Opaque<U64, "MachineId[u64]">;
 /** Convert a number into PVM instance identifier. */
 export const tryAsMachineId = (v: number | bigint): MachineId => asOpaqueType(tryAsU64(v));
@@ -67,7 +66,7 @@ export enum PeekPokeError {
 export enum ZeroVoidError {
   /** No machine under given machine index. */
   NoMachine = 0,
-  /** Attempting to void non-accessible page. */
+  /** Attempting to void or zero non-accessible page. */
   InvalidPage = 1,
 }
 
