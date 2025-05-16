@@ -1,7 +1,7 @@
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
@@ -14,9 +14,7 @@ const IN_OUT_REG = 7;
 /**
  * Create a new service account.
  *
- * // TODO [ToDr] Update to latest GP
- *
- * https://graypaper.fluffylabs.dev/#/579bd12/323f00323f00
+ * https://graypaper.fluffylabs.dev/#/9a08063/364602364602?v=0.6.6
  */
 export class New implements HostCallHandler {
   index = tryAsHostCallIndex(9);
@@ -33,7 +31,7 @@ export class New implements HostCallHandler {
     // `o`
     const codeHashStart = regs.get(IN_OUT_REG);
     // `l`
-    const codeLength = tryAsU32(Number(regs.get(8)));
+    const codeLength = regs.get(8);
     // `g`
     const gas = regs.get(9);
     // `m`

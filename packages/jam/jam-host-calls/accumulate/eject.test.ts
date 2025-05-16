@@ -2,6 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
+import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { HostCallMemory } from "@typeberry/pvm-host-calls";
@@ -11,30 +12,29 @@ import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { Result } from "@typeberry/utils";
+import { OK, Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
-import { CURRENT_SERVICE_ID } from "../utils";
 import { Eject } from "./eject";
-import { QuitError, TRANSFER_MEMO_BYTES } from "./partial-state";
+import { EjectError } from "./partial-state";
 import { TestAccumulate } from "./partial-state.test";
 
 const RESULT_REG = 7;
-const DESTINATION_REG = 7;
-const MEMO_START_REG = 8;
+const SOURCE_REG = 7;
+const HASH_START_REG = 8;
 
 function prepareRegsAndMemory(
-  destination: ServiceId,
-  memo: Bytes<TRANSFER_MEMO_BYTES>,
-  { skipMemo = false }: { skipMemo?: boolean } = {},
+  source: ServiceId,
+  hash: Bytes<HASH_SIZE>,
+  { skipHash = false }: { skipHash?: boolean } = {},
 ) {
-  const memStart = 2 ** 16;
+  const hashStart = 2 ** 16;
   const registers = new HostCallRegisters(new Registers());
-  registers.set(DESTINATION_REG, tryAsU64(destination));
-  registers.set(MEMO_START_REG, tryAsU64(memStart));
+  registers.set(SOURCE_REG, tryAsU64(source));
+  registers.set(HASH_START_REG, tryAsU64(hashStart));
 
   const builder = new MemoryBuilder();
-  if (!skipMemo) {
-    builder.setReadablePages(tryAsMemoryIndex(memStart), tryAsMemoryIndex(memStart + PAGE_SIZE), memo.raw);
+  if (!skipHash) {
+    builder.setReadablePages(tryAsMemoryIndex(hashStart), tryAsMemoryIndex(hashStart + PAGE_SIZE), hash.raw);
   }
 
   const memory = builder.finalize(tryAsMemoryIndex(0), tryAsSbrkIndex(0));
@@ -47,111 +47,117 @@ function prepareRegsAndMemory(
 const gas = gasCounter(tryAsGas(10_000));
 
 describe("HostCalls: Eject", () => {
-  it("should quit the account and burn the funds", async () => {
+  it("should eject the account and transfer the funds", async () => {
     const accumulate = new TestAccumulate();
     const eject = new Eject(accumulate);
+    const sourceServiceId = tryAsServiceId(15_000);
     eject.currentServiceId = tryAsServiceId(10_000);
+    const hash = Bytes.fill(HASH_SIZE, 5);
 
-    const { registers, memory } = prepareRegsAndMemory(
-      CURRENT_SERVICE_ID,
-      Bytes.fill(TRANSFER_MEMO_BYTES, 33),
-      { skipMemo: true }, // memo is not needed in the memory if we burn the funds.
-    );
+    const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
 
     // when
-    await eject.execute(gas, registers, memory);
+    const result = await eject.execute(gas, registers, memory);
 
     // then
+    assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
-    assert.deepStrictEqual(accumulate.quitAndTransferData, []);
-    assert.deepStrictEqual(accumulate.quitAndBurnCalled, 1);
+    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, hash]]);
+    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.ok(OK));
   });
 
-  it("should quit the account and burn the funds", async () => {
+  it("should fail if there is no memory for hash", async () => {
     const accumulate = new TestAccumulate();
-    const quit = new Eject(accumulate);
-    quit.currentServiceId = tryAsServiceId(10_000);
+    const eject = new Eject(accumulate);
+    const sourceServiceId = tryAsServiceId(15_000);
+    eject.currentServiceId = tryAsServiceId(10_000);
+    const hash = Bytes.fill(HASH_SIZE, 5);
 
-    const { registers, memory } = prepareRegsAndMemory(
-      quit.currentServiceId,
-      Bytes.fill(TRANSFER_MEMO_BYTES, 33),
-      { skipMemo: true }, // memo is not needed in the memory if we burn the funds.
-    );
+    const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash, { skipHash: true });
 
     // when
-    await quit.execute(gas, registers, memory);
-
-    // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
-    assert.deepStrictEqual(accumulate.quitAndTransferData, []);
-    assert.deepStrictEqual(accumulate.quitAndBurnCalled, 1);
-  });
-
-  it("should quit and do a transfer to different account", async () => {
-    const accumulate = new TestAccumulate();
-    const quit = new Eject(accumulate);
-    quit.currentServiceId = tryAsServiceId(10_000);
-
-    const { registers, memory } = prepareRegsAndMemory(tryAsServiceId(15_000), Bytes.fill(TRANSFER_MEMO_BYTES, 33));
-
-    // when
-    await quit.execute(gas, registers, memory);
-
-    // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
-    assert.deepStrictEqual(accumulate.quitAndTransferData, [[15_000, 10_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
-    assert.deepStrictEqual(accumulate.quitAndBurnCalled, 0);
-  });
-
-  it("should fail if there is no memory for memo", async () => {
-    const accumulate = new TestAccumulate();
-    const quit = new Eject(accumulate);
-    quit.currentServiceId = tryAsServiceId(10_000);
-
-    const { registers, memory } = prepareRegsAndMemory(tryAsServiceId(15_000), Bytes.fill(TRANSFER_MEMO_BYTES, 33), {
-      skipMemo: true,
-    });
-
-    // when
-    const result = await quit.execute(gas, registers, memory);
+    const result = await eject.execute(gas, registers, memory);
 
     // then
     assert.deepStrictEqual(result, PvmExecution.Panic);
-    assert.deepStrictEqual(accumulate.quitAndTransferData, []);
-    assert.deepStrictEqual(accumulate.quitAndBurnCalled, 0);
-  });
-
-  it("should fail if gas is too low", async () => {
-    const accumulate = new TestAccumulate();
-    const quit = new Eject(accumulate);
-    quit.currentServiceId = tryAsServiceId(10_000);
-
-    const { registers, memory } = prepareRegsAndMemory(tryAsServiceId(15_000), Bytes.fill(TRANSFER_MEMO_BYTES, 33));
-
-    // when
-    accumulate.quitReturnValue = Result.error(QuitError.GasTooLow);
-    await quit.execute(gas, registers, memory);
-
-    // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.LOW);
-    assert.deepStrictEqual(accumulate.quitAndTransferData, [[15_000, 10_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
-    assert.deepStrictEqual(accumulate.quitAndBurnCalled, 0);
+    assert.deepStrictEqual(accumulate.ejectData, []);
   });
 
   it("should fail if destination does not exist", async () => {
     const accumulate = new TestAccumulate();
-    const quit = new Eject(accumulate);
-    quit.currentServiceId = tryAsServiceId(10_000);
+    const eject = new Eject(accumulate);
+    const sourceServiceId = tryAsServiceId(15_000);
+    eject.currentServiceId = tryAsServiceId(10_000);
+    const hash = Bytes.fill(HASH_SIZE, 5);
+    accumulate.ejectReturnValue = Result.error(EjectError.InvalidService);
 
-    const { registers, memory } = prepareRegsAndMemory(tryAsServiceId(15_000), Bytes.fill(TRANSFER_MEMO_BYTES, 33));
+    const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
 
     // when
-    accumulate.quitReturnValue = Result.error(QuitError.DestinationNotFound);
-    await quit.execute(gas, registers, memory);
+    const result = await eject.execute(gas, registers, memory);
 
     // then
+    assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
-    assert.deepStrictEqual(accumulate.quitAndTransferData, [[15_000, 10_000n, Bytes.fill(TRANSFER_MEMO_BYTES, 33)]]);
-    assert.deepStrictEqual(accumulate.quitAndBurnCalled, 0);
+    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, hash]]);
+    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.error(EjectError.InvalidService));
+  });
+
+  it("should fail if destination and source are the same", async () => {
+    const accumulate = new TestAccumulate();
+    const eject = new Eject(accumulate);
+    const sourceServiceId = tryAsServiceId(15_000);
+    eject.currentServiceId = sourceServiceId;
+    const hash = Bytes.fill(HASH_SIZE, 5);
+
+    const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
+
+    // when
+    const result = await eject.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(result, undefined);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
+    assert.deepStrictEqual(accumulate.ejectData, []);
+  });
+
+  it("should fail if destination has no available preimage", async () => {
+    const accumulate = new TestAccumulate();
+    const eject = new Eject(accumulate);
+    const sourceServiceId = tryAsServiceId(15_000);
+    eject.currentServiceId = tryAsServiceId(10_000);
+    const hash = Bytes.fill(HASH_SIZE, 5);
+    accumulate.ejectReturnValue = Result.error(EjectError.InvalidPreimage);
+
+    const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
+
+    // when
+    const result = await eject.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(result, undefined);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
+    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, hash]]);
+    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.error(EjectError.InvalidPreimage));
+  });
+
+  it("should fail if preimage is too old", async () => {
+    const accumulate = new TestAccumulate();
+    const eject = new Eject(accumulate);
+    const sourceServiceId = tryAsServiceId(15_000);
+    eject.currentServiceId = tryAsServiceId(10_000);
+    const hash = Bytes.fill(HASH_SIZE, 5);
+    accumulate.ejectReturnValue = Result.error(EjectError.InvalidPreimage);
+
+    const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
+
+    // when
+    const result = await eject.execute(gas, registers, memory);
+
+    // then
+    assert.deepStrictEqual(result, undefined);
+    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
+    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, hash]]);
+    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.error(EjectError.InvalidPreimage));
   });
 });
