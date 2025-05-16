@@ -62,7 +62,7 @@ describe("HostCalls: Eject", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
-    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, eject.currentServiceId, hash]]);
+    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, hash]]);
     assert.deepStrictEqual(accumulate.ejectReturnValue, Result.ok(OK));
   });
 
@@ -86,11 +86,10 @@ describe("HostCalls: Eject", () => {
   it("should fail if destination does not exist", async () => {
     const accumulate = new TestAccumulate();
     const eject = new Eject(accumulate);
-    accumulate.ejectReturnValue = Result.error(EjectError.DestinationNotFound);
     const sourceServiceId = tryAsServiceId(15_000);
     eject.currentServiceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(HASH_SIZE, 5);
-    accumulate.ejectReturnValue = Result.error(EjectError.DestinationNotFound);
+    accumulate.ejectReturnValue = Result.error(EjectError.InvalidService);
 
     const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
 
@@ -100,8 +99,8 @@ describe("HostCalls: Eject", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
-    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, eject.currentServiceId, hash]]);
-    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.error(EjectError.DestinationNotFound));
+    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, hash]]);
+    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.error(EjectError.InvalidService));
   });
 
   it("should fail if destination and source are the same", async () => {
@@ -110,7 +109,6 @@ describe("HostCalls: Eject", () => {
     const sourceServiceId = tryAsServiceId(15_000);
     eject.currentServiceId = sourceServiceId;
     const hash = Bytes.fill(HASH_SIZE, 5);
-    accumulate.ejectReturnValue = Result.error(EjectError.SameSourceAndDestination);
 
     const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
 
@@ -120,18 +118,16 @@ describe("HostCalls: Eject", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.WHO);
-    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, eject.currentServiceId, hash]]);
-    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.error(EjectError.SameSourceAndDestination));
+    assert.deepStrictEqual(accumulate.ejectData, []);
   });
 
   it("should fail if destination has no available preimage", async () => {
     const accumulate = new TestAccumulate();
-    accumulate.ejectReturnValue = Result.error(EjectError.PreimageUnavailable);
     const eject = new Eject(accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
     eject.currentServiceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(HASH_SIZE, 5);
-    accumulate.ejectReturnValue = Result.error(EjectError.PreimageUnavailable);
+    accumulate.ejectReturnValue = Result.error(EjectError.InvalidPreimage);
 
     const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
 
@@ -141,18 +137,17 @@ describe("HostCalls: Eject", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
-    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, eject.currentServiceId, hash]]);
-    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.error(EjectError.PreimageUnavailable));
+    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, hash]]);
+    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.error(EjectError.InvalidPreimage));
   });
 
   it("should fail if preimage is too old", async () => {
     const accumulate = new TestAccumulate();
-    accumulate.ejectReturnValue = Result.error(EjectError.PreimageUnavailable);
     const eject = new Eject(accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
     eject.currentServiceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(HASH_SIZE, 5);
-    accumulate.ejectReturnValue = Result.error(EjectError.PreimageTooOld);
+    accumulate.ejectReturnValue = Result.error(EjectError.InvalidPreimage);
 
     const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
 
@@ -162,7 +157,7 @@ describe("HostCalls: Eject", () => {
     // then
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
-    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, eject.currentServiceId, hash]]);
-    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.error(EjectError.PreimageTooOld));
+    assert.deepStrictEqual(accumulate.ejectData, [[sourceServiceId, hash]]);
+    assert.deepStrictEqual(accumulate.ejectReturnValue, Result.error(EjectError.InvalidPreimage));
   });
 });

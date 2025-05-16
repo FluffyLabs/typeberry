@@ -37,12 +37,8 @@ export class TestAccumulate implements AccumulationPartialState {
   public checkPreimageStatusResponse: PreimageStatusResult | null = null;
   public transferReturnValue: Result<OK, TransferError> = Result.ok(OK);
 
-  async eject(
-    source: ServiceId | null,
-    destination: ServiceId | null,
-    hash: OpaqueHash,
-  ): Promise<Result<OK, EjectError>> {
-    this.ejectData.push([source, destination, hash]);
+  async eject(from: ServiceId | null, hash: OpaqueHash): Promise<Result<OK, EjectError>> {
+    this.ejectData.push([from, hash]);
     return this.ejectReturnValue;
   }
 

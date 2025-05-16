@@ -85,14 +85,10 @@ export enum TransferError {
  * because the account is removed anyway.
  */
 export enum EjectError {
-  /** The destination service does not exist. */
-  DestinationNotFound = 0,
-  /** Preimage is not available. */
-  PreimageUnavailable = 1,
-  /** Preimage is too old. */
-  PreimageTooOld = 2,
-  /** The source and destination service are the same. */
-  SameSourceAndDestination = 3,
+  /** The service does not exist or invalid. */
+  InvalidService = 0,
+  /** Preimage is not available or too old. */
+  InvalidPreimage = 1,
 }
 
 /**
@@ -133,7 +129,7 @@ export interface AccumulationPartialState {
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/37b60137b601?v=0.6.6
    */
-  eject(source: ServiceId | null, destination: ServiceId | null, hash: OpaqueHash): Promise<Result<OK, EjectError>>;
+  eject(from: ServiceId | null, hash: OpaqueHash): Promise<Result<OK, EjectError>>;
 
   /**
    * Transfer given `amount` of funds to the `destination`,
