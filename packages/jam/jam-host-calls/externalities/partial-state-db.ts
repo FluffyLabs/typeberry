@@ -12,7 +12,7 @@ import type { PreimageHash } from "@typeberry/block/preimage";
 import type { Bytes } from "@typeberry/bytes";
 import { type FixedSizeArray, HashDictionary } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
-import { type U32, type U64, sumU32, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { type U64, sumU32, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   LookupHistoryItem,
   Service,
@@ -24,10 +24,10 @@ import {
 import { OK, Result, assertNever, check, ensure } from "@typeberry/utils";
 import { clampU64ToU32 } from "../utils";
 import {
+  type EjectError,
   type PartialState,
   type PreimageStatus,
   PreimageStatusKind,
-  type QuitError,
   RequestPreimageError,
   type TRANSFER_MEMO_BYTES,
   TransferError,
@@ -58,6 +58,10 @@ export class PartialStateDb implements PartialState {
     if (service === undefined) {
       throw new Error(`Invalid state initialization. Service info missing for ${this.currentServiceId}.`);
     }
+  }
+
+  eject(_from: ServiceId | null, _hash: OpaqueHash): Promise<Result<OK, EjectError>> {
+    throw new Error("Method not implemented.");
   }
 
   /** Return the underlying state update and checkpointed state (if any). */
@@ -298,18 +302,6 @@ export class PartialStateDb implements PartialState {
     assertNever(s);
   }
 
-  quitAndTransfer(
-    _destination: ServiceId,
-    _suppliedGas: ServiceGas,
-    _memo: Bytes<TRANSFER_MEMO_BYTES>,
-  ): Result<OK, QuitError> {
-    throw new Error("Method not implemented (waiting for eject)");
-  }
-
-  quitAndBurn(): void {
-    throw new Error("Method not implemented (waiting for eject)");
-  }
-
   transfer(
     destinationId: ServiceId | null,
     amount: U64,
@@ -359,7 +351,7 @@ export class PartialStateDb implements PartialState {
 
   newService(
     codeHash: CodeHash,
-    codeLength: U32,
+    codeLength: U64,
     accumulateMinGas: ServiceGas,
     onTransferMinGas: ServiceGas,
   ): Result<ServiceId, "insufficient funds"> {
@@ -367,9 +359,10 @@ export class PartialStateDb implements PartialState {
     // calculate the threshold. Storage is empty, one preimage requested.
     // https://graypaper.fluffylabs.dev/#/9a08063/114501114501?v=0.6.6
     const items = tryAsU32(2 * 1 + 0);
-    const bytes = tryAsU64(81 + codeLength);
+    const bytes = sumU64(tryAsU64(81), codeLength);
+    const clampedLength = clampU64ToU32(codeLength);
 
-    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes);
+    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes.value);
     const currentService = this.getCurrentServiceInfo();
     const thresholdForCurrent = ServiceAccountInfo.calculateThresholdBalance(
       currentService.storageUtilisationCount,
@@ -378,7 +371,7 @@ export class PartialStateDb implements PartialState {
 
     // check if we have enough balance
     const balanceLeftForCurrent = currentService.balance - thresholdForNew;
-    if (balanceLeftForCurrent < thresholdForCurrent) {
+    if (balanceLeftForCurrent < thresholdForCurrent || bytes.overflow) {
       return Result.error("insufficient funds");
     }
 
@@ -389,7 +382,7 @@ export class PartialStateDb implements PartialState {
         balance: thresholdForNew,
         accumulateMinGas,
         onTransferMinGas,
-        storageUtilisationBytes: bytes,
+        storageUtilisationBytes: bytes.value,
         storageUtilisationCount: items,
       }),
       preimages: HashDictionary.new(),
@@ -398,7 +391,7 @@ export class PartialStateDb implements PartialState {
     });
     // add the preimage request
     newService.data.lookupHistory.set(codeHash.asOpaque(), [
-      new LookupHistoryItem(codeHash.asOpaque(), codeLength, tryAsLookupHistorySlots([])),
+      new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([])),
     ]);
 
     // add the new service
@@ -452,7 +445,7 @@ export class PartialStateDb implements PartialState {
     manager: ServiceId,
     authorizer: ServiceId,
     validators: ServiceId,
-    autoAccumulate: Map<ServiceId, ServiceGas>,
+    autoAccumulate: [ServiceId, ServiceGas][],
   ): void {
     // NOTE [ToDr] I guess we should not fail if the services don't exist. */
     /** https://graypaper.fluffylabs.dev/#/9a08063/36f40036f400?v=0.6.6 */

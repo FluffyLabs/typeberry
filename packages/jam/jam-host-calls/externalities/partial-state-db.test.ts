@@ -331,6 +331,7 @@ describe("PartialState.newService", () => {
 
     const codeHash = Bytes.fill(HASH_SIZE, 0x11).asOpaque();
     const codeLength = tryAsU32(100);
+    const codeLengthU64 = tryAsU64(codeLength);
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
 
@@ -340,7 +341,7 @@ describe("PartialState.newService", () => {
     const expectedBalance = tryAsU64(service.data.info.balance - thresholdForNew);
 
     // when
-    const result = partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas);
+    const result = partialState.newService(codeHash, codeLengthU64, accumulateMinGas, onTransferMinGas);
 
     // then
     const expectedServiceId = tryAsServiceId(10);
@@ -400,7 +401,7 @@ describe("PartialState.newService", () => {
 
     const codeHash = Bytes.fill(HASH_SIZE, 0x12).asOpaque();
     // artificially large to exceed balance
-    const codeLength = tryAsU32(2 ** 32 - 1);
+    const codeLength = tryAsU64(2 ** 32 + 1);
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
 
@@ -510,10 +511,10 @@ describe("PartialState.updatePrivilegedServices", () => {
     const manager = tryAsServiceId(1);
     const authorizer = tryAsServiceId(2);
     const validators = tryAsServiceId(3);
-    const autoAccumulate = new Map<ServiceId, ServiceGas>([
+    const autoAccumulate: [ServiceId, ServiceGas][] = [
       [tryAsServiceId(4), tryAsServiceGas(10n)],
       [tryAsServiceId(5), tryAsServiceGas(20n)],
-    ]);
+    ];
 
     // when
     partialState.updatePrivilegedServices(manager, authorizer, validators, autoAccumulate);

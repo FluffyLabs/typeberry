@@ -58,6 +58,6 @@ export class StateUpdate {
     manager: ServiceId;
     authorizer: ServiceId;
     validators: ServiceId;
-    autoAccumulate: Map<ServiceId, ServiceGas>;
+    autoAccumulate: [ServiceId, ServiceGas][];
   } | null = null;
 }
