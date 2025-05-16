@@ -6,7 +6,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { HostCallResult } from "./results";
-import { CURRENT_SERVICE_ID, getServiceId } from "./utils";
+import { CURRENT_SERVICE_ID, getServiceIdOrCurrent } from "./utils";
 
 /** Account data interface for lookup host calls. */
 export interface AccountsLookup {
@@ -34,7 +34,7 @@ export class Lookup implements HostCallHandler {
     memory: IHostCallMemory,
   ): Promise<undefined | PvmExecution> {
     // a
-    const serviceId = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
+    const serviceId = getServiceIdOrCurrent(IN_OUT_REG, regs, this.currentServiceId);
 
     // h
     const hashAddress = regs.get(8);

@@ -15,14 +15,14 @@ const MEMO_START_REG = 10; // `o`
 /**
  * Transfer balance from one service account to another.
  *
- * https://graypaper.fluffylabs.dev/#/68eaa1f/32d10132d101?v=0.6.4
+ * https://graypaper.fluffylabs.dev/#/9a08063/373b00373b00?v=0.6.6
  */
 export class Transfer implements HostCallHandler {
   index = tryAsHostCallIndex(11);
   /**
    * `g = 10 + ω9`
    *
-   * https://graypaper.fluffylabs.dev/#/68eaa1f/32d20132d501?v=0.6.4
+   * https://graypaper.fluffylabs.dev/#/9a08063/373d00373d00?v=0.6.6
    */
   gasCost = (regs: IHostCallRegisters): Gas => {
     const gas = 10n + regs.get(ON_TRANSFER_GAS_REG);
@@ -38,7 +38,7 @@ export class Transfer implements HostCallHandler {
     memory: IHostCallMemory,
   ): Promise<undefined | PvmExecution> {
     // `d`: destination
-    const destination = getServiceId(IN_OUT_REG, regs, this.currentServiceId);
+    const destination = getServiceId(regs.get(IN_OUT_REG));
     // `a`: amount
     const amount = regs.get(AMOUNT_REG);
     // `l`: gas

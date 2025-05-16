@@ -130,7 +130,5 @@ export function leBytesAsU32(uint8Array: Uint8Array): U32 {
   );
 }
 
-/**
- * Get the smallest value between U64 a and values given as input parameters.
- */
+/** Get the smallest value between U64 a and values given as input parameters. */
 export const minU64 = (a: U64, ...values: U64[]): U64 => values.reduce((min, value) => (value > min ? min : value), a);

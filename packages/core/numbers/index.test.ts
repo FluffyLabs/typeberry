@@ -63,8 +63,9 @@ describe("tryAsU32", () => {
 
 describe("minU64", () => {
   it("should return minimal value", () => {
-    const a = tryAsU64(3n);
     const minimal = tryAsU64(1n);
-    assert.deepStrictEqual(minU64(a, tryAsU64(2n ** 64n - 1n), minimal), minimal);
+    const middle = tryAsU64(2n ** 16n + 48n);
+    const maximal = tryAsU64(2n ** 64n - 1n);
+    assert.deepStrictEqual(minU64(middle, maximal, minimal), minimal);
   });
 });
