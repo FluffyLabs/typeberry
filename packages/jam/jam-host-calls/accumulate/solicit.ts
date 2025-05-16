@@ -45,8 +45,6 @@ export class Solicit implements HostCallHandler {
     }
 
     const e = result.error;
-    // TODO [MaSo] Shouldn't this set the preimage if `AlreadyRequested`
-    // instead of returning an error?
     if (e === RequestPreimageError.AlreadyAvailable || e === RequestPreimageError.AlreadyRequested) {
       regs.set(IN_OUT_REG, HostCallResult.HUH);
       return;
