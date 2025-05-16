@@ -61,12 +61,12 @@ export const testState = (): State => {
     // lambda
     previousValidatorData: testValidatorData(),
     // psi
-    disputesRecords: new DisputesRecords(
-      SortedSet.fromArray<WorkReportHash>(hashComparator, []),
-      SortedSet.fromArray<WorkReportHash>(hashComparator, []),
-      SortedSet.fromArray<WorkReportHash>(hashComparator, []),
-      SortedSet.fromArray<Ed25519Key>(hashComparator, []),
-    ),
+    disputesRecords: DisputesRecords.create({
+      goodSet: SortedSet.fromArray<WorkReportHash>(hashComparator, []),
+      badSet: SortedSet.fromArray<WorkReportHash>(hashComparator, []),
+      wonkySet: SortedSet.fromArray<WorkReportHash>(hashComparator, []),
+      punishSet: SortedSet.fromArray<Ed25519Key>(hashComparator, []),
+    }),
     // tau
     timeslot: tryAsTimeSlot(16),
     // eta
@@ -115,7 +115,7 @@ export const testState = (): State => {
     ),
     // beta
     recentBlocks: asKnownSize([
-      BlockState.fromCodec({
+      BlockState.create({
         headerHash: b32("0x3fcf9728204359b93032b413eef3af0a0953d494b8b96e01550795b43b56c766"),
         mmr: {
           peaks: [emptyHash()],
@@ -123,7 +123,7 @@ export const testState = (): State => {
         postStateRoot: b32("0xbcf32b81ac750f980b03c8cbdbaf5ad7d9e6aad823d099e209d7d5a0b82f2aed"),
         reported: HashDictionary.new(),
       }),
-      BlockState.fromCodec({
+      BlockState.create({
         headerHash: b32("0x1a7d753af2e2be12f88dfcb7ca5c704641534094b061c8c3aa258d4b0acbf5c8"),
         mmr: {
           peaks: [null, b32("0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5")],
@@ -131,7 +131,7 @@ export const testState = (): State => {
         postStateRoot: b32("0x5e8f73cf5d9f94cb3a8313361a3b48e97968a9ac52ab9c29b4e88f4159c21560"),
         reported: HashDictionary.new(),
       }),
-      BlockState.fromCodec({
+      BlockState.create({
         headerHash: b32("0x3a31fd60656cb3de2c6ba9fafb8dee8d4c45d4bc87ca248cdda7625a68b987fb"),
         mmr: {
           peaks: [
@@ -142,7 +142,7 @@ export const testState = (): State => {
         postStateRoot: b32("0x0fac6a80aa8722be502119a5dd405b3c1baae8170569ce186942a8c64ba0260a"),
         reported: HashDictionary.new(),
       }),
-      BlockState.fromCodec({
+      BlockState.create({
         headerHash: b32("0x070fe1f39b43ca551f40a58048bf52614771c812c87f5e43bc611d252f5d7949"),
         mmr: {
           peaks: [null, null, b32("0xb4c11951957c6f8f642c4af61cd6b24640fec6dc7fc607ee8206a99e92410d30")],
@@ -150,7 +150,7 @@ export const testState = (): State => {
         postStateRoot: b32("0x175cafa38d5d26914e8c6bf3f8cc456eb073a7a0ae3d41bd12c2e5c396a62615"),
         reported: HashDictionary.new(),
       }),
-      BlockState.fromCodec({
+      BlockState.create({
         headerHash: b32("0x3f70f457921f9e274722ef3a7601f26393af473ce2f44109ab4316414b007de3"),
         mmr: {
           peaks: [
@@ -163,10 +163,10 @@ export const testState = (): State => {
         reported: HashDictionary.fromEntries([
           [
             b32("0xac9928d4eb0c942a07c40157fa4498b2efbbc65136819517dc94d50ff2ca9f49"),
-            new WorkPackageInfo(
-              b32("0xac9928d4eb0c942a07c40157fa4498b2efbbc65136819517dc94d50ff2ca9f49"),
-              b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
-            ),
+            WorkPackageInfo.create({
+              workPackageHash: b32("0xac9928d4eb0c942a07c40157fa4498b2efbbc65136819517dc94d50ff2ca9f49"),
+              segmentTreeRoot: b32("0x0000000000000000000000000000000000000000000000000000000000000000"),
+            }),
           ],
         ]),
       }),
@@ -175,7 +175,7 @@ export const testState = (): State => {
       [
         tryAsServiceId(0),
         new Service(tryAsServiceId(0), {
-          info: ServiceAccountInfo.fromCodec({
+          info: ServiceAccountInfo.create({
             codeHash: b32("0x15f8485e3a88e86182e63280720d5ec9892578f0e577fb1bcdda5cf497950815"),
             balance: tryAsU64(10000000000),
             accumulateMinGas: tryAsServiceGas(100),
@@ -185,11 +185,11 @@ export const testState = (): State => {
           }),
           preimages: HashDictionary.fromEntries(
             [
-              PreimageItem.fromCodec({
+              PreimageItem.create({
                 hash: b32("0xc16326432b5b3213dfd1609495e13c6b276cb474d679645337e5c2c09f19b53c"),
                 blob: BytesBlob.parseBlob("0x09626f6f74737472617000000000000000000020000a00000000000628023307320015"),
               }),
-              PreimageItem.fromCodec({
+              PreimageItem.create({
                 hash: b32("0x15f8485e3a88e86182e63280720d5ec9892578f0e577fb1bcdda5cf497950815"),
                 blob: BytesBlob.parseBlob(
                   "0x09626f6f747374726170000000000000020000200032040000050283ae7900300194012f027802280d00000028ae00000028ab029511e07b10187b15107b1608648664783309043307000001ac967c9566fc5106769587047d7833050159083a8489ff003305025329c0002d3305035329e000253305045329f0001d3305055329f800153305065329fc000d8898fe009a850801ac564564587b175010029c026478e45607c95707d88709e48707c98707887720d479098217c8750594983307000001da95072805330801821018821510821608951120320000951150ff7b10a8007b15a0007b169800330908ac98e7003309fcaa97e5015107e101958af8957508510a457d583306015908408489ff003306025329c0002d3306035329e000253306045329f0001d3306055329f800153306065329fc000d8898fe009a860801ae6a092890003306017b166457646864a6501004e501821a51077be4a607c9a70753176072c85a089576a09587607b1751064c7d783305015908378489ff003305025329c0002d3305035329e000253305045329f0001d3305055329f800153305065329fc000d8898fe009a850801ac562a016458501006810128073305330701e45608c95808e47808c97808330921ae981d33083307000001018210a8008215a000821698009511b00032008219c89505c857077c792051090933083307286e958adf957521510a547d573306015907378477ff003306025327c0002d3306035327e000253306045327f0001d3306055327f800153306065327fc000d8877fe009a7608017b1aac6a920064576468501008e6006478821a28073306330801c86507e46a09c96909e6890801c878088088fc330964330a640a0964757b1708481114951714330804951908330a040a0395171833098000330850100a4a330820a107330964951a1864570a0b81180833070000023b080000029889183b090300029889103b090200029888083b080100023308202806ff0000003307000001330832008d7a84aa07c8a70b510a0e647c0178c895cc01acbcfbc9a903843cf8c8cb0a580c1d8482ff0014090101010101010101ca920c017bbc95bb08acabfb843907520905280ec8a9090178a895aa01ac9afb320051089b0064797c77510791005127ff0090006c7a570a09330a330828735527c0000d330a01330b80284a5527e0000e330a02330b40ff283c5527f0000e330a03330b20ff282e5527f8000e330a04330b10ff28205527fc000e330a05330b08ff2812887afe00330b04ff93ab02ff85aa0701ae8a2b3308c8b70764ab01c8b90c7ccc97880895bbffd4c808520bf28aa903cf9707c88707320032000000002124492a21494a22212121212132154a9224a5909a248d88482422494924242424244426ad0a258924a524121212121222a3504d92a43022a292a44a52120909090909914585aa26c924a924494a1421a984909090903c54495a92241140962465495111942a24854421514814124544a6342549923a",
@@ -216,7 +216,7 @@ export const testState = (): State => {
       ],
     ]),
     // pi
-    statistics: StatisticsData.fromCodec({
+    statistics: StatisticsData.create({
       current: tryAsPerValidator(
         [
           activityRecord(1, 3, 0, 0, 0, 0),
@@ -241,7 +241,7 @@ export const testState = (): State => {
       ),
       cores: tryAsPerCore(
         [
-          CoreStatistics.fromCodec({
+          CoreStatistics.create({
             dataAvailabilityLoad: tryAsU32(0),
             gasUsed: tryAsServiceGas(0),
             extrinsicCount: tryAsU16(0),
@@ -258,7 +258,7 @@ export const testState = (): State => {
       services: new Map([
         [
           tryAsServiceId(0),
-          ServiceStatistics.fromCodec({
+          ServiceStatistics.create({
             extrinsicCount: tryAsU16(0),
             extrinsicSize: tryAsU32(0),
             imports: tryAsU16(0),
@@ -287,18 +287,54 @@ export const testState = (): State => {
     ),
     // gamma_a
     ticketsAccumulator: asKnownSize([
-      new Ticket(b32("0x0b7537993b0a700def26bb16e99ed0bfb530f616e4c13cf63ecb60bcbe83387d"), attempt(2)),
-      new Ticket(b32("0x1912baa74049a4cad89dc3f0646144459b691b926cf8b9c1c4a5bbfa1ee0c331"), attempt(1)),
-      new Ticket(b32("0x22fdcfa858e5195e222174597d7d33bd66d97748c413b876f7a132134ce9baef"), attempt(0)),
-      new Ticket(b32("0x23bd628fd365a0f3ecd10db746dd04ec5efe61f96da19ae070c44b97d3c9a7b8"), attempt(2)),
-      new Ticket(b32("0x31d6a25525ff4bd6e47e611646d7b5835b94b5c0a69c225371b2b762c93095a2"), attempt(1)),
-      new Ticket(b32("0x31e9b8070f42d7c9083eca5879e5528191259a395761b8fcc068dcdd36b06be4"), attempt(1)),
-      new Ticket(b32("0x39120d5b82981c7f5aba8247925f358afb9539839b61602a0726f51efb35ef4c"), attempt(0)),
-      new Ticket(b32("0x39e2d23807ff3788156eac40cc0a622a9fd23e9468bf962aebe48079c0fd2f1a"), attempt(0)),
-      new Ticket(b32("0x39f7d99b86f90cada4aa3b08adfe310024813fca0bdcdff944873a2cc2e47074"), attempt(1)),
-      new Ticket(b32("0x665df13fd353ffe92e9bd68ae952f4511681f04bd2ffb9a6da1b1f5f706c53ec"), attempt(2)),
-      new Ticket(b32("0x6b5cc620ed50042cd517ec8267706c82482f07ebcb3c65bfb6288ef5984141a7"), attempt(1)),
-      new Ticket(b32("0x71dd32fb8a1580b4aa3213c3616d8fbbcb9edc00467c4e4548ff8a1fd815811c"), attempt(2)),
+      Ticket.create({
+        id: b32("0x0b7537993b0a700def26bb16e99ed0bfb530f616e4c13cf63ecb60bcbe83387d"),
+        attempt: attempt(2),
+      }),
+      Ticket.create({
+        id: b32("0x1912baa74049a4cad89dc3f0646144459b691b926cf8b9c1c4a5bbfa1ee0c331"),
+        attempt: attempt(1),
+      }),
+      Ticket.create({
+        id: b32("0x22fdcfa858e5195e222174597d7d33bd66d97748c413b876f7a132134ce9baef"),
+        attempt: attempt(0),
+      }),
+      Ticket.create({
+        id: b32("0x23bd628fd365a0f3ecd10db746dd04ec5efe61f96da19ae070c44b97d3c9a7b8"),
+        attempt: attempt(2),
+      }),
+      Ticket.create({
+        id: b32("0x31d6a25525ff4bd6e47e611646d7b5835b94b5c0a69c225371b2b762c93095a2"),
+        attempt: attempt(1),
+      }),
+      Ticket.create({
+        id: b32("0x31e9b8070f42d7c9083eca5879e5528191259a395761b8fcc068dcdd36b06be4"),
+        attempt: attempt(1),
+      }),
+      Ticket.create({
+        id: b32("0x39120d5b82981c7f5aba8247925f358afb9539839b61602a0726f51efb35ef4c"),
+        attempt: attempt(0),
+      }),
+      Ticket.create({
+        id: b32("0x39e2d23807ff3788156eac40cc0a622a9fd23e9468bf962aebe48079c0fd2f1a"),
+        attempt: attempt(0),
+      }),
+      Ticket.create({
+        id: b32("0x39f7d99b86f90cada4aa3b08adfe310024813fca0bdcdff944873a2cc2e47074"),
+        attempt: attempt(1),
+      }),
+      Ticket.create({
+        id: b32("0x665df13fd353ffe92e9bd68ae952f4511681f04bd2ffb9a6da1b1f5f706c53ec"),
+        attempt: attempt(2),
+      }),
+      Ticket.create({
+        id: b32("0x6b5cc620ed50042cd517ec8267706c82482f07ebcb3c65bfb6288ef5984141a7"),
+        attempt: attempt(1),
+      }),
+      Ticket.create({
+        id: b32("0x71dd32fb8a1580b4aa3213c3616d8fbbcb9edc00467c4e4548ff8a1fd815811c"),
+        attempt: attempt(2),
+      }),
     ]),
     // gamma_s
     sealingKeySeries: SafroleSealingKeysData.keys(
@@ -325,7 +361,7 @@ export const testState = (): State => {
       "0x85f9095f4abd040839d793d89ab5ff25c61e50c844ab6765e2c0b22373b5a8f6fbe5fc0cd61fdde580b3d44fe1be127197e33b91960b10d2c6fc75aec03f36e16c2a8204961097dbc2c5ba7655543385399cc9ef08bf2e520ccf3b0a7569d88492e630ae2b14e758ab0960e372172203f4c9a41777dadd529971d7ab9d23ab29fe0e9c85ec450505dde7f5ac038274cf",
       BANDERSNATCH_RING_ROOT_BYTES,
     ).asOpaque(),
-    privilegedServices: PrivilegedServices.fromCodec({
+    privilegedServices: PrivilegedServices.create({
       manager: tryAsServiceId(0),
       authManager: tryAsServiceId(0),
       validatorsManager: tryAsServiceId(0),
@@ -349,7 +385,7 @@ const activityRecord = (
   guarantees: number,
   assurances: number,
 ) => {
-  return ValidatorStatistics.fromCodec({
+  return ValidatorStatistics.create({
     blocks: tryAsU32(blocks),
     tickets: tryAsU32(tickets),
     preImages: tryAsU32(preimages),

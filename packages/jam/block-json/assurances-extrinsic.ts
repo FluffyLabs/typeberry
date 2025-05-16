@@ -18,7 +18,7 @@ const getAvailabilityAssuranceFromJson = (ctx: ChainSpec) =>
       signature: fromJson.ed25519Signature,
     },
     ({ anchor, bitfield, validator_index, signature }) =>
-      new AvailabilityAssurance(anchor, bitfield, validator_index, signature),
+      AvailabilityAssurance.create({ anchor, bitfield, validatorIndex: validator_index, signature }),
   );
 
 export const getAssurancesExtrinsicFromJson = (ctx: ChainSpec) => json.array(getAvailabilityAssuranceFromJson(ctx));

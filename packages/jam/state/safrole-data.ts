@@ -105,11 +105,11 @@ export class SafroleData {
     ticketsAccumulator: codec.sequenceVarLen(Ticket.Codec).convert(seeThrough, asKnownSize),
   });
 
-  static fromCodec({ nextValidatorData, epochRoot, sealingKeySeries, ticketsAccumulator }: CodecRecord<SafroleData>) {
+  static create({ nextValidatorData, epochRoot, sealingKeySeries, ticketsAccumulator }: CodecRecord<SafroleData>) {
     return new SafroleData(nextValidatorData, epochRoot, sealingKeySeries, ticketsAccumulator);
   }
 
-  constructor(
+  private constructor(
     /** gamma_k */
     public readonly nextValidatorData: PerValidator<ValidatorData>,
     /** gamma_z */

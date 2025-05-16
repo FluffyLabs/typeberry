@@ -173,12 +173,12 @@ export class Safrole {
          * https://graypaper.fluffylabs.dev/#/5f542d7/0ea2000ea200
          */
         if (isOffender) {
-          return new ValidatorData(
-            Bytes.zero(BANDERSNATCH_KEY_BYTES).asOpaque(),
-            Bytes.zero(ED25519_KEY_BYTES).asOpaque(),
-            validator.bls,
-            validator.metadata,
-          );
+          return ValidatorData.create({
+            bandersnatch: Bytes.zero(BANDERSNATCH_KEY_BYTES).asOpaque(),
+            ed25519: Bytes.zero(ED25519_KEY_BYTES).asOpaque(),
+            bls: validator.bls,
+            metadata: validator.metadata,
+          });
         }
 
         return validator;
@@ -294,11 +294,11 @@ export class Safrole {
     }
 
     const entropy = this.state.entropy;
-    return new EpochMarker(
-      entropy[0],
-      entropy[1],
-      asKnownSize(nextValidators.map((validator) => ValidatorKeys.fromCodec(validator))),
-    );
+    return EpochMarker.create({
+      entropy: entropy[0],
+      ticketsEntropy: entropy[1],
+      validators: asKnownSize(nextValidators.map((validator) => ValidatorKeys.create(validator))),
+    });
   }
 
   /**

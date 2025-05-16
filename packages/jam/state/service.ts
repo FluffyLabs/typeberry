@@ -23,7 +23,7 @@ export class ServiceAccountInfo extends WithDebug {
     storageUtilisationCount: codec.u32,
   });
 
-  static fromCodec(a: CodecRecord<ServiceAccountInfo>) {
+  static create(a: CodecRecord<ServiceAccountInfo>) {
     return new ServiceAccountInfo(
       a.codeHash,
       a.balance,
@@ -72,11 +72,11 @@ export class PreimageItem extends WithDebug {
     blob: codec.blob,
   });
 
-  static fromCodec({ hash, blob }: CodecRecord<PreimageItem>) {
+  static create({ hash, blob }: CodecRecord<PreimageItem>) {
     return new PreimageItem(hash, blob);
   }
 
-  constructor(
+  private constructor(
     readonly hash: PreimageHash,
     readonly blob: BytesBlob,
   ) {
@@ -90,11 +90,11 @@ export class StateItem extends WithDebug {
     blob: codec.blob,
   });
 
-  static fromCodec({ hash, blob }: CodecRecord<StateItem>) {
+  static create({ hash, blob }: CodecRecord<StateItem>) {
     return new StateItem(hash, blob);
   }
 
-  constructor(
+  private constructor(
     readonly hash: StateKey,
     readonly blob: BytesBlob,
   ) {

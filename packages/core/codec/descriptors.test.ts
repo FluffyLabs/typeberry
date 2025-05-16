@@ -13,7 +13,7 @@ class TestHeader {
     extrinsicHash: codec.bytes(32),
   });
 
-  static fromCodec = ({ parentHeaderHash, priorStateRoot, extrinsicHash }: CodecRecord<TestHeader>) =>
+  static create = ({ parentHeaderHash, priorStateRoot, extrinsicHash }: CodecRecord<TestHeader>) =>
     new TestHeader(parentHeaderHash, priorStateRoot, extrinsicHash);
 
   // this key is ignored, since it's not a string one.
@@ -31,7 +31,7 @@ describe("Codec Descriptors / sequence view", () => {
     static Codec = codec.Class(MyHash, {
       hash: codec.bytes(32),
     });
-    static fromCodec = ({ hash }: CodecRecord<MyHash>) => new MyHash(hash);
+    static create = ({ hash }: CodecRecord<MyHash>) => new MyHash(hash);
     constructor(public readonly hash: Bytes<32>) {}
   }
 
@@ -203,11 +203,11 @@ describe("Codec Descriptors / nested views", () => {
       kind: codec.string,
     });
 
-    static fromCodec(o: CodecRecord<TestExtrinsic>) {
+    static create(o: CodecRecord<TestExtrinsic>) {
       return new TestExtrinsic(o.kind);
     }
 
-    public constructor(public kind: string) {}
+    private constructor(public kind: string) {}
   }
 
   class TestBlock {
@@ -217,11 +217,11 @@ describe("Codec Descriptors / nested views", () => {
       extrinsic: TestExtrinsic.Codec,
     });
 
-    static fromCodec(o: CodecRecord<TestBlock>) {
+    static create(o: CodecRecord<TestBlock>) {
       return new TestBlock(o.someUnrelatedField, o.header, o.extrinsic);
     }
 
-    public constructor(
+    private constructor(
       public readonly someUnrelatedField: U32,
       public readonly header: TestHeader,
       public readonly extrinsic: TestExtrinsic,
@@ -265,7 +265,7 @@ describe("Codec Descriptors / nested views", () => {
     assert.strictEqual(`${header.priorStateRoot}`, `${data.priorStateRoot}`);
     assert.strictEqual(`${header.extrinsicHash}`, `${data.extrinsicHash}`);
 
-    assert.deepStrictEqual(block.extrinsic, new TestExtrinsic("hello world!"));
+    assert.deepStrictEqual(block.extrinsic, TestExtrinsic.create({ kind: "hello world!" }));
   });
 
   it("should encode in the same way", () => {
@@ -341,7 +341,7 @@ describe("Codec Descriptors / generic class", () => {
       b: codec.bool,
     });
 
-    static fromCodec({ a, b }: CodecRecord<Concrete>) {
+    static create({ a, b }: CodecRecord<Concrete>) {
       return new Concrete(a, b);
     }
 

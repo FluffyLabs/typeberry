@@ -11,7 +11,7 @@ import { Header, encodeUnsealedHeader } from "./header";
 describe("Header", () => {
   it("should encode unsigned header", () => {
     const spec = tinyChainSpec;
-    const header = Header.fromCodec({
+    const header = Header.create({
       parentHeaderHash: Bytes.fill(HASH_SIZE, 0xa).asOpaque(),
       priorStateRoot: Bytes.fill(HASH_SIZE, 0x5).asOpaque(),
       extrinsicHash: Bytes.fill(HASH_SIZE, 0xe).asOpaque(),

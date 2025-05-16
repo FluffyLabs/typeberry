@@ -10,7 +10,7 @@ export const ticketFromJson: FromJson<Ticket> = json.object<Ticket>(
     id: fromJson.bytes32(),
     attempt: fromJson.ticketAttempt,
   },
-  Ticket.fromCodec,
+  Ticket.create,
 );
 
 export class TicketsOrKeys {

@@ -6,7 +6,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { type U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   LookupHistoryItem,
   PreimageItem,
@@ -125,7 +125,7 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Service {
   const preimages = HashDictionary.fromEntries(
     entry.data.preimages
       .map((x) => {
-        return new PreimageItem(blake2b.hashBytes(x.blob).asOpaque(), x.blob);
+        return PreimageItem.create({ hash: blake2b.hashBytes(x.blob).asOpaque(), blob: x.blob });
       })
       .map((x) => [x.hash, x]),
   );
@@ -135,12 +135,12 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Service {
     const slots = tryAsLookupHistorySlots(item.value.map((slot) => tryAsTimeSlot(slot)));
 
     const arr = lookupHistory.get(item.key.hash) ?? [];
-    arr.push(new LookupHistoryItem(item.key.hash, item.key.length as U32, slots));
+    arr.push(new LookupHistoryItem(item.key.hash, tryAsU32(item.key.length), slots));
     lookupHistory.set(item.key.hash, arr);
   }
 
   return new Service(tryAsServiceId(entry.id), {
-    info: ServiceAccountInfo.fromCodec({
+    info: ServiceAccountInfo.create({
       codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
       balance: tryAsU64(0),
       accumulateMinGas: tryAsServiceGas(0),

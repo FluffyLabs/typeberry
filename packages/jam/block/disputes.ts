@@ -18,11 +18,11 @@ export class Fault extends WithDebug {
     signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque<Ed25519Signature>(),
   });
 
-  static fromCodec({ workReportHash, wasConsideredValid, key, signature }: CodecRecord<Fault>) {
+  static create({ workReportHash, wasConsideredValid, key, signature }: CodecRecord<Fault>) {
     return new Fault(workReportHash, wasConsideredValid, key, signature);
   }
 
-  constructor(
+  private constructor(
     /** Hash of the work-report that had conflicting votes. */
     public readonly workReportHash: WorkReportHash,
     /** Did the validator consider this work-report valid in their [`Judgement`]? */
@@ -46,11 +46,11 @@ export class Culprit extends WithDebug {
     signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque<Ed25519Signature>(),
   });
 
-  static fromCodec({ workReportHash, key, signature }: CodecRecord<Culprit>) {
+  static create({ workReportHash, key, signature }: CodecRecord<Culprit>) {
     return new Culprit(workReportHash, key, signature);
   }
 
-  constructor(
+  private constructor(
     /** Hash of the invalid work-report. */
     public readonly workReportHash: WorkReportHash,
     /** Validator key that provided the signature. */
@@ -72,11 +72,11 @@ export class Judgement extends WithDebug {
     signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque<Ed25519Signature>(),
   });
 
-  static fromCodec({ isWorkReportValid, index, signature }: CodecRecord<Judgement>) {
+  static create({ isWorkReportValid, index, signature }: CodecRecord<Judgement>) {
     return new Judgement(isWorkReportValid, index, signature);
   }
 
-  constructor(
+  private constructor(
     /** Whether the work report is considered valid or not. */
     public readonly isWorkReportValid: boolean,
     /** Index of the validator that signed this vote. */
@@ -106,11 +106,11 @@ export class Verdict extends WithDebug {
     }),
   });
 
-  static fromCodec({ workReportHash, votesEpoch, votes }: CodecRecord<Verdict>) {
+  static create({ workReportHash, votesEpoch, votes }: CodecRecord<Verdict>) {
     return new Verdict(workReportHash, votesEpoch, votes);
   }
 
-  constructor(
+  private constructor(
     /** Hash of the work report the verdict is for. */
     public readonly workReportHash: WorkReportHash,
     /**
@@ -150,11 +150,11 @@ export class DisputesExtrinsic extends WithDebug {
     faults: codec.sequenceVarLen(Fault.Codec),
   });
 
-  static fromCodec({ verdicts, culprits, faults }: CodecRecord<DisputesExtrinsic>) {
+  static create({ verdicts, culprits, faults }: CodecRecord<DisputesExtrinsic>) {
     return new DisputesExtrinsic(verdicts, culprits, faults);
   }
 
-  constructor(
+  private constructor(
     /**
      * `v`: a collection of verdicts over validity of some [`WorkReport`]s.
      *
