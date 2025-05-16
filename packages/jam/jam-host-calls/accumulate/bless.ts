@@ -1,12 +1,12 @@
-import type { ServiceId } from "@typeberry/block";
+import type { ServiceGas, ServiceId } from "@typeberry/block";
 import { Decoder, codec, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
-import { type BigGas, type Gas, type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { asOpaqueType } from "@typeberry/utils";
 import { HostCallResult } from "../results";
-import { CURRENT_SERVICE_ID, clampU64ToU32, getServiceIdFromU64 } from "../utils";
+import { CURRENT_SERVICE_ID, getServiceIdFromU64 } from "../utils";
 import type { AccumulationPartialState } from "./partial-state";
 
 const IN_OUT_REG = 7;
@@ -16,9 +16,9 @@ const serviceIdAndGasCodec = codec.object({
     (i) => i,
     (o) => asOpaqueType(o),
   ),
-  gas: codec.u64.convert<Gas>(
+  gas: codec.u64.convert<ServiceGas>(
     (i) => tryAsU64(i),
-    (o): BigGas => asOpaqueType(o),
+    (o): ServiceGas => asOpaqueType(o),
   ),
 });
 
@@ -50,10 +50,8 @@ export class Bless implements HostCallHandler {
     // `n`: number of items in the auto-accumulate dictionary
     const numberOfItems = regs.get(11);
 
-    const numberOfItemsClamped = clampU64ToU32(numberOfItems);
-
-    // `g`: dictionary of serviceId -> gas that auto-accumulate every block
-    const g = new Array<[ServiceId, Gas]>();
+    // `g`: array of key-value pairs serviceId -> gas that auto-accumulate every block
+    const autoAccumulateEntries = new Array<[ServiceId, ServiceGas]>();
 
     // TODO [ToDr] Is it better to read everything in one go instead?
     const result = new Uint8Array(tryAsExactBytes(serviceIdAndGasCodec.sizeHint));
@@ -69,7 +67,7 @@ export class Bless implements HostCallHandler {
 
       const { serviceId, gas } = decoder.object(serviceIdAndGasCodec);
 
-      g.push([serviceId, gas]);
+      autoAccumulateEntries.push([serviceId, gas]);
 
       // we allow the index to go beyond `MEMORY_SIZE` (i.e. 2**32) and have the next `loadInto` fail with page fault.
       memIndex = tryAsU64(memIndex + tryAsU64(decoder.bytesRead()));
@@ -80,7 +78,7 @@ export class Bless implements HostCallHandler {
       return;
     }
 
-    this.partialState.updatePrivilegedServices(manager, authorization, validator, g);
+    this.partialState.updatePrivilegedServices(manager, authorization, validator, autoAccumulateEntries);
     regs.set(IN_OUT_REG, HostCallResult.OK);
   }
 }

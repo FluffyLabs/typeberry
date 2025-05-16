@@ -1,4 +1,4 @@
-import type { CodeHash, CoreIndex, PerValidator, ServiceId } from "@typeberry/block";
+import type { CodeHash, CoreIndex, PerValidator, ServiceGas, ServiceId } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
@@ -101,7 +101,7 @@ export class TestAccumulate implements AccumulationPartialState {
     this.validatorsData.push(validatorsData);
   }
 
-  updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: Array<[ServiceId, Gas]>): void {
+  updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: [ServiceId, ServiceGas][]): void {
     this.privilegedServices.push([m, a, v, g]);
   }
 
