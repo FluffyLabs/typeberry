@@ -22,6 +22,7 @@ import {
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { OK, Result, assertNever, check, ensure } from "@typeberry/utils";
+import { clampU64ToU32 } from "../utils";
 import {
   type PartialState,
   type PreimageStatus,
@@ -109,7 +110,7 @@ export class PartialStateDb implements PartialState {
       return null;
     }
 
-    const maybeNewService = this.updatedState.newServices.find((x) => x.id === destination);
+    const maybeNewService = this.updatedState.newServices.find(({ id }) => id === destination);
     if (maybeNewService !== undefined) {
       return maybeNewService.data.info;
     }
@@ -122,9 +123,9 @@ export class PartialStateDb implements PartialState {
   }
 
   /** Get status of a preimage of current service taking into account any updates. */
-  private getPreimageStatus(hash: PreimageHash, length: U64): PreimageUpdate | undefined {
+  private getPreimageStatus(hash: PreimageHash, length: U64): PreimageUpdate | null {
     const updatedPreimage = this.updatedState.preimages.find(
-      (x) => x.hash.isEqualTo(hash) && BigInt(x.length) === length,
+      (preimage) => preimage.hash.isEqualTo(hash) && BigInt(preimage.length) === length,
     );
     if (updatedPreimage !== undefined) {
       return updatedPreimage;
@@ -132,8 +133,8 @@ export class PartialStateDb implements PartialState {
     // fallback to state lookup
     const service = this.state.services.get(this.currentServiceId);
     const lookup = service?.data.lookupHistory.get(hash);
-    const status = lookup?.find((x) => BigInt(x.length) === length);
-    return status === undefined ? undefined : PreimageUpdate.update(status);
+    const status = lookup?.find((item) => BigInt(item.length) === length);
+    return status === undefined ? null : PreimageUpdate.update(status);
   }
 
   /**
@@ -141,7 +142,7 @@ export class PartialStateDb implements PartialState {
    *
    * May replace an existing entry in the pending state update.
    */
-  private updateOrAddPreimageUpdate(existingPreimage: PreimageUpdate, newUpdate: PreimageUpdate) {
+  private replaceOrAddPreimageUpdate(existingPreimage: PreimageUpdate, newUpdate: PreimageUpdate) {
     const index = this.updatedState.preimages.indexOf(existingPreimage);
     const removeCount = index === -1 ? 0 : 1;
     this.updatedState.preimages.splice(index, removeCount, newUpdate);
@@ -165,7 +166,7 @@ export class PartialStateDb implements PartialState {
   checkPreimageStatus(hash: PreimageHash, length: U64): PreimageStatus | null {
     // https://graypaper.fluffylabs.dev/#/9a08063/378102378102?v=0.6.6
     const status = this.getPreimageStatus(hash, length);
-    if (status === undefined || status.forgotten) {
+    if (status === null || status.forgotten) {
       return null;
     }
 
@@ -175,7 +176,7 @@ export class PartialStateDb implements PartialState {
   requestPreimage(hash: PreimageHash, length: U64): Result<OK, RequestPreimageError> {
     const existingPreimage = this.getPreimageStatus(hash, length);
 
-    if (existingPreimage !== undefined && !existingPreimage.forgotten) {
+    if (existingPreimage !== null && !existingPreimage.forgotten) {
       const len = existingPreimage.slots.length;
       // https://graypaper.fluffylabs.dev/#/9a08063/380901380901?v=0.6.6
       if (len === PreimageStatusKind.Requested) {
@@ -218,18 +219,22 @@ export class PartialStateDb implements PartialState {
     // TODO [ToDr] This is probably invalid. What if someome requests the same
     // hash with two different lengths over `2**32`? We will end up with the same entry.
     // hopefuly this will be prohibitevely expensive?
-    const len = length >= 2n ** 32n ? tryAsU32(2 ** 32 - 1) : tryAsU32(Number(length));
-    if (existingPreimage === undefined || existingPreimage.forgotten) {
+    const clampedLength = clampU64ToU32(length);
+    if (existingPreimage === null || existingPreimage.forgotten) {
       // https://graypaper.fluffylabs.dev/#/9a08063/38a60038a600?v=0.6.6
       this.updatedState.preimages.push(
-        PreimageUpdate.update(new LookupHistoryItem(hash, len, tryAsLookupHistorySlots([]))),
+        PreimageUpdate.update(new LookupHistoryItem(hash, clampedLength, tryAsLookupHistorySlots([]))),
       );
     } else {
       /** https://graypaper.fluffylabs.dev/#/9a08063/38ca0038ca00?v=0.6.6 */
-      this.updateOrAddPreimageUpdate(
+      this.replaceOrAddPreimageUpdate(
         existingPreimage,
         PreimageUpdate.update(
-          new LookupHistoryItem(hash, len, tryAsLookupHistorySlots([...existingPreimage.slots, this.state.timeslot])),
+          new LookupHistoryItem(
+            hash,
+            clampedLength,
+            tryAsLookupHistorySlots([...existingPreimage.slots, this.state.timeslot]),
+          ),
         ),
       );
     }
@@ -239,14 +244,14 @@ export class PartialStateDb implements PartialState {
 
   forgetPreimage(hash: PreimageHash, length: U64): Result<OK, null> {
     const status = this.getPreimageStatus(hash, length);
-    if (status === undefined || status.forgotten) {
+    if (status === null || status.forgotten) {
       return Result.error(null);
     }
 
     const s = slotsToPreimageStatus(status.slots);
     // https://graypaper.fluffylabs.dev/#/9a08063/378102378102?v=0.6.6
     if (s.status === PreimageStatusKind.Requested) {
-      this.updateOrAddPreimageUpdate(status, PreimageUpdate.forget(status));
+      this.replaceOrAddPreimageUpdate(status, PreimageUpdate.forget(status));
       return Result.ok(OK);
     }
 
@@ -255,7 +260,7 @@ export class PartialStateDb implements PartialState {
     if (s.status === PreimageStatusKind.Unavailable) {
       const y = s.data[1];
       if (y < t - PREIMAGE_EXPUNGE_PERIOD) {
-        this.updateOrAddPreimageUpdate(status, PreimageUpdate.forget(status));
+        this.replaceOrAddPreimageUpdate(status, PreimageUpdate.forget(status));
         return Result.ok(OK);
       }
 
@@ -264,7 +269,7 @@ export class PartialStateDb implements PartialState {
 
     // https://graypaper.fluffylabs.dev/#/9a08063/38c80138c801?v=0.6.6
     if (s.status === PreimageStatusKind.Available) {
-      this.updateOrAddPreimageUpdate(
+      this.replaceOrAddPreimageUpdate(
         status,
         PreimageUpdate.update(
           new LookupHistoryItem(status.hash, status.length, tryAsLookupHistorySlots([s.data[0], t])),
@@ -277,7 +282,7 @@ export class PartialStateDb implements PartialState {
     if (s.status === PreimageStatusKind.Reavailable) {
       const y = s.data[1];
       if (y < t - PREIMAGE_EXPUNGE_PERIOD) {
-        this.updateOrAddPreimageUpdate(
+        this.replaceOrAddPreimageUpdate(
           status,
           PreimageUpdate.update(
             new LookupHistoryItem(status.hash, status.length, tryAsLookupHistorySlots([s.data[2], t])),

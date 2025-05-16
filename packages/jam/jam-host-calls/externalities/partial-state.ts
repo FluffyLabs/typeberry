@@ -80,6 +80,7 @@ export function slotsToPreimageStatus(slots: LookupHistorySlots): PreimageStatus
       data: [slots[0], slots[1], slots[2]],
     };
   }
+
   throw new Error(`Invalid slots length: ${slots.length}`);
 }
 
