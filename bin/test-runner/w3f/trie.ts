@@ -18,14 +18,14 @@ export class TrieTest {
 
       const output: Map<StateKey, BytesBlob> = new Map();
       for (const [k, v] of Object.entries(input)) {
-        const key = Bytes.parseBytesNoPrefix(k, 32) as StateKey;
+        const key = Bytes.parseBytesNoPrefix(k, 32).asOpaque<StateKey>();
         const value = BytesBlob.parseBlobNoPrefix(v);
         output.set(key, value);
       }
 
       return output;
     }),
-    output: json.fromString((v) => Bytes.parseBytesNoPrefix(v, 32) as TrieHash),
+    output: json.fromString((v) => Bytes.parseBytesNoPrefix(v, 32).asOpaque()),
   };
   input!: Map<StateKey, BytesBlob>;
   output!: TrieHash;

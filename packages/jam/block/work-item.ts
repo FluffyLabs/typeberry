@@ -21,11 +21,11 @@ export class ImportSpec extends WithDebug {
     index: codec.u16.asOpaque<SegmentIndex>(),
   });
 
-  static fromCodec({ treeRoot, index }: CodecRecord<ImportSpec>) {
+  static create({ treeRoot, index }: CodecRecord<ImportSpec>) {
     return new ImportSpec(treeRoot, index);
   }
 
-  constructor(
+  private constructor(
     /**
      * ??: TODO [ToDr] GP seems to mention a identity of a work-package:
      * https://graypaper.fluffylabs.dev/#/579bd12/199300199300
@@ -45,11 +45,11 @@ export class WorkItemExtrinsicSpec extends WithDebug {
     len: codec.u32,
   });
 
-  static fromCodec({ hash, len }: CodecRecord<WorkItemExtrinsicSpec>) {
+  static create({ hash, len }: CodecRecord<WorkItemExtrinsicSpec>) {
     return new WorkItemExtrinsicSpec(hash, len);
   }
 
-  constructor(
+  private constructor(
     /** The pre-image to this hash should be passed to the guarantor alongisde the work-package. */
     public readonly hash: WorkItemExtrinsicHash,
     /** Length of the preimage identified by the hash above. */
@@ -125,7 +125,7 @@ export class WorkItem extends WithDebug {
     exportCount: codec.u16,
   });
 
-  static fromCodec({
+  static create({
     service,
     codeHash,
     payload,
@@ -147,7 +147,7 @@ export class WorkItem extends WithDebug {
     );
   }
 
-  constructor(
+  private constructor(
     /** `s`: related service */
     public readonly service: ServiceId,
     /**

@@ -21,38 +21,46 @@ import { DisputesErrorCode } from "./disputes-error-code";
 import type { DisputesState } from "./disputes-state";
 
 const createValidatorData = ({ bandersnatch, ed25519 }: { bandersnatch: string; ed25519: string }) =>
-  new ValidatorData(
-    Bytes.parseBytes(bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque(),
-    Bytes.parseBytes(ed25519, ED25519_KEY_BYTES).asOpaque(),
-    Bytes.zero(BLS_KEY_BYTES).asOpaque(),
-    Bytes.zero(VALIDATOR_META_BYTES),
-  );
+  ValidatorData.create({
+    bandersnatch: Bytes.parseBytes(bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque(),
+    ed25519: Bytes.parseBytes(ed25519, ED25519_KEY_BYTES).asOpaque(),
+    bls: Bytes.zero(BLS_KEY_BYTES).asOpaque(),
+    metadata: Bytes.zero(VALIDATOR_META_BYTES),
+  });
 const createVote = ({ vote, index, signature }: { vote: boolean; index: number; signature: string }) =>
-  new Judgement(vote, tryAsValidatorIndex(index), Bytes.parseBytes(signature, ED25519_SIGNATURE_BYTES).asOpaque());
+  Judgement.create({
+    isWorkReportValid: vote,
+    index: tryAsValidatorIndex(index),
+    signature: Bytes.parseBytes(signature, ED25519_SIGNATURE_BYTES).asOpaque(),
+  });
 const createVerdict = ({
   target,
   age,
   votes,
 }: { target: string; age: number; votes: { vote: boolean; index: number; signature: string }[] }) =>
-  new Verdict(Bytes.parseBytes(target, HASH_SIZE).asOpaque(), tryAsEpoch(age), asKnownSize(votes.map(createVote)));
+  Verdict.create({
+    workReportHash: Bytes.parseBytes(target, HASH_SIZE).asOpaque(),
+    votesEpoch: tryAsEpoch(age),
+    votes: asKnownSize(votes.map(createVote)),
+  });
 const createCulprit = ({ target, key, signature }: { target: string; key: string; signature: string }) =>
-  new Culprit(
-    Bytes.parseBytes(target, HASH_SIZE).asOpaque(),
-    Bytes.parseBytes(key, ED25519_KEY_BYTES).asOpaque(),
-    Bytes.parseBytes(signature, ED25519_SIGNATURE_BYTES).asOpaque(),
-  );
+  Culprit.create({
+    workReportHash: Bytes.parseBytes(target, HASH_SIZE).asOpaque(),
+    key: Bytes.parseBytes(key, ED25519_KEY_BYTES).asOpaque(),
+    signature: Bytes.parseBytes(signature, ED25519_SIGNATURE_BYTES).asOpaque(),
+  });
 const createFault = ({
   target,
   vote,
   key,
   signature,
 }: { target: string; vote: boolean; key: string; signature: string }) =>
-  new Fault(
-    Bytes.parseBytes(target, HASH_SIZE).asOpaque(),
-    vote,
-    Bytes.parseBytes(key, ED25519_KEY_BYTES).asOpaque(),
-    Bytes.parseBytes(signature, ED25519_SIGNATURE_BYTES).asOpaque(),
-  );
+  Fault.create({
+    workReportHash: Bytes.parseBytes(target, HASH_SIZE).asOpaque(),
+    wasConsideredValid: vote,
+    key: Bytes.parseBytes(key, ED25519_KEY_BYTES).asOpaque(),
+    signature: Bytes.parseBytes(signature, ED25519_SIGNATURE_BYTES).asOpaque(),
+  });
 const createOffender = (blob: string): Ed25519Key => Bytes.parseBytes(blob, ED25519_KEY_BYTES).asOpaque();
 
 describe("Disputes", () => {
@@ -256,12 +264,12 @@ describe("Disputes", () => {
   ].map(createFault);
 
   const preState: DisputesState = {
-    disputesRecords: new DisputesRecords(
-      SortedSet.fromArray(hashComparator),
-      SortedSet.fromArray(hashComparator),
-      SortedSet.fromArray(hashComparator),
-      SortedSet.fromArray(hashComparator),
-    ),
+    disputesRecords: DisputesRecords.create({
+      goodSet: SortedSet.fromArray(hashComparator),
+      badSet: SortedSet.fromArray(hashComparator),
+      wonkySet: SortedSet.fromArray(hashComparator),
+      punishSet: SortedSet.fromArray(hashComparator),
+    }),
     timeslot: tryAsTimeSlot(0),
     availabilityAssignment: tryAsPerCore([null, null], tinyChainSpec),
     currentValidatorData,
@@ -270,7 +278,7 @@ describe("Disputes", () => {
 
   it("should perform correct state transition and return offenders", async () => {
     const disputes = new Disputes(tinyChainSpec, preState);
-    const disputesExtrinsic = new DisputesExtrinsic(verdicts, culprits, faults);
+    const disputesExtrinsic = DisputesExtrinsic.create({ verdicts, culprits, faults });
     const offenders = [
       "0x22351e22105a19aabb42589162ad7f1ea0df1c25cebf0e4a9fcd261301274862",
       "0xe68e0cf7f26c59f963b5846202d2327cc8bc0c4eff8cb9abd4012f9a71decf00",
@@ -287,7 +295,11 @@ describe("Disputes", () => {
 
   it("should return incorrect validator index error", async () => {
     const disputes = new Disputes(tinyChainSpec, preState);
-    const disputesExtrinsic = new DisputesExtrinsic(verdictsWithIncorrectValidatorIndex, culprits, faults);
+    const disputesExtrinsic = DisputesExtrinsic.create({
+      verdicts: verdictsWithIncorrectValidatorIndex,
+      culprits,
+      faults,
+    });
 
     const result = await disputes.transition(disputesExtrinsic);
     const error = result.isError ? result.error : undefined;

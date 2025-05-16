@@ -57,7 +57,7 @@ describe("HostCalls: Info", () => {
     const storageUtilisationCount = tryAsU32(1_000);
     accounts.details.set(
       serviceId,
-      ServiceAccountInfo.fromCodec({
+      ServiceAccountInfo.create({
         codeHash: Bytes.fill(32, 5).asOpaque(),
         balance: tryAsU64(150_000),
         accumulateMinGas: tryAsServiceGas(0n),
@@ -103,7 +103,7 @@ describe("HostCalls: Info", () => {
     const storageUtilisationCount = tryAsU32(1_000);
     accounts.details.set(
       serviceId,
-      ServiceAccountInfo.fromCodec({
+      ServiceAccountInfo.create({
         codeHash: Bytes.fill(32, 5).asOpaque(),
         balance: tryAsU64(150_000),
         accumulateMinGas: tryAsServiceGas(0n),

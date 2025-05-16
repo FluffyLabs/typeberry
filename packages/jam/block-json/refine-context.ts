@@ -14,7 +14,14 @@ export const refineContextFromJson = json.object<JsonRefineContext, RefineContex
     prerequisites: json.array(fromJson.bytes32()),
   },
   ({ anchor, state_root, beefy_root, lookup_anchor, lookup_anchor_slot, prerequisites }) =>
-    new RefineContext(anchor, state_root, beefy_root, lookup_anchor, lookup_anchor_slot, prerequisites),
+    RefineContext.create({
+      anchor,
+      stateRoot: state_root,
+      beefyRoot: beefy_root,
+      lookupAnchor: lookup_anchor,
+      lookupAnchorSlot: lookup_anchor_slot,
+      prerequisites,
+    }),
 );
 
 type JsonRefineContext = {

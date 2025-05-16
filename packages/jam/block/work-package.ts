@@ -47,7 +47,7 @@ export class WorkPackage extends WithDebug {
     ),
   });
 
-  static fromCodec({
+  static create({
     authorization,
     authCodeHost,
     authCodeHash,
@@ -58,7 +58,7 @@ export class WorkPackage extends WithDebug {
     return new WorkPackage(authorization, authCodeHost, authCodeHash, parametrization, context, items);
   }
 
-  constructor(
+  private constructor(
     /** `j`: simple blob acting as an authorization token */
     public readonly authorization: BytesBlob,
     /** `h`: index of the service that hosts the authorization code */

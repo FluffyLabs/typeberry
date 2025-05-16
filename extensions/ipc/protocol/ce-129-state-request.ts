@@ -30,7 +30,7 @@ export class KeyValuePair extends WithDebug {
     value: codec.blob,
   });
 
-  static fromCodec({ key, value }: CodecRecord<KeyValuePair>) {
+  static create({ key, value }: CodecRecord<KeyValuePair>) {
     return new KeyValuePair(key, value);
   }
 
@@ -47,11 +47,11 @@ export class StateResponse extends WithDebug {
     keyValuePairs: codec.sequenceVarLen(KeyValuePair.Codec),
   });
 
-  static fromCodec({ keyValuePairs }: CodecRecord<StateResponse>) {
+  static create({ keyValuePairs }: CodecRecord<StateResponse>) {
     return new StateResponse(keyValuePairs);
   }
 
-  constructor(public readonly keyValuePairs: KeyValuePair[]) {
+  private constructor(public readonly keyValuePairs: KeyValuePair[]) {
     super();
   }
 }
@@ -64,11 +64,11 @@ export class StateRequest extends WithDebug {
     maximumSize: codec.u32,
   });
 
-  static fromCodec({ headerHash, startKey, endKey, maximumSize }: CodecRecord<StateRequest>) {
+  static create({ headerHash, startKey, endKey, maximumSize }: CodecRecord<StateRequest>) {
     return new StateRequest(headerHash, startKey, endKey, maximumSize);
   }
 
-  constructor(
+  private constructor(
     public readonly headerHash: HeaderHash,
     public readonly startKey: Bytes<KEY_SIZE>,
     public readonly endKey: Bytes<KEY_SIZE>,
@@ -117,7 +117,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
 
       logger.info(`[${sender.streamId}][server]: <-- responding with boundary nodes and key value pairs.`);
       sender.send(Encoder.encodeObject(codec.sequenceVarLen(trieNodeCodec), boundaryNodes));
-      sender.send(Encoder.encodeObject(StateResponse.Codec, new StateResponse(keyValuePairs)));
+      sender.send(Encoder.encodeObject(StateResponse.Codec, StateResponse.create({ keyValuePairs })));
       sender.close();
 
       return;
@@ -140,15 +140,20 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
 
   getStateByKey(
     sender: StreamSender,
-    hash: HeaderHash,
-    key: StateRequest["startKey"],
+    headerHash: HeaderHash,
+    startKey: StateRequest["startKey"],
     onResponse: (state: StateResponse) => void,
   ) {
     if (this.onResponse.has(sender.streamId)) {
       throw new Error("It is disallowed to use the same stream for multiple requests.");
     }
     this.onResponse.set(sender.streamId, onResponse);
-    sender.send(Encoder.encodeObject(StateRequest.Codec, new StateRequest(hash, key, key, tryAsU32(4096))));
+    sender.send(
+      Encoder.encodeObject(
+        StateRequest.Codec,
+        StateRequest.create({ headerHash, startKey, endKey: startKey, maximumSize: tryAsU32(4096) }),
+      ),
+    );
     sender.close();
   }
 }

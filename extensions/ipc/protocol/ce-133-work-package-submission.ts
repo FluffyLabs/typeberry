@@ -23,11 +23,11 @@ export class CoreWorkPackage extends WithDebug {
     workPackage: WorkPackage.Codec,
   });
 
-  static fromCodec({ coreIndex, workPackage }: CodecRecord<CoreWorkPackage>) {
+  static create({ coreIndex, workPackage }: CodecRecord<CoreWorkPackage>) {
     return new CoreWorkPackage(coreIndex, workPackage);
   }
 
-  constructor(
+  private constructor(
     public readonly coreIndex: CoreIndex,
     public readonly workPackage: WorkPackage,
   ) {
@@ -77,7 +77,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   onClose(): void {}
 
   sendWorkPackage(sender: StreamSender, coreIndex: CoreIndex, workPackage: WorkPackage, extrinsic: WorkItemExtrinsics) {
-    const corePack = new CoreWorkPackage(coreIndex, workPackage);
+    const corePack = CoreWorkPackage.create({ coreIndex, workPackage });
     logger.trace(`[${sender.streamId}] Sending work package: ${corePack}`);
     sender.send(Encoder.encodeObject(CoreWorkPackage.Codec, corePack));
     logger.trace(`[${sender.streamId}] Sending extrinsics: ${workPackage.items}`);

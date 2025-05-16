@@ -86,9 +86,9 @@ describe("Block Verifier", async () => {
 
   it("should return ParentNotFound error if parent block is not found", async () => {
     const blocksDb = new InMemoryBlocks();
-    prepareBlocksDb(blocksDb, { headerHash: Bytes.fill(HASH_SIZE, 7).asOpaque<HeaderHash>() });
+    prepareBlocksDb(blocksDb, { headerHash: Bytes.fill(HASH_SIZE, 7).asOpaque() });
     const blockVerifier = new BlockVerifier(hasher, blocksDb);
-    const block = prepareBlock({ parentHash: Bytes.fill(HASH_SIZE, 8).asOpaque<HeaderHash>() });
+    const block = prepareBlock({ parentHash: Bytes.fill(HASH_SIZE, 8).asOpaque() });
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
 
@@ -136,13 +136,13 @@ describe("Block Verifier", async () => {
   it("should return StateRootNotFound error if posterior state root of parent hash is not set", async () => {
     const blocksDb = new InMemoryBlocks();
     prepareBlocksDb(blocksDb, {
-      stateRootHash: Bytes.fill(HASH_SIZE, 6).asOpaque<StateRootHash>(),
+      stateRootHash: Bytes.fill(HASH_SIZE, 6).asOpaque(),
       prepareStateRoot: false,
     });
     const blockVerifier = new BlockVerifier(hasher, blocksDb);
 
     const block = prepareBlock({
-      priorStateRootHash: Bytes.fill(HASH_SIZE, 7).asOpaque<StateRootHash>(),
+      priorStateRootHash: Bytes.fill(HASH_SIZE, 7).asOpaque(),
       correctExtrinsic: true,
     });
 
@@ -160,13 +160,13 @@ describe("Block Verifier", async () => {
   it("should return InvalidStateRoot error if current block priorStateRoot hash is not the same as posterior state root", async () => {
     const blocksDb = new InMemoryBlocks();
     prepareBlocksDb(blocksDb, {
-      stateRootHash: Bytes.fill(HASH_SIZE, 6).asOpaque<StateRootHash>(),
+      stateRootHash: Bytes.fill(HASH_SIZE, 6).asOpaque(),
       prepareStateRoot: true,
     });
     const blockVerifier = new BlockVerifier(hasher, blocksDb);
 
     const block = prepareBlock({
-      priorStateRootHash: Bytes.fill(HASH_SIZE, 7).asOpaque<StateRootHash>(),
+      priorStateRootHash: Bytes.fill(HASH_SIZE, 7).asOpaque(),
       correctExtrinsic: true,
     });
 
@@ -195,10 +195,7 @@ describe("Block Verifier", async () => {
     assert.deepStrictEqual(
       result,
       Result.ok(
-        Bytes.parseBytes(
-          "0x8c87f0595257eaa1a9fd6d1df9c078a622552dba4a02b8232cf1821c5bb67984",
-          HASH_SIZE,
-        ).asOpaque<HeaderHash>(),
+        Bytes.parseBytes("0x8c87f0595257eaa1a9fd6d1df9c078a622552dba4a02b8232cf1821c5bb67984", HASH_SIZE).asOpaque(),
       ),
     );
   });

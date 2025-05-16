@@ -150,7 +150,7 @@ export type PropertyKeys<T> = {
 /** A constructor of basic data object that takes a `Record<T>`. */
 export type ClassConstructor<T> = {
   name: string;
-  fromCodec: (o: CodecRecord<T>) => T;
+  create: (o: CodecRecord<T>) => T;
 };
 
 function exactHint(bytes: number): SizeHint {
@@ -531,9 +531,9 @@ export namespace codec {
   export const object = <T>(
     descriptors: SimpleDescriptorRecord<T>,
     name = "object",
-    fromCodec: (o: CodecRecord<T>) => T = (o) => o as T,
+    create: (o: CodecRecord<T>) => T = (o) => o as T,
   ) => {
-    return Class({ name, fromCodec }, descriptors);
+    return Class({ name, create }, descriptors);
   };
 
   /**
@@ -583,7 +583,7 @@ export namespace codec {
           const value = descriptor.decode(d);
           constructorParams[key] = value;
         });
-        return Class.fromCodec(constructorParams as CodecRecord<T>);
+        return Class.create(constructorParams as CodecRecord<T>);
       },
       skipper,
       view,

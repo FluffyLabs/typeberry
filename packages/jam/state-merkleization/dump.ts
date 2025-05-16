@@ -75,7 +75,7 @@ class ServiceWithCodec extends Service {
       storage: codec.sequenceVarLen(StateItem.Codec),
     }),
   });
-  static fromCodec({ id, data }: CodecRecord<ServiceWithCodec>) {
+  static create({ id, data }: CodecRecord<ServiceWithCodec>) {
     return new ServiceWithCodec(id, data);
   }
 }

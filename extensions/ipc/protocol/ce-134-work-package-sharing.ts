@@ -30,11 +30,11 @@ export class WorkPackageSharingRequest extends WithDebug {
     segmentsRootMappings: codec.sequenceVarLen(WorkPackageInfo.Codec),
   });
 
-  static fromCodec({ coreIndex, segmentsRootMappings }: CodecRecord<WorkPackageSharingRequest>) {
+  static create({ coreIndex, segmentsRootMappings }: CodecRecord<WorkPackageSharingRequest>) {
     return new WorkPackageSharingRequest(coreIndex, segmentsRootMappings);
   }
 
-  constructor(
+  private constructor(
     public readonly coreIndex: CoreIndex,
     public readonly segmentsRootMappings: WorkPackageInfo[],
   ) {
@@ -48,11 +48,11 @@ export class WorkPackageSharingResponse extends WithDebug {
     signature: codec.bytes(ED25519_SIGNATURE_BYTES).asOpaque<Ed25519Signature>(),
   });
 
-  static fromCodec({ workReportHash, signature }: CodecRecord<WorkPackageSharingResponse>) {
+  static create({ workReportHash, signature }: CodecRecord<WorkPackageSharingResponse>) {
     return new WorkPackageSharingResponse(workReportHash, signature);
   }
 
-  constructor(
+  private constructor(
     public readonly workReportHash: WorkReportHash,
     public readonly signature: Ed25519Signature,
   ) {
@@ -76,7 +76,7 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   private readonly requestsMap = new Map<StreamId, WorkPackageSharingRequest>();
 
   private static sendWorkReport(sender: StreamSender, workReportHash: WorkReportHash, signature: Ed25519Signature) {
-    const workReport = new WorkPackageSharingResponse(workReportHash, signature);
+    const workReport = WorkPackageSharingResponse.create({ workReportHash, signature });
     sender.send(Encoder.encodeObject(WorkPackageSharingResponse.Codec, workReport));
     sender.close();
   }
@@ -144,7 +144,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     segmentsRootMappings: WorkPackageInfo[],
     workPackageBundle: WorkPackageBundle,
   ): Promise<{ workReportHash: WorkReportHash; signature: Ed25519Signature }> {
-    const request = new WorkPackageSharingRequest(coreIndex, segmentsRootMappings);
+    const request = WorkPackageSharingRequest.create({ coreIndex, segmentsRootMappings });
     logger.trace(`[${sender.streamId}] Sending core index and segments-root mappings.`);
     sender.send(Encoder.encodeObject(WorkPackageSharingRequest.Codec, request));
     logger.trace(`[${sender.streamId}] Sending work package bundle.`);

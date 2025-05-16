@@ -1,8 +1,7 @@
 import assert from "node:assert";
 import { fromJson } from "@typeberry/block-json";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { Interpreter } from "@typeberry/pvm-interpreter";
-import type { Gas } from "@typeberry/pvm-interpreter/gas";
+import { Interpreter, tryAsGas } from "@typeberry/pvm-interpreter";
 import { MemoryBuilder } from "@typeberry/pvm-interpreter/memory";
 import { MAX_MEMORY_INDEX, PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
@@ -113,7 +112,7 @@ export async function runPvmTest(testContent: PvmTest) {
     return "halt";
   };
 
-  pvm.reset(testContent.program, testContent["initial-pc"], testContent["initial-gas"] as Gas, regs, memory);
+  pvm.reset(testContent.program, testContent["initial-pc"], tryAsGas(testContent["initial-gas"]), regs, memory);
   pvm.runProgram();
 
   assert.strictEqual(pvm.getGas(), BigInt(testContent["expected-gas"]));

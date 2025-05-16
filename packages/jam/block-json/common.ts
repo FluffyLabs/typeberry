@@ -1,4 +1,4 @@
-import type { TicketAttempt } from "@typeberry/block/tickets";
+import { type TicketAttempt, tryAsTicketAttempt } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { Ed25519Signature } from "@typeberry/crypto";
 import { type FromJson, json } from "@typeberry/json-parser";
@@ -17,7 +17,7 @@ export namespace fromJson {
     if (v !== 0 && v !== 1 && v !== 2) {
       throw new Error("Invalid TicketAttempt value.");
     }
-    return v as TicketAttempt;
+    return tryAsTicketAttempt(v);
   }) as FromJson<TicketAttempt>;
 
   export const uint8Array = json.fromAny((v) => {

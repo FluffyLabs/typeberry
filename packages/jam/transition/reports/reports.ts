@@ -1,4 +1,4 @@
-import type { PerValidator, TimeSlot, WorkReportHash } from "@typeberry/block";
+import { type PerValidator, type TimeSlot, type WorkReportHash, tryAsTimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
 import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
 import { type BytesBlob, bytesBlobComparator } from "@typeberry/bytes";
@@ -138,10 +138,10 @@ export class Reports {
     for (const guarantee of input.guarantees) {
       const report = guarantee.view().report.materialize();
       const workPackageHash = workReportHashes[index];
-      this.state.availabilityAssignment[report.coreIndex] = new AvailabilityAssignment(
-        new WithHash(workPackageHash, report),
-        input.slot,
-      );
+      this.state.availabilityAssignment[report.coreIndex] = AvailabilityAssignment.create({
+        workReport: new WithHash(workPackageHash, report),
+        timeout: input.slot,
+      });
       index += 1;
     }
 
@@ -250,7 +250,7 @@ export class Reports {
     if (headerRotation > guaranteeRotation) {
       // we can safely subtract here, because if `guaranteeRotation` is less
       // than header rotation it must be greater than the `rotationPeriod`.
-      timeSlot = (headerTimeSlot - rotationPeriod) as TimeSlot;
+      timeSlot = tryAsTimeSlot(headerTimeSlot - rotationPeriod);
 
       // if the epoch changed, we need to take previous entropy and previous validator data.
       if (isPreviousRotationPreviousEpoch(timeSlot, headerTimeSlot, epochLength)) {
