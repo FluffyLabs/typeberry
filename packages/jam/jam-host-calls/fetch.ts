@@ -232,7 +232,8 @@ export class Fetch implements HostCallHandler {
     // l
     const length = minU64(regs.get(9), tryAsU64(valueLength - offset));
 
-    // attempt to write the output
+    // NOTE: casting to `Number` is safe in both places, since we are always bounded
+    // by the actual length of the value returned which is smaller than `2*32`.
     const chunk = value === null ? new Uint8Array() : value.raw.subarray(Number(offset), Number(offset + length));
     const storeResult = memory.storeFrom(output, chunk);
     if (storeResult.isError) {
