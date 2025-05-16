@@ -3,22 +3,23 @@ import type { LmdbBlocks, LmdbStates } from "@typeberry/database-lmdb";
 import type { U32 } from "@typeberry/numbers";
 
 export type JsonRpcId = string | number | null;
+export const JSON_RPC_VERSION = "2.0";
 
 export interface JsonRpcRequest {
-  jsonrpc: "2.0";
+  jsonrpc: typeof JSON_RPC_VERSION;
   method: string;
   params?: unknown[];
   id?: JsonRpcId;
 }
 
 export interface JsonRpcSuccessResponse {
-  jsonrpc: "2.0";
+  jsonrpc: typeof JSON_RPC_VERSION;
   result: unknown[] | null;
   id: JsonRpcId;
 }
 
 export interface JsonRpcErrorResponse {
-  jsonrpc: "2.0";
+  jsonrpc: typeof JSON_RPC_VERSION;
   error: {
     code: number;
     message: string;

@@ -1,10 +1,9 @@
 import type { HeaderHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU32 } from "@typeberry/numbers";
 import type { Hash, RpcMethod, Slot } from "../types";
 
-export const parent: RpcMethod<[Hash], [Hash, Slot]> = async ([headerHash], db) => {
+export const parent: RpcMethod<[Hash], [Hash, Slot] | null> = async ([headerHash], db) => {
   const hash: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
   const header = db.blocks.getHeader(hash);
   if (header === null) {
@@ -14,7 +13,7 @@ export const parent: RpcMethod<[Hash], [Hash, Slot]> = async ([headerHash], db) 
   const parentHash = header.parentHeaderHash.materialize();
 
   if (parentHash.isEqualTo(Bytes.zero(HASH_SIZE).asOpaque())) {
-    return [Array.from(parentHash.raw), tryAsU32(0)];
+    return null;
   }
 
   const parentHeader = db.blocks.getHeader(parentHash);

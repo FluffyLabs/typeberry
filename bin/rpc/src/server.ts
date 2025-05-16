@@ -3,7 +3,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import { WebSocketServer } from "ws";
 import type { WebSocket } from "ws";
-import { loadMethods } from "./methodLoader";
+import { loadMethodsInto } from "./method-loader";
 import type {
   DatabaseContext,
   JsonRpcErrorResponse,
@@ -12,11 +12,11 @@ import type {
   JsonRpcResponse,
   RpcMethod,
 } from "./types";
-import { RpcError } from "./types";
+import { JSON_RPC_VERSION, RpcError } from "./types";
 
 function createErrorResponse(error: RpcError, id: JsonRpcId): JsonRpcErrorResponse {
   return {
-    jsonrpc: "2.0",
+    jsonrpc: JSON_RPC_VERSION,
     error: {
       code: error.code,
       message: error.message,
@@ -47,7 +47,7 @@ export class RpcServer {
     this.states = new LmdbStates(chainSpec, this.rootDb);
     this.chainSpec = chainSpec;
 
-    loadMethods(this.methods);
+    loadMethodsInto(this.methods);
     this.setupWebSocket();
     console.info(`Server listening on port ${port}...`);
   }
@@ -63,7 +63,7 @@ export class RpcServer {
           return;
         }
 
-        if (request.jsonrpc !== "2.0") {
+        if (request.jsonrpc !== JSON_RPC_VERSION) {
           ws.send(
             JSON.stringify(createErrorResponse(new RpcError(-32600, "Invalid JSON-RPC version"), request.id ?? null)),
           );
@@ -74,7 +74,7 @@ export class RpcServer {
           const result = await this.handleRequest(request);
           if (request.id !== undefined) {
             const response: JsonRpcResponse = {
-              jsonrpc: "2.0",
+              jsonrpc: JSON_RPC_VERSION,
               result,
               id: request.id,
             };

@@ -1,6 +1,8 @@
 import WebSocket from "ws";
 import type { JsonRpcRequest, JsonRpcResponse } from "../src/types";
 
+const JSON_RPC_VERSION = "2.0";
+
 class RpcClient {
   private ws: WebSocket;
   private messageQueue: Map<number, (response: JsonRpcResponse) => void> = new Map();
@@ -46,7 +48,7 @@ class RpcClient {
     return new Promise((resolve, reject) => {
       const id = this.nextId++;
       const request: JsonRpcRequest = {
-        jsonrpc: "2.0",
+        jsonrpc: JSON_RPC_VERSION,
         method,
         params,
         id,

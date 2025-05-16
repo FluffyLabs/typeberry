@@ -2,8 +2,8 @@ import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config"
 import minimist from "minimist";
 import { RpcServer } from "./src/server";
 
-function main() {
-  const argv = minimist(process.argv.slice(2), {
+function main(args: string[]) {
+  const argv = minimist(args, {
     string: ["db-path", "genesis-root", "port", "chain-spec"],
     default: {
       port: "19800",
@@ -16,18 +16,7 @@ function main() {
   const port = Number.parseInt(argv.port, 10);
   const dbPath = argv["db-path"];
   const genesisRoot = `0x${argv["genesis-root"]}`;
-
-  let chainSpec: ChainSpec;
-  switch (argv["chain-spec"]) {
-    case "tiny":
-      chainSpec = tinyChainSpec;
-      break;
-    case "full":
-      chainSpec = fullChainSpec;
-      break;
-    default:
-      throw new Error("chain-spec must be either 'tiny' or 'full'");
-  }
+  const chainSpec = parseChainSpec(argv["chain-spec"]);
 
   const server = new RpcServer(port, dbPath, genesisRoot, chainSpec);
 
@@ -37,4 +26,15 @@ function main() {
   });
 }
 
-main();
+function parseChainSpec(chainSpec: string): ChainSpec {
+  switch (chainSpec) {
+    case "tiny":
+      return tinyChainSpec;
+    case "full":
+      return fullChainSpec;
+    default:
+      throw new Error("chain-spec must be either 'tiny' or 'full'");
+  }
+}
+
+main(process.argv.slice(2));
