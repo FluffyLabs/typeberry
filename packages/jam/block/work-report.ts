@@ -31,11 +31,11 @@ export class WorkPackageSpec extends WithDebug {
     exportsCount: codec.u16,
   });
 
-  static fromCodec({ hash, length, erasureRoot, exportsRoot, exportsCount }: CodecRecord<WorkPackageSpec>) {
+  static create({ hash, length, erasureRoot, exportsRoot, exportsCount }: CodecRecord<WorkPackageSpec>) {
     return new WorkPackageSpec(hash, length, erasureRoot, exportsRoot, exportsCount);
   }
 
-  constructor(
+  private constructor(
     /** `h`: The hash of the work package. */
     public readonly hash: WorkPackageHash,
     /** `l`: Auditable work-bundle length. */
@@ -62,7 +62,7 @@ export class WorkPackageInfo extends WithDebug {
     segmentTreeRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
   });
 
-  constructor(
+  private constructor(
     /** Hash of the described work package. */
     readonly workPackageHash: WorkPackageHash,
     /** Exports root hash. */
@@ -71,7 +71,7 @@ export class WorkPackageInfo extends WithDebug {
     super();
   }
 
-  static fromCodec({ workPackageHash, segmentTreeRoot }: CodecRecord<WorkPackageInfo>) {
+  static create({ workPackageHash, segmentTreeRoot }: CodecRecord<WorkPackageInfo>) {
     return new WorkPackageInfo(workPackageHash, segmentTreeRoot);
   }
 }
@@ -96,7 +96,7 @@ export class WorkReport extends WithDebug {
     authorizationGasUsed: codec.varU64.asOpaque<ServiceGas>(),
   });
 
-  static fromCodec({
+  static create({
     workPackageSpec,
     context,
     coreIndex,

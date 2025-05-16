@@ -32,11 +32,11 @@ export class StreamEnvelope {
     data: codec.blob,
   });
 
-  static fromCodec({ streamId, type, data }: CodecRecord<StreamEnvelope>) {
+  static create({ streamId, type, data }: CodecRecord<StreamEnvelope>) {
     return new StreamEnvelope(streamId, type, data);
   }
 
-  constructor(
+  private constructor(
     public readonly streamId: StreamId,
     public readonly type: StreamEnvelopeType,
     public readonly data: BytesBlob,
@@ -48,9 +48,9 @@ export class NewStream {
     streamByte: codec.u8,
   });
 
-  static fromCodec({ streamByte }: CodecRecord<NewStream>) {
+  static create({ streamByte }: CodecRecord<NewStream>) {
     return new NewStream(streamByte);
   }
 
-  constructor(public readonly streamByte: StreamKind) {}
+  private constructor(public readonly streamByte: StreamKind) {}
 }

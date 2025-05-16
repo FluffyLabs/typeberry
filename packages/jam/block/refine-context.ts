@@ -28,7 +28,7 @@ export class RefineContext extends WithDebug {
     prerequisites: codec.sequenceVarLen(codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>()),
   });
 
-  static fromCodec({
+  static create({
     anchor,
     stateRoot,
     beefyRoot,
@@ -39,7 +39,7 @@ export class RefineContext extends WithDebug {
     return new RefineContext(anchor, stateRoot, beefyRoot, lookupAnchor, lookupAnchorSlot, prerequisites);
   }
 
-  constructor(
+  private constructor(
     /** `a`: Header hash at which the work-package was evaluated. */
     public readonly anchor: HeaderHash,
     /** `s`: **Posterior** state root of the anchor. */

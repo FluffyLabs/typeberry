@@ -269,11 +269,11 @@ function intoAssurances(data: { bitfield: string; validatorIndex: number; signat
   const validatorIndex = tryAsValidatorIndex(data.validatorIndex);
   const signature = Bytes.parseBytes(data.signature, ED25519_SIGNATURE_BYTES).asOpaque();
 
-  return new AvailabilityAssurance(anchor, bitfield, validatorIndex, signature);
+  return AvailabilityAssurance.create({ anchor, bitfield, validatorIndex, signature });
 }
 
 function intoValidatorData({ bandersnatch, ed25519 }: { bandersnatch: string; ed25519: string }): ValidatorData {
-  return ValidatorData.fromCodec({
+  return ValidatorData.create({
     ed25519: Bytes.parseBytes(ed25519, ED25519_KEY_BYTES).asOpaque(),
     bandersnatch: Bytes.parseBytes(bandersnatch, BANDERSNATCH_KEY_BYTES).asOpaque(),
     bls: Bytes.zero(BLS_KEY_BYTES).asOpaque(),
@@ -293,7 +293,7 @@ function newAvailabilityAssignment(core: number, timeout: number): AvailabilityA
     results,
     authorizationGasUsed,
   } = report;
-  const workReport = WorkReport.fromCodec({
+  const workReport = WorkReport.create({
     workPackageSpec,
     context,
     coreIndex: tryAsCoreIndex(core),
@@ -307,7 +307,7 @@ function newAvailabilityAssignment(core: number, timeout: number): AvailabilityA
   const hash = blake2b.hashBytes(encoded).asOpaque();
   const workReportWithHash = new WithHash(hash, workReport);
 
-  return new AvailabilityAssignment(workReportWithHash, tryAsTimeSlot(timeout));
+  return AvailabilityAssignment.create({ workReport: workReportWithHash, timeout: tryAsTimeSlot(timeout) });
 }
 
 const INITIAL_ASSIGNMENT: AvailabilityAssignment[] = [

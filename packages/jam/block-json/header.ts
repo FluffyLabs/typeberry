@@ -19,14 +19,14 @@ import type { Ed25519Key } from "@typeberry/crypto";
 import { json } from "@typeberry/json-parser";
 import { fromJson } from "./common";
 
-const bandersnatchVrfSignature = json.fromString((v) => Bytes.parseBytes(v, 96) as BandersnatchVrfSignature);
+const bandersnatchVrfSignature = json.fromString((v) => Bytes.parseBytes(v, 96).asOpaque<BandersnatchVrfSignature>());
 
 const validatorKeysFromJson = json.object<ValidatorKeys, ValidatorKeys>(
   {
     bandersnatch: fromJson.bytes32<BandersnatchKey>(),
     ed25519: fromJson.bytes32<Ed25519Key>(),
   },
-  ValidatorKeys.fromCodec,
+  ValidatorKeys.create,
 );
 
 type JsonEpochMarker = {
@@ -41,7 +41,7 @@ const epochMark = json.object<JsonEpochMarker, EpochMarker>(
     tickets_entropy: fromJson.bytes32(),
     validators: json.array(validatorKeysFromJson),
   },
-  (x) => new EpochMarker(x.entropy, x.tickets_entropy, x.validators),
+  (x) => EpochMarker.create({ entropy: x.entropy, ticketsEntropy: x.tickets_entropy, validators: x.validators }),
 );
 
 const ticketsMark = json.object<Ticket>(
@@ -49,7 +49,7 @@ const ticketsMark = json.object<Ticket>(
     id: fromJson.bytes32(),
     attempt: fromJson.ticketAttempt,
   },
-  (x) => new Ticket(x.id, x.attempt),
+  (x) => Ticket.create({ id: x.id, attempt: x.attempt }),
 );
 
 type JsonHeader = {
