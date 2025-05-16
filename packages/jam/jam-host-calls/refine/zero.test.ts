@@ -6,7 +6,7 @@ import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { OK, Result } from "@typeberry/utils";
-import { type MachineId, tryAsMachineId, ZeroVoidError } from "../externalities/refine-externalities";
+import { type MachineId, ZeroVoidError, tryAsMachineId } from "../externalities/refine-externalities";
 import { TestRefineExt } from "../externalities/refine-externalities.test";
 import { HostCallResult } from "../results";
 import { Zero } from "./zero";

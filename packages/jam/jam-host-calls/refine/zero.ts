@@ -5,10 +5,10 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { type RefineExternalities, tryAsMachineId, ZeroVoidError } from "../externalities/refine-externalities";
+import { assertNever } from "@typeberry/utils";
+import { type RefineExternalities, ZeroVoidError, tryAsMachineId } from "../externalities/refine-externalities";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import { assertNever } from "@typeberry/utils";
 
 const IN_OUT_REG = 7;
 
