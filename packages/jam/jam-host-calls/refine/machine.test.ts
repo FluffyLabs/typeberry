@@ -7,10 +7,10 @@ import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-
 import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
+import { type ProgramCounter, tryAsMachineId, tryAsProgramCounter } from "../externalities/refine-externalities";
+import { TestRefineExt } from "../externalities/refine-externalities.test";
 import { HostCallResult } from "../results";
 import { Machine } from "./machine";
-import { type ProgramCounter, tryAsMachineId, tryAsProgramCounter } from "./refine-externalities";
-import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));
 const CODE_START_REG = 7;

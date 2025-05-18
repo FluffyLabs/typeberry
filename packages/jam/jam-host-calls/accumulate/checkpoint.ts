@@ -1,9 +1,9 @@
 import type { HostCallHandler, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
+import type { PartialState } from "../externalities/partial-state";
 import { GasHostCall } from "../gas";
 import { CURRENT_SERVICE_ID } from "../utils";
-import type { AccumulationPartialState } from "./partial-state";
 
 /**
  * Checkpoint the partial state.
@@ -17,7 +17,7 @@ export class Checkpoint implements HostCallHandler {
 
   private readonly gasHostCall: GasHostCall = new GasHostCall();
 
-  constructor(private readonly partialState: AccumulationPartialState) {}
+  constructor(private readonly partialState: PartialState) {}
 
   async execute(gas: GasCounter, regs: IHostCallRegisters): Promise<undefined | PvmExecution> {
     await this.gasHostCall.execute(gas, regs);

@@ -5,9 +5,9 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { ValidatorData } from "@typeberry/state";
+import type { PartialState } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import type { AccumulationPartialState } from "./partial-state";
 
 const IN_OUT_REG = 7;
 export const VALIDATOR_DATA_BYTES = tryAsExactBytes(ValidatorData.Codec.sizeHint);
@@ -23,7 +23,7 @@ export class Designate implements HostCallHandler {
   currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(
-    private readonly partialState: AccumulationPartialState,
+    private readonly partialState: PartialState,
     private readonly chainSpec: ChainSpec,
   ) {}
 

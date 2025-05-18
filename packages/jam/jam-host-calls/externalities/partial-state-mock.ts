@@ -4,37 +4,36 @@ import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
-import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { ValidatorData } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
 import {
-  type AccumulationPartialState,
   type EjectError,
-  type PreimageStatusResult,
+  type PartialState,
+  type PreimageStatus,
   type RequestPreimageError,
   type TRANSFER_MEMO_BYTES,
   TransferError,
 } from "./partial-state";
 
-export class TestAccumulate implements AccumulationPartialState {
-  public readonly authQueue: Parameters<TestAccumulate["updateAuthorizationQueue"]>[] = [];
-  public readonly forgetPreimageData: Parameters<TestAccumulate["forgetPreimage"]>[] = [];
-  public readonly newServiceCalled: Parameters<TestAccumulate["newService"]>[] = [];
-  public readonly ejectData: Parameters<TestAccumulate["eject"]>[] = [];
-  public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
-  public readonly requestPreimageData: Parameters<TestAccumulate["requestPreimage"]>[] = [];
-  public readonly checkPreimageStatusData: Parameters<TestAccumulate["checkPreimageStatus"]>[] = [];
-  public readonly transferData: Parameters<TestAccumulate["transfer"]>[] = [];
-  public readonly upgradeData: Parameters<TestAccumulate["upgradeService"]>[] = [];
-  public readonly validatorsData: Parameters<TestAccumulate["updateValidatorsData"]>[0][] = [];
+export class PartialStateMock implements PartialState {
+  public readonly authQueue: Parameters<PartialStateMock["updateAuthorizationQueue"]>[] = [];
+  public readonly forgetPreimageData: Parameters<PartialStateMock["forgetPreimage"]>[] = [];
+  public readonly newServiceCalled: Parameters<PartialStateMock["newService"]>[] = [];
+  public readonly privilegedServices: Parameters<PartialStateMock["updatePrivilegedServices"]>[] = [];
+  public readonly ejectData: Parameters<PartialStateMock["eject"]>[] = [];
+  public readonly requestPreimageData: Parameters<PartialStateMock["requestPreimage"]>[] = [];
+  public readonly checkPreimageStatusData: Parameters<PartialStateMock["checkPreimageStatus"]>[] = [];
+  public readonly transferData: Parameters<PartialStateMock["transfer"]>[] = [];
+  public readonly upgradeData: Parameters<PartialStateMock["upgradeService"]>[] = [];
+  public readonly validatorsData: Parameters<PartialStateMock["updateValidatorsData"]>[0][] = [];
 
   public checkpointCalled = 0;
   public yieldHash: OpaqueHash | null = null;
-  public forgetPreimageResponse: Result<null, null> = Result.ok(null);
+  public forgetPreimageResponse: Result<OK, null> = Result.ok(OK);
   public newServiceResponse: ServiceId | null = null;
   public ejectReturnValue: Result<OK, EjectError> = Result.ok(OK);
-  public requestPreimageResponse: Result<null, RequestPreimageError> = Result.ok(null);
-  public checkPreimageStatusResponse: PreimageStatusResult | null = null;
+  public requestPreimageResponse: Result<OK, RequestPreimageError> = Result.ok(OK);
+  public checkPreimageStatusResponse: PreimageStatus | null = null;
   public transferReturnValue: Result<OK, TransferError> = Result.ok(OK);
 
   async eject(from: ServiceId | null, hash: OpaqueHash): Promise<Result<OK, EjectError>> {
@@ -42,17 +41,17 @@ export class TestAccumulate implements AccumulationPartialState {
     return this.ejectReturnValue;
   }
 
-  checkPreimageStatus(hash: Blake2bHash, length: U64): PreimageStatusResult | null {
+  checkPreimageStatus(hash: Blake2bHash, length: U64): PreimageStatus | null {
     this.checkPreimageStatusData.push([hash, length]);
     return this.checkPreimageStatusResponse;
   }
 
-  requestPreimage(hash: Blake2bHash, length: U64): Result<null, RequestPreimageError> {
+  requestPreimage(hash: Blake2bHash, length: U64): Result<OK, RequestPreimageError> {
     this.requestPreimageData.push([hash, length]);
     return this.requestPreimageResponse;
   }
 
-  forgetPreimage(hash: Blake2bHash, length: U64): Result<null, null> {
+  forgetPreimage(hash: Blake2bHash, length: U64): Result<OK, null> {
     this.forgetPreimageData.push([hash, length]);
     return this.forgetPreimageResponse;
   }
@@ -60,7 +59,7 @@ export class TestAccumulate implements AccumulationPartialState {
   transfer(
     destination: ServiceId | null,
     amount: U64,
-    suppliedGas: Gas,
+    suppliedGas: ServiceGas,
     memo: Bytes<TRANSFER_MEMO_BYTES>,
   ): Result<OK, TransferError> {
     if (destination === null) {
@@ -71,13 +70,12 @@ export class TestAccumulate implements AccumulationPartialState {
   }
 
   newService(
-    requestedServiceId: ServiceId,
     codeHash: CodeHash,
     codeLength: U64,
-    gas: U64,
-    balance: U64,
+    gas: ServiceGas,
+    balance: ServiceGas,
   ): Result<ServiceId, "insufficient funds"> {
-    this.newServiceCalled.push([requestedServiceId, codeHash, codeLength, gas, balance]);
+    this.newServiceCalled.push([codeHash, codeLength, gas, balance]);
     if (this.newServiceResponse !== null) {
       return Result.ok(this.newServiceResponse);
     }

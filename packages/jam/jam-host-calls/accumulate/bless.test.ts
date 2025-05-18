@@ -9,9 +9,9 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { PartialStateMock } from "../externalities/partial-state-mock";
 import { HostCallResult } from "../results";
 import { Bless } from "./bless";
-import { TestAccumulate } from "./partial-state.test";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
@@ -61,7 +61,7 @@ function prepareRegsAndMemory(
 
 describe("HostCalls: Bless", () => {
   it("should set new privileged services and auto-accumualte services", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const bless = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     bless.currentServiceId = serviceId;
@@ -79,8 +79,8 @@ describe("HostCalls: Bless", () => {
     ]);
   });
 
-  it("should panic when dictionary is not readable", async () => {
-    const accumulate = new TestAccumulate();
+  it("should return panic when dictionary is not readable", async () => {
+    const accumulate = new PartialStateMock();
     const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
@@ -96,7 +96,7 @@ describe("HostCalls: Bless", () => {
   });
 
   it("should auto-accumualte services when dictionary is out of order", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
@@ -115,7 +115,7 @@ describe("HostCalls: Bless", () => {
   });
 
   it("should auto-accumualte services when dictionary contains duplicates", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;

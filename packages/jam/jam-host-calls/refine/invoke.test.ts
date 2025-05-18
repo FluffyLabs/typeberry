@@ -9,10 +9,15 @@ import { RESERVED_NUMBER_OF_PAGES } from "@typeberry/pvm-interpreter/memory/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
+import {
+  type MachineId,
+  MachineInstance,
+  type MachineStatus,
+  tryAsMachineId,
+} from "../externalities/refine-externalities";
+import { TestRefineExt } from "../externalities/refine-externalities.test";
 import { HostCallResult } from "../results";
 import { Invoke } from "./invoke";
-import { type MachineId, MachineInstance, type MachineStatus, tryAsMachineId } from "./refine-externalities";
-import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));
 const MACHINE_INDEX_REG = 7;

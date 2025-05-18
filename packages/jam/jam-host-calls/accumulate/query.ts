@@ -9,9 +9,9 @@ import {
 } from "@typeberry/pvm-host-calls";
 import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
+import { type PartialState, PreimageStatusKind } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import { type AccumulationPartialState, PreimageStatus } from "./partial-state";
 
 const IN_OUT_REG_1 = 7;
 const IN_OUT_REG_2 = 8;
@@ -27,7 +27,7 @@ export class Query implements HostCallHandler {
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly partialState: AccumulationPartialState) {}
+  constructor(private readonly partialState: PartialState) {}
 
   async execute(
     _gas: GasCounter,
@@ -46,7 +46,7 @@ export class Query implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    const result = this.partialState.checkPreimageStatus(hash, length);
+    const result = this.partialState.checkPreimageStatus(hash.asOpaque(), length);
     const zero = tryAsU64(0n);
 
     if (result === null) {
@@ -56,19 +56,19 @@ export class Query implements HostCallHandler {
     }
 
     switch (result.status) {
-      case PreimageStatus.Requested:
+      case PreimageStatusKind.Requested:
         regs.set(IN_OUT_REG_1, zero);
         regs.set(IN_OUT_REG_2, zero);
         return;
-      case PreimageStatus.Available:
+      case PreimageStatusKind.Available:
         regs.set(IN_OUT_REG_1, tryAsU64((BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 1n));
         regs.set(IN_OUT_REG_2, zero);
         return;
-      case PreimageStatus.Unavailable:
+      case PreimageStatusKind.Unavailable:
         regs.set(IN_OUT_REG_1, tryAsU64((BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 2n));
         regs.set(IN_OUT_REG_2, tryAsU64(result.data[1]));
         return;
-      case PreimageStatus.Reavailable:
+      case PreimageStatusKind.Reavailable:
         regs.set(IN_OUT_REG_1, tryAsU64((BigInt(result.data[0]) << UPPER_BITS_SHIFT) + 3n));
         regs.set(IN_OUT_REG_2, tryAsU64((BigInt(result.data[2]) << UPPER_BITS_SHIFT) + BigInt(result.data[1])));
         return;
