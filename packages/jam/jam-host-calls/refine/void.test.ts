@@ -7,7 +7,7 @@ import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-i
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { OK, Result } from "@typeberry/utils";
 import { HostCallResult } from "../results";
-import { InvalidPageError, type MachineId, NoMachineError, tryAsMachineId } from "./refine-externalities";
+import { type MachineId, ZeroVoidError, tryAsMachineId } from "./refine-externalities";
 import { TestRefineExt } from "./refine-externalities.test";
 import { Void } from "./void";
 
@@ -29,7 +29,7 @@ function prepareRegsAndMemory(machineId: MachineId, pageStart: number, pageCount
   };
 }
 
-function prepareTest(result: Result<OK, NoMachineError | InvalidPageError>, pageStart: number, pageCount: number) {
+function prepareTest(result: Result<OK, ZeroVoidError>, pageStart: number, pageCount: number) {
   const refine = new TestRefineExt();
   const _void = new Void(refine);
   _void.currentServiceId = tryAsServiceId(10_000);
@@ -57,7 +57,7 @@ describe("HostCalls: Void", () => {
   });
 
   it("should return HUH if invalid page is given", async () => {
-    const { _void, registers } = prepareTest(Result.error(InvalidPageError), 12, 5);
+    const { _void, registers } = prepareTest(Result.error(ZeroVoidError.InvalidPage), 12, 5);
 
     // when
     const result = await _void.execute(gas, registers);
@@ -68,7 +68,7 @@ describe("HostCalls: Void", () => {
   });
 
   it("should return HUH when page is too low", async () => {
-    const { _void, registers } = prepareTest(Result.ok(OK), 12, 5);
+    const { _void, registers } = prepareTest(Result.error(ZeroVoidError.InvalidPage), 12, 5);
 
     // when
     const result = await _void.execute(gas, registers);
@@ -79,7 +79,7 @@ describe("HostCalls: Void", () => {
   });
 
   it("should return HUH when page is too large", async () => {
-    const { _void, registers } = prepareTest(Result.ok(OK), 2 ** 32 - 1, 12_000);
+    const { _void, registers } = prepareTest(Result.error(ZeroVoidError.InvalidPage), 2 ** 32 - 1, 12_000);
 
     // when
     const result = await _void.execute(gas, registers);
@@ -90,7 +90,7 @@ describe("HostCalls: Void", () => {
   });
 
   it("should return HUH when page is too large 2", async () => {
-    const { _void, registers } = prepareTest(Result.ok(OK), 2 ** 20 - 5, 5);
+    const { _void, registers } = prepareTest(Result.error(ZeroVoidError.InvalidPage), 2 ** 20 - 5, 5);
 
     // when
     const result = await _void.execute(gas, registers);
@@ -101,7 +101,7 @@ describe("HostCalls: Void", () => {
   });
 
   it("should fail if machine is not known", async () => {
-    const { _void, registers } = prepareTest(Result.error(NoMachineError), 10_000, 5);
+    const { _void, registers } = prepareTest(Result.error(ZeroVoidError.NoMachine), 10_000, 5);
 
     // when
     const result = await _void.execute(gas, registers);

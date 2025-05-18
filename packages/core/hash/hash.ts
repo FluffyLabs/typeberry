@@ -8,7 +8,6 @@ import { WithDebug } from "@typeberry/utils";
  *
  */
 export const HASH_SIZE = 32;
-/** A type for the above value. */
 export type HASH_SIZE = typeof HASH_SIZE;
 
 /** Opaque, unknown hash. */

@@ -34,11 +34,11 @@ export class GuaranteedWorkReport extends WithDebug {
     }),
   });
 
-  static fromCodec({ report, slot, signatures }: CodecRecord<GuaranteedWorkReport>) {
+  static create({ report, slot, signatures }: CodecRecord<GuaranteedWorkReport>) {
     return new GuaranteedWorkReport(report, slot, signatures);
   }
 
-  constructor(
+  private constructor(
     public readonly report: WorkReport,
     public readonly slot: TimeSlot,
     public readonly signatures: KnownSizeArray<Credential, "[0..ValidatorsCount)">,

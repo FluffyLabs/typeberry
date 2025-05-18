@@ -2,8 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type ServiceId, tryAsServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
-import { MultiMap } from "@typeberry/collections";
-import { type Blake2bHash, blake2b } from "@typeberry/hash";
+import { blake2b } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
@@ -13,24 +12,10 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { OK, Result } from "@typeberry/utils";
-import { type Accounts, Read } from "./read";
+import { Read } from "./read";
 import { HostCallResult } from "./results";
+import { TestAccounts } from "./test-accounts";
 import { SERVICE_ID_BYTES, writeServiceIdAsLeBytes } from "./utils";
-
-class TestAccounts implements Accounts {
-  public readonly data: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
-    null,
-    (hash) => hash.toString(),
-  ]);
-
-  read(serviceId: ServiceId, hash: Blake2bHash): Promise<BytesBlob | null> {
-    const d = this.data.get(serviceId, hash);
-    if (d === undefined) {
-      throw new Error(`Unexpected call to read with ${serviceId}, ${hash}`);
-    }
-    return Promise.resolve(d);
-  }
-}
 
 const gas = gasCounter(tryAsGas(0));
 const SERVICE_ID_REG = 7;
@@ -109,7 +94,7 @@ describe("HostCalls: Read", () => {
       const { key, hash } = prepareKey(read.currentServiceId, "key");
       const value = "hello world";
       const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length);
-      accounts.data.set(BytesBlob.blobFromString(value), serviceId, hash);
+      accounts.storage.set(BytesBlob.blobFromString(value), serviceId, hash);
 
       const result = await read.execute(gas, registers, memory);
 
@@ -123,12 +108,12 @@ describe("HostCalls: Read", () => {
       const read = new Read(accounts);
       read.currentServiceId = tryAsServiceId(10_000);
       const serviceId = tryAsServiceId(11_000);
-      const { key, hash } = prepareKey(read.currentServiceId, "key");
+      const { key, hash } = prepareKey(serviceId, "key");
       const value = "hello world";
       const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length, {
         serviceId,
       });
-      accounts.data.set(BytesBlob.blobFromString(value), serviceId, hash);
+      accounts.storage.set(BytesBlob.blobFromString(value), serviceId, hash);
 
       const result = await read.execute(gas, registers, memory);
 
@@ -147,7 +132,7 @@ describe("HostCalls: Read", () => {
       const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length, {
         valueOffset: 6,
       });
-      accounts.data.set(BytesBlob.blobFromString(value), serviceId, hash);
+      accounts.storage.set(BytesBlob.blobFromString(value), serviceId, hash);
 
       const result = await read.execute(gas, registers, memory);
 
@@ -167,7 +152,7 @@ describe("HostCalls: Read", () => {
         valueOffset: 6,
         valueLengthToWrite: 1,
       });
-      accounts.data.set(BytesBlob.blobFromString(value), serviceId, hash);
+      accounts.storage.set(BytesBlob.blobFromString(value), serviceId, hash);
 
       const result = await read.execute(gas, registers, memory);
 
@@ -184,7 +169,7 @@ describe("HostCalls: Read", () => {
       const { key, hash } = prepareKey(read.currentServiceId, "xyz");
       const value = "hello world";
       const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length, { valueLengthToWrite: 0 });
-      accounts.data.set(BytesBlob.blobFromString(value), serviceId, hash);
+      accounts.storage.set(BytesBlob.blobFromString(value), serviceId, hash);
       const result = await read.execute(gas, registers, memory);
 
       assert.deepStrictEqual(result, undefined);
@@ -218,7 +203,7 @@ describe("HostCalls: Read", () => {
     const value = "xyz";
     const { key, hash } = prepareKey(read.currentServiceId, value);
     const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length);
-    accounts.data.set(null, serviceId, hash);
+    accounts.storage.set(null, serviceId, hash);
 
     const result = await read.execute(gas, registers, memory);
 
@@ -235,7 +220,7 @@ describe("HostCalls: Read", () => {
     const value = "xyz";
     const { key, hash } = prepareKey(read.currentServiceId, value);
     const { registers, memory } = prepareRegsAndMemory(key, value.length, { skipKey: true });
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
+    accounts.storage.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
 
     const result = await read.execute(gas, registers, memory);
     assert.deepStrictEqual(result, PvmExecution.Panic);
@@ -249,7 +234,7 @@ describe("HostCalls: Read", () => {
     const value = "xyz";
     const { key, hash } = prepareKey(read.currentServiceId, value);
     const { registers, memory } = prepareRegsAndMemory(key, value.length, { skipValue: true });
-    accounts.data.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
+    accounts.storage.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
 
     const result = await read.execute(gas, registers, memory);
     assert.deepStrictEqual(result, PvmExecution.Panic);

@@ -17,9 +17,9 @@ describe("JAM types codec / HashDictionary", () => {
 
   it("should be compatible with a list", () => {
     const list = [
-      new ImportSpec(hash(1), tryAsSegmentIndex(15)),
-      new ImportSpec(hash(2), tryAsSegmentIndex(30)),
-      new ImportSpec(hash(3), tryAsSegmentIndex(65_300)),
+      ImportSpec.create({ treeRoot: hash(1), index: tryAsSegmentIndex(15) }),
+      ImportSpec.create({ treeRoot: hash(2), index: tryAsSegmentIndex(30) }),
+      ImportSpec.create({ treeRoot: hash(3), index: tryAsSegmentIndex(65_300) }),
     ];
 
     const encoded = Encoder.encodeObject(arrayCodec, list);
@@ -34,9 +34,9 @@ describe("JAM types codec / HashDictionary", () => {
 
   it("should throw an error if order is incorrect", () => {
     const list = [
-      new ImportSpec(hash(2), tryAsSegmentIndex(30)),
-      new ImportSpec(hash(3), tryAsSegmentIndex(65_300)),
-      new ImportSpec(hash(1), tryAsSegmentIndex(15)),
+      ImportSpec.create({ treeRoot: hash(2), index: tryAsSegmentIndex(30) }),
+      ImportSpec.create({ treeRoot: hash(3), index: tryAsSegmentIndex(65_300) }),
+      ImportSpec.create({ treeRoot: hash(1), index: tryAsSegmentIndex(15) }),
     ];
 
     const encoded = Encoder.encodeObject(arrayCodec, list);
@@ -50,10 +50,10 @@ describe("JAM types codec / HashDictionary", () => {
 
   it("should throw an error if there are duplicates", () => {
     const list = [
-      new ImportSpec(hash(1), tryAsSegmentIndex(15)),
-      new ImportSpec(hash(2), tryAsSegmentIndex(30)),
-      new ImportSpec(hash(3), tryAsSegmentIndex(65_300)),
-      new ImportSpec(hash(3), tryAsSegmentIndex(65_300)),
+      ImportSpec.create({ treeRoot: hash(1), index: tryAsSegmentIndex(15) }),
+      ImportSpec.create({ treeRoot: hash(2), index: tryAsSegmentIndex(30) }),
+      ImportSpec.create({ treeRoot: hash(3), index: tryAsSegmentIndex(65_300) }),
+      ImportSpec.create({ treeRoot: hash(3), index: tryAsSegmentIndex(65_300) }),
     ];
 
     const encoded = Encoder.encodeObject(arrayCodec, list);

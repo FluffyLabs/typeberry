@@ -27,11 +27,11 @@ export class DisputesRecords {
     punishSet: sortedSetCodec(),
   });
 
-  static fromCodec({ goodSet, badSet, wonkySet, punishSet }: CodecRecord<DisputesRecords>) {
+  static create({ goodSet, badSet, wonkySet, punishSet }: CodecRecord<DisputesRecords>) {
     return new DisputesRecords(goodSet, badSet, wonkySet, punishSet);
   }
 
-  constructor(
+  private constructor(
     /** `goodSet`: all work-reports hashes which were judged to be correct */
     public goodSet: SortedSet<WorkReportHash>,
     /** `badSet`: all work-reports hashes which were judged to be incorrect */

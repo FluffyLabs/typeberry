@@ -11,7 +11,7 @@ import type { StateKey } from "../state-merkleization/keys";
 /**
  * Service account details.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/105a01105a01
+ * https://graypaper.fluffylabs.dev/#/9a08063/106001106001?v=0.6.6
  */
 export class ServiceAccountInfo extends WithDebug {
   static Codec = codec.Class(ServiceAccountInfo, {
@@ -23,7 +23,7 @@ export class ServiceAccountInfo extends WithDebug {
     storageUtilisationCount: codec.u32,
   });
 
-  static fromCodec(a: CodecRecord<ServiceAccountInfo>) {
+  static create(a: CodecRecord<ServiceAccountInfo>) {
     return new ServiceAccountInfo(
       a.codeHash,
       a.balance,
@@ -36,17 +36,15 @@ export class ServiceAccountInfo extends WithDebug {
 
   /**
    * `a_t = BS + BI * a_i + BL * a_o`
-   * https://graypaper.fluffylabs.dev/#/579bd12/116e01116e01
+   * https://graypaper.fluffylabs.dev/#/9a08063/117201117201?v=0.6.6
    */
   static calculateThresholdBalance(items: U32, bytes: U64): U64 {
-    /** https://graypaper.fluffylabs.dev/#/579bd12/413e00413e00 */
+    /** https://graypaper.fluffylabs.dev/#/9a08063/445100445100?v=0.6.6 */
     const B_S = 100n;
-    /** https://graypaper.fluffylabs.dev/#/579bd12/413600413600 */
+    /** https://graypaper.fluffylabs.dev/#/9a08063/444900444900?v=0.6.6 */
     const B_I = 10n;
-    /** https://graypaper.fluffylabs.dev/#/579bd12/413a00413b00 */
+    /** https://graypaper.fluffylabs.dev/#/9a08063/444d00444d00?v=0.6.6 */
     const B_L = 1n;
-
-    // TODO [ToDr] Overflows?
     return tryAsU64(B_S + B_I * BigInt(items) + B_L * bytes);
   }
 
@@ -74,11 +72,11 @@ export class PreimageItem extends WithDebug {
     blob: codec.blob,
   });
 
-  static fromCodec({ hash, blob }: CodecRecord<PreimageItem>) {
+  static create({ hash, blob }: CodecRecord<PreimageItem>) {
     return new PreimageItem(hash, blob);
   }
 
-  constructor(
+  private constructor(
     readonly hash: PreimageHash,
     readonly blob: BytesBlob,
   ) {
@@ -92,11 +90,11 @@ export class StateItem extends WithDebug {
     blob: codec.blob,
   });
 
-  static fromCodec({ hash, blob }: CodecRecord<StateItem>) {
+  static create({ hash, blob }: CodecRecord<StateItem>) {
     return new StateItem(hash, blob);
   }
 
-  constructor(
+  private constructor(
     readonly hash: StateKey,
     readonly blob: BytesBlob,
   ) {

@@ -14,7 +14,7 @@ describe("Reports.verifyCredentials", () => {
     const guarantees = guaranteesAsView(
       tinyChainSpec,
       [
-        ReportGuarantee.fromCodec({
+        ReportGuarantee.create({
           slot: tryAsTimeSlot(5),
           report: newWorkReport({ core: 0 }),
           credentials: asOpaqueType([1].map((x) => newCredential(x))),
@@ -40,7 +40,7 @@ describe("Reports.verifyCredentials", () => {
     const guarantees = guaranteesAsView(
       tinyChainSpec,
       [
-        ReportGuarantee.fromCodec({
+        ReportGuarantee.create({
           slot: tryAsTimeSlot(5),
           report: newWorkReport({ core: 1 }),
           credentials: asOpaqueType([1, 2, 3, 4].map((x) => newCredential(x))),
@@ -64,7 +64,7 @@ describe("Reports.verifyCredentials", () => {
   it("should reject out-of-order credentials", async () => {
     const reports = await newReports();
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(5),
         report: newWorkReport({ core: 0 }),
         credentials: asOpaqueType([1, 0].map((x) => newCredential(x))),
@@ -86,7 +86,7 @@ describe("Reports.verifyCredentials", () => {
   it("should reject invalid core assignment", async () => {
     const reports = await newReports();
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(5),
         report: newWorkReport({ core: 1 }),
         credentials: asOpaqueType([0, 1].map((x) => newCredential(x))),
@@ -108,7 +108,7 @@ describe("Reports.verifyCredentials", () => {
   it("should reject future reports", async () => {
     const reports = await newReports();
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(5),
         report: newWorkReport({ core: 0 }),
         credentials: asOpaqueType([0, 1].map((x) => newCredential(x))),
@@ -130,7 +130,7 @@ describe("Reports.verifyCredentials", () => {
   it("should reject old reports", async () => {
     const reports = await newReports();
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(9),
         report: newWorkReport({ core: 0 }),
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),
@@ -152,7 +152,7 @@ describe("Reports.verifyCredentials", () => {
   it("should return signatures for verification", async () => {
     const reports = await newReports();
     const guarantees = guaranteesAsView(tinyChainSpec, [
-      ReportGuarantee.fromCodec({
+      ReportGuarantee.create({
         slot: tryAsTimeSlot(20),
         report: newWorkReport({ core: 0 }),
         credentials: asOpaqueType([0, 3].map((x) => newCredential(x))),

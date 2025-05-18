@@ -93,7 +93,7 @@ export function sumU64(...values: U64[]) {
   const overflow = !isU64(sum);
   sum = sum & 0xffff_ffff_ffff_ffffn;
 
-  return { overflow, value: sum as U64 };
+  return { overflow, value: tryAsU64(sum) };
 }
 
 /**
@@ -110,7 +110,7 @@ export function sumU32(...values: U32[]) {
     overflow ||= prev > sum;
   }
 
-  return { overflow, value: sum as U32 };
+  return { overflow, value: tryAsU32(sum) };
 }
 
 /**
@@ -130,7 +130,5 @@ export function leBytesAsU32(uint8Array: Uint8Array): U32 {
   );
 }
 
-/**
- * Get the smallest value between U64 a and values given as input parameters.
- */
+/** Get the smallest value between U64 a and values given as input parameters. */
 export const minU64 = (a: U64, ...values: U64[]): U64 => values.reduce((min, value) => (value > min ? min : value), a);

@@ -5,7 +5,7 @@ import { ArgumentType } from "./args-decoder/argument-type";
 import { instructionArgumentTypeMap } from "./args-decoder/instruction-argument-type-map";
 import { assemblify } from "./assemblify";
 import { BasicBlocks } from "./basic-blocks";
-import { type Gas, type GasCounter, gasCounter } from "./gas";
+import { type Gas, type GasCounter, gasCounter, tryAsGas } from "./gas";
 import { Instruction } from "./instruction";
 import { instructionGasMap } from "./instruction-gas-map";
 import { InstructionResult } from "./instruction-result";
@@ -55,7 +55,7 @@ export class Interpreter {
   private code = new Uint8Array();
   private mask = Mask.empty();
   private pc = 0;
-  private gas = gasCounter(0 as Gas);
+  private gas = gasCounter(tryAsGas(0));
   private argsDecoder: ArgsDecoder;
   private threeRegsDispatcher: ThreeRegsDispatcher;
   private twoRegsOneImmDispatcher: TwoRegsOneImmDispatcher;
@@ -200,7 +200,7 @@ export class Interpreter {
           if (this.useSbrkGas && currentInstruction === Instruction.SBRK) {
             const calculateSbrkCost = (length: number) => (alignToPageSize(length) / PAGE_SIZE) * 16;
             const underflow = this.gas.sub(
-              calculateSbrkCost(this.registers.getLowerU32(argsResult.firstRegisterIndex)) as Gas,
+              tryAsGas(calculateSbrkCost(this.registers.getLowerU32(argsResult.firstRegisterIndex))),
             );
             if (underflow) {
               this.status = Status.OOG;

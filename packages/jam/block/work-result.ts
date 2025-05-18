@@ -80,7 +80,7 @@ export class WorkRefineLoad extends WithDebug {
     exportedSegments: codec.varU32,
   });
 
-  static fromCodec({
+  static create({
     gasUsed,
     importedSegments,
     extrinsicCount,
@@ -121,11 +121,11 @@ export class WorkResult {
     load: WorkRefineLoad.Codec,
   });
 
-  static fromCodec({ serviceId, codeHash, payloadHash, gas, result, load }: CodecRecord<WorkResult>) {
+  static create({ serviceId, codeHash, payloadHash, gas, result, load }: CodecRecord<WorkResult>) {
     return new WorkResult(serviceId, codeHash, payloadHash, gas, result, load);
   }
 
-  constructor(
+  private constructor(
     /** `s`: Index of the service whose state is to be altered (refine already executed). */
     public readonly serviceId: ServiceId,
     /** `c`: Hash of the code of the service at the time of being reported. */

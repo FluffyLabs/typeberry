@@ -1,18 +1,18 @@
-import type { CodeHash, CoreIndex, PerValidator, ServiceId } from "@typeberry/block";
+import type { CodeHash, CoreIndex, PerValidator, ServiceGas, ServiceId } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import type { Bytes } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
-import type { U32, U64 } from "@typeberry/numbers";
+import type { U64 } from "@typeberry/numbers";
 import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import type { ValidatorData } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
-import type {
-  AccumulationPartialState,
-  PreimageStatusResult,
-  QuitError,
-  RequestPreimageError,
-  TRANSFER_MEMO_BYTES,
+import {
+  type AccumulationPartialState,
+  type EjectError,
+  type PreimageStatusResult,
+  type RequestPreimageError,
+  type TRANSFER_MEMO_BYTES,
   TransferError,
 } from "./partial-state";
 
@@ -20,8 +20,8 @@ export class TestAccumulate implements AccumulationPartialState {
   public readonly authQueue: Parameters<TestAccumulate["updateAuthorizationQueue"]>[] = [];
   public readonly forgetPreimageData: Parameters<TestAccumulate["forgetPreimage"]>[] = [];
   public readonly newServiceCalled: Parameters<TestAccumulate["newService"]>[] = [];
+  public readonly ejectData: Parameters<TestAccumulate["eject"]>[] = [];
   public readonly privilegedServices: Parameters<TestAccumulate["updatePrivilegedServices"]>[] = [];
-  public readonly quitAndTransferData: Parameters<TestAccumulate["quitAndTransfer"]>[] = [];
   public readonly requestPreimageData: Parameters<TestAccumulate["requestPreimage"]>[] = [];
   public readonly checkPreimageStatusData: Parameters<TestAccumulate["checkPreimageStatus"]>[] = [];
   public readonly transferData: Parameters<TestAccumulate["transfer"]>[] = [];
@@ -32,19 +32,14 @@ export class TestAccumulate implements AccumulationPartialState {
   public yieldHash: OpaqueHash | null = null;
   public forgetPreimageResponse: Result<null, null> = Result.ok(null);
   public newServiceResponse: ServiceId | null = null;
-  public quitAndBurnCalled = 0;
-  public quitReturnValue: Result<null, QuitError> = Result.ok(null);
+  public ejectReturnValue: Result<OK, EjectError> = Result.ok(OK);
   public requestPreimageResponse: Result<null, RequestPreimageError> = Result.ok(null);
   public checkPreimageStatusResponse: PreimageStatusResult | null = null;
   public transferReturnValue: Result<OK, TransferError> = Result.ok(OK);
 
-  quitAndTransfer(destination: ServiceId, suppliedGas: Gas, memo: Bytes<TRANSFER_MEMO_BYTES>): Result<null, QuitError> {
-    this.quitAndTransferData.push([destination, suppliedGas, memo]);
-    return this.quitReturnValue;
-  }
-
-  quitAndBurn(): void {
-    this.quitAndBurnCalled += 1;
+  async eject(from: ServiceId | null, hash: OpaqueHash): Promise<Result<OK, EjectError>> {
+    this.ejectData.push([from, hash]);
+    return this.ejectReturnValue;
   }
 
   checkPreimageStatus(hash: Blake2bHash, length: U64): PreimageStatusResult | null {
@@ -63,11 +58,14 @@ export class TestAccumulate implements AccumulationPartialState {
   }
 
   transfer(
-    destination: ServiceId,
+    destination: ServiceId | null,
     amount: U64,
     suppliedGas: Gas,
     memo: Bytes<TRANSFER_MEMO_BYTES>,
   ): Result<OK, TransferError> {
+    if (destination === null) {
+      return Result.error(TransferError.DestinationNotFound);
+    }
     this.transferData.push([destination, amount, suppliedGas, memo]);
     return this.transferReturnValue;
   }
@@ -75,7 +73,7 @@ export class TestAccumulate implements AccumulationPartialState {
   newService(
     requestedServiceId: ServiceId,
     codeHash: CodeHash,
-    codeLength: U32,
+    codeLength: U64,
     gas: U64,
     balance: U64,
   ): Result<ServiceId, "insufficient funds"> {
@@ -99,7 +97,7 @@ export class TestAccumulate implements AccumulationPartialState {
     this.validatorsData.push(validatorsData);
   }
 
-  updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: Map<ServiceId, Gas>): void {
+  updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: [ServiceId, ServiceGas][]): void {
     this.privilegedServices.push([m, a, v, g]);
   }
 

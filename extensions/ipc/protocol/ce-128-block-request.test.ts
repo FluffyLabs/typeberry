@@ -5,14 +5,14 @@ import { testBlock } from "@typeberry/block/test-helpers";
 import type { BytesBlob } from "@typeberry/bytes";
 import { tinyChainSpec } from "@typeberry/config";
 import { blake2b } from "@typeberry/hash";
-import type { U32 } from "@typeberry/numbers";
+import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { MessageHandler, type MessageSender } from "../handler";
 import { ClientHandler, Direction, STREAM_KIND, ServerHandler } from "./ce-128-block-request";
 
 const HEADER_HASH: HeaderHash = blake2b
   .hashString("0x7e1b07b8039cf840d51c4825362948c8ecb8fce1d290f705c269b6bcc7992731")
   .asOpaque();
-const MAX_BLOCKS = 10 as U32;
+const MAX_BLOCKS = tryAsU32(10);
 const TEST_BLOCK = testBlock();
 
 class FakeMessageSender implements MessageSender {

@@ -4,7 +4,7 @@ import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import { check } from "@typeberry/utils";
-import { type HostCallIndex, PvmExecution } from "./host-call-handler";
+import { PvmExecution, tryAsHostCallIndex } from "./host-call-handler";
 import { HostCallMemory } from "./host-call-memory";
 import { HostCallRegisters } from "./host-call-registers";
 import type { HostCallsManager } from "./host-calls-manager";
@@ -50,7 +50,7 @@ export class HostCalls {
       const gas = pvmInstance.getGasCounter();
       const regs = new HostCallRegisters(pvmInstance.getRegisters());
       const memory = new HostCallMemory(pvmInstance.getMemory());
-      const hostCall = this.hostCalls.get(hostCallIndex as HostCallIndex);
+      const hostCall = this.hostCalls.get(tryAsHostCallIndex(hostCallIndex));
       const gasCost = typeof hostCall.gasCost === "number" ? hostCall.gasCost : hostCall.gasCost(regs);
       const underflow = gas.sub(gasCost);
       if (underflow) {

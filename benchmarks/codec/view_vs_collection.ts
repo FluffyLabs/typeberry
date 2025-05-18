@@ -10,10 +10,11 @@ class TestHeader {
     parentHeaderHash: codec.bytes(32),
   });
 
-  static fromCodec({ blockNumber, parentHeaderHash }: CodecRecord<TestHeader>) {
+  static create({ blockNumber, parentHeaderHash }: CodecRecord<TestHeader>) {
     return new TestHeader(blockNumber, parentHeaderHash);
   }
-  constructor(
+
+  private constructor(
     public readonly blockNumber: U64,
     public readonly parentHeaderHash: Bytes<32>,
   ) {}
@@ -25,7 +26,7 @@ const collection: TestHeader[] = [];
 for (let i = 0; i < ELEMENTS; i++) {
   const parentHeaderHash = Bytes.fill(32, i);
 
-  collection.push(new TestHeader(tryAsU64(10_000_000n + BigInt(i)), parentHeaderHash));
+  collection.push(TestHeader.create({ blockNumber: tryAsU64(10_000_000n + BigInt(i)), parentHeaderHash }));
 }
 const encodedData = Encoder.encodeObject(headerSequence, collection);
 

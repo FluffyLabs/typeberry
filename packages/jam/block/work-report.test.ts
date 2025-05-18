@@ -7,7 +7,7 @@ import { WorkRefineLoad } from "./work-result";
 
 describe("WorkReport", () => {
   it("should encode work refine load", () => {
-    const load = WorkRefineLoad.fromCodec({
+    const load = WorkRefineLoad.create({
       gasUsed: tryAsServiceGas(0),
       importedSegments: tryAsU32(0),
       exportedSegments: tryAsU32(0),

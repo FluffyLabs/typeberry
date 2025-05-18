@@ -22,11 +22,11 @@ export class StateEntry extends WithDebug {
     value: codec.blob,
   });
 
-  static fromCodec({ key, value }: CodecRecord<StateEntry>) {
+  static create({ key, value }: CodecRecord<StateEntry>) {
     return new StateEntry(key, value);
   }
 
-  constructor(
+  private constructor(
     public readonly key: StateKey,
     public readonly value: BytesBlob,
   ) {
@@ -48,7 +48,9 @@ export function merkelizeState(state: SerializedState): StateRootHash {
 export function serializeState(state: State, spec: ChainSpec): SerializedState {
   const raw: StateEntry[] = [];
   function doSerialize<T>(codec: StateCodec<T>) {
-    raw.push(new StateEntry(codec.key, Encoder.encodeObject(codec.Codec, codec.extract(state), spec)));
+    raw.push(
+      StateEntry.create({ key: codec.key, value: Encoder.encodeObject(codec.Codec, codec.extract(state), spec) }),
+    );
   }
 
   doSerialize(serialize.authPools); // C(1)
@@ -72,25 +74,25 @@ export function serializeState(state: State, spec: ChainSpec): SerializedState {
     const serviceId = service.id;
     // data
     const { key, Codec } = serialize.serviceData(serviceId);
-    raw.push(new StateEntry(key, Encoder.encodeObject(Codec, service.data.info)));
+    raw.push(StateEntry.create({ key, value: Encoder.encodeObject(Codec, service.data.info) }));
 
     // preimages
     for (const preimage of service.data.preimages.values()) {
       const { key, Codec } = serialize.servicePreimages(serviceId, preimage.hash);
-      raw.push(new StateEntry(key, Encoder.encodeObject(Codec, preimage.blob)));
+      raw.push(StateEntry.create({ key, value: Encoder.encodeObject(Codec, preimage.blob) }));
     }
 
     // storage
     for (const storage of service.data.storage) {
       const { key, Codec } = serialize.serviceStorage(serviceId, storage.hash);
-      raw.push(new StateEntry(key, Encoder.encodeObject(Codec, storage.blob)));
+      raw.push(StateEntry.create({ key, value: Encoder.encodeObject(Codec, storage.blob) }));
     }
 
     // lookup history
     for (const lookupHistoryList of service.data.lookupHistory.values()) {
       for (const lookupHistory of lookupHistoryList) {
         const { key, Codec } = serialize.serviceLookupHistory(serviceId, lookupHistory.hash, lookupHistory.length);
-        raw.push(new StateEntry(key, Encoder.encodeObject(Codec, lookupHistory.slots)));
+        raw.push(StateEntry.create({ key, value: Encoder.encodeObject(Codec, lookupHistory.slots) }));
       }
     }
   }

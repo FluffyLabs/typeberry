@@ -7,7 +7,7 @@ const preimageFromJson = json.object<Preimage>(
     requester: "number",
     blob: json.fromString(BytesBlob.parseBlob),
   },
-  ({ requester, blob }) => new Preimage(requester, blob),
+  ({ requester, blob }) => Preimage.create({ requester, blob }),
 );
 
 export const preimagesExtrinsicFromJson = json.array(preimageFromJson);
