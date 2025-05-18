@@ -9,11 +9,6 @@ const MAX_U32_BIG_INT = tryAsU64(MAX_U32);
 export const SERVICE_ID_BYTES = 4;
 export const CURRENT_SERVICE_ID = tryAsServiceId(2 ** 32 - 1);
 
-export function legacyGetServiceId(regNumber: number, regs: IHostCallRegisters, currentServiceId: ServiceId) {
-  const serviceId = Number(regs.get(regNumber));
-  return serviceId === CURRENT_SERVICE_ID ? currentServiceId : tryAsServiceId(serviceId);
-}
-
 export function getServiceIdOrCurrent(
   regNumber: number,
   regs: IHostCallRegisters,
