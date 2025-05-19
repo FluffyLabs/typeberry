@@ -1,6 +1,5 @@
-import type { RpcMethod } from "../types";
+import { RpcError, type RpcMethod } from "../types";
 
-export const subscribeBestBlock: RpcMethod<[], []> = async (): Promise<[]> => {
-  // todo [seko] implement
-  return [];
+export const subscribeBestBlock: RpcMethod<[], []> = async () => {
+  throw new RpcError(-32601, "Method not implemented");
 };

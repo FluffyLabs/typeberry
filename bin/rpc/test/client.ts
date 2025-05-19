@@ -79,14 +79,60 @@ async function main() {
   const bestBlockResult = await client.call("bestBlock");
   console.info("bestBlock result:", bestBlockResult);
 
-  console.info("Testing parameters method...");
-  const parametersResult = await client.call("parameters");
-  console.info("parameters result:", parametersResult);
-
   if (bestBlockResult !== null) {
     console.info("Testing parent method...");
     const parentResult = await client.call("parent", [bestBlockResult[0]]);
     console.info("parent result:", parentResult);
+
+    console.info("Testing stateRoot method...");
+    const stateRootResult = await client.call("stateRoot", [bestBlockResult[0]]);
+    console.info("stateRoot result:", stateRootResult);
+
+    console.info("Testing statistics method...");
+    const statisticsResult = await client.call("statistics", [bestBlockResult[0]]);
+    console.info("statistics result:", statisticsResult);
+
+    console.info("Testing serviceData method...");
+    const serviceDataResult = await client.call("serviceData", [bestBlockResult[0], 0]);
+    console.info("serviceData result:", serviceDataResult);
+
+    console.info("Testing serviceValue method...");
+    const serviceValueResult = await client.call("serviceValue", [
+      bestBlockResult[0],
+      1,
+      [
+        188, 243, 43, 129, 172, 117, 15, 152, 11, 3, 200, 203, 219, 175, 90, 215, 217, 230, 170, 216, 35, 208, 153, 226,
+        9, 215, 213, 160, 184, 47, 42, 237,
+      ],
+    ]);
+    console.info("serviceValue result:", serviceValueResult);
+
+    console.info("Testing servicePreimage method...");
+    const servicePreimageResult = await client.call("servicePreimage", [
+      bestBlockResult[0],
+      0,
+      [
+        193, 99, 38, 67, 43, 91, 50, 19, 223, 209, 96, 148, 149, 225, 60, 107, 39, 108, 180, 116, 214, 121, 100, 83, 55,
+        229, 194, 192, 159, 25, 181, 60,
+      ],
+    ]);
+    console.info("servicePreimage result:", servicePreimageResult);
+
+    console.info("Testing serviceRequest method...");
+    const serviceRequestResult = await client.call("serviceRequest", [
+      bestBlockResult[0],
+      0,
+      [
+        193, 99, 38, 67, 43, 91, 50, 19, 223, 209, 96, 148, 149, 225, 60, 107, 39, 108, 180, 116, 214, 121, 100, 83, 55,
+        229, 194, 192, 159, 25, 181, 60,
+      ],
+      35,
+    ]);
+    console.info("serviceRequest result:", serviceRequestResult);
+
+    console.info("Testing listServices method...");
+    const listServicesResult = await client.call("listServices", [bestBlockResult[0]]);
+    console.info("listServices result:", listServicesResult);
   }
 
   client.close();

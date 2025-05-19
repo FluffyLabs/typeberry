@@ -1,6 +1,6 @@
-import type { RpcMethod } from "../types";
+import { RpcError, type RpcMethod } from "../types";
 
-export const finalizedBlock: RpcMethod<[], []> = async (): Promise<[]> => {
+export const finalizedBlock: RpcMethod<[], []> = async () => {
   // todo [seko] implement when finality is implemented
-  return [];
+  throw new RpcError(-32601, "Method not implemented");
 };

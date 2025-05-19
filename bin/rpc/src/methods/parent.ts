@@ -4,10 +4,10 @@ import { HASH_SIZE } from "@typeberry/hash";
 import type { Hash, RpcMethod, Slot } from "../types";
 
 export const parent: RpcMethod<[Hash], [Hash, Slot] | null> = async ([headerHash], db) => {
-  const hash: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
-  const header = db.blocks.getHeader(hash);
+  const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
+  const header = db.blocks.getHeader(hashOpaque);
   if (header === null) {
-    throw new Error(`${hash} not found.`);
+    throw new Error(`${hashOpaque} not found.`);
   }
 
   const parentHash = header.parentHeaderHash.materialize();

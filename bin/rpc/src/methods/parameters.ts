@@ -1,6 +1,5 @@
-import type { RpcMethod } from "../types";
+import { RpcError, type RpcMethod } from "../types";
 
 export const parameters: RpcMethod<[], []> = async () => {
-  // todo [seko] implement
-  return [];
+  throw new RpcError(-32601, "Method not implemented");
 };
