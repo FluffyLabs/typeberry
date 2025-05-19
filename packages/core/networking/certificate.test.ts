@@ -1,5 +1,6 @@
 import assert, { deepEqual } from "node:assert";
 import fs from "node:fs";
+import path from "node:path";
 import { describe, it } from "node:test";
 import * as x509 from "@peculiar/x509";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
@@ -15,8 +16,8 @@ import {
 
 // taken from jamcha.in
 // currently invalid, due to altname encoding mismatch.
-const ALICE_CERT = fs.readFileSync("./fixtures/alice-imported.cert.pem", "utf8").trim();
-const BOB_CERT = fs.readFileSync("./fixtures/bob-generated.cert.pem", "utf8").trim();
+const ALICE_CERT = fs.readFileSync(path.resolve(`${__dirname}/fixtures/alice-imported.cert.pem`), "utf8").trim();
+const BOB_CERT = fs.readFileSync(path.resolve(`${__dirname}/fixtures/bob-generated.cert.pem`), "utf8").trim();
 
 const ALICE_PAIR = ed25519.privateKey(Bytes.fill(ed25519.ED25519_PRIV_KEY_BYTES, 0).asOpaque());
 const BOB_PAIR = ed25519.privateKey(Bytes.fill(ed25519.ED25519_PRIV_KEY_BYTES, 1).asOpaque());
