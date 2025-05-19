@@ -53,7 +53,7 @@ export function startRpc(db: Database, client: MessageHandler) {
         "access-control-allow-origin": "*",
       });
       if (isOptions) {
-        fs.createReadStream(path.join(__dirname, "index.html")).pipe(res);
+        fs.createReadStream(import.meta.resolve("./index.html")).pipe(res);
       } else {
         res.end();
       }

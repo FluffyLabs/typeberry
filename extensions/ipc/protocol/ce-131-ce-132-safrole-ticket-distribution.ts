@@ -37,7 +37,7 @@ export class TicketDistributionRequest extends WithDebug {
   }
 }
 
-const logger = Logger.new(__filename, "protocol/ce-131-ce-132");
+const logger = Logger.new(import.meta.filename, "protocol/ce-131-ce-132");
 
 export class ServerHandler<T extends STREAM_KIND> implements StreamHandler<T> {
   constructor(

@@ -81,7 +81,7 @@ module.exports = () =>
     cycle(),
     complete(),
     configure({}),
-    ...save(__filename),
+    ...save(import.meta.filename),
   );
 
 type Data = { key: string; value?: boolean };

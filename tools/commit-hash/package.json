@@ -10,8 +10,8 @@
     "@typeberry/logger": "0.0.1"
   },
   "scripts": {
-    "start": "ts-node ./index.ts",
-    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "start": "tsx ./index.ts",
+    "test": "node --test --import tsx $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

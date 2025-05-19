@@ -18,7 +18,7 @@ import {
   importerStateMachine,
 } from "./state-machine.js";
 
-const logger = Logger.new(__filename, "importer");
+const logger = Logger.new(import.meta.filename, "importer");
 
 if (!isMainThread) {
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
@@ -76,5 +76,5 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
 }
 
 export async function spawnWorker() {
-  return spawnWorkerGeneric(__dirname, logger, "ready(main)", new MainReady());
+  return spawnWorkerGeneric(import.meta.resolve('./index.ts'), logger, "ready(main)", new MainReady());
 }

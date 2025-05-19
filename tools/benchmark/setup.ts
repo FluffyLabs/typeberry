@@ -4,7 +4,7 @@ import type { Config } from "benny/lib/internal/common-types.js";
 
 import * as path from "node:path";
 
-export const REL_DIR = `${__dirname}/../..`;
+export const REL_DIR = `${import.meta.dirname}/../..`;
 export const DIST_DIR = "dist";
 export const BENCHMARKS_DIR = "benchmarks";
 export const OUTPUT_DIR = "output";

@@ -70,7 +70,7 @@ export function parseLoggerOptions(input: string, defaultLevel: Level, workingDi
     }
   }
 
-  const myDir = __dirname.split("/");
+  const myDir = import.meta.dirname.split("/");
   myDir.pop();
   myDir.pop();
   return {

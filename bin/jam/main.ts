@@ -19,7 +19,7 @@ import { initializeExtensions } from "./extensions.js";
 import { loadGenesis } from "./genesis.js";
 import { startBlocksReader } from "./reader.js";
 
-const logger = Logger.new(__filename, "jam");
+const logger = Logger.new(import.meta.filename, "jam");
 
 /** General options. */
 type Options = {

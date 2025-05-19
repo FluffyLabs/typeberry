@@ -4,7 +4,7 @@
   "description": "Merkle Mountain Range data structure.",
   "main": "index.ts",
   "scripts": {
-    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "test": "node --test --import tsx $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
     "@typeberry/bytes": "0.0.1",

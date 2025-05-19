@@ -1,9 +1,9 @@
 export { InMemoryTrie } from "./trie.js";
 export {
-  TrieHash,
-  InputKey,
-  StateKey,
-  TruncatedStateKey,
+  type TrieHash,
+  type InputKey,
+  type StateKey,
+  type TruncatedStateKey,
   parseInputKey,
   TrieNode,
   BranchNode,

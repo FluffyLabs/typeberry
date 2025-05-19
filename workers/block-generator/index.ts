@@ -17,7 +17,7 @@ import {
   generatorStateMachine,
 } from "./state-machine.js";
 
-const logger = Logger.new(__filename, "block-generator");
+const logger = Logger.new(import.meta.filename, "block-generator");
 
 if (!isMainThread) {
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
@@ -68,5 +68,5 @@ export async function main(channel: MessageChannelStateMachine<GeneratorInit, Ge
 }
 
 export async function spawnWorker() {
-  return spawnWorkerGeneric(__dirname, logger, "ready(main)", new MainReady());
+  return spawnWorkerGeneric(import.meta.resolve('./index.ts'), logger, "ready(main)", new MainReady());
 }

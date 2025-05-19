@@ -6,7 +6,7 @@ import { NewStream, StreamEnvelope, StreamEnvelopeType, type StreamId, type Stre
 
 export type ResponseHandler = (err: Error | null, response?: BytesBlob) => void;
 
-const logger = Logger.new(__filename, "ext-ipc");
+const logger = Logger.new(import.meta.filename, "ext-ipc");
 
 /** Abstraction over sending messages. May be tied to a particular stream. */
 export interface MessageSender {

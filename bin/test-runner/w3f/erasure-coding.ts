@@ -62,7 +62,7 @@ export class SegmentRoot {
   chunks_root!: BytesBlob;
 }
 
-const logger = Logger.new(__filename, "test-runner/erasure-coding");
+const logger = Logger.new(import.meta.filename, "test-runner/erasure-coding");
 
 let seed = Math.floor(1000 * Math.random());
 

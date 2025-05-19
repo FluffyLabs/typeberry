@@ -22,7 +22,7 @@ export function generatorStateMachine() {
   return new StateMachine("block-generator", initialized, [initialized, ready, finished]);
 }
 
-const logger = Logger.new(__filename, "block-generator");
+const logger = Logger.new(import.meta.filename, "block-generator");
 
 export class MainReady extends State<"ready(main)", Finished, Config> {
   // TODO [ToDr] should this be cleaned up at some point?

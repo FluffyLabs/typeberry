@@ -3,7 +3,7 @@ import { run } from "node:test";
 import { spec } from "node:test/reporters";
 import { Reporter } from "./reporter.js";
 
-const distDir = `${__dirname}/../../dist`;
+const distDir = `${import.meta.dirname}/../../dist`;
 try {
   fs.mkdirSync(distDir);
 } catch {
@@ -22,7 +22,7 @@ if (suite === undefined) {
 }
 
 const stream = run({
-  files: [`${__dirname}/${suiteToRun}.ts`],
+  files: [`${import.meta.dirname}/${suiteToRun}.ts`],
   timeout: 120 * 1000,
   concurrency: true,
 }).on("test:fail", () => {

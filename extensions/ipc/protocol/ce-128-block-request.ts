@@ -53,7 +53,7 @@ export class BlockRequest extends WithDebug {
   }
 }
 
-const logger = Logger.new(__filename, "protocol/ce-128");
+const logger = Logger.new(import.meta.filename, "protocol/ce-128");
 
 export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;

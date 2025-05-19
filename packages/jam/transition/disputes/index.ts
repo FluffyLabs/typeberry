@@ -1,2 +1,2 @@
 export * from "./disputes.js";
-export { DisputesState } from "./disputes-state.js";
+export { type DisputesState } from "./disputes-state.js";

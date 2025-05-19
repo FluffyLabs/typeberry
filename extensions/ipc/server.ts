@@ -38,7 +38,7 @@ export function startIpcServer(
   const isWindows = os.platform() === "win32";
   const socketPath = isWindows ? "\\\\.\\pipe\\typeberry" : path.join(os.tmpdir(), "typeberry.ipc");
 
-  const logger = Logger.new(__filename, "ext-ipc");
+  const logger = Logger.new(import.meta.filename, "ext-ipc");
 
   // Create the IPC server
   const server = createServer((socket: Socket) => {

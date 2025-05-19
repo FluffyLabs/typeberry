@@ -8,7 +8,7 @@ import { Level, Logger } from "@typeberry/logger";
 import { startClient } from "./client.js";
 import { type Database, startRpc } from "./rpc.js";
 
-const logger = Logger.new(__filename, "ipc2rpc");
+const logger = Logger.new(import.meta.filename, "ipc2rpc");
 
 main().catch((e) => {
   logger.error(`Main error: ${e}`);

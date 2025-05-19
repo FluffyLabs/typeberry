@@ -1,6 +1,6 @@
 import { ConcurrentWorker } from "@typeberry/concurrent";
 import { assertNever } from "@typeberry/utils";
-import { batch_verify_tickets, ring_commitment, verify_seal } from "bandersnatch-wasm/pkg";
+import { batch_verify_tickets, ring_commitment, verify_seal } from "bandersnatch-wasm/pkg/bandersnatch_wasm.js";
 import { Method, type Params, Response } from "./params.js";
 
 export const worker = ConcurrentWorker.new<Params, Response, null>((p: Params) => {

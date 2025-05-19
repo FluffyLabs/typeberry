@@ -20,7 +20,7 @@ export default [
       replace({
         preventAssignment: true,
         values: {
-          __filename: JSON.stringify("<unknown>"),
+          import.meta.filename: JSON.stringify("<unknown>"),
         },
       }),
     ],

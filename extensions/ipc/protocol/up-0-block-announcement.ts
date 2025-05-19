@@ -69,7 +69,7 @@ export class Announcement extends WithDebug {
   }
 }
 
-const logger = Logger.new(__filename, "protocol/up-0");
+const logger = Logger.new(import.meta.filename, "protocol/up-0");
 
 export class Handler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;

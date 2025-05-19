@@ -9,7 +9,7 @@
     "@typeberry/pvm-spi-decoder": "0.0.1"
   },
   "scripts": {
-    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts'     | tr '\\n' ' ')"
+    "test": "node --test --import tsx $(find . -type f -name '*.test.ts'     | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

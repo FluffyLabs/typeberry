@@ -9,7 +9,7 @@ import { type FromJson, parseFromJson } from "@typeberry/json-parser";
 import { Level, Logger } from "@typeberry/logger";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
-export const logger = Logger.new(__filename, "test-runner");
+export const logger = Logger.new(import.meta.filename, "test-runner");
 
 export function runner<T>(
   name: string,
@@ -26,7 +26,7 @@ export type Runner<T> = {
 };
 
 export async function main(runners: Runner<unknown>[], directoryToScan: string, inFiles: string[]) {
-  const relPath = `${__dirname}/../..`;
+  const relPath = `${import.meta.dirname}/../..`;
   const tests: TestAndRunner[] = [];
 
   let files = inFiles;

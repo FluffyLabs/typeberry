@@ -7,7 +7,7 @@ import { type Message, Ok } from "./message.js";
 import { TypedPort } from "./port.js";
 import type { State, StateNames, TransitionTo, ValidTransitionFrom } from "./state.js";
 
-const logger = Logger.new(__filename, "state-machine");
+const logger = Logger.new(import.meta.filename, "state-machine");
 
 /**
  * An abstraction for the communication channel between worker threads.

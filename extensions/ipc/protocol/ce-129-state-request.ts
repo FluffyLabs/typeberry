@@ -78,7 +78,7 @@ export class StateRequest extends WithDebug {
   }
 }
 
-const logger = Logger.new(__filename, "protocol/ce-129");
+const logger = Logger.new(import.meta.filename, "protocol/ce-129");
 
 export class Handler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;

@@ -2,7 +2,7 @@ import { add, complete, configure, cycle, save, suite } from "@typeberry/benchma
 import { Logger } from "@typeberry/logger";
 
 const HASH_LENGTH: number = 32;
-const logger = Logger.new(__filename, "hash");
+const logger = Logger.new(import.meta.filename, "hash");
 
 type ByteHash = Byte[];
 type NumberHash = number[];
@@ -199,7 +199,7 @@ module.exports = () =>
     cycle(),
     complete(),
     configure({}),
-    ...save(__filename),
+    ...save(import.meta.filename),
   );
 
 const x00 = Symbol("0x00");

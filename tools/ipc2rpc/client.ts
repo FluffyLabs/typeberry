@@ -6,7 +6,7 @@ import * as up0 from "@typeberry/ext-ipc/protocol/up-0-block-announcement.js";
 import { MessageSenderAdapter } from "@typeberry/ext-ipc/server.js";
 import { Logger } from "@typeberry/logger";
 
-const logger = Logger.new(__filename, "ipc2rpc/client");
+const logger = Logger.new(import.meta.filename, "ipc2rpc/client");
 
 export function startClient(
   socketPath: string,

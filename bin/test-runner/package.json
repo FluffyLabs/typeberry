@@ -31,10 +31,10 @@
     "json-bigint-patch": "^0.0.8"
   },
   "scripts": {
-    "start": "ts-node ./index.ts",
-    "w3f": "ts-node ./w3f.ts",
-    "jamduna": "ts-node ./jamduna.ts",
-    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "start": "tsx ./index.ts",
+    "w3f": "tsx ./w3f.ts",
+    "jamduna": "tsx ./jamduna.ts",
+    "test": "node --test --import tsx $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

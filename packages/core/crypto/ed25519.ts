@@ -1,6 +1,6 @@
 import { type Bytes, BytesBlob } from "@typeberry/bytes";
 import { type Opaque, check } from "@typeberry/utils";
-import { verify_ed25519, verify_ed25519_batch } from "ed25519-wasm/pkg";
+import { verify_ed25519, verify_ed25519_batch } from "ed25519-wasm/pkg/ed25519_wasm.js";
 
 export const ED25519_KEY_BYTES = 32;
 export const ED25519_SIGNATURE_BYTES = 64;

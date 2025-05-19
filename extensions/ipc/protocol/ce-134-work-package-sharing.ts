@@ -60,7 +60,7 @@ export class WorkPackageSharingResponse extends WithDebug {
   }
 }
 
-const logger = Logger.new(__filename, "protocol/ce-134");
+const logger = Logger.new(import.meta.filename, "protocol/ce-134");
 
 export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;

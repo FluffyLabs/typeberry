@@ -4,7 +4,7 @@ import { Result } from "@typeberry/utils";
 import { JumpTable } from "./jump-table.js";
 import { Mask } from "./mask.js";
 
-const logger = Logger.new(__filename, "pvm-interpreter");
+const logger = Logger.new(import.meta.filename, "pvm-interpreter");
 
 export enum ProgramDecoderError {
   InvalidProgramError = 0,

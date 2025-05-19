@@ -1,5 +1,4 @@
 import os from "node:os";
-import { resolve } from "node:path";
 import type { IExecutor } from "@typeberry/concurrent";
 import { Executor } from "@typeberry/concurrent";
 import { Method, Params, type Response } from "./params.js";
@@ -16,7 +15,7 @@ export class BandernsatchWasm {
     const workers = os.cpus().length;
     return new BandernsatchWasm(
       !synchronous
-        ? await Executor.initialize<Params, Response>(resolve(__dirname, "./bootstrap.cjs"), {
+        ? await Executor.initialize<Params, Response>(import.meta.resolve("./bootstrap.js"), {
             minWorkers: workers,
             maxWorkers: workers,
           })
