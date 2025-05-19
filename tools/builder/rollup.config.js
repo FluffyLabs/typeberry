@@ -1,6 +1,5 @@
 import commonjs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";
-import replace from "@rollup/plugin-replace";
 import dts from "rollup-plugin-dts";
 import typescript from "rollup-plugin-typescript2";
 
@@ -17,12 +16,6 @@ export default [
       resolve(),
       commonjs(),
       typescript(),
-      replace({
-        preventAssignment: true,
-        values: {
-          import.meta.filename: JSON.stringify("<unknown>"),
-        },
-      }),
     ],
     treeshake: {
       moduleSideEffects: false,
