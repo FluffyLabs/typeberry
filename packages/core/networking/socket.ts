@@ -84,8 +84,10 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
     issuerKeyPair: keyPair,
   });
 
-  // QUICConfig
   const lastConnectedPeer = peerVerification();
+  const peers = new Peers();
+
+  // QUICConfig
   const config = {
     keepAliveIntervalTime: 3000,
     maxIdleTimeout: 6000,
@@ -109,18 +111,25 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
     crypto: ed25519Crypto(key),
     logger: quicLogger.getChild("server"),
   });
-  server.addEventListener(events.EventQUICServerConnection.name, onIncomingSession);
-  server.addEventListener(events.EventQUICServerError.name, (error: unknown) => logger.error(`Server error: ${error}`));
-  server.addEventListener(events.EventQUICServerClose.name, (ev: unknown) => logger.error(`Server stopped: ${ev}`));
 
-  async function onIncomingSession(ev: any) {
+  // new incoming session
+  server.addEventListener(events.EventQUICServerConnection.name, async (ev: any) =>{
     const conn = ev.detail;
-    logger.log(`🛜 Server handshake with ${conn.remoteHost}:${conn.remotePort}`);
     if (lastConnectedPeer.id === null) {
       await conn.stop();
       return;
     }
+    logger.log(`🛜 Server handshake with ${conn.remoteHost}:${conn.remotePort}`);
+    handleNewPeer(conn, lastConnectedPeer.id);
+    await conn.start();
+  });
 
+  // basic error handling
+  server.addEventListener(events.EventQUICServerError.name, (error: unknown) => logger.error(`Server error: ${error}`));
+  server.addEventListener(events.EventQUICServerClose.name, (ev: unknown) => logger.error(`Server stopped: ${ev}`));
+
+  function handleNewPeer(conn: any, peerInfo: PeerInfo): Peer {
+    logger.log(`👥 peer connected ${conn.remoteHost}:${conn.remotePort}`);
     const streamEvents = new EventEmitter();
     const peerData: Peer = {
       connectionId: conn.connectionIdShared.toString(),
@@ -128,7 +137,7 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
         host: conn.remoteHost,
         port: conn.remotePort,
       },
-      ...lastConnectedPeer.id,
+      ...peerInfo,
       addOnStreamOpen(streamCallback) {
         streamEvents.on("stream", streamCallback);
       },
@@ -138,6 +147,7 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
         return stream;
       },
     };
+
     conn.addEventListener(events.EventQUICConnectionError.name, (err: { type: string }) => {
       logger.error(`❌ connection failed: ${err.type}`);
     });
@@ -147,12 +157,10 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
       logger.log("New stream");
       streamEvents.emit("stream", stream);
     });
+
     peers.peerConnected(peerData);
-
-    await conn.start();
+    return peerData;
   }
-
-  const peers = new Peers();
 
   async function dial(peer: PeerAddress): Promise<Peer> {
     const peerDetails = peerVerification();
@@ -188,29 +196,7 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
       }
 
       const conn = client.connection;
-      const streamEvents = new EventEmitter();
-
-      conn.addEventListener(events.EventQUICConnectionStream.name, (ev: any) => {
-        const stream = ev.detail;
-        logger.log("New stream");
-        streamEvents.emit("stream", stream);
-      });
-
-      peerData = {
-        connectionId: conn.connectionId.toString(),
-        ...peerDetails.id,
-        address: peer,
-        addOnStreamOpen(streamCallback) {
-          streamEvents.on("stream", streamCallback);
-        },
-        openStream() {
-          const stream = conn.newStream("bidi");
-          streamEvents.emit("stream", stream);
-          return stream;
-        },
-      };
-
-      peers.peerConnected(peerData);
+      const peerData = handleNewPeer(conn, peerDetails.id);
       return resolve(peerData);
     });
   }
