@@ -3,6 +3,7 @@ import { ED25519_KEY_BYTES, type Ed25519Key, type ed25519 } from "@typeberry/cry
 import { Result } from "@typeberry/utils";
 
 import * as peculiarWebcrypto from "@peculiar/webcrypto";
+import type { CryptoKey } from "@peculiar/webcrypto";
 import * as x509 from "@peculiar/x509";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
@@ -105,6 +106,16 @@ export async function generateKeyPairEd25519(): Promise<{
     publicKey: await webcrypto.subtle.exportKey("jwk", keyPair.publicKey),
     privateKey: await webcrypto.subtle.exportKey("jwk", keyPair.privateKey),
   };
+}
+
+export async function privateKeyToPEM(keypair: JsonWebKeyPair) {
+  const key = await importEd25519Key(keypair.privateKey, KeyType.Private);
+  // Export as PKCS8
+  const exported = await webcrypto.subtle.exportKey("pkcs8", key);
+  // Base64-encode and wrap as PEM
+  const b64 = Buffer.from(exported).toString("base64");
+  const lines = b64.match(/.{1,64}/g) ?? [];
+  return ["-----BEGIN PRIVATE KEY-----", ...lines, "-----END PRIVATE KEY-----", ""].join("\n");
 }
 
 /** Adapted from https://github.com/MatrixAI/js-quic/blob/staging/tests/utils.ts#L388 */
@@ -215,7 +226,7 @@ enum KeyType {
   Private = 1,
 }
 
-async function importEd25519Key(key: JsonWebKey, typ: KeyType) {
+async function importEd25519Key(key: JsonWebKey, typ: KeyType): Promise<CryptoKey> {
   if (key.kty !== KEY_TYPE) {
     throw new Error(`Unsupported key type ${key.kty}`);
   }

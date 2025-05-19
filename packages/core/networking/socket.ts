@@ -10,6 +10,7 @@ import {
   certToPEM,
   ed25519AsJsonWebKeyPair,
   generateCertificate,
+  privateKeyToPEM,
   verifyCertificate,
 } from "./certificate";
 import type { Network } from "./network";
@@ -97,6 +98,7 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
 
   // Load keypair
   const keyPair = ed25519AsJsonWebKeyPair(key);
+  const privKeyPEM = await privateKeyToPEM(keyPair);
   const cert = await generateCertificate({
     certId: BytesBlob.blobFromString("QUIC Networking"),
     subjectKeyPair: keyPair,
@@ -112,7 +114,7 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
     maxIdleTimeout: 6000,
     applicationProtos: protocols,
     cert: certToPEM(cert),
-    key: privateKeyToPEM(key),
+    key: privKeyPEM,
     verifyPeer: true,
     verifyCallback: lastConnectedPeer.verifyCallback,
   };
@@ -284,39 +286,4 @@ function clientCryptoOps() {
       },
     },
   };
-}
-
-function privateKeyToPEM(key: Ed25519Pair) {
-  // TODO [ToDr] Temporary, probably should rather use `exportKey` to produce DER.
-
-  // PKCS#8 header for Ed25519, 16 bytes:
-  //   SEQUENCE, version=0, algorithm OID (1.3.101.112), OCTET STRING tag
-  const pkcs8Header = Uint8Array.from([
-    0x30,
-    0x2e, // SEQUENCE, length=46
-    0x02,
-    0x01,
-    0x00, //   INTEGER 0
-    0x30,
-    0x05, //   SEQUENCE, length=5
-    0x06,
-    0x03, //     OID (3 bytes)
-    0x2b,
-    0x65,
-    0x70, //     1.3.101.112 = Ed25519
-    0x04,
-    0x22, //   OCTET STRING, length=34
-    0x04,
-    0x20, //     OCTET STRING, length=32
-  ]);
-
-  // Combine header + raw seed into one Uint8Array
-  const der = new Uint8Array(pkcs8Header.length + key.privKey.length);
-  der.set(pkcs8Header, 0);
-  der.set(key.privKey.raw, pkcs8Header.length);
-
-  // Base64-encode and wrap as PEM
-  const b64 = Buffer.from(der).toString("base64");
-  const lines = b64.match(/.{1,64}/g) ?? [];
-  return ["-----BEGIN PRIVATE KEY-----", ...lines, "-----END PRIVATE KEY-----", ""].join("\n");
 }
