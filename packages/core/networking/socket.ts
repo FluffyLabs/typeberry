@@ -13,7 +13,7 @@ import {
   verifyCertificate,
 } from "./certificate";
 import type { Network } from "./network";
-import { type Peer, type PeerAddress, Peers } from "./peers";
+import { type Peer, type PeerAddress, Peers, type Stream } from "./peers";
 
 const logger = Logger.new(__filename, "net");
 
@@ -27,6 +27,25 @@ export type Options = {
   port: number;
   /** Supported ALPNs (protocols) both for the inbound and outbound connections. */
   protocols: string[];
+};
+
+type Connection = {
+  connectionId: string;
+  connectionIdShared: string;
+  remoteHost: string;
+  remotePort: number;
+  start(): Promise<void>;
+  stop(): Promise<void>;
+  newStream(kind: "bidi"): Stream;
+  addEventListener(name: string, callback: unknown): void;
+};
+
+type EventWithConnection = {
+  detail: Connection;
+};
+
+type EventWithStream = {
+  detail: Stream;
 };
 
 /** Setup QUIC socket and start listening for connections. */
@@ -113,7 +132,7 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
   });
 
   // new incoming session
-  server.addEventListener(events.EventQUICServerConnection.name, async (ev: any) =>{
+  server.addEventListener(events.EventQUICServerConnection.name, async (ev: EventWithConnection) => {
     const conn = ev.detail;
     if (lastConnectedPeer.id === null) {
       await conn.stop();
@@ -128,7 +147,7 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
   server.addEventListener(events.EventQUICServerError.name, (error: unknown) => logger.error(`Server error: ${error}`));
   server.addEventListener(events.EventQUICServerClose.name, (ev: unknown) => logger.error(`Server stopped: ${ev}`));
 
-  function handleNewPeer(conn: any, peerInfo: PeerInfo): Peer {
+  function handleNewPeer(conn: Connection, peerInfo: PeerInfo): Peer {
     logger.log(`👥 peer connected ${conn.remoteHost}:${conn.remotePort}`);
     const streamEvents = new EventEmitter();
     const peerData: Peer = {
@@ -152,7 +171,8 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
       logger.error(`❌ connection failed: ${err.type}`);
     });
     conn.addEventListener(events.EventQUICConnectionClose.name, () => peers.peerDisconnected(peerData));
-    conn.addEventListener(events.EventQUICConnectionStream.name, (ev: any) => {
+
+    conn.addEventListener(events.EventQUICConnectionStream.name, (ev: EventWithStream) => {
       const stream = ev.detail;
       logger.log("New stream");
       streamEvents.emit("stream", stream);
@@ -164,7 +184,7 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
 
   async function dial(peer: PeerAddress): Promise<Peer> {
     const peerDetails = peerVerification();
-    let peerData: Peer | null = null;
+    const peerData: Peer | null = null;
     const client = await QUICClient.createQUICClient({
       socket,
       host: peer.host,
@@ -196,7 +216,7 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
       }
 
       const conn = client.connection;
-      const peerData = handleNewPeer(conn, peerDetails.id);
+      const peerData = handleNewPeer(conn as unknown as Connection, peerDetails.id);
       return resolve(peerData);
     });
   }

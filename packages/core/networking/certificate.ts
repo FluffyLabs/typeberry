@@ -68,9 +68,9 @@ export async function verifyCertificate(certs: Uint8Array[]): Promise<Result<Pee
 
   // SAN must be exactly 'e'+base32(rawPub)
   const expectedSan = altName(jwk);
-  const sanField = xc.subjectAltName || "";
+  const sanField = xc.subjectAltName ?? "";
   const m = sanField.match(/DNS:([^,]+)/);
-  if (!m || m[1] !== expectedSan) {
+  if (m === null || m[1] !== expectedSan) {
     logger.log(`AltName mismatch. Expected: '${expectedSan}', got: '${m?.[1]}'`);
     return Result.error(VerifyCertError.AltNameMismatch);
   }

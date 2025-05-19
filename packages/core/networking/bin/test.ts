@@ -22,10 +22,10 @@ async function main(connectTo: number, serverPort: number) {
     logger.log(`New peer: ${p.id}`);
     p.addOnStreamOpen(async (stream) => {
       logger.info(`🚰  Stream with ${p.id} opened`);
-      const {readable } = stream;
+      const { readable } = stream;
       const reader = readable.getReader();
       const data = await reader.read();
-      if (data.value) {
+      if (data.value !== undefined) {
         const bytes = BytesBlob.blobFrom(data.value);
         logger.info(`🚰 Peer ${p.id} stream data: ${bytes}`);
       }
@@ -54,7 +54,7 @@ async function main(connectTo: number, serverPort: number) {
       for (let i = 0; i < 10; i++) {
         const { writable } = peer.openStream();
         // After opening a stream, the stream initiator must send a single byte identifying the stream kind.
-        writable.getWriter().write(Uint8Array.from([i]))
+        writable.getWriter().write(Uint8Array.from([i]));
       }
       break;
     } catch (e) {
@@ -66,7 +66,7 @@ async function main(connectTo: number, serverPort: number) {
 
 const args = process.argv.slice(2);
 const parsePort = (v: string | undefined) => {
-  if (!v) {
+  if (v === undefined) {
     return 0;
   }
 
