@@ -5,9 +5,9 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { ValidatorData } from "@typeberry/state";
+import type { PartialState } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import type { AccumulationPartialState } from "./partial-state";
 
 const IN_OUT_REG = 7;
 export const VALIDATOR_DATA_BYTES = tryAsExactBytes(ValidatorData.Codec.sizeHint);
@@ -15,7 +15,7 @@ export const VALIDATOR_DATA_BYTES = tryAsExactBytes(ValidatorData.Codec.sizeHint
 /**
  * Designate a new set of validator keys.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/31a60231a602
+ * https://graypaper.fluffylabs.dev/#/9a08063/369501369501?v=0.6.6
  */
 export class Designate implements HostCallHandler {
   index = tryAsHostCallIndex(7);
@@ -23,7 +23,7 @@ export class Designate implements HostCallHandler {
   currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(
-    private readonly partialState: AccumulationPartialState,
+    private readonly partialState: PartialState,
     private readonly chainSpec: ChainSpec,
   ) {}
 
@@ -42,11 +42,10 @@ export class Designate implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    const d = Decoder.fromBlob(res);
-    const validatorsData = d.sequenceFixLen(ValidatorData.Codec, this.chainSpec.validatorsCount);
+    const decoder = Decoder.fromBlob(res);
+    const validatorsData = decoder.sequenceFixLen(ValidatorData.Codec, this.chainSpec.validatorsCount);
 
     regs.set(IN_OUT_REG, HostCallResult.OK);
     this.partialState.updateValidatorsData(tryAsPerValidator(validatorsData, this.chainSpec));
-    return;
   }
 }

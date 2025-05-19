@@ -59,17 +59,17 @@ export const Y = 500;
 // TODO [ToDr] Not sure where these should live yet :(
 
 /**
- * `J = 8`: The maximum sum of dependency items in a work-report.
+ * `J`: The maximum sum of dependency items in a work-report.
  *
  * https://graypaper.fluffylabs.dev/#/5f542d7/416a00416a00?v=0.6.2
  */
 export const MAX_REPORT_DEPENDENCIES = 8;
 export type MAX_REPORT_DEPENDENCIES = typeof MAX_REPORT_DEPENDENCIES;
 
-/** Size of the authorization queue. */
+/** `Q`: Size of the authorization queue. */
 export const AUTHORIZATION_QUEUE_SIZE = Q;
 export type AUTHORIZATION_QUEUE_SIZE = typeof AUTHORIZATION_QUEUE_SIZE;
 
-/** Maximal authorization pool size. */
+/** `O`: Maximal authorization pool size. */
 export const MAX_AUTH_POOL_SIZE = O;
 export type MAX_AUTH_POOL_SIZE = typeof MAX_AUTH_POOL_SIZE;

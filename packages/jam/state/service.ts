@@ -4,7 +4,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { type HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
+import { type U32, type U64, sumU64, tryAsU64 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
 import type { StateKey } from "../state-merkleization/keys";
 
@@ -45,7 +45,12 @@ export class ServiceAccountInfo extends WithDebug {
     const B_I = 10n;
     /** https://graypaper.fluffylabs.dev/#/9a08063/444d00444d00?v=0.6.6 */
     const B_L = 1n;
-    return tryAsU64(B_S + B_I * BigInt(items) + B_L * bytes);
+
+    const sum = sumU64(tryAsU64(B_S), tryAsU64(B_I * BigInt(items)), tryAsU64(B_L * bytes));
+    if (sum.overflow) {
+      return tryAsU64(2n ** 64n - 1n);
+    }
+    return sum.value;
   }
 
   private constructor(
@@ -141,11 +146,11 @@ export class Service extends WithDebug {
       /** https://graypaper.fluffylabs.dev/#/85129da/383303383303?v=0.6.3 */
       info: ServiceAccountInfo;
       /** https://graypaper.fluffylabs.dev/#/85129da/10f90010f900?v=0.6.3 */
-      preimages: HashDictionary<PreimageHash, PreimageItem>;
+      readonly preimages: HashDictionary<PreimageHash, PreimageItem>;
       /** https://graypaper.fluffylabs.dev/#/85129da/115400115800?v=0.6.3 */
-      lookupHistory: HashDictionary<PreimageHash, LookupHistoryItem[]>;
+      readonly lookupHistory: HashDictionary<PreimageHash, LookupHistoryItem[]>;
       /** https://graypaper.fluffylabs.dev/#/85129da/10f80010f800?v=0.6.3 */
-      storage: StateItem[];
+      readonly storage: StateItem[];
     },
   ) {
     super();

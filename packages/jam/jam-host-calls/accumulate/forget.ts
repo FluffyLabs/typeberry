@@ -3,23 +3,23 @@ import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
+import type { PartialState } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import type { AccumulationPartialState } from "./partial-state";
 
 const IN_OUT_REG = 7;
 
 /**
  * Mark a preimage hash as unavailable.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/33ee0133ee01
+ * https://graypaper.fluffylabs.dev/#/9a08063/382d01382d01?v=0.6.6
  */
 export class Forget implements HostCallHandler {
-  index = tryAsHostCallIndex(14);
+  index = tryAsHostCallIndex(15);
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly partialState: AccumulationPartialState) {}
+  constructor(private readonly partialState: PartialState) {}
 
   async execute(
     _gas: GasCounter,
@@ -38,7 +38,7 @@ export class Forget implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    const result = this.partialState.forgetPreimage(hash, length);
+    const result = this.partialState.forgetPreimage(hash.asOpaque(), length);
 
     if (result.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);

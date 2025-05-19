@@ -8,16 +8,16 @@ import type { HostCallHandler, IHostCallMemory } from "@typeberry/pvm-host-calls
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import type { IHostCallRegisters } from "@typeberry/pvm-host-calls/host-call-registers";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
+import type { PartialState } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import type { AccumulationPartialState } from "./partial-state";
 
 const IN_OUT_REG = 7;
 
 /**
  * Assign new fixed-length authorization queue to some core.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/311702311702
+ * https://graypaper.fluffylabs.dev/#/9a08063/360501360501?v=0.6.6
  */
 export class Assign implements HostCallHandler {
   index = tryAsHostCallIndex(6);
@@ -25,7 +25,7 @@ export class Assign implements HostCallHandler {
   currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(
-    private readonly partialState: AccumulationPartialState,
+    private readonly partialState: PartialState,
     private readonly chainSpec: ChainSpec,
   ) {}
 
@@ -51,12 +51,12 @@ export class Assign implements HostCallHandler {
       return;
     }
 
-    const d = Decoder.fromBlob(res);
-    const authQueue = d.sequenceFixLen(codec.bytes(HASH_SIZE), AUTHORIZATION_QUEUE_SIZE);
+    const decoder = Decoder.fromBlob(res);
+    const authQueue = decoder.sequenceFixLen(codec.bytes(HASH_SIZE), AUTHORIZATION_QUEUE_SIZE);
     const fixedSizeAuthQueue = FixedSizeArray.new(authQueue, AUTHORIZATION_QUEUE_SIZE);
 
     regs.set(IN_OUT_REG, HostCallResult.OK);
+    // NOTE [MaSo] its safe to cast to Number because we know that the coreIndex is less than cores count = 341
     this.partialState.updateAuthorizationQueue(tryAsCoreIndex(Number(coreIndex)), fixedSizeAuthQueue);
-    return;
   }
 }

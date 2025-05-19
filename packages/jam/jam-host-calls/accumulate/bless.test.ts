@@ -1,17 +1,17 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { type ServiceId, tryAsServiceId } from "@typeberry/block";
+import { type ServiceGas, type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { Encoder } from "@typeberry/codec";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { Registers } from "@typeberry/pvm-interpreter";
-import { type Gas, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
+import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { PartialStateMock } from "../externalities/partial-state-mock";
 import { HostCallResult } from "../results";
 import { Bless } from "./bless";
-import { TestAccumulate } from "./partial-state.test";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
@@ -21,21 +21,15 @@ const SERVICE_V = 9;
 const DICTIONARY_START = 10;
 const DICTIONARY_COUNT = 11;
 
-function prepareDictionary(cb?: (d: Map<ServiceId, Gas>) => void) {
-  const dictionary = new Map();
-  dictionary.set(tryAsServiceId(10_000), tryAsGas(15_000));
-  dictionary.set(tryAsServiceId(20_000), tryAsGas(15_000));
-  if (cb !== undefined) {
-    cb(dictionary);
-  }
-  return {
-    flat: Array.from(dictionary.entries()),
-    expected: new Map(Array.from(dictionary.entries()).map(([k, v]) => [k, BigInt(v)])),
-  };
+function prepareServiceGasEntires() {
+  const entries = new Array<[ServiceId, ServiceGas]>();
+  entries.push([tryAsServiceId(10_000), tryAsServiceGas(15_000)]);
+  entries.push([tryAsServiceId(20_000), tryAsServiceGas(15_000)]);
+  return entries;
 }
 
 function prepareRegsAndMemory(
-  dictionary: [ServiceId, Gas][],
+  entries: [ServiceId, ServiceGas][],
   { skipDictionary = false }: { skipDictionary?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
@@ -44,14 +38,14 @@ function prepareRegsAndMemory(
   registers.set(SERVICE_A, tryAsU64(10));
   registers.set(SERVICE_V, tryAsU64(15));
   registers.set(DICTIONARY_START, tryAsU64(memStart));
-  registers.set(DICTIONARY_COUNT, tryAsU64(dictionary.length));
+  registers.set(DICTIONARY_COUNT, tryAsU64(entries.length));
 
   const builder = new MemoryBuilder();
 
   const encoder = Encoder.create();
-  for (const [k, v] of dictionary) {
+  for (const [k, v] of entries) {
     encoder.i32(k);
-    encoder.i64(BigInt(v));
+    encoder.i64(v);
   }
   const data = encoder.viewResult();
 
@@ -67,30 +61,31 @@ function prepareRegsAndMemory(
 
 describe("HostCalls: Bless", () => {
   it("should set new privileged services and auto-accumualte services", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const bless = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     bless.currentServiceId = serviceId;
-    const { flat, expected } = prepareDictionary();
-    const { registers, memory } = prepareRegsAndMemory(flat);
+    const entries = prepareServiceGasEntires();
+    const { registers, memory } = prepareRegsAndMemory(entries);
 
     // when
-    await bless.execute(gas, registers, memory);
+    const result = await bless.execute(gas, registers, memory);
 
     // then
+    assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OK);
     assert.deepStrictEqual(accumulate.privilegedServices, [
-      [tryAsServiceId(5), tryAsServiceId(10), tryAsServiceId(15), expected],
+      [tryAsServiceId(5), tryAsServiceId(10), tryAsServiceId(15), entries],
     ]);
   });
 
   it("should return panic when dictionary is not readable", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
-    const { flat } = prepareDictionary();
-    const { registers, memory } = prepareRegsAndMemory(flat, { skipDictionary: true });
+    const entries = prepareServiceGasEntires();
+    const { registers, memory } = prepareRegsAndMemory(entries, { skipDictionary: true });
 
     // when
     const result = await empower.execute(gas, registers, memory);
@@ -100,38 +95,41 @@ describe("HostCalls: Bless", () => {
     assert.deepStrictEqual(accumulate.privilegedServices, []);
   });
 
-  it("should fail when dictionary is out of order", async () => {
-    const accumulate = new TestAccumulate();
+  it("should auto-accumualte services when dictionary is out of order", async () => {
+    const accumulate = new PartialStateMock();
     const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
-    const { flat } = prepareDictionary((d) => {
-      d.set(tryAsServiceId(5), tryAsGas(10_000));
-    });
-    const { registers, memory } = prepareRegsAndMemory(flat);
+    const entries = prepareServiceGasEntires();
+    entries.push([tryAsServiceId(5), tryAsServiceGas(10_000)]);
+    const { registers, memory } = prepareRegsAndMemory(entries);
 
     // when
-    await empower.execute(gas, registers, memory);
+    const result = await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
-    assert.deepStrictEqual(accumulate.privilegedServices, []);
+    assert.deepStrictEqual(result, undefined);
+    assert.deepStrictEqual(accumulate.privilegedServices, [
+      [tryAsServiceId(5), tryAsServiceId(10), tryAsServiceId(15), entries],
+    ]);
   });
 
-  it("should fail when dictionary contains duplicates", async () => {
-    const accumulate = new TestAccumulate();
+  it("should auto-accumualte services when dictionary contains duplicates", async () => {
+    const accumulate = new PartialStateMock();
     const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
     empower.currentServiceId = serviceId;
-    const { flat } = prepareDictionary();
-    flat.push(flat[flat.length - 1]);
-    const { registers, memory } = prepareRegsAndMemory(flat);
+    const entries = prepareServiceGasEntires();
+    entries.push(entries[entries.length - 1]);
+    const { registers, memory } = prepareRegsAndMemory(entries);
 
     // when
-    await empower.execute(gas, registers, memory);
+    const result = await empower.execute(gas, registers, memory);
 
     // then
-    assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.OOB);
-    assert.deepStrictEqual(accumulate.privilegedServices, []);
+    assert.deepStrictEqual(result, undefined);
+    assert.deepStrictEqual(accumulate.privilegedServices, [
+      [tryAsServiceId(5), tryAsServiceId(10), tryAsServiceId(15), entries],
+    ]);
   });
 });

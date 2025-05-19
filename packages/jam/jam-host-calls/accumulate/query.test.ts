@@ -15,9 +15,9 @@ import {
   tryAsSbrkIndex,
 } from "@typeberry/pvm-interpreter";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
+import { type PreimageStatus, PreimageStatusKind } from "../externalities/partial-state";
+import { PartialStateMock } from "../externalities/partial-state-mock";
 import { HostCallResult } from "../results";
-import { PreimageStatus, type PreimageStatusResult } from "./partial-state";
-import { TestAccumulate } from "./partial-state.test";
 import { Query } from "./query";
 
 const gas = gasCounter(tryAsGas(0));
@@ -51,7 +51,7 @@ function prepareRegsAndMemory(
 
 describe("HostCalls: Query", () => {
   it("should return panic if memory is unreadable", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const query = new Query(accumulate);
 
     const w7 = tryAsU64(2 ** 16);
@@ -74,7 +74,7 @@ describe("HostCalls: Query", () => {
   });
 
   it("should return none if preimage is not found", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const query = new Query(accumulate);
 
     const w7 = tryAsU64(2 ** 16);
@@ -96,14 +96,14 @@ describe("HostCalls: Query", () => {
   });
 
   it("should return requested if preimage is requested", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const query = new Query(accumulate);
 
     const w7 = tryAsU64(2 ** 16);
     const w8 = tryAsU64(32);
     const data = Bytes.fill(HASH_SIZE, 0xaa).asOpaque();
-    const status: PreimageStatusResult = {
-      status: PreimageStatus.Requested,
+    const status: PreimageStatus = {
+      status: PreimageStatusKind.Requested,
     };
     accumulate.checkPreimageStatusResponse = status;
 
@@ -121,7 +121,7 @@ describe("HostCalls: Query", () => {
   });
 
   it("should return available if preimage is available", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const query = new Query(accumulate);
 
     const w7 = tryAsU64(2 ** 16);
@@ -129,8 +129,8 @@ describe("HostCalls: Query", () => {
     const data = Bytes.fill(HASH_SIZE, 0xaa).asOpaque();
     const timeslot1 = tryAsTimeSlot(0x1234);
 
-    const status: PreimageStatusResult = {
-      status: PreimageStatus.Available,
+    const status: PreimageStatus = {
+      status: PreimageStatusKind.Available,
       data: [timeslot1],
     };
     accumulate.checkPreimageStatusResponse = status;
@@ -149,7 +149,7 @@ describe("HostCalls: Query", () => {
   });
 
   it("should return unavailable if preimage is unavailable", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const query = new Query(accumulate);
 
     const w7 = tryAsU64(2 ** 16);
@@ -158,8 +158,8 @@ describe("HostCalls: Query", () => {
     const timeslot1 = tryAsTimeSlot(0x1234);
     const timeslot2 = tryAsTimeSlot(0x5678);
 
-    const status: PreimageStatusResult = {
-      status: PreimageStatus.Unavailable,
+    const status: PreimageStatus = {
+      status: PreimageStatusKind.Unavailable,
       data: [timeslot1, timeslot2],
     };
     accumulate.checkPreimageStatusResponse = status;
@@ -178,7 +178,7 @@ describe("HostCalls: Query", () => {
   });
 
   it("should return reavailable if preimage is reavailable", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const query = new Query(accumulate);
 
     const w7 = tryAsU64(2 ** 16);
@@ -188,8 +188,8 @@ describe("HostCalls: Query", () => {
     const timeslot2 = tryAsTimeSlot(0x5678);
     const timeslot3 = tryAsTimeSlot(0x9abc);
 
-    const status: PreimageStatusResult = {
-      status: PreimageStatus.Reavailable,
+    const status: PreimageStatus = {
+      status: PreimageStatusKind.Reavailable,
       data: [timeslot1, timeslot2, timeslot3],
     };
     accumulate.checkPreimageStatusResponse = status;
