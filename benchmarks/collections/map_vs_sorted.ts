@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { SortedArray } from "@typeberry/collections";
 import { Ordering } from "@typeberry/ordering";
@@ -6,7 +7,7 @@ const READS = 100;
 const keys = ["xyz", "abc", "123", "def", "Abb"];
 const converted = keys.map((key) => ({ key }));
 
-module.exports = () =>
+export default function run() {
   suite(
     "Map vs SortedArray for small element count",
 
@@ -83,6 +84,7 @@ module.exports = () =>
     configure({}),
     ...save(import.meta.filename),
   );
+}
 
 type Data = { key: string; value?: boolean };
 function dataCmp(a: Data, b: Data) {
@@ -97,6 +99,6 @@ function dataCmp(a: Data, b: Data) {
   return Ordering.Equal;
 }
 
-if (require.main === module) {
-  module.exports();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
 }

@@ -1,2 +1,2 @@
-const { worker } = require('./worker.ts');
+const { worker } = require("./worker.ts");
 worker.listenToParentPort();

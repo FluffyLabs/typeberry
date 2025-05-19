@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { PageAllocator, SimpleAllocator, blake2b } from "@typeberry/hash";
@@ -14,7 +15,7 @@ function generateBlob(): BytesBlob {
   return BytesBlob.blobFrom(result);
 }
 
-module.exports = () =>
+export default function run() {
   suite(
     "Creating many hashes",
 
@@ -47,7 +48,8 @@ module.exports = () =>
     configure({}),
     ...save(import.meta.filename),
   );
+}
 
-if (require.main === module) {
-  module.exports();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
 }

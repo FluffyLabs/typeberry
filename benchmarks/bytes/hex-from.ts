@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 
 function parseByteFromCharCodes(s: string): number {
@@ -83,7 +84,7 @@ for (let i = 0; i < size; i += 1) {
   data.push((i % 256).toString(16).padStart(2, "0"));
 }
 
-module.exports = () =>
+export default function run() {
   suite(
     "Bytes / hex parsing",
 
@@ -109,7 +110,8 @@ module.exports = () =>
     configure({}),
     ...save(import.meta.filename),
   );
+}
 
-if (require.main === module) {
-  module.exports();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
 }

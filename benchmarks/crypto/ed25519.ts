@@ -1,4 +1,5 @@
 import crypto, { createPublicKey } from "node:crypto";
+import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { ed25519 } from "@typeberry/crypto";
@@ -41,13 +42,13 @@ function nativeVerify<T extends BytesBlob>(input: Input<T>[]): Promise<boolean[]
           format: "der",
           type: "spki",
         }),
-        Buffer.from(signature.raw),
+        new Uint8Array(Buffer.from(signature.raw)),
       );
     }),
   );
 }
 
-module.exports = () =>
+export default function run() {
   suite(
     "ED25519 signatures verification",
 
@@ -76,7 +77,8 @@ module.exports = () =>
     configure({}),
     ...save(import.meta.filename),
   );
+}
 
-if (require.main === module) {
-  module.exports();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
 }

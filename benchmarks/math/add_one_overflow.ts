@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 
 const a = 0xff_ff_ff_ff >>> 0;
@@ -5,7 +6,7 @@ const ONE = 1 >>> 0;
 
 const MAX_U32 = 2 ** 32;
 // the purpose of this benchmark is to find the fastest option to calculate the next page number
-module.exports = () =>
+export default function run() {
   suite(
     "Wrapping add one (incrementation)",
 
@@ -24,7 +25,8 @@ module.exports = () =>
     configure({}),
     ...save(import.meta.filename),
   );
+}
 
-if (require.main === module) {
-  module.exports();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
 }

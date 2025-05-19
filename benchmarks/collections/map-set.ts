@@ -1,8 +1,9 @@
+import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 
 const NO_OF_UPDATES = 1000;
 
-module.exports = () =>
+export default function run() {
   suite(
     "Map: 2 gets and conditional set vs 1 get and 1 set ",
 
@@ -49,3 +50,8 @@ module.exports = () =>
     configure({}),
     ...save(import.meta.filename),
   );
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
+}

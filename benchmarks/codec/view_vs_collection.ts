@@ -1,4 +1,5 @@
 import assert from "node:assert";
+import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, type DescribedBy, Encoder, type SequenceView, codec } from "@typeberry/codec";
@@ -48,7 +49,7 @@ function compare(
   ];
 }
 
-module.exports = () =>
+export default function run() {
   suite(
     "Sequence Views",
 
@@ -93,7 +94,8 @@ module.exports = () =>
     configure({}),
     ...save(import.meta.filename),
   );
+}
 
-if (require.main === module) {
-  module.exports();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
 }

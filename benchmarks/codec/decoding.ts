@@ -1,4 +1,5 @@
 import assert from "node:assert";
+import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 
 const inputEncoded = new ArrayBuffer(12);
@@ -7,7 +8,7 @@ view.setInt32(0, -10, true);
 view.setInt32(4, 0x42, true);
 view.setInt32(8, 0xffff, true);
 
-module.exports = () =>
+export default function run() {
   suite(
     "Decoding numbers",
 
@@ -55,9 +56,10 @@ module.exports = () =>
     configure({}),
     ...save(import.meta.filename),
   );
+}
 
-if (require.main === module) {
-  module.exports();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
 }
 
 function decode(source: Uint8Array) {

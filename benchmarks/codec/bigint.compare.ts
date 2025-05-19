@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 
 class U64 {
@@ -18,7 +19,7 @@ view.setBigUint64(0, 2n ** 60n, true);
 const otherA = new U64(0xff, 0xff);
 const otherB = (0xffn << 32n) + 0xffn;
 
-module.exports = () =>
+export default function run() {
   suite(
     "BigInt compare",
 
@@ -43,7 +44,8 @@ module.exports = () =>
     configure({}),
     ...save(import.meta.filename),
   );
+}
 
-if (require.main === module) {
-  module.exports();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
 }

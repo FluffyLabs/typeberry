@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { Logger } from "@typeberry/logger";
 
@@ -139,7 +140,7 @@ function findDuplicates<T>(list: ArrayLike<T>[], compare = isSame): ArrayLike<T>
   return found;
 }
 
-module.exports = () =>
+export default function run() {
   suite(
     "Hash + Symbols",
 
@@ -201,6 +202,7 @@ module.exports = () =>
     configure({}),
     ...save(import.meta.filename),
   );
+}
 
 const x00 = Symbol("0x00");
 const x01 = Symbol("0x01");
@@ -717,6 +719,6 @@ type Byte =
   | typeof xfe
   | typeof xff;
 
-if (require.main === module) {
-  module.exports();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
 }

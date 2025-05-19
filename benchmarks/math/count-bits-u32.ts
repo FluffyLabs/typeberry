@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 
 const randomU32 = Math.floor(Math.random() * 0x100000000);
@@ -22,7 +23,7 @@ function countBits32Magic(val: number) {
   return x & 0x3f; // Mask out excess bits
 }
 
-module.exports = () =>
+export default function run() {
   suite(
     "Countings 1s in a u32 number",
 
@@ -39,7 +40,8 @@ module.exports = () =>
     configure({}),
     ...save(import.meta.filename),
   );
+}
 
-if (require.main === module) {
-  module.exports();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
 }
