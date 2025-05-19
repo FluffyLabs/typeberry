@@ -34,7 +34,7 @@
     "start": "tsx ./index.ts",
     "w3f": "tsx ./w3f.ts",
     "jamduna": "tsx ./jamduna.ts",
-    "test": "node --test --import tsx $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",

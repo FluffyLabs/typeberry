@@ -12,7 +12,7 @@
   },
   "scripts": {
     "start": "tsx ./bin.ts",
-    "test": "node --test --import tsx $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
     "build": "npm run build -w @typeberry/builder -- --environment PACKAGE_NAME:@typeberry/pvm-debugger-adapter,PACKAGE_OUT:pvm"
   },
   "author": "Fluffy Labs",

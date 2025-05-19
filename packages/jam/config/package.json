@@ -4,7 +4,7 @@
   "description": "Config for typeberry workers.",
   "main": "index.ts",
   "scripts": {
-    "test": "node --test --import tsx $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
     "@typeberry/utils": "0.0.1"

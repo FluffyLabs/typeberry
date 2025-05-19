@@ -4,7 +4,7 @@
   "description": "Erasure encoding implementation",
   "main": "index.ts",
   "scripts": {
-    "test": "node --test --import tsx $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
     "start": "tsx ./index"
   },
   "author": "Fluffy Labs",
