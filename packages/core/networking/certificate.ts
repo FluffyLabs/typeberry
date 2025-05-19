@@ -1,5 +1,5 @@
-import crypto, { type JsonWebKey } from "crypto";
-import { ED25519_KEY_BYTES, type ed25519, type Ed25519Key } from "@typeberry/crypto";
+import crypto, { type JsonWebKey } from "node:crypto";
+import { ED25519_KEY_BYTES, type Ed25519Key, type ed25519 } from "@typeberry/crypto";
 import { Result } from "@typeberry/utils";
 import base32 from "hi-base32";
 
@@ -46,8 +46,8 @@ export async function verifyCertificate(certs: Uint8Array[]): Promise<Result<Pee
   const der = Buffer.from(certs[0]);
   const b64 = der
     .toString("base64")
-    .match(/.{1,64}/g)!
-    .join("\n");
+    .match(/.{1,64}/g)
+    ?.join("\n");
   const pem = `-----BEGIN CERTIFICATE-----\n${b64}\n-----END CERTIFICATE-----`;
 
   // Parse with Node's X509Certificate (accepts PEM or DER)
@@ -62,7 +62,7 @@ export async function verifyCertificate(certs: Uint8Array[]): Promise<Result<Pee
   // Extract raw public key via JWK export
   const jwk = xc.publicKey.export({ format: "jwk" });
   if (jwk.kty !== KEY_TYPE || jwk.crv !== CURVE_NAME) {
-    logger.log(`Public key type mismatch.`);
+    logger.log(`Public key type mismatch: ${jwk.kty}, ${jwk.crv}`);
     return Result.error(VerifyCertError.PublicKeyTypeMismatch);
   }
 
@@ -119,8 +119,8 @@ export async function generateCertificate({
   certId: BytesBlob;
   subjectKeyPair: JsonWebKeyPair;
   issuerKeyPair: JsonWebKeyPair;
-  subjectAttrsExtra?: Array<{ [key: string]: Array<string> }>;
-  issuerAttrsExtra?: Array<{ [key: string]: Array<string> }>;
+  subjectAttrsExtra?: Array<{ [key: string]: string[] }>;
+  issuerAttrsExtra?: Array<{ [key: string]: string[] }>;
   now?: Date;
 }): Promise<x509.X509Certificate> {
   const subjectPublicCryptoKey = await importEd25519Key(subjectKeyPair.publicKey, KeyType.Public);
@@ -205,7 +205,7 @@ function altName(ed25519PubKey: JsonWebKey) {
   const rawPub = new Uint8Array(Buffer.from(ed25519PubKey.x ?? "", "base64url"));
   // we remove padding since it's not in the specified alphabet
   // https://github.com/zdave-parity/jam-np/blob/main/simple.md#encryption-and-handshake
-  return "e" + base32.encode(rawPub).toLowerCase().replace(/=/g, "");
+  return `e${base32.encode(rawPub).toLowerCase().replace(/=/g, "")}`;
 }
 
 enum KeyType {
@@ -235,7 +235,7 @@ async function importEd25519Key(key: JsonWebKey, typ: KeyType) {
 }
 
 export function certToPEM(cert: x509.X509Certificate) {
-  return cert.toString("pem") + "\n";
+  return `${cert.toString("pem")}\n`;
 }
 
 export type JsonWebKeyPair = {

@@ -1,7 +1,7 @@
 import { webcrypto } from "node:crypto";
 import EventEmitter from "node:events";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { ed25519, ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
+import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, ed25519 } from "@typeberry/crypto";
 import type { Ed25519Pair } from "@typeberry/crypto/ed25519";
 import { Logger } from "@typeberry/logger";
 import {
@@ -32,7 +32,7 @@ export type Options = {
 /** Setup QUIC socket and start listening for connections. */
 export async function setup({ host, port, protocols, key }: Options): Promise<Network> {
   const { default: Logger, formatting, LogLevel, StreamHandler } = await import("@matrixai/logger");
-  const quicLogger = new Logger(`network`, LogLevel.DEBUG, [
+  const quicLogger = new Logger("quic", LogLevel.DEBUG, [
     new StreamHandler(formatting.format`${formatting.level}:${formatting.keys}:${formatting.msg}`),
   ]);
   const { QUICServer, QUICSocket, QUICClient, events } = await import("@matrixai/quic");
@@ -66,12 +66,11 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
       id: null,
       verifyCallback: async (certs: Uint8Array[], _cas: Uint8Array[]) => {
         const verification = await verifyCertificate(certs);
-        if (verification.isOk) {
-          peer.id = verification.ok;
-          return undefined;
-        } else {
+        if (verification.isError) {
           return asCryptoError(verification.error);
         }
+        peer.id = verification.ok;
+        return undefined;
       },
     };
     return peer;
@@ -111,8 +110,8 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
     logger: quicLogger.getChild("server"),
   });
   server.addEventListener(events.EventQUICServerConnection.name, onIncomingSession);
-  server.addEventListener(events.EventQUICServerError.name, (error: any) => logger.error(`Server error: ${error}`));
-  server.addEventListener(events.EventQUICServerClose.name, (ev: any) => logger.error(`Server stopped: ${ev}`));
+  server.addEventListener(events.EventQUICServerError.name, (error: unknown) => logger.error(`Server error: ${error}`));
+  server.addEventListener(events.EventQUICServerClose.name, (ev: unknown) => logger.error(`Server stopped: ${ev}`));
 
   async function onIncomingSession(ev: any) {
     const conn = ev.detail;
@@ -139,13 +138,13 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
         return stream;
       },
     };
-    conn.addEventListener(events.EventQUICConnectionError.name, (err: any) => {
+    conn.addEventListener(events.EventQUICConnectionError.name, (err: { type: string }) => {
       logger.error(`❌ connection failed: ${err.type}`);
     });
     conn.addEventListener(events.EventQUICConnectionClose.name, () => peers.peerDisconnected(peerData));
     conn.addEventListener(events.EventQUICConnectionStream.name, (ev: any) => {
       const stream = ev.detail;
-      console.log("New stream: ", ev);
+      logger.log("New stream");
       streamEvents.emit("stream", stream);
     });
     peers.peerConnected(peerData);
@@ -178,8 +177,9 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
     });
 
     return new Promise((resolve, reject) => {
-      client.addEventListener(events.EventQUICClientError.name, (error: any) => {
-        quicLogger.error("Client error", error), reject(`${error}`);
+      client.addEventListener(events.EventQUICClientError.name, (error: unknown) => {
+        quicLogger.error(`Client error: ${error}`);
+        reject(`${error}`);
       });
 
       logger.log(`🤝 handshake with: ${peer.host}:${peer.port}`);
@@ -192,7 +192,7 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
 
       conn.addEventListener(events.EventQUICConnectionStream.name, (ev: any) => {
         const stream = ev.detail;
-        console.log("New stream: ", ev);
+        logger.log("New stream");
         streamEvents.emit("stream", stream);
       });
 
@@ -311,6 +311,6 @@ function privateKeyToPEM(key: Ed25519Pair) {
 
   // Base64-encode and wrap as PEM
   const b64 = Buffer.from(der).toString("base64");
-  const lines = b64.match(/.{1,64}/g)!;
+  const lines = b64.match(/.{1,64}/g) ?? [];
   return ["-----BEGIN PRIVATE KEY-----", ...lines, "-----END PRIVATE KEY-----", ""].join("\n");
 }
