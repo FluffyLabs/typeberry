@@ -15,5 +15,6 @@
     "@typeberry/ordering": "0.0.1"
   },
   "author": "Fluffy Labs",
-  "license": "MPL-2.0"
+  "license": "MPL-2.0",
+  "type": "module"
 }

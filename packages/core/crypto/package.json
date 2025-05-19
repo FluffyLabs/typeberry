@@ -13,5 +13,6 @@
     "ed25519-wasm": "github:fluffylabs/ed25519-wasm#a69da16025aa39c1b63842189fe841583213c07b"
   },
   "author": "Fluffy Labs",
-  "license": "MPL-2.0"
+  "license": "MPL-2.0",
+  "type": "module"
 }

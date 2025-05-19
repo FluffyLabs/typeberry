@@ -19,5 +19,6 @@
     "@typeberry/safrole": "0.0.1",
     "@typeberry/state": "0.0.1",
     "@typeberry/utils": "0.0.1"
-  }
+  },
+  "type": "module"
 }

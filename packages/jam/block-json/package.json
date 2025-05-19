@@ -14,5 +14,6 @@
     "@typeberry/collections": "0.0.1",
     "@typeberry/json-parser": "0.0.1",
     "@typeberry/numbers": "0.0.1"
-  }
+  },
+  "type": "module"
 }

@@ -31,5 +31,6 @@
   "license": "MPL-2.0",
   "devDependencies": {
     "@types/minimist": "^1.2.5"
-  }
+  },
+  "type": "module"
 }

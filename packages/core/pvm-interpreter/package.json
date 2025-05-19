@@ -16,5 +16,6 @@
     "build": "npm run build -w @typeberry/builder -- --environment PACKAGE_NAME:@typeberry/pvm-debugger-adapter,PACKAGE_OUT:pvm"
   },
   "author": "Fluffy Labs",
-  "license": "MPL-2.0"
+  "license": "MPL-2.0",
+  "type": "module"
 }
