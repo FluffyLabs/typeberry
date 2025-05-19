@@ -18,7 +18,7 @@ runAllBenchmarks().catch((e: Error) => {
 
 async function runAllBenchmarks() {
   // We are going to run all benchmarks in our benchmark folder.
-  const benchmarksPath = path.resolve(`${BENCHMARKS_DIR}`);
+  const benchmarksPath = BENCHMARKS_DIR;
   const distPath = path.resolve(`${DIST_DIR}/benchmarks`);
   fs.mkdirSync(distPath, {
     recursive: true,

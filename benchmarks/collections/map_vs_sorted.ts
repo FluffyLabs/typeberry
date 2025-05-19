@@ -8,7 +8,7 @@ const keys = ["xyz", "abc", "123", "def", "Abb"];
 const converted = keys.map((key) => ({ key }));
 
 export default function run() {
-  suite(
+  return suite(
     "Map vs SortedArray for small element count",
 
     add("Map", () => {

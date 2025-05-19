@@ -100,7 +100,7 @@ function compare(
 }
 
 export default function run() {
-  suite(
+  return suite(
     "Codec Views",
 
     ...compare(

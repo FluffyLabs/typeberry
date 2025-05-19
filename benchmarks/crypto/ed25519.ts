@@ -49,7 +49,7 @@ function nativeVerify<T extends BytesBlob>(input: Input<T>[]): Promise<boolean[]
 }
 
 export default function run() {
-  suite(
+  return suite(
     "ED25519 signatures verification",
 
     /**

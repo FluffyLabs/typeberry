@@ -141,7 +141,7 @@ function findDuplicates<T>(list: ArrayLike<T>[], compare = isSame): ArrayLike<T>
 }
 
 export default function run() {
-  suite(
+  return suite(
     "Hash + Symbols",
 
     add("hash with numeric representation", () => {

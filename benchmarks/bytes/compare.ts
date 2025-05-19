@@ -50,7 +50,7 @@ const arr = generateArrayOfHashes(ARRAY_SIZE, HASH_SIZE);
  * and not worth the gains.
  */
 export default function run() {
-  suite(
+  return suite(
     "Bytes / comparison",
     add("Comparing Uint32 bytes", () => {
       const withView = arr.map((v) => ({

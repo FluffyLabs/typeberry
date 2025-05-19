@@ -7,7 +7,7 @@ const ONE = 1 >>> 0;
 const MAX_U32 = 2 ** 32;
 // the purpose of this benchmark is to find the fastest option to calculate the next page number
 export default function run() {
-  suite(
+  return suite(
     "Wrapping add one (incrementation)",
 
     add("add and take modulus", () => {

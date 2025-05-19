@@ -4,7 +4,7 @@ import { add, complete, configure, cycle, save, suite } from "@typeberry/benchma
 const NO_OF_UPDATES = 1000;
 
 export default function run() {
-  suite(
+  return suite(
     "Map: 2 gets and conditional set vs 1 get and 1 set ",
 
     add("2 gets + conditional set", () => {

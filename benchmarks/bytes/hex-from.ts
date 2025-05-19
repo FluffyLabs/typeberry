@@ -85,7 +85,7 @@ for (let i = 0; i < size; i += 1) {
 }
 
 export default function run() {
-  suite(
+  return suite(
     "Bytes / hex parsing",
 
     add("parse hex using `Number` with NaN checking", () => {

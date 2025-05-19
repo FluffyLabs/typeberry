@@ -24,7 +24,7 @@ function countBits32Magic(val: number) {
 }
 
 export default function run() {
-  suite(
+  return suite(
     "Countings 1s in a u32 number",
 
     add("standard method", () => {

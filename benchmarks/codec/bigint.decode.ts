@@ -17,7 +17,7 @@ const view = new DataView(input);
 view.setBigUint64(0, 2n ** 60n, true);
 
 export default function run() {
-  suite(
+  return suite(
     "BigInt decoding",
 
     add("decode custom", () => {

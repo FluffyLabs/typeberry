@@ -7,7 +7,7 @@ const b = 0x34123412 >>> 0;
 const MAX_U32 = 2 ** 32;
 
 export default function run() {
-  suite(
+  return suite(
     "Wrapping Multiplication",
 
     add("multiply and bring back to u32", () => {

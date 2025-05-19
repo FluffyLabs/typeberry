@@ -20,7 +20,7 @@ const otherA = new U64(0xff, 0xff);
 const otherB = (0xffn << 32n) + 0xffn;
 
 export default function run() {
-  suite(
+  return suite(
     "BigInt compare",
 
     add("compare custom", () => {

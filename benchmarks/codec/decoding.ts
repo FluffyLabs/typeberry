@@ -9,7 +9,7 @@ view.setInt32(4, 0x42, true);
 view.setInt32(8, 0xffff, true);
 
 export default function run() {
-  suite(
+  return suite(
     "Decoding numbers",
 
     add("manual decode", () => {

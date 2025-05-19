@@ -50,7 +50,7 @@ function compare(
 }
 
 export default function run() {
-  suite(
+  return suite(
     "Sequence Views",
 
     ...compare(

@@ -26,7 +26,7 @@ export function countBits64(val: bigint): number {
 }
 
 export default function run() {
-  suite(
+  return suite(
     "Countings 1s in a u64 number",
 
     add("standard method", () => {

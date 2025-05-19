@@ -16,7 +16,7 @@ function generateBlob(): BytesBlob {
 }
 
 export default function run() {
-  suite(
+  return suite(
     "Creating many hashes",
 
     add("hasher with simple allocator", () => {

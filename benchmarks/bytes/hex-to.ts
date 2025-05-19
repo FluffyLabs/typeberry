@@ -22,7 +22,7 @@ function byteToHexString(byte: number): string {
 }
 
 export default function run() {
-  suite(
+  return suite(
     "Bytes / into hex",
 
     add("number toString + padding", () => {

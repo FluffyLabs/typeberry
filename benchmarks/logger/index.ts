@@ -20,7 +20,7 @@ function fakeConsoleLog(...args: unknown[]) {
 }
 
 export default function run() {
-  suite(
+  return suite(
     "Logger",
 
     add("console.log with string concat", () => {

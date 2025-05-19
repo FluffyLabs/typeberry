@@ -4,7 +4,7 @@ import { add, complete, configure, cycle, save, suite } from "@typeberry/benchma
 const x: number = 1;
 
 export default function run() {
-  suite(
+  return suite(
     "Switch vs if",
 
     add("switch", () => {
