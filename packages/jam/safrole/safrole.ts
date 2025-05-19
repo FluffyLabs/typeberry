@@ -21,7 +21,7 @@ import { type State, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data.js";
 import { Result, asOpaqueType } from "@typeberry/utils";
 import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
-import { getRingCommitment, verifyTickets } from "./bandersnatch.js";
+import bandersnatch from "./bandersnatch.js";
 import type { SafroleSealState } from "./safrole-seal.js";
 
 export const VALIDATOR_META_BYTES = 128;
@@ -186,7 +186,7 @@ export class Safrole {
     );
 
     const { nextValidatorData, currentValidatorData } = this.state;
-    const epochRootResult = await getRingCommitment(
+    const epochRootResult = await bandersnatch.getRingCommitment(
       await this.bandersnatch,
       newNextValidators.map((x) => x.bandersnatch),
     );
@@ -345,7 +345,7 @@ export class Safrole {
     const verificationResult =
       extrinsic.length === 0
         ? []
-        : await verifyTickets(
+        : await bandersnatch.verifyTickets(
             await this.bandersnatch,
             validators.map((x) => x.bandersnatch),
             extrinsic,

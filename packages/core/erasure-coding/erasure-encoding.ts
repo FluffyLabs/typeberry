@@ -1,5 +1,5 @@
 import { check } from "@typeberry/utils";
-import { ShardsCollection, decode, encode } from "reed-solomon-wasm/pkg";
+import { ShardsCollection, decode, encode } from "reed-solomon-wasm/pkg/reed_solomon_wasm.js";
 
 const SHARD_ALIGNMENT = 64; // Shard size must be multiple of 64 bytes. (reed-solomon-simd limitation: https://github.com/ordian/reed-solomon-simd)
 
