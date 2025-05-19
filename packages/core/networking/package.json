@@ -17,7 +17,6 @@
     "@typeberry/utils": "0.0.1",
     "@matrixai/quic": "^2.0.9",
     "@peculiar/webcrypto": "^1.5.0",
-    "@peculiar/x509": "^1.12.3",
-    "hi-base32": "^0.5.1"
+    "@peculiar/x509": "^1.12.3"
   }
 }

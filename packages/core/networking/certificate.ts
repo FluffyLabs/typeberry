@@ -1,12 +1,12 @@
 import crypto, { type JsonWebKey } from "node:crypto";
 import { ED25519_KEY_BYTES, type Ed25519Key, type ed25519 } from "@typeberry/crypto";
 import { Result } from "@typeberry/utils";
-import base32 from "hi-base32";
 
 import * as peculiarWebcrypto from "@peculiar/webcrypto";
 import * as x509 from "@peculiar/x509";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
+import { base32 } from "./base32";
 
 const logger = Logger.new(__filename, "networking");
 
@@ -201,11 +201,11 @@ export async function generateCertificate({
   return await x509.X509CertificateGenerator.create(certConfig);
 }
 
-function altName(ed25519PubKey: JsonWebKey) {
+export function altName(ed25519PubKey: JsonWebKey) {
   const rawPub = new Uint8Array(Buffer.from(ed25519PubKey.x ?? "", "base64url"));
   // we remove padding since it's not in the specified alphabet
   // https://github.com/zdave-parity/jam-np/blob/main/simple.md#encryption-and-handshake
-  return `e${base32.encode(rawPub).toLowerCase().replace(/=/g, "")}`;
+  return `e${base32(rawPub)}`;
 }
 
 enum KeyType {
