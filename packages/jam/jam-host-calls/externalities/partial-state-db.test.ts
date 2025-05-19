@@ -773,7 +773,7 @@ describe("PartialState.providePreimage", () => {
   });
 
   it("should return error if preimage is already available", () => {
-    const { mockState, service, secondService, preimage } = testStateWithSecondService({
+    const { mockState, preimage } = testStateWithSecondService({
       self: false,
       requested: true,
       available: true,
