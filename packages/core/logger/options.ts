@@ -70,7 +70,8 @@ export function parseLoggerOptions(input: string, defaultLevel: Level, workingDi
     }
   }
 
-  const myDir = import.meta.dirname.split("/");
+  // TODO [ToDr] Fix dirname for workers.
+  const myDir = (import.meta.dirname ?? '').split("/");
   myDir.pop();
   myDir.pop();
   return {

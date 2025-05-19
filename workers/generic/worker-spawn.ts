@@ -5,7 +5,7 @@ import type { Finished } from "./finished.js";
 import { stateMachineMain } from "./main-init.js";
 
 export async function spawnWorkerGeneric<TReady extends State<StateNames<TReady>, Finished, StateData<TReady>>>(
-  bootstrapPath: string,
+  bootstrapPath: URL,
   logger: Logger,
   mainReadyName: StateNames<TReady>,
   mainReadyState: TReady,

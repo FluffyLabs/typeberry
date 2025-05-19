@@ -68,5 +68,6 @@ export async function main(channel: MessageChannelStateMachine<GeneratorInit, Ge
 }
 
 export async function spawnWorker() {
-  return spawnWorkerGeneric(import.meta.resolve('./index.ts'), logger, "ready(main)", new MainReady());
+  return spawnWorkerGeneric(
+    new URL(import.meta.resolve('./bootstrap.cjs')), logger, "ready(main)", new MainReady());
 }
