@@ -6,38 +6,32 @@
     {
       "name": "Get first element from Decoded",
       "ops": 31173.02,
-      "margin": 0.56,
-      "percentSlower": 77.66
+      "margin": 0.56
     },
     {
       "name": "Get first element from View",
-      "ops": 142345.6,
-      "margin": 0.2,
-      "percentSlower": 0
+      "ops": 68299.98,
+      "margin": 0.2
     },
     {
       "name": "Get 50th element from Decoded",
       "ops": 31269.64,
-      "margin": 0.45,
-      "percentSlower": 77.89
+      "margin": 0.45
     },
     {
       "name": "Get 50th element from View",
-      "ops": 61582.25,
-      "margin": 2.02,
-      "percentSlower": 51.86
+      "ops": 38404.07,
+      "margin": 2.02
     },
     {
       "name": "Get last element from Decoded",
       "ops": 31315.47,
-      "margin": 0.33,
-      "percentSlower": 78.39
+      "margin": 0.33
     },
     {
       "name": "Get last element from View",
-      "ops": 40156.51,
-      "margin": 0.6,
-      "percentSlower": 68.65
+      "ops": 27069.69,
+      "margin": 0.6
     }
   ],
   "fastest": {

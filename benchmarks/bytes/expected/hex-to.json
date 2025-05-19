@@ -5,20 +5,20 @@
   "results": [
     {
       "name": "number toString + padding",
-      "ops": 318696.03,
+      "ops": 333242.3,
       "margin": 0.1
     },
     {
       "name": "manual",
-      "ops": 358682.53,
+      "ops": 16667.49,
       "margin": 0.1
     }
   ],
-  "fastest": {
+  "slowest": {
     "name": "manual",
     "index": 1
   },
-  "slowest": {
+  "fastest": {
     "name": "number toString + padding",
     "index": 0
   }
