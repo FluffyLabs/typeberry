@@ -1,13 +1,13 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import type { Block, HeaderHash } from "@typeberry/block";
-import { testBlock } from "@typeberry/block/test-helpers";
+import { testBlock } from "@typeberry/block/test-helpers.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { tinyChainSpec } from "@typeberry/config";
 import { blake2b } from "@typeberry/hash";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
-import { MessageHandler, type MessageSender } from "../handler";
-import { ClientHandler, Direction, STREAM_KIND, ServerHandler } from "./ce-128-block-request";
+import { MessageHandler, type MessageSender } from "../handler.js";
+import { ClientHandler, Direction, STREAM_KIND, ServerHandler } from "./ce-128-block-request.js";
 
 const HEADER_HASH: HeaderHash = blake2b
   .hashString("0x7e1b07b8039cf840d51c4825362948c8ecb8fce1d290f705c269b6bcc7992731")

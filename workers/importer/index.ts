@@ -9,14 +9,14 @@ import { SimpleAllocator, keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { TransitionHasher } from "@typeberry/transition";
 import { resultToString } from "@typeberry/utils";
-import { Importer } from "./importer";
+import { Importer } from "./importer.js";
 import {
   type ImporterInit,
   type ImporterReady,
   type ImporterStates,
   MainReady,
   importerStateMachine,
-} from "./state-machine";
+} from "./state-machine.js";
 
 const logger = Logger.new(__filename, "importer");
 

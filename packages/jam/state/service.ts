@@ -1,12 +1,12 @@
 import { type CodeHash, type ServiceGas, type ServiceId, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
-import type { PreimageHash } from "@typeberry/block/preimage";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { type HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, type U64, sumU64, tryAsU64 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
-import type { StateKey } from "../state-merkleization/keys";
+import type { StateKey } from "../state-merkleization/keys.js";
 
 /**
  * Service account details.

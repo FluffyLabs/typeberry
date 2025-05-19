@@ -5,7 +5,7 @@ import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
-import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
+import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler.js";
 import {
   MemoryBuilder,
   Registers,
@@ -14,11 +14,11 @@ import {
   tryAsMemoryIndex,
   tryAsSbrkIndex,
 } from "@typeberry/pvm-interpreter";
-import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { type PreimageStatus, PreimageStatusKind } from "../externalities/partial-state";
-import { PartialStateMock } from "../externalities/partial-state-mock";
-import { HostCallResult } from "../results";
-import { Query } from "./query";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
+import { type PreimageStatus, PreimageStatusKind } from "../externalities/partial-state.js";
+import { PartialStateMock } from "../externalities/partial-state-mock.js";
+import { HostCallResult } from "../results.js";
+import { Query } from "./query.js";
 
 const gas = gasCounter(tryAsGas(0));
 const HASH_START_REG = 7;

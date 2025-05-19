@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
-import { InMemoryPreimages } from "./preimage";
+import { InMemoryPreimages } from "./preimage.js";
 
 const hash = (data: BytesBlob) => {
   const hash = blake2b.hashBytes(data);

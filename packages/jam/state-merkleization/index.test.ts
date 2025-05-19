@@ -3,8 +3,8 @@ import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { TEST_STATE, TEST_STATE_ROOT, testState } from "@typeberry/state/test.utils";
-import { merkelizeState, serializeState } from ".";
+import { TEST_STATE, TEST_STATE_ROOT, testState } from "@typeberry/state/test.utils.js";
+import { merkelizeState, serializeState } from "./index.js";
 
 const spec = tinyChainSpec;
 

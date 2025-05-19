@@ -2,8 +2,8 @@ import os from "node:os";
 import { resolve } from "node:path";
 import type { IExecutor } from "@typeberry/concurrent";
 import { Executor } from "@typeberry/concurrent";
-import { Method, Params, type Response } from "./params";
-import { worker } from "./worker";
+import { Method, Params, type Response } from "./params.js";
+import { worker } from "./worker.js";
 
 export class BandernsatchWasm {
   private constructor(private readonly executor: IExecutor<Params, Response>) {}

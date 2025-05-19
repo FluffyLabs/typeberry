@@ -6,8 +6,8 @@ import {
   tryAsPerValidator,
 } from "@typeberry/block";
 import { fromJson, guaranteesExtrinsicFromJson, segmentRootLookupItemFromJson } from "@typeberry/block-json";
-import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
-import type { AuthorizerHash, WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
+import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees.js";
+import type { AuthorizerHash, WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
 import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
@@ -38,8 +38,8 @@ import {
   type ReportsInput,
   type ReportsOutput,
   type ReportsState,
-} from "@typeberry/transition/reports";
-import { guaranteesAsView } from "@typeberry/transition/reports/test.utils";
+} from "@typeberry/transition/reports/index.js";
+import { guaranteesAsView } from "@typeberry/transition/reports/test.utils.js";
 import { Result, asOpaqueType, deepEqual } from "@typeberry/utils";
 
 class Input {

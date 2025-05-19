@@ -1,11 +1,11 @@
 import { type BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { type U8, type U16, type U32, type U64, tryAsU32 } from "@typeberry/numbers";
 import { type Opaque, type TokenOf, asOpaqueType, seeThrough } from "@typeberry/utils";
-import type { Decode, Decoder } from "./decoder";
-import { type Encode, type Encoder, type SizeHint, addSizeHints } from "./encoder";
-import { type Skip, Skipper } from "./skip";
-import { type LengthRange, validateLength } from "./validation";
-import { ObjectView, SequenceView, type ViewField, type ViewOf } from "./view";
+import type { Decode, Decoder } from "./decoder.js";
+import { type Encode, type Encoder, type SizeHint, addSizeHints } from "./encoder.js";
+import { type Skip, Skipper } from "./skip.js";
+import { type LengthRange, validateLength } from "./validation.js";
+import { ObjectView, SequenceView, type ViewField, type ViewOf } from "./view.js";
 
 /**
  * For sequences with unknown length we need to give some size hint.

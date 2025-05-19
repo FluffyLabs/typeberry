@@ -1,5 +1,5 @@
 import type { EntropyHash, TimeSlot } from "@typeberry/block";
-import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
+import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report.js";
 import type { ChainSpec } from "@typeberry/config";
 import type { OpaqueHash } from "@typeberry/hash";
 import type { Service } from "@typeberry/state";

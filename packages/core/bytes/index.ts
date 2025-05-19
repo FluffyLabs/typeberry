@@ -1,2 +1,2 @@
-export * from "./bytes";
-export * from "./bitvec";
+export * from "./bytes.js";
+export * from "./bitvec.js";

@@ -1,19 +1,19 @@
 import type { EntropyHash, TimeSlot } from "@typeberry/block";
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
-import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
+import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report.js";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { Service } from "@typeberry/state";
-import { JsonService } from "@typeberry/state-json/accounts";
+import { JsonService } from "@typeberry/state-json/accounts.js";
 import {
   Accumulate,
   type AccumulateInput,
   type AccumulateOutput,
   type AccumulateRoot,
   type AccumulateState,
-} from "@typeberry/transition/accumulate";
+} from "@typeberry/transition/accumulate.js";
 import { deepEqual } from "@typeberry/utils";
-import { logger } from "../common";
-import { getChainSpec } from "./spec";
+import { logger } from "../common.js";
+import { getChainSpec } from "./spec.js";
 
 class Input {
   static fromJson: FromJson<Input> = {

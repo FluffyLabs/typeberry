@@ -1,7 +1,7 @@
 import { type CoreIndex, type TimeSlot, tryAsCoreIndex } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
-import type { AuthorizerHash } from "@typeberry/block/work-report";
-import type { HashSet } from "@typeberry/collections/hash-set";
+import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
+import type { AuthorizerHash } from "@typeberry/block/work-report.js";
+import type { HashSet } from "@typeberry/collections/hash-set.js";
 import type { ChainSpec } from "@typeberry/config";
 import type { State } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";

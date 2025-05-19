@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { tryAsTimeSlot } from "@typeberry/block";
 import { asKnownSize } from "@typeberry/collections";
 import type { LookupHistorySlots } from "@typeberry/state";
-import { PreimageStatusKind, slotsToPreimageStatus } from "./partial-state";
+import { PreimageStatusKind, slotsToPreimageStatus } from "./partial-state.js";
 
 describe("slotsToPreimageStatus", () => {
   it("returns Requested when no slots are given", () => {

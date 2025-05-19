@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
+import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, type DescribedBy, Encoder, codec } from "@typeberry/codec";
 import { type U64, tryAsU64 } from "@typeberry/numbers";

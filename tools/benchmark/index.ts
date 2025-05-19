@@ -2,9 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { Logger } from "@typeberry/logger";
 import chalk from "chalk";
-import { formatResults } from "./format";
-import { BENCHMARKS_DIR, DIST_DIR, EXPECTED_DIR, OUTPUT_DIR, REL_DIR } from "./setup";
-import type { BennyOps, BennyResults, ComparisonResult, ErrorResult, OkResult, Result } from "./types";
+import { formatResults } from "./format.js";
+import { BENCHMARKS_DIR, DIST_DIR, EXPECTED_DIR, OUTPUT_DIR, REL_DIR } from "./setup.js";
+import type { BennyOps, BennyResults, ComparisonResult, ErrorResult, OkResult, Result } from "./types.js";
 
 const commitHash = process.env.GITHUB_SHA;
 const logger = Logger.new(__filename, "benchmarks");

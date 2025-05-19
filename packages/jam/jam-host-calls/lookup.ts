@@ -3,10 +3,10 @@ import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, HASH_SIZE } from "@typeberry/hash";
 import { minU64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
-import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import { HostCallResult } from "./results";
-import { CURRENT_SERVICE_ID, getServiceIdOrCurrent } from "./utils";
+import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { HostCallResult } from "./results.js";
+import { CURRENT_SERVICE_ID, getServiceIdOrCurrent } from "./utils.js";
 
 /** Account data interface for lookup host calls. */
 export interface AccountsLookup {

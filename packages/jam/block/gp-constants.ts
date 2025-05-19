@@ -1,5 +1,5 @@
-import { MAX_NUMBER_OF_TICKETS } from "./tickets";
-import { MAX_NUMBER_OF_WORK_ITEMS } from "./work-package";
+import { MAX_NUMBER_OF_TICKETS } from "./tickets.js";
+import { MAX_NUMBER_OF_WORK_ITEMS } from "./work-package.js";
 
 /**
  * This file lists all of the constants defined in the GrayPaper appendix.

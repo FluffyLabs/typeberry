@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Ordering } from "@typeberry/ordering";
-import { SortedArray } from "./sorted-array";
+import { SortedArray } from "./sorted-array.js";
 
 describe("SortedArray", { timeout: 10 }, () => {
   const cmp = (self: number, other: number) => {

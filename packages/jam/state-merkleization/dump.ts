@@ -5,9 +5,9 @@ import {
   type TimeSlot,
   codecPerValidator,
 } from "@typeberry/block";
-import { codecHashDictionary } from "@typeberry/block/codec";
-import type { PreimageHash } from "@typeberry/block/preimage";
-import { Ticket } from "@typeberry/block/tickets";
+import { codecHashDictionary } from "@typeberry/block/codec.js";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
+import { Ticket } from "@typeberry/block/tickets.js";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HashDictionary, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
@@ -21,9 +21,9 @@ import {
   ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { SafroleSealingKeysData } from "@typeberry/state/safrole-data";
+import { SafroleSealingKeysData } from "@typeberry/state/safrole-data.js";
 import { seeThrough } from "@typeberry/utils";
-import { serialize } from "./serialize";
+import { serialize } from "./serialize.js";
 
 type LookupHistoryEntry = {
   key: PreimageHash;

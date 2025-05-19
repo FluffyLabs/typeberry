@@ -1,13 +1,13 @@
 import { describe, it } from "node:test";
 import { BANDERSNATCH_RING_ROOT_BYTES, codecPerValidator } from "@typeberry/block";
-import { Ticket } from "@typeberry/block/tickets";
+import { Ticket } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, codec } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { deepEqual } from "@typeberry/utils";
-import { SafroleData, SafroleSealingKeysData } from "./safrole-data";
-import { ValidatorData } from "./validator-data";
+import { SafroleData, SafroleSealingKeysData } from "./safrole-data.js";
+import { ValidatorData } from "./validator-data.js";
 
 describe("Safrole Data", () => {
   it("should decode safrole data", () => {

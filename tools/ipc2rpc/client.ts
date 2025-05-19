@@ -1,9 +1,9 @@
 import { Socket } from "node:net";
 
-import { MessageHandler, handleFragmentation } from "@typeberry/ext-ipc/handler";
-import * as ce129 from "@typeberry/ext-ipc/protocol/ce-129-state-request";
-import * as up0 from "@typeberry/ext-ipc/protocol/up-0-block-announcement";
-import { MessageSenderAdapter } from "@typeberry/ext-ipc/server";
+import { MessageHandler, handleFragmentation } from "@typeberry/ext-ipc/handler.js";
+import * as ce129 from "@typeberry/ext-ipc/protocol/ce-129-state-request.js";
+import * as up0 from "@typeberry/ext-ipc/protocol/up-0-block-announcement.js";
+import { MessageSenderAdapter } from "@typeberry/ext-ipc/server.js";
 import { Logger } from "@typeberry/logger";
 
 const logger = Logger.new(__filename, "ipc2rpc/client");

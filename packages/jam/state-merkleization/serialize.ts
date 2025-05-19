@@ -5,10 +5,10 @@ import {
   codecPerEpochBlock,
   codecPerValidator,
 } from "@typeberry/block";
-import { codecFixedSizeArray, codecKnownSizeArray } from "@typeberry/block/codec";
-import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
-import type { PreimageHash } from "@typeberry/block/preimage";
-import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
+import { codecFixedSizeArray, codecKnownSizeArray } from "@typeberry/block/codec.js";
+import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
+import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Descriptor, codec } from "@typeberry/codec";
 import { HashSet } from "@typeberry/collections";
@@ -27,10 +27,10 @@ import {
   ValidatorData,
   codecPerCore,
 } from "@typeberry/state";
-import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
-import { SafroleData } from "@typeberry/state/safrole-data";
-import { StateEntry } from "./entries";
-import { type StateKey, keys } from "./keys";
+import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
+import { SafroleData } from "@typeberry/state/safrole-data.js";
+import { StateEntry } from "./entries.js";
+import { type StateKey, keys } from "./keys.js";
 
 export type StateCodec<T> = {
   key: StateKey;

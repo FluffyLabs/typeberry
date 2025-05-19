@@ -8,14 +8,14 @@ import {
   type ValidatorIndex,
   encodeUnsealedHeader,
 } from "@typeberry/block";
-import type { Ticket } from "@typeberry/block/tickets";
+import type { Ticket } from "@typeberry/block/tickets.js";
 import { BytesBlob } from "@typeberry/bytes";
 import type { State, ValidatorData } from "@typeberry/state";
-import { SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
+import { SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
 import { Result } from "@typeberry/utils";
-import { verifySeal } from "./bandersnatch";
-import { BandernsatchWasm } from "./bandersnatch-wasm";
-import { JAM_ENTROPY, JAM_FALLBACK_SEAL, JAM_TICKET_SEAL } from "./constants";
+import { verifySeal } from "./bandersnatch.js";
+import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import { JAM_ENTROPY, JAM_FALLBACK_SEAL, JAM_TICKET_SEAL } from "./constants.js";
 
 export enum SafroleSealError {
   InvalidValidatorIndex = 0,

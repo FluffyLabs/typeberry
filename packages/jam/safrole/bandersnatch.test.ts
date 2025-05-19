@@ -7,12 +7,12 @@ import {
   BANDERSNATCH_RING_ROOT_BYTES,
   tryAsValidatorIndex,
 } from "@typeberry/block";
-import { type SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets";
+import { type SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
-import { getRingCommitment, verifyTickets } from "./bandersnatch";
-import { BandernsatchWasm } from "./bandersnatch-wasm";
+import { getRingCommitment, verifyTickets } from "./bandersnatch.js";
+import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
 
 const bandersnatch = BandernsatchWasm.new({ synchronous: true });
 

@@ -2,10 +2,10 @@ import { MessageChannel, MessagePort, type TransferListItem, type Worker } from 
 import { check } from "@typeberry/utils";
 
 import { Logger } from "@typeberry/logger";
-import type { StateMachine } from "./machine";
-import { type Message, Ok } from "./message";
-import { TypedPort } from "./port";
-import type { State, StateNames, TransitionTo, ValidTransitionFrom } from "./state";
+import type { StateMachine } from "./machine.js";
+import { type Message, Ok } from "./message.js";
+import { TypedPort } from "./port.js";
+import type { State, StateNames, TransitionTo, ValidTransitionFrom } from "./state.js";
 
 const logger = Logger.new(__filename, "state-machine");
 

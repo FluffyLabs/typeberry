@@ -1,11 +1,11 @@
-import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import type { InstructionResult } from "../instruction-result";
-import type { Memory } from "../memory";
-import { tryAsMemoryIndex } from "../memory/memory-index";
-import { getStartPageIndex } from "../memory/memory-utils";
-import type { Registers } from "../registers";
-import { Result } from "../result";
-import { addWithOverflowU32 } from "./math-utils";
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import type { InstructionResult } from "../instruction-result.js";
+import type { Memory } from "../memory/index.js";
+import { tryAsMemoryIndex } from "../memory/memory-index.js";
+import { getStartPageIndex } from "../memory/memory-utils.js";
+import type { Registers } from "../registers.js";
+import { Result } from "../result.js";
+import { addWithOverflowU32 } from "./math-utils.js";
 
 export class StoreOps {
   constructor(

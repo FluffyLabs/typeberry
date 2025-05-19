@@ -1,4 +1,4 @@
-import { ImmediateDecoder } from "./immediate-decoder";
+import { ImmediateDecoder } from "./immediate-decoder.js";
 
 import assert from "node:assert";
 import { describe, it } from "node:test";

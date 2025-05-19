@@ -1,8 +1,8 @@
 import assert from "node:assert";
 import { type HeaderHash, type TimeSlot, tryAsPerValidator } from "@typeberry/block";
 import { fromJson, getAssurancesExtrinsicFromJson, workReportFromJson } from "@typeberry/block-json";
-import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "@typeberry/block/assurances";
-import type { WorkReport } from "@typeberry/block/work-report";
+import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "@typeberry/block/assurances.js";
+import type { WorkReport } from "@typeberry/block/work-report.js";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
@@ -13,7 +13,7 @@ import {
   AssurancesError,
   type AssurancesInput,
   type AssurancesState,
-} from "@typeberry/transition/assurances";
+} from "@typeberry/transition/assurances.js";
 import { Result, deepEqual } from "@typeberry/utils";
 
 class Input {

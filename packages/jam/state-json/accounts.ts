@@ -1,6 +1,6 @@
 import { type CodeHash, type ServiceGas, type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
-import type { PreimageHash } from "@typeberry/block/preimage";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";

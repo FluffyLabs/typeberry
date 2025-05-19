@@ -4,18 +4,18 @@ import { setTimeout } from "node:timers/promises";
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
 import { LmdbBlocks, LmdbStates } from "@typeberry/database-lmdb";
-import { LmdbRoot } from "@typeberry/database-lmdb/root";
+import { LmdbRoot } from "@typeberry/database-lmdb/root.js";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
-import { Generator } from "./generator";
+import { Generator } from "./generator.js";
 import {
   type GeneratorInit,
   type GeneratorReady,
   type GeneratorStates,
   MainReady,
   generatorStateMachine,
-} from "./state-machine";
+} from "./state-machine.js";
 
 const logger = Logger.new(__filename, "block-generator");
 

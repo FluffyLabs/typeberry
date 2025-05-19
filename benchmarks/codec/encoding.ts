@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
+import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 
 const inputEmpty = new ArrayBuffer(12);
 const inputEncoded = new ArrayBuffer(12);

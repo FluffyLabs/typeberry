@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Bytes, BytesBlob, bytesBlobComparator } from "./bytes";
+import { Bytes, BytesBlob, bytesBlobComparator } from "./bytes.js";
 
 describe("BytesBlob", () => {
   it("should fail if 0x is missing", () => {

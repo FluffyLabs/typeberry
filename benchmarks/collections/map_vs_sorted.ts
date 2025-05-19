@@ -1,4 +1,4 @@
-import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
+import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { SortedArray } from "@typeberry/collections";
 import { Ordering } from "@typeberry/ordering";
 

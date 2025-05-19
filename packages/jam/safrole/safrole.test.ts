@@ -9,7 +9,7 @@ import {
   type PerValidator,
   tryAsTimeSlot,
 } from "@typeberry/block";
-import { type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets";
+import { type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
@@ -17,10 +17,10 @@ import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Ordering } from "@typeberry/ordering";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
-import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
-import * as bandersnatch from "./bandersnatch";
-import { BandernsatchWasm } from "./bandersnatch-wasm";
-import { Safrole, SafroleErrorCode, type SafroleState } from "./safrole";
+import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
+import * as bandersnatch from "./bandersnatch.js";
+import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import { Safrole, SafroleErrorCode, type SafroleState } from "./safrole.js";
 
 const bwasm = BandernsatchWasm.new({ synchronous: true });
 

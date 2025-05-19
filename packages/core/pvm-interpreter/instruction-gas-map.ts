@@ -1,6 +1,6 @@
-import { byteToOpCodeMap } from "./assemblify";
-import type { SmallGas } from "./gas";
-import { HIGHEST_INSTRUCTION_NUMBER } from "./instruction";
+import { byteToOpCodeMap } from "./assemblify.js";
+import type { SmallGas } from "./gas.js";
+import { HIGHEST_INSTRUCTION_NUMBER } from "./instruction.js";
 
 export const instructionGasMap = (() => {
   const instructionGasMap = new Array<SmallGas>(HIGHEST_INSTRUCTION_NUMBER + 1);

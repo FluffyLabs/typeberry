@@ -6,11 +6,11 @@ import {
   type IHostCallRegisters,
   PvmExecution,
 } from "@typeberry/pvm-host-calls";
-import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
+import { tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import type { PartialState } from "../externalities/partial-state";
-import { HostCallResult } from "../results";
-import { CURRENT_SERVICE_ID } from "../utils";
+import type { PartialState } from "../externalities/partial-state.js";
+import { HostCallResult } from "../results.js";
+import { CURRENT_SERVICE_ID } from "../utils.js";
 
 const IN_OUT_REG = 7;
 

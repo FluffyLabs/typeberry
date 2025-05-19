@@ -1,14 +1,14 @@
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
-import type { JSONRPCID, JSONRPCSuccessResponse } from "./../../node_modules/json-rpc-2.0/dist/models.d";
+import type { JSONRPCID, JSONRPCSuccessResponse } from "./../../node_modules/json-rpc-2.0/dist/models.d.js";
 
 import type { Header } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import * as ce129 from "@typeberry/ext-ipc/protocol/ce-129-state-request";
+import * as ce129 from "@typeberry/ext-ipc/protocol/ce-129-state-request.js";
 import { blake2b } from "@typeberry/hash";
 import { JSONRPCServer } from "json-rpc-2.0";
-import type { MessageHandler } from "../../extensions/ipc/handler";
+import type { MessageHandler } from "../../extensions/ipc/handler.js";
 
 export interface Database {
   bestHeader: Header | null;

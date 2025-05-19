@@ -8,14 +8,14 @@ import {
   codecPerValidator,
   tryAsPerEpochBlock,
 } from "@typeberry/block";
-import { codecWithContext } from "@typeberry/block/codec";
-import { Ticket } from "@typeberry/block/tickets";
+import { codecWithContext } from "@typeberry/block/codec.js";
+import { Ticket } from "@typeberry/block/tickets.js";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
 import { WithDebug, seeThrough } from "@typeberry/utils";
-import { ValidatorData } from "./validator-data";
+import { ValidatorData } from "./validator-data.js";
 
 export enum SafroleSealingKeysKind {
   Tickets = 0,

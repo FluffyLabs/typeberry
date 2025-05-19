@@ -9,7 +9,7 @@ import {
   ValidatorKeys,
   tryAsPerEpochBlock,
 } from "@typeberry/block";
-import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets";
+import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/tickets.js";
 import { Bytes, bytesBlobComparator } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
@@ -18,11 +18,11 @@ import { ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { blake2b } from "@typeberry/hash";
 import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";
-import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data";
+import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data.js";
 import { Result, asOpaqueType } from "@typeberry/utils";
-import { getRingCommitment, verifyTickets } from "./bandersnatch";
-import { BandernsatchWasm } from "./bandersnatch-wasm";
-import type { SafroleSealState } from "./safrole-seal";
+import { getRingCommitment, verifyTickets } from "./bandersnatch.js";
+import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import type { SafroleSealState } from "./safrole-seal.js";
 
 export const VALIDATOR_META_BYTES = 128;
 export type VALIDATOR_META_BYTES = typeof VALIDATOR_META_BYTES;

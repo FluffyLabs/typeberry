@@ -1,8 +1,8 @@
-import { Mask } from "../program-decoder/mask";
-import { ArgumentType } from "./argument-type";
-import type { ExtendedWitdthImmediateDecoder } from "./decoders/extended-with-immediate-decoder";
-import { ImmediateDecoder } from "./decoders/immediate-decoder";
-import { NibblesDecoder } from "./decoders/nibbles-decoder";
+import { Mask } from "../program-decoder/mask.js";
+import { ArgumentType } from "./argument-type.js";
+import type { ExtendedWitdthImmediateDecoder } from "./decoders/extended-with-immediate-decoder.js";
+import { ImmediateDecoder } from "./decoders/immediate-decoder.js";
+import { NibblesDecoder } from "./decoders/nibbles-decoder.js";
 
 const IMMEDIATE_AND_OFFSET_MAX_LENGTH = 4;
 

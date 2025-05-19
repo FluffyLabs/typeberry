@@ -1,6 +1,6 @@
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import minimist from "minimist";
-import { RpcServer } from "./src/server";
+import { RpcServer } from "./src/server.js";
 
 function main(args: string[]) {
   const argv = minimist(args, {

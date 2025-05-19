@@ -3,8 +3,8 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
-import type { ServiceGas, ServiceId } from "./common";
-import type { CodeHash } from "./hash";
+import type { ServiceGas, ServiceId } from "./common.js";
+import type { CodeHash } from "./hash.js";
 
 /** The tag to describe the [`WorkExecResult`] union. */
 export enum WorkExecResultKind {

@@ -5,7 +5,7 @@ import { Bytes } from "@typeberry/bytes";
 import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { deepEqual } from "@typeberry/utils";
-import { generateCoreAssignment } from "./guarantor-assignment";
+import { generateCoreAssignment } from "./guarantor-assignment.js";
 
 describe("Core assignment", () => {
   it("should assign validators to cores in tinyChainSpec", async () => {

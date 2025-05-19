@@ -8,10 +8,10 @@ import { SimpleAllocator, keccak } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
-import { BlockVerifier } from "@typeberry/transition/block-verifier";
-import { OnChain } from "@typeberry/transition/chain-stf";
+import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
+import { OnChain } from "@typeberry/transition/chain-stf.js";
 import { deepEqual } from "@typeberry/utils";
-import { TestState, loadState } from "./stateLoader";
+import { TestState, loadState } from "./stateLoader.js";
 
 export class StateTransition {
   static fromJson: FromJson<StateTransition> = {

@@ -6,8 +6,8 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { type U32, tryAsU8 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
-import type { StreamHandler, StreamSender } from "../handler";
-import type { StreamId, StreamKind } from "./stream";
+import type { StreamHandler, StreamSender } from "../handler.js";
+import type { StreamId, StreamKind } from "./stream.js";
 
 /**
  * JAM-SNP CE-128 stream.

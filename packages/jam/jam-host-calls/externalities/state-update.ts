@@ -1,10 +1,10 @@
 import type { CoreIndex, PerValidator, ServiceGas, ServiceId } from "@typeberry/block";
-import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
+import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import { type FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import { type Service, ServiceAccountInfo, type ValidatorData } from "@typeberry/state";
-import type { PreimageUpdate } from "./partial-state-db";
-import type { PendingTransfer } from "./pending-transfer";
+import type { PreimageUpdate } from "./partial-state-db.js";
+import type { PendingTransfer } from "./pending-transfer.js";
 
 /**
  * State updates that currently accumulating service produced.

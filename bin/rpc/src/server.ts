@@ -3,7 +3,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import { WebSocketServer } from "ws";
 import type { WebSocket } from "ws";
-import { loadMethodsInto } from "./method-loader";
+import { loadMethodsInto } from "./method-loader.js";
 import type {
   DatabaseContext,
   JsonRpcErrorResponse,
@@ -11,8 +11,8 @@ import type {
   JsonRpcRequest,
   JsonRpcResponse,
   RpcMethod,
-} from "./types";
-import { JSON_RPC_VERSION, RpcError } from "./types";
+} from "./types.js";
+import { JSON_RPC_VERSION, RpcError } from "./types.js";
 
 function createErrorResponse(error: RpcError, id: JsonRpcId): JsonRpcErrorResponse {
   return {

@@ -1,8 +1,8 @@
 import type { HeaderHash, StateRootHash, TimeSlot } from "@typeberry/block";
-import { type BeefyHash, RefineContext } from "@typeberry/block/refine-context";
-import type { WorkPackageHash } from "@typeberry/block/work-report";
+import { type BeefyHash, RefineContext } from "@typeberry/block/refine-context.js";
+import type { WorkPackageHash } from "@typeberry/block/work-report.js";
 import { json } from "@typeberry/json-parser";
-import { fromJson } from "./common";
+import { fromJson } from "./common.js";
 
 export const refineContextFromJson = json.object<JsonRefineContext, RefineContext>(
   {

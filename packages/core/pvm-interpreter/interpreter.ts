@@ -1,18 +1,18 @@
 import { type U32, tryAsU32 } from "@typeberry/numbers";
-import { ArgsDecoder } from "./args-decoder/args-decoder";
-import { createResults } from "./args-decoder/args-decoding-results";
-import { ArgumentType } from "./args-decoder/argument-type";
-import { instructionArgumentTypeMap } from "./args-decoder/instruction-argument-type-map";
-import { assemblify } from "./assemblify";
-import { BasicBlocks } from "./basic-blocks";
-import { type Gas, type GasCounter, gasCounter, tryAsGas } from "./gas";
-import { Instruction } from "./instruction";
-import { instructionGasMap } from "./instruction-gas-map";
-import { InstructionResult } from "./instruction-result";
-import { Memory } from "./memory";
-import { PAGE_SIZE } from "./memory/memory-consts";
-import { alignToPageSize } from "./memory/memory-utils";
-import { tryAsPageNumber } from "./memory/pages/page-utils";
+import { ArgsDecoder } from "./args-decoder/args-decoder.js";
+import { createResults } from "./args-decoder/args-decoding-results.js";
+import { ArgumentType } from "./args-decoder/argument-type.js";
+import { instructionArgumentTypeMap } from "./args-decoder/instruction-argument-type-map.js";
+import { assemblify } from "./assemblify.js";
+import { BasicBlocks } from "./basic-blocks/index.js";
+import { type Gas, type GasCounter, gasCounter, tryAsGas } from "./gas.js";
+import { Instruction } from "./instruction.js";
+import { instructionGasMap } from "./instruction-gas-map.js";
+import { InstructionResult } from "./instruction-result.js";
+import { Memory } from "./memory/index.js";
+import { PAGE_SIZE } from "./memory/memory-consts.js";
+import { alignToPageSize } from "./memory/memory-utils.js";
+import { tryAsPageNumber } from "./memory/pages/page-utils.js";
 import {
   BitOps,
   BitRotationOps,
@@ -27,7 +27,7 @@ import {
   NoArgsOps,
   ShiftOps,
   StoreOps,
-} from "./ops";
+} from "./ops/index.js";
 import {
   NoArgsDispatcher,
   OneImmDispatcher,
@@ -42,13 +42,13 @@ import {
   TwoRegsOneImmDispatcher,
   TwoRegsOneOffsetDispatcher,
   TwoRegsTwoImmsDispatcher,
-} from "./ops-dispatchers";
-import { JumpTable } from "./program-decoder/jump-table";
-import { Mask } from "./program-decoder/mask";
-import { ProgramDecoder } from "./program-decoder/program-decoder";
-import { Registers } from "./registers";
-import { Result } from "./result";
-import { Status } from "./status";
+} from "./ops-dispatchers/index.js";
+import { JumpTable } from "./program-decoder/jump-table.js";
+import { Mask } from "./program-decoder/mask.js";
+import { ProgramDecoder } from "./program-decoder/program-decoder.js";
+import { Registers } from "./registers.js";
+import { Result } from "./result.js";
+import { Status } from "./status.js";
 
 export class Interpreter {
   private registers = new Registers();

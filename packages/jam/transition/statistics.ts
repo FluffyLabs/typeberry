@@ -8,10 +8,10 @@ import {
   tryAsPerValidator,
   tryAsServiceGas,
 } from "@typeberry/block";
-import { W_G } from "@typeberry/block/gp-constants";
-import type { Preimage, PreimagesExtrinsic } from "@typeberry/block/preimage";
-import type { WorkReport } from "@typeberry/block/work-report";
-import type { WorkResult } from "@typeberry/block/work-result";
+import { W_G } from "@typeberry/block/gp-constants.js";
+import type { Preimage, PreimagesExtrinsic } from "@typeberry/block/preimage.js";
+import type { WorkReport } from "@typeberry/block/work-report.js";
+import type { WorkResult } from "@typeberry/block/work-result.js";
 import type { ChainSpec } from "@typeberry/config";
 import { type U32, tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { ServiceStatistics, type State, StatisticsData } from "@typeberry/state";

@@ -1,6 +1,6 @@
-import { type SmallGas, tryAsSmallGas } from "./gas";
-import { Instruction } from "./instruction";
-import type { Mask } from "./program-decoder/mask";
+import { type SmallGas, tryAsSmallGas } from "./gas.js";
+import { Instruction } from "./instruction.js";
+import type { Mask } from "./program-decoder/mask.js";
 
 type Byte = number;
 type Gas = number;

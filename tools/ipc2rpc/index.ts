@@ -2,11 +2,11 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { tryAsTimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
-import * as up0 from "@typeberry/ext-ipc/protocol/up-0-block-announcement";
+import * as up0 from "@typeberry/ext-ipc/protocol/up-0-block-announcement.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
-import { startClient } from "./client";
-import { type Database, startRpc } from "./rpc";
+import { startClient } from "./client.js";
+import { type Database, startRpc } from "./rpc.js";
 
 const logger = Logger.new(__filename, "ipc2rpc");
 

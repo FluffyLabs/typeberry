@@ -1,5 +1,5 @@
 import type { OpaqueHash } from "@typeberry/hash";
-import { HashDictionary } from "./hash-dictionary";
+import { HashDictionary } from "./hash-dictionary.js";
 
 /** A set specialized for storing hashes. */
 export class HashSet<V extends OpaqueHash> {

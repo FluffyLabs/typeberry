@@ -1,5 +1,5 @@
 import type { WorkReportHash } from "@typeberry/block";
-import type { Culprit, Fault, Judgement } from "@typeberry/block/disputes";
+import type { Culprit, Fault, Judgement } from "@typeberry/block/disputes.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { type Ed25519Key, type Ed25519Signature, ed25519 } from "@typeberry/crypto";
 

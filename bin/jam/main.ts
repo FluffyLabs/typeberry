@@ -10,14 +10,14 @@ import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import type { Finished, MainInit } from "@typeberry/generic-worker";
 import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import * as blockImporter from "@typeberry/importer";
-import type { MainReady } from "@typeberry/importer/state-machine";
+import type { MainReady } from "@typeberry/importer/state-machine.js";
 import type { MessageChannelStateMachine } from "@typeberry/state-machine";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
-import { type Arguments, Command, KnownChainSpec } from "./args";
-import { startBlockGenerator } from "./author";
-import { initializeExtensions } from "./extensions";
-import { loadGenesis } from "./genesis";
-import { startBlocksReader } from "./reader";
+import { type Arguments, Command, KnownChainSpec } from "./args.js";
+import { startBlockGenerator } from "./author.js";
+import { initializeExtensions } from "./extensions.js";
+import { loadGenesis } from "./genesis.js";
+import { startBlocksReader } from "./reader.js";
 
 const logger = Logger.new(__filename, "jam");
 

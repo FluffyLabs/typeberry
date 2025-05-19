@@ -1,4 +1,4 @@
-import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
+import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { Logger } from "@typeberry/logger";
 
 const HASH_LENGTH: number = 32;

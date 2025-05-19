@@ -3,8 +3,8 @@ import type { BytesBlob } from "@typeberry/bytes";
 import type { Blake2bHash } from "@typeberry/hash";
 import { type U64, tryAsU64 } from "@typeberry/numbers";
 import type { BigGas, Memory, Registers } from "@typeberry/pvm-interpreter";
-import type { ProgramDecoderError } from "@typeberry/pvm-interpreter/program-decoder/program-decoder";
-import { Status } from "@typeberry/pvm-interpreter/status";
+import type { ProgramDecoderError } from "@typeberry/pvm-interpreter/program-decoder/program-decoder.js";
+import { Status } from "@typeberry/pvm-interpreter/status.js";
 import { type OK, type Opaque, type Result, asOpaqueType } from "@typeberry/utils";
 
 /**

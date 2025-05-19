@@ -1,15 +1,15 @@
 import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
-import type { OneRegisterTwoImmediatesArgs } from "../args-decoder/args-decoder";
-import { ArgumentType } from "../args-decoder/argument-type";
-import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
-import { Instruction } from "../instruction";
-import { InstructionResult } from "../instruction-result";
-import { Memory } from "../memory";
-import { StoreOps } from "../ops";
-import { Registers } from "../registers";
-import { OneRegTwoImmsDispatcher } from "./one-reg-two-imms-dispatcher";
+import type { OneRegisterTwoImmediatesArgs } from "../args-decoder/args-decoder.js";
+import { ArgumentType } from "../args-decoder/argument-type.js";
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map.js";
+import { Instruction } from "../instruction.js";
+import { InstructionResult } from "../instruction-result.js";
+import { Memory } from "../memory/index.js";
+import { StoreOps } from "../ops/index.js";
+import { Registers } from "../registers.js";
+import { OneRegTwoImmsDispatcher } from "./one-reg-two-imms-dispatcher.js";
 
 describe("OneRegTwoImmsDispatcher", () => {
   const regs = new Registers();

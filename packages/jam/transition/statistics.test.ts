@@ -10,13 +10,13 @@ import {
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
-import { type AssurancesExtrinsic, AvailabilityAssurance } from "@typeberry/block/assurances";
-import { I, T, W_G, W_M, W_R, W_X } from "@typeberry/block/gp-constants";
-import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees";
-import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
-import testWorkReport from "@typeberry/block/test-work-report";
-import type { TicketsExtrinsic } from "@typeberry/block/tickets";
-import { WorkReport } from "@typeberry/block/work-report";
+import { type AssurancesExtrinsic, AvailabilityAssurance } from "@typeberry/block/assurances.js";
+import { I, T, W_G, W_M, W_R, W_X } from "@typeberry/block/gp-constants.js";
+import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees.js";
+import type { PreimagesExtrinsic } from "@typeberry/block/preimage.js";
+import testWorkReport from "@typeberry/block/test-work-report.js";
+import type { TicketsExtrinsic } from "@typeberry/block/tickets.js";
+import { WorkReport } from "@typeberry/block/work-report.js";
 import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
@@ -26,7 +26,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { isU16, isU32, tryAsU32 } from "@typeberry/numbers";
 import { CoreStatistics, ServiceStatistics, StatisticsData, ValidatorStatistics, tryAsPerCore } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
-import { Statistics, type StatisticsState } from "./statistics";
+import { Statistics, type StatisticsState } from "./statistics.js";
 
 describe("Statistics", () => {
   describe("formulas", () => {

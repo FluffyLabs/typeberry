@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import { Registers } from "../registers";
-import { bigintToUint8ArrayLE } from "../test-utils";
-import { MoveOps } from "./move-ops";
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import { Registers } from "../registers.js";
+import { bigintToUint8ArrayLE } from "../test-utils.js";
+import { MoveOps } from "./move-ops.js";
 
 describe("MoveOps", () => {
   function prepareData(firstValue: bigint, secondValue: bigint) {

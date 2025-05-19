@@ -1,6 +1,6 @@
 import { Bytes } from "@typeberry/bytes";
 import { check } from "@typeberry/utils";
-import { HASH_SIZE, type OpaqueHash } from "./hash";
+import { HASH_SIZE, type OpaqueHash } from "./hash.js";
 
 /** Allocator interface - returns an empty bytes vector that can be filled with the hash. */
 export interface HashAllocator {

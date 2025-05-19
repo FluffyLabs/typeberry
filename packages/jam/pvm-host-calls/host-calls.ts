@@ -1,14 +1,14 @@
 import type { Interpreter, Memory } from "@typeberry/pvm-interpreter";
-import type { Gas } from "@typeberry/pvm-interpreter/gas";
-import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import type { Registers } from "@typeberry/pvm-interpreter/registers";
-import { Status } from "@typeberry/pvm-interpreter/status";
+import type { Gas } from "@typeberry/pvm-interpreter/gas.js";
+import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
+import type { Registers } from "@typeberry/pvm-interpreter/registers.js";
+import { Status } from "@typeberry/pvm-interpreter/status.js";
 import { check } from "@typeberry/utils";
-import { PvmExecution, tryAsHostCallIndex } from "./host-call-handler";
-import { HostCallMemory } from "./host-call-memory";
-import { HostCallRegisters } from "./host-call-registers";
-import type { HostCallsManager } from "./host-calls-manager";
-import type { InterpreterInstanceManager } from "./interpreter-instance-manager";
+import { PvmExecution, tryAsHostCallIndex } from "./host-call-handler.js";
+import { HostCallMemory } from "./host-call-memory.js";
+import { HostCallRegisters } from "./host-call-registers.js";
+import type { HostCallsManager } from "./host-calls-manager.js";
+import type { InterpreterInstanceManager } from "./interpreter-instance-manager.js";
 
 export class HostCalls {
   constructor(

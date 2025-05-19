@@ -1,27 +1,27 @@
 import type { BlockView, CoreIndex, HeaderHash } from "@typeberry/block";
-import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
-import type { AuthorizerHash } from "@typeberry/block/work-report";
+import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
+import type { AuthorizerHash } from "@typeberry/block/work-report.js";
 import { Bytes } from "@typeberry/bytes";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
 import { Disputes } from "@typeberry/disputes";
-import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
+import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Safrole } from "@typeberry/safrole";
-import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
-import type { SafroleErrorCode } from "@typeberry/safrole/safrole";
-import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal";
+import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js";
+import type { SafroleErrorCode } from "@typeberry/safrole/safrole.js";
+import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
 import type { State } from "@typeberry/state";
 import { type ErrorResult, OK, Result, type TaggedError } from "@typeberry/utils";
-import { Assurances, type AssurancesError } from "./assurances";
-import { Authorization } from "./authorization";
-import type { TransitionHasher } from "./hasher";
-import { Preimages, type PreimagesErrorCode } from "./preimages";
-import { RecentHistory } from "./recent-history";
-import { Reports, type ReportsError } from "./reports";
-import type { HeaderChain } from "./reports/verify-contextual";
-import { Statistics } from "./statistics";
+import { Assurances, type AssurancesError } from "./assurances.js";
+import { Authorization } from "./authorization.js";
+import type { TransitionHasher } from "./hasher.js";
+import { Preimages, type PreimagesErrorCode } from "./preimages.js";
+import { RecentHistory } from "./recent-history.js";
+import { Reports, type ReportsError } from "./reports/index.js";
+import type { HeaderChain } from "./reports/verify-contextual.js";
+import { Statistics } from "./statistics.js";
 
 class DbHeaderChain implements HeaderChain {
   constructor(private readonly blocks: BlocksDb) {}

@@ -1,11 +1,11 @@
 import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
-import { ArgumentType } from "../args-decoder/argument-type";
-import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
-import { Instruction } from "../instruction";
-import { InstructionResult } from "../instruction-result";
-import { NoArgsOps } from "../ops";
-import { NoArgsDispatcher } from "./no-args-dispatcher";
+import { ArgumentType } from "../args-decoder/argument-type.js";
+import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map.js";
+import { Instruction } from "../instruction.js";
+import { InstructionResult } from "../instruction-result.js";
+import { NoArgsOps } from "../ops/index.js";
+import { NoArgsDispatcher } from "./no-args-dispatcher.js";
 
 describe("NoArgsDispatcher", () => {
   const instructionResult = new InstructionResult();

@@ -1,7 +1,7 @@
 import type { BlockView, HeaderHash } from "@typeberry/block";
 import type { BlocksDb } from "@typeberry/database";
 import { Result } from "@typeberry/utils";
-import type { TransitionHasher } from "./hasher";
+import type { TransitionHasher } from "./hasher.js";
 
 export enum BlockVerifierError {
   ParentNotFound = 0,

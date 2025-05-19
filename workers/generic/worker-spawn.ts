@@ -2,8 +2,8 @@ import { resolve } from "node:path";
 import { Worker } from "node:worker_threads";
 import type { Logger } from "@typeberry/logger";
 import { MessageChannelStateMachine, type State, type StateData, type StateNames } from "@typeberry/state-machine";
-import type { Finished } from "./finished";
-import { stateMachineMain } from "./main-init";
+import type { Finished } from "./finished.js";
+import { stateMachineMain } from "./main-init.js";
 
 const BOOTSTRAP_FILE = "./bootstrap.js";
 

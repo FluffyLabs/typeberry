@@ -1,4 +1,4 @@
-import type { Hash, RpcMethod, Slot } from "../types";
+import type { Hash, RpcMethod, Slot } from "../types.js";
 
 export const bestBlock: RpcMethod<[], [Hash, Slot]> = async (_params, db) => {
   const [headerHash] = db.blocks.getBestData();

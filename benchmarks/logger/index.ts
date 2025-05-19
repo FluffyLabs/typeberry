@@ -1,5 +1,5 @@
 import util from "node:util";
-import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
+import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 
 class SomeClass {
   constructor(

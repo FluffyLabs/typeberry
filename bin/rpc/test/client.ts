@@ -1,6 +1,6 @@
 import WebSocket from "ws";
-import type { JsonRpcRequest, JsonRpcResponse } from "../src/types";
-import { JSON_RPC_VERSION } from "../src/types";
+import type { JsonRpcRequest, JsonRpcResponse } from "../src/types.js";
+import { JSON_RPC_VERSION } from "../src/types.js";
 
 class RpcClient {
   private ws: WebSocket;

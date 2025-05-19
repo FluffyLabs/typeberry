@@ -1,14 +1,14 @@
 import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
-import type { TwoRegistersArgs } from "../args-decoder/args-decoder";
-import { ArgumentType } from "../args-decoder/argument-type";
-import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
-import { Instruction } from "../instruction";
-import { InstructionResult } from "../instruction-result";
-import { Memory } from "../memory";
-import { BitOps, BitRotationOps, MemoryOps, MoveOps } from "../ops";
-import { Registers } from "../registers";
-import { TwoRegsDispatcher } from "./two-regs-dispatcher";
+import type { TwoRegistersArgs } from "../args-decoder/args-decoder.js";
+import { ArgumentType } from "../args-decoder/argument-type.js";
+import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map.js";
+import { Instruction } from "../instruction.js";
+import { InstructionResult } from "../instruction-result.js";
+import { Memory } from "../memory/index.js";
+import { BitOps, BitRotationOps, MemoryOps, MoveOps } from "../ops/index.js";
+import { Registers } from "../registers.js";
+import { TwoRegsDispatcher } from "./two-regs-dispatcher.js";
 
 describe("TwoRegsDispatcher", () => {
   const instructionResult = new InstructionResult();

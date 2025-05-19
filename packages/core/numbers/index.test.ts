@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { minU64, sumU32, sumU64, tryAsU32, tryAsU64, u32AsLeBytes } from "./index";
+import { minU64, sumU32, sumU64, tryAsU32, tryAsU64, u32AsLeBytes } from "./index.js";
 
 describe("sumU32", () => {
   it("should sum and handle overflow", () => {

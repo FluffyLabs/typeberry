@@ -1,7 +1,7 @@
 import { Decoder } from "@typeberry/codec";
 import { type Opaque, ensure } from "@typeberry/utils";
-import { ARGS_SEGMENT, DATA_LEGNTH, LAST_PAGE, PAGE_SIZE, SEGMENT_SIZE, STACK_SEGMENT } from "./memory-conts";
-import { alignToPageSize, alignToSegmentSize } from "./memory-utils";
+import { ARGS_SEGMENT, DATA_LEGNTH, LAST_PAGE, PAGE_SIZE, SEGMENT_SIZE, STACK_SEGMENT } from "./memory-conts.js";
+import { alignToPageSize, alignToSegmentSize } from "./memory-utils.js";
 
 const NO_OF_REGISTERS = 13;
 

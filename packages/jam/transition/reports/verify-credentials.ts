@@ -1,10 +1,10 @@
 import type { CoreIndex, PerValidator, TimeSlot, WorkReportHash } from "@typeberry/block";
-import { type GuaranteesExtrinsicView, REQUIRED_CREDENTIALS_RANGE } from "@typeberry/block/guarantees";
+import { type GuaranteesExtrinsicView, REQUIRED_CREDENTIALS_RANGE } from "@typeberry/block/guarantees.js";
 import { BytesBlob } from "@typeberry/bytes";
 import type { KnownSizeArray } from "@typeberry/collections";
 import type { Ed25519Key, ed25519 } from "@typeberry/crypto";
 import { Result } from "@typeberry/utils";
-import { ReportsError } from "./error";
+import { ReportsError } from "./error.js";
 
 export type GuarantorAssignment = {
   core: CoreIndex;

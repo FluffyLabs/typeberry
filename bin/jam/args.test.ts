@@ -4,7 +4,7 @@ import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { deepEqual } from "@typeberry/utils";
-import { Command, KnownChainSpec, type SharedOptions, parseArgs } from "./args";
+import { Command, KnownChainSpec, type SharedOptions, parseArgs } from "./args.js";
 
 describe("CLI", () => {
   const parse = (args: string[]) => parseArgs(args, "..");

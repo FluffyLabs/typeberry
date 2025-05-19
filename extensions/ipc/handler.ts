@@ -2,7 +2,7 @@ import type { Socket } from "node:net";
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { Logger } from "@typeberry/logger";
-import { NewStream, StreamEnvelope, StreamEnvelopeType, type StreamId, type StreamKind } from "./protocol/stream";
+import { NewStream, StreamEnvelope, StreamEnvelopeType, type StreamId, type StreamKind } from "./protocol/stream.js";
 
 export type ResponseHandler = (err: Error | null, response?: BytesBlob) => void;
 

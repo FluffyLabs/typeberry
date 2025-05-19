@@ -1,19 +1,19 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsCoreIndex, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
-import { Credential } from "@typeberry/block/guarantees";
-import { RefineContext } from "@typeberry/block/refine-context";
-import { tryAsWorkItemsCount } from "@typeberry/block/work-package";
-import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
-import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result";
+import { Credential } from "@typeberry/block/guarantees.js";
+import { RefineContext } from "@typeberry/block/refine-context.js";
+import { tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
+import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
+import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { MessageHandler, type MessageSender } from "../handler";
-import { ClientHandler, GuaranteedWorkReport, STREAM_KIND, ServerHandler } from "./ce-135-work-report-distribution";
+import { MessageHandler, type MessageSender } from "../handler.js";
+import { ClientHandler, GuaranteedWorkReport, STREAM_KIND, ServerHandler } from "./ce-135-work-report-distribution.js";
 
 const MOCK_SLOT = tryAsTimeSlot(1000);
 const MOCK_WORK_PACKAGE_SPEC = WorkPackageSpec.create({

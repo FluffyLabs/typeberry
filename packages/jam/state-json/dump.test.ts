@@ -4,7 +4,7 @@ import { tinyChainSpec } from "@typeberry/config";
 import { parseFromJson } from "@typeberry/json-parser";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 
-import { fullStateDumpFromJson } from "./dump";
+import { fullStateDumpFromJson } from "./dump.js";
 
 describe("JSON state dump", () => {
   it("should load full JSON state dump", () => {

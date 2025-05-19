@@ -2,10 +2,10 @@ import assert from "node:assert";
 import { type TestContext, describe, it } from "node:test";
 import { MessageChannel } from "node:worker_threads";
 
-import { MessageChannelStateMachine } from "./channel";
-import { StateMachine } from "./machine";
-import { TypedPort } from "./port";
-import { State, type TransitionTo } from "./state";
+import { MessageChannelStateMachine } from "./channel.js";
+import { StateMachine } from "./machine.js";
+import { TypedPort } from "./port.js";
+import { State, type TransitionTo } from "./state.js";
 
 function newChannel(t: TestContext) {
   const channel = new MessageChannel();

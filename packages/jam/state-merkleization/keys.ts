@@ -1,10 +1,10 @@
 import type { ServiceId } from "@typeberry/block";
-import type { PreimageHash } from "@typeberry/block/preimage";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
-import { StateEntry } from "./entries";
+import { StateEntry } from "./entries.js";
 
 export type StateKey = Opaque<OpaqueHash, "stateKey">;
 

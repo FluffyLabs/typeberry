@@ -4,10 +4,10 @@ import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import type { U16, U32 } from "@typeberry/numbers";
 import { type Opaque, WithDebug } from "@typeberry/utils";
-import type { CoreIndex, ServiceGas } from "./common";
-import { RefineContext } from "./refine-context";
-import { type WorkItemsCount, tryAsWorkItemsCount } from "./work-package";
-import { WorkResult } from "./work-result";
+import type { CoreIndex, ServiceGas } from "./common.js";
+import { RefineContext } from "./refine-context.js";
+import { type WorkItemsCount, tryAsWorkItemsCount } from "./work-package.js";
+import { WorkResult } from "./work-result.js";
 
 /** Authorizer hash. */
 export type AuthorizerHash = Opaque<OpaqueHash, "AuthorizerHash">;

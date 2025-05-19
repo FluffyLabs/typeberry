@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { run } from "node:test";
 import { spec } from "node:test/reporters";
-import { Reporter } from "./reporter";
+import { Reporter } from "./reporter.js";
 
 const distDir = `${__dirname}/../../dist`;
 try {

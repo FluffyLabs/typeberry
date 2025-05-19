@@ -16,7 +16,7 @@ import {
   type State,
   StateItem,
 } from "@typeberry/state";
-import { serialize } from "@typeberry/state-merkleization/serialize";
+import { serialize } from "@typeberry/state-merkleization/serialize.js";
 
 export class TestState {
   static fromJson: FromJson<TestState> = {

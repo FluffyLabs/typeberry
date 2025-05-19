@@ -1,15 +1,15 @@
 import { type CoreIndex, type ServiceGas, tryAsServiceGas } from "@typeberry/block";
-import type { RefineContext } from "@typeberry/block/refine-context";
-import { tryAsWorkItemsCount } from "@typeberry/block/work-package";
-import { type AuthorizerHash, WorkPackageInfo, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
-import type { WorkResult } from "@typeberry/block/work-result";
+import type { RefineContext } from "@typeberry/block/refine-context.js";
+import { tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
+import { type AuthorizerHash, WorkPackageInfo, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
+import type { WorkResult } from "@typeberry/block/work-result.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
-import { fromJson } from "./common";
-import type { JsonObject } from "./json-format";
-import { refineContextFromJson } from "./refine-context";
-import { workResultFromJson } from "./work-result";
+import { fromJson } from "./common.js";
+import type { JsonObject } from "./json-format.js";
+import { refineContextFromJson } from "./refine-context.js";
+import { workResultFromJson } from "./work-result.js";
 
 const workPackageSpecFromJson = json.object<JsonObject<WorkPackageSpec>, WorkPackageSpec>(
   {

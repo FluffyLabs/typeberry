@@ -1,6 +1,6 @@
 import { type Opaque, ensure } from "@typeberry/utils";
 
-import { LAST_PAGE_NUMBER, PAGE_SIZE } from "../memory-consts";
+import { LAST_PAGE_NUMBER, PAGE_SIZE } from "../memory-consts.js";
 
 export type PageIndex = Opaque<number, "memory page index">;
 export type PageNumber = Opaque<number, "memory page number">;

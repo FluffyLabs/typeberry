@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
-import { fisherYatesShuffle } from "./shuffling";
+import { fisherYatesShuffle } from "./shuffling.js";
 
 function prepareArrayToShuffle(length: number) {
   return Array.from({ length }, (_, i) => i);

@@ -9,15 +9,15 @@ import {
   type TimeSlot,
   tryAsTimeSlot,
 } from "@typeberry/block";
-import { testBlockView } from "@typeberry/block/test-helpers";
+import { testBlockView } from "@typeberry/block/test-helpers.js";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { HASH_SIZE, SimpleAllocator, WithHash, keccak } from "@typeberry/hash";
 import { Result } from "@typeberry/utils";
-import { BlockVerifier, BlockVerifierError } from "./block-verifier";
-import { TransitionHasher } from "./hasher";
+import { BlockVerifier, BlockVerifierError } from "./block-verifier.js";
+import { TransitionHasher } from "./hasher.js";
 
 const DEFAULT_HEADER_HASH = Bytes.fill(HASH_SIZE, 1).asOpaque<HeaderHash>();
 const DEFAULT_EXTRINSIC_HASH = Bytes.fill(HASH_SIZE, 2).asOpaque<ExtrinsicHash>();

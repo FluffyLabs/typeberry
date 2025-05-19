@@ -1,7 +1,7 @@
-import { MEMORY_SIZE } from "./memory-consts";
-import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
-import { getStartPageIndex, getStartPageIndexFromPageNumber } from "./memory-utils";
-import { tryAsPageNumber } from "./pages/page-utils";
+import { MEMORY_SIZE } from "./memory-consts.js";
+import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index.js";
+import { getStartPageIndex, getStartPageIndexFromPageNumber } from "./memory-utils.js";
+import { tryAsPageNumber } from "./pages/page-utils.js";
 
 export class PageFault {
   private constructor(

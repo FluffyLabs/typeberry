@@ -1,6 +1,6 @@
 export { add, complete, cycle, suite } from "benny";
 import { configure as rawConfigure, save as rawSave } from "benny";
-import type { Config } from "benny/lib/internal/common-types";
+import type { Config } from "benny/lib/internal/common-types.js";
 
 import * as path from "node:path";
 

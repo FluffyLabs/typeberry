@@ -1,8 +1,8 @@
-import { tryAsGas } from "@typeberry/pvm-interpreter/gas";
+import { tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { Program } from "@typeberry/pvm-program";
-import { HostCalls } from "./host-calls";
-import { HostCallsManager } from "./host-calls-manager";
-import { InterpreterInstanceManager } from "./interpreter-instance-manager";
+import { HostCalls } from "./host-calls.js";
+import { HostCallsManager } from "./host-calls-manager.js";
+import { InterpreterInstanceManager } from "./interpreter-instance-manager.js";
 
 const hostCalls = new HostCallsManager();
 const pvmInstanceManager = new InterpreterInstanceManager(1);

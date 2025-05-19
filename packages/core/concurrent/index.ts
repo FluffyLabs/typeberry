@@ -1,3 +1,3 @@
-export * from "./worker";
-export { IExecutor } from "./messages";
-export * from "./parent";
+export * from "./worker.js";
+export { IExecutor } from "./messages.js";
+export * from "./parent.js";

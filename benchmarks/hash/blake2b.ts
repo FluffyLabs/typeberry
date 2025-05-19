@@ -1,4 +1,4 @@
-import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
+import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { PageAllocator, SimpleAllocator, blake2b } from "@typeberry/hash";
 

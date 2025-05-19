@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { JumpTable } from "./jump-table";
+import { JumpTable } from "./jump-table.js";
 
 describe("JumpTable", () => {
   it("should return true when an index exist in jump table", () => {

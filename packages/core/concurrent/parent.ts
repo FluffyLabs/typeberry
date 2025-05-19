@@ -1,6 +1,6 @@
 import { type MessagePort, Worker } from "node:worker_threads";
 import { check } from "@typeberry/utils";
-import type { IExecutor, MessageIn, MessageOut, WithTransferList } from "./messages";
+import type { IExecutor, MessageIn, MessageOut, WithTransferList } from "./messages.js";
 
 // Amount of tasks in the queue that will trigger creation of new worker thread.
 // NOTE this might need to be configurable in the future.

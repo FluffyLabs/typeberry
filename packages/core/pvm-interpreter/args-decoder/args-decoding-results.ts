@@ -12,10 +12,10 @@ import type {
   TwoRegistersOneImmediateArgs,
   TwoRegistersOneOffsetArgs,
   TwoRegistersTwoImmediatesArgs,
-} from "./args-decoder";
-import { ArgumentType } from "./argument-type";
-import { ExtendedWitdthImmediateDecoder } from "./decoders/extended-with-immediate-decoder";
-import { ImmediateDecoder } from "./decoders/immediate-decoder";
+} from "./args-decoder.js";
+import { ArgumentType } from "./argument-type.js";
+import { ExtendedWitdthImmediateDecoder } from "./decoders/extended-with-immediate-decoder.js";
+import { ImmediateDecoder } from "./decoders/immediate-decoder.js";
 
 const ARGUMENT_TYPE_LENGTH = Object.keys(ArgumentType).length / 2;
 

@@ -4,8 +4,8 @@ import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
-import type { StreamHandler, StreamSender } from "../handler";
-import type { StreamId, StreamKind } from "./stream";
+import type { StreamHandler, StreamSender } from "../handler.js";
+import type { StreamId, StreamKind } from "./stream.js";
 
 /**
  * JAMNP-S UP 0 stream.

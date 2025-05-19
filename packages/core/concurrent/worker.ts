@@ -1,6 +1,6 @@
 import { type MessagePort, parentPort } from "node:worker_threads";
 import { Result } from "@typeberry/utils";
-import type { IExecutor, MessageIn, MessageOut, WithTransferList } from "./messages";
+import type { IExecutor, MessageIn, MessageOut, WithTransferList } from "./messages.js";
 
 /** A in-worker abstraction. */
 export class ConcurrentWorker<TParams, TResult extends WithTransferList, TInternalState>

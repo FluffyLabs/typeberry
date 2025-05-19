@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { State } from "./state";
+import { State } from "./state.js";
 
 describe("State", () => {
   class StateA extends State<"a", StateB | StateC> {}

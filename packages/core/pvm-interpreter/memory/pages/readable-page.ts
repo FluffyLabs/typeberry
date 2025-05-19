@@ -1,8 +1,8 @@
 import { OK, Result } from "@typeberry/utils";
-import { PageFault } from "../errors";
-import { PAGE_SIZE } from "../memory-consts";
-import { MemoryPage } from "./memory-page";
-import type { PageIndex, PageNumber } from "./page-utils";
+import { PageFault } from "../errors.js";
+import { PAGE_SIZE } from "../memory-consts.js";
+import { MemoryPage } from "./memory-page.js";
+import type { PageIndex, PageNumber } from "./page-utils.js";
 
 export class ReadablePage extends MemoryPage {
   constructor(

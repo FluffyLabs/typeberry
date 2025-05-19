@@ -3,8 +3,8 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { StatesDb } from "@typeberry/database";
 import type { State } from "@typeberry/state";
-import { stateDumpCodec } from "@typeberry/state-merkleization/dump";
-import type { LmdbRoot, SubDb } from "./root";
+import { stateDumpCodec } from "@typeberry/state-merkleization/dump.js";
+import type { LmdbRoot, SubDb } from "./root.js";
 
 export class LmdbStates implements StatesDb {
   private readonly states: SubDb;

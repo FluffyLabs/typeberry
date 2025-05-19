@@ -11,7 +11,7 @@ import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config"
 import { type FromJson, json } from "@typeberry/json-parser";
 import { ServiceStatistics, type ValidatorData } from "@typeberry/state";
 import { JsonStatisticsData, validatorDataFromJson } from "@typeberry/state-json";
-import { type Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics";
+import { type Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics.js";
 
 class TinyInput {
   static fromJson = json.object<TinyInput, Input>(

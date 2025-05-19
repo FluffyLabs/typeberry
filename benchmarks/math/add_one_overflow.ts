@@ -1,4 +1,4 @@
-import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
+import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 
 const a = 0xff_ff_ff_ff >>> 0;
 const ONE = 1 >>> 0;

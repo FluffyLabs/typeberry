@@ -1,8 +1,8 @@
 import { Decoder } from "@typeberry/codec";
 import { Logger } from "@typeberry/logger";
 import { Result } from "@typeberry/utils";
-import { JumpTable } from "./jump-table";
-import { Mask } from "./mask";
+import { JumpTable } from "./jump-table.js";
+import { Mask } from "./mask.js";
 
 const logger = Logger.new(__filename, "pvm-interpreter");
 

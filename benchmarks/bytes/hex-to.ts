@@ -1,4 +1,4 @@
-import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
+import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 
 const CODE_OF_0 = "0".charCodeAt(0);
 const CODE_OF_a = "a".charCodeAt(0);

@@ -1,2 +1,2 @@
-export * from "./disputes";
-export { DisputesState } from "./disputes-state";
+export * from "./disputes.js";
+export { DisputesState } from "./disputes-state.js";

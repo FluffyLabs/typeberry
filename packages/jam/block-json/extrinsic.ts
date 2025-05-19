@@ -2,11 +2,11 @@ import { Extrinsic } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import { json } from "@typeberry/json-parser";
 
-import { getAssurancesExtrinsicFromJson } from "./assurances-extrinsic";
-import { disputesExtrinsicFromJson } from "./disputes-extrinsic";
-import { guaranteesExtrinsicFromJson } from "./guarantees-extrinsic";
-import { preimagesExtrinsicFromJson } from "./preimages-extrinsic";
-import { ticketsExtrinsicFromJson } from "./tickets-extrinsic";
+import { getAssurancesExtrinsicFromJson } from "./assurances-extrinsic.js";
+import { disputesExtrinsicFromJson } from "./disputes-extrinsic.js";
+import { guaranteesExtrinsicFromJson } from "./guarantees-extrinsic.js";
+import { preimagesExtrinsicFromJson } from "./preimages-extrinsic.js";
+import { ticketsExtrinsicFromJson } from "./tickets-extrinsic.js";
 
 export const getExtrinsicFromJson = (ctx: ChainSpec) =>
   json.object<Extrinsic>(

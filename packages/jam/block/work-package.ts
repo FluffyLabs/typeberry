@@ -4,10 +4,10 @@ import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U8 } from "@typeberry/numbers";
 import { WithDebug, ensure } from "@typeberry/utils";
-import type { ServiceId } from "./common";
-import type { CodeHash } from "./hash";
-import { RefineContext } from "./refine-context";
-import { WorkItem } from "./work-item";
+import type { ServiceId } from "./common.js";
+import type { CodeHash } from "./hash.js";
+import { RefineContext } from "./refine-context.js";
+import { WorkItem } from "./work-item.js";
 
 /** Possible number of work items in the package or results in the report. */
 /** Constrained by I=16 https://graypaper.fluffylabs.dev/#/68eaa1f/417a00417a00?v=0.6.4 */

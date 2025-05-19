@@ -1,7 +1,7 @@
 import { Decoder } from "@typeberry/codec";
-import { Memory, MemoryBuilder } from "@typeberry/pvm-interpreter/memory";
-import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import { Registers } from "@typeberry/pvm-interpreter/registers";
+import { Memory, MemoryBuilder } from "@typeberry/pvm-interpreter/memory/index.js";
+import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
+import { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
 
 export class Program {

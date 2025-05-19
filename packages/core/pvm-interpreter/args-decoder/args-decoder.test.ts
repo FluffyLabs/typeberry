@@ -1,13 +1,13 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { BitVec } from "@typeberry/bytes";
-import { Instruction } from "../instruction";
-import { Mask } from "../program-decoder/mask";
-import { ArgsDecoder } from "./args-decoder";
-import { createResults } from "./args-decoding-results";
-import { ArgumentType } from "./argument-type";
-import { ExtendedWitdthImmediateDecoder } from "./decoders/extended-with-immediate-decoder";
-import { ImmediateDecoder } from "./decoders/immediate-decoder";
+import { Instruction } from "../instruction.js";
+import { Mask } from "../program-decoder/mask.js";
+import { ArgsDecoder } from "./args-decoder.js";
+import { createResults } from "./args-decoding-results.js";
+import { ArgumentType } from "./argument-type.js";
+import { ExtendedWitdthImmediateDecoder } from "./decoders/extended-with-immediate-decoder.js";
+import { ImmediateDecoder } from "./decoders/immediate-decoder.js";
 
 describe("ArgsDecoder", () => {
   function prepareData({

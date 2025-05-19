@@ -1,7 +1,7 @@
 import type { HeaderHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { Hash, RpcMethod, Slot } from "../types";
+import type { Hash, RpcMethod, Slot } from "../types.js";
 
 export const parent: RpcMethod<[Hash], [Hash, Slot] | null> = async ([headerHash], db) => {
   const hash: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();

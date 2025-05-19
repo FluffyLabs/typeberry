@@ -1,6 +1,6 @@
 import type { Comparator } from "@typeberry/ordering";
 import { check } from "@typeberry/utils";
-import { SortedArray } from "./sorted-array";
+import { SortedArray } from "./sorted-array.js";
 
 /**
  * Collection of elements of type `V` that has some strict ordering and does not have dupliocates.

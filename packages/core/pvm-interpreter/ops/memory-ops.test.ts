@@ -1,11 +1,11 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { InstructionResult } from "../instruction-result";
-import { Memory, MemoryBuilder } from "../memory";
-import { MAX_MEMORY_INDEX, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "../memory/memory-consts";
-import { tryAsMemoryIndex, tryAsSbrkIndex } from "../memory/memory-index";
-import { Registers } from "../registers";
-import { MemoryOps } from "./memory-ops";
+import { InstructionResult } from "../instruction-result.js";
+import { Memory, MemoryBuilder } from "../memory/index.js";
+import { MAX_MEMORY_INDEX, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "../memory/memory-consts.js";
+import { tryAsMemoryIndex, tryAsSbrkIndex } from "../memory/memory-index.js";
+import { Registers } from "../registers.js";
+import { MemoryOps } from "./memory-ops.js";
 
 describe("MemoryOps", () => {
   function prepareData(pagesToAllocate: number, lengthRegisterValue = PAGE_SIZE) {

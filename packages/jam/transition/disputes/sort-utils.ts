@@ -1,4 +1,4 @@
-import type { Judgement } from "@typeberry/block/disputes";
+import type { Judgement } from "@typeberry/block/disputes.js";
 import type { BytesBlob } from "@typeberry/bytes";
 
 /**

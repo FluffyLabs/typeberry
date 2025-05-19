@@ -5,7 +5,7 @@ import { tryAsValidatorIndex } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
-import { prepareCulpritSignature, prepareJudgementSignature, vefifyAllSignatures } from "./verification-utils";
+import { prepareCulpritSignature, prepareJudgementSignature, vefifyAllSignatures } from "./verification-utils.js";
 
 describe("verification-utils", () => {
   describe("verifyVoteSignature", () => {

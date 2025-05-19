@@ -1,6 +1,6 @@
 import type { HeaderHash, TimeSlot } from "@typeberry/block";
-import type { AssurancesExtrinsicView } from "@typeberry/block/assurances";
-import type { WorkReport } from "@typeberry/block/work-report";
+import type { AssurancesExtrinsicView } from "@typeberry/block/assurances.js";
+import type { WorkReport } from "@typeberry/block/work-report.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";

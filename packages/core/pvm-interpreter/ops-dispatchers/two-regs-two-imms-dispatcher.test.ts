@@ -1,17 +1,17 @@
 import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
-import type { TwoRegistersTwoImmediatesArgs } from "../args-decoder/args-decoder";
-import { ArgumentType } from "../args-decoder/argument-type";
-import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
-import { BasicBlocks } from "../basic-blocks";
-import { Instruction } from "../instruction";
-import { InstructionResult } from "../instruction-result";
-import { Memory } from "../memory";
-import { DynamicJumpOps, LoadOps } from "../ops";
-import { JumpTable } from "../program-decoder/jump-table";
-import { Registers } from "../registers";
-import { TwoRegsTwoImmsDispatcher } from "./two-regs-two-imms-dispatcher";
+import type { TwoRegistersTwoImmediatesArgs } from "../args-decoder/args-decoder.js";
+import { ArgumentType } from "../args-decoder/argument-type.js";
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map.js";
+import { BasicBlocks } from "../basic-blocks/index.js";
+import { Instruction } from "../instruction.js";
+import { InstructionResult } from "../instruction-result.js";
+import { Memory } from "../memory/index.js";
+import { DynamicJumpOps, LoadOps } from "../ops/index.js";
+import { JumpTable } from "../program-decoder/jump-table.js";
+import { Registers } from "../registers.js";
+import { TwoRegsTwoImmsDispatcher } from "./two-regs-two-imms-dispatcher.js";
 
 describe("TwoRegsTwoImmsDispatcher", () => {
   describe("check if it handles expected instructions", () => {
