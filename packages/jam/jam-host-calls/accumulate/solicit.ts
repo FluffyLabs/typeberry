@@ -4,9 +4,9 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { assertNever } from "@typeberry/utils";
+import { type PartialState, RequestPreimageError } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import { type AccumulationPartialState, RequestPreimageError } from "./partial-state";
 
 const IN_OUT_REG = 7;
 
@@ -20,7 +20,7 @@ export class Solicit implements HostCallHandler {
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly partialState: AccumulationPartialState) {}
+  constructor(private readonly partialState: PartialState) {}
 
   async execute(
     _gas: GasCounter,
@@ -38,7 +38,7 @@ export class Solicit implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    const result = this.partialState.requestPreimage(hash, length);
+    const result = this.partialState.requestPreimage(hash.asOpaque(), length);
     if (result.isOk) {
       regs.set(IN_OUT_REG, HostCallResult.OK);
       return;

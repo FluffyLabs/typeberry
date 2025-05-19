@@ -13,10 +13,10 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Registers } from "@typeberry/pvm-interpreter/registers";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
 import { OK, Result } from "@typeberry/utils";
+import { EjectError } from "../externalities/partial-state";
+import { PartialStateMock } from "../externalities/partial-state-mock";
 import { HostCallResult } from "../results";
 import { Eject } from "./eject";
-import { EjectError } from "./partial-state";
-import { TestAccumulate } from "./partial-state.test";
 
 const RESULT_REG = 7;
 const SOURCE_REG = 7;
@@ -48,7 +48,7 @@ const gas = gasCounter(tryAsGas(10_000));
 
 describe("HostCalls: Eject", () => {
   it("should eject the account and transfer the funds", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const eject = new Eject(accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
     eject.currentServiceId = tryAsServiceId(10_000);
@@ -67,7 +67,7 @@ describe("HostCalls: Eject", () => {
   });
 
   it("should fail if there is no memory for hash", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const eject = new Eject(accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
     eject.currentServiceId = tryAsServiceId(10_000);
@@ -84,7 +84,7 @@ describe("HostCalls: Eject", () => {
   });
 
   it("should fail if destination does not exist", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const eject = new Eject(accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
     eject.currentServiceId = tryAsServiceId(10_000);
@@ -104,7 +104,7 @@ describe("HostCalls: Eject", () => {
   });
 
   it("should fail if destination and source are the same", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const eject = new Eject(accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
     eject.currentServiceId = sourceServiceId;
@@ -122,7 +122,7 @@ describe("HostCalls: Eject", () => {
   });
 
   it("should fail if destination has no available preimage", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const eject = new Eject(accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
     eject.currentServiceId = tryAsServiceId(10_000);
@@ -142,7 +142,7 @@ describe("HostCalls: Eject", () => {
   });
 
   it("should fail if preimage is too old", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const eject = new Eject(accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
     eject.currentServiceId = tryAsServiceId(10_000);

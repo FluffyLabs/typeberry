@@ -1,13 +1,13 @@
-import { type ServiceId, tryAsServiceId } from "@typeberry/block";
+import { tryAsServiceGas } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
+import type { PartialState } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import type { AccumulationPartialState } from "./partial-state";
 
 const IN_OUT_REG = 7;
 
@@ -21,7 +21,7 @@ export class New implements HostCallHandler {
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly partialState: AccumulationPartialState) {}
+  constructor(private readonly partialState: PartialState) {}
 
   async execute(
     _gas: GasCounter,
@@ -33,9 +33,9 @@ export class New implements HostCallHandler {
     // `l`
     const codeLength = regs.get(8);
     // `g`
-    const gas = regs.get(9);
+    const gas = tryAsServiceGas(regs.get(9));
     // `m`
-    const allowance = regs.get(10);
+    const allowance = tryAsServiceGas(regs.get(10));
 
     // `c`
     const codeHash = Bytes.zero(HASH_SIZE);
@@ -45,9 +45,7 @@ export class New implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    const newServiceId = bump(this.currentServiceId);
-
-    const assignedId = this.partialState.newService(newServiceId, codeHash.asOpaque(), codeLength, gas, allowance);
+    const assignedId = this.partialState.newService(codeHash.asOpaque(), codeLength, gas, allowance);
 
     if (assignedId.isOk) {
       regs.set(IN_OUT_REG, tryAsU64(assignedId.ok));
@@ -56,9 +54,4 @@ export class New implements HostCallHandler {
     }
     return;
   }
-}
-
-function bump(serviceId: ServiceId) {
-  const mod = 2 ** 32 - 2 ** 9;
-  return tryAsServiceId(2 ** 8 + ((serviceId - 2 ** 8 + 42 + mod) % mod));
 }

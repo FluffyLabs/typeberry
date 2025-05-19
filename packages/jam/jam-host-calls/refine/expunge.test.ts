@@ -5,16 +5,16 @@ import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { Result } from "@typeberry/utils";
-import { HostCallResult } from "../results";
-import { Expunge } from "./expunge";
 import {
   type MachineId,
   NoMachineError,
   type ProgramCounter,
   tryAsMachineId,
   tryAsProgramCounter,
-} from "./refine-externalities";
-import { TestRefineExt } from "./refine-externalities.test";
+} from "../externalities/refine-externalities";
+import { TestRefineExt } from "../externalities/refine-externalities.test";
+import { HostCallResult } from "../results";
+import { Expunge } from "./expunge";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;

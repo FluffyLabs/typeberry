@@ -1,13 +1,13 @@
-import type { ServiceGas, ServiceId } from "@typeberry/block";
+import { type ServiceGas, type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import { Decoder, codec, tryAsExactBytes } from "@typeberry/codec";
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
 import { asOpaqueType } from "@typeberry/utils";
+import type { PartialState } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID, getServiceId } from "../utils";
-import type { AccumulationPartialState } from "./partial-state";
 
 const IN_OUT_REG = 7;
 
@@ -18,7 +18,7 @@ const serviceIdAndGasCodec = codec.object({
   ),
   gas: codec.u64.convert<ServiceGas>(
     (i) => tryAsU64(i),
-    (o): ServiceGas => asOpaqueType(o),
+    (o) => tryAsServiceGas(o),
   ),
 });
 
@@ -32,7 +32,7 @@ export class Bless implements HostCallHandler {
   gasCost = tryAsSmallGas(10);
   currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly partialState: AccumulationPartialState) {}
+  constructor(private readonly partialState: PartialState) {}
 
   async execute(
     _gas: GasCounter,

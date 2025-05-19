@@ -8,9 +8,9 @@ import type { HostCallHandler, IHostCallMemory } from "@typeberry/pvm-host-calls
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
 import type { IHostCallRegisters } from "@typeberry/pvm-host-calls/host-call-registers";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
+import type { PartialState } from "../externalities/partial-state";
 import { HostCallResult } from "../results";
 import { CURRENT_SERVICE_ID } from "../utils";
-import type { AccumulationPartialState } from "./partial-state";
 
 const IN_OUT_REG = 7;
 
@@ -25,7 +25,7 @@ export class Assign implements HostCallHandler {
   currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(
-    private readonly partialState: AccumulationPartialState,
+    private readonly partialState: PartialState,
     private readonly chainSpec: ChainSpec,
   ) {}
 

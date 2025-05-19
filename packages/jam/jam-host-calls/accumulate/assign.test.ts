@@ -14,9 +14,9 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
+import { PartialStateMock } from "../externalities/partial-state-mock";
 import { HostCallResult } from "../results";
 import { Assign } from "./assign";
-import { TestAccumulate } from "./partial-state.test";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
@@ -55,7 +55,7 @@ function prepareRegsAndMemory(
 
 describe("HostCalls: Assign", () => {
   it("should assign authorization queue to a core", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const assign = new Assign(accumulate, tinyChainSpec);
     const serviceId = tryAsServiceId(10_000);
     assign.currentServiceId = serviceId;
@@ -84,7 +84,7 @@ describe("HostCalls: Assign", () => {
   });
 
   it("should return an error if core index is too large", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const assign = new Assign(accumulate, tinyChainSpec);
     const serviceId = tryAsServiceId(10_000);
     assign.currentServiceId = serviceId;
@@ -99,7 +99,7 @@ describe("HostCalls: Assign", () => {
   });
 
   it("should return an error if core index is waay too large", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const assign = new Assign(accumulate, tinyChainSpec);
     const serviceId = tryAsServiceId(10_000);
     assign.currentServiceId = serviceId;
@@ -115,7 +115,7 @@ describe("HostCalls: Assign", () => {
   });
 
   it("should return panic if data not readable", async () => {
-    const accumulate = new TestAccumulate();
+    const accumulate = new PartialStateMock();
     const assign = new Assign(accumulate, tinyChainSpec);
     const serviceId = tryAsServiceId(10_000);
     assign.currentServiceId = serviceId;

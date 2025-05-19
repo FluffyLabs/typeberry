@@ -6,11 +6,12 @@ export type SubDb = lmdb.Database<Uint8Array, lmdb.Key>;
 export class LmdbRoot {
   readonly db: lmdb.RootDatabase<Uint8Array, lmdb.Key>;
 
-  constructor(dbPath: string) {
+  constructor(dbPath: string, readOnly = false) {
     this.db = lmdb.open(dbPath, {
       compression: true,
       keyEncoding: "binary",
       encoding: "binary",
+      readOnly,
     });
   }
 

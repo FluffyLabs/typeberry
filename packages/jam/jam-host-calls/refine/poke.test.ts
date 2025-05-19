@@ -6,10 +6,10 @@ import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-
 import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
 import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter";
 import { OK, Result } from "@typeberry/utils";
+import { type MachineId, PeekPokeError, tryAsMachineId } from "../externalities/refine-externalities";
+import { TestRefineExt } from "../externalities/refine-externalities.test";
 import { HostCallResult } from "../results";
 import { Poke } from "./poke";
-import { type MachineId, PeekPokeError, tryAsMachineId } from "./refine-externalities";
-import { TestRefineExt } from "./refine-externalities.test";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;
