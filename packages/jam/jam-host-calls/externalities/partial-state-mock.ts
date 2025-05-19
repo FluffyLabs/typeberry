@@ -1,6 +1,6 @@
 import type { CodeHash, CoreIndex, PerValidator, ServiceGas, ServiceId } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
-import type { Bytes } from "@typeberry/bytes";
+import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
@@ -10,6 +10,7 @@ import {
   type EjectError,
   type PartialState,
   type PreimageStatus,
+  ProvidePreimageError,
   type RequestPreimageError,
   type TRANSFER_MEMO_BYTES,
   TransferError,
@@ -26,6 +27,7 @@ export class PartialStateMock implements PartialState {
   public readonly transferData: Parameters<PartialStateMock["transfer"]>[] = [];
   public readonly upgradeData: Parameters<PartialStateMock["upgradeService"]>[] = [];
   public readonly validatorsData: Parameters<PartialStateMock["updateValidatorsData"]>[0][] = [];
+  public readonly providePreimageData: Parameters<PartialStateMock["providePreimage"]>[] = [];
 
   public checkpointCalled = 0;
   public yieldHash: OpaqueHash | null = null;
@@ -35,6 +37,7 @@ export class PartialStateMock implements PartialState {
   public requestPreimageResponse: Result<OK, RequestPreimageError> = Result.ok(OK);
   public checkPreimageStatusResponse: PreimageStatus | null = null;
   public transferReturnValue: Result<OK, TransferError> = Result.ok(OK);
+  public providePreimageResponse: Result<OK, ProvidePreimageError> = Result.ok(OK);
 
   async eject(from: ServiceId | null, hash: OpaqueHash): Promise<Result<OK, EjectError>> {
     this.ejectData.push([from, hash]);
@@ -108,5 +111,13 @@ export class PartialStateMock implements PartialState {
 
   yield(hash: OpaqueHash): void {
     this.yieldHash = hash;
+  }
+
+  providePreimage(service: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError> {
+    if (service === null) {
+      return Result.error(ProvidePreimageError.ServiceNotFound);
+    }
+    this.providePreimageData.push([service, preimage]);
+    return this.providePreimageResponse;
   }
 }

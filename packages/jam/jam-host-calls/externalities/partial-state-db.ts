@@ -9,12 +9,13 @@ import {
 } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import type { PreimageHash } from "@typeberry/block/preimage";
-import type { Bytes } from "@typeberry/bytes";
+import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type FixedSizeArray, HashDictionary } from "@typeberry/collections";
-import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
+import { type Blake2bHash, type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type U64, sumU32, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   LookupHistoryItem,
+  PreimageItem,
   Service,
   ServiceAccountInfo,
   type State,
@@ -28,6 +29,7 @@ import {
   type PartialState,
   type PreimageStatus,
   PreimageStatusKind,
+  ProvidePreimageError,
   RequestPreimageError,
   type TRANSFER_MEMO_BYTES,
   TransferError,
@@ -460,6 +462,40 @@ export class PartialStateDb implements PartialState {
   yield(hash: OpaqueHash): void {
     /** https://graypaper.fluffylabs.dev/#/9a08063/387d02387d02?v=0.6.6 */
     this.updatedState.yieldedRoot = hash;
+  }
+
+  providePreimage(serviceId: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError> {
+    const service = serviceId === null ? undefined : this.state.services.get(serviceId);
+    if (service === undefined) {
+      return Result.error(ProvidePreimageError.ServiceNotFound);
+    }
+
+    // calculating the hash
+    const preimageHash = blake2b.hashBytes(preimage).asOpaque<PreimageHash>();
+
+    // checking lookup history
+    const lookup = service.data.lookupHistory.get(preimageHash);
+    const status = lookup?.find((item) => item.length === preimage.length);
+    if (status === undefined || !LookupHistoryItem.isRequested(status)) {
+      return Result.error(ProvidePreimageError.WasNotRequested);
+    }
+
+    // checking preimages
+    const servicePreimage = service.data.preimages.get(preimageHash);
+    if (servicePreimage !== undefined) {
+      return Result.error(ProvidePreimageError.AlreadyProvided);
+    }
+
+    // setting up the new preimage
+    service.data.preimages.set(
+      preimageHash,
+      PreimageItem.create({
+        hash: preimageHash,
+        blob: preimage,
+      }),
+    );
+
+    return Result.ok(OK);
   }
 }
 

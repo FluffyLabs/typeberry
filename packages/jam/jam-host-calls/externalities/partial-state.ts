@@ -1,7 +1,7 @@
 import type { CodeHash, CoreIndex, PerValidator, ServiceGas, ServiceId, TimeSlot } from "@typeberry/block";
 import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants";
 import type { PreimageHash } from "@typeberry/block/preimage";
-import type { Bytes } from "@typeberry/bytes";
+import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
@@ -128,6 +128,15 @@ export enum EjectError {
   InvalidPreimage = 1,
 }
 
+export enum ProvidePreimageError {
+  /** The service does not exist. */
+  ServiceNotFound = 0,
+  /** The preimage wasn't requested. */
+  WasNotRequested = 1,
+  /** The preimage is already provided. */
+  AlreadyProvided = 2,
+}
+
 /**
  * `U`: state components mutated by the accumulation.
  * - `d`: service accounts state
@@ -228,10 +237,9 @@ export interface PartialState {
    */
   updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: [ServiceId, ServiceGas][]): void;
 
-  /**
-   * Yield accumulation trie result hash.
-   *
-   * https://graypaper.fluffylabs.dev/#/85129da/3f98003f9b00?v=0.6.3
-   */
+  /** Yield accumulation trie result hash. */
   yield(hash: OpaqueHash): void;
+
+  /** Provide a preimage for given service. */
+  providePreimage(service: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError>;
 }
