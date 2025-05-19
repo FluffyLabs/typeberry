@@ -2,7 +2,12 @@ import type { ServiceId } from "@typeberry/block";
 import { CURRENT_SERVICE_ID, HostCallResult } from "@typeberry/jam-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { check } from "@typeberry/utils";
-import { type HostCallHandler, type HostCallIndex, type PvmExecution, tryAsHostCallIndex } from "./host-call-handler.js";
+import {
+  type HostCallHandler,
+  type HostCallIndex,
+  type PvmExecution,
+  tryAsHostCallIndex,
+} from "./host-call-handler.js";
 import type { IHostCallMemory } from "./host-call-memory.js";
 import type { IHostCallRegisters } from "./host-call-registers.js";
 

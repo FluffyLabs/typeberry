@@ -71,7 +71,7 @@ export function parseLoggerOptions(input: string, defaultLevel: Level, workingDi
   }
 
   // TODO [ToDr] Fix dirname for workers.
-  const myDir = (import.meta.dirname ?? '').split("/");
+  const myDir = (import.meta.dirname ?? "").split("/");
   myDir.pop();
   myDir.pop();
   return {

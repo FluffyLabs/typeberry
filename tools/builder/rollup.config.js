@@ -12,11 +12,7 @@ export default [
       file: setup.outFile,
       format: "cjs",
     },
-    plugins: [
-      resolve(),
-      commonjs(),
-      typescript(),
-    ],
+    plugins: [resolve(), commonjs(), typescript()],
     treeshake: {
       moduleSideEffects: false,
     },

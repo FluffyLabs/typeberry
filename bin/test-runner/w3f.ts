@@ -14,7 +14,12 @@ import {
 import { tinyChainSpec } from "@typeberry/config";
 import { logger, main, runner } from "./common.js";
 import { AccumulateTest, runAccumulateTest } from "./w3f/accumulate.js";
-import { AssurancesTestFull, AssurancesTestTiny, runAssurancesTestFull, runAssurancesTestTiny } from "./w3f/assurances.js";
+import {
+  AssurancesTestFull,
+  AssurancesTestTiny,
+  runAssurancesTestFull,
+  runAssurancesTestTiny,
+} from "./w3f/assurances.js";
 import { AuthorizationsTest, runAuthorizationsTest } from "./w3f/authorizations.js";
 import {
   runAssurancesExtrinsicTest,
@@ -52,7 +57,12 @@ import { ReportsTest, runReportsTestFull, runReportsTestTiny } from "./w3f/repor
 import { SafroleTest, runSafroleTest } from "./w3f/safrole.js";
 import { JsonSchema, ignoreSchemaFiles } from "./w3f/schema.js";
 import { runShufflingTests, shufflingTests } from "./w3f/shuffling.js";
-import { StatisticsTestFull, StatisticsTestTiny, runStatisticsTestFull, runStatisticsTestTiny } from "./w3f/statistics.js";
+import {
+  StatisticsTestFull,
+  StatisticsTestTiny,
+  runStatisticsTestFull,
+  runStatisticsTestTiny,
+} from "./w3f/statistics.js";
 import { runTrieTest, trieTestSuiteFromJson } from "./w3f/trie.js";
 
 const runners = [

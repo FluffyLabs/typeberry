@@ -1,2 +1,2 @@
-import {worker} from "./worker.js";
+import { worker } from "./worker.js";
 worker.listenToParentPort();

@@ -4,7 +4,10 @@ import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
 import type { BigGas, Memory, Registers } from "@typeberry/pvm-interpreter";
-import { ProgramDecoder, type ProgramDecoderError } from "@typeberry/pvm-interpreter/program-decoder/program-decoder.js";
+import {
+  ProgramDecoder,
+  type ProgramDecoderError,
+} from "@typeberry/pvm-interpreter/program-decoder/program-decoder.js";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
 import { type OK, Result } from "@typeberry/utils";
 import {

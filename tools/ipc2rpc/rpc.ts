@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import http from "node:http";
-import path from "node:path";
 import type { JSONRPCID, JSONRPCSuccessResponse } from "./../../node_modules/json-rpc-2.0/dist/models.d.js";
 
 import type { Header } from "@typeberry/block";

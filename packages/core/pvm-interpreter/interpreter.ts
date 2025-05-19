@@ -6,28 +6,13 @@ import { instructionArgumentTypeMap } from "./args-decoder/instruction-argument-
 import { assemblify } from "./assemblify.js";
 import { BasicBlocks } from "./basic-blocks/index.js";
 import { type Gas, type GasCounter, gasCounter, tryAsGas } from "./gas.js";
-import { Instruction } from "./instruction.js";
 import { instructionGasMap } from "./instruction-gas-map.js";
 import { InstructionResult } from "./instruction-result.js";
+import { Instruction } from "./instruction.js";
 import { Memory } from "./memory/index.js";
 import { PAGE_SIZE } from "./memory/memory-consts.js";
 import { alignToPageSize } from "./memory/memory-utils.js";
 import { tryAsPageNumber } from "./memory/pages/page-utils.js";
-import {
-  BitOps,
-  BitRotationOps,
-  BooleanOps,
-  BranchOps,
-  DynamicJumpOps,
-  HostCallOps,
-  LoadOps,
-  MathOps,
-  MemoryOps,
-  MoveOps,
-  NoArgsOps,
-  ShiftOps,
-  StoreOps,
-} from "./ops/index.js";
 import {
   NoArgsDispatcher,
   OneImmDispatcher,
@@ -43,6 +28,21 @@ import {
   TwoRegsOneOffsetDispatcher,
   TwoRegsTwoImmsDispatcher,
 } from "./ops-dispatchers/index.js";
+import {
+  BitOps,
+  BitRotationOps,
+  BooleanOps,
+  BranchOps,
+  DynamicJumpOps,
+  HostCallOps,
+  LoadOps,
+  MathOps,
+  MemoryOps,
+  MoveOps,
+  NoArgsOps,
+  ShiftOps,
+  StoreOps,
+} from "./ops/index.js";
 import { JumpTable } from "./program-decoder/jump-table.js";
 import { Mask } from "./program-decoder/mask.js";
 import { ProgramDecoder } from "./program-decoder/program-decoder.js";

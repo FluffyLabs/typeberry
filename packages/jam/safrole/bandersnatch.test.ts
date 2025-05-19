@@ -11,8 +11,8 @@ import { type SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
-import { getRingCommitment, verifyTickets } from "./bandersnatch.js";
 import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import { getRingCommitment, verifyTickets } from "./bandersnatch.js";
 
 const bandersnatch = BandernsatchWasm.new({ synchronous: true });
 

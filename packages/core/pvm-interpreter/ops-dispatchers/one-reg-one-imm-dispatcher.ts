@@ -1,7 +1,7 @@
 import type { OneRegisterOneImmediateArgs } from "../args-decoder/args-decoder.js";
 import { Instruction } from "../instruction.js";
-import type { LoadOps, StoreOps } from "../ops/index.js";
 import type { DynamicJumpOps } from "../ops/dynamic-jump-ops.js";
+import type { LoadOps, StoreOps } from "../ops/index.js";
 
 export class OneRegOneImmDispatcher {
   constructor(

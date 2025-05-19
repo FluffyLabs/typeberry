@@ -4,8 +4,8 @@ import type { OneRegisterOneExtendedWidthImmediateArgs } from "../args-decoder/a
 import { ArgumentType } from "../args-decoder/argument-type.js";
 import { ExtendedWitdthImmediateDecoder } from "../args-decoder/decoders/extended-with-immediate-decoder.js";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map.js";
-import { Instruction } from "../instruction.js";
 import { InstructionResult } from "../instruction-result.js";
+import { Instruction } from "../instruction.js";
 import { Memory } from "../memory/index.js";
 import { LoadOps } from "../ops/index.js";
 import { Registers } from "../registers.js";

@@ -11,8 +11,8 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.j
 import { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { Result } from "@typeberry/utils";
-import { TRANSFER_MEMO_BYTES, TransferError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
+import { TRANSFER_MEMO_BYTES, TransferError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 import { Transfer } from "./transfer.js";
 

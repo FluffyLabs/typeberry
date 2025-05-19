@@ -4,8 +4,8 @@ import type { OneRegisterTwoImmediatesArgs } from "../args-decoder/args-decoder.
 import { ArgumentType } from "../args-decoder/argument-type.js";
 import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
 import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map.js";
-import { Instruction } from "../instruction.js";
 import { InstructionResult } from "../instruction-result.js";
+import { Instruction } from "../instruction.js";
 import { Memory } from "../memory/index.js";
 import { StoreOps } from "../ops/index.js";
 import { Registers } from "../registers.js";

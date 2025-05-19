@@ -5,8 +5,8 @@ import { Decoder, Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { codecHashDictionary } from "./codec.js";
 import type { PreimageHash } from "./preimage.js";
-import { ImportSpec } from "./work-item.js";
 import { tryAsSegmentIndex } from "./work-item-segment.js";
+import { ImportSpec } from "./work-item.js";
 
 describe("JAM types codec / HashDictionary", () => {
   const dictionaryCodec = codecHashDictionary(ImportSpec.Codec, (x) => x.treeRoot, { typicalLength: 10 });

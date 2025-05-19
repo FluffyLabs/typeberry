@@ -16,9 +16,9 @@ import { tinyChainSpec } from "@typeberry/config";
 import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { DisputesRecords, VALIDATOR_META_BYTES, ValidatorData, hashComparator, tryAsPerCore } from "@typeberry/state";
-import { Disputes } from "./disputes.js";
 import { DisputesErrorCode } from "./disputes-error-code.js";
 import type { DisputesState } from "./disputes-state.js";
+import { Disputes } from "./disputes.js";
 
 const createValidatorData = ({ bandersnatch, ed25519 }: { bandersnatch: string; ed25519: string }) =>
   ValidatorData.create({

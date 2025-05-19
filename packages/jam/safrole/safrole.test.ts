@@ -18,8 +18,8 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { Ordering } from "@typeberry/ordering";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
-import * as bandersnatch from "./bandersnatch.js";
 import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import * as bandersnatch from "./bandersnatch.js";
 import { Safrole, SafroleErrorCode, type SafroleState } from "./safrole.js";
 
 const bwasm = BandernsatchWasm.new({ synchronous: true });

@@ -13,8 +13,8 @@ import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.j
 import { Registers } from "@typeberry/pvm-interpreter/registers.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { OK, Result } from "@typeberry/utils";
-import { EjectError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
+import { EjectError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 import { Eject } from "./eject.js";
 

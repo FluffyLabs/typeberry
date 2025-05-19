@@ -1,1 +1,1 @@
-require('./index.ts');
+require("./index.ts");

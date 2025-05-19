@@ -11,8 +11,8 @@ import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memo
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import { Result } from "@typeberry/utils";
-import { RequestPreimageError } from "../externalities/partial-state.js";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
+import { RequestPreimageError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 import { Solicit } from "./solicit.js";
 

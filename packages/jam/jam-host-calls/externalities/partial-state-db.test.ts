@@ -27,8 +27,8 @@ import {
 } from "@typeberry/state";
 import { testState } from "@typeberry/state/test.utils.js";
 import { OK, Result, ensure } from "@typeberry/utils";
-import { PreimageStatusKind, RequestPreimageError, TRANSFER_MEMO_BYTES, TransferError } from "./partial-state.js";
 import { PartialStateDb, PreimageUpdate } from "./partial-state-db.js";
+import { PreimageStatusKind, RequestPreimageError, TRANSFER_MEMO_BYTES, TransferError } from "./partial-state.js";
 import { PendingTransfer } from "./pending-transfer.js";
 
 describe("PartialState.checkPreimageStatus", () => {

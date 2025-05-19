@@ -10,8 +10,8 @@ import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code.
 import { HASH_SIZE } from "@typeberry/hash";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js";
-import type { SafroleErrorCode } from "@typeberry/safrole/safrole.js";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
+import type { SafroleErrorCode } from "@typeberry/safrole/safrole.js";
 import type { State } from "@typeberry/state";
 import { type ErrorResult, OK, Result, type TaggedError } from "@typeberry/utils";
 import { Assurances, type AssurancesError } from "./assurances.js";
