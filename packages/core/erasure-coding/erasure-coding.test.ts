@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { TEST_DATA } from "./ec-test-data";
-import { decodeData, encodeData } from "./erasure-coding";
+import { decodeData, encodeData, unzip } from "./erasure-coding";
 
 function stringToBytes(input: string): Uint8Array {
   const chunkSize = 2; // 2 chars === 1 byte
@@ -68,5 +68,46 @@ describe("erasure coding", () => {
       .join("");
 
     assert.deepStrictEqual(resultAsString, data);
+  });
+});
+
+describe("erasure coding: unzip", () => {
+  it("should unzip data", () => {
+    const test = [
+      {
+        input: Uint8Array.from([0x00, 0x01, 0x02, 0x03]),
+        expected: [
+          Uint8Array.from([0x00, 0x01]),
+          Uint8Array.from([0x02, 0x03]),
+        ],
+        size: 2,
+      },
+      {
+        input: Uint8Array.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]),
+        expected: [
+          Uint8Array.from([0x00, 0x01, 0x02, 0x03]),
+          Uint8Array.from([0x04, 0x05, 0x06, 0x07]),
+        ],
+        size: 4,
+      },
+
+      {
+        input: Uint8Array.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]),
+        expected: [
+          Uint8Array.from([0x00, 0x01]),
+          Uint8Array.from([0x02, 0x03]),
+          Uint8Array.from([0x04, 0x05]),
+          Uint8Array.from([0x06, 0x07]),
+        ],
+        size: 2,
+      },
+    ];
+
+    for (const { input, expected, size } of test) {
+      const result = unzip(input, size);
+
+      assert.deepStrictEqual(result.length, expected.length);
+      assert.deepStrictEqual(result, expected);
+    }
   });
 });

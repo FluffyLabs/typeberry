@@ -106,9 +106,38 @@ export async function runPageProofTest(test: PageProof) {
 }
 
 export async function runSegmentEcTest(test: SegmentEcTest) {
-  // TODO [ToDr] EC: Segment EC test
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error("Not implemented yet!");
+  if (test.segments.length === 0) {
+    logger.info("Incorrect test data. The segments should not be empty!");
+    it.skip("test was skipped because of incorrect data: segments are empty");
+    return;
+  }
+  if (test.segments[0].segment_ec[0].length > 2) {
+    logger.info("Incorrect test data. The chunks should have 2 bytes!");
+    it.skip(
+      `test was skipped because of incorrect data: chunk length: ${test.segments[0].segment_ec[0].length} (it should be 2)`,
+    );
+    return;
+  }
+
+  it("should encode data", () => {
+    const encoded = encodeData(test.data.raw);
+    // slice(0, 1023) is needed because test data is incorrect (1026 length)
+    const expected = test.segments[0].segment_ec.slice(0, 1023).map((x) => x.raw);
+
+    assert.deepStrictEqual(encoded, expected);
+  });
+
+  it("should decode data", () => {
+    // slice(0, 1023) is needed because test data is incorrect (1026 length)
+    const chunks = test.segments[0].segment_ec
+      .slice(0, 1023)
+      .map((chunk, idx) => [idx, chunk.raw] as [number, Uint8Array]);
+    const selectedChunks = getRandomItems(chunks, 342);
+
+    const decoded = decodeData(selectedChunks, test.data.raw.length);
+
+    assert.deepStrictEqual(decoded, test.data.raw);
+  });
 }
 
 export async function runSegmentRootTest(test: SegmentRoot) {

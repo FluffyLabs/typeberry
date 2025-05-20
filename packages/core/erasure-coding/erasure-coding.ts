@@ -117,3 +117,51 @@ export function decodeData(input: [number, Uint8Array][], expectedLength: number
 
   return result.subarray(0, expectedLength);
 }
+
+export function split() {
+  throw new Error("Not implemented yet!");
+}
+
+export function join() {
+  throw new Error("Not implemented yet!");
+}
+
+/**
+ * Unzipping function which accepts a blob of data and returns
+ * `k` pieces of data, each of size 684 octets.
+ *
+ * https://graypaper.fluffylabs.dev/#/9a08063/3e06023e0602?v=0.6.6
+ */
+export function unzip(input: Uint8Array, size = 684): Uint8Array[] {
+  const pieces = Math.ceil(input.length / size);
+  const result = new Array<Uint8Array>(pieces);
+  for (let i = 0; i < pieces; i++) {
+    const start = i * size;
+    const end = Math.min(start + size, input.length);
+    result[i] = input.subarray(start, end);
+  }
+  return result;
+}
+
+export function lace() {
+  throw new Error("Not implemented yet!");
+}
+
+function transpose() {
+  throw new Error("Not implemented yet!");
+}
+
+/**
+ * Chunking function which accepts an arbitrary sized data
+ * blob whose length divides wholly into 684 octets and results in 1,023
+ * sequences of sequences each of smaller blobs
+ *
+ * https://graypaper.fluffylabs.dev/#/9a08063/3f15003f1500?v=0.6.6
+ */
+export function chunk() {
+  throw new Error("Not implemented yet!");
+}
+
+export function reconstruct() {
+  throw new Error("Not implemented yet!");
+}
