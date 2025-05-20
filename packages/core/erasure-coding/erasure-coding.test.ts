@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { TEST_DATA } from "./ec-test-data";
-import { decodeData, encodeData, unzip } from "./erasure-coding";
+import { decodeData, encodeData, join, unzip } from "./erasure-coding";
 
 function stringToBytes(input: string): Uint8Array {
   const chunkSize = 2; // 2 chars === 1 byte
@@ -122,5 +122,67 @@ describe("erasure coding: unzip", () => {
 
     assert.deepStrictEqual(encoded.length, expected.length);
     assert.deepStrictEqual(encoded, expected);
+  });
+});
+
+describe("erasure coding: join", () => {
+  it("should join data", () => {
+    const test = [
+      {
+        input: [Uint8Array.from([0x00, 0x01]), Uint8Array.from([0x02, 0x03])],
+        expected: Uint8Array.from([0x00, 0x01, 0x02, 0x03]),
+        size: 2,
+      },
+      {
+        input: [Uint8Array.from([0x00, 0x01, 0x02, 0x03]), Uint8Array.from([0x04, 0x05, 0x06, 0x07])],
+        expected: Uint8Array.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]),
+        size: 4,
+      },
+      {
+        input: [
+          Uint8Array.from([0x00, 0x01]),
+          Uint8Array.from([0x02, 0x03]),
+          Uint8Array.from([0x04, 0x05]),
+          Uint8Array.from([0x06, 0x07]),
+        ],
+        expected: Uint8Array.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]),
+        size: 2,
+      },
+      {
+        input: [new Uint8Array(648)],
+        expected: new Uint8Array(648),
+        size: 648,
+      },
+      {
+        input: [],
+        expected: new Uint8Array(),
+        size: 648,
+      },
+    ];
+
+    for (const { input, expected, size } of test) {
+      const result = join(input, size);
+
+      assert.deepStrictEqual(result.length, expected.length);
+      assert.deepStrictEqual(result, expected);
+    }
+  });
+
+  it("should unzip and join data without a change", () => {
+    const test = [
+      { input: Uint8Array.from([0x00, 0x01]), size: 2 },
+      { input: Uint8Array.from([0x00, 0x01, 0x02, 0x03]), size: 4 },
+      { input: Uint8Array.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]), size: 2 },
+      { input: new Uint8Array(648), size: 648 },
+      { input: new Uint8Array(1), size: 1 },
+    ];
+
+    for (const { input, size } of test) {
+      const unzipped = unzip(input, size);
+      const joined = join(unzipped, size);
+
+      assert.deepStrictEqual(joined.length, input.length);
+      assert.deepStrictEqual(joined, input);
+    }
   });
 });

@@ -122,8 +122,20 @@ export function split() {
   throw new Error("Not implemented yet!");
 }
 
-export function join() {
-  throw new Error("Not implemented yet!");
+/**
+ * Joining function which accepts `k` pieces of data, each of `size` octets
+ * and returns a single blob of data.
+ *
+ * https://graypaper.fluffylabs.dev/#/9a08063/3ed4013ed401?v=0.6.6
+ */
+export function join(input: Uint8Array[], size = SHARD_LENGTH * N_SHARDS): Uint8Array {
+  const result = new Uint8Array(input.length * size);
+  for (let i = 0; i < input.length; i++) {
+    const start = i * size;
+    const end = Math.min(start + size, result.length);
+    result.set(input[i].subarray(0, end - start), start);
+  }
+  return result;
 }
 
 /**
