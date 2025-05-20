@@ -123,7 +123,7 @@ export function split() {
 }
 
 /**
- * Joining function which accepts `k` pieces of data, each of `size` octets
+ * `join`: Joining function which accepts `k` pieces of data, each of `size` octets
  * and returns a single blob of data.
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3ed4013ed401?v=0.6.6
@@ -139,7 +139,7 @@ export function join(input: Uint8Array[], size = SHARD_LENGTH * N_SHARDS): Uint8
 }
 
 /**
- * Unzipping function which accepts a blob of data and returns
+ * `unzip`: Unzipping function which accepts a blob of data and returns
  * `k` pieces of data, each of `size` octets.
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3e06023e0602?v=0.6.6
@@ -161,8 +161,31 @@ export function lace() {
   throw new Error("Not implemented yet!");
 }
 
-function _transpose() {
-  throw new Error("Not implemented yet!");
+/**
+ * `T`: Transposing function which accepts an array of `k` pieces of data
+ * which each have same lenght of `n` octets and returns an array of `n`
+ * pieces of data which each have length of `k` octets.
+ *
+ * T[[x0,0, x0,1, x0,2, . . . ], [x1,0, x1,1, . . . ], . . . ] ≡
+ * [[x0,0, x1,0, x2,0, . . . ], [x0,1, x1,1, . . . ], . . . ]
+ *
+ * https://graypaper.fluffylabs.dev/#/9a08063/3e2e023e2e02?v=0.6.6
+ */
+export function transpose(input: Uint8Array[]): Uint8Array[] {
+  if (input.length === 0) {
+    return [];
+  }
+  const pieces = input[0].length;
+  const size = input.length;
+  const result = new Array<Uint8Array>(pieces);
+  for (let i = 0; i < pieces; i++) {
+    const chunk = new Uint8Array(size);
+    for (let j = 0; j < size; j++) {
+      chunk[j] = input[j][i];
+    }
+    result[i] = chunk;
+  }
+  return result;
 }
 
 /**

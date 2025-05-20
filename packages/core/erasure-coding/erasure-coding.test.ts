@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { TEST_DATA } from "./ec-test-data";
-import { decodeData, encodeData, join, unzip } from "./erasure-coding";
+import { decodeData, encodeData, join, transpose, unzip } from "./erasure-coding";
 
 function stringToBytes(input: string): Uint8Array {
   const chunkSize = 2; // 2 chars === 1 byte
@@ -183,6 +183,42 @@ describe("erasure coding: join", () => {
 
       assert.deepStrictEqual(joined.length, input.length);
       assert.deepStrictEqual(joined, input);
+    }
+  });
+});
+
+describe("erasure coding: transpose", () => {
+  it("should transpose data", () => {
+    const test = [
+      {
+        input: [Uint8Array.from([0x00, 0x01]), Uint8Array.from([0x02, 0x03])],
+        expected: [Uint8Array.from([0x00, 0x02]), Uint8Array.from([0x01, 0x03])],
+      },
+      {
+        input: [Uint8Array.from([0x00, 0x01, 0x02, 0x03]), Uint8Array.from([0x04, 0x05, 0x06, 0x07])],
+        expected: [
+          Uint8Array.from([0x00, 0x04]),
+          Uint8Array.from([0x01, 0x05]),
+          Uint8Array.from([0x02, 0x06]),
+          Uint8Array.from([0x03, 0x07]),
+        ],
+      },
+      {
+        input: [
+          Uint8Array.from([0x00, 0x01]),
+          Uint8Array.from([0x02, 0x03]),
+          Uint8Array.from([0x04, 0x05]),
+          Uint8Array.from([0x06, 0x07]),
+        ],
+        expected: [Uint8Array.from([0x00, 0x02, 0x04, 0x06]), Uint8Array.from([0x01, 0x03, 0x05, 0x07])],
+      },
+    ];
+
+    for (const { input, expected } of test) {
+      const result = transpose(input);
+
+      assert.deepStrictEqual(result.length, expected.length);
+      assert.deepStrictEqual(result, expected);
     }
   });
 });
