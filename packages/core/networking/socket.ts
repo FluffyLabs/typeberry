@@ -251,8 +251,10 @@ function toArrayBuffer(data: Uint8Array): ArrayBuffer {
   if (data.buffer instanceof ArrayBuffer) {
     return data.buffer;
   }
-  const copy = new Uint8Array(data);
-  return copy.buffer;
+  const buffer = new ArrayBuffer(data.length);
+  const copy = new Uint8Array(buffer);
+  copy.set(data, 0);
+  return buffer;
 }
 
 function ed25519Crypto(key: Ed25519Pair) {

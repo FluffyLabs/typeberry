@@ -42,7 +42,7 @@ describe("X509 Certificate", () => {
       certId: BytesBlob.blobFromString("QUIC Networking"),
       subjectKeyPair: keyPair,
       issuerKeyPair: keyPair,
-      now: new Date(Date.UTC(2025, 4, 30, 9, 0, 0, 0))
+      now: new Date(Date.UTC(2025, 4, 30, 9, 0, 0, 0)),
     });
 
     const altName = cert.getExtension(x509.SubjectAlternativeNameExtension);
