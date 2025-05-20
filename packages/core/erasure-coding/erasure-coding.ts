@@ -9,6 +9,7 @@ const SHARD_ALIGNMENT = 64; // Shard size must be multiple of 64 bytes. (reed-so
  */
 const N_SHARDS = 342;
 const RESULT_SHARDS = 1023;
+/** `RESULT_SHARDS - N_SHARDS`: `681` */
 const N_REDUNDANCY = RESULT_SHARDS - N_SHARDS;
 
 /**
@@ -61,9 +62,12 @@ export function encodeData(input: Uint8Array) {
   const encodedData = encodingResult.take_data();
 
   for (let i = 0; i < N_REDUNDANCY; i++) {
-    result[i + N_SHARDS] = new Uint8Array(2);
-    result[i + N_SHARDS][0] = encodedData[i * SHARD_ALIGNMENT + FIRST_POINT_INDEX];
-    result[i + N_SHARDS][1] = encodedData[i * SHARD_ALIGNMENT + SECOND_POINT_INDEX];
+    const idx = i + N_SHARDS;
+    const shardIdx = i * SHARD_ALIGNMENT;
+
+    result[idx] = new Uint8Array(2);
+    result[idx][0] = encodedData[shardIdx + FIRST_POINT_INDEX];
+    result[idx][1] = encodedData[shardIdx + SECOND_POINT_INDEX];
   }
 
   return result;
@@ -104,8 +108,11 @@ export function decodeData(input: [number, Uint8Array][], expectedLength: number
   for (let i = 0; i < resultIndices.length; i++) {
     // fill reconstructed shards in result
     const index = resultIndices[i];
-    result[SHARD_LENGTH * index] = resultData[i * SHARD_ALIGNMENT + FIRST_POINT_INDEX];
-    result[SHARD_LENGTH * index + 1] = resultData[i * SHARD_ALIGNMENT + SECOND_POINT_INDEX];
+    const resultIdx = SHARD_LENGTH * index;
+    const shardIdx = i * SHARD_ALIGNMENT;
+
+    result[resultIdx] = resultData[shardIdx + FIRST_POINT_INDEX];
+    result[resultIdx + 1] = resultData[shardIdx + SECOND_POINT_INDEX];
   }
 
   return result.subarray(0, expectedLength);
