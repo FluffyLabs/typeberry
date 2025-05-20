@@ -138,7 +138,9 @@ export function unzip(input: Uint8Array, size = 684): Uint8Array[] {
   for (let i = 0; i < pieces; i++) {
     const start = i * size;
     const end = Math.min(start + size, input.length);
-    result[i] = input.subarray(start, end);
+    const chunk = new Uint8Array(size);
+    chunk.set(input.subarray(start, end));
+    result[i] = chunk;
   }
   return result;
 }
@@ -147,7 +149,7 @@ export function lace() {
   throw new Error("Not implemented yet!");
 }
 
-function transpose() {
+function _transpose() {
   throw new Error("Not implemented yet!");
 }
 

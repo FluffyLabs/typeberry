@@ -76,21 +76,14 @@ describe("erasure coding: unzip", () => {
     const test = [
       {
         input: Uint8Array.from([0x00, 0x01, 0x02, 0x03]),
-        expected: [
-          Uint8Array.from([0x00, 0x01]),
-          Uint8Array.from([0x02, 0x03]),
-        ],
+        expected: [Uint8Array.from([0x00, 0x01]), Uint8Array.from([0x02, 0x03])],
         size: 2,
       },
       {
         input: Uint8Array.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]),
-        expected: [
-          Uint8Array.from([0x00, 0x01, 0x02, 0x03]),
-          Uint8Array.from([0x04, 0x05, 0x06, 0x07]),
-        ],
+        expected: [Uint8Array.from([0x00, 0x01, 0x02, 0x03]), Uint8Array.from([0x04, 0x05, 0x06, 0x07])],
         size: 4,
       },
-
       {
         input: Uint8Array.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]),
         expected: [
@@ -100,6 +93,16 @@ describe("erasure coding: unzip", () => {
           Uint8Array.from([0x06, 0x07]),
         ],
         size: 2,
+      },
+      {
+        input: Uint8Array.from([0x00]),
+        expected: [new Uint8Array(648)],
+        size: 648,
+      },
+      {
+        input: new Uint8Array(),
+        expected: [],
+        size: 648,
       },
     ];
 
