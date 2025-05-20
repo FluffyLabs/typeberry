@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { TEST_DATA } from "./ec-test-data";
-import { decodeData, encodeData, join, transpose, unzip } from "./erasure-coding";
+import { decodeData, encodeData, join, split, transpose, unzip } from "./erasure-coding";
 
 function stringToBytes(input: string): Uint8Array {
   const chunkSize = 2; // 2 chars === 1 byte
@@ -71,7 +71,7 @@ describe("erasure coding", () => {
   });
 });
 
-describe("erasure coding: unzip", () => {
+describe("erasure coding: split", () => {
   it("should unzip data", () => {
     const test = [
       {
@@ -107,17 +107,17 @@ describe("erasure coding: unzip", () => {
     ];
 
     for (const { input, expected, size } of test) {
-      const result = unzip(input, size);
+      const result = split(input, size);
 
       assert.deepStrictEqual(result.length, expected.length);
       assert.deepStrictEqual(result, expected);
     }
   });
 
-  it("should unzip and successfully encode data", () => {
+  it("should split and successfully encode data", () => {
     const input = Uint8Array.from([0x00]);
     const expected = [...Array.from({ length: 1023 }, () => new Uint8Array(2))];
-    const unzipped = unzip(input);
+    const unzipped = split(input);
     const encoded = encodeData(unzipped[0]);
 
     assert.deepStrictEqual(encoded.length, expected.length);
@@ -168,7 +168,7 @@ describe("erasure coding: join", () => {
     }
   });
 
-  it("should unzip and join data without a change", () => {
+  it("should split and join data without a change", () => {
     const test = [
       { input: Uint8Array.from([0x00, 0x01]), size: 2 },
       { input: Uint8Array.from([0x00, 0x01, 0x02, 0x03]), size: 4 },
@@ -178,7 +178,7 @@ describe("erasure coding: join", () => {
     ];
 
     for (const { input, size } of test) {
-      const unzipped = unzip(input, size);
+      const unzipped = split(input, size);
       const joined = join(unzipped, size);
 
       assert.deepStrictEqual(joined.length, input.length);
@@ -220,5 +220,59 @@ describe("erasure coding: transpose", () => {
       assert.deepStrictEqual(result.length, expected.length);
       assert.deepStrictEqual(result, expected);
     }
+  });
+});
+
+describe("erasure coding: unzip", () => {
+  it("should unzip data", () => {
+    const test = [
+      {
+        input: Uint8Array.from([0x00, 0x01, 0x02, 0x03]),
+        expected: [Uint8Array.from([0x00, 0x02]), Uint8Array.from([0x01, 0x03])],
+        size: 2,
+      },
+      {
+        input: Uint8Array.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]),
+        expected: [Uint8Array.from([0x00, 0x02, 0x04, 0x06]), Uint8Array.from([0x01, 0x03, 0x05, 0x07])],
+        size: 4,
+      },
+      {
+        input: Uint8Array.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]),
+        expected: [
+          Uint8Array.from([0x00, 0x04]),
+          Uint8Array.from([0x01, 0x05]),
+          Uint8Array.from([0x02, 0x06]),
+          Uint8Array.from([0x03, 0x07]),
+        ],
+        size: 2,
+      },
+      {
+        input: Uint8Array.from([0x00]),
+        expected: [new Uint8Array(648)],
+        size: 648,
+      },
+      {
+        input: new Uint8Array(),
+        expected: [],
+        size: 648,
+      },
+    ];
+
+    for (const { input, expected, size } of test) {
+      const result = unzip(input, size);
+
+      assert.deepStrictEqual(result.length, expected.length);
+      assert.deepStrictEqual(result, expected);
+    }
+  });
+
+  it("should unzip and successfully encode data", () => {
+    const input = Uint8Array.from([0x00]);
+    const expected = [...Array.from({ length: 1023 }, () => new Uint8Array(2))];
+    const unzipped = unzip(input);
+    const encoded = encodeData(unzipped[0]);
+
+    assert.deepStrictEqual(encoded.length, expected.length);
+    assert.deepStrictEqual(encoded, expected);
   });
 });

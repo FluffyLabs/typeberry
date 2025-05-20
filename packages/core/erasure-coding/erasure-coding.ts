@@ -118,8 +118,23 @@ export function decodeData(input: [number, Uint8Array][], expectedLength: number
   return result.subarray(0, expectedLength);
 }
 
-export function split() {
-  throw new Error("Not implemented yet!");
+/**
+ * `split`: Splitting function which accepts a blob of data and returns
+ * `k` pieces of data, each of `size` octets.
+ *
+ * https://graypaper.fluffylabs.dev/#/9a08063/3eb4013eb401?v=0.6.6
+ */
+export function split(input: Uint8Array, size = SHARD_LENGTH * N_SHARDS): Uint8Array[] {
+  const pieces = Math.ceil(input.length / size);
+  const result = new Array<Uint8Array>(pieces);
+  for (let i = 0; i < pieces; i++) {
+    const start = i * size;
+    const end = Math.min(start + size, input.length);
+    const chunk = new Uint8Array(size);
+    chunk.set(input.subarray(start, end));
+    result[i] = chunk;
+  }
+  return result;
 }
 
 /**
@@ -140,7 +155,7 @@ export function join(input: Uint8Array[], size = SHARD_LENGTH * N_SHARDS): Uint8
 
 /**
  * `unzip`: Unzipping function which accepts a blob of data and returns
- * `k` pieces of data, each of `size` octets.
+ * `k` pieces of data, each of `n` size octets.
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3e06023e0602?v=0.6.6
  */
@@ -148,10 +163,10 @@ export function unzip(input: Uint8Array, size = SHARD_LENGTH * N_SHARDS): Uint8A
   const pieces = Math.ceil(input.length / size);
   const result = new Array<Uint8Array>(pieces);
   for (let i = 0; i < pieces; i++) {
-    const start = i * size;
-    const end = Math.min(start + size, input.length);
     const chunk = new Uint8Array(size);
-    chunk.set(input.subarray(start, end));
+    for (let j = 0; j < size; j++) {
+      chunk[j] = input[j * pieces + i];
+    }
     result[i] = chunk;
   }
   return result;
