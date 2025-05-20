@@ -481,7 +481,7 @@ export class PartialStateDb implements PartialState {
       const stateLookup = this.updatedState.lookupHistory.find(
         (l) => l.hash.isEqualTo(preimageHash) && l.length === preimage.length,
       );
-      if (stateLookup === undefined || stateLookup.slots.length !== 0) {
+      if (stateLookup === undefined || stateLookup.slots.length !== 0 || stateLookup.forgotten) {
         return Result.error(ProvidePreimageError.WasNotRequested);
       }
     }
