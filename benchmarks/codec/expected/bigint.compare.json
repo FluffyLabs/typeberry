@@ -3,11 +3,11 @@
   "date": "2024-09-09T22:50:08.461Z",
   "version": null,
   "results": null,
-  "slowest": {
+  "fastest": {
     "name": "compare bigint",
     "index": 1
   },
-  "fastest": {
+  "slowest": {
     "name": "compare custom",
     "index": 0
   }
