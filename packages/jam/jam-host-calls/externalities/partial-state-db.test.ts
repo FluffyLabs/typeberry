@@ -708,14 +708,12 @@ describe("PartialState.providePreimage", () => {
 
     return {
       mockState,
-      service,
-      secondService,
       preimage,
     };
   };
 
   it("should provide a preimage for other service", () => {
-    const { mockState, service, secondService, preimage } = testStateWithSecondService({
+    const { mockState, preimage } = testStateWithSecondService({
       self: false,
       requested: true,
     });
@@ -729,30 +727,24 @@ describe("PartialState.providePreimage", () => {
 
     // then
     assert.deepStrictEqual(result, Result.ok(OK));
-    assert.deepStrictEqual(service.data.preimages.get(preimage.hash), undefined);
-    assert.deepStrictEqual(secondService.data.preimages.get(preimage.hash), preimage);
   });
 
   it("should provide a preimage for itself", () => {
-    const { mockState, service, secondService, preimage } = testStateWithSecondService({ self: true, requested: true });
+    const { mockState, preimage } = testStateWithSecondService({ self: true, requested: true });
 
     const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
 
     const serviceId = tryAsServiceId(0);
-    const expected = HashDictionary.new<PreimageHash, PreimageItem>();
-    expected.set(preimage.hash, preimage);
 
     // when
     const result = partialState.providePreimage(serviceId, preimage.blob);
 
     // then
     assert.deepStrictEqual(result, Result.ok(OK));
-    assert.deepStrictEqual(service.data.preimages.get(preimage.hash), preimage);
-    assert.deepStrictEqual(secondService.data.preimages.get(preimage.hash), undefined);
   });
 
   it("should return error if preimage was not requested", () => {
-    const { mockState, service, secondService, preimage } = testStateWithSecondService({
+    const { mockState, preimage } = testStateWithSecondService({
       self: false,
       requested: false,
     });
@@ -760,16 +752,12 @@ describe("PartialState.providePreimage", () => {
     const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
 
     const serviceId = tryAsServiceId(1);
-    const expected = HashDictionary.new<PreimageHash, PreimageItem>();
-    expected.set(preimage.hash, preimage);
 
     // when
     const result = partialState.providePreimage(serviceId, preimage.blob);
 
     // then
     assert.deepStrictEqual(result, Result.error(ProvidePreimageError.WasNotRequested));
-    assert.deepStrictEqual(service.data.preimages.get(preimage.hash), undefined);
-    assert.deepStrictEqual(secondService.data.preimages.get(preimage.hash), undefined);
   });
 
   it("should return error if preimage is requestedn and already available for other service", () => {
@@ -782,8 +770,6 @@ describe("PartialState.providePreimage", () => {
     const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
 
     const serviceId = tryAsServiceId(1);
-    const expected = HashDictionary.new<PreimageHash, PreimageItem>();
-    expected.set(preimage.hash, preimage);
 
     // when
     const result = partialState.providePreimage(serviceId, preimage.blob);
@@ -802,8 +788,6 @@ describe("PartialState.providePreimage", () => {
     const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
 
     const serviceId = tryAsServiceId(0);
-    const expected = HashDictionary.new<PreimageHash, PreimageItem>();
-    expected.set(preimage.hash, preimage);
 
     // when
     const result = partialState.providePreimage(serviceId, preimage.blob);
@@ -812,8 +796,8 @@ describe("PartialState.providePreimage", () => {
     assert.deepStrictEqual(result, Result.error(ProvidePreimageError.AlreadyProvided));
   });
 
-  it("should return ok and than error if preimage is provided twice for self", () => {
-    const { mockState, preimage, service, secondService } = testStateWithSecondService({
+  it("should return ok and then error if preimage is provided twice for self", () => {
+    const { mockState, preimage } = testStateWithSecondService({
       self: true,
       requested: true,
       available: false,
@@ -822,8 +806,6 @@ describe("PartialState.providePreimage", () => {
     const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
 
     const serviceId = tryAsServiceId(0);
-    const expected = HashDictionary.new<PreimageHash, PreimageItem>();
-    expected.set(preimage.hash, preimage);
 
     // when
     const resultok = partialState.providePreimage(serviceId, preimage.blob);
@@ -832,12 +814,10 @@ describe("PartialState.providePreimage", () => {
     // then
     assert.deepStrictEqual(resultok, Result.ok(OK));
     assert.deepStrictEqual(resulterr, Result.error(ProvidePreimageError.AlreadyProvided));
-    assert.deepStrictEqual(service.data.preimages.get(preimage.hash), preimage);
-    assert.deepStrictEqual(secondService.data.preimages.get(preimage.hash), undefined);
   });
 
-  it("should return ok and than error if preimage is provided twice for other", () => {
-    const { mockState, preimage, service, secondService } = testStateWithSecondService({
+  it("should return ok and then error if preimage is provided twice for other", () => {
+    const { mockState, preimage } = testStateWithSecondService({
       self: false,
       requested: true,
       available: false,
@@ -846,8 +826,6 @@ describe("PartialState.providePreimage", () => {
     const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
 
     const serviceId = tryAsServiceId(1);
-    const expected = HashDictionary.new<PreimageHash, PreimageItem>();
-    expected.set(preimage.hash, preimage);
 
     // when
     const resultok = partialState.providePreimage(serviceId, preimage.blob);
@@ -856,7 +834,5 @@ describe("PartialState.providePreimage", () => {
     // then
     assert.deepStrictEqual(resultok, Result.ok(OK));
     assert.deepStrictEqual(resulterr, Result.error(ProvidePreimageError.AlreadyProvided));
-    assert.deepStrictEqual(service.data.preimages.get(preimage.hash), undefined);
-    assert.deepStrictEqual(secondService.data.preimages.get(preimage.hash), preimage);
   });
 });

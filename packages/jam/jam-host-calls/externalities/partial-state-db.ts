@@ -143,6 +143,31 @@ export class PartialStateDb implements PartialState {
     return status === undefined ? null : PreimageUpdate.update(status);
   }
 
+  private getProvidedPreimage(serviceId: ServiceId | null, hash: PreimageHash): PreimageItem | null {
+    if (serviceId === null) {
+      return null;
+    }
+
+    const providedPreimage = this.updatedState.providedPreimages.find(
+      (p) => p.serviceId === serviceId && p.item.hash.isEqualTo(hash),
+    );
+    if (providedPreimage !== undefined) {
+      return providedPreimage.item;
+    }
+
+    // fallback to state preimages
+    const service = this.state.services.get(serviceId);
+    if (service === undefined) {
+      return null;
+    }
+    const preimage = service.data.preimages.get(hash);
+    if (preimage !== undefined) {
+      return preimage;
+    }
+
+    return null;
+  }
+
   /**
    * Update a preimage.
    *
@@ -474,45 +499,37 @@ export class PartialStateDb implements PartialState {
     const preimageHash = blake2b.hashBytes(preimage).asOpaque<PreimageHash>();
 
     // checking service internal lookup
-    const lookup = service.data.lookupHistory.get(preimageHash);
-    const status = lookup?.find((item) => item.length === preimage.length);
-    if (status === undefined || !LookupHistoryItem.isRequested(status)) {
-      // checking state lookup
-      const stateLookup = this.updatedState.lookupHistory.find(
-        (l) => l.hash.isEqualTo(preimageHash) && l.length === preimage.length,
-      );
-      if (stateLookup === undefined || stateLookup.slots.length !== 0 || stateLookup.forgotten) {
+    if (serviceId === this.currentServiceId) {
+      const stateLookup = this.getPreimageStatus(preimageHash, tryAsU64(preimage.length));
+      if (stateLookup === null || stateLookup.slots.length !== 0 || stateLookup.forgotten) {
+        return Result.error(ProvidePreimageError.WasNotRequested);
+      }
+    } else {
+      const lookup = service.data.lookupHistory.get(preimageHash);
+      const status = lookup?.find((item) => item.length === preimage.length);
+      const notRequested = status === undefined || !LookupHistoryItem.isRequested(status);
+
+      if (notRequested) {
         return Result.error(ProvidePreimageError.WasNotRequested);
       }
     }
 
-    // checking service preimages
-    const servicePreimage = service.data.preimages.get(preimageHash);
-    if (servicePreimage !== undefined) {
+    // checking already provided preimages
+    const providedPreimages = this.getProvidedPreimage(serviceId, preimageHash);
+    if (providedPreimages !== null) {
       return Result.error(ProvidePreimageError.AlreadyProvided);
     }
-
-    // checking state preimages
-    const statePreimage = this.updatedState.providedPreimages.find(
-      (p) => p.serviceId === serviceId && p.item.hash.isEqualTo(preimageHash),
-    );
-    if (statePreimage !== undefined) {
-      return Result.error(ProvidePreimageError.AlreadyProvided);
-    }
-
-    const item = PreimageItem.create({
-      hash: preimageHash,
-      blob: preimage,
-    });
 
     // setting up the new preimage
     this.updatedState.providedPreimages.push(
       NewPreimage.create({
         serviceId: service.id,
-        item,
+        item: PreimageItem.create({
+          hash: preimageHash,
+          blob: preimage,
+        }),
       }),
     );
-    service.data.preimages.set(preimageHash, item);
 
     return Result.ok(OK);
   }
@@ -548,12 +565,9 @@ export class NewPreimage {
   }
 
   private constructor(
-    public serviceId: ServiceId,
-    public item: PreimageItem,
-  ) {
-    this.serviceId = serviceId;
-    this.item = item;
-  }
+    public readonly serviceId: ServiceId,
+    public readonly item: PreimageItem,
+  ) {}
 }
 
 function bumpServiceId(serviceId: ServiceId) {
