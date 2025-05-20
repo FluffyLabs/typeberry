@@ -259,7 +259,7 @@ export function ed25519AsJsonWebKeyPair(keyPair: ed25519.Ed25519Pair): JsonWebKe
     kty: KEY_TYPE,
     crv: CURVE_NAME,
     x: Buffer.from(keyPair.pubKey.raw).toString("base64url"),
-    d: Buffer.from(keyPair.privKey.raw).toString("base64url"),
+    d: Buffer.from(keyPair._privKey.raw).toString("base64url"),
   };
 
   return {
