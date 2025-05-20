@@ -113,4 +113,14 @@ describe("erasure coding: unzip", () => {
       assert.deepStrictEqual(result, expected);
     }
   });
+
+  it("should unzip and successfully encode data", () => {
+    const input = Uint8Array.from([0x00]);
+    const expected = [...Array.from({ length: 1023 }, () => new Uint8Array(2))];
+    const unzipped = unzip(input);
+    const encoded = encodeData(unzipped[0]);
+
+    assert.deepStrictEqual(encoded.length, expected.length);
+    assert.deepStrictEqual(encoded, expected);
+  });
 });

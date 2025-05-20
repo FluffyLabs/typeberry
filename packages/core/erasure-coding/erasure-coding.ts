@@ -132,7 +132,7 @@ export function join() {
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3e06023e0602?v=0.6.6
  */
-export function unzip(input: Uint8Array, size = 684): Uint8Array[] {
+export function unzip(input: Uint8Array, size = SHARD_LENGTH * N_SHARDS): Uint8Array[] {
   const pieces = Math.ceil(input.length / size);
   const result = new Array<Uint8Array>(pieces);
   for (let i = 0; i < pieces; i++) {
