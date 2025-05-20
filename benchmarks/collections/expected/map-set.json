@@ -5,15 +5,13 @@
   "results": [
     {
       "name": "2 gets + conditional set",
-      "ops": 69767.39,
-      "margin": 0.3,
-      "percentSlower": 0
+      "ops": 121199.26,
+      "margin": 1.0
     },
     {
       "name": "1 get 1 set",
       "ops": 62595.29,
-      "margin": 0.2,
-      "percentSlower": 39.2
+      "margin": 1.0
     }
   ],
   "fastest": {

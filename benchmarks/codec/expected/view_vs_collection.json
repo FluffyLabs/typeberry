@@ -5,33 +5,33 @@
   "results": [
     {
       "name": "Get first element from Decoded",
-      "ops": 31173.02,
-      "margin": 0.56
+      "ops": 27801.89,
+      "margin": 1.0
     },
     {
       "name": "Get first element from View",
       "ops": 68299.98,
-      "margin": 0.2
+      "margin": 1.0
     },
     {
       "name": "Get 50th element from Decoded",
       "ops": 31269.64,
-      "margin": 0.45
+      "margin": 1.0
     },
     {
       "name": "Get 50th element from View",
       "ops": 38404.07,
-      "margin": 2.02
+      "margin": 1.0
     },
     {
       "name": "Get last element from Decoded",
-      "ops": 28099.2,
-      "margin": 0.33
+      "ops": 27604.46,
+      "margin": 1.0
     },
     {
       "name": "Get last element from View",
       "ops": 27069.69,
-      "margin": 0.6
+      "margin": 1.0
     }
   ],
   "fastest": {
