@@ -1,4 +1,4 @@
-import assert, { deepEqual } from "node:assert";
+import assert from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
 import { describe, it } from "node:test";
@@ -22,13 +22,15 @@ const BOB_CERT = fs.readFileSync(path.resolve(`${__dirname}/fixtures/bob-generat
 const ALICE_PAIR = ed25519.privateKey(Bytes.fill(ed25519.ED25519_PRIV_KEY_BYTES, 0).asOpaque());
 const BOB_PAIR = ed25519.privateKey(Bytes.fill(ed25519.ED25519_PRIV_KEY_BYTES, 1).asOpaque());
 
-describe("altName", async () => {
-  const alice = await ALICE_PAIR;
-  const keyPair = ed25519AsJsonWebKeyPair(alice);
+describe("altName", () => {
+  it("should compute Alices alt name", async () => {
+    const alice = await ALICE_PAIR;
+    const keyPair = ed25519AsJsonWebKeyPair(alice);
 
-  const aliceAltName = altName(keyPair.publicKey);
+    const aliceAltName = altName(keyPair.publicKey);
 
-  assert.strictEqual(aliceAltName, "e3r2oc62zwfj3crnuifuvsxvbtlzetk4o5qyhetkhagsc2fgl2oka");
+    assert.strictEqual(aliceAltName, "e3r2oc62zwfj3crnuifuvsxvbtlzetk4o5qyhetkhagsc2fgl2oka");
+  });
 });
 
 describe("X509 Certificate", () => {
@@ -64,6 +66,6 @@ describe("X509 Certificate", () => {
     const verificationResult = await verifyCertificate([certDer]);
 
     // then
-    deepEqual(verificationResult, Result.error(VerifyCertError.AltNameMismatch));
+    assert.deepEqual(verificationResult, Result.error(VerifyCertError.AltNameMismatch));
   });
 });

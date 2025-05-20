@@ -38,7 +38,7 @@ export type PeerInfo = {
 export async function verifyCertificate(certs: Uint8Array[]): Promise<Result<PeerInfo, VerifyCertError>> {
   logger.info("Verifying peer certificate");
   // Must present exactly one cert
-  if (!certs.length) {
+  if (certs.length !== 1) {
     logger.log("Rejecting peer with no certificates.");
     return Result.error(VerifyCertError.NoCertificate);
   }
@@ -93,14 +93,14 @@ export async function generateKeyPairEd25519(): Promise<{
   publicKey: JsonWebKey;
   privateKey: JsonWebKey;
 }> {
-  const keyPair = (await webcrypto.subtle.generateKey(
+  const keyPair = await webcrypto.subtle.generateKey(
     {
       name: "EdDSA",
       namedCurve: "Ed25519",
     },
     true,
     ["sign", "verify"],
-  )) as JsonWebKeyPair;
+  );
 
   return {
     publicKey: await webcrypto.subtle.exportKey("jwk", keyPair.publicKey),
@@ -202,7 +202,7 @@ export async function generateCertificate({
       new x509.SubjectAlternativeNameExtension([
         {
           type: "dns",
-          value: altName(issuerKeyPair.publicKey),
+          value: altName(subjectKeyPair.publicKey),
         },
       ]),
       await x509.SubjectKeyIdentifierExtension.create(subjectPublicCryptoKey),

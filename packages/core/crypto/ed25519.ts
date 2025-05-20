@@ -1,6 +1,7 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type Opaque, check } from "@typeberry/utils";
 import { verify_ed25519, verify_ed25519_batch } from "ed25519-wasm/pkg";
+// TODO [ToDr] Migrate to `@noble/ed25519` when we switch to ESM.
 import * as ed from "noble-ed25519";
 
 /** ED25519 private key size. */
@@ -37,7 +38,7 @@ export class Ed25519Pair {
     /** Public key */
     public readonly pubKey: Ed25519Key,
     /** Private key. NOTE: Avoid using directly. */
-    public readonly privKey: Bytes<ED25519_PRIV_KEY_BYTES>,
+    public readonly _privKey: Bytes<ED25519_PRIV_KEY_BYTES>,
   ) {}
 }
 
@@ -49,7 +50,7 @@ export async function privateKey(privKey: Bytes<ED25519_PRIV_KEY_BYTES>): Promis
 
 /** Sign given piece of data using provided key pair. */
 export async function sign<T extends BytesBlob>(key: Ed25519Pair, message: T): Promise<Ed25519Signature> {
-  const signature = await ed.sign(message.raw, key.privKey.raw);
+  const signature = await ed.sign(message.raw, key._privKey.raw);
   return Bytes.fromBlob(signature, ED25519_SIGNATURE_BYTES).asOpaque();
 }
 

@@ -1,6 +1,9 @@
 /**
  * Custom base32 encoding used for networking.
  *
+ * This is not matching the RFC 4648 because of
+ * bit ordering.
+ *
  * NOTE [ToDr] consider optimizing.
  */
 export function base32(input: Uint8Array) {

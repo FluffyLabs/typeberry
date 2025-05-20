@@ -66,9 +66,21 @@ export class Peers {
 
   public addOnPeerConnected(cb: PeerCallback) {
     this.onPeerConnected.push(cb);
+    return () => {
+      const idx = this.onPeerConnected.indexOf(cb);
+      if (idx !== -1) {
+        this.onPeerConnected.splice(idx, 1);
+      }
+    };
   }
 
   public addOnPeerDisconnected(cb: PeerCallback) {
     this.onPeerDisconnected.push(cb);
+    return () => {
+      const idx = this.onPeerDisconnected.indexOf(cb);
+      if (idx !== -1) {
+        this.onPeerDisconnected.splice(idx, 1);
+      }
+    };
   }
 }

@@ -186,7 +186,7 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
 
   async function dial(peer: PeerAddress): Promise<Peer> {
     const peerDetails = peerVerification();
-    const peerData: Peer | null = null;
+    let peerData: Peer | null = null;
     const client = await QUICClient.createQUICClient({
       socket,
       host: peer.host,
@@ -217,8 +217,9 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
         return reject("no peer details!");
       }
 
-      const conn = client.connection;
-      const peerData = handleNewPeer(conn as unknown as Connection, peerDetails.id);
+      // TODO [ToDr] Temporary unsafe cast due to lack of ESM.
+      const conn = client.connection as unknown as Connection;
+      peerData = handleNewPeer(conn, peerDetails.id);
       return resolve(peerData);
     });
   }
@@ -250,13 +251,13 @@ function toArrayBuffer(data: Uint8Array): ArrayBuffer {
   if (data.buffer instanceof ArrayBuffer) {
     return data.buffer;
   }
-  const copy = Uint8Array.from(data);
-  return copy.buffer as ArrayBuffer;
+  const copy = new Uint8Array(data);
+  return copy.buffer;
 }
 
 function ed25519Crypto(key: Ed25519Pair) {
   return {
-    key: toArrayBuffer(key.privKey.raw),
+    key: toArrayBuffer(key._privKey.raw),
     ops: {
       async sign(privKey: ArrayBuffer, data: ArrayBuffer): Promise<ArrayBuffer> {
         const key = await ed25519.privateKey(Bytes.fromBlob(new Uint8Array(privKey), ED25519_KEY_BYTES).asOpaque());
