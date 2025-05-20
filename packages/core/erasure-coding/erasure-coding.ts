@@ -128,7 +128,7 @@ export function join() {
 
 /**
  * Unzipping function which accepts a blob of data and returns
- * `k` pieces of data, each of size 684 octets.
+ * `k` pieces of data, each of `size` octets.
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3e06023e0602?v=0.6.6
  */
