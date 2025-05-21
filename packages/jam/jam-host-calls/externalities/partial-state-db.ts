@@ -143,29 +143,30 @@ export class PartialStateDb implements PartialState {
     return status === undefined ? null : PreimageUpdate.update(status);
   }
 
-  private getProvidedPreimage(serviceId: ServiceId | null, hash: PreimageHash): PreimageItem | null {
+  private hasProvidedPreimage(serviceId: ServiceId | null, hash: PreimageHash): boolean {
     if (serviceId === null) {
-      return null;
+      return false;
     }
 
     const providedPreimage = this.updatedState.providedPreimages.find(
       (p) => p.serviceId === serviceId && p.item.hash.isEqualTo(hash),
     );
     if (providedPreimage !== undefined) {
-      return providedPreimage.item;
+      return true;
     }
 
     // fallback to state preimages
     const service = this.state.services.get(serviceId);
     if (service === undefined) {
-      return null;
-    }
-    const preimage = service.data.preimages.get(hash);
-    if (preimage !== undefined) {
-      return preimage;
+      return false;
     }
 
-    return null;
+    const preimage = service.data.preimages.get(hash);
+    if (preimage !== undefined) {
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -515,8 +516,8 @@ export class PartialStateDb implements PartialState {
     }
 
     // checking already provided preimages
-    const providedPreimages = this.getProvidedPreimage(serviceId, preimageHash);
-    if (providedPreimages !== null) {
+    const hasPreimage = this.hasProvidedPreimage(serviceId, preimageHash);
+    if (hasPreimage) {
       return Result.error(ProvidePreimageError.AlreadyProvided);
     }
 
