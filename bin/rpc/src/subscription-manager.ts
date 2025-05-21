@@ -19,11 +19,13 @@ export const UNSUBSCRIBE_METHOD_WHITELIST = new Set<string>(["unsubscribeBestBlo
 
 export class SubscriptionManager {
   private subscriptions: Map<SubscriptionId, Subscription>;
+  private lastResults: Map<SubscriptionId, string>;
   private pollInterval: NodeJS.Timeout;
   private nextId: number;
 
   constructor(private server: RpcServer) {
     this.subscriptions = new Map();
+    this.lastResults = new Map();
     this.pollInterval = setInterval(() => this.pollSubscriptions(), POLL_INTERVAL_MS);
     this.nextId = 0;
   }
@@ -36,13 +38,18 @@ export class SubscriptionManager {
       }
 
       const result = await this.server.callMethod(subscription.method, subscription.params);
-      const notification: JsonRpcSubscriptionNotification = {
-        jsonrpc: JSON_RPC_VERSION,
-        method: subscription.method,
-        params: [subscriptionId, result],
-      };
+      const lastResult = this.lastResults.get(subscriptionId);
 
-      subscription.ws.send(JSON.stringify(notification));
+      if (JSON.stringify(result) !== lastResult) {
+        const notification: JsonRpcSubscriptionNotification = {
+          jsonrpc: JSON_RPC_VERSION,
+          method: subscription.method,
+          params: [subscriptionId, result],
+        };
+
+        subscription.ws.send(JSON.stringify(notification));
+        this.lastResults.set(subscriptionId, JSON.stringify(result));
+      }
     }
   }
 
@@ -65,6 +72,7 @@ export class SubscriptionManager {
   }
 
   unsubscribe(id: SubscriptionId): boolean {
+    this.lastResults.delete(id);
     return this.subscriptions.delete(id);
   }
 
