@@ -502,7 +502,7 @@ export class PartialStateDb implements PartialState {
     // checking service internal lookup
     if (serviceId === this.currentServiceId) {
       const stateLookup = this.getPreimageStatus(preimageHash, tryAsU64(preimage.length));
-      if (stateLookup === null || stateLookup.slots.length !== 0 || stateLookup.forgotten) {
+      if (stateLookup === null || !LookupHistoryItem.isRequested(stateLookup) || stateLookup.forgotten) {
         return Result.error(ProvidePreimageError.WasNotRequested);
       }
     } else {
