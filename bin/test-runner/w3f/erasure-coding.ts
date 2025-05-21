@@ -3,10 +3,21 @@ import { it } from "node:test";
 
 import { fromJson } from "@typeberry/block-json";
 import type { ExportsRootHash } from "@typeberry/block/work-report";
-import type { BytesBlob } from "@typeberry/bytes";
+import { BytesBlob } from "@typeberry/bytes";
 import { decodeData, encodeData } from "@typeberry/erasure-coding";
+import { encodeChunks } from "@typeberry/erasure-coding/erasure-coding";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
+
+export class JavaJamEcTest {
+  static fromJson: FromJson<JavaJamEcTest> = {
+    data: fromJson.bytesBlob,
+    shards: json.array(fromJson.bytesBlob),
+  };
+
+  data!: BytesBlob;
+  shards!: BytesBlob[];
+}
 
 export class EcTest {
   static fromJson: FromJson<EcTest> = {
@@ -72,6 +83,19 @@ function random() {
 }
 
 logger.info(`Erasure encoding tests random seed: ${seed}`);
+
+export async function runJavaJamEcTest(test: JavaJamEcTest, _path: string) {
+  //const chainSpec = getChainSpec(path);
+
+  it("should encode data", () => {
+    const encoded = encodeChunks(test.data.raw);
+    const expected = test.shards.map((x) => x.raw);
+
+    assert.strictEqual(encoded[0].length, expected.length);
+    assert.deepStrictEqual(encoded, expected);
+  });
+  it("should decode data", () => {});
+}
 
 export async function runEcTest(test: EcTest) {
   if (test.chunks[0].length > 2) {

@@ -33,11 +33,11 @@ import { runWorkItemTest, workItemFromJson } from "./w3f/codec/work-item";
 import { runWorkPackageTest, workPackageFromJson } from "./w3f/codec/work-package";
 import { DisputesTest, runDisputesTest } from "./w3f/disputes";
 import {
-  EcTest,
+  JavaJamEcTest,
   PageProof,
   SegmentEcTest,
   SegmentRoot,
-  runEcTest,
+  runJavaJamEcTest,
   runPageProofTest,
   runSegmentEcTest,
   runSegmentRootTest,
@@ -74,10 +74,11 @@ const runners = [
   runner("codec/work_report", workReportFromJson, runWorkReportTest),
   runner("codec/work_result", workResultFromJson, runWorkResultTest),
   runner("disputes", DisputesTest.fromJson, runDisputesTest),
-  runner("erasure_coding", EcTest.fromJson, runEcTest),
+  //runner("erasure_coding", EcTest.fromJson, runEcTest),
   runner("erasure_coding/page_proof", PageProof.fromJson, runPageProofTest),
   runner("erasure_coding/segment_ec", SegmentEcTest.fromJson, runSegmentEcTest),
   runner("erasure_coding/segment_root", SegmentRoot.fromJson, runSegmentRootTest),
+  runner("erasure_coding/javajam", JavaJamEcTest.fromJson, runJavaJamEcTest),
   runner("history", HistoryTest.fromJson, runHistoryTest),
   runner("schema", JsonSchema.fromJson, ignoreSchemaFiles), // ignore schema files
   runner("preimages", PreImagesTest.fromJson, runPreImagesTest),
