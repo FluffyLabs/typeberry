@@ -34,7 +34,7 @@ function getInputWithPadding(input: Uint8Array) {
   return inputWithPadding;
 }
 
-export function encodeData(input: Uint8Array) {
+export function encodeData(input: Uint8Array): Uint8Array[] {
   check(
     input.length <= SHARD_LENGTH * N_SHARDS,
     `length of input (${input.length}) should be equal to or less than ${SHARD_LENGTH * N_SHARDS}`,
@@ -74,7 +74,10 @@ export function encodeData(input: Uint8Array) {
 }
 
 // expectedLength can be useful to remove padding in case of short data (< 342)
-export function decodeData(input: [number, Uint8Array][], expectedLength: number = SHARD_LENGTH * N_SHARDS) {
+export function decodeData(
+  input: [number, Uint8Array][],
+  expectedLength: number = SHARD_LENGTH * N_SHARDS,
+): Uint8Array {
   check(input.length === N_SHARDS, `length of input should be equal to ${N_SHARDS}`);
   const result = new Uint8Array(SHARD_LENGTH * N_SHARDS);
 
@@ -219,16 +222,18 @@ export function transpose(input: Uint8Array[]): Uint8Array[] {
 }
 
 /**
- * Chunking function which accepts an arbitrary sized data
- * blob whose length divides wholly into 684 octets and results in 1,023
- * sequences of sequences each of smaller blobs
+ * Encoding function which accepts an arbitrary sized data
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3f15003f1500?v=0.6.6
  */
-export function chunk() {
-  throw new Error("Not implemented yet!");
+export function encodeChunks(input: Uint8Array): Uint8Array[] {
+  const encodedChunks: Uint8Array[] = [];
+  for (const piece of unzip(input)) {
+    encodedChunks.push(join(transpose(encodeData(piece))));
+  }
+  return encodedChunks;
 }
 
-export function reconstruct() {
+export function reconstructData() {
   throw new Error("Not implemented yet!");
 }
