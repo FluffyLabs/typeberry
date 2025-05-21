@@ -8,6 +8,7 @@ import { decodeData, encodeData } from "@typeberry/erasure-coding";
 import { encodeChunks } from "@typeberry/erasure-coding/erasure-coding";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
+import { getChainSpec } from "./spec";
 
 export class JavaJamEcTest {
   static fromJson: FromJson<JavaJamEcTest> = {
@@ -84,15 +85,14 @@ function random() {
 
 logger.info(`Erasure encoding tests random seed: ${seed}`);
 
-export async function runJavaJamEcTest(test: JavaJamEcTest, _path: string) {
-  //const chainSpec = getChainSpec(path);
+export async function runJavaJamEcTest(test: JavaJamEcTest, path: string) {
+  const chainSpec = getChainSpec(path);
 
   it("should encode data", () => {
     const encoded = encodeChunks(test.data.raw);
-    const expected = test.shards.map((x) => x.raw);
 
-    assert.strictEqual(encoded[0].length, expected.length);
-    assert.deepStrictEqual(encoded, expected);
+    assert.strictEqual(encoded.length, test.shards.length);
+    assert.deepStrictEqual(encoded, test.shards);
   });
   it("should decode data", () => {});
 }

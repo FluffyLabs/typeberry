@@ -1,3 +1,4 @@
+import { BytesBlob } from "@typeberry/bytes";
 import { check } from "@typeberry/utils";
 import { ShardsCollection, decode, encode } from "reed-solomon-wasm/pkg";
 
@@ -226,12 +227,19 @@ export function transpose(input: Uint8Array[]): Uint8Array[] {
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3f15003f1500?v=0.6.6
  */
-export function encodeChunks(input: Uint8Array): Uint8Array[] {
-  const encodedChunks: Uint8Array[] = [];
+export function encodeChunks(input: Uint8Array): BytesBlob[] {
+  const result: BytesBlob[] = [];
+
+  // https://graypaper.fluffylabs.dev/#/9a08063/3e8a013e8a01?v=0.6.6
   for (const piece of unzip(input)) {
-    encodedChunks.push(join(transpose(encodeData(piece))));
+    const encoded = encodeData(piece);
+    for (let i = 0; i < encoded.length; i++) {
+      result[i] = result[i] || BytesBlob.empty();
+      result[i] = BytesBlob.blobFromParts(result[i].raw, encoded[i]);
+    }
   }
-  return encodedChunks;
+
+  return result;
 }
 
 export function reconstructData() {
