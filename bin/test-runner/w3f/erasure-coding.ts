@@ -3,7 +3,7 @@ import { it } from "node:test";
 
 import { fromJson } from "@typeberry/block-json";
 import type { ExportsRootHash } from "@typeberry/block/work-report";
-import { BytesBlob } from "@typeberry/bytes";
+import type { BytesBlob } from "@typeberry/bytes";
 import { decodeData, encodeData } from "@typeberry/erasure-coding";
 import { encodeChunks } from "@typeberry/erasure-coding/erasure-coding";
 import { type FromJson, json } from "@typeberry/json-parser";
