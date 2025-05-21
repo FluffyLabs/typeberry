@@ -10,9 +10,11 @@ import type {
   JsonRpcId,
   JsonRpcRequest,
   JsonRpcResponse,
-  RpcMethod,
+  JsonRpcResult,
+  RpcMethodRepo,
 } from "./types";
 import { JSON_RPC_VERSION, RpcError } from "./types";
+import { SUBSCRIBE_METHOD_MAP, SubscriptionManager, UNSUBSCRIBE_METHOD_WHITELIST } from "./subscription-manager";
 
 function createErrorResponse(error: RpcError, id: JsonRpcId): JsonRpcErrorResponse {
   return {
@@ -27,12 +29,12 @@ function createErrorResponse(error: RpcError, id: JsonRpcId): JsonRpcErrorRespon
 
 export class RpcServer {
   private wss: WebSocketServer;
-  // biome-ignore lint/suspicious/noExplicitAny: the map must be able to store methods with any parameters and return values
-  private methods: Map<string, RpcMethod<any, any>>;
+  private methods: RpcMethodRepo;
   private rootDb: LmdbRoot;
   private blocks: LmdbBlocks;
   private states: LmdbStates;
   private chainSpec: ChainSpec;
+  private subscriptionManager: SubscriptionManager;
 
   constructor(port: number, dbPath: string, genesisRoot: string, chainSpec: ChainSpec) {
     this.wss = new WebSocketServer({ port });
@@ -49,6 +51,7 @@ export class RpcServer {
 
     loadMethodsInto(this.methods);
     this.setupWebSocket();
+    this.subscriptionManager = new SubscriptionManager(this);
     console.info(`Server listening on port ${port}...`);
   }
 
@@ -71,7 +74,7 @@ export class RpcServer {
         }
 
         try {
-          const result = await this.handleRequest(request);
+          const result = await this.handleRequest(request, ws);
           if (request.id !== undefined) {
             const response: JsonRpcResponse = {
               jsonrpc: JSON_RPC_VERSION,
@@ -93,16 +96,31 @@ export class RpcServer {
     });
   }
 
-  private async handleRequest(request: JsonRpcRequest): Promise<unknown[] | null> {
+  private async handleRequest(request: JsonRpcRequest, ws: WebSocket): Promise<JsonRpcResult> {
     const { method, params } = request;
 
-    const handler = this.methods.get(method);
-    if (handler === undefined) {
-      throw new RpcError(-32601, "Method not found");
+    if (SUBSCRIBE_METHOD_MAP.has(method)) {
+      return [this.subscriptionManager.subscribe(ws, method, params)];
+    }
+
+    if (UNSUBSCRIBE_METHOD_WHITELIST.has(method)) {
+      if (Array.isArray(params) && typeof params[0] === "string") {
+        return [this.subscriptionManager.unsubscribe(params[0])];
+      }
+
+      throw new RpcError(-32602, "Invalid params");
     }
 
     if (params !== undefined && !Array.isArray(params)) {
       throw new RpcError(-32602, "Invalid params");
+    }
+
+    return this.callMethod(method, params);
+  }
+
+  async callMethod(method: string, params: unknown[] | undefined): Promise<JsonRpcResult> {
+    if (!this.methods.has(method)) {
+      throw new RpcError(-32601, `Method not found: ${method}`);
     }
 
     const db: DatabaseContext = {
@@ -110,14 +128,15 @@ export class RpcServer {
       states: this.states,
     };
 
-    return handler(params, db, this.chainSpec);
+    return this.methods.get(method)?.(params, db, this.chainSpec);
   }
 
   async close(): Promise<void> {
-    console.info("Closing websocket and db connections...");
+    console.info("Cleaning up...");
     await new Promise<void>((resolve) => {
       this.wss.close(() => resolve());
     });
+    this.subscriptionManager.destroy();
     await this.rootDb.db.close();
   }
 }

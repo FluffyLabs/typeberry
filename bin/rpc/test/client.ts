@@ -1,5 +1,5 @@
 import WebSocket from "ws";
-import type { JsonRpcRequest, JsonRpcResponse } from "../src/types";
+import type { JsonRpcRequest, JsonRpcResponse, JsonRpcSubscriptionNotification } from "../src/types";
 import { JSON_RPC_VERSION } from "../src/types";
 
 class RpcClient {
@@ -21,12 +21,17 @@ class RpcClient {
 
   private setupWebSocket(): void {
     this.ws.on("message", (data: Buffer) => {
-      const response: JsonRpcResponse = JSON.parse(data.toString());
-      const callback = this.messageQueue.get(response.id as number);
+      const response: JsonRpcResponse | JsonRpcSubscriptionNotification = JSON.parse(data.toString());
 
-      if (callback !== undefined) {
-        callback(response);
-        this.messageQueue.delete(response.id as number);
+      if ("params" in response) {
+        console.info(`sub[${response.params[0]}]:`, response.params[1]);
+      } else if (typeof response.id === "number") {
+        const callback = this.messageQueue.get(response.id);
+
+        if (callback !== undefined) {
+          callback(response);
+          this.messageQueue.delete(response.id);
+        }
       }
     });
 
@@ -135,7 +140,17 @@ async function main() {
     console.info("listServices result:", listServicesResult);
   }
 
-  client.close();
+  console.info("Testing subscribeBestBlock method...");
+  const subscribeBestBlockResult = await client.call("subscribeBestBlock", []);
+  console.info("subscribeBestBlock result:", subscribeBestBlockResult);
+
+  setTimeout(async () => {
+    console.info("Testing unsubscribeBestBlock method...");
+    const unsubscribeBestBlockResult = await client.call("unsubscribeBestBlock", [subscribeBestBlockResult![0]]);
+    console.info("unsubscribeBestBlock result:", unsubscribeBestBlockResult);
+  }, 10000);
+
+  // client.close();
 }
 
 main();
