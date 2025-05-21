@@ -3,7 +3,7 @@ import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import { type FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import { type Service, ServiceAccountInfo, type ValidatorData } from "@typeberry/state";
-import type { PreimageUpdate } from "./partial-state-db";
+import type { NewPreimage, PreimageUpdate } from "./partial-state-db";
 import type { PendingTransfer } from "./pending-transfer";
 
 /**
@@ -17,7 +17,8 @@ export class StateUpdate {
     const update = new StateUpdate();
     update.newServices.push(...from.newServices);
     update.transfers.push(...from.transfers);
-    update.preimages.push(...from.preimages);
+    update.lookupHistory.push(...from.lookupHistory);
+    update.providedPreimages.push(...from.providedPreimages);
     for (const [k, v] of from.authorizationQueues) {
       update.authorizationQueues.set(k, v);
     }
@@ -40,8 +41,10 @@ export class StateUpdate {
   public readonly newServices: Service[] = [];
   /** Pending transfers. */
   public readonly transfers: PendingTransfer[] = [];
-  /** Preimages updates. */
-  public readonly preimages: PreimageUpdate[] = [];
+  /** Lookup History to update preimages. */
+  public readonly lookupHistory: PreimageUpdate[] = [];
+  /** Newly provided preimages. */
+  public readonly providedPreimages: NewPreimage[] = [];
   /** Updated authorization queues for cores. */
   public readonly authorizationQueues: Map<CoreIndex, FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>> =
     new Map();
