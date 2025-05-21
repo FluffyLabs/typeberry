@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { TEST_DATA } from "./ec-test-data";
-import { decodeData, encodeData, join, split, transpose, unzip } from "./erasure-coding";
+import { decodeData, encodeData, join, lace, split, transpose, unzip } from "./erasure-coding";
 
 function stringToBytes(input: string): Uint8Array {
   const chunkSize = 2; // 2 chars === 1 byte
@@ -274,5 +274,66 @@ describe("erasure coding: unzip", () => {
 
     assert.deepStrictEqual(encoded.length, expected.length);
     assert.deepStrictEqual(encoded, expected);
+  });
+});
+
+describe("erasure coding: lace", () => {
+  it("should lace data", () => {
+    const test = [
+      {
+        input: [Uint8Array.from([0x00, 0x02]), Uint8Array.from([0x01, 0x03])],
+        expected: Uint8Array.from([0x00, 0x01, 0x02, 0x03]),
+        size: 2,
+      },
+      {
+        input: [Uint8Array.from([0x00, 0x02, 0x04, 0x06]), Uint8Array.from([0x01, 0x03, 0x05, 0x07])],
+        expected: Uint8Array.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]),
+        size: 4,
+      },
+      {
+        input: [
+          Uint8Array.from([0x00, 0x04]),
+          Uint8Array.from([0x01, 0x05]),
+          Uint8Array.from([0x02, 0x06]),
+          Uint8Array.from([0x03, 0x07]),
+        ],
+        expected: Uint8Array.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]),
+        size: 2,
+      },
+      {
+        input: [new Uint8Array(648)],
+        expected: Uint8Array.from([0x00]),
+        size: 1,
+      },
+      {
+        input: [],
+        expected: new Uint8Array(),
+        size: 1,
+      },
+    ];
+
+    for (const { input, expected, size } of test) {
+      const result = lace(input, size);
+
+      assert.deepStrictEqual(result.length, expected.length);
+      assert.deepStrictEqual(result, expected);
+    }
+  });
+
+  it("should unzip and lace data without a change", () => {
+    const test = [
+      { input: Uint8Array.from([0x00, 0x01]) },
+      { input: Uint8Array.from([0x00, 0x01, 0x02, 0x03]) },
+      { input: Uint8Array.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]) },
+      { input: Uint8Array.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]) },
+    ];
+
+    for (const { input } of test) {
+      const unzipped = unzip(input, input.length);
+      const laced = lace(unzipped, input.length);
+
+      //assert.deepStrictEqual(laced.length, input.length);
+      assert.deepStrictEqual(laced, input);
+    }
   });
 });

@@ -156,6 +156,7 @@ export function join(input: Uint8Array[], size = SHARD_LENGTH * N_SHARDS): Uint8
 /**
  * `unzip`: Unzipping function which accepts a blob of data and returns
  * `k` pieces of data, each of `n` size octets.
+ * Reorganizes the data.
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3e06023e0602?v=0.6.6
  */
@@ -172,8 +173,22 @@ export function unzip(input: Uint8Array, size = SHARD_LENGTH * N_SHARDS): Uint8A
   return result;
 }
 
-export function lace() {
-  throw new Error("Not implemented yet!");
+/**
+ * `lace`: Lacing function which accepts `k` pieces of data, each of `n` size octets
+ * and returns a single blob of data.
+ * Opposite of `unzip`.
+ *
+ * https://graypaper.fluffylabs.dev/#/9a08063/3e2a023e2a02?v=0.6.6
+ */
+export function lace(input: Uint8Array[], size = SHARD_LENGTH * N_SHARDS): Uint8Array {
+  const pieces = input.length;
+  const result = new Uint8Array(pieces * size);
+  for (let i = 0; i < pieces; i++) {
+    for (let j = 0; j < size; j++) {
+      result[j * pieces + i] = input[i][j];
+    }
+  }
+  return result;
 }
 
 /**
