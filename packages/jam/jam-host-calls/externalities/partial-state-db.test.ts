@@ -679,36 +679,39 @@ describe("PartialState.providePreimage", () => {
       blob: preimageBlob,
     });
 
+    const preimages = HashDictionary.fromEntries(available ? [[preimage.hash, preimage]] : []);
+    const lookupHistory = HashDictionary.fromEntries(
+      requested
+        ? [
+            [
+              preimage.hash,
+              [new LookupHistoryItem(preimage.hash, tryAsU32(preimage.blob.length), tryAsLookupHistorySlots([]))],
+            ],
+          ]
+        : [],
+    );
+
+    if (self) {
+      // we need to replace the existing service
+      mockState.services.set(
+        service.id,
+        new Service(service.id, {
+          ...service.data,
+          preimages,
+          lookupHistory,
+        }),
+      );
+    }
+
     const secondService = new Service(tryAsServiceId(1), {
       info: ServiceAccountInfo.create({
         ...service.data.info,
         onTransferMinGas: tryAsServiceGas(1000),
       }),
-      preimages: HashDictionary.new(),
-      lookupHistory: HashDictionary.new(),
+      preimages: self ? HashDictionary.new() : preimages,
+      lookupHistory: self ? HashDictionary.new() : lookupHistory,
       storage: [],
     });
-
-    if (self) {
-      if (requested) {
-        service.data.lookupHistory.set(preimage.hash, [
-          new LookupHistoryItem(preimage.hash, tryAsU32(preimage.blob.length), tryAsLookupHistorySlots([])),
-        ]);
-      }
-      if (available) {
-        service.data.preimages.set(preimage.hash, preimage);
-      }
-    } else {
-      if (requested) {
-        secondService.data.lookupHistory.set(preimage.hash, [
-          new LookupHistoryItem(preimage.hash, tryAsU32(preimage.blob.length), tryAsLookupHistorySlots([])),
-        ]);
-      }
-      if (available) {
-        secondService.data.preimages.set(preimage.hash, preimage);
-      }
-    }
-
     mockState.services.set(secondService.id, secondService);
 
     return {
@@ -953,6 +956,25 @@ describe("PartialState.eject", () => {
     const storageUtilisationBytes =
       overrides.storageUtilisationBytes ?? tryAsU64(81 + (overrides.tombstone?.length ?? 0));
 
+    let preimages = HashDictionary.new<PreimageHash, PreimageItem>();
+    let lookupHistory = HashDictionary.new<PreimageHash, LookupHistoryItem[]>();
+    if (overrides.tombstone !== undefined) {
+      const { hash, length, slots } = overrides.tombstone;
+      const item = new LookupHistoryItem(hash, length, slots);
+      lookupHistory = HashDictionary.fromEntries([[hash, [item]]]);
+      if (item.slots.length === 1 || item.slots.length === 2) {
+        preimages = HashDictionary.fromEntries([
+          [
+            hash,
+            PreimageItem.create({
+              hash,
+              blob: BytesBlob.blobFrom(new Uint8Array(length)),
+            }),
+          ],
+        ]);
+      }
+    }
+
     const destinationService = new Service(destinationId, {
       info: ServiceAccountInfo.create({
         ...baseService.data.info,
@@ -960,25 +982,10 @@ describe("PartialState.eject", () => {
         storageUtilisationCount,
         storageUtilisationBytes,
       }),
-      preimages: HashDictionary.new(),
-      lookupHistory: HashDictionary.new(),
+      preimages,
+      lookupHistory,
       storage: [],
     });
-
-    if (overrides.tombstone !== undefined) {
-      const { hash, length, slots } = overrides.tombstone;
-      const item = new LookupHistoryItem(hash, length, slots);
-      destinationService.data.lookupHistory.set(hash, [item]);
-      if (item.slots.length === 1 || item.slots.length === 2) {
-        destinationService.data.preimages.set(
-          hash,
-          PreimageItem.create({
-            hash,
-            blob: BytesBlob.blobFrom(new Uint8Array(length)),
-          }),
-        );
-      }
-    }
 
     mockState.services.set(destinationId, destinationService);
     return destinationId;

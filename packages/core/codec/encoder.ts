@@ -410,7 +410,7 @@ export class Encoder {
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/371100371100
    */
-  sequenceFixLen<T>(encode: Encode<T>, elements: T[]) {
+  sequenceFixLen<T>(encode: Encode<T>, elements: readonly T[]) {
     this.applySizeHint(encode, elements.length);
     for (const e of elements) {
       encode.encode(this, e);
@@ -424,7 +424,7 @@ export class Encoder {
    *
    * https://graypaper.fluffylabs.dev/#/579bd12/374400374400
    */
-  sequenceVarLen<T>(encode: Encode<T>, elements: T[]) {
+  sequenceVarLen<T>(encode: Encode<T>, elements: readonly T[]) {
     check(elements.length <= 2 ** 32, "Wow, that's a nice long sequence you've got here.");
     this.varU32(tryAsU32(elements.length));
     this.sequenceFixLen(encode, elements);

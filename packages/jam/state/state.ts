@@ -2,7 +2,7 @@ import type { EntropyHash, PerEpochBlock, PerValidator, ServiceId, TimeSlot } fr
 import type { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
-import type { HashSet } from "@typeberry/collections/hash-set";
+import type { ImmutableHashSet } from "@typeberry/collections/hash-set";
 import type { AvailabilityAssignment } from "./assurances";
 import type { BlockState } from "./block-state";
 import type { PerCore } from "./common";
@@ -38,7 +38,7 @@ export type ENTROPY_ENTRIES = typeof ENTROPY_ENTRIES;
 export const MAX_RECENT_HISTORY = 8;
 export type MAX_RECENT_HISTORY = typeof MAX_RECENT_HISTORY;
 
-export type PartialState = {
+export type StateMutation = {
   -readonly [P in keyof State]?: State[P];
 };
 
@@ -49,6 +49,7 @@ export type PartialState = {
  */
 export type State = {
   /**
+
    * `ρ rho`: work-reports which have been reported but are not yet known to be
    *          available to a super-majority of validators, together with the time
    *          at which each was reported.
@@ -130,15 +131,6 @@ export type State = {
   readonly recentBlocks: KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
 
   /**
-   * `δ delta`:  In summary, δ is the portion of state dealing with
-   *             services, analogous in Jam to the Yellow Paper’s (
-   *             smart contract) accounts.
-   *
-   * https://graypaper.fluffylabs.dev/#/579bd12/08fb0008ff00
-   */
-  readonly services: Map<ServiceId, Service>;
-
-  /**
    * `π pi`: Previous and current statistics of each validator,
    *         cores statistics and services statistics.
    *
@@ -153,7 +145,7 @@ export type State = {
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/165300165500
    */
-  readonly accumulationQueue: PerEpochBlock<NotYetAccumulatedReport[]>;
+  readonly accumulationQueue: PerEpochBlock<readonly NotYetAccumulatedReport[]>;
 
   /**
    * `ξ xi`: In order to know which work-packages have been
@@ -163,7 +155,7 @@ export type State = {
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/161a00161d00
    */
-  readonly recentlyAccumulated: PerEpochBlock<HashSet<WorkPackageHash>>;
+  readonly recentlyAccumulated: PerEpochBlock<ImmutableHashSet<WorkPackageHash>>;
 
   /*
    * `γₐ gamma_a`: The ticket accumulator - a series of highest-scoring ticket identifiers to be
@@ -198,4 +190,13 @@ export type State = {
    * https://graypaper.fluffylabs.dev/#/85129da/116f01117201?v=0.6.3
    */
   readonly privilegedServices: PrivilegedServices;
+
+  /**
+   * `δ delta`:  In summary, δ is the portion of state dealing with
+   *             services, analogous in Jam to the Yellow Paper’s (
+   *             smart contract) accounts.
+   *
+   * https://graypaper.fluffylabs.dev/#/579bd12/08fb0008ff00
+   */
+  readonly services: Map<ServiceId, Service>;
 };

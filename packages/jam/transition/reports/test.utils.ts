@@ -119,7 +119,7 @@ export function newWorkReport({
 
 export function guaranteesAsView(
   spec: ChainSpec,
-  guarantees: ReportGuarantee[],
+  guarantees: readonly ReportGuarantee[],
   { disableCredentialsRangeCheck = false }: { disableCredentialsRangeCheck?: boolean } = {},
 ): GuaranteesExtrinsicView {
   if (disableCredentialsRangeCheck) {

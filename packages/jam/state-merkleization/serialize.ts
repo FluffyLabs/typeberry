@@ -10,7 +10,7 @@ import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/g
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { Descriptor, codec } from "@typeberry/codec";
+import { Descriptor, codec, readonlyArray } from "@typeberry/codec";
 import { HashSet } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
@@ -152,7 +152,7 @@ export namespace serialize {
   /** C(14): https://graypaper.fluffylabs.dev/#/85129da/38f80238f802?v=0.6.3 */
   export const accumulationQueue: StateCodec<State["accumulationQueue"]> = {
     key: keys.index(StateEntry.Theta),
-    Codec: codecPerEpochBlock(codec.sequenceVarLen(NotYetAccumulatedReport.Codec)),
+    Codec: codecPerEpochBlock(readonlyArray(codec.sequenceVarLen(NotYetAccumulatedReport.Codec))),
     extract: (s) => s.accumulationQueue,
   };
 

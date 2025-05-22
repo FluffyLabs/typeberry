@@ -8,7 +8,7 @@ import {
 import { codecHashDictionary } from "@typeberry/block/codec";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import { Ticket } from "@typeberry/block/tickets";
-import { type CodecRecord, codec } from "@typeberry/codec";
+import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
 import { HashDictionary, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import {
@@ -27,16 +27,16 @@ import { serialize } from "./serialize";
 
 type LookupHistoryEntry = {
   key: PreimageHash;
-  data: LookupHistoryItem[];
+  data: readonly LookupHistoryItem[];
 };
 
 const lookupHistoryItemCodec = codec.object<LookupHistoryItem>(
   {
     hash: codec.bytes(HASH_SIZE).asOpaque<PreimageHash>(),
     length: codec.u32,
-    slots: codec.sequenceVarLen(codec.u32.asOpaque<TimeSlot>()).convert(
-      (i) => seeThrough(i),
-      (o) => tryAsLookupHistorySlots(o),
+    slots: readonlyArray(codec.sequenceVarLen(codec.u32.asOpaque<TimeSlot>())).convert(
+      seeThrough,
+      tryAsLookupHistorySlots,
     ),
   },
   "LookupHistoryItem",
@@ -45,12 +45,12 @@ const lookupHistoryItemCodec = codec.object<LookupHistoryItem>(
 
 const lookupHistoryEntryCodec = codec.object<LookupHistoryEntry>({
   key: codec.bytes(HASH_SIZE).asOpaque<PreimageHash>(),
-  data: codec.sequenceVarLen(lookupHistoryItemCodec),
+  data: readonlyArray(codec.sequenceVarLen(lookupHistoryItemCodec)),
 });
 
 const lookupHistoryCodec = codec
   .sequenceVarLen(lookupHistoryEntryCodec)
-  .convert<HashDictionary<PreimageHash, LookupHistoryItem[]>>(
+  .convert<HashDictionary<PreimageHash, readonly LookupHistoryItem[]>>(
     (dict) => {
       const entries: LookupHistoryEntry[] = [];
       for (const [key, data] of dict) {
@@ -61,18 +61,28 @@ const lookupHistoryCodec = codec
       }
       return entries;
     },
-    (data): HashDictionary<PreimageHash, LookupHistoryItem[]> =>
+    // TODO [ToDr] we have a bug here, if there are multiple entries for the same hash
+    // (only one will end up in the dictionary)
+    (data): HashDictionary<PreimageHash, readonly LookupHistoryItem[]> =>
       HashDictionary.fromEntries(data.map((x) => [x.key, x.data])),
   );
 
 class ServiceWithCodec extends Service {
   static Codec = codec.Class(ServiceWithCodec, {
     id: codec.u32.asOpaque<ServiceId>(),
-    data: codec.object({
+    data: codec.object<Service["data"]>({
       info: ServiceAccountInfo.Codec,
-      preimages: codecHashDictionary(PreimageItem.Codec, (x) => x.hash),
-      lookupHistory: lookupHistoryCodec,
-      storage: codec.sequenceVarLen(StateItem.Codec),
+      // TODO [ToDr] These two instances of code should go away.
+      // we shouldn't be serializing it like that.
+      preimages: codecHashDictionary(PreimageItem.Codec, (x) => x.hash).convert(
+        (x) => (x instanceof HashDictionary ? x : HashDictionary.fromEntries(Array.from(x))),
+        (y) => y,
+      ),
+      lookupHistory: lookupHistoryCodec.convert(
+        (x) => (x instanceof HashDictionary ? x : HashDictionary.fromEntries(Array.from(x))),
+        (y) => y,
+      ),
+      storage: readonlyArray(codec.sequenceVarLen(StateItem.Codec)),
     }),
   });
   static create({ id, data }: CodecRecord<ServiceWithCodec>) {
@@ -95,7 +105,7 @@ export const stateDumpCodec = codec.object<State>(
     // gamma_s
     sealingKeySeries: SafroleSealingKeysData.Codec,
     // gamma_a
-    ticketsAccumulator: codec.sequenceVarLen(Ticket.Codec).convert(seeThrough, asKnownSize),
+    ticketsAccumulator: readonlyArray(codec.sequenceVarLen(Ticket.Codec)).convert(seeThrough, asKnownSize),
     // psi
     disputesRecords: serialize.disputesRecords.Codec,
     // eta

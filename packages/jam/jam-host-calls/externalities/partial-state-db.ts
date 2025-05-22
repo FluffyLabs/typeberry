@@ -454,13 +454,12 @@ export class PartialStateDb implements PartialState {
         storageUtilisationCount: items,
       }),
       preimages: HashDictionary.new(),
-      lookupHistory: HashDictionary.new(),
+      // add the preimage request
+      lookupHistory: HashDictionary.fromEntries([
+        [codeHash.asOpaque(), [new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([]))]],
+      ]),
       storage: [],
     });
-    // add the preimage request
-    newService.data.lookupHistory.set(codeHash.asOpaque(), [
-      new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([])),
-    ]);
 
     // add the new service
     this.updatedState.newServices.push(newService);

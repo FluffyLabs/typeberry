@@ -92,7 +92,7 @@ export function serializeState(state: State, spec: ChainSpec): SerializedState {
     for (const lookupHistoryList of service.data.lookupHistory.values()) {
       for (const lookupHistory of lookupHistoryList) {
         const { key, Codec } = serialize.serviceLookupHistory(serviceId, lookupHistory.hash, lookupHistory.length);
-        raw.push(StateEntry.create({ key, value: Encoder.encodeObject(Codec, lookupHistory.slots) }));
+        raw.push(StateEntry.create({ key, value: Encoder.encodeObject(Codec, lookupHistory.slots.slice()) }));
       }
     }
   }

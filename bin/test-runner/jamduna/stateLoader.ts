@@ -9,12 +9,12 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   LookupHistoryItem,
-  type PartialState,
   PreimageItem,
   Service,
   ServiceAccountInfo,
   type State,
   StateItem,
+  type StateMutation,
 } from "@typeberry/state";
 import { serialize } from "@typeberry/state-merkleization/serialize";
 
@@ -30,7 +30,7 @@ export class TestState {
 export type StateKeyVal = string[];
 
 export function loadState(testState: StateKeyVal[]): State {
-  const partial: PartialState = {
+  const partial: StateMutation = {
     services: new Map(),
   };
   for (const [_key, value, kind, description] of testState) {
@@ -83,7 +83,7 @@ class Parser {
 }
 
 // Takes the state and value and insert it into the state.
-type Appender = (s: PartialState, value: BytesBlob, description: string) => void;
+type Appender = (s: StateMutation, value: BytesBlob, description: string) => void;
 
 const kindMapping: { [k: string]: Appender } = {
   account_lookup: (s, value, description) => {
@@ -166,7 +166,7 @@ function decode<T>(descriptor: Descriptor<T>, value: BytesBlob) {
   return Decoder.decodeObject(descriptor, value, tinyChainSpec);
 }
 
-function findOrAddService(s: PartialState, serviceId: ServiceId) {
+function findOrAddService(s: StateMutation, serviceId: ServiceId) {
   s.services ??= new Map();
   const maybe_service = s.services.get(serviceId);
 

@@ -2,7 +2,7 @@ import { type CodeHash, type ServiceGas, type ServiceId, type TimeSlot, tryAsSer
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { type HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
+import { type ImmutableHashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, type U64, sumU64, tryAsU64 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
@@ -109,7 +109,7 @@ export class StateItem extends WithDebug {
 
 const MAX_LOOKUP_HISTORY_SLOTS = 3;
 export type LookupHistorySlots = KnownSizeArray<TimeSlot, `0-${typeof MAX_LOOKUP_HISTORY_SLOTS} timeslots`>;
-export function tryAsLookupHistorySlots(items: TimeSlot[]): LookupHistorySlots {
+export function tryAsLookupHistorySlots(items: readonly TimeSlot[]): LookupHistorySlots {
   const knownSize = asKnownSize(items) as LookupHistorySlots;
   if (knownSize.length > MAX_LOOKUP_HISTORY_SLOTS) {
     throw new Error(`Lookup history items must contain 0-${MAX_LOOKUP_HISTORY_SLOTS} timeslots.`);
@@ -144,13 +144,13 @@ export class Service extends WithDebug {
     /** Service details. */
     readonly data: {
       /** https://graypaper.fluffylabs.dev/#/85129da/383303383303?v=0.6.3 */
-      info: ServiceAccountInfo;
+      readonly info: ServiceAccountInfo;
       /** https://graypaper.fluffylabs.dev/#/85129da/10f90010f900?v=0.6.3 */
-      readonly preimages: HashDictionary<PreimageHash, PreimageItem>;
+      readonly preimages: ImmutableHashDictionary<PreimageHash, PreimageItem>;
       /** https://graypaper.fluffylabs.dev/#/85129da/115400115800?v=0.6.3 */
-      readonly lookupHistory: HashDictionary<PreimageHash, LookupHistoryItem[]>;
+      readonly lookupHistory: ImmutableHashDictionary<PreimageHash, readonly LookupHistoryItem[]>;
       /** https://graypaper.fluffylabs.dev/#/85129da/10f80010f800?v=0.6.3 */
-      readonly storage: StateItem[];
+      readonly storage: readonly StateItem[];
     },
   ) {
     super();

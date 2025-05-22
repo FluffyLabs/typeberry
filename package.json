@@ -48,7 +48,8 @@
     "workers/block-generator",
     "workers/generic",
     "workers/importer",
-    "packages/jam/state-json"
+    "packages/jam/state-json",
+    "packages/jam/state-persistence"
   ],
   "engines": {
     "node": ">=22",
