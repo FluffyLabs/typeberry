@@ -44,12 +44,7 @@ export class SubscriptionManager {
   }
 
   private async pollSubscriptions(): Promise<void> {
-    for (const subscriptionId of this.subscriptions.keys()) {
-      const subscription = this.subscriptions.get(subscriptionId);
-      if (subscription === undefined) {
-        continue;
-      }
-
+    for (const [subscriptionId, subscription] of this.subscriptions) {
       const result = await this.server.callMethod(subscription.method, subscription.params);
       const lastResult = this.lastResults.get(subscriptionId);
 
