@@ -9,12 +9,13 @@ import {
 } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import type { PreimageHash } from "@typeberry/block/preimage";
-import type { Bytes } from "@typeberry/bytes";
+import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { type FixedSizeArray, HashDictionary } from "@typeberry/collections";
-import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
-import { type U64, sumU32, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { type Blake2bHash, HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
+import { type U64, maxU64, sumU32, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   LookupHistoryItem,
+  PreimageItem,
   Service,
   ServiceAccountInfo,
   type State,
@@ -22,12 +23,13 @@ import {
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { OK, Result, assertNever, check, ensure } from "@typeberry/utils";
-import { clampU64ToU32 } from "../utils";
+import { clampU64ToU32, writeServiceIdAsLeBytes } from "../utils";
 import {
-  type EjectError,
+  EjectError,
   type PartialState,
   type PreimageStatus,
   PreimageStatusKind,
+  ProvidePreimageError,
   RequestPreimageError,
   type TRANSFER_MEMO_BYTES,
   TransferError,
@@ -42,6 +44,16 @@ import { StateUpdate } from "./state-update";
  * https://graypaper.fluffylabs.dev/#/9a08063/445800445800?v=0.6.6
  */
 export const PREIMAGE_EXPUNGE_PERIOD = 19200;
+
+/**
+ * Number of storage items required for ejection of the service.
+ *
+ * Value 2 seems to indicate that there is only one preimage lookup,
+ * most likely some sort of "tombstone" that is also required
+ * to authorize the `eject`.
+ *
+ * https://graypaper.fluffylabs.dev/#/9a08063/370202370502?v=0.6.6 */
+const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 
 export class PartialStateDb implements PartialState {
   public readonly updatedState: StateUpdate = new StateUpdate();
@@ -58,10 +70,6 @@ export class PartialStateDb implements PartialState {
     if (service === undefined) {
       throw new Error(`Invalid state initialization. Service info missing for ${this.currentServiceId}.`);
     }
-  }
-
-  eject(_from: ServiceId | null, _hash: OpaqueHash): Promise<Result<OK, EjectError>> {
-    throw new Error("Method not implemented.");
   }
 
   /** Return the underlying state update and checkpointed state (if any). */
@@ -109,7 +117,7 @@ export class PartialStateDb implements PartialState {
       return this.getCurrentServiceInfo();
     }
 
-    const isEjected = false; // TODO [ToDr] eject
+    const isEjected = this.updatedState.ejectedServices.some((x) => x === destination);
     if (isEjected) {
       return null;
     }
@@ -128,7 +136,7 @@ export class PartialStateDb implements PartialState {
 
   /** Get status of a preimage of current service taking into account any updates. */
   private getPreimageStatus(hash: PreimageHash, length: U64): PreimageUpdate | null {
-    const updatedPreimage = this.updatedState.preimages.find(
+    const updatedPreimage = this.updatedState.lookupHistory.find(
       (preimage) => preimage.hash.isEqualTo(hash) && BigInt(preimage.length) === length,
     );
     if (updatedPreimage !== undefined) {
@@ -142,14 +150,74 @@ export class PartialStateDb implements PartialState {
   }
 
   /**
+   * Returns `true` if given service has a particular preimage unavailable
+   * and expired.
+   *
+   * Note that we only check the state here, since the function is used
+   * in the context of `eject` function.
+   *
+   * There is on way that tumbstone is in the recently updated state
+   * - cannot be part of the newly created service, because
+   *   the preimage would not be available yet.
+   * - cannot be "freshly provided", since we defer updating the
+   *   lookup status.
+   */
+  private isTombstoneExpired(destination: ServiceId, tombstone: PreimageHash, len: U64): [boolean, string] {
+    const service = this.state.services.get(destination);
+    const items = service?.data.lookupHistory.get(tombstone) ?? [];
+    const item = items.find((i) => BigInt(i.length) === len);
+    const status = item === undefined ? null : slotsToPreimageStatus(item.slots);
+    // The tombstone needs to be forgotten and expired.
+    if (status?.status !== PreimageStatusKind.Unavailable) {
+      return [false, "wrong status"];
+    }
+    const t = this.state.timeslot;
+    const isExpired = status.data[1] < t - PREIMAGE_EXPUNGE_PERIOD;
+    return [isExpired, isExpired ? "" : "not expired"];
+  }
+
+  /**
+   * Returns `true` if the preimage is already provided either in current
+   * accumulation scope or earlier.
+   *
+   * NOTE: Does not check if the preimage is available, we just check
+   * the existence in `preimages` map.
+   */
+  private hasExistingPreimage(serviceId: ServiceId | null, hash: PreimageHash): boolean {
+    if (serviceId === null) {
+      return false;
+    }
+
+    const providedPreimage = this.updatedState.providedPreimages.find(
+      (p) => p.serviceId === serviceId && p.item.hash.isEqualTo(hash),
+    );
+    if (providedPreimage !== undefined) {
+      return true;
+    }
+
+    // fallback to state preimages
+    const service = this.state.services.get(serviceId);
+    if (service === undefined) {
+      return false;
+    }
+
+    const preimage = service.data.preimages.get(hash);
+    if (preimage !== undefined) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
    * Update a preimage.
    *
    * May replace an existing entry in the pending state update.
    */
   private replaceOrAddPreimageUpdate(existingPreimage: PreimageUpdate, newUpdate: PreimageUpdate) {
-    const index = this.updatedState.preimages.indexOf(existingPreimage);
+    const index = this.updatedState.lookupHistory.indexOf(existingPreimage);
     const removeCount = index === -1 ? 0 : 1;
-    this.updatedState.preimages.splice(index, removeCount, newUpdate);
+    this.updatedState.lookupHistory.splice(index, removeCount, newUpdate);
   }
 
   /** `check`: https://graypaper.fluffylabs.dev/#/9a08063/303f02303f02?v=0.6.6 */
@@ -226,7 +294,7 @@ export class PartialStateDb implements PartialState {
     const clampedLength = clampU64ToU32(length);
     if (existingPreimage === null || existingPreimage.forgotten) {
       // https://graypaper.fluffylabs.dev/#/9a08063/38a60038a600?v=0.6.6
-      this.updatedState.preimages.push(
+      this.updatedState.lookupHistory.push(
         PreimageUpdate.update(new LookupHistoryItem(hash, clampedLength, tryAsLookupHistorySlots([]))),
       );
     } else {
@@ -461,6 +529,98 @@ export class PartialStateDb implements PartialState {
     /** https://graypaper.fluffylabs.dev/#/9a08063/387d02387d02?v=0.6.6 */
     this.updatedState.yieldedRoot = hash;
   }
+
+  providePreimage(serviceId: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError> {
+    const service = serviceId === null ? undefined : this.state.services.get(serviceId);
+    if (service === undefined) {
+      return Result.error(ProvidePreimageError.ServiceNotFound);
+    }
+
+    // calculating the hash
+    const preimageHash = blake2b.hashBytes(preimage).asOpaque<PreimageHash>();
+
+    // checking service internal lookup
+    if (serviceId === this.currentServiceId) {
+      const stateLookup = this.getPreimageStatus(preimageHash, tryAsU64(preimage.length));
+      if (stateLookup === null || !LookupHistoryItem.isRequested(stateLookup) || stateLookup.forgotten) {
+        return Result.error(ProvidePreimageError.WasNotRequested);
+      }
+    } else {
+      const lookup = service.data.lookupHistory.get(preimageHash);
+      const status = lookup?.find((item) => item.length === preimage.length);
+      const notRequested = status === undefined || !LookupHistoryItem.isRequested(status);
+
+      if (notRequested) {
+        return Result.error(ProvidePreimageError.WasNotRequested);
+      }
+    }
+
+    // checking already provided preimages
+    const hasPreimage = this.hasExistingPreimage(serviceId, preimageHash);
+    if (hasPreimage) {
+      return Result.error(ProvidePreimageError.AlreadyProvided);
+    }
+
+    // setting up the new preimage
+    this.updatedState.providedPreimages.push(
+      NewPreimage.create({
+        serviceId: service.id,
+        item: PreimageItem.create({
+          hash: preimageHash,
+          blob: preimage,
+        }),
+      }),
+    );
+
+    return Result.ok(OK);
+  }
+
+  eject(destination: ServiceId | null, tombstone: PreimageHash): Result<OK, EjectError> {
+    const service = this.getServiceInfo(destination);
+    if (service === null || destination === null) {
+      return Result.error(EjectError.InvalidService, "Service missing");
+    }
+
+    const currentService = this.getCurrentServiceInfo();
+
+    // check if the service expects to be ejected by us:
+    const expectedCodeHash = Bytes.zero(HASH_SIZE).asOpaque<CodeHash>();
+    writeServiceIdAsLeBytes(this.currentServiceId, expectedCodeHash.raw);
+    if (!service.codeHash.isEqualTo(expectedCodeHash)) {
+      return Result.error(EjectError.InvalidService, "Invalid code hash");
+    }
+
+    // make sure the service only has required number of storage items?
+    if (service.storageUtilisationCount !== REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT) {
+      return Result.error(EjectError.InvalidPreimage, "Too many storage items");
+    }
+
+    // storage items length
+    const minServiceBytes = tryAsU64(81);
+    const l = tryAsU64(maxU64(service.storageUtilisationBytes, minServiceBytes) - minServiceBytes);
+
+    // check if we have a preimage with the entire storage.
+    const [isTombstoneExpired, errorReason] = this.isTombstoneExpired(destination, tombstone, l);
+    if (!isTombstoneExpired) {
+      return Result.error(EjectError.InvalidPreimage, `Tombstone available: ${errorReason}`);
+    }
+
+    // compute new balance of the service.
+    const newBalance = sumU64(currentService.balance, service.balance);
+    // TODO [ToDr] what to do in case of overflow?
+    if (newBalance.overflow) {
+      return Result.error(EjectError.InvalidService, "Balance overflow");
+    }
+
+    // update current service.
+    this.updatedState.updatedServiceInfo = ServiceAccountInfo.create({
+      ...currentService,
+      balance: newBalance.value,
+    });
+    // and finally add an ejected service.
+    this.updatedState.ejectedServices.push(destination);
+    return Result.ok(OK);
+  }
 }
 
 export class PreimageUpdate extends LookupHistoryItem {
@@ -479,6 +639,23 @@ export class PreimageUpdate extends LookupHistoryItem {
   static update(item: LookupHistoryItem) {
     return new PreimageUpdate(item, false);
   }
+}
+
+export class NewPreimage {
+  public static create({
+    serviceId,
+    item,
+  }: {
+    serviceId: ServiceId;
+    item: PreimageItem;
+  }): NewPreimage {
+    return new NewPreimage(serviceId, item);
+  }
+
+  private constructor(
+    public readonly serviceId: ServiceId,
+    public readonly item: PreimageItem,
+  ) {}
 }
 
 function bumpServiceId(serviceId: ServiceId) {
