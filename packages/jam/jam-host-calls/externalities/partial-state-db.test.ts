@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   BANDERSNATCH_KEY_BYTES,
   BLS_KEY_BYTES,
+  type CodeHash,
   type ServiceGas,
   type ServiceId,
   tryAsCoreIndex,
@@ -16,19 +17,23 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, HashDictionary, asKnownSize } from "@typeberry/collections";
 import { ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE, blake2b } from "@typeberry/hash";
-import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   LookupHistoryItem,
+  type LookupHistorySlots,
   PreimageItem,
   Service,
   ServiceAccountInfo,
+  type State,
   VALIDATOR_META_BYTES,
   ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { testState } from "@typeberry/state/test.utils";
 import { OK, Result, ensure } from "@typeberry/utils";
+import { writeServiceIdAsLeBytes } from "../utils";
 import {
+  EjectError,
   PreimageStatusKind,
   ProvidePreimageError,
   RequestPreimageError,
@@ -912,5 +917,259 @@ describe("PartialState.providePreimage", () => {
         }),
       }),
     ]);
+  });
+});
+
+describe("PartialState.eject", () => {
+  function setupEjectableService(
+    mockState: State,
+    overrides: {
+      codeHash?: CodeHash;
+      storageUtilisationCount?: U32;
+      storageUtilisationBytes?: U64;
+      tombstone?: {
+        hash: PreimageHash;
+        length: U32;
+        slots: LookupHistorySlots;
+      };
+    } = {},
+  ): ServiceId {
+    const destinationId = tryAsServiceId(1);
+
+    const baseService = mockState.services.get(tryAsServiceId(0));
+    if (baseService === undefined) {
+      throw new Error("Missing required service!");
+    }
+    const codeHash =
+      overrides.codeHash ??
+      (() => {
+        const expected = Bytes.zero(HASH_SIZE).asOpaque<CodeHash>();
+        writeServiceIdAsLeBytes(tryAsServiceId(0), expected.raw);
+        return expected;
+      })();
+
+    const storageUtilisationCount = overrides.storageUtilisationCount ?? tryAsU32(2);
+
+    const storageUtilisationBytes =
+      overrides.storageUtilisationBytes ?? tryAsU64(81 + (overrides.tombstone?.length ?? 0));
+
+    const destinationService = new Service(destinationId, {
+      info: ServiceAccountInfo.create({
+        ...baseService.data.info,
+        codeHash,
+        storageUtilisationCount,
+        storageUtilisationBytes,
+      }),
+      preimages: HashDictionary.new(),
+      lookupHistory: HashDictionary.new(),
+      storage: [],
+    });
+
+    if (overrides.tombstone !== undefined) {
+      const { hash, length, slots } = overrides.tombstone;
+      const item = new LookupHistoryItem(hash, length, slots);
+      destinationService.data.lookupHistory.set(hash, [item]);
+      if (item.slots.length === 1 || item.slots.length === 2) {
+        destinationService.data.preimages.set(
+          hash,
+          PreimageItem.create({
+            hash,
+            blob: BytesBlob.blobFrom(new Uint8Array(length)),
+          }),
+        );
+      }
+    }
+
+    mockState.services.set(destinationId, destinationService);
+    return destinationId;
+  }
+  it("should return InvalidService if destination is null", () => {
+    const mockState = testState();
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    const tombstone = Bytes.fill(HASH_SIZE, 0xef).asOpaque();
+
+    // when
+    const result = partialState.eject(null, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Service missing"));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
+  });
+
+  it("should return InvalidService if destination service does not exist", () => {
+    const mockState = testState();
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    const nonExistentServiceId = tryAsServiceId(99); // not present in mockState
+    const tombstone = Bytes.fill(HASH_SIZE, 0xee).asOpaque();
+
+    // when
+    const result = partialState.eject(nonExistentServiceId, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Service missing"));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
+  });
+
+  it("should return InvalidService if destination service codeHash does not match expected pattern", () => {
+    const mockState = testState();
+    const destinationId = setupEjectableService(mockState, {
+      codeHash: Bytes.fill(HASH_SIZE, 0x99).asOpaque(), // wrong codeHash
+    });
+
+    const tombstone = Bytes.fill(HASH_SIZE, 0xec).asOpaque();
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    // when
+    const result = partialState.eject(destinationId, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Invalid code hash"));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
+  });
+
+  it("should return InvalidPreimage if storageUtilisationCount is not equal to required value", () => {
+    const mockState = testState();
+    const destinationId = setupEjectableService(mockState, {
+      storageUtilisationCount: tryAsU32(2 + 1), // off by 1
+    });
+
+    const tombstone = Bytes.fill(HASH_SIZE, 0xeb).asOpaque();
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    // when
+    const result = partialState.eject(destinationId, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Too many storage items"));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
+  });
+
+  it("should return InvalidPreimage if the tombstone preimage is missing", () => {
+    const mockState = testState();
+    const tombstone = Bytes.fill(HASH_SIZE, 0xea).asOpaque();
+
+    // destination service has valid codeHash and config, but no preimage or lookup history
+    const destinationId = setupEjectableService(mockState);
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    // when
+    const result = partialState.eject(destinationId, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Tombstone available: wrong status"));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
+  });
+
+  it("should return InvalidPreimage if tombstone preimage exists but has wrong status", () => {
+    const mockState = testState();
+    const tombstone = Bytes.fill(HASH_SIZE, 0xe9).asOpaque<PreimageHash>();
+    const length = tryAsU32(100);
+
+    const destinationId = setupEjectableService(mockState, {
+      tombstone: {
+        hash: tombstone,
+        length,
+        // available
+        slots: tryAsLookupHistorySlots([1].map((x) => tryAsTimeSlot(x))),
+      },
+    });
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    // when
+    const result = partialState.eject(destinationId, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Tombstone available: wrong status"));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
+  });
+
+  it("should return InvalidPreimage if tombstone preimage exists but is not expired", () => {
+    const mockState = testState();
+    const tombstone = Bytes.fill(HASH_SIZE, 0xe9).asOpaque<PreimageHash>();
+    const length = tryAsU32(13);
+
+    const destinationId = setupEjectableService(mockState, {
+      tombstone: {
+        hash: tombstone,
+        length,
+        // unavailable
+        slots: tryAsLookupHistorySlots([1, 2].map((x) => tryAsTimeSlot(x))),
+      },
+    });
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    // when
+    const result = partialState.eject(destinationId, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Tombstone available: not expired"));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
+  });
+
+  it("should return InvalidService if summing balances would overflow", () => {
+    const mockState: State = {
+      ...testState(),
+      timeslot: tryAsTimeSlot(1_000_000),
+    };
+    const tombstone = Bytes.fill(HASH_SIZE, 0xe8).asOpaque();
+    const length = tryAsU32(100);
+
+    const destinationId = setupEjectableService(mockState, {
+      tombstone: {
+        hash: tombstone,
+        length,
+        slots: tryAsLookupHistorySlots([0, 1].map((x) => tryAsTimeSlot(x))),
+      },
+    });
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    // set the balance to overflow
+    const currentService = mockState.services.get(tryAsServiceId(0));
+    if (currentService === undefined) {
+      throw new Error("missing required service!");
+    }
+    partialState.updatedState.updatedServiceInfo = ServiceAccountInfo.create({
+      ...currentService.data.info,
+      balance: tryAsU64(2n ** 64n - 1n),
+    });
+
+    // when
+    const result = partialState.eject(destinationId, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Balance overflow"));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
+  });
+
+  it("should return OK", () => {
+    const mockState: State = {
+      ...testState(),
+      timeslot: tryAsTimeSlot(1_000_000),
+    };
+    const tombstone = Bytes.fill(HASH_SIZE, 0xe8).asOpaque();
+    const length = tryAsU32(100);
+
+    const destinationId = setupEjectableService(mockState, {
+      tombstone: {
+        hash: tombstone,
+        length,
+        slots: tryAsLookupHistorySlots([0, 1].map((x) => tryAsTimeSlot(x))),
+      },
+    });
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    // when
+    const result = partialState.eject(destinationId, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.ok(OK));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, [destinationId]);
   });
 });

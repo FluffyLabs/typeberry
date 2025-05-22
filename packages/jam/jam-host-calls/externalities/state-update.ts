@@ -16,6 +16,7 @@ export class StateUpdate {
   static copyFrom(from: StateUpdate): StateUpdate {
     const update = new StateUpdate();
     update.newServices.push(...from.newServices);
+    update.ejectedServices.push(...from.ejectedServices);
     update.transfers.push(...from.transfers);
     update.lookupHistory.push(...from.lookupHistory);
     update.providedPreimages.push(...from.providedPreimages);
@@ -39,6 +40,8 @@ export class StateUpdate {
 
   /** Newly created services. */
   public readonly newServices: Service[] = [];
+  /** Services that were successfully ejected. */
+  public readonly ejectedServices: ServiceId[] = [];
   /** Pending transfers. */
   public readonly transfers: PendingTransfer[] = [];
   /** Lookup History to update preimages. */

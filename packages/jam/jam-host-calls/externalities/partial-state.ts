@@ -122,9 +122,9 @@ export enum TransferError {
  * because the account is removed anyway.
  */
 export enum EjectError {
-  /** The service does not exist or invalid. */
+  /** The service does not exist or does not expect to be ejected by us. */
   InvalidService = 0,
-  /** Preimage is not available or too old. */
+  /** The service must have only one tombstone preimage available. */
   InvalidPreimage = 1,
 }
 
@@ -175,7 +175,7 @@ export interface PartialState {
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/37b60137b601?v=0.6.6
    */
-  eject(from: ServiceId | null, hash: OpaqueHash): Promise<Result<OK, EjectError>>;
+  eject(from: ServiceId | null, tombstone: PreimageHash): Result<OK, EjectError>;
 
   /**
    * Transfer given `amount` of funds to the `destination`,
