@@ -1,5 +1,6 @@
 import type { CodeHash, CoreIndex, PerValidator, ServiceGas, ServiceId } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
+import type { PreimageHash } from "@typeberry/block/preimage";
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
@@ -39,8 +40,8 @@ export class PartialStateMock implements PartialState {
   public transferReturnValue: Result<OK, TransferError> = Result.ok(OK);
   public providePreimageResponse: Result<OK, ProvidePreimageError> = Result.ok(OK);
 
-  async eject(from: ServiceId | null, hash: OpaqueHash): Promise<Result<OK, EjectError>> {
-    this.ejectData.push([from, hash]);
+  eject(from: ServiceId | null, tombstone: PreimageHash): Result<OK, EjectError> {
+    this.ejectData.push([from, tombstone]);
     return this.ejectReturnValue;
   }
 
