@@ -20,12 +20,12 @@ export class EcTest {
 
 const logger = Logger.new(__filename, "test-runner/erasure-coding");
 
-let seed = Math.floor(1000 * Math.random());
+const seed = Math.floor(1000 * Math.random());
 
-function random() {
-  const x = Math.sin(seed++) * 10000;
-  return x - Math.floor(x);
-}
+// function random() {
+//   const x = Math.sin(seed++) * 10000;
+//   return x - Math.floor(x);
+// }
 
 logger.info(`Erasure encoding tests random seed: ${seed}`);
 
