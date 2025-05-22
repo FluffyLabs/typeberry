@@ -45,18 +45,22 @@ export class SubscriptionManager {
 
   private async pollSubscriptions(): Promise<void> {
     for (const [subscriptionId, subscription] of this.subscriptions) {
-      const result = await this.server.callMethod(subscription.method, subscription.params);
-      const lastResult = this.lastResults.get(subscriptionId);
+      try {
+        const result = await this.server.callMethod(subscription.method, subscription.params);
+        const lastResult = this.lastResults.get(subscriptionId);
 
-      if (JSON.stringify(result) !== lastResult) {
-        const notification: JsonRpcSubscriptionNotification = {
-          jsonrpc: JSON_RPC_VERSION,
-          method: subscription.method,
-          params: [subscriptionId, result],
-        };
+        if (JSON.stringify(result) !== lastResult) {
+          const notification: JsonRpcSubscriptionNotification = {
+            jsonrpc: JSON_RPC_VERSION,
+            method: subscription.method,
+            params: [subscriptionId, result],
+          };
 
-        subscription.ws.send(JSON.stringify(notification));
-        this.lastResults.set(subscriptionId, JSON.stringify(result));
+          subscription.ws.send(JSON.stringify(notification));
+          this.lastResults.set(subscriptionId, JSON.stringify(result));
+        }
+      } catch (error) {
+        console.error(`Error polling subscription ${subscriptionId}:`, error);
       }
     }
   }
