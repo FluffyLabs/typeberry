@@ -233,7 +233,6 @@ export function encodeChunks(input: Uint8Array): Uint8Array[] {
   for (const piece of unzip(input)) {
     const encoded = encodeData(piece);
     for (let i = 0; i < encoded.length; i++) {
-      result[i] = result[i] || new Uint8Array();
       const newLength = result[i].length + encoded[i].length;
       const newResult = new Uint8Array(newLength);
       newResult.set(result[i], 0);
@@ -245,6 +244,6 @@ export function encodeChunks(input: Uint8Array): Uint8Array[] {
   return result;
 }
 
-export function reconstructData() {
-  throw new Error("Not implemented yet!");
-}
+// export function reconstructData() {
+//   throw new Error("Not implemented yet!");
+// }
