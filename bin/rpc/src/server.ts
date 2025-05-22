@@ -4,6 +4,7 @@ import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import { WebSocketServer } from "ws";
 import type { WebSocket } from "ws";
 import { loadMethodsInto } from "./method-loader";
+import { SUBSCRIBE_METHOD_MAP, SubscriptionManager, UNSUBSCRIBE_METHOD_WHITELIST } from "./subscription-manager";
 import type {
   DatabaseContext,
   JsonRpcErrorResponse,
@@ -14,7 +15,6 @@ import type {
   RpcMethodRepo,
 } from "./types";
 import { JSON_RPC_VERSION, RpcError } from "./types";
-import { SUBSCRIBE_METHOD_MAP, SubscriptionManager, UNSUBSCRIBE_METHOD_WHITELIST } from "./subscription-manager";
 
 function createErrorResponse(error: RpcError, id: JsonRpcId): JsonRpcErrorResponse {
   return {

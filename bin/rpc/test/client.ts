@@ -138,19 +138,32 @@ async function main() {
     console.info("Testing listServices method...");
     const listServicesResult = await client.call("listServices", [bestBlockResult[0]]);
     console.info("listServices result:", listServicesResult);
+
+    console.info("Testing subscribeServicePreimage method...");
+    const subscribeServicePreimageResult = await client.call("subscribeServicePreimage", [
+      bestBlockResult[0],
+      0,
+      [
+        193, 99, 38, 67, 43, 91, 50, 19, 223, 209, 96, 148, 149, 225, 60, 107, 39, 108, 180, 116, 214, 121, 100, 83, 55,
+        229, 194, 192, 159, 25, 181, 60,
+      ],
+    ]);
+    console.info("subscribeServicePreimage result:", subscribeServicePreimageResult);
+
+    setTimeout(async () => {
+      if (subscribeServicePreimageResult !== null) {
+        console.info("Testing unsubscribeServicePreimage method...");
+        const unsubscribeServicePreimageResult = await client.call("unsubscribeServicePreimage", [
+          subscribeServicePreimageResult[0],
+        ]);
+        console.info("unsubscribeServicePreimage result:", unsubscribeServicePreimageResult);
+      }
+
+      client.close();
+    }, 10000);
+  } else {
+    client.close();
   }
-
-  console.info("Testing subscribeBestBlock method...");
-  const subscribeBestBlockResult = await client.call("subscribeBestBlock", []);
-  console.info("subscribeBestBlock result:", subscribeBestBlockResult);
-
-  setTimeout(async () => {
-    console.info("Testing unsubscribeBestBlock method...");
-    const unsubscribeBestBlockResult = await client.call("unsubscribeBestBlock", [subscribeBestBlockResult![0]]);
-    console.info("unsubscribeBestBlock result:", unsubscribeBestBlockResult);
-  }, 10000);
-
-  // client.close();
 }
 
 main();

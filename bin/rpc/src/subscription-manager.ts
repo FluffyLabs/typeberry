@@ -1,4 +1,5 @@
 import type WebSocket from "ws";
+import type { RpcServer } from "./server";
 import {
   JSON_RPC_VERSION,
   type JsonRpcSubscriptionNotification,
@@ -6,16 +7,28 @@ import {
   type Subscription,
   type SubscriptionId,
 } from "./types";
-import type { RpcServer } from "./server";
 
 const POLL_INTERVAL_MS = 1000;
 
 export const SUBSCRIBE_METHOD_MAP = new Map<string, string>([
   ["subscribeBestBlock", "bestBlock"],
+  ["subscribeFinalizedBlock", "finalizedBlock"],
   ["subscribeServiceData", "serviceData"],
+  ["subscribeServicePreimage", "servicePreimage"],
+  ["subscribeServiceRequest", "serviceRequest"],
+  ["subscribeServiceValue", "serviceValue"],
+  ["subscribeStatistics", "statistics"],
 ]);
 
-export const UNSUBSCRIBE_METHOD_WHITELIST = new Set<string>(["unsubscribeBestBlock", "unsubscribeServiceData"]);
+export const UNSUBSCRIBE_METHOD_WHITELIST = new Set<string>([
+  "unsubscribeBestBlock",
+  "unsubscribeFinalizedBlock",
+  "unsubscribeServiceData",
+  "unsubscribeServicePreimage",
+  "unsubscribeServiceRequest",
+  "unsubscribeServiceValue",
+  "unsubscribeStatistics",
+]);
 
 export class SubscriptionManager {
   private subscriptions: Map<SubscriptionId, Subscription>;

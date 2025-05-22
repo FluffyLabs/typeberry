@@ -12,11 +12,6 @@ import { stateRoot } from "./methods/state-root";
 import { statistics } from "./methods/statistics";
 import { submitPreimage } from "./methods/submit-preimage";
 import { submitWorkPackage } from "./methods/submit-work-package";
-import { subscribeFinalizedBlock } from "./methods/subscribe-finalized-block";
-import { subscribeServicePreimage } from "./methods/subscribe-service-preimage";
-import { subscribeServiceRequest } from "./methods/subscribe-service-request";
-import { subscribeServiceValue } from "./methods/subscribe-service-value";
-import { subscribeStatistics } from "./methods/subscribe-statistics";
 import type { RpcMethodRepo } from "./types";
 
 export function loadMethodsInto(methods: RpcMethodRepo): void {
@@ -34,9 +29,4 @@ export function loadMethodsInto(methods: RpcMethodRepo): void {
   methods.set("statistics", statistics);
   methods.set("submitPreimage", submitPreimage);
   methods.set("submitWorkPackage", submitWorkPackage);
-  methods.set("subscribeFinalizedBlock", subscribeFinalizedBlock);
-  methods.set("subscribeServicePreimage", subscribeServicePreimage);
-  methods.set("subscribeServiceRequest", subscribeServiceRequest);
-  methods.set("subscribeServiceValue", subscribeServiceValue);
-  methods.set("subscribeStatistics", subscribeStatistics);
 }
