@@ -6,7 +6,6 @@ import { BytesBlob } from "@typeberry/bytes";
 import { encodeChunks, reconstructData } from "@typeberry/erasure-coding/erasure-coding";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
-import { check } from "@typeberry/utils";
 import { getChainSpec } from "./spec";
 
 export class EcTest {
@@ -100,7 +99,6 @@ export async function runEcTest(test: EcTest, path: string) {
       allReconstructedShards.push(...distributedShardsFromGroup);
     }
 
-    check(allReconstructedShards.length > 342, "Not enough shards");
     return allReconstructedShards;
   };
 
@@ -115,12 +113,23 @@ export async function runEcTest(test: EcTest, path: string) {
     assert.deepStrictEqual(shards[0].toString(), test.shards[0].toString());
   });
 
-  it("should decode data", () => {
+  it("should decode first 342 data", () => {
     const split = splitShard(test.shards, chainSpec.validatorsCount);
 
     const shards = split.map((shard, idx) => [idx, shard] as [number, BytesBlob]);
 
-    const decoded = reconstructData(shards, test.data.length);
+    const decoded = reconstructData(shards.slice(0, 342));
+
+    assert.strictEqual(decoded.length, test.data.length);
+    assert.deepStrictEqual(decoded.toString(), test.data.toString());
+  });
+
+  it("should decode random 342 data", () => {
+    const split = splitShard(test.shards, chainSpec.validatorsCount);
+
+    const shards = split.map((shard, idx) => [idx, shard] as [number, BytesBlob]);
+
+    const decoded = reconstructData(getRandomItems(shards, 342));
 
     assert.strictEqual(decoded.length, test.data.length);
     assert.deepStrictEqual(decoded.toString(), test.data.toString());
