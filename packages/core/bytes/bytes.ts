@@ -71,8 +71,9 @@ export class BytesBlob {
   }
 
   /** Create a new [`BytesBlob`] with no data. */
-  static empty(): BytesBlob {
-    return new BytesBlob(new Uint8Array());
+  static empty({ size = 0 }: { size?: number } = {}): BytesBlob {
+    check(size >= 0, "Size has to be non-negative");
+    return new BytesBlob(new Uint8Array(size));
   }
 
   /** Create a new [`BytesBlob'] by converting given UTF-u encoded string into bytes. */

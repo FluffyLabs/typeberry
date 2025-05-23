@@ -30,6 +30,7 @@ const seed = Math.floor(1000 * Math.random());
 logger.info(`Erasure encoding tests random seed: ${seed}`);
 
 export async function runEcTest(test: EcTest, path: string) {
+  /** transposing and joining in one go */
   const collect = (shards: BytesBlob[]) => {
     if (shards.length === 0) {
       return new Uint8Array(0);
@@ -46,6 +47,7 @@ export async function runEcTest(test: EcTest, path: string) {
     return result;
   };
 
+  /** helper to support TINY specs */
   const collectShard = (shards: BytesBlob[], k: number) => {
     const length = Math.ceil(shards.length / k);
 
@@ -65,12 +67,9 @@ export async function runEcTest(test: EcTest, path: string) {
   const chainSpec = getChainSpec(path);
 
   it("should encode data", () => {
-    const encoded = encodeChunks(test.data.raw);
+    const encoded = encodeChunks(test.data);
 
-    const shards = collectShard(
-      encoded.map((chunk) => BytesBlob.blobFrom(chunk)),
-      chainSpec.validatorsCount,
-    );
+    const shards = collectShard(encoded, chainSpec.validatorsCount);
 
     assert.strictEqual(shards.length, test.shards.length);
     assert.deepStrictEqual(shards[0].toString(), test.shards[0].toString());

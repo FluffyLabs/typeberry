@@ -1,3 +1,4 @@
+import { BytesBlob } from "@typeberry/bytes";
 import { check } from "@typeberry/utils";
 import { ShardsCollection, decode, encode } from "reed-solomon-wasm/pkg";
 
@@ -127,14 +128,14 @@ export function decodeData(
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3eb4013eb401?v=0.6.6
  */
-export function split(input: Uint8Array, size = SHARD_LENGTH * N_SHARDS): Uint8Array[] {
+export function split(input: BytesBlob, size = SHARD_LENGTH * N_SHARDS): BytesBlob[] {
   const pieces = Math.ceil(input.length / size);
-  const result = new Array<Uint8Array>(pieces);
+  const result = new Array<BytesBlob>(pieces);
   for (let i = 0; i < pieces; i++) {
     const start = i * size;
     const end = Math.min(start + size, input.length);
-    const chunk = new Uint8Array(size);
-    chunk.set(input.subarray(start, end));
+    const chunk = BytesBlob.empty({ size });
+    chunk.raw.set(input.raw.subarray(start, end));
     result[i] = chunk;
   }
   return result;
@@ -146,12 +147,12 @@ export function split(input: Uint8Array, size = SHARD_LENGTH * N_SHARDS): Uint8A
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3ed4013ed401?v=0.6.6
  */
-export function join(input: Uint8Array[], size = SHARD_LENGTH * N_SHARDS): Uint8Array {
-  const result = new Uint8Array(input.length * size);
+export function join(input: BytesBlob[], size = SHARD_LENGTH * N_SHARDS): BytesBlob {
+  const result = BytesBlob.empty({ size: input.length * size });
   for (let i = 0; i < input.length; i++) {
     const start = i * size;
     const end = Math.min(start + size, result.length);
-    result.set(input[i].subarray(0, end - start), start);
+    result.raw.set(input[i].raw.subarray(0, end - start), start);
   }
   return result;
 }
@@ -163,13 +164,13 @@ export function join(input: Uint8Array[], size = SHARD_LENGTH * N_SHARDS): Uint8
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3e06023e0602?v=0.6.6
  */
-export function unzip(input: Uint8Array, size = SHARD_LENGTH * N_SHARDS): Uint8Array[] {
+export function unzip(input: BytesBlob, size = SHARD_LENGTH * N_SHARDS): BytesBlob[] {
   const pieces = Math.ceil(input.length / size);
-  const result = new Array<Uint8Array>(pieces);
+  const result = new Array<BytesBlob>(pieces);
   for (let i = 0; i < pieces; i++) {
-    const chunk = new Uint8Array(size);
+    const chunk = BytesBlob.empty({ size });
     for (let j = 0; j < size; j++) {
-      chunk[j] = input[j * pieces + i];
+      chunk.raw[j] = input.raw[j * pieces + i];
     }
     result[i] = chunk;
   }
@@ -183,12 +184,12 @@ export function unzip(input: Uint8Array, size = SHARD_LENGTH * N_SHARDS): Uint8A
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3e2a023e2a02?v=0.6.6
  */
-export function lace(input: Uint8Array[], size = SHARD_LENGTH * N_SHARDS): Uint8Array {
+export function lace(input: BytesBlob[], size = SHARD_LENGTH * N_SHARDS): BytesBlob {
   const pieces = input.length;
-  const result = new Uint8Array(pieces * size);
+  const result = BytesBlob.empty({ size: pieces * size });
   for (let i = 0; i < pieces; i++) {
     for (let j = 0; j < size; j++) {
-      result[j * pieces + i] = input[i][j];
+      result.raw[j * pieces + i] = input[i].raw[j];
     }
   }
   return result;
@@ -204,19 +205,21 @@ export function lace(input: Uint8Array[], size = SHARD_LENGTH * N_SHARDS): Uint8
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3e2e023e2e02?v=0.6.6
  */
-export function transpose(input: Uint8Array[]): Uint8Array[] {
-  if (input.length === 0) {
-    return [];
+export function transpose(input: BytesBlob[]): BytesBlob[] {
+  if (input.length === 0 || input.length === 1) {
+    return input;
   }
-  const pieces = input[0].length;
-  const size = input.length;
-  const result = new Array<Uint8Array>(pieces);
-  for (let i = 0; i < pieces; i++) {
-    const chunk = new Uint8Array(size);
-    for (let j = 0; j < size; j++) {
-      chunk[j] = input[j][i];
+  const shardLength = input[0].length;
+  const result = new Array<BytesBlob>(shardLength);
+  for (let seg = 0; seg < shardLength; seg += 2) {
+    for (let i = 0; i < input.length; i++) {
+      result[i] ??= BytesBlob.empty();
+      const newLength = result[i].length + 2;
+      const newResult = BytesBlob.empty({ size: newLength });
+      newResult.raw.set(result[i].raw, 0);
+      newResult.raw.set(input[i].raw.subarray(seg, seg + 2), result[i].length);
+      result[i] = newResult;
     }
-    result[i] = chunk;
   }
   return result;
 }
@@ -226,25 +229,22 @@ export function transpose(input: Uint8Array[]): Uint8Array[] {
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3f15003f1500?v=0.6.6
  */
-export function encodeChunks(input: Uint8Array): Uint8Array[] {
-  const result: Uint8Array[] = [];
-
-  // https://graypaper.fluffylabs.dev/#/9a08063/3e8a013e8a01?v=0.6.6
+export function encodeChunks(input: BytesBlob): BytesBlob[] {
+  const encodedPieces: BytesBlob[] = [];
   for (const piece of unzip(input)) {
-    const encoded = encodeData(piece);
+    const encoded = encodeData(piece.raw);
     for (let i = 0; i < encoded.length; i++) {
-      result[i] ??= new Uint8Array();
-      const newLength = result[i].length + encoded[i].length;
-      const newResult = new Uint8Array(newLength);
-      newResult.set(result[i], 0);
-      newResult.set(encoded[i], result[i].length);
-      result[i] = newResult;
+      encodedPieces[i] ??= BytesBlob.empty();
+      const newLength = encodedPieces[i].length + encoded[i].length;
+      const newResult = BytesBlob.empty({ size: newLength });
+      newResult.raw.set(encodedPieces[i].raw, 0);
+      newResult.raw.set(encoded[i], encodedPieces[i].length);
+      encodedPieces[i] = newResult;
     }
   }
-
-  return result;
+  return encodedPieces;
 }
 
-// export function reconstructData() {
-//   throw new Error("Not implemented yet!");
-// }
+export function reconstructData() {
+  throw new Error("Not implemented yet!");
+}
