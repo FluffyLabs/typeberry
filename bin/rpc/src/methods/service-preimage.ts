@@ -3,6 +3,18 @@ import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { BlobArray, Hash, RpcMethod, ServiceId } from "../types";
 
+/**
+ * https://hackmd.io/@polkadot/jip2#servicePreimage
+ * Returns the preimage associated with the given service ID and hash in the posterior state of the
+ * block with the given header hash. `null` is returned if there is no preimage associated with the
+ * given service ID and hash.
+ * @param [
+ *   Hash - The header hash indicating the block whose posterior state should be used for the query.
+ *   ServiceId - The ID of the service.
+ *   Hash - The hash.
+ * ]
+ * @returns Either null or Blob
+ */
 export const servicePreimage: RpcMethod<[Hash, ServiceId, Hash], [BlobArray] | null> = async (
   [headerHash, serviceId, preimageHash],
   db,

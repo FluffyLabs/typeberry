@@ -3,6 +3,16 @@ import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { Hash, RpcMethod, ServiceId } from "../types";
 
+/**
+ * https://hackmd.io/@polkadot/jip2#listServices
+ * Returns a list of all services currently known to be on JAM. This is a best-effort list and may not
+ * reflect the true state. Nodes could e.g. reasonably hide services which are not recently active from
+ * this list.
+ * @param [
+ *   Hash - The header hash indicating the block whose posterior state should be used for the query.
+ * ]
+ * @returns array of ServiceId
+ */
 export const listServices: RpcMethod<[Hash], [ServiceId[]]> = async ([headerHash], db) => {
   const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
   const stateRoot = db.blocks.getPostStateRoot(hashOpaque);

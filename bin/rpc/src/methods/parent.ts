@@ -3,6 +3,18 @@ import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { Hash, RpcMethod, Slot } from "../types";
 
+/**
+ * https://hackmd.io/@polkadot/jip2#parent
+ * Returns the header hash and slot of the parent of the block with the given header hash, or `null` if
+ * this is not known.
+ * @param [
+ *   Hash - The hash of a child's header.
+ * ]
+ * @returns Either null or [
+ *   Hash - The parent's header hash,
+ *   Slot - The slot,
+ * ]
+ */
 export const parent: RpcMethod<[Hash], [Hash, Slot] | null> = async ([headerHash], db) => {
   const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
   const header = db.blocks.getHeader(hashOpaque);

@@ -1,8 +1,5 @@
-import { beefyRoot } from "./methods/beefy-root";
 import { bestBlock } from "./methods/best-block";
-import { finalizedBlock } from "./methods/finalized-block";
 import { listServices } from "./methods/list-services";
-import { parameters } from "./methods/parameters";
 import { parent } from "./methods/parent";
 import { serviceData } from "./methods/service-data";
 import { servicePreimage } from "./methods/service-preimage";
@@ -10,16 +7,14 @@ import { serviceRequest } from "./methods/service-request";
 import { serviceValue } from "./methods/service-value";
 import { stateRoot } from "./methods/state-root";
 import { statistics } from "./methods/statistics";
-import { submitPreimage } from "./methods/submit-preimage";
-import { submitWorkPackage } from "./methods/submit-work-package";
-import type { RpcMethodRepo } from "./types";
+import { RpcError, type RpcMethod, type RpcMethodRepo } from "./types";
 
 export function loadMethodsInto(methods: RpcMethodRepo): void {
-  methods.set("beefyRoot", beefyRoot);
+  methods.set("beefyRoot", methodNotImplemented); // todo [seko] beefy root needs to be stored in the db first, also awaits chapter 12
   methods.set("bestBlock", bestBlock);
-  methods.set("finalizedBlock", finalizedBlock);
+  methods.set("finalizedBlock", methodNotImplemented); // todo [seko] implement when finality is implemented
   methods.set("listServices", listServices);
-  methods.set("parameters", parameters);
+  methods.set("parameters", methodNotImplemented);
   methods.set("parent", parent);
   methods.set("serviceData", serviceData);
   methods.set("servicePreimage", servicePreimage);
@@ -27,6 +22,10 @@ export function loadMethodsInto(methods: RpcMethodRepo): void {
   methods.set("serviceValue", serviceValue);
   methods.set("stateRoot", stateRoot);
   methods.set("statistics", statistics);
-  methods.set("submitPreimage", submitPreimage);
-  methods.set("submitWorkPackage", submitWorkPackage);
+  methods.set("submitPreimage", methodNotImplemented);
+  methods.set("submitWorkPackage", methodNotImplemented);
 }
+
+export const methodNotImplemented: RpcMethod<[], []> = () => {
+  throw new RpcError(-32601, "Method not implemented");
+};
