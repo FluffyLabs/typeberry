@@ -17,7 +17,7 @@ import {
   Service,
   ServiceAccountInfo,
   type State,
-  StateItem,
+  StorageItem,
   ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
@@ -82,7 +82,7 @@ class ServiceWithCodec extends Service {
         (x) => (x instanceof HashDictionary ? x : HashDictionary.fromEntries(Array.from(x))),
         (y) => y,
       ),
-      storage: readonlyArray(codec.sequenceVarLen(StateItem.Codec)),
+      storage: readonlyArray(codec.sequenceVarLen(StorageItem.Codec)),
     }),
   });
   static create({ id, data }: CodecRecord<ServiceWithCodec>) {

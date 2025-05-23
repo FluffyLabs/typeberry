@@ -1,20 +1,22 @@
 import type { Comparator } from "@typeberry/ordering";
 import { check } from "@typeberry/utils";
-import { SortedArray } from "./sorted-array";
+import { type ImmutableSortedArray, SortedArray } from "./sorted-array";
+
+export interface ImmutableSortedSet<V> extends ImmutableSortedArray<V> {}
 
 /**
- * Collection of elements of type `V` that has some strict ordering and does not have dupliocates.
+ * Collection of elements of type `V` that has some strict ordering and does not have duplicates.
  *
  * The items are stored sorted, which allows logarithmic insertion & lookup
  * and obviously in-order iteration.
  *
  * Duplicates are not allowed. Inserting an existing item is no-op.
  */
-export class SortedSet<V> extends SortedArray<V> {
+export class SortedSet<V> extends SortedArray<V> implements ImmutableSortedSet<V> {
   /**
    * Create SortedSet from array that is not sorted. This function sorts the array.
    */
-  static fromArray<V>(comparator: Comparator<V>, array: V[] = []) {
+  static fromArray<V>(comparator: Comparator<V>, array: readonly V[] = []) {
     const data = array.slice();
     data.sort((a, b) => comparator(a, b).value);
     const dataLength = data.length;
@@ -33,7 +35,7 @@ export class SortedSet<V> extends SortedArray<V> {
    *
    * NOTE: This function does not sort the array. Unsorted array will throw an error.
    */
-  static fromSortedArray<V>(comparator: Comparator<V>, array: V[] = []) {
+  static fromSortedArray<V>(comparator: Comparator<V>, array: readonly V[] = []) {
     if (array.length === 0) {
       return new SortedSet([], comparator);
     }
@@ -59,7 +61,7 @@ export class SortedSet<V> extends SortedArray<V> {
   }
 
   /** Create a new SortedSet from two sorted collections. */
-  static fromTwoSortedCollections<V>(first: SortedArray<V>, second: SortedArray<V>) {
+  static fromTwoSortedCollections<V>(first: ImmutableSortedArray<V>, second: ImmutableSortedArray<V>) {
     check(first.comparator === second.comparator, "Cannot merge arrays if they do not use the same comparator");
     const comparator = first.comparator;
 

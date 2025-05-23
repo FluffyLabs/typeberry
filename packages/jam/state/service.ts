@@ -3,10 +3,9 @@ import type { PreimageHash } from "@typeberry/block/preimage";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { type ImmutableHashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
-import { HASH_SIZE } from "@typeberry/hash";
+import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type U32, type U64, sumU64, tryAsU64 } from "@typeberry/numbers";
-import { WithDebug } from "@typeberry/utils";
-import type { StateKey } from "../state-merkleization/keys";
+import { type Opaque, WithDebug } from "@typeberry/utils";
 
 /**
  * Service account details.
@@ -89,18 +88,20 @@ export class PreimageItem extends WithDebug {
   }
 }
 
-export class StateItem extends WithDebug {
-  static Codec = codec.Class(StateItem, {
-    hash: codec.bytes(HASH_SIZE).asOpaque<StateKey>(),
+export type StorageKey = Opaque<OpaqueHash, "stateKey">;
+
+export class StorageItem extends WithDebug {
+  static Codec = codec.Class(StorageItem, {
+    hash: codec.bytes(HASH_SIZE).asOpaque<StorageKey>(),
     blob: codec.blob,
   });
 
-  static create({ hash, blob }: CodecRecord<StateItem>) {
-    return new StateItem(hash, blob);
+  static create({ hash, blob }: CodecRecord<StorageItem>) {
+    return new StorageItem(hash, blob);
   }
 
   private constructor(
-    readonly hash: StateKey,
+    readonly hash: StorageKey,
     readonly blob: BytesBlob,
   ) {
     super();
@@ -126,7 +127,7 @@ export class LookupHistoryItem {
      * Preimage availability history as a sequence of time slots.
      * See PreimageStatus and the following GP fragment for more details.
      * https://graypaper.fluffylabs.dev/#/5f542d7/11780011a500 */
-    public slots: LookupHistorySlots,
+    public readonly slots: LookupHistorySlots,
   ) {}
 
   static isRequested(item: LookupHistoryItem): boolean {
@@ -150,7 +151,7 @@ export class Service extends WithDebug {
       /** https://graypaper.fluffylabs.dev/#/85129da/115400115800?v=0.6.3 */
       readonly lookupHistory: ImmutableHashDictionary<PreimageHash, readonly LookupHistoryItem[]>;
       /** https://graypaper.fluffylabs.dev/#/85129da/10f80010f800?v=0.6.3 */
-      readonly storage: readonly StateItem[];
+      readonly storage: readonly StorageItem[];
     },
   ) {
     super();

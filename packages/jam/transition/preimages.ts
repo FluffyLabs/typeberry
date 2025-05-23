@@ -1,9 +1,15 @@
 import type { TimeSlot } from "@typeberry/block";
 import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage";
-import type { BytesBlob } from "@typeberry/bytes";
 import { blake2b } from "@typeberry/hash";
-import { LookupHistoryItem, PreimageItem, type Service, type State, tryAsLookupHistorySlots } from "@typeberry/state";
-import { OK, Result } from "@typeberry/utils";
+import {
+  LookupHistoryItem,
+  PreimageItem,
+  PreimageUpdate,
+  type ServicesUpdate,
+  type State,
+  StateUpdate,
+} from "@typeberry/state";
+import { Result } from "@typeberry/utils";
 
 type PreimagesState = Pick<State, "services">;
 
@@ -22,7 +28,7 @@ export enum PreimagesErrorCode {
 export class Preimages {
   constructor(public readonly state: PreimagesState) {}
 
-  integrate(input: PreimagesInput): Result<OK, PreimagesErrorCode> {
+  integrate(input: PreimagesInput): Result<StateUpdate<ServicesUpdate>, PreimagesErrorCode> {
     // make sure lookup extrinsics are sorted and unique
     // "The lookup extrinsic is a sequence of pairs of service indices and data.
     // These pairs must be ordered and without duplicates."
@@ -44,17 +50,12 @@ export class Preimages {
     }
 
     const { preimages, slot } = input;
-    const pendingChanges: {
-      account: Service;
-      hash: PreimageHash;
-      blob: BytesBlob;
-      lookupHistoryItem: LookupHistoryItem;
-    }[] = [];
+    const pendingChanges: PreimageUpdate[] = [];
 
     // select preimages for integration
     for (const preimage of preimages) {
       const { requester, blob } = preimage;
-      const hash = blake2b.hashBytes(blob).asOpaque();
+      const hash: PreimageHash = blake2b.hashBytes(blob).asOpaque();
       const account = this.state.services.get(requester);
 
       if (account === undefined) {
@@ -62,7 +63,9 @@ export class Preimages {
       }
 
       const preimageHistory = account.data.lookupHistory.get(hash);
-      const lookupHistoryItem = getLookupHistoryItem(preimageHistory, hash, blob.length);
+      const lookupHistoryItem = preimageHistory?.find(
+        (item) => item.hash.isEqualTo(hash) && item.length === blob.length,
+      );
 
       // https://graypaper.fluffylabs.dev/#/5f542d7/181800181900
       // https://graypaper.fluffylabs.dev/#/5f542d7/116f0011a500
@@ -74,29 +77,20 @@ export class Preimages {
         return Result.error(PreimagesErrorCode.PreimageUnneeded);
       }
 
-      pendingChanges.push({
-        account,
-        hash,
-        blob,
-        lookupHistoryItem,
-      });
+      // https://graypaper.fluffylabs.dev/#/5f542d7/18c00018f300
+      pendingChanges.push(
+        PreimageUpdate.provide({
+          serviceId: requester,
+          preimage: PreimageItem.create({ hash, blob }),
+          slot,
+        }),
+      );
     }
 
-    // https://graypaper.fluffylabs.dev/#/5f542d7/18c00018f300
-    for (const change of pendingChanges) {
-      const { account, hash, blob, lookupHistoryItem } = change;
-      account.data.preimages.set(hash, PreimageItem.create({ hash, blob }));
-      lookupHistoryItem.slots = tryAsLookupHistorySlots([slot]);
-    }
-
-    return Result.ok(OK);
+    return Result.ok(
+      StateUpdate.new({
+        preimages: pendingChanges,
+      }),
+    );
   }
-}
-
-export function getLookupHistoryItem(
-  lookupHistory: LookupHistoryItem[] | undefined,
-  hash: PreimageHash,
-  length: number,
-): LookupHistoryItem | undefined {
-  return lookupHistory?.find((item) => item.hash.isEqualTo(hash) && item.length === length);
 }

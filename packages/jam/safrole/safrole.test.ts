@@ -9,7 +9,7 @@ import {
   type PerValidator,
   tryAsTimeSlot,
 } from "@typeberry/block";
-import { type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets";
+import { type SignedTicket, type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
@@ -123,12 +123,12 @@ describe("Safrole", () => {
     const safrole = new Safrole(tinyChainSpec, state, bwasm);
     const timeslot = tryAsTimeSlot(2);
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
-    const extrinsic: TicketsExtrinsic = asKnownSize([]);
+    const extrinsic: SignedTicket[] = [];
     extrinsic.length = tinyChainSpec.epochLength + 1;
     const input = {
       slot: timeslot,
       entropy,
-      extrinsic,
+      extrinsic: asKnownSize(extrinsic),
     };
 
     const result = await safrole.transition(input);

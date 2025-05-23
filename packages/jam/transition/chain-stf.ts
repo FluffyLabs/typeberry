@@ -96,6 +96,8 @@ export class OnChain {
   }
 
   async transition(block: BlockView, headerHash: HeaderHash): Promise<Result<OK, StfError>> {
+    // TODO [ToDr] Apply state updates!!!
+
     const header = block.header.materialize();
     const timeSlot = header.timeSlotIndex;
 
@@ -177,7 +179,7 @@ export class OnChain {
       authorIndex: header.bandersnatchBlockAuthorIndex,
       extrinsic,
       incomingReports: extrinsic.guarantees.map((g) => g.report),
-      availableReports: assurancesResult.ok,
+      availableReports: assurancesResult.ok.availableReports,
       accumulationStatistics: new Map(),
       transferStatistics: new Map(),
     });

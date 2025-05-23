@@ -6,5 +6,6 @@ export * from "./privileged-services";
 export * from "./safrole-data";
 export * from "./service";
 export * from "./state";
+export * from "./state-update";
 export * from "./statistics";
 export * from "./validator-data";

@@ -2,11 +2,11 @@ import type { HeaderHash, TimeSlot } from "@typeberry/block";
 import type { AssurancesExtrinsicView } from "@typeberry/block/assurances";
 import type { WorkReport } from "@typeberry/block/work-report";
 import { BytesBlob } from "@typeberry/bytes";
-import { FixedSizeArray } from "@typeberry/collections";
+import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
 import { blake2b } from "@typeberry/hash";
-import type { State } from "@typeberry/state";
+import { type State, StateUpdate } from "@typeberry/state";
 import { OK, Result, check } from "@typeberry/utils";
 
 /** Assurances transition input. */
@@ -50,7 +50,15 @@ export class Assurances {
     public readonly state: AssurancesState,
   ) {}
 
-  async transition(input: AssurancesInput): Promise<Result<WorkReport[], AssurancesError>> {
+  async transition(input: AssurancesInput): Promise<
+    Result<
+      {
+        availableReports: WorkReport[];
+        stateUpdate: StateUpdate<AssurancesState>;
+      },
+      AssurancesError
+    >
+  > {
     const coresCount = this.chainSpec.coresCount;
     /**
      * The signature must be one whose public key is that of the validator assuring
@@ -130,11 +138,17 @@ export class Assurances {
     }
 
     // Only clear the state at the very end.
+    const availabilityAssignment = this.state.availabilityAssignment.slice();
     for (const c of coresToClear) {
-      this.state.availabilityAssignment[c] = null;
+      availabilityAssignment[c] = null;
     }
 
-    return Result.ok(availableReports);
+    return Result.ok({
+      availableReports,
+      stateUpdate: StateUpdate.new({
+        availabilityAssignment: asKnownSize(availabilityAssignment),
+      }),
+    });
   }
 
   /** Asynchronously verify all signatures. */

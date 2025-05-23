@@ -38,10 +38,6 @@ export type ENTROPY_ENTRIES = typeof ENTROPY_ENTRIES;
 export const MAX_RECENT_HISTORY = 8;
 export type MAX_RECENT_HISTORY = typeof MAX_RECENT_HISTORY;
 
-export type StateMutation = {
-  -readonly [P in keyof State]?: State[P];
-};
-
 /**
  * Complete state tuple with all entries.
  *

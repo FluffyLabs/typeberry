@@ -6,7 +6,7 @@ import type { WorkReport } from "@typeberry/block/work-report";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { type AvailabilityAssignment, type ValidatorData, tryAsPerCore } from "@typeberry/state";
+import { type AvailabilityAssignment, type ValidatorData, copyAndUpdateState, tryAsPerCore } from "@typeberry/state";
 import { availabilityAssignmentFromJson, validatorDataFromJson } from "@typeberry/state-json";
 import {
   Assurances,
@@ -175,9 +175,16 @@ async function runAssurancesTest(
     expectedResult.error = AssurancesError.InvalidOrder;
   }
 
-  deepEqual(res, expectedResult, {
-    context: "output",
-    ignore: ["output.details"],
-  });
-  deepEqual(assurances.state, postState, { context: "state" });
+  if (res.isError) {
+    deepEqual(res, expectedResult, {
+      context: "output",
+      ignore: ["output.details"],
+    });
+    deepEqual(assurances.state, postState, { context: "state" });
+  } else {
+    const { availableReports, stateUpdate } = res.ok;
+    const result = copyAndUpdateState(preState, stateUpdate);
+    deepEqual(Result.ok(availableReports), expectedResult);
+    deepEqual(result, postState, { context: "state" });
+  }
 }

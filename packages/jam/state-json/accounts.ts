@@ -11,7 +11,7 @@ import {
   PreimageItem,
   Service,
   ServiceAccountInfo,
-  StateItem,
+  StorageItem,
 } from "@typeberry/state";
 
 class JsonServiceInfo {
@@ -57,12 +57,12 @@ class JsonPreimageItem {
   blob!: BytesBlob;
 }
 
-const stateItemFromJson = json.object<StateItem>(
+const stateItemFromJson = json.object<StorageItem>(
   {
     hash: fromJson.bytes32(),
     blob: json.fromString(BytesBlob.parseBlob),
   },
-  StateItem.create,
+  StorageItem.create,
 );
 
 const lookupMetaFromJson = json.object<JsonLookupMeta, LookupHistoryItem>(
@@ -116,7 +116,7 @@ export class JsonService {
   data!: {
     service: ServiceAccountInfo;
     preimages?: JsonPreimageItem[];
-    storage?: StateItem[];
+    storage?: StorageItem[];
     lookup_meta?: LookupHistoryItem[];
   };
 }

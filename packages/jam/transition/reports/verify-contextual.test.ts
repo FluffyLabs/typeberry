@@ -198,8 +198,8 @@ describe("Reports.verifyContextualValidity", () => {
     const reports = await newReports({
       withCoreAssignment: true,
       services: initialServices(),
+      clearAvailabilityOnZero: true,
     });
-    reports.state.availabilityAssignment[0] = null;
 
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.create({
@@ -229,8 +229,8 @@ describe("Reports.verifyContextualValidity", () => {
       accumulationQueue: [
         NotYetAccumulatedReport.create({ report: newWorkReport({ core: 1 }), unlocks: asKnownSize([]) }),
       ],
+      clearAvailabilityOnZero: true,
     });
-    reports.state.availabilityAssignment[0] = null;
 
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.create({
@@ -265,8 +265,8 @@ describe("Reports.verifyContextualValidity", () => {
           }),
         ].map((x) => [x.workPackageHash, x]),
       ),
+      clearAvailabilityOnZero: true,
     });
-    reports.state.availabilityAssignment[0] = null;
 
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.create({
@@ -294,8 +294,8 @@ describe("Reports.verifyContextualValidity", () => {
     const reports = await newReports({
       services: initialServices(),
       recentlyAccumulated: HashSet.from([newWorkReport({ core: 0 }).workPackageSpec.hash]),
+      clearAvailabilityOnZero: true,
     });
-    reports.state.availabilityAssignment[0] = null;
 
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.create({

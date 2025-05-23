@@ -1,10 +1,11 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
 import { Bytes } from "@typeberry/bytes";
-import type { HashDictionary } from "@typeberry/collections";
+import { type HashDictionary, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, type OpaqueHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
 import { MAX_RECENT_HISTORY, type State } from "@typeberry/state";
+import { StateUpdate } from "@typeberry/state/state-update";
 
 /** Current block input for the recent history transition. */
 export type RecentHistoryInput = {
@@ -23,9 +24,7 @@ export type RecentHistoryInput = {
 };
 
 /** Recent history tests state. */
-export type RecentHistoryState = {
-  recentBlocks: State["recentBlocks"];
-};
+export type RecentHistoryState = Pick<State, "recentBlocks">;
 
 /**
  * Recent History transition function.
@@ -38,8 +37,8 @@ export class RecentHistory {
     public readonly state: RecentHistoryState,
   ) {}
 
-  transition(input: RecentHistoryInput) {
-    const { recentBlocks } = this.state;
+  transition(input: RecentHistoryInput): StateUpdate<RecentHistoryState> {
+    const recentBlocks = this.state.recentBlocks.slice();
     const lastState = recentBlocks.length > 0 ? recentBlocks[recentBlocks.length - 1] : null;
     // update the posterior root of previous state.
     if (lastState !== null) {
@@ -66,6 +65,9 @@ export class RecentHistory {
     }
 
     // write back to the state.
-    this.state.recentBlocks = recentBlocks;
+    return StateUpdate.new({
+      // we remove all items above `MAX_RECENT_HISTORY`.
+      recentBlocks: asKnownSize(recentBlocks),
+    });
   }
 }

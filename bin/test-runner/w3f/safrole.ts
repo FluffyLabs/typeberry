@@ -21,7 +21,7 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import { type Input, type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole";
-import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
+import { ENTROPY_ENTRIES, StateUpdate, type ValidatorData, copyAndUpdateState, hashComparator } from "@typeberry/state";
 import { TicketsOrKeys, ticketFromJson } from "@typeberry/state-json";
 import { validatorDataFromJson } from "@typeberry/state-json";
 import { Result, deepEqual } from "@typeberry/utils";
@@ -155,6 +155,7 @@ export class Output {
     return Result.ok({
       epochMark,
       ticketsMark,
+      stateUpdate: StateUpdate.new({}),
     });
   }
 
@@ -222,6 +223,21 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
 
   const result = await safrole.transition(testContent.input);
 
-  deepEqual(result, Output.toSafroleOutput(testContent.output, chainSpec));
-  deepEqual(safrole.state, JsonState.toSafroleState(testContent.post_state, chainSpec));
+  const expectedResult = Output.toSafroleOutput(testContent.output, chainSpec);
+  const expectedState = JsonState.toSafroleState(testContent.post_state, chainSpec);
+
+  if (result.isError) {
+    deepEqual(result, expectedResult);
+    deepEqual(safrole.state, expectedState);
+  } else {
+    const state = copyAndUpdateState(safrole.state, result.ok.stateUpdate);
+    deepEqual(
+      Result.ok({
+        ...result.ok,
+        stateUpdate: StateUpdate.new({}),
+      }),
+      expectedResult,
+    );
+    deepEqual(state, expectedState);
+  }
 }

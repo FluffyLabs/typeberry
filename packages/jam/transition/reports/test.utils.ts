@@ -173,6 +173,7 @@ type ReportStateOptions = {
   accumulationQueue?: NotYetAccumulatedReport[];
   recentlyAccumulated?: HashSet<WorkPackageHash>;
   reportedInRecentBlocks?: HashDictionary<WorkPackageHash, WorkPackageInfo>;
+  clearAvailabilityOnZero?: boolean;
 };
 
 function newReportsState({
@@ -181,8 +182,13 @@ function newReportsState({
   accumulationQueue = [],
   recentlyAccumulated = HashSet.new(),
   reportedInRecentBlocks = HashDictionary.new(),
+  clearAvailabilityOnZero = false,
 }: ReportStateOptions = {}): ReportsState {
   const spec = tinyChainSpec;
+  const coreAssignment = withCoreAssignment ? initialAssignment() : [null, null];
+  if (clearAvailabilityOnZero) {
+    coreAssignment[0] = null;
+  }
   return {
     accumulationQueue: tryAsPerEpochBlock(
       FixedSizeArray.fill((idx) => (idx === 0 ? accumulationQueue : []), spec.epochLength),
@@ -192,7 +198,7 @@ function newReportsState({
       FixedSizeArray.fill((idx) => (idx === 0 ? recentlyAccumulated : HashSet.new()), spec.epochLength),
       spec,
     ),
-    availabilityAssignment: tryAsPerCore(withCoreAssignment ? initialAssignment() : [null, null], spec),
+    availabilityAssignment: tryAsPerCore(coreAssignment, spec),
     currentValidatorData: tryAsPerValidator(initialValidators(), spec),
     previousValidatorData: tryAsPerValidator(initialValidators(), spec),
     entropy: getEntropy(1, 2, 3, 4),

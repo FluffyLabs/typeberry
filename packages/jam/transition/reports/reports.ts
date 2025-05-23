@@ -7,7 +7,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { type Ed25519Key, ed25519 } from "@typeberry/crypto";
 import { type KeccakHash, WithHash, blake2b } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
-import { AvailabilityAssignment, type State } from "@typeberry/state";
+import { AvailabilityAssignment, type State, StateUpdate, tryAsPerCore } from "@typeberry/state";
 import { OK, Result, asOpaqueType } from "@typeberry/utils";
 import { ReportsError } from "./error";
 import { generateCoreAssignment, rotationIndex } from "./guarantor-assignment";
@@ -66,6 +66,8 @@ export type ReportsState = Pick<
 */
 
 export type ReportsOutput = {
+  /** Altered state. */
+  stateUpdate: StateUpdate<ReportsState>;
   /**
    * All work Packages and their segment roots reported in the extrinsic.
    *
@@ -135,10 +137,12 @@ export class Reports {
      * https://graypaper.fluffylabs.dev/#/5f542d7/154c02154c02
      */
     let index = 0;
+    const availabilityAssignment = this.state.availabilityAssignment.slice();
+
     for (const guarantee of input.guarantees) {
       const report = guarantee.view().report.materialize();
       const workPackageHash = workReportHashes[index];
-      this.state.availabilityAssignment[report.coreIndex] = AvailabilityAssignment.create({
+      availabilityAssignment[report.coreIndex] = AvailabilityAssignment.create({
         workReport: new WithHash(workPackageHash, report),
         timeout: input.slot,
       });
@@ -146,6 +150,9 @@ export class Reports {
     }
 
     return Result.ok({
+      stateUpdate: StateUpdate.new({
+        availabilityAssignment: tryAsPerCore(availabilityAssignment, this.chainSpec),
+      }),
       reported: contextualValidity.ok,
       reporters: asKnownSize(
         SortedSet.fromArray(
