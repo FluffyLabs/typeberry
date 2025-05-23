@@ -245,6 +245,19 @@ export function encodeChunks(input: BytesBlob): BytesBlob[] {
   return encodedPieces;
 }
 
-export function reconstructData() {
-  throw new Error("Not implemented yet!");
+export function reconstructData(
+  input: [number, BytesBlob][],
+  expectedLength: number = SHARD_LENGTH * N_SHARDS,
+): BytesBlob {
+  check(input.length >= N_SHARDS, `length of input should be equal or more than ${N_SHARDS}`);
+  const result = BytesBlob.empty({ size: expectedLength });
+  const pieces = input[0][1].length / SHARD_LENGTH;
+  let offset = 0;
+  for (let i = 0; i < pieces; i++) {
+    const start = i * SHARD_LENGTH;
+    const arrayInput = input.slice(0, N_SHARDS).map(([index, piece]) => [index, piece.raw.slice(start, start + 2)] as [number, Uint8Array]);
+    result.raw.set(decodeData(arrayInput, expectedLength), offset);
+    offset += arrayInput.length * SHARD_LENGTH;
+  }
+  return result;
 }
