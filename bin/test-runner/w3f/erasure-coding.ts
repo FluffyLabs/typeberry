@@ -113,7 +113,7 @@ export async function runEcTest(test: EcTest, path: string) {
     assert.deepStrictEqual(shards[0].toString(), test.shards[0].toString());
   });
 
-  it("should decode first 342 data", () => {
+  it("should decode first 342 shards", () => {
     const split = splitShard(test.shards, chainSpec.validatorsCount);
 
     const shards = split.map((shard, idx) => [idx, shard] as [number, BytesBlob]);
@@ -124,7 +124,7 @@ export async function runEcTest(test: EcTest, path: string) {
     assert.deepStrictEqual(decoded.toString(), test.data.toString());
   });
 
-  it("should decode random 342 data", () => {
+  it("should decode random 342 shards", () => {
     const split = splitShard(test.shards, chainSpec.validatorsCount);
 
     const shards = split.map((shard, idx) => [idx, shard] as [number, BytesBlob]);
