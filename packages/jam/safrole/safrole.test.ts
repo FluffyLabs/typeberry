@@ -19,6 +19,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { Ordering } from "@typeberry/ordering";
 import { DisputesRecords, VALIDATOR_META_BYTES, ValidatorData, hashComparator } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
+import { Result, deepEqual } from "@typeberry/utils";
 import * as bandersnatch from "./bandersnatch";
 import { BandernsatchWasm } from "./bandersnatch-wasm";
 import { Safrole, SafroleErrorCode, type SafroleState } from "./safrole";
@@ -363,13 +364,15 @@ describe("Safrole", () => {
 
     const result = await safrole.transition(input);
 
-    assert.deepEqual(result.isOk, true);
-    if (result.isOk) {
-      assert.deepStrictEqual(result.ok, {
+    deepEqual(
+      result,
+      Result.ok({
+        stateUpdate: {},
         epochMark: null,
         ticketsMark: null,
-      });
-    }
+      }),
+      { ignore: ["ok.stateUpdate"] },
+    );
   });
 });
 

@@ -12,7 +12,7 @@ import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import type { SafroleErrorCode } from "@typeberry/safrole/safrole";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal";
-import type { ServicesUpdate, State, StateUpdate } from "@typeberry/state";
+import { type ServicesUpdate, type State, type StateUpdate, mergeStateUpdates } from "@typeberry/state";
 import { type ErrorResult, Result, type TaggedError } from "@typeberry/utils";
 import { Assurances, type AssurancesError } from "./assurances";
 import { Authorization } from "./authorization";
@@ -100,6 +100,7 @@ export class OnChain {
   async transition(block: BlockView, headerHash: HeaderHash): Promise<Result<Ok, StfError>> {
     const header = block.header.materialize();
     const timeSlot = header.timeSlotIndex;
+    const stateUpdates: Ok[] = [];
 
     // safrole seal
     const sealState = this.safrole.getSafroleSealState(timeSlot);
@@ -113,6 +114,7 @@ export class OnChain {
     if (disputesResult.isError) {
       return stfError(StfErrorKind.Disputes, disputesResult);
     }
+    stateUpdates.push(disputesResult.ok.stateUpdate);
 
     // reports
     const reportsResult = await this.reports.transition({
@@ -123,6 +125,7 @@ export class OnChain {
     if (reportsResult.isError) {
       return stfError(StfErrorKind.Reports, reportsResult);
     }
+    stateUpdates.push(reportsResult.ok.stateUpdate);
 
     // assurances
     const assurancesResult = await this.assurances.transition({
@@ -133,6 +136,7 @@ export class OnChain {
     if (assurancesResult.isError) {
       return stfError(StfErrorKind.Assurances, assurancesResult);
     }
+    stateUpdates.push(assurancesResult.ok.stateUpdate);
 
     // safrole
     const safroleResult = await this.safrole.transition({
@@ -140,11 +144,11 @@ export class OnChain {
       entropy: sealResult.ok,
       extrinsic: block.extrinsic.view().tickets.materialize(),
     });
-
     // TODO [ToDr] shall we verify the ticket mark & epoch mark as well?
     if (safroleResult.isError) {
       return stfError(StfErrorKind.Safrole, safroleResult);
     }
+    stateUpdates.push(safroleResult.ok.stateUpdate);
 
     // preimages
     const preimagesResult = this.preimages.integrate({
@@ -154,21 +158,25 @@ export class OnChain {
     if (preimagesResult.isError) {
       return stfError(StfErrorKind.Preimages, preimagesResult);
     }
+    stateUpdates.push(preimagesResult.ok);
 
     // TODO [ToDr] output from accumulate
     const accumulateRoot = Bytes.zero(HASH_SIZE).asOpaque();
     // recent history
-    this.recentHistory.transition({
+    const recentHistoryUpdate = this.recentHistory.transition({
       headerHash,
       priorStateRoot: header.priorStateRoot,
       accumulateRoot: accumulateRoot,
       workPackages: reportsResult.ok.reported,
     });
+    stateUpdates.push(recentHistoryUpdate);
+
     // authorization
-    this.authorization.transition({
+    const authorizationUpdate = this.authorization.transition({
       slot: timeSlot,
       used: this.getUsedAuthorizerHashes(block.extrinsic.view().guarantees.view()),
     });
+    stateUpdates.push(authorizationUpdate);
 
     const extrinsic = block.extrinsic.materialize();
 
@@ -183,8 +191,9 @@ export class OnChain {
       accumulationStatistics: new Map(),
       transferStatistics: new Map(),
     });
+    stateUpdates.push(update);
 
-    return Result.ok(update);
+    return Result.ok(mergeStateUpdates(stateUpdates));
   }
 
   private getUsedAuthorizerHashes(guarantees: GuaranteesExtrinsicView) {

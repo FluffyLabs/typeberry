@@ -178,11 +178,8 @@ export class Reports {
   }
 
   verifyPostSignatureChecks(input: GuaranteesExtrinsicView) {
-    return verifyPostSignatureChecks(
-      input,
-      this.state.availabilityAssignment,
-      this.state.authPools,
-      this.state.service,
+    return verifyPostSignatureChecks(input, this.state.availabilityAssignment, this.state.authPools, (id) =>
+      this.state.service(id),
     );
   }
 

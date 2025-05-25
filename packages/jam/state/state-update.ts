@@ -163,6 +163,10 @@ export type ServicesUpdate = {
 /** An update to the State object. */
 export type StateUpdate<State> = Partial<State>;
 
+export function mergeStateUpdates<T>(updates: StateUpdate<T>[]): StateUpdate<T> {
+  return updates.reduce((acc, x) => Object.assign(acc, x), {});
+}
+
 /**
  * A rather test-only function to copy some fields from the state,
  * apply an update to them (excluding services) and return a new plain object.
