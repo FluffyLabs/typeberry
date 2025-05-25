@@ -9,7 +9,7 @@ import {
 import { getExtrinsicFromJson } from "@typeberry/block-json";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { ServiceStatistics, type ValidatorData } from "@typeberry/state";
+import { InMemoryState, ServiceStatistics, type ValidatorData } from "@typeberry/state";
 import { JsonStatisticsData, validatorDataFromJson } from "@typeberry/state-json";
 import { type Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics";
 
@@ -121,23 +121,24 @@ export async function runStatisticsTest(
   assert.deepStrictEqual(statistics.state, preState);
 
   // when
-  statistics.transition(input);
+  const update = statistics.transition(input);
+  const state = InMemoryState.partial(spec, preState).applyUpdate(update);
 
   // NOTE [MaSo] This is a workaround for the fact that the test data does not contain any posterior service statistics.
-  assert.deepStrictEqual(postState.statistics.services.size, 0);
-  if (statistics.state.statistics.services.size > 0) {
-    const serviceStatistics = statistics.state.statistics.services.get(tryAsServiceId(0)) ?? ServiceStatistics.empty();
+  assert.deepStrictEqual(postState.statistics.services.size, 0, "We expect services are not calculated.");
+  if (state.statistics.services.size > 0) {
+    const serviceStatistics = state.statistics.services.get(tryAsServiceId(0)) ?? ServiceStatistics.empty();
     postState.statistics.services.set(tryAsServiceId(0), serviceStatistics);
   }
 
   // then
-  assert.deepStrictEqual(statistics.state, postState);
+  assert.deepStrictEqual(state, InMemoryState.partial(spec, postState));
 }
 
 export async function runStatisticsTestTiny(test: StatisticsTestTiny) {
-  runStatisticsTest(test, tinyChainSpec);
+  await runStatisticsTest(test, tinyChainSpec);
 }
 
 export async function runStatisticsTestFull(test: StatisticsTestFull) {
-  runStatisticsTest(test, fullChainSpec);
+  await runStatisticsTest(test, fullChainSpec);
 }

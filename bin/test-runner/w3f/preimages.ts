@@ -17,7 +17,7 @@ import {
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { Preimages, type PreimagesErrorCode } from "@typeberry/transition";
-import { OK, Result } from "@typeberry/utils";
+import { deepEqual, OK, Result } from "@typeberry/utils";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -119,7 +119,7 @@ export async function runPreImagesTest(testContent: PreImagesTest) {
   const preimages = new Preimages(preState);
   const result = preimages.integrate(testContent.input);
 
-  assert.deepEqual(result, testOutputToResult(testContent.output));
+  deepEqual(result, testOutputToResult(testContent.output), { ignore: ["ok"] });
   const state = result.isOk ? preState.applyUpdate(result.ok) : preState;
   assert.deepEqual(state, postState);
 }
@@ -157,6 +157,6 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): InMemorySer
   });
 }
 
-function testOutputToResult(testOutput: Output): Result<OK, PreimagesErrorCode> {
-  return testOutput.err !== undefined ? Result.error(testOutput.err) : Result.ok(OK);
+function testOutputToResult(testOutput: Output): ReturnType<Preimages['integrate']> {
+  return testOutput.err !== undefined ? Result.error(testOutput.err) : Result.ok({});
 }
