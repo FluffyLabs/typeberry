@@ -36,7 +36,8 @@ import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   AvailabilityAssignment,
   ENTROPY_ENTRIES,
-  Service,
+  InMemoryService,
+  InMemoryState,
   ServiceAccountInfo,
   VALIDATOR_META_BYTES,
   ValidatorData,
@@ -169,7 +170,7 @@ export function newCredential(index: number, signature?: Ed25519Signature) {
 
 type ReportStateOptions = {
   withCoreAssignment?: boolean;
-  services?: ReportsState["services"];
+  services?: InMemoryState["services"];
   accumulationQueue?: NotYetAccumulatedReport[];
   recentlyAccumulated?: HashSet<WorkPackageHash>;
   reportedInRecentBlocks?: HashDictionary<WorkPackageHash, WorkPackageInfo>;
@@ -189,7 +190,7 @@ function newReportsState({
   if (clearAvailabilityOnZero) {
     coreAssignment[0] = null;
   }
-  return {
+  return InMemoryState.partial(spec, {
     accumulationQueue: tryAsPerEpochBlock(
       FixedSizeArray.fill((idx) => (idx === 0 ? accumulationQueue : []), spec.epochLength),
       spec,
@@ -240,7 +241,7 @@ function newReportsState({
       },
     ]),
     services,
-  };
+  });
 }
 
 function getAuthPools(source: number[], spec: ChainSpec): ReportsState["authPools"] {
@@ -316,14 +317,14 @@ export const initialValidators = (): ValidatorData[] =>
     },
   ].map(intoValidatorData);
 
-export const initialServices = ({ withDummyCodeHash = false } = {}): Map<ServiceId, Service> => {
+export const initialServices = ({ withDummyCodeHash = false } = {}): Map<ServiceId, InMemoryService> => {
   const m = new Map();
   const id = tryAsServiceId(129);
   m.set(
     id,
-    new Service(tryAsServiceId(129), {
+    new InMemoryService(tryAsServiceId(129), {
       preimages: HashDictionary.new(),
-      storage: [],
+      storage: HashDictionary.new(),
       lookupHistory: HashDictionary.new(),
       info: ServiceAccountInfo.create({
         codeHash: withDummyCodeHash

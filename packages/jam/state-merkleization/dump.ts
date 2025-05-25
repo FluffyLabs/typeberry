@@ -12,9 +12,10 @@ import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
 import { HashDictionary, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import {
+  InMemoryService,
+  InMemoryState,
   LookupHistoryItem,
   PreimageItem,
-  Service,
   ServiceAccountInfo,
   type State,
   StorageItem,
@@ -27,7 +28,7 @@ import { serialize } from "./serialize";
 
 type LookupHistoryEntry = {
   key: PreimageHash;
-  data: readonly LookupHistoryItem[];
+  data: LookupHistoryItem[];
 };
 
 const lookupHistoryItemCodec = codec.object<LookupHistoryItem>(
@@ -45,12 +46,12 @@ const lookupHistoryItemCodec = codec.object<LookupHistoryItem>(
 
 const lookupHistoryEntryCodec = codec.object<LookupHistoryEntry>({
   key: codec.bytes(HASH_SIZE).asOpaque<PreimageHash>(),
-  data: readonlyArray(codec.sequenceVarLen(lookupHistoryItemCodec)),
+  data: codec.sequenceVarLen(lookupHistoryItemCodec),
 });
 
 const lookupHistoryCodec = codec
   .sequenceVarLen(lookupHistoryEntryCodec)
-  .convert<HashDictionary<PreimageHash, readonly LookupHistoryItem[]>>(
+  .convert<HashDictionary<PreimageHash, LookupHistoryItem[]>>(
     (dict) => {
       const entries: LookupHistoryEntry[] = [];
       for (const [key, data] of dict) {
@@ -63,26 +64,18 @@ const lookupHistoryCodec = codec
     },
     // TODO [ToDr] we have a bug here, if there are multiple entries for the same hash
     // (only one will end up in the dictionary)
-    (data): HashDictionary<PreimageHash, readonly LookupHistoryItem[]> =>
+    (data): HashDictionary<PreimageHash, LookupHistoryItem[]> =>
       HashDictionary.fromEntries(data.map((x) => [x.key, x.data])),
   );
 
-class ServiceWithCodec extends Service {
+class ServiceWithCodec extends InMemoryService {
   static Codec = codec.Class(ServiceWithCodec, {
     id: codec.u32.asOpaque<ServiceId>(),
-    data: codec.object<Service["data"]>({
+    data: codec.object<InMemoryService["data"]>({
       info: ServiceAccountInfo.Codec,
-      // TODO [ToDr] These two instances of code should go away.
-      // we shouldn't be serializing it like that.
-      preimages: codecHashDictionary(PreimageItem.Codec, (x) => x.hash).convert(
-        (x) => (x instanceof HashDictionary ? x : HashDictionary.fromEntries(Array.from(x))),
-        (y) => y,
-      ),
-      lookupHistory: lookupHistoryCodec.convert(
-        (x) => (x instanceof HashDictionary ? x : HashDictionary.fromEntries(Array.from(x))),
-        (y) => y,
-      ),
-      storage: readonlyArray(codec.sequenceVarLen(StorageItem.Codec)),
+      preimages: codecHashDictionary(PreimageItem.Codec, (x) => x.hash),
+      lookupHistory: lookupHistoryCodec,
+      storage: codecHashDictionary(StorageItem.Codec, (x) => x.hash),
     }),
   });
   static create({ id, data }: CodecRecord<ServiceWithCodec>) {
@@ -90,49 +83,48 @@ class ServiceWithCodec extends Service {
   }
 }
 
-export const stateDumpCodec = codec.object<State>(
-  {
-    // alpha
-    authPools: serialize.authPools.Codec,
-    // phi
-    authQueues: serialize.authQueues.Codec,
-    // beta
-    recentBlocks: serialize.recentBlocks.Codec,
-    // gamma_k
-    nextValidatorData: codecPerValidator(ValidatorData.Codec),
-    // gamma_z
-    epochRoot: codec.bytes(BANDERSNATCH_RING_ROOT_BYTES).asOpaque<BandersnatchRingRoot>(),
-    // gamma_s
-    sealingKeySeries: SafroleSealingKeysData.Codec,
-    // gamma_a
-    ticketsAccumulator: readonlyArray(codec.sequenceVarLen(Ticket.Codec)).convert(seeThrough, asKnownSize),
-    // psi
-    disputesRecords: serialize.disputesRecords.Codec,
-    // eta
-    entropy: serialize.entropy.Codec,
-    // iota
-    designatedValidatorData: serialize.designatedValidators.Codec,
-    // kappa
-    currentValidatorData: serialize.currentValidators.Codec,
-    // lambda
-    previousValidatorData: serialize.previousValidators.Codec,
-    // rho
-    availabilityAssignment: serialize.availabilityAssignment.Codec,
-    // tau
-    timeslot: serialize.timeslot.Codec,
-    // chi
-    privilegedServices: serialize.privilegedServices.Codec,
-    // pi
-    statistics: serialize.statistics.Codec,
-    // theta
-    accumulationQueue: serialize.accumulationQueue.Codec,
-    // xi
-    recentlyAccumulated: serialize.recentlyAccumulated.Codec,
-    // delta
-    services: codec.dictionary(codec.u32.asOpaque<ServiceId>(), ServiceWithCodec.Codec, {
-      sortKeys: (a, b) => a - b,
-    }),
-  },
-  "State",
-  (state: State) => state,
-);
+export const stateDumpCodec = codec.Class<InMemoryState>(InMemoryState, {
+  // alpha
+  authPools: serialize.authPools.Codec,
+  // phi
+  authQueues: serialize.authQueues.Codec,
+  // beta
+  recentBlocks: serialize.recentBlocks.Codec,
+  // gamma_k
+  nextValidatorData: codecPerValidator(ValidatorData.Codec),
+  // gamma_z
+  epochRoot: codec.bytes(BANDERSNATCH_RING_ROOT_BYTES).asOpaque<BandersnatchRingRoot>(),
+  // gamma_s
+  sealingKeySeries: SafroleSealingKeysData.Codec,
+  // gamma_a
+  ticketsAccumulator: readonlyArray(codec.sequenceVarLen(Ticket.Codec)).convert<State["ticketsAccumulator"]>(
+    (x) => x,
+    asKnownSize,
+  ),
+  // psi
+  disputesRecords: serialize.disputesRecords.Codec,
+  // eta
+  entropy: serialize.entropy.Codec,
+  // iota
+  designatedValidatorData: serialize.designatedValidators.Codec,
+  // kappa
+  currentValidatorData: serialize.currentValidators.Codec,
+  // lambda
+  previousValidatorData: serialize.previousValidators.Codec,
+  // rho
+  availabilityAssignment: serialize.availabilityAssignment.Codec,
+  // tau
+  timeslot: serialize.timeslot.Codec,
+  // chi
+  privilegedServices: serialize.privilegedServices.Codec,
+  // pi
+  statistics: serialize.statistics.Codec,
+  // theta
+  accumulationQueue: serialize.accumulationQueue.Codec,
+  // xi
+  recentlyAccumulated: serialize.recentlyAccumulated.Codec,
+  // delta
+  services: codec.dictionary(codec.u32.asOpaque<ServiceId>(), ServiceWithCodec.Codec, {
+    sortKeys: (a, b) => a - b,
+  }),
+});

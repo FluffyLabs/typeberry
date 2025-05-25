@@ -7,7 +7,7 @@ import {
   type AvailabilityAssignment,
   DisputesRecords,
   type PerCore,
-  StateUpdate,
+  type StateUpdate,
   hashComparator,
   tryAsPerCore,
 } from "@typeberry/state";
@@ -414,10 +414,10 @@ export class Disputes {
 
     return Result.ok({
       offendersMark,
-      stateUpdate: StateUpdate.new({
+      stateUpdate: {
         disputesRecords,
         availabilityAssignment,
-      }),
+      },
     });
   }
 }

@@ -7,6 +7,7 @@ import {
   BLS_KEY_BYTES,
   type EntropyHash,
   type PerValidator,
+  type WorkReportHash,
   tryAsTimeSlot,
 } from "@typeberry/block";
 import { type SignedTicket, type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets";
@@ -16,7 +17,7 @@ import { tinyChainSpec } from "@typeberry/config";
 import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Ordering } from "@typeberry/ordering";
-import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
+import { DisputesRecords, VALIDATOR_META_BYTES, ValidatorData, hashComparator } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
 import * as bandersnatch from "./bandersnatch";
 import { BandernsatchWasm } from "./bandersnatch-wasm";
@@ -184,9 +185,7 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      disputesRecords: {
-        punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
-      },
+      disputesRecords: emptyDisputesRecords(),
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
@@ -237,9 +236,7 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      disputesRecords: {
-        punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
-      },
+      disputesRecords: emptyDisputesRecords(),
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
@@ -294,9 +291,7 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      disputesRecords: {
-        punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
-      },
+      disputesRecords: emptyDisputesRecords(),
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
@@ -345,9 +340,7 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      disputesRecords: {
-        punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
-      },
+      disputesRecords: emptyDisputesRecords(),
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
@@ -379,3 +372,12 @@ describe("Safrole", () => {
     }
   });
 });
+
+function emptyDisputesRecords(): DisputesRecords {
+  return DisputesRecords.create({
+    wonkySet: SortedSet.fromArray<WorkReportHash>(hashComparator, []),
+    badSet: SortedSet.fromArray<WorkReportHash>(hashComparator, []),
+    goodSet: SortedSet.fromArray<WorkReportHash>(hashComparator, []),
+    punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
+  });
+}

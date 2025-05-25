@@ -12,8 +12,8 @@ import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import type { SafroleErrorCode } from "@typeberry/safrole/safrole";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal";
-import type { State } from "@typeberry/state";
-import { type ErrorResult, OK, Result, type TaggedError } from "@typeberry/utils";
+import type { ServicesUpdate, State, StateUpdate } from "@typeberry/state";
+import { type ErrorResult, Result, type TaggedError } from "@typeberry/utils";
 import { Assurances, type AssurancesError } from "./assurances";
 import { Authorization } from "./authorization";
 import type { TransitionHasher } from "./hasher";
@@ -40,6 +40,8 @@ export enum StfErrorKind {
   SafroleSeal = 5,
 }
 
+export type Ok = StateUpdate<State & ServicesUpdate>;
+
 export type StfError =
   | TaggedError<StfErrorKind.Assurances, AssurancesError>
   | TaggedError<StfErrorKind.Reports, ReportsError>
@@ -49,7 +51,7 @@ export type StfError =
   | TaggedError<StfErrorKind.SafroleSeal, SafroleSealError>;
 
 const stfError = <Kind extends StfErrorKind, Err extends StfError["error"]>(kind: Kind, nested: ErrorResult<Err>) => {
-  return Result.taggedError<OK, Kind, Err>(StfErrorKind, kind, nested);
+  return Result.taggedError<Ok, Kind, Err>(StfErrorKind, kind, nested);
 };
 
 export class OnChain {
@@ -95,9 +97,7 @@ export class OnChain {
     this.authorization = new Authorization(chainSpec, state);
   }
 
-  async transition(block: BlockView, headerHash: HeaderHash): Promise<Result<OK, StfError>> {
-    // TODO [ToDr] Apply state updates!!!
-
+  async transition(block: BlockView, headerHash: HeaderHash): Promise<Result<Ok, StfError>> {
     const header = block.header.materialize();
     const timeSlot = header.timeSlotIndex;
 
@@ -174,7 +174,7 @@ export class OnChain {
 
     // TODO [MaSo] fill in the statistics with accumulation results
     // statistics
-    this.statistics.transition({
+    const update = this.statistics.transition({
       slot: timeSlot,
       authorIndex: header.bandersnatchBlockAuthorIndex,
       extrinsic,
@@ -184,7 +184,7 @@ export class OnChain {
       transferStatistics: new Map(),
     });
 
-    return Result.ok(OK);
+    return Result.ok(update);
   }
 
   private getUsedAuthorizerHashes(guarantees: GuaranteesExtrinsicView) {

@@ -6,10 +6,10 @@ import { HashDictionary } from "@typeberry/collections";
 import { json } from "@typeberry/json-parser";
 import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
 import {
+  InMemoryService,
   LookupHistoryItem,
   type LookupHistorySlots,
   PreimageItem,
-  Service,
   ServiceAccountInfo,
   StorageItem,
 } from "@typeberry/state";
@@ -85,7 +85,7 @@ type JsonLookupMeta = {
 };
 
 export class JsonService {
-  static fromJson = json.object<JsonService, Service>(
+  static fromJson = json.object<JsonService, InMemoryService>(
     {
       id: "number",
       data: {
@@ -103,10 +103,11 @@ export class JsonService {
         lookupHistory.set(item.hash, data);
       }
       const preimages = HashDictionary.fromEntries((data.preimages ?? []).map((x) => [x.hash, x]));
-      return new Service(id, {
+      const storage = HashDictionary.fromEntries((data.storage ?? []).map((x) => [x.hash, x]));
+      return new InMemoryService(id, {
         info: data.service,
         preimages,
-        storage: data.storage ?? [],
+        storage,
         lookupHistory,
       });
     },

@@ -7,7 +7,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { type Ed25519Key, ed25519 } from "@typeberry/crypto";
 import { type KeccakHash, WithHash, blake2b } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
-import { AvailabilityAssignment, type State, StateUpdate, tryAsPerCore } from "@typeberry/state";
+import { AvailabilityAssignment, type State, type StateUpdate, tryAsPerCore } from "@typeberry/state";
 import { OK, Result, asOpaqueType } from "@typeberry/utils";
 import { ReportsError } from "./error";
 import { generateCoreAssignment, rotationIndex } from "./guarantor-assignment";
@@ -51,9 +51,9 @@ export type ReportsState = Pick<
   | "currentValidatorData"
   | "previousValidatorData"
   | "entropy"
+  | "service"
   | "authPools"
   | "recentBlocks"
-  | "services"
   | "accumulationQueue"
   | "recentlyAccumulated"
 >;
@@ -150,9 +150,9 @@ export class Reports {
     }
 
     return Result.ok({
-      stateUpdate: StateUpdate.new({
+      stateUpdate: {
         availabilityAssignment: tryAsPerCore(availabilityAssignment, this.chainSpec),
-      }),
+      },
       reported: contextualValidity.ok,
       reporters: asKnownSize(
         SortedSet.fromArray(
@@ -182,7 +182,7 @@ export class Reports {
       input,
       this.state.availabilityAssignment,
       this.state.authPools,
-      this.state.services,
+      this.state.service,
     );
   }
 

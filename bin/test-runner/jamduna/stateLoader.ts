@@ -3,19 +3,20 @@ import { fromJson } from "@typeberry/block-json";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, type Descriptor, codec } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
-import { tinyChainSpec } from "@typeberry/config";
+import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { tryAsU32 } from "@typeberry/numbers";
 import {
+  InMemoryState,
   LookupHistoryItem,
   PreimageItem,
-  PreimageUpdate,
   ServiceAccountInfo,
   type ServicesUpdate,
   type State,
-  StateUpdate,
+  type StateUpdate,
   StorageItem,
+  UpdatePreimage,
   UpdateService,
   UpdateStorage,
 } from "@typeberry/state";
@@ -32,18 +33,17 @@ export class TestState {
 
 export type StateKeyVal = string[];
 
-export function loadState(testState: StateKeyVal[]): State {
-  const partial = {
-    services: new Map(),
-  };
-  for (const [_key, value, kind, description] of testState) {
+export function loadState(spec: ChainSpec, stateData: StateKeyVal[]): InMemoryState {
+  const state = InMemoryState.empty(spec);
+  for (const [_key, value, kind, description] of stateData) {
     const appender = kindMapping[kind];
     if (appender === undefined) {
       throw new Error(`Missing kind mapping for: ${kind}`);
     }
-    appender(partial, BytesBlob.parseBlob(value), description);
+    const update = appender(BytesBlob.parseBlob(value), description);
+    state.applyUpdate(update);
   }
-  return partial as State;
+  return state;
 }
 
 // A hacky set of parsers to avoid decoding the state keys.
@@ -86,10 +86,10 @@ class Parser {
 }
 
 // Takes the state and value and insert it into the state.
-type Appender = (s: Partial<State>, value: BytesBlob, description: string) => StateUpdate<State & ServicesUpdate>;
+type Appender = (value: BytesBlob, description: string) => StateUpdate<State & ServicesUpdate>;
 
 const kindMapping: { [k: string]: Appender } = {
-  account_lookup: (_s, value, description) => {
+  account_lookup: (value, description) => {
     const { serviceId, hash, len } = Parser.lookup(description);
     const lookupHistory = new LookupHistoryItem(
       hash,
@@ -97,121 +97,107 @@ const kindMapping: { [k: string]: Appender } = {
       asKnownSize(decode(codec.sequenceVarLen(codec.u32), value).map((x) => tryAsTimeSlot(x))),
     );
 
-    return StateUpdate.new({
+    return {
       preimages: [
-        PreimageUpdate.updateOrAdd({
+        UpdatePreimage.updateOrAdd({
           serviceId,
           lookupHistory,
         }),
       ],
-    });
+    };
   },
-  account_storage: (_s, blob, description) => {
+  account_storage: (blob, description) => {
     const { serviceId, hash } = Parser.storage(description);
     const storage = StorageItem.create({ hash, blob });
 
-    return StateUpdate.new({
+    return {
       storage: [
         UpdateStorage.set({
           serviceId,
           storage,
         }),
       ],
-    });
+    };
   },
-  account_preimage: (_s, blob, description) => {
+  account_preimage: (blob, description) => {
     const { serviceId, hash } = Parser.preimage(description);
     const preimage = PreimageItem.create({ hash, blob });
 
-    return StateUpdate.new({
+    return {
       preimages: [
-        PreimageUpdate.provide({
+        UpdatePreimage.provide({
           serviceId,
           preimage,
           slot: null,
         }),
       ],
-    });
+    };
   },
-  service_account: (_s, blob, description) => {
+  service_account: (blob, description) => {
     const { serviceId } = Parser.info(description);
     const serviceInfo = decode(ServiceAccountInfo.Codec, blob);
 
-    return StateUpdate.new({
+    return {
       servicesUpdates: [
         UpdateService.create({
           serviceId,
           serviceInfo,
-          lookupHistory: [],
+          lookupHistory: null,
         }),
       ],
-    });
+    };
   },
-  c1: (_s, value) =>
-    StateUpdate.new({
-      authPools: decode(serialize.authPools.Codec, value),
-    }),
-  c2: (_s, value) =>
-    StateUpdate.new({
-      authQueues: decode(serialize.authQueues.Codec, value),
-    }),
-  c3: (_s, value) =>
-    StateUpdate.new({
-      recentBlocks: decode(serialize.recentBlocks.Codec, value),
-    }),
-  c4: (_s, value) => {
+  c1: (value) => ({
+    authPools: decode(serialize.authPools.Codec, value),
+  }),
+  c2: (value) => ({
+    authQueues: decode(serialize.authQueues.Codec, value),
+  }),
+  c3: (value) => ({
+    recentBlocks: decode(serialize.recentBlocks.Codec, value),
+  }),
+  c4: (value) => {
     const safrole = decode(serialize.safrole.Codec, value);
-    return StateUpdate.new({
+    return {
       nextValidatorData: safrole.nextValidatorData,
       epochRoot: safrole.epochRoot,
       sealingKeySeries: safrole.sealingKeySeries,
       ticketsAccumulator: safrole.ticketsAccumulator,
-    });
+    };
   },
-  c5: (_s, value) =>
-    StateUpdate.new({
-      disputesRecords: decode(serialize.disputesRecords.Codec, value),
-    }),
-  c6: (_s, value) =>
-    StateUpdate.new({
-      entropy: decode(serialize.entropy.Codec, value),
-    }),
-  c7: (_s, value) =>
-    StateUpdate.new({
-      designatedValidatorData: decode(serialize.designatedValidators.Codec, value),
-    }),
-  c8: (_s, value) =>
-    StateUpdate.new({
-      currentValidatorData: decode(serialize.currentValidators.Codec, value),
-    }),
-  c9: (_s, value) =>
-    StateUpdate.new({
-      previousValidatorData: decode(serialize.previousValidators.Codec, value),
-    }),
-  c10: (_s, value) =>
-    StateUpdate.new({
-      availabilityAssignment: decode(serialize.availabilityAssignment.Codec, value),
-    }),
-  c11: (_s, value) =>
-    StateUpdate.new({
-      timeslot: decode(serialize.timeslot.Codec, value),
-    }),
-  c12: (_s, value) =>
-    StateUpdate.new({
-      privilegedServices: decode(serialize.privilegedServices.Codec, value),
-    }),
-  c13: (_s, value) =>
-    StateUpdate.new({
-      statistics: decode(serialize.statistics.Codec, value),
-    }),
-  c14: (_s, value) =>
-    StateUpdate.new({
-      accumulationQueue: decode(serialize.accumulationQueue.Codec, value),
-    }),
-  c15: (_s, value) =>
-    StateUpdate.new({
-      recentlyAccumulated: decode(serialize.recentlyAccumulated.Codec, value),
-    }),
+  c5: (value) => ({
+    disputesRecords: decode(serialize.disputesRecords.Codec, value),
+  }),
+  c6: (value) => ({
+    entropy: decode(serialize.entropy.Codec, value),
+  }),
+  c7: (value) => ({
+    designatedValidatorData: decode(serialize.designatedValidators.Codec, value),
+  }),
+  c8: (value) => ({
+    currentValidatorData: decode(serialize.currentValidators.Codec, value),
+  }),
+  c9: (value) => ({
+    previousValidatorData: decode(serialize.previousValidators.Codec, value),
+  }),
+  c10: (value) => ({
+    availabilityAssignment: decode(serialize.availabilityAssignment.Codec, value),
+  }),
+  c11: (value) => ({
+    timeslot: decode(serialize.timeslot.Codec, value),
+  }),
+  c12: (value) => ({
+    privilegedServices: decode(serialize.privilegedServices.Codec, value),
+  }),
+  c13: (value) => ({
+    statistics: decode(serialize.statistics.Codec, value),
+  }),
+  c14: (value) => ({
+    accumulationQueue: decode(serialize.accumulationQueue.Codec, value),
+  }),
+  c15: (value) => ({
+    recentlyAccumulated: decode(serialize.recentlyAccumulated.Codec, value),
+  }),
 };
 
 function decode<T>(descriptor: Descriptor<T>, value: BytesBlob) {

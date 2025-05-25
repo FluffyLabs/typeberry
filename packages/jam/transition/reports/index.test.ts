@@ -3,7 +3,6 @@ import { tryAsTimeSlot } from "@typeberry/block";
 import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
 import { HashDictionary, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { StateUpdate } from "@typeberry/state";
 import { deepEqual } from "@typeberry/utils";
 import type { ReportsInput } from "./reports";
 import { guaranteesAsView, newReports } from "./test.utils";
@@ -24,7 +23,9 @@ describe("Reports - top level", () => {
       isOk: true,
       isError: false,
       ok: {
-        stateUpdate: StateUpdate.new({}),
+        stateUpdate: {
+          availabilityAssignment: asKnownSize([null, null]),
+        },
         reported: HashDictionary.new<WorkPackageHash, WorkPackageInfo>(),
         reporters: asKnownSize([]),
       },

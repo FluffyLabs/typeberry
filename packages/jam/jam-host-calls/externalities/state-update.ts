@@ -2,7 +2,7 @@ import type { CoreIndex, PerValidator, ServiceGas, ServiceId } from "@typeberry/
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import { type FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
-import { type Service, ServiceAccountInfo, type ValidatorData } from "@typeberry/state";
+import { type InMemoryService, ServiceAccountInfo, type ValidatorData } from "@typeberry/state";
 import type { NewPreimage, PreimageUpdate } from "./partial-state-db";
 import type { PendingTransfer } from "./pending-transfer";
 
@@ -38,8 +38,10 @@ export class StateUpdate {
     return update;
   }
 
+  // TODO [ToDr] Use @typeberry/state format!
+
   /** Newly created services. */
-  public readonly newServices: Service[] = [];
+  public readonly newServices: InMemoryService[] = [];
   /** Services that were successfully ejected. */
   public readonly ejectedServices: ServiceId[] = [];
   /** Pending transfers. */

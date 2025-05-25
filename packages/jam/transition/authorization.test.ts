@@ -7,7 +7,7 @@ import { asKnownSize } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsPerCore } from "@typeberry/state";
+import { copyAndUpdateState, tryAsPerCore } from "@typeberry/state";
 import { deepEqual } from "@typeberry/utils";
 import { Authorization, type AuthorizationInput, type AuthorizationState } from "./authorization";
 
@@ -41,10 +41,11 @@ describe("Authorization", () => {
       slot: tryAsTimeSlot(0),
       used: used(),
     };
-    authorization.transition(input);
+    const stateUpdate = authorization.transition(input);
+    const state = copyAndUpdateState(authorization.state, stateUpdate);
 
-    deepEqual(authorization.state.authPools, authPools([h(1)], [h(1)]), { context: "pools" });
-    deepEqual(authorization.state.authQueues, authQueues([h(1)], [h(1)]), { context: "queues" });
+    deepEqual(state.authPools, authPools([h(1)], [h(1)]), { context: "pools" });
+    deepEqual(state.authQueues, authQueues([h(1)], [h(1)]), { context: "queues" });
   });
 
   it("should perform a transition and remove existing entries", async () => {
@@ -57,10 +58,11 @@ describe("Authorization", () => {
       slot: tryAsTimeSlot(0),
       used: used([0, h(1)], [1, h(2)]),
     };
-    authorization.transition(input);
+    const stateUpdate = authorization.transition(input);
+    const state = copyAndUpdateState(authorization.state, stateUpdate);
 
-    deepEqual(authorization.state.authPools, authPools([h(0), h(0), h(1)], [h(3), h(2), h(1)]), { context: "pools" });
-    deepEqual(authorization.state.authQueues, authQueues([h(1)], [h(1)]), { context: "queues" });
+    deepEqual(state.authPools, authPools([h(0), h(0), h(1)], [h(3), h(2), h(1)]), { context: "pools" });
+    deepEqual(state.authQueues, authQueues([h(1)], [h(1)]), { context: "queues" });
   });
 
   it("should perform a transition and keep last items in pool", async () => {
@@ -78,13 +80,12 @@ describe("Authorization", () => {
       slot: tryAsTimeSlot(1),
       used: used([0, h(13)], [1, h(2)]),
     };
-    authorization.transition(input);
+    const stateUpdate = authorization.transition(input);
+    const state = copyAndUpdateState(authorization.state, stateUpdate);
 
-    deepEqual(
-      authorization.state.authPools,
-      authPools([h(2), h(3), h(4), h(5), h(6), h(7), h(8), h(11)], [h(3), h(2), h(2)]),
-      { context: "pools" },
-    );
-    deepEqual(authorization.state.authQueues, authQueues([h(10), h(11)], [h(1), h(2)]), { context: "queues" });
+    deepEqual(state.authPools, authPools([h(2), h(3), h(4), h(5), h(6), h(7), h(8), h(11)], [h(3), h(2), h(2)]), {
+      context: "pools",
+    });
+    deepEqual(state.authQueues, authQueues([h(10), h(11)], [h(1), h(2)]), { context: "queues" });
   });
 });

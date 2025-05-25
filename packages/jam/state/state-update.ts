@@ -2,7 +2,16 @@ import type { ServiceId, TimeSlot } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { U32 } from "@typeberry/numbers";
 import type { LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, StorageKey } from "./service";
+import type { State } from "./state";
 
+export enum UpdatePreimageKind {
+  /** Insert new preimage and optionally update it's lookup history. */
+  Provide = 0,
+  /** Remove a preimage and it's lookup history. */
+  Remove = 1,
+  /** update or add lookup history for preimage hash/len to given value. */
+  UpdateOrAdd = 2,
+}
 /**
  * A preimage update.
  *
@@ -11,24 +20,24 @@ import type { LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, 
  * 2. Remove (expunge) a preimage and it's lookup history.
  * 3. Update `LookupHistory` with given value.
  */
-export class PreimageUpdate {
+export class UpdatePreimage {
   private constructor(
     public readonly serviceId: ServiceId,
-    public readonly kind:
+    public readonly action:
       | {
-          // add new preimage
-          set: PreimageItem;
+          kind: UpdatePreimageKind.Provide;
+          preimage: PreimageItem;
           // optionally set lookup history of that preimage to "available"
           slot: TimeSlot | null;
         }
       | {
-          // remove given preimage and it's lookup history.
-          remove: PreimageHash;
+          kind: UpdatePreimageKind.Remove;
+          hash: PreimageHash;
           length: U32;
         }
       | {
-          // update lookup history for given preimage to given value.
-          update: LookupHistoryItem;
+          kind: UpdatePreimageKind.UpdateOrAdd;
+          item: LookupHistoryItem;
         },
   ) {}
 
@@ -37,26 +46,36 @@ export class PreimageUpdate {
     preimage,
     slot,
   }: { serviceId: ServiceId; preimage: PreimageItem; slot: TimeSlot | null }) {
-    return new PreimageUpdate(serviceId, {
-      set: preimage,
+    return new UpdatePreimage(serviceId, {
+      kind: UpdatePreimageKind.Provide,
+      preimage,
       slot,
     });
   }
 
   static remove({ serviceId, hash, length }: { serviceId: ServiceId; hash: PreimageHash; length: U32 }) {
-    return new PreimageUpdate(serviceId, {
-      remove: hash,
+    return new UpdatePreimage(serviceId, {
+      kind: UpdatePreimageKind.Remove,
+      hash,
       length,
     });
   }
 
   static updateOrAdd({ serviceId, lookupHistory }: { serviceId: ServiceId; lookupHistory: LookupHistoryItem }) {
-    return new PreimageUpdate(serviceId, {
-      update: lookupHistory,
+    return new UpdatePreimage(serviceId, {
+      kind: UpdatePreimageKind.UpdateOrAdd,
+      item: lookupHistory,
     });
   }
 }
 
+/** The type of service update. */
+export enum UpdateServiceKind {
+  /** Just update the `ServiceAccountInfo`. */
+  Update = 0,
+  /** Create a new `Service` instance. */
+  Create = 1,
+}
 /**
  * Update service info of a particular `ServiceId` or create a new one.
  */
@@ -65,17 +84,20 @@ export class UpdateService {
     public readonly serviceId: ServiceId,
     public readonly action:
       | {
-          update: ServiceAccountInfo;
+          kind: UpdateServiceKind.Update;
+          account: ServiceAccountInfo;
         }
       | {
-          create: ServiceAccountInfo;
-          lookupHistory: LookupHistoryItem[];
+          kind: UpdateServiceKind.Create;
+          account: ServiceAccountInfo;
+          lookupHistory: LookupHistoryItem | null;
         },
   ) {}
 
   static update({ serviceId, serviceInfo }: { serviceId: ServiceId; serviceInfo: ServiceAccountInfo }) {
     return new UpdateService(serviceId, {
-      update: serviceInfo,
+      kind: UpdateServiceKind.Update,
+      account: serviceInfo,
     });
   }
 
@@ -83,14 +105,22 @@ export class UpdateService {
     serviceId,
     serviceInfo,
     lookupHistory,
-  }: { serviceId: ServiceId; serviceInfo: ServiceAccountInfo; lookupHistory: LookupHistoryItem[] }) {
+  }: { serviceId: ServiceId; serviceInfo: ServiceAccountInfo; lookupHistory: LookupHistoryItem | null }) {
     return new UpdateService(serviceId, {
-      create: serviceInfo,
+      kind: UpdateServiceKind.Create,
+      account: serviceInfo,
       lookupHistory,
     });
   }
 }
 
+/** Update service storage kind. */
+export enum UpdateStorageKind {
+  /** Set a storage value. */
+  Set = 0,
+  /** Remove a storage value. */
+  Remove = 1,
+}
 /**
  * Update service storage item.
  *
@@ -99,21 +129,23 @@ export class UpdateService {
 export class UpdateStorage {
   private constructor(
     public readonly serviceId: ServiceId,
-    public readonly storage:
+    public readonly action:
       | {
-          set: StorageItem;
+          kind: UpdateStorageKind.Set;
+          storage: StorageItem;
         }
       | {
-          remove: StorageKey;
+          kind: UpdateStorageKind.Remove;
+          key: StorageKey;
         },
   ) {}
 
   static set({ serviceId, storage }: { serviceId: ServiceId; storage: StorageItem }) {
-    return new UpdateStorage(serviceId, { set: storage });
+    return new UpdateStorage(serviceId, { kind: UpdateStorageKind.Set, storage });
   }
 
   static remove({ serviceId, key }: { serviceId: ServiceId; key: StorageKey }) {
-    return new UpdateStorage(serviceId, { remove: key });
+    return new UpdateStorage(serviceId, { kind: UpdateStorageKind.Remove, key });
   }
 }
 
@@ -123,30 +155,23 @@ export type ServicesUpdate = {
   /** Services to update or create anew. */
   servicesUpdates: UpdateService[];
   /** Service preimages to update and potentially lookup history */
-  preimages: PreimageUpdate[];
+  preimages: UpdatePreimage[];
   /** Service storage to update. */
   storage: UpdateStorage[];
 };
 
 /** An update to the State object. */
-export class StateUpdate<PartialState> {
-  private constructor(public readonly update: Partial<PartialState>) {}
-
-  static new<V>(update: Partial<V>) {
-    return new StateUpdate(update);
-  }
-}
+export type StateUpdate<State> = Partial<State>;
 
 /**
- * Returns a materialized version of the state, created by copying all properties
- * from the current state and applying the update.
+ * A rather test-only function to copy some fields from the state,
+ * apply an update to them (excluding services) and return a new plain object.
  *
- * NOTE: avoid using directly, since we would rather use a more backend-specific
- *       solution (i.e. only updating some fields in the database).
+ * NOTE: if looking something more sophisticated try `InMemoryState` representation.
  */
-export function copyAndUpdateState<T>(state: T, update: StateUpdate<T>): T {
+export function copyAndUpdateState<T extends Partial<State>>(preState: T, stateUpdate: StateUpdate<T>): T {
   return {
-    ...state,
-    ...update.update,
+    ...preState,
+    ...stateUpdate,
   };
 }

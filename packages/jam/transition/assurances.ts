@@ -6,7 +6,7 @@ import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
 import { blake2b } from "@typeberry/hash";
-import { type State, StateUpdate } from "@typeberry/state";
+import type { State, StateUpdate } from "@typeberry/state";
 import { OK, Result, check } from "@typeberry/utils";
 
 /** Assurances transition input. */
@@ -145,9 +145,9 @@ export class Assurances {
 
     return Result.ok({
       availableReports,
-      stateUpdate: StateUpdate.new({
+      stateUpdate: {
         availabilityAssignment: asKnownSize(availabilityAssignment),
-      }),
+      },
     });
   }
 

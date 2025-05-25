@@ -17,7 +17,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { blake2b } from "@typeberry/hash";
 import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
-import { type State, StateUpdate, ValidatorData } from "@typeberry/state";
+import { type State, type StateUpdate, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data";
 import { Result, asOpaqueType } from "@typeberry/utils";
 import { getRingCommitment, verifyTickets } from "./bandersnatch";
@@ -29,10 +29,9 @@ export type VALIDATOR_META_BYTES = typeof VALIDATOR_META_BYTES;
 
 const ticketComparator = (a: Ticket, b: Ticket) => bytesBlobComparator(a.id, b.id);
 
-export type SafroleState = {
-  disputesRecords: Pick<State["disputesRecords"], "punishSet">;
-} & Pick<
+export type SafroleState = Pick<
   State,
+  | "disputesRecords"
   | "designatedValidatorData"
   | "timeslot"
   | "previousValidatorData"
@@ -478,7 +477,7 @@ export class Safrole {
       return Result.error(newTicketsAccumulatorResult.error);
     }
 
-    const stateUpdate = StateUpdate.new({
+    const stateUpdate = {
       nextValidatorData,
       currentValidatorData,
       previousValidatorData,
@@ -487,7 +486,7 @@ export class Safrole {
       entropy,
       sealingKeySeries,
       ticketsAccumulator: asKnownSize(newTicketsAccumulatorResult.ok),
-    });
+    };
 
     const result = {
       epochMark: this.getEpochMark(input.slot, nextValidatorData),

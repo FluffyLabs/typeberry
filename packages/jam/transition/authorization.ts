@@ -4,7 +4,7 @@ import type { AuthorizerHash } from "@typeberry/block/work-report";
 import { asKnownSize } from "@typeberry/collections";
 import type { HashSet } from "@typeberry/collections/hash-set";
 import type { ChainSpec } from "@typeberry/config";
-import { type State, StateUpdate, tryAsPerCore } from "@typeberry/state";
+import { type State, type StateUpdate, tryAsPerCore } from "@typeberry/state";
 
 /** Authorization state. */
 export type AuthorizationState = Pick<State, "authPools" | "authQueues">;
@@ -75,8 +75,8 @@ export class Authorization {
       authPoolsUpdate[coreIndex] = asKnownSize(pool);
     }
 
-    return StateUpdate.new({
+    return {
       authPools: tryAsPerCore(authPoolsUpdate, this.chainSpec),
-    });
+    };
   }
 }

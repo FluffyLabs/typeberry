@@ -1,5 +1,6 @@
 import type { EntropyHash, PerEpochBlock, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
+import type { PreimageHash } from "@typeberry/block/preimage";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { ImmutableHashSet } from "@typeberry/collections/hash-set";
@@ -10,7 +11,7 @@ import type { DisputesRecords } from "./disputes";
 import type { NotYetAccumulatedReport } from "./not-yet-accumulated";
 import type { PrivilegedServices } from "./privileged-services";
 import type { SafroleData } from "./safrole-data";
-import type { Service } from "./service";
+import type { LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, StorageKey } from "./service";
 import type { StatisticsData } from "./statistics";
 import type { ValidatorData } from "./validator-data";
 
@@ -37,6 +38,21 @@ export type ENTROPY_ENTRIES = typeof ENTROPY_ENTRIES;
  */
 export const MAX_RECENT_HISTORY = 8;
 export type MAX_RECENT_HISTORY = typeof MAX_RECENT_HISTORY;
+
+/**
+ * State object with additional ability to enumerate
+ * it's services entries.
+ */
+export type EnumerableState = {
+  /**
+   * `δ delta`:  In summary, δ is the portion of state dealing with
+   *             services, analogous in Jam to the Yellow Paper’s (
+   *             smart contract) accounts.
+   *
+   * https://graypaper.fluffylabs.dev/#/579bd12/08fb0008ff00
+   */
+  serviceIds(): readonly ServiceId[];
+};
 
 /**
  * Complete state tuple with all entries.
@@ -188,11 +204,25 @@ export type State = {
   readonly privilegedServices: PrivilegedServices;
 
   /**
-   * `δ delta`:  In summary, δ is the portion of state dealing with
-   *             services, analogous in Jam to the Yellow Paper’s (
-   *             smart contract) accounts.
-   *
-   * https://graypaper.fluffylabs.dev/#/579bd12/08fb0008ff00
+   * Retrieve details about single service.
    */
-  readonly services: Map<ServiceId, Service>;
+  service(id: ServiceId): Service | null;
 };
+
+/** Service details. */
+export interface Service {
+  /** Retrieve service account info. */
+  info(): ServiceAccountInfo;
+
+  /** Read one particular storage item. */
+  storage(storage: StorageKey): StorageItem | null;
+
+  /** Check if preimage is present. */
+  hasPreimage(hash: PreimageHash): boolean;
+
+  /** Retrieve a preimage. */
+  preimage(hash: PreimageHash): PreimageItem | null;
+
+  /** Retrieve lookup history of a preimage. */
+  lookupHistory(hash: PreimageHash): LookupHistoryItem[] | null;
+}

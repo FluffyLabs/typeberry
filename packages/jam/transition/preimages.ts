@@ -4,14 +4,14 @@ import { blake2b } from "@typeberry/hash";
 import {
   LookupHistoryItem,
   PreimageItem,
-  PreimageUpdate,
   type ServicesUpdate,
   type State,
-  StateUpdate,
+  type StateUpdate,
+  UpdatePreimage,
 } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 
-type PreimagesState = Pick<State, "services">;
+type PreimagesState = Pick<State, "service">;
 
 export type PreimagesInput = {
   preimages: PreimagesExtrinsic;
@@ -50,36 +50,33 @@ export class Preimages {
     }
 
     const { preimages, slot } = input;
-    const pendingChanges: PreimageUpdate[] = [];
+    const pendingChanges: UpdatePreimage[] = [];
 
     // select preimages for integration
     for (const preimage of preimages) {
       const { requester, blob } = preimage;
       const hash: PreimageHash = blake2b.hashBytes(blob).asOpaque();
-      const account = this.state.services.get(requester);
 
-      if (account === undefined) {
+      const service = this.state.service(requester);
+      if (service === null) {
         return Result.error(PreimagesErrorCode.AccountNotFound);
       }
 
-      const preimageHistory = account.data.lookupHistory.get(hash);
+      const preimageHistory = service.lookupHistory(hash);
       const lookupHistoryItem = preimageHistory?.find(
         (item) => item.hash.isEqualTo(hash) && item.length === blob.length,
       );
 
+      const hasPreimage = service.hasPreimage(hash);
       // https://graypaper.fluffylabs.dev/#/5f542d7/181800181900
       // https://graypaper.fluffylabs.dev/#/5f542d7/116f0011a500
-      if (
-        account.data.preimages.has(hash) ||
-        lookupHistoryItem === undefined ||
-        !LookupHistoryItem.isRequested(lookupHistoryItem)
-      ) {
+      if (hasPreimage || lookupHistoryItem === undefined || !LookupHistoryItem.isRequested(lookupHistoryItem)) {
         return Result.error(PreimagesErrorCode.PreimageUnneeded);
       }
 
       // https://graypaper.fluffylabs.dev/#/5f542d7/18c00018f300
       pendingChanges.push(
-        PreimageUpdate.provide({
+        UpdatePreimage.provide({
           serviceId: requester,
           preimage: PreimageItem.create({ hash, blob }),
           slot,
@@ -87,10 +84,8 @@ export class Preimages {
       );
     }
 
-    return Result.ok(
-      StateUpdate.new({
-        preimages: pendingChanges,
-      }),
-    );
+    return Result.ok({
+      preimages: pendingChanges,
+    });
   }
 }

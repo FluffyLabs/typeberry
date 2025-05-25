@@ -2,7 +2,7 @@ import type { EntropyHash, TimeSlot } from "@typeberry/block";
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
 import { type FromJson, json } from "@typeberry/json-parser";
-import type { Service } from "@typeberry/state";
+import type { InMemoryService } from "@typeberry/state";
 import { JsonService } from "@typeberry/state-json/accounts";
 import {
   Accumulate,
@@ -77,7 +77,7 @@ class TestState {
     designate: number;
     always_acc: { id: number; gas: number }[];
   };
-  accounts!: Service[];
+  accounts!: InMemoryService[];
 }
 
 class Output {

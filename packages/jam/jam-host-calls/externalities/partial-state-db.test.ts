@@ -19,12 +19,13 @@ import { ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE, blake2b } from "@typeberry/hash";
 import { type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
+  InMemoryService,
+  type InMemoryState,
   LookupHistoryItem,
   type LookupHistorySlots,
   PreimageItem,
-  Service,
+  type Service,
   ServiceAccountInfo,
-  type State,
   VALIDATOR_META_BYTES,
   ValidatorData,
   tryAsLookupHistorySlots,
@@ -98,9 +99,9 @@ describe("PartialState.requestPreimage", () => {
     assert.deepStrictEqual(
       partialState.updatedState.updatedServiceInfo,
       ServiceAccountInfo.create({
-        ...service.data.info,
-        storageUtilisationBytes: tryAsU64(service.data.info.storageUtilisationBytes + 5n),
-        storageUtilisationCount: tryAsU32(service.data.info.storageUtilisationCount + 1),
+        ...service.info(),
+        storageUtilisationBytes: tryAsU64(service.info().storageUtilisationBytes + 5n),
+        storageUtilisationCount: tryAsU32(service.info().storageUtilisationCount + 1),
       }),
     );
   });
@@ -122,9 +123,9 @@ describe("PartialState.requestPreimage", () => {
     assert.deepStrictEqual(
       partialState.updatedState.updatedServiceInfo,
       ServiceAccountInfo.create({
-        ...service.data.info,
-        storageUtilisationBytes: tryAsU64(service.data.info.storageUtilisationBytes + 5n),
-        storageUtilisationCount: tryAsU32(service.data.info.storageUtilisationCount + 1),
+        ...service.info(),
+        storageUtilisationBytes: tryAsU64(service.info().storageUtilisationBytes + 5n),
+        storageUtilisationCount: tryAsU32(service.info().storageUtilisationCount + 1),
       }),
     );
   });
@@ -204,10 +205,10 @@ describe("PartialState.forgetPreimage", () => {
   });
 
   it("should forget an unavailable preimage if it is old enough", () => {
-    const mockState = {
-      ...testState(),
+    const mockState = testState();
+    mockState.applyUpdate({
       timeslot: tryAsTimeSlot(100000),
-    };
+    });
 
     const hash = Bytes.fill(HASH_SIZE, 0x04).asOpaque();
     const length = tryAsU64(42);
@@ -231,10 +232,10 @@ describe("PartialState.forgetPreimage", () => {
   });
 
   it("should not forget an unavailable preimage if it is recent", () => {
-    const mockState = {
-      ...testState(),
+    const mockState = testState();
+    mockState.applyUpdate({
       timeslot: tryAsTimeSlot(100),
-    };
+    });
 
     const hash = Bytes.fill(HASH_SIZE, 0x05).asOpaque();
     const length = tryAsU64(42);
@@ -252,10 +253,10 @@ describe("PartialState.forgetPreimage", () => {
   });
 
   it("should update lookup history for available preimage", () => {
-    const mockState = {
-      ...testState(),
+    const mockState = testState();
+    mockState.applyUpdate({
       timeslot: tryAsTimeSlot(100),
-    };
+    });
 
     const hash = Bytes.fill(HASH_SIZE, 0x06).asOpaque();
     const length = tryAsU64(42);
@@ -283,10 +284,10 @@ describe("PartialState.forgetPreimage", () => {
   });
 
   it("should update history for reavailable preimage if old", () => {
-    const mockState = {
-      ...testState(),
+    const mockState = testState();
+    mockState.applyUpdate({
       timeslot: tryAsTimeSlot(100000),
-    };
+    });
 
     const hash = Bytes.fill(HASH_SIZE, 0x07).asOpaque();
     const length = tryAsU64(42);
@@ -311,10 +312,10 @@ describe("PartialState.forgetPreimage", () => {
   });
 
   it("should not update history for reavailable preimage if too recent", () => {
-    const mockState = {
-      ...testState(),
+    const mockState = testState();
+    mockState.applyUpdate({
       timeslot: tryAsTimeSlot(100),
-    };
+    });
 
     const hash = Bytes.fill(HASH_SIZE, 0x08).asOpaque();
     const length = tryAsU64(42);
@@ -337,7 +338,7 @@ describe("PartialState.newService", () => {
   it("should create a new service and update balance + next service ID", () => {
     const mockState = testState();
     const maybeService = mockState.services.get(tryAsServiceId(0));
-    const service = ensure<Service | undefined, Service>(maybeService, maybeService !== undefined);
+    const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
 
     const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
 
@@ -362,7 +363,7 @@ describe("PartialState.newService", () => {
 
     // Verify new service entry
     assert.deepStrictEqual(partialState.updatedState.newServices, [
-      new Service(expectedServiceId, {
+      new InMemoryService(expectedServiceId, {
         info: ServiceAccountInfo.create({
           codeHash,
           balance: thresholdForNew,
@@ -377,7 +378,7 @@ describe("PartialState.newService", () => {
           map.set(codeHash, [new LookupHistoryItem(codeHash, codeLength, tryAsLookupHistorySlots([]))]);
           return map;
         })(),
-        storage: [],
+        storage: HashDictionary.new(),
       }),
     ]);
 
@@ -397,9 +398,9 @@ describe("PartialState.newService", () => {
   it("should return an error if there are insufficient funds", () => {
     const mockState = testState();
     const maybeService = mockState.services.get(tryAsServiceId(0));
-    const service = ensure<Service | undefined, Service>(maybeService, maybeService !== undefined);
+    const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
 
-    const updatedService = new Service(service.id, {
+    const updatedService = new InMemoryService(service.id, {
       ...service.data,
       info: ServiceAccountInfo.create({
         ...service.data.info,
@@ -487,7 +488,7 @@ describe("PartialState.upgradeService", () => {
     assert.deepStrictEqual(
       partialState.updatedState.updatedServiceInfo,
       ServiceAccountInfo.create({
-        ...service.data.info,
+        ...service.info(),
         codeHash,
         accumulateMinGas: tryAsServiceGas(gas),
         onTransferMinGas: tryAsServiceGas(allowance),
@@ -545,17 +546,17 @@ describe("PartialState.transfer", () => {
   const testStateWithSecondService = () => {
     const mockState = testState();
     const maybeService = mockState.services.get(tryAsServiceId(0));
-    const service = ensure<Service | undefined, Service>(maybeService, maybeService !== undefined);
+    const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
     mockState.services.set(
       tryAsServiceId(1),
-      new Service(tryAsServiceId(1), {
+      new InMemoryService(tryAsServiceId(1), {
         info: ServiceAccountInfo.create({
           ...service.data.info,
           onTransferMinGas: tryAsServiceGas(1000),
         }),
         preimages: HashDictionary.new(),
         lookupHistory: HashDictionary.new(),
-        storage: [],
+        storage: HashDictionary.new(),
       }),
     );
     return {
@@ -671,7 +672,7 @@ describe("PartialState.providePreimage", () => {
   } = {}) => {
     const mockState = testState();
     const maybeService = mockState.services.get(tryAsServiceId(0));
-    const service = ensure<Service | undefined, Service>(maybeService, maybeService !== undefined);
+    const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
 
     const preimageBlob = BytesBlob.blobFromNumbers([0xaa, 0xbb, 0xcc, 0xdd]);
     const preimage = PreimageItem.create({
@@ -695,7 +696,7 @@ describe("PartialState.providePreimage", () => {
       // we need to replace the existing service
       mockState.services.set(
         service.id,
-        new Service(service.id, {
+        new InMemoryService(service.id, {
           ...service.data,
           preimages,
           lookupHistory,
@@ -703,14 +704,14 @@ describe("PartialState.providePreimage", () => {
       );
     }
 
-    const secondService = new Service(tryAsServiceId(1), {
+    const secondService = new InMemoryService(tryAsServiceId(1), {
       info: ServiceAccountInfo.create({
         ...service.data.info,
         onTransferMinGas: tryAsServiceGas(1000),
       }),
       preimages: self ? HashDictionary.new() : preimages,
       lookupHistory: self ? HashDictionary.new() : lookupHistory,
-      storage: [],
+      storage: HashDictionary.new(),
     });
     mockState.services.set(secondService.id, secondService);
 
@@ -925,7 +926,7 @@ describe("PartialState.providePreimage", () => {
 
 describe("PartialState.eject", () => {
   function setupEjectableService(
-    mockState: State,
+    mockState: InMemoryState,
     overrides: {
       codeHash?: CodeHash;
       storageUtilisationCount?: U32;
@@ -975,7 +976,7 @@ describe("PartialState.eject", () => {
       }
     }
 
-    const destinationService = new Service(destinationId, {
+    const destinationService = new InMemoryService(destinationId, {
       info: ServiceAccountInfo.create({
         ...baseService.data.info,
         codeHash,
@@ -984,7 +985,7 @@ describe("PartialState.eject", () => {
       }),
       preimages,
       lookupHistory,
-      storage: [],
+      storage: HashDictionary.new(),
     });
 
     mockState.services.set(destinationId, destinationService);
@@ -1119,10 +1120,10 @@ describe("PartialState.eject", () => {
   });
 
   it("should return InvalidService if summing balances would overflow", () => {
-    const mockState: State = {
-      ...testState(),
+    const mockState = testState();
+    mockState.applyUpdate({
       timeslot: tryAsTimeSlot(1_000_000),
-    };
+    });
     const tombstone = Bytes.fill(HASH_SIZE, 0xe8).asOpaque();
     const length = tryAsU32(100);
 
@@ -1155,10 +1156,10 @@ describe("PartialState.eject", () => {
   });
 
   it("should return OK", () => {
-    const mockState: State = {
-      ...testState(),
+    const mockState = testState();
+    mockState.applyUpdate({
       timeslot: tryAsTimeSlot(1_000_000),
-    };
+    });
     const tombstone = Bytes.fill(HASH_SIZE, 0xe8).asOpaque();
     const length = tryAsU32(100);
 

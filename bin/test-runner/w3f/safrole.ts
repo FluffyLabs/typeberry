@@ -7,6 +7,7 @@ import {
   EpochMarker,
   type TimeSlot,
   type ValidatorKeys,
+  type WorkReportHash,
   tryAsPerEpochBlock,
   tryAsPerValidator,
   tryAsTimeSlot,
@@ -21,7 +22,13 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import { type Input, type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole";
-import { ENTROPY_ENTRIES, StateUpdate, type ValidatorData, copyAndUpdateState, hashComparator } from "@typeberry/state";
+import {
+  DisputesRecords,
+  ENTROPY_ENTRIES,
+  type ValidatorData,
+  copyAndUpdateState,
+  hashComparator,
+} from "@typeberry/state";
 import { TicketsOrKeys, ticketFromJson } from "@typeberry/state-json";
 import { validatorDataFromJson } from "@typeberry/state-json";
 import { Result, deepEqual } from "@typeberry/utils";
@@ -99,9 +106,12 @@ class JsonState {
       ticketsAccumulator: asKnownSize(state.gamma_a),
       sealingKeySeries: TicketsOrKeys.toSafroleSealingKeys(state.gamma_s, chainSpec),
       epochRoot: state.gamma_z.asOpaque(),
-      disputesRecords: {
+      disputesRecords: DisputesRecords.create({
+        goodSet: SortedSet.fromSortedArray<WorkReportHash>(hashComparator, []),
+        badSet: SortedSet.fromSortedArray<WorkReportHash>(hashComparator, []),
+        wonkySet: SortedSet.fromSortedArray<WorkReportHash>(hashComparator, []),
         punishSet: SortedSet.fromSortedArray(hashComparator, state.post_offenders),
-      },
+      }),
     };
   }
 }
@@ -155,7 +165,7 @@ export class Output {
     return Result.ok({
       epochMark,
       ticketsMark,
-      stateUpdate: StateUpdate.new({}),
+      stateUpdate: {},
     });
   }
 
@@ -234,7 +244,7 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
     deepEqual(
       Result.ok({
         ...result.ok,
-        stateUpdate: StateUpdate.new({}),
+        stateUpdate: {},
       }),
       expectedResult,
     );

@@ -25,7 +25,7 @@ const keccakHasher = keccak.KeccakHasher.create();
 
 export async function runStateTransitionFuzzed(testContent: StateTransitionFuzzed, _path: string) {
   const spec = tinyChainSpec;
-  const preState = loadState(testContent.pre_state.keyvals);
+  const preState = loadState(spec, testContent.pre_state.keyvals);
   const preStateSerialized = serializeState(preState, spec);
 
   const preStateRoot = merkelizeState(preStateSerialized);
@@ -56,6 +56,8 @@ export async function runStateTransitionFuzzed(testContent: StateTransitionFuzze
     assert.fail(`Expected the transition to go smoothly, got error: ${JSON.stringify(stfResult.error)}`);
   }
 
+  preState.applyUpdate(stfResult.ok);
+
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
-  const _root = merkelizeState(serializeState(stf.state, spec));
+  const _root = merkelizeState(serializeState(preState, spec));
 }

@@ -19,8 +19,8 @@ import {
   type BlockState,
   type CoreStatistics,
   ENTROPY_ENTRIES,
-  type Service,
-  StateUpdate,
+  type InMemoryService,
+  InMemoryState,
   type ValidatorData,
   copyAndUpdateState,
   tryAsPerCore,
@@ -89,7 +89,7 @@ class TestState {
   offenders!: Ed25519Key[];
   auth_pools!: AuthorizerHash[][];
   recent_blocks!: BlockState[];
-  accounts!: Service[];
+  accounts!: InMemoryService[];
   cores_statistics!: CoreStatistics[];
   services_statistics!: ServiceStatisticsEntry[];
 
@@ -100,7 +100,7 @@ class TestState {
       throw new Error("Ignoring non-empty offenders!");
     }
 
-    return {
+    return InMemoryState.partial(spec, {
       accumulationQueue: tryAsPerEpochBlock(
         FixedSizeArray.fill(() => [], spec.epochLength),
         spec,
@@ -119,7 +119,7 @@ class TestState {
       ),
       recentBlocks: asOpaqueType(pre.recent_blocks),
       services: new Map(pre.accounts.map((x) => [x.id, x])),
-    };
+    });
   }
 }
 
@@ -156,7 +156,7 @@ class OutputData {
       reporters: json.array(fromJson.bytes32()),
     },
     ({ reported, reporters }) => ({
-      stateUpdate: StateUpdate.new({}),
+      stateUpdate: {},
       reported: HashDictionary.fromEntries(reported.map((x) => [x.workPackageHash, x])),
       reporters,
     }),

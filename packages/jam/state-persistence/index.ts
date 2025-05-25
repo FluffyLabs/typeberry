@@ -1,7 +1,17 @@
+import type { ServiceId } from "@typeberry/block";
+import type { PreimageHash } from "@typeberry/block/preimage";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type Decode, Decoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import type { State } from "@typeberry/state";
+import type {
+  LookupHistoryItem,
+  PreimageItem,
+  Service,
+  ServiceAccountInfo,
+  State,
+  StorageItem,
+  StorageKey,
+} from "@typeberry/state";
 import type { StateKey } from "@typeberry/state-merkleization/keys";
 import { serialize } from "@typeberry/state-merkleization/serialize";
 
@@ -9,11 +19,33 @@ export interface Persistence {
   get(key: StateKey): BytesBlob;
 }
 
-export class ImmutableState implements State {
+export class DbService implements Service {
+  info(): ServiceAccountInfo {
+    throw new Error("Method not implemented.");
+  }
+  storage(_storage: StorageKey): StorageItem | null {
+    throw new Error("Method not implemented.");
+  }
+  hasPreimage(_hash: PreimageHash): boolean {
+    throw new Error("Method not implemented.");
+  }
+  preimage(_hash: PreimageHash): PreimageItem | null {
+    throw new Error("Method not implemented.");
+  }
+  lookupHistory(_hash: PreimageHash): LookupHistoryItem[] | null {
+    throw new Error("Method not implemented.");
+  }
+}
+
+export class DbState implements State {
   constructor(
     private readonly backend: Persistence,
     private readonly spec: ChainSpec,
   ) {}
+
+  service(_id: ServiceId): Service | null {
+    throw new Error("Method not implemented.");
+  }
 
   private retrieve<T>({
     key,
@@ -24,10 +56,6 @@ export class ImmutableState implements State {
   }): T {
     const bytes = this.backend.get(key);
     return Decoder.decodeObject(Codec, bytes, this.spec);
-  }
-
-  get services(): State["services"] {
-    throw new Error("not implemented yet");
   }
 
   get availabilityAssignment(): State["availabilityAssignment"] {

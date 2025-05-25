@@ -5,7 +5,7 @@ import { type HashDictionary, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, type OpaqueHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
 import { MAX_RECENT_HISTORY, type State } from "@typeberry/state";
-import { StateUpdate } from "@typeberry/state/state-update";
+import type { StateUpdate } from "@typeberry/state/state-update";
 
 /** Current block input for the recent history transition. */
 export type RecentHistoryInput = {
@@ -65,9 +65,9 @@ export class RecentHistory {
     }
 
     // write back to the state.
-    return StateUpdate.new({
+    return {
       // we remove all items above `MAX_RECENT_HISTORY`.
       recentBlocks: asKnownSize(recentBlocks),
-    });
+    };
   }
 }

@@ -1,8 +1,8 @@
-import { type CodeHash, type ServiceGas, type ServiceId, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
+import { type CodeHash, type ServiceGas, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { type ImmutableHashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
+import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type U32, type U64, sumU64, tryAsU64 } from "@typeberry/numbers";
 import { type Opaque, WithDebug } from "@typeberry/utils";
@@ -132,28 +132,5 @@ export class LookupHistoryItem {
 
   static isRequested(item: LookupHistoryItem): boolean {
     return item.slots.length === 0;
-  }
-}
-
-/**
- * Service dictionary entry.
- */
-export class Service extends WithDebug {
-  constructor(
-    /** Service id. */
-    readonly id: ServiceId,
-    /** Service details. */
-    readonly data: {
-      /** https://graypaper.fluffylabs.dev/#/85129da/383303383303?v=0.6.3 */
-      readonly info: ServiceAccountInfo;
-      /** https://graypaper.fluffylabs.dev/#/85129da/10f90010f900?v=0.6.3 */
-      readonly preimages: ImmutableHashDictionary<PreimageHash, PreimageItem>;
-      /** https://graypaper.fluffylabs.dev/#/85129da/115400115800?v=0.6.3 */
-      readonly lookupHistory: ImmutableHashDictionary<PreimageHash, readonly LookupHistoryItem[]>;
-      /** https://graypaper.fluffylabs.dev/#/85129da/10f80010f800?v=0.6.3 */
-      readonly storage: readonly StorageItem[];
-    },
-  ) {
-    super();
   }
 }

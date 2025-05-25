@@ -24,6 +24,7 @@ import {
   ServiceAccountInfo,
   type State,
   StatisticsData,
+  type StorageKey,
   ValidatorData,
   codecPerCore,
 } from "@typeberry/state";
@@ -175,7 +176,7 @@ export namespace serialize {
   });
 
   /** https://graypaper.fluffylabs.dev/#/85129da/384803384803?v=0.6.3 */
-  export const serviceStorage = (serviceId: ServiceId, key: StateKey) => ({
+  export const serviceStorage = (serviceId: ServiceId, key: StorageKey) => ({
     key: keys.serviceStorage(serviceId, key),
     Codec: dumpCodec,
   });

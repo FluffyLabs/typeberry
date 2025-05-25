@@ -5,7 +5,7 @@ import { Bytes } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, keccak } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
-import { type BlockState, MAX_RECENT_HISTORY } from "@typeberry/state";
+import { type BlockState, MAX_RECENT_HISTORY, copyAndUpdateState } from "@typeberry/state";
 import { asOpaqueType, check } from "@typeberry/utils";
 import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "./recent-history";
 
@@ -32,9 +32,10 @@ describe("Recent History", () => {
       accumulateRoot: Bytes.fill(HASH_SIZE, 1).asOpaque(),
       workPackages: HashDictionary.new(),
     };
-    recentHistory.transition(input);
+    const stateUpdate = recentHistory.transition(input);
+    const state = copyAndUpdateState(recentHistory.state, stateUpdate);
 
-    assert.deepStrictEqual(recentHistory.state.recentBlocks, [
+    assert.deepStrictEqual(state.recentBlocks, [
       {
         headerHash: input.headerHash,
         mmr: {
@@ -70,9 +71,10 @@ describe("Recent History", () => {
         ].map((x) => [x.workPackageHash, x]),
       ),
     };
-    recentHistory.transition(input);
+    const stateUpdate = recentHistory.transition(input);
+    const state = copyAndUpdateState(recentHistory.state, stateUpdate);
 
-    const recentBlocks = recentHistory.state.recentBlocks;
+    const recentBlocks = state.recentBlocks;
     assert.deepStrictEqual(recentBlocks.length, 2);
     assert.deepStrictEqual(recentBlocks[0], {
       headerHash: initialState.headerHash,
@@ -99,10 +101,11 @@ describe("Recent History", () => {
   });
 
   it("should only keep 8 entries", async () => {
-    const recentHistory = new RecentHistory(await hasher, asRecentHistory([]));
-
     let input!: RecentHistoryInput;
+    let state = asRecentHistory([]);
+
     for (let i = 0; i < 10; i++) {
+      const recentHistory = new RecentHistory(await hasher, state);
       const id = (x: number) => 10 * i + x;
       input = {
         headerHash: Bytes.fill(HASH_SIZE, id(1)).asOpaque(),
@@ -117,10 +120,11 @@ describe("Recent History", () => {
           ].map((x) => [x.workPackageHash, x]),
         ),
       };
-      recentHistory.transition(input);
+      const stateUpdate = recentHistory.transition(input);
+      state = copyAndUpdateState(recentHistory.state, stateUpdate);
     }
 
-    const recentBlocks = recentHistory.state.recentBlocks;
+    const recentBlocks = state.recentBlocks;
     assert.deepStrictEqual(recentBlocks.length, 8);
     assert.deepStrictEqual(recentBlocks[7], {
       headerHash: input.headerHash,
