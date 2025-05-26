@@ -7,7 +7,16 @@ const runners = [
   runner("safrole/state_transitions_fuzzed", StateTransitionFuzzed.fromJson, runStateTransitionFuzzed),
 ];
 
-main(runners, "jamdunavectors", process.argv.slice(2))
+main(runners, process.argv.slice(2), "jamdunavectors", {
+  accepted: ["safrole/state_transitions", "safrole/state_transitions_fuzzed", "fallback/state_transitions"],
+  ignored: [
+    // Ignoring, since they are invalid and we cannot even parse them.
+    "BadTicketAttemptNumber.json",
+    // we only run independent state-transition tests
+    "/blocks/",
+    "/state_snapshots/",
+  ],
+})
   .then((r) => logger.log(r))
   .catch((e) => {
     logger.error(`${e}`);

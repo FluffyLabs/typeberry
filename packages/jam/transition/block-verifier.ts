@@ -2,7 +2,6 @@ import type { BlockView, HeaderHash } from "@typeberry/block";
 import type { BlocksDb } from "@typeberry/database";
 import { Result } from "@typeberry/utils";
 import type { TransitionHasher } from "./hasher";
-
 export enum BlockVerifierError {
   ParentNotFound = 0,
   InvalidTimeSlot = 1,
@@ -69,7 +68,10 @@ export class BlockVerifier {
     }
 
     const headerHash = this.hasher.header(headerView);
-
     return Result.ok(headerHash.hash);
+  }
+
+  hashHeader(block: BlockView) {
+    return this.hasher.header(block.header.view());
   }
 }

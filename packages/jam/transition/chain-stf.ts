@@ -48,7 +48,10 @@ export type StfError =
   | TaggedError<StfErrorKind.Preimages, PreimagesErrorCode>
   | TaggedError<StfErrorKind.SafroleSeal, SafroleSealError>;
 
-const stfError = <Kind extends StfErrorKind, Err extends StfError["error"]>(kind: Kind, nested: ErrorResult<Err>) => {
+export const stfError = <Kind extends StfErrorKind, Err extends StfError["error"]>(
+  kind: Kind,
+  nested: ErrorResult<Err>,
+) => {
   return Result.taggedError<OK, Kind, Err>(StfErrorKind, kind, nested);
 };
 
@@ -132,6 +135,19 @@ export class OnChain {
       return stfError(StfErrorKind.Assurances, assurancesResult);
     }
 
+    const extrinsic = block.extrinsic.materialize();
+    // TODO [MaSo] fill in the statistics with accumulation results
+    // statistics
+    this.statistics.transition({
+      slot: timeSlot,
+      authorIndex: header.bandersnatchBlockAuthorIndex,
+      extrinsic,
+      incomingReports: extrinsic.guarantees.map((g) => g.report),
+      availableReports: assurancesResult.ok,
+      accumulationStatistics: new Map(),
+      transferStatistics: new Map(),
+    });
+
     // safrole
     const safroleResult = await this.safrole.transition({
       slot: timeSlot,
@@ -166,20 +182,6 @@ export class OnChain {
     this.authorization.transition({
       slot: timeSlot,
       used: this.getUsedAuthorizerHashes(block.extrinsic.view().guarantees.view()),
-    });
-
-    const extrinsic = block.extrinsic.materialize();
-
-    // TODO [MaSo] fill in the statistics with accumulation results
-    // statistics
-    this.statistics.transition({
-      slot: timeSlot,
-      authorIndex: header.bandersnatchBlockAuthorIndex,
-      extrinsic,
-      incomingReports: extrinsic.guarantees.map((g) => g.report),
-      availableReports: assurancesResult.ok,
-      accumulationStatistics: new Map(),
-      transferStatistics: new Map(),
     });
 
     return Result.ok(OK);
