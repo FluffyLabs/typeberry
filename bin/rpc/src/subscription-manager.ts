@@ -48,16 +48,16 @@ export class SubscriptionManager {
       try {
         const result = await this.server.callMethod(subscription.method, subscription.params);
         const lastResult = this.lastResults.get(subscriptionId);
+        const notification: JsonRpcSubscriptionNotification = {
+          jsonrpc: JSON_RPC_VERSION,
+          method: subscription.method,
+          params: [subscriptionId, result],
+        };
+        const notificationString = JSON.stringify(notification);
 
-        if (JSON.stringify(result) !== lastResult) {
-          const notification: JsonRpcSubscriptionNotification = {
-            jsonrpc: JSON_RPC_VERSION,
-            method: subscription.method,
-            params: [subscriptionId, result],
-          };
-
-          subscription.ws.send(JSON.stringify(notification));
-          this.lastResults.set(subscriptionId, JSON.stringify(result));
+        if (notificationString !== lastResult) {
+          subscription.ws.send(notificationString);
+          this.lastResults.set(subscriptionId, notificationString);
         }
       } catch (error) {
         this.server.getLogger().error(`Error polling subscription ${subscriptionId}:`);
