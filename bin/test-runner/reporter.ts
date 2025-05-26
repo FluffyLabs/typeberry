@@ -7,7 +7,7 @@ export class Reporter extends Transform {
   public testPassed = 0;
   public testFailed = 0;
 
-  constructor() {
+  constructor(public readonly suiteName: string) {
     super({
       writableObjectMode: true,
       transform: myTransform,
@@ -19,7 +19,7 @@ export class Reporter extends Transform {
     fileStream.write(
       `</details>
 
-### JAM test vectors ${this.testPassed}/${this.testPassed + this.testFailed} ${status}
+### ${this.suiteName} test vectors {this.testPassed}/${this.testPassed + this.testFailed} ${status}
       `,
     );
   }

@@ -21,9 +21,6 @@ if (suite === undefined) {
   throw new Error(`Invalid suite ${suiteToRun}. Available suites: ${Object.keys(suites)}`);
 }
 
-// pass remaining parameters to the suite file
-process.argv.shift();
-
 const stream = run({
   files: [`${__dirname}/${suiteToRun}.ts`],
   timeout: 120 * 1000,
@@ -34,7 +31,7 @@ const stream = run({
 
 stream.compose(new spec()).pipe(process.stdout);
 
-const reporter = new Reporter();
+const reporter = new Reporter(suiteToRun);
 const fileStream = fs.createWriteStream(`${distDir}/${suite}.txt`);
 stream
   .compose(reporter)
