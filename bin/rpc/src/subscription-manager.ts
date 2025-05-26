@@ -60,7 +60,12 @@ export class SubscriptionManager {
           this.lastResults.set(subscriptionId, JSON.stringify(result));
         }
       } catch (error) {
-        console.error(`Error polling subscription ${subscriptionId}:`, error);
+        this.server.getLogger().error(`Error polling subscription ${subscriptionId}:`);
+        if (error instanceof Error) {
+          this.server.getLogger().error(error.toString());
+        } else {
+          this.server.getLogger().error(JSON.stringify(error));
+        }
       }
     }
   }

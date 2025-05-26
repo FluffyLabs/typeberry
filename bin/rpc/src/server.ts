@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import type { ChainSpec } from "@typeberry/config";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
+import { Logger } from "@typeberry/logger";
 import { WebSocketServer } from "ws";
 import type { WebSocket } from "ws";
 import { loadMethodsInto } from "./method-loader";
@@ -28,34 +29,47 @@ function createErrorResponse(error: RpcError, id: JsonRpcId): JsonRpcErrorRespon
 }
 
 export class RpcServer {
-  private wss: WebSocketServer;
-  private methods: RpcMethodRepo;
-  private rootDb: LmdbRoot;
-  private blocks: LmdbBlocks;
-  private states: LmdbStates;
-  private chainSpec: ChainSpec;
-  private subscriptionManager: SubscriptionManager;
+  private readonly wss: WebSocketServer;
+  private readonly methods: RpcMethodRepo;
+  private readonly rootDb: LmdbRoot;
+  private readonly blocks: LmdbBlocks;
+  private readonly states: LmdbStates;
+  private readonly chainSpec: ChainSpec;
+  private readonly subscriptionManager: SubscriptionManager;
+  private readonly logger: Logger;
 
   constructor(port: number, dbPath: string, genesisRoot: string, chainSpec: ChainSpec) {
-    this.wss = new WebSocketServer({ port });
-    this.methods = new Map();
+    this.logger = Logger.new(__filename, "rpc");
 
     const fullDbPath = `${dbPath}/${genesisRoot}`;
     if (!existsSync(fullDbPath)) {
-      throw new Error(`Database not found at ${fullDbPath}`);
+      this.logger.error(`Database not found at ${fullDbPath}`);
+      process.exit(1);
     }
     this.rootDb = new LmdbRoot(fullDbPath, true);
     this.blocks = new LmdbBlocks(chainSpec, this.rootDb);
     this.states = new LmdbStates(chainSpec, this.rootDb);
+
     this.chainSpec = chainSpec;
 
+    this.methods = new Map();
     loadMethodsInto(this.methods);
+
+    this.wss = new WebSocketServer({ port });
     this.setupWebSocket();
+
     this.subscriptionManager = new SubscriptionManager(this);
-    console.info(`Server listening on port ${port}...`);
   }
 
   private setupWebSocket(): void {
+    this.wss.on("error", (error) => {
+      this.logger.error(`Server error: ${error}`);
+    });
+
+    this.wss.on("listening", () => {
+      this.logger.info(`Server listening on port ${this.wss.options.port}`);
+    });
+
     this.wss.on("connection", (ws: WebSocket) => {
       ws.on("message", async (data: Buffer) => {
         let request: JsonRpcRequest;
@@ -118,6 +132,10 @@ export class RpcServer {
     return this.callMethod(method, params);
   }
 
+  getLogger(): Logger {
+    return this.logger;
+  }
+
   async callMethod(method: string, params: unknown[] | undefined): Promise<JsonRpcResult> {
     if (!this.methods.has(method)) {
       throw new RpcError(-32601, `Method not found: ${method}`);
@@ -132,7 +150,7 @@ export class RpcServer {
   }
 
   async close(): Promise<void> {
-    console.info("Cleaning up...");
+    this.logger.info("Cleaning up...");
     await new Promise<void>((resolve) => {
       this.wss.close(() => resolve());
     });
