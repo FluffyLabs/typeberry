@@ -23,7 +23,7 @@ class RpcClient {
     this.ws.on("message", (data: Buffer) => {
       const response: JsonRpcResponse | JsonRpcSubscriptionNotification = JSON.parse(data.toString());
 
-      if ("params" in response) {
+      if (!("id" in response) && "params" in response) {
         console.info(`sub[${response.params[0]}]:`, response.params[1]);
       } else if (typeof response.id === "number") {
         const callback = this.messageQueue.get(response.id);
@@ -32,6 +32,8 @@ class RpcClient {
           callback(response);
           this.messageQueue.delete(response.id);
         }
+      } else {
+        console.error("Unexpected message from server:", response);
       }
     });
 

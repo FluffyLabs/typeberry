@@ -4,25 +4,28 @@ import type { U32 } from "@typeberry/numbers";
 import type WebSocket from "ws";
 
 export const JSON_RPC_VERSION = "2.0";
+export type JSON_RPC_VERSION = typeof JSON_RPC_VERSION;
 
 export type JsonRpcId = string | number | null;
 export type JsonRpcResult = unknown[] | null;
 
 export interface JsonRpcRequest {
-  jsonrpc: typeof JSON_RPC_VERSION;
+  jsonrpc: JSON_RPC_VERSION;
   method: string;
   params?: unknown[];
-  id?: JsonRpcId;
+  id: JsonRpcId;
 }
 
+export interface JsonRpcNotification extends Omit<JsonRpcRequest, "id"> {}
+
 export interface JsonRpcSuccessResponse {
-  jsonrpc: typeof JSON_RPC_VERSION;
+  jsonrpc: JSON_RPC_VERSION;
   result: JsonRpcResult;
   id: JsonRpcId;
 }
 
 export interface JsonRpcErrorResponse {
-  jsonrpc: typeof JSON_RPC_VERSION;
+  jsonrpc: JSON_RPC_VERSION;
   error: {
     code: number;
     message: string;
@@ -31,7 +34,7 @@ export interface JsonRpcErrorResponse {
   id: JsonRpcId;
 }
 
-export interface JsonRpcSubscriptionNotification extends JsonRpcRequest {
+export interface JsonRpcSubscriptionNotification extends JsonRpcNotification {
   params: [SubscriptionId, JsonRpcResult];
 }
 
