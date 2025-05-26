@@ -18,6 +18,7 @@ export default tseslint.config(
       },
     },
     rules: {
+      "no-unused-expressions": "error",
       "import/no-extraneous-dependencies": "error",
       "@typescript-eslint/strict-boolean-expressions": [
         "error",
