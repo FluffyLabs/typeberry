@@ -17,6 +17,7 @@ import {
   MainReady,
   importerStateMachine,
 } from "./state-machine";
+import {BlockView} from "@typeberry/block";
 
 const logger = Logger.new(__filename, "importer");
 
@@ -54,17 +55,40 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
     );
 
     // TODO [ToDr] back pressure?
+    let isProcessing = false;
+    const importingQueue: BlockView[] = [];
+
     worker.onBlock.on(async (b) => {
+      importingQueue.push(b);
       // NOTE [ToDr] this is incorrect, since it may fail to decode.
       const timeSlot = b.header.view().timeSlotIndex.materialize();
       logger.log(`🧊 Got block: #${timeSlot}`);
-      const maybeBestHeader = await importer.importBlock(b);
-      if (maybeBestHeader.isOk) {
-        const bestHeader = maybeBestHeader.ok;
-        worker.announce(port, bestHeader);
-        logger.info(`🧊 Best block: #${bestHeader.data.timeSlotIndex.materialize()} (${bestHeader.hash})`);
-      } else {
-        logger.error(`❌ Rejected block #${timeSlot}: ${resultToString(maybeBestHeader)}`);
+
+      if (isProcessing) {
+        // some other annoncement is already processing the import queue.
+        return;
+      }
+
+      isProcessing = true;
+      try {
+        while (importingQueue.length > 0) {
+          const b = importingQueue.shift();
+          if (!b) {
+            return;
+          }
+          console.time('importBlock');
+          const maybeBestHeader = await importer.importBlock(b);
+          if (maybeBestHeader.isOk) {
+            const bestHeader = maybeBestHeader.ok;
+            worker.announce(port, bestHeader);
+            logger.info(`🧊 Best block: #${bestHeader.data.timeSlotIndex.materialize()} (${bestHeader.hash})`);
+          } else {
+            logger.log(`❌ Rejected block #${timeSlot}: ${resultToString(maybeBestHeader)}`);
+          }
+          console.timeEnd('importBlock');
+        }
+      } finally {
+        isProcessing = false;
       }
     });
   });
