@@ -49,7 +49,9 @@ export class Importer {
   async importBlock(block: BlockView): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
     this.logger.log("🧱 Attempting to import a new block.");
 
+    console.time('import:verify');
     const hash = await this.verifier.verifyBlock(block);
+    console.timeEnd('import:verify');
     if (hash.isError) {
       return importerError(ImporterErrorKind.Verifier, hash);
     }
@@ -57,14 +59,19 @@ export class Importer {
     const timeSlot = block.header.view().timeSlotIndex.materialize();
     this.logger.log(`🧱 Got hash ${hash.ok} for block at slot ${timeSlot}.`);
     const headerHash = hash.ok;
+    console.time('import:stf');
     const res = await this.stf.transition(block, headerHash);
+    console.timeEnd('import:stf');
     if (res.isError) {
       // TODO [ToDr] Revert the state?
       return importerError(ImporterErrorKind.Stf, res);
     }
 
+    console.time('import:state');
     const stateRoot = merkelizeState(serializeState(this.stf.state, this.spec));
+    console.timeEnd('import:state');
     // insert new state and the block to DB.
+    console.time('import:db');
     const writeState = this.states.insertFullState(stateRoot, this.stf.state);
     const writeBlocks = this.blocks.insertBlock(new WithHash(headerHash, block));
     // insert posterior state root, since we know it now.
@@ -72,6 +79,7 @@ export class Importer {
 
     await Promise.all([writeState, writeBlocks, writePostState]);
     await this.blocks.setBestData(headerHash, stateRoot);
+    console.timeEnd('import:db');
 
     return Result.ok(new WithHash(headerHash, block.header.view()));
   }
