@@ -57,7 +57,13 @@ export async function main(args: Arguments) {
 
   const chainSpec = getChainSpec(options.chainSpec);
   // Initialize the database with genesis state and block if there isn't one.
-  const dbPath = await initializeDatabase(chainSpec, options.databasePath, options.genesisRoot, options.genesisPath, options.genesisBlockPath);
+  const dbPath = await initializeDatabase(
+    chainSpec,
+    options.databasePath,
+    options.genesisRoot,
+    options.genesisPath,
+    options.genesisBlockPath,
+  );
 
   // Start extensions
   const importerInit = await blockImporter.spawnWorker();
@@ -190,19 +196,19 @@ async function initializeDatabase(
   let genesisBlock = loadGenesisBlockIfProvided(spec, genesisHeaderPath);
   if (genesisBlock === null) {
     genesisBlock = Block.create({
-    header: Header.empty(),
-    extrinsic: Extrinsic.create({
-      tickets: asKnownSize([]),
-      preimages: [],
-      assurances: asKnownSize([]),
-      guarantees: asKnownSize([]),
-      disputes: {
-        verdicts: [],
-        culprits: [],
-        faults: [],
-      },
-    }),
-  });
+      header: Header.empty(),
+      extrinsic: Extrinsic.create({
+        tickets: asKnownSize([]),
+        preimages: [],
+        assurances: asKnownSize([]),
+        guarantees: asKnownSize([]),
+        disputes: {
+          verdicts: [],
+          culprits: [],
+          faults: [],
+        },
+      }),
+    });
   }
 
   const genesisHeader = genesisBlock.header;

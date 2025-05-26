@@ -79,8 +79,8 @@ function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedO
     (v) => Bytes.parseBytesNoPrefix(v, HASH_SIZE).asOpaque(),
     DEFAULTS.genesisRoot,
   );
-  const {genesis} = parseOption(args, "genesis", (v) => withRelPath(relPath, v), null);
-  const genesisBlock  = parseOption(args, "genesis-block", (v) => withRelPath(relPath, v), null);
+  const { genesis } = parseOption(args, "genesis", (v) => withRelPath(relPath, v), null);
+  const genesisBlock = parseOption(args, "genesis-block", (v) => withRelPath(relPath, v), null);
   const chainSpec = parseOption(
     args,
     "chain-spec",

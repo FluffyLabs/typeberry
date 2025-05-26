@@ -2,6 +2,7 @@ import { isMainThread, parentPort } from "node:worker_threads";
 
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
+import type { BlockView } from "@typeberry/block";
 import { LmdbBlocks, LmdbStates } from "@typeberry/database-lmdb";
 import { LmdbRoot } from "@typeberry/database-lmdb";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
@@ -17,7 +18,6 @@ import {
   MainReady,
   importerStateMachine,
 } from "./state-machine";
-import {BlockView} from "@typeberry/block";
 
 const logger = Logger.new(__filename, "importer");
 
@@ -76,7 +76,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
           if (!b) {
             return;
           }
-          console.time('importBlock');
+          console.time("importBlock");
           const maybeBestHeader = await importer.importBlock(b);
           if (maybeBestHeader.isOk) {
             const bestHeader = maybeBestHeader.ok;
@@ -85,7 +85,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
           } else {
             logger.log(`❌ Rejected block #${timeSlot}: ${resultToString(maybeBestHeader)}`);
           }
-          console.timeEnd('importBlock');
+          console.timeEnd("importBlock");
         }
       } finally {
         isProcessing = false;

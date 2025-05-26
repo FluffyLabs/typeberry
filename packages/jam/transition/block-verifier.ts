@@ -1,9 +1,9 @@
 import type { BlockView, HeaderHash } from "@typeberry/block";
+import { Bytes } from "@typeberry/bytes";
 import type { BlocksDb } from "@typeberry/database";
+import { HASH_SIZE } from "@typeberry/hash";
 import { Result } from "@typeberry/utils";
 import type { TransitionHasher } from "./hasher";
-import {HASH_SIZE} from "@typeberry/hash";
-import {Bytes} from "@typeberry/bytes";
 
 export enum BlockVerifierError {
   ParentNotFound = 0,
@@ -11,7 +11,7 @@ export enum BlockVerifierError {
   InvalidExtrinsic = 2,
   StateRootNotFound = 3,
   InvalidStateRoot = 4,
-  AlreadyImported,
+  AlreadyImported = 5,
 }
 
 const ZERO_HASH: HeaderHash = Bytes.zero(HASH_SIZE).asOpaque();

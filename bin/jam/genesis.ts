@@ -1,10 +1,10 @@
 import fs from "node:fs";
+import type { Block } from "@typeberry/block";
+import { blockFromJson } from "@typeberry/block-json";
 import type { ChainSpec } from "@typeberry/config";
 import { parseFromJson } from "@typeberry/json-parser";
 import type { State } from "@typeberry/state";
 import { fullStateDumpFromJson } from "@typeberry/state-json";
-import {blockFromJson} from "@typeberry/block-json";
-import {Block} from "@typeberry/block";
 
 export function loadGenesis(spec: ChainSpec, path: string): State {
   const genesisData = fs.readFileSync(path, "utf8");
@@ -13,7 +13,7 @@ export function loadGenesis(spec: ChainSpec, path: string): State {
 }
 
 export function loadGenesisBlock(spec: ChainSpec, path: string): Block {
-  const blockData = fs.readFileSync(path, 'utf8');
+  const blockData = fs.readFileSync(path, "utf8");
   const blockJson = JSON.parse(blockData);
   return parseFromJson(blockJson, blockFromJson(spec));
 }
