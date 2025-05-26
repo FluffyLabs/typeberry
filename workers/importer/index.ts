@@ -73,7 +73,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
       try {
         while (importingQueue.length > 0) {
           const b = importingQueue.shift();
-          if (!b) {
+          if (b === undefined) {
             return;
           }
           console.time("importBlock");
