@@ -2,10 +2,8 @@ name: w3f test vectors
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ["src-build"]
-    types:
-      - completed
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   run:
