@@ -19,7 +19,7 @@ export class Reporter extends Transform {
     fileStream.write(
       `</details>
 
-### ${this.suiteName} test vectors {this.testPassed}/${this.testPassed + this.testFailed} ${status}
+### ${this.suiteName} test vectors ${this.testPassed}/${this.testPassed + this.testFailed} ${status}
       `,
     );
   }
