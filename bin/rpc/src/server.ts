@@ -17,6 +17,8 @@ import type {
 } from "./types";
 import { JSON_RPC_VERSION, RpcError } from "./types";
 
+const PING_INTERVAL_MS = 30000;
+
 function createErrorResponse(error: RpcError, id: JsonRpcId): JsonRpcErrorResponse {
   return {
     jsonrpc: JSON_RPC_VERSION,
@@ -71,6 +73,25 @@ export class RpcServer {
     });
 
     this.wss.on("connection", (ws: WebSocket) => {
+      let isAlive = true;
+
+      ws.on("pong", () => {
+        isAlive = true;
+      });
+
+      const pingInterval = setInterval(() => {
+        if (!isAlive) {
+          ws.terminate();
+        }
+        isAlive = false;
+        ws.ping();
+        this.logger.info("Pinging client");
+      }, PING_INTERVAL_MS);
+
+      ws.on("close", () => {
+        clearInterval(pingInterval);
+      });
+
       ws.on("message", async (data: Buffer) => {
         let request: JsonRpcRequest;
         try {
@@ -152,6 +173,9 @@ export class RpcServer {
   async close(): Promise<void> {
     this.logger.info("Cleaning up...");
     await new Promise<void>((resolve) => {
+      for (const ws of this.wss.clients) {
+        ws.close();
+      }
       this.wss.close(() => resolve());
     });
     this.subscriptionManager.destroy();
