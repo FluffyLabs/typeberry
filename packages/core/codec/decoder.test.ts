@@ -11,12 +11,16 @@ function decodeVarU32(source: Uint8Array, finish = true) {
   const decoder = Decoder.fromBlob(source);
   const value = decoder.varU32();
   const bytesToSkip = decoder.bytesRead();
-  finish && decoder.finish();
+  if (finish) {
+    decoder.finish();
+  }
 
   // compare with u64 just to be sure.
   const decoder2 = Decoder.fromBlob(source);
   assert.strictEqual(decoder2.varU64(), BigInt(value));
-  finish && decoder2.finish();
+  if (finish) {
+    decoder2.finish();
+  }
 
   return { value, bytesToSkip };
 }
@@ -25,7 +29,9 @@ function decodeVarU64(source: Uint8Array, finish = true) {
   const decoder = Decoder.fromBlob(source);
   const value = decoder.varU64();
   const bytesToSkip = decoder.bytesRead();
-  finish && decoder.finish();
+  if (finish) {
+    decoder.finish();
+  }
   return { value, bytesToSkip };
 }
 
