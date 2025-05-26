@@ -1,4 +1,4 @@
-name: Run jamduna JAM test vectors
+name: jamduna test vectors
 
 on:
   workflow_dispatch:
@@ -9,7 +9,6 @@ on:
 
 jobs:
   import:
-    name: "Import blocks"
     runs-on: self-hosted
 
     strategy:
@@ -49,7 +48,6 @@ jobs:
           }
 
   state_transition:
-    name: "Run state transition tests."
     runs-on: self-hosted
 
     strategy:

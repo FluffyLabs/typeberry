@@ -1,4 +1,4 @@
-name: Run w3f JAM test vectors
+name: w3f test vectors
 
 on:
   workflow_dispatch:
