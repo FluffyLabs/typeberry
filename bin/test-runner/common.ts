@@ -39,6 +39,7 @@ export async function main(
 ) {
   const relPath = `${__dirname}/../..`;
   const tests: TestAndRunner[] = [];
+  const ignoredPatterns = ignored ?? [];
 
   let files = initialFiles;
   if (initialFiles.length === 0) {
@@ -55,7 +56,7 @@ export async function main(
 
     testCase.shouldSkip = accepted !== undefined && !accepted.some((x) => absolutePath.includes(x));
 
-    if (ignored?.some((x) => absolutePath.includes(x))) {
+    if (ignoredPatterns.some((x) => absolutePath.includes(x))) {
       logger.log(`Ignoring: ${absolutePath}`);
       continue;
     }

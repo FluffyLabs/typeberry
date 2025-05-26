@@ -13,6 +13,7 @@ main(runners, process.argv.slice(2), "jamdunavectors", {
     // Ignoring, since they are invalid and we cannot even parse them.
     "BadTicketAttemptNumber.json",
     // we only run independent state-transition tests
+    "/chainspecs/",
     "/blocks/",
     "/state_snapshots/",
   ],
