@@ -3,7 +3,7 @@ name: w3f test vectors
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: ["build"]
+    workflows: ["src-build"]
     types:
       - completed
 
