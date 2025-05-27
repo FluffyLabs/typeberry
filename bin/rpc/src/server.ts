@@ -174,7 +174,7 @@ export class RpcServer {
     this.logger.info("Cleaning up...");
     await new Promise<void>((resolve) => {
       for (const ws of this.wss.clients) {
-        ws.close();
+        ws.terminate();
       }
       this.wss.close(() => resolve());
     });
