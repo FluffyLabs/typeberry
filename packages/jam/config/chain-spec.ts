@@ -59,6 +59,8 @@ export class ChainSpec extends WithDebug {
   readonly ticketsPerValidator: number;
   /** The maximum number of tickets that can be included in a single block. */
   readonly maxTicketsPerExtrinsic: number;
+  /** Number of erasure coding pieces per segment. */
+  readonly numberECPiecesPerSegment: number;
 
   constructor(data: Omit<ChainSpec, "validatorsSuperMajority" | "thirdOfValidators">) {
     super();
@@ -73,6 +75,7 @@ export class ChainSpec extends WithDebug {
     this.contestLength = data.contestLength;
     this.ticketsPerValidator = data.ticketsPerValidator;
     this.maxTicketsPerExtrinsic = data.maxTicketsPerExtrinsic;
+    this.numberECPiecesPerSegment = data.numberECPiecesPerSegment;
   }
 }
 
@@ -86,6 +89,7 @@ export const tinyChainSpec = new ChainSpec({
   slotDuration: 6,
   ticketsPerValidator: 3,
   validatorsCount: 6,
+  numberECPiecesPerSegment: 1026,
 });
 
 /**
@@ -101,4 +105,5 @@ export const fullChainSpec = new ChainSpec({
   slotDuration: 6,
   ticketsPerValidator: 2,
   validatorsCount: 1023,
+  numberECPiecesPerSegment: 1023,
 });

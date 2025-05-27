@@ -1,8 +1,13 @@
 import { BytesBlob } from "@typeberry/bytes";
+import type { ChainSpec } from "@typeberry/config";
 import { check } from "@typeberry/utils";
 import { ShardsCollection, decode, encode } from "reed-solomon-wasm/pkg";
 
-const SHARD_ALIGNMENT = 64; // Shard size must be multiple of 64 bytes. (reed-solomon-simd limitation: https://github.com/ordian/reed-solomon-simd)
+/**
+ * Shard size must be multiple of 64 bytes.
+ * (reed-solomon-simd limitation: https://github.com/ordian/reed-solomon-simd)
+ */
+const SHARD_ALIGNMENT = 64;
 
 /**
  * The following values are the consequences of the coding rate 342:1023
@@ -17,8 +22,7 @@ const N_REDUNDANCY = RESULT_SHARDS - N_SHARDS;
  * reed-solomon-simd requires shard size to be multiple of 64 bytes but we need only 2 bytes.
  * It does not matter what indices are selected, but it has to be n and n + 32
  */
-const FIRST_POINT_INDEX = 0;
-const SECOND_POINT_INDEX = 32;
+const POINT_SIZE = 32;
 
 /**
  * The shards are 2 bytes length because the encoding function is defined in GF(16)
@@ -26,49 +30,67 @@ const SECOND_POINT_INDEX = 32;
  */
 const SHARD_LENGTH = 2;
 
-function getInputWithPadding(input: Uint8Array) {
-  if (input.length >= SHARD_LENGTH * N_SHARDS) {
+function padInput(input: Uint8Array, minSize = SHARD_LENGTH * N_SHARDS) {
+  if (input.length >= minSize) {
     return input;
   }
-  const inputWithPadding = new Uint8Array(SHARD_LENGTH * N_SHARDS);
-  inputWithPadding.set(input);
-  return inputWithPadding;
+  const padded = new Uint8Array(minSize);
+  padded.set(input);
+  return padded;
 }
 
-export function encodeData(input: Uint8Array): Uint8Array[] {
+export function encodeData(
+  input: Uint8Array,
+  optional:
+    | {
+        resultShards?: number;
+        nShards?: number;
+        shardLength?: number;
+        nRedundancy?: number;
+      }
+    | undefined = undefined,
+): Uint8Array[] {
+  const nShards = optional?.nShards ?? N_SHARDS;
+  const shardLength = optional?.shardLength ?? SHARD_LENGTH;
+  const expectedLength = shardLength * nShards;
+  const resultShards = optional?.resultShards ?? RESULT_SHARDS;
+  const nRedundancy = optional?.nRedundancy ?? N_REDUNDANCY;
+
   check(
-    input.length <= SHARD_LENGTH * N_SHARDS,
-    `length of input (${input.length}) should be equal to or less than ${SHARD_LENGTH * N_SHARDS}`,
+    input.length <= expectedLength,
+    `length of input (${input.length}) should be equal to or less than ${expectedLength}`,
   );
-  // if the input is shorter than 342 we need to fill it with '0' to be 342
-  const inputWithPadding = getInputWithPadding(input);
 
-  const result = new Array<Uint8Array>(RESULT_SHARDS);
+  const inputWithPadding = padInput(input, expectedLength);
 
-  const data = new Uint8Array(SHARD_ALIGNMENT * N_SHARDS);
+  const result = new Array<Uint8Array>(resultShards);
 
-  for (let i = 0; i < N_SHARDS; i++) {
+  const data = new Uint8Array(SHARD_ALIGNMENT * nShards);
+
+  for (let i = 0; i < nShards; i++) {
     // fill original shards in result
-    const shardStart = SHARD_LENGTH * i;
-    result[i] = new Uint8Array(inputWithPadding.slice(shardStart, shardStart + SHARD_LENGTH));
+    const shardStart = shardLength * i;
+    result[i] = new Uint8Array(inputWithPadding.slice(shardStart, shardStart + shardLength));
     // fill array that will be passed to wasm lib
-    data[i * SHARD_ALIGNMENT + FIRST_POINT_INDEX] = inputWithPadding[shardStart];
-    data[i * SHARD_ALIGNMENT + SECOND_POINT_INDEX] = inputWithPadding[shardStart + 1];
+    for (let j = 0; j < shardLength; j++) {
+      data[i * SHARD_ALIGNMENT + j * POINT_SIZE] = inputWithPadding[shardStart + j];
+    }
   }
 
   const shards = new ShardsCollection(SHARD_ALIGNMENT, data);
 
-  const encodingResult = encode(N_REDUNDANCY, SHARD_ALIGNMENT, shards);
+  const encodingResult = encode(nRedundancy, SHARD_ALIGNMENT, shards);
 
   const encodedData = encodingResult.take_data();
 
-  for (let i = 0; i < N_REDUNDANCY; i++) {
-    const idx = i + N_SHARDS;
+  for (let i = 0; i < nRedundancy; i++) {
+    const idx = i + nShards;
     const shardIdx = i * SHARD_ALIGNMENT;
 
-    result[idx] = new Uint8Array(2);
-    result[idx][0] = encodedData[shardIdx + FIRST_POINT_INDEX];
-    result[idx][1] = encodedData[shardIdx + SECOND_POINT_INDEX];
+    result[idx] = new Uint8Array(shardLength);
+    for (let j = 0; j < shardLength; j++) {
+      result[idx][j] = encodedData[shardIdx + j * POINT_SIZE];
+    }
   }
 
   return result;
@@ -77,10 +99,22 @@ export function encodeData(input: Uint8Array): Uint8Array[] {
 // expectedLength can be useful to remove padding in case of short data (< 342)
 export function decodeData(
   input: [number, Uint8Array][],
-  expectedLength: number = SHARD_LENGTH * N_SHARDS,
+  optional:
+    | {
+        resultShards?: number;
+        shardLength?: number;
+        nShards?: number;
+        nRedundancy?: number;
+      }
+    | undefined = undefined,
 ): Uint8Array {
-  check(input.length === N_SHARDS, `length of input should be equal to ${N_SHARDS}, got ${input.length}`);
-  const result = new Uint8Array(SHARD_LENGTH * N_SHARDS);
+  const shardLength = optional?.shardLength ?? SHARD_LENGTH;
+  const nShards = optional?.nShards ?? N_SHARDS;
+  const nRedundancy = optional?.nRedundancy ?? N_REDUNDANCY;
+  const expectedLength = shardLength * nShards;
+
+  check(input.length === nShards, `length of input should be equal to ${nShards}, got ${input.length}`);
+  const result = new Uint8Array(shardLength * nShards);
 
   const data = new Uint8Array(input.length * SHARD_ALIGNMENT);
   const indices = new Uint16Array(input.length);
@@ -88,18 +122,19 @@ export function decodeData(
   for (let i = 0; i < input.length; i++) {
     const [index, points] = input[i];
     const shardStart = i * SHARD_ALIGNMENT;
-    data[shardStart + FIRST_POINT_INDEX] = points[0];
-    data[shardStart + SECOND_POINT_INDEX] = points[1];
+    for (let j = 0; j < shardLength; j++) {
+      data[shardStart + j * POINT_SIZE] = points[j];
+    }
     indices[i] = index;
-    if (index < N_SHARDS) {
+    if (index < nShards) {
       // fill original shards in result
-      const shardStartInResult = SHARD_LENGTH * index;
+      const shardStartInResult = shardLength * index;
       result.set(points, shardStartInResult);
     }
   }
   const shards = new ShardsCollection(SHARD_ALIGNMENT, data, indices);
 
-  const decodingResult = decode(N_SHARDS, N_REDUNDANCY, SHARD_ALIGNMENT, shards);
+  const decodingResult = decode(nShards, nRedundancy, SHARD_ALIGNMENT, shards);
   const resultIndices = decodingResult.take_indices(); // it has to be called before take_data
   const resultData = decodingResult.take_data(); // it destroys the result object in rust
 
@@ -112,11 +147,11 @@ export function decodeData(
   for (let i = 0; i < resultIndices.length; i++) {
     // fill reconstructed shards in result
     const index = resultIndices[i];
-    const resultIdx = SHARD_LENGTH * index;
+    const resultIdx = shardLength * index;
     const shardIdx = i * SHARD_ALIGNMENT;
-
-    result[resultIdx] = resultData[shardIdx + FIRST_POINT_INDEX];
-    result[resultIdx + 1] = resultData[shardIdx + SECOND_POINT_INDEX];
+    for (let j = 0; j < shardLength; j++) {
+      result[resultIdx + j] = resultData[shardIdx + j * POINT_SIZE];
+    }
   }
 
   return result.subarray(0, expectedLength);
@@ -229,10 +264,18 @@ export function transpose(input: BytesBlob[]): BytesBlob[] {
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3f15003f1500?v=0.6.6
  */
-export function encodeChunks(input: BytesBlob): BytesBlob[] {
+export function encodeChunks(input: BytesBlob, chainSpec: ChainSpec): BytesBlob[] {
+  const vc = chainSpec.validatorsCount;
+  const optional = {
+    resultShards: vc,
+    nShards: vc === 6 ? SHARD_LENGTH : N_SHARDS,
+    nRedundancy: vc - (vc === 6 ? SHARD_LENGTH : N_SHARDS),
+    shardLength: vc === 6 ? N_SHARDS : SHARD_LENGTH,
+  };
+
   const encodedPieces: BytesBlob[] = [];
   for (const piece of unzip(input)) {
-    const encoded = encodeData(piece.raw);
+    const encoded = encodeData(piece.raw, optional);
     for (let i = 0; i < encoded.length; i++) {
       encodedPieces[i] ??= BytesBlob.empty();
       const newLength = encodedPieces[i].length + encoded[i].length;
@@ -245,27 +288,26 @@ export function encodeChunks(input: BytesBlob): BytesBlob[] {
   return encodedPieces;
 }
 
-export function reconstructData(
-  input: [number, BytesBlob][],
-  expectedLength: number = SHARD_LENGTH * N_SHARDS,
-): BytesBlob {
-  check(input.length >= N_SHARDS, `length of input should be equal or more than ${N_SHARDS}`);
-  const trimInput = input.slice(0, N_SHARDS);
+export function reconstructData(input: [number, BytesBlob][], chainSpec: ChainSpec, expectedLength: number): BytesBlob {
+  const vc = chainSpec.validatorsCount;
+  const optional = {
+    resultShards: vc,
+    nShards: vc === 6 ? SHARD_LENGTH : N_SHARDS,
+    nRedundancy: vc - (vc === 6 ? SHARD_LENGTH : N_SHARDS),
+    shardLength: vc === 6 ? N_SHARDS : SHARD_LENGTH,
+  };
+  const trimInput = input.slice(0, optional.nShards);
   const result = new Array<BytesBlob>();
-  const pieces = trimInput[0][1].length / SHARD_LENGTH;
+  const pieces = trimInput[0][1].length / optional.shardLength;
 
   for (let i = 0; i < pieces; i++) {
-    const start = i * SHARD_LENGTH;
+    const start = i * optional.shardLength;
     const arrayInput = trimInput.map(
-      ([index, piece]) => [index, piece.raw.slice(start, start + SHARD_LENGTH)] as [number, Uint8Array],
+      ([index, piece]) => [index, piece.raw.slice(start, start + optional.shardLength)] as [number, Uint8Array],
     );
 
-    check(
-      arrayInput[0][1].length === SHARD_LENGTH,
-      `length of input[0][1] should be equal to ${SHARD_LENGTH}, got ${arrayInput[0][1].length}`,
-    );
-
-    result.push(BytesBlob.blobFrom(decodeData(arrayInput)));
+    result.push(BytesBlob.blobFrom(decodeData(arrayInput, optional)));
   }
-  return lace(result, expectedLength);
+  const laced = lace(result, expectedLength);
+  return BytesBlob.blobFrom(laced.raw.slice(0, expectedLength));
 }
