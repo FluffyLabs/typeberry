@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [ "main" ]
+env:
+  JAMTESTNET_REF: 6d41bb2e8f4d60dc1806df42401363b54f956c0a
 
 jobs:
   import:
@@ -20,8 +22,7 @@ jobs:
         with:
           repository: jam-duna/jamtestnet
           path: "./jamdunavectors"
-          # NOTE: another instance below. Should probably be re-used somehow.
-          ref: 6d41bb2e8f4d60dc1806df42401363b54f956c0a
+          ref: ${{ env.JAMTESTNET_REF }}
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
@@ -66,7 +67,7 @@ jobs:
         with:
           repository: jam-duna/jamtestnet
           path: "./jamdunavectors"
-          ref: 6d41bb2e8f4d60dc1806df42401363b54f956c0a
+          ref: ${{ env.JAMTESTNET_REF }}
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
