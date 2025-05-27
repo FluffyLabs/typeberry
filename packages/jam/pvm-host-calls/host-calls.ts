@@ -71,8 +71,8 @@ export class HostCalls {
 
       const result = new Uint8Array(maybeLength);
       const startAddress = tryAsMemoryIndex(maybeAddress);
-      const readResult = memory.loadInto(result, startAddress);
       const pageFault = memory.loadInto(result, startAddress);
+
       if (pageFault !== null) {
         return ReturnValue.fromMemoryFault(gasConsumed);
       }
