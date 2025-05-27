@@ -14,9 +14,6 @@ import { MAX_NUMBER_OF_WORK_ITEMS } from "./work-package";
  * https://graypaper.fluffylabs.dev/#/579bd12/413000413000
  */
 
-/** `H`: The size of recent history, in blocks. */
-export const H = 8;
-
 /** `I`: Maximum number of work items in a package. */
 export const I = MAX_NUMBER_OF_WORK_ITEMS;
 
