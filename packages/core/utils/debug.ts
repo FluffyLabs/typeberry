@@ -45,7 +45,7 @@ export function assertNever(value: never): never {
 }
 
 /** Debug print an object. */
-export function inspect<T>(val: T, recursive = true): string {
+export function inspect<T>(val: T): string {
   const nest = (v: string) =>
     v
       .split("\n")
@@ -62,7 +62,11 @@ export function inspect<T>(val: T, recursive = true): string {
   }
 
   if (Array.isArray(val)) {
-    return `[${val.map((x) => inspect(x, false))}]`;
+    return `[${val.map((x) => inspect(x))}]`;
+  }
+
+  if (val instanceof Map) {
+    return inspect(Array.from(val.entries()));
   }
 
   if (typeof val === "number") {
@@ -88,7 +92,7 @@ export function inspect<T>(val: T, recursive = true): string {
   for (const k of keys) {
     if (typeof k === "string") {
       v += oneLine ? "" : "\n  ";
-      v += `${k}: ${nest(inspect(val[k as keyof T], recursive))}`;
+      v += `${k}: ${nest(inspect(val[k as keyof T]))}`;
       v += oneLine ? "," : "";
     }
   }
@@ -115,6 +119,6 @@ export const measure =
 /** A class that adds `toString` method that prints all properties of an object. */
 export abstract class WithDebug {
   toString() {
-    return inspect(this, false);
+    return inspect(this);
   }
 }

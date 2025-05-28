@@ -29,6 +29,8 @@ const keccakHasher = keccak.KeccakHasher.create();
 export async function runStateTransition(testContent: StateTransition, _path: string) {
   const spec = tinyChainSpec;
   const preState = loadState(spec, testContent.pre_state.keyvals);
+  console.log(`Loaded state: ${preState}`);
+  console.log(`Loaded services: ${Array.from(preState.services.entries())}`);
   const preStateSerialized = serializeState(preState, spec);
 
   const postState = loadState(spec, testContent.post_state.keyvals);
@@ -67,6 +69,6 @@ export async function runStateTransition(testContent: StateTransition, _path: st
 
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
   const root = merkelizeState(serializeState(preState, spec));
-  deepEqual(stf.state, postState);
+  deepEqual(preState, postState);
   assert.deepStrictEqual(root.toString(), postStateRoot.toString());
 }

@@ -49,6 +49,6 @@ export class FixedSizeArray<T, N extends number> extends Array<T> {
   }
 
   toString() {
-    return inspect(Array.from(this), false);
+    return inspect(Array.from(this));
   }
 }

@@ -108,7 +108,7 @@ export class InMemoryService extends WithDebug implements Service {
 /**
  * A special version of state, stored fully in-memory.
  */
-export class InMemoryState implements State, EnumerableState {
+export class InMemoryState extends WithDebug implements State, EnumerableState {
   /** Create a new `InMemoryState` by providing all required fields. */
   static create(state: InMemoryStateFields) {
     return new InMemoryState(state);
@@ -206,9 +206,20 @@ export class InMemoryState implements State, EnumerableState {
           }
         }
       } else if (kind === UpdatePreimageKind.Remove) {
-        throw new Error("not implemented yet!");
+        const { hash, length } = action;
+        service.data.preimages.delete(hash);
+        const history = service.data.lookupHistory.get(hash) ?? [];
+        const idx = history.map(x => x.length).indexOf(length);
+        if (idx !== -1) {
+          history.splice(idx, 1);
+        }
       } else if (kind === UpdatePreimageKind.UpdateOrAdd) {
-        throw new Error("not implemented yet!");
+        const { item } = action;
+        const history = service.data.lookupHistory.get(item.hash) ?? [];
+        const existingIdx = history.map(x => x.length).indexOf(item.length);
+        const removeCount = existingIdx === -1 ? 0 : 1;
+        history.splice(existingIdx, removeCount, item);
+        service.data.lookupHistory.set(item.hash, history);
       } else {
         assertNever(kind);
       }
@@ -272,6 +283,7 @@ export class InMemoryState implements State, EnumerableState {
   }
 
   private constructor(s: InMemoryStateFields) {
+    super();
     this.availabilityAssignment = s.availabilityAssignment;
     this.designatedValidatorData = s.designatedValidatorData;
     this.nextValidatorData = s.nextValidatorData;

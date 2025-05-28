@@ -160,11 +160,27 @@ export type ServicesUpdate = {
   storage: UpdateStorage[];
 };
 
+function isServiceUpdateKey(key: string | number | symbol) {
+  const keys: (keyof ServicesUpdate)[] = ['servicesRemoved', 'servicesUpdates', 'preimages', 'storage']
+  return keys.indexOf(key as keyof ServicesUpdate) !== -1;
+}
+
 /** An update to the State object. */
 export type StateUpdate<State> = Partial<State>;
 
 export function mergeStateUpdates<T>(updates: StateUpdate<T>[]): StateUpdate<T> {
-  return updates.reduce((acc, x) => Object.assign(acc, x), {});
+  return updates.reduce<StateUpdate<T>>((acc, x) => {
+    for (const k of Object.keys(x)) {
+      const key = k as keyof T;
+      if (isServiceUpdateKey(key) && Array.isArray(acc[key]) && Array.isArray(x[key])) {
+        acc[key].push(...x[key]);
+      } else {
+        // overwriting
+        acc[key] = x[key];
+      }
+    }
+    return acc;
+  }, {});
 }
 
 /**
@@ -179,3 +195,4 @@ export function copyAndUpdateState<T extends Partial<State>>(preState: T, stateU
     ...stateUpdate,
   };
 }
+

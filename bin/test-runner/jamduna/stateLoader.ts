@@ -10,6 +10,7 @@ import { tryAsU32 } from "@typeberry/numbers";
 import {
   InMemoryState,
   LookupHistoryItem,
+  mergeStateUpdates,
   PreimageItem,
   ServiceAccountInfo,
   type ServicesUpdate,
@@ -35,15 +36,16 @@ export type StateKeyVal = string[];
 
 export function loadState(spec: ChainSpec, stateData: StateKeyVal[]): InMemoryState {
   const state = InMemoryState.empty(spec);
+  const updates = [];
   for (const [_key, value, kind, description] of stateData) {
     const appender = kindMapping[kind];
     if (appender === undefined) {
       throw new Error(`Missing kind mapping for: ${kind}`);
     }
-    const update = appender(BytesBlob.parseBlob(value), description);
-    state.applyUpdate(update);
+    updates.push(appender(BytesBlob.parseBlob(value), description));
   }
-  return state;
+  const update = mergeStateUpdates(updates);
+  return state.applyUpdate(update);
 }
 
 // A hacky set of parsers to avoid decoding the state keys.
