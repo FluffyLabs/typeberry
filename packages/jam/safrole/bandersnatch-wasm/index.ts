@@ -17,7 +17,7 @@ export class BandernsatchWasm {
     return new BandernsatchWasm(
       !synchronous
         ? await Executor.initialize<Params, Response>(resolve(__dirname, "./bootstrap.cjs"), {
-            minWorkers: workers / 2,
+            minWorkers: Math.max(1, Math.floor(workers / 2)),
             maxWorkers: workers,
           })
         : worker,
