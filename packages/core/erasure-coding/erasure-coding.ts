@@ -245,15 +245,10 @@ export function transpose(input: BytesBlob[]): BytesBlob[] {
     return input;
   }
   const shardLength = input[0].length;
-  const result = new Array<BytesBlob>(shardLength);
+  const result = Array.from({ length: shardLength }, () => BytesBlob.blobFrom(new Uint8Array(input.length)));
   for (let seg = 0; seg < shardLength; seg += 2) {
     for (let i = 0; i < input.length; i++) {
-      result[i] ??= BytesBlob.empty();
-      const newLength = result[i].length + 2;
-      const newResult = BytesBlob.blobFrom(new Uint8Array(newLength));
-      newResult.raw.set(result[i].raw, 0);
-      newResult.raw.set(input[i].raw.subarray(seg, seg + 2), result[i].length);
-      result[i] = newResult;
+      result[i].raw.set(input[i].raw.subarray(seg, seg + 2), i * seg);
     }
   }
   return result;
