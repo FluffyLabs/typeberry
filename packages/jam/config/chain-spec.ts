@@ -105,5 +105,5 @@ export const fullChainSpec = new ChainSpec({
   slotDuration: 6,
   ticketsPerValidator: 2,
   validatorsCount: 1023,
-  numberECPiecesPerSegment: 1023,
+  numberECPiecesPerSegment: 6,
 });
