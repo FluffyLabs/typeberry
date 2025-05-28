@@ -35,15 +35,6 @@ export async function runEcTest(test: EcTest, path: string) {
   it("should encode data", () => {
     const shards = encodeChunks(test.data, chainSpec);
 
-    // console.log(`Encoded data length: ${test.data.length}`);
-    // console.log(`Encoded shards length: ${shards.length}`);
-    // console.log("{");
-    // for (let i = 0; i < shards.length; i++) {
-    //   console.log(`Shard: ${i},\nlength: ${shards[i].length},`);
-    //   console.log(`data: ${shards[i].toString()},`);
-    // }
-    // console.log("}");
-
     assert.strictEqual(shards.length, test.shards.length);
     assert.deepStrictEqual(shards[0].toString(), test.shards[0].toString());
     assert.deepStrictEqual(shards[1].toString(), test.shards[1].toString());
@@ -52,15 +43,7 @@ export async function runEcTest(test: EcTest, path: string) {
   it("should decode from first 1/3 of shards", () => {
     const shards = test.shards.map((shard, idx) => [idx, shard] as [number, BytesBlob]);
 
-    // console.log("{");
-    // console.log(`Selected shards: \n${shards.map(([idx, shard]) => `Shard: ${idx},\ndata: ${shard.toString()}\n`)}`);
-    // console.log("}");
     const decoded = reconstructData(shards, chainSpec, test.data.length);
-
-    // console.log(`Decoded data length: ${decoded.length},`);
-    // console.log("{");
-    // console.log(`Decoded_data: ${decoded.toString()},`);
-    // console.log("}");
 
     assert.strictEqual(decoded.length, test.data.length);
     assert.deepStrictEqual(decoded.toString(), test.data.toString());
@@ -71,19 +54,7 @@ export async function runEcTest(test: EcTest, path: string) {
     const shards = test.shards.map((shard, idx) => [idx, shard] as [number, BytesBlob]);
 
     const selectedShards = getRandomItems(shards, randomShards);
-    // logger.info(`Randomly selecting ${randomShards} shards from ${shards.length} total shards`);
-    // console.log("{");
-    // console.log(
-    //   `Selected_shards: \n${selectedShards.map(([idx, shard]) => `Shard: ${idx},\ndata: ${shard.toString()},\n`)}`,
-    // );
-    // console.log("}");
-
     const decoded = reconstructData(selectedShards, chainSpec, test.data.length);
-
-    // console.log(`Decoded data length: ${decoded.length},`);
-    // console.log("{");
-    // console.log(`Decoded_data: ${decoded.toString()},`);
-    // console.log("}");
 
     assert.strictEqual(decoded.length, test.data.length);
     // Cannot decode from tiny testnet shards
