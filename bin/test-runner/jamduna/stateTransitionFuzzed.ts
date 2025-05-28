@@ -13,7 +13,7 @@ import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier";
 import { OnChain, StfErrorKind, stfError } from "@typeberry/transition/chain-stf";
-import { Result, resultToString } from "@typeberry/utils";
+import { OK, Result, resultToString } from "@typeberry/utils";
 import { TestState, loadState } from "./stateLoader";
 
 export class StateTransitionFuzzed {
@@ -57,20 +57,9 @@ export async function runStateTransitionFuzzed(testContent: StateTransitionFuzze
   // now perform the state transition
   const stfResult = await stf.transition(blockView, headerHash.hash);
   const errorType = Object.keys(expectedErrors).find((x) => fileName.endsWith(x));
-  if (errorType !== undefined) {
-    const expectedError = expectedErrors[errorType];
-    if (stfResult.isOk) {
-      assert.fail(`Expected error result: ${expectedError}. Got ${resultToString(stfResult)}.`);
-    }
-    assert.deepEqual(stfResult, expectedError);
-  } else {
-    if (stfResult.isError) {
-      assert.fail(`Expected the transition to go smoothly, got error: ${resultToString(stfResult)}`);
-    }
-  }
 
-  // if the stf was successful compare the resulting state and the root (redundant, but double checking).
-  const _root = merkelizeState(serializeState(stf.state, spec));
+  const expectedResult = errorType !== undefined ? expectedErrors[errorType] : Result.ok(OK);
+  assert.deepEqual(stfResult, expectedResult);
 }
 
 const expectedErrors: { [key: string]: string | Awaited<ReturnType<OnChain["transition"]>> } = {
