@@ -75,10 +75,22 @@ export async function verifyTickets(
   ).raw;
 
   const keys = BytesBlob.blobFromParts(validators.map((x) => x.raw)).raw;
-  const verificationResult = await bandersnatch.batchVerifyTicket(keys, ticketsData, contextLength);
-
-  return Array.from(BytesBlob.blobFrom(verificationResult).chunks(33)).map((result) => ({
-    isValid: result.raw[RESULT_INDEX] === ResultValues.Ok,
-    entropyHash: Bytes.fromBlob(result.raw.subarray(1, 33), HASH_SIZE).asOpaque(),
-  }));
+  try {
+    const verificationResult = await bandersnatch.batchVerifyTicket(keys, ticketsData, contextLength);
+    return Array.from(BytesBlob.blobFrom(verificationResult).chunks(33)).map((result) => ({
+      isValid: result.raw[RESULT_INDEX] === ResultValues.Ok,
+      entropyHash: Bytes.fromBlob(result.raw.subarray(1, 33), HASH_SIZE).asOpaque(),
+    }));
+  } catch (e) {
+    // TODO [ToDr] Temporary workaround for failing verification.
+    // Instead we should handle that in the wasm library.
+    // See stateTransitionFuzzed tests for details.
+    if (`${e}` === "RuntimeError: unreachable") {
+      return Array.from({ length: tickets.length }, () => ({
+        isValid: false,
+        entropyHash: Bytes.zero(HASH_SIZE).asOpaque(),
+      }));
+    }
+    throw e;
+  }
 }

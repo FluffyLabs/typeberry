@@ -10,7 +10,7 @@ import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier";
 import { OnChain } from "@typeberry/transition/chain-stf";
-import { deepEqual } from "@typeberry/utils";
+import { deepEqual, resultToString } from "@typeberry/utils";
 import { TestState, loadState } from "./stateLoader";
 
 export class StateTransition {
@@ -53,15 +53,14 @@ export async function runStateTransition(testContent: StateTransition, _path: st
   assert.deepStrictEqual(testContent.post_state.state_root.toString(), postStateRoot.toString());
 
   const verifier = new BlockVerifier(stf.hasher, blocksDb);
-  const verificationResult = await verifier.verifyBlock(blockView);
-  if (verificationResult.isError) {
-    assert.fail(`Block verification failed, got: ${JSON.stringify(verificationResult.error)}`);
-  }
+  // NOTE [ToDr] we skip full verification here, since we can run tests in isolation
+  // (i.e. no block history)
+  const headerHash = verifier.hashHeader(blockView);
 
   // now perform the state transition
-  const stfResult = await stf.transition(blockView, verificationResult.ok);
+  const stfResult = await stf.transition(blockView, headerHash.hash);
   if (stfResult.isError) {
-    assert.fail(`Expected the transition to go smoothly, got error: ${JSON.stringify(stfResult.error)}`);
+    assert.fail(`Expected the transition to go smoothly, got error: ${resultToString(stfResult)}`);
   }
 
   preState.applyUpdate(stfResult.ok);

@@ -17,7 +17,7 @@ import {
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { Preimages, type PreimagesErrorCode } from "@typeberry/transition";
-import { deepEqual, OK, Result } from "@typeberry/utils";
+import { OK, Result, deepEqual } from "@typeberry/utils";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -157,6 +157,6 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): InMemorySer
   });
 }
 
-function testOutputToResult(testOutput: Output): ReturnType<Preimages['integrate']> {
+function testOutputToResult(testOutput: Output): ReturnType<Preimages["integrate"]> {
   return testOutput.err !== undefined ? Result.error(testOutput.err) : Result.ok({});
 }

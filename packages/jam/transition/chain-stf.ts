@@ -50,7 +50,10 @@ export type StfError =
   | TaggedError<StfErrorKind.Preimages, PreimagesErrorCode>
   | TaggedError<StfErrorKind.SafroleSeal, SafroleSealError>;
 
-const stfError = <Kind extends StfErrorKind, Err extends StfError["error"]>(kind: Kind, nested: ErrorResult<Err>) => {
+export const stfError = <Kind extends StfErrorKind, Err extends StfError["error"]>(
+  kind: Kind,
+  nested: ErrorResult<Err>,
+) => {
   return Result.taggedError<Ok, Kind, Err>(StfErrorKind, kind, nested);
 };
 

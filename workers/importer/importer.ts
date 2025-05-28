@@ -8,7 +8,7 @@ import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verifier";
 import { OnChain, type StfError } from "@typeberry/transition/chain-stf";
-import { type ErrorResult, Result, type TaggedError } from "@typeberry/utils";
+import { type ErrorResult, Result, type TaggedError, measure } from "@typeberry/utils";
 
 export enum ImporterErrorKind {
   Verifier = 0,
@@ -51,25 +51,34 @@ export class Importer {
   }
 
   async importBlock(block: BlockView): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
-    this.logger.log("🧱 Attempting to import a new block.");
+    const logger = this.logger;
+    logger.log("🧱 Attempting to import a new block.");
 
+    const timerVerify = measure("import:verify");
     const hash = await this.verifier.verifyBlock(block);
+    logger.log(timerVerify());
     if (hash.isError) {
       return importerError(ImporterErrorKind.Verifier, hash);
     }
 
     const timeSlot = block.header.view().timeSlotIndex.materialize();
-    this.logger.log(`🧱 Got hash ${hash.ok} for block at slot ${timeSlot}.`);
+    logger.log(`🧱 Got hash ${hash.ok} for block at slot ${timeSlot}.`);
     const headerHash = hash.ok;
+    const timerStf = measure("import:stf");
     const res = await this.stf.transition(block, headerHash);
+    logger.log(timerStf());
     if (res.isError) {
       return importerError(ImporterErrorKind.Stf, res);
     }
-    const update = res.ok;
     // modify the state
+    const update = res.ok;
+    const timerState = measure("import:state");
     this.state.applyUpdate(update);
     const stateRoot = merkelizeState(serializeState(this.state, this.spec));
+    logger.log(timerState());
+
     // insert new state and the block to DB.
+    const timerDb = measure("import:db");
     const writeState = this.states.insertFullState(stateRoot, this.state);
     const writeBlocks = this.blocks.insertBlock(new WithHash(headerHash, block));
     // insert posterior state root, since we know it now.
@@ -77,6 +86,7 @@ export class Importer {
 
     await Promise.all([writeState, writeBlocks, writePostState]);
     await this.blocks.setBestData(headerHash, stateRoot);
+    logger.log(timerDb());
 
     return Result.ok(new WithHash(headerHash, block.header.view()));
   }
