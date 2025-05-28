@@ -327,6 +327,7 @@ export class Accumulate {
         .get(serviceId)
         ?.data.lookupHistory.get(hash)
         ?.find(({ length }) => length === blob.length)?.slots;
+
       if (slots !== undefined && slots.length === 0) {
         slots.push(slot);
         this.state.services.get(serviceId)?.data.preimages.set(hash, item);
