@@ -1,5 +1,7 @@
 import type { BlockView, HeaderHash } from "@typeberry/block";
+import { Bytes } from "@typeberry/bytes";
 import type { BlocksDb } from "@typeberry/database";
+import { HASH_SIZE } from "@typeberry/hash";
 import { Result } from "@typeberry/utils";
 import type { TransitionHasher } from "./hasher";
 
@@ -9,7 +11,10 @@ export enum BlockVerifierError {
   InvalidExtrinsic = 2,
   StateRootNotFound = 3,
   InvalidStateRoot = 4,
+  AlreadyImported = 5,
 }
+
+const ZERO_HASH: HeaderHash = Bytes.zero(HASH_SIZE).asOpaque();
 
 export class BlockVerifier {
   constructor(
@@ -19,25 +24,33 @@ export class BlockVerifier {
 
   async verifyBlock(block: BlockView): Promise<Result<HeaderHash, BlockVerifierError>> {
     const headerView = block.header.view();
+    const headerHash = this.hasher.header(headerView);
+    // check if current block is already imported
+    if (this.blocks.getHeader(headerHash.hash) !== null) {
+      return Result.error(BlockVerifierError.AlreadyImported, `Block ${headerHash.hash} is already imported.`);
+    }
 
     // Check if parent block exists.
     // https://graypaper.fluffylabs.dev/#/cc517d7/0c82000c8200?v=0.6.5
     // https://graypaper.fluffylabs.dev/#/cc517d7/0c9d000c9d00?v=0.6.5
     const parentHash = headerView.parentHeaderHash.materialize();
-    const parentBlock = this.blocks.getHeader(parentHash);
-    if (parentBlock === null) {
-      return Result.error(BlockVerifierError.ParentNotFound, `Parent ${parentHash.toString()} not found`);
-    }
+    // importing genesis block
+    if (!parentHash.isEqualTo(ZERO_HASH)) {
+      const parentBlock = this.blocks.getHeader(parentHash);
+      if (parentBlock === null) {
+        return Result.error(BlockVerifierError.ParentNotFound, `Parent ${parentHash.toString()} not found`);
+      }
 
-    // Check if the time slot index is consecutive and not from future.
-    // https://graypaper.fluffylabs.dev/#/cc517d7/0c02010c0201?v=0.6.5
-    const timeslot = headerView.timeSlotIndex.materialize();
-    const parentTimeslot = parentBlock.timeSlotIndex.materialize();
-    if (timeslot <= parentTimeslot) {
-      return Result.error(
-        BlockVerifierError.InvalidTimeSlot,
-        `Invalid time slot index: ${timeslot}, expected > ${parentTimeslot}`,
-      );
+      // Check if the time slot index is consecutive and not from future.
+      // https://graypaper.fluffylabs.dev/#/cc517d7/0c02010c0201?v=0.6.5
+      const timeslot = headerView.timeSlotIndex.materialize();
+      const parentTimeslot = parentBlock.timeSlotIndex.materialize();
+      if (timeslot <= parentTimeslot) {
+        return Result.error(
+          BlockVerifierError.InvalidTimeSlot,
+          `Invalid time slot index: ${timeslot}, expected > ${parentTimeslot}`,
+        );
+      }
     }
 
     // Check if extrinsic is valid.
@@ -68,8 +81,10 @@ export class BlockVerifier {
       );
     }
 
-    const headerHash = this.hasher.header(headerView);
-
     return Result.ok(headerHash.hash);
+  }
+
+  hashHeader(block: BlockView) {
+    return this.hasher.header(block.header.view());
   }
 }
