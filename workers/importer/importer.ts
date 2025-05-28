@@ -41,7 +41,7 @@ export class Importer {
     }
 
     this.verifier = new BlockVerifier(hasher, blocks);
-    this.stf = new OnChain(spec, state, blocks, hasher);
+    this.stf = new OnChain(spec, state, blocks, hasher, { enableParallelSealVerification: true });
 
     logger.info(`😎 Best time slot: ${state.timeslot} (state root: ${currentStateRootHash})`);
   }

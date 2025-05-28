@@ -79,8 +79,9 @@ export class OnChain {
     public readonly state: State,
     blocks: BlocksDb,
     public readonly hasher: TransitionHasher,
+    { enableParallelSealVerification }: { enableParallelSealVerification: boolean },
   ) {
-    const bandersnatch = BandernsatchWasm.new({ synchronous: false });
+    const bandersnatch = BandernsatchWasm.new({ synchronous: !enableParallelSealVerification });
     this.statistics = new Statistics(chainSpec, state);
 
     this.safrole = new Safrole(chainSpec, state, bandersnatch);
