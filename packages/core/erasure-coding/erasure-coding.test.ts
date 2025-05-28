@@ -4,24 +4,6 @@ import { BytesBlob } from "@typeberry/bytes";
 import { TEST_DATA } from "./ec-test-data";
 import { decodeData, encodeData, join, lace, split, unzip } from "./erasure-coding";
 
-function stringToBytes(input: string): Uint8Array {
-  const chunkSize = 2; // 2 chars === 1 byte
-  const chunks: string[] = [];
-
-  for (let i = 0; i < input.length; i += chunkSize) {
-    chunks.push(input.substring(i, i + chunkSize));
-  }
-
-  const numbers = chunks.map((x) => Number.parseInt(x, 16));
-  const result = new Uint8Array(numbers.length);
-
-  for (let i = 0; i < result.length; i++) {
-    result[i] = numbers[i];
-  }
-
-  return result;
-}
-
 let seed = 1;
 function random() {
   const x = Math.sin(seed++) * 10000;
@@ -52,15 +34,15 @@ describe("erasure coding", () => {
   seed = Math.floor(1000 * Math.random());
 
   it("should encode data", () => {
-    const encoded = encodeData(stringToBytes(data));
-    const expected = segmentEc.map(stringToBytes);
+    const encoded = encodeData(BytesBlob.parseBlobNoPrefix(data).raw);
+    const expected = segmentEc.map(BytesBlob.parseBlobNoPrefix).map((x) => x.raw);
 
     assert.deepStrictEqual(encoded.length, expected.length);
     assert.deepStrictEqual(encoded, expected);
   });
 
   it(`should decode data (random seed: ${seed})`, () => {
-    const chunks = segmentEc.map((chunk, idx) => [idx, stringToBytes(chunk)] as [number, Uint8Array]);
+    const chunks = segmentEc.map((chunk, idx) => [idx, BytesBlob.parseBlobNoPrefix(chunk).raw] as [number, Uint8Array]);
     const selectedChunks = getRandomItems(chunks, 342);
 
     const decoded = decodeData(selectedChunks);
