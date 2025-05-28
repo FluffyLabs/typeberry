@@ -158,12 +158,18 @@ export function decodeData(
 }
 
 /**
- * `split`: Splitting function which accepts a blob of data and returns
- * `k` pieces of data, each of `size` octets.
+ * `split`: Takes a single BytesBlob and divides it into sequential,
+ * contiguous chunks of a given size.
+ *
+ * Input: [a0, a1, a2, a3, a4, a5], size = 2
+ *
+ * Output: [[a0, a1], [a2, a3], [a4, a5]]
+ *
+ * NOTE: Last chunk is padded with zeroes if the input is shorter than `size`.
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3eb4013eb401?v=0.6.6
  */
-export function split(input: BytesBlob, size = SHARD_LENGTH * N_SHARDS): BytesBlob[] {
+export function split(input: BytesBlob, size: number): BytesBlob[] {
   const pieces = Math.ceil(input.length / size);
   const result = new Array<BytesBlob>(pieces);
   for (let i = 0; i < pieces; i++) {
@@ -177,12 +183,19 @@ export function split(input: BytesBlob, size = SHARD_LENGTH * N_SHARDS): BytesBl
 }
 
 /**
- * `join`: Joining function which accepts `k` pieces of data, each of `size` octets
- * and returns a single blob of data.
+ * `join`: Takes an array of blobs and concatenates them sequentially
+ * (one after another) into a single blob.
+ *
+ * Input: [[a0, a1], [a2, a3], [a4, a5]], size = 2
+ *
+ * Output: [a0, a1, a2, a3, a4, a5]
+ *
+ * NOTE: Output is padded with zeroes if the input's chunk is shorter than
+ * `size`.
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3ed4013ed401?v=0.6.6
  */
-export function join(input: BytesBlob[], size = SHARD_LENGTH * N_SHARDS): BytesBlob {
+export function join(input: BytesBlob[], size: number): BytesBlob {
   const result = BytesBlob.blobFrom(new Uint8Array(input.length * size));
   for (let i = 0; i < input.length; i++) {
     const start = i * size;
@@ -193,29 +206,33 @@ export function join(input: BytesBlob[], size = SHARD_LENGTH * N_SHARDS): BytesB
 }
 
 /**
- * `unzip`: Unzipping function which accepts a blob of data and returns
- * `k` pieces of data, each of `n` size octets.
- * Reorganizes the data.
+ * `unzip`: Reorganizes the data by de-interleaving: it takes every N-th byte
+ * for each output chunk, where N is the number of output pieces.
+ *
+ * Input: [a0, b0, c0, a1, b1, c1], size = 2
+ * Output: [[a0, a1], [b0, b1], [c0, c1]]
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3e06023e0602?v=0.6.6
  */
 export function unzip(input: BytesBlob, size = SHARD_LENGTH * N_SHARDS): BytesBlob[] {
   const pieces = Math.ceil(input.length / size);
-  const result = new Array<BytesBlob>(pieces);
+  const result = Array.from({ length: pieces }, () => BytesBlob.blobFrom(new Uint8Array(size)));
   for (let i = 0; i < pieces; i++) {
-    const chunk = BytesBlob.blobFrom(new Uint8Array(size));
     for (let j = 0; j < size; j++) {
-      chunk.raw[j] = input.raw[j * pieces + i];
+      result[i].raw[j] = input.raw[j * pieces + i];
     }
-    result[i] = chunk;
   }
   return result;
 }
 
 /**
- * `lace`: Lacing function which accepts `k` pieces of data, each of `n` size octets
- * and returns a single blob of data.
- * Opposite of `unzip`.
+ * `lace`: Takes an array of blobs and interleaves their bytes:
+ * it takes the first byte from each blob, then the second byte from
+ * each blob, etc., producing a single blob.
+ *
+ * Input: [[a0, a1], [b0, b1], [c0, c1]]
+ *
+ * Output: [a0, b0, c0, a1, b1, c1]
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3e2a023e2a02?v=0.6.6
  */
