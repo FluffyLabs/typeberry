@@ -1,5 +1,7 @@
 import { type BlockView, type EntropyHash, type Epoch, type TimeSlot, tryAsEpoch } from "@typeberry/block";
+import { SortedArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
+import { Ordering } from "@typeberry/ordering";
 import type { Importer } from "./importer";
 
 export type ImportingQueueEntry = {
@@ -9,7 +11,17 @@ export type ImportingQueueEntry = {
 };
 
 export class ImportQueue {
-  private readonly toImport: ImportingQueueEntry[] = [];
+  private readonly toImport: SortedArray<ImportingQueueEntry> = SortedArray.fromSortedArray((a, b) => {
+    const diff = a.timeSlot - b.timeSlot;
+    if (diff < 0) {
+      return Ordering.Greater;
+    }
+    if (diff > 0) {
+      return Ordering.Less;
+    }
+    return Ordering.Equal;
+  });
+
   private lastEpoch: Epoch = tryAsEpoch(2 ** 32 - 1);
 
   constructor(
@@ -47,23 +59,22 @@ export class ImportQueue {
     const entry: ImportingQueueEntry = {
       timeSlot,
       block,
-      seal: Promise.resolve(null),
+      seal: this.isCurrentEpoch(timeSlot) ? this.importer.preverifySeal(timeSlot, block) : Promise.resolve(null),
     };
-    // TODO [ToDr] we should probably be sorting that by timeSlot, but for
-    // now we require blocks to be added in-order
-    this.toImport.push(entry);
+    this.toImport.insert(entry);
 
     return timeSlot;
   }
 
   shift(): ImportingQueueEntry | undefined {
-    const entry = this.toImport.shift();
+    const entry = this.toImport.pop();
     if (entry !== undefined) {
       const blockEpoch = Math.floor(entry.timeSlot / this.spec.epochLength);
-      const triggerPreverification = this.lastEpoch !== blockEpoch;
+      const hasEpochChanged = this.lastEpoch !== blockEpoch;
       this.lastEpoch = tryAsEpoch(blockEpoch);
-      // attempt to trigger preverification for some of the blocks in this current epoch.
-      if (triggerPreverification) {
+      // currently removed block is changing the epoch, so fire up
+      // preverifcation for the following blocks.
+      if (hasEpochChanged) {
         this.startPreverification();
       }
     }

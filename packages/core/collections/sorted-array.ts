@@ -52,6 +52,15 @@ export class SortedArray<V> {
   }
 
   /**
+   * Return and remove the last element of the collection.
+   *
+   * `shift` is much slower, so please don't add it.
+   */
+  public pop(): V | undefined {
+    return this.array.pop();
+  }
+
+  /**
    * Returns index of SOME (it's not guaranteed it's first or last)
    * equal element or -1 if the element does not exist.
    */
