@@ -57,8 +57,8 @@ export class HostCalls {
   }
 
   private getReturnValue(status: Status, pvmInstance: Interpreter, initialGas: Gas): ReturnValue {
-    const gas = pvmInstance.getGasCounter().get();
-    const gasConsumed = this.calculateConsumedGas(initialGas, gas);
+    const gasLeft = pvmInstance.getGasCounter().get();
+    const gasConsumed = this.calculateConsumedGas(initialGas, gasLeft);
     if (status === Status.OOG) {
       return ReturnValue.fromOOG(gasConsumed);
     }

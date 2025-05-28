@@ -55,10 +55,7 @@ export const PREIMAGE_EXPUNGE_PERIOD = 19200;
  * https://graypaper.fluffylabs.dev/#/9a08063/370202370502?v=0.6.6 */
 const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 
-type StateSlice = {
-  services: State["services"];
-  timeslot: State["timeslot"];
-};
+type StateSlice = Pick<State, "services" | "timeslot">;
 export class PartialStateDb implements PartialState {
   public readonly updatedState: StateUpdate = new StateUpdate();
   private checkpointedState: StateUpdate | null = null;
