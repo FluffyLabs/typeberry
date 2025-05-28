@@ -13,7 +13,7 @@ import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier";
 import { OnChain, StfErrorKind, stfError } from "@typeberry/transition/chain-stf";
-import { OK, Result, resultToString } from "@typeberry/utils";
+import { OK, Result } from "@typeberry/utils";
 import { TestState, loadState } from "./stateLoader";
 
 export class StateTransitionFuzzed {

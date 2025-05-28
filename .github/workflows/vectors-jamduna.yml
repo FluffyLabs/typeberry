@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [ "main" ]
+
 env:
   JAMTESTNET_REF: 6d41bb2e8f4d60dc1806df42401363b54f956c0a
 
@@ -35,14 +36,14 @@ jobs:
       #             or a special mode that would import the blocks for test purposes and print some extra output.
       - run: |
           grep -q "Best block: #60 (0x293c3d1d15d58871a9ffd2bbdbd48d59f3874e6bfac644ec7b8f975263e7fabe)" safrole.txt || {
-            echo "Seems that the blocks where not imported correctly"
+            echo "Seems that the blocks were not imported correctly"
             exit 1
           }
       - run: rm -rf ./database
       - run: npm start -- --genesis ./jamdunavectors/chainspecs/state_snapshots/genesis-tiny.json --genesis-block ./jamdunavectors/chainspecs/blocks/genesis-tiny.json import ./jamdunavectors/data/fallback/blocks/*.json | tee fallback.txt
       - run: |
           grep -q "Best block: #60 (0x5da17ce23b742d103fd40c20353db271601943a260653802f7645da319e10fd8)" fallback.txt || {
-            echo "Seems that the blocks where not imported correctly"
+            echo "Seems that the blocks were not imported correctly"
             exit 1
           }
 

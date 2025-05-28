@@ -195,20 +195,7 @@ async function initializeDatabase(
   // looks like a fresh db, initialize the state.
   let genesisBlock = loadGenesisBlockIfProvided(spec, genesisHeaderPath);
   if (genesisBlock === null) {
-    genesisBlock = Block.create({
-      header: Header.empty(),
-      extrinsic: Extrinsic.create({
-        tickets: asKnownSize([]),
-        preimages: [],
-        assurances: asKnownSize([]),
-        guarantees: asKnownSize([]),
-        disputes: {
-          verdicts: [],
-          culprits: [],
-          faults: [],
-        },
-      }),
-    });
+    genesisBlock = emptyBlock();
   }
 
   const genesisHeader = genesisBlock.header;
@@ -258,4 +245,21 @@ function loadAndCheckGenesisIfProvided(spec: ChainSpec, expectedRootHash: StateR
     genesisState,
     genesisStateRootHash,
   };
+}
+
+function emptyBlock() {
+  return Block.create({
+    header: Header.empty(),
+    extrinsic: Extrinsic.create({
+      tickets: asKnownSize([]),
+      preimages: [],
+      assurances: asKnownSize([]),
+      guarantees: asKnownSize([]),
+      disputes: {
+        verdicts: [],
+        culprits: [],
+        faults: [],
+      },
+    }),
+  });
 }

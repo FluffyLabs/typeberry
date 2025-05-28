@@ -9,7 +9,7 @@ import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { SimpleAllocator, keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { TransitionHasher } from "@typeberry/transition";
-import { resultToString } from "@typeberry/utils";
+import { measure, resultToString } from "@typeberry/utils";
 import { Importer } from "./importer";
 import {
   type ImporterInit,
@@ -76,7 +76,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
           if (b === undefined) {
             return;
           }
-          console.time("importBlock");
+          const timer = measure("importBlock");
           const maybeBestHeader = await importer.importBlock(b);
           if (maybeBestHeader.isOk) {
             const bestHeader = maybeBestHeader.ok;
@@ -85,7 +85,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
           } else {
             logger.log(`❌ Rejected block #${timeSlot}: ${resultToString(maybeBestHeader)}`);
           }
-          console.timeEnd("importBlock");
+          logger.log(timer());
         }
       } finally {
         isProcessing = false;
