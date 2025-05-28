@@ -100,7 +100,7 @@ describe("erasure coding: split", () => {
       },
       {
         input: BytesBlob.blobFromNumbers([0x00]),
-        expected: [BytesBlob.empty({ size: 648 })],
+        expected: [BytesBlob.blobFrom(new Uint8Array(648))],
         size: 648,
       },
       {
@@ -146,8 +146,8 @@ describe("erasure coding: join", () => {
         size: 2,
       },
       {
-        input: [BytesBlob.empty({ size: 648 })],
-        expected: BytesBlob.empty({ size: 648 }),
+        input: [BytesBlob.blobFrom(new Uint8Array(648))],
+        expected: BytesBlob.blobFrom(new Uint8Array(648)),
         size: 648,
       },
       {
@@ -170,8 +170,8 @@ describe("erasure coding: join", () => {
       { input: BytesBlob.blobFromNumbers([0x00, 0x01]), size: 2 },
       { input: BytesBlob.blobFromNumbers([0x00, 0x01, 0x02, 0x03]), size: 4 },
       { input: BytesBlob.blobFromNumbers([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]), size: 2 },
-      { input: BytesBlob.empty({ size: 648 }), size: 648 },
-      { input: BytesBlob.empty({ size: 1 }), size: 1 },
+      { input: BytesBlob.blobFrom(new Uint8Array(648)), size: 648 },
+      { input: BytesBlob.blobFrom(new Uint8Array(1)), size: 1 },
     ];
 
     for (const { input, size } of test) {
@@ -212,7 +212,7 @@ describe("erasure coding: unzip", () => {
       },
       {
         input: BytesBlob.blobFromNumbers([0x00]),
-        expected: [BytesBlob.empty({ size: 648 })],
+        expected: [BytesBlob.blobFrom(new Uint8Array(648))],
         size: 648,
       },
       {
@@ -258,7 +258,7 @@ describe("erasure coding: lace", () => {
         size: 2,
       },
       {
-        input: [BytesBlob.empty({ size: 648 })],
+        input: [BytesBlob.blobFrom(new Uint8Array(648))],
         expected: BytesBlob.blobFromNumbers([0x00]),
         size: 1,
       },

@@ -169,7 +169,7 @@ export function split(input: BytesBlob, size = SHARD_LENGTH * N_SHARDS): BytesBl
   for (let i = 0; i < pieces; i++) {
     const start = i * size;
     const end = Math.min(start + size, input.length);
-    const chunk = BytesBlob.empty({ size });
+    const chunk = BytesBlob.blobFrom(new Uint8Array(size));
     chunk.raw.set(input.raw.subarray(start, end));
     result[i] = chunk;
   }
@@ -183,7 +183,7 @@ export function split(input: BytesBlob, size = SHARD_LENGTH * N_SHARDS): BytesBl
  * https://graypaper.fluffylabs.dev/#/9a08063/3ed4013ed401?v=0.6.6
  */
 export function join(input: BytesBlob[], size = SHARD_LENGTH * N_SHARDS): BytesBlob {
-  const result = BytesBlob.empty({ size: input.length * size });
+  const result = BytesBlob.blobFrom(new Uint8Array(input.length * size));
   for (let i = 0; i < input.length; i++) {
     const start = i * size;
     const end = Math.min(start + size, result.length);
@@ -203,7 +203,7 @@ export function unzip(input: BytesBlob, size = SHARD_LENGTH * N_SHARDS): BytesBl
   const pieces = Math.ceil(input.length / size);
   const result = new Array<BytesBlob>(pieces);
   for (let i = 0; i < pieces; i++) {
-    const chunk = BytesBlob.empty({ size });
+    const chunk = BytesBlob.blobFrom(new Uint8Array(size));
     for (let j = 0; j < size; j++) {
       chunk.raw[j] = input.raw[j * pieces + i];
     }
@@ -221,7 +221,7 @@ export function unzip(input: BytesBlob, size = SHARD_LENGTH * N_SHARDS): BytesBl
  */
 export function lace(input: BytesBlob[], size = SHARD_LENGTH): BytesBlob {
   const pieces = input.length;
-  const result = BytesBlob.empty({ size: pieces * size });
+  const result = BytesBlob.blobFrom(new Uint8Array(pieces * size));
   for (let i = 0; i < pieces; i++) {
     for (let j = 0; j < size; j++) {
       result.raw[j * pieces + i] = input[i].raw[j];
@@ -250,7 +250,7 @@ export function transpose(input: BytesBlob[]): BytesBlob[] {
     for (let i = 0; i < input.length; i++) {
       result[i] ??= BytesBlob.empty();
       const newLength = result[i].length + 2;
-      const newResult = BytesBlob.empty({ size: newLength });
+      const newResult = BytesBlob.blobFrom(new Uint8Array(newLength));
       newResult.raw.set(result[i].raw, 0);
       newResult.raw.set(input[i].raw.subarray(seg, seg + 2), result[i].length);
       result[i] = newResult;
@@ -279,7 +279,7 @@ export function encodeChunks(input: BytesBlob, chainSpec: ChainSpec): BytesBlob[
     for (let i = 0; i < encoded.length; i++) {
       encodedPieces[i] ??= BytesBlob.empty();
       const newLength = encodedPieces[i].length + encoded[i].length;
-      const newResult = BytesBlob.empty({ size: newLength });
+      const newResult = BytesBlob.blobFrom(new Uint8Array(newLength));
       newResult.raw.set(encodedPieces[i].raw, 0);
       newResult.raw.set(encoded[i], encodedPieces[i].length);
       encodedPieces[i] = newResult;
