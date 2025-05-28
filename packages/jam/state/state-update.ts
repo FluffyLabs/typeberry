@@ -161,7 +161,7 @@ export type ServicesUpdate = {
 };
 
 function isServiceUpdateKey(key: string | number | symbol) {
-  const keys: (keyof ServicesUpdate)[] = ['servicesRemoved', 'servicesUpdates', 'preimages', 'storage']
+  const keys: (keyof ServicesUpdate)[] = ["servicesRemoved", "servicesUpdates", "preimages", "storage"];
   return keys.indexOf(key as keyof ServicesUpdate) !== -1;
 }
 
@@ -195,4 +195,3 @@ export function copyAndUpdateState<T extends Partial<State>>(preState: T, stateU
     ...stateUpdate,
   };
 }
-

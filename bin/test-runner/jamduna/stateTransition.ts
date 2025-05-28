@@ -29,8 +29,6 @@ const keccakHasher = keccak.KeccakHasher.create();
 export async function runStateTransition(testContent: StateTransition, _path: string) {
   const spec = tinyChainSpec;
   const preState = loadState(spec, testContent.pre_state.keyvals);
-  console.log(`Loaded state: ${preState}`);
-  console.log(`Loaded services: ${Array.from(preState.services.entries())}`);
   const preStateSerialized = serializeState(preState, spec);
 
   const postState = loadState(spec, testContent.post_state.keyvals);

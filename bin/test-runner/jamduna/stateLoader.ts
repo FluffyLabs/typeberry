@@ -10,7 +10,6 @@ import { tryAsU32 } from "@typeberry/numbers";
 import {
   InMemoryState,
   LookupHistoryItem,
-  mergeStateUpdates,
   PreimageItem,
   ServiceAccountInfo,
   type ServicesUpdate,
@@ -20,6 +19,7 @@ import {
   UpdatePreimage,
   UpdateService,
   UpdateStorage,
+  mergeStateUpdates,
 } from "@typeberry/state";
 import { serialize } from "@typeberry/state-merkleization/serialize";
 
@@ -36,7 +36,7 @@ export type StateKeyVal = string[];
 
 export function loadState(spec: ChainSpec, stateData: StateKeyVal[]): InMemoryState {
   const state = InMemoryState.empty(spec);
-  const updates = [];
+  const updates: StateUpdate<State & ServicesUpdate>[] = [];
   for (const [_key, value, kind, description] of stateData) {
     const appender = kindMapping[kind];
     if (appender === undefined) {

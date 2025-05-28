@@ -209,14 +209,14 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
         const { hash, length } = action;
         service.data.preimages.delete(hash);
         const history = service.data.lookupHistory.get(hash) ?? [];
-        const idx = history.map(x => x.length).indexOf(length);
+        const idx = history.map((x) => x.length).indexOf(length);
         if (idx !== -1) {
           history.splice(idx, 1);
         }
       } else if (kind === UpdatePreimageKind.UpdateOrAdd) {
         const { item } = action;
         const history = service.data.lookupHistory.get(item.hash) ?? [];
-        const existingIdx = history.map(x => x.length).indexOf(item.length);
+        const existingIdx = history.map((x) => x.length).indexOf(item.length);
         const removeCount = existingIdx === -1 ? 0 : 1;
         history.splice(existingIdx, removeCount, item);
         service.data.lookupHistory.set(item.hash, history);
