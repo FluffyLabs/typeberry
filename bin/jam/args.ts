@@ -39,6 +39,9 @@ Options:
                         [default: ${DEFAULTS.genesisRoot.toString().replace("0x", "")}]
   --genesis             Path to a JSON file containing genesis state dump.
                         Takes precedence over --genesis-root.
+  --genesis-block       Path to a JSON file containing genesis block.
+                        Overrides the default empty block if needed.
+
 `;
 
 /** Command to execute. */
@@ -51,6 +54,7 @@ export enum Command {
 
 export type SharedOptions = {
   genesis: string | null;
+  genesisBlock: string | null;
   genesisRoot: StateRootHash;
   chainSpec: KnownChainSpec;
   dbPath: string;
@@ -75,7 +79,8 @@ function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedO
     (v) => Bytes.parseBytesNoPrefix(v, HASH_SIZE).asOpaque(),
     DEFAULTS.genesisRoot,
   );
-  const genesis = parseOption(args, "genesis", (v) => withRelPath(relPath, v), null);
+  const { genesis } = parseOption(args, "genesis", (v) => withRelPath(relPath, v), null);
+  const genesisBlock = parseOption(args, "genesis-block", (v) => withRelPath(relPath, v), null);
   const chainSpec = parseOption(
     args,
     "chain-spec",
@@ -95,7 +100,8 @@ function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedO
   return {
     dbPath: dbPath["db-path"],
     genesisRoot: genesisRootHash["genesis-root"],
-    genesis: genesis.genesis,
+    genesis: genesis,
+    genesisBlock: genesisBlock["genesis-block"],
     chainSpec: chainSpec["chain-spec"],
   };
 }
