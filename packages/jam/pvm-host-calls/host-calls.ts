@@ -32,11 +32,11 @@ class ReturnValue {
     return new ReturnValue(consumedGas, memorySlice);
   }
 
-  hasMemorySlice(): this is { consumedGas: Gas; statusOrMemorySlice: Uint8Array } {
+  hasMemorySlice(): this is this & { statusOrMemorySlice: Uint8Array } {
     return this.statusOrMemorySlice instanceof Uint8Array;
   }
 
-  hasStatus(): this is { consumedGas: Gas; statusOrMemorySlice: Status } {
+  hasStatus(): this is this & { statusOrMemorySlice: Status } {
     return !this.hasMemorySlice();
   }
 }
@@ -57,8 +57,8 @@ export class HostCalls {
   }
 
   private getReturnValue(status: Status, pvmInstance: Interpreter, initialGas: Gas): ReturnValue {
-    const gasLeft = pvmInstance.getGasCounter().get();
-    const gasConsumed = this.calculateConsumedGas(initialGas, gasLeft);
+    const gas = pvmInstance.getGasCounter().get();
+    const gasConsumed = this.calculateConsumedGas(initialGas, gas);
     if (status === Status.OOG) {
       return ReturnValue.fromOOG(gasConsumed);
     }
