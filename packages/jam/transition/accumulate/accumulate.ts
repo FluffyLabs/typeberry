@@ -13,7 +13,14 @@ import { Logger } from "@typeberry/logger";
 import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status";
-import { AutoAccumulate, PrivilegedServices, type Service, type State, tryAsPerCore } from "@typeberry/state";
+import {
+  AutoAccumulate,
+  PrivilegedServices,
+  type Service,
+  type State,
+  hashComparator,
+  tryAsPerCore,
+} from "@typeberry/state";
 import { InMemoryTrie } from "@typeberry/trie";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher";
 import { Result } from "@typeberry/utils";
@@ -162,22 +169,22 @@ export class Accumulate {
     const operands: Operand[] = [];
 
     for (const report of reports) {
-      for (const result of report.results) {
-        if (result.serviceId === serviceId) {
-          gasCost = tryAsServiceGas(gasCost + result.gas);
+      const results = report.results.filter((result) => result.serviceId === serviceId);
 
-          operands.push(
-            Operand.new({
-              gas: result.gas, // g
-              payloadHash: result.payloadHash, // y
-              result: result.result, // d
-              authorizationOutput: report.authorizationOutput, // o
-              exportsRoot: report.workPackageSpec.exportsRoot, // e
-              hash: report.workPackageSpec.hash, // h
-              authorizerHash: report.authorizerHash, // a
-            }),
-          );
-        }
+      for (const result of results) {
+        gasCost = tryAsServiceGas(gasCost + result.gas);
+
+        operands.push(
+          Operand.new({
+            gas: result.gas, // g
+            payloadHash: result.payloadHash, // y
+            result: result.result, // d
+            authorizationOutput: report.authorizationOutput, // o
+            exportsRoot: report.workPackageSpec.exportsRoot, // e
+            hash: report.workPackageSpec.hash, // h
+            authorizerHash: report.authorizerHash, // a
+          }),
+        );
       }
     }
 
@@ -342,24 +349,19 @@ export class Accumulate {
       this.state.accumulated[i] = this.state.accumulated[i + 1];
     }
 
-    this.state.accumulated[epochLength - 1] = getWorkPackageHashes(accumulated);
+    const accumulatedSet = getWorkPackageHashes(accumulated);
+    this.state.accumulated[epochLength - 1] = Array.from(accumulatedSet).sort((a, b) => hashComparator(a, b).value);
 
     const phaseIndex = slot % epochLength;
 
-    this.state.readyQueue[phaseIndex] = pruneQueue(
-      toAccumulateLater,
-      this.state.accumulated[this.chainSpec.epochLength - 1],
-    );
+    this.state.readyQueue[phaseIndex] = pruneQueue(toAccumulateLater, accumulatedSet);
 
     for (let i = 1; i < epochLength; i++) {
       if (i < slot - this.state.timeslot) {
         this.state.readyQueue[(phaseIndex + epochLength - i) % epochLength] = [];
       } else {
         const queueIndex = (phaseIndex + epochLength - i) % epochLength;
-        this.state.readyQueue[queueIndex] = pruneQueue(
-          this.state.readyQueue[queueIndex],
-          this.state.accumulated[epochLength - 1],
-        );
+        this.state.readyQueue[queueIndex] = pruneQueue(this.state.readyQueue[queueIndex], accumulatedSet);
       }
     }
 

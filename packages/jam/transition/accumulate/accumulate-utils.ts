@@ -1,21 +1,17 @@
-import type { WorkReport } from "@typeberry/block/work-report";
-import { HashSet, SortedSet } from "@typeberry/collections";
-import { hashComparator } from "@typeberry/state";
+import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
+import { HashSet } from "@typeberry/collections";
 
 export function uniquePreserveOrder<T extends number>(arr: T[]): T[] {
-  const seen = new Set<T>();
-  return arr.filter((item) => {
-    if (seen.has(item)) {
-      return false;
-    }
-    seen.add(item);
-    return true;
-  });
+  const set = new Set<T>();
+
+  for (const item of arr) {
+    set.add(item);
+  }
+
+  return Array.from(set);
 }
 
-export function getWorkPackageHashes(reports: WorkReport[]) {
+export function getWorkPackageHashes(reports: WorkReport[]): HashSet<WorkPackageHash> {
   const workPackageHashes = reports.map((report) => report.workPackageSpec.hash);
-  const uniqueHashes = HashSet.from(workPackageHashes);
-  const uniqueSortedHashes = SortedSet.fromArray(hashComparator, Array.from(uniqueHashes));
-  return uniqueSortedHashes.array;
+  return HashSet.from(workPackageHashes);
 }

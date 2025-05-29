@@ -14,6 +14,7 @@ import { Transfer } from "@typeberry/jam-host-calls/accumulate/transfer";
 import { Upgrade } from "@typeberry/jam-host-calls/accumulate/upgrade";
 import { Yield } from "@typeberry/jam-host-calls/accumulate/yield";
 import type { PartialState } from "@typeberry/jam-host-calls/externalities/partial-state";
+import { type ProgramCounter, tryAsProgramCounter } from "@typeberry/jam-host-calls/externalities/refine-externalities";
 import { Fetch, type FetchExternalities } from "@typeberry/jam-host-calls/fetch";
 import { GasHostCall } from "@typeberry/jam-host-calls/gas";
 import { type AccountsInfo, Info } from "@typeberry/jam-host-calls/info";
@@ -40,7 +41,7 @@ const ACCUMULATE_HOST_CALL_CLASSES = [
   Provide,
 ];
 
-type HostCallExternalities = {
+type AccumulateHostCallExternalities = {
   partialState: PartialState;
   accountsRead: AccountsRead;
   accountsWrite: AccountsWrite;
@@ -49,30 +50,37 @@ type HostCallExternalities = {
   accountsLookup: AccountsLookup;
 };
 
+namespace entrypoint {
+  export const IS_AUTHORIZED = tryAsProgramCounter(0);
+  export const REFINE = tryAsProgramCounter(0);
+  export const ACCUMULATE = tryAsProgramCounter(5);
+  export const ON_TRANSFER = tryAsProgramCounter(10);
+}
+
 export class PvmExecutor {
   private readonly pvm: PvmHostCallExtension;
   private hostCalls: HostCalls;
   private pvmInstanceManager = new PvmInstanceManager(4);
 
-  constructor(
+  private constructor(
     private serviceCode: BytesBlob,
-    externalities: HostCallExternalities,
-    private chainSpec: ChainSpec,
+    hostCallHandlers: HostCallHandler[],
+    private entrypoint: ProgramCounter,
   ) {
-    this.hostCalls = new HostCalls(...this.prepareAccumulateHostCalls(externalities));
+    this.hostCalls = new HostCalls(...hostCallHandlers);
     this.pvm = new PvmHostCallExtension(this.pvmInstanceManager, this.hostCalls);
   }
 
-  private prepareAccumulateHostCalls(externalities: HostCallExternalities) {
+  private static prepareAccumulateHostCalls(externalities: AccumulateHostCallExternalities, chainSpec: ChainSpec) {
     const accumulateHandlers: HostCallHandler[] = ACCUMULATE_HOST_CALL_CLASSES.map(
-      (HandlerClass) => new HandlerClass(externalities.partialState, this.chainSpec),
+      (HandlerClass) => new HandlerClass(externalities.partialState, chainSpec),
     );
 
     const generalHandlers: HostCallHandler[] = [
       new GasHostCall(),
       new Read(externalities.accountsRead),
       new Write(externalities.accountsWrite),
-      new Fetch(externalities.fetchExternalities), // TODO [MaSi]: missing operands
+      new Fetch(externalities.fetchExternalities),
       new Lookup(externalities.accountsLookup),
       new Info(externalities.accountsInfo),
     ];
@@ -83,6 +91,15 @@ export class PvmExecutor {
   async run(args: BytesBlob, gas: Gas) {
     const program = Program.fromSpi(this.serviceCode.raw, args.raw, true);
 
-    return this.pvm.runProgram(program.code, 5, gas, program.registers, program.memory);
+    return this.pvm.runProgram(program.code, Number(this.entrypoint), gas, program.registers, program.memory);
+  }
+
+  static createAccumulateExecutor(
+    serviceCode: BytesBlob,
+    externalities: AccumulateHostCallExternalities,
+    chainSpec: ChainSpec,
+  ) {
+    const hostCallHandlers = PvmExecutor.prepareAccumulateHostCalls(externalities, chainSpec);
+    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ACCUMULATE);
   }
 }

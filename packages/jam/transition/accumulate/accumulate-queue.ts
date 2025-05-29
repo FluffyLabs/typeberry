@@ -1,5 +1,6 @@
 import type { TimeSlot } from "@typeberry/block";
 import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
+import { HashSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { AccumulateState } from "../accumulate";
 import { getWorkPackageHashes } from "./accumulate-utils";
@@ -36,7 +37,7 @@ export class AccumulateQueue {
       dependencies: this.getWorkReportDependencies(report),
     }));
 
-    return pruneQueue(itemsToEnqueue, history);
+    return pruneQueue(itemsToEnqueue, HashSet.from(history));
   }
 
   enqueueReports(r: QueueItem[]): WorkReport[] {
@@ -69,16 +70,14 @@ export class AccumulateQueue {
   }
 }
 
-export function pruneQueue(reports: QueueItem[], processedHashes: WorkPackageHash[]) {
+export function pruneQueue(reports: QueueItem[], processedHashes: HashSet<WorkPackageHash>) {
   return reports
-    .filter(({ report }) => processedHashes.find((hash) => hash.isEqualTo(report.workPackageSpec.hash)) === undefined)
+    .filter(({ report }) => !processedHashes.has(report.workPackageSpec.hash))
     .map((item) => {
       const { report, dependencies } = item;
       return {
         report,
-        dependencies: dependencies.filter(
-          (dependency) => processedHashes.find((historyItem) => historyItem.isEqualTo(dependency)) === undefined,
-        ),
+        dependencies: dependencies.filter((dependency) => !processedHashes.has(dependency)),
       };
     });
 }
