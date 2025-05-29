@@ -252,25 +252,19 @@ export function encodeChunks(chainSpec: ChainSpec, input: BytesBlob): BytesBlob[
   const encodedPieces = Array.from({ length: chainSpec.validatorsCount }, () =>
     BytesBlob.blobFrom(new Uint8Array(segmentLength)),
   );
-  console.info(`Input length ${input.length} Encoding data into ${segments} segments, each of length ${segmentLength}`);
   const shardLength = SHARD_LENGTH * Math.ceil(1023 / chainSpec.validatorsCount);
   let chunkIndex = 0;
   for (const chunk of unzip(input)) {
     const encoded = encodeData(chunk.raw);
     let validatorIndex = 0;
     let shardIndex = 0;
-    let i = 0;
     for (const piece of encoded) {
-      console.info(
-        `${i}: Encoding chunk ${chunkIndex}, piece ${validatorIndex}, shard index ${shardIndex}(${shardLength}) into segment length ${segmentLength}`,
-      );
       encodedPieces[validatorIndex].raw.set(piece, shardIndex + chunkIndex * shardLength);
       shardIndex += SHARD_LENGTH;
       if (shardIndex >= segmentLength || shardIndex >= shardLength) {
         shardIndex = 0;
         validatorIndex++;
       }
-      i++;
     }
     chunkIndex++;
   }
