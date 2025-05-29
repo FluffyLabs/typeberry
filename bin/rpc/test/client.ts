@@ -86,6 +86,10 @@ async function main() {
   const bestBlockResult = await client.call("bestBlock");
   console.info("bestBlock result:", bestBlockResult);
 
+  console.info("Testing finalizedBlock method...");
+  const finalizedBlockResult = await client.call("finalizedBlock");
+  console.info("finalizedBlock result:", finalizedBlockResult);
+
   if (bestBlockResult !== null) {
     console.info("Testing parent method...");
     const parentResult = await client.call("parent", [bestBlockResult[0]]);

@@ -12,7 +12,7 @@ import { RpcError, type RpcMethod, type RpcMethodRepo } from "./types";
 export function loadMethodsInto(methods: RpcMethodRepo): void {
   methods.set("beefyRoot", methodNotImplemented); // todo [seko] beefy root needs to be stored in the db first, also awaits chapter 12
   methods.set("bestBlock", bestBlock);
-  methods.set("finalizedBlock", methodNotImplemented); // todo [seko] implement when finality is implemented
+  methods.set("finalizedBlock", bestBlock); // todo [seko] implement when finality is implemented
   methods.set("listServices", listServices);
   methods.set("parameters", methodNotImplemented);
   methods.set("parent", parent);
