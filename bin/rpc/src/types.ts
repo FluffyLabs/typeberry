@@ -56,7 +56,7 @@ export interface DatabaseContext {
 }
 
 export type RpcMethod<T, R> = (params: T, db: DatabaseContext, chainSpec: ChainSpec) => Promise<R>;
-// biome-ignore lint/suspicious/noExplicitAny: any is used to make the method and param repos generic
+// biome-ignore lint/suspicious/noExplicitAny: any is used to make the method repo generic
 export type RpcMethodRepo = Map<string, [RpcMethod<any, any>, z.ZodType<any>]>;
 
 export type Subscription = {
