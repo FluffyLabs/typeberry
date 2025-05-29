@@ -1,5 +1,6 @@
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import minimist from "minimist";
+import { methods } from "./src/method-loader";
 import { RpcServer } from "./src/server";
 
 function main(args: string[]) {
@@ -18,7 +19,7 @@ function main(args: string[]) {
   const genesisRoot = `0x${argv["genesis-root"]}`;
   const chainSpec = parseChainSpec(argv["chain-spec"]);
 
-  const server = new RpcServer(port, dbPath, genesisRoot, chainSpec);
+  const server = new RpcServer(port, dbPath, genesisRoot, chainSpec, methods);
 
   process.on("SIGINT", async () => {
     await server.close();

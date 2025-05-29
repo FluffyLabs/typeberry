@@ -1,4 +1,8 @@
+import z from "zod";
 import type { Hash, RpcMethod, Slot } from "../types";
+
+export const BestBlockParams = z.null();
+export type BestBlockParams = z.infer<typeof BestBlockParams>;
 
 /**
  * https://hackmd.io/@polkadot/jip2#bestBlock
@@ -8,7 +12,7 @@ import type { Hash, RpcMethod, Slot } from "../types";
  *   Slot - The slot,
  * ]
  */
-export const bestBlock: RpcMethod<[], [Hash, Slot]> = async (_params, db) => {
+export const bestBlock: RpcMethod<BestBlockParams, [Hash, Slot]> = async (_params, db) => {
   const [headerHash] = db.blocks.getBestData();
 
   const header = db.blocks.getHeader(headerHash);
