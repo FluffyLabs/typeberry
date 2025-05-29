@@ -1,17 +1,31 @@
 import { bestBlock } from "./methods/best-block";
-import { finalizedBlock } from "./methods/finalized-block";
-import { parameters } from "./methods/parameters";
+import { listServices } from "./methods/list-services";
 import { parent } from "./methods/parent";
-import { subscribeBestBlock } from "./methods/subscribe-best-block";
-import { subscribeFinalizedBlock } from "./methods/subscribe-finalized-block";
-import type { RpcMethod } from "./types";
+import { serviceData } from "./methods/service-data";
+import { servicePreimage } from "./methods/service-preimage";
+import { serviceRequest } from "./methods/service-request";
+import { serviceValue } from "./methods/service-value";
+import { stateRoot } from "./methods/state-root";
+import { statistics } from "./methods/statistics";
+import { RpcError, type RpcMethod, type RpcMethodRepo } from "./types";
 
-// biome-ignore lint/suspicious/noExplicitAny: the map must be able to store methods with any parameters and return values
-export function loadMethodsInto(methods: Map<string, RpcMethod<any, any>>): void {
+export function loadMethodsInto(methods: RpcMethodRepo): void {
+  methods.set("beefyRoot", methodNotImplemented); // todo [seko] beefy root needs to be stored in the db first, also awaits chapter 12
   methods.set("bestBlock", bestBlock);
-  methods.set("parameters", parameters);
-  methods.set("subscribeBestBlock", subscribeBestBlock);
-  methods.set("finalizedBlock", finalizedBlock);
-  methods.set("subscribeFinalizedBlock", subscribeFinalizedBlock);
+  methods.set("finalizedBlock", bestBlock); // todo [seko] implement when finality is implemented
+  methods.set("listServices", listServices);
+  methods.set("parameters", methodNotImplemented);
   methods.set("parent", parent);
+  methods.set("serviceData", serviceData);
+  methods.set("servicePreimage", servicePreimage);
+  methods.set("serviceRequest", serviceRequest);
+  methods.set("serviceValue", serviceValue);
+  methods.set("stateRoot", stateRoot);
+  methods.set("statistics", statistics);
+  methods.set("submitPreimage", methodNotImplemented);
+  methods.set("submitWorkPackage", methodNotImplemented);
 }
+
+export const methodNotImplemented: RpcMethod<[], []> = () => {
+  throw new RpcError(-32601, "Method not implemented");
+};
