@@ -33,7 +33,7 @@ export async function runEcTest(test: EcTest, path: string) {
   const chainSpec = getChainSpec(path);
 
   it("should encode data", () => {
-    const shards = encodeChunks(test.data, chainSpec);
+    const shards = encodeChunks(chainSpec, test.data);
 
     assert.strictEqual(shards.length, test.shards.length);
     assert.deepStrictEqual(shards[0].toString(), test.shards[0].toString());
@@ -43,7 +43,7 @@ export async function runEcTest(test: EcTest, path: string) {
   it("should decode from first 1/3 of shards", () => {
     const shards = test.shards.map((shard, idx) => [idx, shard] as [number, BytesBlob]);
 
-    const decoded = reconstructData(shards, chainSpec, test.data.length);
+    const decoded = reconstructData(chainSpec, shards, test.data.length);
 
     assert.strictEqual(decoded.length, test.data.length);
     assert.deepStrictEqual(decoded.toString(), test.data.toString());
@@ -54,7 +54,7 @@ export async function runEcTest(test: EcTest, path: string) {
     const shards = test.shards.map((shard, idx) => [idx, shard] as [number, BytesBlob]);
 
     const selectedShards = getRandomItems(shards, randomShards);
-    const decoded = reconstructData(selectedShards, chainSpec, test.data.length);
+    const decoded = reconstructData(chainSpec, selectedShards, test.data.length);
 
     assert.strictEqual(decoded.length, test.data.length);
     // Cannot decode from tiny testnet shards
