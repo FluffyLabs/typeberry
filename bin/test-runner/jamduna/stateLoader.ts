@@ -52,7 +52,30 @@ export function loadState(spec: ChainSpec, stateData: StateKeyVal[]): InMemorySt
 }
 
 function mergeStateUpdates(updates: Partial<State & ServicesUpdate>[]) {
-  return updates.reduce((acc, x) => Object.assign(acc, x), {});
+  const keysToMerge: (keyof ServicesUpdate)[] = ["preimages", "storage", "servicesUpdates", "servicesRemoved"];
+  const keysToMergeTyped: (keyof State | keyof ServicesUpdate)[] = keysToMerge;
+  return updates.reduce(
+    (acc, update) => {
+      for (const k of Object.keys(update)) {
+        const key = k as keyof typeof update;
+        if (keysToMergeTyped.indexOf(key) !== -1) {
+          if (!(Array.isArray(acc[key]) && Array.isArray(update[key]))) {
+            throw new Error(`Unable to merge updates of key ${key}`);
+          }
+          acc[key].push(...update[key]);
+        } else {
+          Object.assign(acc, { [key]: update[key] });
+        }
+      }
+      return acc;
+    },
+    {
+      preimages: [],
+      storage: [],
+      servicesUpdates: [],
+      servicesRemoved: [],
+    },
+  );
 }
 
 // A hacky set of parsers to avoid decoding the state keys.

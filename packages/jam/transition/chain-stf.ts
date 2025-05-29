@@ -16,13 +16,13 @@ import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-s
 import type { State } from "@typeberry/state";
 import { type ErrorResult, Result, type TaggedError } from "@typeberry/utils";
 import { Assurances, type AssurancesError, type AssurancesStateUpdate } from "./assurances";
-import { Authorization } from "./authorization";
+import { Authorization, type AuthorizationStateUpdate } from "./authorization";
 import type { TransitionHasher } from "./hasher";
 import { Preimages, type PreimagesErrorCode, type PreimagesStateUpdate } from "./preimages";
-import { RecentHistory } from "./recent-history";
+import { RecentHistory, type RecentHistoryStateUpdate } from "./recent-history";
 import { Reports, type ReportsError, type ReportsStateUpdate } from "./reports";
 import type { HeaderChain } from "./reports/verify-contextual";
-import { Statistics } from "./statistics";
+import { Statistics, type StatisticsStateUpdate } from "./statistics";
 
 class DbHeaderChain implements HeaderChain {
   constructor(private readonly blocks: BlocksDb) {}
@@ -41,11 +41,14 @@ export enum StfErrorKind {
   SafroleSeal = 5,
 }
 
-export type Ok = AssurancesStateUpdate &
-  ReportsStateUpdate &
+export type Ok = SafroleStateUpdate &
   DisputesStateUpdate &
-  SafroleStateUpdate &
-  PreimagesStateUpdate;
+  ReportsStateUpdate &
+  AssurancesStateUpdate &
+  PreimagesStateUpdate &
+  RecentHistoryStateUpdate &
+  AuthorizationStateUpdate &
+  StatisticsStateUpdate;
 
 export type StfError =
   | TaggedError<StfErrorKind.Assurances, AssurancesError>
@@ -63,8 +66,6 @@ export const stfError = <Kind extends StfErrorKind, Err extends StfError["error"
 };
 
 export class OnChain {
-  // chapter 13: https://graypaper.fluffylabs.dev/#/68eaa1f/18b60118b601?v=0.6.4
-  private readonly statistics: Statistics;
   // chapter 6: https://graypaper.fluffylabs.dev/#/68eaa1f/0d13000d1300?v=0.6.4
   private readonly safrole: Safrole;
   private readonly safroleSeal: SafroleSeal;
@@ -80,6 +81,8 @@ export class OnChain {
   private readonly recentHistory: RecentHistory;
   // chapter 8: https://graypaper.fluffylabs.dev/#/68eaa1f/0f94020f9402?v=0.6.4
   private readonly authorization: Authorization;
+  // chapter 13: https://graypaper.fluffylabs.dev/#/68eaa1f/18b60118b601?v=0.6.4
+  private readonly statistics: Statistics;
 
   constructor(
     public readonly chainSpec: ChainSpec,
@@ -223,6 +226,7 @@ export class OnChain {
     assertEmpty(statisticsRest);
 
     return Result.ok({
+      authPools,
       preimages,
       disputesRecords,
       availabilityAssignment: mergeAvailabilityAssignments(
@@ -230,6 +234,7 @@ export class OnChain {
         disputesAvailAssignment,
         assurancesAvailAssignment,
       ),
+      recentBlocks,
       statistics,
       timeslot,
       epochRoot,

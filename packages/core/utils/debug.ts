@@ -11,7 +11,7 @@ export function check(condition: boolean, message?: string): asserts condition i
   }
 }
 
-function cast<T, U extends T>(a: T, condition: boolean): a is U {
+function cast<T, U extends T>(_a: T, condition: boolean): _a is U {
   return condition;
 }
 
