@@ -7,9 +7,10 @@ import { asKnownSize } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { copyAndUpdateState, tryAsPerCore } from "@typeberry/state";
+import { tryAsPerCore } from "@typeberry/state";
 import { deepEqual } from "@typeberry/utils";
 import { Authorization, type AuthorizationInput, type AuthorizationState } from "./authorization";
+import { copyAndUpdateState } from "./test.utils";
 
 const authQueues = (core1: AuthorizerHash[], core2: AuthorizerHash[]): AuthorizationState["authQueues"] => {
   return tryAsPerCore([asKnownSize(core1), asKnownSize(core2)], tinyChainSpec);

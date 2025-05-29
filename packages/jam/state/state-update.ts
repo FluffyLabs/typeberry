@@ -2,7 +2,6 @@ import type { ServiceId, TimeSlot } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { U32 } from "@typeberry/numbers";
 import type { LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, StorageKey } from "./service";
-import type { State } from "./state";
 
 export enum UpdatePreimageKind {
   /** Insert new preimage and optionally update it's lookup history. */
@@ -159,39 +158,3 @@ export type ServicesUpdate = {
   /** Service storage to update. */
   storage: UpdateStorage[];
 };
-
-function isServiceUpdateKey(key: string | number | symbol) {
-  const keys: (keyof ServicesUpdate)[] = ["servicesRemoved", "servicesUpdates", "preimages", "storage"];
-  return keys.indexOf(key as keyof ServicesUpdate) !== -1;
-}
-
-/** An update to the State object. */
-export type StateUpdate<State> = Partial<State>;
-
-export function mergeStateUpdates<T>(updates: StateUpdate<T>[]): StateUpdate<T> {
-  return updates.reduce<StateUpdate<T>>((acc, x) => {
-    for (const k of Object.keys(x)) {
-      const key = k as keyof T;
-      if (isServiceUpdateKey(key) && Array.isArray(acc[key]) && Array.isArray(x[key])) {
-        acc[key].push(...x[key]);
-      } else {
-        // overwriting
-        acc[key] = x[key];
-      }
-    }
-    return acc;
-  }, {});
-}
-
-/**
- * A rather test-only function to copy some fields from the state,
- * apply an update to them (excluding services) and return a new plain object.
- *
- * NOTE: if looking something more sophisticated try `InMemoryState` representation.
- */
-export function copyAndUpdateState<T extends Partial<State>>(preState: T, stateUpdate: StateUpdate<T>): T {
-  return {
-    ...preState,
-    ...stateUpdate,
-  };
-}

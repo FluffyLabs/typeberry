@@ -7,7 +7,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { type Ed25519Key, ed25519 } from "@typeberry/crypto";
 import { type KeccakHash, WithHash, blake2b } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
-import { AvailabilityAssignment, type State, type StateUpdate, tryAsPerCore } from "@typeberry/state";
+import { AvailabilityAssignment, type State, tryAsPerCore } from "@typeberry/state";
 import { OK, Result, asOpaqueType } from "@typeberry/utils";
 import { ReportsError } from "./error";
 import { generateCoreAssignment, rotationIndex } from "./guarantor-assignment";
@@ -65,9 +65,12 @@ export type ReportsState = Pick<
   readonly offenders: KnownSizeArray<Ed25519Key, "0..ValidatorsCount">;
 */
 
+/** Reports state update. */
+export type ReportsStateUpdate = Pick<ReportsState, "availabilityAssignment">;
+
 export type ReportsOutput = {
   /** Altered state. */
-  stateUpdate: StateUpdate<ReportsState>;
+  stateUpdate: ReportsStateUpdate;
   /**
    * All work Packages and their segment roots reported in the extrinsic.
    *

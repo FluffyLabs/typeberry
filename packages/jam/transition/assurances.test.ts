@@ -21,15 +21,10 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
-import {
-  AvailabilityAssignment,
-  VALIDATOR_META_BYTES,
-  ValidatorData,
-  copyAndUpdateState,
-  tryAsPerCore,
-} from "@typeberry/state";
+import { AvailabilityAssignment, VALIDATOR_META_BYTES, ValidatorData, tryAsPerCore } from "@typeberry/state";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { Assurances, AssurancesError, type AssurancesInput } from "./assurances";
+import { copyAndUpdateState } from "./test.utils";
 
 function assurancesAsView(spec: ChainSpec, assurances: AvailabilityAssurance[]): AssurancesExtrinsicView {
   const encoded = Encoder.encodeObject(assurancesExtrinsicCodec, asOpaqueType(assurances), spec);

@@ -1,17 +1,12 @@
 import type { TimeSlot } from "@typeberry/block";
 import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage";
 import { blake2b } from "@typeberry/hash";
-import {
-  LookupHistoryItem,
-  PreimageItem,
-  type ServicesUpdate,
-  type State,
-  type StateUpdate,
-  UpdatePreimage,
-} from "@typeberry/state";
+import { LookupHistoryItem, PreimageItem, type ServicesUpdate, type State, UpdatePreimage } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 
-type PreimagesState = Pick<State, "service">;
+export type PreimagesState = Pick<State, "service">;
+
+export type PreimagesStateUpdate = Pick<ServicesUpdate, "preimages">;
 
 export type PreimagesInput = {
   preimages: PreimagesExtrinsic;
@@ -28,7 +23,7 @@ export enum PreimagesErrorCode {
 export class Preimages {
   constructor(public readonly state: PreimagesState) {}
 
-  integrate(input: PreimagesInput): Result<StateUpdate<ServicesUpdate>, PreimagesErrorCode> {
+  integrate(input: PreimagesInput): Result<PreimagesStateUpdate, PreimagesErrorCode> {
     // make sure lookup extrinsics are sorted and unique
     // "The lookup extrinsic is a sequence of pairs of service indices and data.
     // These pairs must be ordered and without duplicates."

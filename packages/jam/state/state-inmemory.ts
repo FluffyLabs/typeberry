@@ -32,7 +32,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
-import { WithDebug, assertNever, check } from "@typeberry/utils";
+import { OK, Result, WithDebug, assertNever, check } from "@typeberry/utils";
 import type { AvailabilityAssignment } from "./assurances";
 import type { BlockState } from "./block-state";
 import { type PerCore, tryAsPerCore } from "./common";
@@ -51,7 +51,6 @@ import {
 import { ENTROPY_ENTRIES, type EnumerableState, type MAX_RECENT_HISTORY, type Service, type State } from "./state";
 import {
   type ServicesUpdate,
-  type StateUpdate,
   type UpdatePreimage,
   UpdatePreimageKind,
   type UpdateService,
@@ -61,6 +60,15 @@ import {
 } from "./state-update";
 import { CoreStatistics, StatisticsData, ValidatorStatistics } from "./statistics";
 import { VALIDATOR_META_BYTES, ValidatorData } from "./validator-data";
+
+export enum UpdateError {
+  /** Attempting to create a service that already exists. */
+  DuplicateService = 0,
+  /** Attempting to update a non-existing service. */
+  NoService = 1,
+  /** Attempting to provide an existing preimage. */
+  PreimageExists = 2,
+}
 
 /**
  * In-memory representation of the service.
@@ -136,20 +144,30 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
   }
 
   /**
-   * Modify the state and apply the state update.
-   *
-   * NOTE: use `updateServices` to modify the services state.
+   * Modify the state and apply a single state update.
    */
-  applyUpdate(update: StateUpdate<State & ServicesUpdate>) {
+  applyUpdate(update: Partial<State & ServicesUpdate>): Result<OK, UpdateError> {
     const { servicesRemoved, servicesUpdates, preimages, storage, ...rest } = update;
     // just assign all other variables
     Object.assign(this, rest);
+
     // and update the services state
-    this.updateServices(servicesUpdates);
-    this.updatePreimages(preimages);
-    this.updateStorage(storage);
+    let result: Result<OK, UpdateError>;
+    result = this.updateServices(servicesUpdates);
+    if (result.isError) {
+      return result;
+    }
+    result = this.updatePreimages(preimages);
+    if (result.isError) {
+      return result;
+    }
+    result = this.updateStorage(storage);
+    if (result.isError) {
+      return result;
+    }
     this.removeServices(servicesRemoved);
-    return this;
+
+    return Result.ok(OK);
   }
 
   private removeServices(servicesRemoved: ServiceId[] | undefined) {
@@ -159,19 +177,22 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
     }
   }
 
-  private updateStorage(storage: UpdateStorage[] | undefined) {
+  private updateStorage(storage: UpdateStorage[] | undefined): Result<OK, UpdateError> {
     for (const { serviceId, action } of storage ?? []) {
       const { kind } = action;
       const service = this.services.get(serviceId);
       if (service === undefined) {
-        throw new Error(`Attempting to update storage of non-existing service: ${serviceId}`);
+        return Result.error(
+          UpdateError.NoService,
+          `Attempting to update storage of non-existing service: ${serviceId}`,
+        );
       }
 
       if (kind === UpdateStorageKind.Set) {
         service.data.storage.set(action.storage.hash, action.storage);
       } else if (kind === UpdateStorageKind.Remove) {
         check(
-          this.services.has(serviceId),
+          !service.data.storage.has(action.key),
           `Attempting to remove non-existing storage item at ${serviceId}: ${action.key}`,
         );
         service.data.storage.delete(action.key);
@@ -179,18 +200,25 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
         assertNever(kind);
       }
     }
+
+    return Result.ok(OK);
   }
 
-  private updatePreimages(preimages: UpdatePreimage[] | undefined) {
+  private updatePreimages(preimages: UpdatePreimage[] | undefined): Result<OK, UpdateError> {
     for (const { serviceId, action } of preimages ?? []) {
       const service = this.services.get(serviceId);
       if (service === undefined) {
-        throw new Error(`Attempting to update preimage of non-existing service: ${serviceId}`);
+        return Result.error(
+          UpdateError.NoService,
+          `Attempting to update preimage of non-existing service: ${serviceId}`,
+        );
       }
       const { kind } = action;
       if (kind === UpdatePreimageKind.Provide) {
         const { preimage, slot } = action;
-        check(!service.data.preimages.has(preimage.hash), `Overwriting existing preimage at ${serviceId}: ${preimage}`);
+        if (service.data.preimages.has(preimage.hash)) {
+          return Result.error(UpdateError.PreimageExists, `Overwriting existing preimage at ${serviceId}: ${preimage}`);
+        }
         service.data.preimages.set(preimage.hash, preimage);
         if (slot !== null) {
           const lookupHistory = service.data.lookupHistory.get(preimage.hash);
@@ -224,13 +252,17 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
         assertNever(kind);
       }
     }
+    return Result.ok(OK);
   }
 
-  private updateServices(servicesUpdates?: UpdateService[]) {
+  private updateServices(servicesUpdates?: UpdateService[]): Result<OK, UpdateError> {
     for (const { serviceId, action } of servicesUpdates ?? []) {
       const { kind, account } = action;
       if (kind === UpdateServiceKind.Create) {
         const { lookupHistory } = action;
+        if (this.services.has(serviceId)) {
+          return Result.error(UpdateError.DuplicateService, `${serviceId} already exists!`);
+        }
         this.services.set(
           serviceId,
           new InMemoryService(serviceId, {
@@ -245,13 +277,14 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       } else if (kind === UpdateServiceKind.Update) {
         const existingService = this.services.get(serviceId);
         if (existingService === undefined) {
-          throw new Error(`Attempting to update non-existing service: ${serviceId}`);
+          return Result.error(UpdateError.NoService, `Cannot update ${serviceId} because it does not exist.`);
         }
         existingService.data.info = account;
       } else {
         assertNever(kind);
       }
     }
+    return Result.ok(OK);
   }
 
   availabilityAssignment: PerCore<AvailabilityAssignment | null>;

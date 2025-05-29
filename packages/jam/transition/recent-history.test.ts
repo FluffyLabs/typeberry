@@ -5,9 +5,10 @@ import { Bytes } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, keccak } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
-import { type BlockState, MAX_RECENT_HISTORY, copyAndUpdateState } from "@typeberry/state";
+import { type BlockState, MAX_RECENT_HISTORY } from "@typeberry/state";
 import { asOpaqueType, check } from "@typeberry/utils";
 import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "./recent-history";
+import { copyAndUpdateState } from "./test.utils";
 
 const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then((hasher) => {
   return {

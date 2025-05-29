@@ -22,7 +22,6 @@ import {
   type InMemoryService,
   InMemoryState,
   type ValidatorData,
-  copyAndUpdateState,
   tryAsPerCore,
 } from "@typeberry/state";
 import {
@@ -42,6 +41,7 @@ import {
   type ReportsState,
 } from "@typeberry/transition/reports";
 import { guaranteesAsView } from "@typeberry/transition/reports/test.utils";
+import { copyAndUpdateState } from "@typeberry/transition/test.utils";
 import { Result, asOpaqueType, deepEqual } from "@typeberry/utils";
 
 type TestReportsOutput = Omit<ReportsOutput, "stateUpdate">;

@@ -120,8 +120,10 @@ export async function runPreImagesTest(testContent: PreImagesTest) {
   const result = preimages.integrate(testContent.input);
 
   deepEqual(result, testOutputToResult(testContent.output), { ignore: ["ok"] });
-  const state = result.isOk ? preState.applyUpdate(result.ok) : preState;
-  assert.deepEqual(state, postState);
+  if (result.isOk) {
+    preState.applyUpdate(result.ok);
+  }
+  assert.deepEqual(preState, postState);
 }
 
 function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): InMemoryService {
@@ -158,5 +160,9 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): InMemorySer
 }
 
 function testOutputToResult(testOutput: Output): ReturnType<Preimages["integrate"]> {
-  return testOutput.err !== undefined ? Result.error(testOutput.err) : Result.ok({});
+  return testOutput.err !== undefined
+    ? Result.error(testOutput.err)
+    : Result.ok({
+        preimages: [],
+      });
 }

@@ -14,14 +14,13 @@ import {
   ServiceAccountInfo,
   type ServicesUpdate,
   type State,
-  type StateUpdate,
   StorageItem,
   UpdatePreimage,
   UpdateService,
   UpdateStorage,
-  mergeStateUpdates,
 } from "@typeberry/state";
 import { serialize } from "@typeberry/state-merkleization/serialize";
+import { resultToString } from "@typeberry/utils";
 
 export class TestState {
   static fromJson: FromJson<TestState> = {
@@ -36,7 +35,7 @@ export type StateKeyVal = string[];
 
 export function loadState(spec: ChainSpec, stateData: StateKeyVal[]): InMemoryState {
   const state = InMemoryState.empty(spec);
-  const updates: StateUpdate<State & ServicesUpdate>[] = [];
+  const updates: Partial<State & ServicesUpdate>[] = [];
   for (const [_key, value, kind, description] of stateData) {
     const appender = kindMapping[kind];
     if (appender === undefined) {
@@ -45,7 +44,15 @@ export function loadState(spec: ChainSpec, stateData: StateKeyVal[]): InMemorySt
     updates.push(appender(BytesBlob.parseBlob(value), description));
   }
   const update = mergeStateUpdates(updates);
-  return state.applyUpdate(update);
+  const applyResult = state.applyUpdate(update);
+  if (applyResult.isError) {
+    throw new Error(`Error while loading state: ${resultToString(applyResult)}`);
+  }
+  return state;
+}
+
+function mergeStateUpdates(updates: Partial<State & ServicesUpdate>[]) {
+  return updates.reduce((acc, x) => Object.assign(acc, x), {});
 }
 
 // A hacky set of parsers to avoid decoding the state keys.
@@ -88,7 +95,7 @@ class Parser {
 }
 
 // Takes the state and value and insert it into the state.
-type Appender = (value: BytesBlob, description: string) => StateUpdate<State & ServicesUpdate>;
+type Appender = (value: BytesBlob, description: string) => Partial<State & ServicesUpdate>;
 
 const kindMapping: { [k: string]: Appender } = {
   account_lookup: (value, description) => {

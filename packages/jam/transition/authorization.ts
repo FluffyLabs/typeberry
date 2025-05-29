@@ -4,10 +4,13 @@ import type { AuthorizerHash } from "@typeberry/block/work-report";
 import { asKnownSize } from "@typeberry/collections";
 import type { HashSet } from "@typeberry/collections/hash-set";
 import type { ChainSpec } from "@typeberry/config";
-import { type State, type StateUpdate, tryAsPerCore } from "@typeberry/state";
+import { type State, tryAsPerCore } from "@typeberry/state";
 
 /** Authorization state. */
 export type AuthorizationState = Pick<State, "authPools" | "authQueues">;
+
+/** Authorization state update. */
+export type AuthorizationStateUpdate = Pick<AuthorizationState, "authPools">;
 
 /** Input to the authorization. */
 export type AuthorizationInput = {
@@ -46,7 +49,7 @@ export class Authorization {
    *
    * https://graypaper.fluffylabs.dev/#/68eaa1f/103e00103f00?v=0.6.4
    */
-  transition(input: AuthorizationInput): StateUpdate<AuthorizationState> {
+  transition(input: AuthorizationInput): AuthorizationStateUpdate {
     const authPoolsUpdate = this.state.authPools.slice();
     // we transition authorizations for each core.
     for (let coreIndex = tryAsCoreIndex(0); coreIndex < this.chainSpec.coresCount; coreIndex++) {

@@ -7,14 +7,9 @@ import type { Ed25519Key } from "@typeberry/crypto";
 import { Disputes, type DisputesState } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
 import { type FromJson, json } from "@typeberry/json-parser";
-import {
-  type AvailabilityAssignment,
-  type DisputesRecords,
-  type ValidatorData,
-  copyAndUpdateState,
-  tryAsPerCore,
-} from "@typeberry/state";
+import { type AvailabilityAssignment, type DisputesRecords, type ValidatorData, tryAsPerCore } from "@typeberry/state";
 import { availabilityAssignmentFromJson, disputesRecordsFromJson, validatorDataFromJson } from "@typeberry/state-json";
+import { copyAndUpdateState } from "@typeberry/transition/test.utils";
 import { getChainSpec } from "./spec";
 
 class DisputesOutputMarks {

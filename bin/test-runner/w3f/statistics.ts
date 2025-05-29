@@ -122,7 +122,8 @@ export async function runStatisticsTest(
 
   // when
   const update = statistics.transition(input);
-  const state = InMemoryState.partial(spec, preState).applyUpdate(update);
+  const state = InMemoryState.partial(spec, preState);
+  state.applyUpdate(update);
 
   // NOTE [MaSo] This is a workaround for the fact that the test data does not contain any posterior service statistics.
   assert.deepStrictEqual(postState.statistics.services.size, 0, "We expect services are not calculated.");

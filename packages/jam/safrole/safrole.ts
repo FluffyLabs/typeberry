@@ -17,7 +17,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { blake2b } from "@typeberry/hash";
 import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
-import { type State, type StateUpdate, ValidatorData } from "@typeberry/state";
+import { type State, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data";
 import { Result, asOpaqueType } from "@typeberry/utils";
 import { getRingCommitment, verifyTickets } from "./bandersnatch";
@@ -43,12 +43,24 @@ export type SafroleState = Pick<
   | "epochRoot"
 >;
 
+export type SafroleStateUpdate = Pick<
+  SafroleState,
+  | "nextValidatorData"
+  | "currentValidatorData"
+  | "previousValidatorData"
+  | "epochRoot"
+  | "timeslot"
+  | "entropy"
+  | "sealingKeySeries"
+  | "ticketsAccumulator"
+>;
+
 type TicketsMark = PerEpochBlock<Ticket>;
 
 export type OkResult = {
   epochMark: EpochMarker | null;
   ticketsMark: TicketsMark | null;
-  stateUpdate: StateUpdate<SafroleState>;
+  stateUpdate: SafroleStateUpdate;
 };
 
 export type Input = {

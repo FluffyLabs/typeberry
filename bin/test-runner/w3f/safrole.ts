@@ -22,15 +22,10 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import { type Input, type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole";
-import {
-  DisputesRecords,
-  ENTROPY_ENTRIES,
-  type ValidatorData,
-  copyAndUpdateState,
-  hashComparator,
-} from "@typeberry/state";
+import { DisputesRecords, ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
 import { TicketsOrKeys, ticketFromJson } from "@typeberry/state-json";
 import { validatorDataFromJson } from "@typeberry/state-json";
+import { copyAndUpdateState } from "@typeberry/transition/test.utils";
 import { Result, deepEqual } from "@typeberry/utils";
 import { getChainSpec } from "./spec";
 namespace safroleFromJson {
@@ -146,7 +141,7 @@ export class Output {
   ok?: OkOutput;
   err?: TestErrorCode;
 
-  static toSafroleOutput(output: Output, spec: ChainSpec): Result<OkResult, SafroleErrorCode> {
+  static toSafroleOutput(output: Output, spec: ChainSpec): Result<Omit<OkResult, "stateUpdate">, SafroleErrorCode> {
     if (output.err !== undefined) {
       return Result.error(Output.toSafroleErrorCode(output.err));
     }
@@ -165,7 +160,6 @@ export class Output {
     return Result.ok({
       epochMark,
       ticketsMark,
-      stateUpdate: {},
     });
   }
 
@@ -243,8 +237,8 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
     const state = copyAndUpdateState(safrole.state, result.ok.stateUpdate);
     deepEqual(
       Result.ok({
-        ...result.ok,
-        stateUpdate: {},
+        epochMark: result.ok.epochMark,
+        ticketsMark: result.ok.ticketsMark,
       }),
       expectedResult,
     );

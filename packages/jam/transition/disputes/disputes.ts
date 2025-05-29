@@ -7,13 +7,12 @@ import {
   type AvailabilityAssignment,
   DisputesRecords,
   type PerCore,
-  type StateUpdate,
   hashComparator,
   tryAsPerCore,
 } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import { DisputesErrorCode } from "./disputes-error-code";
-import type { DisputesState } from "./disputes-state";
+import type { DisputesState, DisputesStateUpdate } from "./disputes-state";
 import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
 import {
   type VerificationInput,
@@ -376,7 +375,7 @@ export class Disputes {
     Result<
       {
         offendersMark: Ed25519Key[];
-        stateUpdate: StateUpdate<DisputesState>;
+        stateUpdate: DisputesStateUpdate;
       },
       DisputesErrorCode
     >

@@ -5,9 +5,10 @@ import { HashDictionary } from "@typeberry/collections";
 import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
-import { type BlockState, copyAndUpdateState } from "@typeberry/state";
+import type { BlockState } from "@typeberry/state";
 import { blockStateFromJson, reportedWorkPackageFromJson } from "@typeberry/state-json";
 import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "@typeberry/transition/recent-history";
+import { copyAndUpdateState } from "@typeberry/transition/test.utils";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 
 class Input {

@@ -24,16 +24,10 @@ import { tinyChainSpec } from "@typeberry/config";
 import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { isU16, isU32, tryAsU32 } from "@typeberry/numbers";
-import {
-  CoreStatistics,
-  ServiceStatistics,
-  StatisticsData,
-  ValidatorStatistics,
-  copyAndUpdateState,
-  tryAsPerCore,
-} from "@typeberry/state";
+import { CoreStatistics, ServiceStatistics, StatisticsData, ValidatorStatistics, tryAsPerCore } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
 import { Statistics, type StatisticsState } from "./statistics";
+import { copyAndUpdateState } from "./test.utils";
 
 describe("Statistics", () => {
   describe("formulas", () => {

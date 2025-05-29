@@ -6,7 +6,7 @@ import type { WorkReport } from "@typeberry/block/work-report";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { type AvailabilityAssignment, type ValidatorData, copyAndUpdateState, tryAsPerCore } from "@typeberry/state";
+import { type AvailabilityAssignment, type ValidatorData, tryAsPerCore } from "@typeberry/state";
 import { availabilityAssignmentFromJson, validatorDataFromJson } from "@typeberry/state-json";
 import {
   Assurances,
@@ -14,6 +14,7 @@ import {
   type AssurancesInput,
   type AssurancesState,
 } from "@typeberry/transition/assurances";
+import { copyAndUpdateState } from "@typeberry/transition/test.utils";
 import { Result, deepEqual } from "@typeberry/utils";
 
 class Input {

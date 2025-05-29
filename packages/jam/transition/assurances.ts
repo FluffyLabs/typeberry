@@ -6,7 +6,7 @@ import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
 import { blake2b } from "@typeberry/hash";
-import type { State, StateUpdate } from "@typeberry/state";
+import type { State } from "@typeberry/state";
 import { OK, Result, check } from "@typeberry/utils";
 
 /** Assurances transition input. */
@@ -21,6 +21,9 @@ export type AssurancesInput = {
 
 /** State of the assurances. */
 export type AssurancesState = Pick<State, "availabilityAssignment" | "currentValidatorData">;
+
+/** State update of the assurances. */
+export type AssurancesStateUpdate = Pick<AssurancesState, "availabilityAssignment">;
 
 /** Possible error during assurances transition. */
 export enum AssurancesError {
@@ -54,7 +57,7 @@ export class Assurances {
     Result<
       {
         availableReports: WorkReport[];
-        stateUpdate: StateUpdate<AssurancesState>;
+        stateUpdate: AssurancesStateUpdate;
       },
       AssurancesError
     >

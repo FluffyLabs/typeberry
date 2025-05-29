@@ -22,7 +22,7 @@ import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/stat
 import { Result, deepEqual } from "@typeberry/utils";
 import * as bandersnatch from "./bandersnatch";
 import { BandernsatchWasm } from "./bandersnatch-wasm";
-import { Safrole, SafroleErrorCode, type SafroleState } from "./safrole";
+import { Safrole, SafroleErrorCode, type SafroleState, type SafroleStateUpdate } from "./safrole";
 
 const bwasm = BandernsatchWasm.new({ synchronous: true });
 
@@ -367,7 +367,8 @@ describe("Safrole", () => {
     deepEqual(
       result,
       Result.ok({
-        stateUpdate: {},
+        // we are ignoring that result anyway, so safe to cast.
+        stateUpdate: {} as SafroleStateUpdate,
         epochMark: null,
         ticketsMark: null,
       }),

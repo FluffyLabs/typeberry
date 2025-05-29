@@ -14,7 +14,7 @@ import type { WorkReport } from "@typeberry/block/work-report";
 import type { WorkResult } from "@typeberry/block/work-result";
 import type { ChainSpec } from "@typeberry/config";
 import { type U32, tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { ServiceStatistics, type State, type StateUpdate, StatisticsData } from "@typeberry/state";
+import { ServiceStatistics, type State, StatisticsData } from "@typeberry/state";
 import { ValidatorStatistics } from "@typeberry/state";
 import { check } from "@typeberry/utils";
 
@@ -64,6 +64,9 @@ export type StatisticsState = Pick<State, "timeslot" | "statistics"> & {
    */
   readonly currentValidatorData: State["currentValidatorData"];
 };
+
+/** Update to the statistics state. */
+export type StatisticsStateUpdate = Pick<StatisticsState, "statistics">;
 
 export class Statistics {
   constructor(
@@ -203,7 +206,7 @@ export class Statistics {
    * https://graypaper.fluffylabs.dev/#/68eaa1f/19fc0019fc00?v=0.6.4
    * https://graypaper.fluffylabs.dev/#/68eaa1f/199002199002?v=0.6.4
    */
-  transition(input: Input): StateUpdate<StatisticsState> {
+  transition(input: Input): StatisticsStateUpdate {
     const { slot, authorIndex, extrinsic, incomingReports, availableReports } = input;
 
     /** get statistics for the current epoch */

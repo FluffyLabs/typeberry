@@ -6,20 +6,21 @@ import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
 import { Disputes } from "@typeberry/disputes";
+import type { DisputesStateUpdate } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Safrole } from "@typeberry/safrole";
+import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
-import type { SafroleErrorCode } from "@typeberry/safrole/safrole";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal";
-import { type ServicesUpdate, type State, type StateUpdate, mergeStateUpdates } from "@typeberry/state";
+import type { State } from "@typeberry/state";
 import { type ErrorResult, Result, type TaggedError } from "@typeberry/utils";
-import { Assurances, type AssurancesError } from "./assurances";
+import { Assurances, type AssurancesError, type AssurancesStateUpdate } from "./assurances";
 import { Authorization } from "./authorization";
 import type { TransitionHasher } from "./hasher";
-import { Preimages, type PreimagesErrorCode } from "./preimages";
+import { Preimages, type PreimagesErrorCode, type PreimagesStateUpdate } from "./preimages";
 import { RecentHistory } from "./recent-history";
-import { Reports, type ReportsError } from "./reports";
+import { Reports, type ReportsError, type ReportsStateUpdate } from "./reports";
 import type { HeaderChain } from "./reports/verify-contextual";
 import { Statistics } from "./statistics";
 
@@ -40,7 +41,11 @@ export enum StfErrorKind {
   SafroleSeal = 5,
 }
 
-export type Ok = StateUpdate<State & ServicesUpdate>;
+export type Ok = AssurancesStateUpdate &
+  ReportsStateUpdate &
+  DisputesStateUpdate &
+  SafroleStateUpdate &
+  PreimagesStateUpdate;
 
 export type StfError =
   | TaggedError<StfErrorKind.Assurances, AssurancesError>
@@ -103,7 +108,6 @@ export class OnChain {
   async transition(block: BlockView, headerHash: HeaderHash): Promise<Result<Ok, StfError>> {
     const header = block.header.materialize();
     const timeSlot = header.timeSlotIndex;
-    const stateUpdates: Ok[] = [];
 
     // safrole seal
     const sealState = this.safrole.getSafroleSealState(timeSlot);
@@ -117,7 +121,12 @@ export class OnChain {
     if (disputesResult.isError) {
       return stfError(StfErrorKind.Disputes, disputesResult);
     }
-    stateUpdates.push(disputesResult.ok.stateUpdate);
+    const {
+      disputesRecords,
+      availabilityAssignment: disputesAvailAssignment,
+      ...disputesRest
+    } = disputesResult.ok.stateUpdate;
+    assertEmpty(disputesRest);
 
     // reports
     const reportsResult = await this.reports.transition({
@@ -128,7 +137,8 @@ export class OnChain {
     if (reportsResult.isError) {
       return stfError(StfErrorKind.Reports, reportsResult);
     }
-    stateUpdates.push(reportsResult.ok.stateUpdate);
+    const { availabilityAssignment: reportsAvailAssignment, ...reportsRest } = reportsResult.ok.stateUpdate;
+    assertEmpty(reportsRest);
 
     // assurances
     const assurancesResult = await this.assurances.transition({
@@ -139,7 +149,8 @@ export class OnChain {
     if (assurancesResult.isError) {
       return stfError(StfErrorKind.Assurances, assurancesResult);
     }
-    stateUpdates.push(assurancesResult.ok.stateUpdate);
+    const { availabilityAssignment: assurancesAvailAssignment, ...assurancesRest } = assurancesResult.ok.stateUpdate;
+    assertEmpty(assurancesRest);
 
     // safrole
     const safroleResult = await this.safrole.transition({
@@ -151,7 +162,18 @@ export class OnChain {
     if (safroleResult.isError) {
       return stfError(StfErrorKind.Safrole, safroleResult);
     }
-    stateUpdates.push(safroleResult.ok.stateUpdate);
+    const {
+      timeslot,
+      ticketsAccumulator,
+      sealingKeySeries,
+      epochRoot,
+      entropy,
+      nextValidatorData,
+      currentValidatorData,
+      previousValidatorData,
+      ...safroleRest
+    } = safroleResult.ok.stateUpdate;
+    assertEmpty(safroleRest);
 
     // preimages
     const preimagesResult = this.preimages.integrate({
@@ -161,7 +183,8 @@ export class OnChain {
     if (preimagesResult.isError) {
       return stfError(StfErrorKind.Preimages, preimagesResult);
     }
-    stateUpdates.push(preimagesResult.ok);
+    const { preimages, ...preimagesRest } = preimagesResult.ok;
+    assertEmpty(preimagesRest);
 
     // TODO [ToDr] output from accumulate
     const accumulateRoot = Bytes.zero(HASH_SIZE).asOpaque();
@@ -172,20 +195,22 @@ export class OnChain {
       accumulateRoot: accumulateRoot,
       workPackages: reportsResult.ok.reported,
     });
-    stateUpdates.push(recentHistoryUpdate);
+    const { recentBlocks, ...recentHistoryRest } = recentHistoryUpdate;
+    assertEmpty(recentHistoryRest);
 
     // authorization
     const authorizationUpdate = this.authorization.transition({
       slot: timeSlot,
       used: this.getUsedAuthorizerHashes(block.extrinsic.view().guarantees.view()),
     });
-    stateUpdates.push(authorizationUpdate);
+    const { authPools, ...authorizationRest } = authorizationUpdate;
+    assertEmpty(authorizationRest);
 
     const extrinsic = block.extrinsic.materialize();
 
     // TODO [MaSo] fill in the statistics with accumulation results
     // statistics
-    const update = this.statistics.transition({
+    const statisticsUpdate = this.statistics.transition({
       slot: timeSlot,
       authorIndex: header.bandersnatchBlockAuthorIndex,
       extrinsic,
@@ -194,9 +219,27 @@ export class OnChain {
       accumulationStatistics: new Map(),
       transferStatistics: new Map(),
     });
-    stateUpdates.push(update);
+    const { statistics, ...statisticsRest } = statisticsUpdate;
+    assertEmpty(statisticsRest);
 
-    return Result.ok(mergeStateUpdates(stateUpdates));
+    return Result.ok({
+      preimages,
+      disputesRecords,
+      availabilityAssignment: mergeAvailabilityAssignments(
+        reportsAvailAssignment,
+        disputesAvailAssignment,
+        assurancesAvailAssignment,
+      ),
+      statistics,
+      timeslot,
+      epochRoot,
+      entropy,
+      currentValidatorData,
+      nextValidatorData,
+      previousValidatorData,
+      sealingKeySeries,
+      ticketsAccumulator,
+    });
   }
 
   private getUsedAuthorizerHashes(guarantees: GuaranteesExtrinsicView) {
@@ -210,4 +253,32 @@ export class OnChain {
     }
     return map;
   }
+}
+
+function assertEmpty<T extends Record<string, never>>(_x: T) {}
+
+type AvailAssignment = State["availabilityAssignment"];
+
+/**
+ * Since multiple modules might alter the availalbility assignment,
+ * we need to merge the results.
+ *
+ * NOTE: both `Disputes` and `Assurances` will clear out the availability assignment.
+ *       reports however will assign new reports to cores.
+ */
+function mergeAvailabilityAssignments(
+  reportsAvailAssignment: AvailAssignment,
+  disputesAvailAssignment: AvailAssignment,
+  assurancesAvailAssignment: AvailAssignment,
+) {
+  const newAssignments = reportsAvailAssignment.slice();
+
+  for (const core of reportsAvailAssignment.keys()) {
+    if (disputesAvailAssignment[core] === null || assurancesAvailAssignment[core] === null) {
+      newAssignments[core] = null;
+    }
+  }
+
+  // This is safe, since we are cloning the whole array.
+  return asKnownSize(newAssignments);
 }

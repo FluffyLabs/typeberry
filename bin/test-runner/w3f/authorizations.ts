@@ -3,8 +3,8 @@ import { fromJson } from "@typeberry/block-json";
 import type { AuthorizerHash } from "@typeberry/block/work-report";
 import { HashSet } from "@typeberry/collections/hash-set";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { copyAndUpdateState } from "@typeberry/state";
 import { Authorization, type AuthorizationInput, type AuthorizationState } from "@typeberry/transition/authorization";
+import { copyAndUpdateState } from "@typeberry/transition/test.utils";
 import { deepEqual } from "@typeberry/utils";
 import { getChainSpec } from "./spec";
 
