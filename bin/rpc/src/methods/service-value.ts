@@ -38,7 +38,8 @@ export const serviceValue: RpcMethod<[Hash, ServiceId, BlobArray], [BlobArray] |
     return null;
   }
 
-  const storageValue = service.data.storage.find(({ hash }) => hash.isEqualTo(Bytes.fromNumbers(key, HASH_SIZE)));
+  // TODO [ToDr] we should probably hash the blob to get `StateKey` instead.
+  const storageValue = service.data.storage.get(Bytes.fromNumbers(key, HASH_SIZE).asOpaque());
 
   if (storageValue === undefined) {
     return null;

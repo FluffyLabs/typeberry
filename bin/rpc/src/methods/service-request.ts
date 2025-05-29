@@ -17,7 +17,7 @@ import type { Hash, RpcMethod, ServiceId, Slot } from "../types";
  * ]
  * @returns Either null or array of Slot
  */
-export const serviceRequest: RpcMethod<[Hash, ServiceId, Hash, U32], [Slot[]] | null> = async (
+export const serviceRequest: RpcMethod<[Hash, ServiceId, Hash, U32], [readonly Slot[]] | null> = async (
   [headerHash, serviceId, preimageHash, preimageLength],
   db,
 ) => {
