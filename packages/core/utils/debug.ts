@@ -96,6 +96,22 @@ export function inspect<T>(val: T, recursive = true): string {
   return v;
 }
 
+/** Utility function to measure time taken for some operation [ms]. */
+export const measure =
+  process === undefined
+    ? (id: string) => {
+        const start = performance.now();
+        return () => `${id} took ${performance.now() - start}ms`;
+      }
+    : (id: string) => {
+        const start = process.hrtime.bigint();
+        return () => {
+          const tookNano = process.hrtime.bigint() - start;
+          const tookMilli = Number(tookNano / 1_000_000n).toFixed(2);
+          return `${id} took ${tookMilli}ms`;
+        };
+      };
+
 /** A class that adds `toString` method that prints all properties of an object. */
 export abstract class WithDebug {
   toString() {
