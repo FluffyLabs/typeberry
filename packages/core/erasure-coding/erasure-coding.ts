@@ -246,25 +246,17 @@ export function transpose(input: BytesBlob[]): BytesBlob[] {
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/3f15003f1500?v=0.6.6
  */
-export function encodeChunks(chainSpec: ChainSpec, input: BytesBlob): BytesBlob[] {
+export function encodeChunks(input: BytesBlob): BytesBlob[] {
   const segments = input.length / 4104;
-  const segmentLength = Math.ceil(chainSpec.numberECPiecesPerSegment * segments * SHARD_LENGTH);
-  const encodedPieces = Array.from({ length: chainSpec.validatorsCount }, () =>
-    BytesBlob.blobFrom(new Uint8Array(segmentLength)),
-  );
-  const shardLength = SHARD_LENGTH * Math.ceil(1023 / chainSpec.validatorsCount);
+  const segmentLength = Math.ceil(6 * segments * SHARD_LENGTH);
+  const encodedPieces = Array.from({ length: 1023 }, () => BytesBlob.blobFrom(new Uint8Array(segmentLength)));
   let chunkIndex = 0;
   for (const chunk of unzip(input)) {
     const encoded = encodeData(chunk.raw);
     let validatorIndex = 0;
-    let shardIndex = 0;
     for (const piece of encoded) {
-      encodedPieces[validatorIndex].raw.set(piece, shardIndex + chunkIndex * shardLength);
-      shardIndex += SHARD_LENGTH;
-      if (shardIndex >= segmentLength || shardIndex >= shardLength) {
-        shardIndex = 0;
-        validatorIndex++;
-      }
+      encodedPieces[validatorIndex].raw.set(piece, chunkIndex * SHARD_LENGTH);
+      validatorIndex++;
     }
     chunkIndex++;
   }
@@ -286,4 +278,66 @@ export function reconstructData(input: [number, BytesBlob][], expectedLength: nu
   }
   const laced = lace(result, expectedLength);
   return BytesBlob.blobFrom(laced.raw.slice(0, expectedLength));
+}
+
+export function expandShardsToFullSet(chainSpec: ChainSpec, shards: BytesBlob[]): BytesBlob[] {
+  if (shards.length === 1023) {
+    // full set of shards, no need to expand
+    return shards;
+  }
+  const shardSplitFactor = chainSpec.numberECPiecesPerSegment / 6;
+  const shardLength = shards[0].length / shardSplitFactor;
+  const result: BytesBlob[] = Array.from({ length: 1023 }, () => BytesBlob.blobFrom(new Uint8Array(shardLength)));
+  for (let i = 0; i < shards.length; i++) {
+    const shard = shards[i];
+    let offset = 0;
+    for (let j = 0; j < shard.length / 2; j += shardSplitFactor) {
+      for (let k = 0; k < shardSplitFactor; k++) {
+        const index = i * shardSplitFactor + k;
+        if (index >= 1023) {
+          continue; // Prevent overflow
+        }
+        const shardStart = (j + k) * 2;
+        const shardEnd = shardStart + 2;
+        result[index].raw.set(shard.raw.subarray(shardStart, shardEnd), offset);
+      }
+      offset += 2;
+    }
+  }
+
+  return result;
+}
+
+export function condenseShardsFromFullSet(chainSpec: ChainSpec, shards: BytesBlob[]) {
+  if (chainSpec.validatorsCount === 1023) {
+    // full set of shards, no need to shrink
+    return shards;
+  }
+
+  const shardSplitFactor = chainSpec.numberECPiecesPerSegment / 6;
+  const condensedShardLength = shards[0].length * shardSplitFactor;
+  const result: BytesBlob[] = Array.from({ length: chainSpec.validatorsCount }, () =>
+    BytesBlob.blobFrom(new Uint8Array(condensedShardLength)),
+  );
+  for (let i = 0; i < chainSpec.validatorsCount; i++) {
+    const shardToFill = result[i];
+    for (let j = 0; j < shards[0].length; j++) {
+      const shardIndex = j * shardSplitFactor;
+      const offset = j * 2;
+      for (let k = 0; k < shardSplitFactor; k++) {
+        const sourceIndex = i * shardSplitFactor + k;
+        if (sourceIndex >= shards.length) {
+          continue; // Prevent overflow
+        }
+        const chunkToCopy = shards[sourceIndex].raw.subarray(offset, offset + 2);
+        const destinationOffset = (shardIndex + k) * 2;
+        if (destinationOffset + chunkToCopy.length > shardToFill.raw.length) {
+          continue; // Prevent overflow
+        }
+        shardToFill.raw.set(chunkToCopy, destinationOffset);
+      }
+    }
+  }
+
+  return result;
 }
