@@ -1,8 +1,20 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { BytesBlob } from "@typeberry/bytes";
-import { TEST_DATA } from "./ec-test-data";
-import { decodeData, encodeData, join, lace, split, unzip } from "./erasure-coding";
+import { tinyChainSpec } from "@typeberry/config/chain-spec";
+import { SEGMENT_FULL, SEGMENT_TINY, TEST_DATA, WORKPACKAGE_FULL, WORKPACKAGE_TINY } from "./ec-test-data";
+import {
+  condenseShardsFromFullSet,
+  decodeData,
+  encodeChunks,
+  encodeData,
+  expandShardsToFullSet,
+  join,
+  lace,
+  reconstructData,
+  split,
+  unzip,
+} from "./erasure-coding";
 
 let seed = 1;
 function random() {
@@ -10,12 +22,12 @@ function random() {
   return x - Math.floor(x);
 }
 
-function getRandomItems(arr: [number, Uint8Array][], n: number): [number, Uint8Array][] {
+function getRandomItems<T>(arr: [number, T][], n: number): [number, T][] {
   if (n > arr.length) {
     throw new Error("Requested more items than available in the array");
   }
 
-  const result: [number, Uint8Array][] = [];
+  const result: [number, T][] = [];
   const copy = [...arr];
 
   for (let i = 0; i < n; i++) {
@@ -27,10 +39,10 @@ function getRandomItems(arr: [number, Uint8Array][], n: number): [number, Uint8A
   return result;
 }
 
-const data = TEST_DATA.data as string;
-const segmentEc = TEST_DATA.segment.segments[0].segment_ec;
+describe("erasure coding: general", () => {
+  const data = TEST_DATA.data as string;
+  const segmentEc = TEST_DATA.segment.segments[0].segment_ec;
 
-describe("erasure coding", () => {
   seed = Math.floor(1000 * Math.random());
 
   it("should encode data", () => {
@@ -51,6 +63,140 @@ describe("erasure coding", () => {
       .join("");
 
     assert.deepStrictEqual(resultAsString, data);
+  });
+});
+
+describe("erasure coding: full", () => {
+  const wp_data = WORKPACKAGE_FULL.data as string;
+  const wp_shards = WORKPACKAGE_FULL.shards;
+  const seg_data = SEGMENT_FULL.data as string;
+  const seg_shards = SEGMENT_FULL.shards;
+
+  seed = Math.floor(1000 * Math.random());
+
+  it("should encode segment data", () => {
+    const encoded = encodeChunks(BytesBlob.parseBlobNoPrefix(seg_data));
+    const expected = seg_shards.map(BytesBlob.parseBlobNoPrefix);
+
+    assert.deepStrictEqual(encoded.length, expected.length);
+    assert.deepStrictEqual(encoded, expected);
+  });
+
+  it(`should decode segment data (random seed: ${seed})`, () => {
+    const chunks = seg_shards.map((chunk, idx) => [idx, BytesBlob.parseBlobNoPrefix(chunk)] as [number, BytesBlob]);
+    const selectedChunks = getRandomItems(chunks, 342);
+
+    const decoded = reconstructData(selectedChunks, seg_data.length);
+
+    assert.deepStrictEqual(decoded.toString().slice(2, seg_data.length + 2), seg_data);
+  });
+
+  it("should encode workpackage data", () => {
+    const encoded = encodeChunks(BytesBlob.parseBlobNoPrefix(wp_data));
+    const expected = wp_shards.map(BytesBlob.parseBlobNoPrefix);
+
+    assert.deepStrictEqual(encoded.length, expected.length);
+    assert.deepStrictEqual(encoded, expected);
+  });
+
+  it(`should decode workpackage data (random seed: ${seed})`, () => {
+    const chunks = wp_shards.map((chunk, idx) => [idx, BytesBlob.parseBlobNoPrefix(chunk)] as [number, BytesBlob]);
+    const selectedChunks = getRandomItems(chunks, 342);
+
+    const decoded = reconstructData(selectedChunks, wp_data.length);
+
+    assert.deepStrictEqual(decoded.toString().slice(2, wp_data.length + 2), wp_data);
+  });
+
+  it(`should encode and decode segment data without a change (random seed: ${seed})`, () => {
+    const encoded = encodeChunks(BytesBlob.parseBlobNoPrefix(seg_data));
+    const selectedChunks = getRandomItems(
+      encoded.map((chunk, idx) => [idx, chunk] as [number, BytesBlob]),
+      342,
+    );
+    const decoded = reconstructData(selectedChunks, seg_data.length);
+
+    assert.deepStrictEqual(decoded.toString().slice(2, seg_data.length + 2), seg_data);
+  });
+
+  it(`should encode and decode workpackage data without a change (random seed: ${seed})`, () => {
+    const encoded = encodeChunks(BytesBlob.parseBlobNoPrefix(wp_data));
+    const selectedChunks = getRandomItems(
+      encoded.map((chunk, idx) => [idx, chunk] as [number, BytesBlob]),
+      342,
+    );
+    const decoded = reconstructData(selectedChunks, wp_data.length);
+
+    assert.deepStrictEqual(decoded.toString().slice(2, wp_data.length + 2), wp_data);
+  });
+});
+
+describe("erasure coding: tiny", () => {
+  const wp_data = WORKPACKAGE_TINY.data as string;
+  const wp_shards = WORKPACKAGE_TINY.shards;
+  const seg_data = SEGMENT_TINY.data as string;
+  const seg_shards = SEGMENT_TINY.shards;
+
+  seed = Math.floor(1000 * Math.random());
+
+  it("should encode segment data", () => {
+    const encoded = condenseShardsFromFullSet(tinyChainSpec, encodeChunks(BytesBlob.parseBlobNoPrefix(seg_data)));
+    const expected = seg_shards.map(BytesBlob.parseBlobNoPrefix);
+
+    assert.deepStrictEqual(encoded.length, expected.length);
+    assert.deepStrictEqual(encoded, expected);
+  });
+
+  it(`should decode segment data (random seed: ${seed})`, () => {
+    const chunks = expandShardsToFullSet(tinyChainSpec, seg_shards.map(BytesBlob.parseBlobNoPrefix)).map(
+      (chunk, idx) => [idx, chunk] as [number, BytesBlob],
+    );
+    const selectedChunks = getRandomItems(chunks, 342);
+
+    const decoded = reconstructData(selectedChunks, seg_data.length);
+
+    assert.deepStrictEqual(decoded.toString().slice(2, seg_data.length + 2), seg_data);
+  });
+
+  it("should encode workpackage data", () => {
+    const encoded = condenseShardsFromFullSet(tinyChainSpec, encodeChunks(BytesBlob.parseBlobNoPrefix(wp_data)));
+    const expected = wp_shards.map(BytesBlob.parseBlobNoPrefix);
+
+    assert.deepStrictEqual(encoded.length, expected.length);
+    assert.deepStrictEqual(encoded, expected);
+  });
+
+  it(`should decode workpackage data (random seed: ${seed})`, () => {
+    const chunks = expandShardsToFullSet(tinyChainSpec, wp_shards.map(BytesBlob.parseBlobNoPrefix)).map(
+      (chunk, idx) => [idx, chunk] as [number, BytesBlob],
+    );
+    const selectedChunks = getRandomItems(chunks, 342);
+
+    const decoded = reconstructData(selectedChunks, wp_data.length);
+
+    assert.deepStrictEqual(decoded.toString().slice(2, wp_data.length + 2), wp_data);
+  });
+
+  it(`should encode and decode segment data without a change (random seed: ${seed})`, () => {
+    const encoded = condenseShardsFromFullSet(tinyChainSpec, encodeChunks(BytesBlob.parseBlobNoPrefix(seg_data)));
+    const selectedChunks = getRandomItems(
+      expandShardsToFullSet(tinyChainSpec, encoded).map((x, idx) => [idx, x] as [number, BytesBlob]),
+      342,
+    );
+    const decoded = reconstructData(selectedChunks, seg_data.length);
+
+    assert.deepStrictEqual(decoded.toString().slice(2, seg_data.length + 2), seg_data);
+  });
+
+  it(`should encode and decode workpackage data without a change (random seed: ${seed})`, () => {
+    const encoded = condenseShardsFromFullSet(tinyChainSpec, encodeChunks(BytesBlob.parseBlobNoPrefix(wp_data)));
+    const selectedChunks = getRandomItems(
+      expandShardsToFullSet(tinyChainSpec, encoded).map((x, idx) => [idx, x] as [number, BytesBlob]),
+      342,
+    );
+    const decoded = reconstructData(selectedChunks, wp_data.length);
+
+    assert.deepStrictEqual(decoded.toString().slice(2, wp_data.length + 2), wp_data);
   });
 });
 
