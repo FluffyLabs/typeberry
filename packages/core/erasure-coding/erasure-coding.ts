@@ -1,3 +1,4 @@
+import {PerValidator, tryAsPerValidator} from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
@@ -82,6 +83,7 @@ export function decodeData(input: FixedSizeArray<[number, BytesBlob], N_SHARDS_R
     const start = i * SHARD_LENGTH;
     const chunkShards = input.map<[number, Bytes<SHARD_LENGTH>]>(([index, piece]) => [
       index,
+      // this is split?
       Bytes.fromBlob(piece.raw.subarray(start, start + SHARD_LENGTH), SHARD_LENGTH),
     ]);
 
@@ -328,6 +330,38 @@ export function chunkingFunction(input: BytesBlob): FixedSizeArray<BytesBlob, N_
   // we get an array of `N_SHARDS_TOTAL` elements, each of length `SHARD_LENGTH * k`.
   const joined = transposed.map((c) => join(c));
   return FixedSizeArray.new(joined, N_SHARDS_TOTAL);
+}
+
+/** Split each validator's segment into numbered shards it originaly should have got. */
+export function segmentsToShards(
+  _spec: ChainSpec,
+  _segments: PerValidator<BytesBlob>,
+): PerValidator<[number, BytesBlob][]>{
+  throw new Error('asdf');
+}
+
+/** Divide shards between validators. */
+export function shardsToSegments(
+  spec: ChainSpec,
+  shards: FixedSizeArray<BytesBlob, N_SHARDS_TOTAL>
+): PerValidator<BytesBlob> {
+  const result = new Array<BytesBlob>();
+
+  const allShards = BytesBlob.blobFromParts(shards.map(x => x.raw));
+  const shardsToDrawFrom = BytesBlob.blobFromParts(allShards.raw, allShards.raw);
+  const bytesPerValidator = spec.numberECPiecesPerSegment * SHARD_LENGTH;
+  check(bytesPerValidator * spec.validatorsCount < shardsToDrawFrom.length);
+
+  for (let i = 0; i < spec.validatorsCount; i++) {
+    const start = i * bytesPerValidator;
+    const end = start + bytesPerValidator;
+
+    result.push(BytesBlob.blobFrom(
+      shardsToDrawFrom.raw.subarray(start, end)
+    ));
+  }
+
+  return tryAsPerValidator(result, spec);
 }
 
 export function expandShardsToFullSet(chainSpec: ChainSpec, shards: BytesBlob[]): BytesBlob[] {
