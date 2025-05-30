@@ -1,14 +1,10 @@
 import type { TimeSlot } from "@typeberry/block";
 import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
-import { HashSet } from "@typeberry/collections";
+import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
+import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
 import type { AccumulateState } from "../accumulate";
 import { getWorkPackageHashes } from "./accumulate-utils";
-
-export type QueueItem = {
-  report: WorkReport;
-  dependencies: WorkPackageHash[];
-};
 
 export class AccumulateQueue {
   constructor(
@@ -26,21 +22,23 @@ export class AccumulateQueue {
     return report.context.prerequisites.concat(report.segmentRootLookup.map((x) => x.workPackageHash));
   }
 
-  getWorkReportsToAccumulateLater(reports: WorkReport[]): QueueItem[] {
-    const history = this.state.accumulated.flat();
+  getWorkReportsToAccumulateLater(reports: WorkReport[]): NotYetAccumulatedReport[] {
+    const history = this.state.recentlyAccumulated.flatMap((set) => Array.from(set));
     const reportsWithDependencies = reports.filter(
       (report) => report.context.prerequisites.length > 0 || report.segmentRootLookup.length > 0,
     );
 
-    const itemsToEnqueue = reportsWithDependencies.map<QueueItem>((report) => ({
-      report,
-      dependencies: this.getWorkReportDependencies(report),
-    }));
+    const itemsToEnqueue = reportsWithDependencies.map<NotYetAccumulatedReport>((report) =>
+      NotYetAccumulatedReport.create({
+        report,
+        dependencies: asKnownSize(this.getWorkReportDependencies(report)),
+      }),
+    );
 
     return pruneQueue(itemsToEnqueue, HashSet.from(history));
   }
 
-  enqueueReports(r: QueueItem[]): WorkReport[] {
+  enqueueReports(r: NotYetAccumulatedReport[]): WorkReport[] {
     const result: WorkReport[] = [];
 
     let queue = [...r];
@@ -64,20 +62,20 @@ export class AccumulateQueue {
 
   getQueueFromState(slot: TimeSlot) {
     const phaseIndex = slot % this.chainSpec.epochLength;
-    const fromPhaseIndexToEnd = this.state.readyQueue.slice(phaseIndex);
-    const fromStartToPhaseIndex = this.state.readyQueue.slice(0, phaseIndex);
+    const fromPhaseIndexToEnd = this.state.accumulationQueue.slice(phaseIndex);
+    const fromStartToPhaseIndex = this.state.accumulationQueue.slice(0, phaseIndex);
     return fromPhaseIndexToEnd.concat(fromStartToPhaseIndex).flat();
   }
 }
 
-export function pruneQueue(reports: QueueItem[], processedHashes: HashSet<WorkPackageHash>) {
+export function pruneQueue(reports: NotYetAccumulatedReport[], processedHashes: HashSet<WorkPackageHash>) {
   return reports
     .filter(({ report }) => !processedHashes.has(report.workPackageSpec.hash))
     .map((item) => {
       const { report, dependencies } = item;
-      return {
+      return NotYetAccumulatedReport.create({
         report,
-        dependencies: dependencies.filter((dependency) => !processedHashes.has(dependency)),
-      };
+        dependencies: asKnownSize(dependencies.filter((dependency) => !processedHashes.has(dependency))),
+      });
     });
 }

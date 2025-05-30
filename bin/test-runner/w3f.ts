@@ -13,7 +13,7 @@ import {
 } from "@typeberry/block-json";
 import { tinyChainSpec } from "@typeberry/config";
 import { logger, main, runner } from "./common";
-import { AccumulateTest, runAccumulateTest } from "./w3f/accumulate";
+import { AccumulateTestFull, AccumulateTestTiny, runAccumulateTestFull, runAccumulateTestTiny } from "./w3f/accumulate";
 import { AssurancesTestFull, AssurancesTestTiny, runAssurancesTestFull, runAssurancesTestTiny } from "./w3f/assurances";
 import { AuthorizationsTest, runAuthorizationsTest } from "./w3f/authorizations";
 import {
@@ -56,7 +56,8 @@ import { StatisticsTestFull, StatisticsTestTiny, runStatisticsTestFull, runStati
 import { runTrieTest, trieTestSuiteFromJson } from "./w3f/trie";
 
 const runners = [
-  runner("accumulate", AccumulateTest.fromJson, runAccumulateTest),
+  runner("accumulate", AccumulateTestTiny.fromJson, runAccumulateTestTiny),
+  runner("accumulate", AccumulateTestFull.fromJson, runAccumulateTestFull),
   runner("assurances/tiny", AssurancesTestTiny.fromJson, runAssurancesTestTiny),
   runner("assurances/full", AssurancesTestFull.fromJson, runAssurancesTestFull),
   runner("authorizations", AuthorizationsTest.fromJson, runAuthorizationsTest),

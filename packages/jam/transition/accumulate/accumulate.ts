@@ -1,10 +1,19 @@
-import { type EntropyHash, type ServiceGas, type ServiceId, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
-import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
+import {
+  type EntropyHash,
+  type ServiceGas,
+  type ServiceId,
+  type TimeSlot,
+  tryAsPerEpochBlock,
+  tryAsServiceGas,
+} from "@typeberry/block";
+import type { WorkReport } from "@typeberry/block/work-report";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 
+import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
+import { FixedSizeArray, HashSet } from "@typeberry/collections";
 import { KeccakHasher } from "@typeberry/hash/keccak";
 import { PartialStateDb } from "@typeberry/jam-host-calls/externalities/partial-state-db";
 import type { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer";
@@ -15,16 +24,17 @@ import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status";
 import {
   AutoAccumulate,
+  LookupHistoryItem,
   PrivilegedServices,
-  type Service,
   type State,
   hashComparator,
   tryAsPerCore,
 } from "@typeberry/state";
+import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
 import { InMemoryTrie } from "@typeberry/trie";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher";
-import { Result } from "@typeberry/utils";
-import { AccumulateQueue, type QueueItem, pruneQueue } from "./accumulate-queue";
+import { type MutablePick, Result } from "@typeberry/utils";
+import { AccumulateQueue, pruneQueue } from "./accumulate-queue";
 import { getWorkPackageHashes, uniquePreserveOrder } from "./accumulate-utils";
 import {
   AccountsInfoExternalities,
@@ -44,15 +54,10 @@ export type AccumulateInput = {
 };
 
 export type AccumulateState = {
-  timeslot: TimeSlot;
   entropy: EntropyHash;
-  readyQueue: QueueItem[][];
-  accumulated: WorkPackageHash[][];
-  privileges: PrivilegedServices;
-  services: Map<ServiceId, Service>;
   designatedValidatorData?: State["designatedValidatorData"];
   authQueues?: State["authQueues"];
-};
+} & MutablePick<State, "privilegedServices" | "recentlyAccumulated" | "accumulationQueue" | "timeslot" | "services">;
 
 type InvocationResult = {
   stateUpdate: StateUpdate | null;
@@ -81,6 +86,12 @@ const GAS_TO_INVOKE_WORK_REPORT = 10_000_000n;
 const ACCUMULATE_TOTAL_GAS = 3_500_000_000n;
 
 const logger = Logger.new(__filename, "accumulate");
+
+const ARGS_CODEC = codec.object({
+  slot: codec.u32.asOpaque<TimeSlot>(),
+  serviceId: codec.u32.asOpaque<ServiceId>(),
+  operands: codec.sequenceVarLen(Operand.Codec),
+});
 
 export class Accumulate {
   constructor(
@@ -137,11 +148,8 @@ export class Accumulate {
       accountsLookup: new AccountsLookupExternalities(),
     };
 
-    const executor = new PvmExecutor(code.blob, externalities, this.chainSpec);
-    const slotEncoded = u32AsLeBytes(slot);
-    const serviceIdEncoded = u32AsLeBytes(serviceId);
-    const operandsEncoded = Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), operands, this.chainSpec);
-    const args = BytesBlob.blobFromParts([slotEncoded, serviceIdEncoded, operandsEncoded.raw]);
+    const executor = PvmExecutor.createAccumulateExecutor(code.blob, externalities, this.chainSpec);
+    const args = Encoder.encodeObject(ARGS_CODEC, { slot, serviceId, operands }, this.chainSpec);
 
     const result = await executor.run(args, tryAsGas(gas));
     const [newState, checkpoint] = partialState.getStateUpdates();
@@ -163,7 +171,7 @@ export class Accumulate {
 
   private getOperandsAndGasCost(serviceId: ServiceId, reports: WorkReport[]) {
     let gasCost =
-      this.state.privileges.autoAccumulateServices.find((x) => x.service === serviceId)?.gasLimit ??
+      this.state.privilegedServices.autoAccumulateServices.find((x) => x.service === serviceId)?.gasLimit ??
       tryAsServiceGas(0n);
 
     const operands: Operand[] = [];
@@ -197,7 +205,7 @@ export class Accumulate {
     const result = await this.pvmAccumulateInvocation(slot, serviceId, operands, gasCost);
 
     if (result.isError) {
-      return { stateUpdate: null, consumedGas: 0n };
+      return { stateUpdate: null, consumedGas: gasCost };
     }
 
     return result.ok;
@@ -241,12 +249,13 @@ export class Accumulate {
   }
 
   async accumulateInParallel(reports: WorkReport[], slot: TimeSlot): Promise<ParallelAccumulationResult> {
-    const autoAccumulateServiceIds = this.state.privileges.autoAccumulateServices.map(({ service }) => service);
+    const autoAccumulateServiceIds = this.state.privilegedServices.autoAccumulateServices.map(({ service }) => service);
     const allServiceIds = reports
       .flatMap((report) => report.results.map((result) => result.serviceId))
       .concat(Array.from(autoAccumulateServiceIds));
     const serviceIds = uniquePreserveOrder(autoAccumulateServiceIds.concat(allServiceIds));
 
+    const stateUpdates: [ServiceId, StateUpdate][] = [];
     const gasCosts: [ServiceId, ServiceGas][] = [];
     const yieldedRoots: [ServiceId, OpaqueHash][] = [];
     const pendingTransfers: [ServiceId, PendingTransfer[]][] = [];
@@ -254,20 +263,21 @@ export class Accumulate {
     for (const serviceId of serviceIds) {
       const { consumedGas, stateUpdate } = await this.accumulateSingleService(serviceId, reports, slot);
 
+      gasCosts.push([serviceId, tryAsServiceGas(consumedGas)]);
+
       if (stateUpdate === null) {
         continue;
       }
 
-      gasCosts.push([serviceId, tryAsServiceGas(consumedGas)]);
+      stateUpdates.push([serviceId, stateUpdate]);
+      pendingTransfers.push([serviceId, stateUpdate.transfers]);
 
       if (stateUpdate.yieldedRoot !== null) {
         yieldedRoots.push([serviceId, stateUpdate.yieldedRoot]);
       }
-
-      pendingTransfers.push([serviceId, stateUpdate.transfers]);
-
-      this.updateServicesInState(stateUpdate, serviceId, slot);
     }
+
+    this.updateServicesInState(stateUpdates, slot);
 
     return {
       pendingTransfers,
@@ -276,92 +286,91 @@ export class Accumulate {
     };
   }
 
-  private updateServicesInState(stateUpdate: StateUpdate, serviceId: ServiceId, slot: TimeSlot): void {
-    const { authManager, manager, validatorsManager } = this.state.privileges;
+  private updateServicesInState(stateUpdates: [ServiceId, StateUpdate][], slot: TimeSlot): void {
+    const { authManager, manager, validatorsManager } = this.state.privilegedServices;
+    for (const [serviceId, stateUpdate] of stateUpdates) {
+      if (serviceId === manager && stateUpdate.priviledgedServices !== null) {
+        const priviledgedServices = stateUpdate.priviledgedServices;
 
-    if (serviceId === manager && stateUpdate.priviledgedServices !== null) {
-      const priviledgedServices = stateUpdate.priviledgedServices;
-
-      this.state.privileges = PrivilegedServices.create({
-        manager: priviledgedServices.manager,
-        authManager: priviledgedServices.authorizer,
-        validatorsManager: priviledgedServices.validators,
-        autoAccumulateServices: priviledgedServices.autoAccumulate.map(([service, gasLimit]) =>
-          AutoAccumulate.create({ gasLimit, service }),
-        ),
-      });
-    }
-
-    if (serviceId === authManager && stateUpdate.authorizationQueues !== null) {
-      if (this.state.authQueues === undefined) {
-        const queue = new Array(this.chainSpec.coresCount);
-        queue.fill([]);
-        this.state.authQueues = tryAsPerCore(queue, this.chainSpec);
+        this.state.privilegedServices = PrivilegedServices.create({
+          manager: priviledgedServices.manager,
+          authManager: priviledgedServices.authorizer,
+          validatorsManager: priviledgedServices.validators,
+          autoAccumulateServices: priviledgedServices.autoAccumulate.map(([service, gasLimit]) =>
+            AutoAccumulate.create({ gasLimit, service }),
+          ),
+        });
       }
 
-      for (const [coreIndex, authQueue] of stateUpdate.authorizationQueues) {
-        this.state.authQueues[coreIndex].push(...authQueue.map((hash) => hash.asOpaque()));
+      if (serviceId === authManager && stateUpdate.authorizationQueues !== null) {
+        if (this.state.authQueues === undefined) {
+          const queue = new Array(this.chainSpec.coresCount);
+          queue.fill([]);
+          this.state.authQueues = tryAsPerCore(queue, this.chainSpec);
+        }
+
+        for (const [coreIndex, authQueue] of stateUpdate.authorizationQueues) {
+          this.state.authQueues[coreIndex] = FixedSizeArray.new(
+            authQueue.map((hash) => hash.asOpaque()),
+            AUTHORIZATION_QUEUE_SIZE,
+          );
+        }
       }
-    }
 
-    if (serviceId === validatorsManager && stateUpdate.validatorsData !== null) {
-      this.state.designatedValidatorData = stateUpdate.validatorsData;
-    }
-
-    if (stateUpdate.updatedServiceInfo !== null) {
-      const currentService = this.state.services.get(serviceId);
-      if (currentService !== undefined) {
-        currentService.data.info = stateUpdate.updatedServiceInfo;
+      if (serviceId === validatorsManager && stateUpdate.validatorsData !== null) {
+        this.state.designatedValidatorData = stateUpdate.validatorsData;
       }
-    }
 
-    if (stateUpdate.newServices !== null) {
-      for (const service of stateUpdate.newServices) {
-        const serviceId = service.id;
-        this.state.services.set(serviceId, service);
+      if (stateUpdate.updatedServiceInfo !== null) {
+        const currentService = this.state.services.get(serviceId);
+        if (currentService !== undefined) {
+          currentService.data.info = stateUpdate.updatedServiceInfo;
+        }
       }
-    }
 
-    if (stateUpdate.ejectedServices !== null) {
-      for (const serviceId of stateUpdate.ejectedServices) {
-        this.state.services.delete(serviceId);
+      if (stateUpdate.newServices !== null) {
+        for (const service of stateUpdate.newServices) {
+          const serviceId = service.id;
+          this.state.services.set(serviceId, service);
+        }
       }
-    }
 
-    for (const { item, serviceId } of stateUpdate.providedPreimages) {
-      const { blob, hash } = item;
-      const slots = this.state.services
-        .get(serviceId)
-        ?.data.lookupHistory.get(hash)
-        ?.find(({ length }) => length === blob.length)?.slots;
+      if (stateUpdate.ejectedServices !== null) {
+        for (const serviceId of stateUpdate.ejectedServices) {
+          this.state.services.delete(serviceId);
+        }
+      }
 
-      if (slots !== undefined && slots.length === 0) {
-        slots.push(slot);
-        this.state.services.get(serviceId)?.data.preimages.set(hash, item);
+      for (const { item, serviceId } of stateUpdate.providedPreimages) {
+        const { blob, hash } = item;
+        const lookupHistoryItem = this.state.services
+          .get(serviceId)
+          ?.data.lookupHistory.get(hash)
+          ?.find(({ length }) => length === blob.length);
+
+        if (lookupHistoryItem?.slots !== undefined && LookupHistoryItem.isRequested(lookupHistoryItem)) {
+          lookupHistoryItem.slots.push(slot);
+          this.state.services.get(serviceId)?.data.preimages.set(hash, item);
+        }
       }
     }
   }
 
-  private updateState(accumulated: WorkReport[], toAccumulateLater: QueueItem[], slot: TimeSlot) {
+  private updateState(accumulated: WorkReport[], toAccumulateLater: NotYetAccumulatedReport[], slot: TimeSlot) {
     const epochLength = this.chainSpec.epochLength;
-
-    for (let i = 0; i < epochLength - 1; i++) {
-      this.state.accumulated[i] = this.state.accumulated[i + 1];
-    }
-
-    const accumulatedSet = getWorkPackageHashes(accumulated);
-    this.state.accumulated[epochLength - 1] = Array.from(accumulatedSet).sort((a, b) => hashComparator(a, b).value);
-
     const phaseIndex = slot % epochLength;
-
-    this.state.readyQueue[phaseIndex] = pruneQueue(toAccumulateLater, accumulatedSet);
+    const accumulatedSet = getWorkPackageHashes(accumulated);
+    const accumulatedSorted = Array.from(accumulatedSet).sort((a, b) => hashComparator(a, b).value);
+    const newRecentlyAccumulated = this.state.recentlyAccumulated.slice(1).concat(HashSet.from(accumulatedSorted));
+    this.state.recentlyAccumulated = tryAsPerEpochBlock(newRecentlyAccumulated, this.chainSpec);
+    this.state.accumulationQueue[phaseIndex] = pruneQueue(toAccumulateLater, accumulatedSet);
 
     for (let i = 1; i < epochLength; i++) {
       if (i < slot - this.state.timeslot) {
-        this.state.readyQueue[(phaseIndex + epochLength - i) % epochLength] = [];
+        this.state.accumulationQueue[(phaseIndex + epochLength - i) % epochLength] = [];
       } else {
         const queueIndex = (phaseIndex + epochLength - i) % epochLength;
-        this.state.readyQueue[queueIndex] = pruneQueue(this.state.readyQueue[queueIndex], accumulatedSet);
+        this.state.accumulationQueue[queueIndex] = pruneQueue(this.state.accumulationQueue[queueIndex], accumulatedSet);
       }
     }
 
@@ -371,7 +380,7 @@ export class Accumulate {
   private getGasLimit() {
     const calculatedGasLimit =
       GAS_TO_INVOKE_WORK_REPORT * BigInt(this.chainSpec.coresCount) +
-      this.state.privileges.autoAccumulateServices.reduce((acc, { gasLimit }) => acc + gasLimit, 0n);
+      this.state.privilegedServices.autoAccumulateServices.reduce((acc, { gasLimit }) => acc + gasLimit, 0n);
     const gasLimit = tryAsServiceGas(
       ACCUMULATE_TOTAL_GAS > calculatedGasLimit ? ACCUMULATE_TOTAL_GAS : calculatedGasLimit,
     );
@@ -379,7 +388,7 @@ export class Accumulate {
     return tryAsServiceGas(gasLimit);
   }
 
-  async transition({ reports, slot }: AccumulateInput): Promise<Result<AccumulateRoot, never>> {
+  async transition({ reports, slot }: AccumulateInput): Promise<AccumulateRoot> {
     const accumulateQueue = new AccumulateQueue(this.state, this.chainSpec);
     const toAccumulateImmediately = accumulateQueue.getWorkReportsToAccumulateImmediately(reports);
     const toAccumulateLater = accumulateQueue.getWorkReportsToAccumulateLater(reports);
@@ -404,7 +413,7 @@ export class Accumulate {
     this.updateState(accumulated, toAccumulateLater, slot);
 
     const rootHash = await getRootHash(yieldedRoots);
-    return Result.ok(rootHash);
+    return rootHash;
   }
 }
 

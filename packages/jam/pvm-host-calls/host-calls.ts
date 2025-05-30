@@ -56,9 +56,8 @@ export class HostCalls {
     return tryAsBigGas(gasConsumed);
   }
 
-  private getReturnValue(status: Status, pvmInstance: Interpreter, initialGas: Gas): ReturnValue {
-    const gas = pvmInstance.getGasCounter().get();
-    const gasConsumed = this.calculateConsumedGas(initialGas, gas);
+  private getReturnValue(status: Status, pvmInstance: Interpreter): ReturnValue {
+    const gasConsumed = pvmInstance.getGasConsumed();
     if (status === Status.OOG) {
       return ReturnValue.fromOOG(gasConsumed);
     }
@@ -83,12 +82,12 @@ export class HostCalls {
     return ReturnValue.fromPanic(gasConsumed);
   }
 
-  private async execute(pvmInstance: Interpreter, initialGas: Gas) {
+  private async execute(pvmInstance: Interpreter) {
     pvmInstance.runProgram();
     for (;;) {
       let status = pvmInstance.getStatus();
       if (status !== Status.HOST) {
-        return this.getReturnValue(status, pvmInstance, initialGas);
+        return this.getReturnValue(status, pvmInstance);
       }
       check(
         pvmInstance.getExitParam() !== null,
@@ -102,13 +101,13 @@ export class HostCalls {
       const gasCost = typeof hostCall.gasCost === "number" ? hostCall.gasCost : hostCall.gasCost(regs);
       const underflow = gas.sub(gasCost);
       if (underflow) {
-        return ReturnValue.fromOOG(initialGas);
+        return ReturnValue.fromOOG(pvmInstance.getGasConsumed());
       }
       const result = await hostCall.execute(gas, regs, memory);
 
       if (result === PvmExecution.Halt) {
         status = Status.HALT;
-        return this.getReturnValue(status, pvmInstance, initialGas);
+        return this.getReturnValue(status, pvmInstance);
       }
 
       pvmInstance.runProgram();
@@ -126,7 +125,7 @@ export class HostCalls {
     const pvmInstance = await this.pvmInstanceManager.getInstance();
     pvmInstance.reset(rawProgram, initialPc, initialGas, maybeRegisters, maybeMemory);
     try {
-      return await this.execute(pvmInstance, initialGas);
+      return await this.execute(pvmInstance);
     } finally {
       this.pvmInstanceManager.releaseInstance(pvmInstance);
     }
