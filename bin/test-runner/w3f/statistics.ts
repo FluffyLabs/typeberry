@@ -12,6 +12,7 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import { InMemoryState, ServiceStatistics, type ValidatorData } from "@typeberry/state";
 import { JsonStatisticsData, validatorDataFromJson } from "@typeberry/state-json";
 import { type Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics";
+import { OK, Result } from "@typeberry/utils";
 
 class TinyInput {
   static fromJson = json.object<TinyInput, Input>(
@@ -123,7 +124,7 @@ export async function runStatisticsTest(
   // when
   const update = statistics.transition(input);
   const state = InMemoryState.partial(spec, preState);
-  state.applyUpdate(update);
+  assert.deepEqual(state.applyUpdate(update), Result.ok(OK));
 
   // NOTE [MaSo] This is a workaround for the fact that the test data does not contain any posterior service statistics.
   assert.deepStrictEqual(postState.statistics.services.size, 0, "We expect services are not calculated.");

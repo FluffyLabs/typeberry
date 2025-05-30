@@ -188,58 +188,6 @@ describe("InMemoryState", () => {
     );
   });
 
-  it("should fail to update storage of non-existing service", () => {
-    const state = InMemoryState.empty(tinyChainSpec);
-
-    const serviceId = tryAsServiceId(42); // Not created
-    const key = Bytes.zero(HASH_SIZE).asOpaque();
-    const blob = BytesBlob.blobFromString("data");
-    const item = StorageItem.create({ hash: key, blob });
-
-    const result = state.applyUpdate({
-      storage: [
-        {
-          serviceId,
-          action: {
-            kind: UpdateStorageKind.Set,
-            storage: item,
-          },
-        },
-      ],
-    });
-
-    assert.deepEqual(
-      result,
-      Result.error(UpdateError.NoService, `Attempting to update storage of non-existing service: ${serviceId}`),
-    );
-  });
-
-  it("should fail to update storage of non-existing service", () => {
-    const state = InMemoryState.empty(tinyChainSpec);
-
-    const serviceId = tryAsServiceId(42); // Not created
-    const key = Bytes.zero(HASH_SIZE).asOpaque();
-    const blob = BytesBlob.blobFromString("data");
-    const item = StorageItem.create({ hash: key, blob });
-
-    const result = state.applyUpdate({
-      storage: [
-        {
-          serviceId,
-          action: {
-            kind: UpdateStorageKind.Set,
-            storage: item,
-          },
-        },
-      ],
-    });
-
-    assert.deepEqual(
-      result,
-      Result.error(UpdateError.NoService, `Attempting to update storage of non-existing service: ${serviceId}`),
-    );
-  });
-
   it("should provide a preimage to an existing service", () => {
     const state = InMemoryState.empty(tinyChainSpec);
 

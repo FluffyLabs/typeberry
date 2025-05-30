@@ -149,6 +149,8 @@ export class Assurances {
     return Result.ok({
       availableReports,
       stateUpdate: {
+        // Since we are copying the original array and only assigning to
+        // existing cores, this cast is safe here.
         availabilityAssignment: asKnownSize(availabilityAssignment),
       },
     });

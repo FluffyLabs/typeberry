@@ -62,10 +62,15 @@ const lookupHistoryCodec = codec
       }
       return entries;
     },
-    // TODO [ToDr] we have a bug here, if there are multiple entries for the same hash
-    // (only one will end up in the dictionary)
-    (data): HashDictionary<PreimageHash, LookupHistoryItem[]> =>
-      HashDictionary.fromEntries(data.map((x) => [x.key, x.data])),
+    (items): HashDictionary<PreimageHash, LookupHistoryItem[]> => {
+      const dict = HashDictionary.new<PreimageHash, LookupHistoryItem[]>();
+      for (const { key, data } of items) {
+        const items = dict.get(key) ?? [];
+        items.push(...data);
+        dict.set(key, items);
+      }
+      return dict;
+    },
   );
 
 class ServiceWithCodec extends InMemoryService {
@@ -78,6 +83,11 @@ class ServiceWithCodec extends InMemoryService {
       storage: codecHashDictionary(StorageItem.Codec, (x) => x.hash),
     }),
   });
+
+  private constructor(id: ServiceId, data: InMemoryService["data"]) {
+    super(id, data);
+  }
+
   static create({ id, data }: CodecRecord<ServiceWithCodec>) {
     return new ServiceWithCodec(id, data);
   }
