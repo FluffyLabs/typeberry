@@ -271,11 +271,7 @@ export function encodeChunks(chainSpec: ChainSpec, input: BytesBlob): BytesBlob[
   return encodedPieces;
 }
 
-export function reconstructData(
-  _chainSpec: ChainSpec,
-  input: [number, BytesBlob][],
-  expectedLength: number,
-): BytesBlob {
+export function reconstructData(input: [number, BytesBlob][], expectedLength: number): BytesBlob {
   const trimInput = input.slice(0, N_SHARDS);
   const result = new Array<BytesBlob>();
   const pieces = trimInput[0][1].length / SHARD_LENGTH;

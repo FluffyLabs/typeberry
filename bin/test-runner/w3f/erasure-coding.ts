@@ -2,7 +2,8 @@ import assert from "node:assert";
 import { it } from "node:test";
 
 import { fromJson } from "@typeberry/block-json";
-import type { BytesBlob } from "@typeberry/bytes";
+import { BytesBlob } from "@typeberry/bytes";
+import type { ChainSpec } from "@typeberry/config";
 import { encodeChunks, reconstructData } from "@typeberry/erasure-coding/erasure-coding";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
@@ -32,8 +33,44 @@ logger.info(`Erasure encoding tests random seed: ${seed}`);
 export async function runEcTest(test: EcTest, path: string) {
   const chainSpec = getChainSpec(path);
 
+  // Expands compact shards to full validator set
+  function expandShardsToFullSet(chainSpec: ChainSpec, shards: BytesBlob[]): BytesBlob[] {
+    if (shards.length === 1023) {
+      return shards;
+    }
+    const shardSplitFactor = chainSpec.numberECPiecesPerSegment / 6;
+    const shardLength = shards[0].length / shardSplitFactor;
+    const result: BytesBlob[] = Array.from({ length: 1023 }, () => BytesBlob.blobFrom(new Uint8Array(shardLength)));
+    for (let i = 0; i < shards.length; i++) {
+      const shard = shards[i];
+      let offset = 0;
+      for (let j = 0; j < shard.length / 2; j += shardSplitFactor) {
+        for (let k = 0; k < shardSplitFactor; k++) {
+          const index = i * shardSplitFactor + k;
+          if (index >= 1023) {
+            continue; // Prevent overflow
+          }
+          const shardStart = (j + k) * 2;
+          const shardEnd = shardStart + 2;
+          result[index].raw.set(shard.raw.subarray(shardStart, shardEnd), offset);
+        }
+        offset += 2;
+      }
+    }
+
+    return result;
+  }
+
+  function shrinkShardsToChainSpecTest(chainSpec: ChainSpec, shards: BytesBlob[]) {
+    if (chainSpec.validatorsCount === 1023) {
+      return shards;
+    }
+
+    return shards;
+  }
+
   it("should encode data", () => {
-    const shards = encodeChunks(chainSpec, test.data);
+    const shards = shrinkShardsToChainSpecTest(chainSpec, encodeChunks(chainSpec, test.data));
 
     assert.strictEqual(shards.length, test.shards.length);
     assert.deepStrictEqual(shards[0].toString(), test.shards[0].toString());
@@ -41,20 +78,23 @@ export async function runEcTest(test: EcTest, path: string) {
   });
 
   it("should decode from first 1/3 of shards", () => {
-    const shards = test.shards.map((shard, idx) => [idx, shard] as [number, BytesBlob]);
+    const shards = expandShardsToFullSet(chainSpec, test.shards).map(
+      (shard, idx) => [idx, shard] as [number, BytesBlob],
+    );
 
-    const decoded = reconstructData(chainSpec, shards, test.data.length);
+    const decoded = reconstructData(shards, test.data.length);
 
     assert.strictEqual(decoded.length, test.data.length);
     assert.deepStrictEqual(decoded.toString(), test.data.toString());
   });
 
   it("should decode from random 1/3 of shards", () => {
-    const randomShards = chainSpec.validatorsCount === 6 ? 2 : 342;
-    const shards = test.shards.map((shard, idx) => [idx, shard] as [number, BytesBlob]);
+    const shards = expandShardsToFullSet(chainSpec, test.shards).map(
+      (shard, idx) => [idx, shard] as [number, BytesBlob],
+    );
 
-    const selectedShards = getRandomItems(shards, randomShards);
-    const decoded = reconstructData(chainSpec, selectedShards, test.data.length);
+    const selectedShards = getRandomItems(shards, 342);
+    const decoded = reconstructData(selectedShards, test.data.length);
 
     assert.strictEqual(decoded.length, test.data.length);
     // Cannot decode from tiny testnet shards
