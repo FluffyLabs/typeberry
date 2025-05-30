@@ -4,10 +4,10 @@ import { it } from "node:test";
 import { fromJson } from "@typeberry/block-json";
 import type { BytesBlob } from "@typeberry/bytes";
 import {
+  chunkingFunction,
   condenseShardsFromFullSet,
-  encodeChunks,
+  decodeData,
   expandShardsToFullSet,
-  reconstructData,
 } from "@typeberry/erasure-coding/erasure-coding";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Logger } from "@typeberry/logger";
@@ -38,7 +38,7 @@ export async function runEcTest(test: EcTest, path: string) {
   const chainSpec = getChainSpec(path);
 
   it("should encode data", () => {
-    const shards = condenseShardsFromFullSet(chainSpec, encodeChunks(test.data));
+    const shards = condenseShardsFromFullSet(chainSpec, chunkingFunction(test.data));
 
     assert.strictEqual(shards.length, test.shards.length);
     assert.deepStrictEqual(shards[0].toString(), test.shards[0].toString());
@@ -50,7 +50,7 @@ export async function runEcTest(test: EcTest, path: string) {
       (shard, idx) => [idx, shard] as [number, BytesBlob],
     );
 
-    const decoded = reconstructData(shards, test.data.length);
+    const decoded = decodeData(shards, test.data.length);
 
     assert.strictEqual(decoded.length, test.data.length);
     assert.deepStrictEqual(decoded.toString(), test.data.toString());
@@ -62,7 +62,7 @@ export async function runEcTest(test: EcTest, path: string) {
     );
 
     const selectedShards = getRandomItems(shards, 342);
-    const decoded = reconstructData(selectedShards, test.data.length);
+    const decoded = decodeData(selectedShards, test.data.length);
 
     assert.strictEqual(decoded.length, test.data.length);
     // Cannot decode from tiny testnet shards
