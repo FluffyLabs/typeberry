@@ -1,3 +1,4 @@
+import assert from 'assert'
 import { it } from "node:test";
 
 import type { PerValidator } from "@typeberry/block";
@@ -50,13 +51,13 @@ export async function runEcTest(test: EcTest, path: string) {
     const shards = segmentsToShards(spec, test.shards);
     const allShards = shards.flat();
     const selectedShards = FixedSizeArray.new(allShards.slice(0, N_SHARDS_REQUIRED), N_SHARDS_REQUIRED);
-    // const ourSelectedShards = (() => {
-    //   const shards = padAndEncodeData(test.data);
-    //   const segments = shardsToSegments(spec, shards);
-    //   const shardsBack = segmentsToShards(spec, segments).flatMap(x => x);
-    //   return FixedSizeArray.new(shardsBack.slice(0, N_SHARDS_REQUIRED), N_SHARDS_REQUIRED);
-    // })();
-    // deepEqual(selectedShards, ourSelectedShards);
+    const ourSelectedShards = (() => {
+      const shards = padAndEncodeData(test.data);
+      const segments = shardsToSegments(spec, shards);
+      const shardsBack = segmentsToShards(spec, segments).flatMap(x => x);
+      return FixedSizeArray.new(shardsBack.slice(0, N_SHARDS_REQUIRED), N_SHARDS_REQUIRED);
+    })();
+    deepEqual(selectedShards, ourSelectedShards);
     const decoded = decodeData(selectedShards);
 
     deepEqual(decoded, test.data);
