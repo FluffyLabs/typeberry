@@ -1,4 +1,4 @@
-import {PerValidator, tryAsPerValidator} from "@typeberry/block";
+import { type PerValidator, tryAsPerValidator } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
@@ -74,8 +74,11 @@ export function padAndEncodeData(input: BytesBlob) {
 export function decodeData(input: FixedSizeArray<[number, BytesBlob], N_SHARDS_REQUIRED>): BytesBlob {
   const n = input[0][1].length;
   const pieces = Math.floor(n / SHARD_LENGTH);
-  check(pieces * SHARD_LENGTH === n);
-  check(input.every(([_idx, piece]) => piece.length === n));
+  check(pieces * SHARD_LENGTH === n, "Each piece length needs to be a multiple of `SHARD_LENGTH`");
+  check(
+    input.every(([_idx, piece]) => piece.length === n),
+    "Every piece must have the same length!",
+  );
 
   const chunks = FixedSizeArray.fill(() => Bytes.zero(CHUNK_SIZE), pieces);
 
@@ -334,31 +337,62 @@ export function chunkingFunction(input: BytesBlob): FixedSizeArray<BytesBlob, N_
 
 /** Split each validator's segment into numbered shards it originaly should have got. */
 export function segmentsToShards(
-  _spec: ChainSpec,
-  _segments: PerValidator<BytesBlob>,
-): PerValidator<[number, BytesBlob][]>{
-  throw new Error('asdf');
+  spec: ChainSpec,
+  segments: PerValidator<BytesBlob>,
+): PerValidator<[number, BytesBlob][]> {
+  const result = new Array<[number, BytesBlob][]>();
+
+  const segmentSize = segments[0].length;
+  check(
+    segments.every((x) => x.length === segmentSize),
+    "Each segment must be the same length!",
+  );
+
+  const totalData = segments.map((x) => x.length).reduce((sum, x) => sum + x, 0);
+  const shardSize = Math.floor(totalData / N_SHARDS_TOTAL);
+  const shardsPerSegment = Math.floor(segmentSize / shardSize);
+
+  let currentShard = 0;
+  for (const s of segments) {
+    const validatorShards = new Array<[number, BytesBlob]>();
+    for (let i = 0; i < shardsPerSegment; i++) {
+      const start = i * shardSize;
+      const end = start + shardSize;
+      const shard = BytesBlob.blobFrom(s.raw.subarray(start, end));
+      // TODO [ToDr] we may possibly have not enough data for some of the shards here
+      if (shard.length === shardSize) {
+        validatorShards.push([currentShard, shard]);
+      }
+
+      currentShard = (currentShard + 1) % N_SHARDS_TOTAL;
+    }
+    result.push(validatorShards);
+  }
+
+  return tryAsPerValidator(result, spec);
 }
 
 /** Divide shards between validators. */
 export function shardsToSegments(
   spec: ChainSpec,
-  shards: FixedSizeArray<BytesBlob, N_SHARDS_TOTAL>
+  shards: FixedSizeArray<BytesBlob, N_SHARDS_TOTAL>,
 ): PerValidator<BytesBlob> {
   const result = new Array<BytesBlob>();
 
-  const allShards = BytesBlob.blobFromParts(shards.map(x => x.raw));
-  const shardsToDrawFrom = BytesBlob.blobFromParts(allShards.raw, allShards.raw);
-  const bytesPerValidator = spec.numberECPiecesPerSegment * SHARD_LENGTH;
-  check(bytesPerValidator * spec.validatorsCount < shardsToDrawFrom.length);
+  const allShards = BytesBlob.blobFromParts(shards.map((x) => x.raw));
+  const shardSize = allShards.length / N_SHARDS_TOTAL;
+
+  // wrap around the data to have enough
+  const bytesToDrawFrom = BytesBlob.blobFromParts(allShards.raw, allShards.raw);
+  const bytesPerValidator = Math.ceil(allShards.length / spec.validatorsCount);
+  // align number of bytes to the shard length.
+  const alignedBytesPerValidator = Math.ceil(bytesPerValidator / shardSize) * shardSize;
 
   for (let i = 0; i < spec.validatorsCount; i++) {
-    const start = i * bytesPerValidator;
-    const end = start + bytesPerValidator;
+    const start = i * alignedBytesPerValidator;
+    const end = start + alignedBytesPerValidator;
 
-    result.push(BytesBlob.blobFrom(
-      shardsToDrawFrom.raw.subarray(start, end)
-    ));
+    result.push(BytesBlob.blobFrom(bytesToDrawFrom.raw.subarray(start, end)));
   }
 
   return tryAsPerValidator(result, spec);
