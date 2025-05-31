@@ -4,7 +4,7 @@ import { blake2b } from "@typeberry/hash";
 import { LookupHistoryItem, PreimageItem, type ServicesUpdate, type State, UpdatePreimage } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 
-export type PreimagesState = Pick<State, "service">;
+export type PreimagesState = Pick<State, "getService">;
 
 export type PreimagesStateUpdate = Pick<ServicesUpdate, "preimages">;
 
@@ -52,12 +52,12 @@ export class Preimages {
       const { requester, blob } = preimage;
       const hash: PreimageHash = blake2b.hashBytes(blob).asOpaque();
 
-      const service = this.state.service(requester);
+      const service = this.state.getService(requester);
       if (service === null) {
         return Result.error(PreimagesErrorCode.AccountNotFound);
       }
 
-      const preimageHistory = service.lookupHistory(hash);
+      const preimageHistory = service.getLookupHistory(hash);
       const lookupHistoryItem = preimageHistory?.find(
         (item) => item.hash.isEqualTo(hash) && item.length === blob.length,
       );

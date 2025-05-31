@@ -67,7 +67,7 @@ export class PartialStateDb implements PartialState {
     /** `x_i`: next service id we are going to create. */
     private nextNewServiceId: ServiceId,
   ) {
-    const service = this.state.service(this.currentServiceId);
+    const service = this.state.getService(this.currentServiceId);
     if (service === undefined) {
       throw new Error(`Invalid state initialization. Service info missing for ${this.currentServiceId}.`);
     }
@@ -93,13 +93,13 @@ export class PartialStateDb implements PartialState {
       return this.updatedState.updatedServiceInfo;
     }
 
-    const maybeService = this.state.service(this.currentServiceId);
+    const maybeService = this.state.getService(this.currentServiceId);
     const service = ensure<Service | null, Service>(
       maybeService,
       maybeService !== null,
       "Service existence in state validated in constructor.",
     );
-    return service.info();
+    return service.getInfo();
   }
 
   /**
@@ -128,11 +128,11 @@ export class PartialStateDb implements PartialState {
       return maybeNewService.data.info;
     }
 
-    const maybeService = this.state.service(destination);
+    const maybeService = this.state.getService(destination);
     if (maybeService === null) {
       return null;
     }
-    return maybeService.info();
+    return maybeService.getInfo();
   }
 
   /** Get status of a preimage of current service taking into account any updates. */
@@ -144,8 +144,8 @@ export class PartialStateDb implements PartialState {
       return updatedPreimage;
     }
     // fallback to state lookup
-    const service = this.state.service(this.currentServiceId);
-    const lookup = service?.lookupHistory(hash);
+    const service = this.state.getService(this.currentServiceId);
+    const lookup = service?.getLookupHistory(hash);
     const status = lookup?.find((item) => BigInt(item.length) === length);
     return status === undefined ? null : PreimageUpdate.update(status);
   }
@@ -164,8 +164,8 @@ export class PartialStateDb implements PartialState {
    *   lookup status.
    */
   private isTombstoneExpired(destination: ServiceId, tombstone: PreimageHash, len: U64): [boolean, string] {
-    const service = this.state.service(destination);
-    const items = service?.lookupHistory(tombstone) ?? [];
+    const service = this.state.getService(destination);
+    const items = service?.getLookupHistory(tombstone) ?? [];
     const item = items.find((i) => BigInt(i.length) === len);
     const status = item === undefined ? null : slotsToPreimageStatus(item.slots);
     // The tombstone needs to be forgotten and expired.
@@ -197,7 +197,7 @@ export class PartialStateDb implements PartialState {
     }
 
     // fallback to state preimages
-    const service = this.state.service(serviceId);
+    const service = this.state.getService(serviceId);
     if (service === undefined) {
       return false;
     }
@@ -526,7 +526,7 @@ export class PartialStateDb implements PartialState {
   }
 
   providePreimage(serviceId: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError> {
-    const service = serviceId === null ? null : this.state.service(serviceId);
+    const service = serviceId === null ? null : this.state.getService(serviceId);
     if (service === null || serviceId === null) {
       return Result.error(ProvidePreimageError.ServiceNotFound);
     }
@@ -541,7 +541,7 @@ export class PartialStateDb implements PartialState {
         return Result.error(ProvidePreimageError.WasNotRequested);
       }
     } else {
-      const lookup = service.lookupHistory(preimageHash);
+      const lookup = service.getLookupHistory(preimageHash);
       const status = lookup?.find((item) => item.length === preimage.length);
       const notRequested = status === undefined || !LookupHistoryItem.isRequested(status);
 

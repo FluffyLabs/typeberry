@@ -11,7 +11,7 @@ export function verifyPostSignatureChecks(
   input: GuaranteesExtrinsicView,
   availabilityAssignment: State["availabilityAssignment"],
   authPools: State["authPools"],
-  services: State["service"],
+  services: State["getService"],
 ): Result<OK, ReportsError> {
   for (const guaranteeView of input) {
     const guarantee = guaranteeView.materialize();
@@ -55,7 +55,7 @@ export function verifyPostSignatureChecks(
       if (service === null) {
         return Result.error(ReportsError.BadServiceId, `No service with id: ${result.serviceId}`);
       }
-      const info = service.info();
+      const info = service.getInfo();
 
       // check minimal accumulation gas
       if (result.gas < info.accumulateMinGas) {

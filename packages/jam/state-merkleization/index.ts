@@ -73,7 +73,7 @@ export function serializeState(state: InMemoryState, spec: ChainSpec): Serialize
   for (const [serviceId, service] of state.services.entries()) {
     // data
     const { key, Codec } = serialize.serviceData(serviceId);
-    raw.push(StateEntry.create({ key, value: Encoder.encodeObject(Codec, service.info()) }));
+    raw.push(StateEntry.create({ key, value: Encoder.encodeObject(Codec, service.getInfo()) }));
 
     // preimages
     for (const preimage of service.data.preimages.values()) {

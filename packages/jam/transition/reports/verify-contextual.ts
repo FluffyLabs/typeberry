@@ -23,7 +23,7 @@ export function verifyContextualValidity(
   input: { guarantees: GuaranteesExtrinsicView; slot: TimeSlot },
   state: Pick<
     State,
-    "service" | "recentBlocks" | "availabilityAssignment" | "accumulationQueue" | "recentlyAccumulated"
+    "getService" | "recentBlocks" | "availabilityAssignment" | "accumulationQueue" | "recentlyAccumulated"
   >,
   hasher: MmrHasher<KeccakHash>,
   headerChain: HeaderChain,
@@ -46,17 +46,17 @@ export function verifyContextualValidity(
     segmentRootLookupHashes.insertAll(guarantee.report.segmentRootLookup.map((x) => x.workPackageHash));
 
     for (const result of guarantee.report.results) {
-      const service = state.service(result.serviceId);
+      const service = state.getService(result.serviceId);
       if (service === null) {
         return Result.error(ReportsError.BadServiceId, `No service with id: ${result.serviceId}`);
       }
 
       // check service code hash
       // https://graypaper.fluffylabs.dev/#/5f542d7/154b02154b02
-      if (!result.codeHash.isEqualTo(service.info().codeHash)) {
+      if (!result.codeHash.isEqualTo(service.getInfo().codeHash)) {
         return Result.error(
           ReportsError.BadCodeHash,
-          `Service (${result.serviceId}) code hash mismatch. Got: ${result.codeHash}, expected: ${service.info().codeHash}`,
+          `Service (${result.serviceId}) code hash mismatch. Got: ${result.codeHash}, expected: ${service.getInfo().codeHash}`,
         );
       }
     }

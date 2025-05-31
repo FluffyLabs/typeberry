@@ -99,9 +99,9 @@ describe("PartialState.requestPreimage", () => {
     assert.deepStrictEqual(
       partialState.updatedState.updatedServiceInfo,
       ServiceAccountInfo.create({
-        ...service.info(),
-        storageUtilisationBytes: tryAsU64(service.info().storageUtilisationBytes + 5n),
-        storageUtilisationCount: tryAsU32(service.info().storageUtilisationCount + 1),
+        ...service.getInfo(),
+        storageUtilisationBytes: tryAsU64(service.getInfo().storageUtilisationBytes + 5n),
+        storageUtilisationCount: tryAsU32(service.getInfo().storageUtilisationCount + 1),
       }),
     );
   });
@@ -123,9 +123,9 @@ describe("PartialState.requestPreimage", () => {
     assert.deepStrictEqual(
       partialState.updatedState.updatedServiceInfo,
       ServiceAccountInfo.create({
-        ...service.info(),
-        storageUtilisationBytes: tryAsU64(service.info().storageUtilisationBytes + 5n),
-        storageUtilisationCount: tryAsU32(service.info().storageUtilisationCount + 1),
+        ...service.getInfo(),
+        storageUtilisationBytes: tryAsU64(service.getInfo().storageUtilisationBytes + 5n),
+        storageUtilisationCount: tryAsU32(service.getInfo().storageUtilisationCount + 1),
       }),
     );
   });
@@ -488,7 +488,7 @@ describe("PartialState.upgradeService", () => {
     assert.deepStrictEqual(
       partialState.updatedState.updatedServiceInfo,
       ServiceAccountInfo.create({
-        ...service.info(),
+        ...service.getInfo(),
         codeHash,
         accumulateMinGas: tryAsServiceGas(gas),
         onTransferMinGas: tryAsServiceGas(allowance),

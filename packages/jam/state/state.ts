@@ -206,23 +206,23 @@ export type State = {
   /**
    * Retrieve details about single service.
    */
-  service(id: ServiceId): Service | null;
+  getService(id: ServiceId): Service | null;
 };
 
 /** Service details. */
 export interface Service {
   /** Retrieve service account info. */
-  info(): ServiceAccountInfo;
+  getInfo(): ServiceAccountInfo;
 
   /** Read one particular storage item. */
-  storage(storage: StorageKey): StorageItem | null;
+  getStorage(storage: StorageKey): StorageItem | null;
 
   /** Check if preimage is present. */
   hasPreimage(hash: PreimageHash): boolean;
 
   /** Retrieve a preimage. */
-  preimage(hash: PreimageHash): PreimageItem | null;
+  getPreimage(hash: PreimageHash): PreimageItem | null;
 
   /** Retrieve lookup history of a preimage. */
-  lookupHistory(hash: PreimageHash): LookupHistoryItem[] | null;
+  getLookupHistory(hash: PreimageHash): LookupHistoryItem[] | null;
 }

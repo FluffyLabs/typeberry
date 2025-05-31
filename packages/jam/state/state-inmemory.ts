@@ -92,11 +92,11 @@ export class InMemoryService extends WithDebug implements Service {
     super();
   }
 
-  info(): ServiceAccountInfo {
+  getInfo(): ServiceAccountInfo {
     return this.data.info;
   }
 
-  storage(key: StorageKey): StorageItem | null {
+  getStorage(key: StorageKey): StorageItem | null {
     return this.data.storage.get(key) ?? null;
   }
 
@@ -104,11 +104,11 @@ export class InMemoryService extends WithDebug implements Service {
     return this.data.preimages.has(hash);
   }
 
-  preimage(hash: PreimageHash): PreimageItem | null {
+  getPreimage(hash: PreimageHash): PreimageItem | null {
     return this.data.preimages.get(hash) ?? null;
   }
 
-  lookupHistory(hash: PreimageHash): LookupHistoryItem[] | null {
+  getLookupHistory(hash: PreimageHash): LookupHistoryItem[] | null {
     return this.data.lookupHistory.get(hash) ?? null;
   }
 }
@@ -311,7 +311,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
     return Array.from(this.services.keys());
   }
 
-  service(id: ServiceId): Service | null {
+  getService(id: ServiceId): Service | null {
     return this.services.get(id) ?? null;
   }
 

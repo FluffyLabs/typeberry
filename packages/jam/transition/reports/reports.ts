@@ -51,7 +51,7 @@ export type ReportsState = Pick<
   | "currentValidatorData"
   | "previousValidatorData"
   | "entropy"
-  | "service"
+  | "getService"
   | "authPools"
   | "recentBlocks"
   | "accumulationQueue"
@@ -182,7 +182,7 @@ export class Reports {
 
   verifyPostSignatureChecks(input: GuaranteesExtrinsicView) {
     return verifyPostSignatureChecks(input, this.state.availabilityAssignment, this.state.authPools, (id) =>
-      this.state.service(id),
+      this.state.getService(id),
     );
   }
 
