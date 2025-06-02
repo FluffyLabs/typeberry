@@ -1,6 +1,7 @@
 import type { TimeSlot } from "@typeberry/block";
 import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage";
 import { blake2b } from "@typeberry/hash";
+import { tryAsU32 } from "@typeberry/numbers";
 import { LookupHistoryItem, PreimageItem, type ServicesUpdate, type State, UpdatePreimage } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 
@@ -57,15 +58,11 @@ export class Preimages {
         return Result.error(PreimagesErrorCode.AccountNotFound);
       }
 
-      const preimageHistory = service.getLookupHistory(hash);
-      const lookupHistoryItem = preimageHistory?.find(
-        (item) => item.hash.isEqualTo(hash) && item.length === blob.length,
-      );
-
       const hasPreimage = service.hasPreimage(hash);
+      const slots = service.getLookupHistory(hash, tryAsU32(blob.length));
       // https://graypaper.fluffylabs.dev/#/5f542d7/181800181900
       // https://graypaper.fluffylabs.dev/#/5f542d7/116f0011a500
-      if (hasPreimage || lookupHistoryItem === undefined || !LookupHistoryItem.isRequested(lookupHistoryItem)) {
+      if (hasPreimage || slots === null || !LookupHistoryItem.isRequested(slots)) {
         return Result.error(PreimagesErrorCode.PreimageUnneeded);
       }
 

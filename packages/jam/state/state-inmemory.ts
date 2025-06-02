@@ -18,7 +18,7 @@ import { AUTHORIZATION_QUEUE_SIZE, type MAX_AUTH_POOL_SIZE } from "@typeberry/bl
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { Ticket } from "@typeberry/block/tickets";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
-import { Bytes } from "@typeberry/bytes";
+import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import {
   FixedSizeArray,
   HashDictionary,
@@ -31,7 +31,7 @@ import {
 import type { ChainSpec } from "@typeberry/config";
 import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU32 } from "@typeberry/numbers";
+import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { OK, Result, WithDebug, assertNever, check } from "@typeberry/utils";
 import type { AvailabilityAssignment } from "./assurances";
 import type { BlockState } from "./block-state";
@@ -42,6 +42,7 @@ import { PrivilegedServices } from "./privileged-services";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "./safrole-data";
 import {
   LookupHistoryItem,
+  type LookupHistorySlots,
   type PreimageItem,
   type ServiceAccountInfo,
   type StorageItem,
@@ -76,7 +77,7 @@ export enum UpdateError {
 export class InMemoryService extends WithDebug implements Service {
   constructor(
     /** Service id. */
-    readonly id: ServiceId,
+    readonly serviceId: ServiceId,
     /** Service details. */
     readonly data: {
       /** https://graypaper.fluffylabs.dev/#/85129da/383303383303?v=0.6.3 */
@@ -96,20 +97,24 @@ export class InMemoryService extends WithDebug implements Service {
     return this.data.info;
   }
 
-  getStorage(key: StorageKey): StorageItem | null {
-    return this.data.storage.get(key) ?? null;
+  getStorage(key: StorageKey): BytesBlob | null {
+    return this.data.storage.get(key)?.blob ?? null;
   }
 
   hasPreimage(hash: PreimageHash): boolean {
     return this.data.preimages.has(hash);
   }
 
-  getPreimage(hash: PreimageHash): PreimageItem | null {
-    return this.data.preimages.get(hash) ?? null;
+  getPreimage(hash: PreimageHash): BytesBlob | null {
+    return this.data.preimages.get(hash)?.blob ?? null;
   }
 
-  getLookupHistory(hash: PreimageHash): LookupHistoryItem[] | null {
-    return this.data.lookupHistory.get(hash) ?? null;
+  getLookupHistory(hash: PreimageHash, len: U32): LookupHistorySlots | null {
+    const item = this.data.lookupHistory.get(hash);
+    if (item === undefined) {
+      return null;
+    }
+    return item.find((x) => x.length === len)?.slots ?? null;
   }
 }
 

@@ -75,7 +75,7 @@ const lookupHistoryCodec = codec
 
 class ServiceWithCodec extends InMemoryService {
   static Codec = codec.Class(ServiceWithCodec, {
-    id: codec.u32.asOpaque<ServiceId>(),
+    serviceId: codec.u32.asOpaque<ServiceId>(),
     data: codec.object<InMemoryService["data"]>({
       info: ServiceAccountInfo.Codec,
       preimages: codecHashDictionary(PreimageItem.Codec, (x) => x.hash),
@@ -88,8 +88,8 @@ class ServiceWithCodec extends InMemoryService {
     super(id, data);
   }
 
-  static create({ id, data }: CodecRecord<ServiceWithCodec>) {
-    return new ServiceWithCodec(id, data);
+  static create({ serviceId, data }: CodecRecord<ServiceWithCodec>) {
+    return new ServiceWithCodec(serviceId, data);
   }
 }
 

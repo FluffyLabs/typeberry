@@ -130,7 +130,7 @@ export class PartialStateDb implements PartialState {
       return null;
     }
 
-    const maybeNewService = this.updatedState.newServices.find(({ id }) => id === destination);
+    const maybeNewService = this.updatedState.newServices.find(({ serviceId: id }) => id === destination);
     if (maybeNewService !== undefined) {
       return maybeNewService.data.info;
     }
@@ -150,11 +150,16 @@ export class PartialStateDb implements PartialState {
     if (updatedPreimage !== undefined) {
       return updatedPreimage;
     }
+
     // fallback to state lookup
     const service = this.state.getService(this.currentServiceId);
-    const lookup = service?.getLookupHistory(hash);
-    const status = lookup?.find((item) => BigInt(item.length) === length);
-    return status === undefined ? null : PreimageUpdate.update(status);
+    const lenU32 = length >= 2n ** 32n ? null : tryAsU32(Number(length));
+    if (lenU32 === null || service === null) {
+      return null;
+    }
+
+    const slots = service.getLookupHistory(hash, lenU32);
+    return slots === null ? null : PreimageUpdate.update(new LookupHistoryItem(hash, lenU32, slots));
   }
 
   /**
@@ -172,9 +177,9 @@ export class PartialStateDb implements PartialState {
    */
   private isTombstoneExpired(destination: ServiceId, tombstone: PreimageHash, len: U64): [boolean, string] {
     const service = this.state.getService(destination);
-    const items = service?.getLookupHistory(tombstone) ?? [];
-    const item = items.find((i) => BigInt(i.length) === len);
-    const status = item === undefined ? null : slotsToPreimageStatus(item.slots);
+    const lenU32 = len >= 2n ** 32n ? null : tryAsU32(Number(len));
+    const slots = service === null || lenU32 === null ? null : service.getLookupHistory(tombstone, lenU32);
+    const status = slots === null ? null : slotsToPreimageStatus(slots);
     // The tombstone needs to be forgotten and expired.
     if (status?.status !== PreimageStatusKind.Unavailable) {
       return [false, "wrong status"];
@@ -548,9 +553,8 @@ export class PartialStateDb implements PartialState {
         return Result.error(ProvidePreimageError.WasNotRequested);
       }
     } else {
-      const lookup = service.getLookupHistory(preimageHash);
-      const status = lookup?.find((item) => item.length === preimage.length);
-      const notRequested = status === undefined || !LookupHistoryItem.isRequested(status);
+      const slots = service.getLookupHistory(preimageHash, tryAsU32(preimage.length));
+      const notRequested = slots === null || !LookupHistoryItem.isRequested(slots);
 
       if (notRequested) {
         return Result.error(ProvidePreimageError.WasNotRequested);

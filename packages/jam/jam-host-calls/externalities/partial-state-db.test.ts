@@ -400,7 +400,7 @@ describe("PartialState.newService", () => {
     const maybeService = mockState.services.get(tryAsServiceId(0));
     const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
 
-    const updatedService = new InMemoryService(service.id, {
+    const updatedService = new InMemoryService(service.serviceId, {
       ...service.data,
       info: ServiceAccountInfo.create({
         ...service.data.info,
@@ -695,8 +695,8 @@ describe("PartialState.providePreimage", () => {
     if (self) {
       // we need to replace the existing service
       mockState.services.set(
-        service.id,
-        new InMemoryService(service.id, {
+        service.serviceId,
+        new InMemoryService(service.serviceId, {
           ...service.data,
           preimages,
           lookupHistory,
@@ -713,7 +713,7 @@ describe("PartialState.providePreimage", () => {
       lookupHistory: self ? HashDictionary.new() : lookupHistory,
       storage: HashDictionary.new(),
     });
-    mockState.services.set(secondService.id, secondService);
+    mockState.services.set(secondService.serviceId, secondService);
 
     return {
       mockState,

@@ -2,8 +2,10 @@ import type { EntropyHash, PerEpochBlock, PerValidator, ServiceId, TimeSlot } fr
 import type { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
+import type { BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
 import type { ImmutableHashSet } from "@typeberry/collections/hash-set";
+import type { U32 } from "@typeberry/numbers";
 import type { AvailabilityAssignment } from "./assurances";
 import type { BlockState } from "./block-state";
 import type { PerCore } from "./common";
@@ -11,7 +13,7 @@ import type { DisputesRecords } from "./disputes";
 import type { NotYetAccumulatedReport } from "./not-yet-accumulated";
 import type { PrivilegedServices } from "./privileged-services";
 import type { SafroleData } from "./safrole-data";
-import type { LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, StorageKey } from "./service";
+import type { LookupHistorySlots, ServiceAccountInfo, StorageKey } from "./service";
 import type { StatisticsData } from "./statistics";
 import type { ValidatorData } from "./validator-data";
 
@@ -211,18 +213,21 @@ export type State = {
 
 /** Service details. */
 export interface Service {
+  /** Service id. */
+  readonly serviceId: ServiceId;
+
   /** Retrieve service account info. */
   getInfo(): ServiceAccountInfo;
 
   /** Read one particular storage item. */
-  getStorage(storage: StorageKey): StorageItem | null;
+  getStorage(storage: StorageKey): BytesBlob | null;
 
-  /** Check if preimage is present. */
+  /** Check if preimage is present without retrieving the blob. */
   hasPreimage(hash: PreimageHash): boolean;
 
   /** Retrieve a preimage. */
-  getPreimage(hash: PreimageHash): PreimageItem | null;
+  getPreimage(hash: PreimageHash): BytesBlob | null;
 
   /** Retrieve lookup history of a preimage. */
-  getLookupHistory(hash: PreimageHash): LookupHistoryItem[] | null;
+  getLookupHistory(hash: PreimageHash, len: U32): LookupHistorySlots | null;
 }
