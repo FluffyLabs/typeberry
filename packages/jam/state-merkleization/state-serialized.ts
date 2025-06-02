@@ -4,10 +4,16 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type Decode, Decoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { U32 } from "@typeberry/numbers";
-import type { StateKey } from "@typeberry/state-merkleization/keys";
-import { serialize } from "@typeberry/state-merkleization/serialize";
-import { type LookupHistorySlots, type ServiceAccountInfo, type StorageKey, tryAsLookupHistorySlots } from "./service";
-import type { Service, State } from "./state";
+import {
+  type LookupHistorySlots,
+  type Service,
+  type ServiceAccountInfo,
+  type State,
+  type StorageKey,
+  tryAsLookupHistorySlots,
+} from "@typeberry/state";
+import type { StateKey } from "./keys";
+import { serialize } from "./serialize";
 
 export interface Persistence {
   get(key: StateKey): BytesBlob | undefined;

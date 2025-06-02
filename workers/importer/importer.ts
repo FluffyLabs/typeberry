@@ -4,7 +4,7 @@ import type { BlocksDb, StatesDb } from "@typeberry/database";
 import { WithHash } from "@typeberry/hash";
 import type { Logger } from "@typeberry/logger";
 import type { InMemoryState } from "@typeberry/state";
-import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
+import { merkelizeState, serializeInMemoryState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verifier";
 import { OnChain, type StfError } from "@typeberry/transition/chain-stf";
@@ -92,7 +92,7 @@ export class Importer {
     const update = res.ok;
     const timerState = measure("import:state");
     this.state.applyUpdate(update);
-    const stateRoot = merkelizeState(serializeState(this.state, this.spec));
+    const stateRoot = merkelizeState(serializeInMemoryState(this.state, this.spec));
     logger.log(timerState());
 
     // insert new state and the block to DB.

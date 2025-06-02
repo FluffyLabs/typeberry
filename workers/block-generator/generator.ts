@@ -18,7 +18,7 @@ import type { BlocksDb, StatesDb } from "@typeberry/database";
 import { HASH_SIZE, SimpleAllocator } from "@typeberry/hash";
 import type { KeccakHasher } from "@typeberry/hash/keccak";
 import type { InMemoryState } from "@typeberry/state";
-import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
+import { merkelizeState, serializeInMemoryState } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { asOpaqueType } from "@typeberry/utils";
 
@@ -80,7 +80,7 @@ export class Generator {
 
     const hasher = new TransitionHasher(this.chainSpec, this.keccakHasher, this.hashAllocator);
     const parentHeaderHash = this.lastHeaderHash;
-    const stateRoot = merkelizeState(serializeState(this.lastState, this.chainSpec));
+    const stateRoot = merkelizeState(serializeInMemoryState(this.lastState, this.chainSpec));
 
     const extrinsic = Extrinsic.create({
       tickets: asOpaqueType([]),

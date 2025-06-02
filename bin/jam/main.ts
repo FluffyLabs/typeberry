@@ -12,7 +12,7 @@ import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import * as blockImporter from "@typeberry/importer";
 import type { MainReady } from "@typeberry/importer/state-machine";
 import type { MessageChannelStateMachine } from "@typeberry/state-machine";
-import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
+import { merkelizeState, serializeInMemoryState } from "@typeberry/state-merkleization";
 import { type Arguments, Command, KnownChainSpec } from "./args";
 import { startBlockGenerator } from "./author";
 import { initializeExtensions } from "./extensions";
@@ -231,7 +231,7 @@ function loadAndCheckGenesisIfProvided(spec: ChainSpec, expectedRootHash: StateR
 
   logger.log(`🧬 Loading genesis state from ${genesisPath}`);
   const genesisState = loadGenesis(spec, genesisPath);
-  const genesisStateRootHash = merkelizeState(serializeState(genesisState, spec));
+  const genesisStateRootHash = merkelizeState(serializeInMemoryState(genesisState, spec));
   logger.info(`🧬 Genesis state root: ${genesisStateRootHash}`);
 
   // mismatch between expected state root and the one loaded.

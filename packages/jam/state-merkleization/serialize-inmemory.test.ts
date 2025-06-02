@@ -4,15 +4,15 @@ import { Bytes } from "@typeberry/bytes";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { TEST_STATE, TEST_STATE_ROOT, testState } from "@typeberry/state/test.utils";
-import { merkelizeState, serializeState } from ".";
+import { merkelizeState, serializeInMemoryState } from ".";
 
 const spec = tinyChainSpec;
 
 describe("State Serialization", () => {
   it("should load and serialize the test state", () => {
     const state = testState();
-    const serialized = serializeState(state, spec);
-    for (const { key: actualKey, value: actualValue } of serialized) {
+    const serialized = serializeInMemoryState(state, spec);
+    for (const [actualKey, actualValue] of serialized) {
       let foundKey = false;
       for (const [expectedKey, expectedValue, details] of TEST_STATE) {
         if (actualKey.isEqualTo(Bytes.parseBytes(expectedKey, HASH_SIZE))) {
@@ -31,7 +31,7 @@ describe("State Serialization", () => {
 describe("State Merkleization", () => {
   it("should load and merkelize the test state", () => {
     const state = testState();
-    const serialized = serializeState(state, spec);
+    const serialized = serializeInMemoryState(state, spec);
     const stateRoot = merkelizeState(serialized);
 
     assert.strictEqual(stateRoot.toString(), TEST_STATE_ROOT);
