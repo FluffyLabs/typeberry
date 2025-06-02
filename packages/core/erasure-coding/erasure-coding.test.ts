@@ -1,21 +1,22 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { type PerValidator, tryAsPerValidator } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
-import { tinyChainSpec } from "@typeberry/config/chain-spec";
+import { fullChainSpec, tinyChainSpec } from "@typeberry/config/chain-spec";
 import { deepEqual } from "@typeberry/utils";
 import { SEGMENT_FULL, SEGMENT_TINY, TEST_DATA, WORKPACKAGE_FULL, WORKPACKAGE_TINY } from "./ec-test-data";
 import {
   N_SHARDS_REQUIRED,
   SHARD_LENGTH,
-  chunkingFunction,
-  condenseShardsFromFullSet,
   decodeChunk,
   decodeData,
   encodeChunk,
-  expandShardsToFullSet,
   join,
   lace,
+  padAndEncodeData,
+  segmentsToShards,
+  shardsToSegments,
   split,
   unzip,
 } from "./erasure-coding";
@@ -26,7 +27,7 @@ function random() {
   return x - Math.floor(x);
 }
 
-function getRandomItems<T, N extends number>(arr: [number, T][], n: N): FixedSizeArray<[number, T], N> {
+function getRandomItems<T, N extends number>(arr: PerValidator<[number, T]>, n: N): FixedSizeArray<[number, T], N> {
   if (n > arr.length) {
     throw new Error("Requested more items than available in the array");
   }
@@ -57,10 +58,13 @@ describe("erasure coding: general", () => {
   });
 
   it(`should decode data (random seed: ${seed})`, () => {
-    const chunks = segmentEc.map<[number, Bytes<SHARD_LENGTH>]>((chunk, idx) => [
-      idx,
-      Bytes.parseBytesNoPrefix(chunk, SHARD_LENGTH),
-    ]);
+    const chunks = tryAsPerValidator(
+      segmentEc.map<[number, Bytes<SHARD_LENGTH>]>((chunk, idx) => [
+        idx,
+        Bytes.parseBytesNoPrefix(chunk, SHARD_LENGTH),
+      ]),
+      fullChainSpec,
+    );
     const selectedChunks = FixedSizeArray.new(getRandomItems(chunks, N_SHARDS_REQUIRED), N_SHARDS_REQUIRED);
 
     const decoded = decodeChunk(selectedChunks);
@@ -78,14 +82,17 @@ describe("erasure coding: full", () => {
   seed = Math.floor(1000 * Math.random());
 
   it("should encode segment data", () => {
-    const encoded = chunkingFunction(BytesBlob.parseBlobNoPrefix(seg_data));
+    const encoded = padAndEncodeData(BytesBlob.parseBlobNoPrefix(seg_data));
     const expected = seg_shards.map(BytesBlob.parseBlobNoPrefix);
 
     deepEqual([...encoded], expected);
   });
 
   it(`should decode segment data (random seed: ${seed})`, () => {
-    const chunks = seg_shards.map<[number, Bytes<12>]>((chunk, idx) => [idx, Bytes.parseBytesNoPrefix(chunk, 12)]);
+    const chunks = tryAsPerValidator(
+      seg_shards.map<[number, Bytes<12>]>((chunk, idx) => [idx, Bytes.parseBytesNoPrefix(chunk, 12)]),
+      fullChainSpec,
+    );
     const selectedChunks = getRandomItems(chunks, N_SHARDS_REQUIRED);
 
     const decoded = decodeData(selectedChunks);
@@ -94,15 +101,18 @@ describe("erasure coding: full", () => {
   });
 
   it("should encode workpackage data", () => {
-    const encoded = chunkingFunction(BytesBlob.parseBlobNoPrefix(wp_data));
+    const encoded = padAndEncodeData(BytesBlob.parseBlobNoPrefix(wp_data));
     const expected = wp_shards.map(BytesBlob.parseBlobNoPrefix);
 
     deepEqual([...encoded], expected);
   });
 
   it(`should decode workpackage data (random seed: ${seed})`, () => {
-    const chunks = wp_shards.map<[number, Bytes<2>]>((chunk, idx) => [idx, Bytes.parseBytesNoPrefix(chunk, 2)]);
-    const selectedChunks = getRandomItems(chunks, N_SHARDS_REQUIRED);
+    const segments = tryAsPerValidator(
+      wp_shards.map<[number, Bytes<2>]>((chunk, idx) => [idx, Bytes.parseBytesNoPrefix(chunk, 2)]),
+      fullChainSpec,
+    );
+    const selectedChunks = getRandomItems(segments, N_SHARDS_REQUIRED);
 
     const decoded = decodeData(selectedChunks);
 
@@ -110,22 +120,24 @@ describe("erasure coding: full", () => {
   });
 
   it(`should encode and decode segment data without a change (random seed: ${seed})`, () => {
-    const encoded = chunkingFunction(BytesBlob.parseBlobNoPrefix(seg_data));
-    const selectedChunks = getRandomItems(
+    const encoded = padAndEncodeData(BytesBlob.parseBlobNoPrefix(seg_data));
+    const segments = tryAsPerValidator(
       encoded.map<[number, BytesBlob]>((chunk, idx) => [idx, chunk]),
-      N_SHARDS_REQUIRED,
+      fullChainSpec,
     );
+    const selectedChunks = getRandomItems(segments, N_SHARDS_REQUIRED);
     const decoded = decodeData(selectedChunks);
 
     assert.deepStrictEqual(`${decoded}`, `0x${seg_data}`);
   });
 
   it(`should encode and decode workpackage data without a change (random seed: ${seed})`, () => {
-    const encoded = chunkingFunction(BytesBlob.parseBlobNoPrefix(wp_data));
-    const selectedChunks = getRandomItems(
-      encoded.map((chunk, idx) => [idx, chunk] as [number, BytesBlob]),
-      342,
+    const encoded = padAndEncodeData(BytesBlob.parseBlobNoPrefix(wp_data));
+    const segments = tryAsPerValidator(
+      encoded.map<[number, BytesBlob]>((chunk, idx) => [idx, chunk]).slice(0, 1023),
+      fullChainSpec,
     );
+    const selectedChunks = getRandomItems(segments, 342);
     const decoded = decodeData(selectedChunks);
 
     assert.deepStrictEqual(`${decoded}`, `0x${wp_data}`);
@@ -141,36 +153,51 @@ describe("erasure coding: tiny", () => {
   seed = Math.floor(1000 * Math.random());
 
   it("should encode segment data", () => {
-    const encoded = condenseShardsFromFullSet(tinyChainSpec, chunkingFunction(BytesBlob.parseBlobNoPrefix(seg_data)));
-    const expected = seg_shards.map(BytesBlob.parseBlobNoPrefix);
+    const encoded = shardsToSegments(tinyChainSpec, padAndEncodeData(BytesBlob.parseBlobNoPrefix(seg_data)));
+    const expected: PerValidator<BytesBlob> = tryAsPerValidator(
+      seg_shards.map(BytesBlob.parseBlobNoPrefix),
+      tinyChainSpec,
+    );
 
     assert.deepStrictEqual(encoded.length, expected.length);
-    assert.deepStrictEqual(encoded, expected);
+    deepEqual(encoded, expected);
   });
 
   it(`should decode segment data (random seed: ${seed})`, () => {
-    const chunks = expandShardsToFullSet(tinyChainSpec, seg_shards.map(BytesBlob.parseBlobNoPrefix)).map(
-      (chunk, idx) => [idx, chunk] as [number, BytesBlob],
+    const segments: PerValidator<BytesBlob> = tryAsPerValidator(
+      seg_shards.map(BytesBlob.parseBlobNoPrefix),
+      tinyChainSpec,
     );
-    const selectedChunks = getRandomItems(chunks, 342);
+
+    const shards: PerValidator<[number, BytesBlob]> = tryAsPerValidator(
+      segmentsToShards(tinyChainSpec, segments).flat().slice(0, 1023),
+      fullChainSpec,
+    );
+    const selectedChunks = getRandomItems(shards, 342);
 
     const decoded = decodeData(selectedChunks);
 
-    assert.strictEqual(`${decoded}`, `0x${seg_data}`);
+    deepEqual(`${decoded}`, `0x${seg_data}`);
   });
 
   it("should encode workpackage data", () => {
-    const encoded = condenseShardsFromFullSet(tinyChainSpec, chunkingFunction(BytesBlob.parseBlobNoPrefix(wp_data)));
-    const expected = wp_shards.map(BytesBlob.parseBlobNoPrefix);
+    const encoded = shardsToSegments(tinyChainSpec, padAndEncodeData(BytesBlob.parseBlobNoPrefix(wp_data)));
+    const expected: PerValidator<BytesBlob> = tryAsPerValidator(
+      wp_shards.map(BytesBlob.parseBlobNoPrefix),
+      tinyChainSpec,
+    );
 
     deepEqual(encoded, expected);
   });
 
   it(`should decode workpackage data (random seed: ${seed})`, () => {
-    const chunks = expandShardsToFullSet(tinyChainSpec, wp_shards.map(BytesBlob.parseBlobNoPrefix)).map(
-      (chunk, idx) => [idx, chunk] as [number, BytesBlob],
+    const segments: PerValidator<[number, BytesBlob]> = tryAsPerValidator(
+      segmentsToShards(tinyChainSpec, tryAsPerValidator(wp_shards.map(BytesBlob.parseBlobNoPrefix), tinyChainSpec))
+        .flat()
+        .slice(0, 1023),
+      fullChainSpec,
     );
-    const selectedChunks = getRandomItems(chunks, 342);
+    const selectedChunks = getRandomItems(segments, 342);
 
     const decoded = decodeData(selectedChunks);
 
@@ -178,22 +205,23 @@ describe("erasure coding: tiny", () => {
   });
 
   it(`should encode and decode segment data without a change (random seed: ${seed})`, () => {
-    const encoded = condenseShardsFromFullSet(tinyChainSpec, chunkingFunction(BytesBlob.parseBlobNoPrefix(seg_data)));
-    const selectedChunks = getRandomItems(
-      expandShardsToFullSet(tinyChainSpec, encoded).map((x, idx) => [idx, x] as [number, BytesBlob]),
-      342,
+    const segments = shardsToSegments(tinyChainSpec, padAndEncodeData(BytesBlob.parseBlobNoPrefix(seg_data)));
+    const shards: PerValidator<[number, BytesBlob]> = tryAsPerValidator(
+      segmentsToShards(tinyChainSpec, segments).flat().slice(0, 1023),
+      fullChainSpec,
     );
+    const selectedChunks = getRandomItems(shards, 342);
     const decoded = decodeData(selectedChunks);
 
     assert.strictEqual(`${decoded}`, `0x${seg_data}`);
   });
 
   it(`should encode and decode workpackage data without a change (random seed: ${seed})`, () => {
-    const encoded = condenseShardsFromFullSet(tinyChainSpec, chunkingFunction(BytesBlob.parseBlobNoPrefix(wp_data)));
-    const selectedChunks = getRandomItems(
-      expandShardsToFullSet(tinyChainSpec, encoded).map((x, idx) => [idx, x] as [number, BytesBlob]),
-      342,
+    const encoded = tryAsPerValidator(
+      padAndEncodeData(BytesBlob.parseBlobNoPrefix(wp_data)).map<[number, BytesBlob]>((shard, idx) => [idx, shard]),
+      fullChainSpec,
     );
+    const selectedChunks = getRandomItems(encoded, 342);
     const decoded = decodeData(selectedChunks);
 
     assert.strictEqual(`${decoded}`, `0x${wp_data}`);
