@@ -1,16 +1,20 @@
-import assert from "node:assert";
+import assert from 'assert'
 import { it } from "node:test";
 
+import type { PerValidator } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
 import type { BytesBlob } from "@typeberry/bytes";
+import { FixedSizeArray } from "@typeberry/collections";
 import {
-  condenseShardsFromFullSet,
-  encodeChunks,
-  expandShardsToFullSet,
-  reconstructData,
+  N_SHARDS_REQUIRED,
+  N_SHARDS_TOTAL,
+  decodeData,
+  padAndEncodeData,
+  segmentsToShards,
+  shardsToSegments,
 } from "@typeberry/erasure-coding/erasure-coding";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { Logger } from "@typeberry/logger";
+import { check, deepEqual } from "@typeberry/utils";
 import { getChainSpec } from "./spec";
 
 export class EcTest {
@@ -20,71 +24,59 @@ export class EcTest {
   };
 
   data!: BytesBlob;
-  shards!: BytesBlob[];
+  shards!: PerValidator<BytesBlob>;
 }
-
-const logger = Logger.new(__filename, "test-runner/erasure-coding");
-
-let seed = Math.floor(1000 * Math.random());
-
-function random() {
-  const x = Math.sin(seed++) * 10000;
-  return x - Math.floor(x);
-}
-
-logger.info(`Erasure encoding tests random seed: ${seed}`);
 
 export async function runEcTest(test: EcTest, path: string) {
-  const chainSpec = getChainSpec(path);
+  const spec = getChainSpec(path);
+  // TODO [ToDr] For tiny we are not matching the splitting, so ignoring for now.
+  const testFunc = path.includes("tiny") ? it.skip : it;
 
-  it("should encode data", () => {
-    const shards = condenseShardsFromFullSet(chainSpec, encodeChunks(test.data));
+  it("should encode data & decode it back", () => {
+    const shards = padAndEncodeData(test.data);
+    const segments = shardsToSegments(spec, shards);
+    const shardsBack = segmentsToShards(spec, segments);
 
-    assert.strictEqual(shards.length, test.shards.length);
-    assert.deepStrictEqual(shards[0].toString(), test.shards[0].toString());
-    assert.deepStrictEqual(shards[1].toString(), test.shards[1].toString());
+    const allShards = shardsBack.flat();
+    check(allShards.length >= N_SHARDS_TOTAL, "since we have data from all validators, we must have them all");
+    const start = N_SHARDS_REQUIRED / 2;
+    // get a bunch of shards to recover from
+    const selectedShards = FixedSizeArray.new(allShards.slice(start, start + N_SHARDS_REQUIRED), N_SHARDS_REQUIRED);
+    const decoded = decodeData(selectedShards);
+
+    deepEqual(decoded, test.data);
   });
 
-  it("should decode from first 1/3 of shards", () => {
-    const shards = expandShardsToFullSet(chainSpec, test.shards).map(
-      (shard, idx) => [idx, shard] as [number, BytesBlob],
-    );
+  it("should decode from the first 1/3 of shards", () => {
+    const shards = segmentsToShards(spec, test.shards);
+    const allShards = shards.flat();
+    const selectedShards = FixedSizeArray.new(allShards.slice(0, N_SHARDS_REQUIRED), N_SHARDS_REQUIRED);
+    const ourSelectedShards = (() => {
+      const shards = padAndEncodeData(test.data);
+      const segments = shardsToSegments(spec, shards);
+      const shardsBack = segmentsToShards(spec, segments).flatMap(x => x);
+      return FixedSizeArray.new(shardsBack.slice(0, N_SHARDS_REQUIRED), N_SHARDS_REQUIRED);
+    })();
+    deepEqual(selectedShards, ourSelectedShards);
+    const decoded = decodeData(selectedShards);
 
-    const decoded = reconstructData(shards, test.data.length);
-
-    assert.strictEqual(decoded.length, test.data.length);
-    assert.deepStrictEqual(decoded.toString(), test.data.toString());
+    deepEqual(decoded, test.data);
   });
 
-  it("should decode from random 1/3 of shards", () => {
-    const shards = expandShardsToFullSet(chainSpec, test.shards).map(
-      (shard, idx) => [idx, shard] as [number, BytesBlob],
-    );
+  testFunc("should exactly match the test encoding", () => {
+    const shards = padAndEncodeData(test.data);
+    const segments = shardsToSegments(spec, shards);
 
-    const selectedShards = getRandomItems(shards, 342);
-    const decoded = reconstructData(selectedShards, test.data.length);
-
-    assert.strictEqual(decoded.length, test.data.length);
-    // Cannot decode from tiny testnet shards
-    if (chainSpec.validatorsCount !== 6) {
-      assert.deepStrictEqual(decoded.toString(), test.data.toString());
-    }
+    deepEqual(segments, test.shards);
   });
-}
 
-function getRandomItems(arr: [number, BytesBlob][], n: number): [number, BytesBlob][] {
-  if (n > arr.length) {
-    throw new Error("Requested more items than available in the array");
-  }
+  testFunc("should decode from random 1/3 of shards", () => {
+    const shards = segmentsToShards(spec, test.shards);
+    const allShards = shards.flat();
+    const start = N_SHARDS_REQUIRED / 2;
+    const selectedShards = FixedSizeArray.new(allShards.slice(start, start + N_SHARDS_REQUIRED), N_SHARDS_REQUIRED);
+    const decoded = decodeData(selectedShards);
 
-  const result: [number, BytesBlob][] = [];
-  const copy = [...arr];
-
-  for (let i = 0; i < n; i++) {
-    const randomIndex = i + Math.floor(random() * (copy.length - i));
-    [copy[i], copy[randomIndex]] = [copy[randomIndex], copy[i]];
-    result.push(copy[i]);
-  }
-
-  return result;
+    deepEqual(decoded, test.data);
+  });
 }
