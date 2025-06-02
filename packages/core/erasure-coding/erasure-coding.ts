@@ -60,7 +60,16 @@ export function padAndEncodeData(input: BytesBlob) {
     padded = BytesBlob.blobFrom(new Uint8Array(paddedLength));
     padded.raw.set(input.raw, 0);
   }
-  return chunkingFunction(input);
+  return chunkingFunction(padded);
+}
+
+export function decodeDataAndCrop(
+  input: FixedSizeArray<[number, BytesBlob], N_SHARDS_REQUIRED>,
+  outputLength: number,
+): BytesBlob {
+  const decoded = decodeData(input);
+  const cropped = decoded.raw.slice(0, outputLength);
+  return BytesBlob.blobFrom(cropped);
 }
 
 /**
@@ -317,7 +326,7 @@ export function transpose<T, N extends number, K extends number>(
  */
 export function chunkingFunction(input: BytesBlob): FixedSizeArray<BytesBlob, N_SHARDS_TOTAL> {
   const k = Math.floor(input.length / CHUNK_SIZE);
-  check(k * CHUNK_SIZE === input.length);
+  check(k * CHUNK_SIZE === input.length, `Input length ${input.length} is not divisible by ${CHUNK_SIZE}`);
 
   // we get a `k` chunks.
   const unzipped = unzip<CHUNK_SIZE, typeof k>(input, CHUNK_SIZE, k);
