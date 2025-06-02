@@ -25,12 +25,24 @@ export type Runner<T> = {
   run: (test: T, path: string) => Promise<void>;
 };
 
-export async function main(runners: Runner<unknown>[], directoryToScan: string, inFiles: string[]) {
+export async function main(
+  runners: Runner<unknown>[],
+  initialFiles: string[],
+  directoryToScan: string,
+  {
+    accepted,
+    ignored,
+  }: {
+    accepted?: string[];
+    ignored?: string[];
+  } = {},
+) {
   const relPath = `${__dirname}/../..`;
   const tests: TestAndRunner[] = [];
+  const ignoredPatterns = ignored ?? [];
 
-  let files = inFiles;
-  if (files.length === 0) {
+  let files = initialFiles;
+  if (initialFiles.length === 0) {
     // scan the jamtestvectors directory
     files = await scanDir(relPath, directoryToScan, ".json");
   }
@@ -41,6 +53,13 @@ export async function main(runners: Runner<unknown>[], directoryToScan: string, 
     const data = await fs.readFile(absolutePath, "utf8");
     const testContent = JSON.parse(data);
     const testCase = prepareTest(runners, testContent, file, absolutePath);
+
+    testCase.shouldSkip = accepted !== undefined && !accepted.some((x) => absolutePath.includes(x));
+
+    if (ignoredPatterns.some((x) => absolutePath.includes(x))) {
+      logger.log(`Ignoring: ${absolutePath}`);
+      continue;
+    }
 
     tests.push(testCase);
   }
@@ -54,6 +73,7 @@ export async function main(runners: Runner<unknown>[], directoryToScan: string, 
   }
 
   const pathToReplace = new RegExp(`/.*${directoryToScan}/`);
+
   logger.info(`Running all tests (${tests.length}).`);
   // we have all of the tests now, let's run them in parallel and generate results.
   for (const [key, values] of aggregated.entries()) {
@@ -76,7 +96,11 @@ export async function main(runners: Runner<unknown>[], directoryToScan: string, 
             const partValues = values.slice(i * perPart, (i + 1) * perPart);
             for (const subTest of partValues) {
               const fileName = subTest.file.replace(pathToReplace, "");
-              test.it(fileName, subTest.test);
+              if (subTest.shouldSkip) {
+                test.it.skip(fileName, subTest.test);
+              } else {
+                test.it(fileName, subTest.test);
+              }
             }
           },
         );
@@ -95,6 +119,7 @@ async function scanDir(relPath: string, dir: string, filePattern: string): Promi
 }
 
 type TestAndRunner = {
+  shouldSkip: boolean;
   runner: string;
   file: string;
   test: () => Promise<void>;
@@ -116,6 +141,7 @@ function prepareTest(runners: Runner<unknown>[], testContent: unknown, file: str
       const parsedTest = parseFromJson(testContent, fromJson);
 
       return {
+        shouldSkip: false,
         runner: name,
         file,
         test: () => {
@@ -130,6 +156,7 @@ function prepareTest(runners: Runner<unknown>[], testContent: unknown, file: str
   }
 
   return {
+    shouldSkip: false,
     runner: "Invalid",
     file,
     test: () => {

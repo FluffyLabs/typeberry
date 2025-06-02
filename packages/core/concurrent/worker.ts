@@ -52,8 +52,8 @@ export class ConcurrentWorker<TParams, TResult extends WithTransferList, TIntern
     });
   }
 
-  run(params: TParams): Promise<TResult> {
-    return this.runInternal(params, this.state);
+  async run(params: TParams): Promise<TResult> {
+    return await this.runInternal(params, this.state);
   }
 
   async destroy() {}

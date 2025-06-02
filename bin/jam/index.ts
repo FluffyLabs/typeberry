@@ -10,8 +10,9 @@ let args: Arguments;
 try {
   args = parseArgs(process.argv.slice(2), relPath);
 } catch (e) {
-  console.error(HELP);
-  throw e;
+  console.error(`\n${e}\n`);
+  console.info(HELP);
+  process.exit(1);
 }
 
 main(args).catch((e) => {
