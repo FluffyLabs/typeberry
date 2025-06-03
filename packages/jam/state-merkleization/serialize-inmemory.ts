@@ -9,7 +9,7 @@ import { type StateCodec, serialize } from "./serialize";
 export type StateEntries = HashDictionary<StateKey, BytesBlob>;
 
 /** https://graypaper.fluffylabs.dev/#/68eaa1f/38a50038a500?v=0.6.4 */
-export function serializeInMemoryState(state: InMemoryState, spec: ChainSpec): StateEntries {
+export function convertInMemoryStateToDictionary(state: InMemoryState, spec: ChainSpec): StateEntries {
   const serialized = HashDictionary.new<StateKey, BytesBlob>();
   function doSerialize<T>(codec: StateCodec<T>) {
     serialized.set(codec.key, Encoder.encodeObject(codec.Codec, codec.extract(state), spec));

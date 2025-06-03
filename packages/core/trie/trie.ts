@@ -8,7 +8,6 @@ import {
   NodeType,
   type StateKey,
   TRUNCATED_KEY_BITS,
-  TRUNCATED_KEY_BYTES,
   type TrieHash,
   type TrieNode,
   type TruncatedStateKey,
@@ -16,23 +15,28 @@ import {
 import { type NodesDb, type TrieHasher, WriteableNodesDb } from "./nodesDb";
 
 export class InMemoryTrie {
-  // Exposed for trie-visualiser
-  public readonly nodes: WriteableNodesDb;
-  // TODO [ToDr] Consider using HashDictionary?
-  private readonly flat: Map<string, BytesBlob> = new Map();
-  private root: TrieNode | null = null;
-
   static empty(hasher: TrieHasher): InMemoryTrie {
     return new InMemoryTrie(new WriteableNodesDb(hasher));
   }
 
-  constructor(nodes: WriteableNodesDb) {
-    this.nodes = nodes;
+  static fromLeaves(hasher: TrieHasher, leaves: LeafNode[]) {
+    // TODO [ToDr] This is inefficient way of doing it
+    // we should rather pair up the leaves and work our way up.
+    let root: TrieNode | null = null;
+    const nodes = new WriteableNodesDb(hasher);
+    for (const leaf of leaves) {
+      root = trieInsert(root, nodes, leaf);
+    }
+    return new InMemoryTrie(nodes, root);
   }
 
+  private constructor(
+    // Exposed for trie-visualiser
+    public readonly nodes: WriteableNodesDb,
+    private root: TrieNode | null = null,
+  ) {}
+
   set(key: InputKey, value: BytesBlob, maybeValueHash?: TrieHash) {
-    const truncatedKey = Bytes.fromBlob(key.raw.subarray(0, TRUNCATED_KEY_BYTES), TRUNCATED_KEY_BYTES);
-    this.flat.set(truncatedKey.toString(), value);
     const valueHash = maybeValueHash ?? this.nodes.hasher.hashConcat(value.raw);
     const leafNode = LeafNode.fromValue(key, value, valueHash);
     this.root = trieInsert(this.root, this.nodes, leafNode);

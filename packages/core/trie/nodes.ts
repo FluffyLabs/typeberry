@@ -92,6 +92,10 @@ export class TrieNode {
     check(this.getNodeType() !== NodeType.Branch);
     return new LeafNode(this);
   }
+
+  toString() {
+    return BytesBlob.blobFrom(this.data).toString();
+  }
 }
 
 /**

@@ -1,6 +1,6 @@
 import { HashDictionary } from "@typeberry/collections";
 import { FIRST_BIT_SET_NEG } from "./masks";
-import type { TrieHash, TrieNode } from "./nodes";
+import { type LeafNode, NodeType, type TrieHash, type TrieNode } from "./nodes";
 
 /**
  * Hasher used for the trie nodes.
@@ -30,6 +30,15 @@ export class NodesDb {
 
   hashNode(n: TrieNode): TrieHash {
     return this.hasher.hashConcat(n.data);
+  }
+
+  *leaves(): Generator<[TrieHash, LeafNode]> {
+    for (const [key, val] of this.nodes) {
+      const nodeType = val.getNodeType();
+      if (nodeType !== NodeType.Branch) {
+        yield [key, val.asLeafNode()];
+      }
+    }
   }
 
   /**

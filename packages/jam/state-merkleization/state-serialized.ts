@@ -15,7 +15,9 @@ import {
 import type { StateKey } from "./keys";
 import { serialize } from "./serialize";
 
+/** A tiny wrapper for some persistence layer. */
 export interface Persistence {
+  /** Retrieve given state key. */
   get(key: StateKey): BytesBlob | undefined;
 }
 
@@ -24,30 +26,41 @@ type KeyAndCodec<T> = {
   Codec: Decode<T>;
 };
 
+/** Service data representation on a serialized state. */
 export class SerializedService implements Service {
   constructor(
+    /** Service id */
     public readonly serviceId: ServiceId,
     private readonly accountInfo: ServiceAccountInfo,
     private readonly retrieveOptional: <T>(key: KeyAndCodec<T>) => T | undefined,
   ) {}
 
+  /** Service account info. */
   getInfo(): ServiceAccountInfo {
     return this.accountInfo;
   }
 
+  /** Retrieve a storage item. */
   getStorage(storage: StorageKey): BytesBlob | null {
     return this.retrieveOptional(serialize.serviceStorage(this.serviceId, storage)) ?? null;
   }
 
+  /**
+   * Check if preimage is present in the DB.
+   *
+   * NOTE: it DOES NOT mean that the preimage is available.
+   */
   hasPreimage(hash: PreimageHash): boolean {
     // TODO [ToDr] consider optimizing to avoid fetching the whole data.
     return this.retrieveOptional(serialize.servicePreimages(this.serviceId, hash)) !== undefined;
   }
 
+  /** Retrieve preimage from the DB. */
   getPreimage(hash: PreimageHash): BytesBlob | null {
     return this.retrieveOptional(serialize.servicePreimages(this.serviceId, hash)) ?? null;
   }
 
+  /** Retrieve preimage lookup history. */
   getLookupHistory(hash: PreimageHash, len: U32): LookupHistorySlots | null {
     const rawSlots = this.retrieveOptional(serialize.serviceLookupHistory(this.serviceId, hash, len));
     if (rawSlots === undefined) {
@@ -65,12 +78,11 @@ export class SerializedService implements Service {
  */
 export class SerializedState implements State {
   constructor(
-    private readonly backend: Persistence,
     private readonly spec: ChainSpec,
+    private readonly backend: Persistence,
   ) {}
 
   getService(id: ServiceId): Service | null {
-    // TODO [ToDr] should we maintain a collection of services somewhere?
     const serviceData = this.retrieveOptional(serialize.serviceData(id));
     if (serviceData === undefined) {
       return null;

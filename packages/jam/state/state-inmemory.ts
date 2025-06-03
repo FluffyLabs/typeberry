@@ -43,9 +43,9 @@ import { type SafroleSealingKeys, SafroleSealingKeysData } from "./safrole-data"
 import {
   LookupHistoryItem,
   type LookupHistorySlots,
-  type PreimageItem,
+  PreimageItem,
   type ServiceAccountInfo,
-  type StorageItem,
+  StorageItem,
   type StorageKey,
   tryAsLookupHistorySlots,
 } from "./service";
@@ -116,6 +116,53 @@ export class InMemoryService extends WithDebug implements Service {
     }
     return item.find((x) => x.length === len)?.slots ?? null;
   }
+
+  /**
+   * Create a new in-memory service from another state service
+   * by copying all given entries.
+   */
+  static copyFrom(service: Service, entries: ServiceEntries) {
+    const info = service.getInfo();
+    const preimages = HashDictionary.new<PreimageHash, PreimageItem>();
+    const storage = HashDictionary.new<StorageKey, StorageItem>();
+    const lookupHistory = HashDictionary.new<PreimageHash, LookupHistoryItem[]>();
+
+    // copy preimages
+    for (const hash of entries.preimages) {
+      const blob = service.getPreimage(hash);
+      if (blob === null) {
+        throw new Error(`Service ${service.serviceId} is missing expected preimage: ${hash}`);
+      }
+      preimages.set(hash, PreimageItem.create({ hash, blob }));
+    }
+
+    // copy lookupHistory
+    for (const [hash, len] of entries.lookupHistory) {
+      const slots = service.getLookupHistory(hash, len);
+      if (slots === null) {
+        throw new Error(`Service ${service.serviceId} is missing expected lookupHistory: ${hash}, ${len}`);
+      }
+      const items = lookupHistory.get(hash) ?? [];
+      items.push(new LookupHistoryItem(hash, len, slots));
+      lookupHistory.set(hash, items);
+    }
+
+    // copy storage
+    for (const key of entries.storageKeys) {
+      const blob = service.getStorage(key);
+      if (blob === null) {
+        throw new Error(`Service ${service.serviceId} is missing expected storage: ${key}`);
+      }
+      storage.set(key, StorageItem.create({ hash: key, blob }));
+    }
+
+    return new InMemoryService(service.serviceId, {
+      info,
+      preimages,
+      storage,
+      lookupHistory,
+    });
+  }
 }
 
 /**
@@ -138,14 +185,41 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
     return state;
   }
 
-  static pickKeys<T extends Partial<InMemoryStateFields>>(self: T, other: T): T {
-    const ret: Partial<T> = {};
-    for (const key of Object.keys(other)) {
-      const k1 = key as keyof T;
-      ret[k1] = self[k1];
+  /**
+   * Create a new `InMemoryState` from some other state object.
+   */
+  static copyFrom(other: State, servicesData: Map<ServiceId, ServiceEntries>) {
+    const services = new Map<ServiceId, InMemoryService>();
+    for (const [id, entries] of servicesData) {
+      const service = other.getService(id);
+      if (service === null) {
+        throw new Error(`Expected service ${id} to be part of the state!`);
+      }
+      const inMemService = InMemoryService.copyFrom(service, entries);
+      services.set(id, inMemService);
     }
 
-    return ret as T;
+    return InMemoryState.create({
+      availabilityAssignment: other.availabilityAssignment,
+      accumulationQueue: other.accumulationQueue,
+      designatedValidatorData: other.designatedValidatorData,
+      nextValidatorData: other.nextValidatorData,
+      currentValidatorData: other.currentValidatorData,
+      previousValidatorData: other.previousValidatorData,
+      disputesRecords: other.disputesRecords,
+      timeslot: other.timeslot,
+      entropy: other.entropy,
+      authPools: other.authPools,
+      authQueues: other.authQueues,
+      recentBlocks: other.recentBlocks,
+      statistics: other.statistics,
+      recentlyAccumulated: other.recentlyAccumulated,
+      ticketsAccumulator: other.ticketsAccumulator,
+      sealingKeySeries: other.sealingKeySeries,
+      epochRoot: other.epochRoot,
+      privilegedServices: other.privilegedServices,
+      services,
+    });
   }
 
   /**
@@ -456,6 +530,16 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
     });
   }
 }
+
+/** Enumeration of all service-related data. */
+export type ServiceEntries = {
+  /** Service storage keys. */
+  storageKeys: StorageKey[];
+  /** Service preimages. */
+  preimages: PreimageHash[];
+  /** Service lookup history. */
+  lookupHistory: [PreimageHash, U32][];
+};
 
 /** All non-function properties of the `InMemoryState`. */
 export type InMemoryStateFields = Pick<InMemoryState, FieldNames<InMemoryState>>;
