@@ -11,10 +11,10 @@ import type { PendingTransfer } from "./pending-transfer";
  *
  * `x_u`: https://graypaper.fluffylabs.dev/#/9a08063/2f31012f3101?v=0.6.6
  */
-export class StateUpdate {
+export class AccumulationStateUpdate {
   /** Create a copy of another `StateUpdate`. Used by checkpoints. */
-  static copyFrom(from: StateUpdate): StateUpdate {
-    const update = new StateUpdate();
+  static copyFrom(from: AccumulationStateUpdate): AccumulationStateUpdate {
+    const update = new AccumulationStateUpdate();
     update.newServices.push(...from.newServices);
     update.ejectedServices.push(...from.ejectedServices);
     update.transfers.push(...from.transfers);

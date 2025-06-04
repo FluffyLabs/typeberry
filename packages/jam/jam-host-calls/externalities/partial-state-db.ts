@@ -37,7 +37,7 @@ import {
   slotsToPreimageStatus,
 } from "./partial-state";
 import { PendingTransfer } from "./pending-transfer";
-import { StateUpdate } from "./state-update";
+import { AccumulationStateUpdate } from "./state-update";
 
 /**
  * `D`: Period in timeslots after which an unreferenced preimage may be expunged.
@@ -59,9 +59,9 @@ const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 type StateSlice = Pick<State, "getService" | "timeslot">;
 
 export class PartialStateDb implements PartialState {
-  public readonly updatedState: StateUpdate = new StateUpdate();
-  private checkpointedState: StateUpdate | null = null;
-    /** `x_i`: next service id we are going to create. */
+  public readonly updatedState: AccumulationStateUpdate = new AccumulationStateUpdate();
+  private checkpointedState: AccumulationStateUpdate | null = null;
+  /** `x_i`: next service id we are going to create. */
   private nextNewServiceId: ServiceId;
 
   constructor(
@@ -79,7 +79,7 @@ export class PartialStateDb implements PartialState {
   }
 
   /** Return the underlying state update and checkpointed state (if any). */
-  public getStateUpdates(): [StateUpdate, StateUpdate | null] {
+  public getStateUpdates(): [AccumulationStateUpdate, AccumulationStateUpdate | null] {
     return [this.updatedState, this.checkpointedState];
   }
 
@@ -497,7 +497,7 @@ export class PartialStateDb implements PartialState {
 
   checkpoint(): void {
     /** https://graypaper.fluffylabs.dev/#/9a08063/362202362202?v=0.6.6 */
-    this.checkpointedState = StateUpdate.copyFrom(this.updatedState);
+    this.checkpointedState = AccumulationStateUpdate.copyFrom(this.updatedState);
   }
 
   updateAuthorizationQueue(

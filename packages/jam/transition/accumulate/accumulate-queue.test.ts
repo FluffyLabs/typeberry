@@ -1,12 +1,5 @@
 import { describe, it } from "node:test";
-import {
-  type ServiceId,
-  tryAsCoreIndex,
-  tryAsPerEpochBlock,
-  tryAsServiceGas,
-  tryAsServiceId,
-  tryAsTimeSlot,
-} from "@typeberry/block";
+import { tryAsCoreIndex, tryAsPerEpochBlock, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { RefineContext } from "@typeberry/block/refine-context";
 import { tryAsWorkItemsCount } from "@typeberry/block/work-package";
 import { type WorkPackageHash, WorkPackageInfo, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
@@ -16,7 +9,7 @@ import { FixedSizeArray, HashSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { PrivilegedServices, type Service } from "@typeberry/state";
+import { InMemoryState, PrivilegedServices } from "@typeberry/state";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
 import { deepEqual } from "@typeberry/utils";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue";
@@ -106,7 +99,8 @@ describe("accumulate-queue", () => {
       accumulationQueue: NotYetAccumulatedReport[][] = createEmptyAccumulationQueue(),
     ) =>
       new AccumulateQueue(
-        {
+        tinyChainSpec,
+        InMemoryState.partial(tinyChainSpec, {
           entropy: Bytes.zero(HASH_SIZE).asOpaque(),
           privilegedServices: PrivilegedServices.create({
             manager: tryAsServiceId(0),
@@ -117,9 +111,7 @@ describe("accumulate-queue", () => {
           recentlyAccumulated: tryAsPerEpochBlock(recentlyAccumulated, tinyChainSpec),
           accumulationQueue: tryAsPerEpochBlock(accumulationQueue, tinyChainSpec),
           timeslot: tryAsTimeSlot(1),
-          services: new Map<ServiceId, Service>(),
-        },
-        tinyChainSpec,
+        }),
       );
 
     describe("getWorkReportsToAccumulateImmediately", () => {
