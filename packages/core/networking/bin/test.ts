@@ -14,7 +14,7 @@ async function main(clientPort: number, serverPort: number) {
   const network = await socket.setup({
     host: "127.0.0.1",
     port: serverPort,
-    key: connectTo === 0 ? serverKey : clientKey,
+    key: clientPort === 0 ? serverKey : clientKey,
     protocols: [`jamnp-s/0/${genesisHash}`],
   });
 
@@ -38,7 +38,7 @@ async function main(clientPort: number, serverPort: number) {
 
   await network.start();
 
-  if (connectTo === 0) {
+  if (clientPort === 0) {
     logger.warn("No client port given. Finishing.");
     return;
   }
@@ -48,7 +48,7 @@ async function main(clientPort: number, serverPort: number) {
     try {
       const peer = await network.dial({
         host: "127.0.0.1",
-        port: connectTo,
+        port: clientPort,
       });
       // open a bunch of streams
       for (let i = 0; i < 10; i++) {
