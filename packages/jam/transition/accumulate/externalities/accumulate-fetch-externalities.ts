@@ -66,7 +66,16 @@ export class AccumulateFetchExternalities implements FetchExternalities {
   }
 
   oneOperand(operandIndex: U64): BytesBlob | null {
+    if (operandIndex >= 2n ** 32n) {
+      return null;
+    }
+
     const operand = this.operands[Number(operandIndex)];
+
+    if (operand === undefined) {
+      return null;
+    }
+
     return Encoder.encodeObject(Operand.Codec, operand, this.chainSpec);
   }
 

@@ -108,6 +108,36 @@ describe("accumulate-fetch-externalities", () => {
     assert.deepStrictEqual(operands, encodedOperands);
   });
 
+  it("should null when operand index is not U32", () => {
+    const operands = prepareOperands(5);
+    const chainSpec = tinyChainSpec;
+    const expectedOperandIndex = 2 ** 32 + 3;
+    const expectedOperand: Operand | null = null;
+
+    const args = prepareData({ operands, chainSpec });
+
+    const fetchExternalities = new AccumulateFetchExternalities(...args);
+
+    const operand = fetchExternalities.oneOperand(tryAsU64(expectedOperandIndex));
+
+    assert.deepStrictEqual(operand, expectedOperand);
+  });
+
+  it("should null when operand index is U32 but is incorrect", () => {
+    const operands = prepareOperands(5);
+    const chainSpec = tinyChainSpec;
+    const expectedOperandIndex = 153;
+    const expectedOperand: Operand | null = null;
+
+    const args = prepareData({ operands, chainSpec });
+
+    const fetchExternalities = new AccumulateFetchExternalities(...args);
+
+    const operand = fetchExternalities.oneOperand(tryAsU64(expectedOperandIndex));
+
+    assert.deepStrictEqual(operand, expectedOperand);
+  });
+
   it("should return one operand", () => {
     const operands = prepareOperands(5);
     const chainSpec = tinyChainSpec;

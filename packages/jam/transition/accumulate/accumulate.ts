@@ -6,7 +6,7 @@ import {
   tryAsPerEpochBlock,
   tryAsServiceGas,
 } from "@typeberry/block";
-import type { WorkReport } from "@typeberry/block/work-report";
+import type { AuthorizerHash, WorkReport } from "@typeberry/block/work-report";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
@@ -370,8 +370,12 @@ export class Accumulate {
 
       if (serviceId === authManager && stateUpdate.authorizationQueues !== null) {
         if (this.state.authQueues === undefined) {
-          const queue = new Array(this.chainSpec.coresCount);
-          queue.fill([]);
+          const queue = Array.from({ length: this.chainSpec.coresCount }, () =>
+            FixedSizeArray.new(
+              Array.from<AuthorizerHash>({ length: AUTHORIZATION_QUEUE_SIZE }),
+              AUTHORIZATION_QUEUE_SIZE,
+            ),
+          );
           this.state.authQueues = tryAsPerCore(queue, this.chainSpec);
         }
 

@@ -6,7 +6,7 @@ import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { AccountsLookupExternalities } from "./accounts-lookup-externalities";
 
-describe("accounts-read-externalities", () => {
+describe("accounts-lookup-externalities", () => {
   describe("lookup", () => {
     it("should not be implemented yet", () => {
       const serviceId = tryAsServiceId(0);
