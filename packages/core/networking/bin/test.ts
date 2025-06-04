@@ -6,7 +6,7 @@ import { socket } from "../";
 
 const logger = Logger.new(__filename, "net:demo");
 
-async function main(connectTo: number, serverPort: number) {
+async function main(clientPort: number, serverPort: number) {
   const genesisHash = "0259fbe9"; // polkajam: 0259fbe9
   const clientKey = await ed25519.privateKey(Bytes.fill(ed25519.ED25519_PRIV_KEY_BYTES, 1));
   const serverKey = await ed25519.privateKey(Bytes.fill(ed25519.ED25519_PRIV_KEY_BYTES, 2));
