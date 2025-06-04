@@ -158,7 +158,7 @@ class PvmExecutor {
     const result = await this.pvm.runProgram(program.code, 5, gas, program.registers, program.memory);
 
     if (result.hasMemorySlice()) {
-      return BytesBlob.blobFrom(result.statusOrMemorySlice);
+      return BytesBlob.blobFrom(result.memorySlice);
     }
 
     return BytesBlob.empty();
