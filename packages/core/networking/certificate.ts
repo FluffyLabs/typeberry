@@ -43,16 +43,8 @@ export async function verifyCertificate(certs: Uint8Array[]): Promise<Result<Pee
     return Result.error(VerifyCertError.NoCertificate);
   }
 
-  // Convert first cert DER?PEM
-  const der = Buffer.from(certs[0]);
-  const b64 = der
-    .toString("base64")
-    .match(/.{1,64}/g)
-    ?.join("\n");
-  const pem = `-----BEGIN CERTIFICATE-----\n${b64}\n-----END CERTIFICATE-----`;
-
   // Parse with Node's X509Certificate (accepts PEM or DER)
-  const xc = new crypto.X509Certificate(pem);
+  const xc = new crypto.X509Certificate(certs[0]);
 
   // Must be Ed25519 key
   if (xc.publicKey.asymmetricKeyType !== CURVE_NAME.toLowerCase()) {

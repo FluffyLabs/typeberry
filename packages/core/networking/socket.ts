@@ -81,6 +81,7 @@ export async function setup({ host, port, protocols, key }: Options): Promise<Ne
   function peerVerification() {
     const peer: {
       id: PeerInfo | null;
+      /** Takes all certicates the peer presented and all local certifcates from Certificate Authorities (unused) */
       verifyCallback: (certs: Uint8Array[], cas: Uint8Array[]) => Promise<ReturnType<typeof asCryptoError> | undefined>;
     } = {
       id: null,
