@@ -11,8 +11,7 @@
   },
   "scripts": {
     "start": "ts-node ./index.ts",
-    "test": "node --test --require ts-node/register ./test/e2e.ts",
-    "test:client": "ts-node ./test/client.ts"
+    "test": "node --test --require ts-node/register ./test/e2e.ts"
   },
   "dependencies": {
     "@typeberry/block": "^0.0.1",
