@@ -178,7 +178,7 @@ export class Accumulate {
      * https://graypaper.fluffylabs.dev/#/7e6ff6a/300002300002?v=0.6.7
      */
     if (result.hasStatus()) {
-      const status = result.statusOrMemorySlice;
+      const status = result.status;
       if (status === Status.OOG || status === Status.PANIC) {
         return Result.ok({ stateUpdate: checkpoint, consumedGas: tryAsServiceGas(result.consumedGas) });
       }
@@ -189,8 +189,8 @@ export class Accumulate {
      *
      * https://graypaper.fluffylabs.dev/#/7e6ff6a/301202301202?v=0.6.7
      */
-    if (result.hasMemorySlice() && result.statusOrMemorySlice.length === HASH_SIZE) {
-      const memorySlice = Bytes.fromBlob(result.statusOrMemorySlice, HASH_SIZE);
+    if (result.hasMemorySlice() && result.memorySlice.length === HASH_SIZE) {
+      const memorySlice = Bytes.fromBlob(result.memorySlice, HASH_SIZE);
       newState.yieldedRoot = memorySlice.asOpaque();
     }
 

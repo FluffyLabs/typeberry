@@ -1,5 +1,5 @@
 import type { Interpreter, Memory } from "@typeberry/pvm-interpreter";
-import { type Gas, tryAsBigGas } from "@typeberry/pvm-interpreter/gas";
+import type { Gas } from "@typeberry/pvm-interpreter/gas";
 import { tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
 import type { Registers } from "@typeberry/pvm-interpreter/registers";
 import { Status } from "@typeberry/pvm-interpreter/status";
@@ -13,30 +13,28 @@ import type { InterpreterInstanceManager } from "./interpreter-instance-manager"
 class ReturnValue {
   private constructor(
     public consumedGas: Gas,
-    public statusOrMemorySlice: Status | Uint8Array,
-  ) {}
-
-  static fromOOG(consumedGas: Gas) {
-    return new ReturnValue(consumedGas, Status.OOG);
+    public status: Status | null,
+    public memorySlice: Uint8Array | null,
+  ) {
+    check(
+      (status === null && memorySlice !== null) || (status !== null && memorySlice === null),
+      "`status` and `memorySlice` must not both be null or both be non-null — exactly one must be provided",
+    );
   }
 
-  static fromPanic(consumedGas: Gas) {
-    return new ReturnValue(consumedGas, Status.PANIC);
-  }
-
-  static fromMemoryFault(consumedGas: Gas) {
-    return new ReturnValue(consumedGas, new Uint8Array(0));
+  static fromStatus(consumedGas: Gas, status: Status) {
+    return new ReturnValue(consumedGas, status, null);
   }
 
   static fromMemorySlice(consumedGas: Gas, memorySlice: Uint8Array) {
-    return new ReturnValue(consumedGas, memorySlice);
+    return new ReturnValue(consumedGas, null, memorySlice);
   }
 
-  hasMemorySlice(): this is this & { statusOrMemorySlice: Uint8Array } {
-    return this.statusOrMemorySlice instanceof Uint8Array;
+  hasMemorySlice(): this is this & { status: null; memorySlice: Uint8Array } {
+    return this.memorySlice instanceof Uint8Array && this.status === null;
   }
 
-  hasStatus(): this is this & { statusOrMemorySlice: Status } {
+  hasStatus(): this is this & { status: Status; memorySlice: null } {
     return !this.hasMemorySlice();
   }
 }
@@ -46,20 +44,10 @@ export class HostCalls {
     private hostCalls: HostCallsManager,
   ) {}
 
-  private calculateConsumedGas(initialGas: Gas, gas: Gas): Gas {
-    const gasConsumed = tryAsBigGas(initialGas) - tryAsBigGas(gas);
-
-    if (gasConsumed < 0) {
-      return initialGas;
-    }
-
-    return tryAsBigGas(gasConsumed);
-  }
-
   private getReturnValue(status: Status, pvmInstance: Interpreter): ReturnValue {
     const gasConsumed = pvmInstance.getGasConsumed();
     if (status === Status.OOG) {
-      return ReturnValue.fromOOG(gasConsumed);
+      return ReturnValue.fromStatus(gasConsumed, status);
     }
 
     if (status === Status.HALT) {
@@ -73,13 +61,13 @@ export class HostCalls {
       const pageFault = memory.loadInto(result, startAddress);
 
       if (pageFault !== null) {
-        return ReturnValue.fromMemoryFault(gasConsumed);
+        return ReturnValue.fromMemorySlice(gasConsumed, new Uint8Array());
       }
 
       return ReturnValue.fromMemorySlice(gasConsumed, result);
     }
 
-    return ReturnValue.fromPanic(gasConsumed);
+    return ReturnValue.fromStatus(gasConsumed, Status.PANIC);
   }
 
   private async execute(pvmInstance: Interpreter) {
@@ -101,7 +89,7 @@ export class HostCalls {
       const gasCost = typeof hostCall.gasCost === "number" ? hostCall.gasCost : hostCall.gasCost(regs);
       const underflow = gas.sub(gasCost);
       if (underflow) {
-        return ReturnValue.fromOOG(pvmInstance.getGasConsumed());
+        return ReturnValue.fromStatus(pvmInstance.getGasConsumed(), Status.OOG);
       }
       const result = await hostCall.execute(gas, regs, memory);
 
