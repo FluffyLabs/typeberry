@@ -10,6 +10,7 @@ describe("CLI", () => {
   const parse = (args: string[]) => parseArgs(args, "..");
   const defaultOptions: SharedOptions = {
     genesis: null,
+    genesisBlock: null,
     genesisRoot: Bytes.parseBytes(
       "0xc07cdbce686c64d0a9b6539c70b0bb821b6a74d9de750a46a5da05b5640c290a",
       HASH_SIZE,
@@ -47,6 +48,18 @@ describe("CLI", () => {
       args: {
         ...defaultOptions,
         genesis: ".././genesis.json",
+      },
+    });
+  });
+
+  it("should parse genesisBlock option", () => {
+    const args = parse(["--genesis-block=./genesis-block.json"]);
+
+    deepEqual(args, {
+      command: Command.Run,
+      args: {
+        ...defaultOptions,
+        genesisBlock: ".././genesis-block.json",
       },
     });
   });
