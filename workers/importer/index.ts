@@ -2,7 +2,7 @@ import { isMainThread, parentPort } from "node:worker_threads";
 
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
-import type { BlockView } from "@typeberry/block";
+import { tryAsTimeSlot } from "@typeberry/block";
 import { LmdbBlocks, LmdbStates } from "@typeberry/database-lmdb";
 import { LmdbRoot } from "@typeberry/database-lmdb";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
@@ -10,6 +10,7 @@ import { SimpleAllocator, keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { TransitionHasher } from "@typeberry/transition";
 import { measure, resultToString } from "@typeberry/utils";
+import { ImportQueue } from "./import-queue";
 import { Importer } from "./importer";
 import {
   type ImporterInit,
@@ -29,6 +30,7 @@ if (!isMainThread) {
 }
 
 const keccakHasher = keccak.KeccakHasher.create();
+
 /**
  * The `BlockImporter` listens to `block` signals, where it expects
  * RAW undecoded block objects (typically coming from the network).
@@ -56,28 +58,26 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
 
     // TODO [ToDr] back pressure?
     let isProcessing = false;
-    const importingQueue: BlockView[] = [];
+    const importingQueue = new ImportQueue(config.chainSpec, importer);
 
-    worker.onBlock.on(async (b) => {
-      importingQueue.push(b);
-      // NOTE [ToDr] this is incorrect, since it may fail to decode.
-      const timeSlot = b.header.view().timeSlotIndex.materialize();
+    worker.onBlock.on(async (block) => {
+      const timeSlot = importingQueue.push(block) ?? tryAsTimeSlot(0);
       logger.log(`🧊 Got block: #${timeSlot}`);
 
       if (isProcessing) {
-        // some other annoncement is already processing the import queue.
         return;
       }
 
       isProcessing = true;
       try {
-        while (importingQueue.length > 0) {
-          const b = importingQueue.shift();
-          if (b === undefined) {
+        for (;;) {
+          const entry = importingQueue.shift();
+          if (entry === undefined) {
             return;
           }
+          const { block, seal } = entry;
           const timer = measure("importBlock");
-          const maybeBestHeader = await importer.importBlock(b);
+          const maybeBestHeader = await importer.importBlock(block, await seal);
           if (maybeBestHeader.isOk) {
             const bestHeader = maybeBestHeader.ok;
             worker.announce(port, bestHeader);
