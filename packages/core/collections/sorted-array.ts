@@ -83,7 +83,16 @@ export class SortedArray<V> implements ImmutableSortedArray<V> {
     this.array.splice(findIdx.idx, 0, v);
   }
 
-  findIndex(v: V) {
+  /**
+   * Return and remove the last element of the collection.
+   *
+   * `shift` is much slower, so please don't add it.
+   */
+  public pop(): V | undefined {
+    return this.array.pop();
+  }
+
+  public findIndex(v: V) {
     const findIdx = this.binarySearch(v);
     if (findIdx.isEqual) {
       return findIdx.idx;
@@ -92,7 +101,7 @@ export class SortedArray<V> implements ImmutableSortedArray<V> {
     return -1;
   }
 
-  findExact(v: V): V | undefined {
+  public findExact(v: V): V | undefined {
     const findIdx = this.binarySearch(v);
     if (findIdx.isEqual) {
       return this.array[findIdx.idx];

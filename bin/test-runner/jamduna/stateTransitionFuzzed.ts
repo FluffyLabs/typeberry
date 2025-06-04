@@ -44,6 +44,7 @@ export async function runStateTransitionFuzzed(testContent: StateTransitionFuzze
     preState,
     blocksDb,
     new TransitionHasher(spec, await keccakHasher, new SimpleAllocator()),
+    { enableParallelSealVerification: false },
   );
 
   // verify that we compute the state root exactly the same.

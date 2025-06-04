@@ -56,17 +56,22 @@ export const PREIMAGE_EXPUNGE_PERIOD = 19200;
  * https://graypaper.fluffylabs.dev/#/9a08063/370202370502?v=0.6.6 */
 const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 
+type StateSlice = Pick<State, "getService" | "timeslot">;
+
 export class PartialStateDb implements PartialState {
   public readonly updatedState: StateUpdate = new StateUpdate();
   private checkpointedState: StateUpdate | null = null;
+    /** `x_i`: next service id we are going to create. */
+  private nextNewServiceId: ServiceId;
 
   constructor(
-    private readonly state: State,
+    private readonly state: StateSlice,
     /** `x_s` */
     private readonly currentServiceId: ServiceId,
-    /** `x_i`: next service id we are going to create. */
-    private nextNewServiceId: ServiceId,
+    nextNewServiceIdCandidate: ServiceId,
   ) {
+    this.nextNewServiceId = this.getNextAvailableServiceId(nextNewServiceIdCandidate);
+
     const service = this.state.getService(this.currentServiceId);
     if (service === undefined) {
       throw new Error(`Invalid state initialization. Service info missing for ${this.currentServiceId}.`);

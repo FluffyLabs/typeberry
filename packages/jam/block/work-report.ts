@@ -79,7 +79,7 @@ export class WorkPackageInfo extends WithDebug {
 /**
  * A report of execution of some work package.
  *
- * https://graypaper.fluffylabs.dev/#/579bd12/136f00137600
+ * https://graypaper.fluffylabs.dev/#/cc517d7/131c01132401?v=0.6.5
  */
 export class WorkReport extends WithDebug {
   static Codec = codec.Class(WorkReport, {
