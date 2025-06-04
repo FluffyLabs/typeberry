@@ -114,7 +114,7 @@ export function sumU32(...values: U32[]) {
 }
 
 /**
- * Transform provided number to little-endian representation.
+ * Transform provided U32 number to little-endian representation.
  */
 export function u32AsLeBytes(value: U32): Uint8Array {
   return new Uint8Array([value & 0xff, (value >> 8) & 0xff, (value >> 16) & 0xff, (value >> 24) & 0xff]);
