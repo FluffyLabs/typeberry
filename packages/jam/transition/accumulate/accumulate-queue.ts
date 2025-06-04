@@ -12,16 +12,33 @@ export class AccumulateQueue {
     public readonly chainSpec: ChainSpec,
   ) {}
 
+  /**
+   * Returns work reports that do not have any deps and can be accumulate immediately
+   *
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/16fa0016fa00?v=0.6.7
+   */
   getWorkReportsToAccumulateImmediately(reports: WorkReport[]): WorkReport[] {
     return reports.filter((report) => {
       return report.context.prerequisites.length === 0 && report.segmentRootLookup.length === 0;
     });
   }
 
+  /**
+   * Returns work report dependencies
+   *
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/162a01162a01?v=0.6.7
+   */
   private getWorkReportDependencies(report: WorkReport): WorkPackageHash[] {
-    return report.context.prerequisites.concat(report.segmentRootLookup.map((x) => x.workPackageHash));
+    return Array.from(
+      HashSet.from(report.context.prerequisites.concat(report.segmentRootLookup.map((x) => x.workPackageHash))),
+    );
   }
 
+  /**
+   * Returns work reports that have some dependencies and cannot be accumulate immediately
+   *
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/162301162301?v=0.6.7
+   */
   getWorkReportsToAccumulateLater(reports: WorkReport[]): NotYetAccumulatedReport[] {
     const history = this.state.recentlyAccumulated.flatMap((set) => Array.from(set));
     const reportsWithDependencies = reports.filter(
@@ -38,6 +55,11 @@ export class AccumulateQueue {
     return pruneQueue(itemsToEnqueue, HashSet.from(history));
   }
 
+  /**
+   * Reorders work reports based on their dependencies
+   *
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/16a40116a401?v=0.6.7
+   */
   enqueueReports(r: NotYetAccumulatedReport[]): WorkReport[] {
     const result: WorkReport[] = [];
 
@@ -60,6 +82,11 @@ export class AccumulateQueue {
     return result;
   }
 
+  /**
+   * Returns work reports to accumulate from state
+   *
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/165d02165d02?v=0.6.7
+   */
   getQueueFromState(slot: TimeSlot) {
     const phaseIndex = slot % this.chainSpec.epochLength;
     const fromPhaseIndexToEnd = this.state.accumulationQueue.slice(phaseIndex);
@@ -68,6 +95,12 @@ export class AccumulateQueue {
   }
 }
 
+/**
+ * A fuction that removes all entries whose work-report’s hash is in the set provided as a parameter, and removes any dependencies which appear in said set.
+ * It is defined as E function in GP:
+ *
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/164501164501?v=0.6.7
+ */
 export function pruneQueue(reports: NotYetAccumulatedReport[], processedHashes: HashSet<WorkPackageHash>) {
   return reports
     .filter(({ report }) => !processedHashes.has(report.workPackageSpec.hash))

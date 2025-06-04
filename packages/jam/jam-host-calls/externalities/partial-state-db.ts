@@ -66,15 +66,11 @@ export class PartialStateDb implements PartialState {
     /** `x_s` */
     private readonly currentServiceId: ServiceId,
     /** `x_i`: next service id we are going to create. */
-    nextNewServiceId?: ServiceId,
+    nextNewServiceIdCandidate: ServiceId,
   ) {
     const service = this.state.services.get(this.currentServiceId);
 
-    if (nextNewServiceId === undefined) {
-      this.nextNewServiceId = this.getNextAvailableServiceId(this.currentServiceId);
-    } else {
-      this.nextNewServiceId = nextNewServiceId;
-    }
+    this.nextNewServiceId = this.getNextAvailableServiceId(nextNewServiceIdCandidate);
 
     if (service === undefined) {
       throw new Error(`Invalid state initialization. Service info missing for ${this.currentServiceId}.`);

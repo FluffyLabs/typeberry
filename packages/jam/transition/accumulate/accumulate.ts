@@ -35,7 +35,7 @@ import { InMemoryTrie } from "@typeberry/trie";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher";
 import { type MutablePick, Result } from "@typeberry/utils";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue";
-import { getWorkPackageHashes, uniquePreserveOrder } from "./accumulate-utils";
+import { generateNextServiceId, getWorkPackageHashes, uniquePreserveOrder } from "./accumulate-utils";
 import {
   AccountsInfoExternalities,
   AccountsLookupExternalities,
@@ -99,7 +99,12 @@ export class Accumulate {
     public readonly chainSpec: ChainSpec,
   ) {}
 
-  findReportCutoffIndex(gasLimit: ServiceGas, reports: WorkReport[]) {
+  /**
+   * Returns an index that determines how many WorkReports can be processed before exceeding a given gasLimit.
+   *
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/170a01170a01?v=0.6.7
+   */
+  private findReportCutoffIndex(gasLimit: ServiceGas, reports: WorkReport[]) {
     const reportsLength = reports.length;
     let currentGas = 0n;
 
@@ -117,7 +122,12 @@ export class Accumulate {
     return reportsLength;
   }
 
-  async pvmAccumulateInvocation(
+  /**
+   * A method that prepres PVM executor and state to run accumulation
+   *
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/2fdb012fdb01?v=0.6.7
+   */
+  private async pvmAccumulateInvocation(
     slot: TimeSlot,
     serviceId: ServiceId,
     operands: Operand[],
@@ -137,7 +147,15 @@ export class Accumulate {
       return Result.error(PvmInvocationError.NoPreimage);
     }
 
-    const partialState = new PartialStateDb({ services: this.state.services, timeslot: slot }, serviceId);
+    const nextServiceId = generateNextServiceId(
+      { serviceId, entropy: this.state.entropy, timeslot: slot },
+      this.chainSpec,
+    );
+    const partialState = new PartialStateDb(
+      { services: this.state.services, timeslot: slot },
+      serviceId,
+      nextServiceId,
+    );
 
     const externalities = {
       partialState,
@@ -154,6 +172,11 @@ export class Accumulate {
     const result = await executor.run(args, tryAsGas(gas));
     const [newState, checkpoint] = partialState.getStateUpdates();
 
+    /**
+     * PVM invocation returned and error so we return the checkpoint
+     *
+     * https://graypaper.fluffylabs.dev/#/7e6ff6a/300002300002?v=0.6.7
+     */
     if (result.hasStatus()) {
       const status = result.statusOrMemorySlice;
       if (status === Status.OOG || status === Status.PANIC) {
@@ -161,14 +184,29 @@ export class Accumulate {
       }
     }
 
+    /**
+     * PVM invocation returned a hash so we save it in partial state
+     *
+     * https://graypaper.fluffylabs.dev/#/7e6ff6a/301202301202?v=0.6.7
+     */
     if (result.hasMemorySlice() && result.statusOrMemorySlice.length === HASH_SIZE) {
       const memorySlice = Bytes.fromBlob(result.statusOrMemorySlice, HASH_SIZE);
       newState.yieldedRoot = memorySlice.asOpaque();
     }
 
+    /**
+     * Everything was okay so we can return a new state
+     *
+     * https://graypaper.fluffylabs.dev/#/7e6ff6a/302302302302?v=0.6.7
+     */
     return Result.ok({ stateUpdate: newState, consumedGas: tryAsServiceGas(result.consumedGas) });
   }
 
+  /**
+   * A method that prepare operands array and gas cost that are needed to accumulate a single service.
+   *
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/18ea00189d01?v=0.6.7
+   */
   private getOperandsAndGasCost(serviceId: ServiceId, reports: WorkReport[]) {
     let gasCost =
       this.state.privilegedServices.autoAccumulateServices.find((x) => x.service === serviceId)?.gasLimit ??
@@ -199,7 +237,12 @@ export class Accumulate {
     return { operands, gasCost };
   }
 
-  async accumulateSingleService(serviceId: ServiceId, reports: WorkReport[], slot: TimeSlot) {
+  /**
+   * A method that accumulate reports connected with a single service
+   *
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/18d70118d701?v=0.6.7
+   */
+  private async accumulateSingleService(serviceId: ServiceId, reports: WorkReport[], slot: TimeSlot) {
     const { operands, gasCost } = this.getOperandsAndGasCost(serviceId, reports);
 
     const result = await this.pvmAccumulateInvocation(slot, serviceId, operands, gasCost);
@@ -211,7 +254,15 @@ export class Accumulate {
     return result.ok;
   }
 
-  async accumulateSequentially(
+  /**
+   * The outer accumulation function ∆+ which transforms a gas-limit, a sequence of work-reports,
+   * an initial partial-state and a dictionary of services enjoying free accumulation,
+   * into a tuple of the number of work-results accumulated, a posterior state-context,
+   * the resultant deferred-transfers and accumulation-output pairing.
+   *
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/179d00179d00?v=0.6.7
+   */
+  private async accumulateSequentially(
     gasLimit: ServiceGas,
     reports: WorkReport[],
     slot: TimeSlot,
@@ -248,7 +299,17 @@ export class Accumulate {
     };
   }
 
-  async accumulateInParallel(reports: WorkReport[], slot: TimeSlot): Promise<ParallelAccumulationResult> {
+  /**
+   * The parallelized accumulation function ∆∗ which,
+   * with the help of the single-service accumulation function ∆1,
+   * transforms an initial state-context, together with a sequence of work-reports
+   * and a dictionary of privileged always-accumulate services,
+   * into a tuple of the total gas utilized in pvm execution u, a posterior state-context
+   * and the resultant accumulation-output pairings b and deferred-transfers.
+   *
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/175501175501?v=0.6.7
+   */
+  private async accumulateInParallel(reports: WorkReport[], slot: TimeSlot): Promise<ParallelAccumulationResult> {
     const autoAccumulateServiceIds = this.state.privilegedServices.autoAccumulateServices.map(({ service }) => service);
     const allServiceIds = reports
       .flatMap((report) => report.results.map((result) => result.serviceId))
@@ -277,7 +338,7 @@ export class Accumulate {
       }
     }
 
-    this.updateServicesInState(stateUpdates, slot);
+    this.applyStateUpdates(stateUpdates, slot);
 
     return {
       pendingTransfers,
@@ -286,7 +347,12 @@ export class Accumulate {
     };
   }
 
-  private updateServicesInState(stateUpdates: [ServiceId, StateUpdate][], slot: TimeSlot): void {
+  /**
+   * A method that applies changes that were made by services.
+   * It can modify: `services`, `privilegedServices`, `authQueues`,
+   * and `designatedValidatorData` and is called after parallel accumulation step.
+   */
+  private applyStateUpdates(stateUpdates: [ServiceId, StateUpdate][], slot: TimeSlot): void {
     const { authManager, manager, validatorsManager } = this.state.privilegedServices;
     for (const [serviceId, stateUpdate] of stateUpdates) {
       if (serviceId === manager && stateUpdate.priviledgedServices !== null) {
@@ -341,6 +407,11 @@ export class Accumulate {
         }
       }
 
+      /**
+       * Integrate provided premiages
+       *
+       * https://graypaper.fluffylabs.dev/#/7e6ff6a/17b80217b802?v=0.6.7
+       */
       for (const { item, serviceId } of stateUpdate.providedPreimages) {
         const { blob, hash } = item;
         const lookupHistoryItem = this.state.services
@@ -356,6 +427,9 @@ export class Accumulate {
     }
   }
 
+  /**
+   * A method that updates `recentlyAccumulated`, `accumulationQueue` and `timeslot` in state
+   */
   private updateState(accumulated: WorkReport[], toAccumulateLater: NotYetAccumulatedReport[], slot: TimeSlot) {
     const epochLength = this.chainSpec.epochLength;
     const phaseIndex = slot % epochLength;
@@ -377,6 +451,13 @@ export class Accumulate {
     this.state.timeslot = slot;
   }
 
+  /**
+   * A method that calculates the initial gas limit.
+   *
+   * Please note it cannot overflow because we use `BigInt`, and the final result is clamped to `ACCUMULATE_TOTAL_GAS`.
+   *
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/18f40118f401?v=0.6.7
+   */
   private getGasLimit() {
     const calculatedGasLimit =
       GAS_TO_INVOKE_WORK_REPORT * BigInt(this.chainSpec.coresCount) +
@@ -417,6 +498,11 @@ export class Accumulate {
   }
 }
 
+/**
+ * Retruns a new root hash
+ *
+ * This function probably doesn't work correctly, since the current test vectors don't verify the root hash.
+ */
 async function getRootHash(yieldedRoots: [ServiceId, OpaqueHash][]): Promise<AccumulateRoot> {
   const keccakHasher = await KeccakHasher.create();
   const trieHasher = getKeccakTrieHasher(keccakHasher);

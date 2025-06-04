@@ -9,7 +9,7 @@ import {
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
 import { HashSet, asKnownSize } from "@typeberry/collections";
-import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { AutoAccumulate, PrivilegedServices, type Service } from "@typeberry/state";
 import { JsonService } from "@typeberry/state-json/accounts";
@@ -21,6 +21,7 @@ import {
   type AccumulateState,
 } from "@typeberry/transition/accumulate";
 import { Result, deepEqual } from "@typeberry/utils";
+import { getChainSpec } from "./spec";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -32,81 +33,81 @@ class Input {
   reports!: WorkReport[];
 }
 
-function getTestStateClass(chainSpec: ChainSpec) {
-  return class TestStateTemplate {
-    static fromJson = json.object<TestStateTemplate, AccumulateState>(
-      {
-        slot: "number",
-        entropy: fromJson.bytes32(),
-        ready_queue: [
-          "array",
-          json.array({
-            report: workReportFromJson,
-            dependencies: json.array(fromJson.bytes32()),
-          }),
-        ],
-        accumulated: ["array", json.array(fromJson.bytes32())],
-        privileges: {
-          bless: "number",
-          assign: "number",
-          designate: "number",
-          always_acc: json.array({
-            id: "number",
-            gas: "number",
-          }),
-        },
-        accounts: json.array(JsonService.fromJson),
+class TestState {
+  static fromJson = json.object<TestState, TestState>(
+    {
+      slot: "number",
+      entropy: fromJson.bytes32(),
+      ready_queue: [
+        "array",
+        json.array({
+          report: workReportFromJson,
+          dependencies: json.array(fromJson.bytes32()),
+        }),
+      ],
+      accumulated: ["array", json.array(fromJson.bytes32())],
+      privileges: {
+        bless: "number",
+        assign: "number",
+        designate: "number",
+        always_acc: json.array({
+          id: "number",
+          gas: "number",
+        }),
       },
-      ({ accounts, accumulated, entropy, privileges, ready_queue, slot }): AccumulateState => {
-        const services: Map<ServiceId, Service> = new Map();
+      accounts: json.array(JsonService.fromJson),
+    },
+    (x) => x,
+  );
 
-        for (const service of accounts) {
-          services.set(service.id, service);
-        }
-        return {
-          timeslot: slot,
-          entropy,
-          accumulationQueue: tryAsPerEpochBlock(
-            ready_queue.map((queue) =>
-              queue.map((item) =>
-                NotYetAccumulatedReport.create({ report: item.report, dependencies: asKnownSize(item.dependencies) }),
-              ),
-            ),
-            chainSpec,
-          ),
-          recentlyAccumulated: tryAsPerEpochBlock(
-            accumulated.map((queue) => HashSet.from(queue)),
-            chainSpec,
-          ),
-          privilegedServices: PrivilegedServices.create({
-            manager: tryAsServiceId(privileges.bless),
-            authManager: tryAsServiceId(privileges.assign),
-            validatorsManager: tryAsServiceId(privileges.designate),
-            autoAccumulateServices: privileges.always_acc.map(({ gas, id }) =>
-              AutoAccumulate.create({ gasLimit: tryAsServiceGas(gas), service: tryAsServiceId(id) }),
-            ),
-          }),
-          services,
-        };
-      },
-    );
-
-    slot!: TimeSlot;
-    entropy!: EntropyHash;
-    ready_queue!: { report: WorkReport; dependencies: WorkPackageHash[] }[][];
-    accumulated!: WorkPackageHash[][];
-    privileges!: {
-      bless: number;
-      assign: number;
-      designate: number;
-      always_acc: { id: number; gas: number }[];
-    };
-    accounts!: Service[];
+  slot!: TimeSlot;
+  entropy!: EntropyHash;
+  ready_queue!: { report: WorkReport; dependencies: WorkPackageHash[] }[][];
+  accumulated!: WorkPackageHash[][];
+  privileges!: {
+    bless: number;
+    assign: number;
+    designate: number;
+    always_acc: { id: number; gas: number }[];
   };
-}
+  accounts!: Service[];
 
-export const TestStateTiny = getTestStateClass(tinyChainSpec);
-export const TestStateFull = getTestStateClass(fullChainSpec);
+  static toAccumulateState(
+    { accounts, slot, entropy, ready_queue, accumulated, privileges }: TestState,
+    chainSpec: ChainSpec,
+  ): AccumulateState {
+    const services: Map<ServiceId, Service> = new Map();
+
+    for (const service of accounts) {
+      services.set(service.id, service);
+    }
+    return {
+      timeslot: slot,
+      entropy,
+      accumulationQueue: tryAsPerEpochBlock(
+        ready_queue.map((queue) =>
+          queue.map((item) =>
+            NotYetAccumulatedReport.create({ report: item.report, dependencies: asKnownSize(item.dependencies) }),
+          ),
+        ),
+        chainSpec,
+      ),
+      recentlyAccumulated: tryAsPerEpochBlock(
+        accumulated.map((queue) => HashSet.from(queue)),
+        chainSpec,
+      ),
+      privilegedServices: PrivilegedServices.create({
+        manager: tryAsServiceId(privileges.bless),
+        authManager: tryAsServiceId(privileges.assign),
+        validatorsManager: tryAsServiceId(privileges.designate),
+        autoAccumulateServices: privileges.always_acc.map(({ gas, id }) =>
+          AutoAccumulate.create({ gasLimit: tryAsServiceGas(gas), service: tryAsServiceId(id) }),
+        ),
+      }),
+      services,
+    };
+  }
+}
 
 class Output {
   static fromJson: FromJson<Output> = {
@@ -120,46 +121,25 @@ class Output {
   }
 }
 
-export class AccumulateTestTiny {
-  static fromJson: FromJson<AccumulateTestTiny> = {
+export class AccumulateTest {
+  static fromJson: FromJson<AccumulateTest> = {
     input: Input.fromJson,
-    pre_state: TestStateTiny.fromJson,
+    pre_state: TestState.fromJson,
     output: Output.fromJson,
-    post_state: TestStateTiny.fromJson,
+    post_state: TestState.fromJson,
   };
 
   input!: AccumulateInput;
-  pre_state!: AccumulateState;
+  pre_state!: TestState;
   output!: Output;
-  post_state!: AccumulateState;
+  post_state!: TestState;
 }
 
-export class AccumulateTestFull {
-  static fromJson: FromJson<AccumulateTestTiny> = {
-    input: Input.fromJson,
-    pre_state: TestStateFull.fromJson,
-    output: Output.fromJson,
-    post_state: TestStateFull.fromJson,
-  };
-
-  input!: AccumulateInput;
-  pre_state!: AccumulateState;
-  output!: Output;
-  post_state!: AccumulateState;
-}
-
-export async function runAccumulateTestTiny(test: AccumulateTestTiny) {
-  const accumulate = new Accumulate(test.pre_state, tinyChainSpec);
+export async function runAccumulateTest(test: AccumulateTest, path: string) {
+  const chainSpec = getChainSpec(path);
+  const accumulate = new Accumulate(TestState.toAccumulateState(test.pre_state, chainSpec), chainSpec);
   const result = await accumulate.transition(test.input);
 
-  deepEqual(test.post_state, accumulate.state);
-  deepEqual(test.output.ok, result);
-}
-
-export async function runAccumulateTestFull(test: AccumulateTestFull) {
-  const accumulate = new Accumulate(test.pre_state, fullChainSpec);
-  const result = await accumulate.transition(test.input);
-
-  deepEqual(test.post_state, accumulate.state);
+  deepEqual(TestState.toAccumulateState(test.post_state, chainSpec), accumulate.state);
   deepEqual(test.output.ok, result);
 }

@@ -57,6 +57,9 @@ namespace entrypoint {
   export const ON_TRANSFER = tryAsProgramCounter(10);
 }
 
+/**
+ * PVM exectutor class that prepares PVM together with host call handlers to be run in requested context
+ */
 export class PvmExecutor {
   private readonly pvm: PvmHostCallExtension;
   private hostCalls: HostCalls;
@@ -71,6 +74,7 @@ export class PvmExecutor {
     this.pvm = new PvmHostCallExtension(this.pvmInstanceManager, this.hostCalls);
   }
 
+  /** Prepare accumulation host call handlers */
   private static prepareAccumulateHostCalls(externalities: AccumulateHostCallExternalities, chainSpec: ChainSpec) {
     const accumulateHandlers: HostCallHandler[] = ACCUMULATE_HOST_CALL_CLASSES.map(
       (HandlerClass) => new HandlerClass(externalities.partialState, chainSpec),
@@ -88,12 +92,20 @@ export class PvmExecutor {
     return accumulateHandlers.concat(generalHandlers);
   }
 
+  /**
+   * Execute provided program
+   *
+   * @param args additional arguments that will be placed in PVM memory before execution
+   * @param gas gas limit
+   * @returns `ReturnValue` object that can be a status or memory slice
+   */
   async run(args: BytesBlob, gas: Gas) {
     const program = Program.fromSpi(this.serviceCode.raw, args.raw, true);
 
     return this.pvm.runProgram(program.code, Number(this.entrypoint), gas, program.registers, program.memory);
   }
 
+  /** A utility function that can be used to prepare accumulate executor */
   static createAccumulateExecutor(
     serviceCode: BytesBlob,
     externalities: AccumulateHostCallExternalities,

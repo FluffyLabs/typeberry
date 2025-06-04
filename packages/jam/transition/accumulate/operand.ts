@@ -5,6 +5,11 @@ import { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 
+/**
+ * The set of wrangled operand tuples, used as an operand to the PVM Accumulation function.
+ *
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/173d03173d03?v=0.6.7
+ */
 export class Operand {
   static Codec = codec.Class(Operand, {
     gas: codec.u64.asOpaque<ServiceGas>(),
@@ -16,6 +21,9 @@ export class Operand {
     authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
   });
 
+  /**
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/181801189d01?v=0.6.7
+   */
   gas: ServiceGas; // g
   payloadHash: OpaqueHash; // y
   result: WorkExecResult; // d
