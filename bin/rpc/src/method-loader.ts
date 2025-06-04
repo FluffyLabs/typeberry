@@ -10,7 +10,7 @@ import { StateRootParams, stateRoot } from "./methods/state-root";
 import { StatisticsParams, statistics } from "./methods/statistics";
 import { RpcError, type RpcMethod, type RpcMethodRepo } from "./types";
 
-export const MethodNotImplementedParams = z.null();
+export const MethodNotImplementedParams = z.any();
 export type MethodNotImplementedParams = z.infer<typeof MethodNotImplementedParams>;
 
 export const methodNotImplemented: RpcMethod<MethodNotImplementedParams, []> = () => {

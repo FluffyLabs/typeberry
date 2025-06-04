@@ -1,8 +1,7 @@
-import z from "zod";
-import type { Hash, RpcMethod, Slot } from "../types";
+import { type Hash, NoArgs, type RpcMethod, type Slot } from "../types";
 
-export const BestBlockParams = z.null();
-export type BestBlockParams = z.infer<typeof BestBlockParams>;
+export const BestBlockParams = NoArgs;
+export type BestBlockParams = NoArgs;
 
 /**
  * https://hackmd.io/@polkadot/jip2#bestBlock
