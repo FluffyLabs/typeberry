@@ -1,11 +1,12 @@
+import { type FromJson, json } from "@typeberry/json-parser";
 import { WithDebug } from "@typeberry/utils";
 
 /**
-* A chain specification collects information that describes a JAM-based network.
-* It identifies the network a blockchain node connects to, the other nodes it initially
-* communicates with, and the initial state that nodes must agree on to produce blocks.
-* The chain specification can be defined in a JSON file.
-*/
+ * A chain specification collects information that describes a JAM-based network.
+ * It identifies the network a blockchain node connects to, the other nodes it initially
+ * communicates with, and the initial state that nodes must agree on to produce blocks.
+ * The chain specification can be defined in a JSON file.
+ */
 export class NetChainSpec extends WithDebug {
   /**
    * An optional list of the nodes accepting connections.
@@ -29,9 +30,16 @@ export class NetChainSpec extends WithDebug {
    * An object defining genesis state. Each key is a 62-character hex string
    * defining the 31-byte state key. The values are arbitrary length hex strings.
    */
-  readonly genesis_state: Map<string, string>;
+  readonly genesis_state: Record<string, string>;
 
-  constructor(data: NetChainSpec) {
+  static fromJson: FromJson<NetChainSpec> = {
+    bootnodes: json.optional(json.array("string")),
+    id: "string",
+    genesis_header: "string",
+    genesis_state: json.record("string"),
+  };
+
+  private constructor(data: NetChainSpec) {
     super();
 
     this.bootnodes = data.bootnodes;
