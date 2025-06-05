@@ -21,7 +21,6 @@ Erasure coding is applied to a `Piece` or a multiple of `Pieces`.
 * **`Chunk` Composition**: Each `Chunk` is made up of `Points`. The number of `Points` per `Chunk` depends on the input data size:
     * If the input is a single **`Piece`** (684 bytes):
         * Each `Chunk` contains **1 `Point`** (2 bytes).
-        * Total data spread across `Chunks`: 1023 `Chunks` * 2 bytes/`Chunk` = 2046 bytes.
     * If the input is a single **`Segment`** (4104 bytes, i.e., 6 `Pieces`):
         * 1023 `Chunks` are produced.
         * Each `Chunk` contains **6 `Points`** (12 bytes).
