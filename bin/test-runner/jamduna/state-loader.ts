@@ -58,9 +58,15 @@ class Parser {
   static storage(description: string) {
     const [service, hashKey] = description.split("|");
     const [hash, key] = hashKey.split(" ");
+
+    // TODO [ToDr] For some reason they take the last 28 bytes when creating the state
+    // entry, so we swap some bytes here to make that work.
+    const strHash = hash.replace("hk=", "");
+    const metaHash = Bytes.parseBytes(`0x${strHash.substring(10)}00000000`, HASH_SIZE).asOpaque();
+
     return {
       serviceId: tryAsServiceId(Number.parseInt(service.replace("s=", ""))),
-      hash: Bytes.parseBytes(hash.replace("hk=", ""), HASH_SIZE).asOpaque(),
+      hash: metaHash,
       key: Bytes.parseBytes(key.replace("k=", ""), HASH_SIZE).asOpaque(),
     };
   }
