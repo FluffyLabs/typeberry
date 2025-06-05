@@ -14,12 +14,7 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import { AutoAccumulate, PrivilegedServices, type Service } from "@typeberry/state";
 import { JsonService } from "@typeberry/state-json/accounts";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
-import {
-  Accumulate,
-  type AccumulateInput,
-  type AccumulateRoot,
-  type AccumulateState,
-} from "@typeberry/transition/accumulate";
+import { Accumulate, type AccumulateRoot, type AccumulateState } from "@typeberry/transition/accumulate";
 import { Result, deepEqual } from "@typeberry/utils";
 import { getChainSpec } from "./spec";
 
@@ -73,7 +68,7 @@ class TestState {
   accounts!: Service[];
 
   static toAccumulateState(
-    { accounts, slot, entropy, ready_queue, accumulated, privileges }: TestState,
+    { accounts, slot, ready_queue, accumulated, privileges }: TestState,
     chainSpec: ChainSpec,
   ): AccumulateState {
     const services: Map<ServiceId, Service> = new Map();
@@ -83,7 +78,6 @@ class TestState {
     }
     return {
       timeslot: slot,
-      entropy,
       accumulationQueue: tryAsPerEpochBlock(
         ready_queue.map((queue) =>
           queue.map((item) =>
@@ -129,7 +123,7 @@ export class AccumulateTest {
     post_state: TestState.fromJson,
   };
 
-  input!: AccumulateInput;
+  input!: Input;
   pre_state!: TestState;
   output!: Output;
   post_state!: TestState;
@@ -137,8 +131,17 @@ export class AccumulateTest {
 
 export async function runAccumulateTest(test: AccumulateTest, path: string) {
   const chainSpec = getChainSpec(path);
-  const accumulate = new Accumulate(TestState.toAccumulateState(test.pre_state, chainSpec), chainSpec);
-  const result = await accumulate.transition(test.input);
+
+  /**
+   * entropy has to be moved to input because state is incompatibile -
+   * in test state we have: `entropy: EntropyHash;`
+   * in typeberry state we have: `entropy: FixedSizeArray<EntropyHash, ENTROPY_ENTRIES>;`
+   * The accumulation doesn't modify entropy so we can remove it safely from pre/post state
+   */
+  const entropy = test.pre_state.entropy;
+
+  const accumulate = new Accumulate(chainSpec, TestState.toAccumulateState(test.pre_state, chainSpec));
+  const result = await accumulate.transition({ ...test.input, entropy });
 
   deepEqual(TestState.toAccumulateState(test.post_state, chainSpec), accumulate.state);
   deepEqual(test.output.ok, result);
