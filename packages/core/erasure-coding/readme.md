@@ -37,6 +37,6 @@ Erasure coding is applied to a `Piece` or a multiple of `Pieces`.
 ### Terminology: `Chunks` vs. `Shards`
 
 * **`Chunk`**: A unit of data produced by the erasure coding process.
-* **`Shard`**: A `Chunk` that has been distributed, for example, to validators in a network. Essentially, a `Shard` is a `Chunk` in the context of full network distribution.
+* **`Shard`**: A `Chunk` that has been distributed, for example, to validators in a network. In case of a full network (1023 validators), a `Shard` is equivalent to `Chunk`.
 
 ---
