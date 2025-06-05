@@ -5,6 +5,10 @@ import { type U32, u32AsLeBytes } from "@typeberry/numbers";
 const ED25519_SECRET_KEY = "jam_val_key_ed25519" as const;
 const BANDERSNATCH_SECRET_KEY = "jam_val_key_bandersnatch" as const;
 
+/**
+ * JIP-5: Secret key derivation
+ *
+ * https://github.com/polkadot-fellows/JIPs/blob/7048f79edf4f4eb8bfe6fb42e6bbf61900f44c65/JIP-5.md */
 export function trivialSeed(s: U32): Bytes<32> {
   const s_le = u32AsLeBytes(s);
   return Bytes.fromBlob(BytesBlob.blobFromParts([s_le, s_le, s_le, s_le, s_le, s_le, s_le, s_le]).raw, 32);
