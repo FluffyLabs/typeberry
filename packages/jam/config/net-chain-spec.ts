@@ -1,5 +1,11 @@
 import { WithDebug } from "@typeberry/utils";
 
+/**
+* A chain specification collects information that describes a JAM-based network.
+* It identifies the network a blockchain node connects to, the other nodes it initially
+* communicates with, and the initial state that nodes must agree on to produce blocks.
+* The chain specification can be defined in a JSON file.
+*/
 export class NetChainSpec extends WithDebug {
   /**
    * An optional list of the nodes accepting connections.
