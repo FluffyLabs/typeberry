@@ -14,12 +14,7 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import { AutoAccumulate, PrivilegedServices, type Service } from "@typeberry/state";
 import { JsonService } from "@typeberry/state-json/accounts";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
-import {
-  Accumulate,
-  type AccumulateInput,
-  type AccumulateRoot,
-  type AccumulateState,
-} from "@typeberry/transition/accumulate";
+import { Accumulate, type AccumulateRoot, type AccumulateState } from "@typeberry/transition/accumulate";
 import { Result, deepEqual } from "@typeberry/utils";
 import { getChainSpec } from "./spec";
 
@@ -128,7 +123,7 @@ export class AccumulateTest {
     post_state: TestState.fromJson,
   };
 
-  input!: AccumulateInput;
+  input!: Input;
   pre_state!: TestState;
   output!: Output;
   post_state!: TestState;
@@ -144,15 +139,9 @@ export async function runAccumulateTest(test: AccumulateTest, path: string) {
    * The accumulation doesn't modify entropy so we can remove it safely from pre/post state
    */
   const entropy = test.pre_state.entropy;
-  // @ts-expect-error TS2790: The operand of a 'delete' operator must be optional
-  // biome-ignore lint/performance/noDelete: It is okay to use `delete` in tests.
-  delete test.pre_state.entropy;
-  // @ts-expect-error TS2790: The operand of a 'delete' operator must be optional
-  // biome-ignore lint/performance/noDelete: It is okay to use `delete` in tests.
-  delete test.post_state.entropy;
 
   const accumulate = new Accumulate(chainSpec, TestState.toAccumulateState(test.pre_state, chainSpec));
-  const result = await accumulate.transition(test.input, entropy);
+  const result = await accumulate.transition({ ...test.input, entropy });
 
   deepEqual(TestState.toAccumulateState(test.post_state, chainSpec), accumulate.state);
   deepEqual(test.output.ok, result);

@@ -34,6 +34,7 @@ describe("accumulate", () => {
         createWorkReport(hashFromString("0xd3d0ac423a2e9451db2e88bd75cc143b19424747fbcf2696792987436e8722a6")),
       ],
       slot: tryAsTimeSlot(47),
+      entropy,
     };
 
     const services = createServices([
@@ -157,7 +158,7 @@ describe("accumulate", () => {
     const expectedOutput = Bytes.zero(HASH_SIZE);
     const accumulate = new Accumulate(tinyChainSpec, state);
 
-    const output = await accumulate.transition(input, entropy);
+    const output = await accumulate.transition(input);
 
     deepEqual(output, expectedOutput);
     deepEqual(accumulate.state, expectedState);

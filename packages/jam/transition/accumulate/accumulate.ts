@@ -51,6 +51,7 @@ export type AccumulateRoot = OpaqueHash;
 export type AccumulateInput = {
   slot: TimeSlot;
   reports: WorkReport[];
+  entropy: EntropyHash;
 };
 
 export type AccumulateState = {
@@ -481,7 +482,7 @@ export class Accumulate {
     return tryAsServiceGas(gasLimit);
   }
 
-  async transition({ reports, slot }: AccumulateInput, entropy: EntropyHash): Promise<AccumulateRoot> {
+  async transition({ reports, slot, entropy }: AccumulateInput): Promise<AccumulateRoot> {
     const accumulateQueue = new AccumulateQueue(this.state, this.chainSpec);
     const toAccumulateImmediately = accumulateQueue.getWorkReportsToAccumulateImmediately(reports);
     const toAccumulateLater = accumulateQueue.getWorkReportsToAccumulateLater(reports);

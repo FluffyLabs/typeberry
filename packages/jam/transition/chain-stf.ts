@@ -183,13 +183,11 @@ export class OnChain {
       return stfError(StfErrorKind.Preimages, preimagesResult);
     }
 
-    const accumulateRoot = await this.accumulate.transition(
-      {
-        slot: timeSlot,
-        reports: assurancesResult.ok,
-      },
-      this.state.entropy[0],
-    );
+    const accumulateRoot = await this.accumulate.transition({
+      slot: timeSlot,
+      reports: assurancesResult.ok,
+      entropy: this.state.entropy[0], // TODO [MaSi]: it should be eta_0_prime
+    });
     // recent history
     this.recentHistory.transition({
       headerHash,
