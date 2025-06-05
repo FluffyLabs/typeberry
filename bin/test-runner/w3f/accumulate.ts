@@ -73,7 +73,7 @@ class TestState {
   accounts!: Service[];
 
   static toAccumulateState(
-    { accounts, slot, entropy, ready_queue, accumulated, privileges }: TestState,
+    { accounts, slot, ready_queue, accumulated, privileges }: TestState,
     chainSpec: ChainSpec,
   ): AccumulateState {
     const services: Map<ServiceId, Service> = new Map();
@@ -83,7 +83,6 @@ class TestState {
     }
     return {
       timeslot: slot,
-      entropy,
       accumulationQueue: tryAsPerEpochBlock(
         ready_queue.map((queue) =>
           queue.map((item) =>
@@ -137,8 +136,23 @@ export class AccumulateTest {
 
 export async function runAccumulateTest(test: AccumulateTest, path: string) {
   const chainSpec = getChainSpec(path);
-  const accumulate = new Accumulate(TestState.toAccumulateState(test.pre_state, chainSpec), chainSpec);
-  const result = await accumulate.transition(test.input);
+
+  /**
+   * entropy has to be moved to input because state is incompatibile -
+   * in test state we have: `entropy: EntropyHash;`
+   * in typeberry state we have: `entropy: FixedSizeArray<EntropyHash, ENTROPY_ENTRIES>;`
+   * The accumulation doesn't modify entropy so we can remove it safely from pre/post state
+   */
+  const entropy = test.pre_state.entropy;
+  // @ts-expect-error TS2790: The operand of a 'delete' operator must be optional
+  // biome-ignore lint/performance/noDelete: It is okay to use `delete` in tests.
+  delete test.pre_state.entropy;
+  // @ts-expect-error TS2790: The operand of a 'delete' operator must be optional
+  // biome-ignore lint/performance/noDelete: It is okay to use `delete` in tests.
+  delete test.post_state.entropy;
+
+  const accumulate = new Accumulate(chainSpec, TestState.toAccumulateState(test.pre_state, chainSpec));
+  const result = await accumulate.transition(test.input, entropy);
 
   deepEqual(TestState.toAccumulateState(test.post_state, chainSpec), accumulate.state);
   deepEqual(test.output.ok, result);

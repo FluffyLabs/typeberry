@@ -54,7 +54,6 @@ export type AccumulateInput = {
 };
 
 export type AccumulateState = {
-  entropy: EntropyHash;
   designatedValidatorData?: State["designatedValidatorData"];
   authQueues?: State["authQueues"];
 } & MutablePick<State, "privilegedServices" | "recentlyAccumulated" | "accumulationQueue" | "timeslot" | "services">;
@@ -95,8 +94,8 @@ const ARGS_CODEC = codec.object({
 
 export class Accumulate {
   constructor(
-    public readonly state: AccumulateState,
     public readonly chainSpec: ChainSpec,
+    public readonly state: AccumulateState,
   ) {}
 
   /**
@@ -132,6 +131,7 @@ export class Accumulate {
     serviceId: ServiceId,
     operands: Operand[],
     gas: ServiceGas,
+    entropy: EntropyHash,
   ): Promise<Result<InvocationResult, PvmInvocationError>> {
     const service = this.state.services.get(serviceId);
     if (service === undefined) {
@@ -147,10 +147,7 @@ export class Accumulate {
       return Result.error(PvmInvocationError.NoPreimage);
     }
 
-    const nextServiceId = generateNextServiceId(
-      { serviceId, entropy: this.state.entropy, timeslot: slot },
-      this.chainSpec,
-    );
+    const nextServiceId = generateNextServiceId({ serviceId, entropy: entropy, timeslot: slot }, this.chainSpec);
     const partialState = new PartialStateDb(
       { services: this.state.services, timeslot: slot },
       serviceId,
@@ -159,7 +156,7 @@ export class Accumulate {
 
     const externalities = {
       partialState,
-      fetchExternalities: new AccumulateFetchExternalities(this.state.entropy, operands, this.chainSpec),
+      fetchExternalities: new AccumulateFetchExternalities(entropy, operands, this.chainSpec),
       accountsInfo: new AccountsInfoExternalities(this.state.services),
       accountsRead: new AccountsReadExternalities(),
       accountsWrite: new AccountsWriteExternalities(),
@@ -242,10 +239,15 @@ export class Accumulate {
    *
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/18d70118d701?v=0.6.7
    */
-  private async accumulateSingleService(serviceId: ServiceId, reports: WorkReport[], slot: TimeSlot) {
+  private async accumulateSingleService(
+    serviceId: ServiceId,
+    reports: WorkReport[],
+    slot: TimeSlot,
+    entropy: EntropyHash,
+  ) {
     const { operands, gasCost } = this.getOperandsAndGasCost(serviceId, reports);
 
-    const result = await this.pvmAccumulateInvocation(slot, serviceId, operands, gasCost);
+    const result = await this.pvmAccumulateInvocation(slot, serviceId, operands, gasCost, entropy);
 
     if (result.isError) {
       return { stateUpdate: null, consumedGas: gasCost };
@@ -266,6 +268,7 @@ export class Accumulate {
     gasLimit: ServiceGas,
     reports: WorkReport[],
     slot: TimeSlot,
+    entropy: EntropyHash,
   ): Promise<SequentialAccumulationResult> {
     const i = this.findReportCutoffIndex(gasLimit, reports);
 
@@ -281,12 +284,13 @@ export class Accumulate {
     const reportsToAccumulateInParallel = reports.slice(0, i);
     const reportsToAccumulateSequentially = reports.slice(i);
 
-    const parallelAccumulationResult = await this.accumulateInParallel(reportsToAccumulateInParallel, slot);
+    const parallelAccumulationResult = await this.accumulateInParallel(reportsToAccumulateInParallel, slot, entropy);
     const consumedGas = parallelAccumulationResult.gasCosts.reduce((acc, [_, gas]) => acc + gas, 0n);
     const sequentialAccumulationResult = await this.accumulateSequentially(
       tryAsServiceGas(gasLimit - consumedGas),
       reportsToAccumulateSequentially,
       slot,
+      entropy,
     );
 
     return {
@@ -309,7 +313,11 @@ export class Accumulate {
    *
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/175501175501?v=0.6.7
    */
-  private async accumulateInParallel(reports: WorkReport[], slot: TimeSlot): Promise<ParallelAccumulationResult> {
+  private async accumulateInParallel(
+    reports: WorkReport[],
+    slot: TimeSlot,
+    entropy: EntropyHash,
+  ): Promise<ParallelAccumulationResult> {
     const autoAccumulateServiceIds = this.state.privilegedServices.autoAccumulateServices.map(({ service }) => service);
     const allServiceIds = reports
       .flatMap((report) => report.results.map((result) => result.serviceId))
@@ -322,7 +330,7 @@ export class Accumulate {
     const pendingTransfers: [ServiceId, PendingTransfer[]][] = [];
 
     for (const serviceId of serviceIds) {
-      const { consumedGas, stateUpdate } = await this.accumulateSingleService(serviceId, reports, slot);
+      const { consumedGas, stateUpdate } = await this.accumulateSingleService(serviceId, reports, slot, entropy);
 
       gasCosts.push([serviceId, tryAsServiceGas(consumedGas)]);
 
@@ -473,7 +481,7 @@ export class Accumulate {
     return tryAsServiceGas(gasLimit);
   }
 
-  async transition({ reports, slot }: AccumulateInput): Promise<AccumulateRoot> {
+  async transition({ reports, slot }: AccumulateInput, entropy: EntropyHash): Promise<AccumulateRoot> {
     const accumulateQueue = new AccumulateQueue(this.state, this.chainSpec);
     const toAccumulateImmediately = accumulateQueue.getWorkReportsToAccumulateImmediately(reports);
     const toAccumulateLater = accumulateQueue.getWorkReportsToAccumulateLater(reports);
@@ -492,6 +500,7 @@ export class Accumulate {
       gasLimit,
       accumulatableReports,
       slot,
+      entropy,
     );
     const accumulated = accumulatableReports.slice(0, accumulatedReports);
 
