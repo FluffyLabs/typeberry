@@ -29,7 +29,7 @@ Erasure coding is applied to a `Piece` or a multiple of `Pieces`.
 
 ### Data Reconstruction
 
-* To reconstruct the original encoded data, **any 342 `Chunks`** out of the 1023 available `Chunks` are required.
+* To reconstruct the original encoded data, **any 342 `Chunks`** (along with their indices) out of the 1023 available `Chunks` are required.
 
 ---
 
