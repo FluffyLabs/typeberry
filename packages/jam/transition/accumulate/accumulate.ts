@@ -147,7 +147,7 @@ export class Accumulate {
       return Result.error(PvmInvocationError.NoPreimage);
     }
 
-    const nextServiceId = generateNextServiceId({ serviceId, entropy: entropy, timeslot: slot }, this.chainSpec);
+    const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec);
     const partialState = new PartialStateDb(
       { services: this.state.services, timeslot: slot },
       serviceId,
