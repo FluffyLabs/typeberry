@@ -11,7 +11,7 @@ import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier";
 import { OnChain } from "@typeberry/transition/chain-stf";
 import { deepEqual, resultToString } from "@typeberry/utils";
-import { TestState, loadState } from "./stateLoader";
+import { TestState, loadState } from "./state-loader";
 
 export class StateTransition {
   static fromJson: FromJson<StateTransition> = {
