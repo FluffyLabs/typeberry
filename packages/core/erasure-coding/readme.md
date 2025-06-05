@@ -23,7 +23,7 @@ Erasure coding is applied to a `Piece` or a multiple of `Pieces`.
         * Each `Chunk` contains **1 `Point`** (2 bytes).
     * If the input is a single **`Segment`** (4104 bytes, i.e., 6 `Pieces`):
         * Each `Chunk` contains **6 `Points`** (12 bytes).
-    * For other input sizes (always a multiple of a `Piece`), the number of `Points` per `Chunk` scales proportionally. For an input of $N \times \text{Piece}$, each of the 1023 `Chunks` will contain $N \text{ Points}$.
+    * For other input sizes (always a multiple of a `Piece`), the number of `Points` per `Chunk` scales proportionally. For an input of $k \times \text{Piece}$, each of the 1023 `Chunks` will contain $k \text{ Points}$.
 
 ---
 
