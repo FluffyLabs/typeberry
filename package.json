@@ -35,6 +35,7 @@
     "packages/jam/database",
     "packages/jam/database-lmdb",
     "packages/jam/jam-host-calls",
+    "packages/jam/key-generator",
     "packages/jam/pvm-host-calls",
     "packages/jam/safrole",
     "packages/jam/state",
