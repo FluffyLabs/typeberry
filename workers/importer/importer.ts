@@ -1,4 +1,4 @@
-import type { BlockView, HeaderHash, HeaderView } from "@typeberry/block";
+import type { BlockView, EntropyHash, HeaderHash, HeaderView, TimeSlot } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
 import { WithHash } from "@typeberry/hash";
@@ -7,7 +7,7 @@ import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verifier";
 import { OnChain, type StfError } from "@typeberry/transition/chain-stf";
-import { type ErrorResult, Result, type TaggedError, measure } from "@typeberry/utils";
+import { type ErrorResult, Result, type TaggedError, measure, resultToString } from "@typeberry/utils";
 
 export enum ImporterErrorKind {
   Verifier = 0,
@@ -41,14 +41,32 @@ export class Importer {
     }
 
     this.verifier = new BlockVerifier(hasher, blocks);
-    this.stf = new OnChain(spec, state, blocks, hasher);
+    this.stf = new OnChain(spec, state, blocks, hasher, { enableParallelSealVerification: true });
 
     logger.info(`😎 Best time slot: ${state.timeslot} (state root: ${currentStateRootHash})`);
   }
 
-  async importBlock(block: BlockView): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
+  /** Attempt to pre-verify the seal to speed up importing. */
+  async preverifySeal(timeSlot: TimeSlot, block: BlockView): Promise<EntropyHash | null> {
+    try {
+      const res = await this.stf.verifySeal(timeSlot, block);
+      if (res.isOk) {
+        return res.ok;
+      }
+      this.logger.warn(`Unable to pre-verify the seal: ${resultToString(res)}`);
+      return null;
+    } catch (e) {
+      this.logger.warn(`Error while trying to pre-verify the seal: ${e}`);
+      return null;
+    }
+  }
+
+  async importBlock(
+    block: BlockView,
+    preverifiedSeal: EntropyHash | null,
+  ): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
     const logger = this.logger;
-    logger.log("🧱 Attempting to import a new block.");
+    logger.log(`🧱 Attempting to import a new block ${preverifiedSeal !== null ? "(seal preverified)" : ""}`);
 
     const timerVerify = measure("import:verify");
     const hash = await this.verifier.verifyBlock(block);
@@ -61,7 +79,7 @@ export class Importer {
     logger.log(`🧱 Got hash ${hash.ok} for block at slot ${timeSlot}.`);
     const headerHash = hash.ok;
     const timerStf = measure("import:stf");
-    const res = await this.stf.transition(block, headerHash);
+    const res = await this.stf.transition(block, headerHash, preverifiedSeal);
     logger.log(timerStf());
     if (res.isError) {
       // TODO [ToDr] Revert the state?

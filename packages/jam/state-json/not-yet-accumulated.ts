@@ -5,7 +5,7 @@ import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
 export const notYetAccumulatedFromJson = json.object<NotYetAccumulatedReport>(
   {
     report: workReportFromJson,
-    unlocks: json.array(fromJson.bytes32()),
+    dependencies: json.array(fromJson.bytes32()),
   },
-  ({ report, unlocks }) => NotYetAccumulatedReport.create({ report, unlocks }),
+  ({ report, dependencies }) => NotYetAccumulatedReport.create({ report, dependencies }),
 );
