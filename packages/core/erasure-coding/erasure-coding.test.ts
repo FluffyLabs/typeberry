@@ -7,16 +7,16 @@ import { tinyChainSpec } from "@typeberry/config/chain-spec";
 import { deepEqual } from "@typeberry/utils";
 import { SEGMENT_FULL, SEGMENT_TINY, TEST_DATA, WORKPACKAGE_FULL, WORKPACKAGE_TINY } from "./ec-test-data";
 import {
-  N_SHARDS_REQUIRED,
-  SHARD_LENGTH,
-  decodeChunk,
+  N_CHUNKS_REQUIRED,
+  POINT_LENGTH,
+  chunksToShards,
   decodeData,
-  encodeChunk,
+  decodePiece,
+  encodePoints,
   join,
   lace,
   padAndEncodeData,
-  segmentsToShards,
-  shardsToSegments,
+  shardsToChunks,
   split,
   unzip,
 } from "./erasure-coding";
@@ -51,20 +51,20 @@ describe("erasure coding: general", () => {
   seed = Math.floor(1000 * Math.random());
 
   it("should encode data", () => {
-    const encoded = encodeChunk(Bytes.parseBytesNoPrefix(data, 684));
+    const encoded = encodePoints(Bytes.parseBytesNoPrefix(data, 684));
     const expected = segmentEc.map((x) => Bytes.parseBytesNoPrefix(x, 2));
 
     assert.deepStrictEqual([...encoded], expected);
   });
 
   it(`should decode data (random seed: ${seed})`, () => {
-    const shards = segmentEc.map<[number, Bytes<SHARD_LENGTH>]>((chunk, idx) => [
+    const shards = segmentEc.map<[number, Bytes<POINT_LENGTH>]>((chunk, idx) => [
       idx,
-      Bytes.parseBytesNoPrefix(chunk, SHARD_LENGTH),
+      Bytes.parseBytesNoPrefix(chunk, POINT_LENGTH),
     ]);
-    const selectedShards = FixedSizeArray.new(getRandomItems(shards, N_SHARDS_REQUIRED), N_SHARDS_REQUIRED);
+    const selectedShards = FixedSizeArray.new(getRandomItems(shards, N_CHUNKS_REQUIRED), N_CHUNKS_REQUIRED);
 
-    const decoded = decodeChunk(selectedShards);
+    const decoded = decodePiece(selectedShards);
 
     assert.strictEqual(`${decoded}`, `0x${data}`);
   });
@@ -87,7 +87,7 @@ describe("erasure coding: full", () => {
 
   it(`should decode segment data (random seed: ${seed})`, () => {
     const shards = seg_shards.map<[number, Bytes<12>]>((chunk, idx) => [idx, Bytes.parseBytesNoPrefix(chunk, 12)]);
-    const selectedShards = getRandomItems(shards, N_SHARDS_REQUIRED);
+    const selectedShards = getRandomItems(shards, N_CHUNKS_REQUIRED);
 
     const decoded = decodeData(selectedShards);
 
@@ -103,7 +103,7 @@ describe("erasure coding: full", () => {
 
   it(`should decode workpackage data (random seed: ${seed})`, () => {
     const shards = wp_shards.map<[number, Bytes<2>]>((chunk, idx) => [idx, Bytes.parseBytesNoPrefix(chunk, 2)]);
-    const selectedShards = getRandomItems(shards, N_SHARDS_REQUIRED);
+    const selectedShards = getRandomItems(shards, N_CHUNKS_REQUIRED);
 
     const decoded = decodeData(selectedShards);
 
@@ -113,7 +113,7 @@ describe("erasure coding: full", () => {
   it(`should encode and decode segment data without a change (random seed: ${seed})`, () => {
     const segments = padAndEncodeData(BytesBlob.parseBlobNoPrefix(seg_data));
     const shards = segments.map<[number, BytesBlob]>((chunk, idx) => [idx, chunk]);
-    const selectedShards = getRandomItems(shards, N_SHARDS_REQUIRED);
+    const selectedShards = getRandomItems(shards, N_CHUNKS_REQUIRED);
     const decoded = decodeData(selectedShards);
 
     assert.deepStrictEqual(`${decoded}`, `0x${seg_data}`);
@@ -138,7 +138,7 @@ describe("erasure coding: tiny", () => {
   seed = Math.floor(1000 * Math.random());
 
   it("should encode segment data", () => {
-    const segments = shardsToSegments(tinyChainSpec, padAndEncodeData(BytesBlob.parseBlobNoPrefix(seg_data)));
+    const segments = chunksToShards(tinyChainSpec, padAndEncodeData(BytesBlob.parseBlobNoPrefix(seg_data)));
     const expected: PerValidator<BytesBlob> = tryAsPerValidator(
       seg_shards.map(BytesBlob.parseBlobNoPrefix),
       tinyChainSpec,
@@ -153,7 +153,7 @@ describe("erasure coding: tiny", () => {
       seg_shards.map(BytesBlob.parseBlobNoPrefix),
       tinyChainSpec,
     );
-    const shards = segmentsToShards(tinyChainSpec, segments);
+    const shards = shardsToChunks(tinyChainSpec, segments);
 
     // slicing to remove duplicates
     const selectedShards = getRandomItems(shards.flat().slice(0, 1023), 342);
@@ -164,7 +164,7 @@ describe("erasure coding: tiny", () => {
   });
 
   it("should encode workpackage data", () => {
-    const segments = shardsToSegments(tinyChainSpec, padAndEncodeData(BytesBlob.parseBlobNoPrefix(wp_data)));
+    const segments = chunksToShards(tinyChainSpec, padAndEncodeData(BytesBlob.parseBlobNoPrefix(wp_data)));
     const expected: PerValidator<BytesBlob> = tryAsPerValidator(
       wp_shards.map(BytesBlob.parseBlobNoPrefix),
       tinyChainSpec,
@@ -174,7 +174,7 @@ describe("erasure coding: tiny", () => {
   });
 
   it(`should decode workpackage data (random seed: ${seed})`, () => {
-    const shards = segmentsToShards(
+    const shards = shardsToChunks(
       tinyChainSpec,
       tryAsPerValidator(wp_shards.map(BytesBlob.parseBlobNoPrefix), tinyChainSpec),
     );
@@ -188,8 +188,8 @@ describe("erasure coding: tiny", () => {
   });
 
   it(`should encode and decode segment data without a change (random seed: ${seed})`, () => {
-    const segments = shardsToSegments(tinyChainSpec, padAndEncodeData(BytesBlob.parseBlobNoPrefix(seg_data)));
-    const shards = segmentsToShards(tinyChainSpec, segments);
+    const segments = chunksToShards(tinyChainSpec, padAndEncodeData(BytesBlob.parseBlobNoPrefix(seg_data)));
+    const shards = shardsToChunks(tinyChainSpec, segments);
     // slicing to remove duplicates
     const selectedShards = getRandomItems(shards.flat().slice(0, 1023), 342);
     const decoded = decodeData(selectedShards);
