@@ -49,8 +49,11 @@ import { PvmExecutor } from "./pvm-executor";
 export type AccumulateRoot = OpaqueHash;
 
 export type AccumulateInput = {
+  /** time slot from header */
   slot: TimeSlot;
+  /** List of newly available work-reports */
   reports: WorkReport[];
+  /** eta0' (after Safrole STF) - it is not eta0 from state! */
   entropy: EntropyHash;
 };
 
