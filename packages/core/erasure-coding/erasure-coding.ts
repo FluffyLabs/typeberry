@@ -8,6 +8,7 @@ import { ShardsCollection, decode, encode } from "reed-solomon-wasm/pkg";
 /**
  * `point` - [Y_2]
  * `chunk` - [Y_2*k]
+ * `shard` - PerValidator<chunk/s>
  * `piece` - 684 octets
  * `segment` - 4104 octets = 6 * piece
  */
