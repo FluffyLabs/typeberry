@@ -50,7 +50,6 @@ export type AccumulateState = Pick<
   | "designatedValidatorData"
   | "timeslot"
   | "authQueues"
-  | "entropy"
   | "getService"
   | "recentlyAccumulated"
   | "accumulationQueue"
@@ -164,7 +163,7 @@ export class Accumulate {
     }
 
     const nextServiceId = generateNextServiceId(
-      { serviceId, entropy: this.state.entropy[0], timeslot: slot },
+      { serviceId, entropy: eta0prime, timeslot: slot },
       this.chainSpec,
     );
     const partialState = new PartialStateDb(this.state, serviceId, nextServiceId);
