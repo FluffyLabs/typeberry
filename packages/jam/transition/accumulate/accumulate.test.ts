@@ -1,5 +1,6 @@
 import { describe, it } from "node:test";
 import {
+  type EntropyHash,
   type ServiceId,
   type WorkReportHash,
   tryAsCoreIndex,
@@ -26,12 +27,14 @@ import { Accumulate, type AccumulateInput, type AccumulateState } from "./accumu
 describe("accumulate", () => {
   // based on tiny/enqueue_and_unlock_chain_wraps-5.json
   it("should do correct state transition", async () => {
+    const entropy: EntropyHash = hashFromString("0xae85d6635e9ae539d0846b911ec86a27fe000f619b78bcac8a74b77e36f6dbcf");
     const input: AccumulateInput = {
       reports: [
         createWorkReport(hashFromString("0xdf49de52326d7d3c99391cdd32b2ca7c06398e798b520970347160ecf8d9ce32")),
         createWorkReport(hashFromString("0xd3d0ac423a2e9451db2e88bd75cc143b19424747fbcf2696792987436e8722a6")),
       ],
       slot: tryAsTimeSlot(47),
+      entropy,
     };
 
     const services = createServices([
@@ -43,7 +46,6 @@ describe("accumulate", () => {
     ]);
     const state: AccumulateState = {
       timeslot: tryAsTimeSlot(46),
-      entropy: hashFromString("0xae85d6635e9ae539d0846b911ec86a27fe000f619b78bcac8a74b77e36f6dbcf"),
       services,
       privilegedServices: createPrivilegedServices(),
       recentlyAccumulated: tryAsPerEpochBlock(
@@ -123,7 +125,6 @@ describe("accumulate", () => {
     };
     const expectedState: AccumulateState = {
       timeslot: input.slot,
-      entropy: state.entropy,
       services,
       privilegedServices: state.privilegedServices,
       recentlyAccumulated: tryAsPerEpochBlock(
@@ -155,7 +156,7 @@ describe("accumulate", () => {
       accumulationQueue: tryAsPerEpochBlock([[], [], [], [], [], [], [], [], [], [], [], []], tinyChainSpec),
     };
     const expectedOutput = Bytes.zero(HASH_SIZE);
-    const accumulate = new Accumulate(state, tinyChainSpec);
+    const accumulate = new Accumulate(tinyChainSpec, state);
 
     const output = await accumulate.transition(input);
 
