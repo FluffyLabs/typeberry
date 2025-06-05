@@ -41,7 +41,7 @@ function nativeVerify<T extends BytesBlob>(input: Input<T>[]): Promise<boolean[]
           format: "der",
           type: "spki",
         }),
-        Buffer.from(signature.raw),
+        new Uint8Array(Buffer.from(signature.raw)),
       );
     }),
   );
