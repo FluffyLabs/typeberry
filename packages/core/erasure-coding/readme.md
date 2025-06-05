@@ -18,6 +18,7 @@ Erasure coding is applied to a `Piece` or a multiple of `Pieces`.
 * **Output**: The EC process always generates **1023 `Chunks`**.
     * These consist of **342 main `Chunks`** (original data).
     * And **681 redundancy `Chunks`** (for recovery).
+    * The order of `Chunks` matter for recovery, so each `Chunk` has an index associated with it. The index is implicit though and is not part of the `Chunk` bytes.
 * **`Chunk` Composition**: Each `Chunk` is made up of `Points`. The number of `Points` per `Chunk` depends on the input data size:
     * If the input is a single **`Piece`** (684 bytes):
         * Each `Chunk` contains **1 `Point`** (2 bytes).
