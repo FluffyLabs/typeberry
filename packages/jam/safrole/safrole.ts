@@ -19,7 +19,7 @@ import { blake2b } from "@typeberry/hash";
 import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data";
-import { Result, asOpaqueType } from "@typeberry/utils";
+import { type MutablePick, Result, asOpaqueType } from "@typeberry/utils";
 import { getRingCommitment, verifyTickets } from "./bandersnatch";
 import { BandernsatchWasm } from "./bandersnatch-wasm";
 import type { SafroleSealState } from "./safrole-seal";
@@ -28,12 +28,6 @@ export const VALIDATOR_META_BYTES = 128;
 export type VALIDATOR_META_BYTES = typeof VALIDATOR_META_BYTES;
 
 const ticketComparator = (a: Ticket, b: Ticket) => bytesBlobComparator(a.id, b.id);
-
-type Mutable<T> = {
-  -readonly [P in keyof T]: T[P];
-};
-
-type MutablePick<T, K extends keyof T> = Mutable<Pick<T, K>>;
 
 export type SafroleState = Pick<State, "designatedValidatorData"> & {
   disputesRecords: Pick<State["disputesRecords"], "punishSet">;
