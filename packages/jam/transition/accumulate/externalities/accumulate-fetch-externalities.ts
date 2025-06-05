@@ -1,8 +1,5 @@
 import type { EntropyHash } from "@typeberry/block";
 import {
-  B_I,
-  B_L,
-  B_S,
   G_I,
   G_R,
   MAX_REPORT_DEPENDENCIES,
@@ -29,7 +26,12 @@ import type { ChainSpec } from "@typeberry/config";
 import { PREIMAGE_EXPUNGE_PERIOD } from "@typeberry/jam-host-calls/externalities/partial-state-db";
 import type { FetchExternalities } from "@typeberry/jam-host-calls/fetch";
 import { type U64, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { MAX_RECENT_HISTORY } from "@typeberry/state";
+import {
+  BASE_SERVICE_BALANCE,
+  ELECTIVE_BYTE_BALANCE,
+  ELECTIVE_ITEM_BALANCE,
+  MAX_RECENT_HISTORY,
+} from "@typeberry/state";
 import { REPORT_TIMEOUT_GRACE_PERIOD } from "../../assurances";
 import { L } from "../../reports/verify-contextual";
 import { ACCUMULATE_TOTAL_GAS, GAS_TO_INVOKE_WORK_REPORT } from "../accumulate";
@@ -80,9 +82,9 @@ function getEncodedConstants(chainSpec: ChainSpec) {
   }
 
   const encodedConsts = Encoder.encodeObject(CONSTANTS_CODEC, {
-    B_I: tryAsU64(B_I),
-    B_L: tryAsU64(B_L),
-    B_S: tryAsU64(B_S),
+    B_I: tryAsU64(ELECTIVE_ITEM_BALANCE),
+    B_L: tryAsU64(ELECTIVE_BYTE_BALANCE),
+    B_S: tryAsU64(BASE_SERVICE_BALANCE),
     C: tryAsU16(chainSpec.coresCount),
     D: tryAsU32(PREIMAGE_EXPUNGE_PERIOD),
     E: tryAsU32(chainSpec.epochLength),

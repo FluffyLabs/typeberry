@@ -14,15 +14,6 @@ import { MAX_NUMBER_OF_WORK_ITEMS } from "./work-package";
  * https://graypaper.fluffylabs.dev/#/579bd12/413000413000
  */
 
-/** `B_I`: The additional minimum balance required per item of elective service state. */
-export const B_I = 10;
-
-/** `B_L`: The additional minimum balance required per octet of elective service state. */
-export const B_L = 1;
-
-/** `B_S`: The basic minimum balance which all services require. */
-export const B_S = 100;
-
 /** `G_I`: The gas allocated to invoke a work-package’s Is-Authorized logic. */
 export const G_I = 50_000_000;
 
