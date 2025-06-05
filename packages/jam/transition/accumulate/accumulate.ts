@@ -80,10 +80,10 @@ enum PvmInvocationError {
 }
 
 /** `G_A`: The gas allocated to invoke a work-report’s Accumulation logic. */
-const GAS_TO_INVOKE_WORK_REPORT = 10_000_000n;
+export const GAS_TO_INVOKE_WORK_REPORT = 10_000_000n;
 
 /** `G_T`: The total gas allocated across all Accumulation. */
-const ACCUMULATE_TOTAL_GAS = 3_500_000_000n;
+export const ACCUMULATE_TOTAL_GAS = 3_500_000_000n;
 
 const logger = Logger.new(__filename, "accumulate");
 

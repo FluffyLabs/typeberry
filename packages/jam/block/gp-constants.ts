@@ -14,6 +14,21 @@ import { MAX_NUMBER_OF_WORK_ITEMS } from "./work-package";
  * https://graypaper.fluffylabs.dev/#/579bd12/413000413000
  */
 
+/** `B_I`: The additional minimum balance required per item of elective service state. */
+export const B_I = 10;
+
+/** `B_L`: The additional minimum balance required per octet of elective service state. */
+export const B_L = 1;
+
+/** `B_S`: The basic minimum balance which all services require. */
+export const B_S = 100;
+
+/** `G_I`: The gas allocated to invoke a work-package’s Is-Authorized logic. */
+export const G_I = 50_000_000;
+
+/** `G_R`: The gas allocated to invoke a work-package’s Refine logic. */
+export const G_R = 5_000_000_000;
+
 /** `I`: Maximum number of work items in a package. */
 export const I = MAX_NUMBER_OF_WORK_ITEMS;
 
@@ -26,8 +41,17 @@ export const O = 8;
 /** `Q`: The number of items in the authorizations queue. */
 export const Q = 80;
 
+/** `S`: The maximum number of entries in the accumulation queue. */
+export const S = 1024;
+
 /** `T`: The maximum number of extrinsics in a work-package. */
 export const T = 128;
+
+/** `W_A`: The maximum size of is-authorized code in octets. */
+export const W_A = 64_000;
+
+/** `W_B`: The maximum size of an encoded work-package with extrinsic data and imports. */
+export const W_B = 13_794_305;
 
 /** `W_C`: The maximum size of service code in octets. */
 export const W_C = 4_000_000;
