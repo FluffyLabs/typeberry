@@ -1,16 +1,16 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
-import type { Blake2bHash } from "@typeberry/hash";
+import { type Blake2bHash, SimpleAllocator } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
-import { SEED_SIZE, generateBandersnatchSecretKey, generateEd25519SecretKey, trivialSeed } from "./index";
+import { SEED_SIZE, deriveBandersnatchSecretKey, deriveEd25519SecretKey, trivialSeed } from "./index";
 
-describe("Key Generator: trivial seed", () => {
-  it("should generate a valid seed: 0", () => {
+describe("Key Derivation: trivial seed", () => {
+  it("should derive a valid seed: 0", () => {
     const seed = trivialSeed(tryAsU32(0));
     assert.deepStrictEqual(seed, Bytes.zero(SEED_SIZE));
   });
-  it("should generate a valid seed: 1", () => {
+  it("should derive a valid seed: 1", () => {
     const seed = trivialSeed(tryAsU32(1));
     assert.deepStrictEqual(
       seed,
@@ -20,7 +20,7 @@ describe("Key Generator: trivial seed", () => {
       ),
     );
   });
-  it("should generate a valid seed: 2", () => {
+  it("should derive a valid seed: 2", () => {
     const seed = trivialSeed(tryAsU32(2));
     assert.deepStrictEqual(
       seed,
@@ -30,7 +30,7 @@ describe("Key Generator: trivial seed", () => {
       ),
     );
   });
-  it("should generate a valid seed: 3", () => {
+  it("should derive a valid seed: 3", () => {
     const seed = trivialSeed(tryAsU32(3));
     assert.deepStrictEqual(
       seed,
@@ -40,7 +40,7 @@ describe("Key Generator: trivial seed", () => {
       ),
     );
   });
-  it("should generate a valid seed: 4", () => {
+  it("should derive a valid seed: 4", () => {
     const seed = trivialSeed(tryAsU32(4));
     assert.deepStrictEqual(
       seed,
@@ -50,7 +50,7 @@ describe("Key Generator: trivial seed", () => {
       ),
     );
   });
-  it("should generate a valid seed: 5", () => {
+  it("should derive a valid seed: 5", () => {
     const seed = trivialSeed(tryAsU32(5));
     assert.deepStrictEqual(
       seed,
@@ -60,7 +60,7 @@ describe("Key Generator: trivial seed", () => {
       ),
     );
   });
-  it("should generate a valid seed: deadbeef", () => {
+  it("should derive a valid seed: deadbeef", () => {
     const seed = trivialSeed(tryAsU32(0xdeadbeef));
     assert.deepStrictEqual(
       seed,
@@ -76,9 +76,11 @@ describe("Key Generator: trivial seed", () => {
 });
 
 describe("Key Generator: Ed25519 secret seed", () => {
-  it("should generate from seed: 0", () => {
+  const allocator = new SimpleAllocator();
+
+  it("should derive from seed: 0", () => {
     const seed = trivialSeed(tryAsU32(0));
-    const ed25519_seed = generateEd25519SecretKey(seed);
+    const ed25519_seed = deriveEd25519SecretKey(seed, allocator);
     assert.deepStrictEqual(
       ed25519_seed,
       Bytes.fromBlob(
@@ -88,9 +90,9 @@ describe("Key Generator: Ed25519 secret seed", () => {
     );
   });
 
-  it("should generate from seed: 1", () => {
+  it("should derive from seed: 1", () => {
     const seed = trivialSeed(tryAsU32(1));
-    const ed25519_seed = generateEd25519SecretKey(seed);
+    const ed25519_seed = deriveEd25519SecretKey(seed, allocator);
     assert.deepStrictEqual(
       ed25519_seed,
       Bytes.fromBlob(
@@ -100,9 +102,9 @@ describe("Key Generator: Ed25519 secret seed", () => {
     );
   });
 
-  it("should generate from seed: 2", () => {
+  it("should derive from seed: 2", () => {
     const seed = trivialSeed(tryAsU32(2));
-    const ed25519_seed = generateEd25519SecretKey(seed);
+    const ed25519_seed = deriveEd25519SecretKey(seed, allocator);
     assert.deepStrictEqual(
       ed25519_seed,
       Bytes.fromBlob(
@@ -112,9 +114,9 @@ describe("Key Generator: Ed25519 secret seed", () => {
     );
   });
 
-  it("should generate from seed: 3", () => {
+  it("should derive from seed: 3", () => {
     const seed = trivialSeed(tryAsU32(3));
-    const ed25519_seed = generateEd25519SecretKey(seed);
+    const ed25519_seed = deriveEd25519SecretKey(seed, allocator);
     assert.deepStrictEqual(
       ed25519_seed,
       Bytes.fromBlob(
@@ -124,9 +126,9 @@ describe("Key Generator: Ed25519 secret seed", () => {
     );
   });
 
-  it("should generate from seed: 4", () => {
+  it("should derive from seed: 4", () => {
     const seed = trivialSeed(tryAsU32(4));
-    const ed25519_seed = generateEd25519SecretKey(seed);
+    const ed25519_seed = deriveEd25519SecretKey(seed, allocator);
     assert.deepStrictEqual(
       ed25519_seed,
       Bytes.fromBlob(
@@ -136,9 +138,9 @@ describe("Key Generator: Ed25519 secret seed", () => {
     );
   });
 
-  it("should generate from seed: 5", () => {
+  it("should derive from seed: 5", () => {
     const seed = trivialSeed(tryAsU32(5));
-    const ed25519_seed = generateEd25519SecretKey(seed);
+    const ed25519_seed = deriveEd25519SecretKey(seed, allocator);
     assert.deepStrictEqual(
       ed25519_seed,
       Bytes.fromBlob(
@@ -148,12 +150,12 @@ describe("Key Generator: Ed25519 secret seed", () => {
     );
   });
 
-  it("should generate from seed: f92d...d9d1", () => {
+  it("should derive from seed: f92d...d9d1", () => {
     const seed = Bytes.fromBlob(
       Bytes.parseBlobNoPrefix("f92d680ea3f0ac06307795490d8a03c5c0d4572b5e0a8cffec87e1294855d9d1").raw,
       SEED_SIZE,
     );
-    const ed25519_seed = generateEd25519SecretKey(seed);
+    const ed25519_seed = deriveEd25519SecretKey(seed, allocator);
     assert.deepStrictEqual(
       ed25519_seed,
       Bytes.fromBlob(
@@ -165,9 +167,11 @@ describe("Key Generator: Ed25519 secret seed", () => {
 });
 
 describe("Key Generator: Bandersnatch secret seed", () => {
-  it("should generate from seed: 0", () => {
+  const allocator = new SimpleAllocator();
+
+  it("should derive from seed: 0", () => {
     const seed = trivialSeed(tryAsU32(0));
-    const bandersnatch_seed = generateBandersnatchSecretKey(seed);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
     assert.deepStrictEqual(
       bandersnatch_seed,
       Bytes.fromBlob(
@@ -177,9 +181,9 @@ describe("Key Generator: Bandersnatch secret seed", () => {
     );
   });
 
-  it("should generate from seed: 1", () => {
+  it("should derive from seed: 1", () => {
     const seed = trivialSeed(tryAsU32(1));
-    const bandersnatch_seed = generateBandersnatchSecretKey(seed);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
     assert.deepStrictEqual(
       bandersnatch_seed,
       Bytes.fromBlob(
@@ -189,9 +193,21 @@ describe("Key Generator: Bandersnatch secret seed", () => {
     );
   });
 
-  it("should generate from seed: 2", () => {
+  it("should derive from seed: 1", () => {
+    const seed = trivialSeed(tryAsU32(1));
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    assert.deepStrictEqual(
+      bandersnatch_seed,
+      Bytes.fromBlob(
+        Bytes.parseBlobNoPrefix("12ca375c9242101c99ad5fafe8997411f112ae10e0e5b7c4589e107c433700ac").raw,
+        SEED_SIZE,
+      ).asOpaque<Blake2bHash>(),
+    );
+  });
+
+  it("should derive from seed: 2", () => {
     const seed = trivialSeed(tryAsU32(2));
-    const bandersnatch_seed = generateBandersnatchSecretKey(seed);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
     assert.deepStrictEqual(
       bandersnatch_seed,
       Bytes.fromBlob(
@@ -201,9 +217,9 @@ describe("Key Generator: Bandersnatch secret seed", () => {
     );
   });
 
-  it("should generate from seed: 3", () => {
+  it("should derive from seed: 3", () => {
     const seed = trivialSeed(tryAsU32(3));
-    const bandersnatch_seed = generateBandersnatchSecretKey(seed);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
     assert.deepStrictEqual(
       bandersnatch_seed,
       Bytes.fromBlob(
@@ -213,9 +229,9 @@ describe("Key Generator: Bandersnatch secret seed", () => {
     );
   });
 
-  it("should generate from seed: 4", () => {
+  it("should derive from seed: 4", () => {
     const seed = trivialSeed(tryAsU32(4));
-    const bandersnatch_seed = generateBandersnatchSecretKey(seed);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
     assert.deepStrictEqual(
       bandersnatch_seed,
       Bytes.fromBlob(
@@ -225,9 +241,9 @@ describe("Key Generator: Bandersnatch secret seed", () => {
     );
   });
 
-  it("should generate from seed: 5", () => {
+  it("should derive from seed: 5", () => {
     const seed = trivialSeed(tryAsU32(5));
-    const bandersnatch_seed = generateBandersnatchSecretKey(seed);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
     assert.deepStrictEqual(
       bandersnatch_seed,
       Bytes.fromBlob(
@@ -237,12 +253,12 @@ describe("Key Generator: Bandersnatch secret seed", () => {
     );
   });
 
-  it("should generate from seed: f92d...d9d1", () => {
+  it("should derive from seed: f92d...d9d1", () => {
     const seed = Bytes.fromBlob(
       Bytes.parseBlobNoPrefix("f92d680ea3f0ac06307795490d8a03c5c0d4572b5e0a8cffec87e1294855d9d1").raw,
       SEED_SIZE,
     );
-    const bandersnatch_seed = generateBandersnatchSecretKey(seed);
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
     assert.deepStrictEqual(
       bandersnatch_seed,
       Bytes.fromBlob(

@@ -1,12 +1,12 @@
 {
-  "name": "@typeberry/key-generator",
+  "name": "@typeberry/key-derivation",
   "version": "0.0.1",
-  "description": "JAM ed25519 & bandersnatch key generator.",
+  "description": "JAM ed25519 & bandersnatch key derivation.",
   "main": "index.ts",
   "scripts": {
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
-  "dependencies": {
+  "devDependencies": {
     "@typeberry/hash": "0.0.1",
     "@typeberry/bytes": "0.0.1",
     "@typeberry/utils": "0.0.1",

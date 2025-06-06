@@ -23,23 +23,29 @@ export function trivialSeed(s: U32): Bytes<SEED_SIZE> {
 }
 
 /**
- * Creates a Ed25519 secret key from a seed.
+ * Derives a Ed25519 secret key from a seed.
  * https://github.com/polkadot-fellows/JIPs/blob/7048f79edf4f4eb8bfe6fb42e6bbf61900f44c65/JIP-5.md#derivation-method
  */
-export function generateEd25519SecretKey(seed: Bytes<SEED_SIZE>, allocator?: SimpleAllocator): Blake2bHash {
+export function deriveEd25519SecretKey(
+  seed: Bytes<SEED_SIZE>,
+  allocator: SimpleAllocator = new SimpleAllocator(),
+): Blake2bHash {
   return blake2b.hashBytes(
     BytesBlob.blobFromParts([Bytes.blobFromString(ED25519_SECRET_KEY).raw, seed.raw]),
-    allocator ?? new SimpleAllocator(),
+    allocator,
   );
 }
 
 /**
- * Creates a Bandersnatch secret key from a seed.
+ * Derives a Bandersnatch secret key from a seed.
  * https://github.com/polkadot-fellows/JIPs/blob/7048f79edf4f4eb8bfe6fb42e6bbf61900f44c65/JIP-5.md#derivation-method
  */
-export function generateBandersnatchSecretKey(seed: Bytes<SEED_SIZE>, allocator?: SimpleAllocator): Blake2bHash {
+export function deriveBandersnatchSecretKey(
+  seed: Bytes<SEED_SIZE>,
+  allocator: SimpleAllocator = new SimpleAllocator(),
+): Blake2bHash {
   return blake2b.hashBytes(
     BytesBlob.blobFromParts([Bytes.blobFromString(BANDERSNATCH_SECRET_KEY).raw, seed.raw]),
-    allocator ?? new SimpleAllocator(),
+    allocator,
   );
 }
