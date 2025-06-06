@@ -14,7 +14,7 @@ import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier";
 import { OnChain, StfErrorKind, stfError } from "@typeberry/transition/chain-stf";
 import { OK, Result } from "@typeberry/utils";
-import { TestState, loadState } from "./stateLoader";
+import { TestState, loadState } from "./state-loader";
 
 export class StateTransitionFuzzed {
   static fromJson: FromJson<StateTransitionFuzzed> = {
@@ -44,6 +44,7 @@ export async function runStateTransitionFuzzed(testContent: StateTransitionFuzze
     preState,
     blocksDb,
     new TransitionHasher(spec, await keccakHasher, new SimpleAllocator()),
+    { enableParallelSealVerification: false },
   );
 
   // verify that we compute the state root exactly the same.
