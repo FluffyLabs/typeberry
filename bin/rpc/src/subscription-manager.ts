@@ -3,7 +3,6 @@ import type { RpcServer } from "./server";
 import {
   JSON_RPC_VERSION,
   type JsonRpcSubscriptionNotification,
-  RpcError,
   type Subscription,
   type SubscriptionId,
 } from "./types";
@@ -70,16 +69,11 @@ export class SubscriptionManager {
     }
   }
 
-  subscribe(ws: WebSocket, method: string, params?: unknown[]): SubscriptionId {
-    const mappedMethod = SUBSCRIBE_METHOD_MAP.get(method);
-    if (mappedMethod === undefined) {
-      throw new RpcError(-32601, `Method not found: ${method}`);
-    }
-
+  subscribe(ws: WebSocket, method: string, params: unknown): SubscriptionId {
     const id = this.nextId++;
     const idHex = `0x${id.toString(16)}`;
 
-    this.subscriptions.set(idHex, { ws, method: mappedMethod, params });
+    this.subscriptions.set(idHex, { ws, method, params });
 
     ws.on("close", () => {
       this.unsubscribe(idHex);

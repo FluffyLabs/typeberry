@@ -1,4 +1,7 @@
-import type { Hash, RpcMethod, Slot } from "../types";
+import { type Hash, NoArgs, type RpcMethod, type Slot } from "../types";
+
+export const BestBlockParams = NoArgs;
+export type BestBlockParams = NoArgs;
 
 /**
  * https://hackmd.io/@polkadot/jip2#bestBlock
@@ -8,7 +11,7 @@ import type { Hash, RpcMethod, Slot } from "../types";
  *   Slot - The slot,
  * ]
  */
-export const bestBlock: RpcMethod<[], [Hash, Slot]> = async (_params, db) => {
+export const bestBlock: RpcMethod<BestBlockParams, [Hash, Slot]> = async (_params, db) => {
   const [headerHash] = db.blocks.getBestData();
 
   const header = db.blocks.getHeader(headerHash);
