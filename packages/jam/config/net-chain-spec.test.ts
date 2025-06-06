@@ -24,7 +24,7 @@ const NET_CHAIN_SPEC_TEST = {
 };
 
 describe("Importing Net Chain Spec", () => {
-  const ncs: NetChainSpec = NetChainSpec.parseFromJson(NET_CHAIN_SPEC_TEST);
+  const ncs = NetChainSpec.parseFromJson(NET_CHAIN_SPEC_TEST);
 
   it("should read the net id", () => {
     assert.deepStrictEqual(ncs.id, "testnet");
