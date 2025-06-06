@@ -1,28 +1,39 @@
+import { Bytes } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { WithDebug } from "@typeberry/utils";
 
+class Bootnode extends WithDebug {
+  readonly name: string;
+  readonly ip: string;
+  readonly port: number;
+
+  constructor(name: string, ip: string, port: number) {
+    super();
+    this.name = name;
+    this.ip = ip;
+    this.port = port;
+  }
+}
+
 /**
- * A chain specification collects information that describes a JAM-based network.
- * It identifies the network a blockchain node connects to, the other nodes it initially
- * communicates with, and the initial state that nodes must agree on to produce blocks.
- * The chain specification can be defined in a JSON file.
+ * configuration file for any blockchain network built on the JAM protocol
+ *
+ * provides all the essential information that a new node
+ * needs to join, connect to others, and understand the blockchain's starting point
+ *
+ *  https://github.com/polkadot-fellows/JIPs/blob/90f809b84a9913a821437225f085cf5153870212/JIP-4.md#jip-4-chainspec-file
  */
 export class NetChainSpec extends WithDebug {
   /**
-   * An optional list of the nodes accepting connections.
-   * Each entry is a string in the following format: <name>@<ip>:<port>
-   * where <name> is the 53-character DNS name consisting of "e" followed by the Ed25519 public key,
-   * base-32 encoded using the alphabet "abcdefghijklmnopqrstuvwxyz234567".
-   * <ip> is a string containing IPv4 or IPv6 address of the node.
-   * IPv6 address may optionally be specified in square brackets ([]).
-   * <port> is an IP port number.
+   * optional list of initial contact points for a new node joining the network
+   *
+   * - `name`: network address derived from the node's cryptographic public key
+   * (always 53-character?)
+   * - `ip`: IP address (either IPv4 or IPv6) of the bootnode.
+   * - `port`: network port on the bootnode that is listening for new connections
    */
   readonly bootnodes?: string[];
-  /**
-   * The machine-readable identifier for the network.
-   * This may be used as part of the network protocol identifier
-   * in the future version of the network protocol.
-   */
+  /** human-readable identifier for the network */
   readonly id: string;
   /** A hex string containing JAM-serialized genesis block header */
   readonly genesis_header: string;
