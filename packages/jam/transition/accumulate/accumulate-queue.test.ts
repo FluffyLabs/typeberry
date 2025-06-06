@@ -107,7 +107,6 @@ describe("accumulate-queue", () => {
     ) =>
       new AccumulateQueue(
         {
-          entropy: Bytes.zero(HASH_SIZE).asOpaque(),
           privilegedServices: PrivilegedServices.create({
             manager: tryAsServiceId(0),
             authManager: tryAsServiceId(0),

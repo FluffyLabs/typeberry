@@ -1,19 +1,18 @@
 import type { BlockView, CoreIndex, EntropyHash, HeaderHash, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
 import type { AuthorizerHash } from "@typeberry/block/work-report";
-import { Bytes } from "@typeberry/bytes";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
 import { Disputes } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
-import { HASH_SIZE } from "@typeberry/hash";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import type { SafroleErrorCode } from "@typeberry/safrole/safrole";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal";
 import type { State } from "@typeberry/state";
 import { type ErrorResult, OK, Result, type TaggedError } from "@typeberry/utils";
+import { Accumulate } from "./accumulate";
 import { Assurances, type AssurancesError } from "./assurances";
 import { Authorization } from "./authorization";
 import type { TransitionHasher } from "./hasher";
@@ -66,6 +65,8 @@ export class OnChain {
   // chapter 11: https://graypaper.fluffylabs.dev/#/68eaa1f/133100133100?v=0.6.4
   private readonly reports: Reports;
   private readonly assurances: Assurances;
+  // chapter 12: https://graypaper.fluffylabs.dev/#/68eaa1f/159f02159f02?v=0.6.4
+  private readonly accumulate: Accumulate;
   // chapter 12.4: https://graypaper.fluffylabs.dev/#/68eaa1f/18cc0018cc00?v=0.6.4
   private readonly preimages: Preimages;
   // after accumulation
@@ -93,7 +94,7 @@ export class OnChain {
 
     this.reports = new Reports(chainSpec, state, hasher, new DbHeaderChain(blocks));
     this.assurances = new Assurances(chainSpec, state);
-
+    this.accumulate = new Accumulate(chainSpec, state);
     this.preimages = new Preimages(state);
 
     this.authorization = new Authorization(chainSpec, state);
@@ -182,8 +183,11 @@ export class OnChain {
       return stfError(StfErrorKind.Preimages, preimagesResult);
     }
 
-    // TODO [ToDr] output from accumulate
-    const accumulateRoot = Bytes.zero(HASH_SIZE).asOpaque();
+    const accumulateRoot = await this.accumulate.transition({
+      slot: timeSlot,
+      reports: assurancesResult.ok,
+      entropy: this.state.entropy[0], // TODO [MaSi]: it should be eta_0_prime
+    });
     // recent history
     this.recentHistory.transition({
       headerHash,
