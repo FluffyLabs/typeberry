@@ -1,7 +1,11 @@
 import { type HeaderHash, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { BlobArray, Hash, RpcMethod, ServiceId } from "../types";
+import z from "zod";
+import { type BlobArray, Hash, type RpcMethod, ServiceId } from "../types";
+
+export const ServicePreimageParams = z.tuple([Hash, ServiceId, Hash]);
+export type ServicePreimageParams = z.infer<typeof ServicePreimageParams>;
 
 /**
  * https://hackmd.io/@polkadot/jip2#servicePreimage
@@ -15,7 +19,7 @@ import type { BlobArray, Hash, RpcMethod, ServiceId } from "../types";
  * ]
  * @returns Either null or Blob
  */
-export const servicePreimage: RpcMethod<[Hash, ServiceId, Hash], [BlobArray] | null> = async (
+export const servicePreimage: RpcMethod<ServicePreimageParams, [BlobArray] | null> = async (
   [headerHash, serviceId, preimageHash],
   db,
 ) => {

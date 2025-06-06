@@ -3,7 +3,11 @@ import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { ServiceAccountInfo } from "@typeberry/state";
-import type { BlobArray, Hash, None, RpcMethod, ServiceId } from "../types";
+import z from "zod";
+import { type BlobArray, Hash, type None, type RpcMethod, ServiceId } from "../types";
+
+export const ServiceDataParams = z.tuple([Hash, ServiceId]);
+export type ServiceDataParams = z.infer<typeof ServiceDataParams>;
 
 /**
  * https://hackmd.io/@polkadot/jip2#serviceData
@@ -16,7 +20,7 @@ import type { BlobArray, Hash, None, RpcMethod, ServiceId } from "../types";
  * ]
  * @returns Either null or Blob
  */
-export const serviceData: RpcMethod<[Hash, ServiceId], [BlobArray] | None | null> = async (
+export const serviceData: RpcMethod<ServiceDataParams, [BlobArray] | None | null> = async (
   [headerHash, serviceId],
   db,
   chainSpec,

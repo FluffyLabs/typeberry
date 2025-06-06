@@ -1,7 +1,11 @@
 import type { HeaderHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { Hash, RpcMethod } from "../types";
+import z from "zod";
+import { Hash, type RpcMethod } from "../types";
+
+export const StateRootParams = z.tuple([Hash]);
+export type StateRootParams = z.infer<typeof StateRootParams>;
 
 /**
  * https://hackmd.io/@polkadot/jip2#stateRoot
@@ -14,7 +18,7 @@ import type { Hash, RpcMethod } from "../types";
  *   Hash - state_root
  * ]
  */
-export const stateRoot: RpcMethod<[Hash], [Hash] | null> = async ([headerHash], db) => {
+export const stateRoot: RpcMethod<StateRootParams, [Hash] | null> = async ([headerHash], db) => {
   const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
 
   const stateRoot = db.blocks.getPostStateRoot(hashOpaque);

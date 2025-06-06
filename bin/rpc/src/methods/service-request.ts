@@ -1,8 +1,11 @@
 import { type HeaderHash, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { U32 } from "@typeberry/numbers";
-import type { Hash, RpcMethod, ServiceId, Slot } from "../types";
+import z from "zod";
+import { Hash, PreimageLength, type RpcMethod, ServiceId, type Slot } from "../types";
+
+export const ServiceRequestParams = z.tuple([Hash, ServiceId, Hash, PreimageLength]);
+export type ServiceRequestParams = z.infer<typeof ServiceRequestParams>;
 
 /**
  * https://hackmd.io/@polkadot/jip2#serviceRequest
@@ -17,7 +20,7 @@ import type { Hash, RpcMethod, ServiceId, Slot } from "../types";
  * ]
  * @returns Either null or array of Slot
  */
-export const serviceRequest: RpcMethod<[Hash, ServiceId, Hash, U32], [Slot[]] | null> = async (
+export const serviceRequest: RpcMethod<ServiceRequestParams, [Slot[]] | null> = async (
   [headerHash, serviceId, preimageHash, preimageLength],
   db,
 ) => {
