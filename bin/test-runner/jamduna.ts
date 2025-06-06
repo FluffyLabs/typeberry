@@ -1,6 +1,6 @@
 import { logger, main, runner } from "./common";
-import { StateTransition, runStateTransition } from "./jamduna/stateTransition";
-import { StateTransitionFuzzed, runStateTransitionFuzzed } from "./jamduna/stateTransitionFuzzed";
+import { StateTransition, runStateTransition } from "./jamduna/state-transition";
+import { StateTransitionFuzzed, runStateTransitionFuzzed } from "./jamduna/state-transition-fuzzed";
 
 const runners = [
   runner("state_transitions", StateTransition.fromJson, runStateTransition),
@@ -8,7 +8,11 @@ const runners = [
 ];
 
 main(runners, process.argv.slice(2), "jamdunavectors", {
-  accepted: ["safrole/state_transitions", "safrole/state_transitions_fuzzed", "fallback/state_transitions"],
+  accepted: [
+    "safrole/state_transitions",
+    /*"assurances/state_transitions",*/ "safrole/state_transitions_fuzzed",
+    "fallback/state_transitions",
+  ],
   ignored: [
     // Ignoring, since they are invalid and we cannot even parse them.
     "BadTicketAttemptNumber.json",
