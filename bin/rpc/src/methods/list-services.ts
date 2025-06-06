@@ -1,7 +1,11 @@
 import type { HeaderHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { Hash, RpcMethod, ServiceId } from "../types";
+import z from "zod";
+import { Hash, type RpcMethod, type ServiceId } from "../types";
+
+export const ListServicesParams = z.tuple([Hash]);
+export type ListServicesParams = z.infer<typeof ListServicesParams>;
 
 /**
  * https://hackmd.io/@polkadot/jip2#listServices
@@ -13,7 +17,7 @@ import type { Hash, RpcMethod, ServiceId } from "../types";
  * ]
  * @returns array of ServiceId
  */
-export const listServices: RpcMethod<[Hash], [ServiceId[]]> = async ([headerHash], db) => {
+export const listServices: RpcMethod<ListServicesParams, [ServiceId[]]> = async ([headerHash], db) => {
   const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
   const stateRoot = db.blocks.getPostStateRoot(hashOpaque);
 
