@@ -31,24 +31,26 @@ class Bootnode extends WithDebug {
 }
 
 export class NetChainSpecJson extends WithDebug {
-  static fromJson = json.object<NetChainSpecJson, NetChainSpec>(
-    {
-      bootnodes: json.optional(json.array(json.fromString(Bootnode.fromString))),
-      id: "string",
-      genesis_header: fromJson.bytesBlob,
-      genesis_state: json.map(
-        json.fromString<Bytes<31>>((v) => Bytes.parseBytesNoPrefix(v, 31).asOpaque()),
-        fromJson.bytesBlob,
-      ),
-    },
-    (o) =>
-      NetChainSpec.create({
-        bootnodes: o.bootnodes,
-        id: o.id,
-        genesisHeader: o.genesis_header,
-        genesisState: o.genesis_state ?? new Map(),
-      }),
-  );
+  static get fromJson() {
+    return json.object<NetChainSpecJson, NetChainSpec>(
+      {
+        bootnodes: json.optional(json.array(json.fromString(Bootnode.fromString))),
+        id: "string",
+        genesis_header: fromJson.bytesBlob,
+        genesis_state: json.map(
+          json.fromString<Bytes<31>>((v) => Bytes.parseBytesNoPrefix(v, 31).asOpaque()),
+          fromJson.bytesBlob,
+        ),
+      },
+      (o) =>
+        NetChainSpec.create({
+          bootnodes: o.bootnodes,
+          id: o.id,
+          genesisHeader: o.genesis_header,
+          genesisState: o.genesis_state ?? new Map(),
+        }),
+    );
+  }
 
   bootnodes?: Bootnode[];
   id!: string;
