@@ -1,5 +1,6 @@
-import { Bytes } from "@typeberry/bytes";
-import { type FromJson, json } from "@typeberry/json-parser";
+import { fromJson } from "@typeberry/block-json";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { json, parseFromJson } from "@typeberry/json-parser";
 import { WithDebug } from "@typeberry/utils";
 
 class Bootnode extends WithDebug {
@@ -7,12 +8,52 @@ class Bootnode extends WithDebug {
   readonly ip: string;
   readonly port: number;
 
+  static fromString(v: string): Bootnode {
+    const [name, ip, port] = v.split(/@|:/);
+    if (name === undefined || ip === undefined || port === undefined) {
+      throw new Error(`Invalid bootnode string: ${v}, expected format: <name>@<ip>:<port>`);
+    }
+
+    const portNumber = Number.parseInt(port);
+    if (Number.isNaN(portNumber) || portNumber < 0 || portNumber > 65535) {
+      throw new Error(`Invalid port number: ${port}`);
+    }
+
+    return new Bootnode(name, ip, portNumber);
+  }
+
   constructor(name: string, ip: string, port: number) {
     super();
     this.name = name;
     this.ip = ip;
     this.port = port;
   }
+}
+
+export class NetChainSpecJson extends WithDebug {
+  static fromJson = json.object<NetChainSpecJson, NetChainSpec>(
+    {
+      bootnodes: json.optional(json.array(json.fromString(Bootnode.fromString))),
+      id: "string",
+      genesis_header: json.fromString(BytesBlob.parseBlobNoPrefix),
+      genesis_state: json.map(
+        json.fromString<Bytes<31>>((v) => Bytes.parseBytesNoPrefix(v, 31).asOpaque()),
+        fromJson.bytesBlob,
+      ),
+    },
+    (o) =>
+      NetChainSpec.create({
+        bootnodes: o.bootnodes,
+        id: o.id,
+        genesisHeader: o.genesis_header,
+        genesisState: o.genesis_state ?? new Map(),
+      }),
+  );
+
+  bootnodes?: Bootnode[];
+  id!: string;
+  genesis_header!: BytesBlob;
+  genesis_state!: Map<Bytes<31>, BytesBlob>;
 }
 
 /**
@@ -32,30 +73,43 @@ export class NetChainSpec extends WithDebug {
    * - `ip`: IP address (either IPv4 or IPv6) of the bootnode.
    * - `port`: network port on the bootnode that is listening for new connections
    */
-  readonly bootnodes?: string[];
+  readonly bootnodes?: Bootnode[];
   /** human-readable identifier for the network */
   readonly id: string;
-  /** A hex string containing JAM-serialized genesis block header */
-  readonly genesis_header: string;
+  /** contains the serialized header of the first `block 0` */
+  readonly genesisHeader: BytesBlob;
   /**
-   * An object defining genesis state. Each key is a 62-character hex string
-   * defining the 31-byte state key. The values are arbitrary length hex strings.
+   * initial state of the blockchain at the moment of its creation
+   *
+   * - `key`: is 31-byte object identifier
+   * - `value`: is the data stored at this location, as BytesBlob of any length.
    */
-  readonly genesis_state: Record<string, string>;
+  readonly genesisState: Map<Bytes<31>, BytesBlob>;
 
-  static fromJson: FromJson<NetChainSpec> = {
-    bootnodes: json.optional(json.array("string")),
-    id: "string",
-    genesis_header: "string",
-    genesis_state: json.record("string"),
-  };
+  static parseFromJson(json: object): NetChainSpec {
+    return parseFromJson(json, NetChainSpecJson.fromJson);
+  }
+
+  static create({
+    bootnodes = [],
+    id = "",
+    genesisHeader = BytesBlob.empty(),
+    genesisState = new Map(),
+  }: {
+    bootnodes?: Bootnode[];
+    id?: string;
+    genesisHeader?: BytesBlob;
+    genesisState?: Map<Bytes<31>, BytesBlob>;
+  }) {
+    return new NetChainSpec({ bootnodes, id, genesisHeader, genesisState });
+  }
 
   private constructor(data: NetChainSpec) {
     super();
 
     this.bootnodes = data.bootnodes;
     this.id = data.id;
-    this.genesis_header = data.genesis_header;
-    this.genesis_state = data.genesis_state;
+    this.genesisHeader = data.genesisHeader;
+    this.genesisState = data.genesisState;
   }
 }
