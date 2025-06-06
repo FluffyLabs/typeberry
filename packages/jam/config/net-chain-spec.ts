@@ -35,7 +35,7 @@ export class NetChainSpecJson extends WithDebug {
     {
       bootnodes: json.optional(json.array(json.fromString(Bootnode.fromString))),
       id: "string",
-      genesis_header: json.fromString(BytesBlob.parseBlobNoPrefix),
+      genesis_header: fromJson.bytesBlob,
       genesis_state: json.map(
         json.fromString<Bytes<31>>((v) => Bytes.parseBytesNoPrefix(v, 31).asOpaque()),
         fromJson.bytesBlob,
