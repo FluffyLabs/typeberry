@@ -6,11 +6,14 @@
   "scripts": {
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
-  "dependencies": {
+  "devDependencies": {
     "@typeberry/block": "0.0.1",
     "@typeberry/bytes": "0.0.1",
+    "@typeberry/hash": "0.0.1",
+    "@typeberry/numbers": "0.0.1",
     "@typeberry/utils": "0.0.1",
     "ed25519-wasm": "github:fluffylabs/ed25519-wasm#a69da16025aa39c1b63842189fe841583213c07b",
+    "bandersnatch-wasm": "github:fluffylabs/bandersnatch#e5e0364f70355e80c7f9f468bbaa937d4d3cf3b2",
     "noble-ed25519": "^1.2.6"
   },
   "author": "Fluffy Labs",

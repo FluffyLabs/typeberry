@@ -3,7 +3,14 @@ import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { type Blake2bHash, SimpleAllocator } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
-import { SEED_SIZE, deriveBandersnatchSecretKey, deriveEd25519SecretKey, trivialSeed } from "./index";
+import type { Ed25519Key } from "./ed25519";
+import {
+  SEED_SIZE,
+  deriveBandersnatchSecretKey,
+  deriveEd25519PublicKey,
+  deriveEd25519SecretKey,
+  trivialSeed,
+} from "./key-derivation";
 
 describe("Key Derivation: trivial seed", () => {
   it("should derive a valid seed: 0", () => {
@@ -75,7 +82,7 @@ describe("Key Derivation: trivial seed", () => {
   });
 });
 
-describe("Key Generator: Ed25519 secret seed", () => {
+describe("Key Derivation: Ed25519 secret seed", () => {
   const allocator = new SimpleAllocator();
 
   it("should derive from seed: 0", () => {
@@ -166,7 +173,105 @@ describe("Key Generator: Ed25519 secret seed", () => {
   });
 });
 
-describe("Key Generator: Bandersnatch secret seed", () => {
+describe("Key Derivation: Ed25519 public key", () => {
+  const allocator = new SimpleAllocator();
+
+  it("should derive from seed: 0", async () => {
+    const seed = trivialSeed(tryAsU32(0));
+    const ed25519_secret_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_public_key = await deriveEd25519PublicKey(ed25519_secret_seed);
+    assert.deepStrictEqual(
+      ed25519_public_key,
+      Bytes.fromBlob(
+        Bytes.parseBlobNoPrefix("4418fb8c85bb3985394a8c2756d3643457ce614546202a2f50b093d762499ace").raw,
+        SEED_SIZE,
+      ).asOpaque<Ed25519Key>(),
+    );
+  });
+
+  it("should derive from seed: 1", async () => {
+    const seed = trivialSeed(tryAsU32(1));
+    const ed25519_secret_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_public_key = await deriveEd25519PublicKey(ed25519_secret_seed);
+    assert.deepStrictEqual(
+      ed25519_public_key,
+      Bytes.fromBlob(
+        Bytes.parseBlobNoPrefix("ad93247bd01307550ec7acd757ce6fb805fcf73db364063265b30a949e90d933").raw,
+        SEED_SIZE,
+      ).asOpaque<Ed25519Key>(),
+    );
+  });
+
+  it("should derive from seed: 2", async () => {
+    const seed = trivialSeed(tryAsU32(2));
+    const ed25519_secret_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_public_key = await deriveEd25519PublicKey(ed25519_secret_seed);
+    assert.deepStrictEqual(
+      ed25519_public_key,
+      Bytes.fromBlob(
+        Bytes.parseBlobNoPrefix("cab2b9ff25c2410fbe9b8a717abb298c716a03983c98ceb4def2087500b8e341").raw,
+        SEED_SIZE,
+      ).asOpaque<Ed25519Key>(),
+    );
+  });
+
+  it("should derive from seed: 3", async () => {
+    const seed = trivialSeed(tryAsU32(3));
+    const ed25519_secret_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_public_key = await deriveEd25519PublicKey(ed25519_secret_seed);
+    assert.deepStrictEqual(
+      ed25519_public_key,
+      Bytes.fromBlob(
+        Bytes.parseBlobNoPrefix("f30aa5444688b3cab47697b37d5cac5707bb3289e986b19b17db437206931a8d").raw,
+        SEED_SIZE,
+      ).asOpaque<Ed25519Key>(),
+    );
+  });
+
+  it("should derive from seed: 4", async () => {
+    const seed = trivialSeed(tryAsU32(4));
+    const ed25519_secret_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_public_key = await deriveEd25519PublicKey(ed25519_secret_seed);
+    assert.deepStrictEqual(
+      ed25519_public_key,
+      Bytes.fromBlob(
+        Bytes.parseBlobNoPrefix("8b8c5d436f92ecf605421e873a99ec528761eb52a88a2f9a057b3b3003e6f32a").raw,
+        SEED_SIZE,
+      ).asOpaque<Ed25519Key>(),
+    );
+  });
+
+  it("should derive from seed: 5", async () => {
+    const seed = trivialSeed(tryAsU32(5));
+    const ed25519_secret_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_public_key = await deriveEd25519PublicKey(ed25519_secret_seed);
+    assert.deepStrictEqual(
+      ed25519_public_key,
+      Bytes.fromBlob(
+        Bytes.parseBlobNoPrefix("ab0084d01534b31c1dd87c81645fd762482a90027754041ca1b56133d0466c06").raw,
+        SEED_SIZE,
+      ).asOpaque<Ed25519Key>(),
+    );
+  });
+
+  it("should derive from seed: f92d...d9d1", async () => {
+    const seed = Bytes.fromBlob(
+      Bytes.parseBlobNoPrefix("f92d680ea3f0ac06307795490d8a03c5c0d4572b5e0a8cffec87e1294855d9d1").raw,
+      SEED_SIZE,
+    );
+    const ed25519_secret_seed = deriveEd25519SecretKey(seed, allocator);
+    const ed25519_public_key = await deriveEd25519PublicKey(ed25519_secret_seed);
+    assert.deepStrictEqual(
+      ed25519_public_key,
+      Bytes.fromBlob(
+        Bytes.parseBlobNoPrefix("11a695f674de95ff3daaff9a5b88c18448b10156bf88bc04200e48d5155c7243").raw,
+        SEED_SIZE,
+      ).asOpaque<Ed25519Key>(),
+    );
+  });
+});
+
+describe("Key Derivation: Bandersnatch secret seed", () => {
   const allocator = new SimpleAllocator();
 
   it("should derive from seed: 0", () => {

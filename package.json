@@ -17,7 +17,6 @@
     "packages/core/erasure-coding",
     "packages/core/hash",
     "packages/core/json-parser",
-    "packages/core/key-derivation",
     "packages/core/logger",
     "packages/core/mmr",
     "packages/core/networking",
