@@ -53,7 +53,7 @@ export class AccumulationStateUpdate {
       servicesUpdates: this.newServices
         .map((s) => {
           return UpdateService.create({
-            serviceId: s.id,
+            serviceId: s.serviceId,
             serviceInfo: s.data.info,
             lookupHistory: s.data.lookupHistory.values().next().value?.[0] ?? null,
           });
