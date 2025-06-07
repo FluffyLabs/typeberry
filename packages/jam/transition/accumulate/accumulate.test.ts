@@ -20,14 +20,7 @@ import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import {
-  ENTROPY_ENTRIES,
-  InMemoryService,
-  InMemoryState,
-  PreimageItem,
-  PrivilegedServices,
-  ServiceAccountInfo,
-} from "@typeberry/state";
+import { InMemoryService, InMemoryState, PreimageItem, PrivilegedServices, ServiceAccountInfo } from "@typeberry/state";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
 import { deepEqual, resultToString } from "@typeberry/utils";
 import { Accumulate, type AccumulateInput, type AccumulateState } from "./accumulate";
@@ -36,13 +29,14 @@ describe("accumulate", () => {
   // based on tiny/enqueue_and_unlock_chain_wraps-5.json
   it("should do correct state transition", async () => {
     const entropy = hashFromString<EntropyHash>("0xae85d6635e9ae539d0846b911ec86a27fe000f619b78bcac8a74b77e36f6dbcf");
+
     const input: AccumulateInput = {
       reports: [
         createWorkReport(hashFromString("0xdf49de52326d7d3c99391cdd32b2ca7c06398e798b520970347160ecf8d9ce32")),
         createWorkReport(hashFromString("0xd3d0ac423a2e9451db2e88bd75cc143b19424747fbcf2696792987436e8722a6")),
       ],
       slot: tryAsTimeSlot(47),
-      eta0prime: entropy,
+      entropy,
     };
 
     const services = createServices([
@@ -54,7 +48,6 @@ describe("accumulate", () => {
     ]);
     const state = InMemoryState.partial(tinyChainSpec, {
       timeslot: tryAsTimeSlot(46),
-      entropy: FixedSizeArray.new([entropy, entropy, entropy, entropy], ENTROPY_ENTRIES),
       services,
       privilegedServices: createPrivilegedServices(),
       recentlyAccumulated: tryAsPerEpochBlock(
@@ -134,7 +127,6 @@ describe("accumulate", () => {
     });
     const expectedState: AccumulateState = InMemoryState.partial(tinyChainSpec, {
       timeslot: input.slot,
-      entropy: state.entropy,
       services,
       privilegedServices: state.privilegedServices,
       recentlyAccumulated: tryAsPerEpochBlock(

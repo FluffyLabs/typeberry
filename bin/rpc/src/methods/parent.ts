@@ -1,7 +1,11 @@
 import type { HeaderHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { Hash, RpcMethod, Slot } from "../types";
+import z from "zod";
+import { Hash, type RpcMethod, type Slot } from "../types";
+
+export const ParentParams = z.tuple([Hash]);
+export type ParentParams = z.infer<typeof ParentParams>;
 
 /**
  * https://hackmd.io/@polkadot/jip2#parent
@@ -15,7 +19,7 @@ import type { Hash, RpcMethod, Slot } from "../types";
  *   Slot - The slot,
  * ]
  */
-export const parent: RpcMethod<[Hash], [Hash, Slot] | null> = async ([headerHash], db) => {
+export const parent: RpcMethod<ParentParams, [Hash, Slot] | null> = async ([headerHash], db) => {
   const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
   const header = db.blocks.getHeader(hashOpaque);
   if (header === null) {

@@ -3,7 +3,11 @@ import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { StatisticsData } from "@typeberry/state";
-import type { BlobArray, Hash, RpcMethod } from "../types";
+import z from "zod";
+import { type BlobArray, Hash, type RpcMethod } from "../types";
+
+export const StatisticsParams = z.tuple([Hash]);
+export type StatisticsParams = z.infer<typeof StatisticsParams>;
 
 /**
  * https://hackmd.io/@polkadot/jip2#statistics
@@ -15,7 +19,7 @@ import type { BlobArray, Hash, RpcMethod } from "../types";
  * ]
  * @returns Blob
  */
-export const statistics: RpcMethod<[Hash], [BlobArray] | null> = async ([headerHash], db, chainSpec) => {
+export const statistics: RpcMethod<StatisticsParams, [BlobArray] | null> = async ([headerHash], db, chainSpec) => {
   const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
   const stateRoot = db.blocks.getPostStateRoot(hashOpaque);
 

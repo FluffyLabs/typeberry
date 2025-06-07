@@ -101,7 +101,6 @@ describe("accumulate-queue", () => {
       new AccumulateQueue(
         tinyChainSpec,
         InMemoryState.partial(tinyChainSpec, {
-          entropy: Bytes.zero(HASH_SIZE).asOpaque(),
           privilegedServices: PrivilegedServices.create({
             manager: tryAsServiceId(0),
             authManager: tryAsServiceId(0),

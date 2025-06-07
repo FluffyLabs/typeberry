@@ -1,7 +1,11 @@
 import { type HeaderHash, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { BlobArray, Hash, RpcMethod, ServiceId } from "../types";
+import z from "zod";
+import { BlobArray, Hash, type RpcMethod, ServiceId } from "../types";
+
+export const ServiceValueParams = z.tuple([Hash, ServiceId, BlobArray]);
+export type ServiceValueParams = z.infer<typeof ServiceValueParams>;
 
 /**
  * https://hackmd.io/@polkadot/jip2#serviceValue
@@ -15,7 +19,7 @@ import type { BlobArray, Hash, RpcMethod, ServiceId } from "../types";
  * ]
  * @returns Either null or Blob
  */
-export const serviceValue: RpcMethod<[Hash, ServiceId, BlobArray], [BlobArray] | null> = async (
+export const serviceValue: RpcMethod<ServiceValueParams, [BlobArray] | null> = async (
   [headerHash, serviceId, key],
   db,
 ) => {

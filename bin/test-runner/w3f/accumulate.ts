@@ -2,11 +2,11 @@ import assert from "node:assert";
 import { type EntropyHash, type TimeSlot, tryAsPerEpochBlock, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
-import { FixedSizeArray, HashSet, asKnownSize } from "@typeberry/collections";
+import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { InMemoryService } from "@typeberry/state";
-import { AutoAccumulate, ENTROPY_ENTRIES, InMemoryState, PrivilegedServices } from "@typeberry/state";
+import { AutoAccumulate, InMemoryState, PrivilegedServices } from "@typeberry/state";
 import { JsonService } from "@typeberry/state-json/accounts";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
 import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate";
@@ -63,12 +63,11 @@ class TestState {
   accounts!: InMemoryService[];
 
   static toAccumulateState(
-    { accounts, slot, entropy, ready_queue, accumulated, privileges }: TestState,
+    { accounts, slot, ready_queue, accumulated, privileges }: TestState,
     chainSpec: ChainSpec,
   ): InMemoryState {
     return InMemoryState.partial(chainSpec, {
       timeslot: slot,
-      entropy: FixedSizeArray.new([entropy, entropy, entropy, entropy], ENTROPY_ENTRIES),
       accumulationQueue: tryAsPerEpochBlock(
         ready_queue.map((queue) =>
           queue.map((item) =>
@@ -122,12 +121,18 @@ export class AccumulateTest {
 
 export async function runAccumulateTest(test: AccumulateTest, path: string) {
   const chainSpec = getChainSpec(path);
+
+  /**
+   * entropy has to be moved to input because state is incompatibile -
+   * in test state we have: `entropy: EntropyHash;`
+   * in typeberry state we have: `entropy: FixedSizeArray<EntropyHash, ENTROPY_ENTRIES>;`
+   * The accumulation doesn't modify entropy so we can remove it safely from pre/post state
+   */
+  const entropy = test.pre_state.entropy;
+
   const state = TestState.toAccumulateState(test.pre_state, chainSpec);
   const accumulate = new Accumulate(chainSpec, state);
-  const result = await accumulate.transition({
-    ...test.input,
-    eta0prime: test.pre_state.entropy,
-  });
+  const result = await accumulate.transition({ ...test.input, entropy });
 
   if (result.isError) {
     assert.fail(`Expected successfull accumulation, got: ${result}`);

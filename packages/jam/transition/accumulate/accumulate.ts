@@ -47,9 +47,12 @@ import { PvmExecutor } from "./pvm-executor";
 export type AccumulateRoot = OpaqueHash;
 
 export type AccumulateInput = {
+  /** time slot from header */
   slot: TimeSlot;
+  /** List of newly available work-reports */
   reports: WorkReport[];
-  eta0prime: EntropyHash;
+  /** eta0' (after Safrole STF) - it is not eta0 from state! */
+  entropy: EntropyHash;
 };
 
 export type AccumulateState = Pick<
@@ -106,10 +109,10 @@ enum PvmInvocationError {
 }
 
 /** `G_A`: The gas allocated to invoke a work-report’s Accumulation logic. */
-const GAS_TO_INVOKE_WORK_REPORT = 10_000_000n;
+export const GAS_TO_INVOKE_WORK_REPORT = 10_000_000n;
 
 /** `G_T`: The total gas allocated across all Accumulation. */
-const ACCUMULATE_TOTAL_GAS = 3_500_000_000n;
+export const ACCUMULATE_TOTAL_GAS = 3_500_000_000n;
 
 const logger = Logger.new(__filename, "accumulate");
 
@@ -155,10 +158,10 @@ export class Accumulate {
    */
   private async pvmAccumulateInvocation(
     slot: TimeSlot,
-    eta0prime: EntropyHash,
     serviceId: ServiceId,
     operands: Operand[],
     gas: ServiceGas,
+    entropy: EntropyHash,
   ): Promise<Result<InvocationResult, PvmInvocationError>> {
     const service = this.state.getService(serviceId);
     if (service === null) {
@@ -175,12 +178,12 @@ export class Accumulate {
       return Result.error(PvmInvocationError.NoPreimage);
     }
 
-    const nextServiceId = generateNextServiceId({ serviceId, entropy: eta0prime, timeslot: slot }, this.chainSpec);
+    const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec);
     const partialState = new PartialStateDb(this.state, serviceId, nextServiceId);
 
     const externalities = {
       partialState,
-      fetchExternalities: new AccumulateFetchExternalities(eta0prime, operands, this.chainSpec),
+      fetchExternalities: new AccumulateFetchExternalities(entropy, operands, this.chainSpec),
       accountsInfo: new AccountsInfoExternalities(this.state),
       accountsRead: new AccountsReadExternalities(),
       accountsWrite: new AccountsWriteExternalities(),
@@ -267,11 +270,11 @@ export class Accumulate {
     serviceId: ServiceId,
     reports: WorkReport[],
     slot: TimeSlot,
-    eta0prime: EntropyHash,
+    entropy: EntropyHash,
   ) {
     const { operands, gasCost } = this.getOperandsAndGasCost(serviceId, reports);
 
-    const result = await this.pvmAccumulateInvocation(slot, eta0prime, serviceId, operands, gasCost);
+    const result = await this.pvmAccumulateInvocation(slot, serviceId, operands, gasCost, entropy);
 
     if (result.isError) {
       return { stateUpdate: null, consumedGas: gasCost };
@@ -292,7 +295,7 @@ export class Accumulate {
     gasLimit: ServiceGas,
     reports: WorkReport[],
     slot: TimeSlot,
-    eta0prime: EntropyHash,
+    entropy: EntropyHash,
   ): Promise<SequentialAccumulationResult> {
     const i = this.findReportCutoffIndex(gasLimit, reports);
 
@@ -312,7 +315,7 @@ export class Accumulate {
     const { gasCosts, yieldedRoots, pendingTransfers, stateUpdates, ...rest } = await this.accumulateInParallel(
       reportsToAccumulateInParallel,
       slot,
-      eta0prime,
+      entropy,
     );
     assertEmpty(rest);
 
@@ -329,7 +332,7 @@ export class Accumulate {
       tryAsServiceGas(gasLimit - consumedGas),
       reportsToAccumulateSequentially,
       slot,
-      eta0prime,
+      entropy,
     );
     assertEmpty(seqRest);
 
@@ -355,7 +358,7 @@ export class Accumulate {
   private async accumulateInParallel(
     reports: WorkReport[],
     slot: TimeSlot,
-    eta0prime: EntropyHash,
+    entropy: EntropyHash,
   ): Promise<ParallelAccumulationResult> {
     const autoAccumulateServiceIds = this.state.privilegedServices.autoAccumulateServices.map(({ service }) => service);
     const allServiceIds = reports
@@ -369,7 +372,7 @@ export class Accumulate {
     const pendingTransfers: [ServiceId, PendingTransfer[]][] = [];
 
     for (const serviceId of serviceIds) {
-      const { consumedGas, stateUpdate } = await this.accumulateSingleService(serviceId, reports, slot, eta0prime);
+      const { consumedGas, stateUpdate } = await this.accumulateSingleService(serviceId, reports, slot, entropy);
 
       gasCosts.push([serviceId, tryAsServiceGas(consumedGas)]);
 
@@ -410,8 +413,8 @@ export class Accumulate {
     const serviceUpdates: ServicesUpdate[] = [];
 
     for (const [serviceId, stateUpdate] of stateUpdates) {
-      if (serviceId === manager && stateUpdate.priviledgedServices !== null) {
-        const { manager, authorizer, validators, autoAccumulate } = stateUpdate.priviledgedServices;
+      if (serviceId === manager && stateUpdate.privilegedServices !== null) {
+        const { manager, authorizer, validators, autoAccumulate } = stateUpdate.privilegedServices;
         check(privilegedServices === null, "Only one service can update privileged services!");
         privilegedServices = PrivilegedServices.create({
           manager,
@@ -528,11 +531,7 @@ export class Accumulate {
     return tryAsServiceGas(gasLimit);
   }
 
-  async transition({
-    reports,
-    slot,
-    eta0prime,
-  }: AccumulateInput): Promise<Result<AccumulateResult, ACCUMULATION_ERROR>> {
+  async transition({ reports, slot, entropy }: AccumulateInput): Promise<Result<AccumulateResult, ACCUMULATION_ERROR>> {
     const accumulateQueue = new AccumulateQueue(this.chainSpec, this.state);
     const toAccumulateImmediately = accumulateQueue.getWorkReportsToAccumulateImmediately(reports);
     const toAccumulateLater = accumulateQueue.getWorkReportsToAccumulateLater(reports);
@@ -548,7 +547,7 @@ export class Accumulate {
     const gasLimit = this.getGasLimit();
 
     const { accumulatedReports, yieldedRoots, gasCosts, pendingTransfers, stateUpdates, ...rest } =
-      await this.accumulateSequentially(gasLimit, accumulatableReports, slot, eta0prime);
+      await this.accumulateSequentially(gasLimit, accumulatableReports, slot, entropy);
     assertEmpty(rest);
     const accumulated = accumulatableReports.slice(0, accumulatedReports);
 

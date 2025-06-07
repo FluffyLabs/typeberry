@@ -4,7 +4,7 @@ import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import { Logger } from "@typeberry/logger";
 import { WebSocketServer } from "ws";
 import type { WebSocket } from "ws";
-import { loadMethodsInto } from "./method-loader";
+import z from "zod";
 import { SUBSCRIBE_METHOD_MAP, SubscriptionManager, UNSUBSCRIBE_METHOD_WHITELIST } from "./subscription-manager";
 import type {
   DatabaseContext,
@@ -19,6 +19,8 @@ import { JSON_RPC_VERSION, RpcError } from "./types";
 
 const PING_INTERVAL_MS = 30000;
 
+const UnsubscribeParams = z.tuple([z.string()]);
+
 function createErrorResponse(error: RpcError, id: JsonRpcId): JsonRpcErrorResponse {
   return {
     jsonrpc: JSON_RPC_VERSION,
@@ -30,9 +32,12 @@ function createErrorResponse(error: RpcError, id: JsonRpcId): JsonRpcErrorRespon
   };
 }
 
+function createParamsParseErrorMessage(error: z.ZodError): string {
+  return `Invalid params:\n${error.issues.map((issue) => `[${issue.path.join(".")}] ${issue.message}`).join(",\n")}`;
+}
+
 export class RpcServer {
   private readonly wss: WebSocketServer;
-  private readonly methods: RpcMethodRepo;
   private readonly rootDb: LmdbRoot;
   private readonly blocks: LmdbBlocks;
   private readonly states: LmdbStates;
@@ -40,7 +45,13 @@ export class RpcServer {
   private readonly subscriptionManager: SubscriptionManager;
   private readonly logger: Logger;
 
-  constructor(port: number, dbPath: string, genesisRoot: string, chainSpec: ChainSpec) {
+  constructor(
+    port: number,
+    dbPath: string,
+    genesisRoot: string,
+    chainSpec: ChainSpec,
+    private readonly methods: RpcMethodRepo,
+  ) {
     this.logger = Logger.new(__filename, "rpc");
 
     const fullDbPath = `${dbPath}/${genesisRoot}`;
@@ -53,9 +64,6 @@ export class RpcServer {
     this.states = new LmdbStates(chainSpec, this.rootDb);
 
     this.chainSpec = chainSpec;
-
-    this.methods = new Map();
-    loadMethodsInto(this.methods);
 
     this.wss = new WebSocketServer({ port });
     this.setupWebSocket();
@@ -131,43 +139,59 @@ export class RpcServer {
     });
   }
 
+  private validateCall(method: string, params: unknown): unknown {
+    const methodEntry = this.methods.get(method);
+    if (methodEntry === undefined) {
+      throw new RpcError(-32601, `Method not found: ${method}`);
+    }
+
+    const [_, paramsSchema] = methodEntry;
+
+    const parseResult = paramsSchema.safeParse(params);
+    if (parseResult.error !== undefined) {
+      throw new RpcError(-32602, createParamsParseErrorMessage(parseResult.error));
+    }
+    return parseResult.data;
+  }
+
   private async handleRequest(request: JsonRpcRequest, ws: WebSocket): Promise<JsonRpcResult> {
     const { method, params } = request;
 
-    if (SUBSCRIBE_METHOD_MAP.has(method)) {
-      return [this.subscriptionManager.subscribe(ws, method, params)];
+    const subscribeMethod = SUBSCRIBE_METHOD_MAP.get(method);
+    if (subscribeMethod !== undefined) {
+      const validatedParams = this.validateCall(subscribeMethod, params ?? null);
+      return [this.subscriptionManager.subscribe(ws, subscribeMethod, validatedParams)];
     }
 
     if (UNSUBSCRIBE_METHOD_WHITELIST.has(method)) {
-      if (Array.isArray(params) && typeof params[0] === "string") {
-        return [this.subscriptionManager.unsubscribe(params[0])];
+      const parseResult = UnsubscribeParams.safeParse(params);
+      if (parseResult.error !== undefined) {
+        throw new RpcError(-32602, createParamsParseErrorMessage(parseResult.error));
       }
-
-      throw new RpcError(-32602, "Invalid params");
+      return [this.subscriptionManager.unsubscribe(parseResult.data[0])];
     }
 
-    if (params !== undefined && !Array.isArray(params)) {
-      throw new RpcError(-32602, "Invalid params");
-    }
-
-    return this.callMethod(method, params);
+    const validatedParams = this.validateCall(method, params ?? null);
+    return this.callMethod(method, validatedParams);
   }
 
   getLogger(): Logger {
     return this.logger;
   }
 
-  async callMethod(method: string, params: unknown[] | undefined): Promise<JsonRpcResult> {
-    if (!this.methods.has(method)) {
+  async callMethod(method: string, validatedParams: unknown): Promise<JsonRpcResult> {
+    const methodEntry = this.methods.get(method);
+    if (methodEntry === undefined) {
       throw new RpcError(-32601, `Method not found: ${method}`);
     }
+    const [methodFn] = methodEntry;
 
     const db: DatabaseContext = {
       blocks: this.blocks,
       states: this.states,
     };
 
-    return this.methods.get(method)?.(params, db, this.chainSpec);
+    return methodFn(validatedParams, db, this.chainSpec);
   }
 
   async close(): Promise<void> {

@@ -1,20 +1,20 @@
 import type { BlockView, CoreIndex, EntropyHash, HeaderHash, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
 import type { AuthorizerHash } from "@typeberry/block/work-report";
-import { Bytes } from "@typeberry/bytes";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
 import { Disputes } from "@typeberry/disputes";
 import type { DisputesStateUpdate } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
-import { HASH_SIZE } from "@typeberry/hash";
 import { Safrole } from "@typeberry/safrole";
 import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal";
 import type { State } from "@typeberry/state";
 import { type ErrorResult, Result, type TaggedError } from "@typeberry/utils";
+import { Accumulate } from "./accumulate";
+import type { ACCUMULATION_ERROR, AccumulateStateUpdate } from "./accumulate/accumulate";
 import { Assurances, type AssurancesError, type AssurancesStateUpdate } from "./assurances";
 import { Authorization, type AuthorizationStateUpdate } from "./authorization";
 import type { TransitionHasher } from "./hasher";
@@ -32,15 +32,6 @@ class DbHeaderChain implements HeaderChain {
   }
 }
 
-export enum StfErrorKind {
-  Assurances = 0,
-  Disputes = 1,
-  Safrole = 2,
-  Reports = 3,
-  Preimages = 4,
-  SafroleSeal = 5,
-}
-
 export type Ok = SafroleStateUpdate &
   DisputesStateUpdate &
   ReportsStateUpdate &
@@ -48,7 +39,18 @@ export type Ok = SafroleStateUpdate &
   PreimagesStateUpdate &
   RecentHistoryStateUpdate &
   AuthorizationStateUpdate &
+  AccumulateStateUpdate &
   StatisticsStateUpdate;
+
+export enum StfErrorKind {
+  Assurances = 0,
+  Disputes = 1,
+  Safrole = 2,
+  Reports = 3,
+  Preimages = 4,
+  SafroleSeal = 5,
+  Accumulate = 6,
+}
 
 export type StfError =
   | TaggedError<StfErrorKind.Assurances, AssurancesError>
@@ -56,7 +58,8 @@ export type StfError =
   | TaggedError<StfErrorKind.Disputes, DisputesErrorCode>
   | TaggedError<StfErrorKind.Safrole, SafroleErrorCode>
   | TaggedError<StfErrorKind.Preimages, PreimagesErrorCode>
-  | TaggedError<StfErrorKind.SafroleSeal, SafroleSealError>;
+  | TaggedError<StfErrorKind.SafroleSeal, SafroleSealError>
+  | TaggedError<StfErrorKind.Accumulate, ACCUMULATION_ERROR>;
 
 export const stfError = <Kind extends StfErrorKind, Err extends StfError["error"]>(
   kind: Kind,
@@ -74,6 +77,8 @@ export class OnChain {
   // chapter 11: https://graypaper.fluffylabs.dev/#/68eaa1f/133100133100?v=0.6.4
   private readonly reports: Reports;
   private readonly assurances: Assurances;
+  // chapter 12: https://graypaper.fluffylabs.dev/#/68eaa1f/159f02159f02?v=0.6.4
+  private readonly accumulate: Accumulate;
   // chapter 12.4: https://graypaper.fluffylabs.dev/#/68eaa1f/18cc0018cc00?v=0.6.4
   private readonly preimages: Preimages;
   // after accumulation
@@ -103,7 +108,7 @@ export class OnChain {
 
     this.reports = new Reports(chainSpec, state, hasher, new DbHeaderChain(blocks));
     this.assurances = new Assurances(chainSpec, state);
-
+    this.accumulate = new Accumulate(chainSpec, state);
     this.preimages = new Preimages(state);
 
     this.authorization = new Authorization(chainSpec, state);
@@ -202,13 +207,31 @@ export class OnChain {
     const { preimages, ...preimagesRest } = preimagesResult.ok;
     assertEmpty(preimagesRest);
 
-    // TODO [ToDr] output from accumulate
-    const accumulateRoot = Bytes.zero(HASH_SIZE).asOpaque();
+    // accumulate
+    const accumulateResult = await this.accumulate.transition({
+      slot: timeSlot,
+      reports: assurancesResult.ok.availableReports,
+      entropy: entropy[0],
+    });
+    if (accumulateResult.isError) {
+      return stfError(StfErrorKind.Accumulate, accumulateResult);
+    }
+    const { root: accumulateRoot, stateUpdate: accumulateUpdate, ...accumulateRest } = accumulateResult.ok;
+    assertEmpty(accumulateRest);
+    const {
+      privilegedServices,
+      authQueues,
+      designatedValidatorData,
+      timeslot: accumulationTimeSlot,
+      preimages: accumulatePreimages,
+      ...servicesUpdate
+    } = accumulateUpdate;
+
     // recent history
     const recentHistoryUpdate = this.recentHistory.transition({
       headerHash,
       priorStateRoot: header.priorStateRoot,
-      accumulateRoot: accumulateRoot,
+      accumulateRoot,
       workPackages: reportsResult.ok.reported,
     });
     const { recentBlocks, ...recentHistoryRest } = recentHistoryUpdate;
@@ -239,8 +262,9 @@ export class OnChain {
     assertEmpty(statisticsRest);
 
     return Result.ok({
+      authQueues,
       authPools,
-      preimages,
+      preimages: preimages.concat(accumulatePreimages),
       disputesRecords,
       availabilityAssignment: mergeAvailabilityAssignments(
         reportsAvailAssignment,
@@ -255,8 +279,11 @@ export class OnChain {
       currentValidatorData,
       nextValidatorData,
       previousValidatorData,
+      designatedValidatorData,
+      privilegedServices,
       sealingKeySeries,
       ticketsAccumulator,
+      ...servicesUpdate,
     });
   }
 

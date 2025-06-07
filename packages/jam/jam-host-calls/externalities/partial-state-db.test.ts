@@ -533,7 +533,7 @@ describe("PartialState.updatePrivilegedServices", () => {
     partialState.updatePrivilegedServices(manager, authorizer, validators, autoAccumulate);
 
     // then
-    assert.deepStrictEqual(partialState.updatedState.priviledgedServices, {
+    assert.deepStrictEqual(partialState.updatedState.privilegedServices, {
       manager,
       authorizer,
       validators,

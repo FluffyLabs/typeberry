@@ -36,11 +36,11 @@ export class AccumulationStateUpdate {
       from.updatedServiceInfo === null ? null : ServiceAccountInfo.create(from.updatedServiceInfo);
     update.validatorsData = from.validatorsData === null ? null : asKnownSize([...from.validatorsData]);
     update.yieldedRoot = from.yieldedRoot;
-    update.priviledgedServices =
-      from.priviledgedServices === null
+    update.privilegedServices =
+      from.privilegedServices === null
         ? null
         : {
-            ...from.priviledgedServices,
+            ...from.privilegedServices,
           };
 
     return update;
@@ -117,7 +117,7 @@ export class AccumulationStateUpdate {
   /** New validators data. */
   public validatorsData: PerValidator<ValidatorData> | null = null;
   /** Updated priviliged services. */
-  public priviledgedServices: {
+  public privilegedServices: {
     manager: ServiceId;
     authorizer: ServiceId;
     validators: ServiceId;

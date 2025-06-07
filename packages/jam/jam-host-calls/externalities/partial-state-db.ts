@@ -519,7 +519,7 @@ export class PartialStateDb implements PartialState {
   ): void {
     // NOTE [ToDr] I guess we should not fail if the services don't exist. */
     /** https://graypaper.fluffylabs.dev/#/9a08063/36f40036f400?v=0.6.6 */
-    this.updatedState.priviledgedServices = {
+    this.updatedState.privilegedServices = {
       manager,
       authorizer,
       validators,
