@@ -219,9 +219,9 @@ export class OnChain {
     const { root: accumulateRoot, stateUpdate: accumulateUpdate, ...accumulateRest } = accumulateResult.ok;
     assertEmpty(accumulateRest);
     const {
-      privilegedServices,
-      authQueues,
-      designatedValidatorData,
+      privilegedServices: maybePrivilegedServices,
+      authQueues: maybeAuthQueues,
+      designatedValidatorData: maybeDesignatedValidatorData,
       timeslot: accumulationTimeSlot,
       preimages: accumulatePreimages,
       ...servicesUpdate
@@ -262,7 +262,9 @@ export class OnChain {
     assertEmpty(statisticsRest);
 
     return Result.ok({
-      authQueues,
+      ...(maybeAuthQueues !== undefined ? { authQueues: maybeAuthQueues } : {}),
+      ...(maybeDesignatedValidatorData !== undefined ? { designatedValidatorData: maybeDesignatedValidatorData } : {}),
+      ...(maybePrivilegedServices !== undefined ? { privilegedServices: maybePrivilegedServices } : {}),
       authPools,
       preimages: preimages.concat(accumulatePreimages),
       disputesRecords,
@@ -279,8 +281,6 @@ export class OnChain {
       currentValidatorData,
       nextValidatorData,
       previousValidatorData,
-      designatedValidatorData,
-      privilegedServices,
       sealingKeySeries,
       ticketsAccumulator,
       ...servicesUpdate,

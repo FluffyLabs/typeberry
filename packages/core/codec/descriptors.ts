@@ -121,7 +121,7 @@ export class Descriptor<T, V = T> implements Codec<T>, Skip {
 export function readonlyArray<T, V>(desc: Descriptor<T[], V>): Descriptor<readonly T[], V> {
   return desc.convert(
     (x) => {
-      check(Array.isArray(x), "Non-arrays are not supported as `readonly`");
+      check(Array.isArray(x), `Non-arrays are not supported as 'readonly': got ${typeof x}, ${x}`);
       // NOTE [ToDr] This assumption is incorrect in general, but it's documented
       // in the general note. We avoid `.slice()` the array for performance reasons.
       return x as T[];
