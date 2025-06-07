@@ -1,3 +1,4 @@
+import assert from "node:assert";
 import { type EntropyHash, type TimeSlot, tryAsPerEpochBlock, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
@@ -128,8 +129,12 @@ export async function runAccumulateTest(test: AccumulateTest, path: string) {
     eta0prime: test.pre_state.entropy,
   });
 
-  state.applyUpdate(result.stateUpdate);
+  if (result.isError) {
+    assert.fail(`Expected successfull accumulation, got: ${result}`);
+  }
+
+  state.applyUpdate(result.ok.stateUpdate);
 
   deepEqual(state, TestState.toAccumulateState(test.post_state, chainSpec));
-  deepEqual(result.root, test.output.ok);
+  deepEqual(result.ok.root, test.output.ok);
 }

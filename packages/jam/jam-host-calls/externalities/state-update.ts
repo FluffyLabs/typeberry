@@ -1,8 +1,16 @@
-import type { CoreIndex, PerValidator, ServiceGas, ServiceId } from "@typeberry/block";
+import type { CoreIndex, PerValidator, ServiceGas, ServiceId, TimeSlot } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
+import type { AuthorizerHash } from "@typeberry/block/work-report";
 import { type FixedSizeArray, asKnownSize } from "@typeberry/collections";
-import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
-import { type InMemoryService, ServiceAccountInfo, type ValidatorData } from "@typeberry/state";
+import type { OpaqueHash } from "@typeberry/hash";
+import {
+  type InMemoryService,
+  ServiceAccountInfo,
+  type ServicesUpdate,
+  UpdatePreimage,
+  UpdateService,
+  type ValidatorData,
+} from "@typeberry/state";
 import type { NewPreimage, PreimageUpdate } from "./partial-state-db";
 import type { PendingTransfer } from "./pending-transfer";
 
@@ -14,7 +22,7 @@ import type { PendingTransfer } from "./pending-transfer";
 export class AccumulationStateUpdate {
   /** Create a copy of another `StateUpdate`. Used by checkpoints. */
   static copyFrom(from: AccumulationStateUpdate): AccumulationStateUpdate {
-    const update = new AccumulationStateUpdate();
+    const update = new AccumulationStateUpdate(from.serviceId);
     update.newServices.push(...from.newServices);
     update.ejectedServices.push(...from.ejectedServices);
     update.transfers.push(...from.transfers);
@@ -38,7 +46,54 @@ export class AccumulationStateUpdate {
     return update;
   }
 
-  // TODO [ToDr] Use @typeberry/state format!
+  // TODO [ToDr] Ideally we would use `ServicesUpdate`-format already.
+  public intoServicesUpdate(timeslot: TimeSlot): ServicesUpdate {
+    return {
+      servicesRemoved: this.ejectedServices,
+      servicesUpdates: this.newServices
+        .map((s) => {
+          return UpdateService.create({
+            serviceId: s.id,
+            serviceInfo: s.data.info,
+            lookupHistory: s.data.lookupHistory.values().next().value?.[0] ?? null,
+          });
+        })
+        .concat(
+          this.updatedServiceInfo === null
+            ? []
+            : [
+                UpdateService.update({
+                  serviceId: this.serviceId,
+                  serviceInfo: this.updatedServiceInfo,
+                }),
+              ],
+        ),
+      preimages: this.providedPreimages
+        .map((p) => {
+          return UpdatePreimage.provide({
+            serviceId: p.serviceId,
+            preimage: p.item,
+            slot: timeslot,
+          });
+        })
+        .concat(
+          this.lookupHistory.map((x) => {
+            if (x.forgotten) {
+              return UpdatePreimage.remove({
+                serviceId: this.serviceId,
+                hash: x.hash,
+                length: x.length,
+              });
+            }
+            return UpdatePreimage.updateOrAdd({
+              serviceId: this.serviceId,
+              lookupHistory: x,
+            });
+          }),
+        ),
+      storage: [],
+    };
+  }
 
   /** Newly created services. */
   public readonly newServices: InMemoryService[] = [];
@@ -51,7 +106,7 @@ export class AccumulationStateUpdate {
   /** Newly provided preimages. */
   public readonly providedPreimages: NewPreimage[] = [];
   /** Updated authorization queues for cores. */
-  public readonly authorizationQueues: Map<CoreIndex, FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>> =
+  public readonly authorizationQueues: Map<CoreIndex, FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>> =
     new Map();
 
   /** Current service updated info. */
@@ -68,4 +123,6 @@ export class AccumulationStateUpdate {
     validators: ServiceId;
     autoAccumulate: [ServiceId, ServiceGas][];
   } | null = null;
+
+  constructor(public readonly serviceId: ServiceId) {}
 }

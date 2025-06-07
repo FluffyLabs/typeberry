@@ -9,9 +9,10 @@ import {
 } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
 import type { PreimageHash } from "@typeberry/block/preimage";
+import type { AuthorizerHash } from "@typeberry/block/work-report";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { type FixedSizeArray, HashDictionary } from "@typeberry/collections";
-import { type Blake2bHash, HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
+import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type U64, maxU64, sumU32, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   InMemoryService,
@@ -59,7 +60,7 @@ const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 type StateSlice = Pick<State, "getService" | "timeslot">;
 
 export class PartialStateDb implements PartialState {
-  public readonly updatedState: AccumulationStateUpdate = new AccumulationStateUpdate();
+  public readonly updatedState: AccumulationStateUpdate;
   private checkpointedState: AccumulationStateUpdate | null = null;
   /** `x_i`: next service id we are going to create. */
   private nextNewServiceId: ServiceId;
@@ -70,6 +71,7 @@ export class PartialStateDb implements PartialState {
     private readonly currentServiceId: ServiceId,
     nextNewServiceIdCandidate: ServiceId,
   ) {
+    this.updatedState = new AccumulationStateUpdate(currentServiceId);
     this.nextNewServiceId = this.getNextAvailableServiceId(nextNewServiceIdCandidate);
 
     const service = this.state.getService(this.currentServiceId);
@@ -502,7 +504,7 @@ export class PartialStateDb implements PartialState {
 
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
-    authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
+    authQueue: FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>,
   ): void {
     // NOTE `coreIndex` is already verified in the HC, so this is infallible.
     /** https://graypaper.fluffylabs.dev/#/9a08063/368401368401?v=0.6.6 */

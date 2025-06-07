@@ -504,7 +504,7 @@ describe("PartialState.updateAuthorizationQueue", () => {
 
     const coreIndex = tryAsCoreIndex(0);
     const queue = FixedSizeArray.new(
-      Array.from({ length: AUTHORIZATION_QUEUE_SIZE }, () => Bytes.fill(HASH_SIZE, 0xee)),
+      Array.from({ length: AUTHORIZATION_QUEUE_SIZE }, () => Bytes.fill(HASH_SIZE, 0xee).asOpaque()),
       AUTHORIZATION_QUEUE_SIZE,
     );
 

@@ -1,3 +1,4 @@
+import assert from "node:assert";
 import { describe, it } from "node:test";
 import {
   type EntropyHash,
@@ -28,7 +29,7 @@ import {
   ServiceAccountInfo,
 } from "@typeberry/state";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
-import { deepEqual } from "@typeberry/utils";
+import { deepEqual, resultToString } from "@typeberry/utils";
 import { Accumulate, type AccumulateInput, type AccumulateState } from "./accumulate";
 
 describe("accumulate", () => {
@@ -169,10 +170,13 @@ describe("accumulate", () => {
 
     // when
     const output = await accumulate.transition(input);
-    state.applyUpdate(output.stateUpdate);
+    if (output.isError) {
+      assert.fail(`Expect ok, got ${resultToString(output)}`);
+    }
+    state.applyUpdate(output.ok.stateUpdate);
 
     // then
-    deepEqual(output.root, expectedOutput);
+    deepEqual(output.ok.root, expectedOutput);
     deepEqual(state, expectedState);
   });
 });
