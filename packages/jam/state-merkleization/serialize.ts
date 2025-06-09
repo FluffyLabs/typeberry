@@ -190,7 +190,7 @@ export namespace serialize {
   /** https://graypaper.fluffylabs.dev/#/85129da/387603387603?v=0.6.3 */
   export const serviceLookupHistory = (serviceId: ServiceId, hash: PreimageHash, len: U32) => ({
     key: keys.serviceLookupHistory(serviceId, hash, len),
-    Codec: codec.sequenceVarLen(codec.u32),
+    Codec: readonlyArray(codec.sequenceVarLen(codec.u32)),
   });
 }
 

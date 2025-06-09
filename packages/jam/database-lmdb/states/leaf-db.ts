@@ -1,6 +1,6 @@
 import type { StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
-import type { Persistence } from "@typeberry/state-merkleization/state-serialized";
+import type { Persistence } from "@typeberry/state-merkleization";
 import { InMemoryTrie, type LeafNode, type StateKey, TrieNode } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher";
 import { NodeType, TRIE_NODE_BYTES } from "@typeberry/trie/nodes";

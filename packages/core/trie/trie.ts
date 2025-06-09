@@ -61,7 +61,12 @@ export class InMemoryTrie {
   }
 
   remove(_: StateKey) {
-    // TODO [ToDr] implement me.
+    // TODO [ToDr] Trie removal is most likely not needed. If we run into this issue,
+    // we should most likely decide to optimize the code that requires removal.
+    // NOTE: we pretty much NEVER need the full trie at all. We only need to compute the
+    // state root (from time to time), but we can easily just operate on the leafs.
+    // Removal should happen on the leaf level as well. Most likey the whole
+    // `InMemoryTrie` stuff should be eradicated in favor of leaves-operating methods.
     throw new Error("Removing from the trie not implemented yet.");
   }
 
