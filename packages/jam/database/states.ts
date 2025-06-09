@@ -3,17 +3,17 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { InMemoryState, UpdateError, type ServicesUpdate, type State } from "@typeberry/state";
-import {merkelizeState, serializeInMemoryState} from "@typeberry/state-merkleization";
-import {inMemoryStateCodec} from "@typeberry/state/state-inmemory-codec";
-import {assertNever, OK, Result} from "@typeberry/utils";
+import { type InMemoryState, type ServicesUpdate, type State, UpdateError } from "@typeberry/state";
+import { merkelizeState, serializeInMemoryState } from "@typeberry/state-merkleization";
+import { inMemoryStateCodec } from "@typeberry/state/state-inmemory-codec";
+import { OK, Result, assertNever } from "@typeberry/utils";
 
 /** A potential error that occured during state update. */
 export enum StateUpdateError {
   /** A conflicting state update has been provided. */
-  Conflict,
+  Conflict = 0,
   /** There was an error committing the changes. */
-  Commit,
+  Commit = 1,
 }
 /**
  * Interface for accessing states stored in the database.
@@ -32,9 +32,11 @@ export interface StatesDb<T extends State = State> {
    *
    * NOTE: for efficiency, the implementation MAY alter given `state` object.
    */
-  updateAndSetState(header: HeaderHash, state: T, update: Partial<State & ServicesUpdate>): Promise<
-    Result<OK, StateUpdateError>
-  >;
+  updateAndSetState(
+    header: HeaderHash,
+    state: T,
+    update: Partial<State & ServicesUpdate>,
+  ): Promise<Result<OK, StateUpdateError>>;
 
   /** Retrieve posterior state of given header. */
   getState(header: HeaderHash): T | null;
@@ -72,10 +74,7 @@ export class InMemoryStates implements StatesDb<InMemoryState> {
   }
 
   /** Insert a full state into the database. */
-  async insertState(
-    headerHash: HeaderHash,
-    state: InMemoryState,
-  ): Promise<Result<OK, StateUpdateError>> {
+  async insertState(headerHash: HeaderHash, state: InMemoryState): Promise<Result<OK, StateUpdateError>> {
     const encoded = Encoder.encodeObject(inMemoryStateCodec, state, this.spec);
     this.db.set(headerHash, encoded);
     return Result.ok(OK);

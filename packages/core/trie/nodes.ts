@@ -68,7 +68,7 @@ export enum NodeType {
 export class TrieNode {
   constructor(
     /** Exactly 512 bits / 64 bytes */
-    public readonly raw: Uint8Array = new Uint8Array(TRIE_NODE_BYTES)
+    public readonly raw: Uint8Array = new Uint8Array(TRIE_NODE_BYTES),
   ) {}
 
   /** Returns the type of the node */

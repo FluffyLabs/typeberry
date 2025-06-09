@@ -195,10 +195,7 @@ describe("Trie", async () => {
 
     // when
     const leaves = Array.from(trie.nodes.leaves());
-    const actual = InMemoryTrie.fromLeaves(
-      blake2bTrieHasher,
-      leaves,
-    );
+    const actual = InMemoryTrie.fromLeaves(blake2bTrieHasher, leaves);
 
     assert.deepStrictEqual(actual.getRootHash(), trie.getRootHash());
     assert.deepStrictEqual(actual.nodes, trie.nodes);

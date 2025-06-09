@@ -1,14 +1,14 @@
-import { describe, it } from 'node:test';
-import assert from 'node:assert';
-import {Bytes, BytesBlob} from '@typeberry/bytes';
-import {HASH_SIZE} from '@typeberry/hash';
-import {InMemoryTrie, InputKey } from '@typeberry/trie';
-import {LeafDb, LeafDbError, ValuesDb } from './leaf-db';
-import {blake2bTrieHasher} from '@typeberry/trie/hasher';
-import {Result, resultToString} from '@typeberry/utils';
+import assert from "node:assert";
+import { describe, it } from "node:test";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { HASH_SIZE } from "@typeberry/hash";
+import { InMemoryTrie, type InputKey } from "@typeberry/trie";
+import { blake2bTrieHasher } from "@typeberry/trie/hasher";
+import { type Result, resultToString } from "@typeberry/utils";
+import { LeafDb, type LeafDbError, type ValuesDb } from "./leaf-db";
 
-describe('LeafDb', () => {
-  it('should construct a LeafDb', () => {
+describe("LeafDb", () => {
+  it("should construct a LeafDb", () => {
     const leafDbRes = constructLeafDb([
       [Bytes.fill(HASH_SIZE, 1).asOpaque(), BytesBlob.blobFromString("val1")],
       [Bytes.fill(HASH_SIZE, 2).asOpaque(), BytesBlob.blobFromString("val2")],
@@ -20,12 +20,12 @@ describe('LeafDb', () => {
     const val2 = leafDb.get(Bytes.fill(HASH_SIZE, 2).asOpaque());
     const val3 = leafDb.get(Bytes.fill(HASH_SIZE, 3).asOpaque());
 
-    assert.strictEqual(`${val1}`, `${BytesBlob.blobFromString('val1')}`);
-    assert.strictEqual(`${val2}`, '0x76616c32');
+    assert.strictEqual(`${val1}`, `${BytesBlob.blobFromString("val1")}`);
+    assert.strictEqual(`${val2}`, "0x76616c32");
     assert.strictEqual(val3, null);
   });
 
-  it('should retrieve value from a DB', () => {
+  it("should retrieve value from a DB", () => {
     const leafDbRes = constructLeafDb([
       [Bytes.fill(HASH_SIZE, 1).asOpaque(), Bytes.fill(128, 0xff)],
       [Bytes.fill(HASH_SIZE, 2).asOpaque(), Bytes.fill(129, 0xee)],
@@ -42,13 +42,10 @@ describe('LeafDb', () => {
     assert.strictEqual(val3, null);
   });
 
-  it('should fail on invalid blob data', () => {
-    const res = LeafDb.fromLeavesBlob(
-      BytesBlob.blobFromNumbers([1, 2, 3]),
-      dbFromRaw(new Map())
-    );
+  it("should fail on invalid blob data", () => {
+    const res = LeafDb.fromLeavesBlob(BytesBlob.blobFromNumbers([1, 2, 3]), dbFromRaw(new Map()));
 
-    assert.strictEqual(`${resultToString(res)}`, '3 is not a multiply of 64: 0x010203\nError: 0');
+    assert.strictEqual(`${resultToString(res)}`, "3 is not a multiply of 64: 0x010203\nError: 0");
   });
 });
 
@@ -59,9 +56,7 @@ function assertOk(res: ReturnType<typeof constructLeafDb>) {
   return res.ok;
 }
 
-function constructLeafDb(
-  entries: [InputKey, BytesBlob][],
-): Result<LeafDb, LeafDbError> {
+function constructLeafDb(entries: [InputKey, BytesBlob][]): Result<LeafDb, LeafDbError> {
   const rawDb = new Map<string, BytesBlob>();
   const trie = InMemoryTrie.empty(blake2bTrieHasher);
   for (const [key, value] of entries) {
@@ -75,7 +70,7 @@ function constructLeafDb(
   const leafNodes = Array.from(trie.nodes.leaves());
   const db = dbFromRaw(rawDb);
 
-  return LeafDb.fromLeavesBlob(BytesBlob.blobFromParts(leafNodes.map(x => x.node.raw)), db);
+  return LeafDb.fromLeavesBlob(BytesBlob.blobFromParts(leafNodes.map((x) => x.node.raw)), db);
 }
 
 function dbFromRaw(rawDb: Map<string, BytesBlob>): ValuesDb {
@@ -87,7 +82,6 @@ function dbFromRaw(rawDb: Map<string, BytesBlob>): ValuesDb {
         throw new Error(`Missing key: ${key}`);
       }
       return v.raw;
-    }
+    },
   };
 }
-

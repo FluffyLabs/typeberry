@@ -7,6 +7,7 @@ import { HASH_SIZE, type WithHash } from "@typeberry/hash";
  * Blockchain database interface.
  */
 export interface BlocksDb {
+  // TODO [ToDr] Consider removing the state root hash from best data!
   /** Mark given header hash as the best block along with it's posterior state root. */
   setBestData(hash: HeaderHash, posteriorStateRoot: StateRootHash): Promise<void>;
   /** Retrieve current best header hash and posterior state root. */

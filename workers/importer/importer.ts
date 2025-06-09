@@ -1,13 +1,12 @@
 import type { BlockView, EntropyHash, HeaderHash, HeaderView, TimeSlot } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
-import type { BlocksDb, StatesDb, StateUpdateError } from "@typeberry/database";
+import type { BlocksDb, StateUpdateError, StatesDb } from "@typeberry/database";
 import { WithHash } from "@typeberry/hash";
 import type { Logger } from "@typeberry/logger";
-import type { State } from "@typeberry/state";
 import type { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verifier";
 import { OnChain, type StfError } from "@typeberry/transition/chain-stf";
-import { type ErrorResult, Result, type TaggedError, check, measure, resultToString } from "@typeberry/utils";
+import { type ErrorResult, Result, type TaggedError, measure, resultToString } from "@typeberry/utils";
 
 export enum ImporterErrorKind {
   Verifier = 0,
@@ -96,7 +95,7 @@ export class Importer {
     }
     const newState = this.states.getState(headerHash);
     if (newState === null) {
-      throw new Error('Freshly updated state not in the DB?');
+      throw new Error("Freshly updated state not in the DB?");
     }
     // TODO [ToDr] This is a temporary measure. We should rather read
     // the state of a parent block to support forks.

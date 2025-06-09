@@ -1,15 +1,15 @@
-import {StateRootHash} from "@typeberry/block";
-import {BytesBlob} from "@typeberry/bytes";
-import {Persistence} from "@typeberry/state-merkleization/state-serialized";
-import {InMemoryTrie, LeafNode, StateKey, TrieNode } from "@typeberry/trie";
-import {blake2bTrieHasher} from "@typeberry/trie/hasher";
-import {assertNever, Result} from "@typeberry/utils";
-import {TruncatedHashDictionary} from "./truncated-hash-dictionary";
-import {NodeType, TRIE_NODE_BYTES} from "@typeberry/trie/nodes";
+import type { StateRootHash } from "@typeberry/block";
+import { BytesBlob } from "@typeberry/bytes";
+import type { Persistence } from "@typeberry/state-merkleization/state-serialized";
+import { InMemoryTrie, type LeafNode, type StateKey, TrieNode } from "@typeberry/trie";
+import { blake2bTrieHasher } from "@typeberry/trie/hasher";
+import { NodeType, TRIE_NODE_BYTES } from "@typeberry/trie/nodes";
+import { Result, assertNever } from "@typeberry/utils";
+import { TruncatedHashDictionary } from "./truncated-hash-dictionary";
 
 /** Error during `LeafDb` creation. */
 export enum LeafDbError {
-  InvalidLeafData,
+  InvalidLeafData = 0,
 }
 
 /** Abstraction over access to values that don't fit into leaves. */
@@ -24,17 +24,19 @@ export interface ValuesDb {
 }
 
 enum LookupKind {
-  EmbeddedValue,
-  DbKey,
+  EmbeddedValue = 0,
+  DbKey = 1,
 }
 
-type Lookup = {
-  kind: LookupKind.EmbeddedValue,
-  value: BytesBlob,
-} | {
-  kind: LookupKind.DbKey,
-  key: Uint8Array,
-};
+type Lookup =
+  | {
+      kind: LookupKind.EmbeddedValue;
+      value: BytesBlob;
+    }
+  | {
+      kind: LookupKind.DbKey;
+      key: Uint8Array;
+    };
 
 /**
  * Read the collection of leaf nodes and covert it into a Map-like structure.
@@ -45,17 +47,17 @@ export class LeafDb implements Persistence {
   /**
    * Parse given blob containing concatenated leaf nodes into leaf db.
    */
-  static fromLeavesBlob(
-    blob: BytesBlob,
-    db: ValuesDb,
-  ): Result<LeafDb, LeafDbError> {
+  static fromLeavesBlob(blob: BytesBlob, db: ValuesDb): Result<LeafDb, LeafDbError> {
     if (blob.length % TRIE_NODE_BYTES !== 0) {
-      return Result.error(LeafDbError.InvalidLeafData, `${blob.length} is not a multiply of ${TRIE_NODE_BYTES}: ${blob}`);
+      return Result.error(
+        LeafDbError.InvalidLeafData,
+        `${blob.length} is not a multiply of ${TRIE_NODE_BYTES}: ${blob}`,
+      );
     }
 
     const leaves: LeafNode[] = [];
     for (const nodeData of blob.chunks(TRIE_NODE_BYTES)) {
-      const node = new TrieNode(nodeData.raw)
+      const node = new TrieNode(nodeData.raw);
       if (node.getNodeType() === NodeType.Branch) {
         return Result.error(LeafDbError.InvalidLeafData, `Branch node detected: ${nodeData}`);
       }
@@ -72,17 +74,21 @@ export class LeafDb implements Persistence {
     public readonly leaves: readonly LeafNode[],
     public readonly db: ValuesDb,
   ) {
-    this.lookup = TruncatedHashDictionary.fromEntries(leaves.map(leaf => {
-      const key: StateKey = leaf.getKey().asOpaque();
-      const value: Lookup = leaf.hasEmbeddedValue() ? {
-        kind: LookupKind.EmbeddedValue,
-        value: leaf.getValue(),
-      } : {
-        kind: LookupKind.DbKey,
-        key: leaf.getValueHash().raw,
-      };
-      return [key, value];
-    }));
+    this.lookup = TruncatedHashDictionary.fromEntries(
+      leaves.map((leaf) => {
+        const key: StateKey = leaf.getKey().asOpaque();
+        const value: Lookup = leaf.hasEmbeddedValue()
+          ? {
+              kind: LookupKind.EmbeddedValue,
+              value: leaf.getValue(),
+            }
+          : {
+              kind: LookupKind.DbKey,
+              key: leaf.getValueHash().raw,
+            };
+        return [key, value];
+      }),
+    );
   }
 
   get(key: StateKey): BytesBlob | null {

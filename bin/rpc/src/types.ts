@@ -1,7 +1,7 @@
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
 import { HASH_SIZE } from "@typeberry/hash";
-import {EnumerableState, State} from "@typeberry/state";
+import type { EnumerableState, State } from "@typeberry/state";
 import type WebSocket from "ws";
 import { z } from "zod";
 

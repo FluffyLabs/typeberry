@@ -2,7 +2,6 @@ import {
   Block,
   Header,
   type HeaderHash,
-  StateRootHash,
   tryAsEpoch,
   tryAsServiceId,
   tryAsTimeSlot,
@@ -48,7 +47,7 @@ export class Generator {
   }
 
   private static getLastHeaderAndState(blocks: BlocksDb, states: StatesDb) {
-    const [headerHash, stateRoot] = blocks.getBestData();
+    const headerHash = blocks.getBestData()[0];
     const lastHeader = blocks.getHeader(headerHash)?.materialize() ?? null;
     const lastState = states.getState(headerHash);
     if (lastHeader === null) {

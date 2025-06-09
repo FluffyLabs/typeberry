@@ -1,7 +1,7 @@
-import {Bytes} from "@typeberry/bytes";
-import {HashDictionary} from "@typeberry/collections";
-import {HASH_SIZE, OpaqueHash} from "@typeberry/hash";
-import {TRUNCATED_KEY_BYTES} from "@typeberry/trie";
+import { Bytes } from "@typeberry/bytes";
+import { HashDictionary } from "@typeberry/collections";
+import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
+import { TRUNCATED_KEY_BYTES } from "@typeberry/trie";
 
 type HashWithZeroedBit = OpaqueHash;
 
@@ -19,7 +19,7 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
     entries: [T | Bytes<TRUNCATED_KEY_BYTES>, V][],
   ): TruncatedHashDictionary<T, V> {
     /** Copy key bytes of an entry and replace the last one with 0. */
-    const mapped = entries.map<[T, V]>(entry => {
+    const mapped = entries.map<[T, V]>((entry) => {
       const newKey: T = Bytes.zero(HASH_SIZE).asOpaque();
       newKey.raw.set(entry[0].raw.subarray(0, TRUNCATED_KEY_BYTES));
       return [newKey, entry[1]];
@@ -30,9 +30,7 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
   /** A truncated key which we re-use to query the dictionary. */
   private readonly truncatedKey: T = Bytes.zero(HASH_SIZE).asOpaque();
 
-  private constructor(
-    private readonly dict: HashDictionary<HashWithZeroedBit, V>,
-  ) {}
+  private constructor(private readonly dict: HashDictionary<HashWithZeroedBit, V>) {}
 
   /** Retrieve a value that matches the key on `TRUNCATED_KEY_BYTES`. */
   public get(fullKey: T | Bytes<TRUNCATED_KEY_BYTES>): V | undefined {
