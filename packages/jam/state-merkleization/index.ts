@@ -6,7 +6,8 @@
 
 export { convertInMemoryStateToDictionary as serializeInMemoryState, StateEntries } from "./serialize-inmemory";
 export { serializeUpdate, TrieAction } from "./serialize-update";
-export { merkelizeState } from "./merkleize";
+// TODO [ToDr] rename
+export { merkleizeState as merkelizeState } from "./merkleize";
 export { SerializedState, Persistence } from "./state-serialized";
 export { serialize } from "./serialize";
 export { StateKey } from "./keys";

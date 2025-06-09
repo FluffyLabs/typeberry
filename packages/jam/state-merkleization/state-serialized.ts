@@ -111,8 +111,14 @@ export class SerializedState<T extends Persistence = Persistence> implements Sta
 
   private constructor(
     private readonly spec: ChainSpec,
-    public readonly backend: T,
+    public backend: T,
   ) {}
+
+  // TODO [ToDr] Temporary method to update the state,
+  // without changing references.
+  public updateBackend(newBackend: T) {
+    this.backend = newBackend;
+  }
 
   recentServiceIds(): readonly ServiceId[] {
     return this._recentServiceIds;

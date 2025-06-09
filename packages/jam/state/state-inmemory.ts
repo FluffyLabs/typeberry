@@ -19,6 +19,7 @@ import type { PreimageHash } from "@typeberry/block/preimage";
 import type { Ticket } from "@typeberry/block/tickets";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
+import { codec } from "@typeberry/codec";
 import {
   FixedSizeArray,
   HashDictionary,
@@ -137,13 +138,13 @@ export class InMemoryService extends WithDebug implements Service {
     }
 
     // copy lookupHistory
-    for (const [hash, len] of entries.lookupHistory) {
-      const slots = service.getLookupHistory(hash, len);
+    for (const { hash, length } of entries.lookupHistory) {
+      const slots = service.getLookupHistory(hash, length);
       if (slots === null) {
-        throw new Error(`Service ${service.serviceId} is missing expected lookupHistory: ${hash}, ${len}`);
+        throw new Error(`Service ${service.serviceId} is missing expected lookupHistory: ${hash}, ${length}`);
       }
       const items = lookupHistory.get(hash) ?? [];
-      items.push(new LookupHistoryItem(hash, len, slots));
+      items.push(new LookupHistoryItem(hash, length, slots));
       lookupHistory.set(hash, items);
     }
 
@@ -173,6 +174,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
   static create(state: InMemoryStateFields) {
     return new InMemoryState(state);
   }
+
   /**
    * Create a new `InMemoryState` with a partial state override.
    *
@@ -220,6 +222,23 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       privilegedServices: other.privilegedServices,
       services,
     });
+  }
+
+  /**
+   * Convert in-memory state into enumerable service information.
+   */
+  intoServicesData(): Map<ServiceId, ServiceEntries> {
+    const servicesData = new Map<ServiceId, ServiceEntries>();
+    for (const [serviceId, { data }] of this.services) {
+      servicesData.set(serviceId, {
+        storageKeys: Array.from(data.storage.keys()),
+        preimages: Array.from(data.preimages.keys()),
+        lookupHistory: Array.from(data.lookupHistory).flatMap(([hash, items]) =>
+          items.map((item) => ({ hash, length: item.length })),
+        ),
+      });
+    }
+    return servicesData;
   }
 
   /**
@@ -538,8 +557,23 @@ export type ServiceEntries = {
   /** Service preimages. */
   preimages: PreimageHash[];
   /** Service lookup history. */
-  lookupHistory: [PreimageHash, U32][];
+  lookupHistory: { hash: PreimageHash; length: U32 }[];
 };
+
+export const serviceEntriesCodec = codec.object<ServiceEntries>({
+  storageKeys: codec.sequenceVarLen(codec.bytes(HASH_SIZE).asOpaque<StorageKey>()),
+  preimages: codec.sequenceVarLen(codec.bytes(HASH_SIZE).asOpaque<PreimageHash>()),
+  lookupHistory: codec.sequenceVarLen(
+    codec.object({
+      hash: codec.bytes(HASH_SIZE).asOpaque<PreimageHash>(),
+      length: codec.u32,
+    }),
+  ),
+});
+
+export const serviceDataCodec = codec.dictionary(codec.u32.asOpaque<ServiceId>(), serviceEntriesCodec, {
+  sortKeys: (a, b) => a - b,
+});
 
 /** All non-function properties of the `InMemoryState`. */
 export type InMemoryStateFields = Pick<InMemoryState, FieldNames<InMemoryState>>;

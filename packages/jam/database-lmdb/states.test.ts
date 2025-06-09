@@ -117,7 +117,7 @@ describe("LMDB States database", () => {
             {
               storageKeys: [],
               preimages: [],
-              lookupHistory: [[lookupHistory.hash, lookupHistory.length]],
+              lookupHistory: [{ hash: lookupHistory.hash, length: lookupHistory.length }],
             },
           ],
         ]),

@@ -61,8 +61,8 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
     const importingQueue = new ImportQueue(config.chainSpec, importer);
 
     worker.onBlock.on(async (block) => {
-      const timeSlot = importingQueue.push(block) ?? tryAsTimeSlot(0);
-      logger.log(`🧊 Got block: #${timeSlot}`);
+      const newBlockSlot = importingQueue.push(block) ?? tryAsTimeSlot(0);
+      logger.log(`🧊 Got block: #${newBlockSlot}`);
 
       if (isProcessing) {
         return;

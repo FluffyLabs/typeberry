@@ -1,8 +1,10 @@
 import type { BlockView, EntropyHash, HeaderHash, HeaderView, TimeSlot } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb, StateUpdateError, StatesDb } from "@typeberry/database";
+import type { LeafDb } from "@typeberry/database-lmdb/states/leaf-db";
 import { WithHash } from "@typeberry/hash";
 import type { Logger } from "@typeberry/logger";
+import type { SerializedState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verifier";
 import { OnChain, type StfError } from "@typeberry/transition/chain-stf";
@@ -27,13 +29,15 @@ const importerError = <Kind extends ImporterErrorKind, Err extends ImporterError
 export class Importer {
   private readonly verifier: BlockVerifier;
   private readonly stf: OnChain;
+  // TODO [ToDr] we cannot assume state reference does not change.
+  private readonly state: SerializedState<LeafDb>;
 
   constructor(
     spec: ChainSpec,
     hasher: TransitionHasher,
     private readonly logger: Logger,
     private readonly blocks: BlocksDb,
-    private readonly states: StatesDb,
+    private readonly states: StatesDb<SerializedState<LeafDb>>,
   ) {
     const currentBestHeaderHash = this.blocks.getBestData()[0];
     const state = states.getState(currentBestHeaderHash);
@@ -43,6 +47,7 @@ export class Importer {
 
     this.verifier = new BlockVerifier(hasher, blocks);
     this.stf = new OnChain(spec, state, blocks, hasher, { enableParallelSealVerification: true });
+    this.state = state;
 
     logger.info(`😎 Best time slot: ${state.timeslot} (header hash: ${currentBestHeaderHash})`);
   }
@@ -88,7 +93,7 @@ export class Importer {
     // modify the state
     const update = res.ok;
     const timerState = measure("import:state");
-    const updateResult = await this.states.updateAndSetState(headerHash, this.stf.state, update);
+    const updateResult = await this.states.updateAndSetState(headerHash, this.state, update);
     if (updateResult.isError) {
       logger.error(`🧱 Unable to update state: ${resultToString(updateResult)}`);
       return importerError(ImporterErrorKind.Update, updateResult);
@@ -98,8 +103,8 @@ export class Importer {
       throw new Error("Freshly updated state not in the DB?");
     }
     // TODO [ToDr] This is a temporary measure. We should rather read
-    // the state of a parent block to support forks.
-    this.stf.updateState(newState);
+    // the state of a parent block to support forks and create a fresh STF.
+    this.state.updateBackend(newState.backend);
     logger.log(timerState());
 
     // insert new state and the block to DB.
@@ -107,6 +112,7 @@ export class Importer {
     const writeBlocks = this.blocks.insertBlock(new WithHash(headerHash, block));
     // insert posterior state root, since we know it now.
     const stateRoot = this.states.getStateRoot(newState);
+    logger.log(`🧱 Storing post-state-root for ${headerHash}: ${stateRoot}.`);
     const writePostState = this.blocks.setPostStateRoot(headerHash, stateRoot);
 
     await Promise.all([writeBlocks, writePostState]);

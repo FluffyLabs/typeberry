@@ -10,7 +10,7 @@ import { TrieAction } from "@typeberry/state-merkleization";
 import { InMemoryTrie } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher";
 import type { ValueHash } from "@typeberry/trie/nodes";
-import { OK, Result, assertNever, deepEqual, resultToString } from "@typeberry/utils";
+import { OK, Result, assertNever, resultToString } from "@typeberry/utils";
 import type { LmdbRoot, SubDb } from "./root";
 import { LeafDb } from "./states/leaf-db";
 
@@ -107,11 +107,6 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
       }
     }
     const stateLeafs = BytesBlob.blobFromParts(Array.from(trie.nodes.leaves()).map((x) => x.node.raw));
-
-    const secondTrie = InMemoryTrie.fromLeaves(blake2bTrieHasher, Array.from(trie.nodes.leaves()));
-    deepEqual(trie.getRootHash(), secondTrie.getRootHash());
-    deepEqual(Array.from(trie.nodes.leaves()), Array.from(secondTrie.nodes.leaves()));
-
     // now we have the leaves and the values, so let's write it down to the DB.
     const statesWrite = this.states.put(headerHash.raw, stateLeafs.raw);
     const valuesWrite = this.values.transaction(() => {

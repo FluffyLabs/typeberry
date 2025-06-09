@@ -77,7 +77,7 @@ export class BlockVerifier {
     if (!stateRoot.isEqualTo(posteriorStateRoot)) {
       return Result.error(
         BlockVerifierError.InvalidStateRoot,
-        `Invalid state root: ${stateRoot.toString()}, expected ${posteriorStateRoot.toString()}`,
+        `Invalid prior state root: ${stateRoot.toString()}, expected ${posteriorStateRoot.toString()} (ours)`,
       );
     }
 

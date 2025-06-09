@@ -61,7 +61,7 @@ describe("SerializedState", () => {
           {
             storageKeys: [],
             preimages: [],
-            lookupHistory: [[Bytes.fill(HASH_SIZE, 5).asOpaque(), tryAsU32(10_000)]],
+            lookupHistory: [{ hash: Bytes.fill(HASH_SIZE, 5).asOpaque(), length: tryAsU32(10_000) }],
           },
         ],
       ]),
