@@ -1,14 +1,16 @@
 import { type JsonObject, fromJson } from "@typeberry/block-json";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
+import { isU16 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
 
-/**
- * Bootnode class represents a single bootnode in the network.
- */
+/** Bootnode class represents a single contact point in the network */
 class Bootnode extends WithDebug {
+  /** Network address derived from the node's cryptographic public key (always 53-character?) */
   readonly name: string;
+  /** IP address (either IPv4 or IPv6) of the bootnode */
   readonly ip: string;
+  /** Port number on which the bootnode is listening for new connections */
   readonly port: number;
 
   static fromString(v: string): Bootnode {
@@ -16,13 +18,13 @@ class Bootnode extends WithDebug {
     // spliting only by last `:` in case of IPv6
     const ip = ipPort.substring(0, ipPort.lastIndexOf(":"));
     const port = ipPort.substring(ipPort.lastIndexOf(":") + 1);
-    if (name === undefined || ip === undefined || port === undefined) {
-      throw new Error(`Invalid bootnode string: ${v}, expected format: <name>@<ip>:<port>`);
+    if (name === "" || ip === "" || port === "") {
+      throw new Error(`Invalid bootnode format, expected: <name>@<ip>:<port>, got: "${v}"`);
     }
 
     const portNumber = Number.parseInt(port);
-    if (Number.isNaN(portNumber) || portNumber < 0 || portNumber > 65535) {
-      throw new Error(`Invalid port number: ${port}`);
+    if (!isU16(portNumber)) {
+      throw new Error(`Invalid port number: "${port}"`);
     }
 
     return new Bootnode(name, ip, portNumber);
@@ -45,14 +47,7 @@ class Bootnode extends WithDebug {
  *  https://github.com/polkadot-fellows/JIPs/blob/90f809b84a9913a821437225f085cf5153870212/JIP-4.md#jip-4-chainspec-file
  */
 export class NetChainSpec extends WithDebug {
-  /**
-   * Optional list of initial contact points for a new node joining the network
-   *
-   * - `name`: network address derived from the node's cryptographic public key
-   * (always 53-character?)
-   * - `ip`: IP address (either IPv4 or IPv6) of the bootnode.
-   * - `port`: network port on the bootnode that is listening for new connections
-   */
+  /** Optional list of initial contact points for a new node joining the network */
   readonly bootnodes?: Bootnode[];
   /** Human-readable identifier for the network */
   readonly id: string;

@@ -59,4 +59,78 @@ describe("Importing Net Chain Spec", () => {
       BytesBlob.parseBlobNoPrefix("08b647818aef53ffdf401882ab552f3ea21a57bdfe3fb4554a518a6fea139ca894b0"),
     );
   });
+
+  it("should not throw an error when the bootnodes are missing", () => {
+    const invalidSpec = {
+      ...NET_CHAIN_SPEC_TEST,
+      bootnodes: undefined,
+    };
+    assert.doesNotThrow(() => parseFromJson(invalidSpec, NetChainSpec.fromJson));
+  });
+
+  it("should not throw an error when the bootnodes are empty", () => {
+    const invalidSpec = {
+      ...NET_CHAIN_SPEC_TEST,
+      bootnodes: [],
+    };
+    assert.doesNotThrow(() => parseFromJson(invalidSpec, NetChainSpec.fromJson));
+  });
+});
+
+describe("Importing Net Chain Spec: Error Handling", () => {
+  it("should throw an error when the net id is missing", () => {
+    const invalidSpec = {
+      ...NET_CHAIN_SPEC_TEST,
+      id: undefined,
+    };
+    assert.throws(() => parseFromJson(invalidSpec, NetChainSpec.fromJson));
+  });
+
+  it("should throw an error when the genesis header is missing", () => {
+    const invalidSpec = {
+      ...NET_CHAIN_SPEC_TEST,
+      genesisHeader: undefined,
+    };
+    assert.throws(() => parseFromJson(invalidSpec, NetChainSpec.fromJson));
+  });
+
+  it("should throw an error when the genesis state is missing", () => {
+    const invalidSpec = {
+      ...NET_CHAIN_SPEC_TEST,
+      genesisState: undefined,
+    };
+    assert.throws(() => parseFromJson(invalidSpec, NetChainSpec.fromJson));
+  });
+
+  it("should throw an error when bootnode has invalid format (1)", () => {
+    const invalidSpec = {
+      ...NET_CHAIN_SPEC_TEST,
+      bootnodes: ["192.168.50.18:62061"],
+    };
+    assert.throws(() => parseFromJson(invalidSpec, NetChainSpec.fromJson));
+  });
+
+  it("should throw an error when bootnode has invalid format (2)", () => {
+    const invalidSpec = {
+      ...NET_CHAIN_SPEC_TEST,
+      bootnodes: ["evysk4p563r2kappaebqykryquxw5lfcclvf23dqqhi5n765h4kkb"],
+    };
+    assert.throws(() => parseFromJson(invalidSpec, NetChainSpec.fromJson));
+  });
+
+  it("should throw an error when bootnode has invalid port (1)", () => {
+    const invalidSpec = {
+      ...NET_CHAIN_SPEC_TEST,
+      bootnodes: ["evysk4p563r2kappaebqykryquxw5lfcclvf23dqqhi5n765h4kkb@192.168.50.18:port"],
+    };
+    assert.throws(() => parseFromJson(invalidSpec, NetChainSpec.fromJson));
+  });
+
+  it("should throw an error when bootnode has invalid port (2)", () => {
+    const invalidSpec = {
+      ...NET_CHAIN_SPEC_TEST,
+      bootnodes: ["evysk4p563r2kappaebqykryquxw5lfcclvf23dqqhi5n765h4kkb@192.168.50.18:-62061"],
+    };
+    assert.throws(() => parseFromJson(invalidSpec, NetChainSpec.fromJson));
+  });
 });
