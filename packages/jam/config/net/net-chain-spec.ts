@@ -61,26 +61,24 @@ export class NetChainSpec extends WithDebug {
    */
   readonly genesisState: Map<Bytes<31>, BytesBlob>;
 
-  static get fromJson() {
-    return json.object<JsonObject<NetChainSpec>, NetChainSpec>(
-      {
-        bootnodes: json.optional(json.array(json.fromString(Bootnode.fromString))),
-        id: "string",
-        genesis_header: fromJson.bytesBlob,
-        genesis_state: json.map(
-          json.fromString<Bytes<31>>((v) => Bytes.parseBytesNoPrefix(v, 31).asOpaque()),
-          fromJson.bytesBlob,
-        ),
-      },
-      (o) =>
-        NetChainSpec.create({
-          bootnodes: o.bootnodes,
-          id: o.id,
-          genesisHeader: o.genesis_header,
-          genesisState: o.genesis_state ?? new Map(),
-        }),
-    );
-  }
+  static fromJson = json.object<JsonObject<NetChainSpec>, NetChainSpec>(
+    {
+      bootnodes: json.optional(json.array(json.fromString(Bootnode.fromString))),
+      id: "string",
+      genesis_header: fromJson.bytesBlob,
+      genesis_state: json.map(
+        json.fromString<Bytes<31>>((v) => Bytes.parseBytesNoPrefix(v, 31).asOpaque()),
+        fromJson.bytesBlob,
+      ),
+    },
+    (o) =>
+      NetChainSpec.create({
+        bootnodes: o.bootnodes,
+        id: o.id,
+        genesisHeader: o.genesis_header,
+        genesisState: o.genesis_state ?? new Map(),
+      }),
+  );
 
   static create({
     bootnodes = [],
