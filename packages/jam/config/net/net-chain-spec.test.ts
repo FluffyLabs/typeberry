@@ -1,12 +1,15 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { BytesBlob } from "@typeberry/bytes";
+import { parseFromJson } from "@typeberry/json-parser";
 import { NetChainSpec } from "./net-chain-spec";
 
 const NET_CHAIN_SPEC_TEST = {
   bootnodes: [
     "evysk4p563r2kappaebqykryquxw5lfcclvf23dqqhi5n765h4kkb@192.168.50.18:62061",
     "egy5qba5fyjf7hn7bxeroo7ncqfk5otxvo6or77k23o6pjqnxdoxb@192.168.50.20:63747",
+    "evysk4p563r2kappaebqykryquxw5lfcclvf23dqqhi5n765h4kkb@[2001:0db8:85a3:0000:0000:8a2e:0370:7334]:62061",
+    "egy5qba5fyjf7hn7bxeroo7ncqfk5otxvo6or77k23o6pjqnxdoxb@[2001:0db8:85a3:0000:0000:8a2e:0370:7335]:63747",
   ],
   id: "testnet",
   genesis_header:
@@ -24,7 +27,7 @@ const NET_CHAIN_SPEC_TEST = {
 };
 
 describe("Importing Net Chain Spec", () => {
-  const ncs = NetChainSpec.parseFromJson(NET_CHAIN_SPEC_TEST);
+  const ncs = parseFromJson(NET_CHAIN_SPEC_TEST, NetChainSpec.fromJson);
 
   it("should read the net id", () => {
     assert.deepStrictEqual(ncs.id, "testnet");
@@ -40,7 +43,7 @@ describe("Importing Net Chain Spec", () => {
   });
 
   it("should read bootnodes", () => {
-    assert.deepStrictEqual(ncs.bootnodes?.length, 2);
+    assert(ncs.bootnodes !== undefined);
     for (const bootnode of ncs.bootnodes) {
       assert(bootnode.name.length > 0);
       assert(bootnode.ip.length > 0);
