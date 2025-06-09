@@ -8,9 +8,10 @@ import {
   NodeType,
   type StateKey,
   TRUNCATED_KEY_BITS,
-  type TrieHash,
+  type TrieNodeHash,
   type TrieNode,
   type TruncatedStateKey,
+  ValueHash,
 } from "./nodes";
 import { type NodesDb, type TrieHasher, WriteableNodesDb } from "./nodesDb";
 
@@ -52,8 +53,8 @@ export class InMemoryTrie {
     private root: TrieNode | null = null,
   ) {}
 
-  set(key: InputKey, value: BytesBlob, maybeValueHash?: TrieHash) {
-    const valueHash = () => maybeValueHash ?? this.nodes.hasher.hashConcat(value.raw);
+  set(key: InputKey, value: BytesBlob, maybeValueHash?: ValueHash) {
+    const valueHash = () => maybeValueHash ?? this.nodes.hasher.hashConcat(value.raw).asOpaque();
     const leafNode = LeafNode.fromValue(key, value, valueHash);
     this.root = trieInsert(this.root, this.nodes, leafNode);
     return leafNode;
@@ -68,7 +69,7 @@ export class InMemoryTrie {
     return this.root;
   }
 
-  getRootHash(): TrieHash {
+  getRootHash(): TrieNodeHash {
     if (this.root === null) {
       return Bytes.zero(HASH_SIZE).asOpaque();
     }
@@ -104,7 +105,7 @@ function trieInsert(root: TrieNode | null, nodes: WriteableNodesDb, leaf: LeafNo
   //    traversed path from root.
   // 2. We found an empty spot (i.e. branch node with zero hash) - we can just update already
   //    traversed path from root.
-  const nodeToInsert: [TrieNode, TrieHash] =
+  const nodeToInsert: [TrieNode, TrieNodeHash] =
     traversedPath.leafToReplace !== undefined
       ? createSubtreeForBothLeaves(traversedPath, nodes, traversedPath.leafToReplace, leaf)
       : [leaf.node, nodes.insert(leaf.node)];
@@ -135,11 +136,11 @@ function trieInsert(root: TrieNode | null, nodes: WriteableNodesDb, leaf: LeafNo
  */
 class TraversedPath {
   /** history of branch nodes (with their hashes) and the branching bit. */
-  branchingHistory: [BranchNode, TrieHash, boolean][] = [];
+  branchingHistory: [BranchNode, TrieNodeHash, boolean][] = [];
   /** last bitIndex */
   bitIndex = 0;
   /** in case of a leaf node at destination, details of that leaf node */
-  leafToReplace?: [LeafNode, TrieHash];
+  leafToReplace?: [LeafNode, TrieNodeHash];
 }
 
 /**
@@ -191,9 +192,9 @@ function findNodeToReplace(root: TrieNode, nodes: NodesDb, key: TruncatedStateKe
 function createSubtreeForBothLeaves(
   traversedPath: TraversedPath,
   nodes: WriteableNodesDb,
-  leafToReplace: [LeafNode, TrieHash],
+  leafToReplace: [LeafNode, TrieNodeHash],
   leaf: LeafNode,
-): [TrieNode, TrieHash] {
+): [TrieNode, TrieNodeHash] {
   const key = leaf.getKey();
   let [existingLeaf, existingLeafHash] = leafToReplace;
   const existingLeafKey = existingLeaf.getKey();

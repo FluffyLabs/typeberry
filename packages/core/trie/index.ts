@@ -1,6 +1,6 @@
 export { InMemoryTrie } from "./trie";
 export {
-  TrieHash,
+  TrieNodeHash as TrieHash,
   InputKey,
   StateKey,
   TruncatedStateKey,

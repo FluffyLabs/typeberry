@@ -9,11 +9,15 @@ export type TruncatedStateKey = Opaque<Bytes<TRUNCATED_KEY_BYTES>, "stateKey">;
 export type InputKey = StateKey | TruncatedStateKey;
 
 /**
- * A state commitment.
+ * Hash of the entire node of the trie or concatenation of two nodes.
+ *
+ * In case this is the root node of the entire trie, it's going to be the state commitment.
  *
  * https://graypaper.fluffylabs.dev/#/579bd12/0c1f010c2301
  */
-export type TrieHash = Opaque<OpaqueHash, "trie">;
+export type TrieNodeHash = Opaque<OpaqueHash, "trie">;
+
+/** Hash of the value contained in the trie node. */
 export type ValueHash = Opaque<OpaqueHash, "trieValue">;
 
 /** Value nodes have the key truncated to 31 bytes. */
@@ -117,7 +121,7 @@ export class BranchNode {
   // Underlying raw node.
   constructor(readonly node: TrieNode) {}
 
-  static fromSubNodes(left: TrieHash, right: TrieHash) {
+  static fromSubNodes(left: TrieNodeHash, right: TrieNodeHash) {
     const node = new TrieNode();
     node.raw.set(left.raw, 0);
     node.raw.set(right.raw, HASH_SIZE);
@@ -129,12 +133,12 @@ export class BranchNode {
   }
 
   /** Get the hash of the left sub-trie. */
-  getLeft(): TrieHash {
+  getLeft(): TrieNodeHash {
     return Bytes.fromBlob(this.node.raw.subarray(0, HASH_SIZE), HASH_SIZE).asOpaque();
   }
 
   /** Get the hash of the right sub-trie. */
-  getRight(): TrieHash {
+  getRight(): TrieNodeHash {
     return Bytes.fromBlob(this.node.raw.subarray(HASH_SIZE), HASH_SIZE).asOpaque();
   }
 }
@@ -165,7 +169,7 @@ export class LeafNode {
     this.node = node;
   }
 
-  static fromValue(key: InputKey, value: BytesBlob, valueHash: () => TrieHash): LeafNode {
+  static fromValue(key: InputKey, value: BytesBlob, valueHash: () => ValueHash): LeafNode {
     const node = new TrieNode();
     // The value will fit in the leaf itself.
     if (value.length <= HASH_SIZE) {
