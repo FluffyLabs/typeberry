@@ -5,7 +5,7 @@ import { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type InMemoryState, type ServicesUpdate, type State, UpdateError } from "@typeberry/state";
 import { merkelizeState, serializeInMemoryState } from "@typeberry/state-merkleization";
-import { inMemoryStateCodec } from "@typeberry/state/state-inmemory-codec";
+import { inMemoryStateCodec } from "@typeberry/state-merkleization/state-inmemory-codec";
 import { OK, Result, assertNever } from "@typeberry/utils";
 
 /** A potential error that occured during state update. */

@@ -22,9 +22,9 @@ import {
   ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { serialize } from "@typeberry/state-merkleization";
 import { SafroleSealingKeysData } from "@typeberry/state/safrole-data";
 import { seeThrough } from "@typeberry/utils";
+import { serialize } from "./serialize";
 
 type LookupHistoryEntry = {
   key: PreimageHash;
