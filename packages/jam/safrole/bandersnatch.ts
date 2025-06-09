@@ -3,6 +3,8 @@ import {
   type BandersnatchKey,
   type BandersnatchRingRoot,
   type BandersnatchVrfSignature,
+} from "@typeberry/crypto";
+import {
   type EntropyHash,
   type ValidatorIndex,
 } from "@typeberry/block";

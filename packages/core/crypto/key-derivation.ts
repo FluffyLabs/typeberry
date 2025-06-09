@@ -57,3 +57,10 @@ export function deriveBandersnatchSecretKey(
 export async function deriveEd25519PublicKey(seed: Bytes<SEED_SIZE>): Promise<Ed25519Key> {
   return (await privateKey(seed)).pubKey;
 }
+
+/**
+ * Derive Bandersnatch public key from secret seed
+ */
+export async function deriveBandersnatchPublicKey(seed: Bytes<SEED_SIZE>): Promise<Bander> {
+  return (await privateKey(seed)).pubKey;
+}
