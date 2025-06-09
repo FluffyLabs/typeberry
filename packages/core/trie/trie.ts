@@ -15,13 +15,29 @@ import {
 import { type NodesDb, type TrieHasher, WriteableNodesDb } from "./nodesDb";
 
 export class InMemoryTrie {
+  /**
+   * Create an empty in-memory trie.
+   */
   static empty(hasher: TrieHasher): InMemoryTrie {
     return new InMemoryTrie(new WriteableNodesDb(hasher));
   }
 
+  /**
+   * Given a collection of leaves, compute the state root.
+   */
+  static computeStateRoot(hasher: TrieHasher, leaves: LeafNode[]) {
+    // TODO [ToDr] [opti] Simple loop to just compute the root hash instead of
+    // constructing the entire trie.
+    return InMemoryTrie.fromLeaves(hasher, leaves).getRootHash();
+  }
+
+  /**
+   * Reconstruct the entire trie from it's leaves.
+   *
+   * Note that if only the state root is needed, this is rather inefficient.
+   */
   static fromLeaves(hasher: TrieHasher, leaves: LeafNode[]) {
-    // TODO [ToDr] This is inefficient way of doing it
-    // we should rather pair up the leaves and work our way up.
+    // TODO [ToDr] [opti] Pair up the leaves and build upper levels.
     let root: TrieNode | null = null;
     const nodes = new WriteableNodesDb(hasher);
     for (const leaf of leaves) {
@@ -37,9 +53,10 @@ export class InMemoryTrie {
   ) {}
 
   set(key: InputKey, value: BytesBlob, maybeValueHash?: TrieHash) {
-    const valueHash = maybeValueHash ?? this.nodes.hasher.hashConcat(value.raw);
+    const valueHash = () => maybeValueHash ?? this.nodes.hasher.hashConcat(value.raw);
     const leafNode = LeafNode.fromValue(key, value, valueHash);
     this.root = trieInsert(this.root, this.nodes, leafNode);
+    return leafNode;
   }
 
   remove(_: StateKey) {

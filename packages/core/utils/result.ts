@@ -71,7 +71,7 @@ export function resultToString<Ok, Error>(res: Result<Ok, Error>) {
   if (res.isOk) {
     return `OK: ${res.ok}`;
   }
-  return `Error: ${res.details}\n${maybeTaggedErrorToString(res.error)}`;
+  return `${res.details}\nError: ${maybeTaggedErrorToString(res.error)}`;
 }
 
 /** An indication of two possible outcomes returned from a function. */

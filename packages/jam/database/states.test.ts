@@ -10,10 +10,10 @@ describe("InMemoryState", () => {
   it("should write and read some state", async () => {
     const db = new InMemoryStates(tinyChainSpec);
     const root = Bytes.parseBytes(TEST_STATE_ROOT, HASH_SIZE).asOpaque();
-    deepEqual(db.getFullState(root), null);
+    deepEqual(db.getState(root), null);
 
-    await db.insertFullState(root, testState());
+    await db.setState(root, testState());
 
-    deepEqual(db.getFullState(root), testState());
+    deepEqual(db.getState(root), testState());
   });
 });

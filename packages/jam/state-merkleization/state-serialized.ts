@@ -1,10 +1,11 @@
 import { type ServiceId, tryAsTimeSlot } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage";
-import type { BytesBlob } from "@typeberry/bytes";
+import { BytesBlob } from "@typeberry/bytes";
 import { type Decode, Decoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { U32 } from "@typeberry/numbers";
 import {
+  EnumerableState,
   type LookupHistorySlots,
   type Service,
   type ServiceAccountInfo,
@@ -12,13 +13,27 @@ import {
   type StorageKey,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import type { StateKey } from "./keys";
 import { serialize } from "./serialize";
+import {StateKey} from "./keys";
+import {HashDictionary} from "@typeberry/collections";
 
 /** A tiny wrapper for some persistence layer. */
 export interface Persistence {
   /** Retrieve given state key. */
-  get(key: StateKey): BytesBlob | undefined;
+  get(key: StateKey): BytesBlob | null;
+}
+
+/**
+ * Wrap a `HashDictionary` as `Peristence` object.
+ *
+ * Reminder: DO not do that with regular `Map`, since it compares by reference.
+ */
+export function hashDictPersistence(dict: HashDictionary<StateKey, BytesBlob>): Persistence {
+  return {
+    get(key: StateKey): BytesBlob | null {
+      return dict.get(key) ?? null;
+    }
+  };
 }
 
 type KeyAndCodec<T> = {
@@ -76,16 +91,26 @@ export class SerializedService implements Service {
  * It differs from `InMemoryState` by needing to serialize the keys before accessing
  * them.
  */
-export class SerializedState implements State {
+export class SerializedState<T extends Persistence = Persistence> implements State, EnumerableState {
+  private _recentServiceIds: ServiceId[] = [];
+
   constructor(
     private readonly spec: ChainSpec,
-    private readonly backend: Persistence,
+    public readonly backend: T,
   ) {}
 
-  getService(id: ServiceId): Service | null {
+  recentServiceIds(): readonly ServiceId[] {
+    return this._recentServiceIds;
+  }
+
+  getService(id: ServiceId): SerializedService | null {
     const serviceData = this.retrieveOptional(serialize.serviceData(id));
     if (serviceData === undefined) {
       return null;
+    }
+
+    if (this._recentServiceIds.indexOf(id) === -1) {
+      this._recentServiceIds.push(id);
     }
 
     return new SerializedService(id, serviceData, (key) => this.retrieveOptional(key));
@@ -95,14 +120,11 @@ export class SerializedState implements State {
     {
       key,
       Codec,
-    }: {
-      key: StateKey;
-      Codec: Decode<T>;
-    },
+    }: KeyAndCodec<T>,
     description: string,
   ): T {
     const bytes = this.backend.get(key);
-    if (bytes === undefined) {
+    if (bytes === null) {
       throw new Error(`Required state entry for ${description} is missing!. Accessing key: ${key}`);
     }
     return Decoder.decodeObject(Codec, bytes, this.spec);
@@ -111,15 +133,12 @@ export class SerializedState implements State {
   private retrieveOptional<T>({
     key,
     Codec,
-  }: {
-    key: StateKey;
-    Codec: Decode<T>;
-  }): T | undefined {
+  }: KeyAndCodec<T>): T | undefined {
     const bytes = this.backend.get(key);
-    if (bytes !== undefined) {
-      return Decoder.decodeObject(Codec, bytes, this.spec);
+    if (bytes === null) {
+      return undefined;
     }
-    return bytes;
+    return Decoder.decodeObject(Codec, bytes, this.spec);
   }
 
   get availabilityAssignment(): State["availabilityAssignment"] {

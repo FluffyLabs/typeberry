@@ -49,11 +49,11 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
     const blocks = new LmdbBlocks(config.chainSpec, lmdb);
     const states = new LmdbStates(config.chainSpec, lmdb);
     const importer = new Importer(
-      blocks,
-      states,
       config.chainSpec,
       new TransitionHasher(config.chainSpec, await keccakHasher, new SimpleAllocator()),
       logger,
+      blocks,
+      states,
     );
 
     // TODO [ToDr] back pressure?

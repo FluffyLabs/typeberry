@@ -21,6 +21,9 @@ export const TRUNCATED_KEY_BYTES = 31;
 export type TRUNCATED_KEY_BYTES = 31;
 export const TRUNCATED_KEY_BITS = TRUNCATED_KEY_BYTES * 8;
 
+/** Number of bytes used to represent a trie node. */
+export const TRIE_NODE_BYTES = 64;
+
 export function parseInputKey(v: string): InputKey {
   if (v.length === HASH_SIZE * 2) {
     return Bytes.parseBytesNoPrefix(v, HASH_SIZE).asOpaque();
@@ -65,7 +68,7 @@ export enum NodeType {
 export class TrieNode {
   constructor(
     /** Exactly 512 bits / 64 bytes */
-    public readonly data: Uint8Array = new Uint8Array(64),
+    public readonly data: Uint8Array = new Uint8Array(TRIE_NODE_BYTES)
   ) {}
 
   /** Returns the type of the node */
@@ -162,7 +165,7 @@ export class LeafNode {
     this.node = node;
   }
 
-  static fromValue(key: InputKey, value: BytesBlob, valueHash: TrieHash): LeafNode {
+  static fromValue(key: InputKey, value: BytesBlob, valueHash: () => TrieHash): LeafNode {
     const node = new TrieNode();
     // The value will fit in the leaf itself.
     if (value.length <= HASH_SIZE) {
@@ -176,7 +179,7 @@ export class LeafNode {
       // truncate & copy the key
       node.data.set(key.raw.subarray(0, TRUNCATED_KEY_BYTES), 1);
       // copy the value hash
-      node.data.set(valueHash.raw, TRUNCATED_KEY_BYTES + 1);
+      node.data.set(valueHash().raw, TRUNCATED_KEY_BYTES + 1);
     }
 
     return new LeafNode(node);
@@ -185,6 +188,10 @@ export class LeafNode {
   /** Get the key (truncated to 31 bytes). */
   getKey(): TruncatedStateKey {
     return Bytes.fromBlob(this.node.data.subarray(1, TRUNCATED_KEY_BYTES + 1), TRUNCATED_KEY_BYTES).asOpaque();
+  }
+
+  hasEmbeddedValue(): boolean {
+    return this.node.getNodeType() === NodeType.EmbedLeaf;
   }
 
   /**

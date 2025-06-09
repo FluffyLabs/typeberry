@@ -41,19 +41,15 @@ export type ENTROPY_ENTRIES = typeof ENTROPY_ENTRIES;
 export const MAX_RECENT_HISTORY = 8;
 export type MAX_RECENT_HISTORY = typeof MAX_RECENT_HISTORY;
 
-/**
- * State object with additional ability to enumerate
- * it's services entries.
- */
+/** State with some entries being possible to enumerate. */
 export type EnumerableState = {
   /**
-   * `δ delta`:  In summary, δ is the portion of state dealing with
-   *             services, analogous in Jam to the Yellow Paper’s (
-   *             smart contract) accounts.
+   * Returns recently active `ServiceId`s.
    *
-   * https://graypaper.fluffylabs.dev/#/579bd12/08fb0008ff00
+   * NOTE we don't define exactly what 'recent' means on purpose.
+   * This method only exists to satisfy requirements of RPC services method.
    */
-  serviceIds(): readonly ServiceId[];
+  recentServiceIds(): readonly ServiceId[];
 };
 
 /**

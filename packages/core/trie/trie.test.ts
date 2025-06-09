@@ -18,7 +18,7 @@ describe("Trie", async () => {
   it("Leaf Node", () => {
     const key = parseInputKey("16c72e0c2e0b78157e3a116d86d90461a199e439325317aea160b30347adb8ec");
     const value = BytesBlob.parseBlob("0x4227b4a465084852cd87d8f23bec0db6fa7766b9685ab5e095ef9cda9e15e49dff");
-    const valueHash = blake2bTrieHasher.hashConcat(value.raw);
+    const valueHash = () => blake2bTrieHasher.hashConcat(value.raw);
     const node = LeafNode.fromValue(key, value, valueHash);
 
     assert.deepStrictEqual(
@@ -171,7 +171,7 @@ describe("Trie", async () => {
     const leaves = Array.from(trie.nodes.leaves());
 
     assert.deepStrictEqual(
-      leaves.map(([key, val]) => `${key}: ${val.node.toString()}`),
+      leaves.map((val) => `${val.getKey()}: ${val.node}`),
       [
         "0xb301f7d9e40ffed69a3056d5c93563c9c8adf52267ad577983db613b3dbb9aad: 0x9cd7f99b746f23411983df92806725af8e5cb66eba9f200737accae4a1ab7f4724232437f5b3f2380ba9089bdbc45efaffbe386602cb1ecc2c17f1d000000000",
         "0xf0fe9027093e50ec39cdf719f542063ced28ddae45f2454be9f36a535e18e2f7: 0xc059ee947b94bcc05634d95efb474742f6cd6531766e44670ec987270a6b5a42a7f2482020023b85b4009884a31aea08f03b4bbdb5efd5e6ff1d63f1a86aaa53",
@@ -197,7 +197,7 @@ describe("Trie", async () => {
     const leaves = Array.from(trie.nodes.leaves());
     const actual = InMemoryTrie.fromLeaves(
       blake2bTrieHasher,
-      leaves.map((x) => x[1]),
+      leaves,
     );
 
     assert.deepStrictEqual(actual.getRootHash(), trie.getRootHash());

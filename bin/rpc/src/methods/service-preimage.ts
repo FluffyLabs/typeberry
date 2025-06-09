@@ -24,29 +24,23 @@ export const servicePreimage: RpcMethod<ServicePreimageParams, [BlobArray] | nul
   db,
 ) => {
   const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
-  const stateRoot = db.blocks.getPostStateRoot(hashOpaque);
-
-  if (stateRoot === null) {
-    return null;
-  }
-
-  const state = db.states.getFullState(stateRoot);
+  const state = db.states.getState(hashOpaque);
 
   if (state === null) {
     return null;
   }
 
-  const service = state.services.get(tryAsServiceId(serviceId));
+  const service = state.getService(tryAsServiceId(serviceId));
 
-  if (service === undefined) {
+  if (service === null) {
     return null;
   }
 
-  const preimage = service.data.preimages.get(Bytes.fromNumbers(preimageHash, HASH_SIZE).asOpaque());
+  const preimage = service.getPreimage(Bytes.fromNumbers(preimageHash, HASH_SIZE).asOpaque());
 
-  if (preimage === undefined) {
+  if (preimage === null) {
     return null;
   }
 
-  return [[...preimage.blob.raw]];
+  return [[...preimage.raw]];
 };

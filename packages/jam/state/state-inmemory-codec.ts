@@ -22,9 +22,9 @@ import {
   ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
+import {serialize} from "@typeberry/state-merkleization/serialize";
 import { SafroleSealingKeysData } from "@typeberry/state/safrole-data";
 import { seeThrough } from "@typeberry/utils";
-import { serialize } from "./serialize";
 
 type LookupHistoryEntry = {
   key: PreimageHash;
@@ -93,7 +93,7 @@ class ServiceWithCodec extends InMemoryService {
   }
 }
 
-export const stateDumpCodec = codec.Class<InMemoryState>(InMemoryState, {
+export const inMemoryStateCodec = codec.Class<InMemoryState>(InMemoryState, {
   // alpha
   authPools: serialize.authPools.Codec,
   // phi

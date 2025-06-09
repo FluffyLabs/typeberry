@@ -32,11 +32,12 @@ export class NodesDb {
     return this.hasher.hashConcat(n.data);
   }
 
-  *leaves(): Generator<[TrieHash, LeafNode]> {
-    for (const [key, val] of this.nodes) {
+  *leaves(): Generator<LeafNode> {
+    // TODO [ToDr] Perhaps we could avoid iterating over all nodes?
+    for (const val of this.nodes.values()) {
       const nodeType = val.getNodeType();
       if (nodeType !== NodeType.Branch) {
-        yield [key, val.asLeafNode()];
+        yield val.asLeafNode();
       }
     }
   }

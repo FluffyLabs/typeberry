@@ -21,13 +21,7 @@ export type StatisticsParams = z.infer<typeof StatisticsParams>;
  */
 export const statistics: RpcMethod<StatisticsParams, [BlobArray] | null> = async ([headerHash], db, chainSpec) => {
   const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
-  const stateRoot = db.blocks.getPostStateRoot(hashOpaque);
-
-  if (stateRoot === null) {
-    return null;
-  }
-
-  const state = db.states.getFullState(stateRoot);
+  const state = db.states.getState(hashOpaque);
 
   if (state === null) {
     return null;

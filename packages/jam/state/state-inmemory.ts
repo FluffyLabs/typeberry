@@ -49,7 +49,7 @@ import {
   type StorageKey,
   tryAsLookupHistorySlots,
 } from "./service";
-import { ENTROPY_ENTRIES, type EnumerableState, type MAX_RECENT_HISTORY, type Service, type State } from "./state";
+import { ENTROPY_ENTRIES, EnumerableState, type MAX_RECENT_HISTORY, type Service, type State } from "./state";
 import {
   type ServicesUpdate,
   type UpdatePreimage,
@@ -386,7 +386,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
   privilegedServices: PrivilegedServices;
   services: Map<ServiceId, InMemoryService>;
 
-  serviceIds(): readonly ServiceId[] {
+  recentServiceIds(): readonly ServiceId[] {
     return Array.from(this.services.keys());
   }
 

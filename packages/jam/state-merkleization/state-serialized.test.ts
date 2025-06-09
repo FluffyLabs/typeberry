@@ -14,7 +14,7 @@ import {
 import { deepEqual } from "@typeberry/utils";
 import { TriePersistence, merkelizeState } from "./merkleize";
 import { convertInMemoryStateToDictionary } from "./serialize-inmemory";
-import { SerializedState } from "./state-serialized";
+import { hashDictPersistence, SerializedState } from "./state-serialized";
 
 describe("SerializedState", () => {
   const testInitialState = () => {
@@ -51,7 +51,7 @@ describe("SerializedState", () => {
   it("should load serialized state", () => {
     const { initialState, serializedState } = testInitialState();
     // load the state from a dictionary.
-    const state = new SerializedState(tinyChainSpec, serializedState);
+    const state = new SerializedState(tinyChainSpec, hashDictPersistence(serializedState));
 
     // copy back to memory from it's serialized form
     const copiedState = InMemoryState.copyFrom(

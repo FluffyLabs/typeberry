@@ -19,6 +19,9 @@ export class TriePersistence implements Persistence {
     for (const [key, value] of state) {
       trie.set(key, value);
     }
+    // TODO [ToDr] we probably need a way to tell the hash dictionary to disregard the last byte.
+    // otherwise we will need to copy all of the keys and truncate them and also do that on every
+    // access.
     return new TriePersistence(trie, state);
   }
 
@@ -31,7 +34,7 @@ export class TriePersistence implements Persistence {
     return this.trie.getRootHash().asOpaque();
   }
 
-  get(key: StateKey): BytesBlob | undefined {
-    return this.serializedState.get(key);
+  get(key: StateKey): BytesBlob | null {
+    return this.serializedState.get(key) ?? null;
   }
 }

@@ -3,6 +3,7 @@ import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import z from "zod";
 import { Hash, PreimageLength, type RpcMethod, ServiceId, type Slot } from "../types";
+import {tryAsU32} from "@typeberry/numbers";
 
 export const ServiceRequestParams = z.tuple([Hash, ServiceId, Hash, PreimageLength]);
 export type ServiceRequestParams = z.infer<typeof ServiceRequestParams>;
@@ -25,31 +26,24 @@ export const serviceRequest: RpcMethod<ServiceRequestParams, [readonly Slot[]] |
   db,
 ) => {
   const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
-  const stateRoot = db.blocks.getPostStateRoot(hashOpaque);
-
-  if (stateRoot === null) {
-    return null;
-  }
-
-  const state = db.states.getFullState(stateRoot);
-
+  const state = db.states.getState(hashOpaque);
   if (state === null) {
     return null;
   }
 
-  const service = state.services.get(tryAsServiceId(serviceId));
+  const service = state.getService(tryAsServiceId(serviceId));
 
-  if (service === undefined) {
+  if (service === null) {
     return null;
   }
 
-  const preimage = service.data.lookupHistory
-    .get(Bytes.fromNumbers(preimageHash, HASH_SIZE).asOpaque())
-    ?.find(({ length }) => length === preimageLength);
-
-  if (preimage === undefined) {
+  const slots = service.getLookupHistory(
+    Bytes.fromNumbers(preimageHash, HASH_SIZE).asOpaque(),
+    tryAsU32(preimageLength),
+  );
+  if (slots === null) {
     return null;
   }
 
-  return [preimage.slots];
+  return [slots];
 };
