@@ -29,7 +29,7 @@ export class NodesDb {
   }
 
   hashNode(n: TrieNode): TrieHash {
-    return this.hasher.hashConcat(n.data);
+    return this.hasher.hashConcat(n.raw);
   }
 
   *leaves(): Generator<LeafNode> {

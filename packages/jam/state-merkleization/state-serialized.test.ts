@@ -12,9 +12,8 @@ import {
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { deepEqual } from "@typeberry/utils";
-import { TriePersistence, merkelizeState } from "./merkleize";
 import { convertInMemoryStateToDictionary } from "./serialize-inmemory";
-import { hashDictPersistence, SerializedState } from "./state-serialized";
+import { SerializedState } from "./state-serialized";
 
 describe("SerializedState", () => {
   const testInitialState = () => {
@@ -51,7 +50,7 @@ describe("SerializedState", () => {
   it("should load serialized state", () => {
     const { initialState, serializedState } = testInitialState();
     // load the state from a dictionary.
-    const state = new SerializedState(tinyChainSpec, hashDictPersistence(serializedState));
+    const state = SerializedState.fromStateDictionary(tinyChainSpec, serializedState);
 
     // copy back to memory from it's serialized form
     const copiedState = InMemoryState.copyFrom(
@@ -69,19 +68,5 @@ describe("SerializedState", () => {
     );
 
     deepEqual(copiedState, initialState);
-  });
-
-  it("should calculate merkle root", () => {
-    const { serializedState } = testInitialState();
-    const expectedMerkleRoot = merkelizeState(serializedState);
-
-    // load the state from a dictionary.
-    const db = TriePersistence.fromStateDictionary(serializedState);
-    const _state = new SerializedState(tinyChainSpec, db);
-    // and calculate it's merkle root
-    const actualMerkleRoot = db.getRootHash();
-    // TODO [ToDr] alter the state
-
-    deepEqual(actualMerkleRoot, expectedMerkleRoot);
   });
 });

@@ -20,7 +20,7 @@ export const KEY_SIZE = 31;
 export type KEY_SIZE = typeof KEY_SIZE;
 
 const trieNodeCodec = codec.bytes<64>(64).convert<TrieNode>(
-  (i) => Bytes.fromBlob(i.data, 64),
+  (i) => Bytes.fromBlob(i.raw, 64),
   (i) => new TrieNode(i.raw),
 );
 

@@ -43,9 +43,8 @@ describe('LeafDb', () => {
   });
 
   it('should fail on invalid blob data', () => {
-    const res = LeafDb.fromLeafsBlob(
+    const res = LeafDb.fromLeavesBlob(
       BytesBlob.blobFromNumbers([1, 2, 3]),
-      BytesBlob.blobFromString("x"),
       dbFromRaw(new Map())
     );
 
@@ -62,7 +61,6 @@ function assertOk(res: ReturnType<typeof constructLeafDb>) {
 
 function constructLeafDb(
   entries: [InputKey, BytesBlob][],
-  dbPrefix: BytesBlob = BytesBlob.blobFromString("prefix"),
 ): Result<LeafDb, LeafDbError> {
   const rawDb = new Map<string, BytesBlob>();
   const trie = InMemoryTrie.empty(blake2bTrieHasher);
@@ -70,14 +68,14 @@ function constructLeafDb(
     const leafNode = trie.set(key, value);
     if (!leafNode.hasEmbeddedValue()) {
       // we need to put it to the DB, since it didn't fit into the leaf.
-      rawDb.set(`${Bytes.blobFromParts(dbPrefix.raw, leafNode.getValueHash().raw)}`, value);
+      rawDb.set(`${leafNode.getValueHash()}`, value);
     }
   }
 
   const leafNodes = Array.from(trie.nodes.leaves());
   const db = dbFromRaw(rawDb);
 
-  return LeafDb.fromLeafsBlob(BytesBlob.blobFromParts(leafNodes.map(x => x.node.data)), dbPrefix, db);
+  return LeafDb.fromLeavesBlob(BytesBlob.blobFromParts(leafNodes.map(x => x.node.raw)), db);
 }
 
 function dbFromRaw(rawDb: Map<string, BytesBlob>): ValuesDb {

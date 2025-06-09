@@ -68,16 +68,16 @@ export enum NodeType {
 export class TrieNode {
   constructor(
     /** Exactly 512 bits / 64 bytes */
-    public readonly data: Uint8Array = new Uint8Array(TRIE_NODE_BYTES)
+    public readonly raw: Uint8Array = new Uint8Array(TRIE_NODE_BYTES)
   ) {}
 
   /** Returns the type of the node */
   getNodeType(): NodeType {
-    if ((this.data[0] & FIRST_BIT_SET) === 0) {
+    if ((this.raw[0] & FIRST_BIT_SET) === 0) {
       return NodeType.Branch;
     }
 
-    if ((this.data[0] & FIRST_TWO_BITS_SET) === FIRST_TWO_BITS_SET) {
+    if ((this.raw[0] & FIRST_TWO_BITS_SET) === FIRST_TWO_BITS_SET) {
       return NodeType.Leaf;
     }
 
@@ -97,7 +97,7 @@ export class TrieNode {
   }
 
   toString() {
-    return BytesBlob.blobFrom(this.data).toString();
+    return BytesBlob.blobFrom(this.raw).toString();
   }
 }
 
@@ -119,23 +119,23 @@ export class BranchNode {
 
   static fromSubNodes(left: TrieHash, right: TrieHash) {
     const node = new TrieNode();
-    node.data.set(left.raw, 0);
-    node.data.set(right.raw, HASH_SIZE);
+    node.raw.set(left.raw, 0);
+    node.raw.set(right.raw, HASH_SIZE);
 
     // set the first bit to 0 (branch node)
-    node.data[0] &= FIRST_BIT_SET_NEG;
+    node.raw[0] &= FIRST_BIT_SET_NEG;
 
     return new BranchNode(node);
   }
 
   /** Get the hash of the left sub-trie. */
   getLeft(): TrieHash {
-    return Bytes.fromBlob(this.node.data.subarray(0, HASH_SIZE), HASH_SIZE).asOpaque();
+    return Bytes.fromBlob(this.node.raw.subarray(0, HASH_SIZE), HASH_SIZE).asOpaque();
   }
 
   /** Get the hash of the right sub-trie. */
   getRight(): TrieHash {
-    return Bytes.fromBlob(this.node.data.subarray(HASH_SIZE), HASH_SIZE).asOpaque();
+    return Bytes.fromBlob(this.node.raw.subarray(HASH_SIZE), HASH_SIZE).asOpaque();
   }
 }
 
@@ -169,17 +169,17 @@ export class LeafNode {
     const node = new TrieNode();
     // The value will fit in the leaf itself.
     if (value.length <= HASH_SIZE) {
-      node.data[0] = FIRST_BIT_SET | value.length;
+      node.raw[0] = FIRST_BIT_SET | value.length;
       // truncate & copy the key
-      node.data.set(key.raw.subarray(0, TRUNCATED_KEY_BYTES), 1);
+      node.raw.set(key.raw.subarray(0, TRUNCATED_KEY_BYTES), 1);
       // copy the value
-      node.data.set(value.raw, TRUNCATED_KEY_BYTES + 1);
+      node.raw.set(value.raw, TRUNCATED_KEY_BYTES + 1);
     } else {
-      node.data[0] = FIRST_TWO_BITS_SET;
+      node.raw[0] = FIRST_TWO_BITS_SET;
       // truncate & copy the key
-      node.data.set(key.raw.subarray(0, TRUNCATED_KEY_BYTES), 1);
+      node.raw.set(key.raw.subarray(0, TRUNCATED_KEY_BYTES), 1);
       // copy the value hash
-      node.data.set(valueHash().raw, TRUNCATED_KEY_BYTES + 1);
+      node.raw.set(valueHash().raw, TRUNCATED_KEY_BYTES + 1);
     }
 
     return new LeafNode(node);
@@ -187,7 +187,7 @@ export class LeafNode {
 
   /** Get the key (truncated to 31 bytes). */
   getKey(): TruncatedStateKey {
-    return Bytes.fromBlob(this.node.data.subarray(1, TRUNCATED_KEY_BYTES + 1), TRUNCATED_KEY_BYTES).asOpaque();
+    return Bytes.fromBlob(this.node.raw.subarray(1, TRUNCATED_KEY_BYTES + 1), TRUNCATED_KEY_BYTES).asOpaque();
   }
 
   hasEmbeddedValue(): boolean {
@@ -201,7 +201,7 @@ export class LeafNode {
    * Note in case this node only contains hash this is going to be 0.
    */
   getValueLength(): number {
-    const firstByte = this.node.data[0];
+    const firstByte = this.node.raw[0];
     // we only store values up to `HASH_SIZE`, so they fit on the last 6 bits.
     return firstByte & FIRST_TWO_BITS_SET_NEG;
   }
@@ -214,7 +214,7 @@ export class LeafNode {
    */
   getValue(): BytesBlob {
     const len = this.getValueLength();
-    return BytesBlob.blobFrom(this.node.data.subarray(HASH_SIZE, HASH_SIZE + len));
+    return BytesBlob.blobFrom(this.node.raw.subarray(HASH_SIZE, HASH_SIZE + len));
   }
 
   /**
@@ -224,6 +224,6 @@ export class LeafNode {
    * Note that for embedded value this is going to be full 0-padded 32 bytes.
    */
   getValueHash(): ValueHash {
-    return Bytes.fromBlob(this.node.data.subarray(HASH_SIZE), HASH_SIZE).asOpaque();
+    return Bytes.fromBlob(this.node.raw.subarray(HASH_SIZE), HASH_SIZE).asOpaque();
   }
 }

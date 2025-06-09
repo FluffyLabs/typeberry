@@ -3,7 +3,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { UpdateError, type InMemoryState, type ServicesUpdate, type State } from "@typeberry/state";
+import { InMemoryState, UpdateError, type ServicesUpdate, type State } from "@typeberry/state";
 import {merkelizeState, serializeInMemoryState} from "@typeberry/state-merkleization";
 import {inMemoryStateCodec} from "@typeberry/state/state-inmemory-codec";
 import {assertNever, OK, Result} from "@typeberry/utils";
@@ -13,7 +13,7 @@ export enum StateUpdateError {
   /** A conflicting state update has been provided. */
   Conflict,
   /** There was an error committing the changes. */
-  CommitError,
+  Commit,
 }
 /**
  * Interface for accessing states stored in the database.
@@ -27,18 +27,13 @@ export interface StatesDb<T extends State = State> {
   /** Compute a state root for given state. */
   getStateRoot(state: T): StateRootHash;
 
-  /** Insert a posterior state for given header hash. */
-  setState(header: HeaderHash, state: T): Promise<
-    Result<OK, StateUpdateError>
-  >;
-
   /**
    * Apply & commit a state update.
    *
    * NOTE: for efficiency, the implementation MAY alter given `state` object.
    */
   updateAndSetState(header: HeaderHash, state: T, update: Partial<State & ServicesUpdate>): Promise<
-    Result<T, StateUpdateError>
+    Result<OK, StateUpdateError>
   >;
 
   /** Retrieve posterior state of given header. */
@@ -54,12 +49,10 @@ export class InMemoryStates implements StatesDb<InMemoryState> {
     headerHash: HeaderHash,
     state: InMemoryState,
     update: Partial<State & ServicesUpdate>,
-  ): Promise<Result<InMemoryState, StateUpdateError>> {
+  ): Promise<Result<OK, StateUpdateError>> {
     const res = state.applyUpdate(update);
     if (res.isOk) {
-      // we ignore the result here, since it's infallible.
-      await this.setState(headerHash, state);
-      return Result.ok(state);
+      return await this.insertState(headerHash, state);
     }
 
     switch (res.error) {
@@ -78,7 +71,11 @@ export class InMemoryStates implements StatesDb<InMemoryState> {
     return merkelizeState(serializeInMemoryState(state, this.spec));
   }
 
-  async setState(headerHash: HeaderHash, state: InMemoryState): Promise<Result<OK, StateUpdateError>> {
+  /** Insert a full state into the database. */
+  async insertState(
+    headerHash: HeaderHash,
+    state: InMemoryState,
+  ): Promise<Result<OK, StateUpdateError>> {
     const encoded = Encoder.encodeObject(inMemoryStateCodec, state, this.spec);
     this.db.set(headerHash, encoded);
     return Result.ok(OK);

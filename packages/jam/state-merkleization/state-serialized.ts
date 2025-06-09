@@ -16,6 +16,7 @@ import {
 import { serialize } from "./serialize";
 import {StateKey} from "./keys";
 import {HashDictionary} from "@typeberry/collections";
+import {StateEntries} from "./serialize-inmemory";
 
 /** A tiny wrapper for some persistence layer. */
 export interface Persistence {
@@ -28,7 +29,7 @@ export interface Persistence {
  *
  * Reminder: DO not do that with regular `Map`, since it compares by reference.
  */
-export function hashDictPersistence(dict: HashDictionary<StateKey, BytesBlob>): Persistence {
+function hashDictPersistence(dict: HashDictionary<StateKey, BytesBlob>): Persistence {
   return {
     get(key: StateKey): BytesBlob | null {
       return dict.get(key) ?? null;
@@ -90,11 +91,25 @@ export class SerializedService implements Service {
  *
  * It differs from `InMemoryState` by needing to serialize the keys before accessing
  * them.
+ *
+ * NOTE: the object has no way of knowing if all of the required data is present
+ * in the persistence layer, so it MAY fail during runtime.
  */
 export class SerializedState<T extends Persistence = Persistence> implements State, EnumerableState {
+  /** Create a state-like object from collection of serialized entries. */
+  static fromStateDictionary(spec: ChainSpec, state: StateEntries) {
+    return new SerializedState(spec, hashDictPersistence(state));
+  }
+
+  /** Create a state-like object backed by some DB. */
+  static new<T extends Persistence>(spec: ChainSpec, db: T): SerializedState<T> {
+    return new SerializedState(spec, db);
+  }
+
+  /** Best-effort list of recently active services. */
   private _recentServiceIds: ServiceId[] = [];
 
-  constructor(
+  private constructor(
     private readonly spec: ChainSpec,
     public readonly backend: T,
   ) {}

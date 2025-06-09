@@ -5,5 +5,6 @@
  */
 
 export { convertInMemoryStateToDictionary as serializeInMemoryState } from "./serialize-inmemory";
+export { serializeUpdate } from "./serialize-update";
 export { merkelizeState } from "./merkleize";
 export { SerializedState } from "./state-serialized";

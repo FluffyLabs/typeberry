@@ -25,7 +25,7 @@ export class InMemoryTrie {
   /**
    * Given a collection of leaves, compute the state root.
    */
-  static computeStateRoot(hasher: TrieHasher, leaves: LeafNode[]) {
+  static computeStateRoot(hasher: TrieHasher, leaves: readonly LeafNode[]) {
     // TODO [ToDr] [opti] Simple loop to just compute the root hash instead of
     // constructing the entire trie.
     return InMemoryTrie.fromLeaves(hasher, leaves).getRootHash();
@@ -36,7 +36,7 @@ export class InMemoryTrie {
    *
    * Note that if only the state root is needed, this is rather inefficient.
    */
-  static fromLeaves(hasher: TrieHasher, leaves: LeafNode[]) {
+  static fromLeaves(hasher: TrieHasher, leaves: readonly LeafNode[]) {
     // TODO [ToDr] [opti] Pair up the leaves and build upper levels.
     let root: TrieNode | null = null;
     const nodes = new WriteableNodesDb(hasher);

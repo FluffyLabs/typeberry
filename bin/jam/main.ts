@@ -204,8 +204,9 @@ async function initializeDatabase(
   logger.log(`🧬 Writing genesis block ${genesisHeaderHash}`);
 
   // write to db
+  const serializedState = serializeInMemoryState(genesisState, spec);
   await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(genesisHeaderHash, blockView));
-  await states.setState(genesisHeaderHash, genesisState);
+  await states.insertState(genesisHeaderHash, serializedState);
   await blocks.setPostStateRoot(genesisHeaderHash, genesisStateRootHash);
   await blocks.setBestData(genesisHeaderHash, genesisStateRootHash);
 

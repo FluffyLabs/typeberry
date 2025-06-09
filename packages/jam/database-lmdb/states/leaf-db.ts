@@ -45,9 +45,8 @@ export class LeafDb implements Persistence {
   /**
    * Parse given blob containing concatenated leaf nodes into leaf db.
    */
-  static fromLeafsBlob(
+  static fromLeavesBlob(
     blob: BytesBlob,
-    dbPrefix: BytesBlob,
     db: ValuesDb,
   ): Result<LeafDb, LeafDbError> {
     if (blob.length % TRIE_NODE_BYTES !== 0) {
@@ -63,16 +62,15 @@ export class LeafDb implements Persistence {
       leaves.push(node.asLeafNode());
     }
 
-    return Result.ok(new LeafDb(leaves, dbPrefix, db));
+    return Result.ok(new LeafDb(leaves, db));
   }
 
   /** A mapping between an embedded value or db lookup key. */
   private readonly lookup: TruncatedHashDictionary<StateKey, Lookup>;
 
   private constructor(
-    private readonly leaves: LeafNode[],
-    dbPrefix: BytesBlob,
-    private readonly db: ValuesDb,
+    public readonly leaves: readonly LeafNode[],
+    public readonly db: ValuesDb,
   ) {
     this.lookup = TruncatedHashDictionary.fromEntries(leaves.map(leaf => {
       const key: StateKey = leaf.getKey().asOpaque();
@@ -81,7 +79,7 @@ export class LeafDb implements Persistence {
         value: leaf.getValue(),
       } : {
         kind: LookupKind.DbKey,
-        key: BytesBlob.blobFromParts(dbPrefix.raw, leaf.getValueHash().raw).raw,
+        key: leaf.getValueHash().raw,
       };
       return [key, value];
     }));

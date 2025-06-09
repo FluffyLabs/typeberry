@@ -91,7 +91,7 @@ export class OnChain {
 
   constructor(
     public readonly chainSpec: ChainSpec,
-    public readonly state: State,
+    public state: State,
     blocks: BlocksDb,
     public readonly hasher: TransitionHasher,
     { enableParallelSealVerification }: { enableParallelSealVerification: boolean },
@@ -112,6 +112,14 @@ export class OnChain {
     this.preimages = new Preimages(state);
 
     this.authorization = new Authorization(chainSpec, state);
+  }
+
+  /**
+   * Temporary method to support updating the STF state to a new version
+   * with some updates applied.
+   */
+  updateState(newState: State) {
+    this.state = newState;
   }
 
   async verifySeal(timeSlot: TimeSlot, block: BlockView) {

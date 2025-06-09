@@ -7,7 +7,7 @@ import type { State } from "@typeberry/state";
 import type { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verifier";
 import { OnChain, type StfError } from "@typeberry/transition/chain-stf";
-import { type ErrorResult, Result, type TaggedError, measure, resultToString } from "@typeberry/utils";
+import { type ErrorResult, Result, type TaggedError, check, measure, resultToString } from "@typeberry/utils";
 
 export enum ImporterErrorKind {
   Verifier = 0,
@@ -28,7 +28,6 @@ const importerError = <Kind extends ImporterErrorKind, Err extends ImporterError
 export class Importer {
   private readonly verifier: BlockVerifier;
   private readonly stf: OnChain;
-  private state: State;
 
   constructor(
     spec: ChainSpec,
@@ -45,7 +44,6 @@ export class Importer {
 
     this.verifier = new BlockVerifier(hasher, blocks);
     this.stf = new OnChain(spec, state, blocks, hasher, { enableParallelSealVerification: true });
-    this.state = state;
 
     logger.info(`😎 Best time slot: ${state.timeslot} (header hash: ${currentBestHeaderHash})`);
   }
@@ -91,19 +89,25 @@ export class Importer {
     // modify the state
     const update = res.ok;
     const timerState = measure("import:state");
-    const updateResult = await this.states.updateAndSetState(headerHash, this.state, update);
+    const updateResult = await this.states.updateAndSetState(headerHash, this.stf.state, update);
     if (updateResult.isError) {
       logger.error(`🧱 Unable to update state: ${resultToString(updateResult)}`);
       return importerError(ImporterErrorKind.Update, updateResult);
     }
-    this.state = updateResult.ok;
+    const newState = this.states.getState(headerHash);
+    if (newState === null) {
+      throw new Error('Freshly updated state not in the DB?');
+    }
+    // TODO [ToDr] This is a temporary measure. We should rather read
+    // the state of a parent block to support forks.
+    this.stf.updateState(newState);
     logger.log(timerState());
 
     // insert new state and the block to DB.
     const timerDb = measure("import:db");
     const writeBlocks = this.blocks.insertBlock(new WithHash(headerHash, block));
     // insert posterior state root, since we know it now.
-    const stateRoot = this.states.getStateRoot(this.state);
+    const stateRoot = this.states.getStateRoot(newState);
     const writePostState = this.blocks.setPostStateRoot(headerHash, stateRoot);
 
     await Promise.all([writeBlocks, writePostState]);

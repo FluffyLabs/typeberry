@@ -1,15 +1,19 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import type { StatesDb, StateUpdateError } from "@typeberry/database";
-import type { ServicesUpdate, State } from "@typeberry/state";
+import { StatesDb, StateUpdateError } from "@typeberry/database";
+import type { InMemoryState, ServicesUpdate, State } from "@typeberry/state";
 import type { LmdbRoot, SubDb } from "./root";
 import {OK, Result, resultToString} from "@typeberry/utils";
-import {SerializedState} from "@typeberry/state-merkleization";
+import {SerializedState, serializeInMemoryState, serializeUpdate} from "@typeberry/state-merkleization";
 import {StateKey} from "@typeberry/state-merkleization/keys";
 import {BytesBlob} from "@typeberry/bytes";
 import {LeafDb} from "./states/leaf-db";
 import {OpaqueHash} from "@typeberry/hash";
+import {StateEntries} from "@typeberry/state-merkleization/serialize-inmemory";
+import {blake2bTrieHasher} from "@typeberry/trie/hasher";
+import {InMemoryTrie} from "@typeberry/trie";
+import {ValueHash} from "@typeberry/trie/nodes";
 
 /**
  * LMDB-backed state storage.
@@ -71,22 +75,66 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     this.values = this.root.subDb("values");
   }
 
+  /** Insert a pre-defined, serialized state directly into the database. */
+  async insertState(
+    headerHash: HeaderHash,
+    serializedState: StateEntries,
+  ): Promise<Result<OK, StateUpdateError>> {
+    // we start with an empty trie, so that all value will be added.
+    const trie = InMemoryTrie.empty(blake2bTrieHasher);
+    return await this.updateAndCommit(headerHash, trie, serializedState);
+  }
+
+  async updateAndCommit(
+    headerHash: HeaderHash,
+    trie: InMemoryTrie,
+    data: Iterable<[StateKey, BytesBlob]>
+  ): Promise<Result<OK, StateUpdateError>> {
+    // We will collect all values that don't fit directly into leaf nodes.
+    const values: [ValueHash, BytesBlob][] = [];
+    // add all new data to the trie and take care of the values that didn't fit into leaves.
+    for (const [key, value] of data) {
+      const leaf = trie.set(key, value);
+      if (!leaf.hasEmbeddedValue()) {
+        values.push([leaf.getValueHash(), value]);
+      }
+    }
+    const stateLeafs = BytesBlob.blobFromParts(Array.from(trie.nodes.leaves()).map(x => x.node.raw));
+
+    // now we have the leaves and the values, so let's write it down to the DB.
+    const statesWrite = this.states.put(headerHash.raw, stateLeafs.raw)
+    const valuesWrite = this.values.transaction(() => {
+      for (const [hash, val] of values) {
+        this.values.put(hash.raw, val.raw);
+      }
+    });
+
+    try {
+      await Promise.all([valuesWrite, statesWrite]);
+    } catch (e) {
+      console.error(e);
+      return Result.error(StateUpdateError.Commit);
+    }
+    return Result.ok(OK);
+  }
+
   async updateAndSetState(
     headerHash: HeaderHash,
     state: SerializedState<LeafDb>,
     update: Partial<State & ServicesUpdate>
-  ): Promise<Result<SerializedState<LeafDb>, StateUpdateError>> {
-    throw new Error("Method not implemented.");
+  ): Promise<Result<OK, StateUpdateError>> {
+    // First we reconstruct the trie
+    // TODO [ToDr] [opti] reconstructing the trie is not really needed,
+    // we could simply produce new leaf nodes and append them.
+    const trie = InMemoryTrie.fromLeaves(blake2bTrieHasher, state.backend.leaves);
+    // Next we add all new elements.
+    const updatedValues = serializeUpdate(update);
+    // and finally we insert new values and store leaves in the DB.
+    return await this.updateAndCommit(headerHash, trie, updatedValues);
   }
 
   getStateRoot(state: SerializedState<LeafDb>): StateRootHash {
-    throw new Error("Method not implemented.");
-  }
-
-  async setState(root: HeaderHash, state: SerializedState<LeafDb>): Promise<Result<OK, StateUpdateError>> {
-    // just a marker that given state is present.
-    this.states.put(root.raw, new Uint8Array());
-    throw new Error("Method not implemented.");
+    return state.backend.getStateRoot();
   }
 
   getState(root: HeaderHash): SerializedState<LeafDb> | null {
@@ -96,7 +144,7 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
       return null;
     }
     const values = this.values;
-    const leafDbResult = LeafDb.fromLeafsBlob(BytesBlob.blobFrom(leafNodes), root, {
+    const leafDbResult = LeafDb.fromLeavesBlob(BytesBlob.blobFrom(leafNodes), {
       get(key: Uint8Array): Uint8Array {
         const val = values.get(key);
         if (val === undefined) {
@@ -108,6 +156,6 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     if (leafDbResult.isError) {
       throw new Error(`Inconsistent DB. Invalid leaf nodes for ${root}: ${resultToString(leafDbResult)}`);
     }
-    return new SerializedState(this.spec, leafDbResult.ok);
+    return SerializedState.new(this.spec, leafDbResult.ok);
   }
 }
