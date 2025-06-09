@@ -8,10 +8,10 @@ import {
   NodeType,
   type StateKey,
   TRUNCATED_KEY_BITS,
-  type TrieNodeHash,
   type TrieNode,
+  type TrieNodeHash,
   type TruncatedStateKey,
-  ValueHash,
+  type ValueHash,
 } from "./nodes";
 import { type NodesDb, type TrieHasher, WriteableNodesDb } from "./nodesDb";
 
@@ -208,8 +208,13 @@ function createSubtreeForBothLeaves(
   // better to return a changeset that can be batch-applied to the DB.
   const leafNodeHash = nodes.insert(leaf.node);
   if (existingLeafKey.isEqualTo(key)) {
+    // remove only if we are not inserting the same value twice
+    // we compare values only, since the hashes might have a difference at first
+    // bit.
+    if (!existingLeaf.getValueHash().isEqualTo(leaf.getValueHash())) {
+      nodes.remove(existingLeafHash);
+    }
     // just replacing an existing value
-    nodes.remove(existingLeafHash);
     return [leaf.node, leafNodeHash];
   }
 

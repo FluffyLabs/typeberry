@@ -230,4 +230,8 @@ export class LeafNode {
   getValueHash(): ValueHash {
     return Bytes.fromBlob(this.node.raw.subarray(HASH_SIZE), HASH_SIZE).asOpaque();
   }
+
+  toString() {
+    return `LeafNode {\n key: ${this.getKey()},\n valueHash: ${this.getValueHash()}\n}`;
+  }
 }

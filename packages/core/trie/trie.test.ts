@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { deepEqual } from "@typeberry/utils";
 import { blake2bTrieHasher } from "./hasher";
 import { LeafNode, parseInputKey } from "./nodes";
 import { InMemoryTrie } from "./trie";
@@ -197,7 +198,35 @@ describe("Trie", async () => {
     const leaves = Array.from(trie.nodes.leaves());
     const actual = InMemoryTrie.fromLeaves(blake2bTrieHasher, leaves);
 
-    assert.deepStrictEqual(actual.getRootHash(), trie.getRootHash());
+    assert.deepStrictEqual(`${actual.getRootHash()}`, `${trie.getRootHash()}`);
+    assert.deepStrictEqual(actual.nodes, trie.nodes);
+  });
+
+  it("should return correct leafs after updates", () => {
+    const data = { ...testVector9 };
+
+    // construct the trie manually
+    const trie = InMemoryTrie.empty(blake2bTrieHasher);
+    for (const [key, val] of Object.entries(data)) {
+      const stateKey = parseInputKey(key);
+      const value = BytesBlob.parseBlobNoPrefix(val);
+      trie.set(stateKey, value);
+    }
+    const initialLeaves = Array.from(trie.nodes.leaves());
+
+    // insert again
+    for (const [key, val] of Object.entries(data)) {
+      const stateKey = parseInputKey(key);
+      const value = BytesBlob.parseBlobNoPrefix(val);
+      trie.set(stateKey, value);
+    }
+
+    // when
+    const leaves = Array.from(trie.nodes.leaves());
+    const actual = InMemoryTrie.fromLeaves(blake2bTrieHasher, leaves);
+
+    deepEqual(leaves.map((x) => x.getKey().toString()).sort(), initialLeaves.map((x) => x.getKey().toString()).sort());
+    assert.deepStrictEqual(`${actual.getRootHash()}`, `${trie.getRootHash()}`);
     assert.deepStrictEqual(actual.nodes, trie.nodes);
   });
 

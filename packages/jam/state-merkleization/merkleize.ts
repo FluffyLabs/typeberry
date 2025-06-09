@@ -8,9 +8,14 @@ export function merkelizeState(state: StateEntries): StateRootHash {
   // TODO [ToDr] it should be possible to do this more efficiently
   // by converting the state entries into leaf nodes and constructing
   // the trie from the trie nodes.
+  return trieFromStateEntries(state).getRootHash().asOpaque();
+}
+
+/** Construct the trie from given set of state entries. */
+export function trieFromStateEntries(state: StateEntries): InMemoryTrie {
   const trie = InMemoryTrie.empty(blake2bTrieHasher);
   for (const [key, value] of state) {
     trie.set(key, value);
   }
-  return trie.getRootHash().asOpaque();
+  return trie;
 }

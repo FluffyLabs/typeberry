@@ -6,13 +6,13 @@ import type { ServicesUpdate, State } from "@typeberry/state";
 import { SerializedState, serializeUpdate } from "@typeberry/state-merkleization";
 import type { StateKey } from "@typeberry/state-merkleization";
 import type { StateEntries } from "@typeberry/state-merkleization";
+import { TrieAction } from "@typeberry/state-merkleization";
 import { InMemoryTrie } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher";
 import type { ValueHash } from "@typeberry/trie/nodes";
-import { assertNever, OK, Result, resultToString } from "@typeberry/utils";
+import { OK, Result, assertNever, deepEqual, resultToString } from "@typeberry/utils";
 import type { LmdbRoot, SubDb } from "./root";
 import { LeafDb } from "./states/leaf-db";
-import {TrieAction} from "@typeberry/state-merkleization";
 
 /**
  * LMDB-backed state storage.
@@ -81,7 +81,7 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     return await this.updateAndCommit(
       headerHash,
       trie,
-      Array.from(serializedState).map(x => [TrieAction.Insert, x[0], x[1]])
+      Array.from(serializedState).map((x) => [TrieAction.Insert, x[0], x[1]]),
     );
   }
 
@@ -101,12 +101,16 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
         }
       } else if (action === TrieAction.Remove) {
         trie.remove(key);
-        // TODO [ToDr] handle marking value as unused
+        // TODO [ToDr] Handle ref-counting values or updating some header-hash-based references.
       } else {
         assertNever(action);
       }
     }
     const stateLeafs = BytesBlob.blobFromParts(Array.from(trie.nodes.leaves()).map((x) => x.node.raw));
+
+    const secondTrie = InMemoryTrie.fromLeaves(blake2bTrieHasher, Array.from(trie.nodes.leaves()));
+    deepEqual(trie.getRootHash(), secondTrie.getRootHash());
+    deepEqual(Array.from(trie.nodes.leaves()), Array.from(secondTrie.nodes.leaves()));
 
     // now we have the leaves and the values, so let's write it down to the DB.
     const statesWrite = this.states.put(headerHash.raw, stateLeafs.raw);

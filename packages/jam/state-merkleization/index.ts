@@ -8,5 +8,5 @@ export { convertInMemoryStateToDictionary as serializeInMemoryState, StateEntrie
 export { serializeUpdate, TrieAction } from "./serialize-update";
 export { merkelizeState } from "./merkleize";
 export { SerializedState, Persistence } from "./state-serialized";
-export { serialize } from './serialize';
-export { StateKey } from './keys';
+export { serialize } from "./serialize";
+export { StateKey } from "./keys";

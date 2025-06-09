@@ -1,6 +1,6 @@
 import { HashDictionary } from "@typeberry/collections";
 import { FIRST_BIT_SET_NEG } from "./masks";
-import { type LeafNode, NodeType, type TrieNodeHash, type TrieNode } from "./nodes";
+import { type LeafNode, NodeType, type TrieNode, type TrieNodeHash } from "./nodes";
 
 /** Hasher used for the trie nodes. */
 export type TrieHasher = {
@@ -11,9 +11,7 @@ export type TrieHasher = {
 export class NodesDb {
   protected readonly nodes: HashDictionary<TrieNodeHash, TrieNode> = HashDictionary.new();
 
-  constructor(
-    public readonly hasher: TrieHasher
-  ) {}
+  constructor(public readonly hasher: TrieHasher) {}
 
   get(hash: TrieNodeHash): TrieNode | null {
     return NodesDb.withHashCompat(hash, (key) => {
