@@ -9,6 +9,25 @@ import { WithDebug } from "@typeberry/utils";
 import type { StateKey } from "../state-merkleization/keys";
 
 /**
+ * `B_S`: The basic minimum balance which all services require.
+ *
+ * https://graypaper.fluffylabs.dev/#/9a08063/445100445100?v=0.6.6
+ */
+export const BASE_SERVICE_BALANCE = 100n;
+/**
+ * `B_I`: The additional minimum balance required per item of elective service state.
+ *
+ * https://graypaper.fluffylabs.dev/#/9a08063/444900444900?v=0.6.6
+ */
+export const ELECTIVE_ITEM_BALANCE = 10n;
+/**
+ * `B_L`: The additional minimum balance required per octet of elective service state.
+ *
+ * https://graypaper.fluffylabs.dev/#/9a08063/444d00444d00?v=0.6.6
+ */
+export const ELECTIVE_BYTE_BALANCE = 1n;
+
+/**
  * Service account details.
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/106001106001?v=0.6.6
@@ -39,14 +58,11 @@ export class ServiceAccountInfo extends WithDebug {
    * https://graypaper.fluffylabs.dev/#/9a08063/117201117201?v=0.6.6
    */
   static calculateThresholdBalance(items: U32, bytes: U64): U64 {
-    /** https://graypaper.fluffylabs.dev/#/9a08063/445100445100?v=0.6.6 */
-    const B_S = 100n;
-    /** https://graypaper.fluffylabs.dev/#/9a08063/444900444900?v=0.6.6 */
-    const B_I = 10n;
-    /** https://graypaper.fluffylabs.dev/#/9a08063/444d00444d00?v=0.6.6 */
-    const B_L = 1n;
-
-    const sum = sumU64(tryAsU64(B_S), tryAsU64(B_I * BigInt(items)), tryAsU64(B_L * bytes));
+    const sum = sumU64(
+      tryAsU64(BASE_SERVICE_BALANCE),
+      tryAsU64(ELECTIVE_ITEM_BALANCE * BigInt(items)),
+      tryAsU64(ELECTIVE_BYTE_BALANCE * bytes),
+    );
     if (sum.overflow) {
       return tryAsU64(2n ** 64n - 1n);
     }

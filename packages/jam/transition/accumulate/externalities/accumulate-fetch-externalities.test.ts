@@ -50,18 +50,12 @@ describe("accumulate-fetch-externalities", () => {
     const tinyFetchExternalities = new AccumulateFetchExternalities(...tinyArgs);
     const fullFetchExternalities = new AccumulateFetchExternalities(...fullArgs);
 
-    const tryTinyConstants = () => tinyFetchExternalities.constants();
-    const tryFullConstants = () => fullFetchExternalities.constants();
+    const tinyContants = tinyFetchExternalities.constants();
+    const fullContants = fullFetchExternalities.constants();
 
-    assert.throws(tryTinyConstants, new Error("Method not implemented."));
-    assert.throws(tryFullConstants, new Error("Method not implemented."));
-
-    // const tinyContants = tinyFetchExternalities.constants();
-    // const fullContants = fullFetchExternalities.constants();
-
-    // assert.notStrictEqual(tinyContants.length, 0);
-    // assert.notStrictEqual(fullContants.length, 0);
-    // assert.notDeepStrictEqual(tinyContants, fullContants);
+    assert.notStrictEqual(tinyContants.length, 0);
+    assert.notStrictEqual(fullContants.length, 0);
+    assert.notDeepStrictEqual(tinyContants, fullContants);
   });
 
   it("should return null for all methods that are not important during accumulate", () => {
