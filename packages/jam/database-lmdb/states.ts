@@ -81,7 +81,7 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     return await this.updateAndCommit(
       headerHash,
       trie,
-      Array.from(serializedState).map((x) => [TrieAction.Insert, x[0], x[1]]),
+      Array.from(serializedState.entries).map((x) => [TrieAction.Insert, x[0], x[1]]),
     );
   }
 
@@ -95,12 +95,12 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     // add all new data to the trie and take care of the values that didn't fit into leaves.
     for (const [action, key, value] of data) {
       if (action === TrieAction.Insert) {
-        const leaf = trie.set(key, value);
+        const leaf = trie.set(key.asOpaque(), value);
         if (!leaf.hasEmbeddedValue()) {
           values.push([leaf.getValueHash(), value]);
         }
       } else if (action === TrieAction.Remove) {
-        trie.remove(key);
+        trie.remove(key.asOpaque());
         // TODO [ToDr] Handle ref-counting values or updating some header-hash-based references.
       } else {
         assertNever(action);

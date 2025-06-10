@@ -2,7 +2,6 @@ import { type ServiceId, tryAsTimeSlot } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type Decode, Decoder } from "@typeberry/codec";
-import type { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { U32 } from "@typeberry/numbers";
 import {
@@ -16,7 +15,7 @@ import {
 } from "@typeberry/state";
 import type { StateKey } from "./keys";
 import { serialize } from "./serialize";
-import type { StateEntries } from "./serialize-inmemory";
+import type { StateEntries } from "./state-entries";
 
 /** A tiny wrapper for some persistence layer. */
 export interface Persistence {
@@ -24,15 +23,12 @@ export interface Persistence {
   get(key: StateKey): BytesBlob | null;
 }
 
-/**
- * Wrap a `HashDictionary` as `Peristence` object.
- *
- * Reminder: DO not do that with regular `Map`, since it compares by reference.
- */
-function hashDictPersistence(dict: HashDictionary<StateKey, BytesBlob>): Persistence {
+/** Wrap a `StateEntries` as `Peristence` object. */
+function stateEntriesPersistence(dict: StateEntries): Persistence {
+  const entries = dict.entries;
   return {
     get(key: StateKey): BytesBlob | null {
-      return dict.get(key) ?? null;
+      return entries.get(key) ?? null;
     },
   };
 }
@@ -89,16 +85,15 @@ export class SerializedService implements Service {
 /**
  * A potentially persistence-backed state object which stores the keys serialized.
  *
- * It differs from `InMemoryState` by needing to serialize the keys before accessing
- * them.
+ * It differs from `InMemoryState` by needing to serialize the keys before accessing them.
  *
  * NOTE: the object has no way of knowing if all of the required data is present
  * in the persistence layer, so it MAY fail during runtime.
  */
 export class SerializedState<T extends Persistence = Persistence> implements State, EnumerableState {
   /** Create a state-like object from collection of serialized entries. */
-  static fromStateDictionary(spec: ChainSpec, state: StateEntries) {
-    return new SerializedState(spec, hashDictPersistence(state));
+  static fromStateEntries(spec: ChainSpec, state: StateEntries) {
+    return new SerializedState(spec, stateEntriesPersistence(state));
   }
 
   /** Create a state-like object backed by some DB. */

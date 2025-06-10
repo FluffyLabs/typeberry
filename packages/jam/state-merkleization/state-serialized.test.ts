@@ -12,7 +12,7 @@ import {
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { deepEqual } from "@typeberry/utils";
-import { convertInMemoryStateToDictionary } from "./serialize-inmemory";
+import { StateEntries } from "./state-entries";
 import { SerializedState } from "./state-serialized";
 
 describe("SerializedState", () => {
@@ -40,7 +40,7 @@ describe("SerializedState", () => {
       ],
     });
     // serialize into a dictionary
-    const serializedState = convertInMemoryStateToDictionary(initialState, tinyChainSpec);
+    const serializedState = StateEntries.serializeInMemory(tinyChainSpec, initialState);
     return {
       initialState,
       serializedState,
@@ -50,7 +50,7 @@ describe("SerializedState", () => {
   it("should load serialized state", () => {
     const { initialState, serializedState } = testInitialState();
     // load the state from a dictionary.
-    const state = SerializedState.fromStateDictionary(tinyChainSpec, serializedState);
+    const state = SerializedState.fromStateEntries(tinyChainSpec, serializedState);
 
     // copy back to memory from it's serialized form
     const copiedState = InMemoryState.copyFrom(

@@ -3,8 +3,8 @@ import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type Opaque, check } from "@typeberry/utils";
 import { FIRST_BIT_SET, FIRST_BIT_SET_NEG, FIRST_TWO_BITS_SET, FIRST_TWO_BITS_SET_NEG } from "./masks";
 
-export type StateKey = Opaque<OpaqueHash, "stateKey">;
-export type TruncatedStateKey = Opaque<Bytes<TRUNCATED_KEY_BYTES>, "stateKey">;
+export type StateKey = Opaque<OpaqueHash, "trieStateKey">;
+export type TruncatedStateKey = Opaque<Bytes<TRUNCATED_KEY_BYTES>, "trieStateKey">;
 
 export type InputKey = StateKey | TruncatedStateKey;
 

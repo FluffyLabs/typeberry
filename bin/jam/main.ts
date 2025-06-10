@@ -12,7 +12,7 @@ import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import * as blockImporter from "@typeberry/importer";
 import type { MainReady } from "@typeberry/importer/state-machine";
 import type { MessageChannelStateMachine } from "@typeberry/state-machine";
-import { merkelizeState, serializeInMemoryState } from "@typeberry/state-merkleization";
+import { StateEntries } from "@typeberry/state-merkleization";
 import { type Arguments, Command, KnownChainSpec } from "./args";
 import { startBlockGenerator } from "./author";
 import { initializeExtensions } from "./extensions";
@@ -189,7 +189,7 @@ async function initializeDatabase(
     );
   }
 
-  const { genesisState, genesisStateRootHash } = maybeGenesis;
+  const { genesisStateSerialized, genesisStateRootHash } = maybeGenesis;
 
   logger.log("🛢️ Database looks fresh. Initializing.");
   // looks like a fresh db, initialize the state.
@@ -204,9 +204,8 @@ async function initializeDatabase(
   logger.log(`🧬 Writing genesis block ${genesisHeaderHash}`);
 
   // write to db
-  const serializedState = serializeInMemoryState(genesisState, spec);
   await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(genesisHeaderHash, blockView));
-  await states.insertState(genesisHeaderHash, serializedState);
+  await states.insertState(genesisHeaderHash, genesisStateSerialized);
   await blocks.setPostStateRoot(genesisHeaderHash, genesisStateRootHash);
   await blocks.setBestData(genesisHeaderHash, genesisStateRootHash);
 
@@ -232,7 +231,8 @@ function loadAndCheckGenesisIfProvided(spec: ChainSpec, expectedRootHash: StateR
 
   logger.log(`🧬 Loading genesis state from ${genesisPath}`);
   const genesisState = loadGenesis(spec, genesisPath);
-  const genesisStateRootHash = merkelizeState(serializeInMemoryState(genesisState, spec));
+  const genesisStateSerialized = StateEntries.serializeInMemory(spec, genesisState);
+  const genesisStateRootHash = genesisStateSerialized.getRootHash();
   logger.info(`🧬 Genesis state root: ${genesisStateRootHash}`);
 
   // mismatch between expected state root and the one loaded.
@@ -244,6 +244,7 @@ function loadAndCheckGenesisIfProvided(spec: ChainSpec, expectedRootHash: StateR
 
   return {
     genesisState,
+    genesisStateSerialized,
     genesisStateRootHash,
   };
 }

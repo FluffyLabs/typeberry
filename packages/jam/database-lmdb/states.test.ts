@@ -14,7 +14,7 @@ import {
   UpdateService,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { merkelizeState, serializeInMemoryState } from "@typeberry/state-merkleization";
+import { StateEntries } from "@typeberry/state-merkleization";
 import { testState } from "@typeberry/state/test.utils";
 import { OK, Result, deepEqual } from "@typeberry/utils";
 import { LmdbRoot } from "./root";
@@ -44,8 +44,8 @@ describe("LMDB States database", () => {
     const states = new LmdbStates(spec, root);
 
     const emptyState = InMemoryState.empty(spec);
-    const serialized = serializeInMemoryState(emptyState, spec);
-    const emptyRoot = merkelizeState(serialized);
+    const serialized = StateEntries.serializeInMemory(spec, emptyState);
+    const emptyRoot = serialized.getRootHash();
 
     // when
     const res = await states.insertState(headerHash, serialized);
@@ -62,7 +62,7 @@ describe("LMDB States database", () => {
     const root = new LmdbRoot(tmpDir);
     const states = new LmdbStates(spec, root);
     const state = InMemoryState.empty(spec);
-    await states.insertState(headerHash, serializeInMemoryState(state, spec));
+    await states.insertState(headerHash, StateEntries.serializeInMemory(spec, state));
     const newState = states.getState(headerHash);
     assert.ok(newState !== null);
     const headerHash2: HeaderHash = Bytes.fill(HASH_SIZE, 2).asOpaque();
@@ -124,7 +124,7 @@ describe("LMDB States database", () => {
       ),
       state,
     );
-    assert.strictEqual(`${updatedStateRoot}`, `${merkelizeState(serializeInMemoryState(state, spec))}`);
+    assert.strictEqual(`${updatedStateRoot}`, `${StateEntries.serializeInMemory(spec, state).getRootHash()}`);
   });
 
   it("should import more complex state", async () => {
@@ -132,8 +132,8 @@ describe("LMDB States database", () => {
     const states = new LmdbStates(spec, root);
 
     const initialState = testState();
-    const serialized = serializeInMemoryState(initialState, spec);
-    const initialRoot = merkelizeState(serialized);
+    const serialized = StateEntries.serializeInMemory(spec, initialState);
+    const initialRoot = serialized.getRootHash();
 
     // when
     const res = await states.insertState(headerHash, serialized);
@@ -150,7 +150,7 @@ describe("LMDB States database", () => {
     const root = new LmdbRoot(tmpDir);
     const states = new LmdbStates(spec, root);
     const state = testState();
-    await states.insertState(headerHash, serializeInMemoryState(state, spec));
+    await states.insertState(headerHash, StateEntries.serializeInMemory(spec, state));
     const newState = states.getState(headerHash);
     assert.ok(newState !== null);
     const headerHash2: HeaderHash = Bytes.fill(HASH_SIZE, 2).asOpaque();
@@ -171,6 +171,6 @@ describe("LMDB States database", () => {
     const updatedStateRoot = states.getStateRoot(updatedState);
 
     deepEqual(InMemoryState.copyFrom(updatedState, new Map()), state);
-    assert.strictEqual(`${updatedStateRoot}`, `${merkelizeState(serializeInMemoryState(state, spec))}`);
+    assert.strictEqual(`${updatedStateRoot}`, `${StateEntries.serializeInMemory(spec, state).getRootHash()}`);
   });
 });

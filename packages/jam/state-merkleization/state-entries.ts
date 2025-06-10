@@ -1,15 +1,58 @@
-import type { BytesBlob } from "@typeberry/bytes";
+import type { StateRootHash } from "@typeberry/block";
 import { Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
+import type { ImmutableHashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { InMemoryState } from "@typeberry/state";
+import { type BytesBlob, InMemoryTrie } from "@typeberry/trie";
+import { blake2bTrieHasher } from "@typeberry/trie/hasher";
 import type { StateKey } from "./keys";
 import { type StateCodec, serialize } from "./serialize";
 
-export type StateEntries = HashDictionary<StateKey, BytesBlob>;
+/** Full, in-memory state as serialized entries dictionary. */
+export class StateEntries {
+  /** Turn in-memory state into it's serialized form. */
+  static serializeInMemory(spec: ChainSpec, state: InMemoryState) {
+    return new StateEntries(convertInMemoryStateToDictionary(spec, state));
+  }
+
+  /**
+   * Wrap a collection of state entries and treat it as state.
+   *
+   * NOTE: There is no verification happening, so the state may be
+   * incomplete. Use only if you are sure this is all the entries needed.
+   */
+  static fromDictionaryUnsafe(state: StateEntries["entries"]) {
+    return new StateEntries(state);
+  }
+
+  private trieCache: InMemoryTrie | null = null;
+
+  private constructor(public readonly entries: ImmutableHashDictionary<StateKey, BytesBlob>) {}
+
+  /** Construct the trie from given set of state entries. */
+  public getTrie(): InMemoryTrie {
+    if (this.trieCache === null) {
+      const trie = InMemoryTrie.empty(blake2bTrieHasher);
+      for (const [key, value] of this.entries) {
+        trie.set(key.asOpaque(), value);
+      }
+      this.trieCache = trie;
+    }
+    return this.trieCache;
+  }
+
+  /** https://graypaper.fluffylabs.dev/#/68eaa1f/391600391600?v=0.6.4 */
+  getRootHash(): StateRootHash {
+    // TODO [ToDr] it should be possible to do this more efficiently
+    // by converting the state entries into leaf nodes and constructing
+    // the trie from the trie nodes.
+    return this.getTrie().getRootHash().asOpaque();
+  }
+}
 
 /** https://graypaper.fluffylabs.dev/#/68eaa1f/38a50038a500?v=0.6.4 */
-export function convertInMemoryStateToDictionary(state: InMemoryState, spec: ChainSpec): StateEntries {
+function convertInMemoryStateToDictionary(spec: ChainSpec, state: InMemoryState): HashDictionary<StateKey, BytesBlob> {
   const serialized = HashDictionary.new<StateKey, BytesBlob>();
   function doSerialize<T>(codec: StateCodec<T>) {
     serialized.set(codec.key, Encoder.encodeObject(codec.Codec, codec.extract(state), spec));
