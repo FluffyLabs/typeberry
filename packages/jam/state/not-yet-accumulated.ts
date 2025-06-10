@@ -14,15 +14,15 @@ import { WithDebug } from "@typeberry/utils";
 export class NotYetAccumulatedReport extends WithDebug {
   static Codec = codec.Class(NotYetAccumulatedReport, {
     report: WorkReport.Codec,
-    unlocks: codecKnownSizeArray(codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(), {
+    dependencies: codecKnownSizeArray(codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(), {
       typicalLength: MAX_REPORT_DEPENDENCIES / 2,
       maxLength: MAX_REPORT_DEPENDENCIES,
       minLength: 0,
     }),
   });
 
-  static create({ report, unlocks }: CodecRecord<NotYetAccumulatedReport>) {
-    return new NotYetAccumulatedReport(report, unlocks);
+  static create({ report, dependencies }: CodecRecord<NotYetAccumulatedReport>) {
+    return new NotYetAccumulatedReport(report, dependencies);
   }
 
   private constructor(
@@ -37,7 +37,7 @@ export class NotYetAccumulatedReport extends WithDebug {
      *
      * https://graypaper.fluffylabs.dev/#/5f542d7/165800165800
      */
-    readonly unlocks: KnownSizeArray<WorkPackageHash, `[0..${MAX_REPORT_DEPENDENCIES})`>,
+    readonly dependencies: KnownSizeArray<WorkPackageHash, `[0..${MAX_REPORT_DEPENDENCIES})`>,
   ) {
     super();
   }

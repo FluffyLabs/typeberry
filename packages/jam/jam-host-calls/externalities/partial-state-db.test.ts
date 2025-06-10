@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   BANDERSNATCH_KEY_BYTES,
   BLS_KEY_BYTES,
+  type CodeHash,
   type ServiceGas,
   type ServiceId,
   tryAsCoreIndex,
@@ -12,23 +13,34 @@ import {
 } from "@typeberry/block";
 import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
-import { Bytes } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, HashDictionary, asKnownSize } from "@typeberry/collections";
 import { ED25519_KEY_BYTES } from "@typeberry/crypto";
-import { HASH_SIZE } from "@typeberry/hash";
-import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { HASH_SIZE, blake2b } from "@typeberry/hash";
+import { type U32, type U64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   LookupHistoryItem,
+  type LookupHistorySlots,
+  PreimageItem,
   Service,
   ServiceAccountInfo,
+  type State,
   VALIDATOR_META_BYTES,
   ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { testState } from "@typeberry/state/test.utils.js";
 import { OK, Result, ensure } from "@typeberry/utils";
-import { PartialStateDb, PreimageUpdate } from "./partial-state-db.js";
-import { PreimageStatusKind, RequestPreimageError, TRANSFER_MEMO_BYTES, TransferError } from "./partial-state.js";
+import { writeServiceIdAsLeBytes } from "../utils.js";
+import { NewPreimage, PartialStateDb, PreimageUpdate } from "./partial-state-db.js";
+import {
+  EjectError,
+  PreimageStatusKind,
+  ProvidePreimageError,
+  RequestPreimageError,
+  TRANSFER_MEMO_BYTES,
+  TransferError,
+} from "./partial-state.js";
 import { PendingTransfer } from "./pending-transfer.js";
 
 describe("PartialState.checkPreimageStatus", () => {
@@ -57,7 +69,7 @@ describe("PartialState.checkPreimageStatus", () => {
     ).asOpaque();
     const length = tryAsU64(35);
 
-    partialState.updatedState.preimages.push(
+    partialState.updatedState.lookupHistory.push(
       PreimageUpdate.update(new LookupHistoryItem(preimageHash, tryAsU32(Number(length)), tryAsLookupHistorySlots([]))),
     );
 
@@ -80,7 +92,7 @@ describe("PartialState.requestPreimage", () => {
     const status = partialState.requestPreimage(preimageHash, tryAsU64(5));
     assert.deepStrictEqual(status, Result.ok(OK));
 
-    assert.deepStrictEqual(partialState.updatedState.preimages, [
+    assert.deepStrictEqual(partialState.updatedState.lookupHistory, [
       PreimageUpdate.update(new LookupHistoryItem(preimageHash, tryAsU32(5), tryAsLookupHistorySlots([]))),
     ]);
     assert.deepStrictEqual(
@@ -104,7 +116,7 @@ describe("PartialState.requestPreimage", () => {
     const status = partialState.requestPreimage(preimageHash, tryAsU64(5));
     assert.deepStrictEqual(status, Result.ok(OK));
 
-    assert.deepStrictEqual(partialState.updatedState.preimages, [
+    assert.deepStrictEqual(partialState.updatedState.lookupHistory, [
       PreimageUpdate.update(new LookupHistoryItem(preimageHash, tryAsU32(5), tryAsLookupHistorySlots([]))),
     ]);
     assert.deepStrictEqual(
@@ -167,7 +179,7 @@ describe("PartialState.forgetPreimage", () => {
     const length = tryAsU64(42);
 
     const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
-    partialState.updatedState.preimages.push(
+    partialState.updatedState.lookupHistory.push(
       PreimageUpdate.forget(new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([]))),
     );
 
@@ -186,7 +198,7 @@ describe("PartialState.forgetPreimage", () => {
     const result = partialState.forgetPreimage(hash, length);
     assert.deepStrictEqual(result, Result.ok(OK));
 
-    assert.deepStrictEqual(partialState.updatedState.preimages, [
+    assert.deepStrictEqual(partialState.updatedState.lookupHistory, [
       PreimageUpdate.forget(new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([]))),
     ]);
   });
@@ -202,7 +214,7 @@ describe("PartialState.forgetPreimage", () => {
     const oldSlot = tryAsTimeSlot(0); // very old
 
     const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
-    partialState.updatedState.preimages.push(
+    partialState.updatedState.lookupHistory.push(
       PreimageUpdate.update(
         new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([oldSlot, oldSlot])),
       ),
@@ -211,7 +223,7 @@ describe("PartialState.forgetPreimage", () => {
     const result = partialState.forgetPreimage(hash, length);
     assert.deepStrictEqual(result, Result.ok(OK));
 
-    assert.deepStrictEqual(partialState.updatedState.preimages, [
+    assert.deepStrictEqual(partialState.updatedState.lookupHistory, [
       PreimageUpdate.forget(
         new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([oldSlot, oldSlot])),
       ),
@@ -229,7 +241,7 @@ describe("PartialState.forgetPreimage", () => {
     const recentSlot = tryAsTimeSlot(90); // within expunge period
 
     const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
-    partialState.updatedState.preimages.push(
+    partialState.updatedState.lookupHistory.push(
       PreimageUpdate.update(
         new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([recentSlot])),
       ),
@@ -250,7 +262,7 @@ describe("PartialState.forgetPreimage", () => {
     const availableSlot = tryAsTimeSlot(80);
 
     const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
-    partialState.updatedState.preimages.push(
+    partialState.updatedState.lookupHistory.push(
       PreimageUpdate.update(
         new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([availableSlot])),
       ),
@@ -259,7 +271,7 @@ describe("PartialState.forgetPreimage", () => {
     const result = partialState.forgetPreimage(hash, length);
     assert.deepStrictEqual(result, Result.ok(OK));
 
-    assert.deepStrictEqual(partialState.updatedState.preimages, [
+    assert.deepStrictEqual(partialState.updatedState.lookupHistory, [
       PreimageUpdate.update(
         new LookupHistoryItem(
           hash,
@@ -282,7 +294,7 @@ describe("PartialState.forgetPreimage", () => {
     const z = tryAsTimeSlot(70);
 
     const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
-    partialState.updatedState.preimages.push(
+    partialState.updatedState.lookupHistory.push(
       PreimageUpdate.update(
         new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([tryAsTimeSlot(0), y, z])),
       ),
@@ -291,7 +303,7 @@ describe("PartialState.forgetPreimage", () => {
     const result = partialState.forgetPreimage(hash, length);
     assert.deepStrictEqual(result, Result.ok(OK));
 
-    assert.deepStrictEqual(partialState.updatedState.preimages, [
+    assert.deepStrictEqual(partialState.updatedState.lookupHistory, [
       PreimageUpdate.update(
         new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([z, mockState.timeslot])),
       ),
@@ -310,7 +322,7 @@ describe("PartialState.forgetPreimage", () => {
     const z = tryAsTimeSlot(70);
 
     const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
-    partialState.updatedState.preimages.push(
+    partialState.updatedState.lookupHistory.push(
       PreimageUpdate.update(
         new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([tryAsTimeSlot(0), y, z])),
       ),
@@ -551,6 +563,7 @@ describe("PartialState.transfer", () => {
       service,
     };
   };
+
   it("should perform a successful transfer", () => {
     const { mockState, service } = testStateWithSecondService();
     const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
@@ -643,5 +656,520 @@ describe("PartialState.yield", () => {
 
     // then
     assert.deepStrictEqual(partialState.updatedState.yieldedRoot, Bytes.fill(HASH_SIZE, 0xef));
+  });
+});
+
+describe("PartialState.providePreimage", () => {
+  const testStateWithSecondService = ({
+    requested = false,
+    available = false,
+    self = false,
+  }: {
+    requested?: boolean;
+    available?: boolean;
+    self?: boolean;
+  } = {}) => {
+    const mockState = testState();
+    const maybeService = mockState.services.get(tryAsServiceId(0));
+    const service = ensure<Service | undefined, Service>(maybeService, maybeService !== undefined);
+
+    const preimageBlob = BytesBlob.blobFromNumbers([0xaa, 0xbb, 0xcc, 0xdd]);
+    const preimage = PreimageItem.create({
+      hash: blake2b.hashBytes(preimageBlob).asOpaque(),
+      blob: preimageBlob,
+    });
+
+    const secondService = new Service(tryAsServiceId(1), {
+      info: ServiceAccountInfo.create({
+        ...service.data.info,
+        onTransferMinGas: tryAsServiceGas(1000),
+      }),
+      preimages: HashDictionary.new(),
+      lookupHistory: HashDictionary.new(),
+      storage: [],
+    });
+
+    if (self) {
+      if (requested) {
+        service.data.lookupHistory.set(preimage.hash, [
+          new LookupHistoryItem(preimage.hash, tryAsU32(preimage.blob.length), tryAsLookupHistorySlots([])),
+        ]);
+      }
+      if (available) {
+        service.data.preimages.set(preimage.hash, preimage);
+      }
+    } else {
+      if (requested) {
+        secondService.data.lookupHistory.set(preimage.hash, [
+          new LookupHistoryItem(preimage.hash, tryAsU32(preimage.blob.length), tryAsLookupHistorySlots([])),
+        ]);
+      }
+      if (available) {
+        secondService.data.preimages.set(preimage.hash, preimage);
+      }
+    }
+
+    mockState.services.set(secondService.id, secondService);
+
+    return {
+      mockState,
+      preimage,
+    };
+  };
+
+  it("should provide a preimage for other service", () => {
+    const { mockState, preimage } = testStateWithSecondService({
+      self: false,
+      requested: true,
+    });
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    const serviceId = tryAsServiceId(1);
+    assert.deepStrictEqual(partialState.updatedState.providedPreimages, []);
+
+    // when
+    const result = partialState.providePreimage(serviceId, preimage.blob);
+
+    // then
+    assert.deepStrictEqual(result, Result.ok(OK));
+    assert.deepStrictEqual(partialState.updatedState.providedPreimages, [
+      NewPreimage.create({
+        serviceId: tryAsServiceId(1),
+        item: PreimageItem.create({
+          hash: preimage.hash,
+          blob: preimage.blob,
+        }),
+      }),
+    ]);
+  });
+
+  it("should provide a preimage for itself", () => {
+    const { mockState, preimage } = testStateWithSecondService({ self: true, requested: true });
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    const serviceId = tryAsServiceId(0);
+    assert.deepStrictEqual(partialState.updatedState.providedPreimages, []);
+
+    // when
+    const result = partialState.providePreimage(serviceId, preimage.blob);
+
+    // then
+    assert.deepStrictEqual(result, Result.ok(OK));
+    assert.deepStrictEqual(partialState.updatedState.providedPreimages, [
+      NewPreimage.create({
+        serviceId: tryAsServiceId(0),
+        item: PreimageItem.create({
+          hash: preimage.hash,
+          blob: preimage.blob,
+        }),
+      }),
+    ]);
+  });
+
+  it("should return error if preimage was not requested", () => {
+    const { mockState, preimage } = testStateWithSecondService({
+      self: false,
+      requested: false,
+    });
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    const serviceId = tryAsServiceId(1);
+    assert.deepStrictEqual(partialState.updatedState.providedPreimages, []);
+
+    // when
+    const result = partialState.providePreimage(serviceId, preimage.blob);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(ProvidePreimageError.WasNotRequested));
+    assert.deepStrictEqual(partialState.updatedState.providedPreimages, []);
+  });
+
+  it("should return error if preimage is requested and already available for other service", () => {
+    const { mockState, preimage } = testStateWithSecondService({
+      self: false,
+      requested: true,
+      available: true,
+    });
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    partialState.updatedState.providedPreimages.push(
+      NewPreimage.create({
+        serviceId: tryAsServiceId(1),
+        item: PreimageItem.create({
+          hash: preimage.hash,
+          blob: preimage.blob,
+        }),
+      }),
+    );
+
+    const serviceId = tryAsServiceId(1);
+
+    // when
+    const result = partialState.providePreimage(serviceId, preimage.blob);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(ProvidePreimageError.AlreadyProvided));
+    assert.deepStrictEqual(partialState.updatedState.providedPreimages, [
+      NewPreimage.create({
+        serviceId: tryAsServiceId(1),
+        item: PreimageItem.create({
+          hash: preimage.hash,
+          blob: preimage.blob,
+        }),
+      }),
+    ]);
+  });
+
+  it("should return error if preimage is requested and already provided for self", () => {
+    const { mockState, preimage } = testStateWithSecondService({
+      self: true,
+      requested: true,
+      available: true,
+    });
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    partialState.updatedState.providedPreimages.push(
+      NewPreimage.create({
+        serviceId: tryAsServiceId(0),
+        item: PreimageItem.create({
+          hash: preimage.hash,
+          blob: preimage.blob,
+        }),
+      }),
+    );
+
+    const serviceId = tryAsServiceId(0);
+
+    // when
+    const result = partialState.providePreimage(serviceId, preimage.blob);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(ProvidePreimageError.AlreadyProvided));
+    assert.deepStrictEqual(partialState.updatedState.providedPreimages, [
+      NewPreimage.create({
+        serviceId: tryAsServiceId(0),
+        item: PreimageItem.create({
+          hash: preimage.hash,
+          blob: preimage.blob,
+        }),
+      }),
+    ]);
+  });
+
+  it("should return ok and then error if preimage is provided twice for self", () => {
+    const { mockState, preimage } = testStateWithSecondService({
+      self: true,
+      requested: true,
+      available: false,
+    });
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    const serviceId = tryAsServiceId(0);
+    assert.deepStrictEqual(partialState.updatedState.providedPreimages, []);
+
+    // when
+    const resultok = partialState.providePreimage(serviceId, preimage.blob);
+    const resulterr = partialState.providePreimage(serviceId, preimage.blob);
+
+    // then
+    assert.deepStrictEqual(resultok, Result.ok(OK));
+    assert.deepStrictEqual(resulterr, Result.error(ProvidePreimageError.AlreadyProvided));
+    assert.deepStrictEqual(partialState.updatedState.providedPreimages, [
+      NewPreimage.create({
+        serviceId: tryAsServiceId(0),
+        item: PreimageItem.create({
+          hash: preimage.hash,
+          blob: preimage.blob,
+        }),
+      }),
+    ]);
+  });
+
+  it("should return ok and then error if preimage is provided twice for other", () => {
+    const { mockState, preimage } = testStateWithSecondService({
+      self: false,
+      requested: true,
+      available: false,
+    });
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    const serviceId = tryAsServiceId(1);
+    assert.deepStrictEqual(partialState.updatedState.providedPreimages, []);
+
+    // when
+    const resultok = partialState.providePreimage(serviceId, preimage.blob);
+    const resulterr = partialState.providePreimage(serviceId, preimage.blob);
+
+    // then
+    assert.deepStrictEqual(resultok, Result.ok(OK));
+    assert.deepStrictEqual(resulterr, Result.error(ProvidePreimageError.AlreadyProvided));
+    assert.deepStrictEqual(partialState.updatedState.providedPreimages, [
+      NewPreimage.create({
+        serviceId: tryAsServiceId(1),
+        item: PreimageItem.create({
+          hash: preimage.hash,
+          blob: preimage.blob,
+        }),
+      }),
+    ]);
+  });
+});
+
+describe("PartialState.eject", () => {
+  function setupEjectableService(
+    mockState: State,
+    overrides: {
+      codeHash?: CodeHash;
+      storageUtilisationCount?: U32;
+      storageUtilisationBytes?: U64;
+      tombstone?: {
+        hash: PreimageHash;
+        length: U32;
+        slots: LookupHistorySlots;
+      };
+    } = {},
+  ): ServiceId {
+    const destinationId = tryAsServiceId(1);
+
+    const baseService = mockState.services.get(tryAsServiceId(0));
+    if (baseService === undefined) {
+      throw new Error("Missing required service!");
+    }
+    const codeHash =
+      overrides.codeHash ??
+      (() => {
+        const expected = Bytes.zero(HASH_SIZE).asOpaque<CodeHash>();
+        writeServiceIdAsLeBytes(tryAsServiceId(0), expected.raw);
+        return expected;
+      })();
+
+    const storageUtilisationCount = overrides.storageUtilisationCount ?? tryAsU32(2);
+
+    const storageUtilisationBytes =
+      overrides.storageUtilisationBytes ?? tryAsU64(81 + (overrides.tombstone?.length ?? 0));
+
+    const destinationService = new Service(destinationId, {
+      info: ServiceAccountInfo.create({
+        ...baseService.data.info,
+        codeHash,
+        storageUtilisationCount,
+        storageUtilisationBytes,
+      }),
+      preimages: HashDictionary.new(),
+      lookupHistory: HashDictionary.new(),
+      storage: [],
+    });
+
+    if (overrides.tombstone !== undefined) {
+      const { hash, length, slots } = overrides.tombstone;
+      const item = new LookupHistoryItem(hash, length, slots);
+      destinationService.data.lookupHistory.set(hash, [item]);
+      if (item.slots.length === 1 || item.slots.length === 2) {
+        destinationService.data.preimages.set(
+          hash,
+          PreimageItem.create({
+            hash,
+            blob: BytesBlob.blobFrom(new Uint8Array(length)),
+          }),
+        );
+      }
+    }
+
+    mockState.services.set(destinationId, destinationService);
+    return destinationId;
+  }
+  it("should return InvalidService if destination is null", () => {
+    const mockState = testState();
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    const tombstone = Bytes.fill(HASH_SIZE, 0xef).asOpaque();
+
+    // when
+    const result = partialState.eject(null, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Service missing"));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
+  });
+
+  it("should return InvalidService if destination service does not exist", () => {
+    const mockState = testState();
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    const nonExistentServiceId = tryAsServiceId(99); // not present in mockState
+    const tombstone = Bytes.fill(HASH_SIZE, 0xee).asOpaque();
+
+    // when
+    const result = partialState.eject(nonExistentServiceId, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Service missing"));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
+  });
+
+  it("should return InvalidService if destination service codeHash does not match expected pattern", () => {
+    const mockState = testState();
+    const destinationId = setupEjectableService(mockState, {
+      codeHash: Bytes.fill(HASH_SIZE, 0x99).asOpaque(), // wrong codeHash
+    });
+
+    const tombstone = Bytes.fill(HASH_SIZE, 0xec).asOpaque();
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    // when
+    const result = partialState.eject(destinationId, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Invalid code hash"));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
+  });
+
+  it("should return InvalidPreimage if storageUtilisationCount is not equal to required value", () => {
+    const mockState = testState();
+    const destinationId = setupEjectableService(mockState, {
+      storageUtilisationCount: tryAsU32(2 + 1), // off by 1
+    });
+
+    const tombstone = Bytes.fill(HASH_SIZE, 0xeb).asOpaque();
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    // when
+    const result = partialState.eject(destinationId, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Too many storage items"));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
+  });
+
+  it("should return InvalidPreimage if the tombstone preimage is missing", () => {
+    const mockState = testState();
+    const tombstone = Bytes.fill(HASH_SIZE, 0xea).asOpaque();
+
+    // destination service has valid codeHash and config, but no preimage or lookup history
+    const destinationId = setupEjectableService(mockState);
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    // when
+    const result = partialState.eject(destinationId, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Tombstone available: wrong status"));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
+  });
+
+  it("should return InvalidPreimage if tombstone preimage exists but has wrong status", () => {
+    const mockState = testState();
+    const tombstone = Bytes.fill(HASH_SIZE, 0xe9).asOpaque<PreimageHash>();
+    const length = tryAsU32(100);
+
+    const destinationId = setupEjectableService(mockState, {
+      tombstone: {
+        hash: tombstone,
+        length,
+        // available
+        slots: tryAsLookupHistorySlots([1].map((x) => tryAsTimeSlot(x))),
+      },
+    });
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    // when
+    const result = partialState.eject(destinationId, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Tombstone available: wrong status"));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
+  });
+
+  it("should return InvalidPreimage if tombstone preimage exists but is not expired", () => {
+    const mockState = testState();
+    const tombstone = Bytes.fill(HASH_SIZE, 0xe9).asOpaque<PreimageHash>();
+    const length = tryAsU32(13);
+
+    const destinationId = setupEjectableService(mockState, {
+      tombstone: {
+        hash: tombstone,
+        length,
+        // unavailable
+        slots: tryAsLookupHistorySlots([1, 2].map((x) => tryAsTimeSlot(x))),
+      },
+    });
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    // when
+    const result = partialState.eject(destinationId, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Tombstone available: not expired"));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
+  });
+
+  it("should return InvalidService if summing balances would overflow", () => {
+    const mockState: State = {
+      ...testState(),
+      timeslot: tryAsTimeSlot(1_000_000),
+    };
+    const tombstone = Bytes.fill(HASH_SIZE, 0xe8).asOpaque();
+    const length = tryAsU32(100);
+
+    const destinationId = setupEjectableService(mockState, {
+      tombstone: {
+        hash: tombstone,
+        length,
+        slots: tryAsLookupHistorySlots([0, 1].map((x) => tryAsTimeSlot(x))),
+      },
+    });
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    // set the balance to overflow
+    const currentService = mockState.services.get(tryAsServiceId(0));
+    if (currentService === undefined) {
+      throw new Error("missing required service!");
+    }
+    partialState.updatedState.updatedServiceInfo = ServiceAccountInfo.create({
+      ...currentService.data.info,
+      balance: tryAsU64(2n ** 64n - 1n),
+    });
+
+    // when
+    const result = partialState.eject(destinationId, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidService, "Balance overflow"));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
+  });
+
+  it("should return OK", () => {
+    const mockState: State = {
+      ...testState(),
+      timeslot: tryAsTimeSlot(1_000_000),
+    };
+    const tombstone = Bytes.fill(HASH_SIZE, 0xe8).asOpaque();
+    const length = tryAsU32(100);
+
+    const destinationId = setupEjectableService(mockState, {
+      tombstone: {
+        hash: tombstone,
+        length,
+        slots: tryAsLookupHistorySlots([0, 1].map((x) => tryAsTimeSlot(x))),
+      },
+    });
+
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+
+    // when
+    const result = partialState.eject(destinationId, tombstone);
+
+    // then
+    assert.deepStrictEqual(result, Result.ok(OK));
+    assert.deepStrictEqual(partialState.updatedState.ejectedServices, [destinationId]);
   });
 });

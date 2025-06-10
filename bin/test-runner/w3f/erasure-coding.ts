@@ -1,135 +1,79 @@
-import assert from "node:assert";
 import { it } from "node:test";
 
+import type { PerValidator } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
-import type { ExportsRootHash } from "@typeberry/block/work-report.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import { decodeData, encodeData } from "@typeberry/erasure-coding";
+import { FixedSizeArray } from "@typeberry/collections";
+import {
+  N_CHUNKS_REQUIRED,
+  N_CHUNKS_TOTAL,
+  chunksToShards,
+  decodeDataAndTrim,
+  padAndEncodeData,
+  shardsToChunks,
+} from "@typeberry/erasure-coding";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { Logger } from "@typeberry/logger";
+import { check, deepEqual } from "@typeberry/utils";
+import { getChainSpec } from "./spec.js";
 
 export class EcTest {
   static fromJson: FromJson<EcTest> = {
     data: fromJson.bytesBlob,
-    chunks: json.array(fromJson.bytesBlob),
+    shards: json.array(fromJson.bytesBlob),
   };
 
   data!: BytesBlob;
-  chunks!: BytesBlob[];
+  shards!: PerValidator<BytesBlob>;
 }
 
-export class PageProof {
-  static fromJson: FromJson<PageProof> = {
-    data: fromJson.bytesBlob,
-    page_proofs: json.array(fromJson.bytesBlob),
-    segments_root: fromJson.bytes32NoPrefix(),
-  };
+export async function runEcTest(test: EcTest, path: string) {
+  const spec = getChainSpec(path);
 
-  data!: BytesBlob;
-  page_proofs!: BytesBlob[];
-  segments_root!: ExportsRootHash;
-}
+  it("should encode data & decode it back", () => {
+    const shards = padAndEncodeData(test.data);
+    const segments = chunksToShards(spec, shards);
+    const shardsBack = shardsToChunks(spec, segments);
 
-export class SegmentEc {
-  static fromJson: FromJson<SegmentEc> = {
-    segment_ec: json.array(fromJson.bytesBlob),
-  };
+    const allShards = shardsBack.flat();
+    check(allShards.length >= N_CHUNKS_TOTAL, "since we have data from all validators, we must have them all");
+    const start = N_CHUNKS_REQUIRED / 2;
+    // get a bunch of shards to recover from
+    const selectedShards = FixedSizeArray.new(allShards.slice(start, start + N_CHUNKS_REQUIRED), N_CHUNKS_REQUIRED);
+    const decoded = decodeDataAndTrim(selectedShards, test.data.length);
 
-  segment_ec!: BytesBlob[];
-}
-
-export class SegmentEcTest {
-  static fromJson: FromJson<SegmentEcTest> = {
-    data: fromJson.bytesBlob,
-    segments: json.array(SegmentEc.fromJson),
-    segments_root: fromJson.bytes32NoPrefix(),
-  };
-
-  data!: BytesBlob;
-  segments!: SegmentEc[];
-  segments_root!: ExportsRootHash;
-}
-
-export class SegmentRoot {
-  static fromJson: FromJson<SegmentRoot> = {
-    data: fromJson.bytesBlob,
-    chunks: json.array(fromJson.bytesBlob),
-    chunks_root: fromJson.bytesBlob,
-  };
-
-  data!: BytesBlob;
-  chunks!: BytesBlob[];
-  chunks_root!: BytesBlob;
-}
-
-const logger = Logger.new(import.meta.filename, "test-runner/erasure-coding");
-
-let seed = Math.floor(1000 * Math.random());
-
-function random() {
-  const x = Math.sin(seed++) * 10000;
-  return x - Math.floor(x);
-}
-
-logger.info(`Erasure encoding tests random seed: ${seed}`);
-
-export async function runEcTest(test: EcTest) {
-  if (test.chunks[0].length > 2) {
-    logger.info("Incorrect test data. The chunks should have 2 bytes!");
-    it.skip(`test was skipped because of incorrect data: chunk length: ${test.chunks[0].length} (it should be 2)`);
-    return;
-  }
-
-  it("should encode data", () => {
-    const encoded = encodeData(test.data.raw);
-    // slice(0, 1023) is needed because test data is incorrect (1026 length)
-    const expected = test.chunks.slice(0, 1023).map((x) => x.raw);
-
-    assert.deepStrictEqual(encoded, expected);
+    deepEqual(decoded, test.data);
   });
 
-  it("should decode data", () => {
-    // slice(0, 1023) is needed because test data is incorrect (1026 length)
-    const chunks = test.chunks.slice(0, 1023).map((chunk, idx) => [idx, chunk.raw] as [number, Uint8Array]);
-    const selectedChunks = getRandomItems(chunks, 342);
+  it("should decode from the first 1/3 of shards", () => {
+    const shards = shardsToChunks(spec, test.shards);
+    const allShards = shards.flat();
+    const selectedShards = FixedSizeArray.new(allShards.slice(0, N_CHUNKS_REQUIRED), N_CHUNKS_REQUIRED);
+    const ourSelectedShards = (() => {
+      const shards = padAndEncodeData(test.data);
+      const segments = chunksToShards(spec, shards);
+      const shardsBack = shardsToChunks(spec, segments).flat();
+      return FixedSizeArray.new(shardsBack.slice(0, N_CHUNKS_REQUIRED), N_CHUNKS_REQUIRED);
+    })();
+    deepEqual(selectedShards, ourSelectedShards);
+    const decoded = decodeDataAndTrim(selectedShards, test.data.length);
 
-    const decoded = decodeData(selectedChunks, test.data.raw.length);
-
-    assert.deepStrictEqual(decoded, test.data.raw);
+    deepEqual(decoded, test.data);
   });
-}
 
-export async function runPageProofTest(test: PageProof) {
-  // TODO [ToDr] EC: Page Proof test
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error("Not implemented yet!");
-}
+  it("should exactly match the test encoding", () => {
+    const shards = padAndEncodeData(test.data);
+    const segments = chunksToShards(spec, shards);
 
-export async function runSegmentEcTest(test: SegmentEcTest) {
-  // TODO [ToDr] EC: Segment EC test
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error("Not implemented yet!");
-}
+    deepEqual(segments, test.shards);
+  });
 
-export async function runSegmentRootTest(test: SegmentRoot) {
-  // TODO [ToDr] EC: Segment root test
-  logger.trace(JSON.stringify(test, null, 2));
-  logger.error("Not implemented yet!");
-}
+  it("should decode from random 1/3 of shards", () => {
+    const shards = shardsToChunks(spec, test.shards);
+    const allShards = shards.flat();
+    const start = N_CHUNKS_REQUIRED / 2;
+    const selectedShards = FixedSizeArray.new(allShards.slice(start, start + N_CHUNKS_REQUIRED), N_CHUNKS_REQUIRED);
+    const decoded = decodeDataAndTrim(selectedShards, test.data.length);
 
-function getRandomItems(arr: [number, Uint8Array][], n: number): [number, Uint8Array][] {
-  if (n > arr.length) {
-    throw new Error("Requested more items than available in the array");
-  }
-
-  const result: [number, Uint8Array][] = [];
-  const copy = [...arr];
-
-  for (let i = 0; i < n; i++) {
-    const randomIndex = i + Math.floor(random() * (copy.length - i));
-    [copy[i], copy[randomIndex]] = [copy[randomIndex], copy[i]];
-    result.push(copy[i]);
-  }
-
-  return result;
+    deepEqual(decoded, test.data);
+  });
 }

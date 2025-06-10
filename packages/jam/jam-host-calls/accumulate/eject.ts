@@ -1,3 +1,4 @@
+import type { PreimageHash } from "@typeberry/block/preimage";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
@@ -33,8 +34,8 @@ export class Eject implements HostCallHandler {
     const preimageHashStart = regs.get(8);
 
     // `h`: hash
-    const preimageHash = Bytes.zero(HASH_SIZE);
-    const memoryReadResult = memory.loadInto(preimageHash.raw, preimageHashStart);
+    const tombstoneHash = Bytes.zero(HASH_SIZE).asOpaque<PreimageHash>();
+    const memoryReadResult = memory.loadInto(tombstoneHash.raw, preimageHashStart);
     if (memoryReadResult.isError) {
       return PvmExecution.Panic;
     }
@@ -45,7 +46,7 @@ export class Eject implements HostCallHandler {
       return;
     }
 
-    const result = await this.partialState.eject(serviceId, preimageHash);
+    const result = this.partialState.eject(serviceId, tombstoneHash);
 
     // All good!
     if (result.isOk) {

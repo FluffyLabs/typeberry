@@ -1,8 +1,8 @@
 import WebSocket from "ws";
-import type { JsonRpcRequest, JsonRpcResponse } from "../src/types.js";
-import { JSON_RPC_VERSION } from "../src/types.js";
+import type { JsonRpcRequest, JsonRpcResponse, JsonRpcSubscriptionNotification } from "./types.js";
+import { JSON_RPC_VERSION } from "./types.js";
 
-class RpcClient {
+export class RpcClient {
   private ws: WebSocket;
   private messageQueue: Map<number, (response: JsonRpcResponse) => void> = new Map();
   private nextId = 1;
@@ -21,12 +21,19 @@ class RpcClient {
 
   private setupWebSocket(): void {
     this.ws.on("message", (data: Buffer) => {
-      const response: JsonRpcResponse = JSON.parse(data.toString());
-      const callback = this.messageQueue.get(response.id as number);
+      const response: JsonRpcResponse | JsonRpcSubscriptionNotification = JSON.parse(data.toString());
 
-      if (callback !== undefined) {
-        callback(response);
-        this.messageQueue.delete(response.id as number);
+      if (!("id" in response) && "params" in response) {
+        console.info(`sub[${response.params[0]}]:`, response.params[1]);
+      } else if (typeof response.id === "number") {
+        const callback = this.messageQueue.get(response.id);
+
+        if (callback !== undefined) {
+          callback(response);
+          this.messageQueue.delete(response.id);
+        }
+      } else {
+        console.error("Unexpected message from server:", response);
       }
     });
 
@@ -43,7 +50,7 @@ class RpcClient {
     return this.connectionPromise;
   }
 
-  async call(method: string, params?: unknown[]): Promise<unknown[] | null> {
+  async call(method: string, params?: unknown[]): Promise<unknown> {
     return new Promise((resolve, reject) => {
       const id = this.nextId++;
       const request: JsonRpcRequest = {
@@ -69,27 +76,3 @@ class RpcClient {
     this.ws.close();
   }
 }
-
-async function main() {
-  const client = new RpcClient("ws://localhost:19800");
-
-  await client.waitForConnection();
-
-  console.info("Testing bestBlock method...");
-  const bestBlockResult = await client.call("bestBlock");
-  console.info("bestBlock result:", bestBlockResult);
-
-  console.info("Testing parameters method...");
-  const parametersResult = await client.call("parameters");
-  console.info("parameters result:", parametersResult);
-
-  if (bestBlockResult !== null) {
-    console.info("Testing parent method...");
-    const parentResult = await client.call("parent", [bestBlockResult[0]]);
-    console.info("parent result:", parentResult);
-  }
-
-  client.close();
-}
-
-main();

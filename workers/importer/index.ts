@@ -2,13 +2,15 @@ import { isMainThread, parentPort } from "node:worker_threads";
 
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
+import { tryAsTimeSlot } from "@typeberry/block";
 import { LmdbBlocks, LmdbStates } from "@typeberry/database-lmdb";
 import { LmdbRoot } from "@typeberry/database-lmdb";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { SimpleAllocator, keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { TransitionHasher } from "@typeberry/transition";
-import { resultToString } from "@typeberry/utils";
+import { measure, resultToString } from "@typeberry/utils";
+import { ImportQueue } from "./import-queue.js";
 import { Importer } from "./importer.js";
 import {
   type ImporterInit,
@@ -28,6 +30,7 @@ if (!isMainThread) {
 }
 
 const keccakHasher = keccak.KeccakHasher.create();
+
 /**
  * The `BlockImporter` listens to `block` signals, where it expects
  * RAW undecoded block objects (typically coming from the network).
@@ -54,17 +57,38 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
     );
 
     // TODO [ToDr] back pressure?
-    worker.onBlock.on(async (b) => {
-      // NOTE [ToDr] this is incorrect, since it may fail to decode.
-      const timeSlot = b.header.view().timeSlotIndex.materialize();
+    let isProcessing = false;
+    const importingQueue = new ImportQueue(config.chainSpec, importer);
+
+    worker.onBlock.on(async (block) => {
+      const timeSlot = importingQueue.push(block) ?? tryAsTimeSlot(0);
       logger.log(`🧊 Got block: #${timeSlot}`);
-      const maybeBestHeader = await importer.importBlock(b);
-      if (maybeBestHeader.isOk) {
-        const bestHeader = maybeBestHeader.ok;
-        worker.announce(port, bestHeader);
-        logger.info(`🧊 Best block: #${bestHeader.data.timeSlotIndex.materialize()} (${bestHeader.hash})`);
-      } else {
-        logger.error(`❌ Rejected block #${timeSlot}: ${resultToString(maybeBestHeader)}`);
+
+      if (isProcessing) {
+        return;
+      }
+
+      isProcessing = true;
+      try {
+        for (;;) {
+          const entry = importingQueue.shift();
+          if (entry === undefined) {
+            return;
+          }
+          const { block, seal } = entry;
+          const timer = measure("importBlock");
+          const maybeBestHeader = await importer.importBlock(block, await seal);
+          if (maybeBestHeader.isOk) {
+            const bestHeader = maybeBestHeader.ok;
+            worker.announce(port, bestHeader);
+            logger.info(`🧊 Best block: #${bestHeader.data.timeSlotIndex.materialize()} (${bestHeader.hash})`);
+          } else {
+            logger.log(`❌ Rejected block #${timeSlot}: ${resultToString(maybeBestHeader)}`);
+          }
+          logger.log(timer());
+        }
+      } finally {
+        isProcessing = false;
       }
     });
   });

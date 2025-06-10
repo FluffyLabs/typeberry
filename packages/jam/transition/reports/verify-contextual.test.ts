@@ -227,7 +227,7 @@ describe("Reports.verifyContextualValidity", () => {
     const reports = await newReports({
       services: initialServices(),
       accumulationQueue: [
-        NotYetAccumulatedReport.create({ report: newWorkReport({ core: 1 }), unlocks: asKnownSize([]) }),
+        NotYetAccumulatedReport.create({ report: newWorkReport({ core: 1 }), dependencies: asKnownSize([]) }),
       ],
     });
     reports.state.availabilityAssignment[0] = null;

@@ -28,7 +28,7 @@ export type ServiceId = Opaque<U32, "ServiceId[u32]">;
 export const tryAsServiceId = (v: number): ServiceId => asOpaqueType(tryAsU32(v));
 
 /** Service gas - a measure of execution time/complexity. */
-export type ServiceGas = Opaque<U64, "Gas[u64]">;
+export type ServiceGas = Opaque<U64, "ServiceGas[u64]">;
 export const tryAsServiceGas = (v: number | bigint): ServiceGas => asOpaqueType(tryAsU64(v));
 
 /** Index of the core on which the execution of the work package is done. */

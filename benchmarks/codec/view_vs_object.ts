@@ -122,33 +122,33 @@ export default function run() {
       (view) => {
         const headerView = view.header2.view();
         assert.deepStrictEqual(headerView.blockNumber.materialize(), 10_000_000n);
-        headerView.priorStateRoot.materialize();
+        return headerView.priorStateRoot.materialize();
       },
       (block) => {
         assert.deepStrictEqual(block.header2.blockNumber, 10_000_000n);
-        block.header2.priorStateRoot;
+        return block.header2.priorStateRoot;
       },
     ),
 
     ...compare("two fields from materialized", (view) => {
       const headerView = view.header2.materialize();
       assert.deepStrictEqual(headerView.blockNumber, 10_000_000n);
-      headerView.priorStateRoot;
+      return headerView.priorStateRoot;
     }),
 
     ...compare("two fields as views", (view) => {
       const headerView = view.header2.view();
       assert.deepStrictEqual(headerView.blockNumber.view(), 10_000_000n);
-      headerView.priorStateRoot.view();
+      return headerView.priorStateRoot.view();
     }),
 
     ...compare(
       "only third field",
       (view) => {
-        view.header2.view().parentHeaderHash.materialize();
+        return view.header2.view().parentHeaderHash.materialize();
       },
       (block) => {
-        block.header2.parentHeaderHash;
+        return block.header2.parentHeaderHash;
       },
     ),
 

@@ -1,19 +1,18 @@
-import type { BlockView, CoreIndex, HeaderHash } from "@typeberry/block";
+import type { BlockView, CoreIndex, EntropyHash, HeaderHash, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { AuthorizerHash } from "@typeberry/block/work-report.js";
-import { Bytes } from "@typeberry/bytes";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
 import { Disputes } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code.js";
-import { HASH_SIZE } from "@typeberry/hash";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
 import type { SafroleErrorCode } from "@typeberry/safrole/safrole.js";
 import type { State } from "@typeberry/state";
 import { type ErrorResult, OK, Result, type TaggedError } from "@typeberry/utils";
+import { Accumulate } from "./accumulate/index.js";
 import { Assurances, type AssurancesError } from "./assurances.js";
 import { Authorization } from "./authorization.js";
 import type { TransitionHasher } from "./hasher.js";
@@ -48,7 +47,10 @@ export type StfError =
   | TaggedError<StfErrorKind.Preimages, PreimagesErrorCode>
   | TaggedError<StfErrorKind.SafroleSeal, SafroleSealError>;
 
-const stfError = <Kind extends StfErrorKind, Err extends StfError["error"]>(kind: Kind, nested: ErrorResult<Err>) => {
+export const stfError = <Kind extends StfErrorKind, Err extends StfError["error"]>(
+  kind: Kind,
+  nested: ErrorResult<Err>,
+) => {
   return Result.taggedError<OK, Kind, Err>(StfErrorKind, kind, nested);
 };
 
@@ -63,6 +65,8 @@ export class OnChain {
   // chapter 11: https://graypaper.fluffylabs.dev/#/68eaa1f/133100133100?v=0.6.4
   private readonly reports: Reports;
   private readonly assurances: Assurances;
+  // chapter 12: https://graypaper.fluffylabs.dev/#/68eaa1f/159f02159f02?v=0.6.4
+  private readonly accumulate: Accumulate;
   // chapter 12.4: https://graypaper.fluffylabs.dev/#/68eaa1f/18cc0018cc00?v=0.6.4
   private readonly preimages: Preimages;
   // after accumulation
@@ -76,8 +80,9 @@ export class OnChain {
     public readonly state: State,
     blocks: BlocksDb,
     public readonly hasher: TransitionHasher,
+    { enableParallelSealVerification }: { enableParallelSealVerification: boolean },
   ) {
-    const bandersnatch = BandernsatchWasm.new({ synchronous: true });
+    const bandersnatch = BandernsatchWasm.new({ synchronous: !enableParallelSealVerification });
     this.statistics = new Statistics(chainSpec, state);
 
     this.safrole = new Safrole(chainSpec, state, bandersnatch);
@@ -89,21 +94,33 @@ export class OnChain {
 
     this.reports = new Reports(chainSpec, state, hasher, new DbHeaderChain(blocks));
     this.assurances = new Assurances(chainSpec, state);
-
+    this.accumulate = new Accumulate(chainSpec, state);
     this.preimages = new Preimages(state);
 
     this.authorization = new Authorization(chainSpec, state);
   }
 
-  async transition(block: BlockView, headerHash: HeaderHash): Promise<Result<OK, StfError>> {
+  async verifySeal(timeSlot: TimeSlot, block: BlockView) {
+    const sealState = this.safrole.getSafroleSealState(timeSlot);
+    return await this.safroleSeal.verifyHeaderSeal(block.header.view(), sealState);
+  }
+
+  async transition(
+    block: BlockView,
+    headerHash: HeaderHash,
+    preverifiedSeal: EntropyHash | null = null,
+  ): Promise<Result<OK, StfError>> {
     const header = block.header.materialize();
     const timeSlot = header.timeSlotIndex;
 
     // safrole seal
-    const sealState = this.safrole.getSafroleSealState(timeSlot);
-    const sealResult = await this.safroleSeal.verifyHeaderSeal(block.header.view(), sealState);
-    if (sealResult.isError) {
-      return stfError(StfErrorKind.SafroleSeal, sealResult);
+    let newEntropyHash = preverifiedSeal;
+    if (newEntropyHash === null) {
+      const sealResult = await this.verifySeal(timeSlot, block);
+      if (sealResult.isError) {
+        return stfError(StfErrorKind.SafroleSeal, sealResult);
+      }
+      newEntropyHash = sealResult.ok;
     }
 
     // disputes
@@ -132,10 +149,23 @@ export class OnChain {
       return stfError(StfErrorKind.Assurances, assurancesResult);
     }
 
+    const extrinsic = block.extrinsic.materialize();
+    // TODO [MaSo] fill in the statistics with accumulation results
+    // statistics
+    this.statistics.transition({
+      slot: timeSlot,
+      authorIndex: header.bandersnatchBlockAuthorIndex,
+      extrinsic,
+      incomingReports: extrinsic.guarantees.map((g) => g.report),
+      availableReports: assurancesResult.ok,
+      accumulationStatistics: new Map(),
+      transferStatistics: new Map(),
+    });
+
     // safrole
     const safroleResult = await this.safrole.transition({
       slot: timeSlot,
-      entropy: sealResult.ok,
+      entropy: newEntropyHash,
       extrinsic: block.extrinsic.view().tickets.materialize(),
     });
 
@@ -153,8 +183,11 @@ export class OnChain {
       return stfError(StfErrorKind.Preimages, preimagesResult);
     }
 
-    // TODO [ToDr] output from accumulate
-    const accumulateRoot = Bytes.zero(HASH_SIZE).asOpaque();
+    const accumulateRoot = await this.accumulate.transition({
+      slot: timeSlot,
+      reports: assurancesResult.ok,
+      entropy: this.state.entropy[0], // TODO [MaSi]: it should be eta_0_prime
+    });
     // recent history
     this.recentHistory.transition({
       headerHash,
@@ -166,20 +199,6 @@ export class OnChain {
     this.authorization.transition({
       slot: timeSlot,
       used: this.getUsedAuthorizerHashes(block.extrinsic.view().guarantees.view()),
-    });
-
-    const extrinsic = block.extrinsic.materialize();
-
-    // TODO [MaSo] fill in the statistics with accumulation results
-    // statistics
-    this.statistics.transition({
-      slot: timeSlot,
-      authorIndex: header.bandersnatchBlockAuthorIndex,
-      extrinsic,
-      incomingReports: extrinsic.guarantees.map((g) => g.report),
-      availableReports: assurancesResult.ok,
-      accumulationStatistics: new Map(),
-      transferStatistics: new Map(),
     });
 
     return Result.ok(OK);

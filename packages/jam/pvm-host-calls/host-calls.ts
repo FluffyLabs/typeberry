@@ -10,29 +10,64 @@ import { HostCallRegisters } from "./host-call-registers.js";
 import type { HostCallsManager } from "./host-calls-manager.js";
 import type { InterpreterInstanceManager } from "./interpreter-instance-manager.js";
 
+class ReturnValue {
+  private constructor(
+    public consumedGas: Gas,
+    public status: Status | null,
+    public memorySlice: Uint8Array | null,
+  ) {
+    check(
+      (status === null && memorySlice !== null) || (status !== null && memorySlice === null),
+      "`status` and `memorySlice` must not both be null or both be non-null — exactly one must be provided",
+    );
+  }
+
+  static fromStatus(consumedGas: Gas, status: Status) {
+    return new ReturnValue(consumedGas, status, null);
+  }
+
+  static fromMemorySlice(consumedGas: Gas, memorySlice: Uint8Array) {
+    return new ReturnValue(consumedGas, null, memorySlice);
+  }
+
+  hasMemorySlice(): this is this & { status: null; memorySlice: Uint8Array } {
+    return this.memorySlice instanceof Uint8Array && this.status === null;
+  }
+
+  hasStatus(): this is this & { status: Status; memorySlice: null } {
+    return !this.hasMemorySlice();
+  }
+}
 export class HostCalls {
   constructor(
     private pvmInstanceManager: InterpreterInstanceManager,
     private hostCalls: HostCallsManager,
   ) {}
 
-  private getReturnValue(status: Status, memory: Memory, regs: Registers): Status | Uint8Array {
+  private getReturnValue(status: Status, pvmInstance: Interpreter): ReturnValue {
+    const gasConsumed = pvmInstance.getGasConsumed();
     if (status === Status.OOG) {
-      return Status.OOG;
+      return ReturnValue.fromStatus(gasConsumed, status);
     }
 
     if (status === Status.HALT) {
+      const memory = pvmInstance.getMemory();
+      const regs = pvmInstance.getRegisters();
       const maybeAddress = regs.getLowerU32(10);
       const maybeLength = regs.getLowerU32(11);
 
       const result = new Uint8Array(maybeLength);
       const startAddress = tryAsMemoryIndex(maybeAddress);
-      const readResult = memory.loadInto(result, startAddress);
-      // https://graypaper-reader.netlify.app/#/293bf5a/296c02296c02
-      return readResult.isError ? new Uint8Array(0) : result;
+      const pageFault = memory.loadInto(result, startAddress);
+
+      if (pageFault !== null) {
+        return ReturnValue.fromMemorySlice(gasConsumed, new Uint8Array());
+      }
+
+      return ReturnValue.fromMemorySlice(gasConsumed, result);
     }
 
-    return Status.PANIC;
+    return ReturnValue.fromStatus(gasConsumed, Status.PANIC);
   }
 
   private async execute(pvmInstance: Interpreter) {
@@ -40,7 +75,7 @@ export class HostCalls {
     for (;;) {
       let status = pvmInstance.getStatus();
       if (status !== Status.HOST) {
-        return this.getReturnValue(status, pvmInstance.getMemory(), pvmInstance.getRegisters());
+        return this.getReturnValue(status, pvmInstance);
       }
       check(
         pvmInstance.getExitParam() !== null,
@@ -54,13 +89,13 @@ export class HostCalls {
       const gasCost = typeof hostCall.gasCost === "number" ? hostCall.gasCost : hostCall.gasCost(regs);
       const underflow = gas.sub(gasCost);
       if (underflow) {
-        return Status.OOG;
+        return ReturnValue.fromStatus(pvmInstance.getGasConsumed(), Status.OOG);
       }
       const result = await hostCall.execute(gas, regs, memory);
 
       if (result === PvmExecution.Halt) {
         status = Status.HALT;
-        return this.getReturnValue(status, pvmInstance.getMemory(), pvmInstance.getRegisters());
+        return this.getReturnValue(status, pvmInstance);
       }
 
       pvmInstance.runProgram();
@@ -74,7 +109,7 @@ export class HostCalls {
     initialGas: Gas,
     maybeRegisters?: Registers,
     maybeMemory?: Memory,
-  ): Promise<Status | Uint8Array> {
+  ): Promise<ReturnValue> {
     const pvmInstance = await this.pvmInstanceManager.getInstance();
     pvmInstance.reset(rawProgram, initialPc, initialGas, maybeRegisters, maybeMemory);
     try {

@@ -16,7 +16,7 @@ import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import { type Arguments, Command, KnownChainSpec } from "./args.js";
 import { startBlockGenerator } from "./author.js";
 import { initializeExtensions } from "./extensions.js";
-import { loadGenesis } from "./genesis.js";
+import { loadGenesis, loadGenesisBlock } from "./genesis.js";
 import { startBlocksReader } from "./reader.js";
 
 const logger = Logger.new(import.meta.filename, "jam");
@@ -29,6 +29,8 @@ type Options = {
   blocksToImport: string[] | null;
   /** Path to JSON with genesis state. */
   genesisPath: string | null;
+  /** Path to a JSON with genesis block. */
+  genesisBlockPath: string | null;
   /** Genesis root hash. */
   genesisRoot: StateRootHash;
   /** Path to database to open. */
@@ -47,6 +49,7 @@ export async function main(args: Arguments) {
     isAuthoring: false,
     blocksToImport: args.command === Command.Import ? args.args.files : null,
     genesisPath: args.args.genesis,
+    genesisBlockPath: args.args.genesisBlock,
     genesisRoot: args.args.genesisRoot,
     databasePath: args.args.dbPath,
     chainSpec: KnownChainSpec.Tiny,
@@ -54,7 +57,13 @@ export async function main(args: Arguments) {
 
   const chainSpec = getChainSpec(options.chainSpec);
   // Initialize the database with genesis state and block if there isn't one.
-  const dbPath = await initializeDatabase(chainSpec, options.databasePath, options.genesisRoot, options.genesisPath);
+  const dbPath = await initializeDatabase(
+    chainSpec,
+    options.databasePath,
+    options.genesisRoot,
+    options.genesisPath,
+    options.genesisBlockPath,
+  );
 
   // Start extensions
   const importerInit = await blockImporter.spawnWorker();
@@ -154,6 +163,7 @@ async function initializeDatabase(
   databasePath: string,
   genesisRootHash: StateRootHash,
   genesisPath: string | null,
+  genesisHeaderPath: string | null,
 ): Promise<string> {
   const maybeGenesis = loadAndCheckGenesisIfProvided(spec, genesisRootHash, genesisPath);
   const dbPath = `${databasePath}/${genesisRootHash}`;
@@ -183,23 +193,15 @@ async function initializeDatabase(
 
   logger.log("🛢️ Database looks fresh. Initializing.");
   // looks like a fresh db, initialize the state.
-  const genesisHeader = Header.empty();
+  let genesisBlock = loadGenesisBlockIfProvided(spec, genesisHeaderPath);
+  if (genesisBlock === null) {
+    genesisBlock = emptyBlock();
+  }
+
+  const genesisHeader = genesisBlock.header;
   const genesisHeaderHash = blake2b.hashBytes(Encoder.encodeObject(Header.Codec, genesisHeader, spec)).asOpaque();
-  const genesisBlock = Block.create({
-    header: genesisHeader,
-    extrinsic: Extrinsic.create({
-      tickets: asKnownSize([]),
-      preimages: [],
-      assurances: asKnownSize([]),
-      guarantees: asKnownSize([]),
-      disputes: {
-        verdicts: [],
-        culprits: [],
-        faults: [],
-      },
-    }),
-  });
   const blockView = Decoder.decodeObject(Block.Codec.View, Encoder.encodeObject(Block.Codec, genesisBlock, spec), spec);
+  logger.log(`🧬 Writing genesis block ${genesisHeaderHash}`);
 
   // write to db
   await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(genesisHeaderHash, blockView));
@@ -211,6 +213,15 @@ async function initializeDatabase(
   await rootDb.db.close();
 
   return dbPath;
+}
+
+function loadGenesisBlockIfProvided(spec: ChainSpec, genesisBlockPath: string | null): Block | null {
+  if (genesisBlockPath === null) {
+    return null;
+  }
+
+  logger.log(`🧬 Loading genesis block from ${genesisBlockPath}`);
+  return loadGenesisBlock(spec, genesisBlockPath);
 }
 
 function loadAndCheckGenesisIfProvided(spec: ChainSpec, expectedRootHash: StateRootHash, genesisPath: string | null) {
@@ -234,4 +245,21 @@ function loadAndCheckGenesisIfProvided(spec: ChainSpec, expectedRootHash: StateR
     genesisState,
     genesisStateRootHash,
   };
+}
+
+function emptyBlock() {
+  return Block.create({
+    header: Header.empty(),
+    extrinsic: Extrinsic.create({
+      tickets: asKnownSize([]),
+      preimages: [],
+      assurances: asKnownSize([]),
+      guarantees: asKnownSize([]),
+      disputes: {
+        verdicts: [],
+        culprits: [],
+        faults: [],
+      },
+    }),
+  });
 }

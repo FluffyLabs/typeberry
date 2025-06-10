@@ -1,7 +1,7 @@
 import type { CodeHash, CoreIndex, PerValidator, ServiceGas, ServiceId, TimeSlot } from "@typeberry/block";
 import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
-import type { Bytes } from "@typeberry/bytes";
+import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
@@ -122,10 +122,19 @@ export enum TransferError {
  * because the account is removed anyway.
  */
 export enum EjectError {
-  /** The service does not exist or invalid. */
+  /** The service does not exist or does not expect to be ejected by us. */
   InvalidService = 0,
-  /** Preimage is not available or too old. */
+  /** The service must have only one tombstone preimage available. */
   InvalidPreimage = 1,
+}
+
+export enum ProvidePreimageError {
+  /** The service does not exist. */
+  ServiceNotFound = 0,
+  /** The preimage wasn't requested. */
+  WasNotRequested = 1,
+  /** The preimage is already provided. */
+  AlreadyProvided = 2,
 }
 
 /**
@@ -166,7 +175,7 @@ export interface PartialState {
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/37b60137b601?v=0.6.6
    */
-  eject(from: ServiceId | null, hash: OpaqueHash): Promise<Result<OK, EjectError>>;
+  eject(from: ServiceId | null, tombstone: PreimageHash): Result<OK, EjectError>;
 
   /**
    * Transfer given `amount` of funds to the `destination`,
@@ -228,10 +237,9 @@ export interface PartialState {
    */
   updatePrivilegedServices(m: ServiceId, a: ServiceId, v: ServiceId, g: [ServiceId, ServiceGas][]): void;
 
-  /**
-   * Yield accumulation trie result hash.
-   *
-   * https://graypaper.fluffylabs.dev/#/85129da/3f98003f9b00?v=0.6.3
-   */
+  /** Yield accumulation trie result hash. */
   yield(hash: OpaqueHash): void;
+
+  /** Provide a preimage for given service. */
+  providePreimage(service: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError>;
 }

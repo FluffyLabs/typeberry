@@ -10,25 +10,32 @@ import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain } from "@typeberry/transition/chain-stf.js";
-import { TestState, loadState } from "./stateLoader.js";
+import { deepEqual, resultToString } from "@typeberry/utils";
+import { TestState, loadState } from "./state-loader.js";
 
-export class StateTransitionFuzzed {
-  static fromJson: FromJson<StateTransitionFuzzed> = {
+export class StateTransition {
+  static fromJson: FromJson<StateTransition> = {
     pre_state: TestState.fromJson,
+    post_state: TestState.fromJson,
     block: blockFromJson(tinyChainSpec),
   };
   pre_state!: TestState;
+  post_state!: TestState;
   block!: Block;
 }
 
 const keccakHasher = keccak.KeccakHasher.create();
 
-export async function runStateTransitionFuzzed(testContent: StateTransitionFuzzed, _path: string) {
+export async function runStateTransition(testContent: StateTransition, _path: string) {
   const spec = tinyChainSpec;
   const preState = loadState(testContent.pre_state.keyvals);
   const preStateSerialized = serializeState(preState, spec);
 
+  const postState = loadState(testContent.post_state.keyvals);
+  const postStateSerialized = serializeState(postState, spec);
+
   const preStateRoot = merkelizeState(preStateSerialized);
+  const postStateRoot = merkelizeState(postStateSerialized);
 
   const encodedBlock = Encoder.encodeObject(Block.Codec, testContent.block, spec);
   const blockView = Decoder.decodeObject(Block.Codec.View, encodedBlock, spec);
@@ -39,23 +46,26 @@ export async function runStateTransitionFuzzed(testContent: StateTransitionFuzze
     preState,
     blocksDb,
     new TransitionHasher(spec, await keccakHasher, new SimpleAllocator()),
+    { enableParallelSealVerification: false },
   );
 
   // verify that we compute the state root exactly the same.
   assert.deepStrictEqual(testContent.pre_state.state_root.toString(), preStateRoot.toString());
+  assert.deepStrictEqual(testContent.post_state.state_root.toString(), postStateRoot.toString());
 
   const verifier = new BlockVerifier(stf.hasher, blocksDb);
-  const verificationResult = await verifier.verifyBlock(blockView);
-  if (verificationResult.isError) {
-    assert.fail(`Block verification failed, got: ${JSON.stringify(verificationResult.error)}`);
-  }
+  // NOTE [ToDr] we skip full verification here, since we can run tests in isolation
+  // (i.e. no block history)
+  const headerHash = verifier.hashHeader(blockView);
 
   // now perform the state transition
-  const stfResult = await stf.transition(blockView, verificationResult.ok);
+  const stfResult = await stf.transition(blockView, headerHash.hash);
   if (stfResult.isError) {
-    assert.fail(`Expected the transition to go smoothly, got error: ${JSON.stringify(stfResult.error)}`);
+    assert.fail(`Expected the transition to go smoothly, got error: ${resultToString(stfResult)}`);
   }
 
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
-  const _root = merkelizeState(serializeState(stf.state, spec));
+  const root = merkelizeState(serializeState(stf.state, spec));
+  deepEqual(stf.state, postState);
+  assert.deepStrictEqual(root.toString(), postStateRoot.toString());
 }

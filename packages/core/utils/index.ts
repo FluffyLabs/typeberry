@@ -15,3 +15,4 @@ export * from "./debug.js";
 export * from "./opaque.js";
 export * from "./result.js";
 export * from "./test.js";
+export * from "./mutable-pick.js";

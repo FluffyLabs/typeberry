@@ -6,6 +6,28 @@ import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES } from "./ed25519.js";
 import { ed25519 } from "./index.js";
 
 describe("crypto.ed25519", () => {
+  it("should produce a signature and verify it", async () => {
+    const key = await ed25519.privateKey(Bytes.zero(ed25519.ED25519_PRIV_KEY_BYTES));
+    const message = Bytes.blobFromString("Hello world!");
+
+    const signature = await ed25519.sign(key, message);
+
+    assert.strictEqual(
+      signature.toString(),
+      "0x99a3ca1ebdaed52cce90360a5ed42b17a3d2b9a7a00d54b3d1c86dd515063fc48c339bbbd890a3c5373d9a16651da6de8e63cbf6034db417cc3e3538737e500e",
+    );
+
+    const result = await ed25519.verify([
+      {
+        signature,
+        key: key.pubKey,
+        message,
+      },
+    ]);
+
+    assert.deepStrictEqual(result, [true]);
+  });
+
   it("should verify a bunch of signatures using verify", async () => {
     const results = await ed25519.verify(
       VALID_EXAMPLES.concat({

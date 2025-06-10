@@ -5,7 +5,7 @@ import { ArgumentType } from "./args-decoder/argument-type.js";
 import { instructionArgumentTypeMap } from "./args-decoder/instruction-argument-type-map.js";
 import { assemblify } from "./assemblify.js";
 import { BasicBlocks } from "./basic-blocks/index.js";
-import { type Gas, type GasCounter, gasCounter, tryAsGas } from "./gas.js";
+import { type Gas, type GasCounter, gasCounter, tryAsBigGas, tryAsGas } from "./gas.js";
 import { instructionGasMap } from "./instruction-gas-map.js";
 import { InstructionResult } from "./instruction-result.js";
 import { Instruction } from "./instruction.js";
@@ -52,10 +52,11 @@ import { Status } from "./status.js";
 
 export class Interpreter {
   private registers = new Registers();
-  private code = new Uint8Array();
+  private code: Uint8Array = new Uint8Array();
   private mask = Mask.empty();
   private pc = 0;
   private gas = gasCounter(tryAsGas(0));
+  private initialGas = gasCounter(tryAsGas(0));
   private argsDecoder: ArgsDecoder;
   private threeRegsDispatcher: ThreeRegsDispatcher;
   private twoRegsOneImmDispatcher: TwoRegsOneImmDispatcher;
@@ -126,6 +127,7 @@ export class Interpreter {
 
     this.pc = pc;
     this.gas = gasCounter(gas);
+    this.initialGas = gasCounter(gas);
     this.status = Status.OK;
     this.argsDecoder.reset(this.code, this.mask);
     this.basicBlocks.reset(this.code, this.mask);
@@ -283,6 +285,16 @@ export class Interpreter {
 
   getGas(): Gas {
     return this.gas.get();
+  }
+
+  getGasConsumed(): Gas {
+    const gasConsumed = tryAsBigGas(this.initialGas.get()) - tryAsBigGas(this.gas.get());
+
+    if (gasConsumed < 0) {
+      return this.initialGas.get();
+    }
+
+    return tryAsBigGas(gasConsumed);
   }
 
   getGasCounter(): GasCounter {
