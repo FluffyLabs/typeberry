@@ -51,6 +51,20 @@ export namespace json {
     });
   }
 
+  /** Parse a map with the given type. */
+  export function map<TKey, TValue>(K: FromJson<TKey>, V: FromJson<TValue>): FromJson<Map<TKey, TValue>> {
+    return fromAny<Map<TKey, TValue>>((inJson, context) => {
+      if (typeof inJson !== "object" || inJson === null) {
+        throw new Error("Expected map for parsing");
+      }
+      const result = new Map<TKey, TValue>();
+      for (const [key, value] of Object.entries(inJson)) {
+        result.set(parseFromJson(key, K, `${context}.key`), parseFromJson(value, V, `${context}.value`));
+      }
+      return result;
+    });
+  }
+
   /** Parse an object and create a class instance of given type using `builder` function. */
   export function object<TFrom, TInto = TFrom>(
     from: FromJson<TFrom>,
