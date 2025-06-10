@@ -51,7 +51,7 @@ export const PREIMAGE_EXPUNGE_PERIOD = 19200;
  * Number of storage items required for ejection of the service.
  *
  * Value 2 seems to indicate that there is only one preimage lookup,
- * most likely some sort of "tombstone" that is also required
+ * and it has to be the previous code of the service, additionally used
  * to authorize the `eject`.
  *
  * https://graypaper.fluffylabs.dev/#/9a08063/370202370502?v=0.6.6 */
@@ -169,18 +169,19 @@ export class PartialStateDb implements PartialState {
    * Note that we only check the state here, since the function is used
    * in the context of `eject` function.
    *
-   * There is on way that tumbstone is in the recently updated state
+   * There is one way that previousCode is in the recently updated state
    * - cannot be part of the newly created service, because
    *   the preimage would not be available yet.
    * - cannot be "freshly provided", since we defer updating the
    *   lookup status.
    */
-  private isTombstoneExpired(destination: ServiceId, tombstone: PreimageHash, len: U64): [boolean, string] {
+  private isPreviousCodeExpired(destination: ServiceId, previousCodeHash: PreimageHash, len: U64): [boolean, string] {
     const service = this.state.getService(destination);
+    // Safe to convert to Number and U32: we check that len < 2^32 before conversion
     const lenU32 = len >= 2n ** 32n ? null : tryAsU32(Number(len));
-    const slots = service === null || lenU32 === null ? null : service.getLookupHistory(tombstone, lenU32);
+    const slots = service === null || lenU32 === null ? null : service.getLookupHistory(previousCodeHash, lenU32);
     const status = slots === null ? null : slotsToPreimageStatus(slots);
-    // The tombstone needs to be forgotten and expired.
+    // The previous code needs to be forgotten and expired.
     if (status?.status !== PreimageStatusKind.Unavailable) {
       return [false, "wrong status"];
     }
@@ -581,7 +582,7 @@ export class PartialStateDb implements PartialState {
     return Result.ok(OK);
   }
 
-  eject(destination: ServiceId | null, tombstone: PreimageHash): Result<OK, EjectError> {
+  eject(destination: ServiceId | null, previousCodeHash: PreimageHash): Result<OK, EjectError> {
     const service = this.getServiceInfo(destination);
     if (service === null || destination === null) {
       return Result.error(EjectError.InvalidService, "Service missing");
@@ -606,9 +607,9 @@ export class PartialStateDb implements PartialState {
     const l = tryAsU64(maxU64(service.storageUtilisationBytes, minServiceBytes) - minServiceBytes);
 
     // check if we have a preimage with the entire storage.
-    const [isTombstoneExpired, errorReason] = this.isTombstoneExpired(destination, tombstone, l);
-    if (!isTombstoneExpired) {
-      return Result.error(EjectError.InvalidPreimage, `Tombstone available: ${errorReason}`);
+    const [isPreviousCodeExpired, errorReason] = this.isPreviousCodeExpired(destination, previousCodeHash, l);
+    if (!isPreviousCodeExpired) {
+      return Result.error(EjectError.InvalidPreimage, `Previous code available: ${errorReason}`);
     }
 
     // compute new balance of the service.
