@@ -7,7 +7,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { type Ed25519Key, ed25519 } from "@typeberry/crypto";
 import { type KeccakHash, WithHash, blake2b } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
-import { AvailabilityAssignment, type State } from "@typeberry/state";
+import { AvailabilityAssignment, type State, tryAsPerCore } from "@typeberry/state";
 import { OK, Result, asOpaqueType } from "@typeberry/utils";
 import { ReportsError } from "./error";
 import { generateCoreAssignment, rotationIndex } from "./guarantor-assignment";
@@ -51,9 +51,9 @@ export type ReportsState = Pick<
   | "currentValidatorData"
   | "previousValidatorData"
   | "entropy"
+  | "getService"
   | "authPools"
   | "recentBlocks"
-  | "services"
   | "accumulationQueue"
   | "recentlyAccumulated"
 >;
@@ -65,7 +65,12 @@ export type ReportsState = Pick<
   readonly offenders: KnownSizeArray<Ed25519Key, "0..ValidatorsCount">;
 */
 
+/** Reports state update. */
+export type ReportsStateUpdate = Pick<ReportsState, "availabilityAssignment">;
+
 export type ReportsOutput = {
+  /** Altered state. */
+  stateUpdate: ReportsStateUpdate;
   /**
    * All work Packages and their segment roots reported in the extrinsic.
    *
@@ -135,10 +140,12 @@ export class Reports {
      * https://graypaper.fluffylabs.dev/#/5f542d7/154c02154c02
      */
     let index = 0;
+    const availabilityAssignment = this.state.availabilityAssignment.slice();
+
     for (const guarantee of input.guarantees) {
       const report = guarantee.view().report.materialize();
       const workPackageHash = workReportHashes[index];
-      this.state.availabilityAssignment[report.coreIndex] = AvailabilityAssignment.create({
+      availabilityAssignment[report.coreIndex] = AvailabilityAssignment.create({
         workReport: new WithHash(workPackageHash, report),
         timeout: input.slot,
       });
@@ -146,6 +153,9 @@ export class Reports {
     }
 
     return Result.ok({
+      stateUpdate: {
+        availabilityAssignment: tryAsPerCore(availabilityAssignment, this.chainSpec),
+      },
       reported: contextualValidity.ok,
       reporters: asKnownSize(
         SortedSet.fromArray(
@@ -171,11 +181,8 @@ export class Reports {
   }
 
   verifyPostSignatureChecks(input: GuaranteesExtrinsicView) {
-    return verifyPostSignatureChecks(
-      input,
-      this.state.availabilityAssignment,
-      this.state.authPools,
-      this.state.services,
+    return verifyPostSignatureChecks(input, this.state.availabilityAssignment, this.state.authPools, (id) =>
+      this.state.getService(id),
     );
   }
 

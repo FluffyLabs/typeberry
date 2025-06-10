@@ -3,6 +3,7 @@ import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
 import { WithHash } from "@typeberry/hash";
 import type { Logger } from "@typeberry/logger";
+import type { InMemoryState } from "@typeberry/state";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verifier";
@@ -26,6 +27,8 @@ const importerError = <Kind extends ImporterErrorKind, Err extends ImporterError
 export class Importer {
   private readonly verifier: BlockVerifier;
   private readonly stf: OnChain;
+  // TODO [ToDr] Temporarily we work with in-memory state only.
+  private readonly state: InMemoryState;
 
   constructor(
     private readonly blocks: BlocksDb,
@@ -42,6 +45,7 @@ export class Importer {
 
     this.verifier = new BlockVerifier(hasher, blocks);
     this.stf = new OnChain(spec, state, blocks, hasher, { enableParallelSealVerification: true });
+    this.state = state;
 
     logger.info(`😎 Best time slot: ${state.timeslot} (state root: ${currentStateRootHash})`);
   }
@@ -82,16 +86,18 @@ export class Importer {
     const res = await this.stf.transition(block, headerHash, preverifiedSeal);
     logger.log(timerStf());
     if (res.isError) {
-      // TODO [ToDr] Revert the state?
       return importerError(ImporterErrorKind.Stf, res);
     }
-
+    // modify the state
+    const update = res.ok;
     const timerState = measure("import:state");
-    const stateRoot = merkelizeState(serializeState(this.stf.state, this.spec));
+    this.state.applyUpdate(update);
+    const stateRoot = merkelizeState(serializeState(this.state, this.spec));
     logger.log(timerState());
+
     // insert new state and the block to DB.
     const timerDb = measure("import:db");
-    const writeState = this.states.insertFullState(stateRoot, this.stf.state);
+    const writeState = this.states.insertFullState(stateRoot, this.state);
     const writeBlocks = this.blocks.insertBlock(new WithHash(headerHash, block));
     // insert posterior state root, since we know it now.
     const writePostState = this.blocks.setPostStateRoot(headerHash, stateRoot);

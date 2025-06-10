@@ -20,7 +20,7 @@ export type ServiceRequestParams = z.infer<typeof ServiceRequestParams>;
  * ]
  * @returns Either null or array of Slot
  */
-export const serviceRequest: RpcMethod<ServiceRequestParams, [Slot[]] | null> = async (
+export const serviceRequest: RpcMethod<ServiceRequestParams, [readonly Slot[]] | null> = async (
   [headerHash, serviceId, preimageHash, preimageLength],
   db,
 ) => {

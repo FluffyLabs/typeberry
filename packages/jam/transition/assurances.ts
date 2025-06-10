@@ -2,7 +2,7 @@ import type { HeaderHash, TimeSlot } from "@typeberry/block";
 import type { AssurancesExtrinsicView } from "@typeberry/block/assurances";
 import type { WorkReport } from "@typeberry/block/work-report";
 import { BytesBlob } from "@typeberry/bytes";
-import { FixedSizeArray } from "@typeberry/collections";
+import { FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { ed25519 } from "@typeberry/crypto";
 import { blake2b } from "@typeberry/hash";
@@ -21,6 +21,9 @@ export type AssurancesInput = {
 
 /** State of the assurances. */
 export type AssurancesState = Pick<State, "availabilityAssignment" | "currentValidatorData">;
+
+/** State update of the assurances. */
+export type AssurancesStateUpdate = Pick<AssurancesState, "availabilityAssignment">;
 
 /** Possible error during assurances transition. */
 export enum AssurancesError {
@@ -50,7 +53,15 @@ export class Assurances {
     public readonly state: AssurancesState,
   ) {}
 
-  async transition(input: AssurancesInput): Promise<Result<WorkReport[], AssurancesError>> {
+  async transition(input: AssurancesInput): Promise<
+    Result<
+      {
+        availableReports: WorkReport[];
+        stateUpdate: AssurancesStateUpdate;
+      },
+      AssurancesError
+    >
+  > {
     const coresCount = this.chainSpec.coresCount;
     /**
      * The signature must be one whose public key is that of the validator assuring
@@ -130,11 +141,19 @@ export class Assurances {
     }
 
     // Only clear the state at the very end.
+    const availabilityAssignment = this.state.availabilityAssignment.slice();
     for (const c of coresToClear) {
-      this.state.availabilityAssignment[c] = null;
+      availabilityAssignment[c] = null;
     }
 
-    return Result.ok(availableReports);
+    return Result.ok({
+      availableReports,
+      stateUpdate: {
+        // Since we are copying the original array and only assigning to
+        // existing cores, this cast is safe here.
+        availabilityAssignment: asKnownSize(availabilityAssignment),
+      },
+    });
   }
 
   /** Asynchronously verify all signatures. */

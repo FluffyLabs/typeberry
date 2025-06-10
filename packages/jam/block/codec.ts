@@ -1,4 +1,4 @@
-import { Descriptor, type SequenceView, TYPICAL_DICTIONARY_LENGTH, codec } from "@typeberry/codec";
+import { Descriptor, type SequenceView, TYPICAL_DICTIONARY_LENGTH, codec, readonlyArray } from "@typeberry/codec";
 import { FixedSizeArray, HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { ChainSpec, fullChainSpec } from "@typeberry/config";
 import type { OpaqueHash } from "@typeberry/hash";
@@ -50,10 +50,10 @@ export const codecKnownSizeArray = <F extends string, T, V>(
   _id?: F,
 ): Descriptor<KnownSizeArray<T, F>, SequenceView<T, V>> => {
   if ("fixedLength" in options) {
-    return codec.sequenceFixLen(val, options.fixedLength).convert(seeThrough, asKnownSize);
+    return readonlyArray(codec.sequenceFixLen(val, options.fixedLength)).convert(seeThrough, asKnownSize);
   }
 
-  return codec.sequenceVarLen(val, options).convert(seeThrough, asKnownSize);
+  return readonlyArray(codec.sequenceVarLen(val, options)).convert(seeThrough, asKnownSize);
 };
 
 /** Codec for a fixed-size array with length validation. */

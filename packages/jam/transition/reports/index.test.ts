@@ -23,6 +23,9 @@ describe("Reports - top level", () => {
       isOk: true,
       isError: false,
       ok: {
+        stateUpdate: {
+          availabilityAssignment: asKnownSize([null, null]),
+        },
         reported: HashDictionary.new<WorkPackageHash, WorkPackageInfo>(),
         reporters: asKnownSize([]),
       },

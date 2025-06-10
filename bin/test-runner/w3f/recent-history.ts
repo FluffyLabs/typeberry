@@ -8,6 +8,7 @@ import type { MmrHasher } from "@typeberry/mmr";
 import type { BlockState } from "@typeberry/state";
 import { blockStateFromJson, reportedWorkPackageFromJson } from "@typeberry/state-json";
 import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "@typeberry/transition/recent-history";
+import { copyAndUpdateState } from "@typeberry/transition/test.utils";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 
 class Input {
@@ -69,7 +70,8 @@ export async function runHistoryTest(testContent: HistoryTest) {
   };
 
   const recentHistory = new RecentHistory(hasher, testContent.pre_state);
-  recentHistory.transition(testContent.input);
+  const stateUpdate = recentHistory.transition(testContent.input);
+  const result = copyAndUpdateState(recentHistory.state, stateUpdate);
 
-  deepEqual(recentHistory.state, testContent.post_state);
+  deepEqual(result, testContent.post_state);
 }

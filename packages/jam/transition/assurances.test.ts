@@ -24,6 +24,7 @@ import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import { AvailabilityAssignment, VALIDATOR_META_BYTES, ValidatorData, tryAsPerCore } from "@typeberry/state";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { Assurances, AssurancesError, type AssurancesInput } from "./assurances";
+import { copyAndUpdateState } from "./test.utils";
 
 function assurancesAsView(spec: ChainSpec, assurances: AvailabilityAssurance[]): AssurancesExtrinsicView {
   const encoded = Encoder.encodeObject(assurancesExtrinsicCodec, asOpaqueType(assurances), spec);
@@ -51,8 +52,9 @@ describe("Assurances", () => {
     const res = await assurances.transition(input);
 
     assert.strictEqual(res.isOk, true);
-    deepEqual(res.ok, []);
-    deepEqual(assurances.state, {
+    deepEqual(res.ok.availableReports, []);
+    const state = copyAndUpdateState(assurances.state, res.ok.stateUpdate);
+    deepEqual(state, {
       availabilityAssignment: tryAsPerCore([null, null], tinyChainSpec),
       currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),
     });
@@ -113,9 +115,10 @@ describe("Assurances", () => {
     const res = await assurances.transition(input);
 
     assert.strictEqual(res.isOk, true);
-    deepEqual(res.ok, [INITIAL_ASSIGNMENT[0].workReport.data], { context: "result" });
+    deepEqual(res.ok.availableReports, [INITIAL_ASSIGNMENT[0].workReport.data], { context: "result" });
+    const state = copyAndUpdateState(assurances.state, res.ok.stateUpdate);
     deepEqual(
-      assurances.state,
+      state,
       {
         availabilityAssignment: tryAsPerCore([null, INITIAL_ASSIGNMENT[1]], tinyChainSpec),
         currentValidatorData: tryAsPerValidator(VALIDATORS, tinyChainSpec),

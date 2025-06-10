@@ -60,8 +60,8 @@ export async function getRingCommitment(
 
 export async function verifyTickets(
   bandersnatch: BandernsatchWasm,
-  validators: BandersnatchKey[],
-  tickets: SignedTicket[],
+  validators: readonly BandersnatchKey[],
+  tickets: readonly SignedTicket[],
   entropy: EntropyHash,
 ): Promise<{ isValid: boolean; entropyHash: EntropyHash }[]> {
   const contextLength = entropy.length + JAM_TICKET_SEAL.length + 1;

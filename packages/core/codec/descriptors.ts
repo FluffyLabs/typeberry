@@ -1,6 +1,6 @@
 import { type BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { type U8, type U16, type U32, type U64, tryAsU32 } from "@typeberry/numbers";
-import { type Opaque, type TokenOf, asOpaqueType, seeThrough } from "@typeberry/utils";
+import { type Opaque, type TokenOf, asOpaqueType, check, seeThrough } from "@typeberry/utils";
 import type { Decode, Decoder } from "./decoder";
 import { type Encode, type Encoder, type SizeHint, addSizeHints } from "./encoder";
 import { type Skip, Skipper } from "./skip";
@@ -108,6 +108,26 @@ export class Descriptor<T, V = T> implements Codec<T>, Skip {
       (o) => asOpaqueType<T, TokenOf<R, T>>(o),
     );
   }
+}
+
+/**
+ * Convert a descriptor for regular array into readonly one.
+ *
+ * NOTE: for performance reasons we assume that every `readonly T[]` is `T[]`,
+ *       and the `readonly` annotation is there just to prevent altering it.
+ *       It's not true in a general case, but should be good enough for us.
+ *
+ */
+export function readonlyArray<T, V>(desc: Descriptor<T[], V>): Descriptor<readonly T[], V> {
+  return desc.convert(
+    (x) => {
+      check(Array.isArray(x), `Non-arrays are not supported as 'readonly': got ${typeof x}, ${x}`);
+      // NOTE [ToDr] This assumption is incorrect in general, but it's documented
+      // in the general note. We avoid `.slice()` the array for performance reasons.
+      return x as T[];
+    },
+    (x) => x,
+  );
 }
 
 /** Infer the type that is described by given descriptor `T` */

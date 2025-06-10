@@ -1,5 +1,6 @@
 /** A type that can be read from a JSON-parsed object. */
-export type FromJson<T> = T extends (infer U)[]
+// biome-ignore lint/suspicious/noRedeclare: Biome seems to incorrectly think that the second part of the union is re-declaration. I'm not sure, but it does work so 🤷.
+export type FromJson<T> = T extends (infer U)[] | readonly (infer U)[]
   ? ["array", FromJson<U> | Parser<unknown, U[]>]
   : // parse a string from JSON into expected type
       | FromJsonWithParser<string, T>

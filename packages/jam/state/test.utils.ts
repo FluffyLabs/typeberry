@@ -24,14 +24,14 @@ import {
   CoreStatistics,
   DisputesRecords,
   ENTROPY_ENTRIES,
+  InMemoryService,
+  InMemoryState,
   LookupHistoryItem,
   PreimageItem,
   PrivilegedServices,
   SafroleSealingKeysData,
-  Service,
   ServiceAccountInfo,
   ServiceStatistics,
-  type State,
   StatisticsData,
   ValidatorData,
   ValidatorStatistics,
@@ -42,8 +42,8 @@ import {
 const spec = tinyChainSpec;
 
 // based on jamduna/assurances/state_snapshots/1_004.json
-export const testState = (): State => {
-  return {
+export const testState = (): InMemoryState => {
+  const state = InMemoryState.create({
     // rho
     availabilityAssignment: tryAsPerCore(
       [
@@ -174,7 +174,7 @@ export const testState = (): State => {
     services: new Map([
       [
         tryAsServiceId(0),
-        new Service(tryAsServiceId(0), {
+        new InMemoryService(tryAsServiceId(0), {
           info: ServiceAccountInfo.create({
             codeHash: b32("0x15f8485e3a88e86182e63280720d5ec9892578f0e577fb1bcdda5cf497950815"),
             balance: tryAsU64(10000000000),
@@ -211,7 +211,7 @@ export const testState = (): State => {
               ),
             ].map((x) => [x.hash, [x]]),
           ),
-          storage: [],
+          storage: HashDictionary.new(),
         }),
       ],
     ]),
@@ -367,7 +367,8 @@ export const testState = (): State => {
       validatorsManager: tryAsServiceId(0),
       autoAccumulateServices: [],
     }),
-  };
+  });
+  return state;
 };
 
 const emptyHash = () => b32("0x0000000000000000000000000000000000000000000000000000000000000000");

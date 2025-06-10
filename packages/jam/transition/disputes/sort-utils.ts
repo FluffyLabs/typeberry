@@ -17,7 +17,7 @@ export function isUniqueSortedBy<T extends Record<K, BytesBlob>, K extends keyof
 /**
  * A function that checks if an array of Judgements is ascending sorted by index and there is no duplicates
  */
-export function isUniqueSortedByIndex(judgements: Judgement[]) {
+export function isUniqueSortedByIndex(judgements: readonly Judgement[]) {
   for (let i = 1; i < judgements.length; i++) {
     if (judgements[i - 1].index >= judgements[i].index) {
       return false;

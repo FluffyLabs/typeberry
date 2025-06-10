@@ -1,3 +1,4 @@
+import assert from "node:assert";
 import { describe, it } from "node:test";
 import {
   type EntropyHash,
@@ -19,15 +20,16 @@ import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { PreimageItem, PrivilegedServices, Service, ServiceAccountInfo } from "@typeberry/state";
+import { InMemoryService, InMemoryState, PreimageItem, PrivilegedServices, ServiceAccountInfo } from "@typeberry/state";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
-import { deepEqual } from "@typeberry/utils";
+import { deepEqual, resultToString } from "@typeberry/utils";
 import { Accumulate, type AccumulateInput, type AccumulateState } from "./accumulate";
 
 describe("accumulate", () => {
   // based on tiny/enqueue_and_unlock_chain_wraps-5.json
   it("should do correct state transition", async () => {
-    const entropy: EntropyHash = hashFromString("0xae85d6635e9ae539d0846b911ec86a27fe000f619b78bcac8a74b77e36f6dbcf");
+    const entropy = hashFromString<EntropyHash>("0xae85d6635e9ae539d0846b911ec86a27fe000f619b78bcac8a74b77e36f6dbcf");
+
     const input: AccumulateInput = {
       reports: [
         createWorkReport(hashFromString("0xdf49de52326d7d3c99391cdd32b2ca7c06398e798b520970347160ecf8d9ce32")),
@@ -44,7 +46,7 @@ describe("accumulate", () => {
         preimageBlob,
       ],
     ]);
-    const state: AccumulateState = {
+    const state = InMemoryState.partial(tinyChainSpec, {
       timeslot: tryAsTimeSlot(46),
       services,
       privilegedServices: createPrivilegedServices(),
@@ -62,7 +64,7 @@ describe("accumulate", () => {
           ["0x07b08ccece1b01a9202152a6fa99d23cf0160da721374ccaabd40885d8fc15d3"],
           [],
           ["0x9d7588b469d529d9a058c12bef3ce96106babf54aa3ba251066832cd160aa2c6"],
-        ].map((x) => HashSet.from(x.map(hashFromString))),
+        ].map((x) => HashSet.from(x.map((x) => hashFromString<WorkPackageHash>(x)))),
         tinyChainSpec,
       ),
       accumulationQueue: tryAsPerEpochBlock(
@@ -122,8 +124,8 @@ describe("accumulate", () => {
         ],
         tinyChainSpec,
       ),
-    };
-    const expectedState: AccumulateState = {
+    });
+    const expectedState: AccumulateState = InMemoryState.partial(tinyChainSpec, {
       timeslot: input.slot,
       services,
       privilegedServices: state.privilegedServices,
@@ -150,31 +152,39 @@ describe("accumulate", () => {
             "0xdf49de52326d7d3c99391cdd32b2ca7c06398e798b520970347160ecf8d9ce32",
             "0xf5983aaa6fe1e7428902ace29d14be81a664a65f6dfca1138ccb99136547324e",
           ],
-        ].map((x) => HashSet.from(x.map(hashFromString))),
+        ].map((x) => HashSet.from(x.map((x) => hashFromString<WorkPackageHash>(x)))),
         tinyChainSpec,
       ),
       accumulationQueue: tryAsPerEpochBlock([[], [], [], [], [], [], [], [], [], [], [], []], tinyChainSpec),
-    };
+    });
     const expectedOutput = Bytes.zero(HASH_SIZE);
     const accumulate = new Accumulate(tinyChainSpec, state);
 
+    // when
     const output = await accumulate.transition(input);
+    if (output.isError) {
+      assert.fail(`Expect ok, got ${resultToString(output)}`);
+    }
+    state.applyUpdate(output.ok.stateUpdate);
 
-    deepEqual(output, expectedOutput);
-    deepEqual(accumulate.state, expectedState);
+    // then
+    deepEqual(output.ok.root, expectedOutput);
+    deepEqual(state, expectedState);
   });
 });
 
-const hashFromString = (blob: string) => Bytes.parseBytes(blob, HASH_SIZE).asOpaque();
+const hashFromString = <T>(blob: string): T => {
+  return Bytes.parseBytes(blob, HASH_SIZE).asOpaque();
+};
 
 const createServices = (items: [ServiceId, OpaqueHash, BytesBlob][]) => {
-  const services = new Map<ServiceId, Service>();
+  const services = new Map<ServiceId, InMemoryService>();
   for (const [serviceId, hash, blob] of items) {
     const preimages = HashDictionary.new<PreimageHash, PreimageItem>();
     preimages.set(hash.asOpaque(), PreimageItem.create({ hash: hash.asOpaque(), blob }));
     services.set(
       serviceId,
-      new Service(serviceId, {
+      new InMemoryService(serviceId, {
         info: ServiceAccountInfo.create({
           accumulateMinGas: tryAsServiceGas(0n),
           codeHash: hash.asOpaque(),
@@ -185,7 +195,7 @@ const createServices = (items: [ServiceId, OpaqueHash, BytesBlob][]) => {
         }),
         lookupHistory: HashDictionary.new(),
         preimages,
-        storage: [],
+        storage: HashDictionary.new(),
       }),
     );
   }

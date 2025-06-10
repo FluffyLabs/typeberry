@@ -1,12 +1,11 @@
-import { type CodeHash, type ServiceGas, type ServiceId, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
+import { type CodeHash, type ServiceGas, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { type HashDictionary, type KnownSizeArray, asKnownSize } from "@typeberry/collections";
-import { HASH_SIZE } from "@typeberry/hash";
+import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
+import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type U32, type U64, sumU64, tryAsU64 } from "@typeberry/numbers";
-import { WithDebug } from "@typeberry/utils";
-import type { StateKey } from "../state-merkleization/keys";
+import { type Opaque, WithDebug } from "@typeberry/utils";
 
 /**
  * `B_S`: The basic minimum balance which all services require.
@@ -105,18 +104,20 @@ export class PreimageItem extends WithDebug {
   }
 }
 
-export class StateItem extends WithDebug {
-  static Codec = codec.Class(StateItem, {
-    hash: codec.bytes(HASH_SIZE).asOpaque<StateKey>(),
+export type StorageKey = Opaque<OpaqueHash, "stateKey">;
+
+export class StorageItem extends WithDebug {
+  static Codec = codec.Class(StorageItem, {
+    hash: codec.bytes(HASH_SIZE).asOpaque<StorageKey>(),
     blob: codec.blob,
   });
 
-  static create({ hash, blob }: CodecRecord<StateItem>) {
-    return new StateItem(hash, blob);
+  static create({ hash, blob }: CodecRecord<StorageItem>) {
+    return new StorageItem(hash, blob);
   }
 
   private constructor(
-    readonly hash: StateKey,
+    readonly hash: StorageKey,
     readonly blob: BytesBlob,
   ) {
     super();
@@ -125,7 +126,7 @@ export class StateItem extends WithDebug {
 
 const MAX_LOOKUP_HISTORY_SLOTS = 3;
 export type LookupHistorySlots = KnownSizeArray<TimeSlot, `0-${typeof MAX_LOOKUP_HISTORY_SLOTS} timeslots`>;
-export function tryAsLookupHistorySlots(items: TimeSlot[]): LookupHistorySlots {
+export function tryAsLookupHistorySlots(items: readonly TimeSlot[]): LookupHistorySlots {
   const knownSize = asKnownSize(items) as LookupHistorySlots;
   if (knownSize.length > MAX_LOOKUP_HISTORY_SLOTS) {
     throw new Error(`Lookup history items must contain 0-${MAX_LOOKUP_HISTORY_SLOTS} timeslots.`);
@@ -142,33 +143,10 @@ export class LookupHistoryItem {
      * Preimage availability history as a sequence of time slots.
      * See PreimageStatus and the following GP fragment for more details.
      * https://graypaper.fluffylabs.dev/#/5f542d7/11780011a500 */
-    public slots: LookupHistorySlots,
+    public readonly slots: LookupHistorySlots,
   ) {}
 
   static isRequested(item: LookupHistoryItem): boolean {
     return item.slots.length === 0;
-  }
-}
-
-/**
- * Service dictionary entry.
- */
-export class Service extends WithDebug {
-  constructor(
-    /** Service id. */
-    readonly id: ServiceId,
-    /** Service details. */
-    readonly data: {
-      /** https://graypaper.fluffylabs.dev/#/85129da/383303383303?v=0.6.3 */
-      info: ServiceAccountInfo;
-      /** https://graypaper.fluffylabs.dev/#/85129da/10f90010f900?v=0.6.3 */
-      readonly preimages: HashDictionary<PreimageHash, PreimageItem>;
-      /** https://graypaper.fluffylabs.dev/#/85129da/115400115800?v=0.6.3 */
-      readonly lookupHistory: HashDictionary<PreimageHash, LookupHistoryItem[]>;
-      /** https://graypaper.fluffylabs.dev/#/85129da/10f80010f800?v=0.6.3 */
-      readonly storage: StateItem[];
-    },
-  ) {
-    super();
   }
 }

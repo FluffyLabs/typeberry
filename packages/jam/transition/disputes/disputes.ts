@@ -3,10 +3,16 @@ import type { DisputesExtrinsic } from "@typeberry/block/disputes";
 import { HashDictionary, HashSet, SortedArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
-import { hashComparator } from "@typeberry/state";
+import {
+  type AvailabilityAssignment,
+  DisputesRecords,
+  type PerCore,
+  hashComparator,
+  tryAsPerCore,
+} from "@typeberry/state";
 import { Result } from "@typeberry/utils";
 import { DisputesErrorCode } from "./disputes-error-code";
-import type { DisputesState } from "./disputes-state";
+import type { DisputesState, DisputesStateUpdate } from "./disputes-state";
 import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
 import {
   type VerificationInput,
@@ -274,20 +280,22 @@ export class Disputes {
     };
   }
 
-  private clearCoreAssignment(v: VotesForWorkReports) {
+  private getClearedCoreAssignment(v: VotesForWorkReports): PerCore<AvailabilityAssignment | null> {
     /**
      * We clear any work-reports which we judged as uncertain or invalid from their core.
      * https://graypaper.fluffylabs.dev/#/579bd12/121a03123f03
      */
-    for (let c = 0; c < this.state.availabilityAssignment.length; c++) {
-      const assignment = this.state.availabilityAssignment[c];
+    const availabilityAssignment = this.state.availabilityAssignment.slice();
+    for (let c = 0; c < availabilityAssignment.length; c++) {
+      const assignment = availabilityAssignment[c];
       if (assignment !== null) {
         const sum = v.get(assignment.workReport.hash);
         if (sum !== undefined && sum < this.chainSpec.validatorsSuperMajority) {
-          this.state.availabilityAssignment[c] = null;
+          availabilityAssignment[c] = null;
         }
       }
     }
+    return tryAsPerCore(availabilityAssignment, this.chainSpec);
   }
 
   private getOffenders(disputes: DisputesExtrinsic) {
@@ -305,25 +313,15 @@ export class Disputes {
     return offendersMarks;
   }
 
-  private updateDisputesRecords(newItems: NewDisputesRecordsItems, offenders: Ed25519Key[]) {
-    // https://graypaper.fluffylabs.dev/#/579bd12/12690312bc03
-    this.state.disputesRecords.goodSet = SortedSet.fromTwoSortedCollections(
-      this.state.disputesRecords.goodSet,
-      newItems.toAddToGoodSet,
-    );
-    this.state.disputesRecords.badSet = SortedSet.fromTwoSortedCollections(
-      this.state.disputesRecords.badSet,
-      newItems.toAddToBadSet,
-    );
-    this.state.disputesRecords.wonkySet = SortedSet.fromTwoSortedCollections(
-      this.state.disputesRecords.wonkySet,
-      newItems.toAddToWonkySet,
-    );
+  private getUpdatedDisputesRecords(newItems: NewDisputesRecordsItems, offenders: Ed25519Key[]): DisputesRecords {
     const toAddToPunishSet = SortedArray.fromArray(hashComparator, offenders);
-    this.state.disputesRecords.punishSet = SortedSet.fromTwoSortedCollections(
-      this.state.disputesRecords.punishSet,
-      toAddToPunishSet,
-    );
+    return DisputesRecords.create({
+      // https://graypaper.fluffylabs.dev/#/579bd12/12690312bc03
+      goodSet: SortedSet.fromTwoSortedCollections(this.state.disputesRecords.goodSet, newItems.toAddToGoodSet),
+      badSet: SortedSet.fromTwoSortedCollections(this.state.disputesRecords.badSet, newItems.toAddToBadSet),
+      wonkySet: SortedSet.fromTwoSortedCollections(this.state.disputesRecords.wonkySet, newItems.toAddToWonkySet),
+      punishSet: SortedSet.fromTwoSortedCollections(this.state.disputesRecords.punishSet, toAddToPunishSet),
+    });
   }
 
   private prepareSignaturesToVerification(disputes: DisputesExtrinsic): Result<VerificationInput, DisputesErrorCode> {
@@ -373,7 +371,15 @@ export class Disputes {
   /**
    * Transition the disputes and return a list of offenders.
    */
-  async transition(disputes: DisputesExtrinsic): Promise<Result<Ed25519Key[], DisputesErrorCode>> {
+  async transition(disputes: DisputesExtrinsic): Promise<
+    Result<
+      {
+        offendersMark: Ed25519Key[];
+        stateUpdate: DisputesStateUpdate;
+      },
+      DisputesErrorCode
+    >
+  > {
     const signaturesToVerifyResult = this.prepareSignaturesToVerification(disputes);
     if (signaturesToVerifyResult.isError) {
       return Result.error(signaturesToVerifyResult.error);
@@ -401,9 +407,16 @@ export class Disputes {
     }
 
     // GP: https://graypaper.fluffylabs.dev/#/579bd12/131300133000
-    const offendersMarks = this.getOffenders(disputes);
-    this.updateDisputesRecords(newItems, offendersMarks);
-    this.clearCoreAssignment(v);
-    return Result.ok(offendersMarks);
+    const offendersMark = this.getOffenders(disputes);
+    const disputesRecords = this.getUpdatedDisputesRecords(newItems, offendersMark);
+    const availabilityAssignment = this.getClearedCoreAssignment(v);
+
+    return Result.ok({
+      offendersMark,
+      stateUpdate: {
+        disputesRecords,
+        availabilityAssignment,
+      },
+    });
   }
 }
