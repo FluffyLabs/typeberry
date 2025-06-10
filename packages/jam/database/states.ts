@@ -25,7 +25,7 @@ export enum StateUpdateError {
  */
 export interface StatesDb<T extends State = State> {
   /** Compute a state root for given state. */
-  getStateRoot(state: T): StateRootHash;
+  getStateRoot(state: T): Promise<StateRootHash>;
 
   /**
    * Apply & commit a state update.
@@ -69,7 +69,7 @@ export class InMemoryStates implements StatesDb<InMemoryState> {
     }
   }
 
-  getStateRoot(state: InMemoryState): StateRootHash {
+  async getStateRoot(state: InMemoryState): Promise<StateRootHash> {
     return StateEntries.serializeInMemory(this.spec, state).getRootHash();
   }
 

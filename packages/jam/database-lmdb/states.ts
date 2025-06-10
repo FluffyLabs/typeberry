@@ -140,7 +140,7 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     return await this.updateAndCommit(headerHash, trie, updatedValues);
   }
 
-  getStateRoot(state: SerializedState<LeafDb>): StateRootHash {
+  async getStateRoot(state: SerializedState<LeafDb>): Promise<StateRootHash> {
     return state.backend.getStateRoot();
   }
 

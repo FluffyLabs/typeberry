@@ -7,11 +7,10 @@ import { HASH_SIZE, type WithHash } from "@typeberry/hash";
  * Blockchain database interface.
  */
 export interface BlocksDb {
-  // TODO [ToDr] Consider removing the state root hash from best data!
-  /** Mark given header hash as the best block along with it's posterior state root. */
-  setBestData(hash: HeaderHash, posteriorStateRoot: StateRootHash): Promise<void>;
-  /** Retrieve current best header hash and posterior state root. */
-  getBestData(): [HeaderHash, StateRootHash];
+  /** Mark given header hash as the best block. */
+  setBestHeaderHash(hash: HeaderHash): Promise<void>;
+  /** Retrieve current best header hash. */
+  getBestHeaderHash(): HeaderHash;
   /** Set the posterior state root hash of given block. */
   setPostStateRoot(hash: HeaderHash, postStateRoot: StateRootHash): Promise<void>;
   /** Get posterior state root of given block hash. */
@@ -34,17 +33,15 @@ export class InMemoryBlocks implements BlocksDb {
   private readonly extrinsicsByHeaderHash: HashDictionary<HeaderHash, ExtrinsicView> = HashDictionary.new();
   private readonly postStateRootByHeaderHash: HashDictionary<HeaderHash, StateRootHash> = HashDictionary.new();
   private bestHeaderHash: HeaderHash = Bytes.zero(HASH_SIZE).asOpaque();
-  private bestPostStateRoot: StateRootHash = Bytes.zero(HASH_SIZE).asOpaque();
 
-  setBestData(hash: HeaderHash, postStateRoot: StateRootHash): Promise<void> {
+  setBestHeaderHash(hash: HeaderHash): Promise<void> {
     this.bestHeaderHash = hash;
-    this.bestPostStateRoot = postStateRoot;
 
     return Promise.resolve();
   }
 
-  getBestData(): [HeaderHash, StateRootHash] {
-    return [this.bestHeaderHash, this.bestPostStateRoot];
+  getBestHeaderHash(): HeaderHash {
+    return this.bestHeaderHash;
   }
 
   setPostStateRoot(hash: HeaderHash, postStateRoot: StateRootHash): Promise<void> {

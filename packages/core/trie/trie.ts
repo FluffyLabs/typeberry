@@ -16,16 +16,12 @@ import {
 import { type NodesDb, type TrieHasher, WriteableNodesDb } from "./nodesDb";
 
 export class InMemoryTrie {
-  /**
-   * Create an empty in-memory trie.
-   */
+  /** Create an empty in-memory trie. */
   static empty(hasher: TrieHasher): InMemoryTrie {
     return new InMemoryTrie(new WriteableNodesDb(hasher));
   }
 
-  /**
-   * Given a collection of leaves, compute the state root.
-   */
+  /** Given a collection of leaves, compute the state root. */
   static computeStateRoot(hasher: TrieHasher, leaves: readonly LeafNode[]) {
     // TODO [ToDr] [opti] Simple loop to just compute the root hash instead of
     // constructing the entire trie.

@@ -52,7 +52,7 @@ describe("LMDB States database", () => {
     deepEqual(res, Result.ok(OK));
     const newState = states.getState(headerHash);
     assert.ok(newState !== null);
-    const newRoot = states.getStateRoot(newState);
+    const newRoot = await states.getStateRoot(newState);
 
     assert.deepStrictEqual(`${newRoot}`, `${emptyRoot}`);
     deepEqual(InMemoryState.copyFrom(newState, new Map()), emptyState);
@@ -106,7 +106,7 @@ describe("LMDB States database", () => {
 
     const updatedState = states.getState(headerHash2);
     assert.ok(updatedState !== null);
-    const updatedStateRoot = states.getStateRoot(updatedState);
+    const updatedStateRoot = await states.getStateRoot(updatedState);
 
     deepEqual(
       InMemoryState.copyFrom(
@@ -140,7 +140,7 @@ describe("LMDB States database", () => {
     deepEqual(res, Result.ok(OK));
     const newState = states.getState(headerHash);
     assert.ok(newState !== null);
-    const newRoot = states.getStateRoot(newState);
+    const newRoot = await states.getStateRoot(newState);
 
     assert.deepStrictEqual(`${newRoot}`, `${initialRoot}`);
     deepEqual(InMemoryState.copyFrom(newState, new Map()), initialState);
@@ -168,7 +168,7 @@ describe("LMDB States database", () => {
 
     const updatedState = states.getState(headerHash2);
     assert.ok(updatedState !== null);
-    const updatedStateRoot = states.getStateRoot(updatedState);
+    const updatedStateRoot = await states.getStateRoot(updatedState);
 
     deepEqual(InMemoryState.copyFrom(updatedState, new Map()), state);
     assert.strictEqual(`${updatedStateRoot}`, `${StateEntries.serializeInMemory(spec, state).getRootHash()}`);

@@ -172,12 +172,13 @@ async function initializeDatabase(
   const blocks = new LmdbBlocks(spec, rootDb);
   const states = new LmdbStates(spec, rootDb);
 
-  const [header, state] = blocks.getBestData();
+  const header = blocks.getBestHeaderHash();
+  const state = blocks.getPostStateRoot(header);
   logger.log(`🛢️ Best header hash: ${header}`);
   logger.log(`🛢️ Best state root: ${state}`);
 
   // DB seems already initialized, just go with what we have.
-  if (!state.isEqualTo(Bytes.zero(HASH_SIZE)) && !header.isEqualTo(Bytes.zero(HASH_SIZE))) {
+  if (state !== null && !state.isEqualTo(Bytes.zero(HASH_SIZE)) && !header.isEqualTo(Bytes.zero(HASH_SIZE))) {
     await rootDb.db.close();
     return dbPath;
   }
@@ -207,7 +208,7 @@ async function initializeDatabase(
   await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(genesisHeaderHash, blockView));
   await states.insertState(genesisHeaderHash, genesisStateSerialized);
   await blocks.setPostStateRoot(genesisHeaderHash, genesisStateRootHash);
-  await blocks.setBestData(genesisHeaderHash, genesisStateRootHash);
+  await blocks.setBestHeaderHash(genesisHeaderHash);
 
   // close the DB
   await rootDb.db.close();

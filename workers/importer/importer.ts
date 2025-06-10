@@ -39,7 +39,7 @@ export class Importer {
     private readonly blocks: BlocksDb,
     private readonly states: StatesDb<SerializedState<LeafDb>>,
   ) {
-    const currentBestHeaderHash = this.blocks.getBestData()[0];
+    const currentBestHeaderHash = this.blocks.getBestHeaderHash();
     const state = states.getState(currentBestHeaderHash);
     if (state === null) {
       throw new Error(`Unable to load best state from header hash: ${currentBestHeaderHash}.`);
@@ -110,19 +110,22 @@ export class Importer {
     // insert new state and the block to DB.
     const timerDb = measure("import:db");
     const writeBlocks = this.blocks.insertBlock(new WithHash(headerHash, block));
-    // insert posterior state root, since we know it now.
-    const stateRoot = this.states.getStateRoot(newState);
-    logger.log(`🧱 Storing post-state-root for ${headerHash}: ${stateRoot}.`);
-    const writePostState = this.blocks.setPostStateRoot(headerHash, stateRoot);
 
-    await Promise.all([writeBlocks, writePostState]);
-    await this.blocks.setBestData(headerHash, stateRoot);
+    // Computation of the state root may happen asynchronously,
+    // but we still need to wait for it before next block can be imported
+    const stateRoot = await this.states.getStateRoot(newState);
+    logger.log(`🧱 Storing post-state-root for ${headerHash}: ${stateRoot}.`);
+    const writeStateRoot = this.blocks.setPostStateRoot(headerHash, stateRoot);
+
+    await Promise.all([writeBlocks, writeStateRoot]);
     logger.log(timerDb());
+    // finally update the best block
+    await this.blocks.setBestHeaderHash(headerHash);
 
     return Result.ok(new WithHash(headerHash, block.header.view()));
   }
 
   bestBlockHash() {
-    return this.blocks.getBestData()[0];
+    return this.blocks.getBestHeaderHash();
   }
 }

@@ -57,7 +57,7 @@ describe("Block Verifier", async () => {
     if (prepareStateRoot) {
       db.setPostStateRoot(header, stateRoot);
     }
-    db.setBestData(header, stateRoot);
+    db.setBestHeaderHash(header);
   };
 
   const prepareBlock = ({
