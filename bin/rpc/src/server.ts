@@ -52,7 +52,7 @@ export class RpcServer {
     chainSpec: ChainSpec,
     private readonly methods: RpcMethodRepo,
   ) {
-    this.logger = Logger.new(__filename, "rpc");
+    this.logger = Logger.new(import.meta.filename, "rpc");
 
     const fullDbPath = `${dbPath}/${genesisRoot}`;
     if (!existsSync(fullDbPath)) {

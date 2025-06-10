@@ -3,7 +3,11 @@ import { fromJson } from "@typeberry/block-json";
 import type { AuthorizerHash } from "@typeberry/block/work-report.js";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { Authorization, type AuthorizationInput, type AuthorizationState } from "@typeberry/transition/authorization.js";
+import {
+  Authorization,
+  type AuthorizationInput,
+  type AuthorizationState,
+} from "@typeberry/transition/authorization.js";
 import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { deepEqual } from "@typeberry/utils";
 import { getChainSpec } from "./spec.js";

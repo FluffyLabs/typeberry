@@ -16,7 +16,7 @@ import {
 import type { Network } from "./network.js";
 import { type Peer, type PeerAddress, Peers, type Stream } from "./peers.js";
 
-const logger = Logger.new(__filename, "net");
+const logger = Logger.new(import.meta.filename, "net");
 
 /** Networking server part options. */
 export type Options = {

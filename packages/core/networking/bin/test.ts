@@ -4,7 +4,7 @@ import { ed25519 } from "@typeberry/crypto";
 import { Logger } from "@typeberry/logger";
 import { socket } from "../index.js";
 
-const logger = Logger.new(__filename, "net:demo");
+const logger = Logger.new(import.meta.filename, "net:demo");
 
 async function main(clientPort: number, serverPort: number) {
   const genesisHash = "0259fbe9"; // polkajam: 0259fbe9

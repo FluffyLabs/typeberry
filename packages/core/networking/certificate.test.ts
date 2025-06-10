@@ -16,8 +16,10 @@ import {
 
 // taken from jamcha.in
 // currently invalid, due to altname encoding mismatch.
-const ALICE_CERT = fs.readFileSync(path.resolve(`${__dirname}/fixtures/alice-imported.cert.pem`), "utf8").trim();
-const BOB_CERT = fs.readFileSync(path.resolve(`${__dirname}/fixtures/bob-generated.cert.pem`), "utf8").trim();
+const ALICE_CERT = fs
+  .readFileSync(path.resolve(`${import.meta.dirname}/fixtures/alice-imported.cert.pem`), "utf8")
+  .trim();
+const BOB_CERT = fs.readFileSync(path.resolve(`${import.meta.dirname}/fixtures/bob-generated.cert.pem`), "utf8").trim();
 
 const ALICE_PAIR = ed25519.privateKey(Bytes.fill(ed25519.ED25519_PRIV_KEY_BYTES, 0).asOpaque());
 const BOB_PAIR = ed25519.privateKey(Bytes.fill(ed25519.ED25519_PRIV_KEY_BYTES, 1).asOpaque());

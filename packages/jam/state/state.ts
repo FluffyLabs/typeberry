@@ -1,5 +1,6 @@
 import type { EntropyHash, PerEpochBlock, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report.js";
 import type { FixedSizeArray, ImmutableHashSet, KnownSizeArray } from "@typeberry/collections";
 import type { AvailabilityAssignment } from "./assurances.js";
@@ -9,10 +10,9 @@ import type { DisputesRecords } from "./disputes.js";
 import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
 import type { PrivilegedServices } from "./privileged-services.js";
 import type { SafroleData } from "./safrole-data.js";
+import type { LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, StorageKey } from "./service.js";
 import type { StatisticsData } from "./statistics.js";
 import type { ValidatorData } from "./validator-data.js";
-import {LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, StorageKey} from "./service.js";
-import {PreimageHash} from "@typeberry/block/preimage.js";
 
 /**
  * In addition to the entropy accumulator η_0, we retain

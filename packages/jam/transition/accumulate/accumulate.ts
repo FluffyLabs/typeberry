@@ -33,7 +33,7 @@ import {
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { InMemoryTrie } from "@typeberry/trie";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
-import { check, Result } from "@typeberry/utils";
+import { Result, check } from "@typeberry/utils";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
 import { generateNextServiceId, getWorkPackageHashes, uniquePreserveOrder } from "./accumulate-utils.js";
 import {
@@ -116,7 +116,7 @@ export const GAS_TO_INVOKE_WORK_REPORT = 10_000_000n;
 /** `G_T`: The total gas allocated across all Accumulation. */
 export const ACCUMULATE_TOTAL_GAS = 3_500_000_000n;
 
-const logger = Logger.new(__filename, "accumulate");
+const logger = Logger.new(import.meta.filename, "accumulate");
 
 const ARGS_CODEC = codec.object({
   slot: codec.u32.asOpaque<TimeSlot>(),

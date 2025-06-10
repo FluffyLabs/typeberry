@@ -48,7 +48,6 @@ import {
   type StorageKey,
   tryAsLookupHistorySlots,
 } from "./service.js";
-import { ENTROPY_ENTRIES, type EnumerableState, type MAX_RECENT_HISTORY, type Service, type State } from "./state.js";
 import {
   type ServicesUpdate,
   type UpdatePreimage,
@@ -58,6 +57,7 @@ import {
   type UpdateStorage,
   UpdateStorageKind,
 } from "./state-update.js";
+import { ENTROPY_ENTRIES, type EnumerableState, type MAX_RECENT_HISTORY, type Service, type State } from "./state.js";
 import { CoreStatistics, StatisticsData, ValidatorStatistics } from "./statistics.js";
 import { VALIDATOR_META_BYTES, ValidatorData } from "./validator-data.js";
 

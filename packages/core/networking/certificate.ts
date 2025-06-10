@@ -9,7 +9,7 @@ import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
 import { base32 } from "./base32.js";
 
-const logger = Logger.new(__filename, "networking");
+const logger = Logger.new(import.meta.filename, "networking");
 
 // TODO [ToDr] Might not be relevant any more and we can use built-in webcrypto.
 // overwrite crypto provider to use the @peculiar version

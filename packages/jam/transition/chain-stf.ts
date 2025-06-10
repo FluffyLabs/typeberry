@@ -4,7 +4,7 @@ import type { AuthorizerHash } from "@typeberry/block/work-report.js";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
-import { Disputes, DisputesStateUpdate } from "@typeberry/disputes";
+import { Disputes, type DisputesStateUpdate } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code.js";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js";
@@ -12,17 +12,16 @@ import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-s
 import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/safrole.js";
 import type { State } from "@typeberry/state";
 import { type ErrorResult, Result, type TaggedError } from "@typeberry/utils";
+import type { ACCUMULATION_ERROR, AccumulateStateUpdate } from "./accumulate/accumulate.js";
 import { Accumulate } from "./accumulate/index.js";
-import { Assurances, AssurancesStateUpdate, type AssurancesError } from "./assurances.js";
-import { Authorization, AuthorizationStateUpdate } from "./authorization.js";
+import { Assurances, type AssurancesError, type AssurancesStateUpdate } from "./assurances.js";
+import { Authorization, type AuthorizationStateUpdate } from "./authorization.js";
 import type { TransitionHasher } from "./hasher.js";
-import { Preimages, PreimagesStateUpdate, type PreimagesErrorCode } from "./preimages.js";
-import { RecentHistory, RecentHistoryStateUpdate } from "./recent-history.js";
-import { Reports, ReportsStateUpdate, type ReportsError } from "./reports/index.js";
+import { Preimages, type PreimagesErrorCode, type PreimagesStateUpdate } from "./preimages.js";
+import { RecentHistory, type RecentHistoryStateUpdate } from "./recent-history.js";
+import { Reports, type ReportsError, type ReportsStateUpdate } from "./reports/index.js";
 import type { HeaderChain } from "./reports/verify-contextual.js";
-import { Statistics, StatisticsStateUpdate } from "./statistics.js";
-import {AccumulateStateUpdate, ACCUMULATION_ERROR} from "./accumulate/accumulate.js";
-
+import { Statistics, type StatisticsStateUpdate } from "./statistics.js";
 
 class DbHeaderChain implements HeaderChain {
   constructor(private readonly blocks: BlocksDb) {}

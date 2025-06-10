@@ -1,7 +1,7 @@
 import type { ServiceId, TimeSlot } from "@typeberry/block";
-import type { PreimageHash } from "@typeberry/block/preimage";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { U32 } from "@typeberry/numbers";
-import type { LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, StorageKey } from "./service";
+import type { LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, StorageKey } from "./service.js";
 
 export enum UpdatePreimageKind {
   /** Insert new preimage and optionally update it's lookup history. */
