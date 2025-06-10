@@ -15,7 +15,7 @@ export class BandernsatchWasm {
     const workers = os.cpus().length;
     return new BandernsatchWasm(
       !synchronous
-        ? await Executor.initialize<Params, Response>(new URL(import.meta.resolve("./bootstrap.cjs")), {
+        ? await Executor.initialize<Params, Response>(new URL("./bootstrap.mjs", import.meta.url), {
             minWorkers: Math.max(1, Math.floor(workers / 2)),
             maxWorkers: workers,
           })
