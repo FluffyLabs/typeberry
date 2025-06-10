@@ -58,7 +58,7 @@ function mergeStateUpdates(updates: Partial<State & ServicesUpdate>[]) {
     (acc, update) => {
       for (const k of Object.keys(update)) {
         const key = k as keyof typeof update;
-        if (keysToMergeTyped.indexOf(key) !== -1) {
+        if (keysToMergeTyped.includes(key)) {
           if (!(Array.isArray(acc[key]) && Array.isArray(update[key]))) {
             throw new Error(`Unable to merge updates of key ${key}`);
           }
