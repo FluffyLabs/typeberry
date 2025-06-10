@@ -2,7 +2,7 @@ import type { HeaderHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import z from "zod";
-import { Hash, type RpcMethod } from "../types";
+import { Hash, type RpcMethod } from "../types.js";
 
 export const StateRootParams = z.tuple([Hash]);
 export type StateRootParams = z.infer<typeof StateRootParams>;

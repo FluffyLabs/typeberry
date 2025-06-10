@@ -2,6 +2,7 @@ export * from "./assurances.js";
 export * from "./block-state.js";
 export * from "./common.js";
 export * from "./disputes.js";
+export * from "./not-yet-accumulated.js";
 export * from "./privileged-services.js";
 export * from "./safrole-data.js";
 export * from "./service.js";

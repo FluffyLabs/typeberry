@@ -7,19 +7,19 @@ import {
   tryAsServiceId,
   tryAsTimeSlot,
 } from "@typeberry/block";
-import { RefineContext } from "@typeberry/block/refine-context";
-import { tryAsWorkItemsCount } from "@typeberry/block/work-package";
-import { type WorkPackageHash, WorkPackageInfo, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
-import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result";
+import { RefineContext } from "@typeberry/block/refine-context.js";
+import { tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
+import { type WorkPackageHash, WorkPackageInfo, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
+import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, HashSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { PrivilegedServices, type Service } from "@typeberry/state";
-import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
+import { NotYetAccumulatedReport } from "@typeberry/state";
 import { deepEqual } from "@typeberry/utils";
-import { AccumulateQueue, pruneQueue } from "./accumulate-queue";
+import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
 
 describe("accumulate-queue", () => {
   const createWorkReportHash = (i: number): WorkPackageHash => Bytes.fill(HASH_SIZE, i).asOpaque();

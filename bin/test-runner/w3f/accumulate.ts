@@ -8,11 +8,13 @@ import {
 } from "@typeberry/block";
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report.js";
+import { HashSet, asKnownSize } from "@typeberry/collections";
+import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
-import type { Service } from "@typeberry/state";
+import { AutoAccumulate, NotYetAccumulatedReport, PrivilegedServices, type Service } from "@typeberry/state";
 import { JsonService } from "@typeberry/state-json/accounts.js";
 import { Accumulate, type AccumulateRoot, type AccumulateState } from "@typeberry/transition/accumulate/index.js";
-import { deepEqual } from "@typeberry/utils";
+import { Result, deepEqual } from "@typeberry/utils";
 import { getChainSpec } from "./spec.js";
 
 class Input {

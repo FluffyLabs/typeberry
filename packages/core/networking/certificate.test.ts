@@ -12,7 +12,7 @@ import {
   ed25519AsJsonWebKeyPair,
   generateCertificate,
   verifyCertificate,
-} from "./certificate";
+} from "./certificate.js";
 
 // taken from jamcha.in
 // currently invalid, due to altname encoding mismatch.

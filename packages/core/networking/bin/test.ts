@@ -2,7 +2,7 @@ import { setTimeout } from "node:timers/promises";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { ed25519 } from "@typeberry/crypto";
 import { Logger } from "@typeberry/logger";
-import { socket } from "../";
+import { socket } from "../index.js";
 
 const logger = Logger.new(__filename, "net:demo");
 

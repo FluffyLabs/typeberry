@@ -2,7 +2,7 @@ import { type HeaderHash, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import z from "zod";
-import { BlobArray, Hash, type RpcMethod, ServiceId } from "../types";
+import { BlobArray, Hash, type RpcMethod, ServiceId } from "../types.js";
 
 export const ServiceValueParams = z.tuple([Hash, ServiceId, BlobArray]);
 export type ServiceValueParams = z.infer<typeof ServiceValueParams>;

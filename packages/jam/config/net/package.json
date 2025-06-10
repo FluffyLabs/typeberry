@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Config for typeberry network.",
   "main": "index.ts",
+  "type": "module",
   "scripts": {
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },

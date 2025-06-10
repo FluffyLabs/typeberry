@@ -7,7 +7,7 @@ import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { Service, type ServiceAccountInfo } from "@typeberry/state";
-import { AccountsInfoExternalities } from "./accounts-info-externalities";
+import { AccountsInfoExternalities } from "./accounts-info-externalities.js";
 
 describe("accounts-info-externalities", () => {
   const prepareService = (serviceId: ServiceId): Service =>

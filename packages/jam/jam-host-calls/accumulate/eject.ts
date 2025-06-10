@@ -1,4 +1,4 @@
-import type { PreimageHash } from "@typeberry/block/preimage";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";

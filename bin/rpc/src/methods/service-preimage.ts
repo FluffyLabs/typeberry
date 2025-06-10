@@ -2,7 +2,7 @@ import { type HeaderHash, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import z from "zod";
-import { type BlobArray, Hash, type RpcMethod, ServiceId } from "../types";
+import { type BlobArray, Hash, type RpcMethod, ServiceId } from "../types.js";
 
 export const ServicePreimageParams = z.tuple([Hash, ServiceId, Hash]);
 export type ServicePreimageParams = z.infer<typeof ServicePreimageParams>;

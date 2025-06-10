@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { type PerValidator, tryAsPerValidator } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
-import { tinyChainSpec } from "@typeberry/config/chain-spec";
+import { tinyChainSpec } from "@typeberry/config";
 import { deepEqual } from "@typeberry/utils";
 import { SEGMENT_FULL, SEGMENT_TINY, TEST_DATA, WORKPACKAGE_FULL, WORKPACKAGE_TINY } from "./ec-test-data.js";
 import {
@@ -19,7 +19,7 @@ import {
   shardsToChunks,
   split,
   unzip,
-} from "./erasure-coding";
+} from "./erasure-coding.js";
 
 let seed = 1;
 function random() {

@@ -7,7 +7,7 @@ import type { CryptoKey } from "@peculiar/webcrypto";
 import * as x509 from "@peculiar/x509";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
-import { base32 } from "./base32";
+import { base32 } from "./base32.js";
 
 const logger = Logger.new(__filename, "networking");
 
