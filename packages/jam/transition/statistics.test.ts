@@ -27,6 +27,7 @@ import { isU16, isU32, tryAsU32 } from "@typeberry/numbers";
 import { CoreStatistics, ServiceStatistics, StatisticsData, ValidatorStatistics, tryAsPerCore } from "@typeberry/state";
 import { asOpaqueType } from "@typeberry/utils";
 import { Statistics, type StatisticsState } from "./statistics.js";
+import { copyAndUpdateState } from "./test.utils.js";
 
 describe("Statistics", () => {
   describe("formulas", () => {
@@ -111,7 +112,7 @@ describe("Statistics", () => {
         currentSlot: 1,
       });
 
-      statistics.transition({
+      const update = statistics.transition({
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: emptyExtrinsic,
@@ -121,8 +122,10 @@ describe("Statistics", () => {
         transferStatistics: new Map(),
       });
 
-      assert.deepStrictEqual(statistics.state.statistics.current, currentStatistics);
-      assert.deepStrictEqual(statistics.state.statistics.previous, lastStatistics);
+      const state = copyAndUpdateState(statistics.state, update);
+
+      assert.deepStrictEqual(state.statistics.current, currentStatistics);
+      assert.deepStrictEqual(state.statistics.previous, lastStatistics);
     });
 
     it("should create a new 'current' statistics and previous current should be 'last' when the epoch is changed", () => {
@@ -135,7 +138,7 @@ describe("Statistics", () => {
 
       assert.deepStrictEqual(statistics.state.statistics.current, currentStatistics);
 
-      statistics.transition({
+      const update = statistics.transition({
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: emptyExtrinsic,
@@ -144,8 +147,9 @@ describe("Statistics", () => {
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
       });
+      const state = copyAndUpdateState(statistics.state, update);
 
-      assert.deepStrictEqual(statistics.state.statistics.previous, currentStatistics);
+      assert.deepStrictEqual(state.statistics.previous, currentStatistics);
     });
 
     it("should create a new current statistics object that have length equal to number of validators ", () => {
@@ -156,7 +160,7 @@ describe("Statistics", () => {
         currentSlot: previousSlot + tinyChainSpec.epochLength,
       });
 
-      statistics.transition({
+      const update = statistics.transition({
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: emptyExtrinsic,
@@ -165,8 +169,9 @@ describe("Statistics", () => {
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
       });
+      const state = copyAndUpdateState(statistics.state, update);
 
-      assert.deepStrictEqual(statistics.state.statistics.current.length, tinyChainSpec.validatorsCount);
+      assert.deepStrictEqual(state.statistics.current.length, tinyChainSpec.validatorsCount);
     });
   });
 
@@ -244,7 +249,7 @@ describe("Statistics", () => {
 
       assert.strictEqual(statistics.state.statistics.current[validatorIndex].blocks, 0);
 
-      statistics.transition({
+      const update = statistics.transition({
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: emptyExtrinsic,
@@ -253,8 +258,9 @@ describe("Statistics", () => {
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
       });
+      const state = copyAndUpdateState(statistics.state, update);
 
-      assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(state.statistics.current[validatorIndex], expectedStatistics);
     });
 
     it("should add tickets length from extrinstic to tickets in statistics", () => {
@@ -268,7 +274,7 @@ describe("Statistics", () => {
 
       assert.strictEqual(statistics.state.statistics.current[validatorIndex].tickets, 0);
 
-      statistics.transition({
+      const update = statistics.transition({
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: extrinsic,
@@ -277,8 +283,9 @@ describe("Statistics", () => {
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
       });
+      const state = copyAndUpdateState(statistics.state, update);
 
-      assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(state.statistics.current[validatorIndex], expectedStatistics);
     });
 
     it("should add preimages length from extrinstic to preImages in statistics", () => {
@@ -293,7 +300,7 @@ describe("Statistics", () => {
 
       assert.strictEqual(statistics.state.statistics.current[validatorIndex].preImages, 0);
 
-      statistics.transition({
+      const update = statistics.transition({
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: extrinsic,
@@ -302,8 +309,9 @@ describe("Statistics", () => {
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
       });
+      const state = copyAndUpdateState(statistics.state, update);
 
-      assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(state.statistics.current[validatorIndex], expectedStatistics);
     });
 
     it("should add preimages size length from extrinstic to preImagesSize in statistics", () => {
@@ -322,7 +330,7 @@ describe("Statistics", () => {
 
       assert.strictEqual(statistics.state.statistics.current[validatorIndex].preImagesSize, 0);
 
-      statistics.transition({
+      const update = statistics.transition({
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: extrinsic,
@@ -331,8 +339,9 @@ describe("Statistics", () => {
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
       });
+      const state = copyAndUpdateState(statistics.state, update);
 
-      assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(state.statistics.current[validatorIndex], expectedStatistics);
     });
 
     it("should update guarantees for each validator based on guarantees from extrinstic", () => {
@@ -351,7 +360,7 @@ describe("Statistics", () => {
 
       assert.strictEqual(statistics.state.statistics.current[validatorIndex].guarantees, 0);
 
-      statistics.transition({
+      const update = statistics.transition({
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: extrinsic,
@@ -360,8 +369,9 @@ describe("Statistics", () => {
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
       });
+      const state = copyAndUpdateState(statistics.state, update);
 
-      assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(state.statistics.current[validatorIndex], expectedStatistics);
     });
 
     it("should update assurances for each validator based on assurances from extrinstic", () => {
@@ -375,7 +385,7 @@ describe("Statistics", () => {
 
       assert.strictEqual(statistics.state.statistics.current[validatorIndex].assurances, 0);
 
-      statistics.transition({
+      const update = statistics.transition({
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: extrinsic,
@@ -384,8 +394,9 @@ describe("Statistics", () => {
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
       });
+      const state = copyAndUpdateState(statistics.state, update);
 
-      assert.deepEqual(statistics.state.statistics.current[validatorIndex], expectedStatistics);
+      assert.deepEqual(state.statistics.current[validatorIndex], expectedStatistics);
     });
 
     it("should update refine score of core statistics based on incoming work-reports", () => {
@@ -401,7 +412,7 @@ describe("Statistics", () => {
 
       assert.deepEqual(statistics.state.statistics.cores[coreIndex], coreStatistics[coreIndex]);
 
-      statistics.transition({
+      const update = statistics.transition({
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: extrinsic,
@@ -410,8 +421,9 @@ describe("Statistics", () => {
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
       });
+      const state = copyAndUpdateState(statistics.state, update);
 
-      assert.deepEqual(statistics.state.statistics.cores[coreIndex], expectedStatistics);
+      assert.deepEqual(state.statistics.cores[coreIndex], expectedStatistics);
     });
 
     it("should update popularity score of core statistics based on assurances", () => {
@@ -427,7 +439,7 @@ describe("Statistics", () => {
 
       assert.deepEqual(statistics.state.statistics.cores[coreIndex], coreStatistics[coreIndex]);
 
-      statistics.transition({
+      const update = statistics.transition({
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: extrinsic,
@@ -436,8 +448,9 @@ describe("Statistics", () => {
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
       });
+      const state = copyAndUpdateState(statistics.state, update);
 
-      assert.deepEqual(statistics.state.statistics.cores[coreIndex], expectedStatistics);
+      assert.deepEqual(state.statistics.cores[coreIndex], expectedStatistics);
     });
 
     it("should update data availability score of core statistics based on available work-reports", () => {
@@ -453,7 +466,7 @@ describe("Statistics", () => {
 
       assert.deepEqual(statistics.state.statistics.cores[coreIndex], coreStatistics[coreIndex]);
 
-      statistics.transition({
+      const update = statistics.transition({
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: extrinsic,
@@ -462,8 +475,9 @@ describe("Statistics", () => {
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
       });
+      const state = copyAndUpdateState(statistics.state, update);
 
-      assert.deepEqual(statistics.state.statistics.cores[coreIndex], expectedStatistics);
+      assert.deepEqual(state.statistics.cores[coreIndex], expectedStatistics);
     });
 
     it("should update provided score of service statistics based on extrinstic preimages", () => {
@@ -484,7 +498,7 @@ describe("Statistics", () => {
 
       assert.deepEqual(statistics.state.statistics.services.get(serviceIndex), serviceStatistics.get(serviceIndex));
 
-      statistics.transition({
+      const update = statistics.transition({
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: extrinsic,
@@ -493,8 +507,9 @@ describe("Statistics", () => {
         accumulationStatistics: new Map(),
         transferStatistics: new Map(),
       });
+      const state = copyAndUpdateState(statistics.state, update);
 
-      assert.deepEqual(statistics.state.statistics.services.get(serviceIndex), expectedStatistics);
+      assert.deepEqual(state.statistics.services.get(serviceIndex), expectedStatistics);
     });
 
     it("should update accumulation score of service statistics based on accumulation statistics", () => {
@@ -513,7 +528,7 @@ describe("Statistics", () => {
 
       assert.deepEqual(statistics.state.statistics.services.get(serviceIndex), serviceStatistics.get(serviceIndex));
 
-      statistics.transition({
+      const update = statistics.transition({
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: getExtrinsic(),
@@ -522,8 +537,9 @@ describe("Statistics", () => {
         accumulationStatistics,
         transferStatistics: new Map(),
       });
+      const state = copyAndUpdateState(statistics.state, update);
 
-      assert.deepEqual(statistics.state.statistics.services.get(serviceIndex), expectedStatistics);
+      assert.deepEqual(state.statistics.services.get(serviceIndex), expectedStatistics);
     });
 
     it("should update on transfer score of service statistics based on on transfer statistics", () => {
@@ -542,7 +558,7 @@ describe("Statistics", () => {
 
       assert.deepEqual(statistics.state.statistics.services.get(serviceIndex), serviceStatistics.get(serviceIndex));
 
-      statistics.transition({
+      const update = statistics.transition({
         slot: currentSlot,
         authorIndex: validatorIndex,
         extrinsic: getExtrinsic(),
@@ -551,8 +567,9 @@ describe("Statistics", () => {
         accumulationStatistics: new Map(),
         transferStatistics,
       });
+      const state = copyAndUpdateState(statistics.state, update);
 
-      assert.deepEqual(statistics.state.statistics.services.get(serviceIndex), expectedStatistics);
+      assert.deepEqual(state.statistics.services.get(serviceIndex), expectedStatistics);
     });
   });
 });

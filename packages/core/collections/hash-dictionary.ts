@@ -1,8 +1,27 @@
 import type { OpaqueHash } from "@typeberry/hash";
 import type { Comparator } from "@typeberry/ordering";
 
+/** Immutable view of the `HashDictionary`. */
+export interface ImmutableHashDictionary<K extends OpaqueHash, V> extends Iterable<[K, V]> {
+  /** Return number of items in the dictionary. */
+  get size(): number;
+  /** Return true if the key is present in the dictionary. */
+  has(key: K): boolean;
+  /** Get the value under given key or `undefined` if the value is not present. */
+  get(key: K): V | undefined;
+
+  /** Iterator over keys of the dictionary. */
+  keys(): Generator<K>;
+
+  /** Iterator over values of the dictionary. */
+  values(): Generator<V>;
+
+  /** Returns an array of the map's values, sorted by their corresponding keys */
+  toSortedArray(compare: Comparator<K>): V[];
+}
+
 /** A map which uses hashes as keys. */
-export class HashDictionary<K extends OpaqueHash, V> {
+export class HashDictionary<K extends OpaqueHash, V> implements ImmutableHashDictionary<K, V> {
   // TODO [ToDr] [crit] We can't use `TrieHash` directly in the map,
   // because of the way it's being compared. Hence having `string` here.
   // This has to be benchmarked and re-written to a custom map most likely.
@@ -24,19 +43,41 @@ export class HashDictionary<K extends OpaqueHash, V> {
     return dict;
   }
 
-  /** Return number of items in the dictionary. */
   get size(): number {
     return this.map.size;
   }
 
-  /** Return true if the key is present in the dictionary. */
   has(key: K): boolean {
     return this.map.has(key.toString());
   }
 
-  /** Get the value under given key or `null` if the value is not present. */
   get(key: K): V | undefined {
     return this.map.get(key.toString())?.[1];
+  }
+
+  /** it allows to use HashDictionary in for-of loop */
+  *[Symbol.iterator]() {
+    for (const value of this.map.values()) {
+      yield value;
+    }
+  }
+
+  *keys() {
+    for (const value of this.map.values()) {
+      yield value[0];
+    }
+  }
+
+  *values() {
+    for (const value of this.map.values()) {
+      yield value[1];
+    }
+  }
+
+  toSortedArray(compare: Comparator<K>): V[] {
+    const vals = Array.from(this.map.values());
+    vals.sort((a, b) => compare(a[0], b[0]).value);
+    return vals.map((x) => x[1]);
   }
 
   /** Insert/overwrite the value at given key. */
@@ -51,33 +92,5 @@ export class HashDictionary<K extends OpaqueHash, V> {
    */
   delete(key: K) {
     return this.map.delete(key.toString());
-  }
-
-  /** it allows to use HashDictionary in for-of loop */
-  *[Symbol.iterator]() {
-    for (const value of this.map.values()) {
-      yield value;
-    }
-  }
-
-  /** Iterator over keys of the dictionary. */
-  *keys() {
-    for (const value of this.map.values()) {
-      yield value[0];
-    }
-  }
-
-  /** Iterator over values of the dictionary. */
-  *values() {
-    for (const value of this.map.values()) {
-      yield value[1];
-    }
-  }
-
-  /** Returns an array of the map's values, sorted by their corresponding keys */
-  toSortedArray(compare: Comparator<K>): V[] {
-    const vals = Array.from(this.map.values());
-    vals.sort((a, b) => compare(a[0], b[0]).value);
-    return vals.map((x) => x[1]);
   }
 }

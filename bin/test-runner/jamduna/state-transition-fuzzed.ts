@@ -30,7 +30,7 @@ const keccakHasher = keccak.KeccakHasher.create();
 export async function runStateTransitionFuzzed(testContent: StateTransitionFuzzed, testPath: string) {
   const fileName = path.basename(testPath);
   const spec = tinyChainSpec;
-  const preState = loadState(testContent.pre_state.keyvals);
+  const preState = loadState(spec, testContent.pre_state.keyvals);
   const preStateSerialized = serializeState(preState, spec);
 
   const preStateRoot = merkelizeState(preStateSerialized);

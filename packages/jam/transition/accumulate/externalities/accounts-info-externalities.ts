@@ -1,21 +1,21 @@
 import type { ServiceId } from "@typeberry/block";
 import type { AccountsInfo } from "@typeberry/jam-host-calls/info.js";
-import type { Service, ServiceAccountInfo } from "@typeberry/state";
+import type { ServiceAccountInfo, State } from "@typeberry/state";
 
 export class AccountsInfoExternalities implements AccountsInfo {
-  constructor(private services: Map<ServiceId, Service>) {}
+  constructor(private state: Pick<State, "getService">) {}
 
   async getInfo(serviceId: ServiceId | null): Promise<ServiceAccountInfo | null> {
     if (serviceId === null) {
       return null;
     }
 
-    const service = this.services.get(serviceId);
+    const service = this.state.getService(serviceId);
 
-    if (service === undefined) {
+    if (service === null) {
       return null;
     }
 
-    return service.data.info;
+    return service.getInfo();
   }
 }

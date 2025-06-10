@@ -7,20 +7,22 @@ import {
   BLS_KEY_BYTES,
   type EntropyHash,
   type PerValidator,
+  type WorkReportHash,
   tryAsTimeSlot,
 } from "@typeberry/block";
-import { type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
+import { type SignedTicket, type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Ordering } from "@typeberry/ordering";
-import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
+import { DisputesRecords, hashComparator, VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
 import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
 import bandersnatch from "./bandersnatch.js";
-import { Safrole, SafroleErrorCode, type SafroleState } from "./safrole.js";
+import { Safrole, SafroleErrorCode, SafroleStateUpdate, type SafroleState } from "./safrole.js";
+import {deepEqual, Result} from "@typeberry/utils";
 
 const bwasm = BandernsatchWasm.new({ synchronous: true });
 
@@ -123,12 +125,12 @@ describe("Safrole", () => {
     const safrole = new Safrole(tinyChainSpec, state, bwasm);
     const timeslot = tryAsTimeSlot(2);
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
-    const extrinsic: TicketsExtrinsic = asKnownSize([]);
+    const extrinsic: SignedTicket[] = [];
     extrinsic.length = tinyChainSpec.epochLength + 1;
     const input = {
       slot: timeslot,
       entropy,
-      extrinsic,
+      extrinsic: asKnownSize(extrinsic),
     };
 
     const result = await safrole.transition(input);
@@ -184,9 +186,7 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      disputesRecords: {
-        punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
-      },
+      disputesRecords: emptyDisputesRecords(),
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
@@ -237,9 +237,7 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      disputesRecords: {
-        punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
-      },
+      disputesRecords: emptyDisputesRecords(),
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
@@ -294,9 +292,7 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      disputesRecords: {
-        punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
-      },
+      disputesRecords: emptyDisputesRecords(),
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
@@ -345,9 +341,7 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      disputesRecords: {
-        punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
-      },
+      disputesRecords: emptyDisputesRecords(),
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
@@ -370,12 +364,24 @@ describe("Safrole", () => {
 
     const result = await safrole.transition(input);
 
-    assert.deepEqual(result.isOk, true);
-    if (result.isOk) {
-      assert.deepStrictEqual(result.ok, {
+    deepEqual(
+      result,
+      Result.ok({
+        // we are ignoring that result anyway, so safe to cast.
+        stateUpdate: {} as SafroleStateUpdate,
         epochMark: null,
         ticketsMark: null,
-      });
-    }
+      }),
+      { ignore: ["ok.stateUpdate"] },
+    );
   });
 });
+
+function emptyDisputesRecords(): DisputesRecords {
+  return DisputesRecords.create({
+    wonkySet: SortedSet.fromArray<WorkReportHash>(hashComparator, []),
+    badSet: SortedSet.fromArray<WorkReportHash>(hashComparator, []),
+    goodSet: SortedSet.fromArray<WorkReportHash>(hashComparator, []),
+    punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
+  });
+}

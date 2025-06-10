@@ -2,7 +2,7 @@ import type { StateRootHash } from "@typeberry/block";
 import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { StatesDb } from "@typeberry/database";
-import type { State } from "@typeberry/state";
+import type { InMemoryState } from "@typeberry/state";
 import { stateDumpCodec } from "@typeberry/state-merkleization/dump.js";
 import type { LmdbRoot, SubDb } from "./root.js";
 
@@ -16,12 +16,12 @@ export class LmdbStates implements StatesDb {
     this.states = this.root.subDb("states");
   }
 
-  async insertFullState(root: StateRootHash, state: State): Promise<void> {
+  async insertFullState(root: StateRootHash, state: InMemoryState): Promise<void> {
     const encoded = Encoder.encodeObject(stateDumpCodec, state, this.spec);
     this.states.put(root.raw, encoded.raw);
   }
 
-  getFullState(root: StateRootHash): State | null {
+  getFullState(root: StateRootHash): InMemoryState | null {
     const encodedState = this.states.get(root.raw);
     if (encodedState === undefined) {
       return null;

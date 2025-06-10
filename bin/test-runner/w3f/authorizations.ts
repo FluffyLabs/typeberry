@@ -3,11 +3,8 @@ import { fromJson } from "@typeberry/block-json";
 import type { AuthorizerHash } from "@typeberry/block/work-report.js";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import { type FromJson, json } from "@typeberry/json-parser";
-import {
-  Authorization,
-  type AuthorizationInput,
-  type AuthorizationState,
-} from "@typeberry/transition/authorization.js";
+import { Authorization, type AuthorizationInput, type AuthorizationState } from "@typeberry/transition/authorization.js";
+import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { deepEqual } from "@typeberry/utils";
 import { getChainSpec } from "./spec.js";
 
@@ -80,7 +77,8 @@ export async function runAuthorizationsTest(test: AuthorizationsTest, path: stri
   const chainSpec = getChainSpec(path);
 
   const authorization = new Authorization(chainSpec, test.pre_state);
-  authorization.transition(test.input);
+  const update = authorization.transition(test.input);
+  const result = copyAndUpdateState(test.pre_state, update);
 
-  deepEqual(test.post_state, authorization.state);
+  deepEqual(result, test.post_state);
 }

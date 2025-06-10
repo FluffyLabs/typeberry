@@ -1,13 +1,16 @@
 import { type CoreIndex, type TimeSlot, tryAsCoreIndex } from "@typeberry/block";
 import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
 import type { AuthorizerHash } from "@typeberry/block/work-report.js";
+import {asKnownSize} from "@typeberry/collections";
 import type { HashSet } from "@typeberry/collections/hash-set.js";
 import type { ChainSpec } from "@typeberry/config";
-import type { State } from "@typeberry/state";
-import { asOpaqueType } from "@typeberry/utils";
+import { type State, tryAsPerCore } from "@typeberry/state";
 
 /** Authorization state. */
 export type AuthorizationState = Pick<State, "authPools" | "authQueues">;
+
+/** Authorization state update. */
+export type AuthorizationStateUpdate = Pick<AuthorizationState, "authPools">;
 
 /** Input to the authorization. */
 export type AuthorizationInput = {
@@ -46,22 +49,21 @@ export class Authorization {
    *
    * https://graypaper.fluffylabs.dev/#/68eaa1f/103e00103f00?v=0.6.4
    */
-  transition(input: AuthorizationInput) {
+  transition(input: AuthorizationInput): AuthorizationStateUpdate {
+    const authPoolsUpdate = this.state.authPools.slice();
     // we transition authorizations for each core.
     for (let coreIndex = tryAsCoreIndex(0); coreIndex < this.chainSpec.coresCount; coreIndex++) {
-      let pool = this.state.authPools[coreIndex];
+      let pool = authPoolsUpdate[coreIndex].slice();
       // the queue is only read (we should most likely use `ArrayView` here).
       const queue = this.state.authQueues[coreIndex];
       // if there were any used hashes - remove them
       const usedHashes = input.used.get(coreIndex);
       if (usedHashes !== undefined) {
-        pool = asOpaqueType(
-          pool.filter((x) => {
-            // we only remove the left-most first occurrence.
-            const wasRemoved = usedHashes.delete(x);
-            return !wasRemoved;
-          }),
-        );
+        pool = pool.filter((x) => {
+          // we only remove the left-most first occurrence.
+          const wasRemoved = usedHashes.delete(x);
+          return !wasRemoved;
+        });
       }
 
       // fill the pool with authorizer for current slot.
@@ -73,7 +75,11 @@ export class Authorization {
       }
 
       // assign back to state
-      this.state.authPools[coreIndex] = pool;
+      authPoolsUpdate[coreIndex] = asKnownSize(pool);
     }
+
+    return {
+      authPools: tryAsPerCore(authPoolsUpdate, this.chainSpec),
+    };
   }
 }

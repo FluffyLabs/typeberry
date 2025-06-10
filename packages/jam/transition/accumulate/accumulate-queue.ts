@@ -8,8 +8,8 @@ import { getWorkPackageHashes } from "./accumulate-utils.js";
 
 export class AccumulateQueue {
   constructor(
-    public readonly state: AccumulateState,
     public readonly chainSpec: ChainSpec,
+    public readonly state: AccumulateState,
   ) {}
 
   /**
@@ -101,7 +101,7 @@ export class AccumulateQueue {
  *
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/164501164501?v=0.6.7
  */
-export function pruneQueue(reports: NotYetAccumulatedReport[], processedHashes: HashSet<WorkPackageHash>) {
+export function pruneQueue(reports: readonly NotYetAccumulatedReport[], processedHashes: HashSet<WorkPackageHash>) {
   return reports
     .filter(({ report }) => !processedHashes.has(report.workPackageSpec.hash))
     .map((item) => {

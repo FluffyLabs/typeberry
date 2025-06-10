@@ -7,6 +7,7 @@ import {
   EpochMarker,
   type TimeSlot,
   type ValidatorKeys,
+  type WorkReportHash,
   tryAsPerEpochBlock,
   tryAsPerValidator,
   tryAsTimeSlot,
@@ -21,9 +22,10 @@ import { type FromJson, json } from "@typeberry/json-parser";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js";
 import { type Input, type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole.js";
-import { ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
+import { DisputesRecords, ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";
 import { TicketsOrKeys, ticketFromJson } from "@typeberry/state-json";
 import { validatorDataFromJson } from "@typeberry/state-json";
+import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { Result, deepEqual } from "@typeberry/utils";
 import { getChainSpec } from "./spec.js";
 namespace safroleFromJson {
@@ -99,9 +101,12 @@ class JsonState {
       ticketsAccumulator: asKnownSize(state.gamma_a),
       sealingKeySeries: TicketsOrKeys.toSafroleSealingKeys(state.gamma_s, chainSpec),
       epochRoot: state.gamma_z.asOpaque(),
-      disputesRecords: {
+      disputesRecords: DisputesRecords.create({
+        goodSet: SortedSet.fromSortedArray<WorkReportHash>(hashComparator, []),
+        badSet: SortedSet.fromSortedArray<WorkReportHash>(hashComparator, []),
+        wonkySet: SortedSet.fromSortedArray<WorkReportHash>(hashComparator, []),
         punishSet: SortedSet.fromSortedArray(hashComparator, state.post_offenders),
-      },
+      }),
     };
   }
 }
@@ -136,7 +141,7 @@ export class Output {
   ok?: OkOutput;
   err?: TestErrorCode;
 
-  static toSafroleOutput(output: Output, spec: ChainSpec): Result<OkResult, SafroleErrorCode> {
+  static toSafroleOutput(output: Output, spec: ChainSpec): Result<Omit<OkResult, "stateUpdate">, SafroleErrorCode> {
     if (output.err !== undefined) {
       return Result.error(Output.toSafroleErrorCode(output.err));
     }
@@ -222,6 +227,21 @@ export async function runSafroleTest(testContent: SafroleTest, path: string) {
 
   const result = await safrole.transition(testContent.input);
 
-  deepEqual(result, Output.toSafroleOutput(testContent.output, chainSpec));
-  deepEqual(safrole.state, JsonState.toSafroleState(testContent.post_state, chainSpec));
+  const expectedResult = Output.toSafroleOutput(testContent.output, chainSpec);
+  const expectedState = JsonState.toSafroleState(testContent.post_state, chainSpec);
+
+  if (result.isError) {
+    deepEqual(result, expectedResult);
+    deepEqual(safrole.state, expectedState);
+  } else {
+    const state = copyAndUpdateState(safrole.state, result.ok.stateUpdate);
+    deepEqual(
+      Result.ok({
+        epochMark: result.ok.epochMark,
+        ticketsMark: result.ok.ticketsMark,
+      }),
+      expectedResult,
+    );
+    deepEqual(state, expectedState);
+  }
 }

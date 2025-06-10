@@ -56,8 +56,7 @@ export type CountAndGasUsed = {
 };
 
 /** https://graypaper.fluffylabs.dev/#/68eaa1f/18f60118f601?v=0.6.4 */
-export type StatisticsState = Pick<State, "timeslot"> & {
-  statistics: State["statistics"];
+export type StatisticsState = Pick<State, "timeslot" | "statistics"> & {
   /**
    * `κ' kappa_prime`: Posterior active validators
    *
@@ -65,6 +64,9 @@ export type StatisticsState = Pick<State, "timeslot"> & {
    */
   readonly currentValidatorData: State["currentValidatorData"];
 };
+
+/** Update to the statistics state. */
+export type StatisticsStateUpdate = Pick<StatisticsState, "statistics">;
 
 export class Statistics {
   constructor(
@@ -204,7 +206,7 @@ export class Statistics {
    * https://graypaper.fluffylabs.dev/#/68eaa1f/19fc0019fc00?v=0.6.4
    * https://graypaper.fluffylabs.dev/#/68eaa1f/199002199002?v=0.6.4
    */
-  transition(input: Input) {
+  transition(input: Input): StatisticsStateUpdate {
     const { slot, authorIndex, extrinsic, incomingReports, availableReports } = input;
 
     /** get statistics for the current epoch */
@@ -296,8 +298,6 @@ export class Statistics {
     );
 
     for (const serviceId of serviceIds) {
-      const serviceStatistics = ServiceStatistics.empty();
-
       const workResults = incomingReports.flatMap((wr) => wr.results.filter((r) => r.serviceId === serviceId));
       const { gasUsed, imported, extrinsicCount, extrinsicSize, exported } = this.calculateRefineScore(workResults);
 
@@ -318,6 +318,7 @@ export class Statistics {
        * Service statistics are tracked only per-block basis, so we override previous values.
        * https://graypaper.fluffylabs.dev/#/cc517d7/190201190501?v=0.6.5
        */
+      const serviceStatistics = ServiceStatistics.empty();
       serviceStatistics.refinementCount = tryAsU32(workResults.length);
       serviceStatistics.refinementGasUsed = gasUsed;
       serviceStatistics.imports = imported;
@@ -337,6 +338,8 @@ export class Statistics {
     }
 
     /** Update state */
-    this.state.statistics = statistics;
+    return {
+      statistics,
+    };
   }
 }

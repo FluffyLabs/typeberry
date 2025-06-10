@@ -9,7 +9,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import type { State } from "@typeberry/state";
+import type { InMemoryState } from "@typeberry/state";
 import { InMemoryTrie, WriteableNodesDb } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { WithDebug, asOpaqueType } from "@typeberry/utils";
@@ -45,7 +45,7 @@ export function merkelizeState(state: SerializedState): StateRootHash {
 }
 
 /** https://graypaper.fluffylabs.dev/#/68eaa1f/38a50038a500?v=0.6.4 */
-export function serializeState(state: State, spec: ChainSpec): SerializedState {
+export function serializeState(state: InMemoryState, spec: ChainSpec): SerializedState {
   const raw: StateEntry[] = [];
   function doSerialize<T>(codec: StateCodec<T>) {
     raw.push(
@@ -70,11 +70,10 @@ export function serializeState(state: State, spec: ChainSpec): SerializedState {
   doSerialize(serialize.recentlyAccumulated); // C(15)
 
   // services
-  for (const service of state.services.values()) {
-    const serviceId = service.id;
+  for (const [serviceId, service] of state.services.entries()) {
     // data
     const { key, Codec } = serialize.serviceData(serviceId);
-    raw.push(StateEntry.create({ key, value: Encoder.encodeObject(Codec, service.data.info) }));
+    raw.push(StateEntry.create({ key, value: Encoder.encodeObject(Codec, service.getInfo()) }));
 
     // preimages
     for (const preimage of service.data.preimages.values()) {
@@ -83,7 +82,7 @@ export function serializeState(state: State, spec: ChainSpec): SerializedState {
     }
 
     // storage
-    for (const storage of service.data.storage) {
+    for (const storage of service.data.storage.values()) {
       const { key, Codec } = serialize.serviceStorage(serviceId, storage.hash);
       raw.push(StateEntry.create({ key, value: Encoder.encodeObject(Codec, storage.blob) }));
     }
@@ -92,7 +91,7 @@ export function serializeState(state: State, spec: ChainSpec): SerializedState {
     for (const lookupHistoryList of service.data.lookupHistory.values()) {
       for (const lookupHistory of lookupHistoryList) {
         const { key, Codec } = serialize.serviceLookupHistory(serviceId, lookupHistory.hash, lookupHistory.length);
-        raw.push(StateEntry.create({ key, value: Encoder.encodeObject(Codec, lookupHistory.slots) }));
+        raw.push(StateEntry.create({ key, value: Encoder.encodeObject(Codec, lookupHistory.slots.slice()) }));
       }
     }
   }

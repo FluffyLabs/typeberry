@@ -19,7 +19,8 @@ import {
   type BlockState,
   type CoreStatistics,
   ENTROPY_ENTRIES,
-  type Service,
+  type InMemoryService,
+  InMemoryState,
   type ValidatorData,
   tryAsPerCore,
 } from "@typeberry/state";
@@ -40,7 +41,10 @@ import {
   type ReportsState,
 } from "@typeberry/transition/reports/index.js";
 import { guaranteesAsView } from "@typeberry/transition/reports/test.utils.js";
+import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { Result, asOpaqueType, deepEqual } from "@typeberry/utils";
+
+type TestReportsOutput = Omit<ReportsOutput, "stateUpdate">;
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -85,7 +89,7 @@ class TestState {
   offenders!: Ed25519Key[];
   auth_pools!: AuthorizerHash[][];
   recent_blocks!: BlockState[];
-  accounts!: Service[];
+  accounts!: InMemoryService[];
   cores_statistics!: CoreStatistics[];
   services_statistics!: ServiceStatisticsEntry[];
 
@@ -96,7 +100,7 @@ class TestState {
       throw new Error("Ignoring non-empty offenders!");
     }
 
-    return {
+    return InMemoryState.partial(spec, {
       accumulationQueue: tryAsPerEpochBlock(
         FixedSizeArray.fill(() => [], spec.epochLength),
         spec,
@@ -115,7 +119,7 @@ class TestState {
       ),
       recentBlocks: asOpaqueType(pre.recent_blocks),
       services: new Map(pre.accounts.map((x) => [x.id, x])),
-    };
+    });
   }
 }
 
@@ -146,12 +150,13 @@ enum ReportsErrorCode {
 }
 
 class OutputData {
-  static fromJson = json.object<OutputData, ReportsOutput>(
+  static fromJson = json.object<OutputData, TestReportsOutput>(
     {
       reported: json.array(segmentRootLookupItemFromJson),
       reporters: json.array(fromJson.bytes32()),
     },
     ({ reported, reporters }) => ({
+      stateUpdate: {},
       reported: HashDictionary.fromEntries(reported.map((x) => [x.workPackageHash, x])),
       reporters,
     }),
@@ -161,7 +166,7 @@ class OutputData {
   reporters!: ReportsOutput["reporters"];
 }
 
-type ReportsResult = Result<ReportsOutput, ReportsError>;
+type ReportsResult = Result<TestReportsOutput, ReportsError>;
 
 class TestReportsResult {
   static fromJson: FromJson<TestReportsResult> = {
@@ -210,7 +215,7 @@ class TestReportsResult {
     throw new Error('Neither "ok" nor "err" is defined in output.');
   }
 
-  ok?: ReportsOutput;
+  ok?: TestReportsOutput;
   err?: ReportsErrorCode;
 }
 
@@ -258,7 +263,11 @@ async function runReportsTest(testContent: ReportsTest, spec: ChainSpec) {
   const reports = new Reports(spec, preState, hasher, headerChain);
 
   const output = await reports.transition(input);
+  let state = reports.state;
+  if (output.isOk) {
+    state = copyAndUpdateState(state, output.ok.stateUpdate);
+  }
 
-  deepEqual(output, expectedOutput, { context: "output", ignore: ["output.details"] });
-  deepEqual(reports.state, postState, { context: "postState" });
+  deepEqual(output, expectedOutput, { context: "output", ignore: ["output.details", "output.ok.stateUpdate"] });
+  deepEqual(state, postState, { context: "postState" });
 }

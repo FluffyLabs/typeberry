@@ -30,8 +30,11 @@ export function getWorkPackageHashes(reports: WorkReport[]): HashSet<WorkPackage
 }
 
 type NextServiceIdInput = {
+  /** currently accumulated service */
   serviceId: ServiceId;
+  /** `eta_0'` */
   entropy: EntropyHash;
+  /** `H_t`: time slot of the header. */
   timeslot: TimeSlot;
 };
 

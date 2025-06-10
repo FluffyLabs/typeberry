@@ -14,6 +14,7 @@ import {
   type AssurancesInput,
   type AssurancesState,
 } from "@typeberry/transition/assurances.js";
+import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { Result, deepEqual } from "@typeberry/utils";
 
 class Input {
@@ -175,9 +176,16 @@ async function runAssurancesTest(
     expectedResult.error = AssurancesError.InvalidOrder;
   }
 
-  deepEqual(res, expectedResult, {
-    context: "output",
-    ignore: ["output.details"],
-  });
-  deepEqual(assurances.state, postState, { context: "state" });
+  if (res.isError) {
+    deepEqual(res, expectedResult, {
+      context: "output",
+      ignore: ["output.details"],
+    });
+    deepEqual(assurances.state, postState, { context: "state" });
+  } else {
+    const { availableReports, stateUpdate } = res.ok;
+    const result = copyAndUpdateState(preState, stateUpdate);
+    deepEqual(Result.ok(availableReports), expectedResult);
+    deepEqual(result, postState, { context: "state" });
+  }
 }

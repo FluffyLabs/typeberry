@@ -1,19 +1,15 @@
-import {
-  type EntropyHash,
-  type ServiceId,
-  type TimeSlot,
-  tryAsPerEpochBlock,
-  tryAsServiceGas,
-  tryAsServiceId,
-} from "@typeberry/block";
+import assert from "node:assert";
+import { type EntropyHash, type TimeSlot, tryAsPerEpochBlock, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report.js";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { AutoAccumulate, NotYetAccumulatedReport, PrivilegedServices, type Service } from "@typeberry/state";
+import type { InMemoryService } from "@typeberry/state";
+import { AutoAccumulate, InMemoryState, PrivilegedServices } from "@typeberry/state";
 import { JsonService } from "@typeberry/state-json/accounts.js";
-import { Accumulate, type AccumulateRoot, type AccumulateState } from "@typeberry/transition/accumulate/index.js";
+import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
+import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
 import { Result, deepEqual } from "@typeberry/utils";
 import { getChainSpec } from "./spec.js";
 
@@ -64,18 +60,13 @@ class TestState {
     designate: number;
     always_acc: { id: number; gas: number }[];
   };
-  accounts!: Service[];
+  accounts!: InMemoryService[];
 
   static toAccumulateState(
     { accounts, slot, ready_queue, accumulated, privileges }: TestState,
     chainSpec: ChainSpec,
-  ): AccumulateState {
-    const services: Map<ServiceId, Service> = new Map();
-
-    for (const service of accounts) {
-      services.set(service.id, service);
-    }
-    return {
+  ): InMemoryState {
+    return InMemoryState.partial(chainSpec, {
       timeslot: slot,
       accumulationQueue: tryAsPerEpochBlock(
         ready_queue.map((queue) =>
@@ -97,8 +88,8 @@ class TestState {
           AutoAccumulate.create({ gasLimit: tryAsServiceGas(gas), service: tryAsServiceId(id) }),
         ),
       }),
-      services,
-    };
+      services: new Map(accounts.map((service) => [service.id, service])),
+    });
   }
 }
 
@@ -139,9 +130,16 @@ export async function runAccumulateTest(test: AccumulateTest, path: string) {
    */
   const entropy = test.pre_state.entropy;
 
-  const accumulate = new Accumulate(chainSpec, TestState.toAccumulateState(test.pre_state, chainSpec));
+  const state = TestState.toAccumulateState(test.pre_state, chainSpec);
+  const accumulate = new Accumulate(chainSpec, state);
   const result = await accumulate.transition({ ...test.input, entropy });
 
-  deepEqual(TestState.toAccumulateState(test.post_state, chainSpec), accumulate.state);
-  deepEqual(test.output.ok, result);
+  if (result.isError) {
+    assert.fail(`Expected successfull accumulation, got: ${result}`);
+  }
+
+  state.applyUpdate(result.ok.stateUpdate);
+
+  deepEqual(state, TestState.toAccumulateState(test.post_state, chainSpec));
+  deepEqual(result.ok.root, test.output.ok);
 }

@@ -4,18 +4,20 @@ import { fromJson, preimagesExtrinsicFromJson } from "@typeberry/block-json";
 import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
+import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
+  InMemoryService,
+  InMemoryState,
   LookupHistoryItem,
   PreimageItem,
-  Service,
   ServiceAccountInfo,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { Preimages, type PreimagesErrorCode } from "@typeberry/transition";
-import { OK, Result } from "@typeberry/utils";
+import { OK, Result, deepEqual } from "@typeberry/utils";
 
 class Input {
   static fromJson: FromJson<Input> = {
@@ -98,30 +100,33 @@ export class PreImagesTest {
 }
 
 export async function runPreImagesTest(testContent: PreImagesTest) {
-  const preState = {
+  const preState = InMemoryState.partial(tinyChainSpec, {
     services: new Map(
       testContent.pre_state.accounts.map((account) => [
         tryAsServiceId(account.id),
         testAccountsMapEntryToAccount(account),
       ]),
     ),
-  };
-  const postState = {
+  });
+  const postState = InMemoryState.partial(tinyChainSpec, {
     services: new Map(
       testContent.post_state.accounts.map((account) => [
         tryAsServiceId(account.id),
         testAccountsMapEntryToAccount(account),
       ]),
     ),
-  };
+  });
   const preimages = new Preimages(preState);
   const result = preimages.integrate(testContent.input);
 
-  assert.deepEqual(result, testOutputToResult(testContent.output));
-  assert.deepEqual(preimages.state, postState);
+  deepEqual(result, testOutputToResult(testContent.output), { ignore: ["ok"] });
+  if (result.isOk) {
+    preState.applyUpdate(result.ok);
+  }
+  assert.deepEqual(preState, postState);
 }
 
-function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Service {
+function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): InMemoryService {
   const preimages = HashDictionary.fromEntries(
     entry.data.preimages
       .map((x) => {
@@ -139,7 +144,7 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Service {
     lookupHistory.set(item.key.hash, arr);
   }
 
-  return new Service(tryAsServiceId(entry.id), {
+  return new InMemoryService(tryAsServiceId(entry.id), {
     info: ServiceAccountInfo.create({
       codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
       balance: tryAsU64(0),
@@ -148,12 +153,16 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): Service {
       storageUtilisationBytes: tryAsU64(0),
       storageUtilisationCount: tryAsU32(0),
     }),
-    storage: [],
+    storage: HashDictionary.new(),
     preimages,
     lookupHistory,
   });
 }
 
-function testOutputToResult(testOutput: Output): Result<OK, PreimagesErrorCode> {
-  return testOutput.err !== undefined ? Result.error(testOutput.err) : Result.ok(OK);
+function testOutputToResult(testOutput: Output): ReturnType<Preimages["integrate"]> {
+  return testOutput.err !== undefined
+    ? Result.error(testOutput.err)
+    : Result.ok({
+        preimages: [],
+      });
 }

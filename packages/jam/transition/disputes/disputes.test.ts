@@ -287,7 +287,7 @@ describe("Disputes", () => {
 
     const result = await disputes.transition(disputesExtrinsic);
     const error = result.isError ? result.error : undefined;
-    const ok = result.isOk ? result.ok.slice() : undefined;
+    const ok = result.isOk ? result.ok.offendersMark.slice() : undefined;
 
     assert.strictEqual(error, undefined);
     assert.deepStrictEqual(ok, offenders);
@@ -303,7 +303,7 @@ describe("Disputes", () => {
 
     const result = await disputes.transition(disputesExtrinsic);
     const error = result.isError ? result.error : undefined;
-    const ok = result.isOk ? result.ok.slice() : undefined;
+    const ok = result.isOk ? result.ok.offendersMark.slice() : undefined;
 
     assert.strictEqual(error, DisputesErrorCode.BadValidatorIndex);
     assert.strictEqual(ok, undefined);

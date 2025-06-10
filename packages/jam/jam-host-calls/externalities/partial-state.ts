@@ -229,7 +229,7 @@ export interface PartialState {
   /**
    * Update priviliged services and their gas.
    *
-   * `m`: manager service (can change priviledged services)
+   * `m`: manager service (can change privileged services)
    * `a`: manages authorization queue
    * `v`: manages validator keys
    * `g`: collection of serviceId -> gas that auto-accumulate every block

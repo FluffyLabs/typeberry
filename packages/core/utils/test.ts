@@ -55,8 +55,10 @@ export function deepEqual<T>(
           ].join("\n"),
         );
       }
+      const actualDisp = actual === null || actual === undefined ? actual : `${actual}`;
+      const expectedDisp = expected === null || expected === undefined ? expected : `${expected}`;
 
-      assert.strictEqual(actual, expected, message);
+      assert.strictEqual(actualDisp, expectedDisp, message);
     }, ctx);
     return errors.exitOrThrow();
   }

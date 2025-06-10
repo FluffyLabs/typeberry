@@ -16,8 +16,9 @@ import type { ChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { type FromJson, json } from "@typeberry/json-parser";
 import {
+  type InMemoryService,
+  InMemoryState,
   PrivilegedServices,
-  type Service,
   type State,
   VALIDATOR_META_BYTES,
   ValidatorData,
@@ -67,11 +68,11 @@ type JsonStateDump = {
   pi: JsonStatisticsData;
   theta: State["accumulationQueue"];
   xi: PerEpochBlock<WorkPackageHash[]>;
-  accounts: Service[];
+  accounts: InMemoryService[];
 };
 
 export const fullStateDumpFromJson = (spec: ChainSpec) =>
-  json.object<JsonStateDump, State>(
+  json.object<JsonStateDump, InMemoryState>(
     {
       alpha: json.array(json.array(fromJson.bytes32<AuthorizerHash>())),
       varphi: json.array(json.array(fromJson.bytes32<AuthorizerHash>())),
@@ -105,8 +106,25 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
       xi: json.array(json.array(fromJson.bytes32())),
       accounts: json.array(JsonService.fromJson),
     },
-    ({ alpha, varphi, beta, gamma, psi, eta, iota, kappa, lambda, rho, tau, chi, pi, theta, xi, accounts }): State => {
-      return {
+    ({
+      alpha,
+      varphi,
+      beta,
+      gamma,
+      psi,
+      eta,
+      iota,
+      kappa,
+      lambda,
+      rho,
+      tau,
+      chi,
+      pi,
+      theta,
+      xi,
+      accounts,
+    }): InMemoryState => {
+      return InMemoryState.create({
         authPools: tryAsPerCore(
           alpha.map((perCore) => {
             if (perCore.length > MAX_AUTH_POOL_SIZE) {
@@ -150,6 +168,6 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           spec,
         ),
         services: new Map(accounts.map((x) => [x.id, x])),
-      };
+      });
     },
   );

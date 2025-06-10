@@ -9,14 +9,16 @@ import {
 } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
+import type { AuthorizerHash } from "@typeberry/block/work-report.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { type FixedSizeArray, HashDictionary } from "@typeberry/collections";
-import { type Blake2bHash, HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
+import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type U64, maxU64, sumU32, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
+  InMemoryService,
   LookupHistoryItem,
   PreimageItem,
-  Service,
+  type Service,
   ServiceAccountInfo,
   type State,
   type ValidatorData,
@@ -36,7 +38,7 @@ import {
   slotsToPreimageStatus,
 } from "./partial-state.js";
 import { PendingTransfer } from "./pending-transfer.js";
-import { StateUpdate } from "./state-update.js";
+import { AccumulationStateUpdate } from "./state-update.js";
 
 /**
  * `D`: Period in timeslots after which an unreferenced preimage may be expunged.
@@ -55,30 +57,31 @@ export const PREIMAGE_EXPUNGE_PERIOD = 19200;
  * https://graypaper.fluffylabs.dev/#/9a08063/370202370502?v=0.6.6 */
 const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 
-type StateSlice = Pick<State, "services" | "timeslot">;
+type StateSlice = Pick<State, "getService" | "timeslot">;
+
 export class PartialStateDb implements PartialState {
-  public readonly updatedState: StateUpdate = new StateUpdate();
-  private checkpointedState: StateUpdate | null = null;
+  public readonly updatedState: AccumulationStateUpdate;
+  private checkpointedState: AccumulationStateUpdate | null = null;
+  /** `x_i`: next service id we are going to create. */
   private nextNewServiceId: ServiceId;
 
   constructor(
     private readonly state: StateSlice,
     /** `x_s` */
     private readonly currentServiceId: ServiceId,
-    /** `x_i`: next service id we are going to create. */
     nextNewServiceIdCandidate: ServiceId,
   ) {
-    const service = this.state.services.get(this.currentServiceId);
-
+    this.updatedState = new AccumulationStateUpdate(currentServiceId);
     this.nextNewServiceId = this.getNextAvailableServiceId(nextNewServiceIdCandidate);
 
-    if (service === undefined) {
+    const service = this.state.getService(this.currentServiceId);
+    if (service === null) {
       throw new Error(`Invalid state initialization. Service info missing for ${this.currentServiceId}.`);
     }
   }
 
   /** Return the underlying state update and checkpointed state (if any). */
-  public getStateUpdates(): [StateUpdate, StateUpdate | null] {
+  public getStateUpdates(): [AccumulationStateUpdate, AccumulationStateUpdate | null] {
     return [this.updatedState, this.checkpointedState];
   }
 
@@ -97,13 +100,13 @@ export class PartialStateDb implements PartialState {
       return this.updatedState.updatedServiceInfo;
     }
 
-    const maybeService = this.state.services.get(this.currentServiceId);
-    const service = ensure<Service | undefined, Service>(
+    const maybeService = this.state.getService(this.currentServiceId);
+    const service = ensure<Service | null, Service>(
       maybeService,
-      maybeService !== undefined,
+      maybeService !== null,
       "Service existence in state validated in constructor.",
     );
-    return service.data.info;
+    return service.getInfo();
   }
 
   /**
@@ -132,11 +135,11 @@ export class PartialStateDb implements PartialState {
       return maybeNewService.data.info;
     }
 
-    const maybeService = this.state.services.get(destination);
-    if (maybeService === undefined) {
+    const maybeService = this.state.getService(destination);
+    if (maybeService === null) {
       return null;
     }
-    return maybeService.data.info;
+    return maybeService.getInfo();
   }
 
   /** Get status of a preimage of current service taking into account any updates. */
@@ -148,8 +151,8 @@ export class PartialStateDb implements PartialState {
       return updatedPreimage;
     }
     // fallback to state lookup
-    const service = this.state.services.get(this.currentServiceId);
-    const lookup = service?.data.lookupHistory.get(hash);
+    const service = this.state.getService(this.currentServiceId);
+    const lookup = service?.getLookupHistory(hash);
     const status = lookup?.find((item) => BigInt(item.length) === length);
     return status === undefined ? null : PreimageUpdate.update(status);
   }
@@ -168,8 +171,8 @@ export class PartialStateDb implements PartialState {
    *   lookup status.
    */
   private isTombstoneExpired(destination: ServiceId, tombstone: PreimageHash, len: U64): [boolean, string] {
-    const service = this.state.services.get(destination);
-    const items = service?.data.lookupHistory.get(tombstone) ?? [];
+    const service = this.state.getService(destination);
+    const items = service?.getLookupHistory(tombstone) ?? [];
     const item = items.find((i) => BigInt(i.length) === len);
     const status = item === undefined ? null : slotsToPreimageStatus(item.slots);
     // The tombstone needs to be forgotten and expired.
@@ -201,17 +204,12 @@ export class PartialStateDb implements PartialState {
     }
 
     // fallback to state preimages
-    const service = this.state.services.get(serviceId);
+    const service = this.state.getService(serviceId);
     if (service === undefined) {
       return false;
     }
 
-    const preimage = service.data.preimages.get(hash);
-    if (preimage !== undefined) {
-      return true;
-    }
-
-    return false;
+    return service?.hasPreimage(hash) ?? false;
   }
 
   /**
@@ -449,7 +447,7 @@ export class PartialStateDb implements PartialState {
     }
 
     // proceed with service creation
-    const newService = new Service(newServiceId, {
+    const newService = new InMemoryService(newServiceId, {
       info: ServiceAccountInfo.create({
         codeHash,
         balance: thresholdForNew,
@@ -459,13 +457,12 @@ export class PartialStateDb implements PartialState {
         storageUtilisationCount: items,
       }),
       preimages: HashDictionary.new(),
-      lookupHistory: HashDictionary.new(),
-      storage: [],
+      // add the preimage request
+      lookupHistory: HashDictionary.fromEntries([
+        [codeHash.asOpaque(), [new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([]))]],
+      ]),
+      storage: HashDictionary.new(),
     });
-    // add the preimage request
-    newService.data.lookupHistory.set(codeHash.asOpaque(), [
-      new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([])),
-    ]);
 
     // add the new service
     this.updatedState.newServices.push(newService);
@@ -502,12 +499,12 @@ export class PartialStateDb implements PartialState {
 
   checkpoint(): void {
     /** https://graypaper.fluffylabs.dev/#/9a08063/362202362202?v=0.6.6 */
-    this.checkpointedState = StateUpdate.copyFrom(this.updatedState);
+    this.checkpointedState = AccumulationStateUpdate.copyFrom(this.updatedState);
   }
 
   updateAuthorizationQueue(
     coreIndex: CoreIndex,
-    authQueue: FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>,
+    authQueue: FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>,
   ): void {
     // NOTE `coreIndex` is already verified in the HC, so this is infallible.
     /** https://graypaper.fluffylabs.dev/#/9a08063/368401368401?v=0.6.6 */
@@ -522,7 +519,7 @@ export class PartialStateDb implements PartialState {
   ): void {
     // NOTE [ToDr] I guess we should not fail if the services don't exist. */
     /** https://graypaper.fluffylabs.dev/#/9a08063/36f40036f400?v=0.6.6 */
-    this.updatedState.priviledgedServices = {
+    this.updatedState.privilegedServices = {
       manager,
       authorizer,
       validators,
@@ -536,8 +533,8 @@ export class PartialStateDb implements PartialState {
   }
 
   providePreimage(serviceId: ServiceId | null, preimage: BytesBlob): Result<OK, ProvidePreimageError> {
-    const service = serviceId === null ? undefined : this.state.services.get(serviceId);
-    if (service === undefined) {
+    const service = serviceId === null ? null : this.state.getService(serviceId);
+    if (service === null || serviceId === null) {
       return Result.error(ProvidePreimageError.ServiceNotFound);
     }
 
@@ -551,7 +548,7 @@ export class PartialStateDb implements PartialState {
         return Result.error(ProvidePreimageError.WasNotRequested);
       }
     } else {
-      const lookup = service.data.lookupHistory.get(preimageHash);
+      const lookup = service.getLookupHistory(preimageHash);
       const status = lookup?.find((item) => item.length === preimage.length);
       const notRequested = status === undefined || !LookupHistoryItem.isRequested(status);
 
@@ -569,7 +566,7 @@ export class PartialStateDb implements PartialState {
     // setting up the new preimage
     this.updatedState.providedPreimages.push(
       NewPreimage.create({
-        serviceId: service.id,
+        serviceId: serviceId,
         item: PreimageItem.create({
           hash: preimageHash,
           blob: preimage,

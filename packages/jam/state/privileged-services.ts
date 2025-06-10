@@ -1,5 +1,5 @@
 import type { ServiceGas, ServiceId } from "@typeberry/block";
-import { type CodecRecord, codec } from "@typeberry/codec";
+import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
 
 /** Dictionary entry of services that auto-accumulate every block. */
 export class AutoAccumulate {
@@ -28,7 +28,7 @@ export class PrivilegedServices {
     manager: codec.u32.asOpaque<ServiceId>(),
     authManager: codec.u32.asOpaque<ServiceId>(),
     validatorsManager: codec.u32.asOpaque<ServiceId>(),
-    autoAccumulateServices: codec.sequenceVarLen(AutoAccumulate.Codec),
+    autoAccumulateServices: readonlyArray(codec.sequenceVarLen(AutoAccumulate.Codec)),
   });
 
   static create({ manager, authManager, validatorsManager, autoAccumulateServices }: CodecRecord<PrivilegedServices>) {
@@ -47,6 +47,6 @@ export class PrivilegedServices {
     /** `chi_v`: Managers validator keys. */
     readonly validatorsManager: ServiceId,
     /** `chi_g`: Dictionary of services that auto-accumulate every block with their gas limit. */
-    readonly autoAccumulateServices: AutoAccumulate[],
+    readonly autoAccumulateServices: readonly AutoAccumulate[],
   ) {}
 }

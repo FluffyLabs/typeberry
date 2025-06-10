@@ -1,6 +1,38 @@
 import type { Comparator } from "@typeberry/ordering";
 import { check } from "@typeberry/utils";
 
+export interface ImmutableSortedArray<V> extends Iterable<V> {
+  /** Underlying array. */
+  get array(): readonly V[];
+  /** Underlying comparator. */
+  get comparator(): Comparator<V>;
+
+  /**
+   * Returns index of SOME (it's not guaranteed it's first or last)
+   * equal element or -1 if the element does not exist.
+   */
+  findIndex(v: V): number;
+
+  /**
+   * Return the exact (in terms of comparator) element that's in the array if present.
+   *
+   * Note this API might look redundant on a first glance, but it really depends on the
+   * comparator. We might have a complex object inside the array, yet the comparator
+   * will consider two objects equal just by looking at the id. With this API
+   * we are able to retrieve the exact object that's stored.
+   */
+  findExact(v: V): V | undefined;
+
+  /** Check if element is present in the collection. */
+  has(v: V): boolean;
+
+  /** Return the number of items in the array. */
+  get length(): number;
+
+  /** Return a regular array that's a copy of this one. */
+  slice(start?: number, end?: number): V[];
+}
+
 /**
  * Collection of elements of type `V` that has some strict ordering.
  *
@@ -9,11 +41,11 @@ import { check } from "@typeberry/utils";
  *
  * Duplicates are allowed, so make sure to check presence before inserting.
  */
-export class SortedArray<V> {
+export class SortedArray<V> implements ImmutableSortedArray<V> {
   /**
    * Create SortedArray from array that is not sorted. This function sorts the array.
    */
-  static fromArray<V>(comparator: Comparator<V>, array: V[] = []) {
+  static fromArray<V>(comparator: Comparator<V>, array: readonly V[] = []) {
     const data = array.slice();
     data.sort((a, b) => comparator(a, b).value);
     return new SortedArray(data, comparator);
@@ -22,7 +54,7 @@ export class SortedArray<V> {
   /**
    * Create SortedArray from array that is sorted. This function does not sort the array. Unsorted array will not work correctly!
    */
-  static fromSortedArray<V>(comparator: Comparator<V>, array: V[] = []) {
+  static fromSortedArray<V>(comparator: Comparator<V>, array: readonly V[] = []) {
     const dataLength = array.length;
 
     if (dataLength === 0) {
@@ -60,10 +92,6 @@ export class SortedArray<V> {
     return this.array.pop();
   }
 
-  /**
-   * Returns index of SOME (it's not guaranteed it's first or last)
-   * equal element or -1 if the element does not exist.
-   */
   public findIndex(v: V) {
     const findIdx = this.binarySearch(v);
     if (findIdx.isEqual) {
@@ -72,14 +100,7 @@ export class SortedArray<V> {
 
     return -1;
   }
-  /**
-   * Return the exact (in terms of comparator) element that's in the array if present.
-   *
-   * Note this API might look redundant on a first glance, but it really depends on the
-   * comparator. We might have a complex object inside the array, yet the comparator
-   * will consider two objects equal just by looking at the id. With this API
-   * we are able to retrieve the exact object that's stored.
-   */
+
   public findExact(v: V): V | undefined {
     const findIdx = this.binarySearch(v);
     if (findIdx.isEqual) {
@@ -98,12 +119,10 @@ export class SortedArray<V> {
     }
   }
 
-  /** Check if element is present in the collection. */
   public has(v: V) {
     return this.binarySearch(v).isEqual;
   }
 
-  /** Return the number of items in the array. */
   public get length(): number {
     return this.array.length;
   }
@@ -144,7 +163,7 @@ export class SortedArray<V> {
   }
 
   /** Create a new SortedSet from two sorted collections. */
-  static fromTwoSortedCollections<V>(first: SortedArray<V>, second: SortedArray<V>) {
+  static fromTwoSortedCollections<V>(first: ImmutableSortedArray<V>, second: ImmutableSortedArray<V>) {
     check(first.comparator === second.comparator, "Cannot merge arrays if they do not use the same comparator");
     const comparator = first.comparator;
     const arr1 = first.array;

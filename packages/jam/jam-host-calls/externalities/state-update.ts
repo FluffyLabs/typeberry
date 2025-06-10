@@ -1,8 +1,16 @@
-import type { CoreIndex, PerValidator, ServiceGas, ServiceId } from "@typeberry/block";
+import type { CoreIndex, PerValidator, ServiceGas, ServiceId, TimeSlot } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
+import type { AuthorizerHash } from "@typeberry/block/work-report.js";
 import { type FixedSizeArray, asKnownSize } from "@typeberry/collections";
-import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
-import { type Service, ServiceAccountInfo, type ValidatorData } from "@typeberry/state";
+import type { OpaqueHash } from "@typeberry/hash";
+import {
+  type InMemoryService,
+  ServiceAccountInfo,
+  type ServicesUpdate,
+  UpdatePreimage,
+  UpdateService,
+  type ValidatorData,
+} from "@typeberry/state";
 import type { NewPreimage, PreimageUpdate } from "./partial-state-db.js";
 import type { PendingTransfer } from "./pending-transfer.js";
 
@@ -11,10 +19,10 @@ import type { PendingTransfer } from "./pending-transfer.js";
  *
  * `x_u`: https://graypaper.fluffylabs.dev/#/9a08063/2f31012f3101?v=0.6.6
  */
-export class StateUpdate {
+export class AccumulationStateUpdate {
   /** Create a copy of another `StateUpdate`. Used by checkpoints. */
-  static copyFrom(from: StateUpdate): StateUpdate {
-    const update = new StateUpdate();
+  static copyFrom(from: AccumulationStateUpdate): AccumulationStateUpdate {
+    const update = new AccumulationStateUpdate(from.serviceId);
     update.newServices.push(...from.newServices);
     update.ejectedServices.push(...from.ejectedServices);
     update.transfers.push(...from.transfers);
@@ -28,18 +36,67 @@ export class StateUpdate {
       from.updatedServiceInfo === null ? null : ServiceAccountInfo.create(from.updatedServiceInfo);
     update.validatorsData = from.validatorsData === null ? null : asKnownSize([...from.validatorsData]);
     update.yieldedRoot = from.yieldedRoot;
-    update.priviledgedServices =
-      from.priviledgedServices === null
+    update.privilegedServices =
+      from.privilegedServices === null
         ? null
         : {
-            ...from.priviledgedServices,
+            ...from.privilegedServices,
           };
 
     return update;
   }
 
+  // TODO [ToDr] Ideally we would use `ServicesUpdate`-format already.
+  public intoServicesUpdate(timeslot: TimeSlot): ServicesUpdate {
+    return {
+      servicesRemoved: this.ejectedServices,
+      servicesUpdates: this.newServices
+        .map((s) => {
+          return UpdateService.create({
+            serviceId: s.id,
+            serviceInfo: s.data.info,
+            lookupHistory: s.data.lookupHistory.values().next().value?.[0] ?? null,
+          });
+        })
+        .concat(
+          this.updatedServiceInfo === null
+            ? []
+            : [
+                UpdateService.update({
+                  serviceId: this.serviceId,
+                  serviceInfo: this.updatedServiceInfo,
+                }),
+              ],
+        ),
+      preimages: this.providedPreimages
+        .map((p) => {
+          return UpdatePreimage.provide({
+            serviceId: p.serviceId,
+            preimage: p.item,
+            slot: timeslot,
+          });
+        })
+        .concat(
+          this.lookupHistory.map((x) => {
+            if (x.forgotten) {
+              return UpdatePreimage.remove({
+                serviceId: this.serviceId,
+                hash: x.hash,
+                length: x.length,
+              });
+            }
+            return UpdatePreimage.updateOrAdd({
+              serviceId: this.serviceId,
+              lookupHistory: x,
+            });
+          }),
+        ),
+      storage: [],
+    };
+  }
+
   /** Newly created services. */
-  public readonly newServices: Service[] = [];
+  public readonly newServices: InMemoryService[] = [];
   /** Services that were successfully ejected. */
   public readonly ejectedServices: ServiceId[] = [];
   /** Pending transfers. */
@@ -49,7 +106,7 @@ export class StateUpdate {
   /** Newly provided preimages. */
   public readonly providedPreimages: NewPreimage[] = [];
   /** Updated authorization queues for cores. */
-  public readonly authorizationQueues: Map<CoreIndex, FixedSizeArray<Blake2bHash, AUTHORIZATION_QUEUE_SIZE>> =
+  public readonly authorizationQueues: Map<CoreIndex, FixedSizeArray<AuthorizerHash, AUTHORIZATION_QUEUE_SIZE>> =
     new Map();
 
   /** Current service updated info. */
@@ -60,10 +117,12 @@ export class StateUpdate {
   /** New validators data. */
   public validatorsData: PerValidator<ValidatorData> | null = null;
   /** Updated priviliged services. */
-  public priviledgedServices: {
+  public privilegedServices: {
     manager: ServiceId;
     authorizer: ServiceId;
     validators: ServiceId;
     autoAccumulate: [ServiceId, ServiceGas][];
   } | null = null;
+
+  constructor(public readonly serviceId: ServiceId) {}
 }

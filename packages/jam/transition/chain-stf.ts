@@ -4,23 +4,25 @@ import type { AuthorizerHash } from "@typeberry/block/work-report.js";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
-import { Disputes } from "@typeberry/disputes";
+import { Disputes, DisputesStateUpdate } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code.js";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
-import type { SafroleErrorCode } from "@typeberry/safrole/safrole.js";
+import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/safrole.js";
 import type { State } from "@typeberry/state";
-import { type ErrorResult, OK, Result, type TaggedError } from "@typeberry/utils";
+import { type ErrorResult, Result, type TaggedError } from "@typeberry/utils";
 import { Accumulate } from "./accumulate/index.js";
-import { Assurances, type AssurancesError } from "./assurances.js";
-import { Authorization } from "./authorization.js";
+import { Assurances, AssurancesStateUpdate, type AssurancesError } from "./assurances.js";
+import { Authorization, AuthorizationStateUpdate } from "./authorization.js";
 import type { TransitionHasher } from "./hasher.js";
-import { Preimages, type PreimagesErrorCode } from "./preimages.js";
-import { RecentHistory } from "./recent-history.js";
-import { Reports, type ReportsError } from "./reports/index.js";
+import { Preimages, PreimagesStateUpdate, type PreimagesErrorCode } from "./preimages.js";
+import { RecentHistory, RecentHistoryStateUpdate } from "./recent-history.js";
+import { Reports, ReportsStateUpdate, type ReportsError } from "./reports/index.js";
 import type { HeaderChain } from "./reports/verify-contextual.js";
-import { Statistics } from "./statistics.js";
+import { Statistics, StatisticsStateUpdate } from "./statistics.js";
+import {AccumulateStateUpdate, ACCUMULATION_ERROR} from "./accumulate/accumulate.js";
+
 
 class DbHeaderChain implements HeaderChain {
   constructor(private readonly blocks: BlocksDb) {}
@@ -30,6 +32,16 @@ class DbHeaderChain implements HeaderChain {
   }
 }
 
+export type Ok = SafroleStateUpdate &
+  DisputesStateUpdate &
+  ReportsStateUpdate &
+  AssurancesStateUpdate &
+  PreimagesStateUpdate &
+  RecentHistoryStateUpdate &
+  AuthorizationStateUpdate &
+  AccumulateStateUpdate &
+  StatisticsStateUpdate;
+
 export enum StfErrorKind {
   Assurances = 0,
   Disputes = 1,
@@ -37,6 +49,7 @@ export enum StfErrorKind {
   Reports = 3,
   Preimages = 4,
   SafroleSeal = 5,
+  Accumulate = 6,
 }
 
 export type StfError =
@@ -45,18 +58,17 @@ export type StfError =
   | TaggedError<StfErrorKind.Disputes, DisputesErrorCode>
   | TaggedError<StfErrorKind.Safrole, SafroleErrorCode>
   | TaggedError<StfErrorKind.Preimages, PreimagesErrorCode>
-  | TaggedError<StfErrorKind.SafroleSeal, SafroleSealError>;
+  | TaggedError<StfErrorKind.SafroleSeal, SafroleSealError>
+  | TaggedError<StfErrorKind.Accumulate, ACCUMULATION_ERROR>;
 
 export const stfError = <Kind extends StfErrorKind, Err extends StfError["error"]>(
   kind: Kind,
   nested: ErrorResult<Err>,
 ) => {
-  return Result.taggedError<OK, Kind, Err>(StfErrorKind, kind, nested);
+  return Result.taggedError<Ok, Kind, Err>(StfErrorKind, kind, nested);
 };
 
 export class OnChain {
-  // chapter 13: https://graypaper.fluffylabs.dev/#/68eaa1f/18b60118b601?v=0.6.4
-  private readonly statistics: Statistics;
   // chapter 6: https://graypaper.fluffylabs.dev/#/68eaa1f/0d13000d1300?v=0.6.4
   private readonly safrole: Safrole;
   private readonly safroleSeal: SafroleSeal;
@@ -74,6 +86,8 @@ export class OnChain {
   private readonly recentHistory: RecentHistory;
   // chapter 8: https://graypaper.fluffylabs.dev/#/68eaa1f/0f94020f9402?v=0.6.4
   private readonly authorization: Authorization;
+  // chapter 13: https://graypaper.fluffylabs.dev/#/68eaa1f/18b60118b601?v=0.6.4
+  private readonly statistics: Statistics;
 
   constructor(
     public readonly chainSpec: ChainSpec,
@@ -109,7 +123,7 @@ export class OnChain {
     block: BlockView,
     headerHash: HeaderHash,
     preverifiedSeal: EntropyHash | null = null,
-  ): Promise<Result<OK, StfError>> {
+  ): Promise<Result<Ok, StfError>> {
     const header = block.header.materialize();
     const timeSlot = header.timeSlotIndex;
 
@@ -128,6 +142,12 @@ export class OnChain {
     if (disputesResult.isError) {
       return stfError(StfErrorKind.Disputes, disputesResult);
     }
+    const {
+      disputesRecords,
+      availabilityAssignment: disputesAvailAssignment,
+      ...disputesRest
+    } = disputesResult.ok.stateUpdate;
+    assertEmpty(disputesRest);
 
     // reports
     const reportsResult = await this.reports.transition({
@@ -138,6 +158,8 @@ export class OnChain {
     if (reportsResult.isError) {
       return stfError(StfErrorKind.Reports, reportsResult);
     }
+    const { availabilityAssignment: reportsAvailAssignment, ...reportsRest } = reportsResult.ok.stateUpdate;
+    assertEmpty(reportsRest);
 
     // assurances
     const assurancesResult = await this.assurances.transition({
@@ -148,19 +170,8 @@ export class OnChain {
     if (assurancesResult.isError) {
       return stfError(StfErrorKind.Assurances, assurancesResult);
     }
-
-    const extrinsic = block.extrinsic.materialize();
-    // TODO [MaSo] fill in the statistics with accumulation results
-    // statistics
-    this.statistics.transition({
-      slot: timeSlot,
-      authorIndex: header.bandersnatchBlockAuthorIndex,
-      extrinsic,
-      incomingReports: extrinsic.guarantees.map((g) => g.report),
-      availableReports: assurancesResult.ok,
-      accumulationStatistics: new Map(),
-      transferStatistics: new Map(),
-    });
+    const { availabilityAssignment: assurancesAvailAssignment, ...assurancesRest } = assurancesResult.ok.stateUpdate;
+    assertEmpty(assurancesRest);
 
     // safrole
     const safroleResult = await this.safrole.transition({
@@ -168,11 +179,22 @@ export class OnChain {
       entropy: newEntropyHash,
       extrinsic: block.extrinsic.view().tickets.materialize(),
     });
-
     // TODO [ToDr] shall we verify the ticket mark & epoch mark as well?
     if (safroleResult.isError) {
       return stfError(StfErrorKind.Safrole, safroleResult);
     }
+    const {
+      timeslot,
+      ticketsAccumulator,
+      sealingKeySeries,
+      epochRoot,
+      entropy,
+      nextValidatorData,
+      currentValidatorData,
+      previousValidatorData,
+      ...safroleRest
+    } = safroleResult.ok.stateUpdate;
+    assertEmpty(safroleRest);
 
     // preimages
     const preimagesResult = this.preimages.integrate({
@@ -182,26 +204,87 @@ export class OnChain {
     if (preimagesResult.isError) {
       return stfError(StfErrorKind.Preimages, preimagesResult);
     }
+    const { preimages, ...preimagesRest } = preimagesResult.ok;
+    assertEmpty(preimagesRest);
 
-    const accumulateRoot = await this.accumulate.transition({
+    // accumulate
+    const accumulateResult = await this.accumulate.transition({
       slot: timeSlot,
-      reports: assurancesResult.ok,
-      entropy: this.state.entropy[0], // TODO [MaSi]: it should be eta_0_prime
+      reports: assurancesResult.ok.availableReports,
+      entropy: entropy[0],
     });
+    if (accumulateResult.isError) {
+      return stfError(StfErrorKind.Accumulate, accumulateResult);
+    }
+    const { root: accumulateRoot, stateUpdate: accumulateUpdate, ...accumulateRest } = accumulateResult.ok;
+    assertEmpty(accumulateRest);
+    const {
+      privilegedServices: maybePrivilegedServices,
+      authQueues: maybeAuthQueues,
+      designatedValidatorData: maybeDesignatedValidatorData,
+      timeslot: accumulationTimeSlot,
+      preimages: accumulatePreimages,
+      ...servicesUpdate
+    } = accumulateUpdate;
+
     // recent history
-    this.recentHistory.transition({
+    const recentHistoryUpdate = this.recentHistory.transition({
       headerHash,
       priorStateRoot: header.priorStateRoot,
-      accumulateRoot: accumulateRoot,
+      accumulateRoot,
       workPackages: reportsResult.ok.reported,
     });
+    const { recentBlocks, ...recentHistoryRest } = recentHistoryUpdate;
+    assertEmpty(recentHistoryRest);
+
     // authorization
-    this.authorization.transition({
+    const authorizationUpdate = this.authorization.transition({
       slot: timeSlot,
       used: this.getUsedAuthorizerHashes(block.extrinsic.view().guarantees.view()),
     });
+    const { authPools, ...authorizationRest } = authorizationUpdate;
+    assertEmpty(authorizationRest);
 
-    return Result.ok(OK);
+    const extrinsic = block.extrinsic.materialize();
+
+    // TODO [MaSo] fill in the statistics with accumulation results
+    // statistics
+    const statisticsUpdate = this.statistics.transition({
+      slot: timeSlot,
+      authorIndex: header.bandersnatchBlockAuthorIndex,
+      extrinsic,
+      incomingReports: extrinsic.guarantees.map((g) => g.report),
+      availableReports: assurancesResult.ok.availableReports,
+      accumulationStatistics: new Map(),
+      transferStatistics: new Map(),
+    });
+    const { statistics, ...statisticsRest } = statisticsUpdate;
+    assertEmpty(statisticsRest);
+
+    return Result.ok({
+      ...(maybeAuthQueues !== undefined ? { authQueues: maybeAuthQueues } : {}),
+      ...(maybeDesignatedValidatorData !== undefined ? { designatedValidatorData: maybeDesignatedValidatorData } : {}),
+      ...(maybePrivilegedServices !== undefined ? { privilegedServices: maybePrivilegedServices } : {}),
+      authPools,
+      preimages: preimages.concat(accumulatePreimages),
+      disputesRecords,
+      availabilityAssignment: mergeAvailabilityAssignments(
+        reportsAvailAssignment,
+        disputesAvailAssignment,
+        assurancesAvailAssignment,
+      ),
+      recentBlocks,
+      statistics,
+      timeslot,
+      epochRoot,
+      entropy,
+      currentValidatorData,
+      nextValidatorData,
+      previousValidatorData,
+      sealingKeySeries,
+      ticketsAccumulator,
+      ...servicesUpdate,
+    });
   }
 
   private getUsedAuthorizerHashes(guarantees: GuaranteesExtrinsicView) {
@@ -215,4 +298,32 @@ export class OnChain {
     }
     return map;
   }
+}
+
+function assertEmpty<T extends Record<string, never>>(_x: T) {}
+
+type AvailAssignment = State["availabilityAssignment"];
+
+/**
+ * Since multiple modules might alter the availalbility assignment,
+ * we need to merge the results.
+ *
+ * NOTE: both `Disputes` and `Assurances` will clear out the availability assignment.
+ *       reports however will assign new reports to cores.
+ */
+function mergeAvailabilityAssignments(
+  reportsAvailAssignment: AvailAssignment,
+  disputesAvailAssignment: AvailAssignment,
+  assurancesAvailAssignment: AvailAssignment,
+) {
+  const newAssignments = reportsAvailAssignment.slice();
+
+  for (const core of reportsAvailAssignment.keys()) {
+    if (disputesAvailAssignment[core] === null || assurancesAvailAssignment[core] === null) {
+      newAssignments[core] = null;
+    }
+  }
+
+  // This is safe, since we are cloning the whole array.
+  return asKnownSize(newAssignments);
 }
