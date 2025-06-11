@@ -1,6 +1,5 @@
 import { derive_public_key } from "@fluffylabs/bandersnatch";
 import { Bytes } from "@typeberry/bytes";
-import { HASH_SIZE } from "@typeberry/hash";
 import type { Opaque } from "@typeberry/utils";
 
 export const BANDERSNATCH_KEY_BYTES = 32;
