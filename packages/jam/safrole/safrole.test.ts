@@ -17,7 +17,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { Ordering } from "@typeberry/ordering";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
-import * as bandersnatch from "./bandersnatch";
+import * as bandersnatch from "./bandersnatch-vrf";
 import { BandernsatchWasm } from "./bandersnatch-wasm";
 import { Safrole, SafroleErrorCode, type SafroleState } from "./safrole";
 

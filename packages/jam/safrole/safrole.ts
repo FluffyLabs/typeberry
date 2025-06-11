@@ -18,7 +18,7 @@ import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data";
 import { type MutablePick, Result, asOpaqueType } from "@typeberry/utils";
-import { getRingCommitment, verifyTickets } from "./bandersnatch";
+import { getRingCommitment, verifyTickets } from "./bandersnatch-vrf";
 import { BandernsatchWasm } from "./bandersnatch-wasm";
 import type { SafroleSealState } from "./safrole-seal";
 

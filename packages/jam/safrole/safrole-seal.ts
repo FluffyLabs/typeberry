@@ -13,7 +13,7 @@ import type { BandersnatchKey } from "@typeberry/crypto";
 import type { State, ValidatorData } from "@typeberry/state";
 import { SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
 import { Result } from "@typeberry/utils";
-import { verifySeal } from "./bandersnatch";
+import { verifySeal } from "./bandersnatch-vrf";
 import { BandernsatchWasm } from "./bandersnatch-wasm";
 import { JAM_ENTROPY, JAM_FALLBACK_SEAL, JAM_TICKET_SEAL } from "./constants";
 
