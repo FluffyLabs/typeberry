@@ -2,15 +2,16 @@ import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config"
 import minimist from "minimist";
 import { methods } from "./src/method-loader.js";
 import { RpcServer } from "./src/server.js";
+import { KnownChainSpec } from "@typeberry/jam";
 
-function main(args: string[]) {
+export function main(args: string[]) {
   const argv = minimist(args, {
     string: ["db-path", "genesis-root", "port", "chain-spec"],
     default: {
       port: "19800",
       "db-path": "../../database",
-      "genesis-root": "0000000000000000000000000000000000000000000000000000000000000000",
-      "chain-spec": "tiny",
+      "genesis-root": "c07cdbce686c64d0a9b6539c70b0bb821b6a74d9de750a46a5da05b5640c290a",
+      "chain-spec": KnownChainSpec.Tiny,
     },
   });
 
@@ -25,17 +26,21 @@ function main(args: string[]) {
     await server.close();
     process.exit(0);
   });
+
+  return server;
 }
 
 function parseChainSpec(chainSpec: string): ChainSpec {
   switch (chainSpec) {
-    case "tiny":
+    case KnownChainSpec.Tiny:
       return tinyChainSpec;
-    case "full":
+    case KnownChainSpec.Full:
       return fullChainSpec;
     default:
       throw new Error("chain-spec must be either 'tiny' or 'full'");
   }
 }
 
-main(process.argv.slice(2));
+if (require.main === module) {
+  main(process.argv.slice(2));
+}
