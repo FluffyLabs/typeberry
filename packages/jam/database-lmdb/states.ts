@@ -29,7 +29,7 @@ import { LeafDb } from "./states/leaf-db";
  * that don't fit directly into a trie node (larger than 32bytes) are hash-referenced
  * there.
  * Thanks to this, we can estimate that for each and every state, all of the leaf nodes
- * "should not take a lot"™. Let's assume that we have:
+ * "should not take a lot". Let's assume that we have:
  * 1. 999 services
  * 2. Each service has 50 preimages, so also roughly 50 preimage lookups.
  * 3. On top of that we have 899 storage entries (arbitrary size)

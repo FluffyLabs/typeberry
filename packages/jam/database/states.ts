@@ -59,9 +59,7 @@ export class InMemoryStates implements StatesDb<InMemoryState> {
 
     switch (res.error) {
       case UpdateError.DuplicateService:
-        return Result.error(StateUpdateError.Conflict, res.details);
       case UpdateError.NoService:
-        return Result.error(StateUpdateError.Conflict, res.details);
       case UpdateError.PreimageExists:
         return Result.error(StateUpdateError.Conflict, res.details);
       default:

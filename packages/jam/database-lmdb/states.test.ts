@@ -20,8 +20,8 @@ import { OK, Result, deepEqual } from "@typeberry/utils";
 import { LmdbRoot } from "./root";
 import { LmdbStates } from "./states";
 
-function createTempDir(prefix = "lmdb"): string {
-  return fs.mkdtempSync(`typeberry-${prefix}`);
+function createTempDir(suffix = "lmdb"): string {
+  return fs.mkdtempSync(`typeberry-${suffix}`);
 }
 
 describe("LMDB States database", () => {

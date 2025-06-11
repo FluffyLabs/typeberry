@@ -130,7 +130,7 @@ export class PartialStateDb implements PartialState {
       return null;
     }
 
-    const maybeNewService = this.updatedState.newServices.find(({ serviceId: id }) => id === destination);
+    const maybeNewService = this.updatedState.newServices.find(({ serviceId }) => serviceId === destination);
     if (maybeNewService !== undefined) {
       return maybeNewService.data.info;
     }
