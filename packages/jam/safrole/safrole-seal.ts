@@ -13,8 +13,8 @@ import type { BandersnatchKey } from "@typeberry/crypto";
 import type { State, ValidatorData } from "@typeberry/state";
 import { SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
 import { Result } from "@typeberry/utils";
-import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
+import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
 import { JAM_ENTROPY, JAM_FALLBACK_SEAL, JAM_TICKET_SEAL } from "./constants.js";
 
 export enum SafroleSealError {

@@ -18,8 +18,8 @@ import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data.js";
 import { Result, asOpaqueType } from "@typeberry/utils";
-import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
+import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
 import type { SafroleSealState } from "./safrole-seal.js";
 
 export const VALIDATOR_META_BYTES = 128;
