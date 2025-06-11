@@ -1,8 +1,8 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, SimpleAllocator, blake2b } from "@typeberry/hash";
 import { type U32, u32AsLeBytes } from "@typeberry/numbers";
-import { type BandersnatchKey, publicKey } from "./bandersnatch";
-import { type Ed25519Key, privateKey } from "./ed25519";
+import { type BandersnatchKey, publicKey } from "./bandersnatch.js";
+import { type Ed25519Key, privateKey } from "./ed25519.js";
 
 export const SEED_SIZE = 32;
 export type SEED_SIZE = typeof SEED_SIZE;

@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsEpoch } from "@typeberry/block";
-import { SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets";
+import { SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/crypto";
-import { MessageHandler, type MessageSender } from "../handler";
+import { MessageHandler, type MessageSender } from "../handler.js";
 import {
   ClientHandler,
   STREAM_KIND_GENERATOR_TO_PROXY,

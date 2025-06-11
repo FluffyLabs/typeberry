@@ -3,8 +3,8 @@ import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { type Blake2bHash, SimpleAllocator } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
-import type { BandersnatchKey } from "./bandersnatch";
-import type { Ed25519Key } from "./ed25519";
+import type { BandersnatchKey } from "./bandersnatch.js";
+import type { Ed25519Key } from "./ed25519.js";
 import {
   SEED_SIZE,
   deriveBandersnatchPublicKey,
@@ -12,7 +12,7 @@ import {
   deriveEd25519PublicKey,
   deriveEd25519SecretKey,
   trivialSeed,
-} from "./key-derivation";
+} from "./key-derivation.js";
 
 describe("Key Derivation: trivial seed", () => {
   it("should derive a valid seed: 0", () => {
