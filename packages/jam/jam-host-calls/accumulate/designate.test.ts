@@ -1,9 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, tryAsServiceId } from "@typeberry/block";
+import { tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
+import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES } from "@typeberry/crypto";
 import { ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";

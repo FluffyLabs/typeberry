@@ -1,5 +1,4 @@
 import {
-  type BandersnatchKey,
   type EntropyHash,
   type HeaderView,
   type PerEpochBlock,
@@ -10,6 +9,7 @@ import {
 } from "@typeberry/block";
 import type { Ticket } from "@typeberry/block/tickets";
 import { BytesBlob } from "@typeberry/bytes";
+import type { BandersnatchKey } from "@typeberry/crypto";
 import type { State, ValidatorData } from "@typeberry/state";
 import { SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
 import { Result } from "@typeberry/utils";

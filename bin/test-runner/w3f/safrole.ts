@@ -1,8 +1,4 @@
 import {
-  BANDERSNATCH_KEY_BYTES,
-  BANDERSNATCH_PROOF_BYTES,
-  BANDERSNATCH_RING_ROOT_BYTES,
-  type BandersnatchRingRoot,
   type EntropyHash,
   EpochMarker,
   type TimeSlot,
@@ -16,7 +12,14 @@ import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/ti
 import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
+import {
+  BANDERSNATCH_KEY_BYTES,
+  BANDERSNATCH_PROOF_BYTES,
+  BANDERSNATCH_RING_ROOT_BYTES,
+  type BandersnatchRingRoot,
+  ED25519_KEY_BYTES,
+  type Ed25519Key,
+} from "@typeberry/crypto";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm";

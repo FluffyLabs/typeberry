@@ -1,6 +1,6 @@
-import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/block";
 import { SignedTicket } from "@typeberry/block/tickets";
 import { Bytes } from "@typeberry/bytes";
+import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/crypto";
 import { json } from "@typeberry/json-parser";
 import { fromJson } from "./common";
 

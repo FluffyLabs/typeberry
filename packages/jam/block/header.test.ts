@@ -3,9 +3,9 @@ import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
+import { BANDERSNATCH_VRF_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsTimeSlot, tryAsValidatorIndex } from "./common";
-import { BANDERSNATCH_VRF_SIGNATURE_BYTES } from "./crypto";
 import { Header, encodeUnsealedHeader } from "./header";
 
 describe("Header", () => {

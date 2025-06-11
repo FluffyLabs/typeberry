@@ -1,19 +1,11 @@
-import {
-  BANDERSNATCH_RING_ROOT_BYTES,
-  BLS_KEY_BYTES,
-  type BandersnatchKey,
-  type EntropyHash,
-  type PerEpochBlock,
-  tryAsPerEpochBlock,
-  tryAsServiceGas,
-} from "@typeberry/block";
+import { type EntropyHash, type PerEpochBlock, tryAsPerEpochBlock, tryAsServiceGas } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
 import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
 import { Bytes } from "@typeberry/bytes";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import type { Ed25519Key } from "@typeberry/crypto";
+import { BANDERSNATCH_RING_ROOT_BYTES, BLS_KEY_BYTES, type BandersnatchKey, type Ed25519Key } from "@typeberry/crypto";
 import { type FromJson, json } from "@typeberry/json-parser";
 import {
   PrivilegedServices,

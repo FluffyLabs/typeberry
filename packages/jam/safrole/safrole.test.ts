@@ -1,19 +1,18 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
+import { type EntropyHash, type PerValidator, tryAsTimeSlot } from "@typeberry/block";
+import { type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets";
+import { Bytes } from "@typeberry/bytes";
+import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
+import { tinyChainSpec } from "@typeberry/config";
 import {
   BANDERSNATCH_KEY_BYTES,
   BANDERSNATCH_PROOF_BYTES,
   BANDERSNATCH_RING_ROOT_BYTES,
   BLS_KEY_BYTES,
-  type EntropyHash,
-  type PerValidator,
-  tryAsTimeSlot,
-} from "@typeberry/block";
-import { type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets";
-import { Bytes } from "@typeberry/bytes";
-import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
-import { tinyChainSpec } from "@typeberry/config";
-import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
+  ED25519_KEY_BYTES,
+  type Ed25519Key,
+} from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Ordering } from "@typeberry/ordering";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";

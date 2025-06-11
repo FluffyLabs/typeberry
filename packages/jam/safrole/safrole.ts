@@ -1,6 +1,4 @@
 import {
-  BANDERSNATCH_KEY_BYTES,
-  type BandersnatchKey,
   type EntropyHash,
   EpochMarker,
   type PerEpochBlock,
@@ -14,7 +12,7 @@ import { Bytes, bytesBlobComparator } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { ED25519_KEY_BYTES } from "@typeberry/crypto";
+import { BANDERSNATCH_KEY_BYTES, type BandersnatchKey, ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { blake2b } from "@typeberry/hash";
 import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";

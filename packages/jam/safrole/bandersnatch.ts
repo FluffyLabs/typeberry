@@ -1,15 +1,12 @@
+import type { EntropyHash, ValidatorIndex } from "@typeberry/block";
+import type { SignedTicket } from "@typeberry/block/tickets";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import {
   BANDERSNATCH_RING_ROOT_BYTES,
   type BandersnatchKey,
   type BandersnatchRingRoot,
   type BandersnatchVrfSignature,
 } from "@typeberry/crypto";
-import {
-  type EntropyHash,
-  type ValidatorIndex,
-} from "@typeberry/block";
-import type { SignedTicket } from "@typeberry/block/tickets";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Result } from "@typeberry/utils";
 import type { BandernsatchWasm } from "./bandersnatch-wasm";

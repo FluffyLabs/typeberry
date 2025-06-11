@@ -1,15 +1,11 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import {
-  BANDERSNATCH_KEY_BYTES,
-  BANDERSNATCH_PROOF_BYTES,
-  BANDERSNATCH_RING_ROOT_BYTES,
-  tryAsValidatorIndex,
-} from "@typeberry/block";
+import { tryAsValidatorIndex } from "@typeberry/block";
 import { type SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize } from "@typeberry/collections";
+import { BANDERSNATCH_KEY_BYTES, BANDERSNATCH_PROOF_BYTES, BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { getRingCommitment, verifyTickets } from "./bandersnatch";
 import { BandernsatchWasm } from "./bandersnatch-wasm";

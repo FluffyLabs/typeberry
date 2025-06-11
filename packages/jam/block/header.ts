@@ -1,6 +1,12 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
+import {
+  BANDERSNATCH_KEY_BYTES,
+  BANDERSNATCH_VRF_SIGNATURE_BYTES,
+  type BandersnatchKey,
+  type BandersnatchVrfSignature,
+} from "@typeberry/crypto";
 import { HASH_SIZE, WithHash } from "@typeberry/hash";
 import { WithDebug } from "@typeberry/utils";
 import {
@@ -15,12 +21,6 @@ import {
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "./common";
-import {
-  BANDERSNATCH_KEY_BYTES,
-  BANDERSNATCH_VRF_SIGNATURE_BYTES,
-  type BandersnatchKey,
-  type BandersnatchVrfSignature,
-} from "./crypto";
 import type { ExtrinsicHash, HeaderHash } from "./hash";
 import { Ticket } from "./tickets";
 

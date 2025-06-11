@@ -1,7 +1,13 @@
-import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, type BandersnatchKey, type BlsKey } from "@typeberry/block/crypto";
 import type { Bytes } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
+import {
+  BANDERSNATCH_KEY_BYTES,
+  BLS_KEY_BYTES,
+  type BandersnatchKey,
+  type BlsKey,
+  ED25519_KEY_BYTES,
+  type Ed25519Key,
+} from "@typeberry/crypto";
 import { WithDebug } from "@typeberry/utils";
 
 /**
