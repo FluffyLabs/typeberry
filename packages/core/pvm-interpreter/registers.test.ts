@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Registers } from "./registers";
+import { Registers } from "./registers.js";
 
 const U32_BYTES = 4;
 

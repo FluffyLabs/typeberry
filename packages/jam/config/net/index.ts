@@ -1,1 +1,1 @@
-export * from "./net-chain-spec";
+export * from "./net-chain-spec.js";

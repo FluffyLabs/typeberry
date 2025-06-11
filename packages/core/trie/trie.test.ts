@@ -2,9 +2,9 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { deepEqual } from "@typeberry/utils";
-import { blake2bTrieHasher } from "./hasher";
-import { LeafNode, parseInputKey } from "./nodes";
-import { InMemoryTrie } from "./trie";
+import { blake2bTrieHasher } from "./hasher.js";
+import { LeafNode, parseInputKey } from "./nodes.js";
+import { InMemoryTrie } from "./trie.js";
 
 describe("Trie", async () => {
   it("Empty trie", () => {

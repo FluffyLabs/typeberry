@@ -7,9 +7,9 @@ import {
   tryAsServiceGas,
   tryAsServiceId,
 } from "@typeberry/block";
-import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
-import type { PreimageHash } from "@typeberry/block/preimage";
-import type { AuthorizerHash } from "@typeberry/block/work-report";
+import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
+import type { AuthorizerHash } from "@typeberry/block/work-report.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { type FixedSizeArray, HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
@@ -25,7 +25,7 @@ import {
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { OK, Result, assertNever, check, ensure } from "@typeberry/utils";
-import { clampU64ToU32, writeServiceIdAsLeBytes } from "../utils";
+import { clampU64ToU32, writeServiceIdAsLeBytes } from "../utils.js";
 import {
   EjectError,
   type PartialState,
@@ -36,9 +36,9 @@ import {
   type TRANSFER_MEMO_BYTES,
   TransferError,
   slotsToPreimageStatus,
-} from "./partial-state";
-import { PendingTransfer } from "./pending-transfer";
-import { AccumulationStateUpdate } from "./state-update";
+} from "./partial-state.js";
+import { PendingTransfer } from "./pending-transfer.js";
+import { AccumulationStateUpdate } from "./state-update.js";
 
 /**
  * `D`: Period in timeslots after which an unreferenced preimage may be expunged.

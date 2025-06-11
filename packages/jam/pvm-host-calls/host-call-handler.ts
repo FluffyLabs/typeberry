@@ -1,9 +1,9 @@
 import type { ServiceId } from "@typeberry/block";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
-import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas";
+import type { Gas, GasCounter, SmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { type Opaque, asOpaqueType } from "@typeberry/utils";
-import type { IHostCallMemory } from "./host-call-memory";
-import type { IHostCallRegisters } from "./host-call-registers";
+import type { IHostCallMemory } from "./host-call-memory.js";
+import type { IHostCallRegisters } from "./host-call-registers.js";
 
 /** Strictly-typed host call index. */
 export type HostCallIndex = Opaque<U32, "HostCallIndex[U32]">;

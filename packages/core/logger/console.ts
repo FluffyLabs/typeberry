@@ -1,5 +1,5 @@
-import { Level, type Options, findLevel } from "./options";
-import type { Transport } from "./transport";
+import { Level, type Options, findLevel } from "./options.js";
+import type { Transport } from "./transport.js";
 
 /** An optimized logger that ignores `TRACE`, `DEBUG` and `LOG` messages.
  *

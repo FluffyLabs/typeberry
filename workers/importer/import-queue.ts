@@ -2,7 +2,7 @@ import { type BlockView, type EntropyHash, type Epoch, type TimeSlot, tryAsEpoch
 import { SortedArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { Ordering } from "@typeberry/ordering";
-import type { Importer } from "./importer";
+import type { Importer } from "./importer.js";
 
 export type ImportingQueueEntry = {
   timeSlot: TimeSlot;

@@ -1,7 +1,7 @@
-import type { InstructionResult } from "../instruction-result";
-import type { Memory } from "../memory";
-import type { Registers } from "../registers";
-import { Result } from "../result";
+import type { InstructionResult } from "../instruction-result.js";
+import type { Memory } from "../memory/index.js";
+import type { Registers } from "../registers.js";
+import { Result } from "../result.js";
 
 export class MemoryOps {
   constructor(

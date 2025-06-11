@@ -1,5 +1,5 @@
 import type { TimeSlot } from "@typeberry/block";
-import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage";
+import type { PreimageHash, PreimagesExtrinsic } from "@typeberry/block/preimage.js";
 import { blake2b } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
 import { LookupHistoryItem, PreimageItem, type ServicesUpdate, type State, UpdatePreimage } from "@typeberry/state";

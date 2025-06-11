@@ -1,6 +1,6 @@
-import { PAGE_SIZE, PAGE_SIZE_SHIFT } from "./memory-consts";
-import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex } from "./memory-index";
-import { type PageNumber, tryAsPageNumber } from "./pages/page-utils";
+import { PAGE_SIZE, PAGE_SIZE_SHIFT } from "./memory-consts.js";
+import { type MemoryIndex, type SbrkIndex, tryAsMemoryIndex } from "./memory-index.js";
+import { type PageNumber, tryAsPageNumber } from "./pages/page-utils.js";
 
 export function alignToPageSize(length: number) {
   return PAGE_SIZE * Math.ceil(length / PAGE_SIZE);

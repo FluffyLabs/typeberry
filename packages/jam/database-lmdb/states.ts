@@ -8,11 +8,11 @@ import type { StateKey } from "@typeberry/state-merkleization";
 import type { StateEntries } from "@typeberry/state-merkleization";
 import { TrieAction } from "@typeberry/state-merkleization";
 import { InMemoryTrie } from "@typeberry/trie";
-import { blake2bTrieHasher } from "@typeberry/trie/hasher";
-import type { ValueHash } from "@typeberry/trie/nodes";
+import type { ValueHash } from "@typeberry/trie";
+import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { OK, Result, assertNever, resultToString } from "@typeberry/utils";
-import type { LmdbRoot, SubDb } from "./root";
-import { LeafDb } from "./states/leaf-db";
+import type { LmdbRoot, SubDb } from "./root.js";
+import { LeafDb } from "./states/leaf-db.js";
 
 /**
  * LMDB-backed state storage.

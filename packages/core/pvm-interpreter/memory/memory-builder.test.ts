@@ -1,11 +1,11 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { IncorrectSbrkIndex } from "./errors";
-import { MemoryBuilder } from "./memory-builder";
-import { MEMORY_SIZE, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts";
-import { tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index";
-import { ReadablePage, WriteablePage } from "./pages";
-import { tryAsPageNumber } from "./pages/page-utils";
+import { IncorrectSbrkIndex } from "./errors.js";
+import { MemoryBuilder } from "./memory-builder.js";
+import { MEMORY_SIZE, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts.js";
+import { tryAsMemoryIndex, tryAsSbrkIndex } from "./memory-index.js";
+import { ReadablePage, WriteablePage } from "./pages/index.js";
+import { tryAsPageNumber } from "./pages/page-utils.js";
 
 describe("MemoryBuilder", () => {
   describe("finalize", () => {

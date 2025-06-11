@@ -1,6 +1,6 @@
 import type { CodeHash, CoreIndex, PerValidator, ServiceGas, ServiceId, TimeSlot } from "@typeberry/block";
-import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants";
-import type { PreimageHash } from "@typeberry/block/preimage";
+import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants.js";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";

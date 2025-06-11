@@ -5,9 +5,9 @@ import type { ImmutableHashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { InMemoryState } from "@typeberry/state";
 import { type BytesBlob, InMemoryTrie } from "@typeberry/trie";
-import { blake2bTrieHasher } from "@typeberry/trie/hasher";
-import type { StateKey } from "./keys";
-import { type StateCodec, serialize } from "./serialize";
+import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
+import type { StateKey } from "./keys.js";
+import { type StateCodec, serialize } from "./serialize.js";
 
 /** Full, in-memory state as serialized entries dictionary. */
 export class StateEntries {

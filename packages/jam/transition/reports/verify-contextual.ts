@@ -1,14 +1,14 @@
 import type { HeaderHash, TimeSlot } from "@typeberry/block";
-import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
-import type { RefineContext } from "@typeberry/block/refine-context";
-import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
+import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
+import type { RefineContext } from "@typeberry/block/refine-context.js";
+import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
 import { HashDictionary } from "@typeberry/collections";
-import { HashSet } from "@typeberry/collections/hash-set";
+import { HashSet } from "@typeberry/collections/hash-set.js";
 import type { KeccakHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
 import type { BlockState, State } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
-import { ReportsError } from "./error";
+import { ReportsError } from "./error.js";
 
 /** `L`: The maximum age in timeslots of the lookup anchor. */
 export const L = 14_400;

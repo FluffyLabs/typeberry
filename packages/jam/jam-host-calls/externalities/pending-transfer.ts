@@ -2,7 +2,7 @@ import type { ServiceGas, ServiceId } from "@typeberry/block";
 import type { Bytes } from "@typeberry/bytes";
 import type { CodecRecord } from "@typeberry/codec";
 import type { U64 } from "@typeberry/numbers";
-import type { TRANSFER_MEMO_BYTES } from "./partial-state";
+import type { TRANSFER_MEMO_BYTES } from "./partial-state.js";
 
 /**
  * Deferred Transfer.

@@ -1,4 +1,5 @@
-import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
+import { pathToFileURL } from "node:url";
+import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { Bytes } from "@typeberry/bytes";
 
 const HASH_SIZE = 4;
@@ -48,8 +49,8 @@ const arr = generateArrayOfHashes(ARRAY_SIZE, HASH_SIZE);
  * edge cases only if the data view is created eagerly!
  * and not worth the gains.
  */
-module.exports = () =>
-  suite(
+export default function run() {
+  return suite(
     "Bytes / comparison",
     add("Comparing Uint32 bytes", () => {
       const withView = arr.map((v) => ({
@@ -76,9 +77,10 @@ module.exports = () =>
     cycle(),
     complete(),
     configure({}),
-    ...save(__filename),
+    ...save(import.meta.filename),
   );
+}
 
-if (require.main === module) {
-  module.exports();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
 }

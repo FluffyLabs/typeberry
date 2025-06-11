@@ -18,13 +18,13 @@ import {
   W_T,
   W_X,
   Y,
-} from "@typeberry/block/gp-constants";
-import { MAX_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package";
+} from "@typeberry/block/gp-constants.js";
+import { MAX_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { PREIMAGE_EXPUNGE_PERIOD } from "@typeberry/jam-host-calls/externalities/partial-state-db";
-import type { FetchExternalities } from "@typeberry/jam-host-calls/fetch";
+import { PREIMAGE_EXPUNGE_PERIOD } from "@typeberry/jam-host-calls/externalities/partial-state-db.js";
+import type { FetchExternalities } from "@typeberry/jam-host-calls/fetch.js";
 import { type U64, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   BASE_SERVICE_BALANCE,
@@ -32,10 +32,10 @@ import {
   ELECTIVE_ITEM_BALANCE,
   MAX_RECENT_HISTORY,
 } from "@typeberry/state";
-import { REPORT_TIMEOUT_GRACE_PERIOD } from "../../assurances";
-import { L } from "../../reports/verify-contextual";
-import { ACCUMULATE_TOTAL_GAS, GAS_TO_INVOKE_WORK_REPORT } from "../accumulate";
-import { Operand } from "../operand";
+import { REPORT_TIMEOUT_GRACE_PERIOD } from "../../assurances.js";
+import { L } from "../../reports/verify-contextual.js";
+import { ACCUMULATE_TOTAL_GAS, GAS_TO_INVOKE_WORK_REPORT } from "../accumulate.js";
+import { Operand } from "../operand.js";
 
 const CONSTANTS_CODEC = codec.object({
   B_I: codec.u64,

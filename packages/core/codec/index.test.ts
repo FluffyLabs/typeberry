@@ -3,10 +3,10 @@ import { describe, it } from "node:test";
 import { BytesBlob } from "@typeberry/bytes";
 import { BitVec } from "@typeberry/bytes";
 import { tryAsU8, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { Decoder } from "./decoder";
-import { type Descriptor, codec } from "./descriptors";
-import { Encoder } from "./encoder";
-import { Skipper } from "./skip";
+import { Decoder } from "./decoder.js";
+import { type Descriptor, codec } from "./descriptors.js";
+import { Encoder } from "./encoder.js";
+import { Skipper } from "./skip.js";
 
 let seed = 1;
 function random() {

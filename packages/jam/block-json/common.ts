@@ -1,4 +1,4 @@
-import { type TicketAttempt, tryAsTicketAttempt } from "@typeberry/block/tickets";
+import { type TicketAttempt, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { Ed25519Signature } from "@typeberry/crypto";
 import { type FromJson, json } from "@typeberry/json-parser";

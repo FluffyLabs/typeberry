@@ -1,8 +1,9 @@
 import crypto, { createPublicKey } from "node:crypto";
-import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
+import { pathToFileURL } from "node:url";
+import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { ed25519 } from "@typeberry/crypto";
-import type { Input } from "@typeberry/crypto/ed25519";
+import type { Input } from "@typeberry/crypto/ed25519.js";
 
 const key = BytesBlob.parseBlob("0x3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29");
 const message = BytesBlob.parseBlob(
@@ -47,8 +48,8 @@ function nativeVerify<T extends BytesBlob>(input: Input<T>[]): Promise<boolean[]
   );
 }
 
-module.exports = () =>
-  suite(
+export default function run() {
+  return suite(
     "ED25519 signatures verification",
 
     /**
@@ -74,9 +75,10 @@ module.exports = () =>
     cycle(),
     complete(),
     configure({}),
-    ...save(__filename),
+    ...save(import.meta.filename),
   );
+}
 
-if (require.main === module) {
-  module.exports();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
 }

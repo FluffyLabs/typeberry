@@ -1,6 +1,6 @@
 import type { StateData, StateNames, TypedChannel } from "@typeberry/state-machine";
 import { State, StateMachine, type TransitionTo } from "@typeberry/state-machine";
-import { Finished } from "./finished";
+import { Finished } from "./finished.js";
 
 export function stateMachineMain<TReady extends State<StateNames<TReady>, Finished, StateData<TReady>>>(
   name: string,

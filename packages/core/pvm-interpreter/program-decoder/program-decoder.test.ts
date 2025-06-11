@@ -2,9 +2,9 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { BitVec } from "@typeberry/bytes";
-import { JumpTable } from "./jump-table";
-import { Mask } from "./mask";
-import { ProgramDecoder } from "./program-decoder";
+import { JumpTable } from "./jump-table.js";
+import { Mask } from "./mask.js";
+import { ProgramDecoder } from "./program-decoder.js";
 
 const code = [4, 7, 246, 4, 8, 10, 41, 135, 4, 0, 4, 7, 239, 190, 173, 222];
 

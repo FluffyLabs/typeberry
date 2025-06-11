@@ -1,6 +1,6 @@
 import type { ExtrinsicHash, ExtrinsicView, HeaderHash, HeaderView, TimeSlot, WorkReportHash } from "@typeberry/block";
-import { WorkPackage } from "@typeberry/block/work-package";
-import type { WorkPackageHash } from "@typeberry/block/work-report";
+import { WorkPackage } from "@typeberry/block/work-package.js";
+import type { WorkPackageHash } from "@typeberry/block/work-report.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { type Codec, Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";

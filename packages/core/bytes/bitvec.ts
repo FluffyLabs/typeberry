@@ -1,5 +1,5 @@
 import { check } from "@typeberry/utils";
-import type { Bytes } from "./bytes";
+import type { Bytes } from "./bytes.js";
 
 /**
  * A sequence of bits with a packed in-memory representation.

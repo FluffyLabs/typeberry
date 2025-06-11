@@ -1,8 +1,8 @@
 import type { OK, Result } from "@typeberry/utils";
-import type { PageFault } from "../errors";
-import type { MemoryIndex } from "../memory-index";
-import { getStartPageIndexFromPageNumber } from "../memory-utils";
-import type { PageIndex, PageNumber } from "./page-utils";
+import type { PageFault } from "../errors.js";
+import type { MemoryIndex } from "../memory-index.js";
+import { getStartPageIndexFromPageNumber } from "../memory-utils.js";
+import type { PageIndex, PageNumber } from "./page-utils.js";
 
 export abstract class MemoryPage {
   public start: MemoryIndex;

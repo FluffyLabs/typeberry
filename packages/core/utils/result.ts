@@ -1,4 +1,4 @@
-import { check } from "./debug";
+import { check } from "./debug.js";
 
 /** An indication of two possible outcomes returned from a function. */
 export type Result<Ok, Error> = OkResult<Ok> | ErrorResult<Error>;

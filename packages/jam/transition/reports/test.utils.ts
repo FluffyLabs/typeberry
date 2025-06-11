@@ -12,22 +12,22 @@ import {
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
-import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec";
+import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec.js";
 import {
   Credential,
   GuaranteesExtrinsicBounds,
   type GuaranteesExtrinsicView,
   ReportGuarantee,
   guaranteesExtrinsicCodec,
-} from "@typeberry/block/guarantees";
-import { RefineContext } from "@typeberry/block/refine-context";
-import testWorkReport from "@typeberry/block/test-work-report";
-import { type WorkPackageHash, type WorkPackageInfo, WorkReport } from "@typeberry/block/work-report";
-import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result";
+} from "@typeberry/block/guarantees.js";
+import { RefineContext } from "@typeberry/block/refine-context.js";
+import testWorkReport from "@typeberry/block/test-work-report.js";
+import { type WorkPackageHash, type WorkPackageInfo, WorkReport } from "@typeberry/block/work-report.js";
+import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder, codec } from "@typeberry/codec";
 import { FixedSizeArray, HashDictionary, asKnownSize } from "@typeberry/collections";
-import { HashSet } from "@typeberry/collections/hash-set";
+import { HashSet } from "@typeberry/collections/hash-set.js";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/crypto";
 import { HASH_SIZE, type KeccakHash, type OpaqueHash, WithHash, blake2b, keccak } from "@typeberry/hash";
@@ -43,9 +43,9 @@ import {
   ValidatorData,
   tryAsPerCore,
 } from "@typeberry/state";
-import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
+import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { asOpaqueType } from "@typeberry/utils";
-import { Reports, type ReportsState } from "./reports";
+import { Reports, type ReportsState } from "./reports.js";
 
 const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then((hasher) => {
   return {

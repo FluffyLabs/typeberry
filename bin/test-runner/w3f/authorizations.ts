@@ -1,12 +1,16 @@
 import type { CoreIndex, TimeSlot } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
-import type { AuthorizerHash } from "@typeberry/block/work-report";
-import { HashSet } from "@typeberry/collections/hash-set";
+import type { AuthorizerHash } from "@typeberry/block/work-report.js";
+import { HashSet } from "@typeberry/collections/hash-set.js";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { Authorization, type AuthorizationInput, type AuthorizationState } from "@typeberry/transition/authorization";
-import { copyAndUpdateState } from "@typeberry/transition/test.utils";
+import {
+  Authorization,
+  type AuthorizationInput,
+  type AuthorizationState,
+} from "@typeberry/transition/authorization.js";
+import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { deepEqual } from "@typeberry/utils";
-import { getChainSpec } from "./spec";
+import { getChainSpec } from "./spec.js";
 
 class TestCoreAuthorizer {
   static fromJson: FromJson<TestCoreAuthorizer> = {

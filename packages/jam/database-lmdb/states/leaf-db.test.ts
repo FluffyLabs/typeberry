@@ -3,9 +3,9 @@ import { describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { InMemoryTrie, type InputKey } from "@typeberry/trie";
-import { blake2bTrieHasher } from "@typeberry/trie/hasher";
+import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { type Result, resultToString } from "@typeberry/utils";
-import { LeafDb, type LeafDbError, type ValuesDb } from "./leaf-db";
+import { LeafDb, type LeafDbError, type ValuesDb } from "./leaf-db.js";
 
 describe("LeafDb", () => {
   it("should construct a LeafDb", () => {

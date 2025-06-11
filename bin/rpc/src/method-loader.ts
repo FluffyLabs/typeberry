@@ -1,14 +1,14 @@
 import z from "zod";
-import { BestBlockParams, bestBlock } from "./methods/best-block";
-import { ListServicesParams, listServices } from "./methods/list-services";
-import { ParentParams, parent } from "./methods/parent";
-import { ServiceDataParams, serviceData } from "./methods/service-data";
-import { ServicePreimageParams, servicePreimage } from "./methods/service-preimage";
-import { ServiceRequestParams, serviceRequest } from "./methods/service-request";
-import { ServiceValueParams, serviceValue } from "./methods/service-value";
-import { StateRootParams, stateRoot } from "./methods/state-root";
-import { StatisticsParams, statistics } from "./methods/statistics";
-import { RpcError, type RpcMethod, type RpcMethodRepo } from "./types";
+import { BestBlockParams, bestBlock } from "./methods/best-block.js";
+import { ListServicesParams, listServices } from "./methods/list-services.js";
+import { ParentParams, parent } from "./methods/parent.js";
+import { ServiceDataParams, serviceData } from "./methods/service-data.js";
+import { ServicePreimageParams, servicePreimage } from "./methods/service-preimage.js";
+import { ServiceRequestParams, serviceRequest } from "./methods/service-request.js";
+import { ServiceValueParams, serviceValue } from "./methods/service-value.js";
+import { StateRootParams, stateRoot } from "./methods/state-root.js";
+import { StatisticsParams, statistics } from "./methods/statistics.js";
+import { RpcError, type RpcMethod, type RpcMethodRepo } from "./types.js";
 
 export const MethodNotImplementedParams = z.any();
 export type MethodNotImplementedParams = z.infer<typeof MethodNotImplementedParams>;

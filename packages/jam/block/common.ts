@@ -4,7 +4,7 @@ import type { ChainSpec } from "@typeberry/config";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
 import { type U16, type U32, type U64, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { type Opaque, asOpaqueType, check } from "@typeberry/utils";
-import { codecKnownSizeArray, codecWithContext } from "./codec";
+import { codecKnownSizeArray, codecWithContext } from "./codec.js";
 
 /**
  * Time slot index.

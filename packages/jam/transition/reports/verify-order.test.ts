@@ -1,11 +1,11 @@
 import { describe, it } from "node:test";
 import { tryAsTimeSlot } from "@typeberry/block";
-import { ReportGuarantee } from "@typeberry/block/guarantees";
+import { ReportGuarantee } from "@typeberry/block/guarantees.js";
 import { tinyChainSpec } from "@typeberry/config";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
-import { ReportsError } from "./index";
-import { guaranteesAsView, newCredential, newWorkReport } from "./test.utils";
-import { verifyReportsOrder } from "./verify-order";
+import { ReportsError } from "./index.js";
+import { guaranteesAsView, newCredential, newWorkReport } from "./test.utils.js";
+import { verifyReportsOrder } from "./verify-order.js";
 
 describe("Reports.verifyReportsOrder", () => {
   it("should reject out-of-order guarantees", async () => {

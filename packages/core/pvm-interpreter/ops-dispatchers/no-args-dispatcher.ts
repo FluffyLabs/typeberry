@@ -1,5 +1,5 @@
-import { Instruction } from "../instruction";
-import type { NoArgsOps } from "../ops";
+import { Instruction } from "../instruction.js";
+import type { NoArgsOps } from "../ops/index.js";
 
 export class NoArgsDispatcher {
   constructor(private noArgsOps: NoArgsOps) {}

@@ -5,7 +5,7 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { deepEqual } from "@typeberry/utils";
-import { ServiceAccountInfo } from "./service";
+import { ServiceAccountInfo } from "./service.js";
 
 const encodedTestInfo =
   "0x0101010101010101010101010101010101010101010101010101010101010101809698000000000064000000000000000a000000000000000a0000000000000003000000";

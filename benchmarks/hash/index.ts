@@ -1,8 +1,9 @@
-import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
+import { pathToFileURL } from "node:url";
+import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 import { Logger } from "@typeberry/logger";
 
 const HASH_LENGTH: number = 32;
-const logger = Logger.new(__filename, "hash");
+const logger = Logger.new(import.meta.filename, "hash");
 
 type ByteHash = Byte[];
 type NumberHash = number[];
@@ -139,8 +140,8 @@ function findDuplicates<T>(list: ArrayLike<T>[], compare = isSame): ArrayLike<T>
   return found;
 }
 
-module.exports = () =>
-  suite(
+export default function run() {
+  return suite(
     "Hash + Symbols",
 
     add("hash with numeric representation", () => {
@@ -199,8 +200,9 @@ module.exports = () =>
     cycle(),
     complete(),
     configure({}),
-    ...save(__filename),
+    ...save(import.meta.filename),
   );
+}
 
 const x00 = Symbol("0x00");
 const x01 = Symbol("0x01");
@@ -717,6 +719,6 @@ type Byte =
   | typeof xfe
   | typeof xff;
 
-if (require.main === module) {
-  module.exports();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
 }

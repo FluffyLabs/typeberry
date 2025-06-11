@@ -1,14 +1,13 @@
 export { add, complete, cycle, suite } from "benny";
 import { configure as rawConfigure, save as rawSave } from "benny";
-import type { Config } from "benny/lib/internal/common-types";
+import type { Config } from "benny/lib/internal/common-types.js";
 
 import * as path from "node:path";
 
-export const REL_DIR = `${__dirname}/../..`;
-export const DIST_DIR = "dist";
-export const BENCHMARKS_DIR = "benchmarks";
-export const OUTPUT_DIR = "output";
-export const EXPECTED_DIR = "expected";
+export const DIST_DIR = path.resolve(`${import.meta.dirname}/../../dist`);
+export const BENCHMARKS_DIR = path.resolve(`${import.meta.dirname}/../../benchmarks`);
+export const OUTPUT_DIR_NAME = "output";
+export const EXPECTED_DIR_NAME = "expected";
 
 export function configure(obj: Config) {
   obj.minDisplayPrecision ??= 2;
@@ -20,7 +19,7 @@ export function save(benchmarkPath: string) {
   const testSuite = path.basename(testPath.dir);
   const defaultParams = {
     file: testPath.name,
-    folder: `${REL_DIR}/${BENCHMARKS_DIR}/${testSuite}/${OUTPUT_DIR}`,
+    folder: `${BENCHMARKS_DIR}/${testSuite}/${OUTPUT_DIR_NAME}`,
   };
   return [
     rawSave({

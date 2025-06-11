@@ -1,5 +1,5 @@
 import { check } from "@typeberry/utils";
-import { MAX_VALUE } from "./math-consts";
+import { MAX_VALUE } from "./math-consts.js";
 
 /**
  * Overflowing addition for two-complement representation of 32-bit signed numbers.

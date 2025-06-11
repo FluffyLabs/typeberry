@@ -4,10 +4,10 @@ import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type U16, type U32, sumU32 } from "@typeberry/numbers";
 import { type Opaque, WithDebug } from "@typeberry/utils";
-import { codecKnownSizeArray } from "./codec";
-import type { ServiceGas, ServiceId } from "./common";
-import type { CodeHash } from "./hash";
-import { MAX_NUMBER_OF_SEGMENTS, type SegmentIndex } from "./work-item-segment";
+import { codecKnownSizeArray } from "./codec.js";
+import type { ServiceGas, ServiceId } from "./common.js";
+import type { CodeHash } from "./hash.js";
+import { MAX_NUMBER_OF_SEGMENTS, type SegmentIndex } from "./work-item-segment.js";
 
 type WorkItemExtrinsicHash = Opaque<OpaqueHash, "ExtrinsicHash">;
 

@@ -2,9 +2,9 @@ import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { TEST_STATE_ROOT, testState } from "@typeberry/state/test.utils";
+import { TEST_STATE_ROOT, testState } from "@typeberry/state/test.utils.js";
 import { deepEqual } from "@typeberry/utils";
-import { InMemoryStates } from "./states";
+import { InMemoryStates } from "./states.js";
 
 describe("InMemoryState", () => {
   it("should write and read some state", async () => {

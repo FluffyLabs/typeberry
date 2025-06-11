@@ -1,5 +1,5 @@
 import { type CodeHash, type ServiceGas, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
-import type { PreimageHash } from "@typeberry/block/preimage";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";

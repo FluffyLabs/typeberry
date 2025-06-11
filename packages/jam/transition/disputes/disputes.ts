@@ -1,5 +1,5 @@
 import type { WorkReportHash } from "@typeberry/block";
-import type { DisputesExtrinsic } from "@typeberry/block/disputes";
+import type { DisputesExtrinsic } from "@typeberry/block/disputes.js";
 import { HashDictionary, HashSet, SortedArray, SortedSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
@@ -11,9 +11,9 @@ import {
   tryAsPerCore,
 } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
-import { DisputesErrorCode } from "./disputes-error-code";
-import type { DisputesState, DisputesStateUpdate } from "./disputes-state";
-import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
+import { DisputesErrorCode } from "./disputes-error-code.js";
+import type { DisputesState, DisputesStateUpdate } from "./disputes-state.js";
+import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils.js";
 import {
   type VerificationInput,
   type VerificationOutput,
@@ -21,7 +21,7 @@ import {
   prepareFaultSignature,
   prepareJudgementSignature,
   vefifyAllSignatures,
-} from "./verification-utils";
+} from "./verification-utils.js";
 
 type VotesForWorkReports = HashDictionary<WorkReportHash, number>;
 

@@ -1,6 +1,6 @@
-import type { TwoImmediatesArgs } from "../args-decoder/args-decoder";
-import { Instruction } from "../instruction";
-import type { StoreOps } from "../ops";
+import type { TwoImmediatesArgs } from "../args-decoder/args-decoder.js";
+import { Instruction } from "../instruction.js";
+import type { StoreOps } from "../ops/index.js";
 
 export class TwoImmsDispatcher {
   constructor(private storeOps: StoreOps) {}

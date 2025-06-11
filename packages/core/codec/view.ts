@@ -1,8 +1,8 @@
 import { BytesBlob } from "@typeberry/bytes";
 import { check, ensure } from "@typeberry/utils";
-import type { Decoder } from "./decoder";
-import type { ClassConstructor, CodecRecord, Descriptor, DescriptorRecord } from "./descriptors";
-import { Skipper } from "./skip";
+import type { Decoder } from "./decoder.js";
+import type { ClassConstructor, CodecRecord, Descriptor, DescriptorRecord } from "./descriptors.js";
+import { Skipper } from "./skip.js";
 
 /** View type for given complex object `T`. */
 export type ViewOf<T, D extends DescriptorRecord<T>> = ObjectView<T> & {

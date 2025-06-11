@@ -3,9 +3,9 @@ import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Key, type Ed25519Signature } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { WithDebug, seeThrough } from "@typeberry/utils";
-import { codecWithContext } from "./codec";
-import type { Epoch, ValidatorIndex } from "./common";
-import type { WorkReportHash } from "./hash";
+import { codecWithContext } from "./codec.js";
+import type { Epoch, ValidatorIndex } from "./common.js";
+import type { WorkReportHash } from "./hash.js";
 
 /**
  * Proof of signing a contradictory [`Judgement`] of a work report.

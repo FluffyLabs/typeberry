@@ -4,7 +4,7 @@ import { Encoder } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { ServiceAccountInfo } from "@typeberry/state";
 import z from "zod";
-import { type BlobArray, Hash, type None, type RpcMethod, ServiceId } from "../types";
+import { type BlobArray, Hash, type None, type RpcMethod, ServiceId } from "../types.js";
 
 export const ServiceDataParams = z.tuple([Hash, ServiceId]);
 export type ServiceDataParams = z.infer<typeof ServiceDataParams>;

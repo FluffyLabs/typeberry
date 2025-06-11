@@ -10,7 +10,7 @@ import {
   type WorkReportHash,
   tryAsTimeSlot,
 } from "@typeberry/block";
-import { type SignedTicket, type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets";
+import { type SignedTicket, type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
@@ -18,11 +18,11 @@ import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Ordering } from "@typeberry/ordering";
 import { DisputesRecords, VALIDATOR_META_BYTES, ValidatorData, hashComparator } from "@typeberry/state";
-import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
+import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
 import { Result, deepEqual } from "@typeberry/utils";
-import * as bandersnatch from "./bandersnatch";
-import { BandernsatchWasm } from "./bandersnatch-wasm";
-import { Safrole, SafroleErrorCode, type SafroleState, type SafroleStateUpdate } from "./safrole";
+import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import bandersnatch from "./bandersnatch.js";
+import { Safrole, SafroleErrorCode, type SafroleState, type SafroleStateUpdate } from "./safrole.js";
 
 const bwasm = BandernsatchWasm.new({ synchronous: true });
 

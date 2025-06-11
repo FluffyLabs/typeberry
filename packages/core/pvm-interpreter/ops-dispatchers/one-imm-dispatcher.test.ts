@@ -1,13 +1,13 @@
 import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
-import type { OneImmediateArgs } from "../args-decoder/args-decoder";
-import { ArgumentType } from "../args-decoder/argument-type";
-import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
-import { Instruction } from "../instruction";
-import { InstructionResult } from "../instruction-result";
-import { HostCallOps } from "../ops";
-import { OneImmDispatcher } from "./one-imm-dispatcher";
+import type { OneImmediateArgs } from "../args-decoder/args-decoder.js";
+import { ArgumentType } from "../args-decoder/argument-type.js";
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map.js";
+import { InstructionResult } from "../instruction-result.js";
+import { Instruction } from "../instruction.js";
+import { HostCallOps } from "../ops/index.js";
+import { OneImmDispatcher } from "./one-imm-dispatcher.js";
 
 describe("OneImmDispatcher", () => {
   describe("check if it handles expected instructions", () => {

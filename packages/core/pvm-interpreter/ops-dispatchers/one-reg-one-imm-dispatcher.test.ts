@@ -1,17 +1,17 @@
 import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
-import type { OneRegisterOneImmediateArgs } from "../args-decoder/args-decoder";
-import { ArgumentType } from "../args-decoder/argument-type";
-import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
-import { BasicBlocks } from "../basic-blocks";
-import { Instruction } from "../instruction";
-import { InstructionResult } from "../instruction-result";
-import { Memory } from "../memory";
-import { DynamicJumpOps, LoadOps, StoreOps } from "../ops";
-import { JumpTable } from "../program-decoder/jump-table";
-import { Registers } from "../registers";
-import { OneRegOneImmDispatcher } from "./one-reg-one-imm-dispatcher";
+import type { OneRegisterOneImmediateArgs } from "../args-decoder/args-decoder.js";
+import { ArgumentType } from "../args-decoder/argument-type.js";
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map.js";
+import { BasicBlocks } from "../basic-blocks/index.js";
+import { InstructionResult } from "../instruction-result.js";
+import { Instruction } from "../instruction.js";
+import { Memory } from "../memory/index.js";
+import { DynamicJumpOps, LoadOps, StoreOps } from "../ops/index.js";
+import { JumpTable } from "../program-decoder/jump-table.js";
+import { Registers } from "../registers.js";
+import { OneRegOneImmDispatcher } from "./one-reg-one-imm-dispatcher.js";
 
 describe("OneRegOneImmDispatcher", () => {
   const regs = new Registers();

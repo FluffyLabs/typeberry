@@ -1,14 +1,18 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
-import type { WorkPackageInfo } from "@typeberry/block/work-report";
+import type { WorkPackageInfo } from "@typeberry/block/work-report.js";
 import { HashDictionary } from "@typeberry/collections";
 import { type KeccakHash, type OpaqueHash, keccak } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { MmrHasher } from "@typeberry/mmr";
 import type { BlockState } from "@typeberry/state";
 import { blockStateFromJson, reportedWorkPackageFromJson } from "@typeberry/state-json";
-import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "@typeberry/transition/recent-history";
-import { copyAndUpdateState } from "@typeberry/transition/test.utils";
+import {
+  RecentHistory,
+  type RecentHistoryInput,
+  type RecentHistoryState,
+} from "@typeberry/transition/recent-history.js";
+import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 
 class Input {

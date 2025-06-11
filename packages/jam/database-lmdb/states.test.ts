@@ -15,10 +15,10 @@ import {
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { StateEntries } from "@typeberry/state-merkleization";
-import { testState } from "@typeberry/state/test.utils";
+import { testState } from "@typeberry/state/test.utils.js";
 import { OK, Result, deepEqual } from "@typeberry/utils";
-import { LmdbRoot } from "./root";
-import { LmdbStates } from "./states";
+import { LmdbRoot } from "./root.js";
+import { LmdbStates } from "./states.js";
 
 function createTempDir(suffix = "lmdb"): string {
   return fs.mkdtempSync(`typeberry-${suffix}`);

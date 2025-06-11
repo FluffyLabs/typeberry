@@ -4,8 +4,8 @@
  * https://graypaper.fluffylabs.dev/#/5f542d7/389f00389f00
  */
 
-export { serializeUpdate, TrieAction } from "./serialize-update";
-export { SerializedState, Persistence } from "./serialized-state";
-export { StateEntries } from "./state-entries";
-export { serialize } from "./serialize";
-export { StateKey } from "./keys";
+export * from "./serialize-update.js";
+export * from "./serialized-state.js";
+export * from "./state-entries.js";
+export * from "./serialize.js";
+export * from "./keys.js";

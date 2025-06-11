@@ -1,14 +1,14 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
+import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
 import { Bytes } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, keccak } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
 import { type BlockState, MAX_RECENT_HISTORY } from "@typeberry/state";
 import { asOpaqueType, check } from "@typeberry/utils";
-import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "./recent-history";
-import { copyAndUpdateState } from "./test.utils";
+import { RecentHistory, type RecentHistoryInput, type RecentHistoryState } from "./recent-history.js";
+import { copyAndUpdateState } from "./test.utils.js";
 
 const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then((hasher) => {
   return {

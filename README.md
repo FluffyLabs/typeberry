@@ -87,7 +87,7 @@ $ npm start -w @typeberry/benchmark
 
 Since each benchmark file is also runnable, it's easy to run just one benchmark, e.g:
 ```bash
-$ npm exec ts-node ./benchmarks/math/mul_overflow.ts
+$ npm exec tsx ./benchmarks/math/mul_overflow.ts
 ```
 
 ### Running JSON test vectors

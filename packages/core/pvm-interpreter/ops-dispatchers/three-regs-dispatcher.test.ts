@@ -1,12 +1,12 @@
 import assert from "node:assert";
 import { test } from "node:test";
-import type { ThreeRegistersArgs } from "../args-decoder/args-decoder";
-import { ArgumentType } from "../args-decoder/argument-type";
-import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
-import { Instruction } from "../instruction";
-import { BitOps, BitRotationOps, BooleanOps, MathOps, MoveOps, ShiftOps } from "../ops";
-import { Registers } from "../registers";
-import { ThreeRegsDispatcher } from "./three-regs-dispatcher";
+import type { ThreeRegistersArgs } from "../args-decoder/args-decoder.js";
+import { ArgumentType } from "../args-decoder/argument-type.js";
+import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map.js";
+import { Instruction } from "../instruction.js";
+import { BitOps, BitRotationOps, BooleanOps, MathOps, MoveOps, ShiftOps } from "../ops/index.js";
+import { Registers } from "../registers.js";
+import { ThreeRegsDispatcher } from "./three-regs-dispatcher.js";
 
 test("ThreeRegsDispatcher", async (t) => {
   const regs = new Registers();

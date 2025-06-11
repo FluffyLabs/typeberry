@@ -4,7 +4,7 @@ import { Encoder } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { StatisticsData } from "@typeberry/state";
 import z from "zod";
-import { type BlobArray, Hash, type RpcMethod } from "../types";
+import { type BlobArray, Hash, type RpcMethod } from "../types.js";
 
 export const StatisticsParams = z.tuple([Hash]);
 export type StatisticsParams = z.infer<typeof StatisticsParams>;

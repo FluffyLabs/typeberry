@@ -3,8 +3,8 @@ import { test } from "node:test";
 
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { InMemoryTrie, type StateKey, type TrieHash } from "@typeberry/trie";
-import { blake2bTrieHasher } from "@typeberry/trie/hasher";
+import { InMemoryTrie, type StateKey, type TrieNodeHash } from "@typeberry/trie";
+import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 
 export class TrieTest {
   static fromJson: FromJson<TrieTest> = {
@@ -28,7 +28,7 @@ export class TrieTest {
     output: json.fromString((v) => Bytes.parseBytesNoPrefix(v, 32).asOpaque()),
   };
   input!: Map<StateKey, BytesBlob>;
-  output!: TrieHash;
+  output!: TrieNodeHash;
 }
 
 export type TrieTestSuite = [TrieTest];

@@ -6,12 +6,12 @@ import {
   type EntropyHash,
   type ValidatorIndex,
 } from "@typeberry/block";
-import type { SignedTicket } from "@typeberry/block/tickets";
+import type { SignedTicket } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Result } from "@typeberry/utils";
-import type { BandernsatchWasm } from "./bandersnatch-wasm";
-import { JAM_TICKET_SEAL } from "./constants";
+import type { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import { JAM_TICKET_SEAL } from "./constants.js";
 
 const RESULT_INDEX = 0 as const;
 
@@ -20,7 +20,16 @@ enum ResultValues {
   Error = 1,
 }
 
-export async function verifySeal(
+// TODO [ToDr] We export the entire object to allow mocking in tests.
+// Ideally we would just export functions and figure out how to mock
+// properly in ESM.
+export default {
+  verifySeal,
+  verifyTickets,
+  getRingCommitment,
+};
+
+async function verifySeal(
   bandersnatch: BandernsatchWasm,
   validators: BandersnatchKey[],
   authorIndex: ValidatorIndex,
@@ -44,7 +53,7 @@ export async function verifySeal(
   return Result.ok(Bytes.fromBlob(sealResult.subarray(1), HASH_SIZE).asOpaque());
 }
 
-export async function getRingCommitment(
+async function getRingCommitment(
   bandersnatch: BandernsatchWasm,
   validators: BandersnatchKey[],
 ): Promise<Result<BandersnatchRingRoot, null>> {
@@ -58,7 +67,7 @@ export async function getRingCommitment(
   return Result.ok(Bytes.fromBlob(commitmentResult.subarray(1), BANDERSNATCH_RING_ROOT_BYTES).asOpaque());
 }
 
-export async function verifyTickets(
+async function verifyTickets(
   bandersnatch: BandernsatchWasm,
   validators: readonly BandersnatchKey[],
   tickets: readonly SignedTicket[],

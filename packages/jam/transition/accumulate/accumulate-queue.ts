@@ -1,10 +1,10 @@
 import type { TimeSlot } from "@typeberry/block";
-import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
+import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report.js";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
-import type { AccumulateState } from "../accumulate";
-import { getWorkPackageHashes } from "./accumulate-utils";
+import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
+import type { AccumulateState } from "../accumulate/index.js";
+import { getWorkPackageHashes } from "./accumulate-utils.js";
 
 export class AccumulateQueue {
   constructor(

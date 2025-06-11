@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { BitVec } from "./bitvec";
-import { BytesBlob } from "./bytes";
+import { BitVec } from "./bitvec.js";
+import { BytesBlob } from "./bytes.js";
 
 describe("BitVec", () => {
   it("should set and read bytes", () => {

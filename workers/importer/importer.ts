@@ -1,13 +1,13 @@
 import type { BlockView, EntropyHash, HeaderHash, HeaderView, TimeSlot } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb, StateUpdateError, StatesDb } from "@typeberry/database";
-import type { LeafDb } from "@typeberry/database-lmdb/states/leaf-db";
+import type { LeafDb } from "@typeberry/database-lmdb";
 import { WithHash } from "@typeberry/hash";
 import type { Logger } from "@typeberry/logger";
 import type { SerializedState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
-import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verifier";
-import { OnChain, type StfError } from "@typeberry/transition/chain-stf";
+import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verifier.js";
+import { OnChain, type StfError } from "@typeberry/transition/chain-stf.js";
 import { type ErrorResult, Result, type TaggedError, measure, resultToString } from "@typeberry/utils";
 
 export enum ImporterErrorKind {

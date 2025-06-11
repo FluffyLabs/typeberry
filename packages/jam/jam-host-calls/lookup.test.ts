@@ -5,15 +5,15 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, blake2b } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
-import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler";
+import { PvmExecution } from "@typeberry/pvm-host-calls/host-call-handler.js";
 import { Registers } from "@typeberry/pvm-interpreter";
-import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
-import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory";
-import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
-import { Lookup } from "./lookup";
-import { HostCallResult } from "./results";
-import { TestAccounts } from "./test-accounts";
+import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
+import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
+import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
+import { Lookup } from "./lookup.js";
+import { HostCallResult } from "./results.js";
+import { TestAccounts } from "./test-accounts.js";
 
 const gas = gasCounter(tryAsGas(0));
 

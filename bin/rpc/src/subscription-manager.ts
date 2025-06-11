@@ -1,11 +1,11 @@
 import type WebSocket from "ws";
-import type { RpcServer } from "./server";
+import type { RpcServer } from "./server.js";
 import {
   JSON_RPC_VERSION,
   type JsonRpcSubscriptionNotification,
   type Subscription,
   type SubscriptionId,
-} from "./types";
+} from "./types.js";
 
 const POLL_INTERVAL_MS = 1000;
 

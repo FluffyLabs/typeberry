@@ -14,10 +14,10 @@ import {
   tryAsServiceId,
   tryAsTimeSlot,
 } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE, type MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
-import type { PreimageHash } from "@typeberry/block/preimage";
-import type { Ticket } from "@typeberry/block/tickets";
-import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
+import { AUTHORIZATION_QUEUE_SIZE, type MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
+import type { Ticket } from "@typeberry/block/tickets.js";
+import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { codec } from "@typeberry/codec";
 import {
@@ -34,13 +34,13 @@ import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { OK, Result, WithDebug, assertNever, check } from "@typeberry/utils";
-import type { AvailabilityAssignment } from "./assurances";
-import type { BlockState } from "./block-state";
-import { type PerCore, tryAsPerCore } from "./common";
-import { DisputesRecords, hashComparator } from "./disputes";
-import type { NotYetAccumulatedReport } from "./not-yet-accumulated";
-import { PrivilegedServices } from "./privileged-services";
-import { type SafroleSealingKeys, SafroleSealingKeysData } from "./safrole-data";
+import type { AvailabilityAssignment } from "./assurances.js";
+import type { BlockState } from "./block-state.js";
+import { type PerCore, tryAsPerCore } from "./common.js";
+import { DisputesRecords, hashComparator } from "./disputes.js";
+import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
+import { PrivilegedServices } from "./privileged-services.js";
+import { type SafroleSealingKeys, SafroleSealingKeysData } from "./safrole-data.js";
 import {
   LookupHistoryItem,
   type LookupHistorySlots,
@@ -49,8 +49,7 @@ import {
   StorageItem,
   type StorageKey,
   tryAsLookupHistorySlots,
-} from "./service";
-import { ENTROPY_ENTRIES, type EnumerableState, type MAX_RECENT_HISTORY, type Service, type State } from "./state";
+} from "./service.js";
 import {
   type ServicesUpdate,
   type UpdatePreimage,
@@ -59,9 +58,10 @@ import {
   UpdateServiceKind,
   type UpdateStorage,
   UpdateStorageKind,
-} from "./state-update";
-import { CoreStatistics, StatisticsData, ValidatorStatistics } from "./statistics";
-import { VALIDATOR_META_BYTES, ValidatorData } from "./validator-data";
+} from "./state-update.js";
+import { ENTROPY_ENTRIES, type EnumerableState, type MAX_RECENT_HISTORY, type Service, type State } from "./state.js";
+import { CoreStatistics, StatisticsData, ValidatorStatistics } from "./statistics.js";
+import { VALIDATOR_META_BYTES, ValidatorData } from "./validator-data.js";
 
 export enum UpdateError {
   /** Attempting to create a service that already exists. */

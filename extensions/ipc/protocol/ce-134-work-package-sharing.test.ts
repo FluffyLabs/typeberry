@@ -1,12 +1,12 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsCoreIndex } from "@typeberry/block";
-import { WorkPackageInfo } from "@typeberry/block/work-report";
+import { WorkPackageInfo } from "@typeberry/block/work-report.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
-import { MessageHandler, type MessageSender } from "../handler";
-import { ClientHandler, STREAM_KIND, ServerHandler } from "./ce-134-work-package-sharing";
+import { MessageHandler, type MessageSender } from "../handler.js";
+import { ClientHandler, STREAM_KIND, ServerHandler } from "./ce-134-work-package-sharing.js";
 
 const MOCK_CORE_INDEX = tryAsCoreIndex(1);
 const MOCK_SEGMENTS_ROOT_MAPPINGS = [

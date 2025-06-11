@@ -2,12 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { Logger } from "@typeberry/logger";
 import chalk from "chalk";
-import { formatResults } from "./format";
-import { BENCHMARKS_DIR, DIST_DIR, EXPECTED_DIR, OUTPUT_DIR, REL_DIR } from "./setup";
-import type { BennyOps, BennyResults, ComparisonResult, ErrorResult, OkResult, Result } from "./types";
+import { formatResults } from "./format.js";
+import { BENCHMARKS_DIR, DIST_DIR, EXPECTED_DIR_NAME, OUTPUT_DIR_NAME } from "./setup.js";
+import type { BennyOps, BennyResults, ComparisonResult, ErrorResult, OkResult, Result } from "./types.js";
 
 const commitHash = process.env.GITHUB_SHA;
-const logger = Logger.new(__filename, "benchmarks");
+const logger = Logger.new(import.meta.filename, "benchmarks");
 
 runAllBenchmarks().catch((e: Error) => {
   logger.error(e.message);
@@ -18,8 +18,8 @@ runAllBenchmarks().catch((e: Error) => {
 
 async function runAllBenchmarks() {
   // We are going to run all benchmarks in our benchmark folder.
-  const benchmarksPath = `${REL_DIR}/${BENCHMARKS_DIR}`;
-  const distPath = `${REL_DIR}/${DIST_DIR}/${BENCHMARKS_DIR}`;
+  const benchmarksPath = BENCHMARKS_DIR;
+  const distPath = path.resolve(`${DIST_DIR}/benchmarks`);
   fs.mkdirSync(distPath, {
     recursive: true,
   });
@@ -83,12 +83,12 @@ async function runBenchmark(benchPath: string, fileName: string): Promise<Result
   const filePath = `${benchPath}/${fileName}`;
   const fileNameNoExt = path.basename(fileName, path.extname(fileName));
   logger.log(`Running ${filePath}`);
-  const run = require(path.resolve(filePath));
-  await run();
+  const run = await import(path.resolve(filePath));
+  await run.default();
 
   logger.log("Compare with expected results.");
-  const outputPath = `${benchPath}/${OUTPUT_DIR}/${fileNameNoExt}.json`;
-  const expectedPath = `${benchPath}/${EXPECTED_DIR}/${fileNameNoExt}.json`;
+  const outputPath = `${benchPath}/${OUTPUT_DIR_NAME}/${fileNameNoExt}.json`;
+  const expectedPath = `${benchPath}/${EXPECTED_DIR_NAME}/${fileNameNoExt}.json`;
 
   const currentResults = JSON.parse(fs.readFileSync(outputPath).toString());
   const expectedContent = tryReadFile(expectedPath);

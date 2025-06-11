@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { HostCallRegisters } from "@typeberry/pvm-host-calls";
-import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
-import { Registers } from "@typeberry/pvm-interpreter/registers";
-import { PartialStateMock } from "../externalities/partial-state-mock";
-import { Checkpoint } from "./checkpoint";
+import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
+import { Registers } from "@typeberry/pvm-interpreter/registers.js";
+import { PartialStateMock } from "../externalities/partial-state-mock.js";
+import { Checkpoint } from "./checkpoint.js";
 
 const REGISTER = 7;
 

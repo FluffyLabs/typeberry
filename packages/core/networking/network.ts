@@ -1,4 +1,4 @@
-import type { Peer, PeerAddress } from "./peers";
+import type { Peer, PeerAddress } from "./peers.js";
 
 export interface Network {
   start(): Promise<void>;

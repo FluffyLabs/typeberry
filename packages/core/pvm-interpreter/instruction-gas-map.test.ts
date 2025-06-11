@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Instruction } from "./instruction";
-import { instructionGasMap } from "./instruction-gas-map";
+import { instructionGasMap } from "./instruction-gas-map.js";
+import { Instruction } from "./instruction.js";
 
 describe("instructionGasMap", () => {
   const instructions = Object.entries(Instruction).filter(

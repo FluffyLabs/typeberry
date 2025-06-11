@@ -1,4 +1,4 @@
-import lmdb from "lmdb";
+import * as lmdb from "lmdb";
 
 export type SubDb = lmdb.Database<Uint8Array, lmdb.Key>;
 

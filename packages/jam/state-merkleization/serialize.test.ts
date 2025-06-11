@@ -5,8 +5,8 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
-import type { StateKey } from "./keys";
-import { dumpCodec, serialize } from "./serialize";
+import type { StateKey } from "./keys.js";
+import { dumpCodec, serialize } from "./serialize.js";
 
 type TestCase = [string, { key: StateKey }, string];
 

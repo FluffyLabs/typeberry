@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { test } from "node:test";
-import { type FromJson, json, parseFromJson } from "./";
+import { type FromJson, json, parseFromJson } from "./index.js";
 
 test("JSON parser", async (t) => {
   await t.test("parse simple class", () => {

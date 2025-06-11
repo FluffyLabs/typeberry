@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { validateLength } from "./validation";
+import { validateLength } from "./validation.js";
 
 describe("Codec validation", () => {
   it("should throw when length is out of range", () => {

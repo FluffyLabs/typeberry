@@ -4,8 +4,8 @@ import { tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
-import { StateEntry } from "./entries";
-import { keys } from "./keys";
+import { StateEntry } from "./entries.js";
+import { keys } from "./keys.js";
 
 describe("State Serialization / keys", () => {
   it("should construct index key", () => {

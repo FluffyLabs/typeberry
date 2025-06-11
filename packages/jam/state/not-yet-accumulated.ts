@@ -1,6 +1,6 @@
-import { codecKnownSizeArray } from "@typeberry/block/codec";
-import { MAX_REPORT_DEPENDENCIES } from "@typeberry/block/gp-constants";
-import { type WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
+import { codecKnownSizeArray } from "@typeberry/block/codec.js";
+import { MAX_REPORT_DEPENDENCIES } from "@typeberry/block/gp-constants.js";
+import { type WorkPackageHash, WorkReport } from "@typeberry/block/work-report.js";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";

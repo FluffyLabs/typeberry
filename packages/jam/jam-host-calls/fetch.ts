@@ -1,10 +1,10 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { type U64, minU64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
-import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import { HostCallResult } from "./results";
-import { CURRENT_SERVICE_ID, clampU64ToU32 } from "./utils";
+import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { HostCallResult } from "./results.js";
+import { CURRENT_SERVICE_ID, clampU64ToU32 } from "./utils.js";
 
 /** Fetchable data. */
 export interface FetchExternalities {

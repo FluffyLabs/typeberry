@@ -3,9 +3,9 @@ import { type HeaderHash, type HeaderView, tryAsTimeSlot } from "@typeberry/bloc
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE, type WithHash, blake2b } from "@typeberry/hash";
 import type { Listener } from "@typeberry/state-machine";
-import { KEY_SIZE, KeyValuePair } from "./protocol/ce-129-state-request";
-import { Announcement, Handshake, HashAndSlot } from "./protocol/up-0-block-announcement";
-import { startIpcServer } from "./server";
+import { KEY_SIZE, KeyValuePair } from "./protocol/ce-129-state-request.js";
+import { Announcement, Handshake, HashAndSlot } from "./protocol/up-0-block-announcement.js";
+import { startIpcServer } from "./server.js";
 
 export interface ExtensionApi {
   bestHeader: Listener<WithHash<HeaderHash, HeaderView>>;

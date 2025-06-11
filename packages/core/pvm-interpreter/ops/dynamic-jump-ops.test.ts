@@ -1,16 +1,16 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { BitVec } from "@typeberry/bytes";
-import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import { BasicBlocks } from "../basic-blocks";
-import { Instruction } from "../instruction";
-import { InstructionResult } from "../instruction-result";
-import { JumpTable } from "../program-decoder/jump-table";
-import { Mask } from "../program-decoder/mask";
-import { Registers } from "../registers";
-import { Result } from "../result";
-import { bigintToUint8ArrayLE } from "../test-utils";
-import { DynamicJumpOps } from "./dynamic-jump-ops";
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import { BasicBlocks } from "../basic-blocks/index.js";
+import { InstructionResult } from "../instruction-result.js";
+import { Instruction } from "../instruction.js";
+import { JumpTable } from "../program-decoder/jump-table.js";
+import { Mask } from "../program-decoder/mask.js";
+import { Registers } from "../registers.js";
+import { Result } from "../result.js";
+import { bigintToUint8ArrayLE } from "../test-utils.js";
+import { DynamicJumpOps } from "./dynamic-jump-ops.js";
 
 describe("DynamicJumpOps", () => {
   function prepareData(firstValue: bigint, secondValue: bigint) {

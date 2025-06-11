@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import { Registers } from "../registers";
-import { bigintToUint8ArrayLE } from "../test-utils";
-import { BooleanOps } from "./boolean-ops";
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import { Registers } from "../registers.js";
+import { bigintToUint8ArrayLE } from "../test-utils.js";
+import { BooleanOps } from "./boolean-ops.js";
 
 describe("BooleanOps", () => {
   function prepareData(firstValue: bigint, secondValue: bigint) {

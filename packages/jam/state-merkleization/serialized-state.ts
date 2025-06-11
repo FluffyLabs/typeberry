@@ -1,5 +1,5 @@
 import { type ServiceId, tryAsTimeSlot } from "@typeberry/block";
-import type { PreimageHash } from "@typeberry/block/preimage";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type Decode, Decoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
@@ -13,9 +13,9 @@ import {
   type StorageKey,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import type { StateKey } from "./keys";
-import { serialize } from "./serialize";
-import type { StateEntries } from "./state-entries";
+import type { StateKey } from "./keys.js";
+import { serialize } from "./serialize.js";
+import type { StateEntries } from "./state-entries.js";
 
 /** A tiny wrapper for some persistence layer. */
 export interface Persistence {

@@ -1,6 +1,6 @@
-import type { ThreeRegistersArgs } from "../args-decoder/args-decoder";
-import { Instruction } from "../instruction";
-import type { BitOps, BitRotationOps, BooleanOps, MathOps, MoveOps, ShiftOps } from "../ops";
+import type { ThreeRegistersArgs } from "../args-decoder/args-decoder.js";
+import { Instruction } from "../instruction.js";
+import type { BitOps, BitRotationOps, BooleanOps, MathOps, MoveOps, ShiftOps } from "../ops/index.js";
 
 export class ThreeRegsDispatcher {
   constructor(

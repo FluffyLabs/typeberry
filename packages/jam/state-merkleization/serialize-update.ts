@@ -16,8 +16,8 @@ import {
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { assertNever } from "@typeberry/utils";
-import type { StateKey } from "./keys";
-import { type StateCodec, serialize } from "./serialize";
+import type { StateKey } from "./keys.js";
+import { type StateCodec, serialize } from "./serialize.js";
 
 /** What should be done with that key? */
 export enum TrieAction {

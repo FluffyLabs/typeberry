@@ -1,5 +1,5 @@
-import type { Mask } from "../program-decoder/mask";
-import { terminationInstructions } from "./is-termination-instruction";
+import type { Mask } from "../program-decoder/mask.js";
+import { terminationInstructions } from "./is-termination-instruction.js";
 
 export class BasicBlocks {
   private basicBlocks: Set<number> = new Set();

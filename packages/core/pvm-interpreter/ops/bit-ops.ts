@@ -1,6 +1,6 @@
-import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import type { Registers } from "../registers";
-import { clz64, countBits32, countBits64, ctz32, ctz64 } from "./bit-utils";
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import type { Registers } from "../registers.js";
+import { clz64, countBits32, countBits64, ctz32, ctz64 } from "./bit-utils.js";
 
 export class BitOps {
   constructor(private regs: Registers) {}

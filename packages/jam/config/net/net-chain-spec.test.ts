@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { BytesBlob } from "@typeberry/bytes";
 import { parseFromJson } from "@typeberry/json-parser";
-import { NetChainSpec } from "./net-chain-spec";
+import { NetChainSpec } from "./net-chain-spec.js";
 
 const NET_CHAIN_SPEC_TEST = {
   bootnodes: [

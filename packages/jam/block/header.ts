@@ -14,15 +14,15 @@ import {
   codecPerValidator,
   tryAsTimeSlot,
   tryAsValidatorIndex,
-} from "./common";
+} from "./common.js";
 import {
   BANDERSNATCH_KEY_BYTES,
   BANDERSNATCH_VRF_SIGNATURE_BYTES,
   type BandersnatchKey,
   type BandersnatchVrfSignature,
-} from "./crypto";
-import type { ExtrinsicHash, HeaderHash } from "./hash";
-import { Ticket } from "./tickets";
+} from "./crypto.js";
+import type { ExtrinsicHash, HeaderHash } from "./hash.js";
+import { Ticket } from "./tickets.js";
 
 /**
  * Encoded validator keys.

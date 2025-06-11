@@ -1,9 +1,9 @@
 import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler } from "@typeberry/pvm-host-calls";
-import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
-import type { IHostCallRegisters } from "@typeberry/pvm-host-calls/host-call-registers";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import { CURRENT_SERVICE_ID } from "./utils";
+import { type PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
+import type { IHostCallRegisters } from "@typeberry/pvm-host-calls/host-call-registers.js";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import { CURRENT_SERVICE_ID } from "./utils.js";
 
 /**
  * Return remaining gas to the PVM.

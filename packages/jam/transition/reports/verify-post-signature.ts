@@ -1,8 +1,8 @@
-import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
+import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import { sumU64 } from "@typeberry/numbers";
 import type { State } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
-import { ReportsError } from "./error";
+import { ReportsError } from "./error.js";
 
 /** `G_A`: The gas allocated to invoke a work-report’s Accumulation logic. */
 export const G_A = 10_000_000;

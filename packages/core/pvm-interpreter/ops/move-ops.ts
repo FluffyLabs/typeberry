@@ -1,5 +1,5 @@
-import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import type { Registers } from "../registers";
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import type { Registers } from "../registers.js";
 
 export class MoveOps {
   constructor(private regs: Registers) {}

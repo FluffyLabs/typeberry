@@ -5,7 +5,7 @@ import { Bytes } from "@typeberry/bytes";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { ValidatorData } from "@typeberry/state";
 import { validatorDataFromJson } from "@typeberry/state-json";
-import { Memory, ServiceAccount } from "./host-calls-general";
+import { Memory, ServiceAccount } from "./host-calls-general.js";
 
 namespace localFromJson {
   export const bytes32 = <T extends Bytes<32>>() =>

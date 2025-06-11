@@ -1,10 +1,10 @@
-import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import type { BasicBlocks } from "../basic-blocks";
-import type { InstructionResult } from "../instruction-result";
-import type { JumpTable } from "../program-decoder/jump-table";
-import type { Registers } from "../registers";
-import { Result } from "../result";
-import { addWithOverflowU32 } from "./math-utils";
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import type { BasicBlocks } from "../basic-blocks/index.js";
+import type { InstructionResult } from "../instruction-result.js";
+import type { JumpTable } from "../program-decoder/jump-table.js";
+import type { Registers } from "../registers.js";
+import { Result } from "../result.js";
+import { addWithOverflowU32 } from "./math-utils.js";
 
 const EXIT = 0xff_ff_00_00;
 /** `Z_A`: https://graypaper.fluffylabs.dev/#/579bd12/248402248402 */

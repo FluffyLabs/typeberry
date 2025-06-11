@@ -1,15 +1,15 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import { InstructionResult } from "../instruction-result";
-import { MemoryBuilder } from "../memory";
-import { PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "../memory/memory-consts";
-import { type MemoryIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "../memory/memory-index";
-import { getPageNumber, getStartPageIndex } from "../memory/memory-utils";
-import { Registers } from "../registers";
-import { bigintToUint8ArrayLE } from "../test-utils";
-import { StoreOps } from "./store-ops";
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import { InstructionResult } from "../instruction-result.js";
+import { MemoryBuilder } from "../memory/index.js";
+import { PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "../memory/memory-consts.js";
+import { type MemoryIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "../memory/memory-index.js";
+import { getPageNumber, getStartPageIndex } from "../memory/memory-utils.js";
+import { Registers } from "../registers.js";
+import { bigintToUint8ArrayLE } from "../test-utils.js";
+import { StoreOps } from "./store-ops.js";
 
 const getExpectedPage = (address: MemoryIndex, contents: Uint8Array, length: number) => {
   const pageStartIndex = getStartPageIndex(address);

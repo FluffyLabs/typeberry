@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { TRUNCATED_KEY_BYTES } from "@typeberry/trie";
-import { TruncatedHashDictionary } from "./truncated-hash-dictionary";
+import { TruncatedHashDictionary } from "./truncated-hash-dictionary.js";
 
 describe("TruncatedHashDictionary", () => {
   it("should return undefined when dictionary is empty", () => {

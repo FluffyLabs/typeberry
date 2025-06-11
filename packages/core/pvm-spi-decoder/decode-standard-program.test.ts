@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { MemorySegment, decodeStandardProgram } from "./decode-standard-program";
+import { MemorySegment, decodeStandardProgram } from "./decode-standard-program.js";
 
 // E_3(|o|) = 04 00 00
 const O_LENGTH = new Uint8Array([0x04, 0x00, 0x00]);

@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { OK, Result } from "@typeberry/utils";
-import { PageFault } from "../errors";
-import { tryAsMemoryIndex } from "../memory-index";
-import { tryAsPageIndex, tryAsPageNumber } from "./page-utils";
-import { ReadablePage } from "./readable-page";
+import { PageFault } from "../errors.js";
+import { tryAsMemoryIndex } from "../memory-index.js";
+import { tryAsPageIndex, tryAsPageNumber } from "./page-utils.js";
+import { ReadablePage } from "./readable-page.js";
 
 describe("ReadablePage", () => {
   it("should load 4 byts from memory", () => {

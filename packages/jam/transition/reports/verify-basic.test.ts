@@ -1,13 +1,13 @@
 import { describe, it } from "node:test";
 import { tryAsTimeSlot } from "@typeberry/block";
-import { ReportGuarantee } from "@typeberry/block/guarantees";
+import { ReportGuarantee } from "@typeberry/block/guarantees.js";
 import { Bytes } from "@typeberry/bytes";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { OK, asOpaqueType, deepEqual } from "@typeberry/utils";
-import { ReportsError } from "./error";
-import { guaranteesAsView, newCredential, newWorkReport } from "./test.utils";
-import { MAX_WORK_REPORT_SIZE_BYTES, verifyReportsBasic } from "./verify-basic";
+import { ReportsError } from "./error.js";
+import { guaranteesAsView, newCredential, newWorkReport } from "./test.utils.js";
+import { MAX_WORK_REPORT_SIZE_BYTES, verifyReportsBasic } from "./verify-basic.js";
 
 describe("Reports.verifyReportsBasic", () => {
   it("should reject if report has too many dependencies", () => {

@@ -1,6 +1,6 @@
-import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import type { Registers } from "../registers";
-import { unsignedRightShiftBigInt } from "./math-utils";
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import type { Registers } from "../registers.js";
+import { unsignedRightShiftBigInt } from "./math-utils.js";
 
 export class BitRotationOps {
   constructor(private regs: Registers) {}

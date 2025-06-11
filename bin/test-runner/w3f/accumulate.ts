@@ -1,17 +1,17 @@
 import assert from "node:assert";
 import { type EntropyHash, type TimeSlot, tryAsPerEpochBlock, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
-import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
+import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report.js";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { InMemoryService } from "@typeberry/state";
 import { AutoAccumulate, InMemoryState, PrivilegedServices } from "@typeberry/state";
-import { JsonService } from "@typeberry/state-json/accounts";
-import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
-import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate";
+import { JsonService } from "@typeberry/state-json/accounts.js";
+import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
+import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
 import { Result, deepEqual } from "@typeberry/utils";
-import { getChainSpec } from "./spec";
+import { getChainSpec } from "./spec.js";
 
 class Input {
   static fromJson: FromJson<Input> = {
