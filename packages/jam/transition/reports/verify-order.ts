@@ -1,7 +1,7 @@
-import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
+import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { ChainSpec } from "@typeberry/config";
 import { OK, Result } from "@typeberry/utils";
-import { ReportsError } from "./error";
+import { ReportsError } from "./error.js";
 
 export function verifyReportsOrder(input: GuaranteesExtrinsicView, chainSpec: ChainSpec): Result<OK, ReportsError> {
   /**

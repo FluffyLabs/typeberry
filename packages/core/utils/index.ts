@@ -11,7 +11,7 @@
  * as an afterthought.
  */
 
-export * from "./debug";
-export * from "./opaque";
-export * from "./result";
-export * from "./test";
+export * from "./debug.js";
+export * from "./opaque.js";
+export * from "./result.js";
+export * from "./test.js";

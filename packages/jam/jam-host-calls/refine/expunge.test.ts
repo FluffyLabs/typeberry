@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { HostCallMemory, HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas } from "@typeberry/pvm-interpreter";
-import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
+import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { Result } from "@typeberry/utils";
 import {
   type MachineId,
@@ -11,10 +11,10 @@ import {
   type ProgramCounter,
   tryAsMachineId,
   tryAsProgramCounter,
-} from "../externalities/refine-externalities";
-import { TestRefineExt } from "../externalities/refine-externalities.test";
-import { HostCallResult } from "../results";
-import { Expunge } from "./expunge";
+} from "../externalities/refine-externalities.js";
+import { TestRefineExt } from "../externalities/refine-externalities.test.js";
+import { HostCallResult } from "../results.js";
+import { Expunge } from "./expunge.js";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;

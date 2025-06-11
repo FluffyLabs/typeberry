@@ -8,9 +8,9 @@ import {
   tryAsServiceId,
   tryAsTimeSlot,
 } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
-import { Ticket, tryAsTicketAttempt } from "@typeberry/block/tickets";
-import { type AuthorizerHash, WorkPackageInfo } from "@typeberry/block/work-report";
+import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
+import { Ticket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
+import { type AuthorizerHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, HashDictionary, HashSet, SortedSet, asKnownSize } from "@typeberry/collections";
@@ -37,7 +37,7 @@ import {
   ValidatorStatistics,
   hashComparator,
   tryAsPerCore,
-} from ".";
+} from "./index.js";
 
 const spec = tinyChainSpec;
 

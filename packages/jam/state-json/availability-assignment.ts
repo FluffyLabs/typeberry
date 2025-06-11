@@ -1,6 +1,6 @@
 import type { TimeSlot } from "@typeberry/block";
 import { workReportFromJson } from "@typeberry/block-json";
-import { WorkReport } from "@typeberry/block/work-report";
+import { WorkReport } from "@typeberry/block/work-report.js";
 import { Encoder } from "@typeberry/codec";
 import { WithHash, blake2b } from "@typeberry/hash";
 import { json } from "@typeberry/json-parser";

@@ -19,7 +19,7 @@ import {
   UpdateService,
   UpdateStorage,
 } from "@typeberry/state";
-import { serialize } from "@typeberry/state-merkleization/serialize";
+import { serialize } from "@typeberry/state-merkleization/serialize.js";
 import { resultToString } from "@typeberry/utils";
 
 export class TestState {

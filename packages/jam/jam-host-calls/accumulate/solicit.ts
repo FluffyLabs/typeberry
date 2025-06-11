@@ -2,11 +2,11 @@ import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { assertNever } from "@typeberry/utils";
-import { type PartialState, RequestPreimageError } from "../externalities/partial-state";
-import { HostCallResult } from "../results";
-import { CURRENT_SERVICE_ID } from "../utils";
+import { type PartialState, RequestPreimageError } from "../externalities/partial-state.js";
+import { HostCallResult } from "../results.js";
+import { CURRENT_SERVICE_ID } from "../utils.js";
 
 const IN_OUT_REG = 7;
 

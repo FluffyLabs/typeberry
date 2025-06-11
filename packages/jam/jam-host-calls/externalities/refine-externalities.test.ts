@@ -4,8 +4,11 @@ import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import type { U64 } from "@typeberry/numbers";
 import type { BigGas, Memory, Registers } from "@typeberry/pvm-interpreter";
-import { ProgramDecoder, type ProgramDecoderError } from "@typeberry/pvm-interpreter/program-decoder/program-decoder";
-import { Status } from "@typeberry/pvm-interpreter/status";
+import {
+  ProgramDecoder,
+  type ProgramDecoderError,
+} from "@typeberry/pvm-interpreter/program-decoder/program-decoder.js";
+import { Status } from "@typeberry/pvm-interpreter/status.js";
 import { type OK, Result } from "@typeberry/utils";
 import {
   type MachineId,
@@ -18,7 +21,7 @@ import {
   type RefineExternalities,
   type SegmentExportError,
   type ZeroVoidError,
-} from "./refine-externalities";
+} from "./refine-externalities.js";
 
 export class TestRefineExt implements RefineExternalities {
   public readonly exportSegmentData: MultiMap<[Segment], Result<SegmentIndex, SegmentExportError>> = new MultiMap(1, [

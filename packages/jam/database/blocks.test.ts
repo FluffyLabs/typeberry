@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { testBlockView } from "@typeberry/block/test-helpers";
+import { testBlockView } from "@typeberry/block/test-helpers.js";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
-import { InMemoryBlocks } from ".";
+import { InMemoryBlocks } from "./index.js";
 
 describe("InMemoryDatabase", () => {
   it("should set and retrieve best header hash", () => {

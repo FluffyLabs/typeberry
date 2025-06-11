@@ -2,14 +2,14 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { type EntropyHash, tryAsServiceGas } from "@typeberry/block";
-import { WorkExecResult, WorkExecResultKind } from "@typeberry/block/work-result";
+import { WorkExecResult, WorkExecResultKind } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
-import { Operand } from "../operand";
-import { AccumulateFetchExternalities } from "./accumulate-fetch-externalities";
+import { Operand } from "../operand.js";
+import { AccumulateFetchExternalities } from "./accumulate-fetch-externalities.js";
 
 describe("accumulate-fetch-externalities", () => {
   const prepareOperands = (length: number) => {

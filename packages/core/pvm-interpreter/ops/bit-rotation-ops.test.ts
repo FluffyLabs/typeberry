@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import { Registers } from "../registers";
-import { bigintToUint8ArrayLE } from "../test-utils";
-import { BitRotationOps } from "./bit-rotation-ops";
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import { Registers } from "../registers.js";
+import { bigintToUint8ArrayLE } from "../test-utils.js";
+import { BitRotationOps } from "./bit-rotation-ops.js";
 
 describe("BitRotationOps", () => {
   describe("reverseBytes", () => {

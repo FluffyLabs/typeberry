@@ -2,9 +2,9 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
-import { Decoder } from "./decoder";
-import { type CodecRecord, codec } from "./descriptors";
-import { Encoder } from "./encoder";
+import { Decoder } from "./decoder.js";
+import { type CodecRecord, codec } from "./descriptors.js";
+import { Encoder } from "./encoder.js";
 
 class TestHeader {
   static Codec = codec.Class(TestHeader, {

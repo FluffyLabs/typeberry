@@ -1,4 +1,5 @@
-import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
+import { pathToFileURL } from "node:url";
+import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 
 class U64 {
   constructor(
@@ -15,8 +16,8 @@ const input = new ArrayBuffer(8);
 const view = new DataView(input);
 view.setBigUint64(0, 2n ** 60n, true);
 
-module.exports = () =>
-  suite(
+export default function run() {
+  return suite(
     "BigInt decoding",
 
     add("decode custom", () => {
@@ -32,9 +33,10 @@ module.exports = () =>
     cycle(),
     complete(),
     configure({}),
-    ...save(__filename),
+    ...save(import.meta.filename),
   );
+}
 
-if (require.main === module) {
-  module.exports();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
 }

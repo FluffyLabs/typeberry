@@ -6,6 +6,7 @@
   "author": "Fluffy Labs",
   "bin": "./bin/test.ts",
   "main": "index.ts",
+  "type": "module",
   "scripts": {
     "start": "ts-node ./bin/test.ts",
     "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

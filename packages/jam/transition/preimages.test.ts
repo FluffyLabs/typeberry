@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import type { ServiceId } from "@typeberry/block";
-import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
+import type { PreimagesExtrinsic } from "@typeberry/block/preimage.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
@@ -17,7 +17,7 @@ import {
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { Result } from "@typeberry/utils";
-import { Preimages, PreimagesErrorCode, type PreimagesInput } from "./preimages";
+import { Preimages, PreimagesErrorCode, type PreimagesInput } from "./preimages.js";
 
 function createInput(preimages: { requester: ServiceId; blob: BytesBlob }[], slot: number): PreimagesInput {
   return {

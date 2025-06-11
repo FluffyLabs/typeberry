@@ -7,10 +7,10 @@ import * as path from "node:path";
 import type { HeaderHash } from "@typeberry/block";
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
-import type { TrieNode } from "@typeberry/trie/nodes";
-import { MessageHandler, type MessageSender, handleFragmentation, sendWithLengthPrefix } from "./handler";
-import * as ce129 from "./protocol/ce-129-state-request";
-import * as up0 from "./protocol/up-0-block-announcement";
+import type { TrieNode } from "@typeberry/trie/nodes.js";
+import { MessageHandler, type MessageSender, handleFragmentation, sendWithLengthPrefix } from "./handler.js";
+import * as ce129 from "./protocol/ce-129-state-request.js";
+import * as up0 from "./protocol/up-0-block-announcement.js";
 
 export class MessageSenderAdapter implements MessageSender {
   constructor(private readonly socket: Socket) {}
@@ -38,7 +38,7 @@ export function startIpcServer(
   const isWindows = os.platform() === "win32";
   const socketPath = isWindows ? "\\\\.\\pipe\\typeberry" : path.join(os.tmpdir(), "typeberry.ipc");
 
-  const logger = Logger.new(__filename, "ext-ipc");
+  const logger = Logger.new(import.meta.filename, "ext-ipc");
 
   // Create the IPC server
   const server = createServer((socket: Socket) => {

@@ -2,8 +2,8 @@ import { BytesBlob } from "@typeberry/bytes";
 // TODO [ToDr] (#212) compare with blake2b from hash-wasm?
 import blake2b from "blake2b";
 
-import { type HashAllocator, defaultAllocator } from "./allocator";
-import { type Blake2bHash, HASH_SIZE } from "./hash";
+import { type HashAllocator, defaultAllocator } from "./allocator.js";
+import { type Blake2bHash, HASH_SIZE } from "./hash.js";
 
 /**
  * Hash given collection of blobs.

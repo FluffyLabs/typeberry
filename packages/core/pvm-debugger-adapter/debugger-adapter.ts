@@ -1,8 +1,8 @@
 import { Interpreter, type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
-import { tryAsGas } from "@typeberry/pvm-interpreter/gas";
-import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
-import { Registers } from "@typeberry/pvm-interpreter/registers";
-import { Status } from "@typeberry/pvm-interpreter/status";
+import { tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
+import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
+import { Registers } from "@typeberry/pvm-interpreter/registers.js";
+import { Status } from "@typeberry/pvm-interpreter/status.js";
 import { check } from "@typeberry/utils";
 
 export class DebuggerAdapter {

@@ -1,4 +1,4 @@
-import type { Result } from "./result";
+import type { Result } from "./result.js";
 
 export class InstructionResult {
   public nextPc = 0;

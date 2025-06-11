@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { type TestContext, describe, it } from "node:test";
 import { MessageChannel } from "node:worker_threads";
-import { TypedPort } from "./port";
+import { TypedPort } from "./port.js";
 
 function newChannel(t: TestContext) {
   const channel = new MessageChannel();

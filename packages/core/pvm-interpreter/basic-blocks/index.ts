@@ -1,1 +1,1 @@
-export { BasicBlocks } from "./basic-blocks";
+export { BasicBlocks } from "./basic-blocks.js";

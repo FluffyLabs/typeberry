@@ -1,5 +1,5 @@
-import { HIGHEST_INSTRUCTION_NUMBER, Instruction } from "../instruction";
-import { ArgumentType } from "./argument-type";
+import { HIGHEST_INSTRUCTION_NUMBER, Instruction } from "../instruction.js";
+import { ArgumentType } from "./argument-type.js";
 
 export const instructionArgumentTypeMap = (() => {
   const instructionArgumentTypeMap = new Array<ArgumentType>(HIGHEST_INSTRUCTION_NUMBER + 1);

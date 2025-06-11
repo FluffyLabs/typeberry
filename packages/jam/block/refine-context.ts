@@ -1,9 +1,9 @@
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type Opaque, WithDebug } from "@typeberry/utils";
-import type { StateRootHash, TimeSlot } from "./common";
-import type { HeaderHash } from "./hash";
-import type { WorkPackageHash } from "./work-report";
+import type { StateRootHash, TimeSlot } from "./common.js";
+import type { HeaderHash } from "./hash.js";
+import type { WorkPackageHash } from "./work-report.js";
 
 /**
  * Keccak-256 hash of the BEEFY MMR root.

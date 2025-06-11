@@ -4,10 +4,10 @@
   "description": "Utilities to parse JSON state.",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",
-  "type": "commonjs",
+  "type": "module",
   "main": "index.ts",
   "scripts": {
-    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
     "@typeberry/block": "0.0.1",

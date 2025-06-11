@@ -4,15 +4,15 @@
   "description": "A JSON RPC server for Typeberry. Spec: https://hackmd.io/@polkadot/jip2",
   "license": "MPL-2.0",
   "author": "Fluffy Labs",
-  "type": "commonjs",
+  "type": "module",
   "main": "index.ts",
   "bin": {
     "rpc": "index.ts"
   },
   "scripts": {
-    "start": "ts-node ./index.ts",
-    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
-    "test:e2e": "node --test --require ts-node/register ./test/e2e.ts"
+    "start": "tsx ./index.ts",
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
+    "test:e2e": "tsx --test ./test/e2e.ts"
   },
   "dependencies": {
     "@typeberry/block": "^0.0.1",

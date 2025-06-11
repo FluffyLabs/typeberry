@@ -1,4 +1,4 @@
-import type { FromJson } from "./types";
+import type { FromJson } from "./types.js";
 
 const NO_KEY: unique symbol = Symbol("no key");
 

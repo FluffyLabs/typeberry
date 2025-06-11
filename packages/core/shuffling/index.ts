@@ -1,1 +1,1 @@
-export { fisherYatesShuffle } from "./shuffling";
+export { fisherYatesShuffle } from "./shuffling.js";

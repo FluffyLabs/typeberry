@@ -2,9 +2,9 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { BitVec } from "@typeberry/bytes";
-import { Instruction } from "../instruction";
-import { Mask } from "../program-decoder/mask";
-import { BasicBlocks } from "./basic-blocks";
+import { Instruction } from "../instruction.js";
+import { Mask } from "../program-decoder/mask.js";
+import { BasicBlocks } from "./basic-blocks.js";
 
 describe("BasicBlocks", () => {
   it("should return true for the first instruction even it is a termination block instruction", () => {

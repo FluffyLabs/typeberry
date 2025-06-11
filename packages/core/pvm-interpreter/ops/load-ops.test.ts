@@ -1,15 +1,15 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import { InstructionResult } from "../instruction-result";
-import { Memory, MemoryBuilder } from "../memory";
-import { PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "../memory/memory-consts";
-import { type MemoryIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "../memory/memory-index";
-import { getStartPageIndex } from "../memory/memory-utils";
-import { Registers } from "../registers";
-import { bigintToUint8ArrayLE } from "../test-utils";
-import { LoadOps } from "./load-ops";
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import { InstructionResult } from "../instruction-result.js";
+import { Memory, MemoryBuilder } from "../memory/index.js";
+import { PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "../memory/memory-consts.js";
+import { type MemoryIndex, tryAsMemoryIndex, tryAsSbrkIndex } from "../memory/memory-index.js";
+import { getStartPageIndex } from "../memory/memory-utils.js";
+import { Registers } from "../registers.js";
+import { bigintToUint8ArrayLE } from "../test-utils.js";
+import { LoadOps } from "./load-ops.js";
 
 describe("LoadOps", () => {
   describe("loadImmediate", () => {

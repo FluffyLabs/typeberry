@@ -2,13 +2,13 @@ import assert from "node:assert";
 import { fromJson } from "@typeberry/block-json";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { Interpreter, tryAsGas } from "@typeberry/pvm-interpreter";
-import { MemoryBuilder } from "@typeberry/pvm-interpreter/memory";
-import { MAX_MEMORY_INDEX, PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
-import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import { getPageNumber } from "@typeberry/pvm-interpreter/memory/memory-utils";
-import { type PageNumber, tryAsPageNumber } from "@typeberry/pvm-interpreter/memory/pages/page-utils";
-import { Registers } from "@typeberry/pvm-interpreter/registers";
-import { Status } from "@typeberry/pvm-interpreter/status";
+import { MemoryBuilder } from "@typeberry/pvm-interpreter/memory/index.js";
+import { MAX_MEMORY_INDEX, PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
+import { tryAsMemoryIndex, tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
+import { getPageNumber } from "@typeberry/pvm-interpreter/memory/memory-utils.js";
+import { type PageNumber, tryAsPageNumber } from "@typeberry/pvm-interpreter/memory/pages/page-utils.js";
+import { Registers } from "@typeberry/pvm-interpreter/registers.js";
+import { Status } from "@typeberry/pvm-interpreter/status.js";
 
 class MemoryChunkItem {
   static fromJson: FromJson<MemoryChunkItem> = {

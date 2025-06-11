@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { LAST_PAGE_NUMBER } from "../memory-consts";
-import { getNextPageNumber, tryAsPageNumber } from "./page-utils";
+import { LAST_PAGE_NUMBER } from "../memory-consts.js";
+import { getNextPageNumber, tryAsPageNumber } from "./page-utils.js";
 
 describe("page-utils / getNextPageNumber", () => {
   it("should increment the page number", () => {

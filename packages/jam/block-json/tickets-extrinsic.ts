@@ -1,8 +1,8 @@
 import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/block";
-import { SignedTicket } from "@typeberry/block/tickets";
+import { SignedTicket } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
-import { fromJson } from "./common";
+import { fromJson } from "./common.js";
 
 const ticketEnvelopeFromJson = json.object<SignedTicket>(
   {

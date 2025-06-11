@@ -1,6 +1,6 @@
 import type { Comparator } from "@typeberry/ordering";
 import { check } from "@typeberry/utils";
-import { type ImmutableSortedArray, SortedArray } from "./sorted-array";
+import { type ImmutableSortedArray, SortedArray } from "./sorted-array.js";
 
 export interface ImmutableSortedSet<V> extends ImmutableSortedArray<V> {}
 

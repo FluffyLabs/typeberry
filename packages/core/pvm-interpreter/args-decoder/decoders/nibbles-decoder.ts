@@ -1,4 +1,4 @@
-import { NO_OF_REGISTERS } from "../../registers";
+import { NO_OF_REGISTERS } from "../../registers.js";
 
 const MAX_REGISTER_INDEX = NO_OF_REGISTERS - 1;
 const MAX_LENGTH = 4;

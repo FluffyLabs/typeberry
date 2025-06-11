@@ -4,9 +4,9 @@ import type { KnownSizeArray } from "@typeberry/collections";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { WithDebug } from "@typeberry/utils";
-import { codecKnownSizeArray, codecWithContext } from "./codec";
-import type { ValidatorIndex } from "./common";
-import type { HeaderHash } from "./hash";
+import { codecKnownSizeArray, codecWithContext } from "./codec.js";
+import type { ValidatorIndex } from "./common.js";
+import type { HeaderHash } from "./hash.js";
 
 /**
  *

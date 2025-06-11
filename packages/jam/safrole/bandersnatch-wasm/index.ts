@@ -1,9 +1,8 @@
 import os from "node:os";
-import { resolve } from "node:path";
 import type { IExecutor } from "@typeberry/concurrent";
 import { Executor } from "@typeberry/concurrent";
-import { Method, Params, type Response } from "./params";
-import { worker } from "./worker";
+import { Method, Params, type Response } from "./params.js";
+import { worker } from "./worker.js";
 
 export class BandernsatchWasm {
   private constructor(private readonly executor: IExecutor<Params, Response>) {}
@@ -16,7 +15,7 @@ export class BandernsatchWasm {
     const workers = os.cpus().length;
     return new BandernsatchWasm(
       !synchronous
-        ? await Executor.initialize<Params, Response>(resolve(__dirname, "./bootstrap.cjs"), {
+        ? await Executor.initialize<Params, Response>(new URL("./bootstrap.mjs", import.meta.url), {
             minWorkers: Math.max(1, Math.floor(workers / 2)),
             maxWorkers: workers,
           })

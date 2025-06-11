@@ -1,10 +1,10 @@
 import type { TimeSlot } from "@typeberry/block";
-import { Credential, ReportGuarantee } from "@typeberry/block/guarantees";
-import type { WorkReport } from "@typeberry/block/work-report";
+import { Credential, ReportGuarantee } from "@typeberry/block/guarantees.js";
+import type { WorkReport } from "@typeberry/block/work-report.js";
 import { json } from "@typeberry/json-parser";
-import { fromJson } from "./common";
-import type { JsonObject } from "./json-format";
-import { workReportFromJson } from "./work-report";
+import { fromJson } from "./common.js";
+import type { JsonObject } from "./json-format.js";
+import { workReportFromJson } from "./work-report.js";
 
 const validatorSignatureFromJson = json.object<JsonObject<Credential>, Credential>(
   {

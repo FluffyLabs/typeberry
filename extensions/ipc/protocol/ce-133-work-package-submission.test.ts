@@ -1,14 +1,14 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { type CoreIndex, tryAsCoreIndex } from "@typeberry/block";
-import type { WorkItemExtrinsics } from "@typeberry/block/work-item";
-import { WorkPackage } from "@typeberry/block/work-package";
+import type { WorkItemExtrinsics } from "@typeberry/block/work-item.js";
+import { WorkPackage } from "@typeberry/block/work-package.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import { tryAsU32 } from "@typeberry/numbers";
-import { MessageHandler, type MessageSender } from "../handler";
-import { ClientHandler, STREAM_KIND, ServerHandler } from "./ce-133-work-package-submission";
+import { MessageHandler, type MessageSender } from "../handler.js";
+import { ClientHandler, STREAM_KIND, ServerHandler } from "./ce-133-work-package-submission.js";
 
 class FakeMessageSender implements MessageSender {
   constructor(

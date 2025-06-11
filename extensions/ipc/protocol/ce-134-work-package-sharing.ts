@@ -1,13 +1,13 @@
 import type { CoreIndex, WorkReportHash } from "@typeberry/block";
-import { WorkPackageInfo } from "@typeberry/block/work-report";
+import { WorkPackageInfo } from "@typeberry/block/work-report.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
 import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
-import type { StreamHandler, StreamSender } from "../handler";
-import type { StreamId, StreamKind } from "./stream";
+import type { StreamHandler, StreamSender } from "../handler.js";
+import type { StreamId, StreamKind } from "./stream.js";
 
 /**
  * JAMNP-S CE 134 Stream
@@ -60,7 +60,7 @@ export class WorkPackageSharingResponse extends WithDebug {
   }
 }
 
-const logger = Logger.new(__filename, "protocol/ce-134");
+const logger = Logger.new(import.meta.filename, "protocol/ce-134");
 
 export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;

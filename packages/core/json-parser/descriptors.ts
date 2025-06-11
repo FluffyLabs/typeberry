@@ -1,5 +1,5 @@
-import { parseFromJson } from "./parse";
-import type { Builder, FromJson, FromJsonWithParser, Parser } from "./types";
+import { parseFromJson } from "./parse.js";
+import type { Builder, FromJson, FromJsonWithParser, Parser } from "./types.js";
 
 export namespace json {
   /** Parse a JSON string into the expected type. */

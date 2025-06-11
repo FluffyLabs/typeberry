@@ -10,9 +10,9 @@ import {
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import type { BlocksDb } from "@typeberry/database/blocks";
+import type { BlocksDb } from "@typeberry/database/blocks.js";
 import { HASH_SIZE, type WithHash } from "@typeberry/hash";
-import type { LmdbRoot, SubDb } from "./root";
+import type { LmdbRoot, SubDb } from "./root.js";
 
 const BEST_DATA = "best hash and posterior state root";
 

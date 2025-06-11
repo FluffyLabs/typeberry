@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsValidatorIndex } from "@typeberry/block";
-import { Judgement } from "@typeberry/block/disputes";
+import { Judgement } from "@typeberry/block/disputes.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
-import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils";
+import { isUniqueSortedBy, isUniqueSortedByIndex } from "./sort-utils.js";
 
 describe("sort-utils", () => {
   describe("isUniqueSortedBy", () => {

@@ -1,7 +1,7 @@
-import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import type { Registers } from "../registers";
-import { MAX_SHIFT_U32, MAX_SHIFT_U64 } from "./math-consts";
-import { unsignedRightShiftBigInt } from "./math-utils";
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import type { Registers } from "../registers.js";
+import { MAX_SHIFT_U32, MAX_SHIFT_U64 } from "./math-consts.js";
+import { unsignedRightShiftBigInt } from "./math-utils.js";
 
 export class ShiftOps {
   constructor(private regs: Registers) {}

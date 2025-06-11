@@ -1,17 +1,17 @@
 import { type CodeHash, type HeaderHash, type ServiceId, tryAsCoreIndex, tryAsServiceGas } from "@typeberry/block";
-import { type WorkPackage, tryAsWorkItemsCount } from "@typeberry/block/work-package";
-import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
-import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result";
+import { type WorkPackage, tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
+import { WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
+import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
 import { HASH_SIZE, blake2b } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { HostCalls, PvmHostCallExtension, PvmInstanceManager } from "@typeberry/pvm-host-calls";
-import { type Gas, tryAsGas } from "@typeberry/pvm-interpreter/gas";
+import { type Gas, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { Program } from "@typeberry/pvm-program";
 import { Result } from "@typeberry/utils";
-import type { TransitionHasher } from "./hasher";
+import type { TransitionHasher } from "./hasher.js";
 
 enum ServiceExecutorError {
   NoLookup = 0,

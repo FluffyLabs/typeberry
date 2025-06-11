@@ -6,20 +6,22 @@ import {
   tryAsPerEpochBlock,
   tryAsServiceGas,
 } from "@typeberry/block";
-import type { WorkReport } from "@typeberry/block/work-report";
+import type { WorkReport } from "@typeberry/block/work-report.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
-import { HashSet, asKnownSize } from "@typeberry/collections";
+import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { KeccakHasher } from "@typeberry/hash/keccak";
-import { PartialStateDb } from "@typeberry/jam-host-calls/externalities/partial-state-db";
-import type { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer";
-import type { AccumulationStateUpdate } from "@typeberry/jam-host-calls/externalities/state-update";
+
+import { HashSet } from "@typeberry/collections";
+import { KeccakHasher } from "@typeberry/hash/keccak.js";
+import { PartialStateDb } from "@typeberry/jam-host-calls/externalities/partial-state-db.js";
+import type { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
+import type { AccumulationStateUpdate } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
 import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
-import { Status } from "@typeberry/pvm-interpreter/status";
+import { Status } from "@typeberry/pvm-interpreter/status.js";
 import {
   AutoAccumulate,
   PrivilegedServices,
@@ -28,21 +30,21 @@ import {
   UpdateServiceKind,
   hashComparator,
 } from "@typeberry/state";
-import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
+import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { InMemoryTrie } from "@typeberry/trie";
-import { getKeccakTrieHasher } from "@typeberry/trie/hasher";
+import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
 import { Result, check } from "@typeberry/utils";
-import { AccumulateQueue, pruneQueue } from "./accumulate-queue";
-import { generateNextServiceId, getWorkPackageHashes, uniquePreserveOrder } from "./accumulate-utils";
+import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
+import { generateNextServiceId, getWorkPackageHashes, uniquePreserveOrder } from "./accumulate-utils.js";
 import {
   AccountsInfoExternalities,
   AccountsLookupExternalities,
   AccountsReadExternalities,
   AccountsWriteExternalities,
   AccumulateFetchExternalities,
-} from "./externalities";
-import { Operand } from "./operand";
-import { PvmExecutor } from "./pvm-executor";
+} from "./externalities/index.js";
+import { Operand } from "./operand.js";
+import { PvmExecutor } from "./pvm-executor.js";
 
 export type AccumulateRoot = OpaqueHash;
 
@@ -114,7 +116,7 @@ export const GAS_TO_INVOKE_WORK_REPORT = 10_000_000n;
 /** `G_T`: The total gas allocated across all Accumulation. */
 export const ACCUMULATE_TOTAL_GAS = 3_500_000_000n;
 
-const logger = Logger.new(__filename, "accumulate");
+const logger = Logger.new(import.meta.filename, "accumulate");
 
 const ARGS_CODEC = codec.object({
   slot: codec.u32.asOpaque<TimeSlot>(),

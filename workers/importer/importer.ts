@@ -6,8 +6,8 @@ import type { Logger } from "@typeberry/logger";
 import type { InMemoryState } from "@typeberry/state";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
-import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verifier";
-import { OnChain, type StfError } from "@typeberry/transition/chain-stf";
+import { BlockVerifier, type BlockVerifierError } from "@typeberry/transition/block-verifier.js";
+import { OnChain, type StfError } from "@typeberry/transition/chain-stf.js";
 import { type ErrorResult, Result, type TaggedError, measure, resultToString } from "@typeberry/utils";
 
 export enum ImporterErrorKind {

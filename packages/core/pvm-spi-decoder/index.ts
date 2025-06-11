@@ -1,1 +1,1 @@
-export * from "./decode-standard-program";
+export * from "./decode-standard-program.js";

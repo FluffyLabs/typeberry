@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { Ordering } from "@typeberry/ordering";
-import { SortedSet } from "./sorted-set";
+import { SortedSet } from "./sorted-set.js";
 
 describe("SortedSet", () => {
   const cmp = (self: number, other: number) => {

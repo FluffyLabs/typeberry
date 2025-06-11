@@ -1,9 +1,9 @@
 import { describe, it } from "node:test";
 import { BytesBlob } from "@typeberry/bytes";
 
-import { deepEqual } from "@typeberry/utils/test";
-import { extractCodeAndMetadata } from "./program";
-import { CODE, METADATA, PREIMAGE_TEST_BLOB } from "./test-preimage-blob";
+import { deepEqual } from "@typeberry/utils/test.js";
+import { extractCodeAndMetadata } from "./program.js";
+import { CODE, METADATA, PREIMAGE_TEST_BLOB } from "./test-preimage-blob.js";
 
 describe("extractCodeAndMetadata", () => {
   it("should correctly decode code with metadata", () => {

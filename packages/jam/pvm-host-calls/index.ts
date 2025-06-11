@@ -1,6 +1,6 @@
-export { HostCalls as PvmHostCallExtension } from "./host-calls";
-export { InterpreterInstanceManager as PvmInstanceManager } from "./interpreter-instance-manager";
-export { HostCallsManager as HostCalls } from "./host-calls-manager";
-export { HostCallHandler, tryAsHostCallIndex, PvmExecution } from "./host-call-handler";
-export { HostCallRegisters, IHostCallRegisters } from "./host-call-registers";
-export { HostCallMemory, IHostCallMemory } from "./host-call-memory";
+export { HostCalls as PvmHostCallExtension } from "./host-calls.js";
+export { InterpreterInstanceManager as PvmInstanceManager } from "./interpreter-instance-manager.js";
+export { HostCallsManager as HostCalls } from "./host-calls-manager.js";
+export { type HostCallHandler, tryAsHostCallIndex, PvmExecution } from "./host-call-handler.js";
+export { HostCallRegisters, type IHostCallRegisters } from "./host-call-registers.js";
+export { HostCallMemory, type IHostCallMemory } from "./host-call-memory.js";

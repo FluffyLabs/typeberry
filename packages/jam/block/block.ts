@@ -1,11 +1,11 @@
 import { type CodecRecord, type DescribedBy, codec } from "@typeberry/codec";
 import { WithDebug } from "@typeberry/utils";
-import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "./assurances";
-import { DisputesExtrinsic } from "./disputes";
-import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "./guarantees";
-import { Header } from "./header";
-import { type PreimagesExtrinsic, preimagesExtrinsicCodec } from "./preimage";
-import { type TicketsExtrinsic, ticketsExtrinsicCodec } from "./tickets";
+import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "./assurances.js";
+import { DisputesExtrinsic } from "./disputes.js";
+import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "./guarantees.js";
+import { Header } from "./header.js";
+import { type PreimagesExtrinsic, preimagesExtrinsicCodec } from "./preimage.js";
+import { type TicketsExtrinsic, ticketsExtrinsicCodec } from "./tickets.js";
 
 /**
  * Extrinsic part of the block - the input data being external to the system.

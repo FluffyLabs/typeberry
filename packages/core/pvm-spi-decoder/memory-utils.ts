@@ -1,4 +1,4 @@
-import { PAGE_SIZE, SEGMENT_SIZE } from "./memory-conts";
+import { PAGE_SIZE, SEGMENT_SIZE } from "./memory-conts.js";
 
 // GP reference: https://graypaper.fluffylabs.dev/#/579bd12/2bd2022bd202
 

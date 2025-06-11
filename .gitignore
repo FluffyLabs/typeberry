@@ -1,7 +1,6 @@
-jamtestvectors
-jamdunavectors
-database
-bin/jam/database
+/jamtestvectors
+/jamdunavectors
+/database
 
 # Logs
 logs

@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { BitVec } from "@typeberry/bytes";
-import { Mask } from "./mask";
+import { Mask } from "./mask.js";
 
 describe("Mask", () => {
   describe("isInstruction", () => {

@@ -11,8 +11,8 @@ import {
   tryAsServiceId,
   tryAsTimeSlot,
 } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
-import type { PreimageHash } from "@typeberry/block/preimage";
+import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, HashDictionary, asKnownSize } from "@typeberry/collections";
 import { ED25519_KEY_BYTES } from "@typeberry/crypto";
@@ -30,9 +30,10 @@ import {
   ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { testState } from "@typeberry/state/test.utils";
+import { testState } from "@typeberry/state/test.utils.js";
 import { OK, Result, ensure } from "@typeberry/utils";
-import { writeServiceIdAsLeBytes } from "../utils";
+import { writeServiceIdAsLeBytes } from "../utils.js";
+import { NewPreimage, PartialStateDb, PreimageUpdate } from "./partial-state-db.js";
 import {
   EjectError,
   PreimageStatusKind,
@@ -40,9 +41,8 @@ import {
   RequestPreimageError,
   TRANSFER_MEMO_BYTES,
   TransferError,
-} from "./partial-state";
-import { NewPreimage, PartialStateDb, PreimageUpdate } from "./partial-state-db";
-import { PendingTransfer } from "./pending-transfer";
+} from "./partial-state.js";
+import { PendingTransfer } from "./pending-transfer.js";
 
 describe("PartialState.checkPreimageStatus", () => {
   it("should check preimage status from state", () => {

@@ -1,6 +1,6 @@
-import type { OneImmediateArgs } from "../args-decoder/args-decoder";
-import { Instruction } from "../instruction";
-import type { HostCallOps } from "../ops";
+import type { OneImmediateArgs } from "../args-decoder/args-decoder.js";
+import { Instruction } from "../instruction.js";
+import type { HostCallOps } from "../ops/index.js";
 
 export class OneImmDispatcher {
   constructor(private hostCallOps: HostCallOps) {}

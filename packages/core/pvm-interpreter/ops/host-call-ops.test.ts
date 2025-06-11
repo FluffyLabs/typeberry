@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import { InstructionResult } from "../instruction-result";
-import { Result } from "../result";
-import { bigintToUint8ArrayLE } from "../test-utils";
-import { HostCallOps } from "./host-call-ops";
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import { InstructionResult } from "../instruction-result.js";
+import { Result } from "../result.js";
+import { bigintToUint8ArrayLE } from "../test-utils.js";
+import { HostCallOps } from "./host-call-ops.js";
 
 describe("HostCallOps", () => {
   function prepareData(immediateValue: bigint) {

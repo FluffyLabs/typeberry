@@ -4,7 +4,7 @@ import { describe, it } from "node:test";
 import { tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
-import { AccountsReadExternalities } from "./accounts-read-externalities";
+import { AccountsReadExternalities } from "./accounts-read-externalities.js";
 
 describe("accounts-read-externalities", () => {
   describe("read", () => {

@@ -12,10 +12,15 @@ import {
   workResultFromJson,
 } from "@typeberry/block-json";
 import { tinyChainSpec } from "@typeberry/config";
-import { logger, main, runner } from "./common";
-import { AccumulateTest, runAccumulateTest } from "./w3f/accumulate";
-import { AssurancesTestFull, AssurancesTestTiny, runAssurancesTestFull, runAssurancesTestTiny } from "./w3f/assurances";
-import { AuthorizationsTest, runAuthorizationsTest } from "./w3f/authorizations";
+import { logger, main, runner } from "./common.js";
+import { AccumulateTest, runAccumulateTest } from "./w3f/accumulate.js";
+import {
+  AssurancesTestFull,
+  AssurancesTestTiny,
+  runAssurancesTestFull,
+  runAssurancesTestTiny,
+} from "./w3f/assurances.js";
+import { AuthorizationsTest, runAuthorizationsTest } from "./w3f/authorizations.js";
 import {
   runAssurancesExtrinsicTest,
   runBlockTest,
@@ -28,23 +33,28 @@ import {
   runTicketsExtrinsicTest,
   runWorkReportTest,
   runWorkResultTest,
-} from "./w3f/codec";
-import { runWorkItemTest, workItemFromJson } from "./w3f/codec/work-item";
-import { runWorkPackageTest, workPackageFromJson } from "./w3f/codec/work-package";
-import { DisputesTest, runDisputesTest } from "./w3f/disputes";
-import { EcTest, runEcTest } from "./w3f/erasure-coding";
-import { HostCallAccumulateTest, runHostCallAccumulateTest } from "./w3f/host-calls-accumulate";
-import { HostCallGeneralTest, runHostCallGeneralTest } from "./w3f/host-calls-general";
-import { HostCallRefineTest, runHostCallRefineTest } from "./w3f/host-calls-refine";
-import { PreImagesTest, runPreImagesTest } from "./w3f/preimages";
-import { PvmTest, runPvmTest } from "./w3f/pvm";
-import { HistoryTest, runHistoryTest } from "./w3f/recent-history";
-import { ReportsTest, runReportsTestFull, runReportsTestTiny } from "./w3f/reports";
-import { SafroleTest, runSafroleTest } from "./w3f/safrole";
-import { JsonSchema, ignoreSchemaFiles } from "./w3f/schema";
-import { runShufflingTests, shufflingTests } from "./w3f/shuffling";
-import { StatisticsTestFull, StatisticsTestTiny, runStatisticsTestFull, runStatisticsTestTiny } from "./w3f/statistics";
-import { runTrieTest, trieTestSuiteFromJson } from "./w3f/trie";
+} from "./w3f/codec/index.js";
+import { runWorkItemTest, workItemFromJson } from "./w3f/codec/work-item.js";
+import { runWorkPackageTest, workPackageFromJson } from "./w3f/codec/work-package.js";
+import { DisputesTest, runDisputesTest } from "./w3f/disputes.js";
+import { EcTest, runEcTest } from "./w3f/erasure-coding.js";
+import { HostCallAccumulateTest, runHostCallAccumulateTest } from "./w3f/host-calls-accumulate.js";
+import { HostCallGeneralTest, runHostCallGeneralTest } from "./w3f/host-calls-general.js";
+import { HostCallRefineTest, runHostCallRefineTest } from "./w3f/host-calls-refine.js";
+import { PreImagesTest, runPreImagesTest } from "./w3f/preimages.js";
+import { PvmTest, runPvmTest } from "./w3f/pvm.js";
+import { HistoryTest, runHistoryTest } from "./w3f/recent-history.js";
+import { ReportsTest, runReportsTestFull, runReportsTestTiny } from "./w3f/reports.js";
+import { SafroleTest, runSafroleTest } from "./w3f/safrole.js";
+import { JsonSchema, ignoreSchemaFiles } from "./w3f/schema.js";
+import { runShufflingTests, shufflingTests } from "./w3f/shuffling.js";
+import {
+  StatisticsTestFull,
+  StatisticsTestTiny,
+  runStatisticsTestFull,
+  runStatisticsTestTiny,
+} from "./w3f/statistics.js";
+import { runTrieTest, trieTestSuiteFromJson } from "./w3f/trie.js";
 
 const runners = [
   runner("accumulate", AccumulateTest.fromJson, runAccumulateTest),

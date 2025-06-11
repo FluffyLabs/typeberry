@@ -7,16 +7,16 @@ import {
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
-import { Extrinsic } from "@typeberry/block/block";
-import { DisputesExtrinsic, Judgement, Verdict } from "@typeberry/block/disputes";
-import { Preimage } from "@typeberry/block/preimage";
+import { Extrinsic } from "@typeberry/block/block.js";
+import { DisputesExtrinsic, Judgement, Verdict } from "@typeberry/block/disputes.js";
+import { Preimage } from "@typeberry/block/preimage.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
 import { HASH_SIZE, SimpleAllocator } from "@typeberry/hash";
-import type { KeccakHasher } from "@typeberry/hash/keccak";
+import type { KeccakHasher } from "@typeberry/hash/keccak.js";
 import type { InMemoryState } from "@typeberry/state";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";

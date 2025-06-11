@@ -1,6 +1,6 @@
-import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import type { InstructionResult } from "../instruction-result";
-import { Result } from "../result";
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import type { InstructionResult } from "../instruction-result.js";
+import { Result } from "../result.js";
 
 export class HostCallOps {
   constructor(private instructionResult: InstructionResult) {}

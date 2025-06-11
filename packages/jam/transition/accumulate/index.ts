@@ -1,1 +1,1 @@
-export { Accumulate, type AccumulateInput, type AccumulateRoot, type AccumulateState } from "./accumulate";
+export { Accumulate, type AccumulateInput, type AccumulateRoot, type AccumulateState } from "./accumulate.js";

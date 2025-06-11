@@ -10,17 +10,17 @@ import { SimpleAllocator, keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";
 import { TransitionHasher } from "@typeberry/transition";
 import { measure, resultToString } from "@typeberry/utils";
-import { ImportQueue } from "./import-queue";
-import { Importer } from "./importer";
+import { ImportQueue } from "./import-queue.js";
+import { Importer } from "./importer.js";
 import {
   type ImporterInit,
   type ImporterReady,
   type ImporterStates,
   MainReady,
   importerStateMachine,
-} from "./state-machine";
+} from "./state-machine.js";
 
-const logger = Logger.new(__filename, "importer");
+const logger = Logger.new(import.meta.filename, "importer");
 
 if (!isMainThread) {
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
@@ -100,5 +100,5 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
 }
 
 export async function spawnWorker() {
-  return spawnWorkerGeneric(__dirname, logger, "ready(main)", new MainReady());
+  return spawnWorkerGeneric(new URL("./bootstrap.mjs", import.meta.url), logger, "ready(main)", new MainReady());
 }

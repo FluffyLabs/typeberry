@@ -1,6 +1,6 @@
-import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import { type Registers, signExtend32To64 } from "../registers";
-import { MIN_VALUE } from "./math-consts";
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import { type Registers, signExtend32To64 } from "../registers.js";
+import { MIN_VALUE } from "./math-consts.js";
 import {
   addWithOverflowU32,
   addWithOverflowU64,
@@ -13,7 +13,7 @@ import {
   mulUpperUU,
   subU32,
   subU64,
-} from "./math-utils";
+} from "./math-utils.js";
 
 export class MathOps {
   constructor(private regs: Registers) {}

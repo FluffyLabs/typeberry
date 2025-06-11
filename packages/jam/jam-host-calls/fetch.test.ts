@@ -12,9 +12,9 @@ import {
   tryAsMemoryIndex,
   tryAsSbrkIndex,
 } from "@typeberry/pvm-interpreter";
-import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
-import { Fetch, type FetchExternalities, FetchKind } from "./fetch";
-import { HostCallResult } from "./results";
+import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
+import { Fetch, type FetchExternalities, FetchKind } from "./fetch.js";
+import { HostCallResult } from "./results.js";
 
 describe("Fetch", () => {
   const IN_OUT_REG = 7;

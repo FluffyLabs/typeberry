@@ -4,16 +4,18 @@
   "description": "Erasure encoding implementation",
   "main": "index.ts",
   "scripts": {
-    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
-    "start": "ts-node ./index"
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
+    "start": "tsx ./index"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
+  "type": "module",
   "dependencies": {
-    "reed-solomon-wasm": "github:fluffylabs/reed-solomon-wasm#8d814552c9770fcdce30b44f193d4f48c75bad19",
-    "@typeberry/utils": "0.0.1",
-    "@typeberry/bytes": "0.0.1",
     "@typeberry/block": "0.0.1",
-    "@typeberry/collections": "0.0.1"
+    "@typeberry/bytes": "0.0.1",
+    "@typeberry/collections": "0.0.1",
+    "@typeberry/config": "0.0.1",
+    "@typeberry/utils": "0.0.1",
+    "reed-solomon-wasm": "github:fluffylabs/reed-solomon-wasm#8d814552c9770fcdce30b44f193d4f48c75bad19"
   }
 }

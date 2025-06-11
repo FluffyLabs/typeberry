@@ -1,6 +1,6 @@
-import type { OneRegisterOneImmediateOneOffsetArgs } from "../args-decoder/args-decoder";
-import { Instruction } from "../instruction";
-import type { BranchOps, LoadOps } from "../ops";
+import type { OneRegisterOneImmediateOneOffsetArgs } from "../args-decoder/args-decoder.js";
+import { Instruction } from "../instruction.js";
+import type { BranchOps, LoadOps } from "../ops/index.js";
 
 export class OneRegOneImmOneOffsetDispatcher {
   constructor(

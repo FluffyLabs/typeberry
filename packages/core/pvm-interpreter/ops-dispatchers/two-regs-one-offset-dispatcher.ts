@@ -1,6 +1,6 @@
-import type { TwoRegistersOneOffsetArgs } from "../args-decoder/args-decoder";
-import { Instruction } from "../instruction";
-import type { BranchOps } from "../ops";
+import type { TwoRegistersOneOffsetArgs } from "../args-decoder/args-decoder.js";
+import { Instruction } from "../instruction.js";
+import type { BranchOps } from "../ops/index.js";
 
 export class TwoRegsOneOffsetDispatcher {
   constructor(private branchOps: BranchOps) {}

@@ -3,7 +3,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { check } from "@typeberry/utils";
-import { ShardsCollection, decode, encode } from "reed-solomon-wasm/pkg";
+import { ShardsCollection, decode, encode } from "reed-solomon-wasm/pkg/reed_solomon_wasm.js";
 
 /**
  * `point` - [Y_2]

@@ -1,14 +1,14 @@
 import { check } from "@typeberry/utils";
-import { FinalizedBuilderModification, IncorrectSbrkIndex, PageNotExist, ReservedMemoryFault } from "./errors";
-import { Memory } from "./memory";
-import { PAGE_SIZE } from "./memory-consts";
-import { type MemoryIndex, type SbrkIndex, tryAsSbrkIndex } from "./memory-index";
-import { MemoryRange, RESERVED_MEMORY_RANGE } from "./memory-range";
-import { getPageNumber } from "./memory-utils";
-import { PageRange } from "./page-range";
-import { ReadablePage, WriteablePage } from "./pages";
-import type { MemoryPage } from "./pages/memory-page";
-import { type PageNumber, tryAsPageIndex } from "./pages/page-utils";
+import { FinalizedBuilderModification, IncorrectSbrkIndex, PageNotExist, ReservedMemoryFault } from "./errors.js";
+import { PAGE_SIZE } from "./memory-consts.js";
+import { type MemoryIndex, type SbrkIndex, tryAsSbrkIndex } from "./memory-index.js";
+import { MemoryRange, RESERVED_MEMORY_RANGE } from "./memory-range.js";
+import { getPageNumber } from "./memory-utils.js";
+import { Memory } from "./memory.js";
+import { PageRange } from "./page-range.js";
+import { ReadablePage, WriteablePage } from "./pages/index.js";
+import type { MemoryPage } from "./pages/memory-page.js";
+import { type PageNumber, tryAsPageIndex } from "./pages/page-utils.js";
 
 export class MemoryBuilder {
   private readonly initialMemory: Map<PageNumber, MemoryPage> = new Map();

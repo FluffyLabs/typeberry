@@ -1,2 +1,2 @@
-export { ReadablePage } from "./readable-page";
-export { WriteablePage } from "./writeable-page";
+export { ReadablePage } from "./readable-page.js";
+export { WriteablePage } from "./writeable-page.js";

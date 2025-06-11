@@ -8,14 +8,14 @@ import {
   type ValidatorIndex,
   encodeUnsealedHeader,
 } from "@typeberry/block";
-import type { Ticket } from "@typeberry/block/tickets";
+import type { Ticket } from "@typeberry/block/tickets.js";
 import { BytesBlob } from "@typeberry/bytes";
 import type { State, ValidatorData } from "@typeberry/state";
-import { SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
+import { SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
 import { Result } from "@typeberry/utils";
-import { verifySeal } from "./bandersnatch";
-import { BandernsatchWasm } from "./bandersnatch-wasm";
-import { JAM_ENTROPY, JAM_FALLBACK_SEAL, JAM_TICKET_SEAL } from "./constants";
+import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import bandersnatch from "./bandersnatch.js";
+import { JAM_ENTROPY, JAM_FALLBACK_SEAL, JAM_TICKET_SEAL } from "./constants.js";
 
 export enum SafroleSealError {
   InvalidValidatorIndex = 0,
@@ -46,7 +46,7 @@ export class SafroleSeal {
 
     // verify entropySource
     const payload = BytesBlob.blobFromParts(JAM_ENTROPY, sealResult.ok.raw);
-    const entropySourceResult = await verifySeal(
+    const entropySourceResult = await bandersnatch.verifySeal(
       await this.bandersnatch,
       state.currentValidatorData.map((x) => x.bandersnatch),
       headerView.bandersnatchBlockAuthorIndex.materialize(),
@@ -114,7 +114,7 @@ export class SafroleSeal {
     const { id, attempt } = tickets[index];
     const payload = BytesBlob.blobFromParts(JAM_TICKET_SEAL, entropy.raw, new Uint8Array([attempt]));
     // verify seal correctness
-    const result = await verifySeal(
+    const result = await bandersnatch.verifySeal(
       await this.bandersnatch,
       validators.map((x) => x.bandersnatch),
       validatorIndex,
@@ -152,7 +152,7 @@ export class SafroleSeal {
 
     // verify seal correctness
     const payload = BytesBlob.blobFromParts(JAM_FALLBACK_SEAL, entropy.raw);
-    const result = await verifySeal(
+    const result = await bandersnatch.verifySeal(
       await this.bandersnatch,
       validators.map((x) => x.bandersnatch),
       validatorIndex,

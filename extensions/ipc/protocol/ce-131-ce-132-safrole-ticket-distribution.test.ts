@@ -1,15 +1,15 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsEpoch } from "@typeberry/block";
-import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/block/crypto";
-import { SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets";
+import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/block/crypto.js";
+import { SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
-import { MessageHandler, type MessageSender } from "../handler";
+import { MessageHandler, type MessageSender } from "../handler.js";
 import {
   ClientHandler,
   STREAM_KIND_GENERATOR_TO_PROXY,
   ServerHandler,
-} from "./ce-131-ce-132-safrole-ticket-distribution";
+} from "./ce-131-ce-132-safrole-ticket-distribution.js";
 
 const TEST_EPOCH = tryAsEpoch(1);
 const TEST_TICKET = SignedTicket.create({

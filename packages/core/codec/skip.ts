@@ -1,4 +1,4 @@
-import { type Decoder, decodeVariableLengthExtraBytes } from "./decoder";
+import { type Decoder, decodeVariableLengthExtraBytes } from "./decoder.js";
 
 /** An extension of a codec that can skip given value. */
 export type Skip = {

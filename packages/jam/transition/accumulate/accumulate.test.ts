@@ -10,20 +10,20 @@ import {
   tryAsServiceId,
   tryAsTimeSlot,
 } from "@typeberry/block";
-import type { PreimageHash } from "@typeberry/block/preimage";
-import { RefineContext } from "@typeberry/block/refine-context";
-import { tryAsWorkItemsCount } from "@typeberry/block/work-package";
-import { type WorkPackageHash, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
-import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
+import { RefineContext } from "@typeberry/block/refine-context.js";
+import { tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
+import { type WorkPackageHash, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
+import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, HashDictionary, HashSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { InMemoryService, InMemoryState, PreimageItem, PrivilegedServices, ServiceAccountInfo } from "@typeberry/state";
-import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
+import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { deepEqual, resultToString } from "@typeberry/utils";
-import { Accumulate, type AccumulateInput, type AccumulateState } from "./accumulate";
+import { Accumulate, type AccumulateInput, type AccumulateState } from "./accumulate.js";
 
 describe("accumulate", () => {
   // based on tiny/enqueue_and_unlock_chain_wraps-5.json

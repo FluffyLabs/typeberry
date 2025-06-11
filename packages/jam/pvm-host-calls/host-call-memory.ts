@@ -1,7 +1,7 @@
 import { type U64, tryAsU64 } from "@typeberry/numbers";
 import { type Memory, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
-import { OutOfBounds, type PageFault } from "@typeberry/pvm-interpreter/memory/errors";
-import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
+import { OutOfBounds, type PageFault } from "@typeberry/pvm-interpreter/memory/errors.js";
+import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { OK, Result } from "@typeberry/utils";
 
 export interface IHostCallMemory {

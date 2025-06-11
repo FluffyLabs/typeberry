@@ -1,6 +1,6 @@
 import { type PerValidator, type TimeSlot, type WorkReportHash, tryAsTimeSlot } from "@typeberry/block";
-import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
-import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
+import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
+import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
 import { type BytesBlob, bytesBlobComparator } from "@typeberry/bytes";
 import { type HashDictionary, type KnownSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
@@ -9,13 +9,13 @@ import { type KeccakHash, WithHash, blake2b } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
 import { AvailabilityAssignment, type State, tryAsPerCore } from "@typeberry/state";
 import { OK, Result, asOpaqueType } from "@typeberry/utils";
-import { ReportsError } from "./error";
-import { generateCoreAssignment, rotationIndex } from "./guarantor-assignment";
-import { verifyReportsBasic } from "./verify-basic";
-import { type HeaderChain, verifyContextualValidity } from "./verify-contextual";
-import { type GuarantorAssignment, verifyCredentials } from "./verify-credentials";
-import { verifyReportsOrder } from "./verify-order";
-import { verifyPostSignatureChecks } from "./verify-post-signature";
+import { ReportsError } from "./error.js";
+import { generateCoreAssignment, rotationIndex } from "./guarantor-assignment.js";
+import { verifyReportsBasic } from "./verify-basic.js";
+import { type HeaderChain, verifyContextualValidity } from "./verify-contextual.js";
+import { type GuarantorAssignment, verifyCredentials } from "./verify-credentials.js";
+import { verifyReportsOrder } from "./verify-order.js";
+import { verifyPostSignatureChecks } from "./verify-post-signature.js";
 
 /**
  * Work Report is presented on-chain within `GuaranteesExtrinsic`

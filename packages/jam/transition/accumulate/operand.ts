@@ -1,6 +1,6 @@
 import { type ServiceGas, tryAsServiceGas } from "@typeberry/block";
-import type { AuthorizerHash, ExportsRootHash, WorkPackageHash } from "@typeberry/block/work-report";
-import { WorkExecResult } from "@typeberry/block/work-result";
+import type { AuthorizerHash, ExportsRootHash, WorkPackageHash } from "@typeberry/block/work-report.js";
+import { WorkExecResult } from "@typeberry/block/work-result.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";

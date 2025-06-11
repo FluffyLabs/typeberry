@@ -1,7 +1,7 @@
 import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { Blake2bHash } from "@typeberry/hash";
-import type { AccountsWrite } from "@typeberry/jam-host-calls/write";
+import type { AccountsWrite } from "@typeberry/jam-host-calls/write.js";
 
 export class AccountsWriteExternalities implements AccountsWrite {
   write(_serviceId: ServiceId, _hash: Blake2bHash, _data: BytesBlob | null): Promise<void> {

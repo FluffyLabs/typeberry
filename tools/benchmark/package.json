@@ -4,8 +4,8 @@
   "description": "Benchmarks runner for typeberry.",
   "main": "index.ts",
   "scripts": {
-    "start": "ts-node ./index.ts",
-    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "start": "tsx ./index.ts",
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
@@ -13,5 +13,6 @@
     "@typeberry/logger": "0.0.1",
     "benny": "^3.7.1",
     "chalk": "^4.1.2"
-  }
+  },
+  "type": "module"
 }

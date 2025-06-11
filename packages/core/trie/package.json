@@ -5,7 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "build": "npm run build -w @typeberry/builder -- --environment PACKAGE_NAME:@typeberry/trie",
-    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
     "@typeberry/bytes": "0.0.1",
@@ -14,5 +14,6 @@
     "@typeberry/utils": "0.0.1"
   },
   "author": "Fluffy Labs",
-  "license": "MPL-2.0"
+  "license": "MPL-2.0",
+  "type": "module"
 }

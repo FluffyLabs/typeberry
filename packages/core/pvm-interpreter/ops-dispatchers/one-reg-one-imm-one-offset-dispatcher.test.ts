@@ -1,16 +1,16 @@
 import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
-import type { OneRegisterOneImmediateOneOffsetArgs } from "../args-decoder/args-decoder";
-import { ArgumentType } from "../args-decoder/argument-type";
-import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
-import { BasicBlocks } from "../basic-blocks";
-import { Instruction } from "../instruction";
-import { InstructionResult } from "../instruction-result";
-import { Memory } from "../memory";
-import { BranchOps, LoadOps } from "../ops";
-import { Registers } from "../registers";
-import { OneRegOneImmOneOffsetDispatcher } from "./one-reg-one-imm-one-offset-dispatcher";
+import type { OneRegisterOneImmediateOneOffsetArgs } from "../args-decoder/args-decoder.js";
+import { ArgumentType } from "../args-decoder/argument-type.js";
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map.js";
+import { BasicBlocks } from "../basic-blocks/index.js";
+import { InstructionResult } from "../instruction-result.js";
+import { Instruction } from "../instruction.js";
+import { Memory } from "../memory/index.js";
+import { BranchOps, LoadOps } from "../ops/index.js";
+import { Registers } from "../registers.js";
+import { OneRegOneImmOneOffsetDispatcher } from "./one-reg-one-imm-one-offset-dispatcher.js";
 
 describe("OneRegOneImmOneOffsetDispatcher", () => {
   describe("check if it handles expected instructions", () => {

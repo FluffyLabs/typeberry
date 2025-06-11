@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 
 import { tryAsU64 } from "@typeberry/numbers";
 import { Registers } from "@typeberry/pvm-interpreter";
-import { HostCallRegisters } from "./host-call-registers";
+import { HostCallRegisters } from "./host-call-registers.js";
 
 describe("HostCallRegisters", () => {
   describe("get", () => {

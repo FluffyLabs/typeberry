@@ -1,4 +1,4 @@
-import { Preimage } from "@typeberry/block/preimage";
+import { Preimage } from "@typeberry/block/preimage.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
 

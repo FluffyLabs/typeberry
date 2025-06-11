@@ -1,5 +1,5 @@
 import { State, type StateData, type StateNames, type TransitionTo } from "@typeberry/state-machine";
-import type { Finished } from "./finished";
+import type { Finished } from "./finished.js";
 
 export class WorkerInit<TReady extends State<StateNames<TReady>, Finished, StateData<TReady>>> extends State<
   "init(worker)",

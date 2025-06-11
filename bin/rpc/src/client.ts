@@ -1,6 +1,6 @@
 import WebSocket from "ws";
-import type { JsonRpcRequest, JsonRpcResponse, JsonRpcSubscriptionNotification } from "./types";
-import { JSON_RPC_VERSION } from "./types";
+import type { JsonRpcRequest, JsonRpcResponse, JsonRpcSubscriptionNotification } from "./types.js";
+import { JSON_RPC_VERSION } from "./types.js";
 
 export class RpcClient {
   private ws: WebSocket;

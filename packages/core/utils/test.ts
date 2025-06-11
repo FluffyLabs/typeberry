@@ -2,7 +2,7 @@
  * Utilities for tests.
  */
 import assert from "node:assert";
-import type { Result } from "./result";
+import type { Result } from "./result.js";
 
 /** Unique symbol that can be added to a class to have it be compared by strings instead of defaults. */
 export const TEST_COMPARE_VIA_STRING: unique symbol = Symbol("compare via string");

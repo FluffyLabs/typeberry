@@ -1,5 +1,5 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
-import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
+import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
 import { Bytes } from "@typeberry/bytes";
 import { type HashDictionary, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, type OpaqueHash } from "@typeberry/hash";

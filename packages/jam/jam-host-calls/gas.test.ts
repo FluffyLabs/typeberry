@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { HostCallRegisters } from "@typeberry/pvm-host-calls";
-import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas";
-import { Registers } from "@typeberry/pvm-interpreter/registers";
-import { GasHostCall } from "./gas";
+import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
+import { Registers } from "@typeberry/pvm-interpreter/registers.js";
+import { GasHostCall } from "./gas.js";
 
 const REGISTER = 7;
 

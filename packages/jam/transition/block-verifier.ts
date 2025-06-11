@@ -3,7 +3,7 @@ import { Bytes } from "@typeberry/bytes";
 import type { BlocksDb } from "@typeberry/database";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Result } from "@typeberry/utils";
-import type { TransitionHasher } from "./hasher";
+import type { TransitionHasher } from "./hasher.js";
 
 export enum BlockVerifierError {
   ParentNotFound = 0,

@@ -34,7 +34,7 @@ export interface Peer {
 type PeerCallback = (onPeer: Peer) => void;
 type StreamCallback = (onPeer: Stream) => void;
 
-const logger = Logger.new(__filename, "net:peers");
+const logger = Logger.new(import.meta.filename, "net:peers");
 
 /** Peer management. */
 export class Peers {

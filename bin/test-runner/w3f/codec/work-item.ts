@@ -1,10 +1,10 @@
 import { type CodeHash, type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import { type JsonObject, fromJson } from "@typeberry/block-json";
-import { ImportSpec, WorkItem, WorkItemExtrinsicSpec } from "@typeberry/block/work-item";
+import { ImportSpec, WorkItem, WorkItemExtrinsicSpec } from "@typeberry/block/work-item.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
 import type { U16 } from "@typeberry/numbers";
-import { runCodecTest } from "./common";
+import { runCodecTest } from "./common.js";
 
 const importSpecFromJson = json.object<JsonObject<ImportSpec>, ImportSpec>(
   {

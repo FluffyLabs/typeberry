@@ -1,5 +1,5 @@
-import type { InstructionResult } from "../instruction-result";
-import { Result } from "../result";
+import type { InstructionResult } from "../instruction-result.js";
+import { Result } from "../result.js";
 
 export class NoArgsOps {
   constructor(private instructionResult: InstructionResult) {}

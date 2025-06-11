@@ -1,4 +1,4 @@
-import { type Hash, NoArgs, type RpcMethod, type Slot } from "../types";
+import { type Hash, NoArgs, type RpcMethod, type Slot } from "../types.js";
 
 export const BestBlockParams = NoArgs;
 export type BestBlockParams = NoArgs;

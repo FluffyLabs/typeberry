@@ -11,10 +11,10 @@ import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { InMemoryState } from "@typeberry/state";
 import { InMemoryTrie, WriteableNodesDb } from "@typeberry/trie";
-import { blake2bTrieHasher } from "@typeberry/trie/hasher";
+import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { WithDebug, asOpaqueType } from "@typeberry/utils";
-import type { StateKey } from "./keys";
-import { type StateCodec, serialize } from "./serialize";
+import type { StateKey } from "./keys.js";
+import { type StateCodec, serialize } from "./serialize.js";
 
 export class StateEntry extends WithDebug {
   static Codec = codec.Class(StateEntry, {

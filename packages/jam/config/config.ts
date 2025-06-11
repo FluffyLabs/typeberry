@@ -1,4 +1,4 @@
-import { ChainSpec } from "./chain-spec";
+import { ChainSpec } from "./chain-spec.js";
 
 /**
  * Configuration object for typeberry workers.

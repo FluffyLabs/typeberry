@@ -1,19 +1,18 @@
 import type { EntropyHash, PerEpochBlock, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
-import type { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
-import type { PreimageHash } from "@typeberry/block/preimage";
-import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
-import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
-import type { ImmutableHashSet } from "@typeberry/collections/hash-set";
-import type { AvailabilityAssignment } from "./assurances";
-import type { BlockState } from "./block-state";
-import type { PerCore } from "./common";
-import type { DisputesRecords } from "./disputes";
-import type { NotYetAccumulatedReport } from "./not-yet-accumulated";
-import type { PrivilegedServices } from "./privileged-services";
-import type { SafroleData } from "./safrole-data";
-import type { LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, StorageKey } from "./service";
-import type { StatisticsData } from "./statistics";
-import type { ValidatorData } from "./validator-data";
+import type { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
+import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report.js";
+import type { FixedSizeArray, ImmutableHashSet, KnownSizeArray } from "@typeberry/collections";
+import type { AvailabilityAssignment } from "./assurances.js";
+import type { BlockState } from "./block-state.js";
+import type { PerCore } from "./common.js";
+import type { DisputesRecords } from "./disputes.js";
+import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
+import type { PrivilegedServices } from "./privileged-services.js";
+import type { SafroleData } from "./safrole-data.js";
+import type { LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, StorageKey } from "./service.js";
+import type { StatisticsData } from "./statistics.js";
+import type { ValidatorData } from "./validator-data.js";
 
 /**
  * In addition to the entropy accumulator η_0, we retain

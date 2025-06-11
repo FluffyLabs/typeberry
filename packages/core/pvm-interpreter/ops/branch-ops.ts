@@ -1,8 +1,8 @@
-import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import type { BasicBlocks } from "../basic-blocks";
-import type { InstructionResult } from "../instruction-result";
-import type { Registers } from "../registers";
-import { Result } from "../result";
+import type { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import type { BasicBlocks } from "../basic-blocks/index.js";
+import type { InstructionResult } from "../instruction-result.js";
+import type { Registers } from "../registers.js";
+import { Result } from "../result.js";
 
 export class BranchOps {
   constructor(

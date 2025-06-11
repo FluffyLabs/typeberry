@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { MAX_MEMORY_INDEX, MAX_NUMBER_OF_PAGES, MEMORY_SIZE, PAGE_SIZE } from "./memory-consts";
-import { tryAsMemoryIndex } from "./memory-index";
-import { MemoryRange } from "./memory-range";
-import { PageRange } from "./page-range";
-import { tryAsPageNumber } from "./pages/page-utils";
+import { MAX_MEMORY_INDEX, MAX_NUMBER_OF_PAGES, MEMORY_SIZE, PAGE_SIZE } from "./memory-consts.js";
+import { tryAsMemoryIndex } from "./memory-index.js";
+import { MemoryRange } from "./memory-range.js";
+import { PageRange } from "./page-range.js";
+import { tryAsPageNumber } from "./pages/page-utils.js";
 
 describe("PageRange", () => {
   describe("create from memory range", () => {

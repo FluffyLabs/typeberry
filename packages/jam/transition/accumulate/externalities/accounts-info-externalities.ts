@@ -1,5 +1,5 @@
 import type { ServiceId } from "@typeberry/block";
-import type { AccountsInfo } from "@typeberry/jam-host-calls/info";
+import type { AccountsInfo } from "@typeberry/jam-host-calls/info.js";
 import type { ServiceAccountInfo, State } from "@typeberry/state";
 
 export class AccountsInfoExternalities implements AccountsInfo {

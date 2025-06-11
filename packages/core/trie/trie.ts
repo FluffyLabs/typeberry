@@ -12,8 +12,8 @@ import {
   type TrieHash,
   type TrieNode,
   type TruncatedStateKey,
-} from "./nodes";
-import { type NodesDb, type TrieHasher, WriteableNodesDb } from "./nodesDb";
+} from "./nodes.js";
+import { type NodesDb, type TrieHasher, WriteableNodesDb } from "./nodesDb.js";
 
 export class InMemoryTrie {
   // Exposed for trie-visualiser

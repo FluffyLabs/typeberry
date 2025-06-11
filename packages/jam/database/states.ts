@@ -4,7 +4,7 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { InMemoryState } from "@typeberry/state";
-import { stateDumpCodec } from "@typeberry/state-merkleization/dump";
+import { stateDumpCodec } from "@typeberry/state-merkleization/dump.js";
 
 /**
  * Temporary and simple state database interface.

@@ -1,6 +1,6 @@
 import { HashDictionary } from "@typeberry/collections";
-import { FIRST_BIT_SET_NEG } from "./masks";
-import type { TrieHash, TrieNode } from "./nodes";
+import { FIRST_BIT_SET_NEG } from "./masks.js";
+import type { TrieHash, TrieNode } from "./nodes.js";
 
 /**
  * Hasher used for the trie nodes.

@@ -1,15 +1,15 @@
 import assert from "node:assert";
 import { after, before, beforeEach, describe, it, mock } from "node:test";
-import type { TwoRegistersOneImmediateArgs } from "../args-decoder/args-decoder";
-import { ArgumentType } from "../args-decoder/argument-type";
-import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder";
-import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
-import { Instruction } from "../instruction";
-import { InstructionResult } from "../instruction-result";
-import { Memory } from "../memory";
-import { BitOps, BitRotationOps, BooleanOps, LoadOps, MathOps, MoveOps, ShiftOps, StoreOps } from "../ops";
-import { Registers } from "../registers";
-import { TwoRegsOneImmDispatcher } from "./two-regs-one-imm-dispatcher";
+import type { TwoRegistersOneImmediateArgs } from "../args-decoder/args-decoder.js";
+import { ArgumentType } from "../args-decoder/argument-type.js";
+import { ImmediateDecoder } from "../args-decoder/decoders/immediate-decoder.js";
+import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map.js";
+import { InstructionResult } from "../instruction-result.js";
+import { Instruction } from "../instruction.js";
+import { Memory } from "../memory/index.js";
+import { BitOps, BitRotationOps, BooleanOps, LoadOps, MathOps, MoveOps, ShiftOps, StoreOps } from "../ops/index.js";
+import { Registers } from "../registers.js";
+import { TwoRegsOneImmDispatcher } from "./two-regs-one-imm-dispatcher.js";
 
 describe("TwoRegsOneImmDispatcher", () => {
   const instructionResult = new InstructionResult();

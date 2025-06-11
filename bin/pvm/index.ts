@@ -1,5 +1,5 @@
 import { Interpreter, tryAsGas } from "@typeberry/pvm-interpreter";
-import { Status } from "@typeberry/pvm-interpreter/status";
+import { Status } from "@typeberry/pvm-interpreter/status.js";
 
 const pvm = new Interpreter();
 
