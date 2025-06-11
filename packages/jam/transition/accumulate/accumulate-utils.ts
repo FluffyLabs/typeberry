@@ -1,5 +1,5 @@
 import { type EntropyHash, type ServiceId, type TimeSlot, tryAsServiceId } from "@typeberry/block";
-import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report";
+import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report.js";
 import { Encoder, codec } from "@typeberry/codec";
 import { HashSet } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
@@ -30,8 +30,11 @@ export function getWorkPackageHashes(reports: WorkReport[]): HashSet<WorkPackage
 }
 
 type NextServiceIdInput = {
+  /** currently accumulated service */
   serviceId: ServiceId;
+  /** `eta_0'` */
   entropy: EntropyHash;
+  /** `H_t`: time slot of the header. */
   timeslot: TimeSlot;
 };
 

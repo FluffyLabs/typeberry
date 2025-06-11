@@ -1,13 +1,13 @@
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, codec } from "@typeberry/codec";
+import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import type { U16, U32 } from "@typeberry/numbers";
 import { type Opaque, WithDebug } from "@typeberry/utils";
-import type { CoreIndex, ServiceGas } from "./common";
-import { RefineContext } from "./refine-context";
-import { type WorkItemsCount, tryAsWorkItemsCount } from "./work-package";
-import { WorkResult } from "./work-result";
+import type { CoreIndex, ServiceGas } from "./common.js";
+import { RefineContext } from "./refine-context.js";
+import { type WorkItemsCount, tryAsWorkItemsCount } from "./work-package.js";
+import { WorkResult } from "./work-result.js";
 
 /** Authorizer hash. */
 export type AuthorizerHash = Opaque<OpaqueHash, "AuthorizerHash">;
@@ -88,7 +88,7 @@ export class WorkReport extends WithDebug {
     coreIndex: codec.u16.asOpaque<CoreIndex>(),
     authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
     authorizationOutput: codec.blob,
-    segmentRootLookup: codec.sequenceVarLen(WorkPackageInfo.Codec),
+    segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),
     results: codec.sequenceVarLen(WorkResult.Codec).convert(
       (x) => x,
       (items) => FixedSizeArray.new(items, tryAsWorkItemsCount(items.length)),
@@ -133,7 +133,7 @@ export class WorkReport extends WithDebug {
      * In GP segment-root lookup is a dictionary but dictionary and var-len sequence are equal from codec perspective
      * https://graypaper.fluffylabs.dev/#/579bd12/13ab0013ad00
      */
-    public readonly segmentRootLookup: WorkPackageInfo[],
+    public readonly segmentRootLookup: readonly WorkPackageInfo[],
     /** `r`: The results of evaluation of each of the items in the work package. */
     public readonly results: FixedSizeArray<WorkResult, WorkItemsCount>,
     /** `g`: Gas used during authorization. */

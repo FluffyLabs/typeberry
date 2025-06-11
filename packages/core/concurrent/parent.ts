@@ -1,6 +1,6 @@
 import { type MessagePort, Worker } from "node:worker_threads";
 import { check } from "@typeberry/utils";
-import type { IExecutor, MessageIn, MessageOut, WithTransferList } from "./messages";
+import type { IExecutor, MessageIn, MessageOut, WithTransferList } from "./messages.js";
 
 // Amount of tasks in the queue that will trigger creation of new worker thread.
 // NOTE this might need to be configurable in the future.
@@ -23,7 +23,7 @@ export type ExecutorOptions = {
 export class Executor<TParams extends WithTransferList, TResult> implements IExecutor<TParams, TResult> {
   /** Initialize a new concurrent executor given a path to the worker. */
   static async initialize<XParams extends WithTransferList, XResult extends WithTransferList>(
-    workerPath: string,
+    workerPath: URL,
     options: ExecutorOptions,
   ): Promise<Executor<XParams, XResult>> {
     check(options.maxWorkers > 0, "Max workers has to be positive.");
@@ -44,7 +44,7 @@ export class Executor<TParams extends WithTransferList, TResult> implements IExe
   private constructor(
     private readonly workers: WorkerChannel<TParams, TResult>[],
     private readonly maxWorkers: number,
-    private readonly workerPath: string,
+    private readonly workerPath: URL,
   ) {
     // intial free workers.
     for (let i = 0; i < workers.length; i++) {
@@ -135,7 +135,7 @@ type Task<TParams, TResult> = {
 };
 
 async function initWorker<XParams extends WithTransferList, XResult>(
-  workerPath: string,
+  workerPath: URL,
 ): Promise<WorkerChannel<XParams, XResult>> {
   // create a worker and initialize communication channel
   const { port1, port2 } = new MessageChannel();

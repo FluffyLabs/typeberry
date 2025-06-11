@@ -2,7 +2,7 @@ import { type HeaderHash, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import z from "zod";
-import { BlobArray, Hash, type RpcMethod, ServiceId } from "../types";
+import { BlobArray, Hash, type RpcMethod, ServiceId } from "../types.js";
 
 export const ServiceValueParams = z.tuple([Hash, ServiceId, BlobArray]);
 export type ServiceValueParams = z.infer<typeof ServiceValueParams>;
@@ -42,7 +42,8 @@ export const serviceValue: RpcMethod<ServiceValueParams, [BlobArray] | null> = a
     return null;
   }
 
-  const storageValue = service.data.storage.find(({ hash }) => hash.isEqualTo(Bytes.fromNumbers(key, HASH_SIZE)));
+  // TODO [ToDr] we should probably hash the blob to get `StateKey` instead.
+  const storageValue = service.data.storage.get(Bytes.fromNumbers(key, HASH_SIZE).asOpaque());
 
   if (storageValue === undefined) {
     return null;

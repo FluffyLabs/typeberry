@@ -3,10 +3,10 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import { ServiceAccountInfo } from "@typeberry/state";
-import type { AccountsInfo } from "./info";
-import type { AccountsLookup } from "./lookup";
-import type { AccountsRead } from "./read";
-import type { AccountsWrite } from "./write";
+import type { AccountsInfo } from "./info.js";
+import type { AccountsLookup } from "./lookup.js";
+import type { AccountsRead } from "./read.js";
+import type { AccountsWrite } from "./write.js";
 
 export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite, AccountsInfo {
   public readonly preimages: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [

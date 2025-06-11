@@ -9,7 +9,7 @@ import {
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
-import { Ticket, tryAsTicketAttempt } from "@typeberry/block/tickets";
+import { Ticket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
@@ -22,9 +22,9 @@ import {
 } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
-import { SafroleSealingKeysData } from "@typeberry/state/safrole-data";
-import { BandernsatchWasm } from "./bandersnatch-wasm";
-import { SafroleSeal } from "./safrole-seal";
+import { SafroleSealingKeysData } from "@typeberry/state/safrole-data.js";
+import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import { SafroleSeal } from "./safrole-seal.js";
 
 const bandersnatch = BandernsatchWasm.new({ synchronous: true });
 

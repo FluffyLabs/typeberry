@@ -1,5 +1,5 @@
-import { BENCHMARKS_DIR } from "./setup";
-import type { Result } from "./types";
+import { BENCHMARKS_DIR } from "./setup.js";
+import type { Result } from "./types.js";
 
 type ErrorSummary = {
   file: string;

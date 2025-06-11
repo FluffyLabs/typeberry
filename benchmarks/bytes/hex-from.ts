@@ -1,4 +1,5 @@
-import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
+import { pathToFileURL } from "node:url";
+import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 
 function parseByteFromCharCodes(s: string): number {
   const a = parseCharCode(s.charCodeAt(0));
@@ -83,8 +84,8 @@ for (let i = 0; i < size; i += 1) {
   data.push((i % 256).toString(16).padStart(2, "0"));
 }
 
-module.exports = () =>
-  suite(
+export default function run() {
+  return suite(
     "Bytes / hex parsing",
 
     add("parse hex using `Number` with NaN checking", () => {
@@ -107,9 +108,10 @@ module.exports = () =>
     cycle(),
     complete(),
     configure({}),
-    ...save(__filename),
+    ...save(import.meta.filename),
   );
+}
 
-if (require.main === module) {
-  module.exports();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
 }

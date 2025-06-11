@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { after, before, describe, it } from "node:test";
-import { RpcClient } from "../src/client";
+import { RpcClient } from "../src/client.js";
 
 // todo [seko] these tests need to be updated to work with some predefined
 // and universally obtainable database. They currently only work with my local db.

@@ -1,11 +1,11 @@
 import type { Epoch } from "@typeberry/block";
-import { SignedTicket } from "@typeberry/block/tickets";
+import { SignedTicket } from "@typeberry/block/tickets.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
-import type { StreamHandler, StreamSender } from "../handler";
-import type { StreamKind } from "./stream";
+import type { StreamHandler, StreamSender } from "../handler.js";
+import type { StreamKind } from "./stream.js";
 
 /**
  * JAM-SNP CE-131 and CE-132 streams.
@@ -37,7 +37,7 @@ export class TicketDistributionRequest extends WithDebug {
   }
 }
 
-const logger = Logger.new(__filename, "protocol/ce-131-ce-132");
+const logger = Logger.new(import.meta.filename, "protocol/ce-131-ce-132");
 
 export class ServerHandler<T extends STREAM_KIND> implements StreamHandler<T> {
   constructor(

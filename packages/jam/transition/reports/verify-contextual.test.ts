@@ -1,16 +1,16 @@
 import { describe, it } from "node:test";
 import { tryAsTimeSlot } from "@typeberry/block";
-import { ReportGuarantee } from "@typeberry/block/guarantees";
-import { WorkPackageInfo } from "@typeberry/block/work-report";
+import { ReportGuarantee } from "@typeberry/block/guarantees.js";
+import { WorkPackageInfo } from "@typeberry/block/work-report.js";
 import { Bytes } from "@typeberry/bytes";
 import { HashDictionary, asKnownSize } from "@typeberry/collections";
-import { HashSet } from "@typeberry/collections/hash-set";
+import { HashSet } from "@typeberry/collections/hash-set.js";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
-import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
+import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
-import { ReportsError } from "./error";
-import { guaranteesAsView, initialServices, newCredential, newReports, newWorkReport } from "./test.utils";
+import { ReportsError } from "./error.js";
+import { guaranteesAsView, initialServices, newCredential, newReports, newWorkReport } from "./test.utils.js";
 
 describe("Reports.verifyContextualValidity", () => {
   it("should reject when code hash is not matching", async () => {
@@ -198,8 +198,8 @@ describe("Reports.verifyContextualValidity", () => {
     const reports = await newReports({
       withCoreAssignment: true,
       services: initialServices(),
+      clearAvailabilityOnZero: true,
     });
-    reports.state.availabilityAssignment[0] = null;
 
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.create({
@@ -229,8 +229,8 @@ describe("Reports.verifyContextualValidity", () => {
       accumulationQueue: [
         NotYetAccumulatedReport.create({ report: newWorkReport({ core: 1 }), dependencies: asKnownSize([]) }),
       ],
+      clearAvailabilityOnZero: true,
     });
-    reports.state.availabilityAssignment[0] = null;
 
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.create({
@@ -265,8 +265,8 @@ describe("Reports.verifyContextualValidity", () => {
           }),
         ].map((x) => [x.workPackageHash, x]),
       ),
+      clearAvailabilityOnZero: true,
     });
-    reports.state.availabilityAssignment[0] = null;
 
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.create({
@@ -294,8 +294,8 @@ describe("Reports.verifyContextualValidity", () => {
     const reports = await newReports({
       services: initialServices(),
       recentlyAccumulated: HashSet.from([newWorkReport({ core: 0 }).workPackageSpec.hash]),
+      clearAvailabilityOnZero: true,
     });
-    reports.state.availabilityAssignment[0] = null;
 
     const guarantees = guaranteesAsView(tinyChainSpec, [
       ReportGuarantee.create({

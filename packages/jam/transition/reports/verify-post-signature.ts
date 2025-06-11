@@ -1,8 +1,8 @@
-import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
+import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import { sumU64 } from "@typeberry/numbers";
 import type { State } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
-import { ReportsError } from "./error";
+import { ReportsError } from "./error.js";
 
 /** `G_A`: The gas allocated to invoke a work-report’s Accumulation logic. */
 export const G_A = 10_000_000;
@@ -11,7 +11,7 @@ export function verifyPostSignatureChecks(
   input: GuaranteesExtrinsicView,
   availabilityAssignment: State["availabilityAssignment"],
   authPools: State["authPools"],
-  services: State["services"],
+  services: State["getService"],
 ): Result<OK, ReportsError> {
   for (const guaranteeView of input) {
     const guarantee = guaranteeView.materialize();
@@ -51,16 +51,17 @@ export function verifyPostSignatureChecks(
      * https://graypaper.fluffylabs.dev/#/5f542d7/15f80015fa00
      */
     for (const result of report.results) {
-      const service = services.get(result.serviceId);
-      if (service === undefined) {
+      const service = services(result.serviceId);
+      if (service === null) {
         return Result.error(ReportsError.BadServiceId, `No service with id: ${result.serviceId}`);
       }
+      const info = service.getInfo();
 
       // check minimal accumulation gas
-      if (result.gas < service.data.info.accumulateMinGas) {
+      if (result.gas < info.accumulateMinGas) {
         return Result.error(
           ReportsError.ServiceItemGasTooLow,
-          `Service (${result.serviceId}) gas is less than minimal. Got: ${result.gas}, expected at least: ${service.data.info.accumulateMinGas}`,
+          `Service (${result.serviceId}) gas is less than minimal. Got: ${result.gas}, expected at least: ${info.accumulateMinGas}`,
         );
       }
     }

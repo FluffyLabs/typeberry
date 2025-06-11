@@ -7,14 +7,14 @@ import { tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { SimpleAllocator, keccak } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
-import { SafroleErrorCode } from "@typeberry/safrole/safrole";
-import { SafroleSealError } from "@typeberry/safrole/safrole-seal";
+import { SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
+import { SafroleErrorCode } from "@typeberry/safrole/safrole.js";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
-import { BlockVerifier } from "@typeberry/transition/block-verifier";
-import { OnChain, StfErrorKind, stfError } from "@typeberry/transition/chain-stf";
+import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
+import { OnChain, StfErrorKind, stfError } from "@typeberry/transition/chain-stf.js";
 import { OK, Result } from "@typeberry/utils";
-import { TestState, loadState } from "./state-loader";
+import { TestState, loadState } from "./state-loader.js";
 
 export class StateTransitionFuzzed {
   static fromJson: FromJson<StateTransitionFuzzed> = {
@@ -30,7 +30,7 @@ const keccakHasher = keccak.KeccakHasher.create();
 export async function runStateTransitionFuzzed(testContent: StateTransitionFuzzed, testPath: string) {
   const fileName = path.basename(testPath);
   const spec = tinyChainSpec;
-  const preState = loadState(testContent.pre_state.keyvals);
+  const preState = loadState(spec, testContent.pre_state.keyvals);
   const preStateSerialized = serializeState(preState, spec);
 
   const preStateRoot = merkelizeState(preStateSerialized);

@@ -1,5 +1,5 @@
 import type { TimeSlot, WorkReportHash } from "@typeberry/block";
-import { WorkReport } from "@typeberry/block/work-report";
+import { WorkReport } from "@typeberry/block/work-report.js";
 import { type CodecRecord, Descriptor, codec } from "@typeberry/codec";
 import { type OpaqueHash, WithHash, blake2b } from "@typeberry/hash";
 import { WithDebug } from "@typeberry/utils";

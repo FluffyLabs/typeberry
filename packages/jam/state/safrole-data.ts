@@ -1,7 +1,7 @@
 import { type PerEpochBlock, type PerValidator, codecPerValidator, tryAsPerEpochBlock } from "@typeberry/block";
-import { codecWithContext } from "@typeberry/block/codec";
-import { Ticket } from "@typeberry/block/tickets";
-import { type CodecRecord, codec } from "@typeberry/codec";
+import { codecWithContext } from "@typeberry/block/codec.js";
+import { Ticket } from "@typeberry/block/tickets.js";
+import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
 import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import {
   BANDERSNATCH_KEY_BYTES,
@@ -12,7 +12,7 @@ import {
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
 import { WithDebug, seeThrough } from "@typeberry/utils";
-import { ValidatorData } from "./validator-data";
+import { ValidatorData } from "./validator-data.js";
 
 export enum SafroleSealingKeysKind {
   Tickets = 0,
@@ -99,7 +99,7 @@ export class SafroleData {
     nextValidatorData: codecPerValidator(ValidatorData.Codec),
     epochRoot: codec.bytes(BANDERSNATCH_RING_ROOT_BYTES).asOpaque<BandersnatchRingRoot>(),
     sealingKeySeries: SafroleSealingKeysData.Codec,
-    ticketsAccumulator: codec.sequenceVarLen(Ticket.Codec).convert(seeThrough, asKnownSize),
+    ticketsAccumulator: readonlyArray(codec.sequenceVarLen(Ticket.Codec)).convert(seeThrough, asKnownSize),
   });
 
   static create({ nextValidatorData, epochRoot, sealingKeySeries, ticketsAccumulator }: CodecRecord<SafroleData>) {

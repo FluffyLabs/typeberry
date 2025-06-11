@@ -2,7 +2,7 @@ import { webcrypto } from "node:crypto";
 import EventEmitter from "node:events";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, ed25519 } from "@typeberry/crypto";
-import type { Ed25519Pair } from "@typeberry/crypto/ed25519";
+import type { Ed25519Pair } from "@typeberry/crypto/ed25519.js";
 import { Logger } from "@typeberry/logger";
 import {
   type PeerInfo,
@@ -12,11 +12,11 @@ import {
   generateCertificate,
   privateKeyToPEM,
   verifyCertificate,
-} from "./certificate";
-import type { Network } from "./network";
-import { type Peer, type PeerAddress, Peers, type Stream } from "./peers";
+} from "./certificate.js";
+import type { Network } from "./network.js";
+import { type Peer, type PeerAddress, Peers, type Stream } from "./peers.js";
 
-const logger = Logger.new(__filename, "net");
+const logger = Logger.new(import.meta.filename, "net");
 
 /** Networking server part options. */
 export type Options = {

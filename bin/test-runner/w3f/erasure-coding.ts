@@ -11,10 +11,10 @@ import {
   decodeDataAndTrim,
   padAndEncodeData,
   shardsToChunks,
-} from "@typeberry/erasure-coding/erasure-coding";
+} from "@typeberry/erasure-coding";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { check, deepEqual } from "@typeberry/utils";
-import { getChainSpec } from "./spec";
+import { getChainSpec } from "./spec.js";
 
 export class EcTest {
   static fromJson: FromJson<EcTest> = {

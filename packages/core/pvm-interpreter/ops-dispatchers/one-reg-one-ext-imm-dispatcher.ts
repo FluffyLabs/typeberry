@@ -1,6 +1,6 @@
-import type { OneRegisterOneExtendedWidthImmediateArgs } from "../args-decoder/args-decoder";
-import { Instruction } from "../instruction";
-import type { LoadOps } from "../ops";
+import type { OneRegisterOneExtendedWidthImmediateArgs } from "../args-decoder/args-decoder.js";
+import { Instruction } from "../instruction.js";
+import type { LoadOps } from "../ops/index.js";
 
 export class OneRegOneExtImmDispatcher {
   constructor(private loadOps: LoadOps) {}

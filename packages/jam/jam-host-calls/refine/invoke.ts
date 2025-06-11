@@ -9,12 +9,12 @@ import {
   tryAsHostCallIndex,
 } from "@typeberry/pvm-host-calls";
 import { type GasCounter, Registers, tryAsBigGas, tryAsSmallGas } from "@typeberry/pvm-interpreter";
-import { NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers";
-import { Status } from "@typeberry/pvm-interpreter/status";
+import { NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers.js";
+import { Status } from "@typeberry/pvm-interpreter/status.js";
 import { check } from "@typeberry/utils";
-import { type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities";
-import { HostCallResult } from "../results";
-import { CURRENT_SERVICE_ID } from "../utils";
+import { type RefineExternalities, tryAsMachineId } from "../externalities/refine-externalities.js";
+import { HostCallResult } from "../results.js";
+import { CURRENT_SERVICE_ID } from "../utils.js";
 
 const IN_OUT_REG_1 = 7;
 const IN_OUT_REG_2 = 8;

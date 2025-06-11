@@ -1,6 +1,6 @@
-import type { TwoRegistersTwoImmediatesArgs } from "../args-decoder/args-decoder";
-import { Instruction } from "../instruction";
-import type { DynamicJumpOps, LoadOps } from "../ops";
+import type { TwoRegistersTwoImmediatesArgs } from "../args-decoder/args-decoder.js";
+import { Instruction } from "../instruction.js";
+import type { DynamicJumpOps, LoadOps } from "../ops/index.js";
 
 export class TwoRegsTwoImmsDispatcher {
   constructor(

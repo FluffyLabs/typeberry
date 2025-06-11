@@ -1,14 +1,14 @@
-export { InMemoryTrie } from "./trie";
+export { InMemoryTrie } from "./trie.js";
 export {
-  TrieHash,
-  InputKey,
-  StateKey,
-  TruncatedStateKey,
+  type TrieHash,
+  type InputKey,
+  type StateKey,
+  type TruncatedStateKey,
   parseInputKey,
   TrieNode,
   BranchNode,
   LeafNode,
   NodeType,
-} from "./nodes";
-export * from "./nodesDb";
+} from "./nodes.js";
+export * from "./nodesDb.js";
 export * from "@typeberry/bytes";

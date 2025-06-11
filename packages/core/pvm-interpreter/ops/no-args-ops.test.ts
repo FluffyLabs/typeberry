@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { InstructionResult } from "../instruction-result";
-import { Result } from "../result";
-import { NoArgsOps } from "./no-args-ops";
+import { InstructionResult } from "../instruction-result.js";
+import { Result } from "../result.js";
+import { NoArgsOps } from "./no-args-ops.js";
 
 describe("NoArgsOps", () => {
   describe("trap", () => {

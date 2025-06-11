@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { Instruction } from "../instruction";
-import { instructionArgumentTypeMap } from "./instruction-argument-type-map";
+import { Instruction } from "../instruction.js";
+import { instructionArgumentTypeMap } from "./instruction-argument-type-map.js";
 
 describe("instructionArgumentTypeMap", () => {
   const instructions = Object.entries(Instruction).filter(

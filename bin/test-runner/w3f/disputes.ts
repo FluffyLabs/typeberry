@@ -1,15 +1,16 @@
 import assert from "node:assert";
 import { type TimeSlot, tryAsPerValidator } from "@typeberry/block";
 import { disputesExtrinsicFromJson, fromJson } from "@typeberry/block-json";
-import type { DisputesExtrinsic } from "@typeberry/block/disputes";
+import type { DisputesExtrinsic } from "@typeberry/block/disputes.js";
 import type { ChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { Disputes, type DisputesState } from "@typeberry/disputes";
-import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code";
+import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code.js";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { type AvailabilityAssignment, type DisputesRecords, type ValidatorData, tryAsPerCore } from "@typeberry/state";
 import { availabilityAssignmentFromJson, disputesRecordsFromJson, validatorDataFromJson } from "@typeberry/state-json";
-import { getChainSpec } from "./spec";
+import { copyAndUpdateState } from "@typeberry/transition/test.utils.js";
+import { getChainSpec } from "./spec.js";
 
 class DisputesOutputMarks {
   static fromJson: FromJson<DisputesOutputMarks> = {
@@ -94,9 +95,11 @@ export async function runDisputesTest(testContent: DisputesTest, path: string) {
 
   const result = await disputes.transition(testContent.input.disputes);
   const error = result.isError ? result.error : undefined;
-  const ok = result.isOk ? result.ok.slice() : undefined;
+  const ok = result.isOk ? result.ok.offendersMark.slice() : undefined;
+  const stateUpdate = result.isOk ? result.ok.stateUpdate : undefined;
 
   assert.deepEqual(error, testContent.output.err);
   assert.deepEqual(ok, testContent.output.ok?.offenders_mark);
-  assert.deepEqual(disputes.state, TestState.toDisputesState(testContent.post_state, chainSpec));
+  const newState = stateUpdate === undefined ? disputes.state : copyAndUpdateState(disputes.state, stateUpdate);
+  assert.deepEqual(newState, TestState.toDisputesState(testContent.post_state, chainSpec));
 }

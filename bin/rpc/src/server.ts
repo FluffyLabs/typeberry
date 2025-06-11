@@ -5,7 +5,7 @@ import { Logger } from "@typeberry/logger";
 import { WebSocketServer } from "ws";
 import type { WebSocket } from "ws";
 import z from "zod";
-import { SUBSCRIBE_METHOD_MAP, SubscriptionManager, UNSUBSCRIBE_METHOD_WHITELIST } from "./subscription-manager";
+import { SUBSCRIBE_METHOD_MAP, SubscriptionManager, UNSUBSCRIBE_METHOD_WHITELIST } from "./subscription-manager.js";
 import type {
   DatabaseContext,
   JsonRpcErrorResponse,
@@ -14,8 +14,8 @@ import type {
   JsonRpcResponse,
   JsonRpcResult,
   RpcMethodRepo,
-} from "./types";
-import { JSON_RPC_VERSION, RpcError } from "./types";
+} from "./types.js";
+import { JSON_RPC_VERSION, RpcError } from "./types.js";
 
 const PING_INTERVAL_MS = 30000;
 
@@ -52,7 +52,7 @@ export class RpcServer {
     chainSpec: ChainSpec,
     private readonly methods: RpcMethodRepo,
   ) {
-    this.logger = Logger.new(__filename, "rpc");
+    this.logger = Logger.new(import.meta.filename, "rpc");
 
     const fullDbPath = `${dbPath}/${genesisRoot}`;
     if (!existsSync(fullDbPath)) {

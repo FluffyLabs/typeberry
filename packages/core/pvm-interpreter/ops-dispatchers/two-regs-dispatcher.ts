@@ -1,6 +1,6 @@
-import type { TwoRegistersArgs } from "../args-decoder/args-decoder";
-import { Instruction } from "../instruction";
-import type { BitOps, BitRotationOps, MemoryOps, MoveOps } from "../ops";
+import type { TwoRegistersArgs } from "../args-decoder/args-decoder.js";
+import { Instruction } from "../instruction.js";
+import type { BitOps, BitRotationOps, MemoryOps, MoveOps } from "../ops/index.js";
 
 export class TwoRegsDispatcher {
   constructor(

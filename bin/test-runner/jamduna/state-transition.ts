@@ -8,10 +8,10 @@ import { SimpleAllocator, keccak } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
 import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
-import { BlockVerifier } from "@typeberry/transition/block-verifier";
-import { OnChain } from "@typeberry/transition/chain-stf";
+import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
+import { OnChain } from "@typeberry/transition/chain-stf.js";
 import { deepEqual, resultToString } from "@typeberry/utils";
-import { TestState, loadState } from "./state-loader";
+import { TestState, loadState } from "./state-loader.js";
 
 export class StateTransition {
   static fromJson: FromJson<StateTransition> = {
@@ -28,10 +28,10 @@ const keccakHasher = keccak.KeccakHasher.create();
 
 export async function runStateTransition(testContent: StateTransition, _path: string) {
   const spec = tinyChainSpec;
-  const preState = loadState(testContent.pre_state.keyvals);
+  const preState = loadState(spec, testContent.pre_state.keyvals);
   const preStateSerialized = serializeState(preState, spec);
 
-  const postState = loadState(testContent.post_state.keyvals);
+  const postState = loadState(spec, testContent.post_state.keyvals);
   const postStateSerialized = serializeState(postState, spec);
 
   const preStateRoot = merkelizeState(preStateSerialized);
@@ -64,8 +64,10 @@ export async function runStateTransition(testContent: StateTransition, _path: st
     assert.fail(`Expected the transition to go smoothly, got error: ${resultToString(stfResult)}`);
   }
 
+  preState.applyUpdate(stfResult.ok);
+
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
-  const root = merkelizeState(serializeState(stf.state, spec));
-  deepEqual(stf.state, postState);
+  const root = merkelizeState(serializeState(preState, spec));
+  deepEqual(preState, postState);
   assert.deepStrictEqual(root.toString(), postStateRoot.toString());
 }

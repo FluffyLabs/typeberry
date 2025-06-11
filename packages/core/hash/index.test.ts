@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { BytesBlob } from "@typeberry/bytes";
-import { PageAllocator, blake2b } from ".";
+import { PageAllocator, blake2b } from "./index.js";
 
 const allocator = new PageAllocator(128);
 

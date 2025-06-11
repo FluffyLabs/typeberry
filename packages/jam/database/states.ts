@@ -3,8 +3,8 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import type { State } from "@typeberry/state";
-import { stateDumpCodec } from "@typeberry/state-merkleization/dump";
+import type { InMemoryState } from "@typeberry/state";
+import { stateDumpCodec } from "@typeberry/state-merkleization/dump.js";
 
 /**
  * Temporary and simple state database interface.
@@ -36,9 +36,9 @@ import { stateDumpCodec } from "@typeberry/state-merkleization/dump";
  */
 export interface StatesDb {
   /** Insert a full state with given state root hash. */
-  insertFullState(root: StateRootHash, state: State): Promise<void>;
+  insertFullState(root: StateRootHash, state: InMemoryState): Promise<void>;
   /** Retrieve state with given state root hash. */
-  getFullState(root: StateRootHash): State | null;
+  getFullState(root: StateRootHash): InMemoryState | null;
 }
 
 export class InMemoryStates implements StatesDb {
@@ -46,12 +46,12 @@ export class InMemoryStates implements StatesDb {
 
   constructor(private readonly spec: ChainSpec) {}
 
-  async insertFullState(root: StateRootHash, state: State): Promise<void> {
+  async insertFullState(root: StateRootHash, state: InMemoryState): Promise<void> {
     const encoded = Encoder.encodeObject(stateDumpCodec, state, this.spec);
     this.db.set(root, encoded);
   }
 
-  getFullState(root: StateRootHash): State | null {
+  getFullState(root: StateRootHash): InMemoryState | null {
     const encodedState = this.db.get(root);
     if (encodedState === undefined) {
       return null;

@@ -1,14 +1,14 @@
 import { Header } from "@typeberry/block";
-import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "@typeberry/block/assurances";
-import { Block, Extrinsic } from "@typeberry/block/block";
-import { DisputesExtrinsic } from "@typeberry/block/disputes";
-import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "@typeberry/block/guarantees";
-import { type PreimagesExtrinsic, preimagesExtrinsicCodec } from "@typeberry/block/preimage";
-import { RefineContext } from "@typeberry/block/refine-context";
-import { type TicketsExtrinsic, ticketsExtrinsicCodec } from "@typeberry/block/tickets";
-import { WorkReport } from "@typeberry/block/work-report";
-import { WorkResult } from "@typeberry/block/work-result";
-import { runCodecTest } from "./common";
+import { type AssurancesExtrinsic, assurancesExtrinsicCodec } from "@typeberry/block/assurances.js";
+import { Block, Extrinsic } from "@typeberry/block/block.js";
+import { DisputesExtrinsic } from "@typeberry/block/disputes.js";
+import { type GuaranteesExtrinsic, guaranteesExtrinsicCodec } from "@typeberry/block/guarantees.js";
+import { type PreimagesExtrinsic, preimagesExtrinsicCodec } from "@typeberry/block/preimage.js";
+import { RefineContext } from "@typeberry/block/refine-context.js";
+import { type TicketsExtrinsic, ticketsExtrinsicCodec } from "@typeberry/block/tickets.js";
+import { WorkReport } from "@typeberry/block/work-report.js";
+import { WorkResult } from "@typeberry/block/work-result.js";
+import { runCodecTest } from "./common.js";
 
 export async function runAssurancesExtrinsicTest(test: AssurancesExtrinsic, file: string) {
   runCodecTest(assurancesExtrinsicCodec, test, file);

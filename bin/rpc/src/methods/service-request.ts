@@ -2,7 +2,7 @@ import { type HeaderHash, tryAsServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import z from "zod";
-import { Hash, PreimageLength, type RpcMethod, ServiceId, type Slot } from "../types";
+import { Hash, PreimageLength, type RpcMethod, ServiceId, type Slot } from "../types.js";
 
 export const ServiceRequestParams = z.tuple([Hash, ServiceId, Hash, PreimageLength]);
 export type ServiceRequestParams = z.infer<typeof ServiceRequestParams>;
@@ -20,7 +20,7 @@ export type ServiceRequestParams = z.infer<typeof ServiceRequestParams>;
  * ]
  * @returns Either null or array of Slot
  */
-export const serviceRequest: RpcMethod<ServiceRequestParams, [Slot[]] | null> = async (
+export const serviceRequest: RpcMethod<ServiceRequestParams, [readonly Slot[]] | null> = async (
   [headerHash, serviceId, preimageHash, preimageLength],
   db,
 ) => {

@@ -1,14 +1,14 @@
 import assert from "node:assert";
 import { test } from "node:test";
-import type { OneOffsetArgs } from "../args-decoder/args-decoder";
-import { ArgumentType } from "../args-decoder/argument-type";
-import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map";
-import { BasicBlocks } from "../basic-blocks";
-import { Instruction } from "../instruction";
-import { InstructionResult } from "../instruction-result";
-import { BranchOps } from "../ops";
-import { Registers } from "../registers";
-import { OneOffsetDispatcher } from "./one-offset-dispatcher";
+import type { OneOffsetArgs } from "../args-decoder/args-decoder.js";
+import { ArgumentType } from "../args-decoder/argument-type.js";
+import { instructionArgumentTypeMap } from "../args-decoder/instruction-argument-type-map.js";
+import { BasicBlocks } from "../basic-blocks/index.js";
+import { InstructionResult } from "../instruction-result.js";
+import { Instruction } from "../instruction.js";
+import { BranchOps } from "../ops/index.js";
+import { Registers } from "../registers.js";
+import { OneOffsetDispatcher } from "./one-offset-dispatcher.js";
 
 test("OneOffsetDispatcher", async (t) => {
   const regs = new Registers();

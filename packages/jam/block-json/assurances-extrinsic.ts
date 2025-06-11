@@ -1,10 +1,10 @@
 import { BitVec, Bytes } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
 import { json } from "@typeberry/json-parser";
-import { fromJson } from "./common";
+import { fromJson } from "./common.js";
 
-import { AvailabilityAssurance } from "@typeberry/block/assurances";
-import type { JsonObject } from "./json-format";
+import { AvailabilityAssurance } from "@typeberry/block/assurances.js";
+import type { JsonObject } from "./json-format.js";
 
 const getAvailabilityAssuranceFromJson = (ctx: ChainSpec) =>
   json.object<JsonObject<AvailabilityAssurance>, AvailabilityAssurance>(

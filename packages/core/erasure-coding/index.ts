@@ -1,1 +1,1 @@
-export { padAndEncodeData, decodeData } from "./erasure-coding";
+export * from "./erasure-coding.js";

@@ -5,19 +5,19 @@ import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { type U64, tryAsU64 } from "@typeberry/numbers";
 import { HostCallMemory, HostCallRegisters, PvmExecution } from "@typeberry/pvm-host-calls";
 import { MemoryBuilder, Registers, gasCounter, tryAsGas, tryAsMemoryIndex } from "@typeberry/pvm-interpreter";
-import { RESERVED_NUMBER_OF_PAGES } from "@typeberry/pvm-interpreter/memory/memory-consts";
-import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index";
-import { Status } from "@typeberry/pvm-interpreter/status";
-import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts";
+import { RESERVED_NUMBER_OF_PAGES } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
+import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
+import { Status } from "@typeberry/pvm-interpreter/status.js";
+import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
 import {
   type MachineId,
   MachineInstance,
   type MachineStatus,
   tryAsMachineId,
-} from "../externalities/refine-externalities";
-import { TestRefineExt } from "../externalities/refine-externalities.test";
-import { HostCallResult } from "../results";
-import { Invoke } from "./invoke";
+} from "../externalities/refine-externalities.js";
+import { TestRefineExt } from "../externalities/refine-externalities.test.js";
+import { HostCallResult } from "../results.js";
+import { Invoke } from "./invoke.js";
 
 const gas = gasCounter(tryAsGas(0));
 const MACHINE_INDEX_REG = 7;

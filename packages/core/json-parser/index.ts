@@ -1,3 +1,3 @@
-export * from "./descriptors";
-export * from "./parse";
-export * from "./types";
+export * from "./descriptors.js";
+export * from "./parse.js";
+export * from "./types.js";

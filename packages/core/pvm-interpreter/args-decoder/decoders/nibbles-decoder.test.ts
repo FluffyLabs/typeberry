@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { NibblesDecoder } from "./nibbles-decoder";
+import { NibblesDecoder } from "./nibbles-decoder.js";
 
 describe("NibblesDecoder", () => {
   it("should decode high nibble from 0x79", () => {

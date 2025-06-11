@@ -3,8 +3,8 @@ import { describe, it } from "node:test";
 import type { HeaderHash } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { blake2b } from "@typeberry/hash";
-import { MessageHandler, type MessageSender } from "../handler";
-import { Handler, KEY_SIZE, KeyValuePair, STREAM_KIND } from "./ce-129-state-request";
+import { MessageHandler, type MessageSender } from "../handler.js";
+import { Handler, KEY_SIZE, KeyValuePair, STREAM_KIND } from "./ce-129-state-request.js";
 
 const HEADER_HASH: HeaderHash = blake2b
   .hashString("0x7e1b07b8039cf840d51c4825362948c8ecb8fce1d290f705c269b6bcc7992731")

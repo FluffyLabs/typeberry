@@ -2,20 +2,22 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import type { ServiceId } from "@typeberry/block";
-import type { PreimagesExtrinsic } from "@typeberry/block/preimage";
+import type { PreimagesExtrinsic } from "@typeberry/block/preimage.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
+import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, blake2b } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
+  InMemoryService,
+  InMemoryState,
   LookupHistoryItem,
   PreimageItem,
-  Service,
   ServiceAccountInfo,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { OK } from "@typeberry/utils";
-import { Preimages, PreimagesErrorCode, type PreimagesInput } from "./preimages";
+import { Result } from "@typeberry/utils";
+import { Preimages, PreimagesErrorCode, type PreimagesInput } from "./preimages.js";
 
 function createInput(preimages: { requester: ServiceId; blob: BytesBlob }[], slot: number): PreimagesInput {
   return {
@@ -28,11 +30,11 @@ function createAccount(
   id: ServiceId,
   preimagesEntries: PreimageItem[] = [],
   lookupHistoryEntries: LookupHistoryItem[] = [],
-): Service {
+): InMemoryService {
   const preimages = HashDictionary.fromEntries(preimagesEntries.map((x) => [x.hash, x]));
   const lookupHistory = HashDictionary.fromEntries(lookupHistoryEntries.map((x) => [x.hash, [x]]));
 
-  return new Service(id, {
+  return new InMemoryService(id, {
     info: ServiceAccountInfo.create({
       codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
       balance: tryAsU64(0),
@@ -41,7 +43,7 @@ function createAccount(
       storageUtilisationBytes: tryAsU64(0),
       storageUtilisationCount: tryAsU32(0),
     }),
-    storage: [],
+    storage: HashDictionary.new(),
     preimages,
     lookupHistory,
   });
@@ -49,12 +51,12 @@ function createAccount(
 
 describe("Preimages", () => {
   it("should reject preimages that are not sorted by requester", () => {
-    const state = {
+    const state = InMemoryState.partial(tinyChainSpec, {
       services: new Map([
         [tryAsServiceId(0), createAccount(tryAsServiceId(0))],
         [tryAsServiceId(1), createAccount(tryAsServiceId(1))],
       ]),
-    };
+    });
     const preimages = new Preimages(state);
 
     const blob1 = BytesBlob.parseBlob("0xd34db33f11223344556677889900aabbccddeeff0123456789abcdef01234567");
@@ -78,9 +80,9 @@ describe("Preimages", () => {
   });
 
   it("should reject preimages that are sorted by requester but not by blob", () => {
-    const state = {
+    const state = InMemoryState.partial(tinyChainSpec, {
       services: new Map([[tryAsServiceId(0), createAccount(tryAsServiceId(0))]]),
-    };
+    });
     const preimages = new Preimages(state);
 
     const blob1 = BytesBlob.parseBlob("0xf00dc0de11223344556677889900aabbccddeeff0123456789abcdef01234567");
@@ -104,9 +106,9 @@ describe("Preimages", () => {
   });
 
   it("should reject duplicates", () => {
-    const state = {
+    const state = InMemoryState.partial(tinyChainSpec, {
       services: new Map([[tryAsServiceId(0), createAccount(tryAsServiceId(0))]]),
-    };
+    });
     const preimages = new Preimages(state);
 
     const blob = BytesBlob.parseBlob("0xdeadbeef11223344556677889900aabbccddeeff0123456789abcdef01234567");
@@ -129,9 +131,9 @@ describe("Preimages", () => {
   });
 
   it("should reject preimages when account not found", () => {
-    const state = {
+    const state = InMemoryState.partial(tinyChainSpec, {
       services: new Map([[tryAsServiceId(0), createAccount(tryAsServiceId(0))]]),
-    };
+    });
     const preimages = new Preimages(state);
 
     const blob = BytesBlob.parseBlob("0xc0ffee0011223344556677889900aabbccddeeff0123456789abcdef01234567");
@@ -139,18 +141,13 @@ describe("Preimages", () => {
 
     const result = preimages.integrate(input);
 
-    assert.deepStrictEqual(result, {
-      isError: true,
-      isOk: false,
-      error: PreimagesErrorCode.AccountNotFound,
-      details: "",
-    });
+    assert.deepStrictEqual(result, Result.error(PreimagesErrorCode.AccountNotFound));
   });
 
   it("should reject unrequested preimages", () => {
-    const state = {
+    const state = InMemoryState.partial(tinyChainSpec, {
       services: new Map([[tryAsServiceId(0), createAccount(tryAsServiceId(0))]]),
-    };
+    });
     const preimages = new Preimages(state);
 
     const blob = BytesBlob.parseBlob("0xbaddcafe11223344556677889900aabbccddeeff0123456789abcdef01234567");
@@ -175,9 +172,9 @@ describe("Preimages", () => {
       new LookupHistoryItem(hash, tryAsU32(blob.length), tryAsLookupHistorySlots([tryAsTimeSlot(5)])),
     ];
 
-    const state = {
+    const state = InMemoryState.partial(tinyChainSpec, {
       services: new Map([[tryAsServiceId(0), createAccount(tryAsServiceId(0), preimages, lookupHistory)]]),
-    };
+    });
     const preimagesService = new Preimages(state);
 
     const input = createInput([{ requester: tryAsServiceId(0), blob }], tryAsTimeSlot(12));
@@ -203,12 +200,12 @@ describe("Preimages", () => {
       new LookupHistoryItem(hash2, tryAsU32(blob2.length), tryAsLookupHistorySlots([])),
     ];
 
-    const state = {
+    const state = InMemoryState.partial(tinyChainSpec, {
       services: new Map([
         [tryAsServiceId(0), createAccount(tryAsServiceId(0), [], lookupHistory)],
         [tryAsServiceId(1), createAccount(tryAsServiceId(1), [], lookupHistory)],
       ]),
-    };
+    });
     const preimages = new Preimages(state);
 
     const input = createInput(
@@ -220,11 +217,8 @@ describe("Preimages", () => {
     );
 
     const result = preimages.integrate(input);
-    assert.deepStrictEqual(result, {
-      isError: false,
-      isOk: true,
-      ok: OK,
-    });
+    assert.deepStrictEqual(result.isOk, true);
+    state.applyUpdate(result.ok);
 
     const account0 = state.services.get(tryAsServiceId(0));
     assert.ok(account0 !== undefined);
@@ -232,11 +226,14 @@ describe("Preimages", () => {
     assert.strictEqual(account0.data.preimages.has(hash1), true);
     assert.strictEqual(account0.data.preimages.get(hash1)?.blob, blob1);
     assert.deepStrictEqual(account0LookupHistory[0][0].slots, tryAsLookupHistorySlots([tryAsTimeSlot(12)]));
+    assert.deepStrictEqual(account0LookupHistory[1][0].slots, tryAsLookupHistorySlots([]));
 
     const account1 = state.services.get(tryAsServiceId(1));
     assert.ok(account1 !== undefined);
+    const account1LookupHistory = Array.from(account1.data.lookupHistory.values());
     assert.strictEqual(account1.data.preimages.has(hash2), true);
     assert.strictEqual(account1.data.preimages.get(hash2)?.blob, blob2);
-    assert.deepStrictEqual(account0LookupHistory[1][0].slots, tryAsLookupHistorySlots([tryAsTimeSlot(12)]));
+    assert.deepStrictEqual(account1LookupHistory[0][0].slots, tryAsLookupHistorySlots([]));
+    assert.deepStrictEqual(account1LookupHistory[1][0].slots, tryAsLookupHistorySlots([tryAsTimeSlot(12)]));
   });
 });

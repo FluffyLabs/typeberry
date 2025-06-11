@@ -9,7 +9,7 @@ import {
   ClientHandler,
   STREAM_KIND_GENERATOR_TO_PROXY,
   ServerHandler,
-} from "./ce-131-ce-132-safrole-ticket-distribution";
+} from "./ce-131-ce-132-safrole-ticket-distribution.js";
 
 const TEST_EPOCH = tryAsEpoch(1);
 const TEST_TICKET = SignedTicket.create({

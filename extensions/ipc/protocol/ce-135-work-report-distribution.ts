@@ -1,15 +1,15 @@
 import type { TimeSlot } from "@typeberry/block";
-import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec";
-import { Credential } from "@typeberry/block/guarantees";
-import { WorkReport } from "@typeberry/block/work-report";
+import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec.js";
+import { Credential } from "@typeberry/block/guarantees.js";
+import { WorkReport } from "@typeberry/block/work-report.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
-import type { StreamHandler, StreamSender } from "../handler";
-import type { StreamKind } from "./stream";
+import type { StreamHandler, StreamSender } from "../handler.js";
+import type { StreamKind } from "./stream.js";
 
 /**
  * JAMNP-S CE 135 Stream
@@ -47,7 +47,7 @@ export class GuaranteedWorkReport extends WithDebug {
   }
 }
 
-const logger = Logger.new(__filename, "protocol/ce-135");
+const logger = Logger.new(import.meta.filename, "protocol/ce-135");
 
 export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;

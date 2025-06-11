@@ -1,7 +1,7 @@
-import { MAX_REPORT_DEPENDENCIES } from "@typeberry/block/gp-constants";
-import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
+import { MAX_REPORT_DEPENDENCIES } from "@typeberry/block/gp-constants.js";
+import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import { OK, Result } from "@typeberry/utils";
-import { ReportsError } from "./error";
+import { ReportsError } from "./error.js";
 
 /**
  * `W_R = 48 * 2**10`: The maximum total size of all output blobs in a work-report, in octets.

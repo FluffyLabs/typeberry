@@ -24,7 +24,7 @@ export function importerStateMachine() {
   return new StateMachine("importer", initialized, [initialized, ready, finished]);
 }
 
-const logger = Logger.new(__filename, "importer");
+const logger = Logger.new(import.meta.filename, "importer");
 
 export class MainReady extends State<"ready(main)", Finished, Config> {
   public readonly onBestBlock = new Listener<WithHash<HeaderHash, HeaderView>>();

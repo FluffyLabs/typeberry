@@ -1,6 +1,6 @@
 import type { CodeHash, CoreIndex, PerValidator, ServiceGas, ServiceId, TimeSlot } from "@typeberry/block";
-import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants";
-import type { PreimageHash } from "@typeberry/block/preimage";
+import { type AUTHORIZATION_QUEUE_SIZE, W_T } from "@typeberry/block/gp-constants.js";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray } from "@typeberry/collections";
 import type { Blake2bHash, OpaqueHash } from "@typeberry/hash";
@@ -229,7 +229,7 @@ export interface PartialState {
   /**
    * Update priviliged services and their gas.
    *
-   * `m`: manager service (can change priviledged services)
+   * `m`: manager service (can change privileged services)
    * `a`: manages authorization queue
    * `v`: manages validator keys
    * `g`: collection of serviceId -> gas that auto-accumulate every block

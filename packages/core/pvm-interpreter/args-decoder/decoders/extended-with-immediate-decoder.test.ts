@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { ExtendedWitdthImmediateDecoder } from "./extended-with-immediate-decoder";
+import { ExtendedWitdthImmediateDecoder } from "./extended-with-immediate-decoder.js";
 
 describe("ExtendedWitdthImmediateDecoder", () => {
   describe("reading bytes as unsigned number", () => {

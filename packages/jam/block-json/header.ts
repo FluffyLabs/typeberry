@@ -10,12 +10,12 @@ import {
   type ValidatorIndex,
   ValidatorKeys,
 } from "@typeberry/block";
-import { Ticket } from "@typeberry/block/tickets";
+import { Ticket } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
 import type { KnownSizeArray } from "@typeberry/collections";
 import type { BandersnatchKey, BandersnatchVrfSignature, Ed25519Key } from "@typeberry/crypto";
 import { json } from "@typeberry/json-parser";
-import { fromJson } from "./common";
+import { fromJson } from "./common.js";
 
 const bandersnatchVrfSignature = json.fromString((v) => Bytes.parseBytes(v, 96).asOpaque<BandersnatchVrfSignature>());
 

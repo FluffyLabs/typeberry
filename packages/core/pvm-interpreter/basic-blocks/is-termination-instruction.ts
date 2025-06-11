@@ -1,4 +1,4 @@
-import { HIGHEST_INSTRUCTION_NUMBER, Instruction } from "../instruction";
+import { HIGHEST_INSTRUCTION_NUMBER, Instruction } from "../instruction.js";
 
 export const terminationInstructions = (() => {
   const terminationInstructions = new Array<boolean>(HIGHEST_INSTRUCTION_NUMBER + 1);

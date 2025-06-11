@@ -1,13 +1,13 @@
 import { OK, Result } from "@typeberry/utils";
-import { OutOfMemory, PageFault } from "./errors";
-import { MAX_MEMORY_INDEX, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts";
-import { type MemoryIndex, type SbrkIndex, tryAsSbrkIndex } from "./memory-index";
-import { MemoryRange, RESERVED_MEMORY_RANGE } from "./memory-range";
-import { alignToPageSize, getPageNumber } from "./memory-utils";
-import { PageRange } from "./page-range";
-import { WriteablePage } from "./pages";
-import type { MemoryPage } from "./pages/memory-page";
-import { type PageNumber, tryAsPageIndex } from "./pages/page-utils";
+import { OutOfMemory, PageFault } from "./errors.js";
+import { MAX_MEMORY_INDEX, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts.js";
+import { type MemoryIndex, type SbrkIndex, tryAsSbrkIndex } from "./memory-index.js";
+import { MemoryRange, RESERVED_MEMORY_RANGE } from "./memory-range.js";
+import { alignToPageSize, getPageNumber } from "./memory-utils.js";
+import { PageRange } from "./page-range.js";
+import { WriteablePage } from "./pages/index.js";
+import type { MemoryPage } from "./pages/memory-page.js";
+import { type PageNumber, tryAsPageIndex } from "./pages/page-utils.js";
 
 type InitialMemoryState = {
   memory: Map<PageNumber, MemoryPage>;

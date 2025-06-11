@@ -1,27 +1,28 @@
 import { type EntropyHash, type PerEpochBlock, tryAsPerEpochBlock, tryAsServiceGas } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
-import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
-import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
+import { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
+import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report.js";
 import { Bytes } from "@typeberry/bytes";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { BANDERSNATCH_RING_ROOT_BYTES, BLS_KEY_BYTES, type BandersnatchKey, type Ed25519Key } from "@typeberry/crypto";
 import { type FromJson, json } from "@typeberry/json-parser";
 import {
+  type InMemoryService,
+  InMemoryState,
   PrivilegedServices,
-  type Service,
   type State,
   VALIDATOR_META_BYTES,
   ValidatorData,
   tryAsPerCore,
 } from "@typeberry/state";
-import { JsonService } from "./accounts";
-import { availabilityAssignmentFromJson } from "./availability-assignment";
-import { disputesRecordsFromJson } from "./disputes";
-import { notYetAccumulatedFromJson } from "./not-yet-accumulated";
-import { blockStateFromJson } from "./recent-history";
-import { TicketsOrKeys, ticketFromJson } from "./safrole";
-import { JsonStatisticsData } from "./statistics";
+import { JsonService } from "./accounts.js";
+import { availabilityAssignmentFromJson } from "./availability-assignment.js";
+import { disputesRecordsFromJson } from "./disputes.js";
+import { notYetAccumulatedFromJson } from "./not-yet-accumulated.js";
+import { blockStateFromJson } from "./recent-history.js";
+import { TicketsOrKeys, ticketFromJson } from "./safrole.js";
+import { JsonStatisticsData } from "./statistics.js";
 
 const validatorDataFromJson: FromJson<ValidatorData> = json.object<ValidatorData>(
   {
@@ -59,11 +60,11 @@ type JsonStateDump = {
   pi: JsonStatisticsData;
   theta: State["accumulationQueue"];
   xi: PerEpochBlock<WorkPackageHash[]>;
-  accounts: Service[];
+  accounts: InMemoryService[];
 };
 
 export const fullStateDumpFromJson = (spec: ChainSpec) =>
-  json.object<JsonStateDump, State>(
+  json.object<JsonStateDump, InMemoryState>(
     {
       alpha: json.array(json.array(fromJson.bytes32<AuthorizerHash>())),
       varphi: json.array(json.array(fromJson.bytes32<AuthorizerHash>())),
@@ -97,8 +98,25 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
       xi: json.array(json.array(fromJson.bytes32())),
       accounts: json.array(JsonService.fromJson),
     },
-    ({ alpha, varphi, beta, gamma, psi, eta, iota, kappa, lambda, rho, tau, chi, pi, theta, xi, accounts }): State => {
-      return {
+    ({
+      alpha,
+      varphi,
+      beta,
+      gamma,
+      psi,
+      eta,
+      iota,
+      kappa,
+      lambda,
+      rho,
+      tau,
+      chi,
+      pi,
+      theta,
+      xi,
+      accounts,
+    }): InMemoryState => {
+      return InMemoryState.create({
         authPools: tryAsPerCore(
           alpha.map((perCore) => {
             if (perCore.length > MAX_AUTH_POOL_SIZE) {
@@ -142,6 +160,6 @@ export const fullStateDumpFromJson = (spec: ChainSpec) =>
           spec,
         ),
         services: new Map(accounts.map((x) => [x.id, x])),
-      };
+      });
     },
   );

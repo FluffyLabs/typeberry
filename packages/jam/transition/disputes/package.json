@@ -4,7 +4,7 @@
   "description": "Disputes implementation based on the Gray Paper.",
   "main": "index.ts",
   "scripts": {
-    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
@@ -19,5 +19,6 @@
     "@typeberry/safrole": "0.0.1",
     "@typeberry/state": "0.0.1",
     "@typeberry/utils": "0.0.1"
-  }
+  },
+  "type": "module"
 }

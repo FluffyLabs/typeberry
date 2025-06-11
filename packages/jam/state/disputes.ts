@@ -1,11 +1,11 @@
 import type { WorkReportHash } from "@typeberry/block";
-import { type CodecRecord, codec } from "@typeberry/codec";
-import { SortedSet } from "@typeberry/collections";
+import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
+import { type ImmutableSortedSet, SortedSet } from "@typeberry/collections";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 
 const sortedSetCodec = <T extends OpaqueHash>() =>
-  codec.sequenceVarLen(codec.bytes(HASH_SIZE)).convert<SortedSet<T>>(
+  readonlyArray(codec.sequenceVarLen(codec.bytes(HASH_SIZE))).convert<ImmutableSortedSet<T>>(
     (input) => input.array,
     (output) => {
       const typed: T[] = output.map((x) => x.asOpaque());
@@ -33,13 +33,13 @@ export class DisputesRecords {
 
   private constructor(
     /** `goodSet`: all work-reports hashes which were judged to be correct */
-    public goodSet: SortedSet<WorkReportHash>,
+    public readonly goodSet: ImmutableSortedSet<WorkReportHash>,
     /** `badSet`: all work-reports hashes which were judged to be incorrect */
-    public badSet: SortedSet<WorkReportHash>,
+    public readonly badSet: ImmutableSortedSet<WorkReportHash>,
     /** `wonkySet`: all work-reports hashes which appear to be impossible to judge */
-    public wonkySet: SortedSet<WorkReportHash>,
+    public readonly wonkySet: ImmutableSortedSet<WorkReportHash>,
     /** `punishSet`: set of Ed25519 keys representing validators which were found to have misjudged a work-report */
-    public punishSet: SortedSet<Ed25519Key>,
+    public readonly punishSet: ImmutableSortedSet<Ed25519Key>,
   ) {}
 
   static fromSortedArrays({

@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { MultiMap } from "./multi-map";
+import { MultiMap } from "./multi-map.js";
 
 function dump(map: Map<unknown, unknown>) {
   return JSON.stringify(map, (_key, val) => {

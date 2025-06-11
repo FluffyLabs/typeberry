@@ -2,10 +2,10 @@ import assert from "node:assert";
 import { beforeEach, describe, it } from "node:test";
 import { tryAsU64 } from "@typeberry/numbers";
 import { Memory } from "@typeberry/pvm-interpreter";
-import { OutOfBounds, PageFault } from "@typeberry/pvm-interpreter/memory/errors";
-import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
+import { OutOfBounds, PageFault } from "@typeberry/pvm-interpreter/memory/errors.js";
+import { MEMORY_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { OK, Result, deepEqual } from "@typeberry/utils";
-import { HostCallMemory } from "./host-call-memory";
+import { HostCallMemory } from "./host-call-memory.js";
 
 describe("HostCallMemory", () => {
   let memory: Memory;

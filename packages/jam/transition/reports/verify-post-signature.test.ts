@@ -1,15 +1,15 @@
 import { describe, it } from "node:test";
 import { tryAsTimeSlot } from "@typeberry/block";
-import { ReportGuarantee } from "@typeberry/block/guarantees";
-import { WorkResult } from "@typeberry/block/work-result";
+import { ReportGuarantee } from "@typeberry/block/guarantees.js";
+import { WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes } from "@typeberry/bytes";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
-import { ReportsError } from "./error";
-import { guaranteesAsView, initialServices, newCredential, newReports, newWorkReport } from "./test.utils";
-import { G_A } from "./verify-post-signature";
+import { ReportsError } from "./error.js";
+import { guaranteesAsView, initialServices, newCredential, newReports, newWorkReport } from "./test.utils.js";
+import { G_A } from "./verify-post-signature.js";
 
 describe("Reports.verifyPostSignatureChecks", () => {
   it("should reject report on core with pending availability", async () => {

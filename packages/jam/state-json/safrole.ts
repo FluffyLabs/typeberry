@@ -1,6 +1,6 @@
 import { tryAsPerEpochBlock } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
-import { Ticket } from "@typeberry/block/tickets";
+import { Ticket } from "@typeberry/block/tickets.js";
 import type { ChainSpec } from "@typeberry/config";
 import type { BandersnatchKey } from "@typeberry/crypto";
 import { type FromJson, json } from "@typeberry/json-parser";

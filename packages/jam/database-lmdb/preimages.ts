@@ -1,7 +1,7 @@
 import { BytesBlob } from "@typeberry/bytes";
 import type { PreimageDb } from "@typeberry/database";
 import { type OpaqueHash, WithHash } from "@typeberry/hash";
-import type { LmdbRoot, SubDb } from "./root";
+import type { LmdbRoot, SubDb } from "./root.js";
 
 // TODO [ToDr] Preimages should probably have an availability information.
 // i.e. we might have something in the DB, but it should not be available

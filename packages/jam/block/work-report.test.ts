@@ -2,8 +2,8 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Encoder } from "@typeberry/codec";
 import { tryAsU32 } from "@typeberry/numbers";
-import { tryAsServiceGas } from "./common";
-import { WorkRefineLoad } from "./work-result";
+import { tryAsServiceGas } from "./common.js";
+import { WorkRefineLoad } from "./work-result.js";
 
 describe("WorkReport", () => {
   it("should encode work refine load", () => {

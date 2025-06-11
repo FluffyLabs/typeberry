@@ -2,10 +2,10 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { OK, Result } from "@typeberry/utils";
-import { MIN_ALLOCATION_LENGTH } from "../memory-consts";
-import { tryAsMemoryIndex } from "../memory-index";
-import { tryAsPageIndex, tryAsPageNumber } from "./page-utils";
-import { WriteablePage } from "./writeable-page";
+import { MIN_ALLOCATION_LENGTH } from "../memory-consts.js";
+import { tryAsMemoryIndex } from "../memory-index.js";
+import { tryAsPageIndex, tryAsPageNumber } from "./page-utils.js";
+import { WriteablePage } from "./writeable-page.js";
 
 describe("WriteablePage", () => {
   it("should load 4 bytes from memory", () => {

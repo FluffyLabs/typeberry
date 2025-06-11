@@ -1,14 +1,14 @@
 import type { HeaderHash, TimeSlot } from "@typeberry/block";
-import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees";
-import type { RefineContext } from "@typeberry/block/refine-context";
-import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report";
+import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
+import type { RefineContext } from "@typeberry/block/refine-context.js";
+import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-report.js";
 import { HashDictionary } from "@typeberry/collections";
-import { HashSet } from "@typeberry/collections/hash-set";
+import { HashSet } from "@typeberry/collections/hash-set.js";
 import type { KeccakHash } from "@typeberry/hash";
 import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
 import type { BlockState, State } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
-import { ReportsError } from "./error";
+import { ReportsError } from "./error.js";
 
 /** `L`: The maximum age in timeslots of the lookup anchor. */
 export const L = 14_400;
@@ -23,7 +23,7 @@ export function verifyContextualValidity(
   input: { guarantees: GuaranteesExtrinsicView; slot: TimeSlot },
   state: Pick<
     State,
-    "services" | "recentBlocks" | "availabilityAssignment" | "accumulationQueue" | "recentlyAccumulated"
+    "getService" | "recentBlocks" | "availabilityAssignment" | "accumulationQueue" | "recentlyAccumulated"
   >,
   hasher: MmrHasher<KeccakHash>,
   headerChain: HeaderChain,
@@ -46,17 +46,17 @@ export function verifyContextualValidity(
     segmentRootLookupHashes.insertAll(guarantee.report.segmentRootLookup.map((x) => x.workPackageHash));
 
     for (const result of guarantee.report.results) {
-      const service = state.services.get(result.serviceId);
-      if (service === undefined) {
+      const service = state.getService(result.serviceId);
+      if (service === null) {
         return Result.error(ReportsError.BadServiceId, `No service with id: ${result.serviceId}`);
       }
 
       // check service code hash
       // https://graypaper.fluffylabs.dev/#/5f542d7/154b02154b02
-      if (!result.codeHash.isEqualTo(service.data.info.codeHash)) {
+      if (!result.codeHash.isEqualTo(service.getInfo().codeHash)) {
         return Result.error(
           ReportsError.BadCodeHash,
-          `Service (${result.serviceId}) code hash mismatch. Got: ${result.codeHash}, expected: ${service.data.info.codeHash}`,
+          `Service (${result.serviceId}) code hash mismatch. Got: ${result.codeHash}, expected: ${service.getInfo().codeHash}`,
         );
       }
     }

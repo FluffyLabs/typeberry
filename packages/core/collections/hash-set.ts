@@ -1,15 +1,30 @@
 import type { OpaqueHash } from "@typeberry/hash";
-import { HashDictionary } from "./hash-dictionary";
+import { HashDictionary } from "./hash-dictionary.js";
+
+/** Immutable version of the HashSet. */
+export interface ImmutableHashSet<V extends OpaqueHash> extends Iterable<V> {
+  /** Return number of items in the set. */
+  get size(): number;
+
+  /** Check if given hash is in the set. */
+  has(value: V): boolean;
+
+  /**
+   * Return an iterator over elements that are in the intersection of both sets.
+   * i.e. they exist in both.
+   */
+  intersection(other: ImmutableHashSet<V>): Generator<V>;
+}
 
 /** A set specialized for storing hashes. */
-export class HashSet<V extends OpaqueHash> {
+export class HashSet<V extends OpaqueHash> implements ImmutableHashSet<V> {
   /** Wrap given dictionary into `HashSet` api for it's keys. */
   static viewDictionaryKeys<V extends OpaqueHash>(dict: HashDictionary<V, unknown>): HashSet<V> {
     return new HashSet(dict);
   }
 
   /** Create new set from given array of values. */
-  static from<V extends OpaqueHash>(values: V[]): HashSet<V> {
+  static from<V extends OpaqueHash>(values: readonly V[]): HashSet<V> {
     const newSet = HashSet.new<V>();
     newSet.insertAll(values);
     return newSet;
@@ -22,33 +37,15 @@ export class HashSet<V extends OpaqueHash> {
 
   private constructor(private readonly map = HashDictionary.new<V, unknown>()) {}
 
-  /** Return number of items in the set. */
   get size(): number {
     return this.map.size;
   }
 
-  /** Insert given hash to the set. */
-  insert(value: V) {
-    return this.map.set(value, true);
-  }
-
-  /** Insert multiple items to the set. */
-  insertAll(values: V[]) {
-    for (const v of values) {
-      this.map.set(v, true);
-    }
-  }
-
-  /** Check if given hash is in the set. */
-  has(value: V) {
+  has(value: V): boolean {
     return this.map.has(value);
   }
 
-  /**
-   * Return an iterator over elements that are in the intersection of both sets.
-   * i.e. they exist in both.
-   */
-  *intersection(other: HashSet<V>) {
+  *intersection(other: ImmutableHashSet<V>): Generator<V> {
     const iterate = this.size < other.size ? this : other;
     const second = iterate === this ? other : this;
 
@@ -59,6 +56,25 @@ export class HashSet<V extends OpaqueHash> {
     }
   }
 
+  /** it allows to use HashSet in for-of loop */
+  *[Symbol.iterator]() {
+    for (const value of this.map) {
+      yield value[0];
+    }
+  }
+
+  /** Insert given hash to the set. */
+  insert(value: V) {
+    return this.map.set(value, true);
+  }
+
+  /** Insert multiple items to the set. */
+  insertAll(values: readonly V[]) {
+    for (const v of values) {
+      this.map.set(v, true);
+    }
+  }
+
   /**
    * Remove value from set.
    *
@@ -66,12 +82,5 @@ export class HashSet<V extends OpaqueHash> {
    */
   delete(value: V) {
     return this.map.delete(value);
-  }
-
-  /** it allows to use HashSet in for-of loop */
-  *[Symbol.iterator]() {
-    for (const value of this.map) {
-      yield value[0];
-    }
   }
 }

@@ -1,5 +1,5 @@
 import type { TransferListItem } from "node:worker_threads";
-import type { WithTransferList } from "@typeberry/concurrent/messages";
+import type { WithTransferList } from "@typeberry/concurrent/messages.js";
 
 export enum Method {
   RingCommitment = 0,

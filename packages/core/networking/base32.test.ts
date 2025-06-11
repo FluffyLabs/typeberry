@@ -1,7 +1,7 @@
 import { strictEqual } from "node:assert";
 import { describe, it } from "node:test";
 import { BytesBlob } from "@typeberry/bytes";
-import { base32 } from "./base32";
+import { base32 } from "./base32.js";
 
 describe("base32 encoding", () => {
   it("should encode to base32", () => {

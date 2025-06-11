@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 import { check } from "@typeberry/utils";
-import type { State, StateNames, ValidTransitionFrom } from "./state";
+import type { State, StateNames, ValidTransitionFrom } from "./state.js";
 
 /**
  * Manager of multiple states with well-defined transitions between them.

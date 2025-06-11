@@ -1,10 +1,7 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
-import { type EntropyHash, type PerValidator, tryAsTimeSlot } from "@typeberry/block";
-import { type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets";
-import { Bytes } from "@typeberry/bytes";
-import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
-import { tinyChainSpec } from "@typeberry/config";
+import { type EntropyHash, type PerValidator,
+  type WorkReportHash, tryAsTimeSlot } from "@typeberry/block";
 import {
   BANDERSNATCH_KEY_BYTES,
   BANDERSNATCH_PROOF_BYTES,
@@ -13,13 +10,18 @@ import {
   ED25519_KEY_BYTES,
   type Ed25519Key,
 } from "@typeberry/crypto";
+import { type SignedTicket, type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
+import { Bytes } from "@typeberry/bytes";
+import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
+import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Ordering } from "@typeberry/ordering";
-import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
-import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data";
-import * as bandersnatch from "./bandersnatch-vrf";
-import { BandernsatchWasm } from "./bandersnatch-wasm";
-import { Safrole, SafroleErrorCode, type SafroleState } from "./safrole";
+import { DisputesRecords, VALIDATOR_META_BYTES, ValidatorData, hashComparator } from "@typeberry/state";
+import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
+import { Result, deepEqual } from "@typeberry/utils";
+import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
+import bandersnatchVrf from "./bandersnatch-vrf.js";
+import { Safrole, SafroleErrorCode, type SafroleState, type SafroleStateUpdate } from "./safrole.js";
 
 const bwasm = BandernsatchWasm.new({ synchronous: true });
 
@@ -85,7 +87,7 @@ const fakeSealingKeys: SafroleSealingKeys = {
 
 describe("Safrole", () => {
   beforeEach(() => {
-    mock.method(bandersnatch, "verifyTickets", () =>
+    mock.method(bandersnatchVrf, "verifyTickets", () =>
       Promise.resolve([
         { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
         { isValid: true, entropyHash: Bytes.fill(HASH_SIZE, 1) },
@@ -122,12 +124,12 @@ describe("Safrole", () => {
     const safrole = new Safrole(tinyChainSpec, state, bwasm);
     const timeslot = tryAsTimeSlot(2);
     const entropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
-    const extrinsic: TicketsExtrinsic = asKnownSize([]);
+    const extrinsic: SignedTicket[] = [];
     extrinsic.length = tinyChainSpec.epochLength + 1;
     const input = {
       slot: timeslot,
       entropy,
-      extrinsic,
+      extrinsic: asKnownSize(extrinsic),
     };
 
     const result = await safrole.transition(input);
@@ -165,7 +167,7 @@ describe("Safrole", () => {
   });
 
   it("should return bad ticket proof error", async () => {
-    mock.method(bandersnatch, "verifyTickets", () =>
+    mock.method(bandersnatchVrf, "verifyTickets", () =>
       Promise.resolve([{ isValid: false, entropyHash: Bytes.zero(HASH_SIZE) }]),
     );
     const state: SafroleState = {
@@ -183,9 +185,7 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      disputesRecords: {
-        punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
-      },
+      disputesRecords: emptyDisputesRecords(),
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
@@ -215,7 +215,7 @@ describe("Safrole", () => {
   });
 
   it("should return duplicated ticket error", async () => {
-    mock.method(bandersnatch, "verifyTickets", () =>
+    mock.method(bandersnatchVrf, "verifyTickets", () =>
       Promise.resolve([
         { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
         { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
@@ -236,9 +236,7 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      disputesRecords: {
-        punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
-      },
+      disputesRecords: emptyDisputesRecords(),
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
@@ -272,7 +270,7 @@ describe("Safrole", () => {
   });
 
   it("should return bad ticket order error", async () => {
-    mock.method(bandersnatch, "verifyTickets", () =>
+    mock.method(bandersnatchVrf, "verifyTickets", () =>
       Promise.resolve([
         { isValid: true, entropyHash: Bytes.fill(HASH_SIZE, 1) },
         { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
@@ -293,9 +291,7 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      disputesRecords: {
-        punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
-      },
+      disputesRecords: emptyDisputesRecords(),
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
@@ -344,9 +340,7 @@ describe("Safrole", () => {
       currentValidatorData: validators,
       designatedValidatorData: validators,
       nextValidatorData: validators,
-      disputesRecords: {
-        punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
-      },
+      disputesRecords: emptyDisputesRecords(),
       ticketsAccumulator: asKnownSize([]),
       sealingKeySeries: fakeSealingKeys,
       epochRoot: Bytes.zero(BANDERSNATCH_RING_ROOT_BYTES).asOpaque(),
@@ -369,12 +363,24 @@ describe("Safrole", () => {
 
     const result = await safrole.transition(input);
 
-    assert.deepEqual(result.isOk, true);
-    if (result.isOk) {
-      assert.deepStrictEqual(result.ok, {
+    deepEqual(
+      result,
+      Result.ok({
+        // we are ignoring that result anyway, so safe to cast.
+        stateUpdate: {} as SafroleStateUpdate,
         epochMark: null,
         ticketsMark: null,
-      });
-    }
+      }),
+      { ignore: ["ok.stateUpdate"] },
+    );
   });
 });
+
+function emptyDisputesRecords(): DisputesRecords {
+  return DisputesRecords.create({
+    wonkySet: SortedSet.fromArray<WorkReportHash>(hashComparator, []),
+    badSet: SortedSet.fromArray<WorkReportHash>(hashComparator, []),
+    goodSet: SortedSet.fromArray<WorkReportHash>(hashComparator, []),
+    punishSet: SortedSet.fromArray<Ed25519Key>(() => Ordering.Equal, []),
+  });
+}

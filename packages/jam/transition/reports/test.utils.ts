@@ -10,22 +10,22 @@ import {
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
-import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec";
+import { codecKnownSizeArray, codecWithContext } from "@typeberry/block/codec.js";
 import {
   Credential,
   GuaranteesExtrinsicBounds,
   type GuaranteesExtrinsicView,
   ReportGuarantee,
   guaranteesExtrinsicCodec,
-} from "@typeberry/block/guarantees";
-import { RefineContext } from "@typeberry/block/refine-context";
-import testWorkReport from "@typeberry/block/test-work-report";
-import { type WorkPackageHash, type WorkPackageInfo, WorkReport } from "@typeberry/block/work-report";
-import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result";
+} from "@typeberry/block/guarantees.js";
+import { RefineContext } from "@typeberry/block/refine-context.js";
+import testWorkReport from "@typeberry/block/test-work-report.js";
+import { type WorkPackageHash, type WorkPackageInfo, WorkReport } from "@typeberry/block/work-report.js";
+import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder, codec } from "@typeberry/codec";
 import { FixedSizeArray, HashDictionary, asKnownSize } from "@typeberry/collections";
-import { HashSet } from "@typeberry/collections/hash-set";
+import { HashSet } from "@typeberry/collections/hash-set.js";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import {
   BANDERSNATCH_KEY_BYTES,
@@ -40,15 +40,16 @@ import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   AvailabilityAssignment,
   ENTROPY_ENTRIES,
-  Service,
+  InMemoryService,
+  InMemoryState,
   ServiceAccountInfo,
   VALIDATOR_META_BYTES,
   ValidatorData,
   tryAsPerCore,
 } from "@typeberry/state";
-import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
+import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { asOpaqueType } from "@typeberry/utils";
-import { Reports, type ReportsState } from "./reports";
+import { Reports, type ReportsState } from "./reports.js";
 
 const hasher: Promise<MmrHasher<KeccakHash>> = keccak.KeccakHasher.create().then((hasher) => {
   return {
@@ -123,7 +124,7 @@ export function newWorkReport({
 
 export function guaranteesAsView(
   spec: ChainSpec,
-  guarantees: ReportGuarantee[],
+  guarantees: readonly ReportGuarantee[],
   { disableCredentialsRangeCheck = false }: { disableCredentialsRangeCheck?: boolean } = {},
 ): GuaranteesExtrinsicView {
   if (disableCredentialsRangeCheck) {
@@ -173,10 +174,11 @@ export function newCredential(index: number, signature?: Ed25519Signature) {
 
 type ReportStateOptions = {
   withCoreAssignment?: boolean;
-  services?: ReportsState["services"];
+  services?: InMemoryState["services"];
   accumulationQueue?: NotYetAccumulatedReport[];
   recentlyAccumulated?: HashSet<WorkPackageHash>;
   reportedInRecentBlocks?: HashDictionary<WorkPackageHash, WorkPackageInfo>;
+  clearAvailabilityOnZero?: boolean;
 };
 
 function newReportsState({
@@ -185,9 +187,14 @@ function newReportsState({
   accumulationQueue = [],
   recentlyAccumulated = HashSet.new(),
   reportedInRecentBlocks = HashDictionary.new(),
+  clearAvailabilityOnZero = false,
 }: ReportStateOptions = {}): ReportsState {
   const spec = tinyChainSpec;
-  return {
+  const coreAssignment = withCoreAssignment ? initialAssignment() : [null, null];
+  if (clearAvailabilityOnZero) {
+    coreAssignment[0] = null;
+  }
+  return InMemoryState.partial(spec, {
     accumulationQueue: tryAsPerEpochBlock(
       FixedSizeArray.fill((idx) => (idx === 0 ? accumulationQueue : []), spec.epochLength),
       spec,
@@ -196,7 +203,7 @@ function newReportsState({
       FixedSizeArray.fill((idx) => (idx === 0 ? recentlyAccumulated : HashSet.new()), spec.epochLength),
       spec,
     ),
-    availabilityAssignment: tryAsPerCore(withCoreAssignment ? initialAssignment() : [null, null], spec),
+    availabilityAssignment: tryAsPerCore(coreAssignment, spec),
     currentValidatorData: tryAsPerValidator(initialValidators(), spec),
     previousValidatorData: tryAsPerValidator(initialValidators(), spec),
     entropy: getEntropy(1, 2, 3, 4),
@@ -238,7 +245,7 @@ function newReportsState({
       },
     ]),
     services,
-  };
+  });
 }
 
 function getAuthPools(source: number[], spec: ChainSpec): ReportsState["authPools"] {
@@ -314,14 +321,14 @@ export const initialValidators = (): ValidatorData[] =>
     },
   ].map(intoValidatorData);
 
-export const initialServices = ({ withDummyCodeHash = false } = {}): Map<ServiceId, Service> => {
+export const initialServices = ({ withDummyCodeHash = false } = {}): Map<ServiceId, InMemoryService> => {
   const m = new Map();
   const id = tryAsServiceId(129);
   m.set(
     id,
-    new Service(tryAsServiceId(129), {
+    new InMemoryService(tryAsServiceId(129), {
       preimages: HashDictionary.new(),
-      storage: [],
+      storage: HashDictionary.new(),
       lookupHistory: HashDictionary.new(),
       info: ServiceAccountInfo.create({
         codeHash: withDummyCodeHash

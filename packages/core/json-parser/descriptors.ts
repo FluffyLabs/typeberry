@@ -1,5 +1,5 @@
-import { parseFromJson } from "./parse";
-import type { Builder, FromJson, FromJsonWithParser, Parser } from "./types";
+import { parseFromJson } from "./parse.js";
+import type { Builder, FromJson, FromJsonWithParser, Parser } from "./types.js";
 
 export namespace json {
   /** Parse a JSON string into the expected type. */
@@ -46,6 +46,20 @@ export namespace json {
       const result: Record<string, TInto> = {};
       for (const [key, value] of Object.entries(inJson)) {
         result[key] = parseFromJson(value, from, `${context}.${key}`);
+      }
+      return result;
+    });
+  }
+
+  /** Parse a map with the given type. */
+  export function map<TKey, TValue>(K: FromJson<TKey>, V: FromJson<TValue>): FromJson<Map<TKey, TValue>> {
+    return fromAny<Map<TKey, TValue>>((inJson, context) => {
+      if (typeof inJson !== "object" || inJson === null) {
+        throw new Error("Expected map for parsing");
+      }
+      const result = new Map<TKey, TValue>();
+      for (const [key, value] of Object.entries(inJson)) {
+        result.set(parseFromJson(key, K, `${context}.key`), parseFromJson(value, V, `${context}.value`));
       }
       return result;
     });

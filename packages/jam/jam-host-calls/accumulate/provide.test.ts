@@ -12,12 +12,12 @@ import {
   tryAsMemoryIndex,
   tryAsSbrkIndex,
 } from "@typeberry/pvm-interpreter";
-import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts";
+import { PAGE_SIZE } from "@typeberry/pvm-interpreter/memory/memory-consts.js";
 import { Result } from "@typeberry/utils";
-import { ProvidePreimageError } from "../externalities/partial-state";
-import { PartialStateMock } from "../externalities/partial-state-mock";
-import { HostCallResult } from "../results";
-import { Provide } from "./provide";
+import { PartialStateMock } from "../externalities/partial-state-mock.js";
+import { ProvidePreimageError } from "../externalities/partial-state.js";
+import { HostCallResult } from "../results.js";
+import { Provide } from "./provide.js";
 
 const gas = gasCounter(tryAsGas(0));
 const RESULT_REG = 7;

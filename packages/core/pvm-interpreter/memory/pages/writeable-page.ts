@@ -1,8 +1,8 @@
 import { OK, Result } from "@typeberry/utils";
-import { PageFault } from "../errors";
-import { MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "../memory-consts";
-import { MemoryPage } from "./memory-page";
-import type { PageIndex, PageNumber } from "./page-utils";
+import { PageFault } from "../errors.js";
+import { MIN_ALLOCATION_LENGTH, PAGE_SIZE } from "../memory-consts.js";
+import { MemoryPage } from "./memory-page.js";
+import type { PageIndex, PageNumber } from "./page-utils.js";
 
 /**
  * I had to extend ArrayBuffer type to use resizable ArrayBuffer.

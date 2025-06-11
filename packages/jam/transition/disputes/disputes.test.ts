@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { tryAsEpoch, tryAsPerValidator, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
-import { Culprit, DisputesExtrinsic, Fault, Judgement, Verdict } from "@typeberry/block/disputes";
+import { Culprit, DisputesExtrinsic, Fault, Judgement, Verdict } from "@typeberry/block/disputes.js";
 import { Bytes } from "@typeberry/bytes";
 import { SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
@@ -15,9 +15,9 @@ import {
 } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { DisputesRecords, VALIDATOR_META_BYTES, ValidatorData, hashComparator, tryAsPerCore } from "@typeberry/state";
-import { Disputes } from "./disputes";
-import { DisputesErrorCode } from "./disputes-error-code";
-import type { DisputesState } from "./disputes-state";
+import { DisputesErrorCode } from "./disputes-error-code.js";
+import type { DisputesState } from "./disputes-state.js";
+import { Disputes } from "./disputes.js";
 
 const createValidatorData = ({ bandersnatch, ed25519 }: { bandersnatch: string; ed25519: string }) =>
   ValidatorData.create({
@@ -286,7 +286,7 @@ describe("Disputes", () => {
 
     const result = await disputes.transition(disputesExtrinsic);
     const error = result.isError ? result.error : undefined;
-    const ok = result.isOk ? result.ok.slice() : undefined;
+    const ok = result.isOk ? result.ok.offendersMark.slice() : undefined;
 
     assert.strictEqual(error, undefined);
     assert.deepStrictEqual(ok, offenders);
@@ -302,7 +302,7 @@ describe("Disputes", () => {
 
     const result = await disputes.transition(disputesExtrinsic);
     const error = result.isError ? result.error : undefined;
-    const ok = result.isOk ? result.ok.slice() : undefined;
+    const ok = result.isOk ? result.ok.offendersMark.slice() : undefined;
 
     assert.strictEqual(error, DisputesErrorCode.BadValidatorIndex);
     assert.strictEqual(ok, undefined);

@@ -1,6 +1,15 @@
-import type { TwoRegistersOneImmediateArgs } from "../args-decoder/args-decoder";
-import { Instruction } from "../instruction";
-import type { BitOps, BitRotationOps, BooleanOps, LoadOps, MathOps, MoveOps, ShiftOps, StoreOps } from "../ops";
+import type { TwoRegistersOneImmediateArgs } from "../args-decoder/args-decoder.js";
+import { Instruction } from "../instruction.js";
+import type {
+  BitOps,
+  BitRotationOps,
+  BooleanOps,
+  LoadOps,
+  MathOps,
+  MoveOps,
+  ShiftOps,
+  StoreOps,
+} from "../ops/index.js";
 
 export class TwoRegsOneImmDispatcher {
   constructor(

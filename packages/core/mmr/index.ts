@@ -10,7 +10,7 @@ export interface MmrPeaks<H extends OpaqueHash> {
    *
    * In case there is no merkle trie at given index, `null` is placed.
    */
-  peaks: (H | null)[];
+  peaks: readonly (H | null)[];
 }
 
 /** Hasher interface for MMR. */
@@ -99,7 +99,7 @@ export class MerkleMountainRange<H extends OpaqueHash> {
 
   /** Get current peaks. */
   getPeaks(): MmrPeaks<H> {
-    const ret: MmrPeaks<H> = { peaks: [] };
+    const peaks: (H | null)[] = [];
     const mountains = this.mountains;
 
     // always 2**index
@@ -108,15 +108,15 @@ export class MerkleMountainRange<H extends OpaqueHash> {
     while (currentIdx >= 0) {
       const currentItem = mountains[currentIdx];
       if (currentItem.size >= currentSize && currentItem.size < 2 * currentSize) {
-        ret.peaks.push(currentItem.peak);
+        peaks.push(currentItem.peak);
         currentIdx -= 1;
       } else {
-        ret.peaks.push(null);
+        peaks.push(null);
       }
       // move to the next index.
       currentSize = currentSize << 1;
     }
-    return ret;
+    return { peaks };
   }
 }
 

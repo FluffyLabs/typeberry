@@ -1,18 +1,18 @@
 import type { EntropyHash, PerEpochBlock, PerValidator, ServiceId, TimeSlot } from "@typeberry/block";
-import type { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants";
-import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report";
-import type { FixedSizeArray, KnownSizeArray } from "@typeberry/collections";
-import type { HashSet } from "@typeberry/collections/hash-set";
-import type { AvailabilityAssignment } from "./assurances";
-import type { BlockState } from "./block-state";
-import type { PerCore } from "./common";
-import type { DisputesRecords } from "./disputes";
-import type { NotYetAccumulatedReport } from "./not-yet-accumulated";
-import type { PrivilegedServices } from "./privileged-services";
-import type { SafroleData } from "./safrole-data";
-import type { Service } from "./service";
-import type { StatisticsData } from "./statistics";
-import type { ValidatorData } from "./validator-data";
+import type { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
+import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report.js";
+import type { FixedSizeArray, ImmutableHashSet, KnownSizeArray } from "@typeberry/collections";
+import type { AvailabilityAssignment } from "./assurances.js";
+import type { BlockState } from "./block-state.js";
+import type { PerCore } from "./common.js";
+import type { DisputesRecords } from "./disputes.js";
+import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
+import type { PrivilegedServices } from "./privileged-services.js";
+import type { SafroleData } from "./safrole-data.js";
+import type { LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, StorageKey } from "./service.js";
+import type { StatisticsData } from "./statistics.js";
+import type { ValidatorData } from "./validator-data.js";
 
 /**
  * In addition to the entropy accumulator η_0, we retain
@@ -38,8 +38,19 @@ export type ENTROPY_ENTRIES = typeof ENTROPY_ENTRIES;
 export const MAX_RECENT_HISTORY = 8;
 export type MAX_RECENT_HISTORY = typeof MAX_RECENT_HISTORY;
 
-export type PartialState = {
-  -readonly [P in keyof State]?: State[P];
+/**
+ * State object with additional ability to enumerate
+ * it's services entries.
+ */
+export type EnumerableState = {
+  /**
+   * `δ delta`:  In summary, δ is the portion of state dealing with
+   *             services, analogous in Jam to the Yellow Paper’s (
+   *             smart contract) accounts.
+   *
+   * https://graypaper.fluffylabs.dev/#/579bd12/08fb0008ff00
+   */
+  serviceIds(): readonly ServiceId[];
 };
 
 /**
@@ -49,6 +60,7 @@ export type PartialState = {
  */
 export type State = {
   /**
+
    * `ρ rho`: work-reports which have been reported but are not yet known to be
    *          available to a super-majority of validators, together with the time
    *          at which each was reported.
@@ -130,15 +142,6 @@ export type State = {
   readonly recentBlocks: KnownSizeArray<BlockState, `0..${typeof MAX_RECENT_HISTORY}`>;
 
   /**
-   * `δ delta`:  In summary, δ is the portion of state dealing with
-   *             services, analogous in Jam to the Yellow Paper’s (
-   *             smart contract) accounts.
-   *
-   * https://graypaper.fluffylabs.dev/#/579bd12/08fb0008ff00
-   */
-  readonly services: Map<ServiceId, Service>;
-
-  /**
    * `π pi`: Previous and current statistics of each validator,
    *         cores statistics and services statistics.
    *
@@ -153,7 +156,7 @@ export type State = {
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/165300165500
    */
-  readonly accumulationQueue: PerEpochBlock<NotYetAccumulatedReport[]>;
+  readonly accumulationQueue: PerEpochBlock<readonly NotYetAccumulatedReport[]>;
 
   /**
    * `ξ xi`: In order to know which work-packages have been
@@ -163,7 +166,7 @@ export type State = {
    *
    * https://graypaper.fluffylabs.dev/#/5f542d7/161a00161d00
    */
-  readonly recentlyAccumulated: PerEpochBlock<HashSet<WorkPackageHash>>;
+  readonly recentlyAccumulated: PerEpochBlock<ImmutableHashSet<WorkPackageHash>>;
 
   /*
    * `γₐ gamma_a`: The ticket accumulator - a series of highest-scoring ticket identifiers to be
@@ -198,4 +201,27 @@ export type State = {
    * https://graypaper.fluffylabs.dev/#/85129da/116f01117201?v=0.6.3
    */
   readonly privilegedServices: PrivilegedServices;
+
+  /**
+   * Retrieve details about single service.
+   */
+  getService(id: ServiceId): Service | null;
 };
+
+/** Service details. */
+export interface Service {
+  /** Retrieve service account info. */
+  getInfo(): ServiceAccountInfo;
+
+  /** Read one particular storage item. */
+  getStorage(storage: StorageKey): StorageItem | null;
+
+  /** Check if preimage is present. */
+  hasPreimage(hash: PreimageHash): boolean;
+
+  /** Retrieve a preimage. */
+  getPreimage(hash: PreimageHash): PreimageItem | null;
+
+  /** Retrieve lookup history of a preimage. */
+  getLookupHistory(hash: PreimageHash): LookupHistoryItem[] | null;
+}

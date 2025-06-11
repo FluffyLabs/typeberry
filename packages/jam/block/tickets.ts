@@ -5,7 +5,7 @@ import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "@typeberry/cry
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U8, tryAsU8 } from "@typeberry/numbers";
 import { type Opaque, WithDebug, asOpaqueType } from "@typeberry/utils";
-import { codecKnownSizeArray } from "./codec";
+import { codecKnownSizeArray } from "./codec.js";
 
 /**
  * The index of a ticket entry per validator.

@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { clz64, countBits32, countBits64, ctz32, ctz64 } from "./bit-utils";
+import { clz64, countBits32, countBits64, ctz32, ctz64 } from "./bit-utils.js";
 
 describe("bit-utils", () => {
   describe("countBits32", () => {

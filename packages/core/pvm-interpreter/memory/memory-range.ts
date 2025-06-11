@@ -1,5 +1,5 @@
-import { MEMORY_SIZE, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts";
-import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index";
+import { MEMORY_SIZE, PAGE_SIZE, RESERVED_NUMBER_OF_PAGES } from "./memory-consts.js";
+import { type MemoryIndex, tryAsMemoryIndex } from "./memory-index.js";
 
 /**
  * A representation of open-ended range of consecutive indices in memory,

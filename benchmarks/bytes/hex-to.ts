@@ -1,4 +1,5 @@
-import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
+import { pathToFileURL } from "node:url";
+import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 
 const CODE_OF_0 = "0".charCodeAt(0);
 const CODE_OF_a = "a".charCodeAt(0);
@@ -20,8 +21,8 @@ function byteToHexString(byte: number): string {
   return `${nibbleToString(byte >>> 4)}${nibbleToString(byte & 0xf)}`;
 }
 
-module.exports = () =>
-  suite(
+export default function run() {
+  return suite(
     "Bytes / into hex",
 
     add("number toString + padding", () => {
@@ -35,9 +36,10 @@ module.exports = () =>
     cycle(),
     complete(),
     configure({}),
-    ...save(__filename),
+    ...save(import.meta.filename),
   );
+}
 
-if (require.main === module) {
-  module.exports();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
 }

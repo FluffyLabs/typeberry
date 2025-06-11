@@ -1,5 +1,6 @@
+import { pathToFileURL } from "node:url";
 import util from "node:util";
-import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup";
+import { add, complete, configure, cycle, save, suite } from "@typeberry/benchmark/setup.js";
 
 class SomeClass {
   constructor(
@@ -18,8 +19,8 @@ function fakeConsoleLog(...args: unknown[]) {
   logs.push(util.format.apply(null, args) + "\n");
 }
 
-module.exports = () =>
-  suite(
+export default function run() {
+  return suite(
     "Logger",
 
     add("console.log with string concat", () => {
@@ -38,9 +39,10 @@ module.exports = () =>
     cycle(),
     complete(),
     configure({}),
-    ...save(__filename),
+    ...save(import.meta.filename),
   );
+}
 
-if (require.main === module) {
-  module.exports();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
 }

@@ -4,7 +4,7 @@
   "description": "JAM crypto-related utilites.",
   "main": "index.ts",
   "scripts": {
-    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "devDependencies": {
     "@typeberry/bytes": "0.0.1",
@@ -16,5 +16,6 @@
     "noble-ed25519": "^1.2.6"
   },
   "author": "Fluffy Labs",
-  "license": "MPL-2.0"
+  "license": "MPL-2.0",
+  "type": "module"
 }

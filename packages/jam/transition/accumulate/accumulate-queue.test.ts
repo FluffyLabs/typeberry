@@ -1,25 +1,19 @@
 import { describe, it } from "node:test";
-import {
-  type ServiceId,
-  tryAsCoreIndex,
-  tryAsPerEpochBlock,
-  tryAsServiceGas,
-  tryAsServiceId,
-  tryAsTimeSlot,
-} from "@typeberry/block";
-import { RefineContext } from "@typeberry/block/refine-context";
-import { tryAsWorkItemsCount } from "@typeberry/block/work-package";
-import { type WorkPackageHash, WorkPackageInfo, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
-import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result";
+import { tryAsCoreIndex, tryAsPerEpochBlock, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
+import { RefineContext } from "@typeberry/block/refine-context.js";
+import { tryAsWorkItemsCount } from "@typeberry/block/work-package.js";
+import { type WorkPackageHash, WorkPackageInfo, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
+import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
+
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray, HashSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { PrivilegedServices, type Service } from "@typeberry/state";
-import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated";
+import { InMemoryState, PrivilegedServices } from "@typeberry/state";
+import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { deepEqual } from "@typeberry/utils";
-import { AccumulateQueue, pruneQueue } from "./accumulate-queue";
+import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
 
 describe("accumulate-queue", () => {
   const createWorkReportHash = (i: number): WorkPackageHash => Bytes.fill(HASH_SIZE, i).asOpaque();
@@ -106,7 +100,8 @@ describe("accumulate-queue", () => {
       accumulationQueue: NotYetAccumulatedReport[][] = createEmptyAccumulationQueue(),
     ) =>
       new AccumulateQueue(
-        {
+        tinyChainSpec,
+        InMemoryState.partial(tinyChainSpec, {
           privilegedServices: PrivilegedServices.create({
             manager: tryAsServiceId(0),
             authManager: tryAsServiceId(0),
@@ -116,9 +111,7 @@ describe("accumulate-queue", () => {
           recentlyAccumulated: tryAsPerEpochBlock(recentlyAccumulated, tinyChainSpec),
           accumulationQueue: tryAsPerEpochBlock(accumulationQueue, tinyChainSpec),
           timeslot: tryAsTimeSlot(1),
-          services: new Map<ServiceId, Service>(),
-        },
-        tinyChainSpec,
+        }),
       );
 
     describe("getWorkReportsToAccumulateImmediately", () => {

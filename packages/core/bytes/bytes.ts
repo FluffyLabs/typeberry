@@ -1,5 +1,5 @@
 import { type Comparator, Ordering } from "@typeberry/ordering";
-import { TEST_COMPARE_VIA_STRING, type TokenOf, asOpaqueType, check } from "@typeberry/utils";
+import { type Opaque, TEST_COMPARE_VIA_STRING, type TokenOf, asOpaqueType, check } from "@typeberry/utils";
 
 /**
  * A variable-length blob of bytes with a concise text representation.
@@ -212,7 +212,7 @@ export class Bytes<T extends number> extends BytesBlob {
   }
 
   /** Converts current type into some opaque extension. */
-  asOpaque<R>() {
+  asOpaque<R>(): Opaque<Bytes<T>, TokenOf<R, Bytes<T>>> {
     return asOpaqueType<Bytes<T>, TokenOf<R, Bytes<T>>>(this);
   }
 }

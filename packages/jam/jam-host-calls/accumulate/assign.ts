@@ -1,16 +1,16 @@
 import { tryAsCoreIndex } from "@typeberry/block";
-import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants";
+import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import { Decoder, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory } from "@typeberry/pvm-host-calls";
-import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler";
-import type { IHostCallRegisters } from "@typeberry/pvm-host-calls/host-call-registers";
-import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas";
-import type { PartialState } from "../externalities/partial-state";
-import { HostCallResult } from "../results";
-import { CURRENT_SERVICE_ID } from "../utils";
+import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
+import type { IHostCallRegisters } from "@typeberry/pvm-host-calls/host-call-registers.js";
+import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
+import type { PartialState } from "../externalities/partial-state.js";
+import { HostCallResult } from "../results.js";
+import { CURRENT_SERVICE_ID } from "../utils.js";
 
 const IN_OUT_REG = 7;
 

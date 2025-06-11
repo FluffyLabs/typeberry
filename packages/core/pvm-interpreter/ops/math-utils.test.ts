@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { MAX_VALUE, MAX_VALUE_U64 } from "./math-consts";
+import { MAX_VALUE, MAX_VALUE_U64 } from "./math-consts.js";
 import {
   addWithOverflowU32,
   addWithOverflowU64,
@@ -15,7 +15,7 @@ import {
   subU32,
   subU64,
   unsignedRightShiftBigInt,
-} from "./math-utils";
+} from "./math-utils.js";
 
 describe("math-utils", () => {
   describe("addWithOverflow", () => {
