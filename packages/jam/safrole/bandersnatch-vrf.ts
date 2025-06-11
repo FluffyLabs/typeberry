@@ -1,18 +1,42 @@
 import type { EntropyHash, ValidatorIndex } from "@typeberry/block";
 import type { SignedTicket } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import {
-  BANDERSNATCH_RING_ROOT_BYTES,
-  type BandersnatchKey,
-  type BandersnatchRingRoot,
-  type BandersnatchVrfSignature,
-} from "@typeberry/crypto";
+import type { BandersnatchKey } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
-import { Result } from "@typeberry/utils";
+import { type Opaque, Result } from "@typeberry/utils";
 import type { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
 import { JAM_TICKET_SEAL } from "./constants.js";
 
 const RESULT_INDEX = 0 as const;
+
+export const BANDERSNATCH_VRF_SIGNATURE_BYTES = 96;
+export const BANDERSNATCH_RING_ROOT_BYTES = 144;
+export const BANDERSNATCH_PROOF_BYTES = 784;
+
+export type BANDERSNATCH_VRF_SIGNATURE_BYTES = typeof BANDERSNATCH_VRF_SIGNATURE_BYTES;
+export type BANDERSNATCH_RING_ROOT_BYTES = typeof BANDERSNATCH_RING_ROOT_BYTES;
+export type BANDERSNATCH_PROOF_BYTES = typeof BANDERSNATCH_PROOF_BYTES;
+
+/**
+ * Bandersnatch ring commitment
+ *
+ * https://graypaper.fluffylabs.dev/#/5f542d7/0da8000dc200
+ */
+export type BandersnatchRingRoot = Opaque<Bytes<BANDERSNATCH_RING_ROOT_BYTES>, "BandersnatchRingRoot">;
+
+/**
+ * Potentially valid Bandersnatch signature.
+ *
+ * https://graypaper.fluffylabs.dev/#/579bd12/082200082200
+ */
+export type BandersnatchVrfSignature = Opaque<Bytes<BANDERSNATCH_VRF_SIGNATURE_BYTES>, "BandersnatchVrfSignature">;
+
+/**
+ * Potentially valid Bandersnatch RingVRF proof of knowledge.
+ *
+ * https://graypaper.fluffylabs.dev/#/579bd12/082d00083a00
+ */
+export type BandersnatchProof = Opaque<Bytes<BANDERSNATCH_PROOF_BYTES>, "BandersnatchRingSignature">;
 
 enum ResultValues {
   Ok = 0,

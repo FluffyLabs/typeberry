@@ -5,8 +5,9 @@ import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-repo
 import { Bytes } from "@typeberry/bytes";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { BANDERSNATCH_RING_ROOT_BYTES, BLS_KEY_BYTES, type BandersnatchKey, type Ed25519Key } from "@typeberry/crypto";
+import { BLS_KEY_BYTES, type BandersnatchKey, type Ed25519Key } from "@typeberry/crypto";
 import { type FromJson, json } from "@typeberry/json-parser";
+import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/safrole/bandersnatch-vrf.js";
 import {
   type InMemoryService,
   InMemoryState,

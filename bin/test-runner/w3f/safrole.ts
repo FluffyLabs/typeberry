@@ -13,16 +13,14 @@ import type { SignedTicket, Ticket, TicketsExtrinsic } from "@typeberry/block/ti
 import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
+import { BANDERSNATCH_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
+import { type FromJson, json } from "@typeberry/json-parser";
+import { Safrole } from "@typeberry/safrole";
 import {
-  BANDERSNATCH_KEY_BYTES,
   BANDERSNATCH_PROOF_BYTES,
   BANDERSNATCH_RING_ROOT_BYTES,
   type BandersnatchRingRoot,
-  ED25519_KEY_BYTES,
-  type Ed25519Key,
-} from "@typeberry/crypto";
-import { type FromJson, json } from "@typeberry/json-parser";
-import { Safrole } from "@typeberry/safrole";
+} from "@typeberry/safrole/bandersnatch-vrf.js";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js";
 import { type Input, type OkResult, SafroleErrorCode, type SafroleState } from "@typeberry/safrole/safrole.js";
 import { DisputesRecords, ENTROPY_ENTRIES, type ValidatorData, hashComparator } from "@typeberry/state";

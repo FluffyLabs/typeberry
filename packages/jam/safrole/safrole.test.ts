@@ -5,19 +5,13 @@ import { type SignedTicket, type TicketsExtrinsic, tryAsTicketAttempt } from "@t
 import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import {
-  BANDERSNATCH_KEY_BYTES,
-  BANDERSNATCH_PROOF_BYTES,
-  BANDERSNATCH_RING_ROOT_BYTES,
-  BLS_KEY_BYTES,
-  ED25519_KEY_BYTES,
-  type Ed25519Key,
-} from "@typeberry/crypto";
+import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Ordering } from "@typeberry/ordering";
 import { DisputesRecords, VALIDATOR_META_BYTES, ValidatorData, hashComparator } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
 import { Result, deepEqual } from "@typeberry/utils";
+import { BANDERSNATCH_PROOF_BYTES, BANDERSNATCH_RING_ROOT_BYTES } from "./bandersnatch-vrf.js";
 import bandersnatchVrf from "./bandersnatch-vrf.js";
 import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
 import { Safrole, SafroleErrorCode, type SafroleState, type SafroleStateUpdate } from "./safrole.js";

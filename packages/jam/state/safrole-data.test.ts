@@ -5,7 +5,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, codec } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/crypto";
+import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/safrole/bandersnatch-vrf.js";
 import { deepEqual } from "@typeberry/utils";
 import { SafroleData, SafroleSealingKeysData } from "./safrole-data.js";
 import { ValidatorData } from "./validator-data.js";
