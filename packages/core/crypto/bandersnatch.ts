@@ -1,4 +1,6 @@
-import type { Bytes } from "@typeberry/bytes";
+import { derive_public_key } from "@fluffylabs/bandersnatch";
+import { Bytes } from "@typeberry/bytes";
+import { HASH_SIZE } from "@typeberry/hash";
 import type { Opaque } from "@typeberry/utils";
 
 export const BANDERSNATCH_KEY_BYTES = 32;
@@ -47,3 +49,16 @@ export type BandersnatchProof = Opaque<Bytes<BANDERSNATCH_PROOF_BYTES>, "Banders
  * https://graypaper.fluffylabs.dev/#/579bd12/081c00081c00
  */
 export type BlsKey = Opaque<Bytes<BLS_KEY_BYTES>, "BlsKey">;
+
+/** Derive a Bandersnatch public key from a seed. */
+export function publicKey(seed: Uint8Array): BandersnatchKey {
+  const key = derive_public_key(seed);
+
+  // Can happen if there is not enough memory to derive the key
+  const success = key[0] === 0;
+  if (!success) {
+    throw new Error("Invalid public key: Out of memory error");
+  }
+
+  return Bytes.fromBlob(key.subarray(1), HASH_SIZE).asOpaque();
+}

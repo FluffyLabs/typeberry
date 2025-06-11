@@ -3,9 +3,11 @@ import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { type Blake2bHash, SimpleAllocator } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
+import type { BandersnatchKey } from "./bandersnatch";
 import type { Ed25519Key } from "./ed25519";
 import {
   SEED_SIZE,
+  deriveBandersnatchPublicKey,
   deriveBandersnatchSecretKey,
   deriveEd25519PublicKey,
   deriveEd25519SecretKey,
@@ -368,6 +370,104 @@ describe("Key Derivation: Bandersnatch secret seed", () => {
       bandersnatch_seed,
       Bytes.fromBlob(
         Bytes.parseBlobNoPrefix("06154d857537a9b622a9a94b1aeee7d588db912bfc914a8a9707148bfba3b9d1").raw,
+        SEED_SIZE,
+      ).asOpaque<Blake2bHash>(),
+    );
+  });
+});
+
+describe("Key Derivation: Bandersnatch public key", () => {
+  const allocator = new SimpleAllocator();
+
+  it("should derive from seed: 0", () => {
+    const seed = trivialSeed(tryAsU32(0));
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
+    assert.deepStrictEqual(
+      bandersnatch_public_key,
+      Bytes.fromBlob(
+        Bytes.parseBlobNoPrefix("ff71c6c03ff88adb5ed52c9681de1629a54e702fc14729f6b50d2f0a76f185b3").raw,
+        SEED_SIZE,
+      ).asOpaque<BandersnatchKey>(),
+    );
+  });
+
+  it("should derive from seed: 1", () => {
+    const seed = trivialSeed(tryAsU32(1));
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
+    assert.deepStrictEqual(
+      bandersnatch_public_key,
+      Bytes.fromBlob(
+        Bytes.parseBlobNoPrefix("dee6d555b82024f1ccf8a1e37e60fa60fd40b1958c4bb3006af78647950e1b91").raw,
+        SEED_SIZE,
+      ).asOpaque<BandersnatchKey>(),
+    );
+  });
+
+  it("should derive from seed: 2", () => {
+    const seed = trivialSeed(tryAsU32(2));
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
+    assert.deepStrictEqual(
+      bandersnatch_public_key,
+      Bytes.fromBlob(
+        Bytes.parseBlobNoPrefix("9326edb21e5541717fde24ec085000b28709847b8aab1ac51f84e94b37ca1b66").raw,
+        SEED_SIZE,
+      ).asOpaque<BandersnatchKey>(),
+    );
+  });
+
+  it("should derive from seed: 3", () => {
+    const seed = trivialSeed(tryAsU32(3));
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
+    assert.deepStrictEqual(
+      bandersnatch_public_key,
+      Bytes.fromBlob(
+        Bytes.parseBlobNoPrefix("0746846d17469fb2f95ef365efcab9f4e22fa1feb53111c995376be8019981cc").raw,
+        SEED_SIZE,
+      ).asOpaque<BandersnatchKey>(),
+    );
+  });
+
+  it("should derive from seed: 4", () => {
+    const seed = trivialSeed(tryAsU32(4));
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
+    assert.deepStrictEqual(
+      bandersnatch_public_key,
+      Bytes.fromBlob(
+        Bytes.parseBlobNoPrefix("151e5c8fe2b9d8a606966a79edd2f9e5db47e83947ce368ccba53bf6ba20a40b").raw,
+        SEED_SIZE,
+      ).asOpaque<BandersnatchKey>(),
+    );
+  });
+
+  it("should derive from seed: 5", () => {
+    const seed = trivialSeed(tryAsU32(5));
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
+    assert.deepStrictEqual(
+      bandersnatch_public_key,
+      Bytes.fromBlob(
+        Bytes.parseBlobNoPrefix("2105650944fcd101621fd5bb3124c9fd191d114b7ad936c1d79d734f9f21392e").raw,
+        SEED_SIZE,
+      ).asOpaque<BandersnatchKey>(),
+    );
+  });
+
+  it("should derive from seed: f92d...d9d1", () => {
+    const seed = Bytes.fromBlob(
+      Bytes.parseBlobNoPrefix("f92d680ea3f0ac06307795490d8a03c5c0d4572b5e0a8cffec87e1294855d9d1").raw,
+      SEED_SIZE,
+    );
+    const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
+    const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
+    assert.deepStrictEqual(
+      bandersnatch_public_key,
+      Bytes.fromBlob(
+        Bytes.parseBlobNoPrefix("299bdfd8d615aadd9e6c58718f9893a5144d60e897bc9da1f3d73c935715c650").raw,
         SEED_SIZE,
       ).asOpaque<Blake2bHash>(),
     );

@@ -1,7 +1,7 @@
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { type Blake2bHash, SimpleAllocator, blake2b } from "@typeberry/hash";
 import { type U32, u32AsLeBytes } from "@typeberry/numbers";
-import type { BandersnatchKey } from "./bandersnatch";
+import { type BandersnatchKey, publicKey } from "./bandersnatch";
 import { type Ed25519Key, privateKey } from "./ed25519";
 
 export const SEED_SIZE = 32;
@@ -62,6 +62,6 @@ export async function deriveEd25519PublicKey(seed: Bytes<SEED_SIZE>): Promise<Ed
 /**
  * Derive Bandersnatch public key from secret seed
  */
-export async function deriveBandersnatchPublicKey(_seed: Bytes<SEED_SIZE>): Promise<BandersnatchKey> {
-  throw new Error("Not implemented");
+export function deriveBandersnatchPublicKey(seed: Bytes<SEED_SIZE>): BandersnatchKey {
+  return publicKey(seed.raw);
 }
