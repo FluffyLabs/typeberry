@@ -54,11 +54,7 @@ export type BlsKey = Opaque<Bytes<BLS_KEY_BYTES>, "BlsKey">;
 export function publicKey(seed: Uint8Array): BandersnatchKey {
   const key = derive_public_key(seed);
 
-  // Can happen if there is not enough memory to derive the key
-  const success = key[0] === 0;
-  if (!success) {
-    throw new Error("Invalid public key: Out of memory error");
-  }
-
-  return Bytes.fromBlob(key.subarray(1), HASH_SIZE).asOpaque();
+  // NOTE: We assume that the key is valid, as the derivation function should only
+  // fail in case of OutOfMemory Error.
+  return Bytes.fromBlob(key.subarray(1), BANDERSNATCH_KEY_BYTES).asOpaque();
 }

@@ -469,7 +469,7 @@ describe("Key Derivation: Bandersnatch public key", () => {
       Bytes.fromBlob(
         Bytes.parseBlobNoPrefix("299bdfd8d615aadd9e6c58718f9893a5144d60e897bc9da1f3d73c935715c650").raw,
         SEED_SIZE,
-      ).asOpaque<Blake2bHash>(),
+      ).asOpaque<BandersnatchKey>(),
     );
   });
 });

@@ -6,7 +6,7 @@
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
-  "devDependencies": {
+  "dependencies": {
     "@typeberry/bytes": "0.0.1",
     "@typeberry/hash": "0.0.1",
     "@typeberry/numbers": "0.0.1",
