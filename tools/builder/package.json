@@ -9,7 +9,7 @@
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
   "dependencies": {
-    "@rollup/plugin-commonjs": "^26.0.1",
+    "@rollup/plugin-commonjs": "^28.0.3",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "rollup": "^4.20.0",
     "rollup-plugin-dts": "^6.1.1",
