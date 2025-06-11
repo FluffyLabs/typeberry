@@ -5,9 +5,6 @@ import { RpcClient } from "../src/client.js";
 import type { RpcServer } from "../src/server.js";
 import { DB_PATH, GENESIS_ROOT } from "./e2e-setup.js";
 
-// todo [seko] these tests need to be updated to work with some predefined
-// and universally obtainable database. They currently only work with my local db.
-
 describe("JSON RPC Client-Server E2E", () => {
   let client: RpcClient;
   let server: RpcServer;
