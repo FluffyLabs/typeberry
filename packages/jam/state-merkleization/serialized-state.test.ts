@@ -12,8 +12,8 @@ import {
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { deepEqual } from "@typeberry/utils";
+import { SerializedState } from "./serialized-state";
 import { StateEntries } from "./state-entries";
-import { SerializedState } from "./state-serialized";
 
 describe("SerializedState", () => {
   const testInitialState = () => {

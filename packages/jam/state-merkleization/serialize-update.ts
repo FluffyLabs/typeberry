@@ -43,8 +43,6 @@ export function* serializeUpdate(spec: ChainSpec, update: Partial<State & Servic
   yield* serializePreimages(update.preimages, encode);
   yield* serializeStorage(update.storage);
   yield* serializeRemovedServices(update.servicesRemoved);
-
-  // service storage
 }
 
 function* serializeRemovedServices(servicesRemoved: ServiceId[] | undefined): Generator<SerializeOutput> {

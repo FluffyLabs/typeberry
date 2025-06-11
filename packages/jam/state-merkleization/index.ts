@@ -5,7 +5,7 @@
  */
 
 export { serializeUpdate, TrieAction } from "./serialize-update";
-export { SerializedState, Persistence } from "./state-serialized";
+export { SerializedState, Persistence } from "./serialized-state";
 export { StateEntries } from "./state-entries";
 export { serialize } from "./serialize";
 export { StateKey } from "./keys";
