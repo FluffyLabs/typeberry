@@ -206,7 +206,7 @@ export class Reports {
         }
         return signaturesToVerify[idx].key;
       })
-      .filter((x) => x);
+      .filter((x) => x !== null);
 
     return Result.error(
       ReportsError.BadSignature,
