@@ -1,8 +1,9 @@
+import { pathToFileURL } from "node:url";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import { KnownChainSpec } from "@typeberry/jam";
 import minimist from "minimist";
 import { methods } from "./src/method-loader.js";
 import { RpcServer } from "./src/server.js";
-import { KnownChainSpec } from "@typeberry/jam";
 
 export function main(args: string[]) {
   const argv = minimist(args, {
@@ -41,6 +42,6 @@ function parseChainSpec(chainSpec: string): ChainSpec {
   }
 }
 
-if (require.main === module) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   main(process.argv.slice(2));
 }

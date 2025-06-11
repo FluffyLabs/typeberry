@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { after, before, describe, it } from "node:test";
-import { RpcClient } from "../src/client.js";
 import { main } from "../index.js";
+import { RpcClient } from "../src/client.js";
 import type { RpcServer } from "../src/server.js";
 import { DB_PATH, GENESIS_ROOT } from "./e2e-setup.js";
 
