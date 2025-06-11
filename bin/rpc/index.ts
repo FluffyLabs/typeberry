@@ -4,6 +4,7 @@ import { KnownChainSpec } from "@typeberry/jam";
 import minimist from "minimist";
 import { methods } from "./src/method-loader.js";
 import { RpcServer } from "./src/server.js";
+import { KnownChainSpec } from "@typeberry/jam";
 
 export function main(args: string[]) {
   const argv = minimist(args, {
