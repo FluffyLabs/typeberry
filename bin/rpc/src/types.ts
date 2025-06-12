@@ -7,21 +7,24 @@ import { z } from "zod";
 export const JSON_RPC_VERSION = "2.0";
 export type JSON_RPC_VERSION = typeof JSON_RPC_VERSION;
 
-export type JsonRpcId = string | number | null;
 export type JsonRpcResult = unknown;
 
-export interface JsonRpcRequest {
-  jsonrpc: JSON_RPC_VERSION;
-  method: string;
-  params?: unknown;
-  id: JsonRpcId;
-}
+export const JsonRpcRequest = z.object({
+  jsonrpc: z.literal(JSON_RPC_VERSION),
+  method: z.string(),
+  params: z.unknown().optional(),
+  id: z.union([z.string(), z.number(), z.null()]),
+});
+export type JsonRpcRequest = z.infer<typeof JsonRpcRequest>;
 
-export interface JsonRpcNotification extends Omit<JsonRpcRequest, "id"> {}
+export const JsonRpcNotification = JsonRpcRequest.omit({ id: true });
+export type JsonRpcNotification = z.infer<typeof JsonRpcNotification>;
+
+export type JsonRpcId = JsonRpcRequest["id"];
 
 export interface JsonRpcSuccessResponse {
   jsonrpc: JSON_RPC_VERSION;
-  result: JsonRpcResult;
+  result: unknown;
   id: JsonRpcId;
 }
 

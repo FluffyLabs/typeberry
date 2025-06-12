@@ -4,6 +4,7 @@ import { main } from "../index.js";
 import { RpcClient } from "../src/client.js";
 import type { RpcServer } from "../src/server.js";
 import { DB_PATH, GENESIS_ROOT } from "./e2e-setup.js";
+import { JSON_RPC_VERSION } from "../src/types.js";
 
 describe("JSON RPC Client-Server E2E", () => {
   let client: RpcClient;
@@ -247,5 +248,60 @@ describe("JSON RPC Client-Server E2E", () => {
 
     // todo [seko] implement tests for presence of subscription messages
     // (requires implementing a subscription interface in the client)
+  });
+
+  it("server gracefully handles malformed requests", async () => {
+    const socket = client.getSocket();
+
+    socket.send(JSON.stringify({ foo: "bar" }));
+
+    const message = await new Promise<string>((resolve) => {
+      socket.on("message", (data) => {
+        resolve(data.toString());
+      });
+    });
+
+    assert.deepStrictEqual(JSON.parse(message), {
+      jsonrpc: "2.0",
+      error: { code: -32600, message: "Invalid request." },
+      id: null,
+    });
+  });
+
+  it("server handles batch requests", async () => {
+    const socket = client.getSocket();
+    const bestBlock = await client.call("bestBlock");
+
+    socket.send(
+      JSON.stringify([
+        { foo: "bar" }, // malformed request (error expected)
+        {
+          jsonrpc: JSON_RPC_VERSION,
+          method: "notificationTest",
+          params: [],
+        }, // notification (no response expected, even if causes error)
+        {
+          jsonrpc: JSON_RPC_VERSION,
+          method: "bestBlock",
+          params: [],
+          id: 1,
+        }, // correct request
+      ]),
+    );
+
+    const message = await new Promise<string>((resolve) => {
+      socket.on("message", (data) => {
+        resolve(data.toString());
+      });
+    });
+
+    assert.deepStrictEqual(JSON.parse(message), [
+      { jsonrpc: "2.0", error: { code: -32600, message: "Invalid request." }, id: null },
+      {
+        jsonrpc: "2.0",
+        result: bestBlock,
+        id: 1,
+      },
+    ]);
   });
 });

@@ -6,14 +6,15 @@ import { WebSocketServer } from "ws";
 import type { WebSocket } from "ws";
 import z from "zod";
 import { SUBSCRIBE_METHOD_MAP, SubscriptionManager, UNSUBSCRIBE_METHOD_WHITELIST } from "./subscription-manager.js";
-import type {
-  DatabaseContext,
-  JsonRpcErrorResponse,
-  JsonRpcId,
+import {
+  type DatabaseContext,
+  type JsonRpcErrorResponse,
+  type JsonRpcId,
+  JsonRpcNotification,
   JsonRpcRequest,
-  JsonRpcResponse,
-  JsonRpcResult,
-  RpcMethodRepo,
+  type JsonRpcResponse,
+  type JsonRpcResult,
+  type RpcMethodRepo,
 } from "./types.js";
 import { JSON_RPC_VERSION, RpcError } from "./types.js";
 
@@ -101,60 +102,70 @@ export class RpcServer {
       });
 
       ws.on("message", async (data: Buffer) => {
-        let request: JsonRpcRequest;
+        let rawRequest: unknown;
         try {
-          request = JSON.parse(data.toString());
+          rawRequest = JSON.parse(data.toString());
         } catch {
           ws.send(JSON.stringify(createErrorResponse(new RpcError(-32700, "Parse error"), null)));
           return;
         }
 
-        if (request.jsonrpc !== JSON_RPC_VERSION) {
-          ws.send(
-            JSON.stringify(createErrorResponse(new RpcError(-32600, "Invalid JSON-RPC version"), request.id ?? null)),
-          );
+        if (Array.isArray(rawRequest)) {
+          if (rawRequest.length === 0) {
+            ws.send(JSON.stringify(createErrorResponse(new RpcError(-32600, "Array must contain requests."), null)));
+            return;
+          }
+
+          const responses = (
+            await Promise.all(rawRequest.map((request: unknown) => this.handleRequest(request, ws)))
+          ).filter((response) => response !== null);
+
+          if (responses.length > 0) {
+            ws.send(JSON.stringify(responses));
+          }
+
           return;
         }
 
-        try {
-          const result = await this.handleRequest(request, ws);
-          if (request.id !== undefined) {
-            const response: JsonRpcResponse = {
-              jsonrpc: JSON_RPC_VERSION,
-              result,
-              id: request.id,
-            };
-            ws.send(JSON.stringify(response));
-          }
-        } catch (error) {
-          if (request.id !== undefined) {
-            const rpcError =
-              error instanceof RpcError
-                ? error
-                : new RpcError(-32603, error instanceof Error ? error.message : "Internal error");
-            ws.send(JSON.stringify(createErrorResponse(rpcError, request.id)));
-          }
+        const response = await this.handleRequest(rawRequest, ws);
+        if (response !== null) {
+          ws.send(JSON.stringify(response));
         }
       });
     });
   }
 
-  private validateCall(method: string, params: unknown): unknown {
-    const methodEntry = this.methods.get(method);
-    if (methodEntry === undefined) {
-      throw new RpcError(-32601, `Method not found: ${method}`);
+  private async handleRequest(request: unknown, ws: WebSocket): Promise<JsonRpcResponse | null> {
+    const requestParseResult = JsonRpcRequest.safeParse(request);
+    if (requestParseResult.success === true) {
+      try {
+        return {
+          jsonrpc: JSON_RPC_VERSION,
+          result: await this.fulfillRequest(requestParseResult.data, ws),
+          id: requestParseResult.data.id,
+        };
+      } catch (error) {
+        const rpcError =
+          error instanceof RpcError
+            ? error
+            : new RpcError(-32603, error instanceof Error ? error.message : "Internal error");
+        return createErrorResponse(rpcError, requestParseResult.data.id);
+      }
     }
 
-    const [_, paramsSchema] = methodEntry;
+    const notificationParseResult = JsonRpcNotification.safeParse(request);
+    if (notificationParseResult.success === true) {
+      try {
+        await this.fulfillRequest(notificationParseResult.data, ws);
+      } catch {} // no response for notifications
 
-    const parseResult = paramsSchema.safeParse(params);
-    if (parseResult.error !== undefined) {
-      throw new RpcError(-32602, createParamsParseErrorMessage(parseResult.error));
+      return null;
     }
-    return parseResult.data;
+
+    return createErrorResponse(new RpcError(-32600, "Invalid request."), null);
   }
 
-  private async handleRequest(request: JsonRpcRequest, ws: WebSocket): Promise<JsonRpcResult> {
+  private async fulfillRequest(request: JsonRpcRequest | JsonRpcNotification, ws: WebSocket): Promise<JsonRpcResult> {
     const { method, params } = request;
 
     const subscribeMethod = SUBSCRIBE_METHOD_MAP.get(method);
@@ -175,8 +186,19 @@ export class RpcServer {
     return this.callMethod(method, validatedParams);
   }
 
-  getLogger(): Logger {
-    return this.logger;
+  private validateCall(method: string, params: unknown): unknown {
+    const methodEntry = this.methods.get(method);
+    if (methodEntry === undefined) {
+      throw new RpcError(-32601, `Method not found: ${method}`);
+    }
+
+    const [_, paramsSchema] = methodEntry;
+
+    const parseResult = paramsSchema.safeParse(params);
+    if (parseResult.error !== undefined) {
+      throw new RpcError(-32602, createParamsParseErrorMessage(parseResult.error));
+    }
+    return parseResult.data;
   }
 
   async callMethod(method: string, validatedParams: unknown): Promise<JsonRpcResult> {
@@ -192,6 +214,10 @@ export class RpcServer {
     };
 
     return methodFn(validatedParams, db, this.chainSpec);
+  }
+
+  getLogger(): Logger {
+    return this.logger;
   }
 
   async close(): Promise<void> {
