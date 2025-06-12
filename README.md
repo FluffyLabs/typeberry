@@ -105,6 +105,16 @@ $ npm run w3f -w @typeberry/test-runner  --  jamtestvectors/**/*.json ../jamtest
 Obviously it's also possible to run just single test case or part of the test
 cases by altering the glob pattern in the path.
 
+### Running JSON RPC E2E tests
+
+To run JSON RPC E2E tests the 6d41bb2e8f4d60dc1806df42401363b54f956c0a ref (0.6.4.4)
+of [jamduna/jamtestnet](https://github.com/jam-duna/jamtestnet) repo needs to be checked out
+into the `jamdunavectors` directory. Then to run the tests:
+
+```bash
+$ npm run test:e2e -w @typeberry/rpc
+```
+
 ### Adding a new component / package
 
 ```bash
