@@ -10,11 +10,11 @@ import {
   tryAsTimeSlot,
   tryAsValidatorIndex,
 } from "@typeberry/block";
-import { Credential, ReportGuarantee } from "@typeberry/block/guarantees";
-import { RefineContext } from "@typeberry/block/refine-context";
-import { SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets";
-import { WorkPackageInfo, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report";
-import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result";
+import { Credential, ReportGuarantee } from "@typeberry/block/guarantees.js";
+import { RefineContext } from "@typeberry/block/refine-context.js";
+import { SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
+import { WorkPackageInfo, WorkPackageSpec, WorkReport } from "@typeberry/block/work-report.js";
+import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
@@ -23,7 +23,7 @@ import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE, SimpleAllocator, keccak } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
-import { TransitionHasher } from "./hasher";
+import { TransitionHasher } from "./hasher.js";
 
 describe("TransitionHasher", () => {
   describe("extrinsic", () => {
