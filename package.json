@@ -61,7 +61,14 @@
     "typeberry": "dist/typeberry.cjs"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "rollup -c && npm run post-build",
+    "post-build": "npm run copy-wasm && npm run create-symlink",
+    "copy-wasm": "cp node_modules/ed25519-wasm/pkg/ed25519_wasm_bg.wasm dist/ && cp node_modules/bandersnatch-wasm/pkg/bandersnatch_wasm_bg.wasm dist/ && cp node_modules/reed-solomon-wasm/pkg/reed_solomon_wasm_bg.wasm dist/",
+    "create-symlink": "cd dist && cp typeberry-v0.0.1-1dba82f.cjs typeberry.cjs",
+    "prepublishOnly": "npm run build",
+    "publish:npm": "npm publish",
+    "publish:github": "npm publish --registry=https://npm.pkg.github.com",
+    "publish:both": "npm run publish:npm && npm run publish:github",
     "qa": "biome ci && eslint .",
     "qa-fix": "npm run format; npm run lint",
     "format": "biome format --write",
@@ -90,5 +97,13 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.9.0"
   },
-  "type": "module"
+  "type": "module",
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }
