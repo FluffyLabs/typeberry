@@ -1,0 +1,80 @@
+# Source maps (keep for development, exclude from npm)
+*.map
+**/*.map
+
+# Development files
+src/
+**/*.test.ts
+**/*.test.js
+*.test.*
+
+# Build artifacts we don't need in npm
+dist/**/*.js
+dist/**/*.js.map
+!dist/**/*.cjs
+
+# Development configs
+tsconfig*.json
+rollup.config.js
+biome.jsonc
+eslint.config.mjs
+.editorconfig
+
+# GitHub specific
+.github/
+.gitignore
+.git/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies
+node_modules/
+
+# Scripts (keep only what's needed)
+scripts/
+
+# Documentation that's not needed
+CODESTYLE.md
+PUBLISHING.md
+
+# Test vectors and benchmarks
+jamtestvectors.txt
+benchmarks/
+tools/
+web/
+workers/
+extensions/
+packages/
+bin/
+.ropeproject/
+
+# Lock files
+package-lock.json
+yarn.lock
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Coverage
+coverage/
+*.lcov
+
+# Temporary
+tmp/
+temp/

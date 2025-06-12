@@ -212,6 +212,8 @@ npm pack
 tar -tzf typeberry-*.tgz
 ```
 
+**Note**: Source maps (`.map` files) are excluded from published packages to reduce size. They're only generated for local development and debugging.
+
 #### Test Installation
 ```bash
 # Test npm package
@@ -252,7 +254,7 @@ node dist/typeberry.cjs --help
 - Rotate GitHub tokens regularly
 - Review package contents before publishing
 
-## Configuration Files
+### Configuration Files
 
 ### `.npmrc`
 ```ini
@@ -266,12 +268,25 @@ init-license="MPL-2.0"
 {
   "name": "typeberry",
   "private": false,
-  "files": ["dist/**/*", "README.md", "LICENSE"],
+  "files": [
+    "dist/typeberry.cjs",
+    "dist/*.wasm",
+    "README.md",
+    "LICENSE"
+  ],
   "publishConfig": {
     "access": "public"
   }
 }
 ```
+
+### `.npmignore`
+Excludes development files from published package:
+- Source maps (`*.map`)
+- TypeScript source files
+- Build configuration
+- Development tools
+- Test files
 
 ## Monitoring
 

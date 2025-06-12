@@ -26,7 +26,7 @@ export default {
     file: outputFileName,
     // The format of the output bundle. 'cjs' is for CommonJS, suitable for Node.js
     format: 'cjs',
-    // Generate a sourcemap for debugging
+    // Generate a sourcemap for debugging (development only, not published)
     sourcemap: true,
     // Add a shebang to make the script executable
     banner: '#!/usr/bin/env node',

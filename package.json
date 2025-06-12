@@ -73,7 +73,7 @@
     "build": "rollup -c && npm run post-build",
     "post-build": "npm run copy-wasm && npm run create-symlink",
     "copy-wasm": "cp node_modules/ed25519-wasm/pkg/ed25519_wasm_bg.wasm dist/ && cp node_modules/bandersnatch-wasm/pkg/bandersnatch_wasm_bg.wasm dist/ && cp node_modules/reed-solomon-wasm/pkg/reed_solomon_wasm_bg.wasm dist/",
-    "create-symlink": "cd dist && cp typeberry-v0.0.1-1dba82f.cjs typeberry.cjs",
+    "create-symlink": "node scripts/create-symlink.cjs",
     "prepublishOnly": "npm run build",
     "publish:npm": "npm publish",
     "publish:github": "npm publish --registry=https://npm.pkg.github.com",
@@ -113,7 +113,8 @@
   },
   "type": "module",
   "files": [
-    "dist/**/*",
+    "dist/typeberry.cjs",
+    "dist/*.wasm",
     "README.md",
     "LICENSE"
   ],
