@@ -12,7 +12,7 @@
   "scripts": {
     "start": "tsx ./index.ts",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
-    "test:e2e": "tsx --test ./test/e2e.ts"
+    "test:e2e": "tsx ./test/e2e-setup.ts && tsx --test ./test/e2e.ts"
   },
   "dependencies": {
     "@typeberry/block": "^0.0.1",
@@ -21,6 +21,7 @@
     "@typeberry/config": "^0.0.1",
     "@typeberry/database-lmdb": "^0.0.1",
     "@typeberry/hash": "^0.0.1",
+    "@typeberry/jam": "^0.0.1",
     "@typeberry/logger": "^0.0.1",
     "@typeberry/state": "^0.0.1",
     "@types/ws": "^8.18.1",
