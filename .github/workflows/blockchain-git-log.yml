@@ -15,7 +15,8 @@ permissions:
 
 jobs:
   blockchain-git-log:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    timeout-minutes: 10
 
     strategy:
       matrix:
