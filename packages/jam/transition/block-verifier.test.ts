@@ -195,7 +195,7 @@ describe("Block Verifier", async () => {
     assert.deepStrictEqual(
       result,
       Result.ok(
-        Bytes.parseBytes("0x8c87f0595257eaa1a9fd6d1df9c078a622552dba4a02b8232cf1821c5bb67984", HASH_SIZE).asOpaque(),
+        Bytes.parseBytes("0xa1895a132474e9191e8bdc949649ecfe16ad55685db3e4ea9646766cc7ac1fc4", HASH_SIZE).asOpaque(),
       ),
     );
   });
