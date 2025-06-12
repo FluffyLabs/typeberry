@@ -8,8 +8,8 @@
   "main": "index.ts",
   "type": "module",
   "scripts": {
-    "start": "ts-node ./bin/test.ts",
-    "test": "node --test --require ts-node/register $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "start": "tsx ./bin/test.ts",
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
     "@typeberry/bytes": "0.0.1",
