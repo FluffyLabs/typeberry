@@ -128,7 +128,7 @@ describe("Block Verifier", async () => {
       result,
       Result.error(
         BlockVerifierError.InvalidExtrinsic,
-        "Invalid extrinsic hash: 0x0202020202020202020202020202020202020202020202020202020202020202, expected 0xac30392ab14ba0e1806ebfe027f9f84f0d1e7384e1b272db5b94890331b11045",
+        "Invalid extrinsic hash: 0x0202020202020202020202020202020202020202020202020202020202020202, expected 0x170f8e387101ffd117ad93ef6161ef8decc3900b37c38011aef10ba3274052ae",
       ),
     );
   });

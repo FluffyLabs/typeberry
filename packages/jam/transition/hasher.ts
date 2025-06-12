@@ -1,11 +1,10 @@
-import type { ExtrinsicHash, ExtrinsicView, HeaderHash, HeaderView, TimeSlot, WorkReportHash } from "@typeberry/block";
+import type { ExtrinsicHash, ExtrinsicView, HeaderHash, HeaderView, WorkReportHash } from "@typeberry/block";
 import { WorkPackage } from "@typeberry/block/work-package.js";
 import type { WorkPackageHash } from "@typeberry/block/work-report.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { type Codec, Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import {
-  HASH_SIZE,
   type HashAllocator,
   type KeccakHash,
   type OpaqueHash,
@@ -15,12 +14,7 @@ import {
   keccak,
 } from "@typeberry/hash";
 import type { MmrHasher } from "@typeberry/mmr";
-
-const GUARENTEE_CODEC = codec.object({
-  workReportHash: codec.bytes(HASH_SIZE).asOpaque<WorkReportHash>(),
-  timeSlot: codec.u32.asOpaque<TimeSlot>(),
-  credentials: codec.blob,
-});
+import { dumpCodec } from "@typeberry/state-merkleization/serialize.js";
 
 export class TransitionHasher implements MmrHasher<KeccakHash> {
   constructor(
@@ -46,20 +40,22 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
    * https://graypaper.fluffylabs.dev/#/cc517d7/0ca1000ca200?v=0.6.5
    */
   extrinsic(extrinsicView: ExtrinsicView): WithHashAndBytes<ExtrinsicHash, ExtrinsicView> {
-    const guarantees: BytesBlob[] = [];
+    // const guarantees: {report: WorkReportHash, slot: ReportGuarantee['slot'], credentials: ReportGuarantee['credentials']}[] = [];
 
     // https://graypaper.fluffylabs.dev/#/cc517d7/0cfb000cfb00?v=0.6.5
-    for (const guarantee of extrinsicView.guarantees.view().map((g) => g.view())) {
-      const reportHash = blake2b.hashBytes(guarantee.report.encoded(), this.allocator).asOpaque<WorkReportHash>();
-      const guaranteeEncoded = Encoder.encodeObject(GUARENTEE_CODEC, {
-        workReportHash: reportHash,
-        timeSlot: guarantee.slot.materialize(),
-        credentials: guarantee.credentials.encoded(),
+    const guarantees = extrinsicView.guarantees
+      .view()
+      .map((g) => g.view())
+      .map((guarantee) => {
+        const reportHash = blake2b.hashBytes(guarantee.report.encoded(), this.allocator).asOpaque<WorkReportHash>();
+        return BytesBlob.blobFromParts([
+          reportHash.raw,
+          guarantee.slot.encoded().raw,
+          guarantee.credentials.encoded().raw,
+        ]);
       });
-      guarantees.push(guaranteeEncoded);
-    }
 
-    const guaranteeBlob = Encoder.encodeObject(codec.sequenceVarLen(codec.blob), guarantees, this.context);
+    const guaranteeBlob = Encoder.encodeObject(codec.sequenceVarLen(dumpCodec), guarantees, this.context);
 
     const et = blake2b.hashBytes(extrinsicView.tickets.encoded(), this.allocator).asOpaque<ExtrinsicHash>();
     const ep = blake2b.hashBytes(extrinsicView.preimages.encoded(), this.allocator).asOpaque<ExtrinsicHash>();
