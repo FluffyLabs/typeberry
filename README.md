@@ -15,6 +15,51 @@ Typeberry is a TypeScript implementation of [JAM protocol](https://graypaper.com
 - [ ] GRANDPA
 - [ ] Data Availability
 
+## Installation
+
+### From npm (Recommended)
+
+```bash
+# Install globally
+npm install -g typeberry
+
+# Or run directly with npx
+npx typeberry --help
+```
+
+### From GitHub Packages
+
+```bash
+npm install -g @fluffylabs/typeberry
+```
+
+### Download Binary
+
+You can also download the standalone binary from our [GitHub Pages](https://fluffylabs.github.io/typeberry):
+
+- [Direct download](https://fluffylabs.github.io/typeberry/dist/typeberry.cjs)
+- Make it executable: `chmod +x typeberry.cjs`
+- Run: `./typeberry.cjs --help`
+
+## Usage
+
+```bash
+# Show help
+typeberry --help
+
+# Run with tiny chain spec (default)
+typeberry --chain-spec tiny
+
+# Import blocks
+typeberry import blocks.json
+
+# Specify custom database path
+typeberry --db-path ./my-database
+
+# Use custom genesis
+typeberry --genesis genesis.json
+```
+
 ## Requirements
 
 ```bash

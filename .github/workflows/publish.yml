@@ -1,0 +1,239 @@
+name: Build and Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run QA checks
+        run: npm run qa
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-github:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@fluffylabs'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Configure package for GitHub registry
+        run: |
+          jq '.name = "@fluffylabs/typeberry"' package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-docs:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Generate documentation
+        run: |
+          mkdir -p docs
+          cp README.md docs/index.md
+          cp -r dist docs/
+
+          # Create a simple HTML page
+          cat > docs/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Typeberry - JAM Implementation in TypeScript</title>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <style>
+                  body {
+                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                      max-width: 800px;
+                      margin: 0 auto;
+                      padding: 20px;
+                      line-height: 1.6;
+                  }
+                  pre {
+                      background: #f4f4f4;
+                      padding: 10px;
+                      border-radius: 5px;
+                      overflow-x: auto;
+                  }
+                  .download-section {
+                      background: #f8f9fa;
+                      padding: 20px;
+                      border-radius: 8px;
+                      margin: 20px 0;
+                  }
+                  .download-link {
+                      display: inline-block;
+                      background: #007bff;
+                      color: white;
+                      padding: 10px 20px;
+                      text-decoration: none;
+                      border-radius: 5px;
+                      margin: 5px;
+                  }
+              </style>
+          </head>
+          <body>
+              <h1>Typeberry</h1>
+              <p>JAM implementation in TypeScript by Fluffy Labs</p>
+
+              <div class="download-section">
+                  <h2>Downloads</h2>
+                  <p>Get the latest binary:</p>
+                  <a href="dist/typeberry.cjs" class="download-link" download>Download typeberry.cjs</a>
+                  <a href="https://www.npmjs.com/package/typeberry" class="download-link">View on npm</a>
+                  <a href="https://github.com/fluffylabs/typeberry" class="download-link">View on GitHub</a>
+              </div>
+
+              <h2>Installation</h2>
+              <pre><code># Install globally from npm
+          npm install -g typeberry
+
+          # Or run directly with npx
+          npx typeberry --help</code></pre>
+
+              <h2>Usage</h2>
+              <pre><code>typeberry [options]
+          typeberry [options] import &lt;bin-or-json-blocks&gt;
+
+          Options:
+            --chain-spec    Chain Spec to use. Either 'tiny' or 'full'. [default: tiny]
+            --db-path       Directory where database is going to be stored. [default: database]
+            --genesis-root  Assume a particular genesis root hash to open the DB.
+            --genesis       Path to a JSON file containing genesis state dump.
+            --genesis-block Path to a JSON file containing genesis block.</code></pre>
+
+              <h2>Binary Download</h2>
+              <p>You can download the standalone binary directly:</p>
+              <ul>
+                  <li><a href="dist/typeberry.cjs">typeberry.cjs</a> - Main executable</li>
+                  <li><a href="dist/">Browse all files</a></li>
+              </ul>
+
+              <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+                  <p>&copy; 2024 Fluffy Labs - Licensed under MPL-2.0</p>
+              </footer>
+          </body>
+          </html>
+          EOF
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/
+
+  deploy-pages:
+    needs: build-docs
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
