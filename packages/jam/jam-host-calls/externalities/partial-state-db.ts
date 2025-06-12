@@ -153,7 +153,7 @@ export class PartialStateDb implements PartialState {
 
     // fallback to state lookup
     const service = this.state.getService(this.currentServiceId);
-    const lenU32 = length >= 2n ** 32n ? null : tryAsU32(Number(length));
+    const lenU32 = preimageLenAsU32(length);
     if (lenU32 === null || service === null) {
       return null;
     }
@@ -177,8 +177,7 @@ export class PartialStateDb implements PartialState {
    */
   private isPreviousCodeExpired(destination: ServiceId, previousCodeHash: PreimageHash, len: U64): [boolean, string] {
     const service = this.state.getService(destination);
-    // Safe to convert to Number and U32: we check that len < 2^32 before conversion
-    const lenU32 = len >= 2n ** 32n ? null : tryAsU32(Number(len));
+    const lenU32 = preimageLenAsU32(len);
     const slots = service === null || lenU32 === null ? null : service.getLookupHistory(previousCodeHash, lenU32);
     const status = slots === null ? null : slotsToPreimageStatus(slots);
     // The previous code needs to be forgotten and expired.
@@ -668,4 +667,9 @@ export class NewPreimage {
 function bumpServiceId(serviceId: ServiceId) {
   const mod = 2 ** 32 - 2 ** 9;
   return tryAsServiceId(2 ** 8 + ((serviceId - 2 ** 8 + 42 + mod) % mod));
+}
+
+function preimageLenAsU32(length: U64) {
+  // Safe to convert to Number and U32: we check that len < 2^32 before conversion
+  return length >= 2n ** 32n ? null : tryAsU32(Number(length));
 }
