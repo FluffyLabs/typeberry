@@ -74,7 +74,11 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     this.values = this.root.subDb("values");
   }
 
-  /** Insert a pre-defined, serialized state directly into the database. */
+  /**
+   * Insert a pre-defined, serialized state directly into the database.
+   *
+   * Optionally passing service enumeration data.
+   */
   async insertState(headerHash: HeaderHash, serializedState: StateEntries): Promise<Result<OK, StateUpdateError>> {
     // we start with an empty trie, so that all value will be added.
     const trie = InMemoryTrie.empty(blake2bTrieHasher);

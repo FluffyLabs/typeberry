@@ -571,6 +571,9 @@ export const serviceEntriesCodec = codec.object<ServiceEntries>({
   ),
 });
 
+/** Enumeration of all services and it's internall data. */
+export type ServiceData = Map<ServiceId, ServiceEntries>;
+
 export const serviceDataCodec = codec.dictionary(codec.u32.asOpaque<ServiceId>(), serviceEntriesCodec, {
   sortKeys: (a, b) => a - b,
 });

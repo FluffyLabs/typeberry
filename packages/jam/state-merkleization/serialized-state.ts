@@ -92,21 +92,20 @@ export class SerializedService implements Service {
  */
 export class SerializedState<T extends Persistence = Persistence> implements State, EnumerableState {
   /** Create a state-like object from collection of serialized entries. */
-  static fromStateEntries(spec: ChainSpec, state: StateEntries) {
-    return new SerializedState(spec, stateEntriesPersistence(state));
+  static fromStateEntries(spec: ChainSpec, state: StateEntries, recentServices: ServiceId[] = []) {
+    return new SerializedState(spec, stateEntriesPersistence(state), recentServices);
   }
 
   /** Create a state-like object backed by some DB. */
-  static new<T extends Persistence>(spec: ChainSpec, db: T): SerializedState<T> {
-    return new SerializedState(spec, db);
+  static new<T extends Persistence>(spec: ChainSpec, db: T, recentServices: ServiceId[] = []): SerializedState<T> {
+    return new SerializedState(spec, db, recentServices);
   }
-
-  /** Best-effort list of recently active services. */
-  private _recentServiceIds: ServiceId[] = [];
 
   private constructor(
     private readonly spec: ChainSpec,
     public backend: T,
+    /** Best-effort list of recently active services. */
+    private readonly _recentServiceIds: ServiceId[],
   ) {}
 
   // TODO [ToDr] Temporary method to update the state,
@@ -125,7 +124,7 @@ export class SerializedState<T extends Persistence = Persistence> implements Sta
       return null;
     }
 
-    if (this._recentServiceIds.indexOf(id) === -1) {
+    if (!this._recentServiceIds.includes(id)) {
       this._recentServiceIds.push(id);
     }
 

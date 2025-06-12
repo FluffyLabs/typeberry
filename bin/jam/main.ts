@@ -21,6 +21,11 @@ import { startBlocksReader } from "./reader.js";
 
 const logger = Logger.new(import.meta.filename, "jam");
 
+export enum DatabaseKind {
+  InMemory = 0,
+  Lmdb = 1,
+}
+
 /** General options. */
 type Options = {
   /** Whether we should be authoring blocks. */
