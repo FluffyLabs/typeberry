@@ -7,8 +7,8 @@ import { type Ed25519Key, privateKey } from "./ed25519.js";
 export const SEED_SIZE = 32;
 export type SEED_SIZE = typeof SEED_SIZE;
 
-const ED25519_SECRET_KEY = "jam_val_key_ed25519" as const;
-const BANDERSNATCH_SECRET_KEY = "jam_val_key_bandersnatch" as const;
+const ED25519_SECRET_KEY = Bytes.blobFromString("jam_val_key_ed25519");
+const BANDERSNATCH_SECRET_KEY = Bytes.blobFromString("jam_val_key_bandersnatch");
 
 /**
  * JIP-5: Secret key derivation
@@ -32,10 +32,7 @@ export function deriveEd25519SecretKey(
   seed: Bytes<SEED_SIZE>,
   allocator: SimpleAllocator = new SimpleAllocator(),
 ): Blake2bHash {
-  return blake2b.hashBytes(
-    BytesBlob.blobFromParts([Bytes.blobFromString(ED25519_SECRET_KEY).raw, seed.raw]),
-    allocator,
-  );
+  return blake2b.hashBytes(BytesBlob.blobFromParts([ED25519_SECRET_KEY.raw, seed.raw]), allocator);
 }
 
 /**
@@ -46,10 +43,7 @@ export function deriveBandersnatchSecretKey(
   seed: Bytes<SEED_SIZE>,
   allocator: SimpleAllocator = new SimpleAllocator(),
 ): Blake2bHash {
-  return blake2b.hashBytes(
-    BytesBlob.blobFromParts([Bytes.blobFromString(BANDERSNATCH_SECRET_KEY).raw, seed.raw]),
-    allocator,
-  );
+  return blake2b.hashBytes(BytesBlob.blobFromParts([BANDERSNATCH_SECRET_KEY.raw, seed.raw]), allocator);
 }
 
 /**
