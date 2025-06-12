@@ -40,8 +40,6 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
    * https://graypaper.fluffylabs.dev/#/cc517d7/0ca1000ca200?v=0.6.5
    */
   extrinsic(extrinsicView: ExtrinsicView): WithHashAndBytes<ExtrinsicHash, ExtrinsicView> {
-    // const guarantees: {report: WorkReportHash, slot: ReportGuarantee['slot'], credentials: ReportGuarantee['credentials']}[] = [];
-
     // https://graypaper.fluffylabs.dev/#/cc517d7/0cfb000cfb00?v=0.6.5
     const guarantees = extrinsicView.guarantees
       .view()
