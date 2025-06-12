@@ -2,7 +2,16 @@
   "name": "typeberry",
   "version": "0.0.1",
   "description": "JAM implementation in TypeScript",
-  "private": true,
+  "private": false,
+  "keywords": ["jam", "blockchain", "polkadot", "typescript", "web3"],
+  "homepage": "https://fluffylabs.github.io/typeberry",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fluffylabs/typeberry.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fluffylabs/typeberry/issues"
+  },
   "workspaces": [
     "bin/jam",
     "bin/pvm",
@@ -69,6 +78,11 @@
     "publish:npm": "npm publish",
     "publish:github": "npm publish --registry=https://npm.pkg.github.com",
     "publish:both": "npm run publish:npm && npm run publish:github",
+    "release": "./scripts/publish.sh",
+    "release:patch": "./scripts/publish.sh --version patch",
+    "release:minor": "./scripts/publish.sh --version minor",
+    "release:major": "./scripts/publish.sh --version major",
+    "build-tsc": "tsc",
     "qa": "biome ci && eslint .",
     "qa-fix": "npm run format; npm run lint",
     "format": "biome format --write",
