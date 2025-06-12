@@ -3,8 +3,8 @@ import { after, before, describe, it } from "node:test";
 import { main } from "../index.js";
 import { RpcClient } from "../src/client.js";
 import type { RpcServer } from "../src/server.js";
-import { DB_PATH, GENESIS_ROOT } from "./e2e-setup.js";
 import { JSON_RPC_VERSION } from "../src/types.js";
+import { DB_PATH, GENESIS_ROOT } from "./e2e-setup.js";
 
 describe("JSON RPC Client-Server E2E", () => {
   let client: RpcClient;
