@@ -1,19 +1,11 @@
-import { execSync } from "node:child_process";
-import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-
-const require = createRequire(import.meta.url);
-const pkg = require("./package.json");
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default (_env, argv) => {
   const isProduction = argv.mode === "production";
-  const commitHash = execSync("git rev-parse --short HEAD").toString().trim();
-  const version = pkg.version;
-  const outputFileName = `typeberry-v${version}-${commitHash}.mjs`;
 
   return {
     mode: isProduction ? "production" : "development",
@@ -25,7 +17,7 @@ export default (_env, argv) => {
     },
     output: {
       path: path.resolve(__dirname, "../../dist/typeberry"),
-      filename: outputFileName,
+      filename: "[name].mjs",
       library: {
         type: "module",
       },

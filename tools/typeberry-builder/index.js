@@ -3,6 +3,7 @@
 import fs from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { execSync } from "node:child_process";
 import webpack from "webpack";
 import webpackConfig from "./webpack.config.js";
 
@@ -44,6 +45,56 @@ async function copyWasmFiles() {
       console.warn(`🫣 Could not copy ${wasmFile.name}:`, error.message);
     }
   }
+}
+
+async function createNpmPackage() {
+  console.info("\n📦 Creating npm package...");
+
+  const destDir = resolve(__dirname, "../../dist/typeberry");
+
+  const rootPkgPath = resolve(__dirname, "../../package.json");
+  const rootPkg = JSON.parse(await fs.readFile(rootPkgPath, "utf-8"));
+
+  const commitHash = execSync("git rev-parse --short HEAD").toString().trim();
+  const version = `${rootPkg.version}-${commitHash}`;
+
+  const files = await fs.readdir(destDir);
+  const mainFile = files.find(file => file === "typeberry.mjs");
+
+  if (!mainFile) {
+    throw new Error("Could not find built typeberry main file");
+  }
+
+  // Create package.json
+  const packageJson = {
+    name: rootPkg.name,
+    version: version,
+    description: rootPkg.description,
+    main: mainFile,
+    type: "module",
+    author: rootPkg.author,
+    license: rootPkg.license,
+    dependencies: {
+      "minimist": "^1.2.8",
+      "lmdb": "^3.1.3"
+    },
+    files: [
+      "*.mjs",
+      "*.wasm",
+      "*.txt"
+    ]
+  };
+
+  // Create package.json
+  const packageJsonPath = resolve(destDir, "package.json");
+  await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
+  console.info(" - Created package.json");
+
+  // Create .npmignore
+  const npmignore = `*.map`;
+  const npmignorePath = resolve(destDir, ".npmignore");
+  await fs.writeFile(npmignorePath, npmignore);
+  console.info(" - Created .npmignore");
 }
 
 async function build() {
@@ -95,6 +146,7 @@ async function build() {
     });
 
     await copyWasmFiles();
+    await createNpmPackage();
 
     console.info("\n🎉 Typeberry build complete!");
   } catch (error) {
