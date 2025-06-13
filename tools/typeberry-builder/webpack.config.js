@@ -17,6 +17,8 @@ export default (_env, argv) => {
 
   return {
     mode: isProduction ? 'production' : 'development',
+    // TODO [MaSo] Add target `web` or `browserlist`
+    // https://webpack.js.org/configuration/target/
     target: 'node',
     entry: {
       typeberry: path.resolve(__dirname, './entry.ts')
@@ -33,7 +35,7 @@ export default (_env, argv) => {
       outputModule: true
     },
     externals: {
-      // Keep Node.js built-ins as externals
+      // Keep node build-ins as externals
       'node:fs': 'node:fs',
       'node:path': 'node:path',
       'node:url': 'node:url',
@@ -49,7 +51,7 @@ export default (_env, argv) => {
       'node:net': 'node:net',
       'node:http': 'node:http',
       'node:https': 'node:https',
-      // External npm packages
+      // Can't be bundled
       'minimist': 'minimist',
       'lmdb': 'lmdb'
     },
@@ -86,29 +88,15 @@ export default (_env, argv) => {
             options: {
               transpileOnly: true,
               compilerOptions: {
-                module: 'ES2022',
-                target: 'ES2022',
-                moduleResolution: 'node',
-                strict: false,
-                skipLibCheck: true,
-                allowJs: true,
-                esModuleInterop: true,
-                allowSyntheticDefaultImports: true,
-                resolveJsonModule: true,
-                declaration: false,
                 sourceMap: !isProduction
               }
             }
           },
           exclude: /node_modules/
-        },
-        {
-          test: /\.json$/,
-          type: 'json'
         }
       ]
     },
-    devtool: isProduction ? 'source-map' : 'inline-source-map',
+    devtool: isProduction ? 'nosources-source-map' : 'inline-source-map',
     optimization: {
       minimize: isProduction
     },
@@ -116,8 +104,7 @@ export default (_env, argv) => {
       colors: true,
       modules: false,
       chunks: false,
-      chunkModules: false,
-      warnings: false
+      chunkModules: false
     }
   };
 };
