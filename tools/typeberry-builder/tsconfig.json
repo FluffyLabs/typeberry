@@ -1,20 +1,11 @@
 {
   "compilerOptions": {
-    "strict": false,
+    "strict": true,
     "module": "ES2022",
     "moduleResolution": "node",
     "target": "ES2022",
     "outDir": "../../dist/typeberry",
-    "declaration": false,
     "sourceMap": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
-    "allowJs": true,
-    "noEmit": false,
-    "isolatedModules": false,
-    "allowImportingTsExtensions": false,
     "baseUrl": "..",
     "paths": {
       "@typeberry/block": ["packages/jam/block/index.ts"],
