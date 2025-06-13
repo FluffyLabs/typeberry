@@ -2,7 +2,7 @@ import type { StateRootHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import minimist from "minimist";
-import { version } from "./package.json";
+import packageJson from "./package.json";
 
 /** Chain spec chooser. */
 export enum KnownChainSpec {
@@ -25,7 +25,7 @@ const DEFAULTS = {
 // consider just using JSON config files and only leave the stuff
 // that is actually meant to be easily overriden from CLI.
 export const HELP = `
-typeberry ${version} by Fluffy Labs.
+typeberry ${packageJson.version} by Fluffy Labs.
 
 Usage:
   typeberry [options]
