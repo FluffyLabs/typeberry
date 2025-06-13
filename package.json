@@ -58,6 +58,8 @@
   },
   "scripts": {
     "build": "tsc",
+    "build-binary": "cd tools/typeberry-builder && npm run build",
+    "build-binary-dev": "cd tools/typeberry-builder && npm run dev",
     "qa": "biome ci && eslint .",
     "qa-fix": "npm run format; npm run lint",
     "format": "biome format --write",
