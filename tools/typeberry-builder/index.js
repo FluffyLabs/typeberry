@@ -71,6 +71,9 @@ async function createNpmPackage() {
     version: version,
     description: rootPkg.description,
     main: mainFile,
+    bin: {
+      typeberry: mainFile,
+    },
     type: "module",
     author: rootPkg.author,
     license: rootPkg.license,
