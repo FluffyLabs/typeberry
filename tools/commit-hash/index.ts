@@ -139,9 +139,12 @@ async function main() {
 
         unsub();
         await api.disconnect();
+      } else if (status.isDropped || status.isInvalid || status.isUsurped) {
+        logger.log("Transaction failed.");
+        unsub();
+        await api.disconnect();
       } else if (dispatchError !== undefined) {
         await handleError(log, transactionPayload, dispatchError.toString());
-
         unsub();
         await api.disconnect();
       }
