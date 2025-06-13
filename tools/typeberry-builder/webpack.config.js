@@ -49,24 +49,6 @@ export default (_env, argv) => {
     },
     resolve: {
       extensions: [".ts", ".js", ".mjs", ".json"],
-      alias: {
-        "@typeberry/block": path.resolve(__dirname, "../../packages/jam/block"),
-        "@typeberry/block-generator": path.resolve(__dirname, "../../workers/block-generator"),
-        "@typeberry/block-json": path.resolve(__dirname, "../../packages/jam/block-json"),
-        "@typeberry/bytes": path.resolve(__dirname, "../../packages/core/bytes"),
-        "@typeberry/codec": path.resolve(__dirname, "../../packages/core/codec"),
-        "@typeberry/collections": path.resolve(__dirname, "../../packages/core/collections"),
-        "@typeberry/config": path.resolve(__dirname, "../../packages/jam/config"),
-        "@typeberry/database-lmdb": path.resolve(__dirname, "../../packages/jam/database-lmdb"),
-        "@typeberry/ext-ipc": path.resolve(__dirname, "../../extensions/ipc"),
-        "@typeberry/hash": path.resolve(__dirname, "../../packages/core/hash"),
-        "@typeberry/importer": path.resolve(__dirname, "../../workers/importer"),
-        "@typeberry/json-parser": path.resolve(__dirname, "../../packages/core/json-parser"),
-        "@typeberry/logger": path.resolve(__dirname, "../../packages/core/logger"),
-        "@typeberry/state-json": path.resolve(__dirname, "../../packages/jam/state-json"),
-        "@typeberry/state-merkleization": path.resolve(__dirname, "../../packages/jam/state-merkleization"),
-        "@typeberry/utils": path.resolve(__dirname, "../../packages/core/utils"),
-      },
       extensionAlias: {
         ".js": [".js", ".ts"],
       },
@@ -88,7 +70,7 @@ export default (_env, argv) => {
         },
       ],
     },
-    devtool: isProduction ? "nosources-source-map" : "inline-source-map",
+    devtool: isProduction ? false : "source-map",
     optimization: {
       minimize: isProduction,
     },
