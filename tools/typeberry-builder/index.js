@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
+import { execSync } from "node:child_process";
 import fs from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
 import webpack from "webpack";
 import webpackConfig from "./webpack.config.js";
 
@@ -59,7 +59,7 @@ async function createNpmPackage() {
   const version = `${rootPkg.version}-${commitHash}`;
 
   const files = await fs.readdir(destDir);
-  const mainFile = files.find(file => file === "typeberry.mjs");
+  const mainFile = files.find((file) => file === "typeberry.mjs");
 
   if (!mainFile) {
     throw new Error("Could not find built typeberry main file");
@@ -75,14 +75,10 @@ async function createNpmPackage() {
     author: rootPkg.author,
     license: rootPkg.license,
     dependencies: {
-      "minimist": "^1.2.8",
-      "lmdb": "^3.1.3"
+      minimist: "^1.2.8",
+      lmdb: "^3.1.3",
     },
-    files: [
-      "*.mjs",
-      "*.wasm",
-      "*.txt"
-    ]
+    files: ["*.mjs", "*.wasm", "*.txt"],
   };
 
   // Create package.json
