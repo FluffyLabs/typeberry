@@ -7,11 +7,13 @@ import { fileURLToPath } from "node:url";
 import webpack from "webpack";
 import webpackConfig from "./webpack.config.js";
 
+const DIST_DIR = "../../dist/typeberry";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 async function createDistDirectory() {
-  const distPath = resolve(__dirname, "../../dist/typeberry");
+  const distPath = resolve(__dirname, DIST_DIR);
   try {
     await fs.mkdir(distPath, { recursive: true });
     console.info("📁 Created dist/typeberry directory");
@@ -32,7 +34,7 @@ async function copyWasmFiles() {
   ];
 
   const srcDir = resolve(__dirname, "../../node_modules/");
-  const destDir = resolve(__dirname, "../../dist/typeberry");
+  const destDir = resolve(__dirname, DIST_DIR);
 
   for (const wasmFile of wasmFiles) {
     const srcPath = resolve(srcDir, wasmFile.path, wasmFile.name);
@@ -50,7 +52,7 @@ async function copyWasmFiles() {
 async function createNpmPackage() {
   console.info("\n📦 Creating npm package...");
 
-  const destDir = resolve(__dirname, "../../dist/typeberry");
+  const destDir = resolve(__dirname, DIST_DIR);
 
   const rootPkgPath = resolve(__dirname, "../../package.json");
   const rootPkg = JSON.parse(await fs.readFile(rootPkgPath, "utf-8"));
@@ -88,12 +90,6 @@ async function createNpmPackage() {
   const packageJsonPath = resolve(destDir, "package.json");
   await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
   console.info(" - Created package.json");
-
-  // Create .npmignore
-  const npmignore = "*.map";
-  const npmignorePath = resolve(destDir, ".npmignore");
-  await fs.writeFile(npmignorePath, npmignore);
-  console.info(" - Created .npmignore");
 }
 
 async function build() {
