@@ -140,7 +140,7 @@ async function main() {
         unsub();
         await api.disconnect();
       } else if (status.isDropped || status.isInvalid || status.isUsurped) {
-        logger.log("Transaction failed.");
+        await handleError(log, transactionPayload, `Transaction failed with status: ${status.type}`);
         unsub();
         await api.disconnect();
       } else if (dispatchError !== undefined) {
