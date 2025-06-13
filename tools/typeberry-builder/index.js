@@ -90,7 +90,7 @@ async function createNpmPackage() {
   console.info(" - Created package.json");
 
   // Create .npmignore
-  const npmignore = `*.map`;
+  const npmignore = "*.map";
   const npmignorePath = resolve(destDir, ".npmignore");
   await fs.writeFile(npmignorePath, npmignore);
   console.info(" - Created .npmignore");
