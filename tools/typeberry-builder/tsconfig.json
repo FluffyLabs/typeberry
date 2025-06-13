@@ -29,6 +29,6 @@
   "ts-node": {
     "esm": true
   },
-  "include": ["../../bin/jam/**/*", "../../packages/**/*", "../../workers/**/*", "../../extensions/**/*"],
+  "include": ["entry.ts", "../../bin/jam/**/*", "../../packages/**/*", "../../workers/**/*", "../../extensions/**/*"],
   "exclude": ["../../node_modules", "../../dist", "../../**/*.test.ts"]
 }
