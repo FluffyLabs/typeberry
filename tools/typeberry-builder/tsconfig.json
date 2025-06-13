@@ -1,13 +1,52 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
+    "strict": false,
+    "module": "ES2022",
     "moduleResolution": "node",
+    "target": "ES2022",
+    "outDir": "../../dist/typeberry",
+    "declaration": false,
     "sourceMap": true,
-    "outDir": "../../dist",
+    "skipLibCheck": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "skipLibCheck": true
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "noEmit": false,
+    "isolatedModules": false,
+    "allowImportingTsExtensions": false,
+    "baseUrl": "..",
+    "paths": {
+      "@typeberry/block": ["packages/jam/block/index.ts"],
+      "@typeberry/block-generator": ["workers/block-generator/index.ts"],
+      "@typeberry/block-json": ["packages/jam/block-json/index.ts"],
+      "@typeberry/bytes": ["packages/core/bytes/index.ts"],
+      "@typeberry/codec": ["packages/core/codec/index.ts"],
+      "@typeberry/collections": ["packages/core/collections/index.ts"],
+      "@typeberry/config": ["packages/jam/config/index.ts"],
+      "@typeberry/database-lmdb": ["packages/jam/database-lmdb/index.ts"],
+      "@typeberry/ext-ipc": ["extensions/ipc/index.ts"],
+      "@typeberry/hash": ["packages/core/hash/index.ts"],
+      "@typeberry/importer": ["workers/importer/index.ts"],
+      "@typeberry/json-parser": ["packages/core/json-parser/index.ts"],
+      "@typeberry/logger": ["packages/core/logger/index.ts"],
+      "@typeberry/state-json": ["packages/jam/state-json/index.ts"],
+      "@typeberry/state-merkleization": ["packages/jam/state-merkleization/index.ts"],
+      "@typeberry/utils": ["packages/core/utils/index.ts"]
+    }
   },
+  "ts-node": {
+    "esm": true
+  },
+  "include": [
+    "../../bin/jam/**/*",
+    "../../packages/**/*",
+    "../../workers/**/*",
+    "../../extensions/**/*"
+  ],
+  "exclude": [
+    "../../node_modules",
+    "../../dist",
+    "../../**/*.test.ts"
+  ]
 }
