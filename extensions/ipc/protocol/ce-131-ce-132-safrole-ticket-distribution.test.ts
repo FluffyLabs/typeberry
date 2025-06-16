@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { tryAsEpoch } from "@typeberry/block";
-import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/block/crypto.js";
 import { SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
+import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/safrole/bandersnatch-vrf.js";
 import { MessageHandler, type MessageSender } from "../handler.js";
 import {
   ClientHandler,

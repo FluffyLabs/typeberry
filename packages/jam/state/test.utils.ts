@@ -1,5 +1,4 @@
 import {
-  BANDERSNATCH_RING_ROOT_BYTES,
   type WorkReportHash,
   codecPerValidator,
   tryAsPerEpochBlock,
@@ -18,6 +17,7 @@ import { tinyChainSpec } from "@typeberry/config";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { BANDERSNATCH_RING_ROOT_BYTES } from "@typeberry/safrole/bandersnatch-vrf.js";
 import {
   AvailabilityAssignment,
   BlockState,
