@@ -1,8 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import {
-  BANDERSNATCH_KEY_BYTES,
-  BLS_KEY_BYTES,
   type HeaderHash,
   tryAsCoreIndex,
   tryAsPerValidator,
@@ -19,7 +17,7 @@ import { WorkReport } from "@typeberry/block/work-report.js";
 import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
-import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
+import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import { AvailabilityAssignment, VALIDATOR_META_BYTES, ValidatorData, tryAsPerCore } from "@typeberry/state";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
