@@ -55,13 +55,6 @@ jobs:
         node-version: [22.x]
 
     steps:
-      - name: Delete previous comment on PR
-        # Don't attempt to comment if PR is coming from a fork.
-        if: ${{ always() && github.event.pull_request.head.repo.full_name == github.repository }}
-        uses: thollander/actions-comment-pull-request@v3
-        with:
-          mode: delete
-          comment-tag: jamdunavectors
       - uses: actions/checkout@v4
       - name: Checkout JAM test vectors
         uses: actions/checkout@v4
@@ -79,13 +72,6 @@ jobs:
       - name: Display results
         if: always()
         run: cat ./dist/jamdunavectors.txt
-      - name: Comment PR
-        # Don't attempt to comment if PR is coming from a fork.
-        if: ${{ always() && github.event.pull_request.head.repo.full_name == github.repository }}
-        uses: thollander/actions-comment-pull-request@v3
-        with:
-          file-path: ./dist/jamdunavectors.txt
-          comment-tag: jamdunavectors
       - name: Upload new results
         if: failure()
         uses: actions/upload-artifact@v4
