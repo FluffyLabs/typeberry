@@ -2,7 +2,7 @@ import * as fs from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import webpack from "webpack";
-import webpackConfig from "./webpack.config";
+import webpackConfig from "./webpack.config.js";
 
 const commitHash = process.env.SHORT_SHA;
 if (commitHash === undefined) {
