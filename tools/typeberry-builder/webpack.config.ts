@@ -24,23 +24,11 @@ const config: webpack.Configuration = {
   experiments: {
     outputModule: true,
   },
+  externalsType: "module",
+  externalsPresets: {
+    node: true,
+  },
   externals: {
-    // Keep node build-ins as externals
-    "node:fs": "node:fs",
-    "node:path": "node:path",
-    "node:url": "node:url",
-    "node:process": "node:process",
-    "node:crypto": "node:crypto",
-    "node:buffer": "node:buffer",
-    "node:stream": "node:stream",
-    "node:util": "node:util",
-    "node:events": "node:events",
-    "node:os": "node:os",
-    "node:worker_threads": "node:worker_threads",
-    "node:child_process": "node:child_process",
-    "node:net": "node:net",
-    "node:http": "node:http",
-    "node:https": "node:https",
     // Can't be bundled
     minimist: "minimist",
     lmdb: "lmdb",
