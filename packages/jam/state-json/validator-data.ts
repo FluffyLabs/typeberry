@@ -1,6 +1,6 @@
-import { BLS_KEY_BYTES } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
 import { Bytes } from "@typeberry/bytes";
+import { BLS_KEY_BYTES } from "@typeberry/crypto";
 import { json } from "@typeberry/json-parser";
 import { VALIDATOR_META_BYTES, ValidatorData } from "@typeberry/state";
 
