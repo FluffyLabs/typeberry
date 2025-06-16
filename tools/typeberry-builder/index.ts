@@ -1,4 +1,3 @@
-import { execSync } from "node:child_process";
 import * as fs from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -57,8 +56,7 @@ async function createNpmPackage() {
   const jamPkgPath = resolve(relPath, "bin/jam/package.json");
   const jamPkg = JSON.parse(await fs.readFile(jamPkgPath, "utf8"));
 
-  // TODO: [MaSo] move that into env-variable
-  const commitHash = execSync("git rev-parse --short HEAD").toString().trim();
+  const commitHash = process.env.PACKAGE_HASH;
   const version = `${rootPkg.version}-${commitHash}`;
 
   const files = await fs.readdir(destDir);
