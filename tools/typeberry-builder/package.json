@@ -2,16 +2,16 @@
   "name": "@typeberry/typeberry-builder",
   "version": "0.0.1",
   "description": "Build typeberry into one Module JS",
-  "main": "index.js",
+  "main": "index.ts",
   "type": "module",
   "scripts": {
-    "build": "node index.js",
-    "dev": "node index.js --mode development"
+    "build": "tsx index.ts"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
   "devDependencies": {
     "ts-loader": "^9.5.2",
+    "tsx": "^4.20.3",
     "webpack": "^5.99.9",
     "webpack-cli": "^6.0.1"
   }

@@ -3,11 +3,13 @@
     "strict": true,
     "module": "ES2022",
     "moduleResolution": "node",
-    "target": "ES2022"
+    "target": "ES2022",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   },
   "ts-node": {
     "esm": true
   },
-  "include": ["entry.ts", "../../bin/jam/**/*", "../../packages/**/*", "../../workers/**/*", "../../extensions/**/*"],
+  "include": ["index.ts", "entry.ts", "../../**/*"],
   "exclude": ["../../node_modules", "../../dist", "../../**/*.test.ts"]
 }
