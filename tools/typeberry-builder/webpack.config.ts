@@ -1,6 +1,6 @@
 import * as path from "node:path";
-import type * as webpack from "webpack";
 import { fileURLToPath } from "node:url";
+import type * as webpack from "webpack";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

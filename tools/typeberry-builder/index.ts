@@ -2,7 +2,14 @@ import * as fs from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import webpack from "webpack";
-import webpackConfig from "./webpack.config.js";
+import webpackConfig from "./webpack.config";
+
+const commitHash = process.env.SHORT_SHA;
+if (commitHash === undefined) {
+  throw new Error("Missing 'SHORT_SHA' environment variable");
+}
+
+console.info(`🪢 Current commit hash: ${commitHash}\n`);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -56,7 +63,6 @@ async function createNpmPackage() {
   const jamPkgPath = resolve(relPath, "bin/jam/package.json");
   const jamPkg = JSON.parse(await fs.readFile(jamPkgPath, "utf8"));
 
-  const commitHash = process.env.PACKAGE_HASH;
   const version = `${rootPkg.version}-${commitHash}`;
 
   const files = await fs.readdir(destDir);

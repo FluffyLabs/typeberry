@@ -5,7 +5,7 @@
   "main": "index.ts",
   "type": "module",
   "scripts": {
-    "build": "tsx index.ts"
+    "build": "SHORT_SHA=$(git rev-parse --short HEAD) tsx index.ts"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
