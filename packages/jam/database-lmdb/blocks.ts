@@ -7,14 +7,14 @@ import {
   type HeaderView,
   type StateRootHash,
 } from "@typeberry/block";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Bytes } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database/blocks.js";
 import { HASH_SIZE, type WithHash } from "@typeberry/hash";
 import type { LmdbRoot, SubDb } from "./root.js";
 
-const BEST_DATA = "best hash and posterior state root";
+const BEST_BLOCK = "best hash and posterior state root";
 
 // TODO [ToDr] consider having a changeset for transactions,
 // where we store all `insert ++ key ++ value` and `remove ++ key`
@@ -61,20 +61,17 @@ export class LmdbBlocks implements BlocksDb {
     });
   }
 
-  async setBestData(hash: HeaderHash, postState: StateRootHash): Promise<void> {
-    await this.root.db.put(BEST_DATA, BytesBlob.blobFromParts(hash.raw, postState.raw).raw);
+  async setBestHeaderHash(hash: HeaderHash): Promise<void> {
+    await this.root.db.put(BEST_BLOCK, hash.raw);
   }
 
-  getBestData(): [HeaderHash, StateRootHash] {
-    const bestData = this.root.db.get(BEST_DATA);
-    if (bestData === undefined) {
-      return [Bytes.zero(HASH_SIZE).asOpaque(), Bytes.zero(HASH_SIZE).asOpaque()];
+  getBestHeaderHash(): HeaderHash {
+    const bestHeaderHash = this.root.db.get(BEST_BLOCK);
+    if (bestHeaderHash === undefined) {
+      return Bytes.zero(HASH_SIZE).asOpaque();
     }
 
-    return [
-      Bytes.fromBlob(bestData.subarray(0, HASH_SIZE), HASH_SIZE).asOpaque(),
-      Bytes.fromBlob(bestData.subarray(HASH_SIZE), HASH_SIZE).asOpaque(),
-    ];
+    return Bytes.fromBlob(bestHeaderHash, HASH_SIZE).asOpaque();
   }
 
   getHeader(hash: HeaderHash): HeaderView | null {

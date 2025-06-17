@@ -8,38 +8,61 @@ import {
   NodeType,
   type StateKey,
   TRUNCATED_KEY_BITS,
-  TRUNCATED_KEY_BYTES,
-  type TrieHash,
   type TrieNode,
+  type TrieNodeHash,
   type TruncatedStateKey,
+  type ValueHash,
 } from "./nodes.js";
 import { type NodesDb, type TrieHasher, WriteableNodesDb } from "./nodesDb.js";
 
 export class InMemoryTrie {
-  // Exposed for trie-visualiser
-  public readonly nodes: WriteableNodesDb;
-  // TODO [ToDr] Consider using HashDictionary?
-  private readonly flat: Map<string, BytesBlob> = new Map();
-  private root: TrieNode | null = null;
-
+  /** Create an empty in-memory trie. */
   static empty(hasher: TrieHasher): InMemoryTrie {
     return new InMemoryTrie(new WriteableNodesDb(hasher));
   }
 
-  constructor(nodes: WriteableNodesDb) {
-    this.nodes = nodes;
+  /** Given a collection of leaves, compute the state root. */
+  static computeStateRoot(hasher: TrieHasher, leaves: readonly LeafNode[]) {
+    // TODO [ToDr] [opti] Simple loop to just compute the root hash instead of
+    // constructing the entire trie.
+    return InMemoryTrie.fromLeaves(hasher, leaves).getRootHash();
   }
 
-  set(key: InputKey, value: BytesBlob, maybeValueHash?: TrieHash) {
-    const truncatedKey = Bytes.fromBlob(key.raw.subarray(0, TRUNCATED_KEY_BYTES), TRUNCATED_KEY_BYTES);
-    this.flat.set(truncatedKey.toString(), value);
-    const valueHash = maybeValueHash ?? this.nodes.hasher.hashConcat(value.raw);
+  /**
+   * Reconstruct the entire trie from it's leaves.
+   *
+   * Note that if only the state root is needed, this is rather inefficient.
+   */
+  static fromLeaves(hasher: TrieHasher, leaves: readonly LeafNode[]) {
+    // TODO [ToDr] [opti] Pair up the leaves and build upper levels.
+    let root: TrieNode | null = null;
+    const nodes = new WriteableNodesDb(hasher);
+    for (const leaf of leaves) {
+      root = trieInsert(root, nodes, leaf);
+    }
+    return new InMemoryTrie(nodes, root);
+  }
+
+  private constructor(
+    // Exposed for trie-visualiser
+    public readonly nodes: WriteableNodesDb,
+    private root: TrieNode | null = null,
+  ) {}
+
+  set(key: InputKey, value: BytesBlob, maybeValueHash?: ValueHash) {
+    const valueHash = () => maybeValueHash ?? this.nodes.hasher.hashConcat(value.raw).asOpaque();
     const leafNode = LeafNode.fromValue(key, value, valueHash);
     this.root = trieInsert(this.root, this.nodes, leafNode);
+    return leafNode;
   }
 
   remove(_: StateKey) {
-    // TODO [ToDr] implement me.
+    // TODO [ToDr] Trie removal is most likely not needed. If we run into this issue,
+    // we should most likely decide to optimize the code that requires removal.
+    // NOTE: we pretty much NEVER need the full trie at all. We only need to compute the
+    // state root (from time to time), but we can easily just operate on the leafs.
+    // Removal should happen on the leaf level as well. Most likey the whole
+    // `InMemoryTrie` stuff should be eradicated in favor of leaves-operating methods.
     throw new Error("Removing from the trie not implemented yet.");
   }
 
@@ -47,7 +70,7 @@ export class InMemoryTrie {
     return this.root;
   }
 
-  getRootHash(): TrieHash {
+  getRootHash(): TrieNodeHash {
     if (this.root === null) {
       return Bytes.zero(HASH_SIZE).asOpaque();
     }
@@ -83,7 +106,7 @@ function trieInsert(root: TrieNode | null, nodes: WriteableNodesDb, leaf: LeafNo
   //    traversed path from root.
   // 2. We found an empty spot (i.e. branch node with zero hash) - we can just update already
   //    traversed path from root.
-  const nodeToInsert: [TrieNode, TrieHash] =
+  const nodeToInsert: [TrieNode, TrieNodeHash] =
     traversedPath.leafToReplace !== undefined
       ? createSubtreeForBothLeaves(traversedPath, nodes, traversedPath.leafToReplace, leaf)
       : [leaf.node, nodes.insert(leaf.node)];
@@ -114,11 +137,11 @@ function trieInsert(root: TrieNode | null, nodes: WriteableNodesDb, leaf: LeafNo
  */
 class TraversedPath {
   /** history of branch nodes (with their hashes) and the branching bit. */
-  branchingHistory: [BranchNode, TrieHash, boolean][] = [];
+  branchingHistory: [BranchNode, TrieNodeHash, boolean][] = [];
   /** last bitIndex */
   bitIndex = 0;
   /** in case of a leaf node at destination, details of that leaf node */
-  leafToReplace?: [LeafNode, TrieHash];
+  leafToReplace?: [LeafNode, TrieNodeHash];
 }
 
 /**
@@ -170,9 +193,9 @@ function findNodeToReplace(root: TrieNode, nodes: NodesDb, key: TruncatedStateKe
 function createSubtreeForBothLeaves(
   traversedPath: TraversedPath,
   nodes: WriteableNodesDb,
-  leafToReplace: [LeafNode, TrieHash],
+  leafToReplace: [LeafNode, TrieNodeHash],
   leaf: LeafNode,
-): [TrieNode, TrieHash] {
+): [TrieNode, TrieNodeHash] {
   const key = leaf.getKey();
   let [existingLeaf, existingLeafHash] = leafToReplace;
   const existingLeafKey = existingLeaf.getKey();
@@ -181,8 +204,13 @@ function createSubtreeForBothLeaves(
   // better to return a changeset that can be batch-applied to the DB.
   const leafNodeHash = nodes.insert(leaf.node);
   if (existingLeafKey.isEqualTo(key)) {
+    // remove only if we are not inserting the same value twice
+    // we compare values only, since the hashes might have a difference at first
+    // bit.
+    if (!existingLeaf.getValueHash().isEqualTo(leaf.getValueHash())) {
+      nodes.remove(existingLeafHash);
+    }
     // just replacing an existing value
-    nodes.remove(existingLeafHash);
     return [leaf.node, leafNodeHash];
   }
 

@@ -1,35 +1,36 @@
 import { HashDictionary } from "@typeberry/collections";
 import { FIRST_BIT_SET_NEG } from "./masks.js";
-import type { TrieHash, TrieNode } from "./nodes.js";
+import { type LeafNode, NodeType, type TrieNode, type TrieNodeHash } from "./nodes.js";
 
-/**
- * Hasher used for the trie nodes.
- */
+/** Hasher used for the trie nodes. */
 export type TrieHasher = {
-  hashConcat(n: Uint8Array, r?: Uint8Array[]): TrieHash;
+  hashConcat(n: Uint8Array, r?: Uint8Array[]): TrieNodeHash;
 };
 
-/**
- * An abstraction over read-only nodes storage.
- */
+/** An abstraction over read-only nodes storage. */
 export class NodesDb {
-  readonly hasher: TrieHasher;
+  protected readonly nodes: HashDictionary<TrieNodeHash, TrieNode> = HashDictionary.new();
 
-  protected readonly nodes: HashDictionary<TrieHash, TrieNode>;
+  constructor(public readonly hasher: TrieHasher) {}
 
-  constructor(hasher: TrieHasher) {
-    this.hasher = hasher;
-    this.nodes = HashDictionary.new();
-  }
-
-  get(hash: TrieHash): TrieNode | null {
+  get(hash: TrieNodeHash): TrieNode | null {
     return NodesDb.withHashCompat(hash, (key) => {
       return this.nodes.get(key) ?? null;
     });
   }
 
-  hashNode(n: TrieNode): TrieHash {
-    return this.hasher.hashConcat(n.data);
+  hashNode(n: TrieNode): TrieNodeHash {
+    return this.hasher.hashConcat(n.raw);
+  }
+
+  *leaves(): Generator<LeafNode> {
+    // TODO [ToDr] Perhaps we could avoid iterating over all nodes?
+    for (const val of this.nodes.values()) {
+      const nodeType = val.getNodeType();
+      if (nodeType !== NodeType.Branch) {
+        yield val.asLeafNode();
+      }
+    }
   }
 
   /**
@@ -38,9 +39,8 @@ export class NodesDb {
    * Before calling `toString` the first bit is set to 0, to maintain compatibility
    * with branch nodes, which have the left subtree stripped out of the first bit
    * (since it's a branch node identifier).
-   *
    */
-  protected static withHashCompat<T>(hash: TrieHash, exe: (hash: TrieHash) => T): T {
+  protected static withHashCompat<T>(hash: TrieNodeHash, exe: (hash: TrieNodeHash) => T): T {
     const prevValue = hash.raw[0];
     hash.raw[0] &= FIRST_BIT_SET_NEG;
     const returnValue = exe(hash);
@@ -55,13 +55,13 @@ export class NodesDb {
  * A version of `NodesDb` augmented with mutating methods.
  */
 export class WriteableNodesDb extends NodesDb {
-  remove(hash: TrieHash) {
+  remove(hash: TrieNodeHash) {
     return NodesDb.withHashCompat(hash, (key) => {
       this.nodes.delete(key);
     });
   }
 
-  insert(node: TrieNode, hash?: TrieHash): TrieHash {
+  insert(node: TrieNode, hash?: TrieNodeHash): TrieNodeHash {
     const h = hash ?? this.hashNode(node);
     NodesDb.withHashCompat(h, (key) => {
       this.nodes.set(key, node);

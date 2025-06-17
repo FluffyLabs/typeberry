@@ -12,8 +12,7 @@ export type BestBlockParams = NoArgs;
  * ]
  */
 export const bestBlock: RpcMethod<BestBlockParams, [Hash, Slot]> = async (_params, db) => {
-  const [headerHash] = db.blocks.getBestData();
-
+  const headerHash = db.blocks.getBestHeaderHash();
   const header = db.blocks.getHeader(headerHash);
 
   if (header === null) {

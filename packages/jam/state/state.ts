@@ -2,7 +2,9 @@ import type { EntropyHash, PerEpochBlock, PerValidator, ServiceId, TimeSlot } fr
 import type { AUTHORIZATION_QUEUE_SIZE, MAX_AUTH_POOL_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { AuthorizerHash, WorkPackageHash } from "@typeberry/block/work-report.js";
+import type { BytesBlob } from "@typeberry/bytes";
 import type { FixedSizeArray, ImmutableHashSet, KnownSizeArray } from "@typeberry/collections";
+import type { U32 } from "@typeberry/numbers";
 import type { AvailabilityAssignment } from "./assurances.js";
 import type { BlockState } from "./block-state.js";
 import type { PerCore } from "./common.js";
@@ -10,7 +12,7 @@ import type { DisputesRecords } from "./disputes.js";
 import type { NotYetAccumulatedReport } from "./not-yet-accumulated.js";
 import type { PrivilegedServices } from "./privileged-services.js";
 import type { SafroleData } from "./safrole-data.js";
-import type { LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, StorageKey } from "./service.js";
+import type { LookupHistorySlots, ServiceAccountInfo, StorageKey } from "./service.js";
 import type { StatisticsData } from "./statistics.js";
 import type { ValidatorData } from "./validator-data.js";
 
@@ -38,19 +40,15 @@ export type ENTROPY_ENTRIES = typeof ENTROPY_ENTRIES;
 export const MAX_RECENT_HISTORY = 8;
 export type MAX_RECENT_HISTORY = typeof MAX_RECENT_HISTORY;
 
-/**
- * State object with additional ability to enumerate
- * it's services entries.
- */
+/** State with some entries being possible to enumerate. */
 export type EnumerableState = {
   /**
-   * `δ delta`:  In summary, δ is the portion of state dealing with
-   *             services, analogous in Jam to the Yellow Paper’s (
-   *             smart contract) accounts.
+   * Returns recently active `ServiceId`s.
    *
-   * https://graypaper.fluffylabs.dev/#/579bd12/08fb0008ff00
+   * NOTE we don't define exactly what 'recent' means on purpose.
+   * This method only exists to satisfy requirements of RPC services method.
    */
-  serviceIds(): readonly ServiceId[];
+  recentServiceIds(): readonly ServiceId[];
 };
 
 /**
@@ -210,18 +208,21 @@ export type State = {
 
 /** Service details. */
 export interface Service {
+  /** Service id. */
+  readonly serviceId: ServiceId;
+
   /** Retrieve service account info. */
   getInfo(): ServiceAccountInfo;
 
   /** Read one particular storage item. */
-  getStorage(storage: StorageKey): StorageItem | null;
+  getStorage(storage: StorageKey): BytesBlob | null;
 
-  /** Check if preimage is present. */
+  /** Check if preimage is present without retrieving the blob. */
   hasPreimage(hash: PreimageHash): boolean;
 
   /** Retrieve a preimage. */
-  getPreimage(hash: PreimageHash): PreimageItem | null;
+  getPreimage(hash: PreimageHash): BytesBlob | null;
 
   /** Retrieve lookup history of a preimage. */
-  getLookupHistory(hash: PreimageHash): LookupHistoryItem[] | null;
+  getLookupHistory(hash: PreimageHash, len: U32): LookupHistorySlots | null;
 }

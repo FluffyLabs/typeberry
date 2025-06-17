@@ -49,11 +49,11 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
     const blocks = new LmdbBlocks(config.chainSpec, lmdb);
     const states = new LmdbStates(config.chainSpec, lmdb);
     const importer = new Importer(
-      blocks,
-      states,
       config.chainSpec,
       new TransitionHasher(config.chainSpec, await keccakHasher, new SimpleAllocator()),
       logger,
+      blocks,
+      states,
     );
 
     // TODO [ToDr] back pressure?
@@ -61,8 +61,8 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
     const importingQueue = new ImportQueue(config.chainSpec, importer);
 
     worker.onBlock.on(async (block) => {
-      const timeSlot = importingQueue.push(block) ?? tryAsTimeSlot(0);
-      logger.log(`🧊 Got block: #${timeSlot}`);
+      const newBlockSlot = importingQueue.push(block) ?? tryAsTimeSlot(0);
+      logger.log(`🧊 Got block: #${newBlockSlot}`);
 
       if (isProcessing) {
         return;
@@ -75,7 +75,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
           if (entry === undefined) {
             return;
           }
-          const { block, seal } = entry;
+          const { block, seal, timeSlot } = entry;
           const timer = measure("importBlock");
           const maybeBestHeader = await importer.importBlock(block, await seal);
           if (maybeBestHeader.isOk) {
