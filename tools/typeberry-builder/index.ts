@@ -56,11 +56,8 @@ async function createNpmPackage() {
   const rootPkgPath = resolve(relPath, "package.json");
   const rootPkg = JSON.parse(await fs.readFile(rootPkgPath, "utf8"));
 
-  const dbPkgPath = resolve(relPath, "packages/jam/database-lmdb/package.json");
-  const dbPkg = JSON.parse(await fs.readFile(dbPkgPath, "utf8"));
-
-  const jamPkgPath = resolve(relPath, "bin/jam/package.json");
-  const jamPkg = JSON.parse(await fs.readFile(jamPkgPath, "utf8"));
+  const lockPkgPath = resolve(relPath, "package-lock.json");
+  const lockPkg = JSON.parse(await fs.readFile(lockPkgPath, "utf8"));
 
   const version = `${rootPkg.version}-${commitHash}`;
 
@@ -84,8 +81,8 @@ async function createNpmPackage() {
     author: rootPkg.author,
     license: rootPkg.license,
     dependencies: {
-      minimist: jamPkg.dependencies.minist,
-      lmdb: dbPkg.dependencies.lmdb,
+      minimist: lockPkg.packages["node_modules/minimist"],
+      lmdb: lockPkg.packages["node_modules/lmdb"],
     },
     files: ["*.mjs", "*.wasm", "*.txt"],
   };
