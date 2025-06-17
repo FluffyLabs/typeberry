@@ -6,7 +6,10 @@ import type { State } from "@typeberry/state";
  *
  * NOTE: if looking something more sophisticated try `InMemoryState` representation.
  */
-export function copyAndUpdateState<T extends Partial<State>>(preState: T, stateUpdate: Partial<T>): T {
+export function copyAndUpdateState<T extends Partial<State>>(
+  preState: T,
+  stateUpdate: Partial<T>,
+): { [K in keyof T]: T[K] } {
   return {
     ...preState,
     ...stateUpdate,

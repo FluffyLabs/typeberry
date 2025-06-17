@@ -117,14 +117,13 @@ export class WorkPackageExecutor {
       return Result.error(ServiceExecutorError.NoLookup);
     }
 
-    // TODO [ToDr] we should probably store posteriorStateRoots in the blocks db.
-    const state = this.state.getFullState(header.priorStateRoot.materialize());
+    const state = this.state.getState(lookupAnchor);
     if (state === null) {
       return Result.error(ServiceExecutorError.NoState);
     }
 
-    const service = state.services.get(serviceId) ?? null;
-    const serviceCodeHash = service?.data.info.codeHash ?? null;
+    const service = state.getService(serviceId);
+    const serviceCodeHash = service?.getInfo().codeHash ?? null;
     if (serviceCodeHash === null) {
       return Result.error(ServiceExecutorError.NoServiceCode);
     }
@@ -133,8 +132,7 @@ export class WorkPackageExecutor {
       return Result.error(ServiceExecutorError.ServiceCodeMismatch);
     }
 
-    // TODO [ToDr] This should rather be read from preimages db?
-    const serviceCode = service?.data.preimages.get(serviceCodeHash.asOpaque())?.blob ?? null;
+    const serviceCode = service?.getPreimage(serviceCodeHash.asOpaque()) ?? null;
     if (serviceCode === null) {
       return Result.error(ServiceExecutorError.NoServiceCode);
     }

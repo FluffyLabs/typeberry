@@ -6,7 +6,7 @@ export * from "./privileged-services.js";
 export * from "./safrole-data.js";
 export * from "./service.js";
 export * from "./state.js";
-export * from "./state-inmemory.js";
+export * from "./in-memory-state.js";
 export * from "./state-update.js";
 export * from "./statistics.js";
 export * from "./validator-data.js";
