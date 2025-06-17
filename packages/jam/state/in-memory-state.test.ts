@@ -7,6 +7,7 @@ import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE, blake2b } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import { OK, Result, deepEqual } from "@typeberry/utils";
+import { InMemoryState, UpdateError } from "./in-memory-state.js";
 import {
   LookupHistoryItem,
   PreimageItem,
@@ -14,7 +15,6 @@ import {
   StorageItem,
   tryAsLookupHistorySlots,
 } from "./service.js";
-import { InMemoryState, UpdateError } from "./state-inmemory.js";
 import { UpdatePreimageKind, UpdateServiceKind, UpdateStorageKind } from "./state-update.js";
 
 describe("InMemoryState", () => {

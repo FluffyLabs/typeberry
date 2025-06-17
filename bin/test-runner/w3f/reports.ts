@@ -118,7 +118,7 @@ class TestState {
         spec,
       ),
       recentBlocks: asOpaqueType(pre.recent_blocks),
-      services: new Map(pre.accounts.map((x) => [x.id, x])),
+      services: new Map(pre.accounts.map((x) => [x.serviceId, x])),
     });
   }
 }

@@ -24,30 +24,24 @@ export const serviceValue: RpcMethod<ServiceValueParams, [BlobArray] | null> = a
   db,
 ) => {
   const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
-  const stateRoot = db.blocks.getPostStateRoot(hashOpaque);
-
-  if (stateRoot === null) {
-    return null;
-  }
-
-  const state = db.states.getFullState(stateRoot);
+  const state = db.states.getState(hashOpaque);
 
   if (state === null) {
     return null;
   }
 
-  const service = state.services.get(tryAsServiceId(serviceId));
+  const service = state.getService(tryAsServiceId(serviceId));
 
-  if (service === undefined) {
+  if (service === null) {
     return null;
   }
 
   // TODO [ToDr] we should probably hash the blob to get `StateKey` instead.
-  const storageValue = service.data.storage.get(Bytes.fromNumbers(key, HASH_SIZE).asOpaque());
+  const storageValue = service.getStorage(Bytes.fromNumbers(key, HASH_SIZE).asOpaque());
 
-  if (storageValue === undefined) {
+  if (storageValue === null) {
     return null;
   }
 
-  return [[...storageValue.blob.raw]];
+  return [[...storageValue.raw]];
 };

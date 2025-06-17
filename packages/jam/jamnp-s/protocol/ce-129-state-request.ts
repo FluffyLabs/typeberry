@@ -20,7 +20,7 @@ const TRIE_NODE_BYTES = 64;
 export type Key = Bytes<TRUNCATED_KEY_BYTES>;
 
 const trieNodeCodec = codec.bytes(TRIE_NODE_BYTES).convert<TrieNode>(
-  (i) => Bytes.fromBlob(i.data, TRIE_NODE_BYTES),
+  (i) => Bytes.fromBlob(i.raw, TRIE_NODE_BYTES),
   (i) => new TrieNode(i.raw),
 );
 

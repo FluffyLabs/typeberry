@@ -26,23 +26,17 @@ export const serviceData: RpcMethod<ServiceDataParams, [BlobArray] | None | null
   chainSpec,
 ) => {
   const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
-  const stateRoot = db.blocks.getPostStateRoot(hashOpaque);
-
-  if (stateRoot === null) {
-    return null;
-  }
-
-  const state = db.states.getFullState(stateRoot);
+  const state = db.states.getState(hashOpaque);
 
   if (state === null) {
     return null;
   }
 
-  const serviceData = state.services.get(tryAsServiceId(serviceId));
+  const serviceData = state.getService(tryAsServiceId(serviceId));
 
-  if (serviceData === undefined) {
+  if (serviceData === null) {
     return [null];
   }
 
-  return [Array.from(Encoder.encodeObject(ServiceAccountInfo.Codec, serviceData.data.info, chainSpec).raw)];
+  return [Array.from(Encoder.encodeObject(ServiceAccountInfo.Codec, serviceData.getInfo(), chainSpec).raw)];
 };
