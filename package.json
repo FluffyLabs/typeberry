@@ -47,6 +47,7 @@
     "tools/builder",
     "tools/commit-hash",
     "tools/ipc2rpc",
+    "tools/typeberry-builder",
     "workers/block-generator",
     "workers/generic",
     "workers/importer",
@@ -58,7 +59,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "build-binary": "cd tools/typeberry-builder && npm run build",
+    "build-binary": "npm run build -w @typeberry/typeberry-builder",
     "qa": "biome ci && eslint .",
     "qa-fix": "npm run format; npm run lint",
     "format": "biome format --write",
