@@ -23,7 +23,6 @@ async function createDistDirectory() {
   console.info("📁 Created dist/typeberry directory");
 }
 
-// TODO: [MaSo] Handle by webpack if possible
 async function copyWasmFiles() {
   console.info("\n📦 Copying WASM files...");
 
