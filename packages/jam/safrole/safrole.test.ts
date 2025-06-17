@@ -1,27 +1,19 @@
 import assert from "node:assert";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
-import {
-  BANDERSNATCH_KEY_BYTES,
-  BANDERSNATCH_PROOF_BYTES,
-  BANDERSNATCH_RING_ROOT_BYTES,
-  BLS_KEY_BYTES,
-  type EntropyHash,
-  type PerValidator,
-  type WorkReportHash,
-  tryAsTimeSlot,
-} from "@typeberry/block";
+import { type EntropyHash, type PerValidator, type WorkReportHash, tryAsTimeSlot } from "@typeberry/block";
 import { type SignedTicket, type TicketsExtrinsic, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
+import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Ordering } from "@typeberry/ordering";
 import { DisputesRecords, VALIDATOR_META_BYTES, ValidatorData, hashComparator } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysKind } from "@typeberry/state/safrole-data.js";
 import { Result, deepEqual } from "@typeberry/utils";
+import { BANDERSNATCH_PROOF_BYTES, BANDERSNATCH_RING_ROOT_BYTES } from "./bandersnatch-vrf.js";
+import bandersnatchVrf from "./bandersnatch-vrf.js";
 import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
-import bandersnatch from "./bandersnatch.js";
 import { Safrole, SafroleErrorCode, type SafroleState, type SafroleStateUpdate } from "./safrole.js";
 
 const bwasm = BandernsatchWasm.new({ synchronous: true });
@@ -88,7 +80,7 @@ const fakeSealingKeys: SafroleSealingKeys = {
 
 describe("Safrole", () => {
   beforeEach(() => {
-    mock.method(bandersnatch, "verifyTickets", () =>
+    mock.method(bandersnatchVrf, "verifyTickets", () =>
       Promise.resolve([
         { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
         { isValid: true, entropyHash: Bytes.fill(HASH_SIZE, 1) },
@@ -168,7 +160,7 @@ describe("Safrole", () => {
   });
 
   it("should return bad ticket proof error", async () => {
-    mock.method(bandersnatch, "verifyTickets", () =>
+    mock.method(bandersnatchVrf, "verifyTickets", () =>
       Promise.resolve([{ isValid: false, entropyHash: Bytes.zero(HASH_SIZE) }]),
     );
     const state: SafroleState = {
@@ -216,7 +208,7 @@ describe("Safrole", () => {
   });
 
   it("should return duplicated ticket error", async () => {
-    mock.method(bandersnatch, "verifyTickets", () =>
+    mock.method(bandersnatchVrf, "verifyTickets", () =>
       Promise.resolve([
         { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
         { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },
@@ -271,7 +263,7 @@ describe("Safrole", () => {
   });
 
   it("should return bad ticket order error", async () => {
-    mock.method(bandersnatch, "verifyTickets", () =>
+    mock.method(bandersnatchVrf, "verifyTickets", () =>
       Promise.resolve([
         { isValid: true, entropyHash: Bytes.fill(HASH_SIZE, 1) },
         { isValid: true, entropyHash: Bytes.zero(HASH_SIZE) },

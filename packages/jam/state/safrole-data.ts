@@ -1,19 +1,12 @@
-import {
-  BANDERSNATCH_KEY_BYTES,
-  BANDERSNATCH_RING_ROOT_BYTES,
-  type BandersnatchKey,
-  type BandersnatchRingRoot,
-  type PerEpochBlock,
-  type PerValidator,
-  codecPerValidator,
-  tryAsPerEpochBlock,
-} from "@typeberry/block";
+import { type PerEpochBlock, type PerValidator, codecPerValidator, tryAsPerEpochBlock } from "@typeberry/block";
 import { codecWithContext } from "@typeberry/block/codec.js";
 import { Ticket } from "@typeberry/block/tickets.js";
 import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
 import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
+import { BANDERSNATCH_KEY_BYTES, type BandersnatchKey } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
+import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/safrole/bandersnatch-vrf.js";
 import { WithDebug, seeThrough } from "@typeberry/utils";
 import { ValidatorData } from "./validator-data.js";
 

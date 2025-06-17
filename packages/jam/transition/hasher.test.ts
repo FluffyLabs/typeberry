@@ -1,7 +1,6 @@
 import { describe, it } from "node:test";
 
 import {
-  BANDERSNATCH_PROOF_BYTES,
   Extrinsic,
   type ExtrinsicHash,
   tryAsCoreIndex,
@@ -22,6 +21,7 @@ import { tinyChainSpec } from "@typeberry/config";
 import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE, SimpleAllocator, keccak } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
+import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/safrole";
 import { asOpaqueType, deepEqual } from "@typeberry/utils";
 import { TransitionHasher } from "./hasher.js";
 
