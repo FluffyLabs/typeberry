@@ -1,19 +1,18 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import {
-  BANDERSNATCH_KEY_BYTES,
-  BLS_KEY_BYTES,
-  tryAsEpoch,
-  tryAsPerValidator,
-  tryAsTimeSlot,
-  tryAsValidatorIndex,
-} from "@typeberry/block";
+import { tryAsEpoch, tryAsPerValidator, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import { Culprit, DisputesExtrinsic, Fault, Judgement, Verdict } from "@typeberry/block/disputes.js";
 import { Bytes } from "@typeberry/bytes";
 import { SortedSet, asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
-import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Key } from "@typeberry/crypto";
+import {
+  BANDERSNATCH_KEY_BYTES,
+  BLS_KEY_BYTES,
+  ED25519_KEY_BYTES,
+  ED25519_SIGNATURE_BYTES,
+  type Ed25519Key,
+} from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { DisputesRecords, VALIDATOR_META_BYTES, ValidatorData, hashComparator, tryAsPerCore } from "@typeberry/state";
 import { DisputesErrorCode } from "./disputes-error-code.js";

@@ -1,6 +1,4 @@
 import {
-  type BandersnatchKey,
-  type BandersnatchVrfSignature,
   type EntropyHash,
   EpochMarker,
   type ExtrinsicHash,
@@ -15,8 +13,9 @@ import {
 import { Ticket } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
 import type { KnownSizeArray } from "@typeberry/collections";
-import type { Ed25519Key } from "@typeberry/crypto";
+import type { BandersnatchKey, Ed25519Key } from "@typeberry/crypto";
 import { json } from "@typeberry/json-parser";
+import type { BandersnatchVrfSignature } from "@typeberry/safrole";
 import { fromJson } from "./common.js";
 
 const bandersnatchVrfSignature = json.fromString((v) => Bytes.parseBytes(v, 96).asOpaque<BandersnatchVrfSignature>());

@@ -3,9 +3,9 @@ import { type CodecRecord, codec } from "@typeberry/codec";
 import type { KnownSizeArray } from "@typeberry/collections";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U8, tryAsU8 } from "@typeberry/numbers";
+import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "@typeberry/safrole/bandersnatch-vrf.js";
 import { type Opaque, WithDebug, asOpaqueType } from "@typeberry/utils";
 import { codecKnownSizeArray } from "./codec.js";
-import { BANDERSNATCH_PROOF_BYTES, type BandersnatchProof } from "./crypto.js";
 
 /**
  * The index of a ticket entry per validator.
