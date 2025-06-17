@@ -13,7 +13,7 @@ export interface ExtensionApi {
 
 export function startExtension(api: ExtensionApi) {
   const announcements = new EventEmitter();
-  let bestBlock = null as up0.HashAndSlot | null;
+  let bestBlock: up0.HashAndSlot | null = null;
 
   api.bestHeader.on((headerWithHash) => {
     const header = headerWithHash.data.materialize();

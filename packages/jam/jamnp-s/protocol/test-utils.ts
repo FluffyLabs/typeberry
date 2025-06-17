@@ -1,6 +1,13 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import type { OK } from "@typeberry/utils";
-import type { StreamHandler, StreamId, StreamKind, StreamManager, StreamMessageSender } from "./stream.js";
+import {
+  type StreamHandler,
+  type StreamId,
+  type StreamKind,
+  type StreamManager,
+  type StreamMessageSender,
+  tryAsStreamId,
+} from "./stream.js";
 
 export class TestStreamSender implements StreamMessageSender {
   public readonly onSend: (data: BytesBlob) => void;
@@ -78,7 +85,7 @@ export class TestMessageHandler implements StreamManager {
     kind: TStreamKind,
     work: (handler: THandler, sender: StreamMessageSender) => OK,
   ): void {
-    const getRandomStreamId = () => Math.floor(Math.random() * 2 ** 16) as StreamId;
+    const getRandomStreamId = () => tryAsStreamId(Math.floor(Math.random() * 2 ** 16));
     const streams = this.openStreams;
     const streamId = (function findStreamId() {
       const s = getRandomStreamId();
