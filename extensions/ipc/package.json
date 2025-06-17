@@ -7,13 +7,10 @@
     "@typeberry/block": "0.0.1",
     "@typeberry/bytes": "0.0.1",
     "@typeberry/codec": "0.0.1",
-    "@typeberry/collections": "^0.0.1",
-    "@typeberry/config": "0.0.1",
-    "@typeberry/crypto": "0.0.1",
     "@typeberry/hash": "0.0.1",
+    "@typeberry/jamnp-s": "0.0.1",
     "@typeberry/logger": "0.0.1",
-    "@typeberry/numbers": "0.0.1",
-    "@typeberry/utils": "0.0.1"
+    "@typeberry/numbers": "0.0.1"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
