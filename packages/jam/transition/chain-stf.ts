@@ -268,6 +268,7 @@ export class OnChain {
       preimages: preimages.concat(accumulatePreimages),
       disputesRecords,
       availabilityAssignment: mergeAvailabilityAssignments(
+        this.state.availabilityAssignment,
         reportsAvailAssignment,
         disputesAvailAssignment,
         assurancesAvailAssignment,
@@ -308,18 +309,32 @@ type AvailAssignment = State["availabilityAssignment"];
  * we need to merge the results.
  *
  * NOTE: both `Disputes` and `Assurances` will clear out the availability assignment.
- *       reports however will assign new reports to cores.
+ *       reports however will assign new reports to cores. All modules start from
+ *       `initialAvailAssigment` and return a new assignment. To merge it we have to
+ *       figure out what each module changed and build a new assignment.
  */
-function mergeAvailabilityAssignments(
+export function mergeAvailabilityAssignments(
+  initialAvailAssigment: AvailAssignment,
   reportsAvailAssignment: AvailAssignment,
   disputesAvailAssignment: AvailAssignment,
   assurancesAvailAssignment: AvailAssignment,
 ) {
-  const newAssignments = reportsAvailAssignment.slice();
+  const newAssignments = initialAvailAssigment.slice();
 
   for (const core of reportsAvailAssignment.keys()) {
-    if (disputesAvailAssignment[core] === null || assurancesAvailAssignment[core] === null) {
+    if (disputesAvailAssignment[core] === null && initialAvailAssigment[core] !== null) {
       newAssignments[core] = null;
+    }
+
+    if (assurancesAvailAssignment[core] === null && initialAvailAssigment[core] !== null) {
+      newAssignments[core] = null;
+    }
+
+    if (
+      reportsAvailAssignment[core] !== null &&
+      reportsAvailAssignment[core].workReport.hash !== initialAvailAssigment[core]?.workReport.hash
+    ) {
+      newAssignments[core] = reportsAvailAssignment[core];
     }
   }
 
