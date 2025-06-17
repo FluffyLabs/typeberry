@@ -1,18 +1,15 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import {
-  BANDERSNATCH_KEY_BYTES,
-  BANDERSNATCH_PROOF_BYTES,
-  BANDERSNATCH_RING_ROOT_BYTES,
-  tryAsValidatorIndex,
-} from "@typeberry/block";
+import { tryAsValidatorIndex } from "@typeberry/block";
 import { type SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { asKnownSize } from "@typeberry/collections";
+import { BANDERSNATCH_KEY_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
+import { BANDERSNATCH_PROOF_BYTES, BANDERSNATCH_RING_ROOT_BYTES } from "./bandersnatch-vrf.js";
+import bandersnatchVrf from "./bandersnatch-vrf.js";
 import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
-import bandersnatch from "./bandersnatch.js";
 
 const bandersnatchWasm = BandernsatchWasm.new({ synchronous: true });
 
@@ -32,7 +29,7 @@ describe("Bandersnatch verification", () => {
     );
 
     it("should return commitment", async () => {
-      const result = await bandersnatch.getRingCommitment(await bandersnatchWasm, bandersnatchKeys);
+      const result = await bandersnatchVrf.getRingCommitment(await bandersnatchWasm, bandersnatchKeys);
       const expectedCommitment = Bytes.parseBytes(
         "0x8387a131593447e4e1c3d4e220c322e42d33207fa77cd0fedb39fc3491479ca47a2d82295252e278fa3eec78185982ed82ae0c8fd691335e703d663fb5be02b3def15380789320636b2479beab5a03ccb3f0909ffea59d859fcdc7e187e45a8c92e630ae2b14e758ab0960e372172203f4c9a41777dadd529971d7ab9d23ab29fe0e9c85ec450505dde7f5ac038274cf",
         BANDERSNATCH_RING_ROOT_BYTES,
@@ -90,7 +87,7 @@ describe("Bandersnatch verification", () => {
         "0x3a5d10abc80dda33fe3f40b3bb2e3eefd3e97dda3d617a860c9d94eb70b832ad",
       ].map((x) => Bytes.parseBytes(x, HASH_SIZE));
 
-      const result = await bandersnatch.verifyTickets(await bandersnatchWasm, bandersnatchKeys, tickets, entropy);
+      const result = await bandersnatchVrf.verifyTickets(await bandersnatchWasm, bandersnatchKeys, tickets, entropy);
 
       assert.strictEqual(
         result.every((x) => x.isValid),
@@ -137,7 +134,7 @@ describe("Bandersnatch verification", () => {
         "0x3a5d10abc80dda33fe3f40b3bb2e3eefd3e97dda3d617a860c9d94eb70b832ad",
       ].map((x) => Bytes.parseBytes(x, HASH_SIZE));
 
-      const result = await bandersnatch.verifyTickets(await bandersnatchWasm, bandersnatchKeys, tickets, entropy);
+      const result = await bandersnatchVrf.verifyTickets(await bandersnatchWasm, bandersnatchKeys, tickets, entropy);
 
       assert.deepStrictEqual(
         result.map((x) => x.isValid),

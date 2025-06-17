@@ -1,6 +1,4 @@
 import {
-  BANDERSNATCH_KEY_BYTES,
-  type BandersnatchKey,
   type EntropyHash,
   EpochMarker,
   type PerEpochBlock,
@@ -14,14 +12,14 @@ import { Bytes, bytesBlobComparator } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { ED25519_KEY_BYTES } from "@typeberry/crypto";
+import { BANDERSNATCH_KEY_BYTES, type BandersnatchKey, ED25519_KEY_BYTES } from "@typeberry/crypto";
 import { blake2b } from "@typeberry/hash";
 import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";
 import { type SafroleSealingKeys, SafroleSealingKeysData } from "@typeberry/state/safrole-data.js";
 import { Result, asOpaqueType } from "@typeberry/utils";
+import bandersnatchVrf from "./bandersnatch-vrf.js";
 import { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
-import bandersnatch from "./bandersnatch.js";
 import type { SafroleSealState } from "./safrole-seal.js";
 
 export const VALIDATOR_META_BYTES = 128;
@@ -191,7 +189,7 @@ export class Safrole {
     );
 
     const { nextValidatorData, currentValidatorData } = this.state;
-    const epochRootResult = await bandersnatch.getRingCommitment(
+    const epochRootResult = await bandersnatchVrf.getRingCommitment(
       await this.bandersnatch,
       newNextValidators.map((x) => x.bandersnatch),
     );
@@ -343,7 +341,7 @@ export class Safrole {
     const verificationResult =
       extrinsic.length === 0
         ? []
-        : await bandersnatch.verifyTickets(
+        : await bandersnatchVrf.verifyTickets(
             await this.bandersnatch,
             validators.map((x) => x.bandersnatch),
             extrinsic,

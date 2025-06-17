@@ -4,8 +4,8 @@ import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
+import { BANDERSNATCH_VRF_SIGNATURE_BYTES } from "@typeberry/safrole/bandersnatch-vrf.js";
 import { tryAsTimeSlot, tryAsValidatorIndex } from "./common.js";
-import { BANDERSNATCH_VRF_SIGNATURE_BYTES } from "./crypto.js";
 import { Header, encodeUnsealedHeader } from "./header.js";
 
 describe("Header", () => {

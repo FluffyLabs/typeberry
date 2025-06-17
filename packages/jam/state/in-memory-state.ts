@@ -1,8 +1,4 @@
 import {
-  BANDERSNATCH_KEY_BYTES,
-  BANDERSNATCH_RING_ROOT_BYTES,
-  BLS_KEY_BYTES,
-  type BandersnatchRingRoot,
   type EntropyHash,
   type PerEpochBlock,
   type PerValidator,
@@ -30,9 +26,10 @@ import {
   asKnownSize,
 } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
+import { BANDERSNATCH_KEY_BYTES, BLS_KEY_BYTES, ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
+import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/safrole/bandersnatch-vrf.js";
 import { OK, Result, WithDebug, assertNever, check } from "@typeberry/utils";
 import type { AvailabilityAssignment } from "./assurances.js";
 import type { BlockState } from "./block-state.js";
