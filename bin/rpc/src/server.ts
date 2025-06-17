@@ -101,10 +101,10 @@ export class RpcServer {
         clearInterval(pingInterval);
       });
 
-      ws.on("message", async (data: Buffer) => {
+      ws.on("message", async (data: string) => {
         let rawRequest: unknown;
         try {
-          rawRequest = JSON.parse(data.toString());
+          rawRequest = JSON.parse(data);
         } catch {
           ws.send(JSON.stringify(createErrorResponse(new RpcError(-32700, "Parse error"), null)));
           return;
@@ -157,7 +157,10 @@ export class RpcServer {
     if (notificationParseResult.success === true) {
       try {
         await this.fulfillRequest(notificationParseResult.data, ws);
-      } catch {} // no response for notifications
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : "Unknown error";
+        this.logger.error(`Notification ${JSON.stringify(notificationParseResult.data)} caused an error: ${msg}`);
+      }
 
       return null;
     }
