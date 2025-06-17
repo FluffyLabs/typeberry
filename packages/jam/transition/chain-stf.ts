@@ -322,18 +322,12 @@ export function mergeAvailabilityAssignments(
   const newAssignments = initialAvailAssigment.slice();
 
   for (const core of reportsAvailAssignment.keys()) {
-    if (disputesAvailAssignment[core] === null && initialAvailAssigment[core] !== null) {
+    if (disputesAvailAssignment[core] === null  || assurancesAvailAssignment[core] === null) {
       newAssignments[core] = null;
     }
-
-    if (assurancesAvailAssignment[core] === null && initialAvailAssigment[core] !== null) {
-      newAssignments[core] = null;
-    }
-
-    if (
-      reportsAvailAssignment[core] !== null &&
-      reportsAvailAssignment[core].workReport.hash !== initialAvailAssigment[core]?.workReport.hash
-    ) {
+    // override with new report, but only if it's actually changed (otherwise it will
+    // restore reports removed by disputes or assurances).
+    if (reportsAvailAssignment[core] !== null && initialAvailAssigment[core] !== reportsAvailAssignment[core]) {
       newAssignments[core] = reportsAvailAssignment[core];
     }
   }
