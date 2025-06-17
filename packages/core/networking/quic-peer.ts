@@ -41,7 +41,7 @@ export class QuicPeer implements Peer {
     });
   }
 
-  addOnStreamOpen(streamCallback: StreamCallback): void {
+  addOnStreamOpen(streamCallback: StreamCallback<QUICStream>): void {
     this.streamEvents.on("stream", streamCallback);
   }
 

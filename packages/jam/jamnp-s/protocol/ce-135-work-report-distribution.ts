@@ -8,8 +8,7 @@ import type { KnownSizeArray } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
-import type { StreamHandler, StreamSender } from "../handler.js";
-import type { StreamKind } from "./stream.js";
+import { type StreamHandler, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
  * JAMNP-S CE 135 Stream
@@ -19,7 +18,7 @@ import type { StreamKind } from "./stream.js";
  * https://github.com/zdave-parity/jam-np/blob/main/simple.md#ce-135-work-report-distribution
  */
 
-export const STREAM_KIND = 135 as StreamKind;
+export const STREAM_KIND = tryAsStreamKind(135);
 
 export class GuaranteedWorkReport extends WithDebug {
   static Codec = codec.Class(GuaranteedWorkReport, {
@@ -57,7 +56,7 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
     private readonly onWorkReport: (workReport: GuaranteedWorkReport) => void,
   ) {}
 
-  onStreamMessage(sender: StreamSender, message: BytesBlob): void {
+  onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
     const guaranteedWorkReport = Decoder.decodeObject(GuaranteedWorkReport.Codec, message, this.chainSpec);
     logger.log(`[${sender.streamId}] Received guaranteed work report.`);
     this.onWorkReport(guaranteedWorkReport);
@@ -72,16 +71,16 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
 
   constructor(private readonly chainSpec: ChainSpec) {}
 
-  onStreamMessage(sender: StreamSender): void {
+  onStreamMessage(sender: StreamMessageSender): void {
     logger.warn(`[${sender.streamId}] Got unexpected message on CE-135 stream. Closing.`);
     sender.close();
   }
 
   onClose(): void {}
 
-  sendWorkReport(sender: StreamSender, workReport: GuaranteedWorkReport) {
+  sendWorkReport(sender: StreamMessageSender, workReport: GuaranteedWorkReport) {
     logger.trace(`[${sender.streamId}] Sending guaranteed work report.`);
-    sender.send(Encoder.encodeObject(GuaranteedWorkReport.Codec, workReport, this.chainSpec));
+    sender.bufferAndSend(Encoder.encodeObject(GuaranteedWorkReport.Codec, workReport, this.chainSpec));
     sender.close();
   }
 }

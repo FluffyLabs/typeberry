@@ -1,0 +1,13 @@
+{
+  "name": "@typeberry/jamnp-s",
+  "version": "0.0.1",
+  "description": "JAM Networking Protocol - Simple",
+  "license": "MPL-2.0",
+  "author": "Fluffy Labs",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "devDependencies": {}
+}

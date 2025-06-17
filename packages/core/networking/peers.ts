@@ -13,6 +13,8 @@ export type PeerAddress = {
 
 /** Communication stream. */
 export interface Stream extends ReadableWritablePair<Uint8Array, Uint8Array> {
+  /** Unique stream identifier. */
+  streamId: number;
   destroy(): Promise<void>;
 }
 
@@ -44,7 +46,7 @@ export interface Peer {
  * that any asynchronous work has to be handled separately
  * with all possible exceptions handled.
  */
-export type StreamCallback = (onPeer: Stream) => OK;
+export type StreamCallback<S extends Stream = Stream> = (onPeer: S) => OK;
 /**
  * Function called when a new peer is connected or disconnected.
  *

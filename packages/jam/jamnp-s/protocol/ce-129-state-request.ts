@@ -4,10 +4,9 @@ import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
-import { TrieNode } from "@typeberry/trie/nodes.js";
+import { TRUNCATED_KEY_BYTES, TrieNode } from "@typeberry/trie/nodes.js";
 import { WithDebug } from "@typeberry/utils";
-import type { StreamHandler, StreamSender } from "../handler.js";
-import type { StreamId, StreamKind } from "./stream.js";
+import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
  * JAM-SNP CE-129 stream.
@@ -15,18 +14,19 @@ import type { StreamId, StreamKind } from "./stream.js";
  * https://github.com/zdave-parity/jam-np/blob/main/simple.md#ce-129-state-request
  */
 
-export const STREAM_KIND = 129 as StreamKind;
-export const KEY_SIZE = 31;
-export type KEY_SIZE = typeof KEY_SIZE;
+export const STREAM_KIND = tryAsStreamKind(129);
+const TRIE_NODE_BYTES = 64;
 
-const trieNodeCodec = codec.bytes<64>(64).convert<TrieNode>(
-  (i) => Bytes.fromBlob(i.data, 64),
+export type Key = Bytes<TRUNCATED_KEY_BYTES>;
+
+const trieNodeCodec = codec.bytes(TRIE_NODE_BYTES).convert<TrieNode>(
+  (i) => Bytes.fromBlob(i.data, TRIE_NODE_BYTES),
   (i) => new TrieNode(i.raw),
 );
 
 export class KeyValuePair extends WithDebug {
   static Codec = codec.Class(KeyValuePair, {
-    key: codec.bytes(KEY_SIZE),
+    key: codec.bytes(TRUNCATED_KEY_BYTES),
     value: codec.blob,
   });
 
@@ -35,7 +35,7 @@ export class KeyValuePair extends WithDebug {
   }
 
   constructor(
-    public readonly key: Bytes<KEY_SIZE>,
+    public readonly key: Key,
     public readonly value: BytesBlob,
   ) {
     super();
@@ -59,8 +59,8 @@ export class StateResponse extends WithDebug {
 export class StateRequest extends WithDebug {
   static Codec = codec.Class(StateRequest, {
     headerHash: codec.bytes(HASH_SIZE).asOpaque<HeaderHash>(),
-    startKey: codec.bytes(KEY_SIZE),
-    endKey: codec.bytes(KEY_SIZE),
+    startKey: codec.bytes(TRUNCATED_KEY_BYTES),
+    endKey: codec.bytes(TRUNCATED_KEY_BYTES),
     maximumSize: codec.u32,
   });
 
@@ -70,8 +70,8 @@ export class StateRequest extends WithDebug {
 
   private constructor(
     public readonly headerHash: HeaderHash,
-    public readonly startKey: Bytes<KEY_SIZE>,
-    public readonly endKey: Bytes<KEY_SIZE>,
+    public readonly startKey: Key,
+    public readonly endKey: Key,
     public readonly maximumSize: U32,
   ) {
     super();
@@ -88,23 +88,15 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
 
   constructor(
     private readonly isServer: boolean = false,
-    private readonly getBoundaryNodes?: (
-      hash: HeaderHash,
-      startKey: Bytes<KEY_SIZE>,
-      endKey: Bytes<KEY_SIZE>,
-    ) => TrieNode[],
-    private readonly getKeyValuePairs?: (
-      hash: HeaderHash,
-      startKey: Bytes<KEY_SIZE>,
-      endKey: Bytes<KEY_SIZE>,
-    ) => KeyValuePair[],
+    private readonly getBoundaryNodes?: (hash: HeaderHash, startKey: Key, endKey: Key) => TrieNode[],
+    private readonly getKeyValuePairs?: (hash: HeaderHash, startKey: Key, endKey: Key) => KeyValuePair[],
   ) {
     if (isServer && (getBoundaryNodes === undefined || getKeyValuePairs === undefined)) {
       throw new Error("getBoundaryNodes and getKeyValuePairs are required in server mode.");
     }
   }
 
-  onStreamMessage(sender: StreamSender, message: BytesBlob): void {
+  onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
     if (this.isServer) {
       logger.info(`[${sender.streamId}][server]: Received request.`);
 
@@ -116,8 +108,8 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
       const keyValuePairs = this.getKeyValuePairs(request.headerHash, request.startKey, request.endKey);
 
       logger.info(`[${sender.streamId}][server]: <-- responding with boundary nodes and key value pairs.`);
-      sender.send(Encoder.encodeObject(codec.sequenceVarLen(trieNodeCodec), boundaryNodes));
-      sender.send(Encoder.encodeObject(StateResponse.Codec, StateResponse.create({ keyValuePairs })));
+      sender.bufferAndSend(Encoder.encodeObject(codec.sequenceVarLen(trieNodeCodec), boundaryNodes));
+      sender.bufferAndSend(Encoder.encodeObject(StateResponse.Codec, StateResponse.create({ keyValuePairs })));
       sender.close();
 
       return;
@@ -139,7 +131,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
   }
 
   getStateByKey(
-    sender: StreamSender,
+    sender: StreamMessageSender,
     headerHash: HeaderHash,
     startKey: StateRequest["startKey"],
     onResponse: (state: StateResponse) => void,
@@ -148,7 +140,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
       throw new Error("It is disallowed to use the same stream for multiple requests.");
     }
     this.onResponse.set(sender.streamId, onResponse);
-    sender.send(
+    sender.bufferAndSend(
       Encoder.encodeObject(
         StateRequest.Codec,
         StateRequest.create({ headerHash, startKey, endKey: startKey, maximumSize: tryAsU32(4096) }),
