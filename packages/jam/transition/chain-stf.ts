@@ -322,7 +322,7 @@ export function mergeAvailabilityAssignments(
   const newAssignments = initialAvailAssigment.slice();
 
   for (const core of reportsAvailAssignment.keys()) {
-    if (disputesAvailAssignment[core] === null  || assurancesAvailAssignment[core] === null) {
+    if (disputesAvailAssignment[core] === null || assurancesAvailAssignment[core] === null) {
       newAssignments[core] = null;
     }
     // override with new report, but only if it's actually changed (otherwise it will
