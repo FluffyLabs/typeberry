@@ -17,8 +17,7 @@ import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
 import { HASH_SIZE, SimpleAllocator } from "@typeberry/hash";
 import type { KeccakHasher } from "@typeberry/hash/keccak.js";
-import type { InMemoryState } from "@typeberry/state";
-import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
+import type { State } from "@typeberry/state";
 import { TransitionHasher } from "@typeberry/transition";
 import { asOpaqueType } from "@typeberry/utils";
 
@@ -26,7 +25,7 @@ export class Generator {
   private readonly hashAllocator = new SimpleAllocator();
   private lastHeaderHash: HeaderHash;
   private lastHeader: Header;
-  private lastState: InMemoryState;
+  private lastState: State;
 
   constructor(
     public readonly chainSpec: ChainSpec,
@@ -48,14 +47,14 @@ export class Generator {
   }
 
   private static getLastHeaderAndState(blocks: BlocksDb, states: StatesDb) {
-    const [headerHash, stateRoot] = blocks.getBestData();
+    const headerHash = blocks.getBestHeaderHash();
     const lastHeader = blocks.getHeader(headerHash)?.materialize() ?? null;
-    const lastState = states.getFullState(stateRoot);
+    const lastState = states.getState(headerHash);
     if (lastHeader === null) {
       throw new Error(`Missing best header: ${headerHash}! Make sure DB is initialized.`);
     }
     if (lastState === null) {
-      throw new Error(`Missing last state: ${stateRoot}! Make sure DB is initialized.`);
+      throw new Error(`Missing last state at ${headerHash}! Make sure DB is initialized.`);
     }
     return {
       lastHeaderHash: headerHash,
@@ -80,7 +79,7 @@ export class Generator {
 
     const hasher = new TransitionHasher(this.chainSpec, this.keccakHasher, this.hashAllocator);
     const parentHeaderHash = this.lastHeaderHash;
-    const stateRoot = merkelizeState(serializeState(this.lastState, this.chainSpec));
+    const stateRoot = this.states.getStateRoot(this.lastState);
 
     const extrinsic = Extrinsic.create({
       tickets: asOpaqueType([]),
@@ -132,7 +131,7 @@ export class Generator {
 
     const header = Header.create({
       parentHeaderHash,
-      priorStateRoot: stateRoot,
+      priorStateRoot: await stateRoot,
       extrinsicHash,
       timeSlotIndex: tryAsTimeSlot(newTimeSlot),
       epochMarker: null,

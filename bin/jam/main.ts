@@ -12,7 +12,7 @@ import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import * as blockImporter from "@typeberry/importer";
 import type { MainReady } from "@typeberry/importer/state-machine.js";
 import type { MessageChannelStateMachine } from "@typeberry/state-machine";
-import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
+import { StateEntries } from "@typeberry/state-merkleization";
 import { type Arguments, Command, KnownChainSpec } from "./args.js";
 import { startBlockGenerator } from "./author.js";
 import { initializeExtensions } from "./extensions.js";
@@ -20,6 +20,11 @@ import { loadGenesis, loadGenesisBlock } from "./genesis.js";
 import { startBlocksReader } from "./reader.js";
 
 const logger = Logger.new(import.meta.filename, "jam");
+
+export enum DatabaseKind {
+  InMemory = 0,
+  Lmdb = 1,
+}
 
 /** General options. */
 type Options = {
@@ -172,12 +177,13 @@ async function initializeDatabase(
   const blocks = new LmdbBlocks(spec, rootDb);
   const states = new LmdbStates(spec, rootDb);
 
-  const [header, state] = blocks.getBestData();
+  const header = blocks.getBestHeaderHash();
+  const state = blocks.getPostStateRoot(header);
   logger.log(`🛢️ Best header hash: ${header}`);
   logger.log(`🛢️ Best state root: ${state}`);
 
   // DB seems already initialized, just go with what we have.
-  if (!state.isEqualTo(Bytes.zero(HASH_SIZE)) && !header.isEqualTo(Bytes.zero(HASH_SIZE))) {
+  if (state !== null && !state.isEqualTo(Bytes.zero(HASH_SIZE)) && !header.isEqualTo(Bytes.zero(HASH_SIZE))) {
     await rootDb.db.close();
     return dbPath;
   }
@@ -189,7 +195,7 @@ async function initializeDatabase(
     );
   }
 
-  const { genesisState, genesisStateRootHash } = maybeGenesis;
+  const { genesisStateSerialized, genesisStateRootHash } = maybeGenesis;
 
   logger.log("🛢️ Database looks fresh. Initializing.");
   // looks like a fresh db, initialize the state.
@@ -205,9 +211,9 @@ async function initializeDatabase(
 
   // write to db
   await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(genesisHeaderHash, blockView));
-  await states.insertFullState(genesisStateRootHash, genesisState);
+  await states.insertState(genesisHeaderHash, genesisStateSerialized);
   await blocks.setPostStateRoot(genesisHeaderHash, genesisStateRootHash);
-  await blocks.setBestData(genesisHeaderHash, genesisStateRootHash);
+  await blocks.setBestHeaderHash(genesisHeaderHash);
 
   // close the DB
   await rootDb.db.close();
@@ -231,7 +237,8 @@ function loadAndCheckGenesisIfProvided(spec: ChainSpec, expectedRootHash: StateR
 
   logger.log(`🧬 Loading genesis state from ${genesisPath}`);
   const genesisState = loadGenesis(spec, genesisPath);
-  const genesisStateRootHash = merkelizeState(serializeState(genesisState, spec));
+  const genesisStateSerialized = StateEntries.serializeInMemory(spec, genesisState);
+  const genesisStateRootHash = genesisStateSerialized.getRootHash();
   logger.info(`🧬 Genesis state root: ${genesisStateRootHash}`);
 
   // mismatch between expected state root and the one loaded.
@@ -243,6 +250,7 @@ function loadAndCheckGenesisIfProvided(spec: ChainSpec, expectedRootHash: StateR
 
   return {
     genesisState,
+    genesisStateSerialized,
     genesisStateRootHash,
   };
 }

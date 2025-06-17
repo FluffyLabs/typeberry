@@ -19,19 +19,13 @@ export type ListServicesParams = z.infer<typeof ListServicesParams>;
  */
 export const listServices: RpcMethod<ListServicesParams, [ServiceId[]]> = async ([headerHash], db) => {
   const hashOpaque: HeaderHash = Bytes.fromNumbers(headerHash, HASH_SIZE).asOpaque();
-  const stateRoot = db.blocks.getPostStateRoot(hashOpaque);
-
-  if (stateRoot === null) {
-    throw new Error("State root not found for the given header hash.");
-  }
-
-  const state = db.states.getFullState(stateRoot);
+  const state = db.states.getState(hashOpaque);
 
   if (state === null) {
     throw new Error("State not found the given state root.");
   }
 
-  const serviceIds = state.services.keys();
+  const serviceIds = state.recentServiceIds();
 
   return [[...serviceIds]];
 };
