@@ -1,9 +1,11 @@
 import * as fs from "node:fs/promises";
 import type { PushEvent } from "@octokit/webhooks-types";
-// @ts-ignore ECMAScript module being incompatible with CommonJS.
-import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
+import { ksm } from "@polkadot-api/descriptors";
+import { createClient, Binary } from "polkadot-api";
+import { getWsProvider } from "polkadot-api/ws-provider/web";
+import { getPolkadotSigner } from "polkadot-api/signer";
+import { sr25519Sign, sr25519PairFromSeed, cryptoWaitReady } from "@polkadot/util-crypto";
 import { Logger } from "@typeberry/logger";
-
 const logger = Logger.new(import.meta.filename, "commit-hash");
 
 type TransactionPayload = [
@@ -111,50 +113,41 @@ async function main() {
     previousBlockHash,
   ];
 
-  const wsProvider = new WsProvider("wss://kusama-asset-hub-rpc.polkadot.io");
-  const api = await ApiPromise.create({ provider: wsProvider });
+  await cryptoWaitReady();
 
-  const keyring = new Keyring({ type: "sr25519" });
-  const pair = keyring.addFromUri(AUTH);
+  const client = createClient(getWsProvider("wss://kusama-asset-hub-rpc.polkadot.io"));
+  const api = client.getTypedApi(ksm);
+  const keypair = sr25519PairFromSeed(AUTH);
+  const signer = getPolkadotSigner(keypair.publicKey, "Sr25519", (input) => sr25519Sign(input, keypair));
 
-  const remark = api.tx.system.remark(JSON.stringify(transactionPayload));
+  const remark = api.tx.System.remark({ remark: Binary.fromText(JSON.stringify(transactionPayload)) });
 
-  try {
-    logger.log("Submitting...");
+  logger.log("Submitting...");
 
-    const unsub = await remark.signAndSend(pair, async ({ status, dispatchError }) => {
-      logger.log(`Transaction status: ${status.type}`);
-
-      if (status.isInBlock) {
-        logger.log(`Success. Block hash: ${status.asInBlock.toString()}`);
-
+  remark.signSubmitAndWatch(signer).subscribe({
+    next: (event) => {
+      logger.log(`Transaction status: ${event.type}`);
+      if (event.type === "txBestBlocksState") {
         log.push({
           payload: transactionPayload,
-          status: status.type,
-          block: status.asInBlock.toString(),
+          status: event.type,
+          block: event.txHash,
           failed: false,
         });
 
-        await writeLog(log);
+        writeLog(log);
 
-        unsub();
-        await api.disconnect();
-      } else if (status.isDropped || status.isInvalid || status.isUsurped) {
-        await handleError(log, transactionPayload, `Transaction failed with status: ${status.type}`);
-        unsub();
-        await api.disconnect();
-      } else if (dispatchError !== undefined) {
-        await handleError(log, transactionPayload, dispatchError.toString());
-        unsub();
-        await api.disconnect();
+        logger.log("Transaction is now in a best block:");
+        logger.log(`https://assethub-kusama.subscan.io/extrinsic/${event.txHash}`);
       }
-    });
-  } catch (error) {
-    if (error instanceof Error) {
-      await handleError(log, transactionPayload, error.toString());
-    }
-    await api.disconnect();
-  }
+    },
+    error: (error) => {
+      handleError(log, transactionPayload, error.toString());
+    },
+    complete: () => {
+      client.destroy();
+    },
+  });
 }
 
 main();

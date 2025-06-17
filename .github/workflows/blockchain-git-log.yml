@@ -39,6 +39,7 @@ jobs:
           branch: ${{ github.ref_name }}
         continue-on-error: true
       - run: npm start -w @typeberry/commit-hash-to-blockchain
+        continue-on-error: true
         env:
           COMMIT_KEY_SECRET: ${{ secrets.COMMIT_KEY_SECRET }}
       - name: Upload new transaction log

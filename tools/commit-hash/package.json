@@ -3,17 +3,19 @@
   "version": "0.0.1",
   "description": "Commit git hashes to a public blockchain.",
   "main": "index.ts",
-  "devDependencies": {
-    "@octokit/webhooks-types": "^7.5.1",
-    "@polkadot/api": "^12.2.1",
-    "@polkadot/types": "^12.2.1",
-    "@typeberry/logger": "0.0.1"
-  },
   "scripts": {
     "start": "tsx ./index.ts",
-    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')",
+    "postinstall": "papi add ksm -n ksmcc3_asset_hub && papi"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0",
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@octokit/webhooks-types": "^7.6.1",
+    "@polkadot-api/descriptors": "file:.papi/descriptors",
+    "@polkadot/util-crypto": "^13.5.1",
+    "@typeberry/logger": "^0.0.1",
+    "polkadot-api": "^1.13.1"
+  }
 }
