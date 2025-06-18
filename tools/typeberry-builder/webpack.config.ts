@@ -20,7 +20,6 @@ const config: webpack.Configuration = {
       type: "module",
     },
     clean: true,
-    webassemblyModuleFilename: "[name].wasm",
   },
   experiments: {
     futureDefaults: true,
@@ -56,10 +55,6 @@ const config: webpack.Configuration = {
           },
         },
         exclude: /node_modules/,
-      },
-      {
-        test: /\.wasm$/,
-        type: "asset/resource",
       },
     ],
   },
