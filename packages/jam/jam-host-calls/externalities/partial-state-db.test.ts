@@ -398,7 +398,7 @@ describe("PartialState.newService", () => {
     const maybeService = mockState.services.get(tryAsServiceId(0));
     const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
 
-    const updatedService = new InMemoryService(service.id, {
+    const updatedService = new InMemoryService(service.serviceId, {
       ...service.data,
       info: ServiceAccountInfo.create({
         ...service.data.info,
@@ -693,8 +693,8 @@ describe("PartialState.providePreimage", () => {
     if (self) {
       // we need to replace the existing service
       mockState.services.set(
-        service.id,
-        new InMemoryService(service.id, {
+        service.serviceId,
+        new InMemoryService(service.serviceId, {
           ...service.data,
           preimages,
           lookupHistory,
@@ -711,7 +711,7 @@ describe("PartialState.providePreimage", () => {
       lookupHistory: self ? HashDictionary.new() : lookupHistory,
       storage: HashDictionary.new(),
     });
-    mockState.services.set(secondService.id, secondService);
+    mockState.services.set(secondService.serviceId, secondService);
 
     return {
       mockState,
@@ -1065,7 +1065,7 @@ describe("PartialState.eject", () => {
     const result = partialState.eject(destinationId, tombstone);
 
     // then
-    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Tombstone available: wrong status"));
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Previous code available: wrong status"));
     assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
   });
 
@@ -1089,7 +1089,7 @@ describe("PartialState.eject", () => {
     const result = partialState.eject(destinationId, tombstone);
 
     // then
-    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Tombstone available: wrong status"));
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Previous code available: wrong status"));
     assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
   });
 
@@ -1113,7 +1113,7 @@ describe("PartialState.eject", () => {
     const result = partialState.eject(destinationId, tombstone);
 
     // then
-    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Tombstone available: not expired"));
+    assert.deepStrictEqual(result, Result.error(EjectError.InvalidPreimage, "Previous code available: not expired"));
     assert.deepStrictEqual(partialState.updatedState.ejectedServices, []);
   });
 

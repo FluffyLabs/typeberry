@@ -40,8 +40,8 @@ export class PartialStateMock implements PartialState {
   public transferReturnValue: Result<OK, TransferError> = Result.ok(OK);
   public providePreimageResponse: Result<OK, ProvidePreimageError> = Result.ok(OK);
 
-  eject(from: ServiceId | null, tombstone: PreimageHash): Result<OK, EjectError> {
-    this.ejectData.push([from, tombstone]);
+  eject(from: ServiceId | null, previousCode: PreimageHash): Result<OK, EjectError> {
+    this.ejectData.push([from, previousCode]);
     return this.ejectReturnValue;
   }
 

@@ -9,7 +9,7 @@ import { SimpleAllocator, keccak } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
 import { SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
 import { SafroleErrorCode } from "@typeberry/safrole/safrole.js";
-import { merkelizeState, serializeState } from "@typeberry/state-merkleization";
+import { StateEntries } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain, StfErrorKind, stfError } from "@typeberry/transition/chain-stf.js";
@@ -31,9 +31,9 @@ export async function runStateTransitionFuzzed(testContent: StateTransitionFuzze
   const fileName = path.basename(testPath);
   const spec = tinyChainSpec;
   const preState = loadState(spec, testContent.pre_state.keyvals);
-  const preStateSerialized = serializeState(preState, spec);
+  const preStateSerialized = StateEntries.serializeInMemory(spec, preState);
 
-  const preStateRoot = merkelizeState(preStateSerialized);
+  const preStateRoot = preStateSerialized.getRootHash();
 
   const encodedBlock = Encoder.encodeObject(Block.Codec, testContent.block, spec);
   const blockView = Decoder.decodeObject(Block.Codec.View, encodedBlock, spec);

@@ -34,8 +34,8 @@ export class Eject implements HostCallHandler {
     const preimageHashStart = regs.get(8);
 
     // `h`: hash
-    const tombstoneHash = Bytes.zero(HASH_SIZE).asOpaque<PreimageHash>();
-    const memoryReadResult = memory.loadInto(tombstoneHash.raw, preimageHashStart);
+    const previousCodeHash = Bytes.zero(HASH_SIZE).asOpaque<PreimageHash>();
+    const memoryReadResult = memory.loadInto(previousCodeHash.raw, preimageHashStart);
     if (memoryReadResult.isError) {
       return PvmExecution.Panic;
     }
@@ -46,7 +46,7 @@ export class Eject implements HostCallHandler {
       return;
     }
 
-    const result = this.partialState.eject(serviceId, tombstoneHash);
+    const result = this.partialState.eject(serviceId, previousCodeHash);
 
     // All good!
     if (result.isOk) {

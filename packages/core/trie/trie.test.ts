@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { deepEqual } from "@typeberry/utils";
 import { blake2bTrieHasher } from "./hasher.js";
 import { LeafNode, parseInputKey } from "./nodes.js";
 import { InMemoryTrie } from "./trie.js";
@@ -18,7 +19,7 @@ describe("Trie", async () => {
   it("Leaf Node", () => {
     const key = parseInputKey("16c72e0c2e0b78157e3a116d86d90461a199e439325317aea160b30347adb8ec");
     const value = BytesBlob.parseBlob("0x4227b4a465084852cd87d8f23bec0db6fa7766b9685ab5e095ef9cda9e15e49dff");
-    const valueHash = blake2bTrieHasher.hashConcat(value.raw);
+    const valueHash = () => blake2bTrieHasher.hashConcat(value.raw).asOpaque();
     const node = LeafNode.fromValue(key, value, valueHash);
 
     assert.deepStrictEqual(
@@ -27,7 +28,7 @@ describe("Trie", async () => {
     );
     assert.deepStrictEqual(node.getValueLength(), 0);
     assert.deepStrictEqual(node.getValue().raw, Bytes.zero(0).raw);
-    assert.deepStrictEqual(node.getValueHash(), valueHash);
+    assert.deepStrictEqual(node.getValueHash(), valueHash());
   });
 
   it("Empty value", () => {
@@ -145,17 +146,93 @@ describe("Trie", async () => {
     );
   });
 
+  const testVector9 = {
+    d7f99b746f23411983df92806725af8e5cb66eba9f200737accae4a1ab7f47b9:
+      "24232437f5b3f2380ba9089bdbc45efaffbe386602cb1ecc2c17f1d0",
+    "59ee947b94bcc05634d95efb474742f6cd6531766e44670ec987270a6b5a4211":
+      "72fdb0c99cf47feb85b2dad01ee163139ee6d34a8d893029a200aff76f4be5930b9000a1bbb2dc2b6c79f8f3c19906c94a3472349817af21181c3eef6b",
+    a3dc3bed1b0727caf428961bed11c9998ae2476d8a97fad203171b628363d9a2: "8a0dafa9d6ae6177",
+    "15207c233b055f921701fc62b41a440d01dfa488016a97cc653a84afb5f94fd5": "157b6c821169dacabcf26690df",
+    b05ff8a05bb23c0d7b177d47ce466ee58fd55c6a0351a3040cf3cbf5225aab19: "6a208734106f38b73880684b",
+  };
+
+  it("should return all leaf nodes", () => {
+    const data = { ...testVector9 };
+
+    // construct the trie
+    const trie = InMemoryTrie.empty(blake2bTrieHasher);
+
+    for (const [key, val] of Object.entries(data)) {
+      const stateKey = parseInputKey(key);
+      const value = BytesBlob.parseBlobNoPrefix(val);
+      trie.set(stateKey, value);
+    }
+
+    // when
+    const leaves = Array.from(trie.nodes.leaves());
+
+    assert.deepStrictEqual(
+      leaves.map((val) => `${val.getKey()}: ${val.node}`),
+      [
+        "0xd7f99b746f23411983df92806725af8e5cb66eba9f200737accae4a1ab7f47: 0x9cd7f99b746f23411983df92806725af8e5cb66eba9f200737accae4a1ab7f4724232437f5b3f2380ba9089bdbc45efaffbe386602cb1ecc2c17f1d000000000",
+        "0x59ee947b94bcc05634d95efb474742f6cd6531766e44670ec987270a6b5a42: 0xc059ee947b94bcc05634d95efb474742f6cd6531766e44670ec987270a6b5a42a7f2482020023b85b4009884a31aea08f03b4bbdb5efd5e6ff1d63f1a86aaa53",
+        "0xa3dc3bed1b0727caf428961bed11c9998ae2476d8a97fad203171b628363d9: 0x88a3dc3bed1b0727caf428961bed11c9998ae2476d8a97fad203171b628363d98a0dafa9d6ae6177000000000000000000000000000000000000000000000000",
+        "0x15207c233b055f921701fc62b41a440d01dfa488016a97cc653a84afb5f94f: 0x8d15207c233b055f921701fc62b41a440d01dfa488016a97cc653a84afb5f94f157b6c821169dacabcf26690df00000000000000000000000000000000000000",
+        "0xb05ff8a05bb23c0d7b177d47ce466ee58fd55c6a0351a3040cf3cbf5225aab: 0x8cb05ff8a05bb23c0d7b177d47ce466ee58fd55c6a0351a3040cf3cbf5225aab6a208734106f38b73880684b0000000000000000000000000000000000000000",
+      ],
+    );
+  });
+
+  it("should create trie from leaf nodes", () => {
+    const data = { ...testVector9 };
+
+    // construct the trie manually
+    const trie = InMemoryTrie.empty(blake2bTrieHasher);
+    for (const [key, val] of Object.entries(data)) {
+      const stateKey = parseInputKey(key);
+      const value = BytesBlob.parseBlobNoPrefix(val);
+      trie.set(stateKey, value);
+    }
+
+    // when
+    const leaves = Array.from(trie.nodes.leaves());
+    const actual = InMemoryTrie.fromLeaves(blake2bTrieHasher, leaves);
+
+    assert.deepStrictEqual(`${actual.getRootHash()}`, `${trie.getRootHash()}`);
+    assert.deepStrictEqual(actual.nodes, trie.nodes);
+  });
+
+  it("should return correct leafs after updates", () => {
+    const data = { ...testVector9 };
+
+    // construct the trie manually
+    const trie = InMemoryTrie.empty(blake2bTrieHasher);
+    for (const [key, val] of Object.entries(data)) {
+      const stateKey = parseInputKey(key);
+      const value = BytesBlob.parseBlobNoPrefix(val);
+      trie.set(stateKey, value);
+    }
+    const initialLeaves = Array.from(trie.nodes.leaves());
+
+    // insert again
+    for (const [key, val] of Object.entries(data)) {
+      const stateKey = parseInputKey(key);
+      const value = BytesBlob.parseBlobNoPrefix(val);
+      trie.set(stateKey, value);
+    }
+
+    // when
+    const leaves = Array.from(trie.nodes.leaves());
+    const actual = InMemoryTrie.fromLeaves(blake2bTrieHasher, leaves);
+
+    deepEqual(leaves.map((x) => x.getKey().toString()).sort(), initialLeaves.map((x) => x.getKey().toString()).sort());
+    assert.deepStrictEqual(`${actual.getRootHash()}`, `${trie.getRootHash()}`);
+    assert.deepStrictEqual(actual.nodes, trie.nodes);
+  });
+
   it("Test vector 9", () => {
     const vector = {
-      input: {
-        d7f99b746f23411983df92806725af8e5cb66eba9f200737accae4a1ab7f47b9:
-          "24232437f5b3f2380ba9089bdbc45efaffbe386602cb1ecc2c17f1d0",
-        "59ee947b94bcc05634d95efb474742f6cd6531766e44670ec987270a6b5a4211":
-          "72fdb0c99cf47feb85b2dad01ee163139ee6d34a8d893029a200aff76f4be5930b9000a1bbb2dc2b6c79f8f3c19906c94a3472349817af21181c3eef6b",
-        a3dc3bed1b0727caf428961bed11c9998ae2476d8a97fad203171b628363d9a2: "8a0dafa9d6ae6177",
-        "15207c233b055f921701fc62b41a440d01dfa488016a97cc653a84afb5f94fd5": "157b6c821169dacabcf26690df",
-        b05ff8a05bb23c0d7b177d47ce466ee58fd55c6a0351a3040cf3cbf5225aab19: "6a208734106f38b73880684b",
-      },
+      input: { ...testVector9 },
       output: "f6ac87ea6258a68bd3288cf73ac9d03419b548858c5466b1927b796f29db13fc",
     };
 

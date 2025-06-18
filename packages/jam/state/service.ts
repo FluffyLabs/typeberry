@@ -146,7 +146,10 @@ export class LookupHistoryItem {
     public readonly slots: LookupHistorySlots,
   ) {}
 
-  static isRequested(item: LookupHistoryItem): boolean {
-    return item.slots.length === 0;
+  static isRequested(item: LookupHistoryItem | LookupHistorySlots): boolean {
+    if ("slots" in item) {
+      return item.slots.length === 0;
+    }
+    return item.length === 0;
   }
 }

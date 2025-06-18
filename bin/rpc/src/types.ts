@@ -1,6 +1,7 @@
 import type { ChainSpec } from "@typeberry/config";
-import type { LmdbBlocks, LmdbStates } from "@typeberry/database-lmdb";
+import type { BlocksDb, StatesDb } from "@typeberry/database";
 import { HASH_SIZE } from "@typeberry/hash";
+import type { EnumerableState, State } from "@typeberry/state";
 import type WebSocket from "ws";
 import { z } from "zod";
 
@@ -54,8 +55,8 @@ export class RpcError extends Error {
 }
 
 export interface DatabaseContext {
-  blocks: LmdbBlocks;
-  states: LmdbStates;
+  blocks: BlocksDb;
+  states: StatesDb<State & EnumerableState>;
 }
 
 export type RpcMethod<T, R> = (params: T, db: DatabaseContext, chainSpec: ChainSpec) => Promise<R>;

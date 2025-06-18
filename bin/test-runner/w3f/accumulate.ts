@@ -88,7 +88,7 @@ class TestState {
           AutoAccumulate.create({ gasLimit: tryAsServiceGas(gas), service: tryAsServiceId(id) }),
         ),
       }),
-      services: new Map(accounts.map((service) => [service.id, service])),
+      services: new Map(accounts.map((service) => [service.serviceId, service])),
     });
   }
 }

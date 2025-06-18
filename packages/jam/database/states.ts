@@ -1,62 +1,89 @@
-import type { StateRootHash } from "@typeberry/block";
+import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import type { InMemoryState } from "@typeberry/state";
-import { stateDumpCodec } from "@typeberry/state-merkleization/dump.js";
+import { type InMemoryState, type ServicesUpdate, type State, UpdateError } from "@typeberry/state";
+import { StateEntries } from "@typeberry/state-merkleization";
+import { inMemoryStateCodec } from "@typeberry/state-merkleization/in-memory-state-codec.js";
+import { OK, Result, assertNever } from "@typeberry/utils";
 
+/** A potential error that occured during state update. */
+export enum StateUpdateError {
+  /** A conflicting state update has been provided. */
+  Conflict = 0,
+  /** There was an error committing the changes. */
+  Commit = 1,
+}
 /**
- * Temporary and simple state database interface.
+ * Interface for accessing states stored in the database.
  *
- * We store the entire state with full keys under it's state root hash.
+ * NOTE that the design of this interface is heavily influenced
+ * by the LMDB implementation, so that we can implement it efficiently.
  *
- * Note that this is sub-optimal for some reasons:
- * 1. Answering CE-129 queries requires us storing all trie nodes.
- * 2. We can't load `SerializedState` (since we don't have full keys).
- * 3. We store a lot of duplicated data.
- *
- * but also nice (we have full key data - fast retrieval) and simple (easy access
- * to the state fields, loading state, etc), but might not be sustainable.
- *
- * A slightly better option would be to store only changes to the state instead of full
- * one.
- *
- * Some other options that we have:
- * 1. Store `SerializedState` and compute the merkle trie on-demand.
- *    1. If our storage is somehow based on the merkle trie keys we could answer
- *       ce-129 given the key. (nomt approach)
- *    2. If our storage is more naive we will not know what exact state needs
- *       to be merkelized when a random trie node is requested.
- * 2. Store all trie nodes and do some pruning of old ones - basically an archive node.
- *
- * In case of any of these options, when accessing state we will need to compute
- * the keys before retrieving the data (which is slower).
- *
+ * See the documentation there for more detailed reasoning.
  */
-export interface StatesDb {
-  /** Insert a full state with given state root hash. */
-  insertFullState(root: StateRootHash, state: InMemoryState): Promise<void>;
-  /** Retrieve state with given state root hash. */
-  getFullState(root: StateRootHash): InMemoryState | null;
+export interface StatesDb<T extends State = State> {
+  /** Compute a state root for given state. */
+  getStateRoot(state: T): Promise<StateRootHash>;
+
+  /**
+   * Apply & commit a state update.
+   *
+   * NOTE: for efficiency, the implementation MAY alter given `state` object.
+   */
+  updateAndSetState(
+    header: HeaderHash,
+    state: T,
+    update: Partial<State & ServicesUpdate>,
+  ): Promise<Result<OK, StateUpdateError>>;
+
+  /** Retrieve posterior state of given header. */
+  getState(header: HeaderHash): T | null;
 }
 
-export class InMemoryStates implements StatesDb {
-  private readonly db: HashDictionary<StateRootHash, BytesBlob> = HashDictionary.new();
+export class InMemoryStates implements StatesDb<InMemoryState> {
+  private readonly db: HashDictionary<HeaderHash, BytesBlob> = HashDictionary.new();
 
   constructor(private readonly spec: ChainSpec) {}
 
-  async insertFullState(root: StateRootHash, state: InMemoryState): Promise<void> {
-    const encoded = Encoder.encodeObject(stateDumpCodec, state, this.spec);
-    this.db.set(root, encoded);
+  async updateAndSetState(
+    headerHash: HeaderHash,
+    state: InMemoryState,
+    update: Partial<State & ServicesUpdate>,
+  ): Promise<Result<OK, StateUpdateError>> {
+    const res = state.applyUpdate(update);
+    if (res.isOk) {
+      return await this.insertState(headerHash, state);
+    }
+
+    switch (res.error) {
+      case UpdateError.DuplicateService:
+      case UpdateError.NoService:
+      case UpdateError.PreimageExists:
+        return Result.error(StateUpdateError.Conflict, res.details);
+      default:
+        assertNever(res.error);
+    }
   }
 
-  getFullState(root: StateRootHash): InMemoryState | null {
-    const encodedState = this.db.get(root);
+  async getStateRoot(state: InMemoryState): Promise<StateRootHash> {
+    return StateEntries.serializeInMemory(this.spec, state).getRootHash();
+  }
+
+  /** Insert a full state into the database. */
+  async insertState(headerHash: HeaderHash, state: InMemoryState): Promise<Result<OK, StateUpdateError>> {
+    const encoded = Encoder.encodeObject(inMemoryStateCodec, state, this.spec);
+    this.db.set(headerHash, encoded);
+    return Result.ok(OK);
+  }
+
+  getState(headerHash: HeaderHash): InMemoryState | null {
+    const encodedState = this.db.get(headerHash);
     if (encodedState === undefined) {
       return null;
     }
 
-    return Decoder.decodeObject(stateDumpCodec, encodedState, this.spec);
+    return Decoder.decodeObject(inMemoryStateCodec, encodedState, this.spec);
   }
 }

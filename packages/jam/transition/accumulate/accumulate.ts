@@ -192,7 +192,7 @@ export class Accumulate {
       accountsLookup: new AccountsLookupExternalities(),
     };
 
-    const executor = PvmExecutor.createAccumulateExecutor(code.blob, externalities, this.chainSpec);
+    const executor = PvmExecutor.createAccumulateExecutor(code, externalities, this.chainSpec);
     const args = Encoder.encodeObject(ARGS_CODEC, { slot, serviceId, operands }, this.chainSpec);
 
     const result = await executor.run(args, tryAsGas(gas));
