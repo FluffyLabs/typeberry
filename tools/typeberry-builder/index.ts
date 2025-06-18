@@ -127,10 +127,20 @@ async function build() {
           return;
         }
 
+        if (stats?.hasWarnings() === true) {
+          const warnings = stats.toJson().warnings;
+          console.warn("⚠️ Build has warnings:");
+          if (warnings !== undefined) {
+            for (const warning of warnings) {
+              console.warn(warning.message);
+            }
+          }
+        }
+
         console.info("✅ Build completed successfully!\n");
 
         if (stats !== undefined) {
-          // Printing stats & warnings
+          // Printing stats
           console.info(
             stats.toString({
               colors: true,
