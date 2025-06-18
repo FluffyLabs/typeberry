@@ -141,5 +141,5 @@ some controversial perf-related suggestions should be applied.
         The author **does not resolve discussions**.
 
 7. At any point in time, when the PR is all-approved it can be merged. To simplify
-    the process, the **last reviewer to approve a PR is requested to merge** it immidiately
+    the process, the **last reviewer to approve a PR is requested to merge** it immediately
     after approval.
