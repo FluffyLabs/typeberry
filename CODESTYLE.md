@@ -121,7 +121,7 @@ some controversial perf-related suggestions should be applied.
 1. The PR is **opened** by the author and is _no longer a draft_.
 2. Draft PRs _can be_ reviewed, but the _comments do not need to be addressed_ if
     the code is subject to change anyway.
-3. The author **requests 1 or more reviewrs** to review the PR.
+3. The author **requests 1 or more** reviewers to review the PR.
 4. **All REQUESTED** reviewers **must approve** the PR. Non-requested core devs may still
     review the PR, and in such case their approval is required too (i.e. volunteer).
 5. If the reviewer **does not leave any comments**, the approval status must be **`Approve`**.
