@@ -91,6 +91,11 @@ async function createNpmPackage() {
   const packageJsonPath = resolve(destDir, "package.json");
   await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
   console.info(" - Created package.json");
+
+  // Create .npmignore
+  const npmignore = resolve(destDir, ".npmignore");
+  await fs.writeFile(npmignore, "*.map");
+  console.info(" - Created .npmignore");
 }
 
 async function build() {
