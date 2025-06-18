@@ -4,9 +4,9 @@ import { Ticket } from "@typeberry/block/tickets.js";
 import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
 import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { BANDERSNATCH_KEY_BYTES, type BandersnatchKey } from "@typeberry/crypto";
+import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32 } from "@typeberry/numbers";
-import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/safrole/bandersnatch-vrf.js";
 import { WithDebug, seeThrough } from "@typeberry/utils";
 import { ValidatorData } from "./validator-data.js";
 

@@ -3,8 +3,8 @@ import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
+import { BANDERSNATCH_VRF_SIGNATURE_BYTES } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
-import { BANDERSNATCH_VRF_SIGNATURE_BYTES } from "@typeberry/safrole/bandersnatch-vrf.js";
 import { tryAsTimeSlot, tryAsValidatorIndex } from "./common.js";
 import { Header, encodeUnsealedHeader } from "./header.js";
 
