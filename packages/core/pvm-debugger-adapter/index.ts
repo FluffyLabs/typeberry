@@ -10,7 +10,7 @@ export { createResults } from "@typeberry/pvm-interpreter/args-decoder/args-deco
 export { instructionArgumentTypeMap } from "@typeberry/pvm-interpreter/args-decoder/instruction-argument-type-map.js";
 export { decodeStandardProgram, SpiMemory, SpiProgram, MemorySegment } from "@typeberry/pvm-spi-decoder";
 export { Registers, NO_OF_REGISTERS } from "@typeberry/pvm-interpreter/registers.js";
-export { Program } from "@typeberry/pvm-program";
+export { Program, extractCodeAndMetadata } from "@typeberry/pvm-program";
 export { BasicBlocks } from "@typeberry/pvm-interpreter/basic-blocks/index.js";
 export { DebuggerAdapter as Pvm } from "./debugger-adapter.js";
 export * from "@typeberry/jam-host-calls";
