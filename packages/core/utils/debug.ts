@@ -102,7 +102,7 @@ export function inspect<T>(val: T): string {
 
 /** Utility function to measure time taken for some operation [ms]. */
 export const measure =
-  process === undefined
+  typeof process === "undefined"
     ? (id: string) => {
         const start = performance.now();
         return () => `${id} took ${performance.now() - start}ms`;

@@ -19,22 +19,6 @@ export { HostCallRegisters, HostCallMemory, IHostCallMemory, IHostCallRegisters 
 export * as bytes from "@typeberry/bytes";
 export * as hash from "@typeberry/hash";
 export * as block from "@typeberry/block";
-export {
-  ErrorResult,
-  ErrorsCollector,
-  OK,
-  OkResult,
-  Opaque,
-  Result,
-  TaggedError,
-  TokenOf,
-  WithDebug,
-  WithOpaque,
-  asOpaqueType,
-  assertNever,
-  check,
-  ensure,
-  inspect,
-  resultToString,
-  seeThrough,
-} from "@typeberry/utils";
+export * from "@typeberry/utils/debug.js";
+export * from "@typeberry/utils/opaque.js";
+export * from "@typeberry/utils/result.js";
