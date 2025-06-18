@@ -116,29 +116,31 @@ That's okay.
 Performance critical code should be measured (micro benchmarked) and only then
 some controversial perf-related suggestions should be applied.
 
-## Process
+## Merge Pull Request Process
 
-1. The PR is opened by the author and is no longer a draft.
-2. Draft PRs can be reviewed, but the comments does not need to be addressed if
+1. The PR is **opened** by the author and is _no longer a draft_.
+2. Draft PRs _can be_ reviewed, but the _comments does not need to be addressed_ if
     the code is subject to change anyway.
-3. The author requests 1 or more persons to review the PR.
-4. All REQUESTED reviewers must approve the PR. Non-requested core devs may still
+3. The author **requests 1 or more** persons to review the PR.
+4. **All REQUESTED** reviewers **must approve** the PR. Non-requested core devs may still
     review the PR and in such case their approval is required too (i.e.
     self-select themselves).
-5. If the reviewer does not leave any comments the approval status must be `Approve`.
-6. If some comments are left the status might be one of:
-    1. `Approve` - re-review is not required, the reviewer trusts the author to
+5. If the reviewer **does not leave any comments** the approval status must be **`Approve`**.
+6. If **some comments** are left the status might be one of:
+    1. **`Approve`** - **re-review is not required**, the reviewer trusts the author to
         fix all the issues at their free discretion. Reply comments are not required.
-        If the PR is all-approved can be merged by the author after CI passes.
-    2. `Comment` - reviewer is opening a discussion with the author to address
-        some of the issues. Addressing DOES not necessarily mean fixing as reviewer
-        requested, but rather might just require a reply comment with justification
-        for the code in question. Re-review of addressed issues is required.
-        The author does not resolve discussions.
-    3. `Request Changes` - the reviewer has a strong opinion that the code should
-        not be merged in it's current form. The author must consider either changing
+        If the PR is all-approved, author **can resolve** comments under **approved review**
+        and merge PR after CI passes.
+    3. **`Comment`** - reviewer is opening a discussion with the author to address
+        some of the issues. Addressing _DOES not necessarily mean fixing_ as reviewer
+        requested, but rather might just require a _reply comment_ with justification
+        for the code in question. **Re-review** of addressed issues is **required**.
+        The author **does not resolve discussions**.
+    4. **`Request Changes`** - the reviewer has a strong opinion that the code should
+        not be merged in it's current form. The author MUST consider either changing
         the code or persuading the reviewer that their view is wrong.
+        The author **does not resolve discussions**.
 
 7. At any point in time, when the PR is all-approved it can be merged. To simplify
-    the process the last reviewer to approve a PR is requested to merge it right
+    the process the **last reviewer to approve a PR is requested to merge** it right
     after.
