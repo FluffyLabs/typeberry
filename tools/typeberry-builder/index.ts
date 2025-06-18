@@ -29,6 +29,7 @@ async function copyWasmFiles() {
   const wasmFiles = [
     { name: "ed25519_wasm_bg.wasm", path: "ed25519-wasm/pkg" },
     { name: "reed_solomon_wasm_bg.wasm", path: "reed-solomon-wasm/pkg" },
+    { name: "bandersnatch_bg.wasm", path: "@fluffylabs/bandersnatch" },
   ];
 
   const srcDir = resolve(relPath, "node_modules");
