@@ -5,8 +5,8 @@ import { createClient, Binary } from "polkadot-api";
 import { getWsProvider } from "polkadot-api/ws-provider/web";
 import { getPolkadotSigner } from "polkadot-api/signer";
 import { sr25519Sign, sr25519PairFromSeed, cryptoWaitReady } from "@polkadot/util-crypto";
-import { Logger } from "@typeberry/logger";
-const logger = Logger.new(import.meta.filename, "commit-hash");
+import { Logger, withTimestamps } from "@typeberry/logger";
+const logger = withTimestamps(Logger.new(import.meta.filename, "commit-hash"));
 
 type TransactionPayload = [
   string, // repo name
@@ -28,6 +28,7 @@ const LOG_FILENAME = process.env.LOG_FILENAME as string;
 const AUTH = process.env.COMMIT_KEY_SECRET as string;
 
 if (LOG_FILENAME === undefined || AUTH === undefined) {
+  logger.error("Missing LOG_FILENAME or COMMIT_KEY_SECRET env variables");
   throw new Error("Missing LOG_FILENAME or COMMIT_KEY_SECRET env variables");
 }
 

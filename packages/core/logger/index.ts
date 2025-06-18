@@ -96,3 +96,31 @@ export class Logger {
     this.config.transport.error(this.moduleName, this.fileName, val);
   }
 }
+
+export function withTimestamps(logger: Logger) {
+  function getTimestampedString(val: string) {
+    return `[${new Date().toLocaleString()}] ${val}`;
+  }
+
+  return {
+    trace(val: string) {
+      logger.trace(getTimestampedString(val));
+    },
+
+    log(val: string) {
+      logger.log(getTimestampedString(val));
+    },
+
+    info(val: string) {
+      logger.info(getTimestampedString(val));
+    },
+
+    warn(val: string) {
+      logger.warn(getTimestampedString(val));
+    },
+
+    error(val: string) {
+      logger.error(getTimestampedString(val));
+    },
+  };
+}
