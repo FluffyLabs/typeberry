@@ -4,8 +4,8 @@ import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Ticket } from "@typeberry/block/tickets.js";
 import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
 import { HashDictionary, asKnownSize } from "@typeberry/collections";
+import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
-import { BANDERSNATCH_RING_ROOT_BYTES, type BandersnatchRingRoot } from "@typeberry/safrole/bandersnatch-vrf.js";
 import {
   InMemoryService,
   InMemoryState,
