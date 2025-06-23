@@ -45,7 +45,6 @@
     "packages/jam/transition/disputes",
     "tools/benchmark",
     "tools/builder",
-    "tools/commit-hash",
     "tools/ipc2rpc",
     "workers/block-generator",
     "workers/generic",
