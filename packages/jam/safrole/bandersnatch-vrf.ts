@@ -2,45 +2,17 @@ import type { EntropyHash, ValidatorIndex } from "@typeberry/block";
 import type { SignedTicket } from "@typeberry/block/tickets.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { BandersnatchKey } from "@typeberry/crypto";
+import {
+  BANDERSNATCH_RING_ROOT_BYTES,
+  type BandersnatchRingRoot,
+  type BandersnatchVrfSignature,
+} from "@typeberry/crypto/bandersnatch.js";
 import { HASH_SIZE } from "@typeberry/hash";
-import { type Opaque, Result } from "@typeberry/utils";
+import { Result } from "@typeberry/utils";
 import type { BandernsatchWasm } from "./bandersnatch-wasm/index.js";
 import { JAM_TICKET_SEAL } from "./constants.js";
 
 const RESULT_INDEX = 0 as const;
-
-/** Bandersnatch VRF signature size */
-export const BANDERSNATCH_VRF_SIGNATURE_BYTES = 96;
-export type BANDERSNATCH_VRF_SIGNATURE_BYTES = typeof BANDERSNATCH_VRF_SIGNATURE_BYTES;
-
-/** Bandersnatch ring commitment size */
-export const BANDERSNATCH_RING_ROOT_BYTES = 144;
-export type BANDERSNATCH_RING_ROOT_BYTES = typeof BANDERSNATCH_RING_ROOT_BYTES;
-
-/** Bandersnatch proof size */
-export const BANDERSNATCH_PROOF_BYTES = 784;
-export type BANDERSNATCH_PROOF_BYTES = typeof BANDERSNATCH_PROOF_BYTES;
-
-/**
- * Bandersnatch ring commitment
- *
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/0da8000dc200?v=0.6.7
- */
-export type BandersnatchRingRoot = Opaque<Bytes<BANDERSNATCH_RING_ROOT_BYTES>, "BandersnatchRingRoot">;
-
-/**
- * Potentially valid Bandersnatch signature.
- *
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/082300082300?v=0.6.7
- */
-export type BandersnatchVrfSignature = Opaque<Bytes<BANDERSNATCH_VRF_SIGNATURE_BYTES>, "BandersnatchVrfSignature">;
-
-/**
- * Potentially valid Bandersnatch RingVRF proof of knowledge.
- *
- * https://graypaper.fluffylabs.dev/#/7e6ff6a/082d00083a00?v=0.6.7
- */
-export type BandersnatchProof = Opaque<Bytes<BANDERSNATCH_PROOF_BYTES>, "BandersnatchRingSignature">;
 
 enum ResultValues {
   Ok = 0,
