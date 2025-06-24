@@ -1,4 +1,4 @@
-// GP reference: https://graypaper.fluffylabs.dev/#/579bd12/2ba8022ba802
+// GP reference: https://graypaper.fluffylabs.dev/#/7e6ff6a/2d32002d3200?v=0.6.7
 
 export const PAGE_SIZE = 2 ** 12; // Z_P from GP
 export const SEGMENT_SIZE = 2 ** 16; // Z_Z from GP
