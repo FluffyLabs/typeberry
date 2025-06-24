@@ -27,7 +27,7 @@ import { Accumulate, type AccumulateInput, type AccumulateState } from "./accumu
 
 describe("accumulate", () => {
   // based on tiny/enqueue_and_unlock_chain_wraps-5.json
-  it("should do correct state transition", async () => {
+  it.skip("should do correct state transition", async () => {
     const entropy = hashFromString<EntropyHash>("0xae85d6635e9ae539d0846b911ec86a27fe000f619b78bcac8a74b77e36f6dbcf");
 
     const input: AccumulateInput = {

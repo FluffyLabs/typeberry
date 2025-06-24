@@ -87,7 +87,14 @@ export class LegacyOperand {
   payloadHash: OpaqueHash; // y
   result: WorkExecResult; // d
 
-  static create({ authorizationOutput, authorizerHash, exportsRoot, hash, payloadHash, result }: CodecRecord<Operand>) {
+  static create({
+    authorizationOutput,
+    authorizerHash,
+    exportsRoot,
+    hash,
+    payloadHash,
+    result,
+  }: CodecRecord<LegacyOperand>) {
     return new LegacyOperand({
       payloadHash: payloadHash.asOpaque(),
       result: result,
