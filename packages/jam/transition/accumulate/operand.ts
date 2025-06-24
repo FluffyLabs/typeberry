@@ -65,3 +65,47 @@ export class Operand {
     return new Operand(operand);
   }
 }
+
+export class LegacyOperand {
+  static Codec = codec.Class(LegacyOperand, {
+    result: WorkExecResult.Codec,
+    exportsRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
+    authorizationOutput: codec.blob,
+    payloadHash: codec.bytes(HASH_SIZE),
+    hash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
+    authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
+  });
+
+  /**
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/181801189d01?v=0.6.7
+   */
+  result: WorkExecResult; // d
+  exportsRoot: ExportsRootHash; // e
+  authorizationOutput: BytesBlob; // o
+  payloadHash: OpaqueHash; // y
+  hash: WorkPackageHash; // h
+  authorizerHash: AuthorizerHash; // a
+
+  static create({ authorizationOutput, authorizerHash, exportsRoot, hash, payloadHash, result }: CodecRecord<Operand>) {
+    return new LegacyOperand({
+      payloadHash: payloadHash.asOpaque(),
+      result: result,
+      authorizationOutput: BytesBlob.blobFrom(authorizationOutput.raw),
+      exportsRoot: exportsRoot.asOpaque(),
+      hash: hash.asOpaque(),
+      authorizerHash: authorizerHash.asOpaque(),
+    });
+  }
+  private constructor(operand: Pick<LegacyOperand, keyof LegacyOperand>) {
+    this.payloadHash = operand.payloadHash;
+    this.result = operand.result;
+    this.authorizationOutput = operand.authorizationOutput;
+    this.exportsRoot = operand.exportsRoot;
+    this.hash = operand.hash;
+    this.authorizerHash = operand.authorizerHash;
+  }
+
+  static new(operand: Pick<LegacyOperand, keyof LegacyOperand>) {
+    return new LegacyOperand(operand);
+  }
+}
