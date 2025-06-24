@@ -25,6 +25,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          repository: 'FluffyLabs/publish-commit'
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
@@ -38,7 +40,7 @@ jobs:
           search_artifacts: true
           branch: ${{ github.ref_name }}
         continue-on-error: true
-      - run: npx --yes github:FluffyLabs/publish-commit
+      - run: npm start
         env:
           COMMIT_KEY_SECRET: ${{ secrets.COMMIT_KEY_SECRET }}
       - name: Upload new transaction log
