@@ -193,6 +193,7 @@ export class Accumulate {
     };
 
     const executor = PvmExecutor.createAccumulateExecutor(code, externalities, this.chainSpec);
+    // TODO [MaSi]: in GP 0.6.7 operands array is replaced with length of operands array
     const args = Encoder.encodeObject(ARGS_CODEC, { slot, serviceId, operands }, this.chainSpec);
 
     const result = await executor.run(args, tryAsGas(gas));
