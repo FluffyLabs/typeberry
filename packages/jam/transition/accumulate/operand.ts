@@ -66,25 +66,26 @@ export class Operand {
   }
 }
 
+// LegacyOperand is a legacy version of Operand. It is temporary used for compatibility with older test vectors.
 export class LegacyOperand {
   static Codec = codec.Class(LegacyOperand, {
-    result: WorkExecResult.Codec,
+    hash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
     exportsRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
+    authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
     authorizationOutput: codec.blob,
     payloadHash: codec.bytes(HASH_SIZE),
-    hash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
-    authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
+    result: WorkExecResult.Codec,
   });
 
   /**
-   * https://graypaper.fluffylabs.dev/#/7e6ff6a/181801189d01?v=0.6.7
+   * https://graypaper.fluffylabs.dev/#/68eaa1f/17d302175803?v=0.6.4
    */
-  result: WorkExecResult; // d
+  hash: WorkPackageHash; // h
   exportsRoot: ExportsRootHash; // e
+  authorizerHash: AuthorizerHash; // a
   authorizationOutput: BytesBlob; // o
   payloadHash: OpaqueHash; // y
-  hash: WorkPackageHash; // h
-  authorizerHash: AuthorizerHash; // a
+  result: WorkExecResult; // d
 
   static create({ authorizationOutput, authorizerHash, exportsRoot, hash, payloadHash, result }: CodecRecord<Operand>) {
     return new LegacyOperand({
