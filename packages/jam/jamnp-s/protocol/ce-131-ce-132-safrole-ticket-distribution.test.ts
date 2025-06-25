@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { tryAsEpoch } from "@typeberry/block";
 import { SignedTicket, tryAsTicketAttempt } from "@typeberry/block/tickets.js";
 import { Bytes } from "@typeberry/bytes";
-import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/safrole/bandersnatch-vrf.js";
+import { BANDERSNATCH_PROOF_BYTES } from "@typeberry/crypto";
 import { OK } from "@typeberry/utils";
 import {
   ClientHandler,

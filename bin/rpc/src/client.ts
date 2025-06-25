@@ -20,8 +20,8 @@ export class RpcClient {
   }
 
   private setupWebSocket(): void {
-    this.ws.on("message", (data: Buffer) => {
-      const response: JsonRpcResponse | JsonRpcSubscriptionNotification = JSON.parse(data.toString());
+    this.ws.on("message", (data: string) => {
+      const response: JsonRpcResponse | JsonRpcSubscriptionNotification = JSON.parse(data);
 
       if (!("id" in response) && "params" in response) {
         console.info(`sub[${response.params[0]}]:`, response.params[1]);
@@ -32,8 +32,6 @@ export class RpcClient {
           callback(response);
           this.messageQueue.delete(response.id);
         }
-      } else {
-        console.error("Unexpected message from server:", response);
       }
     });
 
@@ -74,5 +72,9 @@ export class RpcClient {
 
   close(): void {
     this.ws.close();
+  }
+
+  getSocket(): WebSocket {
+    return this.ws;
   }
 }
