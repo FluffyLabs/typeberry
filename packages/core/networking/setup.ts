@@ -11,7 +11,7 @@ import {
   generateCertificate,
   privateKeyToPEM,
 } from "./certificate.js";
-import { clientCryptoOps, ed25519Crypto } from "./crypto.js";
+import { getQuicClientCrypto, getQuicServerCrypto } from "./crypto.js";
 import { peerVerification } from "./peer-verification.js";
 import { type PeerAddress, Peers } from "./peers.js";
 import { QuicNetwork } from "./quic-network.js";
@@ -71,7 +71,7 @@ export class Quic {
     const server = new QUICServer({
       socket,
       config,
-      crypto: ed25519Crypto(key),
+      crypto: getQuicServerCrypto(key),
       logger: quicLogger.getChild("server"),
     });
 
@@ -102,7 +102,7 @@ export class Quic {
         socket: socket,
         host: peer.host,
         port: peer.port,
-        crypto: clientCryptoOps(),
+        crypto: getQuicClientCrypto(),
         config: {
           ...config,
           verifyCallback: peerDetails.verifyCallback,

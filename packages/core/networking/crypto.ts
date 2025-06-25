@@ -1,8 +1,14 @@
 import { webcrypto } from "node:crypto";
+import type { QUICClientCrypto, QUICServerCrypto } from "@matrixai/quic";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { ED25519_KEY_BYTES, ED25519_SIGNATURE_BYTES, type Ed25519Pair, ed25519 } from "@typeberry/crypto";
 
-export function ed25519Crypto(key: Ed25519Pair) {
+/**
+ * Crypto utilitiy functions required by the QUIC server.
+ *
+ * Implements `ed25519` signing and verification and presents the server key.
+ */
+export function getQuicServerCrypto(key: Ed25519Pair): QUICServerCrypto {
   return {
     key: toArrayBuffer(key._privKey.raw),
     ops: {
@@ -26,7 +32,12 @@ export function ed25519Crypto(key: Ed25519Pair) {
   };
 }
 
-export function clientCryptoOps() {
+/**
+ * Crypto utilities functions required by the QUIC client.
+ *
+ * We just need to be able to get crypto-secure random bytes.
+ */
+export function getQuicClientCrypto(): QUICClientCrypto {
   return {
     ops: {
       async randomBytes(data: ArrayBuffer): Promise<void> {
