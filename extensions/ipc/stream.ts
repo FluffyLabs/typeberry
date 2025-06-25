@@ -1,9 +1,7 @@
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
-import { type U8, type U16, tryAsU8 } from "@typeberry/numbers";
-
-export type StreamId = U16;
-export type StreamKind = U8;
+import type { StreamId, StreamKind } from "@typeberry/jamnp-s";
+import { type U8, tryAsU8 } from "@typeberry/numbers";
 
 export enum StreamEnvelopeType {
   Msg = 0,
@@ -13,7 +11,7 @@ export enum StreamEnvelopeType {
 
 export class StreamEnvelope {
   static Codec = codec.Class(StreamEnvelope, {
-    streamId: codec.u16,
+    streamId: codec.u32,
     type: codec.u8.convert<StreamEnvelopeType>(
       (i) => tryAsU8(i),
       (o: U8) => {

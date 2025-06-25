@@ -6,8 +6,8 @@
   "workspaces": [
     "bin/jam",
     "bin/pvm",
-    "bin/test-runner",
     "bin/rpc",
+    "bin/test-runner",
     "extensions/ipc",
     "packages/core/bytes",
     "packages/core/codec",
@@ -37,9 +37,11 @@
     "packages/jam/database",
     "packages/jam/database-lmdb",
     "packages/jam/jam-host-calls",
+    "packages/jam/jamnp-s",
     "packages/jam/pvm-host-calls",
     "packages/jam/safrole",
     "packages/jam/state",
+    "packages/jam/state-json",
     "packages/jam/state-merkleization",
     "packages/jam/transition",
     "packages/jam/transition/disputes",
@@ -48,8 +50,7 @@
     "tools/ipc2rpc",
     "workers/block-generator",
     "workers/generic",
-    "workers/importer",
-    "packages/jam/state-json"
+    "workers/importer"
   ],
   "engines": {
     "node": ">=22",
