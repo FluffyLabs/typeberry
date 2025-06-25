@@ -6,8 +6,7 @@ import { ED25519_SIGNATURE_BYTES, type Ed25519Signature } from "@typeberry/crypt
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
-import type { StreamHandler, StreamSender } from "../handler.js";
-import type { StreamId, StreamKind } from "./stream.js";
+import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
  * JAMNP-S CE 134 Stream
@@ -22,7 +21,7 @@ import type { StreamId, StreamKind } from "./stream.js";
 type WorkPackageBundle = BytesBlob;
 const WorkPackageBundleCodec = codec.blob;
 
-export const STREAM_KIND = 134 as StreamKind;
+export const STREAM_KIND = tryAsStreamKind(134);
 
 export class WorkPackageSharingRequest extends WithDebug {
   static Codec = codec.Class(WorkPackageSharingRequest, {
@@ -75,13 +74,17 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 
   private readonly requestsMap = new Map<StreamId, WorkPackageSharingRequest>();
 
-  private static sendWorkReport(sender: StreamSender, workReportHash: WorkReportHash, signature: Ed25519Signature) {
+  private static sendWorkReport(
+    sender: StreamMessageSender,
+    workReportHash: WorkReportHash,
+    signature: Ed25519Signature,
+  ) {
     const workReport = WorkPackageSharingResponse.create({ workReportHash, signature });
-    sender.send(Encoder.encodeObject(WorkPackageSharingResponse.Codec, workReport));
+    sender.bufferAndSend(Encoder.encodeObject(WorkPackageSharingResponse.Codec, workReport));
     sender.close();
   }
 
-  onStreamMessage(sender: StreamSender, message: BytesBlob): void {
+  onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
     const streamId = sender.streamId;
     const request = this.requestsMap.get(streamId);
 
@@ -118,7 +121,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     }
   >();
 
-  onStreamMessage(sender: StreamSender, message: BytesBlob): void {
+  onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
     const pendingRequest = this.pendingRequests.get(sender.streamId);
     if (pendingRequest === undefined) {
       throw new Error("Unexpected message received.");
@@ -139,16 +142,16 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   }
 
   async sendWorkPackage(
-    sender: StreamSender,
+    sender: StreamMessageSender,
     coreIndex: CoreIndex,
     segmentsRootMappings: WorkPackageInfo[],
     workPackageBundle: WorkPackageBundle,
   ): Promise<{ workReportHash: WorkReportHash; signature: Ed25519Signature }> {
     const request = WorkPackageSharingRequest.create({ coreIndex, segmentsRootMappings });
     logger.trace(`[${sender.streamId}] Sending core index and segments-root mappings.`);
-    sender.send(Encoder.encodeObject(WorkPackageSharingRequest.Codec, request));
+    sender.bufferAndSend(Encoder.encodeObject(WorkPackageSharingRequest.Codec, request));
     logger.trace(`[${sender.streamId}] Sending work package bundle.`);
-    sender.send(Encoder.encodeObject(WorkPackageBundleCodec, workPackageBundle));
+    sender.bufferAndSend(Encoder.encodeObject(WorkPackageBundleCodec, workPackageBundle));
 
     return new Promise((resolve, reject) => {
       this.pendingRequests.set(sender.streamId, { resolve, reject });

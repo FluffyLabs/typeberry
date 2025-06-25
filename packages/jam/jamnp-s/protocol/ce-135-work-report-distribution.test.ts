@@ -12,8 +12,9 @@ import { tinyChainSpec } from "@typeberry/config";
 import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU16, tryAsU32 } from "@typeberry/numbers";
-import { MessageHandler, type MessageSender } from "../handler.js";
+import { OK } from "@typeberry/utils";
 import { ClientHandler, GuaranteedWorkReport, STREAM_KIND, ServerHandler } from "./ce-135-work-report-distribution.js";
+import { testClientServer } from "./test-utils.js";
 
 const MOCK_SLOT = tryAsTimeSlot(1000);
 const MOCK_WORK_PACKAGE_SPEC = WorkPackageSpec.create({
@@ -71,48 +72,9 @@ const MOCK_GUARANTEED_WORK_REPORT = GuaranteedWorkReport.create({
   signatures: MOCK_SIGNATURES,
 });
 
-class FakeMessageSender implements MessageSender {
-  constructor(
-    public readonly onMessage: (data: BytesBlob) => void,
-    public readonly onClose: () => void,
-  ) {}
-
-  send(data: BytesBlob): void {
-    setImmediate(() => {
-      this.onMessage(data);
-    });
-  }
-
-  close(): void {
-    setImmediate(() => {
-      this.onClose();
-    });
-  }
-}
-
 describe("CE 135: Work Report Distribution", () => {
   it("Guarantor sends a work report and validator receives it", async () => {
-    const handlers = {} as { client: MessageHandler; server: MessageHandler };
-    handlers.client = new MessageHandler(
-      new FakeMessageSender(
-        (data) => {
-          handlers.server.onSocketMessage(data.raw);
-        },
-        () => {
-          handlers.server.onClose({});
-        },
-      ),
-    );
-    handlers.server = new MessageHandler(
-      new FakeMessageSender(
-        (data) => {
-          handlers.client.onSocketMessage(data.raw);
-        },
-        () => {
-          handlers.client.onClose({});
-        },
-      ),
-    );
+    const handlers = testClientServer();
 
     await new Promise((resolve) => {
       const serverHandler = new ServerHandler(tinyChainSpec, (workReport) => {
@@ -125,6 +87,7 @@ describe("CE 135: Work Report Distribution", () => {
 
       handlers.client.withNewStream(STREAM_KIND, (handler: ClientHandler, sender) => {
         handler.sendWorkReport(sender, MOCK_GUARANTEED_WORK_REPORT);
+        return OK;
       });
     });
   });

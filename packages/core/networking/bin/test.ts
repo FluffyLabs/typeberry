@@ -2,7 +2,8 @@ import { setTimeout } from "node:timers/promises";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { ed25519 } from "@typeberry/crypto";
 import { Logger } from "@typeberry/logger";
-import { socket } from "../index.js";
+import { OK } from "@typeberry/utils";
+import { Quic } from "../index.js";
 
 const logger = Logger.new(import.meta.filename, "net:demo");
 
@@ -11,29 +12,39 @@ async function main(clientPort: number, serverPort: number) {
   const clientKey = await ed25519.privateKey(Bytes.fill(ed25519.ED25519_PRIV_KEY_BYTES, 1));
   const serverKey = await ed25519.privateKey(Bytes.fill(ed25519.ED25519_PRIV_KEY_BYTES, 2));
 
-  const network = await socket.setup({
+  const network = await Quic.setup({
     host: "127.0.0.1",
     port: serverPort,
     key: clientPort === 0 ? serverKey : clientKey,
     protocols: [`jamnp-s/0/${genesisHash}`],
   });
 
-  network.onPeerConnect((p) => {
-    logger.log(`New peer: ${p.id}`);
-    p.addOnStreamOpen(async (stream) => {
-      logger.info(`🚰  Stream with ${p.id} opened`);
-      const { readable } = stream;
-      const reader = readable.getReader();
-      const data = await reader.read();
-      if (data.value !== undefined) {
-        const bytes = BytesBlob.blobFrom(data.value);
-        logger.info(`🚰 Peer ${p.id} stream data: ${bytes}`);
-      }
-      if (data.done) {
-        logger.info(`🚰 Peer ${p.id} stream done.`);
-        return;
-      }
+  network.onPeerConnect((peer) => {
+    logger.log(`New peer: ${peer.id}`);
+    peer.addOnStreamOpen((stream) => {
+      (async () => {
+        logger.info(`🚰  Stream with ${peer.id} opened`);
+        const { readable } = stream;
+        const reader = readable.getReader();
+        for (;;) {
+          const data = await reader.read();
+          if (data.value !== undefined) {
+            const bytes = BytesBlob.blobFrom(data.value);
+            logger.info(`🚰 Peer ${peer.id} stream data: ${bytes}`);
+          }
+          if (data.done) {
+            logger.info(`🚰 Peer ${peer.id} stream done.`);
+            return;
+          }
+        }
+      })().catch((e) => {
+        logger.error(`Error handling stream: ${e}. Disconnecting.`);
+        peer.disconnect();
+      });
+
+      return OK;
     });
+    return OK;
   });
 
   await network.start();
@@ -50,18 +61,24 @@ async function main(clientPort: number, serverPort: number) {
         host: "127.0.0.1",
         port: clientPort,
       });
+      logger.log("Connected, opening streams...");
+      await setTimeout(2000);
       // open a bunch of streams
       for (let i = 0; i < 10; i++) {
-        const { writable } = peer.openStream();
+        const stream = peer.openStream();
         // After opening a stream, the stream initiator must send a single byte identifying the stream kind.
-        writable.getWriter().write(Uint8Array.from([i]));
+        await stream.writable.getWriter().write(Uint8Array.from([i]));
       }
+      logger.log("Streams done. Disconnecting.");
+      await peer.disconnect();
       break;
     } catch (e) {
       logger.warn(`Dial error: ${e}`);
     }
   }
-  logger.log("Connected...");
+
+  logger.log("Closing networking...");
+  await network.stop();
 }
 
 const args = process.argv.slice(2);
@@ -77,4 +94,7 @@ const parsePort = (v: string | undefined) => {
   return p;
 };
 
-main(parsePort(args[0]), parsePort(args[1]));
+main(parsePort(args[0]), parsePort(args[1])).catch((e) => {
+  console.error(e);
+  process.exit(-1);
+});
