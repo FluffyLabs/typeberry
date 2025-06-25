@@ -56,11 +56,16 @@ const config: webpack.Configuration = {
         },
         exclude: /node_modules/,
       },
+      {
+        test: /bootstrap\.mjs$/,
+        type: "asset/inline",
+      },
     ],
   },
   devtool: "source-map",
   optimization: {
     minimize: true,
+    splitChunks: false,
   },
   stats: {
     colors: true,
