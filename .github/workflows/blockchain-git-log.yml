@@ -44,6 +44,7 @@ jobs:
       - run: npm start
         env:
           COMMIT_KEY_SECRET: ${{ secrets.COMMIT_KEY_SECRET }}
+        continue-on-error: true
       - name: Upload new transaction log
         uses: actions/upload-artifact@v4
         with:
