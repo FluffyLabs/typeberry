@@ -39,7 +39,7 @@ export class Generator {
     this.lastState = lastState;
   }
 
-  private refreshLastHeaderAndState() {
+  private refreshLastHeaderAndState(): void {
     const { lastHeaderHash, lastHeader, lastState } = Generator.getLastHeaderAndState(this.blocks, this.states);
     this.lastHeaderHash = lastHeaderHash;
     this.lastHeader = lastHeader;
@@ -63,7 +63,7 @@ export class Generator {
     };
   }
 
-  async nextEncodedBlock() {
+  async nextEncodedBlock(): Promise<BytesBlob> {
     const newBlock = await this.nextBlock();
     const encoded = Encoder.encodeObject(Block.Codec, newBlock, this.chainSpec);
     return encoded;
@@ -74,6 +74,7 @@ export class Generator {
     // fetch latest data from the db.
     this.refreshLastHeaderAndState();
 
+    // incrementing timeslot for current block
     const lastTimeSlot = this.lastHeader.timeSlotIndex;
     const newTimeSlot = lastTimeSlot + 1;
 

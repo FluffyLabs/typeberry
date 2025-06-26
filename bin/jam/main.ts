@@ -42,6 +42,8 @@ type Options = {
   databasePath: string;
   /** Chain spec (could also be filename?) */
   chainSpec: KnownChainSpec;
+  /** Whether to enable typeberry mode without state root verification */
+  typeberryMode: boolean;
 };
 
 export async function main(args: Arguments) {
@@ -58,6 +60,7 @@ export async function main(args: Arguments) {
     genesisRoot: args.args.genesisRoot,
     databasePath: args.args.dbPath,
     chainSpec: KnownChainSpec.Tiny,
+    typeberryMode: args.args.typeberryMode,
   };
 
   const chainSpec = getChainSpec(options.chainSpec);
@@ -76,7 +79,7 @@ export async function main(args: Arguments) {
   const closeExtensions = initializeExtensions({ bestHeader });
 
   // Start block importer
-  const config = new Config(chainSpec, dbPath);
+  const config = new Config(chainSpec, dbPath, options.typeberryMode);
   const importerReady = importerInit.transition((state, port) => {
     return state.sendConfig(port, config);
   });

@@ -38,6 +38,7 @@ export class Importer {
     private readonly logger: Logger,
     private readonly blocks: BlocksDb,
     private readonly states: StatesDb<SerializedState<LeafDb>>,
+    typeberryMode = false,
   ) {
     const currentBestHeaderHash = this.blocks.getBestHeaderHash();
     const state = states.getState(currentBestHeaderHash);
@@ -45,7 +46,7 @@ export class Importer {
       throw new Error(`Unable to load best state from header hash: ${currentBestHeaderHash}.`);
     }
 
-    this.verifier = new BlockVerifier(hasher, blocks);
+    this.verifier = new BlockVerifier(hasher, blocks, typeberryMode);
     this.stf = new OnChain(spec, state, blocks, hasher, { enableParallelSealVerification: true });
     this.state = state;
 
