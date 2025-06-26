@@ -24,6 +24,10 @@ const DEFAULTS = {
 // NOTE [ToDr] Instead of adding more options here we should probably
 // consider just using JSON config files and only leave the stuff
 // that is actually meant to be easily overriden from CLI.
+// NOTE [MaSo] Temporarily added special flag to enable/disable state root verification.
+// TODO [MaSo] Delete this flag when implemented correct seal generation to block
+// --typeberry-mode      Enable typeberry mode without state root verification.
+//                       [default: false]
 export const HELP = `
 typeberry ${version} by Fluffy Labs.
 
@@ -42,8 +46,6 @@ Options:
                         Takes precedence over --genesis-root.
   --genesis-block       Path to a JSON file containing genesis block.
                         Overrides the default empty block if needed.
-  --typeberry-mode      Enable typeberry mode without state root verification.
-                        [default: false]
 
 `;
 
