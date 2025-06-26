@@ -27,7 +27,7 @@ const DEFAULTS = {
 // NOTE [MaSo] Temporarily added special flag to enable/disable seal verification.
 // TODO [MaSo] Delete this flag when implemented correct seal generation to block
 // --omit-seal-verification      Enable omit seal verification.
-//                       [default: false]
+//                               [default: false]
 export const HELP = `
 typeberry ${version} by Fluffy Labs.
 
