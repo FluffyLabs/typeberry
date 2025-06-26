@@ -67,6 +67,7 @@ export class BlockVerifier {
 
     // In typeberry mode, we skip state root validation to allow for testing blocks
     // without correct seal
+    // TODO [MaSo] Should be removed when we start generating blocks with correct seals
     if (!this.typeberryMode) {
       // Check if the state root is valid.
       // https://graypaper.fluffylabs.dev/#/cc517d7/0c18010c1801?v=0.6.5
