@@ -124,14 +124,14 @@ export class OnChain {
     block: BlockView,
     headerHash: HeaderHash,
     preverifiedSeal: EntropyHash | null = null,
-    typeberryMode = false,
+    omitSealVerification = false,
   ): Promise<Result<Ok, StfError>> {
     const header = block.header.materialize();
     const timeSlot = header.timeSlotIndex;
 
     // safrole seal
     let newEntropyHash = preverifiedSeal;
-    if (typeberryMode) {
+    if (omitSealVerification) {
       const validatorId = header.bandersnatchBlockAuthorIndex;
       const bytes = new Uint8Array(32);
       bytes[0] = (timeSlot >> 24) & 0xff;
@@ -152,7 +152,7 @@ export class OnChain {
     }
 
     // disputes
-    const disputesResult = await this.disputes.transition(block.extrinsic.view().disputes.materialize(), typeberryMode);
+    const disputesResult = await this.disputes.transition(block.extrinsic.view().disputes.materialize(), omitSealVerification);
     if (disputesResult.isError) {
       return stfError(StfErrorKind.Disputes, disputesResult);
     }

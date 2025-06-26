@@ -373,7 +373,7 @@ export class Disputes {
    */
   async transition(
     disputes: DisputesExtrinsic,
-    typeberryMode = false,
+    omitSealVerification = false,
   ): Promise<
     Result<
       {
@@ -405,7 +405,7 @@ export class Disputes {
       this.verifyIfAlreadyJudged(disputes),
     ].find((result) => result.isError);
 
-    if (inputError?.isError && !typeberryMode) {
+    if (inputError?.isError && !omitSealVerification) {
       return Result.error(inputError.error);
     }
 

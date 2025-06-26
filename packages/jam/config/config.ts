@@ -9,13 +9,13 @@ export class Config {
    * this function is re-initializing proper types.
    */
   static reInit(config: unknown) {
-    const { chainSpec, dbPath, typeberryMode } = config as Config;
-    return new Config(new ChainSpec(chainSpec), dbPath, typeberryMode);
+    const { chainSpec, dbPath, omitSealVerification } = config as Config;
+    return new Config(new ChainSpec(chainSpec), dbPath, omitSealVerification);
   }
 
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly dbPath: string,
-    public readonly typeberryMode: boolean = false,
+    public readonly omitSealVerification: boolean = false,
   ) {}
 }

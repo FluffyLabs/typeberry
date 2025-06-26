@@ -26,7 +26,7 @@ const DEFAULTS = {
 // that is actually meant to be easily overriden from CLI.
 // NOTE [MaSo] Temporarily added special flag to enable/disable state root verification.
 // TODO [MaSo] Delete this flag when implemented correct seal generation to block
-// --typeberry-mode      Enable typeberry mode without state root verification.
+// --omit-seal-verification      Enable omit seal verification without state root verification.
 //                       [default: false]
 export const HELP = `
 typeberry ${version} by Fluffy Labs.
@@ -63,7 +63,7 @@ export type SharedOptions = {
   genesisRoot: StateRootHash;
   chainSpec: KnownChainSpec;
   dbPath: string;
-  typeberryMode: boolean;
+  omitSealVerification: boolean;
 };
 
 export type Arguments =
@@ -102,7 +102,7 @@ function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedO
     },
     DEFAULTS.chainSpec,
   );
-  const typeberryMode = parseOption(args, "typeberry-mode", (v) => v === "true", false);
+  const omitSealVerification = parseOption(args, "omit-seal-verification", (v) => v === "true", false);
 
   return {
     dbPath: dbPath["db-path"],
@@ -110,7 +110,7 @@ function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedO
     genesis: genesis,
     genesisBlock: genesisBlock["genesis-block"],
     chainSpec: chainSpec["chain-spec"],
-    typeberryMode: typeberryMode["typeberry-mode"],
+    omitSealVerification: omitSealVerification["omit-seal-verification"],
   };
 }
 

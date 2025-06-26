@@ -17,7 +17,7 @@ describe("CLI", () => {
     ).asOpaque(),
     dbPath: "../database",
     chainSpec: KnownChainSpec.Tiny,
-    typeberryMode: false,
+    omitSealVerification: false,
   };
 
   it("should start with default arguments", () => {
@@ -104,26 +104,26 @@ describe("CLI", () => {
     });
   });
 
-  it("should parse typeberry-mode option with true", () => {
-    const args = parse(["--typeberry-mode=true"]);
+  it("should parse omit-seal-verification option with true", () => {
+    const args = parse(["--omit-seal-verification=true"]);
 
     deepEqual(args, {
       command: Command.Run,
       args: {
         ...defaultOptions,
-        typeberryMode: true,
+        omitSealVerification: true,
       },
     });
   });
 
-  it("should parse typeberry-mode option with false", () => {
-    const args = parse(["--typeberry-mode=false"]);
+  it("should parse omit-seal-verification option with false", () => {
+    const args = parse(["--omit-seal-verification=false"]);
 
     deepEqual(args, {
       command: Command.Run,
       args: {
         ...defaultOptions,
-        typeberryMode: false,
+        omitSealVerification: false,
       },
     });
   });
