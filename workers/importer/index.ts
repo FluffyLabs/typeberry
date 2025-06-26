@@ -54,7 +54,6 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
       logger,
       blocks,
       states,
-      config.typeberryMode,
     );
 
     // TODO [ToDr] back pressure?

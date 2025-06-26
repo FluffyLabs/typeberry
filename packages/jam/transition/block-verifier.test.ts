@@ -199,22 +199,4 @@ describe("Block Verifier", async () => {
       ),
     );
   });
-
-  it("should skip state root validation in typeberry mode", async () => {
-    const blocksDb = new InMemoryBlocks();
-    prepareBlocksDb(blocksDb, {
-      stateRootHash: Bytes.fill(HASH_SIZE, 6).asOpaque(),
-      prepareStateRoot: true,
-    });
-    const blockVerifier = new BlockVerifier(hasher, blocksDb, true); // typeberry mode enabled
-
-    const block = prepareBlock({
-      priorStateRootHash: Bytes.fill(HASH_SIZE, 7).asOpaque(),
-      correctExtrinsic: true,
-    });
-
-    const result = await blockVerifier.verifyBlock(toBlockView(block));
-
-    assert.deepStrictEqual(result.isOk, true);
-  });
 });
