@@ -56,7 +56,6 @@ export async function main(channel: MessageChannelStateMachine<GeneratorInit, Ge
       await keccak.KeccakHasher.create(),
       blocks,
       states,
-      config.typeberryMode,
     );
     while (!isFinished()) {
       counter += 1;
