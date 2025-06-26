@@ -20,6 +20,7 @@ export class BlockVerifier {
   constructor(
     public readonly hasher: TransitionHasher,
     private readonly blocks: BlocksDb,
+    private readonly typeberryMode: boolean = false,
   ) {}
 
   async verifyBlock(block: BlockView): Promise<Result<HeaderHash, BlockVerifierError>> {
@@ -64,21 +65,25 @@ export class BlockVerifier {
       );
     }
 
-    // Check if the state root is valid.
-    // https://graypaper.fluffylabs.dev/#/cc517d7/0c18010c1801?v=0.6.5
-    const stateRoot = headerView.priorStateRoot.materialize();
-    const posteriorStateRoot = this.blocks.getPostStateRoot(parentHash);
-    if (posteriorStateRoot === null) {
-      return Result.error(
-        BlockVerifierError.StateRootNotFound,
-        `Posterior state root ${parentHash.toString()} not found`,
-      );
-    }
-    if (!stateRoot.isEqualTo(posteriorStateRoot)) {
-      return Result.error(
-        BlockVerifierError.InvalidStateRoot,
-        `Invalid prior state root: ${stateRoot.toString()}, expected ${posteriorStateRoot.toString()} (ours)`,
-      );
+    // In typeberry mode, we skip state root validation to allow for testing blocks
+    // without correct seal
+    if (!this.typeberryMode) {
+      // Check if the state root is valid.
+      // https://graypaper.fluffylabs.dev/#/cc517d7/0c18010c1801?v=0.6.5
+      const stateRoot = headerView.priorStateRoot.materialize();
+      const posteriorStateRoot = this.blocks.getPostStateRoot(parentHash);
+      if (posteriorStateRoot === null) {
+        return Result.error(
+          BlockVerifierError.StateRootNotFound,
+          `Posterior state root ${parentHash.toString()} not found`,
+        );
+      }
+      if (!stateRoot.isEqualTo(posteriorStateRoot)) {
+        return Result.error(
+          BlockVerifierError.InvalidStateRoot,
+          `Invalid prior state root: ${stateRoot.toString()}, expected ${posteriorStateRoot.toString()} (ours)`,
+        );
+      }
     }
 
     return Result.ok(headerHash.hash);
