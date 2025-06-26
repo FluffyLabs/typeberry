@@ -152,7 +152,10 @@ export class OnChain {
     }
 
     // disputes
-    const disputesResult = await this.disputes.transition(block.extrinsic.view().disputes.materialize(), omitSealVerification);
+    const disputesResult = await this.disputes.transition(
+      block.extrinsic.view().disputes.materialize(),
+      omitSealVerification,
+    );
     if (disputesResult.isError) {
       return stfError(StfErrorKind.Disputes, disputesResult);
     }

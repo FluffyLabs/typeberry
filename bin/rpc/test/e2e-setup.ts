@@ -73,6 +73,7 @@ async function main() {
         genesis: "../../jamdunavectors/chainspecs/state_snapshots/genesis-tiny.json",
         genesisRoot: Bytes.parseBytesNoPrefix(GENESIS_ROOT, HASH_SIZE).asOpaque(),
         chainSpec: KnownChainSpec.Tiny,
+        omitSealVerification: false,
       },
     }).catch((e) => {
       console.error(`${e}`);
