@@ -24,9 +24,9 @@ const DEFAULTS = {
 // NOTE [ToDr] Instead of adding more options here we should probably
 // consider just using JSON config files and only leave the stuff
 // that is actually meant to be easily overriden from CLI.
-// NOTE [MaSo] Temporarily added special flag to enable/disable state root verification.
+// NOTE [MaSo] Temporarily added special flag to enable/disable seal verification.
 // TODO [MaSo] Delete this flag when implemented correct seal generation to block
-// --omit-seal-verification      Enable omit seal verification without state root verification.
+// --omit-seal-verification      Enable omit seal verification without seal verification.
 //                       [default: false]
 export const HELP = `
 typeberry ${version} by Fluffy Labs.
