@@ -40,7 +40,7 @@ if (!isMainThread) {
  * The `BlockGenerator` should periodically create new blocks and send them as signals to the main thread.
  */
 export async function main(channel: MessageChannelStateMachine<GeneratorInit, GeneratorStates>) {
-  logger.info(`Block Generator running ${channel.currentState()}`);
+  logger.info(`🎁 Block Generator running ${channel.currentState()}`);
   // Await the configuration object
   const ready = await channel.waitForState<GeneratorReady>("ready(generator)");
   const config = ready.currentState().getConfig();

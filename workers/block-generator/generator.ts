@@ -91,7 +91,7 @@ export class Generator {
         verdicts: [
           Verdict.create({
             workReportHash: Bytes.fill(HASH_SIZE, newTimeSlot % 256).asOpaque(),
-            votesEpoch: tryAsEpoch(newTimeSlot / this.chainSpec.epochLength),
+            votesEpoch: tryAsEpoch(Math.floor(newTimeSlot / this.chainSpec.epochLength)),
             votes: asKnownSize([
               Judgement.create({
                 isWorkReportValid: true,
