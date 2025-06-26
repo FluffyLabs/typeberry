@@ -42,6 +42,8 @@ Options:
                         Takes precedence over --genesis-root.
   --genesis-block       Path to a JSON file containing genesis block.
                         Overrides the default empty block if needed.
+  --typeberry-mode      Enable typeberry mode without state root verification.
+                        [default: false]
 
 `;
 
@@ -59,6 +61,7 @@ export type SharedOptions = {
   genesisRoot: StateRootHash;
   chainSpec: KnownChainSpec;
   dbPath: string;
+  typeberryMode: boolean;
 };
 
 export type Arguments =
@@ -97,6 +100,7 @@ function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedO
     },
     DEFAULTS.chainSpec,
   );
+  const typeberryMode = parseOption(args, "typeberry-mode", (v) => v === "true", false);
 
   return {
     dbPath: dbPath["db-path"],
@@ -104,6 +108,7 @@ function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedO
     genesis: genesis,
     genesisBlock: genesisBlock["genesis-block"],
     chainSpec: chainSpec["chain-spec"],
+    typeberryMode: typeberryMode["typeberry-mode"],
   };
 }
 

@@ -17,6 +17,7 @@ describe("CLI", () => {
     ).asOpaque(),
     dbPath: "../database",
     chainSpec: KnownChainSpec.Tiny,
+    typeberryMode: false,
   };
 
   it("should start with default arguments", () => {
@@ -99,6 +100,30 @@ describe("CLI", () => {
       args: {
         ...defaultOptions,
         files: [".././file1.json", ".././file2.json"],
+      },
+    });
+  });
+
+  it("should parse typeberry-mode option with true", () => {
+    const args = parse(["--typeberry-mode=true"]);
+
+    deepEqual(args, {
+      command: Command.Run,
+      args: {
+        ...defaultOptions,
+        typeberryMode: true,
+      },
+    });
+  });
+
+  it("should parse typeberry-mode option with false", () => {
+    const args = parse(["--typeberry-mode=false"]);
+
+    deepEqual(args, {
+      command: Command.Run,
+      args: {
+        ...defaultOptions,
+        typeberryMode: false,
       },
     });
   });
