@@ -371,7 +371,7 @@ export class Disputes {
   /**
    * Transition the disputes and return a list of offenders.
    */
-  async transition(disputes: DisputesExtrinsic): Promise<
+  async transition(disputes: DisputesExtrinsic, typeberryMode: boolean = false): Promise<
     Result<
       {
         offendersMark: Ed25519Key[];
@@ -402,7 +402,7 @@ export class Disputes {
       this.verifyIfAlreadyJudged(disputes),
     ].find((result) => result.isError);
 
-    if (inputError?.isError) {
+    if (inputError?.isError && !typeberryMode) {
       return Result.error(inputError.error);
     }
 

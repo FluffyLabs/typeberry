@@ -84,7 +84,8 @@ export class Generator {
 
     const extrinsic = Extrinsic.create({
       tickets: asOpaqueType([]),
-      preimages: [Preimage.create({ requester: tryAsServiceId(1), blob: BytesBlob.parseBlob("0x1234") })],
+      // preimages: [Preimage.create({ requester: tryAsServiceId(0), blob: BytesBlob.parseBlob("0x1234") })],
+      preimages: [],
       guarantees: asOpaqueType([]),
       assurances: asOpaqueType([]),
       disputes: DisputesExtrinsic.create({

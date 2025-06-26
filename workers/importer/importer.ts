@@ -71,6 +71,7 @@ export class Importer {
   async importBlock(
     block: BlockView,
     preverifiedSeal: EntropyHash | null,
+    typeberryMode: boolean = false,
   ): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
     const logger = this.logger;
     logger.log(`🧱 Attempting to import a new block ${preverifiedSeal !== null ? "(seal preverified)" : ""}`);
@@ -83,10 +84,10 @@ export class Importer {
     }
 
     const timeSlot = block.header.view().timeSlotIndex.materialize();
-    logger.log(`🧱 Got hash ${hash.ok} for block at slot ${timeSlot}.`);
     const headerHash = hash.ok;
+    logger.log(`🧱 Verified block: Got hash ${headerHash} for block at slot ${timeSlot}.`);
     const timerStf = measure("import:stf");
-    const res = await this.stf.transition(block, headerHash, preverifiedSeal);
+    const res = await this.stf.transition(block, headerHash, preverifiedSeal, typeberryMode);
     logger.log(timerStf());
     if (res.isError) {
       return importerError(ImporterErrorKind.Stf, res);

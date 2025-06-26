@@ -22,6 +22,8 @@ import { RecentHistory, type RecentHistoryStateUpdate } from "./recent-history.j
 import { Reports, type ReportsError, type ReportsStateUpdate } from "./reports/index.js";
 import type { HeaderChain } from "./reports/verify-contextual.js";
 import { Statistics, type StatisticsStateUpdate } from "./statistics.js";
+import { Bytes } from "@typeberry/bytes";
+import { blake2b } from "@typeberry/hash";
 
 class DbHeaderChain implements HeaderChain {
   constructor(private readonly blocks: BlocksDb) {}
@@ -122,12 +124,25 @@ export class OnChain {
     block: BlockView,
     headerHash: HeaderHash,
     preverifiedSeal: EntropyHash | null = null,
+    typeberryMode: boolean = false,
   ): Promise<Result<Ok, StfError>> {
     const header = block.header.materialize();
     const timeSlot = header.timeSlotIndex;
 
     // safrole seal
     let newEntropyHash = preverifiedSeal;
+    if (typeberryMode) {
+      const validatorId = header.bandersnatchBlockAuthorIndex;
+      const bytes = new Uint8Array(32);
+      bytes[0] = timeSlot >> 24 & 0xff;
+      bytes[1] = timeSlot >> 16 & 0xff;
+      bytes[2] = timeSlot >> 8 & 0xff;
+      bytes[3] = timeSlot & 0xff;
+      bytes[4] = validatorId >> 8 & 0xff;
+      bytes[5] = validatorId & 0xff;
+      const seal = Bytes.fromBlob(bytes, 32);
+      newEntropyHash = blake2b.hashBytes(seal).asOpaque();
+    }
     if (newEntropyHash === null) {
       const sealResult = await this.verifySeal(timeSlot, block);
       if (sealResult.isError) {
@@ -137,7 +152,7 @@ export class OnChain {
     }
 
     // disputes
-    const disputesResult = await this.disputes.transition(block.extrinsic.view().disputes.materialize());
+    const disputesResult = await this.disputes.transition(block.extrinsic.view().disputes.materialize(), typeberryMode);
     if (disputesResult.isError) {
       return stfError(StfErrorKind.Disputes, disputesResult);
     }
