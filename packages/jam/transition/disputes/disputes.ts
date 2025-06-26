@@ -371,7 +371,10 @@ export class Disputes {
   /**
    * Transition the disputes and return a list of offenders.
    */
-  async transition(disputes: DisputesExtrinsic, typeberryMode: boolean = false): Promise<
+  async transition(
+    disputes: DisputesExtrinsic,
+    typeberryMode = false,
+  ): Promise<
     Result<
       {
         offendersMark: Ed25519Key[];

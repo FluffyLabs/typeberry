@@ -1,16 +1,7 @@
-import {
-  Block,
-  Header,
-  type HeaderHash,
-  tryAsEpoch,
-  tryAsServiceId,
-  tryAsTimeSlot,
-  tryAsValidatorIndex,
-} from "@typeberry/block";
+import { Block, Header, type HeaderHash, tryAsEpoch, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import { Extrinsic } from "@typeberry/block/block.js";
 import { DisputesExtrinsic, Judgement, Verdict } from "@typeberry/block/disputes.js";
-import { Preimage } from "@typeberry/block/preimage.js";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";

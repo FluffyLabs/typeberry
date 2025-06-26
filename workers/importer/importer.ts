@@ -71,7 +71,7 @@ export class Importer {
   async importBlock(
     block: BlockView,
     preverifiedSeal: EntropyHash | null,
-    typeberryMode: boolean = false,
+    typeberryMode = false,
   ): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
     const logger = this.logger;
     logger.log(`🧱 Attempting to import a new block ${preverifiedSeal !== null ? "(seal preverified)" : ""}`);
