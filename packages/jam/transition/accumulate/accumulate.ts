@@ -36,6 +36,7 @@ import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
 import { Result, check } from "@typeberry/utils";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
 import { generateNextServiceId, getWorkPackageHashes, uniquePreserveOrder } from "./accumulate-utils.js";
+import { ServiceStorageManager } from "./externalities/accumulate-service-storage.js";
 import {
   AccountsInfoExternalities,
   AccountsLookupExternalities,
@@ -183,20 +184,23 @@ export class Accumulate {
     const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec);
     const partialState = new PartialStateDb(this.state, serviceId, nextServiceId);
 
+    const storageManager = new ServiceStorageManager(this.state);
+
     const externalities = {
       partialState,
       fetchExternalities: new AccumulateFetchExternalities(entropy, operands, this.chainSpec),
       accountsInfo: new AccountsInfoExternalities(this.state),
-      accountsRead: new AccountsReadExternalities(),
-      accountsWrite: new AccountsWriteExternalities(),
-      accountsLookup: new AccountsLookupExternalities(),
+      accountsRead: new AccountsReadExternalities(storageManager),
+      accountsWrite: new AccountsWriteExternalities(storageManager),
+      accountsLookup: new AccountsLookupExternalities(this.state),
     };
 
-    const executor = PvmExecutor.createAccumulateExecutor(code, externalities, this.chainSpec);
+    const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec);
     // TODO [MaSi]: in GP 0.6.7 operands array is replaced with length of operands array
     const args = Encoder.encodeObject(ARGS_CODEC, { slot, serviceId, operands }, this.chainSpec);
 
     const result = await executor.run(args, tryAsGas(gas));
+
     const [newState, checkpoint] = partialState.getStateUpdates();
 
     /**
@@ -226,6 +230,8 @@ export class Accumulate {
      *
      * https://graypaper.fluffylabs.dev/#/7e6ff6a/302302302302?v=0.6.7
      */
+    newState.storage = storageManager.getUpdates(serviceId);
+
     return Result.ok({ stateUpdate: newState, consumedGas: tryAsServiceGas(result.consumedGas) });
   }
 

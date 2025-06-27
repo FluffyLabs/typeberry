@@ -27,7 +27,10 @@ export class HostCallsManager {
   /** Set current service id for all handlers. */
   setServiceId(serviceId: ServiceId) {
     for (const handler of this.hostCalls) {
-      handler.currentServiceId = serviceId;
+      if (handler !== undefined) {
+        // todo: check why it contains undefined
+        handler.currentServiceId = serviceId;
+      }
     }
   }
 

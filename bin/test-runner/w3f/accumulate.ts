@@ -1,3 +1,4 @@
+import assert from "node:assert";
 import { type EntropyHash, type TimeSlot, tryAsPerEpochBlock, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report.js";
@@ -9,7 +10,7 @@ import { AutoAccumulate, InMemoryState, PrivilegedServices } from "@typeberry/st
 import { JsonService } from "@typeberry/state-json/accounts.js";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
-import { Result } from "@typeberry/utils";
+import { Result, deepEqual } from "@typeberry/utils";
 import { getChainSpec } from "./spec.js";
 
 class Input {
@@ -127,22 +128,18 @@ export async function runAccumulateTest(test: AccumulateTest, path: string) {
    * in typeberry state we have: `entropy: FixedSizeArray<EntropyHash, ENTROPY_ENTRIES>;`
    * The accumulation doesn't modify entropy so we can remove it safely from pre/post state
    */
-  const _entropy = test.pre_state.entropy;
+  const entropy = test.pre_state.entropy;
 
   const state = TestState.toAccumulateState(test.pre_state, chainSpec);
-  const _accumulate = new Accumulate(chainSpec, state);
+  const accumulate = new Accumulate(chainSpec, state);
+  const result = await accumulate.transition({ ...test.input, entropy });
 
-  // TODO [MaSi]: currently accumulate.transition throws "Method not implemented." error.
-  // It will be fixed in this PR: https://github.com/FluffyLabs/typeberry/pull/451
+  if (result.isError) {
+    assert.fail(`Expected successfull accumulation, got: ${result}`);
+  }
 
-  // const result = await accumulate.transition({ ...test.input, entropy });
+  state.applyUpdate(result.ok.stateUpdate);
 
-  // if (result.isError) {
-  //   assert.fail(`Expected successfull accumulation, got: ${result}`);
-  // }
-
-  // state.applyUpdate(result.ok.stateUpdate);
-
-  // deepEqual(state, TestState.toAccumulateState(test.post_state, chainSpec));
-  // deepEqual(result.ok.root, test.output.ok);
+  deepEqual(state, TestState.toAccumulateState(test.post_state, chainSpec));
+  deepEqual(result.ok.root, test.output.ok);
 }

@@ -1,3 +1,4 @@
+import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
 import { Assign } from "@typeberry/jam-host-calls/accumulate/assign.js";
@@ -69,11 +70,13 @@ export class PvmExecutor {
   private pvmInstanceManager = new PvmInstanceManager(4);
 
   private constructor(
+    serviceId: ServiceId,
     private serviceCode: BytesBlob,
     hostCallHandlers: HostCallHandler[],
     private entrypoint: ProgramCounter,
   ) {
     this.hostCalls = new HostCalls(...hostCallHandlers);
+    this.hostCalls.setServiceId(serviceId);
     this.pvm = new PvmHostCallExtension(this.pvmInstanceManager, this.hostCalls);
   }
 
@@ -110,11 +113,12 @@ export class PvmExecutor {
 
   /** A utility function that can be used to prepare accumulate executor */
   static createAccumulateExecutor(
+    serviceId: ServiceId,
     serviceCode: BytesBlob,
     externalities: AccumulateHostCallExternalities,
     chainSpec: ChainSpec,
   ) {
     const hostCallHandlers = PvmExecutor.prepareAccumulateHostCalls(externalities, chainSpec);
-    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ACCUMULATE);
+    return new PvmExecutor(serviceId, serviceCode, hostCallHandlers, entrypoint.ACCUMULATE);
   }
 }
