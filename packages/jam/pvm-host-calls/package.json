@@ -13,7 +13,7 @@
     "@typeberry/utils": "0.0.1"
   },
   "scripts": {
-    "start": "ts-node ./bin.ts",
+    "start": "tsx ./bin.ts",
     "test": "tsx --test $(find . -type f -name '*.test.ts'     | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",

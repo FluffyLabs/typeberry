@@ -6,8 +6,7 @@ import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { type U32, tryAsU8 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
-import type { StreamHandler, StreamSender } from "../handler.js";
-import type { StreamId, StreamKind } from "./stream.js";
+import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
  * JAM-SNP CE-128 stream.
@@ -15,7 +14,8 @@ import type { StreamId, StreamKind } from "./stream.js";
  * https://github.com/zdave-parity/jam-np/blob/main/simple.md#ce-128-block-request
  */
 
-export const STREAM_KIND = 128 as StreamKind;
+export const STREAM_KIND = tryAsStreamKind(128);
+
 export enum Direction {
   AscExcl = 0,
   DescIncl = 1,
@@ -63,13 +63,15 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
     private readonly getBlockSequence: (hash: HeaderHash, direction: Direction, maxBlocks: U32) => Block[],
   ) {}
 
-  onStreamMessage(sender: StreamSender, message: BytesBlob): void {
+  onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
     const request = Decoder.decodeObject(BlockRequest.Codec, message);
     logger.log(`[${sender.streamId}] Client has requested: ${request}`);
 
     const blocks = this.getBlockSequence(request.headerHash, request.direction, request.maxBlocks);
 
-    sender.send(Encoder.encodeObject(codec.sequenceFixLen(Block.Codec, blocks.length), blocks, this.chainSpec));
+    sender.bufferAndSend(
+      Encoder.encodeObject(codec.sequenceFixLen(Block.Codec, blocks.length), blocks, this.chainSpec),
+    );
     sender.close();
   }
 
@@ -84,7 +86,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
 
   constructor(private readonly chainSpec: ChainSpec) {}
 
-  onStreamMessage(sender: StreamSender, message: BytesBlob): void {
+  onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
     if (!this.promiseResolvers.has(sender.streamId)) {
       throw new Error("Received an unexpected message from the server.");
     }
@@ -102,7 +104,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   }
 
   async getBlockSequence(
-    sender: StreamSender,
+    sender: StreamMessageSender,
     headerHash: HeaderHash,
     direction: Direction,
     maxBlocks: U32,
@@ -115,7 +117,9 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
       this.promiseResolvers.set(sender.streamId, resolve);
       this.promiseRejectors.set(sender.streamId, reject);
 
-      sender.send(Encoder.encodeObject(BlockRequest.Codec, BlockRequest.create({ headerHash, direction, maxBlocks })));
+      sender.bufferAndSend(
+        Encoder.encodeObject(BlockRequest.Codec, BlockRequest.create({ headerHash, direction, maxBlocks })),
+      );
       sender.close();
     });
   }

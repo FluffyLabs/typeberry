@@ -1,71 +1,14 @@
+import { Buffer } from "node:buffer";
 import type { Socket } from "node:net";
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
+import type { StreamHandler, StreamId, StreamKind, StreamManager, StreamMessageSender } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
-import { NewStream, StreamEnvelope, StreamEnvelopeType, type StreamId, type StreamKind } from "./protocol/stream.js";
+import { NewStream, StreamEnvelope, StreamEnvelopeType } from "./stream.js";
 
 export type ResponseHandler = (err: Error | null, response?: BytesBlob) => void;
 
 const logger = Logger.new(import.meta.filename, "ext-ipc");
-
-/** Abstraction over sending messages. May be tied to a particular stream. */
-export interface MessageSender {
-  /** Send data blob to the other end. */
-  send(data: BytesBlob): void;
-  /** Close the connection on our side (FIN). */
-  close(): void;
-}
-
-/** Protocol handler for many streams of the same, given kind. */
-export interface StreamHandler<TStreamKind extends StreamKind = StreamKind> {
-  /** Kind of the stream */
-  readonly kind: TStreamKind;
-
-  /** Handle message for that particular stream kind. */
-  onStreamMessage(streamSender: StreamSender, message: BytesBlob): void;
-
-  /** Handle closing of given `streamId`. */
-  onClose(streamId: StreamId, isError: boolean): void;
-}
-
-export class StreamSender implements MessageSender {
-  constructor(
-    public readonly streamId: StreamId,
-    private readonly sender: MessageSender,
-  ) {}
-
-  open(newStream: NewStream) {
-    const msg = Encoder.encodeObject(NewStream.Codec, newStream);
-    this.sender.send(
-      Encoder.encodeObject(
-        StreamEnvelope.Codec,
-        StreamEnvelope.create({ streamId: this.streamId, type: StreamEnvelopeType.Open, data: msg }),
-      ),
-    );
-  }
-
-  send(msg: BytesBlob): void {
-    this.sender.send(
-      Encoder.encodeObject(
-        StreamEnvelope.Codec,
-        StreamEnvelope.create({ streamId: this.streamId, type: StreamEnvelopeType.Msg, data: msg }),
-      ),
-    );
-  }
-
-  close(): void {
-    this.sender.send(
-      Encoder.encodeObject(
-        StreamEnvelope.Codec,
-        StreamEnvelope.create({
-          streamId: this.streamId,
-          type: StreamEnvelopeType.Close,
-          data: BytesBlob.blobFromNumbers([]),
-        }),
-      ),
-    );
-  }
-}
 
 type OnEnd = {
   finished: boolean;
@@ -74,7 +17,7 @@ type OnEnd = {
   reject: (error: Error) => void;
 };
 
-export class MessageHandler {
+export class IpcHandler implements StreamManager {
   // already initiated streams
   private readonly streams: Map<StreamId, StreamHandler> = new Map();
   // streams awaiting confirmation from the other side.
@@ -84,13 +27,16 @@ export class MessageHandler {
   // termination promise + resolvers
   private readonly onEnd: OnEnd;
 
-  constructor(private readonly sender: MessageSender) {
+  private readonly sender: IpcSender;
+
+  constructor(socket: Socket) {
     const onEnd = { finished: false } as OnEnd;
     onEnd.listen = new Promise((resolve, reject) => {
       onEnd.resolve = resolve;
       onEnd.reject = reject;
     });
     this.onEnd = onEnd;
+    this.sender = new IpcSender(socket);
   }
 
   /** Register stream handlers. */
@@ -100,37 +46,26 @@ export class MessageHandler {
     }
   }
 
-  /** Perform some work on a specific stream. */
-  withStream(streamId: StreamId, work: (handler: StreamHandler, sender: StreamSender) => void) {
-    const handler = this.streams.get(streamId);
-    if (handler === undefined) {
-      return false;
-    }
-
-    work(handler, new StreamSender(streamId, this.sender));
-    return true;
-  }
-
   /** Re-use an existing stream of given kind if present. */
   withStreamOfKind<TStreamKind extends StreamKind, THandler extends StreamHandler<TStreamKind>>(
     streamKind: TStreamKind,
-    work: (handler: THandler, sender: StreamSender) => void,
-  ) {
+    work: (handler: THandler, sender: EnvelopeSender) => void,
+  ): void {
     // find first stream id with given kind
     for (const [streamId, handler] of this.streams.entries()) {
       if (handler.kind === streamKind) {
-        work(handler as THandler, new StreamSender(streamId, this.sender));
-        return true;
+        work(handler as THandler, new EnvelopeSender(streamId, this.sender));
+        return;
       }
     }
-    return false;
+    throw new Error(`Missing handler for ${streamKind}!`);
   }
 
   /** Open a new stream of given kind. */
   withNewStream<TStreamKind extends StreamKind, THandler extends StreamHandler<TStreamKind>>(
     kind: TStreamKind,
-    work: (handler: THandler, sender: StreamSender) => void,
-  ) {
+    work: (handler: THandler, sender: EnvelopeSender) => void,
+  ): void {
     const handler = this.streamHandlers.get(kind);
     if (handler === undefined) {
       throw new Error(`Stream with unregistered handler of kind: ${kind} was requested to be opened.`);
@@ -151,7 +86,7 @@ export class MessageHandler {
     this.streams.set(streamId, handler);
     this.pendingStreams.set(streamId, true);
 
-    const sender = new StreamSender(streamId, this.sender);
+    const sender = new EnvelopeSender(streamId, this.sender);
     sender.open(NewStream.create({ streamByte: kind }));
 
     work(handler as THandler, sender);
@@ -165,7 +100,7 @@ export class MessageHandler {
     logger.log(`[${streamId}] incoming message: ${envelope.type} ${envelope.data}`);
     // check if this is a already known stream id
     const streamHandler = this.streams.get(streamId);
-    const streamSender = new StreamSender(streamId, this.sender);
+    const streamSender = new EnvelopeSender(streamId, this.sender);
     // we don't know that stream yet, so it has to be a new one
     if (streamHandler === undefined) {
       // closing or message of unknown stream - ignore.
@@ -233,12 +168,66 @@ export class MessageHandler {
   }
 }
 
+class EnvelopeSender implements StreamMessageSender {
+  constructor(
+    public readonly streamId: StreamId,
+    private readonly sender: IpcSender,
+  ) {}
+
+  open(newStream: NewStream) {
+    const msg = Encoder.encodeObject(NewStream.Codec, newStream);
+    this.sender.send(
+      Encoder.encodeObject(
+        StreamEnvelope.Codec,
+        StreamEnvelope.create({ streamId: this.streamId, type: StreamEnvelopeType.Open, data: msg }),
+      ),
+    );
+  }
+
+  bufferAndSend(msg: BytesBlob): boolean {
+    this.sender.send(
+      Encoder.encodeObject(
+        StreamEnvelope.Codec,
+        StreamEnvelope.create({ streamId: this.streamId, type: StreamEnvelopeType.Msg, data: msg }),
+      ),
+    );
+    // we are buffering until we run OOM
+    return true;
+  }
+
+  close(): void {
+    this.sender.send(
+      Encoder.encodeObject(
+        StreamEnvelope.Codec,
+        StreamEnvelope.create({
+          streamId: this.streamId,
+          type: StreamEnvelopeType.Close,
+          data: BytesBlob.blobFromNumbers([]),
+        }),
+      ),
+    );
+  }
+}
+
+class IpcSender {
+  constructor(private readonly socket: Socket) {}
+
+  send(data: BytesBlob): void {
+    sendWithLengthPrefix(this.socket, data.raw);
+  }
+
+  close(): void {
+    this.socket.end();
+  }
+}
+
 const MSG_LEN_PREFIX_BYTES = 4;
+
 /**
  * Send a message to the socket, but prefix it with a 32-bit length,
  * so that the receiver can now the boundaries between the datum.
  */
-export function sendWithLengthPrefix(socket: Socket, data: Uint8Array) {
+function sendWithLengthPrefix(socket: Socket, data: Uint8Array) {
   const buffer = new Uint8Array(MSG_LEN_PREFIX_BYTES);
   const encoder = Encoder.create({
     destination: buffer,

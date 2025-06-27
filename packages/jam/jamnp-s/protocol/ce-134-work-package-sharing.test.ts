@@ -5,8 +5,9 @@ import { WorkPackageInfo } from "@typeberry/block/work-report.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
 import { HASH_SIZE } from "@typeberry/hash";
-import { MessageHandler, type MessageSender } from "../handler.js";
+import { OK } from "@typeberry/utils";
 import { ClientHandler, STREAM_KIND, ServerHandler } from "./ce-134-work-package-sharing.js";
+import { testClientServer } from "./test-utils.js";
 
 const MOCK_CORE_INDEX = tryAsCoreIndex(1);
 const MOCK_SEGMENTS_ROOT_MAPPINGS = [
@@ -19,48 +20,9 @@ const MOCK_WORK_PACKAGE_BUNDLE = BytesBlob.blobFromString("hello");
 const MOCK_WORK_REPORT_HASH = Bytes.zero(HASH_SIZE).asOpaque();
 const MOCK_SIGNATURE = Bytes.zero(ED25519_SIGNATURE_BYTES).asOpaque();
 
-class FakeMessageSender implements MessageSender {
-  constructor(
-    public readonly onMessage: (data: BytesBlob) => void,
-    public readonly onClose: () => void,
-  ) {}
-
-  send(data: BytesBlob): void {
-    setImmediate(() => {
-      this.onMessage(data);
-    });
-  }
-
-  close(): void {
-    setImmediate(() => {
-      this.onClose();
-    });
-  }
-}
-
 describe("CE 134: Work Package Sharing", () => {
   it("Client sends a work package and the server returns a work report hash", async () => {
-    const handlers = {} as { client: MessageHandler; server: MessageHandler };
-    handlers.client = new MessageHandler(
-      new FakeMessageSender(
-        (data) => {
-          handlers.server.onSocketMessage(data.raw);
-        },
-        () => {
-          handlers.server.onClose({});
-        },
-      ),
-    );
-    handlers.server = new MessageHandler(
-      new FakeMessageSender(
-        (data) => {
-          handlers.client.onSocketMessage(data.raw);
-        },
-        () => {
-          handlers.client.onClose({});
-        },
-      ),
-    );
+    const handlers = testClientServer();
 
     await new Promise((resolve) => {
       const serverHandler = new ServerHandler((coreIndex, segmentsRootMappings, workPackageBundle) => {
@@ -85,6 +47,7 @@ describe("CE 134: Work Package Sharing", () => {
             assert.deepStrictEqual(signature, MOCK_SIGNATURE);
             resolve(undefined);
           });
+        return OK;
       });
     });
   });

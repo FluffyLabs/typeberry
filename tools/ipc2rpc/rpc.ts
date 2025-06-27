@@ -4,16 +4,17 @@ import type { JSONRPCID, JSONRPCSuccessResponse } from "./../../node_modules/jso
 
 import type { Header } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
-import * as ce129 from "@typeberry/ext-ipc/protocol/ce-129-state-request.js";
 import { blake2b } from "@typeberry/hash";
+import { ce129 } from "@typeberry/jamnp-s";
+import { TRUNCATED_KEY_BYTES } from "@typeberry/trie/nodes.js";
 import { JSONRPCServer } from "json-rpc-2.0";
-import type { MessageHandler } from "../../extensions/ipc/handler.js";
+import type { IpcHandler } from "../../extensions/ipc/handler.js";
 
 export interface Database {
   bestHeader: Header | null;
 }
 
-export function startRpc(db: Database, client: MessageHandler) {
+export function startRpc(db: Database, client: IpcHandler) {
   const server = new JSONRPCServer();
   server.addMethod("jam_bestHeader", () => {
     return db.bestHeader;
@@ -37,7 +38,7 @@ export function startRpc(db: Database, client: MessageHandler) {
         handler.getStateByKey(
           sender,
           db.bestHeader.parentHeaderHash,
-          Bytes.fromBlob(blake2b.hashString(key).raw.subarray(0, ce129.KEY_SIZE), ce129.KEY_SIZE),
+          Bytes.fromBlob(blake2b.hashString(key).raw.subarray(0, TRUNCATED_KEY_BYTES), TRUNCATED_KEY_BYTES),
           handleResponse,
         );
       });

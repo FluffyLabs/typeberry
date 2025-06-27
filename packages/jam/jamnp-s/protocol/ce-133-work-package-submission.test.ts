@@ -7,51 +7,13 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import { tryAsU32 } from "@typeberry/numbers";
-import { MessageHandler, type MessageSender } from "../handler.js";
+import { OK } from "@typeberry/utils";
 import { ClientHandler, STREAM_KIND, ServerHandler } from "./ce-133-work-package-submission.js";
-
-class FakeMessageSender implements MessageSender {
-  constructor(
-    public readonly onMessage: (data: BytesBlob) => void,
-    public readonly onClose: () => void,
-  ) {}
-
-  send(data: BytesBlob): void {
-    setImmediate(() => {
-      this.onMessage(data);
-    });
-  }
-
-  close(): void {
-    setImmediate(() => {
-      this.onClose();
-    });
-  }
-}
+import { testClientServer } from "./test-utils.js";
 
 describe("CE133", () => {
   it("should send a work package", async () => {
-    const handlers = {} as { client: MessageHandler; server: MessageHandler };
-    handlers.client = new MessageHandler(
-      new FakeMessageSender(
-        (data) => {
-          handlers.server.onSocketMessage(data.raw);
-        },
-        () => {
-          handlers.server.onClose({});
-        },
-      ),
-    );
-    handlers.server = new MessageHandler(
-      new FakeMessageSender(
-        (data) => {
-          handlers.client.onSocketMessage(data.raw);
-        },
-        () => {
-          handlers.client.onClose({});
-        },
-      ),
-    );
+    const handlers = testClientServer();
 
     let receivedData = {} as { coreIndex: CoreIndex; workPackage: WorkPackage; extrinsic: WorkItemExtrinsics };
     const server = new ServerHandler((coreIndex, workPackage, extrinsic) => {
@@ -66,6 +28,8 @@ describe("CE133", () => {
       const workPackage = Decoder.decodeObject(WorkPackage.Codec, BytesBlob.parseBlob(testWorkPackage));
       const extrinsic = testExtrinsicData();
       handler.sendWorkPackage(sender, tryAsCoreIndex(0), workPackage, extrinsic);
+
+      return OK;
     });
 
     await new Promise((resolve) => {

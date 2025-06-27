@@ -4,8 +4,7 @@ import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
-import type { StreamHandler, StreamSender } from "../handler.js";
-import type { StreamId, StreamKind } from "./stream.js";
+import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
  * JAMNP-S UP 0 stream.
@@ -15,7 +14,7 @@ import type { StreamId, StreamKind } from "./stream.js";
  * https://github.com/zdave-parity/jam-np/blob/main/simple.md#up-0-block-announcement
  */
 
-export const STREAM_KIND = 0 as StreamKind;
+export const STREAM_KIND = tryAsStreamKind(0);
 
 export class HashAndSlot extends WithDebug {
   static Codec = codec.Class(HashAndSlot, {
@@ -82,7 +81,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
     private readonly onAnnouncement: (ann: Announcement) => void,
   ) {}
 
-  onStreamMessage(sender: StreamSender, message: BytesBlob): void {
+  onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
     const streamId = sender.streamId;
     // we expect a handshake first
     if (!this.handshakes.has(streamId)) {
@@ -91,7 +90,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
       // we didn't initiate this handshake, so let's respond
       if (!this.pendingHandshakes.delete(streamId)) {
         logger.log(`[${streamId}] <-- responding with a handshake.`);
-        sender.send(Encoder.encodeObject(Handshake.Codec, this.getHandshake()));
+        sender.bufferAndSend(Encoder.encodeObject(Handshake.Codec, this.getHandshake()));
       }
       return;
     }
@@ -106,15 +105,15 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
     this.handshakes.delete(streamId);
   }
 
-  sendHandshake(sender: StreamSender, handshake: Handshake) {
+  sendHandshake(sender: StreamMessageSender, handshake: Handshake) {
     this.pendingHandshakes.set(sender.streamId, true);
-    sender.send(Encoder.encodeObject(Handshake.Codec, handshake));
+    sender.bufferAndSend(Encoder.encodeObject(Handshake.Codec, handshake));
   }
 
-  sendAnnouncement(sender: StreamSender, annoucement: Announcement) {
+  sendAnnouncement(sender: StreamMessageSender, annoucement: Announcement) {
     // only send announcement if we've handshaken
     if (this.handshakes.has(sender.streamId)) {
-      sender.send(Encoder.encodeObject(Announcement.Codec, annoucement));
+      sender.bufferAndSend(Encoder.encodeObject(Announcement.Codec, annoucement));
     } else {
       logger.warn(`[${sender.streamId}] no handshake yet, skipping announcement.`);
     }

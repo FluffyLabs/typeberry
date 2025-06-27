@@ -4,8 +4,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
 import { Logger } from "@typeberry/logger";
 import { WithDebug } from "@typeberry/utils";
-import type { StreamHandler, StreamSender } from "../handler.js";
-import type { StreamKind } from "./stream.js";
+import { type StreamHandler, type StreamMessageSender, tryAsStreamKind } from "./stream.js";
 
 /**
  * JAM-SNP CE-131 and CE-132 streams.
@@ -15,8 +14,9 @@ import type { StreamKind } from "./stream.js";
  * https://github.com/zdave-parity/jam-np/blob/main/simple.md#ce-131132-safrole-ticket-distribution
  */
 
-export const STREAM_KIND_GENERATOR_TO_PROXY = 131 as StreamKind;
-export const STREAM_KIND_PROXY_TO_ALL = 132 as StreamKind;
+export const STREAM_KIND_GENERATOR_TO_PROXY = tryAsStreamKind(131);
+export const STREAM_KIND_PROXY_TO_ALL = tryAsStreamKind(132);
+
 type STREAM_KIND = typeof STREAM_KIND_GENERATOR_TO_PROXY | typeof STREAM_KIND_PROXY_TO_ALL;
 
 export class TicketDistributionRequest extends WithDebug {
@@ -45,7 +45,7 @@ export class ServerHandler<T extends STREAM_KIND> implements StreamHandler<T> {
     private readonly onTicketReceived: (epochIndex: Epoch, ticket: SignedTicket) => void,
   ) {}
 
-  onStreamMessage(sender: StreamSender, message: BytesBlob): void {
+  onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
     const ticketDistribution = Decoder.decodeObject(TicketDistributionRequest.Codec, message);
     logger.log(`[${sender.streamId}][ce-${this.kind}] Received ticket for epoch ${ticketDistribution.epochIndex}`);
     this.onTicketReceived(ticketDistribution.epochIndex, ticketDistribution.ticket);
@@ -58,16 +58,16 @@ export class ServerHandler<T extends STREAM_KIND> implements StreamHandler<T> {
 export class ClientHandler<T extends STREAM_KIND> implements StreamHandler<T> {
   constructor(public readonly kind: T) {}
 
-  onStreamMessage(sender: StreamSender): void {
+  onStreamMessage(sender: StreamMessageSender): void {
     logger.warn(`[${sender.streamId}][ce-${this.kind}] Unexpected message received. Closing.`);
     sender.close();
   }
 
   onClose() {}
 
-  sendTicket(sender: StreamSender, epochIndex: Epoch, ticket: SignedTicket) {
+  sendTicket(sender: StreamMessageSender, epochIndex: Epoch, ticket: SignedTicket) {
     const request = TicketDistributionRequest.create({ epochIndex, ticket });
-    sender.send(Encoder.encodeObject(TicketDistributionRequest.Codec, request));
+    sender.bufferAndSend(Encoder.encodeObject(TicketDistributionRequest.Codec, request));
     sender.close();
   }
 }

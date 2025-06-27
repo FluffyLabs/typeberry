@@ -1,6 +1,7 @@
 import type { ReadableWritablePair } from "node:stream/web";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { Logger } from "@typeberry/logger";
+import type { OK } from "@typeberry/utils";
 
 /** Peer connection details. */
 export type PeerAddress = {
@@ -11,7 +12,11 @@ export type PeerAddress = {
 };
 
 /** Communication stream. */
-export interface Stream extends ReadableWritablePair<Uint8Array, Uint8Array> {}
+export interface Stream extends ReadableWritablePair<Uint8Array, Uint8Array> {
+  /** Unique stream identifier. */
+  streamId: number;
+  destroy(): Promise<void>;
+}
 
 /** Peer interface. */
 export interface Peer {
@@ -29,21 +34,38 @@ export interface Peer {
 
   /** Initiate a new stream. */
   openStream(): Stream;
+
+  /** Close the connection to that peer. */
+  disconnect(): Promise<void>;
 }
 
-type PeerCallback = (onPeer: Peer) => void;
-type StreamCallback = (onPeer: Stream) => void;
+/**
+ * Function called when a new stream is opened.
+ *
+ * NOTE the callbacks are required to return `OK` to indicate,
+ * that any asynchronous work has to be handled separately
+ * with all possible exceptions handled.
+ */
+export type StreamCallback<S extends Stream = Stream> = (onPeer: S) => OK;
+/**
+ * Function called when a new peer is connected or disconnected.
+ *
+ * NOTE the callbacks are required to return `OK` to indicate,
+ * that any asynchronous work has to be handled separately
+ * with all possible exceptions handled.
+ */
+export type PeerCallback<T extends Peer> = (onPeer: T) => OK;
 
 const logger = Logger.new(import.meta.filename, "net:peers");
 
 /** Peer management. */
-export class Peers {
-  private readonly onPeerConnected: PeerCallback[] = [];
-  private readonly onPeerDisconnected: PeerCallback[] = [];
+export class Peers<T extends Peer> {
+  private readonly onPeerConnected: PeerCallback<T>[] = [];
+  private readonly onPeerDisconnected: PeerCallback<T>[] = [];
 
   private readonly peers: Map<string, Peer> = new Map();
 
-  public peerConnected(peer: Peer) {
+  public peerConnected(peer: T) {
     logger.info(`💡 Peer ${peer.id} connected.`);
     const oldPeerData = this.peers.get(peer.connectionId);
     if (oldPeerData !== undefined) {
@@ -56,7 +78,7 @@ export class Peers {
     }
   }
 
-  public peerDisconnected(peer: Peer) {
+  public peerDisconnected(peer: T) {
     logger.info(`⚡︎Peer ${peer.id} disconnected.`);
     this.peers.delete(peer.connectionId);
     for (const callback of this.onPeerDisconnected) {
@@ -64,7 +86,7 @@ export class Peers {
     }
   }
 
-  public addOnPeerConnected(cb: PeerCallback) {
+  public addOnPeerConnected(cb: PeerCallback<T>) {
     this.onPeerConnected.push(cb);
     return () => {
       const idx = this.onPeerConnected.indexOf(cb);
@@ -74,7 +96,7 @@ export class Peers {
     };
   }
 
-  public addOnPeerDisconnected(cb: PeerCallback) {
+  public addOnPeerDisconnected(cb: PeerCallback<T>) {
     this.onPeerDisconnected.push(cb);
     return () => {
       const idx = this.onPeerDisconnected.indexOf(cb);
