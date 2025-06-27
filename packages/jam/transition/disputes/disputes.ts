@@ -389,7 +389,7 @@ export class Disputes {
     }
 
     const signaturesToVerify = signaturesToVerifyResult.ok;
-    const verificationPromise = vefifyAllSignatures(signaturesToVerify);
+    const verificationPromise = vefifyAllSignatures(signaturesToVerify, omitSealVerification);
     const v = this.calculateVotesForWorkReports(disputes);
     const newItems = this.getDisputesRecordsNewItems(v);
 
@@ -405,7 +405,7 @@ export class Disputes {
       this.verifyIfAlreadyJudged(disputes),
     ].find((result) => result.isError);
 
-    if (inputError?.isError && !omitSealVerification) {
+    if (inputError?.isError) {
       return Result.error(inputError.error);
     }
 

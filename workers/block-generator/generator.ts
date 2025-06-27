@@ -1,7 +1,16 @@
-import { Block, Header, type HeaderHash, tryAsEpoch, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
+import {
+  Block,
+  Header,
+  type HeaderHash,
+  tryAsEpoch,
+  tryAsServiceId,
+  tryAsTimeSlot,
+  tryAsValidatorIndex,
+} from "@typeberry/block";
 import { Extrinsic } from "@typeberry/block/block.js";
-import { DisputesExtrinsic, Judgement, Verdict } from "@typeberry/block/disputes.js";
-import { Bytes, type BytesBlob } from "@typeberry/bytes";
+import { DisputesExtrinsic, Fault, Judgement, Verdict } from "@typeberry/block/disputes.js";
+import { Preimage } from "@typeberry/block/preimage.js";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
@@ -75,8 +84,7 @@ export class Generator {
 
     const extrinsic = Extrinsic.create({
       tickets: asOpaqueType([]),
-      // preimages: [Preimage.create({ requester: tryAsServiceId(0), blob: BytesBlob.parseBlob("0x1234") })],
-      preimages: [],
+      preimages: [Preimage.create({ requester: tryAsServiceId(0), blob: BytesBlob.parseBlob("0x1234") })],
       guarantees: asOpaqueType([]),
       assurances: asOpaqueType([]),
       disputes: DisputesExtrinsic.create({
@@ -114,7 +122,14 @@ export class Generator {
           }),
         ],
         culprits: [],
-        faults: [],
+        faults: [
+          Fault.create({
+            workReportHash: Bytes.fill(HASH_SIZE, newTimeSlot % 256).asOpaque(),
+            wasConsideredValid: false,
+            signature: Bytes.fill(64, 4).asOpaque(),
+            key: Bytes.parseBytes("0x3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29", 32).asOpaque(),
+          }),
+        ],
       }),
     });
 
