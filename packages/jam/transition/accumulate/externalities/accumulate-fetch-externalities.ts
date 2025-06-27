@@ -35,7 +35,7 @@ import {
 import { REPORT_TIMEOUT_GRACE_PERIOD } from "../../assurances.js";
 import { L } from "../../reports/verify-contextual.js";
 import { ACCUMULATE_TOTAL_GAS, GAS_TO_INVOKE_WORK_REPORT } from "../accumulate.js";
-import { Operand } from "../operand.js";
+import { LegacyOperand } from "../operand.js";
 
 const CONSTANTS_CODEC = codec.object({
   B_I: codec.u64,
@@ -125,7 +125,7 @@ function getEncodedConstants(chainSpec: ChainSpec) {
 export class AccumulateFetchExternalities implements FetchExternalities {
   constructor(
     private entropyHash: EntropyHash,
-    private operands: Operand[],
+    private operands: LegacyOperand[],
     private chainSpec: ChainSpec,
   ) {}
 
@@ -178,7 +178,7 @@ export class AccumulateFetchExternalities implements FetchExternalities {
   }
 
   allOperands(): BytesBlob {
-    return Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), this.operands, this.chainSpec);
+    return Encoder.encodeObject(codec.sequenceVarLen(LegacyOperand.Codec), this.operands, this.chainSpec);
   }
 
   oneOperand(operandIndex: U64): BytesBlob | null {
@@ -192,7 +192,7 @@ export class AccumulateFetchExternalities implements FetchExternalities {
       return null;
     }
 
-    return Encoder.encodeObject(Operand.Codec, operand, this.chainSpec);
+    return Encoder.encodeObject(LegacyOperand.Codec, operand, this.chainSpec);
   }
 
   allTransfers(): BytesBlob | null {
