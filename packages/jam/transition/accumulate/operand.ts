@@ -51,7 +51,7 @@ export class Operand {
       authorizerHash: authorizerHash.asOpaque(),
     });
   }
-  private constructor(operand: Pick<Operand, keyof Operand>) {
+  private constructor(operand: CodecRecord<Operand>) {
     this.gas = operand.gas;
     this.payloadHash = operand.payloadHash;
     this.result = operand.result;
@@ -96,15 +96,15 @@ export class LegacyOperand {
     result,
   }: CodecRecord<LegacyOperand>) {
     return new LegacyOperand({
-      payloadHash: payloadHash.asOpaque(),
+      payloadHash,
       result: result,
-      authorizationOutput: BytesBlob.blobFrom(authorizationOutput.raw),
-      exportsRoot: exportsRoot.asOpaque(),
-      hash: hash.asOpaque(),
-      authorizerHash: authorizerHash.asOpaque(),
+      authorizationOutput,
+      exportsRoot,
+      hash,
+      authorizerHash,
     });
   }
-  private constructor(operand: Pick<LegacyOperand, keyof LegacyOperand>) {
+  private constructor(operand: CodecRecord<LegacyOperand>) {
     this.payloadHash = operand.payloadHash;
     this.result = operand.result;
     this.authorizationOutput = operand.authorizationOutput;

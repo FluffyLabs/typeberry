@@ -131,6 +131,10 @@ export async function runAccumulateTest(test: AccumulateTest, path: string) {
 
   const state = TestState.toAccumulateState(test.pre_state, chainSpec);
   const _accumulate = new Accumulate(chainSpec, state);
+
+  // TODO [MaSi]: currently accumulate.transition throws "Method not implemented." error.
+  // It will be fixed in this PR: https://github.com/FluffyLabs/typeberry/pull/451
+
   // const result = await accumulate.transition({ ...test.input, entropy });
 
   // if (result.isError) {
