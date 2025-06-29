@@ -56,9 +56,9 @@ export async function main(channel: MessageChannelStateMachine<GeneratorInit, Ge
       await setTimeout(6000);
       counter += 1;
       const newBlock = await generator.nextEncodedBlock();
-      // logger.trace(`Sending block ${counter}`);
+      logger.trace(`Sending block ${counter}`);
       // TODO [ToDr] fix crashing!
-      // worker.sendBlock(port, newBlock);
+      worker.sendBlock(port, newBlock);
     }
   });
 

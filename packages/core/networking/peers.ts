@@ -62,7 +62,7 @@ export type StreamCallback<S extends Stream = Stream> = (onPeer: S) => OK;
  */
 export type PeerCallback<T extends Peer> = (onPeer: T) => OK;
 
-const logger = Logger.new(import.meta.filename, "net:peers");
+const logger = Logger.new(import.meta.filename, "peers");
 
 /** Peer ID and address in a standardized format. */
 function displayId(peer: Peer) {

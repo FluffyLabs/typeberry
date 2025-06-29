@@ -12,7 +12,7 @@
     "@typeberry/numbers": "0.0.1",
     "@typeberry/utils": "0.0.1",
     "ed25519-wasm": "github:fluffylabs/ed25519-wasm#a69da16025aa39c1b63842189fe841583213c07b",
-    "@fluffylabs/bandersnatch": "0.1.0-c67985f",
+    "@fluffylabs/bandersnatch": "0.1.0-c227660",
     "@noble/ed25519": "^2.2.3"
   },
   "author": "Fluffy Labs",

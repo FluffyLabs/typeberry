@@ -50,10 +50,7 @@ export async function main(channel: MessageChannelStateMachine<NetworkInit, Netw
       },
       config.genesisHeaderHash,
       key,
-      // TODO [ToDr] temporarily disable duplicate connections
-      config.port === 12347
-        ? []
-        : config.bootnodes.map(parseBootnode).filter((node) => node.host !== config.host || node.port !== config.port),
+      config.bootnodes.map(parseBootnode).filter((node) => node.host !== config.host || node.port !== config.port),
       config.genericConfig.chainSpec,
       blocks,
       (blocks) => worker.sendBlocks(port, blocks),

@@ -14,7 +14,7 @@ import {
 } from "./protocol/stream.js";
 import { handleAsyncErrors } from "./utils.js";
 
-const logger = Logger.new(import.meta.filename, "jamnps");
+const logger = Logger.new(import.meta.filename, "stream");
 
 export class StreamManager {
   /** A map of handlers for incoming stream kinds. */
@@ -89,7 +89,7 @@ export class StreamManager {
     }
 
     const stream = peer.openStream();
-    const quicStream = this.registerStream(peer, handler, stream);
+    const quicStream = this.registerStream(peer, handler, stream, BytesBlob.empty());
     // send the initial byte with stream kind
     quicStream.bufferAndSend(BytesBlob.blobFromNumbers([kind]));
 
@@ -98,7 +98,7 @@ export class StreamManager {
 
   /** Handle an incoming stream. */
   async onIncomingStream(peer: Peer, stream: Stream) {
-    const { readable } = stream;
+    const { readable, streamId } = stream;
     const reader = readable.getReader();
 
     let bytes = BytesBlob.empty();
@@ -106,12 +106,12 @@ export class StreamManager {
       // We expect a one-byte identifier first.
       const data = await reader.read();
       bytes = BytesBlob.blobFrom(data.value !== undefined ? data.value : new Uint8Array());
-      logger.trace(`[${peer.id}:${stream.streamId}]🚰 Initial data: ${bytes}`);
+      logger.trace(`🚰 --> [${peer.id}:${streamId}] Initial data: ${bytes}`);
     } finally {
       reader.releaseLock();
     }
 
-    if (bytes.raw.length !== 1) {
+    if (bytes.raw.length < 1) {
       throw new Error(`Expected 1-byte stream identifier, got: ${bytes}`);
     }
 
@@ -122,16 +122,16 @@ export class StreamManager {
       throw new Error(`Unsupported stream kind: ${kind}`);
     }
 
-    logger.log(`[${peer.id}:${stream.streamId}]🚰 Stream identified as: ${kind}`);
+    logger.log(`🚰 --> [${peer.id}:${stream.streamId}] Stream identified as: ${kind}`);
 
-    this.registerStream(peer, handler, stream);
+    this.registerStream(peer, handler, stream, BytesBlob.blobFrom(bytes.raw.subarray(1)));
   }
 
-  private registerStream(peer: Peer, handler: StreamHandler, stream: Stream): QuicStream {
+  private registerStream(peer: Peer, handler: StreamHandler, stream: Stream, initialData: BytesBlob): QuicStream {
     const streamId = tryAsStreamId(stream.streamId);
 
     const onError = (e: unknown) => {
-      logger.error(`[${peer.id}:${stream.streamId}]🚰  Stream error: ${e}. Disconnecting peer.`);
+      logger.error(`🚰 --- [${peer.id}:${streamId}] Stream error: ${e}. Disconnecting peer.`);
       // TODO [ToDr] We should do this on clean close as well (without disconnecting)
       this.streams.delete(streamId);
       this.backgroundTasks.delete(streamId);
@@ -145,7 +145,7 @@ export class StreamManager {
     stream.addOnError(onError);
     const quicStream = new QuicStream(streamId, stream, onError);
     const readStreamPromise = handleAsyncErrors(
-      () => readStreamForever(peer, handler, quicStream, stream.readable.getReader()),
+      () => readStreamForever(peer, handler, quicStream, initialData, stream.readable.getReader()),
       onError,
     );
 
@@ -164,25 +164,30 @@ async function readStreamForever(
   peer: Peer,
   handler: StreamHandler,
   quicStream: QuicStream,
+  initialData: BytesBlob,
   reader: ReadableStreamDefaultReader<Uint8Array>,
 ) {
   // finally start listening for more data.
+  let bytes = initialData;
+  let isDone = false;
   for (;;) {
-    const data = await reader.read();
-    const bytes = BytesBlob.blobFrom(data.value !== undefined ? data.value : new Uint8Array());
-
     // TODO [ToDr] We are going to read messages from the socket as fast as we can,
     // yet it doesn't mean we are able to handle them as fast. This should rather
     // be a promise, so that we can make back pressure here.
     if (bytes.length > 0) {
-      logger.trace(`[${peer.id}:${quicStream.streamId}]🚰  ${bytes}`);
+      logger.trace(`🚰 --> [${peer.id}:${quicStream.streamId}] ${bytes}`);
       handler.onStreamMessage(quicStream, bytes);
     }
 
-    if (data.done) {
-      logger.log(`[${peer.id}:${quicStream.streamId}]🚰 Stream finished on the other end.`);
+    if (isDone) {
+      logger.log(`🚰 --> [${peer.id}:${quicStream.streamId}] remote finished.`);
       return;
     }
+
+    // await for more data
+    const data = await reader.read();
+    isDone = data.done;
+    bytes = BytesBlob.blobFrom(data.value !== undefined ? data.value : new Uint8Array());
   }
 }
 
@@ -190,6 +195,8 @@ const MAX_OUTGOING_BUFFER_BYTES = 16384;
 
 class QuicStream implements StreamMessageSender {
   private bufferedLength = 0;
+  private bufferedData: BytesBlob[] = [];
+  private hasLock = false;
 
   constructor(
     public readonly streamId: StreamId,
@@ -202,18 +209,30 @@ class QuicStream implements StreamMessageSender {
     if (this.bufferedLength > MAX_OUTGOING_BUFFER_BYTES) {
       return false;
     }
+    this.bufferedData.push(data);
     this.bufferedLength += data.length;
+    // some other async task already has a lock, so it will keep writing.
+    if (this.hasLock) {
+      return true;
+    }
+    // let's start an async task to write the buffer
+    this.hasLock = true;
     handleAsyncErrors(
       async () => {
-        console.log("Acquiring writer lock" + this.internal.streamId);
         const writer = this.internal.writable.getWriter();
         try {
-          await writer.write(data.raw);
-
-          this.bufferedLength -= data.length;
+          for (;;) {
+            const chunk = this.bufferedData.shift();
+            if (chunk === undefined) {
+              return;
+            }
+            logger.trace(`🚰 <-- [${this.streamId}] write: ${chunk}`);
+            await writer.write(chunk.raw);
+            this.bufferedLength -= chunk.length;
+          }
         } finally {
-          console.log("Releasing writer lock" + this.internal.streamId);
           writer.releaseLock();
+          this.hasLock = false;
         }
       },
       (e) => {
@@ -225,6 +244,7 @@ class QuicStream implements StreamMessageSender {
 
   close(): void {
     handleAsyncErrors(async () => {
+      logger.trace(`🚰 <-- [${this.streamId}] closing`);
       await this.internal.writable.close();
     }, this.onError);
   }
