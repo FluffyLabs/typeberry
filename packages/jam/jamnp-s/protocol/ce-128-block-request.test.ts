@@ -33,7 +33,10 @@ describe("CE 128: Block Request", () => {
       });
     });
 
-    assert.deepStrictEqual(receivedData, [TEST_BLOCK_VIEW, TEST_BLOCK_VIEW]);
+    assert.deepStrictEqual(
+      `${receivedData.map((x) => x.encoded())}`,
+      `${[TEST_BLOCK_VIEW, TEST_BLOCK_VIEW].map((x) => x.encoded())}`,
+    );
   });
 });
 
