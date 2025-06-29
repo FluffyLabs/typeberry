@@ -151,7 +151,7 @@ export class Connections {
       }
 
       // seems we are already connected, bailing
-      if (meta.peerRef) {
+      if (meta.peerRef !== null) {
         return;
       }
 
