@@ -1,12 +1,13 @@
 import { ChainSpec } from "./chain-spec.js";
 
-/**
- * Configuration object for typeberry workers.
- */
+/** Configuration object for typeberry workers. */
 export class Config {
   /**
    * Since we loose prototypes when transferring the context,
    * this function is re-initializing proper types.
+   *
+   * TODO [ToDr] instead of doing this hack, we might prefer to pass data
+   * between workers using JAM codec maybe?
    */
   static reInit(config: unknown) {
     const { chainSpec, dbPath } = config as Config;

@@ -1,0 +1,231 @@
+import type { ReadableStreamDefaultReader } from "node:stream/web";
+import { BytesBlob } from "@typeberry/bytes";
+import { Logger } from "@typeberry/logger";
+import type { Peer, PeerId, Stream } from "@typeberry/networking";
+import type { OK } from "@typeberry/utils";
+import {
+  type StreamHandler,
+  type StreamId,
+  type StreamKind,
+  type StreamKindOf,
+  type StreamMessageSender,
+  tryAsStreamId,
+  tryAsStreamKind,
+} from "./protocol/stream.js";
+import { handleAsyncErrors } from "./utils.js";
+
+const logger = Logger.new(import.meta.filename, "jamnps");
+
+export class StreamManager {
+  /** A map of handlers for incoming stream kinds. */
+  private readonly incomingHandlers: Map<StreamKind, StreamHandler> = new Map();
+  /** A map of handlers for outgoing stream kinds. */
+  private readonly outgoingHandlers: Map<StreamKind, StreamHandler> = new Map();
+
+  /** A collection of open streams, peers and their handlers. */
+  private readonly streams: Map<
+    StreamId,
+    {
+      handler: StreamHandler;
+      stream: QuicStream;
+      peer: Peer;
+    }
+  > = new Map();
+
+  /** Promises for stream background tasks (reading data). */
+  private readonly backgroundTasks: Map<StreamId, Promise<void>> = new Map();
+
+  /** Add supported incoming handlers. */
+  registerIncomingHandlers(...handlers: StreamHandler[]) {
+    for (const handler of handlers) {
+      this.incomingHandlers.set(handler.kind, handler);
+    }
+  }
+
+  /** Add supported outgoing handlers. */
+  registerOutgoingHandlers(...handlers: StreamHandler[]) {
+    for (const handler of handlers) {
+      this.outgoingHandlers.set(handler.kind, handler);
+    }
+  }
+
+  /** Get peer associated with a stream. */
+  getPeer(streamId: StreamId): Peer | null {
+    return this.streams.get(streamId)?.peer ?? null;
+  }
+
+  /** Wait until all of the streams are closed. */
+  async waitForFinish() {
+    for (const task of this.backgroundTasks.values()) {
+      await task;
+    }
+  }
+
+  /** Attempt to find an already open stream of given kind. */
+  withStreamOfKind<THandler extends StreamHandler>(
+    peerId: PeerId,
+    kind: StreamKindOf<THandler>,
+    work: (handler: THandler, sender: QuicStream) => OK,
+  ): void {
+    // TODO [ToDr] That might not be super performant, perhaps we should
+    // maintain a mapping of Peer->open streams as well?
+    for (const streamData of this.streams.values()) {
+      if (streamData.handler.kind === kind && streamData.peer.id === peerId) {
+        work(streamData.handler as THandler, streamData.stream);
+        return;
+      }
+    }
+  }
+
+  /** Open a new stream of given kind, with the peer given. */
+  withNewStream<THandler extends StreamHandler>(
+    peer: Peer,
+    kind: StreamKindOf<THandler>,
+    work: (handler: THandler, sender: QuicStream) => OK,
+  ): void {
+    const handler = this.outgoingHandlers.get(kind);
+    if (handler === undefined) {
+      throw new Error(`Unsupported outgoing stream kind: ${kind}`);
+    }
+
+    const stream = peer.openStream();
+    const quicStream = this.registerStream(peer, handler, stream);
+    // send the initial byte with stream kind
+    quicStream.bufferAndSend(BytesBlob.blobFromNumbers([kind]));
+
+    work(handler as THandler, quicStream);
+  }
+
+  /** Handle an incoming stream. */
+  async onIncomingStream(peer: Peer, stream: Stream) {
+    const { readable } = stream;
+    const reader = readable.getReader();
+
+    let bytes = BytesBlob.empty();
+    try {
+      // We expect a one-byte identifier first.
+      const data = await reader.read();
+      bytes = BytesBlob.blobFrom(data.value !== undefined ? data.value : new Uint8Array());
+      logger.trace(`[${peer.id}:${stream.streamId}]🚰 Initial data: ${bytes}`);
+    } finally {
+      reader.releaseLock();
+    }
+
+    if (bytes.raw.length !== 1) {
+      throw new Error(`Expected 1-byte stream identifier, got: ${bytes}`);
+    }
+
+    // stream kind
+    const kind = tryAsStreamKind(bytes.raw[0]);
+    const handler = this.incomingHandlers.get(kind);
+    if (handler === undefined) {
+      throw new Error(`Unsupported stream kind: ${kind}`);
+    }
+
+    logger.log(`[${peer.id}:${stream.streamId}]🚰 Stream identified as: ${kind}`);
+
+    this.registerStream(peer, handler, stream);
+  }
+
+  private registerStream(peer: Peer, handler: StreamHandler, stream: Stream): QuicStream {
+    const streamId = tryAsStreamId(stream.streamId);
+
+    const onError = (e: unknown) => {
+      logger.error(`[${peer.id}:${stream.streamId}]🚰  Stream error: ${e}. Disconnecting peer.`);
+      // TODO [ToDr] We should do this on clean close as well (without disconnecting)
+      this.streams.delete(streamId);
+      this.backgroundTasks.delete(streamId);
+      // whenever we have an error, we are going to inform the handler
+      // and close the stream,
+      handler.onClose(streamId, true);
+      // but also disconnect from the peer.
+      peer.disconnect();
+    };
+
+    stream.addOnError(onError);
+    const quicStream = new QuicStream(streamId, stream, onError);
+    const readStreamPromise = handleAsyncErrors(
+      () => readStreamForever(peer, handler, quicStream, stream.readable.getReader()),
+      onError,
+    );
+
+    this.streams.set(streamId, {
+      handler,
+      stream: quicStream,
+      peer,
+    });
+    this.backgroundTasks.set(streamId, readStreamPromise);
+
+    return quicStream;
+  }
+}
+
+async function readStreamForever(
+  peer: Peer,
+  handler: StreamHandler,
+  quicStream: QuicStream,
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+) {
+  // finally start listening for more data.
+  for (;;) {
+    const data = await reader.read();
+    const bytes = BytesBlob.blobFrom(data.value !== undefined ? data.value : new Uint8Array());
+
+    // TODO [ToDr] We are going to read messages from the socket as fast as we can,
+    // yet it doesn't mean we are able to handle them as fast. This should rather
+    // be a promise, so that we can make back pressure here.
+    if (bytes.length > 0) {
+      logger.trace(`[${peer.id}:${quicStream.streamId}]🚰  ${bytes}`);
+      handler.onStreamMessage(quicStream, bytes);
+    }
+
+    if (data.done) {
+      logger.log(`[${peer.id}:${quicStream.streamId}]🚰 Stream finished on the other end.`);
+      return;
+    }
+  }
+}
+
+const MAX_OUTGOING_BUFFER_BYTES = 16384;
+
+class QuicStream implements StreamMessageSender {
+  private bufferedLength = 0;
+
+  constructor(
+    public readonly streamId: StreamId,
+    private readonly internal: Stream,
+    private readonly onError: (e: unknown) => void,
+  ) {}
+
+  /** Send given piece of data to the other end. */
+  bufferAndSend(data: BytesBlob): boolean {
+    if (this.bufferedLength > MAX_OUTGOING_BUFFER_BYTES) {
+      return false;
+    }
+    this.bufferedLength += data.length;
+    handleAsyncErrors(
+      async () => {
+        console.log("Acquiring writer lock" + this.internal.streamId);
+        const writer = this.internal.writable.getWriter();
+        try {
+          await writer.write(data.raw);
+
+          this.bufferedLength -= data.length;
+        } finally {
+          console.log("Releasing writer lock" + this.internal.streamId);
+          writer.releaseLock();
+        }
+      },
+      (e) => {
+        this.onError(e);
+      },
+    );
+    return true;
+  }
+
+  close(): void {
+    handleAsyncErrors(async () => {
+      await this.internal.writable.close();
+    }, this.onError);
+  }
+}

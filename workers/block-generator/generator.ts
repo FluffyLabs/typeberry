@@ -14,6 +14,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
+import { BANDERSNATCH_VRF_SIGNATURE_BYTES } from "@typeberry/crypto";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
 import { HASH_SIZE, SimpleAllocator } from "@typeberry/hash";
 import type { KeccakHasher } from "@typeberry/hash/keccak.js";
@@ -90,7 +91,7 @@ export class Generator {
         verdicts: [
           Verdict.create({
             workReportHash: Bytes.fill(HASH_SIZE, newTimeSlot % 256).asOpaque(),
-            votesEpoch: tryAsEpoch(newTimeSlot / this.chainSpec.epochLength),
+            votesEpoch: tryAsEpoch(Math.floor(newTimeSlot / this.chainSpec.epochLength)),
             votes: asKnownSize([
               Judgement.create({
                 isWorkReportValid: true,
@@ -138,8 +139,8 @@ export class Generator {
       ticketsMarker: null,
       offendersMarker: [],
       bandersnatchBlockAuthorIndex: tryAsValidatorIndex(0),
-      entropySource: Bytes.fill(96, (newTimeSlot * 42) % 256).asOpaque(),
-      seal: Bytes.fill(96, (newTimeSlot * 69) % 256).asOpaque(),
+      entropySource: Bytes.fill(BANDERSNATCH_VRF_SIGNATURE_BYTES, (newTimeSlot * 42) % 256).asOpaque(),
+      seal: Bytes.fill(BANDERSNATCH_VRF_SIGNATURE_BYTES, (newTimeSlot * 69) % 256).asOpaque(),
     });
 
     const encoded = Encoder.encodeObject(Header.Codec, header, this.chainSpec);

@@ -1,7 +1,7 @@
 import { Socket } from "node:net";
 
 import { IpcHandler, handleFragmentation } from "@typeberry/ext-ipc/handler.js";
-import { ce129, up0 } from "@typeberry/jamnp-s";
+import { type StreamId, ce129, up0 } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
 
 const logger = Logger.new(import.meta.filename, "ipc2rpc/client");
@@ -9,7 +9,7 @@ const logger = Logger.new(import.meta.filename, "ipc2rpc/client");
 export function startClient(
   socketPath: string,
   getHandshake: () => up0.Handshake,
-  onAnnouncement: (ann: up0.Announcement) => void,
+  onAnnouncement: (streamId: StreamId, ann: up0.Announcement) => void,
 ): Promise<IpcHandler> {
   const client = new Socket();
 

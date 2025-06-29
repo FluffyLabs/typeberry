@@ -1,9 +1,8 @@
-import { EventEmitter } from "node:events";
 import { type HeaderHash, type HeaderView, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE, type WithHash, blake2b } from "@typeberry/hash";
 import { ce129, up0 } from "@typeberry/jamnp-s";
-import type { Listener } from "@typeberry/state-machine";
+import { Listener } from "@typeberry/state-machine";
 import { TRUNCATED_KEY_BYTES } from "@typeberry/trie/nodes.js";
 import { startIpcServer } from "./server.js";
 
@@ -12,7 +11,7 @@ export interface ExtensionApi {
 }
 
 export function startExtension(api: ExtensionApi) {
-  const announcements = new EventEmitter();
+  const announcements = new Listener<up0.Announcement>();
   let bestBlock: up0.HashAndSlot | null = null;
 
   api.bestHeader.on((headerWithHash) => {
@@ -20,7 +19,7 @@ export function startExtension(api: ExtensionApi) {
     const hash = headerWithHash.hash;
     const final = up0.HashAndSlot.create({ hash, slot: header.timeSlotIndex });
     bestBlock = final;
-    announcements.emit("announcement", up0.Announcement.create({ header, final }));
+    announcements.emit(up0.Announcement.create({ header, final }));
   });
 
   // TODO [ToDr] `Handshake` should not leak that far.

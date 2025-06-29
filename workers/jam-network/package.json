@@ -1,17 +1,16 @@
 {
-  "name": "@typeberry/ext-ipc",
+  "name": "@typeberry/jam-network",
   "version": "0.0.1",
-  "description": "An IPC extension to inspect the node state.",
+  "description": "JAM networking worker.",
   "main": "index.ts",
   "dependencies": {
     "@typeberry/block": "0.0.1",
-    "@typeberry/bytes": "0.0.1",
-    "@typeberry/codec": "0.0.1",
-    "@typeberry/hash": "0.0.1",
+    "@typeberry/config": "0.0.1",
+    "@typeberry/database": "0.0.1",
+    "@typeberry/generic-worker": "0.0.1",
     "@typeberry/jamnp-s": "0.0.1",
     "@typeberry/logger": "0.0.1",
-    "@typeberry/numbers": "0.0.1",
-    "@typeberry/state-machine": "0.0.1"
+    "@typeberry/utils": "0.0.1"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"

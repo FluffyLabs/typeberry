@@ -1,13 +1,14 @@
 import crypto, { type JsonWebKey } from "node:crypto";
 import { ED25519_KEY_BYTES, type Ed25519Key, type ed25519 } from "@typeberry/crypto";
-import { Result } from "@typeberry/utils";
+import { Result, asOpaqueType } from "@typeberry/utils";
 
 import * as peculiarWebcrypto from "@peculiar/webcrypto";
 import type { CryptoKey } from "@peculiar/webcrypto";
 import * as x509 from "@peculiar/x509";
-import { Bytes, type BytesBlob } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
 import { base32 } from "./base32.js";
+import type { PeerId } from "./peers.js";
 
 const logger = Logger.new(import.meta.filename, "networking");
 
@@ -31,12 +32,12 @@ export enum VerifyCertError {
 }
 
 export type PeerInfo = {
-  id: string;
+  id: PeerId;
   key: Ed25519Key;
 };
 
 export async function verifyCertificate(certs: Uint8Array[]): Promise<Result<PeerInfo, VerifyCertError>> {
-  logger.info("Verifying peer certificate");
+  logger.log("Incoming peer. Verifying certificate");
   // Must present exactly one cert
   if (certs.length !== 1) {
     logger.log("Rejecting peer with no certificates.");
@@ -60,7 +61,7 @@ export async function verifyCertificate(certs: Uint8Array[]): Promise<Result<Pee
   }
 
   // SAN must be exactly 'e'+base32(rawPub)
-  const expectedSan = altName(jwk);
+  const expectedSan = altNameJwk(jwk);
   const sanField = xc.subjectAltName ?? "";
   const m = sanField.match(/DNS:([^,]+)/);
   if (m === null || m[1] !== expectedSan) {
@@ -76,7 +77,7 @@ export async function verifyCertificate(certs: Uint8Array[]): Promise<Result<Pee
 
   const publicKey = Bytes.fromBlob(new Uint8Array(key), ED25519_KEY_BYTES);
   return Result.ok({
-    id: expectedSan,
+    id: asOpaqueType(expectedSan),
     key: publicKey.asOpaque(),
   });
 }
@@ -194,7 +195,7 @@ export async function generateCertificate({
       new x509.SubjectAlternativeNameExtension([
         {
           type: "dns",
-          value: altName(subjectKeyPair.publicKey),
+          value: altNameJwk(subjectKeyPair.publicKey),
         },
       ]),
       await x509.SubjectKeyIdentifierExtension.create(subjectPublicCryptoKey),
@@ -204,11 +205,12 @@ export async function generateCertificate({
   return await x509.X509CertificateGenerator.create(certConfig);
 }
 
-export function altName(ed25519PubKey: JsonWebKey) {
+export function altNameRaw(ed25519PubKey: BytesBlob) {
+  return `e${base32(ed25519PubKey.raw)}`;
+}
+export function altNameJwk(ed25519PubKey: JsonWebKey) {
   const rawPub = new Uint8Array(Buffer.from(ed25519PubKey.x ?? "", "base64url"));
-  // we remove padding since it's not in the specified alphabet
-  // https://github.com/zdave-parity/jam-np/blob/main/simple.md#encryption-and-handshake
-  return `e${base32(rawPub)}`;
+  return altNameRaw(BytesBlob.blobFrom(rawPub));
 }
 
 enum KeyType {

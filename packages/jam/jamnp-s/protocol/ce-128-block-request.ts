@@ -1,4 +1,4 @@
-import { Block, type HeaderHash } from "@typeberry/block";
+import { Block, type BlockView, type HeaderHash } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Decoder, Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
@@ -17,7 +17,17 @@ import { type StreamHandler, type StreamId, type StreamMessageSender, tryAsStrea
 export const STREAM_KIND = tryAsStreamKind(128);
 
 export enum Direction {
+  /**
+   * Ascending exclusive.
+   *
+   * The sequence of blocks in the response should start with a child of the given block, followed by a grandchild, and so on.
+   */
   AscExcl = 0,
+  /**
+   * Descending inclusive.
+   *
+   * The sequence of blocks in the response should start with the given block, followed by its parent, grandparent, and so on.
+   */
   DescIncl = 1,
 }
 
@@ -60,17 +70,22 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 
   constructor(
     private readonly chainSpec: ChainSpec,
-    private readonly getBlockSequence: (hash: HeaderHash, direction: Direction, maxBlocks: U32) => Block[],
+    private readonly getBlockSequence: (
+      streamId: StreamId,
+      hash: HeaderHash,
+      direction: Direction,
+      maxBlocks: U32,
+    ) => BlockView[],
   ) {}
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
     const request = Decoder.decodeObject(BlockRequest.Codec, message);
     logger.log(`[${sender.streamId}] Client has requested: ${request}`);
 
-    const blocks = this.getBlockSequence(request.headerHash, request.direction, request.maxBlocks);
+    const blocks = this.getBlockSequence(sender.streamId, request.headerHash, request.direction, request.maxBlocks);
 
     sender.bufferAndSend(
-      Encoder.encodeObject(codec.sequenceFixLen(Block.Codec, blocks.length), blocks, this.chainSpec),
+      Encoder.encodeObject(codec.sequenceFixLen(Block.Codec.View, blocks.length), blocks, this.chainSpec),
     );
     sender.close();
   }
@@ -81,7 +96,7 @@ export class ServerHandler implements StreamHandler<typeof STREAM_KIND> {
 export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
   kind = STREAM_KIND;
 
-  private promiseResolvers: Map<StreamId, (value: Block[] | PromiseLike<Block[]>) => void> = new Map();
+  private promiseResolvers: Map<StreamId, (value: BlockView[]) => void> = new Map();
   private promiseRejectors: Map<StreamId, (reason?: unknown) => void> = new Map();
 
   constructor(private readonly chainSpec: ChainSpec) {}
@@ -90,7 +105,7 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     if (!this.promiseResolvers.has(sender.streamId)) {
       throw new Error("Received an unexpected message from the server.");
     }
-    const blocks = Decoder.decodeSequence(Block.Codec, message, this.chainSpec);
+    const blocks = Decoder.decodeSequence(Block.Codec.View, message, this.chainSpec);
     logger.log(`[${sender.streamId}] Server returned ${blocks.length} blocks in ${message.length} bytes of data.`);
     this.promiseResolvers.get(sender.streamId)?.(blocks);
     this.promiseResolvers.delete(sender.streamId);
@@ -103,12 +118,12 @@ export class ClientHandler implements StreamHandler<typeof STREAM_KIND> {
     this.promiseRejectors.delete(streamId);
   }
 
-  async getBlockSequence(
+  async requestBlockSequence(
     sender: StreamMessageSender,
     headerHash: HeaderHash,
     direction: Direction,
     maxBlocks: U32,
-  ): Promise<Block[]> {
+  ): Promise<BlockView[]> {
     if (this.promiseResolvers.has(sender.streamId)) {
       throw new Error("It is disallowed to use the same stream for multiple requests.");
     }

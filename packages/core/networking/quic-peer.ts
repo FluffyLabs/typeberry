@@ -1,16 +1,17 @@
 import EventEmitter from "node:events";
 
-import { events, type QUICConnection, type QUICStream } from "@matrixai/quic";
+import { events, type QUICConnection } from "@matrixai/quic";
 import type { Ed25519Key } from "@typeberry/crypto";
 import { Logger } from "@typeberry/logger";
 import type { PeerInfo } from "./certificate.js";
-import type { Peer, PeerAddress, StreamCallback } from "./peers.js";
+import type { Peer, PeerAddress, PeerId, StreamCallback } from "./peers.js";
+import { QuicStream } from "./quic-stream.js";
 import { addEventListener } from "./quic-utils.js";
 
 export class QuicPeer implements Peer {
   public readonly connectionId: string;
   public readonly address: PeerAddress;
-  public readonly id: string;
+  public readonly id: PeerId;
   public readonly key: Ed25519Key;
   private readonly logger: Logger;
   private readonly streamEvents = new EventEmitter();
@@ -19,7 +20,7 @@ export class QuicPeer implements Peer {
     public readonly conn: QUICConnection,
     peerInfo: PeerInfo,
   ) {
-    this.logger = Logger.new(import.meta.filename, `net:peer:${conn.connectionIdShared.toString()}`);
+    this.logger = Logger.new(import.meta.filename, `net:peer:${peerInfo.id}`);
     this.logger.log(`👥 peer connected ${conn.remoteHost}:${conn.remotePort}`);
 
     this.connectionId = conn.connectionIdShared.toString();
@@ -32,7 +33,7 @@ export class QuicPeer implements Peer {
 
     addEventListener(conn, events.EventQUICConnectionStream, (ev) => {
       const stream = ev.detail;
-      this.logger.log("New stream");
+      this.logger.log(`[${stream.streamId}]🚰 new stream`);
       this.streamEvents.emit("stream", stream);
     });
 
@@ -41,17 +42,18 @@ export class QuicPeer implements Peer {
     });
   }
 
-  addOnStreamOpen(streamCallback: StreamCallback<QUICStream>): void {
+  addOnIncomingStream(streamCallback: StreamCallback<QuicStream>): void {
     this.streamEvents.on("stream", streamCallback);
   }
 
-  openStream(): QUICStream {
+  openStream(): QuicStream {
     const stream = this.conn.newStream("bidi");
-    this.streamEvents.emit("stream", stream);
-    return stream;
+    this.logger.log(`[${stream.streamId}]🚰 opening stream`);
+    return new QuicStream(stream);
   }
 
   async disconnect() {
+    this.logger.log(`👋 disconnecting`);
     await this.conn.stop({ isApp: true });
   }
 }

@@ -18,6 +18,11 @@ export class Listener<T> {
     return this;
   }
 
+  off(listener: (d: T) => void) {
+    this.emitter.off(EVENT, listener);
+    return this;
+  }
+
   once(listener: (d: T) => void) {
     this.emitter.once(EVENT, listener);
     return this;

@@ -21,7 +21,7 @@ async function main(clientPort: number, serverPort: number) {
 
   network.onPeerConnect((peer) => {
     logger.log(`New peer: ${peer.id}`);
-    peer.addOnStreamOpen((stream) => {
+    peer.addOnIncomingStream((stream) => {
       (async () => {
         logger.info(`🚰  Stream with ${peer.id} opened`);
         const { readable } = stream;

@@ -1,6 +1,7 @@
-import type { StateRootHash } from "@typeberry/block";
+import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
+import { type U16, isU16 } from "@typeberry/numbers";
 import minimist from "minimist";
 import { version } from "./package.json";
 
@@ -18,6 +19,10 @@ const DEFAULTS = {
     "0xc07cdbce686c64d0a9b6539c70b0bb821b6a74d9de750a46a5da05b5640c290a",
     HASH_SIZE,
   ).asOpaque<StateRootHash>(),
+  genesisHeaderHash: Bytes.parseBytes(
+    "0x0259fbe900000000000000000000000000000000000000000000000000000000",
+    HASH_SIZE,
+  ).asOpaque<HeaderHash>(),
   dbPath: "database",
 };
 
@@ -29,6 +34,7 @@ typeberry ${version} by Fluffy Labs.
 
 Usage:
   typeberry [options]
+  typeberry [options] dev <dev-validator-index>
   typeberry [options] import <bin-or-json-blocks>
 
 Options:
@@ -38,6 +44,9 @@ Options:
                         [default: ${DEFAULTS.dbPath}]
   --genesis-root        Assume a particular genesis root hash to open the DB.
                         [default: ${DEFAULTS.genesisRoot.toString().replace("0x", "")}]
+  --genesis-header-hash Override genesis header hash to be used for networking.
+                        [default: ${DEFAULTS.genesisHeaderHash.toString().replace("0x", "")}]
+
   --genesis             Path to a JSON file containing genesis state dump.
                         Takes precedence over --genesis-root.
   --genesis-block       Path to a JSON file containing genesis block.
@@ -49,6 +58,8 @@ Options:
 export enum Command {
   /** Regular node operation. */
   Run = "run",
+  /** Run in as a development-mode validator. */
+  Dev = "dev",
   /** Import the blocks from CLI and finish. */
   Import = "import",
 }
@@ -57,12 +68,19 @@ export type SharedOptions = {
   genesis: string | null;
   genesisBlock: string | null;
   genesisRoot: StateRootHash;
+  genesisHeaderHash: HeaderHash;
   chainSpec: KnownChainSpec;
   dbPath: string;
 };
 
 export type Arguments =
   | CommandArgs<Command.Run, SharedOptions & {}>
+  | CommandArgs<
+      Command.Dev,
+      SharedOptions & {
+        index: U16;
+      }
+    >
   | CommandArgs<
       Command.Import,
       SharedOptions & {
@@ -79,6 +97,12 @@ function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedO
     "genesis-root",
     (v) => Bytes.parseBytesNoPrefix(v, HASH_SIZE).asOpaque(),
     DEFAULTS.genesisRoot,
+  );
+  const genesisHeaderHash = parseOption(
+    args,
+    "genesis-header-hash",
+    (v) => Bytes.parseBytesNoPrefix(v, HASH_SIZE).asOpaque(),
+    DEFAULTS.genesisHeaderHash,
   );
   const { genesis } = parseOption(args, "genesis", (v) => withRelPath(relPath, v), null);
   const genesisBlock = parseOption(args, "genesis-block", (v) => withRelPath(relPath, v), null);
@@ -101,6 +125,7 @@ function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedO
   return {
     dbPath: dbPath["db-path"],
     genesisRoot: genesisRootHash["genesis-root"],
+    genesisHeaderHash: genesisHeaderHash["genesis-header-hash"],
     genesis: genesis,
     genesisBlock: genesisBlock["genesis-block"],
     chainSpec: chainSpec["chain-spec"],
@@ -116,6 +141,19 @@ export function parseArgs(input: string[], relPath: string): Arguments {
       const data = parseSharedOptions(args, relPath);
       assertNoMoreArgs(args);
       return { command: Command.Run, args: data };
+    }
+    case Command.Dev: {
+      const data = parseSharedOptions(args, relPath);
+      const index = args._.shift();
+      if (index === undefined) {
+        throw new Error("Missing dev-validator index.");
+      }
+      const numIndex = Number(index);
+      if (!isU16(numIndex)) {
+        throw new Error(`Invalid dev-validator index: ${numIndex}, need U16`);
+      }
+      assertNoMoreArgs(args);
+      return { command: Command.Dev, args: { ...data, index: numIndex } };
     }
     case Command.Import: {
       const data = parseSharedOptions(args, relPath);

@@ -1,6 +1,6 @@
 import type { QUICServer, QUICSocket } from "@matrixai/quic";
 import { Logger } from "@typeberry/logger";
-import type { Network } from "./network.js";
+import type { DialOptions, Network } from "./network.js";
 import type { PeerAddress, PeerCallback, Peers } from "./peers.js";
 import type { QuicPeer } from "./quic-peer.js";
 
@@ -12,7 +12,7 @@ export class QuicNetwork implements Network<QuicPeer> {
   constructor(
     private readonly socket: QUICSocket,
     private readonly server: QUICServer,
-    private readonly _dial: (peer: PeerAddress) => Promise<QuicPeer>,
+    private readonly _dial: (peer: PeerAddress, options: DialOptions) => Promise<QuicPeer>,
     private readonly peers: Peers<QuicPeer>,
     private readonly listen: { host: string; port: number },
   ) {}
@@ -49,7 +49,7 @@ export class QuicNetwork implements Network<QuicPeer> {
     return this.peers.addOnPeerDisconnected(onPeer);
   }
 
-  async dial(peer: PeerAddress): Promise<QuicPeer> {
-    return this._dial(peer);
+  async dial(peer: PeerAddress, options: DialOptions = {}): Promise<QuicPeer> {
+    return this._dial(peer, options);
   }
 }

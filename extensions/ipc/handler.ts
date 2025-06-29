@@ -2,7 +2,7 @@ import { Buffer } from "node:buffer";
 import type { Socket } from "node:net";
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import type { StreamHandler, StreamId, StreamKind, StreamManager, StreamMessageSender } from "@typeberry/jamnp-s";
+import type { StreamHandler, StreamId, StreamKind, StreamKindOf, StreamMessageSender } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
 import { NewStream, StreamEnvelope, StreamEnvelopeType } from "./stream.js";
 
@@ -17,7 +17,7 @@ type OnEnd = {
   reject: (error: Error) => void;
 };
 
-export class IpcHandler implements StreamManager {
+export class IpcHandler {
   // already initiated streams
   private readonly streams: Map<StreamId, StreamHandler> = new Map();
   // streams awaiting confirmation from the other side.
@@ -47,8 +47,8 @@ export class IpcHandler implements StreamManager {
   }
 
   /** Re-use an existing stream of given kind if present. */
-  withStreamOfKind<TStreamKind extends StreamKind, THandler extends StreamHandler<TStreamKind>>(
-    streamKind: TStreamKind,
+  withStreamOfKind<THandler extends StreamHandler>(
+    streamKind: StreamKindOf<THandler>,
     work: (handler: THandler, sender: EnvelopeSender) => void,
   ): void {
     // find first stream id with given kind
@@ -62,8 +62,8 @@ export class IpcHandler implements StreamManager {
   }
 
   /** Open a new stream of given kind. */
-  withNewStream<TStreamKind extends StreamKind, THandler extends StreamHandler<TStreamKind>>(
-    kind: TStreamKind,
+  withNewStream<THandler extends StreamHandler>(
+    kind: StreamKindOf<THandler>,
     work: (handler: THandler, sender: EnvelopeSender) => void,
   ): void {
     const handler = this.streamHandlers.get(kind);

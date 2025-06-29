@@ -6,17 +6,23 @@ import { Bytes } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, Config, fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import { parseBootnode } from "@typeberry/config/net";
+import { SEED_SIZE, deriveEd25519SecretKey, trivialSeed } from "@typeberry/crypto/key-derivation.js";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import type { Finished, MainInit } from "@typeberry/generic-worker";
 import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import * as blockImporter from "@typeberry/importer";
 import type { MainReady } from "@typeberry/importer/state-machine.js";
+import { NetworkConfig } from "@typeberry/jam-network/state-machine.js";
+import type { Bootnode } from "@typeberry/jamnp-s";
+import { tryAsU32 } from "@typeberry/numbers";
 import type { MessageChannelStateMachine } from "@typeberry/state-machine";
 import { StateEntries } from "@typeberry/state-merkleization";
 import { type Arguments, Command, KnownChainSpec } from "./args.js";
 import { startBlockGenerator } from "./author.js";
 import { initializeExtensions } from "./extensions.js";
 import { loadGenesis, loadGenesisBlock } from "./genesis.js";
+import { startNetwork } from "./network.js";
 import { startBlocksReader } from "./reader.js";
 
 const logger = Logger.new(import.meta.filename, "jam");
@@ -32,16 +38,28 @@ type Options = {
   isAuthoring: boolean;
   /** Paths to JSON or binary blocks to import (ordered). */
   blocksToImport: string[] | null;
+  // TODO [ToDr] Remove in favor of JIP-4 config file.
   /** Path to JSON with genesis state. */
   genesisPath: string | null;
   /** Path to a JSON with genesis block. */
   genesisBlockPath: string | null;
   /** Genesis root hash. */
   genesisRoot: StateRootHash;
+  /** Genesis header hash to use for networking. */
+  genesisHeaderHash: HeaderHash;
   /** Path to database to open. */
   databasePath: string;
   /** Chain spec (could also be filename?) */
   chainSpec: KnownChainSpec;
+  /** Networking options. */
+  network: NetworkingOptions;
+};
+
+type NetworkingOptions = {
+  key: string;
+  host: string;
+  port: number;
+  bootnodes: Bootnode[];
 };
 
 export async function main(args: Arguments) {
@@ -50,14 +68,35 @@ export async function main(args: Arguments) {
     return;
   }
 
+  const portShift = args.command === Command.Dev ? args.args.index : 0;
+  const networkingKey = (() => {
+    // TODO [ToDr] in the future we should probably read the networking key
+    // from some file or a database, since we want it to be consistent between runs.
+    // For now, for easier testability, we use a deterministic seed.
+    const seed = args.command === Command.Dev ? trivialSeed(tryAsU32(args.args.index)) : Bytes.zero(SEED_SIZE);
+    const key = deriveEd25519SecretKey(seed);
+    return key;
+  })();
+
   const options: Options = {
-    isAuthoring: false,
+    isAuthoring: args.command === Command.Dev,
     blocksToImport: args.command === Command.Import ? args.args.files : null,
     genesisPath: args.args.genesis,
     genesisBlockPath: args.args.genesisBlock,
     genesisRoot: args.args.genesisRoot,
+    genesisHeaderHash: args.args.genesisHeaderHash,
     databasePath: args.args.dbPath,
-    chainSpec: KnownChainSpec.Tiny,
+    chainSpec: args.args.chainSpec,
+    network: {
+      key: networkingKey.toString(),
+      host: "127.0.0.1",
+      port: 12345 + portShift,
+      bootnodes: [
+        "eecgwpgwq3noky4ijm4jmvjtmuzv44qvigciusxakq5epnrfj2utb@127.0.0.1:12345",
+        "en5ejs5b2tybkfh4ym5vpfh7nynby73xhtfzmazumtvcijpcsz6ma@127.0.0.1:12346",
+        "ekwmt37xecoq6a7otkm4ux5gfmm4uwbat4bg5m223shckhaaxdpqa@127.0.0.1:12347",
+      ].map(parseBootnode),
+    },
   };
 
   const chainSpec = getChainSpec(options.chainSpec);
@@ -88,7 +127,10 @@ export async function main(args: Arguments) {
   // 1. load validator keys (bandersnatch, ed25519, bls)
   // 2. allow the validator to specify metadata.
   // 3. if we have validator keys, we should start the authorship module.
-  const closeAuthorship = await initAuthorship(options.isAuthoring, config, importerReady);
+  const closeAuthorship = await initAuthorship(importerReady, options.isAuthoring, config);
+
+  // Networking initialization
+  const closeNetwork = await initNetwork(importerReady, config, options.genesisHeaderHash, options.network);
 
   logger.info("[main]⌛ waiting for importer to finish");
   const importerDone = await blocksReader;
@@ -98,12 +140,15 @@ export async function main(args: Arguments) {
   await importerDone.currentState().waitForWorkerToFinish();
   logger.log("[main] ☠️  Closing the authorship module");
   closeAuthorship();
+  logger.log("[main] ☠️  Closing the networking module");
+  closeNetwork();
+
   logger.info("[main] ✅ Done.");
 }
 
 type ImporterReady = MessageChannelStateMachine<MainReady, Finished | MainReady | MainInit<MainReady>>;
 
-const initAuthorship = async (isAuthoring: boolean, config: Config, importerReady: ImporterReady) => {
+const initAuthorship = async (importerReady: ImporterReady, isAuthoring: boolean, config: Config) => {
   if (!isAuthoring) {
     return () => Promise.resolve();
   }
@@ -146,6 +191,35 @@ const initBlocksReader = async (
   });
 };
 
+const initNetwork = async (
+  importerReady: ImporterReady,
+  genericConfig: Config,
+  genesisHeaderHash: HeaderHash,
+  { key, host, port, bootnodes }: NetworkingOptions,
+) => {
+  const { network, finish } = await startNetwork(
+    NetworkConfig.new({
+      genericConfig,
+      genesisHeaderHash,
+      key,
+      host,
+      port,
+      bootnodes: bootnodes.map((node) => node.toString()),
+    }),
+  );
+
+  // relay blocks from networking to importer?
+  importerReady.doUntil<Finished>("finished", async (importer, port) => {
+    network.currentState().onNewBlocks.on((newBlocks) => {
+      for (const block of newBlocks) {
+        importer.sendBlock(port, block.encoded().raw);
+      }
+    });
+  });
+
+  return finish;
+};
+
 const getChainSpec = (name: KnownChainSpec) => {
   if (name === KnownChainSpec.Full) {
     return fullChainSpec;
@@ -171,6 +245,8 @@ async function initializeDatabase(
   genesisHeaderPath: string | null,
 ): Promise<string> {
   const maybeGenesis = loadAndCheckGenesisIfProvided(spec, genesisRootHash, genesisPath);
+  // TODO [ToDr] Instead of using `genesisRootHash` use first 8 nibbles of
+  // genesis header hash, similarly to the networking.
   const dbPath = `${databasePath}/${genesisRootHash}`;
   logger.log(`🛢️ Opening database at ${dbPath}`);
   const rootDb = new LmdbRoot(dbPath);

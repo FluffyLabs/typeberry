@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
+import { tryAsU16 } from "@typeberry/numbers";
 import { deepEqual } from "@typeberry/utils";
 import { Command, KnownChainSpec, type SharedOptions, parseArgs } from "./args.js";
 
@@ -13,6 +14,10 @@ describe("CLI", () => {
     genesisBlock: null,
     genesisRoot: Bytes.parseBytes(
       "0xc07cdbce686c64d0a9b6539c70b0bb821b6a74d9de750a46a5da05b5640c290a",
+      HASH_SIZE,
+    ).asOpaque(),
+    genesisHeaderHash: Bytes.parseBytes(
+      "0x0259fbe900000000000000000000000000000000000000000000000000000000",
       HASH_SIZE,
     ).asOpaque(),
     dbPath: "../database",
@@ -91,6 +96,21 @@ describe("CLI", () => {
     });
   });
 
+  it("should parse genesisHeaderHash option", () => {
+    const args = parse(["--genesis-header-hash=3fcf9728204359b93032b413eef3af0a0953d494b8b96e01550795b43b56c766"]);
+
+    deepEqual(args, {
+      command: Command.Run,
+      args: {
+        ...defaultOptions,
+        genesisHeaderHash: Bytes.parseBytesNoPrefix(
+          "3fcf9728204359b93032b413eef3af0a0953d494b8b96e01550795b43b56c766",
+          HASH_SIZE,
+        ).asOpaque(),
+      },
+    });
+  });
+
   it("should parse import command and add rel path to files", () => {
     const args = parse(["import", "./file1.json", "./file2.json"]);
 
@@ -103,6 +123,18 @@ describe("CLI", () => {
     });
   });
 
+  it("should parse dev-validator index", () => {
+    const args = parse(["dev", "0xa"]);
+
+    deepEqual(args, {
+      command: Command.Dev,
+      args: {
+        ...defaultOptions,
+        index: tryAsU16(10),
+      },
+    });
+  });
+
   it("should throw on unexpected command", () => {
     assert.throws(
       () => {
@@ -110,6 +142,28 @@ describe("CLI", () => {
       },
       {
         message: "Unexpected command: 'unknown'",
+      },
+    );
+  });
+
+  it("should throw on missing dev-validator index", () => {
+    assert.throws(
+      () => {
+        const _args = parse(["dev"]);
+      },
+      {
+        message: "Missing dev-validator index.",
+      },
+    );
+  });
+
+  it("should throw on invalid dev-validator index", () => {
+    assert.throws(
+      () => {
+        const _args = parse(["dev", "1.5"]);
+      },
+      {
+        message: "Invalid dev-validator index: 1.5, need U16",
       },
     );
   });

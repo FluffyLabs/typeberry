@@ -1,5 +1,13 @@
 import type { Peer, PeerAddress, PeerCallback } from "./peers.js";
 
+/** Peer dialing options. */
+export type DialOptions = {
+  /** Verify the expected peer name after connection. */
+  verifyName?: string;
+  /** Abort connection on demand. */
+  signal?: AbortSignal;
+};
+
 /** Networking abstraction. */
 export interface Network<T extends Peer> {
   /** Start networking interface. */
@@ -19,5 +27,5 @@ export interface Network<T extends Peer> {
    *
    * TODO [ToDr] should prolly support a timeout.
    */
-  dial(address: PeerAddress): Promise<T>;
+  dial(address: PeerAddress, options: DialOptions): Promise<T>;
 }

@@ -1,0 +1,298 @@
+import {
+  Block,
+  type BlockView,
+  Header,
+  type HeaderHash,
+  type HeaderView,
+  type TimeSlot,
+  tryAsTimeSlot,
+} from "@typeberry/block";
+import { BytesBlob } from "@typeberry/bytes";
+import { Decoder, Encoder } from "@typeberry/codec";
+import type { ChainSpec } from "@typeberry/config";
+import type { BlocksDb } from "@typeberry/database";
+import { WithHash, blake2b } from "@typeberry/hash";
+import { Logger } from "@typeberry/logger";
+import type { Peer } from "@typeberry/networking";
+import { type U32, tryAsU32 } from "@typeberry/numbers";
+import { OK } from "@typeberry/utils";
+import type { AuxData, Connections } from "../peers.js";
+import { type StreamId, ce128, up0 } from "../protocol/index.js";
+import type { StreamManager } from "../stream-manager.js";
+import { handleAsyncErrors } from "../utils.js";
+
+export const SYNC_AUX: AuxData<SyncAux> = {
+  id: Symbol("sync"),
+};
+
+type SyncAux = {
+  finalBlockHash: HeaderHash;
+  finalBlockSlot: TimeSlot;
+  bestHeader: WithHash<HeaderHash, Header>;
+};
+
+const logger = Logger.new(import.meta.filename, "net:sync");
+
+/**
+ * Maximal number of blocks we will send as a response to CE128.
+ */
+const MAX_BLOCK_SEQUENCE = 128;
+
+export class SyncTask {
+  static start(
+    spec: ChainSpec,
+    streamManager: StreamManager,
+    connections: Connections,
+    blocks: BlocksDb,
+    onNewBlocks: (blocks: BlockView[]) => void,
+  ) {
+    const syncTask = new SyncTask(spec, streamManager, connections, blocks, onNewBlocks);
+
+    const getPeerForStream = (streamId: StreamId) => {
+      // TODO [ToDr] Needing to query stream manager for a peer might be a bit
+      // wasteful, since we probably know the peer when we dispatch the
+      // stream message, however it's nice that the current abstraction of
+      // streams does not know anything about peers. Revisit if it gets ugly.
+
+      // retrieve a peer for that stream
+      return streamManager.getPeer(streamId);
+    };
+
+    const up0Handler = new up0.Handler(
+      () => syncTask.getUp0Handshake(),
+      (streamId, ann) => {
+        const peer = getPeerForStream(streamId);
+        if (peer !== null) {
+          syncTask.onUp0Annoucement(peer, ann);
+        }
+      },
+    );
+
+    // server mode
+    streamManager.registerIncomingHandlers(up0Handler);
+    streamManager.registerIncomingHandlers(
+      new ce128.ServerHandler(spec, (streamId, hash, direction, maxBlocks) => {
+        const peer = getPeerForStream(streamId);
+        if (peer !== null) {
+          return syncTask.handleGetBlockSequence(peer, hash, direction, maxBlocks);
+        }
+        return [];
+      }),
+    );
+
+    // client mode
+    streamManager.registerOutgoingHandlers(up0Handler);
+    streamManager.registerOutgoingHandlers(new ce128.ClientHandler(spec));
+
+    return syncTask;
+  }
+
+  private bestSeenHeader: WithHash<HeaderHash, Header>;
+
+  private constructor(
+    private readonly spec: ChainSpec,
+    private readonly streamManager: StreamManager,
+    private readonly connections: Connections,
+    private readonly blocks: BlocksDb,
+    private readonly onNewBlocks: (blocks: BlockView[]) => void,
+  ) {
+    const ourBestHash = blocks.getBestHeaderHash();
+    const ourBest = blocks.getHeader(ourBestHash);
+    if (ourBest === null) {
+      throw new Error(`Best header ${ourBestHash} missing in the database?`);
+    }
+    this.bestSeenHeader = new WithHash(ourBestHash, ourBest.materialize());
+  }
+
+  private onUp0Annoucement(peer: Peer, announcement: up0.Announcement) {
+    const { hash, slot } = announcement.final;
+    const bestHeader = hashHeader(announcement.header, this.spec);
+    logger.info(`[${peer.id}] --> Received new header #${announcement.header.timeSlotIndex}: ${bestHeader.hash}`);
+
+    // TODO [ToDr] Instead of having `Connections` store aux data perhaps
+    // we should maintain that directly? However that would require
+    // listening to peers connected/disconnected to perfrom some cleanups
+    // and extra persistence.
+    //
+    // update the peer info
+    this.connections.withAuxData(peer.id, SYNC_AUX, (aux) => {
+      if (aux === undefined) {
+        return {
+          finalBlockHash: hash,
+          finalBlockSlot: slot,
+          bestHeader,
+        };
+      }
+
+      aux.finalBlockHash = hash;
+      aux.finalBlockSlot = slot;
+      aux.bestHeader = bestHeader;
+      return aux;
+    });
+
+    // TODO [ToDr] This should take finality into account, which would
+    // also indirectly do ancestry checks (i.e. we assume that the peer
+    // is verifying that the best block is built on top of it's own
+    // reported finalized block).
+    //
+    // now check if we should sync that block
+    if (this.bestSeenHeader.data.timeSlotIndex < bestHeader.data.timeSlotIndex) {
+      this.bestSeenHeader = bestHeader;
+      this.maintainSync();
+    }
+  }
+
+  private getUp0Handshake(): up0.Handshake {
+    // TODO [ToDr] We don't have finality yet,
+    // we just treat each produced block as instantly-finalized.
+    const bestBlockHash = this.blocks.getBestHeaderHash();
+    const bestHeader = this.blocks.getHeader(bestBlockHash);
+    const bestBlock = up0.HashAndSlot.create({
+      hash: bestBlockHash,
+      slot: bestHeader?.timeSlotIndex.materialize() ?? tryAsTimeSlot(0),
+    });
+
+    return up0.Handshake.create({
+      final: bestBlock,
+      leafs: [],
+    });
+  }
+
+  openUp0(peer: Peer) {
+    this.streamManager.withNewStream<up0.Handler>(peer, up0.STREAM_KIND, (handler, sender) => {
+      handler.sendHandshake(sender);
+      return OK;
+    });
+  }
+
+  broadcastHeader(header: WithHash<HeaderHash, HeaderView>) {
+    const slot = header.data.timeSlotIndex.materialize();
+    const annoucement = up0.Announcement.create({
+      header: header.data.materialize(),
+      final: up0.HashAndSlot.create({
+        hash: header.hash,
+        slot,
+      }),
+    });
+    // TODO [ToDr] we currently gossip to everyone, but we probably should:
+    // 1. Gossip to peers in batches (sqrt(n) peers first?)
+    // 2. Gossip only to the peers that don't know about that header yet.
+    const peers = this.connections.getConnectedPeers();
+    for (const peerInfo of peers) {
+      this.streamManager.withStreamOfKind<up0.Handler>(peerInfo.peerId, up0.STREAM_KIND, (handler, sender) => {
+        logger.log(`[${peerInfo.peerId}] <-- Broadcasting new header #${slot}: ${header.hash}`);
+        handler.sendAnnouncement(sender, annoucement);
+        return OK;
+      });
+    }
+  }
+
+  private handleGetBlockSequence(
+    peer: Peer,
+    hash: HeaderHash,
+    direction: ce128.Direction,
+    maxBlocks: U32,
+  ): BlockView[] {
+    const getBlockView = (hash: HeaderHash): BlockView | null => {
+      const header = this.blocks.getHeader(hash);
+      const extrinsic = this.blocks.getExtrinsic(hash);
+      if (header === null || extrinsic === null) {
+        return null;
+      }
+      const blockView = BytesBlob.blobFromParts(header.encoded().raw, extrinsic.encoded().raw);
+      // TODO [ToDr] rest of the blocks
+      return Decoder.decodeObject(Block.Codec.View, blockView, this.spec);
+    };
+
+    const startBlock = getBlockView(hash);
+    if (startBlock === null) {
+      // we don't know about that block at all, so let's just bail.
+      // we should probably penalize the peer for sending BS?
+      logger.warn(`[${peer.id}] <-- Invalid block sequence request: ${hash} missing header or extrinsic.`);
+      return [];
+    }
+
+    if (direction === ce128.Direction.AscExcl) {
+      // TODO [ToDr] Unsupported yet.
+      logger.warn(`[${peer.id}] <-- Unsupported children request of: ${hash}.`);
+      return [];
+    }
+
+    const response = [startBlock];
+    let currentBlock = startBlock;
+    const limit = Math.min(maxBlocks, MAX_BLOCK_SEQUENCE);
+
+    // now iterate a bit over ancestor blocks
+    for (let i = 0; i < limit; i++) {
+      const parent = getBlockView(currentBlock.header.view().parentHeaderHash.materialize());
+      if (parent === null) {
+        break;
+      }
+
+      response.push(parent);
+      currentBlock = parent;
+    }
+
+    return response;
+  }
+
+  private maintainSync() {
+    // figure out where we are at
+    const ourBestHash = this.blocks.getBestHeaderHash();
+    const ourBestHeader = this.blocks.getHeader(ourBestHash);
+    if (ourBestHeader === null) {
+      return;
+    }
+
+    const ourBestSlot = ourBestHeader.timeSlotIndex.materialize();
+    // figure out where others are at
+    const othersBest = this.bestSeenHeader;
+    const blocksToSync = othersBest.data.timeSlotIndex - ourBestSlot;
+    if (blocksToSync < 1) {
+      logger.log("Seems that there is no new blocks to sync. Finishing.");
+      return;
+    }
+
+    // TODO [ToDr] We might be requesting the same blocks from many peers
+    // which isn't very optimal, but for now: 🤷
+    //
+    // find peers that might have that block
+    for (const peerInfo of this.connections.getConnectedPeers()) {
+      const auxData = this.connections.getAuxData(peerInfo.peerId, SYNC_AUX);
+      // no aux data for that peer or peer not connected?
+      if (auxData === undefined || peerInfo.peerRef === null) {
+        continue;
+      }
+
+      // the peer doesn't have anything new for us
+      if (auxData.bestHeader.data.timeSlotIndex <= ourBestSlot) {
+        continue;
+      }
+
+      // request as much blocks from that peer as possible.
+      this.streamManager.withNewStream<ce128.ClientHandler>(peerInfo.peerRef, ce128.STREAM_KIND, (handler, sender) => {
+        handleAsyncErrors(
+          async () => {
+            const blocks = await handler.requestBlockSequence(
+              sender,
+              auxData.bestHeader.hash,
+              ce128.Direction.DescIncl,
+              tryAsU32(auxData.bestHeader.data.timeSlotIndex - ourBestSlot),
+            );
+            this.onNewBlocks(blocks);
+          },
+          (e) => {
+            logger.warn(`[${peerInfo.peerId}] --> requesting blocks to import: ${e}`);
+          },
+        );
+        return OK;
+      });
+    }
+  }
+}
+
+// TODO [ToDr] Should this be transition hasher?
+function hashHeader(header: Header, spec: ChainSpec): WithHash<HeaderHash, Header> {
+  const encoded = Encoder.encodeObject(Header.Codec, header, spec);
+  return blake2b.hashBytes(encoded).asOpaque();
+}

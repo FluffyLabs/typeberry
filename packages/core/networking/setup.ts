@@ -6,12 +6,14 @@ import type { Ed25519Pair } from "@typeberry/crypto/ed25519.js";
 import { Logger } from "@typeberry/logger";
 import {
   type PeerInfo,
+  altNameRaw,
   certToPEM,
   ed25519AsJsonWebKeyPair,
   generateCertificate,
   privateKeyToPEM,
 } from "./certificate.js";
 import { getQuicClientCrypto, getQuicServerCrypto } from "./crypto.js";
+import type { DialOptions } from "./network.js";
 import { peerVerification } from "./peer-verification.js";
 import { type PeerAddress, Peers } from "./peers.js";
 import { QuicNetwork } from "./quic-network.js";
@@ -35,7 +37,7 @@ export type Options = {
 export class Quic {
   /** Setup QUIC socket and start listening for connections. */
   static async setup({ host, port, protocols, key }: Options): Promise<QuicNetwork> {
-    const quicLogger = new QuicLogger("quic", LogLevel.DEBUG, [
+    const quicLogger = new QuicLogger("quic", LogLevel.WARN, [
       new StreamHandler(formatting.format`${formatting.level}:${formatting.keys}:${formatting.msg}`),
     ]);
 
@@ -61,7 +63,7 @@ export class Quic {
       verifyCallback: lastConnectedPeer.verifyCallback,
     };
 
-    logger.info(`Using key: ${key.pubKey}`);
+    logger.info(`🆔 Peer id: ** ${altNameRaw(key.pubKey)}@${host}:${port} ** (pubkey: ${key.pubKey})`);
     // Shared injected UDP socket
     const socket = new QUICSocket({
       logger: quicLogger.getChild("socket"),
@@ -89,6 +91,21 @@ export class Quic {
         await conn.stop();
         return;
       }
+
+      if (lastConnectedPeer.id.key.isEqualTo(key.pubKey)) {
+        logger.log(`🛜 Rejecting connection from ourself from ${conn.remoteHost}:${conn.remotePort}`);
+        await conn.stop();
+        return;
+      }
+
+      if (peers.isConnected(lastConnectedPeer.id.id)) {
+        logger.log(
+          `🛜 Rejecting duplicate connection with peer ${lastConnectedPeer.id.id} from ${conn.remoteHost}:${conn.remotePort}`,
+        );
+        await conn.stop();
+        return;
+      }
+
       logger.log(`🛜 Server handshake with ${conn.remoteHost}:${conn.remotePort}`);
       newPeer(conn, lastConnectedPeer.id);
       lastConnectedPeer.id = null;
@@ -96,19 +113,25 @@ export class Quic {
     });
 
     // connecting to a peer
-    async function dial(peer: PeerAddress): Promise<QuicPeer> {
+    async function dial(peer: PeerAddress, options: DialOptions): Promise<QuicPeer> {
       const peerDetails = peerVerification();
-      const client = await QUICClient.createQUICClient({
-        socket: socket,
-        host: peer.host,
-        port: peer.port,
-        crypto: getQuicClientCrypto(),
-        config: {
-          ...config,
-          verifyCallback: peerDetails.verifyCallback,
+      const clientLater = QUICClient.createQUICClient(
+        {
+          socket: socket,
+          host: peer.host,
+          port: peer.port,
+          crypto: getQuicClientCrypto(),
+          config: {
+            ...config,
+            verifyCallback: peerDetails.verifyCallback,
+          },
+          logger: quicLogger.getChild("client"),
         },
-        logger: quicLogger.getChild("client"),
-      });
+        {
+          signal: options.signal,
+        },
+      );
+      const client = await clientLater;
 
       addEventListener(client, events.EventQUICClientClose, () => {
         logger.log("⚰️ Client connection closed.");
@@ -120,6 +143,12 @@ export class Quic {
 
       if (peerDetails.id === null) {
         throw new Error("Client connected, but there is no peer details!");
+      }
+
+      if (options.verifyName !== undefined && options.verifyName !== peerDetails.id.id) {
+        throw new Error(
+          `Client connected, but the id didn't match. Expected: ${options.verifyName}, got: ${peerDetails.id.id}`,
+        );
       }
 
       logger.log(`🤝 Client handshake with: ${peer.host}:${peer.port}`);

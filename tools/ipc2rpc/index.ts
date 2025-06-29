@@ -33,14 +33,14 @@ async function main() {
     return up0.Handshake.create({ final, leafs: [] });
   };
 
-  const client = await startClient(socketPath, getHandshake, (ann: up0.Announcement) => {
+  const client = await startClient(socketPath, getHandshake, (_streamId, ann) => {
     db.bestHeader = ann.header;
   });
 
   logger.info("Opening new UP0 stream.");
   client.withNewStream(up0.STREAM_KIND, (handler: up0.Handler, sender) => {
     logger.info("Sending handshake.");
-    handler.sendHandshake(sender, getHandshake());
+    handler.sendHandshake(sender);
   });
 
   const rpcServer = startRpc(db, client);

@@ -1,10 +1,3 @@
 export * from "./network.js";
-export * from "./protocol/handler.js";
-export * from "./protocol/stream.js";
-export * as up0 from "./protocol/up-0-block-announcement.js";
-export * as ce128 from "./protocol/ce-128-block-request.js";
-export * as ce129 from "./protocol/ce-129-state-request.js";
-export * as ce131 from "./protocol/ce-131-ce-132-safrole-ticket-distribution.js";
-export * as ce133 from "./protocol/ce-133-work-package-submission.js";
-export * as ce134 from "./protocol/ce-134-work-package-sharing.js";
-export * as ce135 from "./protocol/ce-135-work-report-distribution.js";
+export * from "./peers.js";
+export * from "./protocol/index.js";
