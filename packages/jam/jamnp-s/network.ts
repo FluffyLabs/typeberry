@@ -38,8 +38,10 @@ export async function setup(
   const syncTask = SyncTask.start(spec, streamManager, connections, blocks, onNewBlocks);
 
   network.onPeerConnect((peer) => {
-    // open UP0 stream with each new peer after the connection is fully estabilished.
-    syncTask.openUp0(peer);
+    setImmediate(() => {
+      // open UP0 stream with each new peer after the connection is fully estabilished.
+      syncTask.openUp0(peer);
+    });
 
     // whenever the peer wants to open a stream with us, let's handle that.
     peer.addOnIncomingStream((stream) => {
