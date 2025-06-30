@@ -14,5 +14,12 @@
     "tsx": "^4.20.3",
     "webpack": "^5.99.9",
     "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "@types/node": "^24.0.7",
+    "neo-async": "^2.6.2",
+    "schema-utils": "^4.3.2",
+    "source-map": "^0.7.4",
+    "terser": "^5.43.1"
   }
 }
