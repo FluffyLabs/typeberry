@@ -371,10 +371,7 @@ export class Disputes {
   /**
    * Transition the disputes and return a list of offenders.
    */
-  async transition(
-    disputes: DisputesExtrinsic,
-    omitSealVerification = false,
-  ): Promise<
+  async transition(disputes: DisputesExtrinsic): Promise<
     Result<
       {
         offendersMark: Ed25519Key[];
@@ -389,7 +386,7 @@ export class Disputes {
     }
 
     const signaturesToVerify = signaturesToVerifyResult.ok;
-    const verificationPromise = vefifyAllSignatures(signaturesToVerify, omitSealVerification);
+    const verificationPromise = vefifyAllSignatures(signaturesToVerify);
     const v = this.calculateVotesForWorkReports(disputes);
     const newItems = this.getDisputesRecordsNewItems(v);
 

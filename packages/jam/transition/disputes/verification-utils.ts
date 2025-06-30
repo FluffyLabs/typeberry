@@ -60,17 +60,14 @@ export function prepareJudgementSignature(
 
 // Verification is heavy and currently it is a bottleneck so in the future it will be outsourced to Rust.
 // This is why the data structure is complicated but it should allow to pass whole data to Rust at once.
-export async function vefifyAllSignatures(
-  input: VerificationInput,
-  omitSealVerification = false,
-): Promise<VerificationOutput> {
+export async function vefifyAllSignatures(input: VerificationInput): Promise<VerificationOutput> {
   const output: VerificationOutput = { culprits: [], faults: [], judgements: [] };
   const inputEntries = Object.entries(input) as [keyof VerificationInput, InputItem[]][];
 
   for (const [key, signatureGroup] of inputEntries) {
     output[key] = (await ed25519.verify(signatureGroup)).map((isValid, idx) => {
       return {
-        isValid: omitSealVerification ? true : isValid,
+        isValid: isValid,
         signature: signatureGroup[idx].signature,
       };
     });

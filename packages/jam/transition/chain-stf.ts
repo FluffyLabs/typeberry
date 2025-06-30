@@ -1,7 +1,6 @@
 import type { BlockView, CoreIndex, EntropyHash, HeaderHash, TimeSlot } from "@typeberry/block";
 import type { GuaranteesExtrinsicView } from "@typeberry/block/guarantees.js";
 import type { AuthorizerHash } from "@typeberry/block/work-report.js";
-import { Bytes } from "@typeberry/bytes";
 import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
@@ -143,10 +142,7 @@ export class OnChain {
     }
 
     // disputes
-    const disputesResult = await this.disputes.transition(
-      block.extrinsic.view().disputes.materialize(),
-      omitSealVerification,
-    );
+    const disputesResult = await this.disputes.transition(block.extrinsic.view().disputes.materialize());
     if (disputesResult.isError) {
       return stfError(StfErrorKind.Disputes, disputesResult);
     }
