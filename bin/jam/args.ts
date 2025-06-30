@@ -81,11 +81,11 @@ export type SharedOptions = {
 export type Arguments =
   | CommandArgs<Command.Run, SharedOptions & {}>
   | CommandArgs<
-    Command.Import,
-    SharedOptions & {
-      files: string[];
-    }
-  >;
+      Command.Import,
+      SharedOptions & {
+        files: string[];
+      }
+    >;
 
 const withRelPath = (relPath: string, p: string) => `${relPath}/${p}`;
 

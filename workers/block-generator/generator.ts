@@ -1,21 +1,11 @@
-import {
-  Block,
-  Header,
-  type HeaderHash,
-  tryAsEpoch,
-  tryAsServiceId,
-  tryAsTimeSlot,
-  tryAsValidatorIndex,
-} from "@typeberry/block";
+import { Block, Header, type HeaderHash, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import { Extrinsic } from "@typeberry/block/block.js";
-import { DisputesExtrinsic, Fault, Judgement, Verdict } from "@typeberry/block/disputes.js";
-import { Preimage } from "@typeberry/block/preimage.js";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { DisputesExtrinsic } from "@typeberry/block/disputes.js";
+import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
-import { HASH_SIZE, SimpleAllocator } from "@typeberry/hash";
+import { SimpleAllocator } from "@typeberry/hash";
 import type { KeccakHasher } from "@typeberry/hash/keccak.js";
 import type { State } from "@typeberry/state";
 import { TransitionHasher } from "@typeberry/transition";
@@ -84,52 +74,13 @@ export class Generator {
 
     const extrinsic = Extrinsic.create({
       tickets: asOpaqueType([]),
-      preimages: [Preimage.create({ requester: tryAsServiceId(0), blob: BytesBlob.parseBlob("0x1234") })],
+      preimages: [],
       guarantees: asOpaqueType([]),
       assurances: asOpaqueType([]),
       disputes: DisputesExtrinsic.create({
-        verdicts: [
-          Verdict.create({
-            workReportHash: Bytes.fill(HASH_SIZE, newTimeSlot % 256).asOpaque(),
-            votesEpoch: tryAsEpoch(Math.floor(newTimeSlot / this.chainSpec.epochLength)),
-            votes: asKnownSize([
-              Judgement.create({
-                isWorkReportValid: true,
-                index: tryAsValidatorIndex(0),
-                signature: Bytes.fill(64, 0).asOpaque(),
-              }),
-              Judgement.create({
-                isWorkReportValid: true,
-                index: tryAsValidatorIndex(1),
-                signature: Bytes.fill(64, 1).asOpaque(),
-              }),
-              Judgement.create({
-                isWorkReportValid: true,
-                index: tryAsValidatorIndex(2),
-                signature: Bytes.fill(64, 2).asOpaque(),
-              }),
-              Judgement.create({
-                isWorkReportValid: true,
-                index: tryAsValidatorIndex(3),
-                signature: Bytes.fill(64, 3).asOpaque(),
-              }),
-              Judgement.create({
-                isWorkReportValid: true,
-                index: tryAsValidatorIndex(4),
-                signature: Bytes.fill(64, 4).asOpaque(),
-              }),
-            ]),
-          }),
-        ],
+        verdicts: [],
         culprits: [],
-        faults: [
-          Fault.create({
-            workReportHash: Bytes.fill(HASH_SIZE, newTimeSlot % 256).asOpaque(),
-            wasConsideredValid: false,
-            signature: Bytes.fill(64, 4).asOpaque(),
-            key: Bytes.parseBytes("0x3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29", 32).asOpaque(),
-          }),
-        ],
+        faults: [],
       }),
     });
 
