@@ -36,17 +36,29 @@ Usage:
   typeberry [options] import <bin-or-json-blocks>
 
 Options:
-  --chain-spec          Chain Spec to use. Either 'tiny' or 'full'.
-                        [default: ${DEFAULTS.chainSpec}]
-  --db-path             Directory where database is going to be stored.
-                        [default: ${DEFAULTS.dbPath}]
-  --genesis-root        Assume a particular genesis root hash to open the DB.
-                        [default: ${DEFAULTS.genesisRoot.toString().replace("0x", "")}]
-  --genesis             Path to a JSON file containing genesis state dump.
-                        Takes precedence over --genesis-root.
-  --genesis-block       Path to a JSON file containing genesis block.
-                        Overrides the default empty block if needed.
+  --chain-spec
+      Chain Spec to use. Either 'tiny' or 'full'.
+      [default: ${DEFAULTS.chainSpec}]
 
+  --db-path
+      Directory where database is going to be stored.
+      [default: ${DEFAULTS.dbPath}]
+
+  --genesis-root
+      Assume a particular genesis root hash to open the DB.
+      [default: ${DEFAULTS.genesisRoot.toString().replace("0x", "")}]
+
+  --genesis
+      Path to a JSON file containing genesis state dump.
+      Takes precedence over --genesis-root.
+
+  --genesis-block
+      Path to a JSON file containing genesis block.
+      Overrides the default empty block if needed.
+
+  --omit-seal-verification
+      Enable omit seal verification.
+      [default: false]
 `;
 
 /** Command to execute. */
@@ -69,11 +81,11 @@ export type SharedOptions = {
 export type Arguments =
   | CommandArgs<Command.Run, SharedOptions & {}>
   | CommandArgs<
-      Command.Import,
-      SharedOptions & {
-        files: string[];
-      }
-    >;
+    Command.Import,
+    SharedOptions & {
+      files: string[];
+    }
+  >;
 
 const withRelPath = (relPath: string, p: string) => `${relPath}/${p}`;
 
