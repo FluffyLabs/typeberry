@@ -26,7 +26,7 @@ import type { HeaderChain } from "./reports/verify-contextual.js";
 import { Statistics, type StatisticsStateUpdate } from "./statistics.js";
 
 class DbHeaderChain implements HeaderChain {
-  constructor(private readonly blocks: BlocksDb) {}
+  constructor(private readonly blocks: BlocksDb) { }
 
   isInChain(header: HeaderHash): boolean {
     return this.blocks.getHeader(header) !== null;
@@ -132,16 +132,7 @@ export class OnChain {
     // safrole seal
     let newEntropyHash = preverifiedSeal;
     if (omitSealVerification) {
-      const validatorId = header.bandersnatchBlockAuthorIndex;
-      const bytes = new Uint8Array(32);
-      bytes[0] = (timeSlot >> 24) & 0xff;
-      bytes[1] = (timeSlot >> 16) & 0xff;
-      bytes[2] = (timeSlot >> 8) & 0xff;
-      bytes[3] = timeSlot & 0xff;
-      bytes[4] = (validatorId >> 8) & 0xff;
-      bytes[5] = validatorId & 0xff;
-      const seal = Bytes.fromBlob(bytes, 32);
-      newEntropyHash = blake2b.hashBytes(seal).asOpaque();
+      newEntropyHash = blake2b.hashBytes(header.seal).asOpaque();
     }
     if (newEntropyHash === null) {
       const sealResult = await this.verifySeal(timeSlot, block);
@@ -318,7 +309,7 @@ export class OnChain {
   }
 }
 
-function assertEmpty<T extends Record<string, never>>(_x: T) {}
+function assertEmpty<T extends Record<string, never>>(_x: T) { }
 
 type AvailAssignment = State["availabilityAssignment"];
 

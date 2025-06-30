@@ -59,7 +59,6 @@ export class Generator {
     return encoded;
   }
 
-  // NOTE [ToDr] this whole function is incorrect, it's just a placeholder for proper generator.
   async nextBlock() {
     // fetch latest data from the db.
     this.refreshLastHeaderAndState();
@@ -68,10 +67,15 @@ export class Generator {
     const lastTimeSlot = this.lastHeader.timeSlotIndex;
     const newTimeSlot = lastTimeSlot + 1;
 
+    // select validator for block
+    const validatorId = tryAsValidatorIndex(newTimeSlot % 6);
+
+    // retriev data from previous block
     const hasher = new TransitionHasher(this.chainSpec, this.keccakHasher, this.hashAllocator);
     const parentHeaderHash = this.lastHeaderHash;
     const stateRoot = this.states.getStateRoot(this.lastState);
 
+    // create extrinsic
     const extrinsic = Extrinsic.create({
       tickets: asOpaqueType([]),
       preimages: [],
@@ -88,6 +92,14 @@ export class Generator {
     const extrinsicView = Decoder.decodeObject(Extrinsic.Codec.View, encodedExtrinsic, this.chainSpec);
     const extrinsicHash = hasher.extrinsic(extrinsicView).hash;
 
+    // Create seal
+    const e = Encoder.create();
+    e.i32(newTimeSlot);
+    e.i16(validatorId);
+    e.bytes(Bytes.fill(90, 0));
+    const seal = Bytes.fromBlob(e.viewResult().raw, 96);
+
+    // create header
     const header = Header.create({
       parentHeaderHash,
       priorStateRoot: await stateRoot,
@@ -96,15 +108,19 @@ export class Generator {
       epochMarker: null,
       ticketsMarker: null,
       offendersMarker: [],
-      bandersnatchBlockAuthorIndex: tryAsValidatorIndex(0),
+      bandersnatchBlockAuthorIndex: validatorId,
       entropySource: Bytes.fill(96, (newTimeSlot * 42) % 256).asOpaque(),
-      seal: Bytes.fill(96, (newTimeSlot * 69) % 256).asOpaque(),
+      seal: seal.asOpaque(),
     });
 
+    // TODO [MaSo] IDK if this is ok to update it here.
+    // This function utility is to create a block
+    // not to update any logic.
     const encoded = Encoder.encodeObject(Header.Codec, header, this.chainSpec);
     const headerView = Decoder.decodeObject(Header.Codec.View, encoded, this.chainSpec);
     this.lastHeaderHash = hasher.header(headerView).hash;
     this.lastHeader = header;
+
     return Block.create({ header, extrinsic });
   }
 }
