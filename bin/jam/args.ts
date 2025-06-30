@@ -78,16 +78,21 @@ export type Arguments =
 const withRelPath = (relPath: string, p: string) => `${relPath}/${p}`;
 
 function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedOptions {
-  const dbPath = parseOption(args, "db-path", (v) => withRelPath(relPath, v), withRelPath(relPath, DEFAULTS.dbPath));
-  const genesisRootHash = parseOption(
+  const dbPath = parseValueOption(
+    args,
+    "db-path",
+    (v) => withRelPath(relPath, v),
+    withRelPath(relPath, DEFAULTS.dbPath),
+  );
+  const genesisRootHash = parseValueOption(
     args,
     "genesis-root",
     (v) => Bytes.parseBytesNoPrefix(v, HASH_SIZE).asOpaque(),
     DEFAULTS.genesisRoot,
   );
-  const { genesis } = parseOption(args, "genesis", (v) => withRelPath(relPath, v), null);
-  const genesisBlock = parseOption(args, "genesis-block", (v) => withRelPath(relPath, v), null);
-  const chainSpec = parseOption(
+  const { genesis } = parseValueOption(args, "genesis", (v) => withRelPath(relPath, v), null);
+  const genesisBlock = parseValueOption(args, "genesis-block", (v) => withRelPath(relPath, v), null);
+  const chainSpec = parseValueOption(
     args,
     "chain-spec",
     (v) => {
@@ -102,7 +107,7 @@ function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedO
     },
     DEFAULTS.chainSpec,
   );
-  const omitSealVerification = parseOption(args, "omit-seal-verification", (v) => v === "true", false);
+  const omitSealVerification = parseFlagOption(args, "omit-seal-verification", false);
 
   return {
     dbPath: dbPath["db-path"],
@@ -146,19 +151,19 @@ export function parseArgs(input: string[], relPath: string): Arguments {
   throw new Error(`Invalid arguments: ${JSON.stringify(args)}`);
 }
 
-function parseOption<S extends string, T>(
+function parseValueOption<S extends string, T>(
   args: minimist.ParsedArgs,
   option: S,
   parser: (v: string) => T | null,
   defaultValue: T,
 ): Record<S, T> {
-  if (args[option] === undefined) {
+  const val = args[option];
+  if (val === undefined) {
     return {
       [option]: defaultValue,
     } as Record<S, T>;
   }
 
-  const val = args[option];
   delete args[option];
   if (typeof val !== "string") {
     throw new Error(`Option '--${option}' requires an argument.`);
@@ -171,6 +176,34 @@ function parseOption<S extends string, T>(
   } catch (e) {
     throw new Error(`Invalid value '${val}' for option '${option}': ${e}`);
   }
+}
+
+function parseFlagOption<S extends string>(
+  args: minimist.ParsedArgs,
+  option: S,
+  defaultValue: boolean,
+): Record<S, boolean> {
+  const val = args[option];
+  if (val === undefined) {
+    return {
+      [option]: defaultValue,
+    } as Record<S, boolean>;
+  }
+
+  delete args[option];
+  if (typeof val === "boolean") {
+    return {
+      [option]: val,
+    } as Record<S, boolean>;
+  }
+
+  if (typeof val === "string") {
+    return {
+      [option]: val === "true",
+    } as Record<S, boolean>;
+  }
+
+  throw new Error(`Unexpected value '${val}' for option '${option}'`);
 }
 
 function assertNoMoreArgs(args: minimist.ParsedArgs) {

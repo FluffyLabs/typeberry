@@ -104,7 +104,31 @@ describe("CLI", () => {
     });
   });
 
-  it("should parse omit-seal-verification option with true", () => {
+  it("should parse omit-seal-verification without value as true", () => {
+    const args = parse(["--omit-seal-verification"]);
+
+    deepEqual(args, {
+      command: Command.Run,
+      args: {
+        ...defaultOptions,
+        omitSealVerification: true,
+      },
+    });
+  });
+
+  it("should parse omit-seal-verification option with true (second argument)", () => {
+    const args = parse(["--omit-seal-verification", "true"]);
+
+    deepEqual(args, {
+      command: Command.Run,
+      args: {
+        ...defaultOptions,
+        omitSealVerification: true,
+      },
+    });
+  });
+
+  it("should parse omit-seal-verification option with true (sign =)", () => {
     const args = parse(["--omit-seal-verification=true"]);
 
     deepEqual(args, {
@@ -116,7 +140,7 @@ describe("CLI", () => {
     });
   });
 
-  it("should parse omit-seal-verification option with false", () => {
+  it("should parse omit-seal-verification option with false (sign =)", () => {
     const args = parse(["--omit-seal-verification=false"]);
 
     deepEqual(args, {
@@ -131,7 +155,7 @@ describe("CLI", () => {
   it("should throw on unexpected command", () => {
     assert.throws(
       () => {
-        const _args = parse(["unknown"]);
+        parse(["unknown"]);
       },
       {
         message: "Unexpected command: 'unknown'",
@@ -142,7 +166,7 @@ describe("CLI", () => {
   it("should throw on unexpected options", () => {
     assert.throws(
       () => {
-        const _args = parse(["run", "--myoption", "x"]);
+        parse(["run", "--myoption", "x"]);
       },
       {
         message: "Unrecognized options: 'myoption'",
@@ -153,7 +177,7 @@ describe("CLI", () => {
   it("should throw on unexpected run args", () => {
     assert.throws(
       () => {
-        const _args = parse(["run", "x"]);
+        parse(["run", "x"]);
       },
       {
         message: "Unexpected command: 'x'",
@@ -164,7 +188,7 @@ describe("CLI", () => {
   it("should fail on invalid option value", () => {
     assert.throws(
       () => {
-        const _args = parse(["--chain-spec=xxx"]);
+        parse(["--chain-spec=xxx"]);
       },
       {
         message: "Invalid value 'xxx' for option 'chain-spec': Error: unknown chainspec",
@@ -175,7 +199,7 @@ describe("CLI", () => {
   it("should throw on unexpected extra args", () => {
     assert.throws(
       () => {
-        const _args = parse(["run", "--", "x"]);
+        parse(["run", "--", "x"]);
       },
       {
         message: "Unexpected command: 'x'",
