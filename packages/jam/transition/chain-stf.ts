@@ -25,7 +25,7 @@ import type { HeaderChain } from "./reports/verify-contextual.js";
 import { Statistics, type StatisticsStateUpdate } from "./statistics.js";
 
 class DbHeaderChain implements HeaderChain {
-  constructor(private readonly blocks: BlocksDb) { }
+  constructor(private readonly blocks: BlocksDb) {}
 
   isInChain(header: HeaderHash): boolean {
     return this.blocks.getHeader(header) !== null;
@@ -305,7 +305,7 @@ export class OnChain {
   }
 }
 
-function assertEmpty<T extends Record<string, never>>(_x: T) { }
+function assertEmpty<T extends Record<string, never>>(_x: T) {}
 
 type AvailAssignment = State["availabilityAssignment"];
 
