@@ -1,3 +1,4 @@
+import { setTimeout } from "node:timers/promises";
 import type { BlockView, HeaderHash } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
 import type { ed25519 } from "@typeberry/crypto";
@@ -37,11 +38,16 @@ export async function setup(
   // start the networking tasks
   const syncTask = SyncTask.start(spec, streamManager, connections, blocks, onNewBlocks);
 
+  setImmediate(async () => {
+    for (;;) {
+      await setTimeout(3000);
+      syncTask.maintainSync();
+    }
+  });
+
   network.onPeerConnect((peer) => {
-    setImmediate(() => {
-      // open UP0 stream with each new peer after the connection is fully estabilished.
-      syncTask.openUp0(peer);
-    });
+    // open UP0 stream with each new peer after the connection is fully estabilished.
+    syncTask.openUp0(peer);
 
     // whenever the peer wants to open a stream with us, let's handle that.
     peer.addOnIncomingStream((stream) => {

@@ -33,9 +33,14 @@ async function main() {
     return up0.Handshake.create({ final, leafs: [] });
   };
 
-  const client = await startClient(socketPath, getHandshake, (_streamId, ann) => {
-    db.bestHeader = ann.header;
-  });
+  const client = await startClient(
+    socketPath,
+    getHandshake,
+    (_streamId, ann) => {
+      db.bestHeader = ann.header;
+    },
+    (_streamId, _handshake) => {},
+  );
 
   logger.info("Opening new UP0 stream.");
   client.withNewStream(up0.STREAM_KIND, (handler: up0.Handler, sender) => {

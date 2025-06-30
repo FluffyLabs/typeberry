@@ -79,7 +79,8 @@ export async function main(args: Arguments) {
   })();
 
   const options: Options = {
-    isAuthoring: args.command === Command.Dev,
+    // TODO [ToDr] temporarily disable
+    isAuthoring: args.command === Command.Dev && false,
     blocksToImport: args.command === Command.Import ? args.args.files : null,
     genesisPath: args.args.genesis,
     genesisBlockPath: args.args.genesisBlock,
@@ -128,10 +129,20 @@ export async function main(args: Arguments) {
   // 1. load validator keys (bandersnatch, ed25519, bls)
   // 2. allow the validator to specify metadata.
   // 3. if we have validator keys, we should start the authorship module.
-  const closeAuthorship = await initAuthorship(importerReady, options.isAuthoring, config);
+  const closeAuthorship = await initAuthorship(
+    importerReady,
+    options.isAuthoring && options.blocksToImport === null,
+    config,
+  );
 
   // Networking initialization
-  const closeNetwork = await initNetwork(importerReady, config, options.genesisHeaderHash, options.network);
+  const closeNetwork = await initNetwork(
+    importerReady,
+    config,
+    options.genesisHeaderHash,
+    options.network,
+    options.blocksToImport === null,
+  );
 
   logger.info("[main]⌛ waiting for importer to finish");
   const importerDone = await blocksReader;
@@ -197,7 +208,12 @@ const initNetwork = async (
   genericConfig: Config,
   genesisHeaderHash: HeaderHash,
   { key, host, port, bootnodes }: NetworkingOptions,
+  shouldStartNetwork: boolean,
 ) => {
+  if (!shouldStartNetwork) {
+    return () => Promise.resolve();
+  }
+
   const { network, finish } = await startNetwork(
     NetworkConfig.new({
       genericConfig,

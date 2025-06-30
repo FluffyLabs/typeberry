@@ -1,7 +1,13 @@
 import type { ReadableStreamDefaultReader } from "node:stream/web";
 import { BytesBlob } from "@typeberry/bytes";
 import { Logger } from "@typeberry/logger";
-import type { Peer, PeerId, Stream } from "@typeberry/networking";
+import {
+  type Peer,
+  type PeerId,
+  type Stream,
+  encodeMessageLength,
+  handleMessageFragmentation,
+} from "@typeberry/networking";
 import type { OK } from "@typeberry/utils";
 import {
   type StreamHandler,
@@ -91,7 +97,7 @@ export class StreamManager {
     const stream = peer.openStream();
     const quicStream = this.registerStream(peer, handler, stream, BytesBlob.empty());
     // send the initial byte with stream kind
-    quicStream.bufferAndSend(BytesBlob.blobFromNumbers([kind]));
+    quicStream.bufferAndSend(BytesBlob.blobFromNumbers([kind]), false);
 
     work(handler as THandler, quicStream);
   }
@@ -170,14 +176,17 @@ async function readStreamForever(
   // finally start listening for more data.
   let bytes = initialData;
   let isDone = false;
+  const callback = handleMessageFragmentation((data) => {
+    const bytes = BytesBlob.blobFrom(new Uint8Array(data));
+    logger.trace(`🚰 --> [${peer.id}:${quicStream.streamId}] ${bytes}`);
+    handler.onStreamMessage(quicStream, bytes);
+  });
+
   for (;;) {
     // TODO [ToDr] We are going to read messages from the socket as fast as we can,
     // yet it doesn't mean we are able to handle them as fast. This should rather
     // be a promise, so that we can make back pressure here.
-    if (bytes.length > 0) {
-      logger.trace(`🚰 --> [${peer.id}:${quicStream.streamId}] ${bytes}`);
-      handler.onStreamMessage(quicStream, bytes);
-    }
+    callback(bytes.raw);
 
     if (isDone) {
       logger.log(`🚰 --> [${peer.id}:${quicStream.streamId}] remote finished.`);
@@ -195,8 +204,8 @@ const MAX_OUTGOING_BUFFER_BYTES = 16384;
 
 class QuicStream implements StreamMessageSender {
   private bufferedLength = 0;
-  private bufferedData: BytesBlob[] = [];
-  private hasLock = false;
+  private bufferedData: { data: BytesBlob; addPrefix: boolean }[] = [];
+  private currentWriterPromise: Promise<void> | null = null;
 
   constructor(
     public readonly streamId: StreamId,
@@ -205,19 +214,18 @@ class QuicStream implements StreamMessageSender {
   ) {}
 
   /** Send given piece of data to the other end. */
-  bufferAndSend(data: BytesBlob): boolean {
+  bufferAndSend(data: BytesBlob, prefixWithLength = true): boolean {
     if (this.bufferedLength > MAX_OUTGOING_BUFFER_BYTES) {
       return false;
     }
-    this.bufferedData.push(data);
+    this.bufferedData.push({ data, addPrefix: prefixWithLength });
     this.bufferedLength += data.length;
     // some other async task already has a lock, so it will keep writing.
-    if (this.hasLock) {
+    if (this.currentWriterPromise !== null) {
       return true;
     }
     // let's start an async task to write the buffer
-    this.hasLock = true;
-    handleAsyncErrors(
+    this.currentWriterPromise = handleAsyncErrors(
       async () => {
         const writer = this.internal.writable.getWriter();
         try {
@@ -226,13 +234,17 @@ class QuicStream implements StreamMessageSender {
             if (chunk === undefined) {
               return;
             }
-            logger.trace(`🚰 <-- [${this.streamId}] write: ${chunk}`);
-            await writer.write(chunk.raw);
-            this.bufferedLength -= chunk.length;
+            const { data, addPrefix } = chunk;
+            logger.trace(`🚰 <-- [${this.streamId}] write: ${data}`);
+            if (addPrefix) {
+              await writer.write(encodeMessageLength(data.raw));
+            }
+            await writer.write(data.raw);
+            this.bufferedLength -= data.length;
           }
         } finally {
           writer.releaseLock();
-          this.hasLock = false;
+          this.currentWriterPromise = null;
         }
       },
       (e) => {
@@ -245,6 +257,9 @@ class QuicStream implements StreamMessageSender {
   close(): void {
     handleAsyncErrors(async () => {
       logger.trace(`🚰 <-- [${this.streamId}] closing`);
+      if (this.currentWriterPromise !== null) {
+        await this.currentWriterPromise;
+      }
       await this.internal.writable.close();
     }, this.onError);
   }

@@ -27,7 +27,7 @@ export interface StreamMessageSender {
    * messages. Check the result to know if the message was
    * sent/buffered correctly (`true`) or dropped (`false`)
    */
-  bufferAndSend(data: BytesBlob): boolean;
+  bufferAndSend(data: BytesBlob, prefixWithLength?: boolean): boolean;
 
   /** Close the connection on our side (FIN). */
   close(): void;

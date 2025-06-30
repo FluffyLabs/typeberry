@@ -90,6 +90,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
   constructor(
     private readonly getHandshake: () => Handshake,
     private readonly onAnnouncement: (sender: StreamId, ann: Announcement) => void,
+    private readonly onHandshake: (sender: StreamId, handshake: Handshake) => void,
   ) {}
 
   onStreamMessage(sender: StreamMessageSender, message: BytesBlob): void {
@@ -103,6 +104,7 @@ export class Handler implements StreamHandler<typeof STREAM_KIND> {
         logger.log(`[${streamId}] <-- responding with a handshake.`);
         sender.bufferAndSend(Encoder.encodeObject(Handshake.Codec, this.getHandshake()));
       }
+      this.onHandshake(streamId, handshake);
       return;
     }
 

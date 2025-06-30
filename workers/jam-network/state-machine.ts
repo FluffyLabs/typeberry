@@ -87,7 +87,12 @@ export class MainReady extends State<"ready(main)", Finished, NetworkConfig> {
 
   private triggerNewBlocks(block: unknown) {
     if (block instanceof Uint8Array) {
-      const blocks = Decoder.decodeObject(codec.sequenceVarLen(Block.Codec.View), block);
+      const config = this.getConfig();
+      const blocks = Decoder.decodeObject(
+        codec.sequenceVarLen(Block.Codec.View),
+        block,
+        config.genericConfig.chainSpec,
+      );
       this.onNewBlocks.emit(blocks);
     } else {
       logger.error(`${this.constructor.name} got invalid signal type: ${JSON.stringify(block)}.`);
@@ -121,8 +126,13 @@ export class NetworkReady extends State<"ready(network)", Finished, NetworkConfi
   sendBlocks(port: TypedChannel, blocks: BlockView[]) {
     // TODO [ToDr] How to make a better API to pass this binary data around?
     // Currently we don't guarantee that the underlying buffer is actually `ArrayBuffer`.
-    const encoded = Encoder.encodeObject(codec.sequenceVarLen(Block.Codec.View), blocks);
-    port.sendSignal("block", encoded.raw, [encoded.raw.buffer as ArrayBuffer]);
+    const config = this.getConfig();
+    const encoded = Encoder.encodeObject(
+      codec.sequenceVarLen(Block.Codec.View),
+      blocks,
+      config.genericConfig.chainSpec,
+    );
+    port.sendSignal("newBlocks", encoded.raw, [encoded.raw.buffer as ArrayBuffer]);
   }
 
   getConfig(): NetworkConfig {

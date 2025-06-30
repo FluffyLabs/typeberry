@@ -1,4 +1,3 @@
-import type { Buffer } from "node:buffer";
 import * as fs from "node:fs";
 import { type Socket, createServer } from "node:net";
 import * as os from "node:os";
@@ -7,9 +6,10 @@ import * as path from "node:path";
 import type { HeaderHash } from "@typeberry/block";
 import { ce129, up0 } from "@typeberry/jamnp-s";
 import { Logger } from "@typeberry/logger";
+import { handleMessageFragmentation } from "@typeberry/networking";
 import type { Listener } from "@typeberry/state-machine";
 import type { TrieNode } from "@typeberry/trie/nodes.js";
-import { IpcHandler, handleFragmentation } from "./handler.js";
+import { IpcHandler } from "./handler.js";
 
 export function startIpcServer(
   announcements: Listener<up0.Announcement>,
@@ -27,7 +27,13 @@ export function startIpcServer(
   const server = createServer((socket: Socket) => {
     logger.log("Client connected");
     const messageHandler = new IpcHandler(socket);
-    messageHandler.registerHandlers(new up0.Handler(getHandshake, () => {}));
+    messageHandler.registerHandlers(
+      new up0.Handler(
+        getHandshake,
+        () => {},
+        () => {},
+      ),
+    );
     messageHandler.registerHandlers(new ce129.Handler(true, getBoundaryNodes, getKeyValuePairs));
 
     // Send block announcements
@@ -41,9 +47,9 @@ export function startIpcServer(
     // Handle incoming data from the client
     socket.on(
       "data",
-      handleFragmentation((data: Buffer) => {
+      handleMessageFragmentation((data: Uint8Array) => {
         try {
-          messageHandler.onSocketMessage(new Uint8Array(data));
+          messageHandler.onSocketMessage(data);
         } catch (e) {
           logger.error(`Received invalid data on socket: ${e}. Closing connection.`);
           socket.end();

@@ -11,7 +11,7 @@ import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
-import { WithHash, blake2b } from "@typeberry/hash";
+import { type WithHash, blake2b } from "@typeberry/hash";
 import { Logger } from "@typeberry/logger";
 import type { Peer } from "@typeberry/networking";
 import { type U32, tryAsU32 } from "@typeberry/numbers";
@@ -28,7 +28,7 @@ export const SYNC_AUX: AuxData<SyncAux> = {
 type SyncAux = {
   finalBlockHash: HeaderHash;
   finalBlockSlot: TimeSlot;
-  bestHeader: WithHash<HeaderHash, Header>;
+  bestHeader: WithHash<HeaderHash, Header> | null;
 };
 
 const logger = Logger.new(import.meta.filename, "net:sync");
@@ -66,6 +66,12 @@ export class SyncTask {
           syncTask.onUp0Annoucement(peer, ann);
         }
       },
+      (streamId, handshake) => {
+        const peer = getPeerForStream(streamId);
+        if (peer !== null) {
+          syncTask.onUp0Handshake(peer, handshake);
+        }
+      },
     );
 
     // server mode
@@ -87,7 +93,7 @@ export class SyncTask {
     return syncTask;
   }
 
-  private bestSeenHeader: WithHash<HeaderHash, Header>;
+  private bestSeen: up0.HashAndSlot;
 
   private constructor(
     private readonly spec: ChainSpec,
@@ -101,7 +107,32 @@ export class SyncTask {
     if (ourBest === null) {
       throw new Error(`Best header ${ourBestHash} missing in the database?`);
     }
-    this.bestSeenHeader = new WithHash(ourBestHash, ourBest.materialize());
+    this.bestSeen = up0.HashAndSlot.create({
+      hash: ourBestHash,
+      slot: ourBest.timeSlotIndex.materialize(),
+    });
+  }
+
+  private onUp0Handshake(peer: Peer, handshake: up0.Handshake) {
+    const { hash, slot } = handshake.final;
+    this.connections.withAuxData(peer.id, SYNC_AUX, (aux) => {
+      if (aux === undefined) {
+        return {
+          finalBlockHash: hash,
+          finalBlockSlot: slot,
+          bestHeader: null,
+        };
+      }
+
+      aux.finalBlockHash = hash;
+      aux.finalBlockSlot = slot;
+      aux.bestHeader = null;
+      return aux;
+    });
+
+    if (this.bestSeen.slot < slot) {
+      this.bestSeen = handshake.final;
+    }
   }
 
   private onUp0Annoucement(peer: Peer, announcement: up0.Announcement) {
@@ -136,8 +167,11 @@ export class SyncTask {
     // reported finalized block).
     //
     // now check if we should sync that block
-    if (this.bestSeenHeader.data.timeSlotIndex < bestHeader.data.timeSlotIndex) {
-      this.bestSeenHeader = bestHeader;
+    if (this.bestSeen.slot < bestHeader.data.timeSlotIndex) {
+      this.bestSeen = up0.HashAndSlot.create({
+        hash: bestHeader.hash,
+        slot: bestHeader.data.timeSlotIndex,
+      });
       this.maintainSync();
     }
   }
@@ -147,9 +181,10 @@ export class SyncTask {
     // we just treat each produced block as instantly-finalized.
     const bestBlockHash = this.blocks.getBestHeaderHash();
     const bestHeader = this.blocks.getHeader(bestBlockHash);
+    const timeSlot = bestHeader?.timeSlotIndex.materialize();
     const bestBlock = up0.HashAndSlot.create({
       hash: bestBlockHash,
-      slot: bestHeader?.timeSlotIndex.materialize() ?? tryAsTimeSlot(0),
+      slot: timeSlot ?? tryAsTimeSlot(0),
     });
 
     return up0.Handshake.create({
@@ -236,7 +271,7 @@ export class SyncTask {
     return response;
   }
 
-  private maintainSync() {
+  maintainSync() {
     // figure out where we are at
     const ourBestHash = this.blocks.getBestHeaderHash();
     const ourBestHeader = this.blocks.getHeader(ourBestHash);
@@ -246,13 +281,14 @@ export class SyncTask {
 
     const ourBestSlot = ourBestHeader.timeSlotIndex.materialize();
     // figure out where others are at
-    const othersBest = this.bestSeenHeader;
-    const blocksToSync = othersBest.data.timeSlotIndex - ourBestSlot;
+    const othersBest = this.bestSeen;
+    const blocksToSync = othersBest.slot - ourBestSlot;
     if (blocksToSync < 1) {
       logger.log("Seems that there is no new blocks to sync. Finishing.");
       return;
     }
 
+    logger.log(`Attempting to sync ${blocksToSync} blocks.`);
     // TODO [ToDr] We might be requesting the same blocks from many peers
     // which isn't very optimal, but for now: 🤷
     //
@@ -264,8 +300,10 @@ export class SyncTask {
         continue;
       }
 
+      const bestSlot = auxData.bestHeader !== null ? auxData.bestHeader.data.timeSlotIndex : auxData.finalBlockSlot;
+      const bestHash = auxData.bestHeader !== null ? auxData.bestHeader.hash : auxData.finalBlockHash;
       // the peer doesn't have anything new for us
-      if (auxData.bestHeader.data.timeSlotIndex <= ourBestSlot) {
+      if (bestSlot <= ourBestSlot) {
         continue;
       }
 
@@ -273,12 +311,14 @@ export class SyncTask {
       this.streamManager.withNewStream<ce128.ClientHandler>(peerInfo.peerRef, ce128.STREAM_KIND, (handler, sender) => {
         handleAsyncErrors(
           async () => {
+            logger.log(`Fetching blocks from ${peerInfo.peerId}.`);
             const blocks = await handler.requestBlockSequence(
               sender,
-              auxData.bestHeader.hash,
+              bestHash,
               ce128.Direction.DescIncl,
-              tryAsU32(auxData.bestHeader.data.timeSlotIndex - ourBestSlot),
+              tryAsU32(bestSlot - ourBestSlot),
             );
+            blocks.reverse();
             this.onNewBlocks(blocks);
           },
           (e) => {
