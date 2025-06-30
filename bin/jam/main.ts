@@ -92,6 +92,7 @@ export async function main(args: Arguments) {
       host: "127.0.0.1",
       port: 12345 + portShift,
       bootnodes: [
+        "e3r2oc62zwfj3crnuifuvsxvbtlzetk4o5qyhetkhagsc2fgl2oka@127.0.0.1:40000",
         "eecgwpgwq3noky4ijm4jmvjtmuzv44qvigciusxakq5epnrfj2utb@127.0.0.1:12345",
         "en5ejs5b2tybkfh4ym5vpfh7nynby73xhtfzmazumtvcijpcsz6ma@127.0.0.1:12346",
         "ekwmt37xecoq6a7otkm4ux5gfmm4uwbat4bg5m223shckhaaxdpqa@127.0.0.1:12347",
