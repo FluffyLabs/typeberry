@@ -43,7 +43,7 @@ import {
   AccountsWriteExternalities,
   AccumulateFetchExternalities,
 } from "./externalities/index.js";
-import { Operand } from "./operand.js";
+import { LegacyOperand } from "./operand.js";
 import { PvmExecutor } from "./pvm-executor.js";
 
 export type AccumulateRoot = OpaqueHash;
@@ -121,7 +121,7 @@ const logger = Logger.new(import.meta.filename, "accumulate");
 const ARGS_CODEC = codec.object({
   slot: codec.u32.asOpaque<TimeSlot>(),
   serviceId: codec.u32.asOpaque<ServiceId>(),
-  operands: codec.sequenceVarLen(Operand.Codec),
+  operands: codec.sequenceVarLen(LegacyOperand.Codec),
 });
 
 export class Accumulate {
@@ -161,7 +161,7 @@ export class Accumulate {
   private async pvmAccumulateInvocation(
     slot: TimeSlot,
     serviceId: ServiceId,
-    operands: Operand[],
+    operands: LegacyOperand[],
     gas: ServiceGas,
     entropy: EntropyHash,
   ): Promise<Result<InvocationResult, PvmInvocationError>> {
@@ -193,6 +193,7 @@ export class Accumulate {
     };
 
     const executor = PvmExecutor.createAccumulateExecutor(code, externalities, this.chainSpec);
+    // TODO [MaSi]: in GP 0.6.7 operands array is replaced with length of operands array
     const args = Encoder.encodeObject(ARGS_CODEC, { slot, serviceId, operands }, this.chainSpec);
 
     const result = await executor.run(args, tryAsGas(gas));
@@ -238,7 +239,7 @@ export class Accumulate {
       this.state.privilegedServices.autoAccumulateServices.find((x) => x.service === serviceId)?.gasLimit ??
       tryAsServiceGas(0n);
 
-    const operands: Operand[] = [];
+    const operands: LegacyOperand[] = [];
 
     for (const report of reports) {
       const results = report.results.filter((result) => result.serviceId === serviceId);
@@ -247,8 +248,8 @@ export class Accumulate {
         gasCost = tryAsServiceGas(gasCost + result.gas);
 
         operands.push(
-          Operand.new({
-            gas: result.gas, // g
+          LegacyOperand.new({
+            // gas: result.gas, // g
             payloadHash: result.payloadHash, // y
             result: result.result, // d
             authorizationOutput: report.authorizationOutput, // o

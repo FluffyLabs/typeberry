@@ -1,27 +1,27 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { type EntropyHash, tryAsServiceGas } from "@typeberry/block";
+import type { EntropyHash } from "@typeberry/block";
 import { WorkExecResult, WorkExecResultKind } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU64 } from "@typeberry/numbers";
-import { Operand } from "../operand.js";
+import { LegacyOperand } from "../operand.js";
 import { AccumulateFetchExternalities } from "./accumulate-fetch-externalities.js";
 
 describe("accumulate-fetch-externalities", () => {
   const prepareOperands = (length: number) => {
-    const operands: Operand[] = [];
+    const operands: LegacyOperand[] = [];
 
     for (let i = 0; i < length; i++) {
       operands.push(
-        Operand.create({
+        LegacyOperand.create({
           authorizationOutput: BytesBlob.empty(),
           authorizerHash: Bytes.fill(HASH_SIZE, i + 1).asOpaque(),
           exportsRoot: Bytes.fill(HASH_SIZE, i + 2).asOpaque(),
-          gas: tryAsServiceGas(i + 3),
+          // gas: tryAsServiceGas(i + 3),
           hash: Bytes.fill(HASH_SIZE, i + 4).asOpaque(),
           payloadHash: Bytes.fill(HASH_SIZE, i + 5).asOpaque(),
           result: new WorkExecResult(WorkExecResultKind.ok, BytesBlob.empty()),
@@ -36,10 +36,10 @@ describe("accumulate-fetch-externalities", () => {
     chainSpec,
     operands,
     entropy,
-  }: { chainSpec?: ChainSpec; operands?: Operand[]; entropy?: EntropyHash }) => {
+  }: { chainSpec?: ChainSpec; operands?: LegacyOperand[]; entropy?: EntropyHash }) => {
     const defaultChainSpec = tinyChainSpec;
     const defaultEntropy: EntropyHash = Bytes.zero(HASH_SIZE).asOpaque();
-    const defaultOperands: Operand[] = [];
+    const defaultOperands: LegacyOperand[] = [];
     return [entropy ?? defaultEntropy, operands ?? defaultOperands, chainSpec ?? defaultChainSpec] as const;
   };
 
@@ -91,7 +91,11 @@ describe("accumulate-fetch-externalities", () => {
   it("should return all operands", () => {
     const expectedOperands = prepareOperands(5);
     const chainSpec = tinyChainSpec;
-    const encodedOperands = Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), expectedOperands, chainSpec);
+    const encodedOperands = Encoder.encodeObject(
+      codec.sequenceVarLen(LegacyOperand.Codec),
+      expectedOperands,
+      chainSpec,
+    );
 
     const args = prepareData({ operands: expectedOperands, chainSpec });
 
@@ -106,7 +110,7 @@ describe("accumulate-fetch-externalities", () => {
     const operands = prepareOperands(5);
     const chainSpec = tinyChainSpec;
     const expectedOperandIndex = 2 ** 32 + 3;
-    const expectedOperand: Operand | null = null;
+    const expectedOperand: LegacyOperand | null = null;
 
     const args = prepareData({ operands, chainSpec });
 
@@ -121,7 +125,7 @@ describe("accumulate-fetch-externalities", () => {
     const operands = prepareOperands(5);
     const chainSpec = tinyChainSpec;
     const expectedOperandIndex = 153;
-    const expectedOperand: Operand | null = null;
+    const expectedOperand: LegacyOperand | null = null;
 
     const args = prepareData({ operands, chainSpec });
 
@@ -137,7 +141,7 @@ describe("accumulate-fetch-externalities", () => {
     const chainSpec = tinyChainSpec;
     const expectedOperandIndex = 3;
     const expectedOperand = operands[expectedOperandIndex];
-    const encodedOperand = Encoder.encodeObject(Operand.Codec, expectedOperand, chainSpec);
+    const encodedOperand = Encoder.encodeObject(LegacyOperand.Codec, expectedOperand, chainSpec);
 
     const args = prepareData({ operands, chainSpec });
 
