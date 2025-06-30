@@ -11,6 +11,7 @@ const MSG_LENGTH_BUFFER = new Uint8Array(MSG_LEN_PREFIX_BYTES);
  * down to the socket.
  */
 export function encodeMessageLength(message: Uint8Array) {
+  // TODO [ToDr] avoid using codec for just this one thing.
   const encoder = Encoder.create({
     destination: MSG_LENGTH_BUFFER,
   });

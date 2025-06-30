@@ -10,6 +10,7 @@
     "@typeberry/hash": "0.0.1",
     "@typeberry/jamnp-s": "0.0.1",
     "@typeberry/logger": "0.0.1",
+    "@typeberry/networking": "0.0.1",
     "@typeberry/numbers": "0.0.1",
     "@typeberry/state-machine": "0.0.1"
   },

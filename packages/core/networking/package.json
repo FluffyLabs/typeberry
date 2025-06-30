@@ -14,6 +14,7 @@
   "dependencies": {
     "@typeberry/bytes": "0.0.1",
     "@typeberry/crypto": "0.0.1",
+    "@typeberry/codec": "0.0.1",
     "@typeberry/logger": "0.0.1",
     "@typeberry/utils": "0.0.1",
     "@matrixai/quic": "^2.0.9",
