@@ -6,13 +6,13 @@ export const HELP = `
 @typeberry/convert ${packageJson.version} by Fluffy Labs.
 
 Usage:
-  convert <type> <hex-or-json-input-file> [to <format>]
+  @typeberry/convert [options] <type> <hex-or-json-input-file> [to <format>]
 
 Attempts to read provided input file as 'type' and output in requested 'format'.
 The input type is detected from file extension ('.hex' or '.json').
 
 Example usage:
-  convert [options] header ./genesis-header.json to hex
+  @typeberry/convert [options] header ./genesis-header.json to hex
 
 Options:
   --flavor    - chain spec flavor, either 'full' or 'tiny'.
@@ -25,15 +25,14 @@ Supported generic output formats:
   json        - JSON format (when supported)
   hex         - JAM-codec hex-encoded string (when supported)
 
-Processing:
-  ${SUPPORTED_TYPES.filter((x) => x.process !== undefined).map(
-    (x) => `
-  ${x.name}:
-    ${x.process?.options.join(", ")}`,
-  )}
-
 Supported types:
 ${SUPPORTED_TYPES.map((x) => `  ${x.name}`).join("\n")}
+
+Processing: ${SUPPORTED_TYPES.filter((x) => x.process !== undefined).map(
+  (x) => `
+  ${x.name}:
+    ${x.process?.options.join(", ")}`,
+)}
 `;
 
 export type Arguments = {

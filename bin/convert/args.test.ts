@@ -9,6 +9,7 @@ const headerType = SUPPORTED_TYPES[1];
 describe("CLI", () => {
   const parse = (args: string[]) => parseArgs(args, (v) => `../${v}`);
   const defaultArgs = {
+    process: "",
     flavor: KnownChainSpec.Tiny,
     outputFormat: OutputFormat.Print,
   };
