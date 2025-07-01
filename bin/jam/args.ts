@@ -25,11 +25,11 @@ const DEFAULTS = {
 // consider just using JSON config files and only leave the stuff
 // that is actually meant to be easily overriden from CLI.
 export const HELP = `
-typeberry ${version} by Fluffy Labs.
+@typeberry/jam ${version} by Fluffy Labs.
 
 Usage:
-  typeberry [options]
-  typeberry [options] import <bin-or-json-blocks>
+  jam [options]
+  jam [options] import <bin-or-json-blocks>
 
 Options:
   --chain-spec          Chain Spec to use. Either 'tiny' or 'full'.

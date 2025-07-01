@@ -50,7 +50,8 @@
     "tools/ipc2rpc",
     "workers/block-generator",
     "workers/generic",
-    "workers/importer"
+    "workers/importer",
+    "bin/convert"
   ],
   "engines": {
     "node": ">=22",
