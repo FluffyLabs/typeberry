@@ -4,10 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: [ "main" ]
-    paths: [
-      './**',
-      '.github/workflows/publish-typeberry.yml'
-    ]
 
 jobs:
   publish-typeberry-npm:
