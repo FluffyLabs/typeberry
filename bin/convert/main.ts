@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
+import { HashDictionary } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { parseFromJson } from "@typeberry/json-parser";
 import { assertNever, inspect } from "@typeberry/utils";
@@ -11,8 +12,9 @@ export function main(args: Arguments, withRelPath: (v: string) => string) {
   const input = loadInputFile(args.inputPath, withRelPath);
   const spec = getChainSpec(args.flavor);
 
-  const dump = (data: unknown) => {
-    dumpOutput(spec, data, args.type, args.outputFormat);
+  const processAndDump = (data: unknown) => {
+    const { processed, type } = processOutput(spec, data, args.type, args.process);
+    dumpOutput(spec, processed, type, args.outputFormat);
   };
 
   if (input.type === "blob") {
@@ -20,7 +22,7 @@ export function main(args: Arguments, withRelPath: (v: string) => string) {
       throw new Error(`${args.type.name} does not support decoding from binary data.`);
     }
     const data = Decoder.decodeObject(args.type.decode, input.data, spec);
-    dump(data);
+    processAndDump(data);
     return;
   }
 
@@ -29,7 +31,7 @@ export function main(args: Arguments, withRelPath: (v: string) => string) {
       throw new Error(`${args.type.name} does not support reading from JSON.`);
     }
     const parsed = parseFromJson(input.data, args.type.json(spec));
-    dump(parsed);
+    processAndDump(parsed);
     return;
   }
 
@@ -61,7 +63,8 @@ function loadInputFile(
   if (file === undefined) {
     throw new Error("Missing input file!");
   }
-  const fileContent = fs.readFileSync(withRelPath(file), "utf8");
+
+  const fileContent = fs.readFileSync(withRelPath(file), "utf8").trim();
   if (file.endsWith(".hex")) {
     return {
       type: "blob",
@@ -78,6 +81,7 @@ function loadInputFile(
 
   throw new Error("Input file format unsupported.");
 }
+
 function dumpOutput(spec: ChainSpec, data: unknown, type: SupportedType, outputFormat: OutputFormat) {
   switch (outputFormat) {
     case OutputFormat.Print: {
@@ -102,9 +106,15 @@ function dumpOutput(spec: ChainSpec, data: unknown, type: SupportedType, outputF
             if (value instanceof BytesBlob) {
               return value.toString();
             }
+
             if (typeof value === "bigint") {
               return value.toString();
             }
+
+            if (value instanceof HashDictionary) {
+              return Object.fromEntries(Array.from(value).map(([key, val]) => [key.toString(), val]));
+            }
+
             return value;
           },
           2,
@@ -115,4 +125,31 @@ function dumpOutput(spec: ChainSpec, data: unknown, type: SupportedType, outputF
     default:
       assertNever(outputFormat);
   }
+}
+
+function processOutput(
+  spec: ChainSpec,
+  data: unknown,
+  type: SupportedType,
+  process: string,
+): {
+  processed: unknown;
+  type: SupportedType;
+} {
+  if (process === "") {
+    return { processed: data, type };
+  }
+
+  if (type.process === undefined || !type.process.options.includes(process)) {
+    throw new Error(`Unsupported processing: '${process}' for '${type.name}'`);
+  }
+
+  return {
+    processed: type.process.run(spec, data, process),
+    type: {
+      ...type,
+      // disable encoding, since it won't match
+      encode: undefined,
+    },
+  };
 }

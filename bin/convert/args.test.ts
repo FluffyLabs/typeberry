@@ -24,6 +24,17 @@ describe("CLI", () => {
     });
   });
 
+  it("should parse chain process option", () => {
+    const args = parse(["--process=root-hash", "header", "./test.hex"]);
+
+    assert.deepStrictEqual(args, {
+      ...defaultArgs,
+      type: headerType,
+      inputPath: ".././test.hex",
+      process: "root-hash",
+    });
+  });
+
   it("should parse defaults", () => {
     const args = parse(["header", "./test.json"]);
 

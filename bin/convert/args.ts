@@ -15,13 +15,22 @@ Example usage:
   convert [options] header ./genesis-header.json to hex
 
 Options:
-  --flavor  - chain spec flavor, either 'full' or 'tiny'.
-              [default: tiny]
+  --flavor    - chain spec flavor, either 'full' or 'tiny'.
+                [default: tiny]
+  --process   - process the type before outputing it. See below
+                for supported processing.
 
 Supported generic output formats:
-  print     - print the object to the console
-  json      - JSON format (when supported)
-  hex       - JAM-codec hex-encoded string (when supported)
+  print       - print the object to the console
+  json        - JSON format (when supported)
+  hex         - JAM-codec hex-encoded string (when supported)
+
+Processing:
+  ${SUPPORTED_TYPES.filter((x) => x.process !== undefined).map(
+    (x) => `
+  ${x.name}:
+    ${x.process?.options.join(", ")}`,
+  )}
 
 Supported types:
 ${SUPPORTED_TYPES.map((x) => `  ${x.name}`).join("\n")}
@@ -29,6 +38,7 @@ ${SUPPORTED_TYPES.map((x) => `  ${x.name}`).join("\n")}
 
 export type Arguments = {
   flavor: KnownChainSpec;
+  process: string;
   type: SupportedType;
   inputPath: string;
   outputFormat: OutputFormat;
@@ -57,6 +67,7 @@ export function parseArgs(cliInput: string[], withRelPath: (v: string) => string
     },
     KnownChainSpec.Tiny,
   );
+  const process = parseOption(args, "process", (v) => v, "");
 
   const type = parseType(args._.shift());
   const input = args._.shift();
@@ -71,6 +82,7 @@ export function parseArgs(cliInput: string[], withRelPath: (v: string) => string
   return {
     flavor: chainSpec.flavor,
     type,
+    process: process.process,
     inputPath: withRelPath(input),
     outputFormat,
   };

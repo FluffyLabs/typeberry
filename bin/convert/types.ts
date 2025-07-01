@@ -7,7 +7,9 @@ import type { Decode, Encode } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { FromJson } from "@typeberry/json-parser";
 import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
+import type { InMemoryState } from "@typeberry/state";
 import { fullStateDumpFromJson } from "@typeberry/state-json";
+import { StateEntries } from "@typeberry/state-merkleization";
 import { inMemoryStateCodec } from "@typeberry/state-merkleization/in-memory-state-codec.js";
 import { workItemFromJson } from "../test-runner/w3f/codec/work-item.js";
 import { workPackageFromJson } from "../test-runner/w3f/codec/work-package.js";
@@ -21,9 +23,13 @@ export type SupportedType = {
   decode?: Decode<any>;
   // biome-ignore lint/suspicious/noExplicitAny: We need to handle any possible output
   json?: (spec: ChainSpec) => FromJson<any>;
+  process?: {
+    options: readonly string[];
+    run: (spec: ChainSpec, data: unknown, option: string) => unknown;
+  };
 };
 
-export const SUPPORTED_TYPES: SupportedType[] = [
+export const SUPPORTED_TYPES: readonly SupportedType[] = [
   {
     name: "block",
     encode: Block.Codec,
@@ -71,6 +77,26 @@ export const SUPPORTED_TYPES: SupportedType[] = [
     encode: inMemoryStateCodec,
     decode: inMemoryStateCodec,
     json: fullStateDumpFromJson,
-    // serializeState: (state: InMemoryState) => SerializedState.
+    process: {
+      options: ["root-hash", "entries", "truncated-entries"],
+      run(spec: ChainSpec, data: unknown, option: string) {
+        const state = data as InMemoryState;
+        if (option === "entries") {
+          return StateEntries.serializeInMemory(spec, state).entries;
+        }
+
+        if (option === "truncated-entries") {
+          const entries = Array.from(StateEntries.serializeInMemory(spec, state).entries).map(([key, value]) => [
+            key.toString().substring(2, 64),
+            value.toString().substring(2),
+          ]);
+          return Object.fromEntries(entries);
+        }
+
+        if (option === "root-hash") {
+          return StateEntries.serializeInMemory(spec, state).getRootHash();
+        }
+      },
+    },
   },
 ];
