@@ -71,21 +71,29 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
     if (type === "string") {
       const parser = jsonDescription[1];
       const value = parseFromJson<string>(jsonType, type, context);
-      return parser(value, context);
+      try {
+        return parser(value, context);
+      } catch (e) {
+        throw new Error(`[${context}] ${e}`);
+      }
     }
 
     if (type === "number") {
       const type = jsonDescription[0];
       const parser = jsonDescription[1];
       const value = parseFromJson<number>(jsonType, type, context);
-      return parser(value, context);
+      try {
+        return parser(value, context);
+      } catch (e) {
+        throw new Error(`[${context}] ${e}`);
+      }
     }
 
     throw new Error(`[${context}] Invalid parser type: ${type}`);
   }
 
   if (t !== "object") {
-    throw new Error(`Expected complex type but got ${t}`);
+    throw new Error(`[${context}] Expected complex type but got ${t}`);
   }
 
   if (typeof jsonDescription !== "object") {

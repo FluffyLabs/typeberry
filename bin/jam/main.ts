@@ -239,7 +239,7 @@ function emptyBlock() {
   });
 }
 
-function loadConfig(configPath: string): NodeConfiguration {
+export function loadConfig(configPath: string): NodeConfiguration {
   if (configPath === DEV_CONFIG) {
     return parseFromJson(devConfigJson, NodeConfiguration.fromJson);
   }
