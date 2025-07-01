@@ -1,5 +1,5 @@
 import minimist from "minimist";
-import packageJson from "./package.json";
+import packageJson from "./package.json" with { type: "json" };
 import { SUPPORTED_TYPES, type SupportedType } from "./types.js";
 
 export const HELP = `
