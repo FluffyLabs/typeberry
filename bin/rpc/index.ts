@@ -1,6 +1,6 @@
 import { pathToFileURL } from "node:url";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import { KnownChainSpec } from "@typeberry/jam";
+import { KnownChainSpec } from "@typeberry/config-node";
 import minimist from "minimist";
 import { methods } from "./src/method-loader.js";
 import { RpcServer } from "./src/server.js";

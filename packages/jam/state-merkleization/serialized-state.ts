@@ -25,7 +25,7 @@ export interface Persistence {
 
 /** Wrap a `StateEntries` as `Peristence` object. */
 function stateEntriesPersistence(dict: StateEntries): Persistence {
-  const entries = dict.entries;
+  const entries = dict.entries.data;
   return {
     get(key: StateKey): BytesBlob | null {
       return entries.get(key) ?? null;
