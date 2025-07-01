@@ -4,6 +4,7 @@
   "description": "JAM implementation in TypeScript",
   "private": true,
   "workspaces": [
+    "bin/convert",
     "bin/jam",
     "bin/pvm",
     "bin/rpc",
@@ -50,8 +51,7 @@
     "tools/ipc2rpc",
     "workers/block-generator",
     "workers/generic",
-    "workers/importer",
-    "bin/convert"
+    "workers/importer"
   ],
   "engines": {
     "node": ">=22",
