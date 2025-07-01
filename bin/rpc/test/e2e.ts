@@ -234,25 +234,42 @@ describe("JSON RPC Client-Server E2E", () => {
     const bestBlock = await client.call("bestBlock");
     assert(Array.isArray(bestBlock));
     if (bestBlock !== null) {
-      const subscribeResult = await client.call("subscribeServicePreimage", [
-        bestBlock[0],
-        0,
-        [
-          193, 99, 38, 67, 43, 91, 50, 19, 223, 209, 96, 148, 149, 225, 60, 107, 39, 108, 180, 116, 214, 121, 100, 83,
-          55, 229, 194, 192, 159, 25, 181, 60,
-        ],
-      ]);
-      assert(Array.isArray(subscribeResult));
-      assert.match(subscribeResult[0], /0x[0-9A-Fa-f]+/);
+      return new Promise<void>((resolve, reject) => {
+        let unsubscribe: () => Promise<void>;
 
-      if (subscribeResult !== null) {
-        const unsubscribeResult = await client.call("unsubscribeServicePreimage", [subscribeResult[0]]);
-        assert.notStrictEqual(unsubscribeResult, null);
-      }
+        client
+          .subscribe(
+            "servicePreimage",
+            [
+              bestBlock[0],
+              0,
+              [
+                193, 99, 38, 67, 43, 91, 50, 19, 223, 209, 96, 148, 149, 225, 60, 107, 39, 108, 180, 116, 214, 121, 100,
+                83, 55, 229, 194, 192, 159, 25, 181, 60,
+              ],
+            ],
+            async (data) => {
+              try {
+                assert.deepStrictEqual(data, [
+                  [
+                    9, 98, 111, 111, 116, 115, 116, 114, 97, 112, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 10, 0, 0, 0, 0, 0,
+                    6, 40, 2, 51, 7, 50, 0, 21,
+                  ],
+                ]);
+
+                await unsubscribe();
+              } catch (e) {
+                reject(e);
+              }
+
+              resolve();
+            },
+          )
+          .then((_unsubscribe) => {
+            unsubscribe = _unsubscribe;
+          });
+      });
     }
-
-    // todo [seko] implement tests for presence of subscription messages
-    // (requires implementing a subscription interface in the client)
   });
 
   it("server gracefully handles malformed requests", async () => {

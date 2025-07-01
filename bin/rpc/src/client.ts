@@ -2,9 +2,18 @@ import WebSocket from "ws";
 import type { JsonRpcRequest, JsonRpcResponse, JsonRpcSubscriptionNotification } from "./types.js";
 import { JSON_RPC_VERSION } from "./types.js";
 
+export type SubscriptionCallback = (data: unknown) => void;
+
+export interface Subscription {
+  id: string;
+  method: string;
+  callback: SubscriptionCallback;
+}
+
 export class RpcClient {
   private ws: WebSocket;
   private messageQueue: Map<number, (response: JsonRpcResponse) => void> = new Map();
+  private subscriptions: Map<string, Subscription> = new Map();
   private nextId = 1;
   private connectionPromise: Promise<void>;
 
@@ -24,7 +33,14 @@ export class RpcClient {
       const response: JsonRpcResponse | JsonRpcSubscriptionNotification = JSON.parse(data);
 
       if (!("id" in response) && "params" in response) {
-        console.info(`sub[${response.params[0]}]:`, response.params[1]);
+        const [subscriptionId, subscriptionData] = response.params;
+        const subscription = this.subscriptions.get(subscriptionId);
+
+        if (subscription) {
+          subscription.callback(subscriptionData);
+        } else {
+          console.error("Uncaught subscription message:", response);
+        }
       } else if (typeof response.id === "number") {
         const callback = this.messageQueue.get(response.id);
 
@@ -70,6 +86,45 @@ export class RpcClient {
     });
   }
 
+  async subscribe(method: string, params: unknown[], callback: SubscriptionCallback): Promise<() => Promise<void>> {
+    const subscribeMethod = `subscribe${capitalizeFirstLetter(method)}`;
+    const result = await this.call(subscribeMethod, params);
+
+    if (Array.isArray(result) && result.length === 1 && typeof result[0] === "string") {
+      const subscriptionId = result[0];
+      this.subscriptions.set(subscriptionId, { id: subscriptionId, method, callback });
+      return async () => await this.unsubscribe(subscriptionId);
+    }
+
+    throw new Error("Invalid subscription response");
+  }
+
+  private async unsubscribe(subscriptionId: string): Promise<void> {
+    const subscription = this.subscriptions.get(subscriptionId);
+    if (!subscription) {
+      throw new Error("Subscription not found");
+    }
+
+    const unsubscribeMethod = `unsubscribe${capitalizeFirstLetter(subscription.method)}`;
+    const result = await this.call(unsubscribeMethod, [subscriptionId]);
+
+    if (Array.isArray(result) && result.length === 1 && typeof result[0] === "boolean") {
+      if (result[0] === true) {
+        this.subscriptions.delete(subscriptionId);
+      } else {
+        throw new Error("Subscription found on client but not on server");
+      }
+
+      return;
+    }
+
+    throw new Error("Invalid unsubscribe response");
+  }
+
+  getSubscriptions(): Subscription[] {
+    return Array.from(this.subscriptions.values());
+  }
+
   close(): void {
     this.ws.close();
   }
@@ -77,4 +132,8 @@ export class RpcClient {
   getSocket(): WebSocket {
     return this.ws;
   }
+}
+
+function capitalizeFirstLetter(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }
