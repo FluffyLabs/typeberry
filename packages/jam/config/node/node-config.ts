@@ -24,6 +24,8 @@ export const knownChainSpecFromJson = json.fromString((input, ctx): KnownChainSp
 export class NodeConfiguration {
   static fromJson = json.object<JsonObject<NodeConfiguration>, NodeConfiguration>(
     {
+      $schema: "string",
+      version: "number",
       flavor: knownChainSpecFromJson,
       chain_spec: JipChainSpec.fromJson,
       database_base_path: "string",
@@ -31,11 +33,16 @@ export class NodeConfiguration {
     NodeConfiguration.new,
   );
 
-  static new({ flavor, chain_spec, database_base_path }: JsonObject<NodeConfiguration>) {
-    return new NodeConfiguration(flavor, chain_spec, database_base_path);
+  static new({ $schema, version, flavor, chain_spec, database_base_path }: JsonObject<NodeConfiguration>) {
+    if (version !== 1) {
+      throw new Error("Only version=1 config is supported.");
+    }
+    return new NodeConfiguration($schema, version, flavor, chain_spec, database_base_path);
   }
 
   private constructor(
+    public readonly $schema: string,
+    public readonly version: number,
     public readonly flavor: KnownChainSpec,
     public readonly chainSpec: JipChainSpec,
     public readonly databaseBasePath: string,

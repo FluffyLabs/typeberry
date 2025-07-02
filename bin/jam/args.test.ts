@@ -21,13 +21,13 @@ describe("CLI", () => {
   });
 
   it("should parse name option", () => {
-    const args = parse(["--name='my silly name'"]);
+    const args = parse(["--name=my silly name"]);
 
     deepEqual(args, {
       command: Command.Run,
       args: {
         ...defaultOptions,
-        nodeName: "my sill name",
+        nodeName: "my silly name",
       },
     });
   });
