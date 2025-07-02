@@ -22,7 +22,7 @@ import { startBlockGenerator } from "./author.js";
 import { initializeExtensions } from "./extensions.js";
 import { startBlocksReader } from "./reader.js";
 
-import devConfigJson from "../../configs/typeberry-dev.json" with { type: "json" };
+import devConfigJson from "@typeberry/configs/typeberry-dev.json" with { type: "json" };
 
 const logger = Logger.new(import.meta.filename, "jam");
 
