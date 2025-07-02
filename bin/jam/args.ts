@@ -2,7 +2,7 @@ import type { StateRootHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import minimist from "minimist";
-import packageJson from "./package.json" with { type: 'json' };
+import packageJson from "./package.json" with { type: "json" };
 
 /** Chain spec chooser. */
 export enum KnownChainSpec {

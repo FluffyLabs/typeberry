@@ -35,6 +35,14 @@ Processing: ${SUPPORTED_TYPES.filter((x) => x.process !== undefined).map(
 )}
 `;
 
+/** Chain spec chooser. */
+export enum KnownChainSpec {
+  /** Tiny chain spec. */
+  Tiny = "tiny",
+  /** Full chain spec. */
+  Full = "full",
+}
+
 export type Arguments = {
   flavor: KnownChainSpec;
   process: string;
@@ -123,14 +131,6 @@ function parseOutputFormat(output?: string): OutputFormat {
 }
 
 // TODO [ToDr] Consider sharing that?
-
-/** Chain spec chooser. */
-export enum KnownChainSpec {
-  /** Tiny chain spec. */
-  Tiny = "tiny",
-  /** Full chain spec. */
-  Full = "full",
-}
 
 function parseOption<S extends string, T>(
   args: minimist.ParsedArgs,
