@@ -1,4 +1,6 @@
 {
+  "$schema": "../../../configs/config-v1.schema.json",
+  "version": 1,
   "flavor": "tiny",
   "database_base_path": "database",
   "chain_spec": {

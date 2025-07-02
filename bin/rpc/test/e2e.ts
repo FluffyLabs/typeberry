@@ -10,7 +10,7 @@ describe("JSON RPC Client-Server E2E", () => {
   let server: RpcServer;
 
   before(async () => {
-    server = main(["--config", import.meta.resolve("./e2e.config.json")]);
+    server = main(["--config", `${import.meta.dirname}/e2e.config.json`]);
     client = new RpcClient("ws://localhost:19800");
     await client.waitForConnection();
   });

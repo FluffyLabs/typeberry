@@ -3,7 +3,7 @@
   "title": "Chain Specification",
   "description": "Schema for blockchain chain specification",
   "type": "object",
-  "required": ["id", "bootnodes", "genesis_header", "genesis_state"],
+  "required": ["id", "genesis_header", "genesis_state"],
   "properties": {
     "id": {
       "type": "string",
