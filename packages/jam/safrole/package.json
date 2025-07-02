@@ -4,6 +4,7 @@
   "description": "Safrole implementation based on the Gray Paper.",
   "main": "index.ts",
   "dependencies": {
+    "@fluffylabs/bandersnatch": "^0.1.0-c67985f",
     "@typeberry/block": "0.0.1",
     "@typeberry/bytes": "0.0.1",
     "@typeberry/codec": "0.0.1",
@@ -15,8 +16,7 @@
     "@typeberry/numbers": "0.0.1",
     "@typeberry/ordering": "0.0.1",
     "@typeberry/state": "0.0.1",
-    "@typeberry/utils": "0.0.1",
-    "bandersnatch-wasm": "github:fluffylabs/bandersnatch#e5e0364f70355e80c7f9f468bbaa937d4d3cf3b2"
+    "@typeberry/utils": "0.0.1"
   },
   "scripts": {
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
