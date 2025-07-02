@@ -57,13 +57,13 @@ export async function main(args: Arguments, withRelPath: (v: string) => string) 
   };
 
   const chainSpec = getChainSpec(options.config.flavor);
-  // Initialize the database with genesis state and block if there isn't one.
-  const dbPath = await initializeDatabase(
-    chainSpec,
+  const { rootDb, dbPath, genesisHeaderHash } = openDatabase(
     options.nodeName,
+    options.config.chainSpec.genesisHeader,
     withRelPath(options.config.databaseBasePath),
-    options.config.chainSpec,
   );
+  // Initialize the database with genesis state and block if there isn't one.
+  await initializeDatabase(chainSpec, genesisHeaderHash, rootDb, options.config.chainSpec);
 
   // Start extensions
   const importerInit = await blockImporter.spawnWorker();
@@ -141,7 +141,7 @@ const initBlocksReader = async (
   });
 };
 
-const getChainSpec = (name: KnownChainSpec) => {
+export const getChainSpec = (name: KnownChainSpec) => {
   if (name === KnownChainSpec.Full) {
     return fullChainSpec;
   }
@@ -150,8 +150,31 @@ const getChainSpec = (name: KnownChainSpec) => {
     return tinyChainSpec;
   }
 
-  throw new Error(`Unknown chain spec: ${name}`);
+  throw new Error(`Unknown chain spec: ${name}. Possible options: ${[KnownChainSpec.Full, KnownChainSpec.Tiny]}`);
 };
+
+export function openDatabase(
+  nodeName: string,
+  genesisHeader: BytesBlob,
+  databaseBasePath: string,
+  { readOnly = false }: { readOnly?: boolean } = {},
+) {
+  const nodeNameHash = blake2b.hashString(nodeName).toString().substring(2, 10);
+  const genesisHeaderHash = blake2b.hashBytes(genesisHeader).asOpaque<HeaderHash>();
+  const genesisHeaderHashNibbles = genesisHeaderHash.toString().substring(2, 10);
+
+  const dbPath = `${databaseBasePath}/${nodeNameHash}/${genesisHeaderHashNibbles}`;
+  logger.info(`🛢️ Opening database at ${dbPath}`);
+  try {
+    return {
+      dbPath,
+      rootDb: new LmdbRoot(dbPath, readOnly),
+      genesisHeaderHash,
+    };
+  } catch (e) {
+    throw new Error(`Unable to open database at ${dbPath}: ${e}`);
+  }
+}
 
 /**
  * Initialize the database unless it's already initialized.
@@ -160,17 +183,10 @@ const getChainSpec = (name: KnownChainSpec) => {
  */
 async function initializeDatabase(
   spec: ChainSpec,
-  nodeName: string,
-  databaseBasePath: string,
+  genesisHeaderHash: HeaderHash,
+  rootDb: LmdbRoot,
   config: JipChainSpec,
-): Promise<string> {
-  const nodeNameHash = blake2b.hashString(nodeName).toString().substring(2, 18);
-  const genesisHeaderHash = blake2b.hashBytes(config.genesisHeader).asOpaque<HeaderHash>();
-  const genesisHeaderHashNibbles = genesisHeaderHash.toString().substring(2, 18);
-
-  const dbPath = `${databaseBasePath}/${nodeNameHash}/${genesisHeaderHashNibbles}`;
-  logger.info(`🛢️ Opening database at ${dbPath}`);
-  const rootDb = new LmdbRoot(dbPath);
+): Promise<void> {
   const blocks = new LmdbBlocks(spec, rootDb);
   const states = new LmdbStates(spec, rootDb);
 
@@ -182,7 +198,7 @@ async function initializeDatabase(
   // DB seems already initialized, just go with what we have.
   if (state !== null && !state.isEqualTo(Bytes.zero(HASH_SIZE)) && !header.isEqualTo(Bytes.zero(HASH_SIZE))) {
     await rootDb.db.close();
-    return dbPath;
+    return;
   }
 
   logger.log("🛢️ Database looks fresh. Initializing.");
@@ -203,8 +219,6 @@ async function initializeDatabase(
 
   // close the DB
   await rootDb.db.close();
-
-  return dbPath;
 }
 
 function loadGenesisState(spec: ChainSpec, data: JipChainSpec["genesisState"]) {

@@ -1,4 +1,5 @@
 import { Command, main as jam } from "@typeberry/jam";
+import { DEFAULTS } from "@typeberry/jam/args.js";
 import { Level, Logger } from "@typeberry/logger";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
@@ -13,7 +14,7 @@ async function main() {
       {
         command: Command.Import,
         args: {
-          nodeName: "e2e",
+          nodeName: DEFAULTS.name,
           configPath: `${import.meta.dirname}/e2e.config.json`,
           files: [
             "jamdunavectors/data/safrole/blocks/1_000.json",
