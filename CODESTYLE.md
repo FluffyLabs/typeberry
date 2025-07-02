@@ -122,12 +122,12 @@ some controversial perf-related suggestions should be applied.
 2. Draft PRs _can be_ reviewed, but the _comments do not need to be addressed_ if
     the code is subject to change anyway.
 3. The author **requests 1 or more** reviewers to review the PR.
-4. **At least 2 REQUESTED** reviewers **must approve** the PR (unless only 1 reviewer is
-   requested) and there can be no unresolved discussions left.
-6. Non-requested core devs may still review the PR (i.e. volunteer), and in case they leave
-   some comments, their approval is required too.
-7. If the reviewer **does not leave any comments**, the approval status must be **`Approve`**.
-8. If **some comments** are left, the status might be one of:
+4. **At least two _requested_** reviewers **must approve** the PR (unless only one was
+    requested). No unresolved discussions may remain.
+5. Non-requested core devs may still volunteer a review. **If they leave any comments,
+    their explicit approval is required before merging.**
+6. If a reviewer **does not leave comments**, the review status **must be** **`Approve`**.
+7. If **any comments** are left, the status may be one of:
     1. **`Approve`** - **re-review is not required**, the reviewer trusts the author to
         fix all the issues at their free discretion. Reply comments are not required.
         If the PR is all-approved, author **can resolve** comments under **approved review**
