@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Chain Specification",
+  "description": "Schema for blockchain chain specification",
+  "type": "object",
+  "required": ["id", "bootnodes", "genesis_header", "genesis_state"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the blockchain network",
+      "pattern": "^[a-zA-Z0-9-]+$",
+      "examples": ["typeberry-dev"]
+    },
+    "bootnodes": {
+      "type": "array",
+      "description": "List of bootstrap nodes for network connectivity",
+      "items": {
+        "type": "string",
+        "description": "Bootnode address in format: peer_id@host:port",
+        "pattern": "^[a-z0-9]+@[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+:[0-9]+$"
+      },
+      "minItems": 1
+    },
+    "genesis_header": {
+      "type": "string",
+      "description": "Genesis block header as hex string",
+      "pattern": "^[0-9a-fA-F]+$",
+      "minLength": 1
+    },
+    "genesis_state": {
+      "type": "object",
+      "description": "Initial blockchain state as key-value pairs",
+      "patternProperties": {
+        "^[0-9a-fA-F]{62}$": {
+          "type": "string",
+          "description": "State value as hex string",
+          "pattern": "^[0-9a-fA-F]*$"
+        }
+      },
+      "additionalProperties": false,
+      "minProperties": 1
+    }
+  },
+  "additionalProperties": false
+}

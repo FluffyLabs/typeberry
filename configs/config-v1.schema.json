@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Typeberry Configuration - v1",
+  "description": "Configuration schema for Typeberry blockchain node",
+  "type": "object",
+  "required": ["$schema", "version", "flavor", "chain_spec", "database_base_path"],
+  "properties": {
+    "version": {
+      "type": "number",
+      "description": "Version of the configuration file.",
+      "const": 1
+    },
+    "flavor": {
+      "type": "string",
+      "description": "The flavor/variant of the configuration",
+      "examples": ["tiny", "full"]
+    },
+    "chain_spec": {
+      "$ref": "./specs/jip4.schema.json"
+    },
+    "database_base_path": {
+      "type": "string",
+      "description": "Base path for blockchain database storage",
+      "minLength": 1,
+      "examples": ["./database"]
+    }
+  },
+  "additionalProperties": false
+}

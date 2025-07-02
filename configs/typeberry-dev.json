@@ -1,4 +1,6 @@
 {
+  "$schema": "./config-v1.schema.json",
+  "version": 1,
   "flavor": "tiny",
   "chain_spec": {
     "id": "typeberry-dev",
