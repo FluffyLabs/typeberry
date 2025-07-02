@@ -48,6 +48,8 @@ export class RpcClient {
           callback(response);
           this.messageQueue.delete(response.id);
         }
+      } else {
+        console.info("Unhandled message from server:", response);
       }
     });
 
@@ -119,10 +121,6 @@ export class RpcClient {
     }
 
     throw new Error("Invalid unsubscribe response");
-  }
-
-  getSubscriptions(): Subscription[] {
-    return Array.from(this.subscriptions.values());
   }
 
   close(): void {

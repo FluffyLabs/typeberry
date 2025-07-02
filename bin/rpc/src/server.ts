@@ -165,7 +165,7 @@ export class RpcServer {
       return null;
     }
 
-    return createErrorResponse(new RpcError(-32600, "Invalid request."), null);
+    return createErrorResponse(new RpcError(-32600, `Invalid request: ${JSON.stringify(request)}`), null);
   }
 
   private async fulfillRequest(request: JsonRpcRequest | JsonRpcNotification, ws: WebSocket): Promise<JsonRpcResult> {

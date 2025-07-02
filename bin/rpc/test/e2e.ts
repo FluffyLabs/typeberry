@@ -108,7 +108,6 @@ describe("JSON RPC Client-Server E2E", () => {
         ],
         59,
       ]);
-      // todo [seko] need to come up with a test database that has more than one block
     }
   });
 
@@ -272,6 +271,25 @@ describe("JSON RPC Client-Server E2E", () => {
     }
   });
 
+  it("client handles subscription errors", async () => {
+    assert.rejects(async () =>
+      client.subscribe(
+        "servicePreimage",
+        [
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          0,
+          [
+            193, 99, 38, 67, 43, 91, 50, 19, 223, 209, 96, 148, 149, 225, 60, 107, 39, 108, 180, 116, 214, 121, 100, 83,
+            55, 229, 194, 192, 159, 25, 181, 60, 61,
+          ], // invalid preimage hash
+        ],
+        () => {},
+      ),
+    );
+  });
+
+  // todo [seko] what happens when the error occurs when the server is polling a subscription?
+
   it("server gracefully handles malformed requests", async () => {
     const socket = client.getSocket();
 
@@ -285,7 +303,7 @@ describe("JSON RPC Client-Server E2E", () => {
 
     assert.deepStrictEqual(JSON.parse(message), {
       jsonrpc: "2.0",
-      error: { code: -32600, message: "Invalid request." },
+      error: { code: -32600, message: 'Invalid request: {"foo":"bar"}' },
       id: null,
     });
   });
@@ -318,7 +336,7 @@ describe("JSON RPC Client-Server E2E", () => {
     });
 
     assert.deepStrictEqual(JSON.parse(message), [
-      { jsonrpc: "2.0", error: { code: -32600, message: "Invalid request." }, id: null },
+      { jsonrpc: "2.0", error: { code: -32600, message: 'Invalid request: {"foo":"bar"}' }, id: null },
       {
         jsonrpc: "2.0",
         result: bestBlock,
