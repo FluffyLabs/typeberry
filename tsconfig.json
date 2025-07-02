@@ -11,5 +11,5 @@
     "resolveJsonModule": true
   },
   "extends": "@tsconfig/node20/tsconfig.json",
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "tools/typeberry-builder"]
 }
