@@ -40,7 +40,7 @@ if (!isMainThread) {
  * The `BlockGenerator` should periodically create new blocks and send them as signals to the main thread.
  */
 export async function main(channel: MessageChannelStateMachine<GeneratorInit, GeneratorStates>) {
-  logger.info(`Block Generator running ${channel.currentState()}`);
+  logger.info(`🎁 Block Generator running ${channel.currentState()}`);
   // Await the configuration object
   const ready = await channel.waitForState<GeneratorReady>("ready(generator)");
   const config = ready.currentState().getConfig();
@@ -68,6 +68,9 @@ export async function main(channel: MessageChannelStateMachine<GeneratorInit, Ge
   finished.currentState().close(channel);
 }
 
-export async function spawnWorker() {
-  return spawnWorkerGeneric(new URL("./bootstrap.mjs", import.meta.url), logger, "ready(main)", new MainReady());
+export async function spawnWorker(customLogger?: Logger, customMainReady?: MainReady) {
+  const bootstrapFile = "./bootstrap.mjs";
+  const workerLogger = customLogger ?? logger;
+  const mainReady = customMainReady ?? new MainReady();
+  return spawnWorkerGeneric(new URL(bootstrapFile, import.meta.url), workerLogger, "ready(main)", mainReady);
 }

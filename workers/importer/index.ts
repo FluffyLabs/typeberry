@@ -77,7 +77,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
           }
           const { block, seal, timeSlot } = entry;
           const timer = measure("importBlock");
-          const maybeBestHeader = await importer.importBlock(block, await seal);
+          const maybeBestHeader = await importer.importBlock(block, await seal, config.omitSealVerification);
           if (maybeBestHeader.isOk) {
             const bestHeader = maybeBestHeader.ok;
             worker.announce(port, bestHeader);
@@ -99,6 +99,9 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
   finished.currentState().close(channel);
 }
 
-export async function spawnWorker() {
-  return spawnWorkerGeneric(new URL("./bootstrap.mjs", import.meta.url), logger, "ready(main)", new MainReady());
+export async function spawnWorker(customLogger?: Logger, customMainReady?: MainReady) {
+  const bootstrapFile = "./bootstrap.mjs";
+  const workerLogger = customLogger ?? logger;
+  const mainReady = customMainReady ?? new MainReady();
+  return spawnWorkerGeneric(new URL(bootstrapFile, import.meta.url), workerLogger, "ready(main)", mainReady);
 }

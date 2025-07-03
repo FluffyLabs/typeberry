@@ -16,6 +16,7 @@ import {
 import type { MmrHasher } from "@typeberry/mmr";
 import { dumpCodec } from "@typeberry/state-merkleization/serialize.js";
 
+/** Helper function to create most used hashes in the block */
 export class TransitionHasher implements MmrHasher<KeccakHash> {
   constructor(
     private readonly context: ChainSpec,
@@ -23,13 +24,16 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
     private readonly allocator: HashAllocator,
   ) {}
 
+  /** Concatenates two hashes and hash this concatenation */
   hashConcat(a: KeccakHash, b: KeccakHash): KeccakHash {
     return keccak.hashBlobs(this.keccakHasher, [a, b]);
   }
+
   hashConcatPrepend(id: BytesBlob, a: KeccakHash, b: KeccakHash): KeccakHash {
     return keccak.hashBlobs(this.keccakHasher, [id, a, b]);
   }
 
+  /** Creates hash from the block header view */
   header(header: HeaderView): WithHash<HeaderHash, HeaderView> {
     return new WithHash(blake2b.hashBytes(header.encoded(), this.allocator).asOpaque(), header);
   }
@@ -66,6 +70,7 @@ export class TransitionHasher implements MmrHasher<KeccakHash> {
     return new WithHashAndBytes(blake2b.hashBytes(encoded, this.allocator).asOpaque(), extrinsicView, encoded);
   }
 
+  /** Creates hash for given WorkPackage */
   workPackage(workPackage: WorkPackage): WithHashAndBytes<WorkPackageHash, WorkPackage> {
     return this.encode(WorkPackage.Codec, workPackage);
   }

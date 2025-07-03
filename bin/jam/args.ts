@@ -3,7 +3,7 @@ import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import { type U16, isU16 } from "@typeberry/numbers";
 import minimist from "minimist";
-import { version } from "./package.json";
+import packageJson from "./package.json";
 
 /** Chain spec chooser. */
 export enum KnownChainSpec {
@@ -29,8 +29,12 @@ const DEFAULTS = {
 // NOTE [ToDr] Instead of adding more options here we should probably
 // consider just using JSON config files and only leave the stuff
 // that is actually meant to be easily overriden from CLI.
+// NOTE [MaSo] Temporarily added special flag to enable/disable seal verification.
+// TODO [MaSo] Delete this flag when implemented correct seal generation to block
+// --omit-seal-verification      Enable omit seal verification.
+//                               [default: false]
 export const HELP = `
-typeberry ${version} by Fluffy Labs.
+typeberry ${packageJson.version} by Fluffy Labs.
 
 Usage:
   typeberry [options]
@@ -38,6 +42,7 @@ Usage:
   typeberry [options] import <bin-or-json-blocks>
 
 Options:
+<<<<<<< HEAD
   --chain-spec          Chain Spec to use. Either 'tiny' or 'full'.
                         [default: ${DEFAULTS.chainSpec}]
   --db-path             Directory where database is going to be stored.
@@ -51,7 +56,31 @@ Options:
                         Takes precedence over --genesis-root.
   --genesis-block       Path to a JSON file containing genesis block.
                         Overrides the default empty block if needed.
+=======
+  --chain-spec
+      Chain Spec to use. Either 'tiny' or 'full'.
+      [default: ${DEFAULTS.chainSpec}]
+>>>>>>> main
 
+  --db-path
+      Directory where database is going to be stored.
+      [default: ${DEFAULTS.dbPath}]
+
+  --genesis-root
+      Assume a particular genesis root hash to open the DB.
+      [default: ${DEFAULTS.genesisRoot.toString().replace("0x", "")}]
+
+  --genesis
+      Path to a JSON file containing genesis state dump.
+      Takes precedence over --genesis-root.
+
+  --genesis-block
+      Path to a JSON file containing genesis block.
+      Overrides the default empty block if needed.
+
+  --omit-seal-verification
+      Enable omit seal verification.
+      [default: false]
 `;
 
 /** Command to execute. */
@@ -71,6 +100,7 @@ export type SharedOptions = {
   genesisHeaderHash: HeaderHash;
   chainSpec: KnownChainSpec;
   dbPath: string;
+  omitSealVerification: boolean;
 };
 
 export type Arguments =
@@ -91,22 +121,27 @@ export type Arguments =
 const withRelPath = (relPath: string, p: string) => `${relPath}/${p}`;
 
 function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedOptions {
-  const dbPath = parseOption(args, "db-path", (v) => withRelPath(relPath, v), withRelPath(relPath, DEFAULTS.dbPath));
-  const genesisRootHash = parseOption(
+  const dbPath = parseValueOption(
+    args,
+    "db-path",
+    (v) => withRelPath(relPath, v),
+    withRelPath(relPath, DEFAULTS.dbPath),
+  );
+  const genesisRootHash = parseValueOption(
     args,
     "genesis-root",
     (v) => Bytes.parseBytesNoPrefix(v, HASH_SIZE).asOpaque(),
     DEFAULTS.genesisRoot,
   );
-  const genesisHeaderHash = parseOption(
+  const genesisHeaderHash = parseValueOption(
     args,
     "genesis-header-hash",
     (v) => Bytes.parseBytesNoPrefix(v, HASH_SIZE).asOpaque(),
     DEFAULTS.genesisHeaderHash,
   );
-  const { genesis } = parseOption(args, "genesis", (v) => withRelPath(relPath, v), null);
-  const genesisBlock = parseOption(args, "genesis-block", (v) => withRelPath(relPath, v), null);
-  const chainSpec = parseOption(
+  const { genesis } = parseValueOption(args, "genesis", (v) => withRelPath(relPath, v), null);
+  const genesisBlock = parseValueOption(args, "genesis-block", (v) => withRelPath(relPath, v), null);
+  const chainSpec = parseValueOption(
     args,
     "chain-spec",
     (v) => {
@@ -121,6 +156,7 @@ function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedO
     },
     DEFAULTS.chainSpec,
   );
+  const omitSealVerification = parseFlagOption(args, "omit-seal-verification", false);
 
   return {
     dbPath: dbPath["db-path"],
@@ -129,6 +165,7 @@ function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedO
     genesis: genesis,
     genesisBlock: genesisBlock["genesis-block"],
     chainSpec: chainSpec["chain-spec"],
+    omitSealVerification: omitSealVerification["omit-seal-verification"],
   };
 }
 
@@ -177,19 +214,19 @@ export function parseArgs(input: string[], relPath: string): Arguments {
   throw new Error(`Invalid arguments: ${JSON.stringify(args)}`);
 }
 
-function parseOption<S extends string, T>(
+function parseValueOption<S extends string, T>(
   args: minimist.ParsedArgs,
   option: S,
   parser: (v: string) => T | null,
   defaultValue: T,
 ): Record<S, T> {
-  if (args[option] === undefined) {
+  const val = args[option];
+  if (val === undefined) {
     return {
       [option]: defaultValue,
     } as Record<S, T>;
   }
 
-  const val = args[option];
   delete args[option];
   if (typeof val !== "string") {
     throw new Error(`Option '--${option}' requires an argument.`);
@@ -202,6 +239,34 @@ function parseOption<S extends string, T>(
   } catch (e) {
     throw new Error(`Invalid value '${val}' for option '${option}': ${e}`);
   }
+}
+
+function parseFlagOption<S extends string>(
+  args: minimist.ParsedArgs,
+  option: S,
+  defaultValue: boolean,
+): Record<S, boolean> {
+  const val = args[option];
+  if (val === undefined) {
+    return {
+      [option]: defaultValue,
+    } as Record<S, boolean>;
+  }
+
+  delete args[option];
+  if (typeof val === "boolean") {
+    return {
+      [option]: val,
+    } as Record<S, boolean>;
+  }
+
+  if (typeof val === "string") {
+    return {
+      [option]: val === "true",
+    } as Record<S, boolean>;
+  }
+
+  throw new Error(`Unexpected value '${val}' for option '${option}'`);
 }
 
 function assertNoMoreArgs(args: minimist.ParsedArgs) {

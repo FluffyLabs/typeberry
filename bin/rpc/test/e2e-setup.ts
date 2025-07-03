@@ -74,6 +74,7 @@ async function main() {
         genesisRoot: Bytes.parseBytesNoPrefix(GENESIS_ROOT, HASH_SIZE).asOpaque(),
         genesisHeaderHash: Bytes.zero(HASH_SIZE).asOpaque(),
         chainSpec: KnownChainSpec.Tiny,
+        omitSealVerification: false,
       },
     }).catch((e) => {
       console.error(`${e}`);

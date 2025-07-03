@@ -6,6 +6,7 @@ import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb } from "@typeberry/database";
 import { Disputes, type DisputesStateUpdate } from "@typeberry/disputes";
 import type { DisputesErrorCode } from "@typeberry/disputes/disputes-error-code.js";
+import { blake2b } from "@typeberry/hash";
 import { Safrole } from "@typeberry/safrole";
 import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js";
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
@@ -122,12 +123,16 @@ export class OnChain {
     block: BlockView,
     headerHash: HeaderHash,
     preverifiedSeal: EntropyHash | null = null,
+    omitSealVerification = false,
   ): Promise<Result<Ok, StfError>> {
     const header = block.header.materialize();
     const timeSlot = header.timeSlotIndex;
 
     // safrole seal
     let newEntropyHash = preverifiedSeal;
+    if (omitSealVerification) {
+      newEntropyHash = blake2b.hashBytes(header.seal).asOpaque();
+    }
     if (newEntropyHash === null) {
       const sealResult = await this.verifySeal(timeSlot, block);
       if (sealResult.isError) {
