@@ -26,7 +26,7 @@ const JIP_CHAIN_SPEC_TEST = {
   },
 };
 
-describe("Importing Net Chain Spec", () => {
+describe("Importing JIP Chain Spec", () => {
   const ncs = parseFromJson(JIP_CHAIN_SPEC_TEST, JipChainSpec.fromJson);
 
   it("should read the net id", () => {
@@ -77,7 +77,7 @@ describe("Importing Net Chain Spec", () => {
   });
 });
 
-describe("Importing Net Chain Spec: Error Handling", () => {
+describe("Importing JIP Chain Spec: Error Handling", () => {
   it("should throw an error when the net id is missing", () => {
     const invalidSpec = {
       ...JIP_CHAIN_SPEC_TEST,
