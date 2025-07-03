@@ -1,4 +1,4 @@
-import type { FromJson } from "./types.js";
+import type { FromJson, Parser } from "./types.js";
 
 const NO_KEY: unique symbol = Symbol("no key");
 
@@ -64,29 +64,21 @@ export function parseFromJson<T>(jsonType: unknown, jsonDescription: FromJson<T>
     if (type === "object") {
       const parser = jsonDescription[1];
       const obj = jsonType as object;
-      return parser(obj, context);
+      return parseOrThrow(parser, obj, context);
     }
 
     // An expected in-json type and the parser to the destination type.
     if (type === "string") {
       const parser = jsonDescription[1];
       const value = parseFromJson<string>(jsonType, type, context);
-      try {
-        return parser(value, context);
-      } catch (e) {
-        throw new Error(`[${context}] ${e}`);
-      }
+      return parseOrThrow(parser, value, context);
     }
 
     if (type === "number") {
       const type = jsonDescription[0];
       const parser = jsonDescription[1];
       const value = parseFromJson<number>(jsonType, type, context);
-      try {
-        return parser(value, context);
-      } catch (e) {
-        throw new Error(`[${context}] ${e}`);
-      }
+      return parseOrThrow(parser, value, context);
     }
 
     throw new Error(`[${context}] Invalid parser type: ${type}`);
@@ -174,4 +166,12 @@ function diffKeys(obj1: object, obj2: object): [string, string][] {
   }
 
   return diff;
+}
+
+function parseOrThrow<T, X>(parser: Parser<X, T>, value: X, context: string): T {
+  try {
+    return parser(value, context);
+  } catch (e) {
+    throw new Error(`[${context}] Error while parsing the value: ${e}`);
+  }
 }
