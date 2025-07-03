@@ -44,27 +44,32 @@ export class SubscriptionManager {
 
   private async pollSubscriptions(): Promise<void> {
     for (const [subscriptionId, subscription] of this.subscriptions) {
+      const lastResult = this.lastResults.get(subscriptionId);
+      let notificationString: string;
+
       try {
         const result = await this.server.callMethod(subscription.method, subscription.params);
-        const lastResult = this.lastResults.get(subscriptionId);
+
         const notification: JsonRpcSubscriptionNotification = {
           jsonrpc: JSON_RPC_VERSION,
           method: subscription.method,
-          params: [subscriptionId, result],
+          params: { subscriptionId, result },
         };
-        const notificationString = JSON.stringify(notification);
 
-        if (notificationString !== lastResult) {
-          subscription.ws.send(notificationString);
-          this.lastResults.set(subscriptionId, notificationString);
-        }
+        notificationString = JSON.stringify(notification);
       } catch (error) {
-        this.server.getLogger().error(`Error polling subscription ${subscriptionId}:`);
-        if (error instanceof Error) {
-          this.server.getLogger().error(error.toString());
-        } else {
-          this.server.getLogger().error(JSON.stringify(error));
-        }
+        const notification: JsonRpcSubscriptionNotification = {
+          jsonrpc: JSON_RPC_VERSION,
+          method: subscription.method,
+          params: { subscriptionId, error: error instanceof Error ? error.toString() : error },
+        };
+
+        notificationString = JSON.stringify(notification);
+      }
+
+      if (notificationString !== lastResult) {
+        subscription.ws.send(notificationString);
+        this.lastResults.set(subscriptionId, notificationString);
       }
     }
   }

@@ -2,12 +2,11 @@ import WebSocket from "ws";
 import type { JsonRpcRequest, JsonRpcResponse, JsonRpcSubscriptionNotification } from "./types.js";
 import { JSON_RPC_VERSION } from "./types.js";
 
-export type SubscriptionCallback = (data: unknown) => void;
-
 export interface Subscription {
   id: string;
   method: string;
-  callback: SubscriptionCallback;
+  callback: (data: unknown) => void;
+  errorCallback?: (error: unknown) => void;
 }
 
 export class RpcClient {
@@ -32,24 +31,38 @@ export class RpcClient {
     this.ws.on("message", (data: string) => {
       const response: JsonRpcResponse | JsonRpcSubscriptionNotification = JSON.parse(data);
 
-      if (!("id" in response) && "params" in response) {
-        const [subscriptionId, subscriptionData] = response.params;
+      // todo [seko] this block of ifs shall be made cleaner once there's zod validation in place for the client
+      if (
+        !("id" in response) &&
+        "params" in response &&
+        "subscriptionId" in response.params &&
+        "result" in response.params
+      ) {
+        const { subscriptionId, result } = response.params;
         const subscription = this.subscriptions.get(subscriptionId);
 
-        if (subscription) {
-          subscription.callback(subscriptionData);
-        } else {
-          console.error("Uncaught subscription message:", response);
+        if (subscription !== undefined) {
+          subscription.callback(result);
         }
-      } else if (typeof response.id === "number") {
+      } else if (
+        !("id" in response) &&
+        "params" in response &&
+        "subscriptionId" in response.params &&
+        "error" in response.params
+      ) {
+        const { subscriptionId, error } = response.params;
+        const subscription = this.subscriptions.get(subscriptionId);
+
+        if (subscription !== undefined && subscription.errorCallback !== undefined) {
+          subscription.errorCallback(error);
+        }
+      } else if ("id" in response && typeof response.id === "number") {
         const callback = this.messageQueue.get(response.id);
 
         if (callback !== undefined) {
           callback(response);
           this.messageQueue.delete(response.id);
         }
-      } else {
-        console.info("Unhandled message from server:", response);
       }
     });
 
@@ -88,13 +101,18 @@ export class RpcClient {
     });
   }
 
-  async subscribe(method: string, params: unknown[], callback: SubscriptionCallback): Promise<() => Promise<void>> {
+  async subscribe(
+    method: string,
+    params: unknown[],
+    callback: Subscription["callback"],
+    errorCallback?: Subscription["errorCallback"],
+  ): Promise<() => Promise<void>> {
     const subscribeMethod = `subscribe${capitalizeFirstLetter(method)}`;
     const result = await this.call(subscribeMethod, params);
 
     if (Array.isArray(result) && result.length === 1 && typeof result[0] === "string") {
       const subscriptionId = result[0];
-      this.subscriptions.set(subscriptionId, { id: subscriptionId, method, callback });
+      this.subscriptions.set(subscriptionId, { id: subscriptionId, method, callback, errorCallback });
       return async () => await this.unsubscribe(subscriptionId);
     }
 
@@ -103,7 +121,7 @@ export class RpcClient {
 
   private async unsubscribe(subscriptionId: string): Promise<void> {
     const subscription = this.subscriptions.get(subscriptionId);
-    if (!subscription) {
+    if (subscription === undefined) {
       throw new Error("Subscription not found");
     }
 
@@ -114,7 +132,7 @@ export class RpcClient {
       if (result[0] === true) {
         this.subscriptions.delete(subscriptionId);
       } else {
-        throw new Error("Subscription found on client but not on server");
+        throw new Error("Couldn't terminate subscription on server because it was not found.");
       }
 
       return;

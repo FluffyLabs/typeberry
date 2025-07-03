@@ -271,7 +271,7 @@ describe("JSON RPC Client-Server E2E", () => {
     }
   });
 
-  it("client handles subscription errors", async () => {
+  it("client handles errors when subscription is being requested", async () => {
     assert.rejects(async () =>
       client.subscribe(
         "servicePreimage",
@@ -288,7 +288,38 @@ describe("JSON RPC Client-Server E2E", () => {
     );
   });
 
-  // todo [seko] what happens when the error occurs when the server is polling a subscription?
+  it("client handles errors produced by the subscription", async () => {
+    const originalCallMethod = server.callMethod;
+    server.callMethod = async (method: string, validatedParams: unknown) => {
+      if (method === "bestBlock") {
+        throw new Error("Forced error for bestBlock");
+      }
+      return originalCallMethod.call(server, method, validatedParams);
+    };
+    return new Promise<void>((resolve, reject) => {
+      let unsubscribe: () => Promise<void>;
+
+      client
+        .subscribe(
+          "bestBlock",
+          [],
+          async () => {
+            await unsubscribe();
+            reject(new Error("Subscription callback should not be called."));
+          },
+          async (error) => {
+            assert.strictEqual(error, "Error: Forced error for bestBlock");
+            await unsubscribe();
+            resolve();
+          },
+        )
+        .then((_unsubscribe) => {
+          unsubscribe = _unsubscribe;
+        });
+    }).finally(() => {
+      server.callMethod = originalCallMethod;
+    });
+  });
 
   it("server gracefully handles malformed requests", async () => {
     const socket = client.getSocket();
