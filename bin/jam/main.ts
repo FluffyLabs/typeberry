@@ -42,6 +42,8 @@ type Options = {
   databasePath: string;
   /** Chain spec (could also be filename?) */
   chainSpec: KnownChainSpec;
+  /** Whether to enable omit seal verification */
+  omitSealVerification: boolean;
 };
 
 export async function main(args: Arguments) {
@@ -58,6 +60,7 @@ export async function main(args: Arguments) {
     genesisRoot: args.args.genesisRoot,
     databasePath: args.args.dbPath,
     chainSpec: KnownChainSpec.Tiny,
+    omitSealVerification: args.args.omitSealVerification,
   };
 
   const chainSpec = getChainSpec(options.chainSpec);
@@ -76,7 +79,7 @@ export async function main(args: Arguments) {
   const closeExtensions = initializeExtensions({ bestHeader });
 
   // Start block importer
-  const config = new Config(chainSpec, dbPath);
+  const config = new Config(chainSpec, dbPath, options.omitSealVerification);
   const importerReady = importerInit.transition((state, port) => {
     return state.sendConfig(port, config);
   });
@@ -113,7 +116,7 @@ const initAuthorship = async (isAuthoring: boolean, config: Config, importerRead
   // relay blocks from generator to importer
   importerReady.doUntil<Finished>("finished", async (importer, port) => {
     generator.currentState().onBlock.on((b) => {
-      logger.log(`✍️  Produced block: ${b.length}`);
+      logger.log(`✍️  Produced block. Size: [${b.length}]`);
       importer.sendBlock(port, b);
     });
   });

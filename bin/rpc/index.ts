@@ -13,6 +13,7 @@ export function main(args: string[]) {
       "db-path": "../../database",
       "genesis-root": "c07cdbce686c64d0a9b6539c70b0bb821b6a74d9de750a46a5da05b5640c290a",
       "chain-spec": KnownChainSpec.Tiny,
+      "omit-seal-verification": "false",
     },
   });
 

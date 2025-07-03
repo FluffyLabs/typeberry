@@ -1,21 +1,11 @@
-import {
-  Block,
-  Header,
-  type HeaderHash,
-  tryAsEpoch,
-  tryAsServiceId,
-  tryAsTimeSlot,
-  tryAsValidatorIndex,
-} from "@typeberry/block";
+import { Block, Header, type HeaderHash, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import { Extrinsic } from "@typeberry/block/block.js";
-import { DisputesExtrinsic, Judgement, Verdict } from "@typeberry/block/disputes.js";
-import { Preimage } from "@typeberry/block/preimage.js";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { DisputesExtrinsic } from "@typeberry/block/disputes.js";
+import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
-import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb, StatesDb } from "@typeberry/database";
-import { HASH_SIZE, SimpleAllocator } from "@typeberry/hash";
+import { SimpleAllocator } from "@typeberry/hash";
 import type { KeccakHasher } from "@typeberry/hash/keccak.js";
 import type { State } from "@typeberry/state";
 import { TransitionHasher } from "@typeberry/transition";
@@ -39,7 +29,7 @@ export class Generator {
     this.lastState = lastState;
   }
 
-  private refreshLastHeaderAndState() {
+  private refreshLastHeaderAndState(): void {
     const { lastHeaderHash, lastHeader, lastState } = Generator.getLastHeaderAndState(this.blocks, this.states);
     this.lastHeaderHash = lastHeaderHash;
     this.lastHeader = lastHeader;
@@ -63,63 +53,36 @@ export class Generator {
     };
   }
 
-  async nextEncodedBlock() {
+  async nextEncodedBlock(): Promise<BytesBlob> {
     const newBlock = await this.nextBlock();
     const encoded = Encoder.encodeObject(Block.Codec, newBlock, this.chainSpec);
     return encoded;
   }
 
-  // NOTE [ToDr] this whole function is incorrect, it's just a placeholder for proper generator.
   async nextBlock() {
     // fetch latest data from the db.
     this.refreshLastHeaderAndState();
 
+    // incrementing timeslot for current block
     const lastTimeSlot = this.lastHeader.timeSlotIndex;
     const newTimeSlot = lastTimeSlot + 1;
 
+    // select validator for block
+    const validatorId = tryAsValidatorIndex(newTimeSlot % 6);
+
+    // retriev data from previous block
     const hasher = new TransitionHasher(this.chainSpec, this.keccakHasher, this.hashAllocator);
     const parentHeaderHash = this.lastHeaderHash;
     const stateRoot = this.states.getStateRoot(this.lastState);
 
+    // create extrinsic
     const extrinsic = Extrinsic.create({
       tickets: asOpaqueType([]),
-      preimages: [Preimage.create({ requester: tryAsServiceId(1), blob: BytesBlob.parseBlob("0x1234") })],
+      preimages: [],
       guarantees: asOpaqueType([]),
       assurances: asOpaqueType([]),
       disputes: DisputesExtrinsic.create({
-        verdicts: [
-          Verdict.create({
-            workReportHash: Bytes.fill(HASH_SIZE, newTimeSlot % 256).asOpaque(),
-            votesEpoch: tryAsEpoch(newTimeSlot / this.chainSpec.epochLength),
-            votes: asKnownSize([
-              Judgement.create({
-                isWorkReportValid: true,
-                index: tryAsValidatorIndex(0),
-                signature: Bytes.fill(64, 0).asOpaque(),
-              }),
-              Judgement.create({
-                isWorkReportValid: true,
-                index: tryAsValidatorIndex(1),
-                signature: Bytes.fill(64, 1).asOpaque(),
-              }),
-              Judgement.create({
-                isWorkReportValid: true,
-                index: tryAsValidatorIndex(2),
-                signature: Bytes.fill(64, 2).asOpaque(),
-              }),
-              Judgement.create({
-                isWorkReportValid: true,
-                index: tryAsValidatorIndex(3),
-                signature: Bytes.fill(64, 3).asOpaque(),
-              }),
-              Judgement.create({
-                isWorkReportValid: true,
-                index: tryAsValidatorIndex(4),
-                signature: Bytes.fill(64, 4).asOpaque(),
-              }),
-            ]),
-          }),
-        ],
+        verdicts: [],
         culprits: [],
         faults: [],
       }),
@@ -129,6 +92,14 @@ export class Generator {
     const extrinsicView = Decoder.decodeObject(Extrinsic.Codec.View, encodedExtrinsic, this.chainSpec);
     const extrinsicHash = hasher.extrinsic(extrinsicView).hash;
 
+    // Create seal
+    const e = Encoder.create();
+    e.i32(newTimeSlot);
+    e.i16(validatorId);
+    e.bytes(Bytes.fill(90, 0));
+    const seal = Bytes.fromBlob(e.viewResult().raw, 96);
+
+    // create header
     const header = Header.create({
       parentHeaderHash,
       priorStateRoot: await stateRoot,
@@ -137,15 +108,19 @@ export class Generator {
       epochMarker: null,
       ticketsMarker: null,
       offendersMarker: [],
-      bandersnatchBlockAuthorIndex: tryAsValidatorIndex(0),
+      bandersnatchBlockAuthorIndex: validatorId,
       entropySource: Bytes.fill(96, (newTimeSlot * 42) % 256).asOpaque(),
-      seal: Bytes.fill(96, (newTimeSlot * 69) % 256).asOpaque(),
+      seal: seal.asOpaque(),
     });
 
+    // TODO [MaSo] IDK if this is ok to update it here.
+    // This function utility is to create a block
+    // not to update any logic.
     const encoded = Encoder.encodeObject(Header.Codec, header, this.chainSpec);
     const headerView = Decoder.decodeObject(Header.Codec.View, encoded, this.chainSpec);
     this.lastHeaderHash = hasher.header(headerView).hash;
     this.lastHeader = header;
+
     return Block.create({ header, extrinsic });
   }
 }
