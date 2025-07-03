@@ -2,7 +2,7 @@ import type { StateRootHash } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import minimist from "minimist";
-import { version } from "./package.json";
+import packageJson from "./package.json";
 
 /** Chain spec chooser. */
 export enum KnownChainSpec {
@@ -29,7 +29,7 @@ const DEFAULTS = {
 // --omit-seal-verification      Enable omit seal verification.
 //                               [default: false]
 export const HELP = `
-typeberry ${version} by Fluffy Labs.
+typeberry ${packageJson.version} by Fluffy Labs.
 
 Usage:
   typeberry [options]

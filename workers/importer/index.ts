@@ -99,6 +99,9 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
   finished.currentState().close(channel);
 }
 
-export async function spawnWorker() {
-  return spawnWorkerGeneric(new URL("./bootstrap.mjs", import.meta.url), logger, "ready(main)", new MainReady());
+export async function spawnWorker(customLogger?: Logger, customMainReady?: MainReady) {
+  const bootstrapFile = "./bootstrap.mjs";
+  const workerLogger = customLogger ?? logger;
+  const mainReady = customMainReady ?? new MainReady();
+  return spawnWorkerGeneric(new URL(bootstrapFile, import.meta.url), workerLogger, "ready(main)", mainReady);
 }
