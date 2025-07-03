@@ -60,7 +60,6 @@ export class Handshake {
  */
 export class Announcement extends WithDebug {
   static Codec = codec.Class(Announcement, {
-    // TODO [ToDr] Should that rather be `HeaderView`?
     header: Header.Codec,
     final: HashAndSlot.Codec,
   });

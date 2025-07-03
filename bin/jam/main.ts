@@ -81,8 +81,7 @@ export async function main(args: Arguments) {
   })();
 
   const options: Options = {
-    // TODO [ToDr] temporarily disable
-    isAuthoring: args.command === Command.Dev && false,
+    isAuthoring: args.command === Command.Dev,
     blocksToImport: args.command === Command.Import ? args.args.files : null,
     genesisPath: args.args.genesis,
     genesisBlockPath: args.args.genesisBlock,

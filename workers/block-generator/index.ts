@@ -53,11 +53,10 @@ export async function main(channel: MessageChannelStateMachine<GeneratorInit, Ge
     let counter = 0;
     const generator = new Generator(config.chainSpec, await keccak.KeccakHasher.create(), blocks, states);
     while (!isFinished()) {
-      await setTimeout(6000);
+      await setTimeout(config.chainSpec.slotDuration);
       counter += 1;
       const newBlock = await generator.nextEncodedBlock();
       logger.trace(`Sending block ${counter}`);
-      // TODO [ToDr] fix crashing!
       worker.sendBlock(port, newBlock);
     }
   });

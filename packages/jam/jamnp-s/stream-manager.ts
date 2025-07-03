@@ -33,7 +33,7 @@ export class StreamManager {
     StreamId,
     {
       handler: StreamHandler;
-      stream: QuicStream;
+      streamSender: QuicStreamSender;
       peer: Peer;
     }
   > = new Map();
@@ -71,13 +71,13 @@ export class StreamManager {
   withStreamOfKind<THandler extends StreamHandler>(
     peerId: PeerId,
     kind: StreamKindOf<THandler>,
-    work: (handler: THandler, sender: QuicStream) => OK,
+    work: (handler: THandler, sender: QuicStreamSender) => OK,
   ): void {
     // TODO [ToDr] That might not be super performant, perhaps we should
     // maintain a mapping of Peer->open streams as well?
     for (const streamData of this.streams.values()) {
       if (streamData.handler.kind === kind && streamData.peer.id === peerId) {
-        work(streamData.handler as THandler, streamData.stream);
+        work(streamData.handler as THandler, streamData.streamSender);
         return;
       }
     }
@@ -87,7 +87,7 @@ export class StreamManager {
   withNewStream<THandler extends StreamHandler>(
     peer: Peer,
     kind: StreamKindOf<THandler>,
-    work: (handler: THandler, sender: QuicStream) => OK,
+    work: (handler: THandler, sender: QuicStreamSender) => OK,
   ): void {
     const handler = this.outgoingHandlers.get(kind);
     if (handler === undefined) {
@@ -133,12 +133,13 @@ export class StreamManager {
     this.registerStream(peer, handler, stream, BytesBlob.blobFrom(bytes.raw.subarray(1)));
   }
 
-  private registerStream(peer: Peer, handler: StreamHandler, stream: Stream, initialData: BytesBlob): QuicStream {
+  private registerStream(peer: Peer, handler: StreamHandler, stream: Stream, initialData: BytesBlob): QuicStreamSender {
     const streamId = tryAsStreamId(stream.streamId);
 
+    // NOTE: `onError` callback may be called multiple times.
     const onError = (e: unknown) => {
       logger.error(`🚰 --- [${peer.id}:${streamId}] Stream error: ${e}. Disconnecting peer.`);
-      // TODO [ToDr] We should do this on clean close as well (without disconnecting)
+      // TODO [ToDr] We should clean up the stream when it's closed gracefuly!
       this.streams.delete(streamId);
       this.backgroundTasks.delete(streamId);
       // whenever we have an error, we are going to inform the handler
@@ -149,7 +150,7 @@ export class StreamManager {
     };
 
     stream.addOnError(onError);
-    const quicStream = new QuicStream(streamId, stream, onError);
+    const quicStream = new QuicStreamSender(streamId, stream, onError);
     const readStreamPromise = handleAsyncErrors(
       () => readStreamForever(peer, handler, quicStream, initialData, stream.readable.getReader()),
       onError,
@@ -157,7 +158,7 @@ export class StreamManager {
 
     this.streams.set(streamId, {
       handler,
-      stream: quicStream,
+      streamSender: quicStream,
       peer,
     });
     this.backgroundTasks.set(streamId, readStreamPromise);
@@ -169,7 +170,7 @@ export class StreamManager {
 async function readStreamForever(
   peer: Peer,
   handler: StreamHandler,
-  quicStream: QuicStream,
+  quicStream: QuicStreamSender,
   initialData: BytesBlob,
   reader: ReadableStreamDefaultReader<Uint8Array>,
 ) {
@@ -202,7 +203,7 @@ async function readStreamForever(
 
 const MAX_OUTGOING_BUFFER_BYTES = 16384;
 
-class QuicStream implements StreamMessageSender {
+class QuicStreamSender implements StreamMessageSender {
   private bufferedLength = 0;
   private bufferedData: { data: BytesBlob; addPrefix: boolean }[] = [];
   private currentWriterPromise: Promise<void> | null = null;

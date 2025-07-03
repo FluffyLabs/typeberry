@@ -1,22 +1,11 @@
 import { Buffer } from "node:buffer";
-import { Encoder } from "@typeberry/codec";
+import {tryAsU32, u32AsLeBytes} from "@typeberry/numbers";
 
 export const MSG_LEN_PREFIX_BYTES = 4;
-const MSG_LENGTH_BUFFER = new Uint8Array(MSG_LEN_PREFIX_BYTES);
 
-/**
- * Encode message length into a buffer.
- *
- * NOTE: the returned buffer will be re-used so it's meant to be immediatelly written
- * down to the socket.
- */
+/** Encode message length into a buffer. */
 export function encodeMessageLength(message: Uint8Array) {
-  // TODO [ToDr] avoid using codec for just this one thing.
-  const encoder = Encoder.create({
-    destination: MSG_LENGTH_BUFFER,
-  });
-  encoder.i32(message.length);
-  return MSG_LENGTH_BUFFER;
+  return u32AsLeBytes(tryAsU32(message.length))
 }
 
 /**

@@ -2,15 +2,18 @@ import { events, type QUICStream } from "@matrixai/quic";
 import type { Stream } from "./peers.js";
 import { addEventListener } from "./quic-utils.js";
 
+// TODO [ToDr] Add handling of readclose/writeclose
 export class QuicStream implements Stream {
   constructor(public readonly stream: QUICStream) {}
 
   get streamId() {
     return this.stream.streamId;
   }
+
   get readable() {
     return this.stream.readable;
   }
+
   get writable() {
     return this.stream.writable;
   }

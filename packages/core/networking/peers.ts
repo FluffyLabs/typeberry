@@ -14,7 +14,7 @@ export type PeerAddress = {
 /** Communication stream. */
 export interface Stream extends ReadableWritablePair<Uint8Array, Uint8Array> {
   /** Add a callback to be notified about stream errors. */
-  addOnError(onError: (e: unknown) => void): unknown;
+  addOnError(onError: (e: unknown) => void): void;
   /** Unique stream identifier. */
   streamId: number;
   /** Destroy the stream. */
@@ -48,7 +48,7 @@ export interface Peer {
 /**
  * Function called when a new stream is opened.
  *
- * NOTE the callbacks are required to return `OK` to indicate,
+ * NOTE: the callbacks are required to return `OK` to indicate,
  * that any asynchronous work has to be handled separately
  * with all possible exceptions handled.
  */
