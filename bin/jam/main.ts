@@ -53,7 +53,7 @@ export async function main(args: Arguments) {
   }
 
   const options: Options = {
-    isAuthoring: true,
+    isAuthoring: false,
     blocksToImport: args.command === Command.Import ? args.args.files : null,
     genesisPath: args.args.genesis,
     genesisBlockPath: args.args.genesisBlock,
