@@ -51,7 +51,7 @@ export function parseArgs(cliInput: string[]): Arguments {
     datadir: parseValue(args, "datadir", toOptionString).datadir,
     ed25519: parseValue(args, "ed25519", toHex).ed25519,
     genesis: parseValue(args, "genesis", toOptionString).genesis,
-    metadata: parseValue(args, "metadata", toOptionString).metadata,
+    metadata: parseValue(args, "metadata", toOptionString, "Alice").metadata,
     port: parseValue(args, "port", toOptionNumber).port,
     ts: parseValue(args, "ts", toOptionNumber).ts,
     validatorindex: parseValue(args, "validatorindex", toOptionNumber).validatorindex,
@@ -66,11 +66,12 @@ function parseValue<S extends string, T>(
   args: minimist.ParsedArgs,
   flag: S,
   parser: (v: string) => T,
+  defaultValue?: T | undefined,
 ): Record<S, T | undefined> {
   const value = args[flag];
   if (value === undefined) {
     return {
-      [flag]: value,
+      [flag]: defaultValue ?? value,
     } as Record<S, T>;
   }
 

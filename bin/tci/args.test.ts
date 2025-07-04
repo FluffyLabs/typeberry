@@ -17,7 +17,7 @@ describe("Typeberry Common Interface (TCI)", () => {
     datadir: undefined,
     ed25519: undefined,
     genesis: undefined,
-    metadata: undefined,
+    metadata: "Alice",
     port: undefined,
     ts: undefined,
     validatorindex: undefined,
