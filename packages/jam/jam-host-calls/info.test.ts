@@ -47,7 +47,7 @@ function prepareRegsAndMemory(
 }
 
 describe("HostCalls: Info", () => {
-  it("should write account info data into memory", () => {
+  it("should write account info data into memory", async () => {
     const serviceId = tryAsServiceId(10_000);
     const currentServiceId = serviceId;
     const accounts = new TestAccounts(currentServiceId);
@@ -68,7 +68,7 @@ describe("HostCalls: Info", () => {
     );
 
     // when
-    const result = info.execute(gas, registers, memory);
+    const result = await info.execute(gas, registers, memory);
 
     // then
     assert.strictEqual(result, undefined);
@@ -79,7 +79,7 @@ describe("HostCalls: Info", () => {
     });
   });
 
-  it("should write none if account info is missing", () => {
+  it("should write none if account info is missing", async () => {
     const currentServiceId = tryAsServiceId(15_000);
     const accounts = new TestAccounts(currentServiceId);
     const info = new Info(currentServiceId, accounts);
@@ -87,14 +87,14 @@ describe("HostCalls: Info", () => {
     const { registers, memory } = prepareRegsAndMemory(serviceId);
 
     // when
-    const result = info.execute(gas, registers, memory);
+    const result = await info.execute(gas, registers, memory);
 
     // then
     assert.strictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.NONE);
   });
 
-  it("should panic if not enough memory allocated", () => {
+  it("should panic if not enough memory allocated", async () => {
     const serviceId = tryAsServiceId(10_000);
     const currentServiceId = serviceId;
     const accounts = new TestAccounts(currentServiceId);
@@ -115,7 +115,7 @@ describe("HostCalls: Info", () => {
     );
 
     // when
-    const result = info.execute(gas, registers, memory);
+    const result = await info.execute(gas, registers, memory);
 
     // then
     assert.strictEqual(result, PvmExecution.Panic);

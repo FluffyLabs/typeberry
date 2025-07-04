@@ -86,7 +86,7 @@ function prepareRegsAndMemory(
 
 describe("HostCalls: Read", () => {
   describe("should read key from an account state", () => {
-    it("for current account", () => {
+    it("for current account", async () => {
       const currentServiceId = tryAsServiceId(10_000);
       const accounts = new TestAccounts(currentServiceId);
       const read = new Read(currentServiceId, accounts);
@@ -96,14 +96,14 @@ describe("HostCalls: Read", () => {
       const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length);
       accounts.storage.set(BytesBlob.blobFromString(value), serviceId, hash);
 
-      const result = read.execute(gas, registers, memory);
+      const result = await read.execute(gas, registers, memory);
 
       assert.deepStrictEqual(result, undefined);
       assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(value.length));
       assert.deepStrictEqual(readResult().asText(), value);
     });
 
-    it("for different service Id", () => {
+    it("for different service Id", async () => {
       const currentServiceId = tryAsServiceId(10_000);
       const accounts = new TestAccounts(currentServiceId);
       const read = new Read(currentServiceId, accounts);
@@ -115,14 +115,14 @@ describe("HostCalls: Read", () => {
       });
       accounts.storage.set(BytesBlob.blobFromString(value), serviceId, hash);
 
-      const result = read.execute(gas, registers, memory);
+      const result = await read.execute(gas, registers, memory);
 
       assert.deepStrictEqual(result, undefined);
       assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(value.length));
       assert.deepStrictEqual(readResult().asText(), value);
     });
 
-    it("with offset", () => {
+    it("with offset", async () => {
       const currentServiceId = tryAsServiceId(10_000);
       const accounts = new TestAccounts(currentServiceId);
       const read = new Read(currentServiceId, accounts);
@@ -134,14 +134,14 @@ describe("HostCalls: Read", () => {
       });
       accounts.storage.set(BytesBlob.blobFromString(value), serviceId, hash);
 
-      const result = read.execute(gas, registers, memory);
+      const result = await read.execute(gas, registers, memory);
 
       assert.deepStrictEqual(result, undefined);
       assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(value.length));
       assert.deepStrictEqual(readResult().toString(), "0x776f726c64");
     });
 
-    it("with offset and length", () => {
+    it("with offset and length", async () => {
       const currentServiceId = tryAsServiceId(10_000);
       const accounts = new TestAccounts(currentServiceId);
       const read = new Read(currentServiceId, accounts);
@@ -154,14 +154,14 @@ describe("HostCalls: Read", () => {
       });
       accounts.storage.set(BytesBlob.blobFromString(value), serviceId, hash);
 
-      const result = read.execute(gas, registers, memory);
+      const result = await read.execute(gas, registers, memory);
 
       assert.deepStrictEqual(result, undefined);
       assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(value.length));
       assert.deepStrictEqual(readResult().toString(), "0x7700000000");
     });
 
-    it("with 0-length destination target", () => {
+    it("with 0-length destination target", async () => {
       const currentServiceId = tryAsServiceId(10_000);
       const accounts = new TestAccounts(currentServiceId);
       const read = new Read(currentServiceId, accounts);
@@ -170,7 +170,7 @@ describe("HostCalls: Read", () => {
       const value = "hello world";
       const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length, { valueLengthToWrite: 0 });
       accounts.storage.set(BytesBlob.blobFromString(value), serviceId, hash);
-      const result = read.execute(gas, registers, memory);
+      const result = await read.execute(gas, registers, memory);
 
       assert.deepStrictEqual(result, undefined);
       assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64(value.length));
@@ -178,7 +178,7 @@ describe("HostCalls: Read", () => {
     });
   });
 
-  it("should handle missing account", () => {
+  it("should handle missing account", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const accounts = new TestAccounts(currentServiceId);
     const read = new Read(currentServiceId, accounts);
@@ -189,13 +189,13 @@ describe("HostCalls: Read", () => {
     // serviceId out of range
     registers.set(SERVICE_ID_REG, tryAsU64(2n ** 32n));
 
-    const result = read.execute(gas, registers, memory);
+    const result = await read.execute(gas, registers, memory);
 
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(SERVICE_ID_REG), HostCallResult.NONE);
   });
 
-  it("should handle missing value", () => {
+  it("should handle missing value", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const accounts = new TestAccounts(currentServiceId);
     const read = new Read(currentServiceId, accounts);
@@ -205,14 +205,14 @@ describe("HostCalls: Read", () => {
     const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length);
     accounts.storage.set(null, serviceId, hash);
 
-    const result = read.execute(gas, registers, memory);
+    const result = await read.execute(gas, registers, memory);
 
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.NONE);
     assert.deepStrictEqual(readResult().toString(), "0x000000");
   });
 
-  it("should fail if there is no memory for key", () => {
+  it("should fail if there is no memory for key", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const accounts = new TestAccounts(currentServiceId);
     const read = new Read(currentServiceId, accounts);
@@ -222,11 +222,11 @@ describe("HostCalls: Read", () => {
     const { registers, memory } = prepareRegsAndMemory(key, value.length, { skipKey: true });
     accounts.storage.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
 
-    const result = read.execute(gas, registers, memory);
+    const result = await read.execute(gas, registers, memory);
     assert.deepStrictEqual(result, PvmExecution.Panic);
   });
 
-  it("should fail if there is no memory for result", () => {
+  it("should fail if there is no memory for result", async () => {
     const currentServiceId = tryAsServiceId(10_000);
     const accounts = new TestAccounts(currentServiceId);
     const read = new Read(currentServiceId, accounts);
@@ -236,7 +236,7 @@ describe("HostCalls: Read", () => {
     const { registers, memory } = prepareRegsAndMemory(key, value.length, { skipValue: true });
     accounts.storage.set(BytesBlob.blobFromString("hello world"), serviceId, hash);
 
-    const result = read.execute(gas, registers, memory);
+    const result = await read.execute(gas, registers, memory);
     assert.deepStrictEqual(result, PvmExecution.Panic);
   });
 });

@@ -105,7 +105,7 @@ describe("HostCalls: Eject", () => {
 
   it("should fail if destination and source are the same", async () => {
     const accumulate = new PartialStateMock();
-    const serviceId = tryAsServiceId(10_000);
+    const serviceId = tryAsServiceId(15_000);
     const eject = new Eject(serviceId, accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
     const hash = Bytes.fill(HASH_SIZE, 5);

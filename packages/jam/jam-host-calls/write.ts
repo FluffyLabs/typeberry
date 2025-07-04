@@ -81,7 +81,7 @@ export class Write implements HostCallHandler {
     }
 
     // Check if the storage is full
-    const isStorageFull = await this.account.isStorageFull();
+    const isStorageFull = this.account.isStorageFull();
     if (isStorageFull) {
       regs.set(IN_OUT_REG, HostCallResult.FULL);
       return;
@@ -91,10 +91,10 @@ export class Write implements HostCallHandler {
     const maybeValue = valueLength === 0n ? null : BytesBlob.blobFrom(value);
 
     // a
-    await this.account.write(storageKey, maybeValue);
+    this.account.write(storageKey, maybeValue);
 
     // l
-    const previousLength = await this.account.readSnapshotLength(storageKey);
+    const previousLength = this.account.readSnapshotLength(storageKey);
     regs.set(IN_OUT_REG, previousLength === null ? HostCallResult.NONE : tryAsU64(previousLength));
   }
 }

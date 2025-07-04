@@ -36,9 +36,7 @@ import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
 import { Result, check } from "@typeberry/utils";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
 import { generateNextServiceId, getWorkPackageHashes, uniquePreserveOrder } from "./accumulate-utils.js";
-import { AccumulateServiceExternalities } from "./externalities/accumulate-service-externalities.js";
-import { ServiceStorageManager } from "./externalities/accumulate-service-storage.js";
-import { AccumulateFetchExternalities } from "./externalities/index.js";
+import { AccumulateFetchExternalities, AccumulateServiceExternalities } from "./externalities/index.js";
 import { LegacyOperand } from "./operand.js";
 import { PvmExecutor } from "./pvm-executor.js";
 
@@ -179,16 +177,17 @@ export class Accumulate {
     const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec);
     const partialState = new PartialStateDb(this.state, serviceId, nextServiceId);
 
-    const storageManager = new ServiceStorageManager(this.state);
     const balanceProvider = {
       getNewBalance() {
         return partialState.updatedState.updatedServiceInfo?.balance ?? null;
       },
     };
+
+    const serviceExternalities = new AccumulateServiceExternalities(serviceId, this.state, balanceProvider);
     const externalities = {
       partialState,
+      serviceExternalities,
       fetchExternalities: new AccumulateFetchExternalities(entropy, operands, this.chainSpec),
-      serviceExternalities: new AccumulateServiceExternalities(serviceId, this.state, balanceProvider),
     };
 
     const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec);
@@ -226,7 +225,7 @@ export class Accumulate {
      *
      * https://graypaper.fluffylabs.dev/#/7e6ff6a/302302302302?v=0.6.7
      */
-    newState.storage = storageManager.getUpdates(serviceId);
+    newState.storage = serviceExternalities.getUpdates();
 
     return Result.ok({ stateUpdate: newState, consumedGas: tryAsServiceGas(result.consumedGas) });
   }

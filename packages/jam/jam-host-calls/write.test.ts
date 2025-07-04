@@ -75,7 +75,7 @@ function prepareRegsAndMemory(
 }
 
 describe("HostCalls: Write", () => {
-  it("should write data to account state", () => {
+  it("should write data to account state", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
     const write = new Write(serviceId, accounts);
@@ -84,7 +84,7 @@ describe("HostCalls: Write", () => {
     accounts.snapshotData.set(BytesBlob.blobFromString("old data"), serviceId, hash);
 
     // when
-    const result = write.execute(gas, registers, memory);
+    const result = await write.execute(gas, registers, memory);
 
     // then
     assert.strictEqual(result, undefined);
@@ -93,7 +93,7 @@ describe("HostCalls: Write", () => {
     assert.deepStrictEqual(accounts.storage.data.size, 1);
   });
 
-  it("should remove data from account state", () => {
+  it("should remove data from account state", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
     const write = new Write(serviceId, accounts);
@@ -103,7 +103,7 @@ describe("HostCalls: Write", () => {
     accounts.snapshotData.set(null, serviceId, hash);
 
     // when
-    const result = write.execute(gas, registers, memory);
+    const result = await write.execute(gas, registers, memory);
 
     // then
     assert.strictEqual(result, undefined);
@@ -111,7 +111,7 @@ describe("HostCalls: Write", () => {
     assert.deepStrictEqual(accounts.storage.get(serviceId, hash), undefined);
   });
 
-  it("should fail if there is no memory for key", () => {
+  it("should fail if there is no memory for key", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
     const write = new Write(serviceId, accounts);
@@ -121,14 +121,14 @@ describe("HostCalls: Write", () => {
     });
 
     // when
-    const result = write.execute(gas, registers, memory);
+    const result = await write.execute(gas, registers, memory);
 
     // then
     assert.strictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(accounts.storage.data.size, 0);
   });
 
-  it("should fail if there is no memory for result", () => {
+  it("should fail if there is no memory for result", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
     const write = new Write(serviceId, accounts);
@@ -138,14 +138,14 @@ describe("HostCalls: Write", () => {
     });
 
     // when
-    const result = write.execute(gas, registers, memory);
+    const result = await write.execute(gas, registers, memory);
 
     // then
     assert.strictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(accounts.storage.data.size, 0);
   });
 
-  it("should fail if the key is not fully readable", () => {
+  it("should fail if the key is not fully readable", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
     const write = new Write(serviceId, accounts);
@@ -154,14 +154,14 @@ describe("HostCalls: Write", () => {
     registers.set(KEY_LEN_REG, tryAsU64(PAGE_SIZE + 1));
 
     // when
-    const result = write.execute(gas, registers, memory);
+    const result = await write.execute(gas, registers, memory);
 
     // then
     assert.strictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(accounts.storage.data.size, 0);
   });
 
-  it("should fail if the value is not fully readable", () => {
+  it("should fail if the value is not fully readable", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
     const write = new Write(serviceId, accounts);
@@ -170,14 +170,14 @@ describe("HostCalls: Write", () => {
     registers.set(DEST_LEN_REG, tryAsU64(PAGE_SIZE + 1));
 
     // when
-    const result = write.execute(gas, registers, memory);
+    const result = await write.execute(gas, registers, memory);
 
     // then
     assert.strictEqual(result, PvmExecution.Panic);
     assert.deepStrictEqual(accounts.storage.data.size, 0);
   });
 
-  it("should handle storage full when low balance in the account", () => {
+  it("should handle storage full when low balance in the account", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId, { balance: 100n });
     const write = new Write(serviceId, accounts);
@@ -186,7 +186,7 @@ describe("HostCalls: Write", () => {
     accounts.snapshotData.set(BytesBlob.blobFromString("old data"), serviceId, hash);
 
     // when
-    const result = write.execute(gas, registers, memory);
+    const result = await write.execute(gas, registers, memory);
 
     // then
     assert.strictEqual(result, undefined);

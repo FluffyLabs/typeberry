@@ -68,7 +68,7 @@ function prepareRegsAndMemory(
 }
 
 describe("HostCalls: Lookup", () => {
-  it("should fail gracefully if account doesn't exist", () => {
+  it("should fail gracefully if account doesn't exist", async () => {
     const currentServiceId = tryAsServiceId(15_000);
     const accounts = new TestAccounts(currentServiceId);
     const lookup = new Lookup(currentServiceId, accounts);
@@ -77,13 +77,13 @@ describe("HostCalls: Lookup", () => {
 
     // serviceId out of range
     registers.set(SERVICE_ID_REG, tryAsU64(2n ** 32n));
-    const result = lookup.execute(gas, registers, memory);
+    const result = await lookup.execute(gas, registers, memory);
 
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(SERVICE_ID_REG), HostCallResult.NONE);
   });
 
-  it("should fail gracefully if preimage doesn't exist", () => {
+  it("should fail gracefully if preimage doesn't exist", async () => {
     const currentServiceId = tryAsServiceId(15_000);
     const accounts = new TestAccounts(currentServiceId);
     const lookup = new Lookup(currentServiceId, accounts);
@@ -91,13 +91,13 @@ describe("HostCalls: Lookup", () => {
     const { registers, memory } = prepareRegsAndMemory(serviceId, HASH);
 
     accounts.preimages.set(null, serviceId, HASH);
-    const result = lookup.execute(gas, registers, memory);
+    const result = await lookup.execute(gas, registers, memory);
 
     assert.deepStrictEqual(result, undefined);
     assert.deepStrictEqual(registers.get(SERVICE_ID_REG), HostCallResult.NONE);
   });
 
-  it("should fail on page fault if memory isn't readable", () => {
+  it("should fail on page fault if memory isn't readable", async () => {
     const currentServiceId = tryAsServiceId(15_000);
     const accounts = new TestAccounts(currentServiceId);
     const lookup = new Lookup(currentServiceId, accounts);
@@ -106,12 +106,12 @@ describe("HostCalls: Lookup", () => {
       skipKey: true,
     });
 
-    const result = lookup.execute(gas, registers, emptyMemory);
+    const result = await lookup.execute(gas, registers, emptyMemory);
 
     assert.deepStrictEqual(result, PvmExecution.Panic);
   });
 
-  it("should fail on page fault if destination memory is not writable", () => {
+  it("should fail on page fault if destination memory is not writable", async () => {
     const currentServiceId = tryAsServiceId(15_000);
     const accounts = new TestAccounts(currentServiceId);
     const lookup = new Lookup(currentServiceId, accounts);
@@ -122,13 +122,13 @@ describe("HostCalls: Lookup", () => {
     });
 
     accounts.preimages.set(PREIMAGE_BLOB, serviceId, HASH);
-    const result = lookup.execute(gas, registers, emptyMemory);
+    const result = await lookup.execute(gas, registers, emptyMemory);
 
     assert.deepStrictEqual(result, PvmExecution.Panic);
   });
 
   describe("should lookup key from an account", () => {
-    it("without offset", () => {
+    it("without offset", async () => {
       const currentServiceId = tryAsServiceId(15_000);
       const accounts = new TestAccounts(currentServiceId);
       const lookup = new Lookup(currentServiceId, accounts);
@@ -138,7 +138,7 @@ describe("HostCalls: Lookup", () => {
 
       accounts.preimages.set(PREIMAGE_BLOB, serviceId, HASH);
 
-      const result = lookup.execute(gas, registers, memory);
+      const result = await lookup.execute(gas, registers, memory);
       assert.deepStrictEqual(result, undefined);
 
       const resultBlob = Bytes.zero(preimageLength);
@@ -148,7 +148,7 @@ describe("HostCalls: Lookup", () => {
       assert.deepStrictEqual(registers.get(RESULT_REG), tryAsU64("hello world".length));
     });
 
-    it("with offset", () => {
+    it("with offset", async () => {
       const currentServiceId = tryAsServiceId(15_000);
       const accounts = new TestAccounts(currentServiceId);
       const lookup = new Lookup(currentServiceId, accounts);
@@ -162,7 +162,7 @@ describe("HostCalls: Lookup", () => {
 
       accounts.preimages.set(PREIMAGE_BLOB, serviceId, HASH);
 
-      const result = lookup.execute(gas, registers, memory);
+      const result = await lookup.execute(gas, registers, memory);
       assert.deepStrictEqual(result, undefined);
 
       const resultBlob = Bytes.zero(preimageLength);
