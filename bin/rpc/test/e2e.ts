@@ -234,20 +234,17 @@ describe("JSON RPC Client-Server E2E", () => {
     assert(Array.isArray(bestBlock));
     if (bestBlock !== null) {
       return new Promise<void>((resolve, reject) => {
-        let unsubscribe: () => Promise<void>;
-
         client
-          .subscribe(
-            "subscribeServicePreimage",
+          .subscribe("subscribeServicePreimage", [
+            bestBlock[0],
+            0,
             [
-              bestBlock[0],
-              0,
-              [
-                193, 99, 38, 67, 43, 91, 50, 19, 223, 209, 96, 148, 149, 225, 60, 107, 39, 108, 180, 116, 214, 121, 100,
-                83, 55, 229, 194, 192, 159, 25, 181, 60,
-              ],
+              193, 99, 38, 67, 43, 91, 50, 19, 223, 209, 96, 148, 149, 225, 60, 107, 39, 108, 180, 116, 214, 121, 100,
+              83, 55, 229, 194, 192, 159, 25, 181, 60,
             ],
-            async (data) => {
+          ])
+          .then((subscription) => {
+            subscription.on("data", async (data) => {
               try {
                 assert.deepStrictEqual(data, [
                   [
@@ -256,16 +253,13 @@ describe("JSON RPC Client-Server E2E", () => {
                   ],
                 ]);
 
-                await unsubscribe();
+                resolve();
               } catch (e) {
                 reject(e);
+              } finally {
+                await subscription.unsubscribe();
               }
-
-              resolve();
-            },
-          )
-          .then((_unsubscribe) => {
-            unsubscribe = _unsubscribe;
+            });
           });
       });
     }
@@ -273,18 +267,14 @@ describe("JSON RPC Client-Server E2E", () => {
 
   it("client handles errors when subscription is being requested", async () => {
     assert.rejects(async () =>
-      client.subscribe(
-        "subscribeServicePreimage",
+      client.subscribe("subscribeServicePreimage", [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        0,
         [
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          0,
-          [
-            193, 99, 38, 67, 43, 91, 50, 19, 223, 209, 96, 148, 149, 225, 60, 107, 39, 108, 180, 116, 214, 121, 100, 83,
-            55, 229, 194, 192, 159, 25, 181, 60, 61,
-          ], // invalid preimage hash
-        ],
-        () => {},
-      ),
+          193, 99, 38, 67, 43, 91, 50, 19, 223, 209, 96, 148, 149, 225, 60, 107, 39, 108, 180, 116, 214, 121, 100, 83,
+          55, 229, 194, 192, 159, 25, 181, 60, 61,
+        ], // invalid preimage hash
+      ]),
     );
   });
 
@@ -297,25 +287,17 @@ describe("JSON RPC Client-Server E2E", () => {
       return originalCallMethod.call(server, method, validatedParams);
     };
     return new Promise<void>((resolve, reject) => {
-      let unsubscribe: () => Promise<void>;
-
-      client
-        .subscribe(
-          "subscribeBestBlock",
-          [],
-          async () => {
-            await unsubscribe();
-            reject(new Error("Subscription callback should not be called."));
-          },
-          async (error) => {
-            assert.strictEqual(error, "Error: Forced error for bestBlock");
-            await unsubscribe();
-            resolve();
-          },
-        )
-        .then((_unsubscribe) => {
-          unsubscribe = _unsubscribe;
+      client.subscribe("subscribeBestBlock", []).then((subscription) => {
+        subscription.on("data", async () => {
+          await subscription.unsubscribe();
+          reject(new Error("Subscription callback should not be called."));
         });
+        subscription.on("error", async (error) => {
+          assert.strictEqual(error, "Error: Forced error for bestBlock");
+          await subscription.unsubscribe();
+          resolve();
+        });
+      });
     }).finally(() => {
       server.callMethod = originalCallMethod;
     });

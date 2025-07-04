@@ -171,7 +171,7 @@ export class RpcServer {
   private async fulfillRequest(request: JsonRpcRequest | JsonRpcNotification, ws: WebSocket): Promise<JsonRpcResult> {
     const { method, params } = request;
 
-    const [subscribeMethod, _] = SUBSCRIBE_METHOD_MAP.get(method) || [];
+    const [subscribeMethod, _] = SUBSCRIBE_METHOD_MAP.get(method) ?? [];
     if (subscribeMethod !== undefined) {
       const validatedParams = this.validateCall(subscribeMethod, params ?? null);
       return [this.subscriptionManager.subscribe(ws, subscribeMethod, validatedParams)];

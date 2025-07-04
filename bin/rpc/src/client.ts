@@ -1,13 +1,25 @@
+import { EventEmitter } from "node:events";
 import WebSocket from "ws";
+import { SUBSCRIBE_METHOD_MAP } from "./subscription-manager.js";
 import type { JsonRpcRequest, JsonRpcResponse, JsonRpcSubscriptionNotification } from "./types.js";
 import { JSON_RPC_VERSION } from "./types.js";
-import { SUBSCRIBE_METHOD_MAP } from "./subscription-manager.js";
 
 export interface Subscription {
   id: string;
   method: string;
-  callback: (data: unknown) => void;
-  errorCallback?: (error: unknown) => void;
+  eventEmitter: SubscriptionEventEmitter;
+}
+
+type SubscriptionEventMap = {
+  data: [unknown];
+  error: [unknown];
+  end: [];
+};
+
+class SubscriptionEventEmitter extends EventEmitter<SubscriptionEventMap> {
+  constructor(readonly unsubscribe: () => Promise<void>) {
+    super();
+  }
 }
 
 export class RpcClient {
@@ -43,7 +55,7 @@ export class RpcClient {
         const subscription = this.subscriptions.get(subscriptionId);
 
         if (subscription !== undefined) {
-          subscription.callback(result);
+          subscription.eventEmitter.emit("data", result);
         }
       } else if (
         !("id" in response) &&
@@ -54,8 +66,8 @@ export class RpcClient {
         const { subscriptionId, error } = response.params;
         const subscription = this.subscriptions.get(subscriptionId);
 
-        if (subscription !== undefined && subscription.errorCallback !== undefined) {
-          subscription.errorCallback(error);
+        if (subscription !== undefined) {
+          subscription.eventEmitter.emit("error", error);
         }
       } else if ("id" in response && typeof response.id === "number") {
         const callback = this.messageQueue.get(response.id);
@@ -102,18 +114,14 @@ export class RpcClient {
     });
   }
 
-  async subscribe(
-    method: string,
-    params: unknown[],
-    callback: Subscription["callback"],
-    errorCallback?: Subscription["errorCallback"],
-  ): Promise<() => Promise<void>> {
+  async subscribe(method: string, params: unknown[]): Promise<SubscriptionEventEmitter> {
     const result = await this.call(method, params);
 
     if (Array.isArray(result) && result.length === 1 && typeof result[0] === "string") {
       const subscriptionId = result[0];
-      this.subscriptions.set(subscriptionId, { id: subscriptionId, method, callback, errorCallback });
-      return async () => await this.unsubscribe(subscriptionId);
+      const eventEmitter = new SubscriptionEventEmitter(() => this.unsubscribe(subscriptionId));
+      this.subscriptions.set(subscriptionId, { id: subscriptionId, method, eventEmitter });
+      return eventEmitter;
     }
 
     throw new Error("Invalid subscription response");
@@ -125,7 +133,7 @@ export class RpcClient {
       throw new Error("Subscription not found");
     }
 
-    const [_, unsubscribeMethod] = SUBSCRIBE_METHOD_MAP.get(subscription.method) || [];
+    const [_, unsubscribeMethod] = SUBSCRIBE_METHOD_MAP.get(subscription.method) ?? [];
     if (unsubscribeMethod === undefined) {
       throw new Error(`Missing unsubscribe method mapping for ${subscription.method}`);
     }
