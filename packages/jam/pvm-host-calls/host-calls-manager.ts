@@ -1,4 +1,3 @@
-import type { ServiceId } from "@typeberry/block";
 import { CURRENT_SERVICE_ID, HostCallResult } from "@typeberry/jam-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { check } from "@typeberry/utils";
@@ -21,13 +20,6 @@ export class HostCallsManager {
     for (const handler of hostCallHandlers) {
       check(this.hostCalls.get(handler.index) === undefined, `Overwriting host call handler at index ${handler.index}`);
       this.hostCalls.set(handler.index, handler);
-    }
-  }
-
-  /** Set current service id for all handlers. */
-  setServiceId(serviceId: ServiceId) {
-    for (const handler of this.hostCalls.values()) {
-      handler.currentServiceId = serviceId;
     }
   }
 

@@ -67,13 +67,11 @@ export class PvmExecutor {
   private pvmInstanceManager = new PvmInstanceManager(4);
 
   private constructor(
-    serviceId: ServiceId,
     private serviceCode: BytesBlob,
     hostCallHandlers: HostCallHandler[],
     private entrypoint: ProgramCounter,
   ) {
     this.hostCalls = new HostCalls(...hostCallHandlers);
-    this.hostCalls.setServiceId(serviceId);
     this.pvm = new PvmHostCallExtension(this.pvmInstanceManager, this.hostCalls);
   }
 
@@ -120,6 +118,6 @@ export class PvmExecutor {
     chainSpec: ChainSpec,
   ) {
     const hostCallHandlers = PvmExecutor.prepareAccumulateHostCalls(serviceId, externalities, chainSpec);
-    return new PvmExecutor(serviceId, serviceCode, hostCallHandlers, entrypoint.ACCUMULATE);
+    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ACCUMULATE);
   }
 }
