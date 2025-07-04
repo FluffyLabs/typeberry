@@ -7,6 +7,7 @@
     "bin/jam",
     "bin/pvm",
     "bin/rpc",
+    "bin/tci",
     "bin/test-runner",
     "extensions/ipc",
     "packages/core/bytes",

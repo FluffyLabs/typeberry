@@ -35,7 +35,9 @@ const toOptionString = (v: string): OptionString => v;
 const toOptionNumber = (v: string): OptionNumber => Number.parseInt(v);
 
 export function parseArgs(cliInput: string[]): Arguments {
-  const args = minimist(cliInput);
+  const args = minimist(cliInput, {
+    string: ["bandersnatch", "bls", "datadir", "ed25519", "genesis", "medatada", "port", "ts", "validatorindex"],
+  });
 
   const result: Arguments = {
     bandersnatch: parseValue(args, "bandersnatch", toHex).bandersnatch,
