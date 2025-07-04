@@ -132,27 +132,40 @@ describe("Typeberry Common Interface (TCI)", () => {
     });
   });
 
-  it("should throw Invalid value --bls: too short hex", () => {
-    assert.throws(
-      () => {
-        parseArgs(["--bls", "0102030405060708"]);
-      },
-      {
-        message:
-          "Invalid value '0102030405060708' for flag '--bls': Error: Input string too short. Expected 32, got 8",
-      },
-    );
+  it("should throw Invalid value: too short hex", () => {
+    assert.throws(() => parseArgs(["--bls", "0102030405060708"]), {
+      message: "Invalid value '0102030405060708' for flag '--bls': Error: Input string too short. Expected 32, got 8",
+    });
   });
 
-  it("should throw Invalid value --bls: too long hex", () => {
-    assert.throws(
-      () => {
-        parseArgs(["--bls", "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2021"]);
-      },
-      {
-        message:
-          "Invalid value '0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2021' for flag '--bls': Error: Input string too long. Expected 32, got 33",
-      },
-    );
+  it("should throw Invalid value: too long hex", () => {
+    assert.throws(() => parseArgs(["--bls", "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2021"]), {
+      message:
+        "Invalid value '0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2021' for flag '--bls': Error: Input string too long. Expected 32, got 33",
+    });
+  });
+
+  it("should throw value cannot be parsed as a number", () => {
+    assert.throws(() => parseArgs(["--ts", "test"]), {
+      message: "Invalid value 'test' for flag '--ts': Error: Cannot parse 'test' as a number.",
+    });
+  });
+
+  it("should throw value required", () => {
+    assert.throws(() => parseArgs(["--port"]), {
+      message: "Option --port requires an argument.",
+    });
+  });
+
+  it("should throw unexpected command", () => {
+    assert.throws(() => parseArgs(["unknown"]), {
+      message: "Unexpected commands: unknown",
+    });
+  });
+
+  it("should throw unrecognized flag", () => {
+    assert.throws(() => parseArgs(["--unknown", "value"]), {
+      message: "Uncrecognized flags: unknown",
+    });
   });
 });

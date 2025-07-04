@@ -32,7 +32,13 @@ const toHex = (v: string) => {
   return Bytes.parseBytesNoPrefix(v, HASH_SIZE);
 };
 const toOptionString = (v: string): OptionString => v;
-const toOptionNumber = (v: string): OptionNumber => Number.parseInt(v);
+const toOptionNumber = (v: string): OptionNumber => {
+  const val = Number.parseInt(v);
+  if (Number.isNaN(val)) {
+    throw Error(`Cannot parse '${v}' as a number.`);
+  }
+  return val;
+};
 
 export function parseArgs(cliInput: string[]): Arguments {
   const args = minimist(cliInput, {
@@ -69,7 +75,7 @@ function parseValue<S extends string, T>(
   }
 
   delete args[flag];
-  if (typeof value !== "string") {
+  if (!value) {
     throw new Error(`Option --${flag} requires an argument.`);
   }
 
@@ -94,6 +100,6 @@ function assertNoMoreArgs(args: minimist.ParsedArgs): void {
     throw new Error(`Unexpected parameters: ${args["--"]?.join(", ")}`);
   }
   if (keysLeft.length > 0) {
-    throw new Error(`Uncrecognized options: ${keysLeft.join(", ")}`);
+    throw new Error(`Uncrecognized flags: ${keysLeft.join(", ")}`);
   }
 }
