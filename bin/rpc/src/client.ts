@@ -1,6 +1,7 @@
 import WebSocket from "ws";
 import type { JsonRpcRequest, JsonRpcResponse, JsonRpcSubscriptionNotification } from "./types.js";
 import { JSON_RPC_VERSION } from "./types.js";
+import { SUBSCRIBE_METHOD_MAP } from "./subscription-manager.js";
 
 export interface Subscription {
   id: string;
@@ -107,8 +108,7 @@ export class RpcClient {
     callback: Subscription["callback"],
     errorCallback?: Subscription["errorCallback"],
   ): Promise<() => Promise<void>> {
-    const subscribeMethod = `subscribe${capitalizeFirstLetter(method)}`;
-    const result = await this.call(subscribeMethod, params);
+    const result = await this.call(method, params);
 
     if (Array.isArray(result) && result.length === 1 && typeof result[0] === "string") {
       const subscriptionId = result[0];
@@ -125,7 +125,11 @@ export class RpcClient {
       throw new Error("Subscription not found");
     }
 
-    const unsubscribeMethod = `unsubscribe${capitalizeFirstLetter(subscription.method)}`;
+    const [_, unsubscribeMethod] = SUBSCRIBE_METHOD_MAP.get(subscription.method) || [];
+    if (unsubscribeMethod === undefined) {
+      throw new Error(`Missing unsubscribe method mapping for ${subscription.method}`);
+    }
+
     const result = await this.call(unsubscribeMethod, [subscriptionId]);
 
     if (Array.isArray(result) && result.length === 1 && typeof result[0] === "boolean") {
@@ -148,8 +152,4 @@ export class RpcClient {
   getSocket(): WebSocket {
     return this.ws;
   }
-}
-
-function capitalizeFirstLetter(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
 }

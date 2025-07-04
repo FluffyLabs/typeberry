@@ -238,7 +238,7 @@ describe("JSON RPC Client-Server E2E", () => {
 
         client
           .subscribe(
-            "servicePreimage",
+            "subscribeServicePreimage",
             [
               bestBlock[0],
               0,
@@ -274,7 +274,7 @@ describe("JSON RPC Client-Server E2E", () => {
   it("client handles errors when subscription is being requested", async () => {
     assert.rejects(async () =>
       client.subscribe(
-        "servicePreimage",
+        "subscribeServicePreimage",
         [
           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
           0,
@@ -301,7 +301,7 @@ describe("JSON RPC Client-Server E2E", () => {
 
       client
         .subscribe(
-          "bestBlock",
+          "subscribeBestBlock",
           [],
           async () => {
             await unsubscribe();
