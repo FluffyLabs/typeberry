@@ -125,6 +125,7 @@ export class AccumulationStateUpdate {
     autoAccumulate: [ServiceId, ServiceGas][];
   } | null = null;
 
+  /** Service's storage update. */
   public storage: UpdateStorage[] = [];
 
   constructor(public readonly serviceId: ServiceId) {}

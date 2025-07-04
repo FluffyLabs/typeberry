@@ -9,6 +9,7 @@ import type { AccountsRead } from "./read.js";
 import type { AccountsWrite } from "./write.js";
 
 export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite, AccountsInfo {
+  constructor(private readonly serviceId: ServiceId) {}
   public readonly preimages: MultiMap<[ServiceId, Blake2bHash], BytesBlob | null> = new MultiMap(2, [
     null,
     (hash) => hash.toString(),
@@ -23,63 +24,61 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
   ]);
   public readonly details = new Map<ServiceId, ServiceAccountInfo>();
 
-  lookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null> {
+  lookup(serviceId: ServiceId | null, hash: Blake2bHash): BytesBlob | null {
     if (serviceId === null) {
-      return Promise.resolve(null);
+      return null;
     }
     const preImage = this.preimages.get(serviceId, hash);
     if (preImage === undefined) {
-      return Promise.resolve(null);
+      return null;
     }
-    return Promise.resolve(preImage);
+    return preImage;
   }
 
-  read(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null> {
+  read(serviceId: ServiceId | null, hash: Blake2bHash): BytesBlob | null {
     if (serviceId === null) {
-      return Promise.resolve(null);
+      return null;
     }
     const d = this.storage.get(serviceId, hash);
     if (d === undefined) {
-      return Promise.resolve(null);
+      return null;
     }
-    return Promise.resolve(d);
+    return d;
   }
 
-  write(serviceId: ServiceId, hash: Blake2bHash, data: BytesBlob | null): Promise<void> {
+  write(hash: Blake2bHash, data: BytesBlob | null): void {
     if (data === null) {
-      this.storage.delete(serviceId, hash);
+      this.storage.delete(this.serviceId, hash);
     } else {
-      this.storage.set(data, serviceId, hash);
+      this.storage.set(data, this.serviceId, hash);
     }
-
-    return Promise.resolve();
   }
 
-  readSnapshotLength(serviceId: ServiceId, hash: Blake2bHash): Promise<number | null> {
-    const data = this.snapshotData.get(serviceId, hash);
+  readSnapshotLength(hash: Blake2bHash): number | null {
+    const data = this.snapshotData.get(this.serviceId, hash);
     if (data === undefined) {
-      return Promise.resolve(null);
+      return null;
     }
-    return Promise.resolve(data?.length ?? null);
+    return data?.length ?? null;
   }
 
-  isStorageFull(serviceId: ServiceId): Promise<boolean> {
-    const accountInfo = this.details.get(serviceId);
+  isStorageFull(): boolean {
+    const accountInfo = this.details.get(this.serviceId);
     if (accountInfo === undefined) {
-      return Promise.resolve(false);
+      return false;
     }
-    return Promise.resolve(
+    return (
       ServiceAccountInfo.calculateThresholdBalance(
         accountInfo.storageUtilisationCount,
         accountInfo.storageUtilisationBytes,
-      ) > accountInfo.balance,
+      ) > accountInfo.balance
     );
   }
 
-  getInfo(serviceId: ServiceId | null): Promise<ServiceAccountInfo | null> {
+  getInfo(serviceId: ServiceId | null): ServiceAccountInfo | null {
     if (serviceId === null) {
-      return Promise.resolve(null);
+      return null;
     }
-    return Promise.resolve(this.details.get(serviceId) ?? null);
+    return this.details.get(serviceId) ?? null;
   }
 }

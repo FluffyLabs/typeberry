@@ -50,9 +50,8 @@ function prepareRegsAndMemory(
 describe("HostCalls: New", () => {
   it("should create a new service", async () => {
     const accumulate = new PartialStateMock();
-    const n = new New(accumulate);
     const serviceId = tryAsServiceId(10_000);
-    n.currentServiceId = serviceId;
+    const n = new New(serviceId, accumulate);
     accumulate.newServiceResponse = tryAsServiceId(23_000);
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
@@ -71,9 +70,8 @@ describe("HostCalls: New", () => {
 
   it("should fail when balance is not enough", async () => {
     const accumulate = new PartialStateMock();
-    const n = new New(accumulate);
     const serviceId = tryAsServiceId(10_000);
-    n.currentServiceId = serviceId;
+    const n = new New(serviceId, accumulate);
     accumulate.newServiceResponse = null;
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
@@ -92,9 +90,8 @@ describe("HostCalls: New", () => {
 
   it("should fail when code not readable", async () => {
     const accumulate = new PartialStateMock();
-    const n = new New(accumulate);
     const serviceId = tryAsServiceId(10_000);
-    n.currentServiceId = serviceId;
+    const n = new New(serviceId, accumulate);
     accumulate.newServiceResponse = null;
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),

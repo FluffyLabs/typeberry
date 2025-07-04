@@ -7,7 +7,7 @@ import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.j
 import { asOpaqueType } from "@typeberry/utils";
 import type { PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
-import { CURRENT_SERVICE_ID, getServiceId } from "../utils.js";
+import { getServiceId } from "../utils.js";
 
 const IN_OUT_REG = 7;
 
@@ -30,9 +30,11 @@ const serviceIdAndGasCodec = codec.object({
 export class Bless implements HostCallHandler {
   index = tryAsHostCallIndex(5);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly partialState: PartialState) {}
+  constructor(
+    public readonly currentServiceId: ServiceId,
+    private readonly partialState: PartialState,
+  ) {}
 
   async execute(
     _gas: GasCounter,

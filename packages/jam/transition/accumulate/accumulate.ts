@@ -36,14 +36,9 @@ import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
 import { Result, check } from "@typeberry/utils";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
 import { generateNextServiceId, getWorkPackageHashes, uniquePreserveOrder } from "./accumulate-utils.js";
+import { AccumulateServiceExternalities } from "./externalities/accumulate-service-externalities.js";
 import { ServiceStorageManager } from "./externalities/accumulate-service-storage.js";
-import {
-  AccountsInfoExternalities,
-  AccountsLookupExternalities,
-  AccountsReadExternalities,
-  AccountsWriteExternalities,
-  AccumulateFetchExternalities,
-} from "./externalities/index.js";
+import { AccumulateFetchExternalities } from "./externalities/index.js";
 import { LegacyOperand } from "./operand.js";
 import { PvmExecutor } from "./pvm-executor.js";
 
@@ -185,14 +180,15 @@ export class Accumulate {
     const partialState = new PartialStateDb(this.state, serviceId, nextServiceId);
 
     const storageManager = new ServiceStorageManager(this.state);
-
+    const balanceProvider = {
+      getNewBalance() {
+        return partialState.updatedState.updatedServiceInfo?.balance ?? null;
+      },
+    };
     const externalities = {
       partialState,
       fetchExternalities: new AccumulateFetchExternalities(entropy, operands, this.chainSpec),
-      accountsInfo: new AccountsInfoExternalities(this.state),
-      accountsRead: new AccountsReadExternalities(storageManager),
-      accountsWrite: new AccountsWriteExternalities(storageManager),
-      accountsLookup: new AccountsLookupExternalities(this.state),
+      serviceExternalities: new AccumulateServiceExternalities(serviceId, this.state, balanceProvider),
     };
 
     const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec);

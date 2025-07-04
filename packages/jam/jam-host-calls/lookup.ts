@@ -6,12 +6,12 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { HostCallResult } from "./results.js";
-import { CURRENT_SERVICE_ID, getServiceIdOrCurrent } from "./utils.js";
+import { getServiceIdOrCurrent } from "./utils.js";
 
 /** Account data interface for lookup host calls. */
 export interface AccountsLookup {
   /** Lookup a preimage. */
-  lookup(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null>;
+  lookup(serviceId: ServiceId | null, hash: Blake2bHash): BytesBlob | null;
 }
 
 const IN_OUT_REG = 7;
@@ -24,9 +24,11 @@ const IN_OUT_REG = 7;
 export class Lookup implements HostCallHandler {
   index = tryAsHostCallIndex(1);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly account: AccountsLookup) {}
+  constructor(
+    public readonly currentServiceId: ServiceId,
+    private readonly account: AccountsLookup,
+  ) {}
 
   async execute(
     _gas: GasCounter,
@@ -48,7 +50,7 @@ export class Lookup implements HostCallHandler {
     }
 
     // v
-    const preImage = await this.account.lookup(serviceId, preImageHash);
+    const preImage = this.account.lookup(serviceId, preImageHash);
 
     const preImageLength = preImage === null ? tryAsU64(0) : tryAsU64(preImage.raw.length);
     const preimageBlobOffset = regs.get(10);

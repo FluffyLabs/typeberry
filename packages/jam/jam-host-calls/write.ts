@@ -6,7 +6,7 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { HostCallResult } from "./results.js";
-import { CURRENT_SERVICE_ID, SERVICE_ID_BYTES, clampU64ToU32, writeServiceIdAsLeBytes } from "./utils.js";
+import { SERVICE_ID_BYTES, clampU64ToU32, writeServiceIdAsLeBytes } from "./utils.js";
 
 /** Account data interface for write host calls. */
 export interface AccountsWrite {
@@ -14,19 +14,19 @@ export interface AccountsWrite {
    * Alter the account storage. Put `data` under given key hash.
    * `null` indicates the storage entry should be removed.
    */
-  write(serviceId: ServiceId, hash: Blake2bHash, data: BytesBlob | null): Promise<void>;
+  write(hash: Blake2bHash, data: BytesBlob | null): void;
   /**
    * Read the length of some value from account snapshot state.
    * Returns `null` if the storage entry was empty.
    */
-  readSnapshotLength(serviceId: ServiceId, hash: Blake2bHash): Promise<number | null>;
+  readSnapshotLength(hash: Blake2bHash): number | null;
   /**
    * Returns true if the storage is already full.
    * - aka Not enough balance to pay for the storage.
    *
    * https://graypaper.fluffylabs.dev/#/9a08063/331002331402?v=0.6.6
    */
-  isStorageFull(serviceId: ServiceId): Promise<boolean>;
+  isStorageFull(): boolean;
 }
 
 const IN_OUT_REG = 7;
@@ -39,9 +39,11 @@ const IN_OUT_REG = 7;
 export class Write implements HostCallHandler {
   index = tryAsHostCallIndex(3);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly account: AccountsWrite) {}
+  constructor(
+    public readonly currentServiceId: ServiceId,
+    private readonly account: AccountsWrite,
+  ) {}
 
   async execute(
     _gas: GasCounter,
@@ -79,7 +81,7 @@ export class Write implements HostCallHandler {
     }
 
     // Check if the storage is full
-    const isStorageFull = await this.account.isStorageFull(this.currentServiceId);
+    const isStorageFull = await this.account.isStorageFull();
     if (isStorageFull) {
       regs.set(IN_OUT_REG, HostCallResult.FULL);
       return;
@@ -89,10 +91,10 @@ export class Write implements HostCallHandler {
     const maybeValue = valueLength === 0n ? null : BytesBlob.blobFrom(value);
 
     // a
-    await this.account.write(this.currentServiceId, storageKey, maybeValue);
+    await this.account.write(storageKey, maybeValue);
 
     // l
-    const previousLength = await this.account.readSnapshotLength(this.currentServiceId, storageKey);
+    const previousLength = await this.account.readSnapshotLength(storageKey);
     regs.set(IN_OUT_REG, previousLength === null ? HostCallResult.NONE : tryAsU64(previousLength));
   }
 }

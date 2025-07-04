@@ -56,9 +56,8 @@ function prepareRegsAndMemory(
 describe("HostCalls: Assign", () => {
   it("should assign authorization queue to a core", async () => {
     const accumulate = new PartialStateMock();
-    const assign = new Assign(accumulate, tinyChainSpec);
     const serviceId = tryAsServiceId(10_000);
-    assign.currentServiceId = serviceId;
+    const assign = new Assign(serviceId, accumulate, tinyChainSpec);
     const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(0), [
       Bytes.fill(HASH_SIZE, 1),
       Bytes.fill(HASH_SIZE, 2),
@@ -85,9 +84,8 @@ describe("HostCalls: Assign", () => {
 
   it("should return an error if core index is too large", async () => {
     const accumulate = new PartialStateMock();
-    const assign = new Assign(accumulate, tinyChainSpec);
     const serviceId = tryAsServiceId(10_000);
-    assign.currentServiceId = serviceId;
+    const assign = new Assign(serviceId, accumulate, tinyChainSpec);
     const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(3), []);
 
     // when
@@ -100,9 +98,8 @@ describe("HostCalls: Assign", () => {
 
   it("should return an error if core index is waay too large", async () => {
     const accumulate = new PartialStateMock();
-    const assign = new Assign(accumulate, tinyChainSpec);
     const serviceId = tryAsServiceId(10_000);
-    assign.currentServiceId = serviceId;
+    const assign = new Assign(serviceId, accumulate, tinyChainSpec);
     const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(3), []);
     registers.set(CORE_INDEX_REG, tryAsU64(2 ** 16 + 3));
 
@@ -116,9 +113,8 @@ describe("HostCalls: Assign", () => {
 
   it("should return panic if data not readable", async () => {
     const accumulate = new PartialStateMock();
-    const assign = new Assign(accumulate, tinyChainSpec);
     const serviceId = tryAsServiceId(10_000);
-    assign.currentServiceId = serviceId;
+    const assign = new Assign(serviceId, accumulate, tinyChainSpec);
     const { registers, memory } = prepareRegsAndMemory(tryAsCoreIndex(3), [], { skipAuthQueue: true });
 
     // when

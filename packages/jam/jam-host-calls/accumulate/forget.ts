@@ -1,3 +1,4 @@
+import type { ServiceId } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
@@ -5,7 +6,6 @@ import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import type { PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
-import { CURRENT_SERVICE_ID } from "../utils.js";
 
 const IN_OUT_REG = 7;
 
@@ -17,9 +17,11 @@ const IN_OUT_REG = 7;
 export class Forget implements HostCallHandler {
   index = tryAsHostCallIndex(15);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly partialState: PartialState) {}
+  constructor(
+    public readonly currentServiceId: ServiceId,
+    private readonly partialState: PartialState,
+  ) {}
 
   async execute(
     _gas: GasCounter,
