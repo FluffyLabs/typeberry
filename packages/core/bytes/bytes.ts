@@ -187,20 +187,14 @@ export class Bytes<T extends number> extends BytesBlob {
 
   /** Parse a hex-encoded fixed-length bytes without `0x` prefix. */
   static parseBytesNoPrefix<X extends number>(v: string, len: X): Bytes<X> {
-    if (v.length > 2 * len) {
-      throw new Error(`Input string too long. Expected ${len}, got ${v.length / 2}`);
-    }
-
+    checkLength(v.length, len);
     const blob = BytesBlob.parseBlobNoPrefix(v);
     return new Bytes(blob.raw, len);
   }
 
   /** Parse a hex-encoded fixed-length bytes with `0x` prefix. */
   static parseBytes<X extends number>(v: string, len: X): Bytes<X> {
-    if (v.length > 2 * len + 2) {
-      throw new Error(`Input string too long. Expected ${len}, got ${v.length / 2 - 1}`);
-    }
-
+    checkLength(v.length - 2, len);
     const blob = BytesBlob.parseBlob(v);
     return new Bytes(blob.raw, len);
   }
@@ -271,6 +265,16 @@ function u8ArraySameLengthEqual(self: Uint8Array, other: Uint8Array) {
     }
   }
   return true;
+}
+
+/** Check if hex-encoded string length is same as expected length */
+function checkLength<X extends number>(value: X, expected: X): void {
+  if (value > 2 * expected) {
+    throw new Error(`Input string too long. Expected ${expected}, got ${value / 2}`);
+  }
+  if (value < 2 * expected) {
+    throw new Error(`Input string too short. Expected ${expected}, got ${value / 2}`);
+  }
 }
 
 export const bytesBlobComparator: Comparator<BytesBlob> = <T extends BytesBlob>(a: T, b: T) => a.compare(b);
