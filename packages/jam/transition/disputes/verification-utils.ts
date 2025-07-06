@@ -67,7 +67,7 @@ export async function vefifyAllSignatures(input: VerificationInput): Promise<Ver
   for (const [key, signatureGroup] of inputEntries) {
     output[key] = (await ed25519.verify(signatureGroup)).map((isValid, idx) => {
       return {
-        isValid,
+        isValid: isValid,
         signature: signatureGroup[idx].signature,
       };
     });
