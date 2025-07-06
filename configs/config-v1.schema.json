@@ -3,7 +3,7 @@
   "title": "Typeberry Configuration - v1",
   "description": "Configuration schema for Typeberry blockchain node",
   "type": "object",
-  "required": ["$schema", "version", "flavor", "chain_spec", "database_base_path"],
+  "required": ["$schema", "version", "flavor", "chain_spec", "database_base_path", "authorship"],
   "properties": {
     "version": {
       "type": "number",
@@ -23,6 +23,18 @@
       "description": "Base path for blockchain database storage",
       "minLength": 1,
       "examples": ["./database"]
+    },
+    "authorship": {
+      "type": "object",
+      "description": "Block authorship configuration options",
+      "required": ["omit_seal_verification"],
+      "properties": {
+        "omit_seal_verification": {
+          "type": "boolean",
+          "description": "Use fake seal verification instead of running bandersnatch"
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

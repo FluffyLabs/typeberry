@@ -2,6 +2,9 @@
   "$schema": "./config-v1.schema.json",
   "version": 1,
   "flavor": "tiny",
+  "authorship": {
+    "omit_seal_verification": true
+  },
   "chain_spec": {
     "id": "typeberry-dev",
     "bootnodes": [

@@ -71,7 +71,7 @@ describe("CLI", () => {
   it("should throw on unexpected command", () => {
     assert.throws(
       () => {
-        const _args = parse(["unknown"]);
+        parse(["unknown"]);
       },
       {
         message: "Unexpected command: 'unknown'",
@@ -82,7 +82,7 @@ describe("CLI", () => {
   it("should throw on unexpected options", () => {
     assert.throws(
       () => {
-        const _args = parse(["run", "--myoption", "x"]);
+        parse(["run", "--myoption", "x"]);
       },
       {
         message: "Unrecognized options: 'myoption'",
@@ -93,7 +93,7 @@ describe("CLI", () => {
   it("should throw on unexpected run args", () => {
     assert.throws(
       () => {
-        const _args = parse(["run", "x"]);
+        parse(["run", "x"]);
       },
       {
         message: "Unexpected command: 'x'",
@@ -104,7 +104,7 @@ describe("CLI", () => {
   it("should throw on unexpected extra args", () => {
     assert.throws(
       () => {
-        const _args = parse(["run", "--", "x"]);
+        parse(["run", "--", "x"]);
       },
       {
         message: "Unexpected command: 'x'",

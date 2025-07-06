@@ -107,7 +107,6 @@ describe("JSON RPC Client-Server E2E", () => {
         ],
         59,
       ]);
-      // todo [seko] need to come up with a test database that has more than one block
     }
   });
 
@@ -233,25 +232,74 @@ describe("JSON RPC Client-Server E2E", () => {
     const bestBlock = await client.call("bestBlock");
     assert(Array.isArray(bestBlock));
     if (bestBlock !== null) {
-      const subscribeResult = await client.call("subscribeServicePreimage", [
-        bestBlock[0],
+      return new Promise<void>((resolve, reject) => {
+        client
+          .subscribe("subscribeServicePreimage", [
+            bestBlock[0],
+            0,
+            [
+              193, 99, 38, 67, 43, 91, 50, 19, 223, 209, 96, 148, 149, 225, 60, 107, 39, 108, 180, 116, 214, 121, 100,
+              83, 55, 229, 194, 192, 159, 25, 181, 60,
+            ],
+          ])
+          .then((subscription) => {
+            subscription.on("data", async (data) => {
+              try {
+                assert.deepStrictEqual(data, [
+                  [
+                    9, 98, 111, 111, 116, 115, 116, 114, 97, 112, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 10, 0, 0, 0, 0, 0,
+                    6, 40, 2, 51, 7, 50, 0, 21,
+                  ],
+                ]);
+
+                resolve();
+              } catch (e) {
+                reject(e);
+              } finally {
+                await subscription.unsubscribe();
+              }
+            });
+          });
+      });
+    }
+  });
+
+  it("client handles errors when subscription is being requested", async () => {
+    assert.rejects(async () =>
+      client.subscribe("subscribeServicePreimage", [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         0,
         [
           193, 99, 38, 67, 43, 91, 50, 19, 223, 209, 96, 148, 149, 225, 60, 107, 39, 108, 180, 116, 214, 121, 100, 83,
-          55, 229, 194, 192, 159, 25, 181, 60,
-        ],
-      ]);
-      assert(Array.isArray(subscribeResult));
-      assert.match(subscribeResult[0], /0x[0-9A-Fa-f]+/);
+          55, 229, 194, 192, 159, 25, 181, 60, 61,
+        ], // invalid preimage hash
+      ]),
+    );
+  });
 
-      if (subscribeResult !== null) {
-        const unsubscribeResult = await client.call("unsubscribeServicePreimage", [subscribeResult[0]]);
-        assert.notStrictEqual(unsubscribeResult, null);
+  it("client handles errors produced by the subscription", async () => {
+    const originalCallMethod = server.callMethod;
+    server.callMethod = async (method: string, validatedParams: unknown) => {
+      if (method === "bestBlock") {
+        throw new Error("Forced error for bestBlock");
       }
-    }
-
-    // todo [seko] implement tests for presence of subscription messages
-    // (requires implementing a subscription interface in the client)
+      return originalCallMethod.call(server, method, validatedParams);
+    };
+    return new Promise<void>((resolve, reject) => {
+      client.subscribe("subscribeBestBlock", []).then((subscription) => {
+        subscription.on("data", async () => {
+          await subscription.unsubscribe();
+          reject(new Error("Subscription callback should not be called."));
+        });
+        subscription.on("error", async (error) => {
+          assert.strictEqual(error, "Error: Forced error for bestBlock");
+          await subscription.unsubscribe();
+          resolve();
+        });
+      });
+    }).finally(() => {
+      server.callMethod = originalCallMethod;
+    });
   });
 
   it("server gracefully handles malformed requests", async () => {
@@ -267,7 +315,7 @@ describe("JSON RPC Client-Server E2E", () => {
 
     assert.deepStrictEqual(JSON.parse(message), {
       jsonrpc: "2.0",
-      error: { code: -32600, message: "Invalid request." },
+      error: { code: -32600, message: 'Invalid request: {"foo":"bar"}' },
       id: null,
     });
   });
@@ -300,7 +348,7 @@ describe("JSON RPC Client-Server E2E", () => {
     });
 
     assert.deepStrictEqual(JSON.parse(message), [
-      { jsonrpc: "2.0", error: { code: -32600, message: "Invalid request." }, id: null },
+      { jsonrpc: "2.0", error: { code: -32600, message: 'Invalid request: {"foo":"bar"}' }, id: null },
       {
         jsonrpc: "2.0",
         result: bestBlock,

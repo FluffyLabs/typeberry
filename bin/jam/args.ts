@@ -46,8 +46,8 @@ export type Arguments =
     >;
 
 function parseSharedOptions(args: minimist.ParsedArgs, withRelPath: (v: string) => string): SharedOptions {
-  const { name } = parseOption(args, "name", (v) => v, DEFAULTS.name);
-  const { config } = parseOption(
+  const { name } = parseValueOption(args, "name", (v) => v, DEFAULTS.name);
+  const { config } = parseValueOption(
     args,
     "config",
     (v) => {
@@ -97,19 +97,19 @@ export function parseArgs(input: string[], withRelPath: (v: string) => string): 
   throw new Error(`Invalid arguments: ${JSON.stringify(args)}`);
 }
 
-function parseOption<S extends string, T>(
+function parseValueOption<S extends string, T>(
   args: minimist.ParsedArgs,
   option: S,
   parser: (v: string) => T | null,
   defaultValue: T,
 ): Record<S, T> {
-  if (args[option] === undefined) {
+  const val = args[option];
+  if (val === undefined) {
     return {
       [option]: defaultValue,
     } as Record<S, T>;
   }
 
-  const val = args[option];
   delete args[option];
   if (typeof val !== "string") {
     throw new Error(`Option '--${option}' requires an argument.`);

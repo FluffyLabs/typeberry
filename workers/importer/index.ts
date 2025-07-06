@@ -76,7 +76,7 @@ export async function main(channel: MessageChannelStateMachine<ImporterInit, Imp
           }
           const { block, seal, timeSlot } = entry;
           const timer = measure("importBlock");
-          const maybeBestHeader = await importer.importBlock(block, await seal);
+          const maybeBestHeader = await importer.importBlock(block, await seal, config.omitSealVerification);
           if (maybeBestHeader.isOk) {
             const bestHeader = maybeBestHeader.ok;
             worker.announce(port, bestHeader);

@@ -71,7 +71,7 @@ export async function main(args: Arguments, withRelPath: (v: string) => string) 
   const closeExtensions = initializeExtensions({ bestHeader });
 
   // Start block importer
-  const config = new Config(chainSpec, dbPath);
+  const config = new Config(chainSpec, dbPath, options.config.authorship.omitSealVerification);
   const importerReady = importerInit.transition((state, port) => {
     return state.sendConfig(port, config);
   });
@@ -108,7 +108,7 @@ const initAuthorship = async (isAuthoring: boolean, config: Config, importerRead
   // relay blocks from generator to importer
   importerReady.doUntil<Finished>("finished", async (importer, port) => {
     generator.currentState().onBlock.on((b) => {
-      logger.log(`✍️  Produced block: ${b.length}`);
+      logger.log(`✍️  Produced block. Size: [${b.length}]`);
       importer.sendBlock(port, b);
     });
   });
