@@ -16,6 +16,7 @@
     "@typeberry/hash": "0.0.1",
     "@typeberry/bytes": "0.0.1",
     "@typeberry/logger": "0.0.1",
+    "@typeberry/rpc": "0.0.1",
     "minimist": "^1.2.8"
   },
   "devDependencies": {
