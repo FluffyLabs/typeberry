@@ -1,3 +1,4 @@
+import type { ServiceId } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import {
   type HostCallHandler,
@@ -10,16 +11,18 @@ import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter";
 import { assertNever } from "@typeberry/utils";
 import { type PartialState, ProvidePreimageError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
-import { CURRENT_SERVICE_ID, clampU64ToU32, getServiceIdOrCurrent } from "../utils.js";
+import { clampU64ToU32, getServiceIdOrCurrent } from "../utils.js";
 
 const IN_OUT_REG = 7;
 
 export class Provide implements HostCallHandler {
   index = tryAsHostCallIndex(27);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly partialState: PartialState) {}
+  constructor(
+    public readonly currentServiceId: ServiceId,
+    private readonly partialState: PartialState,
+  ) {}
 
   async execute(_gas: GasCounter, regs: IHostCallRegisters, memory: IHostCallMemory) {
     // `s`

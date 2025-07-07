@@ -7,12 +7,12 @@ import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { ServiceAccountInfo } from "@typeberry/state";
 import { HostCallResult } from "./results.js";
-import { CURRENT_SERVICE_ID, getServiceIdOrCurrent } from "./utils.js";
+import { getServiceIdOrCurrent } from "./utils.js";
 
 /** Account data interface for info host calls. */
 export interface AccountsInfo {
   /** Get account info. */
-  getInfo(serviceId: ServiceId | null): Promise<ServiceAccountInfo | null>;
+  getInfo(serviceId: ServiceId | null): ServiceAccountInfo | null;
 }
 
 const IN_OUT_REG = 7;
@@ -34,9 +34,11 @@ const IN_OUT_REG = 7;
 export class Info implements HostCallHandler {
   index = tryAsHostCallIndex(4);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly account: AccountsInfo) {}
+  constructor(
+    public readonly currentServiceId: ServiceId,
+    private readonly account: AccountsInfo,
+  ) {}
 
   async execute(
     _gas: GasCounter,
@@ -49,7 +51,7 @@ export class Info implements HostCallHandler {
     const outputStart = regs.get(8);
 
     // t
-    const accountInfo = await this.account.getInfo(serviceId);
+    const accountInfo = this.account.getInfo(serviceId);
 
     const encodedInfo =
       accountInfo === null

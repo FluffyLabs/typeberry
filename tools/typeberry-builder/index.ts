@@ -81,8 +81,8 @@ async function createNpmPackage() {
     author: rootPkg.author,
     license: rootPkg.license,
     dependencies: {
-      minimist: lockPkg.packages["node_modules/minimist"],
-      lmdb: lockPkg.packages["node_modules/lmdb"],
+      minimist: lockPkg.packages["node_modules/minimist"].version,
+      lmdb: lockPkg.packages["node_modules/lmdb"].version,
     },
     files: ["*.mjs", "*.wasm", "*.txt"],
   };

@@ -69,8 +69,9 @@ function prepareRegsAndMemory(
 
 describe("HostCalls: Lookup", () => {
   it("should fail gracefully if account doesn't exist", async () => {
-    const accounts = new TestAccounts();
-    const lookup = new Lookup(accounts);
+    const currentServiceId = tryAsServiceId(15_000);
+    const accounts = new TestAccounts(currentServiceId);
+    const lookup = new Lookup(currentServiceId, accounts);
     const serviceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(serviceId, HASH);
 
@@ -83,8 +84,9 @@ describe("HostCalls: Lookup", () => {
   });
 
   it("should fail gracefully if preimage doesn't exist", async () => {
-    const accounts = new TestAccounts();
-    const lookup = new Lookup(accounts);
+    const currentServiceId = tryAsServiceId(15_000);
+    const accounts = new TestAccounts(currentServiceId);
+    const lookup = new Lookup(currentServiceId, accounts);
     const serviceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(serviceId, HASH);
 
@@ -96,8 +98,9 @@ describe("HostCalls: Lookup", () => {
   });
 
   it("should fail on page fault if memory isn't readable", async () => {
-    const accounts = new TestAccounts();
-    const lookup = new Lookup(accounts);
+    const currentServiceId = tryAsServiceId(15_000);
+    const accounts = new TestAccounts(currentServiceId);
+    const lookup = new Lookup(currentServiceId, accounts);
     const serviceId = tryAsServiceId(10_000);
     const { registers, memory: emptyMemory } = prepareRegsAndMemory(serviceId, HASH, {
       skipKey: true,
@@ -109,8 +112,9 @@ describe("HostCalls: Lookup", () => {
   });
 
   it("should fail on page fault if destination memory is not writable", async () => {
-    const accounts = new TestAccounts();
-    const lookup = new Lookup(accounts);
+    const currentServiceId = tryAsServiceId(15_000);
+    const accounts = new TestAccounts(currentServiceId);
+    const lookup = new Lookup(currentServiceId, accounts);
     const serviceId = tryAsServiceId(10_000);
     const { registers, memory: emptyMemory } = prepareRegsAndMemory(serviceId, HASH, {
       skipValue: true,
@@ -125,8 +129,9 @@ describe("HostCalls: Lookup", () => {
 
   describe("should lookup key from an account", () => {
     it("without offset", async () => {
-      const accounts = new TestAccounts();
-      const lookup = new Lookup(accounts);
+      const currentServiceId = tryAsServiceId(15_000);
+      const accounts = new TestAccounts(currentServiceId);
+      const lookup = new Lookup(currentServiceId, accounts);
       const serviceId = tryAsServiceId(10_000);
       const preimageLength = 5;
       const { registers, memory } = prepareRegsAndMemory(serviceId, HASH, { preimageLength });
@@ -144,8 +149,9 @@ describe("HostCalls: Lookup", () => {
     });
 
     it("with offset", async () => {
-      const accounts = new TestAccounts();
-      const lookup = new Lookup(accounts);
+      const currentServiceId = tryAsServiceId(15_000);
+      const accounts = new TestAccounts(currentServiceId);
+      const lookup = new Lookup(currentServiceId, accounts);
       const serviceId = tryAsServiceId(10_000);
       const preimageLength = 5;
       const preimageOffset = 6;

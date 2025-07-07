@@ -1,3 +1,4 @@
+import type { ServiceId } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
@@ -7,7 +8,7 @@ import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.j
 import { assertNever } from "@typeberry/utils";
 import { EjectError, type PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
-import { CURRENT_SERVICE_ID, getServiceId } from "../utils.js";
+import { getServiceId } from "../utils.js";
 
 const IN_OUT_REG = 7;
 
@@ -19,9 +20,11 @@ const IN_OUT_REG = 7;
 export class Eject implements HostCallHandler {
   index = tryAsHostCallIndex(12);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly partialState: PartialState) {}
+  constructor(
+    public readonly currentServiceId: ServiceId,
+    private readonly partialState: PartialState,
+  ) {}
 
   async execute(
     _gas: GasCounter,
