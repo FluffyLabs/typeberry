@@ -34,7 +34,7 @@
     "packages/jam/block",
     "packages/jam/block-json",
     "packages/jam/config",
-    "packages/jam/config/net",
+    "packages/jam/config/node",
     "packages/jam/database",
     "packages/jam/database-lmdb",
     "packages/jam/jam-host-calls",
@@ -52,7 +52,8 @@
     "tools/typeberry-builder",
     "workers/block-generator",
     "workers/generic",
-    "workers/importer"
+    "workers/importer",
+    "configs"
   ],
   "engines": {
     "node": ">=22",

@@ -56,10 +56,8 @@ export class HashDictionary<K extends OpaqueHash, V> implements ImmutableHashDic
   }
 
   /** it allows to use HashDictionary in for-of loop */
-  *[Symbol.iterator]() {
-    for (const value of this.map.values()) {
-      yield value;
-    }
+  [Symbol.iterator]() {
+    return this.map.values();
   }
 
   *keys() {

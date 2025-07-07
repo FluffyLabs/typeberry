@@ -3,17 +3,33 @@ import { Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
 import type { ImmutableHashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
+import type { TruncatedHashDictionary } from "@typeberry/database/truncated-hash-dictionary.js";
 import type { InMemoryState } from "@typeberry/state";
 import { type BytesBlob, InMemoryTrie } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import type { StateKey } from "./keys.js";
 import { type StateCodec, serialize } from "./serialize.js";
 
+/** Full (i.e. 32 bytes; non-truncated) state entries. */
+export type FullEntries = {
+  full: true;
+  data: ImmutableHashDictionary<StateKey, BytesBlob>;
+};
+
+/** Truncated (i.e. 31 bytes extended to 32 bytes) state entries. */
+export type TruncatedEntries = {
+  full: false;
+  data: TruncatedHashDictionary<StateKey, BytesBlob>;
+};
+
 /** Full, in-memory state as serialized entries dictionary. */
-export class StateEntries {
+export class StateEntries<TEntries extends FullEntries | TruncatedEntries = FullEntries | TruncatedEntries> {
   /** Turn in-memory state into it's serialized form. */
-  static serializeInMemory(spec: ChainSpec, state: InMemoryState) {
-    return new StateEntries(convertInMemoryStateToDictionary(spec, state));
+  static serializeInMemory(spec: ChainSpec, state: InMemoryState): StateEntries<FullEntries> {
+    return new StateEntries({
+      full: true,
+      data: convertInMemoryStateToDictionary(spec, state),
+    });
   }
 
   /**
@@ -22,19 +38,35 @@ export class StateEntries {
    * NOTE: There is no verification happening, so the state may be
    * incomplete. Use only if you are sure this is all the entries needed.
    */
-  static fromDictionaryUnsafe(state: StateEntries["entries"]) {
-    return new StateEntries(state);
+  static fromDictionaryUnsafe(data: FullEntries["data"]): StateEntries<FullEntries> {
+    return new StateEntries({
+      full: true,
+      data,
+    });
+  }
+
+  /**
+   * Wrap a collection of truncated state entries and treat it as state.
+   *
+   * NOTE: There is no verification happening, so the state may be
+   * incomplete. Use only if you are sure this is all the entries needed.
+   */
+  static fromTruncatedDictionaryUnsafe(data: TruncatedEntries["data"]): StateEntries<TruncatedEntries> {
+    return new StateEntries({
+      full: false,
+      data,
+    });
   }
 
   private trieCache: InMemoryTrie | null = null;
 
-  private constructor(public readonly entries: ImmutableHashDictionary<StateKey, BytesBlob>) {}
+  private constructor(public readonly entries: TEntries) {}
 
   /** Construct the trie from given set of state entries. */
   public getTrie(): InMemoryTrie {
     if (this.trieCache === null) {
       const trie = InMemoryTrie.empty(blake2bTrieHasher);
-      for (const [key, value] of this.entries) {
+      for (const [key, value] of this.entries.data) {
         trie.set(key.asOpaque(), value);
       }
       this.trieCache = trie;
