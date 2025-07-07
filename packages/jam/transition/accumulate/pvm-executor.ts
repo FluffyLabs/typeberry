@@ -1,3 +1,4 @@
+import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
 import { Assign } from "@typeberry/jam-host-calls/accumulate/assign.js";
@@ -46,11 +47,8 @@ const ACCUMULATE_HOST_CALL_CLASSES = [
 
 type AccumulateHostCallExternalities = {
   partialState: PartialState;
-  accountsRead: AccountsRead;
-  accountsWrite: AccountsWrite;
   fetchExternalities: FetchExternalities;
-  accountsInfo: AccountsInfo;
-  accountsLookup: AccountsLookup;
+  serviceExternalities: AccountsInfo & AccountsLookup & AccountsWrite & AccountsRead;
 };
 
 namespace entrypoint {
@@ -78,18 +76,22 @@ export class PvmExecutor {
   }
 
   /** Prepare accumulation host call handlers */
-  private static prepareAccumulateHostCalls(externalities: AccumulateHostCallExternalities, chainSpec: ChainSpec) {
+  private static prepareAccumulateHostCalls(
+    serviceId: ServiceId,
+    externalities: AccumulateHostCallExternalities,
+    chainSpec: ChainSpec,
+  ) {
     const accumulateHandlers: HostCallHandler[] = ACCUMULATE_HOST_CALL_CLASSES.map(
-      (HandlerClass) => new HandlerClass(externalities.partialState, chainSpec),
+      (HandlerClass) => new HandlerClass(serviceId, externalities.partialState, chainSpec),
     );
 
     const generalHandlers: HostCallHandler[] = [
-      new GasHostCall(),
-      new Read(externalities.accountsRead),
-      new Write(externalities.accountsWrite),
-      new Fetch(externalities.fetchExternalities),
-      new Lookup(externalities.accountsLookup),
-      new Info(externalities.accountsInfo),
+      new GasHostCall(serviceId),
+      new Read(serviceId, externalities.serviceExternalities),
+      new Write(serviceId, externalities.serviceExternalities),
+      new Fetch(serviceId, externalities.fetchExternalities),
+      new Lookup(serviceId, externalities.serviceExternalities),
+      new Info(serviceId, externalities.serviceExternalities),
     ];
 
     return accumulateHandlers.concat(generalHandlers);
@@ -110,11 +112,12 @@ export class PvmExecutor {
 
   /** A utility function that can be used to prepare accumulate executor */
   static createAccumulateExecutor(
+    serviceId: ServiceId,
     serviceCode: BytesBlob,
     externalities: AccumulateHostCallExternalities,
     chainSpec: ChainSpec,
   ) {
-    const hostCallHandlers = PvmExecutor.prepareAccumulateHostCalls(externalities, chainSpec);
+    const hostCallHandlers = PvmExecutor.prepareAccumulateHostCalls(serviceId, externalities, chainSpec);
     return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ACCUMULATE);
   }
 }

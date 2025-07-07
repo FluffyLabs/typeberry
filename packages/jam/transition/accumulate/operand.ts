@@ -104,6 +104,7 @@ export class LegacyOperand {
       authorizerHash,
     });
   }
+
   private constructor(operand: CodecRecord<LegacyOperand>) {
     this.payloadHash = operand.payloadHash;
     this.result = operand.result;

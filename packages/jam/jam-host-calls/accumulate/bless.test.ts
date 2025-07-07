@@ -62,9 +62,8 @@ function prepareRegsAndMemory(
 describe("HostCalls: Bless", () => {
   it("should set new privileged services and auto-accumualte services", async () => {
     const accumulate = new PartialStateMock();
-    const bless = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
-    bless.currentServiceId = serviceId;
+    const bless = new Bless(serviceId, accumulate);
     const entries = prepareServiceGasEntires();
     const { registers, memory } = prepareRegsAndMemory(entries);
 
@@ -81,14 +80,13 @@ describe("HostCalls: Bless", () => {
 
   it("should return panic when dictionary is not readable", async () => {
     const accumulate = new PartialStateMock();
-    const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
-    empower.currentServiceId = serviceId;
+    const bless = new Bless(serviceId, accumulate);
     const entries = prepareServiceGasEntires();
     const { registers, memory } = prepareRegsAndMemory(entries, { skipDictionary: true });
 
     // when
-    const result = await empower.execute(gas, registers, memory);
+    const result = await bless.execute(gas, registers, memory);
 
     // then
     assert.deepStrictEqual(result, PvmExecution.Panic);
@@ -97,15 +95,14 @@ describe("HostCalls: Bless", () => {
 
   it("should auto-accumualte services when dictionary is out of order", async () => {
     const accumulate = new PartialStateMock();
-    const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
-    empower.currentServiceId = serviceId;
+    const bless = new Bless(serviceId, accumulate);
     const entries = prepareServiceGasEntires();
     entries.push([tryAsServiceId(5), tryAsServiceGas(10_000)]);
     const { registers, memory } = prepareRegsAndMemory(entries);
 
     // when
-    const result = await empower.execute(gas, registers, memory);
+    const result = await bless.execute(gas, registers, memory);
 
     // then
     assert.deepStrictEqual(result, undefined);
@@ -116,15 +113,14 @@ describe("HostCalls: Bless", () => {
 
   it("should auto-accumualte services when dictionary contains duplicates", async () => {
     const accumulate = new PartialStateMock();
-    const empower = new Bless(accumulate);
     const serviceId = tryAsServiceId(10_000);
-    empower.currentServiceId = serviceId;
+    const bless = new Bless(serviceId, accumulate);
     const entries = prepareServiceGasEntires();
     entries.push(entries[entries.length - 1]);
     const { registers, memory } = prepareRegsAndMemory(entries);
 
     // when
-    const result = await empower.execute(gas, registers, memory);
+    const result = await bless.execute(gas, registers, memory);
 
     // then
     assert.deepStrictEqual(result, undefined);

@@ -1,4 +1,4 @@
-import { tryAsServiceGas } from "@typeberry/block";
+import { type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls";
@@ -6,7 +6,7 @@ import { type Gas, type GasCounter, tryAsGas } from "@typeberry/pvm-interpreter/
 import { assertNever } from "@typeberry/utils";
 import { type PartialState, TRANSFER_MEMO_BYTES, TransferError } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
-import { CURRENT_SERVICE_ID, getServiceId } from "../utils.js";
+import { getServiceId } from "../utils.js";
 
 const IN_OUT_REG = 7; // `d`
 const AMOUNT_REG = 8; // `a`
@@ -29,9 +29,11 @@ export class Transfer implements HostCallHandler {
     const gas = 10n + regs.get(ON_TRANSFER_GAS_REG);
     return tryAsGas(gas);
   };
-  currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly partialState: PartialState) {}
+  constructor(
+    public readonly currentServiceId: ServiceId,
+    private readonly partialState: PartialState,
+  ) {}
 
   async execute(
     _gas: GasCounter,

@@ -1,4 +1,3 @@
-import type { ServiceId } from "@typeberry/block";
 import { CURRENT_SERVICE_ID, HostCallResult } from "@typeberry/jam-host-calls";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { check } from "@typeberry/utils";
@@ -14,26 +13,19 @@ import type { IHostCallRegisters } from "./host-call-registers.js";
 // TODO [ToDr] Rename to just `HostCalls`
 /** Container for all available host calls. */
 export class HostCallsManager {
-  private readonly hostCalls = Array<HostCallHandler>();
+  private readonly hostCalls = new Map<HostCallIndex, HostCallHandler>();
   private readonly missing = new Missing();
 
-  constructor(...hostCallHandler: HostCallHandler[]) {
-    for (const handler of hostCallHandler) {
-      check(this.hostCalls[handler.index] === undefined, `Overwriting host call handler at index ${handler.index}`);
-      this.hostCalls[handler.index] = handler;
-    }
-  }
-
-  /** Set current service id for all handlers. */
-  setServiceId(serviceId: ServiceId) {
-    for (const handler of this.hostCalls) {
-      handler.currentServiceId = serviceId;
+  constructor(...hostCallHandlers: HostCallHandler[]) {
+    for (const handler of hostCallHandlers) {
+      check(this.hostCalls.get(handler.index) === undefined, `Overwriting host call handler at index ${handler.index}`);
+      this.hostCalls.set(handler.index, handler);
     }
   }
 
   /** Get a host call by index. */
   get(hostCallIndex: HostCallIndex): HostCallHandler {
-    return this.hostCalls[hostCallIndex] ?? this.missing;
+    return this.hostCalls.get(hostCallIndex) ?? this.missing;
   }
 }
 

@@ -1,4 +1,4 @@
-import { tryAsCoreIndex } from "@typeberry/block";
+import { type ServiceId, tryAsCoreIndex } from "@typeberry/block";
 import { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import { Decoder, codec } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
@@ -10,7 +10,6 @@ import type { IHostCallRegisters } from "@typeberry/pvm-host-calls/host-call-reg
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import type { PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
-import { CURRENT_SERVICE_ID } from "../utils.js";
 
 const IN_OUT_REG = 7;
 
@@ -22,9 +21,9 @@ const IN_OUT_REG = 7;
 export class Assign implements HostCallHandler {
   index = tryAsHostCallIndex(6);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(
+    public readonly currentServiceId: ServiceId,
     private readonly partialState: PartialState,
     private readonly chainSpec: ChainSpec,
   ) {}

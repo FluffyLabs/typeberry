@@ -53,8 +53,8 @@ const gas = gasCounter(tryAsGas(10_000));
 describe("HostCalls: Transfer", () => {
   it("should perform a transfer to self?", async () => {
     const accumulate = new PartialStateMock();
-    const transfer = new Transfer(accumulate);
-    transfer.currentServiceId = tryAsServiceId(10_000);
+    const currentServiceId = tryAsServiceId(10_000);
+    const transfer = new Transfer(currentServiceId, accumulate);
 
     const { registers, memory } = prepareRegsAndMemory(
       transfer.currentServiceId,
@@ -75,8 +75,8 @@ describe("HostCalls: Transfer", () => {
 
   it("should perform a transfer to different account", async () => {
     const accumulate = new PartialStateMock();
-    const transfer = new Transfer(accumulate);
-    transfer.currentServiceId = tryAsServiceId(10_000);
+    const currentServiceId = tryAsServiceId(10_000);
+    const transfer = new Transfer(currentServiceId, accumulate);
 
     const { registers, memory } = prepareRegsAndMemory(
       tryAsServiceId(15_000),
@@ -95,8 +95,8 @@ describe("HostCalls: Transfer", () => {
 
   it("should calculate gas cost", () => {
     const accumulate = new PartialStateMock();
-    const transfer = new Transfer(accumulate);
-    transfer.currentServiceId = tryAsServiceId(10_000);
+    const currentServiceId = tryAsServiceId(10_000);
+    const transfer = new Transfer(currentServiceId, accumulate);
 
     const { registers } = prepareRegsAndMemory(
       tryAsServiceId(15_000),
@@ -114,8 +114,8 @@ describe("HostCalls: Transfer", () => {
 
   it("should fail if there is no memory for memo", async () => {
     const accumulate = new PartialStateMock();
-    const transfer = new Transfer(accumulate);
-    transfer.currentServiceId = tryAsServiceId(10_000);
+    const currentServiceId = tryAsServiceId(10_000);
+    const transfer = new Transfer(currentServiceId, accumulate);
 
     const { registers, memory } = prepareRegsAndMemory(
       tryAsServiceId(15_000),
@@ -135,8 +135,8 @@ describe("HostCalls: Transfer", () => {
 
   it("should fail if gas is too low", async () => {
     const accumulate = new PartialStateMock();
-    const transfer = new Transfer(accumulate);
-    transfer.currentServiceId = tryAsServiceId(10_000);
+    const currentServiceId = tryAsServiceId(10_000);
+    const transfer = new Transfer(currentServiceId, accumulate);
 
     const { registers, memory } = prepareRegsAndMemory(
       tryAsServiceId(15_000),
@@ -156,8 +156,8 @@ describe("HostCalls: Transfer", () => {
 
   it("should fail if amount is too big", async () => {
     const accumulate = new PartialStateMock();
-    const transfer = new Transfer(accumulate);
-    transfer.currentServiceId = tryAsServiceId(10_000);
+    const currentServiceId = tryAsServiceId(10_000);
+    const transfer = new Transfer(currentServiceId, accumulate);
 
     const { registers, memory } = prepareRegsAndMemory(
       tryAsServiceId(15_000),
@@ -177,8 +177,8 @@ describe("HostCalls: Transfer", () => {
 
   it("should fail if destination does not exist", async () => {
     const accumulate = new PartialStateMock();
-    const transfer = new Transfer(accumulate);
-    transfer.currentServiceId = tryAsServiceId(10_000);
+    const currentServiceId = tryAsServiceId(10_000);
+    const transfer = new Transfer(currentServiceId, accumulate);
 
     const { registers, memory } = prepareRegsAndMemory(
       tryAsServiceId(15_000),

@@ -87,10 +87,10 @@ function prepareRegsAndMemory(
 describe("HostCalls: Read", () => {
   describe("should read key from an account state", () => {
     it("for current account", async () => {
-      const accounts = new TestAccounts();
-      const read = new Read(accounts);
+      const currentServiceId = tryAsServiceId(10_000);
+      const accounts = new TestAccounts(currentServiceId);
+      const read = new Read(currentServiceId, accounts);
       const serviceId = tryAsServiceId(10_000);
-      read.currentServiceId = serviceId;
       const { key, hash } = prepareKey(read.currentServiceId, "key");
       const value = "hello world";
       const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length);
@@ -104,9 +104,9 @@ describe("HostCalls: Read", () => {
     });
 
     it("for different service Id", async () => {
-      const accounts = new TestAccounts();
-      const read = new Read(accounts);
-      read.currentServiceId = tryAsServiceId(10_000);
+      const currentServiceId = tryAsServiceId(10_000);
+      const accounts = new TestAccounts(currentServiceId);
+      const read = new Read(currentServiceId, accounts);
       const serviceId = tryAsServiceId(11_000);
       const { key, hash } = prepareKey(serviceId, "key");
       const value = "hello world";
@@ -123,10 +123,10 @@ describe("HostCalls: Read", () => {
     });
 
     it("with offset", async () => {
-      const accounts = new TestAccounts();
-      const read = new Read(accounts);
+      const currentServiceId = tryAsServiceId(10_000);
+      const accounts = new TestAccounts(currentServiceId);
+      const read = new Read(currentServiceId, accounts);
       const serviceId = tryAsServiceId(10_000);
-      read.currentServiceId = serviceId;
       const { key, hash } = prepareKey(read.currentServiceId, "key");
       const value = "hello world";
       const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length, {
@@ -142,10 +142,10 @@ describe("HostCalls: Read", () => {
     });
 
     it("with offset and length", async () => {
-      const accounts = new TestAccounts();
-      const read = new Read(accounts);
+      const currentServiceId = tryAsServiceId(10_000);
+      const accounts = new TestAccounts(currentServiceId);
+      const read = new Read(currentServiceId, accounts);
       const serviceId = tryAsServiceId(10_000);
-      read.currentServiceId = serviceId;
       const { key, hash } = prepareKey(read.currentServiceId, "key");
       const value = "hello world";
       const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length, {
@@ -162,10 +162,10 @@ describe("HostCalls: Read", () => {
     });
 
     it("with 0-length destination target", async () => {
-      const accounts = new TestAccounts();
-      const read = new Read(accounts);
+      const currentServiceId = tryAsServiceId(10_000);
+      const accounts = new TestAccounts(currentServiceId);
+      const read = new Read(currentServiceId, accounts);
       const serviceId = tryAsServiceId(10_000);
-      read.currentServiceId = serviceId;
       const { key, hash } = prepareKey(read.currentServiceId, "xyz");
       const value = "hello world";
       const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length, { valueLengthToWrite: 0 });
@@ -179,9 +179,9 @@ describe("HostCalls: Read", () => {
   });
 
   it("should handle missing account", async () => {
-    const accounts = new TestAccounts();
-    const read = new Read(accounts);
-    read.currentServiceId = tryAsServiceId(10_000);
+    const currentServiceId = tryAsServiceId(10_000);
+    const accounts = new TestAccounts(currentServiceId);
+    const read = new Read(currentServiceId, accounts);
     const value = "xyz";
     const { key } = prepareKey(read.currentServiceId, value);
     const { registers, memory } = prepareRegsAndMemory(key, value.length);
@@ -196,10 +196,10 @@ describe("HostCalls: Read", () => {
   });
 
   it("should handle missing value", async () => {
-    const accounts = new TestAccounts();
-    const read = new Read(accounts);
+    const currentServiceId = tryAsServiceId(10_000);
+    const accounts = new TestAccounts(currentServiceId);
+    const read = new Read(currentServiceId, accounts);
     const serviceId = tryAsServiceId(10_000);
-    read.currentServiceId = serviceId;
     const value = "xyz";
     const { key, hash } = prepareKey(read.currentServiceId, value);
     const { registers, memory, readResult } = prepareRegsAndMemory(key, value.length);
@@ -213,10 +213,10 @@ describe("HostCalls: Read", () => {
   });
 
   it("should fail if there is no memory for key", async () => {
-    const accounts = new TestAccounts();
-    const read = new Read(accounts);
+    const currentServiceId = tryAsServiceId(10_000);
+    const accounts = new TestAccounts(currentServiceId);
+    const read = new Read(currentServiceId, accounts);
     const serviceId = tryAsServiceId(10_000);
-    read.currentServiceId = serviceId;
     const value = "xyz";
     const { key, hash } = prepareKey(read.currentServiceId, value);
     const { registers, memory } = prepareRegsAndMemory(key, value.length, { skipKey: true });
@@ -227,10 +227,10 @@ describe("HostCalls: Read", () => {
   });
 
   it("should fail if there is no memory for result", async () => {
-    const accounts = new TestAccounts();
-    const read = new Read(accounts);
+    const currentServiceId = tryAsServiceId(10_000);
+    const accounts = new TestAccounts(currentServiceId);
+    const read = new Read(currentServiceId, accounts);
     const serviceId = tryAsServiceId(10_000);
-    read.currentServiceId = serviceId;
     const value = "xyz";
     const { key, hash } = prepareKey(read.currentServiceId, value);
     const { registers, memory } = prepareRegsAndMemory(key, value.length, { skipValue: true });

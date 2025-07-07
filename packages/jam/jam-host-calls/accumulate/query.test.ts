@@ -52,14 +52,14 @@ function prepareRegsAndMemory(
 describe("HostCalls: Query", () => {
   it("should return panic if memory is unreadable", async () => {
     const accumulate = new PartialStateMock();
-    const query = new Query(accumulate);
+    const currentServiceId = tryAsServiceId(10_000);
+    const query = new Query(currentServiceId, accumulate);
 
     const w7 = tryAsU64(2 ** 16);
     const w8 = tryAsU64(0);
     const data = Bytes.fill(HASH_SIZE, 0xaa).asOpaque();
     accumulate.checkPreimageStatusResponse = null;
 
-    query.currentServiceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(tryAsU32(Number(w7)), tryAsU32(Number(w8)), data, {
       registerMemory: false,
     });
@@ -75,14 +75,14 @@ describe("HostCalls: Query", () => {
 
   it("should return none if preimage is not found", async () => {
     const accumulate = new PartialStateMock();
-    const query = new Query(accumulate);
+    const currentServiceId = tryAsServiceId(10_000);
+    const query = new Query(currentServiceId, accumulate);
 
     const w7 = tryAsU64(2 ** 16);
     const w8 = tryAsU64(32);
     const data = Bytes.fill(HASH_SIZE, 0xaa).asOpaque();
     accumulate.checkPreimageStatusResponse = null;
 
-    query.currentServiceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(tryAsU32(Number(w7)), tryAsU32(Number(w8)), data);
 
     // when
@@ -97,7 +97,8 @@ describe("HostCalls: Query", () => {
 
   it("should return requested if preimage is requested", async () => {
     const accumulate = new PartialStateMock();
-    const query = new Query(accumulate);
+    const currentServiceId = tryAsServiceId(10_000);
+    const query = new Query(currentServiceId, accumulate);
 
     const w7 = tryAsU64(2 ** 16);
     const w8 = tryAsU64(32);
@@ -107,7 +108,6 @@ describe("HostCalls: Query", () => {
     };
     accumulate.checkPreimageStatusResponse = status;
 
-    query.currentServiceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(tryAsU32(Number(w7)), tryAsU32(Number(w8)), data);
 
     // when
@@ -122,7 +122,8 @@ describe("HostCalls: Query", () => {
 
   it("should return available if preimage is available", async () => {
     const accumulate = new PartialStateMock();
-    const query = new Query(accumulate);
+    const currentServiceId = tryAsServiceId(10_000);
+    const query = new Query(currentServiceId, accumulate);
 
     const w7 = tryAsU64(2 ** 16);
     const w8 = tryAsU64(32);
@@ -135,7 +136,6 @@ describe("HostCalls: Query", () => {
     };
     accumulate.checkPreimageStatusResponse = status;
 
-    query.currentServiceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(tryAsU32(Number(w7)), tryAsU32(Number(w8)), data);
 
     // when
@@ -150,7 +150,8 @@ describe("HostCalls: Query", () => {
 
   it("should return unavailable if preimage is unavailable", async () => {
     const accumulate = new PartialStateMock();
-    const query = new Query(accumulate);
+    const currentServiceId = tryAsServiceId(10_000);
+    const query = new Query(currentServiceId, accumulate);
 
     const w7 = tryAsU64(2 ** 16);
     const w8 = tryAsU64(32);
@@ -164,7 +165,6 @@ describe("HostCalls: Query", () => {
     };
     accumulate.checkPreimageStatusResponse = status;
 
-    query.currentServiceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(tryAsU32(Number(w7)), tryAsU32(Number(w8)), data);
 
     // when
@@ -179,7 +179,8 @@ describe("HostCalls: Query", () => {
 
   it("should return reavailable if preimage is reavailable", async () => {
     const accumulate = new PartialStateMock();
-    const query = new Query(accumulate);
+    const currentServiceId = tryAsServiceId(10_000);
+    const query = new Query(currentServiceId, accumulate);
 
     const w7 = tryAsU64(2 ** 16);
     const w8 = tryAsU64(32);
@@ -194,7 +195,6 @@ describe("HostCalls: Query", () => {
     };
     accumulate.checkPreimageStatusResponse = status;
 
-    query.currentServiceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(tryAsU32(Number(w7)), tryAsU32(Number(w8)), data);
 
     // when

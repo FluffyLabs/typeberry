@@ -49,9 +49,9 @@ const gas = gasCounter(tryAsGas(10_000));
 describe("HostCalls: Eject", () => {
   it("should eject the account and transfer the funds", async () => {
     const accumulate = new PartialStateMock();
-    const eject = new Eject(accumulate);
+    const serviceId = tryAsServiceId(10_000);
+    const eject = new Eject(serviceId, accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
-    eject.currentServiceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(HASH_SIZE, 5);
 
     const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
@@ -68,9 +68,9 @@ describe("HostCalls: Eject", () => {
 
   it("should fail if there is no memory for hash", async () => {
     const accumulate = new PartialStateMock();
-    const eject = new Eject(accumulate);
+    const serviceId = tryAsServiceId(10_000);
+    const eject = new Eject(serviceId, accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
-    eject.currentServiceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(HASH_SIZE, 5);
 
     const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash, { skipHash: true });
@@ -85,9 +85,9 @@ describe("HostCalls: Eject", () => {
 
   it("should fail if destination does not exist", async () => {
     const accumulate = new PartialStateMock();
-    const eject = new Eject(accumulate);
+    const serviceId = tryAsServiceId(10_000);
+    const eject = new Eject(serviceId, accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
-    eject.currentServiceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(HASH_SIZE, 5);
     accumulate.ejectReturnValue = Result.error(EjectError.InvalidService);
 
@@ -105,9 +105,9 @@ describe("HostCalls: Eject", () => {
 
   it("should fail if destination and source are the same", async () => {
     const accumulate = new PartialStateMock();
-    const eject = new Eject(accumulate);
+    const serviceId = tryAsServiceId(15_000);
+    const eject = new Eject(serviceId, accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
-    eject.currentServiceId = sourceServiceId;
     const hash = Bytes.fill(HASH_SIZE, 5);
 
     const { registers, memory } = prepareRegsAndMemory(sourceServiceId, hash);
@@ -123,9 +123,9 @@ describe("HostCalls: Eject", () => {
 
   it("should fail if destination has no available preimage", async () => {
     const accumulate = new PartialStateMock();
-    const eject = new Eject(accumulate);
+    const serviceId = tryAsServiceId(10_000);
+    const eject = new Eject(serviceId, accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
-    eject.currentServiceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(HASH_SIZE, 5);
     accumulate.ejectReturnValue = Result.error(EjectError.InvalidPreimage);
 
@@ -143,9 +143,9 @@ describe("HostCalls: Eject", () => {
 
   it("should fail if preimage is too old", async () => {
     const accumulate = new PartialStateMock();
-    const eject = new Eject(accumulate);
+    const serviceId = tryAsServiceId(10_000);
+    const eject = new Eject(serviceId, accumulate);
     const sourceServiceId = tryAsServiceId(15_000);
-    eject.currentServiceId = tryAsServiceId(10_000);
     const hash = Bytes.fill(HASH_SIZE, 5);
     accumulate.ejectReturnValue = Result.error(EjectError.InvalidPreimage);
 

@@ -36,13 +36,7 @@ import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
 import { Result, check } from "@typeberry/utils";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
 import { generateNextServiceId, getWorkPackageHashes, uniquePreserveOrder } from "./accumulate-utils.js";
-import {
-  AccountsInfoExternalities,
-  AccountsLookupExternalities,
-  AccountsReadExternalities,
-  AccountsWriteExternalities,
-  AccumulateFetchExternalities,
-} from "./externalities/index.js";
+import { AccumulateFetchExternalities, AccumulateServiceExternalities } from "./externalities/index.js";
 import { LegacyOperand } from "./operand.js";
 import { PvmExecutor } from "./pvm-executor.js";
 
@@ -183,20 +177,25 @@ export class Accumulate {
     const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec);
     const partialState = new PartialStateDb(this.state, serviceId, nextServiceId);
 
-    const externalities = {
-      partialState,
-      fetchExternalities: new AccumulateFetchExternalities(entropy, operands, this.chainSpec),
-      accountsInfo: new AccountsInfoExternalities(this.state),
-      accountsRead: new AccountsReadExternalities(),
-      accountsWrite: new AccountsWriteExternalities(),
-      accountsLookup: new AccountsLookupExternalities(),
+    const balanceProvider = {
+      getNewBalance() {
+        return partialState.updatedState.updatedServiceInfo?.balance ?? null;
+      },
     };
 
-    const executor = PvmExecutor.createAccumulateExecutor(code, externalities, this.chainSpec);
+    const serviceExternalities = new AccumulateServiceExternalities(serviceId, this.state, balanceProvider);
+    const externalities = {
+      partialState,
+      serviceExternalities,
+      fetchExternalities: new AccumulateFetchExternalities(entropy, operands, this.chainSpec),
+    };
+
+    const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec);
     // TODO [MaSi]: in GP 0.6.7 operands array is replaced with length of operands array
     const args = Encoder.encodeObject(ARGS_CODEC, { slot, serviceId, operands }, this.chainSpec);
 
     const result = await executor.run(args, tryAsGas(gas));
+
     const [newState, checkpoint] = partialState.getStateUpdates();
 
     /**
@@ -226,6 +225,8 @@ export class Accumulate {
      *
      * https://graypaper.fluffylabs.dev/#/7e6ff6a/302302302302?v=0.6.7
      */
+    newState.storage = serviceExternalities.getUpdates();
+
     return Result.ok({ stateUpdate: newState, consumedGas: tryAsServiceGas(result.consumedGas) });
   }
 

@@ -47,8 +47,8 @@ function prepareRegsAndMemory(
 describe("HostCalls: Upgrade", () => {
   it("should upgrade a service", async () => {
     const accumulate = new PartialStateMock();
-    const upgrade = new Upgrade(accumulate);
-    upgrade.currentServiceId = tryAsServiceId(10_000);
+    const currentServiceId = tryAsServiceId(10_000);
+    const upgrade = new Upgrade(currentServiceId, accumulate);
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(2n ** 40n),
@@ -65,8 +65,8 @@ describe("HostCalls: Upgrade", () => {
 
   it("should fail when code not readable", async () => {
     const accumulate = new PartialStateMock();
-    const upgrade = new Upgrade(accumulate);
-    upgrade.currentServiceId = tryAsServiceId(10_000);
+    const currentServiceId = tryAsServiceId(10_000);
+    const upgrade = new Upgrade(currentServiceId, accumulate);
 
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),

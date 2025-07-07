@@ -60,9 +60,8 @@ function prepareRegsAndMemory(
 describe("HostCalls: Designate", () => {
   it("should fail when no data in memory", async () => {
     const accumulate = new PartialStateMock();
-    const designate = new Designate(accumulate, tinyChainSpec);
     const serviceId = tryAsServiceId(10_000);
-    designate.currentServiceId = serviceId;
+    const designate = new Designate(serviceId, accumulate, tinyChainSpec);
     const { registers, memory } = prepareRegsAndMemory([], { skipValidators: true });
 
     // when
@@ -75,9 +74,8 @@ describe("HostCalls: Designate", () => {
 
   it("should designate new validator set", async () => {
     const accumulate = new PartialStateMock();
-    const designate = new Designate(accumulate, tinyChainSpec);
     const serviceId = tryAsServiceId(10_000);
-    designate.currentServiceId = serviceId;
+    const designate = new Designate(serviceId, accumulate, tinyChainSpec);
     const { registers, memory } = prepareRegsAndMemory([
       ValidatorData.create({
         ed25519: Bytes.fill(ED25519_KEY_BYTES, 1).asOpaque(),
