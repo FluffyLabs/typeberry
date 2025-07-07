@@ -1,23 +1,28 @@
+import fs from "node:fs";
 import { isMainThread } from "node:worker_threads";
 import { Logger } from "@typeberry/logger";
 
-import { Block, type BlockView, Extrinsic, Header, type HeaderHash, type StateRootHash } from "@typeberry/block";
-import { Bytes } from "@typeberry/bytes";
+import { Block, type BlockView, Extrinsic, Header, type HeaderHash } from "@typeberry/block";
+import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, Config, fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import { type JipChainSpec, KnownChainSpec, NodeConfiguration } from "@typeberry/config-node";
+import { TruncatedHashDictionary } from "@typeberry/database";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import type { Finished, MainInit } from "@typeberry/generic-worker";
 import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import * as blockImporter from "@typeberry/importer";
 import type { MainReady } from "@typeberry/importer/state-machine.js";
+import { parseFromJson } from "@typeberry/json-parser";
 import type { MessageChannelStateMachine } from "@typeberry/state-machine";
-import { StateEntries } from "@typeberry/state-merkleization";
-import { type Arguments, Command, KnownChainSpec } from "./args.js";
+import { SerializedState, StateEntries, type StateKey } from "@typeberry/state-merkleization";
+import { type Arguments, Command, DEV_CONFIG } from "./args.js";
 import { startBlockGenerator } from "./author.js";
 import { initializeExtensions } from "./extensions.js";
-import { loadGenesis, loadGenesisBlock } from "./genesis.js";
 import { startBlocksReader } from "./reader.js";
+
+import devConfigJson from "@typeberry/configs/typeberry-dev.json" with { type: "json" };
 
 const logger = Logger.new(import.meta.filename, "jam");
 
@@ -32,21 +37,13 @@ type Options = {
   isAuthoring: boolean;
   /** Paths to JSON or binary blocks to import (ordered). */
   blocksToImport: string[] | null;
-  /** Path to JSON with genesis state. */
-  genesisPath: string | null;
-  /** Path to a JSON with genesis block. */
-  genesisBlockPath: string | null;
-  /** Genesis root hash. */
-  genesisRoot: StateRootHash;
-  /** Path to database to open. */
-  databasePath: string;
-  /** Chain spec (could also be filename?) */
-  chainSpec: KnownChainSpec;
-  /** Whether to enable omit seal verification */
-  omitSealVerification: boolean;
+  /** Node name. */
+  nodeName: string;
+  /** Node configuration. */
+  config: NodeConfiguration;
 };
 
-export async function main(args: Arguments) {
+export async function main(args: Arguments, withRelPath: (v: string) => string) {
   if (!isMainThread) {
     logger.error("The main binary cannot be running as a Worker!");
     return;
@@ -55,23 +52,18 @@ export async function main(args: Arguments) {
   const options: Options = {
     isAuthoring: false,
     blocksToImport: args.command === Command.Import ? args.args.files : null,
-    genesisPath: args.args.genesis,
-    genesisBlockPath: args.args.genesisBlock,
-    genesisRoot: args.args.genesisRoot,
-    databasePath: args.args.dbPath,
-    chainSpec: KnownChainSpec.Tiny,
-    omitSealVerification: args.args.omitSealVerification,
+    nodeName: args.args.nodeName,
+    config: loadConfig(args.args.configPath),
   };
 
-  const chainSpec = getChainSpec(options.chainSpec);
-  // Initialize the database with genesis state and block if there isn't one.
-  const dbPath = await initializeDatabase(
-    chainSpec,
-    options.databasePath,
-    options.genesisRoot,
-    options.genesisPath,
-    options.genesisBlockPath,
+  const chainSpec = getChainSpec(options.config.flavor);
+  const { rootDb, dbPath, genesisHeaderHash } = openDatabase(
+    options.nodeName,
+    options.config.chainSpec.genesisHeader,
+    withRelPath(options.config.databaseBasePath),
   );
+  // Initialize the database with genesis state and block if there isn't one.
+  await initializeDatabase(chainSpec, genesisHeaderHash, rootDb, options.config.chainSpec);
 
   // Start extensions
   const importerInit = await blockImporter.spawnWorker();
@@ -79,7 +71,7 @@ export async function main(args: Arguments) {
   const closeExtensions = initializeExtensions({ bestHeader });
 
   // Start block importer
-  const config = new Config(chainSpec, dbPath, options.omitSealVerification);
+  const config = new Config(chainSpec, dbPath, options.config.authorship.omitSealVerification);
   const importerReady = importerInit.transition((state, port) => {
     return state.sendConfig(port, config);
   });
@@ -149,7 +141,7 @@ const initBlocksReader = async (
   });
 };
 
-const getChainSpec = (name: KnownChainSpec) => {
+export const getChainSpec = (name: KnownChainSpec) => {
   if (name === KnownChainSpec.Full) {
     return fullChainSpec;
   }
@@ -158,8 +150,31 @@ const getChainSpec = (name: KnownChainSpec) => {
     return tinyChainSpec;
   }
 
-  throw new Error(`Unknown chain spec: ${name}`);
+  throw new Error(`Unknown chain spec: ${name}. Possible options: ${[KnownChainSpec.Full, KnownChainSpec.Tiny]}`);
 };
+
+export function openDatabase(
+  nodeName: string,
+  genesisHeader: BytesBlob,
+  databaseBasePath: string,
+  { readOnly = false }: { readOnly?: boolean } = {},
+) {
+  const nodeNameHash = blake2b.hashString(nodeName).toString().substring(2, 10);
+  const genesisHeaderHash = blake2b.hashBytes(genesisHeader).asOpaque<HeaderHash>();
+  const genesisHeaderHashNibbles = genesisHeaderHash.toString().substring(2, 10);
+
+  const dbPath = `${databaseBasePath}/${nodeNameHash}/${genesisHeaderHashNibbles}`;
+  logger.info(`🛢️ Opening database at ${dbPath}`);
+  try {
+    return {
+      dbPath,
+      rootDb: new LmdbRoot(dbPath, readOnly),
+      genesisHeaderHash,
+    };
+  } catch (e) {
+    throw new Error(`Unable to open database at ${dbPath}: ${e}`);
+  }
+}
 
 /**
  * Initialize the database unless it's already initialized.
@@ -168,15 +183,10 @@ const getChainSpec = (name: KnownChainSpec) => {
  */
 async function initializeDatabase(
   spec: ChainSpec,
-  databasePath: string,
-  genesisRootHash: StateRootHash,
-  genesisPath: string | null,
-  genesisHeaderPath: string | null,
-): Promise<string> {
-  const maybeGenesis = loadAndCheckGenesisIfProvided(spec, genesisRootHash, genesisPath);
-  const dbPath = `${databasePath}/${genesisRootHash}`;
-  logger.log(`🛢️ Opening database at ${dbPath}`);
-  const rootDb = new LmdbRoot(dbPath);
+  genesisHeaderHash: HeaderHash,
+  rootDb: LmdbRoot,
+  config: JipChainSpec,
+): Promise<void> {
   const blocks = new LmdbBlocks(spec, rootDb);
   const states = new LmdbStates(spec, rootDb);
 
@@ -188,29 +198,18 @@ async function initializeDatabase(
   // DB seems already initialized, just go with what we have.
   if (state !== null && !state.isEqualTo(Bytes.zero(HASH_SIZE)) && !header.isEqualTo(Bytes.zero(HASH_SIZE))) {
     await rootDb.db.close();
-    return dbPath;
+    return;
   }
-
-  // we need genesis, since the DB is empty. Let's error out if it's not provided.
-  if (maybeGenesis === null) {
-    throw new Error(
-      `Database is not initialized. Provide path to genesis state yielding root hash: ${genesisRootHash}`,
-    );
-  }
-
-  const { genesisStateSerialized, genesisStateRootHash } = maybeGenesis;
 
   logger.log("🛢️ Database looks fresh. Initializing.");
   // looks like a fresh db, initialize the state.
-  let genesisBlock = loadGenesisBlockIfProvided(spec, genesisHeaderPath);
-  if (genesisBlock === null) {
-    genesisBlock = emptyBlock();
-  }
-
-  const genesisHeader = genesisBlock.header;
-  const genesisHeaderHash = blake2b.hashBytes(Encoder.encodeObject(Header.Codec, genesisHeader, spec)).asOpaque();
+  const genesisHeader = Decoder.decodeObject(Header.Codec, config.genesisHeader, spec);
+  const genesisExtrinsic = emptyBlock().extrinsic;
+  const genesisBlock = Block.create({ header: genesisHeader, extrinsic: genesisExtrinsic });
   const blockView = Decoder.decodeObject(Block.Codec.View, Encoder.encodeObject(Block.Codec, genesisBlock, spec), spec);
-  logger.log(`🧬 Writing genesis block ${genesisHeaderHash}`);
+  logger.log(`🧬 Writing genesis block #${genesisHeader.timeSlotIndex}: ${genesisHeaderHash}`);
+
+  const { genesisStateSerialized, genesisStateRootHash } = loadGenesisState(spec, config.genesisState);
 
   // write to db
   await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(genesisHeaderHash, blockView));
@@ -220,40 +219,19 @@ async function initializeDatabase(
 
   // close the DB
   await rootDb.db.close();
-
-  return dbPath;
 }
 
-function loadGenesisBlockIfProvided(spec: ChainSpec, genesisBlockPath: string | null): Block | null {
-  if (genesisBlockPath === null) {
-    return null;
-  }
+function loadGenesisState(spec: ChainSpec, data: JipChainSpec["genesisState"]) {
+  const stateDict = TruncatedHashDictionary.fromEntries<StateKey, BytesBlob>(Array.from(data.entries()));
+  const stateEntries = StateEntries.fromTruncatedDictionaryUnsafe(stateDict);
+  const state = SerializedState.fromStateEntries(spec, stateEntries);
 
-  logger.log(`🧬 Loading genesis block from ${genesisBlockPath}`);
-  return loadGenesisBlock(spec, genesisBlockPath);
-}
-
-function loadAndCheckGenesisIfProvided(spec: ChainSpec, expectedRootHash: StateRootHash, genesisPath: string | null) {
-  if (genesisPath === null) {
-    return null;
-  }
-
-  logger.log(`🧬 Loading genesis state from ${genesisPath}`);
-  const genesisState = loadGenesis(spec, genesisPath);
-  const genesisStateSerialized = StateEntries.serializeInMemory(spec, genesisState);
-  const genesisStateRootHash = genesisStateSerialized.getRootHash();
+  const genesisStateRootHash = stateEntries.getRootHash();
   logger.info(`🧬 Genesis state root: ${genesisStateRootHash}`);
 
-  // mismatch between expected state root and the one loaded.
-  if (!genesisStateRootHash.isEqualTo(expectedRootHash)) {
-    throw new Error(
-      `Incorrect genesis loaded. State root mismatch. Expected: ${expectedRootHash}, got: ${genesisStateRootHash}`,
-    );
-  }
-
   return {
-    genesisState,
-    genesisStateSerialized,
+    genesisState: state,
+    genesisStateSerialized: stateEntries,
     genesisStateRootHash,
   };
 }
@@ -273,4 +251,18 @@ function emptyBlock() {
       },
     }),
   });
+}
+
+export function loadConfig(configPath: string): NodeConfiguration {
+  if (configPath === DEV_CONFIG) {
+    return parseFromJson(devConfigJson, NodeConfiguration.fromJson);
+  }
+
+  try {
+    const configFile = fs.readFileSync(configPath, "utf8");
+    const parsed = JSON.parse(configFile);
+    return parseFromJson(parsed, NodeConfiguration.fromJson);
+  } catch (e) {
+    throw new Error(`Unable to load config file from ${configPath}: ${e}`);
+  }
 }

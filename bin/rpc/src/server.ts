@@ -1,6 +1,5 @@
-import { existsSync } from "node:fs";
 import type { ChainSpec } from "@typeberry/config";
-import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
+import { LmdbBlocks, type LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import { Logger } from "@typeberry/logger";
 import { WebSocketServer } from "ws";
 import type { WebSocket } from "ws";
@@ -39,32 +38,21 @@ function createParamsParseErrorMessage(error: z.ZodError): string {
 
 export class RpcServer {
   private readonly wss: WebSocketServer;
-  private readonly rootDb: LmdbRoot;
   private readonly blocks: LmdbBlocks;
   private readonly states: LmdbStates;
-  private readonly chainSpec: ChainSpec;
   private readonly subscriptionManager: SubscriptionManager;
   private readonly logger: Logger;
 
   constructor(
     port: number,
-    dbPath: string,
-    genesisRoot: string,
-    chainSpec: ChainSpec,
+    private readonly rootDb: LmdbRoot,
+    private readonly chainSpec: ChainSpec,
     private readonly methods: RpcMethodRepo,
   ) {
     this.logger = Logger.new(import.meta.filename, "rpc");
 
-    const fullDbPath = `${dbPath}/${genesisRoot}`;
-    if (!existsSync(fullDbPath)) {
-      this.logger.error(`Database not found at ${fullDbPath}`);
-      process.exit(1);
-    }
-    this.rootDb = new LmdbRoot(fullDbPath, true);
     this.blocks = new LmdbBlocks(chainSpec, this.rootDb);
     this.states = new LmdbStates(chainSpec, this.rootDb);
-
-    this.chainSpec = chainSpec;
 
     this.wss = new WebSocketServer({ port });
     this.setupWebSocket();

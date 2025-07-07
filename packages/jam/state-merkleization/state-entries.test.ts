@@ -12,7 +12,7 @@ describe("State Serialization", () => {
   it("should load and serialize the test state", () => {
     const state = testState();
     const serialized = StateEntries.serializeInMemory(spec, state);
-    for (const [actualKey, actualValue] of serialized.entries) {
+    for (const [actualKey, actualValue] of serialized.entries.data) {
       let foundKey = false;
       for (const [expectedKey, expectedValue, details] of TEST_STATE) {
         if (actualKey.isEqualTo(Bytes.parseBytes(expectedKey, HASH_SIZE))) {

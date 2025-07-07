@@ -46,7 +46,7 @@ class Bootnode extends WithDebug {
  *
  *  https://github.com/polkadot-fellows/JIPs/blob/90f809b84a9913a821437225f085cf5153870212/JIP-4.md#jip-4-chainspec-file
  */
-export class NetChainSpec extends WithDebug {
+export class JipChainSpec extends WithDebug {
   /** Optional list of initial contact points for a new node joining the network */
   readonly bootnodes?: Bootnode[];
   /** Human-readable identifier for the network */
@@ -61,7 +61,7 @@ export class NetChainSpec extends WithDebug {
    */
   readonly genesisState: Map<Bytes<31>, BytesBlob>;
 
-  static fromJson = json.object<JsonObject<NetChainSpec>, NetChainSpec>(
+  static fromJson = json.object<JsonObject<JipChainSpec>, JipChainSpec>(
     {
       bootnodes: json.optional(json.array(json.fromString(Bootnode.fromString))),
       id: "string",
@@ -72,7 +72,7 @@ export class NetChainSpec extends WithDebug {
       ),
     },
     (o) =>
-      NetChainSpec.create({
+      JipChainSpec.create({
         bootnodes: o.bootnodes,
         id: o.id,
         genesisHeader: o.genesis_header,
@@ -91,10 +91,10 @@ export class NetChainSpec extends WithDebug {
     genesisHeader?: BytesBlob;
     genesisState?: Map<Bytes<31>, BytesBlob>;
   }) {
-    return new NetChainSpec({ bootnodes, id, genesisHeader, genesisState });
+    return new JipChainSpec({ bootnodes, id, genesisHeader, genesisState });
   }
 
-  private constructor(data: NetChainSpec) {
+  private constructor(data: JipChainSpec) {
     super();
 
     this.bootnodes = data.bootnodes;
