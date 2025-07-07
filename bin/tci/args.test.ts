@@ -5,7 +5,7 @@ import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "../../dist/packages/core/hash/hash.js";
 import { type CommonArguments, parseArgs } from "./args.js";
 
-describe("Typeberry Common Interface (TCI)", () => {
+describe("Typeberry Common Interface (TCI): Arguments", () => {
   const hex32 = "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20";
   const hex32with0x = `0x${hex32}`;
   const expectedBytes = Bytes.parseBytesNoPrefix(hex32, HASH_SIZE);

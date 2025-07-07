@@ -8,14 +8,20 @@ import { type CommonArguments, parseArgs } from "./args.js";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 
-async function main(args: string[]) {
+/**
+  * JAM Node entry w/ common command lines arguments
+  * understood by all JAM nodes implementations
+  *
+  * https://docs.jamcha.in/basics/cli-args
+  */
+export async function main(args: string[]) {
   const argv = parseArgs(args);
   const rpcArgs = rpcConfig(argv);
   const config = jamConfig(argv);
   mainRpc(rpcArgs, config);
 }
 
-function jamConfig(argv: CommonArguments): NodeConfiguration {
+export function jamConfig(argv: CommonArguments): NodeConfiguration {
   const config = loadConfig(DEV_CONFIG);
   const { bandersnatch, bls, ed25519, datadir, genesis, ts, validatorindex } = argv;
 
@@ -44,7 +50,7 @@ function jamConfig(argv: CommonArguments): NodeConfiguration {
   return config;
 }
 
-function rpcConfig(argv: CommonArguments): string[] {
+export function rpcConfig(argv: CommonArguments): string[] {
   const args: string[] = [];
   if (argv.metadata !== undefined) {
     args.push(`--nodeName=${argv.metadata}`);
