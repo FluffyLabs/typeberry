@@ -5,7 +5,7 @@ import { Logger } from "@typeberry/logger";
 import { WebSocketServer } from "ws";
 import type { WebSocket } from "ws";
 import z from "zod";
-import { SUBSCRIBE_METHOD_MAP, SubscriptionManager, UNSUBSCRIBE_METHOD_WHITELIST } from "./subscription-manager.js";
+import { SUBSCRIBE_METHOD_MAP, SubscriptionManager } from "./subscription-manager.js";
 import {
   type DatabaseContext,
   type JsonRpcErrorResponse,
@@ -165,19 +165,19 @@ export class RpcServer {
       return null;
     }
 
-    return createErrorResponse(new RpcError(-32600, "Invalid request."), null);
+    return createErrorResponse(new RpcError(-32600, `Invalid request: ${JSON.stringify(request)}`), null);
   }
 
   private async fulfillRequest(request: JsonRpcRequest | JsonRpcNotification, ws: WebSocket): Promise<JsonRpcResult> {
     const { method, params } = request;
 
-    const subscribeMethod = SUBSCRIBE_METHOD_MAP.get(method);
+    const [subscribeMethod, _] = SUBSCRIBE_METHOD_MAP.get(method) ?? [];
     if (subscribeMethod !== undefined) {
       const validatedParams = this.validateCall(subscribeMethod, params ?? null);
       return [this.subscriptionManager.subscribe(ws, subscribeMethod, validatedParams)];
     }
 
-    if (UNSUBSCRIBE_METHOD_WHITELIST.has(method)) {
+    if ([...SUBSCRIBE_METHOD_MAP.values()].some(([, unsubscribeMethod]) => unsubscribeMethod === method)) {
       const parseResult = UnsubscribeParams.safeParse(params);
       if (parseResult.error !== undefined) {
         throw new RpcError(-32602, createParamsParseErrorMessage(parseResult.error));

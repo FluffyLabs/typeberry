@@ -9,24 +9,14 @@ import {
 
 const POLL_INTERVAL_MS = 1000;
 
-export const SUBSCRIBE_METHOD_MAP = new Map<string, string>([
-  ["subscribeBestBlock", "bestBlock"],
-  ["subscribeFinalizedBlock", "finalizedBlock"],
-  ["subscribeServiceData", "serviceData"],
-  ["subscribeServicePreimage", "servicePreimage"],
-  ["subscribeServiceRequest", "serviceRequest"],
-  ["subscribeServiceValue", "serviceValue"],
-  ["subscribeStatistics", "statistics"],
-]);
-
-export const UNSUBSCRIBE_METHOD_WHITELIST = new Set<string>([
-  "unsubscribeBestBlock",
-  "unsubscribeFinalizedBlock",
-  "unsubscribeServiceData",
-  "unsubscribeServicePreimage",
-  "unsubscribeServiceRequest",
-  "unsubscribeServiceValue",
-  "unsubscribeStatistics",
+export const SUBSCRIBE_METHOD_MAP = new Map<string, [string, string]>([
+  ["subscribeBestBlock", ["bestBlock", "unsubscribeBestBlock"]],
+  ["subscribeFinalizedBlock", ["finalizedBlock", "unsubscribeFinalizedBlock"]],
+  ["subscribeServiceData", ["serviceData", "unsubscribeServiceData"]],
+  ["subscribeServicePreimage", ["servicePreimage", "unsubscribeServicePreimage"]],
+  ["subscribeServiceRequest", ["serviceRequest", "unsubscribeServiceRequest"]],
+  ["subscribeServiceValue", ["serviceValue", "unsubscribeServiceValue"]],
+  ["subscribeStatistics", ["statistics", "unsubscribeStatistics"]],
 ]);
 
 export class SubscriptionManager {
@@ -44,27 +34,32 @@ export class SubscriptionManager {
 
   private async pollSubscriptions(): Promise<void> {
     for (const [subscriptionId, subscription] of this.subscriptions) {
+      const lastResult = this.lastResults.get(subscriptionId);
+      let notificationString: string;
+
       try {
         const result = await this.server.callMethod(subscription.method, subscription.params);
-        const lastResult = this.lastResults.get(subscriptionId);
+
         const notification: JsonRpcSubscriptionNotification = {
           jsonrpc: JSON_RPC_VERSION,
           method: subscription.method,
-          params: [subscriptionId, result],
+          params: { subscriptionId, result },
         };
-        const notificationString = JSON.stringify(notification);
 
-        if (notificationString !== lastResult) {
-          subscription.ws.send(notificationString);
-          this.lastResults.set(subscriptionId, notificationString);
-        }
+        notificationString = JSON.stringify(notification);
       } catch (error) {
-        this.server.getLogger().error(`Error polling subscription ${subscriptionId}:`);
-        if (error instanceof Error) {
-          this.server.getLogger().error(error.toString());
-        } else {
-          this.server.getLogger().error(JSON.stringify(error));
-        }
+        const notification: JsonRpcSubscriptionNotification = {
+          jsonrpc: JSON_RPC_VERSION,
+          method: subscription.method,
+          params: { subscriptionId, error: `${error}` },
+        };
+
+        notificationString = JSON.stringify(notification);
+      }
+
+      if (notificationString !== lastResult) {
+        subscription.ws.send(notificationString);
+        this.lastResults.set(subscriptionId, notificationString);
       }
     }
   }
