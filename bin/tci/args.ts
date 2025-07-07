@@ -4,25 +4,35 @@ import minimist from "minimist";
 import packageJson from "./package.json";
 
 type Hex = Bytes<HASH_SIZE>;
-export type OptionHex = Hex | undefined;
-export type OptionString = string | undefined;
-export type OptionNumber = number | undefined;
 
 export const HELP = `
-typeberry ${packageJson.version} by ${packageJson.author}
+JAM compatible CLI for typeberry ${packageJson.version} by ${packageJson.author}
 
+Usage:
+  typeberry [options]
+
+Options:
+  --bandersnatch hex        Bandersnatch Seed (development only)
+  --bls hex                 BLS Seed (development only)
+  --datadir path            Directory for blockchain, keystore, and other data
+  --ed25519 hex             Ed25519 Seed (development only)
+  --genesis path            Genesis state JSON file
+  --metadata string         Node metadata (default: "Alice")
+  --port int                Network listening port (default: 9900)
+  --ts int                  Epoch0 Unix timestamp (overrides genesis config)
+  --validatorindex int      Validator Index (development only)
 `;
 
-export type Arguments = {
-  bandersnatch: OptionHex;
-  bls: OptionHex;
-  datadir: OptionString;
-  ed25519: OptionHex;
-  genesis: OptionString;
-  metadata: OptionString;
-  port: OptionNumber;
-  ts: OptionNumber; // Epoch0 Unix TimeStamp
-  validatorindex: OptionNumber;
+export type CommonArguments = {
+  bandersnatch?: Hex;
+  bls?: Hex;
+  datadir?: string;
+  ed25519?: Hex;
+  genesis?: string;
+  metadata?: string;
+  port?: number;
+  ts?: number; // epoch0 unix timestamp
+  validatorindex?: number;
 };
 
 const toHex = (v: string) => {
@@ -31,8 +41,8 @@ const toHex = (v: string) => {
   }
   return Bytes.parseBytesNoPrefix(v, HASH_SIZE);
 };
-const toOptionString = (v: string): OptionString => v;
-const toOptionNumber = (v: string): OptionNumber => {
+const toString = (v: string) => v;
+const toNumber = (v: string): number => {
   const val = Number.parseInt(v);
   if (Number.isNaN(val)) {
     throw Error(`Cannot parse '${v}' as a number.`);
@@ -40,21 +50,21 @@ const toOptionNumber = (v: string): OptionNumber => {
   return val;
 };
 
-export function parseArgs(cliInput: string[]): Arguments {
+export function parseArgs(cliInput: string[]): CommonArguments {
   const args = minimist(cliInput, {
     string: ["bandersnatch", "bls", "datadir", "ed25519", "genesis", "medatada", "port", "ts", "validatorindex"],
   });
 
-  const result: Arguments = {
+  const result: CommonArguments = {
     bandersnatch: parseValue(args, "bandersnatch", toHex).bandersnatch,
     bls: parseValue(args, "bls", toHex).bls,
-    datadir: parseValue(args, "datadir", toOptionString).datadir,
+    datadir: parseValue(args, "datadir", toString).datadir,
     ed25519: parseValue(args, "ed25519", toHex).ed25519,
-    genesis: parseValue(args, "genesis", toOptionString).genesis,
-    metadata: parseValue(args, "metadata", toOptionString, "Alice").metadata,
-    port: parseValue(args, "port", toOptionNumber).port,
-    ts: parseValue(args, "ts", toOptionNumber).ts,
-    validatorindex: parseValue(args, "validatorindex", toOptionNumber).validatorindex,
+    genesis: parseValue(args, "genesis", toString).genesis,
+    metadata: parseValue(args, "metadata", toString, "Alice").metadata,
+    port: parseValue(args, "port", toNumber).port,
+    ts: parseValue(args, "ts", toNumber).ts,
+    validatorindex: parseValue(args, "validatorindex", toNumber).validatorindex,
   };
 
   assertNoMoreArgs(args);

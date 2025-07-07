@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "../../dist/packages/core/hash/hash.js";
-import { type Arguments, parseArgs } from "./args.js";
+import { type CommonArguments, parseArgs } from "./args.js";
 
 describe("Typeberry Common Interface (TCI)", () => {
   const hex32 = "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20";
@@ -11,7 +11,7 @@ describe("Typeberry Common Interface (TCI)", () => {
   const expectedBytes = Bytes.parseBytesNoPrefix(hex32, HASH_SIZE);
   const path = "../mydata";
 
-  const defaultArgs: Arguments = {
+  const defaultArgs: CommonArguments = {
     bandersnatch: undefined,
     bls: undefined,
     datadir: undefined,
