@@ -41,7 +41,7 @@ const toHex = (v: string) => {
   }
   return Bytes.parseBytesNoPrefix(v, HASH_SIZE);
 };
-const toString = (v: string) => v;
+const toStr = (v: string) => v;
 const toNumber = (v: string): number => {
   const val = Number.parseInt(v);
   if (Number.isNaN(val)) {
@@ -58,10 +58,10 @@ export function parseArgs(cliInput: string[]): CommonArguments {
   const result: CommonArguments = {
     bandersnatch: parseValue(args, "bandersnatch", toHex).bandersnatch,
     bls: parseValue(args, "bls", toHex).bls,
-    datadir: parseValue(args, "datadir", toString).datadir,
+    datadir: parseValue(args, "datadir", toStr).datadir,
     ed25519: parseValue(args, "ed25519", toHex).ed25519,
-    genesis: parseValue(args, "genesis", toString).genesis,
-    metadata: parseValue(args, "metadata", toString, "Alice").metadata,
+    genesis: parseValue(args, "genesis", toStr).genesis,
+    metadata: parseValue(args, "metadata", toStr, "Alice").metadata,
     port: parseValue(args, "port", toNumber).port,
     ts: parseValue(args, "ts", toNumber).ts,
     validatorindex: parseValue(args, "validatorindex", toNumber).validatorindex,

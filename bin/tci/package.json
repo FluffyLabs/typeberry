@@ -13,6 +13,7 @@
   "type": "module",
   "dependencies": {
     "@typeberry/crypto": "0.0.1",
+    "@typeberry/config-node": "^0.0.1",
     "@typeberry/hash": "0.0.1",
     "@typeberry/bytes": "0.0.1",
     "@typeberry/logger": "0.0.1",

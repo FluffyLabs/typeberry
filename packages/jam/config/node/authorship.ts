@@ -12,6 +12,7 @@ export class AuthorshipOptions {
       bandersnatch_seed: json.optional(fromJson.bytes32()),
       bls_seed: json.optional(fromJson.bytes32()),
       ed25519_seed: json.optional(fromJson.bytes32()),
+      genesis_path: json.optional("string"),
       time_slot: json.optional("number"),
       validator_index: json.optional("number"),
     },
@@ -23,6 +24,7 @@ export class AuthorshipOptions {
     bandersnatch_seed,
     bls_seed,
     ed25519_seed,
+    genesis_path,
     time_slot,
     validator_index,
   }: JsonObject<AuthorshipOptions>) {
@@ -31,6 +33,7 @@ export class AuthorshipOptions {
       bandersnatch_seed,
       bls_seed,
       ed25519_seed,
+      genesis_path,
       time_slot,
       validator_index,
     );
@@ -40,14 +43,16 @@ export class AuthorshipOptions {
     /** Use fake seal verification instead of running bandersnatch. */
     public readonly omitSealVerification: boolean,
     /** Use predefined bandersnatch seed to derive bandersnatch key. */
-    public readonly bandersnatchSeed?: Bytes<HASH_SIZE>,
+    public bandersnatchSeed?: Bytes<HASH_SIZE>,
     /** Use predefined bls seed to derive bls key. */
-    public readonly blsSeed?: Bytes<HASH_SIZE>,
+    public blsSeed?: Bytes<HASH_SIZE>,
     /** Use predefined ed25519 seed to derive ed25519 key. */
-    public readonly ed25519Seed?: Bytes<HASH_SIZE>,
+    public ed25519Seed?: Bytes<HASH_SIZE>,
+    /** Use to provide path for genesis state */
+    public genesisPath?: string,
     /** Use to override genesis head config slot. */
-    public readonly timeSlot?: TimeSlot,
+    public timeSlot?: TimeSlot,
     /** Use to specify validator index that will be used as for current node. */
-    public readonly validatorIndex?: ValidatorIndex,
+    public validatorIndex?: ValidatorIndex,
   ) {}
 }

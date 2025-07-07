@@ -12,20 +12,21 @@
     "bandersnatch_seed": {
       "type": "string",
       "description": "Use seed to derive bandersnatch key",
-      "pattern": "^(?:0x)?[0-9a-fA-F]+$",
-      "minLength": 1
+      "pattern": "^(?:0x)?[0-9a-fA-F]+$"
     },
     "bls_seed": {
       "type": "string",
       "description": "Use seed to derive bls key",
-      "pattern": "^(?:0x)?[0-9a-fA-F]+$",
-      "minLength": 1
+      "pattern": "^(?:0x)?[0-9a-fA-F]+$"
     },
     "ed25519_seed": {
       "type": "string",
       "description": "Use seed to derive ed25519 key",
-      "pattern": "^(?:0x)?[0-9a-fA-F]+$",
-      "minLength": 1
+      "pattern": "^(?:0x)?[0-9a-fA-F]+$"
+    },
+    "genesis_path": {
+      "type": "string",
+      "description": "Use seed to derive ed25519 key"
     },
     "time_slot": {
       "type": "number",
@@ -36,7 +37,7 @@
       "type": "number",
       "description": "Use validator index for current node",
       "minimum": 0
-    },
+    }
   },
   "additionalProperties": false
 }

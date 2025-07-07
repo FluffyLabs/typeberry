@@ -43,7 +43,7 @@ type Options = {
   config: NodeConfiguration;
 };
 
-export async function main(args: Arguments, withRelPath: (v: string) => string) {
+export async function main(args: Arguments, withRelPath: (v: string) => string, nodeConfig?: NodeConfiguration) {
   if (!isMainThread) {
     logger.error("The main binary cannot be running as a Worker!");
     return;
@@ -53,7 +53,7 @@ export async function main(args: Arguments, withRelPath: (v: string) => string) 
     isAuthoring: false,
     blocksToImport: args.command === Command.Import ? args.args.files : null,
     nodeName: args.args.nodeName,
-    config: loadConfig(args.args.configPath),
+    config: nodeConfig ?? loadConfig(args.args.configPath),
   };
 
   const chainSpec = getChainSpec(options.config.flavor);

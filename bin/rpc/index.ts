@@ -1,11 +1,12 @@
 import { pathToFileURL } from "node:url";
+import type { NodeConfiguration } from "@typeberry/config-node";
 import { DEFAULTS } from "@typeberry/jam/args.js";
 import { getChainSpec, loadConfig, openDatabase } from "@typeberry/jam/main.js";
 import minimist from "minimist";
 import { methods } from "./src/method-loader.js";
 import { RpcServer } from "./src/server.js";
 
-export function main(args: string[]) {
+export function main(args: string[], nodeConfig?: NodeConfiguration) {
   const argv = minimist(args, {
     string: ["port", "nodeName", "config"],
     default: {
@@ -16,7 +17,7 @@ export function main(args: string[]) {
   });
 
   const port = Number.parseInt(argv.port, 10);
-  const config = loadConfig(argv.config);
+  const config = nodeConfig ?? loadConfig(argv.config);
   const spec = getChainSpec(config.flavor);
   const { rootDb } = openDatabase(argv.nodeName, config.chainSpec.genesisHeader, `../../${config.databaseBasePath}`, {
     readOnly: true,
