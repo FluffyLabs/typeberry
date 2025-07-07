@@ -9,11 +9,11 @@ import { type CommonArguments, parseArgs } from "./args.js";
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 
 /**
-  * JAM Node entry w/ common command lines arguments
-  * understood by all JAM nodes implementations
-  *
-  * https://docs.jamcha.in/basics/cli-args
-  */
+ * JAM Node entry w/ common command lines arguments
+ * understood by all JAM nodes implementations
+ *
+ * https://docs.jamcha.in/basics/cli-args
+ */
 export async function main(args: string[]) {
   const argv = parseArgs(args);
   const rpcArgs = rpcConfig(argv);
