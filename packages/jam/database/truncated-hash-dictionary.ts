@@ -3,7 +3,7 @@ import { HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { TRUNCATED_KEY_BYTES } from "@typeberry/trie";
 
-type HashWithZeroedBit = OpaqueHash;
+type HashWithZeroedBit<T extends OpaqueHash> = T;
 
 /**
  * A collection of hash-based keys (likely `StateKey`s) which ignores
@@ -30,11 +30,15 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
   /** A truncated key which we re-use to query the dictionary. */
   private readonly truncatedKey: T = Bytes.zero(HASH_SIZE).asOpaque();
 
-  private constructor(private readonly dict: HashDictionary<HashWithZeroedBit, V>) {}
+  private constructor(private readonly dict: HashDictionary<HashWithZeroedBit<T>, V>) {}
 
   /** Retrieve a value that matches the key on `TRUNCATED_KEY_BYTES`. */
   public get(fullKey: T | Bytes<TRUNCATED_KEY_BYTES>): V | undefined {
     this.truncatedKey.raw.set(fullKey.raw.subarray(0, TRUNCATED_KEY_BYTES));
     return this.dict.get(this.truncatedKey);
+  }
+
+  [Symbol.iterator]() {
+    return this.dict[Symbol.iterator]();
   }
 }

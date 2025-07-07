@@ -1,7 +1,6 @@
 import type { BlockView, EntropyHash, HeaderHash, HeaderView, TimeSlot } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
-import type { BlocksDb, StateUpdateError, StatesDb } from "@typeberry/database";
-import type { LeafDb } from "@typeberry/database-lmdb";
+import type { BlocksDb, LeafDb, StateUpdateError, StatesDb } from "@typeberry/database";
 import { WithHash } from "@typeberry/hash";
 import type { Logger } from "@typeberry/logger";
 import type { SerializedState } from "@typeberry/state-merkleization";
@@ -70,6 +69,7 @@ export class Importer {
   async importBlock(
     block: BlockView,
     preverifiedSeal: EntropyHash | null,
+    omitSealVerification = false,
   ): Promise<Result<WithHash<HeaderHash, HeaderView>, ImporterError>> {
     const logger = this.logger;
     logger.log(`🧱 Attempting to import a new block ${preverifiedSeal !== null ? "(seal preverified)" : ""}`);
@@ -82,10 +82,10 @@ export class Importer {
     }
 
     const timeSlot = block.header.view().timeSlotIndex.materialize();
-    logger.log(`🧱 Got hash ${hash.ok} for block at slot ${timeSlot}.`);
     const headerHash = hash.ok;
+    logger.log(`🧱 Verified block: Got hash ${headerHash} for block at slot ${timeSlot}.`);
     const timerStf = measure("import:stf");
-    const res = await this.stf.transition(block, headerHash, preverifiedSeal);
+    const res = await this.stf.transition(block, headerHash, preverifiedSeal, omitSealVerification);
     logger.log(timerStf());
     if (res.isError) {
       return importerError(ImporterErrorKind.Stf, res);

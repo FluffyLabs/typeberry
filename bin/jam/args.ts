@@ -1,48 +1,26 @@
-import type { StateRootHash } from "@typeberry/block";
-import { Bytes } from "@typeberry/bytes";
-import { HASH_SIZE } from "@typeberry/hash";
+import os from "node:os";
 import minimist from "minimist";
-import { version } from "./package.json";
+import packageJson from "./package.json" with { type: "json" };
 
-/** Chain spec chooser. */
-export enum KnownChainSpec {
-  /** Tiny chain spec. */
-  Tiny = "tiny",
-  /** Full chain spec. */
-  Full = "full",
-}
+export const DEV_CONFIG = "dev";
 
-const DEFAULTS = {
-  chainSpec: KnownChainSpec.Tiny,
-  genesisRoot: Bytes.parseBytes(
-    "0xc07cdbce686c64d0a9b6539c70b0bb821b6a74d9de750a46a5da05b5640c290a",
-    HASH_SIZE,
-  ).asOpaque<StateRootHash>(),
-  dbPath: "database",
+export const DEFAULTS = {
+  name: os.hostname(),
+  config: DEV_CONFIG,
 };
 
-// NOTE [ToDr] Instead of adding more options here we should probably
-// consider just using JSON config files and only leave the stuff
-// that is actually meant to be easily overriden from CLI.
 export const HELP = `
-typeberry ${version} by Fluffy Labs.
+typeberry ${packageJson.version} by Fluffy Labs.
 
 Usage:
   typeberry [options]
   typeberry [options] import <bin-or-json-blocks>
 
 Options:
-  --chain-spec          Chain Spec to use. Either 'tiny' or 'full'.
-                        [default: ${DEFAULTS.chainSpec}]
-  --db-path             Directory where database is going to be stored.
-                        [default: ${DEFAULTS.dbPath}]
-  --genesis-root        Assume a particular genesis root hash to open the DB.
-                        [default: ${DEFAULTS.genesisRoot.toString().replace("0x", "")}]
-  --genesis             Path to a JSON file containing genesis state dump.
-                        Takes precedence over --genesis-root.
-  --genesis-block       Path to a JSON file containing genesis block.
-                        Overrides the default empty block if needed.
-
+  --name                Override node name. Affects networking key and db location.
+                        [default: ${DEFAULTS.name}]
+  --config              Path to a config file or '${DEV_CONFIG}'.
+                        [default: ${DEFAULTS.config}]
 `;
 
 /** Command to execute. */
@@ -54,11 +32,8 @@ export enum Command {
 }
 
 export type SharedOptions = {
-  genesis: string | null;
-  genesisBlock: string | null;
-  genesisRoot: StateRootHash;
-  chainSpec: KnownChainSpec;
-  dbPath: string;
+  nodeName: string;
+  configPath: string;
 };
 
 export type Arguments =
@@ -70,56 +45,39 @@ export type Arguments =
       }
     >;
 
-const withRelPath = (relPath: string, p: string) => `${relPath}/${p}`;
-
-function parseSharedOptions(args: minimist.ParsedArgs, relPath: string): SharedOptions {
-  const dbPath = parseOption(args, "db-path", (v) => withRelPath(relPath, v), withRelPath(relPath, DEFAULTS.dbPath));
-  const genesisRootHash = parseOption(
+function parseSharedOptions(args: minimist.ParsedArgs, withRelPath: (v: string) => string): SharedOptions {
+  const { name } = parseValueOption(args, "name", (v) => v, DEFAULTS.name);
+  const { config } = parseValueOption(
     args,
-    "genesis-root",
-    (v) => Bytes.parseBytesNoPrefix(v, HASH_SIZE).asOpaque(),
-    DEFAULTS.genesisRoot,
-  );
-  const { genesis } = parseOption(args, "genesis", (v) => withRelPath(relPath, v), null);
-  const genesisBlock = parseOption(args, "genesis-block", (v) => withRelPath(relPath, v), null);
-  const chainSpec = parseOption(
-    args,
-    "chain-spec",
+    "config",
     (v) => {
-      switch (v) {
-        case KnownChainSpec.Tiny:
-          return KnownChainSpec.Tiny;
-        case KnownChainSpec.Full:
-          return KnownChainSpec.Full;
-        default:
-          throw Error("unknown chainspec");
+      if (v === DEV_CONFIG) {
+        return DEV_CONFIG;
       }
+      return withRelPath(v);
     },
-    DEFAULTS.chainSpec,
+    DEFAULTS.config,
   );
 
   return {
-    dbPath: dbPath["db-path"],
-    genesisRoot: genesisRootHash["genesis-root"],
-    genesis: genesis,
-    genesisBlock: genesisBlock["genesis-block"],
-    chainSpec: chainSpec["chain-spec"],
+    nodeName: name,
+    configPath: config,
   };
 }
 
-export function parseArgs(input: string[], relPath: string): Arguments {
+export function parseArgs(input: string[], withRelPath: (v: string) => string): Arguments {
   const args = minimist(input);
   const command = args._.shift() ?? Command.Run;
 
   switch (command) {
     case Command.Run: {
-      const data = parseSharedOptions(args, relPath);
+      const data = parseSharedOptions(args, withRelPath);
       assertNoMoreArgs(args);
       return { command: Command.Run, args: data };
     }
     case Command.Import: {
-      const data = parseSharedOptions(args, relPath);
-      const files = args._.map((f) => withRelPath(relPath, f));
+      const data = parseSharedOptions(args, withRelPath);
+      const files = args._.map((f) => withRelPath(f));
       args._ = [];
       assertNoMoreArgs(args);
       return {
@@ -139,19 +97,19 @@ export function parseArgs(input: string[], relPath: string): Arguments {
   throw new Error(`Invalid arguments: ${JSON.stringify(args)}`);
 }
 
-function parseOption<S extends string, T>(
+function parseValueOption<S extends string, T>(
   args: minimist.ParsedArgs,
   option: S,
   parser: (v: string) => T | null,
   defaultValue: T,
 ): Record<S, T> {
-  if (args[option] === undefined) {
+  const val = args[option];
+  if (val === undefined) {
     return {
       [option]: defaultValue,
     } as Record<S, T>;
   }
 
-  const val = args[option];
   delete args[option];
   if (typeof val !== "string") {
     throw new Error(`Option '--${option}' requires an argument.`);
