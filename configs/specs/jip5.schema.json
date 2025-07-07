@@ -3,14 +3,24 @@
   "title": "Block Schema",
   "description": "Schema for genesis block header",
   "type": "object",
-  "required": ["parent", "parent_state_root", "extrinsic_hash", "slot", "epoch_mark", "offenders_mark", "author_index", "entropy_source", "seal"],
+  "required": [
+    "parent",
+    "parent_state_root",
+    "extrinsic_hash",
+    "slot",
+    "epoch_mark",
+    "offenders_mark",
+    "author_index",
+    "entropy_source",
+    "seal"
+  ],
   "properties": {
     "parent": {
       "type": "string",
       "description": "Parent block header hash as hex string",
       "pattern": "^(?:0x)?[0-9a-fA-F]+$",
       "minLength": 1
-},
+    },
     "parent_state_root": {
       "type": "string",
       "description": "Parent block state root hash as hex string",
@@ -29,8 +39,10 @@
       "minimum": 0
     },
     "epoch_mark": {
-      "type": "object",
-
+      "type": "object"
+    },
+    "tickets_mark": {
+      "type": "number"
     }
   },
   "additionalProperties": false
