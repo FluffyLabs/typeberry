@@ -1,11 +1,10 @@
-import { existsSync } from "node:fs";
 import type { ChainSpec } from "@typeberry/config";
-import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
+import { LmdbBlocks, type LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import { Logger } from "@typeberry/logger";
 import { WebSocketServer } from "ws";
 import type { WebSocket } from "ws";
 import z from "zod";
-import { SUBSCRIBE_METHOD_MAP, SubscriptionManager, UNSUBSCRIBE_METHOD_WHITELIST } from "./subscription-manager.js";
+import { SUBSCRIBE_METHOD_MAP, SubscriptionManager } from "./subscription-manager.js";
 import {
   type DatabaseContext,
   type JsonRpcErrorResponse,
@@ -39,32 +38,21 @@ function createParamsParseErrorMessage(error: z.ZodError): string {
 
 export class RpcServer {
   private readonly wss: WebSocketServer;
-  private readonly rootDb: LmdbRoot;
   private readonly blocks: LmdbBlocks;
   private readonly states: LmdbStates;
-  private readonly chainSpec: ChainSpec;
   private readonly subscriptionManager: SubscriptionManager;
   private readonly logger: Logger;
 
   constructor(
     port: number,
-    dbPath: string,
-    genesisRoot: string,
-    chainSpec: ChainSpec,
+    private readonly rootDb: LmdbRoot,
+    private readonly chainSpec: ChainSpec,
     private readonly methods: RpcMethodRepo,
   ) {
     this.logger = Logger.new(import.meta.filename, "rpc");
 
-    const fullDbPath = `${dbPath}/${genesisRoot}`;
-    if (!existsSync(fullDbPath)) {
-      this.logger.error(`Database not found at ${fullDbPath}`);
-      process.exit(1);
-    }
-    this.rootDb = new LmdbRoot(fullDbPath, true);
     this.blocks = new LmdbBlocks(chainSpec, this.rootDb);
     this.states = new LmdbStates(chainSpec, this.rootDb);
-
-    this.chainSpec = chainSpec;
 
     this.wss = new WebSocketServer({ port });
     this.setupWebSocket();
@@ -165,19 +153,19 @@ export class RpcServer {
       return null;
     }
 
-    return createErrorResponse(new RpcError(-32600, "Invalid request."), null);
+    return createErrorResponse(new RpcError(-32600, `Invalid request: ${JSON.stringify(request)}`), null);
   }
 
   private async fulfillRequest(request: JsonRpcRequest | JsonRpcNotification, ws: WebSocket): Promise<JsonRpcResult> {
     const { method, params } = request;
 
-    const subscribeMethod = SUBSCRIBE_METHOD_MAP.get(method);
+    const [subscribeMethod, _] = SUBSCRIBE_METHOD_MAP.get(method) ?? [];
     if (subscribeMethod !== undefined) {
       const validatedParams = this.validateCall(subscribeMethod, params ?? null);
       return [this.subscriptionManager.subscribe(ws, subscribeMethod, validatedParams)];
     }
 
-    if (UNSUBSCRIBE_METHOD_WHITELIST.has(method)) {
+    if ([...SUBSCRIBE_METHOD_MAP.values()].some(([, unsubscribeMethod]) => unsubscribeMethod === method)) {
       const parseResult = UnsubscribeParams.safeParse(params);
       if (parseResult.error !== undefined) {
         throw new RpcError(-32602, createParamsParseErrorMessage(parseResult.error));

@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { encodeMessageLength, handleMessageFragmentation, MSG_LEN_PREFIX_BYTES } from "./message.js";
+import { MSG_LEN_PREFIX_BYTES, encodeMessageLength, handleMessageFragmentation } from "./message.js";
 
 describe("encodeMessageLength", () => {
   it("should encode message length for normal message", () => {
@@ -82,10 +82,7 @@ describe("handleMessageFragmentation", () => {
     const message2 = new Uint8Array([0x03, 0x04, 0x05]);
     const lengthPrefix1 = new Uint8Array([2, 0, 0, 0]); // length = 2
     const lengthPrefix2 = new Uint8Array([3, 0, 0, 0]); // length = 3
-    const combinedFrame = new Uint8Array([
-      ...lengthPrefix1, ...message1,
-      ...lengthPrefix2, ...message2
-    ]);
+    const combinedFrame = new Uint8Array([...lengthPrefix1, ...message1, ...lengthPrefix2, ...message2]);
 
     handler(combinedFrame);
 

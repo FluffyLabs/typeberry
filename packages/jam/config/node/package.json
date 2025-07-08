@@ -1,7 +1,7 @@
 {
-  "name": "@typeberry/config-net",
+  "name": "@typeberry/config-node",
   "version": "0.0.1",
-  "description": "Config for typeberry network.",
+  "description": "Config for typeberry node.",
   "main": "index.ts",
   "type": "module",
   "scripts": {

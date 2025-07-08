@@ -24,7 +24,7 @@ export interface HostCallHandler {
   readonly gasCost: SmallGas | ((reg: IHostCallRegisters) => Gas);
 
   /** Currently executing service id. */
-  currentServiceId: ServiceId;
+  readonly currentServiceId: ServiceId;
 
   /**
    * Actually execute the host call.

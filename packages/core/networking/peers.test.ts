@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { Bytes } from "@typeberry/bytes";
 import { ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
 import { OK } from "@typeberry/utils";
-import { Peers, type Peer, type PeerId, type PeerAddress, type Stream, type StreamCallback } from "./peers.js";
-import { Bytes } from "@typeberry/bytes";
+import { type Peer, type PeerAddress, type PeerId, Peers, type Stream, type StreamCallback } from "./peers.js";
 
 // Test implementations
 class TestStream implements Stream {
@@ -29,10 +29,10 @@ class TestPeer implements Peer {
     public readonly connectionId: string,
     public readonly address: PeerAddress,
     public readonly id: PeerId,
-    public readonly key: Ed25519Key
+    public readonly key: Ed25519Key,
   ) {}
 
-  addOnIncomingStream(streamCallback: StreamCallback): void {
+  addOnIncomingStream(_streamCallback: StreamCallback): void {
     // Mock implementation
   }
 
@@ -45,13 +45,8 @@ class TestPeer implements Peer {
   }
 }
 
-function createTestPeer(id: string, host: string = "127.0.0.1", port: number = 8080): TestPeer {
-  return new TestPeer(
-    `conn-${id}`,
-    { host, port },
-    id as PeerId,
-    Bytes.zero(ED25519_KEY_BYTES).asOpaque(),
-  );
+function createTestPeer(id: string, host = "127.0.0.1", port = 8080): TestPeer {
+  return new TestPeer(`conn-${id}`, { host, port }, id as PeerId, Bytes.zero(ED25519_KEY_BYTES).asOpaque());
 }
 
 describe("Peers", () => {

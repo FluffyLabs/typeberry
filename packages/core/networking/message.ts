@@ -1,11 +1,11 @@
 import { Buffer } from "node:buffer";
-import {tryAsU32, u32AsLeBytes} from "@typeberry/numbers";
+import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 
 export const MSG_LEN_PREFIX_BYTES = 4;
 
 /** Encode message length into a buffer. */
 export function encodeMessageLength(message: Uint8Array) {
-  return u32AsLeBytes(tryAsU32(message.length))
+  return u32AsLeBytes(tryAsU32(message.length));
 }
 
 /**

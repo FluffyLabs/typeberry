@@ -1,7 +1,6 @@
 import type { BlockView, EntropyHash, HeaderHash, HeaderView, TimeSlot } from "@typeberry/block";
 import type { ChainSpec } from "@typeberry/config";
-import type { BlocksDb, StateUpdateError, StatesDb } from "@typeberry/database";
-import type { LeafDb } from "@typeberry/database-lmdb";
+import type { BlocksDb, LeafDb, StateUpdateError, StatesDb } from "@typeberry/database";
 import { WithHash } from "@typeberry/hash";
 import type { Logger } from "@typeberry/logger";
 import type { SerializedState } from "@typeberry/state-merkleization";

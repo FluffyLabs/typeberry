@@ -1,10 +1,11 @@
+import type { ServiceId } from "@typeberry/block";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type U64, minU64, tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { HostCallResult } from "./results.js";
-import { CURRENT_SERVICE_ID, clampU64ToU32 } from "./utils.js";
+import { clampU64ToU32 } from "./utils.js";
 
 /** Fetchable data. */
 export interface FetchExternalities {
@@ -213,9 +214,11 @@ const IN_OUT_REG = 7;
 export class Fetch implements HostCallHandler {
   index = tryAsHostCallIndex(18);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly fetch: FetchExternalities) {}
+  constructor(
+    public readonly currentServiceId: ServiceId,
+    private readonly fetch: FetchExternalities,
+  ) {}
 
   async execute(
     _gas: GasCounter,

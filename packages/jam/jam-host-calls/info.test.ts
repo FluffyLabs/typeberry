@@ -48,10 +48,10 @@ function prepareRegsAndMemory(
 
 describe("HostCalls: Info", () => {
   it("should write account info data into memory", async () => {
-    const accounts = new TestAccounts();
-    const info = new Info(accounts);
     const serviceId = tryAsServiceId(10_000);
-    info.currentServiceId = serviceId;
+    const currentServiceId = serviceId;
+    const accounts = new TestAccounts(currentServiceId);
+    const info = new Info(currentServiceId, accounts);
     const { registers, memory, readInfo } = prepareRegsAndMemory(serviceId);
     const storageUtilisationBytes = tryAsU64(10_000);
     const storageUtilisationCount = tryAsU32(1_000);
@@ -80,8 +80,9 @@ describe("HostCalls: Info", () => {
   });
 
   it("should write none if account info is missing", async () => {
-    const accounts = new TestAccounts();
-    const info = new Info(accounts);
+    const currentServiceId = tryAsServiceId(15_000);
+    const accounts = new TestAccounts(currentServiceId);
+    const info = new Info(currentServiceId, accounts);
     const serviceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(serviceId);
 
@@ -94,10 +95,10 @@ describe("HostCalls: Info", () => {
   });
 
   it("should panic if not enough memory allocated", async () => {
-    const accounts = new TestAccounts();
-    const info = new Info(accounts);
     const serviceId = tryAsServiceId(10_000);
-    info.currentServiceId = serviceId;
+    const currentServiceId = serviceId;
+    const accounts = new TestAccounts(currentServiceId);
+    const info = new Info(serviceId, accounts);
     const { registers, memory } = prepareRegsAndMemory(serviceId, 10);
     const storageUtilisationBytes = tryAsU64(10_000);
     const storageUtilisationCount = tryAsU32(1_000);

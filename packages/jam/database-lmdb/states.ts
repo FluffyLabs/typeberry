@@ -1,7 +1,7 @@
 import type { HeaderHash, StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
-import { StateUpdateError, type StatesDb } from "@typeberry/database";
+import { LeafDb, StateUpdateError, type StatesDb } from "@typeberry/database";
 import type { ServicesUpdate, State } from "@typeberry/state";
 import { SerializedState, serializeUpdate } from "@typeberry/state-merkleization";
 import type { StateKey } from "@typeberry/state-merkleization";
@@ -12,7 +12,6 @@ import type { ValueHash } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
 import { OK, Result, assertNever, resultToString } from "@typeberry/utils";
 import type { LmdbRoot, SubDb } from "./root.js";
-import { LeafDb } from "./states/leaf-db.js";
 
 /**
  * LMDB-backed state storage.
@@ -85,7 +84,7 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     return await this.updateAndCommit(
       headerHash,
       trie,
-      Array.from(serializedState.entries).map((x) => [TrieAction.Insert, x[0], x[1]]),
+      Array.from(serializedState.entries.data).map((x) => [TrieAction.Insert, x[0], x[1]]),
     );
   }
 

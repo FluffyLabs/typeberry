@@ -1,4 +1,4 @@
-import { tryAsPerValidator } from "@typeberry/block";
+import { type ServiceId, tryAsPerValidator } from "@typeberry/block";
 import { Decoder, tryAsExactBytes } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
@@ -7,7 +7,6 @@ import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.j
 import { ValidatorData } from "@typeberry/state";
 import type { PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
-import { CURRENT_SERVICE_ID } from "../utils.js";
 
 const IN_OUT_REG = 7;
 export const VALIDATOR_DATA_BYTES = tryAsExactBytes(ValidatorData.Codec.sizeHint);
@@ -20,9 +19,9 @@ export const VALIDATOR_DATA_BYTES = tryAsExactBytes(ValidatorData.Codec.sizeHint
 export class Designate implements HostCallHandler {
   index = tryAsHostCallIndex(7);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
 
   constructor(
+    public readonly currentServiceId: ServiceId,
     private readonly partialState: PartialState,
     private readonly chainSpec: ChainSpec,
   ) {}

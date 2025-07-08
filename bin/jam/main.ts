@@ -1,13 +1,15 @@
+import fs from "node:fs";
 import { isMainThread } from "node:worker_threads";
 import { Logger } from "@typeberry/logger";
 
-import { Block, type BlockView, Extrinsic, Header, type HeaderHash, type StateRootHash } from "@typeberry/block";
-import { Bytes } from "@typeberry/bytes";
+import { Block, type BlockView, Extrinsic, Header, type HeaderHash } from "@typeberry/block";
+import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, Config, fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import { parseBootnode } from "@typeberry/config/net";
+import { type JipChainSpec, KnownChainSpec, NodeConfiguration } from "@typeberry/config-node";
 import { SEED_SIZE, deriveEd25519SecretKey, trivialSeed } from "@typeberry/crypto/key-derivation.js";
+import { TruncatedHashDictionary } from "@typeberry/database";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import type { Finished, MainInit } from "@typeberry/generic-worker";
 import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
@@ -15,15 +17,17 @@ import * as blockImporter from "@typeberry/importer";
 import type { MainReady } from "@typeberry/importer/state-machine.js";
 import { NetworkConfig } from "@typeberry/jam-network/state-machine.js";
 import type { Bootnode } from "@typeberry/jamnp-s";
+import { parseFromJson } from "@typeberry/json-parser";
 import { tryAsU32 } from "@typeberry/numbers";
 import type { MessageChannelStateMachine } from "@typeberry/state-machine";
-import { StateEntries } from "@typeberry/state-merkleization";
-import { type Arguments, Command, KnownChainSpec } from "./args.js";
+import { SerializedState, StateEntries, type StateKey } from "@typeberry/state-merkleization";
+import { type Arguments, Command, DEV_CONFIG } from "./args.js";
 import { startBlockGenerator } from "./author.js";
 import { initializeExtensions } from "./extensions.js";
-import { loadGenesis, loadGenesisBlock } from "./genesis.js";
 import { startNetwork } from "./network.js";
 import { startBlocksReader } from "./reader.js";
+
+import devConfigJson from "@typeberry/configs/typeberry-dev.json" with { type: "json" };
 
 const logger = Logger.new(import.meta.filename, "jam");
 
@@ -38,21 +42,10 @@ type Options = {
   isAuthoring: boolean;
   /** Paths to JSON or binary blocks to import (ordered). */
   blocksToImport: string[] | null;
-  // TODO [ToDr] Remove in favor of JIP-4 config file.
-  /** Path to JSON with genesis state. */
-  genesisPath: string | null;
-  /** Path to a JSON with genesis block. */
-  genesisBlockPath: string | null;
-  /** Genesis root hash. */
-  genesisRoot: StateRootHash;
-  /** Genesis header hash to use for networking. */
-  genesisHeaderHash: HeaderHash;
-  /** Path to database to open. */
-  databasePath: string;
-  /** Chain spec (could also be filename?) */
-  chainSpec: KnownChainSpec;
-  /** Whether to enable omit seal verification */
-  omitSealVerification: boolean;
+  /** Node name. */
+  nodeName: string;
+  /** Node configuration. */
+  config: NodeConfiguration;
   /** Networking options. */
   network: NetworkingOptions;
 };
@@ -64,7 +57,7 @@ type NetworkingOptions = {
   bootnodes: Bootnode[];
 };
 
-export async function main(args: Arguments) {
+export async function main(args: Arguments, withRelPath: (v: string) => string) {
   if (!isMainThread) {
     logger.error("The main binary cannot be running as a Worker!");
     return;
@@ -80,38 +73,28 @@ export async function main(args: Arguments) {
     return key;
   })();
 
+  const nodeConfig = loadConfig(args.args.configPath);
   const options: Options = {
     isAuthoring: args.command === Command.Dev,
     blocksToImport: args.command === Command.Import ? args.args.files : null,
-    genesisPath: args.args.genesis,
-    genesisBlockPath: args.args.genesisBlock,
-    genesisRoot: args.args.genesisRoot,
-    genesisHeaderHash: args.args.genesisHeaderHash,
-    databasePath: args.args.dbPath,
-    chainSpec: args.args.chainSpec,
-    omitSealVerification: args.args.omitSealVerification,
+    nodeName: args.args.nodeName,
+    config: nodeConfig,
     network: {
       key: networkingKey.toString(),
       host: "127.0.0.1",
       port: 12345 + portShift,
-      bootnodes: [
-        "e3r2oc62zwfj3crnuifuvsxvbtlzetk4o5qyhetkhagsc2fgl2oka@127.0.0.1:40000",
-        "eecgwpgwq3noky4ijm4jmvjtmuzv44qvigciusxakq5epnrfj2utb@127.0.0.1:12345",
-        "en5ejs5b2tybkfh4ym5vpfh7nynby73xhtfzmazumtvcijpcsz6ma@127.0.0.1:12346",
-        "ekwmt37xecoq6a7otkm4ux5gfmm4uwbat4bg5m223shckhaaxdpqa@127.0.0.1:12347",
-      ].map(parseBootnode),
+      bootnodes: nodeConfig.chainSpec.bootnodes ?? [],
     },
   };
 
-  const chainSpec = getChainSpec(options.chainSpec);
-  // Initialize the database with genesis state and block if there isn't one.
-  const dbPath = await initializeDatabase(
-    chainSpec,
-    options.databasePath,
-    options.genesisRoot,
-    options.genesisPath,
-    options.genesisBlockPath,
+  const chainSpec = getChainSpec(options.config.flavor);
+  const { rootDb, dbPath, genesisHeaderHash } = openDatabase(
+    options.nodeName,
+    options.config.chainSpec.genesisHeader,
+    withRelPath(options.config.databaseBasePath),
   );
+  // Initialize the database with genesis state and block if there isn't one.
+  await initializeDatabase(chainSpec, genesisHeaderHash, rootDb, options.config.chainSpec);
 
   // Start extensions
   const importerInit = await blockImporter.spawnWorker();
@@ -119,7 +102,7 @@ export async function main(args: Arguments) {
   const closeExtensions = initializeExtensions({ bestHeader });
 
   // Start block importer
-  const config = new Config(chainSpec, dbPath, options.omitSealVerification);
+  const config = new Config(chainSpec, dbPath, options.config.authorship.omitSealVerification);
   const importerReady = importerInit.transition((state, port) => {
     return state.sendConfig(port, config);
   });
@@ -141,7 +124,7 @@ export async function main(args: Arguments) {
   const closeNetwork = await initNetwork(
     importerReady,
     config,
-    options.genesisHeaderHash,
+    genesisHeaderHash,
     options.network,
     options.blocksToImport === null,
   );
@@ -239,7 +222,7 @@ const initNetwork = async (
   return finish;
 };
 
-const getChainSpec = (name: KnownChainSpec) => {
+export const getChainSpec = (name: KnownChainSpec) => {
   if (name === KnownChainSpec.Full) {
     return fullChainSpec;
   }
@@ -248,8 +231,31 @@ const getChainSpec = (name: KnownChainSpec) => {
     return tinyChainSpec;
   }
 
-  throw new Error(`Unknown chain spec: ${name}`);
+  throw new Error(`Unknown chain spec: ${name}. Possible options: ${[KnownChainSpec.Full, KnownChainSpec.Tiny]}`);
 };
+
+export function openDatabase(
+  nodeName: string,
+  genesisHeader: BytesBlob,
+  databaseBasePath: string,
+  { readOnly = false }: { readOnly?: boolean } = {},
+) {
+  const nodeNameHash = blake2b.hashString(nodeName).toString().substring(2, 10);
+  const genesisHeaderHash = blake2b.hashBytes(genesisHeader).asOpaque<HeaderHash>();
+  const genesisHeaderHashNibbles = genesisHeaderHash.toString().substring(2, 10);
+
+  const dbPath = `${databaseBasePath}/${nodeNameHash}/${genesisHeaderHashNibbles}`;
+  logger.info(`🛢️ Opening database at ${dbPath}`);
+  try {
+    return {
+      dbPath,
+      rootDb: new LmdbRoot(dbPath, readOnly),
+      genesisHeaderHash,
+    };
+  } catch (e) {
+    throw new Error(`Unable to open database at ${dbPath}: ${e}`);
+  }
+}
 
 /**
  * Initialize the database unless it's already initialized.
@@ -258,17 +264,10 @@ const getChainSpec = (name: KnownChainSpec) => {
  */
 async function initializeDatabase(
   spec: ChainSpec,
-  databasePath: string,
-  genesisRootHash: StateRootHash,
-  genesisPath: string | null,
-  genesisHeaderPath: string | null,
-): Promise<string> {
-  const maybeGenesis = loadAndCheckGenesisIfProvided(spec, genesisRootHash, genesisPath);
-  // TODO [ToDr] Instead of using `genesisRootHash` use first 8 nibbles of
-  // genesis header hash, similarly to the networking.
-  const dbPath = `${databasePath}/${genesisRootHash}`;
-  logger.log(`🛢️ Opening database at ${dbPath}`);
-  const rootDb = new LmdbRoot(dbPath);
+  genesisHeaderHash: HeaderHash,
+  rootDb: LmdbRoot,
+  config: JipChainSpec,
+): Promise<void> {
   const blocks = new LmdbBlocks(spec, rootDb);
   const states = new LmdbStates(spec, rootDb);
 
@@ -280,29 +279,18 @@ async function initializeDatabase(
   // DB seems already initialized, just go with what we have.
   if (state !== null && !state.isEqualTo(Bytes.zero(HASH_SIZE)) && !header.isEqualTo(Bytes.zero(HASH_SIZE))) {
     await rootDb.db.close();
-    return dbPath;
+    return;
   }
-
-  // we need genesis, since the DB is empty. Let's error out if it's not provided.
-  if (maybeGenesis === null) {
-    throw new Error(
-      `Database is not initialized. Provide path to genesis state yielding root hash: ${genesisRootHash}`,
-    );
-  }
-
-  const { genesisStateSerialized, genesisStateRootHash } = maybeGenesis;
 
   logger.log("🛢️ Database looks fresh. Initializing.");
   // looks like a fresh db, initialize the state.
-  let genesisBlock = loadGenesisBlockIfProvided(spec, genesisHeaderPath);
-  if (genesisBlock === null) {
-    genesisBlock = emptyBlock();
-  }
-
-  const genesisHeader = genesisBlock.header;
-  const genesisHeaderHash = blake2b.hashBytes(Encoder.encodeObject(Header.Codec, genesisHeader, spec)).asOpaque();
+  const genesisHeader = Decoder.decodeObject(Header.Codec, config.genesisHeader, spec);
+  const genesisExtrinsic = emptyBlock().extrinsic;
+  const genesisBlock = Block.create({ header: genesisHeader, extrinsic: genesisExtrinsic });
   const blockView = Decoder.decodeObject(Block.Codec.View, Encoder.encodeObject(Block.Codec, genesisBlock, spec), spec);
-  logger.log(`🧬 Writing genesis block ${genesisHeaderHash}`);
+  logger.log(`🧬 Writing genesis block #${genesisHeader.timeSlotIndex}: ${genesisHeaderHash}`);
+
+  const { genesisStateSerialized, genesisStateRootHash } = loadGenesisState(spec, config.genesisState);
 
   // write to db
   await blocks.insertBlock(new WithHash<HeaderHash, BlockView>(genesisHeaderHash, blockView));
@@ -312,40 +300,19 @@ async function initializeDatabase(
 
   // close the DB
   await rootDb.db.close();
-
-  return dbPath;
 }
 
-function loadGenesisBlockIfProvided(spec: ChainSpec, genesisBlockPath: string | null): Block | null {
-  if (genesisBlockPath === null) {
-    return null;
-  }
+function loadGenesisState(spec: ChainSpec, data: JipChainSpec["genesisState"]) {
+  const stateDict = TruncatedHashDictionary.fromEntries<StateKey, BytesBlob>(Array.from(data.entries()));
+  const stateEntries = StateEntries.fromTruncatedDictionaryUnsafe(stateDict);
+  const state = SerializedState.fromStateEntries(spec, stateEntries);
 
-  logger.log(`🧬 Loading genesis block from ${genesisBlockPath}`);
-  return loadGenesisBlock(spec, genesisBlockPath);
-}
-
-function loadAndCheckGenesisIfProvided(spec: ChainSpec, expectedRootHash: StateRootHash, genesisPath: string | null) {
-  if (genesisPath === null) {
-    return null;
-  }
-
-  logger.log(`🧬 Loading genesis state from ${genesisPath}`);
-  const genesisState = loadGenesis(spec, genesisPath);
-  const genesisStateSerialized = StateEntries.serializeInMemory(spec, genesisState);
-  const genesisStateRootHash = genesisStateSerialized.getRootHash();
+  const genesisStateRootHash = stateEntries.getRootHash();
   logger.info(`🧬 Genesis state root: ${genesisStateRootHash}`);
 
-  // mismatch between expected state root and the one loaded.
-  if (!genesisStateRootHash.isEqualTo(expectedRootHash)) {
-    throw new Error(
-      `Incorrect genesis loaded. State root mismatch. Expected: ${expectedRootHash}, got: ${genesisStateRootHash}`,
-    );
-  }
-
   return {
-    genesisState,
-    genesisStateSerialized,
+    genesisState: state,
+    genesisStateSerialized: stateEntries,
     genesisStateRootHash,
   };
 }
@@ -365,4 +332,18 @@ function emptyBlock() {
       },
     }),
   });
+}
+
+export function loadConfig(configPath: string): NodeConfiguration {
+  if (configPath === DEV_CONFIG) {
+    return parseFromJson(devConfigJson, NodeConfiguration.fromJson);
+  }
+
+  try {
+    const configFile = fs.readFileSync(configPath, "utf8");
+    const parsed = JSON.parse(configFile);
+    return parseFromJson(parsed, NodeConfiguration.fromJson);
+  } catch (e) {
+    throw new Error(`Unable to load config file from ${configPath}: ${e}`);
+  }
 }

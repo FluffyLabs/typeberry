@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { tryAsServiceId } from "@typeberry/block";
 import { HostCallRegisters } from "@typeberry/pvm-host-calls";
 import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { Registers } from "@typeberry/pvm-interpreter/registers.js";
@@ -11,7 +12,8 @@ const REGISTER = 7;
 describe("HostCalls: Checkpoint", () => {
   it("should write U64 gas to register and checkpoint the state", async () => {
     const accumulate = new PartialStateMock();
-    const checkpoint = new Checkpoint(accumulate);
+    const serviceId = tryAsServiceId(10_000);
+    const checkpoint = new Checkpoint(serviceId, accumulate);
 
     const counter = gasCounter(tryAsGas(2n ** 42n - 1n));
     const regs = new HostCallRegisters(new Registers());
