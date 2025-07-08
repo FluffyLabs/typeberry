@@ -78,14 +78,14 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
     decode: inMemoryStateCodec,
     json: fullStateDumpFromJson,
     process: {
-      options: ["root-hash", "entries", "truncated-entries"],
+      options: ["as-root-hash", "as-entries", "as-truncated-entries"],
       run(spec: ChainSpec, data: unknown, option: string) {
         const state = data as InMemoryState;
-        if (option === "entries") {
+        if (option === "as-entries") {
           return StateEntries.serializeInMemory(spec, state).entries;
         }
 
-        if (option === "truncated-entries") {
+        if (option === "as-truncated-entries") {
           const entries = Array.from(StateEntries.serializeInMemory(spec, state).entries.data).map(([key, value]) => [
             key.toString().substring(2, 64),
             value.toString().substring(2),
@@ -93,7 +93,7 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
           return Object.fromEntries(entries);
         }
 
-        if (option === "root-hash") {
+        if (option === "as-root-hash") {
           return StateEntries.serializeInMemory(spec, state).getRootHash();
         }
       },

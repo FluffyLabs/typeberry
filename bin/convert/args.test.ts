@@ -4,7 +4,9 @@ import { describe, it } from "node:test";
 import { KnownChainSpec, OutputFormat, parseArgs } from "./args.js";
 import { SUPPORTED_TYPES } from "./types.js";
 
-const headerType = SUPPORTED_TYPES[1];
+const anyType = SUPPORTED_TYPES[0];
+const headerType = SUPPORTED_TYPES.find(({ name }) => name === "header") ?? anyType;
+const stateDumpType = SUPPORTED_TYPES.find(({ name }) => name === "state-dump") ?? anyType;
 
 describe("CLI", () => {
   const parse = (args: string[]) => parseArgs(args, (v) => `../${v}`);
@@ -15,7 +17,7 @@ describe("CLI", () => {
   };
 
   it("should parse chain spec option", () => {
-    const args = parse(["--flavor=full", "header", "./test.hex"]);
+    const args = parse(["--flavor=full", "./test.hex", "header"]);
 
     assert.deepStrictEqual(args, {
       ...defaultArgs,
@@ -25,19 +27,31 @@ describe("CLI", () => {
     });
   });
 
-  it("should parse chain process option", () => {
-    const args = parse(["--process=root-hash", "header", "./test.hex"]);
+  it("should parse process option alone", () => {
+    const args = parse(["./test.hex", "state-dump", "as-root-hash"]);
 
     assert.deepStrictEqual(args, {
       ...defaultArgs,
-      type: headerType,
+      type: stateDumpType,
       inputPath: ".././test.hex",
-      process: "root-hash",
+      process: "as-root-hash",
+    });
+  });
+
+  it("should parse process option and output", () => {
+    const args = parse(["./test.hex", "state-dump", "as-root-hash", "to-hex"]);
+
+    assert.deepStrictEqual(args, {
+      ...defaultArgs,
+      type: stateDumpType,
+      inputPath: ".././test.hex",
+      process: "as-root-hash",
+      outputFormat: OutputFormat.Hex,
     });
   });
 
   it("should parse defaults", () => {
-    const args = parse(["header", "./test.json"]);
+    const args = parse(["./test.json", "header"]);
 
     assert.deepStrictEqual(args, {
       ...defaultArgs,
@@ -47,7 +61,7 @@ describe("CLI", () => {
   });
 
   it("should parse json output", () => {
-    const args = parse(["header", "./test.json", "to", "json"]);
+    const args = parse(["./test.json", "header", "to-json"]);
 
     assert.deepStrictEqual(args, {
       ...defaultArgs,
@@ -58,7 +72,7 @@ describe("CLI", () => {
   });
 
   it("should parse hex output", () => {
-    const args = parse(["header", "./test.json", "to", "hex"]);
+    const args = parse(["./test.json", "header", "to-hex"]);
 
     assert.deepStrictEqual(args, {
       ...defaultArgs,
@@ -68,13 +82,24 @@ describe("CLI", () => {
     });
   });
 
-  it("should throw on unsupported output format", () => {
+  it("should throw on unsupported output format with processing", () => {
     assert.throws(
       () => {
-        const _args = parse(["header", "./test.bin", "to", "something"]);
+        const _args = parse(["./test.bin", "state-dump", "as-root-hash", "to-something"]);
       },
       {
-        message: "Invalid output format: 'something'.",
+        message: "Invalid output format: 'to-something'.",
+      },
+    );
+  });
+
+  it("should throw on unsupported output format or processing", () => {
+    assert.throws(
+      () => {
+        const _args = parse(["./test.bin", "header", "to-something"]);
+      },
+      {
+        message: "'to-something' is neither output format nor processing parameter.",
       },
     );
   });
@@ -82,10 +107,21 @@ describe("CLI", () => {
   it("should throw on invalid syntax", () => {
     assert.throws(
       () => {
-        const _args = parse(["header", "./test.bin", "into", "something"]);
+        const _args = parse(["./test.bin", "header", "into", "something", "x"]);
       },
       {
-        message: "Missing 'to' before the output type?",
+        message: "Unexpected command: 'x'",
+      },
+    );
+  });
+
+  it("should throw on missing input type", () => {
+    assert.throws(
+      () => {
+        const _args = parse(["./header.json"]);
+      },
+      {
+        message: "Missing input type.",
       },
     );
   });
@@ -93,7 +129,7 @@ describe("CLI", () => {
   it("should throw on unsupported type", () => {
     assert.throws(
       () => {
-        const _args = parse(["unknown"]);
+        const _args = parse(["./header.json", "unknown"]);
       },
       {
         message: "Unsupported input type: 'unknown'.",

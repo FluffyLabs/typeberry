@@ -6,26 +6,26 @@ export const HELP = `
 @typeberry/convert ${packageJson.version} by Fluffy Labs.
 
 Usage:
-  @typeberry/convert [options] <type> <hex-or-json-input-file> [to <format>]
+  @typeberry/convert [options] <hex-or-json-input-file> <type> [process] [output-format]
 
-Attempts to read provided input file as 'type' and output in requested 'format'.
+Attempts to read provided input file as 'type' and output in requested 'output-format'.
+For some 'type's it's additionally possible to process the data before outputting it.
 The input type is detected from file extension ('.hex' or '.json').
 
 Example usage:
-  @typeberry/convert [options] header ./genesis-header.json to hex
+  @typeberry/convert ./genesis-header.json header to-hex
+  @typeberry/convert ./state-snapshot.json state-dump as-entries to-json
 
 Options:
   --flavor    - chain spec flavor, either 'full' or 'tiny'.
                 [default: tiny]
-  --process   - process the type before outputing it. See below
-                for supported processing.
 
-Supported generic output formats:
-  print       - print the object to the console
-  json        - JSON format (when supported)
-  hex         - JAM-codec hex-encoded string (when supported)
+Output formats:
+  to-print       - print the object to the console
+  to-json        - JSON format (when supported)
+  to-hex         - JAM-codec hex-encoded string (when supported)
 
-Supported types:
+Input types:
 ${SUPPORTED_TYPES.map((x) => `  ${x.name}`).join("\n")}
 
 Processing: ${SUPPORTED_TYPES.filter((x) => x.process !== undefined).map(
@@ -52,9 +52,9 @@ export type Arguments = {
 };
 
 export enum OutputFormat {
-  Print = "print",
-  Json = "json",
-  Hex = "hex",
+  Print = "to-print",
+  Json = "to-json",
+  Hex = "to-hex",
 }
 
 export function parseArgs(cliInput: string[], withRelPath: (v: string) => string): Arguments {
@@ -74,24 +74,24 @@ export function parseArgs(cliInput: string[], withRelPath: (v: string) => string
     },
     KnownChainSpec.Tiny,
   );
-  const process = parseOption(args, "process", (v) => v, "");
-
-  const type = parseType(args._.shift());
   const input = args._.shift();
   if (input === undefined) {
     throw new Error("Missing input file!");
   }
-  checkTo(args._.shift());
-  const outputFormat = parseOutputFormat(args._.shift());
+  const type = parseType(args._.shift());
+  const maybeProcess = args._.shift();
+  const maybeOutputFormat = args._.shift();
 
   assertNoMoreArgs(args);
+
+  const { process, format } = getProcessAndOutput(type, maybeProcess, maybeOutputFormat);
 
   return {
     flavor: chainSpec.flavor,
     type,
-    process: process.process,
+    process,
     inputPath: withRelPath(input),
-    outputFormat,
+    outputFormat: format,
   };
 }
 
@@ -106,12 +106,6 @@ function parseType(type?: string) {
   }
 
   return meta;
-}
-
-function checkTo(to?: string) {
-  if (to !== undefined && to !== "to") {
-    throw new Error(`Missing 'to' before the output type?`);
-  }
 }
 
 function parseOutputFormat(output?: string): OutputFormat {
@@ -174,4 +168,38 @@ function assertNoMoreArgs(args: minimist.ParsedArgs) {
   if (keysLeft.length > 0) {
     throw new Error(`Unrecognized options: '${keysLeft}'`);
   }
+}
+
+function getProcessAndOutput(
+  type: SupportedType,
+  maybeProcess: string | undefined,
+  maybeOutputFormat: string | undefined,
+) {
+  const defaultFormat = parseOutputFormat(undefined);
+  const options = type.process?.options ?? [];
+  // we have both options, so we expect them in the right order.
+  if (maybeProcess !== undefined && maybeOutputFormat !== undefined) {
+    const format = parseOutputFormat(maybeOutputFormat);
+
+    if (!options.includes(maybeProcess)) {
+      throw new Error(`Incorrect processing option: ${maybeProcess}. Expected one of: ${options}.`);
+    }
+    return { process: maybeProcess, format };
+  }
+  // only one parameter, but it can be either output or processing.
+  if (maybeProcess !== undefined) {
+    if (options.includes(maybeProcess)) {
+      return { process: maybeProcess, format: defaultFormat };
+    }
+    // now it should be output format, but we want to give a better error message,
+    // if user mispelled processing.
+    try {
+      const format = parseOutputFormat(maybeProcess);
+      return { process: "", format };
+    } catch {
+      throw new Error(`'${maybeProcess}' is neither output format nor processing parameter.`);
+    }
+  }
+
+  return { process: "", format: defaultFormat };
 }
