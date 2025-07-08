@@ -62,6 +62,7 @@ export async function main(args: Arguments, withRelPath: (v: string) => string, 
     options.config.chainSpec.genesisHeader,
     withRelPath(options.config.databaseBasePath),
   );
+
   // Initialize the database with genesis state and block if there isn't one.
   await initializeDatabase(chainSpec, genesisHeaderHash, rootDb, options.config.chainSpec);
 

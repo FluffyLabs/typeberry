@@ -46,7 +46,7 @@ export class NodeConfiguration {
     public readonly $schema: string,
     public readonly version: number,
     public readonly flavor: KnownChainSpec,
-    public readonly chainSpec: JipChainSpec,
+    public chainSpec: JipChainSpec,
     public databaseBasePath: string,
     public authorship: AuthorshipOptions,
   ) {}

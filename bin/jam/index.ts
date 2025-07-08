@@ -4,7 +4,7 @@ import { type Arguments, HELP, parseArgs } from "./args.js";
 import { main } from "./main.js";
 
 export { main } from "./main.js";
-export { Command, DEV_CONFIG } from "./args.js";
+export { Command, DEV_CONFIG, parseArgs, type Arguments } from "./args.js";
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);

@@ -1,12 +1,14 @@
+import { pathToFileURL } from "node:url";
 import { tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import type { NodeConfiguration } from "@typeberry/config-node";
 import { DEV_CONFIG } from "@typeberry/jam";
 import { loadConfig } from "@typeberry/jam/main.js";
 import { Level, Logger } from "@typeberry/logger";
-import { main as mainRpc } from "@typeberry/rpc";
+import * as jam from "@typeberry/jam";
 import { type CommonArguments, parseArgs } from "./args.js";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
+const withRelPath = (v: string) => v;
 
 /**
  * JAM Node entry w/ common command lines arguments
@@ -16,12 +18,19 @@ Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
  */
 export async function main(args: string[]) {
   const argv = parseArgs(args);
-  const rpcArgs = rpcConfig(argv);
-  const config = jamConfig(argv);
-  mainRpc(rpcArgs, config);
+  const { args: jamArgs, config: jamConfig } = createJamArgsConf(argv);
+  jam.main(jamArgs, withRelPath, jamConfig);
 }
 
-export function jamConfig(argv: CommonArguments): NodeConfiguration {
+export function createJamArgsConf(argv: CommonArguments): { args: jam.Arguments, config: NodeConfiguration } {
+  const args: string[] = [];
+  if (argv.metadata !== undefined) {
+    args.push(`--name=${argv.metadata}`);
+  }
+  if (argv.port !== undefined) {
+    args.push(`--port=${argv.port}`);
+  }
+
   const config = loadConfig(DEV_CONFIG);
   const { bandersnatch, bls, ed25519, datadir, genesis, ts, validatorindex } = argv;
 
@@ -47,18 +56,9 @@ export function jamConfig(argv: CommonArguments): NodeConfiguration {
     config.authorship.validatorIndex = tryAsValidatorIndex(validatorindex);
   }
 
-  return config;
+  return { args: jam.parseArgs(args, withRelPath), config };
 }
 
-export function rpcConfig(argv: CommonArguments): string[] {
-  const args: string[] = [];
-  if (argv.metadata !== undefined) {
-    args.push(`--nodeName=${argv.metadata}`);
-  }
-  if (argv.port !== undefined) {
-    args.push(`--port=${argv.port}`);
-  }
-  return args;
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main(process.argv.slice(2));
 }
-
-main(process.argv.slice(2));
