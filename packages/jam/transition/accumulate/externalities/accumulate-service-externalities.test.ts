@@ -6,6 +6,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
+import type { UpdatedCurrentService } from "@typeberry/jam-host-calls/externalities/partial-state-db.js";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   InMemoryService,
@@ -75,9 +76,21 @@ describe("AccumulateServiceExternalities", () => {
     return preimages;
   };
 
-  const prepareBalanceProvider = (val: number | null = 0) => ({
-    getNewBalance() {
-      return val === null ? null : tryAsU64(val);
+  const prepareUpdatedService = (partialInfo: Partial<ServiceAccountInfo> = {}): UpdatedCurrentService => ({
+    getCurrentServiceInfo: () => {
+      return ServiceAccountInfo.create({
+        balance: tryAsU64(0),
+        codeHash: Bytes.fill(HASH_SIZE, 1).asOpaque(),
+        accumulateMinGas: tryAsServiceGas(0),
+        onTransferMinGas: tryAsServiceGas(0),
+        storageUtilisationBytes: tryAsU64(0),
+        storageUtilisationCount: tryAsU32(0),
+        ...partialInfo,
+      });
+    },
+
+    getUpdatedServicePreimage: (_serviceId: ServiceId, _hash: PreimageHash) => {
+      return null;
     },
   });
 
@@ -91,7 +104,7 @@ describe("AccumulateServiceExternalities", () => {
       const accumulateServiceExternalities = new AccumulateServiceExternalities(
         currentServiceId,
         state,
-        prepareBalanceProvider(),
+        prepareUpdatedService(),
       );
 
       const serviceInfo = accumulateServiceExternalities.getInfo(serviceId);
@@ -108,7 +121,7 @@ describe("AccumulateServiceExternalities", () => {
       const accumulateServiceExternalities = new AccumulateServiceExternalities(
         currentServiceId,
         state,
-        prepareBalanceProvider(),
+        prepareUpdatedService(),
       );
 
       const serviceInfo = accumulateServiceExternalities.getInfo(serviceId);
@@ -126,7 +139,7 @@ describe("AccumulateServiceExternalities", () => {
       const accumulateServiceExternalities = new AccumulateServiceExternalities(
         currentServiceId,
         state,
-        prepareBalanceProvider(),
+        prepareUpdatedService(),
       );
 
       const serviceInfo = accumulateServiceExternalities.getInfo(serviceId);
@@ -146,7 +159,7 @@ describe("AccumulateServiceExternalities", () => {
       const accumulateServiceExternalities = new AccumulateServiceExternalities(
         currentServiceId,
         state,
-        prepareBalanceProvider(),
+        prepareUpdatedService(),
       );
 
       const result = accumulateServiceExternalities.lookup(serviceId, hash);
@@ -164,7 +177,7 @@ describe("AccumulateServiceExternalities", () => {
       const accumulateServiceExternalities = new AccumulateServiceExternalities(
         currentServiceId,
         state,
-        prepareBalanceProvider(),
+        prepareUpdatedService(),
       );
 
       const result = accumulateServiceExternalities.lookup(serviceId, hash);
@@ -185,7 +198,7 @@ describe("AccumulateServiceExternalities", () => {
       const accumulateServiceExternalities = new AccumulateServiceExternalities(
         currentServiceId,
         state,
-        prepareBalanceProvider(),
+        prepareUpdatedService(),
       );
 
       const result = accumulateServiceExternalities.lookup(serviceId, requestedHash);
@@ -205,7 +218,7 @@ describe("AccumulateServiceExternalities", () => {
       const accumulateServiceExternalities = new AccumulateServiceExternalities(
         currentServiceId,
         state,
-        prepareBalanceProvider(),
+        prepareUpdatedService(),
       );
 
       const result = accumulateServiceExternalities.lookup(serviceId, requestedHash);
@@ -224,7 +237,7 @@ describe("AccumulateServiceExternalities", () => {
       const accumulateServiceExternalities = new AccumulateServiceExternalities(
         currentServiceId,
         state,
-        prepareBalanceProvider(),
+        prepareUpdatedService(),
       );
 
       const result = accumulateServiceExternalities.read(serviceId, hash);
@@ -240,7 +253,7 @@ describe("AccumulateServiceExternalities", () => {
       const accumulateServiceExternalities = new AccumulateServiceExternalities(
         currentServiceId,
         state,
-        prepareBalanceProvider(),
+        prepareUpdatedService(),
       );
 
       const result = accumulateServiceExternalities.read(serviceId, hash);
@@ -261,7 +274,7 @@ describe("AccumulateServiceExternalities", () => {
       const accumulateServiceExternalities = new AccumulateServiceExternalities(
         currentServiceId,
         state,
-        prepareBalanceProvider(),
+        prepareUpdatedService(),
       );
 
       const result = accumulateServiceExternalities.read(serviceId, hash);
@@ -277,7 +290,7 @@ describe("AccumulateServiceExternalities", () => {
       const accumulateServiceExternalities = new AccumulateServiceExternalities(
         currentServiceId,
         state,
-        prepareBalanceProvider(),
+        prepareUpdatedService(),
       );
 
       assert.strictEqual(accumulateServiceExternalities.getUpdates().length, 0);
@@ -299,7 +312,7 @@ describe("AccumulateServiceExternalities", () => {
       const accumulateServiceExternalities = new AccumulateServiceExternalities(
         currentServiceId,
         state,
-        prepareBalanceProvider(),
+        prepareUpdatedService(),
       );
 
       accumulateServiceExternalities.write(hash, newBlob);
@@ -326,7 +339,7 @@ describe("AccumulateServiceExternalities", () => {
       const accumulateServiceExternalities = new AccumulateServiceExternalities(
         currentServiceId,
         state,
-        prepareBalanceProvider(),
+        prepareUpdatedService(),
       );
 
       const result = accumulateServiceExternalities.read(serviceId, hash);
@@ -346,7 +359,7 @@ describe("AccumulateServiceExternalities", () => {
       const accumulateServiceExternalities = new AccumulateServiceExternalities(
         currentServiceId,
         state,
-        prepareBalanceProvider(),
+        prepareUpdatedService(),
       );
 
       accumulateServiceExternalities.write(hash, newBlob);
@@ -371,7 +384,7 @@ describe("AccumulateServiceExternalities", () => {
       const accumulateServiceExternalities = new AccumulateServiceExternalities(
         currentServiceId,
         state,
-        prepareBalanceProvider(null),
+        prepareUpdatedService({ balance: tryAsU64(100000) }),
       );
 
       const result = accumulateServiceExternalities.isStorageFull();
@@ -393,53 +406,7 @@ describe("AccumulateServiceExternalities", () => {
       const accumulateServiceExternalities = new AccumulateServiceExternalities(
         currentServiceId,
         state,
-        prepareBalanceProvider(null),
-      );
-
-      const result = accumulateServiceExternalities.isStorageFull();
-
-      assert.strictEqual(result, true);
-    });
-
-    it("should return false if storage is not full (balance is updated)", () => {
-      const currentServiceId = tryAsServiceId(10_000);
-      const newBalance = 100000;
-      const service = prepareService(currentServiceId, {
-        info: {
-          balance: tryAsU64(0),
-          storageUtilisationCount: tryAsU32(1),
-          storageUtilisationBytes: tryAsU64(1),
-        },
-      });
-      const state = prepareState([service]);
-
-      const accumulateServiceExternalities = new AccumulateServiceExternalities(
-        currentServiceId,
-        state,
-        prepareBalanceProvider(newBalance),
-      );
-
-      const result = accumulateServiceExternalities.isStorageFull();
-
-      assert.strictEqual(result, false);
-    });
-
-    it("should return true if storage is full (balance is updated)", () => {
-      const currentServiceId = tryAsServiceId(10_000);
-      const newBalance = 1;
-      const service = prepareService(currentServiceId, {
-        info: {
-          balance: tryAsU64(100000),
-          storageUtilisationCount: tryAsU32(1000),
-          storageUtilisationBytes: tryAsU64(1000),
-        },
-      });
-      const state = prepareState([service]);
-
-      const accumulateServiceExternalities = new AccumulateServiceExternalities(
-        currentServiceId,
-        state,
-        prepareBalanceProvider(newBalance),
+        prepareUpdatedService({ balance: tryAsU64(1) }),
       );
 
       const result = accumulateServiceExternalities.isStorageFull();

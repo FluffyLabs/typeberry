@@ -59,7 +59,12 @@ const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 
 type StateSlice = Pick<State, "getService" | "timeslot">;
 
-export class PartialStateDb implements PartialState {
+export interface UpdatedCurrentService {
+  getCurrentServiceInfo(): ServiceAccountInfo;
+  getUpdatedServicePreimage(serviceId: ServiceId, hash: PreimageHash): BytesBlob | null;
+}
+
+export class PartialStateDb implements PartialState, UpdatedCurrentService {
   public readonly updatedState: AccumulationStateUpdate;
   private checkpointedState: AccumulationStateUpdate | null = null;
   /** `x_i`: next service id we are going to create. */
@@ -95,7 +100,7 @@ export class PartialStateDb implements PartialState {
    *
    * Takes into account updates over the state.
    */
-  private getCurrentServiceInfo(): ServiceAccountInfo {
+  getCurrentServiceInfo(): ServiceAccountInfo {
     if (this.updatedState.updatedServiceInfo !== null) {
       return this.updatedState.updatedServiceInfo;
     }
@@ -626,6 +631,13 @@ export class PartialStateDb implements PartialState {
     // and finally add an ejected service.
     this.updatedState.ejectedServices.push(destination);
     return Result.ok(OK);
+  }
+
+  getUpdatedServicePreimage(serviceId: ServiceId, hash: PreimageHash) {
+    return (
+      this.updatedState.providedPreimages.find((x) => x.serviceId === serviceId && x.item.hash.isEqualTo(hash))?.item
+        .blob ?? null
+    );
   }
 }
 

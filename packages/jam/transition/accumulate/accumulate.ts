@@ -176,14 +176,8 @@ export class Accumulate {
 
     const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec);
     const partialState = new PartialStateDb(this.state, serviceId, nextServiceId);
+    const serviceExternalities = new AccumulateServiceExternalities(serviceId, this.state, partialState);
 
-    const balanceProvider = {
-      getNewBalance() {
-        return partialState.updatedState.updatedServiceInfo?.balance ?? null;
-      },
-    };
-
-    const serviceExternalities = new AccumulateServiceExternalities(serviceId, this.state, balanceProvider);
     const externalities = {
       partialState,
       serviceExternalities,
