@@ -86,7 +86,7 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
         }
 
         if (option === "truncated-entries") {
-          const entries = Array.from(StateEntries.serializeInMemory(spec, state).entries).map(([key, value]) => [
+          const entries = Array.from(StateEntries.serializeInMemory(spec, state).entries.data).map(([key, value]) => [
             key.toString().substring(2, 64),
             value.toString().substring(2),
           ]);

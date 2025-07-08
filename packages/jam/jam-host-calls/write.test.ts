@@ -24,7 +24,7 @@ const DEST_START_REG = 9;
 const DEST_LEN_REG = 10;
 
 function prepareAccounts(serviceId: ServiceId, { balance }: { balance?: bigint } = {}) {
-  const accounts = new TestAccounts();
+  const accounts = new TestAccounts(serviceId);
   accounts.details.set(
     serviceId,
     ServiceAccountInfo.create({
@@ -78,8 +78,7 @@ describe("HostCalls: Write", () => {
   it("should write data to account state", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
-    const write = new Write(accounts);
-    write.currentServiceId = serviceId;
+    const write = new Write(serviceId, accounts);
     const { key, hash } = prepareKey(write.currentServiceId, "imma key");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
     accounts.snapshotData.set(BytesBlob.blobFromString("old data"), serviceId, hash);
@@ -97,8 +96,7 @@ describe("HostCalls: Write", () => {
   it("should remove data from account state", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
-    const write = new Write(accounts);
-    write.currentServiceId = serviceId;
+    const write = new Write(serviceId, accounts);
     const { key, hash } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromNumbers([]));
     accounts.storage.set(BytesBlob.blobFromString("hello world!"), serviceId, hash);
@@ -116,8 +114,7 @@ describe("HostCalls: Write", () => {
   it("should fail if there is no memory for key", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
-    const write = new Write(accounts);
-    write.currentServiceId = serviceId;
+    const write = new Write(serviceId, accounts);
     const { key } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"), {
       skipKey: true,
@@ -134,8 +131,7 @@ describe("HostCalls: Write", () => {
   it("should fail if there is no memory for result", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
-    const write = new Write(accounts);
-    write.currentServiceId = serviceId;
+    const write = new Write(serviceId, accounts);
     const { key } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"), {
       skipValue: true,
@@ -152,8 +148,7 @@ describe("HostCalls: Write", () => {
   it("should fail if the key is not fully readable", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
-    const write = new Write(accounts);
-    write.currentServiceId = serviceId;
+    const write = new Write(serviceId, accounts);
     const { key } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
     registers.set(KEY_LEN_REG, tryAsU64(PAGE_SIZE + 1));
@@ -169,8 +164,7 @@ describe("HostCalls: Write", () => {
   it("should fail if the value is not fully readable", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId);
-    const write = new Write(accounts);
-    write.currentServiceId = serviceId;
+    const write = new Write(serviceId, accounts);
     const { key } = prepareKey(write.currentServiceId, "xyz");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
     registers.set(DEST_LEN_REG, tryAsU64(PAGE_SIZE + 1));
@@ -186,8 +180,7 @@ describe("HostCalls: Write", () => {
   it("should handle storage full when low balance in the account", async () => {
     const serviceId = tryAsServiceId(10_000);
     const accounts = prepareAccounts(serviceId, { balance: 100n });
-    const write = new Write(accounts);
-    write.currentServiceId = serviceId;
+    const write = new Write(serviceId, accounts);
     const { key, hash } = prepareKey(write.currentServiceId, "imma key");
     const { registers, memory } = prepareRegsAndMemory(key, BytesBlob.blobFromString("hello world!"));
     accounts.snapshotData.set(BytesBlob.blobFromString("old data"), serviceId, hash);

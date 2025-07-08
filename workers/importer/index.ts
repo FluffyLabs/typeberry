@@ -3,8 +3,7 @@ import { isMainThread, parentPort } from "node:worker_threads";
 import { MessageChannelStateMachine } from "@typeberry/state-machine";
 
 import { tryAsTimeSlot } from "@typeberry/block";
-import { LmdbBlocks, LmdbStates } from "@typeberry/database-lmdb";
-import { LmdbRoot } from "@typeberry/database-lmdb";
+import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import { type Finished, spawnWorkerGeneric } from "@typeberry/generic-worker";
 import { SimpleAllocator, keccak } from "@typeberry/hash";
 import { Level, Logger } from "@typeberry/logger";

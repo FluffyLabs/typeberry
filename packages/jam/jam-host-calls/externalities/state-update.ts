@@ -9,6 +9,7 @@ import {
   type ServicesUpdate,
   UpdatePreimage,
   UpdateService,
+  type UpdateStorage,
   type ValidatorData,
 } from "@typeberry/state";
 import type { NewPreimage, PreimageUpdate } from "./partial-state-db.js";
@@ -91,7 +92,7 @@ export class AccumulationStateUpdate {
             });
           }),
         ),
-      storage: [],
+      storage: this.storage,
     };
   }
 
@@ -123,6 +124,9 @@ export class AccumulationStateUpdate {
     validators: ServiceId;
     autoAccumulate: [ServiceId, ServiceGas][];
   } | null = null;
+
+  /** Service's storage update. */
+  public storage: UpdateStorage[] = [];
 
   constructor(public readonly serviceId: ServiceId) {}
 }

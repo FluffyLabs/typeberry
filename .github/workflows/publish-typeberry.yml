@@ -28,5 +28,5 @@ jobs:
       working-directory: ./dist/typeberry
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      run: npm publish --access public
+      run: npm publish --tag latest --access public
 

@@ -45,8 +45,8 @@ function prepareRegsAndMemory(
 describe("HostCalls: Solicit", () => {
   it("should request a preimage hash", async () => {
     const accumulate = new PartialStateMock();
-    const forget = new Forget(accumulate);
-    forget.currentServiceId = tryAsServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
+    const forget = new Forget(serviceId, accumulate);
     const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU64(4_096));
 
     // when
@@ -59,8 +59,8 @@ describe("HostCalls: Solicit", () => {
 
   it("should fail if hash not available", async () => {
     const accumulate = new PartialStateMock();
-    const forget = new Forget(accumulate);
-    forget.currentServiceId = tryAsServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
+    const forget = new Forget(serviceId, accumulate);
     const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU64(4_096), {
       skipPreimageHash: true,
     });
@@ -75,8 +75,8 @@ describe("HostCalls: Solicit", () => {
 
   it("should fail if preimage not available", async () => {
     const accumulate = new PartialStateMock();
-    const forget = new Forget(accumulate);
-    forget.currentServiceId = tryAsServiceId(10_000);
+    const serviceId = tryAsServiceId(10_000);
+    const forget = new Forget(serviceId, accumulate);
 
     accumulate.forgetPreimageResponse = Result.error(null);
     const { registers, memory } = prepareRegsAndMemory(Bytes.fill(HASH_SIZE, 0x69).asOpaque(), tryAsU64(4_096));

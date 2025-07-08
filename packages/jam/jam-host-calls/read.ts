@@ -7,18 +7,12 @@ import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@type
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { HostCallResult } from "./results.js";
-import {
-  CURRENT_SERVICE_ID,
-  SERVICE_ID_BYTES,
-  clampU64ToU32,
-  getServiceIdOrCurrent,
-  writeServiceIdAsLeBytes,
-} from "./utils.js";
+import { SERVICE_ID_BYTES, clampU64ToU32, getServiceIdOrCurrent, writeServiceIdAsLeBytes } from "./utils.js";
 
 /** Account data interface for read host calls. */
 export interface AccountsRead {
   /** Read service storage. */
-  read(serviceId: ServiceId | null, hash: Blake2bHash): Promise<BytesBlob | null>;
+  read(serviceId: ServiceId | null, hash: Blake2bHash): BytesBlob | null;
 }
 
 const IN_OUT_REG = 7;
@@ -31,9 +25,11 @@ const IN_OUT_REG = 7;
 export class Read implements HostCallHandler {
   index = tryAsHostCallIndex(2);
   gasCost = tryAsSmallGas(10);
-  currentServiceId = CURRENT_SERVICE_ID;
 
-  constructor(private readonly account: AccountsRead) {}
+  constructor(
+    public readonly currentServiceId: ServiceId,
+    private readonly account: AccountsRead,
+  ) {}
 
   async execute(
     _gas: GasCounter,
@@ -67,7 +63,7 @@ export class Read implements HostCallHandler {
     const storageKey = blake2b.hashBytes(serviceIdStorageKey);
 
     // v
-    const value = await this.account.read(serviceId, storageKey);
+    const value = this.account.read(serviceId, storageKey);
 
     const valueLength = value === null ? tryAsU64(0) : tryAsU64(value.raw.length);
     const valueBlobOffset = regs.get(11);

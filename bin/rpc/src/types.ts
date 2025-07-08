@@ -39,9 +39,23 @@ export interface JsonRpcErrorResponse {
   id: JsonRpcId;
 }
 
-export interface JsonRpcSubscriptionNotification extends JsonRpcNotification {
-  params: [SubscriptionId, JsonRpcResult];
+interface JsonRpcSubscriptionResultNotification extends JsonRpcNotification {
+  params: {
+    subscriptionId: SubscriptionId;
+    result: JsonRpcResult;
+  };
 }
+
+interface JsonRpcSubscriptionErrorNotification extends JsonRpcNotification {
+  params: {
+    subscriptionId: SubscriptionId;
+    error: unknown;
+  };
+}
+
+export type JsonRpcSubscriptionNotification =
+  | JsonRpcSubscriptionResultNotification
+  | JsonRpcSubscriptionErrorNotification;
 
 export type JsonRpcResponse = JsonRpcSuccessResponse | JsonRpcErrorResponse;
 

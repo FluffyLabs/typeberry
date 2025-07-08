@@ -46,12 +46,12 @@ function prepareRegsAndMemory(
 describe("HostCalls: Yield", () => {
   it("should return panic if memory is unreadable", async () => {
     const accumulate = new PartialStateMock();
-    const yieldHostCall = new Yield(accumulate); // yield is a reserved keyword
+    const currentServiceId = tryAsServiceId(10_000);
+    const yieldHostCall = new Yield(currentServiceId, accumulate); // yield is a reserved keyword
 
     const hashStart = tryAsU32(2 ** 16);
     const data = Bytes.fill(HASH_SIZE, 0xaa).asOpaque();
 
-    yieldHostCall.currentServiceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(hashStart, data, { registerMemory: false });
 
     // when
@@ -65,12 +65,12 @@ describe("HostCalls: Yield", () => {
 
   it("should return status OK and yield hash", async () => {
     const accumulate = new PartialStateMock();
-    const yieldHostCall = new Yield(accumulate);
+    const currentServiceId = tryAsServiceId(10_000);
+    const yieldHostCall = new Yield(currentServiceId, accumulate);
 
     const hashStart = tryAsU32(2 ** 16);
     const data = Bytes.fill(HASH_SIZE, 0xaa).asOpaque();
 
-    yieldHostCall.currentServiceId = tryAsServiceId(10_000);
     const { registers, memory } = prepareRegsAndMemory(hashStart, data);
 
     // when
