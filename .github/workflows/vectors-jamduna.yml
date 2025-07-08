@@ -24,6 +24,7 @@ jobs:
           repository: fluffylabs/test-vectors
           path: "./test-vectors"
           ref: ${{ env.JAMTESTNET_REF }}
+          submodules: true
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
@@ -62,6 +63,7 @@ jobs:
           repository: fluffylabs/test-vectors
           path: "./test-vectors"
           ref: ${{ env.JAMTESTNET_REF }}
+          submodules: true
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
