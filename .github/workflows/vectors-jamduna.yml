@@ -6,7 +6,7 @@ on:
     branches: [ "main" ]
 
 env:
-  JAMTESTNET_REF: 6d41bb2e8f4d60dc1806df42401363b54f956c0a
+  JAMTESTNET_REF: 2d889a9740128e9a5f28ea6d1ef8babf64c8d4cf
 
 jobs:
   import:
@@ -21,8 +21,8 @@ jobs:
       - name: Checkout JAM test vectors
         uses: actions/checkout@v4
         with:
-          repository: jam-duna/jamtestnet
-          path: "./jamdunavectors"
+          repository: fluffylabs/test-vectors
+          path: "./test-vectors"
           ref: ${{ env.JAMTESTNET_REF }}
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
@@ -31,7 +31,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: rm -rf ./database
-      - run: npm start -- import ./jamdunavectors/data/safrole/blocks/*.json | tee safrole.txt
+      - run: npm start -- import ./test-vetors/jamduna/data/safrole/blocks/*.json | tee safrole.txt
       # TODO [ToDr] would probably be best to have some CLI to display the best block and test with that?
       #             or a special mode that would import the blocks for test purposes and print some extra output.
       - run: |
@@ -40,7 +40,7 @@ jobs:
             exit 1
           }
       - run: rm -rf ./database
-      - run: npm start -- import ./jamdunavectors/data/fallback/blocks/*.json | tee fallback.txt
+      - run: npm start -- import ./test-vetors/jamduna/data/fallback/blocks/*.json | tee fallback.txt
       - run: |
           grep -q "Best block: #60 (0x5da17ce23b742d103fd40c20353db271601943a260653802f7645da319e10fd8)" fallback.txt || {
             echo "Seems that the blocks were not imported correctly"
@@ -59,8 +59,8 @@ jobs:
       - name: Checkout JAM test vectors
         uses: actions/checkout@v4
         with:
-          repository: jam-duna/jamtestnet
-          path: "./jamdunavectors"
+          repository: fluffylabs/test-vectors
+          path: "./test-vectors"
           ref: ${{ env.JAMTESTNET_REF }}
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
