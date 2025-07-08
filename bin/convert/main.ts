@@ -1,3 +1,4 @@
+import "json-bigint-patch";
 import fs from "node:fs";
 import { BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
@@ -104,10 +105,6 @@ function dumpOutput(spec: ChainSpec, data: unknown, type: SupportedType, outputF
           data,
           (_key, value) => {
             if (value instanceof BytesBlob) {
-              return value.toString();
-            }
-
-            if (typeof value === "bigint") {
               return value.toString();
             }
 
