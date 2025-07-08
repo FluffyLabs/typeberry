@@ -8,11 +8,7 @@ const runners = [
 ];
 
 main(runners, process.argv.slice(2), "test-vectors/jamduna", {
-  accepted: [
-    "safrole/state_transitions",
-    "safrole/state_transitions_fuzzed",
-    "fallback/state_transitions",
-  ],
+  accepted: ["safrole/state_transitions", "safrole/state_transitions_fuzzed", "fallback/state_transitions"],
   ignored: [
     // Ignoring, since they are invalid and we cannot even parse them.
     "BadTicketAttemptNumber.json",
