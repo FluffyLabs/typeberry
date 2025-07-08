@@ -7,26 +7,25 @@ import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { HostCallResult } from "./results.js";
 import { SERVICE_ID_BYTES, clampU64ToU32, writeServiceIdAsLeBytes } from "./utils.js";
+import {OK, Result} from "@typeberry/utils";
 
 /** Account data interface for write host calls. */
 export interface AccountsWrite {
   /**
    * Alter the account storage. Put `data` under given key hash.
    * `null` indicates the storage entry should be removed.
+   *
+   * Returns "full" error if there is not enough balance to pay for
+   * the storage.
+   *
+   * https://graypaper.fluffylabs.dev/#/9a08063/331002331402?v=0.6.6
    */
-  write(hash: Blake2bHash, data: BytesBlob | null): void;
+  write(hash: Blake2bHash, data: BytesBlob | null): Result<OK, "full">;
   /**
    * Read the length of some value from account snapshot state.
    * Returns `null` if the storage entry was empty.
    */
   readSnapshotLength(hash: Blake2bHash): number | null;
-  /**
-   * Returns true if the storage is already full.
-   * - aka Not enough balance to pay for the storage.
-   *
-   * https://graypaper.fluffylabs.dev/#/9a08063/331002331402?v=0.6.6
-   */
-  isStorageFull(): boolean;
 }
 
 const IN_OUT_REG = 7;
@@ -80,18 +79,15 @@ export class Write implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    // Check if the storage is full
-    const isStorageFull = this.account.isStorageFull();
-    if (isStorageFull) {
-      regs.set(IN_OUT_REG, HostCallResult.FULL);
-      return;
-    }
-
     /** https://graypaper.fluffylabs.dev/#/9a08063/33af0133b201?v=0.6.6 */
     const maybeValue = valueLength === 0n ? null : BytesBlob.blobFrom(value);
 
     // a
-    this.account.write(storageKey, maybeValue);
+    const result = this.account.write(storageKey, maybeValue);
+    if (result.isError) {
+      regs.set(IN_OUT_REG, HostCallResult.FULL);
+      return;
+    }
 
     // l
     const previousLength = this.account.readSnapshotLength(storageKey);

@@ -5,6 +5,8 @@ import { type FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import type { OpaqueHash } from "@typeberry/hash";
 import {
   type InMemoryService,
+  LookupHistoryItem,
+  PreimageItem,
   ServiceAccountInfo,
   type ServicesUpdate,
   UpdatePreimage,
@@ -12,7 +14,6 @@ import {
   type UpdateStorage,
   type ValidatorData,
 } from "@typeberry/state";
-import type { NewPreimage, PreimageUpdate } from "./partial-state-db.js";
 import type { PendingTransfer } from "./pending-transfer.js";
 
 /**
@@ -32,6 +33,7 @@ export class AccumulationStateUpdate {
     for (const [k, v] of from.authorizationQueues) {
       update.authorizationQueues.set(k, v);
     }
+    update.storage.push(...from.storage);
 
     update.updatedServiceInfo =
       from.updatedServiceInfo === null ? null : ServiceAccountInfo.create(from.updatedServiceInfo);
@@ -43,7 +45,6 @@ export class AccumulationStateUpdate {
         : {
             ...from.privilegedServices,
           };
-
     return update;
   }
 
@@ -129,4 +130,39 @@ export class AccumulationStateUpdate {
   public storage: UpdateStorage[] = [];
 
   constructor(public readonly serviceId: ServiceId) {}
+}
+
+export class PreimageUpdate extends LookupHistoryItem {
+  private constructor(
+    item: LookupHistoryItem,
+    /** NOTE: Forgotten preimages should be removed along their lookup history. */
+    public forgotten: boolean,
+  ) {
+    super(item.hash, item.length, item.slots);
+  }
+
+  static forget(item: LookupHistoryItem) {
+    return new PreimageUpdate(item, true);
+  }
+
+  static update(item: LookupHistoryItem) {
+    return new PreimageUpdate(item, false);
+  }
+}
+
+export class NewPreimage {
+  public static create({
+    serviceId,
+    item,
+  }: {
+    serviceId: ServiceId;
+    item: PreimageItem;
+  }): NewPreimage {
+    return new NewPreimage(serviceId, item);
+  }
+
+  private constructor(
+    public readonly serviceId: ServiceId,
+    public readonly item: PreimageItem,
+  ) {}
 }

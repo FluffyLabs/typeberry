@@ -15,7 +15,7 @@ import {
   StorageItem,
   tryAsLookupHistorySlots,
 } from "./service.js";
-import { UpdatePreimageKind, UpdateServiceKind, UpdateStorageKind } from "./state-update.js";
+import { UpdatePreimageKind, UpdateServiceKind, UpdateStorage } from "./state-update.js";
 
 describe("InMemoryState", () => {
   it("should not change anything when state udpate is empty", () => {
@@ -147,13 +147,10 @@ describe("InMemoryState", () => {
 
     result = state.applyUpdate({
       storage: [
-        {
+        UpdateStorage.set({
           serviceId,
-          action: {
-            kind: UpdateStorageKind.Set,
-            storage: item,
-          },
-        },
+          storage: item,
+        })
       ],
     });
 
@@ -178,13 +175,10 @@ describe("InMemoryState", () => {
 
     const result = state.applyUpdate({
       storage: [
-        {
+        UpdateStorage.set({
           serviceId,
-          action: {
-            kind: UpdateStorageKind.Set,
-            storage: item,
-          },
-        },
+          storage: item,
+        })
       ],
     });
 

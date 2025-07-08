@@ -12,7 +12,7 @@ import { getServiceIdOrCurrent } from "./utils.js";
 /** Account data interface for info host calls. */
 export interface AccountsInfo {
   /** Get account info. */
-  getInfo(serviceId: ServiceId | null): ServiceAccountInfo | null;
+  getServiceInfo(serviceId: ServiceId | null): ServiceAccountInfo | null;
 }
 
 const IN_OUT_REG = 7;
@@ -51,7 +51,7 @@ export class Info implements HostCallHandler {
     const outputStart = regs.get(8);
 
     // t
-    const accountInfo = this.account.getInfo(serviceId);
+    const accountInfo = this.account.getServiceInfo(serviceId);
 
     const encodedInfo =
       accountInfo === null

@@ -13,7 +13,7 @@ import type { AuthorizerHash } from "@typeberry/block/work-report.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { type FixedSizeArray, HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
-import { type U64, maxU64, sumU32, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { U32, type U64, isU32, isU64, maxU64, sumU32, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   InMemoryService,
   LookupHistoryItem,
@@ -21,6 +21,9 @@ import {
   type Service,
   ServiceAccountInfo,
   type State,
+  StorageItem,
+  StorageKey,
+  UpdateStorage,
   type ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
@@ -38,7 +41,11 @@ import {
   slotsToPreimageStatus,
 } from "./partial-state.js";
 import { PendingTransfer } from "./pending-transfer.js";
-import { AccumulationStateUpdate } from "./state-update.js";
+import { AccumulationStateUpdate, NewPreimage, PreimageUpdate } from "./state-update.js";
+import {AccountsLookup} from "../lookup.js";
+import {AccountsInfo} from "../info.js";
+import {AccountsWrite} from "../write.js";
+import {AccountsRead} from "../read.js";
 
 /**
  * `D`: Period in timeslots after which an unreferenced preimage may be expunged.
@@ -59,12 +66,7 @@ const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 
 type StateSlice = Pick<State, "getService" | "timeslot">;
 
-export interface UpdatedCurrentService {
-  getCurrentServiceInfo(): ServiceAccountInfo;
-  getUpdatedServicePreimage(serviceId: ServiceId, hash: PreimageHash): BytesBlob | null;
-}
-
-export class PartialStateDb implements PartialState, UpdatedCurrentService {
+export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead, AccountsInfo, AccountsLookup {
   public readonly updatedState: AccumulationStateUpdate;
   private checkpointedState: AccumulationStateUpdate | null = null;
   /** `x_i`: next service id we are going to create. */
@@ -86,12 +88,12 @@ export class PartialStateDb implements PartialState, UpdatedCurrentService {
   }
 
   /** Return the underlying state update and checkpointed state (if any). */
-  public getStateUpdates(): [AccumulationStateUpdate, AccumulationStateUpdate | null] {
+  getStateUpdates(): [AccumulationStateUpdate, AccumulationStateUpdate | null] {
     return [this.updatedState, this.checkpointedState];
   }
 
   /** Return current `x_i` value of next new service id. */
-  public getNextNewServiceId() {
+  getNextNewServiceId() {
     return this.nextNewServiceId;
   }
 
@@ -100,7 +102,7 @@ export class PartialStateDb implements PartialState, UpdatedCurrentService {
    *
    * Takes into account updates over the state.
    */
-  getCurrentServiceInfo(): ServiceAccountInfo {
+  private getCurrentServiceInfo(): ServiceAccountInfo {
     if (this.updatedState.updatedServiceInfo !== null) {
       return this.updatedState.updatedServiceInfo;
     }
@@ -121,7 +123,7 @@ export class PartialStateDb implements PartialState, UpdatedCurrentService {
    *
    * Takes into account newly created services as well.
    */
-  private getServiceInfo(destination: ServiceId | null): ServiceAccountInfo | null {
+  getServiceInfo(destination: ServiceId | null): ServiceAccountInfo | null {
     if (destination === null) {
       return null;
     }
@@ -144,6 +146,7 @@ export class PartialStateDb implements PartialState, UpdatedCurrentService {
     if (maybeService === null) {
       return null;
     }
+
     return maybeService.getInfo();
   }
 
@@ -282,22 +285,10 @@ export class PartialStateDb implements PartialState, UpdatedCurrentService {
     const items = sumU32(serviceInfo.storageUtilisationCount, tryAsU32(1));
     const bytes = sumU64(serviceInfo.storageUtilisationBytes, length);
 
-    // TODO [ToDr] this is not specified in GP, but it seems sensible.
-    if (items.overflow || bytes.overflow) {
-      return Result.error(RequestPreimageError.InsufficientFunds);
+    const res = this.updateServiceStorageUtilisation(items, bytes, serviceInfo);
+    if (res.isError) {
+      return Result.error(RequestPreimageError.InsufficientFunds, res.details);
     }
-
-    const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(items.value, bytes.value);
-    if (serviceInfo.balance < thresholdBalance) {
-      return Result.error(RequestPreimageError.InsufficientFunds);
-    }
-
-    // Update service info with new details.
-    this.updatedState.updatedServiceInfo = ServiceAccountInfo.create({
-      ...serviceInfo,
-      storageUtilisationBytes: bytes.value,
-      storageUtilisationCount: items.value,
-    });
 
     // and now update preimages
 
@@ -323,6 +314,31 @@ export class PartialStateDb implements PartialState, UpdatedCurrentService {
         ),
       );
     }
+
+    return Result.ok(OK);
+  }
+
+  updateServiceStorageUtilisation(
+    items: {overflow: boolean; value: U32;},
+    bytes: {overflow: boolean; value: U64;},
+    serviceInfo: ServiceAccountInfo
+  ): Result<OK, "insufficient funds">{
+    // TODO [ToDr] this is not specified in GP, but it seems sensible.
+    if (items.overflow || bytes.overflow) {
+      return Result.error("insufficient funds");
+    }
+
+    const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(items.value, bytes.value);
+    if (serviceInfo.balance < thresholdBalance) {
+      return Result.error("insufficient funds");
+    }
+
+    // Update service info with new details.
+    this.updatedState.updatedServiceInfo = ServiceAccountInfo.create({
+      ...serviceInfo,
+      storageUtilisationBytes: bytes.value,
+      storageUtilisationCount: items.value,
+    });
 
     return Result.ok(OK);
   }
@@ -633,47 +649,88 @@ export class PartialStateDb implements PartialState, UpdatedCurrentService {
     return Result.ok(OK);
   }
 
-  getUpdatedServicePreimage(serviceId: ServiceId, hash: PreimageHash) {
-    return (
-      this.updatedState.providedPreimages.find((x) => x.serviceId === serviceId && x.item.hash.isEqualTo(hash))?.item
-        .blob ?? null
-    );
-  }
-}
+  private replaceOrAddStorageUpdate(key: StorageKey, blob: BytesBlob | null) {
+    const update = blob === null
+      ? UpdateStorage.remove({ serviceId: this.currentServiceId, key })
+      : UpdateStorage.set({
+        serviceId: this.currentServiceId,
+        storage: StorageItem.create({ hash: key, blob })
+      });
 
-export class PreimageUpdate extends LookupHistoryItem {
-  private constructor(
-    item: LookupHistoryItem,
-    /** NOTE: Forgotten preimages should be removed along their lookup history. */
-    public forgotten: boolean,
-  ) {
-    super(item.hash, item.length, item.slots);
+    const index = this.updatedState.storage.findIndex(x => x.serviceId === update.serviceId && x.key.isEqualTo(key));
+    const count = index === -1 ? 0 : 1;
+    this.updatedState.storage.splice(index, count, update);
   }
 
-  static forget(item: LookupHistoryItem) {
-    return new PreimageUpdate(item, true);
+  read(serviceId: ServiceId | null, key: StorageKey): BytesBlob | null {
+    if (serviceId === null) {
+      return null;
+    }
+
+    if (this.currentServiceId === serviceId) {
+      const item = this.updatedState.storage.find(x => x.serviceId === serviceId && x.key.isEqualTo(key));
+      if (item !== undefined) {
+        return item.value;
+      }
+    }
+
+    const service = this.state.getService(serviceId);
+    return service?.getStorage(key) ?? null;
   }
 
-  static update(item: LookupHistoryItem) {
-    return new PreimageUpdate(item, false);
-  }
-}
+  write(key: StorageKey, data: BytesBlob | null): Result<OK, "full"> {
+    const current = this.read(this.currentServiceId, key);
 
-export class NewPreimage {
-  public static create({
-    serviceId,
-    item,
-  }: {
-    serviceId: ServiceId;
-    item: PreimageItem;
-  }): NewPreimage {
-    return new NewPreimage(serviceId, item);
+    const isAddingNew = current === null && data !== null;
+    const isRemoving = current !== null && data === null;
+    const countDiff = isAddingNew ? 1 : (isRemoving ? -1 : 0);
+    const lenDiff = (current?.length ?? 0) - (data?.length ?? 0);
+
+    const serviceInfo = this.getCurrentServiceInfo();
+    const items = serviceInfo.storageUtilisationCount + countDiff;
+    const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff);
+
+    check(items >= 0, "storageUtilisationCount has to be a positive number");
+    check(bytes >= 0, "storageUtilisationBytes has to be a positive number");
+
+    const overflowItems = !isU32(items);
+    const overflowBytes = !isU64(bytes);
+
+    const res = this.updateServiceStorageUtilisation({
+      overflow: overflowItems,
+      value: overflowItems ? tryAsU32(0) : items,
+    }, {
+      overflow: overflowBytes,
+      value: overflowBytes ? tryAsU64(0) : bytes,
+    }, serviceInfo);
+    if (res.isError) {
+      return Result.error("full", res.details);
+    }
+
+    this.replaceOrAddStorageUpdate(key, data);
+
+    return Result.ok(OK);
   }
 
-  private constructor(
-    public readonly serviceId: ServiceId,
-    public readonly item: PreimageItem,
-  ) {}
+  readSnapshotLength(key: StorageKey): number | null {
+    const service = this.state.getService(this.currentServiceId);
+    return service?.getStorage(key)?.length ?? null;
+  }
+
+  lookup(serviceId: ServiceId | null, hash: PreimageHash): BytesBlob | null {
+    if (serviceId === null) {
+      return null;
+    }
+
+    // TODO [ToDr] Should we verify availability here?
+    const freshlyProvided = this.updatedState.providedPreimages.find(x => x.serviceId === serviceId && x.item.hash.isEqualTo(hash));
+    if (freshlyProvided !== undefined) {
+      return freshlyProvided.item.blob;
+    }
+
+    const service = this.state.getService(serviceId);
+    return service?.getPreimage(hash) ?? null;
+  }
 }
 
 function bumpServiceId(serviceId: ServiceId) {

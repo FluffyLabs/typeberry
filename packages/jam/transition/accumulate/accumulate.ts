@@ -36,7 +36,7 @@ import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
 import { Result, check } from "@typeberry/utils";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
 import { generateNextServiceId, getWorkPackageHashes, uniquePreserveOrder } from "./accumulate-utils.js";
-import { AccumulateFetchExternalities, AccumulateServiceExternalities } from "./externalities/index.js";
+import { AccumulateFetchExternalities } from "./externalities/index.js";
 import { LegacyOperand } from "./operand.js";
 import { PvmExecutor } from "./pvm-executor.js";
 
@@ -176,11 +176,10 @@ export class Accumulate {
 
     const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec);
     const partialState = new PartialStateDb(this.state, serviceId, nextServiceId);
-    const serviceExternalities = new AccumulateServiceExternalities(serviceId, this.state, partialState);
 
     const externalities = {
       partialState,
-      serviceExternalities,
+      serviceExternalities: partialState,
       fetchExternalities: new AccumulateFetchExternalities(entropy, operands, this.chainSpec),
     };
 
@@ -209,6 +208,8 @@ export class Accumulate {
      *
      * https://graypaper.fluffylabs.dev/#/7e6ff6a/301202301202?v=0.6.7
      */
+    // TODO [ToDr] This looks fishy. Why do we always override `yieldedRoot`
+    // if there is some result memory slice?
     if (result.hasMemorySlice() && result.memorySlice.length === HASH_SIZE) {
       const memorySlice = Bytes.fromBlob(result.memorySlice, HASH_SIZE);
       newState.yieldedRoot = memorySlice.asOpaque();
@@ -219,8 +220,6 @@ export class Accumulate {
      *
      * https://graypaper.fluffylabs.dev/#/7e6ff6a/302302302302?v=0.6.7
      */
-    newState.storage = serviceExternalities.getUpdates();
-
     return Result.ok({ stateUpdate: newState, consumedGas: tryAsServiceGas(result.consumedGas) });
   }
 
