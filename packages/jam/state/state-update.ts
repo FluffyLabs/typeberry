@@ -1,8 +1,8 @@
 import type { ServiceId, TimeSlot } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
+import type { BytesBlob } from "@typeberry/bytes";
 import type { U32 } from "@typeberry/numbers";
 import type { LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, StorageKey } from "./service.js";
-import {BytesBlob} from "@typeberry/bytes";
 
 export enum UpdatePreimageKind {
   /** Insert new preimage and optionally update it's lookup history. */
@@ -159,7 +159,7 @@ export class UpdateStorage {
     if (this.action.kind === UpdateStorageKind.Remove) {
       return null;
     }
-    return this.action.storage.hash;
+    return this.action.storage.blob;
   }
 }
 

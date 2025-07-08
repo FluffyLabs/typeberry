@@ -150,7 +150,7 @@ describe("InMemoryState", () => {
         UpdateStorage.set({
           serviceId,
           storage: item,
-        })
+        }),
       ],
     });
 
@@ -178,7 +178,7 @@ describe("InMemoryState", () => {
         UpdateStorage.set({
           serviceId,
           storage: item,
-        })
+        }),
       ],
     });
 

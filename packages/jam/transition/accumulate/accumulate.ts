@@ -204,12 +204,11 @@ export class Accumulate {
     }
 
     /**
-     * PVM invocation returned a hash so we save it in partial state
+     * PVM invocation returned a hash so we override whatever `yield` host call
+     * provided.
      *
      * https://graypaper.fluffylabs.dev/#/7e6ff6a/301202301202?v=0.6.7
      */
-    // TODO [ToDr] This looks fishy. Why do we always override `yieldedRoot`
-    // if there is some result memory slice?
     if (result.hasMemorySlice() && result.memorySlice.length === HASH_SIZE) {
       const memorySlice = Bytes.fromBlob(result.memorySlice, HASH_SIZE);
       newState.yieldedRoot = memorySlice.asOpaque();

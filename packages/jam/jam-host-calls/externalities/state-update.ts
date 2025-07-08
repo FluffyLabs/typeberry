@@ -6,7 +6,7 @@ import type { OpaqueHash } from "@typeberry/hash";
 import {
   type InMemoryService,
   LookupHistoryItem,
-  PreimageItem,
+  type PreimageItem,
   ServiceAccountInfo,
   type ServicesUpdate,
   UpdatePreimage,

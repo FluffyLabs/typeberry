@@ -13,7 +13,7 @@ import type { AuthorizerHash } from "@typeberry/block/work-report.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { type FixedSizeArray, HashDictionary } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
-import { U32, type U64, isU32, isU64, maxU64, sumU32, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { type U32, type U64, isU32, isU64, maxU64, sumU32, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   InMemoryService,
   LookupHistoryItem,
@@ -22,13 +22,17 @@ import {
   ServiceAccountInfo,
   type State,
   StorageItem,
-  StorageKey,
+  type StorageKey,
   UpdateStorage,
   type ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { OK, Result, assertNever, check, ensure } from "@typeberry/utils";
+import type { AccountsInfo } from "../info.js";
+import type { AccountsLookup } from "../lookup.js";
+import type { AccountsRead } from "../read.js";
 import { clampU64ToU32, writeServiceIdAsLeBytes } from "../utils.js";
+import type { AccountsWrite } from "../write.js";
 import {
   EjectError,
   type PartialState,
@@ -42,10 +46,6 @@ import {
 } from "./partial-state.js";
 import { PendingTransfer } from "./pending-transfer.js";
 import { AccumulationStateUpdate, NewPreimage, PreimageUpdate } from "./state-update.js";
-import {AccountsLookup} from "../lookup.js";
-import {AccountsInfo} from "../info.js";
-import {AccountsWrite} from "../write.js";
-import {AccountsRead} from "../read.js";
 
 /**
  * `D`: Period in timeslots after which an unreferenced preimage may be expunged.
@@ -319,10 +319,10 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
   }
 
   updateServiceStorageUtilisation(
-    items: {overflow: boolean; value: U32;},
-    bytes: {overflow: boolean; value: U64;},
-    serviceInfo: ServiceAccountInfo
-  ): Result<OK, "insufficient funds">{
+    items: { overflow: boolean; value: U32 },
+    bytes: { overflow: boolean; value: U64 },
+    serviceInfo: ServiceAccountInfo,
+  ): Result<OK, "insufficient funds"> {
     // TODO [ToDr] this is not specified in GP, but it seems sensible.
     if (items.overflow || bytes.overflow) {
       return Result.error("insufficient funds");
@@ -650,14 +650,15 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
   }
 
   private replaceOrAddStorageUpdate(key: StorageKey, blob: BytesBlob | null) {
-    const update = blob === null
-      ? UpdateStorage.remove({ serviceId: this.currentServiceId, key })
-      : UpdateStorage.set({
-        serviceId: this.currentServiceId,
-        storage: StorageItem.create({ hash: key, blob })
-      });
+    const update =
+      blob === null
+        ? UpdateStorage.remove({ serviceId: this.currentServiceId, key })
+        : UpdateStorage.set({
+            serviceId: this.currentServiceId,
+            storage: StorageItem.create({ hash: key, blob }),
+          });
 
-    const index = this.updatedState.storage.findIndex(x => x.serviceId === update.serviceId && x.key.isEqualTo(key));
+    const index = this.updatedState.storage.findIndex((x) => x.serviceId === update.serviceId && x.key.isEqualTo(key));
     const count = index === -1 ? 0 : 1;
     this.updatedState.storage.splice(index, count, update);
   }
@@ -668,7 +669,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     }
 
     if (this.currentServiceId === serviceId) {
-      const item = this.updatedState.storage.find(x => x.serviceId === serviceId && x.key.isEqualTo(key));
+      const item = this.updatedState.storage.find((x) => x.serviceId === serviceId && x.key.isEqualTo(key));
       if (item !== undefined) {
         return item.value;
       }
@@ -683,26 +684,30 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
 
     const isAddingNew = current === null && data !== null;
     const isRemoving = current !== null && data === null;
-    const countDiff = isAddingNew ? 1 : (isRemoving ? -1 : 0);
-    const lenDiff = (current?.length ?? 0) - (data?.length ?? 0);
+    const countDiff = isAddingNew ? 1 : isRemoving ? -1 : 0;
+    const lenDiff = (data?.length ?? 0) - (current?.length ?? 0);
 
     const serviceInfo = this.getCurrentServiceInfo();
     const items = serviceInfo.storageUtilisationCount + countDiff;
     const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff);
 
-    check(items >= 0, "storageUtilisationCount has to be a positive number");
-    check(bytes >= 0, "storageUtilisationBytes has to be a positive number");
+    check(items >= 0, `storageUtilisationCount has to be a positive number, got: ${items}`);
+    check(bytes >= 0, `storageUtilisationBytes has to be a positive number, got: ${bytes}`);
 
     const overflowItems = !isU32(items);
     const overflowBytes = !isU64(bytes);
 
-    const res = this.updateServiceStorageUtilisation({
-      overflow: overflowItems,
-      value: overflowItems ? tryAsU32(0) : items,
-    }, {
-      overflow: overflowBytes,
-      value: overflowBytes ? tryAsU64(0) : bytes,
-    }, serviceInfo);
+    const res = this.updateServiceStorageUtilisation(
+      {
+        overflow: overflowItems,
+        value: overflowItems ? tryAsU32(0) : items,
+      },
+      {
+        overflow: overflowBytes,
+        value: overflowBytes ? tryAsU64(0) : bytes,
+      },
+      serviceInfo,
+    );
     if (res.isError) {
       return Result.error("full", res.details);
     }
@@ -723,7 +728,9 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     }
 
     // TODO [ToDr] Should we verify availability here?
-    const freshlyProvided = this.updatedState.providedPreimages.find(x => x.serviceId === serviceId && x.item.hash.isEqualTo(hash));
+    const freshlyProvided = this.updatedState.providedPreimages.find(
+      (x) => x.serviceId === serviceId && x.item.hash.isEqualTo(hash),
+    );
     if (freshlyProvided !== undefined) {
       return freshlyProvided.item.blob;
     }
