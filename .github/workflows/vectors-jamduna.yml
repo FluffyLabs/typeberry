@@ -6,7 +6,7 @@ on:
     branches: [ "main" ]
 
 env:
-  JAMTESTNET_REF: 2d889a9740128e9a5f28ea6d1ef8babf64c8d4cf
+  TEST_VECTORS_REF: 2d889a9740128e9a5f28ea6d1ef8babf64c8d4cf
 
 jobs:
   import:
@@ -23,7 +23,7 @@ jobs:
         with:
           repository: fluffylabs/test-vectors
           path: "./test-vectors"
-          ref: ${{ env.JAMTESTNET_REF }}
+          ref: ${{ env.TEST_VECTORS_REF }}
           submodules: true
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
@@ -62,7 +62,7 @@ jobs:
         with:
           repository: fluffylabs/test-vectors
           path: "./test-vectors"
-          ref: ${{ env.JAMTESTNET_REF }}
+          ref: ${{ env.TEST_VECTORS_REF }}
           submodules: true
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
