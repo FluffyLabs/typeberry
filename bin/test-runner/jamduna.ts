@@ -7,18 +7,11 @@ const runners = [
   runner("safrole/state_transitions_fuzzed", StateTransitionFuzzed.fromJson, runStateTransitionFuzzed),
 ];
 
-main(runners, process.argv.slice(2), "jamdunavectors", {
+main(runners, process.argv.slice(2), "test-vectors/jamduna", {
   accepted: [
-    "safrole/state_transitions",
-    /*"assurances/state_transitions",*/ "safrole/state_transitions_fuzzed",
-    "fallback/state_transitions",
+    "generic/state_transitions",
   ],
   ignored: [
-    // Ignoring, since they are invalid and we cannot even parse them.
-    "BadTicketAttemptNumber.json",
-    // we only run independent state-transition tests
-    "/chainspecs/",
-    "/blocks/",
     "/state_snapshots/",
   ],
 })
