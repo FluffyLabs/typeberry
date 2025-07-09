@@ -48,6 +48,6 @@
     }
   },
   "files": {
-    "ignore": ["dist/*", "jamtestvectors/*", "benchmarks/**/output/*", "jamdunavectors/*"]
+    "ignore": ["dist/*", "jamtestvectors/*", "benchmarks/**/output/*", "test-vectors/*"]
   }
 }
