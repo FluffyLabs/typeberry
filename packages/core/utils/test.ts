@@ -117,6 +117,20 @@ export function deepEqual<T>(
     return errors.exitOrThrow();
   }
 
+  // special casing for maps
+  if (actual instanceof Map && expected instanceof Map) {
+    const actualEntries = Array.from(actual.entries());
+    actualEntries.sort();
+    const expectedEntries = Array.from(expected.entries());
+    expectedEntries.sort();
+    deepEqual(actualEntries, expectedEntries, {
+      context: ctx.concat(["[map]"]),
+      errorsCollector: errors,
+      ignore,
+    });
+    return errors.exitOrThrow();
+  }
+
   if (typeof actual === "object" && typeof expected === "object") {
     const actualKeys = Object.keys(actual) as (keyof T)[];
     const expectedKeys = Object.keys(expected) as (keyof T)[];

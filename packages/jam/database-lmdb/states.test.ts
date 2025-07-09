@@ -132,6 +132,11 @@ describe("LMDB States database", () => {
     const states = new LmdbStates(spec, root);
 
     const initialState = testState();
+    const initialService = initialState.services.get(tryAsServiceId(0));
+    if (initialService === undefined) {
+      throw new Error("Expected service in test state!");
+    }
+
     const serialized = StateEntries.serializeInMemory(spec, initialState);
     const initialRoot = serialized.getRootHash();
 
@@ -143,13 +148,20 @@ describe("LMDB States database", () => {
     const newRoot = await states.getStateRoot(newState);
 
     assert.deepStrictEqual(`${newRoot}`, `${initialRoot}`);
-    deepEqual(InMemoryState.copyFrom(newState, new Map()), initialState);
+    deepEqual(
+      InMemoryState.copyFrom(newState, new Map([[initialService.serviceId, initialService.getEntries()]])),
+      initialState,
+    );
   });
 
   it("should update more complex entries", async () => {
     const root = new LmdbRoot(tmpDir);
     const states = new LmdbStates(spec, root);
     const state = testState();
+    const initialService = state.services.get(tryAsServiceId(0));
+    if (initialService === undefined) {
+      throw new Error("Expected service in test state!");
+    }
     await states.insertState(headerHash, StateEntries.serializeInMemory(spec, state));
     const newState = states.getState(headerHash);
     assert.ok(newState !== null);
@@ -170,7 +182,10 @@ describe("LMDB States database", () => {
     assert.ok(updatedState !== null);
     const updatedStateRoot = await states.getStateRoot(updatedState);
 
-    deepEqual(InMemoryState.copyFrom(updatedState, new Map()), state);
+    deepEqual(
+      InMemoryState.copyFrom(updatedState, new Map([[initialService.serviceId, initialService.getEntries()]])),
+      state,
+    );
     assert.strictEqual(`${updatedStateRoot}`, `${StateEntries.serializeInMemory(spec, state).getRootHash()}`);
   });
 });
