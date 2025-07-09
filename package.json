@@ -12,7 +12,6 @@
     "packages/core/bytes",
     "packages/core/codec",
     "packages/core/collections",
-    "packages/core/compatibility",
     "packages/core/concurrent",
     "packages/core/crypto",
     "packages/core/erasure-coding",

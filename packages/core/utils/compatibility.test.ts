@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { DEFAULT_VERSION, GpVersion } from "./index.js";
+import { DEFAULT_VERSION, GpVersion } from "./compatibility.js";
 
 describe("GrayPaper compatibility", () => {
   it("Should check with default value if env is not set", async () => {
-    const { Compatibility } = await import("./index.js");
+    const { Compatibility } = await import("./compatibility.js");
 
     const defaultVersion = DEFAULT_VERSION;
     assert.equal(Compatibility.is(defaultVersion), true);
@@ -16,7 +16,7 @@ describe("GrayPaper compatibility", () => {
 
     // NOTE: [MaSo] To trick node, reimport module with unique name
     // so it doesn't use cached module
-    const { Compatibility, CURRENT_VERSION } = await import(`./index.js?v=${Date.now()}`);
+    const { Compatibility, CURRENT_VERSION } = await import(`./compatibility.js?v=${Date.now()}`);
 
     assert.deepEqual(CURRENT_VERSION, gpVersion);
     assert.equal(Compatibility.is(gpVersion), true);
@@ -26,7 +26,7 @@ describe("GrayPaper compatibility", () => {
     const gpVersion = "invalid-gp-version";
     process.env.GP_VERSION = gpVersion;
 
-    const { Compatibility, CURRENT_VERSION } = await import(`./index.js?v=${Date.now()}`);
+    const { Compatibility, CURRENT_VERSION } = await import(`./compatibility.js?v=${Date.now()}`);
 
     assert.deepEqual(CURRENT_VERSION, gpVersion);
     assert.equal(Compatibility.is(DEFAULT_VERSION), true);
