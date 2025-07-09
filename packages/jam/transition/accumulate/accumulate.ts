@@ -31,7 +31,7 @@ import {
   hashComparator,
 } from "@typeberry/state";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
-import { InMemoryTrie } from "@typeberry/trie";
+import type { TrieHasher, TrieNodeHash } from "@typeberry/trie";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
 import { Result, check } from "@typeberry/utils";
 import type { CountAndGasUsed } from "../statistics.js";
@@ -587,15 +587,38 @@ export class Accumulate {
 async function getRootHash(yieldedRoots: [ServiceId, OpaqueHash][]): Promise<AccumulateRoot> {
   const keccakHasher = await KeccakHasher.create();
   const trieHasher = getKeccakTrieHasher(keccakHasher);
-  const trie = InMemoryTrie.empty(trieHasher);
   const yieldedRootsSortedByServiceId = yieldedRoots.sort((a, b) => a[0] - b[0]);
+  const values = yieldedRootsSortedByServiceId.map(([serviceId, hash]) => {
+    return BytesBlob.blobFromParts([u32AsLeBytes(serviceId), hash.raw]);
+  });
 
-  for (const [serviceId, hash] of yieldedRootsSortedByServiceId) {
-    const keyVal = BytesBlob.blobFromParts([u32AsLeBytes(serviceId), hash.raw]);
-    trie.set(Bytes.fromBlob(keyVal.raw, 36).asOpaque(), keyVal);
+  return binaryMerkleization(values, trieHasher);
+}
+
+function binaryMerkleization(input: BytesBlob[], hasher: TrieHasher) {
+  if (input.length === 1) {
+    return hasher.hashConcat(input[0].raw);
   }
 
-  return trie.getRootHash().asOpaque();
+  function upperN(input: BytesBlob[], hasher: TrieHasher): BytesBlob {
+    if (input.length === 0) {
+      return Bytes.zero(HASH_SIZE).asOpaque();
+    }
+    if (input.length === 1) {
+      return input[0];
+    }
+
+    const mid = Math.ceil(input.length / 2);
+    const left = input.slice(0, mid);
+    const right = input.slice(mid);
+
+    return hasher.hashConcat(BytesBlob.blobFromString("node").raw, [
+      upperN(left, hasher).raw,
+      upperN(right, hasher).raw,
+    ]);
+  }
+
+  return upperN(input, hasher) as TrieNodeHash;
 }
 
 function assertEmpty<T extends Record<string, never>>(_x: T) {}

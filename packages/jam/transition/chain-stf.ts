@@ -232,6 +232,7 @@ export class OnChain {
       ...accumulateRest
     } = accumulateResult.ok;
     assertEmpty(accumulateRest);
+
     const {
       privilegedServices: maybePrivilegedServices,
       authQueues: maybeAuthQueues,
