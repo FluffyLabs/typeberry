@@ -1,5 +1,5 @@
 {
-  "name": "typeberry",
+  "name": "@typeberry/jam",
   "version": "0.0.1",
   "description": "JAM implementation in TypeScript",
   "private": true,
