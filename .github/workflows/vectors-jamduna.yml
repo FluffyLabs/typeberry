@@ -6,7 +6,7 @@ on:
     branches: [ "main" ]
 
 env:
-  TEST_VECTORS_REF: 2d889a9740128e9a5f28ea6d1ef8babf64c8d4cf
+  TEST_VECTORS_REF: fb6f546f083ee274b02671e9addd6b9a6f05ff95
 
 jobs:
   import:
