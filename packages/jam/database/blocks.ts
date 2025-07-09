@@ -36,12 +36,12 @@ export class InMemoryBlocks implements BlocksDb {
 
   /** Create empty blocks db. */
   static new() {
-    return InMemoryBlocks.fromBlocks([]);
+    return new InMemoryBlocks();
   }
 
   /** Create new `InMemoryBlocks` and insert all given blocks. */
   static fromBlocks(previousBlocks: WithHash<HeaderHash, BlockView>[]) {
-    const blocksDb = new InMemoryBlocks();
+    const blocksDb = InMemoryBlocks.new();
     for (const block of previousBlocks) {
       blocksDb.insertBlock(block);
     }
