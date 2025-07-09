@@ -19,9 +19,10 @@ jobs:
       - name: Checkout JAM test vectors
         uses: actions/checkout@v4
         with:
-          repository: FluffyLabs/jamtestvectors
-          path: "./jamtestvectors"
-          ref: b70b33659ef07be378b4a210aecf0158525fe1b1
+          repository: fluffylabs/test-vectors
+          path: "./test-vectors"
+          ref: ${{ env.TEST_VECTORS_REF }}
+          submodules: true
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
