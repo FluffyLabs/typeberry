@@ -18,6 +18,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Checking Github version
+      - run: git --version
       - name: Checkout JAM test vectors
         uses: actions/checkout@v4
         with:
