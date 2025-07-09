@@ -18,7 +18,7 @@ describe("GrayPaper compatibility", () => {
     // so it doesn't use cached module
     const { Compatibility, CURRENT_VERSION } = await import(`./index.js?v=${Date.now()}`);
 
-    assert.deepEqual(CURRENT_VERSION, gpVersion.toString());
+    assert.deepEqual(CURRENT_VERSION, gpVersion);
     assert.equal(Compatibility.is(gpVersion), true);
   });
 
@@ -28,7 +28,7 @@ describe("GrayPaper compatibility", () => {
 
     const { Compatibility, CURRENT_VERSION } = await import(`./index.js?v=${Date.now()}`);
 
-    assert.deepEqual(CURRENT_VERSION, gpVersion.toString());
+    assert.deepEqual(CURRENT_VERSION, gpVersion);
     assert.equal(Compatibility.is(DEFAULT_VERSION), true);
   });
 });
