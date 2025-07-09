@@ -1,7 +1,8 @@
-import type { BlockView, EntropyHash, HeaderHash, HeaderView, TimeSlot } from "@typeberry/block";
+import { tryAsServiceId, type BlockView, type EntropyHash, type HeaderHash, type HeaderView, type TimeSlot } from "@typeberry/block";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
 import type { BlocksDb, LeafDb, StateUpdateError, StatesDb } from "@typeberry/database";
-import { WithHash } from "@typeberry/hash";
+import { HASH_SIZE, WithHash } from "@typeberry/hash";
 import type { Logger } from "@typeberry/logger";
 import type { SerializedState } from "@typeberry/state-merkleization";
 import type { TransitionHasher } from "@typeberry/transition";
@@ -99,6 +100,7 @@ export class Importer {
       return importerError(ImporterErrorKind.Update, updateResult);
     }
     const newState = this.states.getState(headerHash);
+    const x = newState!.getService(tryAsServiceId(0))?.getStorage(Bytes.parseBytes("0x81e47a19e6b29b0a65b9591762ce5143ed30d0261e5d24a3201752506b20f15c", HASH_SIZE).asOpaque());
     if (newState === null) {
       throw new Error("Freshly updated state not in the DB?");
     }

@@ -16,10 +16,10 @@ import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { HashSet } from "@typeberry/collections";
 import { KeccakHasher } from "@typeberry/hash/keccak.js";
 import { PartialStateDb } from "@typeberry/jam-host-calls/externalities/partial-state-db.js";
-import type { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
-import type { AccumulationStateUpdate } from "@typeberry/jam-host-calls/externalities/state-update.js";
+import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
+import { AccumulationStateUpdate } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
-import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
+import { type U32, tryAsU32, tryAsU64, u32AsLeBytes } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
 import {
@@ -34,6 +34,7 @@ import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulat
 import { InMemoryTrie } from "@typeberry/trie";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
 import { Result, check } from "@typeberry/utils";
+import type { CountAndGasUsed } from "../statistics.js";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
 import { generateNextServiceId, getWorkPackageHashes, uniquePreserveOrder } from "./accumulate-utils.js";
 import { AccumulateFetchExternalities } from "./externalities/index.js";
@@ -78,6 +79,8 @@ type ServiceStateUpdate = Partial<Pick<State, "privilegedServices" | "authQueues
 export type AccumulateResult = {
   root: AccumulateRoot;
   stateUpdate: AccumulateStateUpdate;
+  accumulationStatistics: Map<ServiceId, CountAndGasUsed>;
+  pendingTransfers: PendingTransfer[];
 };
 
 export const ACCUMULATION_ERROR = "duplicate service created";
@@ -92,7 +95,7 @@ type ParallelAccumulationResult = {
   stateUpdates: [ServiceId, AccumulationStateUpdate][];
   gasCosts: [ServiceId, ServiceGas][];
   yieldedRoots: [ServiceId, OpaqueHash][];
-  pendingTransfers: [ServiceId, PendingTransfer[]][];
+  pendingTransfers: PendingTransfer[];
 };
 
 type SequentialAccumulationResult = ParallelAccumulationResult & {
@@ -112,13 +115,20 @@ export const ACCUMULATE_TOTAL_GAS = 3_500_000_000n;
 
 const logger = Logger.new(import.meta.filename, "accumulate");
 
-const ARGS_CODEC = codec.object({
+const ACCUMULATE_ARGS_CODEC = codec.object({
   slot: codec.u32.asOpaque<TimeSlot>(),
   serviceId: codec.u32.asOpaque<ServiceId>(),
   operands: codec.sequenceVarLen(LegacyOperand.Codec),
 });
 
+const ON_TRANSFER_ARGS_CODEC = codec.object({
+  slot: codec.u32.asOpaque<TimeSlot>(),
+  serviceId: codec.u32.asOpaque<ServiceId>(),
+  transfers: codec.sequenceVarLen(PendingTransfer.Codec),
+});
 export class Accumulate {
+  private statistics = new Map<ServiceId, CountAndGasUsed>();
+
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly state: AccumulateState,
@@ -185,7 +195,7 @@ export class Accumulate {
 
     const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec);
     // TODO [MaSi]: in GP 0.6.7 operands array is replaced with length of operands array
-    const args = Encoder.encodeObject(ARGS_CODEC, { slot, serviceId, operands }, this.chainSpec);
+    const args = Encoder.encodeObject(ACCUMULATE_ARGS_CODEC, { slot, serviceId, operands }, this.chainSpec);
 
     const result = await executor.run(args, tryAsGas(gas));
 
@@ -276,6 +286,7 @@ export class Accumulate {
       return { stateUpdate: null, consumedGas: gasCost };
     }
 
+    this.statistics.set(serviceId, { count: tryAsU32(reports.length), gasUsed: result.ok.consumedGas });
     return result.ok;
   }
 
@@ -365,7 +376,7 @@ export class Accumulate {
     const stateUpdates: [ServiceId, AccumulationStateUpdate][] = [];
     const gasCosts: [ServiceId, ServiceGas][] = [];
     const yieldedRoots: [ServiceId, OpaqueHash][] = [];
-    const pendingTransfers: [ServiceId, PendingTransfer[]][] = [];
+    const pendingTransfers: PendingTransfer[] = [];
 
     for (const serviceId of serviceIds) {
       const { consumedGas, stateUpdate } = await this.accumulateSingleService(serviceId, reports, slot, entropy);
@@ -377,7 +388,7 @@ export class Accumulate {
       }
 
       stateUpdates.push([serviceId, stateUpdate]);
-      pendingTransfers.push([serviceId, stateUpdate.transfers]);
+      pendingTransfers.push(...stateUpdate.transfers);
 
       if (stateUpdate.yieldedRoot !== null) {
         yieldedRoots.push([serviceId, stateUpdate.yieldedRoot]);
@@ -528,6 +539,7 @@ export class Accumulate {
   }
 
   async transition({ reports, slot, entropy }: AccumulateInput): Promise<Result<AccumulateResult, ACCUMULATION_ERROR>> {
+    this.statistics = new Map();
     const accumulateQueue = new AccumulateQueue(this.chainSpec, this.state);
     const toAccumulateImmediately = accumulateQueue.getWorkReportsToAccumulateImmediately(reports);
     const toAccumulateLater = accumulateQueue.getWorkReportsToAccumulateLater(reports);
@@ -545,8 +557,8 @@ export class Accumulate {
     const { accumulatedReports, yieldedRoots, gasCosts, pendingTransfers, stateUpdates, ...rest } =
       await this.accumulateSequentially(gasLimit, accumulatableReports, slot, entropy);
     assertEmpty(rest);
-    const accumulated = accumulatableReports.slice(0, accumulatedReports);
 
+    const accumulated = accumulatableReports.slice(0, accumulatedReports);
     const accStateUpdate = this.getAccumulationStateUpdate(accumulated, toAccumulateLater, slot);
     const servicesStateUpdate = this.mergeServiceStateUpdates(stateUpdates, slot);
 
@@ -561,6 +573,8 @@ export class Accumulate {
         ...accStateUpdate,
         ...servicesStateUpdate.ok,
       },
+      accumulationStatistics: this.statistics,
+      pendingTransfers,
     });
   }
 }

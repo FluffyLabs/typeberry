@@ -686,10 +686,10 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     const isRemoving = current !== null && data === null;
     const countDiff = isAddingNew ? 1 : isRemoving ? -1 : 0;
     const lenDiff = (data?.length ?? 0) - (current?.length ?? 0);
-
+    const keyLen = current === null ? 32n : 0n
     const serviceInfo = this.getCurrentServiceInfo();
     const items = serviceInfo.storageUtilisationCount + countDiff;
-    const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff);
+    const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff) + keyLen;
 
     check(items >= 0, `storageUtilisationCount has to be a positive number, got: ${items}`);
     check(bytes >= 0, `storageUtilisationBytes has to be a positive number, got: ${bytes}`);

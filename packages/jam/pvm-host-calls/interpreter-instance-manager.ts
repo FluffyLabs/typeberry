@@ -8,7 +8,7 @@ export class InterpreterInstanceManager {
 
   constructor(noOfPvmInstances: number) {
     for (let i = 0; i < noOfPvmInstances; i++) {
-      this.instances.push(new Interpreter());
+      this.instances.push(new Interpreter(false, true));
     }
   }
 

@@ -23,6 +23,7 @@ import { RecentHistory, type RecentHistoryStateUpdate } from "./recent-history.j
 import { Reports, type ReportsError, type ReportsStateUpdate } from "./reports/index.js";
 import type { HeaderChain } from "./reports/verify-contextual.js";
 import { Statistics, type StatisticsStateUpdate } from "./statistics.js";
+import { DeferredTransfers } from "./accumulate/deferred-transfers.js";
 
 class DbHeaderChain implements HeaderChain {
   constructor(private readonly blocks: BlocksDb) {}
@@ -79,6 +80,8 @@ export class OnChain {
   private readonly assurances: Assurances;
   // chapter 12: https://graypaper.fluffylabs.dev/#/68eaa1f/159f02159f02?v=0.6.4
   private readonly accumulate: Accumulate;
+  // chapter 12.3: https://graypaper.fluffylabs.dev/#/68eaa1f/178203178203?v=0.6.4
+  private readonly deferredTransfers: DeferredTransfers;
   // chapter 12.4: https://graypaper.fluffylabs.dev/#/68eaa1f/18cc0018cc00?v=0.6.4
   private readonly preimages: Preimages;
   // after accumulation
@@ -109,6 +112,7 @@ export class OnChain {
     this.reports = new Reports(chainSpec, state, hasher, new DbHeaderChain(blocks));
     this.assurances = new Assurances(chainSpec, state);
     this.accumulate = new Accumulate(chainSpec, state);
+    this.deferredTransfers = new DeferredTransfers(chainSpec, state);
     this.preimages = new Preimages(state);
 
     this.authorization = new Authorization(chainSpec, state);
@@ -220,7 +224,13 @@ export class OnChain {
     if (accumulateResult.isError) {
       return stfError(StfErrorKind.Accumulate, accumulateResult);
     }
-    const { root: accumulateRoot, stateUpdate: accumulateUpdate, ...accumulateRest } = accumulateResult.ok;
+    const {
+      root: accumulateRoot,
+      stateUpdate: accumulateUpdate,
+      accumulationStatistics,
+      pendingTransfers,
+      ...accumulateRest
+    } = accumulateResult.ok;
     assertEmpty(accumulateRest);
     const {
       privilegedServices: maybePrivilegedServices,
@@ -231,6 +241,9 @@ export class OnChain {
       ...servicesUpdate
     } = accumulateUpdate;
 
+    const {servicesUpdates: newServicesUpdates, transferStatistics, ...deferredTransfersRest} = await this.deferredTransfers.transition({pendingTransfers, ...servicesUpdate, timeslot: timeSlot})
+    assertEmpty(deferredTransfersRest);
+    servicesUpdate.servicesUpdates = newServicesUpdates;
     // recent history
     const recentHistoryUpdate = this.recentHistory.transition({
       headerHash,
@@ -259,8 +272,8 @@ export class OnChain {
       extrinsic,
       incomingReports: extrinsic.guarantees.map((g) => g.report),
       availableReports: assurancesResult.ok.availableReports,
-      accumulationStatistics: new Map(),
-      transferStatistics: new Map(),
+      accumulationStatistics,
+      transferStatistics,
     });
     const { statistics, ...statisticsRest } = statisticsUpdate;
     assertEmpty(statisticsRest);
@@ -332,7 +345,7 @@ export function mergeAvailabilityAssignments(
     }
     // override with new report, but only if it's actually changed (otherwise it will
     // restore reports removed by disputes or assurances).
-    if (reportsAvailAssignment[core] !== null && initialAvailAssigment[core] !== reportsAvailAssignment[core]) {
+    if (reportsAvailAssignment[core] !== null && !((initialAvailAssigment[core]?.workReport.hash.isEqualTo( reportsAvailAssignment[core]?.workReport.hash)) ?? false)) {
       newAssignments[core] = reportsAvailAssignment[core];
     }
   }

@@ -14,6 +14,7 @@ import { Solicit } from "@typeberry/jam-host-calls/accumulate/solicit.js";
 import { Transfer } from "@typeberry/jam-host-calls/accumulate/transfer.js";
 import { Upgrade } from "@typeberry/jam-host-calls/accumulate/upgrade.js";
 import { Yield } from "@typeberry/jam-host-calls/accumulate/yield.js";
+import { PartialStateDb } from "@typeberry/jam-host-calls/externalities/partial-state-db.js";
 import type { PartialState } from "@typeberry/jam-host-calls/externalities/partial-state.js";
 import {
   type ProgramCounter,
@@ -49,6 +50,10 @@ type AccumulateHostCallExternalities = {
   partialState: PartialState;
   fetchExternalities: FetchExternalities;
   serviceExternalities: AccountsInfo & AccountsLookup & AccountsWrite & AccountsRead;
+};
+
+type OnTransferHostCallExternalities = {
+  partialState: PartialStateDb;
 };
 
 namespace entrypoint {
@@ -97,6 +102,18 @@ export class PvmExecutor {
     return accumulateHandlers.concat(generalHandlers);
   }
 
+  /** Prepare on transfer host call handlers */
+  private static prepareOnTransferHostCalls(serviceId: ServiceId, externalities: OnTransferHostCallExternalities) {
+    const generalHandlers: HostCallHandler[] = [
+      new GasHostCall(serviceId),
+      new Read(serviceId, externalities.partialState),
+      new Write(serviceId, externalities.partialState),
+      new Lookup(serviceId, externalities.partialState),
+      new Info(serviceId, externalities.partialState),
+    ];
+
+    return generalHandlers;
+  }
   /**
    * Execute provided program
    *
@@ -119,5 +136,15 @@ export class PvmExecutor {
   ) {
     const hostCallHandlers = PvmExecutor.prepareAccumulateHostCalls(serviceId, externalities, chainSpec);
     return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ACCUMULATE);
+  }
+
+  /** A utility function that can be used to prepare on transfer executor */
+  static createOnTransferExecutor(
+    serviceId: ServiceId,
+    serviceCode: BytesBlob,
+    externalities: OnTransferHostCallExternalities,
+  ) {
+    const hostCallHandlers = PvmExecutor.prepareOnTransferHostCalls(serviceId, externalities);
+    return new PvmExecutor(serviceCode, hostCallHandlers, entrypoint.ON_TRANSFER);
   }
 }
