@@ -14,6 +14,7 @@ import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/sa
 import type { State } from "@typeberry/state";
 import { type ErrorResult, Result, type TaggedError } from "@typeberry/utils";
 import type { ACCUMULATION_ERROR, AccumulateStateUpdate } from "./accumulate/accumulate.js";
+import { DeferredTransfers } from "./accumulate/deferred-transfers.js";
 import { Accumulate } from "./accumulate/index.js";
 import { Assurances, type AssurancesError, type AssurancesStateUpdate } from "./assurances.js";
 import { Authorization, type AuthorizationStateUpdate } from "./authorization.js";
@@ -23,7 +24,6 @@ import { RecentHistory, type RecentHistoryStateUpdate } from "./recent-history.j
 import { Reports, type ReportsError, type ReportsStateUpdate } from "./reports/index.js";
 import type { HeaderChain } from "./reports/verify-contextual.js";
 import { Statistics, type StatisticsStateUpdate } from "./statistics.js";
-import { DeferredTransfers } from "./accumulate/deferred-transfers.js";
 
 class DbHeaderChain implements HeaderChain {
   constructor(private readonly blocks: BlocksDb) {}
@@ -241,7 +241,11 @@ export class OnChain {
       ...servicesUpdate
     } = accumulateUpdate;
 
-    const {servicesUpdates: newServicesUpdates, transferStatistics, ...deferredTransfersRest} = await this.deferredTransfers.transition({pendingTransfers, ...servicesUpdate, timeslot: timeSlot})
+    const {
+      servicesUpdates: newServicesUpdates,
+      transferStatistics,
+      ...deferredTransfersRest
+    } = await this.deferredTransfers.transition({ pendingTransfers, ...servicesUpdate, timeslot: timeSlot });
     assertEmpty(deferredTransfersRest);
     servicesUpdate.servicesUpdates = newServicesUpdates;
     // recent history
@@ -345,7 +349,10 @@ export function mergeAvailabilityAssignments(
     }
     // override with new report, but only if it's actually changed (otherwise it will
     // restore reports removed by disputes or assurances).
-    if (reportsAvailAssignment[core] !== null && !((initialAvailAssigment[core]?.workReport.hash.isEqualTo( reportsAvailAssignment[core]?.workReport.hash)) ?? false)) {
+    if (
+      reportsAvailAssignment[core] !== null &&
+      !(initialAvailAssigment[core]?.workReport.hash.isEqualTo(reportsAvailAssignment[core]?.workReport.hash) ?? false)
+    ) {
       newAssignments[core] = reportsAvailAssignment[core];
     }
   }

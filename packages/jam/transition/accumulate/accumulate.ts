@@ -17,9 +17,9 @@ import { HashSet } from "@typeberry/collections";
 import { KeccakHasher } from "@typeberry/hash/keccak.js";
 import { PartialStateDb } from "@typeberry/jam-host-calls/externalities/partial-state-db.js";
 import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
-import { AccumulationStateUpdate } from "@typeberry/jam-host-calls/externalities/state-update.js";
+import type { AccumulationStateUpdate } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
-import { type U32, tryAsU32, tryAsU64, u32AsLeBytes } from "@typeberry/numbers";
+import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
 import {

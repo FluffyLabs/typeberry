@@ -1,29 +1,32 @@
-import { ServiceId, TimeSlot, tryAsServiceGas } from "@typeberry/block";
-import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js"
-import { InMemoryService, Service, ServiceAccountInfo, State, UpdateService, UpdateServiceKind } from "@typeberry/state";
-import { CountAndGasUsed } from "../statistics.js";
-import { uniquePreserveOrder } from "./accumulate-utils.js";
+import { type ServiceId, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
+import { Encoder, codec } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
-import { check } from "@typeberry/utils";
+import type { ChainSpec } from "@typeberry/config";
 import { PartialStateDb } from "@typeberry/jam-host-calls/externalities/partial-state-db.js";
-import { PvmExecutor } from "./pvm-executor.js";
-import { codec, Encoder } from "@typeberry/codec";
+import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { ChainSpec } from "@typeberry/config";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
+import {
+  InMemoryService,
+  type Service,
+  ServiceAccountInfo,
+  type State,
+  UpdateService,
+  UpdateServiceKind,
+} from "@typeberry/state";
+import { check } from "@typeberry/utils";
+import type { CountAndGasUsed } from "../statistics.js";
+import { uniquePreserveOrder } from "./accumulate-utils.js";
+import { PvmExecutor } from "./pvm-executor.js";
 
 type DeferredTransfersInput = {
-    pendingTransfers: PendingTransfer[],
-    timeslot: TimeSlot,
-    servicesUpdates: UpdateService[], 
-    servicesRemoved: ServiceId[],
-}
+  pendingTransfers: PendingTransfer[];
+  timeslot: TimeSlot;
+  servicesUpdates: UpdateService[];
+  servicesRemoved: ServiceId[];
+};
 
-export type DeferredTransfersState = Pick<
-  State,
-  | "timeslot"
-  | "getService"
->;
+export type DeferredTransfersState = Pick<State, "timeslot" | "getService">;
 
 export type DeferredTransfersResult = {
   servicesUpdates: UpdateService[];
@@ -37,52 +40,60 @@ const ON_TRANSFER_ARGS_CODEC = codec.object({
 });
 
 export class DeferredTransfers {
-    constructor(public readonly chainSpec: ChainSpec, private readonly state: Pick<State, 'getService'>) {}
+  constructor(
+    public readonly chainSpec: ChainSpec,
+    private readonly state: Pick<State, "getService">,
+  ) {}
 
-    private getService(serviceId: ServiceId,
-      serviceUpdates: UpdateService[], 
+  private getService(
+    serviceId: ServiceId,
+    serviceUpdates: UpdateService[],
     servicesRemoved: ServiceId[],
-    ): Service | null {
-        if (servicesRemoved.includes(serviceId)) {
-            return null;
-        }
-
-        const maybeUpdatedService = serviceUpdates.find(x => x.serviceId === serviceId);
-
-            switch(maybeUpdatedService?.action.kind) {
-                case UpdateServiceKind.Create: {
-                    return new InMemoryService(serviceId, {
-                        info: maybeUpdatedService?.action.account,
-                        lookupHistory: HashDictionary.new(),
-                        preimages: HashDictionary.new(),
-                        storage: HashDictionary.new(),
-                    });
-                  }
-                case UpdateServiceKind.Update: {
-                  const service = this.state.getService(serviceId);
-                  const serviceInfo = service?.getInfo() ?? {};
-                  check(serviceInfo !== null, "Update service exists so the service has to exist as well!");
-                  return new InMemoryService(serviceId, {
-                        lookupHistory: HashDictionary.new(),
-                        preimages: HashDictionary.new(),
-                        storage: HashDictionary.new(),
-                        ...service ?? {},
-                        info: {
-                          ...serviceInfo,
-                          ...maybeUpdatedService?.action.account,
-                        }
-                    });
-              
-                }
-            }
-            return this.state.getService(serviceId) ?? null;
+  ): Service | null {
+    if (servicesRemoved.includes(serviceId)) {
+      return null;
     }
 
-  async transition({ pendingTransfers, timeslot, servicesUpdates: servicesUpdatesInput, servicesRemoved }: DeferredTransfersInput): Promise<DeferredTransfersResult> {
-  const transferStatistics = new Map<ServiceId, CountAndGasUsed>();
+    const maybeUpdatedService = serviceUpdates.find((x) => x.serviceId === serviceId);
+
+    switch (maybeUpdatedService?.action.kind) {
+      case UpdateServiceKind.Create: {
+        return new InMemoryService(serviceId, {
+          info: maybeUpdatedService?.action.account,
+          lookupHistory: HashDictionary.new(),
+          preimages: HashDictionary.new(),
+          storage: HashDictionary.new(),
+        });
+      }
+      case UpdateServiceKind.Update: {
+        const service = this.state.getService(serviceId);
+        const serviceInfo = service?.getInfo() ?? {};
+        check(serviceInfo !== null, "Update service exists so the service has to exist as well!");
+        return new InMemoryService(serviceId, {
+          lookupHistory: HashDictionary.new(),
+          preimages: HashDictionary.new(),
+          storage: HashDictionary.new(),
+          ...(service ?? {}),
+          info: {
+            ...serviceInfo,
+            ...maybeUpdatedService?.action.account,
+          },
+        });
+      }
+    }
+    return this.state.getService(serviceId) ?? null;
+  }
+
+  async transition({
+    pendingTransfers,
+    timeslot,
+    servicesUpdates: servicesUpdatesInput,
+    servicesRemoved,
+  }: DeferredTransfersInput): Promise<DeferredTransfersResult> {
+    const transferStatistics = new Map<ServiceId, CountAndGasUsed>();
     const servicesUpdates = [...servicesUpdatesInput];
     const services = uniquePreserveOrder(pendingTransfers.flatMap((x) => [x.source, x.destination]));
-    
+
     for (const serviceId of services) {
       const transfers = pendingTransfers.filter((pendingTransfer) => pendingTransfer.destination === serviceId);
       const service = this.getService(serviceId, servicesUpdates, servicesRemoved);
@@ -97,11 +108,20 @@ export class DeferredTransfers {
       const existingUpdateIndex = servicesUpdates.findIndex((x) => x.serviceId === serviceId);
       const amount = transfers.reduce((acc, item) => acc + item.amount, 0n);
       if (existingUpdateIndex < 0 || servicesUpdates[existingUpdateIndex].action.kind === UpdateServiceKind.Create) {
-        const update = UpdateService.update({serviceId, serviceInfo: ServiceAccountInfo.create({ ...info, balance: tryAsU64(info.balance + amount)})});
+        const update = UpdateService.update({
+          serviceId,
+          serviceInfo: ServiceAccountInfo.create({ ...info, balance: tryAsU64(info.balance + amount) }),
+        });
         servicesUpdates.push(update);
       } else {
         const existingUpdate = servicesUpdates[existingUpdateIndex];
-        const update = UpdateService.update({serviceId, serviceInfo: ServiceAccountInfo.create({ ...existingUpdate.action.account, balance: tryAsU64(info.balance + amount)})});
+        const update = UpdateService.update({
+          serviceId,
+          serviceInfo: ServiceAccountInfo.create({
+            ...existingUpdate.action.account,
+            balance: tryAsU64(info.balance + amount),
+          }),
+        });
         servicesUpdates[existingUpdateIndex] = update;
       }
 
@@ -109,14 +129,18 @@ export class DeferredTransfers {
         transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(0) });
         continue;
       }
-      const partialState = new PartialStateDb({ 
-        timeslot,
-        getService: (serviceId: ServiceId) => this.getService(serviceId, servicesUpdates, servicesRemoved),
-      }, serviceId, serviceId);
+      const partialState = new PartialStateDb(
+        {
+          timeslot,
+          getService: (serviceId: ServiceId) => this.getService(serviceId, servicesUpdates, servicesRemoved),
+        },
+        serviceId,
+        serviceId,
+      );
 
-      const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, {partialState});
+      const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState });
       const args = Encoder.encodeObject(ON_TRANSFER_ARGS_CODEC, { timeslot, serviceId, transfers }, this.chainSpec);
-    
+
       const gas = transfers.reduce((acc, item) => acc + item.gas, 0n);
       const { consumedGas } = await executor.run(args, tryAsGas(gas));
       transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(consumedGas) });
@@ -125,6 +149,6 @@ export class DeferredTransfers {
     return {
       servicesUpdates,
       transferStatistics,
-    }
+    };
   }
 }
