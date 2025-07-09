@@ -10,7 +10,7 @@ const runners = [
 main(runners, process.argv.slice(2), "test-vectors/jamduna", {
   accepted: [
     "safrole/state_transitions",
-    //"assurances/state_transitions",
+    "assurances/state_transitions",
     "safrole/state_transitions_fuzzed",
     "fallback/state_transitions",
   ],
