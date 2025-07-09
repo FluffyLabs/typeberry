@@ -48,8 +48,6 @@ export class InMemoryBlocks implements BlocksDb {
     return blocksDb;
   }
 
-  private constructor() {}
-
   setBestHeaderHash(hash: HeaderHash): Promise<void> {
     this.bestHeaderHash = hash;
 

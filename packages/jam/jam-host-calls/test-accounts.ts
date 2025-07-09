@@ -3,6 +3,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { MultiMap } from "@typeberry/collections";
 import type { Blake2bHash } from "@typeberry/hash";
 import { ServiceAccountInfo } from "@typeberry/state";
+import { OK, Result } from "@typeberry/utils";
 import type { AccountsInfo } from "./info.js";
 import type { AccountsLookup } from "./lookup.js";
 import type { AccountsRead } from "./read.js";
@@ -46,23 +47,21 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
     return d;
   }
 
-  write(hash: Blake2bHash, data: BytesBlob | null): void {
+  write(hash: Blake2bHash, data: BytesBlob | null): Result<OK, "full"> {
+    if (this.isStorageFull()) {
+      return Result.error("full");
+    }
+
     if (data === null) {
       this.storage.delete(this.serviceId, hash);
     } else {
       this.storage.set(data, this.serviceId, hash);
     }
+
+    return Result.ok(OK);
   }
 
-  readSnapshotLength(hash: Blake2bHash): number | null {
-    const data = this.snapshotData.get(this.serviceId, hash);
-    if (data === undefined) {
-      return null;
-    }
-    return data?.length ?? null;
-  }
-
-  isStorageFull(): boolean {
+  private isStorageFull(): boolean {
     const accountInfo = this.details.get(this.serviceId);
     if (accountInfo === undefined) {
       return false;
@@ -75,7 +74,15 @@ export class TestAccounts implements AccountsLookup, AccountsRead, AccountsWrite
     );
   }
 
-  getInfo(serviceId: ServiceId | null): ServiceAccountInfo | null {
+  readSnapshotLength(hash: Blake2bHash): number | null {
+    const data = this.snapshotData.get(this.serviceId, hash);
+    if (data === undefined) {
+      return null;
+    }
+    return data?.length ?? null;
+  }
+
+  getServiceInfo(serviceId: ServiceId | null): ServiceAccountInfo | null {
     if (serviceId === null) {
       return null;
     }
