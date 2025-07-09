@@ -10,11 +10,11 @@ export const DEFAULTS = {
 };
 
 export const HELP = `
-typeberry ${packageJson.version} by Fluffy Labs.
+@typeberry/jam ${packageJson.version} by Fluffy Labs.
 
 Usage:
-  typeberry [options]
-  typeberry [options] import <bin-or-json-blocks>
+  jam [options]
+  jam [options] import <bin-or-json-blocks>
 
 Options:
   --name                Override node name. Affects networking key and db location.
