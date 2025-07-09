@@ -29,11 +29,8 @@ describe("GrayPaper compatibility", () => {
     const { Compatibility, CURRENT_VERSION } = await import(`./compatibility.js?v=${Date.now()}`);
 
     assert.deepEqual(CURRENT_VERSION, gpVersion);
-    assert.throws(
-      () => Compatibility.is(DEFAULT_VERSION),
-      {
-        "message": "Configured environment variable GP_VERSION is unknown: 'invalid-gp-version'",
-      },
-    );
+    assert.throws(() => Compatibility.is(DEFAULT_VERSION), {
+      message: "Configured environment variable GP_VERSION is unknown: 'invalid-gp-version'",
+    });
   });
 });
