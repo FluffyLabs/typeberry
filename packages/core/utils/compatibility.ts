@@ -10,8 +10,11 @@ export const CURRENT_VERSION = process.env.GP_VERSION as GpVersion;
 
 export class Compatibility {
   static is(...version: GpVersion[]) {
-    if (!Object.values(GpVersion).includes(CURRENT_VERSION)) {
+    if (CURRENT_VERSION === undefined) {
       return version.includes(DEFAULT_VERSION);
+    }
+    if (!Object.values(GpVersion).includes(CURRENT_VERSION)) {
+      throw new Error(`Configured environment variable GP_VERSION is unknown: '${CURRENT_VERSION}'`);
     }
     return version.includes(CURRENT_VERSION);
   }
