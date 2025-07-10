@@ -47,6 +47,10 @@ Note the DB needs to be already initialized.
 $ npm start -w @typeberry/rpc -- --genesis-root [genesis state root]
 ```
 
+### Additional tooling
+
+- [@typeberry/convert](bin/convert/README.md) - inspect or convert common JAM formats
+
 ### Formatting & linting
 
 ```bash
@@ -144,4 +148,3 @@ https://fluffylabs.dev/typeberry/links.json
 ![gpr-source-notes-3](https://github.com/user-attachments/assets/877a6494-75fd-4c0c-b531-55af6f676c89)
 6. Click **OK**.
 7. Ensure the ✅ next to **Typeberry** is enabled.
-
