@@ -4,6 +4,7 @@
   "description": "JAM implementation in TypeScript",
   "private": true,
   "workspaces": [
+    "bin/convert",
     "bin/jam",
     "bin/pvm",
     "bin/rpc",
