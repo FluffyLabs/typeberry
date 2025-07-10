@@ -122,6 +122,8 @@ function getEncodedConstants(chainSpec: ChainSpec) {
   return encodedConsts;
 }
 
+// TODO [ToDr] This needs implementation for other context (refine, auth, on_transfer, etc)
+// and should also be moved to general `externalities` folder.
 export class AccumulateFetchExternalities implements FetchExternalities {
   constructor(
     private entropyHash: EntropyHash,
