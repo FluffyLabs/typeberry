@@ -121,8 +121,15 @@ export function deepEqual<T>(
   if (actual instanceof Map && expected instanceof Map) {
     const toArray = (input: Map<unknown, unknown>): Array<{ key: unknown; value: unknown }> => {
       return Array.from(input.entries())
-        .toSorted()
-        .map(([key, value]) => ({ key, value }));
+        .map(([key, value]) => ({ key, value }))
+        .toSorted((a, b) => {
+          const aKey = `${a.key}`;
+          const bKey = `${b.key}`;
+
+          if (aKey < bKey) return -1;
+          if (bKey < aKey) return 1;
+          return 0;
+        });
     };
 
     deepEqual(toArray(actual), toArray(expected), {
