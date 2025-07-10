@@ -27,9 +27,10 @@ export function createJamArgsConf(argv: CommonArguments): { args: jam.Arguments;
   if (argv.metadata !== undefined) {
     args.push(`--name=${argv.metadata}`);
   }
-  if (argv.port !== undefined) {
-    args.push(`--port=${argv.port}`);
-  }
+  // TODO: [MaSo] uncomment when networking is done
+  //if (argv.port !== undefined) {
+  //  args.push(`--port=${argv.port}`);
+  //}
 
   const config = loadConfig(DEV_CONFIG);
   const { bandersnatch, bls, ed25519, datadir, genesis, ts, validatorindex } = argv;
