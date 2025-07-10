@@ -1,19 +1,20 @@
 import type { StateRootHash } from "@typeberry/block";
 import { Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
-import type { ImmutableHashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import type { TruncatedHashDictionary } from "@typeberry/database/truncated-hash-dictionary.js";
 import type { InMemoryState } from "@typeberry/state";
 import { type BytesBlob, InMemoryTrie } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
+import { assertNever } from "@typeberry/utils";
 import type { StateKey } from "./keys.js";
+import { type StateEntryUpdate, StateEntryUpdateAction } from "./serialize-state-update.js";
 import { type StateCodec, serialize } from "./serialize.js";
 
 /** Full (i.e. 32 bytes; non-truncated) state entries. */
 export type FullEntries = {
   full: true;
-  data: ImmutableHashDictionary<StateKey, BytesBlob>;
+  data: HashDictionary<StateKey, BytesBlob>;
 };
 
 /** Truncated (i.e. 31 bytes extended to 32 bytes) state entries. */
@@ -22,7 +23,11 @@ export type TruncatedEntries = {
   data: TruncatedHashDictionary<StateKey, BytesBlob>;
 };
 
-/** Full, in-memory state as serialized entries dictionary. */
+/**
+ * Full, in-memory state represented as serialized entries dictionary.
+ *
+ * State entries may be wrapped into `SerializedState` to access the contained values.
+ */
 export class StateEntries<TEntries extends FullEntries | TruncatedEntries = FullEntries | TruncatedEntries> {
   /** Turn in-memory state into it's serialized form. */
   static serializeInMemory(spec: ChainSpec, state: InMemoryState): StateEntries<FullEntries> {
@@ -72,6 +77,24 @@ export class StateEntries<TEntries extends FullEntries | TruncatedEntries = Full
       this.trieCache = trie;
     }
     return this.trieCache;
+  }
+
+  /** Retrieve value of some serialized key (if present). */
+  get(key: StateKey): BytesBlob | null {
+    return this.entries.data.get(key) ?? null;
+  }
+
+  /** Modify underlying entries dictionary with given update. */
+  applyUpdate(stateEntriesUpdate: Iterable<StateEntryUpdate>) {
+    for (const [action, key, value] of stateEntriesUpdate) {
+      if (action === StateEntryUpdateAction.Insert) {
+        this.entries.data.set(key, value);
+      } else if (action === StateEntryUpdateAction.Remove) {
+        this.entries.data.delete(key);
+      } else {
+        assertNever(action);
+      }
+    }
   }
 
   /** https://graypaper.fluffylabs.dev/#/68eaa1f/391600391600?v=0.6.4 */
