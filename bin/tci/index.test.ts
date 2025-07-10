@@ -2,20 +2,20 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 import { parseArgs } from "./args.js";
 import { createJamArgsConf } from "./index.js";
+import { DEFAULTS, SharedOptions } from "@typeberry/jam";
 
 describe("Typeberry Common Interface (TCI): RPCConfig", () => {
-  const defaultArgs = {
-    port: "19800",
-    nodeName: "test",
-    config: "dev",
+  const defaultOptions: SharedOptions = {
+    nodeName: DEFAULTS.name,
+    configPath: DEFAULTS.config,
   };
 
   it("should crate rpc config", () => {
-    const argv = parseArgs(["--port=9000"]);
+    const argv = parseArgs(["--metadata=Bob"]);
     const { args, config: _config } = createJamArgsConf(argv);
-    assert.deepStrictEqual(args, {
-      ...defaultArgs,
-      port: 9000,
+    assert.deepStrictEqual(args.args, {
+      ...defaultOptions,
+      nodeName: "Bob",
     });
   });
 });
