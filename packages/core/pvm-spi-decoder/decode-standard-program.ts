@@ -1,5 +1,5 @@
 import { Decoder } from "@typeberry/codec";
-import { type Opaque, ensure } from "@typeberry/utils";
+import { type Opaque, WithDebug, ensure } from "@typeberry/utils";
 import { ARGS_SEGMENT, DATA_LEGNTH, LAST_PAGE, PAGE_SIZE, SEGMENT_SIZE, STACK_SEGMENT } from "./memory-conts.js";
 import { alignToPageSize, alignToSegmentSize } from "./memory-utils.js";
 
@@ -19,7 +19,7 @@ const NO_OF_REGISTERS = 13;
  */
 type InputLength = Opaque<number, "Number that is lower than 2 ** 24 (Z_I from GP)">;
 
-export class MemorySegment {
+export class MemorySegment extends WithDebug {
   static from({ start, end, data }: Omit<MemorySegment, never>) {
     return new MemorySegment(start, end, data);
   }
@@ -28,23 +28,29 @@ export class MemorySegment {
     public readonly start: number,
     public readonly end: number,
     public readonly data: Uint8Array | null,
-  ) {}
+  ) {
+    super();
+  }
 }
-export class SpiMemory {
+export class SpiMemory extends WithDebug {
   constructor(
     public readonly readable: MemorySegment[],
     public readonly writeable: MemorySegment[],
     public readonly sbrkIndex: number,
     public readonly heapEnd: number,
-  ) {}
+  ) {
+    super();
+  }
 }
 
-export class SpiProgram {
+export class SpiProgram extends WithDebug {
   constructor(
     public readonly code: Uint8Array,
     public readonly memory: SpiMemory,
     public readonly registers: BigUint64Array,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 export function decodeStandardProgram(program: Uint8Array, args: Uint8Array) {

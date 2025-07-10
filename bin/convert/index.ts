@@ -3,17 +3,14 @@ import { Level, Logger } from "@typeberry/logger";
 import { type Arguments, HELP, parseArgs } from "./args.js";
 import { main } from "./main.js";
 
-export * from "./main.js";
-export * from "./args.js";
-
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
   const relPath = `${import.meta.dirname}/../..`;
-  const withRelPath = (p: string) => {
-    if (p.startsWith("/")) {
-      return p;
+  const withRelPath = (v: string) => {
+    if (v.startsWith("/")) {
+      return v;
     }
-    return `${relPath}/${p}`;
+    return `${relPath}/${v}`;
   };
 
   let args: Arguments;
@@ -26,8 +23,10 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     process.exit(1);
   }
 
-  main(args, withRelPath).catch((e) => {
+  try {
+    main(args, withRelPath);
+  } catch (e) {
     console.error(`${e}`);
     process.exit(-1);
-  });
+  }
 }

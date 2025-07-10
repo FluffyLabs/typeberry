@@ -1,31 +1,30 @@
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
+import { main } from "@typeberry/jam";
 import { type Arguments, HELP, parseArgs } from "@typeberry/jam/args.js";
-import { main } from "@typeberry/jam/main.js";
-import { Logger } from "@typeberry/logger/index.js";
-import { Level } from "@typeberry/logger/options.js";
+import { Level, Logger } from "@typeberry/logger";
 
-export { main } from "@typeberry/jam/main.js";
-export { Command, KnownChainSpec } from "@typeberry/jam/args.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+export * from "@typeberry/jam";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
-const relPath = `${__dirname}/../..`;
 
 let args: Arguments;
 
 try {
-  args = parseArgs(process.argv.slice(2), relPath);
+  args = parseArgs(process.argv.slice(2), withRelPath);
 } catch (e) {
   console.error(`\n${e}\n`);
   console.info(HELP);
   process.exit(1);
 }
 
-main(args).catch((e) => {
+main(args, withRelPath).catch((e) => {
   console.error(`${e}`);
   process.exit(-1);
 });
+
+/**
+ * We assume the binary is run directly (and not via workspace),
+ * so the paths don't need special resolving.
+ */
+function withRelPath(s: string) {
+  return s;
+}
