@@ -34,6 +34,20 @@ export class InMemoryBlocks implements BlocksDb {
   private readonly postStateRootByHeaderHash: HashDictionary<HeaderHash, StateRootHash> = HashDictionary.new();
   private bestHeaderHash: HeaderHash = Bytes.zero(HASH_SIZE).asOpaque();
 
+  /** Create empty blocks db. */
+  static new() {
+    return new InMemoryBlocks();
+  }
+
+  /** Create new `InMemoryBlocks` and insert all given blocks. */
+  static fromBlocks(previousBlocks: WithHash<HeaderHash, BlockView>[]) {
+    const blocksDb = InMemoryBlocks.new();
+    for (const block of previousBlocks) {
+      blocksDb.insertBlock(block);
+    }
+    return blocksDb;
+  }
+
   setBestHeaderHash(hash: HeaderHash): Promise<void> {
     this.bestHeaderHash = hash;
 
