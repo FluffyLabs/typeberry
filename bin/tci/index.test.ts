@@ -1,8 +1,8 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import { DEFAULTS, type SharedOptions } from "@typeberry/jam";
 import { parseArgs } from "./args.js";
 import { createJamArgsConf } from "./index.js";
-import { DEFAULTS, SharedOptions } from "@typeberry/jam";
 
 describe("Typeberry Common Interface (TCI): RPCConfig", () => {
   const defaultOptions: SharedOptions = {
