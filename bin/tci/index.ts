@@ -2,9 +2,9 @@ import { pathToFileURL } from "node:url";
 import { tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import type { NodeConfiguration } from "@typeberry/config-node";
 import { DEV_CONFIG } from "@typeberry/jam";
+import * as jam from "@typeberry/jam";
 import { loadConfig } from "@typeberry/jam/main.js";
 import { Level, Logger } from "@typeberry/logger";
-import * as jam from "@typeberry/jam";
 import { type CommonArguments, parseArgs } from "./args.js";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
@@ -22,7 +22,7 @@ export async function main(args: string[]) {
   jam.main(jamArgs, withRelPath, jamConfig);
 }
 
-export function createJamArgsConf(argv: CommonArguments): { args: jam.Arguments, config: NodeConfiguration } {
+export function createJamArgsConf(argv: CommonArguments): { args: jam.Arguments; config: NodeConfiguration } {
   const args: string[] = [];
   if (argv.metadata !== undefined) {
     args.push(`--name=${argv.metadata}`);
