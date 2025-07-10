@@ -81,12 +81,12 @@ function parseValue<S extends string, T>(
   const value = args[flag];
   if (value === undefined) {
     return {
-      [flag]: defaultValue ?? value,
+      [flag]: defaultValue,
     } as Record<S, T>;
   }
 
   delete args[flag];
-  if (!value) {
+  if (value === "") {
     throw new Error(`Option --${flag} requires an argument.`);
   }
 

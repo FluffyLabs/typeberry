@@ -12,10 +12,12 @@
   "license": "MPL-2.0",
   "type": "module",
   "dependencies": {
+    "@typeberry/block": "0.0.1",
     "@typeberry/crypto": "0.0.1",
     "@typeberry/config-node": "^0.0.1",
     "@typeberry/hash": "0.0.1",
     "@typeberry/bytes": "0.0.1",
+    "@typeberry/jam": "0.0.1",
     "@typeberry/logger": "0.0.1",
     "@typeberry/rpc": "0.0.1",
     "minimist": "^1.2.8"

@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { Bytes } from "@typeberry/bytes";
-import { HASH_SIZE } from "../../dist/packages/core/hash/hash.js";
+import { HASH_SIZE } from "@typeberry/hash";
 import { type CommonArguments, parseArgs } from "./args.js";
 
 describe("Typeberry Common Interface (TCI): Arguments", () => {
