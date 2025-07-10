@@ -6,12 +6,12 @@
     {
       "name": "2 gets + conditional set",
       "ops": 121199.26,
-      "margin": 1.0
+      "margin": 10
     },
     {
       "name": "1 get 1 set",
       "ops": 62595.29,
-      "margin": 1.0
+      "margin": 10
     }
   ],
   "fastest": {
