@@ -55,6 +55,7 @@ import {
   runStatisticsTestTiny,
 } from "./w3f/statistics.js";
 import { runTrieTest, trieTestSuiteFromJson } from "./w3f/trie.js";
+import { runStateTransition, StateTransition } from "./w3f/state-transition.js";
 
 const runners = [
   runner("accumulate", AccumulateTest.fromJson, runAccumulateTest),
@@ -90,9 +91,10 @@ const runners = [
   runner("statistics/tiny", StatisticsTestTiny.fromJson, runStatisticsTestTiny),
   runner("statistics/full", StatisticsTestFull.fromJson, runStatisticsTestFull),
   runner("trie", trieTestSuiteFromJson, runTrieTest),
+  runner("traces", StateTransition.fromJson, runStateTransition),
 ];
 
-main(runners, process.argv.slice(2), "test-vectors/w3f-fluffy")
+main(runners, process.argv.slice(2), "davxy")
   .then((r) => logger.log(r))
   .catch((e) => {
     logger.error(`${e}`);
