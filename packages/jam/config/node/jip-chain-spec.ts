@@ -1,5 +1,5 @@
 import { type JsonObject, fromJson } from "@typeberry/block-json";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { type Bytes, BytesBlob } from "@typeberry/bytes";
 import { json } from "@typeberry/json-parser";
 import { isU16 } from "@typeberry/numbers";
 import { WithDebug } from "@typeberry/utils";
@@ -66,10 +66,7 @@ export class JipChainSpec extends WithDebug {
       bootnodes: json.optional(json.array(json.fromString(Bootnode.fromString))),
       id: "string",
       genesis_header: fromJson.bytesBlob,
-      genesis_state: json.map(
-        json.fromString<Bytes<31>>((v) => Bytes.parseBytesNoPrefix(v, 31).asOpaque()),
-        fromJson.bytesBlob,
-      ),
+      genesis_state: json.map(fromJson.bytesNNoPrefix(31), fromJson.bytesBlobNoPrefix),
     },
     (o) =>
       JipChainSpec.create({

@@ -4,12 +4,20 @@ import type { Ed25519Signature } from "@typeberry/crypto";
 import { type FromJson, json } from "@typeberry/json-parser";
 
 export namespace fromJson {
+  export const bytesN = <N extends number, T extends Bytes<N> = Bytes<N>>(n: N) =>
+    json.fromString<T>((v) => Bytes.parseBytes(v, n).asOpaque());
+
+  export const bytesNNoPrefix = <N extends number, T extends Bytes<N> = Bytes<N>>(n: N) =>
+    json.fromString<T>((v) => Bytes.parseBytesNoPrefix(v, n).asOpaque());
+
   export const bytes32 = <T extends Bytes<32>>() => json.fromString<T>((v) => Bytes.parseBytes(v, 32).asOpaque());
 
   export const bytes32NoPrefix = <T extends Bytes<32>>() =>
     json.fromString<T>((v) => Bytes.parseBytesNoPrefix(v, 32).asOpaque());
 
-  export const bytesBlob = json.fromString(BytesBlob.parseBlobNoPrefix);
+  export const bytesBlob = json.fromString(BytesBlob.parseBlob);
+
+  export const bytesBlobNoPrefix = json.fromString(BytesBlob.parseBlobNoPrefix);
 
   export const ed25519Signature = json.fromString<Ed25519Signature>((v) => Bytes.parseBytes(v, 64).asOpaque());
 
