@@ -35,10 +35,22 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
 
   private constructor(private readonly dict: HashDictionary<HashWithZeroedBit<T>, V>) {}
 
+  /** Return number of itemst in the dictionary. */
+  get size(): number {
+    return this.dict.size;
+  }
+
   /** Retrieve a value that matches the key on `TRUNCATED_KEY_BYTES`. */
   get(fullKey: T | Bytes<TRUNCATED_KEY_BYTES>): V | undefined {
     this.truncatedKey.raw.set(fullKey.raw.subarray(0, TRUNCATED_KEY_BYTES));
     return this.dict.get(this.truncatedKey);
+  }
+
+  /** Return true if the key is present in the dictionary */
+  has(fullKey: T | Bytes<TRUNCATED_KEY_BYTES>): boolean {
+    this.truncatedKey.raw.set(fullKey.raw.subarray(0, TRUNCATED_KEY_BYTES));
+
+    return this.dict.has(this.truncatedKey);
   }
 
   /** Set or update a value that matches the key on `TRUNCATED_KEY_BYTES`. */
@@ -51,6 +63,16 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
   delete(fullKey: T | Bytes<TRUNCATED_KEY_BYTES>) {
     this.truncatedKey.raw.set(fullKey.raw.subarray(0, TRUNCATED_KEY_BYTES));
     this.dict.delete(this.truncatedKey);
+  }
+
+  /** Iterator over keys of the dictionary. */
+  *keys() {
+    return this.dict.keys();
+  }
+
+  /** Iterator over values of the dictionary. */
+  *values() {
+    return this.dict.values();
   }
 
   [Symbol.iterator]() {
