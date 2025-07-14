@@ -8,6 +8,9 @@ type HashWithZeroedBit<T extends OpaqueHash> = T;
 /**
  * A collection of hash-based keys (likely `StateKey`s) which ignores
  * differences on the last byte.
+ *
+ * TODO [ToDr] introduce `TruncatedHash` into `@typeberry/hash` and move this
+ * collection to `@typeberry/collections` (note it should not depend on trie)
  */
 export class TruncatedHashDictionary<T extends OpaqueHash, V> {
   /**
@@ -33,9 +36,21 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
   private constructor(private readonly dict: HashDictionary<HashWithZeroedBit<T>, V>) {}
 
   /** Retrieve a value that matches the key on `TRUNCATED_KEY_BYTES`. */
-  public get(fullKey: T | Bytes<TRUNCATED_KEY_BYTES>): V | undefined {
+  get(fullKey: T | Bytes<TRUNCATED_KEY_BYTES>): V | undefined {
     this.truncatedKey.raw.set(fullKey.raw.subarray(0, TRUNCATED_KEY_BYTES));
     return this.dict.get(this.truncatedKey);
+  }
+
+  /** Set or update a value that matches the key on `TRUNCATED_KEY_BYTES`. */
+  set(fullKey: T | Bytes<TRUNCATED_KEY_BYTES>, value: V) {
+    this.truncatedKey.raw.set(fullKey.raw.subarray(0, TRUNCATED_KEY_BYTES));
+    this.dict.set(this.truncatedKey, value);
+  }
+
+  /** Remove a value that matches the key on `TRUNCATED_KEY_BYTES`. */
+  delete(fullKey: T | Bytes<TRUNCATED_KEY_BYTES>) {
+    this.truncatedKey.raw.set(fullKey.raw.subarray(0, TRUNCATED_KEY_BYTES));
+    this.dict.delete(this.truncatedKey);
   }
 
   [Symbol.iterator]() {
