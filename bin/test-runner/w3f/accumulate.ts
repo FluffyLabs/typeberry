@@ -6,7 +6,7 @@ import { HashSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
 import type { InMemoryService } from "@typeberry/state";
-import { AutoAccumulate, InMemoryState, PrivilegedServices, tryAsPerCore } from "@typeberry/state";
+import { AutoAccumulate, InMemoryState, PrivilegedServices } from "@typeberry/state";
 import { JsonService } from "@typeberry/state-json/accounts.js";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { Accumulate, type AccumulateRoot } from "@typeberry/transition/accumulate/index.js";
@@ -38,7 +38,7 @@ class TestState {
       accumulated: ["array", json.array(fromJson.bytes32())],
       privileges: {
         bless: "number",
-        assign: json.array("number"),
+        assign: "number",
         designate: "number",
         always_acc: json.array({
           id: "number",
@@ -56,7 +56,7 @@ class TestState {
   accumulated!: WorkPackageHash[][];
   privileges!: {
     bless: number;
-    assign: number[];
+    assign: number;
     designate: number;
     always_acc: { id: number; gas: number }[];
   };
@@ -82,10 +82,7 @@ class TestState {
       ),
       privilegedServices: PrivilegedServices.create({
         manager: tryAsServiceId(privileges.bless),
-        authManager: tryAsPerCore(
-          privileges.assign.map((assign) => tryAsServiceId(assign)),
-          chainSpec,
-        ),
+        authManager: tryAsServiceId(privileges.assign),
         validatorsManager: tryAsServiceId(privileges.designate),
         autoAccumulateServices: privileges.always_acc.map(({ gas, id }) =>
           AutoAccumulate.create({ gasLimit: tryAsServiceGas(gas), service: tryAsServiceId(id) }),

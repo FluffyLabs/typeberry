@@ -3,7 +3,7 @@ import type { WorkPackageHash, WorkPackageInfo } from "@typeberry/block/work-rep
 import { Bytes } from "@typeberry/bytes";
 import { type HashDictionary, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, type KeccakHash, type OpaqueHash } from "@typeberry/hash";
-import type { MmrHasher } from "@typeberry/mmr";
+import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
 import { MAX_RECENT_HISTORY, type State } from "@typeberry/state";
 
 /** Current block input for the recent history transition. */
@@ -40,25 +40,25 @@ export class RecentHistory {
   ) {}
 
   transition(input: RecentHistoryInput): RecentHistoryStateUpdate {
-    const recentBlocks = this.state.recentBlocks.blocks.slice();
+    const recentBlocks = this.state.recentBlocks.slice();
     const lastState = recentBlocks.length > 0 ? recentBlocks[recentBlocks.length - 1] : null;
     // update the posterior root of previous state.
     if (lastState !== null) {
       lastState.postStateRoot = input.priorStateRoot;
     }
 
-    //const mmr =
-    //  lastState !== null
-    //    ? MerkleMountainRange.fromPeaks(this.hasher, lastState.mmr)
-    //    : MerkleMountainRange.empty(this.hasher);
+    const mmr =
+      lastState !== null
+        ? MerkleMountainRange.fromPeaks(this.hasher, lastState.mmr)
+        : MerkleMountainRange.empty(this.hasher);
 
     // append the accumulation root
-    // mmr.append(input.accumulateRoot);
+    mmr.append(input.accumulateRoot);
 
     // push new state item
     recentBlocks.push({
       headerHash: input.headerHash,
-      accumulationResult: input.accumulateRoot,
+      mmr: mmr.getPeaks(),
       postStateRoot: Bytes.zero(HASH_SIZE).asOpaque(),
       reported: input.workPackages,
     });
@@ -69,10 +69,7 @@ export class RecentHistory {
     // write back to the state.
     return {
       // we remove all items above `MAX_RECENT_HISTORY`.
-      recentBlocks: {
-        blocks: asKnownSize(recentBlocks),
-        mmr: this.state.recentBlocks.mmr,
-      },
+      recentBlocks: asKnownSize(recentBlocks),
     };
   }
 }

@@ -5,7 +5,7 @@ import { type ExportsRootHash, type WorkPackageHash, WorkPackageInfo } from "@ty
 import { HashDictionary } from "@typeberry/collections";
 import { HashSet } from "@typeberry/collections/hash-set.js";
 import type { KeccakHash } from "@typeberry/hash";
-import type { MmrHasher } from "@typeberry/mmr";
+import { MerkleMountainRange, type MmrHasher } from "@typeberry/mmr";
 import type { BlockState, State } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
@@ -85,7 +85,7 @@ export function verifyContextualValidity(
 
   // construct dictionary of recently-reported work packages and their segment roots
   const recentlyReported = HashDictionary.new<WorkPackageHash, ExportsRootHash>();
-  for (const recentBlock of state.recentBlocks.blocks) {
+  for (const recentBlock of state.recentBlocks) {
     for (const reported of recentBlock.reported.values()) {
       recentlyReported.set(reported.workPackageHash, reported.segmentTreeRoot);
     }
@@ -134,12 +134,12 @@ function verifyRefineContexts(
   minLookupSlot: number,
   contexts: RefineContext[],
   state: Pick<State, "recentBlocks">,
-  _hasher: MmrHasher<KeccakHash>,
+  hasher: MmrHasher<KeccakHash>,
   headerChain: HeaderChain,
 ): Result<OK, ReportsError> {
   // TODO [ToDr] [opti] This could be cached and updated efficiently between runs.
   const recentBlocks = HashDictionary.new<HeaderHash, BlockState>();
-  for (const recentBlock of state.recentBlocks.blocks) {
+  for (const recentBlock of state.recentBlocks) {
     recentBlocks.set(recentBlock.headerHash, recentBlock);
   }
   for (const context of contexts) {
@@ -166,14 +166,14 @@ function verifyRefineContexts(
     // TODO [ToDr] [opti] Don't calculate super peak hash every time.
     //                    use either some cache or pre-processing.
     // check beefy root
-    // const mmr = MerkleMountainRange.fromPeaks(hasher, recentBlock.accumulationResult);
-    // const superPeakHash = mmr.getSuperPeakHash();
-    // if (!superPeakHash.isEqualTo(context.beefyRoot)) {
-    //   return Result.error(
-    //     ReportsError.BadBeefyMmrRoot,
-    //     `Invalid BEEFY super peak hash. Got: ${context.beefyRoot}, expected: ${superPeakHash}. Anchor: ${recentBlock.headerHash}`,
-    //   );
-    // }
+    const mmr = MerkleMountainRange.fromPeaks(hasher, recentBlock.mmr);
+    const superPeakHash = mmr.getSuperPeakHash();
+    if (!superPeakHash.isEqualTo(context.beefyRoot)) {
+      return Result.error(
+        ReportsError.BadBeefyMmrRoot,
+        `Invalid BEEFY super peak hash. Got: ${context.beefyRoot}, expected: ${superPeakHash}. Anchor: ${recentBlock.headerHash}`,
+      );
+    }
 
     /**
      * We require that each lookup-anchor block be within the
@@ -278,7 +278,7 @@ function verifyWorkPackagesUniqueness(
   const packagesInPipeline = HashSet.new();
 
   // all work packages reported in recent blocks
-  for (const recentBlock of state.recentBlocks.blocks) {
+  for (const recentBlock of state.recentBlocks) {
     packagesInPipeline.insertAll(Array.from(recentBlock.reported.keys()));
   }
 
