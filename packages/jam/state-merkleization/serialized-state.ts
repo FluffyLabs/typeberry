@@ -17,87 +17,38 @@ import type { StateKey } from "./keys.js";
 import { serialize } from "./serialize.js";
 import type { StateEntries } from "./state-entries.js";
 
-/** A tiny wrapper for some persistence layer. */
-export interface Persistence {
+/**
+ * Abstraction over some backend containing serialized state entries.
+ *
+ * This may or may not be backed by some on-disk database or can be just stored in memory.
+ */
+export interface SerializedStateBackend {
   /** Retrieve given state key. */
   get(key: StateKey): BytesBlob | null;
 }
 
-/** Wrap a `StateEntries` as `Peristence` object. */
-function stateEntriesPersistence(dict: StateEntries): Persistence {
-  const entries = dict.entries.data;
-  return {
-    get(key: StateKey): BytesBlob | null {
-      return entries.get(key) ?? null;
-    },
-  };
-}
-
-type KeyAndCodec<T> = {
-  key: StateKey;
-  Codec: Decode<T>;
-};
-
-/** Service data representation on a serialized state. */
-export class SerializedService implements Service {
-  constructor(
-    /** Service id */
-    public readonly serviceId: ServiceId,
-    private readonly accountInfo: ServiceAccountInfo,
-    private readonly retrieveOptional: <T>(key: KeyAndCodec<T>) => T | undefined,
-  ) {}
-
-  /** Service account info. */
-  getInfo(): ServiceAccountInfo {
-    return this.accountInfo;
-  }
-
-  /** Retrieve a storage item. */
-  getStorage(storage: StorageKey): BytesBlob | null {
-    return this.retrieveOptional(serialize.serviceStorage(this.serviceId, storage)) ?? null;
-  }
-
-  /**
-   * Check if preimage is present in the DB.
-   *
-   * NOTE: it DOES NOT mean that the preimage is available.
-   */
-  hasPreimage(hash: PreimageHash): boolean {
-    // TODO [ToDr] consider optimizing to avoid fetching the whole data.
-    return this.retrieveOptional(serialize.servicePreimages(this.serviceId, hash)) !== undefined;
-  }
-
-  /** Retrieve preimage from the DB. */
-  getPreimage(hash: PreimageHash): BytesBlob | null {
-    return this.retrieveOptional(serialize.servicePreimages(this.serviceId, hash)) ?? null;
-  }
-
-  /** Retrieve preimage lookup history. */
-  getLookupHistory(hash: PreimageHash, len: U32): LookupHistorySlots | null {
-    const rawSlots = this.retrieveOptional(serialize.serviceLookupHistory(this.serviceId, hash, len));
-    if (rawSlots === undefined) {
-      return null;
-    }
-    return tryAsLookupHistorySlots(rawSlots.map(tryAsTimeSlot));
-  }
-}
-
 /**
- * A potentially persistence-backed state object which stores the keys serialized.
+ * State object which reads it's entries from some backend.
  *
  * It differs from `InMemoryState` by needing to serialize the keys before accessing them.
  *
  * NOTE: the object has no way of knowing if all of the required data is present
- * in the persistence layer, so it MAY fail during runtime.
+ * in the backend layer, so it MAY fail during runtime.
  */
-export class SerializedState<T extends Persistence = Persistence> implements State, EnumerableState {
+export class SerializedState<T extends SerializedStateBackend = SerializedStateBackend>
+  implements State, EnumerableState
+{
   /** Create a state-like object from collection of serialized entries. */
   static fromStateEntries(spec: ChainSpec, state: StateEntries, recentServices: ServiceId[] = []) {
-    return new SerializedState(spec, stateEntriesPersistence(state), recentServices);
+    return new SerializedState(spec, state, recentServices);
   }
 
   /** Create a state-like object backed by some DB. */
-  static new<T extends Persistence>(spec: ChainSpec, db: T, recentServices: ServiceId[] = []): SerializedState<T> {
+  static new<T extends SerializedStateBackend>(
+    spec: ChainSpec,
+    db: T,
+    recentServices: ServiceId[] = [],
+  ): SerializedState<T> {
     return new SerializedState(spec, db, recentServices);
   }
 
@@ -219,3 +170,52 @@ export class SerializedState<T extends Persistence = Persistence> implements Sta
     return this.retrieve(serialize.privilegedServices, "privilegedServices");
   }
 }
+
+/** Service data representation on a serialized state. */
+export class SerializedService implements Service {
+  constructor(
+    /** Service id */
+    public readonly serviceId: ServiceId,
+    private readonly accountInfo: ServiceAccountInfo,
+    private readonly retrieveOptional: <T>(key: KeyAndCodec<T>) => T | undefined,
+  ) {}
+
+  /** Service account info. */
+  getInfo(): ServiceAccountInfo {
+    return this.accountInfo;
+  }
+
+  /** Retrieve a storage item. */
+  getStorage(storage: StorageKey): BytesBlob | null {
+    return this.retrieveOptional(serialize.serviceStorage(this.serviceId, storage)) ?? null;
+  }
+
+  /**
+   * Check if preimage is present in the DB.
+   *
+   * NOTE: it DOES NOT mean that the preimage is available.
+   */
+  hasPreimage(hash: PreimageHash): boolean {
+    // TODO [ToDr] consider optimizing to avoid fetching the whole data.
+    return this.retrieveOptional(serialize.servicePreimages(this.serviceId, hash)) !== undefined;
+  }
+
+  /** Retrieve preimage from the DB. */
+  getPreimage(hash: PreimageHash): BytesBlob | null {
+    return this.retrieveOptional(serialize.servicePreimages(this.serviceId, hash)) ?? null;
+  }
+
+  /** Retrieve preimage lookup history. */
+  getLookupHistory(hash: PreimageHash, len: U32): LookupHistorySlots | null {
+    const rawSlots = this.retrieveOptional(serialize.serviceLookupHistory(this.serviceId, hash, len));
+    if (rawSlots === undefined) {
+      return null;
+    }
+    return tryAsLookupHistorySlots(rawSlots.map(tryAsTimeSlot));
+  }
+}
+
+type KeyAndCodec<T> = {
+  key: StateKey;
+  Codec: Decode<T>;
+};

@@ -4,15 +4,51 @@ import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import type { Opaque } from "@typeberry/utils";
-import { StateEntry } from "./entries.js";
 
 export type StateKey = Opaque<OpaqueHash, "stateKey">;
 
 const U32_BYTES = 4;
 
-export namespace keys {
+/** Numeric mapping for state entries. */
+export enum StateKeyIdx {
+  Unused = 0,
+  /**Authorizer Pool */
+  Alpha = 1,
+  /** Authorizer Queue */
+  Phi = 2,
+  /** Recent History */
+  Beta = 3,
+  /** Safrole */
+  Gamma = 4,
+  /** Disputes Records (Judgements) */
+  Psi = 5,
+  /** Entropy */
+  Eta = 6,
+  /** Next Validators */
+  Iota = 7,
+  /** Current Validators */
+  Kappa = 8,
+  /** Previous Validators */
+  Lambda = 9,
+  /** Availability Assignment */
+  Rho = 10,
+  /** Current time slot */
+  Tau = 11,
+  /** Privileged Services */
+  Chi = 12,
+  /** Statistics */
+  Pi = 13,
+  /** Work Packages ready to be accumulated */
+  Theta = 14,
+  /** Work Packages recently accumulated */
+  Xi = 15,
+  /** Services data */
+  Delta = 255,
+}
+
+export namespace stateKeys {
   /** https://graypaper.fluffylabs.dev/#/85129da/38e50038e500?v=0.6.3 */
-  export function index(index: StateEntry): StateKey {
+  export function index(index: StateKeyIdx): StateKey {
     const key = Bytes.zero(HASH_SIZE);
     key.raw[0] = index;
     return key.asOpaque();
@@ -21,7 +57,7 @@ export namespace keys {
   /** https://graypaper.fluffylabs.dev/#/85129da/382b03382b03?v=0.6.3 */
   export function serviceInfo(serviceId: ServiceId): StateKey {
     const key = Bytes.zero(HASH_SIZE);
-    key.raw[0] = StateEntry.Delta;
+    key.raw[0] = StateKeyIdx.Delta;
     let i = 1;
     for (const byte of u32AsLeBytes(serviceId)) {
       key.raw[i] = byte;
