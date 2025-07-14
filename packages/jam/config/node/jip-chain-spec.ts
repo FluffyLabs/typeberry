@@ -65,7 +65,7 @@ export class JipChainSpec extends WithDebug {
     {
       bootnodes: json.optional(json.array(json.fromString(Bootnode.fromString))),
       id: "string",
-      genesis_header: fromJson.bytesBlob,
+      genesis_header: fromJson.bytesBlobNoPrefix,
       genesis_state: json.map(fromJson.bytesNNoPrefix(31), fromJson.bytesBlobNoPrefix),
     },
     (o) =>

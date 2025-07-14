@@ -18,7 +18,7 @@ export class TestState {
 export type StateKeyVals = Map<Bytes<31>, BytesBlob>;
 
 export function loadState(spec: ChainSpec, keyvals: StateKeyVals) {
-  const stateDict = TruncatedHashDictionary.fromEntriesMap<StateKey, BytesBlob>(keyvals.entries());
+  const stateDict = TruncatedHashDictionary.fromEntries<StateKey, BytesBlob>(keyvals.entries());
   const stateEntries = StateEntries.fromTruncatedDictionaryUnsafe(stateDict);
   return SerializedState.fromStateEntries(spec, stateEntries);
 }

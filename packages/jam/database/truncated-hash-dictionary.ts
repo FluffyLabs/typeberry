@@ -19,10 +19,10 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
    * Each key will be copied and have the last byte replace with a 0.
    */
   static fromEntries<T extends OpaqueHash, V>(
-    entries: [T | Bytes<TRUNCATED_KEY_BYTES>, V][],
+    entries: Iterable<[T | Bytes<TRUNCATED_KEY_BYTES>, V]>,
   ): TruncatedHashDictionary<T, V> {
     /** Copy key bytes of an entry and replace the last one with 0. */
-    const mapped = entries.map<[T, V]>(([key, value]) => {
+    const mapped = Array.from(entries).map<[T, V]>(([key, value]) => {
       const newKey: T = Bytes.zero(HASH_SIZE).asOpaque();
       newKey.raw.set(key.raw.subarray(0, TRUNCATED_KEY_BYTES));
       return [newKey, value];
