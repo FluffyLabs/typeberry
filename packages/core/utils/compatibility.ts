@@ -5,7 +5,7 @@ export enum GpVersion {
   V0_6_7 = "0.6.7",
   V7_0_0 = "7.0.0",
 }
-export const DEFAULT_VERSION = GpVersion.V0_6_4;
+export const DEFAULT_VERSION = GpVersion.V0_6_7;
 export const CURRENT_VERSION = process.env.GP_VERSION as GpVersion;
 
 if (CURRENT_VERSION !== undefined && !Object.values(GpVersion).includes(CURRENT_VERSION)) {
