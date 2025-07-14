@@ -117,6 +117,29 @@ export function deepEqual<T>(
     return errors.exitOrThrow();
   }
 
+  // special casing for maps
+  if (actual instanceof Map && expected instanceof Map) {
+    const toArray = (input: Map<unknown, unknown>): Array<{ key: unknown; value: unknown }> => {
+      return Array.from(input.entries())
+        .map(([key, value]) => ({ key, value }))
+        .toSorted((a, b) => {
+          const aKey = `${a.key}`;
+          const bKey = `${b.key}`;
+
+          if (aKey < bKey) return -1;
+          if (bKey < aKey) return 1;
+          return 0;
+        });
+    };
+
+    deepEqual(toArray(actual), toArray(expected), {
+      context: ctx.concat(["[map]"]),
+      errorsCollector: errors,
+      ignore,
+    });
+    return errors.exitOrThrow();
+  }
+
   if (typeof actual === "object" && typeof expected === "object") {
     const actualKeys = Object.keys(actual) as (keyof T)[];
     const expectedKeys = Object.keys(expected) as (keyof T)[];
