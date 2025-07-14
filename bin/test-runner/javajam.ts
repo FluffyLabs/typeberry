@@ -1,8 +1,13 @@
-import { main, runner } from "./common.js";
-import { runStateTransition, StateTransition } from "./state-transition/state-transition.js";
+import { logger, main, runner } from "./common.js";
+import { StateTransition, runStateTransition } from "./state-transition/state-transition.js";
 
-const runners = [
-  runner("state_transition", StateTransition.fromJson, runStateTransition),
-];
+const runners = [runner("state_transition", StateTransition.fromJson, runStateTransition)];
 
-main()
+main(runners, process.argv.slice(2), "test-vectors/javajam", {
+  accepted: ["stf/state_transitions"],
+})
+  .then((r) => logger.log(r))
+  .catch((e) => {
+    logger.error(`${e}`);
+    process.exit(-1);
+  });
