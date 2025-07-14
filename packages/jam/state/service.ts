@@ -1,4 +1,12 @@
-import { type CodeHash, type ServiceGas, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
+import {
+  type CodeHash,
+  type ServiceGas,
+  type ServiceId,
+  type TimeSlot,
+  tryAsServiceGas,
+  tryAsServiceId,
+  tryAsTimeSlot,
+} from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
@@ -37,8 +45,12 @@ export class ServiceAccountInfo extends WithDebug {
     balance: codec.u64,
     accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
     onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
+    storageOffset: codec.u64,
     storageUtilisationBytes: codec.u64,
     storageUtilisationCount: codec.u32,
+    creation: codec.u32.convert((x) => x, tryAsTimeSlot),
+    lastAccumulation: codec.u32.convert((x) => x, tryAsTimeSlot),
+    parentService: codec.u32.convert((x) => x, tryAsServiceId),
   });
 
   static create(a: CodecRecord<ServiceAccountInfo>) {
@@ -47,8 +59,12 @@ export class ServiceAccountInfo extends WithDebug {
       a.balance,
       a.accumulateMinGas,
       a.onTransferMinGas,
+      a.storageOffset,
       a.storageUtilisationBytes,
       a.storageUtilisationCount,
+      a.creation,
+      a.lastAccumulation,
+      a.parentService,
     );
   }
 
@@ -77,10 +93,18 @@ export class ServiceAccountInfo extends WithDebug {
     public readonly accumulateMinGas: ServiceGas,
     /** `a_m`: Minimal gas required to execute On Transfer entrypoint. */
     public readonly onTransferMinGas: ServiceGas,
+    /** `a_f`: Gratis storage offset */
+    public readonly storageOffset: U64,
     /** `a_o`: Total number of octets in storage. */
     public readonly storageUtilisationBytes: U64,
     /** `a_i`: Number of items in storage. */
     public readonly storageUtilisationCount: U32,
+    /** `a_r`: Creation time slot */
+    public readonly creation: TimeSlot,
+    /** `a_a`: Time slot of most recent accumulation */
+    public readonly lastAccumulation: TimeSlot,
+    /** `a_p`: Parent service */
+    public readonly parentService: ServiceId,
   ) {
     super();
   }

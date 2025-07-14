@@ -65,13 +65,8 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
     this.dict.delete(this.truncatedKey);
   }
 
-  /** Iterator over keys of the dictionary. */
-  *keys() {
-    return this.dict.keys();
-  }
-
   /** Iterator over values of the dictionary. */
-  *values() {
+  values() {
     return this.dict.values();
   }
 

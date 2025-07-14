@@ -6,6 +6,7 @@ import type { OpaqueHash } from "@typeberry/hash";
 import {
   type InMemoryService,
   LookupHistoryItem,
+  type PerCore,
   type PreimageItem,
   ServiceAccountInfo,
   type ServicesUpdate,
@@ -121,7 +122,7 @@ export class AccumulationStateUpdate {
   /** Updated priviliged services. */
   public privilegedServices: {
     manager: ServiceId;
-    authorizer: ServiceId;
+    authorizer: PerCore<ServiceId>;
     validators: ServiceId;
     autoAccumulate: [ServiceId, ServiceGas][];
   } | null = null;

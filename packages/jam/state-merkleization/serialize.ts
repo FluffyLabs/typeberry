@@ -16,10 +16,8 @@ import { HASH_SIZE } from "@typeberry/hash";
 import type { U32 } from "@typeberry/numbers";
 import {
   AvailabilityAssignment,
-  BlockState,
   DisputesRecords,
   ENTROPY_ENTRIES,
-  MAX_RECENT_HISTORY,
   PrivilegedServices,
   ServiceAccountInfo,
   type State,
@@ -29,6 +27,7 @@ import {
   codecPerCore,
 } from "@typeberry/state";
 import { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
+import { RecentBlocks } from "@typeberry/state/recent-blocks.js";
 import { SafroleData } from "@typeberry/state/safrole-data.js";
 import { type StateKey, StateKeyIdx, stateKeys } from "./keys.js";
 
@@ -65,11 +64,7 @@ export namespace serialize {
   /** C(3): https://graypaper.fluffylabs.dev/#/85129da/38cb0138cb01?v=0.6.3 */
   export const recentBlocks: StateCodec<State["recentBlocks"]> = {
     key: stateKeys.index(StateKeyIdx.Beta),
-    Codec: codecKnownSizeArray(BlockState.Codec, {
-      minLength: 0,
-      maxLength: MAX_RECENT_HISTORY,
-      typicalLength: MAX_RECENT_HISTORY,
-    }),
+    Codec: RecentBlocks.Codec,
     extract: (s) => s.recentBlocks,
   };
 

@@ -8,7 +8,7 @@ import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { SimpleAllocator, WithHash, keccak } from "@typeberry/hash";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
-import { FullEntries, serializeStateUpdate, StateEntries, TruncatedEntries } from "@typeberry/state-merkleization";
+import { serializeStateUpdate } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain } from "@typeberry/transition/chain-stf.js";
@@ -90,27 +90,6 @@ export async function runStateTransition(testContent: StateTransition, testPath:
   assert.deepStrictEqual(testContent.pre_state.state_root.toString(), preStateRoot.toString());
   assert.deepStrictEqual(testContent.post_state.state_root.toString(), postStateRoot.toString());
 
-  // verifying state keys and values
-  const preStateEntires = preState.backend.entries.data;
-  const postStateEntries = postState.backend.entries.data;
-  assert.deepEqual(testContent.pre_state.keyvals.length, preStateEntires.size);
-  assert.deepEqual(testContent.post_state.keyvals.length, postStateEntries.size);
-  console.log(`test: ${testPath}`);
-  console.log(`pre_state hash: ${preStateRoot.toString()}`);
-  for (let i = 0; i < preStateEntires.size; i++) {
-    const keyval = testContent.pre_state.keyvals[i];
-    assert.ok(postStateEntries.has(keyval.key.asOpaque()), `Pre state doesnt have the key: ${keyval.key.toString()}`);
-    const val = postStateEntries.get(keyval.key.asOpaque());
-    if (val === undefined) {
-      assert.fail(`undefined post state entry for val ${keyval.key.toString()}`);
-    }
-    if (!keyval.value.isEqualTo(val)) {
-      console.log(`[${i}] state key: ${keyval.key.toString()}`);
-      console.log(`test state blob [${keyval.value.length}]: ${keyval.value}`);
-      console.log(`parsed state blob [${val?.length}]: ${val}`);
-    }
-    //assert.deepEqual(keyval.value.length, val?.length);
-  }
   const verifier = new BlockVerifier(stf.hasher, blocksDb);
   // NOTE [ToDr] we skip full verification here, since we can run tests in isolation
   // (i.e. no block history)

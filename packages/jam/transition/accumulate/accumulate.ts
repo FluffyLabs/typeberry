@@ -422,7 +422,7 @@ export class Accumulate {
         });
       }
 
-      if (serviceId === authManager && stateUpdate.authorizationQueues !== null) {
+      if (authManager.some((auth) => auth === serviceId) && stateUpdate.authorizationQueues !== null) {
         for (const [coreIndex, authQueue] of stateUpdate.authorizationQueues) {
           authQueues[coreIndex] = authQueue;
           authQueuesUpdated = true;
