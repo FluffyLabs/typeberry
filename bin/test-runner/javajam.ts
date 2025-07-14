@@ -1,9 +1,7 @@
 import { logger, main, runner } from "./common.js";
-import { runStateTransition, StateTransition } from "./state-transition/state-transition.js";
+import { StateTransition, runStateTransition } from "./state-transition/state-transition.js";
 
-const runners = [
-  runner("state_transition", StateTransition.fromJson, runStateTransition),
-];
+const runners = [runner("state_transition", StateTransition.fromJson, runStateTransition)];
 
 main(runners, process.argv.slice(2), "test-vectors/javajam", {
   accepted: ["stf/state_transitions/"],

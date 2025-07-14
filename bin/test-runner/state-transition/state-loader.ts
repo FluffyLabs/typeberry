@@ -1,10 +1,10 @@
-import { StateRootHash } from "@typeberry/block";
+import type { StateRootHash } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
-import { Bytes, BytesBlob } from "@typeberry/bytes";
-import { ChainSpec } from "@typeberry/config";
+import type { Bytes, BytesBlob } from "@typeberry/bytes";
+import type { ChainSpec } from "@typeberry/config";
 import { TruncatedHashDictionary } from "@typeberry/database";
-import { FromJson, json } from "@typeberry/json-parser";
-import { SerializedState, StateEntries, StateKey } from "@typeberry/state-merkleization";
+import { type FromJson, json } from "@typeberry/json-parser";
+import { SerializedState, StateEntries, type StateKey } from "@typeberry/state-merkleization";
 
 export class TestState {
   static fromJson: FromJson<TestState> = {

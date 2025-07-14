@@ -110,4 +110,3 @@ export async function runStateTransition(testContent: StateTransition, testPath:
   deepEqual(preState, postState);
   assert.deepStrictEqual(root.toString(), postStateRoot.toString());
 }
-
