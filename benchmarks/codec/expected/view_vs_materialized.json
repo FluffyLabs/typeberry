@@ -6,62 +6,52 @@
     {
       "name": "Get the first field from Decoded",
       "ops": 351510.02,
-      "margin": 0.83,
-      "percentSlower": 14.72
+      "margin": 10
     },
     {
       "name": "Get the first field from View",
       "ops": 391861.79,
-      "margin": 0.15,
-      "percentSlower": 4.93
+      "margin": 10
     },
     {
       "name": "Get the first field as view from View",
       "ops": 383453.46,
-      "margin": 0.74,
-      "percentSlower": 6.97
+      "margin": 10
     },
     {
       "name": "Get two fields from Decoded",
       "ops": 350192.31,
-      "margin": 1.02,
-      "percentSlower": 15.04
+      "margin": 10
     },
     {
       "name": "Get two fields from View",
       "ops": 317433.74,
-      "margin": 0.88,
-      "percentSlower": 22.99
+      "margin": 10
     },
     {
       "name": "Get two fields from materialized from View",
       "ops": 412183.3,
-      "margin": 0.12,
-      "percentSlower": 0
+      "margin": 10
     },
     {
       "name": "Get two fields as views from View",
       "ops": 310230.97,
-      "margin": 1.45,
-      "percentSlower": 24.73
+      "margin": 10
     },
     {
       "name": "Get only third field from Decoded",
       "ops": 353340.84,
-      "margin": 0.15,
-      "percentSlower": 14.28
+      "margin": 10
     },
     {
       "name": "Get only third field from View",
       "ops": 396437.97,
-      "margin": 0.83,
-      "percentSlower": 3.82
+      "margin": 10
     },
     {
       "name": "Get only third field as view from View",
       "ops": 393088.95,
-      "margin": 0.58,
-      "percentSlower": 4.63
+      "margin": 10
     }
   ],
   "fastest": {
