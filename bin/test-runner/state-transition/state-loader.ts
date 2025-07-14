@@ -1,8 +1,10 @@
-import type { StateRootHash } from "@typeberry/block";
+import { StateRootHash } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
-import type { Bytes, BytesBlob } from "@typeberry/bytes";
-import type { ChainSpec } from "@typeberry/config";
-import { type FromJson, json } from "@typeberry/json-parser";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { ChainSpec } from "@typeberry/config";
+import { TruncatedHashDictionary } from "@typeberry/database";
+import { FromJson, json } from "@typeberry/json-parser";
+import { SerializedState, StateEntries, StateKey } from "@typeberry/state-merkleization";
 
 export class TestState {
   static fromJson: FromJson<TestState> = {
@@ -10,11 +12,13 @@ export class TestState {
     keyvals: json.map(fromJson.bytesN(31), fromJson.bytesBlob),
   };
   state_root!: StateRootHash;
-  keyvals!: KeyVals;
+  keyvals!: StateKeyVals;
 }
 
-export type KeyVals = Map<Bytes<31>, BytesBlob>;
+export type StateKeyVals = Map<Bytes<31>, BytesBlob>;
 
-export function loadState(_spec: ChainSpec, _stateData: KeyVals) {
-  // TODO: [MaSo] Change KeyVals to SerializeState<LeafDb>
+export function loadState(spec: ChainSpec, keyvals: StateKeyVals) {
+  const stateDict = TruncatedHashDictionary.fromEntriesMap<StateKey, BytesBlob>(keyvals.entries());
+  const stateEntries = StateEntries.fromTruncatedDictionaryUnsafe(stateDict);
+  return SerializedState.fromStateEntries(spec, stateEntries);
 }

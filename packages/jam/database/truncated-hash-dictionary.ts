@@ -27,6 +27,24 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
     return new TruncatedHashDictionary(HashDictionary.fromEntries(mapped));
   }
 
+  /**
+   * Create a new `TruncatedHashDictionary` from given map of entries.
+   *
+   * Each key will be copied and have the last byte replace with a 0.
+   */
+  static fromEntriesMap<T extends OpaqueHash, V>(
+    entries: MapIterator<[T, V] | [Bytes<TRUNCATED_KEY_BYTES>, V]>,
+  ): TruncatedHashDictionary<T, V> {
+    /** Copy key bytes of an entry and replace the last one with 0. */
+    const mapped: [T, V][] = [];
+    for (const [key, value] of entries) {
+      const newKey: T = Bytes.zero(HASH_SIZE).asOpaque();
+      newKey.raw.set(key.raw.subarray(0, TRUNCATED_KEY_BYTES));
+      mapped.push([newKey, value]);
+    }
+    return new TruncatedHashDictionary(HashDictionary.fromEntries(mapped));
+  }
+
   /** A truncated key which we re-use to query the dictionary. */
   private readonly truncatedKey: T = Bytes.zero(HASH_SIZE).asOpaque();
 
