@@ -115,6 +115,16 @@ export class InMemoryService extends WithDebug implements Service {
     return item.find((x) => x.length === len)?.slots ?? null;
   }
 
+  getEntries(): ServiceEntries {
+    return {
+      storageKeys: Array.from(this.data.storage.keys()),
+      preimages: Array.from(this.data.preimages.keys()),
+      lookupHistory: Array.from(this.data.lookupHistory.entries()).map(([hash, val]) => {
+        return { hash, length: val[0].length };
+      }),
+    };
+  }
+
   /**
    * Create a new in-memory service from another state service
    * by copying all given entries.
@@ -189,7 +199,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
    */
   static copyFrom(other: State, servicesData: Map<ServiceId, ServiceEntries>) {
     const services = new Map<ServiceId, InMemoryService>();
-    for (const [id, entries] of servicesData) {
+    for (const [id, entries] of servicesData.entries()) {
       const service = other.getService(id);
       if (service === null) {
         throw new Error(`Expected service ${id} to be part of the state!`);

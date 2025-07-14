@@ -1,9 +1,14 @@
 import assert, { deepEqual } from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
+import { asKnownSize } from "@typeberry/collections";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
+import type { State } from "@typeberry/state";
+import { tryAsPerCore } from "@typeberry/state/common.js";
 import { TEST_STATE, TEST_STATE_ROOT, testState } from "@typeberry/state/test.utils.js";
+import { serializeStateUpdate } from "./serialize-state-update.js";
+import { SerializedState } from "./serialized-state.js";
 import { StateEntries } from "./state-entries.js";
 
 const spec = tinyChainSpec;
@@ -25,6 +30,26 @@ describe("State Serialization", () => {
         throw new Error(`Unexpected key: ${actualKey} not found in the test state!`);
       }
     }
+  });
+
+  it("should update the state", () => {
+    const serialized = StateEntries.serializeInMemory(spec, testState());
+    assert.strictEqual(serialized.getRootHash().toString(), TEST_STATE_ROOT);
+
+    const authPools: State["authPools"] = tryAsPerCore(
+      [asKnownSize([Bytes.fill(HASH_SIZE, 12).asOpaque()]), asKnownSize([Bytes.fill(HASH_SIZE, 15).asOpaque()])],
+      spec,
+    );
+    const update = serializeStateUpdate(spec, { authPools });
+
+    // when
+    serialized.applyUpdate(update);
+
+    // check the value
+    const state = SerializedState.fromStateEntries(spec, serialized);
+    assert.deepStrictEqual(state.authPools, authPools);
+
+    assert.strictEqual(serialized.getRootHash().toString(), TEST_STATE_ROOT);
   });
 });
 

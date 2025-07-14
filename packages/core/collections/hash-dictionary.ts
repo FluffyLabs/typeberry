@@ -60,6 +60,10 @@ export class HashDictionary<K extends OpaqueHash, V> implements ImmutableHashDic
     return this.map.values();
   }
 
+  entries() {
+    return this.map.values();
+  }
+
   *keys() {
     for (const value of this.map.values()) {
       yield value[0];

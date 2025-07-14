@@ -1,6 +1,6 @@
 import type { StateRootHash } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
-import type { Persistence, StateKey } from "@typeberry/state-merkleization";
+import type { SerializedStateBackend, StateKey } from "@typeberry/state-merkleization";
 import { InMemoryTrie, type LeafNode, TrieNode } from "@typeberry/trie";
 import { NodeType, TRIE_NODE_BYTES } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
@@ -23,27 +23,13 @@ export interface ValuesDb {
   get(key: Uint8Array): Uint8Array;
 }
 
-enum LookupKind {
-  EmbeddedValue = 0,
-  DbKey = 1,
-}
-
-type Lookup =
-  | {
-      kind: LookupKind.EmbeddedValue;
-      value: BytesBlob;
-    }
-  | {
-      kind: LookupKind.DbKey;
-      key: Uint8Array;
-    };
-
 /**
- * Read the collection of leaf nodes and covert it into a Map-like structure.
+ * Reads the collection of leaf nodes and convert them into a Map-like structure
+ * that together with some `ValuesDb` may act as `SerializedStateBackend`.
  *
  * Note that reading the actual values may require accessing the original database.
  */
-export class LeafDb implements Persistence {
+export class LeafDb implements SerializedStateBackend {
   /**
    * Parse given blob containing concatenated leaf nodes into leaf db.
    */
@@ -112,3 +98,18 @@ export class LeafDb implements Persistence {
     return InMemoryTrie.computeStateRoot(blake2bTrieHasher, this.leaves).asOpaque();
   }
 }
+
+enum LookupKind {
+  EmbeddedValue = 0,
+  DbKey = 1,
+}
+
+type Lookup =
+  | {
+      kind: LookupKind.EmbeddedValue;
+      value: BytesBlob;
+    }
+  | {
+      kind: LookupKind.DbKey;
+      key: Uint8Array;
+    };
