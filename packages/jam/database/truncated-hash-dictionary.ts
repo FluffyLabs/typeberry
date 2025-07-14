@@ -35,7 +35,7 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
 
   private constructor(private readonly dict: HashDictionary<HashWithZeroedBit<T>, V>) {}
 
-  /** Return number of itemst in the dictionary. */
+  /** Return number of items in the dictionary. */
   get size(): number {
     return this.dict.size;
   }
