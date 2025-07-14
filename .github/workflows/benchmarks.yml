@@ -32,7 +32,11 @@ jobs:
           cache: "npm"
       - run: npm ci
       - name: Benchmarks run
-        run: npm start -w @typeberry/benchmark
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          command: npm start -w @typeberry/benchmark
       - name: Display results
         if: always()
         run: cat ./dist/benchmarks/results.txt
