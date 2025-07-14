@@ -8,7 +8,7 @@ import { type ChainSpec, tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { SimpleAllocator, WithHash, keccak } from "@typeberry/hash";
 import { type FromJson, parseFromJson } from "@typeberry/json-parser";
-import { StateEntries } from "@typeberry/state-merkleization";
+import { serializeStateUpdate } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain } from "@typeberry/transition/chain-stf.js";
@@ -61,13 +61,10 @@ function blockAsView(spec: ChainSpec, block: Block) {
 export async function runStateTransition(testContent: StateTransition, testPath: string) {
   const spec = tinyChainSpec;
   const preState = loadState(spec, testContent.pre_state.keyvals);
-  const preStateSerialized = StateEntries.serializeInMemory(spec, preState);
-
   const postState = loadState(spec, testContent.post_state.keyvals);
-  const postStateSerialized = StateEntries.serializeInMemory(spec, postState);
 
-  const preStateRoot = preStateSerialized.getRootHash();
-  const postStateRoot = postStateSerialized.getRootHash();
+  const preStateRoot = preState.backend.getRootHash();
+  const postStateRoot = postState.backend.getRootHash();
 
   const blockView = blockAsView(spec, testContent.block);
   const allBlocks = loadBlocks(testPath);
@@ -103,10 +100,10 @@ export async function runStateTransition(testContent: StateTransition, testPath:
     assert.fail(`Expected the transition to go smoothly, got error: ${resultToString(stfResult)}`);
   }
 
-  preState.backend.applyUpdate(stfResult.ok);
+  preState.backend.applyUpdate(serializeStateUpdate(spec, stfResult.ok));
 
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
-  const root = StateEntries.serializeInMemory(spec, preState).getRootHash();
+  const root = preState.backend.getRootHash();
   deepEqual(preState, postState);
   assert.deepStrictEqual(root.toString(), postStateRoot.toString());
 }
