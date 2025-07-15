@@ -48,6 +48,7 @@ import { ReportsTest, runReportsTestFull, runReportsTestTiny } from "./w3f/repor
 import { SafroleTest, runSafroleTest } from "./w3f/safrole.js";
 import { JsonSchema, ignoreSchemaFiles } from "./w3f/schema.js";
 import { runShufflingTests, shufflingTests } from "./w3f/shuffling.js";
+import { StateTransition, runStateTransition } from "./w3f/state-transition.js";
 import {
   StatisticsTestFull,
   StatisticsTestTiny,
@@ -55,7 +56,6 @@ import {
   runStatisticsTestTiny,
 } from "./w3f/statistics.js";
 import { runTrieTest, trieTestSuiteFromJson } from "./w3f/trie.js";
-import { runStateTransition, StateTransition } from "./w3f/state-transition.js";
 
 const runners = [
   runner("accumulate", AccumulateTest.fromJson, runAccumulateTest),
