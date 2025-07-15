@@ -61,8 +61,8 @@ const runners = [
   runner("assurances/tiny", AssurancesTestTiny.fromJson, runAssurancesTestTiny),
   runner("assurances/full", AssurancesTestFull.fromJson, runAssurancesTestFull),
   runner("authorizations", AuthorizationsTest.fromJson, runAuthorizationsTest),
-  ...codecRunners('tiny'),
-  ...codecRunners('full'),
+  ...codecRunners("tiny"),
+  ...codecRunners("full"),
   runner("disputes", DisputesTest.fromJson, runDisputesTest),
   runner("erasure_coding", EcTest.fromJson, runEcTest),
   runner("history", HistoryTest.fromJson, runHistoryTest),
@@ -82,7 +82,7 @@ const runners = [
 ];
 
 main(runners, process.argv.slice(2), "test-vectors/w3f-fluffy", {
-  ignored: ['traces/']
+  ignored: ["traces/"],
 })
   .then((r) => logger.log(r))
   .catch((e) => {
@@ -90,8 +90,8 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-fluffy", {
     process.exit(-1);
   });
 
-function codecRunners(flavor: 'tiny' | 'full') {
-  const spec = flavor === 'tiny' ? tinyChainSpec : fullChainSpec;
+function codecRunners(flavor: "tiny" | "full") {
+  const spec = flavor === "tiny" ? tinyChainSpec : fullChainSpec;
   return [
     runner(`codec/${flavor}/assurances_extrinsic`, getAssurancesExtrinsicFromJson(spec), runAssurancesExtrinsicTest),
     runner(`codec/${flavor}/assurances_extrinsic`, getAssurancesExtrinsicFromJson(spec), runAssurancesExtrinsicTest),

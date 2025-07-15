@@ -7,6 +7,7 @@ on:
 
 env:
   TEST_VECTORS_REF: 4d0e957b969e974a7db701a7df7cdacb384283d0
+  GP_VERSION: 0.6.4
 
 jobs:
   import:

@@ -59,8 +59,8 @@ class JsonPreimageItem {
 
 const stateItemFromJson = json.object<StorageItem>(
   {
-    hash: fromJson.bytes32(),
-    blob: json.fromString(BytesBlob.parseBlob),
+    key: fromJson.bytes32(),
+    value: json.fromString(BytesBlob.parseBlob),
   },
   StorageItem.create,
 );
@@ -103,7 +103,7 @@ export class JsonService {
         lookupHistory.set(item.hash, data);
       }
       const preimages = HashDictionary.fromEntries((data.preimages ?? []).map((x) => [x.hash, x]));
-      const storage = HashDictionary.fromEntries((data.storage ?? []).map((x) => [x.hash, x]));
+      const storage = HashDictionary.fromEntries((data.storage ?? []).map((x) => [x.key, x]));
       return new InMemoryService(id, {
         info: data.service,
         preimages,

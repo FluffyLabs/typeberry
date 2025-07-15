@@ -14,7 +14,7 @@ const ALL_VERSIONS_IN_ORDER = [
   GpVersion.V7_0_0,
 ];
 
-export const DEFAULT_VERSION = GpVersion.V0_6_4;
+export const DEFAULT_VERSION = GpVersion.V0_6_5;
 export let CURRENT_VERSION = process.env.GP_VERSION as GpVersion | undefined;
 
 if (CURRENT_VERSION !== undefined && !Object.values(GpVersion).includes(CURRENT_VERSION)) {

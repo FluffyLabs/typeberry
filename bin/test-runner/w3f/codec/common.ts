@@ -15,12 +15,12 @@ export function runCodecTest<T>(codec: Codec<T>, test: T, file: string) {
 }
 
 function getChainSpec(file: string) {
-  if (file.includes('/tiny/')) {
+  if (file.includes("/tiny/")) {
     return tinyChainSpec;
   }
 
-  if (file.includes('/full/')) {
-    return fullChainSpec
+  if (file.includes("/full/")) {
+    return fullChainSpec;
   }
 
   throw new Error(`Cannot match a chain spec for: ${file}`);

@@ -75,7 +75,7 @@ class ServiceWithCodec extends InMemoryService {
       info: ServiceAccountInfo.Codec,
       preimages: codecHashDictionary(PreimageItem.Codec, (x) => x.hash),
       lookupHistory: lookupHistoryCodec,
-      storage: codecHashDictionary(StorageItem.Codec, (x) => x.hash),
+      storage: codecHashDictionary(StorageItem.Codec, (x) => x.key),
     }),
   });
 
