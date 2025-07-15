@@ -3,8 +3,6 @@ import { HASH_SIZE } from "@typeberry/hash";
 import minimist from "minimist";
 import packageJson from "./package.json";
 
-type Hex = Bytes<HASH_SIZE>;
-
 export const HELP = `
 JAM compatible CLI for typeberry ${packageJson.version} by ${packageJson.author}
 
@@ -24,10 +22,10 @@ Options:
 `;
 
 export type CommonArguments = {
-  bandersnatch?: Hex;
-  bls?: Hex;
+  bandersnatch?: Bytes<HASH_SIZE>;
+  bls?: Bytes<HASH_SIZE>;
   datadir?: string;
-  ed25519?: Hex;
+  ed25519?: Bytes<HASH_SIZE>;
   genesis?: string;
   metadata?: string;
   port?: number;
@@ -35,7 +33,7 @@ export type CommonArguments = {
   validatorindex?: number;
 };
 
-const toHex = (v: string) => {
+const toBytes = (v: string) => {
   if (v.startsWith("0x")) {
     return Bytes.parseBytes(v, HASH_SIZE);
   }
@@ -56,10 +54,10 @@ export function parseArgs(cliInput: string[]): CommonArguments {
   });
 
   const result: CommonArguments = {
-    bandersnatch: parseValue(args, "bandersnatch", toHex).bandersnatch,
-    bls: parseValue(args, "bls", toHex).bls,
+    bandersnatch: parseValue(args, "bandersnatch", toBytes).bandersnatch,
+    bls: parseValue(args, "bls", toBytes).bls,
     datadir: parseValue(args, "datadir", toStr).datadir,
-    ed25519: parseValue(args, "ed25519", toHex).ed25519,
+    ed25519: parseValue(args, "ed25519", toBytes).ed25519,
     genesis: parseValue(args, "genesis", toStr).genesis,
     metadata: parseValue(args, "metadata", toStr, "Alice").metadata,
     port: parseValue(args, "port", toNumber).port,

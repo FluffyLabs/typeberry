@@ -1,9 +1,9 @@
 import { pathToFileURL } from "node:url";
+import { JamConfig } from "@typeberry/config";
+import { loadConfig, main } from "@typeberry/jam";
 import { Level, Logger } from "@typeberry/logger";
-import { type Arguments, HELP, parseArgs } from "./args.js";
-import { main } from "./main.js";
+import { type Arguments, Command, HELP, parseArgs } from "./args.js";
 
-export * from "./main.js";
 export * from "./args.js";
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
@@ -26,7 +26,13 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     process.exit(1);
   }
 
-  main(args, withRelPath).catch((e) => {
+  const prepareConfigFile = (args: Arguments): JamConfig => {
+    const files = args.command === Command.Import ? args.args.files : [];
+    const nodeConfig = loadConfig(args.args.configPath);
+    return JamConfig.new({ isAuthoring: false, blockToImport: files, nodeName: args.args.nodeName, nodeConfig });
+  };
+
+  main(prepareConfigFile(args), withRelPath).catch((e) => {
     console.error(`${e}`);
     process.exit(-1);
   });

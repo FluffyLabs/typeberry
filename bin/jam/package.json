@@ -2,8 +2,8 @@
   "name": "@typeberry/jam",
   "version": "0.0.1",
   "description": "The main typeberry binary.",
-  "main": "index.ts",
-  "bin": "./index.ts",
+  "main": "main.ts",
+  "bin": "./main.ts",
   "dependencies": {
     "@typeberry/block": "0.0.1",
     "@typeberry/block-generator": "0.0.1",
@@ -22,9 +22,7 @@
     "@typeberry/json-parser": "0.0.1",
     "@typeberry/logger": "0.0.1",
     "@typeberry/state-json": "0.0.1",
-    "@typeberry/state-merkleization": "0.0.1",
-    "@typeberry/utils": "0.0.1",
-    "minimist": "^1.2.8"
+    "@typeberry/state-merkleization": "0.0.1"
   },
   "scripts": {
     "start": "tsx ./index.ts",

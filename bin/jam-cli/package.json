@@ -1,0 +1,24 @@
+{
+  "name": "@typeberry/jam-cli",
+  "version": "0.0.1",
+  "description": "The main typeberry binary line tool entry.",
+  "main": "index.ts",
+  "bin": "./index.ts",
+  "dependencies": {
+    "@typeberry/config": "0.0.1",
+    "@typeberry/jam": "0.0.1",
+    "@typeberry/logger": "0.0.1",
+    "@typeberry/utils": "0.0.1",
+    "minimist": "^1.2.8"
+  },
+  "scripts": {
+    "start": "tsx ./index.ts",
+    "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
+  },
+  "author": "Fluffy Labs",
+  "license": "MPL-2.0",
+  "devDependencies": {
+    "@types/minimist": "^1.2.5"
+  },
+  "type": "module"
+}

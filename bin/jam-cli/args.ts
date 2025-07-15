@@ -2,11 +2,11 @@ import os from "node:os";
 import minimist from "minimist";
 import packageJson from "./package.json" with { type: "json" };
 
-export const DEV_CONFIG = "dev";
+export const DEV_CONFIG_PATH = "dev";
 
 export const DEFAULTS = {
   name: os.hostname(),
-  config: DEV_CONFIG,
+  config: DEV_CONFIG_PATH,
 };
 
 export const HELP = `
@@ -19,7 +19,7 @@ Usage:
 Options:
   --name                Override node name. Affects networking key and db location.
                         [default: ${DEFAULTS.name}]
-  --config              Path to a config file or '${DEV_CONFIG}'.
+  --config              Path to a config file or '${DEV_CONFIG_PATH}'.
                         [default: ${DEFAULTS.config}]
 `;
 
@@ -51,8 +51,8 @@ function parseSharedOptions(args: minimist.ParsedArgs, withRelPath: (v: string) 
     args,
     "config",
     (v) => {
-      if (v === DEV_CONFIG) {
-        return DEV_CONFIG;
+      if (v === DEV_CONFIG_PATH) {
+        return DEV_CONFIG_PATH;
       }
       return withRelPath(v);
     },

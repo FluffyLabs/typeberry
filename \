@@ -1,0 +1,10 @@
+import { NodeConfiguration } from "@typeberry/config-node";
+
+export class JamConfig {
+  node: NodeConfiguration;
+  dev: DevConfig;
+}
+
+export class DevConfig {
+
+}

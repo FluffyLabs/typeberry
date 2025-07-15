@@ -1,10 +1,9 @@
 import { pathToFileURL } from "node:url";
 import { tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
-import type { NodeConfiguration } from "@typeberry/config-node";
-import { DEV_CONFIG } from "@typeberry/jam";
+import { DEV_CONFIG, JamConfig, type SeedDevConfig } from "@typeberry/config";
 import * as jam from "@typeberry/jam";
-import { loadConfig } from "@typeberry/jam/main.js";
 import { Level, Logger } from "@typeberry/logger";
+import { DEFAULTS, DEV_CONFIG_PATH } from "../jam-cli/args.js";
 import { type CommonArguments, parseArgs } from "./args.js";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
@@ -18,46 +17,63 @@ const withRelPath = (v: string) => v;
  */
 export async function main(args: string[]) {
   const argv = parseArgs(args);
-  const { args: jamArgs, config: jamConfig } = createJamArgsConf(argv);
-  jam.main(jamArgs, withRelPath, jamConfig);
+  const config = createJamConfig(argv);
+  jam.main(config, withRelPath);
 }
 
-export function createJamArgsConf(argv: CommonArguments): { args: jam.Arguments; config: NodeConfiguration } {
-  const args: string[] = [];
-  if (argv.metadata !== undefined) {
-    args.push(`--name=${argv.metadata}`);
-  }
-  // TODO: [MaSo] uncomment when networking is done
-  //if (argv.port !== undefined) {
-  //  args.push(`--port=${argv.port}`);
-  //}
+export function createJamConfig(argv: CommonArguments): JamConfig {
+  // TODO: [MaSo] Add networking config; add loading from genesis path
 
-  const config = loadConfig(DEV_CONFIG);
-  const { bandersnatch, bls, ed25519, datadir, genesis, ts, validatorindex } = argv;
+  let nodeConfig = jam.loadConfig(DEV_CONFIG_PATH);
+  let devConfig = DEV_CONFIG;
+  let seedConfig: SeedDevConfig | undefined;
+  const requiredSeedKeys = ["bandersnatch", "bls", "ed25519"] as const;
+  type RequiredSeedKey = (typeof requiredSeedKeys)[number];
 
-  if (bandersnatch !== undefined) {
-    config.authorship.bandersnatchSeed = bandersnatch;
-  }
-  if (bls !== undefined) {
-    config.authorship.blsSeed = bls;
-  }
-  if (ed25519 !== undefined) {
-    config.authorship.ed25519Seed = ed25519;
-  }
-  if (datadir !== undefined) {
-    config.databaseBasePath = datadir;
-  }
-  if (genesis !== undefined) {
-    config.authorship.genesisPath = genesis;
-  }
-  if (ts !== undefined) {
-    config.authorship.timeSlot = tryAsTimeSlot(ts);
-  }
-  if (validatorindex !== undefined) {
-    config.authorship.validatorIndex = tryAsValidatorIndex(validatorindex);
+  const provided = requiredSeedKeys.filter((key: RequiredSeedKey) => argv[key] !== undefined);
+  if (provided.length > 0) {
+    const missing = requiredSeedKeys.filter((key: RequiredSeedKey) => argv[key] === undefined);
+    if (missing.length > 0) {
+      throw new Error(
+        `Incomplete seed configuration. You must provide all seeds or none. Provided: [${provided.join(", ")}]. Missing: [${missing.join(", ")}].`,
+      );
+    }
+    // NOTE: [MaSo] here all the flags should NOT be `undefined`, but TS can't figure it out
+    if (argv.bandersnatch !== undefined && argv.bls !== undefined && argv.ed25519 !== undefined) {
+      seedConfig = {
+        bandersnatchSeed: argv.bandersnatch,
+        blsSeed: argv.bls,
+        ed25519Seed: argv.ed25519,
+      };
+    }
   }
 
-  return { args: jam.parseArgs(args, withRelPath), config };
+  if (argv.datadir !== undefined) {
+    nodeConfig = {
+      ...nodeConfig,
+      databaseBasePath: argv.datadir,
+    };
+  }
+  if (argv.genesis !== undefined) {
+    devConfig = {
+      ...devConfig,
+      genesisPath: argv.genesis,
+    };
+  }
+  if (argv.ts !== undefined) {
+    devConfig = {
+      ...devConfig,
+      timeSlot: tryAsTimeSlot(argv.ts),
+    };
+  }
+  if (argv.validatorindex !== undefined) {
+    devConfig = {
+      ...devConfig,
+      validatorIndex: tryAsValidatorIndex(argv.validatorindex),
+    };
+  }
+
+  return JamConfig.new({ nodeName: DEFAULTS.name, nodeConfig, devConfig, seedConfig });
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {

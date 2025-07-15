@@ -1,8 +1,8 @@
 import { pathToFileURL } from "node:url";
 import type { NodeConfiguration } from "@typeberry/config-node";
-import { DEFAULTS } from "@typeberry/jam/args.js";
 import { getChainSpec, loadConfig, openDatabase } from "@typeberry/jam/main.js";
 import minimist from "minimist";
+import { DEFAULTS } from "../jam-cli/args.js";
 import { methods } from "./src/method-loader.js";
 import { RpcServer } from "./src/server.js";
 
