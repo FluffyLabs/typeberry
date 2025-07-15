@@ -14,7 +14,7 @@ import { type AssurancesExtrinsic, AvailabilityAssurance } from "@typeberry/bloc
 import { I, T, W_G, W_M, W_R, W_X } from "@typeberry/block/gp-constants.js";
 import type { GuaranteesExtrinsic } from "@typeberry/block/guarantees.js";
 import type { PreimagesExtrinsic } from "@typeberry/block/preimage.js";
-import testWorkReport from "@typeberry/block/test-work-report.js";
+import { testWorkReportHex } from "@typeberry/block/test-helpers.js";
 import type { TicketsExtrinsic } from "@typeberry/block/tickets.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
 import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
@@ -195,7 +195,7 @@ describe("Statistics", () => {
     });
 
     function createWorkReport(coreIndex: CoreIndex): WorkReport {
-      const source = BytesBlob.parseBlob(testWorkReport);
+      const source = BytesBlob.parseBlob(testWorkReportHex());
       const report = Decoder.decodeObject(WorkReport.Codec, source, tinyChainSpec);
       return WorkReport.create({
         ...report,

@@ -2,9 +2,10 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec, readonlyArray } from "@typeberry/codec";
 import { FixedSizeArray } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import type { U16, U32 } from "@typeberry/numbers";
+import { type U16, type U32, isU16, tryAsU32 } from "@typeberry/numbers";
 import { type Opaque, WithDebug } from "@typeberry/utils";
-import type { CoreIndex, ServiceGas } from "./common.js";
+import { Compatibility, GpVersion } from "@typeberry/utils";
+import { type CoreIndex, type ServiceGas, tryAsCoreIndex } from "./common.js";
 import { RefineContext } from "./refine-context.js";
 import { type WorkItemsCount, tryAsWorkItemsCount } from "./work-package.js";
 import { WorkResult } from "./work-result.js";
@@ -85,7 +86,17 @@ export class WorkReport extends WithDebug {
   static Codec = codec.Class(WorkReport, {
     workPackageSpec: WorkPackageSpec.Codec,
     context: RefineContext.Codec,
-    coreIndex: codec.u16.asOpaque<CoreIndex>(),
+    coreIndex: Compatibility.isGreaterThan(GpVersion.V0_6_4)
+      ? codec.varU32.convert(
+          (o) => tryAsU32(o),
+          (i) => {
+            if (!isU16(i)) {
+              throw new Error(`Core index exceeds U16: ${i}`);
+            }
+            return tryAsCoreIndex(i);
+          },
+        )
+      : codec.u16.asOpaque<CoreIndex>(),
     authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
     authorizationOutput: codec.blob,
     segmentRootLookup: readonlyArray(codec.sequenceVarLen(WorkPackageInfo.Codec)),

@@ -15,7 +15,7 @@ import { Decoder, Encoder } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { HASH_SIZE, SimpleAllocator, WithHash, keccak } from "@typeberry/hash";
-import { Result } from "@typeberry/utils";
+import { Compatibility, GpVersion, Result, deepEqual } from "@typeberry/utils";
 import { BlockVerifier, BlockVerifierError } from "./block-verifier.js";
 import { TransitionHasher } from "./hasher.js";
 
@@ -128,7 +128,9 @@ describe("Block Verifier", async () => {
       result,
       Result.error(
         BlockVerifierError.InvalidExtrinsic,
-        "Invalid extrinsic hash: 0x0202020202020202020202020202020202020202020202020202020202020202, expected 0x170f8e387101ffd117ad93ef6161ef8decc3900b37c38011aef10ba3274052ae",
+        Compatibility.isGreaterThan(GpVersion.V0_6_4)
+          ? "Invalid extrinsic hash: 0x0202020202020202020202020202020202020202020202020202020202020202, expected 0x0cae6b5fb28258312381144a6dd6f8996f7181d7d6ab1016ec6e8108c332f932"
+          : "Invalid extrinsic hash: 0x0202020202020202020202020202020202020202020202020202020202020202, expected 0x170f8e387101ffd117ad93ef6161ef8decc3900b37c38011aef10ba3274052ae",
       ),
     );
   });
@@ -192,10 +194,15 @@ describe("Block Verifier", async () => {
 
     const result = await blockVerifier.verifyBlock(toBlockView(block));
 
-    assert.deepStrictEqual(
+    deepEqual(
       result,
       Result.ok(
-        Bytes.parseBytes("0xa1895a132474e9191e8bdc949649ecfe16ad55685db3e4ea9646766cc7ac1fc4", HASH_SIZE).asOpaque(),
+        Bytes.parseBytes(
+          Compatibility.isGreaterThan(GpVersion.V0_6_4)
+            ? "0xf02989a8c20e88609e3aec79ba7159197bc8e7b5d43e27f98c911a96b61cdcb8"
+            : "0xa1895a132474e9191e8bdc949649ecfe16ad55685db3e4ea9646766cc7ac1fc4",
+          HASH_SIZE,
+        ).asOpaque(),
       ),
     );
   });
