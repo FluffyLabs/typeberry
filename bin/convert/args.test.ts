@@ -27,6 +27,16 @@ describe("CLI", () => {
     });
   });
 
+  it("should parse bin file", () => {
+    const args = parse(["./test.bin", "header"]);
+
+    assert.deepStrictEqual(args, {
+      ...defaultArgs,
+      type: headerType,
+      inputPath: ".././test.bin",
+    });
+  });
+
   it("should parse process option alone", () => {
     const args = parse(["./test.hex", "state-dump", "as-root-hash"]);
 
