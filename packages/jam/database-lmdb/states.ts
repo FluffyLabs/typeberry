@@ -3,10 +3,10 @@ import { BytesBlob } from "@typeberry/bytes";
 import type { ChainSpec } from "@typeberry/config";
 import { LeafDb, StateUpdateError, type StatesDb } from "@typeberry/database";
 import type { ServicesUpdate, State } from "@typeberry/state";
-import { SerializedState, serializeUpdate } from "@typeberry/state-merkleization";
+import { SerializedState, serializeStateUpdate } from "@typeberry/state-merkleization";
 import type { StateKey } from "@typeberry/state-merkleization";
 import type { StateEntries } from "@typeberry/state-merkleization";
-import { TrieAction } from "@typeberry/state-merkleization";
+import { StateEntryUpdateAction } from "@typeberry/state-merkleization";
 import { InMemoryTrie } from "@typeberry/trie";
 import type { ValueHash } from "@typeberry/trie";
 import { blake2bTrieHasher } from "@typeberry/trie/hasher.js";
@@ -84,25 +84,25 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     return await this.updateAndCommit(
       headerHash,
       trie,
-      Array.from(serializedState.entries.data).map((x) => [TrieAction.Insert, x[0], x[1]]),
+      Array.from(serializedState.entries.data).map((x) => [StateEntryUpdateAction.Insert, x[0], x[1]]),
     );
   }
 
-  async updateAndCommit(
+  private async updateAndCommit(
     headerHash: HeaderHash,
     trie: InMemoryTrie,
-    data: Iterable<[TrieAction, StateKey, BytesBlob]>,
+    data: Iterable<[StateEntryUpdateAction, StateKey, BytesBlob]>,
   ): Promise<Result<OK, StateUpdateError>> {
     // We will collect all values that don't fit directly into leaf nodes.
     const values: [ValueHash, BytesBlob][] = [];
     // add all new data to the trie and take care of the values that didn't fit into leaves.
     for (const [action, key, value] of data) {
-      if (action === TrieAction.Insert) {
+      if (action === StateEntryUpdateAction.Insert) {
         const leaf = trie.set(key.asOpaque(), value);
         if (!leaf.hasEmbeddedValue()) {
           values.push([leaf.getValueHash(), value]);
         }
-      } else if (action === TrieAction.Remove) {
+      } else if (action === StateEntryUpdateAction.Remove) {
         trie.remove(key.asOpaque());
         // TODO [ToDr] Handle ref-counting values or updating some header-hash-based references.
       } else {
@@ -138,7 +138,7 @@ export class LmdbStates implements StatesDb<SerializedState<LeafDb>> {
     const trie = InMemoryTrie.fromLeaves(blake2bTrieHasher, state.backend.leaves);
     // TODO [ToDr] We should probably detect a conflicting state (i.e. two services
     // updated at once, etc), for now we're just ignoring it.
-    const updatedValues = serializeUpdate(this.spec, update);
+    const updatedValues = serializeStateUpdate(this.spec, update);
     // and finally we insert new values and store leaves in the DB.
     return await this.updateAndCommit(headerHash, trie, updatedValues);
   }

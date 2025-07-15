@@ -92,7 +92,7 @@ const runners = [
   runner("trie", trieTestSuiteFromJson, runTrieTest),
 ];
 
-main(runners, process.argv.slice(2), "jamtestvectors")
+main(runners, process.argv.slice(2), "test-vectors/w3f-fluffy")
   .then((r) => logger.log(r))
   .catch((e) => {
     logger.error(`${e}`);

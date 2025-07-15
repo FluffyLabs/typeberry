@@ -20,19 +20,22 @@ import type { StateKey } from "./keys.js";
 import { type StateCodec, serialize } from "./serialize.js";
 
 /** What should be done with that key? */
-export enum TrieAction {
+export enum StateEntryUpdateAction {
   /** Insert an entry. */
   Insert = 0,
   /** Remove an entry. */
   Remove = 1,
 }
 
-type SerializeOutput = [TrieAction, StateKey, BytesBlob];
+export type StateEntryUpdate = [StateEntryUpdateAction, StateKey, BytesBlob];
 
 const EMPTY_BLOB = BytesBlob.empty();
 
 /** Serialize given state update into a series of key-value pairs. */
-export function* serializeUpdate(spec: ChainSpec, update: Partial<State & ServicesUpdate>): Generator<SerializeOutput> {
+export function* serializeStateUpdate(
+  spec: ChainSpec,
+  update: Partial<State & ServicesUpdate>,
+): Generator<StateEntryUpdate> {
   // first let's serialize all of the simple entries (if present!)
   yield* serializeBasicKeys(spec, update);
 
@@ -45,25 +48,25 @@ export function* serializeUpdate(spec: ChainSpec, update: Partial<State & Servic
   yield* serializeRemovedServices(update.servicesRemoved);
 }
 
-function* serializeRemovedServices(servicesRemoved: ServiceId[] | undefined): Generator<SerializeOutput> {
+function* serializeRemovedServices(servicesRemoved: ServiceId[] | undefined): Generator<StateEntryUpdate> {
   for (const serviceId of servicesRemoved ?? []) {
     // TODO [ToDr] what about all data associated with a service?
     const codec = serialize.serviceData(serviceId);
-    yield [TrieAction.Remove, codec.key, EMPTY_BLOB];
+    yield [StateEntryUpdateAction.Remove, codec.key, EMPTY_BLOB];
   }
 }
 
-function* serializeStorage(storage: UpdateStorage[] | undefined): Generator<SerializeOutput> {
+function* serializeStorage(storage: UpdateStorage[] | undefined): Generator<StateEntryUpdate> {
   for (const { action, serviceId } of storage ?? []) {
     switch (action.kind) {
       case UpdateStorageKind.Set: {
         const codec = serialize.serviceStorage(serviceId, action.storage.hash);
-        yield [TrieAction.Insert, codec.key, action.storage.blob];
+        yield [StateEntryUpdateAction.Insert, codec.key, action.storage.blob];
         break;
       }
       case UpdateStorageKind.Remove: {
         const codec = serialize.serviceStorage(serviceId, action.key);
-        yield [TrieAction.Remove, codec.key, EMPTY_BLOB];
+        yield [StateEntryUpdateAction.Remove, codec.key, EMPTY_BLOB];
         break;
       }
       default:
@@ -72,33 +75,37 @@ function* serializeStorage(storage: UpdateStorage[] | undefined): Generator<Seri
   }
 }
 
-function* serializePreimages(preimages: UpdatePreimage[] | undefined, encode: EncodeFun): Generator<SerializeOutput> {
+function* serializePreimages(preimages: UpdatePreimage[] | undefined, encode: EncodeFun): Generator<StateEntryUpdate> {
   for (const { action, serviceId } of preimages ?? []) {
     switch (action.kind) {
       case UpdatePreimageKind.Provide: {
         const { hash, blob } = action.preimage;
         const codec = serialize.servicePreimages(serviceId, hash);
-        yield [TrieAction.Insert, codec.key, blob];
+        yield [StateEntryUpdateAction.Insert, codec.key, blob];
 
         if (action.slot !== null) {
           const codec2 = serialize.serviceLookupHistory(serviceId, hash, tryAsU32(blob.length));
-          yield [TrieAction.Insert, codec2.key, encode(codec2.Codec, tryAsLookupHistorySlots([action.slot]))];
+          yield [
+            StateEntryUpdateAction.Insert,
+            codec2.key,
+            encode(codec2.Codec, tryAsLookupHistorySlots([action.slot])),
+          ];
         }
         break;
       }
       case UpdatePreimageKind.UpdateOrAdd: {
         const { hash, length, slots } = action.item;
         const codec = serialize.serviceLookupHistory(serviceId, hash, length);
-        yield [TrieAction.Insert, codec.key, encode(codec.Codec, slots)];
+        yield [StateEntryUpdateAction.Insert, codec.key, encode(codec.Codec, slots)];
         break;
       }
       case UpdatePreimageKind.Remove: {
         const { hash, length } = action;
         const codec = serialize.servicePreimages(serviceId, hash);
-        yield [TrieAction.Remove, codec.key, EMPTY_BLOB];
+        yield [StateEntryUpdateAction.Remove, codec.key, EMPTY_BLOB];
 
         const codec2 = serialize.serviceLookupHistory(serviceId, hash, length);
-        yield [TrieAction.Remove, codec2.key, EMPTY_BLOB];
+        yield [StateEntryUpdateAction.Remove, codec2.key, EMPTY_BLOB];
         break;
       }
       default:
@@ -109,17 +116,17 @@ function* serializePreimages(preimages: UpdatePreimage[] | undefined, encode: En
 function* serializeServiceUpdates(
   servicesUpdates: UpdateService[] | undefined,
   encode: EncodeFun,
-): Generator<SerializeOutput> {
+): Generator<StateEntryUpdate> {
   for (const { action, serviceId } of servicesUpdates ?? []) {
     // new service being created or updated
     const codec = serialize.serviceData(serviceId);
-    yield [TrieAction.Insert, codec.key, encode(codec.Codec, action.account)];
+    yield [StateEntryUpdateAction.Insert, codec.key, encode(codec.Codec, action.account)];
 
     // additional lookup history update
     if (action.kind === UpdateServiceKind.Create && action.lookupHistory !== null) {
       const { lookupHistory } = action;
       const codec2 = serialize.serviceLookupHistory(serviceId, lookupHistory.hash, lookupHistory.length);
-      yield [TrieAction.Insert, codec2.key, encode(codec2.Codec, lookupHistory.slots)];
+      yield [StateEntryUpdateAction.Insert, codec2.key, encode(codec2.Codec, lookupHistory.slots)];
     }
   }
 }
@@ -127,8 +134,8 @@ function* serializeServiceUpdates(
 type EncodeFun = <T>(codec: Encode<T>, val: T) => BytesBlob;
 
 function* serializeBasicKeys(spec: ChainSpec, update: Partial<State>) {
-  function doSerialize<T>(val: T, codec: StateCodec<T>): SerializeOutput {
-    return [TrieAction.Insert, codec.key, Encoder.encodeObject(codec.Codec, val, spec)];
+  function doSerialize<T>(val: T, codec: StateCodec<T>): StateEntryUpdate {
+    return [StateEntryUpdateAction.Insert, codec.key, Encoder.encodeObject(codec.Codec, val, spec)];
   }
 
   if (update.authPools !== undefined) {
