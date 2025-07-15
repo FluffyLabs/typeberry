@@ -1,0 +1,45 @@
+name: davxy w3f test vectors
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  TEST_VECTORS_REF: 3e46bb56c75b16bcce8347e19b042f50e8c7d207
+
+jobs:
+  run:
+    runs-on: self-hosted
+
+    strategy:
+      matrix:
+        node-version: [22.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout JAM test vectors
+        uses: actions/checkout@v4
+        with:
+          repository: fluffylabs/test-vectors
+          path: "./test-vectors"
+          ref: ${{ env.TEST_VECTORS_REF }}
+          submodules: true
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm start -w @typeberry/test-runner w3f test-vectors/w3f-davxy/**/*.json
+      - name: Display results
+        if: always()
+        run: cat ./dist/jamtestvectors-davxy.txt
+      - name: Upload new transaction log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          path: |
+            ./dist/jamtestvectors-davxy.txt
+          name: jamtestvectors-davxy-results

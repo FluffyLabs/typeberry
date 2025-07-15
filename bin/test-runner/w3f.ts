@@ -94,7 +94,7 @@ const runners = [
   runner("traces", StateTransition.fromJson, runStateTransition),
 ];
 
-main(runners, process.argv.slice(2), "davxy")
+main(runners, process.argv.slice(2), "test-vectors/w3f-fluffy", { ignored: ["genesis.json", "w3f-davxy"] })
   .then((r) => logger.log(r))
   .catch((e) => {
     logger.error(`${e}`);
