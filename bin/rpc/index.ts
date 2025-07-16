@@ -1,12 +1,14 @@
 import { pathToFileURL } from "node:url";
-import type { NodeConfiguration } from "@typeberry/config-node";
 import { getChainSpec, loadConfig, openDatabase } from "@typeberry/jam/main.js";
 import minimist from "minimist";
 import { DEFAULTS } from "../jam-cli/args.js";
 import { methods } from "./src/method-loader.js";
 import { RpcServer } from "./src/server.js";
 
-export function main(args: string[], nodeConfig?: NodeConfiguration) {
+// TODO: [MaSo] Could be starting like `bin/jam`
+// from giving a config file to `main` function
+// and separating cli from main funcionality
+export function main(args: string[]) {
   const argv = minimist(args, {
     string: ["port", "nodeName", "config"],
     default: {
@@ -17,7 +19,7 @@ export function main(args: string[], nodeConfig?: NodeConfiguration) {
   });
 
   const port = Number.parseInt(argv.port, 10);
-  const config = nodeConfig ?? loadConfig(argv.config);
+  const config = loadConfig(argv.config);
   const spec = getChainSpec(config.flavor);
   const { rootDb } = openDatabase(argv.nodeName, config.chainSpec.genesisHeader, `../../${config.databaseBasePath}`, {
     readOnly: true,
