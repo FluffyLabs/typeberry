@@ -2,6 +2,7 @@
  * Utilities for tests.
  */
 import assert from "node:assert";
+import { inspect } from "./debug.js";
 import type { Result } from "./result.js";
 
 /** Unique symbol that can be added to a class to have it be compared by strings instead of defaults. */
@@ -55,8 +56,8 @@ export function deepEqual<T>(
           ].join("\n"),
         );
       }
-      const actualDisp = actual === null || actual === undefined ? actual : `${actual}`;
-      const expectedDisp = expected === null || expected === undefined ? expected : `${expected}`;
+      const actualDisp = actual === null || actual === undefined ? actual : `${inspect(actual)}`;
+      const expectedDisp = expected === null || expected === undefined ? expected : `${inspect(expected)}`;
 
       assert.strictEqual(actualDisp, expectedDisp, message);
     }, ctx);

@@ -1,10 +1,11 @@
 import { type CodeHash, type ServiceGas, type ServiceId, tryAsServiceGas } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
-import { BytesBlob } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HashDictionary } from "@typeberry/collections";
+import { HASH_SIZE, blake2b } from "@typeberry/hash";
 import { json } from "@typeberry/json-parser";
-import { type U32, type U64, tryAsU64 } from "@typeberry/numbers";
+import { type U32, type U64, tryAsU64, u32AsLeBytes } from "@typeberry/numbers";
 import {
   InMemoryService,
   LookupHistoryItem,
@@ -12,7 +13,9 @@ import {
   PreimageItem,
   ServiceAccountInfo,
   StorageItem,
+  type StorageKey,
 } from "@typeberry/state";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 
 class JsonServiceInfo {
   static fromJson = json.object<JsonServiceInfo, ServiceAccountInfo>(
@@ -57,12 +60,27 @@ class JsonPreimageItem {
   blob!: BytesBlob;
 }
 
-const stateItemFromJson = json.object<StorageItem>(
-  {
-    key: fromJson.bytes32(),
+class JsonStorageItem {
+  static fromJson = {
+    key: json.fromString(BytesBlob.parseBlob),
     value: json.fromString(BytesBlob.parseBlob),
+  };
+
+  key!: BytesBlob;
+  value!: BytesBlob;
+}
+
+class Gp064JsonStorageItem {
+  hash!: BytesBlob;
+  blob!: BytesBlob;
+}
+
+const gp064stateItemFromJson = json.object<Gp064JsonStorageItem, JsonStorageItem>(
+  {
+    hash: fromJson.bytes32(),
+    blob: json.fromString(BytesBlob.parseBlob),
   },
-  StorageItem.create,
+  ({ hash, blob }) => ({ key: hash, value: blob }),
 );
 
 const lookupMetaFromJson = json.object<JsonLookupMeta, LookupHistoryItem>(
@@ -91,7 +109,11 @@ export class JsonService {
       data: {
         service: JsonServiceInfo.fromJson,
         preimages: json.optional(json.array(JsonPreimageItem.fromJson)),
-        storage: json.optional(json.array(stateItemFromJson)),
+        storage: json.optional(
+          json.array(
+            Compatibility.isGreaterOrEqual(GpVersion.V0_6_4) ? JsonStorageItem.fromJson : gp064stateItemFromJson,
+          ),
+        ),
         lookup_meta: json.optional(json.array(lookupMetaFromJson)),
       },
     },
@@ -103,7 +125,16 @@ export class JsonService {
         lookupHistory.set(item.hash, data);
       }
       const preimages = HashDictionary.fromEntries((data.preimages ?? []).map((x) => [x.hash, x]));
-      const storage = HashDictionary.fromEntries((data.storage ?? []).map((x) => [x.key, x]));
+      const storage = HashDictionary.fromEntries(
+        (data.storage ?? []).map(({ key, value }) => {
+          const keyWithServiceId = BytesBlob.blobFromParts(u32AsLeBytes(id), key.raw);
+          const keyHash = Compatibility.isGreaterOrEqual(GpVersion.V0_6_4)
+            ? blake2b.hashBytes(keyWithServiceId).asOpaque<StorageKey>()
+            : Bytes.parseBytes(key.toString(), HASH_SIZE).asOpaque<StorageKey>();
+          return [keyHash, StorageItem.create({ key: keyHash, value })];
+        }),
+      );
+
       return new InMemoryService(id, {
         info: data.service,
         preimages,
@@ -117,7 +148,7 @@ export class JsonService {
   data!: {
     service: ServiceAccountInfo;
     preimages?: JsonPreimageItem[];
-    storage?: StorageItem[];
+    storage?: JsonStorageItem[];
     lookup_meta?: LookupHistoryItem[];
   };
 }

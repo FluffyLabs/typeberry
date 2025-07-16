@@ -86,7 +86,7 @@ export class WorkReport extends WithDebug {
   static Codec = codec.Class(WorkReport, {
     workPackageSpec: WorkPackageSpec.Codec,
     context: RefineContext.Codec,
-    coreIndex: Compatibility.isGreaterThan(GpVersion.V0_6_4)
+    coreIndex: Compatibility.isGreaterOrEqual(GpVersion.V0_6_4)
       ? codec.varU32.convert(
           (o) => tryAsU32(o),
           (i) => {

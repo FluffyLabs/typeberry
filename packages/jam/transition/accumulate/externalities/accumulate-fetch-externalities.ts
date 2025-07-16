@@ -32,10 +32,11 @@ import {
   ELECTIVE_ITEM_BALANCE,
   MAX_RECENT_HISTORY,
 } from "@typeberry/state";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { REPORT_TIMEOUT_GRACE_PERIOD } from "../../assurances.js";
 import { L } from "../../reports/verify-contextual.js";
 import { ACCUMULATE_TOTAL_GAS, GAS_TO_INVOKE_WORK_REPORT } from "../accumulate.js";
-import { LegacyOperand } from "../operand.js";
+import { Operand, Operand_0_6_4 } from "../operand.js";
 
 const CONSTANTS_CODEC = codec.object({
   B_I: codec.u64,
@@ -51,12 +52,14 @@ const CONSTANTS_CODEC = codec.object({
   H: codec.u16,
   I: codec.u16,
   J: codec.u16,
+  // K: codec.u16, // GP0.7.0
   L: codec.u32,
+  // N: codec.u16, // GP0.7.0
   O: codec.u16,
   P: codec.u16,
   Q: codec.u16,
   R: codec.u16,
-  S: codec.u16,
+  S: codec.u16, // not in gp0.7.0
   T: codec.u16,
   U: codec.u16,
   V: codec.u16,
@@ -64,7 +67,7 @@ const CONSTANTS_CODEC = codec.object({
   W_B: codec.u32,
   W_C: codec.u32,
   W_E: codec.u32,
-  W_G: codec.u32,
+  W_G: codec.u32, // not in gp0.7.0
   W_M: codec.u32,
   W_P: codec.u32,
   W_R: codec.u32,
@@ -95,7 +98,9 @@ function getEncodedConstants(chainSpec: ChainSpec) {
     H: tryAsU16(MAX_RECENT_HISTORY),
     I: tryAsU16(MAX_NUMBER_OF_WORK_ITEMS),
     J: tryAsU16(MAX_REPORT_DEPENDENCIES),
+    // K: tryAsU16(K),
     L: tryAsU32(L),
+    // N: tryAsU16(N),
     O: tryAsU16(O),
     P: tryAsU16(chainSpec.slotDuration),
     Q: tryAsU16(Q),
@@ -127,7 +132,7 @@ function getEncodedConstants(chainSpec: ChainSpec) {
 export class AccumulateFetchExternalities implements FetchExternalities {
   constructor(
     private entropyHash: EntropyHash,
-    private operands: LegacyOperand[],
+    private operands: Operand[],
     private chainSpec: ChainSpec,
   ) {}
 
@@ -180,7 +185,9 @@ export class AccumulateFetchExternalities implements FetchExternalities {
   }
 
   allOperands(): BytesBlob {
-    return Encoder.encodeObject(codec.sequenceVarLen(LegacyOperand.Codec), this.operands, this.chainSpec);
+    return Compatibility.is(GpVersion.V0_6_4)
+      ? Encoder.encodeObject(codec.sequenceVarLen(Operand_0_6_4.Codec), this.operands, this.chainSpec)
+      : Encoder.encodeObject(codec.sequenceVarLen(Operand.Codec), this.operands, this.chainSpec);
   }
 
   oneOperand(operandIndex: U64): BytesBlob | null {
@@ -194,7 +201,9 @@ export class AccumulateFetchExternalities implements FetchExternalities {
       return null;
     }
 
-    return Encoder.encodeObject(LegacyOperand.Codec, operand, this.chainSpec);
+    return Compatibility.is(GpVersion.V0_6_4)
+      ? Encoder.encodeObject(Operand_0_6_4.Codec, operand, this.chainSpec)
+      : Encoder.encodeObject(Operand.Codec, operand, this.chainSpec);
   }
 
   allTransfers(): BytesBlob | null {

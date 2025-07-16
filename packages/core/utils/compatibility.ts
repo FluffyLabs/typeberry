@@ -33,7 +33,7 @@ export class Compatibility {
     return version.includes(CURRENT_VERSION);
   }
 
-  static isGreaterThan(version: GpVersion) {
+  static isGreaterOrEqual(version: GpVersion) {
     const index = ALL_VERSIONS_IN_ORDER.indexOf(version);
     if (index === -1) {
       throw new Error(`Invalid version: ${version}. Not found among all versions.`);

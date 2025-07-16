@@ -12,25 +12,25 @@ import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
  */
 export class Operand {
   static Codec = codec.Class(Operand, {
-    gas: codec.u64.asOpaque<ServiceGas>(),
-    payloadHash: codec.bytes(HASH_SIZE),
-    result: WorkExecResult.Codec,
-    authorizationOutput: codec.blob,
-    exportsRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
     hash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
+    exportsRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
     authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
+    authorizationOutput: codec.blob,
+    payloadHash: codec.bytes(HASH_SIZE),
+    gas: codec.u64.asOpaque<ServiceGas>(),
+    result: WorkExecResult.Codec,
   });
 
   /**
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/181801189d01?v=0.6.7
    */
-  gas: ServiceGas; // g
-  payloadHash: OpaqueHash; // y
-  result: WorkExecResult; // d
-  authorizationOutput: BytesBlob; // o
-  exportsRoot: ExportsRootHash; // e
   hash: WorkPackageHash; // h
+  exportsRoot: ExportsRootHash; // e
   authorizerHash: AuthorizerHash; // a
+  authorizationOutput: BytesBlob; // o
+  payloadHash: OpaqueHash; // y
+  gas: ServiceGas; // g
+  result: WorkExecResult; // d
 
   static create({
     authorizationOutput,
@@ -67,8 +67,8 @@ export class Operand {
 }
 
 // LegacyOperand is a legacy version of Operand. It is temporary used for compatibility with older test vectors.
-export class LegacyOperand {
-  static Codec = codec.Class(LegacyOperand, {
+export class Operand_0_6_4 {
+  static Codec = codec.Class(Operand_0_6_4, {
     hash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
     exportsRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
     authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
@@ -94,8 +94,8 @@ export class LegacyOperand {
     hash,
     payloadHash,
     result,
-  }: CodecRecord<LegacyOperand>) {
-    return new LegacyOperand({
+  }: CodecRecord<Operand_0_6_4>) {
+    return new Operand_0_6_4({
       payloadHash,
       result: result,
       authorizationOutput,
@@ -105,7 +105,7 @@ export class LegacyOperand {
     });
   }
 
-  private constructor(operand: CodecRecord<LegacyOperand>) {
+  private constructor(operand: CodecRecord<Operand_0_6_4>) {
     this.payloadHash = operand.payloadHash;
     this.result = operand.result;
     this.authorizationOutput = operand.authorizationOutput;
@@ -114,7 +114,7 @@ export class LegacyOperand {
     this.authorizerHash = operand.authorizerHash;
   }
 
-  static new(operand: Pick<LegacyOperand, keyof LegacyOperand>) {
-    return new LegacyOperand(operand);
+  static new(operand: Pick<Operand_0_6_4, keyof Operand_0_6_4>) {
+    return new Operand_0_6_4(operand);
   }
 }
