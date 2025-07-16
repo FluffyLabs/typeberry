@@ -3,6 +3,18 @@ import { type PublicKeySeed, SEED_SIZE } from "@typeberry/crypto";
 import minimist from "minimist";
 import packageJson from "./package.json" with { type: "json" };
 
+enum TciFlag {
+  bandersnatch = "bandersnatch",
+  bls = "bls",
+  datadir = "datadir",
+  ed25519 = "ed25519",
+  genesis = "genesis",
+  metadata = "metadata",
+  port = "port",
+  timestamp = "ts",
+  validatorindex = "validatorindex",
+}
+
 export const HELP = `
 JAM compatible CLI for typeberry ${packageJson.version} by ${packageJson.author}
 
@@ -12,30 +24,30 @@ Usage:
   typeberry [options]
 
 Options:
-  --bandersnatch hex        Bandersnatch Seed (development only)
-  --bls hex                 BLS Seed (development only)
-  --datadir path            Directory for blockchain, keystore, and other data
-  --ed25519 hex             Ed25519 Seed (development only)
-  --genesis path            Genesis state JSON file
-  --metadata string         Node metadata (default: "Alice")
-  --port int                Network listening port (default: 9900)
-  --ts int                  JAM genesis TimeSlot (overrides genesis config)
-  --validatorindex int      Validator Index (development only)
+  --${TciFlag.bandersnatch} hex        Bandersnatch Seed (development only)
+  --${TciFlag.bls} hex                 BLS Seed (development only)
+  --${TciFlag.datadir} path            Directory for blockchain, keystore, and other data
+  --${TciFlag.ed25519} hex             Ed25519 Seed (development only)
+  --${TciFlag.genesis} path            Genesis state JSON file
+  --${TciFlag.metadata} string         Node metadata (default: "Alice")
+  --${TciFlag.port} int                Network listening port (default: 9900)
+  --${TciFlag.timestamp} int                  JAM genesis TimeSlot (overrides genesis config)
+  --${TciFlag.validatorindex} int      Validator Index (development only)
 
 Note:
   'hex' is 32 byte hash (64 character string), can be either '0x' prefixed or not.
 `;
 
 export type CommonArguments = {
-  bandersnatch?: PublicKeySeed;
-  bls?: PublicKeySeed;
-  datadir?: string;
-  ed25519?: PublicKeySeed;
-  genesis?: string;
-  metadata?: string;
-  port?: number;
-  ts?: number; // epoch0 unix timestamp
-  validatorindex?: number;
+  [TciFlag.bandersnatch]?: PublicKeySeed;
+  [TciFlag.bls]?: PublicKeySeed;
+  [TciFlag.datadir]?: string;
+  [TciFlag.ed25519]?: PublicKeySeed;
+  [TciFlag.genesis]?: string;
+  [TciFlag.metadata]?: string;
+  [TciFlag.port]?: number;
+  [TciFlag.timestamp]?: number; // epoch0 unix timestamp
+  [TciFlag.validatorindex]?: number;
 };
 
 const toBytes = (v: string): PublicKeySeed => {
@@ -55,19 +67,29 @@ const toNumber = (v: string): number => {
 
 export function parseArgs(cliInput: string[]): CommonArguments {
   const args = minimist(cliInput, {
-    string: ["bandersnatch", "bls", "datadir", "ed25519", "genesis", "medatada", "port", "ts", "validatorindex"],
+    string: [
+      TciFlag.bandersnatch,
+      TciFlag.bls,
+      TciFlag.datadir,
+      TciFlag.ed25519,
+      TciFlag.genesis,
+      TciFlag.metadata,
+      TciFlag.port,
+      TciFlag.timestamp,
+      TciFlag.validatorindex,
+    ],
   });
 
   const result: CommonArguments = {
-    bandersnatch: parseValue(args, "bandersnatch", toBytes).bandersnatch,
-    bls: parseValue(args, "bls", toBytes).bls,
-    datadir: parseValue(args, "datadir", toStr).datadir,
-    ed25519: parseValue(args, "ed25519", toBytes).ed25519,
-    genesis: parseValue(args, "genesis", toStr).genesis,
-    metadata: parseValue(args, "metadata", toStr, "Alice").metadata,
-    port: parseValue(args, "port", toNumber).port,
-    ts: parseValue(args, "ts", toNumber).ts,
-    validatorindex: parseValue(args, "validatorindex", toNumber).validatorindex,
+    bandersnatch: parseValue(args, TciFlag.bandersnatch, toBytes).bandersnatch,
+    bls: parseValue(args, TciFlag.bls, toBytes).bls,
+    datadir: parseValue(args, TciFlag.datadir, toStr).datadir,
+    ed25519: parseValue(args, TciFlag.ed25519, toBytes).ed25519,
+    genesis: parseValue(args, TciFlag.genesis, toStr).genesis,
+    metadata: parseValue(args, TciFlag.metadata, toStr, "Alice").metadata,
+    port: parseValue(args, TciFlag.port, toNumber).port,
+    ts: parseValue(args, TciFlag.timestamp, toNumber).ts,
+    validatorindex: parseValue(args, TciFlag.validatorindex, toNumber).validatorindex,
   };
 
   assertNoMoreArgs(args);

@@ -3,7 +3,7 @@ import { tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import * as jam from "@typeberry/jam";
 import { Level, Logger } from "@typeberry/logger";
 import { DEFAULTS, DEV_CONFIG_PATH } from "../jam-cli/args.js";
-import { type CommonArguments, parseArgs } from "./args.js";
+import { type CommonArguments, HELP, parseArgs } from "./args.js";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 const withRelPath = (v: string) => v;
@@ -15,8 +15,16 @@ const withRelPath = (v: string) => v;
  * https://docs.jamcha.in/basics/cli-args
  */
 export async function main(args: string[]) {
-  const argv = parseArgs(args);
-  const config = createJamConfig(argv);
+  let argv: CommonArguments;
+  let config: jam.JamConfig;
+  try {
+    argv = parseArgs(args);
+    config = createJamConfig(argv);
+  } catch (e) {
+    console.error(`\n${e}\n`);
+    console.info(HELP);
+    process.exit(1);
+  }
   jam.main(config, withRelPath);
 }
 
