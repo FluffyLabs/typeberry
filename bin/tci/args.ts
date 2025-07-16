@@ -136,6 +136,6 @@ function assertNoMoreArgs(args: minimist.ParsedArgs): void {
     throw new Error(`Unexpected parameters: ${args["--"]?.join(", ")}`);
   }
   if (keysLeft.length > 0) {
-    throw new Error(`Uncrecognized flags: ${keysLeft.join(", ")}`);
+    throw new Error(`Unrecognized flags: ${keysLeft.join(", ")}`);
   }
 }
