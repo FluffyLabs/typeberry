@@ -1,10 +1,12 @@
 import { Bytes } from "@typeberry/bytes";
-import { HASH_SIZE } from "@typeberry/hash";
+import { type PublicKeySeed, SEED_SIZE } from "@typeberry/crypto";
 import minimist from "minimist";
 import packageJson from "./package.json" with { type: "json" };
 
 export const HELP = `
 JAM compatible CLI for typeberry ${packageJson.version} by ${packageJson.author}
+
+https://docs.jamcha.in/basics/cli-args
 
 Usage:
   typeberry [options]
@@ -17,15 +19,18 @@ Options:
   --genesis path            Genesis state JSON file
   --metadata string         Node metadata (default: "Alice")
   --port int                Network listening port (default: 9900)
-  --ts int                  Epoch0 Unix timestamp (overrides genesis config)
+  --ts int                  JAM genesis TimeSlot (overrides genesis config)
   --validatorindex int      Validator Index (development only)
+
+Note:
+  'hex' is 32 byte hash (64 character string), can be either '0x' prefixed or not.
 `;
 
 export type CommonArguments = {
-  bandersnatch?: Bytes<HASH_SIZE>;
-  bls?: Bytes<HASH_SIZE>;
+  bandersnatch?: PublicKeySeed;
+  bls?: PublicKeySeed;
   datadir?: string;
-  ed25519?: Bytes<HASH_SIZE>;
+  ed25519?: PublicKeySeed;
   genesis?: string;
   metadata?: string;
   port?: number;
@@ -33,11 +38,11 @@ export type CommonArguments = {
   validatorindex?: number;
 };
 
-const toBytes = (v: string) => {
+const toBytes = (v: string): PublicKeySeed => {
   if (v.startsWith("0x")) {
-    return Bytes.parseBytes(v, HASH_SIZE);
+    return Bytes.parseBytes(v, SEED_SIZE).asOpaque();
   }
-  return Bytes.parseBytesNoPrefix(v, HASH_SIZE);
+  return Bytes.parseBytesNoPrefix(v, SEED_SIZE).asOpaque();
 };
 const toStr = (v: string) => v;
 const toNumber = (v: string): number => {
