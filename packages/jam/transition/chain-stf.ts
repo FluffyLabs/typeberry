@@ -246,7 +246,12 @@ export class OnChain {
       servicesUpdates: newServicesUpdates,
       transferStatistics,
       ...deferredTransfersRest
-    } = await this.deferredTransfers.transition({ pendingTransfers, ...servicesUpdate, timeslot: timeSlot });
+    } = await this.deferredTransfers.transition({
+      pendingTransfers,
+      ...servicesUpdate,
+      preimages: accumulatePreimages,
+      timeslot: timeSlot,
+    });
     assertEmpty(deferredTransfersRest);
     servicesUpdate.servicesUpdates = newServicesUpdates;
     // recent history
@@ -350,10 +355,7 @@ export function mergeAvailabilityAssignments(
     }
     // override with new report, but only if it's actually changed (otherwise it will
     // restore reports removed by disputes or assurances).
-    if (
-      reportsAvailAssignment[core] !== null &&
-      !(initialAvailAssigment[core]?.workReport.hash.isEqualTo(reportsAvailAssignment[core]?.workReport.hash) ?? false)
-    ) {
+    if (reportsAvailAssignment[core] !== null && initialAvailAssigment[core] !== reportsAvailAssignment[core]) {
       newAssignments[core] = reportsAvailAssignment[core];
     }
   }

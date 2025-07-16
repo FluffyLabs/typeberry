@@ -1,4 +1,5 @@
 import { type ServiceId, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
+import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Encoder, codec } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
@@ -11,6 +12,8 @@ import {
   type Service,
   ServiceAccountInfo,
   type State,
+  type UpdatePreimage,
+  UpdatePreimageKind,
   UpdateService,
   UpdateServiceKind,
 } from "@typeberry/state";
@@ -24,6 +27,7 @@ type DeferredTransfersInput = {
   timeslot: TimeSlot;
   servicesUpdates: UpdateService[];
   servicesRemoved: ServiceId[];
+  preimages: UpdatePreimage[];
 };
 
 export type DeferredTransfersState = Pick<State, "timeslot" | "getService">;
@@ -44,6 +48,40 @@ export class DeferredTransfers {
     public readonly chainSpec: ChainSpec,
     private readonly state: Pick<State, "getService" | "timeslot">,
   ) {}
+
+  private getPotentiallyUpdatedServiceInfo(
+    serviceId: ServiceId,
+    serviceUpdates: UpdateService[],
+    servicesRemoved: ServiceId[],
+  ) {
+    if (servicesRemoved.includes(serviceId)) {
+      return null;
+    }
+
+    const maybeUpdatedService = serviceUpdates.find((x) => x.serviceId === serviceId);
+
+    if (maybeUpdatedService !== undefined) {
+      return maybeUpdatedService.action.account;
+    }
+
+    return this.state.getService(serviceId)?.getInfo() ?? null;
+  }
+
+  private getPotentiallyUpdatedPreimage(preimages: UpdatePreimage[], serviceId: ServiceId, preimageHash: PreimageHash) {
+    const preimageUpdate = preimages.findLast((x) => x.serviceId === serviceId && x.hash.isEqualTo(preimageHash));
+    if (preimageUpdate === undefined) {
+      return this.state.getService(serviceId)?.getPreimage(preimageHash) ?? null;
+    }
+
+    switch (preimageUpdate.action.kind) {
+      case UpdatePreimageKind.Provide:
+        return preimageUpdate.action.preimage.blob;
+      case UpdatePreimageKind.Remove:
+        return null;
+      case UpdatePreimageKind.UpdateOrAdd:
+        return this.state.getService(serviceId)?.getPreimage(preimageUpdate.action.item.hash) ?? null;
+    }
+  }
 
   private getService(
     serviceId: ServiceId,
@@ -89,6 +127,7 @@ export class DeferredTransfers {
     timeslot,
     servicesUpdates: servicesUpdatesInput,
     servicesRemoved,
+    preimages,
   }: DeferredTransfersInput): Promise<DeferredTransfersResult> {
     const transferStatistics = new Map<ServiceId, CountAndGasUsed>();
     const servicesUpdates = [...servicesUpdatesInput];
@@ -96,14 +135,13 @@ export class DeferredTransfers {
 
     for (const serviceId of services) {
       const transfers = pendingTransfers.filter((pendingTransfer) => pendingTransfer.destination === serviceId);
-      const service = this.getService(serviceId, servicesUpdates, servicesRemoved);
 
-      if (service === null) {
+      const info = this.getPotentiallyUpdatedServiceInfo(serviceId, servicesUpdates, servicesRemoved);
+      if (info === null) {
         continue;
       }
-      const info = service.getInfo();
       const codeHash = info.codeHash;
-      const code = service.getPreimage(codeHash.asOpaque());
+      const code = this.getPotentiallyUpdatedPreimage(preimages, serviceId, codeHash.asOpaque());
 
       const existingUpdateIndex = servicesUpdates.findIndex((x) => x.serviceId === serviceId);
       const amount = transfers.reduce((acc, item) => acc + item.amount, 0n);

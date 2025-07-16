@@ -2,6 +2,7 @@ import type { ServiceId, TimeSlot } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import type { U32 } from "@typeberry/numbers";
+import { assertNever } from "@typeberry/utils";
 import type { LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, StorageKey } from "./service.js";
 
 export enum UpdatePreimageKind {
@@ -40,6 +41,18 @@ export class UpdatePreimage {
           item: LookupHistoryItem;
         },
   ) {}
+
+  get hash(): PreimageHash {
+    switch (this.action.kind) {
+      case UpdatePreimageKind.Provide:
+        return this.action.preimage.hash;
+      case UpdatePreimageKind.Remove:
+        return this.action.hash;
+      case UpdatePreimageKind.UpdateOrAdd:
+        return this.action.item.hash;
+    }
+    throw assertNever(this.action);
+  }
 
   static provide({
     serviceId,
