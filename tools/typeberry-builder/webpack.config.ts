@@ -60,6 +60,10 @@ const config: webpack.Configuration = {
         test: /bootstrap\.mjs$/,
         type: "asset/inline",
       },
+      {
+        test: /quiche\.js$/,
+        type: "asset/inline",
+      },
     ],
   },
   plugins: [
