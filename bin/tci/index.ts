@@ -6,7 +6,7 @@ import { DEFAULTS, DEV_CONFIG_PATH } from "../jam-cli/args.js";
 import { type CommonArguments, HELP, parseArgs } from "./args.js";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
-const withRelPath = (v: string) => v;
+const withRelPath = (v: string) => `../../${v}`;
 
 /**
  * JAM Node entry w/ common command lines arguments
