@@ -125,8 +125,8 @@ const ARGS_CODEC_0_6_5 = codec.object({
 });
 
 const ARGS_CODEC = codec.object({
-  slot: codec.u32.asOpaque<TimeSlot>(),
-  serviceId: codec.u32.asOpaque<ServiceId>(),
+  slot: codec.varU32.asOpaque<TimeSlot>(),
+  serviceId: codec.varU32.asOpaque<ServiceId>(),
   operands: codec.varU32,
 });
 
@@ -197,11 +197,14 @@ export class Accumulate {
 
     const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec);
 
-    const args = Compatibility.is(GpVersion.V0_6_4)
-      ? Encoder.encodeObject(ARGS_CODEC_0_6_4, { slot, serviceId, operands }, this.chainSpec)
-      : Compatibility.is(GpVersion.V0_6_5)
-        ? Encoder.encodeObject(ARGS_CODEC_0_6_5, { slot, serviceId, operands }, this.chainSpec)
-        : Encoder.encodeObject(ARGS_CODEC, { slot, serviceId, operands: tryAsU32(operands.length) });
+    let args = BytesBlob.empty();
+    if (Compatibility.is(GpVersion.V0_6_4)) {
+      args = Encoder.encodeObject(ARGS_CODEC_0_6_4, { slot, serviceId, operands }, this.chainSpec);
+    } else if (Compatibility.is(GpVersion.V0_6_5)) {
+      args = Encoder.encodeObject(ARGS_CODEC_0_6_5, { slot, serviceId, operands }, this.chainSpec);
+    } else {
+      args = Encoder.encodeObject(ARGS_CODEC, { slot, serviceId, operands: tryAsU32(operands.length) });
+    }
 
     const result = await executor.run(args, tryAsGas(gas));
 
@@ -284,8 +287,9 @@ export class Accumulate {
     slot: TimeSlot,
     entropy: EntropyHash,
   ) {
-    logger.trace(`Accumulating service ${serviceId}, work reports: ${reports.length} at slot: ${slot}.`);
     const { operands, gasCost } = this.getOperandsAndGasCost(serviceId, reports);
+
+    logger.trace(`Accumulating service ${serviceId}, items: ${operands.length} at slot: ${slot}.`);
 
     const result = await this.pvmAccumulateInvocation(slot, serviceId, operands, gasCost, entropy);
 

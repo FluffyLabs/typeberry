@@ -3,7 +3,7 @@ export enum GpVersion {
   V0_6_5 = "0.6.5",
   V0_6_6 = "0.6.6",
   V0_6_7 = "0.6.7",
-  V7_0_0 = "7.0.0",
+  V0_7_0 = "0.7.0",
 }
 
 const ALL_VERSIONS_IN_ORDER = [
@@ -11,7 +11,7 @@ const ALL_VERSIONS_IN_ORDER = [
   GpVersion.V0_6_5,
   GpVersion.V0_6_6,
   GpVersion.V0_6_7,
-  GpVersion.V7_0_0,
+  GpVersion.V0_7_0,
 ];
 
 export const DEFAULT_VERSION = GpVersion.V0_6_5;
@@ -38,7 +38,6 @@ export class Compatibility {
     if (index === -1) {
       throw new Error(`Invalid version: ${version}. Not found among all versions.`);
     }
-
-    return Compatibility.is(...ALL_VERSIONS_IN_ORDER.slice(index));
+    return Compatibility.is(...ALL_VERSIONS_IN_ORDER.slice(0, index + 1));
   }
 }

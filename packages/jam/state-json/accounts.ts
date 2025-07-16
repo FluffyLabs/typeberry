@@ -110,9 +110,7 @@ export class JsonService {
         service: JsonServiceInfo.fromJson,
         preimages: json.optional(json.array(JsonPreimageItem.fromJson)),
         storage: json.optional(
-          json.array(
-            Compatibility.isGreaterOrEqual(GpVersion.V0_6_4) ? JsonStorageItem.fromJson : gp064stateItemFromJson,
-          ),
+          json.array(Compatibility.is(GpVersion.V0_6_4) ? gp064stateItemFromJson : JsonStorageItem.fromJson),
         ),
         lookup_meta: json.optional(json.array(lookupMetaFromJson)),
       },
@@ -128,9 +126,9 @@ export class JsonService {
       const storage = HashDictionary.fromEntries(
         (data.storage ?? []).map(({ key, value }) => {
           const keyWithServiceId = BytesBlob.blobFromParts(u32AsLeBytes(id), key.raw);
-          const keyHash = Compatibility.isGreaterOrEqual(GpVersion.V0_6_4)
-            ? blake2b.hashBytes(keyWithServiceId).asOpaque<StorageKey>()
-            : Bytes.parseBytes(key.toString(), HASH_SIZE).asOpaque<StorageKey>();
+          const keyHash = Compatibility.is(GpVersion.V0_6_4)
+            ? Bytes.parseBytes(key.toString(), HASH_SIZE).asOpaque<StorageKey>()
+            : blake2b.hashBytes(keyWithServiceId).asOpaque<StorageKey>();
           return [keyHash, StorageItem.create({ key: keyHash, value })];
         }),
       );

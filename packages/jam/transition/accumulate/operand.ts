@@ -4,21 +4,22 @@ import { WorkExecResult } from "@typeberry/block/work-result.js";
 import { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, codec } from "@typeberry/codec";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
+import { WithDebug } from "@typeberry/utils";
 
 /**
  * The set of wrangled operand tuples, used as an operand to the PVM Accumulation function.
  *
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/173d03173d03?v=0.6.7
  */
-export class Operand {
+export class Operand extends WithDebug {
   static Codec = codec.Class(Operand, {
     hash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),
     exportsRoot: codec.bytes(HASH_SIZE).asOpaque<ExportsRootHash>(),
     authorizerHash: codec.bytes(HASH_SIZE).asOpaque<AuthorizerHash>(),
-    authorizationOutput: codec.blob,
     payloadHash: codec.bytes(HASH_SIZE),
-    gas: codec.u64.asOpaque<ServiceGas>(),
+    gas: codec.varU64.asOpaque<ServiceGas>(),
     result: WorkExecResult.Codec,
+    authorizationOutput: codec.blob,
   });
 
   /**
@@ -27,10 +28,10 @@ export class Operand {
   hash: WorkPackageHash; // h
   exportsRoot: ExportsRootHash; // e
   authorizerHash: AuthorizerHash; // a
-  authorizationOutput: BytesBlob; // o
   payloadHash: OpaqueHash; // y
   gas: ServiceGas; // g
   result: WorkExecResult; // d
+  authorizationOutput: BytesBlob; // o
 
   static create({
     authorizationOutput,
@@ -52,6 +53,7 @@ export class Operand {
     });
   }
   private constructor(operand: CodecRecord<Operand>) {
+    super();
     this.gas = operand.gas;
     this.payloadHash = operand.payloadHash;
     this.result = operand.result;
@@ -66,7 +68,6 @@ export class Operand {
   }
 }
 
-// LegacyOperand is a legacy version of Operand. It is temporary used for compatibility with older test vectors.
 export class Operand_0_6_4 {
   static Codec = codec.Class(Operand_0_6_4, {
     hash: codec.bytes(HASH_SIZE).asOpaque<WorkPackageHash>(),

@@ -10,7 +10,7 @@ import testWorkReportData from "./test-work-report.js";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 
 export function testBlockHex() {
-  return Compatibility.isGreaterOrEqual(GpVersion.V0_6_4) ? testBlockData : testBlockData_0_6_4;
+  return Compatibility.isGreaterOrEqual(GpVersion.V0_6_5) ? testBlockData : testBlockData_0_6_4;
 }
 export function testBlock() {
   return Decoder.decodeObject(Block.Codec, BytesBlob.parseBlob(testBlockHex()), tinyChainSpec);
@@ -21,5 +21,5 @@ export function testBlockView() {
 }
 
 export function testWorkReportHex() {
-  return Compatibility.isGreaterOrEqual(GpVersion.V0_6_4) ? testWorkReportData : testWorkReportData_0_6_4;
+  return Compatibility.isGreaterOrEqual(GpVersion.V0_6_5) ? testWorkReportData : testWorkReportData_0_6_4;
 }

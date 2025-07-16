@@ -164,7 +164,7 @@ describe("Reports.verifyCredentials", () => {
     const res = reports.verifyCredentials(input, hashes);
 
     const message = BytesBlob.parseBlob(
-      Compatibility.isGreaterOrEqual(GpVersion.V0_6_4)
+      Compatibility.isGreaterOrEqual(GpVersion.V0_6_5)
         ? "0x6a616d5f67756172616e746565d8b3242cac2d1db846434afa3a9eead57339a1244f3203de5e810bfe7ee84de5"
         : "0x6a616d5f67756172616e746565d8c507a9bc5f87033698b255f4fd8b44eda9407def5cf926b5cd36c8f3f4bd52",
     );

@@ -100,7 +100,7 @@ main(runners, process.argv.slice(2), "test-vectors/w3f-fluffy", {
     "queues_are_shifted-1.json",
     "ready_queue_editing-2.json",
     "ready_queue_editing-3.json",
-    "same_code_different_services-1.json",
+    // "same_code_different_services-1.json",
   ],
 })
   .then((r) => logger.log(r))
