@@ -6,7 +6,7 @@ import { Block, type BlockView, Extrinsic, Header, type HeaderHash } from "@type
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
-import { type ChainSpec, type JamConfig, WorkerConfig, fullChainSpec, tinyChainSpec } from "@typeberry/config";
+import { type ChainSpec, WorkerConfig, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type JipChainSpec, KnownChainSpec, NodeConfiguration } from "@typeberry/config-node";
 import { TruncatedHashDictionary } from "@typeberry/database";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
@@ -23,6 +23,9 @@ import { startBlocksReader } from "./reader.js";
 
 import devConfigJson from "@typeberry/configs/typeberry-dev.json" with { type: "json" };
 import { DEV_CONFIG_PATH } from "../jam-cli/args.js";
+import type { JamConfig } from "./jam-config.js";
+
+export * from "./jam-config.js";
 
 const logger = Logger.new(import.meta.filename, "jam");
 

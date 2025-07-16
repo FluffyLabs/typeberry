@@ -1,6 +1,5 @@
 import { pathToFileURL } from "node:url";
 import { tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
-import { DEV_CONFIG, type DevConfig, JamConfig, type SeedDevConfig } from "@typeberry/config";
 import * as jam from "@typeberry/jam";
 import { Level, Logger } from "@typeberry/logger";
 import { DEFAULTS, DEV_CONFIG_PATH } from "../jam-cli/args.js";
@@ -21,16 +20,12 @@ export async function main(args: string[]) {
   jam.main(config, withRelPath);
 }
 
-export function createJamConfig(argv: CommonArguments): JamConfig {
+export function createJamConfig(argv: CommonArguments): jam.JamConfig {
   // TODO: [MaSo] Add networking config; add loading from genesis path
 
   let nodeConfig = jam.loadConfig(DEV_CONFIG_PATH);
-  let devConfig: DevConfig = {
-    genesisPath: DEV_CONFIG.genesisPath,
-    timeSlot: tryAsTimeSlot(DEV_CONFIG.timeSlot),
-    validatorIndex: tryAsValidatorIndex(DEV_CONFIG.validatorIndex),
-  };
-  let seedConfig: SeedDevConfig | undefined;
+  let devConfig = jam.DEV_CONFIG;
+  let seedConfig: jam.SeedDevConfig | undefined;
   const requiredSeedKeys = ["bandersnatch", "bls", "ed25519"] as const;
   type RequiredSeedKey = (typeof requiredSeedKeys)[number];
 
@@ -77,7 +72,7 @@ export function createJamConfig(argv: CommonArguments): JamConfig {
     };
   }
 
-  return JamConfig.new({ nodeName: DEFAULTS.name, nodeConfig, devConfig, seedConfig });
+  return jam.JamConfig.new({ nodeName: DEFAULTS.name, nodeConfig, devConfig, seedConfig });
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {

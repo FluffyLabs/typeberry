@@ -5,8 +5,8 @@ import type { HASH_SIZE } from "@typeberry/hash";
 
 export const DEV_CONFIG = {
   genesisPath: "",
-  timeSlot: 0,
-  validatorIndex: 0,
+  timeSlot: tryAsTimeSlot(0),
+  validatorIndex: tryAsValidatorIndex(0),
 };
 
 /**
@@ -32,11 +32,7 @@ export class JamConfig {
     if (devConfig !== undefined) {
       dev = devConfig;
     } else {
-      dev = {
-        genesisPath: DEV_CONFIG.genesisPath,
-        timeSlot: tryAsTimeSlot(DEV_CONFIG.timeSlot),
-        validatorIndex: tryAsValidatorIndex(DEV_CONFIG.validatorIndex),
-      };
+      dev = DEV_CONFIG;
     }
 
     let full: FullDevConfig;

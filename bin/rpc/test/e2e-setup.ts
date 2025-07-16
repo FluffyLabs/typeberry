@@ -1,5 +1,4 @@
-import { JamConfig } from "@typeberry/config";
-import { main as jam, loadConfig } from "@typeberry/jam";
+import { JamConfig, main as jam, loadConfig } from "@typeberry/jam";
 import { Level, Logger } from "@typeberry/logger";
 import { DEFAULTS } from "../../jam-cli/args.js";
 

@@ -1,7 +1,7 @@
 import { Bytes } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import minimist from "minimist";
-import packageJson from "./package.json";
+import packageJson from "./package.json" with { type: "json" };
 
 export const HELP = `
 JAM compatible CLI for typeberry ${packageJson.version} by ${packageJson.author}
