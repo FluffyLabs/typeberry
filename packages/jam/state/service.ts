@@ -29,7 +29,8 @@ export const ELECTIVE_BYTE_BALANCE = 1n;
 /**
  * Service account details.
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/106001106001?v=0.6.6
+ * 
+ 
  */
 export class ServiceAccountInfo extends WithDebug {
   static Codec = codec.Class(ServiceAccountInfo, {

@@ -42,7 +42,7 @@ const ON_TRANSFER_ARGS_CODEC = codec.object({
 export class DeferredTransfers {
   constructor(
     public readonly chainSpec: ChainSpec,
-    private readonly state: Pick<State, "getService">,
+    private readonly state: Pick<State, "getService" | "timeslot">,
   ) {}
 
   private getService(
@@ -131,11 +131,12 @@ export class DeferredTransfers {
       }
       const partialState = new PartialStateDb(
         {
-          timeslot,
           getService: (serviceId: ServiceId) => this.getService(serviceId, servicesUpdates, servicesRemoved),
         },
         serviceId,
         serviceId,
+        timeslot,
+        this.chainSpec,
       );
 
       const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState });

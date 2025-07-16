@@ -23,7 +23,6 @@ import { MAX_NUMBER_OF_WORK_ITEMS } from "@typeberry/block/work-package.js";
 import type { BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
-import { PREIMAGE_EXPUNGE_PERIOD } from "@typeberry/jam-host-calls/externalities/partial-state-db.js";
 import type { FetchExternalities } from "@typeberry/jam-host-calls/fetch.js";
 import { type U64, tryAsU16, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
@@ -86,7 +85,7 @@ function getEncodedConstants(chainSpec: ChainSpec) {
     B_L: tryAsU64(ELECTIVE_BYTE_BALANCE),
     B_S: tryAsU64(BASE_SERVICE_BALANCE),
     C: tryAsU16(chainSpec.coresCount),
-    D: tryAsU32(PREIMAGE_EXPUNGE_PERIOD),
+    D: tryAsU32(chainSpec.preimageExpungePeriod),
     E: tryAsU32(chainSpec.epochLength),
     G_A: tryAsU64(GAS_TO_INVOKE_WORK_REPORT),
     G_I: tryAsU64(G_I),

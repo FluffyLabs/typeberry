@@ -89,7 +89,7 @@ export class AccumulationStateUpdate {
             }
             return UpdatePreimage.updateOrAdd({
               serviceId: this.serviceId,
-              lookupHistory: x,
+              lookupHistory: new LookupHistoryItem(x.hash, x.length, x.slots),
             });
           }),
         ),

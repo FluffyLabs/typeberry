@@ -297,7 +297,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
         service.data.storage.set(action.storage.hash, action.storage);
       } else if (kind === UpdateStorageKind.Remove) {
         check(
-          !service.data.storage.has(action.key),
+          service.data.storage.has(action.key),
           `Attempting to remove non-existing storage item at ${serviceId}: ${action.key}`,
         );
         service.data.storage.delete(action.key);

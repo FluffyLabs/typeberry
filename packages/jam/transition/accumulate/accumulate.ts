@@ -16,7 +16,7 @@ import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { HashSet } from "@typeberry/collections";
 import { KeccakHasher } from "@typeberry/hash/keccak.js";
 import { PartialStateDb } from "@typeberry/jam-host-calls/externalities/partial-state-db.js";
-import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
+import type { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import type { AccumulationStateUpdate } from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
 import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
@@ -121,11 +121,6 @@ const ACCUMULATE_ARGS_CODEC = codec.object({
   operands: codec.sequenceVarLen(LegacyOperand.Codec),
 });
 
-const ON_TRANSFER_ARGS_CODEC = codec.object({
-  slot: codec.u32.asOpaque<TimeSlot>(),
-  serviceId: codec.u32.asOpaque<ServiceId>(),
-  transfers: codec.sequenceVarLen(PendingTransfer.Codec),
-});
 export class Accumulate {
   private statistics = new Map<ServiceId, CountAndGasUsed>();
 
@@ -185,7 +180,7 @@ export class Accumulate {
     }
 
     const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec);
-    const partialState = new PartialStateDb(this.state, serviceId, nextServiceId);
+    const partialState = new PartialStateDb(this.state, serviceId, nextServiceId, slot, this.chainSpec);
 
     const externalities = {
       partialState,

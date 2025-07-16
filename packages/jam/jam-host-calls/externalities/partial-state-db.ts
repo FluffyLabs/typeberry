@@ -4,6 +4,7 @@ import {
   type PerValidator,
   type ServiceGas,
   type ServiceId,
+  type TimeSlot,
   tryAsServiceGas,
   tryAsServiceId,
 } from "@typeberry/block";
@@ -12,8 +13,9 @@ import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { AuthorizerHash } from "@typeberry/block/work-report.js";
 import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { type FixedSizeArray, HashDictionary } from "@typeberry/collections";
+import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
-import { type U32, type U64, isU32, isU64, maxU64, sumU32, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { type U32, type U64, isU32, isU64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
   InMemoryService,
   LookupHistoryItem,
@@ -48,13 +50,6 @@ import { PendingTransfer } from "./pending-transfer.js";
 import { AccumulationStateUpdate, NewPreimage, PreimageUpdate } from "./state-update.js";
 
 /**
- * `D`: Period in timeslots after which an unreferenced preimage may be expunged.
- *
- * https://graypaper.fluffylabs.dev/#/9a08063/445800445800?v=0.6.6
- */
-export const PREIMAGE_EXPUNGE_PERIOD = 19200;
-
-/**
  * Number of storage items required for ejection of the service.
  *
  * Value 2 seems to indicate that there is only one preimage lookup,
@@ -64,7 +59,7 @@ export const PREIMAGE_EXPUNGE_PERIOD = 19200;
  * https://graypaper.fluffylabs.dev/#/9a08063/370202370502?v=0.6.6 */
 const REQUIRED_NUMBER_OF_STORAGE_ITEMS_FOR_EJECT = 2;
 
-type StateSlice = Pick<State, "getService" | "timeslot">;
+type StateSlice = Pick<State, "getService">;
 
 export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead, AccountsInfo, AccountsLookup {
   public readonly updatedState: AccumulationStateUpdate;
@@ -77,6 +72,8 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     /** `x_s` */
     private readonly currentServiceId: ServiceId,
     nextNewServiceIdCandidate: ServiceId,
+    private currentTimeslot: TimeSlot,
+    private chainSpec: ChainSpec,
   ) {
     this.updatedState = new AccumulationStateUpdate(currentServiceId);
     this.nextNewServiceId = this.getNextAvailableServiceId(nextNewServiceIdCandidate);
@@ -192,8 +189,8 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     if (status?.status !== PreimageStatusKind.Unavailable) {
       return [false, "wrong status"];
     }
-    const t = this.state.timeslot;
-    const isExpired = status.data[1] < t - PREIMAGE_EXPUNGE_PERIOD;
+    const t = this.currentTimeslot;
+    const isExpired = status.data[1] < t - this.chainSpec.preimageExpungePeriod;
     return [isExpired, isExpired ? "" : "not expired"];
   }
 
@@ -282,10 +279,30 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     // make sure we have enough balance for this update
     // https://graypaper.fluffylabs.dev/#/9a08063/381201381601?v=0.6.6
     const serviceInfo = this.getCurrentServiceInfo();
-    const items = sumU32(serviceInfo.storageUtilisationCount, tryAsU32(1));
-    const bytes = sumU64(serviceInfo.storageUtilisationBytes, length);
+    const hasPreimage = existingPreimage !== null;
+    const countDiff = hasPreimage ? 0 : 2;
+    const lenDiff = length - BigInt(existingPreimage?.length ?? 0);
+    const items = serviceInfo.storageUtilisationCount + countDiff;
+    const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff) + (hasPreimage ? 0n : 81n);
 
-    const res = this.updateServiceStorageUtilisation(items, bytes, serviceInfo);
+    check(items >= 0, `storageUtilisationCount has to be a positive number, got: ${items}`);
+    check(bytes >= 0, `storageUtilisationBytes has to be a positive number, got: ${bytes}`);
+
+    const overflowItems = !isU32(items);
+    const overflowBytes = !isU64(bytes);
+
+    const res = this.updateServiceStorageUtilisation(
+      {
+        overflow: overflowItems,
+        value: overflowItems ? tryAsU32(0) : items,
+      },
+      {
+        overflow: overflowBytes,
+        value: overflowBytes ? tryAsU64(0) : bytes,
+      },
+      serviceInfo,
+    );
+
     if (res.isError) {
       return Result.error(RequestPreimageError.InsufficientFunds, res.details);
     }
@@ -309,7 +326,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
           new LookupHistoryItem(
             hash,
             clampedLength,
-            tryAsLookupHistorySlots([...existingPreimage.slots, this.state.timeslot]),
+            tryAsLookupHistorySlots([...existingPreimage.slots, this.currentTimeslot]),
           ),
         ),
       );
@@ -356,11 +373,11 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
       return Result.ok(OK);
     }
 
-    const t = this.state.timeslot;
+    const t = this.currentTimeslot;
     // https://graypaper.fluffylabs.dev/#/9a08063/378102378102?v=0.6.6
     if (s.status === PreimageStatusKind.Unavailable) {
       const y = s.data[1];
-      if (y < t - PREIMAGE_EXPUNGE_PERIOD) {
+      if (y < t - this.chainSpec.preimageExpungePeriod) {
         this.replaceOrAddPreimageUpdate(status, PreimageUpdate.forget(status));
         return Result.ok(OK);
       }
@@ -382,7 +399,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     // https://graypaper.fluffylabs.dev/#/9a08063/38d00138d001?v=0.6.6
     if (s.status === PreimageStatusKind.Reavailable) {
       const y = s.data[1];
-      if (y < t - PREIMAGE_EXPUNGE_PERIOD) {
+      if (y < t - this.chainSpec.preimageExpungePeriod) {
         this.replaceOrAddPreimageUpdate(
           status,
           PreimageUpdate.update(
@@ -686,7 +703,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     const isRemoving = current !== null && data === null;
     const countDiff = isAddingNew ? 1 : isRemoving ? -1 : 0;
     const lenDiff = (data?.length ?? 0) - (current?.length ?? 0);
-    const keyLen = current === null ? 32n : 0n;
+    const keyLen = isAddingNew ? 32n : isRemoving ? -32n : 0n;
     const serviceInfo = this.getCurrentServiceInfo();
     const items = serviceInfo.storageUtilisationCount + countDiff;
     const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff) + keyLen;

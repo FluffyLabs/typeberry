@@ -49,7 +49,8 @@ import { NewPreimage, PreimageUpdate } from "./state-update.js";
 describe("PartialState.checkPreimageStatus", () => {
   it("should check preimage status from state", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
     const preimageHash = Bytes.parseBytes(
       "0xc16326432b5b3213dfd1609495e13c6b276cb474d679645337e5c2c09f19b53c",
       HASH_SIZE,
@@ -64,7 +65,8 @@ describe("PartialState.checkPreimageStatus", () => {
 
   it("should return preimage status when its in updated state", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     const preimageHash = Bytes.parseBytes(
       "0xc16326432b5b3213dfd1609495e13c6b276cb474d679645337e5c2c09f19b53c",
@@ -86,10 +88,11 @@ describe("PartialState.checkPreimageStatus", () => {
 describe("PartialState.requestPreimage", () => {
   it("should request a preimage and update service info", () => {
     const mockState = testState();
+    const timeslot = tryAsTimeSlot(16);
     const maybeService = mockState.services.get(tryAsServiceId(0));
     const service = ensure<Service | undefined, Service>(maybeService, maybeService !== undefined);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
     const preimageHash = Bytes.fill(HASH_SIZE, 0xa).asOpaque();
 
     const status = partialState.requestPreimage(preimageHash, tryAsU64(5));
@@ -102,18 +105,19 @@ describe("PartialState.requestPreimage", () => {
       partialState.updatedState.updatedServiceInfo,
       ServiceAccountInfo.create({
         ...service.getInfo(),
-        storageUtilisationBytes: tryAsU64(service.getInfo().storageUtilisationBytes + 5n),
-        storageUtilisationCount: tryAsU32(service.getInfo().storageUtilisationCount + 1),
+        storageUtilisationBytes: tryAsU64(service.getInfo().storageUtilisationBytes + 5n + 81n),
+        storageUtilisationCount: tryAsU32(service.getInfo().storageUtilisationCount + 2),
       }),
     );
   });
 
   it("should request a preimage and update service info", () => {
     const mockState = testState();
+    const timeslot = tryAsTimeSlot(16);
     const maybeService = mockState.services.get(tryAsServiceId(0));
     const service = ensure<Service | undefined, Service>(maybeService, maybeService !== undefined);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
     const preimageHash = Bytes.fill(HASH_SIZE, 0xa).asOpaque();
 
     const status = partialState.requestPreimage(preimageHash, tryAsU64(5));
@@ -126,15 +130,16 @@ describe("PartialState.requestPreimage", () => {
       partialState.updatedState.updatedServiceInfo,
       ServiceAccountInfo.create({
         ...service.getInfo(),
-        storageUtilisationBytes: tryAsU64(service.getInfo().storageUtilisationBytes + 5n),
-        storageUtilisationCount: tryAsU32(service.getInfo().storageUtilisationCount + 1),
+        storageUtilisationBytes: tryAsU64(service.getInfo().storageUtilisationBytes + 5n + 81n),
+        storageUtilisationCount: tryAsU32(service.getInfo().storageUtilisationCount + 2),
       }),
     );
   });
 
   it("should fail if preimage is already requested", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
     const preimageHash = Bytes.fill(HASH_SIZE, 0xa).asOpaque();
 
     const status = partialState.requestPreimage(preimageHash, tryAsU64(5));
@@ -146,7 +151,8 @@ describe("PartialState.requestPreimage", () => {
 
   it("should fail if preimage is already available", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
     const preimageHash = Bytes.parseBytes(
       "0xc16326432b5b3213dfd1609495e13c6b276cb474d679645337e5c2c09f19b53c",
       HASH_SIZE,
@@ -158,7 +164,8 @@ describe("PartialState.requestPreimage", () => {
 
   it("should fail if balance is insufficient", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
     const preimageHash = Bytes.fill(HASH_SIZE, 0xa).asOpaque();
 
     const status = partialState.requestPreimage(preimageHash, tryAsU64(2n ** 64n - 1n));
@@ -169,7 +176,8 @@ describe("PartialState.requestPreimage", () => {
 describe("PartialState.forgetPreimage", () => {
   it("should error if preimage does not exist", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
     const hash = Bytes.fill(HASH_SIZE, 0x01).asOpaque();
 
     const result = partialState.forgetPreimage(hash, tryAsU64(42));
@@ -178,10 +186,11 @@ describe("PartialState.forgetPreimage", () => {
 
   it("should error if preimage is already forgotten", () => {
     const mockState = testState();
+    const timeslot = tryAsTimeSlot(16);
     const hash = Bytes.fill(HASH_SIZE, 0x02).asOpaque();
     const length = tryAsU64(42);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
     partialState.updatedState.lookupHistory.push(
       PreimageUpdate.forget(new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([]))),
     );
@@ -192,10 +201,11 @@ describe("PartialState.forgetPreimage", () => {
 
   it("should forget a requested preimage", () => {
     const mockState = testState();
+    const timeslot = tryAsTimeSlot(16);
     const hash = Bytes.fill(HASH_SIZE, 0x03).asOpaque();
     const length = tryAsU64(42);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
     partialState.requestPreimage(hash, length);
 
     const result = partialState.forgetPreimage(hash, length);
@@ -208,15 +218,16 @@ describe("PartialState.forgetPreimage", () => {
 
   it("should forget an unavailable preimage if it is old enough", () => {
     const mockState = testState();
-    mockState.applyUpdate({
-      timeslot: tryAsTimeSlot(100000),
-    });
+    const timeslot = tryAsTimeSlot(100000);
+    // mockState.applyUpdate({
+    //   timeslot: tryAsTimeSlot(100000),
+    // });
 
     const hash = Bytes.fill(HASH_SIZE, 0x04).asOpaque();
     const length = tryAsU64(42);
     const oldSlot = tryAsTimeSlot(0); // very old
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
     partialState.updatedState.lookupHistory.push(
       PreimageUpdate.update(
         new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([oldSlot, oldSlot])),
@@ -235,15 +246,16 @@ describe("PartialState.forgetPreimage", () => {
 
   it("should not forget an unavailable preimage if it is recent", () => {
     const mockState = testState();
-    mockState.applyUpdate({
-      timeslot: tryAsTimeSlot(100),
-    });
+    const timeslot = tryAsTimeSlot(100);
+    // mockState.applyUpdate({
+    //   timeslot: tryAsTimeSlot(100),
+    // });
 
     const hash = Bytes.fill(HASH_SIZE, 0x05).asOpaque();
     const length = tryAsU64(42);
     const recentSlot = tryAsTimeSlot(90); // within expunge period
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
     partialState.updatedState.lookupHistory.push(
       PreimageUpdate.update(
         new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([recentSlot])),
@@ -256,15 +268,15 @@ describe("PartialState.forgetPreimage", () => {
 
   it("should update lookup history for available preimage", () => {
     const mockState = testState();
-    mockState.applyUpdate({
-      timeslot: tryAsTimeSlot(100),
-    });
-
+    const timeslot = tryAsTimeSlot(16);
+    // mockState.applyUpdate({
+    //   timeslot: tryAsTimeSlot(100),
+    // });
     const hash = Bytes.fill(HASH_SIZE, 0x06).asOpaque();
     const length = tryAsU64(42);
     const availableSlot = tryAsTimeSlot(80);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
     partialState.updatedState.lookupHistory.push(
       PreimageUpdate.update(
         new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([availableSlot])),
@@ -287,16 +299,17 @@ describe("PartialState.forgetPreimage", () => {
 
   it("should update history for reavailable preimage if old", () => {
     const mockState = testState();
-    mockState.applyUpdate({
-      timeslot: tryAsTimeSlot(100000),
-    });
+    const timeslot = tryAsTimeSlot(16);
+    // mockState.applyUpdate({
+    //   timeslot: tryAsTimeSlot(100000),
+    // });
 
     const hash = Bytes.fill(HASH_SIZE, 0x07).asOpaque();
     const length = tryAsU64(42);
     const y = tryAsTimeSlot(0);
     const z = tryAsTimeSlot(70);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
     partialState.updatedState.lookupHistory.push(
       PreimageUpdate.update(
         new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([tryAsTimeSlot(0), y, z])),
@@ -315,16 +328,17 @@ describe("PartialState.forgetPreimage", () => {
 
   it("should not update history for reavailable preimage if too recent", () => {
     const mockState = testState();
-    mockState.applyUpdate({
-      timeslot: tryAsTimeSlot(100),
-    });
+    const timeslot = tryAsTimeSlot(100);
+    // mockState.applyUpdate({
+    //   timeslot: tryAsTimeSlot(100),
+    // });
 
     const hash = Bytes.fill(HASH_SIZE, 0x08).asOpaque();
     const length = tryAsU64(42);
     const y = tryAsTimeSlot(95); // too recent
     const z = tryAsTimeSlot(70);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
     partialState.updatedState.lookupHistory.push(
       PreimageUpdate.update(
         new LookupHistoryItem(hash, tryAsU32(Number(length)), tryAsLookupHistorySlots([tryAsTimeSlot(0), y, z])),
@@ -339,10 +353,11 @@ describe("PartialState.forgetPreimage", () => {
 describe("PartialState.newService", () => {
   it("should create a new service and update balance + next service ID", () => {
     const mockState = testState();
+    const timeslot = tryAsTimeSlot(16);
     const maybeService = mockState.services.get(tryAsServiceId(0));
     const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     const codeHash = Bytes.fill(HASH_SIZE, 0x11).asOpaque();
     const codeLength = tryAsU32(100);
@@ -399,6 +414,7 @@ describe("PartialState.newService", () => {
 
   it("should return an error if there are insufficient funds", () => {
     const mockState = testState();
+    const timeslot = tryAsTimeSlot(16);
     const maybeService = mockState.services.get(tryAsServiceId(0));
     const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
 
@@ -412,7 +428,7 @@ describe("PartialState.newService", () => {
     });
     mockState.services.set(tryAsServiceId(0), updatedService);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     const codeHash = Bytes.fill(HASH_SIZE, 0x12).asOpaque();
     // artificially large to exceed balance
@@ -435,7 +451,8 @@ describe("PartialState.newService", () => {
 describe("PartialState.updateValidatorsData", () => {
   it("should update validators data", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     // when
     partialState.updateValidatorsData(
@@ -457,7 +474,8 @@ describe("PartialState.updateValidatorsData", () => {
 describe("PartialState.checkpoint", () => {
   it("should checkpoint the updates", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
     const preimageHash = Bytes.fill(HASH_SIZE, 0xa).asOpaque();
     // put something into updated state
     const status = partialState.requestPreimage(preimageHash, tryAsU64(5));
@@ -474,10 +492,11 @@ describe("PartialState.checkpoint", () => {
 describe("PartialState.upgradeService", () => {
   it("should update the service with new code hash and gas limits", () => {
     const mockState = testState();
+    const timeslot = tryAsTimeSlot(16);
     const maybeService = mockState.services.get(tryAsServiceId(0));
     const service = ensure<Service | undefined, Service>(maybeService, maybeService !== undefined);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     const codeHash = Bytes.fill(HASH_SIZE, 0xcd).asOpaque();
     const gas = tryAsU64(1_000n);
@@ -502,7 +521,8 @@ describe("PartialState.upgradeService", () => {
 describe("PartialState.updateAuthorizationQueue", () => {
   it("should update the authorization queue for a given core index", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     const coreIndex = tryAsCoreIndex(0);
     const queue = FixedSizeArray.new(
@@ -521,7 +541,8 @@ describe("PartialState.updateAuthorizationQueue", () => {
 describe("PartialState.updatePrivilegedServices", () => {
   it("should update privileged services", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     const manager = tryAsServiceId(1);
     const authorizer = tryAsServiceId(2);
@@ -569,7 +590,8 @@ describe("PartialState.transfer", () => {
 
   it("should perform a successful transfer", () => {
     const { mockState, service } = testStateWithSecondService();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     const destinationId = tryAsServiceId(1);
     const amount = tryAsU64(500n);
@@ -603,7 +625,8 @@ describe("PartialState.transfer", () => {
 
   it("should return DestinationNotFound error if destination doesnt exist", () => {
     const { mockState } = testStateWithSecondService();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     const amount = tryAsU64(100n);
     const gas = tryAsServiceGas(1_000n);
@@ -618,7 +641,8 @@ describe("PartialState.transfer", () => {
 
   it("should return GasTooLow error if gas is below destination's minimum", () => {
     const { mockState } = testStateWithSecondService();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     const destinationId = tryAsServiceId(1);
     const amount = tryAsU64(100n);
@@ -634,7 +658,8 @@ describe("PartialState.transfer", () => {
 
   it("should return BalanceBelowThreshold error if balance would fall too low", () => {
     const { mockState } = testStateWithSecondService();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     const destinationId = tryAsServiceId(1);
     const amount = tryAsU64(9_999_999_999n); // dangerously high
@@ -652,7 +677,8 @@ describe("PartialState.transfer", () => {
 describe("PartialState.yield", () => {
   it("should yield root", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     // when
     partialState.yield(Bytes.fill(HASH_SIZE, 0xef));
@@ -728,8 +754,8 @@ describe("PartialState.providePreimage", () => {
       self: false,
       requested: true,
     });
-
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     const serviceId = tryAsServiceId(1);
     assert.deepStrictEqual(partialState.updatedState.providedPreimages, []);
@@ -752,8 +778,8 @@ describe("PartialState.providePreimage", () => {
 
   it("should provide a preimage for itself", () => {
     const { mockState, preimage } = testStateWithSecondService({ self: true, requested: true });
-
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     const serviceId = tryAsServiceId(0);
     assert.deepStrictEqual(partialState.updatedState.providedPreimages, []);
@@ -779,8 +805,8 @@ describe("PartialState.providePreimage", () => {
       self: false,
       requested: false,
     });
-
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     const serviceId = tryAsServiceId(1);
     assert.deepStrictEqual(partialState.updatedState.providedPreimages, []);
@@ -799,8 +825,8 @@ describe("PartialState.providePreimage", () => {
       requested: true,
       available: true,
     });
-
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
     partialState.updatedState.providedPreimages.push(
       NewPreimage.create({
         serviceId: tryAsServiceId(1),
@@ -835,8 +861,9 @@ describe("PartialState.providePreimage", () => {
       requested: true,
       available: true,
     });
+    const timeslot = tryAsTimeSlot(16);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
     partialState.updatedState.providedPreimages.push(
       NewPreimage.create({
         serviceId: tryAsServiceId(0),
@@ -871,8 +898,9 @@ describe("PartialState.providePreimage", () => {
       requested: true,
       available: false,
     });
+    const timeslot = tryAsTimeSlot(16);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     const serviceId = tryAsServiceId(0);
     assert.deepStrictEqual(partialState.updatedState.providedPreimages, []);
@@ -901,8 +929,9 @@ describe("PartialState.providePreimage", () => {
       requested: true,
       available: false,
     });
+    const timeslot = tryAsTimeSlot(16);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     const serviceId = tryAsServiceId(1);
     assert.deepStrictEqual(partialState.updatedState.providedPreimages, []);
@@ -995,7 +1024,8 @@ describe("PartialState.eject", () => {
   }
   it("should return InvalidService if destination is null", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     const tombstone = Bytes.fill(HASH_SIZE, 0xef).asOpaque();
 
@@ -1009,7 +1039,8 @@ describe("PartialState.eject", () => {
 
   it("should return InvalidService if destination service does not exist", () => {
     const mockState = testState();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const timeslot = tryAsTimeSlot(16);
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     const nonExistentServiceId = tryAsServiceId(99); // not present in mockState
     const tombstone = Bytes.fill(HASH_SIZE, 0xee).asOpaque();
@@ -1024,12 +1055,13 @@ describe("PartialState.eject", () => {
 
   it("should return InvalidService if destination service codeHash does not match expected pattern", () => {
     const mockState = testState();
+    const timeslot = tryAsTimeSlot(16);
     const destinationId = setupEjectableService(mockState, {
       codeHash: Bytes.fill(HASH_SIZE, 0x99).asOpaque(), // wrong codeHash
     });
 
     const tombstone = Bytes.fill(HASH_SIZE, 0xec).asOpaque();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     // when
     const result = partialState.eject(destinationId, tombstone);
@@ -1041,12 +1073,13 @@ describe("PartialState.eject", () => {
 
   it("should return InvalidPreimage if storageUtilisationCount is not equal to required value", () => {
     const mockState = testState();
+    const timeslot = tryAsTimeSlot(16);
     const destinationId = setupEjectableService(mockState, {
       storageUtilisationCount: tryAsU32(2 + 1), // off by 1
     });
 
     const tombstone = Bytes.fill(HASH_SIZE, 0xeb).asOpaque();
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     // when
     const result = partialState.eject(destinationId, tombstone);
@@ -1058,12 +1091,13 @@ describe("PartialState.eject", () => {
 
   it("should return InvalidPreimage if the tombstone preimage is missing", () => {
     const mockState = testState();
+    const timeslot = tryAsTimeSlot(16);
     const tombstone = Bytes.fill(HASH_SIZE, 0xea).asOpaque();
 
     // destination service has valid codeHash and config, but no preimage or lookup history
     const destinationId = setupEjectableService(mockState);
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     // when
     const result = partialState.eject(destinationId, tombstone);
@@ -1075,6 +1109,7 @@ describe("PartialState.eject", () => {
 
   it("should return InvalidPreimage if tombstone preimage exists but has wrong status", () => {
     const mockState = testState();
+    const timeslot = tryAsTimeSlot(16);
     const tombstone = Bytes.fill(HASH_SIZE, 0xe9).asOpaque<PreimageHash>();
     const length = tryAsU32(100);
 
@@ -1087,7 +1122,7 @@ describe("PartialState.eject", () => {
       },
     });
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     // when
     const result = partialState.eject(destinationId, tombstone);
@@ -1099,6 +1134,7 @@ describe("PartialState.eject", () => {
 
   it("should return InvalidPreimage if tombstone preimage exists but is not expired", () => {
     const mockState = testState();
+    const timeslot = tryAsTimeSlot(6);
     const tombstone = Bytes.fill(HASH_SIZE, 0xe9).asOpaque<PreimageHash>();
     const length = tryAsU32(13);
 
@@ -1111,7 +1147,7 @@ describe("PartialState.eject", () => {
       },
     });
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     // when
     const result = partialState.eject(destinationId, tombstone);
@@ -1123,9 +1159,10 @@ describe("PartialState.eject", () => {
 
   it("should return InvalidService if summing balances would overflow", () => {
     const mockState = testState();
-    mockState.applyUpdate({
-      timeslot: tryAsTimeSlot(1_000_000),
-    });
+    const timeslot = tryAsTimeSlot(1_000_000);
+    // mockState.applyUpdate({
+    //   timeslot: tryAsTimeSlot(1_000_000),
+    // });
     const tombstone = Bytes.fill(HASH_SIZE, 0xe8).asOpaque();
     const length = tryAsU32(100);
 
@@ -1137,7 +1174,7 @@ describe("PartialState.eject", () => {
       },
     });
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     // set the balance to overflow
     const currentService = mockState.services.get(tryAsServiceId(0));
@@ -1159,9 +1196,10 @@ describe("PartialState.eject", () => {
 
   it("should return OK", () => {
     const mockState = testState();
-    mockState.applyUpdate({
-      timeslot: tryAsTimeSlot(1_000_000),
-    });
+    const timeslot = tryAsTimeSlot(1_000_000);
+    // mockState.applyUpdate({
+    //   timeslot: tryAsTimeSlot(1_000_000),
+    // });
     const tombstone = Bytes.fill(HASH_SIZE, 0xe8).asOpaque();
     const length = tryAsU32(100);
 
@@ -1173,7 +1211,7 @@ describe("PartialState.eject", () => {
       },
     });
 
-    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
+    const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10), timeslot, tinyChainSpec);
 
     // when
     const result = partialState.eject(destinationId, tombstone);
@@ -1245,11 +1283,18 @@ describe("AccumulateServiceExternalities", () => {
   describe("getInfo", () => {
     it("should return null when serviceId is null", () => {
       const currentServiceId = tryAsServiceId(10_000);
+      const timeslot = tryAsTimeSlot(16);
       const serviceId: ServiceId | null = null;
       const state = prepareState([prepareService(currentServiceId)]);
       const expectedServiceInfo: ServiceAccountInfo | null = null;
 
-      const accumulateServiceExternalities = new PartialStateDb(state, currentServiceId, tryAsServiceId(42));
+      const accumulateServiceExternalities = new PartialStateDb(
+        state,
+        currentServiceId,
+        tryAsServiceId(42),
+        timeslot,
+        tinyChainSpec,
+      );
 
       const serviceInfo = accumulateServiceExternalities.getServiceInfo(serviceId);
 
@@ -1258,11 +1303,18 @@ describe("AccumulateServiceExternalities", () => {
 
     it("should return null when serviceId is incorrect", () => {
       const currentServiceId = tryAsServiceId(10_000);
+      const timeslot = tryAsTimeSlot(16);
       const serviceId = tryAsServiceId(5);
       const state = prepareState([prepareService(currentServiceId)]);
       const expectedServiceInfo: ServiceAccountInfo | null = null;
 
-      const accumulateServiceExternalities = new PartialStateDb(state, currentServiceId, tryAsServiceId(42));
+      const accumulateServiceExternalities = new PartialStateDb(
+        state,
+        currentServiceId,
+        tryAsServiceId(42),
+        timeslot,
+        tinyChainSpec,
+      );
 
       const serviceInfo = accumulateServiceExternalities.getServiceInfo(serviceId);
 
@@ -1271,11 +1323,18 @@ describe("AccumulateServiceExternalities", () => {
 
     it("should return correct service info", () => {
       const currentServiceId = tryAsServiceId(10_000);
+      const timeslot = tryAsTimeSlot(16);
       const serviceId = tryAsServiceId(5);
       const state = prepareState([prepareService(currentServiceId), prepareService(serviceId)]);
       const expectedServiceInfo = prepareService(serviceId).getInfo();
 
-      const accumulateServiceExternalities = new PartialStateDb(state, currentServiceId, tryAsServiceId(42));
+      const accumulateServiceExternalities = new PartialStateDb(
+        state,
+        currentServiceId,
+        tryAsServiceId(42),
+        timeslot,
+        tinyChainSpec,
+      );
 
       const serviceInfo = accumulateServiceExternalities.getServiceInfo(serviceId);
 
@@ -1286,12 +1345,19 @@ describe("AccumulateServiceExternalities", () => {
   describe("lookup", () => {
     it("should return null when serviceId is null", () => {
       const currentServiceId = tryAsServiceId(10_000);
+      const timeslot = tryAsTimeSlot(16);
       const serviceId: ServiceId | null = null;
       const hash = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const state = prepareState([prepareService(currentServiceId)]);
       const expectedResult: BytesBlob | null = null;
 
-      const accumulateServiceExternalities = new PartialStateDb(state, currentServiceId, tryAsServiceId(42));
+      const accumulateServiceExternalities = new PartialStateDb(
+        state,
+        currentServiceId,
+        tryAsServiceId(42),
+        timeslot,
+        tinyChainSpec,
+      );
 
       const result = accumulateServiceExternalities.lookup(serviceId, hash);
 
@@ -1300,12 +1366,19 @@ describe("AccumulateServiceExternalities", () => {
 
     it("should return null when service does not exist", () => {
       const currentServiceId = tryAsServiceId(10_000);
+      const timeslot = tryAsTimeSlot(16);
       const serviceId = tryAsServiceId(0);
       const hash = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const state = prepareState([prepareService(currentServiceId)]);
       const expectedResult: BytesBlob | null = null;
 
-      const accumulateServiceExternalities = new PartialStateDb(state, currentServiceId, tryAsServiceId(42));
+      const accumulateServiceExternalities = new PartialStateDb(
+        state,
+        currentServiceId,
+        tryAsServiceId(42),
+        timeslot,
+        tinyChainSpec,
+      );
 
       const result = accumulateServiceExternalities.lookup(serviceId, hash);
 
@@ -1314,6 +1387,7 @@ describe("AccumulateServiceExternalities", () => {
 
     it("should return null when preimage does not exists", () => {
       const currentServiceId = tryAsServiceId(10_000);
+      const timeslot = tryAsTimeSlot(16);
       const requestedHash = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const otherHash = Bytes.fill(HASH_SIZE, 2).asOpaque();
       const preimages = preparePreimages([[otherHash, BytesBlob.empty()]]);
@@ -1321,7 +1395,13 @@ describe("AccumulateServiceExternalities", () => {
       const state = prepareState([service]);
       const expectedResult: BytesBlob | null = null;
 
-      const accumulateServiceExternalities = new PartialStateDb(state, currentServiceId, tryAsServiceId(42));
+      const accumulateServiceExternalities = new PartialStateDb(
+        state,
+        currentServiceId,
+        tryAsServiceId(42),
+        timeslot,
+        tinyChainSpec,
+      );
 
       const result = accumulateServiceExternalities.lookup(currentServiceId, requestedHash);
 
@@ -1330,13 +1410,20 @@ describe("AccumulateServiceExternalities", () => {
 
     it("should return return a correct preimage", () => {
       const serviceId = tryAsServiceId(0);
+      const timeslot = tryAsTimeSlot(16);
       const expectedResult = BytesBlob.empty();
       const requestedHash = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const preimages = preparePreimages([[requestedHash, expectedResult]]);
       const service = prepareService(serviceId, { preimages });
       const state = prepareState([service]);
 
-      const accumulateServiceExternalities = new PartialStateDb(state, serviceId, tryAsServiceId(42));
+      const accumulateServiceExternalities = new PartialStateDb(
+        state,
+        serviceId,
+        tryAsServiceId(42),
+        timeslot,
+        tinyChainSpec,
+      );
 
       const result = accumulateServiceExternalities.lookup(serviceId, requestedHash);
 
@@ -1347,11 +1434,18 @@ describe("AccumulateServiceExternalities", () => {
   describe("read / write", () => {
     it("should return null when serviceId is null ", () => {
       const currentServiceId = tryAsServiceId(10_000);
+      const timeslot = tryAsTimeSlot(16);
       const serviceId: ServiceId | null = null;
       const hash = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const state = prepareState([prepareService(currentServiceId)]);
 
-      const accumulateServiceExternalities = new PartialStateDb(state, currentServiceId, tryAsServiceId(42));
+      const accumulateServiceExternalities = new PartialStateDb(
+        state,
+        currentServiceId,
+        tryAsServiceId(42),
+        timeslot,
+        tinyChainSpec,
+      );
 
       const result = accumulateServiceExternalities.read(serviceId, hash);
 
@@ -1360,10 +1454,17 @@ describe("AccumulateServiceExternalities", () => {
 
     it("should return null when service does not exist ", () => {
       const currentServiceId = tryAsServiceId(10_000);
+      const timeslot = tryAsTimeSlot(16);
       const serviceId = tryAsServiceId(33);
       const hash = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const state = prepareState([prepareService(currentServiceId)]);
-      const accumulateServiceExternalities = new PartialStateDb(state, currentServiceId, tryAsServiceId(42));
+      const accumulateServiceExternalities = new PartialStateDb(
+        state,
+        currentServiceId,
+        tryAsServiceId(42),
+        timeslot,
+        tinyChainSpec,
+      );
 
       const result = accumulateServiceExternalities.read(serviceId, hash);
 
@@ -1372,6 +1473,7 @@ describe("AccumulateServiceExternalities", () => {
 
     it("should correctly read from storage", () => {
       const currentServiceId = tryAsServiceId(10_000);
+      const timeslot = tryAsTimeSlot(16);
       const serviceId = tryAsServiceId(33);
       const hash = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const initialStorage = HashDictionary.new<StorageKey, StorageItem>();
@@ -1380,7 +1482,13 @@ describe("AccumulateServiceExternalities", () => {
       const service = prepareService(serviceId, { storage: initialStorage });
       const state = prepareState([prepareService(currentServiceId), service]);
 
-      const accumulateServiceExternalities = new PartialStateDb(state, currentServiceId, tryAsServiceId(42));
+      const accumulateServiceExternalities = new PartialStateDb(
+        state,
+        currentServiceId,
+        tryAsServiceId(42),
+        timeslot,
+        tinyChainSpec,
+      );
 
       const result = accumulateServiceExternalities.read(serviceId, hash);
 
@@ -1389,10 +1497,17 @@ describe("AccumulateServiceExternalities", () => {
 
     it("should correctly write to storage", () => {
       const currentServiceId = tryAsServiceId(10_000);
+      const timeslot = tryAsTimeSlot(16);
       const hash = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const blob = BytesBlob.empty();
       const state = prepareState([prepareService(currentServiceId)]);
-      const accumulateServiceExternalities = new PartialStateDb(state, currentServiceId, tryAsServiceId(42));
+      const accumulateServiceExternalities = new PartialStateDb(
+        state,
+        currentServiceId,
+        tryAsServiceId(42),
+        timeslot,
+        tinyChainSpec,
+      );
 
       assert.strictEqual(accumulateServiceExternalities.updatedState.storage.length, 0);
 
@@ -1403,6 +1518,7 @@ describe("AccumulateServiceExternalities", () => {
 
     it("should return new value if there was a write", () => {
       const currentServiceId = tryAsServiceId(10_000);
+      const timeslot = tryAsTimeSlot(16);
       const hash = Bytes.fill(HASH_SIZE, 2).asOpaque();
       const initialStorage = HashDictionary.new<StorageKey, StorageItem>();
       const blob = BytesBlob.empty();
@@ -1410,7 +1526,13 @@ describe("AccumulateServiceExternalities", () => {
       initialStorage.set(hash, StorageItem.create({ hash, blob }));
 
       const state = prepareState([prepareService(currentServiceId, { storage: initialStorage })]);
-      const accumulateServiceExternalities = new PartialStateDb(state, currentServiceId, tryAsServiceId(42));
+      const accumulateServiceExternalities = new PartialStateDb(
+        state,
+        currentServiceId,
+        tryAsServiceId(42),
+        timeslot,
+        tinyChainSpec,
+      );
 
       accumulateServiceExternalities.write(hash, newBlob);
 
@@ -1425,6 +1547,7 @@ describe("AccumulateServiceExternalities", () => {
   describe("readSnapshotLength", () => {
     it("should correctly read from storage", () => {
       const serviceId = tryAsServiceId(33);
+      const timeslot = tryAsTimeSlot(16);
       const hash = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const initialStorage = HashDictionary.new<StorageKey, StorageItem>();
       const blob = BytesBlob.empty();
@@ -1432,7 +1555,13 @@ describe("AccumulateServiceExternalities", () => {
       const service = prepareService(serviceId, { storage: initialStorage });
       const state = prepareState([service]);
 
-      const accumulateServiceExternalities = new PartialStateDb(state, serviceId, tryAsServiceId(42));
+      const accumulateServiceExternalities = new PartialStateDb(
+        state,
+        serviceId,
+        tryAsServiceId(42),
+        timeslot,
+        tinyChainSpec,
+      );
 
       const result = accumulateServiceExternalities.readSnapshotLength(hash);
 
@@ -1441,6 +1570,7 @@ describe("AccumulateServiceExternalities", () => {
 
     it("should return snapshot length even if a new value if was written", () => {
       const currentServiceId = tryAsServiceId(10_000);
+      const timeslot = tryAsTimeSlot(16);
       const hash = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const initialStorage = HashDictionary.new<StorageKey, StorageItem>();
       const blob = BytesBlob.empty();
@@ -1448,7 +1578,13 @@ describe("AccumulateServiceExternalities", () => {
       initialStorage.set(hash, StorageItem.create({ hash, blob }));
       const service = prepareService(currentServiceId, { storage: initialStorage });
       const state = prepareState([service]);
-      const accumulateServiceExternalities = new PartialStateDb(state, currentServiceId, tryAsServiceId(42));
+      const accumulateServiceExternalities = new PartialStateDb(
+        state,
+        currentServiceId,
+        tryAsServiceId(42),
+        timeslot,
+        tinyChainSpec,
+      );
 
       accumulateServiceExternalities.write(hash, newBlob);
       const result = accumulateServiceExternalities.readSnapshotLength(hash);
