@@ -22,7 +22,7 @@ describe("GrayPaper compatibility", { concurrency: false }, () => {
     Compatibility.override(gpVersion);
 
     assert.equal(Compatibility.isGreaterOrEqual(GpVersion.V0_6_4), true);
-    assert.equal(Compatibility.isGreaterOrEqual(gpVersion), false);
+    assert.equal(Compatibility.isGreaterOrEqual(gpVersion), true);
     assert.equal(Compatibility.isGreaterOrEqual(GpVersion.V0_6_6), false);
     assert.equal(Compatibility.isGreaterOrEqual(GpVersion.V0_6_7), false);
     assert.equal(Compatibility.isGreaterOrEqual(GpVersion.V0_7_0), false);

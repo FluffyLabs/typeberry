@@ -34,7 +34,7 @@ export class LogHostCall implements HostCallHandler {
     }
     memory.loadInto(message, msgStart);
 
-    logger.log(`[${this.currentServiceId}] [${lvl}] ${decoder.decode(target)} ${decoder.decode(message)}`);
+    logger.trace(`[${this.currentServiceId}] [${lvl}] ${decoder.decode(target)} ${decoder.decode(message)}`);
     return Promise.resolve(undefined);
   }
 }
