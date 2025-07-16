@@ -18,8 +18,8 @@ import { getChainSpec } from "./spec.js";
 
 export class EcTest {
   static fromJson: FromJson<EcTest> = {
-    data: fromJson.bytesBlob,
-    shards: json.array(fromJson.bytesBlob),
+    data: fromJson.bytesBlobNoPrefix,
+    shards: json.array(fromJson.bytesBlobNoPrefix),
   };
 
   data!: BytesBlob;
