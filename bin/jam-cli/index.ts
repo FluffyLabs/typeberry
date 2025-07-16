@@ -5,6 +5,12 @@ import { type Arguments, Command, HELP, parseArgs } from "./args.js";
 
 export * from "./args.js";
 
+export const prepareConfigFile = (args: Arguments): JamConfig => {
+  const files = args.command === Command.Import ? args.args.files : [];
+  const nodeConfig = loadConfig(args.args.configPath);
+  return JamConfig.new({ isAuthoring: false, blockToImport: files, nodeName: args.args.nodeName, nodeConfig });
+};
+
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
   const relPath = `${import.meta.dirname}/../..`;
@@ -24,12 +30,6 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     console.info(HELP);
     process.exit(1);
   }
-
-  const prepareConfigFile = (args: Arguments): JamConfig => {
-    const files = args.command === Command.Import ? args.args.files : [];
-    const nodeConfig = loadConfig(args.args.configPath);
-    return JamConfig.new({ isAuthoring: false, blockToImport: files, nodeName: args.args.nodeName, nodeConfig });
-  };
 
   main(prepareConfigFile(args), withRelPath).catch((e) => {
     console.error(`${e}`);
