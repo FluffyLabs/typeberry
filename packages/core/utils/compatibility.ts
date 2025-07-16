@@ -38,6 +38,6 @@ export class Compatibility {
     if (index === -1) {
       throw new Error(`Invalid version: ${version}. Not found among all versions.`);
     }
-    return Compatibility.is(...ALL_VERSIONS_IN_ORDER.slice(0, index + 1));
+    return Compatibility.is(...ALL_VERSIONS_IN_ORDER.slice(index));
   }
 }
