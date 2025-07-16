@@ -134,7 +134,8 @@ describe("Typeberry Common Interface (TCI): Arguments", () => {
 
   it("should throw Invalid value: too short hex", () => {
     assert.throws(() => parseArgs(["--bls", "0102030405060708"]), {
-      message: "Invalid value '0102030405060708' for flag '--bls': Error: Assertion failure: Given buffer has incorrect size 8 vs expected 32",
+      message:
+        "Invalid value '0102030405060708' for flag '--bls': Error: Assertion failure: Given buffer has incorrect size 8 vs expected 32",
     });
   });
 
