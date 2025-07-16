@@ -3,10 +3,10 @@ import type { Bytes } from "@typeberry/bytes";
 import type { NodeConfiguration } from "@typeberry/config-node";
 import type { HASH_SIZE } from "@typeberry/hash";
 
-export const DEV_CONFIG: DevConfig = {
+export const DEV_CONFIG = {
   genesisPath: "",
-  timeSlot: tryAsTimeSlot(0),
-  validatorIndex: tryAsValidatorIndex(0),
+  timeSlot: 0,
+  validatorIndex: 0,
 };
 
 /**
@@ -32,7 +32,11 @@ export class JamConfig {
     if (devConfig !== undefined) {
       dev = devConfig;
     } else {
-      dev = DEV_CONFIG;
+      dev = {
+        genesisPath: DEV_CONFIG.genesisPath,
+        timeSlot: tryAsTimeSlot(DEV_CONFIG.timeSlot),
+        validatorIndex: tryAsValidatorIndex(DEV_CONFIG.validatorIndex),
+      };
     }
 
     let full: FullDevConfig;

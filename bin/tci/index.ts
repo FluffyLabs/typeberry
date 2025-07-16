@@ -1,6 +1,6 @@
 import { pathToFileURL } from "node:url";
 import { tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
-import { DEV_CONFIG, JamConfig, type SeedDevConfig } from "@typeberry/config";
+import { DEV_CONFIG, type DevConfig, JamConfig, type SeedDevConfig } from "@typeberry/config";
 import * as jam from "@typeberry/jam";
 import { Level, Logger } from "@typeberry/logger";
 import { DEFAULTS, DEV_CONFIG_PATH } from "../jam-cli/args.js";
@@ -25,7 +25,11 @@ export function createJamConfig(argv: CommonArguments): JamConfig {
   // TODO: [MaSo] Add networking config; add loading from genesis path
 
   let nodeConfig = jam.loadConfig(DEV_CONFIG_PATH);
-  let devConfig = DEV_CONFIG;
+  let devConfig: DevConfig = {
+    genesisPath: DEV_CONFIG.genesisPath,
+    timeSlot: tryAsTimeSlot(DEV_CONFIG.timeSlot),
+    validatorIndex: tryAsValidatorIndex(DEV_CONFIG.validatorIndex),
+  };
   let seedConfig: SeedDevConfig | undefined;
   const requiredSeedKeys = ["bandersnatch", "bls", "ed25519"] as const;
   type RequiredSeedKey = (typeof requiredSeedKeys)[number];
