@@ -113,7 +113,6 @@ function codecRunners(flavor: "tiny" | "full") {
   const spec = flavor === "tiny" ? tinyChainSpec : fullChainSpec;
   return [
     runner(`codec/${flavor}/assurances_extrinsic`, getAssurancesExtrinsicFromJson(spec), runAssurancesExtrinsicTest),
-    runner(`codec/${flavor}/assurances_extrinsic`, getAssurancesExtrinsicFromJson(spec), runAssurancesExtrinsicTest),
     runner(`codec/${flavor}/block`, blockFromJson(spec), runBlockTest),
     runner(`codec/${flavor}/disputes_extrinsic`, disputesExtrinsicFromJson, runDisputesExtrinsicTest),
     runner(`codec/${flavor}/extrinsic`, getExtrinsicFromJson(spec), runExtrinsicTest),
