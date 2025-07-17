@@ -12,7 +12,7 @@ import { BandernsatchWasm } from "@typeberry/safrole/bandersnatch-wasm/index.js"
 import { SafroleSeal, type SafroleSealError } from "@typeberry/safrole/safrole-seal.js";
 import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/safrole.js";
 import type { State } from "@typeberry/state";
-import { type ErrorResult, Result, type TaggedError } from "@typeberry/utils";
+import { type ErrorResult, Result, type TaggedError, assertEmpty } from "@typeberry/utils";
 import type { ACCUMULATION_ERROR, AccumulateStateUpdate } from "./accumulate/accumulate.js";
 import { DeferredTransfers } from "./accumulate/deferred-transfers.js";
 import { Accumulate } from "./accumulate/index.js";
@@ -327,8 +327,6 @@ export class OnChain {
     return map;
   }
 }
-
-function assertEmpty<T extends Record<string, never>>(_x: T) {}
 
 type AvailAssignment = State["availabilityAssignment"];
 

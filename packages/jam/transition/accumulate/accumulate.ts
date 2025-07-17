@@ -33,7 +33,7 @@ import {
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import type { TrieHasher, TrieNodeHash } from "@typeberry/trie";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
-import { Result, check } from "@typeberry/utils";
+import { Result, assertEmpty, check } from "@typeberry/utils";
 import type { CountAndGasUsed } from "../statistics.js";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
 import { generateNextServiceId, getWorkPackageHashes, uniquePreserveOrder } from "./accumulate-utils.js";
@@ -620,5 +620,3 @@ function binaryMerkleization(input: BytesBlob[], hasher: TrieHasher) {
 
   return upperN(input, hasher) as TrieNodeHash;
 }
-
-function assertEmpty<T extends Record<string, never>>(_x: T) {}
