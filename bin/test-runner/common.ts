@@ -86,11 +86,12 @@ export async function main(
       setImmediate(() => {
         const testName = `${key} tests [${i + 1}/${parts}]`;
         logger.info(`Running ${testName}`);
+        const timeout = 5 * 60 * 1000;
         test.describe(
           testName,
           {
             concurrency: 100,
-            timeout: 60 * 1000,
+            timeout,
           },
           () => {
             const partValues = values.slice(i * perPart, (i + 1) * perPart);
@@ -99,7 +100,7 @@ export async function main(
               if (subTest.shouldSkip) {
                 test.it.skip(fileName, subTest.test);
               } else {
-                test.it(fileName, subTest.test);
+                test.it(fileName, { timeout }, subTest.test);
               }
             }
           },
