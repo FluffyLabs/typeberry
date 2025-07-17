@@ -17,7 +17,7 @@ import {
   UpdateService,
   UpdateServiceKind,
 } from "@typeberry/state";
-import { check } from "@typeberry/utils";
+import { Result, check } from "@typeberry/utils";
 import type { CountAndGasUsed } from "../statistics.js";
 import { uniquePreserveOrder } from "./accumulate-utils.js";
 import { PvmExecutor } from "./pvm-executor.js";
@@ -42,6 +42,9 @@ const ON_TRANSFER_ARGS_CODEC = codec.object({
   serviceId: codec.u32.asOpaque<ServiceId>(),
   transfers: codec.sequenceVarLen(PendingTransfer.Codec),
 });
+
+export const DEFERRED_TRANSFERS_ERROR = "service balance overflow";
+export type DEFERRED_TRANSFERS_ERROR = typeof DEFERRED_TRANSFERS_ERROR;
 
 export class DeferredTransfers {
   constructor(
@@ -130,7 +133,7 @@ export class DeferredTransfers {
     servicesUpdates: servicesUpdatesInput,
     servicesRemoved,
     preimages,
-  }: DeferredTransfersInput): Promise<DeferredTransfersResult> {
+  }: DeferredTransfersInput): Promise<Result<DeferredTransfersResult, DEFERRED_TRANSFERS_ERROR>> {
     const transferStatistics = new Map<ServiceId, CountAndGasUsed>();
     const servicesUpdates = [...servicesUpdatesInput];
     const services = uniquePreserveOrder(pendingTransfers.flatMap((x) => [x.source, x.destination]));
@@ -149,9 +152,9 @@ export class DeferredTransfers {
       const newBalance = sumU64(info.balance, ...transfers.map((item) => item.amount));
 
       if (newBalance.overflow) {
-        // TODO [MaSi]: what to do in case of overflow?
-        continue;
+        return Result.error(DEFERRED_TRANSFERS_ERROR);
       }
+
       const newInfo = ServiceAccountInfo.create({ ...info, balance: newBalance.value });
       const newUpdate = UpdateService.update({
         serviceId,
@@ -185,9 +188,9 @@ export class DeferredTransfers {
       transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(consumedGas) });
     }
 
-    return {
+    return Result.ok({
       servicesUpdates,
       transferStatistics,
-    };
+    });
   }
 }

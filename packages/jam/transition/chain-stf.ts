@@ -14,7 +14,7 @@ import type { SafroleErrorCode, SafroleStateUpdate } from "@typeberry/safrole/sa
 import type { State } from "@typeberry/state";
 import { type ErrorResult, Result, type TaggedError, assertEmpty } from "@typeberry/utils";
 import type { ACCUMULATION_ERROR, AccumulateStateUpdate } from "./accumulate/accumulate.js";
-import { DeferredTransfers } from "./accumulate/deferred-transfers.js";
+import { type DEFERRED_TRANSFERS_ERROR, DeferredTransfers } from "./accumulate/deferred-transfers.js";
 import { Accumulate } from "./accumulate/index.js";
 import { Assurances, type AssurancesError, type AssurancesStateUpdate } from "./assurances.js";
 import { Authorization, type AuthorizationStateUpdate } from "./authorization.js";
@@ -51,6 +51,7 @@ export enum StfErrorKind {
   Preimages = 4,
   SafroleSeal = 5,
   Accumulate = 6,
+  DeferredTransfers = 7,
 }
 
 export type StfError =
@@ -60,7 +61,8 @@ export type StfError =
   | TaggedError<StfErrorKind.Safrole, SafroleErrorCode>
   | TaggedError<StfErrorKind.Preimages, PreimagesErrorCode>
   | TaggedError<StfErrorKind.SafroleSeal, SafroleSealError>
-  | TaggedError<StfErrorKind.Accumulate, ACCUMULATION_ERROR>;
+  | TaggedError<StfErrorKind.Accumulate, ACCUMULATION_ERROR>
+  | TaggedError<StfErrorKind.DeferredTransfers, DEFERRED_TRANSFERS_ERROR>;
 
 export const stfError = <Kind extends StfErrorKind, Err extends StfError["error"]>(
   kind: Kind,
@@ -242,16 +244,21 @@ export class OnChain {
       ...servicesUpdate
     } = accumulateUpdate;
 
-    const {
-      servicesUpdates: newServicesUpdates,
-      transferStatistics,
-      ...deferredTransfersRest
-    } = await this.deferredTransfers.transition({
+    const deferredTransfersResult = await this.deferredTransfers.transition({
       pendingTransfers,
       ...servicesUpdate,
       preimages: accumulatePreimages,
       timeslot: timeSlot,
     });
+    if (deferredTransfersResult.isError) {
+      return stfError(StfErrorKind.DeferredTransfers, deferredTransfersResult);
+    }
+
+    const {
+      servicesUpdates: newServicesUpdates,
+      transferStatistics,
+      ...deferredTransfersRest
+    } = deferredTransfersResult.ok;
     assertEmpty(deferredTransfersRest);
     servicesUpdate.servicesUpdates = newServicesUpdates;
     // recent history
