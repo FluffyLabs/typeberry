@@ -3,7 +3,7 @@ import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { KeccakHasher } from "@typeberry/hash/keccak.js";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
 import { deepEqual } from "@typeberry/utils";
-import { binaryMerkleization } from "./binary-merkalization.js";
+import { binaryMerkleization } from "./binary-merkleization.js";
 
 describe("binaryMerkleization", () => {
   it("should correctly calculate merkle root for empty data", async () => {
