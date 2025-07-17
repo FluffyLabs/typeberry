@@ -72,8 +72,8 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     /** `x_s` */
     private readonly currentServiceId: ServiceId,
     nextNewServiceIdCandidate: ServiceId,
-    private currentTimeslot: TimeSlot,
-    private chainSpec: ChainSpec,
+    private readonly currentTimeslot: TimeSlot,
+    private readonly chainSpec: ChainSpec,
   ) {
     this.updatedState = new AccumulationStateUpdate(currentServiceId);
     this.nextNewServiceId = this.getNextAvailableServiceId(nextNewServiceIdCandidate);
@@ -703,7 +703,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     const isRemoving = current !== null && data === null;
     const countDiff = isAddingNew ? 1 : isRemoving ? -1 : 0;
     const lenDiff = (data?.length ?? 0) - (current?.length ?? 0);
-    const keyLen = isAddingNew ? 32n : isRemoving ? -32n : 0n;
+    const keyLen = isAddingNew ? BigInt(HASH_SIZE) : isRemoving ? BigInt(-HASH_SIZE) : 0n;
     const serviceInfo = this.getCurrentServiceInfo();
     const items = serviceInfo.storageUtilisationCount + countDiff;
     const bytes = serviceInfo.storageUtilisationBytes + BigInt(lenDiff) + keyLen;

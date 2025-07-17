@@ -79,7 +79,7 @@ export class DeferredTransfers {
       case UpdatePreimageKind.Remove:
         return null;
       case UpdatePreimageKind.UpdateOrAdd:
-        return this.state.getService(serviceId)?.getPreimage(preimageUpdate.action.item.hash) ?? null;
+        return this.state.getService(serviceId)?.getPreimage(preimageHash) ?? null;
     }
   }
 
@@ -144,7 +144,7 @@ export class DeferredTransfers {
       const code = this.getPotentiallyUpdatedPreimage(preimages, serviceId, codeHash.asOpaque());
 
       const existingUpdateIndex = servicesUpdates.findIndex((x) => x.serviceId === serviceId);
-      const amount = transfers.reduce((acc, item) => acc + item.amount, 0n);
+      const amount = sumU64(transfers.map(item => item.amount));
       if (existingUpdateIndex < 0 || servicesUpdates[existingUpdateIndex].action.kind === UpdateServiceKind.Create) {
         const update = UpdateService.update({
           serviceId,
