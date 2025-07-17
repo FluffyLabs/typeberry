@@ -1,7 +1,8 @@
 import { it } from "node:test";
 
 import type { PerValidator } from "@typeberry/block";
-import { BytesBlob } from "@typeberry/bytes";
+import { fromJson } from "@typeberry/block-json";
+import type { BytesBlob } from "@typeberry/bytes";
 import { FixedSizeArray } from "@typeberry/collections";
 import {
   N_CHUNKS_REQUIRED,
@@ -17,8 +18,8 @@ import { getChainSpec } from "./spec.js";
 
 export class EcTest {
   static fromJson: FromJson<EcTest> = {
-    data: json.fromString(BytesBlob.parseBlob),
-    shards: json.array(json.fromString(BytesBlob.parseBlob)),
+    data: fromJson.bytesBlobNoPrefix,
+    shards: json.array(fromJson.bytesBlobNoPrefix),
   };
 
   data!: BytesBlob;
