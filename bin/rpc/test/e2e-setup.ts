@@ -1,6 +1,6 @@
 import { JamConfig, main as jam, loadConfig } from "@typeberry/jam";
+import { DEFAULTS } from "@typeberry/jam-cli";
 import { Level, Logger } from "@typeberry/logger";
-import { DEFAULTS } from "../../jam-cli/args.js";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 

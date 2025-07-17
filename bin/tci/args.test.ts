@@ -142,7 +142,7 @@ describe("Typeberry Common Interface (TCI): Arguments", () => {
   it("should throw Invalid value: too long hex", () => {
     assert.throws(() => parseArgs(["--bls", "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2021"]), {
       message:
-        "Invalid value '0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2021' for flag '--bls': Error: Assertion failure: Given buffer has incorrect size 33 vs expected 32",
+        "Invalid value '0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2021' for flag '--bls': Error: Input string too long. Expected 32, got 33",
     });
   });
 

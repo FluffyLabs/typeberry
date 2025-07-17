@@ -1,6 +1,7 @@
 import { type Comparator, Ordering } from "@typeberry/ordering";
 import { type Opaque, TEST_COMPARE_VIA_STRING, type TokenOf, asOpaqueType, check } from "@typeberry/utils";
 
+// TODO: [MaSo] Update BytesBlob and Bytes, so they return Result (not throw error)
 /**
  * A variable-length blob of bytes with a concise text representation.
  *
@@ -187,12 +188,20 @@ export class Bytes<T extends number> extends BytesBlob {
 
   /** Parse a hex-encoded fixed-length bytes without `0x` prefix. */
   static parseBytesNoPrefix<X extends number>(v: string, len: X): Bytes<X> {
+    if (v.length > 2 * len) {
+      throw new Error(`Input string too long. Expected ${len}, got ${v.length / 2}`);
+    }
+
     const blob = BytesBlob.parseBlobNoPrefix(v);
     return new Bytes(blob.raw, len);
   }
 
   /** Parse a hex-encoded fixed-length bytes with `0x` prefix. */
   static parseBytes<X extends number>(v: string, len: X): Bytes<X> {
+    if (v.length > 2 * len + 2) {
+      throw new Error(`Input string too long. Expected ${len}, got ${v.length / 2 - 1}`);
+    }
+
     const blob = BytesBlob.parseBlob(v);
     return new Bytes(blob.raw, len);
   }

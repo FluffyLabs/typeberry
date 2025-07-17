@@ -165,7 +165,7 @@ describe("Bytes", () => {
       Bytes.parseBytes(input, 16);
       assert.fail("Should throw an exception");
     } catch (e) {
-      assert.strictEqual(`${e}`, "Error: Assertion failure: Given buffer has incorrect size 32 vs expected 16");
+      assert.strictEqual(`${e}`, "Error: Input string too long. Expected 16, got 32");
     }
   });
 
