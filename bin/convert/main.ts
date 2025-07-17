@@ -65,6 +65,15 @@ function loadInputFile(
     throw new Error("Missing input file!");
   }
 
+  if (file.endsWith(".bin")) {
+    const fileContent = fs.readFileSync(withRelPath(file));
+
+    return {
+      type: "blob",
+      data: BytesBlob.blobFrom(fileContent),
+    };
+  }
+
   const fileContent = fs.readFileSync(withRelPath(file), "utf8").trim();
   if (file.endsWith(".hex")) {
     return {

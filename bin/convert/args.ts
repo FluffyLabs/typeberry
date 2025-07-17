@@ -6,11 +6,11 @@ export const HELP = `
 @typeberry/convert ${packageJson.version} by Fluffy Labs.
 
 Usage:
-  @typeberry/convert [options] <hex-or-json-input-file> <type> [process] [output-format]
+  @typeberry/convert [options] <bin-hex-or-json-input-file> <type> [process] [output-format]
 
 Attempts to read provided input file as 'type' and output in requested 'output-format'.
 For some 'type's it's additionally possible to process the data before outputting it.
-The input type is detected from file extension ('.hex' or '.json').
+The input type is detected from file extension ('.bin', '.hex' or '.json').
 
 Example usage:
   @typeberry/convert ./genesis-header.json header to-hex
