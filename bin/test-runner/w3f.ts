@@ -4,6 +4,8 @@ import { runners } from "./w3f/runners.js";
 main(runners, process.argv.slice(2), "test-vectors/w3f-fluffy", {
   ignored: [
     "traces/",
+    // TODO [ToDr] Erasure coding test vectors need to be updated to GP 0.7.0
+    "erasure/",
     // TODO [ToDr] Some accumulate tests fail due to incorrect
     // storage bytes counting. This is fixed on `ms-deferred-transfers`
     // so we will uncomment these after the PR is merged.

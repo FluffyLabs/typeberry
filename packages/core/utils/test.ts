@@ -204,7 +204,9 @@ export class ErrorsCollector {
     const addContext = (e: unknown, context: string[]) => {
       const preamble = `❌  DATA MISMATCH @ ${context.join(".")}\n`;
       if (e instanceof Error) {
-        e.stack = `${preamble}${e.stack}`;
+        if (context.length > 0) {
+          e.stack = `${preamble}${e.stack}`;
+        }
         return e;
       }
       return new Error(`${preamble}${e}`);
