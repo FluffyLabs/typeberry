@@ -93,7 +93,7 @@ type InvocationResult = {
 
 type ParallelAccumulationResult = {
   stateUpdates: [ServiceId, AccumulationStateUpdate][];
-  gasCosts: [ServiceId, ServiceGas][];
+  gasCost: ServiceGas;
   yieldedRoots: [ServiceId, OpaqueHash][];
   pendingTransfers: PendingTransfer[];
 };
@@ -122,8 +122,6 @@ const ACCUMULATE_ARGS_CODEC = codec.object({
 });
 
 export class Accumulate {
-  private statistics = new Map<ServiceId, CountAndGasUsed>();
-
   constructor(
     public readonly chainSpec: ChainSpec,
     public readonly state: AccumulateState,
@@ -281,7 +279,6 @@ export class Accumulate {
       return { stateUpdate: null, consumedGas: gasCost };
     }
 
-    this.statistics.set(serviceId, { count: tryAsU32(reports.length), gasUsed: result.ok.consumedGas });
     return result.ok;
   }
 
@@ -298,13 +295,14 @@ export class Accumulate {
     reports: WorkReport[],
     slot: TimeSlot,
     entropy: EntropyHash,
+    statistics: Map<ServiceId, CountAndGasUsed>,
   ): Promise<SequentialAccumulationResult> {
     const i = this.findReportCutoffIndex(gasLimit, reports);
 
     if (i === 0) {
       return {
         accumulatedReports: tryAsU32(0),
-        gasCosts: [],
+        gasCost: tryAsServiceGas(0),
         yieldedRoots: [],
         pendingTransfers: [],
         stateUpdates: [],
@@ -314,33 +312,34 @@ export class Accumulate {
     const reportsToAccumulateInParallel = reports.slice(0, i);
     const reportsToAccumulateSequentially = reports.slice(i);
 
-    const { gasCosts, yieldedRoots, pendingTransfers, stateUpdates, ...rest } = await this.accumulateInParallel(
+    const { gasCost, yieldedRoots, pendingTransfers, stateUpdates, ...rest } = await this.accumulateInParallel(
       reportsToAccumulateInParallel,
       slot,
       entropy,
+      statistics,
     );
     assertEmpty(rest);
 
-    const consumedGas = gasCosts.reduce((acc, [_, gas]) => acc + gas, 0n);
     // NOTE [ToDr] recursive invocation
     const {
       accumulatedReports,
-      gasCosts: seqGasCosts,
+      gasCost: seqGasCost,
       yieldedRoots: seqYieldedRoots,
       pendingTransfers: seqPendingTransfers,
       stateUpdates: seqStateUpdates,
       ...seqRest
     } = await this.accumulateSequentially(
-      tryAsServiceGas(gasLimit - consumedGas),
+      tryAsServiceGas(gasLimit - gasCost),
       reportsToAccumulateSequentially,
       slot,
       entropy,
+      statistics,
     );
     assertEmpty(seqRest);
 
     return {
       accumulatedReports: tryAsU32(i + accumulatedReports),
-      gasCosts: gasCosts.concat(seqGasCosts),
+      gasCost: tryAsServiceGas(gasCost + seqGasCost),
       yieldedRoots: yieldedRoots.concat(seqYieldedRoots),
       pendingTransfers: pendingTransfers.concat(seqPendingTransfers),
       stateUpdates: stateUpdates.concat(seqStateUpdates),
@@ -361,6 +360,7 @@ export class Accumulate {
     reports: WorkReport[],
     slot: TimeSlot,
     entropy: EntropyHash,
+    statistics: Map<ServiceId, CountAndGasUsed>,
   ): Promise<ParallelAccumulationResult> {
     const autoAccumulateServiceIds = this.state.privilegedServices.autoAccumulateServices.map(({ service }) => service);
     const allServiceIds = reports
@@ -369,14 +369,19 @@ export class Accumulate {
     const serviceIds = uniquePreserveOrder(autoAccumulateServiceIds.concat(allServiceIds));
 
     const stateUpdates: [ServiceId, AccumulationStateUpdate][] = [];
-    const gasCosts: [ServiceId, ServiceGas][] = [];
+    let gasCost: ServiceGas = tryAsServiceGas(0);
     const yieldedRoots: [ServiceId, OpaqueHash][] = [];
     const pendingTransfers: PendingTransfer[] = [];
 
     for (const serviceId of serviceIds) {
       const { consumedGas, stateUpdate } = await this.accumulateSingleService(serviceId, reports, slot, entropy);
 
-      gasCosts.push([serviceId, tryAsServiceGas(consumedGas)]);
+      gasCost = tryAsServiceGas(gasCost + consumedGas);
+
+      const serviceStatistics = statistics.get(serviceId) ?? { count: tryAsU32(0), gasUsed: tryAsServiceGas(0) };
+      serviceStatistics.count = tryAsU32(serviceStatistics.count + reports.length);
+      serviceStatistics.gasUsed = tryAsServiceGas(serviceStatistics.gasUsed + consumedGas);
+      statistics.set(serviceId, serviceStatistics);
 
       if (stateUpdate === null) {
         continue;
@@ -394,7 +399,7 @@ export class Accumulate {
       stateUpdates,
       pendingTransfers,
       yieldedRoots,
-      gasCosts,
+      gasCost,
     };
   }
 
@@ -534,7 +539,7 @@ export class Accumulate {
   }
 
   async transition({ reports, slot, entropy }: AccumulateInput): Promise<Result<AccumulateResult, ACCUMULATION_ERROR>> {
-    this.statistics = new Map();
+    const statistics = new Map();
     const accumulateQueue = new AccumulateQueue(this.chainSpec, this.state);
     const toAccumulateImmediately = accumulateQueue.getWorkReportsToAccumulateImmediately(reports);
     const toAccumulateLater = accumulateQueue.getWorkReportsToAccumulateLater(reports);
@@ -549,8 +554,8 @@ export class Accumulate {
 
     const gasLimit = this.getGasLimit();
 
-    const { accumulatedReports, yieldedRoots, gasCosts, pendingTransfers, stateUpdates, ...rest } =
-      await this.accumulateSequentially(gasLimit, accumulatableReports, slot, entropy);
+    const { accumulatedReports, yieldedRoots, gasCost, pendingTransfers, stateUpdates, ...rest } =
+      await this.accumulateSequentially(gasLimit, accumulatableReports, slot, entropy, statistics);
     assertEmpty(rest);
 
     const accumulated = accumulatableReports.slice(0, accumulatedReports);
@@ -568,7 +573,7 @@ export class Accumulate {
         ...accStateUpdate,
         ...servicesStateUpdate.ok,
       },
-      accumulationStatistics: this.statistics,
+      accumulationStatistics: statistics,
       pendingTransfers,
     });
   }
