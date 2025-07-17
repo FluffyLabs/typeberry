@@ -5,7 +5,7 @@ import { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { PartialStateDb } from "@typeberry/jam-host-calls/externalities/partial-state-db.js";
 import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
-import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
+import { sumU64, tryAsU32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import {
   InMemoryService,
@@ -79,6 +79,8 @@ export class DeferredTransfers {
       case UpdatePreimageKind.Remove:
         return null;
       case UpdatePreimageKind.UpdateOrAdd:
+        // TODO [MaSi]: It is possible to have `Provide` and `UpdateOrAdd` in `preimages` and it will return `null`.
+        // We have to check if this situation is possible in real world and handle it
         return this.state.getService(serviceId)?.getPreimage(preimageHash) ?? null;
     }
   }
@@ -144,23 +146,21 @@ export class DeferredTransfers {
       const code = this.getPotentiallyUpdatedPreimage(preimages, serviceId, codeHash.asOpaque());
 
       const existingUpdateIndex = servicesUpdates.findIndex((x) => x.serviceId === serviceId);
-      const amount = sumU64(transfers.map(item => item.amount));
+      const newBalance = sumU64(info.balance, ...transfers.map((item) => item.amount));
+
+      if (newBalance.overflow) {
+        // TODO [MaSi]: what to do in case of overflow?
+        continue;
+      }
+      const newInfo = ServiceAccountInfo.create({ ...info, balance: newBalance.value });
+      const newUpdate = UpdateService.update({
+        serviceId,
+        serviceInfo: newInfo,
+      });
       if (existingUpdateIndex < 0 || servicesUpdates[existingUpdateIndex].action.kind === UpdateServiceKind.Create) {
-        const update = UpdateService.update({
-          serviceId,
-          serviceInfo: ServiceAccountInfo.create({ ...info, balance: tryAsU64(info.balance + amount) }),
-        });
-        servicesUpdates.push(update);
+        servicesUpdates.push(newUpdate);
       } else {
-        const existingUpdate = servicesUpdates[existingUpdateIndex];
-        const update = UpdateService.update({
-          serviceId,
-          serviceInfo: ServiceAccountInfo.create({
-            ...existingUpdate.action.account,
-            balance: tryAsU64(info.balance + amount),
-          }),
-        });
-        servicesUpdates[existingUpdateIndex] = update;
+        servicesUpdates[existingUpdateIndex] = newUpdate;
       }
 
       if (code === null || transfers.length === 0) {
