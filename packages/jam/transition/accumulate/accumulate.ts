@@ -399,7 +399,6 @@ export class Accumulate {
    */
   private mergeServiceStateUpdates(
     stateUpdates: [ServiceId, AccumulationStateUpdate][],
-    slot: TimeSlot,
   ): Result<ServiceStateUpdate, ACCUMULATION_ERROR> {
     const { authManager, manager, validatorsManager } = this.state.privilegedServices;
     let privilegedServices: PrivilegedServices | null = null;
@@ -434,7 +433,7 @@ export class Accumulate {
         designatedValidatorData = stateUpdate.validatorsData;
       }
 
-      serviceUpdates.push(stateUpdate.intoServicesUpdate(slot));
+      serviceUpdates.push(stateUpdate.services);
     }
 
     const servicesUpdate = serviceUpdates.reduce(
@@ -548,7 +547,7 @@ export class Accumulate {
     const accumulated = accumulatableReports.slice(0, accumulatedReports);
 
     const accStateUpdate = this.getAccumulationStateUpdate(accumulated, toAccumulateLater, slot);
-    const servicesStateUpdate = this.mergeServiceStateUpdates(stateUpdates, slot);
+    const servicesStateUpdate = this.mergeServiceStateUpdates(stateUpdates);
 
     if (servicesStateUpdate.isError) {
       return servicesStateUpdate;
