@@ -88,8 +88,10 @@ export class StateEntries<TEntries extends FullEntries | TruncatedEntries = Full
   applyUpdate(stateEntriesUpdate: Iterable<StateEntryUpdate>) {
     for (const [action, key, value] of stateEntriesUpdate) {
       if (action === StateEntryUpdateAction.Insert) {
+        this.trieCache = null;
         this.entries.data.set(key, value);
       } else if (action === StateEntryUpdateAction.Remove) {
+        this.trieCache = null;
         this.entries.data.delete(key);
       } else {
         assertNever(action);
