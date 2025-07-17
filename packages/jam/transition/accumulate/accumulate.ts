@@ -30,8 +30,8 @@ import {
   UpdateServiceKind,
   hashComparator,
 } from "@typeberry/state";
+import { binaryMerkleization } from "@typeberry/state-merkleization";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
-import type { TrieHasher, TrieNodeHash } from "@typeberry/trie";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
 import { Result, assertEmpty, check } from "@typeberry/utils";
 import type { CountAndGasUsed } from "../statistics.js";
@@ -580,9 +580,9 @@ export class Accumulate {
 }
 
 /**
- * Retruns a new root hash
+ * Returns a new root hash
  *
- * This function probably doesn't work correctly, since the current test vectors don't verify the root hash.
+ * https://graypaper.fluffylabs.dev/#/38c4e62/3c9d013c9d01?v=0.7.0
  */
 async function getRootHash(yieldedRoots: [ServiceId, OpaqueHash][]): Promise<AccumulateRoot> {
   const keccakHasher = await KeccakHasher.create();
@@ -593,30 +593,4 @@ async function getRootHash(yieldedRoots: [ServiceId, OpaqueHash][]): Promise<Acc
   });
 
   return binaryMerkleization(values, trieHasher);
-}
-
-function binaryMerkleization(input: BytesBlob[], hasher: TrieHasher) {
-  if (input.length === 1) {
-    return hasher.hashConcat(input[0].raw);
-  }
-
-  function upperN(input: BytesBlob[], hasher: TrieHasher): BytesBlob {
-    if (input.length === 0) {
-      return Bytes.zero(HASH_SIZE).asOpaque();
-    }
-    if (input.length === 1) {
-      return input[0];
-    }
-
-    const mid = Math.ceil(input.length / 2);
-    const left = input.slice(0, mid);
-    const right = input.slice(mid);
-
-    return hasher.hashConcat(BytesBlob.blobFromString("node").raw, [
-      upperN(left, hasher).raw,
-      upperN(right, hasher).raw,
-    ]);
-  }
-
-  return upperN(input, hasher) as TrieNodeHash;
 }

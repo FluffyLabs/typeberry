@@ -28,3 +28,4 @@ export * from "./serialized-state.js";
 export * from "./state-entries.js";
 export * from "./serialize.js";
 export * from "./keys.js";
+export * from "./binary-merkalization.js";
