@@ -2,6 +2,11 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { HASH_SIZE } from "@typeberry/hash";
 import type { TrieHasher, TrieNodeHash } from "@typeberry/trie";
 
+/**
+ *. Binary merkleization for well-balanced trees.
+ *
+ * https://graypaper.fluffylabs.dev/#/38c4e62/3c5d033c5d03?v=0.7.0
+ */
 export function binaryMerkleization(input: BytesBlob[], hasher: TrieHasher): TrieNodeHash {
   if (input.length === 1) {
     return hasher.hashConcat(input[0].raw);
