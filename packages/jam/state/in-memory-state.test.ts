@@ -559,7 +559,10 @@ describe("InMemoryState", () => {
           preimage,
           slot: slot1,
         }),
-        UpdatePreimage.updateOrAdd({ serviceId, lookupHistory: secondItem }),
+        UpdatePreimage.updateOrAdd({
+          serviceId,
+          lookupHistory: secondItem,
+        }),
       ],
     });
 

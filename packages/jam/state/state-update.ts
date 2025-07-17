@@ -1,7 +1,7 @@
 import type { ServiceId, TimeSlot } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import type { U32 } from "@typeberry/numbers";
+import { type U32, tryAsU32 } from "@typeberry/numbers";
 import { assertNever } from "@typeberry/utils";
 import type { LookupHistoryItem, PreimageItem, ServiceAccountInfo, StorageItem, StorageKey } from "./service.js";
 
@@ -42,18 +42,7 @@ export class UpdatePreimage {
         },
   ) {}
 
-  get hash(): PreimageHash {
-    switch (this.action.kind) {
-      case UpdatePreimageKind.Provide:
-        return this.action.preimage.hash;
-      case UpdatePreimageKind.Remove:
-        return this.action.hash;
-      case UpdatePreimageKind.UpdateOrAdd:
-        return this.action.item.hash;
-    }
-    throw assertNever(this.action);
-  }
-
+  /** A preimage is provided. We should update the lookuphistory and add the preimage to db. */
   static provide({
     serviceId,
     preimage,
@@ -66,6 +55,7 @@ export class UpdatePreimage {
     });
   }
 
+  /** The preimage should be removed completely from the database. */
   static remove({ serviceId, hash, length }: { serviceId: ServiceId; hash: PreimageHash; length: U32 }) {
     return new UpdatePreimage(serviceId, {
       kind: UpdatePreimageKind.Remove,
@@ -74,11 +64,36 @@ export class UpdatePreimage {
     });
   }
 
+  /** Update the lookup history of some preimage or add a new one (request). */
   static updateOrAdd({ serviceId, lookupHistory }: { serviceId: ServiceId; lookupHistory: LookupHistoryItem }) {
     return new UpdatePreimage(serviceId, {
       kind: UpdatePreimageKind.UpdateOrAdd,
       item: lookupHistory,
     });
+  }
+
+  get hash(): PreimageHash {
+    switch (this.action.kind) {
+      case UpdatePreimageKind.Provide:
+        return this.action.preimage.hash;
+      case UpdatePreimageKind.Remove:
+        return this.action.hash;
+      case UpdatePreimageKind.UpdateOrAdd:
+        return this.action.item.hash;
+    }
+    throw assertNever(this.action);
+  }
+
+  get length(): U32 {
+    switch (this.action.kind) {
+      case UpdatePreimageKind.Provide:
+        return tryAsU32(this.action.preimage.blob.length);
+      case UpdatePreimageKind.Remove:
+        return this.action.length;
+      case UpdatePreimageKind.UpdateOrAdd:
+        return this.action.item.length;
+    }
+    throw assertNever(this.action);
   }
 }
 
@@ -176,6 +191,7 @@ export class UpdateStorage {
   }
 }
 
+// TODO [ToDr] This would be more convenient to use if the data was grouped by `ServiceId`.
 export type ServicesUpdate = {
   /** Service ids to remove from state alongside all their data. */
   servicesRemoved: ServiceId[];
