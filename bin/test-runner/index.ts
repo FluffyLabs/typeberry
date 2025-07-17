@@ -14,6 +14,7 @@ const suites: { [key: string]: string } = {
   w3f: "jamtestvectors",
   "w3f-davxy": "jamtestvectors-davxy",
   jamduna: "jamdunavectors",
+  javajam: "javajamvectors",
 };
 
 const suiteToRun = process.argv[2] ?? "w3f";

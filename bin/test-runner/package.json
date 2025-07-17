@@ -33,7 +33,7 @@
     "start": "tsx ./index.ts",
     "w3f": "tsx ./w3f.ts",
     "w3f-davxy": "tsx ./w3f-davxy.ts",
-    "jamduna": "tsx ./jamduna.ts",
+    "jamduna": "tsx --test-timeout=600000 ./jamduna.ts",
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "author": "Fluffy Labs",
