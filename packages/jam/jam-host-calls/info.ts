@@ -1,4 +1,4 @@
-import { type ServiceId, tryAsServiceGas } from "@typeberry/block";
+import { type ServiceId, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
@@ -83,7 +83,7 @@ export class Info implements HostCallHandler {
  *
  * Used exclusively by `info` host call.
  *
- * https://graypaper.fluffylabs.dev/#/85129da/307902307902?v=0.6.3
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/337602337602?v=0.6.7
  */
 export const codecServiceAccountInfoWithThresholdBalance = codec.object(
   {
@@ -94,6 +94,10 @@ export const codecServiceAccountInfoWithThresholdBalance = codec.object(
     onTransferMinGas: codec.u64.convert((i) => i, tryAsServiceGas),
     storageUtilisationBytes: codec.u64,
     storageUtilisationCount: codec.u32,
+    gratisStorage: codec.u64,
+    created: codec.u32.convert((x) => x, tryAsTimeSlot),
+    lastAccumulation: codec.u32.convert((x) => x, tryAsTimeSlot),
+    parentService: codec.u32.convert((x) => x, tryAsServiceId),
   },
   "ServiceAccountInfoWithThresholdBalance",
 );

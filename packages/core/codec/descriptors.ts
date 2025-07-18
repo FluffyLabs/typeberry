@@ -326,6 +326,22 @@ export namespace codec {
     (s) => s.bool(),
   );
 
+  export const noopBig = Descriptor.new<bigint>(
+    "noopBig",
+    exactHint(0),
+    (_e, _v) => 0n,
+    (_d) => 0n,
+    (_s) => 0n,
+  );
+
+  export const noop = Descriptor.new<number>(
+    "noop",
+    exactHint(0),
+    (_e, _v) => 0,
+    (_d) => 0,
+    (_s) => 0,
+  );
+
   /** Variable-length bytes blob. */
   export const blob = Descriptor.new<BytesBlob>(
     "BytesBlob",
