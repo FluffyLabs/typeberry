@@ -422,7 +422,7 @@ const TEST_VALIDATOR_DATA =
 
 // from post state of jamduna/assurances/1_004.json
 export const TEST_STATE_ROOT = Compatibility.is(GpVersion.V0_6_7)
-  ? "0xc4a7400c1a862829f68680d7e70b80ce6f02bea1f32e1f492ea5a51c8ab3b9b6"
+  ? "0x88f41b385f235a9dcf6d05c7223cb0a4cd1ac2b69ea5d436cc7b0d7d7bad8a5e"
   : Compatibility.isGreaterOrEqual(GpVersion.V0_6_5)
     ? "0x8e7d1c93e8b9c88584e2212330e062826b5c925a99627b2120e33e41563f4d79"
     : "0xc460608b85a3a6b405f967fbd47b10b185516423f6a6744485b9ecd2c0c72e77";
