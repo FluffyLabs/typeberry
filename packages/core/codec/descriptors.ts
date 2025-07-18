@@ -330,18 +330,18 @@ export namespace codec {
   export const noopBig = Descriptor.new<bigint>(
     "noopBig",
     exactHint(0),
-    (_e, _v) => 0n,
+    (_e, _v) => {},
     (_d) => 0n,
-    (_s) => 0n,
+    (_s) => {},
   );
 
   /** 0-byte noop returns number type. */
   export const noop = Descriptor.new<number>(
     "noop",
     exactHint(0),
-    (_e, _v) => 0,
+    (_e, _v) => {},
     (_d) => 0,
-    (_s) => 0,
+    (_s) => {},
   );
 
   /** Variable-length bytes blob. */
