@@ -11,7 +11,7 @@ import {
   workReportFromJson,
   workResultFromJson,
 } from "@typeberry/block-json";
-import { tinyChainSpec } from "@typeberry/config";
+import { fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { runner } from "../common.js";
 import { AccumulateTest, runAccumulateTest } from "./accumulate.js";
 import { AssurancesTestFull, AssurancesTestTiny, runAssurancesTestFull, runAssurancesTestTiny } from "./assurances.js";
@@ -52,19 +52,8 @@ export const runners = [
   runner("assurances/tiny", AssurancesTestTiny.fromJson, runAssurancesTestTiny),
   runner("assurances/full", AssurancesTestFull.fromJson, runAssurancesTestFull),
   runner("authorizations", AuthorizationsTest.fromJson, runAuthorizationsTest),
-  runner("codec/assurances_extrinsic", getAssurancesExtrinsicFromJson(tinyChainSpec), runAssurancesExtrinsicTest),
-  runner("codec/block", blockFromJson(tinyChainSpec), runBlockTest),
-  runner("codec/disputes_extrinsic", disputesExtrinsicFromJson, runDisputesExtrinsicTest),
-  runner("codec/extrinsic", getExtrinsicFromJson(tinyChainSpec), runExtrinsicTest),
-  runner("codec/guarantees_extrinsic", guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest),
-  runner("codec/header", headerFromJson, runHeaderTest),
-  runner("codec/preimages_extrinsic", preimagesExtrinsicFromJson, runPreimagesExtrinsicTest),
-  runner("codec/refine_context", refineContextFromJson, runRefineContextTest),
-  runner("codec/tickets_extrinsic", ticketsExtrinsicFromJson, runTicketsExtrinsicTest),
-  runner("codec/work_item", workItemFromJson, runWorkItemTest),
-  runner("codec/work_package", workPackageFromJson, runWorkPackageTest),
-  runner("codec/work_report", workReportFromJson, runWorkReportTest),
-  runner("codec/work_result", workResultFromJson, runWorkResultTest),
+  ...codecRunners("tiny"),
+  ...codecRunners("full"),
   runner("disputes", DisputesTest.fromJson, runDisputesTest),
   runner("erasure_coding", EcTest.fromJson, runEcTest),
   runner("history", HistoryTest.fromJson, runHistoryTest),
@@ -83,3 +72,22 @@ export const runners = [
   runner("trie", trieTestSuiteFromJson, runTrieTest),
   runner("traces", StateTransition.fromJson, runStateTransition),
 ];
+
+function codecRunners(flavor: "tiny" | "full") {
+  const spec = flavor === "tiny" ? tinyChainSpec : fullChainSpec;
+  return [
+    runner(`codec/${flavor}/assurances_extrinsic`, getAssurancesExtrinsicFromJson(spec), runAssurancesExtrinsicTest),
+    runner(`codec/${flavor}/block`, blockFromJson(spec), runBlockTest),
+    runner(`codec/${flavor}/disputes_extrinsic`, disputesExtrinsicFromJson, runDisputesExtrinsicTest),
+    runner(`codec/${flavor}/extrinsic`, getExtrinsicFromJson(spec), runExtrinsicTest),
+    runner(`codec/${flavor}/guarantees_extrinsic`, guaranteesExtrinsicFromJson, runGuaranteesExtrinsicTest),
+    runner(`codec/${flavor}/header`, headerFromJson, runHeaderTest),
+    runner(`codec/${flavor}/preimages_extrinsic`, preimagesExtrinsicFromJson, runPreimagesExtrinsicTest),
+    runner(`codec/${flavor}/refine_context`, refineContextFromJson, runRefineContextTest),
+    runner(`codec/${flavor}/tickets_extrinsic`, ticketsExtrinsicFromJson, runTicketsExtrinsicTest),
+    runner(`codec/${flavor}/work_item`, workItemFromJson, runWorkItemTest),
+    runner(`codec/${flavor}/work_package`, workPackageFromJson, runWorkPackageTest),
+    runner(`codec/${flavor}/work_report`, workReportFromJson, runWorkReportTest),
+    runner(`codec/${flavor}/work_result`, workResultFromJson, runWorkResultTest),
+  ];
+}

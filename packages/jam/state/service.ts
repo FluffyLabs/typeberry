@@ -108,17 +108,17 @@ export type StorageKey = Opaque<OpaqueHash, "stateKey">;
 
 export class StorageItem extends WithDebug {
   static Codec = codec.Class(StorageItem, {
-    hash: codec.bytes(HASH_SIZE).asOpaque<StorageKey>(),
-    blob: codec.blob,
+    key: codec.bytes(HASH_SIZE).asOpaque<StorageKey>(),
+    value: codec.blob,
   });
 
-  static create({ hash, blob }: CodecRecord<StorageItem>) {
-    return new StorageItem(hash, blob);
+  static create({ key, value }: CodecRecord<StorageItem>) {
+    return new StorageItem(key, value);
   }
 
   private constructor(
-    readonly hash: StorageKey,
-    readonly blob: BytesBlob,
+    readonly key: StorageKey,
+    readonly value: BytesBlob,
   ) {
     super();
   }

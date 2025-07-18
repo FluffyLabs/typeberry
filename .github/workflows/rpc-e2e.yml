@@ -7,6 +7,7 @@ on:
 
 env:
   JAMTESTNET_REF: 6d41bb2e8f4d60dc1806df42401363b54f956c0a
+  GP_VERSION: 0.6.4
 
 jobs:
   e2e:

@@ -22,6 +22,7 @@ import {
 import { Fetch, type FetchExternalities } from "@typeberry/jam-host-calls/fetch.js";
 import { GasHostCall } from "@typeberry/jam-host-calls/gas.js";
 import { type AccountsInfo, Info } from "@typeberry/jam-host-calls/info.js";
+import { LogHostCall } from "@typeberry/jam-host-calls/log.js";
 import { type AccountsLookup, Lookup } from "@typeberry/jam-host-calls/lookup.js";
 import { type AccountsRead, Read } from "@typeberry/jam-host-calls/read.js";
 import { type AccountsWrite, Write } from "@typeberry/jam-host-calls/write.js";
@@ -87,6 +88,7 @@ export class PvmExecutor {
 
     const generalHandlers: HostCallHandler[] = [
       new GasHostCall(serviceId),
+      new LogHostCall(serviceId),
       new Read(serviceId, externalities.serviceExternalities),
       new Write(serviceId, externalities.serviceExternalities),
       new Fetch(serviceId, externalities.fetchExternalities),
