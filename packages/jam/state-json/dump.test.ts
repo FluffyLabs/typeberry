@@ -3,8 +3,7 @@ import { describe, it } from "node:test";
 import { tinyChainSpec } from "@typeberry/config";
 import { parseFromJson } from "@typeberry/json-parser";
 import { StateEntries } from "@typeberry/state-merkleization";
-
-import { Compatibility, GpVersion } from "@typeberry/utils/compatibility.js";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { fullStateDumpFromJson } from "./dump.js";
 
 describe("JSON state dump", () => {

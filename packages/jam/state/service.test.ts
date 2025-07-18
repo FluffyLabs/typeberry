@@ -4,8 +4,7 @@ import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
-import { deepEqual } from "@typeberry/utils";
-import { Compatibility, GpVersion } from "@typeberry/utils/compatibility.js";
+import { Compatibility, GpVersion, deepEqual } from "@typeberry/utils";
 import { ServiceAccountInfo } from "./service.js";
 
 const encodedTestInfo = Compatibility.is(GpVersion.V0_6_7)
