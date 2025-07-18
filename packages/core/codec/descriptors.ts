@@ -326,6 +326,7 @@ export namespace codec {
     (s) => s.bool(),
   );
 
+  /** 0-byte noop returns bigint type. */
   export const noopBig = Descriptor.new<bigint>(
     "noopBig",
     exactHint(0),
@@ -334,6 +335,7 @@ export namespace codec {
     (_s) => 0n,
   );
 
+  /** 0-byte noop returns number type. */
   export const noop = Descriptor.new<number>(
     "noop",
     exactHint(0),
