@@ -28,12 +28,7 @@ export class JamConfig {
     devConfig?: DevConfig;
     seedConfig?: SeedDevConfig;
   }) {
-    let dev: DevConfig;
-    if (devConfig !== undefined) {
-      dev = devConfig;
-    } else {
-      dev = DEV_CONFIG;
-    }
+    let dev = (devConfig !== undefined) ? devConfig : {...DEV_CONFIG};
 
     let full: FullDevConfig;
     if (seedConfig !== undefined) {
