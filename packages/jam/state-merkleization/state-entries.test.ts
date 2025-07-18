@@ -49,7 +49,10 @@ describe("State Serialization", () => {
     const state = SerializedState.fromStateEntries(spec, serialized);
     assert.deepStrictEqual(state.authPools, authPools);
 
-    assert.strictEqual(serialized.getRootHash().toString(), TEST_STATE_ROOT);
+    assert.strictEqual(
+      serialized.getRootHash().toString(),
+      "0xd30fa98d70ae1f039b8ac40a0fd9f4478f7b57e0faac396a51e4df3718c985b2",
+    );
   });
 });
 

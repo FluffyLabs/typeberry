@@ -2,8 +2,7 @@ import { logger, main } from "./common.js";
 import { runners } from "./w3f/runners.js";
 
 main(runners, process.argv.slice(2), "test-vectors/w3f-davxy/traces", {
-  accepted: ["traces/safrole"],
-  // todo: remove /traces before merging and ignore all tests before commiting
+  accepted: ["traces/safrole", "traces/fallback"],
   ignored: ["genesis.json"],
 })
   .then((r) => logger.log(r))
