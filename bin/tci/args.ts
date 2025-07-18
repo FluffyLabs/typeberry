@@ -16,7 +16,7 @@ enum TciFlag {
 }
 
 export const HELP = `
-JAM compatible CLI for typeberry ${packageJson.version} by ${packageJson.author}
+Cross-implementation compatible CLI for typeberry ${packageJson.version} by ${packageJson.author}
 
 https://docs.jamcha.in/basics/cli-args
 
