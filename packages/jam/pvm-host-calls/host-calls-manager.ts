@@ -1,4 +1,5 @@
 import { CURRENT_SERVICE_ID, HostCallResult } from "@typeberry/jam-host-calls";
+import { Logger } from "@typeberry/logger";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
 import { check } from "@typeberry/utils";
 import {
@@ -9,6 +10,8 @@ import {
 } from "./host-call-handler.js";
 import type { IHostCallMemory } from "./host-call-memory.js";
 import type { IHostCallRegisters } from "./host-call-registers.js";
+
+const logger = Logger.new(import.meta.filename, "host-calls");
 
 // TODO [ToDr] Rename to just `HostCalls`
 /** Container for all available host calls. */
@@ -25,7 +28,11 @@ export class HostCallsManager {
 
   /** Get a host call by index. */
   get(hostCallIndex: HostCallIndex): HostCallHandler {
-    return this.hostCalls.get(hostCallIndex) ?? this.missing;
+    const hostCallHandler: HostCallHandler = this.hostCalls.get(hostCallIndex) ?? this.missing;
+    logger.trace(
+      `[${hostCallHandler.currentServiceId}] PVM invoking ${hostCallIndex} (${hostCallHandler.constructor.name}:${hostCallHandler.index})`,
+    );
+    return hostCallHandler;
   }
 }
 

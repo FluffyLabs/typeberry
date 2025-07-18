@@ -68,9 +68,6 @@ export const W_T = 128;
 /** `W_M`: The maximum number of exports in a work-package. */
 export const W_X = 3_072;
 
-/** `Y`: The number of slots into an epoch at which ticket-submission ends. */
-export const Y = 500;
-
 // TODO [ToDr] Not sure where these should live yet :(
 
 /**

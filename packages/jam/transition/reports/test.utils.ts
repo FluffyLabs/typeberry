@@ -19,7 +19,7 @@ import {
   guaranteesExtrinsicCodec,
 } from "@typeberry/block/guarantees.js";
 import { RefineContext } from "@typeberry/block/refine-context.js";
-import testWorkReport from "@typeberry/block/test-work-report.js";
+import { testWorkReportHex } from "@typeberry/block/test-helpers.js";
 import { type WorkPackageHash, type WorkPackageInfo, WorkReport } from "@typeberry/block/work-report.js";
 import { WorkExecResult, WorkExecResultKind, WorkRefineLoad, WorkResult } from "@typeberry/block/work-result.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
@@ -81,7 +81,7 @@ export function newWorkReport({
   prerequisites,
   resultSize,
 }: WorkReportOptions): WorkReport {
-  const source = BytesBlob.parseBlob(testWorkReport);
+  const source = BytesBlob.parseBlob(testWorkReportHex());
   const report = Decoder.decodeObject(WorkReport.Codec, source, tinyChainSpec);
   const context = RefineContext.create({
     anchor: anchorBlock !== undefined ? anchorBlock.asOpaque() : report.context.anchor,

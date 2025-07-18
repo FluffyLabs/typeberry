@@ -143,8 +143,8 @@ function convertInMemoryStateToDictionary(spec: ChainSpec, state: InMemoryState)
 
     // storage
     for (const storage of service.data.storage.values()) {
-      const { key, Codec } = serialize.serviceStorage(serviceId, storage.hash);
-      serialized.set(key, Encoder.encodeObject(Codec, storage.blob));
+      const { key, Codec } = serialize.serviceStorage(serviceId, storage.key);
+      serialized.set(key, Encoder.encodeObject(Codec, storage.value));
     }
 
     // lookup history

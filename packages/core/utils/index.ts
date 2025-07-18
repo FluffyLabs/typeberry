@@ -11,6 +11,7 @@
  * as an afterthought.
  */
 
+export * from "./compatibility.js";
 export * from "./debug.js";
 export * from "./opaque.js";
 export * from "./result.js";

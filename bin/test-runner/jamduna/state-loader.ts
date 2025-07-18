@@ -144,9 +144,9 @@ const kindMapping: { [k: string]: Appender } = {
       ],
     };
   },
-  account_storage: (blob, description) => {
+  account_storage: (value, description) => {
     const { serviceId, hash } = Parser.storage(description);
-    const storage = StorageItem.create({ hash, blob });
+    const storage = StorageItem.create({ key: hash, value });
 
     return {
       storage: [
