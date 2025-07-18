@@ -152,14 +152,14 @@ export class UpdateStorage {
     if (this.action.kind === UpdateStorageKind.Remove) {
       return this.action.key;
     }
-    return this.action.storage.hash;
+    return this.action.storage.key;
   }
 
   get value(): BytesBlob | null {
     if (this.action.kind === UpdateStorageKind.Remove) {
       return null;
     }
-    return this.action.storage.blob;
+    return this.action.storage.value;
   }
 }
 

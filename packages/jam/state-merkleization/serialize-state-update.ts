@@ -60,8 +60,8 @@ function* serializeStorage(storage: UpdateStorage[] | undefined): Generator<Stat
   for (const { action, serviceId } of storage ?? []) {
     switch (action.kind) {
       case UpdateStorageKind.Set: {
-        const codec = serialize.serviceStorage(serviceId, action.storage.hash);
-        yield [StateEntryUpdateAction.Insert, codec.key, action.storage.blob];
+        const codec = serialize.serviceStorage(serviceId, action.storage.key);
+        yield [StateEntryUpdateAction.Insert, codec.key, action.storage.value];
         break;
       }
       case UpdateStorageKind.Remove: {

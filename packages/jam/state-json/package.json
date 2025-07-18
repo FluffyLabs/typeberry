@@ -21,6 +21,7 @@
     "@typeberry/json-parser": "0.0.1",
     "@typeberry/numbers": "0.0.1",
     "@typeberry/state": "0.0.1",
-    "@typeberry/state-merkleization": "0.0.1"
+    "@typeberry/state-merkleization": "0.0.1",
+    "@typeberry/utils": "0.0.1"
   }
 }
