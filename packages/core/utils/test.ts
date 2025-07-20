@@ -123,7 +123,7 @@ export function deepEqual<T>(
     const toArray = (input: Map<unknown, unknown>): Array<{ key: unknown; value: unknown }> => {
       return Array.from(input.entries())
         .map(([key, value]) => ({ key, value }))
-        .toSorted((a, b) => {
+        .sort((a, b) => {
           const aKey = `${a.key}`;
           const bKey = `${b.key}`;
 
