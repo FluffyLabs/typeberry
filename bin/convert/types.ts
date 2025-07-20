@@ -8,7 +8,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { TruncatedHashDictionary } from "@typeberry/database";
 import type { FromJson } from "@typeberry/json-parser";
 import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
-import { InMemoryState } from "@typeberry/state";
+import type { InMemoryState } from "@typeberry/state";
 import { fullStateDumpFromJson } from "@typeberry/state-json";
 import { SerializedState, StateEntries } from "@typeberry/state-merkleization";
 import { inMemoryStateCodec } from "@typeberry/state-merkleization/in-memory-state-codec.js";
@@ -107,26 +107,26 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
     decode: StateTransition.Codec,
     json: () => StateTransition.fromJson,
     process: {
-      options: ["as-pre-state-dump", "as-post-state-dump"],
+      options: ["as-pre-state", "as-post-state"],
       run(spec: ChainSpec, data: unknown, option: string) {
         const test = data as StateTransition;
 
-        if (option === "as-pre-state-dump") {
+        if (option === "as-pre-state") {
           const dict = TruncatedHashDictionary.fromEntries(
             test.post_state.keyvals.map((x) => [x.key.asOpaque(), x.value]),
           );
           const entries = StateEntries.fromTruncatedDictionaryUnsafe(dict);
           const state = SerializedState.fromStateEntries(spec, entries);
-          return InMemoryState.copyFrom(state, new Map());
+          return state;
         }
 
-        if (option === "as-post-state-dump") {
+        if (option === "as-post-state") {
           const dict = TruncatedHashDictionary.fromEntries(
             test.post_state.keyvals.map((x) => [x.key.asOpaque(), x.value]),
           );
           const entries = StateEntries.fromTruncatedDictionaryUnsafe(dict);
           const state = SerializedState.fromStateEntries(spec, entries);
-          return InMemoryState.copyFrom(state, new Map());
+          return state;
         }
       },
     },
