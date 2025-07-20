@@ -1,7 +1,7 @@
 import "json-bigint-patch";
 import fs from "node:fs";
 import { start as startRepl } from "node:repl";
-import { BytesBlob } from "@typeberry/bytes";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
@@ -136,6 +136,8 @@ function dumpOutput(spec: ChainSpec, data: unknown, type: SupportedType, outputF
         replServer.context.inspect = inspect;
         replServer.context.type = type;
         replServer.context.toJson = toJson;
+        replServer.context.Bytes = Bytes;
+        replServer.context.BytesBlob = BytesBlob;
       }
 
       return;
