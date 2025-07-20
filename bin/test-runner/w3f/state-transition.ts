@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { Block } from "@typeberry/block";
 import { blockFromJson } from "@typeberry/block-json";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Decoder, Encoder, codec } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { SimpleAllocator, keccak } from "@typeberry/hash";
@@ -19,6 +19,13 @@ export class StateTransition {
     post_state: TestState.fromJson,
     block: blockFromJson(tinyChainSpec),
   };
+
+  static Codec = codec.object({
+    pre_state: TestState.Codec,
+    block: Block.Codec,
+    post_state: TestState.Codec,
+  });
+
   pre_state!: TestState;
   post_state!: TestState;
   block!: Block;
