@@ -40,7 +40,7 @@ The input type is detected from file extension (`.bin`, `.hex` or `.json`).
 Some input types support additional processing before output:
 
 - **state-dump**: `as-root-hash`, `as-entries`, `as-truncated-entries`
-- **state-transition-vector**: `as-pre-state-dump`, `as-post-state-dump`
+- **state-transition-vector**: `as-pre-state`, `as-post-state`
 
 ## Examples
 
@@ -67,8 +67,8 @@ When using `to-repl`, the tool starts an interactive JavaScript REPL with:
 
 - Your converted data available in the `data` variable
 - Utility functions:
-  - `inspect(obj, depth)` - Pretty-print objects with color
-  - `keys(obj)` - Get object keys safely
+  - `inspect(obj)` - Pretty-print objects 
+  - `toJson(obj)` - Dump the object into JSON
   - `type` - Shows the data type name
 - Standard REPL commands (`.help`, `.exit`, etc.)
 
@@ -76,9 +76,9 @@ Example REPL session:
 ```javascript
 header> data.timeSlotIndex
 42
-header> keys(data)
+header> Object.keys(data)
 ['parentHeaderHash', 'priorStateRoot', 'extrinsicHash', ...]
-header> inspect(data, 1)
+header> inspect(data)
 Header { ... }
 header> .exit
 ```
