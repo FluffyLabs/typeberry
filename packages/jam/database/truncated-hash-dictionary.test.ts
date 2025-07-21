@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { Bytes } from "@typeberry/bytes";
-import { HASH_SIZE } from "@typeberry/hash";
+import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { TRUNCATED_KEY_BYTES } from "@typeberry/trie";
 import { TruncatedHashDictionary } from "./truncated-hash-dictionary.js";
 
@@ -152,6 +152,23 @@ describe("TruncatedHashDictionary", () => {
       // then
       assert.deepStrictEqual(dict.get(key1), "second");
       assert.deepStrictEqual(dict.get(key2), "second");
+    });
+
+    it("should not reuse the same key object reference for different entries", () => {
+      const key1 = Bytes.parseBytes("0x4444444444444444444444444444444444444444444444444444444444444444", HASH_SIZE);
+      const key2 = Bytes.parseBytes("0x5555555555555555555555555555555555555555555555555555555555555555", HASH_SIZE);
+      const dict = TruncatedHashDictionary.fromEntries([]);
+
+      dict.set(key1, "first");
+      dict.set(key2, "second");
+
+      const keys: OpaqueHash[] = [];
+
+      for (const [key, _] of dict) {
+        keys.push(key);
+      }
+
+      assert.strictEqual([...new Set(keys)].length, 2);
     });
   });
 
