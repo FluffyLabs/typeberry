@@ -10,6 +10,7 @@ import { TEST_STATE, TEST_STATE_ROOT, testState } from "@typeberry/state/test.ut
 import { serializeStateUpdate } from "./serialize-state-update.js";
 import { SerializedState } from "./serialized-state.js";
 import { StateEntries } from "./state-entries.js";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 
 const spec = tinyChainSpec;
 
@@ -49,10 +50,11 @@ describe("State Serialization", () => {
     const state = SerializedState.fromStateEntries(spec, serialized);
     assert.deepStrictEqual(state.authPools, authPools);
 
-    assert.strictEqual(
-      serialized.getRootHash().toString(),
-      "0x22e5ebfb233c49d833af107ae8933ab229bceb49db1d2604abb2e120bc381eba",
-    );
+    const expectedRoot = Compatibility.isGreaterOrEqual(GpVersion.V0_6_5)
+      ? "0x22e5ebfb233c49d833af107ae8933ab229bceb49db1d2604abb2e120bc381eba"
+      : "0xd30fa98d70ae1f039b8ac40a0fd9f4478f7b57e0faac396a51e4df3718c985b2";
+
+    assert.strictEqual(serialized.getRootHash().toString(), expectedRoot);
   });
 });
 
