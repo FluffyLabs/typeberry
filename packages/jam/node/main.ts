@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import { isMainThread } from "node:worker_threads";
 import { Logger } from "@typeberry/logger";
 
@@ -7,22 +6,19 @@ import { Bytes, type BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { asKnownSize } from "@typeberry/collections";
 import { type ChainSpec, WorkerConfig, fullChainSpec, tinyChainSpec } from "@typeberry/config";
-import { type JipChainSpec, KnownChainSpec, NodeConfiguration } from "@typeberry/config-node";
+import { type JipChainSpec, KnownChainSpec } from "@typeberry/config-node";
 import { TruncatedHashDictionary } from "@typeberry/database";
 import { LmdbBlocks, LmdbRoot, LmdbStates } from "@typeberry/database-lmdb";
 import type { Finished, MainInit } from "@typeberry/generic-worker";
 import { HASH_SIZE, WithHash, blake2b } from "@typeberry/hash";
 import * as blockImporter from "@typeberry/importer";
 import type { MainReady } from "@typeberry/importer/state-machine.js";
-import { parseFromJson } from "@typeberry/json-parser";
 import type { MessageChannelStateMachine } from "@typeberry/state-machine";
 import { SerializedState, StateEntries, type StateKey } from "@typeberry/state-merkleization";
 import { startBlockGenerator } from "./author.js";
 import { initializeExtensions } from "./extensions.js";
 import { startBlocksReader } from "./reader.js";
 
-import devConfigJson from "@typeberry/configs/typeberry-dev.json" with { type: "json" };
-import { DEV_CONFIG_PATH } from "../jam-cli/args.js";
 import type { JamConfig } from "./jam-config.js";
 
 export * from "./jam-config.js";
@@ -236,18 +232,4 @@ function emptyBlock() {
       },
     }),
   });
-}
-
-export function loadConfig(configPath: string): NodeConfiguration {
-  if (configPath === DEV_CONFIG_PATH) {
-    return parseFromJson(devConfigJson, NodeConfiguration.fromJson);
-  }
-
-  try {
-    const configFile = fs.readFileSync(configPath, "utf8");
-    const parsed = JSON.parse(configFile);
-    return parseFromJson(parsed, NodeConfiguration.fromJson);
-  } catch (e) {
-    throw new Error(`Unable to load config file from ${configPath}: ${e}`);
-  }
 }

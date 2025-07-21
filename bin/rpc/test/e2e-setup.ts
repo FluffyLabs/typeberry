@@ -1,6 +1,6 @@
-import { JamConfig, main as jam, loadConfig } from "@typeberry/jam";
-import { DEFAULTS } from "@typeberry/jam-cli";
+import { NODE_DEFAULTS, loadConfig } from "@typeberry/config-node";
 import { Level, Logger } from "@typeberry/logger";
+import { JamConfig, main as node } from "@typeberry/node";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 
@@ -10,9 +10,9 @@ const withRelPath = (path: string) => {
 
 async function main() {
   const nodeConfig = loadConfig(`${import.meta.dirname}/e2e.config.json`);
-  const jamConfig = JamConfig.new({ nodeName: DEFAULTS.name, blockToImport: files, nodeConfig });
+  const jamConfig = JamConfig.new({ nodeName: NODE_DEFAULTS.name, blockToImport: files, nodeConfig });
   try {
-    await jam(jamConfig, withRelPath);
+    await node(jamConfig, withRelPath);
   } catch (e) {
     console.error(`${e}`);
     process.exit(-1);

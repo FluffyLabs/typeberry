@@ -1,6 +1,6 @@
-import { main } from "@typeberry/jam";
-import { type Arguments, HELP, parseArgs, prepareConfigFile } from "@typeberry/jam-cli";
+import { type Arguments, HELP, parseArgs, prepareConfigFile } from "@typeberry/jam";
 import { Level, Logger } from "@typeberry/logger";
+import { main } from "@typeberry/node";
 
 export * from "@typeberry/jam";
 

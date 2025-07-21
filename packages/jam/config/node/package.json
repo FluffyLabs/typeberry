@@ -8,11 +8,12 @@
     "test": "tsx --test $(find . -type f -name '*.test.ts' | tr '\\n' ' ')"
   },
   "dependencies": {
-    "@typeberry/utils": "0.0.1",
-    "@typeberry/json-parser": "0.0.1",
-    "@typeberry/bytes": "0.0.1",
     "@typeberry/block-json": "0.0.1",
-    "@typeberry/numbers": "0.0.1"
+    "@typeberry/bytes": "0.0.1",
+    "@typeberry/configs": "^0.0.1",
+    "@typeberry/json-parser": "0.0.1",
+    "@typeberry/numbers": "0.0.1",
+    "@typeberry/utils": "0.0.1"
   },
   "author": "Fluffy Labs",
   "license": "MPL-2.0"

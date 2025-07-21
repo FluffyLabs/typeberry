@@ -1,6 +1,7 @@
 import { pathToFileURL } from "node:url";
-import { JamConfig, loadConfig, main } from "@typeberry/jam";
+import { loadConfig } from "@typeberry/config-node";
 import { Level, Logger } from "@typeberry/logger";
+import { JamConfig, main } from "@typeberry/node";
 import { type Arguments, Command, HELP, parseArgs } from "./args.js";
 
 export * from "./args.js";

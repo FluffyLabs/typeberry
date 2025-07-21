@@ -1,20 +1,17 @@
 import { pathToFileURL } from "node:url";
-import { getChainSpec, loadConfig, openDatabase } from "@typeberry/jam/main.js";
+import { NODE_DEFAULTS, loadConfig } from "@typeberry/config-node";
+import { getChainSpec, openDatabase } from "@typeberry/node/main.js";
 import minimist from "minimist";
-import { DEFAULTS } from "../jam-cli/args.js";
 import { methods } from "./src/method-loader.js";
 import { RpcServer } from "./src/server.js";
 
-// TODO: [MaSo] Could be starting like `bin/jam`
-// from giving a config file to `main` function
-// and separating cli from main funcionality
 export function main(args: string[]) {
   const argv = minimist(args, {
     string: ["port", "nodeName", "config"],
     default: {
       port: "19800",
-      nodeName: DEFAULTS.name,
-      config: DEFAULTS.config,
+      nodeName: NODE_DEFAULTS.name,
+      config: NODE_DEFAULTS.config,
     },
   });
 

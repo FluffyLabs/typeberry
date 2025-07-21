@@ -1,7 +1,17 @@
+import fs from "node:fs";
+import os from "node:os";
 import type { JsonObject } from "@typeberry/block-json";
-import { type FromJson, json } from "@typeberry/json-parser";
+import devConfigJson from "@typeberry/configs/typeberry-dev.json" with { type: "json" };
+import { type FromJson, json, parseFromJson } from "@typeberry/json-parser";
 import { AuthorshipOptions } from "./authorship.js";
 import { JipChainSpec } from "./jip-chain-spec.js";
+
+export const DEV_CONFIG = "dev";
+
+export const NODE_DEFAULTS = {
+  name: os.hostname(),
+  config: DEV_CONFIG,
+};
 
 /** Chain spec chooser. */
 export enum KnownChainSpec {
@@ -50,4 +60,18 @@ export class NodeConfiguration {
     public readonly databaseBasePath: string,
     public readonly authorship: AuthorshipOptions,
   ) {}
+}
+
+export function loadConfig(configPath: string): NodeConfiguration {
+  if (configPath === DEV_CONFIG) {
+    return parseFromJson(devConfigJson, NodeConfiguration.fromJson);
+  }
+
+  try {
+    const configFile = fs.readFileSync(configPath, "utf8");
+    const parsed = JSON.parse(configFile);
+    return parseFromJson(parsed, NodeConfiguration.fromJson);
+  } catch (e) {
+    throw new Error(`Unable to load config file from ${configPath}: ${e}`);
+  }
 }
