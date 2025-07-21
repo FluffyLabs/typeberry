@@ -7,10 +7,10 @@ import { HASH_SIZE } from "@typeberry/hash";
 import type { State } from "@typeberry/state";
 import { tryAsPerCore } from "@typeberry/state/common.js";
 import { TEST_STATE, TEST_STATE_ROOT, testState } from "@typeberry/state/test.utils.js";
+import { Compatibility, GpVersion } from "@typeberry/utils";
 import { serializeStateUpdate } from "./serialize-state-update.js";
 import { SerializedState } from "./serialized-state.js";
 import { StateEntries } from "./state-entries.js";
-import { Compatibility, GpVersion } from "@typeberry/utils";
 
 const spec = tinyChainSpec;
 
