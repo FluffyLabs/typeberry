@@ -3,7 +3,7 @@ import type { Bytes } from "@typeberry/bytes";
 import type { NodeConfiguration } from "@typeberry/config-node";
 import type { HASH_SIZE } from "@typeberry/hash";
 
-export const DEV_CONFIG = {
+export const DEFAULT_DEV_CONFIG = {
   genesisPath: "",
   timeSlot: tryAsTimeSlot(0),
   validatorIndex: tryAsValidatorIndex(0),
@@ -28,16 +28,13 @@ export class JamConfig {
     devConfig?: DevConfig;
     seedConfig?: SeedDevConfig;
   }) {
-    let dev = (devConfig !== undefined) ? devConfig : {...DEV_CONFIG};
+    let fullConfig: FullDevConfig = devConfig ?? { ...DEFAULT_DEV_CONFIG };
 
-    let full: FullDevConfig;
     if (seedConfig !== undefined) {
-      full = { ...dev, ...seedConfig };
-    } else {
-      full = dev;
+      fullConfig = { ...fullConfig, ...seedConfig };
     }
 
-    return new JamConfig(isAuthoring ?? false, blockToImport ?? [], nodeName, nodeConfig, full);
+    return new JamConfig(isAuthoring ?? false, blockToImport ?? [], nodeName, nodeConfig, fullConfig);
   }
 
   private constructor(
@@ -63,19 +60,19 @@ export class JamConfig {
 export type FullDevConfig = DevConfig | (DevConfig & SeedDevConfig);
 
 export type SeedDevConfig = {
-  /** Use predefined bandersnatch seed to derive bandersnatch key. */
+  /** Bandersnatch seed to derive key. */
   bandersnatchSeed: Bytes<HASH_SIZE>;
-  /** Use predefined bls seed to derive bls key. */
+  /** Bls seed to derive key. */
   blsSeed: Bytes<HASH_SIZE>;
-  /** Use predefined ed25519 seed to derive ed25519 key. */
+  /** Ed25519 seed to derive key. */
   ed25519Seed: Bytes<HASH_SIZE>;
 };
 
 export type DevConfig = {
-  /** Use to provide path for genesis state */
+  /** Path to genesis state JSON description file. */
   genesisPath: string;
-  /** Use to override genesis head config slot. */
+  /** Genesis time slot. */
   timeSlot: TimeSlot;
-  /** Use to specify validator index that will be used as for current node. */
+  /** Validator index for current node. */
   validatorIndex: ValidatorIndex;
 };
