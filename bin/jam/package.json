@@ -1,7 +1,7 @@
 {
   "name": "@typeberry/jam",
   "version": "0.0.1",
-  "description": "The main typeberry binary common line tool entry.",
+  "description": "Typeberry-JAM CLI.",
   "main": "index.ts",
   "bin": "./index.ts",
   "dependencies": {
