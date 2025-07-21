@@ -15,6 +15,7 @@ import { inMemoryStateCodec } from "@typeberry/state-merkleization/in-memory-sta
 import { workItemFromJson } from "../test-runner/w3f/codec/work-item.js";
 import { workPackageFromJson } from "../test-runner/w3f/codec/work-package.js";
 import { PvmTest } from "../test-runner/w3f/pvm.js";
+import type { TestState } from "../test-runner/w3f/state-loader.js";
 import { StateTransition } from "../test-runner/w3f/state-transition.js";
 
 export type SupportedType = {
@@ -109,24 +110,19 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
     process: {
       options: ["as-pre-state", "as-post-state"],
       run(spec: ChainSpec, data: unknown, option: string) {
-        const test = data as StateTransition;
-
-        if (option === "as-pre-state") {
-          const dict = TruncatedHashDictionary.fromEntries(
-            test.post_state.keyvals.map((x) => [x.key.asOpaque(), x.value]),
-          );
+        const stateFromKeyvals = (state: TestState) => {
+          const dict = TruncatedHashDictionary.fromEntries(state.keyvals.map((x) => [x.key.asOpaque(), x.value]));
           const entries = StateEntries.fromTruncatedDictionaryUnsafe(dict);
-          const state = SerializedState.fromStateEntries(spec, entries);
-          return state;
+          return SerializedState.fromStateEntries(spec, entries);
+        };
+
+        const test = data as StateTransition;
+        if (option === "as-pre-state") {
+          return stateFromKeyvals(test.pre_state);
         }
 
         if (option === "as-post-state") {
-          const dict = TruncatedHashDictionary.fromEntries(
-            test.post_state.keyvals.map((x) => [x.key.asOpaque(), x.value]),
-          );
-          const entries = StateEntries.fromTruncatedDictionaryUnsafe(dict);
-          const state = SerializedState.fromStateEntries(spec, entries);
-          return state;
+          return stateFromKeyvals(test.post_state);
         }
       },
     },
