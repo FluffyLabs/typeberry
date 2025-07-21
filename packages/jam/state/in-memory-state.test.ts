@@ -142,8 +142,8 @@ describe("InMemoryState", () => {
 
     // Now set storage
     const key = Bytes.fill(1, HASH_SIZE).asOpaque();
-    const blob = BytesBlob.blobFromString("hello");
-    const item = StorageItem.create({ hash: key, blob });
+    const value = BytesBlob.blobFromString("hello");
+    const item = StorageItem.create({ key, value });
 
     result = state.applyUpdate({
       storage: [
@@ -170,8 +170,8 @@ describe("InMemoryState", () => {
 
     const serviceId = tryAsServiceId(42); // Not created
     const key = Bytes.zero(HASH_SIZE).asOpaque();
-    const blob = BytesBlob.blobFromString("data");
-    const item = StorageItem.create({ hash: key, blob });
+    const value = BytesBlob.blobFromString("data");
+    const item = StorageItem.create({ key, value });
 
     const result = state.applyUpdate({
       storage: [

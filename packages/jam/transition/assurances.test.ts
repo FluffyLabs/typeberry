@@ -12,7 +12,7 @@ import {
   AvailabilityAssurance,
   assurancesExtrinsicCodec,
 } from "@typeberry/block/assurances.js";
-import testWorkReport from "@typeberry/block/test-work-report.js";
+import { testWorkReportHex } from "@typeberry/block/test-helpers.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
 import { BitVec, Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
@@ -283,7 +283,7 @@ function intoValidatorData({ bandersnatch, ed25519 }: { bandersnatch: string; ed
 }
 
 function newAvailabilityAssignment(core: number, timeout: number): AvailabilityAssignment {
-  const source = BytesBlob.parseBlob(testWorkReport);
+  const source = BytesBlob.parseBlob(testWorkReportHex());
   const report = Decoder.decodeObject(WorkReport.Codec, source, tinyChainSpec);
   const {
     workPackageSpec,
