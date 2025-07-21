@@ -15,6 +15,9 @@ enum TciFlag {
   validatorindex = "validatorindex",
 }
 
+export const requiredSeedFlags = [TciFlag.bandersnatch, TciFlag.bls, TciFlag.ed25519] as const;
+export type RequiredFlag = (typeof requiredSeedFlags)[number];
+
 export const HELP = `
 Cross-implementation compatible CLI for typeberry ${packageJson.version} by ${packageJson.author}
 

@@ -3,7 +3,7 @@ import { tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
 import { DEV_CONFIG, NODE_DEFAULTS, loadConfig } from "@typeberry/config-node";
 import { Level, Logger } from "@typeberry/logger";
 import * as node from "@typeberry/node";
-import { type CommonArguments, HELP, parseArgs } from "./args.js";
+import { type CommonArguments, HELP, type RequiredFlag, parseArgs, requiredSeedFlags } from "./args.js";
 
 Logger.configureAll(process.env.JAM_LOG ?? "", Level.LOG);
 const withRelPath = (v: string) => `../../${v}`;
@@ -32,26 +32,24 @@ export function createJamConfig(argv: CommonArguments): node.JamConfig {
   // TODO: [MaSo] Add networking config; add loading from genesis path
 
   let nodeConfig = loadConfig(DEV_CONFIG);
-  let devConfig = node.DEV_CONFIG;
+  let devConfig = node.DEFAULT_DEV_CONFIG;
   let seedConfig: node.SeedDevConfig | undefined;
-  const requiredSeedKeys = ["bandersnatch", "bls", "ed25519"] as const;
-  type RequiredSeedKey = (typeof requiredSeedKeys)[number];
 
-  const provided = requiredSeedKeys.filter((key: RequiredSeedKey) => argv[key] !== undefined);
-  if (provided.length > 0) {
-    const missing = requiredSeedKeys.filter((key: RequiredSeedKey) => argv[key] === undefined);
-    if (missing.length > 0) {
-      throw new Error(
-        `Incomplete seed configuration. You must provide all seeds or none. Provided: [${provided.join(", ")}]. Missing: [${missing.join(", ")}].`,
-      );
-    }
-    // NOTE: [MaSo] here all the flags should NOT be `undefined`, but TS can't figure it out
-    if (argv.bandersnatch !== undefined && argv.bls !== undefined && argv.ed25519 !== undefined) {
-      seedConfig = {
-        bandersnatchSeed: argv.bandersnatch,
-        blsSeed: argv.bls,
-        ed25519Seed: argv.ed25519,
-      };
+  if (argv.bandersnatch !== undefined && argv.bls !== undefined && argv.ed25519 !== undefined) {
+    seedConfig = {
+      bandersnatchSeed: argv.bandersnatch,
+      blsSeed: argv.bls,
+      ed25519Seed: argv.ed25519,
+    };
+  } else {
+    const provided = requiredSeedFlags.filter((key: RequiredFlag) => argv[key] !== undefined);
+    if (provided.length > 0) {
+      const missing = requiredSeedFlags.filter((key: RequiredFlag) => argv[key] === undefined);
+      if (missing.length > 0) {
+        throw new Error(
+          `Incomplete seed configuration. You must provide all seeds or none. Provided: [${provided.join(", ")}]. Missing: [${missing.join(", ")}].`,
+        );
+      }
     }
   }
 
