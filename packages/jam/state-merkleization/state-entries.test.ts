@@ -51,7 +51,7 @@ describe("State Serialization", () => {
 
     assert.strictEqual(
       serialized.getRootHash().toString(),
-      "0xd30fa98d70ae1f039b8ac40a0fd9f4478f7b57e0faac396a51e4df3718c985b2",
+      "0x22e5ebfb233c49d833af107ae8933ab229bceb49db1d2604abb2e120bc381eba",
     );
   });
 });

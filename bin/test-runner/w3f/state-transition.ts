@@ -6,7 +6,7 @@ import { tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { SimpleAllocator, keccak } from "@typeberry/hash";
 import type { FromJson } from "@typeberry/json-parser";
-import { type SerializedState, type StateEntries, serializeStateUpdate } from "@typeberry/state-merkleization";
+import { serializeStateUpdate } from "@typeberry/state-merkleization";
 import { TransitionHasher } from "@typeberry/transition";
 import { BlockVerifier } from "@typeberry/transition/block-verifier.js";
 import { OnChain } from "@typeberry/transition/chain-stf.js";
@@ -66,17 +66,6 @@ export async function runStateTransition(testContent: StateTransition, _path: st
 
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
   const root = preState.backend.getRootHash();
-  deepEqual(withTruncatedKeyNull(preState), withTruncatedKeyNull(postState));
+  deepEqual(preState, postState, { ignore: ["backend.entries.data.truncatedKey"] });
   assert.deepStrictEqual(root.toString(), postStateRoot.toString());
-}
-
-// biome-ignore lint/suspicious/noExplicitAny: truncatedKey should not be a part of the comparison
-function withTruncatedKeyNull(state: SerializedState<StateEntries>): any {
-  return {
-    ...state,
-    backend: {
-      ...state.backend,
-      entries: { ...state.backend.entries, data: { ...state.backend.entries.data, truncatedKey: null } },
-    },
-  };
 }
