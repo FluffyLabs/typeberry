@@ -439,11 +439,11 @@ export class Accumulate {
     let privilegedServices: PrivilegedServices | null = null;
     const authQueues = this.state.authQueues.slice();
     let authQueuesUpdated = false;
-    let designatedValidatorData: State["designatedValidatorData"] | undefined;
+    let designatedValidatorData: State["designatedValidatorData"] | null = null;
     const serviceUpdates: ServicesUpdate[] = [];
 
     for (const [serviceId, stateUpdate] of stateUpdates) {
-      if (serviceId === manager && stateUpdate.privilegedServices !== undefined) {
+      if (serviceId === manager && stateUpdate.privilegedServices !== null) {
         const { manager, authManager, validatorsManager, autoAccumulateServices } = stateUpdate.privilegedServices;
         check(privilegedServices === null, "Only one service can update privileged services!");
         privilegedServices = PrivilegedServices.create({

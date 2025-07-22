@@ -22,9 +22,9 @@ export class AccumulationStateUpdate {
   /** Yielded accumulation root. */
   public yieldedRoot: OpaqueHash | null = null;
   /** New validators data. */
-  public validatorsData?: PerValidator<ValidatorData>;
+  public validatorsData: PerValidator<ValidatorData> | null = null;
   /** Updated priviliged services. */
-  public privilegedServices?: PrivilegedServices;
+  public privilegedServices: PrivilegedServices | null = null;
 
   private constructor(
     /** Services state updates. */
@@ -49,7 +49,7 @@ export class AccumulationStateUpdate {
   /** Create a state update with some existing, yet uncommited services updates. */
   static new(update: ServiceStateUpdate): AccumulationStateUpdate {
     const stateUpdate = new AccumulationStateUpdate(update, []);
-    stateUpdate.privilegedServices = update.privilegedServices;
+    stateUpdate.privilegedServices = update.privilegedServices ?? null;
     let coreIndex = 0;
     for (const v of update.authQueues ?? []) {
       stateUpdate.authorizationQueues.set(tryAsCoreIndex(coreIndex), v);
@@ -66,7 +66,7 @@ export class AccumulationStateUpdate {
         stateUpdate.authorizationQueues.set(coreIndex, queue);
       }
     }
-    stateUpdate.validatorsData = update.designatedValidatorData;
+    stateUpdate.validatorsData = update.designatedValidatorData ?? null;
     return stateUpdate;
   }
 
@@ -85,10 +85,10 @@ export class AccumulationStateUpdate {
       update.authorizationQueues.set(k, v);
     }
     update.yieldedRoot = from.yieldedRoot;
-    update.validatorsData = from.validatorsData === undefined ? undefined : asKnownSize([...from.validatorsData]);
+    update.validatorsData = from.validatorsData === null ? null : asKnownSize([...from.validatorsData]);
     update.privilegedServices =
-      from.privilegedServices === undefined
-        ? undefined
+      from.privilegedServices === null
+        ? null
         : {
             ...from.privilegedServices,
           };
