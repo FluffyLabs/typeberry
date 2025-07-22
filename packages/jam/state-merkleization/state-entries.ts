@@ -86,6 +86,8 @@ export class StateEntries<TEntries extends FullEntries | TruncatedEntries = Full
 
   /** Modify underlying entries dictionary with given update. */
   applyUpdate(stateEntriesUpdate: Iterable<StateEntryUpdate>) {
+    // NOTE since we are altering the structure, we need to reset the cache.
+    this.trieCache = null;
     for (const [action, key, value] of stateEntriesUpdate) {
       if (action === StateEntryUpdateAction.Insert) {
         this.entries.data.set(key, value);

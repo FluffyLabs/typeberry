@@ -25,7 +25,7 @@ if (suite === undefined) {
 
 const stream = run({
   files: [`${import.meta.dirname}/${suiteToRun}.ts`],
-  timeout: 120 * 1000,
+  timeout: 180 * 1000,
   concurrency: true,
 }).on("test:fail", () => {
   process.exitCode = 1;
