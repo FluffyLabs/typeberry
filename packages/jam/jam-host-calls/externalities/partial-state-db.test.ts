@@ -1276,7 +1276,7 @@ describe("AccumulateServiceExternalities", () => {
   ) => {
     const initialStorage = storage ?? HashDictionary.new();
     const storageUtilisationBytes = Array.from(initialStorage.values()).reduce(
-      (sum, item) => sum + (item?.blob.length ?? 0),
+      (sum, item) => sum + (item?.value.length ?? 0),
       0,
     );
 
@@ -1438,18 +1438,18 @@ describe("AccumulateServiceExternalities", () => {
     it("should correctly read from storage", () => {
       const currentServiceId = tryAsServiceId(10_000);
       const serviceId = tryAsServiceId(33);
-      const hash = Bytes.fill(HASH_SIZE, 1).asOpaque();
+      const key = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const initialStorage = HashDictionary.new<StorageKey, StorageItem>();
-      const blob = BytesBlob.empty();
-      initialStorage.set(hash, StorageItem.create({ hash, blob }));
+      const value = BytesBlob.empty();
+      initialStorage.set(key, StorageItem.create({ key, value }));
       const service = prepareService(serviceId, { storage: initialStorage });
       const state = prepareState([prepareService(currentServiceId), service]);
 
       const accumulateServiceExternalities = new PartialStateDb(state, currentServiceId, tryAsServiceId(42));
 
-      const result = accumulateServiceExternalities.read(serviceId, hash);
+      const result = accumulateServiceExternalities.read(serviceId, key);
 
-      assert.strictEqual(result, blob);
+      assert.strictEqual(result, value);
     });
 
     it("should correctly write to storage", () => {
@@ -1468,20 +1468,20 @@ describe("AccumulateServiceExternalities", () => {
 
     it("should return new value if there was a write", () => {
       const currentServiceId = tryAsServiceId(10_000);
-      const hash = Bytes.fill(HASH_SIZE, 2).asOpaque();
+      const key = Bytes.fill(HASH_SIZE, 2).asOpaque();
       const initialStorage = HashDictionary.new<StorageKey, StorageItem>();
-      const blob = BytesBlob.empty();
+      const value = BytesBlob.empty();
       const newBlob = BytesBlob.parseBlob("0x11111111");
-      initialStorage.set(hash, StorageItem.create({ hash, blob }));
+      initialStorage.set(key, StorageItem.create({ key, value }));
 
       const state = prepareState([prepareService(currentServiceId, { storage: initialStorage })]);
       const accumulateServiceExternalities = new PartialStateDb(state, currentServiceId, tryAsServiceId(42));
 
-      accumulateServiceExternalities.write(hash, newBlob);
+      accumulateServiceExternalities.write(key, newBlob);
 
       assert.strictEqual(accumulateServiceExternalities.updatedState.services.storage.length, 1);
 
-      const result = accumulateServiceExternalities.read(currentServiceId, hash);
+      const result = accumulateServiceExternalities.read(currentServiceId, key);
 
       assert.deepStrictEqual(result, newBlob);
     });
@@ -1490,35 +1490,35 @@ describe("AccumulateServiceExternalities", () => {
   describe("readSnapshotLength", () => {
     it("should correctly read from storage", () => {
       const serviceId = tryAsServiceId(33);
-      const hash = Bytes.fill(HASH_SIZE, 1).asOpaque();
+      const key = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const initialStorage = HashDictionary.new<StorageKey, StorageItem>();
-      const blob = BytesBlob.empty();
-      initialStorage.set(hash, StorageItem.create({ hash, blob }));
+      const value = BytesBlob.empty();
+      initialStorage.set(key, StorageItem.create({ key, value }));
       const service = prepareService(serviceId, { storage: initialStorage });
       const state = prepareState([service]);
 
       const accumulateServiceExternalities = new PartialStateDb(state, serviceId, tryAsServiceId(42));
 
-      const result = accumulateServiceExternalities.readSnapshotLength(hash);
+      const result = accumulateServiceExternalities.readSnapshotLength(key);
 
-      assert.strictEqual(result, blob.length);
+      assert.strictEqual(result, value.length);
     });
 
     it("should return snapshot length even if a new value if was written", () => {
       const currentServiceId = tryAsServiceId(10_000);
-      const hash = Bytes.fill(HASH_SIZE, 1).asOpaque();
+      const key = Bytes.fill(HASH_SIZE, 1).asOpaque();
       const initialStorage = HashDictionary.new<StorageKey, StorageItem>();
-      const blob = BytesBlob.empty();
+      const value = BytesBlob.empty();
       const newBlob = BytesBlob.parseBlob("0x11111111");
-      initialStorage.set(hash, StorageItem.create({ hash, blob }));
+      initialStorage.set(key, StorageItem.create({ key, value }));
       const service = prepareService(currentServiceId, { storage: initialStorage });
       const state = prepareState([service]);
       const accumulateServiceExternalities = new PartialStateDb(state, currentServiceId, tryAsServiceId(42));
 
-      accumulateServiceExternalities.write(hash, newBlob);
-      const result = accumulateServiceExternalities.readSnapshotLength(hash);
+      accumulateServiceExternalities.write(key, newBlob);
+      const result = accumulateServiceExternalities.readSnapshotLength(key);
 
-      assert.deepStrictEqual(result, blob.length);
+      assert.deepStrictEqual(result, value.length);
     });
   });
 });

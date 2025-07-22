@@ -9,8 +9,16 @@ import {
 import { getExtrinsicFromJson } from "@typeberry/block-json";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
 import { type FromJson, json } from "@typeberry/json-parser";
-import { InMemoryState, ServiceStatistics, type ValidatorData } from "@typeberry/state";
-import { JsonStatisticsData, validatorDataFromJson } from "@typeberry/state-json";
+import {
+  CoreStatistics,
+  InMemoryState,
+  ServiceStatistics,
+  StatisticsData,
+  type ValidatorData,
+  type ValidatorStatistics,
+  tryAsPerCore,
+} from "@typeberry/state";
+import { JsonValidatorStatistics, validatorDataFromJson } from "@typeberry/state-json";
 import { type Input, Statistics, type StatisticsState } from "@typeberry/transition/statistics.js";
 import { OK, Result } from "@typeberry/utils";
 
@@ -66,18 +74,28 @@ class FullInput {
 
 class TestState {
   static fromJson: FromJson<TestState> = {
-    statistics: JsonStatisticsData.fromJson,
+    vals_curr_stats: json.array(JsonValidatorStatistics.fromJson),
+    vals_last_stats: json.array(JsonValidatorStatistics.fromJson),
     slot: "number",
     curr_validators: json.array(validatorDataFromJson),
   };
 
-  statistics!: JsonStatisticsData;
+  vals_curr_stats!: ValidatorStatistics[];
+  vals_last_stats!: ValidatorStatistics[];
   slot!: TimeSlot;
   curr_validators!: ValidatorData[];
 
   static toStatisticsState(spec: ChainSpec, state: TestState): StatisticsState {
     return {
-      statistics: JsonStatisticsData.toStatisticsData(spec, state.statistics),
+      statistics: StatisticsData.create({
+        current: tryAsPerValidator(state.vals_curr_stats, spec),
+        previous: tryAsPerValidator(state.vals_last_stats, spec),
+        cores: tryAsPerCore(
+          Array.from({ length: spec.coresCount }, () => CoreStatistics.empty()),
+          spec,
+        ),
+        services: new Map(),
+      }),
       timeslot: state.slot,
       currentValidatorData: tryAsPerValidator(state.curr_validators, spec),
     };

@@ -729,13 +729,13 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     return Result.ok(OK);
   }
 
-  private replaceOrAddStorageUpdate(key: StorageKey, blob: BytesBlob | null) {
+  private replaceOrAddStorageUpdate(key: StorageKey, value: BytesBlob | null) {
     const update =
-      blob === null
+      value === null
         ? UpdateStorage.remove({ serviceId: this.currentServiceId, key })
         : UpdateStorage.set({
             serviceId: this.currentServiceId,
-            storage: StorageItem.create({ hash: key, blob }),
+            storage: StorageItem.create({ key, value }),
           });
 
     const index = this.updatedState.services.storage.findIndex(

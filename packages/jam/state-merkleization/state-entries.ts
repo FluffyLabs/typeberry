@@ -86,6 +86,8 @@ export class StateEntries<TEntries extends FullEntries | TruncatedEntries = Full
 
   /** Modify underlying entries dictionary with given update. */
   applyUpdate(stateEntriesUpdate: Iterable<StateEntryUpdate>) {
+    // NOTE since we are altering the structure, we need to reset the cache.
+    this.trieCache = null;
     for (const [action, key, value] of stateEntriesUpdate) {
       if (action === StateEntryUpdateAction.Insert) {
         this.entries.data.set(key, value);
@@ -143,8 +145,8 @@ function convertInMemoryStateToDictionary(spec: ChainSpec, state: InMemoryState)
 
     // storage
     for (const storage of service.data.storage.values()) {
-      const { key, Codec } = serialize.serviceStorage(serviceId, storage.hash);
-      serialized.set(key, Encoder.encodeObject(Codec, storage.blob));
+      const { key, Codec } = serialize.serviceStorage(serviceId, storage.key);
+      serialized.set(key, Encoder.encodeObject(Codec, storage.value));
     }
 
     // lookup history
