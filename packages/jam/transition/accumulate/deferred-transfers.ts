@@ -1,15 +1,12 @@
 import { type ServiceId, type TimeSlot, tryAsServiceGas } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Encoder, codec } from "@typeberry/codec";
-import { HashDictionary } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { PartialStateDb } from "@typeberry/jam-host-calls/externalities/partial-state-db.js";
 import { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
 import { sumU64, tryAsU32 } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import {
-  InMemoryService,
-  type Service,
   ServiceAccountInfo,
   type State,
   type UpdatePreimage,
@@ -17,7 +14,7 @@ import {
   UpdateService,
   UpdateServiceKind,
 } from "@typeberry/state";
-import { Result, check } from "@typeberry/utils";
+import { Result } from "@typeberry/utils";
 import type { CountAndGasUsed } from "../statistics.js";
 import { uniquePreserveOrder } from "./accumulate-utils.js";
 import { PvmExecutor } from "./pvm-executor.js";
@@ -86,45 +83,6 @@ export class DeferredTransfers {
         // We have to check if this situation is possible in real world and handle it
         return this.state.getService(serviceId)?.getPreimage(preimageHash) ?? null;
     }
-  }
-
-  private getService(
-    serviceId: ServiceId,
-    serviceUpdates: UpdateService[],
-    servicesRemoved: ServiceId[],
-  ): Service | null {
-    if (servicesRemoved.includes(serviceId)) {
-      return null;
-    }
-
-    const maybeUpdatedService = serviceUpdates.find((x) => x.serviceId === serviceId);
-
-    switch (maybeUpdatedService?.action.kind) {
-      case UpdateServiceKind.Create: {
-        return new InMemoryService(serviceId, {
-          info: maybeUpdatedService?.action.account,
-          lookupHistory: HashDictionary.new(),
-          preimages: HashDictionary.new(),
-          storage: HashDictionary.new(),
-        });
-      }
-      case UpdateServiceKind.Update: {
-        const service = this.state.getService(serviceId);
-        const serviceInfo = service?.getInfo() ?? {};
-        check(serviceInfo !== null, "Update service exists so the service has to exist as well!");
-        return new InMemoryService(serviceId, {
-          lookupHistory: HashDictionary.new(),
-          preimages: HashDictionary.new(),
-          storage: HashDictionary.new(),
-          ...(service ?? {}),
-          info: {
-            ...serviceInfo,
-            ...maybeUpdatedService?.action.account,
-          },
-        });
-      }
-    }
-    return this.state.getService(serviceId) ?? null;
   }
 
   async transition({
