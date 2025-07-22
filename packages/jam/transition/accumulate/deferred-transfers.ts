@@ -170,15 +170,7 @@ export class DeferredTransfers {
         transferStatistics.set(serviceId, { count: tryAsU32(transfers.length), gasUsed: tryAsServiceGas(0) });
         continue;
       }
-      const partialState = new PartialStateDb(
-        {
-          getService: (serviceId: ServiceId) => this.getService(serviceId, servicesUpdates, servicesRemoved),
-        },
-        serviceId,
-        serviceId,
-        timeslot,
-        this.chainSpec,
-      );
+      const partialState = new PartialStateDb(this.chainSpec, this.state, serviceId, serviceId, timeslot);
 
       const executor = PvmExecutor.createOnTransferExecutor(serviceId, code, { partialState });
       const args = Encoder.encodeObject(ON_TRANSFER_ARGS_CODEC, { timeslot, serviceId, transfers }, this.chainSpec);

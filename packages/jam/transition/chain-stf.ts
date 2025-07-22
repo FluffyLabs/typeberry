@@ -237,7 +237,7 @@ export class OnChain {
 
     const {
       privilegedServices: maybePrivilegedServices,
-      authQueues: maybeAuthQueues,
+      authQueues: maybeAuthorizationQueues,
       designatedValidatorData: maybeDesignatedValidatorData,
       timeslot: accumulationTimeSlot,
       preimages: accumulatePreimages,
@@ -296,7 +296,7 @@ export class OnChain {
     assertEmpty(statisticsRest);
 
     return Result.ok({
-      ...(maybeAuthQueues !== undefined ? { authQueues: maybeAuthQueues } : {}),
+      ...(maybeAuthorizationQueues !== undefined ? { authQueues: maybeAuthorizationQueues } : {}),
       ...(maybeDesignatedValidatorData !== undefined ? { designatedValidatorData: maybeDesignatedValidatorData } : {}),
       ...(maybePrivilegedServices !== undefined ? { privilegedServices: maybePrivilegedServices } : {}),
       authPools,

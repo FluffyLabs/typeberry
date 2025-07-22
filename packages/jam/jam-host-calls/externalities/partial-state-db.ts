@@ -17,6 +17,7 @@ import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash, blake2b } from "@typeberry/hash";
 import { type U32, type U64, isU32, isU64, maxU64, sumU64, tryAsU32, tryAsU64 } from "@typeberry/numbers";
 import {
+  AutoAccumulate,
   LookupHistoryItem,
   PreimageItem,
   type Service,
@@ -634,9 +635,9 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     /** https://graypaper.fluffylabs.dev/#/9a08063/36f40036f400?v=0.6.6 */
     this.updatedState.privilegedServices = {
       manager,
-      authorizer,
-      validators,
-      autoAccumulate,
+      authManager: authorizer,
+      validatorsManager: validators,
+      autoAccumulateServices: autoAccumulate.map(([service, gasLimit]) => AutoAccumulate.create({ service, gasLimit })),
     };
   }
 

@@ -3,13 +3,13 @@ import {
   type ServiceGas,
   type ServiceId,
   type TimeSlot,
+  tryAsCoreIndex,
   tryAsPerEpochBlock,
   tryAsServiceGas,
 } from "@typeberry/block";
 import type { WorkReport } from "@typeberry/block/work-report.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
-import { asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 
@@ -17,13 +17,15 @@ import { HashSet } from "@typeberry/collections";
 import { KeccakHasher } from "@typeberry/hash/keccak.js";
 import { PartialStateDb } from "@typeberry/jam-host-calls/externalities/partial-state-db.js";
 import type { PendingTransfer } from "@typeberry/jam-host-calls/externalities/pending-transfer.js";
-import type { AccumulationStateUpdate } from "@typeberry/jam-host-calls/externalities/state-update.js";
+import {
+  AccumulationStateUpdate,
+  type ServiceStateUpdate,
+} from "@typeberry/jam-host-calls/externalities/state-update.js";
 import { Logger } from "@typeberry/logger";
 import { type U32, tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { tryAsGas } from "@typeberry/pvm-interpreter";
 import { Status } from "@typeberry/pvm-interpreter/status.js";
 import {
-  AutoAccumulate,
   PrivilegedServices,
   type ServicesUpdate,
   type State,
@@ -71,10 +73,6 @@ export type AccumulateStateUpdate = Pick<
 > &
   Partial<Pick<State, "recentlyAccumulated" | "accumulationQueue">> &
   ServiceStateUpdate;
-
-/** Update of the state entries coming from accumulation of a single service. */
-type ServiceStateUpdate = Partial<Pick<State, "privilegedServices" | "authQueues" | "designatedValidatorData">> &
-  ServicesUpdate;
 
 export type AccumulateResult = {
   root: AccumulateRoot;
@@ -161,6 +159,7 @@ export class Accumulate {
     operands: LegacyOperand[],
     gas: ServiceGas,
     entropy: EntropyHash,
+    inputStateUpdate: AccumulationStateUpdate,
   ): Promise<Result<InvocationResult, PvmInvocationError>> {
     const service = this.state.getService(serviceId);
     if (service === null) {
@@ -178,7 +177,14 @@ export class Accumulate {
     }
 
     const nextServiceId = generateNextServiceId({ serviceId, entropy, timeslot: slot }, this.chainSpec);
-    const partialState = new PartialStateDb(this.chainSpec, this.state, serviceId, nextServiceId, slot);
+    const partialState = new PartialStateDb(
+      this.chainSpec,
+      this.state,
+      serviceId,
+      nextServiceId,
+      slot,
+      inputStateUpdate,
+    );
 
     const externalities = {
       partialState,
@@ -270,10 +276,11 @@ export class Accumulate {
     reports: WorkReport[],
     slot: TimeSlot,
     entropy: EntropyHash,
+    inputStateUpdate: AccumulationStateUpdate,
   ) {
     const { operands, gasCost } = this.getOperandsAndGasCost(serviceId, reports);
 
-    const result = await this.pvmAccumulateInvocation(slot, serviceId, operands, gasCost, entropy);
+    const result = await this.pvmAccumulateInvocation(slot, serviceId, operands, gasCost, entropy, inputStateUpdate);
 
     if (result.isError) {
       return { stateUpdate: null, consumedGas: gasCost };
@@ -296,6 +303,7 @@ export class Accumulate {
     slot: TimeSlot,
     entropy: EntropyHash,
     statistics: Map<ServiceId, CountAndGasUsed>,
+    stateUpdate: AccumulationStateUpdate,
   ): Promise<SequentialAccumulationResult> {
     const i = this.findReportCutoffIndex(gasLimit, reports);
 
@@ -317,8 +325,14 @@ export class Accumulate {
       slot,
       entropy,
       statistics,
+      stateUpdate,
     );
     assertEmpty(rest);
+
+    const accUpdates = this.mergeServiceStateUpdates(stateUpdates);
+    if (accUpdates.isError) {
+      throw new Error("we should be returning Result here");
+    }
 
     // NOTE [ToDr] recursive invocation
     const {
@@ -334,6 +348,8 @@ export class Accumulate {
       slot,
       entropy,
       statistics,
+      // NOTE: we ignore all of the State changes here that are not service changes! - is it still true?
+      accUpdates.ok,
     );
     assertEmpty(seqRest);
 
@@ -342,6 +358,7 @@ export class Accumulate {
       gasCost: tryAsServiceGas(gasCost + seqGasCost),
       yieldedRoots: yieldedRoots.concat(seqYieldedRoots),
       pendingTransfers: pendingTransfers.concat(seqPendingTransfers),
+      // ideally we would use the already merged state here instead of doing multiple merge rounds
       stateUpdates: stateUpdates.concat(seqStateUpdates),
     };
   }
@@ -361,6 +378,7 @@ export class Accumulate {
     slot: TimeSlot,
     entropy: EntropyHash,
     statistics: Map<ServiceId, CountAndGasUsed>,
+    inputStateUpdate: AccumulationStateUpdate,
   ): Promise<ParallelAccumulationResult> {
     const autoAccumulateServiceIds = this.state.privilegedServices.autoAccumulateServices.map(({ service }) => service);
     const allServiceIds = reports
@@ -374,7 +392,13 @@ export class Accumulate {
     const pendingTransfers: PendingTransfer[] = [];
 
     for (const serviceId of serviceIds) {
-      const { consumedGas, stateUpdate } = await this.accumulateSingleService(serviceId, reports, slot, entropy);
+      const { consumedGas, stateUpdate } = await this.accumulateSingleService(
+        serviceId,
+        reports,
+        slot,
+        entropy,
+        AccumulationStateUpdate.copyFrom(inputStateUpdate), // each service gets its own copy of the state update
+      );
 
       gasCost = tryAsServiceGas(gasCost + consumedGas);
 
@@ -410,25 +434,23 @@ export class Accumulate {
    */
   private mergeServiceStateUpdates(
     stateUpdates: [ServiceId, AccumulationStateUpdate][],
-  ): Result<ServiceStateUpdate, ACCUMULATION_ERROR> {
+  ): Result<AccumulationStateUpdate, ACCUMULATION_ERROR> {
     const { authManager, manager, validatorsManager } = this.state.privilegedServices;
     let privilegedServices: PrivilegedServices | null = null;
     const authQueues = this.state.authQueues.slice();
     let authQueuesUpdated = false;
-    let designatedValidatorData: State["designatedValidatorData"] | null = null;
+    let designatedValidatorData: State["designatedValidatorData"] | undefined;
     const serviceUpdates: ServicesUpdate[] = [];
 
     for (const [serviceId, stateUpdate] of stateUpdates) {
-      if (serviceId === manager && stateUpdate.privilegedServices !== null) {
-        const { manager, authorizer, validators, autoAccumulate } = stateUpdate.privilegedServices;
+      if (serviceId === manager && stateUpdate.privilegedServices !== undefined) {
+        const { manager, authManager, validatorsManager, autoAccumulateServices } = stateUpdate.privilegedServices;
         check(privilegedServices === null, "Only one service can update privileged services!");
         privilegedServices = PrivilegedServices.create({
           manager,
-          authManager: authorizer,
-          validatorsManager: validators,
-          autoAccumulateServices: autoAccumulate.map(([service, gasLimit]) =>
-            AutoAccumulate.create({ gasLimit, service }),
-          ),
+          authManager,
+          validatorsManager,
+          autoAccumulateServices,
         });
       }
 
@@ -440,7 +462,7 @@ export class Accumulate {
       }
 
       if (serviceId === validatorsManager && stateUpdate.validatorsData !== null) {
-        check(designatedValidatorData === null, "Only one service can update designated validators!");
+        check(designatedValidatorData === undefined, "Only one service can update designated validators!");
         designatedValidatorData = stateUpdate.validatorsData;
       }
 
@@ -477,12 +499,23 @@ export class Accumulate {
       }
     }
 
-    return Result.ok({
-      ...servicesUpdate,
-      ...(privilegedServices !== null ? { privilegedServices } : {}),
-      ...(authQueuesUpdated ? { authQueues: asKnownSize(authQueues) } : {}),
-      ...(designatedValidatorData !== null ? { designatedValidatorData } : {}),
-    });
+    const accumulationStateUpdate = AccumulationStateUpdate.new(servicesUpdate);
+
+    if (privilegedServices !== null) {
+      accumulationStateUpdate.privilegedServices = privilegedServices;
+    }
+
+    if (designatedValidatorData !== null) {
+      accumulationStateUpdate.validatorsData = designatedValidatorData;
+    }
+
+    if (authQueuesUpdated) {
+      for (const [coreIndex, authQueue] of authQueues.entries()) {
+        accumulationStateUpdate.authorizationQueues.set(tryAsCoreIndex(coreIndex), authQueue);
+      }
+    }
+
+    return Result.ok(accumulationStateUpdate);
   }
 
   /**
@@ -554,7 +587,14 @@ export class Accumulate {
     const gasLimit = this.getGasLimit();
 
     const { accumulatedReports, yieldedRoots, gasCost, pendingTransfers, stateUpdates, ...rest } =
-      await this.accumulateSequentially(gasLimit, accumulatableReports, slot, entropy, statistics);
+      await this.accumulateSequentially(
+        gasLimit,
+        accumulatableReports,
+        slot,
+        entropy,
+        statistics,
+        AccumulationStateUpdate.empty(),
+      );
     assertEmpty(rest);
 
     const accumulated = accumulatableReports.slice(0, accumulatedReports);
@@ -570,7 +610,7 @@ export class Accumulate {
       root: rootHash,
       stateUpdate: {
         ...accStateUpdate,
-        ...servicesStateUpdate.ok,
+        ...servicesStateUpdate.ok.services,
       },
       accumulationStatistics: statistics,
       pendingTransfers,
