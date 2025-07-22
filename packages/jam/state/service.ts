@@ -34,74 +34,50 @@ export const ELECTIVE_ITEM_BALANCE = 10n;
  */
 export const ELECTIVE_BYTE_BALANCE = 1n;
 
-type ServiceAccountInfoBase = {
-  codeHash: CodeHash;
-  balance: U64;
-  accumulateMinGas: ServiceGas;
-  onTransferMinGas: ServiceGas;
-  storageUtilisationBytes: U64;
-  storageUtilisationCount: U32;
-};
-
-// >= 0.6.7
-type ServiceAccountInfoExtended = ServiceAccountInfoBase & {
-  gratisStorage?: U64;
-  created?: TimeSlot;
-  lastAccumulation?: TimeSlot;
-  parentService?: ServiceId;
-};
-
 /**
  * Service account details.
  *
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/108301108301?v=0.6.7
  */
 export class ServiceAccountInfo extends WithDebug {
-  static Codec067 = codec.Class(ServiceAccountInfo, {
-    codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
-    balance: codec.u64,
-    accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
-    onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
-    storageUtilisationBytes: codec.u64,
-    gratisStorage: codec.u64,
-    storageUtilisationCount: codec.u32,
-    created: codec.u32.convert((x) => x, tryAsTimeSlot),
-    lastAccumulation: codec.u32.convert((x) => x, tryAsTimeSlot),
-    parentService: codec.u32.convert((x) => x, tryAsServiceId),
-  });
+  static Codec = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+    ? codec.Class(ServiceAccountInfo, {
+        codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
+        balance: codec.u64,
+        accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
+        onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
+        storageUtilisationBytes: codec.u64,
+        gratisStorage: codec.u64,
+        storageUtilisationCount: codec.u32,
+        created: codec.u32.convert((x) => x, tryAsTimeSlot),
+        lastAccumulation: codec.u32.convert((x) => x, tryAsTimeSlot),
+        parentService: codec.u32.convert((x) => x, tryAsServiceId),
+      })
+    : codec.Class(ServiceAccountInfo, {
+        codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
+        balance: codec.u64,
+        accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
+        onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
+        storageUtilisationBytes: codec.u64,
+        gratisStorage: codec.noopBig.convert((_) => 0n, tryAsU64),
+        storageUtilisationCount: codec.u32,
+        created: codec.noop.convert((_) => 0, tryAsTimeSlot),
+        lastAccumulation: codec.noop.convert((_) => 0, tryAsTimeSlot),
+        parentService: codec.noop.convert((_) => 0, tryAsServiceId),
+      });
 
-  static CodecLegacy = codec.Class(ServiceAccountInfo, {
-    codeHash: codec.bytes(HASH_SIZE).asOpaque<CodeHash>(),
-    balance: codec.u64,
-    accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
-    onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
-    storageUtilisationBytes: codec.u64,
-    gratisStorage: codec.noopBig.convert((_) => 0n, tryAsU64),
-    storageUtilisationCount: codec.u32,
-    created: codec.noop.convert((_) => 0, tryAsTimeSlot),
-    lastAccumulation: codec.noop.convert((_) => 0, tryAsTimeSlot),
-    parentService: codec.noop.convert((_) => 0, tryAsServiceId),
-  });
-
-  static get Codec() {
-    if (Compatibility.is(GpVersion.V0_6_7)) {
-      return ServiceAccountInfo.Codec067;
-    }
-    return ServiceAccountInfo.CodecLegacy;
-  }
-
-  static create(a: ServiceAccountInfoExtended) {
+  static create(a: CodecRecord<ServiceAccountInfo>) {
     return new ServiceAccountInfo(
       a.codeHash,
       a.balance,
       a.accumulateMinGas,
       a.onTransferMinGas,
       a.storageUtilisationBytes,
-      a.gratisStorage ?? tryAsU64(0),
+      a.gratisStorage,
       a.storageUtilisationCount,
-      a.created ?? tryAsTimeSlot(0),
-      a.lastAccumulation ?? tryAsTimeSlot(0),
-      a.parentService ?? tryAsServiceId(0),
+      a.created,
+      a.lastAccumulation,
+      a.parentService,
     );
   }
 
