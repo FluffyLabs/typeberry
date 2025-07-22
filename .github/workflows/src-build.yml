@@ -22,10 +22,14 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
     - run: npm ci
-    - name: Check whether package-lock.json is up to date
+    - name: Regenerate package-lock.json
       run: |
+        cp package-lock.json package-lock.json.bak
         npm install --package-lock-only
-        if [[ -n $(git status --porcelain package-lock.json) ]]; then
+
+    - name: Check for changes in package-lock.json
+      run: |
+        if ! diff -q package-lock.json package-lock.json.bak; then
           echo "package-lock.json is out of sync with package.json."
           echo "Please run 'npm install' and commit the updated package-lock.json."
           exit 1
