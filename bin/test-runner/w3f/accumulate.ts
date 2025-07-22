@@ -1,5 +1,13 @@
 import assert from "node:assert";
-import { type EntropyHash, ServiceGas, ServiceId, type TimeSlot, tryAsPerEpochBlock, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
+import {
+  type EntropyHash,
+  type ServiceGas,
+  type ServiceId,
+  type TimeSlot,
+  tryAsPerEpochBlock,
+  tryAsServiceGas,
+  tryAsServiceId,
+} from "@typeberry/block";
 import { fromJson, workReportFromJson } from "@typeberry/block-json";
 import type { WorkPackageHash, WorkReport } from "@typeberry/block/work-report.js";
 import { HashSet, asKnownSize } from "@typeberry/collections";
@@ -56,7 +64,7 @@ class TestState {
   accumulated!: WorkPackageHash[][];
   privileges!: {
     bless: ServiceId;
-    assign: Array<ServiceId>;
+    assign: ServiceId[];
     designate: ServiceId;
     always_acc: { id: ServiceId; gas: ServiceGas }[];
   };
@@ -178,13 +186,9 @@ class Output {
 export class AccumulateTest {
   static fromJson: FromJson<AccumulateTest> = {
     input: Input.fromJson,
-    pre_state: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? TestState.fromJson
-      : TestStatePre067.fromJson,
+    pre_state: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? TestState.fromJson : TestStatePre067.fromJson,
     output: Output.fromJson,
-    post_state: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
-      ? TestState.fromJson
-      : TestStatePre067.fromJson,
+    post_state: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? TestState.fromJson : TestStatePre067.fromJson,
   };
 
   input!: Input;

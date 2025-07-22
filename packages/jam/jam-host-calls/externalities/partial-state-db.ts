@@ -17,6 +17,7 @@ import { type U32, type U64, isU32, isU64, maxU64, sumU32, sumU64, tryAsU32, try
 import {
   InMemoryService,
   LookupHistoryItem,
+  type PerCore,
   PreimageItem,
   type Service,
   ServiceAccountInfo,
@@ -539,7 +540,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
 
   updatePrivilegedServices(
     manager: ServiceId,
-    authorizer: ServiceId,
+    authorizer: PerCore<ServiceId>,
     validators: ServiceId,
     autoAccumulate: [ServiceId, ServiceGas][],
   ): void {
