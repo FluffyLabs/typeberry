@@ -25,7 +25,7 @@ jobs:
     - name: Check whether package-lock.json is up to date
       run: |
         npm install --package-lock-only
-        if [[ -n $(git status --porcelain package-lock.json) ]]; then
+        if ! git diff --quiet -- package-lock.json; then
           echo "package-lock.json is out of sync with package.json."
           echo "Please run 'npm install' and commit the updated package-lock.json."
           exit 1
