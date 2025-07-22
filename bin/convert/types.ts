@@ -5,15 +5,18 @@ import { WorkPackage } from "@typeberry/block/work-package.js";
 import { WorkReport } from "@typeberry/block/work-report.js";
 import type { Decode, Encode } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
+import { TruncatedHashDictionary } from "@typeberry/database";
 import type { FromJson } from "@typeberry/json-parser";
 import { decodeStandardProgram } from "@typeberry/pvm-spi-decoder";
 import type { InMemoryState } from "@typeberry/state";
 import { fullStateDumpFromJson } from "@typeberry/state-json";
-import { StateEntries } from "@typeberry/state-merkleization";
+import { SerializedState, StateEntries } from "@typeberry/state-merkleization";
 import { inMemoryStateCodec } from "@typeberry/state-merkleization/in-memory-state-codec.js";
 import { workItemFromJson } from "../test-runner/w3f/codec/work-item.js";
 import { workPackageFromJson } from "../test-runner/w3f/codec/work-package.js";
 import { PvmTest } from "../test-runner/w3f/pvm.js";
+import type { TestState } from "../test-runner/w3f/state-loader.js";
+import { StateTransition } from "../test-runner/w3f/state-transition.js";
 
 export type SupportedType = {
   name: string;
@@ -95,6 +98,31 @@ export const SUPPORTED_TYPES: readonly SupportedType[] = [
 
         if (option === "as-root-hash") {
           return StateEntries.serializeInMemory(spec, state).getRootHash();
+        }
+      },
+    },
+  },
+  {
+    name: "state-transition-vector",
+    encode: StateTransition.Codec,
+    decode: StateTransition.Codec,
+    json: () => StateTransition.fromJson,
+    process: {
+      options: ["as-pre-state", "as-post-state"],
+      run(spec: ChainSpec, data: unknown, option: string) {
+        const stateFromKeyvals = (state: TestState) => {
+          const dict = TruncatedHashDictionary.fromEntries(state.keyvals.map((x) => [x.key.asOpaque(), x.value]));
+          const entries = StateEntries.fromTruncatedDictionaryUnsafe(dict);
+          return SerializedState.fromStateEntries(spec, entries);
+        };
+
+        const test = data as StateTransition;
+        if (option === "as-pre-state") {
+          return stateFromKeyvals(test.pre_state);
+        }
+
+        if (option === "as-post-state") {
+          return stateFromKeyvals(test.post_state);
         }
       },
     },

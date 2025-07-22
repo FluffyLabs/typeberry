@@ -1,6 +1,7 @@
 import "json-bigint-patch";
 import fs from "node:fs";
-import { BytesBlob } from "@typeberry/bytes";
+import { start as startRepl } from "node:repl";
+import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { Decoder, Encoder } from "@typeberry/codec";
 import { HashDictionary } from "@typeberry/collections";
 import { type ChainSpec, fullChainSpec, tinyChainSpec } from "@typeberry/config";
@@ -109,28 +110,59 @@ function dumpOutput(spec: ChainSpec, data: unknown, type: SupportedType, outputF
     case OutputFormat.Json: {
       // TODO [ToDr] this will probably not work for all cases,
       // but for now may be good enough.
-      console.info(
-        JSON.stringify(
-          data,
-          (_key, value) => {
-            if (value instanceof BytesBlob) {
-              return value.toString();
-            }
+      console.info(toJson(data));
+      return;
+    }
+    case OutputFormat.Repl: {
+      console.info("\nStarting JavaScript REPL with converted data...");
+      console.info("📦 Data type:", type.name);
+      console.info("💡 Your data is available in the 'data' variable");
+      console.info("🔍 Try: data, inspect(data), toJson(data)");
+      console.info("❓ Type .help for REPL commands or .exit to quit\n");
 
-            if (value instanceof HashDictionary) {
-              return Object.fromEntries(Array.from(value).map(([key, val]) => [key.toString(), val]));
-            }
+      const replServer = startRepl({
+        prompt: `${type.name}> `,
+        useColors: true,
+      });
 
-            return value;
-          },
-          2,
-        ),
-      );
+      reset();
+      replServer.on("reset", reset);
+
+      function reset() {
+        // Make the data available in the REPL context
+        replServer.context.data = data;
+
+        // Add utility functions to the context
+        replServer.context.inspect = inspect;
+        replServer.context.type = type;
+        replServer.context.toJson = toJson;
+        replServer.context.Bytes = Bytes;
+        replServer.context.BytesBlob = BytesBlob;
+      }
+
       return;
     }
     default:
       assertNever(outputFormat);
   }
+}
+
+function toJson(data: unknown) {
+  return JSON.stringify(
+    data,
+    (_key, value) => {
+      if (value instanceof BytesBlob) {
+        return value.toString();
+      }
+
+      if (value instanceof HashDictionary) {
+        return Object.fromEntries(Array.from(value).map(([key, val]) => [key.toString(), val]));
+      }
+
+      return value;
+    },
+    2,
+  );
 }
 
 function processOutput(
