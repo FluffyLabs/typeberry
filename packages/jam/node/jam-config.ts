@@ -1,7 +1,6 @@
 import { type TimeSlot, type ValidatorIndex, tryAsTimeSlot, tryAsValidatorIndex } from "@typeberry/block";
-import type { Bytes } from "@typeberry/bytes";
 import type { NodeConfiguration } from "@typeberry/config-node";
-import type { HASH_SIZE } from "@typeberry/hash";
+import type { KeySeed } from "@typeberry/crypto/key-derivation.js";
 
 export const DEFAULT_DEV_CONFIG = {
   genesisPath: "",
@@ -61,11 +60,11 @@ export type FullDevConfig = DevConfig | (DevConfig & SeedDevConfig);
 
 export type SeedDevConfig = {
   /** Bandersnatch seed to derive key. */
-  bandersnatchSeed: Bytes<HASH_SIZE>;
+  bandersnatchSeed: KeySeed;
   /** Bls seed to derive key. */
-  blsSeed: Bytes<HASH_SIZE>;
+  blsSeed: KeySeed;
   /** Ed25519 seed to derive key. */
-  ed25519Seed: Bytes<HASH_SIZE>;
+  ed25519Seed: KeySeed;
 };
 
 export type DevConfig = {

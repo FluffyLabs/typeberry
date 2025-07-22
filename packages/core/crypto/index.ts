@@ -18,6 +18,6 @@ export {
   BLS_KEY_BYTES,
 } from "./bandersnatch.js";
 
-export type { PublicKeySeed, Ed25519SecretSeed, BandersnatchSecretSeed } from "./key-derivation.js";
+export type { KeySeed as PublicKeySeed, Ed25519SecretSeed, BandersnatchSecretSeed } from "./key-derivation.js";
 export { SEED_SIZE } from "./key-derivation.js";
 export * as keyDerivation from "./key-derivation.js";

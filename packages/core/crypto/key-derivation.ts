@@ -11,7 +11,7 @@ export type SEED_SIZE = typeof SEED_SIZE;
 const ED25519_SECRET_KEY = Bytes.blobFromString("jam_val_key_ed25519");
 const BANDERSNATCH_SECRET_KEY = Bytes.blobFromString("jam_val_key_bandersnatch");
 
-export type PublicKeySeed = Opaque<Bytes<SEED_SIZE>, "PublicKeySeed">;
+export type KeySeed = Opaque<Bytes<SEED_SIZE>, "PublicKeySeed">;
 export type Ed25519SecretSeed = Opaque<Bytes<SEED_SIZE>, "Ed25519SecretSeed">;
 export type BandersnatchSecretSeed = Opaque<Bytes<SEED_SIZE>, "BandersnatchSecretSeed">;
 
@@ -24,7 +24,7 @@ export type BandersnatchSecretSeed = Opaque<Bytes<SEED_SIZE>, "BandersnatchSecre
  * Deriving a 32-byte seed from a 32-bit unsigned integer
  * https://github.com/polkadot-fellows/JIPs/blob/7048f79edf4f4eb8bfe6fb42e6bbf61900f44c65/JIP-5.md#trivial-seeds
  */
-export function trivialSeed(s: U32): PublicKeySeed {
+export function trivialSeed(s: U32): KeySeed {
   const s_le = u32AsLeBytes(s);
   return Bytes.fromBlob(
     BytesBlob.blobFromParts([s_le, s_le, s_le, s_le, s_le, s_le, s_le, s_le]).raw,
@@ -37,7 +37,7 @@ export function trivialSeed(s: U32): PublicKeySeed {
  * https://github.com/polkadot-fellows/JIPs/blob/7048f79edf4f4eb8bfe6fb42e6bbf61900f44c65/JIP-5.md#derivation-method
  */
 export function deriveEd25519SecretKey(
-  seed: PublicKeySeed,
+  seed: KeySeed,
   allocator: SimpleAllocator = new SimpleAllocator(),
 ): Ed25519SecretSeed {
   return blake2b.hashBytes(BytesBlob.blobFromParts([ED25519_SECRET_KEY.raw, seed.raw]), allocator).asOpaque();
@@ -48,7 +48,7 @@ export function deriveEd25519SecretKey(
  * https://github.com/polkadot-fellows/JIPs/blob/7048f79edf4f4eb8bfe6fb42e6bbf61900f44c65/JIP-5.md#derivation-method
  */
 export function deriveBandersnatchSecretKey(
-  seed: PublicKeySeed,
+  seed: KeySeed,
   allocator: SimpleAllocator = new SimpleAllocator(),
 ): BandersnatchSecretSeed {
   return blake2b.hashBytes(BytesBlob.blobFromParts([BANDERSNATCH_SECRET_KEY.raw, seed.raw]), allocator).asOpaque();

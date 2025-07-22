@@ -8,7 +8,7 @@ import type { Ed25519Key } from "./ed25519.js";
 import {
   type BandersnatchSecretSeed,
   type Ed25519SecretSeed,
-  type PublicKeySeed,
+  type KeySeed,
   SEED_SIZE,
   deriveBandersnatchPublicKey,
   deriveBandersnatchSecretKey,
@@ -29,7 +29,7 @@ describe("Key Derivation: trivial seed", () => {
       Bytes.fromNumbers(
         [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
         SEED_SIZE,
-      ).asOpaque<PublicKeySeed>(),
+      ).asOpaque<KeySeed>(),
     );
   });
   it("should derive a valid seed: 2", () => {
@@ -39,7 +39,7 @@ describe("Key Derivation: trivial seed", () => {
       Bytes.fromNumbers(
         [2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0],
         SEED_SIZE,
-      ).asOpaque<PublicKeySeed>(),
+      ).asOpaque<KeySeed>(),
     );
   });
   it("should derive a valid seed: 3", () => {
@@ -49,7 +49,7 @@ describe("Key Derivation: trivial seed", () => {
       Bytes.fromNumbers(
         [3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0],
         SEED_SIZE,
-      ).asOpaque<PublicKeySeed>(),
+      ).asOpaque<KeySeed>(),
     );
   });
   it("should derive a valid seed: 4", () => {
@@ -59,7 +59,7 @@ describe("Key Derivation: trivial seed", () => {
       Bytes.fromNumbers(
         [4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0],
         SEED_SIZE,
-      ).asOpaque<PublicKeySeed>(),
+      ).asOpaque<KeySeed>(),
     );
   });
   it("should derive a valid seed: 5", () => {
@@ -69,7 +69,7 @@ describe("Key Derivation: trivial seed", () => {
       Bytes.fromNumbers(
         [5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0],
         SEED_SIZE,
-      ).asOpaque<PublicKeySeed>(),
+      ).asOpaque<KeySeed>(),
     );
   });
   it("should derive a valid seed: deadbeef", () => {
@@ -82,7 +82,7 @@ describe("Key Derivation: trivial seed", () => {
           0xad, 0xde, 0xef, 0xbe, 0xad, 0xde, 0xef, 0xbe, 0xad, 0xde, 0xef, 0xbe, 0xad, 0xde,
         ],
         SEED_SIZE,
-      ).asOpaque<PublicKeySeed>(),
+      ).asOpaque<KeySeed>(),
     );
   });
 });
@@ -166,7 +166,7 @@ describe("Key Derivation: Ed25519 secret seed", () => {
     const seed = Bytes.fromBlob(
       Bytes.parseBlobNoPrefix("f92d680ea3f0ac06307795490d8a03c5c0d4572b5e0a8cffec87e1294855d9d1").raw,
       SEED_SIZE,
-    ).asOpaque<PublicKeySeed>();
+    ).asOpaque<KeySeed>();
     const ed25519_seed = deriveEd25519SecretKey(seed, allocator);
     assert.deepStrictEqual(
       ed25519_seed,
@@ -263,7 +263,7 @@ describe("Key Derivation: Ed25519 public key", () => {
     const seed = Bytes.fromBlob(
       Bytes.parseBlobNoPrefix("f92d680ea3f0ac06307795490d8a03c5c0d4572b5e0a8cffec87e1294855d9d1").raw,
       SEED_SIZE,
-    ).asOpaque<PublicKeySeed>();
+    ).asOpaque<KeySeed>();
     const ed25519_secret_seed = deriveEd25519SecretKey(seed, allocator);
     const ed25519_public_key = await deriveEd25519PublicKey(ed25519_secret_seed);
     assert.deepStrictEqual(
@@ -367,7 +367,7 @@ describe("Key Derivation: Bandersnatch secret seed", () => {
     const seed = Bytes.fromBlob(
       Bytes.parseBlobNoPrefix("f92d680ea3f0ac06307795490d8a03c5c0d4572b5e0a8cffec87e1294855d9d1").raw,
       SEED_SIZE,
-    ).asOpaque<PublicKeySeed>();
+    ).asOpaque<KeySeed>();
     const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
     assert.deepStrictEqual(
       bandersnatch_seed,
@@ -464,7 +464,7 @@ describe("Key Derivation: Bandersnatch public key", () => {
     const seed = Bytes.fromBlob(
       Bytes.parseBlobNoPrefix("f92d680ea3f0ac06307795490d8a03c5c0d4572b5e0a8cffec87e1294855d9d1").raw,
       SEED_SIZE,
-    ).asOpaque<PublicKeySeed>();
+    ).asOpaque<KeySeed>();
     const bandersnatch_seed = deriveBandersnatchSecretKey(seed, allocator);
     const bandersnatch_public_key = deriveBandersnatchPublicKey(bandersnatch_seed);
     assert.deepStrictEqual(
