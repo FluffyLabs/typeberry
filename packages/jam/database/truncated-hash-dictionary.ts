@@ -55,8 +55,11 @@ export class TruncatedHashDictionary<T extends OpaqueHash, V> {
 
   /** Set or update a value that matches the key on `TRUNCATED_KEY_BYTES`. */
   set(fullKey: T | Bytes<TRUNCATED_KEY_BYTES>, value: V) {
-    this.truncatedKey.raw.set(fullKey.raw.subarray(0, TRUNCATED_KEY_BYTES));
-    this.dict.set(this.truncatedKey, value);
+    // NOTE we can't use the the shared key here, since the collection will
+    // store the key for us, hence the copy.
+    const key = Bytes.zero(HASH_SIZE);
+    key.raw.set(fullKey.raw.subarray(0, TRUNCATED_KEY_BYTES));
+    this.dict.set(key.asOpaque(), value);
   }
 
   /** Remove a value that matches the key on `TRUNCATED_KEY_BYTES`. */

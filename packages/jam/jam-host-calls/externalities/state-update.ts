@@ -1,9 +1,9 @@
-import { type CoreIndex, type PerValidator, tryAsCoreIndex } from "@typeberry/block";
+import type { CoreIndex, PerValidator } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { AuthorizerHash } from "@typeberry/block/work-report.js";
 import { type FixedSizeArray, asKnownSize } from "@typeberry/collections";
 import type { OpaqueHash } from "@typeberry/hash";
-import type { PrivilegedServices, ServicesUpdate, State, ValidatorData } from "@typeberry/state";
+import { PrivilegedServices, type ServicesUpdate, type State, type ValidatorData } from "@typeberry/state";
 import type { PendingTransfer } from "./pending-transfer.js";
 
 /** Update of the state entries coming from accumulation of a single service. */
@@ -47,27 +47,8 @@ export class AccumulationStateUpdate {
   }
 
   /** Create a state update with some existing, yet uncommited services updates. */
-  static new(update: ServiceStateUpdate): AccumulationStateUpdate {
-    const stateUpdate = new AccumulationStateUpdate(update, []);
-    stateUpdate.privilegedServices = update.privilegedServices ?? null;
-    let coreIndex = 0;
-    for (const v of update.authQueues ?? []) {
-      stateUpdate.authorizationQueues.set(tryAsCoreIndex(coreIndex), v);
-      coreIndex++;
-    }
-
-    for (
-      let coreIndex = tryAsCoreIndex(0);
-      coreIndex < (update.authQueues?.length ?? 0);
-      coreIndex = tryAsCoreIndex(coreIndex + 1)
-    ) {
-      const queue = update.authQueues?.[coreIndex];
-      if (queue !== undefined) {
-        stateUpdate.authorizationQueues.set(coreIndex, queue);
-      }
-    }
-    stateUpdate.validatorsData = update.designatedValidatorData ?? null;
-    return stateUpdate;
+  static new(update: ServicesUpdate): AccumulationStateUpdate {
+    return new AccumulationStateUpdate(update, []);
   }
 
   /** Create a copy of another `StateUpdate`. Used by checkpoints. */
@@ -87,11 +68,7 @@ export class AccumulationStateUpdate {
     update.yieldedRoot = from.yieldedRoot;
     update.validatorsData = from.validatorsData === null ? null : asKnownSize([...from.validatorsData]);
     update.privilegedServices =
-      from.privilegedServices === null
-        ? null
-        : {
-            ...from.privilegedServices,
-          };
+      from.privilegedServices === null ? null : PrivilegedServices.create({ ...from.privilegedServices });
     return update;
   }
 }

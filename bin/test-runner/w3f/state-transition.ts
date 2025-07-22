@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { Block } from "@typeberry/block";
 import { blockFromJson } from "@typeberry/block-json";
-import { Decoder, Encoder } from "@typeberry/codec";
+import { Decoder, Encoder, codec } from "@typeberry/codec";
 import { tinyChainSpec } from "@typeberry/config";
 import { InMemoryBlocks } from "@typeberry/database";
 import { SimpleAllocator, keccak } from "@typeberry/hash";
@@ -19,6 +19,13 @@ export class StateTransition {
     post_state: TestState.fromJson,
     block: blockFromJson(tinyChainSpec),
   };
+
+  static Codec = codec.object({
+    pre_state: TestState.Codec,
+    block: Block.Codec,
+    post_state: TestState.Codec,
+  });
+
   pre_state!: TestState;
   post_state!: TestState;
   block!: Block;
@@ -66,6 +73,6 @@ export async function runStateTransition(testContent: StateTransition, _path: st
 
   // if the stf was successful compare the resulting state and the root (redundant, but double checking).
   const root = preState.backend.getRootHash();
-  deepEqual(preState, postState);
+  deepEqual(preState, postState, { ignore: ["backend.entries.data.truncatedKey"] });
   assert.deepStrictEqual(root.toString(), postStateRoot.toString());
 }

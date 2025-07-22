@@ -4,7 +4,7 @@ import { ReportGuarantee } from "@typeberry/block/guarantees.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { tinyChainSpec } from "@typeberry/config";
 import { ED25519_SIGNATURE_BYTES } from "@typeberry/crypto";
-import { asOpaqueType, deepEqual } from "@typeberry/utils";
+import { Compatibility, GpVersion, asOpaqueType, deepEqual } from "@typeberry/utils";
 import { ReportsError } from "./error.js";
 import { guaranteesAsView, initialValidators, newCredential, newReports, newWorkReport } from "./test.utils.js";
 
@@ -164,7 +164,9 @@ describe("Reports.verifyCredentials", () => {
     const res = reports.verifyCredentials(input, hashes);
 
     const message = BytesBlob.parseBlob(
-      "0x6a616d5f67756172616e746565d8c507a9bc5f87033698b255f4fd8b44eda9407def5cf926b5cd36c8f3f4bd52",
+      Compatibility.isGreaterOrEqual(GpVersion.V0_6_5)
+        ? "0x6a616d5f67756172616e746565d8b3242cac2d1db846434afa3a9eead57339a1244f3203de5e810bfe7ee84de5"
+        : "0x6a616d5f67756172616e746565d8c507a9bc5f87033698b255f4fd8b44eda9407def5cf926b5cd36c8f3f4bd52",
     );
 
     const validators = initialValidators();

@@ -96,7 +96,7 @@ export class InMemoryService extends WithDebug implements Service {
   }
 
   getStorage(key: StorageKey): BytesBlob | null {
-    return this.data.storage.get(key)?.blob ?? null;
+    return this.data.storage.get(key)?.value ?? null;
   }
 
   hasPreimage(hash: PreimageHash): boolean {
@@ -157,11 +157,11 @@ export class InMemoryService extends WithDebug implements Service {
 
     // copy storage
     for (const key of entries.storageKeys) {
-      const blob = service.getStorage(key);
-      if (blob === null) {
+      const value = service.getStorage(key);
+      if (value === null) {
         throw new Error(`Service ${service.serviceId} is missing expected storage: ${key}`);
       }
-      storage.set(key, StorageItem.create({ hash: key, blob }));
+      storage.set(key, StorageItem.create({ key, value }));
     }
 
     return new InMemoryService(service.serviceId, {
@@ -294,7 +294,7 @@ export class InMemoryState extends WithDebug implements State, EnumerableState {
       }
 
       if (kind === UpdateStorageKind.Set) {
-        service.data.storage.set(action.storage.hash, action.storage);
+        service.data.storage.set(action.storage.key, action.storage);
       } else if (kind === UpdateStorageKind.Remove) {
         check(
           service.data.storage.has(action.key),

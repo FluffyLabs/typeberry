@@ -35,12 +35,12 @@ import {
 import { binaryMerkleization } from "@typeberry/state-merkleization";
 import type { NotYetAccumulatedReport } from "@typeberry/state/not-yet-accumulated.js";
 import { getKeccakTrieHasher } from "@typeberry/trie/hasher.js";
-import { Result, assertEmpty, check } from "@typeberry/utils";
+import { Compatibility, GpVersion, Result, assertEmpty, check } from "@typeberry/utils";
 import type { CountAndGasUsed } from "../statistics.js";
 import { AccumulateQueue, pruneQueue } from "./accumulate-queue.js";
 import { generateNextServiceId, getWorkPackageHashes, uniquePreserveOrder } from "./accumulate-utils.js";
 import { AccumulateFetchExternalities } from "./externalities/index.js";
-import { LegacyOperand } from "./operand.js";
+import { Operand, Operand_0_6_4 } from "./operand.js";
 import { PvmExecutor } from "./pvm-executor.js";
 
 export type AccumulateRoot = OpaqueHash;
@@ -113,10 +113,22 @@ export const ACCUMULATE_TOTAL_GAS = 3_500_000_000n;
 
 const logger = Logger.new(import.meta.filename, "accumulate");
 
-const ACCUMULATE_ARGS_CODEC = codec.object({
+const ARGS_CODEC_0_6_4 = codec.object({
   slot: codec.u32.asOpaque<TimeSlot>(),
   serviceId: codec.u32.asOpaque<ServiceId>(),
-  operands: codec.sequenceVarLen(LegacyOperand.Codec),
+  operands: codec.sequenceVarLen(Operand_0_6_4.Codec),
+});
+
+const ARGS_CODEC_0_6_5 = codec.object({
+  slot: codec.u32.asOpaque<TimeSlot>(),
+  serviceId: codec.u32.asOpaque<ServiceId>(),
+  operands: codec.sequenceVarLen(Operand.Codec),
+});
+
+const ARGS_CODEC = codec.object({
+  slot: codec.varU32.asOpaque<TimeSlot>(),
+  serviceId: codec.varU32.asOpaque<ServiceId>(),
+  operands: codec.varU32,
 });
 
 export class Accumulate {
@@ -156,7 +168,7 @@ export class Accumulate {
   private async pvmAccumulateInvocation(
     slot: TimeSlot,
     serviceId: ServiceId,
-    operands: LegacyOperand[],
+    operands: Operand[],
     gas: ServiceGas,
     entropy: EntropyHash,
     inputStateUpdate: AccumulationStateUpdate,
@@ -193,8 +205,15 @@ export class Accumulate {
     };
 
     const executor = PvmExecutor.createAccumulateExecutor(serviceId, code, externalities, this.chainSpec);
-    // TODO [MaSi]: in GP 0.6.7 operands array is replaced with length of operands array
-    const args = Encoder.encodeObject(ACCUMULATE_ARGS_CODEC, { slot, serviceId, operands }, this.chainSpec);
+
+    let args = BytesBlob.empty();
+    if (Compatibility.is(GpVersion.V0_6_4)) {
+      args = Encoder.encodeObject(ARGS_CODEC_0_6_4, { slot, serviceId, operands }, this.chainSpec);
+    } else if (Compatibility.is(GpVersion.V0_6_5)) {
+      args = Encoder.encodeObject(ARGS_CODEC_0_6_5, { slot, serviceId, operands }, this.chainSpec);
+    } else {
+      args = Encoder.encodeObject(ARGS_CODEC, { slot, serviceId, operands: tryAsU32(operands.length) });
+    }
 
     const result = await executor.run(args, tryAsGas(gas));
 
@@ -241,7 +260,7 @@ export class Accumulate {
       this.state.privilegedServices.autoAccumulateServices.find((x) => x.service === serviceId)?.gasLimit ??
       tryAsServiceGas(0n);
 
-    const operands: LegacyOperand[] = [];
+    const operands: Operand[] = [];
 
     for (const report of reports) {
       const results = report.results.filter((result) => result.serviceId === serviceId);
@@ -250,8 +269,8 @@ export class Accumulate {
         gasCost = tryAsServiceGas(gasCost + result.gas);
 
         operands.push(
-          LegacyOperand.new({
-            // gas: result.gas, // g
+          Operand.new({
+            gas: result.gas, // g
             payloadHash: result.payloadHash, // y
             result: result.result, // d
             authorizationOutput: report.authorizationOutput, // o
@@ -280,12 +299,16 @@ export class Accumulate {
   ) {
     const { operands, gasCost } = this.getOperandsAndGasCost(serviceId, reports);
 
+    logger.trace(`Accumulating service ${serviceId}, items: ${operands.length} at slot: ${slot}.`);
+
     const result = await this.pvmAccumulateInvocation(slot, serviceId, operands, gasCost, entropy, inputStateUpdate);
 
     if (result.isError) {
+      logger.trace(`Accumulation failed for ${serviceId}.`);
       return { stateUpdate: null, consumedGas: gasCost };
     }
 
+    logger.trace(`Accumulation successful for ${serviceId}.`);
     return result.ok;
   }
 

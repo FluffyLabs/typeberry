@@ -1,8 +1,10 @@
 import type { StateRootHash } from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
+import { codec } from "@typeberry/codec";
 import type { ChainSpec } from "@typeberry/config";
 import { TruncatedHashDictionary } from "@typeberry/database";
+import { HASH_SIZE } from "@typeberry/hash";
 import { type FromJson, json } from "@typeberry/json-parser";
 import { SerializedState, StateEntries, type StateKey } from "@typeberry/state-merkleization";
 
@@ -24,6 +26,17 @@ export class TestState {
     state_root: fromJson.bytes32(),
     keyvals: json.array(keyValEntryFromJson),
   };
+
+  static Codec = codec.object({
+    state_root: codec.bytes(HASH_SIZE).asOpaque<StateRootHash>(),
+    keyvals: codec.sequenceVarLen(
+      codec.object({
+        key: codec.bytes(31),
+        value: codec.blob,
+      }),
+    ),
+  });
+
   state_root!: StateRootHash;
   keyvals!: KeyValEntry[];
 }

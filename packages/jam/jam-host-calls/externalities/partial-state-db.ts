@@ -20,6 +20,7 @@ import {
   AutoAccumulate,
   LookupHistoryItem,
   PreimageItem,
+  PrivilegedServices,
   type Service,
   ServiceAccountInfo,
   type State,
@@ -633,12 +634,12 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
   ): void {
     // NOTE [ToDr] I guess we should not fail if the services don't exist. */
     /** https://graypaper.fluffylabs.dev/#/9a08063/36f40036f400?v=0.6.6 */
-    this.updatedState.privilegedServices = {
+    this.updatedState.privilegedServices = PrivilegedServices.create({
       manager,
       authManager: authorizer,
       validatorsManager: validators,
       autoAccumulateServices: autoAccumulate.map(([service, gasLimit]) => AutoAccumulate.create({ service, gasLimit })),
-    };
+    });
   }
 
   yield(hash: OpaqueHash): void {
@@ -740,13 +741,13 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     return Result.ok(OK);
   }
 
-  private replaceOrAddStorageUpdate(key: StorageKey, blob: BytesBlob | null) {
+  private replaceOrAddStorageUpdate(key: StorageKey, value: BytesBlob | null) {
     const update =
-      blob === null
+      value === null
         ? UpdateStorage.remove({ serviceId: this.currentServiceId, key })
         : UpdateStorage.set({
             serviceId: this.currentServiceId,
-            storage: StorageItem.create({ hash: key, blob }),
+            storage: StorageItem.create({ key, value }),
           });
 
     const index = this.updatedState.services.storage.findIndex(
