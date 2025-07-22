@@ -15,7 +15,7 @@ describe("JSON state dump", () => {
     const parsedState = parseFromJson(testState.default, fromJson);
     const rootHash = StateEntries.serializeInMemory(spec, parsedState).getRootHash();
 
-    if (Compatibility.is(GpVersion.V0_6_7)) {
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
       // NOTE: [MaSo] ServiceAccountInfo changed
       strictEqual(rootHash.toString(), "0x20965842099127f43a6bf9fb3fa3bc47e479feca2759e112986427bc7cfb4a5b");
     } else {
