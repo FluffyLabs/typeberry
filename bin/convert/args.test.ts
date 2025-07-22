@@ -92,6 +92,17 @@ describe("CLI", () => {
     });
   });
 
+  it("should parse repl output", () => {
+    const args = parse(["./test.json", "header", "to-repl"]);
+
+    assert.deepStrictEqual(args, {
+      ...defaultArgs,
+      type: headerType,
+      inputPath: ".././test.json",
+      outputFormat: OutputFormat.Repl,
+    });
+  });
+
   it("should throw on unsupported output format with processing", () => {
     assert.throws(
       () => {

@@ -15,10 +15,19 @@ const ALL_VERSIONS_IN_ORDER = [
 ];
 
 export const DEFAULT_VERSION = GpVersion.V0_6_5;
-export let CURRENT_VERSION = process.env.GP_VERSION as GpVersion | undefined;
+export let CURRENT_VERSION = parseCurrentVersion(process.env.GP_VERSION);
 
-if (CURRENT_VERSION !== undefined && !Object.values(GpVersion).includes(CURRENT_VERSION)) {
-  throw new Error(`Configured environment variable GP_VERSION is unknown: '${CURRENT_VERSION}'`);
+function parseCurrentVersion(env?: string): GpVersion | undefined {
+  if (env === undefined) {
+    return undefined;
+  }
+  const version = env as GpVersion;
+  if (!Object.values(GpVersion).includes(version)) {
+    throw new Error(
+      `Configured environment variable GP_VERSION is unknown: '${env}'. Use one of: ${ALL_VERSIONS_IN_ORDER}`,
+    );
+  }
+  return version;
 }
 
 export class Compatibility {
