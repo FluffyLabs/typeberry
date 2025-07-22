@@ -9,7 +9,7 @@ import {
 } from "@typeberry/block";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { BytesBlob } from "@typeberry/bytes";
-import { type CodecRecord, codec } from "@typeberry/codec";
+import { type CodecRecord, Descriptor, type SizeHint, codec } from "@typeberry/codec";
 import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
 import { type U32, type U64, sumU64, tryAsU64 } from "@typeberry/numbers";
@@ -33,6 +33,21 @@ export const ELECTIVE_ITEM_BALANCE = 10n;
  * https://graypaper.fluffylabs.dev/#/7e6ff6a/445400445400?v=0.6.7
  */
 export const ELECTIVE_BYTE_BALANCE = 1n;
+
+const zeroSizeHint: SizeHint = {
+  bytes: 0,
+  isExact: true,
+};
+
+/** 0-byte read, return given default value */
+const ignoreValueWithDefault = <T>(defaultValue: T) =>
+  Descriptor.new<T>(
+    "ignoreValue",
+    zeroSizeHint,
+    (_e, _v) => {},
+    (_d) => defaultValue,
+    (_s) => {},
+  );
 
 /**
  * Service account details.
@@ -59,11 +74,11 @@ export class ServiceAccountInfo extends WithDebug {
         accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
         onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
         storageUtilisationBytes: codec.u64,
-        gratisStorage: codec.noopBig.convert((_) => 0n, tryAsU64),
+        gratisStorage: ignoreValueWithDefault(tryAsU64(0)),
         storageUtilisationCount: codec.u32,
-        created: codec.noop.convert((_) => 0, tryAsTimeSlot),
-        lastAccumulation: codec.noop.convert((_) => 0, tryAsTimeSlot),
-        parentService: codec.noop.convert((_) => 0, tryAsServiceId),
+        created: ignoreValueWithDefault(tryAsTimeSlot(0)),
+        lastAccumulation: ignoreValueWithDefault(tryAsTimeSlot(0)),
+        parentService: ignoreValueWithDefault(tryAsServiceId(0)),
       });
 
   static create(a: CodecRecord<ServiceAccountInfo>) {

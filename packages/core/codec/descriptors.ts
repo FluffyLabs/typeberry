@@ -326,24 +326,6 @@ export namespace codec {
     (s) => s.bool(),
   );
 
-  /** 0-byte noop returns bigint type. */
-  export const noopBig = Descriptor.new<bigint>(
-    "noopBig",
-    exactHint(0),
-    (_e, _v) => {},
-    (_d) => 0n,
-    (_s) => {},
-  );
-
-  /** 0-byte noop returns number type. */
-  export const noop = Descriptor.new<number>(
-    "noop",
-    exactHint(0),
-    (_e, _v) => {},
-    (_d) => 0,
-    (_s) => {},
-  );
-
   /** Variable-length bytes blob. */
   export const blob = Descriptor.new<BytesBlob>(
     "BytesBlob",
