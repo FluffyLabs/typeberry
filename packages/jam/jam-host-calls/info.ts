@@ -2,10 +2,11 @@ import { type ServiceId, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "
 import { BytesBlob } from "@typeberry/bytes";
 import { Encoder, codec } from "@typeberry/codec";
 import { HASH_SIZE } from "@typeberry/hash";
+import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import { ServiceAccountInfo } from "@typeberry/state";
+import { ServiceAccountInfo, ignoreValueWithDefault } from "@typeberry/state";
 import { Compatibility, GpVersion } from "@typeberry/utils";
 import { HostCallResult } from "./results.js";
 import { getServiceIdOrCurrent } from "./utils.js";
@@ -112,6 +113,10 @@ export const codecServiceAccountInfoWithThresholdBalance = Compatibility.isGreat
         onTransferMinGas: codec.u64.convert((i) => i, tryAsServiceGas),
         storageUtilisationBytes: codec.u64,
         storageUtilisationCount: codec.u32,
+        gratisStorage: ignoreValueWithDefault(tryAsU64(0)),
+        created: ignoreValueWithDefault(tryAsTimeSlot(0)),
+        lastAccumulation: ignoreValueWithDefault(tryAsTimeSlot(0)),
+        parentService: ignoreValueWithDefault(tryAsServiceId(0)),
       },
       "ServiceAccountInfoWithThresholdBalance",
     );

@@ -6,6 +6,7 @@ import {
   type ServiceId,
   tryAsServiceGas,
   tryAsServiceId,
+  tryAsTimeSlot,
 } from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
@@ -480,7 +481,11 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
         accumulateMinGas,
         onTransferMinGas,
         storageUtilisationBytes: bytes.value,
+        gratisStorage: tryAsU64(0),
         storageUtilisationCount: items,
+        created: tryAsTimeSlot(0),
+        lastAccumulation: tryAsTimeSlot(0),
+        parentService: tryAsServiceId(0),
       }),
       preimages: HashDictionary.new(),
       // add the preimage request

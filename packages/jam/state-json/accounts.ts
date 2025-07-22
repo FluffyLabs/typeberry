@@ -1,4 +1,11 @@
-import { type CodeHash, type ServiceGas, type ServiceId, tryAsServiceGas } from "@typeberry/block";
+import {
+  type CodeHash,
+  type ServiceGas,
+  type ServiceId,
+  tryAsServiceGas,
+  tryAsServiceId,
+  tryAsTimeSlot,
+} from "@typeberry/block";
 import { fromJson } from "@typeberry/block-json";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
@@ -35,6 +42,10 @@ class JsonServiceInfo {
         onTransferMinGas: min_memo_gas,
         storageUtilisationBytes: bytes,
         storageUtilisationCount: items,
+        gratisStorage: tryAsU64(0),
+        created: tryAsTimeSlot(0),
+        lastAccumulation: tryAsTimeSlot(0),
+        parentService: tryAsServiceId(0),
       });
     },
   );

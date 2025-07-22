@@ -40,7 +40,7 @@ const zeroSizeHint: SizeHint = {
 };
 
 /** 0-byte read, return given default value */
-const ignoreValueWithDefault = <T>(defaultValue: T) =>
+export const ignoreValueWithDefault = <T>(defaultValue: T) =>
   Descriptor.new<T>(
     "ignoreValue",
     zeroSizeHint,

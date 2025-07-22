@@ -38,6 +38,10 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
+      gratisStorage: tryAsU64(0),
+      created: tryAsTimeSlot(0),
+      lastAccumulation: tryAsTimeSlot(0),
+      parentService: tryAsServiceId(0),
     });
 
     const result = state.applyUpdate({
@@ -76,6 +80,10 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
+      gratisStorage: tryAsU64(0),
+      created: tryAsTimeSlot(0),
+      lastAccumulation: tryAsTimeSlot(0),
+      parentService: tryAsServiceId(0),
     });
 
     // First creation succeeds
@@ -122,6 +130,10 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
+      gratisStorage: tryAsU64(0),
+      created: tryAsTimeSlot(0),
+      lastAccumulation: tryAsTimeSlot(0),
+      parentService: tryAsServiceId(0),
     });
 
     // Create service first
@@ -199,6 +211,10 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
+      gratisStorage: tryAsU64(0),
+      created: tryAsTimeSlot(0),
+      lastAccumulation: tryAsTimeSlot(0),
+      parentService: tryAsServiceId(0),
     });
 
     // Create service first
@@ -261,6 +277,10 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
+      gratisStorage: tryAsU64(0),
+      created: tryAsTimeSlot(0),
+      lastAccumulation: tryAsTimeSlot(0),
+      parentService: tryAsServiceId(0),
     });
 
     // Create service first
@@ -320,6 +340,10 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
+      gratisStorage: tryAsU64(0),
+      created: tryAsTimeSlot(0),
+      lastAccumulation: tryAsTimeSlot(0),
+      parentService: tryAsServiceId(0),
     });
 
     // Create the service
@@ -402,6 +426,10 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
+      gratisStorage: tryAsU64(0),
+      created: tryAsTimeSlot(0),
+      lastAccumulation: tryAsTimeSlot(0),
+      parentService: tryAsServiceId(0),
     });
 
     // Create the service
@@ -472,6 +500,10 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
+      gratisStorage: tryAsU64(0),
+      created: tryAsTimeSlot(0),
+      lastAccumulation: tryAsTimeSlot(0),
+      parentService: tryAsServiceId(0),
     });
 
     // Create the service
@@ -549,6 +581,10 @@ describe("InMemoryState", () => {
       onTransferMinGas: tryAsServiceGas(5),
       storageUtilisationBytes: tryAsU64(8),
       storageUtilisationCount: tryAsU32(3),
+      gratisStorage: tryAsU64(0),
+      created: tryAsTimeSlot(0),
+      lastAccumulation: tryAsTimeSlot(0),
+      parentService: tryAsServiceId(0),
     });
 
     let result = state.applyUpdate({

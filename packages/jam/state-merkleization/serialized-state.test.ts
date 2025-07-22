@@ -1,5 +1,5 @@
 import { describe, it } from "node:test";
-import { tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
+import { tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes } from "@typeberry/bytes";
 import { tinyChainSpec } from "@typeberry/config";
 import { HASH_SIZE } from "@typeberry/hash";
@@ -30,6 +30,10 @@ describe("SerializedState", () => {
             onTransferMinGas: tryAsServiceGas(10),
             storageUtilisationBytes: tryAsU64(10),
             storageUtilisationCount: tryAsU32(3),
+            gratisStorage: tryAsU64(0),
+            created: tryAsTimeSlot(0),
+            lastAccumulation: tryAsTimeSlot(0),
+            parentService: tryAsServiceId(0),
           }),
           lookupHistory: new LookupHistoryItem(
             Bytes.fill(HASH_SIZE, 5).asOpaque(),

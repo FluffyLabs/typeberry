@@ -8,30 +8,21 @@ import { Compatibility, GpVersion, deepEqual } from "@typeberry/utils";
 import { ServiceAccountInfo } from "./service.js";
 
 const encodedTestInfo = Compatibility.is(GpVersion.V0_6_7)
-  ? "0x0101010101010101010101010101010101010101010101010101010101010101809698000000000064000000000000000a000000000000000a000000000000000a00000000000000030000000a0000000f0000000a000000"
+  ? "0x0101010101010101010101010101010101010101010101010101010101010101809698000000000064000000000000000a000000000000000a00000000000000000000000000000003000000000000000000000000000000"
   : "0x0101010101010101010101010101010101010101010101010101010101010101809698000000000064000000000000000a000000000000000a0000000000000003000000";
 
-const testInfo = Compatibility.is(GpVersion.V0_6_7)
-  ? ServiceAccountInfo.create({
-      codeHash: Bytes.fill(HASH_SIZE, 1).asOpaque(),
-      balance: tryAsU64(10_000_000n),
-      accumulateMinGas: tryAsServiceGas(100),
-      onTransferMinGas: tryAsServiceGas(10),
-      storageUtilisationBytes: tryAsU64(10),
-      gratisStorage: tryAsU64(10),
-      storageUtilisationCount: tryAsU32(3),
-      created: tryAsTimeSlot(10),
-      lastAccumulation: tryAsTimeSlot(15),
-      parentService: tryAsServiceId(10),
-    })
-  : ServiceAccountInfo.create({
-      codeHash: Bytes.fill(HASH_SIZE, 1).asOpaque(),
-      balance: tryAsU64(10_000_000n),
-      accumulateMinGas: tryAsServiceGas(100),
-      onTransferMinGas: tryAsServiceGas(10),
-      storageUtilisationBytes: tryAsU64(10),
-      storageUtilisationCount: tryAsU32(3),
-    });
+const testInfo = ServiceAccountInfo.create({
+  codeHash: Bytes.fill(HASH_SIZE, 1).asOpaque(),
+  balance: tryAsU64(10_000_000n),
+  accumulateMinGas: tryAsServiceGas(100),
+  onTransferMinGas: tryAsServiceGas(10),
+  storageUtilisationBytes: tryAsU64(10),
+  storageUtilisationCount: tryAsU32(3),
+  gratisStorage: tryAsU64(0),
+  created: tryAsTimeSlot(0),
+  lastAccumulation: tryAsTimeSlot(0),
+  parentService: tryAsServiceId(0),
+});
 
 describe("Service Account Info", () => {
   it("should encode service account info", () => {

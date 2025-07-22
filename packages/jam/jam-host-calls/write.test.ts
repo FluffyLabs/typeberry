@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
-import { type ServiceId, tryAsServiceGas, tryAsServiceId } from "@typeberry/block";
+import { type ServiceId, tryAsServiceGas, tryAsServiceId, tryAsTimeSlot } from "@typeberry/block";
 import { Bytes, BytesBlob } from "@typeberry/bytes";
 import { blake2b } from "@typeberry/hash";
 import { tryAsU32, tryAsU64 } from "@typeberry/numbers";
@@ -34,6 +34,10 @@ function prepareAccounts(serviceId: ServiceId, { balance }: { balance?: bigint }
       onTransferMinGas: tryAsServiceGas(0n),
       storageUtilisationBytes: tryAsU64(10_000),
       storageUtilisationCount: tryAsU32(1_000),
+      gratisStorage: tryAsU64(0),
+      created: tryAsTimeSlot(0),
+      lastAccumulation: tryAsTimeSlot(0),
+      parentService: tryAsServiceId(0),
     }),
   );
   return accounts;
