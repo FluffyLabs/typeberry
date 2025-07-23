@@ -252,42 +252,6 @@ export class Accumulate {
   }
 
   /**
-   * A method that prepare operands array and gas cost that are needed to accumulate a single service.
-   *
-   * https://graypaper.fluffylabs.dev/#/7e6ff6a/18ea00189d01?v=0.6.7
-   */
-  private getOperandsAndGasCost(serviceId: ServiceId, reports: WorkReport[]) {
-    // TODO [MaSi]: can `autoAccumulateServices` be a map?
-    let gasCost =
-      this.state.privilegedServices.autoAccumulateServices.find((x) => x.service === serviceId)?.gasLimit ??
-      tryAsServiceGas(0n);
-
-    const operands: Operand[] = [];
-
-    for (const report of reports) {
-      const results = report.results.filter((result) => result.serviceId === serviceId);
-
-      for (const result of results) {
-        gasCost = tryAsServiceGas(gasCost + result.gas);
-
-        operands.push(
-          Operand.new({
-            gas: result.gas, // g
-            payloadHash: result.payloadHash, // y
-            result: result.result, // d
-            authorizationOutput: report.authorizationOutput, // o
-            exportsRoot: report.workPackageSpec.exportsRoot, // e
-            hash: report.workPackageSpec.hash, // h
-            authorizerHash: report.authorizerHash, // a
-          }),
-        );
-      }
-    }
-
-    return { operands, gasCost };
-  }
-
-  /**
    * A method that accumulate reports connected with a single service
    *
    * https://graypaper.fluffylabs.dev/#/7e6ff6a/18d70118d701?v=0.6.7
