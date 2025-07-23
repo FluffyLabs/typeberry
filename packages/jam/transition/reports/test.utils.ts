@@ -342,7 +342,7 @@ export const initialServices = ({ withDummyCodeHash = false } = {}): Map<Service
         onTransferMinGas: tryAsServiceGas(0),
         storageUtilisationBytes: tryAsU64(1),
         storageUtilisationCount: tryAsU32(1),
-        gratisStorage: tryAsU64(0),
+        gratisStorageBytes: tryAsU64(0),
         created: tryAsTimeSlot(0),
         lastAccumulation: tryAsTimeSlot(0),
         parentService: tryAsServiceId(0),

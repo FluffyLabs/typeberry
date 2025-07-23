@@ -5,7 +5,8 @@ import { tryAsU64 } from "@typeberry/numbers";
 import type { HostCallHandler, IHostCallMemory, IHostCallRegisters } from "@typeberry/pvm-host-calls";
 import { PvmExecution, tryAsHostCallIndex } from "@typeberry/pvm-host-calls/host-call-handler.js";
 import { type GasCounter, tryAsSmallGas } from "@typeberry/pvm-interpreter/gas.js";
-import type { PartialState } from "../externalities/partial-state.js";
+import { Compatibility, GpVersion } from "@typeberry/utils";
+import { NewServiceError, type PartialState } from "../externalities/partial-state.js";
 import { HostCallResult } from "../results.js";
 
 const IN_OUT_REG = 7;
@@ -37,6 +38,8 @@ export class New implements HostCallHandler {
     const gas = tryAsServiceGas(regs.get(9));
     // `m`
     const allowance = tryAsServiceGas(regs.get(10));
+    // `f`
+    const gratisStorageOffset = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7) ? regs.get(11) : tryAsU64(0);
 
     // `c`
     const codeHash = Bytes.zero(HASH_SIZE);
@@ -46,12 +49,23 @@ export class New implements HostCallHandler {
       return PvmExecution.Panic;
     }
 
-    const assignedId = this.partialState.newService(codeHash.asOpaque(), codeLength, gas, allowance);
+    const assignedId = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+      ? this.partialState.newService(codeHash.asOpaque(), codeLength, gas, allowance, gratisStorageOffset)
+      : this.partialState.newServicePre067(codeHash.asOpaque(), codeLength, gas, allowance);
 
-    if (assignedId.isOk) {
-      regs.set(IN_OUT_REG, tryAsU64(assignedId.ok));
+    if (assignedId.isError) {
+      if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+        const error = assignedId.error as NewServiceError;
+        if (error === NewServiceError.InsufficientFunds) {
+          regs.set(IN_OUT_REG, HostCallResult.CASH);
+        } else {
+          regs.set(IN_OUT_REG, HostCallResult.HUH);
+        }
+      } else {
+        regs.set(IN_OUT_REG, HostCallResult.CASH);
+      }
     } else {
-      regs.set(IN_OUT_REG, HostCallResult.CASH);
+      regs.set(IN_OUT_REG, tryAsU64(assignedId.ok));
     }
     return;
   }

@@ -28,7 +28,7 @@ import {
   type ValidatorData,
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
-import { OK, Result, assertNever, check, ensure } from "@typeberry/utils";
+import { Compatibility, GpVersion, OK, Result, assertNever, check, ensure } from "@typeberry/utils";
 import type { AccountsInfo } from "../info.js";
 import type { AccountsLookup } from "../lookup.js";
 import type { AccountsRead } from "../read.js";
@@ -36,6 +36,7 @@ import { clampU64ToU32, writeServiceIdAsLeBytes } from "../utils.js";
 import type { AccountsWrite } from "../write.js";
 import {
   EjectError,
+  NewServiceError,
   type PartialState,
   type PreimageStatus,
   PreimageStatusKind,
@@ -323,15 +324,19 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     items: { overflow: boolean; value: U32 },
     bytes: { overflow: boolean; value: U64 },
     serviceInfo: ServiceAccountInfo,
-  ): Result<OK, "insufficient funds"> {
-    // TODO [ToDr] this is not specified in GP, but it seems sensible.
+  ): Result<OK, NewServiceError> {
+    // NOTE: [ToDr] this is not specified in GP, but it seems sensible.
+    // TODO: [MaSo] check if still right in version ^0.6.7, when we can have free storage
     if (items.overflow || bytes.overflow) {
-      return Result.error("insufficient funds");
+      return Result.error(NewServiceError.InsufficientFunds);
     }
 
-    const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(items.value, bytes.value);
+    // TODO: [MaSo] gratisStorageBytes should be passed here as parameter or taken from serviceInfo?
+    const thresholdBalance = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+      ? ServiceAccountInfo.calculateThresholdBalance(items.value, bytes.value, serviceInfo.gratisStorageBytes)
+      : ServiceAccountInfo.calculateThresholdBalancePre067(items.value, bytes.value);
     if (serviceInfo.balance < thresholdBalance) {
-      return Result.error("insufficient funds");
+      return Result.error(NewServiceError.InsufficientFunds);
     }
 
     // Update service info with new details.
@@ -423,6 +428,7 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     const thresholdBalance = ServiceAccountInfo.calculateThresholdBalance(
       source.storageUtilisationCount,
       source.storageUtilisationBytes,
+      source.gratisStorageBytes,
     );
     if (newBalance < thresholdBalance) {
       return Result.error(TransferError.BalanceBelowThreshold);
@@ -452,17 +458,87 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
     codeLength: U64,
     accumulateMinGas: ServiceGas,
     onTransferMinGas: ServiceGas,
-  ): Result<ServiceId, "insufficient funds"> {
+    gratisStorageOffset: U64,
+  ): Result<ServiceId, NewServiceError> {
     const newServiceId = this.nextNewServiceId;
     // calculate the threshold. Storage is empty, one preimage requested.
-    // https://graypaper.fluffylabs.dev/#/9a08063/114501114501?v=0.6.6
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/115901115901?v=0.6.7
     const items = tryAsU32(2 * 1 + 0);
     const bytes = sumU64(tryAsU64(81), codeLength);
     const clampedLength = clampU64ToU32(codeLength);
 
-    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes.value);
+    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes.value, gratisStorageOffset);
     const currentService = this.getCurrentServiceInfo();
     const thresholdForCurrent = ServiceAccountInfo.calculateThresholdBalance(
+      currentService.storageUtilisationCount,
+      currentService.storageUtilisationBytes,
+      currentService.gratisStorageBytes,
+    );
+
+    // TODO: [MaSo] Check if privilaged service for free storage
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/369703369703?v=0.6.7
+
+    // check if we have enough balance
+    const balanceLeftForCurrent = currentService.balance - thresholdForNew;
+    if (balanceLeftForCurrent < thresholdForCurrent || bytes.overflow) {
+      return Result.error(NewServiceError.InsufficientFunds);
+    }
+
+    // proceed with service creation
+    const newService = new InMemoryService(newServiceId, {
+      info: ServiceAccountInfo.create({
+        codeHash,
+        balance: thresholdForNew,
+        accumulateMinGas,
+        onTransferMinGas,
+        storageUtilisationBytes: bytes.value,
+        storageUtilisationCount: items,
+        gratisStorageBytes: gratisStorageOffset,
+        created: this.state.timeslot,
+        lastAccumulation: tryAsTimeSlot(0),
+        parentService: newServiceId,
+      }),
+      preimages: HashDictionary.new(),
+      // add the preimage request
+      lookupHistory: HashDictionary.fromEntries([
+        [codeHash.asOpaque(), [new LookupHistoryItem(codeHash.asOpaque(), clampedLength, tryAsLookupHistorySlots([]))]],
+      ]),
+      storage: HashDictionary.new(),
+    });
+
+    // add the new service
+    this.updatedState.newServices.push(newService);
+
+    // update the balance
+    // https://graypaper.fluffylabs.dev/#/9a08063/36f10236f102?v=0.6.6
+    this.updatedState.updatedServiceInfo = ServiceAccountInfo.create({
+      ...currentService,
+      balance: tryAsU64(balanceLeftForCurrent),
+    });
+
+    // update the next service id we are going to create next
+    // https://graypaper.fluffylabs.dev/#/9a08063/363603363603?v=0.6.6
+    this.nextNewServiceId = this.getNextAvailableServiceId(bumpServiceId(newServiceId));
+
+    return Result.ok(newServiceId);
+  }
+
+  newServicePre067(
+    codeHash: CodeHash,
+    codeLength: U64,
+    accumulateMinGas: ServiceGas,
+    onTransferMinGas: ServiceGas,
+  ): Result<ServiceId, "insufficient funds"> {
+    const newServiceId = this.nextNewServiceId;
+    // calculate the threshold. Storage is empty, one preimage requested.
+    // https://graypaper.fluffylabs.dev/#/7e6ff6a/115901115901?v=0.6.7
+    const items = tryAsU32(2 * 1 + 0);
+    const bytes = sumU64(tryAsU64(81), codeLength);
+    const clampedLength = clampU64ToU32(codeLength);
+
+    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalancePre067(items, bytes.value);
+    const currentService = this.getCurrentServiceInfo();
+    const thresholdForCurrent = ServiceAccountInfo.calculateThresholdBalancePre067(
       currentService.storageUtilisationCount,
       currentService.storageUtilisationBytes,
     );
@@ -481,11 +557,11 @@ export class PartialStateDb implements PartialState, AccountsWrite, AccountsRead
         accumulateMinGas,
         onTransferMinGas,
         storageUtilisationBytes: bytes.value,
-        gratisStorage: tryAsU64(0),
         storageUtilisationCount: items,
-        created: tryAsTimeSlot(0),
+        gratisStorageBytes: tryAsU64(0),
+        created: this.state.timeslot,
         lastAccumulation: tryAsTimeSlot(0),
-        parentService: tryAsServiceId(0),
+        parentService: newServiceId,
       }),
       preimages: HashDictionary.new(),
       // add the preimage request

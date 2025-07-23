@@ -182,7 +182,7 @@ export const testState = (): InMemoryState => {
             accumulateMinGas: tryAsServiceGas(100),
             onTransferMinGas: tryAsServiceGas(100),
             storageUtilisationBytes: tryAsU64(1296),
-            gratisStorage: tryAsU64(0),
+            gratisStorageBytes: tryAsU64(0),
             storageUtilisationCount: tryAsU32(4),
             created: tryAsTimeSlot(0),
             lastAccumulation: tryAsTimeSlot(0),

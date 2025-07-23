@@ -151,7 +151,7 @@ function testAccountsMapEntryToAccount(entry: TestAccountsMapEntry): InMemorySer
       accumulateMinGas: tryAsServiceGas(0),
       onTransferMinGas: tryAsServiceGas(0),
       storageUtilisationBytes: tryAsU64(0),
-      gratisStorage: tryAsU64(0),
+      gratisStorageBytes: tryAsU64(0),
       storageUtilisationCount: tryAsU32(0),
       created: tryAsTimeSlot(0),
       lastAccumulation: tryAsTimeSlot(0),

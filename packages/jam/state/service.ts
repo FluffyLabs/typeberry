@@ -12,7 +12,7 @@ import type { BytesBlob } from "@typeberry/bytes";
 import { type CodecRecord, Descriptor, type SizeHint, codec } from "@typeberry/codec";
 import { type KnownSizeArray, asKnownSize } from "@typeberry/collections";
 import { HASH_SIZE, type OpaqueHash } from "@typeberry/hash";
-import { type U32, type U64, sumU64, tryAsU64 } from "@typeberry/numbers";
+import { type U32, type U64, maxU64, sumU64, tryAsU64 } from "@typeberry/numbers";
 import { Compatibility, GpVersion, type Opaque, WithDebug } from "@typeberry/utils";
 
 /**
@@ -62,7 +62,7 @@ export class ServiceAccountInfo extends WithDebug {
         accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
         onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
         storageUtilisationBytes: codec.u64,
-        gratisStorage: codec.u64,
+        gratisStorageBytes: codec.u64,
         storageUtilisationCount: codec.u32,
         created: codec.u32.convert((x) => x, tryAsTimeSlot),
         lastAccumulation: codec.u32.convert((x) => x, tryAsTimeSlot),
@@ -74,8 +74,9 @@ export class ServiceAccountInfo extends WithDebug {
         accumulateMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
         onTransferMinGas: codec.u64.convert((x) => x, tryAsServiceGas),
         storageUtilisationBytes: codec.u64,
-        gratisStorage: ignoreValueWithDefault(tryAsU64(0)),
         storageUtilisationCount: codec.u32,
+        // NOTE: [MaSo] here are values out of order, bcs they are not existing in previous versions
+        gratisStorageBytes: ignoreValueWithDefault(tryAsU64(0)),
         created: ignoreValueWithDefault(tryAsTimeSlot(0)),
         lastAccumulation: ignoreValueWithDefault(tryAsTimeSlot(0)),
         parentService: ignoreValueWithDefault(tryAsServiceId(0)),
@@ -88,7 +89,7 @@ export class ServiceAccountInfo extends WithDebug {
       a.accumulateMinGas,
       a.onTransferMinGas,
       a.storageUtilisationBytes,
-      a.gratisStorage,
+      a.gratisStorageBytes,
       a.storageUtilisationCount,
       a.created,
       a.lastAccumulation,
@@ -97,10 +98,26 @@ export class ServiceAccountInfo extends WithDebug {
   }
 
   /**
-   * `a_t = BS + BI * a_i + BL * a_o`
-   * https://graypaper.fluffylabs.dev/#/9a08063/117201117201?v=0.6.6
+   * `a_t = max(0, BS + BI * a_i + BL * a_o - a_f)`
+   * https://graypaper.fluffylabs.dev/#/7e6ff6a/119e01119e01?v=0.6.7
    */
-  static calculateThresholdBalance(items: U32, bytes: U64): U64 {
+  static calculateThresholdBalance(items: U32, bytes: U64, freeBytes: U64): U64 {
+    const sum = sumU64(
+      tryAsU64(BASE_SERVICE_BALANCE),
+      tryAsU64(ELECTIVE_ITEM_BALANCE * BigInt(items)),
+      tryAsU64(ELECTIVE_BYTE_BALANCE * (bytes - freeBytes)),
+    );
+    if (sum.overflow) {
+      return tryAsU64(2n ** 64n - 1n);
+    }
+    return maxU64(tryAsU64(0), sum.value);
+  }
+
+  /**
+   * `a_t = BS + BI * a_i + BL * a_o`
+   * https://graypaper.fluffylabs.dev/#/9a08063/114501114501?v=0.6.6
+   */
+  static calculateThresholdBalancePre067(items: U32, bytes: U64): U64 {
     const sum = sumU64(
       tryAsU64(BASE_SERVICE_BALANCE),
       tryAsU64(ELECTIVE_ITEM_BALANCE * BigInt(items)),
@@ -123,8 +140,8 @@ export class ServiceAccountInfo extends WithDebug {
     public readonly onTransferMinGas: ServiceGas,
     /** `a_o`: Total number of octets in storage. */
     public readonly storageUtilisationBytes: U64,
-    /** `a_f`: Gratis storage offset. */
-    public readonly gratisStorage: U64,
+    /** `a_f`: Free octets of storage. */
+    public readonly gratisStorageBytes: U64,
     /** `a_i`: Number of items in storage. */
     public readonly storageUtilisationCount: U32,
     /** `a_r`: Creation account time slot. */

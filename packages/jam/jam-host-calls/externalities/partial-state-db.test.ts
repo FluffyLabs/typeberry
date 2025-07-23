@@ -32,11 +32,12 @@ import {
   tryAsLookupHistorySlots,
 } from "@typeberry/state";
 import { testState } from "@typeberry/state/test.utils.js";
-import { OK, Result, ensure } from "@typeberry/utils";
+import { Compatibility, GpVersion, OK, Result, ensure } from "@typeberry/utils";
 import { writeServiceIdAsLeBytes } from "../utils.js";
 import { PartialStateDb } from "./partial-state-db.js";
 import {
   EjectError,
+  NewServiceError,
   PreimageStatusKind,
   ProvidePreimageError,
   RequestPreimageError,
@@ -339,7 +340,8 @@ describe("PartialState.forgetPreimage", () => {
 describe("PartialState.newService", () => {
   it("should create a new service and update balance + next service ID", () => {
     const mockState = testState();
-    const maybeService = mockState.services.get(tryAsServiceId(0));
+    const serviceId = tryAsServiceId(0);
+    const maybeService = mockState.services.get(serviceId);
     const service = ensure<InMemoryService | undefined, InMemoryService>(maybeService, maybeService !== undefined);
 
     const partialState = new PartialStateDb(mockState, tryAsServiceId(0), tryAsServiceId(10));
@@ -349,14 +351,23 @@ describe("PartialState.newService", () => {
     const codeLengthU64 = tryAsU64(codeLength);
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
+    const gratisStorageBytes = tryAsU64(0);
 
     const items = tryAsU32(2); // 2 * 1 + 0
     const bytes = tryAsU64(81 + codeLength);
-    const thresholdForNew = ServiceAccountInfo.calculateThresholdBalance(items, bytes);
+    const thresholdForNew = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+      ? ServiceAccountInfo.calculateThresholdBalance(items, bytes, gratisStorageBytes)
+      : ServiceAccountInfo.calculateThresholdBalancePre067(items, bytes);
     const expectedBalance = tryAsU64(service.data.info.balance - thresholdForNew);
 
     // when
-    const result = partialState.newService(codeHash, codeLengthU64, accumulateMinGas, onTransferMinGas);
+    const result = partialState.newService(
+      codeHash,
+      codeLengthU64,
+      accumulateMinGas,
+      onTransferMinGas,
+      gratisStorageBytes,
+    );
 
     // then
     const expectedServiceId = tryAsServiceId(10);
@@ -372,11 +383,11 @@ describe("PartialState.newService", () => {
           accumulateMinGas,
           onTransferMinGas,
           storageUtilisationBytes: bytes,
-          gratisStorage: tryAsU64(0),
+          gratisStorageBytes: gratisStorageBytes,
           storageUtilisationCount: items,
-          created: tryAsTimeSlot(0),
+          created: tryAsTimeSlot(16),
           lastAccumulation: tryAsTimeSlot(0),
-          parentService: tryAsServiceId(0),
+          parentService: expectedServiceId,
         }),
         preimages: HashDictionary.new(),
         lookupHistory: (() => {
@@ -423,12 +434,19 @@ describe("PartialState.newService", () => {
     const codeLength = tryAsU64(2 ** 32 + 1);
     const accumulateMinGas = tryAsServiceGas(10n);
     const onTransferMinGas = tryAsServiceGas(20n);
+    const freeStorage = tryAsU64(0);
 
     // when
-    const result = partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas);
+    const result = Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+      ? partialState.newService(codeHash, codeLength, accumulateMinGas, onTransferMinGas, freeStorage)
+      : partialState.newServicePre067(codeHash, codeLength, accumulateMinGas, onTransferMinGas);
 
     // then
-    assert.deepStrictEqual(result, Result.error("insufficient funds"));
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      assert.deepStrictEqual(result, Result.error(NewServiceError.InsufficientFunds));
+    } else {
+      assert.deepStrictEqual(result, Result.error("insufficient funds"));
+    }
 
     // Verify no side effects
     assert.deepStrictEqual(partialState.updatedState.newServices, []);
@@ -1227,7 +1245,7 @@ describe("AccumulateServiceExternalities", () => {
         storageUtilisationCount: tryAsU32(initialStorage.size),
         codeHash: Bytes.zero(HASH_SIZE).asOpaque(),
         onTransferMinGas: tryAsServiceGas(1000),
-        gratisStorage: tryAsU64(0),
+        gratisStorageBytes: tryAsU64(0),
         created: tryAsTimeSlot(0),
         lastAccumulation: tryAsTimeSlot(0),
         parentService: tryAsServiceId(0),

@@ -18,7 +18,7 @@ const testInfo = ServiceAccountInfo.create({
   onTransferMinGas: tryAsServiceGas(10),
   storageUtilisationBytes: tryAsU64(10),
   storageUtilisationCount: tryAsU32(3),
-  gratisStorage: tryAsU64(0),
+  gratisStorageBytes: tryAsU64(0),
   created: tryAsTimeSlot(0),
   lastAccumulation: tryAsTimeSlot(0),
   parentService: tryAsServiceId(0),

@@ -34,7 +34,7 @@ function prepareAccounts(serviceId: ServiceId, { balance }: { balance?: bigint }
       onTransferMinGas: tryAsServiceGas(0n),
       storageUtilisationBytes: tryAsU64(10_000),
       storageUtilisationCount: tryAsU32(1_000),
-      gratisStorage: tryAsU64(0),
+      gratisStorageBytes: tryAsU64(0),
       created: tryAsTimeSlot(0),
       lastAccumulation: tryAsTimeSlot(0),
       parentService: tryAsServiceId(0),

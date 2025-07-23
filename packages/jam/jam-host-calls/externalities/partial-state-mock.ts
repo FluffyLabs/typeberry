@@ -1,4 +1,11 @@
-import type { CodeHash, CoreIndex, PerValidator, ServiceGas, ServiceId } from "@typeberry/block";
+import {
+  type CodeHash,
+  type CoreIndex,
+  type PerValidator,
+  type ServiceGas,
+  type ServiceId,
+  tryAsServiceId,
+} from "@typeberry/block";
 import type { AUTHORIZATION_QUEUE_SIZE } from "@typeberry/block/gp-constants.js";
 import type { PreimageHash } from "@typeberry/block/preimage.js";
 import type { Bytes, BytesBlob } from "@typeberry/bytes";
@@ -9,6 +16,7 @@ import type { ValidatorData } from "@typeberry/state";
 import { OK, Result } from "@typeberry/utils";
 import {
   type EjectError,
+  type NewServiceError,
   type PartialState,
   type PreimageStatus,
   ProvidePreimageError,
@@ -21,6 +29,7 @@ export class PartialStateMock implements PartialState {
   public readonly authQueue: Parameters<PartialStateMock["updateAuthorizationQueue"]>[] = [];
   public readonly forgetPreimageData: Parameters<PartialStateMock["forgetPreimage"]>[] = [];
   public readonly newServiceCalled: Parameters<PartialStateMock["newService"]>[] = [];
+  public readonly newServicePre067Called: Parameters<PartialStateMock["newServicePre067"]>[] = [];
   public readonly privilegedServices: Parameters<PartialStateMock["updatePrivilegedServices"]>[] = [];
   public readonly ejectData: Parameters<PartialStateMock["eject"]>[] = [];
   public readonly requestPreimageData: Parameters<PartialStateMock["requestPreimage"]>[] = [];
@@ -33,7 +42,8 @@ export class PartialStateMock implements PartialState {
   public checkpointCalled = 0;
   public yieldHash: OpaqueHash | null = null;
   public forgetPreimageResponse: Result<OK, null> = Result.ok(OK);
-  public newServiceResponse: ServiceId | null = null;
+  public newServiceResponse: Result<ServiceId, NewServiceError> = Result.ok(tryAsServiceId(0));
+  public newServicePre067Response: ServiceId | null = null;
   public ejectReturnValue: Result<OK, EjectError> = Result.ok(OK);
   public requestPreimageResponse: Result<OK, RequestPreimageError> = Result.ok(OK);
   public checkPreimageStatusResponse: PreimageStatus | null = null;
@@ -78,10 +88,21 @@ export class PartialStateMock implements PartialState {
     codeLength: U64,
     gas: ServiceGas,
     balance: ServiceGas,
+    freeStorage: U64,
+  ): Result<ServiceId, NewServiceError> {
+    this.newServiceCalled.push([codeHash, codeLength, gas, balance, freeStorage]);
+    return this.newServiceResponse;
+  }
+
+  newServicePre067(
+    codeHash: CodeHash,
+    codeLength: U64,
+    gas: ServiceGas,
+    balance: ServiceGas,
   ): Result<ServiceId, "insufficient funds"> {
-    this.newServiceCalled.push([codeHash, codeLength, gas, balance]);
-    if (this.newServiceResponse !== null) {
-      return Result.ok(this.newServiceResponse);
+    this.newServicePre067Called.push([codeHash, codeLength, gas, balance]);
+    if (this.newServicePre067Response !== null) {
+      return Result.ok(this.newServicePre067Response);
     }
 
     return Result.error("insufficient funds");

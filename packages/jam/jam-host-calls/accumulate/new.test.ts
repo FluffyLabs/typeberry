@@ -10,6 +10,7 @@ import { gasCounter, tryAsGas } from "@typeberry/pvm-interpreter/gas.js";
 import { MemoryBuilder, tryAsMemoryIndex } from "@typeberry/pvm-interpreter/memory/index.js";
 import { tryAsSbrkIndex } from "@typeberry/pvm-interpreter/memory/memory-index.js";
 import { PAGE_SIZE } from "@typeberry/pvm-spi-decoder/memory-conts.js";
+import { Compatibility, GpVersion, Result } from "@typeberry/utils";
 import { PartialStateMock } from "../externalities/partial-state-mock.js";
 import { HostCallResult } from "../results.js";
 import { New } from "./new.js";
@@ -20,12 +21,14 @@ const CODE_HASH_START_REG = 7;
 const CODE_LENGTH_REG = 8;
 const GAS_REG = 9;
 const BALANCE_REG = 10;
+const FREE_STORAGE = 11;
 
 function prepareRegsAndMemory(
   codeHash: CodeHash,
   codeLength: U64,
   gas: U64,
   balance: U64,
+  freeStorage: U64,
   { skipCodeHash = false }: { skipCodeHash?: boolean } = {},
 ) {
   const memStart = 2 ** 16;
@@ -34,6 +37,7 @@ function prepareRegsAndMemory(
   registers.set(CODE_LENGTH_REG, tryAsU64(codeLength));
   registers.set(GAS_REG, gas);
   registers.set(BALANCE_REG, balance);
+  registers.set(FREE_STORAGE, freeStorage);
 
   const builder = new MemoryBuilder();
 
@@ -52,12 +56,14 @@ describe("HostCalls: New", () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);
-    accumulate.newServiceResponse = tryAsServiceId(23_000);
+    accumulate.newServiceResponse = Result.ok(tryAsServiceId(23_000));
+    accumulate.newServicePre067Response = tryAsServiceId(23_000);
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(4_096n),
       tryAsU64(2n ** 40n),
       tryAsU64(2n ** 50n),
+      tryAsU64(1_024n),
     );
 
     // when
@@ -65,19 +71,28 @@ describe("HostCalls: New", () => {
 
     // then
     assert.deepStrictEqual(tryAsServiceId(Number(registers.get(RESULT_REG))), tryAsServiceId(23_000));
-    assert.deepStrictEqual(accumulate.newServiceCalled, [[Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n]]);
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      assert.deepStrictEqual(accumulate.newServiceCalled, [
+        [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n, 1_024n],
+      ]);
+    } else {
+      assert.deepStrictEqual(accumulate.newServicePre067Called, [
+        [Bytes.fill(HASH_SIZE, 0x69), 4_096n, 2n ** 40n, 2n ** 50n],
+      ]);
+    }
   });
 
   it("should fail when balance is not enough", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);
-    accumulate.newServiceResponse = null;
+    accumulate.newServicePre067Response = null;
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(4_096n),
       tryAsU64(2n ** 40n),
       tryAsU64(2n ** 50n),
+      tryAsU64(0n),
     );
 
     // when
@@ -85,19 +100,24 @@ describe("HostCalls: New", () => {
 
     // then
     assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.CASH);
-    assert.deepStrictEqual(accumulate.newServiceCalled.length, 1);
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      assert.deepStrictEqual(accumulate.newServiceCalled.length, 1);
+    } else {
+      assert.deepStrictEqual(accumulate.newServicePre067Called.length, 1);
+    }
   });
 
   it("should fail when code not readable", async () => {
     const accumulate = new PartialStateMock();
     const serviceId = tryAsServiceId(10_000);
     const n = new New(serviceId, accumulate);
-    accumulate.newServiceResponse = null;
+    accumulate.newServicePre067Response = null;
     const { registers, memory } = prepareRegsAndMemory(
       Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
       tryAsU64(4_096n),
       tryAsU64(2n ** 40n),
       tryAsU64(2n ** 50n),
+      tryAsU64(1_024n),
       { skipCodeHash: true },
     );
 
@@ -106,6 +126,34 @@ describe("HostCalls: New", () => {
 
     // then
     assert.deepStrictEqual(result, PvmExecution.Panic);
-    assert.deepStrictEqual(accumulate.newServiceCalled, []);
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      assert.deepStrictEqual(accumulate.newServiceCalled, []);
+    } else {
+      assert.deepStrictEqual(accumulate.newServicePre067Called, []);
+    }
+  });
+
+  it("should fail when free storage is for incorrect service", async () => {
+    const accumulate = new PartialStateMock();
+    const serviceId = tryAsServiceId(10_000);
+    const n = new New(serviceId, accumulate);
+    accumulate.newServicePre067Response = null;
+    const { registers, memory } = prepareRegsAndMemory(
+      Bytes.fill(HASH_SIZE, 0x69).asOpaque(),
+      tryAsU64(4_096n),
+      tryAsU64(2n ** 40n),
+      tryAsU64(2n ** 50n),
+      tryAsU64(1_024n),
+      { skipCodeHash: true },
+    );
+
+    // when
+    await n.execute(gas, registers, memory);
+
+    // then
+    if (Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)) {
+      assert.deepStrictEqual(registers.get(RESULT_REG), HostCallResult.HUH);
+      assert.deepStrictEqual(accumulate.newServiceCalled.length, 1);
+    }
   });
 });

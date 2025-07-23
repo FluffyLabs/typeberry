@@ -22,7 +22,7 @@ const IN_OUT_REG = 7;
 /**
  * Return info about some account.
  *
- * `E(t_c, t_b, t_t, t_g , t_m, t_o, t_i)`
+ * `E(t_c, E8(t_b, t_t, t_g , t_m, t_o), E4(t_i), E8(t_f), E4(t_r, t_a, t_p))`
  * c = code hash
  * b = balance
  * t = threshold balance
@@ -30,8 +30,12 @@ const IN_OUT_REG = 7;
  * m = minimum gas for on transfer
  * i = number of items in the storage
  * o = total number of octets stored.
+ * f = gratis storage octets
+ * r = creation timeslot
+ * a = last accumulation timeslot
+ * p = parent service
  *
- * https://graypaper.fluffylabs.dev/#/9a08063/332a02332a02?v=0.6.6
+ * https://graypaper.fluffylabs.dev/#/7e6ff6a/332702332702?v=0.6.7
  */
 export class Info implements HostCallHandler {
   index = tryAsHostCallIndex(4);
@@ -60,10 +64,16 @@ export class Info implements HostCallHandler {
         ? BytesBlob.empty()
         : Encoder.encodeObject(codecServiceAccountInfoWithThresholdBalance, {
             ...accountInfo,
-            thresholdBalance: ServiceAccountInfo.calculateThresholdBalance(
-              accountInfo.storageUtilisationCount,
-              accountInfo.storageUtilisationBytes,
-            ),
+            thresholdBalance: Compatibility.isGreaterOrEqual(GpVersion.V0_6_7)
+              ? ServiceAccountInfo.calculateThresholdBalance(
+                  accountInfo.storageUtilisationCount,
+                  accountInfo.storageUtilisationBytes,
+                  accountInfo.gratisStorageBytes,
+                )
+              : ServiceAccountInfo.calculateThresholdBalancePre067(
+                  accountInfo.storageUtilisationCount,
+                  accountInfo.storageUtilisationBytes,
+                ),
           });
 
     const writeResult = memory.storeFrom(outputStart, encodedInfo.raw);
@@ -97,7 +107,7 @@ export const codecServiceAccountInfoWithThresholdBalance = Compatibility.isGreat
         onTransferMinGas: codec.u64.convert((i) => i, tryAsServiceGas),
         storageUtilisationBytes: codec.u64,
         storageUtilisationCount: codec.u32,
-        gratisStorage: codec.u64,
+        gratisStorageBytes: codec.u64,
         created: codec.u32.convert((x) => x, tryAsTimeSlot),
         lastAccumulation: codec.u32.convert((x) => x, tryAsTimeSlot),
         parentService: codec.u32.convert((x) => x, tryAsServiceId),
@@ -113,7 +123,7 @@ export const codecServiceAccountInfoWithThresholdBalance = Compatibility.isGreat
         onTransferMinGas: codec.u64.convert((i) => i, tryAsServiceGas),
         storageUtilisationBytes: codec.u64,
         storageUtilisationCount: codec.u32,
-        gratisStorage: ignoreValueWithDefault(tryAsU64(0)),
+        gratisStorageBytes: ignoreValueWithDefault(tryAsU64(0)),
         created: ignoreValueWithDefault(tryAsTimeSlot(0)),
         lastAccumulation: ignoreValueWithDefault(tryAsTimeSlot(0)),
         parentService: ignoreValueWithDefault(tryAsServiceId(0)),
