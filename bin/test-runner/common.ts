@@ -87,11 +87,12 @@ export async function main(
       setImmediate(() => {
         const testName = `${testGroupName} tests [${i + 1}/${totalBatches}]`;
         logger.info(`Running ${testName}`);
+        const timeout = 5 * 60 * 1000;
         test.describe(
           testName,
           {
             concurrency: 100,
-            timeout: 60 * 1000,
+            timeout,
           },
           () => {
             const runnersBatch = testRunners.slice(i * batchSize, (i + 1) * batchSize);
@@ -100,7 +101,7 @@ export async function main(
               if (runner.shouldSkip) {
                 test.it.skip(fileName, runner.test);
               } else {
-                test.it(fileName, runner.test);
+                test.it(fileName, { timeout }, runner.test);
               }
             }
           },

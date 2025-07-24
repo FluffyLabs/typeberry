@@ -37,7 +37,7 @@ export async function runStateTransitionFuzzed(testContent: StateTransitionFuzze
 
   const encodedBlock = Encoder.encodeObject(Block.Codec, testContent.block, spec);
   const blockView = Decoder.decodeObject(Block.Codec.View, encodedBlock, spec);
-  const blocksDb = new InMemoryBlocks();
+  const blocksDb = InMemoryBlocks.new();
 
   const stf = new OnChain(
     spec,

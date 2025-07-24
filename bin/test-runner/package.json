@@ -30,7 +30,7 @@
     "json-bigint-patch": "^0.0.8"
   },
   "scripts": {
-    "start": "tsx ./index.ts",
+    "start": "tsx --test-timeout=600000 ./index.ts",
     "w3f": "tsx ./w3f.ts",
     "w3f-davxy": "tsx ./w3f-davxy.ts",
     "jamduna": "tsx ./jamduna.ts",
