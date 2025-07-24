@@ -12,7 +12,13 @@ import { Bytes, bytesBlobComparator } from "@typeberry/bytes";
 import { Decoder } from "@typeberry/codec";
 import { FixedSizeArray, type ImmutableSortedSet, SortedSet, asKnownSize } from "@typeberry/collections";
 import type { ChainSpec } from "@typeberry/config";
-import { BANDERSNATCH_KEY_BYTES, type BandersnatchKey, ED25519_KEY_BYTES, type Ed25519Key } from "@typeberry/crypto";
+import {
+  BANDERSNATCH_KEY_BYTES,
+  BLS_KEY_BYTES,
+  type BandersnatchKey,
+  ED25519_KEY_BYTES,
+  type Ed25519Key,
+} from "@typeberry/crypto";
 import { blake2b } from "@typeberry/hash";
 import { tryAsU32, u32AsLeBytes } from "@typeberry/numbers";
 import { type State, ValidatorData } from "@typeberry/state";
@@ -180,7 +186,7 @@ export class Safrole {
           return ValidatorData.create({
             bandersnatch: Bytes.zero(BANDERSNATCH_KEY_BYTES).asOpaque(),
             ed25519: Bytes.zero(ED25519_KEY_BYTES).asOpaque(),
-            bls: validator.bls,
+            bls: Bytes.zero(BLS_KEY_BYTES).asOpaque(),
             metadata: validator.metadata,
           });
         }
